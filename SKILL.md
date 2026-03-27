@@ -40,6 +40,14 @@ Before saying "done":
 - Never report completion without observable verification
 - Placeholders (TODO, TBD, FIXME) are deployment blockers
 
+### Anti-Drift Rules
+
+- Product descriptions must preserve all defining features — never collapse multi-layered products into single frames
+- If a project has a source-of-truth doc, read it BEFORE writing any summary
+- If a project has forbidden semantic tokens, never use them (even in comments)
+- Semantic drift (losing core product meaning in a summary) is a defect, not a wording issue
+- After fixing drift: patch governance + install prevention rule + add linter check
+
 ### Bounded Scope
 
 Do what was asked. Nothing more.
@@ -190,6 +198,14 @@ Total savings:            {n} tokens ({pct}%)
 - File exists ≠ works. Observable output required.
 - No secrets in code. No .env committed. No hardcoded localhost for remote.
 
+### Deployment Safety
+
+- Always delete old artifacts before uploading new ones
+- Validate runtime dependencies in the actual execution environment before shipping
+- Auth mode must be explicit and validated on startup — no hidden OAuth assumptions
+- No emit-only systems: if something sends messages, it must also receive and process replies
+- Startup health checks: validate critical imports and auth before serving users, not after first failure
+
 ### Error Handling Default
 
 Every external call gets: try/catch, timeout, typed error classification, fallback or escalation. No silent swallowing. No unbounded retries.
@@ -217,3 +233,33 @@ After significant builds: identify what worked (keep), identify mistakes (add to
 | "full optimization" | Run complete C1→C7 pipeline |
 
 Parts A, B, D are always active. Part C activates on trigger.
+
+---
+
+## PART E — COMMUNITY ERROR PATTERNS (auto-fed by KobiiClaw)
+
+Generalized prevention rules discovered through real project errors. Domain-agnostic — apply to any stack.
+
+### E1: Selection Scope Confusion
+
+When choosing between candidates (features, approaches, tools, architectures), NEVER mix candidates from different layers. If the user defines a selection pool, score ONLY within that pool. Existing/baseline options may inform technical strategy but must NOT appear as candidates in the selection.
+
+**Pattern:** User asks "which of MY custom X should I build first?" Agent includes existing/stock X in the candidate list and recommends one of those instead.
+**Root cause:** Conflating "technically easiest" with "what was actually asked."
+**Fix:** Before scoring, explicitly list the candidate pool. Verify every candidate belongs to the defined scope. Separate: (A) candidate selection from (B) technical implementation strategy. The winner comes from A. The how-to-build comes from B.
+
+### E2: Scaffolding vs Identity Lock
+
+When using existing infrastructure as temporary scaffolding, ALWAYS declare it as temporary. Never let scaffolding choices drift into permanent identity. Evaluate the final result against the TARGET identity, not the scaffold's convenience.
+
+**Pattern:** Agent hooks into existing system X as "temporary scaffold," then all subsequent work optimizes for X's constraints instead of the actual goal.
+**Root cause:** Path dependency — early convenience choices become implicit permanent constraints.
+**Fix:** Label every scaffolding decision with: (1) what it scaffolds, (2) when it gets replaced, (3) what the final evaluation criteria are (which must NOT reference the scaffold).
+
+### E3: Layer Flattening
+
+When a task has multiple distinct layers (selection, implementation, evaluation, identity), NEVER collapse them into one decision. Each layer has its own logic, its own candidates, its own constraints.
+
+**Pattern:** Agent merges "what to build" with "how to build it" into a single recommendation, causing the easiest-to-build option to win over the strategically correct one.
+**Root cause:** Optimization for single-dimension efficiency instead of multi-layer correctness.
+**Fix:** Before making recommendations, enumerate the layers. Make one decision per layer. Cross-reference between layers only AFTER each layer has its own answer.
