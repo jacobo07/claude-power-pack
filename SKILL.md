@@ -263,3 +263,19 @@ When a task has multiple distinct layers (selection, implementation, evaluation,
 **Pattern:** Agent merges "what to build" with "how to build it" into a single recommendation, causing the easiest-to-build option to win over the strategically correct one.
 **Root cause:** Optimization for single-dimension efficiency instead of multi-layer correctness.
 **Fix:** Before making recommendations, enumerate the layers. Make one decision per layer. Cross-reference between layers only AFTER each layer has its own answer.
+
+### E4: WordPress REST API — Raw vs Rendered Content Destruction
+
+When modifying WordPress pages/posts via the REST API, ALWAYS use `content.raw` (Gutenberg block markup), NEVER `content.rendered` (processed HTML). Pushing rendered HTML back destroys all block editor structure irreversibly.
+
+**Pattern:** Agent reads page content via REST API, gets `content.rendered` (processed HTML without `<!-- wp:block -->` comments), modifies it, POSTs it back. WordPress saves flat HTML as a single Classic block — hero images disappear, columns collapse, service cards lose text/buttons, the entire page layout breaks.
+**Root cause:** The WP REST API returns two content formats: `raw` (with Gutenberg block comments) and `rendered` (processed HTML). Default `GET` returns rendered. Agent uses rendered for round-trip modifications without realizing it strips block structure.
+**Fix:**
+1. To READ raw content: `GET /wp-json/wp/v2/pages/{id}?context=edit` → use `response.content.raw`
+2. To READ revision raw: `GET /wp-json/wp/v2/pages/{id}/revisions/{rev}?context=edit` → use `content.raw`
+3. To MODIFY content: read raw first, modify within block structure, POST raw back
+4. To APPEND (schema, FAQ sections): read raw, append to raw, POST raw
+5. For meta-only changes (Yoast title/description): send ONLY the `meta` field, do NOT include `content`
+6. NEVER restore from `content.rendered` — it destroys block editor layout permanently
+
+**Severity:** CRITICAL — caused 27 pages to lose their entire visual design on a production site. Required rollback to pre-change revisions using raw content from `context=edit`.
