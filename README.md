@@ -1,31 +1,23 @@
-# Claude Power Pack v1.0
+# Claude Power Pack v2.0
 
-All-in-one skill that makes Claude Code and Claude.ai dramatically better at building software. Project-agnostic — works on any stack, any project.
+All-in-one skill that makes AI coding tools dramatically better at building software. Project-agnostic — works on any stack, any project.
 
-## What It Does
+## What's New in v2.0
 
-**Always active (zero trigger needed):**
-- Execution depth loop: OBSERVE → PLAN → EXECUTE → VERIFY → HARDEN
-- Intent routing: classifies your request complexity and scales effort proportionally
-- Quality gates: prevents shipping broken code
-- Anti-fabrication: stops Claude from inventing fake classes/endpoints
-- Proportional cost: simple requests stay cheap, complex ones get full rigor
-
-**On trigger (token optimization):**
-- Context audit: find what's burning your tokens
-- Prompt compressor: rewrite instructions shorter
-- Dedup finder: eliminate overlapping rules
-- Governance digest: compress large docs to actionable rules
-- Description trimmer: enforce 15-token budget on descriptions
-- Sleepy architecture audit: find always-loaded waste
-- Full optimization: run the complete pipeline
+- **Loop integrity** — Every plan must close. Interrupted work gets logged, not lost.
+- **Acceptance-driven development** — Define "done" (Given/When/Then) before writing code.
+- **Drift prevention** — Log every decision. Silent architectural drift is the #1 project killer.
+- **Context rot awareness** — Quality degrades with session length. Active reset after 10+ exchanges.
+- **PRD auto-versioning (C8)** — After completing features, check if PRD needs updating. Track versions.
+- **21st.dev frontend module (Part F)** — Sleepy module that activates for frontend/web work. Uses 21st.dev MCP tools for component generation, design inspiration, and refinement. Zero cost when dormant.
+- **UAT after each phase** — Don't proceed until current work passes verification.
+- **Coherence validation** — Validate requests against project context before executing.
 
 ## Install
 
 ### Claude.ai (Project Knowledge)
 1. Open your Project → Add Project Knowledge
 2. Upload this zip (or just SKILL.md)
-3. Use any trigger phrase in conversation
 
 ### Claude Code (Skill)
 ```bash
@@ -39,31 +31,52 @@ cp SKILL.md ~/.claude/skills/claude-power-pack/
 
 ## Capabilities
 
-| Code | Capability | Trigger | Always Active? |
-|------|-----------|---------|---------------|
-| A | Execution Depth | — | Yes |
-| B | Intent Routing | — | Yes |
-| C1 | Context Audit | "token audit" | On trigger |
-| C2 | Prompt Compressor | "compress this" | On trigger |
-| C3 | Dedup Finder | "dedup check" | On trigger |
-| C4 | Governance Digest | "create digest" | On trigger |
-| C5 | Description Trimmer | "trim descriptions" | On trigger |
-| C6 | Sleepy Audit | "sleepy audit" | On trigger |
-| C7 | Full Optimization | "full optimization" | On trigger |
-| D | Delivery Standards | — | Yes |
+| Part | Capability | Always Active? | Trigger |
+|------|-----------|---------------|---------|
+| A | Execution Depth (OBSERVE→PLAN→EXECUTE→VERIFY→HARDEN) | Yes | — |
+| A | Loop integrity + acceptance criteria | Yes | — |
+| A | Drift prevention + decision logging | Yes | — |
+| B | Intent Routing (5 tiers) | Yes | — |
+| B | Coherence validation + context rot awareness | Yes | — |
+| C1 | Context Audit | On trigger | "token audit" |
+| C2 | Prompt Compressor | On trigger | "compress this" |
+| C3 | Dedup Finder | On trigger | "dedup check" |
+| C4 | Governance Digest | On trigger | "create digest" |
+| C5 | Description Trimmer | On trigger | "trim descriptions" |
+| C6 | Sleepy Architecture Audit | On trigger | "sleepy audit" |
+| C7 | Full Optimization Pipeline | On trigger | "full optimization" |
+| C8 | PRD Auto-Versioning | On trigger | "PRD version" |
+| D | Delivery Standards | Yes | — |
+| E | Community Error Patterns (E1-E4) | Yes | — |
+| F | 21st.dev Frontend Module | Dormant | React, Next.js, Vue, etc. |
+
+## Sleepy Modules
+
+Part F is a **sleepy module** — it costs zero tokens when dormant. It only activates when your conversation involves frontend/web keywords (React, Next.js, Vue, Svelte, CSS, UI, component, design, landing page, Tailwind, shadcn, etc.).
+
+When active, it instructs Claude to use 21st.dev MCP tools for component generation and design. Requires the `magic-ui` MCP server connected. Falls back to manual implementation if unavailable.
+
+## Community Error Patterns
+
+Part E contains generalized error patterns discovered through real production errors. These are domain-agnostic prevention rules that apply to any stack:
+
+- **E1: Selection Scope Confusion** — Don't mix candidates from different layers
+- **E2: Scaffolding vs Identity Lock** — Declare temporary scaffolding as temporary
+- **E3: Layer Flattening** — Don't collapse multi-layer decisions into one
+- **E4: WordPress Content Destruction** — Use `content.raw`, never `content.rendered`
+
+These patterns grow over time as new errors are discovered and generalized.
 
 ## Token Budget
 
-SKILL.md: ~1900 words (~2527 tokens). Loaded once per session.
-
-## What You'll Notice
-
-- Fewer "it should work" moments — verification is mandatory
-- Simpler requests get fast answers instead of over-engineered responses
-- Complex requests get proper planning instead of rushing
-- Your instruction files get smaller and sharper over time
-- Claude asks one clarifying question instead of guessing wrong and rebuilding
+SKILL.md: ~1100 words (~1463 tokens). 40% leaner than v1.0 while adding 8 new capabilities + preserving all community error patterns.
 
 ## Origin
 
-Distilled from 180+ governance files, 20+ production projects, and 3 years of iteration. The principles come from real failures, not theory.
+Distilled from 180+ governance files, 20+ production projects, the PAUL framework principles, and 3 years of iteration. Every rule exists because something failed without it.
+
+## Credits
+
+- Loop integrity and acceptance-driven patterns inspired by [PAUL](https://github.com/ChristopherKahler/paul) (ChristopherKahler)
+- Frontend module powered by [21st.dev](https://21st.dev) MCP tools
+- Community error patterns from KobiiClaw auto-discovery
