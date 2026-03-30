@@ -84,6 +84,14 @@ Memory engine: ``python modules/memory-engine/append_memory.py "category: lesson
 - Organize sub-agents by TASK (Linter, Tester), not by ROLE (Frontend Dev).
 - NEVER skip authentication, RLS, or sandboxing. Security is not optional.
 - After 3 failed fix attempts on the same bug: STOP, scrap patches, rebuild from scratch.
+
+### E) DYNAMIC INTENT ROUTING & UI TOGGLING
+Before processing ANY prompt, evaluate the Blast Radius:
+- HIGH RISK (core files, 3+ files, architecture, deploy): operate in Plan Mode.
+  First output: "⚠️ ALTO RIESGO. Activa Plan Mode (shift+tab) antes de continuar."
+- LOW RISK (single file, read-only, background, audit): Bypass Permissions allowed.
+  Notify: "🟢 Riesgo Bajo. Ejecutando en modo autónomo."
+- Core files (auth, payments, DB, CI/CD) are ALWAYS high risk. No exceptions.
 "@
     Add-Content -Path $ClaudeFile -Value $doctrine -Encoding UTF8
     Write-Host "[OK] Injected Power Pack doctrine into CLAUDE.md" -ForegroundColor Green

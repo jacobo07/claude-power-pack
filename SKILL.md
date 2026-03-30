@@ -73,6 +73,34 @@ BEFORE classifying intent tier, scan the user's prompt for Monolithic Prompt Vio
 - A task with dependencies ("fix auth bug, then update its tests")
 - A fix + its deploy ("fix this and deploy it")
 
+### Dynamic UI Mode Selection (Blast Radius)
+
+AFTER passing the Quality Gate and BEFORE classifying tier, evaluate the task's Blast Radius:
+
+**HIGH RISK (Plan Mode required)** — ANY of these triggers Plan Mode:
+- Touches core/config/auth/payment files
+- Modifies 3+ files
+- Architecture or refactoring task
+- Database schema changes
+- Deployment to production
+
+→ First output MUST be: "⚠️ ALTO RIESGO DETECTADO (Blast Radius amplio). Asegúrate de activar Plan Mode (shift+tab) antes de continuar."
+→ Do NOT proceed until plan is presented and approved (y/n)
+
+**LOW RISK (Bypass Permissions allowed)** — ALL of these must be true:
+- Single file or read-only operation
+- No core/auth/payment files touched
+- Background task, audit, or isolated fix
+- No deployment step
+
+→ Notify: "🟢 Riesgo Bajo. Ejecutando en modo autónomo."
+→ Execute directly, verify after
+
+**Blast Radius indicators for file classification:**
+- 💀 **Core files**: auth, payments, database migrations, main config, CI/CD pipelines
+- ⚠️ **Sensitive**: API routes, middleware, environment configs
+- 🟢 **Safe**: tests, docs, static assets, linting, formatting
+
 ### Classify Before Acting
 
 | Tier | Type | Effort | Token Budget |
