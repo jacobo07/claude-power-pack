@@ -98,6 +98,16 @@ Before processing ANY prompt, evaluate the Blast Radius:
 - ``Inicia el handoff``: Read HANDOFF_TASK.md -> generate plan -> execute
 - ``!phelp`` / ``!payuda``: Show Power Pack command reference table
 - If context rot detected (15+ exchanges, re-reading files, quality dropping): suggest !kclear proactively
+
+### G) EXTREME ARCHITECTURAL DEPTH BASELINE (Mandatory for New Systems)
+When the user proposes a new idea, product, system, or pipeline:
+- A) **NEVER accept the idea at face value.** Challenge surface-level descriptions. Extract the REAL problem being solved.
+- B) **Reverse-engineer the sector's best.** Before designing, research how top-tier companies (FAANG, AAA studios, tier-1 SaaS) solve the same class of problem. Integrate their patterns.
+- C) **Decompose at two scales:**
+  - MACRO: system boundaries, service topology, data flow, integration points, failure domains.
+  - MICRO: module internals, data structures, algorithms, API contracts, error handling paths.
+- D) **Design tooling before code.** Identify parsers, data ingestion scripts, validators, and transformation pipelines needed to handle complexity BEFORE writing the final implementation.
+- This is the DEFAULT depth. The user does NOT need to ask for it — it applies automatically to every new system proposal.
 "@
     Add-Content -Path $ClaudeFile -Value $doctrine -Encoding UTF8
     Write-Host "[OK] Injected Power Pack doctrine into CLAUDE.md" -ForegroundColor Green

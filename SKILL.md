@@ -1,14 +1,14 @@
 ---
 name: claude-power-pack
-description: "Token optimizer + execution depth + intent routing + autoresearch + ExecutionOS Lite + Memory Flywheel + RCA Self-Healing + Vibe Coding Security"
+description: "Token optimizer + execution depth + intent routing + autoresearch + ExecutionOS Lite + Memory Flywheel + RCA Self-Healing + Vibe Coding Security + Extreme Architectural Depth"
 ---
 
-# Claude Power Pack v5.0
+# Claude Power Pack v6.0
 
 Universal AI execution framework. Project-agnostic. Works on Claude.ai, Claude Code, ChatGPT.
-**v5.0:** Vibe Coding Security + Memory Flywheel + RCA + Anti-Monolith + Prompt Quality Gate.
+**v6.0:** Extreme Architectural Depth + Vibe Coding Security + Memory Flywheel + RCA + Anti-Monolith + Prompt Quality Gate.
 
-**Active:** A (Execution), B (Routing + Quality Gate), D (Delivery), E (Error Patterns), J (Memory Flywheel), K (RCA Self-Healing), L (Vibe Coding & Security) — always loaded.
+**Active:** A (Execution), B (Routing + Quality Gate), D (Delivery), E (Error Patterns), J (Memory Flywheel), K (RCA Self-Healing), L (Vibe Coding & Security), N (Extreme Architectural Depth) — always loaded.
 **Trigger:** C (Token Optimization) — on demand.
 **Sleepy:** F (Frontend/Web), G (Autoresearch), H (Reinforced Token Opt), I (ExecutionOS Lite) — dormant until triggered.
 
@@ -417,6 +417,74 @@ Proactive suggestion format:
 
 ---
 
+## PART N — EXTREME ARCHITECTURAL DEPTH (always active)
+
+Forces AAA-studio / tier-1 tech company depth on every new system proposal. Eliminates "basic" or "lazy" responses by default.
+
+### Activation
+This part is ALWAYS active. It triggers automatically when the user proposes any new:
+- Product, system, or platform
+- Pipeline or workflow
+- Architecture or major feature
+- Tool, framework, or integration
+
+### The 4-Phase Depth Protocol
+
+**Phase 1: CHALLENGE — Reject Surface-Level Thinking**
+- Do NOT accept the idea as described. Ask: "What's the REAL problem this solves?"
+- Identify hidden assumptions, unstated constraints, and missing requirements.
+- Map the problem to known problem classes (CRUD app? Event pipeline? Distributed system? ML workflow?).
+
+**Phase 2: REVERSE-ENGINEER — Study the Best**
+- Before designing ANYTHING, research how the top 3-5 companies in the sector solve this class of problem.
+- Extract their architectural patterns, tech stack choices, and scaling strategies.
+- Identify which patterns apply to the user's scale and constraints (don't blindly copy Google's infra for a 100-user app).
+- Use WebSearch/WebFetch if available; otherwise, apply known industry patterns from training data.
+
+**Phase 3: DECOMPOSE — Macro & Micro Architecture**
+
+**Macro-scale (system level):**
+- Service boundaries and bounded contexts
+- Data flow between services (sync vs async, REST vs events vs streams)
+- Integration points with external systems
+- Failure domains and blast radius mapping
+- Scaling axes (horizontal, vertical, functional)
+
+**Micro-scale (module level):**
+- Internal module architecture (clean layers, dependency direction)
+- Data structures and algorithms (choose deliberately, not by default)
+- API contracts (typed interfaces, versioning strategy)
+- Error handling paths (every external call: try/catch, timeout, fallback)
+- State management (where does truth live? who mutates it?)
+
+**Phase 4: TOOLING FIRST — Build the Machine That Builds the Machine**
+- Before writing application code, identify supporting tools needed:
+  - Data parsers and validators for input complexity
+  - Ingestion scripts for external data sources
+  - Schema generators or migration tools
+  - Test harnesses and fixture generators
+  - CI/CD pipeline definitions
+- Build these tools FIRST. They de-risk the final implementation.
+
+### Depth Calibration
+
+| User Signal | Depth Level | Action |
+|-------------|-------------|--------|
+| "Quick prototype" / "MVP" | Adjusted | Run all 4 phases but optimize for speed over completeness. Note what was deferred. |
+| "Production system" / "Scale to X" | Full | All 4 phases, no shortcuts. |
+| "Just a script" / "One-off" | Lite | Phase 1 only (challenge assumptions), then execute. |
+| No qualifier (default) | Full | Assume production-grade intent until told otherwise. |
+
+### Anti-Patterns This Prevents
+
+- **Copy-paste architecture**: Blindly reusing a template without understanding WHY it was designed that way.
+- **Premature coding**: Writing code before understanding the problem space.
+- **Flat thinking**: Treating a multi-layered system as a single monolith.
+- **Tool amnesia**: Writing complex transformation logic inline instead of building reusable tooling.
+- **Scale blindness**: Designing for 10 users OR 10M users without asking which one.
+
+---
+
 ## Quick Reference
 
 | Trigger | What It Does | Part |
@@ -442,5 +510,6 @@ Proactive suggestion format:
 | `!kclear` | Dump memory + task, prepare clean restart | M |
 | `Inicia el handoff` | Resume task from previous !kclear | M |
 | `!phelp` / `!payuda` | Show Power Pack command reference | M |
+| (automatic) | Extreme depth on new system proposals: challenge → reverse-engineer → decompose → tooling | N |
 
-Parts A, B, D, E, **J, K, L, M** are always active. C activates on trigger. F, G, H, I are sleepy (dormant until needed).
+Parts A, B, D, E, **J, K, L, M, N** are always active. C activates on trigger. F, G, H, I are sleepy (dormant until needed).
