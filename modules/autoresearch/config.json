@@ -1,0 +1,103 @@
+{
+  "schedule": {
+    "runs_per_day": 2,
+    "times": ["02:00", "14:00"],
+    "timezone": "America/New_York"
+  },
+  "throttle": {
+    "min_interval_hours": 6,
+    "signal_score_threshold": 0.4,
+    "max_triggers_per_project_per_day": 4,
+    "dedup_window_hours": 6
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token_env": "TELEGRAM_BOT_TOKEN",
+    "chat_id_env": "TELEGRAM_CHAT_ID"
+  },
+  "projects": {
+    "moneymaker-skill": {
+      "domain": "prediction_markets",
+      "rss_feeds": [
+        {"url": "https://github.com/Polymarket/clob-client/releases.atom", "name": "Polymarket CLOB Client", "authority": 1.0},
+        {"url": "https://github.com/Polymarket/py-clob-client/releases.atom", "name": "Polymarket Python Client", "authority": 1.0},
+        {"url": "https://polymarket.com/blog/rss.xml", "name": "Polymarket Blog", "authority": 0.9},
+        {"url": "https://news.ycombinator.com/rss", "name": "Hacker News", "keywords": ["polymarket", "prediction market", "kalshi", "arbitrage", "betting bot"], "authority": 0.3},
+        {"url": "https://github.com/trending/python.atom", "name": "GitHub Trending Python", "keywords": ["prediction", "arbitrage", "trading bot", "market maker"], "authority": 0.4}
+      ],
+      "youtube_channels": [
+        {"id": "UCJ24N4O0bP7LGj_qMIDBfTA", "name": "Karpathy", "keywords": ["agent", "research", "trading"]},
+        {"id": "UC4SVo0Ue36XCfOyHEqzxm0Q", "name": "Two Minute Papers", "keywords": ["prediction", "market", "trading"]},
+        {"id": "UCnUYZLuoy1rq1aVMwx4piYg", "name": "Fireship", "keywords": ["ai", "agent", "bot"]}
+      ],
+      "cross_project_keywords": {
+        "GEO-audit": ["regulation", "legal", "compliance", "law", "policy"],
+        "nexumops-project": ["user acquisition", "growth", "marketing", "launch"],
+        "TUAX_UGC_SYSTEM": ["AI", "model", "training", "dataset", "knowledge"],
+        "CarlaSignalOS": ["automation", "workflow", "pipeline", "webhook"]
+      }
+    },
+    "GEO-audit": {
+      "domain": "seo",
+      "rss_feeds": [
+        {"url": "https://developers.google.com/search/blog/atom.xml", "name": "Google Search Central", "authority": 1.0},
+        {"url": "https://ahrefs.com/blog/feed/", "name": "Ahrefs Blog", "authority": 0.8},
+        {"url": "https://www.searchenginejournal.com/feed/", "name": "Search Engine Journal", "keywords": ["local seo", "geo", "google business", "map pack", "AI overview"], "authority": 0.6},
+        {"url": "https://moz.com/blog/feed", "name": "Moz Blog", "keywords": ["local", "geo", "algorithm"], "authority": 0.7}
+      ],
+      "youtube_channels": [
+        {"id": "UCWquNQV8Y0_defMKnGKrFRQ", "name": "Kyle Roof SEO"},
+        {"id": "UC_x5XG1OV2P6uZZ5FSM9Ttw", "name": "Google SearchLiaison"},
+        {"id": "UCERs5JFjTHoatWFmWPKGS3w", "name": "Ahrefs", "keywords": ["local", "geo", "seo"]}
+      ],
+      "cross_project_keywords": {
+        "moneymaker-skill": ["algorithm", "ranking", "signal", "prediction"],
+        "nexumops-project": ["content", "outreach", "backlink", "guest post"],
+        "TUAX_UGC_SYSTEM": ["content strategy", "keyword", "topic cluster"]
+      }
+    },
+    "nexumops-project": {
+      "domain": "outreach",
+      "rss_feeds": [
+        {"url": "https://news.ycombinator.com/rss", "name": "Hacker News", "keywords": ["cold email", "outbound", "deliverability", "smtp", "email warmup"], "authority": 0.3},
+        {"url": "https://github.com/trending/python.atom", "name": "GitHub Trending", "keywords": ["email", "outreach", "cold email", "smtp"], "authority": 0.4}
+      ],
+      "youtube_channels": [
+        {"id": "UCj-Wuot3BTN-bNOrBz61RhQ", "name": "Alex Berman", "keywords": ["cold email", "outbound", "outreach"]},
+        {"id": "UC9-y-6csu5WGm29I7JiwpnA", "name": "Computerphile", "keywords": ["email", "spam", "deliverability"]}
+      ],
+      "cross_project_keywords": {
+        "moneymaker-skill": ["conversion", "funnel", "pricing", "monetization"],
+        "GEO-audit": ["email", "deliverability", "domain", "reputation"],
+        "TUAX_UGC_SYSTEM": ["copy", "template", "personalization", "AI writing"]
+      }
+    },
+    "TUAX_UGC_SYSTEM": {
+      "domain": "marketing",
+      "rss_feeds": [
+        {"url": "https://news.ycombinator.com/rss", "name": "Hacker News", "keywords": ["knowledge base", "rag", "vector", "embeddings", "content pipeline"], "authority": 0.3}
+      ],
+      "youtube_channels": [
+        {"id": "UCsBjURrPoezykLs9EqgamOA", "name": "Fireship", "keywords": ["ai", "rag", "vector", "knowledge"]}
+      ],
+      "cross_project_keywords": {
+        "moneymaker-skill": ["data pipeline", "ingestion", "real-time"],
+        "GEO-audit": ["content", "repurpose", "distribution"],
+        "nexumops-project": ["knowledge", "training data", "prompt"]
+      }
+    },
+    "CarlaSignalOS": {
+      "domain": "ai_automation",
+      "rss_feeds": [
+        {"url": "https://community.n8n.io/latest.rss", "name": "n8n Community", "keywords": ["workflow", "automation", "webhook", "governance"], "authority": 0.5}
+      ],
+      "youtube_channels": [],
+      "cross_project_keywords": {}
+    }
+  },
+  "universal_keywords": [
+    "claude", "anthropic", "openai", "gpt", "gemini",
+    "ai agent", "autonomous", "mcp", "tool use",
+    "regulation", "gdpr", "compliance"
+  ]
+}
