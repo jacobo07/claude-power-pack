@@ -187,6 +187,9 @@ NEVER store architecture maps, build instructions, file inventories, or code pat
 ### E8: Feedback Fragmentation
 When multiple memory/feedback files cover the same topic from different angles (e.g., "auto-approve" + "auto-continue" + "don't ask permission"), MERGE them into one file. Fragmentation increases load time and creates conflicting guidance when files drift. Rule: one topic = one file. If a new feedback touches an existing topic, UPDATE the existing file instead of creating a new one.
 
+### E9: Monolithic Skill Loading
+Skills/instructions that load ALL content on EVERY activation waste tokens proportional to their total size times conversation count. Structure skills with tiered loading: (1) SKILL.md = triggers + budget table only (~200w), (2) instructions.md = intent classifier/router that maps task keywords to specific files (~500w), (3) core-safety or equivalent = always-loaded critical rules (~600w), (4) domain files = SLEEPY, loaded only when intent matches. Separate project-specific content into a directory that only loads when the working directory matches. Result: 85-92% token savings for simple tasks vs monolithic loading. The router pattern: classify intent FIRST, load files SECOND, never load all files by default.
+
 ---
 
 ## PART F — SLEEPY: FRONTEND/WEB [DORMANT]
