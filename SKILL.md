@@ -1,16 +1,16 @@
 ---
 name: claude-power-pack
-description: "Token optimizer + execution depth + intent routing + autoresearch + ExecutionOS Lite + Memory Flywheel + RCA Self-Healing + Vibe Coding Security + Extreme Architectural Depth"
+description: "Token optimizer + execution depth + intent routing + autoresearch + ExecutionOS Lite + Memory Flywheel + RCA Self-Healing + Vibe Coding Security + Extreme Architectural Depth + Cross-Repo Dispatcher + Dynamic Daemon + The Leash + Token Forensics"
 ---
 
-# Claude Power Pack v6.0
+# Claude Power Pack v6.3
 
 Universal AI execution framework. Project-agnostic. Works on Claude.ai, Claude Code, ChatGPT.
-**v6.0:** Extreme Architectural Depth + Vibe Coding Security + Memory Flywheel + RCA + Anti-Monolith + Prompt Quality Gate.
+**v6.3:** Extreme Architectural Depth + Vibe Coding Security + Memory Flywheel + RCA + Anti-Monolith + Prompt Quality Gate + Cross-Repo Dispatcher + Dynamic Daemon + The Leash + Token Forensics.
 
-**Active:** A (Execution), B (Routing + Quality Gate), D (Delivery), E (Error Patterns), J (Memory Flywheel), K (RCA Self-Healing), L (Vibe Coding & Security), N (Extreme Architectural Depth) — always loaded.
-**Trigger:** C (Token Optimization) — on demand.
-**Sleepy:** F (Frontend/Web), G (Autoresearch), H (Reinforced Token Opt), I (ExecutionOS Lite) — dormant until triggered.
+**Active:** A (Execution), B (Routing + Quality Gate), D (Delivery), E (Error Patterns), J (Memory Flywheel), K (RCA Self-Healing), L (Vibe Coding & Security), N (Extreme Architectural Depth), Q (The Leash) — always loaded.
+**Trigger:** C (Token Optimization), R (Token Forensics) — on demand.
+**Sleepy:** F (Frontend/Web), G (Autoresearch), H (Reinforced Token Opt), I (ExecutionOS Lite), O (Cross-Repo Dispatcher), P (Dynamic Daemon) — dormant until triggered.
 
 **Token formula:** `round(word_count * 1.33)`
 
@@ -485,6 +485,82 @@ This part is ALWAYS active. It triggers automatically when the user proposes any
 
 ---
 
+## PART Q — THE LEASH: BACKGROUND COMMAND ISOLATION (always active)
+
+Injected into every project's CLAUDE.md via install scripts.
+Prevents "Agentic Loop Hell" — mass search/read operations that burn daily token limits.
+
+**Rules enforced:**
+- No `grep -r`, `find /`, `rg` across entire codebases without permission
+- No parallel sub-agents reading >3 files each without asking
+- >3 files in a single turn = STOP and ask user
+- >500 line files = read only relevant sections
+- Violations = HALT + report estimated cost
+
+---
+
+## PART R — TOKEN FORENSICS: BURN REPORT (on trigger)
+
+> **ACTIVATION:** "token autopsy", "burn report", "token forensics", "where did my tokens go"
+
+Parses Claude Code's actual JSONL session logs to generate a forensic TOKEN_BURN_REPORT.md.
+No self-reporting — reads real usage data from `~/.claude/projects/`.
+
+**Run:** `python modules/token-optimizer/token_autopsy.py`
+**All today:** `python modules/token-optimizer/token_autopsy.py --session all`
+**Custom output:** `python modules/token-optimizer/token_autopsy.py --output path.md`
+
+| Analysis | What It Detects |
+|----------|----------------|
+| Tool breakdown | Tokens consumed per tool type (Read, Agent, Bash, Grep) |
+| File audit | Files read, how many times, redundant reads flagged |
+| Waste detection | Repeated reads, mass greps, aimless sub-agents |
+| Cost estimate | USD cost by model tier (Opus/Sonnet/Haiku) |
+
+---
+
+## PART P — SLEEPY: DYNAMIC DAEMON & CRASH RECOVERY [DORMANT]
+
+> **ACTIVATION:** "daemon", "claude-daemon", "crash recovery", "OOM", "set-ram"
+
+Hardware-aware Node.js memory tuning + automatic crash recovery loop.
+Detects system RAM, allocates 25% to Node.js (min 2GB, max 8GB), relaunches on crash.
+
+**Launch:** `claude-daemon` (replaces `claude` with crash recovery)
+**Set RAM:** `claude-daemon-set-ram <MB>` (manual override)
+**Reset:** `claude-daemon-set-ram --reset` (back to auto-detect)
+**Config:** `~/.claude/daemon/config`
+
+| Behavior | Detail |
+|----------|--------|
+| RAM formula | `min(max(total_RAM * 0.25, 2048), 8192)` MB |
+| Max retries | 5 consecutive crashes, then hard stop |
+| Clean exit | Exit code 0, Ctrl+C, SIGTERM — no restart |
+| Crash exit | Any other code — warn + restart after 2s |
+
+---
+
+## PART O — SLEEPY: CROSS-REPO DISPATCHER [DORMANT]
+
+> **ACTIVATION:** "dispatch to", "run prompt on", "claude-dispatch", "cross-repo"
+
+Dispatches `claude -p` to any repository on disk with a prompt file.
+Auto-discovers the target repo's CLAUDE.md context. Zero cost when dormant.
+
+**Dispatch:** `claude-dispatch <repo-name> <prompt-file>`
+**List repos:** `claude-dispatch --list`
+**Rebuild index:** `claude-dispatch --rebuild-index`
+**Config:** `modules/dispatcher/config.json` (search dirs, depth, extra claude args)
+
+| Flag | What It Does |
+|------|-------------|
+| `--repo-path PATH` | Skip search, use exact path |
+| `--dry-run` | Show command without executing |
+| `--rebuild-index` | Force re-scan of all search directories |
+| `--list` | Show all indexed repositories |
+
+---
+
 ## Quick Reference
 
 | Trigger | What It Does | Part |
@@ -511,5 +587,11 @@ This part is ALWAYS active. It triggers automatically when the user proposes any
 | `Inicia el handoff` | Resume task from previous !kclear | M |
 | `!phelp` / `!payuda` | Show Power Pack command reference | M |
 | (automatic) | Extreme depth on new system proposals: challenge → reverse-engineer → decompose → tooling | N |
+| `claude-dispatch` | Dispatch claude to another repo with a prompt file | O |
+| `claude-daemon` | Launch claude with crash recovery + dynamic RAM | P |
+| `claude-daemon-set-ram` | Override Node.js heap size manually | P |
+| (automatic) | Forbid mass-search/read without permission | Q |
+| "token autopsy" | Generate forensic TOKEN_BURN_REPORT.md from session logs | R |
+| "burn report" | Analyze token usage by tool, file, and cost | R |
 
-Parts A, B, D, E, **J, K, L, M, N** are always active. C activates on trigger. F, G, H, I are sleepy (dormant until needed).
+Parts A, B, D, E, **J, K, L, M, N, Q** are always active. C, R activate on trigger. F, G, H, I, O, P are sleepy (dormant until needed).

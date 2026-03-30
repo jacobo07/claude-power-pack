@@ -1,0 +1,13 @@
+{
+  "search_dirs": [
+    "~/projects",
+    "~/repos",
+    "~/code",
+    "~/dev",
+    "~/Desktop"
+  ],
+  "search_depth": 3,
+  "index_path": "~/.claude/dispatcher/repo-index.json",
+  "claude_args": [],
+  "match_strategy": "basename"
+}

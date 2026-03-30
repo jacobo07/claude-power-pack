@@ -10,8 +10,8 @@ $ClaudeFile = Join-Path $TargetDir "CLAUDE.md"
 $Marker = "## Claude Power Pack — Execution Doctrine"
 
 Write-Host "========================================"
-Write-Host "  Claude Power Pack v4.0 — Installer"
-Write-Host "  Memory Flywheel + RCA + Anti-Monolith"
+Write-Host "  Claude Power Pack v6.3 — Installer"
+Write-Host "  Memory + RCA + Leash + Forensics"
 Write-Host "========================================"
 Write-Host ""
 
@@ -108,6 +108,16 @@ When the user proposes a new idea, product, system, or pipeline:
   - MICRO: module internals, data structures, algorithms, API contracts, error handling paths.
 - D) **Design tooling before code.** Identify parsers, data ingestion scripts, validators, and transformation pipelines needed to handle complexity BEFORE writing the final implementation.
 - This is the DEFAULT depth. The user does NOT need to ask for it — it applies automatically to every new system proposal.
+
+### H) THE LEASH — Background Command Isolation (MANDATORY)
+You are FORBIDDEN from running mass-search or mass-read operations without explicit user permission:
+- NEVER run ``grep -r``, ``find /``, ``rg`` across entire codebases, or read log files >500 lines in background.
+- NEVER launch parallel sub-agents that each read >3 files without asking first.
+- If you need to read MORE than 3 files in a single turn: STOP and ask the user:
+  "I need to read N files to complete this task. Proceed? (y/n)"
+- If a single file exceeds 500 lines: read only the relevant section, not the entire file.
+- VIOLATIONS: If you catch yourself running a mass operation, immediately HALT and report what you did and the estimated token cost.
+This rule exists because agentic loops can burn an entire daily token limit in minutes. Protecting the user's quota is non-negotiable.
 "@
     Add-Content -Path $ClaudeFile -Value $doctrine -Encoding UTF8
     Write-Host "[OK] Injected Power Pack doctrine into CLAUDE.md" -ForegroundColor Green
@@ -115,8 +125,46 @@ When the user proposes a new idea, product, system, or pipeline:
     Write-Host "[SKIP] CLAUDE.md already has Power Pack doctrine" -ForegroundColor Yellow
 }
 
+# 3. Register claude-dispatch global command
+$SkillDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$BinDir = Join-Path $env:USERPROFILE ".claude\bin"
+$DispatchScript = Join-Path $SkillDir "modules\dispatcher\dispatch.py"
+$Wrapper = Join-Path $BinDir "claude-dispatch.cmd"
+
+if (-not (Test-Path $BinDir)) {
+    New-Item -ItemType Directory -Path $BinDir -Force | Out-Null
+}
+
+@"
+@echo off
+python "$DispatchScript" %*
+"@ | Set-Content -Path $Wrapper -Encoding ASCII
+Write-Host "[OK] Created claude-dispatch.cmd at $Wrapper" -ForegroundColor Green
+
+$currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+if ($currentPath -notlike "*$BinDir*") {
+    [Environment]::SetEnvironmentVariable("PATH", "$BinDir;$currentPath", "User")
+    Write-Host "[OK] Added $BinDir to user PATH" -ForegroundColor Green
+} else {
+    Write-Host "[SKIP] $BinDir already in user PATH" -ForegroundColor Yellow
+}
+
+# 4. Register claude-daemon wrapper
+$DaemonSrc = Join-Path $SkillDir "modules\daemon\claude-daemon.bat"
+$DaemonWrapper = Join-Path $BinDir "claude-daemon.cmd"
+$SetRamSrc = Join-Path $SkillDir "modules\daemon\set-ram.bat"
+$SetRamWrapper = Join-Path $BinDir "claude-daemon-set-ram.cmd"
+
+Copy-Item -Path $DaemonSrc -Destination $DaemonWrapper -Force
+Write-Host "[OK] Created claude-daemon.cmd" -ForegroundColor Green
+
+Copy-Item -Path $SetRamSrc -Destination $SetRamWrapper -Force
+Write-Host "[OK] Created claude-daemon-set-ram.cmd" -ForegroundColor Green
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"
 Write-Host "  - Read your preferences before every task (Memory Flywheel)"
 Write-Host "  - Fix governance before code on every correction (RCA Self-Healing)"
+Write-Host "  - Dispatch prompts to any repo (claude-dispatch)"
+Write-Host "  - Auto-recover from crashes (claude-daemon)"

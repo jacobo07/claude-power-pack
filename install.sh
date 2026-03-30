@@ -10,8 +10,8 @@ CLAUDE_FILE="$TARGET_DIR/CLAUDE.md"
 MARKER="## Claude Power Pack — Execution Doctrine"
 
 echo "╔══════════════════════════════════════════╗"
-echo "║  Claude Power Pack v4.0 — Installer      ║"
-echo "║  Memory Flywheel + RCA + Anti-Monolith    ║"
+echo "║  Claude Power Pack v6.3 — Installer      ║"
+echo "║  Memory + RCA + Leash + Forensics          ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
@@ -102,12 +102,61 @@ When the user proposes a new idea, product, system, or pipeline:
   - MICRO: module internals, data structures, algorithms, API contracts, error handling paths.
 - D) **Design tooling before code.** Identify parsers, data ingestion scripts, validators, and transformation pipelines needed to handle complexity BEFORE writing the final implementation.
 - This is the DEFAULT depth. The user does NOT need to ask for it — it applies automatically to every new system proposal.
+
+### H) THE LEASH — Background Command Isolation (MANDATORY)
+You are FORBIDDEN from running mass-search or mass-read operations without explicit user permission:
+- NEVER run \`grep -r\`, \`find /\`, \`rg\` across entire codebases, or read log files >500 lines in background.
+- NEVER launch parallel sub-agents that each read >3 files without asking first.
+- If you need to read MORE than 3 files in a single turn: STOP and ask the user:
+  "I need to read N files to complete this task. Proceed? (y/n)"
+- If a single file exceeds 500 lines: read only the relevant section, not the entire file.
+- VIOLATIONS: If you catch yourself running a mass operation, immediately HALT and report what you did and the estimated token cost.
+This rule exists because agentic loops can burn an entire daily token limit in minutes. Protecting the user's quota is non-negotiable.
 DOCEOF
   echo "✅ Injected Power Pack doctrine into CLAUDE.md"
 fi
+
+# 3. Register claude-dispatch global command
+SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
+BIN_DIR="$HOME/.claude/bin"
+DISPATCH_SCRIPT="$SKILL_DIR/modules/dispatcher/dispatch.py"
+WRAPPER="$BIN_DIR/claude-dispatch"
+PATH_MARKER="# >>> claude-power-pack PATH >>>"
+
+mkdir -p "$BIN_DIR"
+
+cat > "$WRAPPER" << WRAPEOF
+#!/usr/bin/env bash
+exec python3 "$DISPATCH_SCRIPT" "\$@"
+WRAPEOF
+chmod +x "$WRAPPER"
+echo "✅ Created claude-dispatch at $WRAPPER"
+
+for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [ -f "$profile" ] && ! grep -q "$PATH_MARKER" "$profile"; then
+        printf '\n%s\nexport PATH="$HOME/.claude/bin:$PATH"\n# <<< claude-power-pack PATH <<<\n' "$PATH_MARKER" >> "$profile"
+        echo "✅ Added ~/.claude/bin to PATH in $(basename "$profile")"
+    fi
+done
+
+# 4. Register claude-daemon wrapper
+DAEMON_SRC="$SKILL_DIR/modules/daemon/claude-daemon.sh"
+DAEMON_WRAPPER="$BIN_DIR/claude-daemon"
+SETRAM_SRC="$SKILL_DIR/modules/daemon/set-ram.sh"
+SETRAM_WRAPPER="$BIN_DIR/claude-daemon-set-ram"
+
+cp "$DAEMON_SRC" "$DAEMON_WRAPPER"
+chmod +x "$DAEMON_WRAPPER"
+echo "✅ Created claude-daemon at $DAEMON_WRAPPER"
+
+cp "$SETRAM_SRC" "$SETRAM_WRAPPER"
+chmod +x "$SETRAM_WRAPPER"
+echo "✅ Created claude-daemon-set-ram at $SETRAM_WRAPPER"
 
 echo ""
 echo "Done! The AI will now:"
 echo "  • Plan before acting (Anti-Monolith)"
 echo "  • Read your preferences before every task (Memory Flywheel)"
 echo "  • Fix governance before code on every correction (RCA Self-Healing)"
+echo "  • Dispatch prompts to any repo (claude-dispatch)"
+echo "  • Auto-recover from crashes (claude-daemon)"
