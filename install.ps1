@@ -92,6 +92,12 @@ Before processing ANY prompt, evaluate the Blast Radius:
 - LOW RISK (single file, read-only, background, audit): Bypass Permissions allowed.
   Notify: "🟢 Riesgo Bajo. Ejecutando en modo autónomo."
 - Core files (auth, payments, DB, CI/CD) are ALWAYS high risk. No exceptions.
+
+### F) SESSION REBIRTH & COMMANDS
+- ``!kclear``: Abort -> dump memory to USER_CRITERIA_MEMORY.md -> dump task to HANDOFF_TASK.md -> ask user to /clear
+- ``Inicia el handoff``: Read HANDOFF_TASK.md -> generate plan -> execute
+- ``!phelp`` / ``!payuda``: Show Power Pack command reference table
+- If context rot detected (15+ exchanges, re-reading files, quality dropping): suggest !kclear proactively
 "@
     Add-Content -Path $ClaudeFile -Value $doctrine -Encoding UTF8
     Write-Host "[OK] Injected Power Pack doctrine into CLAUDE.md" -ForegroundColor Green

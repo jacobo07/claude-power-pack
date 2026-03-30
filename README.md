@@ -9,6 +9,8 @@ Universal AI execution framework. Project-agnostic. Works on Claude.ai, Claude C
 - **Memory Flywheel**: Learns from corrections, reads preferences before every task
 - **RCA Self-Healing**: Fixes governance before code on every error (HALT > TRACE > HEAL > FIX)
 - **Vibe Coding Security**: Enforces auth, RLS, sandboxing, model routing, 3-strike recovery
+- **Session Rebirth (`!kclear`)**: Safely checkpoint memory + pending task, restart with clean context
+- **Command System (`!phelp`)**: Built-in command reference for all Power Pack features
 - **Token Optimization**: 6 tools for cost analysis, waste detection, and context compression
 - **ExecutionOS Lite**: 25-rule constitution with 20 phases across 4 depth tiers
 - **Autoresearch**: Self-improving competitive intelligence (2x/day, scheduled)
@@ -43,6 +45,7 @@ This generates:
 | J | Memory Flywheel & Execution Discipline | Always active |
 | K | RCA Self-Healing + Universal Error Classes | Always active |
 | L | Vibe Coding & Security Constraints | Always active |
+| M | Session Rebirth & Command System (!kclear, !phelp) | Always active |
 
 **Always active** = loaded every session (~800 tokens).
 **Sleepy** = zero cost until triggered by keyword.

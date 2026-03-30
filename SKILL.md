@@ -357,6 +357,66 @@ After **3 consecutive failed attempts** to fix the same bug:
 
 ---
 
+## PART M — SESSION REBIRTH & COMMAND SYSTEM (always active)
+
+### Virtual Commands
+
+The Power Pack responds to these keywords as if they were commands:
+
+**`!kclear`** — Session Rebirth Protocol
+1. ABORT any task in progress immediately
+2. DUMP MEMORY: Extract all lessons, corrections, and architectural decisions from this session → append to `USER_CRITERIA_MEMORY.md`
+3. DUMP TASK: Create `HANDOFF_TASK.md` with: current task description, files involved, progress so far, what remains, and the exact next step
+4. OUTPUT this exact message:
+```
+🧠 K-CLEAR EJECUTADO. He guardado mi memoria y la tarea pendiente.
+Por favor, escribe el comando nativo:
+/clear
+Y luego simplemente escribe:
+'Inicia el handoff'
+```
+
+**`Inicia el handoff`** — Session Resume
+1. Read `HANDOFF_TASK.md` from project root
+2. Read `USER_CRITERIA_MEMORY.md` for accumulated context
+3. Generate execution plan for the pending task WITHOUT asking questions
+4. Present plan and wait for approval (y/n)
+5. Delete `HANDOFF_TASK.md` after successful completion
+
+**`!phelp`** or **`!payuda`** — Power Pack Command Reference
+Display this formatted table:
+```
+╔══════════════════════════════════════════════════════════════╗
+║                 CLAUDE POWER PACK v5.0                       ║
+╠══════════════════════════════════════════════════════════════╣
+║ COMANDO          │ QUÉ HACE                                 ║
+╠══════════════════╪═══════════════════════════════════════════╣
+║ !kclear          │ Guarda memoria + tarea → sesión limpia    ║
+║ Inicia el handoff│ Retoma la tarea guardada por !kclear      ║
+║ !phelp / !payuda │ Muestra este menú                         ║
+║ token audit      │ Analiza coste de tokens por fuente        ║
+║ compress this    │ Reescribe instrucciones más cortas        ║
+║ dedup check      │ Detecta reglas duplicadas                 ║
+║ full optimization│ Pipeline completo de optimización         ║
+║ load ExecutionOS │ Activa framework de ejecución (4 tiers)   ║
+║ /autoresearch    │ Ejecuta ciclo de inteligencia competitiva ║
+║ deep optimize    │ Herramientas avanzadas de token analysis   ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### Proactive Context Rot Detection
+
+The AI MUST monitor for these signals and suggest `!kclear` when detected:
+- Session exceeds 15+ exchanges on complex multi-file tasks
+- AI notices it's re-reading files it already read earlier in the session
+- A task requires touching 5+ files but context is already heavy
+- AI catches itself making mistakes it wouldn't normally make (hallucinating paths, forgetting recent changes)
+
+Proactive suggestion format:
+"⚠️ Peligro de Context Rot detectado. Te sugiero ejecutar `!kclear` para empaquetar mi memoria y empezar una sesión limpia."
+
+---
+
 ## Quick Reference
 
 | Trigger | What It Does | Part |
@@ -379,5 +439,8 @@ After **3 consecutive failed attempts** to fix the same bug:
 | (automatic) | Read user memory before acting | J |
 | (on correction) | RCA: HALT → TRACE → HEAL → FIX | K |
 | (automatic) | Model routing, security gates, 3-strike recovery | L |
+| `!kclear` | Dump memory + task, prepare clean restart | M |
+| `Inicia el handoff` | Resume task from previous !kclear | M |
+| `!phelp` / `!payuda` | Show Power Pack command reference | M |
 
-Parts A, B, D, E, **J, K, L** are always active. C activates on trigger. F, G, H, I are sleepy (dormant until needed).
+Parts A, B, D, E, **J, K, L, M** are always active. C activates on trigger. F, G, H, I are sleepy (dormant until needed).
