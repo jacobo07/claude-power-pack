@@ -110,6 +110,7 @@ Default one tier lower when ambiguous. Cheaper to upgrade than waste tokens.
 | C6 | "sleepy audit" | Check always-loaded vs on-demand ratio. Propose moving heavy content to reference-only |
 | C7 | "full optimization" | Run C1->C6->C3->C5->C2->C4 pipeline. Report total savings |
 | C8 | "PRD version" | After feature changes, check if PRD needs updating. Identify affected sections, increment version |
+| C9 | "memory audit" | Audit all persistent memory files for bloat, derivable content, fragmentation. Apply E6+E7+E8 fixes |
 
 ---
 
@@ -148,6 +149,15 @@ When modifying WordPress pages/posts via REST API, ALWAYS use `content.raw` (wit
 
 ### E5: Empty Template Waste
 When creating governance files, PRDs, config templates, or any structured document: NEVER leave placeholder/template content (e.g., `_entity_`, `_rule_`, `| _risk_ |`, `FILL:`, `<!-- Add ... here -->`). Either populate with real project data derived from the codebase and context, or do not create the file. An empty template is worse than no file — it loads tokens every session and provides zero value. On first run in any project: scan for template markers and either fill them from project context or flag for deletion.
+
+### E6: Memory Index Bloat
+Memory indexes (MEMORY.md or equivalent) must be PURE POINTERS — one line per entry, under 150 chars, linking to detail files. NEVER inline content in the index. The index is loaded every conversation; inline content multiplies token cost across every session. Symptoms: index file >80 lines, sections with bullet lists or code blocks, content duplicated between index and linked files. Fix: strip index to `- [Title](file.md) — one-line hook`, move content to linked files or delete if derivable from code.
+
+### E7: Derivable Content in Persistent Memory
+NEVER store architecture maps, build instructions, file inventories, or code patterns in memory files when this information can be derived by reading the codebase. Memory is for NON-OBVIOUS context: user preferences, decisions that aren't in code, verified dead-end paths, external system references. Before saving a memory: ask "could a fresh session derive this by reading the code?" If yes, don't save it. Periodic audit: check each memory file against its source — if the source is a file in the repo, delete the memory.
+
+### E8: Feedback Fragmentation
+When multiple memory/feedback files cover the same topic from different angles (e.g., "auto-approve" + "auto-continue" + "don't ask permission"), MERGE them into one file. Fragmentation increases load time and creates conflicting guidance when files drift. Rule: one topic = one file. If a new feedback touches an existing topic, UPDATE the existing file instead of creating a new one.
 
 ---
 
@@ -328,6 +338,7 @@ After **3 consecutive failed attempts** to fix the same bug:
 | "sleepy audit" | Check always-loaded vs on-demand ratio | C6 |
 | "full optimization" | Run complete C1-C7 pipeline | C7 |
 | "PRD version" | Check/update PRD after changes | C8 |
+| "memory audit" | Audit memory for bloat, derivable content, fragmentation | C9 |
 | /autoresearch | Run competitive intelligence cycle | G |
 | "deep optimize" | Project-wide token analysis tools | H |
 | "lint CLAUDE.md" | Enforce word limits across projects | H2 |
