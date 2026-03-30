@@ -595,3 +595,18 @@ Auto-discovers the target repo's CLAUDE.md context. Zero cost when dormant.
 | "burn report" | Analyze token usage by tool, file, and cost | R |
 
 Parts A, B, D, E, **J, K, L, M, N, Q** are always active. C, R activate on trigger. F, G, H, I, O, P are sleepy (dormant until needed).
+
+### E6: Photo/Media Identity Confusion
+
+NEVER batch-replace media files based on filename patterns without verifying which person each file belongs to. Maintain a verified media registry.
+
+**Pattern:** Agent replaces "all photos matching filename X" across a page. Filename X belongs to Person B, not Person A. Two people's photos get swapped. Subsequent fixes make it worse.
+**Root cause:** Filename patterns don't indicate ownership. Agent assumed based on position rather than verifying.
+**Fix:**
+1. Before ANY media replacement: verify person-to-filename mapping from source of truth
+2. Never replace by filename pattern alone — map person-first
+3. For swaps: use 3-step temp-placeholder to avoid double-replacement
+4. After EVERY change: verify ALL items still have correct media
+5. Maintain media registry in project memory
+
+**Severity:** HIGH — caused 3 rounds of incorrect photo swaps on production site.
