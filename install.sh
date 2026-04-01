@@ -10,8 +10,8 @@ CLAUDE_FILE="$TARGET_DIR/CLAUDE.md"
 MARKER="## Claude Power Pack — Execution Doctrine"
 
 echo "╔══════════════════════════════════════════╗"
-echo "║  Claude Power Pack v6.3 — Installer      ║"
-echo "║  Memory + RCA + Leash + Forensics          ║"
+echo "║  Claude Power Pack v6.4 — Installer      ║"
+echo "║  Memory + RCA + Leash + OmniCapture        ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
 
@@ -153,6 +153,26 @@ cp "$SETRAM_SRC" "$SETRAM_WRAPPER"
 chmod +x "$SETRAM_WRAPPER"
 echo "✅ Created claude-daemon-set-ram at $SETRAM_WRAPPER"
 
+# 5. Register omnicapture-query wrapper
+OMNICAPTURE_SCRIPT="$SKILL_DIR/modules/omnicapture/query_telemetry.py"
+OMNICAPTURE_WRAPPER="$BIN_DIR/omnicapture-query"
+
+cat > "$OMNICAPTURE_WRAPPER" << OCEOF
+#!/usr/bin/env bash
+exec python3 "$OMNICAPTURE_SCRIPT" "\$@"
+OCEOF
+chmod +x "$OMNICAPTURE_WRAPPER"
+echo "✅ Created omnicapture-query at $OMNICAPTURE_WRAPPER"
+
+# Check for OmniCapture API key
+if [ -n "$OMNICAPTURE_API_KEY" ]; then
+  echo "✅ OMNICAPTURE_API_KEY detected — runtime telemetry enabled"
+else
+  echo "⚠️  OMNICAPTURE_API_KEY not set — runtime telemetry disabled"
+  echo "   To enable: export OMNICAPTURE_API_KEY=oc_xxx (from your VPS config)"
+  echo "   VPS setup: see modules/omnicapture/vps/ for receiver + nginx + systemd configs"
+fi
+
 echo ""
 echo "Done! The AI will now:"
 echo "  • Plan before acting (Anti-Monolith)"
@@ -160,3 +180,4 @@ echo "  • Read your preferences before every task (Memory Flywheel)"
 echo "  • Fix governance before code on every correction (RCA Self-Healing)"
 echo "  • Dispatch prompts to any repo (claude-dispatch)"
 echo "  • Auto-recover from crashes (claude-daemon)"
+echo "  • Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"

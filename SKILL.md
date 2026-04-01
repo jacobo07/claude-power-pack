@@ -1,16 +1,16 @@
 ---
 name: claude-power-pack
-description: "Token optimizer + execution depth + intent routing + autoresearch + ExecutionOS Lite + Memory Flywheel + RCA Self-Healing + Vibe Coding Security + Extreme Architectural Depth + Cross-Repo Dispatcher + Dynamic Daemon + The Leash + Token Forensics"
+description: "Token optimizer + execution depth + intent routing + autoresearch + ExecutionOS Lite + Memory Flywheel + RCA Self-Healing + Vibe Coding Security + Extreme Architectural Depth + Cross-Repo Dispatcher + Dynamic Daemon + The Leash + Token Forensics + OmniCapture Engine"
 ---
 
-# Claude Power Pack v6.3
+# Claude Power Pack v6.5
 
 Universal AI execution framework. Project-agnostic. Works on Claude.ai, Claude Code, ChatGPT.
-**v6.3:** Extreme Architectural Depth + Vibe Coding Security + Memory Flywheel + RCA + Anti-Monolith + Prompt Quality Gate + Cross-Repo Dispatcher + Dynamic Daemon + The Leash + Token Forensics.
+**v6.5:** OmniCapture Engine + Extreme Architectural Depth + Vibe Coding Security + Memory Flywheel + RCA + Anti-Monolith + Prompt Quality Gate + Cross-Repo Dispatcher + Dynamic Daemon + The Leash + Token Forensics + Elixir-First Directive.
 
-**Active:** A (Execution), B (Routing + Quality Gate), D (Delivery), E (Error Patterns), J (Memory Flywheel), K (RCA Self-Healing), L (Vibe Coding & Security), N (Extreme Architectural Depth), Q (The Leash) — always loaded.
+**Active:** A (Execution), B (Routing + Quality Gate), D (Delivery), E (Error Patterns), J (Memory Flywheel), K (RCA Self-Healing), L (Vibe Coding & Security), N (Extreme Architectural Depth), Q (The Leash), T (Elixir-First) — always loaded.
 **Trigger:** C (Token Optimization), R (Token Forensics) — on demand.
-**Sleepy:** F (Frontend/Web), G (Autoresearch), H (Reinforced Token Opt), I (ExecutionOS Lite), O (Cross-Repo Dispatcher), P (Dynamic Daemon) — dormant until triggered.
+**Sleepy:** F (Frontend/Web), G (Autoresearch), H (Reinforced Token Opt), I (ExecutionOS Lite), O (Cross-Repo Dispatcher), P (Dynamic Daemon), S (OmniCapture Engine) — dormant until triggered.
 
 **Token formula:** `round(word_count * 1.33)`
 
@@ -44,9 +44,21 @@ Every task: **OBSERVE -> PLAN -> EXECUTE -> VERIFY -> HARDEN**
 - Never present approximations as implementations
 - Never report completion without observable verification
 - Placeholders (TODO, TBD, FIXME) are deployment blockers
+- Commented-out wiring (supervision children, middleware registration, route handlers) = NOT DELIVERED. Un-comment and verify it starts.
+- Every external call needs a finite timeout, retry count > 0, and malformed response handler. `:infinity` timeout and zero retries are NEVER acceptable defaults.
+- For every security boundary: test at least 3 bypass vectors before claiming it's secure. Naive string matching is never sufficient.
 - All inputs are hostile: validate presence -> format -> semantics -> state
 - Do what was asked. Nothing more. Don't create files, docs, or refactors outside scope.
 - Product descriptions must preserve all defining features — never collapse multi-layered products into single frames
+
+### Zero-Issue Delivery Protocol (Non-Negotiable — Physical Enforcement)
+- The words "done", "complete", "ready", "fixed", "listo" are KILL-SWITCH WORDS
+- The `zero-issue-gate.js` hook runs automatically on EVERY session end
+- It auto-detects project language and runs: compile → scaffold audit → tests
+- If ANY gate fails → you are BLOCKED. Fix it before responding.
+- 3 consecutive failures → `BLOCKED_DELIVERY.md` created, session terminated
+- "Compiles" is NOT "done". "Tests pass" is NOT "done". BOTH must pass with ZERO issues.
+- There is NO override, NO bypass, NO "it should work". Evidence or silence.
 - If a project has a source-of-truth doc, read it BEFORE writing any summary
 
 ---
@@ -157,6 +169,15 @@ Default one tier lower when ambiguous. Cheaper to upgrade than waste tokens.
 - After significant builds: identify what worked (keep), identify mistakes (add to rules).
 - No empty templates: every file created must contain real project-specific content. Scan governance/ and .planning/ for placeholder markers (`_fill_`, `FILL:`, `<!-- Add`, `_entity_`, `_risk_`) on first session — fill from codebase context or delete.
 
+### Automatic Enforcement (zero-issue-gate.js)
+The zero-issue-gate hook runs on every session end. It:
+1. Detects project language automatically (Elixir, TypeScript, Python, Java, Rust, Go, C++)
+2. Runs compile + scaffold audit + tests in sequence
+3. BLOCKS delivery if any gate fails (Claude receives "BLOCKED: fix before delivering")
+4. After 3 failures: creates `BLOCKED_DELIVERY.md` in project root and terminates the session
+You cannot bypass this. It is a physical hook, not a rule you follow.
+If `BLOCKED_DELIVERY.md` exists, read it and fix the issues before doing anything else.
+
 ---
 
 ## PART E — COMMUNITY ERROR PATTERNS (always active)
@@ -189,6 +210,9 @@ When multiple memory/feedback files cover the same topic from different angles (
 
 ### E9: Monolithic Skill Loading
 Skills/instructions that load ALL content on EVERY activation waste tokens proportional to their total size times conversation count. Structure skills with tiered loading: (1) SKILL.md = triggers + budget table only (~200w), (2) instructions.md = intent classifier/router that maps task keywords to specific files (~500w), (3) core-safety or equivalent = always-loaded critical rules (~600w), (4) domain files = SLEEPY, loaded only when intent matches. Separate project-specific content into a directory that only loads when the working directory matches. Result: 85-92% token savings for simple tasks vs monolithic loading. The router pattern: classify intent FIRST, load files SECOND, never load all files by default.
+
+### E10: Fragile Language Auto-Detection + Elixir Recommendation
+When starting a NEW system (not extending existing code) that matches >=2 of: concurrent processing, long-running daemon, message passing, fault tolerance, real-time pipelines, WebSocket/real-time, multi-node distribution, pattern matching on complex data — recommend Elixir/OTP. Format: "This system matches [N] Elixir-optimal criteria: [list]. Recommend Elixir?" NOT triggered for: extending existing codebases, frontend/UI (JS/TS), ML (Python), embedded (C/Rust), game dev on constrained hardware (C/C++). Activation: SLEEPY — only when creating new service/daemon/pipeline AND project language not locked.
 
 ---
 
@@ -354,6 +378,12 @@ After **3 consecutive failed attempts** to fix the same bug:
 2. **SCRAP** — Discard all patch attempts mentally
 3. **REBUILD** — Start fresh: "Knowing everything I know now about this bug, what's the correct approach from scratch?"
 4. This prevents the "patch-on-patch-on-patch" spiral that makes code worse with each attempt
+
+### Language Routing
+- **Elixir/OTP**: ALWAYS for agent systems, daemons, real-time services, anything needing fault tolerance or concurrent state management
+- **Python**: For ML/AI, data science, quick scripts, existing Python projects
+- **TypeScript**: For frontend, existing Node.js projects, serverless functions
+- Never default to Node.js for long-running processes when Elixir is viable — Node's single-threaded model and lack of supervision make it structurally fragile for production agents
 
 ---
 
@@ -561,6 +591,36 @@ Auto-discovers the target repo's CLAUDE.md context. Zero cost when dormant.
 
 ---
 
+## PART S — SLEEPY: OMNICAPTURE ENGINE [DORMANT]
+
+> **ACTIVATION:** "runtime telemetry", "check runtime", "omnicapture", "show errors", "what crashed", "show me runtime", "runtime check"
+> Also auto-activated by governance gate at DEEP+ tier when claiming completion.
+> Zero cost when dormant.
+
+Runtime telemetry bridge. Queries VPS-resident OmniCapture Receiver for real-time
+application errors, performance metrics, crash reports, and state dumps.
+Closes the "compiles != works" gap (Mistake #6 at application scale).
+
+**Query:** `python modules/omnicapture/query_telemetry.py --project <name> --since 5m --severity ERROR`
+**Summary:** `python modules/omnicapture/query_telemetry.py --project <name> --summary`
+**Install adapter:** `python modules/omnicapture/install_adapter.py --type python|minecraft|wii_cpp|react_native --project <path>`
+**Config:** `modules/omnicapture/config.json`
+
+| Query | What It Returns |
+|-------|----------------|
+| `--since 5m --severity ERROR` | Errors from last 5 minutes |
+| `--summary` | Error counts, top errors, p99 latency, crash count |
+| `--category crash` | Crash reports with stack traces |
+| `--category network` | Failed HTTP calls with status codes and latency |
+| `--category performance` | Slow queries, slow functions, resource usage |
+
+**Governance tiers:**
+- LIGHT/STANDARD: Not consulted
+- DEEP: Consulted if configured; WARNING logged, does NOT block
+- FORENSIC: Required if configured; ERROR+ BLOCKS completion claim
+
+---
+
 ## Quick Reference
 
 | Trigger | What It Does | Part |
@@ -593,20 +653,52 @@ Auto-discovers the target repo's CLAUDE.md context. Zero cost when dormant.
 | (automatic) | Forbid mass-search/read without permission | Q |
 | "token autopsy" | Generate forensic TOKEN_BURN_REPORT.md from session logs | R |
 | "burn report" | Analyze token usage by tool, file, and cost | R |
+| "runtime telemetry" | Query VPS for real-time errors, crashes, metrics | S |
+| "check runtime" | Query OmniCapture for runtime errors before claiming done | S |
+| "omnicapture" | Install adapter or query runtime telemetry | S |
+| (DEEP+ governance) | Auto-check runtime telemetry before completion claim | S |
 
-Parts A, B, D, E, **J, K, L, M, N, Q** are always active. C, R activate on trigger. F, G, H, I, O, P are sleepy (dormant until needed).
+| (automatic) | Recommend Elixir/OTP for agent/daemon/realtime systems | T |
+| "new service/daemon" | Recommend Elixir if >=2 criteria match | E10 |
 
-### E6: Photo/Media Identity Confusion
+Parts A, B, D, E, **J, K, L, M, N, Q, T** are always active. C, R activate on trigger. F, G, H, I, O, P, S are sleepy (dormant until needed).
 
-NEVER batch-replace media files based on filename patterns without verifying which person each file belongs to. Maintain a verified media registry.
+---
 
-**Pattern:** Agent replaces "all photos matching filename X" across a page. Filename X belongs to Person B, not Person A. Two people's photos get swapped. Subsequent fixes make it worse.
-**Root cause:** Filename patterns don't indicate ownership. Agent assumed based on position rather than verifying.
-**Fix:**
-1. Before ANY media replacement: verify person-to-filename mapping from source of truth
-2. Never replace by filename pattern alone — map person-first
-3. For swaps: use 3-step temp-placeholder to avoid double-replacement
-4. After EVERY change: verify ALL items still have correct media
-5. Maintain media registry in project memory
+## PART T — ELIXIR-FIRST DIRECTIVE (always active)
 
-**Severity:** HIGH — caused 3 rounds of incorrect photo swaps on production site.
+For ANY new system proposal that meets 2+ of these criteria, **recommend Elixir/OTP** before defaulting to Node.js/Python/Go:
+
+| Criterion | Why Elixir Wins |
+|-----------|----------------|
+| Long-running processes (agents, daemons, workers) | OTP Supervisors auto-restart; no process managers needed |
+| Concurrent operations (parallel API calls, multi-agent) | BEAM lightweight processes; no async/await complexity |
+| Fault tolerance required (production, user-facing) | "Let it crash" philosophy; supervision trees contain failures |
+| State management across requests | GenServer provides isolated, serialized state |
+| Real-time communication (WebSocket, streaming) | Phoenix Channels built-in; no socket.io dependency |
+| Multi-provider failover (LLM gateways, API routing) | Pattern matching + circuit breakers are native idioms |
+| Background job processing | GenStage / Broadway; no Redis/Sidekiq dependency |
+
+### When NOT to Use Elixir
+- Quick CLI scripts (use Python/Bash)
+- Frontend/UI (use TypeScript/React)
+- ML/AI model training (use Python)
+- Existing codebase in another language (don't rewrite for the sake of it)
+- Team has zero Elixir experience AND deadline < 2 weeks
+
+### Decision Protocol
+When Part N (Phase 1: CHALLENGE) identifies a system fitting 2+ criteria:
+1. Present Elixir/OTP as recommended stack with specific justifications
+2. Compare against user's assumed stack on: reliability, dev speed, operational cost, maintenance
+3. If user chooses another language, proceed — but flag OTP-equivalent patterns they'll need manually (supervision, circuit breakers, graceful shutdown)
+
+### Anti-Fragility Table (empirical, from AADEF remediation)
+
+| Problem Found | Fragile Pattern | Elixir Solution |
+|---------------|----------------|-----------------|
+| Spawn leak | Raw `spawn` without cleanup | `Task.Supervisor.async_nolink` — supervised by default |
+| Cache race condition | Direct ETS write from multiple procs | Route through GenServer — serialized by design |
+| Unbounded buffer | Manual buffer management | `{:line, max_length}` in Port — built into OTP |
+| Missing error handling | Crashes kill caller | `try/rescue` + `{:stop, reason}` — OTP catches it |
+| Dead code integration | Files compile but nothing calls them | `@behaviour` + `@callback` — compiler warns on missing impls |
+| Return type mismatch | Silent catch-all `_ ->` | `@spec` + Dialyzer — static analysis catches at compile time |

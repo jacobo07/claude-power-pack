@@ -35,3 +35,10 @@ Determine for this specific project:
 - What linter runs? (`eslint`, `ruff`, `mypy`?)
 - What's the commit convention?
 - Are there pre-commit hooks?
+
+## 5. Language Evaluation (Core Directive #11)
+
+Before writing new backend/infrastructure code, check:
+- Does this system need fault tolerance, concurrency, or distributed processing?
+- If YES → evaluate Elixir/OTP per the elixir.md overlay before defaulting to TypeScript/Python
+- Document the language decision with evidence in the task context

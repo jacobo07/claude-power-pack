@@ -10,8 +10,8 @@ $ClaudeFile = Join-Path $TargetDir "CLAUDE.md"
 $Marker = "## Claude Power Pack — Execution Doctrine"
 
 Write-Host "========================================"
-Write-Host "  Claude Power Pack v6.3 — Installer"
-Write-Host "  Memory + RCA + Leash + Forensics"
+Write-Host "  Claude Power Pack v6.4 — Installer"
+Write-Host "  Memory + RCA + Leash + OmniCapture"
 Write-Host "========================================"
 Write-Host ""
 
@@ -161,6 +161,25 @@ Write-Host "[OK] Created claude-daemon.cmd" -ForegroundColor Green
 Copy-Item -Path $SetRamSrc -Destination $SetRamWrapper -Force
 Write-Host "[OK] Created claude-daemon-set-ram.cmd" -ForegroundColor Green
 
+# 5. Register omnicapture-query wrapper
+$OmniCaptureScript = Join-Path $SkillDir "modules\omnicapture\query_telemetry.py"
+$OmniCaptureWrapper = Join-Path $BinDir "omnicapture-query.cmd"
+
+@"
+@echo off
+python "$OmniCaptureScript" %*
+"@ | Set-Content -Path $OmniCaptureWrapper -Encoding ASCII
+Write-Host "[OK] Created omnicapture-query.cmd at $OmniCaptureWrapper" -ForegroundColor Green
+
+# Check for OmniCapture API key
+if ($env:OMNICAPTURE_API_KEY) {
+    Write-Host "[OK] OMNICAPTURE_API_KEY detected — runtime telemetry enabled" -ForegroundColor Green
+} else {
+    Write-Host "[WARN] OMNICAPTURE_API_KEY not set — runtime telemetry disabled" -ForegroundColor Yellow
+    Write-Host "   To enable: set OMNICAPTURE_API_KEY=oc_xxx (from your VPS config)"
+    Write-Host "   VPS setup: see modules\omnicapture\vps\ for receiver + nginx + systemd configs"
+}
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"
@@ -168,3 +187,4 @@ Write-Host "  - Read your preferences before every task (Memory Flywheel)"
 Write-Host "  - Fix governance before code on every correction (RCA Self-Healing)"
 Write-Host "  - Dispatch prompts to any repo (claude-dispatch)"
 Write-Host "  - Auto-recover from crashes (claude-daemon)"
+Write-Host "  - Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"

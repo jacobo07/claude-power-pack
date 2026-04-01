@@ -29,6 +29,21 @@ EXACT_OUTPUTS: <files, endpoints, artifacts expected>
 
 **Selection:** Estimate effort from request complexity. Simple lookup = LIGHT. Feature build = STANDARD. Multi-file refactor = DEEP. Production incident = FORENSIC.
 
+## Reasoning Gates (Mandatory)
+
+Before transitioning between phases, produce a reasoning artifact:
+- **OBSERVE → PLAN gate:** State what you found and what you're about to change. No edits without this.
+- **PLAN → EXECUTE gate:** Validate plan against constraints. "What could break? What files are affected?"
+- **EXECUTE → VERIFY gate:** Evidence-based completion. Run tests/lint/build before claiming done.
+- **On failure:** Diagnose ROOT CAUSE before retrying. Fix code, not tests. Max 3 attempts then escalate.
+
+## Tool Hierarchy (Enforce)
+
+1. Specialized tools > Bash (Read>cat, Edit>sed, Grep>rg, Glob>find)
+2. Semantic search > grep > manual browsing
+3. Editor tools > shell for file operations
+4. **PARALLEL by default** — batch independent tool calls. Sequential only when dependent.
+
 ## Core Loop -- Phases 0-4
 
 | Phase | Name     | Action                                              |
@@ -37,7 +52,7 @@ EXACT_OUTPUTS: <files, endpoints, artifacts expected>
 | 1     | INTENT   | Extract: what, why, constraints, success criteria   |
 | 2     | SOURCES  | Identify files, docs, logs needed before acting     |
 | 3     | ROUTE    | Select depth tier + domain overlay                  |
-| 4     | DISCOVER | Read sources, build mental model, note gaps         |
+| 4     | DISCOVER | Read sources, build mental model, note gaps (READ-ONLY) |
 
 ## Execution Packet Schema
 
