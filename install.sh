@@ -188,6 +188,19 @@ else
   echo "⚠️  Zero-Crash module not found — skipping sandbox wrapper"
 fi
 
+# 7. Register kobiiclaw VPS wrapper
+KOBIICLAW_SRC="$SKILL_DIR/modules/daemon/kobiiclaw.sh"
+KOBIICLAW_WRAPPER="$BIN_DIR/kobiiclaw"
+
+if [ -f "$KOBIICLAW_SRC" ]; then
+  cp "$KOBIICLAW_SRC" "$KOBIICLAW_WRAPPER"
+  chmod +x "$KOBIICLAW_WRAPPER"
+  echo "✅ Created kobiiclaw at $KOBIICLAW_WRAPPER"
+  echo "   Usage: kobiiclaw [session] [workspace] — persistent tmux session on VPS"
+else
+  echo "⚠️  KobiiClaw wrapper not found — skipping"
+fi
+
 echo ""
 echo "Done! The AI will now:"
 echo "  • Plan before acting (Anti-Monolith)"
@@ -197,3 +210,4 @@ echo "  • Dispatch prompts to any repo (claude-dispatch)"
 echo "  • Auto-recover from crashes (claude-daemon)"
 echo "  • Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"
 echo "  • Sandbox risky processes to prevent TTY corruption (Zero-Crash)"
+echo "  • Persistent VPS sessions via tmux (KobiiClaw 2.0)"

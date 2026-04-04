@@ -197,6 +197,18 @@ powershell -ExecutionPolicy Bypass -File "$SandboxSrc" %*
     Write-Host "[WARN] Zero-Crash module not found — skipping sandbox wrapper" -ForegroundColor Yellow
 }
 
+# 7. Register kobiiclaw VPS wrapper
+$KobiiClawSrc = Join-Path $SkillDir "modules\daemon\kobiiclaw.bat"
+$KobiiClawWrapper = Join-Path $BinDir "kobiiclaw.cmd"
+
+if (Test-Path $KobiiClawSrc) {
+    Copy-Item -Path $KobiiClawSrc -Destination $KobiiClawWrapper -Force
+    Write-Host "[OK] Created kobiiclaw.cmd at $KobiiClawWrapper" -ForegroundColor Green
+    Write-Host "   Usage: kobiiclaw [session] [workspace] — persistent tmux session on VPS"
+} else {
+    Write-Host "[WARN] KobiiClaw wrapper not found — skipping" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"
@@ -206,3 +218,4 @@ Write-Host "  - Dispatch prompts to any repo (claude-dispatch)"
 Write-Host "  - Auto-recover from crashes (claude-daemon)"
 Write-Host "  - Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"
 Write-Host "  - Sandbox risky processes to prevent TTY corruption (Zero-Crash)"
+Write-Host "  - Persistent VPS sessions via tmux (KobiiClaw 2.0)"
