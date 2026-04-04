@@ -99,5 +99,15 @@
     "claude", "anthropic", "openai", "gpt", "gemini",
     "ai agent", "autonomous", "mcp", "tool use",
     "regulation", "gdpr", "compliance"
-  ]
+  ],
+  "video_analysis_enabled": false,
+  "video_analysis": {
+    "max_frames_per_video": 8,
+    "whisper_model": "base",
+    "vision_scoring_enabled": true,
+    "vision_api_key_env": "ANTHROPIC_API_KEY",
+    "cache_dir": "~/.claude/autoresearch-triggers/signals/video_cache",
+    "max_video_duration_minutes": 30,
+    "download_timeout_seconds": 120
+  }
 }

@@ -1,0 +1,26 @@
+[Unit]
+Description=OmniCapture Telemetry Receiver
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kobicraft
+Group=kobicraft
+WorkingDirectory=/opt/kobiiclaw/omnicapture
+ExecStart=/usr/bin/python3 /opt/kobiiclaw/omnicapture/receiver.py --config /opt/kobiiclaw/omnicapture/config.json
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=omnicapture
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/kobiiclaw/omnicapture/data
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,5 @@
+{
+  "vps_host": "204.168.166.63",
+  "vps_user": "kobicraft",
+  "ssh_key": "~/.ssh/kobicraft_vps"
+}

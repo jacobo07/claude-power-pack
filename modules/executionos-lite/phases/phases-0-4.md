@@ -20,6 +20,7 @@
 - Map to depth tier: LIGHT / STANDARD / DEEP / FORENSIC.
 - Detect domain from stack, file types, and project structure.
 - Select overlays to load (0-2 overlays typical).
+- If Language Fragility Gate score >= 2 AND Elixir is chosen/recommended → load `overlays/elixir.md`
 
 ## Phase 4 -- DISCOVER
 - Read sources identified in Phase 2.

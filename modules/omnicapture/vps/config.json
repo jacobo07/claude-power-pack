@@ -1,0 +1,39 @@
+{
+  "host": "127.0.0.1",
+  "port": 9876,
+  "api_keys": {
+    "kobiicraft": {
+      "key": "oc_kc_CHANGE_ME",
+      "projects": ["kobiicraft"],
+      "rate_limit_per_min": 120
+    },
+    "python_projects": {
+      "key": "oc_py_CHANGE_ME",
+      "projects": ["nexumops", "carlasignalos"],
+      "rate_limit_per_min": 60
+    },
+    "wii_dev": {
+      "key": "oc_wii_CHANGE_ME",
+      "projects": ["wii-homebrew"],
+      "rate_limit_per_min": 30
+    },
+    "react_native": {
+      "key": "oc_rn_CHANGE_ME",
+      "projects": ["mundicraft-app"],
+      "rate_limit_per_min": 60
+    }
+  },
+  "storage": {
+    "base_dir": "/opt/kobiiclaw/omnicapture/data",
+    "hot_max_age_hours": 24,
+    "warm_max_age_days": 7,
+    "cold_max_age_days": 30,
+    "max_file_size_kb": 512,
+    "max_events_per_ingest": 500
+  },
+  "rate_limits": {
+    "global_per_min": 1000,
+    "per_project_per_min": 200,
+    "ws_max_connections": 10
+  }
+}

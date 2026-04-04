@@ -1,0 +1,33 @@
+{
+  "vps_endpoint": "http://204.168.166.63:9877",
+  "api_key_env": "OMNICAPTURE_API_KEY",
+  "default_project": null,
+  "project_mapping": {
+    "kobiicraft": {
+      "adapter": "minecraft",
+      "api_key_env": "OMNICAPTURE_KEY_KC"
+    },
+    "nexumops": {
+      "adapter": "python",
+      "api_key_env": "OMNICAPTURE_KEY_PY"
+    },
+    "wii-homebrew": {
+      "adapter": "wii_cpp",
+      "api_key_env": "OMNICAPTURE_KEY_WII"
+    },
+    "mundicraft-app": {
+      "adapter": "react_native",
+      "api_key_env": "OMNICAPTURE_KEY_RN"
+    }
+  },
+  "governance": {
+    "deep_plus_requires_runtime_check": true,
+    "auto_check_on_completion_claim": true,
+    "severity_threshold_for_block": "ERROR"
+  },
+  "query_defaults": {
+    "since": "5m",
+    "limit": 50,
+    "severity": "WARNING,ERROR,CRITICAL,FATAL"
+  }
+}

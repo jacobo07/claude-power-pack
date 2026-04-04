@@ -1,0 +1,25 @@
+{
+  "agt_sdk": "agent-governance-toolkit",
+  "policy_backend": "builtin",
+  "trust_thresholds": {
+    "ring_0_forensic": 900,
+    "ring_1_deep": 700,
+    "ring_2_standard": 400,
+    "ring_3_light": 0
+  },
+  "framework_detection": {
+    "langchain": ["langchain", "langgraph"],
+    "crewai": ["crewai"],
+    "autogen": ["autogen", "ag2"],
+    "claude_agent_sdk": ["claude_agent_sdk"],
+    "semantic_kernel": ["semantic_kernel"],
+    "openai_agents": ["openai", "agents"]
+  },
+  "owasp_asi_checks": true,
+  "auto_policy_scaffold": true,
+  "governance": {
+    "deep_plus_requires_policy_check": true,
+    "auto_check_on_completion_claim": true,
+    "block_deploy_without_owasp_scan": true
+  }
+}

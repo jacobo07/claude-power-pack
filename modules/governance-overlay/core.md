@@ -17,6 +17,12 @@ Before returning ANY code output, verify:
 9. **Remote deploy integrity** — after SCP/heredoc deploy, read back the file and verify no shell escaping corruption (especially `\`, `$`, quotes in regex patterns).
 10. **Zero-issue gate passed** — compile (0 errors, 0 warnings), tests (all pass), scaffold audit (0 CRITICAL). The `zero-issue-gate.js` hook enforces this automatically on every session end. If it blocked you, fix the issue before responding.
 
+## Zero-Issue Baseline (MANDATORY — read `zero-issue-baseline.md` at STANDARD+)
+
+Every delivery must pass the 5-gate cascade: Static Analysis → Build → Scaffold Audit → Tests → **End-to-End Functional Verification**. Gate 5 is critical: the system must actually WORK when you open/run it, not just compile. Multi-stack projects must pass ALL stacks independently. See `zero-issue-baseline.md` for full checklist.
+
+**"Complete" = every route responds + every screen renders + every integration connects + every form persists. Not "code exists" — code WORKS.**
+
 ## Quality Gate (run if project has the tool)
 
 | Stack | Command | Pass Criteria |
@@ -42,9 +48,10 @@ If during a LIGHT task you discover:
 
 On upgrade, load the additional governance modules for that tier.
 
-## Language Selection Gate (added 2026-03-30)
-When starting a NEW backend project (not extending existing), evaluate:
-- If requires: 5+ workers + real-time WebSocket + fault tolerance + no ML -> RECOMMEND Elixir
-- If requires: ML/data science + rapid prototyping + existing Python -> RECOMMEND Python
-- Document decision in governance/ARCHITECTURE_DECISIONS.md
-- Does NOT apply when extending existing projects
+## Language Selection Gate
+**Authoritative gate:** `pre-task.md` Section 5 (Language Fragility Gate, 10 criteria C1-C10).
+- Score 0-1: no gate
+- Score 2-3: advisory — recommend Elixir, LDR required if non-Elixir chosen
+- Score >= 4: **BLOCKING** — Elixir is default; non-Elixir requires LDR + explicit user override
+- Existing projects: retroactive LDR required per Section 5e if score >= 4
+Do NOT use a simplified version. Always evaluate the full 10-criterion gate.

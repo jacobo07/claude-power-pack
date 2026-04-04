@@ -12,6 +12,7 @@ Usage:
 Categories auto-detected from prefix, or defaults to "Pattern".
 """
 
+import json
 import sys
 import os
 from datetime import datetime
@@ -97,6 +98,32 @@ def archive_old_entries(file_path: Path, content: str) -> str:
     return remaining_header + "\n" + remaining_body
 
 
+def emit_reward(category: str, text: str) -> None:
+    """Emit a reward signal to the Agent Lightning trace buffer."""
+    traces_dir = Path.home() / ".claude" / "traces"
+    traces_dir.mkdir(parents=True, exist_ok=True)
+
+    session_id = os.environ.get("CLAUDE_SESSION_ID", "unknown")
+    reward_value = -1.0 if category == "Correction" else -0.5
+
+    reward = {
+        "trace_id": f"{session_id}_rca_{int(datetime.now().timestamp())}",
+        "session_id": session_id,
+        "timestamp": datetime.now().isoformat(),
+        "type": "reward",
+        "value": reward_value,
+        "source": "rca_correction" if category == "Correction" else "governance_heal",
+        "error_class": text[:100],
+    }
+
+    buffer_path = traces_dir / f"pending_{session_id}.jsonl"
+    try:
+        with open(buffer_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(reward) + "\n")
+    except OSError:
+        pass  # Best effort — never block memory append
+
+
 def append_memory(text: str) -> None:
     """Append a memory entry with timestamp and category."""
     file_path = find_memory_file()
@@ -109,6 +136,10 @@ def append_memory(text: str) -> None:
     category = detect_category(text)
     clean_text = strip_category_prefix(text, category)
     timestamp = datetime.now().isoformat(timespec="seconds")
+
+    # Emit reward signal to Agent Lightning trace buffer
+    if category in ("Correction", "Governance Patch"):
+        emit_reward(category, clean_text)
 
     entry = f"\n### [{timestamp}] {category}\n{clean_text}\n"
 

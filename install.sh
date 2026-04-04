@@ -173,6 +173,21 @@ else
   echo "   VPS setup: see modules/omnicapture/vps/ for receiver + nginx + systemd configs"
 fi
 
+# 6. Register zero-crash-sandbox wrapper
+ZERO_CRASH_DIR="$SKILL_DIR/modules/zero-crash"
+if [ -d "$ZERO_CRASH_DIR" ]; then
+  SANDBOX_SRC="$ZERO_CRASH_DIR/sandbox-wrapper.sh"
+  SANDBOX_WRAPPER="$BIN_DIR/zero-crash-sandbox"
+
+  cp "$SANDBOX_SRC" "$SANDBOX_WRAPPER"
+  chmod +x "$SANDBOX_WRAPPER"
+  echo "✅ Created zero-crash-sandbox at $SANDBOX_WRAPPER"
+  echo "   Hooks: To activate Zero-Crash hooks, add them to ~/.claude/settings.json"
+  echo "   See: $ZERO_CRASH_DIR/README.md for hook registration instructions"
+else
+  echo "⚠️  Zero-Crash module not found — skipping sandbox wrapper"
+fi
+
 echo ""
 echo "Done! The AI will now:"
 echo "  • Plan before acting (Anti-Monolith)"
@@ -181,3 +196,4 @@ echo "  • Fix governance before code on every correction (RCA Self-Healing)"
 echo "  • Dispatch prompts to any repo (claude-dispatch)"
 echo "  • Auto-recover from crashes (claude-daemon)"
 echo "  • Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"
+echo "  • Sandbox risky processes to prevent TTY corruption (Zero-Crash)"

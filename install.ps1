@@ -180,6 +180,23 @@ if ($env:OMNICAPTURE_API_KEY) {
     Write-Host "   VPS setup: see modules\omnicapture\vps\ for receiver + nginx + systemd configs"
 }
 
+# 6. Register zero-crash-sandbox wrapper
+$ZeroCrashDir = Join-Path $SkillDir "modules\zero-crash"
+if (Test-Path $ZeroCrashDir) {
+    $SandboxSrc = Join-Path $ZeroCrashDir "sandbox-wrapper.ps1"
+    $SandboxWrapper = Join-Path $BinDir "zero-crash-sandbox.cmd"
+
+    @"
+@echo off
+powershell -ExecutionPolicy Bypass -File "$SandboxSrc" %*
+"@ | Set-Content -Path $SandboxWrapper -Encoding ASCII
+    Write-Host "[OK] Created zero-crash-sandbox.cmd at $SandboxWrapper" -ForegroundColor Green
+    Write-Host "   Hooks: To activate Zero-Crash hooks, add them to ~/.claude/settings.json"
+    Write-Host "   See: $ZeroCrashDir\README.md for hook registration instructions"
+} else {
+    Write-Host "[WARN] Zero-Crash module not found — skipping sandbox wrapper" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"
@@ -188,3 +205,4 @@ Write-Host "  - Fix governance before code on every correction (RCA Self-Healing
 Write-Host "  - Dispatch prompts to any repo (claude-dispatch)"
 Write-Host "  - Auto-recover from crashes (claude-daemon)"
 Write-Host "  - Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"
+Write-Host "  - Sandbox risky processes to prevent TTY corruption (Zero-Crash)"

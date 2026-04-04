@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "description": "Zero-Crash Environment — TTY isolation, advisory quality gates, process sandboxing",
+  "enforce_mode": false,
+  "advisory_mode": true,
+  "tty_restore": {
+    "enabled": true,
+    "disable_focus_reporting": true,
+    "stty_sane_on_corruption": false
+  },
+  "process_sandbox": {
+    "risky_binaries": ["Xvfb", "dolphin", "emulator", "ffmpeg", "gunicorn", "uvicorn", "node server", "python -m http.server"],
+    "log_dir_env": "ZERO_CRASH_LOG_DIR",
+    "default_log_dir_unix": "/tmp/zero-crash",
+    "default_log_dir_windows": "%TEMP%\\zero-crash"
+  },
+  "quality_gate": {
+    "max_failures_before_warning": 3,
+    "create_blocked_delivery": true,
+    "enforce_env_var": "ZERO_CRASH_ENFORCE"
+  },
+  "vps_telemetry": {
+    "enabled": false,
+    "endpoint_env": "ZERO_CRASH_VPS_ENDPOINT",
+    "api_key_env": "ZERO_CRASH_API_KEY",
+    "default_endpoint": "http://204.168.166.63:9879",
+    "report_crashes": true,
+    "report_tty_corruption": true,
+    "report_gate_failures": true,
+    "anonymize": true,
+    "flush_on_session_end": true
+  }
+}

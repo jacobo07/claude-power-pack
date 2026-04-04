@@ -122,6 +122,16 @@ def emit_signal(
     filepath.write_text(json.dumps(signal, indent=2), encoding="utf-8")
     logger.info("Signal emitted: [%s] %s -> %s", project, title[:60], filepath.name)
 
+    # Video-Enhanced RE: trigger video analysis if enabled (async, non-blocking)
+    config = load_config()
+    if config.get("video_analysis_enabled", False) and link:
+        try:
+            from video_analyzer import analyze_video_async
+            analyze_video_async(link, project)
+            logger.info("Video analysis queued: [%s] %s", project, video_id or link)
+        except ImportError:
+            pass  # video_analyzer not available — text-only mode
+
 
 def poll_channel(
     project: str,

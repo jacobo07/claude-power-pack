@@ -81,11 +81,27 @@ def mark_seen(project: str, source: str, cache: DedupCache, window_hours: float 
 # Signal scoring
 # ---------------------------------------------------------------------------
 
-# Weight constants
+# Weight constants (text-only mode — original)
 W_AUTHORITY = 0.35
 W_KEYWORD = 0.35
 W_RECENCY = 0.20
 W_ENTRY_COUNT = 0.10
+
+# Weight constants (vision-enhanced mode — when video frames analyzed)
+W_AUTHORITY_V = 0.30
+W_KEYWORD_V = 0.30
+W_RECENCY_V = 0.15
+W_ENTRY_COUNT_V = 0.10
+W_VISION = 0.15
+
+# Vision multipliers for specific detection types
+VISION_MULTIPLIERS = {
+    "architecture_detected": 2.0,
+    "system_demo": 1.8,
+    "ui_patterns": 1.5,
+    "metrics_visible": 1.3,
+    "code_walkthrough": 1.2,
+}
 
 
 def _keyword_density(text: str, keywords: list[str]) -> float:
@@ -119,6 +135,27 @@ def _entry_count_score(count: int) -> float:
     return min(1.0, math.log2(count + 1) / 5.0)
 
 
+def _vision_quality_score(vision_data: dict[str, Any]) -> float:
+    """
+    Compute vision quality score from video frame analysis results.
+    Returns 0.0 if no vision data, up to 1.0 for high-value frames.
+    """
+    if not vision_data:
+        return 0.0
+
+    base = float(vision_data.get("composite_score", 0.0))
+    if base > 0:
+        return min(1.0, base)
+
+    # Fallback: compute from individual flags
+    bonus = sum(
+        mult for attr, mult in VISION_MULTIPLIERS.items()
+        if vision_data.get(attr)
+    )
+    confidence = float(vision_data.get("confidence", 0.3))
+    return min(1.0, confidence * (1 + bonus / 10))
+
+
 def score_signal(signal: dict[str, Any], config: dict[str, Any]) -> float:
     """
     Score a signal dict on 0.0-1.0.
@@ -132,6 +169,7 @@ def score_signal(signal: dict[str, Any], config: dict[str, Any]) -> float:
         - entry_count (int): how many entries matched in this burst
         - authority (float): source authority from config (0.0-1.0)
         - keywords (list[str]): applicable keyword filters
+        - vision_score (dict|None): optional vision analysis from video_analyzer
     """
     authority = float(signal.get("authority", 0.5))
     keywords = signal.get("keywords", [])
@@ -147,12 +185,26 @@ def score_signal(signal: dict[str, Any], config: dict[str, Any]) -> float:
     recency = _recency_score(signal.get("published_epoch"))
     entry_ct = _entry_count_score(signal.get("entry_count", 1))
 
-    score = (
-        W_AUTHORITY * authority
-        + W_KEYWORD * kw_score
-        + W_RECENCY * recency
-        + W_ENTRY_COUNT * entry_ct
-    )
+    # Check for vision data (video-enhanced mode)
+    vision_data = signal.get("vision_score")
+    if vision_data:
+        vision = _vision_quality_score(vision_data)
+        score = (
+            W_AUTHORITY_V * authority
+            + W_KEYWORD_V * kw_score
+            + W_RECENCY_V * recency
+            + W_ENTRY_COUNT_V * entry_ct
+            + W_VISION * vision
+        )
+    else:
+        # Original text-only weights (backward compatible)
+        score = (
+            W_AUTHORITY * authority
+            + W_KEYWORD * kw_score
+            + W_RECENCY * recency
+            + W_ENTRY_COUNT * entry_ct
+        )
+
     return round(min(1.0, max(0.0, score)), 4)
 
 

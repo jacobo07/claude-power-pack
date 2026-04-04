@@ -27,3 +27,22 @@ After creating or modifying each file, verify:
 - **Changed geometry/layout constants** → verify dependent ratios are still correct
 - **About to build a utility** → grep first — does this utility already exist?
 - **Using deprecated API** → check for the modern equivalent
+
+### API Endpoint Security Checks (Per-Endpoint, Mistakes #25, #26)
+When modifying any API endpoint in a FastAPI/Express/Phoenix project:
+1. **Authentication:** Verify `Depends(get_current_user)` or equivalent auth dependency is present
+2. **Rate limiting:** Verify rate limit decorator exists for write endpoints (POST/PUT/DELETE)
+3. **Query parameter types:** Verify enum parameters use proper Enum types, not raw strings
+4. **Tenant scoping:** If model has `org_id`, verify query filters by `user.org_id`
+5. **Error handling:** Verify no bare `except Exception:` — always narrow the catch or log the error
+
+If any check fails: fix before proceeding. Do NOT defer to "later fix".
+
+### Agent Governance Checks (when building agent systems)
+When modifying code detected as an agent system (see pre-task Section 7):
+- **New agent loop** → verify kill switch present: `max_iterations` + `circuit_breaker` + `cost_limit` (Mistake #27)
+- **New tool registration** → verify tool is in `allowed_tools` policy; dangerous tools (`shell_exec`, `delete_*`) need explicit justification (Mistake #28)
+- **New agent-to-agent call** → verify trust boundary declaration: identity verification + trust score check (Mistake #29)
+- **New agent memory write** → verify no secrets (API keys, tokens, credentials) stored in agent state
+- **Framework adapter** → verify AGT adapter configured for detected framework, or manual policy enforcement in place
+- **Multi-step workflow** → verify saga/rollback exists for partial failure recovery (Mistake #33)

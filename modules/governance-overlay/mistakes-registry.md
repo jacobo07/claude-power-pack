@@ -158,3 +158,117 @@
 - **Example:** `VALID_TRANSITIONS = {"pending": ["running", "cancelled"], "running": ["completed", "failed"]}` but no function handles the `running -> failed` transition.
 - **Why:** Easy to define states but forget to implement the transition logic.
 - **Prevention:** For every entry in VALID_TRANSITIONS, verify a function handles that transition. Count transitions vs functions.
+
+## Mistake #25: Fragile Language for Critical Systems
+- **Detection:** New backend system scores 4+ on fragility criteria but uses Node.js/Python without a Language Decision Record. `grep -r "express\|fastify\|flask\|fastapi" <new_project>/` in a system that needs supervision trees.
+- **Example:** Built a multi-agent orchestrator with 8 concurrent LLM calls, retry logic, and state management in Node.js. No supervisor, no circuit breakers, no graceful shutdown. Single unhandled promise rejection kills all 8 agents.
+- **Root Causes:**
+  1. Defaulting to familiar language without evaluating requirements
+  2. Assuming all backend languages are equivalent for all workloads
+  3. Not scoring fragility criteria before choosing a stack
+- **Prevention:**
+  1. Run the 10-criterion fragility score BEFORE writing any code
+  2. If score >= 4, Elixir is the default — override requires explicit LDR
+  3. If non-Elixir chosen, manually implement ALL OTP equivalents listed in the LDR
+  4. Post-task verification must confirm equivalents are present, not just listed
+
+## Mistake #26: Building Critical Infrastructure Without Language Decision Record
+- **Detection:** Project has background workers + fault tolerance needs + concurrent operations (scores >= 4 on fragility gate), but no `LDR_*.md` file in project docs/ or governance/ directory.
+- **Example:** COEE SaaS built in Python/FastAPI with Celery workers, SMTP delivery, concurrent API calls, long-running campaign orchestration — scores 7/10 on fragility gate — but no LDR was created before development started.
+- **Root Causes:**
+  1. Fragility gate not yet implemented when project started
+  2. Gate existed but was bypassed without documentation
+  3. Team defaulted to "familiar" language without evaluation
+- **Prevention:**
+  1. Pre-task fragility gate (Section 5) MUST run on every new project
+  2. Score >= 4 without LDR = BLOCKED (cannot write code until LDR filed)
+  3. Retroactive LDR required for existing projects per Section 5e
+  4. Register in Global Alignment Ledger if LDR was bypassed
+
+---
+
+## Agent Governance Mistakes (OWASP ASI Coverage)
+
+## Mistake #27: Agent Without Kill Switch (OWASP ASI-10)
+- **Detection:** Agent loop code has no `max_iterations`, no `circuit_breaker`, no `timeout`, no `cost_limit`. `grep -rn "while.*True\|for.*range.*999\|loop do" <agent-dir>` without nearby `max_iterations` or `break` condition.
+- **Example:** LangChain agent with `while True` loop and no stop condition burns $200 in API calls before manual intervention.
+- **Root Causes:**
+  1. Prototyping without guardrails — "I'll add limits later"
+  2. Framework defaults don't enforce iteration caps
+  3. Cost accumulates silently (no per-iteration cost tracking)
+- **Prevention:**
+  1. Every agent loop MUST have: `max_iterations` cap, `total_cost_limit`, circuit breaker pattern
+  2. Use AGT `AgentRuntime` kill switch or implement equivalent manual check
+  3. Log cost-per-iteration and abort when budget threshold reached
+
+## Mistake #28: Unbounded Tool Access (OWASP ASI-01: Unrestricted Agency)
+- **Detection:** Agent has access to `shell_exec`, `file_write`, `network_raw`, or `delete_*` without explicit scope limits. `grep -rn "tools.*=.*\[" <agent-dir>` shows dangerous tools without corresponding `blocked_tools` or path restrictions.
+- **Example:** CrewAI agent given `bash_tool` access with no path restrictions deletes project files via `rm -rf`.
+- **Root Causes:**
+  1. Giving agents "all tools" for convenience during development
+  2. Not auditing transitive capabilities (tool A can invoke tool B)
+  3. No separation between dev and production tool sets
+- **Prevention:**
+  1. Define `allowed_tools` AND `blocked_tools` explicitly. Default = deny all
+  2. Use AGT `PolicyEngine` with `CapabilityModel` for enforcement
+  3. Production tool sets must be a strict subset of development tool sets
+
+## Mistake #29: Trust Without Verification (OWASP ASI-03: Insecure Agent-Agent Communication)
+- **Detection:** Multi-agent system passes messages between agents without authentication, trust scoring, or input validation. `grep -rn "send_message\|delegate\|handoff" <agent-dir>` without nearby `verify\|authenticate\|trust`.
+- **Example:** Rogue agent injects instructions into shared memory that other agents execute blindly, causing data exfiltration.
+- **Root Causes:**
+  1. Treating inter-agent communication like internal function calls
+  2. No identity model for agents (all agents are equal)
+  3. Shared memory without access control
+- **Prevention:**
+  1. Every agent-to-agent call must verify identity (Ed25519 or equivalent)
+  2. Use AGT `AgentMesh` trust scores — minimum 700 for delegation
+  3. Validate all incoming messages regardless of source agent's trust level
+
+## Mistake #30: Privilege Escalation via Tool Chain (OWASP ASI-05)
+- **Detection:** Agent in Ring 3 (restricted) can chain tools to achieve Ring 0 (admin) effects. Agent can't delete files directly but can run a shell command that deletes files, or can write a script that does privileged operations.
+- **Example:** Agent with only `write_file` permission writes a bash script, then uses `execute_file` to run it with elevated privileges.
+- **Root Causes:**
+  1. Auditing tools individually instead of auditing tool chains
+  2. File write + file execute = arbitrary code execution
+  3. No transitive permission analysis
+- **Prevention:**
+  1. Audit tool chains for transitive privilege escalation
+  2. Use AGT `runtime ring-audit` to detect escalation paths
+  3. If agent can write AND execute: treat as having execution privileges in policy
+
+## Mistake #31: SLO-Blind Agent Deployment (OWASP ASI-08)
+- **Detection:** Agent system deployed to production without defined latency, error-rate, or cost SLOs. No monitoring dashboard, no alerting thresholds.
+- **Example:** Production agent has 8-second p99 latency, no one notices until users complain. Error rate silently climbs to 15%.
+- **Root Causes:**
+  1. Treating agents as "fire and forget" background processes
+  2. No observability infrastructure for agent systems
+  3. SLOs defined for the API layer but not for the agent layer
+- **Prevention:**
+  1. Define SLOs BEFORE deployment: latency p99, error rate, cost per operation
+  2. Use AGT `AgentSRE` for monitoring, circuit breakers, and error budgets
+  3. Set up alerting: circuit breaker opens → page on-call
+
+## Mistake #32: Unsigned Agent Plugin (OWASP ASI-04: Supply Chain Vulnerabilities)
+- **Detection:** Third-party agent plugin/tool loaded without cryptographic signature verification. `pip install random-agent-tool` or `npm install sketchy-agent-plugin` without provenance check.
+- **Example:** Installed a community LangChain tool that contains exfiltration code in `__init__.py`, sending agent context to external server.
+- **Root Causes:**
+  1. Treating agent plugins like regular library dependencies
+  2. No supply chain verification process for agent tools
+  3. Agent tools have higher blast radius than libraries (they execute with agent permissions)
+- **Prevention:**
+  1. Verify cryptographic signatures before installing any agent plugin
+  2. Use AGT `Marketplace verify` command for signature validation
+  3. Audit plugin source code — agent tools are code that runs with YOUR agent's permissions
+
+## Mistake #33: Stateful Agent Without Saga (OWASP ASI-05: Improper Output Handling)
+- **Detection:** Multi-step agent workflow with no rollback/compensation on partial failure. Agent performs steps A, B, C sequentially; if C fails, A and B side effects remain.
+- **Example:** Agent books a flight (step A), reserves a hotel (step B), fails on car rental (step C). Orphaned flight and hotel bookings with no automatic cleanup.
+- **Root Causes:**
+  1. Treating agent workflows as atomic when they're actually distributed transactions
+  2. No compensation logic for already-completed steps
+  3. "Happy path" development — assuming all steps succeed
+- **Prevention:**
+  1. Use saga pattern: every step has a corresponding compensation/rollback action
+  2. Use AGT `AgentRuntime` saga orchestration for automatic rollback
+  3. Test partial failure scenarios explicitly — kill the agent mid-workflow and verify cleanup
