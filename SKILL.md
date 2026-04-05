@@ -47,3 +47,4 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `!kclear` | Dump memory+task, clean restart | execution.md M |
 | "token audit" | Load sleepy/token-tools.md | on demand |
 | "runtime check" | Load sleepy/infrastructure.md | on demand |
+| `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
