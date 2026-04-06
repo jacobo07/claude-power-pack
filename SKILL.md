@@ -13,7 +13,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 
 | Tier | When | Load |
 |------|------|------|
-| LIGHT | Fix, lookup, single file | core.md only (~800 tok) |
+| LIGHT | Fix, lookup, single file | core.md only (~1000 tok) |
 | STANDARD | Feature, 1-5 files | core + execution (~1600 tok) |
 | DEEP | Architecture, 5+ files | core + execution + relevant sleepy |
 | FORENSIC | Production risk, prior failures | all parts |
@@ -37,6 +37,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 
 | Trigger | Action | Source |
 |---------|--------|--------|
+| (every activation) | PART A0: Scan $PWD, detect manifests, populate context | core.md A0 |
 | (every task) | OBSERVE→PLAN→EXECUTE→VERIFY→HARDEN | core.md A |
 | (>1 file) | STOP after PLAN, wait approval | core.md B |
 | "done"/"complete" | Zero-issue gate: compile+test+E2E | core.md D |

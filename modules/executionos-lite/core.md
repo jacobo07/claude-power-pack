@@ -1,14 +1,16 @@
 # ExecutionOS Lite -- Core (Always Loaded)
 
-## Run Context
+## Run Context (populated by PART A0 — never hardcode)
 
 ```
-WORKSPACE_PATH: <absolute path to project root>
+WORKSPACE_PATH: $PWD (from assimilation scan — never hardcode absolute paths)
 PRIMARY_TARGET: <main deliverable or goal>
 CURRENT_GOAL: <immediate objective this session>
 CONSTRAINTS: <hard limits -- time, tokens, stack, budget>
 EXACT_OUTPUTS: <files, endpoints, artifacts expected>
 ```
+
+> Run Context is seeded by PART A0 Assimilation Scan. Do not fill WORKSPACE_PATH manually or use absolute paths.
 
 ## Constitution Core 5
 
@@ -58,7 +60,7 @@ Before transitioning between phases, produce a reasoning artifact:
 
 ```
 intent: <one-line goal>
-domain: <minecraft | python | typescript | seo | product | live-ops | general>
+domain: <minecraft | python | typescript | seo | product | live-ops | v2v-visual | general>
 stack: <relevant tech>
 effort-tier: <LIGHT | STANDARD | DEEP | FORENSIC>
 build-path: <ordered list of phases to execute>

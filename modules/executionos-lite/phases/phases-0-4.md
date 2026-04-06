@@ -11,6 +11,7 @@
 - Output: single-sentence intent statement.
 
 ## Phase 2 -- SOURCES
+- Start from PART A0 assimilation results. Extend with task-specific sources only.
 - List every file, doc, log, config, or external resource needed.
 - Classify each: must-read (blocking), should-read (context), nice-to-have (background).
 - Read all must-read sources before Phase 3. No exceptions.
@@ -18,7 +19,7 @@
 ## Phase 3 -- ROUTE
 - Estimate complexity: trivial / moderate / complex / incident.
 - Map to depth tier: LIGHT / STANDARD / DEEP / FORENSIC.
-- Detect domain from stack, file types, and project structure.
+- Refine domain from PART A0 context. Override only if task-specific signals contradict.
 - Select overlays to load (0-2 overlays typical).
 - If Language Fragility Gate score >= 2 AND Elixir is chosen/recommended → load `overlays/elixir.md`
 

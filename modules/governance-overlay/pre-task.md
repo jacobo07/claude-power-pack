@@ -11,6 +11,8 @@ Before writing any code:
 
 ## 2. LOAD Project Governance
 
+> Inherits workspace context from PART A0 Assimilation Scan. Uses `./governance/` relative paths only.
+
 Check and read (if they exist):
 - `/governance/domain/PROJECT_DOMAIN_RULES.md` — project-specific constraints
 - `/governance/domain/PROJECT_DATA_MODEL.md` — data entities and relationships
@@ -64,11 +66,11 @@ Before writing ANY new backend/infrastructure code, run the fragility detector:
 
 ### 5c. Bypass Conditions (score resets to 0)
 
-- Extending existing codebase (allows work to proceed, but retroactive LDR still required if score >= 4 per Section 5e)
+- Extending existing codebase — score resets to 0 ONLY IF: (a) the existing codebase has <500 lines of the fragile language, OR (b) a retroactive LDR exists documenting the language choice with justification. If neither condition is met, the fragility score stands. This prevents the bypass from silently excusing large non-Elixir services that should have been evaluated. Retroactive LDR still required per Section 5e.
 - ML/AI model training or inference (Python ecosystem advantage)
 - Browser frontend (TypeScript/React)
 - Team has zero Elixir experience AND deadline < 2 weeks
-- User explicitly requests a specific language with stated rationale
+- User explicitly requests a specific language with stated rationale (must be documented in LDR)
 
 ### 5d. Language Decision Record (if score >= 2 and non-Elixir chosen)
 

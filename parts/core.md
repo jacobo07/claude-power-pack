@@ -1,5 +1,27 @@
 # Power Pack Core — Always Loaded
 
+## PART A0 — ASSIMILATION SCAN (every activation, every tier)
+
+**PATH RULE**: `./` and `$PWD` ONLY. ZERO hardcoded absolute paths. ZERO project-specific names.
+
+Before ANY reasoning or action, execute this scan:
+1. **Workspace snapshot**: `ls -la ./` — establish contents of current directory.
+2. **Manifest detection** (read first 1-2 found, in priority order):
+   `PROJECT.md` > `CLAUDE.md` > `GLOBAL_PRAXIS.md` > `package.json` > `pyproject.toml` > `Cargo.toml` > `go.mod` > `Makefile` > `CMakeLists.txt` > `pom.xml` > `build.gradle` > `README.md`
+3. **Context extraction** — from manifests, derive:
+   - **PROJECT**: name + purpose (what is this?)
+   - **STACK**: language(s) + framework(s) + build tool
+   - **DOMAIN**: map to overlay (`python` | `typescript` | `minecraft` | `elixir` | `seo` | `product` | `live-ops` | `general`)
+   - **CONVENTIONS**: naming, structure, test framework, linter
+4. **Populate Run Context** (mental model, not printed):
+   - `WORKSPACE: $PWD`
+   - `STACK: <detected>`
+   - `DOMAIN: <detected>`
+   - `OVERLAY: <mapped if STANDARD+>`
+5. **No manifests found** → Unknown project. Ask user before assuming anything.
+
+All subsequent phases (A through U) operate on THIS context. Never re-derive from assumptions.
+
 ## PART A — EXECUTION DEPTH
 
 Every task: **OBSERVE -> PLAN -> EXECUTE -> VERIFY -> HARDEN**
