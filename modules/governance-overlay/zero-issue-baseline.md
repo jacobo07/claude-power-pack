@@ -37,6 +37,7 @@ Scan all modified files for:
 - Empty `catch` / `rescue` blocks
 - Zero-retry external calls
 - Unimported files (created but never consumed)
+- Hardcoded absolute paths in global skills/shared modules (E11 — `C:/Users/`, `/home/`, `/c/Users/`)
 
 ### Gate 4: Tests (if test suite exists)
 - `npm test` / `pytest` / `mix test` → all pass

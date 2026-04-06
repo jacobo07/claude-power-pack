@@ -62,6 +62,6 @@ Do NOT use a simplified version. Always evaluate the full 10-criterion gate.
 
 **Mistakes taxonomy tiers:**
 - LIGHT: 7 critical mistakes (top-level wiring + integration)
-- STANDARD+: Mistakes #1-15 + extended scan #16-26 (includes #25 Fragile Language, #26 Missing LDR)
-- DEEP+: 26 total (all implementation mistakes)
-- FORENSIC: 33 total (includes #27-33 agent governance)
+- STANDARD+: Mistakes #1-15 + extended scan #16-26 (includes #25 Fragile Language, #26 Missing LDR) + #36 (Hardcoded Path Injection / E11)
+- DEEP+: 27 total (all implementation mistakes + #36)
+- FORENSIC: 36 total (includes #27-33 agent governance, #34-35 runtime, #36 path injection)

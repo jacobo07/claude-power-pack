@@ -1,10 +1,11 @@
 # Governance Overlay — Post-Output Learning
 
 > Loaded for DEEP and FORENSIC tiers. ~100 tokens. Runs after task completion.
+> Inherits workspace context from PART A0 Assimilation Scan. All paths in logs use `./` relative format.
 
 ## Failure Capture
 
-If any mistake from the 15-mistake registry was caught during this task:
+If any mistake from the full registry (36 mistakes + agent governance) was caught during this task:
 
 1. **Log to failure patterns** — if `/governance/12_FAILURE_PATTERNS.md` exists in the project:
    ```
@@ -16,7 +17,7 @@ If any mistake from the 15-mistake registry was caught during this task:
 
 2. **Extract prevention rule** — distill into a one-line rule that prevents recurrence
 
-3. **Project-specific mistakes** — if the mistake is NOT in the 15-mistake registry (it's unique to this project):
+3. **Project-specific mistakes** — if the mistake is NOT in the full registry (it's unique to this project):
    - Add to `governance/domain/PROJECT_DOMAIN_RULES.md` as a new DR-NNN rule
    - Format: Rule, Rationale, Detection, Status: ACTIVE
 

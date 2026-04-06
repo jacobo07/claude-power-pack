@@ -13,7 +13,7 @@
 | A07 | Implementation Log        | Phase 7          | Per-task: what changed, why, verification |
 | A08 | Integration Checklist     | Phase 8          | Wire points verified, imports confirmed   |
 | A09 | Test Report               | Phase 9          | Tests run, pass/fail, coverage            |
-| A10 | Review Findings           | Phase 10         | Issues found during self-review           |
+| A10 | Review Findings           | Phase 10         | Issues found during self-review + E11 path audit |
 | A11 | Validation Gate Results   | Phase 11         | Each gate: pass/fail/skipped + reason     |
 | A12 | Security Scan             | Phase 12         | Vulnerabilities found, mitigations        |
 | A13 | Performance Assessment    | Phase 13         | Bottlenecks identified, optimizations     |
