@@ -1,8 +1,8 @@
-# Claude Power Pack v7.1
+# Claude Power Pack v8.0
 
-Universal AI execution framework for Claude Code. Zero-issue delivery, self-healing governance, tiered token loading, video-enhanced reverse engineering.
+Universal AI execution framework for Claude Code. Zero-issue delivery, self-healing governance, tiered token loading, video-enhanced reverse engineering, and project-aware daemon generation.
 
-**66 files | 12 modules | 8 sleepy parts | 4 depth tiers | Cross-platform (Windows + Unix)**
+**70+ files | 12 modules | 8 sleepy parts | 3 commands | 4 depth tiers | Cross-platform (Windows + Unix)**
 
 ---
 
@@ -26,6 +26,27 @@ This installs:
 
 ---
 
+## What's New in v8.0: CustomClaw
+
+**The OpenClaw replacement that actually works with Claude Code's policies.**
+
+```
+/cpp-customclaw create my-helper
+```
+
+This single command scans your project, detects the stack (11 languages, 10+ frameworks), identifies structure patterns (monorepo, MVC, API-only, full-stack), reads your test/build/lint commands, and generates a **custom AI daemon** at `.claude/commands/my-helper.md` — fully tailored to your project.
+
+**Supports:** Node/TypeScript, Python, Elixir, Rust, Go, Java/Kotlin, Ruby, C#/.NET, Dart/Flutter, PHP, C/C++, plus a generic fallback for anything else.
+
+**Every generated daemon includes:**
+- Stack-specific best practices (not generic advice — actual rules for your framework)
+- Guardrails: max iteration caps, retry limits, forbidden file patterns (.env, secrets)
+- Auto-detected project commands (test, build, lint, dev)
+- The OBSERVE > PLAN > EXECUTE > VERIFY > HARDEN protocol
+- Jargon-free explanation of what was created and how to use it
+
+---
+
 ## How It Works: Tiered Loading
 
 The Power Pack never loads everything at once. It classifies each task and loads only what's needed:
@@ -38,6 +59,16 @@ The Power Pack never loads everything at once. It classifies each task and loads
 | **FORENSIC** | Production risk, prior failures | all parts | ~4,000 tok |
 
 **Sleepy parts** cost zero tokens until triggered by keywords in your prompt. When you say "reverse engineer this competitor", only the Video-RE sleepy part wakes up.
+
+---
+
+## Commands
+
+| Command | What It Does |
+|---------|-------------|
+| `/cpp-customclaw create [name]` | Scan project and generate a custom AI daemon tailored to its stack |
+| `/cpp-update` | Update Claude Power Pack to the latest version from GitHub |
+| `/cpp-autoupdate` | Toggle automatic update checking on session start |
 
 ---
 
@@ -82,29 +113,39 @@ When you correct the AI, it doesn't just fix the code. It: halts all execution, 
 The single most impactful rule. For any task touching 2+ files, type your request and let the AI present a plan. Review it. Say "y". This prevents 80% of wasted iterations.
 
 **Bad:** "Refactor the auth system and add OAuth and fix the login bug"
-**Good:** "Refactor the auth system to support OAuth" → review plan → approve → "Now fix the login bug"
+**Good:** "Refactor the auth system to support OAuth" > review plan > approve > "Now fix the login bug"
 
-### 2. Correct the AI explicitly
+### 2. Generate a CustomClaw for every project
+
+First thing you do in a new project:
+
+```
+/cpp-customclaw create my-project-helper
+```
+
+Now you have a `/my-project-helper` command that knows your stack, your test commands, your framework conventions, and your guardrails. Use it as your daily driver instead of raw Claude Code — it already has the context of your project baked in.
+
+### 3. Correct the AI explicitly
 
 When the AI does something wrong, say exactly what's wrong. The RCA Self-Healing cycle will trace the root cause and persist the lesson to `USER_CRITERIA_MEMORY.md`. Next session, it won't repeat the mistake.
 
 **Example:** "Don't mock the database in these tests — we need integration tests with a real DB"
-**Result:** Memory stores: "Integration tests must hit real database, not mocks" → applies to ALL future sessions.
+**Result:** Memory stores: "Integration tests must hit real database, not mocks" > applies to ALL future sessions.
 
-### 3. Use `!kclear` before context rots
+### 4. Use `!kclear` before context rots
 
 After 15+ exchanges or when the AI starts re-reading files it already read, type `!kclear`. It checkpoints memory + pending task to disk, then you `/clear` for a fresh context. The next session picks up where you left off.
 
-### 4. Trigger sleepy parts with keywords
+### 5. Trigger sleepy parts with keywords
 
 Don't load heavy modules manually. Just use the right words:
 
-- "Do a **token audit** on this project" → loads Token Tools (~300 tok)
-- "**Reverse engineer** how Stripe handles webhooks" → loads Video-RE (~350 tok)
-- "Check the **VPS** status" → loads Infrastructure (~400 tok)
-- "Run **autoresearch** for this project" → loads Autoresearch (~350 tok)
+- "Do a **token audit** on this project" > loads Token Tools (~300 tok)
+- "**Reverse engineer** how Stripe handles webhooks" > loads Video-RE (~350 tok)
+- "Check the **VPS** status" > loads Infrastructure (~400 tok)
+- "Run **autoresearch** for this project" > loads Autoresearch (~350 tok)
 
-### 5. Enable video analysis for competitive intelligence
+### 6. Enable video analysis for competitive intelligence
 
 ```json
 // In modules/autoresearch/config.json
@@ -113,7 +154,7 @@ Don't load heavy modules manually. Just use the right words:
 
 Now every YouTube video detected by autoresearch gets: frames extracted, transcript captured, frames scored for architectural value, and results fed into signal scoring. Competitor demo videos become 5x more useful than blog post summaries.
 
-### 6. Use the sandbox wrapper for heavy processes
+### 7. Use the sandbox wrapper for heavy processes
 
 When running emulators, servers, or long processes via Claude Code:
 
@@ -124,53 +165,53 @@ zero-crash-sandbox gunicorn app:app --bind 0.0.0.0:8000
 
 This isolates the process from Claude Code's TTY, preventing terminal corruption and session hangs.
 
-### 7. Route complex tasks through Omni-Plan
+### 8. Route complex tasks through Omni-Plan
 
-For high-complexity work (new architecture, CI/CD pipelines, system design), the Smart Trigger auto-activates the Omni-Plan route: Auto-Research → Architecture Design → Validation Design → Plan Presentation → Approval → Execution. You get a researched, evidence-based plan before any code is written.
+For high-complexity work (new architecture, CI/CD pipelines, system design), the Smart Trigger auto-activates the Omni-Plan route: Auto-Research > Architecture Design > Validation Design > Plan Presentation > Approval > Execution. You get a researched, evidence-based plan before any code is written.
 
 ---
 
 ## Top 10 Most Powerful Use Cases
 
-### 1. Zero-Issue Feature Delivery
+### 1. CustomClaw: Your Own OpenClaw (Policy-Compliant)
+**What:** Generate a custom AI daemon for any project — your own OpenClaw that works within Claude Code's policies.
+**How:** `/cpp-customclaw create my-bot` in any project root. The scanner detects your stack (11 languages), structure (monorepo, MVC, API-only, full-stack), framework, test/build/lint commands, and existing governance. Outputs a fully wired `.claude/commands/my-bot.md` with stack-specific rules, guardrails, and the OBSERVE-PLAN-EXECUTE-VERIFY-HARDEN protocol.
+**Why it's powerful:** OpenClaw got banned. CustomClaw generates the same kind of tailored AI assistant — but from scratch, per-project, with guardrails, and fully compatible with Claude Code's current policies. No external dependencies, no policy violations.
+
+### 2. Zero-Issue Feature Delivery
 **What:** Build a complete feature with guaranteed quality gates.
 **How:** Describe the feature. The AI plans, executes, then runs compile + scaffold audit + tests before claiming "done". If any gate fails, it fixes and re-runs. `BLOCKED_DELIVERY.md` is created as evidence trail.
 **Why it's powerful:** Eliminates "it works on my machine" entirely. Every delivered feature has compile + lint + test evidence.
 
-### 2. Video-Enhanced Competitor Reverse Engineering
+### 3. Video-Enhanced Competitor Reverse Engineering
 **What:** Deeply analyze a competitor's product by watching their demo videos.
 **How:** "Reverse engineer how [competitor] handles [feature]". The AI searches YouTube for their demos, extracts frames + transcripts, scores frames for architectural diagrams/UI patterns/metrics, and produces a decomposition at macro (service topology) and micro (API contracts) scales.
 **Why it's powerful:** A 10-minute demo video contains 8-12 architectural insights that a blog post misses. Frame analysis detects system diagrams, live metrics, and UI patterns automatically.
 
-### 3. Self-Healing Across Sessions
+### 4. Self-Healing Across Sessions
 **What:** The AI permanently learns from every correction you make.
 **How:** Correct the AI once ("don't use relative imports in this project"). The RCA cycle persists this to `USER_CRITERIA_MEMORY.md`. Every future session reads this file first. The AI never repeats the same mistake.
 **Why it's powerful:** Compounding intelligence. After 10 sessions, the AI knows your codebase conventions, testing preferences, deployment patterns, and naming standards without being told.
 
-### 4. Cross-Repo Prompt Dispatch
+### 5. Cross-Repo Prompt Dispatch
 **What:** Run Claude on any repo from anywhere.
 **How:** `claude-dispatch --repo my-backend "Add rate limiting to the /api/users endpoint"`
 **Why it's powerful:** One terminal, multiple projects. The dispatcher finds the repo, builds context, and runs Claude with the right working directory and project-specific governance.
 
-### 5. Crash-Proof Development Sessions
+### 6. Crash-Proof Development Sessions
 **What:** Never lose a session to TTY corruption or hook failures again.
 **How:** The Zero-Crash module: (a) restores terminal state after every Bash command, (b) warns when you're about to run risky processes without I/O isolation, (c) runs quality gates in advisory mode (warns but never blocks).
 **Why it's powerful:** Before Zero-Crash, a failed `zero-issue-gate` or a misbehaving child process could kill your session. Now sessions always continue, with `BLOCKED_DELIVERY.md` as evidence instead of a dead terminal.
 
-### 6. Autonomous Competitive Intelligence (Autoresearch)
+### 7. Autonomous Competitive Intelligence (Autoresearch)
 **What:** Monitor competitors, industry trends, and YouTube channels automatically.
 **How:** Configure `modules/autoresearch/config.json` with your project domains, RSS feeds, YouTube channels, and keywords. The system runs 2x/day, scores signals by authority + keyword density + recency + vision quality, and emits actionable intelligence.
 **Why it's powerful:** You wake up to a digest of competitor moves, new tools, and industry shifts — scored and ranked by relevance to YOUR specific projects.
 
-### 7. Token Cost Forensics
+### 8. Token Cost Forensics
 **What:** Understand exactly where your Claude tokens go and reduce waste.
 **How:** "Run a token audit on this project". The Token Tools suite: lints CLAUDE.md for bloat, detects cross-project duplication, compresses ExecutionOS rules, identifies unused plugins, estimates session costs, and performs token autopsies on past sessions.
 **Why it's powerful:** Users typically waste 20-40% of context on redundant rules, stale memories, and unused MCP tools. One audit can recover 30% of your context budget.
-
-### 8. Production-Risk Forensic Analysis
-**What:** Investigate production issues with maximum rigor.
-**How:** The FORENSIC tier loads ALL parts including: full ExecutionOS constitution (20 phases), all domain overlays, complete mistakes registry (30+ documented failure patterns), and the zero-issue baseline cascade.
-**Why it's powerful:** When production is down, you need the AI operating at maximum awareness of failure patterns, not guessing. The mistakes registry alone prevents re-introducing 30+ known error classes.
 
 ### 9. Audio Transcription Pipeline (Whisper Integration)
 **What:** Transcribe any audio/video with local AI — no API costs, no data leaves your machine.
@@ -189,23 +230,27 @@ For high-complexity work (new architecture, CI/CD pipelines, system design), the
 ```
 claude-power-pack/
 ├── SKILL.md                    # Skill manifest — tiered loading triggers
-├── VERSION                     # 7.1.0
+├── VERSION                     # 8.0.0
 ├── install.sh / install.ps1    # Cross-platform installers (6 phases)
+├── commands/
+│   ├── customclaw.md           # /cpp-customclaw — project-aware daemon generator
+│   ├── update.md               # /cpp-update — pull latest version
+│   └── autoupdate.md           # /cpp-autoupdate — toggle auto-update check
 ├── parts/
 │   ├── core.md                 # Always-active rules (~800 tok)
 │   ├── execution.md            # Standard+ rules (~800 tok)
 │   └── sleepy/                 # On-demand parts (0 tok until triggered)
 │       ├── frontend.md
-│       ├─��� autoresearch.md
-���       ├── token-tools.md
+│       ├── autoresearch.md
+│       ├── token-tools.md
 │       ├── executionos.md
-│       ���── infrastructure.md
+│       ├── infrastructure.md
 │       ├── agent-governance.md
 │       ├── zero-crash.md
 │       └── video-re.md
 ├── modules/
 │   ├── autoresearch/           # RSS + YouTube + signal scoring + video analysis
-│   ├── daemon/                 # Crash recovery + memory tuning
+│   ├── daemon/                 # Crash recovery + memory tuning + KobiiClaw
 │   ├── dispatcher/             # Cross-repo prompt routing
 │   ├── executionos-lite/       # 25-rule constitution + 20 phases + 6 overlays
 │   ├── governance-overlay/     # Pre-task, during-task, pre-output gates
@@ -220,6 +265,7 @@ claude-power-pack/
 │       ├── sandbox-wrapper.sh  # Unix process isolation
 │       ├── sandbox-wrapper.ps1 # Windows process isolation
 │       └── vps/                # Anonymous crash telemetry receiver
+├── tools/                      # Standalone utilities (memory manager, zombie killer)
 └── knowledge/                  # AKOS briefs, playbooks, integration plans
 ```
 
@@ -245,6 +291,7 @@ claude-power-pack/
 5. **Advisory over blocking** — Quality gates warn and create evidence, never kill sessions.
 6. **Video > text for RE** — A 10-minute demo video contains 8-12 architectural insights a blog post misses.
 7. **Cross-platform always** — Every script works on Windows + Unix. No platform-specific assumptions.
+8. **Policy-compliant by design** — CustomClaw generates project-specific daemons that work within Claude Code's policies, not around them.
 
 ---
 
