@@ -1,6 +1,7 @@
 # Governance Overlay — Core
 
 > Always loaded. ~200 tokens. Applies to ALL tasks regardless of complexity tier.
+> Inherits workspace context from PART A0 Assimilation Scan. All file references use `./` relative paths.
 
 ## Pre-Output Checklist (7 Critical Mistakes)
 
@@ -54,4 +55,13 @@ On upgrade, load the additional governance modules for that tier.
 - Score 2-3: advisory — recommend Elixir, LDR required if non-Elixir chosen
 - Score >= 4: **BLOCKING** — Elixir is default; non-Elixir requires LDR + explicit user override
 - Existing projects: retroactive LDR required per Section 5e if score >= 4
+- Bypass #1 (extending existing codebase) resets to 0 ONLY if <500 LOC or retroactive LDR exists
 Do NOT use a simplified version. Always evaluate the full 10-criterion gate.
+
+**Enforcement (added 2026-04-04):** `pre-output.md` Section "Language Selection Enforcement" performs a BLOCKING check before delivery. If score >=4 and non-Elixir: (a) LDR must exist, (b) all 5 OTP equivalents must be verified. Missing equivalents = HALT.
+
+**Mistakes taxonomy tiers:**
+- LIGHT: 7 critical mistakes (top-level wiring + integration)
+- STANDARD+: Mistakes #1-15 + extended scan #16-26 (includes #25 Fragile Language, #26 Missing LDR)
+- DEEP+: 26 total (all implementation mistakes)
+- FORENSIC: 33 total (includes #27-33 agent governance)

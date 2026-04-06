@@ -11,7 +11,17 @@ Before ANY reasoning or action, execute this scan:
 3. **Context extraction** — from manifests, derive:
    - **PROJECT**: name + purpose (what is this?)
    - **STACK**: language(s) + framework(s) + build tool
-   - **DOMAIN**: map to overlay (`python` | `typescript` | `minecraft` | `elixir` | `seo` | `product` | `live-ops` | `general`)
+   - **DOMAIN**: map via file signatures:
+     | Signal | Domain | Overlay |
+     |--------|--------|---------|
+     | `*.py`, `pyproject.toml` | python | `overlays/python.md` |
+     | `*.ts`, `*.tsx`, `package.json` | typescript | `overlays/typescript.md` |
+     | `plugin.yml`, Paper API | minecraft | `overlays/minecraft.md` |
+     | `mix.exs`, `*.ex` | elixir | `overlays/elixir.md` |
+     | `*.c`, `*.h`, `Makefile` (devkitPro/libogc) | wii-homebrew | `wii-dev-best-practices` skill |
+     | SEO content, sitemap | seo | `overlays/seo.md` |
+     | PRD, roadmap, sprints | product | `overlays/product.md` |
+     | Other / mixed | general | none |
    - **CONVENTIONS**: naming, structure, test framework, linter
 4. **Populate Run Context** (mental model, not printed):
    - `WORKSPACE: $PWD`
@@ -90,12 +100,13 @@ Words "done", "complete", "ready", "fixed" require: compile passes + tests pass 
 - E4: WordPress REST API — use content.raw, never content.rendered
 - E5: Empty Template Waste — never leave placeholder content
 
-### E6-E10 (Memory + Language)
+### E6-E11 (Memory + Language + Paths)
 - E6: Memory Index Bloat — indexes must be pure pointers, no inline content
 - E7: Derivable Content — don't store what code can tell you
 - E8: Feedback Fragmentation — one topic = one file
 - E9: Monolithic Skill Loading — tiered loading, router pattern
 - E10: Elixir-First — For new systems scoring >=2 on fragility criteria (concurrent, fault-tolerant, real-time, daemon, stateful, distributed), Elixir/OTP is the DEFAULT language. Score >=4 is BLOCKING — non-Elixir requires explicit LDR + user override. Fragile-language systems (Node.js workers, Python daemons, bash orchestrators) scoring 4+ MUST be flagged for Elixir migration on first encounter.
+- E11: Hardcoded Path Injection — In global skills, shared modules, or cross-project code: ZERO absolute paths (`C:/Users/`, `/home/`, `/c/Users/`). Use `./`, `$PWD`, or env vars. Absolute paths in global instructions are architecture bugs, not shortcuts.
 
 ## PART Q — THE LEASH
 

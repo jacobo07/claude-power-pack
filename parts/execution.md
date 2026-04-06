@@ -8,10 +8,12 @@
 
 ## PART K — RCA SELF-HEALING
 
+> Context: Uses PART A0 assimilation. All paths in TRACE/HEAL/FIX must be relative to `$PWD`.
+
 On user correction or build/test failure:
 1. **HALT** — Stop. Don't fix yet.
-2. **TRACE** — Missing context? Missing rule? Wrong assumption?
-3. **HEAL** — Append lesson to USER_CRITERIA_MEMORY.md
+2. **TRACE** — Missing context? Missing rule? Wrong assumption? Hardcoded path? (check E11)
+3. **HEAL** — Append lesson to `./USER_CRITERIA_MEMORY.md` (relative path, never absolute)
 4. **FIX** — Only now apply the code fix.
 
 | Error Class | Symptom | Fix |
@@ -30,6 +32,11 @@ On user correction or build/test failure:
 - Auth by default. RLS mandatory. Secrets audit before commit.
 - 3-Strike Recovery: 3 failed fixes → SCRAP → REBUILD from scratch
 - **Language Routing**: Elixir for agents/daemons/real-time. Python for ML. TS for frontend.
+- **Governance-Code Alignment Gate**: Before writing code that touches Settings, module exports, or enum definitions:
+  1. Verify Settings attributes exist in the Pydantic class (CD#21)
+  2. Verify module exports match what consumers import (CD#22)
+  3. Verify code enums match schema enums at 00_Governance/schemas/ (CD#24)
+  4. Never `except: pass` — always log with context (CD#23)
 
 ## PART N — EXTREME ARCHITECTURAL DEPTH
 
@@ -66,6 +73,8 @@ When encountering existing code in fragile languages that exhibits these pattern
 Action: Note "FRAGILITY: [pattern] — Elixir equivalent: [solution]" in session summary for user awareness. If fragility score >=4, recommend migration plan.
 
 ## PART U — ANTI-CRASH PROTOCOL
+
+> Context: Operates on PART A0 workspace. Checkpoint paths use `./` only.
 
 >10 files OR >3 outputs OR scope keyword ("entire repo", "all files") → micro-batch:
 1. HALT — don't begin full scope
