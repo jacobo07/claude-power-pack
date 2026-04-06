@@ -18,6 +18,7 @@
 ## Phase 19 -- HANDOFF
 - Summarize state for the next agent or session.
 - List: open items, known risks, deferred work, environment state.
+- All paths in handoff notes must be relative (`./`). Next agent re-runs PART A0 on activation.
 - Ensure all changes are committed and pushed if requested.
 
 ## Phase 20 -- CLOSE

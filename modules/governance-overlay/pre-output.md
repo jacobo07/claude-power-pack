@@ -1,6 +1,7 @@
 # Governance Overlay — Pre-Output Gate
 
 > Loaded for STANDARD, DEEP, and FORENSIC tiers. ~150 tokens. Final gate before returning code.
+> Inherits workspace context from PART A0 Assimilation Scan. All file references use `./` relative paths.
 
 ## Full 15-Mistake Scan
 
@@ -23,6 +24,7 @@ Before claiming ANY work is complete, verify each item:
 | 13 | Assumptions Without Verification | Read files before editing, verified existence |
 | 14 | Analyzing Callee Without Caller | Traced full call chain upward |
 | 15 | Static Display of Dynamic Data | Counters track real state, not initial totals |
+| 36 | Hardcoded Path Injection | Zero absolute paths in global skills/shared code (E11) |
 | 27 | Agent Without Kill Switch | Every agent loop has max_iterations + breaker + cost_limit |
 | 28 | Unbounded Tool Access | allowed_tools explicitly defined, no open shell access |
 | 29 | Trust Without Verification | Agent-to-agent calls authenticated |
@@ -82,3 +84,28 @@ If this task involved writing new backend/infrastructure code:
 | If non-Elixir chosen, equivalents implemented? | Supervision, circuit breakers, shutdown handlers present in code |
 
 If OTP equivalents were listed but NOT implemented, flag as incomplete.
+
+### Language Selection Enforcement (BLOCKING at >=4)
+
+Before delivering any new backend service, infrastructure daemon, or CLI tool:
+
+1. Was the Language Fragility Gate (pre-task Section 5) evaluated? If NO → **HALT. Run the gate first.**
+2. What was the fragility score? If >=4 and language is NOT Elixir:
+   a. Does an LDR exist with explicit user override? If NO → **HALT. Create LDR.**
+   b. Are ALL OTP equivalents implemented? Verify each concretely:
+      - Supervisor trees → equivalent crash recovery mechanism (restart logic, health checks)
+      - Circuit breakers → timeout + retry + exponential backoff pattern
+      - Graceful shutdown → SIGTERM/SIGINT handlers + cleanup + drain connections
+      - Backpressure → rate limiting, queue depth limits, or flow control
+      - State isolation → no shared mutable state across requests (per-request context only)
+   c. If any equivalent is missing → **HALT with specific gap listed.**
+3. If score 2-3: LDR required, but delivery not blocked. Advisory only.
+4. If score 0-1: no language gate.
+
+### Extended Mistake Scan (Mistakes #16-26 — STANDARD+ tier)
+
+In addition to Mistakes #1-15, verify at STANDARD+ tier:
+- **Mistake #16 (Scaffold Illusion):** Compiles != works. Commented-out wiring = not delivered.
+- **Mistake #20 (Shell Escaping Corruption):** Remote deploy commands with unescaped variables.
+- **Mistake #25 (Fragile Language for Critical Systems):** Defaulting to familiar language without evaluating fragility criteria. If fragility score >=4 and non-Elixir was chosen without LDR, this is a delivery-blocking mistake.
+- **Mistake #26 (Missing LDR):** Building critical infrastructure without Language Decision Record. Pre-task fragility gate MUST run on every new project.

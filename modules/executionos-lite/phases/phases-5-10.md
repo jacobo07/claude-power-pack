@@ -29,6 +29,7 @@
 - Re-read all changed files. Check for: dead code, missing error handling, hardcoded values, security gaps.
 - Verify every new file has at least one consumer.
 - Verify every new function is called somewhere.
+- **Path audit (E11):** If working in a global skill or shared module, grep for absolute paths. Zero tolerance.
 
 ## Constitution Rules 6-15
 

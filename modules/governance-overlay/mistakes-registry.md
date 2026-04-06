@@ -272,3 +272,55 @@
   1. Use saga pattern: every step has a corresponding compensation/rollback action
   2. Use AGT `AgentRuntime` saga orchestration for automatic rollback
   3. Test partial failure scenarios explicitly — kill the agent mid-workflow and verify cleanup
+
+---
+
+## Runtime Environment Mistakes (LLM Cognitive Blind Spots)
+
+## Mistake #34: Async/Sync Boundary Violation (asyncio.run Trap)
+- **Detection:** `grep -rn "asyncio.run(" <project>/` in any file that is NOT a `__main__` entry point. Any `asyncio.run()` call in library code, utility modules, or code imported by async frameworks (FastAPI, aiohttp, Quart).
+- **Example:** `telegram_notifier.py` used `asyncio.run(send_message())` in sync wrapper functions. When called from within FastAPI (which has its own running event loop), it crashes with `RuntimeError: This event loop is already running`. The entire API server dies.
+- **Root Causes:**
+  1. LLM treats `asyncio.run()` as the "simple" sync→async bridge without modeling the caller's runtime context
+  2. Code works in isolation (`python script.py`) but fails when imported into an async framework
+  3. No consideration of whether the function will be called from sync or async contexts
+- **Prevention:**
+  1. **NEVER** use `asyncio.run()` in library/utility code. Only permitted inside `if __name__ == "__main__":` guards
+  2. For sync→async bridges, use the dual-path pattern:
+     ```python
+     def sync_wrapper(**kwargs):
+         try:
+             loop = asyncio.get_running_loop()
+             loop.create_task(async_function(**kwargs))  # Inside async context
+         except RuntimeError:
+             import threading
+             threading.Thread(target=lambda: asyncio.new_event_loop().run_until_complete(
+                 async_function(**kwargs)), daemon=True).start()  # Outside async context
+     ```
+  3. Pre-deploy audit: `grep -rn "asyncio.run(" | grep -v "__main__"` must return 0 results
+
+## Mistake #36: Hardcoded Path Injection in Global Skills
+- **Detection:** `grep -rn "C:/Users\|/home/\|/c/Users" <skill-dir>/` returns results in instruction files (`.md`). Absolute paths in scripts targeting specific VPS hosts are exempt.
+- **Example:** Global skill file references `C:/Users/kobig/Desktop/MyProject/src/main.py` instead of `./src/main.py`. Agent then fails when invoked in any other project or machine.
+- **Root Causes:**
+  1. Agent copies paths from exploration results directly into skill instructions
+  2. Skill written while working on one project, never tested in another
+  3. No enforcement gate for path relativity in shared code
+- **Prevention:**
+  1. **PATH RULE** (PART A0): `./` and `$PWD` ONLY in global skills and shared modules
+  2. Before committing any `.md` instruction file: `grep -rn "C:/Users\|/home/\|/c/Users" <file>` must return 0
+  3. VPS scripts with real host paths are exempt but must use variables (`$WORKSPACE`, `$REMOTE_DIR`) where possible
+  4. Classified as error pattern E11 in `parts/core.md`
+
+## Mistake #35: Single-Writer Database Assumption
+- **Detection:** `grep -rn "duckdb.connect\|sqlite3.connect\|connect(" <project>/` shows database connections without explicit `read_only` parameter. Multiple processes/services access the same database file.
+- **Example:** KobiiClaw daemon (writer) and FastAPI dashboard (reader) both open the same `.duckdb` file without access mode. When both are running, `IOException: Could not set lock on file` crashes whichever process connects second.
+- **Root Causes:**
+  1. LLM generates code for a single consumer without modeling the deployment topology (daemon + API + scripts all hitting the same file)
+  2. File-based databases (DuckDB, SQLite) have single-writer semantics but this isn't enforced at connection time by default
+  3. "It works in development" (single process) doesn't mean it works in production (multiple processes)
+- **Prevention:**
+  1. Every database connection constructor MUST accept and use an `access_mode` or `read_only` parameter
+  2. Readers use `read_only=True`. Only ONE process is the designated writer
+  3. If multiple writers are needed, use a database that supports it (PostgreSQL) or implement a write-through API
+  4. Pre-deploy audit: map all processes that access each database file. If count > 1, verify access modes are explicit

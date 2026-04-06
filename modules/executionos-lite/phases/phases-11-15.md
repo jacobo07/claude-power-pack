@@ -23,6 +23,7 @@
 ## Phase 15 -- GOVERNANCE
 - Verify compliance with project CLAUDE.md rules.
 - Verify compliance with domain overlay rules.
+- Verify PART A0 compliance: all paths relative, context derived from manifests, zero hardcoded assumptions.
 - Run project-specific validation pipelines (linters, validators, custom gates).
 
 ## Constitution Rules 16-20

@@ -113,3 +113,4 @@ Words "done", "complete", "ready", "fixed" require: compile passes + tests pass 
 - No `grep -r` or `find /` across entire codebases without permission
 - >3 files in a single turn = STOP and ask user
 - >500 line files = read only relevant sections
+- **Path enforcement (E11):** In global skills or shared modules, any absolute path (`C:/`, `/home/`, `/c/`) in instruction files is a STOP condition. Fix before proceeding.
