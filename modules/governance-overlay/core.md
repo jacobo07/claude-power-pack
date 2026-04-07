@@ -17,6 +17,7 @@ Before returning ANY code output, verify:
 8. **Return type contracts verified** — for every `case Module.func() do` pattern, the matched atoms/tuples must exist in the callee's actual return values. Read the callee's source, don't assume.
 9. **Remote deploy integrity** — after SCP/heredoc deploy, read back the file and verify no shell escaping corruption (especially `\`, `$`, quotes in regex patterns).
 10. **Zero-issue gate passed** — compile (0 errors, 0 warnings), tests (all pass), scaffold audit (0 CRITICAL). The `zero-issue-gate.js` hook enforces this automatically on every session end. If it blocked you, fix the issue before responding.
+11. **Intent-Lock consistency** — if API Bounding was declared in pre-task (Section 8), verify the delivered code uses ONLY the declared APIs and concurrency patterns. If a Never-Do Matrix was set, verify zero violations. If Sovereign Doubt identified risks, verify mitigations are implemented.
 
 ## Zero-Issue Baseline (MANDATORY — read `zero-issue-baseline.md` at STANDARD+)
 
@@ -62,6 +63,6 @@ Do NOT use a simplified version. Always evaluate the full 10-criterion gate.
 
 **Mistakes taxonomy tiers:**
 - LIGHT: 7 critical mistakes (top-level wiring + integration)
-- STANDARD+: Mistakes #1-15 + extended scan #16-26 (includes #25 Fragile Language, #26 Missing LDR) + #36 (Hardcoded Path Injection / E11)
-- DEEP+: 27 total (all implementation mistakes + #36)
-- FORENSIC: 36 total (includes #27-33 agent governance, #34-35 runtime, #36 path injection)
+- STANDARD+: Mistakes #1-15 + extended scan #16-26 (includes #25 Fragile Language, #26 Missing LDR) + #36 (Hardcoded Path Injection / E11) + #37-39 (Intent-Lock cognitive patterns)
+- DEEP+: 30 total (all implementation mistakes + #36-39)
+- FORENSIC: 39 total (includes #27-33 agent governance, #34-35 runtime, #36 path injection, #37-39 cognitive blind spots)
