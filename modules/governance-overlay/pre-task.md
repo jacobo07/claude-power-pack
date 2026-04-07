@@ -160,3 +160,32 @@ Before any agent deployment or completion claim:
 | ASI-08 | Cascading Failures | Circuit breakers + error budgets? |
 | ASI-09 | Insufficient Oversight | Human-in-the-loop for critical actions? |
 | ASI-10 | Inadequate Logging | All agent actions logged? |
+
+## 8. Intent-Lock Protocol (STANDARD+) — ADVISORY
+
+> Triggers when: writing >50 lines of new code, refactoring async/concurrent code, or building a new module/service. Fills the gap between Phase 1 (INTENT) and Phase 5 (PLAN). Prevents Mistakes #37-39.
+
+### 8a. API Bounding (Declare Your Tools)
+
+Before writing implementation code, declare:
+1. **Key libraries and APIs** you will use — cite specific methods/classes, not just library names
+2. **Concurrency model** — what runs async, what stays on main/UI thread, where the sync↔async boundary is
+3. **Existing patterns** — grep for prior implementations of similar functionality. If one exists, declare you'll reuse it (Mistake #9). If choosing between modern and legacy API, declare the modern one.
+
+### 8b. Never-Do Matrix (Task-Specific Prohibitions)
+
+Write 3+ prohibitions specific to THIS task, drawn from:
+- The project's known failure patterns (`./governance/12_FAILURE_PATTERNS.md` if it exists)
+- The mistakes registry — especially #37 (Silent Degradation), #38 (Producer-Consumer Gap), #39 (Sync Trap)
+- The stack's known pitfalls (e.g., no `readFileSync` in Node async, no `:infinity` in Elixir GenServer, no `requests.get` in FastAPI async, no `block.setType()` in game tick loops)
+
+### 8c. Sovereign Doubt (Red Team Your Architecture)
+
+Before presenting the plan, answer 3 questions:
+1. **"Where does this collapse under 10x load?"** → identify the bottleneck, propose mitigation
+2. **"What if the external dependency fails?"** → map every error path, verify no silent swallowing
+3. **"Is this a structural fix or a surface patch?"** → if surface → flag to user before proceeding
+
+### 8d. Gate Output
+
+The Intent-Lock produces a mental artifact (internal, not printed unless FORENSIC tier or user requests it) that feeds into Phase 5 (PLAN). The implementation plan MUST be consistent with declared API bounding and MUST NOT violate the Never-Do Matrix. Pre-output checklist item 11 verifies this consistency at delivery time.

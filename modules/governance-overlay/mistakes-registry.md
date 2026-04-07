@@ -324,3 +324,48 @@
   2. Readers use `read_only=True`. Only ONE process is the designated writer
   3. If multiple writers are needed, use a database that supports it (PostgreSQL) or implement a write-through API
   4. Pre-deploy audit: map all processes that access each database file. If count > 1, verify access modes are explicit
+
+---
+
+## Cognitive Blind Spot Mistakes (Intent-Lock Protocol Coverage)
+
+## Mistake #37: Silent Quality Degradation (Optimistic Fallback)
+- **Detection:** Grep for dual-path code: `if (available) { fastPath() } else { slowPath() }` where the slow/fallback path has no WARNING-level log, no metric emission, and no user notification. The system "works" but at a fraction of intended capability.
+- **Example (Java/Minecraft):** FAWE async EditSession (50ms for 384k blocks) silently falls back to BukkitRunnable tick loop (96 seconds) — server lags but doesn't crash, operators don't know FAWE isn't active. **Example (Python/ML):** GPU inference silently falls back to CPU — 100x slower, user sees "working" but responses take minutes. **Example (TypeScript/Web):** CDN cache miss silently falls back to origin fetch — TTFB spikes 10x. **Example (Elixir/OTP):** GenServer silently restarts and loses accumulated state — appears "resilient" but data is gone. **Example (Any stack):** Rate-limited API silently returns cached/stale data instead of failing.
+- **Root Causes:**
+  1. LLM treats fallbacks as "graceful degradation" without modeling the quality delta between primary and fallback paths
+  2. Fallback path logged at INFO instead of WARNING — operators never notice
+  3. No metrics/counters on fallback activation — silent production degradation for weeks
+  4. "Works" conflated with "works correctly" — the system operates but at unacceptable performance
+- **Prevention:**
+  1. Every fallback path MUST log a WARNING (not INFO) explaining the degradation and its impact
+  2. If fallback is >10x slower or loses data → ABORT with clear error, don't silently degrade
+  3. Metrics: fallback activations must be observable (counter, structured log, alert threshold)
+  4. Litmus test: "If this fallback runs in production for a week unnoticed, what's the damage?" If damage > trivial → the fallback needs an alert, not just a log line
+
+## Mistake #38: Producer-Consumer Gap (Deferred Wiring That Never Completes)
+- **Detection:** For every method that returns a `List<T>`, `Iterator<T>`, emits events, or writes a data file: grep for callers/readers. Zero callers = gap. Distinct from Mistake #1 (orphan file) because the PRODUCER works correctly; the gap is the missing CONSUMER.
+- **Example (Java):** `MacroPrefabPlacer.getPendingPlacements()` returns placement instructions for 20 buildings — but no code ever calls it. The schematics are never pasted. **Example (Python):** Signal scorer writes `scored_signals.json` — no downstream reader processes it. **Example (TypeScript):** Redux action type `USER_PREFERENCES_UPDATED` dispatched — no reducer handles it, state never updates. **Example (Elixir):** GenServer casts a `:sync_data` message — no `handle_cast(:sync_data, _)` clause exists, message silently dropped. **Example (Any API):** Webhook endpoint registered at `/webhooks/payment` — no handler function processes incoming payloads.
+- **Root Causes:**
+  1. LLM builds the producer in one pass, plans to build the consumer "in the next iteration" — but the next iteration never comes or loses context
+  2. The producer compiles and tests correctly in isolation, giving false confidence
+  3. No gate that asks "who consumes this output?" before claiming the producer is done
+- **Prevention:**
+  1. When building a producer, the consumer MUST be wired in the SAME session
+  2. If consumer is genuinely deferred → flag as `// CONSUMER_MISSING — <what should read this>` in code AND in session summary
+  3. Pre-output gate: "For every new data output (return value, file, event, message), who reads it? If nobody → it's not done"
+  4. Detection heuristic: any `get*()`, `fetch*()`, `load*()`, `emit()`, or file write without a corresponding call site is a candidate
+
+## Mistake #39: Synchronous Default Trap (Blocking When Async Is Required)
+- **Detection:** Grep for sync I/O or blocking calls in async/event-driven contexts: `readFileSync` in Express handlers, `requests.get` in FastAPI async endpoints, `GenServer.call(_, _, :infinity)`, `Thread.sleep` in event loops, `Bukkit.getScheduler().runTask` wrapping heavy computation. The code works in isolation but kills throughput in production.
+- **Example (Java/Minecraft):** `block.setType()` called 200x per server tick on the main thread — each call triggers lighting update + chunk dirty flag. 384k blocks = 96 seconds of continuous lag. **Example (Python/FastAPI):** `requests.get(url)` in an `async def` endpoint — blocks the entire event loop, all concurrent requests stall. **Example (TypeScript/Node):** `fs.readFileSync()` in an Express handler — blocks the event loop for ALL requests during file read. **Example (Elixir):** `GenServer.call(pid, msg, :infinity)` — caller process hangs forever if target GenServer is stuck or slow. **Example (Any UI):** Heavy JSON parsing or image processing on the main/UI thread — app freezes, user sees "not responding".
+- **Root Causes:**
+  1. LLM defaults to the simplest API call without modeling the caller's runtime context (event loop, game tick, UI thread)
+  2. Sync version works in unit tests and scripts — failure only manifests under concurrent load
+  3. No pre-task declaration of concurrency model → LLM picks sync by default
+  4. Framework provides both sync and async APIs — LLM chooses sync because it's fewer lines of code
+- **Prevention:**
+  1. **API Bounding (Intent-Lock Phase 1):** Before writing code, declare the concurrency model: "I will use X for async, Y for sync boundaries"
+  2. Rule: If the runtime has an event loop, main thread, or tick system — ALL I/O and heavy computation goes off-thread. No exceptions.
+  3. Fallback prohibition: If an async API exists for the operation, the sync API is PROHIBITED in that context
+  4. Detection audit: `grep -rn "readFileSync\|requests\.get\|:infinity\|Thread\.sleep\|runBlocking" <async-context-dirs>/` must return 0 results

@@ -32,6 +32,9 @@ Before claiming ANY work is complete, verify each item:
 | 31 | SLO-Blind Deployment | SLOs defined before agent deployment |
 | 32 | Unsigned Plugin | Agent plugin signatures verified |
 | 33 | Stateful Without Saga | Multi-step workflows have rollback |
+| 37 | Silent Quality Degradation | Every fallback logs WARNING + is observable |
+| 38 | Producer-Consumer Gap | Every new data output has a consumer wired |
+| 39 | Synchronous Default Trap | No sync I/O in async/event-loop contexts |
 
 ## Quality Gates (Run ALL That Apply)
 
@@ -102,10 +105,13 @@ Before delivering any new backend service, infrastructure daemon, or CLI tool:
 3. If score 2-3: LDR required, but delivery not blocked. Advisory only.
 4. If score 0-1: no language gate.
 
-### Extended Mistake Scan (Mistakes #16-26 — STANDARD+ tier)
+### Extended Mistake Scan (Mistakes #16-26 + #37-39 — STANDARD+ tier)
 
 In addition to Mistakes #1-15, verify at STANDARD+ tier:
 - **Mistake #16 (Scaffold Illusion):** Compiles != works. Commented-out wiring = not delivered.
 - **Mistake #20 (Shell Escaping Corruption):** Remote deploy commands with unescaped variables.
 - **Mistake #25 (Fragile Language for Critical Systems):** Defaulting to familiar language without evaluating fragility criteria. If fragility score >=4 and non-Elixir was chosen without LDR, this is a delivery-blocking mistake.
 - **Mistake #26 (Missing LDR):** Building critical infrastructure without Language Decision Record. Pre-task fragility gate MUST run on every new project.
+- **Mistake #37 (Silent Quality Degradation):** Every fallback path must log WARNING + be observable. If fallback is >10x slower or loses data → must abort, not silently degrade.
+- **Mistake #38 (Producer-Consumer Gap):** For every new data output (return value, file, event, message) — verify a consumer exists. Zero callers = not done.
+- **Mistake #39 (Synchronous Default Trap):** If the runtime has an event loop, main thread, or tick system — verify ALL I/O and heavy computation runs off-thread. No sync I/O in async contexts.
