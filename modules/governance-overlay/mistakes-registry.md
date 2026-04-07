@@ -369,3 +369,41 @@
   2. Rule: If the runtime has an event loop, main thread, or tick system — ALL I/O and heavy computation goes off-thread. No exceptions.
   3. Fallback prohibition: If an async API exists for the operation, the sync API is PROHIBITED in that context
   4. Detection audit: `grep -rn "readFileSync\|requests\.get\|:infinity\|Thread\.sleep\|runBlocking" <async-context-dirs>/` must return 0 results
+
+## Mistake #40: Type-Semantic Mismatch (Wrong Column in Filter)
+- **Detection:** Supabase/SQL query uses a filter where the column's declared type doesn't match the value type. `grep -rn "\.gte\|\.lte\|\.eq\|\.gt\|\.lt" <project>/ | grep -v "test"` — for each, verify column type matches value type (UUID vs string, timestamp vs date, integer vs text).
+- **Example:** `supabase.from('rep_metadata').select('*').gte('id', today)` — comparing UUID column `id` to a date string `'2026-04-07'`. Query silently returns wrong results because UUID string comparison is lexicographic, not temporal.
+- **Root Causes:**
+  1. LLM sees "filter by today" and grabs the first column without checking its type in the CREATE TABLE
+  2. Supabase JS client doesn't validate column types at compile time — the query runs but returns garbage
+  3. No test exercises the query with production-like data
+- **Prevention:**
+  1. Before writing ANY Supabase filter (`.eq`, `.gte`, `.lte`, `.in`), verify the column's declared type in the schema
+  2. UUID columns: only filter with UUID strings. Timestamp columns: only filter with ISO datetime strings. Text columns: only filter with text
+  3. Pre-commit audit: for each `.gte`/`.lte` call, the value type must match the column type in CREATE TABLE
+
+## Mistake #41: Security Amnesia (Zero RLS on Fresh Schema)
+- **Detection:** `grep -rn "CREATE TABLE" <migrations>/` count vs `grep -rn "ENABLE ROW LEVEL SECURITY" <migrations>/` count. If tables > RLS enables, security is missing.
+- **Example:** 16 Supabase tables created across 3 migrations with zero `ENABLE ROW LEVEL SECURITY` or `CREATE POLICY` statements. The anon key (shipped in the client bundle) grants full read/write access to all data.
+- **Root Causes:**
+  1. LLM focuses on feature delivery and defers security to "hardening phase" that never happens
+  2. Single-user assumption: "only one user, no need for RLS" — but the anon key is PUBLIC, anyone can query
+  3. No governance gate that checks RLS count vs table count
+- **Prevention:**
+  1. Every `CREATE TABLE` in a Supabase migration MUST be followed by `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and at least one `CREATE POLICY`
+  2. Even single-user apps need RLS — the anon key is embedded in the client bundle
+  3. Pre-commit audit: count tables vs RLS policies. If tables > policies, BLOCK the commit
+  4. RPC functions that bypass RLS must be marked `SECURITY DEFINER` explicitly
+
+## Mistake #42: Hardcode Drift (Inline Constants from DB State)
+- **Detection:** `grep -rn "total_skills.*22\|skills_count.*22\|: 22," <project>/` or any inline number that represents a count derivable from the database.
+- **Example:** `total_skills: 22` hardcoded in 5 locations across case-study.ts, model-readiness.ts, and framing functions. When a 23rd skill is added to the database, all 5 locations silently report wrong totals.
+- **Root Causes:**
+  1. LLM knows the current DB state at code-generation time and inlines it as a constant
+  2. No test verifies the constant matches the DB count
+  3. Constants feel "safe" because they compile — but they drift from source of truth silently
+- **Prevention:**
+  1. Never hardcode a value that derives from database state (counts, mappings, enums, configurations)
+  2. Always query the source of truth. If performance is a concern, cache with a TTL — but the source must be the database
+  3. Skill→group mappings, feature flags, category lists: all must come from DB, not inline Records
+  4. Detection heuristic: any integer constant that matches a `SELECT COUNT(*)` from a table is a candidate for hardcode drift
