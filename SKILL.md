@@ -32,6 +32,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | agent governance, AGT, OWASP ASI | W: Agent Gov | `parts/sleepy/agent-governance.md` |
 | zero-crash, TTY, sandbox, process isolation | ZC: Zero-Crash | `parts/sleepy/zero-crash.md` |
 | reverse engineer, video analysis, YouTube, competitor, SOTA | VRE: Video-RE | `parts/sleepy/video-re.md` |
+| knowledge graph, graphify, obsidian, vault | KG: Knowledge Graph | `parts/sleepy/knowledge-graph.md` |
 
 ## Quick Reference
 

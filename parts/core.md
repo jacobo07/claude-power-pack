@@ -8,6 +8,7 @@ Before ANY reasoning or action, execute this scan:
 1. **Workspace snapshot**: `ls -la ./` — establish contents of current directory.
 2. **Manifest detection** (read first 1-2 found, in priority order):
    `PROJECT.md` > `CLAUDE.md` > `GLOBAL_PRAXIS.md` > `package.json` > `pyproject.toml` > `Cargo.toml` > `go.mod` > `Makefile` > `CMakeLists.txt` > `pom.xml` > `build.gradle` > `README.md`
+2.5. **Knowledge Graph check**: If `_knowledge_graph/INDEX.md` exists, `Read` it. Use the graph for architecture discovery (modules, classes, dependencies) instead of grep/glob scanning. Follow `[[wikilinks]]` to drill into specific nodes. Max 10 nodes per task.
 3. **Context extraction** — from manifests, derive:
    - **PROJECT**: name + purpose (what is this?)
    - **STACK**: language(s) + framework(s) + build tool
