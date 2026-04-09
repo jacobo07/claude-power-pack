@@ -437,3 +437,12 @@
   1. Pull from ALL available data fields: `data.message`, `data.tool_input.description`, `data.tool_input.query` — not just content/command/prompt
   2. Default to STANDARD (not LIGHT) when no keywords match — LIGHT should be opt-in, not the fallback
   3. If the platform provides a SessionStart hook event, use that instead of PreToolUse for classification
+
+## Mistake #46: Overblocking Access to Prevent Duplication
+- **Detection:** A "do not re-invoke" or "already loaded" directive blocks a skill/module that contains UNIQUE content not available through the auto-loaded path. Test: diff the auto-loaded content vs the skill content. If the skill has rules/parts not present in the auto-load, the block is too broad.
+- **Example:** Hook injects `modules/executionos-lite/core.md` (Constitution Core 5). Message says "Do NOT re-invoke /claude-power-pack". But the skill loads `parts/core.md` (PART A0 Assimilation Scan, E1-E11 Error Patterns, PART Q Leash) — content NOT in modules/. Those rules become inaccessible.
+- **Root Cause:** Treating two content systems as fully overlapping when they are only partially overlapping. The anti-duplication fix was correct for the shared subset but overreached by blocking the unique subset.
+- **Prevention:**
+  1. Before adding "do not invoke" directives, diff the two content sources. Map shared vs unique content.
+  2. Use targeted messaging: "Modules X, Y already loaded — skill available for parts Z, W (not in hook)."
+  3. Never use blanket "do not invoke" — always specify WHAT is already loaded and WHAT remains available.
