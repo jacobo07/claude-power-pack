@@ -407,3 +407,33 @@
   2. Always query the source of truth. If performance is a concern, cache with a TTL — but the source must be the database
   3. Skill→group mappings, feature flags, category lists: all must come from DB, not inline Records
   4. Detection heuristic: any integer constant that matches a `SELECT COUNT(*)` from a table is a candidate for hardcode drift
+
+## Mistake #43: The Quine Scanner Bug (Self-Referential Detection)
+- **Detection:** A scaffold audit / linter / code scanner reports violations in its own source file — specifically in the lines where detection patterns are defined as string literals.
+- **Example:** `zero-crash-gate.js` defines `{ regex: /:infinity\b/ }` to detect infinite timeouts. The scaffold audit scans `.js` files, finds the literal `:infinity` in line 82 of its own file, and reports it as a CRITICAL violation. This creates `BLOCKED_DELIVERY.md` with 6 failed fix attempts — because every fix attempt still contains the literal in the pattern definition.
+- **Root Cause:** The scanner's pattern definitions are written as readable string literals in a language the scanner also covers. The observer cannot observe itself without interference (Heisenberg applied to linters).
+- **Prevention:**
+  1. Scanner pattern definitions must be **anti-quine encoded** — break string literals via concatenation so the source text doesn't contain the literal being detected
+  2. Fix pattern: `new RegExp(':infin' + 'ity\\b')` — the source file no longer contains `:infinity` as a scannable token
+  3. Same for string patterns in Python linters: `r"TO" + r"DO:?\s"` instead of `r"TODO:?\s"`
+  4. Audit for this at pattern-creation time: any file that (a) defines regex/string patterns AND (b) is in a language the scanner covers is vulnerable
+  5. Test: after adding any new scanner pattern, run the scanner against its own file and verify 0 self-detections
+
+## Mistake #44: Dual-Loader Anti-Pattern (Double Context Injection)
+- **Detection:** A hook injects file content via `additionalContext` AND also tells the agent to invoke a skill that loads overlapping content. Both paths fire → same concepts loaded twice → ~2000-5000 wasted tokens per session.
+- **Example:** `session-init.js` loads `modules/executionos-lite/core.md` + `modules/governance-overlay/core.md` into context. Then a snippet says "Activate /claude-power-pack" which loads `parts/core.md` + `parts/execution.md` — overlapping governance and execution rules.
+- **Root Cause:** Two content-delivery systems (hook injection + skill invocation) built independently, never reconciled. Each assumes it's the sole loader.
+- **Prevention:**
+  1. One loader per concern — if the hook injects content, it must NOT also ask the agent to invoke the skill (or vice versa)
+  2. Hook message should say "content ALREADY loaded" to prevent agent from re-invoking
+  3. Audit at integration time: grep for file paths in both hook code AND skill definitions; overlap = violation
+  4. Token budget: measure hook injection size + skill load size; if both fire, sum exceeds tier budget
+
+## Mistake #45: Hook Input Blindness (Classifying on Wrong Data)
+- **Detection:** A PreToolUse hook classifies task complexity from `tool_input` fields, but the first tool call (usually Read/Glob) contains file paths, not user intent. Result: tier classification is almost always LIGHT regardless of actual task complexity.
+- **Example:** User says "refactor the entire auth system" (DEEP tier). First tool call is `Read { file_path: "src/auth.ts" }`. Hook reads `tool_input.content` → empty. `tool_input.command` → empty. Classifies as LIGHT. Loads minimal governance.
+- **Root Cause:** PreToolUse hooks receive the tool's parameters, not the user's original message. The hook assumes tool_input contains user intent.
+- **Prevention:**
+  1. Pull from ALL available data fields: `data.message`, `data.tool_input.description`, `data.tool_input.query` — not just content/command/prompt
+  2. Default to STANDARD (not LIGHT) when no keywords match — LIGHT should be opt-in, not the fallback
+  3. If the platform provides a SessionStart hook event, use that instead of PreToolUse for classification
