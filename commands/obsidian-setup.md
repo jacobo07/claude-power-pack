@@ -42,8 +42,10 @@ Check that the current directory is a valid project:
 2. Run the Knowledge Graph generator:
 
 ```bash
-python ~/.claude/skills/claude-power-pack/tools/kobi_graphify.py --project . $MODE
+python "$(dirname "$(find ~/.claude/skills -name kobi_graphify.py -path '*/claude-power-pack/*' 2>/dev/null | head -1)")/kobi_graphify.py" --project . $MODE
 ```
+
+**Fallback** if the above fails: use Glob to find `kobi_graphify.py` under `~/.claude/skills/`, then run it with `python <path> --project . $MODE`.
 
 3. Parse the JSON output. Report:
    - Number of nodes generated

@@ -3,7 +3,7 @@
 kobi-graphify — Knowledge Graph Generator for Claude Power Pack.
 
 Parses source code into an Obsidian-compatible Markdown vault with [[wikilinks]].
-Claude reads INDEX.md (~400 tokens) instead of scanning raw code (~5,000-15,000 tokens).
+Claude reads INDEX.md (~1,500 tokens) instead of scanning raw code (~5,000-15,000 tokens).
 
 Usage:
     python kobi_graphify.py --project /path/to/project
@@ -31,6 +31,7 @@ from typing import Optional
 VAULT_DIR = "_knowledge_graph"
 META_DIR = "_meta"
 META_FILE = "graph_meta.json"
+NODES_CACHE_FILE = "nodes_cache.json"
 
 SKIP_DIRS = {
     "node_modules", ".git", "__pycache__", ".venv", "venv", "env",
@@ -130,8 +131,8 @@ def file_hash(path: Path) -> str:
 
 
 def estimate_tokens(text: str) -> int:
-    """Rough token estimate: words * 1.33."""
-    return int(len(text.split()) * 1.33)
+    """Rough token estimate: words * 2.0 (conservative for code-heavy content)."""
+    return int(len(text.split()) * 2.0)
 
 
 def relative_path(file_path: Path, project_dir: Path) -> str:
@@ -143,17 +144,22 @@ def relative_path(file_path: Path, project_dir: Path) -> str:
 
 
 def make_node_id(rel_path: str, name: str, node_type: str) -> str:
-    """Generate a unique node ID for vault filenames."""
+    """Generate a unique node ID for vault filenames.
+
+    Includes file path for class/function nodes to prevent collisions
+    when multiple files define items with the same name (e.g., main()).
+    """
     base = rel_path.rsplit(".", 1)[0]  # strip extension
+    path_prefix = safe_filename(base)
     if node_type == "module":
-        return f"modules/{safe_filename(base)}"
+        return f"modules/{path_prefix}"
     elif node_type == "class":
-        return f"classes/{safe_filename(name)}"
+        return f"classes/{path_prefix}--{safe_filename(name)}"
     elif node_type == "function":
-        return f"functions/{safe_filename(name)}"
+        return f"functions/{path_prefix}--{safe_filename(name)}"
     elif node_type == "dependency":
         return f"dependencies/{safe_filename(name)}"
-    return f"modules/{safe_filename(base)}"
+    return f"modules/{path_prefix}"
 
 
 # ---------------------------------------------------------------------------
@@ -610,7 +616,7 @@ class JavaScriptParser:
             return methods
 
         # Scan for methods within ~500 lines
-        search_end = min(len(source), brace_pos + 20000)
+        search_end = min(len(source), brace_pos + 50000)
         region = source[brace_pos:search_end]
 
         for m in self.RE_METHOD.finditer(region):
@@ -739,7 +745,7 @@ class JavaParser:
         if brace_pos == -1:
             return methods
 
-        search_end = min(len(source), brace_pos + 30000)
+        search_end = min(len(source), brace_pos + 50000)
         region = source[brace_pos:search_end]
 
         for m in self.RE_METHOD.finditer(region):
@@ -967,24 +973,28 @@ def render_index_md(nodes: list[GraphNode], project_name: str, project_dir: str)
     if modules:
         parts.append("## Modules")
         # Sort by path for grouping
-        sorted_mods = sorted(modules, key=lambda n: n.file_path)
-        for node in sorted_mods:
+        sorted_mods = sorted(modules, key=lambda n: len(n.used_by), reverse=True)
+        for node in sorted_mods[:50]:
             inbound = len(node.used_by)
             suffix = f" ({inbound} refs)" if inbound > 0 else ""
             summary_text = f" — {node.summary}" if node.summary else ""
             parts.append(f"- [[{node.node_id}|{node.file_path}]]{summary_text}{suffix}")
+        if len(modules) > 50:
+            parts.append(f"- _...and {len(modules) - 50} more (see architecture/ views)_")
         parts.append("")
 
     # Classes
     if classes:
         parts.append("## Classes")
         sorted_cls = sorted(classes, key=lambda n: len(n.used_by), reverse=True)
-        for node in sorted_cls:
+        for node in sorted_cls[:30]:
             inbound = len(node.used_by)
             suffix = f" ({inbound} refs)" if inbound > 0 else ""
             summary_text = f" — {node.summary}" if node.summary else ""
             base = f" extends {', '.join(node.inherits)}" if node.inherits else ""
             parts.append(f"- [[{node.node_id}|{node.name}]]{base}{summary_text}{suffix}")
+        if len(classes) > 30:
+            parts.append(f"- _...and {len(classes) - 30} more_")
         parts.append("")
 
     # Top standalone functions (max 20 to keep index lean)
@@ -1152,11 +1162,12 @@ class GraphBuilder:
         # Write architecture views
         self._write_architecture_views(vault_path)
 
-        # Write metadata
+        # Write metadata + node cache
         meta = self._build_metadata()
         (meta_path / META_FILE).write_text(
             json.dumps(meta, indent=2), encoding="utf-8"
         )
+        self._save_node_cache()
 
         # Stats
         index_tokens = estimate_tokens(index_content)
@@ -1182,7 +1193,7 @@ class GraphBuilder:
     def _discover_files(self) -> list[Path]:
         """Walk project directory and collect source files."""
         files = []
-        for root, dirs, filenames in os.walk(self.project_dir):
+        for root, dirs, filenames in os.walk(self.project_dir, followlinks=False):
             # Prune skip directories in-place
             dirs[:] = [d for d in dirs if d not in SKIP_DIRS and not d.startswith(".")]
 
@@ -1194,8 +1205,17 @@ class GraphBuilder:
                     continue
                 # Skip large files
                 try:
-                    if fp.stat().st_size > MAX_FILE_SIZE:
+                    size = fp.stat().st_size
+                    if size > MAX_FILE_SIZE or size == 0:
                         continue
+                except OSError:
+                    continue
+                # Skip binary files (check first 8KB for null bytes)
+                try:
+                    with open(fp, "rb") as f:
+                        chunk = f.read(8192)
+                        if b"\x00" in chunk:
+                            continue
                 except OSError:
                     continue
                 files.append(fp)
@@ -1219,6 +1239,67 @@ class GraphBuilder:
             "languages": list(set(n.language for n in self.nodes)),
         }
 
+    def _save_node_cache(self) -> None:
+        """Serialize all nodes to JSON cache for incremental sync."""
+        cache_path = self.project_dir / VAULT_DIR / META_DIR / NODES_CACHE_FILE
+
+        def node_to_dict(n: GraphNode) -> dict:
+            return {
+                "node_id": n.node_id, "name": n.name, "node_type": n.node_type,
+                "file_path": n.file_path, "language": n.language,
+                "line_start": n.line_start, "line_end": n.line_end,
+                "summary": n.summary, "imports": n.imports,
+                "dependencies": n.dependencies, "used_by": n.used_by,
+                "methods": [
+                    {"name": m.name, "lines": m.lines, "visibility": m.visibility,
+                     "summary": m.summary, "params": m.params, "returns": m.returns,
+                     "is_async": m.is_async, "decorators": m.decorators}
+                    for m in n.methods
+                ],
+                "inherits": n.inherits, "implements": n.implements,
+                "exports": n.exports, "decorators": n.decorators,
+                "business_rules": n.business_rules, "extra": n.extra,
+            }
+
+        data = [node_to_dict(n) for n in self.nodes]
+        cache_path.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+
+    def _load_node_cache(self) -> list[GraphNode]:
+        """Load nodes from JSON cache."""
+        cache_path = self.project_dir / VAULT_DIR / META_DIR / NODES_CACHE_FILE
+        if not cache_path.exists():
+            return []
+
+        try:
+            data = json.loads(cache_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return []
+
+        nodes = []
+        for d in data:
+            methods = [
+                MethodInfo(
+                    name=m["name"], lines=m["lines"], visibility=m["visibility"],
+                    summary=m["summary"], params=m.get("params", []),
+                    returns=m.get("returns", ""), is_async=m.get("is_async", False),
+                    decorators=m.get("decorators", []),
+                )
+                for m in d.get("methods", [])
+            ]
+            nodes.append(GraphNode(
+                node_id=d["node_id"], name=d["name"], node_type=d["node_type"],
+                file_path=d["file_path"], language=d["language"],
+                line_start=d.get("line_start", 0), line_end=d.get("line_end", 0),
+                summary=d.get("summary", ""), imports=d.get("imports", []),
+                dependencies=d.get("dependencies", []), used_by=d.get("used_by", []),
+                methods=methods, inherits=d.get("inherits", []),
+                implements=d.get("implements", []), exports=d.get("exports", []),
+                decorators=d.get("decorators", []),
+                business_rules=d.get("business_rules", []),
+                extra=d.get("extra", {}),
+            ))
+        return nodes
+
     def sync(self) -> dict:
         """Incremental sync — only re-parse files whose hash changed."""
         vault_path = self.project_dir / VAULT_DIR
@@ -1238,6 +1319,18 @@ class GraphBuilder:
             self.log("[graphify] Corrupt metadata. Running full scan.")
             self.scan()
             return self.write_vault()
+
+        # Load cached nodes
+        cached_nodes = self._load_node_cache()
+        if not cached_nodes:
+            self.log("[graphify] No node cache found. Running full scan.")
+            self.scan()
+            return self.write_vault()
+
+        # Index cached nodes by source file
+        cached_by_file: dict[str, list[GraphNode]] = {}
+        for node in cached_nodes:
+            cached_by_file.setdefault(node.file_path, []).append(node)
 
         # Discover current files and compute hashes
         files = self._discover_files()
@@ -1276,9 +1369,10 @@ class GraphBuilder:
 
         self.log(f"[graphify] Sync: {len(changed)} changed, {len(added)} added, {len(removed)} removed")
 
-        # Re-parse changed and added files
+        # Re-parse ONLY changed and added files
         re_parse_rels = set(changed + added)
         new_nodes: list[GraphNode] = []
+        parsed_count = 0
         for rel in re_parse_rels:
             fp = file_by_rel.get(rel)
             if not fp:
@@ -1290,24 +1384,22 @@ class GraphBuilder:
             try:
                 file_nodes = parser.parse(fp, self.project_dir)
                 new_nodes.extend(file_nodes)
+                parsed_count += 1
             except Exception as e:
                 self.log(f"[graphify] WARN: Failed to parse {fp}: {e}")
 
-        # Load existing nodes from vault for unchanged files
-        unchanged_rels = set(current_hashes.keys()) - re_parse_rels
+        self.log(f"[graphify] Re-parsed {parsed_count} files (skipped {len(current_hashes) - len(re_parse_rels)} unchanged)")
+
+        # Load cached nodes for unchanged files (no re-parsing!)
+        unchanged_rels = set(current_hashes.keys()) - re_parse_rels - set(removed)
         for rel in unchanged_rels:
-            fp = file_by_rel.get(rel)
-            if not fp:
-                continue
-            lang = LANGUAGE_MAP.get(fp.suffix, "")
-            parser = self.parsers.get(lang)
-            if not parser:
-                continue
-            try:
-                file_nodes = parser.parse(fp, self.project_dir)
-                new_nodes.extend(file_nodes)
-            except Exception:
-                pass
+            if rel in cached_by_file:
+                # Clear old link data — will be rebuilt by resolve_links
+                for node in cached_by_file[rel]:
+                    node.dependencies = [d for d in node.dependencies
+                                         if d.startswith("[[modules/")]
+                    node.used_by = []
+                new_nodes.extend(cached_by_file[rel])
 
         self.nodes = new_nodes
 
@@ -1325,6 +1417,7 @@ class GraphBuilder:
         stats["changed"] = len(changed)
         stats["added"] = len(added)
         stats["removed"] = len(removed)
+        stats["re_parsed"] = parsed_count
         return stats
 
     def _write_architecture_views(self, vault_path: Path) -> None:
