@@ -9,6 +9,7 @@ Before ANY reasoning or action, execute this scan:
 2. **Manifest detection** (read first 1-2 found, in priority order):
    `PROJECT.md` > `CLAUDE.md` > `GLOBAL_PRAXIS.md` > `package.json` > `pyproject.toml` > `Cargo.toml` > `go.mod` > `Makefile` > `CMakeLists.txt` > `pom.xml` > `build.gradle` > `README.md`
 2.5. **Knowledge Graph check**: If `_knowledge_graph/INDEX.md` exists, `Read` it. Use the graph for architecture discovery (modules, classes, dependencies) instead of grep/glob scanning. Follow `[[wikilinks]]` to drill into specific nodes. Max 10 nodes per task.
+2.6. **Governance Vault check**: If `~/.claude/vault/INDEX.md` exists, `Read` it. Use the vault for on-demand governance (leyes, mistakes, gates, protocols) instead of loading everything from CLAUDE.md. Follow `[[wikilinks]]` — max 5 pages per task. See `parts/sleepy/governance-vault.md` for routing table.
 3. **Context extraction** — from manifests, derive:
    - **PROJECT**: name + purpose (what is this?)
    - **STACK**: language(s) + framework(s) + build tool

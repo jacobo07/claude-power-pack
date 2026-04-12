@@ -33,6 +33,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | zero-crash, TTY, sandbox, process isolation | ZC: Zero-Crash | `parts/sleepy/zero-crash.md` |
 | reverse engineer, video analysis, YouTube, competitor, SOTA | VRE: Video-RE | `parts/sleepy/video-re.md` |
 | knowledge graph, graphify, obsidian, vault | KG: Knowledge Graph | `parts/sleepy/knowledge-graph.md` |
+| governance vault, leyes, mistakes, gates, vault sync | GV: Governance Vault | `parts/sleepy/governance-vault.md` |
 
 ## Quick Reference
 
@@ -50,3 +51,5 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | "token audit" | Load sleepy/token-tools.md | on demand |
 | "runtime check" | Load sleepy/infrastructure.md | on demand |
 | `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
+| `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
+| `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
