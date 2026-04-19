@@ -84,7 +84,7 @@ Action: Note "FRAGILITY: [pattern] — Elixir equivalent: [solution]" in session
 
 ## PART M — SESSION REBIRTH
 
-- `!kclear`: dump memory + task → HANDOFF_TASK.md → /clear
-- `Inicia el handoff`: read HANDOFF_TASK.md → resume
-- `!phelp`: show command reference
-- Context rot >15 exchanges → suggest !kclear
+- `/kclear` (v2): one transactional call to `python tools/session_checkpoint.py record` writes handoff + MEMORY.md index + insights.json atomically. Dedup by hash. See `~/.claude/commands/kclear.md`.
+- `Inicia el handoff`: Read `memory/project_session_handoff.md` → resume from its summary + pending list.
+- Context rot >15 exchanges OR context budget <30% free → suggest `/kclear` pre-emptively.
+- Insights with `path` field surface via Token Shield gatekeeper when that file is next read.
