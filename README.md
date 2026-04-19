@@ -1,8 +1,10 @@
 # Claude Power Pack v8.0
 
-Universal AI execution framework for Claude Code. Zero-issue delivery, self-healing governance, tiered token loading, video-enhanced reverse engineering, and project-aware daemon generation.
+Universal AI execution framework for Claude Code. Zero-issue delivery, self-healing governance, tiered token loading, video-enhanced reverse engineering, project-aware daemon generation, and a cross-project engineering-rigor Flywheel.
 
-**70+ files | 12 modules | 8 sleepy parts | 3 commands | 4 depth tiers | Cross-platform (Windows + Unix)**
+**130+ files | 13 modules | 10 sleepy parts | 7 commands | 4 depth tiers | Cross-platform (Windows + Unix)**
+
+See the [SkillBank Index](./SKILLBANK.md) for a scannable catalog of every command, module, sleepy part, and tool with their Process / Rules / Output contracts.
 
 ---
 
@@ -47,6 +49,22 @@ This single command scans your project, detects the stack (11 languages, 10+ fra
 
 ---
 
+## The Flywheel Stack (recent)
+
+Five interlocking systems that make engineering rigor compound across projects and sessions:
+
+**1. Global Baseline Ledger** — `tools/baseline_ledger.py` tracks four independent rigor axes (`k_qa`, `k_router`, `engineering_baseline`, `highest_dna`) across every registered project. A Translator Hook (`~/.claude/hooks/baseline-translator.js`) fires on every prompt, detects which axis the prompt is advancing, and elevates the per-axis `global_max`. Obsidian mirror at `~/.claude/knowledge_vault/governance/global_baseline_ledger.md`.
+
+**2. Council of 5 (TheWarRoom)** — `modules/governance-overlay/council.md` defines an inline 5-advisor structured self-review (Contrarian, First Principles, Expansionist, Outsider, Executor) that runs before every STANDARD+ emission. Verdicts are `A+/A/B/REJECT`; B or REJECT blocks output and triggers Rejection Recovery (max 3 iterations, then HALT). No external model calls — diversity comes from structured prompts, not sub-agents.
+
+**3. Mistakes→Curriculum Loop** — `modules/governance-overlay/mistake-frequency.json` + `tools/mistake_frequency.py` count how often each Mistake-ID from the 51-entry registry recurs. Post-output failure capture increments the counter; pre-task Section 9 surfaces entries crossing the threshold (default 3) as a `WATCH: Mistake #N recurring` banner and auto-loads the prevention rule into the Never-Do Matrix. Recurring errors get more prompt real estate until they stop recurring. The Council's Howard's Loop also reads this file so advisors see recurring patterns on every verdict.
+
+**4. Doctrine Law-ID Registry** — `knowledge/doctrine-laws.md` canonicalizes named doctrine laws (DNA-400 Supremacía Empírica, DNA-2500 Visual Sovereignty, DNA-25000 Global Singularity Baseline), keeping law identifiers separate from the rigor-measurement axis tracked in the ledger.
+
+**5. Token Shield (Austerity Rule)** — `tools/audit_cache.py` + `_audit_cache/source_map.json` (SHA-256 integrity map) + `_audit_cache/semantic_tags.json` (capability-tag sidecar). Before Explore agents or bulk-reads, the Austerity Rule (in `SKILL.md` + `parts/core.md` PART Q) directs use of `--check-all` and cached `--summary <path>` output when hashes match. Raw-reads only on hash mismatch, missing cache, or explicit deep-refactor.
+
+---
+
 ## How It Works: Tiered Loading
 
 The Power Pack never loads everything at once. It classifies each task and loads only what's needed:
@@ -69,6 +87,10 @@ The Power Pack never loads everything at once. It classifies each task and loads
 | `/cpp-customclaw create [name]` | Scan project and generate a custom AI daemon tailored to its stack |
 | `/cpp-update` | Update Claude Power Pack to the latest version from GitHub |
 | `/cpp-autoupdate` | Toggle automatic update checking on session start |
+| `/obsidian-setup` | Generate a Knowledge Graph vault from the current project (architecture discovery via wikilinks, max 10 nodes/task) |
+| `/cpp-vault-setup` | Extract monolithic CLAUDE.md into an Obsidian-compatible governance vault |
+| `/cpp-vault-sync` | Regenerate governance vault `INDEX.md` and sync metadata |
+| `/resume` | Restore context from previous session via Lazarus Protocol (`/resume last` for instant warm-up) |
 
 ---
 
@@ -103,6 +125,8 @@ When you correct the AI, it doesn't just fix the code. It: halts all execution, 
 | **Agent Governance** | AGT, OWASP ASI, agent security | Trust rings (0-3), policy templates, SDK verification |
 | **Zero-Crash** | TTY, sandbox, process isolation | TTY restoration, process sandboxing, advisory quality gates |
 | **Video-RE** | reverse engineer, video analysis, YouTube, SOTA | Whisper transcription, frame analysis, vision scoring, competitor decomposition |
+| **Knowledge Graph** | knowledge graph, graphify, obsidian, vault | `kobi_graphify.py` engine, wikilink resolution, Obsidian-native architecture discovery |
+| **Governance Vault** | governance vault, leyes, mistakes, gates, vault sync | On-demand rule loading, max 5 vault pages/task, `vault_sync.py` metadata regeneration |
 
 ---
 
@@ -229,15 +253,20 @@ For high-complexity work (new architecture, CI/CD pipelines, system design), the
 
 ```
 claude-power-pack/
-├── SKILL.md                    # Skill manifest — tiered loading triggers
+├── SKILL.md                    # Skill manifest — tiered loading triggers + Austerity Rule
+├── SKILLBANK.md                # One-page catalog of every command/module/sleepy-part/tool
 ├── VERSION                     # 8.0.0
 ├── install.sh / install.ps1    # Cross-platform installers (6 phases)
-├── commands/
+├── commands/                   # 7 slash commands
 │   ├── customclaw.md           # /cpp-customclaw — project-aware daemon generator
 │   ├── update.md               # /cpp-update — pull latest version
-│   └── autoupdate.md           # /cpp-autoupdate — toggle auto-update check
+│   ├── autoupdate.md           # /cpp-autoupdate — toggle auto-update check
+│   ├── obsidian-setup.md       # /obsidian-setup — Knowledge Graph vault for a project
+│   ├── vault-setup.md          # /cpp-vault-setup — extract CLAUDE.md into vault
+│   ├── vault-sync.md           # /cpp-vault-sync — regenerate vault INDEX
+│   └── resume.md               # /resume — Lazarus Protocol session restore
 ├── parts/
-│   ├── core.md                 # Always-active rules (~800 tok)
+│   ├── core.md                 # Always-active rules (~800 tok) + PART Q Austerity Rule
 │   ├── execution.md            # Standard+ rules (~800 tok)
 │   └── sleepy/                 # On-demand parts (0 tok until triggered)
 │       ├── frontend.md
@@ -247,26 +276,44 @@ claude-power-pack/
 │       ├── infrastructure.md
 │       ├── agent-governance.md
 │       ├── zero-crash.md
-│       └── video-re.md
-├── modules/
+│       ├── video-re.md
+│       ├── knowledge-graph.md
+│       └── governance-vault.md
+├── modules/                    # 13 pluggable subsystems
 │   ├── autoresearch/           # RSS + YouTube + signal scoring + video analysis
 │   ├── daemon/                 # Crash recovery + memory tuning + KobiiClaw
 │   ├── dispatcher/             # Cross-repo prompt routing
 │   ├── executionos-lite/       # 25-rule constitution + 20 phases + 6 overlays
-│   ├── governance-overlay/     # Pre-task, during-task, pre-output gates
+│   ├── governance-overlay/     # Pre-task, during-task, pre-output gates + Council of 5
+│   │   ├── council.md          # 5-advisor inline structured self-review (A+/A/B/REJECT)
+│   │   ├── mistakes-registry.md# 51-entry error catalog
+│   │   └── mistake-frequency.json # Recurrence counter fed by post-output → pre-task loop
 │   ├── infrastructure/         # VPS query tools
 │   ├── memory-engine/          # RCA self-healing persistence
 │   ├── omnicapture/            # Runtime telemetry (VPS backend + adapters)
 │   ├── agent-governance/       # OWASP ASI, trust rings, policy templates
 │   ├── agent-lightning/        # Trace-based performance optimization
+│   ├── sleepless_qa/           # Closed-loop empirical verification (DNA-400 evidence)
 │   ├── token-optimizer/        # 6 token analysis tools
 │   └── zero-crash/             # TTY isolation, sandbox, advisory gates
-│       ├── hooks/              # 3 hooks (gate, tty-restore, process-sandbox)
+│       ├── hooks/              # TTY-restore, process-sandbox, zero-issue-gate, golden-pattern-inject
 │       ├── sandbox-wrapper.sh  # Unix process isolation
 │       ├── sandbox-wrapper.ps1 # Windows process isolation
 │       └── vps/                # Anonymous crash telemetry receiver
-├── tools/                      # Standalone utilities (memory manager, zombie killer)
-└── knowledge/                  # AKOS briefs, playbooks, integration plans
+├── tools/                      # CLI utilities
+│   ├── baseline_ledger.py      # Multi-axis ecosystem rigor ledger (k_qa / k_router / engineering_baseline / highest_dna)
+│   ├── mistake_frequency.py    # Mistakes→Curriculum recurrence counter
+│   ├── audit_cache.py          # SHA-256 integrity map + cached summaries (Token Shield)
+│   ├── council_verdict.py      # Council verdict recorder
+│   ├── kobi_graphify.py        # Knowledge Graph engine for Obsidian vaults
+│   ├── vault_sync.py           # Governance vault INDEX regenerator
+│   ├── vault_extractor.py      # CLAUDE.md → topic pages extractor
+│   ├── memory_manager.py       # Hot/cold context splitter
+│   ├── obsidian_enrich.py      # Vault frontmatter + wikilink enrichment
+│   ├── chatgpt_distiller.py    # Transcript distiller
+│   └── electron_priority_manager.ps1 # OS priority management for Electron
+├── _audit_cache/               # Token Shield artifacts (source_map.json generated, semantic_tags.json committed)
+└── knowledge/                  # AKOS briefs, playbooks, integration plans, iteration prompts, doctrine-laws registry
 ```
 
 ---
