@@ -116,3 +116,4 @@ Words "done", "complete", "ready", "fixed" require: compile passes + tests pass 
 - >3 files in a single turn = STOP and ask user
 - >500 line files = read only relevant sections
 - **Path enforcement (E11):** In global skills or shared modules, any absolute path (`C:/`, `/home/`, `/c/`) in instruction files is a STOP condition. Fix before proceeding.
+- **Austerity Rule (Token Shield):** Before Explore agents or bulk-reads, check `./_audit_cache/source_map.json` (when present). Use `python tools/audit_cache.py --project . --summary <path>` for unchanged files instead of raw-reading. Semantic tags live in `./_audit_cache/semantic_tags.json` — use them to choose which files are worth touching at all.

@@ -53,3 +53,18 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
+
+## SkillBank Index
+
+Full catalog of slash commands, modules, sleepy parts, and tools — 1-line Process/Rules/Output per entry: [`./SKILLBANK.md`](./SKILLBANK.md).
+
+## Austerity Rule (Token Shield)
+
+Before Explore agents or bulk-reads in this repo, check `./_audit_cache/source_map.json` first:
+
+```bash
+python tools/audit_cache.py --project . --check-all        # report changed vs unchanged
+python tools/audit_cache.py --project . --summary <path>   # cached 1-line summary (no full file read)
+```
+
+If a file's SHA matches the cache, prefer the cached summary. Only raw-read on hash mismatch, missing cache entry, or explicit deep-refactor request. See `./_audit_cache/semantic_tags.json` for module-purpose tags.
