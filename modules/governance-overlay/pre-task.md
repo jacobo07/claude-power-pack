@@ -189,3 +189,39 @@ Before presenting the plan, answer 3 questions:
 ### 8d. Gate Output
 
 The Intent-Lock produces a mental artifact (internal, not printed unless FORENSIC tier or user requests it) that feeds into Phase 5 (PLAN). The implementation plan MUST be consistent with declared API bounding and MUST NOT violate the Never-Do Matrix. Pre-output checklist item 11 verifies this consistency at delivery time.
+
+## 9. Recurring Mistake Watchlist (Mistakes→Curriculum) — ADVISORY
+
+> Closes the post-output→pre-task loop. The frequency ledger at `./modules/governance-overlay/mistake-frequency.json` is incremented by `post-output.md` on every failure capture. Mistakes whose count crosses the threshold (default 3) become a Watchlist for the next session.
+
+### 9a. Read Top Recurring Mistakes
+
+At the start of any STANDARD+ task, run:
+
+```bash
+python tools/mistake_frequency.py --top 3
+```
+
+If output is `(none) — no mistake has count >= 3`, skip to Section 10.
+
+### 9b. Surface as Banner
+
+For each surfaced `M<N>` entry, emit a one-line banner at the top of the session plan:
+
+```
+WATCH: Mistake #<N> recurring (count=<C>, last=<ISO-ts>, projects=<comma-list>)
+```
+
+### 9c. Load Prevention Guidance Prominently
+
+Read the matching entry from `./modules/governance-overlay/mistakes-registry.md` (search for `## Mistake #<N>:`) and treat its **Prevention** clause as a load-bearing constraint for this session — the banner stays visible, the prevention rule enters the Never-Do Matrix (Section 8b) automatically.
+
+### 9d. Reset After Clean Session
+
+If a task completes at STANDARD+ tier with a Council verdict of A+ and the flagged Mistake-ID was not caught during failure capture, optionally decay the counter:
+
+```bash
+python tools/mistake_frequency.py --reset M<N>
+```
+
+Decay is not automatic — it requires explicit operator confirmation, because a single clean session does not disprove a pattern. The default is: counters only decay when the operator has visually confirmed the underlying cause has been engineered out (e.g., a lint rule, a test, a type guard now enforces the invariant).
