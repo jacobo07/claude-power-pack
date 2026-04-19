@@ -3,3 +3,4 @@ __pycache__/
 BLOCKED_DELIVERY.md
 *.v7-monolith-backup
 _knowledge_graph/
+_audit_cache/

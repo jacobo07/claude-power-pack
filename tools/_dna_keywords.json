@@ -1,0 +1,32 @@
+{
+  "_note": "Semantic DNA keyword source. Loaded by audit_cache.py at import. Kept out of .py to avoid quine self-detection (Mistake #43).",
+  "tags": {
+    "#Auth": ["jwt", "oauth", "bcrypt", "passwd", "session_token", "login_handler", "auth_middleware"],
+    "#IO": ["read_text", "write_text", "readFile", "writeFile", "open\\s*\\(", "fs\\.(read|write)"],
+    "#Network": ["requests\\.", "axios\\.", "httpx\\.", "urllib\\.", "fetch\\(", "socket\\.", "WebSocket"],
+    "#Concurrency": ["async\\s+def", "await\\s", "asyncio\\.", "threading\\.", "Promise\\.", "goroutine"],
+    "#State": ["cache", "memoize", "persist", "checkpoint", "snapshot", "lru_cache"],
+    "#HookAPI": ["PreToolUse", "PostToolUse", "UserPromptSubmit", "SessionStart", "addEventListener"],
+    "#Config": ["settings\\.(json|yaml)", "\\.env\\b", "config\\.(json|yml|yaml|toml)"],
+    "#Test": ["pytest", "unittest", "describe\\(", "it\\(", "test_\\w+", "\\w+_test\\b"],
+    "#Schema": ["pydantic", "zod\\.", "jsonschema", "dataclass", "BaseModel"],
+    "#Governance": ["mistake_registry", "leyes", "governance", "council", "voice[_-]spec", "supremacy"]
+  },
+  "case_insensitive_tags": ["#Auth", "#State", "#Governance"],
+  "path_map": {
+    "hooks": "#Hook",
+    "commands": "#Command",
+    "tools": "#Tool",
+    "modules": "#Module",
+    "governance-overlay": "#Governance",
+    "executionos-lite": "#ExecutionOS",
+    "memory-engine": "#Memory",
+    "zero-crash": "#ZeroCrash",
+    "autoresearch": "#Research",
+    "token-optimizer": "#TokenTool",
+    "tests": "#Test",
+    "test": "#Test",
+    "parts": "#Doctrine",
+    "sleepy": "#SleepySkill"
+  }
+}
