@@ -16,7 +16,7 @@ Portable entry point for the Omni-Verification Oracle. Runs on **the current wor
 
 ## Phase A — Delta Forensics
 
-!`python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" --project . --json`
+!`python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py --project . --json`
 
 From the JSON above, capture: `delta_id`, `sha256_pre`, `changed[]`, `new[]`, `deleted[]`, `council_block`, `cold_start`.
 
@@ -24,23 +24,23 @@ For each entry in `changed[]`, read its 1-line cached `summary` first — raw-re
 
 ## OVO Protocol (load canonical source)
 
-@C:/Users/kobig/.claude/skills/claude-power-pack/modules/oracle/ovo-protocol.md
+**Read** the protocol file now (use the Read tool): `~/.claude/skills/claude-power-pack/modules/oracle/ovo-protocol.md`. Internalize its 5 phases before continuing — every step below assumes you have it in context.
 
 ## Phase B — Adversarial Reasoning
 
-Per Phase B of the protocol above. Cross-check the delta against the Mistakes Registry at `C:/Users/kobig/.claude/skills/claude-power-pack/modules/governance-overlay/mistakes-registry.md`. Emit a **≤5-bullet adversarial findings block**, or state **"no adversarial findings"** explicitly.
+Per Phase B of the protocol you just read. Cross-check the delta against the Mistakes Registry at `~/.claude/skills/claude-power-pack/modules/governance-overlay/mistakes-registry.md` (Read it if needed). Emit a **≤5-bullet adversarial findings block**, or state **"no adversarial findings"** explicitly.
 
 Each finding: mistake number, file path, specific line-of-concern. Findings not addressed in the proposed output this turn cap the verdict at **B**.
 
 ## Phase C — Council of 5
 
-!`python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/council_verdict.py" --render`
+!`python ~/.claude/skills/claude-power-pack/tools/council_verdict.py --render`
 
 Reason through all 5 advisors (Contrarian, First Principles, Expansionist, Outsider, Executor) with the delta from Phase A and the adversarial findings from Phase B as explicit context. Fill each `<…>` placeholder with a concrete position — **no hedging**.
 
 ## Phase D — Verdict Stamp
 
-Emit the banner per the rubric in `modules/governance-overlay/council.md`:
+Emit the banner per the rubric in `~/.claude/skills/claude-power-pack/modules/governance-overlay/council.md`:
 
 - **A+** — all 5 approve, zero caveats.
 - **A** — ≤1 minor caveat addressed in this response.
@@ -50,22 +50,22 @@ Emit the banner per the rubric in `modules/governance-overlay/council.md`:
 Then persist the verdict (replace `<VERDICT>`, `<DELTA_ID>`; paste your Council block as `<BLOCK>`):
 
 ```bash
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" \
+python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py \
   --project . \
   --record-verdict <VERDICT> \
   --delta-id <DELTA_ID> \
   --council-text "<BLOCK>"
 ```
 
-**On B or REJECT:** stop here. Route to `C:/Users/kobig/.claude/skills/claude-power-pack/modules/governance-overlay/post-output.md § Rejection Recovery` (max 3 iterations per task).
+**On B or REJECT:** stop here. Route to `~/.claude/skills/claude-power-pack/modules/governance-overlay/post-output.md § Rejection Recovery` (max 3 iterations per task).
 
 ## Phase E — Vault & Propose
 
 On **A or A+**, run:
 
 ```bash
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" --project . --vault-post
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" --project . --report-md vault/audits/ovo_<ISO>_<VERDICT>.md
+python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py --project . --vault-post
+python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py --project . --report-md vault/audits/ovo_<ISO>_<VERDICT>.md
 ```
 
 `<ISO>` = current UTC timestamp (e.g. `date -u +%Y-%m-%dT%H-%M-%SZ`). `<VERDICT>` = `Aplus` or `A` (filesystem-safe).
@@ -73,7 +73,7 @@ python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" -
 **On A+ only,** surface the proposed baseline elevation for Owner review (detect the project name from `pwd`; substitute `<PROJECT>`):
 
 ```bash
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/baseline_ledger.py" --elevate <PROJECT> --axis k_qa --baseline <N>
+python ~/.claude/skills/claude-power-pack/tools/baseline_ledger.py --elevate <PROJECT> --axis k_qa --baseline <N>
 ```
 
 **Never auto-execute** — ledger writes are global state and require a human keystroke.

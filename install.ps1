@@ -209,6 +209,26 @@ if (Test-Path $KobiiClawSrc) {
     Write-Host "[WARN] KobiiClaw wrapper not found — skipping" -ForegroundColor Yellow
 }
 
+# 8. Register Power-Pack slash commands in ~/.claude/commands/
+# Claude Code auto-discovers slash commands from ~/.claude/commands/ (user-global)
+# and <project>/.claude/commands/ (project-local). Power-Pack's commands/ directory
+# is NOT a discovery path, so we copy them out on install.
+$CommandsSrc = Join-Path $SkillDir "commands"
+$CommandsDst = Join-Path $env:USERPROFILE ".claude\commands"
+if (Test-Path $CommandsSrc) {
+    if (-not (Test-Path $CommandsDst)) {
+        New-Item -ItemType Directory -Path $CommandsDst -Force | Out-Null
+    }
+    $cmdCount = 0
+    Get-ChildItem -Path $CommandsSrc -Filter "*.md" | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $CommandsDst -Force
+        $cmdCount++
+    }
+    Write-Host "[OK] Registered $cmdCount Power-Pack slash commands in $CommandsDst" -ForegroundColor Green
+} else {
+    Write-Host "[WARN] commands/ directory not found — skipping slash-command registration" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"
@@ -219,3 +239,4 @@ Write-Host "  - Auto-recover from crashes (claude-daemon)"
 Write-Host "  - Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"
 Write-Host "  - Sandbox risky processes to prevent TTY corruption (Zero-Crash)"
 Write-Host "  - Persistent VPS sessions via tmux (KobiiClaw 2.0)"
+Write-Host "  - Serve /resume, /update, /ovo-audit, /vault-sync, /cpp-customclaw, ... globally (type / in any repo)"

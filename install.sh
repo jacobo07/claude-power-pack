@@ -201,6 +201,25 @@ else
   echo "⚠️  KobiiClaw wrapper not found — skipping"
 fi
 
+# 8. Register Power-Pack slash commands in ~/.claude/commands/
+# Claude Code auto-discovers slash commands from ~/.claude/commands/ (user-global)
+# and <project>/.claude/commands/ (project-local). Power-Pack's commands/ directory
+# is NOT a discovery path, so we copy them out on install.
+COMMANDS_SRC="$SKILL_DIR/commands"
+COMMANDS_DST="$HOME/.claude/commands"
+if [ -d "$COMMANDS_SRC" ]; then
+  mkdir -p "$COMMANDS_DST"
+  cmd_count=0
+  for cmd in "$COMMANDS_SRC"/*.md; do
+    [ -f "$cmd" ] || continue
+    cp "$cmd" "$COMMANDS_DST/"
+    cmd_count=$((cmd_count + 1))
+  done
+  echo "✅ Registered $cmd_count Power-Pack slash commands in $COMMANDS_DST"
+else
+  echo "⚠️  commands/ directory not found — skipping slash-command registration"
+fi
+
 echo ""
 echo "Done! The AI will now:"
 echo "  • Plan before acting (Anti-Monolith)"
@@ -211,3 +230,4 @@ echo "  • Auto-recover from crashes (claude-daemon)"
 echo "  • Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"
 echo "  • Sandbox risky processes to prevent TTY corruption (Zero-Crash)"
 echo "  • Persistent VPS sessions via tmux (KobiiClaw 2.0)"
+echo "  • Serve /resume, /update, /ovo-audit, /vault-sync, /cpp-customclaw, ... globally (type / in any repo)"

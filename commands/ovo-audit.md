@@ -14,51 +14,51 @@ Short-form invocation of `/omni-verification-oracle-audit`. Same phases, same ar
 
 ## Phase A — Delta Forensics
 
-!`python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" --project . --json`
+!`python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py --project . --json`
 
 Capture `delta_id`, `sha256_pre`, `changed[]`, `new[]`, `deleted[]`, `council_block`, `cold_start`. For each new file, identify the consumer (Mistake #38 gate — no consumer = verdict cap at B).
 
 ## OVO Protocol (load canonical source)
 
-@C:/Users/kobig/.claude/skills/claude-power-pack/modules/oracle/ovo-protocol.md
+**Read** the protocol file now (use the Read tool): `~/.claude/skills/claude-power-pack/modules/oracle/ovo-protocol.md`. Internalize its 5 phases before continuing.
 
 ## Phase B — Adversarial Reasoning
 
-Cross-check the delta against `C:/Users/kobig/.claude/skills/claude-power-pack/modules/governance-overlay/mistakes-registry.md`. Emit ≤5-bullet adversarial findings block, or "no adversarial findings". Findings not addressed this turn cap the verdict at **B**.
+Cross-check the delta against `~/.claude/skills/claude-power-pack/modules/governance-overlay/mistakes-registry.md` (Read it if needed). Emit ≤5-bullet adversarial findings block, or "no adversarial findings". Findings not addressed this turn cap the verdict at **B**.
 
 ## Phase C — Council of 5
 
-!`python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/council_verdict.py" --render`
+!`python ~/.claude/skills/claude-power-pack/tools/council_verdict.py --render`
 
 Reason through Contrarian / First Principles / Expansionist / Outsider / Executor with the Phase A delta and Phase B findings as context. No hedging.
 
 ## Phase D — Verdict Stamp
 
-Emit `[COUNCIL_VERDICT: A+|A|B|REJECT]` per the rubric in `modules/governance-overlay/council.md`, then persist:
+Emit `[COUNCIL_VERDICT: A+|A|B|REJECT]` per the rubric in `~/.claude/skills/claude-power-pack/modules/governance-overlay/council.md`, then persist:
 
 ```bash
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" \
+python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py \
   --project . \
   --record-verdict <VERDICT> \
   --delta-id <DELTA_ID> \
   --council-text "<BLOCK>"
 ```
 
-**On B or REJECT:** stop. Route to `C:/Users/kobig/.claude/skills/claude-power-pack/modules/governance-overlay/post-output.md § Rejection Recovery`.
+**On B or REJECT:** stop. Route to `~/.claude/skills/claude-power-pack/modules/governance-overlay/post-output.md § Rejection Recovery`.
 
 ## Phase E — Vault & Propose
 
 On A/A+:
 
 ```bash
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" --project . --vault-post
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/oracle_delta.py" --project . --report-md vault/audits/ovo_<ISO>_<VERDICT>.md
+python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py --project . --vault-post
+python ~/.claude/skills/claude-power-pack/tools/oracle_delta.py --project . --report-md vault/audits/ovo_<ISO>_<VERDICT>.md
 ```
 
 On A+ only: print (do not execute) the baseline elevation command, substituting the current project name for `<PROJECT>`:
 
 ```bash
-python "C:/Users/kobig/.claude/skills/claude-power-pack/tools/baseline_ledger.py" --elevate <PROJECT> --axis k_qa --baseline <N>
+python ~/.claude/skills/claude-power-pack/tools/baseline_ledger.py --elevate <PROJECT> --axis k_qa --baseline <N>
 ```
 
 ## Exit summary
