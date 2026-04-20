@@ -5,3 +5,12 @@ BLOCKED_DELIVERY.md
 _knowledge_graph/
 _audit_cache/*
 !_audit_cache/semantic_tags.json
+
+# OVO session markers (power-pack scoped; hook reads at repo root)
+/.ovo_active
+/.ovo_inactive
+
+# OVO snapshot artifacts (generated per audit; only .gitkeep and verdicts.jsonl tracked)
+vault/audits/snapshots/source_map_*.json
+vault/audits/ovo_*.json
+vault/audits/ovo_*.md
