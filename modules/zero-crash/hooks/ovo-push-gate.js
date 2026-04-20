@@ -25,7 +25,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const BLOCK_REGEX = /\b(?:git\s+(?:push|deploy)|npm\s+publish|gh\s+release\s+create)\b/;
+// Match only at a command boundary (start-of-string, or after a shell separator
+// like `;`, `|`, `&`, `\n`, `(`, or a backtick subshell). Prevents false positives
+// where the tokens appear as literals inside quoted strings — e.g.
+// `echo 'git push' | node hook.js` must NOT trigger the gate.
+const BLOCK_REGEX = /(?:^|[;|&\n(`])\s*(?:git\s+(?:push|deploy)|npm\s+publish|gh\s+release\s+create)\b/;
 const TTL_MS = 10 * 60 * 1000;
 const VALID_VERDICTS = new Set(['A+', 'A']);
 
