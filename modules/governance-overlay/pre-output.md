@@ -161,3 +161,35 @@ The 5 advisors (Contrarian, First Principles, Expansionist, Outsider, Executor) 
 Self-grading is protocol — there is no external auditor in the critical path. Dishonest grading will surface on the next session as Mistake #17.
 
 **OVO breadcrumb (no double-render):** If `./_audit_cache/.council_rendered_*.json` exists with mtime <60s, `/ovo-audit` already rendered the Council this turn. Skip the Section 13 render and reuse the verdict that OVO stamped — do NOT emit a second Council block. Breadcrumbs are written by `tools/oracle_delta.py` during Phase C of the OVO protocol.
+
+### Section 14: Adversarial + Security Auto-Gates (STANDARD+ MANDATORY — MC-OVO-21)
+
+After Council verdict A/A+ but before emitting, inspect the delta's surface and fire the relevant gate(s). Pure-doc deltas (markdown-only, no code) are exempt.
+
+**Adversarial-longevity auto-invocation** — fire when the delta touches ANY of:
+- user input handlers (command handlers, form submits, packet parsers, CLI arg parsing)
+- save writes or shared mutable state (DB writes, file I/O, cache mutations)
+- authentication, session, or authorization logic
+- external API calls with user-supplied params
+- loops processing untrusted input
+
+**Required output:** cite-or-die emission per `~/.claude/skills/claude-power-pack/SKILL.md` § adversarial-longevity — exploit tree (≥5 archetypes), 10x-load proof, drift catalog, budget declarations, all in the same emission. Any gate incomplete → **verdict drops to B** and routes to Rejection Recovery.
+
+**Security-review auto-invocation** — fire when the delta touches ANY of:
+- auth / authz / session management
+- cryptographic operations (hashing, signing, encryption, token generation)
+- shell command construction (`subprocess`, `exec`, `eval`, `Runtime.exec`, backticks)
+- file path handling (traversal risk — user-supplied paths, `..`, symlink follow)
+- deserialization (JSON, YAML, pickle, XML, untrusted network payloads)
+- secrets handling (env vars, config files, key material)
+
+**Required output:** inline 5-point checklist citation: (1) auth present and correct, (2) input validated at boundary, (3) no shell/SQL injection vector, (4) no path traversal, (5) no unsafe deserialization. Cite the specific defenses by file:line. Anything unchecked → verdict B.
+
+**Provenance stamps** — append to the Council block so downstream gates can prove the auto-invocations ran:
+- `[ADVERSARIAL: skipped|cited|deferred]`  where:
+  - `skipped` = delta surface doesn't trigger (pure docs / internal refactor with no user input path)
+  - `cited` = cite-or-die emission present in this turn
+  - `deferred` = surface triggers but Owner explicitly accepted deferral to follow-up commit
+- `[SECURITY: skipped|cited|deferred]` same semantics
+
+**Enforcement:** verdicts.jsonl records will include `adversarial_status` and `security_status` fields derived from these stamps. Future OVO cold-start audits on the same repo will flag missing stamps as Mistake #38 variants (consumer gap — no auto-gate stamp on a surface that required it).
