@@ -34,18 +34,37 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-PROJECT_MARKERS = ["SKILL.md", ".git", "pyproject.toml", "package.json", "CLAUDE.md"]
+PROJECT_MARKERS = ["SKILL.md", ".git", "pyproject.toml", "package.json", "CLAUDE.md", ".claude", ".vscode"]
 HANDOFF_NAME = "project_session_handoff.md"
 MEMORY_INDEX_NAME = "MEMORY.md"
 INSIGHTS_REL = "_audit_cache/insights.json"
 INSIGHTS_SCHEMA = "insights-v1"
 
+# Vault knowledge base — project-local, Obsidian-compatible atomic learning store.
+# Keeps MEMORY.md lean (index only) while per-session lessons and corrected errors
+# accumulate in append-only vault files.
+VAULT_KB_REL = "vault/knowledge_base"
+VAULT_LESSONS_NAME = "session_lessons.md"
+VAULT_ERRORS_NAME = "errors.md"
+VAULT_LESSON_MAX = 600      # hard cap per atomic lesson (chars)
+VAULT_ERROR_MAX = 400       # hard cap per corrected-error line (chars)
+
 
 def find_project_root(start: Path) -> Path:
+    """Walk up from `start` looking for any PROJECT_MARKERS, skipping the user
+    home directory (whose CLAUDE.md is global governance, not a project marker).
+    """
+    home = Path.home().resolve()
     for d in [start.resolve(), *start.resolve().parents]:
+        # Never treat the user home as a project root — its CLAUDE.md is global.
+        if d == home:
+            continue
         if any((d / m).exists() for m in PROJECT_MARKERS):
             return d
-    raise SystemExit(f"[checkpoint] project root not found (looked for {PROJECT_MARKERS})")
+    raise SystemExit(
+        f"[checkpoint] project root not found (looked for {PROJECT_MARKERS}). "
+        f"Create an empty `.claude/` dir in the project root to anchor it."
+    )
 
 
 def claude_project_slug(root: Path) -> str:
@@ -153,6 +172,67 @@ def render_handoff(payload: dict) -> str:
     return "\n".join(lines)
 
 
+def vault_kb_dir(root: Path) -> Path:
+    """Project-local vault/knowledge_base — created on first write."""
+    return root / VAULT_KB_REL
+
+
+def ensure_vault_kb(root: Path) -> Path:
+    """Create vault/knowledge_base/ skeleton if absent. Returns the dir."""
+    kb = vault_kb_dir(root)
+    kb.mkdir(parents=True, exist_ok=True)
+    lessons = kb / VAULT_LESSONS_NAME
+    if not lessons.exists():
+        atomic_write(lessons, (
+            "# Session Lessons — Atomic Learning\n\n"
+            "Append-only log of concrete, non-derivable learnings per session.\n"
+            "One entry per `/kclear` with a `lesson` field. Keep each entry short and\n"
+            "self-contained — if a future reader can't grok it without the conversation,\n"
+            "rewrite it.\n\n"
+            "---\n\n"
+        ))
+    errors = kb / VAULT_ERRORS_NAME
+    if not errors.exists():
+        atomic_write(errors, (
+            "# Corrected Errors — Learning Log\n\n"
+            "Append-only log of bugs/misfires the assistant made and the fix.\n"
+            "One line per entry: `YYYY-MM-DD [category] symptom -> root cause -> fix`.\n\n"
+            "---\n\n"
+        ))
+    return kb
+
+
+def append_lesson(root: Path, date: str, session_id: str, title: str, body: str) -> Path:
+    """Append one atomic lesson entry. Returns target file path."""
+    ensure_vault_kb(root)
+    target = vault_kb_dir(root) / VAULT_LESSONS_NAME
+    body = (body or "").strip()
+    if len(body) > VAULT_LESSON_MAX:
+        body = body[: VAULT_LESSON_MAX - 1] + "…"
+    title = (title or "(untitled lesson)").strip()
+    entry = (
+        f"## {date} — {title}\n\n"
+        f"**Session:** `{session_id}`\n\n"
+        f"{body}\n\n"
+        "---\n\n"
+    )
+    existing = target.read_text(encoding="utf-8") if target.exists() else ""
+    atomic_write(target, existing + entry)
+    return target
+
+
+def append_error_line(root: Path, date: str, category: str, symptom: str, root_cause: str, fix: str) -> Path:
+    """Append one 1-line corrected-error entry."""
+    ensure_vault_kb(root)
+    target = vault_kb_dir(root) / VAULT_ERRORS_NAME
+    line = f"- {date} [{category or 'misc'}] {symptom} -> {root_cause} -> {fix}"
+    if len(line) > VAULT_ERROR_MAX:
+        line = line[: VAULT_ERROR_MAX - 1] + "…"
+    existing = target.read_text(encoding="utf-8") if target.exists() else ""
+    atomic_write(target, existing + line + "\n")
+    return target
+
+
 def update_memory_index(root: Path, date: str, headline: str) -> None:
     path = get_memory_dir(root) / MEMORY_INDEX_NAME
     entry = f"- [Session Handoff {date}](project_session_handoff.md) — {headline}"
@@ -184,10 +264,43 @@ def cmd_record(args) -> int:
     headline = summary_first_line.lstrip("#").strip()[:140] or "session handoff"
     update_memory_index(root, date, headline)
 
-    print(
+    # Optional atomic lesson: append one entry to vault/knowledge_base/session_lessons.md.
+    # Payload format: "lesson" can be a string (becomes body, title derived from headline)
+    # OR {"title": str, "body": str}.
+    lesson_path = None
+    lesson = payload.get("lesson")
+    if lesson:
+        if isinstance(lesson, str):
+            lesson_title = headline[:80] or "session lesson"
+            lesson_body = lesson
+        else:
+            lesson_title = (lesson.get("title") or headline)[:80] or "session lesson"
+            lesson_body = lesson.get("body") or ""
+        lesson_path = append_lesson(root, date, session_id, lesson_title, lesson_body)
+
+    msg = (
         f"[checkpoint] handoff -> {handoff_path} | "
         f"insights: +{added} dup-skip {skipped} | index updated"
     )
+    if lesson_path:
+        msg += f" | lesson -> {lesson_path}"
+    print(msg)
+    return 0
+
+
+def cmd_learn_error(args) -> int:
+    """Append one 1-line corrected-error entry to vault/knowledge_base/errors.md."""
+    root = find_project_root(Path.cwd())
+    date = args.date or datetime.now().strftime("%Y-%m-%d")
+    target = append_error_line(
+        root,
+        date=date,
+        category=args.category or "misc",
+        symptom=args.symptom,
+        root_cause=args.root_cause,
+        fix=args.fix,
+    )
+    print(f"[checkpoint] error learned -> {target}")
     return 0
 
 
@@ -275,6 +388,15 @@ def cmd_list(args) -> int:
 
 
 def main() -> None:
+    # Force UTF-8 on stdin/stdout. Windows Git Bash and cmd default to the console
+    # code page (often CP1252), which mangles em-dashes and other non-ASCII in
+    # heredoc-piped JSON payloads. Reconfigure is available on Python 3.7+.
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+        except (AttributeError, ValueError):
+            pass
+
     ap = argparse.ArgumentParser(description="Session Checkpoint — /kclear transactional backend.")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -290,6 +412,14 @@ def main() -> None:
 
     lst = sub.add_parser("list", help="Print insights database.")
     lst.set_defaults(func=cmd_list)
+
+    le = sub.add_parser("learn-error", help="Append 1-line corrected-error entry to vault/knowledge_base/errors.md.")
+    le.add_argument("--category", help="Short tag (e.g. 'windows', 'hook-json', 'regex'). Default: misc.")
+    le.add_argument("--symptom", required=True, help="What broke (user-visible).")
+    le.add_argument("--root-cause", required=True, help="Why it broke (technical cause).")
+    le.add_argument("--fix", required=True, help="What fixed it (one-line action).")
+    le.add_argument("--date", help="YYYY-MM-DD override; default: today.")
+    le.set_defaults(func=cmd_learn_error)
 
     args = ap.parse_args()
     sys.exit(args.func(args))

@@ -792,6 +792,21 @@ class GenericParser:
         r"^(?:pub\s+|export\s+)?(?:async\s+)?(?:def|fn|func|fun|sub|function)\s+(\w+)",
         re.MULTILINE,
     )
+    # C/C++ function declarations: static void Name(, s32 Class::Method(, etc.
+    RE_C_FUNCTION = re.compile(
+        r"^(?:static\s+)?(?:inline\s+)?(?:const\s+)?(?:virtual\s+)?"
+        r"(?:void|bool|int|unsigned|char|float|double|long|short|size_t|auto"
+        r"|[usf](?:8|16|32|64)|BOOL|GXBool)\s*\*?\s+"
+        r"(?:\w+::)?(\w+)\s*\(",
+        re.MULTILINE,
+    )
+    # C/C++ struct/enum declarations
+    RE_C_STRUCT = re.compile(
+        r"^(?:typedef\s+)?(?:struct|enum|union|class)\s+(\w+)\s*\{",
+        re.MULTILINE,
+    )
+
+    C_LANGUAGES = {"c", "cpp", "csharp"}
 
     def __init__(self, language: str = "unknown"):
         self.language = language
@@ -819,10 +834,14 @@ class GenericParser:
         )
 
         nodes = [module_node]
+        seen_names: set[str] = set()
 
-        # Extract functions
+        # Extract functions (generic keywords: def, fn, func, etc.)
         for m in self.RE_FUNCTION.finditer(source):
             fn_name = m.group(1)
+            if fn_name in seen_names:
+                continue
+            seen_names.add(fn_name)
             line_num = source[:m.start()].count("\n") + 1
 
             fn_node = GraphNode(
@@ -836,6 +855,47 @@ class GenericParser:
             )
             module_node.exports.append(fn_name)
             nodes.append(fn_node)
+
+        # Extract C/C++ functions (return_type Name( pattern)
+        if self.language in self.C_LANGUAGES:
+            for m in self.RE_C_FUNCTION.finditer(source):
+                fn_name = m.group(1)
+                if fn_name in seen_names:
+                    continue
+                seen_names.add(fn_name)
+                line_num = source[:m.start()].count("\n") + 1
+
+                fn_node = GraphNode(
+                    node_id=make_node_id(rel, fn_name, "function"),
+                    name=fn_name,
+                    node_type="function",
+                    file_path=rel,
+                    language=self.language,
+                    line_start=line_num,
+                    dependencies=[f"[[{module_node.node_id}]]"],
+                )
+                module_node.exports.append(fn_name)
+                nodes.append(fn_node)
+
+            # Extract structs/enums/classes
+            for m in self.RE_C_STRUCT.finditer(source):
+                struct_name = m.group(1)
+                if struct_name in seen_names:
+                    continue
+                seen_names.add(struct_name)
+                line_num = source[:m.start()].count("\n") + 1
+
+                struct_node = GraphNode(
+                    node_id=make_node_id(rel, struct_name, "class"),
+                    name=struct_name,
+                    node_type="class",
+                    file_path=rel,
+                    language=self.language,
+                    line_start=line_num,
+                    dependencies=[f"[[{module_node.node_id}]]"],
+                )
+                module_node.exports.append(struct_name)
+                nodes.append(struct_node)
 
         return nodes
 
