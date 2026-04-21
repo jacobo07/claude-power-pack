@@ -1,0 +1,23 @@
+[Unit]
+Description=Sleepless QA — Empirical Verification Pipeline (Ley 25 enforcer)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/sleepless-qa.env
+WorkingDirectory=%h/.claude/skills/claude-power-pack
+ExecStart=%h/.cache/sleepless-qa/venv/bin/python -m sleepless_qa daemon
+Restart=on-failure
+RestartSec=10
+# Keep the auditor isolated from target runtime crashes
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=%h/.claude/sleepless-qa %h/.cache/sleepless-qa
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sleepless-qa
+
+[Install]
+WantedBy=default.target

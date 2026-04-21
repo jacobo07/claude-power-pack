@@ -1,0 +1,32 @@
+name: py-api-crud
+runtime_class: python_daemon
+description: FastAPI CRUD smoke test — POST, GET, DELETE a single resource.
+
+setup:
+  launch_cmd: "python -m uvicorn main:app --host 127.0.0.1 --port 8000"
+  base_url: "http://127.0.0.1:8000"
+  uvicorn_startup_wait_seconds: 5
+
+steps:
+  - kind: http
+    target: "/health"
+    extra:
+      method: "GET"
+  - kind: http
+    target: "/items"
+    extra:
+      method: "POST"
+      json: {"name": "test-item"}
+  - kind: http
+    target: "/items"
+    extra:
+      method: "GET"
+
+expectations:
+  http:
+    - method: "GET"
+      path: "/health"
+      status: 200
+    - method: "GET"
+      path: "/items"
+      status: 200

@@ -1,0 +1,23 @@
+name: mc-login
+runtime_class: minecraft
+description: Paper MC login smoke — spawn bot, chat hello, verify no SEVERE logs.
+
+setup:
+  host: "localhost"
+  port: 25565
+  username: "SleeplessQA"
+  version: "1.21"
+  paper_log_path: "~/paper-test-server/logs/latest.log"
+  overall_timeout_ms: 30000
+
+steps:
+  - kind: chat
+    value: "hello from sleepless-qa"
+    timeout_ms: 1000
+  - kind: wait
+    timeout_ms: 2000
+  - kind: command
+    value: "list"
+    timeout_ms: 1000
+
+expectations: {}

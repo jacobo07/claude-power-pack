@@ -1,0 +1,10 @@
+name: cli-echo
+runtime_class: cli
+description: Generic CLI adapter sanity check — echo produces expected stdout.
+
+setup:
+  command: "echo sleepless-qa-alive"
+
+steps: []
+
+expectations: {}

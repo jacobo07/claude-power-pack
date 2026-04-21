@@ -1,0 +1,10 @@
+name: heartbeat
+runtime_class: cli
+description: Pipeline self-test — runs the heartbeat module and checks exit code.
+
+setup:
+  command: "python -m sleepless_qa heartbeat"
+
+steps: []
+
+expectations: {}

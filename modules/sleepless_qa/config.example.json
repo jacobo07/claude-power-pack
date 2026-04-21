@@ -1,0 +1,40 @@
+{
+  "_comment": "Sleepless QA config. Copy to config.json (gitignored) and fill values. Env vars override.",
+  "vps_host": "${VPS_HOST:-not-set}",
+  "anthropic_api_key_env": "ANTHROPIC_API_KEY",
+  "vision_model": "claude-haiku-4-5-20251001",
+  "state_dir": "~/.claude/sleepless-qa",
+  "max_retry_budget": 3,
+  "subprocess_timeout_seconds": 600,
+  "uncertain_confidence_threshold": 0.7,
+  "notification": {
+    "desktop": true,
+    "silent_log": true
+  },
+  "dumpers": {
+    "web": {
+      "browser": "chromium",
+      "viewport": {"width": 1280, "height": 720},
+      "playwright_cache_dir": "~/.cache/sleepless-qa-playwright"
+    },
+    "minecraft": {
+      "paper_jar": "~/.claude/sleepless-qa/fixtures/paper.jar",
+      "bot_username": "SleeplessQA",
+      "bot_port": 25566
+    },
+    "python_daemon": {
+      "uvicorn_startup_wait_seconds": 5,
+      "probe_timeout_seconds": 10
+    },
+    "cli": {
+      "default_timeout_seconds": 60
+    }
+  },
+  "healer": {
+    "dispatcher_path": "~/.claude/skills/claude-power-pack/modules/dispatcher/dispatch.py",
+    "memory_engine_path": "~/.claude/skills/claude-power-pack/modules/memory-engine/append_memory.py",
+    "pattern_cache_path": "~/.claude/skills/claude-power-pack/knowledge/self-healing-patterns.md",
+    "require_clean_git_status": true
+  },
+  "priority_ladder": ["stability", "functionality", "aesthetics", "polish"]
+}

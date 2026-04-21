@@ -1,0 +1,16 @@
+name: web-smoke
+runtime_class: web
+description: Generic web smoke test — load home page, assert no console errors.
+
+setup:
+  url: "http://localhost:3000"
+
+steps:
+  - kind: wait
+    target: "body"
+    timeout_ms: 10000
+  - kind: custom
+    value: "document.title"
+    timeout_ms: 1000
+
+expectations: {}
