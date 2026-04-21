@@ -18,6 +18,10 @@ Living document. Tracks work toward the 100% capability score from the OVO audit
 | Kotlin overlay (3 of 8) | +1 | `0ac7543` | `modules/executionos-lite/overlays/kotlin.md` |
 | **MC-OVO-30-EXT** Swift-native overlay (4 of 8) | +1 | this cycle | `modules/executionos-lite/overlays/swift-native.md` |
 | **MC-OVO-36** Vault self-optimization (errors.md → INDEX.md) | +1 | this cycle | `tools/vault_summarize.py` + `vault/knowledge_base/INDEX.md` (category-ranked, top-N per bucket, 4/4 gates PASS) |
+| **MC-OVO-30-EXT** elixir-ext overlay (8 of 8 — CLOSES language series) | +1 | `ec56e8c` | `modules/executionos-lite/overlays/elixir-ext.md` (Nerves/Ash/Livebook/releases/Gleam + Elixir 1.18/OTP 27) |
+| **MC-OVO-31-Q** QEMU dumper scaffolder (3-gate cascade) | +1 | `419d3e6` | `tools/scaffold_qemu_dumper.py` — QMP client + mock-QMP tests + qemu-present gate |
+| **MC-OVO-34-V** Mistake-hook cross-platform parity test | +1 | `9516741` | `tests/test_mistake_frequency_xplat.py` — Windows baseline PASS tool_sha=4e53d4167f35 |
+| **MC-OVO-32-F** VPS validation hand-off bundle | +0 meta | (this commit) | `tools/vps_validation_handoff.sh` — packages 32-F + 31-Q + 34-V gates for one-shot VPS run |
 
 ## Deferred — explicit blockers + estimates
 
@@ -28,10 +32,12 @@ Living document. Tracks work toward the 100% capability score from the OVO audit
 | ~~Go~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30+ cycle (go.md) |
 | ~~Kotlin JVM~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30+ cycle (kotlin.md) |
 | ~~Swift native~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30-EXT cycle (swift-native.md, cross-linked to apple-ecosystem.md) |
-| Ruby | overlay (`overlays/ruby.md`) | ~30 min | none — next session |
-| PHP | overlay (`overlays/php.md`) | ~30 min | none — next session |
-| SQL | overlay (`overlays/sql.md`) | ~30 min | dialect split (Postgres/MySQL/SQLite/MSSQL) needs Owner pick first |
-| Elixir code-idioms | overlay (`overlays/elixir.md` EXTENSION) | ~20 min | file exists with high-level rules; extend with code patterns next session |
+| ~~Ruby~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30-LANG cycle (`d3d227b`, `overlays/ruby.md`) |
+| ~~PHP~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30-LANG cycle (`d3d227b`, `overlays/php.md`) |
+| ~~SQL~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30-SQL cycle (`d3d227b`, `overlays/sql.md` multi-dialect Postgres/MySQL/SQLite/MSSQL) |
+| ~~Elixir code-idioms~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30-EXT cycle (`ec56e8c`, `overlays/elixir-ext.md` — Nerves/Ash/Livebook/releases/Gleam, complements base elixir.md) |
+
+**Language-overlay series is now CLOSED: 8 of 8 shipped** (rust, go, kotlin, swift-native, ruby, php, sql, elixir-ext).
 
 **Why not shipped in one session:** writing 7 high-quality overlays at ~30-45 min each = 4-5h of focused work. A same-session bulk ship would produce skeletons (Mistake #47, Success Hallucination). Shipping 1 template (`rust.md`) per session builds momentum honestly.
 
@@ -46,7 +52,7 @@ Living document. Tracks work toward the 100% capability score from the OVO audit
 | Unity dumper | 2-3 days | **HARD BLOCKER: Unity Editor license + headless build license.** Commercial product, Pro license ~$185/mo. |
 | Unreal dumper | 2-3 days | **HARD BLOCKER: UE install (~100GB disk), platform-specific toolchains.** Editor also expensive to host. |
 | Godot dumper | 1 day | **NO BLOCKER.** Free engine, runs headless, can be scripted. Strong candidate for next session. |
-| QEMU embedded dumper | 1 day | **SOFT BLOCKER: `apt install qemu-system*` on VPS (verified NOT installed as of 2026-04-21).** Needs sudo + ~400MB disk. Owner-approved provisioning required. |
+| ~~QEMU embedded dumper~~ | ~~1 day~~ | ~~UNBLOCKED + SCAFFOLDED~~ | Owner installed qemu-system-x86 + qemu-system-arm on VPS (2026-04-22). Scaffolder shipped in `419d3e6` (`tools/scaffold_qemu_dumper.py`). VPS validation pending run of `tools/vps_validation_handoff.sh` — see VPS Hand-off section below. |
 
 **Minimum honest ship in a follow-up session:** Godot dumper (no blocker) + QEMU dumper (if Owner approves VPS `apt install`).
 
@@ -79,6 +85,25 @@ The `/bootstrap-new-project` command (MC-OVO-22, `9491b38`) already covers the b
 2. **Session +2:** MC-OVO-34 piece 1 (auto-fire hook + empirical gate). Requires running a fake mistakes-registry edit and verifying the hook fires.
 3. **Session +3:** MC-OVO-31 Godot dumper (no blockers) + QEMU dumper if Owner approves VPS provision.
 4. **Session +4+:** remaining overlays (Swift/Ruby/PHP/SQL/Elixir-ext), Spring Boot scaffolder depth, Django IF Owner confirms it's used.
+
+## VPS Hand-off — MC-OVO-32-F / 31-Q / 34-V runtime validation
+
+Three gates from this cycle require a Linux host with QEMU and AF_UNIX support. Sandbox policy blocks SSH + sudo from the agent, so Owner runs the bundle:
+
+```bash
+# On VPS 204.168.166.63 (KobiiClaw), in the claude-power-pack working tree:
+git pull
+bash tools/vps_validation_handoff.sh 2>&1 | tee /tmp/mc_ovo_vps_$(date +%Y%m%dT%H%M%SZ).log
+```
+
+Expected output (per gate):
+- `MC-OVO-32-F`: `scaffold_fastapi.py` ALL GATES PASS (pip → pytest → uvicorn /health 200)
+- `MC-OVO-31-Q`: `scaffold_qemu_dumper.py` ALL GATES PASS (pip → pytest with AF_UNIX mock QMP → qemu-system-x86_64 --version → CLI --help)
+- `MC-OVO-34-V`: `PARITY host=<vps> py=3.x platform=linux tool_sha=4e53d4167f35 tests=8 status=PASS`
+
+The `tool_sha=4e53d4167f35` match between Windows and Linux proves mistake-hook ingestion byte-parity. Paste the log back so we can archive it to `vault/audits/vps_validation_<ts>.log` and close the hand-off.
+
+Failure playbook: the script exits with a distinct code per gate (1/2/3/4) so a truncated log still identifies which gate broke. Environment failures (4) point at provisioning; gate failures (1–3) point at scaffolder/test code that must be iterated locally.
 
 ## What 100% requires that Power Pack alone can't deliver
 
