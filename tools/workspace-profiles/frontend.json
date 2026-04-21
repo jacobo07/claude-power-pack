@@ -1,0 +1,43 @@
+{
+    "// PROFILE": "Frontend — Next.js / React / TypeScript projects",
+    "// USAGE": "Copy to your project's .vscode/settings.json and merge with existing settings",
+
+    "typescript.tsserver.maxTsServerMemory": 1024,
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "typescript.preferences.autoImportFileExcludePatterns": [
+        "node_modules/.prisma/**",
+        "node_modules/@types/node/**"
+    ],
+
+    "eslint.run": "onSave",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+
+    "[python]": { "editor.defaultFormatter": null },
+    "python.analysis.autoSearchPaths": false,
+    "java.autobuild.enabled": false,
+
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.next/**": true,
+        "**/.git/objects/**": true,
+        "**/out/**": true,
+        "**/dist/**": true,
+        "**/build/**": true,
+        "**/.venv/**": true,
+        "**/target/**": true,
+        "**/.gradle/**": true
+    },
+
+    "extensions.ignoreRecommendations": false,
+    "extensions.unwantedRecommendations": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "redhat.java",
+        "vscjava.vscode-java-pack",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "elixir-lsp.elixir-ls"
+    ]
+}

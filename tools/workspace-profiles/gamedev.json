@@ -1,0 +1,36 @@
+{
+    "// PROFILE": "GameDev — Java / Minecraft / Wii C projects",
+    "// USAGE": "Copy to your project's .vscode/settings.json and merge with existing settings",
+
+    "java.jdt.ls.vmargs": "-Xmx512m -XX:+UseG1GC",
+    "java.autobuild.enabled": true,
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.maven.enabled": true,
+    "java.compile.nullAnalysis.mode": "automatic",
+
+    "typescript.tsserver.maxTsServerMemory": 256,
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "python.analysis.autoSearchPaths": false,
+
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": ["--background-index=false", "--completion-style=bundled"],
+
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/target/**": true,
+        "**/.gradle/**": true,
+        "**/.git/objects/**": true,
+        "**/build/**": true,
+        "**/out/**": true,
+        "**/.venv/**": true,
+        "**/dist/**": true
+    },
+
+    "extensions.unwantedRecommendations": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "prisma.prisma"
+    ]
+}

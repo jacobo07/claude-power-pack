@@ -1,0 +1,45 @@
+{
+    "// PROFILE": "Backend — Python / Elixir projects",
+    "// USAGE": "Copy to your project's .vscode/settings.json and merge with existing settings",
+
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.typeCheckingMode": "basic",
+
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+
+    "typescript.tsserver.maxTsServerMemory": 512,
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "java.autobuild.enabled": false,
+
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.venv/**": true,
+        "**/.mypy_cache/**": true,
+        "**/.ruff_cache/**": true,
+        "**/.pytest_cache/**": true,
+        "**/__pycache__/**": true,
+        "**/.git/objects/**": true,
+        "**/dist/**": true,
+        "**/build/**": true,
+        "**/*.egg-info/**": true,
+        "**/_build/**": true,
+        "**/deps/**": true,
+        "**/target/**": true
+    },
+
+    "extensions.unwantedRecommendations": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "redhat.java",
+        "vscjava.vscode-java-pack",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools"
+    ]
+}
