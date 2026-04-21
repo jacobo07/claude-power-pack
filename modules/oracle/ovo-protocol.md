@@ -50,6 +50,34 @@ E. Vault & Propose     → --vault-post + baseline elevation proposal (A+ only)
 - **Mistake #37 (Silent Quality Degradation):** fallback paths that degrade >10× or lose data without logging WARN and aborting?
 - **Mistake #38 (Producer-Consumer Gap):** new data output (file, event, return value) with no consumer?
 - **Mistake #39 (Synchronous Default Trap):** blocking I/O on an event-loop or tick thread?
+- **Mistake #52 (Auditor Bug Misattributed):** any finding that cites an ad-hoc one-liner failure — re-verify via the canonical tool before promoting to a recommendation.
+
+### Reality Contract enforcement (MC-OVO-24 — Zero-Stub + Zero-401 checks)
+
+Reality Contract v7000+ is non-negotiable for any delta touching runtime code. Run BOTH checks and emit findings if either triggers:
+
+**Zero-Stub check** — grep the delta for placeholder markers. ANY hit on a runtime-code file (not pure docs, not governance markdown) is a delivery blocker:
+- `TODO:` / `FIXME:` / `XXX:` / `HACK:`
+- `Coming Soon` / `Coming soon` / `coming-soon`
+- `not implemented` / `NotImplementedError` / `raise "not implemented"`
+- `pass  # stub` / `// TODO` / `/* TODO */`
+- empty function bodies: `def foo(): pass\n` with no docstring AND no caller-facing contract, `function foo() {}` on exported symbols
+- commented-out wiring: `# return result` / `// return result` on the happy path
+
+Stub findings cap the verdict at **B** unless each stub has an explicit GitHub-issue reference AND an owner assignment in the same commit.
+
+**Zero-401 check** — if the delta touches ANY of: auth handler, session middleware, API endpoint, command permission check — verify:
+- No hardcoded `return 401` / `status_code=401` bypass path unconditional on the input
+- No `if DEV_MODE: skip_auth()` / `if env == 'local': return 200` flags
+- No commented-out auth checks (`// TODO: re-enable auth`)
+- No "empty permission" defaults that resolve to allow on miss
+- Every auth failure path has a corresponding logging emit at WARN+ level
+
+401 findings are blockers regardless of verdict — a 401 in production IS a broken user promise per the Reality Contract, not a design decision. Route to Rejection Recovery.
+
+**Provenance stamps** (appended to the Council block so downstream audits can prove the gates ran):
+- `[ZERO_STUB: clean|N findings|skipped-docs-only]`
+- `[ZERO_401: clean|N findings|not-applicable]`
 
 Full registry at `./modules/governance-overlay/mistakes-registry.md`. For projects with custom visual/audio stacks (KobiiCraft, KobiiSports) also cross-check `~/.claude/knowledge_vault/gex44_antipatterns/`.
 
