@@ -28,6 +28,7 @@ CLI:
 import argparse
 import io
 import json
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -36,7 +37,8 @@ from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).resolve().parent
-LEDGER_PATH = HERE.parent / "modules" / "governance-overlay" / "mistake-frequency.json"
+_DEFAULT_LEDGER = HERE.parent / "modules" / "governance-overlay" / "mistake-frequency.json"
+LEDGER_PATH = Path(os.environ.get("MISTAKE_FREQUENCY_LEDGER", str(_DEFAULT_LEDGER)))
 
 MISTAKE_ID_RE = re.compile(r"^M\d+$", re.IGNORECASE)
 
