@@ -7,3 +7,11 @@ rewrite it.
 
 ---
 
+## 2026-04-22 — Shipped 5 MC-OVO cycles on claude-power-pack: sleepless_qa atomic landing (34 fi
+
+**Session:** `kpp-supremacy-v7000-marathon`
+
+Before promoting any inline-one-liner failure to an audit recommendation, run the canonical tool (--help / official CLI). Mistake #52: my ad-hoc script's bug got misattributed to the audited file.
+
+---
+

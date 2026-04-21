@@ -1,7 +1,7 @@
 {
   "schema": "mistake-frequency-v1",
   "threshold": 3,
-  "last_updated": "2026-04-21T21:40:00+00:00",
+  "last_updated": "2026-04-21T22:10:00+00:00",
   "entries": {
     "M16": {
       "label": "Scaffold Illusion",
@@ -26,6 +26,49 @@
         {"ts": "2026-04-21T09:58:00Z", "cert": "evidence/audits/20260421T095800Z/CERTIFICATION.md", "surface": "MC-A13 code-landed empirically-incomplete (matches_seen=0 despite unit tests)"},
         {"ts": "2026-04-21T12:22:34Z", "cert": "evidence/audits/20260421T122234Z/CERTIFICATION.md", "surface": "LuckyArena 4->0 PASS regression; unit tests still 46/46"},
         {"ts": "2026-04-21T12:22:34Z", "cert": "evidence/audits/20260421T122234Z/CERTIFICATION.md", "surface": "vision-recorder 12/12 unit green + runtime hang (startInternal FIRST_FRAME_REGEX)"}
+      ]
+    },
+    "M38": {
+      "label": "Producer-Consumer Gap",
+      "count": 3,
+      "description": "New data output (file, event, return value, referenced doc) ships without a declared consumer. Cross-cuts with M16 (Scaffold Illusion). Fails OVO Phase A if flagged. Examples: referenced .txt prompt files without content-hash pin and without consumer function, vision_qa output with no explicit repair_engine bind, frames directory without appended ledger row.",
+      "first_seen": "2026-04-21T21:20:00Z",
+      "last_seen": "2026-04-21T22:10:00Z",
+      "incidents": [
+        {"ts": "2026-04-21T21:20:00Z", "cert": "vault/audits/verdicts.jsonl#delta_344e6a5e", "surface": "v200.0 prompt referenced 3 .txt files (auditar-mundicraft/auditar-luckyarena/iteracion-avanzada-visual) without declared consumer or content-hash pin"},
+        {"ts": "2026-04-21T21:20:00Z", "cert": "vault/audits/verdicts.jsonl#delta_344e6a5e", "surface": "v200.0 prompt 'vision_qa + Repair Engine' loop declared without producer-consumer schema — output sinks ambiguous"},
+        {"ts": "2026-04-21T22:10:00Z", "cert": "docs/KOBII_PHILOSOPHY/TWIN_ENGINE_AUDIT_BASELINE_v30000.md#6", "surface": "baseline v30000 formalizes frames/*.png -> vision_qa -> discrepancies -> repair_engine -> patches chain to close this antipattern"}
+      ]
+    },
+    "HARDWARE-LINK-MISMATCH": {
+      "label": "Hardware contract contradicts Vault reality",
+      "count": 1,
+      "description": "Prompt/plan names hardware (host, GPU node, port) that the canonical Vault has already marked degraded/broken/pivoted. Ignoring Vault state = real-world ABORT on first contact. Triggers DNA-700 mandato 8 (Vault-First Conflict Resolution). Fix: hardware probe in section 1 of the v30000 baseline must verify runtime state (ON/OFF/SHUTTING_DOWN) before firing.",
+      "first_seen": "2026-04-21T21:20:00Z",
+      "last_seen": "2026-04-21T21:20:00Z",
+      "incidents": [
+        {"ts": "2026-04-21T21:20:00Z", "cert": "vault/audits/verdicts.jsonl#delta_344e6a5e", "surface": "v200.0 prompt declared 'Hardware Link: GEX44 display :98' while Vault (project_gex44_on_demand.md, handoff 2026-04-19->20) had GEX44 firmware-bug confirmed by Hetzner and project pivoted to Runpod pod u8m3wlb9z93c4o"}
+      ]
+    },
+    "VAULT-FIRST-CONFLICT": {
+      "label": "Prompt directive contradicts canonical Vault",
+      "count": 1,
+      "description": "Current turn's directive asks for X while Vault (MASTER_ROUTING_TREE, MEMORY.md, or project_*.md) declares Y incompatible with X. Per DNA-700 mandato 8: do NOT execute X blindly; report conflict with exact citation, let Owner ratify or veto. Failure mode: prior snapshot V28.2 burnt 40 minutes confusing VPS 204.168.166.63 with Hetzner 65.109.80.35.",
+      "first_seen": "2026-04-21T21:20:00Z",
+      "last_seen": "2026-04-21T22:10:00Z",
+      "incidents": [
+        {"ts": "2026-04-21T21:20:00Z", "cert": "vault/audits/verdicts.jsonl#delta_344e6a5e", "surface": "v200.0 asserted GEX44 as live hardware; handoff 2026-04-19->20 asserted firmware-broken + Runpod pivot — surfaced as REJECT Contrarian objection"},
+        {"ts": "2026-04-21T22:10:00Z", "cert": "docs/KOBII_PHILOSOPHY/TWIN_ENGINE_AUDIT_BASELINE_v30000.md#1", "surface": "baseline v30000 §1 Pre-flight requires Vault-First citation before hardware ignition"}
+      ]
+    },
+    "KPI-SUBJECTIVE-UNBOUND": {
+      "label": "Subjective predicates + unbounded success loop",
+      "count": 1,
+      "description": "Spec uses prose like '100% jugable', 'feel impecable', 'hasta el Zero-Error' as the success criterion. No numeric threshold = predicate inobservable = loop silently degrades or never halts (M37 sibling). Fix: section 2 of v30000 baseline (threshold sheet with FPS, TP/FP, latencies, crash MTBF, silent-catch count) is mandatory; bounded loop max 3 iterations per discrepancy (DNA-036).",
+      "first_seen": "2026-04-21T21:20:00Z",
+      "last_seen": "2026-04-21T21:20:00Z",
+      "incidents": [
+        {"ts": "2026-04-21T21:20:00Z", "cert": "vault/audits/verdicts.jsonl#delta_344e6a5e", "surface": "v200.0 success predicate = '100% jugable' + 'Zero-Error' loop unbounded; scored 5/100 on benchmark-targets axis, 10/100 on loop-bound axis"}
       ]
     }
   }
