@@ -13,7 +13,11 @@ Living document. Tracks work toward the 100% capability score from the OVO audit
 | Go overlay (2 of 8) | +1 | (next commit) | `modules/executionos-lite/overlays/go.md` |
 | Kotlin overlay (3 of 8) | +1 | (next commit) | `modules/executionos-lite/overlays/kotlin.md` |
 | Roadmap doc (honest scope tracking) | +1 meta | `166d1d4` | this file |
-| **MC-OVO-34** Vault auto-fire hook | +1 | (next commit) | `modules/governance-overlay/hooks/mistake-ingest.js` + `vault/knowledge_base/errors.md` (52 mistakes ingested via empirical fire test) |
+| **MC-OVO-34** Vault auto-fire hook | +1 | `f3ea1ca` | `modules/governance-overlay/hooks/mistake-ingest.js` + `vault/knowledge_base/errors.md` (52 mistakes ingested via empirical fire test) |
+| Go overlay (2 of 8) | +1 | `0ac7543` | `modules/executionos-lite/overlays/go.md` |
+| Kotlin overlay (3 of 8) | +1 | `0ac7543` | `modules/executionos-lite/overlays/kotlin.md` |
+| **MC-OVO-30-EXT** Swift-native overlay (4 of 8) | +1 | this cycle | `modules/executionos-lite/overlays/swift-native.md` |
+| **MC-OVO-36** Vault self-optimization (errors.md → INDEX.md) | +1 | this cycle | `tools/vault_summarize.py` + `vault/knowledge_base/INDEX.md` (category-ranked, top-N per bucket, 4/4 gates PASS) |
 
 ## Deferred — explicit blockers + estimates
 
@@ -23,7 +27,7 @@ Living document. Tracks work toward the 100% capability score from the OVO audit
 |---|---|---|---|
 | ~~Go~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30+ cycle (go.md) |
 | ~~Kotlin JVM~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30+ cycle (kotlin.md) |
-| Swift native | overlay (`overlays/swift-native.md`) | ~45 min | none — apple-ecosystem.md provides cross-link target |
+| ~~Swift native~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30-EXT cycle (swift-native.md, cross-linked to apple-ecosystem.md) |
 | Ruby | overlay (`overlays/ruby.md`) | ~30 min | none — next session |
 | PHP | overlay (`overlays/php.md`) | ~30 min | none — next session |
 | SQL | overlay (`overlays/sql.md`) | ~30 min | dialect split (Postgres/MySQL/SQLite/MSSQL) needs Owner pick first |
