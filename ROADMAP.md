@@ -4,23 +4,26 @@ Living document. Tracks work toward the 100% capability score from the OVO audit
 
 **Current verified score:** 77.2% projected after MC-OVO-21..24 soak (from 65.2% baseline).
 
-## Closed in MC-OVO-30..34 cycle (this session)
+## Closed in MC-OVO-30..34 cycle
 
 | Item | Δ% | Commit | Evidence |
 |---|---:|---|---|
-| Apple ecosystem overlay (macOS + iOS + Swift) | +2-3 | `48f73c9` | `modules/executionos-lite/overlays/apple-ecosystem.md` 55 lines, pattern-match with android-native.md |
-| Rust overlay (first of 8 language overlays — template) | +1 | (this commit) | `modules/executionos-lite/overlays/rust.md` |
-| Roadmap doc (honest scope tracking) | +1 meta | (this commit) | this file |
+| Apple ecosystem overlay (macOS + iOS + Swift) | +2-3 | `48f73c9` | `modules/executionos-lite/overlays/apple-ecosystem.md` |
+| Rust overlay (first of 8 language overlays — template) | +1 | `166d1d4` | `modules/executionos-lite/overlays/rust.md` |
+| Go overlay (2 of 8) | +1 | (next commit) | `modules/executionos-lite/overlays/go.md` |
+| Kotlin overlay (3 of 8) | +1 | (next commit) | `modules/executionos-lite/overlays/kotlin.md` |
+| Roadmap doc (honest scope tracking) | +1 meta | `166d1d4` | this file |
+| **MC-OVO-34** Vault auto-fire hook | +1 | (next commit) | `modules/governance-overlay/hooks/mistake-ingest.js` + `vault/knowledge_base/errors.md` (52 mistakes ingested via empirical fire test) |
 
 ## Deferred — explicit blockers + estimates
 
-### MC-OVO-30 (Language skills / overlays — 7 of 8 remaining)
+### MC-OVO-30 (Language overlays — 5 of 8 remaining after Go + Kotlin shipped)
 
 | Language | Form | Effort | Blocker |
 |---|---|---|---|
-| Go | overlay (`overlays/go.md`) | ~30 min | none — pure authoring, next session |
-| Swift native | overlay (`overlays/swift-native.md`) | ~45 min | needs Apple-ecosystem overlay cross-links — can now build |
-| Kotlin JVM | overlay (`overlays/kotlin.md`) | ~45 min | none — next session |
+| ~~Go~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30+ cycle (go.md) |
+| ~~Kotlin JVM~~ | ~~overlay~~ | ~~DONE~~ | SHIPPED in MC-OVO-30+ cycle (kotlin.md) |
+| Swift native | overlay (`overlays/swift-native.md`) | ~45 min | none — apple-ecosystem.md provides cross-link target |
 | Ruby | overlay (`overlays/ruby.md`) | ~30 min | none — next session |
 | PHP | overlay (`overlays/php.md`) | ~30 min | none — next session |
 | SQL | overlay (`overlays/sql.md`) | ~30 min | dialect split (Postgres/MySQL/SQLite/MSSQL) needs Owner pick first |
