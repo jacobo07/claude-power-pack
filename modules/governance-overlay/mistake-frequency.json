@@ -1,6 +1,32 @@
 {
   "schema": "mistake-frequency-v1",
   "threshold": 3,
-  "last_updated": "2026-04-19T19:05:08+00:00",
-  "entries": {}
+  "last_updated": "2026-04-21T21:40:00+00:00",
+  "entries": {
+    "M16": {
+      "label": "Scaffold Illusion",
+      "count": 4,
+      "description": "Code looks complete (compiles, tests pass) but is not wired to a real caller or silently fails at runtime. Examples: vision-recorder FIRST_FRAME_REGEX hang at warning loglevel (MC-A9 R3), twin-runner requiring vision-recorder.cjs before wire-up (MC-A9 R2), bridge-hook HOTFIX-JAVA-APPROVED override unreachable because pre-commit runs before COMMIT_EDITMSG is written (MC-OVO-110 forensic), mistake-frequency.json itself empty despite council.md calling it Howard's Loop input.",
+      "first_seen": "2026-04-20T17:17:50Z",
+      "last_seen": "2026-04-21T19:40:00Z",
+      "incidents": [
+        {"ts": "2026-04-20T17:17:50Z", "cert": "evidence/audits/20260420T171750Z/CERTIFICATION.md", "surface": "57 OBSERVATIONAL assertions marked non-FAIL but never reviewed"},
+        {"ts": "2026-04-21T09:58:00Z", "cert": "evidence/audits/20260421T095800Z/CERTIFICATION.md", "surface": "vision-recorder wire-up missing despite module existing"},
+        {"ts": "2026-04-21T12:22:34Z", "cert": "evidence/audits/20260421T122234Z/CERTIFICATION.md", "surface": "FIRST_FRAME_REGEX hang at -loglevel warning"},
+        {"ts": "2026-04-21T19:40:00Z", "cert": "docs/audit/COUNCIL-META-AUDIT-2026-04-21.md", "surface": "bridge-hook HOTFIX override + empty mistake-frequency + 13 orphan antipatterns"}
+      ]
+    },
+    "M17": {
+      "label": "Static verification != runtime works",
+      "count": 3,
+      "description": "Tests or type-checker pass but production behavior diverges. 5-gate cascade must include E2E/empirical gate, not stop at 'it compiles'. Examples: 46/46 twin-runner unit tests green but R3 LuckyArena regressed 4/9 -> 0/9 PASS (environmental drift invisible to unit tests), vision-recorder 12/12 unit green but startInternal() hangs at runtime.",
+      "first_seen": "2026-04-21T09:58:00Z",
+      "last_seen": "2026-04-21T12:22:34Z",
+      "incidents": [
+        {"ts": "2026-04-21T09:58:00Z", "cert": "evidence/audits/20260421T095800Z/CERTIFICATION.md", "surface": "MC-A13 code-landed empirically-incomplete (matches_seen=0 despite unit tests)"},
+        {"ts": "2026-04-21T12:22:34Z", "cert": "evidence/audits/20260421T122234Z/CERTIFICATION.md", "surface": "LuckyArena 4->0 PASS regression; unit tests still 46/46"},
+        {"ts": "2026-04-21T12:22:34Z", "cert": "evidence/audits/20260421T122234Z/CERTIFICATION.md", "surface": "vision-recorder 12/12 unit green + runtime hang (startInternal FIRST_FRAME_REGEX)"}
+      ]
+    }
+  }
 }
