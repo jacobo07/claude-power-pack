@@ -446,3 +446,54 @@
   1. Before adding "do not invoke" directives, diff the two content sources. Map shared vs unique content.
   2. Use targeted messaging: "Modules X, Y already loaded — skill available for parts Z, W (not in hook)."
   3. Never use blanket "do not invoke" — always specify WHAT is already loaded and WHAT remains available.
+
+## Mistake #47: Success Hallucination (Ley 25 Enforcement)
+- **Detection:** A feature touching runtime behavior (UI, gameplay, API, daemon, command handler) is marked "done", "fixed", "ready", or "complete" without a PASS ticket from the Sleepless QA Pipeline (`modules/sleepless_qa/`). The "evidence" cited is compilation success, type checks, or lint cleanliness.
+- **Example:** A new `/kobii teleport` command is added. `mvn clean package` succeeds. `tsc --noEmit` is green. The plugin reloads without errors. Claim: "done". Reality: the command's permission check has a typo (`kobii.teleport.self` vs `kobii.teleport.slef`), so ops can use it, players cannot. No one tested it in-game. The bug ships.
+- **Root Cause:** Compilers verify syntax, not behavior. Static verification does NOT prove runtime works (extends Mistake #17 — Runtime != Compiles). The author's optimism fills the empirical gap.
+- **Prevention:**
+  1. Before any "done" emission on runtime-behavior features, the Sleepless QA pipeline MUST have observed the behavior and emitted a PASS ticket for the current run_id.
+  2. `tsc --noEmit` / `mvn compile` / `cargo check` passing is a PREREQUISITE, not a verdict.
+  3. A feature with zero empirical evidence is a scaffold illusion (Mistake #16 variant) regardless of how clean the diff looks.
+  4. Honest alternative when VPS/QA pipeline is unreachable: say "code written, statically valid, **empirical verification pending VPS**". Never collapse the two states into one claim.
+
+## Mistake #48: Zero-Shot Execution (Ley 26 Enforcement)
+- **Detection:** Code edits, script modifications, or non-trivial refactors begin without a pre-written Plan of Action (API Bounding + Never-Do Matrix + Atomic Micro-Commit Roadmap + Verification Section). No file in `./.planning/` or `~/.claude/plans/` references the current task.
+- **Example:** Owner says "add a retry loop to the webhook sender". Agent immediately opens `webhook.py`, writes a retry loop using `time.sleep(2**attempt)`, ships. Reality: the webhook runs inside an asyncio event loop — sync sleep blocks the whole loop (Mistake #39). A 30-second plan would have caught it; zero-shot didn't.
+- **Root Cause:** Familiarity bias. "I've written retry loops before, I don't need to plan this one." The cost of writing a plan (2 minutes) is always less than the cost of a wrong-pattern fix (20+ minutes to diagnose and unwind).
+- **Exceptions (plan-free is ok):** Typo fixes, single-line bug fixes, doc/comment tweaks, renaming a local variable, deleting obviously dead code.
+- **Prevention:**
+  1. Any edit touching >1 file, new functionality, async/concurrent code, or production-risk paths MUST have a plan file approved before the first Write/Edit tool call.
+  2. If the agent catches itself editing without a plan, HALT immediately, roll back pending edits if feasible, and enter PLAN MODE.
+  3. Plans must include: Oracle (API Bounding), Never-Do Matrix (3+ prohibitions), Roadmap (atomic steps), Verification (what passes = done).
+
+## Mistake #49: Untwinned Feature (Ley 27 Enforcement)
+- **Detection:** A new endpoint, UI component, command handler, daemon entrypoint, or state machine transition is added WITHOUT a corresponding `.yml` action script for the Sleepless QA pipeline in the same commit. `git diff --name-only <commit>` shows the code file but no `.yml` twin under `action_scripts/` or the feature's test directory.
+- **Example:** A new `/kobii crate` command is added in `CommandRegistry.java` with full business logic and permission checks. Commit shipped. Six weeks later, a refactor breaks the permission check. No QA coverage existed because no `.yml` twin was ever written. The regression ships to production.
+- **Root Cause:** "I'll write the test later" is the oldest broken promise in software. Features ship, deadlines tighten, tests never get written. The twin mandate closes that loophole at the commit boundary.
+- **Prevention:**
+  1. Every new runtime-behavior feature ships with its `.yml` action script in the same commit. Pre-commit hook enforces this at Sprint+ tier.
+  2. The `.yml` twin must exercise the feature's primary happy path and at least 1 adversarial case (permission denial, bad input, concurrent caller).
+  3. Refactors that rename/relocate a feature must also update the twin's action steps in the same commit.
+  4. Exception: pure internal refactors with no behavioral change (e.g., extracting a helper) are exempt, but must be labeled as such in the commit message.
+
+## Mistake #50: Terminal Outsourcing (Ley 28 Enforcement)
+- **Detection:** An agent with Bash/shell tool access concludes a work unit by asking the Owner to run commands and report the output, when the agent could have run those commands itself. Symptoms: "please run X and paste the result", "copy the following into your terminal", "I need you to verify this on your side".
+- **Example:** Agent finishes building a self-test script. Instead of invoking Bash itself to run `python -m my_module heartbeat` and inspecting the output, it asks the Owner to execute the script and paste back the log. The Owner had to catch the autonomy failure and manually invoke an "Oroboros" correction protocol.
+- **Root Cause:** Anxiety about running code with side effects, or defaulting to "helpful advisor" mode instead of "autonomous executor" mode. The agent conflates *caution about destructive operations* (correct) with *refusal to verify its own non-destructive output* (incorrect).
+- **Prevention:**
+  1. Before emitting any "please run" or "copy-paste this command" ask, check: is this command **non-destructive** AND **runnable with tools I have**? If yes → run it yourself.
+  2. Legitimate exceptions (still must be stated explicitly): commands requiring Owner credentials the agent lacks (`gcloud auth login`), destructive ops on shared systems (prod DB `DROP`), commands with interactive prompts.
+  3. For infrastructure scripts the agent just wrote: the default is **"I run it, I show the raw output, I interpret the output honestly"** — never "here's the command, tell me what happened".
+  4. Even if the command might fail: running it and capturing the failure is MORE valuable than asking the Owner to run it and report success/failure. The agent sees the actual stack trace; the Owner's retelling is lossy.
+
+## Mistake #51: Razonamiento Supuesto (Assumed Reasoning — Ley DNA-400)
+- **Detection:** A non-trivial logic change (>20 LOC, cross-module call, state machine, protocol handler, concurrency primitive) is delivered without either (a) a Sleepless QA verdict artifact, or (b) a synthetic test run whose stdout/exit-code was captured in the same session. Model-reasoned correctness claims like "this should work because X implies Y" without an execution trace qualify.
+- **Example:** Agent rewrites a retry loop to use exponential backoff with jitter. Reads the calling code, traces the happy path in its head, claims "verified". Never actually runs the loop against a failing endpoint. Ships. At runtime, the jitter multiplier overflows on the 10th retry because a `long` was silently promoted to `int` in a helper call. The model was "reasoning correctly" about a signature it got wrong.
+- **Root Cause:** The model's internal world-model drifts from the running system in ways it cannot detect from source alone. Type coercion, library version skew, async scheduler quirks, OS-level edge cases, memory layout, timing — none are visible to pure reasoning. The only SSoT is empirical execution.
+- **Prevention:**
+  1. Ley DNA-400 (Supremacía Empírica): complex logic must be validated by sandbox execution or synthetic test before delivery. Model reasoning is a vector of error, not a proof.
+  2. For any delivery emitting runtime-behavior code, the agent must cite either a `sleepless_qa` verdict.json or attach captured stdout/stderr from a standalone execution.
+  3. Cited evidence must be from THIS session, not a recollection of prior runs ("I tested this yesterday" = not evidence).
+  4. If sandbox execution is impossible (no runtime, hostile target, destructive side effects), phrase the delivery honestly: *"code reasoned statically; empirical verification deferred to [specific owner step]"* — never collapse reasoning and verification into a single claim.
+  5. This mistake pairs with #47 (Success Hallucination). #47 catches claims without a pipeline verdict; #51 catches the earlier step — claims built on reasoning alone before any execution was attempted.

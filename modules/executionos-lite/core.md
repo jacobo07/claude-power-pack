@@ -31,6 +31,8 @@ EXACT_OUTPUTS: <files, endpoints, artifacts expected>
 
 **Selection:** Estimate effort from request complexity. Simple lookup = LIGHT. Feature build = STANDARD. Multi-file refactor = DEEP. Production incident = FORENSIC.
 
+**DEEP+ feature briefs** must follow `sovereign-feature-template.md` (this directory). It enforces `[PRE_FLIGHT_TEST]`, `[VALIDATION_GATE]`, and `[DNA_UPDATE]` sections per Ley DNA-400.
+
 ## Reasoning Gates (Mandatory)
 
 Before transitioning between phases, produce a reasoning artifact:

@@ -18,6 +18,11 @@ Before returning ANY code output, verify:
 9. **Remote deploy integrity** — after SCP/heredoc deploy, read back the file and verify no shell escaping corruption (especially `\`, `$`, quotes in regex patterns).
 10. **Zero-issue gate passed** — compile (0 errors, 0 warnings), tests (all pass), scaffold audit (0 CRITICAL). The `zero-issue-gate.js` hook enforces this automatically on every session end. If it blocked you, fix the issue before responding.
 11. **Intent-Lock consistency** — if API Bounding was declared in pre-task (Section 8), verify the delivered code uses ONLY the declared APIs and concurrency patterns. If a Never-Do Matrix was set, verify zero violations. If Sovereign Doubt identified risks, verify mitigations are implemented.
+12. **Ley DNA-400 (Supremacía Empírica)** — complex logic (>20 LOC, cross-module, state machine, concurrency, protocol handler) requires sandbox or synthetic-test evidence from THIS session before delivery. Model reasoning alone is a vector of error. Cite either a `sleepless_qa` verdict.json or captured stdout/exit-code. See Mistake #51 in `mistakes-registry.md`.
+
+## Council of 5 (MANDATORY at STANDARD+ — read `council.md`)
+
+Before emitting any STANDARD+ output, run the 5-advisor Council (Contrarian, First Principles, Expansionist, Outsider, Executor) inline and stamp `[COUNCIL_VERDICT: A+|A|B|REJECT]`. B or REJECT blocks the output and triggers Rejection Recovery. See `council.md` for the doctrine and `pre-output.md` Section 13 for enforcement.
 
 ## Zero-Issue Baseline (MANDATORY — read `zero-issue-baseline.md` at STANDARD+)
 
@@ -34,6 +39,7 @@ Every delivery must pass the 5-gate cascade: Static Analysis → Build → Scaff
 | Lint | Project-specific linter | 0 errors |
 | Tests | `npm test` / `pytest` | All pass |
 | Runtime (DEEP+) | `python modules/omnicapture/query_telemetry.py --project <X> --summary` | 0 CRITICAL/FATAL |
+| **Empirical (DEEP+, Ley 25)** | `python -m sleepless_qa run <repo> <action.yml>` | verdict.json status=PASS |
 
 **If ANY gate fails → fix before claiming completion. No exceptions.**
 
