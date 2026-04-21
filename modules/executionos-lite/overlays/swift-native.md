@@ -1,0 +1,26 @@
+# Overlay: Swift Native (MC-OVO-30-EXT — 4 of 8 language overlays)
+
+Loads when CWD contains `Package.swift`, `*.xcodeproj`, `*.swift` at root, or `Sources/` with Swift files. ~260 tokens.
+
+**Cross-link:** for Xcode/iOS/macOS toolchain + fastlane + code-signing + simulator-vs-device gate, see `apple-ecosystem.md`. This file covers Swift-the-language + SPM libraries + server-side Swift. Apple-platform app specifics live in the apple-ecosystem overlay.
+
+- **Stack split:** (a) SPM library/CLI = `Package.swift` + `Sources/` + `Tests/`, targets Linux + macOS + iOS. (b) Apple app = `.xcodeproj`/`.xcworkspace`, macOS-only to build/sign. (c) Server-side Swift = Vapor/Hummingbird on Linux. For (a) + (c) Linux CI works fine; for (b) route to apple-ecosystem.md.
+- **Package.swift discipline:** declare `swift-tools-version:5.9` (or the repo's pinned minor) on the FIRST line. Never omit — older toolchains silently misparse. Use explicit product + target split: `.library(...)` / `.executable(...)` products, `.target` for code + `.testTarget` for tests. Platforms block declared: `platforms: [.macOS(.v13), .iOS(.v16), .linux]` as applicable.
+- **Optionals discipline:** `!` (force-unwrap) is a delivery blocker in non-test code. Every `!` needs a `// SAFETY:` comment stating the invariant. Prefer `guard let ... else { return ... }`, `if let`, `??` coalesce, or `try?` for failable calls. IUO (`Int!`) banned in new properties — rewrite to `Int?` + handle absence.
+- **Actors & concurrency:** `async`/`await` over completion handlers in new code. `actor` for isolated mutable state (no manual locks). `@MainActor` for UIKit/SwiftUI code, never cross to main without `await MainActor.run { ... }`. `Task.detached` ONLY when you explicitly need to break priority/context inheritance — otherwise plain `Task { }` inherits the caller correctly.
+- **Structured concurrency:** `async let` for parallel fetches that feed a single result. `TaskGroup` for N-parallel with aggregation. NEVER spawn a detached Task and forget about it — always keep a handle to cancel on scope exit.
+- **Sendable & data races:** enable `-strict-concurrency=complete` in CI builds. `Sendable` conformance on every type that crosses actor boundaries. Suppress warnings with a `@unchecked Sendable` + a comment explaining the invariant (immutable-by-convention, external-synchronization, etc.) — never silently.
+- **Error handling:** `throws` for recoverable errors, `fatalError` only for programmer-error invariants that MUST crash. Typed errors via `enum MyError: Error` — never `throw NSError(...)` in new code. `Result<T, Error>` for APIs that return-or-fail and need composability. `do/try/catch` always names the thrown type when the API allows.
+- **Value types first:** `struct` over `class` for data. `class` only when identity matters (UI views, NSObject bridging, shared-mutable-by-design). `final` on all classes that don't need subclassing (compiler optimization + contract clarity).
+- **Testing:** XCTest standard; `swift-testing` (new) for Swift 6+ projects. `XCTAssertEqual(actual, expected)` (order matters for diff output). `async` tests with `await`. Parameterized tests via `@Test(arguments: ...)` in swift-testing or manual iteration in XCTest. Coverage via `swift test --enable-code-coverage` → target ≥70% on library packages.
+- **Dependencies:** pin exact versions in `Package.swift` (`.package(url: ..., exact: "x.y.z")`) for apps, range `.upToNextMajor` for libraries. Run `swift package resolve` in CI and commit `Package.resolved`. Audit deps via `swift package show-dependencies --format json | jq`.
+- **Linters:** `SwiftLint` (community, idiom/style) + `SwiftFormat` (strict formatter) in CI. `-warnings-as-errors` flag on the compiler for release builds. Pre-commit hook required.
+- **Verification gate (Linux-capable subset):** `swift build --warnings-as-errors` + `swift test --enable-code-coverage` + `swiftlint --strict` (if config present) + `swift package audit` (if available) — all must exit 0. Full Apple-app gates (`xcodebuild`, simulator test, signing, notarize) deferred to apple-ecosystem.md when targeting Xcode projects.
+
+### Fragile-language note (Ley 25 context)
+
+Swift on Linux (server) inherits non-BEAM concurrency: actors give you isolation but no supervision tree, no transparent restart, no hot code reload. For daemon/service code scoring ≥4 on fragility criteria, Elixir still wins. Swift wins on Apple-ecosystem apps (iOS/macOS where it's the primary language) and on CPU-bound code that benefits from its type system + LLVM codegen. For Linux backend work with Swift, accept that the "restart the pod on crash" ops model applies — you don't get BEAM's invisible-to-user fault containment.
+
+### Swift 6 migration note (if `swift-tools-version: 6.0` seen)
+
+Swift 6 enables **complete concurrency checking** by default — many Swift 5 codebases produce hundreds of warnings/errors on first Swift 6 build. Migration path: bump `swift-tools-version` to 6.0 in a dedicated PR, let the compiler surface every cross-actor reference, fix with explicit `Sendable` or `await MainActor.run`, commit. Do NOT bundle Swift 6 migration with a feature PR — signal-to-noise ratio destroys review velocity.
