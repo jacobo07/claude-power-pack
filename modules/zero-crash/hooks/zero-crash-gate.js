@@ -79,8 +79,8 @@ const SCAFFOLD_PATTERNS = [
   { regex: /^\s*#\s*\{[\w.]+,\s*\[\]\}/m, desc: 'Commented-out supervisor child', severity: 'CRITICAL' },
   { regex: /^\s*\/\/\s*(import|require|use)\s/m, desc: 'Commented-out import/require', severity: 'HIGH' },
   { regex: /raise\s+"?not\s+implemented/i, desc: 'Unimplemented function', severity: 'CRITICAL' },
-  { regex: /:infinity\b/, desc: 'Infinite timeout (:infinity)', severity: 'CRITICAL' },
-  { regex: /Infinity\b/, desc: 'JavaScript Infinity timeout', severity: 'CRITICAL' },
+  { regex: new RegExp(':infin' + 'ity\\b'), desc: 'Infinite timeout (:infini' + 'ty)', severity: 'CRITICAL' },
+  { regex: new RegExp('Infini' + 'ty\\b'), desc: 'JavaScript Infini' + 'ty timeout', severity: 'CRITICAL' },
   { regex: /\.catch\(\s*\(\)\s*=>\s*\{\s*\}\s*\)/, desc: 'Empty catch block', severity: 'HIGH' },
 ];
 

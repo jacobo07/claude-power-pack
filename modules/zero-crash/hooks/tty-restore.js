@@ -11,7 +11,10 @@
  */
 
 let input = '';
-const stdinTimeout = setTimeout(() => process.exit(0), 3000);
+const stdinTimeout = setTimeout(() => {
+  try { process.stdout.write('{}'); } catch { }
+  process.exit(0);
+}, 3000);
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', chunk => input += chunk);
 process.stdin.on('end', () => {
@@ -23,14 +26,16 @@ process.stdin.on('end', () => {
 
     // Only restore TTY after Bash tool calls
     if (toolName !== 'Bash') {
+      try { process.stdout.write('{}'); } catch { }
       process.exit(0);
       return;
     }
 
-    // Disable focus reporting (DECSET 1004) — prevents ^[[I^[[O leakage
-    // This is safe: focus reporting is an optional terminal feature
-    // that child processes may enable but fail to disable on exit
-    process.stdout.write('\x1b[?1004l');
+    // Disable focus reporting (DECSET 1004) — prevents ^[[I^[[O leakage.
+    // Written to stderr so stdout stays pure JSON for hook validation;
+    // stderr is pty-connected in Cursor/VSCode terminals so the escape
+    // still reaches the terminal emulator.
+    try { process.stderr.write('\x1b[?1004l'); } catch { }
 
     // Optional: report TTY restoration event for telemetry
     const apiKey = process.env.ZERO_CRASH_API_KEY;
@@ -53,5 +58,6 @@ process.stdin.on('end', () => {
 
   } catch { /* parse error — exit silently */ }
 
+  try { process.stdout.write('{}'); } catch { }
   process.exit(0);
 });

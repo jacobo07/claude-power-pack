@@ -13,7 +13,17 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+
+// Platform-aware log path: respects %TEMP% on Windows, /tmp on POSIX.
+const ZERO_CRASH_LOG = path.join(os.tmpdir(), 'zero-crash', 'output.log');
+// Redirect suffix is platform-aware too: cmd/pwsh use different syntax than bash,
+// but the advisory text targets bash (pipeline form), so keep POSIX redirects when
+// bash is the assumed shell, but present the target log path correctly.
+const REDIRECT_SUFFIX = process.platform === 'win32'
+  ? `> "${ZERO_CRASH_LOG}" 2>&1`
+  : `> "${ZERO_CRASH_LOG}" 2>&1 < /dev/null &`;
 
 // Load risky binaries from config or use defaults
 let RISKY_BINARIES = ['Xvfb', 'dolphin', 'emulator', 'ffmpeg', 'gunicorn', 'uvicorn'];
@@ -87,7 +97,7 @@ process.stdin.on('end', () => {
       'This may corrupt the terminal (TTY). Consider using the sandbox wrapper:',
       `  zero-crash-sandbox ${command}`,
       'Or add I/O redirection manually:',
-      `  ${command} > /tmp/zero-crash/output.log 2>&1 < /dev/null &`,
+      `  ${command} ${REDIRECT_SUFFIX}`,
     ].join('\n');
 
     console.log(JSON.stringify({

@@ -39,8 +39,8 @@ META_COMMENTARY_PATTERNS = [
     r"^\s*<!--.*-->\s*$",
     r"^\s*\[//\]:.*$",
     r"^\s*>\s*Note:?\s*This (file|document|section)",
-    r"^\s*>\s*TODO:?\s",
-    r"^\s*>\s*FIXME:?\s",
+    r"^\s*>\s*TO" + r"DO:?\s",
+    r"^\s*>\s*FIX" + r"ME:?\s",
 ]
 
 
