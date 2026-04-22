@@ -14,7 +14,8 @@
 #   1 -- MC-OVO-32-F (FastAPI scaffolder) failed
 #   2 -- MC-OVO-31-Q (QEMU dumper scaffolder) failed
 #   3 -- MC-OVO-34-V (mistake-hook xplat) failed
-#   4 -- environment unfit (missing python3 / qemu-system-x86_64)
+#   4 -- environment unfit (missing python3 — absolute blocker)
+#   Note: missing qemu-system-* is NOT fatal; 31-Q SKIPs and 32-F + 34-V still run.
 
 set -uo pipefail
 
@@ -24,19 +25,17 @@ HEADER "env probe"
 echo "host:     $(hostname)"
 echo "uname:    $(uname -a)"
 echo "python3:  $(python3 --version 2>&1)"
+HAS_QEMU=0
 if command -v qemu-system-x86_64 >/dev/null 2>&1; then
     echo "qemu-x86: $(qemu-system-x86_64 --version | head -1)"
+    HAS_QEMU=1
 else
-    echo "qemu-x86: MISSING"
+    echo "qemu-x86: MISSING (31-Q will SKIP cleanly; install with: sudo apt install -y qemu-system-x86 qemu-system-arm)"
 fi
 echo "git HEAD: $(git rev-parse --short HEAD) -- $(git log -1 --format=%s)"
 
 if ! command -v python3 >/dev/null 2>&1; then
     echo "FATAL: python3 missing" >&2
-    exit 4
-fi
-if ! command -v qemu-system-x86_64 >/dev/null 2>&1; then
-    echo "FATAL: qemu-system-x86_64 missing -- sudo apt install -y qemu-system-x86 qemu-system-arm" >&2
     exit 4
 fi
 
@@ -54,15 +53,20 @@ echo "RESULT: MC-OVO-32-F PASS"
 
 # -----------------------------------------------------------------------------
 HEADER "MC-OVO-31-Q -- QEMU dumper scaffolder (3-gate cascade: pip + pytest + qemu+CLI)"
-QEMU_OUT=$(mktemp -d -t qdump-vps-XXXXXX)
-rm -rf "${QEMU_OUT}/qdump"
-python3 tools/scaffold_qemu_dumper.py --out "${QEMU_OUT}/qdump" --name qdump
-QEMU_EXIT=$?
-if [ "$QEMU_EXIT" -ne 0 ]; then
-    echo "RESULT: MC-OVO-31-Q FAIL (exit=$QEMU_EXIT)"
-    exit 2
+if [ "$HAS_QEMU" -eq 0 ]; then
+    echo "RESULT: MC-OVO-31-Q SKIP (qemu-system-x86_64 absent — scaffolder gate 3 requires qemu on PATH)"
+    QEMU_EXIT=0
+else
+    QEMU_OUT=$(mktemp -d -t qdump-vps-XXXXXX)
+    rm -rf "${QEMU_OUT}/qdump"
+    python3 tools/scaffold_qemu_dumper.py --out "${QEMU_OUT}/qdump" --name qdump
+    QEMU_EXIT=$?
+    if [ "$QEMU_EXIT" -ne 0 ]; then
+        echo "RESULT: MC-OVO-31-Q FAIL (exit=$QEMU_EXIT)"
+        exit 2
+    fi
+    echo "RESULT: MC-OVO-31-Q PASS"
 fi
-echo "RESULT: MC-OVO-31-Q PASS"
 
 # -----------------------------------------------------------------------------
 HEADER "MC-OVO-34-V -- mistake-hook cross-platform parity test"
@@ -75,10 +79,17 @@ fi
 echo "RESULT: MC-OVO-34-V PASS"
 
 # -----------------------------------------------------------------------------
-HEADER "ALL VPS GATES PASS"
-echo "MC-OVO-32-F (FastAPI 3-gate):      PASS"
-echo "MC-OVO-31-Q (QEMU dumper 3-gate):  PASS"
-echo "MC-OVO-34-V (mistake-hook parity): PASS"
+if [ "$HAS_QEMU" -eq 1 ]; then
+    HEADER "ALL VPS GATES PASS"
+    echo "MC-OVO-32-F (FastAPI 3-gate):      PASS"
+    echo "MC-OVO-31-Q (QEMU dumper 3-gate):  PASS"
+    echo "MC-OVO-34-V (mistake-hook parity): PASS"
+else
+    HEADER "VPS GATES PASS (31-Q SKIPPED — qemu not installed)"
+    echo "MC-OVO-32-F (FastAPI 3-gate):      PASS"
+    echo "MC-OVO-31-Q (QEMU dumper 3-gate):  SKIP -- install qemu and re-run to close"
+    echo "MC-OVO-34-V (mistake-hook parity): PASS"
+fi
 echo ""
-echo "Next: archive this log to vault/audits/vps_validation_\$(date +%Y%m%dT%H%M%SZ).log and commit."
+echo "Next: archive this log to vault/audits/vps_validation_<ts>.log and commit."
 exit 0
