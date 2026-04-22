@@ -1,0 +1,62 @@
+[remote] git pull --ff-only
+Updating 55cdf12..89b4abf
+Fast-forward
+ ROADMAP.md                                       | 34 ++++++++-----
+ vault/audits/verdicts.jsonl                      |  1 +
+ vault/audits/vps_validation_20260422T113712Z.log | 62 ++++++++++++++++++++++++
+ 3 files changed, 86 insertions(+), 11 deletions(-)
+ create mode 100644 vault/audits/vps_validation_20260422T113712Z.log
+From https://github.com/jacobo07/claude-power-pack
+   55cdf12..89b4abf  main       -> origin/main
+[remote] bash tools/vps_validation_handoff.sh
+
+================================================================
+env probe
+================================================================
+host:     ubuntu-8gb-hel1-1
+uname:    Linux ubuntu-8gb-hel1-1 6.8.0-106-generic #106-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar  6 07:58:08 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+python3:  Python 3.12.3
+qemu-x86: MISSING (31-Q will SKIP cleanly; install with: sudo apt install -y qemu-system-x86 qemu-system-arm)
+git HEAD: 89b4abf -- chore(audit): OVO verdict A+ for ca732c50 — session A+ certification achieved
+
+================================================================
+MC-OVO-32-F -- FastAPI scaffolder (3-gate cascade: pip + pytest + uvicorn)
+================================================================
+[scaffold] writing to /tmp/fastapi-vps-B8dF8P/demo
+[scaffold] wrote 8 files:
+  - .gitignore
+  - README.md
+  - app/__init__.py
+  - app/config.py
+  - app/main.py
+  - requirements.txt
+  - tests/__init__.py
+  - tests/test_main.py
+[gate-install] pip install --user -r requirements.txt
+[gate-install] OK
+[gate-pytest] pytest tests/
+[gate-pytest] OK — 4 tests passed
+[gate-boot] uvicorn app.main:app --port 8799 (background)
+[gate-boot] OK - GET /health -> 200 {"status":"ok","project":"scaffolded-api"}
+[scaffold] ALL GATES PASS — FastAPI scaffold verified
+RESULT: MC-OVO-32-F PASS
+
+================================================================
+MC-OVO-31-Q -- QEMU dumper scaffolder (3-gate cascade: pip + pytest + qemu+CLI)
+================================================================
+RESULT: MC-OVO-31-Q SKIP (qemu-system-x86_64 absent — scaffolder gate 3 requires qemu on PATH)
+
+================================================================
+MC-OVO-34-V -- mistake-hook cross-platform parity test
+================================================================
+PARITY host=ubuntu-8gb-hel1-1 py=3.12.3 platform=linux tool_sha=4e53d4167f35 tests=8 status=PASS
+RESULT: MC-OVO-34-V PASS
+
+================================================================
+VPS GATES PASS (31-Q SKIPPED — qemu not installed)
+================================================================
+MC-OVO-32-F (FastAPI 3-gate):      PASS
+MC-OVO-31-Q (QEMU dumper 3-gate):  SKIP -- install qemu and re-run to close
+MC-OVO-34-V (mistake-hook parity): PASS
+
+Next: archive this log to vault/audits/vps_validation_<ts>.log and commit.
