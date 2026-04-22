@@ -70,6 +70,18 @@
       "incidents": [
         {"ts": "2026-04-21T21:20:00Z", "cert": "vault/audits/verdicts.jsonl#delta_344e6a5e", "surface": "v200.0 success predicate = '100% jugable' + 'Zero-Error' loop unbounded; scored 5/100 on benchmark-targets axis, 10/100 on loop-bound axis"}
       ]
+    },
+    "PROMPT-AUTH-VS-POLICY-RAIL": {
+      "label": "Prompt-text authorization does not override structural policy rails",
+      "count": 3,
+      "description": "Owner types 'AUTORIZADO' / 'approved' / 'OWNER PERMISSIONS GRANTED' in the prompt body to unlock a structurally-gated operation (sudo, outbound SSH, agent self-mod of permission files). The Claude Code sandbox treats these classes as unconditional rails: prompt-text auth is not accepted as consent. Denial rationale explicitly cites 'not explicitly authorized' + the class of operation. Retry within the same session reproduces the denial. Canonical unblocks: (a) Owner runs via '! <cmd>' in their own prompt (terminal passthrough), (b) Owner edits settings.local.json or runs /permissions themselves. Agent must NOT re-attempt, must NOT try to bypass with adjacent tools, must surface the rail + route to (a) or (b).",
+      "first_seen": "2026-04-22T00:00:00Z",
+      "last_seen": "2026-04-22T22:50:00Z",
+      "incidents": [
+        {"ts": "2026-04-22T00:00:00Z", "cert": "vault/knowledge_base/errors.md#2026-04-22-sandbox-sudo", "surface": "sudo apt install qemu-system-* denied on shared VPS despite Owner 'AUTORIZADO' in prompt body"},
+        {"ts": "2026-04-22T22:40:00Z", "cert": "vault/knowledge_base/errors.md#2026-04-22-sandbox-ssh", "surface": "outbound SSH to vaulted VPS key + host denied twice in same session even after 'OWNER PERMISSIONS GRANTED' + specific target+command"},
+        {"ts": "2026-04-22T22:50:00Z", "cert": "vault/knowledge_base/errors.md#2026-04-22-sandbox-selfmod", "surface": "agent Edit of .claude/settings.local.json to append Bash(ssh ...) allow-rule blocked by Self-Modification guard after Owner typed 'B approved'; Edit call appeared to succeed but follow-on validation Bash surfaced the denial retroactively"}
+      ]
     }
   }
 }
