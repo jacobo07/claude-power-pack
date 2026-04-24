@@ -17,11 +17,13 @@ purpose: Single-page index of every activatable surface in this skill. Makes the
 - **Output** — the observable artifact produced.
 - **Path** — where the skill lives.
 
-## Slash Commands (8)
+## Slash Commands (10)
 
 | Skill | Type | Process | Rules | Output | Path |
 |-------|------|---------|-------|--------|------|
 | `/audit-all` | cmd | Unified breadth-first audit across every subsystem in current repo — scores on edit-thrashing / drift / completion / env-mapping + OVO delta overlay. | Zero-stub policy enforced; drill-down via `/audit-all <N>` or by subsystem id. | Summary table + GREEN/YELLOW/ORANGE/RED verdicts + oracle_delta footer. | `commands/audit-all.md` |
+| `/investment-ready-audit` | cmd | Project-agnostic investor-grade scoring on 5 axes: Scalability / Resilience / Traceability / Zero-Stub / ROI-Wiring. | Zero-Stub weighted 3×, ROI-Wiring 2×; verdict thresholds 85/75/60. | Progress-bar summary + per-axis + per-subsystem table + Series-A/Seed/Angel/NotInvestable verdict. | `commands/investment-ready-audit.md` |
+| `/ira` | cmd | Alias for `/investment-ready-audit` — short-form invocation for quick runs. | Same engine, same thresholds. | Same as `/investment-ready-audit`. | `commands/ira.md` |
 | `/cpp-autoupdate` | cmd | Toggle automatic update-check on session start. | Must not block session startup. | Boolean flag in settings. | `commands/autoupdate.md` |
 | `/cpp-customclaw create <name>` | cmd | Scan current project, generate a custom AI daemon tailored to its stack. | Project-aware; must not overwrite existing daemons; 11 stacks supported (GAL v1.6). | New daemon module + command. | `commands/customclaw.md` |
 | `/obsidian-setup` | cmd | Generate a Knowledge Graph vault from the current project. | Max 10 nodes per task; follows wikilinks. | `_knowledge_graph/INDEX.md` + node files. | `commands/obsidian-setup.md` |

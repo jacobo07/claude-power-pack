@@ -54,10 +54,13 @@ Pick any subsystem whose row isn't `GREEN`. A drill-down exposes the raw evidenc
 
 Run `/audit-all` first to triage. Run `/ovo-audit` on a suspect subsystem once you've identified it.
 
-## Exit summary
+## Exit summary (Claude: paste the table inline — do NOT let the UI collapse it)
 
-Report these four numbers in under 5 lines:
-- Subsystems audited
-- Red / Orange / Yellow / Green counts
-- Worst subsystem (id, overall, weakest benchmark)
-- Oracle delta: `N changed / M new / K deleted` (or `skipped` with reason)
+**REQUIRED render contract.** After the script completes, emit these blocks in the response body so the Owner sees the per-subsystem `%` per benchmark at a glance without expanding anything:
+
+1. **Headline line** — `Subsystems: N · GREEN: a · YELLOW: b · ORANGE: c · RED: d · oracle_delta: …`
+2. **Full per-subsystem table** (copy verbatim from the script — keep the columns `ID / STACK / THRASH / DRIFT / COMPL / ENV / OVERALL / STATUS`). Fence as a code block so the UI does not fold it behind `+N lines (ctrl+o to expand)`.
+3. **Worst subsystem** — one line: `id, overall%, weakest benchmark, top offender`.
+4. **Next step** — one line recommending the exact drill-down command, e.g. `/audit-all 1` or `/ira 1` if the same subsystem should be re-scored against the investment axes.
+
+If the script prints `oracle_delta: skipped (…)`, include the reason. If a subsystem is RED/ORANGE, name its two worst axes with %, not just the overall.
