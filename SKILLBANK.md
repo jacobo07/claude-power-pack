@@ -65,11 +65,14 @@ purpose: Single-page index of every activatable surface in this skill. Makes the
 | `video-re` (VRE) | sleepy | Load on reverse engineer / video analysis / YouTube / competitor / SOTA. | Frame-by-frame citation required. | Video-RE rules loaded. | `parts/sleepy/video-re.md` |
 | `zero-crash` (ZC) | sleepy | Load on zero-crash / TTY / sandbox / process isolation. | TTY restore after every command. | Zero-crash rules loaded. | `parts/sleepy/zero-crash.md` |
 
-## Tools (CLI scripts, 11)
+## Tools (CLI scripts, 14)
 
 | Skill | Type | Process | Rules | Output | Path |
 |-------|------|---------|-------|--------|------|
 | `audit_cache.py` | tool | Hash-based source file skip for FORENSIC audits. | SHA-256 truncated 16-char; skip `.git/node_modules/target/build/dist/__pycache__`. | `_audit_cache/source_map.json`. | `tools/audit_cache.py` |
+| `oracle_heartbeat.py` | tool | Runtime Handshake Probe — local CPU/mem/load + optional PID/process/log-tail sampling + SHA256 integrity seal. `--check` gates on age. | Heartbeat must be < `--max-age` seconds old or `--check` returns 1; A+ verdicts require attached heartbeat. | Appended JSONL at `vault/audits/heartbeats.jsonl`. | `tools/oracle_heartbeat.py` |
+| `oracle_cascade.py` | tool | Dependency Cascade Oracle — regex-based Paper/Bukkit `@EventHandler` + `callEvent()` graph; computes blast radius + fragile-boundary crossing (Economy/Auth/Persistence/WorldGuard/Spawn/Tax). | Heuristic, not AST. `CASCADE_FRAGILE_BOUNDARY` verdict caps OVO at B unless cited. | `vault/audits/cascade_graph.json` + stdout verdict JSON. | `tools/oracle_cascade.py` |
+| `oracle_chaos.py` | tool | Fault-Injection harness — spawns target cmd under CPU/mem/disk stress, measures survival vs `--deadline`. PASS exit 0, FAIL exit 1. | Local-process chaos only (no Docker/k8s); SLA deadline must be explicit. | Appended JSONL at `vault/audits/chaos_runs.jsonl` + stdout verdict. | `tools/oracle_chaos.py` |
 | `baseline_ledger.py` | tool | Multi-axis ecosystem-baseline tracker (k_qa, k_router, engineering_baseline, highest_dna). | Monotonic elevation; CD#10 no-BOM. | `~/.claude/vault/global_baseline_ledger.json` + Obsidian mirror. | `tools/baseline_ledger.py` |
 | `chatgpt_distiller.py` | tool | Distill ChatGPT transcripts into vault entries. | Strips PII; tags entries. | Distilled .md in vault. | `tools/chatgpt_distiller.py` |
 | `council_verdict.py` | tool | Record a Council-of-5 verdict artifact. | Verdict grade A+/A/B/REJECT only. | Verdict JSON. | `tools/council_verdict.py` |
