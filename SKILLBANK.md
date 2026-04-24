@@ -17,10 +17,11 @@ purpose: Single-page index of every activatable surface in this skill. Makes the
 - **Output** — the observable artifact produced.
 - **Path** — where the skill lives.
 
-## Slash Commands (7)
+## Slash Commands (8)
 
 | Skill | Type | Process | Rules | Output | Path |
 |-------|------|---------|-------|--------|------|
+| `/audit-all` | cmd | Unified breadth-first audit across every subsystem in current repo — scores on edit-thrashing / drift / completion / env-mapping + OVO delta overlay. | Zero-stub policy enforced; drill-down via `/audit-all <N>` or by subsystem id. | Summary table + GREEN/YELLOW/ORANGE/RED verdicts + oracle_delta footer. | `commands/audit-all.md` |
 | `/cpp-autoupdate` | cmd | Toggle automatic update-check on session start. | Must not block session startup. | Boolean flag in settings. | `commands/autoupdate.md` |
 | `/cpp-customclaw create <name>` | cmd | Scan current project, generate a custom AI daemon tailored to its stack. | Project-aware; must not overwrite existing daemons; 11 stacks supported (GAL v1.6). | New daemon module + command. | `commands/customclaw.md` |
 | `/obsidian-setup` | cmd | Generate a Knowledge Graph vault from the current project. | Max 10 nodes per task; follows wikilinks. | `_knowledge_graph/INDEX.md` + node files. | `commands/obsidian-setup.md` |
