@@ -1,0 +1,13 @@
+{
+  "schema": "ovo-cascade-graph-v2",
+  "generated_at": "2026-04-25T18:15:00Z",
+  "project": "claude-power-pack",
+  "nodes": [],
+  "edges": [],
+  "_doc": "v2 envelope ready. Populator is stack-specific work — see vault/forensic/CGAR_SCHEMA.md. Empty nodes[] ⇒ CGAR probe runs in NOT_CONFIGURED mode (correct, not a defect).",
+  "_legacy_v1": {
+    "classes": [],
+    "event_to_listeners": {},
+    "event_to_publishers": {}
+  }
+}
