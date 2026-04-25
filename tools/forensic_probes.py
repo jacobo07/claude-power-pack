@@ -255,6 +255,7 @@ def afhl_check(project: Path, delta_paths: list[str]) -> ProbeResult:
 
 CGAR_CORE_CRITICALITY = ("core", "high")
 CGAR_TRANSITIVE_THRESHOLD = 50
+CGAR_NODE_REQUIRED_FIELDS = ("id", "kind")
 
 
 def cgar_check(project: Path, delta_paths: list[str]) -> ProbeResult:
@@ -291,13 +292,39 @@ def cgar_check(project: Path, delta_paths: list[str]) -> ProbeResult:
     cap = "none"
     delta_set = {p.replace("\\", "/") for p in delta_paths}
 
-    for node in nodes:
-        node_id = node.get("id", "").replace("\\", "/")
+    for idx, node in enumerate(nodes):
+        # MC-OVO-108: explicit malformed-node detection. Silent skip via
+        # .get() defaults was the open Contrarian caveat from the prior
+        # verdict — emit honest WARN finding instead.
+        if not isinstance(node, dict):
+            findings.append(f"WARN cascade node #{idx}: not a dict — skipped")
+            cap = "B"
+            continue
+        missing = [f for f in CGAR_NODE_REQUIRED_FIELDS if f not in node]
+        if missing:
+            findings.append(
+                f"WARN cascade node #{idx} (id={node.get('id','?')!r}): "
+                f"missing required fields {missing} — skipped"
+            )
+            cap = "B"
+            continue
+        node_id = str(node["id"]).replace("\\", "/")
+        if not node_id:
+            findings.append(f"WARN cascade node #{idx}: empty id — skipped")
+            cap = "B"
+            continue
         if node_id not in delta_set:
             continue
         criticality = node.get("criticality", "low")
-        kind = node.get("kind", "module")
+        kind = node["kind"]
         blast = node.get("blast_radius", {}) or {}
+        if not isinstance(blast, dict):
+            findings.append(
+                f"WARN cascade node {node_id}: blast_radius is not a dict — "
+                f"treating as empty"
+            )
+            cap = "B"
+            blast = {}
         transitive = int(blast.get("transitive_callers", 0) or 0)
         downstream = blast.get("downstream_systems", []) or []
 

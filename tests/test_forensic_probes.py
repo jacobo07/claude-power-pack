@@ -329,6 +329,53 @@ class TestCGAR(unittest.TestCase):
             self.assertEqual(r.verdict_cap, "B")
             self.assertTrue(any("malformed" in f for f in r.findings))
 
+    # MC-OVO-108: malformed-node hardening (the open Contrarian caveat).
+    def test_malformed_node_missing_id_is_warned(self):
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            graph = {
+                "schema": "ovo-cascade-graph-v2",
+                "nodes": [
+                    {"kind": "module", "blast_radius": {"transitive_callers": 5}},
+                    {"id": "src/real.py", "kind": "module"},
+                ],
+            }
+            (project / "vault" / "audits" / "cascade_graph.json").write_text(
+                json.dumps(graph), encoding="utf-8")
+            r = fp.cgar_check(project, ["src/real.py"])
+            self.assertEqual(r.verdict_cap, "B")
+            self.assertTrue(any("missing required fields" in f for f in r.findings))
+            # The well-formed node still got evaluated — no findings on it.
+
+    def test_malformed_node_non_dict_is_warned(self):
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            graph = {
+                "schema": "ovo-cascade-graph-v2",
+                "nodes": ["not a dict", {"id": "x.py", "kind": "module"}],
+            }
+            (project / "vault" / "audits" / "cascade_graph.json").write_text(
+                json.dumps(graph), encoding="utf-8")
+            r = fp.cgar_check(project, [])
+            self.assertEqual(r.verdict_cap, "B")
+            self.assertTrue(any("not a dict" in f for f in r.findings))
+
+    def test_malformed_blast_radius_is_warned(self):
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            graph = {
+                "schema": "ovo-cascade-graph-v2",
+                "nodes": [{
+                    "id": "src/x.py", "kind": "module",
+                    "blast_radius": "should-be-dict",
+                }],
+            }
+            (project / "vault" / "audits" / "cascade_graph.json").write_text(
+                json.dumps(graph), encoding="utf-8")
+            r = fp.cgar_check(project, ["src/x.py"])
+            self.assertEqual(r.verdict_cap, "B")
+            self.assertTrue(any("blast_radius is not a dict" in f for f in r.findings))
+
 
 # ---------------------------------------------------------------------------
 # Aggregation
