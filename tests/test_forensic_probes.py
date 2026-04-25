@@ -378,6 +378,98 @@ class TestCGAR(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# CGAR ↔ Replay integration (MC-OVO-106)
+# ---------------------------------------------------------------------------
+
+def _setup_high_blast_node(project: Path) -> None:
+    graph = {
+        "schema": "ovo-cascade-graph-v2",
+        "nodes": [{
+            "id": "lib/util.js", "kind": "module",
+            "blast_radius": {"transitive_callers": 200,
+                             "downstream_systems": []},
+        }],
+    }
+    (project / "vault" / "audits" / "cascade_graph.json").write_text(
+        json.dumps(graph), encoding="utf-8")
+
+
+def _setup_replay(project: Path, events: list[dict],
+                  shim_body: str) -> None:
+    log_dir = project / "vault" / "audits" / "replay_log"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    (log_dir / "test.jsonl").write_text(
+        "\n".join(json.dumps(e) for e in events), encoding="utf-8")
+    tools_dir = project / "tools"
+    tools_dir.mkdir(parents=True, exist_ok=True)
+    (tools_dir / "replay_shim.py").write_text(shim_body, encoding="utf-8")
+
+
+class TestCGARReplayIntegration(unittest.TestCase):
+
+    def test_clean_replay_relaxes_blast_radius_b_to_none(self):
+        """High-blast node + clean replay → cap goes B → none."""
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            _setup_high_blast_node(project)
+            _setup_replay(
+                project,
+                events=[{"event_id": "e1", "input_kind": "echo",
+                         "input": {"x": 1}, "observed_output": {"x": 1}}],
+                shim_body="def apply(k, i):\n    return i\n",
+            )
+            r = fp.cgar_check(project, ["lib/util.js"])
+            self.assertEqual(r.verdict_cap, "none")
+            self.assertTrue(any("relaxed by clean adversarial replay" in f
+                                for f in r.findings))
+
+    def test_regressed_replay_keeps_b(self):
+        """High-blast node + replay DIFF → cap stays B."""
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            _setup_high_blast_node(project)
+            _setup_replay(
+                project,
+                events=[{"event_id": "e1", "input_kind": "echo",
+                         "input": {"x": 1}, "observed_output": {"x": 999}}],
+                shim_body="def apply(k, i):\n    return i\n",
+            )
+            r = fp.cgar_check(project, ["lib/util.js"])
+            self.assertEqual(r.verdict_cap, "B")
+            self.assertTrue(any("replay verdict=regressed" in f
+                                for f in r.findings))
+
+    def test_critical_event_diff_escalates_to_reject(self):
+        """High-blast node + critical-tagged DIFF → cap REJECT."""
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            _setup_high_blast_node(project)
+            _setup_replay(
+                project,
+                events=[{"event_id": "e1", "input_kind": "payment",
+                         "input": {"amount": 100},
+                         "observed_output": {"ok": True},
+                         "severity_hint": "critical"}],
+                shim_body="def apply(k, i):\n    return {'ok': False}\n",
+            )
+            (project / "_audit_cache").mkdir(exist_ok=True)
+            (project / "_audit_cache" / "replay_config.json").write_text(
+                json.dumps({"critical_event_kinds": ["payment"]}),
+                encoding="utf-8")
+            r = fp.cgar_check(project, ["lib/util.js"])
+            self.assertEqual(r.verdict_cap, "REJECT")
+
+    def test_replay_not_configured_leaves_blast_radius_cap(self):
+        """High-blast node + no replay setup → cap stays B (no relaxation)."""
+        with tempfile.TemporaryDirectory() as td:
+            project = _project(Path(td))
+            _setup_high_blast_node(project)
+            # No replay artifacts.
+            r = fp.cgar_check(project, ["lib/util.js"])
+            self.assertEqual(r.verdict_cap, "B")
+
+
+# ---------------------------------------------------------------------------
 # Aggregation
 # ---------------------------------------------------------------------------
 

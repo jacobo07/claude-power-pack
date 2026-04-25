@@ -351,12 +351,56 @@ def cgar_check(project: Path, delta_paths: list[str]) -> ProbeResult:
             if cap != "REJECT":
                 cap = "B"
 
+    # MC-OVO-106: fold replay-harness verdict into CGAR if available.
+    # Replay tightens or relaxes the blast-radius cap per CGAR_SCHEMA.md +
+    # REPLAY_SCHEMA.md. Replay verdict is informational when CGAR has no
+    # cap to begin with.
+    replay_state, replay_cap, replay_note = _cgar_consult_replay(project)
+    if replay_state == STATE_CONFIGURED:
+        findings.append(replay_note)
+        if replay_cap == "REJECT":
+            cap = "REJECT"
+        elif replay_cap == "B" and cap != "REJECT":
+            cap = "B"
+        elif replay_cap == "none" and cap == "B":
+            # Clean replay relaxes blast-radius B → none, REJECT → B.
+            cap = "none"
+            findings.append(
+                "CGAR cap relaxed by clean adversarial replay "
+                "(per REPLAY_SCHEMA.md)"
+            )
+
     return ProbeResult(
         probe="cgar",
         state=STATE_CONFIGURED,
         verdict_cap=cap,
         findings=findings,
     )
+
+
+def _cgar_consult_replay(project: Path) -> tuple[str, str, str]:
+    """Run the replay harness for CGAR; return (state, cap, note).
+
+    Imports lazily so forensic_probes still works if replay_harness.py
+    is removed or broken — the consult fails closed (NOT_CONFIGURED).
+    """
+    try:
+        sys.path.insert(0, str(Path(__file__).parent))
+        import replay_harness  # noqa: WPS433
+    except Exception as exc:
+        return STATE_NOT_CONFIGURED, "none", f"replay consult skipped: {exc}"
+    try:
+        rr = replay_harness.run_replay(project)
+    except Exception as exc:
+        return STATE_NOT_CONFIGURED, "none", f"replay raised: {exc}"
+    if rr.state == STATE_NOT_CONFIGURED:
+        return STATE_NOT_CONFIGURED, "none", ""
+    note = (
+        f"replay verdict={rr.replay_verdict} "
+        f"events=total:{rr.events_total}/match:{rr.events_match}"
+        f"/diff:{rr.events_diff}/shim_err:{rr.events_shim_error}"
+    )
+    return STATE_CONFIGURED, rr.verdict_cap, note
 
 
 # ---------------------------------------------------------------------------
