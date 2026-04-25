@@ -12,8 +12,17 @@
 set -e
 cd "$(dirname "$0")/.."
 
-DID=$(python tools/oracle_delta.py --project . --json 2>/dev/null \
-  | python -c "import sys,json; print(json.load(sys.stdin)['delta_id'])")
+# Prefer python3 (Linux/macOS canonical) and fall back to python (Windows
+# git-bash, some venvs). Caught by VPS parity run when this script
+# originally hardcoded `python` and failed on Ubuntu — see commit log.
+PY=$(command -v python3 || command -v python)
+if [ -z "$PY" ]; then
+  echo "FAIL: no python3 or python on PATH"
+  exit 1
+fi
+
+DID=$("$PY" tools/oracle_delta.py --project . --json 2>/dev/null \
+  | "$PY" -c "import sys,json; print(json.load(sys.stdin)['delta_id'])")
 
 if [ -z "$DID" ]; then
   echo "FAIL: could not get delta_id"
@@ -23,7 +32,7 @@ echo "delta_id=$DID"
 
 # Test 1 — FORENSIC + A + no band → must FAIL exit 4.
 set +e
-python tools/oracle_delta.py --project . \
+"$PY" tools/oracle_delta.py --project . \
   --record-verdict A --tier FORENSIC --delta-id "$DID" \
   --council-text "no probes band here" >/dev/null 2>&1
 RC=$?
@@ -35,15 +44,15 @@ fi
 echo "PASS test1: FORENSIC+A+no-band → exit 4 (Mistake #53 enforcement)"
 
 # Test 2 — FORENSIC + A + band → must SUCCEED exit 0.
-python tools/oracle_delta.py --project . \
+"$PY" tools/oracle_delta.py --project . \
   --record-verdict A --tier FORENSIC --delta-id "$DID" \
   --council-text "[FORENSIC_PROBES: rlp=NOT_CONFIGURED, cap=none]" >/dev/null
 echo "PASS test2: FORENSIC+A+band → exit 0"
 
 # Test 3 — DEEP + A + no band → must SUCCEED (advisory only below FORENSIC).
-DID2=$(python tools/oracle_delta.py --project . --json 2>/dev/null \
-  | python -c "import sys,json; print(json.load(sys.stdin)['delta_id'])")
-python tools/oracle_delta.py --project . \
+DID2=$("$PY" tools/oracle_delta.py --project . --json 2>/dev/null \
+  | "$PY" -c "import sys,json; print(json.load(sys.stdin)['delta_id'])")
+"$PY" tools/oracle_delta.py --project . \
   --record-verdict A --tier DEEP --delta-id "$DID2" \
   --council-text "no band, but DEEP doesn't require it" >/dev/null
 echo "PASS test3: DEEP+A+no-band → exit 0 (advisory only)"
