@@ -233,11 +233,21 @@ def cmd_json(args) -> int:
     return 0
 
 
+VALID_TIERS = ("LIGHT", "STANDARD", "DEEP", "FORENSIC")
+FORENSIC_PROBES_BAND_RX = "[FORENSIC_PROBES:"
+
+
 def cmd_record_verdict(args) -> int:
     project = args.project.resolve()
     verdict = args.record_verdict.strip()
     if verdict not in VALID_VERDICTS:
         print(f"ERROR: verdict must be one of {VALID_VERDICTS}, got {verdict!r}",
+              file=sys.stderr)
+        return 1
+
+    tier = (args.tier or "DEEP").strip().upper()
+    if tier not in VALID_TIERS:
+        print(f"ERROR: tier must be one of {VALID_TIERS}, got {tier!r}",
               file=sys.stderr)
         return 1
 
@@ -249,12 +259,30 @@ def cmd_record_verdict(args) -> int:
         return 2
 
     council_text = args.council_text or ""
+
+    # MC-OVO-110: FORENSIC tier enforcement. A/A+ verdicts at FORENSIC tier
+    # require the [FORENSIC_PROBES: ...] provenance band so we can prove the
+    # runtime probes were consulted (Mistake #53 — Forensic Probe Skipped).
+    # Below FORENSIC tier the band is recommended but not enforced.
+    if tier == "FORENSIC" and verdict in ("A", "A+"):
+        if FORENSIC_PROBES_BAND_RX not in council_text:
+            print(
+                "ERROR: tier=FORENSIC + verdict=" + verdict + " requires the "
+                "[FORENSIC_PROBES: ...] band in --council-text "
+                "(Mistake #53 — Forensic Probe Skipped). "
+                "Run `python tools/forensic_probes.py --project . --probe all` "
+                "and include its summary in the council block.",
+                file=sys.stderr,
+            )
+            return 4
+
     advisor_hash = hashlib.sha256(council_text.encode("utf-8")).hexdigest()[:16]
 
     record = {
         "iso_ts": iso_now(),
         "delta_id": bc["delta_id"],
         "verdict": verdict,
+        "tier": tier,
         "sha256_pre": bc["sha256_pre"],
         "sha256_post": None,
         "advisor_block_hash": advisor_hash,
@@ -361,6 +389,10 @@ def main() -> int:
                         help="Specific delta_id to match breadcrumb (optional)")
     parser.add_argument("--council-text", default=None,
                         help="Council block text (hashed into advisor_block_hash)")
+    parser.add_argument("--tier", default="DEEP", choices=VALID_TIERS,
+                        help="Audit tier (default DEEP). At FORENSIC tier, A/A+ "
+                             "verdicts require a [FORENSIC_PROBES: ...] band in "
+                             "--council-text (MC-OVO-110, Mistake #53).")
     args = parser.parse_args()
 
     project = args.project.resolve()
