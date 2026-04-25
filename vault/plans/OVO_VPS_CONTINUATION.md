@@ -5,8 +5,8 @@
 ## Status snapshot
 
 ✅ MC-OVO-100..104 + 108 + 110 — shipped (commits `bc9a5f4`, `2e5bef0`, `944b6ff`, `5d216e2`, `ea44fdb`, `7c83a45`, `bff44e2`).
-✅ **MC-OVO-106 (Adversarial Replay Harness) — shipped 2026-04-26.** `tools/replay_harness.py` + schema + 4 CGAR-integration tests + self-test. Honest scope: engine + diff + verdict-cap-relaxation logic. Deferred to next session: per-stack shim authoring, ordered-replay, fuzz mutation. See `vault/forensic/REPLAY_SCHEMA.md`.
-❌ MC-OVO-107 (Multi-Stack Cascade Populator) — TS/JS AST walker via tree-sitter; full session.
+✅ MC-OVO-106 (Adversarial Replay Harness) — shipped 2026-04-26.
+✅ **MC-OVO-107 partial — shipped 2026-04-26 (JS via esprima).** `tools/cascade_populate_js.py` + schema + 14 unit tests. Power-pack's own graph populated (4 nodes, 13 edges, 10 honest STALEMATES — esprima 4.x doesn't support ES2020 `??`/`?.`, the modern files stalemate truthfully). Deferred: TypeScript walker (needs separate parser strategy — `tsc --listFilesOnly` subprocess vs alternative pure-Python TS parser), Python populator, full ES2020+ JS coverage (would require swapping esprima for `pyjsparser`/Node-subprocess/tree-sitter).
 ❌ MC-OVO-109 (OmniCapture → RLP Wire) — needs OmniCapture query API surface; blocked until docs read or owner-supplied.
 
 ## Why this handoff exists

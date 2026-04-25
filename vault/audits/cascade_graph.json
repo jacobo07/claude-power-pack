@@ -1,10 +1,329 @@
 {
   "schema": "ovo-cascade-graph-v2",
-  "generated_at": "2026-04-25T18:15:00Z",
+  "generated_at": "2026-04-25T23:33:26Z",
   "project": "claude-power-pack",
-  "nodes": [],
-  "edges": [],
-  "_doc": "v2 envelope ready. Populator is stack-specific work — see vault/forensic/CGAR_SCHEMA.md. Empty nodes[] ⇒ CGAR probe runs in NOT_CONFIGURED mode (correct, not a defect).",
+  "nodes": [
+    {
+      "id": "lib/discover.js",
+      "kind": "module",
+      "definitions": [
+        {
+          "name": "parseArgs",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "helpText",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "safeReaddir",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "detectManifests",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "packageJsonFrameworks",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "slugify",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "buildSubsystem",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "walk",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "main",
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "_populator": "cascade_populate_js",
+      "blast_radius": {
+        "direct_callers": 0,
+        "transitive_callers": 0,
+        "downstream_systems": []
+      }
+    },
+    {
+      "id": "lib/score.js",
+      "kind": "module",
+      "definitions": [
+        {
+          "name": "parseArgs",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "helpText",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "readSubsystemInput",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "gitAvailable",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "scoreEditThrashing",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "scoreDrift",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "hasAnyConsumer",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "scoreCompletion",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "probeBinary",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "resolveStackKeys",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "scoreEnvMapping",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "weightedOverall",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "main",
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "_populator": "cascade_populate_js",
+      "blast_radius": {
+        "direct_callers": 0,
+        "transitive_callers": 0,
+        "downstream_systems": []
+      }
+    },
+    {
+      "id": "tests/license_gate.test.js",
+      "kind": "module",
+      "definitions": [
+        {
+          "name": "mkdtemp",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "writeLicense",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "writeJson",
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "_populator": "cascade_populate_js",
+      "blast_radius": {
+        "direct_callers": 0,
+        "transitive_callers": 0,
+        "downstream_systems": []
+      }
+    },
+    {
+      "id": "modules/zero-crash/hooks/ovo-push-gate.js",
+      "kind": "module",
+      "definitions": [
+        {
+          "name": "findGitRoot",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "emit",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "readLastJsonlLine",
+          "kind": "FunctionDeclaration"
+        },
+        {
+          "name": "main",
+          "kind": "FunctionDeclaration"
+        }
+      ],
+      "_populator": "cascade_populate_js",
+      "blast_radius": {
+        "direct_callers": 0,
+        "transitive_callers": 0,
+        "downstream_systems": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "lib/discover.js",
+      "to": "<external:fs>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('fs')"
+    },
+    {
+      "from": "lib/discover.js",
+      "to": "<external:path>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('path')"
+    },
+    {
+      "from": "lib/score.js",
+      "to": "<external:fs>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('fs')"
+    },
+    {
+      "from": "lib/score.js",
+      "to": "<external:path>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('path')"
+    },
+    {
+      "from": "lib/score.js",
+      "to": "<external:child_process>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('child_process')"
+    },
+    {
+      "from": "tests/license_gate.test.js",
+      "to": "<external:node:test>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('node:test')"
+    },
+    {
+      "from": "tests/license_gate.test.js",
+      "to": "<external:node:assert/strict>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('node:assert/strict')"
+    },
+    {
+      "from": "tests/license_gate.test.js",
+      "to": "<external:node:fs>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('node:fs')"
+    },
+    {
+      "from": "tests/license_gate.test.js",
+      "to": "<external:node:os>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('node:os')"
+    },
+    {
+      "from": "tests/license_gate.test.js",
+      "to": "<external:node:path>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('node:path')"
+    },
+    {
+      "from": "tests/license_gate.test.js",
+      "to": "lib/license_gate.js",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "from": "modules/zero-crash/hooks/ovo-push-gate.js",
+      "to": "<external:fs>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('fs')"
+    },
+    {
+      "from": "modules/zero-crash/hooks/ovo-push-gate.js",
+      "to": "<external:path>",
+      "type": "consumed_by",
+      "_populator": "cascade_populate_js",
+      "unresolved": true,
+      "reason": "non-local require('path')"
+    }
+  ],
+  "_stalemates": [
+    {
+      "file": "lib/audit_all.js",
+      "reason": "esprima parse error: Error: Line 117: Unexpected token ILLEGAL",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "lib/investment_ready.js",
+      "reason": "esprima parse error: Error: Line 385: Unexpected token ?",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "lib/license_gate.js",
+      "reason": "esprima parse error: Error: Line 172: Unexpected token ?",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "lib/report.js",
+      "reason": "esprima parse error: Error: Line 105: Unexpected token ?",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "modules/token-optimizer/plugin_waste_detector.js",
+      "reason": "esprima parse error: Error: Line 137: Unexpected token {",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "modules/governance-overlay/hooks/mistake-ingest.js",
+      "reason": "esprima parse error: Error: Line 44: Unexpected token {",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "modules/zero-crash/hooks/golden-pattern-inject.js",
+      "reason": "esprima parse error: Error: Line 26: Unexpected token {",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "modules/zero-crash/hooks/process-sandbox.js",
+      "reason": "esprima parse error: Error: Line 39: Unexpected token {",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "modules/zero-crash/hooks/tty-restore.js",
+      "reason": "esprima parse error: Error: Line 14: Unexpected token {",
+      "_populator": "cascade_populate_js"
+    },
+    {
+      "file": "modules/zero-crash/hooks/zero-crash-gate.js",
+      "reason": "esprima parse error: Error: Line 29: Unexpected token {",
+      "_populator": "cascade_populate_js"
+    }
+  ],
   "_legacy_v1": {
     "classes": [],
     "event_to_listeners": {},
