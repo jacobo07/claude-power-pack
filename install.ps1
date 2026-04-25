@@ -229,6 +229,27 @@ if (Test-Path $CommandsSrc) {
     Write-Host "[WARN] commands/ directory not found — skipping slash-command registration" -ForegroundColor Yellow
 }
 
+# 9. License Advisory — surface what's vendored from third parties.
+# Advisory only; never blocks install. See vendor/README.md for the policy.
+$VendorDir = Join-Path $SkillDir "vendor"
+$GateScript = Join-Path $SkillDir "lib\license_gate.js"
+if ((Test-Path $VendorDir) -and (Test-Path $GateScript)) {
+    $bundles = Get-ChildItem -Path $VendorDir -Directory -ErrorAction SilentlyContinue
+    if ($bundles.Count -eq 0) {
+        Write-Host "[INFO] vendor/ structurally present, no third-party bundles currently." -ForegroundColor Cyan
+    } else {
+        $node = Get-Command node -ErrorAction SilentlyContinue
+        foreach ($b in $bundles) {
+            Write-Host "-- License advisory: $($b.Name) --"
+            if ($node) {
+                & node $GateScript $b.FullName
+            } else {
+                Write-Host "[WARN] vendor/$($b.Name) present but 'node' not on PATH - license gate skipped." -ForegroundColor Yellow
+            }
+        }
+    }
+}
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"

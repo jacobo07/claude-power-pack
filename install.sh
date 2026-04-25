@@ -220,6 +220,27 @@ else
   echo "⚠️  commands/ directory not found — skipping slash-command registration"
 fi
 
+# 9. License Advisory — surface what's vendored from third parties.
+# Advisory only; never blocks install. See vendor/README.md for the policy.
+VENDOR_DIR="$SKILL_DIR/vendor"
+GATE_SCRIPT="$SKILL_DIR/lib/license_gate.js"
+if [ -d "$VENDOR_DIR" ] && [ -f "$GATE_SCRIPT" ]; then
+  bundle_count=0
+  for sub in "$VENDOR_DIR"/*/; do
+    [ -d "$sub" ] || continue
+    bundle_count=$((bundle_count + 1))
+    if command -v node >/dev/null 2>&1; then
+      echo "── License advisory: $(basename "$sub") ──"
+      node "$GATE_SCRIPT" "$sub" || true
+    else
+      echo "⚠️  vendor/$(basename "$sub") present but 'node' not on PATH — license gate skipped."
+    fi
+  done
+  if [ $bundle_count -eq 0 ]; then
+    echo "ℹ️  vendor/ structurally present, no third-party bundles currently."
+  fi
+fi
+
 echo ""
 echo "Done! The AI will now:"
 echo "  • Plan before acting (Anti-Monolith)"
