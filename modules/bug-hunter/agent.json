@@ -1,0 +1,187 @@
+{
+  "$comment": "Canonical Bug Hunter agent.json. Authored MC-IO-700.1 (2026-04-26). Source-of-truth lives in InfinityOps repo at 04_AI_Agents/Prebuilt_Library/bug-hunter/agent.json -- this file is the propagated copy. To update: edit the InfinityOps copy, then propagate here. Both files MUST stay byte-identical (modulo this $comment field).",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "bug-hunter",
+  "version": "6000.0.0",
+  "spec_authored": "2026-04-26",
+  "spec_authored_by": "Owner (jacobolopezcortijo@gmail.com) + Opus 4.7 (1M)",
+  "mc": "MC-IO-700.1",
+  "scope": "global",
+  "description": "Universal v6000 invariant auditor. KobiiCraft stability heuristics (NBT / JAR / RCON / Async) abstracted into stack-agnostic invariants applied to any code delta the agent encounters.",
+
+  "doctrine_files": [
+    "core.md",
+    "baseline-v6000.md",
+    "heuristics-by-stack.md",
+    "vault-genesis.md"
+  ],
+  "doctrine_root": "~/.claude/skills/claude-power-pack/modules/bug-hunter/",
+  "canonical_copy_path": "InfinityOps/04_AI_Agents/Prebuilt_Library/bug-hunter/agent.json",
+
+  "invocation": {
+    "slash_command": "/bug-hunt",
+    "global": true,
+    "auto_trigger_hooks": [
+      "post-test-fix"
+    ],
+    "manual_invocation_arg": "<delta-spec | file | dir>"
+  },
+
+  "stack_detection_manifests": [
+    "package.json",
+    "pyproject.toml",
+    "Cargo.toml",
+    "pom.xml",
+    "plugin.yml",
+    "go.mod",
+    "composer.json",
+    "Gemfile",
+    "mix.exs",
+    "Dockerfile"
+  ],
+
+  "v6000_invariants": [
+    {
+      "id": "INV1",
+      "name": "Data Integrity Boundary",
+      "kobii_origin": "NBT Protection",
+      "user_mandate_alias": "Data Integrity validation & Schema enforcement (Anti-Corruption Layer)",
+      "what_it_protects": "Any code path that converts in-memory state to persistent state (or vice versa) -- serialization, file write, DB insert, cache flush.",
+      "required_disciplines": [
+        "Pre-write validation (schema/type/invariant check before bytes hit disk)",
+        "Atomic write (temp + rename, transactional commit; never partial writes visible to readers)",
+        "Post-write confirmation (fsync or equivalent + checksum verify before clearing dirty/queued flag)",
+        "Rollback path (prior state recoverable on failure)"
+      ],
+      "primary_check_pattern": "grep delta for (write|dump|encode|serialize|insert|persist) calls; for each, walk forward 5 lines for (fsync|flush|sync|force|commit|rename); if absent AND a dirty/queued flag is cleared after, flag as INV1-violation",
+      "stack_specific_patterns_doc": "heuristics-by-stack.md#inv1",
+      "violation_severity_scale": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "elixir_specific_check": {
+        "search_regex": "Repo\\.insert(!?)\\(|File\\.write\\(",
+        "must_be_followed_within_5_lines_by": "Ecto\\.Multi|cast\\(|changeset|File\\.sync"
+      },
+      "react_specific_check": {
+        "search_regex": "localStorage\\.setItem|fs\\.writeFile|writeFileSync",
+        "must_be_followed_within_5_lines_by": "fs\\.fsync|temp.*rename|atomic"
+      }
+    },
+    {
+      "id": "INV2",
+      "name": "Deploy Atomicity",
+      "kobii_origin": "JAR Sync",
+      "user_mandate_alias": "Dependency lock-file consistency & cross-repo versioning alignment",
+      "what_it_protects": "Any artifact swap (binary, image, container, lambda, JAR, WASM, dependency update) -- must not leave the running system in a half-loaded state.",
+      "required_disciplines": [
+        "Hash verification (new artifact sha256 matches expected before becoming live)",
+        "Atomic activation (symlink swap, blue/green, stop-then-replace-then-start; never live-patch)",
+        "Health check (post-activation probe confirms artifact serves correctly)",
+        "Rollback receipt (auto-return to prior version on health-check fail; deploy log records rollback)"
+      ],
+      "primary_check_pattern": "grep deploy scripts (deploy.sh, Makefile, CI yaml) for live-reload patterns; flag reload/hot-reload/require.cache.delete in production-tagged paths as INV2-violation",
+      "stack_specific_patterns_doc": "heuristics-by-stack.md#inv2",
+      "violation_severity_scale": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "user_extension_dependency_lock": {
+        "rule": "Lock files (mix.lock, package-lock.json, yarn.lock, Cargo.lock, poetry.lock) MUST be committed alongside the manifest they pin. Cross-repo: a sub-entity's declared dependency on a Holding-level package must match the version declared in the parent CLAUDE.md or registry.",
+        "check": "for each *.lock file in delta, verify it is tracked AND its hash is referenced in the corresponding registry entry where applicable"
+      }
+    },
+    {
+      "id": "INV3",
+      "name": "Out-of-Band Command Channel",
+      "kobii_origin": "RCON flow",
+      "user_mandate_alias": "(unchanged from baseline-v6000.md)",
+      "what_it_protects": "Any admin / debug / out-of-band command path (RCON, SSH, REST admin API, GraphQL admin mutation, sudo CLI, Slack/Discord bot command).",
+      "required_disciplines": [
+        "Authentication (caller identity verified, not just network proximity)",
+        "Audit log (who / what / when / from-where / result; persisted append-only)",
+        "Rate limit (per-caller cap)",
+        "Timeout (every command bounded; long ops report progress or are killable)"
+      ],
+      "primary_check_pattern": "grep route handlers for /admin/, /debug/, /internal/, /api/v\\d+/admin; for each, verify presence of (a) auth middleware (b) logger.info-level audit (c) rate limiter (d) timeout. Missing any => INV3-violation",
+      "stack_specific_patterns_doc": "heuristics-by-stack.md#inv3",
+      "violation_severity_scale": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    {
+      "id": "INV4",
+      "name": "Concurrency Hazard Map",
+      "kobii_origin": "Async Safety",
+      "user_mandate_alias": "Race condition detection & OTP Supervisor compliance",
+      "what_it_protects": "Any async operation (callback, Promise, future, goroutine, Bukkit task, Tokio task, asyncio coroutine, GenServer/Task spawn).",
+      "required_disciplines": [
+        "Cancellation declared up-front (caller can cancel; cancellation honored before side effects land)",
+        "Timeout declared up-front (operation cannot run forever)",
+        "Error propagation declared up-front (failures surface to caller, not silently swallowed)",
+        "Thread/loop affinity declared (cross-affinity hops explicit, not assumed)"
+      ],
+      "primary_check_pattern": "grep async spawn primitives (Task.async, spawn_link, Promise.all, asyncio.create_task, tokio::spawn, go fn(), Bukkit scheduler); for each, verify (a) timeout (b) cancellation handle (c) error sink. Async ops touching UI / main-thread / world state must explicitly hop back; flag direct cross-affinity write as INV4-violation",
+      "stack_specific_patterns_doc": "heuristics-by-stack.md#inv4",
+      "violation_severity_scale": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "elixir_specific_check": {
+        "search_regex": "Task\\.async|spawn_link|spawn\\(",
+        "must_be_followed_within_10_lines_by": "Task\\.await|Task\\.shutdown|Process\\.flag\\(:trap_exit",
+        "otp_supervisor_compliance": {
+          "rule": "Every long-lived process MUST be started under a Supervisor (use Supervisor / use DynamicSupervisor); plain spawn_link without supervision is forbidden in production code paths.",
+          "check": "for each spawn_link/Task.async outside test/, verify ancestor module declares `use Supervisor` or `use DynamicSupervisor` OR caller is inside a `child_spec/1` definition"
+        }
+      },
+      "react_specific_check": {
+        "search_regex": "useEffect\\(.*async|setInterval|setTimeout",
+        "must_be_followed_within_10_lines_by": "AbortController|cleanup return|clearTimeout|clearInterval"
+      }
+    }
+  ],
+
+  "verdict_cap_rules": {
+    "0_violations": "A+ candidate (Council still runs)",
+    "1_LOW_total": "A",
+    "2_to_3_LOW_or_1_MEDIUM": "B",
+    "any_HIGH_or_CRITICAL_soberania_tech": "REJECT (BLOCK)"
+  },
+
+  "soberania_tech_block_classes": [
+    "TODO / FIXME / Coming Soon / Placeholder in production paths",
+    "if it works, ship it reasoning without empirical verification",
+    "cross-stack claims without per-stack evidence (Mistake #16)",
+    "verdicts asserted before probes ran (Mistake #17)",
+    "UI element wired to no-op handler"
+  ],
+
+  "output_contract": {
+    "shape_doc": "core.md#output-contract",
+    "vault_persistence_path": "vault/audits/bug_hunter_<ISO>.md",
+    "anti_echo_gate": "Never emit slot syntax <…> in output; resolve every slot with real project data before printing"
+  },
+
+  "scaffold_auditor_integration": {
+    "delegated_to": "~/.claude/hooks/scaffold-auditor.js",
+    "invocation": "shell out at /bug-hunt time, parse violation list from stderr, merge with v6000 findings",
+    "verdict_cap_on_scaffold_HIGH_or_CRITICAL": "B regardless of v6000 health"
+  },
+
+  "council_integration": {
+    "companion_command": "/ovo-audit",
+    "council_doctrine": "modules/governance-overlay/council.md",
+    "bug_hunter_role": "fast narrow audit; council = deeper verification on the same delta"
+  },
+
+  "department_integration": {
+    "primary_consumer_department": "DIS_Engineering",
+    "learning_emission_target": "InfinityOps/knowledge_vault/02_Doctrine/LEARNINGS/",
+    "learning_module": "InfinityOps/02_Knowledge_Engine/Departments/DIS_Engineering/LEARNING_FLOW.ex",
+    "post_test_fix_hook": "~/.claude/hooks/bug-hunter-learning.js"
+  },
+
+  "anti_patterns_to_refuse_in_self": [
+    "echo-audit-prompt-reflection (gex44_antipatterns/)",
+    "scaffold-illusion (writing empty INDEX.md or .gitkeep without active writers)"
+  ],
+
+  "cross_references": {
+    "kobii_origins": [
+      "~/.claude/knowledge_vault/minecraft/antipatterns/dirty-flag-clear-before-write.md",
+      "~/.claude/knowledge_vault/minecraft/praxis-laws.md"
+    ],
+    "infinityops_doctrine": "InfinityOps/knowledge_vault/02_Doctrine/INFINITYOPS_BASELINE_STANDARD.md (v1.28)",
+    "infinityops_architecture": "InfinityOps/knowledge_vault/01_Architecture/ARCHITECTURE.md (Sovereign Baseline 5000m)"
+  }
+}
