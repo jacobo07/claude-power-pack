@@ -20,8 +20,12 @@ restoration report so ``/lazarus all`` can revive the full mental
 model — every window, every project, every session.
 
 Status classification:
+  CURRENT  — heartbeat written within ``--current-window`` (default 90s)
+             AND project_path matches the cwd we were invoked from.
+             This is the session you're already in — surfacing it as
+             a resume target would just spawn a duplicate.
   LIVE     — heartbeat lock present and timestamp younger than the
-             ``--live-window`` (default 5 min)
+             ``--live-window`` (default 5 min); not the current session
   CRASHED  — heartbeat lock present but stale, OR session listed in
              ``pending_resume.txt`` without a clean-exit marker
   CLEAN    — index.json marks ``status: clean_exit`` and no live
@@ -37,6 +41,13 @@ Output modes:
   --mode since   — filter by --since <duration like 24h / 30m / 7d>
 
 Output formats: human-readable text (default) or ``--json``.
+
+Filtering:
+  --exclude-current  — drop CURRENT rows entirely from the listing
+                       (default; suppresses the "resume yourself" trap)
+  --include-current  — keep CURRENT rows but render them with the
+                       distinct CURRENT bullet so you can see the
+                       complete picture
 
 Usage:
   python tools/lazarus_revive_all.py
@@ -73,6 +84,7 @@ LAZARUS_DIR = HOME / ".claude" / "lazarus"
 GLOBAL_INDEX = LAZARUS_DIR / "global_index.json"
 
 LIVE_WINDOW_DEFAULT_SECONDS = 5 * 60
+CURRENT_WINDOW_DEFAULT_SECONDS = 90
 SINCE_DEFAULT = "24h"
 
 DURATION_RE = re.compile(r"^(\d+(?:\.\d+)?)([smhd])$")
@@ -91,6 +103,7 @@ class SessionRow:
     last_seen: str | None = None
     ended: str | None = None
     terminal_hint: str = ""
+    terminal_keys: list[str] = field(default_factory=list)
     branch: str = ""
     uncommitted_count: int = 0
     last_intent: list[str] = field(default_factory=list)
@@ -98,6 +111,7 @@ class SessionRow:
     last_tool: str | None = None
     age_seconds: float | None = None
     snapshot_path: str | None = None
+    is_current: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -109,6 +123,7 @@ class SessionRow:
             "last_seen": self.last_seen,
             "ended": self.ended,
             "terminal_hint": self.terminal_hint,
+            "terminal_keys": self.terminal_keys,
             "branch": self.branch,
             "uncommitted_count": self.uncommitted_count,
             "last_intent": self.last_intent,
@@ -116,6 +131,7 @@ class SessionRow:
             "last_tool": self.last_tool,
             "age_seconds": self.age_seconds,
             "snapshot_path": self.snapshot_path,
+            "is_current": self.is_current,
         }
 
 
@@ -179,11 +195,27 @@ def list_known_projects() -> dict[str, dict]:
     return out
 
 
+def load_bindings(snapshot_dir: Path) -> dict[str, list[str]]:
+    """Return {session_id: [terminal_key, ...]} from bindings.json."""
+    bindings_path = snapshot_dir / "bindings.json"
+    raw = read_json(bindings_path) or {}
+    keys = raw.get("terminal_keys") if isinstance(raw, dict) else None
+    out: dict[str, list[str]] = {}
+    if isinstance(keys, dict):
+        for term_key, sid in keys.items():
+            if isinstance(sid, str) and isinstance(term_key, str):
+                out.setdefault(sid, []).append(term_key)
+    return out
+
+
 def scan_project(
     project_id: str,
     project_path: str,
     live_window: timedelta,
     since: timedelta | None,
+    current_window: timedelta,
+    current_session_id: str | None,
+    cwd_project_id: str | None,
 ) -> list[SessionRow]:
     proj_dir = LAZARUS_DIR / project_id
     if not proj_dir.is_dir():
@@ -214,6 +246,7 @@ def scan_project(
     # 3) walk heartbeats/<sid>.lock for live detection
     heartbeats: dict[str, dict] = {}
     hb_dir = proj_dir / "heartbeats"
+    hb_mtimes: dict[str, float] = {}
     if hb_dir.is_dir():
         for f in hb_dir.iterdir():
             if not f.is_file() or f.suffix != ".lock":
@@ -222,6 +255,10 @@ def scan_project(
             data = read_json(f)
             if isinstance(data, dict):
                 heartbeats[sid] = data
+            try:
+                hb_mtimes[sid] = f.stat().st_mtime
+            except OSError:
+                pass
 
     # 4) walk per-session snapshots
     snap_dir = proj_dir / "sessions"
@@ -236,12 +273,28 @@ def scan_project(
                 snaps[sid] = data
                 snaps[sid]["__snapshot_path"] = str(f)
 
-    # 5) union of all session_ids seen across the four data sources
+    # 5) terminal-key bindings (work/plan/chat → session_id)
+    bindings = load_bindings(proj_dir)
+
+    # 6) union of all session_ids seen across the four data sources
     all_ids = set(by_id.keys()) | set(heartbeats.keys()) | set(snaps.keys()) | pending
     if not all_ids:
         return []
 
     now = now_utc()
+    now_epoch = now.timestamp()
+    is_cwd_project = (cwd_project_id == project_id)
+
+    # Identify the "freshest heartbeat" in this project — used as the
+    # auto-detected current session when an explicit hint is missing.
+    freshest_sid: str | None = None
+    if is_cwd_project and hb_mtimes:
+        freshest_sid = max(hb_mtimes, key=lambda k: hb_mtimes[k])
+        # Only honor the auto-detect if its mtime is fresh enough to be
+        # plausibly "this very session" — otherwise leave it None.
+        if (now_epoch - hb_mtimes[freshest_sid]) > current_window.total_seconds():
+            freshest_sid = None
+
     for sid in sorted(all_ids):
         row = SessionRow(
             project_id=project_id,
@@ -262,6 +315,7 @@ def scan_project(
         )
         row.ended = idx_entry.get("ended")
         row.terminal_hint = idx_entry.get("terminal_hint") or hb.get("terminal_hint") or ""
+        row.terminal_keys = bindings.get(sid, [])
         row.branch = snap.get("branch") or ""
         unc = snap.get("uncommitted_files") or []
         row.uncommitted_count = len(unc) if isinstance(unc, list) else 0
@@ -275,12 +329,21 @@ def scan_project(
         if last_ts is not None:
             row.age_seconds = (now - last_ts).total_seconds()
 
+        # Current-session detection.
+        # 1) Explicit hint wins (e.g. lazarus.md passes the live session_id).
+        # 2) Otherwise, in the cwd's own project, the freshest-heartbeat
+        #    session within the current_window is "this one".
+        if current_session_id and sid == current_session_id and is_cwd_project:
+            row.is_current = True
+        elif freshest_sid is not None and sid == freshest_sid:
+            row.is_current = True
+
         # Status logic
         idx_status = idx_entry.get("status")
         if hb and last_ts is not None:
             age = (now - last_ts).total_seconds()
             if age <= live_window.total_seconds():
-                row.status = "LIVE"
+                row.status = "CURRENT" if row.is_current else "LIVE"
             else:
                 row.status = "CRASHED" if idx_status != "clean_exit" else "CLEAN"
         elif sid in pending and idx_status != "clean_exit":
@@ -293,6 +356,11 @@ def scan_project(
             row.status = "UNKNOWN"
         else:
             row.status = "UNKNOWN"
+
+        # If we deemed it CURRENT but the heartbeat went stale, demote
+        # the marker — it's no longer "this session" in any real sense.
+        if row.is_current and row.status not in ("CURRENT", "LIVE"):
+            row.is_current = False
 
         # Filter by --since
         if since is not None and last_ts is not None:
@@ -310,6 +378,7 @@ def scan_project(
 def status_bullet(status: str) -> str:
     if _STDOUT_UTF8:
         return {
+            "CURRENT":  "▶ ",
             "LIVE":     "● ",
             "CRASHED":  "✗ ",
             "CLEAN":    "○ ",
@@ -317,6 +386,7 @@ def status_bullet(status: str) -> str:
         }.get(status, "? ")
     # cp1252 / legacy console fallback
     return {
+        "CURRENT": "> ",
         "LIVE":    "* ",
         "CRASHED": "x ",
         "CLEAN":   "o ",
@@ -349,12 +419,18 @@ def render_text(rows: list[SessionRow], header: dict) -> str:
     lines.append("Lazarus Multi-Session Restore Report")
     lines.append("=" * 38)
     lines.append(f"Generated: {header['generated_at']}")
-    lines.append(f"Mode: {header['mode']}    Live-window: {header['live_window_s']}s")
+    lines.append(
+        f"Mode: {header['mode']}    Live-window: {header['live_window_s']}s    "
+        f"Current-window: {header['current_window_s']}s"
+    )
     if header.get("since"):
         lines.append(f"Filter: only sessions touched within {header['since']}")
+    if header.get("exclude_current"):
+        lines.append("Filter: CURRENT (this session) excluded from listing")
     lines.append("")
     lines.append(
         f"Total sessions: {header['total']}   "
+        f"CURRENT: {header['by_status'].get('CURRENT', 0)}   "
         f"LIVE: {header['by_status'].get('LIVE', 0)}   "
         f"CRASHED: {header['by_status'].get('CRASHED', 0)}   "
         f"CLEAN: {header['by_status'].get('CLEAN', 0)}   "
@@ -385,12 +461,33 @@ def render_text(rows: list[SessionRow], header: dict) -> str:
         lines.append(f"{_proj_marker()} Project: {pid}")
         lines.append(f"   path: {paths[pid]}")
         lines.append(f"   sessions: {len(proj_rows)}")
+        # Surface terminal-key bindings (visual layout map) for this
+        # project. Read directly from bindings.json so bindings whose
+        # target session was filtered out (e.g. CURRENT under default
+        # --exclude-current) still appear in the visual map — the
+        # bindings are project-level state, not session-level.
+        raw_bindings = read_json(LAZARUS_DIR / pid / "bindings.json") or {}
+        raw_keys = raw_bindings.get("terminal_keys") if isinstance(raw_bindings, dict) else None
+        proj_term_keys: dict[str, str] = {}
+        if isinstance(raw_keys, dict):
+            for tk, sid in raw_keys.items():
+                if isinstance(tk, str) and isinstance(sid, str):
+                    proj_term_keys[tk] = sid
+        if proj_term_keys:
+            line = "   terminal-keys: " + " | ".join(
+                f"{k}→{sid[:8]}" for k, sid in sorted(proj_term_keys.items())
+            )
+            lines.append(line)
         for r in proj_rows:
+            tag = " [CURRENT]" if r.is_current else ""
+            term_keys = (
+                f"  keys=[{','.join(r.terminal_keys)}]" if r.terminal_keys else ""
+            )
             lines.append(
                 f"   {status_bullet(r.status)}{r.session_id}  "
-                f"[{r.status:<7}]  age={format_age(r.age_seconds):<5}  "
+                f"[{r.status:<7}]{tag}  age={format_age(r.age_seconds):<5}  "
                 f"branch={r.branch or '?'}  unc={r.uncommitted_count}  "
-                f"term={r.terminal_hint or _na_marker()}"
+                f"term={r.terminal_hint or _na_marker()}{term_keys}"
             )
             if r.last_intent:
                 trimmed = r.last_intent[-1][:90]
@@ -401,10 +498,27 @@ def render_text(rows: list[SessionRow], header: dict) -> str:
                 lines.append(f"        active_plan: {r.active_plan}")
         lines.append("")
 
+    # Restoration commands — skip CURRENT (you're already in it) and CLEAN
+    # (intentional exit). LIVE = attach context here; CRASHED = revive.
+    revivable = [
+        r for r in rows
+        if r.status in ("LIVE", "CRASHED") and not r.is_current
+    ]
     lines.append("Restoration paths:")
+    if revivable:
+        lines.append("  Recommended next-steps (one window per row):")
+        for r in revivable:
+            display_path = paths.get(r.project_id, r.project_path) or r.project_path
+            lines.append(
+                f"    cd \"{display_path}\" && claude --resume {r.session_id}"
+            )
+        lines.append("")
     lines.append("  Resume current project (latest):       /lazarus")
-    lines.append("  Resume a specific session in a project: cd <path> && claude --resume <session_id>")
-    lines.append("  Re-run this listing:                    /lazarus all")
+    lines.append("  Re-run this listing:                   /lazarus all")
+    if any(r.is_current for r in rows):
+        lines.append(
+            "  (CURRENT row is THIS session — not listed as a resume target)"
+        )
     return "\n".join(lines)
 
 
@@ -421,8 +535,21 @@ def parse_args() -> argparse.Namespace:
                    help=f"only sessions touched within this duration (default {SINCE_DEFAULT}); used when --mode is 'since' or 'auto'")
     p.add_argument("--live-window", type=int, default=LIVE_WINDOW_DEFAULT_SECONDS,
                    help=f"heartbeat freshness window in seconds (default {LIVE_WINDOW_DEFAULT_SECONDS})")
+    p.add_argument("--current-window", type=int, default=CURRENT_WINDOW_DEFAULT_SECONDS,
+                   help=f"window for auto-detecting THIS session via freshest heartbeat (default {CURRENT_WINDOW_DEFAULT_SECONDS}s)")
+    p.add_argument("--current-session-id", default=None,
+                   help="explicit session_id of the invoking Claude session (skill can pass this)")
     p.add_argument("--include-stale", action="store_true",
                    help="ignore --since filter; show every session regardless of age")
+
+    cur_grp = p.add_mutually_exclusive_group()
+    cur_grp.add_argument("--exclude-current", dest="exclude_current",
+                         action="store_true", default=True,
+                         help="drop CURRENT (this session) rows from the listing (default)")
+    cur_grp.add_argument("--include-current", dest="exclude_current",
+                         action="store_false",
+                         help="keep CURRENT rows visible (still tagged [CURRENT])")
+
     p.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     return p.parse_args()
 
@@ -438,6 +565,7 @@ def main() -> int:
         return 0
 
     live_window = timedelta(seconds=args.live_window)
+    current_window = timedelta(seconds=max(1, args.current_window))
     since: timedelta | None
     # --since is applied for every mode EXCEPT 'current' (where Owner
     # explicitly wants one project's full history). --include-stale
@@ -453,7 +581,8 @@ def main() -> int:
 
     projects = list_known_projects()
     cwd = Path(args.cwd or os.getcwd())
-    derived_id = args.project or sanitize_cwd_to_project_id(cwd)
+    cwd_project_id = sanitize_cwd_to_project_id(cwd)
+    derived_id = args.project or cwd_project_id
 
     if args.mode == "current":
         target_ids = [derived_id] if derived_id in projects else []
@@ -478,7 +607,20 @@ def main() -> int:
     rows: list[SessionRow] = []
     for pid in target_ids:
         proj_path = projects.get(pid, {}).get("project_path", "<unknown>")
-        rows.extend(scan_project(pid, proj_path, live_window, since))
+        rows.extend(scan_project(
+            pid,
+            proj_path,
+            live_window,
+            since,
+            current_window,
+            args.current_session_id,
+            cwd_project_id,
+        ))
+
+    # Filter CURRENT rows (default) — they represent this very session,
+    # so suggesting them as a resume target is the redundancy MC-LAZ-03 fixes.
+    if args.exclude_current:
+        rows = [r for r in rows if not r.is_current]
 
     by_status: dict[str, int] = {}
     for r in rows:
@@ -488,7 +630,9 @@ def main() -> int:
         "generated_at": now_utc().isoformat().replace("+00:00", "Z"),
         "mode": args.mode,
         "live_window_s": int(live_window.total_seconds()),
+        "current_window_s": int(current_window.total_seconds()),
         "since": (None if since is None else args.since),
+        "exclude_current": bool(args.exclude_current),
         "total": len(rows),
         "by_status": by_status,
     }
