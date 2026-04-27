@@ -313,16 +313,130 @@ def main() -> int:
         expect(f"{sid}: no gaps in seq (final={prev_seq}, expected={reported_lines})",
                prev_seq == reported_lines)
 
-    # Cleanup
+    # Cleanup pre-Phase-7
     if not args.keep:
         try:
             shutil.rmtree(sandbox, ignore_errors=True)
         except Exception:
             pass
     else:
-        print(f"(sandbox retained at {sandbox})")
+        print(f"(sandbox-phase16 retained at {sandbox})")
 
-    print("\nFORENSIC SANDBOX PASS — Shadow-Engine preserves every byte under sustained rename.")
+    # ---------------------------------------------------------------
+    # Phase 7 — MC-OVO-161: SIGKILL writer mid-shadow, verify recovery.
+    # Proves the engine survives an asymmetric crash where one
+    # session dies while its .jsonl is in the renamed state. Without
+    # the restoreSelfToo + panic-restore safety net, the killed
+    # session's transcript would stay invisible.
+    # ---------------------------------------------------------------
+    print("\nPhase 7 — MC-OVO-161 SIGKILL-during-shadow recovery")
+    sandbox2 = Path(tempfile.mkdtemp(prefix="shadow-killtest-"))
+    print(f"  killtest sandbox: {sandbox2}")
+    proj_dir2 = sandbox2 / ".claude" / "projects" / project_id
+    hb_dir2 = sandbox2 / ".claude" / "lazarus" / project_id / "heartbeats"
+    proj_dir2.mkdir(parents=True, exist_ok=True)
+    hb_dir2.mkdir(parents=True, exist_ok=True)
+
+    kill_sids = ["kill-victim-AAAA", "kill-survivor-BBBB"]
+    kill_owner = "kill-owner-CCCC"
+    for sid in kill_sids:
+        write_json(hb_dir2 / f"{sid}.lock", {
+            "session_id": sid,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+
+    writer_js2 = sandbox2 / "writer.js"
+    write_text(writer_js2, WRITER_SCRIPT)
+
+    procs2 = {}
+    for sid in kill_sids:
+        target = proj_dir2 / f"{sid}.jsonl"
+        target.write_text("", encoding="utf-8")
+        procs2[sid] = subprocess.Popen(
+            ["node", str(writer_js2), sid, str(target), "80"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env={**os.environ, "HOME": str(sandbox2), "USERPROFILE": str(sandbox2)},
+            text=True, encoding="utf-8",
+        )
+
+    time.sleep(0.6)
+    print("  shadow active")
+    shadow_env2 = {**os.environ, "HOME": str(sandbox2), "USERPROFILE": str(sandbox2)}
+    subprocess.run(
+        ["node", str(ENGINE), "shadow", "--project-id", project_id, "--owner-sid", kill_owner, "--no-gate"],
+        capture_output=True, env=shadow_env2,
+    )
+
+    time.sleep(1.0)
+    print(f"  SIGKILL {kill_sids[0]}")
+    procs2[kill_sids[0]].kill()
+    procs2[kill_sids[0]].wait(timeout=3)
+
+    time.sleep(0.5)
+    # Survivor's heartbeat is still fresh; victim's heartbeat will go stale soon.
+
+    # Run panic-restore (PowerShell) — bypasses kill-switch by design.
+    panic_script = THIS_DIR / "lazarus-panic-restore.ps1"
+    if panic_script.exists() and sys.platform == "win32":
+        panic_proc = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+             "-File", str(panic_script), "-ProjectId", project_id],
+            capture_output=True, text=True, encoding="utf-8",
+            env={**os.environ, "HOME": str(sandbox2), "USERPROFILE": str(sandbox2)},
+        )
+        if args.verbose:
+            print("  panic-restore stdout:\n" + panic_proc.stdout)
+    else:
+        # Non-Windows or panic-restore missing: run engine restore directly.
+        subprocess.run(
+            ["node", str(ENGINE), "restore", "--project-id", project_id, "--owner-sid", kill_owner, "--no-gate"],
+            capture_output=True, env=shadow_env2,
+        )
+
+    time.sleep(0.3)
+
+    # Stop survivor, collect its tally.
+    try:
+        out, _ = procs2[kill_sids[1]].communicate("STOP\n", timeout=5)
+        survivor_tally = json.loads(out.strip().splitlines()[-1])
+    except Exception as e:
+        print(f"  FATAL: survivor exit failed: {e}", file=sys.stderr)
+        return 2
+
+    expect("kill-victim .jsonl recovered to original path",
+           (proj_dir2 / f"{kill_sids[0]}.jsonl").exists())
+    expect("kill-survivor .jsonl exists at original path",
+           (proj_dir2 / f"{kill_sids[1]}.jsonl").exists())
+    expect("kill-survivor: byte-exact (writer-reported == file)",
+           len((proj_dir2 / f"{kill_sids[1]}.jsonl").read_bytes())
+           == survivor_tally["bytes_written"])
+
+    # Victim's bytes will be <= what it wrote before kill (writer
+    # exited mid-stream so no final tally available). The key proof
+    # is that the file IS recoverable and contains valid JSON lines.
+    victim_raw = (proj_dir2 / f"{kill_sids[0]}.jsonl").read_bytes()
+    victim_lines = [l for l in victim_raw.decode("utf-8", errors="replace").splitlines() if l.strip()]
+    expect("kill-victim has at least 5 valid JSON lines (proves writes pre-kill survived)",
+           len(victim_lines) >= 5,
+           f"got {len(victim_lines)} lines")
+    for i, ln in enumerate(victim_lines, 1):
+        try:
+            json.loads(ln)
+        except Exception as e:
+            expect(f"kill-victim line {i} parses as JSON", False, str(e))
+
+    expect("no shadow leftovers after panic-restore",
+           not any(f.name.endswith('.live-shadow-' + kill_owner)
+                   for f in proj_dir2.iterdir()))
+
+    if not args.keep:
+        try:
+            shutil.rmtree(sandbox2, ignore_errors=True)
+        except Exception:
+            pass
+
+    print("\nFORENSIC SANDBOX PASS — Shadow-Engine preserves every byte under sustained rename")
+    print("                       AND survives SIGKILL mid-shadow with panic-restore recovery.")
     return 0
 
 
