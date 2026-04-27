@@ -48,5 +48,17 @@ if ($DryRun) {
 $backup = "$ProfilePath.bak.$(Get-Date -AsUTC -Format yyyyMMddTHHmmssfffZ)"
 Copy-Item -LiteralPath $ProfilePath -Destination $backup -Force
 Set-Content -LiteralPath $ProfilePath -Value $updated -Encoding UTF8 -NoNewline
-Write-Output "[disable-shadow] disabled. Backup: $backup"
-Write-Output "[disable-shadow] open a NEW PowerShell to drop the env var."
+Write-Output "[disable-shadow] PowerShell profile cleaned. Backup: $backup"
+
+# MC-LAZ-17 reverse: remove from HKCU\Environment so CMD-launched
+# processes also drop the var. reg delete is the counterpart of setx;
+# no admin needed for HKCU.
+$regOut = & reg delete "HKCU\Environment" /v LAZARUS_SHADOW_FOLDER /f 2>&1
+if ($LASTEXITCODE -eq 0) {
+  Write-Output "[disable-shadow] HKCU\Environment cleared (LAZARUS_SHADOW_FOLDER removed)."
+} else {
+  # Not necessarily an error -- value may have never been set.
+  Write-Output "[disable-shadow] reg delete: $regOut"
+}
+
+Write-Output "[disable-shadow] disabled. Existing shells unaffected; open a NEW shell to drop the var."
