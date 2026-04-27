@@ -291,6 +291,26 @@ def assert_include_run(stdout: str, sids: dict) -> None:
            f"claude --resume {sids['current']}" not in stdout)
 
 
+def assert_exclude_live_run(stdout: str, sids: dict) -> None:
+    print("Phase 4 — --exclude-live (drops CURRENT + LIVE in other windows)")
+    expect("CURRENT row excluded under --exclude-live",
+           sids["current"] not in stdout)
+    expect("LIVE row excluded under --exclude-live (the key MC-LAZ-K fix)",
+           sids["live"] not in stdout)
+    expect("CRASHED row still present (resumeable)",
+           sids["crashed"] in stdout)
+    expect("CLEAN row still present (resumeable)",
+           sids["clean"] in stdout)
+    expect("PENDING (CRASHED) row still present",
+           sids["pending"] in stdout)
+    expect("Restoration path does NOT suggest reviving LIVE",
+           f"claude --resume {sids['live']}" not in stdout)
+    expect("Restoration path emits CRASHED resume command",
+           f"claude --resume {sids['crashed']}" in stdout)
+    expect("Filter banner cites exclude-live",
+           "ALL open sessions" in stdout)
+
+
 def assert_json_run(stdout: str, sids: dict) -> None:
     print("Phase 3 — --json shape (default --exclude-current)")
     try:
@@ -361,6 +381,18 @@ def main() -> int:
             print(f"FATAL: json exit {rc} (stderr: {err})", file=sys.stderr)
             return 2
         assert_json_run(out, sids)
+
+        # Phase 4: --exclude-live (MC-LAZ-K — drop CURRENT + LIVE)
+        rc, out, err = run_lister(
+            sandbox, proj_path,
+            "--mode", "all", "--include-stale", "--exclude-live",
+        )
+        if args.verbose:
+            print("--- stdout (phase 4) ---\n" + out)
+        if rc != 0:
+            print(f"FATAL: exclude-live exit {rc} (stderr: {err})", file=sys.stderr)
+            return 2
+        assert_exclude_live_run(out, sids)
 
         print("\nALL FORENSIC ASSERTIONS PASS — Lazarus restore contract verified.")
         return 0

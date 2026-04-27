@@ -425,7 +425,9 @@ def render_text(rows: list[SessionRow], header: dict) -> str:
     )
     if header.get("since"):
         lines.append(f"Filter: only sessions touched within {header['since']}")
-    if header.get("exclude_current"):
+    if header.get("exclude_live"):
+        lines.append("Filter: ALL open sessions (CURRENT + LIVE) excluded — only resumeable rows shown")
+    elif header.get("exclude_current"):
         lines.append("Filter: CURRENT (this session) excluded from listing")
     lines.append("")
     lines.append(
@@ -550,6 +552,16 @@ def parse_args() -> argparse.Namespace:
                          action="store_false",
                          help="keep CURRENT rows visible (still tagged [CURRENT])")
 
+    # MC-LAZ-K: --exclude-live — drop EVERY currently-open session
+    # (CURRENT + other LIVE windows). This is the right filter for a
+    # /resume-style picker: a session running in another Cursor panel
+    # should not be a resume candidate (you'd just spawn a duplicate).
+    # When this flag is on, --exclude-current is implied (CURRENT is
+    # a subset of LIVE).
+    p.add_argument("--exclude-live", dest="exclude_live",
+                   action="store_true", default=False,
+                   help="drop ALL open sessions (CURRENT + LIVE in other windows). Default off; turn on for /resume-fresh-style filtering.")
+
     p.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     return p.parse_args()
 
@@ -617,9 +629,15 @@ def main() -> int:
             cwd_project_id,
         ))
 
-    # Filter CURRENT rows (default) — they represent this very session,
-    # so suggesting them as a resume target is the redundancy MC-LAZ-03 fixes.
-    if args.exclude_current:
+    # MC-LAZ-K: --exclude-live drops every currently-open session
+    # (CURRENT + other LIVE windows). Use this for the /resume-fresh
+    # use case where running sessions in adjacent panels must not
+    # appear as resume candidates.
+    if args.exclude_live:
+        rows = [r for r in rows if r.status not in ("CURRENT", "LIVE")]
+    elif args.exclude_current:
+        # Filter CURRENT rows (default) — they represent this very session,
+        # so suggesting them as a resume target is the redundancy MC-LAZ-03 fixes.
         rows = [r for r in rows if not r.is_current]
 
     by_status: dict[str, int] = {}
@@ -633,6 +651,7 @@ def main() -> int:
         "current_window_s": int(current_window.total_seconds()),
         "since": (None if since is None else args.since),
         "exclude_current": bool(args.exclude_current),
+        "exclude_live": bool(args.exclude_live),
         "total": len(rows),
         "by_status": by_status,
     }
