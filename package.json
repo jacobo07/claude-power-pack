@@ -1,0 +1,13 @@
+{
+  "name": "claude-power-pack",
+  "version": "8.0.0",
+  "private": true,
+  "description": "Bundled npm tooling for Claude Power Pack skills (design.md linter/exporter, etc.)",
+  "license": "SEE LICENSE IN README.md",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@google/design.md": "^0.1.1"
+  }
+}

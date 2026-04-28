@@ -53,6 +53,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
+| `/cpp-design-md` | Lint/diff/export DESIGN.md (Google Labs design-system spec). Power-Pack default for web design. | commands/design-md.md |
 
 ## SkillBank Index
 

@@ -1,0 +1,120 @@
+---
+version: alpha
+name: ProjectName
+description: One-line summary of the visual identity (e.g. Heritage editorial, type-led, minimal motion)
+colors:
+  primary: "#1A1C1E"
+  secondary: "#6C7278"
+  tertiary: "#3B82F6"
+  neutral: "#F8F9FA"
+  surface: "#FFFFFF"
+  on-surface: "#0F172A"
+  error: "#DC2626"
+typography:
+  h1:
+    fontFamily: Public Sans
+    fontSize: 48px
+    fontWeight: 700
+    lineHeight: 1.1
+    letterSpacing: -0.02em
+  h2:
+    fontFamily: Public Sans
+    fontSize: 36px
+    fontWeight: 600
+    lineHeight: 1.2
+  body-md:
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.6
+  label-sm:
+    fontFamily: Inter
+    fontSize: 13px
+    fontWeight: 500
+    lineHeight: 1.4
+spacing:
+  xs: 4px
+  sm: 8px
+  md: 16px
+  lg: 24px
+  xl: 32px
+  gutter: 24px
+rounded:
+  sm: 4px
+  md: 8px
+  lg: 12px
+  full: 9999px
+components:
+  button-primary:
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.surface}"
+    rounded: "{rounded.md}"
+    padding: 12px
+  button-primary-hover:
+    backgroundColor: "{colors.tertiary}"
+  button-secondary:
+    backgroundColor: "{colors.neutral}"
+    textColor: "{colors.on-surface}"
+    rounded: "{rounded.md}"
+    padding: 12px
+  card:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.lg}"
+    padding: 24px
+  input:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.on-surface}"
+    rounded: "{rounded.md}"
+    padding: 12px
+---
+
+## Overview
+
+This file is the single source of truth for the project's visual identity. Every UI surface — landing pages, dashboards, marketing site, mobile app — derives its tokens from the YAML front-matter above and respects the rationale below. Coding agents read this file before generating any frontend code.
+
+## Colors
+
+The palette is rooted in high-contrast neutrals with a single evocative accent.
+
+- **Primary (#1A1C1E):** Deep ink for headlines and core text. Permanence and readability.
+- **Secondary (#6C7278):** Slate for utility — borders, captions, metadata. Never competes with primary.
+- **Tertiary (#3B82F6):** Reserved for interaction — primary CTAs, links, focus rings. Use sparingly.
+- **Neutral (#F8F9FA):** Page background. Softer than pure white; warmer light reflectance.
+- **Error (#DC2626):** Reserved for state semantics. Do not repurpose for branding.
+
+Contrast: every color used as text must hit WCAG AA (≥4.5:1 for body, ≥3:1 for large text).
+
+## Typography
+
+Two families: **Public Sans** for narrative weight, **Inter** for body and UI chrome.
+
+- **Headlines (h1, h2):** Public Sans semi-bold. Institutional, trustworthy, generous x-height.
+- **Body (body-md):** Inter regular at 16px. Optimized for screen readability across densities.
+- **Labels (label-sm):** Inter medium at 13px for metadata, captions, form helpers.
+
+Line-height contracts upward as size grows (1.1 for h1, 1.6 for body) — deliberate hierarchy signal.
+
+## Layout
+
+Strict 8px grid. Every spacing token is a multiple of 4px. Page max-width: `min(1280px, 92vw)`.
+
+Section vertical rhythm: `xl` (32px) between top-level sections, `lg` (24px) within a section.
+
+## Elevation & Depth
+
+Depth is conveyed through tonal layers and borders, not heavy shadows. Default surface sits on neutral background; elevated surfaces use pure white with a subtle border (1px secondary at 12% opacity).
+
+## Shapes
+
+Architectural softness — `md` (8px) for buttons, inputs, cards. `lg` (12px) for hero panels. `full` reserved for avatars and pill badges only. Sharp corners forbidden for interactive surfaces.
+
+## Components
+
+Component tokens reference primitives via `{path.to.token}` — never hardcode colors at the component level. Variants for state (hover, active, disabled) suffix the component name with the state.
+
+## Do's and Don'ts
+
+- Do use the primary color for the single most important action per screen.
+- Don't mix rounded and sharp corners in the same view.
+- Do maintain WCAG AA contrast for all text.
+- Don't use more than two font families on a single screen.
