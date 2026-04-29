@@ -10,6 +10,7 @@ Before ANY reasoning or action, execute this scan:
    `PROJECT.md` > `CLAUDE.md` > `GLOBAL_PRAXIS.md` > `package.json` > `pyproject.toml` > `Cargo.toml` > `go.mod` > `Makefile` > `CMakeLists.txt` > `pom.xml` > `build.gradle` > `README.md`
 2.5. **Knowledge Graph check**: If `_knowledge_graph/INDEX.md` exists, `Read` it. Use the graph for architecture discovery (modules, classes, dependencies) instead of grep/glob scanning. Follow `[[wikilinks]]` to drill into specific nodes. Max 10 nodes per task.
 2.6. **Governance Vault check**: If `~/.claude/vault/INDEX.md` exists, `Read` it. Use the vault for on-demand governance (leyes, mistakes, gates, protocols) instead of loading everything from CLAUDE.md. Follow `[[wikilinks]]` — max 5 pages per task. See `parts/sleepy/governance-vault.md` for routing table.
+2.7. **Sovereign Rigor Amendment** (vMAX-100S scoped): Always-active. Read `parts/sovereign-rigor-amendment.md` (~50 lines). Adds 5 enforceable rigor rules (SRA-1 Tripwire-to-BLOCK, SRA-2 DNA-Decompose Gate, SRA-3 Sovereign Audit Ledger, SRA-4 Auto-Critique Vaccine, SRA-5 Forensic Paralysis). Three regression-class elements were rejected with reasoning in `vault/audits/sovereign_objection.md` — review before claiming the kernel is fully vMAX-100S.
 3. **Context extraction** — from manifests, derive:
    - **PROJECT**: name + purpose (what is this?)
    - **STACK**: language(s) + framework(s) + build tool
@@ -109,6 +110,30 @@ Words "done", "complete", "ready", "fixed" require: compile passes + tests pass 
 - E9: Monolithic Skill Loading — tiered loading, router pattern
 - E10: Elixir-First — For new systems scoring >=2 on fragility criteria (concurrent, fault-tolerant, real-time, daemon, stateful, distributed), Elixir/OTP is the DEFAULT language. Score >=4 is BLOCKING — non-Elixir requires explicit LDR + user override. Fragile-language systems (Node.js workers, Python daemons, bash orchestrators) scoring 4+ MUST be flagged for Elixir migration on first encounter.
 - E11: Hardcoded Path Injection — In global skills, shared modules, or cross-project code: ZERO absolute paths (`C:/Users/`, `/home/`, `/c/Users/`). Use `./`, `$PWD`, or env vars. Absolute paths in global instructions are architecture bugs, not shortcuts.
+
+## PART R — BASH TRANSPORT SENTINEL (`[Tool result missing due to internal error]`)
+
+**Recognise:** when Bash returns the literal string
+`[Tool result missing due to internal error]` in place of stdout, the
+subprocess **completed**. The harness lost transport, not the work.
+
+**Recover, don't stall:**
+1. Trust the side-channel. The `<task-notification>` reports the real
+   `<status>` and exit code; that channel is independent of stdout.
+2. Read the output file directly. Every `run_in_background` (and many
+   long-running) commands log an absolute output-file path. Use `Read`
+   on that path — it bypasses the broken Bash transport.
+3. Never re-run a side-effecting command (push/write/schedule). The
+   side effect already happened.
+4. Don't loop on the same Bash signature. The error-loop hook will
+   block at 3-in-60s anyway. Switch transport (Read on the file) or
+   change the command shape.
+
+**Detection cue:** the literal substring above appears anywhere in a
+Bash tool result — it is authoritative, not noise.
+
+Origin: TUA-X Sprint X.13.1.7.5 hang on 2026-04-28; promoted to a
+project-agnostic universal patch in Sprint X.13.1.8 (Baseline 115.0 R3).
 
 ## PART Q — THE LEASH
 
