@@ -1,10 +1,11 @@
 {
-  "generated": "2026-04-30T11:26:50+00:00",
+  "generated": "2026-04-30T12:25:20+00:00",
   "totals": {
     "local": 59,
+    "plugin_harvested": 27,
     "gh_harvested": 29,
     "mydeepchat_harvested": 1387,
-    "merged": 1224,
+    "merged": 1251,
     "collisions": 251
   },
   "by_name": {
@@ -599,6 +600,357 @@
         "categories": [
           "wii"
         ]
+      }
+    },
+    "n8n-mcp-skills:n8n-code-javascript": {
+      "name": "n8n-mcp-skills:n8n-code-javascript",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "n8n-mcp-skills",
+        "skill": "n8n-code-javascript",
+        "version": "1.1.0",
+        "marketplace": "n8n-mcp-skills",
+        "description": "Write JavaScript code in n8n Code nodes. Use when writing JavaScript in n8n, using $input/$json/$node syntax, making HTTP requests with $helpers, working with dates using DateTime, troubleshooting Code node errors, or choosing between Code node modes.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/n8n-mcp-skills/n8n-mcp-skills/1.1.0/skills/n8n-code-javascript/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "n8n-mcp-skills:n8n-code-python": {
+      "name": "n8n-mcp-skills:n8n-code-python",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "n8n-mcp-skills",
+        "skill": "n8n-code-python",
+        "version": "1.1.0",
+        "marketplace": "n8n-mcp-skills",
+        "description": "Write Python code in n8n Code nodes. Use when writing Python in n8n, using _input/_json/_node syntax, working with standard library, or need to understand Python limitations in n8n Code nodes.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/n8n-mcp-skills/n8n-mcp-skills/1.1.0/skills/n8n-code-python/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "n8n-mcp-skills:n8n-expression-syntax": {
+      "name": "n8n-mcp-skills:n8n-expression-syntax",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "n8n-mcp-skills",
+        "skill": "n8n-expression-syntax",
+        "version": "1.1.0",
+        "marketplace": "n8n-mcp-skills",
+        "description": "Validate n8n expression syntax and fix common errors. Use when writing n8n expressions, using {{}} syntax, accessing $json/$node variables, troubleshooting expression errors, or working with webhook data in workflows.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/n8n-mcp-skills/n8n-mcp-skills/1.1.0/skills/n8n-expression-syntax/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "n8n-mcp-skills:n8n-mcp-tools-expert": {
+      "name": "n8n-mcp-skills:n8n-mcp-tools-expert",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "n8n-mcp-skills",
+        "skill": "n8n-mcp-tools-expert",
+        "version": "1.1.0",
+        "marketplace": "n8n-mcp-skills",
+        "description": "Expert guide for using n8n-mcp MCP tools effectively. Use when searching for nodes, validating configurations, accessing templates, managing workflows, or using any n8n-mcp tool. Provides tool selection guidance, parameter formats, and common patterns.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/n8n-mcp-skills/n8n-mcp-skills/1.1.0/skills/n8n-mcp-tools-expert/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "n8n-mcp-skills:n8n-node-configuration": {
+      "name": "n8n-mcp-skills:n8n-node-configuration",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "n8n-mcp-skills",
+        "skill": "n8n-node-configuration",
+        "version": "1.1.0",
+        "marketplace": "n8n-mcp-skills",
+        "description": "Operation-aware node configuration guidance. Use when configuring nodes, understanding property dependencies, determining required fields, choosing between get_node detail levels, or learning common configuration patterns by node type.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/n8n-mcp-skills/n8n-mcp-skills/1.1.0/skills/n8n-node-configuration/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "n8n-mcp-skills:n8n-validation-expert": {
+      "name": "n8n-mcp-skills:n8n-validation-expert",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "n8n-mcp-skills",
+        "skill": "n8n-validation-expert",
+        "version": "1.1.0",
+        "marketplace": "n8n-mcp-skills",
+        "description": "Interpret validation errors and guide fixing them. Use when encountering validation errors, validation warnings, false positives, operator structure issues, or need help understanding validation results. Also use when asking about validation profiles, error types, or the validation loop process.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/n8n-mcp-skills/n8n-mcp-skills/1.1.0/skills/n8n-validation-expert/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "n8n-mcp-skills:n8n-workflow-patterns": {
+      "name": "n8n-mcp-skills:n8n-workflow-patterns",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "n8n-mcp-skills",
+        "skill": "n8n-workflow-patterns",
+        "version": "1.1.0",
+        "marketplace": "n8n-mcp-skills",
+        "description": "Proven workflow architectural patterns from real n8n workflows. Use when building new workflows, designing workflow structure, choosing workflow patterns, planning workflow architecture, or asking about webhook processing, HTTP API integration, database operations, AI agent workflows, or scheduled tasks.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/n8n-mcp-skills/n8n-mcp-skills/1.1.0/skills/n8n-workflow-patterns/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "frontend-design:frontend-design": {
+      "name": "frontend-design:frontend-design",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "frontend-design",
+        "skill": "frontend-design",
+        "version": "unknown",
+        "marketplace": "claude-plugins-official",
+        "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, or applications. Generates creative, polished code that avoids generic AI aesthetics.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown/skills/frontend-design/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "claude-md-management:claude-md-improver": {
+      "name": "claude-md-management:claude-md-improver",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "claude-md-management",
+        "skill": "claude-md-improver",
+        "version": "1.0.0",
+        "marketplace": "claude-plugins-official",
+        "description": "Audit and improve CLAUDE.md files in repositories. Use when user asks to check, audit, update, improve, or fix CLAUDE.md files. Scans for all CLAUDE.md files, evaluates quality against templates, outputs quality report, then makes targeted updates. Also use when the user mentions \"CLAUDE.md maintenance\" or \"project memory optimization\".",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/claude-md-management/1.0.0/skills/claude-md-improver/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:brainstorming": {
+      "name": "superpowers:brainstorming",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "brainstorming",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:dispatching-parallel-agents": {
+      "name": "superpowers:dispatching-parallel-agents",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "dispatching-parallel-agents",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/dispatching-parallel-agents/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:executing-plans": {
+      "name": "superpowers:executing-plans",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "executing-plans",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/executing-plans/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:finishing-a-development-branch": {
+      "name": "superpowers:finishing-a-development-branch",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "finishing-a-development-branch",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when implementation is complete, all tests pass, and you need to decide how to integrate the work - guides completion of development work by presenting structured options for merge, PR, or cleanup",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/finishing-a-development-branch/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:receiving-code-review": {
+      "name": "superpowers:receiving-code-review",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "receiving-code-review",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/receiving-code-review/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:requesting-code-review": {
+      "name": "superpowers:requesting-code-review",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "requesting-code-review",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when completing tasks, implementing major features, or before merging to verify work meets requirements",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/requesting-code-review/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:subagent-driven-development": {
+      "name": "superpowers:subagent-driven-development",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "subagent-driven-development",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when executing implementation plans with independent tasks in the current session",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:systematic-debugging": {
+      "name": "superpowers:systematic-debugging",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "systematic-debugging",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/systematic-debugging/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:test-driven-development": {
+      "name": "superpowers:test-driven-development",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "test-driven-development",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when implementing any feature or bugfix, before writing implementation code",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/test-driven-development/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:using-git-worktrees": {
+      "name": "superpowers:using-git-worktrees",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "using-git-worktrees",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/using-git-worktrees/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:using-superpowers": {
+      "name": "superpowers:using-superpowers",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "using-superpowers",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/using-superpowers/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:verification-before-completion": {
+      "name": "superpowers:verification-before-completion",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "verification-before-completion",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/verification-before-completion/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:writing-plans": {
+      "name": "superpowers:writing-plans",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "writing-plans",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when you have a spec or requirements for a multi-step task, before touching code",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/writing-plans/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "superpowers:writing-skills": {
+      "name": "superpowers:writing-skills",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "superpowers",
+        "skill": "writing-skills",
+        "version": "5.0.7",
+        "marketplace": "claude-plugins-official",
+        "description": "Use when creating new skills, editing existing skills, or verifying skills work before deployment",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/writing-skills/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "claude-mem:do": {
+      "name": "claude-mem:do",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "claude-mem",
+        "skill": "do",
+        "version": "10.5.2",
+        "marketplace": "thedotmack",
+        "description": "Execute a phased implementation plan using subagents. Use when asked to execute, run, or carry out a plan — especially one created by make-plan.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/thedotmack/claude-mem/10.5.2/skills/do/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "claude-mem:make-plan": {
+      "name": "claude-mem:make-plan",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "claude-mem",
+        "skill": "make-plan",
+        "version": "10.5.2",
+        "marketplace": "thedotmack",
+        "description": "Create a detailed, phased implementation plan with documentation discovery. Use when asked to plan a feature, task, or multi-step implementation — especially before executing with do.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/thedotmack/claude-mem/10.5.2/skills/make-plan/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "claude-mem:mem-search": {
+      "name": "claude-mem:mem-search",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "claude-mem",
+        "skill": "mem-search",
+        "version": "10.5.2",
+        "marketplace": "thedotmack",
+        "description": "Search claude-mem's persistent cross-session memory database. Use when user asks \"did we already solve this?\", \"how did we do X last time?\", or needs work from previous sessions.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/thedotmack/claude-mem/10.5.2/skills/mem-search/SKILL.md",
+        "scope": "user"
+      }
+    },
+    "claude-mem:smart-explore": {
+      "name": "claude-mem:smart-explore",
+      "origin": "plugin",
+      "plugin": {
+        "plugin": "claude-mem",
+        "skill": "smart-explore",
+        "version": "10.5.2",
+        "marketplace": "thedotmack",
+        "description": "Token-optimized structural code search using tree-sitter AST parsing. Use instead of reading full files when you need to understand code structure, find functions, or explore a codebase efficiently.",
+        "skill_path": "C:/Users/kobig/.claude/plugins/cache/thedotmack/claude-mem/10.5.2/skills/smart-explore/SKILL.md",
+        "scope": "user"
       }
     },
     "SKILL.md": {
