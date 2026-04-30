@@ -41,6 +41,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LOCAL_INDEX = REPO_ROOT / "vault" / "skills_index.json"
 GH_RAW = REPO_ROOT / "vault" / "audits" / "gh_skills_raw.jsonl"
+MDC_RAW = REPO_ROOT / "vault" / "audits" / "mydeepchat_skills_raw.jsonl"
 UNIFIED_OUT = REPO_ROOT / "vault" / "skills_index_unified.json"
 
 
@@ -77,12 +78,31 @@ def load_gh() -> list[dict]:
     return out
 
 
+def load_mydeepchat() -> list[dict]:
+    """Read mydeepchat_skills_raw.jsonl. Drop entries without a name."""
+    out: list[dict] = []
+    if not MDC_RAW.is_file():
+        return out
+    with MDC_RAW.open("r", encoding="utf-8") as h:
+        for line in h:
+            if not line.strip():
+                continue
+            try:
+                e = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not e.get("name"):
+                continue
+            out.append(e)
+    return out
+
+
 def atomic_write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(path.parent))
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as h:
-            json.dump(payload, h, indent=2, sort_keys=False)
+            json.dump(payload, h, indent=2, sort_keys=False, ensure_ascii=False)
             h.write("\n")
         os.replace(tmp, path)
     except Exception:
@@ -100,46 +120,19 @@ def main(argv: list[str] | None = None) -> int:
 
     local = load_local()
     gh = load_gh()
+    mdc = load_mydeepchat()
 
     by_name: dict[str, dict] = {}
     collisions: list[dict] = []
 
+    # Priority: local > github > mydeepchat (local wins on every collision)
     for name, entry in local.items():
-        by_name[name] = {
-            "name": name,
-            "origin": "local",
-            "local": entry,
-        }
+        by_name[name] = {"name": name, "origin": "local", "local": entry}
 
     for e in gh:
         name = e["name"]
-        if name in by_name and by_name[name]["origin"] == "local":
-            collisions.append(
-                {
-                    "name": name,
-                    "local": by_name[name]["local"],
-                    "github": {
-                        "repo": e["repo"],
-                        "path": e["path"],
-                        "raw_url": e["raw_url"],
-                    },
-                }
-            )
-            continue
-        # New skill, GH-only (or already in by_name as GH but multi-repo collision)
         if name in by_name:
-            # second GH source for same name — track as collision too
-            collisions.append(
-                {
-                    "name": name,
-                    "github_a": by_name[name].get("github"),
-                    "github_b": {
-                        "repo": e["repo"],
-                        "path": e["path"],
-                        "raw_url": e["raw_url"],
-                    },
-                }
-            )
+            collisions.append({"name": name, "kept": by_name[name]["origin"], "dropped_source": "github", "dropped_repo": e["repo"]})
             continue
         by_name[name] = {
             "name": name,
@@ -153,11 +146,30 @@ def main(argv: list[str] | None = None) -> int:
             },
         }
 
+    for e in mdc:
+        name = e["name"]
+        if name in by_name:
+            collisions.append({"name": name, "kept": by_name[name]["origin"], "dropped_source": "mydeepchat", "dropped_author": e.get("author")})
+            continue
+        by_name[name] = {
+            "name": name,
+            "origin": "mydeepchat",
+            "mydeepchat": {
+                "id": e.get("id"),
+                "slug": e.get("slug"),
+                "description": e.get("description"),
+                "author": e.get("author"),
+                "github_url": e.get("github_url"),
+                "has_prompt": bool(e.get("prompt")),
+            },
+        }
+
     payload = {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "totals": {
             "local": len(local),
             "gh_harvested": len(gh),
+            "mydeepchat_harvested": len(mdc),
             "merged": len(by_name),
             "collisions": len(collisions),
         },
