@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-04-29T17:53:41Z",
+  "source_video": "C:/Users/kobig/Videos/2026-04-29 17-53-41.mp4",
+  "video_duration_sec": 257.3,
+  "video_resolution": "1280x720@30fps",
+  "frames_analyzed": ["frame_01 @ 40s", "frame_05 @ 200s"],
+  "host": "win32",
+  "ide": "Cursor",
+  "macro_slots": [
+    {
+      "slot": 1,
+      "title": "InfinityOps — Cursor",
+      "workspace_root_hint": "InfinityOps",
+      "taskbar_position": "leftmost",
+      "verified_in_frames": ["frame_01", "frame_05"]
+    },
+    {
+      "slot": 2,
+      "title": "KobiiCraft Core Files — Cursor",
+      "workspace_root_hint": "KobiiCraft Core Files",
+      "taskbar_position": "second",
+      "verified_in_frames": ["frame_01", "frame_05"]
+    },
+    {
+      "slot": 3,
+      "title": "CursorProjects — Cursor",
+      "workspace_root_hint": "CursorProjects",
+      "taskbar_position": "middle",
+      "verified_in_frames": ["frame_01", "frame_05"]
+    },
+    {
+      "slot": 4,
+      "title": "LuckyFly — Cursor",
+      "workspace_root_hint": "LuckyFly",
+      "taskbar_position": "fourth",
+      "verified_in_frames": ["frame_01", "frame_05"]
+    },
+    {
+      "slot": 5,
+      "title": "claude-power-pack — Cursor",
+      "workspace_root_hint": "claude-power-pack",
+      "taskbar_position": "rightmost",
+      "verified_in_frames": ["frame_01 (active)", "frame_05 (active)"]
+    }
+  ],
+  "per_window_layout": {
+    "primary_pane": "claude-code agent terminal (left, ~80% width)",
+    "tab_bar": "Problems · Output · Terminal · Ports · Debug Console (top-left)",
+    "right_sidebar": "Cursor agent session list ('claude' entries, ~10-15 visible per window)",
+    "bottom_chrome": "Cursor status bar + Browser Workbench shortcut",
+    "footer": "Windows taskbar with all 5 macro-slot Cursor windows pinned"
+  },
+  "session_count_assertion": {
+    "owner_claim": 45,
+    "video_evidence": "10-15 'claude' entries visible in right sidebar of active window (claude-power-pack); not extrapolatable to 45 across all 5 windows from these 2 frames alone",
+    "verified": false,
+    "next_action": "Owner confirms total session count OR I extract 9 frames spanning all 5 windows"
+  },
+  "topology_invariants": [
+    "Exactly 5 macro slots (Cursor windows). Adding a 6th invalidates the layout.",
+    "Macro-slot order in taskbar must match: InfinityOps -> KobiiCraft Core Files -> CursorProjects -> LuckyFly -> claude-power-pack.",
+    "Each window shows the claude-code agent terminal as primary pane.",
+    "Right sidebar lists active claude agent sessions for that workspace."
+  ],
+  "out_of_scope_for_this_capture": [
+    "Pane sub-layouts inside each window (would need per-window screenshots)",
+    "Active terminal content (mutates per session; not part of topology)",
+    "Cross-window agent dispatch patterns (Lazarus-level concern, separate doc)"
+  ]
+}
