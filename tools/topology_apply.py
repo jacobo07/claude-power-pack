@@ -113,11 +113,25 @@ def main(argv: list[str] | None = None) -> int:
     unresolved: list[str] = []
     for slot in layout["macro_slots"]:
         hint = slot["workspace_root_hint"]
-        resolved = find_workspace(hint, search_roots)
+        # Honor explicit resolved_path from layout JSON if present and exists.
+        # Otherwise fall back to search-roots heuristic.
+        explicit = slot.get("resolved_path")
+        resolved: Path | None = None
+        source = "search-roots"
+        if explicit:
+            ep = Path(explicit)
+            if ep.is_dir():
+                resolved = ep
+                source = "explicit-from-layout"
+            else:
+                source = f"explicit-MISSING ({explicit})"
+        if resolved is None:
+            resolved = find_workspace(hint, search_roots)
         plan.append({
             "slot": slot["slot"],
             "title": slot["title"],
             "hint": hint,
+            "resolution_source": source,
             "resolved_path": str(resolved) if resolved else None,
             "would_invoke": f'cursor "{resolved}"' if resolved else f"<unresolved: {hint}>",
         })

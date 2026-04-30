@@ -12,36 +12,47 @@
       "slot": 1,
       "title": "InfinityOps — Cursor",
       "workspace_root_hint": "InfinityOps",
+      "resolved_path": "C:/Users/kobig/Desktop/Cursor Projects/InfinityOps",
       "taskbar_position": "leftmost",
-      "verified_in_frames": ["frame_01", "frame_05"]
+      "verified_in_frames": ["frame_01", "frame_05"],
+      "resolved_at": "2026-04-30T13:50Z (MC-LAZ-41-MAP)"
     },
     {
       "slot": 2,
       "title": "KobiiCraft Core Files — Cursor",
       "workspace_root_hint": "KobiiCraft Core Files",
+      "resolved_path": "C:/Users/kobig/Desktop/Cursor Projects/Minecraft Projects/KobiiCraft Workspace",
       "taskbar_position": "second",
-      "verified_in_frames": ["frame_01", "frame_05"]
+      "verified_in_frames": ["frame_01", "frame_05"],
+      "resolved_at": "2026-04-30T13:50Z (MC-LAZ-41-MAP)",
+      "label_vs_folder_note": "Cursor window title is 'KobiiCraft Core Files' but on-disk folder is 'KobiiCraft Workspace'. Cursor labels its windows by workspace name (a Cursor setting) which can differ from the folder basename."
     },
     {
       "slot": 3,
       "title": "CursorProjects — Cursor",
       "workspace_root_hint": "CursorProjects",
+      "resolved_path": "C:/Users/kobig/Desktop/Cursor Projects",
       "taskbar_position": "middle",
-      "verified_in_frames": ["frame_01", "frame_05"]
+      "verified_in_frames": ["frame_01", "frame_05"],
+      "resolved_at": "2026-04-30T13:50Z (MC-LAZ-41-MAP)"
     },
     {
       "slot": 4,
       "title": "LuckyFly — Cursor",
       "workspace_root_hint": "LuckyFly",
+      "resolved_path": "C:/Users/kobig/Desktop/Cursor Projects/Minecraft Projects/LuckyFly",
       "taskbar_position": "fourth",
-      "verified_in_frames": ["frame_01", "frame_05"]
+      "verified_in_frames": ["frame_01", "frame_05"],
+      "resolved_at": "2026-04-30T13:50Z (MC-LAZ-41-MAP)"
     },
     {
       "slot": 5,
       "title": "claude-power-pack — Cursor",
       "workspace_root_hint": "claude-power-pack",
+      "resolved_path": "C:/Users/kobig/.claude/skills/claude-power-pack",
       "taskbar_position": "rightmost",
-      "verified_in_frames": ["frame_01 (active)", "frame_05 (active)"]
+      "verified_in_frames": ["frame_01 (active)", "frame_05 (active)"],
+      "resolved_at": "2026-04-30T13:50Z (MC-LAZ-41-MAP)"
     }
   ],
   "per_window_layout": {
