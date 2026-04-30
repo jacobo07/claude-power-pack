@@ -1,0 +1,924 @@
+{
+  "generated": "2026-04-30T11:13:07+00:00",
+  "totals": {
+    "local": 59,
+    "gh_harvested": 29,
+    "merged": 88,
+    "collisions": 0
+  },
+  "by_name": {
+    "cpp-pro": {
+      "name": "cpp-pro",
+      "origin": "local",
+      "local": {
+        "name": "cpp-pro",
+        "categories": [
+          "cpp"
+        ]
+      }
+    },
+    "debugging-wizard": {
+      "name": "debugging-wizard",
+      "origin": "local",
+      "local": {
+        "name": "debugging-wizard",
+        "categories": [
+          "debug"
+        ]
+      }
+    },
+    "kobiicraft-debug": {
+      "name": "kobiicraft-debug",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-debug",
+        "categories": [
+          "debug",
+          "minecraft"
+        ]
+      }
+    },
+    "artifacts-builder": {
+      "name": "artifacts-builder",
+      "origin": "local",
+      "local": {
+        "name": "artifacts-builder",
+        "categories": [
+          "frontend",
+          "typescript"
+        ]
+      }
+    },
+    "brand-guidelines": {
+      "name": "brand-guidelines",
+      "origin": "local",
+      "local": {
+        "name": "brand-guidelines",
+        "categories": [
+          "frontend"
+        ]
+      }
+    },
+    "building-ai-saas-products": {
+      "name": "building-ai-saas-products",
+      "origin": "local",
+      "local": {
+        "name": "building-ai-saas-products",
+        "categories": [
+          "frontend"
+        ]
+      }
+    },
+    "canvas-design": {
+      "name": "canvas-design",
+      "origin": "local",
+      "local": {
+        "name": "canvas-design",
+        "categories": [
+          "frontend"
+        ]
+      }
+    },
+    "mcp-builder": {
+      "name": "mcp-builder",
+      "origin": "local",
+      "local": {
+        "name": "mcp-builder",
+        "categories": [
+          "frontend"
+        ]
+      }
+    },
+    "kobiicraft-dev": {
+      "name": "kobiicraft-dev",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-dev",
+        "categories": [
+          "minecraft"
+        ]
+      }
+    },
+    "kobiicraft-execution": {
+      "name": "kobiicraft-execution",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-execution",
+        "categories": [
+          "minecraft"
+        ]
+      }
+    },
+    "kobiicraft-ops": {
+      "name": "kobiicraft-ops",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-ops",
+        "categories": [
+          "minecraft"
+        ]
+      }
+    },
+    "kobiicraft-prd": {
+      "name": "kobiicraft-prd",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-prd",
+        "categories": [
+          "minecraft"
+        ]
+      }
+    },
+    "kobiicraft-product": {
+      "name": "kobiicraft-product",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-product",
+        "categories": [
+          "minecraft"
+        ]
+      }
+    },
+    "kobiicraft-review": {
+      "name": "kobiicraft-review",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-review",
+        "categories": [
+          "minecraft"
+        ]
+      }
+    },
+    "kobiicraft-testing": {
+      "name": "kobiicraft-testing",
+      "origin": "local",
+      "local": {
+        "name": "kobiicraft-testing",
+        "categories": [
+          "minecraft",
+          "testing"
+        ]
+      }
+    },
+    "managing-sleepy-skills": {
+      "name": "managing-sleepy-skills",
+      "origin": "local",
+      "local": {
+        "name": "managing-sleepy-skills",
+        "categories": [
+          "python"
+        ]
+      }
+    },
+    "python-best-practices": {
+      "name": "python-best-practices",
+      "origin": "local",
+      "local": {
+        "name": "python-best-practices",
+        "categories": [
+          "python"
+        ]
+      }
+    },
+    "python-pro": {
+      "name": "python-pro",
+      "origin": "local",
+      "local": {
+        "name": "python-pro",
+        "categories": [
+          "python"
+        ]
+      }
+    },
+    "sleepy-skills": {
+      "name": "sleepy-skills",
+      "origin": "local",
+      "local": {
+        "name": "sleepy-skills",
+        "categories": [
+          "python"
+        ]
+      }
+    },
+    "code-auditor": {
+      "name": "code-auditor",
+      "origin": "local",
+      "local": {
+        "name": "code-auditor",
+        "categories": [
+          "security"
+        ]
+      }
+    },
+    "test-master": {
+      "name": "test-master",
+      "origin": "local",
+      "local": {
+        "name": "test-master",
+        "categories": [
+          "testing"
+        ]
+      }
+    },
+    "meeting-insights-analyzer": {
+      "name": "meeting-insights-analyzer",
+      "origin": "local",
+      "local": {
+        "name": "meeting-insights-analyzer",
+        "categories": [
+          "typescript"
+        ]
+      }
+    },
+    "ads": {
+      "name": "ads",
+      "origin": "local",
+      "local": {
+        "name": "ads",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "adversarial-longevity": {
+      "name": "adversarial-longevity",
+      "origin": "local",
+      "local": {
+        "name": "adversarial-longevity",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "algorithmic-art": {
+      "name": "algorithmic-art",
+      "origin": "local",
+      "local": {
+        "name": "algorithmic-art",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "autoresearch": {
+      "name": "autoresearch",
+      "origin": "local",
+      "local": {
+        "name": "autoresearch",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "bmad": {
+      "name": "bmad",
+      "origin": "local",
+      "local": {
+        "name": "bmad",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "carl-help": {
+      "name": "carl-help",
+      "origin": "local",
+      "local": {
+        "name": "carl-help",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "carl-manager": {
+      "name": "carl-manager",
+      "origin": "local",
+      "local": {
+        "name": "carl-manager",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "claude-power-pack": {
+      "name": "claude-power-pack",
+      "origin": "local",
+      "local": {
+        "name": "claude-power-pack",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "code-reviewer": {
+      "name": "code-reviewer",
+      "origin": "local",
+      "local": {
+        "name": "code-reviewer",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "competitive-ads-extractor": {
+      "name": "competitive-ads-extractor",
+      "origin": "local",
+      "local": {
+        "name": "competitive-ads-extractor",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "content-research-writer": {
+      "name": "content-research-writer",
+      "origin": "local",
+      "local": {
+        "name": "content-research-writer",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "custom skills": {
+      "name": "custom skills",
+      "origin": "local",
+      "local": {
+        "name": "custom skills",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "doc-coauthoring": {
+      "name": "doc-coauthoring",
+      "origin": "local",
+      "local": {
+        "name": "doc-coauthoring",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "embedded-systems": {
+      "name": "embedded-systems",
+      "origin": "local",
+      "local": {
+        "name": "embedded-systems",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "fix": {
+      "name": "fix",
+      "origin": "local",
+      "local": {
+        "name": "fix",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "game-feel-codex": {
+      "name": "game-feel-codex",
+      "origin": "local",
+      "local": {
+        "name": "game-feel-codex",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "generating-hook-matrix": {
+      "name": "generating-hook-matrix",
+      "origin": "local",
+      "local": {
+        "name": "generating-hook-matrix",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "governance-overlay": {
+      "name": "governance-overlay",
+      "origin": "local",
+      "local": {
+        "name": "governance-overlay",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "humanizer": {
+      "name": "humanizer",
+      "origin": "local",
+      "local": {
+        "name": "humanizer",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "internal-comms": {
+      "name": "internal-comms",
+      "origin": "local",
+      "local": {
+        "name": "internal-comms",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "java-architect": {
+      "name": "java-architect",
+      "origin": "local",
+      "local": {
+        "name": "java-architect",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "ll-revenue-reinforcing": {
+      "name": "ll-revenue-reinforcing",
+      "origin": "local",
+      "local": {
+        "name": "ll-revenue-reinforcing",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "predicting-market-opportunities": {
+      "name": "predicting-market-opportunities",
+      "origin": "local",
+      "local": {
+        "name": "predicting-market-opportunities",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "project-bootstrapper": {
+      "name": "project-bootstrapper",
+      "origin": "local",
+      "local": {
+        "name": "project-bootstrapper",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "project-pulse": {
+      "name": "project-pulse",
+      "origin": "local",
+      "local": {
+        "name": "project-pulse",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "seo": {
+      "name": "seo",
+      "origin": "local",
+      "local": {
+        "name": "seo",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "skill-creator": {
+      "name": "skill-creator",
+      "origin": "local",
+      "local": {
+        "name": "skill-creator",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "skill-prompt-efficiency-001": {
+      "name": "skill-prompt-efficiency-001",
+      "origin": "local",
+      "local": {
+        "name": "skill-prompt-efficiency-001",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "skill-share": {
+      "name": "skill-share",
+      "origin": "local",
+      "local": {
+        "name": "skill-share",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "slack-gif-creator": {
+      "name": "slack-gif-creator",
+      "origin": "local",
+      "local": {
+        "name": "slack-gif-creator",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "social-media": {
+      "name": "social-media",
+      "origin": "local",
+      "local": {
+        "name": "social-media",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "software-best-practices": {
+      "name": "software-best-practices",
+      "origin": "local",
+      "local": {
+        "name": "software-best-practices",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "theme-factory": {
+      "name": "theme-factory",
+      "origin": "local",
+      "local": {
+        "name": "theme-factory",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "video-analyzer": {
+      "name": "video-analyzer",
+      "origin": "local",
+      "local": {
+        "name": "video-analyzer",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "voice-spec-lock": {
+      "name": "voice-spec-lock",
+      "origin": "local",
+      "local": {
+        "name": "voice-spec-lock",
+        "categories": [
+          "uncategorized"
+        ]
+      }
+    },
+    "wii-dev-best-practices": {
+      "name": "wii-dev-best-practices",
+      "origin": "local",
+      "local": {
+        "name": "wii-dev-best-practices",
+        "categories": [
+          "wii"
+        ]
+      }
+    },
+    "wii-dev-skills": {
+      "name": "wii-dev-skills",
+      "origin": "local",
+      "local": {
+        "name": "wii-dev-skills",
+        "categories": [
+          "wii"
+        ]
+      }
+    },
+    "SKILL.md": {
+      "name": "SKILL.md",
+      "origin": "github",
+      "github": {
+        "repo": "ziqi-lydia/sai-skills",
+        "path": "SKILL.md/SKILL.md",
+        "sha": "452118a2e200281c48e4531494da57e49b843a7b",
+        "raw_url": "https://raw.githubusercontent.com/ziqi-lydia/sai-skills/452118a2e200281c48e4531494da57e49b843a7b/SKILL.md/SKILL.md",
+        "html_url": "https://github.com/ziqi-lydia/sai-skills/blob/a3353d70e2608c20a4dcab57ff21e3037ae8f46b/SKILL.md/SKILL.md"
+      }
+    },
+    "openclaw": {
+      "name": "openclaw",
+      "origin": "github",
+      "github": {
+        "repo": "LuxAlgo/pinets-cli",
+        "path": "SKILL.md/openclaw/SKILL.md",
+        "sha": "cfc4f88c9aa8f2d83c6e60bcc8a1ed5759f3b554",
+        "raw_url": "https://raw.githubusercontent.com/LuxAlgo/pinets-cli/cfc4f88c9aa8f2d83c6e60bcc8a1ed5759f3b554/SKILL.md/openclaw/SKILL.md",
+        "html_url": "https://github.com/LuxAlgo/pinets-cli/blob/b0b67e5a4a179987f9a8f7573a92b02de53b03c7/SKILL.md/openclaw/SKILL.md"
+      }
+    },
+    "claude-code": {
+      "name": "claude-code",
+      "origin": "github",
+      "github": {
+        "repo": "LuxAlgo/pinets-cli",
+        "path": "SKILL.md/claude-code/SKILL.md",
+        "sha": "7e301a7142392bbb90f78452ec7563a3d5aafd74",
+        "raw_url": "https://raw.githubusercontent.com/LuxAlgo/pinets-cli/7e301a7142392bbb90f78452ec7563a3d5aafd74/SKILL.md/claude-code/SKILL.md",
+        "html_url": "https://github.com/LuxAlgo/pinets-cli/blob/b0b67e5a4a179987f9a8f7573a92b02de53b03c7/SKILL.md/claude-code/SKILL.md"
+      }
+    },
+    "openai-codex": {
+      "name": "openai-codex",
+      "origin": "github",
+      "github": {
+        "repo": "LuxAlgo/pinets-cli",
+        "path": "SKILL.md/openai-codex/SKILL.md",
+        "sha": "8216efa8e7923ff8d038baaf93dd940e7d2d3093",
+        "raw_url": "https://raw.githubusercontent.com/LuxAlgo/pinets-cli/8216efa8e7923ff8d038baaf93dd940e7d2d3093/SKILL.md/openai-codex/SKILL.md",
+        "html_url": "https://github.com/LuxAlgo/pinets-cli/blob/b0b67e5a4a179987f9a8f7573a92b02de53b03c7/SKILL.md/openai-codex/SKILL.md"
+      }
+    },
+    "page-cro": {
+      "name": "page-cro",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/page-cro/SKILL.md",
+        "sha": "30687508ea4171a79f1063d71ae56e5267af2cca",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/30687508ea4171a79f1063d71ae56e5267af2cca/SKILL.md/skills/page-cro/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/page-cro/SKILL.md"
+      }
+    },
+    "paid-ads": {
+      "name": "paid-ads",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/paid-ads/SKILL.md",
+        "sha": "0264ff40269ad27646d56486c1aecebd37efd152",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/0264ff40269ad27646d56486c1aecebd37efd152/SKILL.md/skills/paid-ads/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/paid-ads/SKILL.md"
+      }
+    },
+    "seo-audit": {
+      "name": "seo-audit",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/seo-audit/SKILL.md",
+        "sha": "474910d6a0c33640272bd6d9c2962717c4307e60",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/474910d6a0c33640272bd6d9c2962717c4307e60/SKILL.md/skills/seo-audit/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/seo-audit/SKILL.md"
+      }
+    },
+    "popup-cro": {
+      "name": "popup-cro",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/popup-cro/SKILL.md",
+        "sha": "27b7eba13e4e2ce94fd3787100ba5d2c7d919c86",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/27b7eba13e4e2ce94fd3787100ba5d2c7d919c86/SKILL.md/skills/popup-cro/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/popup-cro/SKILL.md"
+      }
+    },
+    "copywriting": {
+      "name": "copywriting",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/copywriting/SKILL.md",
+        "sha": "e34277b255abcc3301e7697da97657f760965b3c",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/e34277b255abcc3301e7697da97657f760965b3c/SKILL.md/skills/copywriting/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/copywriting/SKILL.md"
+      }
+    },
+    "copy-editing": {
+      "name": "copy-editing",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/copy-editing/SKILL.md",
+        "sha": "9c232dc638104a66f5c7d16638b7e735befe04da",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/9c232dc638104a66f5c7d16638b7e735befe04da/SKILL.md/skills/copy-editing/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/copy-editing/SKILL.md"
+      }
+    },
+    "schema-markup": {
+      "name": "schema-markup",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/schema-markup/SKILL.md",
+        "sha": "d3c8ecdbe1ecf3fec10696c1df81bfe2944660b4",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/d3c8ecdbe1ecf3fec10696c1df81bfe2944660b4/SKILL.md/skills/schema-markup/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/schema-markup/SKILL.md"
+      }
+    },
+    "onboarding-cro": {
+      "name": "onboarding-cro",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/onboarding-cro/SKILL.md",
+        "sha": "d9d3264387f61a0083258aba98890e1873b78c3e",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/d9d3264387f61a0083258aba98890e1873b78c3e/SKILL.md/skills/onboarding-cro/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/onboarding-cro/SKILL.md"
+      }
+    },
+    "email-sequence": {
+      "name": "email-sequence",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/email-sequence/SKILL.md",
+        "sha": "93007b7accf209561a7e59ac6e3c52b50a7f3dc6",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/93007b7accf209561a7e59ac6e3c52b50a7f3dc6/SKILL.md/skills/email-sequence/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/email-sequence/SKILL.md"
+      }
+    },
+    "social-content": {
+      "name": "social-content",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/social-content/SKILL.md",
+        "sha": "42088d4868d58ab7dc0b6c2492ed4ccd9163bffd",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/42088d4868d58ab7dc0b6c2492ed4ccd9163bffd/SKILL.md/skills/social-content/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/social-content/SKILL.md"
+      }
+    },
+    "launch-strategy": {
+      "name": "launch-strategy",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/launch-strategy/SKILL.md",
+        "sha": "bb1a7bb86859a82df4570632959c24e6428e2b79",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/bb1a7bb86859a82df4570632959c24e6428e2b79/SKILL.md/skills/launch-strategy/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/launch-strategy/SKILL.md"
+      }
+    },
+    "signup-flow-cro": {
+      "name": "signup-flow-cro",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/signup-flow-cro/SKILL.md",
+        "sha": "aca5e1ee17ab574f95cbf55a741f66762c14caa4",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/aca5e1ee17ab574f95cbf55a741f66762c14caa4/SKILL.md/skills/signup-flow-cro/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/signup-flow-cro/SKILL.md"
+      }
+    },
+    "marketing-ideas": {
+      "name": "marketing-ideas",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/marketing-ideas/SKILL.md",
+        "sha": "0b72bd3d134d43672ad164d7716d78922c92ec10",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/0b72bd3d134d43672ad164d7716d78922c92ec10/SKILL.md/skills/marketing-ideas/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/marketing-ideas/SKILL.md"
+      }
+    },
+    "content-strategy": {
+      "name": "content-strategy",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/content-strategy/SKILL.md",
+        "sha": "efad87a2a834870f6de6a7320e79c889d115fa81",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/efad87a2a834870f6de6a7320e79c889d115fa81/SKILL.md/skills/content-strategy/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/content-strategy/SKILL.md"
+      }
+    },
+    "referral-program": {
+      "name": "referral-program",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/referral-program/SKILL.md",
+        "sha": "b1bc23bd79328f3b308331a539a9d23aa23cbbb6",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/b1bc23bd79328f3b308331a539a9d23aa23cbbb6/SKILL.md/skills/referral-program/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/referral-program/SKILL.md"
+      }
+    },
+    "programmatic-seo": {
+      "name": "programmatic-seo",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/programmatic-seo/SKILL.md",
+        "sha": "02ae75efad22e03fc3d6fc7f0842e53fd352df46",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/02ae75efad22e03fc3d6fc7f0842e53fd352df46/SKILL.md/skills/programmatic-seo/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/programmatic-seo/SKILL.md"
+      }
+    },
+    "pricing-strategy": {
+      "name": "pricing-strategy",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/pricing-strategy/SKILL.md",
+        "sha": "01ab0cc2c6c07b10a537cfd4419205854dcf9e4e",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/01ab0cc2c6c07b10a537cfd4419205854dcf9e4e/SKILL.md/skills/pricing-strategy/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/pricing-strategy/SKILL.md"
+      }
+    },
+    "free-tool-strategy": {
+      "name": "free-tool-strategy",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/free-tool-strategy/SKILL.md",
+        "sha": "f7f873f4b6185f4376518dd991a42658220dab6c",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/f7f873f4b6185f4376518dd991a42658220dab6c/SKILL.md/skills/free-tool-strategy/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/free-tool-strategy/SKILL.md"
+      }
+    },
+    "analytics-tracking": {
+      "name": "analytics-tracking",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/analytics-tracking/SKILL.md",
+        "sha": "63513d650922ca5a8303e69ef31d15fb17259088",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/63513d650922ca5a8303e69ef31d15fb17259088/SKILL.md/skills/analytics-tracking/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/analytics-tracking/SKILL.md"
+      }
+    },
+    "paywall-upgrade-cro": {
+      "name": "paywall-upgrade-cro",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/paywall-upgrade-cro/SKILL.md",
+        "sha": "eb608fc6eafc42a1e827d22b9895a23b77e4675e",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/eb608fc6eafc42a1e827d22b9895a23b77e4675e/SKILL.md/skills/paywall-upgrade-cro/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/paywall-upgrade-cro/SKILL.md"
+      }
+    },
+    "marketing-psychology": {
+      "name": "marketing-psychology",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/marketing-psychology/SKILL.md",
+        "sha": "9e11927893556e7f7a91700e7b3cab4858d8467a",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/9e11927893556e7f7a91700e7b3cab4858d8467a/SKILL.md/skills/marketing-psychology/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/marketing-psychology/SKILL.md"
+      }
+    },
+    "competitor-alternatives": {
+      "name": "competitor-alternatives",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/competitor-alternatives/SKILL.md",
+        "sha": "4bdfaa06785ca48acf1e0e4c0fdc80bbb03f36da",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/4bdfaa06785ca48acf1e0e4c0fdc80bbb03f36da/SKILL.md/skills/competitor-alternatives/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/competitor-alternatives/SKILL.md"
+      }
+    },
+    "product-marketing-context": {
+      "name": "product-marketing-context",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/product-marketing-context/SKILL.md",
+        "sha": "5b590eadf11cc0e5e52e9f143ddf9779f773ab07",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/5b590eadf11cc0e5e52e9f143ddf9779f773ab07/SKILL.md/skills/product-marketing-context/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/product-marketing-context/SKILL.md"
+      }
+    },
+    "form-cro": {
+      "name": "form-cro",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/form-cro/SKILL.md",
+        "sha": "b502ed3d2898ffbfaa612785b53487e1eff70962",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/b502ed3d2898ffbfaa612785b53487e1eff70962/SKILL.md/skills/form-cro/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/form-cro/SKILL.md"
+      }
+    },
+    "ab-test-setup": {
+      "name": "ab-test-setup",
+      "origin": "github",
+      "github": {
+        "repo": "Rollandcodes/BizAI",
+        "path": "SKILL.md/skills/ab-test-setup/SKILL.md",
+        "sha": "a3cd07689e38e134d05183924aca43cb5c2385c7",
+        "raw_url": "https://raw.githubusercontent.com/Rollandcodes/BizAI/a3cd07689e38e134d05183924aca43cb5c2385c7/SKILL.md/skills/ab-test-setup/SKILL.md",
+        "html_url": "https://github.com/Rollandcodes/BizAI/blob/03ce0e0780b420c2bf19880e72128ee158cbe2c7/SKILL.md/skills/ab-test-setup/SKILL.md"
+      }
+    }
+  },
+  "collisions": []
+}
