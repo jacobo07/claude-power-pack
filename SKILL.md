@@ -24,7 +24,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 
 | Trigger | Part | File |
 |---------|------|------|
-| React, Next.js, Vue, CSS, frontend | F: Frontend | `parts/sleepy/frontend.md` |
+| React, Next.js, Vue, Svelte, SwiftUI, RN, Flutter, Tailwind, shadcn, HTML, CSS, frontend, UI, UX, design, component, dashboard, landing page, brand, palette, typography, font, layout, animation, a11y, poster, artwork, canvas, SaaS UI, vibe coding | **F: Frontend Lieutenant** (orchestrates artifacts-builder + frontend-design + brand-guidelines + canvas-design + building-ai-saas-products + ui-ux-pro-max + 21st.dev MCP) | `parts/sleepy/frontend.md` |
 | /autoresearch, competitive research | G: Autoresearch | `parts/sleepy/autoresearch.md` |
 | token audit, compress, dedup, optimize | C+H+R: Token Tools | `parts/sleepy/token-tools.md` |
 | load ExecutionOS, governance overlay | I: ExecutionOS | `parts/sleepy/executionos.md` |
