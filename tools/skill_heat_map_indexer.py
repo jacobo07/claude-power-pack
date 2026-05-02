@@ -47,7 +47,18 @@ SKILL_GLOBS = [
     ROOT / "plugins",
 ]
 OUT_PATH = ROOT / "skills" / "claude-power-pack" / "vault" / "skills_heat_map.json"
+COMMAND_OUT_PATH = ROOT / "skills" / "claude-power-pack" / "vault" / "commands_index.json"
 ATOMIC_WRITE_DIR = ROOT / "skills" / "claude-power-pack" / "lib"
+
+# Slash-command discovery roots. Commands live alongside skills in plugin
+# bundles and at the user-global level. We catalog them in a parallel index
+# (commands_index.json) for documentation/discovery — NOT for the advisor,
+# since the model cannot dispatch slash commands (BL-0003).
+COMMAND_GLOBS = [
+    ROOT / "skills" / "claude-power-pack" / "commands",
+    ROOT / "commands",
+    ROOT / "plugins",  # plugin commands at plugins/<name>/commands/
+]
 
 STOP_WORDS = {
     "the", "and", "for", "use", "this", "that", "with", "your", "you",
@@ -117,6 +128,97 @@ def discover() -> list[Path]:
             except OSError:
                 continue
     return found
+
+
+def _command_id_for(path: Path) -> str:
+    parts = path.parts
+    name = path.stem
+    if "plugins" in parts:
+        i = parts.index("plugins")
+        if len(parts) >= i + 4 and parts[i + 2] == "commands":
+            tail = "/".join(parts[i + 3:-1] + (name,))
+            return f"{parts[i + 1]}:{tail}".replace("/", ":")
+    if "claude-power-pack" in parts:
+        return name
+    if "commands" in parts:
+        i = parts.index("commands")
+        tail = "/".join(parts[i + 1:-1] + (name,))
+        return tail.replace("/", ":")
+    return name
+
+
+def discover_commands() -> list[Path]:
+    found: list[Path] = []
+    for root in COMMAND_GLOBS:
+        if not root.exists():
+            continue
+        if root.name == "plugins":
+            for cmd_dir in root.glob("*/commands"):
+                if not cmd_dir.is_dir():
+                    continue
+                for p in cmd_dir.rglob("*.md"):
+                    if p.is_file() and not p.name.startswith("."):
+                        found.append(p)
+        else:
+            for p in root.rglob("*.md"):
+                try:
+                    if p.is_file() and not p.name.startswith("."):
+                        found.append(p)
+                except OSError:
+                    continue
+    return found
+
+
+def _first_paragraph(text: str) -> str:
+    body = FRONTMATTER_RE.sub("", text, count=1).lstrip()
+    if not body:
+        return ""
+    para: list[str] = []
+    for line in body.split("\n"):
+        s = line.strip()
+        if not s:
+            if para:
+                break
+            continue
+        if s.startswith("#"):
+            s = s.lstrip("# ").strip()
+        para.append(s)
+        if len(" ".join(para)) > 240:
+            break
+    return " ".join(para)[:400]
+
+
+def build_commands_index(paths: list[Path]) -> dict:
+    commands: dict[str, dict] = {}
+    for p in paths:
+        try:
+            text = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        fm = _parse_frontmatter(text)
+        description = fm.get("description") or _first_paragraph(text)
+        cid = _command_id_for(p)
+        try:
+            stat = p.stat()
+            size = stat.st_size
+            mtime = stat.st_mtime
+        except OSError:
+            size = 0
+            mtime = 0.0
+        commands[cid] = {
+            "description": description,
+            "keywords": _keywords(description),
+            "file_path": str(p),
+            "size_bytes": size,
+            "mtime": mtime,
+            "has_frontmatter": bool(fm),
+        }
+    return {
+        "generated_iso": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "total": len(commands),
+        "schema_version": 1,
+        "commands": commands,
+    }
 
 
 def build_index(paths: list[Path]) -> dict:
@@ -192,6 +294,9 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--query", type=str, default=None)
     ap.add_argument("--out", type=str, default=str(OUT_PATH))
+    ap.add_argument("--commands-out", type=str, default=str(COMMAND_OUT_PATH))
+    ap.add_argument("--skip-commands", action="store_true",
+                    help="Index only skills (legacy behavior)")
     args = ap.parse_args()
 
     paths = discover()
@@ -211,6 +316,26 @@ def main() -> int:
     avg_kw = (sum(len(s["keywords"]) for s in index["skills"].values()) / max(index["total"], 1))
     print(f"skill heat-map: {index['total']} skills indexed, avg {avg_kw:.1f} keywords/skill")
     print(f"  output: {out_path}{' (dry-run)' if args.dry_run else ''}")
+
+    if args.skip_commands:
+        return 0
+
+    cmd_paths = discover_commands()
+    cmd_index = build_commands_index(cmd_paths)
+    cmd_out_path = Path(args.commands_out)
+    if not args.dry_run:
+        sys.path.insert(0, str(ATOMIC_WRITE_DIR))
+        try:
+            import atomic_write  # type: ignore
+            atomic_write.atomic_write_json(cmd_out_path, cmd_index, indent=2)
+        finally:
+            try:
+                sys.path.remove(str(ATOMIC_WRITE_DIR))
+            except ValueError:
+                pass
+    fm_count = sum(1 for c in cmd_index["commands"].values() if c["has_frontmatter"])
+    print(f"commands index: {cmd_index['total']} commands cataloged ({fm_count} with frontmatter)")
+    print(f"  output: {cmd_out_path}{' (dry-run)' if args.dry_run else ''}")
     return 0
 
 
