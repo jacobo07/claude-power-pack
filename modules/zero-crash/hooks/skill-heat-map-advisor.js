@@ -103,15 +103,36 @@ function alreadyUsedSkillsPath(sessionId) {
   return path.join(os.tmpdir(), `claude-skills-used-${sessionId}.txt`);
 }
 
-function loadAlreadyUsedSkills(sessionId) {
+function suggestedSkillsPath(sessionId) {
+  // BL-0024 (MC-SYS-52): per-skill-id debounce. Tracks which skills *this hook*
+  // has already suggested in this session, so we don't re-inject the same
+  // recommendation across multiple Bash/Edit/Write tool calls.
+  return path.join(os.tmpdir(), `claude-skills-suggested-${sessionId}.txt`);
+}
+
+function loadSetFromFile(p) {
   try {
-    const p = alreadyUsedSkillsPath(sessionId);
     if (!fs.existsSync(p)) return new Set();
     const text = fs.readFileSync(p, 'utf8');
     return new Set(text.split(/\r?\n/).map(l => l.trim()).filter(Boolean));
   } catch {
     return new Set();
   }
+}
+
+function loadAlreadyUsedSkills(sessionId) {
+  return loadSetFromFile(alreadyUsedSkillsPath(sessionId));
+}
+
+function loadSuggestedSkills(sessionId) {
+  return loadSetFromFile(suggestedSkillsPath(sessionId));
+}
+
+function appendSuggestedSkills(sessionId, skillIds) {
+  if (!skillIds || !skillIds.length) return;
+  const p = suggestedSkillsPath(sessionId);
+  const line = skillIds.join('\n') + '\n';
+  try { fs.appendFileSync(p, line, 'utf8'); } catch { /* best-effort */ }
 }
 
 function pickTopK(heatMap, tokens, used) {
@@ -145,13 +166,6 @@ function pickTopK(heatMap, tokens, used) {
     return;
   }
 
-  // Per-session debounce
-  const flag = alreadyAdvisedFlagPath(sessionId);
-  if (fs.existsSync(flag)) {
-    process.stdout.write('{}');
-    return;
-  }
-
   const tokens = extractTokens(event.tool_input);
   if (!tokens.length) {
     process.stdout.write('{}');
@@ -164,8 +178,12 @@ function pickTopK(heatMap, tokens, used) {
     return;
   }
 
+  // BL-0024 (MC-SYS-52): combine "already used by user" + "already suggested
+  // by this hook" into a single exclusion set. pickTopK skips both buckets.
   const used = loadAlreadyUsedSkills(sessionId);
-  const top = pickTopK(heatMap, tokens, used);
+  const suggested = loadSuggestedSkills(sessionId);
+  const exclude = new Set([...used, ...suggested]);
+  const top = pickTopK(heatMap, tokens, exclude);
   if (!top.length) {
     process.stdout.write('{}');
     return;
@@ -180,7 +198,11 @@ function pickTopK(heatMap, tokens, used) {
     `${tool} input, the following skills may be relevant. Invoke via the Skill ` +
     `tool only if the match looks correct — ignore otherwise.\n${lines.join('\n')}`;
 
-  try { fs.writeFileSync(flag, '1', 'utf8'); } catch { /* best-effort */ }
+  // BL-0024: record which skills we just suggested so the next call in this
+  // session doesn't re-inject them. Skills the user actually invokes (tracked
+  // separately under claude-skills-used-<sid>.txt by other hooks) are also
+  // excluded by pickTopK.
+  appendSuggestedSkills(sessionId, top.map(([sid]) => sid));
 
   const out = {
     hookSpecificOutput: {
