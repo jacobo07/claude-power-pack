@@ -1,0 +1,498 @@
+{
+  "$schema": "aisaas-anti-patterns-failure-prevention-v1.0.0",
+  "dataset_id": "DS-SAAS-001",
+  "domain": "Anti-Patterns & Failure Prevention",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "total_anti_patterns": 26,
+  "total_categories": 5,
+  "description": "Unified anti-pattern registry synthesized from all SaaS batch datasets. Each anti-pattern includes severity classification, detection methods for automated or manual identification, mitigation strategies, and cross-references to related rules in other knowledge files.",
+  "severity_scale": {
+    "CRITICAL": "Causes data loss, security breach, or complete project failure if not addressed",
+    "HIGH": "Causes significant rework, wasted resources, or degraded quality if not addressed",
+    "MEDIUM": "Causes inefficiency, suboptimal outcomes, or technical debt if not addressed"
+  },
+  "anti_patterns": [
+    {
+      "id": "ANTI-AISAAS-001",
+      "category": "Context & Memory Management",
+      "description": "Downloading dozens of skills/MCP servers without curating; having 35 skills but using only 5",
+      "severity": "HIGH",
+      "detection_method": "Audit installed skills and MCP servers; compare against actual usage logs over the past 30 days; flag any skill with zero or near-zero invocations",
+      "mitigation": "Conduct a quarterly skill audit. Remove or disable unused skills. Keep only skills that are actively invoked. Each mounted skill consumes context tokens even when unused.",
+      "source": "ANTI-SAAS-100",
+      "related_rules": ["R-AISAAS-PE-002"]
+    },
+    {
+      "id": "ANTI-AISAAS-002",
+      "category": "Context & Memory Management",
+      "description": "Loading all MCP tool definitions upfront; consuming 14% of context before work begins",
+      "severity": "HIGH",
+      "detection_method": "Measure system prompt token count at session start; if MCP tool definitions exceed 10% of total context budget, this anti-pattern is active",
+      "mitigation": "Use lazy loading for MCP tool definitions. Only load tool schemas when the agent signals intent to use a specific tool category. Alternatively, reduce the number of mounted MCP servers to essential ones only.",
+      "source": "ANTI-SAAS-101",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-003",
+      "category": "Context & Memory Management",
+      "description": "Using default compaction when out of context instead of custom handoff commands",
+      "severity": "MEDIUM",
+      "detection_method": "Check if the project has custom compaction or handoff instructions configured; if using only default Claude Code compaction behavior, this anti-pattern is present",
+      "mitigation": "Define custom handoff commands in claude.md or hooks that preserve critical context (current phase, active plan, key decisions) when context runs out. Default compaction loses project-specific state.",
+      "source": "ANTI-SAAS-102",
+      "related_rules": ["R-AISAAS-PE-006"]
+    },
+    {
+      "id": "ANTI-AISAAS-004",
+      "category": "Context & Memory Management",
+      "description": "Treating Claude Code as a black box without understanding system prompt and context mechanics",
+      "severity": "HIGH",
+      "detection_method": "Ask the developer to explain what happens to their claude.md content, how context is consumed, and what the system prompt contains; inability to answer indicates this anti-pattern",
+      "mitigation": "Study Claude Code internals: system prompt structure, context window allocation, how claude.md is injected, how tools consume context. Understanding the mechanics enables optimization rather than guesswork.",
+      "source": "ANTI-SAAS-103",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-005",
+      "category": "Context & Memory Management",
+      "description": "Storing API keys and PII in the memory system without automatic scrubbing",
+      "severity": "CRITICAL",
+      "detection_method": "Scan memory store contents for patterns matching API key formats (sk-*, AKIA*, etc.), email addresses, phone numbers, SSNs, and other PII regex patterns",
+      "mitigation": "Implement automatic PII/API key scrubbing in the memory pipeline before storage. Use regex pattern matching for known secret formats. Add a pre-storage sanitization hook that strips sensitive data.",
+      "source": "ANTI-SAAS-113",
+      "related_rules": ["R-AISAAS-TA-011"]
+    },
+    {
+      "id": "ANTI-AISAAS-006",
+      "category": "Context & Memory Management",
+      "description": "Keeping data indefinitely without legal requirement",
+      "severity": "MEDIUM",
+      "detection_method": "Check data retention policies; if no expiration dates or TTLs are configured on stored data, and no legal hold justification exists, this anti-pattern is present",
+      "mitigation": "Set explicit data retention periods for all stored data. Implement automatic purging for data past its retention date. Only retain data indefinitely when legally required (compliance, audit trails).",
+      "source": "ANTI-SAAS-114",
+      "related_rules": ["R-AISAAS-TA-008"]
+    },
+    {
+      "id": "ANTI-AISAAS-007",
+      "category": "Context & Memory Management",
+      "description": "Using third-party hacks for memory/agent ops when Claude Code can do it natively",
+      "severity": "MEDIUM",
+      "detection_method": "Inventory third-party tools and services in the stack; for each one, check if Claude Code provides equivalent native functionality (hooks, memory, sub-agents, etc.)",
+      "mitigation": "Before adopting a third-party solution, verify whether Claude Code natively supports the capability. Native solutions have lower latency, better context integration, and fewer failure points than external dependencies.",
+      "source": "ANTI-SAAS-116",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-008",
+      "category": "Development Process",
+      "description": "Building without marketing; spending all time coding and none on distribution",
+      "severity": "HIGH",
+      "detection_method": "Review time allocation over the past month; if marketing/distribution effort is less than 20% of total project time, this anti-pattern is active",
+      "mitigation": "Allocate at least 30% of project time to marketing and distribution from day one. Building in public, creating demo videos, writing case studies, and engaging in communities are all distribution activities that compound over time.",
+      "source": "ANTI-SAAS-104",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-009",
+      "category": "Development Process",
+      "description": "Building a complex feature in one shot without plan mode first",
+      "severity": "HIGH",
+      "detection_method": "Check if features involving multiple files, APIs, or database changes were implemented without a prior planning step; single-prompt implementations of multi-component features indicate this anti-pattern",
+      "mitigation": "Always use plan mode for features touching more than 2 files or involving API + database + UI changes. Planning upfront identifies dependencies and sequencing, reducing iteration count by 50-70%.",
+      "source": "ANTI-SAAS-105",
+      "related_rules": ["R-AISAAS-PE-008"]
+    },
+    {
+      "id": "ANTI-AISAAS-010",
+      "category": "Development Process",
+      "description": "Building the entire UI before verifying backend API connections work",
+      "severity": "HIGH",
+      "detection_method": "Check commit history for UI component commits that precede any API integration testing commits; if UI was built first and API tested later, this anti-pattern was followed",
+      "mitigation": "Test API integrations first using temporary test buttons or scripts. Verify response formats, error handling, and authentication before building any UI. The UI should be the last layer, built on verified data contracts.",
+      "source": "ANTI-SAAS-109",
+      "related_rules": ["R-AISAAS-TA-003"]
+    },
+    {
+      "id": "ANTI-AISAAS-011",
+      "category": "Development Process",
+      "description": "Using overly complex JSON response formats with too many fields",
+      "severity": "MEDIUM",
+      "detection_method": "Review API response schemas; if responses contain more than 15 fields, deeply nested structures (3+ levels), or fields that are never consumed by the frontend, this anti-pattern is present",
+      "mitigation": "Keep JSON response formats minimal — include only fields the consumer actually uses. Flatten nested structures where possible. Use separate endpoints for different data needs rather than one massive response.",
+      "source": "ANTI-SAAS-110",
+      "related_rules": ["R-AISAAS-TA-004"]
+    },
+    {
+      "id": "ANTI-AISAAS-012",
+      "category": "Development Process",
+      "description": "Not saving .env files after editing; variables remain as placeholders",
+      "severity": "HIGH",
+      "detection_method": "After environment variable changes, run a quick validation that reads each expected variable and checks it is not empty or still set to a placeholder value like 'your-api-key-here'",
+      "mitigation": "After every .env edit, explicitly save the file and run a validation script that checks all required variables are populated with real values. Add a startup check that fails fast if any required env var is missing.",
+      "source": "ANTI-SAAS-111",
+      "related_rules": ["R-AISAAS-TA-002"]
+    },
+    {
+      "id": "ANTI-AISAAS-013",
+      "category": "Development Process",
+      "description": "Packaging skills for distribution before they are fully tested",
+      "severity": "HIGH",
+      "detection_method": "Check if the skill package was tested at both the functionality level (IDE) and the distribution level (end-user environment) before release; missing either level indicates this anti-pattern",
+      "mitigation": "Test skills at two levels before distribution: (1) functionality-level testing in the IDE to verify logic correctness, and (2) front-end testing after packaging to verify the skill works in the distribution environment with all dependencies resolved.",
+      "source": "ANTI-SAAS-115",
+      "related_rules": ["R-AISAAS-TA-009", "R-AISAAS-TA-010"]
+    },
+    {
+      "id": "ANTI-AISAAS-014",
+      "category": "Development Process",
+      "description": "Artisanal prompt engineering instead of software engineering for AI ops",
+      "severity": "HIGH",
+      "detection_method": "Check if prompts are managed as freeform text without version control, testing, or structured iteration; if prompts are edited ad-hoc without regression testing, this anti-pattern is active",
+      "mitigation": "Treat prompts as code: version them, test them against evaluation datasets, review changes in PRs, and measure performance regressions. Use structured prompt templates with typed variables rather than freeform text manipulation.",
+      "source": "ANTI-SAAS-124",
+      "related_rules": ["R-AISAAS-PE-002"]
+    },
+    {
+      "id": "ANTI-AISAAS-015",
+      "category": "Development Process",
+      "description": "Skipping the scrappy prototype stage",
+      "severity": "HIGH",
+      "detection_method": "Check if the project jumped directly to production-grade architecture (Kubernetes, microservices, custom databases) without first validating the core value proposition with a minimal prototype (spreadsheet, no-code tool, single script)",
+      "mitigation": "Start with the simplest possible prototype that validates the core hypothesis: Google Sheets + N8N, a single Python script, or a no-code tool. Only graduate to production infrastructure after the prototype proves the concept works and users want it.",
+      "source": "ANTI-SAAS-121",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-016",
+      "category": "Adoption & People",
+      "description": "Treating AI implementation as a technical problem when it is a people problem",
+      "severity": "HIGH",
+      "detection_method": "Review the project plan; if it focuses exclusively on technical milestones (API integration, model selection, deployment) without addressing user training, change management, or adoption metrics, this anti-pattern is present",
+      "mitigation": "Allocate equal effort to people and technology. Create adoption plans covering: user training sessions, change management communication, feedback loops, champion identification, and success metric tracking. The best AI system fails if nobody uses it.",
+      "source": "ANTI-SAAS-106",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-017",
+      "category": "Adoption & People",
+      "description": "Building a sophisticated AI system nobody uses because adoption was not addressed",
+      "severity": "CRITICAL",
+      "detection_method": "Measure actual usage metrics (DAU, feature engagement, task completion rates) 30 days after launch; if usage is below 20% of target users, the adoption problem was not addressed",
+      "mitigation": "Design for adoption from the start: integrate into existing workflows rather than creating new ones, provide immediate visible value in the first interaction, minimize onboarding friction, and establish regular feedback collection. Ship to a small group first and iterate.",
+      "source": "ANTI-SAAS-107",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-018",
+      "category": "Adoption & People",
+      "description": "Re-explaining processes to ChatGPT repeatedly due to no persistent memory",
+      "severity": "MEDIUM",
+      "detection_method": "Search conversation histories for repeated explanations of the same process, context, or preferences; if the same information is re-stated more than 3 times across sessions, this anti-pattern is active",
+      "mitigation": "Use tools with persistent memory (Claude Code memory, custom memory pipelines, or structured knowledge files). Store process descriptions, preferences, and context once and have the system retrieve them automatically at session start.",
+      "source": "ANTI-SAAS-108",
+      "related_rules": ["R-AISAAS-PE-006"]
+    },
+    {
+      "id": "ANTI-AISAAS-019",
+      "category": "Adoption & People",
+      "description": "Binge-watching masterclasses without solving a real painful problem",
+      "severity": "MEDIUM",
+      "detection_method": "Track the ratio of learning hours to building hours; if learning exceeds building by more than 3:1 over a 2-week period without a specific project goal, this anti-pattern is active",
+      "mitigation": "Adopt a learn-by-doing approach: identify one real painful problem, start solving it with current knowledge, and learn just-in-time as specific blockers arise. Masterclasses are useful only when they unblock a specific problem you are actively facing.",
+      "source": "ANTI-SAAS-117",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-020",
+      "category": "Business Strategy",
+      "description": "Staying as a generic AI agency; vertical/specialized solutions dominate",
+      "severity": "HIGH",
+      "detection_method": "Review service offerings; if they describe generic AI capabilities (chatbots, automation, consulting) without naming a specific industry, workflow, or problem domain, this anti-pattern is present",
+      "mitigation": "Pick one vertical (healthcare, legal, real estate, e-commerce) and one specific problem within that vertical. Become the definitive solution for that niche. Generic AI agencies compete on price; vertical solutions compete on expertise and outcomes.",
+      "source": "ANTI-SAAS-118",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-021",
+      "category": "Business Strategy",
+      "description": "Explaining to clients how complex your automation is; they only care about money and time",
+      "severity": "MEDIUM",
+      "detection_method": "Review sales materials and client communications; if they focus on technical implementation details (APIs, models, pipelines) rather than business outcomes (time saved, revenue generated, cost reduced), this anti-pattern is present",
+      "mitigation": "Frame all client communication around outcomes: hours saved per week, cost reduction percentage, revenue impact, and error rate reduction. The technical implementation is irrelevant to the buyer — they are purchasing results, not technology.",
+      "source": "ANTI-SAAS-119",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-022",
+      "category": "Business Strategy",
+      "description": "Trying to automate everything before understanding the process manually first",
+      "severity": "HIGH",
+      "detection_method": "Check if the automation target process has been performed manually at least 10 times with documented steps before automation began; if not, this anti-pattern was followed",
+      "mitigation": "Perform the process manually at least 10-20 times before automating. Document each step, note variations, identify edge cases, and understand where human judgment is required. Automating a process you do not deeply understand creates a brittle system that fails on the first edge case.",
+      "source": "ANTI-SAAS-120",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-023",
+      "category": "Security & Trust",
+      "description": "Putting guardrails only in claude.md; hooks are deterministic and cannot be ignored",
+      "severity": "CRITICAL",
+      "detection_method": "Check if security-critical guardrails (file access restrictions, secret protection, command restrictions) are implemented only as claude.md instructions without corresponding pre-tool or post-tool hooks; if so, this anti-pattern is active",
+      "mitigation": "Implement all security-critical guardrails as hooks (pre-tool, post-tool, stop hooks), not as claude.md instructions. Hooks are deterministic code that executes regardless of what the agent decides to do. Claude.md instructions are suggestions that can be overridden by context or prompt injection.",
+      "source": "ANTI-SAAS-112",
+      "related_rules": ["R-AISAAS-PE-001"]
+    },
+    {
+      "id": "ANTI-AISAAS-024",
+      "category": "Security & Trust",
+      "description": "Treating agents as trusted employees; every capability makes them more dangerous",
+      "severity": "CRITICAL",
+      "detection_method": "Review the agent's permission model; if the agent has unrestricted access to file system, network, payment systems, or external APIs without per-action approval or spending limits, this anti-pattern is present",
+      "mitigation": "Apply adversarial security posture: sandbox every tool (IronClaw/WebAssembly), enforce spending guardrails on wallets, use allowlists for command execution, implement per-action approval for high-stakes operations, and assume the agent will attempt to exceed its intended boundaries.",
+      "source": "ANTI-SAAS-122",
+      "related_rules": ["R-AISAAS-PE-001"]
+    },
+    {
+      "id": "ANTI-AISAAS-025",
+      "category": "Security & Trust",
+      "description": "Trying to replicate latency arbitrage bots without collocated infrastructure",
+      "severity": "HIGH",
+      "detection_method": "Check if the system attempts time-sensitive operations (trading, bidding, real-time pricing) from non-collocated infrastructure with latencies above 10ms to the target exchange or service",
+      "mitigation": "Do not attempt latency-sensitive strategies without collocated infrastructure. Focus instead on strategies where latency is not the competitive advantage: better analysis, better data, better reasoning, or longer time horizons where milliseconds do not matter.",
+      "source": "ANTI-SAAS-123",
+      "related_rules": []
+    },
+    {
+      "id": "ANTI-AISAAS-026",
+      "category": "Security & Trust",
+      "description": "Using human-behavior-calibrated fraud detection for agent transactions",
+      "severity": "HIGH",
+      "detection_method": "Check if the fraud detection model was trained on human transaction data and is being applied to agent transactions without retraining; high false-positive or false-negative rates on agent traffic indicate this anti-pattern",
+      "mitigation": "Retrain fraud detection models from scratch on agent transaction patterns. Agent transactions have fundamentally different behavioral signatures than human ones: 24/7 operation, API-driven, no geographic signals, no typing patterns, programmatic precision. Stripe's retrained Radar model is the reference implementation.",
+      "source": "ANTI-SAAS-125",
+      "related_rules": ["R-AISAAS-PE-001"]
+    }
+  ],
+  "failure_modes": [
+    {
+      "id": "FM-AISAAS-001",
+      "anti_pattern_ref": "ANTI-AISAAS-001",
+      "failure_description": "Context window overwhelmed by unused skill definitions, leaving insufficient tokens for actual task execution",
+      "detection_method": "Monitor context utilization at session start; if more than 20% is consumed by skill/tool definitions before any user interaction, context bloat is occurring",
+      "mitigation": "Prune unused skills quarterly. Implement lazy loading for skill definitions. Set a hard budget of 10% context for tool definitions."
+    },
+    {
+      "id": "FM-AISAAS-002",
+      "anti_pattern_ref": "ANTI-AISAAS-002",
+      "failure_description": "Agent runs out of context mid-task because 14% was consumed by MCP tool schemas before work began",
+      "detection_method": "Track context exhaustion events and correlate with initial MCP tool definition size",
+      "mitigation": "Lazy-load MCP tool schemas. Only mount MCP servers needed for the current task. Use tool categories to defer loading until category is referenced."
+    },
+    {
+      "id": "FM-AISAAS-003",
+      "anti_pattern_ref": "ANTI-AISAAS-003",
+      "failure_description": "Project state is lost during context compaction, forcing the agent to re-discover project context from scratch",
+      "detection_method": "After compaction events, check if the agent asks questions about information it previously had access to",
+      "mitigation": "Define custom compaction handlers that preserve STATE.md, current phase, active plan ID, and key decisions. Use structured handoff documents rather than relying on default summarization."
+    },
+    {
+      "id": "FM-AISAAS-004",
+      "anti_pattern_ref": "ANTI-AISAAS-004",
+      "failure_description": "Developer cannot optimize Claude Code usage because they do not understand how context is allocated, leading to chronic inefficiency",
+      "detection_method": "Developer reports that Claude Code 'forgets things' or 'runs out of context' without understanding why",
+      "mitigation": "Study the Claude Code architecture: system prompt injection, context window allocation, tool definition overhead, and conversation history management. Understanding these mechanics enables targeted optimization."
+    },
+    {
+      "id": "FM-AISAAS-005",
+      "anti_pattern_ref": "ANTI-AISAAS-005",
+      "failure_description": "API keys or PII stored in memory system are exposed through memory retrieval, creating a security breach",
+      "detection_method": "Run regex scans on memory store for API key patterns (sk-*, AKIA*, bearer tokens) and PII patterns (email, phone, SSN)",
+      "mitigation": "Add pre-storage sanitization hook that scrubs secrets and PII using pattern matching. Run periodic audits of stored memories. Implement access controls on the memory store."
+    },
+    {
+      "id": "FM-AISAAS-006",
+      "anti_pattern_ref": "ANTI-AISAAS-006",
+      "failure_description": "Unbounded data accumulation increases storage costs, expands attack surface, and may violate GDPR/CCPA",
+      "detection_method": "Check total data volume growth rate and compare against defined retention policies; if no policies exist, the failure mode is active by default",
+      "mitigation": "Define retention periods per data category. Implement TTL-based auto-deletion. Run monthly compliance audits. Only retain data indefinitely when legally required."
+    },
+    {
+      "id": "FM-AISAAS-007",
+      "anti_pattern_ref": "ANTI-AISAAS-007",
+      "failure_description": "Third-party dependencies introduce latency, failure points, and maintenance burden when native equivalents exist",
+      "detection_method": "For each third-party tool in the stack, check Claude Code release notes for native feature parity",
+      "mitigation": "Before adopting external tools, check if Claude Code provides the capability natively. Migrate from third-party to native solutions when feature parity is achieved."
+    },
+    {
+      "id": "FM-AISAAS-008",
+      "anti_pattern_ref": "ANTI-AISAAS-008",
+      "failure_description": "Product is built but has zero users because no distribution channel was established during development",
+      "detection_method": "Track distribution metrics (social posts, community engagement, waitlist signups, demo views) alongside development metrics; if distribution metrics are zero, this failure mode is imminent",
+      "mitigation": "Build in public from day one. Share progress on social media, write about problems you are solving, engage in relevant communities. Allocate 30% of time to distribution activities."
+    },
+    {
+      "id": "FM-AISAAS-009",
+      "anti_pattern_ref": "ANTI-AISAAS-009",
+      "failure_description": "Multi-component feature has compounding errors across files, making debugging exponentially harder",
+      "detection_method": "Track the number of debugging iterations per feature; if a feature requires more than 5 back-and-forth debugging cycles, it likely lacked upfront planning",
+      "mitigation": "Use plan mode for any feature touching 3+ files. Break into atomic subtasks. Verify each subtask before proceeding to the next. GSD plan-checker enforces this discipline."
+    },
+    {
+      "id": "FM-AISAAS-010",
+      "anti_pattern_ref": "ANTI-AISAAS-010",
+      "failure_description": "UI is built on incorrect assumptions about API response formats, requiring costly rework of both layers",
+      "detection_method": "Check if the first API integration test occurred after UI components were already built; if so, this failure mode is likely active",
+      "mitigation": "Test API integrations in isolation first (test buttons, scripts, curl commands). Verify response formats match expectations. Then build UI on verified data contracts."
+    },
+    {
+      "id": "FM-AISAAS-011",
+      "anti_pattern_ref": "ANTI-AISAAS-011",
+      "failure_description": "Agent generates mismatched data structures because the response format specification is ambiguous or overly complex",
+      "detection_method": "Compare actual API response sizes against what the frontend consumes; if more than 50% of response fields are unused, the format is overly complex",
+      "mitigation": "Keep response schemas minimal. Only include fields the consumer uses. Flatten nested structures. Use separate endpoints for different data needs."
+    },
+    {
+      "id": "FM-AISAAS-012",
+      "anti_pattern_ref": "ANTI-AISAAS-012",
+      "failure_description": "Application fails silently because .env variables are still set to placeholder values after editing",
+      "detection_method": "Run a startup validation that checks each required environment variable is not empty and does not match placeholder patterns (your-*-here, TODO, CHANGE_ME)",
+      "mitigation": "Add a startup validation script that fails fast if any required env var is missing or contains a placeholder. Always explicitly save .env files after editing."
+    },
+    {
+      "id": "FM-AISAAS-013",
+      "anti_pattern_ref": "ANTI-AISAAS-013",
+      "failure_description": "Distributed skill package fails in end-user environment due to missing dependencies, path issues, or environment differences",
+      "detection_method": "Test the packaged skill in a clean environment (fresh install, no dev dependencies); if it fails, the packaging is incomplete",
+      "mitigation": "Test at two levels: functionality in IDE, then distribution in a clean environment. Verify all dependencies are bundled. Test path resolution in both environments."
+    },
+    {
+      "id": "FM-AISAAS-014",
+      "anti_pattern_ref": "ANTI-AISAAS-014",
+      "failure_description": "Prompts degrade over time because changes are made ad-hoc without version control or regression testing",
+      "detection_method": "Check if prompts are stored in version control with associated test cases; if prompts are edited directly in UI or config without testing, this failure mode is active",
+      "mitigation": "Version control all prompts. Create evaluation datasets with expected outputs. Run regression tests on prompt changes. Review prompt modifications in PRs like any other code change."
+    },
+    {
+      "id": "FM-AISAAS-015",
+      "anti_pattern_ref": "ANTI-AISAAS-015",
+      "failure_description": "Over-engineered solution fails because the core value proposition was never validated with real users",
+      "detection_method": "Check if user validation (interviews, prototype testing, waitlist signups) occurred before production architecture decisions were made; if not, this failure mode is likely",
+      "mitigation": "Start with the simplest possible prototype (spreadsheet, no-code tool, single script). Validate with 5-10 real users. Only invest in production infrastructure after confirming demand."
+    },
+    {
+      "id": "FM-AISAAS-016",
+      "anti_pattern_ref": "ANTI-AISAAS-016",
+      "failure_description": "Technically excellent AI system is abandoned because users were not trained, workflows were not adapted, and change management was not executed",
+      "detection_method": "Track adoption curve; if usage plateaus or declines within 60 days of launch despite technical functionality being correct, this is a people problem",
+      "mitigation": "Create parallel workstreams: technical implementation AND adoption planning. Include user training, workflow integration guides, feedback mechanisms, and champion programs in the project plan."
+    },
+    {
+      "id": "FM-AISAAS-017",
+      "anti_pattern_ref": "ANTI-AISAAS-017",
+      "failure_description": "Sophisticated AI system sits unused; development investment is wasted because adoption was treated as an afterthought",
+      "detection_method": "Measure DAU/MAU ratio and feature engagement rates 30-60 days post-launch; below 20% of target indicates adoption failure",
+      "mitigation": "Design for adoption from day one: embed into existing workflows, minimize onboarding friction, provide immediate visible value, ship to a small pilot group first, iterate based on real usage data."
+    },
+    {
+      "id": "FM-AISAAS-018",
+      "anti_pattern_ref": "ANTI-AISAAS-018",
+      "failure_description": "Repeated context re-establishment wastes time and tokens; each session starts from zero despite recurring workflows",
+      "detection_method": "Search for repeated explanation patterns across conversation sessions; if the same context is re-stated more than 3 times, persistent memory is needed",
+      "mitigation": "Implement persistent memory: Claude Code memory files, custom knowledge bases, or structured context injection at session start. Store reusable context once and retrieve automatically."
+    },
+    {
+      "id": "FM-AISAAS-019",
+      "anti_pattern_ref": "ANTI-AISAAS-019",
+      "failure_description": "Analysis paralysis from excessive learning without applying knowledge to real problems; skills decay without practice",
+      "detection_method": "Track learning-to-building ratio; if it exceeds 3:1 over two weeks without a specific project deliverable, this failure mode is active",
+      "mitigation": "Adopt learn-by-doing: pick one problem, start building, learn just-in-time when blocked. Masterclasses are useful only when they unblock a specific active problem."
+    },
+    {
+      "id": "FM-AISAAS-020",
+      "anti_pattern_ref": "ANTI-AISAAS-020",
+      "failure_description": "Generic AI agency competes on price in a commoditizing market; margins compress to zero as competitors multiply",
+      "detection_method": "Review win/loss analysis on recent proposals; if losses are primarily due to pricing (not capability), the agency is too generic",
+      "mitigation": "Specialize in one vertical and one problem. Become the definitive solution for that niche. Vertical expertise commands premium pricing and creates defensible positioning."
+    },
+    {
+      "id": "FM-AISAAS-021",
+      "anti_pattern_ref": "ANTI-AISAAS-021",
+      "failure_description": "Client disengages because technical complexity discussions do not map to their business outcomes",
+      "detection_method": "Review client meeting notes and proposals; if more than 30% of content describes technical implementation rather than business outcomes, this failure mode is active",
+      "mitigation": "Frame everything in terms of outcomes: hours saved, cost reduced, revenue generated, errors eliminated. Technical details belong in internal documentation, not client-facing materials."
+    },
+    {
+      "id": "FM-AISAAS-022",
+      "anti_pattern_ref": "ANTI-AISAAS-022",
+      "failure_description": "Automation breaks on the first edge case because the process was never deeply understood through manual execution",
+      "detection_method": "Track the number of edge case failures in the first 30 days of automation; more than 5 indicates insufficient manual process understanding",
+      "mitigation": "Perform the process manually 10-20 times before automating. Document every variation, edge case, and decision point. Build automation that handles the full spectrum of real-world inputs."
+    },
+    {
+      "id": "FM-AISAAS-023",
+      "anti_pattern_ref": "ANTI-AISAAS-023",
+      "failure_description": "Agent bypasses claude.md guardrails through prompt injection or context overflow, executing restricted operations",
+      "detection_method": "Test guardrails with adversarial prompts; if the agent can be convinced to bypass restrictions defined only in claude.md, the failure mode is confirmed",
+      "mitigation": "Implement all security-critical restrictions as hooks (deterministic code that runs regardless of agent decisions). Use pre-tool hooks for access control, post-tool hooks for output validation, and stop hooks for session cleanup."
+    },
+    {
+      "id": "FM-AISAAS-024",
+      "anti_pattern_ref": "ANTI-AISAAS-024",
+      "failure_description": "Agent with unrestricted capabilities performs unintended actions: exfiltrates data, makes unauthorized purchases, or modifies critical systems",
+      "detection_method": "Audit the agent's permission scope; if it has unrestricted access to file system, network, or payment systems without per-action controls, this failure mode is a ticking bomb",
+      "mitigation": "Apply defense in depth: WebAssembly sandboxing per tool (IronClaw), spending guardrails on wallets, command allowlists for execution, and escalation requirements for high-stakes operations."
+    },
+    {
+      "id": "FM-AISAAS-025",
+      "anti_pattern_ref": "ANTI-AISAAS-025",
+      "failure_description": "Latency-sensitive strategy fails because non-collocated infrastructure adds 50-200ms of network latency, negating any analytical advantage",
+      "detection_method": "Measure round-trip latency to target service; if it exceeds 10ms for time-sensitive operations, the infrastructure is not suitable for latency arbitrage",
+      "mitigation": "Either invest in collocated infrastructure or pivot to strategies where latency is not the competitive moat (better analysis, better data, longer time horizons)."
+    },
+    {
+      "id": "FM-AISAAS-026",
+      "anti_pattern_ref": "ANTI-AISAAS-026",
+      "failure_description": "Fraud detection produces extreme false positive rates on legitimate agent transactions and misses novel agent-specific fraud patterns",
+      "detection_method": "Compare false positive rates on agent transactions versus human transactions; if agent false positive rate is more than 3x the human rate, the model needs retraining",
+      "mitigation": "Retrain fraud models on agent transaction data. Agent behavioral features: API call patterns, transaction velocity, session duration, tool usage sequences. Stripe's retrained Radar is the reference implementation."
+    }
+  ],
+  "category_summary": {
+    "Context & Memory Management": {
+      "count": 7,
+      "anti_pattern_ids": ["ANTI-AISAAS-001", "ANTI-AISAAS-002", "ANTI-AISAAS-003", "ANTI-AISAAS-004", "ANTI-AISAAS-005", "ANTI-AISAAS-006", "ANTI-AISAAS-007"],
+      "critical_count": 1,
+      "high_count": 3,
+      "medium_count": 3
+    },
+    "Development Process": {
+      "count": 8,
+      "anti_pattern_ids": ["ANTI-AISAAS-008", "ANTI-AISAAS-009", "ANTI-AISAAS-010", "ANTI-AISAAS-011", "ANTI-AISAAS-012", "ANTI-AISAAS-013", "ANTI-AISAAS-014", "ANTI-AISAAS-015"],
+      "critical_count": 0,
+      "high_count": 7,
+      "medium_count": 1
+    },
+    "Adoption & People": {
+      "count": 4,
+      "anti_pattern_ids": ["ANTI-AISAAS-016", "ANTI-AISAAS-017", "ANTI-AISAAS-018", "ANTI-AISAAS-019"],
+      "critical_count": 1,
+      "high_count": 1,
+      "medium_count": 2
+    },
+    "Business Strategy": {
+      "count": 3,
+      "anti_pattern_ids": ["ANTI-AISAAS-020", "ANTI-AISAAS-021", "ANTI-AISAAS-022"],
+      "critical_count": 0,
+      "high_count": 2,
+      "medium_count": 1
+    },
+    "Security & Trust": {
+      "count": 4,
+      "anti_pattern_ids": ["ANTI-AISAAS-023", "ANTI-AISAAS-024", "ANTI-AISAAS-025", "ANTI-AISAAS-026"],
+      "critical_count": 2,
+      "high_count": 2,
+      "medium_count": 0
+    }
+  }
+}

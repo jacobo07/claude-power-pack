@@ -1,0 +1,207 @@
+{
+  "$schema": "aisaas-monetization-pricing-v1.0.0",
+  "dataset_id": "DS-SAAS-001",
+  "domain": "Monetization & Pricing",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "total_rules": 4,
+  "total_frameworks": 10,
+  "total_metrics": 5,
+  "rules": [
+    {
+      "id": "R-AISAAS-MP-001",
+      "category": "sales-language",
+      "statement": "Use the word 'investment' instead of 'cost' when describing your fee",
+      "enforcement": "MUST",
+      "source": "MON-SAAS-113",
+      "confidence": "VERBATIM",
+      "related_frameworks": ["FW-AISAAS-MP-003"],
+      "failure_mode_if_violated": "Using 'cost' frames your service as an expense to minimize, triggering loss-aversion psychology in the buyer. 'Investment' reframes the conversation around returns and value, making the fee feel like a strategic allocation rather than a line item to cut."
+    },
+    {
+      "id": "R-AISAAS-MP-002",
+      "category": "pricing-strategy",
+      "statement": "First client can be free or low cost for validation; once proven, raise prices",
+      "enforcement": "MUST",
+      "source": "MON-SAAS-114",
+      "confidence": "VERBATIM",
+      "related_frameworks": ["FW-AISAAS-MP-001", "FW-AISAAS-MP-003"],
+      "failure_mode_if_violated": "Launching at full price without validation means zero feedback loops, no social proof, and high friction that prevents you from learning what the market actually needs. Conversely, staying free forever trains clients to expect zero cost and destroys revenue potential."
+    },
+    {
+      "id": "R-AISAAS-MP-003",
+      "category": "roi-framing",
+      "statement": "Frame ROI so the client wins more than you: 20 leads/month at $3K value = $60K; charge $3K",
+      "enforcement": "MUST",
+      "source": "HEUR-SAAS-123",
+      "confidence": "VERBATIM",
+      "related_frameworks": ["FW-AISAAS-MP-007"],
+      "failure_mode_if_violated": "Charging close to the total value delivered makes the deal feel risky for the client and eliminates their perceived upside. The sale stalls because the math does not obviously favor the buyer. A 20:1 value-to-fee ratio makes the decision a no-brainer."
+    },
+    {
+      "id": "R-AISAAS-MP-004",
+      "category": "client-psychology",
+      "statement": "Clients care about two variables: making more money and saving time",
+      "enforcement": "MUST",
+      "source": "FW-SAAS-122",
+      "confidence": "VERBATIM",
+      "related_frameworks": ["FW-AISAAS-MP-003", "FW-AISAAS-MP-007"],
+      "failure_mode_if_violated": "Pitching technical capabilities, feature lists, or abstract efficiency gains fails to connect with what actually drives buying decisions. Every proposal must map directly to revenue gained or hours reclaimed, or the client will deprioritize the purchase."
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "FW-AISAAS-MP-001",
+      "name": "SaaS Subscription Model",
+      "steps": [
+        "Build a waitlist landing page to capture demand before the product exists",
+        "Open early access to the first 10 users with manual onboarding and high-touch support",
+        "Run a beta phase with expanded access, collecting feedback and iterating rapidly",
+        "Launch to general availability (GA) with self-serve onboarding and automated billing"
+      ],
+      "source": "MON-SAAS-100"
+    },
+    {
+      "id": "FW-AISAAS-MP-002",
+      "name": "Subscription Tiers",
+      "steps": [
+        "Define a starter tier at $20/month targeting individual users or hobbyists with core features",
+        "Define a professional tier at $100/month targeting small teams with expanded capacity and integrations",
+        "Define a business tier at $200/month targeting growing companies with priority support and advanced features",
+        "Start all new users at the lowest tier to reduce friction and prove value before upselling",
+        "Upgrade users based on usage growth, team size expansion, or feature needs"
+      ],
+      "source": "MON-SAAS-101"
+    },
+    {
+      "id": "FW-AISAAS-MP-003",
+      "name": "Service-to-SaaS Progression",
+      "steps": [
+        "Start by selling the outcome as a manual or semi-automated service to validate demand",
+        "Automate the repeatable parts of the service delivery workflow",
+        "Package the automated workflow as standalone SaaS software with self-serve access"
+      ],
+      "source": "MON-SAAS-110"
+    },
+    {
+      "id": "FW-AISAAS-MP-004",
+      "name": "Retainer Model",
+      "steps": [
+        "Identify non-technical clients who cannot maintain AI systems independently",
+        "Deliver the initial build as a project engagement",
+        "Transition to a monthly retainer covering monitoring, maintenance, prompt tuning, and API updates",
+        "Create predictable recurring revenue while ensuring the system remains functional over time"
+      ],
+      "source": "MON-SAAS-106"
+    },
+    {
+      "id": "FW-AISAAS-MP-005",
+      "name": "Plugin Marketplace",
+      "steps": [
+        "Build a packaged AI system that solves a specific, repeatable problem",
+        "Structure the package to meet marketplace directory and metadata requirements",
+        "Distribute via GitHub repositories or dedicated plugin marketplaces",
+        "Collect usage data and feedback to iterate on the plugin",
+        "Scale distribution without per-client onboarding overhead"
+      ],
+      "source": "MON-SAAS-108"
+    },
+    {
+      "id": "FW-AISAAS-MP-006",
+      "name": "Community Model",
+      "steps": [
+        "Launch a paid community with monthly membership fees",
+        "Deliver recurring value through weekly live calls, Q&A sessions, and structured courses",
+        "Share MVP code, templates, and reusable automation assets with members",
+        "Use community feedback to identify new product opportunities and validate ideas",
+        "Upsell high-touch services or SaaS products to engaged community members"
+      ],
+      "source": "MON-SAAS-105"
+    },
+    {
+      "id": "FW-AISAAS-MP-007",
+      "name": "AI Agency Sales",
+      "steps": [
+        "Audit the client's existing business processes and identify automation opportunities",
+        "Develop a strategy document mapping pain points to AI-powered solutions with ROI projections",
+        "Build the solution using the agreed-upon architecture and tools",
+        "Train the client's technical team on system operation and maintenance",
+        "Execute change management to drive adoption across the organization",
+        "Transition to a retainer model for ongoing support, updates, and optimization"
+      ],
+      "source": "FW-SAAS-118"
+    },
+    {
+      "id": "FW-AISAAS-MP-008",
+      "name": "Agent Commerce",
+      "steps": [
+        "Deploy autonomous AI agents with their own digital wallets",
+        "Enable agents to earn revenue by completing tasks, selling outputs, or providing services",
+        "Allow agents to spend on resources they need — compute, data, API calls, other agent services",
+        "Let agents accumulate capital independently, reinvesting in their own operational capacity",
+        "Build economic networks where agents transact with each other and with humans"
+      ],
+      "source": ["MON-SAAS-115", "MON-SAAS-116"]
+    },
+    {
+      "id": "FW-AISAAS-MP-009",
+      "name": "Content Monetization via Agent Web",
+      "steps": [
+        "Publish content accessible to both human users and AI agents",
+        "Integrate Cloudflare X42 micropayment infrastructure for machine-to-machine transactions",
+        "Charge agents per-access fees for premium content, data, or API endpoints",
+        "Scale revenue through high-volume, low-cost automated transactions"
+      ],
+      "source": "MON-SAAS-117"
+    },
+    {
+      "id": "FW-AISAAS-MP-010",
+      "name": "Near-Zero Cost UGC",
+      "steps": [
+        "Identify content creation workflows currently costing $1,000+ per creator video",
+        "Build agent workflows that handle scripting, editing, and post-production tasks",
+        "Reduce per-unit content creation cost to near-zero through automation",
+        "Scale content volume by orders of magnitude without proportional cost increase",
+        "Redirect budget savings into distribution, promotion, or additional content formats"
+      ],
+      "source": "MON-SAAS-119"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "MET-AISAAS-MP-001",
+      "name": "Lead generation ROI example",
+      "value": "20 leads/month x $3K per lead = $60K value; charge $3K; client nets $57K",
+      "unit": "currency_per_month",
+      "source": "MET-SAAS-124"
+    },
+    {
+      "id": "MET-AISAAS-MP-002",
+      "name": "Video editing automation ROI",
+      "value": "$60/video x 7 days/week = $420/week manual cost; charge $2K/month; breakeven in ~3 months",
+      "unit": "currency_per_month",
+      "source": "MET-SAAS-125"
+    },
+    {
+      "id": "MET-AISAAS-MP-003",
+      "name": "Coinbase X42 machine-to-machine transaction volume",
+      "value": "50,000,000+",
+      "unit": "transactions",
+      "source": "MET-SAAS-126"
+    },
+    {
+      "id": "MET-AISAAS-MP-004",
+      "name": "Poly Market prediction market volume (January 2026)",
+      "value": "12,000,000,000",
+      "unit": "USD_volume",
+      "source": "MET-SAAS-132"
+    },
+    {
+      "id": "MET-AISAAS-MP-005",
+      "name": "Bolt annualized revenue within 6 months GA",
+      "value": "$1B annualized revenue; 70% Fortune 100 adoption",
+      "unit": "USD_annualized",
+      "source": "MET-SAAS-139"
+    }
+  ]
+}

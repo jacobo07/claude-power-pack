@@ -1,0 +1,488 @@
+{
+  "$schema": "aisaas-ai-llm-integration-v1.0.0",
+  "dataset_id": "DS-AI-001",
+  "domain": "AI/LLM Integration",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "rules": [
+    {
+      "id": "R-AISAAS-AI-001",
+      "category": "context-management",
+      "statement": "Context is finite; manage your context budget carefully as performance degrades with usage",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-105",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-005"],
+      "failure_mode_if_violated": "Agent performance degrades silently as context fills up, producing increasingly inaccurate and inconsistent outputs without warning"
+    },
+    {
+      "id": "R-AISAAS-AI-002",
+      "category": "context-management",
+      "statement": "Always clear context before starting a new feature to avoid token waste",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-108",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-005"],
+      "failure_mode_if_violated": "Stale context from prior features bleeds into new work, causing confusion, wrong file edits, and wasted tokens on irrelevant information"
+    },
+    {
+      "id": "R-AISAAS-AI-003",
+      "category": "planning",
+      "statement": "Use plan mode before building a large feature to produce a comprehensive implementation plan first",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-109",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-006", "DH-AISAAS-AI-007"],
+      "failure_mode_if_violated": "Large features built without planning result in incomplete implementations, missed edge cases, and excessive rework that burns through context"
+    },
+    {
+      "id": "R-AISAAS-AI-004",
+      "category": "skills",
+      "statement": "A skill is just a markdown file in a folder with a description — do not over-complicate it",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-103",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-001"],
+      "failure_mode_if_violated": "Over-engineered skill structures create unnecessary complexity, increase maintenance burden, and discourage skill creation and iteration"
+    },
+    {
+      "id": "R-AISAAS-AI-005",
+      "category": "context-management",
+      "statement": "Use progressive disclosure for MCP tools: load only descriptions upfront, full instructions on demand",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-104",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-003"],
+      "failure_mode_if_violated": "Loading full MCP tool definitions upfront consumes 13-14% of context budget on tool schemas that may never be used in the session"
+    },
+    {
+      "id": "R-AISAAS-AI-006",
+      "category": "context-management",
+      "statement": "When running out of context, save a session log, tag it, and resume in the next session",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-106",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-005"],
+      "failure_mode_if_violated": "Work progress is lost between sessions, forcing the user to re-explain context and the agent to re-discover the codebase from scratch"
+    },
+    {
+      "id": "R-AISAAS-AI-007",
+      "category": "configuration",
+      "statement": "The claude.md must contain: company overview, key processes, brand voice, data structure, and tool connections",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-115",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Incomplete claude.md results in the agent lacking critical business context, producing generic outputs that do not match the company's standards or workflows"
+    },
+    {
+      "id": "R-AISAAS-AI-008",
+      "category": "configuration",
+      "statement": "Commit claude.md to a shared repository so every team member gets the same context automatically",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-116",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Team members operate with divergent agent configurations, producing inconsistent outputs and duplicating effort to maintain separate instruction files"
+    },
+    {
+      "id": "R-AISAAS-AI-009",
+      "category": "skills",
+      "statement": "Skills stack: one skill can trigger another, building a library of reusable composable components",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-118",
+      "confidence": 0.90,
+      "related_heuristics": ["DH-AISAAS-AI-001"],
+      "failure_mode_if_violated": "Monolithic skills that duplicate logic across definitions become unmaintainable and consume excessive context when loaded"
+    },
+    {
+      "id": "R-AISAAS-AI-010",
+      "category": "skills",
+      "statement": "The first iteration of a skill will not be perfect; continue iterating until output is consistent and predictable",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-119",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Shipping a skill after one iteration leads to unpredictable agent behavior, inconsistent outputs, and loss of user trust in the skill system"
+    },
+    {
+      "id": "R-AISAAS-AI-011",
+      "category": "mental-model",
+      "statement": "Claude Code is not a coding tool; it is an AI agent operating on your file system for any digital task",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-112",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-009", "DH-AISAAS-AI-010"],
+      "failure_mode_if_violated": "Limiting Claude Code to coding tasks leaves the majority of its automation potential untapped, missing opportunities for non-code workflows"
+    },
+    {
+      "id": "R-AISAAS-AI-012",
+      "category": "observability",
+      "statement": "Analyze Claude Code JSON conversation logs to improve agent memory and avoid repetitive instructions",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-100",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-002"],
+      "failure_mode_if_violated": "Without log analysis, the same mistakes and friction points repeat session after session, and opportunities for memory improvement are missed"
+    },
+    {
+      "id": "R-AISAAS-AI-013",
+      "category": "observability",
+      "statement": "Turn on verbose output to understand what content enters context and how the agent behaves",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-101",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Operating without verbose output leaves the user blind to context consumption patterns, making it impossible to diagnose performance issues"
+    },
+    {
+      "id": "R-AISAAS-AI-014",
+      "category": "safety",
+      "statement": "Always review every Git change after agent edits because the agent frequently gets confused",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-102",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-004"],
+      "failure_mode_if_violated": "Unreviewed agent commits introduce subtle bugs, hardcoded values, and unintended file modifications that compound over time"
+    },
+    {
+      "id": "R-AISAAS-AI-015",
+      "category": "context-management",
+      "statement": "Provide the correct amount of context for the specific business; context quality determines output quality",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-130",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-AI-001"],
+      "failure_mode_if_violated": "Too little context produces generic outputs; too much context wastes tokens and degrades performance — both reduce output quality"
+    },
+    {
+      "id": "R-AISAAS-AI-016",
+      "category": "hooks",
+      "statement": "Claude Code hooks are deterministic and cannot be overridden by the agent, unlike claude.md instructions",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-131",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Relying solely on claude.md for critical guardrails allows the agent to ignore or misinterpret instructions, leading to policy violations"
+    },
+    {
+      "id": "R-AISAAS-AI-017",
+      "category": "hooks",
+      "statement": "Use pre-tool hooks for guardrails, post-tool hooks for validation, and stop hooks for memory capture",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-132",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Misplaced hook logic results in guardrails that fire too late, validations that never run, and session memory that is never persisted"
+    },
+    {
+      "id": "R-AISAAS-AI-018",
+      "category": "skills",
+      "statement": "Skills are versioned, mountable instruction packages (like Docker images), not prompts or chat templates",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-148",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Treating skills as ad-hoc prompts prevents version control, reproducibility, and reliable distribution across teams and agents"
+    },
+    {
+      "id": "R-AISAAS-AI-019",
+      "category": "skills",
+      "statement": "Move stable procedures out of system prompts into versioned modular instruction bundles",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-149",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Keeping stable procedures in system prompts wastes context every session and makes updates error-prone since changes must be applied everywhere manually"
+    },
+    {
+      "id": "R-AISAAS-AI-020",
+      "category": "skills",
+      "statement": "When a procedure changes, update the skill version and every agent follows automatically",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-150",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Unversioned skill updates cause agents to run stale procedures or break existing workflows without any audit trail of what changed"
+    },
+    {
+      "id": "R-AISAAS-AI-021",
+      "category": "configuration",
+      "statement": "Run /init on a codebase to create a claude.md file summarizing the project for better agent context",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-125",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Without an initialized claude.md, the agent spends significant context and time rediscovering project structure every session"
+    },
+    {
+      "id": "R-AISAAS-AI-022",
+      "category": "onboarding",
+      "statement": "Start small: verbose output, Git review, backups, create skills, analyze sessions weekly",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-107",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Attempting to adopt all agent capabilities at once overwhelms the user, leads to misconfigured setups, and discourages continued use"
+    }
+  ],
+  "heuristics": [
+    {
+      "id": "DH-AISAAS-AI-001",
+      "condition": "You have 50 skills but use only 5",
+      "action": "Curate relentlessly — the remaining 45 are noise degrading context",
+      "reason": "Unused skills consume context tokens on descriptions and increase the chance of the agent selecting the wrong skill, reducing overall quality",
+      "source": "HEUR-SAAS-100",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-AI-002",
+      "condition": "Friction keywords ('wrong', 'no', repeating mistakes) appear in conversation logs",
+      "action": "Extract the failure patterns and feed them back as explicit rules in claude.md or skills",
+      "reason": "Friction keywords signal recurring agent misunderstandings that will persist unless codified as constraints the agent must follow",
+      "source": "HEUR-SAAS-101",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-AI-003",
+      "condition": "MCP tool definitions consume 13-14% of context",
+      "action": "Replace MCP tool definitions with CLI-invoked skills that load on demand",
+      "reason": "MCP tool schemas are loaded into every session regardless of usage; CLI skills only enter context when explicitly invoked, saving 13-14% of budget",
+      "source": "HEUR-SAAS-102",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-AI-004",
+      "condition": "The agent hardcodes values in generated code",
+      "action": "Leave a comment in the diff review and have the agent fix it immediately",
+      "reason": "Hardcoded values create brittle code that breaks across environments; catching them during review prevents technical debt accumulation",
+      "source": "HEUR-SAAS-103",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-AI-005",
+      "condition": "Context usage exceeds 50%",
+      "action": "Compact the conversation or start a new session to restore agent performance",
+      "reason": "LLM performance degrades measurably above 50% context utilization as attention quality drops and hallucination rates increase",
+      "source": "HEUR-SAAS-104",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-AI-006",
+      "condition": "A feature is large (multiple tables, APIs, UI components)",
+      "action": "Use plan mode first to decompose the feature into discrete implementation steps",
+      "reason": "Large features attempted in a single pass exhaust context, produce incomplete implementations, and make debugging nearly impossible",
+      "source": "HEUR-SAAS-105",
+      "confidence": 0.95
+    },
+    {
+      "id": "DH-AISAAS-AI-007",
+      "condition": "A plan is very detailed with many discrete tasks",
+      "action": "Create GitHub issues for each task and use GitHub-triggered Claude to implement each separately",
+      "reason": "Breaking detailed plans into individual issues enables parallel execution, isolated testing, and incremental review per task",
+      "source": "HEUR-SAAS-106",
+      "confidence": 0.85
+    },
+    {
+      "id": "DH-AISAAS-AI-008",
+      "condition": "Your plugin uses OAuth in IDE but Co-work requires MCP",
+      "action": "Auto-detect the runtime environment and switch to MCP transport automatically",
+      "reason": "Plugins that hard-code one auth method fail in the other environment; auto-detection ensures seamless operation in both IDE and Co-work modes",
+      "source": "HEUR-SAAS-117",
+      "confidence": 0.80
+    },
+    {
+      "id": "DH-AISAAS-AI-009",
+      "condition": "99% of your job has available APIs",
+      "action": "Automate 99% via API calls through Claude Code; for the remaining 1%, use a headless browser",
+      "reason": "API-driven automation is faster, more reliable, and more maintainable than browser-based approaches; headless browser is the fallback for the gap",
+      "source": "HEUR-SAAS-110",
+      "confidence": 0.85
+    },
+    {
+      "id": "DH-AISAAS-AI-010",
+      "condition": "A process can be done digitally",
+      "action": "Evaluate whether Claude Code can automate it — the question is API or browser availability, not capability",
+      "reason": "Claude Code's capability boundary is defined by interface availability, not task complexity; any digital task with an accessible interface is automatable",
+      "source": "HEUR-SAAS-109",
+      "confidence": 0.85
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "FW-AISAAS-AI-001",
+      "name": "Session Analysis Feedback Loop",
+      "description": "A systematic process for extracting insights from Claude Code conversation logs to continuously improve agent performance and reduce friction",
+      "steps": [
+        "Extract messages from JSON conversation logs stored by Claude Code",
+        "Search for friction keywords: 'wrong', 'no', 'not what I wanted', repeated corrections",
+        "Categorize friction into patterns: misunderstanding, wrong file, wrong approach, missing context",
+        "Produce a weekly friction report summarizing top recurring issues",
+        "Convert each recurring issue into an explicit rule in claude.md or a skill constraint",
+        "Verify the rule reduces the target friction in the following week's logs"
+      ],
+      "source": "FW-SAAS-100"
+    },
+    {
+      "id": "FW-AISAAS-AI-002",
+      "name": "Skill Architecture Patterns",
+      "description": "Three canonical patterns for structuring skills based on their purpose and context efficiency requirements",
+      "steps": [
+        "Targeted Tool pattern: one skill performs exactly one job with clear input/output — use for atomic, frequently invoked tasks",
+        "Router Hub pattern: a meta-skill that inspects the user request for keywords and routes to the appropriate sub-skill — use for domain-specific skill collections",
+        "Progressive Disclosure pattern: load only skill descriptions into context upfront; full instructions load only when the skill is invoked — use for large skill libraries to minimize context waste"
+      ],
+      "source": "FW-SAAS-101"
+    },
+    {
+      "id": "FW-AISAAS-AI-003",
+      "name": "Claude Code Internal Architecture",
+      "description": "The layered structure of how Claude Code assembles its context window, from system prompt to response generation",
+      "steps": [
+        "System prompt: core instructions and safety guardrails loaded first",
+        "Tool definitions: MCP tool schemas and built-in tool descriptions",
+        "Skill descriptions: short summaries of available skills for routing",
+        "Conversation history: prior messages in the current session",
+        "System reminders: claude.md contents and periodic instruction reinforcement",
+        "User message: the current request being processed",
+        "Thinking: internal reasoning before generating the response",
+        "Response: the final output including tool calls and text"
+      ],
+      "source": "FW-SAAS-102"
+    },
+    {
+      "id": "FW-AISAAS-AI-004",
+      "name": "Context-as-Life-OS",
+      "description": "A personal knowledge management approach where notes, tasks, and goals are stored as executable context that the agent can act upon directly",
+      "steps": [
+        "Create a single folder as the canonical source of truth for all notes, tasks, and goals",
+        "Structure files so each is self-contained context the agent can read and act on",
+        "Tag files with metadata (status, priority, domain) for agent-driven filtering",
+        "Instruct the agent to read relevant context files before executing tasks",
+        "Let the agent update task status and create new notes as part of its workflow",
+        "Review and curate the folder weekly to prevent context bloat"
+      ],
+      "source": "FW-SAAS-103"
+    },
+    {
+      "id": "FW-AISAAS-AI-005",
+      "name": "Handoff Prompt Protocol",
+      "description": "A structured procedure for preserving work progress when a session runs out of context, enabling seamless continuation in a new session",
+      "steps": [
+        "Detect context exhaustion: agent responses degrade, compaction warnings appear, or 50% threshold is exceeded",
+        "Create a handoff document: summarize completed work, current state, remaining tasks, and key decisions made",
+        "Tag the handoff file with session ID, date, and feature name for retrieval",
+        "Save the handoff file to a known location (e.g., .claude/handoffs/)",
+        "Start a fresh session and point the agent to the handoff file as initial context",
+        "Agent reads the handoff, confirms understanding, and continues from the documented state"
+      ],
+      "source": "FW-SAAS-104"
+    },
+    {
+      "id": "FW-AISAAS-AI-006",
+      "name": "Claude Code Business Architecture",
+      "description": "The organizational model for deploying Claude Code as a business automation layer, with clear separation of concerns between configuration, skills, connections, and execution",
+      "steps": [
+        "User: the human operator who provides intent and reviews output",
+        "claude.md (brain): the central configuration file containing business context, rules, and preferences",
+        "Skills (SOPs): modular instruction packages that encode repeatable procedures",
+        "MCPs (connections): external tool integrations that give the agent access to APIs and services",
+        "Sub agents (parallel): spawned agent instances that execute independent tasks concurrently"
+      ],
+      "source": "FW-SAAS-107"
+    },
+    {
+      "id": "FW-AISAAS-AI-007",
+      "name": "AI Operating System Architecture",
+      "description": "The full file-system layout for running Claude Code as a persistent AI operating system with memory, skills, hooks, and credentials",
+      "steps": [
+        "claude.md: primary agent configuration and business context",
+        "architecture.md: system design documentation for the codebase",
+        "readme: project overview for human and agent onboarding",
+        "setup_memory.py: script that initializes or restores agent memory state",
+        "skills folder: directory of versioned, modular instruction packages",
+        "hooks: pre-tool, post-tool, and stop hooks for deterministic guardrails",
+        "credentials: secure storage for API keys and service tokens (never committed)"
+      ],
+      "source": "FW-SAAS-114"
+    },
+    {
+      "id": "FW-AISAAS-AI-008",
+      "name": "Plugin Distribution Framework",
+      "description": "End-to-end workflow for building, testing, packaging, and distributing Claude Code plugins to users",
+      "steps": [
+        "Build: develop the plugin with commands, connectors, and skills",
+        "Test: validate locally with Claude Code in the development environment",
+        "Package: bundle as a zip file under 50MB with manifest and dependencies",
+        "Upload: publish to the distribution channel or marketplace",
+        "Second testing: install from distribution and verify end-to-end in a clean environment",
+        "Connect MCP: wire up any required MCP server integrations for external tools",
+        "Iterate: collect user feedback, fix issues, and release updated versions"
+      ],
+      "source": "FW-SAAS-117"
+    },
+    {
+      "id": "FW-AISAAS-AI-009",
+      "name": "Plugin Structure",
+      "description": "The canonical composition of a Claude Code plugin, defining the three component types and packaging constraints",
+      "steps": [
+        "Commands (slash): user-facing actions invoked via slash commands that trigger defined workflows",
+        "Connectors (MCP/external): integrations with external services via MCP protocol or direct API calls",
+        "Skills (markdown): instruction packages that provide domain knowledge and procedures to the agent",
+        "Bundle as zip: package all components into a single zip archive under 50MB for distribution",
+        "Include manifest: provide metadata (name, version, description, dependencies) for discovery and compatibility"
+      ],
+      "source": "FW-SAAS-119"
+    }
+  ],
+  "tech_patterns": [
+    {
+      "id": "TECH-AISAAS-AI-001",
+      "name": "Core Toolchain",
+      "description": "The recommended set of tools for an AI-augmented development workflow: Claude Code for agent execution, Obsidian for knowledge vault and dashboard, Whisper Flow for voice-to-text input, Excalidraw for architecture diagrams, and Zed editor for Git diff review",
+      "source": "TECH-SAAS-100"
+    },
+    {
+      "id": "TECH-AISAAS-AI-002",
+      "name": "Text Expansion for Diff Review",
+      "description": "Use text expansion shortcuts (e.g., via Espanso or OS-level expanders) to insert common diff review comments instantly, reducing friction in the Git review process after agent edits",
+      "source": "TECH-SAAS-101"
+    },
+    {
+      "id": "TECH-AISAAS-AI-003",
+      "name": "Obsidian Dataview Skill Dashboard",
+      "description": "Use the Obsidian Dataview plugin to create a dynamic dashboard that displays skill status, version, last-updated date, and usage frequency across the entire skill library",
+      "source": "TECH-SAAS-102"
+    },
+    {
+      "id": "TECH-AISAAS-AI-004",
+      "name": "CLI Skills Over MCP Servers",
+      "description": "Replace always-loaded MCP server tool definitions with CLI tools invoked on-demand via skills, reducing baseline context consumption by up to 13-14% per session",
+      "source": "TECH-SAAS-103"
+    },
+    {
+      "id": "TECH-AISAAS-AI-005",
+      "name": "Slash Commands as Buttons",
+      "description": "Package workflows as slash commands that function like buttons: one invocation triggers a predictable, repeatable sequence of operations without requiring manual prompting",
+      "source": "TECH-SAAS-110"
+    },
+    {
+      "id": "TECH-AISAAS-AI-006",
+      "name": "Phased Plan Mode Execution",
+      "description": "Use plan mode to generate a to-do file with numbered phases, then execute each phase sequentially with explicit testing gates between phases before proceeding to the next",
+      "source": "TECH-SAAS-114"
+    },
+    {
+      "id": "TECH-AISAAS-AI-007",
+      "name": "Skill Creator Meta-Skill",
+      "description": "A meta-skill that creates other skills: given a domain and requirements, it generates a properly structured, versioned skill file following the canonical skill template",
+      "source": "TECH-SAAS-119"
+    },
+    {
+      "id": "TECH-AISAAS-AI-008",
+      "name": "Apify Plus Claude Code Pipeline",
+      "description": "Use Apify as an API marketplace for web scraping tasks, then pipe the scraped data into Claude Code for structured processing, analysis, and action — separating data collection from data intelligence",
+      "source": "TECH-SAAS-107"
+    }
+  ]
+}

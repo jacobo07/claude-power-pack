@@ -1,0 +1,429 @@
+{
+  "$schema": "aisaas-prompt-engineering-agent-design-v1.0.0",
+  "dataset_id": "DS-GSD-001",
+  "domain": "Prompt Engineering & Agent Design",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "total_rules": 8,
+  "total_heuristics": 5,
+  "total_frameworks": 9,
+  "total_tech_patterns": 6,
+  "description": "Synthesizes GSD framework patterns with AI agent patterns from SaaS and AI datasets. Covers agent security models, skill packaging, agent web infrastructure, orchestrator-subagent architectures, atomic commit workflows, and emergent agent behaviors.",
+  "rules": [
+    {
+      "id": "R-AISAAS-PE-001",
+      "category": "Agent Security",
+      "statement": "Treat the agent as a potential adversary, not a trusted employee — correct security model for 2026",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-147",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-PE-001"],
+      "failure_mode_if_violated": "Agent exploits overly permissive trust boundaries to exfiltrate data, execute unauthorized actions, or chain capabilities in unintended ways that bypass human oversight"
+    },
+    {
+      "id": "R-AISAAS-PE-002",
+      "category": "Skill Architecture",
+      "statement": "Skills are versioned, mountable instruction packages (like Docker images)",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-148",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Unversioned skills cause breaking changes when updated, incompatible skills are mounted simultaneously, and there is no rollback path when a skill upgrade introduces regressions"
+    },
+    {
+      "id": "R-AISAAS-PE-003",
+      "category": "Agent Web Architecture",
+      "statement": "The web is forking into human web (fonts/layouts/images) and agent web (APIs/structured data/payment protocols)",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-151",
+      "confidence": 0.90,
+      "related_heuristics": ["DH-AISAAS-PE-002", "DH-AISAAS-PE-003"],
+      "failure_mode_if_violated": "Building agent-facing services using human web conventions (HTML scraping, visual layouts) creates fragile integrations that break on any UI change and waste tokens parsing irrelevant presentation markup"
+    },
+    {
+      "id": "R-AISAAS-PE-004",
+      "category": "GSD Orchestration",
+      "statement": "GSD: Use thin orchestrator (~10-15% context) + specialized subagents with fresh 200k context each",
+      "enforcement": "MUST",
+      "source": "GSD framework",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-PE-004"],
+      "failure_mode_if_violated": "Single-agent monolith exhausts its context window mid-project, loses track of requirements, hallucinates previously completed work, and produces increasingly degraded outputs as context fills"
+    },
+    {
+      "id": "R-AISAAS-PE-005",
+      "category": "GSD Commit Discipline",
+      "statement": "GSD: Atomic commits per task — {type}({phase}-{plan}): {description}",
+      "enforcement": "MUST",
+      "source": "GSD framework",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Large multi-file commits make it impossible to isolate which change introduced a bug, prevent clean rollbacks, and make code review meaningless because changes from multiple concerns are tangled together"
+    },
+    {
+      "id": "R-AISAAS-PE-006",
+      "category": "GSD State Management",
+      "statement": "GSD: STATE.md kept under 100 lines as project short-term memory",
+      "enforcement": "MUST",
+      "source": "GSD framework",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Bloated state file consumes excessive context tokens on every agent invocation, crowds out working memory for actual task execution, and becomes stale because no one reads a 500-line status document"
+    },
+    {
+      "id": "R-AISAAS-PE-007",
+      "category": "GSD Automation",
+      "statement": "GSD: If Claude CAN automate it, Claude MUST automate it",
+      "enforcement": "MUST",
+      "source": "GSD checkpoints",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Human bottleneck on automatable tasks (file creation, test running, linting, formatting) slows development velocity by 5-10x and wastes human attention on mechanical work"
+    },
+    {
+      "id": "R-AISAAS-PE-008",
+      "category": "GSD Plan Verification",
+      "statement": "GSD: Every plan must pass plan-checker verification before execution (max 3 revision iterations)",
+      "enforcement": "MUST",
+      "source": "GSD framework",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Unverified plans contain gaps, incorrect assumptions, or missing dependencies that only surface during execution, wasting compute and time on work that must be redone from scratch"
+    }
+  ],
+  "heuristics": [
+    {
+      "id": "DH-AISAAS-PE-001",
+      "condition": "IF an agent has wallet, search, content, payment, and execution capabilities",
+      "action": "THEN it is an economic actor — apply economic-actor security controls, not employee trust models",
+      "reason": "An agent with the full capability stack (money, information, content generation, tool execution) can autonomously participate in markets, making it functionally equivalent to an economic entity that requires adversarial security posture rather than cooperative trust assumptions",
+      "source": "HEUR-SAAS-125",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-PE-002",
+      "condition": "IF each workflow exposes capabilities through APIs",
+      "action": "THEN agents stitch them into emergent workflows no human designed",
+      "reason": "When individual services expose clean API primitives, agents can discover and compose them into novel multi-step workflows through trial and error, creating value chains that were never explicitly programmed or anticipated by any single service provider",
+      "source": "HEUR-SAAS-126",
+      "confidence": 0.85
+    },
+    {
+      "id": "DH-AISAAS-PE-003",
+      "condition": "IF content is markdown, search structured, execution containerized, payment tokenized",
+      "action": "THEN agents chain these primitives on the fly into end-to-end workflows",
+      "reason": "Standardized, agent-friendly primitives across the four layers (content, search, execution, payment) reduce integration friction to near zero, enabling agents to compose cross-service workflows without custom adapters or human mediation",
+      "source": "HEUR-SAAS-127",
+      "confidence": 0.85
+    },
+    {
+      "id": "DH-AISAAS-PE-004",
+      "condition": "IF search latency compounds in chained workflows (669ms vs 13.6s)",
+      "action": "THEN infrastructure ownership equals speed advantage — own the index, do not rent SERPs",
+      "reason": "In multi-hop agent workflows where search is called 5-20 times per task, the difference between 669ms (own index) and 13.6s (SERP scraping) compounds from seconds to minutes, making owned infrastructure a competitive moat rather than a cost center",
+      "source": "HEUR-SAAS-129",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-PE-005",
+      "condition": "IF fraud detection ML is calibrated for human behavior patterns",
+      "action": "THEN it is useless for agent purchasers — retrain from scratch on agent transaction patterns",
+      "reason": "Human fraud signals (unusual login times, geographic anomalies, typing patterns) are meaningless for API-driven agent transactions that operate 24/7 from data centers with programmatic precision, requiring entirely new feature engineering based on agent behavioral signatures",
+      "source": "HEUR-SAAS-130",
+      "confidence": 0.90
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "FW-AISAAS-PE-001",
+      "name": "GSD Lifecycle",
+      "description": "Four-phase development lifecycle with wave-based parallelization: discuss, plan, execute, verify. Each phase has distinct objectives, agent roles, and completion criteria before transitioning to the next phase.",
+      "steps": [
+        "Discuss: identify gray areas, scout codebase, capture decisions in CONTEXT.md",
+        "Plan: spawn researcher + planner, create atomic task plans, verify with plan-checker (max 3 iterations)",
+        "Execute: wave-based parallel execution, fresh context per plan, atomic commits, deviation rules (auto-fix bugs/missing/blocking, ASK architectural)",
+        "Verify: goal-backward verification (what must be TRUE → what must EXIST → what must be WIRED), stub detection"
+      ],
+      "source": "GSD framework"
+    },
+    {
+      "id": "FW-AISAAS-PE-002",
+      "name": "GSD Agent Architecture",
+      "description": "Thin orchestrator pattern with five specialized subagents, each operating with independent context windows. The orchestrator consumes only 10-15% of context for coordination, while subagents get fresh 200k context for their specific tasks.",
+      "agents": [
+        "gsd-planner (42KB, creates executable phase plans)",
+        "gsd-executor (18KB, implements with atomic commits)",
+        "gsd-verifier (18KB, goal-backward verification)",
+        "gsd-phase-researcher (17KB, researches implementation approaches and codebase patterns)",
+        "gsd-plan-checker (22KB, verifies plans achieve stated goals before execution begins)"
+      ],
+      "source": "GSD framework"
+    },
+    {
+      "id": "FW-AISAAS-PE-003",
+      "name": "GSD Wave Execution Model",
+      "description": "Plans are grouped by dependency into waves. Plans within a wave execute in parallel (independent of each other), while waves execute sequentially (each wave depends on the previous wave's outputs). Maximizes parallelism while respecting dependency ordering.",
+      "steps": [
+        "Analyze plan dependencies to identify which plans are independent",
+        "Group independent plans into waves",
+        "Execute all plans within a wave in parallel with fresh context per plan",
+        "Wait for all plans in the wave to complete",
+        "Feed wave outputs to the next wave as inputs",
+        "Repeat until all waves are complete"
+      ],
+      "source": "GSD framework"
+    },
+    {
+      "id": "FW-AISAAS-PE-004",
+      "name": "GSD Checkpoint System",
+      "description": "Three-tier checkpoint classification system that maximizes automation: 90% of checkpoints are human-verify (agent does, human confirms), 9% are decision points (agent presents options, human chooses), and 1% are human-action (only a human can perform, like signing legal documents).",
+      "components": [
+        "human-verify (90%): Agent completes the action, human reviews and confirms correctness",
+        "decision (9%): Agent presents analyzed options with recommendations, human makes the call",
+        "human-action (1%): Physical or legal actions only a human can perform (signing, deploying to production, contacting clients)"
+      ],
+      "source": "GSD framework"
+    },
+    {
+      "id": "FW-AISAAS-PE-005",
+      "name": "GSD 4-Level Verification",
+      "description": "Progressive verification system that checks implementation completeness at four increasing levels of rigor, from file existence to functional correctness.",
+      "steps": [
+        "Level 1 — Exists: Do all required files, functions, and components exist?",
+        "Level 2 — Substantive: Are implementations real code (not stubs, TODOs, or placeholders)?",
+        "Level 3 — Wired: Are all components properly connected (imports, routes, event handlers, database queries)?",
+        "Level 4 — Functional: Does the system produce correct outputs for expected inputs?"
+      ],
+      "source": "GSD framework"
+    },
+    {
+      "id": "FW-AISAAS-PE-006",
+      "name": "Agent Web Infrastructure Stack",
+      "description": "Four-layer infrastructure stack that enables autonomous agent operation on the web, covering money movement, content consumption, information discovery, and tool execution.",
+      "components": [
+        "Money layer: Coinbase agentic wallets (crypto, non-custodial) + Stripe Agent Commerce Suite (fiat, scoped tokens)",
+        "Content layer: Cloudflare HTML-to-markdown conversion, llms.txt sitemaps, AI Index for discovery",
+        "Search layer: Exa.ai agent-native search with own index, neural retrieval, raw URL/content returns",
+        "Execution layer: OpenAI Skills (versioned instruction packages) + Shell tool (real Linux terminal in containers)"
+      ],
+      "source": "FW-SAAS-125"
+    },
+    {
+      "id": "FW-AISAAS-PE-007",
+      "name": "Agent Security Architecture",
+      "description": "Defense-in-depth security model for AI agents combining sandboxing, access control, and financial guardrails across three distinct security domains.",
+      "components": [
+        "IronClaw: Rust-based WebAssembly sandboxing that isolates every tool into its own sandbox, preventing lateral movement between tools",
+        "OpenAI Shell: Allowlist-based command restrictions + container isolation for code execution environments",
+        "Coinbase Wallets: Hardware enclave isolation for key material + programmable spending guardrails with per-transaction and per-period limits"
+      ],
+      "source": "FW-SAAS-129"
+    },
+    {
+      "id": "FW-AISAAS-PE-008",
+      "name": "Emergent Web Pattern",
+      "description": "When the four agent-web primitives (payments, search, content, execution) all exist and are individually functional, agents combine them into multi-step workflows that no human planned or anticipated. This emergence is the defining pattern of the 2025-2026 agent web.",
+      "components": [
+        "Primitive availability: Each primitive (pay, search, read, execute) must be independently accessible via API",
+        "Composability: Primitives accept and return standardized formats that other primitives can consume",
+        "Discovery: Agents can find available primitives through structured indexes (llms.txt, API registries)",
+        "Emergent workflows: Novel value chains arise from agent experimentation with primitive composition"
+      ],
+      "source": "FW-SAAS-128"
+    },
+    {
+      "id": "FW-AISAAS-PE-009",
+      "name": "70/30 Rule",
+      "description": "People want 70% human control but infrastructure assumes either 0% or 100% automation. The trust gap between human expectations and system design is the central tension of agent deployment. Successful products bridge this gap with progressive autonomy and transparent guardrails.",
+      "components": [
+        "Human expectation: 70% control retention — oversight on decisions, approval on actions, visibility into reasoning",
+        "Infrastructure reality: Binary assumption — either fully manual or fully automated with no middle ground",
+        "Trust gap: The space between 70% and 0/100% where most agent products fail to deliver appropriate controls",
+        "Resolution pattern: Progressive autonomy with escalation — agents handle routine actions, escalate novel or high-stakes decisions"
+      ],
+      "source": "FW-SAAS-127"
+    }
+  ],
+  "tech_patterns": [
+    {
+      "id": "TECH-AISAAS-PE-001",
+      "name": "Coinbase Agentic Wallets",
+      "description": "Non-custodial cryptocurrency wallets designed for AI agent use, featuring the X42 protocol for agent-to-agent payments, programmable spending limits with per-transaction and per-period caps, and gasless transactions on the Base L2 network to eliminate friction for micropayments",
+      "stack_components": ["X42 protocol", "Non-custodial key management", "Programmable spending limits", "Base L2 (gasless)"],
+      "source": "TECH-SAAS-123"
+    },
+    {
+      "id": "TECH-AISAAS-PE-002",
+      "name": "Stripe Agent Commerce Suite",
+      "description": "Fiat payment infrastructure adapted for AI agents, using shared payment tokens that are scoped by merchant, amount, and time constraints. Includes a retrained Radar fraud detection model specifically calibrated for agent transaction patterns rather than human behavioral signals",
+      "stack_components": ["Shared payment tokens (scoped, time-constrained)", "Retrained Radar fraud model", "Agent transaction pattern detection"],
+      "source": "TECH-SAAS-124"
+    },
+    {
+      "id": "TECH-AISAAS-PE-003",
+      "name": "Cloudflare Markdown for Agents",
+      "description": "Content delivery infrastructure that automatically converts HTML pages to clean markdown for agent consumption, supports llms.txt sitemaps for content discovery, provides an AI Index for structured content listing, and integrates X42 micropayment protocols for pay-per-read content access",
+      "stack_components": ["HTML-to-markdown conversion", "llms.txt sitemaps", "AI Index", "X42 micropayments"],
+      "source": "TECH-SAAS-125"
+    },
+    {
+      "id": "TECH-AISAAS-PE-004",
+      "name": "Exa.ai",
+      "description": "Agent-native search engine that owns its own web index rather than scraping Google SERPs. Uses neural retrieval for semantic search, returns raw URLs and content directly (not search result pages), achieving 669ms latency versus 13.6s for SERP-based alternatives in chained agent workflows",
+      "stack_components": ["Owned web index", "Neural retrieval", "Raw URL/content returns", "669ms search latency"],
+      "source": "TECH-SAAS-126"
+    },
+    {
+      "id": "TECH-AISAAS-PE-005",
+      "name": "OpenAI Skills + Shell",
+      "description": "Two-part agent execution infrastructure: Skills are versioned, mountable instruction packages that define agent capabilities (analogous to Docker images for behavior). Shell tool provides a real Linux terminal inside isolated containers with allowlist-based command restrictions for safe code execution",
+      "stack_components": ["Versioned Skills (mountable instruction packages)", "Shell tool (real Linux terminal)", "Container isolation", "Command allowlists"],
+      "source": "TECH-SAAS-127"
+    },
+    {
+      "id": "TECH-AISAAS-PE-006",
+      "name": "IronClaw",
+      "description": "Rust-based security sandbox that isolates every individual tool invocation into its own WebAssembly environment. Prevents lateral movement between tools, contains blast radius of any single tool compromise, and provides deterministic resource limits per tool execution",
+      "stack_components": ["Rust runtime", "WebAssembly sandboxing", "Per-tool isolation", "Deterministic resource limits"],
+      "source": "TECH-SAAS-128"
+    }
+  ],
+  "gsd_extension": {
+    "description": "Documents exactly how the GSD (Get Stuff Done) framework integrates with the agent design knowledge base, including lifecycle phases, model selection profiles, state management files, and deviation handling rules.",
+    "lifecycle_phases": [
+      "new-project: Initial project setup, repository creation, dependency installation",
+      "discuss-phase: Identify gray areas, scout codebase, capture decisions in CONTEXT.md",
+      "plan-phase: Spawn researcher + planner, create atomic task plans, verify with plan-checker",
+      "execute-phase: Wave-based parallel execution, fresh context per plan, atomic commits",
+      "verify-work: Goal-backward verification, stub detection, 4-level verification",
+      "transition: Phase completion, state update, next phase preparation"
+    ],
+    "model_profiles": {
+      "quality": {
+        "planning": "opus",
+        "execution": "opus",
+        "verification": "sonnet",
+        "description": "Maximum quality for critical or complex projects; highest cost"
+      },
+      "balanced": {
+        "planning": "opus",
+        "execution": "sonnet",
+        "verification": "sonnet",
+        "description": "Opus for planning where accuracy matters most; Sonnet for execution and verification"
+      },
+      "budget": {
+        "planning": "sonnet",
+        "execution": "sonnet",
+        "verification": "haiku",
+        "description": "Cost-optimized for routine tasks; Haiku verification for simple pass/fail checks"
+      }
+    },
+    "state_files": [
+      {
+        "file": "PROJECT.md",
+        "purpose": "Project goals, scope, and high-level architecture decisions"
+      },
+      {
+        "file": "REQUIREMENTS.md",
+        "purpose": "Detailed requirements and acceptance criteria"
+      },
+      {
+        "file": "ROADMAP.md",
+        "purpose": "Phase breakdown, timeline, and dependency ordering"
+      },
+      {
+        "file": "STATE.md",
+        "purpose": "Current project state, kept under 100 lines as short-term memory"
+      }
+    ],
+    "deviation_rules": [
+      {
+        "type": "bug",
+        "permission": "auto-fix",
+        "description": "Agent encounters a bug during execution — fix immediately without asking"
+      },
+      {
+        "type": "missing_critical",
+        "permission": "auto-fix",
+        "description": "A critical dependency or file is missing — create it without asking"
+      },
+      {
+        "type": "blocking",
+        "permission": "auto-fix",
+        "description": "Something blocks progress on the current plan — resolve it without asking"
+      },
+      {
+        "type": "architectural",
+        "permission": "ASK_user",
+        "description": "Requires an architectural decision (new pattern, technology choice, major refactor) — always ask the user"
+      }
+    ],
+    "stub_detection_patterns": [
+      "TODO/FIXME comments indicating incomplete implementation",
+      "Empty returns (null, {}, []) that should return real data",
+      "Log-only functions that print but perform no actual logic",
+      "Hardcoded values that should be dynamic or configurable",
+      "React component stubs (<div>Component</div>) with no real content",
+      "API route stubs returning empty responses or 200 with no body",
+      "Fetch calls without response handling or error management"
+    ]
+  },
+  "metrics": [
+    {
+      "id": "MET-AISAAS-PE-001",
+      "name": "Thin orchestrator context budget",
+      "value": "10-15%",
+      "unit": "percent of total context",
+      "source": "GSD framework"
+    },
+    {
+      "id": "MET-AISAAS-PE-002",
+      "name": "Subagent fresh context window",
+      "value": 200000,
+      "unit": "tokens",
+      "source": "GSD framework"
+    },
+    {
+      "id": "MET-AISAAS-PE-003",
+      "name": "Plan-checker max revision iterations",
+      "value": 3,
+      "unit": "iterations",
+      "source": "GSD framework"
+    },
+    {
+      "id": "MET-AISAAS-PE-004",
+      "name": "STATE.md max length",
+      "value": 100,
+      "unit": "lines",
+      "source": "GSD framework"
+    },
+    {
+      "id": "MET-AISAAS-PE-005",
+      "name": "Agent-native search latency (Exa.ai)",
+      "value": 669,
+      "unit": "milliseconds",
+      "source": "TECH-SAAS-126"
+    },
+    {
+      "id": "MET-AISAAS-PE-006",
+      "name": "SERP-based search latency for comparison",
+      "value": 13600,
+      "unit": "milliseconds",
+      "source": "HEUR-SAAS-129"
+    },
+    {
+      "id": "MET-AISAAS-PE-007",
+      "name": "Human control preference",
+      "value": 70,
+      "unit": "percent",
+      "source": "FW-SAAS-127"
+    },
+    {
+      "id": "MET-AISAAS-PE-008",
+      "name": "GSD checkpoint distribution (verify/decision/action)",
+      "value": "90/9/1",
+      "unit": "percent split",
+      "source": "GSD framework"
+    }
+  ]
+}
