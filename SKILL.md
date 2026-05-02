@@ -34,6 +34,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | reverse engineer, video analysis, YouTube, competitor, SOTA | VRE: Video-RE | `parts/sleepy/video-re.md` |
 | knowledge graph, graphify, obsidian, vault | KG: Knowledge Graph | `parts/sleepy/knowledge-graph.md` |
 | governance vault, leyes, mistakes, gates, vault sync | GV: Governance Vault | `parts/sleepy/governance-vault.md` |
+| multi-file search, audit, "find every", > 3 files, > 40 KB raw read | SR: Subagent Routing | `parts/sleepy/subagent-routing.md` |
 
 ## Quick Reference
 
