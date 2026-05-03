@@ -1,0 +1,38 @@
+{
+  "probe": "BL-0046 / MC-SYS-94 \u2014 global watchdog cross-project snapshot",
+  "iso_ts": "2026-05-03T15:32:02+00:00",
+  "watchdog_path": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\modules\\zero-crash\\hooks\\context-watchdog.py",
+  "cases": [
+    {
+      "case": "A_with_vault",
+      "project_dir": "C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_A",
+      "has_vault": true,
+      "expected_path": "C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_A\\vault\\progress.md",
+      "tier1_landed": true,
+      "tier1_silent_stdout": true,
+      "tier2_landed": true,
+      "tier2_advisory_emitted": true,
+      "pre_sha256": "<absent>",
+      "t1_sha256": "113180367358d226",
+      "t2_sha256": "db73c4c08d5318f4",
+      "tail_snippet": "n probe-bl\n- used: **65%** | remaining: 35%\n- cwd: `C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_A`\n- transcript: `<probe>/probe-bl46-A_with_vault-t1-f1abc8.jsonl`\n\n## 2026-05-03T15:32:00+00:00 \u2014 session probe-bl\n- used: **72%** | remaining: 28%\n- cwd: `C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_A`\n- transcript: `<probe>/probe-bl46-A_with_vault-t2-3bdd4c.jsonl`\n",
+      "pass": true
+    },
+    {
+      "case": "B_bare_project",
+      "project_dir": "C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_B",
+      "has_vault": false,
+      "expected_path": "C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_B\\.claude\\progress.md",
+      "tier1_landed": true,
+      "tier1_silent_stdout": true,
+      "tier2_landed": true,
+      "tier2_advisory_emitted": true,
+      "pre_sha256": "<absent>",
+      "t1_sha256": "60308a6e0a8f93ff",
+      "t2_sha256": "893210154193bb66",
+      "tail_snippet": "obe-bl\n- used: **65%** | remaining: 35%\n- cwd: `C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_B`\n- transcript: `<probe>/probe-bl46-B_bare_project-t1-f932a7.jsonl`\n\n## 2026-05-03T15:32:02+00:00 \u2014 session probe-bl\n- used: **72%** | remaining: 28%\n- cwd: `C:\\Users\\kobig\\AppData\\Local\\Temp\\bl46-probe-lirqncmt\\scratch_B`\n- transcript: `<probe>/probe-bl46-B_bare_project-t2-4aaa59.jsonl`\n",
+      "pass": true
+    }
+  ],
+  "all_pass": true
+}
