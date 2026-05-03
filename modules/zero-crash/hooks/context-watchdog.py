@@ -66,7 +66,8 @@ def _read_metrics(session_id: str) -> dict | None:
     if not metrics_path.exists():
         return None
     try:
-        return json.loads(metrics_path.read_text(encoding="utf-8"))
+        # utf-8-sig tolerates BOM written by PowerShell Out-File / WriteAllText
+        return json.loads(metrics_path.read_text(encoding="utf-8-sig"))
     except Exception:
         return None
 
