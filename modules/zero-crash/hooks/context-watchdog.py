@@ -42,8 +42,35 @@ THRESHOLD_ADVISORY_PCT = 70
 
 ROOT = Path.home() / ".claude" / "skills" / "claude-power-pack"
 LEDGER_PATH = ROOT / "vault" / "sleepy" / "context_snapshots.jsonl"
-PROGRESS_PATH = ROOT / "vault" / "progress.md"
 ATOMIC_WRITE_DIR = ROOT / "lib"
+# PROGRESS_PATH is now derived per-project from cwd (BL-0043 globalization).
+# Fallback to power-pack vault when cwd is missing or unwriteable.
+FALLBACK_PROGRESS_PATH = ROOT / "vault" / "progress.md"
+
+
+def _resolve_progress_path(cwd: str) -> Path:
+    """Return the per-project progress.md path. Per BL-0043:
+      1. <cwd>/vault/progress.md     (project has a vault/)
+      2. <cwd>/.claude/progress.md   (project has or can have a .claude/)
+      3. FALLBACK_PROGRESS_PATH      (power-pack root — last resort)
+    """
+    if not cwd:
+        return FALLBACK_PROGRESS_PATH
+    try:
+        cwd_path = Path(cwd)
+        if not cwd_path.is_dir():
+            return FALLBACK_PROGRESS_PATH
+        vault_dir = cwd_path / "vault"
+        if vault_dir.is_dir():
+            return vault_dir / "progress.md"
+        dotclaude = cwd_path / ".claude"
+        try:
+            dotclaude.mkdir(parents=True, exist_ok=True)
+            return dotclaude / "progress.md"
+        except Exception:
+            return FALLBACK_PROGRESS_PATH
+    except Exception:
+        return FALLBACK_PROGRESS_PATH
 
 SNAPSHOT_FLAG = "claude-ctxwd-snap-{session_id}.flag"
 ADVISORY_FLAG = "claude-ctxwd-adv-{session_id}.flag"
@@ -86,7 +113,8 @@ def _set_flag(session_id: str, template: str) -> None:
 
 
 def _append_progress_md(atomic_write, session_id: str, used_pct: float, remaining_pct, cwd: str, transcript_path: str) -> None:
-    """Append a markdown section for this session to vault/progress.md."""
+    """Append a markdown section for this session to the per-project progress.md (BL-0043)."""
+    target = _resolve_progress_path(cwd)
     now = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
     section = (
         f"\n## {now} — session {session_id[:8]}\n"
@@ -95,17 +123,17 @@ def _append_progress_md(atomic_write, session_id: str, used_pct: float, remainin
         f"- transcript: `{transcript_path}`\n"
     )
     existing = b""
-    if PROGRESS_PATH.exists():
+    if target.exists():
         try:
-            existing = PROGRESS_PATH.read_bytes()
+            existing = target.read_bytes()
             if existing and not existing.endswith(b"\n"):
                 existing += b"\n"
         except Exception:
             existing = b""
     if not existing:
-        existing = b"# vault/progress.md\n\nRoll-up of context-watchdog snapshots (BL-0033).\nAppend-only; rotate manually after `/kclear` or `/compact`.\n"
+        existing = b"# progress.md\n\nRoll-up of context-watchdog snapshots (BL-0033 / BL-0043 per-project).\nAppend-only; rotate manually after `/kclear` or `/compact`.\n"
     try:
-        atomic_write.atomic_write_bytes(PROGRESS_PATH, existing + section.encode("utf-8"))
+        atomic_write.atomic_write_bytes(target, existing + section.encode("utf-8"))
     except Exception:
         pass
 
