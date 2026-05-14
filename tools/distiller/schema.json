@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "kobiidistilleros://schema/v1",
+  "version": "1.0.0",
+  "description": "KobiiDistillerOS output contract. Verbatim markers from Dataset KobiiDistillerOS 1.txt + mandatory per-section blocks + forbidden-token + redaction patterns.",
+
+  "tier_layout": {
+    "Tier_1": {
+      "label": "Pipeline & Arquitectura",
+      "sections": [1, 2, 3, 4, 5, 6, 7],
+      "end_marker": "-- FIN DE TIER 1 --"
+    },
+    "Tier_2": {
+      "label": "Gobernanza",
+      "sections": [8, 9, 10, 11, 12, 13],
+      "end_marker": "-- FIN DE TIER 2 --"
+    },
+    "Tier_3": {
+      "label": "Interfaz & Materialización",
+      "sections": [14, 15, 16, 17, 18, 19],
+      "end_marker": "-- FIN DE TIER 3 --"
+    }
+  },
+
+  "dataset_final_marker": "-- FIN DE DATASET v1.0 --",
+
+  "section_count": 19,
+
+  "section_titles": {
+    "1":  "Ingestor Atómico",
+    "2":  "Distillation Engine — Avoid-Loss",
+    "3":  "Distillation Engine — Chase-Gain",
+    "4":  "Logging Frío (rechazo de mediocridad)",
+    "5":  "Filosofía del Sistema — IRE Stage 0",
+    "6":  "Pipeline de Materialización",
+    "7":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "8":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "9":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "10": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "11": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "12": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "13": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "14": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "15": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "16": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "17": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "18": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "19": "<<AWAITING OWNER VERBATIM — Q1.a>>"
+  },
+
+  "required_section_blocks": {
+    "heading_regex": "^##\\s+\\d{1,2}\\.\\s+.+$",
+    "roi_block": {
+      "marker": "🧮 Calculadora de ROI",
+      "required_fields": ["Tipo", "ROI Temporal", "ROI Riesgo", "Escenario", "Explicación"]
+    },
+    "closing_marker": "🏁 Cierre patrimonial",
+    "oracle_aside": "🦅 Comentario del Oráculo"
+  },
+
+  "forbidden_tokens": [
+    "TODO",
+    "FIXME",
+    "HACK",
+    "PLACEHOLDER",
+    "Coming Soon",
+    "coming soon",
+    "<TU_URL_REAL>",
+    "<TU_TOKEN>",
+    "<TU_SECRETO>",
+    "raise NotImplementedError",
+    "pass # TODO",
+    "// TODO",
+    "/* TODO */",
+    "Placeholder"
+  ],
+
+  "redaction_patterns": {
+    "discord_webhook": "https://discord(?:app)?\\.com/api/webhooks/\\d+/[A-Za-z0-9_-]+",
+    "ssh_private_key": "-----BEGIN (?:OPENSSH|RSA|EC|DSA) PRIVATE KEY-----[\\s\\S]+?-----END (?:OPENSSH|RSA|EC|DSA) PRIVATE KEY-----",
+    "ssh_key_path": "~?/?\\.ssh/[A-Za-z0-9_.-]+",
+    "kobicraft_token": "kobicraft_[A-Za-z0-9_-]{6,}",
+    "aws_access_key": "AKIA[A-Z0-9]{16}",
+    "github_pat": "gh[ps]_[A-Za-z0-9]{36,}",
+    "bearer_jwt": "Bearer\\s+ey[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+",
+    "generic_api_key_kv": "(?i)(?:api[_-]?key|secret[_-]?key|access[_-]?token)\\s*[:=]\\s*['\"]?[A-Za-z0-9_-]{16,}['\"]?"
+  },
+
+  "kill_switch_marker": "🧨 KILL-SWITCH",
+
+  "ingestor_limits": {
+    "max_input_bytes": 1048576,
+    "force_flag_required_above_cap": true,
+    "chunk_strategy": "heading_then_block",
+    "chunk_heading_regex": "^##\\s+.+$",
+    "chunk_fallback_block_bytes": 51200
+  }
+}
