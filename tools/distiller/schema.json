@@ -1,30 +1,30 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "kobiidistilleros://schema/v1",
-  "version": "1.1.0",
-  "description": "KobiiDistillerOS output contract. Verbatim markers from Dataset KobiiDistillerOS 1.txt + mandatory per-section blocks + forbidden-token + redaction patterns.",
+  "version": "1.2.1",
+  "description": "KobiiDistillerOS output contract — 22 secciones canónicas (Tier 1=1-7, Tier 2=8-13, Tier 3=14-22). Sections 14-16 = Capa de Soberanía Cognitiva (Cognitive Mirror, Decision Traceability, Antifragilidad). Sections 20-21 = Cartera + Telemetría. Section 22 = Inferencia Decisional Exógena & Conocimiento Negativo (Outside-the-Box Time-Saver — fused). Tandas & Partes structural layer: every section body MUST partition into depth-tandas (T1/T2/T3) × orthogonal partes (I/II/III).",
 
   "tier_layout": {
     "Tier_1": {
-      "label": "Pipeline & Arquitectura",
+      "label": "Baseline Ejecutable",
       "sections": [1, 2, 3, 4, 5, 6, 7],
       "end_marker": "-- FIN DE TIER 1 --"
     },
     "Tier_2": {
-      "label": "Gobernanza",
+      "label": "Chase-Gain Ampliado",
       "sections": [8, 9, 10, 11, 12, 13],
       "end_marker": "-- FIN DE TIER 2 --"
     },
     "Tier_3": {
-      "label": "Interfaz & Materialización",
-      "sections": [14, 15, 16, 17, 18, 19],
+      "label": "Síntesis & Ventaja Estructural",
+      "sections": [14, 15, 16, 17, 18, 19, 20, 21, 22],
       "end_marker": "-- FIN DE TIER 3 --"
     }
   },
 
-  "dataset_final_marker": "-- FIN DE DATASET v1.0 --",
+  "dataset_final_marker": "-- FIN DE DATASET v1.2 --",
 
-  "section_count": 19,
+  "section_count": 22,
 
   "section_titles": {
     "1":  "Resumen General (Arquitectónico)",
@@ -40,12 +40,15 @@
     "11": "Servicios Nuevos y Océanos Azules (APLICABLE A LOS PROYECTOS DEL USUARIO)",
     "12": "Síntesis para Entrenamiento Profundo",
     "13": "Integración Multi-Sistema (InfinityOps Core)",
-    "14": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "15": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "16": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "14": "Cognitive Mirror & Espejo del Owner",
+    "15": "Decision Traceability & ROI Causality Layer",
+    "16": "Antifragilidad & Kill-Switch Universal",
     "17": "Pensamiento arborescente (otros contextos y propósitos de negocio)",
     "18": "ROI del Dataset (tiempo/dinero/riesgo) — CON FREEZE GATE",
-    "19": "Plan de acción con el dataset (operativo + ejecución)"
+    "19": "Plan de acción con el dataset (operativo + ejecución)",
+    "20": "Loops de Cashflow & Capital Paciente",
+    "21": "Telemetría Estratégica de Ciclos",
+    "22": "Inferencia Decisional Exógena & Conocimiento Negativo (Outside-the-Box Time-Saver)"
   },
 
   "required_section_blocks": {
@@ -56,6 +59,26 @@
     },
     "closing_marker": "🏁 Cierre patrimonial",
     "oracle_aside": "🦅 Comentario del Oráculo"
+  },
+
+  "tandas_partes_spec": {
+    "_comment": "Every materialized section body MUST partition into three depth-tandas (T1/T2/T3) × three orthogonal partes (I/II/III). Depth-tandas escalate from baseline → chase-gain → structural advantage. Partes are content slots orthogonal to depth (narrativa, estructura, ROI). validate.py enforces both marker regexes per section file.",
+    "tandas": {
+      "T1": { "label": "Baseline (esenciales)", "purpose": "minimum viable signal — what a reader at first contact needs to act today" },
+      "T2": { "label": "Chase-Gain (ampliación)", "purpose": "snowball-effect / rapid-scaling vectors built on top of T1" },
+      "T3": { "label": "Síntesis & Ventaja Estructural", "purpose": "compounding advantage and irreversible moat — the long-horizon shape" }
+    },
+    "partes": {
+      "I":   { "label": "Narrativa", "purpose": "why this exists; the human-anchored story; Refugio-voice context" },
+      "II":  { "label": "Estructura", "purpose": "the shape, framework, schematic, or operational mechanic" },
+      "III": { "label": "ROI", "purpose": "tiempo / dinero / riesgo of applying it; ties into the section ROI block" }
+    },
+    "structural_markers": {
+      "tanda_heading_regex": "^###\\s+Tanda\\s+T[123]\\b.*$",
+      "parte_heading_regex": "^####\\s+Parte\\s+(I|II|III)\\b.*$",
+      "min_tandas_per_section": 3,
+      "min_partes_per_tanda": 3
+    }
   },
 
   "forbidden_tokens": [
@@ -87,8 +110,9 @@
   },
 
   "voice_gate": {
-    "_comment": "G4 audit fix — author-judgment lists ship as ADVISORY (validator emits warnings, not exit 5) until Owner ratifies. Phase C promotes to enforcing mode by flipping `mode` to `enforcing`.",
+    "_comment": "Phase C (Commit #3) flips mode to enforcing. Scope is GLOBAL: blacklist hits AND anchor counts are aggregated across the entire output_dir (all 22 sections combined). Exit 5 fires iff at least one blacklist token appears AND zero anchor tokens appear in the full dataset.",
     "mode": "advisory",
+    "scope": "global",
     "exit_code_when_enforcing": 5,
     "blacklist_candidates": [
       "KPI",
