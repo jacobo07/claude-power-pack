@@ -27,12 +27,12 @@
   "section_count": 19,
 
   "section_titles": {
-    "1":  "Ingestor Atómico",
-    "2":  "Distillation Engine — Avoid-Loss",
-    "3":  "Distillation Engine — Chase-Gain",
-    "4":  "Logging Frío (rechazo de mediocridad)",
-    "5":  "Filosofía del Sistema — IRE Stage 0",
-    "6":  "Pipeline de Materialización",
+    "1":  "Ingestor Atómico (IRE Stage 1-2)",
+    "2":  "El Motor de Destilación (El Cerebro)",
+    "3":  "Materialización (IRE Stage 7)",
+    "4":  "Protocolo Anti-Mediocridad (Contrato de Realidad)",
+    "5":  "Kernel vMAX-NULL-ERROR",
+    "6":  "Diseño de Soberanía (Móvil & PC)",
     "7":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
     "8":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
     "9":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
