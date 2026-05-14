@@ -17,12 +17,13 @@ purpose: Single-page index of every activatable surface in this skill. Makes the
 - **Output** — the observable artifact produced.
 - **Path** — where the skill lives.
 
-## Slash Commands (7)
+## Slash Commands (8)
 
 | Skill | Type | Process | Rules | Output | Path |
 |-------|------|---------|-------|--------|------|
 | `/cpp-autoupdate` | cmd | Toggle automatic update-check on session start. | Must not block session startup. | Boolean flag in settings. | `commands/autoupdate.md` |
 | `/cpp-customclaw create <name>` | cmd | Scan current project, generate a custom AI daemon tailored to its stack. | Project-aware; must not overwrite existing daemons; 11 stacks supported (GAL v1.6). | New daemon module + command. | `commands/customclaw.md` |
+| `/cpp-distill <source> [--global] [--force]` | cmd | Atomic-ingest + 19-section distillation + IRE-7 materialization driven in-session against a Mother Prompt. | 1 MB cap; secret redaction + placeholder reject; in-session driver (no external API). | `<output_root>/Tier_N/Seccion_N.md` × 19 + ingest sidecar + READY.md. | `commands/distill.md` |
 | `/obsidian-setup` | cmd | Generate a Knowledge Graph vault from the current project. | Max 10 nodes per task; follows wikilinks. | `_knowledge_graph/INDEX.md` + node files. | `commands/obsidian-setup.md` |
 | `/resume` | cmd | Restore context from previous session via Lazarus Protocol. | Read `HANDOFF_TASK.md` if present; `/resume last` = instant warm-up. | Session rebirth with prior state. | `commands/resume.md` |
 | `/cpp-update` | cmd | Update Claude Power Pack to latest from GitHub. | Preserves local patches; reapply via `gsd:reapply-patches`. | Updated SKILL.md + modules. | `commands/update.md` |

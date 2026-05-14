@@ -53,6 +53,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
+| `/cpp-distill <source> [--global] [--force]` | Atomic-ingest + 19-section distillation + IRE-7 materialization | commands/distill.md |
 
 ## SkillBank Index
 
