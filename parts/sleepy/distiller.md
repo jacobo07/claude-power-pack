@@ -1,17 +1,17 @@
 # PART D — KOBIIDISTILLEROS MOTHER PROMPT (Sleepy)
 
-Lazy-loaded by `/cpp-distill`. Defines the verbatim 19-section contract, the per-section required blocks, the tier-end markers, and the materialization rules for the in-session distillation driver.
+Lazy-loaded by `/cpp-distill`. Defines the verbatim **22-section contract** (v1.0 Sovereign Sealing), the per-section required blocks, the **Tandas & Partes** structural layer, the tier-end markers, and the materialization rules for the in-session distillation driver.
 
-**Status (2026-05-14):** Sections 1-6 are inferred from `Dataset KobiiDistillerOS 1.txt` (verbatim wording, single source of truth). Sections 7-19 carry the gap marker `<<AWAITING OWNER VERBATIM — Q1.a>>` until the Owner pastes the canonical Mother Prompt body. `run.py` will refuse to materialize gap-marked sections.
+**Status (2026-05-14, v1.2 Sovereign Sealing):** All 22 canonical sections present. §1-6 realigned to Owner-ratified titles. §7-13 instruction-shape preserved from Phase A (commit `e2ebd59`). §14-22 new instruction-shape bodies. §22 fused (Inferencia Decisional Exógena & Conocimiento Negativo). Zero gap markers. Zero placeholders.
 
 ---
 
 ## CONTRACT
 
-For every `/cpp-distill` invocation, the driver MUST emit 19 markdown files at `<output_root>/Tier_<T>/Seccion_<N>.md` matching the schema at `tools/distiller/schema.json`. Each section file MUST contain, in order:
+For every `/cpp-distill` invocation, the driver MUST emit 22 markdown files at `<output_root>/Tier_<T>/Seccion_<N>.md` matching the schema at `tools/distiller/schema.json` (v1.2.1). Each section file MUST contain, in order:
 
 1. A heading: `## <N>. <SECTION_TITLE>` — title sourced from `schema.json#section_titles[<N>]` (verbatim, accents preserved).
-2. A body paragraph (no fixed length) distilling the ingestor chunks relevant to the section's theme. No filler. No empty-button references. No `Coming Soon`.
+2. **Tandas & Partes body** (mandatory per `schema.tandas_partes_spec`): three depth-tandas × three orthogonal partes per tanda. See the structural layer section below.
 3. A `🧮 Calculadora de ROI` block with all five required fields:
    - `Tipo` — primary ROI dimension (Temporal / Patrimonial / Riesgo / Soberanía / Escalabilidad).
    - `ROI Temporal` — quantified multiplier (e.g. `50×–100×`).
@@ -24,66 +24,79 @@ For every `/cpp-distill` invocation, the driver MUST emit 19 markdown files at `
 After the final section of each tier, append the tier-end marker on its own line:
 - After Sección 7: `-- FIN DE TIER 1 --`
 - After Sección 13: `-- FIN DE TIER 2 --`
-- After Sección 19: `-- FIN DE TIER 3 --` followed by `-- FIN DE DATASET v1.0 --`
+- After Sección 22: `-- FIN DE TIER 3 --` followed by `-- FIN DE DATASET v1.2 --`
 
-The `🧨 KILL-SWITCH` marker appears once, in the section that handles abort conditions (Owner-defined; currently expected in the Tier 3 governance band).
+The `🧨 KILL-SWITCH` canonical marker appears once, inside §16 (Antifragilidad).
+
+---
+
+## TANDAS & PARTES — STRUCTURAL LAYER (v1.0 Sovereign Sealing)
+
+Every section body partitions into 3 depth-tandas × 3 orthogonal partes per tanda. This is the OUTPUT shape; the per-section instruction bodies below describe the THEME each tanda/parte fills.
+
+**Depth-tandas (ascending depth):**
+
+- `### Tanda T1 — Baseline (esenciales)` — minimum viable signal a reader at first contact needs to act today.
+- `### Tanda T2 — Chase-Gain (ampliación)` — snowball-effect / rapid-scaling vectors built on top of T1.
+- `### Tanda T3 — Síntesis & Ventaja Estructural` — compounding advantage and irreversible moat; the long-horizon shape.
+
+**Partes (orthogonal slots inside each tanda):**
+
+- `#### Parte I — Narrativa` — why this exists; the human-anchored story; Refugio-voice context.
+- `#### Parte II — Estructura` — the shape, framework, schematic, or operational mechanic.
+- `#### Parte III — ROI` — tiempo / dinero / riesgo of applying it; ties into the section ROI block.
+
+The validator (`tools/distiller/validate.py`) enforces both marker regexes (`tanda_heading_regex`, `parte_heading_regex` from `schema.tandas_partes_spec`) per section file. A section missing any required tanda or parte fails exit 1.
+
+The §2 native "POR TANDAS" semantic (quick-wins → structural → arquitectura) is absorbed by the depth-tanda axis: T1 = quick wins, T2 = structural, T3 = arquitectura. No conflict, no duplication.
 
 ---
 
-## SECCIÓN 1 — INGESTOR ATÓMICO (IRE STAGE 1-2)
+## SECCIÓN 1 — RESUMEN GENERAL (ARQUITECTÓNICO)
 
-The ingestor is the entry gate. It accepts raw inputs and emits chunked, redacted, size-capped sidecars for the distillation driver. Three input modalities are in scope:
+Compress the dataset into a load-bearing architectural snapshot. The output is not an abstract — it is the map a new engineer or strategist would need to act in the first 30 minutes. The body must surface, across its three tandas:
 
-1. **Texto masivo** — automatic segmentation of files > 1 MB to avoid token-context collapse. The Atomic Ingestor in `tools/distiller/ingest.py` enforces a 1 MB hard cap with `--force` override.
-2. **Transcripción de audio/vídeo** — Whisper-class integration for 40-minute gameplay → distillable text. Out of scope for v1; reserved for a separate `/ultra` cycle.
-3. **Vision-to-Data** — extraction of architectural metadata from images (stadium DNA v2). Out of scope for v1; reserved.
+- WHAT the dataset is about, in one sentence (no jargon, no qualifications).
+- WHICH systems / projects / decisions it informs (cite Owner-known anchors when the dataset names them: KobiiCraft, LaptOps, KobiiSports Resort, Helsinki, MundiCraft, Andorra).
+- WHAT THIS SECTION SELF-IS — the architectural spine readers should hold in mind throughout the remaining 21 sections.
 
-Pre-LLM gates the ingestor enforces unconditionally: placeholder rejection, secret redaction, header-or-block chunking. See `schema.json#ingestor_limits` and `schema.json#redaction_patterns`.
+Reject patterns: marketing language; table-of-contents prose; summaries that hide the spine. The Resumen General IS the spine.
 
-## SECCIÓN 2 — EL MOTOR DE DESTILACIÓN (EL CEREBRO)
+## SECCIÓN 2 — IDEAS ACCIONABLES (POR TANDAS)
 
-The engine applies the **Filtro de Exposición Operativa Extrema**. Every chunk runs through two dual functions before being committed to the output:
+Surface actionable items the dataset endorses. The native "Tandas" semantic of this section maps directly onto the depth-tanda axis:
 
-- **Avoid-Loss.** Blocks ideas that generate technical debt, "airport design", or irreversibility risk. Asks: *what kill-switch does this proposal require, and is the cost of reversing it ever paid?*
-- **Chase-Gain.** Identifies snowball-effect opportunities and rapid-scaling vectors. Asks: *what compounds if this lands cleanly, and over what time horizon?*
+- T1 Baseline = quick wins (executable within 24h, single owner, reversible).
+- T2 Chase-Gain = structural (1 week, 2-3 collaborators, partial reversibility).
+- T3 Síntesis = arquitectura (1 month+, multi-system commit, irreversible by design).
 
-A chunk that passes Avoid-Loss but fails Chase-Gain is preserved as defensive scaffolding. A chunk that passes Chase-Gain but fails Avoid-Loss is parked in a *deferred* bucket and surfaced only when its risk profile can be neutralized. Chunks that pass both are committed to the section being distilled.
+Each idea entry inside a tanda: action verb (imperative), expected ROI dimension (tiempo / dinero / riesgo / soberanía / escalabilidad), prerequisite cost in tooling or attention. Reject patterns: ideas that need a meeting before they need a commit; ideas whose prerequisite cost is higher than the listed ROI; ideas phrased as "explore" or "consider".
 
-## SECCIÓN 3 — MATERIALIZACIÓN (IRE STAGE 7)
+## SECCIÓN 3 — FRAMEWORKS Y MODELOS MENTALES
 
-The output is not a summary. It is **Materia Ejecutable**. Acceptable materialization targets:
+Extract the cognitive frameworks the dataset deploys or implies. Each entry: name (or proposed name if implicit), one-line shape (`A maps to B via C`), domain of applicability (where it WORKS), and one boundary condition (where it BREAKS). Cap 5-9 frameworks per dataset.
 
-- `.java` for KobiMapEngine extensions.
-- `.json` DNA files for stadium / map topology.
-- `.md` files in the Knowledge Vault.
+Reject patterns: generic frameworks any business book would name (Porter / BCG / SWOT) unless the dataset uses them in a domain-shifted way; frameworks whose boundary condition is "use your judgement"; frameworks that lack an operational handle.
 
-`/cpp-distill` materializes only the third — markdown into the vault. Java/JSON materializers are downstream consumers that read the Tier_N markdown.
+## SECCIÓN 4 — ESTRATEGIAS (SOPs + ÁRBOLES DE DECISIÓN)
 
-## SECCIÓN 4 — PROTOCOLO ANTI-MEDIOCRIDAD (CONTRATO DE REALIDAD)
+Render the dataset's strategic moves as executable SOPs and decision trees. Each SOP: 5-12 steps maximum, every step has an observable success criterion. Each decision tree: `if A then B else C` chains where every leaf is a concrete action — never a deferral. Include the strategic intent (1 line) at the top of each SOP/tree so a reader can detect when the procedure applies to a NEW situation outside the dataset's home domain.
 
-KobiiDistillerOS is forbidden from generating:
+Reject patterns: SOPs that end with "iterate"; trees with leaves of "see specialist"; strategies whose first step is "align stakeholders".
 
-- **Placeholders** — `Coming Soon`, `TODO`, `Añadir más tarde`, `<TU_URL_REAL>`, `raise NotImplementedError`. The validator surfaces these as exit code 2; the ingestor rejects them pre-LLM.
-- **Botones vacíos** — every UI affordance referenced in distilled output must be wired to a real function. References to unbacked buttons trigger a section rewrite.
-- **Logging frío** — corporate / generic / cynical tone. The voice must remain "Refugio Humano" with nostalgic anchoring. The Hawkins filter (>200 consciousness) is the qualitative gate.
+## SECCIÓN 5 — PATRONES, LEYES OCULTAS Y PRINCIPIOS
 
-A section that violates any of the three is rejected and re-iterated using the universal iteration protocol at `C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt`.
+Surface the structural patterns the dataset exhibits but does not name. Each entry: pattern name (coin one if needed), one-line statement, evidence in the source (file path / quote / page / timestamp), and a cross-domain echo (where the same pattern appears outside this dataset's home domain). These are the LAWS — what survives if the dataset's surface features are stripped away.
 
-## SECCIÓN 5 — KERNEL vMAX-NULL-ERROR
+Reject patterns: aphorisms; principles that are restatements of well-known maxims (KISS, DRY, YAGNI) without domain-specific bite; patterns with only one evidence point.
 
-The kernel monitors its own runtime. If hallucination rate or context drift exceeds **2 %**, the system enters **Freeze de Memoria** — distillation halts, no further chunks are committed, and the operator is notified. The threshold is non-negotiable; tuning it requires a separate `/ultra` cycle and an updated UKDL entry.
+## SECCIÓN 6 — SEÑALES SOCIALES Y JUEGOS DE PODER
 
-**Vacunas (Vaccine Synthesis).** Every corrected error lands as a UKDL entry — symptom, root cause, fix, vaccine. The system is contractually unable to repeat the same error twice; if it does, the vaccine entry was malformed and itself becomes an audit incident.
+Map the social, political, and power dynamics the dataset references or relies on. For each: actor (role, not name unless public), motivation (what they want, what they fear), lever (what makes them act), and observable signal (how an outside observer detects this dynamic firing). The Owner consumes this as situational intelligence — what coalitions matter, where gatekeepers sit, which signals precede a power shift.
 
-## SECCIÓN 6 — DISEÑO DE SOBERANÍA (MÓVIL & PC)
+Reject patterns: gossip; ad-hominem framing; signals that require insider access to detect; "everyone is rational and aligned" abstractions.
 
-The vault must be accessible from mobile (Flutter / Streamlit) and PC (Claude Code / Terminal). Cross-server sync is mandatory. Three vault surface guarantees:
-
-- **Visualización de ROI** — every processed dataset surfaces an ROI card (Temporal, Económico, Riesgo). The card is generated from the section ROI blocks.
-- **Nivel de Conciencia (Filtro Hawkins)** — auto-evaluation of >200 consciousness. Content scoring cynical or purely transactional is rejected at the surface, not just at the validator.
-- **Sovereign read path** — even offline, the vault is browsable; sync is opportunistic, not a hard dependency.
-
----
+-- FIN DE TIER 1 --
 
 ## SECCIÓN 7 — CITAS CLAVE (DESTILADAS)
 
@@ -104,7 +117,7 @@ Catalog every failure mode the source surfaces — explicit mistakes, cognitive 
 - **Root cause** (1 sentence): the underlying mechanism, not the trigger.
 - **Vaccine** (1 sentence): a concrete action — code-level, process-level, or architectural — that makes the failure mode unrepeatable.
 
-If the same anti-pattern projects across multiple project domains (e.g. plugin → daemon → frontend), note the cross-domain echo explicitly. Reject filter: entries whose vaccine is "be more careful" or "review more thoroughly" do not survive — only operationalizable vaccines count.
+If the same anti-pattern projects across multiple project domains (plugin → daemon → frontend), note the cross-domain echo explicitly. Reject filter: entries whose vaccine is "be more careful" or "review more thoroughly" do not survive — only operationalizable vaccines count.
 
 ## SECCIÓN 9 — AGENTES Y WORKFLOWS (CREACIÓN DIRECTA DESDE EL DATASET)
 
@@ -163,29 +176,105 @@ Map how the dataset's outputs plug into the Owner's existing infrastructure: Kob
 
 Identify shared schema collisions the Owner must resolve **before** wiring this dataset into the InfinityOps spine. Flag any field that exists in two target systems with semantically different meanings.
 
-## SECCIÓN 14 — <<AWAITING OWNER VERBATIM — Q1.a>>
+-- FIN DE TIER 2 --
 
-(see Sección 7 binding rule.)
+## SECCIÓN 14 — COGNITIVE MIRROR & ESPEJO DEL OWNER
 
-## SECCIÓN 15 — <<AWAITING OWNER VERBATIM — Q1.a>>
+Reflect the Owner's own cognitive shape back, surfaced from the dataset. Three reflections required, distributed across the three depth-tandas:
 
-(see Sección 7 binding rule.)
+- **Identity anchors** — values, anchors (Refugio, MCPE, 2014, KobiiClaw), and commitments the dataset reinforces. Cite the dataset evidence for each anchor.
+- **Blind spots** — patterns the Owner is drawn to that the dataset surfaces as risk-shaped or repeat-failure-shaped. Name the bait that makes the pattern attractive.
+- **Leverage** — domains where the Owner's existing cognition compounds when applied to this dataset's content. Cite the dataset evidence that the compounding is real, not flattery.
 
-## SECCIÓN 16 — <<AWAITING OWNER VERBATIM — Q1.a>>
+The output is a mirror, not a compliment. If the dataset reveals a delusion the Owner holds, name it; if it reveals an underused strength, name that too.
 
-(see Sección 7 binding rule.)
+Reject patterns: generic "know thyself" platitudes; flattery; reflections that don't tie back to one or more named anchors.
 
-## SECCIÓN 17 — <<AWAITING OWNER VERBATIM — Q1.a>>
+## SECCIÓN 15 — DECISION TRACEABILITY & ROI CAUSALITY LAYER
 
-(see Sección 7 binding rule.)
+For every major decision the dataset references or implies, render the full causal chain: trigger event → decision → first-order consequence → second-order consequence → ROI realized (or sunk cost). Each decision entry: who decided, what alternatives existed, why this one was chosen, and what the measured outcome was (cite numbers if available).
 
-## SECCIÓN 18 — <<AWAITING OWNER VERBATIM — Q1.a>>
+The goal is to make every decision in the dataset re-auditable — a future Owner or auditor can reconstruct WHY. Each entry stores its own evidence (file paths, timestamps, witnesses) inline so the audit does not need to re-derive context.
 
-(see Sección 7 binding rule.)
+Reject patterns: decisions framed as inevitable; consequences described without first-vs-second order separation; outcomes asserted without measurement; "we decided collectively" framings.
 
-## SECCIÓN 19 — <<AWAITING OWNER VERBATIM — Q1.a>>
+## SECCIÓN 16 — ANTIFRAGILIDAD & KILL-SWITCH UNIVERSAL
 
-(see Sección 7 binding rule.)
+Surface the conditions under which each component of the dataset's recommendation BREAKS, and the kill-switch that incinerates the failed branch before contamination spreads. Each entry: component, failure mode, observable breakage signal, kill-switch action (specific command, file deletion, branch revert, or human escalation).
+
+Embed the canonical 🧨 KILL-SWITCH marker once inside this section's T3 tanda — it is the marker the validator looks for to confirm the kill-switch contract is honored at the dataset level, not just per-component.
+
+The system is contractually antifragile — every recommendation must come with its own abort condition. Reject patterns: "monitor and adjust"; switches whose execution requires the same actor who introduced the failure; switches that require Owner approval AND Owner is the failure mode.
+
+## SECCIÓN 17 — PENSAMIENTO ARBORESCENTE (otros contextos y propósitos de negocio)
+
+Project the dataset's content into adjacent business contexts beyond the obvious home domain. For each branch:
+
+- **Target domain** (named industry / segment).
+- **What carries over verbatim** — the principle or pattern that needs no translation.
+- **What requires translation** — domain-specific vocabulary or constraint shifts.
+- **What is rejected outright** — content that does not survive the move.
+
+Three to five branches minimum. The goal is to harvest the dataset's TRANSFERABLE structure — what does this dataset teach about [adjacent domain X] even though it never mentions X?
+
+Reject patterns: branches into trivially-similar domains; branches whose translation effort exceeds 50% of the original signal; branches whose only justification is "it's also a system".
+
+## SECCIÓN 18 — ROI DEL DATASET (tiempo/dinero/riesgo) — CON FREEZE GATE
+
+Render a dataset-level ROI card distinct from per-section ROI blocks: aggregated time saved, money saved or unlocked, risk neutralized, sovereignty / consciousness preserved. Numbers cite their provenance (which section, which evidence).
+
+Then declare a FREEZE GATE: the condition under which acting on the dataset's recommendations would burn more value than it creates — for example, "freeze action if competing dataset Y arrives within 30 days" or "freeze action if Owner-project anchor X enters drawdown". The freeze gate is not pessimism — it is the dataset's own anti-overshoot condition. Without it, the dataset becomes a maximalist hammer.
+
+Reject patterns: ROI numbers without provenance; freeze gates phrased as "if things change"; freeze gates that never fire.
+
+## SECCIÓN 19 — PLAN DE ACCIÓN CON EL DATASET (operativo + ejecución)
+
+Render a concrete execution plan that moves the dataset from on-disk-knowledge to in-production-effect. Three phases mapped to the three depth-tandas:
+
+- **T1 — PREP** — what gets staged, who reviews, where artifacts land. Time-box: 1-3 days. Exit criterion: named artifact at named path.
+- **T2 — DEPLOY** — the smallest reversible deployment, with verifications named. Time-box: 1-5 days. Exit criterion: observable signal in production (log line, dashboard tick, user action).
+- **T3 — AMPLIFY** — the snowball steps that take a verified deployment to compounding scale. Time-box: 2-6 weeks. Exit criterion: measurable change in the leading indicator from §21.
+
+Each phase: owner, time-box, exit criteria. Reject patterns: plans with phases longer than 2 weeks at T1/T2; plans whose exit criteria are "feels done"; plans without a named owner.
+
+## SECCIÓN 20 — LOOPS DE CASHFLOW & CAPITAL PACIENTE
+
+Map the dataset's recommended cashflow loops and patient-capital allocations. Each loop entry:
+
+- **Input** — where money enters.
+- **Output** — where money compounds.
+- **Velocity** — how fast a unit cycles (per day / per week / per quarter).
+- **Decay condition** — the signal that the loop has stopped compounding and capital should rotate out.
+
+Patient-capital entries additionally specify: minimum holding period before ROI realization, and signals that justify holding through interim drawdown (so the Owner does not exit at the first dip).
+
+The Owner consumes this as the FINANCIAL spine of the dataset — what compounds vs what is consumed. Reject patterns: loops without decay conditions; patient-capital recommendations without a defined exit signal; "set it and forget it" framings.
+
+## SECCIÓN 21 — TELEMETRÍA ESTRATÉGICA DE CICLOS
+
+Define the telemetry the Owner needs to detect whether the dataset's recommendations are landing or drifting. For each strategic vector surfaced in §2 (accionables) or §19 (plan de acción):
+
+- **Leading indicator** — early, cheap-to-measure, available within the cycle.
+- **Lagging indicator** — truthful, expensive-to-measure, available after the cycle closes.
+- **Cadence** — per session / per week / per release / per quarter.
+- **Actionable threshold** — the value at which the indicator stops being informative and becomes a trigger for a §16 kill-switch or §19 amplify-step.
+
+Reject patterns: vanity metrics; indicators without thresholds; cadences slower than the underlying cycle; indicators whose measurement cost exceeds the decision value they unlock.
+
+## SECCIÓN 22 — INFERENCIA DECISIONAL EXÓGENA & CONOCIMIENTO NEGATIVO (Outside-the-Box Time-Saver)
+
+This is the fused outermost section — the Owner's escape hatch from the dataset's home domain. Two complementary harvests, distributed across the three depth-tandas:
+
+- **Inferencia Exógena** — decisions inferred from adjacent domains that the dataset does NOT cover but COULD steal from. Each entry: adjacent domain, decision pattern transplanted, expected friction during transplant, and the time saved by NOT having to re-derive the pattern from scratch.
+- **Conocimiento Negativo** — what the dataset tells you NOT to do. Each entry: anti-pattern, the bait that draws people into it, the cost of the trap (in hours / dollars / opportunity), and the early-warning signal that lets the Owner detect the trap BEFORE paying its cost.
+
+The fusion is non-accidental: outside-the-box inference IS the harvest mechanism for inheriting other people's negative knowledge. Skip the failure ladder; inherit it. The Negative Knowledge Vault is the dataset's most defensible IP — knowing what to skip is a permanent compounding advantage and is harder for a competitor to replicate than knowing what to do.
+
+Reject patterns: inferences that require expertise the Owner does not have; negative knowledge without an early-warning signal (it then cannot fire in time to save the cost); meta-commentary about how clever the cross-domain transfer is.
+
+-- FIN DE TIER 3 --
+
+-- FIN DE DATASET v1.2 --
 
 ---
 
@@ -193,10 +282,10 @@ Identify shared schema collisions the Owner must resolve **before** wiring this 
 
 - `## 4. CONEXIÓN CON UNIVERSAL KNOWLEDGE DISTILLATION LAYER (UKDL)` — cross-project destilación transversal + IP defendibility tagging.
 - `## 5. REGLAS DE EJECUCIÓN PARA LA IA` — hard rules (ROI temporal threshold, secret-handling via `/etc/` + 600 perms, Bedrock-agnostic export discipline).
-- `## 🧮 CALCULADORA DE ROI DEL DATASET (PRE-SOFTWARE)` — dataset-level ROI card, distinct from per-section cards.
-- `## 🧨 KILL-SWITCH CANÓNICO` — incinerate code, return to "Refugio" simplicity if airport-style complexity creeps in.
+- `## 🧮 CALCULADORA DE ROI DEL DATASET (PRE-SOFTWARE)` — dataset-level ROI card, distinct from per-section cards (rendered inside §18).
+- `## 🧨 KILL-SWITCH CANÓNICO` — incinerate code, return to "Refugio" simplicity if airport-style complexity creeps in (canonical marker lives inside §16 T3).
 
-The driver may surface these as appendix sections in `READY.md` without counting them against the 19 mandatory sections.
+The driver may surface these as appendix sections in `READY.md` without counting them against the 22 mandatory sections.
 
 ---
 
