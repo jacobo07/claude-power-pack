@@ -34,6 +34,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | reverse engineer, video analysis, YouTube, competitor, SOTA | VRE: Video-RE | `parts/sleepy/video-re.md` |
 | knowledge graph, graphify, obsidian, vault | KG: Knowledge Graph | `parts/sleepy/knowledge-graph.md` |
 | governance vault, leyes, mistakes, gates, vault sync | GV: Governance Vault | `parts/sleepy/governance-vault.md` |
+| destila, destilar, KobiiDistillerOS, prompt madre, tier 1 2 3, vMAX, 22 secciones, Tandas, Partes, UKDL | D: KobiiDistiller | `parts/sleepy/distiller.md` |
 
 ## Quick Reference
 
@@ -53,7 +54,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
-| `/cpp-distill <source> [--global] [--force]` | Atomic-ingest + 19-section distillation + IRE-7 materialization | commands/distill.md |
+| `/cpp-distill <source> [--global] [--force]` / `/cpp-distill check <path>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7 materialization; `check` subcommand validates an existing output dir | commands/distill.md |
 
 ## SkillBank Index
 

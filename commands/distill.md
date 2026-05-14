@@ -1,6 +1,6 @@
 ---
 name: cpp-distill
-description: "Atomic-ingest + 19-section distillation + IRE-Stage-7 materialization. Reads a raw dataset, applies the Mother Prompt verbatim, writes Tier_N/Seccion_N.md across 19 sections with ROI blocks, then validates."
+description: "Atomic-ingest + 22-section distillation + IRE-Stage-7 materialization. Reads a raw dataset, applies the Mother Prompt verbatim, writes Tier_N/Seccion_N.md across 22 sections with Tandas & Partes structural layer + ROI blocks, then validates. Subcommands: ingest (default) / check."
 allowed-tools:
   - Bash
   - Read
@@ -11,9 +11,9 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# /cpp-distill — KobiiDistillerOS Genesis
+# /cpp-distill — KobiiDistillerOS (v1.2 Sovereign Sealing)
 
-Project-agnostic distillation pipeline. Takes a single source file (text, markdown, dump), runs it through the **Atomic Ingestor** (size cap + placeholder rejection + secret redaction + chunking), drives the **Distillation Engine** in-session against the **Mother Prompt** at `parts/sleepy/distiller.md`, and **Materializes** the result as 19 section files following the verbatim dataset markers.
+Project-agnostic distillation pipeline. Takes a single source file (text, markdown, dump), runs it through the **Atomic Ingestor** (size cap + placeholder rejection + secret redaction + chunking), drives the **Distillation Engine** in-session against the **Mother Prompt** at `parts/sleepy/distiller.md`, and **Materializes** the result as 22 section files following the verbatim dataset markers.
 
 The driver is the running Claude session itself (no external API). Tokens are spent against your active Power-Pack context; the Mother Prompt is the only compression layer.
 
@@ -23,12 +23,24 @@ The driver is the running Claude session itself (no external API). Tokens are sp
 
 ```
 /cpp-distill <source-file> [--global] [--force] [--scope-only]
+/cpp-distill check <path>
 ```
+
+Underlying CLI surface (used by the in-session driver and CI):
+
+```
+python tools/distiller/run.py ingest <source> [--global] [--force] [--scope-only] [--verify]
+python tools/distiller/run.py check <output-dir>
+python tools/distiller/run.py <source> ...      # back-compat → ingest
+```
+
+Arguments:
 
 - `<source-file>` — absolute or CWD-relative path to the raw input.
 - `--global` — write outputs under `~/.claude/knowledge_vault/distilled/<source-stem>/` instead of `./.knowledge_vault/distilled/<source-stem>/`.
 - `--force` — override the 1 MB hard input cap (slow / costly; the cap is there to stop accidental whole-repo dumps).
 - `--scope-only` — emit only the `READY.md` orchestration manifest; do not write any Tier_N section files. Useful for dry-runs.
+- `check <path>` — walk an existing output directory and run the validator. Wraps `validate.py`; same exit codes.
 
 If no argument is passed, AskUserQuestion: **"Which file do you want to distill? Provide an absolute path or a path relative to the current project."**
 
@@ -43,17 +55,21 @@ python tools/distiller/ingest.py <source-file> [--force]
 ```
 
 The ingestor:
+
 - Asserts size ≤ 1 MB unless `--force` is set.
-- Aborts (exit ≠ 0) if the input contains literal placeholder tokens: `TODO`, `FIXME`, `HACK`, `PLACEHOLDER`, `Coming Soon`, `<TU_URL_REAL>`, `raise NotImplementedError`, `pass # TODO`. The Reality Contract is enforced at input as well as output.
-- Redacts secrets in-place (Discord webhook URLs, SSH private-key blocks, SSH key paths matching `~/.ssh/<name>`, `kobicraft_*` token patterns, AWS access keys, GitHub PATs, Bearer JWTs) and replaces them with `[REDACTED:<type>]`. The original file is never modified; the redacted output is written to a sidecar.
+- Aborts (exit 2) if the input contains literal placeholder tokens outside Markdown code fences (`TODO`, `FIXME`, `HACK`, `PLACEHOLDER`, `Coming Soon`, `<TU_URL_REAL>`, `raise NotImplementedError`, etc.). The Reality Contract is enforced at input as well as output. Meta-discourse inputs (documents that name the forbidden tokens) can be wrapped in backticks to demote the mention to a documented enumeration rather than a violation.
+- Redacts secrets in-place (Discord webhook URLs, SSH private-key blocks, SSH key paths `~/.ssh/<name>`, `kobicraft_*` token patterns, AWS access keys, GitHub PATs, Bearer JWTs, generic `api_key=...` patterns) and replaces them with `[REDACTED:<type>]`. The original file is never modified; the redacted output is written to a sidecar.
 - Chunks the source on `^## ` headings, falling back to 50 KB blocks.
 - Emits a sidecar `<source-stem>.ingest.json` next to the raw input with `{size_bytes, chunks: [...], redactions: [...]}`.
+
+A lightweight `--scan-only` mode runs gates 2+3 over an arbitrary input file (e.g. for Reality-Contract probes against documentation) and exits 0/2 with a JSON summary; no sidecar is written.
 
 If the ingestor exits non-zero, abort the slash-command run and surface the exit code + message to the operator.
 
 ## Step 2 — Resolve output root
 
 Compute:
+
 ```
 stem = basename(source-file) without extension
 default = ./.knowledge_vault/distilled/<stem>/
@@ -66,45 +82,50 @@ Create `output_root/Tier_1/`, `output_root/Tier_2/`, `output_root/Tier_3/`. The 
 ## Step 3 — Load the Mother Prompt
 
 Read `parts/sleepy/distiller.md` (lazy-loaded; do NOT inline at session start). The Mother Prompt defines:
-- Section numbering and titles (verbatim from the dataset).
-- The mandatory per-section blocks (`🧮 Calculadora de ROI`, `🏁 Cierre patrimonial`, `🦅 Comentario del Oráculo`).
-- The tier-end markers (`-- FIN DE TIER 1 --`, etc.).
-- The dataset-final marker (`-- FIN DE DATASET v1.0 --`).
 
-If the Mother Prompt contains the line `<<AWAITING OWNER VERBATIM>>` anywhere, halt immediately with:
-> *"The Mother Prompt is still a scaffold — Owner must paste the verbatim template before /cpp-distill can run end-to-end. Sections 1–6 are inferred and safe to draft, but 7–19 will refuse to materialize until the gap-marker is removed."*
+- The 22 section titles (verbatim from the dataset).
+- The Tandas & Partes structural contract (T1 Baseline / T2 Chase-Gain / T3 Síntesis × Parte I Narrativa / II Estructura / III ROI).
+- The mandatory per-section blocks (`🧮 Calculadora de ROI`, `🏁 Cierre patrimonial`, `🦅 Comentario del Oráculo`).
+- The tier-end markers (`-- FIN DE TIER 1 --` after §7, `-- FIN DE TIER 2 --` after §13, `-- FIN DE TIER 3 --` after §22).
+- The dataset-final marker (`-- FIN DE DATASET v1.2 --`).
+- The canonical `🧨 KILL-SWITCH` marker (lives inside §16 T3).
 
 ## Step 4 — Materialize (IRE Stage 7)
 
-For each section N (1..19), use the Mother Prompt to draft a markdown file at `output_root/Tier_<T>/Seccion_<N>.md`. Every section MUST contain:
+For each section N (1..22), use the Mother Prompt to draft a markdown file at `output_root/Tier_<T>/Seccion_<N>.md`. Every section MUST contain:
+
 1. A heading `## N. <SECTION_TITLE>` (titles from `schema.json#section_titles`).
-2. Body content distilled from the ingestor's chunks. No filler. No `TODO`. No placeholder UI / button / endpoint references.
+2. Tandas & Partes body: every section declares all three depth-tandas (T1 / T2 / T3) and all three orthogonal partes (I / II / III) per tanda. Validator exit 1 if any marker is missing.
 3. A `🧮 Calculadora de ROI` block with all required fields (`Tipo`, `ROI Temporal`, `ROI Riesgo`, `Escenario`, `Explicación`).
 4. A `🏁 Cierre patrimonial` closing line.
 5. A `🦅 Comentario del Oráculo` aside (1–3 sentences).
 
-After the last section of a tier, append the tier-end marker. After the very last section, append `-- FIN DE DATASET v1.0 --`.
+After the last section of a tier, append the tier-end marker. After the very last section (§22), append `-- FIN DE DATASET v1.2 --`.
 
 Use the `Write` tool sequentially (one file per call) — bulk parallel writes drop payloads under the current harness.
 
 ## Step 5 — Validate
 
 ```bash
+python tools/distiller/run.py check <output_root>
+# or directly:
 python tools/distiller/validate.py <output_root>
 ```
 
 Validator exit codes:
-- `0` — pass (every section has its blocks, every tier has its marker, no forbidden tokens, no leaked secrets)
-- `1` — missing-marker (section heading, ROI block, tier-end, or final marker)
-- `2` — forbidden-token (`TODO` / `FIXME` / etc. slipped through)
-- `3` — redaction-violation (a secret pattern present in output — should never happen post-ingestor; if it does, abort everything and audit)
-- `4` — schema-parse error (`schema.json` itself is malformed)
+
+- `0` — pass (every section has its blocks, every tier has its marker, no forbidden tokens, no leaked secrets, voice gate clean).
+- `1` — missing-marker (section heading, Tanda or Parte marker, ROI block, tier-end, or final marker absent).
+- `2` — forbidden-token (`TODO` / `FIXME` / `Coming Soon` / etc. slipped through outside code fences).
+- `3` — redaction-violation (a secret pattern present in output — should never happen post-ingestor; if it does, abort everything and audit).
+- `4` — schema-parse error (`schema.json` itself is malformed).
+- `5` — voice-gate violation (`schema.voice_gate.mode == "enforcing"`; corporate blacklist hit AND zero nostalgic anchor hits across the aggregated output; global scope).
 
 If exit ≠ 0, surface the validator output verbatim and STOP. Do not auto-fix and re-run — the operator decides.
 
 ## Step 6 — Visual eyeball (first-run mandate)
 
-On the FIRST `/cpp-distill` invocation against any source file, after validator passes, open `output_root/Tier_1/Seccion_1.md` and compare against `fixtures/expected/Seccion_1.md`. Confirm structural parity (heading + ROI block + closing markers). If a discrepancy exists, treat as failure and re-iterate via the universal iteration protocol at `C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt`.
+On the FIRST `/cpp-distill` invocation against any source file, after validator passes, open `output_root/Tier_1/Seccion_1.md` and compare against `fixtures/expected/Tier_1/Seccion_1.md`. Confirm structural parity (heading + Tandas/Partes shape + ROI block + closing markers). If a discrepancy exists, treat as failure and re-iterate via the universal iteration protocol at `C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt`.
 
 Subsequent runs skip the eyeball step unless the operator passes `--review`.
 
@@ -115,12 +136,13 @@ Subsequent runs skip the eyeball step unless the operator passes `--review`.
 - Zero placeholders in output. Validator exit code 2 = hard stop.
 - Zero leaked secrets. Validator exit code 3 = audit incident.
 - Empty buttons / 401-style stub responses / `Coming Soon` blocks are treated as forbidden tokens — the schema regex catches them at validate time.
+- Voice gate enforcing (exit 5): blacklist of corporate vocabulary AND nostalgic anchors aggregated globally. If your output is ALL corporate AND zero Refugio / MCPE / 2014 / Helsinki / etc., the validator hard-fails.
 - Snowball: every operator-correction round-trip is appended to `vault/knowledge_base/session_lessons.md` with date + symptom + root cause + fix + vaccine.
 
 ## Out of scope (future cycle)
 
-Whisper audio ingestion · vision/video DNA · the "Concilio de 19 Agentes" parallel swarm · ROI Predictor pre-gate · Helsinki Live-Feed wiring · external Claude/Gemini API drivers. Each is a separate `/ultra` cycle.
+Whisper audio ingestion · vision/video DNA · the "Concilio de 22 Agentes" parallel swarm · ROI Predictor pre-gate · Helsinki Live-Feed wiring · external Claude/Gemini API drivers. Each is a separate `/ultra` cycle.
 
 ## Reference
 
-Born of `/ultra plan kobiidistilleros-genesis` (2026-05-14). Dataset: `Dataset KobiiDistillerOS 1.txt`. Snowball ledger: `vault/knowledge_base/session_lessons.md`.
+Born of `/ultra plan kobiidistilleros-genesis` (2026-05-14). v1.2 Sovereign Sealing landed by `/ultra plan` — 22-section singularity with Tandas & Partes structural layer. Snowball ledger: `vault/knowledge_base/session_lessons.md`.
