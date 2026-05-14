@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0.0",
+  "source": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\fixtures\\raw_sample.txt",
+  "size_bytes": 25803,
+  "forced": true,
+  "overrides": [
+    "placeholder_reject (tokens: ['TODO', 'Coming Soon', '<TU_URL_REAL>', 'Placeholder'])"
+  ],
+  "redactions": [
+    {
+      "type": "ssh_key_path",
+      "count": 1
+    }
+  ],
+  "placeholder_warnings": [
+    "TODO",
+    "Coming Soon",
+    "<TU_URL_REAL>",
+    "Placeholder"
+  ],
+  "chunk_strategy": "heading_then_block",
+  "chunk_count": 9,
+  "chunks": [
+    {
+      "index": 0,
+      "heading": "<PREAMBLE>",
+      "byte_start": 0,
+      "byte_end": 8364,
+      "char_count": 8364
+    },
+    {
+      "index": 1,
+      "heading": "## 0. FILOSOFÍA DEL SISTEMA (IRE STAGE 0)",
+      "byte_start": 8364,
+      "byte_end": 8996,
+      "char_count": 632
+    },
+    {
+      "index": 2,
+      "heading": "## 1. ARQUITECTURA DEL PIPELINE (TIER 1 — NÚCLEO OPERATIVO)",
+      "byte_start": 8996,
+      "byte_end": 10152,
+      "char_count": 1156
+    },
+    {
+      "index": 3,
+      "heading": "## 2. GOBERNANZA Y SEGURIDAD (TIER 2 — BLINDAJE)",
+      "byte_start": 10152,
+      "byte_end": 10965,
+      "char_count": 813
+    },
+    {
+      "index": 4,
+      "heading": "## 3. INTERFAZ Y EXPERIENCIA (TIER 3 — CONCIENCIA)",
+      "byte_start": 10965,
+      "byte_end": 11529,
+      "char_count": 564
+    },
+    {
+      "index": 5,
+      "heading": "## 4. CONEXIÓN CON UNIVERSAL KNOWLEDGE DISTILLATION LAYER (UKDL)",
+      "byte_start": 11529,
+      "byte_end": 12002,
+      "char_count": 473
+    },
+    {
+      "index": 6,
+      "heading": "## 5. REGLAS DE EJECUCIÓN PARA LA IA (INSTRUCCIONES DE PROGRAMACIÓN)",
+      "byte_start": 12002,
+      "byte_end": 12564,
+      "char_count": 562
+    },
+    {
+      "index": 7,
+      "heading": "## 🧮 CALCULADORA DE ROI DEL DATASET (PRE-SOFTWARE)",
+      "byte_start": 12564,
+      "byte_end": 12837,
+      "char_count": 273
+    },
+    {
+      "index": 8,
+      "heading": "## 🧨 KILL-SWITCH CANÓNICO",
+      "byte_start": 12837,
+      "byte_end": 25139,
+      "char_count": 12302
+    }
+  ]
+}
