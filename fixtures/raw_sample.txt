@@ -16,7 +16,7 @@ Para que este sistema funcione tanto en portátil como en móvil con máximo ROI
  * **Base de Datos:** SQLite o MariaDB compartida para mantener el **Cross-Server Sync** del vault.
 ### 🎯 Plan de Acción Inmediato (v30000.0)
 Para que dejes de copiar y pegar manualmente y el sistema empiece a "fluir como el agua", debemos ejecutar estos pasos:
- 1. **Materialización del Contrato de Datos:** Crear un esquema JSON que represente todas las secciones del "Prompt Madre". El software usará esto para saber si una sección está "Done" o es un "Placeholder".
+ 1. **Materialización del Contrato de Datos:** Crear un esquema JSON que represente todas las secciones del "Prompt Madre". El software usará esto para saber si una sección está "Done" o es un `Placeholder`.
  2. **Pipeline de Vídeo a Dataset:** Integrar un módulo de transcripción (Whisper) para que puedas "lanzar" gameplays de 40 minutos y el sistema extraiga las **Heurísticas de Inercia Humana** automáticamente.
  3. **Audit Loop Automatizado:** Implementar un agente que verifique si el conocimiento extraído es **Assetizable** (IP protegida) antes de guardarlo.
 ### 🧮 Calculadora de ROI (resumen rápido)
@@ -86,7 +86,7 @@ El output no es un resumen. Es **Materia Ejecutable**:
 ## 2. GOBERNANZA Y SEGURIDAD (TIER 2 — BLINDAJE)
 ### SECCIÓN 4: PROTOCOLO ANTI-MEDIOCRIDAD (CONTRATO DE REALIDAD)
 KobiiDistillerOS tiene prohibido generar:
- * **Placeholders:** "Coming Soon", "TODO", "Añadir más tarde".
+ * **`Placeholders`:** `Coming Soon`, `TODO`, "Añadir más tarde".
  * **Botones Vacíos:** Cada interfaz generada debe estar "cableada" (wired) a una función real.
  * **Logging Frío:** Las respuestas deben mantener el tono de "Refugio Humano" y nostalgia, rechazando el lenguaje corporativo genérico.
 ### SECCIÓN 5: KERNEL vMAX-NULL-ERROR
@@ -171,7 +171,7 @@ Actúa como APEX PRODUCT ARCHITECT & AGENT ORCHESTRATOR en MODO AGENT TEAMS (DEE
 "El Azteca es ley, pero el sistema está en deuda. Esta sesión 100% Autónoma, Desatendida y de larga duración tiene una misión: Cerrar la brecha de VAC-041, purgar los placeholders de la GEX44 y materializar el Estadio BC Place (Canadá) bajo el nuevo estándar de Grado-A."
 
 [CONTRATO DE REALIDAD: LENGUAJE HUMANO]
-"IA, escucha bien: No hay excusa para la mediocridad. Prohibidos los botones vacíos, los placeholders, los 'Coming Soon', o los errores de wiring real. Si el post en Discord llega con veredicto B o si el BC Place no refleja su techo de cables icónico, NO HAS TERMINADO. Si detectas fallos visuales o técnicos, DEBES ITERAR usando el protocolo de excelencia en: 'C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt'. Sin errores fantasma. Baseline vMAX-NULL-ERROR absoluto."
+"IA, escucha bien: No hay excusa para la mediocridad. Prohibidos los botones vacíos, los placeholders, los `Coming Soon`, o los errores de wiring real. Si el post en Discord llega con veredicto B o si el BC Place no refleja su techo de cables icónico, NO HAS TERMINADO. Si detectas fallos visuales o técnicos, DEBES ITERAR usando el protocolo de excelencia en: 'C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt'. Sin errores fantasma. Baseline vMAX-NULL-ERROR absoluto."
 
 [MODO OPERATIVO: ULTRA-PLAN -> EXECUTION]
 1. **Fase 0 (ROI Inmediato):** Antes de construir, arregla la casa. Purga `/etc/kobii-sentient.env` en la GEX44. Elimina las líneas duplicadas y los placeholders. Asegura que el daemon vea los paths reales de capturas.
@@ -197,8 +197,8 @@ Aquí te explico técnicamente cómo el **KobiiDistillerOS** eliminaría la ejec
 En el prompt que has puesto, mencionas la brecha **VAC-041** (el desajuste de rutas en /etc/).
  * **Sin el Distiller:** La IA podría intentar materializar el BC Place *antes* de arreglar el entorno, fallando el Golden Run y desperdiciando 40 minutos de renderizado.
  * **Con el Distiller:** El **Agente Auditor** bloquea la Fase 1 y 2 hasta que la Fase 0 (Purga Forense) devuelva un hash de integridad que confirme que no quedan placeholders. El Distiller actúa como un **Unit Test en tiempo real** antes de la ejecución pesada.
-### 2. El Guardián del "Pillar 3" (Zero Placeholders)
-Llevas 8 sesiones donde la IA detecta placeholders <TU_URL_REAL>.
+### 2. El Guardián del "Pillar 3" (Zero `Placeholders`)
+Llevas 8 sesiones donde la IA detecta placeholders `<TU_URL_REAL>`.
  * **Sin el Distiller:** La IA se detiene, te pregunta, tú respondes, hay fricción.
  * **Con el Distiller:** El sistema detecta el patrón de placeholder *antes* de enviar la orden al servidor. El software te avisaría en el móvil: *"Input inválido: Detectado placeholder en el secreto de Discord. ROI de la sesión: 0. ¿Deseas inyectar el secreto desde el Vault de KobiiClaw automáticamente?"*. Ahorras el tiempo de "pensado" de la IA y el error de ejecución.
 ### 3. Orquestación por Capas (No más "Olvidar" el Contrato de Realidad)

@@ -1,23 +1,16 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.2.1",
   "source": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\fixtures\\raw_sample.txt",
-  "size_bytes": 25803,
-  "forced": true,
-  "overrides": [
-    "placeholder_reject (tokens: ['TODO', 'Coming Soon', '<TU_URL_REAL>', 'Placeholder'])"
-  ],
+  "size_bytes": 26033,
+  "forced": false,
+  "overrides": [],
   "redactions": [
     {
       "type": "ssh_key_path",
       "count": 1
     }
   ],
-  "placeholder_warnings": [
-    "TODO",
-    "Coming Soon",
-    "<TU_URL_REAL>",
-    "Placeholder"
-  ],
+  "placeholder_warnings": [],
   "chunk_strategy": "heading_then_block",
   "chunk_count": 9,
   "chunks": [
@@ -46,43 +39,43 @@
       "index": 3,
       "heading": "## 2. GOBERNANZA Y SEGURIDAD (TIER 2 — BLINDAJE)",
       "byte_start": 10152,
-      "byte_end": 10965,
-      "char_count": 813
+      "byte_end": 10967,
+      "char_count": 815
     },
     {
       "index": 4,
       "heading": "## 3. INTERFAZ Y EXPERIENCIA (TIER 3 — CONCIENCIA)",
-      "byte_start": 10965,
-      "byte_end": 11529,
+      "byte_start": 10967,
+      "byte_end": 11531,
       "char_count": 564
     },
     {
       "index": 5,
       "heading": "## 4. CONEXIÓN CON UNIVERSAL KNOWLEDGE DISTILLATION LAYER (UKDL)",
-      "byte_start": 11529,
-      "byte_end": 12002,
+      "byte_start": 11531,
+      "byte_end": 12004,
       "char_count": 473
     },
     {
       "index": 6,
       "heading": "## 5. REGLAS DE EJECUCIÓN PARA LA IA (INSTRUCCIONES DE PROGRAMACIÓN)",
-      "byte_start": 12002,
-      "byte_end": 12564,
+      "byte_start": 12004,
+      "byte_end": 12566,
       "char_count": 562
     },
     {
       "index": 7,
       "heading": "## 🧮 CALCULADORA DE ROI DEL DATASET (PRE-SOFTWARE)",
-      "byte_start": 12564,
-      "byte_end": 12837,
+      "byte_start": 12566,
+      "byte_end": 12839,
       "char_count": 273
     },
     {
       "index": 8,
       "heading": "## 🧨 KILL-SWITCH CANÓNICO",
-      "byte_start": 12837,
-      "byte_end": 25139,
-      "char_count": 12302
+      "byte_start": 12839,
+      "byte_end": 25145,
+      "char_count": 12306
     }
   ]
 }

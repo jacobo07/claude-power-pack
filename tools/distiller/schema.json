@@ -110,8 +110,8 @@
   },
 
   "voice_gate": {
-    "_comment": "Phase C (Commit #3) flips mode to enforcing. Scope is GLOBAL: blacklist hits AND anchor counts are aggregated across the entire output_dir (all 22 sections combined). Exit 5 fires iff at least one blacklist token appears AND zero anchor tokens appear in the full dataset.",
-    "mode": "advisory",
+    "_comment": "Phase C (Commit #3) flipped mode to enforcing. Scope is GLOBAL: blacklist hits AND anchor counts are aggregated across the entire output_dir (all 22 sections combined). Exit 5 fires iff at least one blacklist token appears AND zero anchor tokens appear in the full dataset.",
+    "mode": "enforcing",
     "scope": "global",
     "exit_code_when_enforcing": 5,
     "blacklist_candidates": [

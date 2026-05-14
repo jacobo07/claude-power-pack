@@ -4,21 +4,26 @@
 
 Walks <output_dir>/Tier_<T>/Seccion_<N>.md, enforces the contract declared
 in tools/distiller/schema.json (verbatim markers + per-section required
-blocks + forbidden tokens + redaction patterns + tier-end + dataset-final
-markers).
+blocks + Tandas & Partes structural layer + forbidden tokens + redaction
+patterns + tier-end + dataset-final markers + voice gate).
 
 Exit codes (highest wins when multiple errors land):
-    0   pass — every section materialized, every block present, no
-        forbidden tokens, no leaked secrets.
+    0   pass — every section materialized, every block present, structural
+        markers present, no forbidden tokens, no leaked secrets, voice gate
+        clean.
     1   missing-marker — a section file is absent, gap-marked, or missing
-        its heading / ROI block / closing line / oracle aside / tier-end
-        marker / dataset-final marker.
+        its heading / ROI block / closing line / oracle aside / Tanda /
+        Parte / tier-end marker / dataset-final marker.
     2   forbidden-token — a literal forbidden token (TODO, FIXME, Coming
         Soon, <TU_URL_REAL>, ...) slipped into output.
     3   redaction-violation — a secret pattern surfaced in output. This
         should be impossible post-ingestor; if it fires, treat as an audit
         incident and stop the entire pipeline run.
     4   schema-parse error — schema.json itself is malformed or missing.
+    5   voice-gate violation — when schema.voice_gate.mode == "enforcing"
+        and at least one blacklist token appears across the aggregated
+        output AND zero anchor tokens appear (global scope per
+        schema.voice_gate.scope). Strict Mode per Q2.a Sovereign Sealing.
 
 Usage:
     python tools/distiller/validate.py <output_dir>
@@ -72,6 +77,58 @@ def _roi_field_present(body: str, field: str) -> bool:
     return bool(re.search(pattern, body))
 
 
+_TANDA_CAPTURE_RE = re.compile(r"^###\s+Tanda\s+(T[123])\b", re.MULTILINE)
+_PARTE_CAPTURE_RE = re.compile(r"^####\s+Parte\s+(I{1,3})\b", re.MULTILINE)
+
+
+def _check_tandas_partes(body: str, rel) -> List[Tuple[int, str]]:
+    """Enforce schema.tandas_partes_spec per section body: every section
+    must declare all three depth-tandas (T1/T2/T3) and all three orthogonal
+    partes (I/II/III). Returns a list of (exit_code, message) tuples."""
+    errors: List[Tuple[int, str]] = []
+    tandas_seen = set(_TANDA_CAPTURE_RE.findall(body))
+    partes_seen = set(_PARTE_CAPTURE_RE.findall(body))
+    needed_tandas = {"T1", "T2", "T3"}
+    needed_partes = {"I", "II", "III"}
+    if tandas_seen != needed_tandas:
+        missing = sorted(needed_tandas - tandas_seen)
+        errors.append((1, f"{rel}: Tandas check — missing {missing} (found {sorted(tandas_seen)})"))
+    if partes_seen != needed_partes:
+        missing = sorted(needed_partes - partes_seen)
+        errors.append((1, f"{rel}: Partes check — missing {missing} (found {sorted(partes_seen)})"))
+    return errors
+
+
+def _check_voice_gate(all_text: str, schema: dict) -> List[Tuple[int, str]]:
+    """Global-scope voice gate. When schema.voice_gate.mode == "enforcing",
+    the aggregated text across all materialized section files is scanned for
+    corporate-vocabulary blacklist hits and nostalgic-anchor hits. If at
+    least one blacklist token appears AND zero anchor tokens appear → exit 5.
+
+    Code fences are stripped before scanning so contract documents that
+    enumerate the blacklist by name (inside backticks) don't trip the gate."""
+    vg = schema.get("voice_gate", {})
+    if vg.get("mode") != "enforcing":
+        return []
+    scan = _strip_code_fences(all_text)
+    blacklist_hits = [tok for tok in vg.get("blacklist_candidates", []) if tok in scan]
+    anchor_hits = [tok for tok in vg.get("anchors_candidates", []) if tok in scan]
+    if blacklist_hits and not anchor_hits:
+        return [
+            (
+                vg.get("exit_code_when_enforcing", 5),
+                (
+                    "voice gate — "
+                    f"{len(blacklist_hits)} blacklist hit(s) {blacklist_hits[:5]} "
+                    "AND zero anchor hits across entire output (global scope). "
+                    "Either remove the corporate vocabulary or add nostalgic anchors "
+                    "(Refugio / MCPE / 2014 / cabaña / linterna / Helsinki / etc.)."
+                ),
+            )
+        ]
+    return []
+
+
 def validate(output_dir: Path) -> int:
     schema = _load_schema()
 
@@ -96,6 +153,8 @@ def validate(output_dir: Path) -> int:
         for n in tier["sections"]:
             expected_files[n] = output_dir / tier_name / f"Seccion_{n}.md"
 
+    materialized_bodies: List[str] = []
+
     for n in sorted(expected_files):
         fpath = expected_files[n]
         rel = fpath.relative_to(output_dir.parent if fpath.is_absolute() else Path.cwd())
@@ -104,6 +163,7 @@ def validate(output_dir: Path) -> int:
             continue
 
         body = _read_text(fpath)
+        materialized_bodies.append(body)
 
         if "<<AWAITING OWNER VERBATIM" in body:
             errors.append(
@@ -126,6 +186,8 @@ def validate(output_dir: Path) -> int:
             errors.append((1, f"{rel}: missing closing marker '{closing_marker}'"))
         if oracle_marker not in body:
             errors.append((1, f"{rel}: missing oracle aside '{oracle_marker}'"))
+
+        errors.extend(_check_tandas_partes(body, rel))
 
         scan_body = _strip_code_fences(body)
         for token in forbidden_tokens:
@@ -151,13 +213,17 @@ def validate(output_dir: Path) -> int:
                 rel = last_path.relative_to(output_dir.parent if last_path.is_absolute() else Path.cwd())
                 errors.append((1, f"{rel}: missing tier-end marker '{marker}'"))
 
-    # Dataset-final marker lives on the very last section (19).
+    # Dataset-final marker lives on the very last section file.
     last_overall = expected_files[max(expected_files)]
     if last_overall.is_file():
         body = _read_text(last_overall)
         if dataset_final not in body:
             rel = last_overall.relative_to(output_dir.parent if last_overall.is_absolute() else Path.cwd())
             errors.append((1, f"{rel}: missing dataset-final marker '{dataset_final}'"))
+
+    # Voice gate (global scope) — aggregates across every materialized body.
+    if materialized_bodies:
+        errors.extend(_check_voice_gate("\n".join(materialized_bodies), schema))
 
     if not errors:
         print(f"[validate] OK — {len(expected_files)} sections validated against schema v{schema.get('version','?')}")

@@ -25,8 +25,13 @@ deterministic: running the ingestor twice on the same input with the
 same schema produces byte-identical output. This is what makes
 `fixtures/expected/ingest_sample.json` a useful golden.
 
+`--scan-only` is the lightweight mode: runs gates 2 and 3 only and
+prints a JSON summary instead of writing a sidecar. Returns exit 2
+if any forbidden token survives the code-fence-aware scan, else 0.
+Reuses the same regex stack so it cannot diverge from full ingest.
+
 Exit codes:
-  0  OK — sidecar written.
+  0  OK — sidecar written (default) or scan-only clean.
   1  usage / file-not-found.
   2  placeholder reject (input contains a forbidden token outside
      code fences and `--force` was not passed).
@@ -129,6 +134,28 @@ def _chunk(text: str, heading_re: re.Pattern, fallback_bytes: int) -> List[dict]
     return chunks
 
 
+def _run_scan_only(src: Path, schema: dict) -> int:
+    """Run gates 2 + 3 (placeholder reject + redaction probe) without
+    writing a sidecar. Used to validate arbitrary input files against the
+    Reality Contract — e.g. parts/sleepy/distiller.md before commit."""
+    text = _read_text(src)
+    forbidden_tokens = schema["forbidden_tokens"]
+    redaction_patterns = schema["redaction_patterns"]
+
+    placeholder_hits = _find_placeholders(text, forbidden_tokens)
+    _, redaction_log = _apply_redactions(text, redaction_patterns)
+
+    summary = {
+        "mode": "scan-only",
+        "source": str(src),
+        "placeholder_hits": placeholder_hits,
+        "redaction_log": redaction_log,
+        "result": "FAIL" if placeholder_hits else "OK",
+    }
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return 2 if placeholder_hits else 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="ingest.py",
@@ -145,6 +172,11 @@ def main() -> None:
         default=None,
         help="path for sidecar JSON (default: <source>.ingest.json)",
     )
+    parser.add_argument(
+        "--scan-only",
+        action="store_true",
+        help="scan input for forbidden tokens and secret patterns (code-fence-aware); print JSON summary; exit 0 if clean / 2 if dirty. No sidecar written.",
+    )
     args = parser.parse_args()
 
     src = Path(args.source).resolve()
@@ -153,6 +185,10 @@ def main() -> None:
         sys.exit(1)
 
     schema = _load_schema()
+
+    if args.scan_only:
+        sys.exit(_run_scan_only(src, schema))
+
     limits = schema["ingestor_limits"]
     size_cap = limits["max_input_bytes"]
     fallback_bytes = limits["chunk_fallback_block_bytes"]
