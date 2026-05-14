@@ -85,33 +85,83 @@ The vault must be accessible from mobile (Flutter / Streamlit) and PC (Claude Co
 
 ---
 
-## SECCIÓN 7 — <<AWAITING OWNER VERBATIM — Q1.a>>
+## SECCIÓN 7 — CITAS CLAVE (DESTILADAS)
 
-`run.py` halts here until the Owner pastes the verbatim Mother Prompt body for Section 7. Until that paste lands, this section MUST NOT be materialized into output. The validator treats `<<AWAITING OWNER VERBATIM>>` strings inside output as exit code 1 (missing-marker).
+Extract verbatim quotations from the source whose **removal would degrade the dataset's strategic value**. Each citation: ≤ 2 lines, source-attributed (timestamp / page / speaker / line-number when known). Cap 5-12 citations per section. A citation only counts as DESTILADA if it compresses a **transferable principle**, not an anecdote.
 
-## SECCIÓN 8 — <<AWAITING OWNER VERBATIM — Q1.a>>
+Reject patterns:
+- Bare aphorisms with no operational consequence.
+- Quotes lifted out of context that lose meaning.
+- Anything that paraphrases — verbatim only.
 
-(see Sección 7 binding rule.)
+Each citation must be followed by a 1-line **interpretation** stating how the principle is operationalizable in the Owner's stack.
 
-## SECCIÓN 9 — <<AWAITING OWNER VERBATIM — Q1.a>>
+## SECCIÓN 8 — ERRORES, SESGOS Y ANTI-PATRONES
 
-(see Sección 7 binding rule.)
+Catalog every failure mode the source surfaces — explicit mistakes, cognitive biases, and structural anti-patterns. For each entry emit:
 
-## SECCIÓN 10 — <<AWAITING OWNER VERBATIM — Q1.a>>
+- **Symptom** (1 sentence): what an observer sees when this fails.
+- **Root cause** (1 sentence): the underlying mechanism, not the trigger.
+- **Vaccine** (1 sentence): a concrete action — code-level, process-level, or architectural — that makes the failure mode unrepeatable.
 
-(see Sección 7 binding rule.)
+If the same anti-pattern projects across multiple project domains (e.g. plugin → daemon → frontend), note the cross-domain echo explicitly. Reject filter: entries whose vaccine is "be more careful" or "review more thoroughly" do not survive — only operationalizable vaccines count.
 
-## SECCIÓN 11 — <<AWAITING OWNER VERBATIM — Q1.a>>
+## SECCIÓN 9 — AGENTES Y WORKFLOWS (CREACIÓN DIRECTA DESDE EL DATASET)
 
-(see Sección 7 binding rule.)
+Convert the dataset's heuristics into deployable agent specs. Each agent entry:
 
-## SECCIÓN 12 — <<AWAITING OWNER VERBATIM — Q1.a>>
+- **Name** (kebab-case).
+- **Role** (1 line): what decision it owns.
+- **Trigger condition** (event, file path, or prompt pattern).
+- **Primary tool / skill / module dependency.**
+- **Exit condition** — the observable that proves the agent is done.
+- **Hand-off contract** — what artifact / state it surrenders to the next agent.
 
-(see Sección 7 binding rule.)
+Workflow chains: render as `A → B → C` with the predicate that fires each transition spelled out (`A→B when …`). Output is meant to drop directly into `~/.claude/agents/<name>.md` or a Power-Pack module skeleton — no rewriting required.
 
-## SECCIÓN 13 — <<AWAITING OWNER VERBATIM — Q1.a>>
+## SECCIÓN 10 — FUNCIONES NUEVAS PARA SAAS Y SISTEMAS IA EMPRESARIALES
 
-(see Sección 7 binding rule.)
+For each strategic vector in the dataset, propose 1-3 new product features deployable as SaaS or enterprise AI. Each feature entry:
+
+- **ICP** (Ideal Customer Profile, 1 line — who buys, why now).
+- **Pain neutralized** (1 sentence, observable cost in the buyer's day).
+- **MVP scope** — ≤ 2 weeks of build, named technologies, named integrations.
+- **Moat created** — the structural reason a competitor can't replicate this in < 6 months.
+
+Reject features whose moat collapses without continuous human curation, and features whose ICP is "everyone".
+
+## SECCIÓN 11 — SERVICIOS NUEVOS Y OCÉANOS AZULES (APLICABLE A LOS PROYECTOS DEL USUARIO)
+
+List blue-ocean services the dataset implies but does not name. Each entry:
+
+- **Served niche** (specific demographic + jobs-to-be-done).
+- **Why blue** — no entrenched competitor, named alternatives that miss this niche.
+- **ROI tier** — Temporal / Patrimonial / Soberanía / Escalabilidad.
+- **Risk profile** — Crítico / Alto / Moderado / Bajo.
+- **Owner-project anchor** — explicit mapping to KobiiCraft / KobiiSports Resort / LaptOps / Helsinki Live-Feed or a named adjacent venture.
+
+Reject filter: services that require licenses, permits, or jurisdictional permissions the Owner does not already hold.
+
+## SECCIÓN 12 — SÍNTESIS PARA ENTRENAMIENTO PROFUNDO
+
+Compress the dataset into a training-grade synthesis suitable as a fine-tuning seed or system-instruction prompt. Output three sub-layers:
+
+1. **Canonical taxonomy** — terms + definitions extracted verbatim from the source. No paraphrase.
+2. **Decision trees** — `if-then` chains the source endorses, rendered as readable nested bullets.
+3. **Failure-mode dictionary** — cross-referenced to §8, indexed so any vaccine can be looked up by symptom.
+
+Total under **1200 words** to fit a single context-injection window. If the source overruns that budget, prefer compression over completeness — strategic depth over surface breadth.
+
+## SECCIÓN 13 — INTEGRACIÓN MULTI-SISTEMA (INFINITYOPS CORE)
+
+Map how the dataset's outputs plug into the Owner's existing infrastructure: KobiiCraft (Paper plugins), KobiiSports Resort, LaptOps Hive, the Power Pack itself, the Knowledge Vault. For each integration target:
+
+- **Data ingress format** — file extension, schema reference, transport (HTTP / WebSocket / direct file).
+- **Data egress format** — what flows back out, who consumes it.
+- **Governance gate** — who or what signs off (Owner manual? validator? Council of 5?).
+- **Failure isolation boundary** — when this integration fails, which other systems must keep running.
+
+Identify shared schema collisions the Owner must resolve **before** wiring this dataset into the InfinityOps spine. Flag any field that exists in two target systems with semantically different meanings.
 
 ## SECCIÓN 14 — <<AWAITING OWNER VERBATIM — Q1.a>>
 

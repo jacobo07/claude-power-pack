@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "kobiidistilleros://schema/v1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "KobiiDistillerOS output contract. Verbatim markers from Dataset KobiiDistillerOS 1.txt + mandatory per-section blocks + forbidden-token + redaction patterns.",
 
   "tier_layout": {
@@ -27,25 +27,25 @@
   "section_count": 19,
 
   "section_titles": {
-    "1":  "Ingestor Atómico (IRE Stage 1-2)",
-    "2":  "El Motor de Destilación (El Cerebro)",
-    "3":  "Materialización (IRE Stage 7)",
-    "4":  "Protocolo Anti-Mediocridad (Contrato de Realidad)",
-    "5":  "Kernel vMAX-NULL-ERROR",
-    "6":  "Diseño de Soberanía (Móvil & PC)",
-    "7":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "8":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "9":  "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "10": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "11": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "12": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "13": "<<AWAITING OWNER VERBATIM — Q1.a>>",
+    "1":  "Resumen General (Arquitectónico)",
+    "2":  "Ideas Accionables (POR TANDAS)",
+    "3":  "Frameworks y Modelos Mentales",
+    "4":  "Estrategias (SOPs + Árboles de Decisión)",
+    "5":  "Patrones, Leyes Ocultas y Principios",
+    "6":  "Señales Sociales y Juegos de Poder",
+    "7":  "Citas Clave (DESTILADAS)",
+    "8":  "Errores, Sesgos y Anti-Patrones",
+    "9":  "Agentes y Workflows (CREACIÓN DIRECTA DESDE EL DATASET)",
+    "10": "Funciones Nuevas para SaaS y Sistemas IA Empresariales",
+    "11": "Servicios Nuevos y Océanos Azules (APLICABLE A LOS PROYECTOS DEL USUARIO)",
+    "12": "Síntesis para Entrenamiento Profundo",
+    "13": "Integración Multi-Sistema (InfinityOps Core)",
     "14": "<<AWAITING OWNER VERBATIM — Q1.a>>",
     "15": "<<AWAITING OWNER VERBATIM — Q1.a>>",
     "16": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "17": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "18": "<<AWAITING OWNER VERBATIM — Q1.a>>",
-    "19": "<<AWAITING OWNER VERBATIM — Q1.a>>"
+    "17": "Pensamiento arborescente (otros contextos y propósitos de negocio)",
+    "18": "ROI del Dataset (tiempo/dinero/riesgo) — CON FREEZE GATE",
+    "19": "Plan de acción con el dataset (operativo + ejecución)"
   },
 
   "required_section_blocks": {
@@ -84,6 +84,56 @@
     "github_pat": "gh[ps]_[A-Za-z0-9]{36,}",
     "bearer_jwt": "Bearer\\s+ey[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+",
     "generic_api_key_kv": "(?i)(?:api[_-]?key|secret[_-]?key|access[_-]?token)\\s*[:=]\\s*['\"]?[A-Za-z0-9_-]{16,}['\"]?"
+  },
+
+  "voice_gate": {
+    "_comment": "G4 audit fix — author-judgment lists ship as ADVISORY (validator emits warnings, not exit 5) until Owner ratifies. Phase C promotes to enforcing mode by flipping `mode` to `enforcing`.",
+    "mode": "advisory",
+    "exit_code_when_enforcing": 5,
+    "blacklist_candidates": [
+      "KPI",
+      "synergy",
+      "leverage",
+      "stakeholder",
+      "deliverable",
+      "roadmap",
+      "actionable",
+      "seamless",
+      "cutting-edge",
+      "value-add",
+      "low-hanging fruit",
+      "paradigm shift",
+      "holistic",
+      "best-in-class",
+      "world-class",
+      "game-changer",
+      "productize",
+      "enablement",
+      "north star metric"
+    ],
+    "anchors_candidates": [
+      "Refugio",
+      "refugio",
+      "MCPE",
+      "Hytale",
+      "2014",
+      "2010",
+      "2012",
+      "infancia",
+      "abuelo",
+      "abuela",
+      "cabaña",
+      "linterna",
+      "Nostalgia",
+      "nostalgia",
+      "Helsinki",
+      "MundiCraft",
+      "KobiiCraft",
+      "KobiiClaw",
+      "Mundial",
+      "Azteca",
+      "Andorra"
+    ]
   },
 
   "kill_switch_marker": "🧨 KILL-SWITCH",
