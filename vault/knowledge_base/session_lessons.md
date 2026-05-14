@@ -27,6 +27,55 @@ Fix: `getPythonCommand()` now probes in priority — `$CLAUDE_PYTHON` → `%LOCA
 
 ---
 
+## 2026-05-14 — Stop-hook schema: no `hookSpecificOutput`, top-level fields only
+
+**Session:** `kobiidistilleros-22-section-singularity-v210000`
+
+Earlier RAM Shield + voice-gate cycles emitted `hookSpecificOutput: {hookEventName: "Stop", additionalContext: "..."}` on Stop events. The harness rejects every such payload with "Hook JSON output validation failed", drops the advisory, and floods the validation log. The schema constraint is: Stop hooks accept ONLY `{continue, suppressOutput, stopReason, decision, reason, systemMessage}` at top level. `hookSpecificOutput` is valid for PreToolUse / UserPromptSubmit / PostToolUse / PostToolBatch — NOT Stop. The canonical re-engagement pattern when a Stop hook needs the model to keep working is `decision: "block" + reason` (see `modules/zero-crash/hooks/context-watchdog.py:209-216`). `systemMessage` is the correct field for UI-visible advisories on Stop (see `modules/zero-crash/hooks/ram-watchdog.js:135-142` and the post-patch `ram-shield.js:213-223`).
+
+**Audit pass:** Glob'd `~/.claude/hooks/*.{js,py}` + `~/.claude/skills/**/hooks/*.{js,py}` and enumerated the 10-entry Stop chain in `settings.json:206-303` by name. Every Stop hook either never used `hookSpecificOutput` or already cited the schema constraint in a header comment. Zero patches needed beyond ram-shield.js (Owner-patched today). Earlier memory entry `BL-0040` incorrectly generalized "additionalContext IS supported on Stop" — that claim was true for PreToolUse, not Stop. Correction landed in this entry.
+
+**Vaccine:** When emitting JSON from a Stop hook, treat any field outside the top-level six as schema-poison. Cite `context-watchdog.py:207-209` in the hook header so future contributors don't re-introduce the bug. `BL-0040` superseded.
+
+---
+
+## 2026-05-14 — Voice gate enforcement: global scope, exit 5, anchor-OR-blacklist
+
+**Session:** `kobiidistilleros-22-section-singularity-v210000`
+
+KobiiDistillerOS v1.2 ships `voice_gate.mode: "enforcing"` in `schema.json`. Validator implementation (`validate.py#_check_voice_gate`) aggregates every materialized section body, strips code fences (so contract docs enumerating the blacklist by name don't trip the gate), and counts hits across two lists:
+
+- `blacklist_candidates` — corporate vocabulary (KPI, synergy, leverage, stakeholder, roadmap, paradigm shift, holistic, …).
+- `anchors_candidates` — nostalgic / Refugio-voice tokens (Refugio, MCPE, 2014, cabaña, linterna, Helsinki, KobiiCraft, Andorra, …).
+
+Exit 5 fires **iff** ≥1 blacklist hit AND 0 anchor hits across the **entire** output (global scope per `voice_gate.scope: "global"`). The OR semantic was chosen over AND because:
+
+- A document with anchors + blacklist may be a deliberate translation of corporate-vocabulary readers into Refugio voice (legitimate use case).
+- A document with no blacklist + no anchors is "neutral" and shouldn't be punished.
+- A document with blacklist + zero anchors is the exact failure mode the gate exists to catch: corporate vocabulary winning, Refugio losing.
+
+**Vaccine:** Voice gates that scan per-section are too strict (most sections legitimately don't reference 2014 / Refugio). Global scope is the right granularity. When wiring the next voice-shaped contract, default to aggregation across the unit-of-distribution (here: the 22-section dataset; for other systems: the PR diff, the commit body, the released chapter).
+
+---
+
+## 2026-05-14 — 22-section schema expansion + Tandas & Partes structural contract
+
+**Session:** `kobiidistilleros-22-section-singularity-v210000`
+
+Schema v1.2.1 expanded the canonical Mother Prompt from 19 to **22 sections** by adding the Sovereignty layer (§14-16: Cognitive Mirror, Decision Traceability, Antifragilidad) and the Cashflow/Telemetría/Outside-the-Box trio (§20-22). §22 was fused at Owner direction: "Inferencia Decisional Exógena & Conocimiento Negativo (Outside-the-Box Time-Saver)" — outside-the-box inference IS the harvest mechanism for inheriting other people's negative knowledge.
+
+A new top-level block `tandas_partes_spec` declares the structural contract every materialized section MUST honor:
+
+- 3 **depth-tandas** (`### Tanda T1` Baseline / `### Tanda T2` Chase-Gain / `### Tanda T3` Síntesis & Ventaja Estructural).
+- 3 **orthogonal partes** per tanda (`#### Parte I` Narrativa / `#### Parte II` Estructura / `#### Parte III` ROI).
+- Validator enforces both marker regexes (`tanda_heading_regex`, `parte_heading_regex`) per section file. Missing any tanda or parte → exit 1.
+
+The §2 native "POR TANDAS" semantic (quick-wins / structural / arquitectura) collapses cleanly onto the depth-tanda axis: T1 = quick wins, T2 = structural, T3 = arquitectura. No duplication, no conflict.
+
+**Vaccine:** When a schema names a structural concept twice (the §2 title "POR TANDAS" pre-existed; the structural layer reuses "Tandas"), explicitly map the older concept onto the newer abstraction in BOTH the schema description block AND the Mother Prompt instructions. Future readers will hit the collision and need the bridge documented inline. Done here in `parts/sleepy/distiller.md` §2 body and `schema.json#description`.
+
+---
+
 ## 2026-05-14 — RAM Shield (BL-0033 RAM channel)
 
 **Session:** `kobiidistilleros-consolidation-v82001`
