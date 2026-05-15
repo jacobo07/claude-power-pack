@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://claude-power-pack/karimo/prd-baseline-1.0",
+  "title": "PRD_BASELINE",
+  "description": "Deterministic constraint extraction of a raw PRD. Source of truth consumed by /ultra Phase 3 and the prd-keyword-sentinel hook.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "content_sha256",
+    "title",
+    "must_have",
+    "must_not",
+    "perf_targets",
+    "auth_required",
+    "deadlines",
+    "integrations",
+    "sections"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 over the canonical (volatile-field-free) constraint payload. Reproducible for identical input."
+    },
+    "generated_at_utc": {
+      "type": ["string", "null"],
+      "description": "Wall-clock stamp. Excluded from content_sha256 so parity stays deterministic."
+    },
+    "source_label": { "type": "string" },
+    "title": { "type": "string" },
+    "must_have": { "type": "array", "items": { "type": "string" } },
+    "must_not": { "type": "array", "items": { "type": "string" } },
+    "perf_targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["raw", "op", "value", "unit"],
+        "additionalProperties": false,
+        "properties": {
+          "raw": { "type": "string" },
+          "op": { "type": "string", "enum": ["<=", ">=", "<", ">", "=="] },
+          "value": { "type": "number" },
+          "unit": { "type": "string" }
+        }
+      }
+    },
+    "auth_required": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["raw", "signal"],
+        "additionalProperties": false,
+        "properties": {
+          "raw": { "type": "string" },
+          "signal": { "type": "string" }
+        }
+      }
+    },
+    "deadlines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["raw", "marker"],
+        "additionalProperties": false,
+        "properties": {
+          "raw": { "type": "string" },
+          "marker": { "type": "string" }
+        }
+      }
+    },
+    "integrations": { "type": "array", "items": { "type": "string" } },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["header", "intent", "lines"],
+        "additionalProperties": false,
+        "properties": {
+          "header": { "type": "string" },
+          "intent": {
+            "type": "string",
+            "enum": ["REQUIREMENT", "CONSTRAINT", "TARGET", "PROHIBITION", "DEADLINE", "AUTH", "INTEGRATION", "NARRATIVE"]
+          },
+          "lines": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}
