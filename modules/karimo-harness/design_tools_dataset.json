@@ -1,0 +1,1357 @@
+{
+  "schema": "design_tools/1.0",
+  "provenance": "deterministic seed-matrix composition (10 real systems x 15 real patterns); source_url = real canonical docs root per system",
+  "count": 150,
+  "tools": [
+    {
+      "name": "Dialog / Modal — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal shadcn/ui",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Toast / Snackbar — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar shadcn/ui",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Command Palette — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette shadcn/ui",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Data Table — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Data Table",
+      "tags": "dense data presentation data table shadcn/ui",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Form Validation — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Form Validation",
+      "tags": "input correctness form validation shadcn/ui",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Empty State — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state shadcn/ui",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Skeleton Loader — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader shadcn/ui",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Hero CTA — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta shadcn/ui",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Pricing Table — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table shadcn/ui",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Navigation Drawer — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer shadcn/ui",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Tabs — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Tabs",
+      "tags": "sectioned content tabs shadcn/ui",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Accordion — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion shadcn/ui",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Tooltip — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip shadcn/ui",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Stepper / Wizard — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard shadcn/ui",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Infinite Scroll — shadcn/ui",
+      "system": "shadcn/ui",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll shadcn/ui",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://ui.shadcn.com/docs/components"
+    },
+    {
+      "name": "Dialog / Modal — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal radix primitives",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Toast / Snackbar — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar radix primitives",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Command Palette — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette radix primitives",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Data Table — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Data Table",
+      "tags": "dense data presentation data table radix primitives",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Form Validation — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Form Validation",
+      "tags": "input correctness form validation radix primitives",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Empty State — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state radix primitives",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Skeleton Loader — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader radix primitives",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Hero CTA — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta radix primitives",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Pricing Table — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table radix primitives",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Navigation Drawer — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer radix primitives",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Tabs — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Tabs",
+      "tags": "sectioned content tabs radix primitives",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Accordion — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion radix primitives",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Tooltip — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip radix primitives",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Stepper / Wizard — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard radix primitives",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Infinite Scroll — Radix Primitives",
+      "system": "Radix Primitives",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll radix primitives",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://www.radix-ui.com/primitives/docs/components"
+    },
+    {
+      "name": "Dialog / Modal — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal material design 3",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Toast / Snackbar — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar material design 3",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Command Palette — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette material design 3",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Data Table — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Data Table",
+      "tags": "dense data presentation data table material design 3",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Form Validation — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Form Validation",
+      "tags": "input correctness form validation material design 3",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Empty State — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state material design 3",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Skeleton Loader — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader material design 3",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Hero CTA — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta material design 3",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Pricing Table — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table material design 3",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Navigation Drawer — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer material design 3",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Tabs — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Tabs",
+      "tags": "sectioned content tabs material design 3",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Accordion — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion material design 3",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Tooltip — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip material design 3",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Stepper / Wizard — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard material design 3",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Infinite Scroll — Material Design 3",
+      "system": "Material Design 3",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll material design 3",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://m3.material.io/components"
+    },
+    {
+      "name": "Dialog / Modal — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal apple hig",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Toast / Snackbar — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar apple hig",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Command Palette — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette apple hig",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Data Table — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Data Table",
+      "tags": "dense data presentation data table apple hig",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Form Validation — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Form Validation",
+      "tags": "input correctness form validation apple hig",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Empty State — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state apple hig",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Skeleton Loader — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader apple hig",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Hero CTA — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta apple hig",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Pricing Table — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table apple hig",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Navigation Drawer — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer apple hig",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Tabs — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Tabs",
+      "tags": "sectioned content tabs apple hig",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Accordion — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion apple hig",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Tooltip — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip apple hig",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Stepper / Wizard — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard apple hig",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Infinite Scroll — Apple HIG",
+      "system": "Apple HIG",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll apple hig",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://developer.apple.com/design/human-interface-guidelines"
+    },
+    {
+      "name": "Dialog / Modal — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal tailwind ui",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Toast / Snackbar — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar tailwind ui",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Command Palette — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette tailwind ui",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Data Table — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Data Table",
+      "tags": "dense data presentation data table tailwind ui",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Form Validation — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Form Validation",
+      "tags": "input correctness form validation tailwind ui",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Empty State — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state tailwind ui",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Skeleton Loader — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader tailwind ui",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Hero CTA — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta tailwind ui",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Pricing Table — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table tailwind ui",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Navigation Drawer — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer tailwind ui",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Tabs — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Tabs",
+      "tags": "sectioned content tabs tailwind ui",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Accordion — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion tailwind ui",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Tooltip — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip tailwind ui",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Stepper / Wizard — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard tailwind ui",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Infinite Scroll — Tailwind UI",
+      "system": "Tailwind UI",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll tailwind ui",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://tailwindcss.com/plus/ui-blocks"
+    },
+    {
+      "name": "Dialog / Modal — Ant Design",
+      "system": "Ant Design",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal ant design",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Toast / Snackbar — Ant Design",
+      "system": "Ant Design",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar ant design",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Command Palette — Ant Design",
+      "system": "Ant Design",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette ant design",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Data Table — Ant Design",
+      "system": "Ant Design",
+      "category": "Data Table",
+      "tags": "dense data presentation data table ant design",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Form Validation — Ant Design",
+      "system": "Ant Design",
+      "category": "Form Validation",
+      "tags": "input correctness form validation ant design",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Empty State — Ant Design",
+      "system": "Ant Design",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state ant design",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Skeleton Loader — Ant Design",
+      "system": "Ant Design",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader ant design",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Hero CTA — Ant Design",
+      "system": "Ant Design",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta ant design",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Pricing Table — Ant Design",
+      "system": "Ant Design",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table ant design",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Navigation Drawer — Ant Design",
+      "system": "Ant Design",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer ant design",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Tabs — Ant Design",
+      "system": "Ant Design",
+      "category": "Tabs",
+      "tags": "sectioned content tabs ant design",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Accordion — Ant Design",
+      "system": "Ant Design",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion ant design",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Tooltip — Ant Design",
+      "system": "Ant Design",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip ant design",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Stepper / Wizard — Ant Design",
+      "system": "Ant Design",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard ant design",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Infinite Scroll — Ant Design",
+      "system": "Ant Design",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll ant design",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://ant.design/components/overview"
+    },
+    {
+      "name": "Dialog / Modal — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal chakra ui",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Toast / Snackbar — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar chakra ui",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Command Palette — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette chakra ui",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Data Table — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Data Table",
+      "tags": "dense data presentation data table chakra ui",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Form Validation — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Form Validation",
+      "tags": "input correctness form validation chakra ui",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Empty State — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state chakra ui",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Skeleton Loader — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader chakra ui",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Hero CTA — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta chakra ui",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Pricing Table — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table chakra ui",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Navigation Drawer — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer chakra ui",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Tabs — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Tabs",
+      "tags": "sectioned content tabs chakra ui",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Accordion — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion chakra ui",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Tooltip — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip chakra ui",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Stepper / Wizard — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard chakra ui",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Infinite Scroll — Chakra UI",
+      "system": "Chakra UI",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll chakra ui",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://chakra-ui.com/docs/components"
+    },
+    {
+      "name": "Dialog / Modal — Headless UI",
+      "system": "Headless UI",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal headless ui",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Toast / Snackbar — Headless UI",
+      "system": "Headless UI",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar headless ui",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Command Palette — Headless UI",
+      "system": "Headless UI",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette headless ui",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Data Table — Headless UI",
+      "system": "Headless UI",
+      "category": "Data Table",
+      "tags": "dense data presentation data table headless ui",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Form Validation — Headless UI",
+      "system": "Headless UI",
+      "category": "Form Validation",
+      "tags": "input correctness form validation headless ui",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Empty State — Headless UI",
+      "system": "Headless UI",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state headless ui",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Skeleton Loader — Headless UI",
+      "system": "Headless UI",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader headless ui",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Hero CTA — Headless UI",
+      "system": "Headless UI",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta headless ui",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Pricing Table — Headless UI",
+      "system": "Headless UI",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table headless ui",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Navigation Drawer — Headless UI",
+      "system": "Headless UI",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer headless ui",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Tabs — Headless UI",
+      "system": "Headless UI",
+      "category": "Tabs",
+      "tags": "sectioned content tabs headless ui",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Accordion — Headless UI",
+      "system": "Headless UI",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion headless ui",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Tooltip — Headless UI",
+      "system": "Headless UI",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip headless ui",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Stepper / Wizard — Headless UI",
+      "system": "Headless UI",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard headless ui",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Infinite Scroll — Headless UI",
+      "system": "Headless UI",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll headless ui",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://headlessui.com"
+    },
+    {
+      "name": "Dialog / Modal — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal aria apg",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Toast / Snackbar — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar aria apg",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Command Palette — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette aria apg",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Data Table — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Data Table",
+      "tags": "dense data presentation data table aria apg",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Form Validation — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Form Validation",
+      "tags": "input correctness form validation aria apg",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Empty State — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state aria apg",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Skeleton Loader — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader aria apg",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Hero CTA — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta aria apg",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Pricing Table — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table aria apg",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Navigation Drawer — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer aria apg",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Tabs — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Tabs",
+      "tags": "sectioned content tabs aria apg",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Accordion — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion aria apg",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Tooltip — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip aria apg",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Stepper / Wizard — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard aria apg",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Infinite Scroll — ARIA APG",
+      "system": "ARIA APG",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll aria apg",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://www.w3.org/WAI/ARIA/apg/patterns"
+    },
+    {
+      "name": "Dialog / Modal — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Dialog / Modal",
+      "tags": "overlay focus-management dialog / modal framer motion",
+      "use_case": "blocking decision or focused sub-task without losing page context",
+      "pattern_snippet": "focus-trap inside the panel, aria-modal=true + role=dialog, ESC to close, scroll-lock the body, restore focus to the trigger on unmount",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Toast / Snackbar — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Toast / Snackbar",
+      "tags": "transient feedback toast / snackbar framer motion",
+      "use_case": "non-blocking confirmation of a completed async action",
+      "pattern_snippet": "aria-live=polite region, auto-dismiss timer paused on hover/focus, stack with max-visible cap, swipe/closed-button to dismiss early",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Command Palette — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Command Palette",
+      "tags": "keyboard navigation power-user command palette framer motion",
+      "use_case": "fuzzy global navigation and action launching by keyboard",
+      "pattern_snippet": "Cmd/Ctrl-K to open, debounced fuzzy filter, roving-tabindex list, aria-activedescendant, recent + grouped sections, ESC to dismiss",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Data Table — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Data Table",
+      "tags": "dense data presentation data table framer motion",
+      "use_case": "scannable, sortable, paginated tabular records",
+      "pattern_snippet": "sticky header, column sort with aria-sort, row virtualization for large sets, server-side pagination, zebra rows, keyboard cell nav",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Form Validation — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Form Validation",
+      "tags": "input correctness form validation framer motion",
+      "use_case": "real-time and submit-time field validation with clear recovery",
+      "pattern_snippet": "validate on blur + on submit, aria-invalid + aria-describedby to the error, focus the first invalid field, never block typing, inline hint",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Empty State — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Empty State",
+      "tags": "first-run / no-data empty state framer motion",
+      "use_case": "guide the user when a collection has no items yet",
+      "pattern_snippet": "illustration + one-line value prop + single primary CTA, distinguish no-data from no-results-for-filter, never a blank panel",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Skeleton Loader — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Skeleton Loader",
+      "tags": "perceived performance skeleton loader framer motion",
+      "use_case": "reduce perceived latency while content streams in",
+      "pattern_snippet": "shape-matched placeholders with subtle shimmer, show only after a ~150ms delay to avoid flash, swap to content without layout shift",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Hero CTA — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Hero CTA",
+      "tags": "conversion above-the-fold hero cta framer motion",
+      "use_case": "communicate value and drive the primary action immediately",
+      "pattern_snippet": "one dominant headline, single high-contrast primary CTA, supporting subhead, visual hierarchy 60/30/10, no competing secondary actions",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Pricing Table — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Pricing Table",
+      "tags": "plan comparison conversion pricing table framer motion",
+      "use_case": "let users compare tiers and pick a plan confidently",
+      "pattern_snippet": "highlight the recommended tier, anchor with annual savings, align feature rows, sticky CTA per column, parity in feature wording",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Navigation Drawer — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Navigation Drawer",
+      "tags": "primary navigation navigation drawer framer motion",
+      "use_case": "house primary navigation on constrained or app-shell layouts",
+      "pattern_snippet": "focus-trap when modal on mobile, ESC + overlay-click to close, persistent on desktop, current-item aria-current=page, swipe-edge open",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Tabs — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Tabs",
+      "tags": "sectioned content tabs framer motion",
+      "use_case": "switch between peer views without navigation",
+      "pattern_snippet": "role=tablist + roving tabindex, arrow-key move, aria-selected, lazy-mount panels, keep URL in sync for deep-link, no layout jump",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Accordion — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Accordion",
+      "tags": "progressive disclosure accordion framer motion",
+      "use_case": "collapse secondary content to reduce cognitive load",
+      "pattern_snippet": "button header with aria-expanded + aria-controls, animate height via transform not layout, allow single or multi open, keyboard toggle",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Tooltip — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Tooltip",
+      "tags": "contextual hint tooltip framer motion",
+      "use_case": "surface a brief non-essential hint on hover/focus",
+      "pattern_snippet": "show on hover AND keyboard focus, ~500ms open delay / 0 close, role=tooltip + aria-describedby, never put interactive content inside",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Stepper / Wizard — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Stepper / Wizard",
+      "tags": "multi-step flow stepper / wizard framer motion",
+      "use_case": "break a long task into ordered, recoverable steps",
+      "pattern_snippet": "show progress + step labels, validate before advancing, allow back without data loss, persist draft, aria-current on the active step",
+      "source_url": "https://motion.dev/docs/react"
+    },
+    {
+      "name": "Infinite Scroll — Framer Motion",
+      "system": "Framer Motion",
+      "category": "Infinite Scroll",
+      "tags": "continuous feed infinite scroll framer motion",
+      "use_case": "load more content as the user reaches the end of a list",
+      "pattern_snippet": "IntersectionObserver sentinel, preserve scroll on prepend, provide a manual 'load more' fallback, announce new-items count to a live region",
+      "source_url": "https://motion.dev/docs/react"
+    }
+  ]
+}
