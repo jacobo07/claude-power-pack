@@ -19,3 +19,11 @@ npm-debug.log*
 vault/audits/snapshots/source_map_*.json
 vault/audits/ovo_*.json
 vault/audits/ovo_*.md
+
+# v230000 — kpp-distiller-kernel pip-installable package artifacts
+kpp-distiller-kernel/*.egg-info/
+kpp-distiller-kernel/**/*.egg-info/
+kpp-distiller-kernel/build/
+kpp-distiller-kernel/dist/
+kpp-distiller-kernel/**/__pycache__/
+kpp-distiller-kernel/**/*.pyc

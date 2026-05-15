@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kpp-distiller-kernel"
+version = "0.1.0"
+description = "KobiiDistillerOS kernel — schema-driven contract + 3 pre-emit gates (anti-scaffold guard, ROI parser, Hawkins scorer). SSOT for the v1.2 distillation contract, consumed by any KobiiCraft project via `pip install -e`."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "KobiiCraft (Jacobo)" }]
+license = { text = "Proprietary" }
+keywords = ["kobiicraft", "distiller", "kernel", "ssot"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "pydantic>=2.0,<3",
+]
+
+[project.urls]
+Homepage = "https://github.com/kobicraft/claude-power-pack"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["kpp_distiller_kernel*"]
+
