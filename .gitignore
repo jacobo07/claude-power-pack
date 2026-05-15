@@ -22,3 +22,4 @@ kpp-distiller-kernel/build/
 kpp-distiller-kernel/dist/
 kpp-distiller-kernel/**/__pycache__/
 kpp-distiller-kernel/**/*.pyc
+/_quarantine/
