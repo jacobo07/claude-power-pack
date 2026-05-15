@@ -23,6 +23,44 @@ OPEN_CACHE = os.path.join(STATE_DIR, "open-composers.json")
 OPEN_TTL = 30  # seconds
 
 
+_FTS_DDL = """
+CREATE VIRTUAL TABLE IF NOT EXISTS turns_fts USING fts5(
+    text, content='turns', content_rowid='rowid', tokenize='unicode61');
+CREATE TRIGGER IF NOT EXISTS turns_fts_ai AFTER INSERT ON turns BEGIN
+  INSERT INTO turns_fts(rowid, text) VALUES (new.rowid, new.text);
+END;
+CREATE TRIGGER IF NOT EXISTS turns_fts_ad AFTER DELETE ON turns BEGIN
+  INSERT INTO turns_fts(turns_fts, rowid, text)
+    VALUES ('delete', old.rowid, old.text);
+END;
+CREATE TRIGGER IF NOT EXISTS turns_fts_au AFTER UPDATE ON turns BEGIN
+  INSERT INTO turns_fts(turns_fts, rowid, text)
+    VALUES ('delete', old.rowid, old.text);
+  INSERT INTO turns_fts(rowid, text) VALUES (new.rowid, new.text);
+END;
+"""
+
+
+def ensure_fts():
+    """Idempotent schema check. Called by merger.py at end of every
+    --build / --incremental run (audit Gap #1)."""
+    if not os.path.isfile(VAULT_DB):
+        print(f"vault_search: vault not found at {VAULT_DB}", file=sys.stderr)
+        return 0
+    con = sqlite3.connect(VAULT_DB)
+    cur = con.cursor()
+    cur.executescript(_FTS_DDL)
+    n_idx = cur.execute("SELECT count(*) FROM turns_fts").fetchone()[0]
+    n_src = cur.execute("SELECT count(*) FROM turns").fetchone()[0]
+    if n_idx < n_src:
+        cur.execute("INSERT INTO turns_fts(turns_fts) VALUES ('rebuild')")
+        con.commit()
+        n_idx = cur.execute("SELECT count(*) FROM turns_fts").fetchone()[0]
+    con.close()
+    print(f"FTS5 ensure: {n_idx} indexed / {n_src} source rows")
+    return 0
+
+
 def build_index():
     if not os.path.isfile(VAULT_DB):
         print(f"vault_search: vault not found at {VAULT_DB}", file=sys.stderr)
@@ -204,6 +242,8 @@ def list_resumeable(top_n=40):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--build-index", action="store_true")
+    ap.add_argument("--ensure-fts", action="store_true",
+                    help="idempotent schema check (called by merger.py)")
     ap.add_argument("--search", metavar="QUERY")
     ap.add_argument("--get", metavar="COMPOSER_ID")
     ap.add_argument("--list-open-composers", action="store_true")
@@ -211,6 +251,8 @@ def main():
     a = ap.parse_args()
     if a.build_index:
         return build_index()
+    if a.ensure_fts:
+        return ensure_fts()
     if a.search:
         return search(a.search)
     if a.get:

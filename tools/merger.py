@@ -19,6 +19,7 @@ import hashlib
 import argparse
 import tempfile
 import subprocess
+import time
 from collections import Counter
 from typing import Optional
 
@@ -399,50 +400,238 @@ def write_vault(jsonl_records, exclude_live=False):
     return vault_jsonl, vault_db
 
 
+# ---------------------------------------------------------------------------
+# Incremental cursor (hybrid mtime + SHA) - Owner Q3 answer (c).
+# ---------------------------------------------------------------------------
+_HERE = os.path.dirname(os.path.abspath(__file__))
+AUDIT_CACHE_DIR = os.path.normpath(os.path.join(_HERE, "..", "_audit_cache"))
+STAMP_PATH = os.path.join(AUDIT_CACHE_DIR, "last-incremental.stamp")
+SHA_PATH = os.path.join(AUDIT_CACHE_DIR, "incremental_sha.json")
+
+
+def _trio_mtime(path):
+    """Return max(mtime) over a SQLite WAL trio (base, -wal, -shm).
+    For .jsonl files, just the base mtime. Audit Gap #2."""
+    best = 0.0
+    try:
+        best = os.path.getmtime(path)
+    except OSError:
+        return 0.0
+    for sfx in ("-wal", "-shm"):
+        sp = path + sfx
+        try:
+            m = os.path.getmtime(sp)
+            if m > best:
+                best = m
+        except OSError:
+            pass
+    return best
+
+
+def _sha_file(path):
+    """Chunked SHA-256; returns None on OSError."""
+    try:
+        h = hashlib.sha256()
+        with open(path, "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except OSError:
+        return None
+
+
+def _collect_inputs():
+    out = []
+    for name in ("state.vscdb", "state.vscdb.backup"):
+        p = os.path.join(GLOBAL_DIR, name)
+        if os.path.isfile(p):
+            out.append(p)
+    for name in ("state.vscdb.old.fixed.db", "state.vscdb.fix-copy.fixed.db"):
+        p = os.path.join(RECON_DIR, name)
+        if os.path.isfile(p):
+            out.append(p)
+    out.extend(sorted(glob.glob(
+        os.path.join(WORKSPACE_DIR, "*", "state.vscdb")))[:25])
+    out.extend(glob.glob(
+        os.path.join(PROJECTS_DIR, "**", "*.jsonl"), recursive=True))
+    out.extend(glob.glob(
+        os.path.join(PROJECTS_DIR, "**", "*.jsonl.live"), recursive=True))
+    return out
+
+
+def _load_stamp():
+    try:
+        with open(STAMP_PATH, "r", encoding="utf-8-sig") as fh:
+            return float(fh.read().strip())
+    except (OSError, ValueError):
+        return 0.0
+
+
+def _atomic_write_text(path, content):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".inc.", suffix=".tmp",
+                                dir=os.path.dirname(path))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as out:
+            out.write(content)
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def _load_shas():
+    try:
+        with open(SHA_PATH, "r", encoding="utf-8-sig") as fh:
+            obj = json.load(fh)
+            return obj if isinstance(obj, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _detect_changed(prev_stamp, prev_shas):
+    """Hybrid Q3-(c): mtime >= stamp first pass, SHA second pass on advanced.
+    Gap #3: use >= not > to survive same-second writes on coarse NTFS."""
+    new_shas = dict(prev_shas)
+    candidates = _collect_inputs()
+    changed = []
+    for p in candidates:
+        m = _trio_mtime(p)
+        if m < prev_stamp and p in prev_shas:
+            continue
+        cur = _sha_file(p)
+        if cur is None:
+            continue
+        if prev_shas.get(p) != cur:
+            changed.append(p)
+            new_shas[p] = cur
+    cand_set = set(candidates)
+    for stale in [k for k in new_shas if k not in cand_set]:
+        new_shas.pop(stale, None)
+    return changed, new_shas
+
+
+def _ensure_fts(vault_db_path):
+    """Shell out to vault_search.py --ensure-fts (avoids circular import)."""
+    if not os.path.isfile(vault_db_path):
+        return 0
+    vs = os.path.join(_HERE, "vault_search.py")
+    try:
+        return subprocess.call([sys.executable, vs, "--ensure-fts"])
+    except OSError as e:
+        sys.stderr.write("[merger] ensure-fts skipped: " + str(e) + "\n")
+        return 1
+
+
+def _full_pipeline(exclude_live):
+    mine_sqlite(skip_live=exclude_live)
+    jsonl_records = mine_jsonl()
+    return write_vault(jsonl_records, exclude_live=exclude_live)
+
+
+def run_incremental():
+    """Q3-(c) hybrid: trio-aware mtime first, SHA-256 second-pass guard.
+    No-change path is hot (heartbeat fires every 5 min idle): just refresh
+    stamp + ensure FTS schema, return < 10s. Changed path falls through to
+    full pipeline + cursor update."""
+    t0 = time.time()
+    prev_stamp = _load_stamp()
+    prev_shas = _load_shas()
+    changed, new_shas = _detect_changed(prev_stamp, prev_shas)
+
+    if not changed:
+        _atomic_write_text(STAMP_PATH, str(t0))
+        _atomic_write_text(SHA_PATH, json.dumps(
+            new_shas, sort_keys=True, indent=0))
+        vault_db = os.path.join(OUT_DIR, "SOVEREIGN-HISTORY-VAULT.db")
+        _ensure_fts(vault_db)
+        dur = time.time() - t0
+        print("=== INCREMENTAL NO-CHANGE ({:.2f}s, scanned {} files) ===".format(
+            dur, len(prev_shas) or len(new_shas)))
+        return 0
+
+    print("[merger] {} input(s) changed -> full pipeline".format(len(changed)))
+    for p in changed[:5]:
+        print("  changed: " + os.path.basename(p))
+    vault_jsonl, vault_db = _full_pipeline(exclude_live=False)
+    _atomic_write_text(STAMP_PATH, str(time.time()))
+    _atomic_write_text(SHA_PATH, json.dumps(
+        new_shas, sort_keys=True, indent=0))
+    _ensure_fts(vault_db)
+    sql_unique = len(SQL_TURNS)
+    dur = time.time() - t0
+    print("=== INCREMENTAL RESYNC OK ({:.2f}s, sql_unique={}, changed={}) ===".format(
+        dur, sql_unique, len(changed)))
+    return 0
+
+
+def _count_jsonl_records(vault_jsonl):
+    out = []
+    try:
+        with open(vault_jsonl, "r", encoding="utf-8") as fh:
+            for line in fh:
+                if '"source": "jsonl"' in line or '"source":"jsonl"' in line:
+                    out.append(1)
+    except OSError:
+        pass
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--build", action="store_true")
+    mode = ap.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--build", action="store_true",
+                      help="full rebuild from all sources")
+    mode.add_argument("--incremental", action="store_true",
+                      help="hybrid mtime+SHA cursor; no-op when sources unchanged")
     ap.add_argument("--exclude-live", action="store_true",
-                    help="for deterministic SHA verification")
+                    help="for deterministic SHA verification (--build only)")
     args = ap.parse_args()
-    if not args.build:
-        print("usage: merger.py --build [--exclude-live]")
-        return 2
 
-    mine_sqlite(skip_live=args.exclude_live)
-    jsonl_records = mine_jsonl()
-    vault_jsonl, vault_db = write_vault(jsonl_records,
-                                         exclude_live=args.exclude_live)
+    if args.incremental:
+        return run_incremental()
 
-    # Verdict-A hard gates.
+    vault_jsonl, vault_db = _full_pipeline(exclude_live=args.exclude_live)
     sql_unique = len(SQL_TURNS)
-    total_unique = sql_unique + len(jsonl_records)
+    total_unique = sql_unique + len(_count_jsonl_records(vault_jsonl))
     exclusive = (EXCLUSIVE_PROBE["recovered_cids"]
                  - EXCLUSIVE_PROBE["live_backup_cids"])
 
     print("=== MERGER COMPLETE ===")
-    print(f"SQL turns (unique): {sql_unique}")
-    print(f"JSONL records:      {len(jsonl_records)}")
-    print(f"TOTAL unique:       {total_unique}")
-    print(f"Per-source: {dict(PER_SOURCE)}")
-    print(f"Degraded: {len(DEGRADED)}")
-    print(f"Recovered composerIds NOT in live/backup: {len(exclusive)}")
+    print("SQL turns (unique): " + str(sql_unique))
+    print("TOTAL unique:       " + str(total_unique))
+    print("Per-source: " + str(dict(PER_SOURCE)))
+    print("Degraded: " + str(len(DEGRADED)))
+    print("Recovered composerIds NOT in live/backup: " + str(len(exclusive)))
     if exclusive:
         for c in sorted(exclusive)[:5]:
-            print(f"  exclusive: {c}")
+            print("  exclusive: " + c)
 
     sha = hashlib.sha256(open(vault_jsonl, "rb").read()).hexdigest()
-    print(f"VAULT_JSONL_SHA256={sha}")
-    print(f"VAULT_JSONL_BYTES={os.path.getsize(vault_jsonl)}")
-    print(f"VAULT_DB_BYTES={os.path.getsize(vault_db)}")
+    print("VAULT_JSONL_SHA256=" + sha)
+    print("VAULT_JSONL_BYTES=" + str(os.path.getsize(vault_jsonl)))
+    print("VAULT_DB_BYTES=" + str(os.path.getsize(vault_db)))
+
+    # Refresh cursor + ensure FTS after a full build too.
+    _atomic_write_text(STAMP_PATH, str(time.time()))
+    full_shas = {}
+    for p in _collect_inputs():
+        s = _sha_file(p)
+        if s:
+            full_shas[p] = s
+    _atomic_write_text(SHA_PATH, json.dumps(full_shas, sort_keys=True, indent=0))
+    _ensure_fts(vault_db)
 
     fails = []
     if sql_unique <= 434:
-        fails.append(f"sql_unique={sql_unique} not > 434")
+        fails.append("sql_unique=" + str(sql_unique) + " not > 434")
     if not exclusive:
         fails.append("no composerIds exclusive to recovered sources")
     if fails:
-        print("VERDICT-A FAILS:", " | ".join(fails))
+        print("VERDICT-A FAILS: " + " | ".join(fails))
         return 5
     print("VERDICT-A PASSES")
     return 0
