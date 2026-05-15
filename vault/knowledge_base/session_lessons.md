@@ -186,3 +186,23 @@ Three durable lessons:
 3. **B is the deliverable when B is true.** Per Owner Q&A-4, an honest B halts the session and writes its own report.md + appends to verdicts.jsonl. Rationalizing A to satisfy a push gate is exactly the dishonesty the gate exists to prevent. A push held back by a true B today buys you a true A+ tomorrow.
 
 Linked: [[ovo-protocol]] (5-phase canonical), [[mistake-16]] (compiles != works = gate satisfied != state shippable), `vault/audits/ovo_2026-05-15T183137_B.md` (the audit-of-record this lesson came from).
+
+---
+
+## 2026-05-15 — Lazarus v3: FTS5 sync via triggers, Stop-hook fire-and-forget, "additionalContext" is hook-only
+
+**Session:** `lazarus-v3-live-intelligence` (/ultra ONESHOT v5)
+
+Four durable lessons from giving the inert Sovereign Vault a live pulse:
+
+**1. FTS5 contentless-shadow tables don't auto-sync — install triggers at build time, never rebuild from the heartbeat.** `CREATE VIRTUAL TABLE turns_fts USING fts5(text, content='turns', content_rowid='rowid')` shadows the base table but does NOT propagate writes. Two options exist: (a) `INSERT INTO turns_fts(turns_fts) VALUES('rebuild')` — full re-scan, slow, holds a write lock; (b) AFTER INSERT/UPDATE/DELETE triggers on the base table — incremental, automatic, zero rebuild. Picked (b): three trigger statements at `--build-index` time, then any subsequent `merger.py --build` write into `turns` propagates to `turns_fts` for free. The heartbeat NEVER touches the FTS index — a rebuild-on-throttle would race the next sync. Real proof: indexed 44,497 rows once; `--search "TODO"` returns BM25-ranked hits in milliseconds (rank=-5.72…) with snippet highlighting.
+
+**2. Stop hooks must be fire-and-forget for long work; sync inside the hook will be SIGTERM'd.** `vault-heartbeat.js` triggers `merger.py --build` (minutes-long on 46k+ records). Awaiting it inside the Stop event blows the harness timeout. Pattern: `spawn(py, [merger, '--build'], {detached:true, stdio:'ignore', windowsHide:true}).unref()` — child outlives the hook; hook returns in <100 ms. Stamp file mtime drives the ≥5 min throttle (touched BEFORE spawn so rapid re-fires respect the gate). Mkdir mutex (`vault-heartbeat.lock`) with 10 min stale-recovery prevents N parallel sessions from racing concurrent full builds (the `pending_resume.txt` race pattern, applied here). User-visible signal is a STATIC `{"systemMessage":"vault: background sync queued"}` — never promise an N-of-this-run count from a hook that doesn't wait for the work.
+
+**3. "additionalContext" is a hook surface, not a slash-command one.** I initially planned `/cpp-resume-sovereign` to "inject via additionalContext" — that's a category error. `additionalContext` is a hook-output field (`UserPromptSubmit`/`PostToolUse`/`PreCompact` etc. on the schema); slash commands run **inside** the user turn and their stdout is just regular conversation text. To get the read-only semantics intended, wrap retrieved transcripts in explicit `<retrieved-history readonly="true" composer_id="…">…</retrieved-history>` framing so the model treats them as data, not directives — a hand-rolled prompt-injection guard against 46k records' worth of "ignore previous instructions" attack surface.
+
+**4. Cursor's open-composer signal lives at `workbench.panel.composerChatViewPane.<UUID>` keys.** Scanning all ~60 workspace `state.vscdb` files for this key pattern (with `isHidden=false` from the value JSON) gives a real "currently bound to a tab" set — 533 composers visible on this box right now. That signal feeds dedup ('resumeable' = vault composers MINUS open MINUS fresh .jsonl.live). The scan is slow and Cursor holds the DBs open; cache the result at `~/.claude/state/open-composers.json` with 30s TTL. Reuse `merger._safe_open()` rather than re-implementing the RO-immutable-fallback dance.
+
+**Bonus pitfall:** the canonical vault path `Downloads\PowerPack_Sovereign_Datasets\` is OneDrive-shadowed on default Win11 setups → cloud-sync grabbing the file mid-WAL is a known SQLITE_CORRUPT vector. Honor `SOVEREIGN_MINER_OUT_DIR` so the canonical sidecar can live under `~/.claude/state/sovereign-vault/`; keep Downloads as an export-only operator-facing copy. Documented for future relocations.
+
+**Vaccine:** FTS5 sync is triggers-or-nothing — never schedule a rebuild from a periodic event. Stop hooks above ~5 s of work must be detached+unref'd. And `additionalContext` is a hook field — for slash commands wanting read-only semantics, explicit `<readonly>` framing IS the contract.
