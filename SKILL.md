@@ -54,7 +54,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
-| `/cpp-distill <source> [--global] [--force]` / `/cpp-distill check <path>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7 materialization; `check` subcommand validates an existing output dir | commands/distill.md |
+| `/cpp-distill <source>` / `check <path>` / `distill <source>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7. `distill` = zero-token deterministic engine (default; needs `$KOBII_DISTILLER_ENGINE_ROOT`); `check` validates an output dir | commands/distill.md |
 
 ## SkillBank Index
 

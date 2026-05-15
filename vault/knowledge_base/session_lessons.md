@@ -90,3 +90,15 @@ Two-stage RAM management for 30+h unattended sessions. `ram-watchdog.js` already
 
 ---
 
+## 2026-05-15 — Verdict-B root cause: stale doctrine oversold the engine; the fix was one function
+
+**Session:** `kobiidistilleros-v1.2-sync-artifact-regeneration`
+
+`/ovo-audit` stamped **Verdict B** (delta_id=66c04ee7): the 22 files in Power Pack `vault/distilled/Dataset_KobiiDistillerOS_1.txt/` failed 43 Tandas/Partes marker checks. The first plan (and the `oneshot-architect-auditor`) trusted the sealed doctrine `docs/KOBII_PHILOSOPHY/KOBIIDISTILLER_OS_v1.md` (v220000), which claimed the canonical engine was a 19-section gap-marked stand-in needing a full synthesizer rewrite. **Empirical probe contradicted the doctrine on three points:** (1) `prompt_madre.py` was already v1.2 — 22 sections, 7/6/9 tiers, titles verbatim, `is_gap_section()` False for all; (2) `_bodies_per_section()` already held real warm-tone content for all 22; (3) the engine already emitted 22 artifacts at exit 0. The ONLY defect: `orchestrator._build_section_body` dumped `payload["decision"]` as flat prose and never emitted the `### Tanda T1/T2/T3` × `#### Parte I/II/III` skeleton the validator requires. The stale e2e test (`test_distill_emits_19_artifacts`) and the doctrine were both written against a pre-v1.2 engine and never re-baselined — they became the misleading "source of truth."
+
+Fix: rewrote one ~45-line function into a deterministic 3-tanda × 3-parte composer wrapping the existing distilled content (zero tokens, zero fabrication, ad-hoc-heading sanitize for Gap-1 collision, §16 kill-switch injected per contract). Re-baselined the e2e suite (9/9 green). Validator: exit 0, "22 sections validated against schema v1.2.1". Wired `tools/distiller/run.py distill` → subprocesses the canonical engine with explicit `cwd`+`PYTHONPATH`, DRY_RUN default, `$KOBII_DISTILLER_ENGINE_ROOT` cross-repo contract (Mistake #36), loud exit-3 if unset (no silent LLM fallback — Mistake #37).
+
+**Vaccine:** A doctrine/README/sealed-claim about a component's capability is a HYPOTHESIS, not evidence (Mistake #51). Before scoping work off a capability claim — especially one that says "X is a stub / gap-marked / needs a rewrite" — run the component's own test suite AND its canonical validator against real input. The audit found the doctrine wrong only because Phase A ran the engine before believing the doctrine. When a test asserts an old shape (19) and the code produces a new shape (22), the test is stale debt that actively misleads the next reader — re-baseline it in the same commit, never leave it red-or-lying. `BL`-style capability claims in sealed docs must carry the date + commit of the last empirical verification, else they are presumed stale.
+
+---
+
