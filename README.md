@@ -85,6 +85,7 @@ The Power Pack never loads everything at once. It classifies each task and loads
 | Command | What It Does |
 |---------|-------------|
 | `/cpp-customclaw create [name]` | Scan project and generate a custom AI daemon tailored to its stack |
+| `/cpp-compound` | Compound Learnings — extract recurring patterns from session learnings into permanent rules/skills/hooks (default-global, per-artifact scope toggle). Sleepy: surfaces only when sentinel detects >5 NEW learnings. |
 | `/cpp-update` | Update Claude Power Pack to the latest version from GitHub |
 | `/cpp-autoupdate` | Toggle automatic update checking on session start |
 | `/obsidian-setup` | Generate a Knowledge Graph vault from the current project (architecture discovery via wikilinks, max 10 nodes/task) |
