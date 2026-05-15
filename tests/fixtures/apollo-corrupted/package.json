@@ -1,0 +1,12 @@
+{
+  "name": "apollo-corrupted-fixture",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Synthetic React-Apollo fixture with 4 deliberate GraphQL ground-rule violations. Test asset only — never shipped, never installed.",
+  "dependencies": {
+    "@apollo/client": "^3.9.0",
+    "graphql": "^16.8.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
