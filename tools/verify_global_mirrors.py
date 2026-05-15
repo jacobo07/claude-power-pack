@@ -16,6 +16,12 @@ PAIRS = [
     (r"C:\Users\User\.claude\agents\oneshot-architect-auditor.md",
      r"C:\Users\User\.claude\skills\claude-power-pack\agents"
      r"\oneshot-architect-auditor.md"),
+    # Sovereign Baseline (2026-05-15): cpp-resume-sovereign global mirror.
+    # PP filename is resume-sovereign.md; global filename is cpp-prefixed
+    # for namespacing. Content must remain byte-identical.
+    (r"C:\Users\User\.claude\commands\cpp-resume-sovereign.md",
+     r"C:\Users\User\.claude\skills\claude-power-pack\commands"
+     r"\resume-sovereign.md"),
 ]
 
 
