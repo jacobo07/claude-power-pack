@@ -55,6 +55,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
 | `/cpp-distill <source>` / `check <path>` / `distill <source>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7. `distill` = zero-token deterministic engine (default; needs `$KOBII_DISTILLER_ENGINE_ROOT`); `check` validates an output dir | commands/distill.md |
+| `/cpp-resume-sovereign <q\|cid\|--list>` | Fuzzy-search Sovereign Vault (46k+) via FTS5 BM25 and inject a recovered session as read-only context + project-filtered Universal Laws | commands/resume-sovereign.md |
 
 ## SkillBank Index
 
