@@ -173,3 +173,16 @@ Three durable lessons:
 **5. Cursor schema reality.** Top-level `bubble.text` is empty for most tool-use/assistant bubbles; real chat content nests in `attachedCodeChunks`, `toolFormerData.params.streamingContent`, hex `agentKv:blob:` rows. Structured walker depth-8 → 12 turns from clean `.backup`; raw-byte regex floor over `"text":"…"` → **630 unique**, **150 composerIds exclusive to recovered .old/.fix-copy** (Verdict-A criterion satisfied). Structured + byte-scrape floor is the only honest combo on Cursor's nested-content storage.
 
 ---
+
+## 2026-05-15 (addendum 3) — OVO Verdict-B Unblock Playbook
+
+**Session:** `ovo-elevation` (/ultra ONESHOT, recursive)
+
+**Finding:** Ran `/ovo-audit` honestly to clear the prior 2026-05-14 verdict B and authorize a push. `oracle_delta.py --json` exposed an 84-file delta (38 changed + 45 new + 1 deleted) because the source-map baseline had not been refreshed since 2026-04-22 — the audit was over 23 days of mixed unrelated work, not the 8 commits I intended to push. `git status` also surfaced 8 garbage untracked entries (`"10\357..."`, `22,`, `Apr`, `Cloning`, `into`, `2026`, `lib/`, `"\342\216\277"`) — fossils of a botched `Cloning into '<repo>'` shell message expanded into filenames. Council of 5 returned **B** on 4-of-5 voices (Contrarian / First Principles / Outsider / Executor) and Owner Q&A-4 honesty discipline fired: no bypass, no rationalized re-stamp, halt cleanly. Verdict recorded at `2026-05-15T18:31:37` delta_id `b7ba3992`.
+
+**Vaccine:** Three rules for any future `/ovo-audit` run.
+1. **Pre-audit hygiene gate.** Before stamping any verdict, run `git status` and refuse to proceed if untracked-junk or unrelated-domain M-files dominate the working tree. `sha256_pre` covers *the working tree*, not just `git diff origin..HEAD` — the verdict authorizes the state, not the commits.
+2. **Baseline freshness.** If `_audit_cache/source_map.json` is >7 days old or covers a different branch's lineage, `audit_cache.py --build` BEFORE Phase A. A long-stale baseline silently turns every audit into a multi-week aggregated audit, and "100% rows" / "zero gaps" become unverifiable in one turn.
+3. **B is the deliverable when B is true.** Per Owner Q&A-4, an honest B halts the session and writes its own report.md + appends to verdicts.jsonl. Rationalizing A to satisfy a push gate is exactly the dishonesty the gate exists to prevent. A push held back by a true B today buys you a true A+ tomorrow.
+
+Linked: [[ovo-protocol]] (5-phase canonical), [[mistake-16]] (compiles != works = gate satisfied != state shippable), `vault/audits/ovo_2026-05-15T183137_B.md` (the audit-of-record this lesson came from).
