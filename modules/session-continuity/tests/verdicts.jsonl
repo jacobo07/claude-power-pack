@@ -1,1 +1,6 @@
 {"ts": "2026-05-15T16:08:54.111868Z", "audit": "lazarus-v4-e2e", "grade": "A", "invariants": ["3 slots exact", "restore exact sid", "0 jsonl renamed", "yellow mark"]}
+{"ts": "2026-05-15T16:10:19.575740Z", "audit": "lazarus-v4-e2e", "grade": "A", "invariants": ["3 slots exact", "restore exact sid", "0 jsonl renamed", "yellow mark"]}
+{"ts": "2026-05-15T16:14:04.061910Z", "audit": "lazarus-v4-e2e", "grade": "A", "invariants": ["3 slots exact", "restore exact sid", "0 jsonl renamed", "yellow mark"]}
+{"ts": "2026-05-15T16:21:05.363761+00:00", "audit": "lazarus-v4-e2e", "grade": "A", "invariants": ["3 slots exact", "restore exact sid", "0 jsonl renamed", "yellow mark"]}
+{"ts": "2026-05-15T16:31:48.196241+00:00", "audit": "lazarus-v4-reboot-cycle", "grade": "A", "invariants": ["installer preserves JSON5 comment + real setting", "3 slot profiles, each -File -> real restore.ps1 + slotN env", "claude_settings: exactly 1 recorder + 1 governance-guard hook", "reboot via installer-produced restore path resumes exact sid", "mark.js: 0 jsonl renamed, no shadow, yellow PRE-REBOOT marker"]}
+{"ts": "2026-05-15T16:32:16.667028+00:00", "audit": "lazarus-v4-e2e", "grade": "A", "invariants": ["3 slots exact", "restore exact sid", "0 jsonl renamed", "yellow mark"]}
