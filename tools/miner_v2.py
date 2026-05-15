@@ -41,10 +41,16 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import sovereign_miner as v1  # reuse jsonl streaming + frontend + potential
 
-OUT_DIR = v1.OUT_DIR
-CURSOR_USER = r"C:\Users\User\AppData\Roaming\Cursor\User"
-FFMPEG = r"C:\Users\User\tools\ffmpeg\ffmpeg.exe"
-VIDEO = r"C:\Users\User\Videos\2026-05-15 18-28-33.mp4"
+OUT_DIR = os.environ.get("SOVEREIGN_MINER_OUT_DIR") or v1.OUT_DIR
+# E11: zero hardcoded absolute paths in a global skill. Resolution order:
+#   env override -> default user-relative -> shutil.which (for ffmpeg).
+CURSOR_USER = (os.environ.get("SOVEREIGN_MINER_CURSOR_DIR")
+               or os.path.expandvars(r"%APPDATA%\Cursor\User"))
+FFMPEG = (os.environ.get("SOVEREIGN_MINER_FFMPEG")
+          or shutil.which("ffmpeg")
+          or os.path.expandvars(r"%USERPROFILE%\tools\ffmpeg\ffmpeg.exe"))
+VIDEO = (os.environ.get("SOVEREIGN_MINER_VIDEO")
+         or os.path.expandvars(r"%USERPROFILE%\Videos\2026-05-15 18-28-33.mp4"))
 FRAMES_DIR = os.path.join(OUT_DIR, "_frames2")
 VISION_NOTES = os.path.join(OUT_DIR, "vision_notes.txt")
 MAX_CLUSTERS = 25
@@ -57,6 +63,9 @@ STATS = Counter()
 DEGRADED: list[str] = []
 # (composerId, bubbleId) -> (role, text)  — global dedup (audit #4)
 TURNS: dict[tuple, tuple] = {}
+# audit gap-5: per-store accounting so MANIFEST can prove
+# rows_extracted == rows_available (gate, not vibe).
+PER_STORE: list[dict] = []
 TEXT_RE = re.compile(r'"text"\s*:\s*"((?:[^"\\]|\\.){1,%d})"' % FRAG_CAP)
 BUBBLE_ID_RE = re.compile(r'"bubbleId"\s*:\s*"([0-9a-f-]{8,})"')
 COMPOSER_ID_RE = re.compile(r'"composerId"\s*:\s*"([0-9a-f-]{8,})"')
@@ -152,6 +161,44 @@ def _sqlite_try(dst: str, src: str) -> bool:
     return got
 
 
+def _count_available(dst: str) -> int:
+    """Chat-bearing row count for rows_available (audit gap-5).
+    Counts only rows the harvester would actually emit a turn for —
+    i.e., key matches the expected pattern AND value carries a non-empty
+    \"text\" field. Counting headers/metadata as 'available' would make
+    rows_extracted < rows_available structurally (apples vs oranges) and
+    silently fail the 100% gate even on a perfect run. -1 = DB unopenable
+    / count failed (don't penalize as a coverage miss)."""
+    for uri in (f"file:{dst}?mode=ro", f"file:{dst}?immutable=1&mode=ro"):
+        con = None
+        try:
+            con = sqlite3.connect(uri, uri=True, timeout=3)
+            cur = con.cursor()
+            n = 0
+            for tbl, where in (
+                ("cursorDiskKV",
+                 "(key LIKE 'bubbleId:%' OR key LIKE 'composerData:%') "
+                 "AND value LIKE '%\"text\":\"%'"),
+                ("ItemTable",
+                 "(key LIKE 'composer%' OR key LIKE 'aiService%') "
+                 "AND value LIKE '%\"text\":\"%'")):
+                try:
+                    cur.execute(f"SELECT COUNT(*) FROM {tbl} WHERE {where}")
+                    n += int(cur.fetchone()[0] or 0)
+                except (sqlite3.DatabaseError, sqlite3.OperationalError):
+                    continue
+            return n
+        except (sqlite3.DatabaseError, sqlite3.OperationalError):
+            continue
+        finally:
+            if con is not None:
+                try:
+                    con.close()
+                except Exception:
+                    pass
+    return -1
+
+
 def mine_sqlite():
     dbs = _db_files()
     STATS["db_total"] = len(dbs)
@@ -159,20 +206,44 @@ def mine_sqlite():
     try:
         for src in dbs:
             STATS["db_seen"] += 1
+            rec = {"src": src.replace(CURSOR_USER, "~Cursor"),
+                   "rows_available": -1, "rows_extracted_clean": 0,
+                   "rows_extracted_scraped": 0, "status": "unknown"}
             try:
                 dst = _copy_trio(src, tmpd)
             except OSError:
                 DEGRADED.append(src + " (copy-failed)")
-                continue
+                rec["status"] = "copy-failed"
+                PER_STORE.append(rec); continue
+            rec["rows_available"] = _count_available(dst)
             before = len(TURNS)
             clean = _sqlite_try(dst, src)
+            rec["rows_extracted_clean"] = len(TURNS) - before
             # Recovery FLOOR (audit #2/#3, Owner: no token lost): byte-scrape
             # every copy regardless — regex survives malformed images. Dedup
             # on (composerId,bubbleId) lets the clean parse win; scrape fills
             # the pages SQLite refused. Only flag truly-degraded files.
             scraped_new = _byte_scrape(dst, src, flag=not clean)
-            if not clean and scraped_new:
-                pass  # already flagged inside _byte_scrape
+            rec["rows_extracted_scraped"] = scraped_new
+            extracted_total = rec["rows_extracted_clean"] + scraped_new
+            # status (audit gap-5 measurable gate):
+            #   ok        = clean opened AND coverage >= available (>0 rows)
+            #   empty     = available == 0 (legit empty store, not failure)
+            #   degraded  = clean failed but scrape recovered something
+            #   thin      = clean opened, available>0, extracted<available
+            #   unknown   = DB unopenable for even a count (-1)
+            av = rec["rows_available"]
+            if av < 0:
+                rec["status"] = "degraded" if extracted_total else "unknown"
+            elif av == 0:
+                rec["status"] = "empty"
+            elif not clean:
+                rec["status"] = "degraded"
+            elif extracted_total >= av:
+                rec["status"] = "ok"
+            else:
+                rec["status"] = "thin"
+            PER_STORE.append(rec)
             for sfx in ("", "-wal", "-shm"):
                 try:
                     os.remove(dst + sfx)
@@ -306,22 +377,61 @@ def build_datasets():
         for lid, title, body in laws:
             _wln(fh, f"{lid}: {title}", f"    {body}", "")
 
+    jsonl_n = v1.STATS.get('files_scanned', 0)
+    sq_seen = STATS.get('db_seen', 0)
+    sq_tot = STATS.get('db_total', 0)
+    sq_turns = STATS.get('turns_recovered', 0)
+    by_status = Counter(r["status"] for r in PER_STORE)
+    rows_avail_sum = sum(max(r["rows_available"], 0) for r in PER_STORE)
+    rows_extr_sum = sum(r["rows_extracted_clean"] + r["rows_extracted_scraped"]
+                        for r in PER_STORE)
+
     f_man = os.path.join(OUT_DIR, "TOTAL-RECALL-MANIFEST.TXT")
     with open(f_man, "w", encoding="utf-8", newline="\n") as fh:
         _wln(fh, "TOTAL RECALL — COVERAGE MANIFEST", "=" * 64, "",
              "CONVERSATION SOURCES",
-             f"  .jsonl transcripts scanned : {v1.STATS.get('files_scanned',0)}",
-             f"  Cursor SQLite dbs seen     : {STATS.get('db_seen',0)} / "
-             f"{STATS.get('db_total',0)}",
-             f"  SQLite distinct turns      : {STATS.get('turns_recovered',0)}",
+             f"  .jsonl transcripts scanned : {jsonl_n}",
+             f"  Cursor SQLite dbs seen     : {sq_seen} / {sq_tot}",
+             f"  SQLite distinct turns      : {sq_turns}",
+             f"  rows_available (sum)       : {rows_avail_sum}",
+             f"  rows_extracted (sum)       : {rows_extr_sum}",
+             f"  per-store status           : "
+             + ", ".join(f"{k}={v}" for k, v in sorted(by_status.items())),
              f"  degraded-recovered dbs     : {len(DEGRADED)}", "",
-             f"  TOTAL (v1 jsonl=2106) -> v2 = 2106 jsonl + "
-             f"{STATS.get('turns_recovered',0)} SQLite turns", "",
+             f"  TOTAL = {jsonl_n} jsonl + {sq_turns} SQLite turns", "",
              "DEGRADED-RECOVERED (byte-scrape / copy-fail) — no token lost:")
         for d in sorted(DEGRADED):
             _wln(fh, "  - " + d.replace(CURSOR_USER, "~Cursor"))
         if not DEGRADED:
             _wln(fh, "  (none — all dbs opened cleanly)")
+
+    # audit gap-5: machine-readable MANIFEST.json with per-store accounting
+    # so the success criterion ("100% rows extracted, 0 read errors") is
+    # measurable against ground truth, not vibes.
+    manifest_obj = {
+        "schema": "sovereign_miner_manifest/1",
+        "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "out_dir": OUT_DIR,
+        "cursor_user": CURSOR_USER.replace(os.path.expanduser("~"), "~"),
+        "jsonl_files_scanned": jsonl_n,
+        "sqlite": {
+            "db_total": sq_tot,
+            "db_seen": sq_seen,
+            "distinct_turns": sq_turns,
+            "rows_available_sum": rows_avail_sum,
+            "rows_extracted_sum": rows_extr_sum,
+            "status_counts": dict(by_status),
+        },
+        "gate_100pct_rows": (rows_extr_sum >= rows_avail_sum
+                             and by_status.get("thin", 0) == 0
+                             and by_status.get("unknown", 0) == 0),
+        "gate_0_read_errors": (by_status.get("copy-failed", 0) == 0),
+        "per_store": PER_STORE,
+        "degraded": [d.replace(CURSOR_USER, "~Cursor") for d in sorted(DEGRADED)],
+    }
+    f_json = os.path.join(OUT_DIR, "MANIFEST.json")
+    with open(f_json, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(manifest_obj, fh, indent=2, ensure_ascii=False)
 
     f_res = os.path.join(OUT_DIR, "RESUME-UPGRADE-SPEC.TXT")
     vision = ""
