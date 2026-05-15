@@ -102,3 +102,22 @@ Fix: rewrote one ~45-line function into a deterministic 3-tanda × 3-parte compo
 
 ---
 
+## 2026-05-15 — Jobs & Woz global guardians: a memory said "won't work this session"; the runtime said it just did
+
+**Session:** `jobs-woz-global-quality-guardians` (/ultra ONESHOT)
+
+Built two global subagents (`steve-jobs` design/UX, `woz` engineering) + an enforced PreToolUse gate: `tools/quality_audit.py` (domain-routes UI→JOBS / code→WOZ, exit 5 on slop, appends a permanent prohibition to `~/.claude/knowledge_vault/global_vetoes.md`) wired through `~/.claude/hooks/jobs-woz-gatekeeper.js` as the 11th PreToolUse block in `settings.json`.
+
+**The headline lesson — empirical reality beat a stored memory, again.** Memory `feedback_settings_session_load.md` / `feedback_agent_files_cold_load.md` asserts hooks+agents cold-load at session start and a mid-session settings edit "does not activate until /restart". Phase-7 was scoped (Owner answer #3) as a runnable-checker fallback *because* of that memory. Then the very next `Write` of a `Coming Soon` fixture was **blocked live, this session**, by the just-wired gatekeeper — `permissionDecision: deny`, JOBS veto emitted, ledger auto-appended. The cold-load memory did not hold for a newly-appended PreToolUse block on this harness build. This is the same failure mode as the KobiiDistiller verdict above: a stored capability claim is a HYPOTHESIS; the runtime is the only source of truth. Phase-7 verification was upgraded on the spot from "runnable checker" to "observed live enforcement" — strictly stronger evidence (Ley 25).
+
+**Three engineering bugs caught by verify-before-claim (none shipped):**
+1. `_skip()` auto-skipped anything under `%TEMP%` → the hook's temp-staged copy made the gate a silent no-op (passed ALL slop). Fixed by giving `scan()` a `logical` arg: read the temp copy, classify/skip by the *real* target path. Smoke test caught it before the settings wire.
+2. Edit tool has **no `content` field** (audit gap #1) — `tool_input.new_string` for Edit, `edits[].new_string` for MultiEdit. A naive `tool_input.content` reader would no-op on every Edit.
+3. Self-veto risk: the detector's own token list + the manifesto's sample audit contain literal slop strings → basename skip-set (`quality_audit.py`, `JOBS_MANIFESTO.md`, `session_lessons.md`, `scaffold-auditor.js`, …) + dir-fragment skips for `/.claude/agents|hooks/` and `/knowledge_vault/`.
+
+**Secondary:** a linter re-added a UTF-8 BOM to `settings.json` after my Edit. Raw `JSON.parse` chokes on BOM; the harness + `utf-8-sig` do not (proven — the hook fired). Correct response was NOT to re-edit the harness file to fight the linter (anti-thrash + don't-fight-tooling), but to validate the BOM-aware way and record the interaction.
+
+**Vaccine:** When a memory says "X won't take effect until /restart", treat it as a hypothesis and design a cheap live probe into the same session — do not pre-emptively downgrade the verification plan around an unverified constraint. A self-enforcing gate must be smoke-tested on a temp fixture **before** it is wired into the harness, because once live it will (correctly) block you from creating the very slop fixtures you'd test it with — and it will also block any delivered file containing the literal tokens, so meta/governance files MUST be on an explicit skip-set or the gate eats itself. Cross-tool BOM on harness JSON is tolerated by the harness; validate with `utf-8-sig`, never thrash the file to strip it.
+
+---
+
