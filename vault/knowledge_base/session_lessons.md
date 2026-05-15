@@ -139,3 +139,11 @@ Three durable lessons:
 
 ---
 
+
+## 2026-05-15 (addendum) — Kernel re-verification: a throwing probe cannot return CLEAN
+
+**Session:** `sovereign-miner-v2` (/ultra ONESHOT, resumed post-compaction)
+
+**Finding:** Re-ran the hook kernel scan over all 30 referenced hooks. settings.json had **zero** `.DISABLED` refs and parsed valid — consistent with the prior Total Recall turn's scripted rewrite already having sealed it (no broken entry to "fix"; honoring "no alteres la lista salvo los rotos" meant *no settings.json edit at all*). Only real action: purge the 3 dead disk orphans (`lazarus_revive.py/.heartbeat.js/.janitor.js.DISABLED`, all 1-line `exit(0)` stubs).
+
+**Vaccine:** A subprocess-probe that decodes child stderr with the Windows default `cp1252` will raise `UnicodeDecodeError` mid-scan on the first hook emitting non-cp1252 bytes — and a "BROKEN 0 / CLEAN" verdict printed *after* that throw is untrustworthy because the throwing child's stderr was never inspected. Always decode probed output as `utf-8, errors="replace"` and assert `probed == total` before trusting a CLEAN verdict. "The loop finished" ≠ "every unit was actually checked" (Mistake #17 class).
