@@ -76,5 +76,44 @@ the recipe above is the way to wire it (never copy code).
 
 ---
 
+## 1.1 — v230000.1 Owner Ratification (2026-05-15)
+
+Mirror of the workspace manifest's reconciliation block (workspace path:
+`<workspace>/docs/SSOT_KOBII_DISTILLER.md` → `## v230000.1 — Owner Ratification`).
+
+The Owner ratified **Opt D Hybrid Kernel-Only** as the canonical architecture
+name after two parallel sessions arrived independently at the same role split
+under different vocabularies ("Hybrid Kernel-Only" / "roles-not-duplicates
+DNA-11000 Rule-097"). The "Engine NEVER moves" invariant is **fully
+compatible** with Opt D — engine stays in workspace, kernel-contract lives
+here. No real conflict ever existed.
+
+### Cert evidence (verified 2026-05-15, system Python 3.12.10)
+
+| Gate | Result |
+|---|---|
+| `pip show kpp-distiller-kernel` | 0.1.0 editable at THIS repo `kpp-distiller-kernel/` |
+| `pip show kobicraft-content-intelligence` | 0.1.0 editable at workspace `kobicraft_content_intelligence/` |
+| Workspace `python scripts/check_kernel_drift.py` | **18/18 identities verified, 5 shims ≤ 60 lines** |
+| Workspace `python -m pytest distiller/tests/ -v` | **12/12 passed** |
+| Workspace `python scripts/e2e_distiller_golden_run.py` | **8/8 boundary contracts PASS** |
+
+### Sealed commits
+
+| Repo | Branch | Anchor commits |
+|---|---|---|
+| Power Pack (this) | `kdos/lazarus-v3-live-intelligence` | `e9b91f3` → `24b9028` → `8db600e` |
+| Workspace | `kdos/v1.2-tandas-partes-fix` | `1f3315a` → `d5ba0f6` → `f1dd874` → `b505261` → `a0e2355` |
+
+### Reconciliation vaccine
+
+The false-collision episode is captured as 2-part vaccine
+**VAC-ARCH-230000.1** in `vault/knowledge_base/governance_vaccines.md`.
+Lesson: at session start, run `git fetch origin && git status` + read **full**
+SSOT manifest content (not just headings/invariant titles) before declaring
+any cross-repo architectural conflict.
+
+---
+
 (More SSOT entries can be appended here as additional cross-repo subsystems
 are inscribed. One table per subsystem; identical invariants apply.)
