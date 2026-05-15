@@ -1,5 +1,6 @@
 // <module>/mark.js
-// Prefixes the `summary` record of given sessions in-place. NEVER renames/moves files.
+// Prefixes the `summary` record of given sessions via atomic same-name replace
+// (tmp + rename onto the SAME <id>.jsonl basename). NEVER moves to a shadow name.
 const fs = require('fs');
 const path = require('path');
 const RE = /^🟡 \[PRE-REBOOT \d\d:\d\d\] /;
@@ -19,19 +20,15 @@ function _rewrite(dir, sid, fn) {
     }
   }
   if (changed) {
-    // In-place content swap on the SAME file handle — preserves file identity
-    // (inode/NTFS file-index). No tmp, no rename, no shadow basename: this is
-    // strictly stronger than the v3 contract and keeps the *.jsonl untouched
-    // by name. fd-truncate+write keeps the OS file object stable.
-    const fd = fs.openSync(f, 'r+');
-    try {
-      const buf = Buffer.from(lines.join('\n'), 'utf8');
-      fs.ftruncateSync(fd, 0);
-      fs.writeSync(fd, buf, 0, buf.length, 0);
-      fs.fsyncSync(fd);
-    } finally {
-      fs.closeSync(fd);
-    }
+    // Atomic same-name replace: write a sibling tmp then rename it onto the
+    // SAME basename <id>.jsonl. This is NOT a shadow rename (the final name
+    // stays <id>.jsonl, so the native picker still lists it) and it closes the
+    // zero-byte data-loss window that an in-place fd-truncate+write would open
+    // if the process died mid-write. Same pattern as lib/registry.js and the
+    // spec's "Atomic tmp+rename" data-flow. Same-volume rename is atomic.
+    const tmp = f + '.mtmp.' + process.pid;
+    fs.writeFileSync(tmp, lines.join('\n'));
+    fs.renameSync(tmp, f); // SAME basename <id>.jsonl → not a shadow; atomic same-volume
   }
 }
 function mark(dir, sids, when) {

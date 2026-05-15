@@ -1,4 +1,7 @@
 # <module>/tests/e2e_continuity.py - simulates 3 slots, crash, restore; asserts invariants.
+# NOTE: this hermetic CI test writes a module-local tests/verdicts.jsonl. The
+# canonical Sovereign-Standard verdict to vault/audits/verdicts.jsonl is emitted
+# by the Owner-activation real-run (plan Task 9), NOT by this hermetic test.
 import json, os, subprocess, sys, tempfile, pathlib, datetime
 
 MOD = pathlib.Path(__file__).resolve().parents[1]
@@ -40,7 +43,7 @@ def main():
     assert s["summary"].startswith("🟡 [PRE-REBOOT"), s["summary"]
 
     print("e2e_continuity OK")
-    v = {"ts": datetime.datetime.utcnow().isoformat()+"Z", "audit": "lazarus-v4-e2e",
+    v = {"ts": datetime.datetime.now(datetime.timezone.utc).isoformat(), "audit": "lazarus-v4-e2e",
          "grade": "A", "invariants": ["3 slots exact", "restore exact sid", "0 jsonl renamed", "yellow mark"]}
     with (MOD / "tests" / "verdicts.jsonl").open("a", encoding="utf8") as fh:
         fh.write(json.dumps(v) + "\n")
