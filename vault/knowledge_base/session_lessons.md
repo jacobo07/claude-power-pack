@@ -250,3 +250,23 @@ Four durable lessons from giving the inert Sovereign Vault a live pulse:
 1. **Before quarantining ANY directory, grep every `require()`/`import`/path-join referencing it across all hooks, commands, tools, modules, tests, AND `~/.claude/hooks` + `~/.claude/skills`.** A dir with even one live consumer is infrastructure, not junk.
 2. **Never trust a search tool's empty result without proving the tool ran.** `rg` is not guaranteed on PATH; `subprocess` swallows the ENOENT. Probe `which rg || echo MISSING` first, or use `grep` (POSIX-guaranteed). An empty result from a tool that didn't execute is the most dangerous false-negative class (Mistake #17).
 3. **Interdependent file sets restore whole or not at all.** If file A in a quarantined set is `require()`d by kept file B, the entire set is load-bearing. Partial restore ships a fragile illusion the Reality Contract forbids.
+
+## 2026-05-16 — Apollo GraphQL Skills deep fusion (/ultra ONESHOT)
+
+**Session:** `apollo-skills-fusion` — absorb `apollographql/skills` as a vendored global layer.
+
+**Findings & Vaccines:**
+
+1. **Hardcoded upstream structure is a Reality-Contract trap.** The plan assumed 8 modules at repo root; the live repo has **14** under a `skills/` subdir (`apollo-router` ≠ `router`, plus `apollo-federation`/`apollo-kotlin`/`apollo-router-plugin-creator`/`skill-creator`), each with `SKILL.md`+`references/`. The Phase-4 auditor caught this before execution. **Vaccine:** ingestors MUST enumerate `skills/*/` dynamically and record the discovered count in MANIFEST; verify gates assert `>= recorded_count`, never a literal. Probe real upstream tree (shallow clone) during Phase 5, never trust the plan's module list.
+
+2. **Windows backslash paths break hand-built JSON in hook tests — silent false-negative.** Testing the SessionStart hook with `printf '{"cwd":"C:\Users\..."}'` produced invalid JSON (`\U \A \L \T` are illegal JSON escapes) → hook's `JSON.parse` failed → fell back to `process.cwd()` → card not injected → looked like a wiring bug that did not exist. `run()` called directly with an object proved the wiring was correct. **Vaccine:** never hand-format JSON containing Windows paths; generate hook stdin via `node -e "process.stdout.write(JSON.stringify({...}))"`. An empty/negative hook result whose input was malformed proves nothing (Mistake #17 class).
+
+3. **Hybrid context-pressure contract (Q&A 2c) = always-inline tiny card + lazy full modules.** The 80-token `ground-rules-card.md` is homedir-anchored (`os.homedir()/.claude/skills/claude-power-pack/vendor/apollo/`), NOT cwd-relative — at SessionStart `cwd` is the user's project, not the Power Pack, so a cwd-relative path would be permanently dead wiring (Mistake #16). Dep-check (`package.json`) runs before any fs walk; the walk is depth-bounded (≤4), skip-dir'd, early-exit, scan-capped (≤4000) to respect the 3s SessionStart budget on monorepos.
+
+4. **Tiered audit severity injects cleanly into an LLM sub-agent as prose, not code.** `oneshot-architect-auditor.md` is markdown read by an LLM; APOLLO-GRAPHQL hard-veto (unnamed ops + inline literals) counts toward Gaps, soft-warnings (dup-fields + over-fetch) go to a non-counted advisories subsection. `verify_apollo_integration.py` can only assert the *fixture contains detectable violations* (fixture-validity) — it cannot prove the LLM auditor will flag them; true enforcement is verified by spawning the agent post-`/restart`.
+
+5. **vendor/README.md Rules 1&2 are commit-time-enforced.** Any physical vendor bundle MUST carry the original `LICENSE` untouched + `SOURCE.txt` (commit+URL) + a `lib/license_gate.js` verdict appended to `vendor/NOTICE.md`. The ingestor does all four; gate returned `PERMISSIVE` for Apollo. **Vaccine:** check `vendor/README.md` before designing any absorption — provenance-in-MANIFEST-only is a documented violation.
+
+6. **Harness mirror direction matters.** `agents/` + `commands/` are version-controlled in-repo and copied OUT to `~/.claude/`; `~/.claude/hooks/` had no repo mirror so a `hooks/` mirror was created (edited-live → copied-in for sentinel; edited-repo → copied-out for auditor). Global `~/.claude/CLAUDE.md` has no repo mirror — its seal is traced via this ledger. **Vaccine:** before "commit N" of any harness-touching plan, locate the version-controlled mirror; if none exists, create one or trace the change in the in-repo governance ledger so the commit is reviewable (Reality Contract: no vapor commits).
+
+**Seal:** `~/.claude/CLAUDE.md` gained a `## Sovereign GraphQL Baseline (sealed 2026-05-16)` section (91 lines total, <100 cap held). APOLLO-GRAPHQL is now a globally-dispatchable auditor category.

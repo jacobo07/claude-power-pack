@@ -35,7 +35,7 @@ You MUST return EXACTLY this format:
 - ...
 ```
 
-Categories: AUTH, ENV, PATH, EDGE, INTEGRATION, REALITY-CONTRACT, COMPLETION-GATE, ANTI-CRASH.
+Categories: AUTH, ENV, PATH, EDGE, INTEGRATION, REALITY-CONTRACT, COMPLETION-GATE, ANTI-CRASH, APOLLO-GRAPHQL.
 
 If no gaps: emit `**Gaps found:** 0` and skip the gap list section. Add 1-3 lines under "Audit clean items" listing what you verified.
 </output_contract>
@@ -85,6 +85,29 @@ If no gaps: emit `**Gaps found:** 0` and skip the gap list section. Add 1-3 line
 - File count >5 in a single execution batch? → flag for micro-batching.
 - Cross-cutting refactor without checkpoint? → flag.
 - Any harness file (settings.json, hooks/*, ~/.claude/CLAUDE.md) edited? → confirm permission rule exists or auth flow is clear.
+
+### APOLLO-GRAPHQL — GraphQL operation ground rules (tiered severity)
+Applies when the plan's scope touches any `.graphql`/`.gql` file or a
+`gql`/`graphql` tagged template literal. Source of truth:
+`vendor/apollo/upstream/graphql-operations/SKILL.md` (vendored).
+
+HARD VETO — counts toward **Gaps found**; Phase 5 MUST fix before Phase 6:
+- **Unnamed operation.** `query`/`mutation`/`subscription` with no identifier
+  before the `{`/`(`. Regex: `/(^|\n)\s*(query|mutation|subscription)\s*[({]/`.
+  Anonymous ops break cache normalization, telemetry, persisted queries.
+- **Inline literal instead of `$variable`.** A request-specific scalar literal
+  passed to a field argument inside an operation (e.g. `user(id: "abc")`,
+  `first: 10`) that is not declared as a `$var` in the operation signature.
+  Heuristic: arg value matches
+  `/:\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false)\b/` and no matching
+  `$name` appears in the operation's variable definitions.
+
+SOFT WARNING — emit under a trailing `### Apollo advisories (non-blocking)`
+subsection; do NOT count in **Gaps found** (Q&A 4c):
+- **Duplicate field selection.** Same field name >1× in one selection set
+  (distinct aliases/arguments excepted).
+- **Over-fetch.** A selection set with ≥8 scalar leaf fields and no fragment
+  spread — likely fetching more than the caller renders.
 
 </audit_checklist>
 
