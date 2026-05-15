@@ -121,3 +121,21 @@ Built two global subagents (`steve-jobs` design/UX, `woz` engineering) + an enfo
 
 ---
 
+## 2026-05-15 — Total Recall: classifier-gated config, partial-SQLite recovery, the 11→434 bug
+
+**Session:** `total-recall-sqlite-kernel-stabilization` (/ultra ONESHOT v3)
+
+Three durable lessons:
+
+**1. The auto-mode classifier hard-gates `settings.json` self-modification regardless of tool — explicit Owner authorization is the unlock, and a Python rewrite ≠ the Edit tool.** The `.DISABLED` Stop-hook purge was denied twice via the Edit tool ("self-modification of agent startup config", reproduction not classifier-visible). I correctly STOPPED (2-fail pivot) and deferred to the Owner. Once the Owner *explicitly* authorized "rewrite settings.json via Python/Bash" in a classifier-visible turn, a `python -c` json-filter rewrite (read `utf-8-sig`, drop blocks whose command contains `.DISABLED`, write plain utf-8, assert `bytes[0:3]` unchanged, backup first, validate with python AND node, then re-exec every Stop+SessionStart hook → 0 MODULE_NOT_FOUND) succeeded. The audit also caught a **third** orphaned ref (`SessionStart → lazarus_revive.py.DISABLED`) the 2-block scope missed — always enumerate ALL events, not just the reported one.
+
+**2. SQLite "malformed image" is rarely all-or-nothing — `count(*)` and `LIMIT 5` can succeed while a deeper fetch throws mid-stream.** First build recovered **11** turns; probing one DB showed `cursorDiskKV` had **175** rows but the connection raised `DatabaseError: database disk image is malformed` on the 3rd query. The original except fell back to `ItemTable` (metadata only) and discarded the file. Fix that took 11→**434** turns across 116 DBs: (a) fetch row-batches in a loop so a mid-stream malformed page keeps prior rows; (b) **always byte-scrape every copied DB as a recovery FLOOR** (regex over raw bytes survives malformed pages), dedup on `(composerId,bubbleId)` so the clean parse wins and scrape only fills refused pages; (c) flag DEGRADED only when the clean parse failed (honest manifest: 2 truly-degraded, not 116). Cursor chat lives in `cursorDiskKV` (`bubbleId:%`→`.text`,`.type` 1=user/2=asst), **not** `ItemTable` `composer%` (that's headers) — verify table/key against a real DB before trusting a query.
+
+**3. WAL is not optional and temp connections must close in `finally`.** A locked live `state.vscdb` had a `-wal` (4.3 MB) **larger than the main DB**; `immutable=1` ignores the WAL → silent data loss. Copy the `.vscdb`+`-wal`+`-shm` trio and open RO *without* immutable so SQLite replays the WAL (immutable only as the corrupt-file fallback). A shared `TemporaryDirectory()` raised `WinError 32` on cleanup because a sqlite connection leaked on an exception path — close in `finally`, `mkdtemp` + `rmtree(ignore_errors=True)`.
+
+**Bonus pitfall:** a single-quoted bash heredoc carrying a Windows path in a Python triple-quoted string died on `\U` (`unicodeescape`). For data files with embedded `C:\Users\...`, write via the Write tool (raw content) or raw-string/forward-slash — never paste Windows paths into a heredoc'd non-raw Python literal.
+
+**Vaccine:** Partial SQLite corruption demands a recovery FLOOR (unconditional byte-scrape + dedup), not a try/except that trusts a clean parse — `count(*)` succeeding is not proof the rows are readable. And a config-mutation denial is a STOP-and-ask boundary, not a try-three-tools puzzle; the unlock is explicit classifier-visible authorization, after which the *non-Edit* path (scripted rewrite) is legitimate, not a bypass.
+
+---
+
