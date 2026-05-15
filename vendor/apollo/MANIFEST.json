@@ -1,0 +1,653 @@
+{
+  "upstream_url": "https://github.com/apollographql/skills.git",
+  "upstream_commit": "64d4087d629e413da1bac780abeaefd653847440",
+  "generated_at": "2026-05-15T22:15:08.160371+00:00",
+  "module_count": 14,
+  "quarantined": [
+    "rust-best-practices"
+  ],
+  "modules": [
+    {
+      "name": "apollo-client",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-client/SKILL.md"
+    },
+    {
+      "name": "apollo-connectors",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-connectors/SKILL.md"
+    },
+    {
+      "name": "apollo-federation",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-federation/SKILL.md"
+    },
+    {
+      "name": "apollo-ios",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-ios/SKILL.md"
+    },
+    {
+      "name": "apollo-kotlin",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-kotlin/SKILL.md"
+    },
+    {
+      "name": "apollo-mcp-server",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-mcp-server/SKILL.md"
+    },
+    {
+      "name": "apollo-router",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-router/SKILL.md"
+    },
+    {
+      "name": "apollo-router-plugin-creator",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-router-plugin-creator/SKILL.md"
+    },
+    {
+      "name": "apollo-server",
+      "quarantined": false,
+      "skill_md": "upstream/apollo-server/SKILL.md"
+    },
+    {
+      "name": "graphql-operations",
+      "quarantined": false,
+      "skill_md": "upstream/graphql-operations/SKILL.md"
+    },
+    {
+      "name": "graphql-schema",
+      "quarantined": false,
+      "skill_md": "upstream/graphql-schema/SKILL.md"
+    },
+    {
+      "name": "rover",
+      "quarantined": false,
+      "skill_md": "upstream/rover/SKILL.md"
+    },
+    {
+      "name": "rust-best-practices",
+      "quarantined": true,
+      "skill_md": "optional/rust-best-practices/SKILL.md"
+    },
+    {
+      "name": "skill-creator",
+      "quarantined": false,
+      "skill_md": "upstream/skill-creator/SKILL.md"
+    }
+  ],
+  "files": [
+    {
+      "path": "optional/rust-best-practices/SKILL.md",
+      "sha256": "91fb5e1610171179c4f2d88427227b1d3423c84511cd41dd0757e570120318c3",
+      "bytes": 4435
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_01.md",
+      "sha256": "9851aaa55a6e9b8b6268049be26a2701cd148647aae174a75aa7d39f8a5b962d",
+      "bytes": 17891
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_02.md",
+      "sha256": "512363a515b94bd1b6c25048355920327e76db18f5571d99c35e66f7f5499659",
+      "bytes": 5570
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_03.md",
+      "sha256": "60c673d1a2cea56771aa64e22bf0c3a52515e7b678731ebe1a809f73c5148556",
+      "bytes": 8994
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_04.md",
+      "sha256": "6b9d933b3c35a499bb30d7bc205e6bb03817cfe8285809dff149d9405228b931",
+      "bytes": 7262
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_05.md",
+      "sha256": "f07e61191becdf75e83296f4183d5a944c372c3591821fbaf9370e18c66439fc",
+      "bytes": 14503
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_06.md",
+      "sha256": "3379ab99e7969517682a8b3186c01ea715ef181e311401ae727d1357d8c5de19",
+      "bytes": 6974
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_07.md",
+      "sha256": "1e2a1a0251e854f269336405c0d494c68ea61d24484b93b77f2814c382ea505b",
+      "bytes": 8462
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_08.md",
+      "sha256": "ff6fec7719d0b20ec54bbc742c522ba36e6f20c253cff25c784e51916c9bd331",
+      "bytes": 10386
+    },
+    {
+      "path": "optional/rust-best-practices/references/chapter_09.md",
+      "sha256": "9b9f5dc1f9b5399eeec6def0ad0b99dfe74832a6ca28c15ba9ff04c3dd630bf6",
+      "bytes": 9826
+    },
+    {
+      "path": "upstream/apollo-client/SKILL.md",
+      "sha256": "ad8b07a30e8162436f223e6602f1539f4dd51bdd0410404e596c2fc9c0fe63d2",
+      "bytes": 7591
+    },
+    {
+      "path": "upstream/apollo-client/references/caching.md",
+      "sha256": "33e10a1b59d7b2a2a9a1a0eb5196d509c206de8c49018ce91f7f084a7ab518c9",
+      "bytes": 11463
+    },
+    {
+      "path": "upstream/apollo-client/references/error-handling.md",
+      "sha256": "258277bf0d2f7bad5f45d5171c4ff53b150ae4781adf38ac4b14d794d89df83c",
+      "bytes": 11444
+    },
+    {
+      "path": "upstream/apollo-client/references/fragments.md",
+      "sha256": "452c0e4867a55e6fb94a27b8fc3269f776177a39f017d1e5f87b2d998af7ea19",
+      "bytes": 23478
+    },
+    {
+      "path": "upstream/apollo-client/references/integration-client.md",
+      "sha256": "4a15163bdbedd9cd496f8a5fd83d218435698c58961b503f896a299fdad578bd",
+      "bytes": 9194
+    },
+    {
+      "path": "upstream/apollo-client/references/integration-nextjs.md",
+      "sha256": "1f712f76a87868fa3ae90d874992fd7825bbae0c58ea59dee773d03e807f963d",
+      "bytes": 8985
+    },
+    {
+      "path": "upstream/apollo-client/references/integration-react-router.md",
+      "sha256": "9b81024d6b37f4657cdef1dbfc6a8a3a027e15755590e8ac1b3d3b41dbe65dd1",
+      "bytes": 7377
+    },
+    {
+      "path": "upstream/apollo-client/references/integration-tanstack-start.md",
+      "sha256": "f98d16595d7503ab9a37b2c40808d747ba8dd5db320de17b403249f448ec7458",
+      "bytes": 11542
+    },
+    {
+      "path": "upstream/apollo-client/references/mutations.md",
+      "sha256": "feca4ae62117f7764ff1e78de4ad394086aebc1295d1b938836a7d17418d443a",
+      "bytes": 12622
+    },
+    {
+      "path": "upstream/apollo-client/references/queries.md",
+      "sha256": "d99a08804a92d8d6686bfd91b2d6d934e9af31287cd34fe3908a1be58da77637",
+      "bytes": 10699
+    },
+    {
+      "path": "upstream/apollo-client/references/state-management.md",
+      "sha256": "9a241159ccc1477edaa4d83bc1f957b0d9bb6ea8fb9471b189ae07694f17bb0b",
+      "bytes": 10943
+    },
+    {
+      "path": "upstream/apollo-client/references/suspense-hooks.md",
+      "sha256": "002b1b4986bba968da60db859f4d00f3954e66fe8251815770eb5736ea5cadde",
+      "bytes": 23267
+    },
+    {
+      "path": "upstream/apollo-client/references/troubleshooting.md",
+      "sha256": "509976ee2f9636861c325bd1ee2309874c9418ecaa4ac65ee3fd0cfea87164aa",
+      "bytes": 11237
+    },
+    {
+      "path": "upstream/apollo-client/references/typescript-codegen.md",
+      "sha256": "273a6d39695e16b8b61c119c067d849f604a56fc70789b21136ddf4059426b74",
+      "bytes": 4183
+    },
+    {
+      "path": "upstream/apollo-connectors/SKILL.md",
+      "sha256": "8e9d32e6495135fb8d98aef8e104bc1352793e7110490473cb4dab07722d9335",
+      "bytes": 5687
+    },
+    {
+      "path": "upstream/apollo-connectors/references/entities.md",
+      "sha256": "6eeb328b7e6eb1dcee6e409ceb09927141ea8e0798b165f407bb34aebc4f6c49",
+      "bytes": 7433
+    },
+    {
+      "path": "upstream/apollo-connectors/references/grammar.md",
+      "sha256": "7e2cf55f7c214cbbe5441a3c245e9f74e70268f9aac5a75b424fee3f6ec4d69f",
+      "bytes": 4230
+    },
+    {
+      "path": "upstream/apollo-connectors/references/methods.md",
+      "sha256": "c37db9ccce21ca0bfd4369bb98d02c8dffce8a24d045cca0b92cfe7caca9e125",
+      "bytes": 5944
+    },
+    {
+      "path": "upstream/apollo-connectors/references/troubleshooting.md",
+      "sha256": "f27dd005ac9f674ea14a67b67001d8ad3939f1fd13d05267bb8908cc67e023c8",
+      "bytes": 8384
+    },
+    {
+      "path": "upstream/apollo-connectors/references/validation.md",
+      "sha256": "422528e5b975790ae2c8731e8875dc4da02f6aa1d751fe85cfcc3314937bf801",
+      "bytes": 8120
+    },
+    {
+      "path": "upstream/apollo-connectors/references/variables.md",
+      "sha256": "7d7800f9b590fbc236e662d7939ab7b4da318703b0babad43606c9cc07be6672",
+      "bytes": 7649
+    },
+    {
+      "path": "upstream/apollo-federation/SKILL.md",
+      "sha256": "6901faf0ba7a037aa37bd81c0e1fe6a86dc6264cf9ca2ae2ab780464a0d2abfe",
+      "bytes": 3721
+    },
+    {
+      "path": "upstream/apollo-federation/references/composition.md",
+      "sha256": "6b52ac34d7d4f7fb39c51c6307d714c89b7344ece0ddde570ba75f35f4b5f701",
+      "bytes": 6074
+    },
+    {
+      "path": "upstream/apollo-federation/references/directives.md",
+      "sha256": "6c3fb319accb636fb4526f690bbea6b1deb4e8931ec05a3c09e367a8f9ec943a",
+      "bytes": 20487
+    },
+    {
+      "path": "upstream/apollo-federation/references/schema-patterns.md",
+      "sha256": "3addd6d83d253be19a9da2f39dcd1be8d9a97edd0ce81c2be591cbe1f4d1b064",
+      "bytes": 7520
+    },
+    {
+      "path": "upstream/apollo-ios/SKILL.md",
+      "sha256": "dd263074df30e341dd931c58adc0f32f13f160f571b7174fd2d64bc6e44838d3",
+      "bytes": 8144
+    },
+    {
+      "path": "upstream/apollo-ios/references/caching.md",
+      "sha256": "cee439528b0a57f66be5540e224fc50a53197b9317c72b64aaac5104a4a3ece2",
+      "bytes": 9367
+    },
+    {
+      "path": "upstream/apollo-ios/references/codegen.md",
+      "sha256": "231797c3119d601d4e70b98f99bcbc0deeb74bdfaa2e3f4174720863d31faeb0",
+      "bytes": 14949
+    },
+    {
+      "path": "upstream/apollo-ios/references/custom-scalars.md",
+      "sha256": "feb3c446835aa982531fcecb0a3a74bae85e4b4d5713c826bb119d83c6f925c9",
+      "bytes": 7416
+    },
+    {
+      "path": "upstream/apollo-ios/references/interceptors.md",
+      "sha256": "8ad1f21d67b9442b0ea999894da768ce85ff47d167c9be165884522e3daee27a",
+      "bytes": 14634
+    },
+    {
+      "path": "upstream/apollo-ios/references/operations.md",
+      "sha256": "248405550f1b9a035847591ba431f2f83c196649d9c3a42cfde2831309dc6a89",
+      "bytes": 8807
+    },
+    {
+      "path": "upstream/apollo-ios/references/setup.md",
+      "sha256": "7bfdc3b8b203fb82ff2559f314ad72d19b25aa5297a76e3fe5278ff62aa0093d",
+      "bytes": 12190
+    },
+    {
+      "path": "upstream/apollo-ios/references/subscriptions.md",
+      "sha256": "14d09c7afcbf9247094e53652e7af2480a7fbcf816e39940e0df85526e1ad379",
+      "bytes": 7781
+    },
+    {
+      "path": "upstream/apollo-ios/references/testing.md",
+      "sha256": "f94eeb2d9100972f3d99d12358f8140f60bb6be119d2654b9be0b4260123b7b9",
+      "bytes": 10155
+    },
+    {
+      "path": "upstream/apollo-ios/scripts/list-apollo-ios-versions.sh",
+      "sha256": "c74da0707d08895fb2756495e4061d8ed096da2412858fe1c455f8be9d686383",
+      "bytes": 107
+    },
+    {
+      "path": "upstream/apollo-kotlin/SKILL.md",
+      "sha256": "e22aeda312cf9f8229a57d056c6c04728dedb84dd75baed4b91d019193f091a3",
+      "bytes": 2147
+    },
+    {
+      "path": "upstream/apollo-kotlin/references/caching.md",
+      "sha256": "5e0b1315e3b1077d2ae285c397e8e6bfb9283fd6bce2623247a9e64d6ac701ec",
+      "bytes": 3408
+    },
+    {
+      "path": "upstream/apollo-kotlin/references/operations.md",
+      "sha256": "e0e2edc8f8852f7479350861ea13fc6a2540a6c251e448c11c91f5a8cdfc5076",
+      "bytes": 1637
+    },
+    {
+      "path": "upstream/apollo-kotlin/references/setup.md",
+      "sha256": "eaf82a2112a329f1ba80bfd43d7c4e5e0b14405f7b97df32007d2025e04218b0",
+      "bytes": 3673
+    },
+    {
+      "path": "upstream/apollo-kotlin/scripts/list-apollo-kotlin-normalized-cache-versions.sh",
+      "sha256": "a62aad726c5456ccb7227c078df0083d6f90fcca0a72654642ce0cf812137dd0",
+      "bytes": 123
+    },
+    {
+      "path": "upstream/apollo-kotlin/scripts/list-apollo-kotlin-versions.sh",
+      "sha256": "04e0c842953429f97ccf4150208b1138abe408a3af75966e541eae8d4c564e59",
+      "bytes": 106
+    },
+    {
+      "path": "upstream/apollo-mcp-server/SKILL.md",
+      "sha256": "084c28c4a330cce20d69b9fdda36daf0711a4ad73d2df738f52b32d91be9d01c",
+      "bytes": 7136
+    },
+    {
+      "path": "upstream/apollo-mcp-server/references/configuration.md",
+      "sha256": "b31ac2603964691941d821fbc06b069e87e4ed34f876f0258b27e436e34757e9",
+      "bytes": 9154
+    },
+    {
+      "path": "upstream/apollo-mcp-server/references/tools.md",
+      "sha256": "ce675e98ccfd82cf5e394b4524c85898f3bcf35cbefb569ed0330c72026601c5",
+      "bytes": 6395
+    },
+    {
+      "path": "upstream/apollo-mcp-server/references/troubleshooting.md",
+      "sha256": "5a08a71aae81ea5812b0769f3ad0dbcde383f13b5b1b12bbf82327662753337e",
+      "bytes": 5900
+    },
+    {
+      "path": "upstream/apollo-router-plugin-creator/SKILL.md",
+      "sha256": "36fe968dd37ae6771bc7f0c40559e38c32cfa329bfe56c18941fc410959e936e",
+      "bytes": 18731
+    },
+    {
+      "path": "upstream/apollo-router-plugin-creator/references/examples.md",
+      "sha256": "e73535302977b1f6b78740ee38fed7bff9befb3bfa44637d2f52c53e81759555",
+      "bytes": 5216
+    },
+    {
+      "path": "upstream/apollo-router-plugin-creator/references/existing-plugins.md",
+      "sha256": "2c8a0c0b457110b9b26e8e3db15d3f3b2cb671bb55fa8fc1e3493acd637b556a",
+      "bytes": 1824
+    },
+    {
+      "path": "upstream/apollo-router-plugin-creator/references/service-hooks.md",
+      "sha256": "f95c2399fb78fefe8f4aa21169029f7a100c37f0f390a5bee8452de40104fc8d",
+      "bytes": 7435
+    },
+    {
+      "path": "upstream/apollo-router/SKILL.md",
+      "sha256": "5988694eaca01a61dd4068612d8b57baa8e37191ff5971316861838947b41901",
+      "bytes": 14498
+    },
+    {
+      "path": "upstream/apollo-router/divergence-map.md",
+      "sha256": "2ec2de26e103a151179e209a3657d2186036ebb2edc9e05e369cd377f7657731",
+      "bytes": 3996
+    },
+    {
+      "path": "upstream/apollo-router/references/configuration.md",
+      "sha256": "fa1902dc187200b4e17398bfc7c3a9364d632620363d5c506ffca1feb0556264",
+      "bytes": 6429
+    },
+    {
+      "path": "upstream/apollo-router/references/connectors.md",
+      "sha256": "9c14ce8e61530df579373c9077fe9e8a30a77374fecf15dc15269de371da1b4b",
+      "bytes": 1047
+    },
+    {
+      "path": "upstream/apollo-router/references/headers.md",
+      "sha256": "6b30e42aa2b4cbc43d72c752d830501ba9cde412180f4751a617c3f36b6c1a6a",
+      "bytes": 5191
+    },
+    {
+      "path": "upstream/apollo-router/references/plugins.md",
+      "sha256": "3161aa1288066b1f12ac61bad790df34d0e19ee08d9fc5520f9ad97d0d59750b",
+      "bytes": 5920
+    },
+    {
+      "path": "upstream/apollo-router/references/response-caching.md",
+      "sha256": "573b2b5f313a0f101b2f1429287079e6bd2c283079c84544a5a998b67315f861",
+      "bytes": 23507
+    },
+    {
+      "path": "upstream/apollo-router/references/telemetry.md",
+      "sha256": "4c69070534cc9abea614861a03a275a584767deafb1ca29f57d6e1b70bec4985",
+      "bytes": 6427
+    },
+    {
+      "path": "upstream/apollo-router/references/troubleshooting.md",
+      "sha256": "ca424a4d96e76ba4f32e2dca09d03ad8c0698a4e97172582ed632b9d4f53100c",
+      "bytes": 8078
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/development.yaml",
+      "sha256": "11546df048b8d9d850701835f65a5f9171f00b57286eb2e052bb9a4cce5496fc",
+      "bytes": 1507
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/production.yaml",
+      "sha256": "96c39728d0db1c26ca9adf180338aeeafa8188897e7ef7f9898385dcbefcc52b",
+      "bytes": 3847
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/sections/auth.yaml",
+      "sha256": "1de9e7261705950d7d0ec75361c50e3e71dd8f25bddc8393b28e521b7cfc8a7d",
+      "bytes": 229
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/sections/cors.yaml",
+      "sha256": "1a37ed80d249681e3796478bb3570f3ea68b189a9b4858841f47e1b26a8418cf",
+      "bytes": 269
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/sections/headers.yaml",
+      "sha256": "3271deb803304414dec69c2732cb33f1548310e6d9d22a7548b857acaa9f0991",
+      "bytes": 153
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/sections/limits.yaml",
+      "sha256": "013f3fdbe30ae26ac1cc0184db8e2ee6bd8853c96ec6879f2520014a59e89d42",
+      "bytes": 478
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/sections/telemetry.yaml",
+      "sha256": "7508cc13fab5f4d7e6f4a6af175e815234b347afd51871701c85c2ce17a4669c",
+      "bytes": 965
+    },
+    {
+      "path": "upstream/apollo-router/templates/v1/sections/traffic-shaping.yaml",
+      "sha256": "f017b84c58edc03992327f0a20256d03185cfb35c6fe389914453d9e7fecf809",
+      "bytes": 385
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/development.yaml",
+      "sha256": "81fc9ccb449c0a7eb1cae435b78b0b185a4bef798a4bd59e3ef3e69a16f07bea",
+      "bytes": 1577
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/production.yaml",
+      "sha256": "08cdbb31d0dcf6775a536c52080b08a01405155e9dd78344219e0edc9247ccf1",
+      "bytes": 3994
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/auth.yaml",
+      "sha256": "0b5236e462ad501b4d3833715252619c472e81447ffaa1107bbb3352428d0507",
+      "bytes": 356
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/connectors.yaml",
+      "sha256": "645ffa0889fe0762325c66b0c668c88430c0bedf7cdd0564c91390eb66269559",
+      "bytes": 277
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/cors.yaml",
+      "sha256": "2379f4d69ed6acf258a1e00c5f2bcbda2adcc0ea7efbdbcb3fa57ea7fcb8dc8d",
+      "bytes": 422
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/headers.yaml",
+      "sha256": "deb17e76bf6e58390f191192b73a6ba8b192b175796b5b878c0d755483e7075e",
+      "bytes": 152
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/limits.yaml",
+      "sha256": "b6298aa140316b2d4ae69b3916f8c759084544f027b3c7bc569d8d891659da5b",
+      "bytes": 402
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/response-caching.yaml",
+      "sha256": "8b85d03ec266ff7ee7911236db45fb26ab6ccd721600a49ce622152ad12e8599",
+      "bytes": 1105
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/telemetry.yaml",
+      "sha256": "8ac680f3e10292305e237aee2249360a467dbe0904766de5042b7691f1b5c373",
+      "bytes": 1079
+    },
+    {
+      "path": "upstream/apollo-router/templates/v2/sections/traffic-shaping.yaml",
+      "sha256": "80a2497f4f731d130d66adc9dcd06e1b533a2d7b6eb4a31a96f4ed7fee5f0895",
+      "bytes": 384
+    },
+    {
+      "path": "upstream/apollo-router/validation/checklist.md",
+      "sha256": "eafece78a96cb59adf95762c76d053cb70445bf453e8ad28600becf2ab3a597d",
+      "bytes": 3605
+    },
+    {
+      "path": "upstream/apollo-server/SKILL.md",
+      "sha256": "0e0d0d1590c1246e6678a041f39409d79fa60ea5563328ff77b27b08754ab118",
+      "bytes": 7504
+    },
+    {
+      "path": "upstream/apollo-server/references/context-and-auth.md",
+      "sha256": "84701cb388293eba561aec4b2909c88ed377ce7b222697fcced35393165eb08d",
+      "bytes": 10454
+    },
+    {
+      "path": "upstream/apollo-server/references/data-sources.md",
+      "sha256": "62a3d2f480033038346fbb9e9c7f8f8cff3ca554af641630a3c171441e21eeb8",
+      "bytes": 9597
+    },
+    {
+      "path": "upstream/apollo-server/references/error-handling.md",
+      "sha256": "d56177386eeadd93fcb17f3e3a9f935e7c9853ad768e47d42534f0fb66dfbaef",
+      "bytes": 10656
+    },
+    {
+      "path": "upstream/apollo-server/references/plugins.md",
+      "sha256": "c5f41abd57d5e695f520fed432c06aef6f169df0a6f07737e53d9c7653fd24f8",
+      "bytes": 11447
+    },
+    {
+      "path": "upstream/apollo-server/references/resolvers.md",
+      "sha256": "a8effe19f8837ffde94faf207d4a002cefa22070de78f0610d16c06c2a79d132",
+      "bytes": 8460
+    },
+    {
+      "path": "upstream/apollo-server/references/troubleshooting.md",
+      "sha256": "5a525759ae18ab320aae5df52402fa1c7235c15918287938374aaad9134d5626",
+      "bytes": 10769
+    },
+    {
+      "path": "upstream/graphql-operations/SKILL.md",
+      "sha256": "fff9bdb09d73aae110f33f17503f1de34c96573dff00b8c6831d4029c10d7f44",
+      "bytes": 4753
+    },
+    {
+      "path": "upstream/graphql-operations/references/fragments.md",
+      "sha256": "146156d86dd2be05c3068575467615de4f955c31f546461a7918044a038dbef4",
+      "bytes": 8189
+    },
+    {
+      "path": "upstream/graphql-operations/references/mutations.md",
+      "sha256": "605a6f9cbdc3297eb1ad62d701464cb725f8496efb2b37b70dc715f714e4f0ba",
+      "bytes": 8275
+    },
+    {
+      "path": "upstream/graphql-operations/references/queries.md",
+      "sha256": "f113697f29cedef0ccca8ea51a9dda1e0cf3c6f29765b77130de952a2bea485f",
+      "bytes": 8350
+    },
+    {
+      "path": "upstream/graphql-operations/references/tooling.md",
+      "sha256": "4132667147fd99a73ba76af50dd40f092b2ff0d26338e4f0da770375cfca5578",
+      "bytes": 8941
+    },
+    {
+      "path": "upstream/graphql-operations/references/variables.md",
+      "sha256": "c308f5986e779ecd6a4c66c03a847f02ecf24ebd8bf83da147998b1032a0ce2a",
+      "bytes": 7014
+    },
+    {
+      "path": "upstream/graphql-schema/SKILL.md",
+      "sha256": "e48d151dcebd08186d2b31614803975ca2a32eff9b7881f3a67f3f6ab9b3b5a9",
+      "bytes": 4596
+    },
+    {
+      "path": "upstream/graphql-schema/references/errors.md",
+      "sha256": "7004834ed1c82b329c9fec43d95b888530065f263519742e98057ab7428f00f9",
+      "bytes": 7056
+    },
+    {
+      "path": "upstream/graphql-schema/references/naming.md",
+      "sha256": "8066aaa0ba507c60f5e4ae5defda20452a744cf1c814e1f24cf7a5d1e83348e4",
+      "bytes": 7247
+    },
+    {
+      "path": "upstream/graphql-schema/references/pagination.md",
+      "sha256": "650c322b9371064798142833dd8b8c19402d677de5fc20fe4967a3ce5a015995",
+      "bytes": 7574
+    },
+    {
+      "path": "upstream/graphql-schema/references/security.md",
+      "sha256": "3b335f105f675c43b52a120d590d27632efc829098263de80d9a263b0d1a1e15",
+      "bytes": 9848
+    },
+    {
+      "path": "upstream/graphql-schema/references/types.md",
+      "sha256": "8258d95589271e6231db14cb4e87471c0a13213b24ac612c4eb2917e469da4d7",
+      "bytes": 8395
+    },
+    {
+      "path": "upstream/rover/SKILL.md",
+      "sha256": "0e8cc7851f316520325e385d5662a3225b18cdbc9126d044b51de619f4103411",
+      "bytes": 5963
+    },
+    {
+      "path": "upstream/rover/references/configuration.md",
+      "sha256": "60c320013adc3add92db2d92263bf40bb4e07d4ae29beb01fe16ed3020ccb31d",
+      "bytes": 6038
+    },
+    {
+      "path": "upstream/rover/references/dev.md",
+      "sha256": "1b9e1fb627889dc150feb5fac60b438c03854346ca69dbc289e368e0209de751",
+      "bytes": 6056
+    },
+    {
+      "path": "upstream/rover/references/graphs.md",
+      "sha256": "fa6d5313cc2c1e8bbfe0cad9b3e99bdd7369f692374ca58011f02721b73752a8",
+      "bytes": 4807
+    },
+    {
+      "path": "upstream/rover/references/subgraphs.md",
+      "sha256": "6f107234b4b53e491c1b481890a741331790e552191ff9803090918d6d22f9e9",
+      "bytes": 6302
+    },
+    {
+      "path": "upstream/rover/references/supergraphs.md",
+      "sha256": "14cff6c777759d7c634a32c05841057173c7e9f2d0dfb8737f606578a0bcda5f",
+      "bytes": 5986
+    },
+    {
+      "path": "upstream/skill-creator/SKILL.md",
+      "sha256": "ef1babc53f97ac268bfbd63186019f5e12a9f5440ff7f4a5e6c1fd3c5f622b2d",
+      "bytes": 12620
+    },
+    {
+      "path": "upstream/skill-creator/references/apollo-skills.md",
+      "sha256": "120efae5bbfde3f387e9e8eca6121452dd931bb011b7f9835548ce50e6492b49",
+      "bytes": 8286
+    }
+  ]
+}
