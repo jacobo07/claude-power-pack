@@ -156,7 +156,7 @@ Track each accepted artifact's chosen scope. Default-global means `Approve globa
    - Skill: write `SKILL.md` (frontmatter + body).
    - Hook: write the single `.js` file using the Windows-native pattern (mirror `~/.claude/hooks/session-summary.js`); register in `~/.claude/settings.json` as a separate Edit (atomic backup-and-rename).
    - Agent update: Edit the existing agent file at `~/.claude/agents/<name>.md`.
-3. **Advance cursor**: read state file, set `state.projects[pid] = { last_run_iso: nowIso() }`, write atomically (write `<state>.tmp` then `fs.renameSync`).
+3. **Advance cursor (MERGE, never replace)**: read state file, then `state.projects[pid] = { ...state.projects[pid], last_run_iso: nowIso(), directive_count: 0 }`. The spread is mandatory — a bare `= { last_run_iso }` would WIPE the sentinel's `auto_prompt` opt-out flag and the GAP-7 `directive_count` runaway guard. Resetting `directive_count` to 0 is the canonical signal that consolidation succeeded (the sentinel's L1 auto-prompt re-arms; the STUCK-degrade clears). Write atomically via `atomicWriteJson` from `~/.claude/skills/claude-power-pack/lib/atomic_write.js` (fsync + EBUSY retry; falls back to `<state>.tmp`+`fs.renameSync` if the lib is unresolvable).
 4. **Release lock** (`rmdir` lockdir).
 5. **Delete marker** `<cwd>/LEARNINGS_PENDING.md` if present (use `fs.unlinkSync`, ignore ENOENT).
 
