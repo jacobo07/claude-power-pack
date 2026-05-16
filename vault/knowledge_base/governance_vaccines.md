@@ -296,3 +296,75 @@ Recorder/capture source where an `ffmpeg`/`x11grab` spawn is reachable
 without a preceding modal-dismiss + scene-settle + window-title forensic
 log, OR a visual verdict graded on bitrate/resolution/frame-count with no
 content-vision assertion.
+
+---
+
+## VAC-SEC-300000 — Runtime secret handling on a shared, logged host
+
+**Synthesized:** 2026-05-16 · ULTRA-PLAN v300000.0 (SECRET CORONATION)
+**Severity:** High (credential exposure) · **Status:** bridge ACTIVE; rotation = irreducible Owner action · STANDARDS Rule-102 family
+
+### Trigger pattern
+
+A pipeline needs a production credential. It ends up exposed by one of:
+(a) a credential committed cleartext into a tracked file (and pushed),
+(b) a secret passed on argv (visible in `ps`/`/proc/*/cmdline`),
+(c) a secret echoed into stdout/stderr/logs or an audit ledger,
+(d) an agent asking for the secret in chat (the transcript IS a log).
+
+Empirical origin: 2026-05-15/16. `bin/vision-capture` carried a cleartext
+`MC_VISION_LOGIN_PASSWORD=` and was git-tracked + pushed to a GitHub
+`origin/main`; the "established convention" (`flywheel_vision_detonate.sh`)
+documented harvesting it with `grep`. The B4 live-proof residual could
+not be closed without the secret, and every channel for the agent to
+obtain it (chat, fabrication, harvesting the leaked value) was either a
+new leak or propagation of the compromised one.
+
+### Why it happened (root cause)
+
+1. "Convenience convention" beat hygiene: a real password in a tracked
+   helper script because it was the easy place to `grep` it from.
+2. No designed secret boundary: nothing said *where* a runtime secret
+   may live or *how* it crosses a host hop.
+3. The honesty trap: under pressure to "collapse the residual", the
+   tempting paths (ask in chat / reuse the leaked value / fake the run)
+   all violate either the Reality Contract or the remediation itself.
+
+### Prevention (how to apply)
+
+1. **Secret lives out-of-tree, mode 0600, loaded at runtime.** Canonical:
+   `~/.kobii/secrets/mc_bot.env` + a sourceable loader
+   (`tools/flywheel/secret_bridge.sh`) with a **fail-closed** permission
+   gate (refuse if not provably 0600; a documented, default-OFF,
+   self-announcing test-only escape is the ONLY bypass and never ships
+   to prod).
+2. **Never argv — cross host hops over stdin.** `printf '%s' "$S" | ssh
+   host 'S="$(cat)" cmd'`. argv is world-readable via `ps`.
+3. **Redact every stream.** A passthrough-safe filter that replaces the
+   live value with an **ASCII** marker (a non-ASCII marker mojibakes
+   through locale/codepage round-trips and silently defeats leak checks)
+   on anything headed to a log/terminal/ledger.
+4. **An agent never receives a secret through chat.** Chat transcripts
+   are logged. The secret enters only via the out-of-band file the human
+   writes in their own terminal. If that file is absent, the honest
+   outcome is a documented residual + an agent-runnable command — never a
+   faked success and never reuse of an already-leaked value.
+5. **A committed secret is compromised forever.** `.gitignore` cannot
+   un-track it. Remediation = ROTATE (only the system admin can) +
+   `git rm --cached` + history purge + collaborator re-clone. Surfacing
+   the leak and stopping is correct; silently working around it is not.
+
+### Boundaries (non-generalizing)
+
+The 0600 fail-closed gate is correct for the real Linux target; on a
+non-POSIX-perm dev host it is intentionally un-satisfiable (fail-closed
+is the secure default there too). The test-only escape is loud and
+default-OFF. This vaccine does not authorize an agent to rotate
+credentials or to read a secret from any channel a human did not
+explicitly place out-of-band.
+
+### Trigger regex (for automated detection)
+
+A tracked file matching `(PASSWORD|SECRET|TOKEN|API_KEY)\s*=\s*\S` that is
+not gitignored; OR a secret-named var interpolated into argv of `ssh`/
+`curl`/`node`; OR an `AskUserQuestion`/prompt requesting a password value.
