@@ -161,3 +161,67 @@ proof-of-double-read receipt at `<repo>/.git/parallel-session-doublecheck.json`.
 
 Prompt or AskUserQuestion text containing: `Vault[-\s]?First Conflict|parallel session.*contradict|architectural collision|ratify ONE architecture`
 without a preceding `git fetch.+git log` in the session's Bash history.
+
+---
+
+## VAC-ENV-240000 — Environment leak: hard require() of a quarantine-able path
+
+**Synthesized:** 2026-05-16 · ULTRA-PLAN v240000.1 (SOVEREIGN CONVERGENCE)
+**Severity:** High (environment) · **Status:** ACTIVE, hooks hardened · Codified as STANDARDS Rule-102
+
+### Trigger pattern
+
+A long-lived production hook/tool hard-`require()`s/imports a module by a
+single absolute path inside a repo that parallel sessions mutate
+(`~/.claude/skills/claude-power-pack/lib/atomic_write.js`). A sibling
+session performs a working-tree-only `mv lib/ _quarantine/lib_dir/` with
+**no tracked git delta** (only `.gitignore` staged). git HEAD still tracks
+`lib/`, but the on-disk file is gone — so the require() throws
+`MODULE_NOT_FOUND` and the hook silently dies. The breakage is
+**intermittent**: it depends on which branch a sibling session last left
+the shared working tree on (branches that track `lib/` make it reappear).
+
+Empirical origin: 2026-05-15. Commit `753422d`
+("chore(tree): sanitize working tree + quarantine fossils", a parallel
+`/ultra` Q&A) moved 18 `lib/` files to `_quarantine/lib_dir/` working-tree
+only. `~/.claude/hooks/lazarus-snapshot.js` (Stop) and `kg-sync-hook.js`
+(PostToolUse) both did `require(path.join(... 'lib','atomic_write.js'))`
+and started failing whenever the shared PP tree sat on a branch without
+`lib/`.
+
+### Why it happened (root cause)
+
+1. A hook trusted a single mutable path with no fallback. The path lived
+   in a repo owned by a different concern (PP skill content), not by the
+   hook — a cross-boundary hard dependency.
+2. The quarantine was a half-operation: `mv` on the working tree with no
+   `git rm`/`git mv`, so git's tracked state and the filesystem
+   disagreed. Consumers that read the filesystem broke; consumers that
+   read git did not.
+
+### Prevention (how to apply)
+
+1. **Multi-location resolver, never a bare require of a mutable path.**
+   Resolve in priority: canonical (`lib/`) → quarantine
+   (`_quarantine/lib_dir/`) → **inline last-resort** implementation. The
+   process must degrade, never throw `MODULE_NOT_FOUND`. Reference impl:
+   `loadAtomicWrite()` in `~/.claude/hooks/{lazarus-snapshot,kg-sync-hook}.js`
+   (v240000.1).
+2. **Quarantine must be a complete operation.** Either `git mv` (tracked
+   delta) or leave the canonical path intact. A working-tree-only `mv`
+   with "no tracked delta" is a landmine for any filesystem consumer.
+3. **Hooks own their dependencies.** A hook that needs a helper should
+   vendor it or carry an inline fallback — never hard-depend on a path in
+   a repo that other sessions triage.
+
+### Boundaries (non-generalizing)
+
+`~/.claude/hooks/` is not a git repo (global system hooks); the resolver
+fix is a direct system edit, not a tracked commit. This vaccine does not
+authorize moving hook logic into any tracked repo.
+
+### Trigger regex (for automated detection)
+
+Hook/tool source containing `require(` or `import ` with a path under
+`skills/claude-power-pack/lib/` AND no sibling `_quarantine` /
+inline-fallback resolver in the same file.
