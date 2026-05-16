@@ -225,3 +225,74 @@ authorize moving hook logic into any tracked repo.
 Hook/tool source containing `require(` or `import ` with a path under
 `skills/claude-power-pack/lib/` AND no sibling `_quarantine` /
 inline-fallback resolver in the same file.
+
+---
+
+## VAC-VIS-290000 — Capture starts before the scene settles (UI modal captured as "gameplay")
+
+**Synthesized:** 2026-05-16 · ULTRA-PLAN v290000.2 (SOVEREIGN VISION OVERHAUL)
+**Severity:** High (visual integrity) · **Status:** ACTIVE, fix deployed + structurally guarded; live behavior proof is a secret-gated residual · STANDARDS Rule-102 family
+
+### Trigger pattern
+
+A headless screen-capture pipeline (Xvfb + real game client + ffmpeg
+x11grab) starts recording before the client is actually in the target
+scene, so the captured "gameplay" is really a blocking UI modal — a
+resource-pack prompt, login screen, or loading screen. A metrics-only
+verdict (bitrate/resolution/frame-count) PASSES because the file is a
+valid video; only a real vision check catches that the *content* is a
+dialog.
+
+Empirical origin: 2026-05-15, audit `20260515T162133Z`. MundiCraft
+`server.properties` had `require-resource-pack=false` **but** still set
+`resource-pack=<url>` + a prompt. MC 1.21 sends the RP offer in the
+**configuration phase** (before spawn/AuthMe), so the portablemc real
+client showed a blocking "Pack de futbol — Proceed/Decline" modal during
+the recorder's 30s warmup. The recorder's `Return×2` (written for the
+Mojang accessibility welcome) did not actuate the 1.21 RP screen, so the
+client sat on the modal and x11grab captured the dialog. The v250000
+metrics verdict said PASS; the v290000 real Claude-Vision pass caught it.
+
+### Why it happened (root cause)
+
+1. **No scene-state precondition before capture.** Capture-start was a
+   fixed sleep, not a gate on "client is in-world at the target".
+2. **A new blocking modal class (config-phase RP) was unhandled.** The
+   recorder only dismissed the dialogs it knew about (Mojang welcome,
+   AuthMe), not the RP offer that 1.21 moved earlier in the join flow.
+3. **The PASS gate was metrics-only.** Bitrate/resolution/frames cannot
+   distinguish a stadium from a menu; only content-vision can.
+
+### Prevention (how to apply)
+
+1. **Capture-after-scene-settle GATE.** ffmpeg/x11grab MUST NOT start
+   until: (a) all known blocking modals are dismissed, (b) the scene
+   command (RCON tp) is dispatched + settled, (c) a forensic snapshot of
+   the active window title is logged so a future dialog-capture is
+   diagnosable from the run log alone.
+2. **Dismiss modals across the whole warmup window, not at one instant.**
+   Modal arrival time is non-deterministic (config-phase timing varies
+   with server lag); interleave N resilient, screen-state-safe accept
+   attempts across warmup rather than a single timed press.
+3. **Never trust a metrics-only PASS for visual work.** A content-vision
+   check (does the frame show the target scene?) is mandatory before any
+   visual verdict is graded — metrics validate the container, not the
+   content.
+
+### Boundaries (non-generalizing)
+
+The fix targets the portablemc real-client recorder
+(`vision-recorder.js`), the only path that renders the vanilla client
+GUI. The mineflayer+prismarine-viewer watcher path
+(`sentinel-runner.js`) renders the 3D world headlessly and never shows
+the RP modal — it is correctly out of scope. Live behavior proof of the
+fix requires the `MC_BOT_PASSWORD` AuthMe secret + stopping the active
+production watcher (shared `KobiiCapture` username) — that is an
+explicit, Owner-gated residual, NOT something to fake green.
+
+### Trigger regex (for automated detection)
+
+Recorder/capture source where an `ffmpeg`/`x11grab` spawn is reachable
+without a preceding modal-dismiss + scene-settle + window-title forensic
+log, OR a visual verdict graded on bitrate/resolution/frame-count with no
+content-vision assertion.
