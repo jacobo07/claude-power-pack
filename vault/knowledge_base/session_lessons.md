@@ -386,3 +386,15 @@ completeness doctrine sealed into `~/.claude/CLAUDE.md` (<100 cap held)
 4. Detached+unref single-flight lock: parent must NOT release post-spawn (breaks mutex); use a short stale-recovery window + a separate cooldown stamp written pre-spawn inside the lock as the authoritative throttle. Track a `spawned` boolean so finally only releases on the no-spawn path.
 5. ISO timestamps in Windows filenames: `:` and `.` are illegal -> toISOString().replace(/[:.]/g, "-").
 6. Doctrine: build the capability inert + standalone-verified; the single line that makes it auto-fire from a boot hook is classifier-gated regardless of scoping or soft-consent — hand the Owner the exact one-line activation patch (apply via ! or a durable settings permission rule). See memory automode-denies-self-modification.
+
+## Lesson — Skill-scoped slash commands do NOT resolve for Node-spawned headless children (2026-05-16, L3)
+
+**Context:** L3 design called for a detached `claude.exe -p "/cpp-compound --dry-run"` spawned from a Node hook.
+
+**What happened:** The child always returned `Unknown command: /cpp-compound` (31-byte output). Falsified hypotheses, each with a real probe matrix: (a) env var `CLAUDECODE=1` nested-detection — manual shell probes resolved the command WITH `CLAUDECODE=1` present, and Node spawns failed even after scrubbing `CLAUDECODE`/`CLAUDE_CODE_*`/`CLAUDE_PROJECT_DIR`/`AI_AGENT`; (b) backslash vs forward-slash `--add-dir`/`--settings` paths — no effect; (c) `stdio` stdin mode (`inherit`/`ignore`/`pipe`) — no effect; (d) `shell:true` (launch via cmd.exe) — still failed. Direct Bash-tool shell children of the live session ALWAYS resolved `/cpp-compound`; ANY Node-`spawn`/`spawnSync` child NEVER did, independent of env, paths, stdio, or shell wrapper.
+
+**Root cause (empirical):** skill-scoped commands (those under `skills/<x>/commands/*.md`, not global `~/.claude/commands/`) are only registered for a process that is a direct shell-child of an active session; a Node-spawned `claude -p` does not inherit that command registry regardless of `--add-dir`.
+
+**Immunization / pivot:** Do not depend on a skill-scoped slash command from a programmatically-spawned child. Invoke `claude -p` with a DIRECT PROMPT that points at the canonical pipeline spec file (here `~/.claude/skills/compound-learnings/SKILL.md`) and instructs the dry-run over the corpus. Verified from Node `spawnSync`: produces a real 7149-byte consolidated report (`tools/test_l3_intent.js` 12/12). Keep `--add-dir <ppRepo>` for filesystem read scope and the scoped read-only `--settings` allow-list.
+
+**Process note:** This is exactly why ULTRA Q5 mandated REAL-input verification — every mock/static check would have passed; only a real detached `claude.exe` exposed the command-registry boundary. Pair with memory `automode-denies-self-modification`: the verified mechanism lives in the PP-tracked harness; wiring + the corrected spawn block into the startup hook remain Owner-authorization residue (classifier-gated, not agent-self-authorizable).
