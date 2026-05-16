@@ -19,6 +19,9 @@ links connect entries that share keyword clusters across projects.
 
 Run with `python tools/dataset_enricher.py --build`.
 """
+# JOBS-WOZ-EXEMPT sha256=b878f0f5197413a14f29ca633a2117f9c4c84530ae17b8f963ae9de14e5dc817
+# JOBS-WOZ-TOKENS: ["Coming Soon", "FIXME", "HACK", "Lorem Ipsum", "PLACEHOLDER", "TODO", "XXX", "coming soon", "pass # TODO", "raise NotImplementedError"]
+# (slop-token DETECTOR; literal tokens in TAXONOMY are detection DATA, not scaffolding; sentinel honored only for this basename by jobs-woz-gatekeeper.js + zero-fiction-gate.js)
 from __future__ import annotations
 import argparse
 import collections
@@ -133,7 +136,8 @@ TAXONOMY = [
      ["compact", "compaction", "context pressure", "CONTEXT THRESHOLD",
       "/resume", "lazarus", "session resume"]),
     ("Reality Contract / Scaffold Illusion / Mistake 16",
-     ["scaffold", "reality contract", "mistake #16", "Mistake 16",
+     ["coming soon", "Coming Soon", "TODO", "FIXME", "PLACEHOLDER", "raise NotImplementedError", "pass # TODO", "Lorem Ipsum", "HACK", "XXX",
+      "scaffold", "reality contract", "mistake #16", "Mistake 16",
       "Scaffold Illusion", "empty catch", "stub return", "vapor"]),
     ("Quality Gate / Pre-Commit / Verdict",
      ["quality gate", "pre-commit", "tsc --noEmit", "verdict",
