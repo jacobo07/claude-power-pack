@@ -14,7 +14,7 @@ If $ARGUMENTS is empty, print this protocol's summary (the 7 phases) and exit.
 
 ## The 7 Phases (mandatory order, no skipping)
 
-1. **Ultra Plan** — restate the target in your own words. Identify scope, surface area, files involved, env/config dependencies. Estimate file count.
+1. **Ultra Plan** — restate the target in your own words. Identify scope, surface area, files involved, env/config dependencies. Estimate file count. **KARIMO pre-pass (BL-0068, advisory):** if the TARGET SPEC contains a raw PRD (a `PRD:` header or a `<prd>…</prd>` block), first run `python ~/.claude/skills/claude-power-pack/modules/karimo-harness/prd_parser.py --in <prd|->` to emit `PRD_BASELINE.json` + `BLUEPRINT.md`, then treat the blueprint seed tasks + the `<prd-constraints>` block as pre-extracted hard scope (do NOT re-derive). This step is purely additive and does NOT alter the Phase 2 mandatory stop.
 2. **Q&A Pass** — emit EXACTLY 6 critical clarifying questions. Number them. Cover: auth/credentials, env vars, file paths, edge cases, success criteria, scope boundaries. STOP and wait for Owner's answers. Do NOT proceed without them.
 3. **Revised Plan** — fold answers into a numbered task list. Each task has: file path, action (create/edit/delete), 1-line purpose, verification step.
 4. **Audit Pass** — invoke the `oneshot-architect-auditor` sub-agent (via Agent tool, `subagent_type: oneshot-architect-auditor`). Pass the revised plan. The sub-agent returns a numbered list of GAPS (auth, env vars, file paths, edge cases). Do NOT rewrite the plan from sub-agent output — the sub-agent reports gaps, you fix them.
