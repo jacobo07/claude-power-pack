@@ -4,7 +4,7 @@
 Owner-authorized self-modification tool (operator answered Q2=(a) on
 2026-05-15). Reads the live settings.json (utf-8-sig — strips any BOM
 introduced by PowerShell tools), validates JSON, writes a timestamped
-backup, deep-merges a single hook block into hooks.<EVENT>[], then writes
+backup, appends a single hook block into hooks.<EVENT>[], then writes
 atomically via os.replace().
 
 Contract:
@@ -13,11 +13,14 @@ Contract:
   - Idempotent: if an entry with the same `command` already exists under
     hooks.<EVENT>[], the merge is a no-op and exits 0.
   - The diff is bounded: ONLY hooks.<EVENT>[] grows by exactly one
-    element. Any other delta fails the post-write assertion (exit 5).
+    element (append-only). Any other delta fails the post-write
+    assertion (exit 5) and the timestamped backup is restored.
 
 Usage:
   settings_merger.py register-stop --node-script <abs/path/to/hook.js>
                                    [--timeout 5]
+  settings_merger.py register-userprompt --py-interp <abs/python.exe>
+                                   --py-script <abs/loader.py> [--timeout 10]
 
 Why not jq: PowerShell tooling regularly writes the file with a UTF-8
 BOM, breaking strict jq. Python json+utf-8-sig is universally robust on
@@ -44,8 +47,8 @@ def _normalize_cmd(cmd: str) -> str:
     return cmd.replace("\\", "/").replace('"', "").strip().lower()
 
 
-def _block_exists(event_arr, node_script: str) -> bool:
-    target = _normalize_cmd(node_script)
+def _block_exists(event_arr, needle: str) -> bool:
+    target = _normalize_cmd(needle)
     for entry in event_arr:
         for hook in entry.get("hooks", []):
             if hook.get("type") == "command":
@@ -54,13 +57,18 @@ def _block_exists(event_arr, node_script: str) -> bool:
     return False
 
 
-def register_stop(settings_path: str, node_script: str, timeout: int) -> int:
+def _register(settings_path: str, event: str, command_str: str,
+              match_needle: str, timeout: int) -> int:
+    """Append one {hooks:[{command}]} block to hooks.<event>[], bounded.
+
+    match_needle: substring used for idempotency + the only allowed delta
+    is hooks.<event> growing by exactly one append-only element.
+    """
     if not os.path.isfile(settings_path):
         print(f"settings_merger: settings.json not found at {settings_path}",
               file=sys.stderr)
         return 5
 
-    # Read with utf-8-sig so any BOM is stripped (PowerShell trap).
     with open(settings_path, "r", encoding="utf-8-sig") as fh:
         original_text = fh.read()
     try:
@@ -73,34 +81,23 @@ def register_stop(settings_path: str, node_script: str, timeout: int) -> int:
         return 5
 
     hooks = data.setdefault("hooks", {})
-    stop = hooks.setdefault("Stop", [])
-    if not isinstance(stop, list):
-        print("settings_merger: hooks.Stop is not a list", file=sys.stderr)
+    arr = hooks.setdefault(event, [])
+    if not isinstance(arr, list):
+        print(f"settings_merger: hooks.{event} is not a list", file=sys.stderr)
         return 5
 
-    # Idempotency: same command already present -> no-op exit 0.
-    if _block_exists(stop, node_script):
-        print(f"settings_merger: already registered ({node_script})")
+    if _block_exists(arr, match_needle):
+        print(f"settings_merger: already registered ({match_needle})")
         return 0
 
-    # Build new entry. node-script path is forced into forward slashes for
-    # Git-Bash/POSIX parser compatibility; the surrounding outer string is
-    # double-quoted so spaces in the path (rare) survive shell parsing.
-    fwd = node_script.replace("\\", "/")
     new_entry = {
         "hooks": [
-            {
-                "type": "command",
-                "command": f'{NODE_CMD} "{fwd}"',
-                "timeout": int(timeout),
-            }
+            {"type": "command", "command": command_str, "timeout": int(timeout)}
         ]
     }
-    # Round-trip safety: snapshot pre-merge, mutate copy, write copy.
     before_snapshot = copy.deepcopy(data)
-    stop.append(new_entry)
+    arr.append(new_entry)
 
-    # Atomic write: tmp in same dir -> os.replace().
     backup_path = f"{settings_path}.bak-{int(time.time())}"
     shutil.copy2(settings_path, backup_path)
 
@@ -118,17 +115,12 @@ def register_stop(settings_path: str, node_script: str, timeout: int) -> int:
             os.unlink(tmp_path)
         except OSError:
             pass
-        # restore backup on failure
         shutil.copy2(backup_path, settings_path)
         raise
 
-    # Post-write validation: parse, confirm bounded diff.
     with open(settings_path, "r", encoding="utf-8-sig") as fh:
         after = json.loads(fh.read())
 
-    # Bounded-diff: subtract before from after at top level.
-    # Only allowed change: hooks.Stop grew by exactly one element matching
-    # the new entry. Every other field is byte-equivalent under json.loads.
     fail = []
     for k in set(before_snapshot.keys()) | set(after.keys()):
         if k == "hooks":
@@ -138,14 +130,13 @@ def register_stop(settings_path: str, node_script: str, timeout: int) -> int:
     if fail:
         print(f"settings_merger: unexpected diff outside hooks: {fail}",
               file=sys.stderr)
-        # rollback
         shutil.copy2(backup_path, settings_path)
         return 5
-    # hooks must differ only in the Stop event array's tail.
+
     bh = before_snapshot.get("hooks", {})
     ah = after.get("hooks", {})
     for k in set(bh.keys()) | set(ah.keys()):
-        if k == "Stop":
+        if k == event:
             continue
         if bh.get(k) != ah.get(k):
             fail.append(f"hooks.{k}")
@@ -154,28 +145,55 @@ def register_stop(settings_path: str, node_script: str, timeout: int) -> int:
               file=sys.stderr)
         shutil.copy2(backup_path, settings_path)
         return 5
-    before_stop = bh.get("Stop", [])
-    after_stop = ah.get("Stop", [])
-    if len(after_stop) != len(before_stop) + 1:
-        print(f"settings_merger: Stop length delta != +1 "
-              f"({len(before_stop)} -> {len(after_stop)})", file=sys.stderr)
+
+    before_arr = bh.get(event, [])
+    after_arr = ah.get(event, [])
+    if len(after_arr) != len(before_arr) + 1:
+        print(f"settings_merger: {event} length delta != +1 "
+              f"({len(before_arr)} -> {len(after_arr)})", file=sys.stderr)
         shutil.copy2(backup_path, settings_path)
         return 5
-    if after_stop[:-1] != before_stop:
-        print("settings_merger: Stop prefix mutated (not append-only)",
+    if after_arr[:-1] != before_arr:
+        print(f"settings_merger: {event} prefix mutated (not append-only)",
               file=sys.stderr)
         shutil.copy2(backup_path, settings_path)
         return 5
 
-    print(f"settings_merger: OK  registered={node_script}  "
+    print(f"settings_merger: OK  event={event}  registered={match_needle}  "
           f"backup={os.path.basename(backup_path)}  "
-          f"stop_len={len(before_stop)}->{len(after_stop)}")
+          f"{event}_len={len(before_arr)}->{len(after_arr)}")
     return 0
+
+
+def register_stop(settings_path: str, node_script: str, timeout: int) -> int:
+    fwd = node_script.replace("\\", "/")
+    return _register(settings_path, "Stop",
+                      f'{NODE_CMD} "{fwd}"', fwd, timeout)
+
+
+def register_userprompt(settings_path: str, py_interp: str,
+                        py_script: str, timeout: int) -> int:
+    # G6 preflight: refuse to write a hook command pointing at a
+    # non-existent interpreter (would silently degrade every prompt).
+    if not os.path.isfile(py_interp):
+        print(f"settings_merger: python interpreter not found: {py_interp}",
+              file=sys.stderr)
+        return 5
+    if not os.path.isfile(py_script):
+        print(f"settings_merger: hook script not found: {py_script}",
+              file=sys.stderr)
+        return 5
+    interp_fwd = py_interp.replace("\\", "/")
+    script_fwd = py_script.replace("\\", "/")
+    cmd = f'"{interp_fwd}" "{script_fwd}"'
+    return _register(settings_path, "UserPromptSubmit", cmd, script_fwd,
+                     timeout)
 
 
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
+
     rs = sub.add_parser("register-stop",
                         help="Register a Stop-event command hook")
     rs.add_argument("--node-script", required=True,
@@ -184,9 +202,24 @@ def main():
                     help="hook timeout in seconds (default 5)")
     rs.add_argument("--settings", default=DEFAULT_SETTINGS,
                     help="path to settings.json (default ~/.claude/...)")
+
+    ru = sub.add_parser("register-userprompt",
+                        help="Register a UserPromptSubmit Python hook")
+    ru.add_argument("--py-interp", required=True,
+                    help="absolute path to python.exe (must exist)")
+    ru.add_argument("--py-script", required=True,
+                    help="absolute path to the Python hook script")
+    ru.add_argument("--timeout", type=int, default=10,
+                    help="hook timeout in seconds (default 10)")
+    ru.add_argument("--settings", default=DEFAULT_SETTINGS,
+                    help="path to settings.json (default ~/.claude/...)")
+
     a = ap.parse_args()
     if a.cmd == "register-stop":
         return register_stop(a.settings, a.node_script, a.timeout)
+    if a.cmd == "register-userprompt":
+        return register_userprompt(a.settings, a.py_interp, a.py_script,
+                                   a.timeout)
     return 2
 
 
