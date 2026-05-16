@@ -89,7 +89,15 @@ function main() {
 
   if (res.error || res.status === null) return passThrough();
 
-  const rewritten = (res.stdout || '').replace(/\r?\n$/, '');
+  let rewritten = (res.stdout || '').replace(/\r?\n$/, '');
+
+  // rtk emits a bare `rtk <args>` invocation. Bare `rtk` only resolves if
+  // ~/.claude/bin is on PATH — it is NOT (verified). Anchor the emitted
+  // command to the absolute binary so the rewrite runs in any shell,
+  // including Claude Code's Bash context.
+  if (/^rtk(\s|$)/.test(rewritten)) {
+    rewritten = `"${RTK_BIN}"` + rewritten.slice(3);
+  }
 
   switch (res.status) {
     case 0: {

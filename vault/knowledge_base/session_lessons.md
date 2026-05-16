@@ -336,3 +336,17 @@ completeness doctrine sealed into `~/.claude/CLAUDE.md` (<100 cap held)
 **Rollback one-liner (settings.json):** `copy "<settings>.bak-<ts>" "<settings>"` — `settings_merger.py` writes a timestamped backup before every merge and auto-restores it on any bounded-diff assertion failure (exit 5). This run's backup: `settings.json.bak-1778925290`.
 
 **Activation caveat (BL-0067):** the new UserPromptSubmit group cold-loads — JIT firing in a live session requires `/restart`. Subprocess verification proves the loader's file-on-disk logic (≥95 % byte capture, dedupe, fail-open); real-session firing is out of phase-7 subprocess scope by design.
+
+---
+
+## RTK Rust-Token-Killer fusion (/ultra, 2026-05-16)
+
+1. **Source-premise gate beats polite execution.** The spec asked to "absorb RTK's multi-agent runtime kernel". Inspecting the zip first proved RTK is a *per-command output compressor* (Rust, MIT), not an orchestrator. Halting at Phase 2/3 to cite README+Cargo.toml — instead of generating a fictional `runtime_kernel.py` — is the protocol working, not failing. Verify what a thing IS before planning around what it was called.
+
+2. **No destructive cleanup before resolving real consumers.** The plan's `git clean -fd` option would have erased 159 untracked entries that were live IP (`modules/`, `tools/lazarus_*`, `commands/*.md`). Rule: never run a destructive sweep to "tidy" a tree until every untracked path is classified; `stash -u` or branch-carry, never `clean -fd`, when uncertainty exists.
+
+3. **Auto-mode denies hook *files* in `~/.claude/hooks/`, not only settings.json registration.** Extends the 2026-05-16 learning. The honest, non-bypass response: ship the hook as a version-controlled repo artifact (`modules/rtk-core/`) + an explicit Owner-activation block, never relocate-via-Bash to dodge the classifier. Respecting the denial's intent (no silent self-persistence) is mandatory; the repo-artifact path is strictly better (auditable, diffable).
+
+4. **A non-empty-output guard is not a correctness guard.** First DONE-gate run reported 99.9 % reduction — a false positive: the rewritten bare-`rtk` command failed to resolve (`~/.claude/bin` not on PATH) and the verifier measured a ~27-token error string. Fix had two parts: (a) the hook now anchors the emitted command to the absolute binary path (`"<RTK_BIN>" …`) so it runs in any shell including Claude's Bash; (b) the verifier rejects an implausibly small compressed output (<50 tok) as a resolution failure. True measured reduction afterward: 80.5 %. Lesson: compression verifiers must assert a sane *floor* and exercise the *real integration path*, not the binary in isolation.
+
+5. **`~/.claude/bin` is not on PATH.** Any artifact that invokes a binary installed there must resolve it by absolute path (env override → `~/.claude/bin/<exe>`), and any *emitted* command that names that binary must be rewritten to the absolute path too. PATH-relative invocation is a latent failure that passes static checks and dies at runtime (Mistake #16 class).
