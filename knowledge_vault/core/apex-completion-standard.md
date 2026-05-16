@@ -76,3 +76,121 @@ empirical gate each fail this standard. Registration is via
 interpreter preflight, append-only bounded settings merge, timestamped
 backup). Activation cold-loads at session start (BL-0067): the gate
 proves file-on-disk logic; live firing requires `/restart`.
+
+---
+
+# Apex Completion Standard — Concurrency & Async-Audit Axes
+
+> Sealed 2026-05-16 (Intent-Lock / L3 cycle). Complementary to the
+> JIT Activation Law above; both define DONE. A new feature satisfies
+> BOTH or it is a draft.
+
+## Axis A — Native concurrent-execution protection (Intent-Lock)
+
+Any feature mutating shared state (files, git, DB, remote) MUST be safe
+under concurrent execution by multiple panes on the same physical
+worktree:
+
+- Mutating ops (Write/Edit/commit) on a worktree held by a different
+  **live** PID are soft-paused, never interleaved.
+- Conflict key = `realpath(worktree)` + live PID, never branch alone
+  (different physical worktrees are legitimate parallelism).
+- Liveness triad: different PID **and** alive **and** stored
+  worktree===current **and** age<expiry. PID alone never denies.
+- Lock auto-expires (default 5 min) and is **fail-open** — a guard
+  that can wedge a session is itself a defect.
+
+Ref: `skills/claude-power-pack/modules/harness/intent_lock.js` (loaded
+via `hook-dispatcher.js` `PreToolUse-default`).
+
+## Axis B — Asynchronous background auditing
+
+Any feature accruing reviewable state (learnings, errors, drift) MUST
+have a decoupled, throttled background path that stages it for batch
+human review without blocking or mutating live:
+
+- Detached + unref'd; never holds the foreground session open.
+- READ + PROPOSE ONLY — stages proposals; never silently mutates
+  rules/skills/config.
+- Triple-shield: single-flight lock + time cooldown + env-sentinel
+  recursion guard at the hook entrypoint's first statement.
+- Headless child auth is non-interactive but REAL (never an
+  auth-strip bypass). Scoped read-only allow-list over blanket bypass.
+
+Ref: `learning-sentinel.js` `maybeSpawnL3` + scoped
+`modules/harness/l3-child-settings.json`; proposals →
+`~/.claude/cache/compound-proposals/<ts>.md`.
+
+## Authorization Boundary (operational law)
+
+The capability code is agent-built + standalone-verified. The single
+line that makes an autonomous background worker **auto-fire from a
+startup hook** is classifier-gated and NOT agent-self-authorizable —
+not via inferred privilege, scoped re-architecture, nor
+`AskUserQuestion` soft-consent. It needs durable Owner authorization
+(explicit settings permission rule, or Owner-applied activation). Ship
+inert + verified; hand the Owner the exact one-line patch. See
+`memory/automode-denies-self-modification`.
+
+---
+
+# Zero-Drift Mirror Completion Law
+
+> Sealed 2026-05-16 (Dynamic Mirror Verifier cycle). A third DONE axis,
+> peer to the JIT Activation Law and the Concurrency & Async-Audit Axes.
+> A feature satisfies ALL THREE or it is a draft.
+
+## The law
+
+No feature, build, or cycle may be declared COMPLETE while the global
+`~/.claude/{commands,agents,knowledge_vault}/` mirror layout carries a
+single bit of **unverified** structural drift against its
+version-controlled Power Pack counterpart.
+
+"Verified" has a precise, mechanical meaning:
+
+- Parity is asserted against the **committed blob** of a deterministic
+  named git ref (`git show <ref>:<relpath>`), NEVER the working tree.
+  A working tree is volatile: concurrent panes flip its branch, so a
+  working-tree read produces *phantom* drift that is an artifact, not a
+  fact. The committed blob is invariant to that.
+- Both sides are LF-normalized before SHA-256. Under
+  `core.autocrlf=true` only `knowledge_vault/**` carries a `-text`
+  attribute; the `commands/` and `agents/` pairs do not, so the global
+  filesystem copy is CRLF while the blob is LF. Without normalization
+  3 of 4 pairs false-drift. Normalization is load-bearing, not cosmetic.
+- The global filesystem copy is the **immutable reference** (it is what
+  the runtime actually loads). Reconciliation flows global -> Power
+  Pack, then is committed; the committed blob is what the gate checks.
+
+## Phantom vs real drift (the distinction the gate must preserve)
+
+A correct verifier MUST separate the two and must NOT silence either:
+
+- **Phantom drift**: working tree on a different branch than the canon.
+  Cured by reading the committed blob of a named ref. Cross-ref
+  `--self-test` invariance proves a result is phantom-free.
+- **Real drift**: the committed mirror genuinely diverges from global
+  (a prior cycle's content never mirrored back). The gate MUST FAIL
+  loudly. Resolving it by fudging the verifier toward exit 0 is a
+  Reality-Contract breach; resolve it by syncing + committing the
+  mirror, never by weakening the check.
+
+## Chronological health (sibling invariant)
+
+The native `/resume` picker depends on `~/.claude/history.jsonl`
+timestamp monotonicity and on `<uuid>.jsonl` not being orphaned as
+`.jsonl.live` by a crashed live-cloak hook. A cycle that touched
+session/transcript infrastructure is not COMPLETE until a health scan
+shows: history monotonic, and every stale `.jsonl.live` either
+clobber-blocked (already restored) or resurfaced. The scan and any
+repair MUST be rename-only, zero-deletion, and secret-safe (never emit
+`display`/session bodies — those carry live tokens).
+
+## Enforcement
+
+`tools/verify_global_mirrors.py` (dynamic ref + LF-norm + `--self-test`)
+and `tools/resume_reindex.py` (heartbeat-contract-identical orphan scan)
+are the mechanical gate. `tools/test_mirror_parity.py` asserts
+branch-flip immunity. Green across all three under any concurrent
+working-tree branch == this law satisfied.

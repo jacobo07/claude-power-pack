@@ -398,3 +398,47 @@ completeness doctrine sealed into `~/.claude/CLAUDE.md` (<100 cap held)
 **Immunization / pivot:** Do not depend on a skill-scoped slash command from a programmatically-spawned child. Invoke `claude -p` with a DIRECT PROMPT that points at the canonical pipeline spec file (here `~/.claude/skills/compound-learnings/SKILL.md`) and instructs the dry-run over the corpus. Verified from Node `spawnSync`: produces a real 7149-byte consolidated report (`tools/test_l3_intent.js` 12/12). Keep `--add-dir <ppRepo>` for filesystem read scope and the scoped read-only `--settings` allow-list.
 
 **Process note:** This is exactly why ULTRA Q5 mandated REAL-input verification — every mock/static check would have passed; only a real detached `claude.exe` exposed the command-registry boundary. Pair with memory `automode-denies-self-modification`: the verified mechanism lives in the PP-tracked harness; wiring + the corrected spawn block into the startup hook remain Owner-authorization residue (classifier-gated, not agent-self-authorizable).
+
+## 2026-05-16 — Dynamic Mirror Verifier & Resume Recency (5 lessons)
+
+1. **Phantom drift was a working-tree read, not a git problem.**
+   `verify_global_mirrors.py` read the PP side from the working tree;
+   concurrent Cursor panes flip that tree's branch, so the SHA compared
+   whatever branch happened to be checked out. Vaccine: parity MUST read
+   the committed blob via `git show <named-ref>:<relpath>` — never the
+   working tree. A `--self-test` asserting cross-ref normalized-SHA
+   invariance mechanically proves a result is phantom-free.
+
+2. **The Owner-locked canonical ref rested on a false premise.**
+   Q1a/Q6a pinned `kdos/v1.2-sync`, but that branch is the merge-base
+   ancestor and tracks NONE of the mirrored files (`git cat-file -e`
+   verified). Honor intent ("stable named ref, not volatile working
+   tree"), reject the false literal: resolve ref via a deterministic
+   chain (`--ref` -> `$POWERPACK_MIRROR_REF` -> sealing branch -> main
+   -> first refname-sorted head that tracks the path). RCA over blind
+   obedience when an audit disproves the premise of an answer.
+
+3. **autocrlf parity is load-bearing, not defense-in-depth.**
+   Only `knowledge_vault/** -text` is pinned in `.gitattributes`; the
+   `commands/`+`agents/` pairs are NOT. Under `core.autocrlf=true` the
+   committed blob is LF, the global filesystem copy CRLF -> 3 of 4 pairs
+   false-drift without LF-normalizing BOTH sides before SHA-256.
+
+4. **`git show <ref>:<path>` exits 128 (not 0) on absent-on-ref and the
+   pathspec must be repo-relative POSIX.** Always check returncode +
+   empty-stdout (treat as explicit NOT_TRACKED, never hash empty as a
+   real blob) and transform the absolute Windows PP path with
+   `PurePosixPath(os.path.relpath(abs, repo)).as_posix()`.
+
+5. **A second restorer must clone the first restorer's exact contract.**
+   `resume_reindex.py` resurfaces stale `.jsonl.live` orphans hidden
+   from native `/resume` by a crashed `resume-hide-live.js`. It reuses
+   the IDENTICAL liveness signal (`~/.claude/lazarus/<proj>/heartbeats/
+   <uuid>.lock` mtime, 60s stale, missing-lock=>stale) and the IDENTICAL
+   no-clobber guard (skip if `<uuid>.jsonl` exists) so the manual tool
+   and the SessionStart hook can never disagree or double-restore.
+   Empirical: 57 orphans, 55 stale-but-clobber-blocked (already safe),
+   2 genuinely live — 0 wrongly hidden; history.jsonl monotonic
+   (9552 entries, 966 sessions, 0 inversions). Secret-safe: never read
+   `display` (live JWT lives in history head).
+
