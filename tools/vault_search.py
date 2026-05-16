@@ -17,10 +17,21 @@ import os, sys, json, glob, time, sqlite3, argparse, tempfile, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import merger as M
 
+# G3: Windows console is cp1252; the [REC] glyph would raise
+# UnicodeEncodeError and crash the picker. Force utf-8 stdout.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except (AttributeError, ValueError):
+    pass
+
 VAULT_DB = os.path.join(M.OUT_DIR, "SOVEREIGN-HISTORY-VAULT.db")
 STATE_DIR = os.path.expandvars(r"%USERPROFILE%\.claude\state")
 OPEN_CACHE = os.path.join(STATE_DIR, "open-composers.json")
 OPEN_TTL = 30  # seconds
+RECOVERED_CACHE = os.path.join(STATE_DIR, "recovered-composers.json")
+RECOVERED_TTL = 300  # G5: recompute-on-read after 5 min
+import re as _re
+_UUID_RE = _re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", _re.IGNORECASE)
 
 
 _FTS_DDL = """
@@ -204,6 +215,125 @@ def list_open_composers():
     return open_ids
 
 
+def _live_jsonl_uuids():
+    """UUIDs that appear as a .jsonl / .jsonl.live filename under projects.
+    These are the live-counterpart UUIDs (id-space matches SQLite cids)."""
+    uuids = set()
+    base = r"C:\\Users\\User\\.claude\\projects"
+    for pat in ("*.jsonl", "*.jsonl.live"):
+        for p in glob.glob(os.path.join(base, "**", pat), recursive=True):
+            stem = os.path.basename(p)
+            if stem.endswith(".jsonl.live"):
+                stem = stem[: -len(".jsonl.live")]
+            elif stem.endswith(".jsonl"):
+                stem = stem[: -len(".jsonl")]
+            uuids.add(stem.lower())
+    return uuids
+
+
+def compute_recovered():
+    """Return {cid: {"project": str, "bubbles": int}} for RECOVERED-orphan
+    composers. G2: orphan-only signal (no bubble-count branch — id-space
+    split makes a live-counterpart join undefined). A cid qualifies iff:
+      - it is UUID-shaped, AND
+      - it has >=1 vault row with source LIKE 'recovered.old%', AND
+      - its UUID is NOT a live .jsonl/.jsonl.live filename, AND
+      - it has 0 vault rows from source live%/backup/workspace."""
+    if not os.path.isfile(VAULT_DB):
+        return {}
+    con = sqlite3.connect(VAULT_DB)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    rec_rows = cur.execute(
+        "SELECT composer_id, project, count(*) AS n FROM turns "
+        "WHERE source LIKE 'recovered.old%' GROUP BY composer_id"
+    ).fetchall()
+    # Same-id-space 'live counterpart' presence set.
+    live_present = set(r[0] for r in cur.execute(
+        "SELECT DISTINCT composer_id FROM turns WHERE "
+        "source LIKE 'live%' OR source LIKE 'state.vscdb.backup%' "
+        "OR source LIKE 'workspace%'"
+    ).fetchall())
+    con.close()
+    live_files = _live_jsonl_uuids()
+    out = {}
+    for r in rec_rows:
+        cid = r["composer_id"]
+        if not cid or not _UUID_RE.match(cid):
+            continue
+        if cid.lower() in live_files:
+            continue
+        if cid in live_present:
+            continue
+        out[cid] = {"project": r["project"] or "?", "bubbles": int(r["n"])}
+    return out
+
+
+def _read_recovered_cache():
+    try:
+        if (os.path.isfile(RECOVERED_CACHE)
+                and time.time() - os.path.getmtime(RECOVERED_CACHE)
+                < RECOVERED_TTL):
+            with open(RECOVERED_CACHE, encoding="utf-8-sig") as fh:
+                obj = json.load(fh)
+            if isinstance(obj, dict) and "composers" in obj:
+                return obj["composers"]
+    except (OSError, ValueError):
+        pass
+    return None
+
+
+def write_recovered_cache():
+    rec = compute_recovered()
+    os.makedirs(STATE_DIR, exist_ok=True)
+    payload = {
+        "generated": time.time(),
+        "ttl_sec": RECOVERED_TTL,
+        "count": len(rec),
+        "composers": rec,
+        # project -> list[cid] reverse map for the SessionStart hook (G1:
+        # SessionStart has no composerId, only cwd/project).
+        "projects": _projects_map(rec),
+    }
+    tmp = RECOVERED_CACHE + ".tmp"
+    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(payload, fh, sort_keys=True, indent=1)
+    os.replace(tmp, RECOVERED_CACHE)
+    return rec
+
+
+def _projects_map(rec):
+    pm = {}
+    for cid, meta in rec.items():
+        pm.setdefault(meta["project"], []).append(cid)
+    for k in pm:
+        pm[k] = sorted(pm[k])
+    return pm
+
+
+def recovered_set():
+    """Cached membership set for callers (hook, picker). Recompute on TTL."""
+    cached = _read_recovered_cache()
+    if cached is not None:
+        return cached
+    return write_recovered_cache()
+
+
+def list_recovered(top_n=40):
+    rec = write_recovered_cache()  # always fresh on explicit list
+    items = sorted(rec.items(), key=lambda kv: (-kv[1]["bubbles"], kv[0]))
+    print("# RECOVERED-orphan composers (source=recovered.old%, "
+          "UUID-shaped, no live .jsonl/.jsonl.live, no live/backup/ws row)")
+    shown = 0
+    for cid, meta in items[:top_n]:
+        proj = (meta["project"] or "")[:32]
+        print(f"  [REC] \U0001f7e9 {cid}  bubbles={meta['bubbles']:>3}  "
+              f"proj={proj}")
+        shown += 1
+    print(f"# total recovered-orphan: {len(rec)}  (cache: {RECOVERED_CACHE})")
+    return 0 if rec else 5
+
+
 def list_resumeable(top_n=40):
     if not os.path.isfile(VAULT_DB):
         return 5
@@ -225,14 +355,19 @@ def list_resumeable(top_n=40):
         GROUP BY composer_id ORDER BY n DESC LIMIT ?
     """, (top_n,)).fetchall()
     con.close()
+    rec = recovered_set()
     print(f"# resumeable composers (vault SQL turns, "
-          f"excluding {len(open_ids)} open + {len(fresh)} live)")
+          f"excluding {len(open_ids)} open + {len(fresh)} live; "
+          f"{len(rec)} flagged [REC])")
     shown = 0
     for r in rows:
         if r["composer_id"] in open_ids or r["composer_id"] in fresh:
             continue
         proj = (r["project"] or "")[:32]
-        print(f"  {r['composer_id'][:36]}  bubbles={r['n']:>3}  "
+        # G3/Q5a: ASCII '[REC]' first then the glyph, so a cp1252 fallback
+        # still shows the marker even if the emoji is replaced.
+        mark = "[REC] \U0001f7e9 " if r["composer_id"] in rec else ""
+        print(f"  {mark}{r['composer_id'][:36]}  bubbles={r['n']:>3}  "
               f"longest={r['longest']:>5}  proj={proj}")
         shown += 1
     print(f"# total resumeable: {shown}")
@@ -248,6 +383,10 @@ def main():
     ap.add_argument("--get", metavar="COMPOSER_ID")
     ap.add_argument("--list-open-composers", action="store_true")
     ap.add_argument("--list-resumeable", type=int, nargs="?", const=40)
+    ap.add_argument("--list-recovered", type=int, nargs="?", const=40,
+                    help="RECOVERED-orphan composers from .old (G1/G2)")
+    ap.add_argument("--write-recovered-cache", action="store_true",
+                    help="refresh ~/.claude/state/recovered-composers.json")
     a = ap.parse_args()
     if a.build_index:
         return build_index()
@@ -263,6 +402,12 @@ def main():
         for u in sorted(ids):
             print(f"  {u}")
         return 0
+    if a.write_recovered_cache:
+        rec = write_recovered_cache()
+        print(f"recovered-composers.json written: {len(rec)} composers")
+        return 0
+    if a.list_recovered is not None:
+        return list_recovered(a.list_recovered)
     if a.list_resumeable is not None:
         return list_resumeable(a.list_resumeable)
     ap.print_help()
