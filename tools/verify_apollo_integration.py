@@ -38,6 +38,10 @@ REPO_AUDITOR = PP_ROOT / "agents" / "oneshot-architect-auditor.md"
 LIVE_AUDITOR = HOME / ".claude" / "agents" / "oneshot-architect-auditor.md"
 GLOBAL_CLAUDE_MD = HOME / ".claude" / "CLAUDE.md"
 FIXTURE = PP_ROOT / "tests" / "fixtures" / "apollo-corrupted" / "src" / "queries.graphql"
+JIT_LOADER = PP_ROOT / "tools" / "jit_skill_loader.py"
+GQL_OPS_SKILL = PP_ROOT / "vendor" / "apollo" / "upstream" / "graphql-operations" / "SKILL.md"
+PY_INTERP = sys.executable  # absolute interpreter running this gate
+STATE_DIR = HOME / ".claude" / "state"  # jit_skill_loader dedupe-state dir
 
 PASS, FAIL = "PASS", "FAIL"
 results = []
@@ -278,12 +282,15 @@ def c_v_fixture():
 
 
 def c_vi_seal():
-    ok = GLOBAL_CLAUDE_MD.is_file() and "Sovereign GraphQL Baseline" in (
-        GLOBAL_CLAUDE_MD.read_text(encoding="utf-8"))
-    lines = len(GLOBAL_CLAUDE_MD.read_text(encoding="utf-8").splitlines()) \
-        if GLOBAL_CLAUDE_MD.is_file() else -1
-    record("(vi) seal", ok and lines < 100,
-           f"seal_present={ok} claude_md_lines={lines} (<100 required)")
+    txt = GLOBAL_CLAUDE_MD.read_text(encoding="utf-8") \
+        if GLOBAL_CLAUDE_MD.is_file() else ""
+    gql_seal = "Sovereign GraphQL" in txt          # GraphQL baseline (BL-0068)
+    jit_seal = "jit_skill_loader" in txt and "0069" in txt and "JIT" in txt
+    lines = len(txt.splitlines()) if txt else -1
+    ok = gql_seal and jit_seal and lines < 100
+    record("(vi) seal", ok,
+           f"gql_seal={gql_seal} jit_seal={jit_seal} "
+           f"claude_md_lines={lines} (<100 required)")
 
 
 def c_vii_license():
@@ -293,10 +300,96 @@ def c_vii_license():
            f"LICENSE={lic} SOURCE.txt={src} (vendor/README Rules 1&2)")
 
 
+def _jit_call(cwd: Path, session_id: str, prompt: str):
+    payload = json.dumps({
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": prompt,
+        "cwd": str(cwd),
+        "session_id": session_id,
+    })
+    proc = subprocess.run(
+        [PY_INTERP, str(JIT_LOADER)], input=payload,
+        capture_output=True, text=True, timeout=20,
+    )
+    try:
+        return json.loads(proc.stdout), proc.stderr
+    except json.JSONDecodeError:
+        return {"_parsefail": proc.stdout[:200]}, proc.stderr
+
+
+def c_viii_jit():
+    """JIT loader: real subprocess, top-level additionalContext, >=95% bytes,
+    literal heading present (no-summary), dedupe, negative-clean, budget."""
+    if not JIT_LOADER.is_file() or not GQL_OPS_SKILL.is_file():
+        return record("(viii) jit", False, "jit_skill_loader or SKILL.md missing")
+    skill = GQL_OPS_SKILL.read_text(encoding="utf-8")
+    skill_bytes = len(skill.encode("utf-8"))
+    heading = next((ln for ln in skill.splitlines() if ln.strip()), "")
+    # Unique session ids per gate run — the loader's session-dedupe is
+    # real persistent state; a fixed id would collide with this gate's
+    # OWN prior run and false-fail the positive case.
+    import uuid
+    tok = uuid.uuid4().hex[:8]
+    s1, s2 = f"VERIFYJIT-{tok}-A", f"VERIFYJIT-{tok}-B"
+    state_files = [STATE_DIR / f"jit-injected-{s}.json" for s in (s1, s2)]
+    tmp = Path(tempfile.mkdtemp(prefix="jit_verify_"))
+    try:
+        gql = tmp / "gqlproj"
+        gql.mkdir()
+        (gql / "schema.graphql").write_text("type Query { me: ID }",
+                                            encoding="utf-8")
+        plain = tmp / "plain"
+        plain.mkdir()
+        (plain / "package.json").write_text(
+            json.dumps({"name": "p", "dependencies": {"react": "^18"}}),
+            encoding="utf-8")
+
+        pos, perr = _jit_call(gql, s1,
+                              "help me write a graphql query")
+        ac = pos.get("additionalContext", "")
+        ac_bytes = len(ac.encode("utf-8"))
+        top_level = "additionalContext" in pos and "hookSpecificOutput" not in pos
+        cont = pos.get("continue") is True
+        pct = (ac_bytes / skill_bytes) if skill_bytes else 0
+        # full SKILL.md body must be literally embedded, not summarized
+        body_embedded = skill[:1500] in ac and skill[-800:] in ac
+        heading_present = bool(heading) and heading in ac
+        budget_ok = ac_bytes <= 40_000
+
+        ded, _ = _jit_call(gql, s1,
+                            "more graphql work")  # same session -> skip
+        dedupe_ok = "additionalContext" not in ded and ded.get("continue") is True
+
+        # negative: no graphql/apollo keyword in prompt AND no graphql in
+        # cwd — proves the loader does not over-trigger on neutral work.
+        neg, _ = _jit_call(plain, s2, "fix the css flexbox padding")
+        neg_ok = "additionalContext" not in neg and neg.get("continue") is True
+
+        ok = (top_level and cont and pct >= 0.95 and body_embedded
+              and heading_present and budget_ok and dedupe_ok and neg_ok
+              and not perr.strip())
+        record("(viii) jit", ok,
+               f"top_level_ac={top_level} continue={cont} "
+               f"bytes={ac_bytes}/{skill_bytes} (>=95%={pct >= 0.95}) "
+               f"embedded={body_embedded} heading={heading_present} "
+               f"budget<=40K={budget_ok} dedupe={dedupe_ok} "
+               f"neg_clean={neg_ok} stderr_clean={not perr.strip()} "
+               f"| BL-0067: real-session firing needs /restart "
+               f"(subprocess proves file-on-disk logic only)")
+    finally:
+        import shutil
+        shutil.rmtree(tmp, ignore_errors=True)
+        for sf in state_files:               # no leaked dedupe state
+            try:
+                sf.unlink()
+            except OSError:
+                pass
+
+
 def main() -> int:
     print("=== Apollo Skills Fusion — empirical verification ===")
     for fn in (c_i_modules, c_ii_sha, c_iii_sentinel, c_iv_auditor,
-               c_v_fixture, c_vi_seal, c_vii_license):
+               c_v_fixture, c_vi_seal, c_vii_license, c_viii_jit):
         try:
             fn()
         except Exception as exc:  # a crashing check is a FAIL, never a skip
