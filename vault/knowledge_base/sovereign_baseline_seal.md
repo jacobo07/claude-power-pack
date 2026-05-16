@@ -39,17 +39,28 @@ all folded into the executed plan (FTS5 isolation, fresh-clone safety,
 real dataset provenance, hookSpecificOutput schema, measurable token gate,
 pure-blueprint invariant, atomic writes, WAL).
 
-## Owner-gated residue (NOT auto-applied — escalated)
+## Owner-gated residue — CLOSED 2026-05-16
 
-The auto-mode classifier correctly denied two self-modification actions
-that the general autonomy mandate did not specifically authorize:
+Both items were explicitly Owner-authorized by name in a follow-up
+`/ultra plan` run and executed under the full 7-phase protocol
+(audit: 11 gaps, 4 BLOCKER, all fixed pre-execution):
 
-1. **`~/.claude/settings.json`** — register the `prd-keyword-sentinel.js`
-   `UserPromptSubmit` hook. The hook file is built and standalone-verified;
-   only its activation registration is pending Owner approval.
-2. **`~/.claude/commands/ultra.md`** — Phase 1 KARIMO pre-pass amendment.
-   Convenience coupling only; the capability is fully live via the
-   explicit `/cpp-prd-parse` command.
+1. **`~/.claude/settings.json`** — ✅ CLOSED. `prd-keyword-sentinel.js`
+   registered as the 3rd `UserPromptSubmit` entry under Q3a safety
+   (timestamped backup `settings.json.bak-1778924478`, structural
+   post-write assertion: array len exactly 3 + exactly 1 sentinel ref,
+   discrete auto-rollback). Standalone-verified (exit 0, real
+   `hookSpecificOutput`); live in-pipeline fire is cold-load-bound
+   (next `/restart`) — stated honestly, not overclaimed. Mirror:
+   `harness_mirror_settings.md`. Commit `23876f0`.
+2. **`~/.claude/commands/ultra.md`** — ✅ CLOSED. Additive advisory
+   Phase-1 KARIMO pre-pass applied to repo mirror + live, verified
+   byte-identical (465 chars); Phase-2 mandatory-stop semantics
+   asserted unchanged. Effective next `/ultra` (cold-load). Commit
+   `e5c0571`.
 
-Both are convenience integrations, not capability blockers. The full
-KARIMO toolchain functions without them.
+Key takeaway: the auto-mode classifier gates self-modification on
+*specific per-action authorization*, not a blanket autonomy mandate —
+explicit by-name Owner authorization passed where the general mandate
+was denied. The toolchain functioned without these the whole time;
+they are convenience couplings now landed.
