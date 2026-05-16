@@ -229,6 +229,61 @@ if (Test-Path $CommandsSrc) {
     Write-Host "[WARN] commands/ directory not found — skipping slash-command registration" -ForegroundColor Yellow
 }
 
+# 9. design-md — Google Labs DESIGN.md linter/exporter (npm-bundled)
+# Provisions @google/design.md into local node_modules\ and exposes a wrapper
+# at ~/.claude/bin/design-md.cmd. Skipped gracefully if npm is missing.
+$DesignMdDir = Join-Path $SkillDir "modules\design-md"
+$DesignMdPkg = Join-Path $SkillDir "package.json"
+$DesignMdEntry = Join-Path $SkillDir "node_modules\@google\design.md\dist\index.js"
+if (Test-Path $DesignMdPkg) {
+    $npm = Get-Command npm -ErrorAction SilentlyContinue
+    if ($npm) {
+        if (-not (Test-Path $DesignMdEntry)) {
+            Write-Host "-- Installing @google/design.md (one-time, ~1.5 MB) --"
+            Push-Location $SkillDir
+            try {
+                & npm install --no-audit --no-fund --loglevel=error
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "[WARN] npm install failed - design-md will not be available until you re-run install.ps1" -ForegroundColor Yellow
+                }
+            } finally {
+                Pop-Location
+            }
+        }
+        $DesignWrapperSrc = Join-Path $DesignMdDir "wrapper.cmd"
+        $DesignWrapper = Join-Path $BinDir "design-md.cmd"
+        if ((Test-Path $DesignMdEntry) -and (Test-Path $DesignWrapperSrc)) {
+            Copy-Item -Path $DesignWrapperSrc -Destination $DesignWrapper -Force
+            Write-Host "[OK] Created design-md.cmd at $DesignWrapper (wraps @google/design.md CLI)" -ForegroundColor Green
+        } else {
+            Write-Host "[WARN] design-md wrapper not registered (CLI entry or wrapper.cmd missing)" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "[WARN] npm not on PATH - design-md skill will not be available. Install Node 18+ and re-run install.ps1." -ForegroundColor Yellow
+    }
+}
+
+# 10. License Advisory — surface what's vendored from third parties.
+# Advisory only; never blocks install. See vendor/README.md for the policy.
+$VendorDir = Join-Path $SkillDir "vendor"
+$GateScript = Join-Path $SkillDir "lib\license_gate.js"
+if ((Test-Path $VendorDir) -and (Test-Path $GateScript)) {
+    $bundles = Get-ChildItem -Path $VendorDir -Directory -ErrorAction SilentlyContinue
+    if ($bundles.Count -eq 0) {
+        Write-Host "[INFO] vendor/ structurally present, no third-party bundles currently." -ForegroundColor Cyan
+    } else {
+        $node = Get-Command node -ErrorAction SilentlyContinue
+        foreach ($b in $bundles) {
+            Write-Host "-- License advisory: $($b.Name) --"
+            if ($node) {
+                & node $GateScript $b.FullName
+            } else {
+                Write-Host "[WARN] vendor/$($b.Name) present but 'node' not on PATH - license gate skipped." -ForegroundColor Yellow
+            }
+        }
+    }
+}
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"
@@ -239,4 +294,5 @@ Write-Host "  - Auto-recover from crashes (claude-daemon)"
 Write-Host "  - Query runtime telemetry at DEEP+ tier (OmniCapture Engine)"
 Write-Host "  - Sandbox risky processes to prevent TTY corruption (Zero-Crash)"
 Write-Host "  - Persistent VPS sessions via tmux (KobiiClaw 2.0)"
+Write-Host "  - Lint/export DESIGN.md (Google Labs format) via design-md CLI / /cpp-design-md"
 Write-Host "  - Serve /resume, /update, /ovo-audit, /vault-sync, /cpp-customclaw, ... globally (type / in any repo)"

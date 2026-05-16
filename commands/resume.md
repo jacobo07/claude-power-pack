@@ -1,60 +1,75 @@
 ---
 name: resume
-description: "Restore context from previous session via Lazarus Protocol. Use /resume last to warm up instantly."
+description: "Filtered session picker — shows only RESUMEABLE sessions (excludes ones currently LIVE in other Cursor terminals). Use /resume last for legacy single-session warm-up of this project's last_session.json."
 allowed-tools:
   - Bash
   - Read
   - Grep
   - Glob
+argument-hint: "[last | <project-id>]"
 ---
 
-# Lazarus Protocol — Session Resume
+# /resume — filtered session picker
 
-Restore the mental model from the previous session in this project. Zero re-explanation needed.
+**Default behavior (no args):** runs the Lazarus lister scoped to the
+current project with `--exclude-live`, so any session currently open in
+another Cursor terminal of THIS or any other window is filtered out of the
+picker. You only see CLEAN / CRASHED / UNKNOWN sessions — the ones that
+are actually free to revive without conflict.
 
-## Step 1: Load Lazarus Snapshot
+This addresses the common scenario: you have N terminals open inside one
+Cursor window, each running its own claude session. You open terminal N+1
+and want to pick a session to revive WITHOUT seeing the N already-attached
+ones in the list.
 
-Read the snapshot file for this project. The project ID is derived from the current working directory.
+## Argument routing
 
-```
-~/.claude/lazarus/{project-id}/last_session.json
-```
+| `$ARGUMENTS` | Behavior |
+|---|---|
+| (empty) | Filtered picker (`--exclude-live`) for this project |
+| `last` | Legacy single-session warm-up — load `~/.claude/lazarus/<project-id>/last_session.json` directly. See § Legacy warm-up below. |
+| `<project-id>` | Filtered picker scoped to that project |
 
-If no snapshot exists for this project, check `~/.claude/lazarus/global_index.json` for the most recent session across all projects and report which project it was in.
+## Default path — filtered picker
 
-## Step 2: Capture Current Git State
+When `$ARGUMENTS` is empty:
 
-Run these commands to compare current state vs snapshot state:
+!`python ~/.claude/skills/claude-power-pack/tools/lazarus_revive_all.py --mode auto --exclude-live --since 7d`
 
-```bash
-git rev-parse --abbrev-ref HEAD
-git status --porcelain
-git log --oneline -5
-```
+The lister enumerates `~/.claude/projects/<project-id>/heartbeats/<sid>.lock`
+files and `/tmp/claude-ctx-<session_id>.json` metric files, classifies each
+session as CURRENT / LIVE / CRASHED / CLEAN / UNKNOWN, and with
+`--exclude-live` drops CURRENT + LIVE rows. The remaining table is the
+"free pool" — sessions you can revive with `claude --resume <sid>`
+without colliding with another open terminal.
 
-Compare with snapshot's `branch`, `uncommitted_files`, and `recent_commits` to detect what changed since the last session.
+Read the table verbatim, then surface the recommended `cd <path> && claude
+--resume <sid>` line for whatever the user picks. Do NOT pre-select.
 
-## Step 3: Read Session Log
+## Live-detection mechanism (BL-0010)
 
-Read the session log file from `snapshot.session_log_path` (last 30 lines). Extract the action timeline — what was being worked on, which files were touched, what the last operations were.
+A session is LIVE iff:
+- its heartbeat lock file (`~/.claude/projects/<project-id>/heartbeats/<sid>.lock`) has mtime within `--live-window` (default 300s), OR
+- its statusline metric file (`/tmp/claude-ctx-<session_id>.json`) has mtime within `--current-window` (default 90s)
 
-## Step 4: Read Active Plan
+A session is CURRENT iff it's the freshest heartbeat in the cwd's project AND `_THIS_ session matches`. The lister uses statusline + heartbeat redundantly so a single missed write doesn't downgrade a real LIVE session to CRASHED.
 
-If `snapshot.active_plan` points to a file that still exists, read it. This is the most important context — it shows what was planned but may not have been completed.
+Why this works: every active claude session writes the statusline metric
+file every ~5 sec via `gsd-statusline.js`. If the file is fresh, the
+terminal is alive. If stale > 5 min, the session crashed or exited.
 
-Also check `~/.claude/plans/` for any plan files modified since the snapshot timestamp.
+## Legacy warm-up — `/resume last`
 
-## Step 5: Read Memory Context
+When `$ARGUMENTS` is `last`:
 
-Read the project's `MEMORY.md` for any persistent context that was saved during or after the previous session.
+1. Read `~/.claude/lazarus/{project-id}/last_session.json`. If missing, fall back to `~/.claude/lazarus/global_index.json` and report which project had the most recent session.
+2. Capture current git state: `git rev-parse --abbrev-ref HEAD`, `git status --porcelain`, `git log --oneline -5`.
+3. Read `snapshot.session_log_path` (last 30 lines) for the action timeline.
+4. Read `snapshot.active_plan` if it points to an existing file.
+5. Read `~/.claude/projects/{project-id}/memory/MEMORY.md`.
+6. Emit the structured restoration report (see § Output format below).
 
-```
-~/.claude/projects/{project-id}/memory/MEMORY.md
-```
-
-## Step 6: Present Warm-Up Summary
-
-Output a structured restoration report:
+## Output format — `/resume last`
 
 ```markdown
 ## Session Restoration (Lazarus Protocol)
@@ -63,28 +78,35 @@ Output a structured restoration report:
 **Branch:** {branch}
 **Uncommitted:** {file list}
 
-### Last Intent (from session log)
+### Last Intent
 {last 5 tool descriptions from snapshot.last_intent}
 
 ### Active Plan
 {plan file path and summary if exists}
 
 ### What Changed Since Last Session
-- {new commits since snapshot}
+- {new commits}
 - {files added/removed from uncommitted}
-- {branch changes}
 
 ### Memory Context
 {relevant MEMORY.md entries}
 
 ### Recommended Next Action
-{Based on the plan state and git state, suggest what to do next}
+{Based on plan + git state}
 ```
 
-## Important Notes
+## Notes
 
-- The snapshot is created automatically by the `lazarus-snapshot.js` Stop hook on every session end.
-- Snapshots are stored per-project at `~/.claude/lazarus/{project-id}/last_session.json`.
-- The global index at `~/.claude/lazarus/global_index.json` tracks the most recent session across all projects.
-- Snapshots older than 30 days are auto-pruned from the global index.
-- If no snapshot exists, suggest the user start a session normally — the snapshot will be created when they close this session.
+- Snapshot creation: `lazarus-snapshot.js` Stop hook on every session end.
+- Snapshots stored per-project at `~/.claude/lazarus/{project-id}/last_session.json`.
+- Global index at `~/.claude/lazarus/global_index.json` tracks most-recent across all projects.
+- Snapshots older than 30 days auto-pruned.
+- For multi-project listing: use `/lazarus all` (shows EVERY project, includes LIVE rows for cross-window context recovery).
+- For repo-scoped listing including LIVE rows: `/lazarus all --include-current` (rarely needed).
+
+## Hardware Law
+
+**BL-0010** (sealed in `vault/baseline_ledger.jsonl`): `/resume` default flow
+MUST filter LIVE sessions. Showing a picker that includes already-attached
+sessions is a UX failure — the user expects "resume" to mean "pick something
+that isn't already running".

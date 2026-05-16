@@ -1,0 +1,340 @@
+{
+  "total_targets": 25,
+  "ok": 23,
+  "skipped": 2,
+  "failed": 0,
+  "details": [
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\CostaLuz Lawyers\\costaluz-rrss-pipeline-v2-execution",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\CostaLuz Lawyers\\costaluz-rrss-pipeline-v2-execution\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\CostaLuz Lawyers\\costaluz-rrss-pipeline-v2-execution\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 898,
+      "vault_files": 13
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\GEO-audit",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\GEO-audit\\CLAUDE.md",
+      "status": "skipped_already_has_vault"
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\InfinityOps",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\InfinityOps\\CLAUDE.md",
+      "status": "skipped_already_has_vault"
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiCraft",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiCraft\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiCraft\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 728,
+      "vault_files": 10
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 1635,
+      "vault_files": 34
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\NexumOps\\nexumops-project",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\NexumOps\\nexumops-project\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\NexumOps\\nexumops-project\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 548,
+      "vault_files": 8
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\NexumOps\\nexumops-saas",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\NexumOps\\nexumops-saas\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\NexumOps\\nexumops-saas\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 459,
+      "vault_files": 8
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Project-Template\\Internal SaaS Bootstrap Engine",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Project-Template\\Internal SaaS Bootstrap Engine\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Project-Template\\Internal SaaS Bootstrap Engine\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 893,
+      "vault_files": 13
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Project-Template\\mi-api",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Project-Template\\mi-api\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Project-Template\\mi-api\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 869,
+      "vault_files": 13
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 1223,
+      "vault_files": 20
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\CW_UGC_SYSTEM",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\CW_UGC_SYSTEM\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\CW_UGC_SYSTEM\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 726,
+      "vault_files": 10
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\frontend",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\frontend\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\frontend\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 251,
+      "vault_files": 2
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\tuax_ui",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\tuax_ui\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X\\tuax_ui\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 250,
+      "vault_files": 2
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\CarlaSignalOS\\CarlaSignalOS",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\CarlaSignalOS\\CarlaSignalOS\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\CarlaSignalOS\\CarlaSignalOS\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 661,
+      "vault_files": 8
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Personal Assistants\\PA Template",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Personal Assistants\\PA Template\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Personal Assistants\\PA Template\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 752,
+      "vault_files": 11
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SaaS\\Gestor de Operaciones",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SaaS\\Gestor de Operaciones\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SaaS\\Gestor de Operaciones\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 893,
+      "vault_files": 13
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SaaS\\RentSignal",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SaaS\\RentSignal\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SaaS\\RentSignal\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 882,
+      "vault_files": 13
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 569,
+      "vault_files": 9
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer\\web",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer\\web\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer\\web\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 274,
+      "vault_files": 2
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Skills Creator Cursor Project\\knowledge-vault-cursor-project",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Skills Creator Cursor Project\\knowledge-vault-cursor-project\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Skills Creator Cursor Project\\knowledge-vault-cursor-project\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 970,
+      "vault_files": 10
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Software Lab OS",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Software Lab OS\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Software Lab OS\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 945,
+      "vault_files": 14
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\VintOps",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\VintOps\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\VintOps\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 547,
+      "vault_files": 8
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 1056,
+      "vault_files": 12
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\KobiiSportsResort-Unity",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\KobiiSportsResort-Unity\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\KobiiSportsResort-Unity\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 707,
+      "vault_files": 8
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\KobiiSports_SummerVibes",
+      "claude_md": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\KobiiSports_SummerVibes\\CLAUDE.md",
+      "returncode": 0,
+      "stdout_tail": [
+        "",
+        "Vault ready at: C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\KobiiSports_SummerVibes\\vault",
+        "Read ~/.claude/vault/INDEX.md to navigate."
+      ],
+      "stderr_tail": [],
+      "status": "ok",
+      "index_bytes": 804,
+      "vault_files": 9
+    }
+  ]
+}

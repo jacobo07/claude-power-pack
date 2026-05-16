@@ -1,0 +1,232 @@
+{
+  "$schema": "aisaas-frontend-ux-vibe-coding-v1.0.0",
+  "dataset_id": "DS-SAAS-001",
+  "domain": "Frontend/UX Vibe-Coding",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "rules": [
+    {
+      "id": "R-AISAAS-UX-001",
+      "category": "Development Planning",
+      "statement": "Use plan mode before building a large feature to produce a comprehensive implementation plan first",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-109",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-UX-004"],
+      "failure_mode_if_violated": "Large features are built without a roadmap, leading to missed dependencies, incorrect sequencing, and multiple costly rework cycles as the agent discovers requirements mid-implementation"
+    },
+    {
+      "id": "R-AISAAS-UX-002",
+      "category": "API Integration",
+      "statement": "Test API integrations early and in isolation before building UI on top of them",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-124",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-UX-001"],
+      "failure_mode_if_violated": "UI is built on assumptions about API response format that turn out to be incorrect, requiring costly rework of both API handling and UI layers simultaneously"
+    },
+    {
+      "id": "R-AISAAS-UX-003",
+      "category": "Version Control",
+      "statement": "Always review every Git change after agent edits because the agent frequently gets confused",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-102",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-UX-002"],
+      "failure_mode_if_violated": "Agent introduces unintended deletions, overwrites, or incorrect logic that goes undetected until it compounds into harder-to-diagnose bugs in later development stages"
+    },
+    {
+      "id": "R-AISAAS-UX-004",
+      "category": "Agent Communication",
+      "statement": "Be specific with the agent about data formats (JSON structure, field names) or it will improvise",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-126",
+      "confidence": 0.90,
+      "related_heuristics": ["DH-AISAAS-UX-001"],
+      "failure_mode_if_violated": "Agent generates mismatched data structures that do not align with database schemas or API contracts, causing runtime errors, broken UI bindings, and integration failures"
+    },
+    {
+      "id": "R-AISAAS-UX-005",
+      "category": "Development Process",
+      "statement": "When implementing multiple phases, require the agent to mark phases done and get approval before proceeding",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-127",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-UX-002", "DH-AISAAS-UX-004"],
+      "failure_mode_if_violated": "Agent races ahead through multiple phases, compounding errors from earlier phases into later ones, making debugging exponentially harder and requiring rollback of multiple completed phases"
+    },
+    {
+      "id": "R-AISAAS-UX-006",
+      "category": "Data Integrity",
+      "statement": "Always match database field names exactly between application code and UI components",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-122",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-UX-001"],
+      "failure_mode_if_violated": "UI components bind to non-existent or misspelled field names, resulting in blank displays, undefined errors, or silent data loss where user input is written to wrong columns"
+    }
+  ],
+  "heuristics": [
+    {
+      "id": "DH-AISAAS-UX-001",
+      "condition": "IF database and API setup is done",
+      "action": "THEN UI implementation is usually easy for the AI",
+      "reason": "Once data contracts are established and APIs are verified, the AI can generate UI components confidently because the input/output shapes are known and the remaining work is presentational",
+      "source": "HEUR-SAAS-114",
+      "confidence": 0.85
+    },
+    {
+      "id": "DH-AISAAS-UX-002",
+      "condition": "IF implementing many things at once",
+      "action": "THEN issues compound; do phases individually with testing",
+      "reason": "Multiple simultaneous UI and logic changes create combinatorial failure modes that are extremely difficult to debug; sequential implementation with testing gates isolates failures to a single phase",
+      "source": "HEUR-SAAS-115",
+      "confidence": 0.95
+    },
+    {
+      "id": "DH-AISAAS-UX-003",
+      "condition": "IF the API returns a CORS error from the browser",
+      "action": "THEN create a server-side API route instead",
+      "reason": "Browser-based API calls are blocked by CORS policies on most third-party APIs; routing through a server-side endpoint (e.g., Next.js API route) bypasses this restriction entirely",
+      "source": "HEUR-SAAS-112",
+      "confidence": 0.95
+    },
+    {
+      "id": "DH-AISAAS-UX-004",
+      "condition": "IF a feature is large (multiple components, API calls, state management)",
+      "action": "THEN use plan mode first to increase chances of one-shotting it",
+      "reason": "Planning upfront identifies component hierarchy, data flow, state dependencies, and potential issues before code generation begins, reducing the number of iterations needed",
+      "source": "HEUR-SAAS-105",
+      "confidence": 0.90
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "FW-AISAAS-UX-001",
+      "name": "SaaS Feature Development Workflow",
+      "steps": [
+        "Sketch the feature concept on paper or whiteboard",
+        "Plan the feature with a virtual CTO persona for architecture review",
+        "Enter plan mode in Claude Code to generate a comprehensive implementation plan",
+        "Review the plan for completeness, correct sequencing, and feasibility",
+        "Execute the plan phase by phase with the agent",
+        "Test each completed phase in the browser",
+        "Debug any issues found during testing before proceeding"
+      ],
+      "source": "FW-SAAS-106"
+    },
+    {
+      "id": "FW-AISAAS-UX-002",
+      "name": "Phased Development with Testing Gates",
+      "steps": [
+        "Define numbered phases with clear deliverables in a to-do file",
+        "Agent completes all steps within a single phase",
+        "Agent marks the phase as done with a summary of changes",
+        "Human reviews the completed phase in the browser and code",
+        "Human approves or requests revisions before the next phase",
+        "Agent proceeds to the next phase only after explicit approval",
+        "Repeat until all phases are complete and verified"
+      ],
+      "source": "FW-SAAS-112"
+    },
+    {
+      "id": "FW-AISAAS-UX-003",
+      "name": "API Integration Testing Pattern",
+      "steps": [
+        "Add a temporary test button to the UI",
+        "Wire the button to trigger the target API call",
+        "Check the browser console and network tab for response data",
+        "Verify the response structure matches expected format",
+        "Debug any issues with the API call, CORS, or response parsing",
+        "Remove the test button once integration is verified",
+        "Proceed with building the production UI on top of the verified API"
+      ],
+      "source": "FW-SAAS-113"
+    },
+    {
+      "id": "FW-AISAAS-UX-004",
+      "name": "SaaS MVP Build Pipeline",
+      "steps": [
+        "Data ingestion via N8N workflows or direct API connections",
+        "Build messaging UI for user interaction and input",
+        "Integrate external APIs (Perplexity, OpenAI, etc.)",
+        "Parse and display API responses in the UI with proper formatting",
+        "Generate reports and dashboards from processed data",
+        "UI polish, responsive design, and user experience refinement"
+      ],
+      "source": "FW-SAAS-111"
+    },
+    {
+      "id": "FW-AISAAS-UX-005",
+      "name": "Scrappy-to-Production Stack",
+      "steps": [
+        "Validate the idea with N8N + Google Sheets for rapid no-code prototyping",
+        "Build a structured prototype with Lovable + Supabase for visual MVP",
+        "Graduate to Cursor/IDE-based development for full production readiness",
+        "Integrate payments, auth, and production infrastructure",
+        "Ship and iterate based on user feedback"
+      ],
+      "source": "TECH-SAAS-120"
+    }
+  ],
+  "tech_patterns": [
+    {
+      "id": "TECH-AISAAS-UX-001",
+      "name": "Stack",
+      "description": "Core development stack for frontend/UX vibe-coding combining Cursor IDE for AI-assisted editing, Claude Code terminal for agentic development, Stripe for payments, plan mode for architecture, GitHub for version control, and Manis for configuration management",
+      "stack_components": ["Cursor IDE", "Claude Code terminal", "Stripe", "Plan mode", "GitHub", "Manis"],
+      "source": "TECH-SAAS-104"
+    },
+    {
+      "id": "TECH-AISAAS-UX-002",
+      "name": "IDEs",
+      "description": "The three primary AI-augmented IDEs for vibe-coding SaaS products: VS Code (free, open-source foundation), Cursor (AI-first fork of VS Code with integrated chat and autocomplete), and Windsurf (AI-enhanced VS Code fork with flow-based editing). All are free and share the VS Code extension ecosystem",
+      "stack_components": ["VS Code", "Cursor", "Windsurf"],
+      "source": "TECH-SAAS-106"
+    },
+    {
+      "id": "TECH-AISAAS-UX-003",
+      "name": "LinkBerry Example",
+      "description": "Reference SaaS application for LinkedIn content management featuring interview-based content extraction, AI-generated voice profiles, automated post draft generation, and engagement pod coordination for distribution amplification",
+      "stack_components": ["LinkedIn API", "Interview pipeline", "Voice profiles", "Post drafts", "Engagement pods"],
+      "source": "TECH-SAAS-105"
+    },
+    {
+      "id": "TECH-AISAAS-UX-004",
+      "name": "UGC Video Pipeline",
+      "description": "Automated user-generated content video creation pipeline that takes an Amazon product link, crawls the product page for details and images, extracts key selling points and specifications, feeds the extracted data to a video generation model, and outputs a polished product video ready for social media",
+      "stack_components": ["Amazon product link", "Web crawler", "Data extractor", "Video generation model", "Output renderer"],
+      "source": "TECH-SAAS-129"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "MET-AISAAS-UX-001",
+      "name": "Full SaaS MVP built in a single session",
+      "value": 1,
+      "unit": "session",
+      "source": "MET-SAAS-118"
+    },
+    {
+      "id": "MET-AISAAS-UX-002",
+      "name": "AI-built system coverage",
+      "value": 98,
+      "unit": "percent",
+      "source": "MET-SAAS-121"
+    },
+    {
+      "id": "MET-AISAAS-UX-003",
+      "name": "Typical feature build time with Claude Code",
+      "value": 10,
+      "unit": "minutes",
+      "source": "MET-SAAS-107"
+    },
+    {
+      "id": "MET-AISAAS-UX-004",
+      "name": "SaaS with Stripe payments build time",
+      "value": "4-5",
+      "unit": "days",
+      "source": "MET-SAAS-106"
+    }
+  ]
+}

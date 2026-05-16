@@ -1,0 +1,12 @@
+{
+  "started_at": "2026-04-30T11:23:39+00:00",
+  "finished_at": "2026-04-30T11:23:48+00:00",
+  "supabase_project": "iobhvvjrssigmnfmjlvx",
+  "table": "skills",
+  "page_size": 1000,
+  "pages_fetched": 2,
+  "total_count_reported": 1387,
+  "rows_persisted": 1387,
+  "out_raw": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\vault\\audits\\mydeepchat_skills_raw.jsonl",
+  "out_size_bytes": 14667305
+}

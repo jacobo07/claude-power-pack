@@ -85,6 +85,39 @@ Full registry at `./modules/governance-overlay/mistakes-registry.md`. For projec
 
 **Exit criterion:** either no adversarial findings, or all findings are addressed *in the proposed output* (not as a follow-up). If an adversarial finding cannot be addressed in this turn, the Council verdict cannot exceed **B** — OVO blocks.
 
+### Phase B+ — Forensic Probes (RLP / AFHL / CGAR) — MC-OVO-101..103
+
+After the static-mistake checklist, run the runtime-aware probes:
+
+```bash
+DELTA_PATHS=$(python tools/oracle_delta.py --project . --json | python -c \
+  "import json,sys; d=json.load(sys.stdin); print(','.join([f['path'] for f in d['changed']+d['new']]))")
+python tools/forensic_probes.py --project . --probe all --delta-paths "$DELTA_PATHS"
+```
+
+The probes are advisory at LIGHT/STANDARD/DEEP tiers and **mandatory at FORENSIC tier**. Each probe emits one of three states:
+
+| State | Effect on verdict |
+|-------|-------------------|
+| `CONFIGURED` + clean | no cap |
+| `CONFIGURED` + findings[] | cap per probe (B or REJECT) |
+| `NOT_CONFIGURED` | advisory note in Council block; **no cap, no PASS claim** |
+
+**FORENSIC-tier rule:** skipping `forensic_probes.py` at FORENSIC tier triggers **Mistake #53 (Forensic Probe Skipped)** and caps the verdict at **B** automatically.
+
+The probes:
+- **RLP** (Runtime Liveness Probe) — reads `_audit_cache/runtime_probe.jsonl`. Catches zombie-state daemons that pass static checks but no longer drain work. See `vault/forensic/RLP_SCHEMA.md`.
+- **AFHL** (Anti-Fragility Hack Ledger) — reads `vault/anti_fragility/hacks.jsonl`. Forces re-validation when a delta touches a registered hack OR when its upstream version exits the registered range. See `vault/forensic/AFHL_SCHEMA.md`.
+- **CGAR** (Cascade Graph + Adversarial Replay, blast-radius only this MC) — reads `vault/audits/cascade_graph.json` v2 nodes. Caps verdict when delta touches `criticality: core` nodes or nodes with `transitive_callers > 50`. Adversarial replay execution is deferred. See `vault/forensic/CGAR_SCHEMA.md`.
+
+**Aggregation:** the probe library returns `overall_verdict_cap` ∈ `{none, B, REJECT}`. The Council MUST include this in the `[ZERO_STUB]`-style provenance band:
+
+```
+[FORENSIC_PROBES: rlp=CONFIGURED-clean, afhl=NOT_CONFIGURED, cgar=NOT_CONFIGURED, cap=none]
+```
+
+If `overall_verdict_cap > none`, the Council's final grade is bounded by it regardless of advisor consensus.
+
 ---
 
 ## Phase C — Council of 5

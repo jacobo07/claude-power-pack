@@ -24,7 +24,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 
 | Trigger | Part | File |
 |---------|------|------|
-| React, Next.js, Vue, CSS, frontend | F: Frontend | `parts/sleepy/frontend.md` |
+| React, Next.js, Vue, Svelte, SwiftUI, RN, Flutter, Tailwind, shadcn, HTML, CSS, frontend, UI, UX, design, component, dashboard, landing page, brand, palette, typography, font, layout, animation, a11y, poster, artwork, canvas, SaaS UI, vibe coding | **F: Frontend Lieutenant** (orchestrates artifacts-builder + frontend-design + brand-guidelines + canvas-design + building-ai-saas-products + ui-ux-pro-max + 21st.dev MCP) | `parts/sleepy/frontend.md` |
 | /autoresearch, competitive research | G: Autoresearch | `parts/sleepy/autoresearch.md` |
 | token audit, compress, dedup, optimize | C+H+R: Token Tools | `parts/sleepy/token-tools.md` |
 | load ExecutionOS, governance overlay | I: ExecutionOS | `parts/sleepy/executionos.md` |
@@ -35,6 +35,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | knowledge graph, graphify, obsidian, vault | KG: Knowledge Graph | `parts/sleepy/knowledge-graph.md` |
 | governance vault, leyes, mistakes, gates, vault sync | GV: Governance Vault | `parts/sleepy/governance-vault.md` |
 | destila, destilar, KobiiDistillerOS, prompt madre, tier 1 2 3, vMAX, 22 secciones, Tandas, Partes, UKDL | D: KobiiDistiller | `parts/sleepy/distiller.md` |
+| multi-file search, audit, "find every", > 3 files, > 40 KB raw read | SR: Subagent Routing | `parts/sleepy/subagent-routing.md` |
 
 ## Quick Reference
 
@@ -55,6 +56,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
 | `/cpp-distill <source> [--global] [--force]` / `/cpp-distill check <path>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7 materialization; `check` subcommand validates an existing output dir | commands/distill.md |
+| `/cpp-design-md` | Lint/diff/export DESIGN.md (Google Labs design-system spec). Power-Pack default for web design. | commands/design-md.md |
 
 ## SkillBank Index
 

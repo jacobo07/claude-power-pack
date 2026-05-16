@@ -1,0 +1,340 @@
+{
+  "$schema": "aisaas-product-strategy-v1.0.0",
+  "dataset_id": "DS-SAAS-001",
+  "domain": "Product Strategy",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "total_rules": 12,
+  "total_heuristics": 6,
+  "total_frameworks": 7,
+  "rules": [
+    {
+      "id": "R-AISAAS-PS-001",
+      "category": "validation",
+      "statement": "Fix the pain point manually first before automating; understand the process end-to-end",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-140",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-004", "DH-AISAAS-PS-001"],
+      "failure_mode_if_violated": "Building automation for a process you do not fully understand leads to brittle systems, missed edge cases, and solutions that fail in production because the underlying workflow was never validated manually."
+    },
+    {
+      "id": "R-AISAAS-PS-002",
+      "category": "validation",
+      "statement": "Ask people to pay before building fully; 'If I build this, will you pay?' validates demand",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-141",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-002"],
+      "failure_mode_if_violated": "Building a complete product without payment validation leads to wasted months of development on features nobody will pay for, resulting in sunk cost and a product with no market."
+    },
+    {
+      "id": "R-AISAAS-PS-003",
+      "category": "sales",
+      "statement": "Clients buy business outcomes, not automations; explain money saved/earned, not technical complexity",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-142",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-002", "DH-AISAAS-PS-005"],
+      "failure_mode_if_violated": "Selling technical features instead of outcomes confuses non-technical buyers, lengthens sales cycles, and positions you as a commodity vendor rather than a strategic partner."
+    },
+    {
+      "id": "R-AISAAS-PS-004",
+      "category": "go-to-market",
+      "statement": "Start with an irresistible offer (even free/low cost) to validate and refine the solution",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-143",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-004", "DH-AISAAS-PS-002"],
+      "failure_mode_if_violated": "Launching at full price without validation means zero feedback loops, no social proof, and high friction that prevents you from learning what the market actually needs."
+    },
+    {
+      "id": "R-AISAAS-PS-005",
+      "category": "validation",
+      "statement": "The pain point must be painful enough for people to pay; if not in pain, they will not pay",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-144",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-001", "DH-AISAAS-PS-002"],
+      "failure_mode_if_violated": "Targeting mild inconveniences instead of acute pain produces solutions people acknowledge as 'nice to have' but never purchase, resulting in low conversion rates and stalled revenue."
+    },
+    {
+      "id": "R-AISAAS-PS-006",
+      "category": "ethics",
+      "statement": "Be honest if automation is impossible for a client's problem; do not overpromise",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-145",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-002"],
+      "failure_mode_if_violated": "Overpromising on automation capabilities leads to failed deliveries, refund demands, reputation damage, and potential legal liability when the solution cannot deliver what was sold."
+    },
+    {
+      "id": "R-AISAAS-PS-007",
+      "category": "sales",
+      "statement": "Do not mention 'AI' when selling; it is becoming tacky — focus on the business outcome",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-146",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-005"],
+      "failure_mode_if_violated": "Leading with 'AI' triggers buyer skepticism due to market saturation of AI buzzwords, positions you alongside low-quality competitors, and shifts the conversation away from the value proposition."
+    },
+    {
+      "id": "R-AISAAS-PS-008",
+      "category": "distribution",
+      "statement": "As a founder, you must market your product — being 'basically done' means nothing without distribution",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-110",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-003"],
+      "failure_mode_if_violated": "A completed product with no distribution strategy dies in obscurity; the graveyard of startups is filled with technically excellent products that nobody ever heard about."
+    },
+    {
+      "id": "R-AISAAS-PS-009",
+      "category": "onboarding",
+      "statement": "Manually onboard the first 10 users before opening broadly",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-111",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-004", "DH-AISAAS-PS-005"],
+      "failure_mode_if_violated": "Skipping manual onboarding means you miss critical UX friction points, fail to build early champion relationships, and scale a broken experience that drives churn."
+    },
+    {
+      "id": "R-AISAAS-PS-010",
+      "category": "competitive-advantage",
+      "statement": "The moat is specialized industry knowledge, not tool proficiency — everyone can 'build AI solutions' now",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-139",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-001", "DH-AISAAS-PS-003"],
+      "failure_mode_if_violated": "Competing on tool proficiency alone puts you in a race to the bottom where every new no-code builder erodes your differentiation, leaving you with no defensible position."
+    },
+    {
+      "id": "R-AISAAS-PS-011",
+      "category": "competitive-advantage",
+      "statement": "If something is hard to do, it is usually valuable; as tools get easier, value shifts to domain knowledge",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-138",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-PS-001"],
+      "failure_mode_if_violated": "Chasing easy-to-build solutions commoditizes your offering instantly; when everyone can replicate what you built in a weekend, margins collapse to zero."
+    },
+    {
+      "id": "R-AISAAS-PS-012",
+      "category": "market-dynamics",
+      "statement": "What cost $50,000 last year now costs a few thousand; AI compression makes execution cheap, strategy expensive",
+      "enforcement": "MUST",
+      "source": "MET-SAAS-114",
+      "confidence": "HIGH_CONFIDENCE",
+      "related_heuristics": ["DH-AISAAS-PS-001", "DH-AISAAS-PS-004"],
+      "failure_mode_if_violated": "Pricing based on execution effort rather than strategic value leaves money on the table as build costs plummet; clients will comparison-shop your labor against increasingly cheaper alternatives."
+    }
+  ],
+  "heuristics": [
+    {
+      "id": "DH-AISAAS-PS-001",
+      "condition": "IF you have worked in a specific industry",
+      "action": "THEN you already have specialized knowledge others lack — start there",
+      "reason": "Domain expertise accumulated through years of industry work is the hardest asset to replicate and provides immediate credibility, insider language, and understanding of real pain points that outsiders cannot fake.",
+      "source": "HEUR-SAAS-120",
+      "confidence": "HIGH_CONFIDENCE"
+    },
+    {
+      "id": "DH-AISAAS-PS-002",
+      "condition": "IF a client does not know what they want",
+      "action": "THEN listen first, identify the biggest pain point, start with that one problem",
+      "reason": "Clients often present scattered wishlists; focusing on the single most painful problem delivers fast, visible wins that build trust and open the door to larger engagements.",
+      "source": "HEUR-SAAS-121",
+      "confidence": "HIGH_CONFIDENCE"
+    },
+    {
+      "id": "DH-AISAAS-PS-003",
+      "condition": "IF tutorials teach generic workflows but you never apply them",
+      "action": "THEN the knowledge is useless",
+      "reason": "Tutorial consumption without application creates an illusion of competence; real skill only develops through building, failing, and iterating on actual projects with real constraints.",
+      "source": "HEUR-SAAS-122",
+      "confidence": "HIGH_CONFIDENCE"
+    },
+    {
+      "id": "DH-AISAAS-PS-004",
+      "condition": "IF the process becomes repeatable across clients",
+      "action": "THEN that is the signal to start automating",
+      "reason": "Premature automation locks in assumptions that may be wrong; repeatability across multiple clients confirms the workflow is stable enough to encode into software without constant rework.",
+      "source": "HEUR-SAAS-124",
+      "confidence": "HIGH_CONFIDENCE"
+    },
+    {
+      "id": "DH-AISAAS-PS-005",
+      "condition": "IF a client has technically savvy team members",
+      "action": "THEN get them as champions early to push adoption",
+      "reason": "Internal champions reduce resistance to new tools, provide real-time feedback during rollout, and advocate for continued investment when budget reviews occur.",
+      "source": "HEUR-SAAS-118",
+      "confidence": "HIGH_CONFIDENCE"
+    },
+    {
+      "id": "DH-AISAAS-PS-006",
+      "condition": "IF a business lacks a technical team",
+      "action": "THEN set up a retainer model to maintain the system",
+      "reason": "Non-technical teams cannot troubleshoot integrations, API changes, or prompt drift; a retainer ensures the system stays functional and creates predictable recurring revenue.",
+      "source": "HEUR-SAAS-119",
+      "confidence": "HIGH_CONFIDENCE"
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "FW-AISAAS-PS-001",
+      "name": "Pain Point Discovery Process",
+      "steps": [
+        "Look at your industry experience and identify domains where you have deep knowledge",
+        "Understand the pain points within those domains from firsthand experience",
+        "Know a framework or methodology that can address those pain points",
+        "Talk to people in the industry to validate that the pain is real and widespread",
+        "Find the specific pain worth paying for — the one that costs money, time, or both"
+      ],
+      "source": "FW-SAAS-121"
+    },
+    {
+      "id": "FW-AISAAS-PS-002",
+      "name": "Service-to-SaaS Progression",
+      "steps": [
+        "Find a painful problem that businesses actively struggle with",
+        "Validate the problem by asking potential clients if they would pay for a solution",
+        "Build a scrappy, manual or semi-automated version to solve it",
+        "Get the first paying client and deliver results",
+        "Refine the solution based on real client feedback and edge cases",
+        "Automate the repeatable parts of the workflow",
+        "Add a user interface so clients can self-serve",
+        "Turn the solution into standalone software (SaaS)",
+        "Hire to scale operations, support, and sales"
+      ],
+      "source": "FW-SAAS-120"
+    },
+    {
+      "id": "FW-AISAAS-PS-003",
+      "name": "Product Brief to Code Pipeline",
+      "steps": [
+        "Write a detailed product brief describing the problem, target user, and desired outcome",
+        "Create a CTO system prompt that encodes architecture decisions and technical constraints",
+        "Generate a roadmap breaking the product into milestones and deliverables",
+        "Break milestones into task files with clear acceptance criteria",
+        "Use plan mode to review and validate the approach before writing code",
+        "Execute the tasks, iterating through build-test-refine cycles"
+      ],
+      "source": "FW-SAAS-105"
+    },
+    {
+      "id": "FW-AISAAS-PS-004",
+      "name": "Technology Adoption Lifecycle for AI",
+      "steps": [
+        "Recognize that AI tooling is crossing the chasm from early adopters to early majority",
+        "Understand that early adopter phase rewarded technical skill (hard to build = valuable)",
+        "Recognize that early majority phase commoditizes tools (everyone can build now)",
+        "Shift competitive advantage from tool proficiency to specialized domain knowledge",
+        "Build moats through industry expertise, proprietary data, and deep process understanding"
+      ],
+      "source": "FW-SAAS-123"
+    },
+    {
+      "id": "FW-AISAAS-PS-005",
+      "name": "AI Agency Sales Framework",
+      "steps": [
+        "Identify that clients care about exactly two variables: making more money and saving time",
+        "Calculate the ROI in terms of additional revenue generated (leads x lead value)",
+        "Calculate the ROI in terms of time saved (cost per task x frequency of task)",
+        "Frame your fee as a fraction of the total value delivered",
+        "Present the math clearly so the decision becomes obvious"
+      ],
+      "source": "FW-SAAS-122"
+    },
+    {
+      "id": "FW-AISAAS-PS-006",
+      "name": "Unscalable-First Learning Pattern",
+      "steps": [
+        "Build the first version using low-code tools like N8N and Google Sheets",
+        "Force yourself to understand every API call, webhook, and data transformation",
+        "Encounter and document every error and edge case in the manual process",
+        "Only move to scalable infrastructure after the workflow is proven and repeatable",
+        "Use the manual experience to write better specifications for the automated version"
+      ],
+      "source": "FW-SAAS-124"
+    },
+    {
+      "id": "FW-AISAAS-PS-007",
+      "name": "Operator-to-Owner Transformation",
+      "steps": [
+        "Recognize when you are stuck in operator mode (firefighting, doing everything manually)",
+        "Build dashboards that give visibility into key metrics without manual checking",
+        "Identify opportunities by analyzing patterns in the data rather than reacting to crises",
+        "Design workflows that run without your direct involvement",
+        "Shift focus to strategic outcomes — growth, positioning, and long-term value creation"
+      ],
+      "source": "FW-SAAS-110"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "MET-AISAAS-PS-001",
+      "name": "ROI formula (leads)",
+      "value": "extra_leads_per_month * lead_value = revenue_generated; fee_charged < revenue_generated",
+      "unit": "currency_per_month",
+      "source": "MON-SAAS-111"
+    },
+    {
+      "id": "MET-AISAAS-PS-002",
+      "name": "ROI formula (time saved)",
+      "value": "cost_per_task * task_frequency = total_savings; frame_fee_as_investment_against_savings",
+      "unit": "currency_per_month",
+      "source": "MON-SAAS-112"
+    },
+    {
+      "id": "MET-AISAAS-PS-003",
+      "name": "Operational AI infrastructure build time",
+      "value": "6-8 weeks",
+      "unit": "weeks",
+      "source": "MET-SAAS-117"
+    },
+    {
+      "id": "MET-AISAAS-PS-004",
+      "name": "Productivity gains from Claude Code business implementations",
+      "value": "25-75%",
+      "unit": "percentage_improvement",
+      "source": "MET-SAAS-112"
+    },
+    {
+      "id": "MET-AISAAS-PS-005",
+      "name": "Full SaaS app build time with Stripe payments using Claude Code",
+      "value": "4-5 days",
+      "unit": "days",
+      "source": "MET-SAAS-106"
+    }
+  ],
+  "monetization_patterns": [
+    {
+      "id": "MON-AISAAS-PS-001",
+      "name": "Service-first validation",
+      "description": "Start by selling the outcome as a service (manual or semi-automated) before investing in product development. This validates willingness to pay and reveals the exact workflow to automate.",
+      "pricing_model": "project_based_or_retainer",
+      "source": ["RULE-SAAS-140", "RULE-SAAS-141", "FW-SAAS-120"]
+    },
+    {
+      "id": "MON-AISAAS-PS-002",
+      "name": "ROI-anchored pricing",
+      "description": "Price based on a fraction of the measurable business outcome (revenue generated or costs saved), not on hours worked or technical complexity. The client sees a clear return on investment.",
+      "pricing_model": "value_based",
+      "source": ["RULE-SAAS-142", "MON-SAAS-111", "MON-SAAS-112"]
+    },
+    {
+      "id": "MON-AISAAS-PS-003",
+      "name": "Retainer for non-technical clients",
+      "description": "For businesses without technical teams, offer a monthly retainer to maintain, monitor, and update the AI system. This creates recurring revenue and ensures the system continues to function.",
+      "pricing_model": "monthly_retainer",
+      "source": ["HEUR-SAAS-119"]
+    },
+    {
+      "id": "MON-AISAAS-PS-004",
+      "name": "Irresistible entry offer to SaaS upsell",
+      "description": "Start with a free or low-cost offer to acquire users and validate the solution. Once the value is proven and the workflow is repeatable, transition to a SaaS subscription model.",
+      "pricing_model": "freemium_to_subscription",
+      "source": ["RULE-SAAS-143", "FW-SAAS-120"]
+    }
+  ]
+}

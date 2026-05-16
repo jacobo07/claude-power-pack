@@ -1,0 +1,1 @@
+{"_schema":"afhl-v1","_doc":"Anti-Fragility Hack Ledger. See vault/forensic/AFHL_SCHEMA.md for entry shape. Append entries below; do not edit existing entries except to update last_revalidated/last_revalidated_against."}

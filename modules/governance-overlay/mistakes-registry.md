@@ -508,3 +508,14 @@
   3. If no canonical tool exists, audit the scaffolding gap itself (Mistake #1 — Building Without Wiring: no consumer for the produced data) rather than attributing parse errors to the data file.
   4. When an audit report is revised for this reason, cite the original (incorrect) recommendation explicitly and mark it RETRACTED with the evidence of the canonical-tool run.
 - **Related:** pairs with #17 (Static verification != runtime works) — the auditor's one-liner "compiled" as valid Python but did not exercise the real behavior.
+
+## Mistake #53: Forensic Probe Skipped (RLP / AFHL / CGAR not consulted at FORENSIC tier)
+- **Detection:** A FORENSIC-tier OVO audit emits a verdict (A or A+) without a `[FORENSIC_PROBES: ...]` provenance band in the Council block. Equivalent: `tools/forensic_probes.py` was not invoked, OR was invoked but its output was not surfaced to the Council reasoning. `grep -c "FORENSIC_PROBES" <council-text>` returns 0.
+- **Example:** A Minecraft plugin delta touches `EconomyHandler.java`. Static OVO grades A on the basis of clean tests. The probes were not consulted. AFHL would have flagged that `EconomyHandler.java` is registered as an NMS-reflection hack whose upstream version (Paper 1.21.4) just exited the registered range (`[1.21.0, 1.21.4)`). RLP would have flagged that the last 10 TPS samples on the dev server show sustained degradation. The static verdict ships; the runtime fails.
+- **Root Cause:** OVO's static phases (delta + mistake registry + Council) are agent-driven and complete in a single pass. The forensic probes require an additional tool invocation, and the agent — under context pressure — defaults to the path of least resistance and skips them. The failure mode is identical to Mistake #47 (Success Hallucination) but at the audit layer instead of the build layer: "static is clean, therefore runtime is clean" is the same fallacy whether stated by a developer or an auditor.
+- **Prevention:**
+  1. At FORENSIC tier, the OVO Phase B exit criterion includes a `[FORENSIC_PROBES: rlp=..., afhl=..., cgar=..., cap=...]` band. The verdict-record tool will reject a verdict A/A+ at FORENSIC tier without this band (future enforcement).
+  2. `NOT_CONFIGURED` is a valid emission — it does not block A/A+, but it must be present in the Council block as evidence the probes were *consulted* (and the project simply hasn't opted in).
+  3. The probes are advisory below FORENSIC tier — but if the delta touches paths the probes know about (registered hacks, declared cascade nodes), running them is recommended even at STANDARD/DEEP.
+  4. See `modules/oracle/ovo-protocol.md § Phase B+` for the canonical invocation.
+- **Related:** pairs with #47 (Success Hallucination) and #51 (Razonamiento Supuesto) — both are "claims without empirical evidence." #53 is the audit-layer version: the probes are the empirical evidence at the audit layer.

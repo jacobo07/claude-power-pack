@@ -1,0 +1,346 @@
+{
+  "probe": "BL-0047 / MC-SYS-94 \u2014 primary cerebrum coverage",
+  "iso_ts": "2026-05-03T15:32:22+00:00",
+  "globals": {
+    "CLAUDE_md": {
+      "exists": true,
+      "bytes": 6148,
+      "is_file": true
+    },
+    "governance_vault_INDEX": {
+      "exists": true,
+      "bytes": 2426,
+      "is_file": true
+    },
+    "knowledge_vault_INDEX": {
+      "exists": true,
+      "bytes": 7480,
+      "is_file": true
+    },
+    "GLOBAL_ALIGNMENT_LEDGER": {
+      "exists": true,
+      "bytes": 38624,
+      "is_file": true
+    }
+  },
+  "globals_all_present": true,
+  "projects_total": 45,
+  "projects_decoded": 5,
+  "projects_with_CLAUDE_md": 2,
+  "projects_with_knowledge_graph": 1,
+  "projects_with_vault_INDEX": 0,
+  "projects_with_progress_md": 0,
+  "details": [
+    {
+      "session_dir": "-c-Users-kobig--claude-skills-claude-power-pack",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "-c-Users-kobig-test",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "-tmp",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "_archived",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig--claude-skills-claude-power-pack",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-.claude-skills-claude-power-pack",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-AppData-Local-Temp-sqa-apex-fixture",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor Projects-InfinityOps-13_UI_Product_Layer-infinity_ui",
+      "decoded_cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\InfinityOps\\13_UI_Product_Layer\\infinity_ui",
+      "decoded_cwd_exists": true,
+      "cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\InfinityOps\\13_UI_Product_Layer\\infinity_ui",
+      "CLAUDE_md": {
+        "exists": false
+      },
+      "knowledge_graph_INDEX": {
+        "exists": false
+      },
+      "vault_INDEX": {
+        "exists": false
+      },
+      "vault_progress": {
+        "exists": false
+      },
+      "dotclaude_progress": {
+        "exists": false
+      }
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor Projects-Minecraft Projects-KobiiCraft Workspace-KobiiCraft Core Files",
+      "decoded_cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files",
+      "decoded_cwd_exists": true,
+      "cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files",
+      "CLAUDE_md": {
+        "exists": true,
+        "bytes": 9924,
+        "is_file": true
+      },
+      "knowledge_graph_INDEX": {
+        "exists": true,
+        "bytes": 19149,
+        "is_file": true
+      },
+      "vault_INDEX": {
+        "exists": false
+      },
+      "vault_progress": {
+        "exists": false
+      },
+      "dotclaude_progress": {
+        "exists": false
+      }
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor Projects-Minecraft Projects-LuckyFly",
+      "decoded_cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\LuckyFly",
+      "decoded_cwd_exists": true,
+      "cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Minecraft Projects\\LuckyFly",
+      "CLAUDE_md": {
+        "exists": false
+      },
+      "knowledge_graph_INDEX": {
+        "exists": false
+      },
+      "vault_INDEX": {
+        "exists": false
+      },
+      "vault_progress": {
+        "exists": false
+      },
+      "dotclaude_progress": {
+        "exists": false
+      }
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor Projects-TUA-X-TUAX_UGC_SYSTEM",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor Projects-Vibe Coding Projects-SalesTrainer",
+      "decoded_cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer",
+      "decoded_cwd_exists": true,
+      "cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer",
+      "CLAUDE_md": {
+        "exists": true,
+        "bytes": 2290,
+        "is_file": true
+      },
+      "knowledge_graph_INDEX": {
+        "exists": false
+      },
+      "vault_INDEX": {
+        "exists": false
+      },
+      "vault_progress": {
+        "exists": false
+      },
+      "dotclaude_progress": {
+        "exists": false
+      }
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor Projects-Wii Projects-KobiiSports Resort-CursorProjects-tools-caddie",
+      "decoded_cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\tools\\caddie",
+      "decoded_cwd_exists": true,
+      "cwd": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\Wii Projects\\KobiiSports Resort\\CursorProjects\\tools\\caddie",
+      "CLAUDE_md": {
+        "exists": false
+      },
+      "knowledge_graph_INDEX": {
+        "exists": false
+      },
+      "vault_INDEX": {
+        "exists": false
+      },
+      "vault_progress": {
+        "exists": false
+      },
+      "dotclaude_progress": {
+        "exists": false
+      }
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Computer-Personal-Ops",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-GEO-audit",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-InfinityOps",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-InfinityOps-01-Core-Systems-infinity-mie",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-InfinityOps-13-UI-Product-Layer-infinity-ui",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files--audit-cache",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files-KobiCraftServer-plugins-kobicore",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Minecraft-Projects-LuckyFly",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-NexumOps-nexumops-project",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-TUA-X",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-TUA-X-CW-UGC-SYSTEM",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-TUA-X-Preliminar-Micro-Systems-100k-days-Micro-System-100k-Days-Micro-OS-TM-AdsOS",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-TUA-X-TUAX-UGC-SYSTEM",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-CarlaSignalOS-CarlaSignalOS",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-KobiiAI",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Personal-Assistants-PA-Template",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-SalesTrainer",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Skills-Creator-Cursor-Project-knowledge-vault-cursor-project",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Skills-Creator-Cursor-Project-knowledge-vault-cursor-project-skills-claude-code-moneymaker-skill",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Software-Lab-OS",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Software-para-Provs-Proveedores-Deng-Chaowei-FlashTrack",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Software-para-Provs-Proveedores-Deng-Chaowei-Website",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-VintOps",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Webinar-Dashboard",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Vibe-Coding-Projects-Webinar-Dashboard-gentica",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects-KobiSports-Fut",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects-tools-caddie",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "C--Users-kobig-mcp-servers-gemini-nano-banana",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    },
+    {
+      "session_dir": "tmp",
+      "decoded_cwd": null,
+      "decoded_cwd_exists": false
+    }
+  ]
+}

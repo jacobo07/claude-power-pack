@@ -1,0 +1,173 @@
+{
+  "$schema": "aisaas-launch-growth-distribution-v1.0.0",
+  "dataset_id": "DS-SAAS-001",
+  "domain": "Launch, Growth & Distribution",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "total_rules": 6,
+  "total_heuristics": 3,
+  "total_frameworks": 3,
+  "total_metrics": 4,
+  "rules": [
+    {
+      "id": "R-AISAAS-LG-001",
+      "category": "onboarding",
+      "statement": "Manually onboard the first 10 users before opening broadly",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-111",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-LG-001"],
+      "failure_mode_if_violated": "Skipping manual onboarding means you miss critical UX friction points, fail to build early champion relationships, and scale a broken experience that drives churn before you ever reach product-market fit."
+    },
+    {
+      "id": "R-AISAAS-LG-002",
+      "category": "distribution",
+      "statement": "As a founder, you must market your product — being 'basically done' means nothing without distribution",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-110",
+      "confidence": "VERBATIM",
+      "related_heuristics": [],
+      "failure_mode_if_violated": "A completed product with no distribution strategy dies in obscurity. The graveyard of startups is filled with technically excellent products that nobody ever heard about. Building is 30% of the job; distribution is 70%."
+    },
+    {
+      "id": "R-AISAAS-LG-003",
+      "category": "process-automation",
+      "statement": "Start with one process to automate first; do not try to document everything at once",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-113",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-LG-003"],
+      "failure_mode_if_violated": "Attempting to automate all processes simultaneously leads to scope paralysis, shallow implementations across the board, and zero completed automations. One deep win creates momentum and a template for the next."
+    },
+    {
+      "id": "R-AISAAS-LG-004",
+      "category": "marketplace-distribution",
+      "statement": "Plugins must meet strict directory structure requirements for marketplace upload",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-136",
+      "confidence": "VERBATIM",
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Submitting a plugin that does not conform to marketplace directory structure results in immediate rejection, wasted review cycles, and delayed distribution. The requirements exist for interoperability and cannot be negotiated."
+    },
+    {
+      "id": "R-AISAAS-LG-005",
+      "category": "change-management",
+      "statement": "Address team fears about AI replacement directly, or the transformation will fail",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-120",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-LG-001"],
+      "failure_mode_if_violated": "Ignoring team anxiety about AI replacing their jobs triggers passive resistance, sabotage of adoption efforts, and political backlash that kills the initiative from the inside regardless of how good the technology is."
+    },
+    {
+      "id": "R-AISAAS-LG-006",
+      "category": "market-timing",
+      "statement": "The window for AI-first transformation is open now but will not last forever",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-121",
+      "confidence": "VERBATIM",
+      "related_heuristics": ["DH-AISAAS-LG-003"],
+      "failure_mode_if_violated": "Delaying AI adoption while competitors move aggressively creates a compounding disadvantage. Early movers capture market position, train their teams, and build institutional knowledge that late entrants cannot replicate quickly."
+    }
+  ],
+  "heuristics": [
+    {
+      "id": "DH-AISAAS-LG-001",
+      "condition": "IF a client has technically savvy team members",
+      "action": "THEN get them as champions early to push adoption internally",
+      "reason": "Internal champions reduce resistance to new tools, provide real-time feedback during rollout, translate technical concepts for non-technical colleagues, and advocate for continued investment when budget reviews occur.",
+      "source": "HEUR-SAAS-118",
+      "confidence": "HIGH_CONFIDENCE"
+    },
+    {
+      "id": "DH-AISAAS-LG-002",
+      "condition": "IF a business lacks a technical team",
+      "action": "THEN set up a retainer model to maintain the AI system on their behalf",
+      "reason": "Non-technical teams cannot troubleshoot integrations, API changes, or prompt drift. A retainer ensures the system stays functional, creates predictable recurring revenue, and prevents the client from churning due to unresolved technical issues.",
+      "source": "HEUR-SAAS-119",
+      "confidence": "HIGH_CONFIDENCE"
+    },
+    {
+      "id": "DH-AISAAS-LG-003",
+      "condition": "IF eliminating 30-40 hours/week of manual work through automation",
+      "action": "THEN the result yields more output, more revenue, and fewer resources consumed",
+      "reason": "Reclaiming 30-40 hours per week from manual tasks unlocks capacity equivalent to a full-time hire. The freed bandwidth can be redirected to revenue-generating activities, strategic work, or headcount reduction depending on business goals.",
+      "source": "HEUR-SAAS-108",
+      "confidence": "HIGH_CONFIDENCE"
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "FW-AISAAS-LG-001",
+      "name": "Team AI Adoption",
+      "steps": [
+        "Start small by identifying the team's single biggest bottleneck or most time-consuming manual task",
+        "Build and share the automation solution with the team, demonstrating the immediate time savings",
+        "Have each team member install an AI-powered IDE (Cursor, Claude Code, or equivalent)",
+        "Set up GitHub or equivalent version control for team synchronization and collaboration",
+        "Deploy production workflows via VPS, n8n, or equivalent infrastructure for reliable operation",
+        "Iterate based on team feedback and expand automation to additional workflows"
+      ],
+      "source": "FW-SAAS-109"
+    },
+    {
+      "id": "FW-AISAAS-LG-002",
+      "name": "Client Delivery Full Loop",
+      "steps": [
+        "Audit the client's existing business processes to identify pain points and automation opportunities",
+        "Develop a strategy document mapping each pain point to a proposed AI-powered solution with ROI projections",
+        "Build the solution using the agreed-upon architecture, tools, and integrations",
+        "Train the technical team on system operation, maintenance, and troubleshooting",
+        "Train power users on day-to-day interaction with the new system",
+        "Find internal champions who are enthusiastic about the technology and can drive peer adoption",
+        "Execute change management across the broader organization, addressing fears and resistance directly",
+        "Transition to a retainer model for ongoing support, monitoring, optimization, and iteration"
+      ],
+      "source": "FW-SAAS-118"
+    },
+    {
+      "id": "FW-AISAAS-LG-003",
+      "name": "Plugin Distribution",
+      "steps": [
+        "Build the plugin to solve a specific, repeatable problem with a clean interface",
+        "Test thoroughly in isolation and with representative user workflows",
+        "Package as a zip file conforming to marketplace directory structure requirements",
+        "Upload to the target marketplace and submit for review",
+        "Conduct second-phase testing in the marketplace environment to catch integration issues",
+        "Connect MCP (Model Context Protocol) endpoints if the plugin exposes AI-accessible capabilities",
+        "Iterate based on marketplace reviews, usage analytics, and user feedback"
+      ],
+      "source": "FW-SAAS-117"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "MET-AISAAS-LG-001",
+      "name": "Staff hours automated by AI-adopting companies",
+      "value": "500,000+",
+      "unit": "hours",
+      "source": "MET-SAAS-111"
+    },
+    {
+      "id": "MET-AISAAS-LG-002",
+      "name": "Non-coders as fastest growing Claude Code user segment",
+      "value": "Fastest growing segment (2026)",
+      "unit": "user_segment_growth",
+      "source": "MET-SAAS-115"
+    },
+    {
+      "id": "MET-AISAAS-LG-003",
+      "name": "Waitlist demand before early access launch",
+      "value": "Hundreds of people on waitlist before early access",
+      "unit": "waitlist_signups",
+      "source": "MET-SAAS-110"
+    },
+    {
+      "id": "MET-AISAAS-LG-004",
+      "name": "Development time compression with AI tooling",
+      "value": "4-5 months reduced to nearly finished generation",
+      "unit": "time_compression_ratio",
+      "source": "MET-SAAS-123"
+    }
+  ]
+}

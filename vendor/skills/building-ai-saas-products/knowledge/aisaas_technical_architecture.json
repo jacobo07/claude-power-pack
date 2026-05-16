@@ -1,0 +1,379 @@
+{
+  "$schema": "aisaas-technical-architecture-v1.0.0",
+  "dataset_id": "DS-SAAS-001",
+  "domain": "Technical Architecture",
+  "version": "1.0.0",
+  "compiled_date": "2026-02-28",
+  "rules": [
+    {
+      "id": "R-AISAAS-TA-001",
+      "category": "Data Integrity",
+      "statement": "Always match database field names exactly between application code and Supabase tables to avoid silent failures",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-122",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-TA-001"],
+      "failure_mode_if_violated": "Silent data loss or insertion failures where application code references non-existent columns, causing writes to fail without clear error messages"
+    },
+    {
+      "id": "R-AISAAS-TA-002",
+      "category": "Environment Configuration",
+      "statement": "Always save the .env file after inputting variables; auto-save may not be enabled",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-123",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Application reads stale or empty environment variables, causing API calls to fail with authentication errors or undefined behavior"
+    },
+    {
+      "id": "R-AISAAS-TA-003",
+      "category": "API Integration",
+      "statement": "Test API integrations early and in isolation before building UI on top of them",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-124",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-TA-004"],
+      "failure_mode_if_violated": "UI is built on assumptions about API response format that turn out to be incorrect, requiring costly rework of both API handling and UI layers simultaneously"
+    },
+    {
+      "id": "R-AISAAS-TA-004",
+      "category": "Agent Communication",
+      "statement": "Be specific with the agent about data formats (JSON structure, field names) or it will improvise",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-126",
+      "confidence": 0.90,
+      "related_heuristics": ["DH-AISAAS-TA-001"],
+      "failure_mode_if_violated": "Agent generates mismatched data structures that do not align with database schemas or API contracts, leading to runtime errors and integration failures"
+    },
+    {
+      "id": "R-AISAAS-TA-005",
+      "category": "Development Process",
+      "statement": "When implementing multiple phases, require the agent to mark phases done and get approval before proceeding",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-127",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-TA-005", "DH-AISAAS-TA-007"],
+      "failure_mode_if_violated": "Agent races ahead through multiple phases, compounding errors from earlier phases into later ones, making debugging exponentially harder"
+    },
+    {
+      "id": "R-AISAAS-TA-006",
+      "category": "Security",
+      "statement": "Disable RLS in Supabase during development for simplicity, but re-enable before production",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-128",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "If left disabled in production, any authenticated user can read or modify any row in the database, exposing all user data"
+    },
+    {
+      "id": "R-AISAAS-TA-007",
+      "category": "Communication Safety",
+      "statement": "Never let a system send emails on your behalf; always have a human in the loop for outbound communications",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-129",
+      "confidence": 0.95,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Automated system sends incorrect, offensive, or misleading emails to customers or partners, causing reputational damage and potential legal liability"
+    },
+    {
+      "id": "R-AISAAS-TA-008",
+      "category": "Data Governance",
+      "statement": "Set appropriate data retention periods; push back on 'keep everything forever' unless legally required",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-133",
+      "confidence": 0.85,
+      "related_heuristics": ["DH-AISAAS-TA-006"],
+      "failure_mode_if_violated": "Unbounded data storage increases costs, expands attack surface for data breaches, and may violate privacy regulations like GDPR"
+    },
+    {
+      "id": "R-AISAAS-TA-009",
+      "category": "Distribution",
+      "statement": "Build and test all skills and dependencies before packaging for distribution",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-134",
+      "confidence": 0.90,
+      "related_heuristics": [],
+      "failure_mode_if_violated": "Distributed package contains broken skills or missing dependencies, causing failures for end users and eroding trust in the product"
+    },
+    {
+      "id": "R-AISAAS-TA-010",
+      "category": "Testing",
+      "statement": "Test at two levels: functionality-level in the IDE, and front-end testing after distribution",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-135",
+      "confidence": 0.90,
+      "related_heuristics": ["DH-AISAAS-TA-005"],
+      "failure_mode_if_violated": "Features that work in the IDE break in the distributed environment due to path differences, missing configs, or environment-specific issues"
+    },
+    {
+      "id": "R-AISAAS-TA-011",
+      "category": "Security",
+      "statement": "Bake in basic PII/API key sanitization into the memory pipeline automatically before storage",
+      "enforcement": "MUST",
+      "source": "RULE-SAAS-137",
+      "confidence": 0.95,
+      "related_heuristics": ["DH-AISAAS-TA-006"],
+      "failure_mode_if_violated": "Sensitive data such as API keys, passwords, or personal information is stored in plaintext in memory systems, creating a security breach vector"
+    }
+  ],
+  "heuristics": [
+    {
+      "id": "DH-AISAAS-TA-001",
+      "condition": "IF the AI creates the database table via SQL",
+      "action": "THEN fields match; if you create manually, expect mismatches",
+      "reason": "AI-generated SQL aligns with its own code generation patterns, while manual table creation introduces human naming conventions that may diverge from what the AI expects",
+      "source": "HEUR-SAAS-111",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-TA-002",
+      "condition": "IF the API returns a CORS error from the browser",
+      "action": "THEN create a server-side API route instead",
+      "reason": "Browser-based API calls are blocked by CORS policies on most third-party APIs; routing through a server-side endpoint bypasses this restriction",
+      "source": "HEUR-SAAS-112",
+      "confidence": 0.95
+    },
+    {
+      "id": "DH-AISAAS-TA-003",
+      "condition": "IF Perplexity API returns a 'thinking' tag",
+      "action": "THEN the parser must strip it before processing",
+      "reason": "The thinking tag is internal chain-of-thought content not meant for end users; including it corrupts the parsed output and confuses downstream consumers",
+      "source": "HEUR-SAAS-113",
+      "confidence": 0.90
+    },
+    {
+      "id": "DH-AISAAS-TA-004",
+      "condition": "IF database and API setup is done",
+      "action": "THEN UI implementation is usually easy for the AI",
+      "reason": "Once data contracts are established and APIs are verified, the AI can generate UI components confidently because the input/output shapes are known",
+      "source": "HEUR-SAAS-114",
+      "confidence": 0.85
+    },
+    {
+      "id": "DH-AISAAS-TA-005",
+      "condition": "IF implementing many things at once",
+      "action": "THEN issues compound; implement phases individually with testing",
+      "reason": "Multiple simultaneous changes create combinatorial failure modes that are extremely difficult to debug; sequential implementation with testing gates isolates failures",
+      "source": "HEUR-SAAS-115",
+      "confidence": 0.95
+    },
+    {
+      "id": "DH-AISAAS-TA-006",
+      "condition": "IF a newer memory contradicts an older one",
+      "action": "THEN temporal decay should weight the newer memory higher",
+      "reason": "More recent information typically reflects the current state of the system, user preferences, or corrected understanding; older memories may be outdated or superseded",
+      "source": "HEUR-SAAS-116",
+      "confidence": 0.85
+    },
+    {
+      "id": "DH-AISAAS-TA-007",
+      "condition": "IF a feature is large (multiple tables, APIs, UI)",
+      "action": "THEN use plan mode first to increase chances of one-shotting it",
+      "reason": "Planning upfront identifies dependencies, sequencing, and potential issues before code generation begins, reducing the number of iterations needed",
+      "source": "HEUR-SAAS-105",
+      "confidence": 0.90
+    }
+  ],
+  "frameworks": [
+    {
+      "id": "FW-AISAAS-TA-001",
+      "name": "SaaS MVP Build Pipeline",
+      "steps": [
+        "Data ingestion via N8N workflows",
+        "Build messaging UI for user interaction",
+        "Integrate external APIs (Perplexity, etc.)",
+        "Parse and display API responses in the UI",
+        "Generate reports from processed data",
+        "UI polish and user experience refinement"
+      ],
+      "source": "FW-SAAS-111"
+    },
+    {
+      "id": "FW-AISAAS-TA-002",
+      "name": "Phased Development with Testing Gates",
+      "steps": [
+        "Define numbered phases in a to-do file",
+        "Agent completes all steps within a single phase",
+        "Agent marks the phase as done",
+        "Human reviews and approves the completed phase",
+        "Agent proceeds to next phase only after approval",
+        "Repeat until all phases are complete"
+      ],
+      "source": "FW-SAAS-112"
+    },
+    {
+      "id": "FW-AISAAS-TA-003",
+      "name": "API Integration Testing Pattern",
+      "steps": [
+        "Add a temporary test button to the UI",
+        "Wire the button to trigger the target API call",
+        "Check the browser console and network tab for response data",
+        "Debug any issues with the API call or response parsing",
+        "Remove the test button once integration is verified",
+        "Proceed with building the production UI on top of the verified API"
+      ],
+      "source": "FW-SAAS-113"
+    },
+    {
+      "id": "FW-AISAAS-TA-004",
+      "name": "Scrappy Stack Progression",
+      "steps": [
+        "Start with N8N + Google Sheets for rapid prototyping",
+        "Graduate to Lovable + N8N + Supabase for structured MVP",
+        "Evolve to Cursor/IDE-based MVP for full production readiness"
+      ],
+      "source": "TECH-SAAS-120"
+    },
+    {
+      "id": "FW-AISAAS-TA-005",
+      "name": "Hybrid Memory System",
+      "steps": [
+        "Implement 70% vector search via Pine Cone for semantic similarity",
+        "Implement 30% keyword search via BM25 for exact matches",
+        "Apply temporal decay to weight newer memories higher",
+        "Run deduplication to remove redundant or overlapping memories",
+        "Apply secret scrubbing to sanitize PII and API keys before storage",
+        "Combine results from both search methods for retrieval"
+      ],
+      "source": "FW-SAAS-115"
+    },
+    {
+      "id": "FW-AISAAS-TA-006",
+      "name": "Memory Loop",
+      "steps": [
+        "User talks to the AI agent",
+        "Stop hook fires at the end of the conversation",
+        "Scrub secrets and PII from the conversation content",
+        "Extract facts via Mem Zero + GPT-4.1 nano",
+        "Deduplicate extracted facts against existing memory store",
+        "Store deduplicated facts in the memory backend",
+        "At next session start, query memory store for relevant context",
+        "Inject top matching memories into the system prompt"
+      ],
+      "source": "FW-SAAS-116"
+    }
+  ],
+  "tech_patterns": [
+    {
+      "id": "TECH-AISAAS-TA-001",
+      "name": "Production Stack",
+      "description": "Full production technology stack for AI-powered SaaS applications combining Next.js for the frontend, Supabase with Row Level Security for the database, N8N for email processing workflows, Perplexity API for deep research capabilities, and Claude Code for development acceleration",
+      "stack_components": ["Next.js", "Supabase (with RLS)", "N8N", "Perplexity API", "Claude Code"],
+      "source": "TECH-SAAS-111"
+    },
+    {
+      "id": "TECH-AISAAS-TA-002",
+      "name": "N8N Workflow Pattern",
+      "description": "Automated email processing pipeline that triggers on new Gmail messages, classifies content using AI, extracts brand and sender data, cleans the extracted data, and writes structured results to Supabase tables",
+      "stack_components": ["N8N", "Gmail", "AI Classifier", "Supabase"],
+      "source": "TECH-SAAS-112"
+    },
+    {
+      "id": "TECH-AISAAS-TA-003",
+      "name": "Perplexity API Config",
+      "description": "Recommended Perplexity API configuration for deep research use cases using the sonar-deep-research model with web search mode enabled and structured JSON schema response format for reliable parsing",
+      "stack_components": ["Perplexity API", "sonar-deep-research model", "JSON Schema response format"],
+      "source": "TECH-SAAS-113"
+    },
+    {
+      "id": "TECH-AISAAS-TA-004",
+      "name": "Hooks Architecture",
+      "description": "Event-driven hook system for AI agent lifecycle management: stop hooks capture memory at conversation end, pre-tool hooks enforce guardrails before tool execution, and post-tool hooks validate outputs after tool execution",
+      "stack_components": ["Stop hooks (memory capture)", "Pre-tool hooks (guardrails)", "Post-tool hooks (validation)"],
+      "source": "TECH-SAAS-116"
+    },
+    {
+      "id": "TECH-AISAAS-TA-005",
+      "name": "Hybrid Search Stack",
+      "description": "Dual-mode search system combining 70% vector similarity search via Pine Cone for semantic matching with 30% keyword-based BM25 search for exact term matching, enhanced with temporal decay to prioritize recent information",
+      "stack_components": ["Pine Cone (vector search)", "BM25 (keyword search)", "Temporal decay weighting"],
+      "source": "TECH-SAAS-117"
+    },
+    {
+      "id": "TECH-AISAAS-TA-006",
+      "name": "Plugin Distribution System",
+      "description": "Claude Co-work plugin distribution model where users customize via tabs for skills, plugins, and connectors, with support for uploading zip archives or linking GitHub repositories for package delivery",
+      "stack_components": ["Claude Co-work", "Skills", "Plugins", "Connectors", "Zip/GitHub distribution"],
+      "source": "TECH-SAAS-118"
+    },
+    {
+      "id": "TECH-AISAAS-TA-007",
+      "name": "SeaTable",
+      "description": "Open source alternative to Airtable used as a lightweight CRM solution during the scrappy prototyping phase before graduating to a full database like Supabase",
+      "stack_components": ["SeaTable"],
+      "source": "TECH-SAAS-121"
+    },
+    {
+      "id": "TECH-AISAAS-TA-008",
+      "name": "Headless Browser Control",
+      "description": "Using Claude Code to control a headless browser for automation steps that lack dedicated APIs, enabling web scraping, form filling, and UI interaction programmatically",
+      "stack_components": ["Claude Code", "Headless browser"],
+      "source": "TECH-SAAS-108"
+    },
+    {
+      "id": "TECH-AISAAS-TA-009",
+      "name": "Sub Agents",
+      "description": "Pattern where Claude spawns separate AI instances to handle parallel subtasks, each operating with its own independent context window to maximize throughput and reduce wall-clock time for complex operations",
+      "stack_components": ["Claude Code", "Sub-agent instances", "Independent context windows"],
+      "source": "TECH-SAAS-109"
+    }
+  ],
+  "metrics": [
+    {
+      "id": "MET-AISAAS-TA-001",
+      "name": "Context window free space",
+      "value": 160000,
+      "unit": "tokens",
+      "source": "MET-SAAS-103"
+    },
+    {
+      "id": "MET-AISAAS-TA-002",
+      "name": "System prompt token usage",
+      "value": 15000,
+      "unit": "tokens",
+      "source": "MET-SAAS-101"
+    },
+    {
+      "id": "MET-AISAAS-TA-003",
+      "name": "MCP tool definitions context consumption",
+      "value": 13.5,
+      "unit": "percent of context",
+      "source": "MET-SAAS-102"
+    },
+    {
+      "id": "MET-AISAAS-TA-004",
+      "name": "Typical feature build time with Claude Code",
+      "value": 10,
+      "unit": "minutes",
+      "source": "MET-SAAS-107"
+    },
+    {
+      "id": "MET-AISAAS-TA-005",
+      "name": "Planning phase resource usage",
+      "value": "344 tool calls, 64000 tokens",
+      "unit": "tool calls and tokens",
+      "source": "MET-SAAS-108"
+    },
+    {
+      "id": "MET-AISAAS-TA-006",
+      "name": "Sub-agent time reduction",
+      "value": "8 hours reduced to 30 minutes",
+      "unit": "wall-clock time",
+      "source": "MET-SAAS-116"
+    },
+    {
+      "id": "MET-AISAAS-TA-007",
+      "name": "Plugin package size",
+      "value": 107,
+      "unit": "KB",
+      "source": "MET-SAAS-119"
+    },
+    {
+      "id": "MET-AISAAS-TA-008",
+      "name": "Available MCP servers",
+      "value": 8000,
+      "unit": "servers",
+      "source": "MET-SAAS-113"
+    }
+  ]
+}

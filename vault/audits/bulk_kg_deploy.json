@@ -1,0 +1,47 @@
+{
+  "ok": 2,
+  "skipped": 3,
+  "failed": 0,
+  "details": [
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\InfinityOps",
+      "returncode": 0,
+      "status": "ok",
+      "stdout_tail": [
+        "  \"files_written\": 2166,",
+        "  \"nodes\": 2165,",
+        "  \"index_tokens\": 1082,",
+        "  \"avg_node_tokens\": 36,",
+        "  \"vault_path\": \"C:\\\\Users\\\\kobig\\\\Desktop\\\\Cursor Projects\\\\InfinityOps\\\\_knowledge_graph\"",
+        "}"
+      ],
+      "stderr_tail": []
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\CPGS",
+      "returncode": 0,
+      "status": "ok",
+      "stdout_tail": [
+        "  \"files_written\": 37,",
+        "  \"nodes\": 36,",
+        "  \"index_tokens\": 620,",
+        "  \"avg_node_tokens\": 73,",
+        "  \"vault_path\": \"C:\\\\Users\\\\kobig\\\\Desktop\\\\Cursor Projects\\\\CPGS\\\\_knowledge_graph\"",
+        "}"
+      ],
+      "stderr_tail": []
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\TUA-X",
+      "status": "skipped_already_has_kg"
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\AKOS",
+      "status": "skipped_already_has_kg"
+    },
+    {
+      "project": "C:\\Users\\kobig\\Desktop\\Cursor Projects\\UGC-v6",
+      "status": "skipped_already_has_kg"
+    }
+  ]
+}

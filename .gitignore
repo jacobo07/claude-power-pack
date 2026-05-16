@@ -6,6 +6,11 @@ _knowledge_graph/
 _audit_cache/*
 !_audit_cache/semantic_tags.json
 
+# npm-managed deps (provisioned by install.sh / install.ps1, not vendored in git)
+node_modules/
+package-lock.json
+npm-debug.log*
+
 # OVO session markers (power-pack scoped; hook reads at repo root)
 /.ovo_active
 /.ovo_inactive

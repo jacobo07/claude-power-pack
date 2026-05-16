@@ -1,0 +1,17 @@
+{
+  "started_at": "2026-04-30T11:09:14+00:00",
+  "finished_at": "2026-04-30T11:09:50+00:00",
+  "filenames_queried": [
+    "skill.md",
+    "SKILL.md"
+  ],
+  "limit_per_query": 200,
+  "per_query_raw_count": {
+    "skill.md": 92,
+    "SKILL.md": 92
+  },
+  "total_raw": 184,
+  "total_deduped": 92,
+  "errors": [],
+  "out_raw": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\vault\\audits\\gh_skills_raw.jsonl"
+}

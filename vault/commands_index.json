@@ -1,0 +1,1442 @@
+{
+  "generated_iso": "2026-05-02T15:07:23+00:00",
+  "total": 82,
+  "schema_version": 1,
+  "commands": {
+    "audit-all": {
+      "description": "Unified audit across all subsystems in the current repo — discovers manifests, scores each on edit-thrashing/drift/completion/env-mapping, emits summary + oracle delta.",
+      "keywords": [
+        "across",
+        "audit",
+        "completion",
+        "current",
+        "delta",
+        "discovers",
+        "drift",
+        "each",
+        "edit-thrashing",
+        "emits",
+        "env-mapping",
+        "manifests",
+        "oracle",
+        "repo",
+        "scores",
+        "subsystems",
+        "summary",
+        "unified"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\audit-all.md",
+      "size_bytes": 4078,
+      "mtime": 1777058976.7977338,
+      "has_frontmatter": true
+    },
+    "autoupdate": {
+      "description": "Toggle automatic update checking for Claude Power Pack on session start",
+      "keywords": [
+        "automatic",
+        "checking",
+        "pack",
+        "power",
+        "session",
+        "start",
+        "toggle",
+        "update"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\autoupdate.md",
+      "size_bytes": 1474,
+      "mtime": 1776684478.0261116,
+      "has_frontmatter": true
+    },
+    "bootstrap-new-project": {
+      "description": "Guided walkthrough to spin up a new project with Power Pack governance pre-wired. Eliminates the onboarding cliff — empty dir → working PROJECT.md + CLAUDE.md + first passing Gate 1 in under 10 min. For existing codebases, use /customclaw instead.",
+      "keywords": [
+        "project",
+        "cliff",
+        "codebases",
+        "customclaw",
+        "dir",
+        "eliminates",
+        "empty",
+        "existing",
+        "first",
+        "gate",
+        "governance",
+        "guided",
+        "instead",
+        "min",
+        "new",
+        "onboarding",
+        "pack",
+        "passing",
+        "power",
+        "pre-wired",
+        "spin",
+        "under",
+        "walkthrough",
+        "working"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\commands\\bootstrap-new-project.md",
+      "size_bytes": 7884,
+      "mtime": 1776806874.889973,
+      "has_frontmatter": true
+    },
+    "browser-session": {
+      "description": "Browser Control Plane — manage auto-browser (LvcidPsyche/auto-browser v1.0.2) sessions: readiness probe, MCP tool list, create session, observe, human-takeover URL, raw tool call. Local-first: hits 127.0.0.1:8000 (REST/MCP) and 127.0.0.1:6080 (noVNC). Owner must have `docker compose up` running per vendor/auto-browser/INSTALL.md.",
+      "keywords": [
+        "auto-browser",
+        "mcp",
+        "browser",
+        "call",
+        "compose",
+        "control",
+        "create",
+        "docker",
+        "hits",
+        "human-takeover",
+        "install",
+        "list",
+        "local-first",
+        "lvcidpsyche",
+        "manage",
+        "novnc",
+        "observe",
+        "owner",
+        "plane",
+        "probe",
+        "raw",
+        "readiness",
+        "rest",
+        "running",
+        "session",
+        "sessions",
+        "url",
+        "vendor"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\commands\\browser-session.md",
+      "size_bytes": 6367,
+      "mtime": 1777241191.7142239,
+      "has_frontmatter": true
+    },
+    "bug-hunt": {
+      "description": "Universal Bug Hunter v6000 — runs the KobiiCraft v6000 baseline (data integrity, deploy atomicity, OOB command channel, concurrency hazard map) over the current project's delta. Auto-creates a knowledge vault if none exists. Globally invokable from any cwd.",
+      "keywords": [
+        "v6000",
+        "atomicity",
+        "auto-creates",
+        "baseline",
+        "bug",
+        "channel",
+        "command",
+        "concurrency",
+        "current",
+        "cwd",
+        "data",
+        "delta",
+        "deploy",
+        "exists",
+        "globally",
+        "hazard",
+        "hunter",
+        "integrity",
+        "invokable",
+        "knowledge",
+        "kobiicraft",
+        "map",
+        "none",
+        "oob",
+        "over",
+        "project",
+        "runs",
+        "universal",
+        "vault"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\commands\\bug-hunt.md",
+      "size_bytes": 5002,
+      "mtime": 1777237053.776657,
+      "has_frontmatter": true
+    },
+    "customclaw": {
+      "description": "Scan current project and generate a custom AI daemon command tailored to its stack",
+      "keywords": [
+        "command",
+        "current",
+        "custom",
+        "daemon",
+        "generate",
+        "its",
+        "project",
+        "scan",
+        "stack",
+        "tailored"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\customclaw.md",
+      "size_bytes": 17422,
+      "mtime": 1776684479.2302032,
+      "has_frontmatter": true
+    },
+    "design-md": {
+      "description": "Lint, diff, export, or scaffold a DESIGN.md (Google Labs design-system spec). Power-Pack default for web design across all projects.",
+      "keywords": [
+        "design",
+        "across",
+        "default",
+        "design-system",
+        "diff",
+        "export",
+        "google",
+        "labs",
+        "lint",
+        "power-pack",
+        "projects",
+        "scaffold",
+        "spec",
+        "web"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\design-md.md",
+      "size_bytes": 4489,
+      "mtime": 1777406142.2076957,
+      "has_frontmatter": true
+    },
+    "investment-ready-audit": {
+      "description": "Project-agnostic Investment-Ready Audit (IRA) — scores current repo on Scalability / Resilience / Traceability / Zero-Stub / ROI-Wiring and emits a Series-A / Seed / Angel / Not-Investable verdict.",
+      "keywords": [
+        "angel",
+        "audit",
+        "current",
+        "emits",
+        "investment-ready",
+        "ira",
+        "not-investable",
+        "project-agnostic",
+        "repo",
+        "resilience",
+        "roi-wiring",
+        "scalability",
+        "scores",
+        "seed",
+        "series-a",
+        "traceability",
+        "verdict",
+        "zero-stub"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\investment-ready-audit.md",
+      "size_bytes": 3433,
+      "mtime": 1777058978.7342353,
+      "has_frontmatter": true
+    },
+    "ira": {
+      "description": "Alias for /investment-ready-audit. Project-agnostic Series-A / Seed / Angel / Not-Investable verdict based on 5 axes — scalability, resilience, traceability, zero-stub, ROI-wiring.",
+      "keywords": [
+        "alias",
+        "angel",
+        "axes",
+        "investment-ready-audit",
+        "not-investable",
+        "project-agnostic",
+        "resilience",
+        "roi-wiring",
+        "scalability",
+        "seed",
+        "series-a",
+        "traceability",
+        "verdict",
+        "zero-stub"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\ira.md",
+      "size_bytes": 1697,
+      "mtime": 1777058977.5602965,
+      "has_frontmatter": true
+    },
+    "obsidian-setup": {
+      "description": "Generate a Knowledge Graph vault from the current project for token-efficient architecture discovery",
+      "keywords": [
+        "architecture",
+        "current",
+        "discovery",
+        "generate",
+        "graph",
+        "knowledge",
+        "project",
+        "token-efficient",
+        "vault"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\obsidian-setup.md",
+      "size_bytes": 2949,
+      "mtime": 1776684480.1075726,
+      "has_frontmatter": true
+    },
+    "omni-verification-oracle-audit": {
+      "description": "OVO forensic audit — delta → 5-advisor Council → verdict → atomic vault → gated push. Runs in the current repo; tooling is resolved to the Power-Pack install.",
+      "keywords": [
+        "advisor",
+        "atomic",
+        "audit",
+        "council",
+        "current",
+        "delta",
+        "forensic",
+        "gated",
+        "install",
+        "ovo",
+        "power-pack",
+        "push",
+        "repo",
+        "resolved",
+        "runs",
+        "tooling",
+        "vault",
+        "verdict"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\omni-verification-oracle-audit.md",
+      "size_bytes": 4486,
+      "mtime": 1776684481.4010642,
+      "has_frontmatter": true
+    },
+    "ovo-audit": {
+      "description": "Alias for /omni-verification-oracle-audit. OVO forensic audit — delta → Council → verdict → vault → gated push.",
+      "keywords": [
+        "alias",
+        "audit",
+        "council",
+        "delta",
+        "forensic",
+        "gated",
+        "omni-verification-oracle-audit",
+        "ovo",
+        "push",
+        "vault",
+        "verdict"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\ovo-audit.md",
+      "size_bytes": 2749,
+      "mtime": 1776684483.2204132,
+      "has_frontmatter": true
+    },
+    "pre-compact": {
+      "description": "Bundle vault dump + handoff write + Hardware-Law ledger update before the user types /compact. Two-step honest flow — hooks cannot dispatch /compact themselves.",
+      "keywords": [
+        "compact",
+        "before",
+        "bundle",
+        "cannot",
+        "dispatch",
+        "dump",
+        "flow",
+        "handoff",
+        "hardware-law",
+        "honest",
+        "hooks",
+        "ledger",
+        "themselves",
+        "two-step",
+        "types",
+        "update",
+        "user",
+        "vault",
+        "write"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\commands\\pre-compact.md",
+      "size_bytes": 2977,
+      "mtime": 1777554899.7187512,
+      "has_frontmatter": true
+    },
+    "resume-clean": {
+      "description": "Filtered session picker (text table) — shows only RESUMEABLE sessions (excludes ones currently LIVE in other Cursor terminals). Use this when you want the Lazarus output instead of the native /resume modal. Native /resume is preserved; this is the text-based alternative. Use /resume-clean last for legacy single-session warm-up.",
+      "keywords": [
+        "native",
+        "resume",
+        "alternative",
+        "currently",
+        "cursor",
+        "excludes",
+        "filtered",
+        "instead",
+        "last",
+        "lazarus",
+        "legacy",
+        "live",
+        "modal",
+        "ones",
+        "only",
+        "other",
+        "output",
+        "picker",
+        "preserved",
+        "resume-clean",
+        "resumeable",
+        "session",
+        "sessions",
+        "shows",
+        "single-session",
+        "table",
+        "terminals",
+        "text",
+        "text-based",
+        "want",
+        "warm-up"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\resume-clean.md",
+      "size_bytes": 4859,
+      "mtime": 1777652351.4578948,
+      "has_frontmatter": true
+    },
+    "update": {
+      "description": "Update Claude Power Pack to the latest version from GitHub",
+      "keywords": [
+        "github",
+        "latest",
+        "pack",
+        "power",
+        "update",
+        "version"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\update.md",
+      "size_bytes": 2036,
+      "mtime": 1776684486.5133016,
+      "has_frontmatter": true
+    },
+    "vault-setup": {
+      "description": "Extract a monolithic CLAUDE.md into an Obsidian-compatible governance vault for token-efficient on-demand rule loading",
+      "keywords": [
+        "extract",
+        "governance",
+        "loading",
+        "monolithic",
+        "obsidian-compatible",
+        "on-demand",
+        "rule",
+        "token-efficient",
+        "vault"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\vault-setup.md",
+      "size_bytes": 2440,
+      "mtime": 1776684490.013284,
+      "has_frontmatter": true
+    },
+    "vault-sync": {
+      "description": "Regenerate the governance vault INDEX.md and sync metadata",
+      "keywords": [
+        "governance",
+        "index",
+        "metadata",
+        "regenerate",
+        "sync",
+        "vault"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\vault-sync.md",
+      "size_bytes": 617,
+      "mtime": 1776684491.906213,
+      "has_frontmatter": true
+    },
+    "evaluate-repository": {
+      "description": "Repository Evaluation Prompt (Awesome-Claude-Code · Full Version)",
+      "keywords": [
+        "awesome-claude-code",
+        "evaluation",
+        "full",
+        "prompt",
+        "repository",
+        "version"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\evaluate-repository.md",
+      "size_bytes": 4486,
+      "mtime": 1772621188.1763792,
+      "has_frontmatter": false
+    },
+    "kclear": {
+      "description": "Session checkpoint + handoff — atomic write, token-lean (v3)",
+      "keywords": [
+        "atomic",
+        "checkpoint",
+        "handoff",
+        "session",
+        "token-lean",
+        "write"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\kclear.md",
+      "size_bytes": 4027,
+      "mtime": 1776857947.4356382,
+      "has_frontmatter": true
+    },
+    "knowledge": {
+      "description": "Inject AKOS knowledge into any project before starting work.",
+      "keywords": [
+        "akos",
+        "before",
+        "inject",
+        "knowledge",
+        "project",
+        "starting",
+        "work"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\knowledge.md",
+      "size_bytes": 1387,
+      "mtime": 1773928727.5189688,
+      "has_frontmatter": false
+    },
+    "lazarus": {
+      "description": "Multi-session Lazarus restore. Default = current project's last session. /lazarus all = every project, every recent session (use this when reviving multiple windows). /lazarus windows = same as all, alias. (Native /resume remains the per-session picker.)",
+      "keywords": [
+        "lazarus",
+        "every",
+        "project",
+        "session",
+        "windows",
+        "alias",
+        "current",
+        "default",
+        "last",
+        "multi-session",
+        "multiple",
+        "native",
+        "per-session",
+        "picker",
+        "recent",
+        "remains",
+        "restore",
+        "resume",
+        "reviving",
+        "same"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\lazarus.md",
+      "size_bytes": 6824,
+      "mtime": 1777303628.857653,
+      "has_frontmatter": true
+    },
+    "research-youtube": {
+      "description": "Analyze YouTube video(s) for deep research using yt-research tool.",
+      "keywords": [
+        "analyze",
+        "deep",
+        "research",
+        "video",
+        "youtube",
+        "yt-research"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\research-youtube.md",
+      "size_bytes": 1131,
+      "mtime": 1772633359.5436401,
+      "has_frontmatter": false
+    },
+    "restart": {
+      "description": "Exit current Claude session and relaunch it with --continue so you land back in the exact same session (fresh context window, full history intact)",
+      "keywords": [
+        "session",
+        "back",
+        "context",
+        "continue",
+        "current",
+        "exact",
+        "exit",
+        "fresh",
+        "full",
+        "history",
+        "intact",
+        "land",
+        "relaunch",
+        "same",
+        "window"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\restart.md",
+      "size_bytes": 1966,
+      "mtime": 1777046008.7722454,
+      "has_frontmatter": true
+    },
+    "saas-continue": {
+      "description": "Continue an existing SaaS project using the internalized doctrine",
+      "keywords": [
+        "continue",
+        "doctrine",
+        "existing",
+        "internalized",
+        "project",
+        "saas"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\saas-continue.md",
+      "size_bytes": 1648,
+      "mtime": 1773849315.1130223,
+      "has_frontmatter": true
+    },
+    "saas-launch": {
+      "description": "Launch a new SaaS project using the internalized 14-phase methodology",
+      "keywords": [
+        "internalized",
+        "launch",
+        "methodology",
+        "new",
+        "phase",
+        "project",
+        "saas"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\saas-launch.md",
+      "size_bytes": 6706,
+      "mtime": 1773849425.1708808,
+      "has_frontmatter": true
+    },
+    "saas_system_audit": {
+      "description": "SaaS System Audit — Universal Commercial Readiness Assessment",
+      "keywords": [
+        "assessment",
+        "audit",
+        "commercial",
+        "readiness",
+        "saas",
+        "system",
+        "universal"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\saas_system_audit.md",
+      "size_bytes": 10284,
+      "mtime": 1773853963.006248,
+      "has_frontmatter": false
+    },
+    "bmad:architecture": {
+      "description": "You are the System Architect, executing the **Architecture** workflow.",
+      "keywords": [
+        "architect",
+        "architecture",
+        "executing",
+        "system",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\architecture.md",
+      "size_bytes": 15851,
+      "mtime": 1772568376.6050594,
+      "has_frontmatter": false
+    },
+    "bmad:brainstorm": {
+      "description": "You are the Creative Intelligence, executing the **Brainstorm** workflow.",
+      "keywords": [
+        "brainstorm",
+        "creative",
+        "executing",
+        "intelligence",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\brainstorm.md",
+      "size_bytes": 9685,
+      "mtime": 1772568376.6133406,
+      "has_frontmatter": false
+    },
+    "bmad:create-agent": {
+      "description": "You are the Builder, executing the **Create Agent** workflow.",
+      "keywords": [
+        "builder",
+        "create",
+        "executing",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\create-agent.md",
+      "size_bytes": 8478,
+      "mtime": 1772568376.6199982,
+      "has_frontmatter": false
+    },
+    "bmad:create-story": {
+      "description": "You are the Scrum Master, executing the **Create Story** workflow.",
+      "keywords": [
+        "create",
+        "executing",
+        "master",
+        "scrum",
+        "story",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\create-story.md",
+      "size_bytes": 13337,
+      "mtime": 1772568376.6264703,
+      "has_frontmatter": false
+    },
+    "bmad:create-ux-design": {
+      "description": "You are the UX Designer, executing the **Create UX Design** workflow.",
+      "keywords": [
+        "create",
+        "design",
+        "designer",
+        "executing",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\create-ux-design.md",
+      "size_bytes": 20883,
+      "mtime": 1772568376.635239,
+      "has_frontmatter": false
+    },
+    "bmad:create-workflow": {
+      "description": "You are the Builder, executing the **Create Workflow** workflow.",
+      "keywords": [
+        "workflow",
+        "builder",
+        "create",
+        "executing"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\create-workflow.md",
+      "size_bytes": 2848,
+      "mtime": 1772568376.6428118,
+      "has_frontmatter": false
+    },
+    "bmad:dev-story": {
+      "description": "You are the Developer, executing the **Dev Story** workflow.",
+      "keywords": [
+        "dev",
+        "developer",
+        "executing",
+        "story",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\dev-story.md",
+      "size_bytes": 22034,
+      "mtime": 1772568376.6520727,
+      "has_frontmatter": false
+    },
+    "bmad:prd": {
+      "description": "You are the Product Manager, executing the **PRD (Product Requirements Document)** workflow.",
+      "keywords": [
+        "product",
+        "document",
+        "executing",
+        "manager",
+        "prd",
+        "requirements",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\prd.md",
+      "size_bytes": 11463,
+      "mtime": 1772568376.6649146,
+      "has_frontmatter": false
+    },
+    "bmad:product-brief": {
+      "description": "You are the Business Analyst, executing the **Product Brief** workflow.",
+      "keywords": [
+        "analyst",
+        "brief",
+        "business",
+        "executing",
+        "product",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\product-brief.md",
+      "size_bytes": 9857,
+      "mtime": 1772568376.6701512,
+      "has_frontmatter": false
+    },
+    "bmad:research": {
+      "description": "You are the Creative Intelligence, executing the **Research** workflow.",
+      "keywords": [
+        "creative",
+        "executing",
+        "intelligence",
+        "research",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\research.md",
+      "size_bytes": 13680,
+      "mtime": 1772568376.675489,
+      "has_frontmatter": false
+    },
+    "bmad:solutioning-gate-check": {
+      "description": "You are the System Architect, executing the **Solutioning Gate Check** workflow.",
+      "keywords": [
+        "architect",
+        "check",
+        "executing",
+        "gate",
+        "solutioning",
+        "system",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\solutioning-gate-check.md",
+      "size_bytes": 14040,
+      "mtime": 1772568376.6835263,
+      "has_frontmatter": false
+    },
+    "bmad:sprint-planning": {
+      "description": "You are the Scrum Master, executing the **Sprint Planning** workflow.",
+      "keywords": [
+        "executing",
+        "master",
+        "planning",
+        "scrum",
+        "sprint",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\sprint-planning.md",
+      "size_bytes": 17697,
+      "mtime": 1772568376.6963546,
+      "has_frontmatter": false
+    },
+    "bmad:tech-spec": {
+      "description": "You are the Product Manager, executing the **Tech Spec (Technical Specification)** workflow.",
+      "keywords": [
+        "executing",
+        "manager",
+        "product",
+        "spec",
+        "specification",
+        "tech",
+        "technical",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\tech-spec.md",
+      "size_bytes": 7465,
+      "mtime": 1772568376.7531192,
+      "has_frontmatter": false
+    },
+    "bmad:workflow-init": {
+      "description": "You are executing the **Workflow Init** command to initialize BMAD Method in the current project.",
+      "keywords": [
+        "bmad",
+        "command",
+        "current",
+        "executing",
+        "init",
+        "initialize",
+        "method",
+        "project",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\workflow-init.md",
+      "size_bytes": 6620,
+      "mtime": 1772568376.7657914,
+      "has_frontmatter": false
+    },
+    "bmad:workflow-status": {
+      "description": "You are executing the **Workflow Status** command to check project progress and get recommendations.",
+      "keywords": [
+        "check",
+        "command",
+        "executing",
+        "get",
+        "progress",
+        "project",
+        "recommendations",
+        "status",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\bmad\\workflow-status.md",
+      "size_bytes": 6732,
+      "mtime": 1772568376.7715564,
+      "has_frontmatter": false
+    },
+    "carl:manager": {
+      "description": "Full CARL domain and rule management. Invoke when user needs to manage .carl/ configuration.",
+      "keywords": [
+        "carl",
+        "configuration",
+        "domain",
+        "full",
+        "invoke",
+        "manage",
+        "management",
+        "needs",
+        "rule",
+        "user"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\manager.md",
+      "size_bytes": 3964,
+      "mtime": 1772241519.1851997,
+      "has_frontmatter": true
+    },
+    "gsd:add-phase": {
+      "description": "Add phase to end of current milestone in roadmap",
+      "keywords": [
+        "add",
+        "current",
+        "end",
+        "milestone",
+        "phase",
+        "roadmap"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\add-phase.md",
+      "size_bytes": 1163,
+      "mtime": 1772567880.5841198,
+      "has_frontmatter": true
+    },
+    "gsd:add-tests": {
+      "description": "Generate tests for a completed phase based on UAT criteria and implementation",
+      "keywords": [
+        "completed",
+        "criteria",
+        "generate",
+        "implementation",
+        "phase",
+        "tests",
+        "uat"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\add-tests.md",
+      "size_bytes": 1391,
+      "mtime": 1772567880.5861173,
+      "has_frontmatter": true
+    },
+    "gsd:add-todo": {
+      "description": "Capture idea or task as todo from current conversation context",
+      "keywords": [
+        "capture",
+        "context",
+        "conversation",
+        "current",
+        "idea",
+        "task",
+        "todo"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\add-todo.md",
+      "size_bytes": 1225,
+      "mtime": 1772567880.5871186,
+      "has_frontmatter": true
+    },
+    "gsd:audit-milestone": {
+      "description": "Audit milestone completion against original intent before archiving",
+      "keywords": [
+        "against",
+        "archiving",
+        "audit",
+        "before",
+        "completion",
+        "intent",
+        "milestone",
+        "original"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\audit-milestone.md",
+      "size_bytes": 1243,
+      "mtime": 1772567880.6851337,
+      "has_frontmatter": true
+    },
+    "gsd:check-todos": {
+      "description": "List pending todos and select one to work on",
+      "keywords": [
+        "list",
+        "one",
+        "pending",
+        "select",
+        "todos",
+        "work"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\check-todos.md",
+      "size_bytes": 1272,
+      "mtime": 1772567880.7687285,
+      "has_frontmatter": true
+    },
+    "gsd:cleanup": {
+      "description": "Archive accumulated phase directories from completed milestones",
+      "keywords": [
+        "accumulated",
+        "archive",
+        "completed",
+        "directories",
+        "milestones",
+        "phase"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\cleanup.md",
+      "size_bytes": 602,
+      "mtime": 1772567880.770734,
+      "has_frontmatter": true
+    },
+    "gsd:complete-milestone": {
+      "description": "Archive completed milestone and prepare for next version",
+      "keywords": [
+        "archive",
+        "completed",
+        "milestone",
+        "next",
+        "prepare",
+        "version"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\complete-milestone.md",
+      "size_bytes": 4519,
+      "mtime": 1772567880.7727387,
+      "has_frontmatter": true
+    },
+    "gsd:debug": {
+      "description": "Systematic debugging with persistent state across context resets",
+      "keywords": [
+        "across",
+        "context",
+        "debugging",
+        "persistent",
+        "resets",
+        "state",
+        "systematic"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\debug.md",
+      "size_bytes": 3901,
+      "mtime": 1772567880.775143,
+      "has_frontmatter": true
+    },
+    "gsd:discuss-phase": {
+      "description": "Gather phase context through adaptive questioning before planning",
+      "keywords": [
+        "adaptive",
+        "before",
+        "context",
+        "gather",
+        "phase",
+        "planning",
+        "questioning",
+        "through"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\discuss-phase.md",
+      "size_bytes": 3587,
+      "mtime": 1772567880.7776773,
+      "has_frontmatter": true
+    },
+    "gsd:execute-phase": {
+      "description": "Execute all plans in a phase with wave-based parallelization",
+      "keywords": [
+        "execute",
+        "parallelization",
+        "phase",
+        "plans",
+        "wave-based"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\execute-phase.md",
+      "size_bytes": 1340,
+      "mtime": 1772567880.7857397,
+      "has_frontmatter": true
+    },
+    "gsd:health": {
+      "description": "Diagnose planning directory health and optionally repair issues",
+      "keywords": [
+        "diagnose",
+        "directory",
+        "health",
+        "issues",
+        "optionally",
+        "planning",
+        "repair"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\health.md",
+      "size_bytes": 660,
+      "mtime": 1772567880.7907927,
+      "has_frontmatter": true
+    },
+    "gsd:help": {
+      "description": "Show available GSD commands and usage guide",
+      "keywords": [
+        "available",
+        "commands",
+        "gsd",
+        "guide",
+        "show",
+        "usage"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\help.md",
+      "size_bytes": 620,
+      "mtime": 1772567880.8033886,
+      "has_frontmatter": true
+    },
+    "gsd:insert-phase": {
+      "description": "Insert urgent work as decimal phase (e.g., 72.1) between existing phases",
+      "keywords": [
+        "between",
+        "decimal",
+        "existing",
+        "insert",
+        "phase",
+        "phases",
+        "urgent",
+        "work"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\insert-phase.md",
+      "size_bytes": 1098,
+      "mtime": 1772567880.8043034,
+      "has_frontmatter": true
+    },
+    "gsd:join-discord": {
+      "description": "Join the GSD Discord community",
+      "keywords": [
+        "community",
+        "discord",
+        "gsd",
+        "join"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\join-discord.md",
+      "size_bytes": 389,
+      "mtime": 1772567880.814973,
+      "has_frontmatter": true
+    },
+    "gsd:list-phase-assumptions": {
+      "description": "Surface Claude's assumptions about a phase approach before planning",
+      "keywords": [
+        "approach",
+        "assumptions",
+        "before",
+        "phase",
+        "planning",
+        "surface"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\list-phase-assumptions.md",
+      "size_bytes": 1472,
+      "mtime": 1772567880.8212543,
+      "has_frontmatter": true
+    },
+    "gsd:map-codebase": {
+      "description": "Analyze codebase with parallel mapper agents to produce .planning/codebase/ documents",
+      "keywords": [
+        "codebase",
+        "analyze",
+        "documents",
+        "mapper",
+        "parallel",
+        "planning",
+        "produce"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\map-codebase.md",
+      "size_bytes": 2604,
+      "mtime": 1772567880.8852842,
+      "has_frontmatter": true
+    },
+    "gsd:new-milestone": {
+      "description": "Start a new milestone cycle — update PROJECT.md and route to requirements",
+      "keywords": [
+        "cycle",
+        "milestone",
+        "new",
+        "project",
+        "requirements",
+        "route",
+        "start",
+        "update"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\new-milestone.md",
+      "size_bytes": 1788,
+      "mtime": 1772567880.8874197,
+      "has_frontmatter": true
+    },
+    "gsd:new-project": {
+      "description": "Initialize a new project with deep context gathering and PROJECT.md",
+      "keywords": [
+        "project",
+        "context",
+        "deep",
+        "gathering",
+        "initialize",
+        "new"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\new-project.md",
+      "size_bytes": 1480,
+      "mtime": 1772567880.8898063,
+      "has_frontmatter": true
+    },
+    "gsd:pause-work": {
+      "description": "Create context handoff when pausing work mid-phase",
+      "keywords": [
+        "context",
+        "create",
+        "handoff",
+        "mid-phase",
+        "pausing",
+        "work"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\pause-work.md",
+      "size_bytes": 1062,
+      "mtime": 1772567880.891825,
+      "has_frontmatter": true
+    },
+    "gsd:plan-milestone-gaps": {
+      "description": "Create phases to close all gaps identified by milestone audit",
+      "keywords": [
+        "audit",
+        "close",
+        "create",
+        "gaps",
+        "identified",
+        "milestone",
+        "phases"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\plan-milestone-gaps.md",
+      "size_bytes": 1063,
+      "mtime": 1772567880.8939185,
+      "has_frontmatter": true
+    },
+    "gsd:plan-phase": {
+      "description": "Create detailed phase plan (PLAN.md) with verification loop",
+      "keywords": [
+        "plan",
+        "create",
+        "detailed",
+        "loop",
+        "phase",
+        "verification"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\plan-phase.md",
+      "size_bytes": 1707,
+      "mtime": 1772567880.8963776,
+      "has_frontmatter": true
+    },
+    "gsd:progress": {
+      "description": "Check project progress, show context, and route to next action (execute or plan)",
+      "keywords": [
+        "action",
+        "check",
+        "context",
+        "execute",
+        "next",
+        "plan",
+        "progress",
+        "project",
+        "route",
+        "show"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\progress.md",
+      "size_bytes": 743,
+      "mtime": 1772567880.8986163,
+      "has_frontmatter": true
+    },
+    "gsd:quick": {
+      "description": "Execute a quick task with GSD guarantees (atomic commits, state tracking) but skip optional agents",
+      "keywords": [
+        "atomic",
+        "commits",
+        "execute",
+        "gsd",
+        "guarantees",
+        "optional",
+        "quick",
+        "skip",
+        "state",
+        "task",
+        "tracking"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\quick.md",
+      "size_bytes": 1653,
+      "mtime": 1772567880.9018784,
+      "has_frontmatter": true
+    },
+    "gsd:reapply-patches": {
+      "description": "Reapply local modifications after a GSD update",
+      "keywords": [
+        "after",
+        "gsd",
+        "local",
+        "modifications",
+        "reapply",
+        "update"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\reapply-patches.md",
+      "size_bytes": 3683,
+      "mtime": 1772567880.904014,
+      "has_frontmatter": true
+    },
+    "gsd:remove-phase": {
+      "description": "Remove a future phase from roadmap and renumber subsequent phases",
+      "keywords": [
+        "future",
+        "phase",
+        "phases",
+        "remove",
+        "renumber",
+        "roadmap",
+        "subsequent"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\remove-phase.md",
+      "size_bytes": 1009,
+      "mtime": 1772567880.906619,
+      "has_frontmatter": true
+    },
+    "gsd:research-phase": {
+      "description": "Research how to implement a phase (standalone - usually use /gsd:plan-phase instead)",
+      "keywords": [
+        "gsd",
+        "how",
+        "implement",
+        "instead",
+        "phase",
+        "plan-phase",
+        "research",
+        "standalone",
+        "usually"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\research-phase.md",
+      "size_bytes": 5492,
+      "mtime": 1772567880.9106548,
+      "has_frontmatter": true
+    },
+    "gsd:resume-work": {
+      "description": "Resume work from previous session with full context restoration",
+      "keywords": [
+        "context",
+        "full",
+        "previous",
+        "restoration",
+        "resume",
+        "session",
+        "work"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\resume-work.md",
+      "size_bytes": 1161,
+      "mtime": 1772567880.9126725,
+      "has_frontmatter": true
+    },
+    "gsd:set-profile": {
+      "description": "Switch model profile for GSD agents (quality/balanced/budget)",
+      "keywords": [
+        "balanced",
+        "budget",
+        "gsd",
+        "model",
+        "profile",
+        "quality",
+        "switch"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\set-profile.md",
+      "size_bytes": 961,
+      "mtime": 1772567880.9145205,
+      "has_frontmatter": true
+    },
+    "gsd:settings": {
+      "description": "Configure GSD workflow toggles and model profile",
+      "keywords": [
+        "configure",
+        "gsd",
+        "model",
+        "profile",
+        "toggles",
+        "workflow"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\settings.md",
+      "size_bytes": 1028,
+      "mtime": 1772567880.9195752,
+      "has_frontmatter": true
+    },
+    "gsd:update": {
+      "description": "Update GSD to latest version with changelog display",
+      "keywords": [
+        "changelog",
+        "display",
+        "gsd",
+        "latest",
+        "update",
+        "version"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\update.md",
+      "size_bytes": 982,
+      "mtime": 1772567880.924953,
+      "has_frontmatter": true
+    },
+    "gsd:validate-phase": {
+      "description": "Retroactively audit and fill Nyquist validation gaps for a completed phase",
+      "keywords": [
+        "audit",
+        "completed",
+        "fill",
+        "gaps",
+        "nyquist",
+        "phase",
+        "retroactively",
+        "validation"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\validate-phase.md",
+      "size_bytes": 897,
+      "mtime": 1772567880.925955,
+      "has_frontmatter": true
+    },
+    "gsd:verify-work": {
+      "description": "Validate built features through conversational UAT",
+      "keywords": [
+        "built",
+        "conversational",
+        "features",
+        "through",
+        "uat",
+        "validate"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\gsd\\verify-work.md",
+      "size_bytes": 1351,
+      "mtime": 1772567880.927427,
+      "has_frontmatter": true
+    },
+    "carl:tasks:add-rule": {
+      "description": "Add Rule Task",
+      "keywords": [
+        "add",
+        "rule",
+        "task"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\tasks\\add-rule.md",
+      "size_bytes": 1078,
+      "mtime": 1772241519.1471977,
+      "has_frontmatter": false
+    },
+    "carl:tasks:create-command": {
+      "description": "Create Star-Command Task",
+      "keywords": [
+        "create",
+        "star-command",
+        "task"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\tasks\\create-command.md",
+      "size_bytes": 1752,
+      "mtime": 1772241519.1471977,
+      "has_frontmatter": false
+    },
+    "carl:tasks:create-domain": {
+      "description": "Create Domain Task",
+      "keywords": [
+        "create",
+        "domain",
+        "task"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\tasks\\create-domain.md",
+      "size_bytes": 1496,
+      "mtime": 1772241519.1471977,
+      "has_frontmatter": false
+    },
+    "carl:tasks:edit-rule": {
+      "description": "Edit Rule Task",
+      "keywords": [
+        "edit",
+        "rule",
+        "task"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\tasks\\edit-rule.md",
+      "size_bytes": 1211,
+      "mtime": 1772241519.1728225,
+      "has_frontmatter": false
+    },
+    "carl:tasks:toggle-domain": {
+      "description": "Toggle Domain Task",
+      "keywords": [
+        "domain",
+        "task",
+        "toggle"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\tasks\\toggle-domain.md",
+      "size_bytes": 1144,
+      "mtime": 1772241519.2484825,
+      "has_frontmatter": false
+    },
+    "carl:templates:domain-template": {
+      "description": "Domain File Template",
+      "keywords": [
+        "domain",
+        "file",
+        "template"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\templates\\domain-template.md",
+      "size_bytes": 2001,
+      "mtime": 1772241519.164272,
+      "has_frontmatter": false
+    },
+    "carl:templates:manifest-entries": {
+      "description": "Manifest Entry Template",
+      "keywords": [
+        "entry",
+        "manifest",
+        "template"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\templates\\manifest-entries.md",
+      "size_bytes": 2208,
+      "mtime": 1772241519.204776,
+      "has_frontmatter": false
+    },
+    "carl:utils:manifest-parser": {
+      "description": "Manifest Parser Reference",
+      "keywords": [
+        "manifest",
+        "parser",
+        "reference"
+      ],
+      "file_path": "C:\\Users\\kobig\\.claude\\commands\\carl\\utils\\manifest-parser.md",
+      "size_bytes": 2538,
+      "mtime": 1772241519.2107792,
+      "has_frontmatter": false
+    }
+  }
+}

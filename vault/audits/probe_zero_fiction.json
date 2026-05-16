@@ -1,0 +1,65 @@
+{
+  "probe": "BL-0048 / MC-SYS-94 \u2014 zero-fiction-gate enforcement",
+  "iso_ts": "2026-05-03T15:35:02+00:00",
+  "gate_path": "C:\\Users\\kobig\\.claude\\skills\\claude-power-pack\\modules\\zero-crash\\hooks\\zero-fiction-gate.js",
+  "cases": [
+    {
+      "case": "clean_js",
+      "tool": "Write",
+      "expect": "clean",
+      "actual": "clean",
+      "raw_output": {},
+      "pass": true
+    },
+    {
+      "case": "literal_soft_launch",
+      "tool": "Write",
+      "expect": "hard",
+      "actual": "hard",
+      "raw_output": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "ask",
+          "permissionDecisionReason": "Zero-Fiction gate (BL-0035 Eight Marks #1): write blocked pending user confirm. Detected: literal soft-launch UI copy. Either replace with real implementation or override (set env ZERO_FICTION_GATE=off in this session)."
+        }
+      },
+      "pass": true
+    },
+    {
+      "case": "todo_comment_line_leading",
+      "tool": "Edit",
+      "expect": "soft",
+      "actual": "soft",
+      "raw_output": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "additionalContext": "Zero-Fiction advisory (BL-0035 Eight Marks #1): about to write content with TODO/FIXME/HACK/XXX comment. The write is proceeding, but consider whether the placeholder is intentional. If shipping production, replace before merge."
+        }
+      },
+      "pass": true
+    },
+    {
+      "case": "todo_comment_inline_should_pass",
+      "tool": "Edit",
+      "expect": "clean",
+      "actual": "clean",
+      "raw_output": {},
+      "pass": true
+    },
+    {
+      "case": "not_implemented_raise",
+      "tool": "Write",
+      "expect": "hard",
+      "actual": "hard",
+      "raw_output": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "ask",
+          "permissionDecisionReason": "Zero-Fiction gate (BL-0035 Eight Marks #1): write blocked pending user confirm. Detected: NotImplemented raise stub. Either replace with real implementation or override (set env ZERO_FICTION_GATE=off in this session)."
+        }
+      },
+      "pass": true
+    }
+  ],
+  "all_pass": true
+}

@@ -1,0 +1,619 @@
+{
+  "generated": "2026-04-29T14:41:36.609801+00:00",
+  "source": "local_filesystem_scan",
+  "scope": "~/.claude/skills/",
+  "totals": {
+    "skills": 59,
+    "files": 10829,
+    "size_mb": 430.65
+  },
+  "categories": {
+    "cpp": [
+      "cpp-pro"
+    ],
+    "debug": [
+      "debugging-wizard",
+      "kobiicraft-debug"
+    ],
+    "frontend": [
+      "artifacts-builder",
+      "brand-guidelines",
+      "building-ai-saas-products",
+      "canvas-design",
+      "mcp-builder"
+    ],
+    "minecraft": [
+      "kobiicraft-debug",
+      "kobiicraft-dev",
+      "kobiicraft-execution",
+      "kobiicraft-ops",
+      "kobiicraft-prd",
+      "kobiicraft-product",
+      "kobiicraft-review",
+      "kobiicraft-testing"
+    ],
+    "python": [
+      "managing-sleepy-skills",
+      "python-best-practices",
+      "python-pro",
+      "sleepy-skills"
+    ],
+    "security": [
+      "code-auditor"
+    ],
+    "testing": [
+      "kobiicraft-testing",
+      "test-master"
+    ],
+    "typescript": [
+      "artifacts-builder",
+      "meeting-insights-analyzer"
+    ],
+    "uncategorized": [
+      "ads",
+      "adversarial-longevity",
+      "algorithmic-art",
+      "autoresearch",
+      "bmad",
+      "carl-help",
+      "carl-manager",
+      "claude-power-pack",
+      "code-reviewer",
+      "competitive-ads-extractor",
+      "content-research-writer",
+      "custom skills",
+      "doc-coauthoring",
+      "embedded-systems",
+      "fix",
+      "game-feel-codex",
+      "generating-hook-matrix",
+      "governance-overlay",
+      "humanizer",
+      "internal-comms",
+      "java-architect",
+      "ll-revenue-reinforcing",
+      "predicting-market-opportunities",
+      "project-bootstrapper",
+      "project-pulse",
+      "seo",
+      "skill-creator",
+      "skill-prompt-efficiency-001",
+      "skill-share",
+      "slack-gif-creator",
+      "social-media",
+      "software-best-practices",
+      "theme-factory",
+      "video-analyzer",
+      "voice-spec-lock"
+    ],
+    "wii": [
+      "wii-dev-best-practices",
+      "wii-dev-skills"
+    ]
+  },
+  "skills": {
+    "ads": {
+      "path": "C:/Users/kobig/.claude/skills/ads",
+      "main_md": "C:/Users/kobig/.claude/skills/ads/instructions.md",
+      "description": "",
+      "file_count": 22,
+      "size_kb": 455.7,
+      "triggers": []
+    },
+    "adversarial-longevity": {
+      "path": "C:/Users/kobig/.claude/skills/adversarial-longevity",
+      "main_md": "C:/Users/kobig/.claude/skills/adversarial-longevity/SKILL.md",
+      "description": "Cite-or-die adversarial hardening for any system with user input, packet handlers, commands, save writes, or shared state. Requires exploit tree (>=5 archetypes), 10x load proof, drift catalog, and budget declarations in same emission. Gate 2 of SUPREMACY MODE.",
+      "file_count": 1,
+      "size_kb": 4.6,
+      "triggers": []
+    },
+    "algorithmic-art": {
+      "path": "C:/Users/kobig/.claude/skills/algorithmic-art",
+      "main_md": "C:/Users/kobig/.claude/skills/algorithmic-art/instructions.md",
+      "description": "",
+      "file_count": 3,
+      "size_kb": 39.5,
+      "triggers": []
+    },
+    "artifacts-builder": {
+      "path": "C:/Users/kobig/.claude/skills/artifacts-builder",
+      "main_md": "C:/Users/kobig/.claude/skills/artifacts-builder/instructions.md",
+      "description": "",
+      "file_count": 7,
+      "size_kb": 48.0,
+      "triggers": [
+        "frontend",
+        "typescript"
+      ]
+    },
+    "autoresearch": {
+      "path": "C:/Users/kobig/.claude/skills/autoresearch",
+      "main_md": "C:/Users/kobig/.claude/skills/autoresearch/SKILL.md",
+      "description": "Self-improving competitive intelligence that runs 3-4x daily on every SaaS project",
+      "file_count": 2,
+      "size_kb": 6.3,
+      "triggers": []
+    },
+    "bmad": {
+      "path": "C:/Users/kobig/.claude/skills/bmad",
+      "main_md": null,
+      "description": "",
+      "file_count": 9,
+      "size_kb": 59.7,
+      "triggers": []
+    },
+    "brand-guidelines": {
+      "path": "C:/Users/kobig/.claude/skills/brand-guidelines",
+      "main_md": "C:/Users/kobig/.claude/skills/brand-guidelines/instructions.md",
+      "description": "",
+      "file_count": 3,
+      "size_kb": 13.4,
+      "triggers": [
+        "frontend"
+      ]
+    },
+    "building-ai-saas-products": {
+      "path": "C:/Users/kobig/.claude/skills/building-ai-saas-products",
+      "main_md": "C:/Users/kobig/.claude/skills/building-ai-saas-products/instructions.md",
+      "description": "",
+      "file_count": 21,
+      "size_kb": 274.0,
+      "triggers": [
+        "frontend"
+      ]
+    },
+    "canvas-design": {
+      "path": "C:/Users/kobig/.claude/skills/canvas-design",
+      "main_md": "C:/Users/kobig/.claude/skills/canvas-design/instructions.md",
+      "description": "",
+      "file_count": 84,
+      "size_kb": 5426.4,
+      "triggers": [
+        "frontend"
+      ]
+    },
+    "carl-help": {
+      "path": "C:/Users/kobig/.claude/skills/carl-help",
+      "main_md": "C:/Users/kobig/.claude/skills/carl-help/CARL-OVERVIEW.md",
+      "description": "",
+      "file_count": 1,
+      "size_kb": 4.7,
+      "triggers": []
+    },
+    "carl-manager": {
+      "path": "C:/Users/kobig/.claude/skills/carl-manager",
+      "main_md": "C:/Users/kobig/.claude/skills/carl-manager/SKILL.md",
+      "description": "Manage CARL domains, rules, and commands",
+      "file_count": 8,
+      "size_kb": 21.4,
+      "triggers": []
+    },
+    "claude-power-pack": {
+      "path": "C:/Users/kobig/.claude/skills/claude-power-pack",
+      "main_md": "C:/Users/kobig/.claude/skills/claude-power-pack/SKILL.md",
+      "description": "Universal AI execution framework — tiered loading, zero-issue delivery, self-healing",
+      "file_count": 8222,
+      "size_kb": 37889.5,
+      "triggers": []
+    },
+    "code-auditor": {
+      "path": "C:/Users/kobig/.claude/skills/code-auditor",
+      "main_md": "C:/Users/kobig/.claude/skills/code-auditor/SKILL.md",
+      "description": "Audit codebase for quality, security, debt",
+      "file_count": 3,
+      "size_kb": 12.7,
+      "triggers": [
+        "security"
+      ]
+    },
+    "code-reviewer": {
+      "path": "C:/Users/kobig/.claude/skills/code-reviewer",
+      "main_md": "C:/Users/kobig/.claude/skills/code-reviewer/SKILL.md",
+      "description": "Code review for bugs, security, architecture",
+      "file_count": 2,
+      "size_kb": 3.4,
+      "triggers": []
+    },
+    "competitive-ads-extractor": {
+      "path": "C:/Users/kobig/.claude/skills/competitive-ads-extractor",
+      "main_md": "C:/Users/kobig/.claude/skills/competitive-ads-extractor/instructions.md",
+      "description": "",
+      "file_count": 3,
+      "size_kb": 15.3,
+      "triggers": []
+    },
+    "content-research-writer": {
+      "path": "C:/Users/kobig/.claude/skills/content-research-writer",
+      "main_md": "C:/Users/kobig/.claude/skills/content-research-writer/instructions.md",
+      "description": "",
+      "file_count": 3,
+      "size_kb": 27.2,
+      "triggers": []
+    },
+    "cpp-pro": {
+      "path": "C:/Users/kobig/.claude/skills/cpp-pro",
+      "main_md": "C:/Users/kobig/.claude/skills/cpp-pro/SKILL.md",
+      "description": "Modern C++20/23 systems and performance optimization",
+      "file_count": 2,
+      "size_kb": 3.1,
+      "triggers": [
+        "cpp"
+      ]
+    },
+    "custom skills": {
+      "path": "C:/Users/kobig/.claude/skills/custom skills",
+      "main_md": null,
+      "description": "",
+      "file_count": 59,
+      "size_kb": 441.2,
+      "triggers": []
+    },
+    "debugging-wizard": {
+      "path": "C:/Users/kobig/.claude/skills/debugging-wizard",
+      "main_md": "C:/Users/kobig/.claude/skills/debugging-wizard/SKILL.md",
+      "description": "Systematic hypothesis-driven debugging any language",
+      "file_count": 2,
+      "size_kb": 3.4,
+      "triggers": [
+        "debug"
+      ]
+    },
+    "doc-coauthoring": {
+      "path": "C:/Users/kobig/.claude/skills/doc-coauthoring",
+      "main_md": "C:/Users/kobig/.claude/skills/doc-coauthoring/instructions.md",
+      "description": "",
+      "file_count": 2,
+      "size_kb": 15.2,
+      "triggers": []
+    },
+    "embedded-systems": {
+      "path": "C:/Users/kobig/.claude/skills/embedded-systems",
+      "main_md": "C:/Users/kobig/.claude/skills/embedded-systems/SKILL.md",
+      "description": "Firmware dev for MCUs, real-time, resource-constrained",
+      "file_count": 2,
+      "size_kb": 3.4,
+      "triggers": []
+    },
+    "fix": {
+      "path": "C:/Users/kobig/.claude/skills/fix",
+      "main_md": "C:/Users/kobig/.claude/skills/fix/SKILL.md",
+      "description": "Fix lint errors and formatting before commits",
+      "file_count": 4,
+      "size_kb": 1.2,
+      "triggers": []
+    },
+    "game-feel-codex": {
+      "path": "C:/Users/kobig/.claude/skills/game-feel-codex",
+      "main_md": "C:/Users/kobig/.claude/skills/game-feel-codex/SKILL.md",
+      "description": "Cite-or-die canonical numeric constants for gameplay feel (Nintendo/Hypixel derived). Use when generating animation, camera, audio, particles, or input handling. Emission without >=3 cited parameters is REJECTED. Gate 1 of SUPREMACY MODE.",
+      "file_count": 1,
+      "size_kb": 4.8,
+      "triggers": []
+    },
+    "generating-hook-matrix": {
+      "path": "C:/Users/kobig/.claude/skills/generating-hook-matrix",
+      "main_md": "C:/Users/kobig/.claude/skills/generating-hook-matrix/instructions.md",
+      "description": "",
+      "file_count": 3,
+      "size_kb": 11.4,
+      "triggers": []
+    },
+    "governance-overlay": {
+      "path": "C:/Users/kobig/.claude/skills/governance-overlay",
+      "main_md": "C:/Users/kobig/.claude/skills/governance-overlay/SKILL.md",
+      "description": "Reusable governance overlay for all development skills. Full lifecycle interception: pre-task, during-task, pre-output, post-output. Adaptive loading by ExecutionOS Lite tier (LIGHT ~200 tokens, STANDARD ~500, DEEP ~800, FORENSIC ~1200). Provides 15-mistake checklist, quality gates, and failure learning capture.",
+      "file_count": 2,
+      "size_kb": 3.1,
+      "triggers": []
+    },
+    "humanizer": {
+      "path": "C:/Users/kobig/.claude/skills/humanizer",
+      "main_md": "C:/Users/kobig/.claude/skills/humanizer/SKILL.md",
+      "description": "Remove signs of AI-generated writing from text",
+      "file_count": 32,
+      "size_kb": 83.7,
+      "triggers": []
+    },
+    "internal-comms": {
+      "path": "C:/Users/kobig/.claude/skills/internal-comms",
+      "main_md": "C:/Users/kobig/.claude/skills/internal-comms/instructions.md",
+      "description": "",
+      "file_count": 7,
+      "size_kb": 22.1,
+      "triggers": []
+    },
+    "java-architect": {
+      "path": "C:/Users/kobig/.claude/skills/java-architect",
+      "main_md": "C:/Users/kobig/.claude/skills/java-architect/SKILL.md",
+      "description": "Enterprise Java 21 with Spring Boot 3.x",
+      "file_count": 2,
+      "size_kb": 3.9,
+      "triggers": []
+    },
+    "kobiicraft-debug": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-debug",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-debug/SKILL.md",
+      "description": "Forensic debugging for KobiiCraft — evidence-first, phase-locked",
+      "file_count": 2,
+      "size_kb": 2.4,
+      "triggers": [
+        "minecraft",
+        "debug"
+      ]
+    },
+    "kobiicraft-dev": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-dev",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-dev/SKILL.md",
+      "description": "KobiiCraft Minecraft plugin development — Paper 1.21.x, Java 21, Maven",
+      "file_count": 2,
+      "size_kb": 3.3,
+      "triggers": [
+        "minecraft"
+      ]
+    },
+    "kobiicraft-execution": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-execution",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-execution/SKILL.md",
+      "description": "Phase execution for KobiiCraft — plan, execute, verify, track progress",
+      "file_count": 2,
+      "size_kb": 4.3,
+      "triggers": [
+        "minecraft"
+      ]
+    },
+    "kobiicraft-ops": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-ops",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-ops/SKILL.md",
+      "description": "KobiiClaw operations — deploy, monitor, restart, suggestions",
+      "file_count": 2,
+      "size_kb": 2.4,
+      "triggers": [
+        "minecraft"
+      ]
+    },
+    "kobiicraft-prd": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-prd",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-prd/SKILL.md",
+      "description": "PRD generation for KobiiCraft plugins and MundiCraft features",
+      "file_count": 2,
+      "size_kb": 2.0,
+      "triggers": [
+        "minecraft"
+      ]
+    },
+    "kobiicraft-product": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-product",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-product/SKILL.md",
+      "description": "Product workflows for KobiiCraft — architecture, sprints, brainstorm, tech specs",
+      "file_count": 2,
+      "size_kb": 4.1,
+      "triggers": [
+        "minecraft"
+      ]
+    },
+    "kobiicraft-review": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-review",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-review/SKILL.md",
+      "description": "Code review for KobiiCraft plugins — Paper API, governance, anti-drift",
+      "file_count": 2,
+      "size_kb": 2.0,
+      "triggers": [
+        "minecraft"
+      ]
+    },
+    "kobiicraft-testing": {
+      "path": "C:/Users/kobig/.claude/skills/kobiicraft-testing",
+      "main_md": "C:/Users/kobig/.claude/skills/kobiicraft-testing/SKILL.md",
+      "description": "Blind Testing Protocol — automated in-game validation via headless Mineflayer bot. GUI inspection, scoreboard reading, command testing, config sanitization. Activates when testing, validating, or verifying KobiiCraft plugin mechanics.",
+      "file_count": 2,
+      "size_kb": 5.9,
+      "triggers": [
+        "testing",
+        "minecraft"
+      ]
+    },
+    "ll-revenue-reinforcing": {
+      "path": "C:/Users/kobig/.claude/skills/ll-revenue-reinforcing",
+      "main_md": "C:/Users/kobig/.claude/skills/ll-revenue-reinforcing/corrective-action-protocol.md",
+      "description": "",
+      "file_count": 8,
+      "size_kb": 22.0,
+      "triggers": []
+    },
+    "managing-sleepy-skills": {
+      "path": "C:/Users/kobig/.claude/skills/managing-sleepy-skills",
+      "main_md": "C:/Users/kobig/.claude/skills/managing-sleepy-skills/SKILL.md",
+      "description": "Convert and validate sleepy skills token budgets",
+      "file_count": 2,
+      "size_kb": 3.6,
+      "triggers": [
+        "python"
+      ]
+    },
+    "mcp-builder": {
+      "path": "C:/Users/kobig/.claude/skills/mcp-builder",
+      "main_md": "C:/Users/kobig/.claude/skills/mcp-builder/SKILL.md",
+      "description": "Build MCP servers for LLM service integration",
+      "file_count": 12,
+      "size_kb": 160.4,
+      "triggers": [
+        "frontend"
+      ]
+    },
+    "meeting-insights-analyzer": {
+      "path": "C:/Users/kobig/.claude/skills/meeting-insights-analyzer",
+      "main_md": "C:/Users/kobig/.claude/skills/meeting-insights-analyzer/instructions.md",
+      "description": "",
+      "file_count": 3,
+      "size_kb": 19.3,
+      "triggers": [
+        "typescript"
+      ]
+    },
+    "predicting-market-opportunities": {
+      "path": "C:/Users/kobig/.claude/skills/predicting-market-opportunities",
+      "main_md": "C:/Users/kobig/.claude/skills/predicting-market-opportunities/SKILL.md",
+      "description": "AI paper-trading for prediction markets",
+      "file_count": 2102,
+      "size_kb": 393821.1,
+      "triggers": []
+    },
+    "project-bootstrapper": {
+      "path": "C:/Users/kobig/.claude/skills/project-bootstrapper",
+      "main_md": "C:/Users/kobig/.claude/skills/project-bootstrapper/SKILL.md",
+      "description": "Bootstrap projects with tooling and best practices",
+      "file_count": 3,
+      "size_kb": 10.7,
+      "triggers": []
+    },
+    "project-pulse": {
+      "path": "C:/Users/kobig/.claude/skills/project-pulse",
+      "main_md": "C:/Users/kobig/.claude/skills/project-pulse/SKILL.md",
+      "description": "Strategic pulse check across all projects",
+      "file_count": 3,
+      "size_kb": 4.0,
+      "triggers": []
+    },
+    "python-best-practices": {
+      "path": "C:/Users/kobig/.claude/skills/python-best-practices",
+      "main_md": "C:/Users/kobig/.claude/skills/python-best-practices/SKILL.md",
+      "description": "Modern Python 3.10+ and TypeScript patterns",
+      "file_count": 10,
+      "size_kb": 98.4,
+      "triggers": [
+        "python"
+      ]
+    },
+    "python-pro": {
+      "path": "C:/Users/kobig/.claude/skills/python-pro",
+      "main_md": "C:/Users/kobig/.claude/skills/python-pro/SKILL.md",
+      "description": "Type-safe async Python 3.11+ with strict mypy",
+      "file_count": 2,
+      "size_kb": 3.2,
+      "triggers": [
+        "python"
+      ]
+    },
+    "seo": {
+      "path": "C:/Users/kobig/.claude/skills/seo",
+      "main_md": "C:/Users/kobig/.claude/skills/seo/CHATGPT_SEO_GEO_DOCTRINE.md",
+      "description": "",
+      "file_count": 26,
+      "size_kb": 479.2,
+      "triggers": []
+    },
+    "skill-creator": {
+      "path": "C:/Users/kobig/.claude/skills/skill-creator",
+      "main_md": "C:/Users/kobig/.claude/skills/skill-creator/SKILL.md",
+      "description": "Create Claude skills with knowledge and workflows",
+      "file_count": 7,
+      "size_kb": 50.0,
+      "triggers": []
+    },
+    "skill-prompt-efficiency-001": {
+      "path": "C:/Users/kobig/.claude/skills/skill-prompt-efficiency-001",
+      "main_md": "C:/Users/kobig/.claude/skills/skill-prompt-efficiency-001/SKILL.md",
+      "description": "Measure and optimize prompt token efficiency",
+      "file_count": 3,
+      "size_kb": 16.3,
+      "triggers": []
+    },
+    "skill-share": {
+      "path": "C:/Users/kobig/.claude/skills/skill-share",
+      "main_md": "C:/Users/kobig/.claude/skills/skill-share/instructions.md",
+      "description": "",
+      "file_count": 3,
+      "size_kb": 5.6,
+      "triggers": []
+    },
+    "slack-gif-creator": {
+      "path": "C:/Users/kobig/.claude/skills/slack-gif-creator",
+      "main_md": "C:/Users/kobig/.claude/skills/slack-gif-creator/instructions.md",
+      "description": "",
+      "file_count": 24,
+      "size_kb": 214.3,
+      "triggers": []
+    },
+    "sleepy-skills": {
+      "path": "C:/Users/kobig/.claude/skills/sleepy-skills",
+      "main_md": "C:/Users/kobig/.claude/skills/sleepy-skills/SKILL.md",
+      "description": "Convert and validate sleepy skills token budgets",
+      "file_count": 12,
+      "size_kb": 253.4,
+      "triggers": [
+        "python"
+      ]
+    },
+    "social-media": {
+      "path": "C:/Users/kobig/.claude/skills/social-media",
+      "main_md": "C:/Users/kobig/.claude/skills/social-media/instructions.md",
+      "description": "",
+      "file_count": 23,
+      "size_kb": 535.7,
+      "triggers": []
+    },
+    "software-best-practices": {
+      "path": "C:/Users/kobig/.claude/skills/software-best-practices",
+      "main_md": "C:/Users/kobig/.claude/skills/software-best-practices/SKILL.md",
+      "description": "Universal software engineering baseline — zero-issue delivery, completeness gates, cross-stack verification",
+      "file_count": 2,
+      "size_kb": 6.1,
+      "triggers": []
+    },
+    "test-master": {
+      "path": "C:/Users/kobig/.claude/skills/test-master",
+      "main_md": "C:/Users/kobig/.claude/skills/test-master/SKILL.md",
+      "description": "Test strategy across unit, integration, E2E, perf",
+      "file_count": 2,
+      "size_kb": 3.7,
+      "triggers": [
+        "testing"
+      ]
+    },
+    "theme-factory": {
+      "path": "C:/Users/kobig/.claude/skills/theme-factory",
+      "main_md": "C:/Users/kobig/.claude/skills/theme-factory/instructions.md",
+      "description": "",
+      "file_count": 14,
+      "size_kb": 141.0,
+      "triggers": []
+    },
+    "video-analyzer": {
+      "path": "C:/Users/kobig/.claude/skills/video-analyzer",
+      "main_md": "C:/Users/kobig/.claude/skills/video-analyzer/SKILL.md",
+      "description": "Analyze video by extracting frames",
+      "file_count": 14,
+      "size_kb": 82.4,
+      "triggers": []
+    },
+    "voice-spec-lock": {
+      "path": "C:/Users/kobig/.claude/skills/voice-spec-lock",
+      "main_md": "C:/Users/kobig/.claude/skills/voice-spec-lock/SKILL.md",
+      "description": "Cite-or-die project voice enforcement for assets, UI, shaders, and render code. Requires >=2 canonical references from the project's governance/VOICE_SPEC.md plus passing the 1-line recognition test. Gate 3 of SUPREMACY MODE.",
+      "file_count": 1,
+      "size_kb": 4.0,
+      "triggers": []
+    },
+    "wii-dev-best-practices": {
+      "path": "C:/Users/kobig/.claude/skills/wii-dev-best-practices",
+      "main_md": "C:/Users/kobig/.claude/skills/wii-dev-best-practices/SKILL.md",
+      "description": "Wii homebrew C/C++ dev with GX, GRRLIB, libogc, Kamek, WSR modding. N-Laws + Forensic Reflex Arc + Reality Contract universalized.",
+      "file_count": 21,
+      "size_kb": 97.4,
+      "triggers": [
+        "wii"
+      ]
+    },
+    "wii-dev-skills": {
+      "path": "C:/Users/kobig/.claude/skills/wii-dev-skills",
+      "main_md": null,
+      "description": "",
+      "file_count": 4,
+      "size_kb": 29.4,
+      "triggers": [
+        "wii"
+      ]
+    }
+  }
+}
