@@ -17,7 +17,21 @@ the top BM25 hits.
 `/cpp-resume-sovereign <composer_id>` — direct retrieval (UUID-shaped).
 `/cpp-resume-sovereign --list` — show top-N dedup'd resumeable
 composers (excludes those already open in another Cursor pane via the
-30s-cached `open-composers.json`).
+30s-cached `open-composers.json`). Rows whose composerId is a
+RECOVERED-orphan (see below) are prefixed with the literal marker
+`[REC] 🟩 ` — ASCII-first so a cp1252/conhost terminal that can't
+render U+1F7E9 still shows `[REC]` (no tofu, no layout shift).
+
+`/cpp-resume-sovereign --recovered` — list only the RECOVERED-orphan
+composers: UUID-shaped composerIds with ≥1 `source LIKE
+'recovered.old%'` vault row that are NOT a live `.jsonl`/`.jsonl.live`
+filename and have 0 rows from `live%`/`backup`/`workspace`. These are
+sessions salvaged from the corrupt `state.vscdb.old.fixed.db` whose
+advances never reached a live transcript. Backed by
+`python tools/vault_search.py --list-recovered [N]`. The set is cached
+at `~/.claude/state/recovered-composers.json` (300 s TTL,
+recompute-on-read) with a `projects` reverse-map consumed by the
+`learning-sentinel.js` SessionStart advisory.
 
 ## Execution contract (what I do when invoked)
 
