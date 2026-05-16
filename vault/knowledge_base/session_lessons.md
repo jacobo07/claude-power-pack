@@ -350,3 +350,19 @@ completeness doctrine sealed into `~/.claude/CLAUDE.md` (<100 cap held)
 4. **A non-empty-output guard is not a correctness guard.** First DONE-gate run reported 99.9 % reduction — a false positive: the rewritten bare-`rtk` command failed to resolve (`~/.claude/bin` not on PATH) and the verifier measured a ~27-token error string. Fix had two parts: (a) the hook now anchors the emitted command to the absolute binary path (`"<RTK_BIN>" …`) so it runs in any shell including Claude's Bash; (b) the verifier rejects an implausibly small compressed output (<50 tok) as a resolution failure. True measured reduction afterward: 80.5 %. Lesson: compression verifiers must assert a sane *floor* and exercise the *real integration path*, not the binary in isolation.
 
 5. **`~/.claude/bin` is not on PATH.** Any artifact that invokes a binary installed there must resolve it by absolute path (env override → `~/.claude/bin/<exe>`), and any *emitted* command that names that binary must be rewritten to the absolute path too. PATH-relative invocation is a latent failure that passes static checks and dies at runtime (Mistake #16 class).
+
+## 2026-05-16 (addendum) — Apex Standardization + gated publish (/ultra ONESHOT)
+
+**Session:** `jit-publishing-apex-standardization`.
+
+**Findings & Vaccines:**
+
+1. **A governance push-gate must be cleared by a real, fresh audit — never agent-self-stamped.** `ovo-push-gate.js` fails-closed unless `verdicts.jsonl` last line ∈ {A,A+} with age < 600 s. The verdict was A but ~31 min stale; the agent did NOT fabricate or refresh it (Q1(a): Owner runs `/ovo-audit`). Forbidden absolutely: writing a synthetic verdict line, `OVO_BYPASS=1`, `.ovo_inactive`, `--no-verify` — each defeats the integrity the gate exists to enforce. Vaccine: when blocked by a freshness/governance gate, the honest move is hard-stop + precise Owner instruction, never self-clearance.
+
+2. **`core.autocrlf=true` + no `.gitattributes` guarantees sha drift on any mirrored repo↔global text file.** `verify_global_mirrors.py` hashes raw bytes; git rewrites the repo copy to CRLF on checkout while the agent writes the global copy LF → permanent mismatch. The 2 healthy pairs held parity only incidentally; the 3rd (`cpp-resume-sovereign`) was already DRIFT for this exact class of reason. Vaccine: every new mirrored pair MUST be pinned `-text` in `.gitattributes` (scoped, e.g. `knowledge_vault/** -text`) BEFORE first commit; verify byte-parity by sha, not by eye.
+
+3. **A whole-repo verifier that returns one global exit code cannot gate a single new pair.** `verify_global_mirrors.py` returns 5 on ANY drift; a pre-existing unrelated drift makes "exit 0" unreachable. Reframing the DONE criterion to *"the new pair is [OK] AND no NEW drift beyond the captured baseline"* is the honest gate — bundling a fix for someone else's drifting mirror is scope creep the plan must refuse. Vaccine: capture the verifier baseline BEFORE the change; assert delta, not absolute exit 0, when the tool aggregates unrelated checks.
+
+4. **Concurrent-global-file write discipline (MC-LAZ-22).** The global `~/.claude/knowledge_vault/core/` tree is shared/multi-session. Write the controlled repo copy first, then the global copy atomically (temp + `os.replace`), then re-read the global bytes immediately before the sha compare — never act on a single transient read.
+
+**Pre-existing issue surfaced (NOT fixed — out of scope, Owner-decision):** `verify_global_mirrors.py` reports `cpp-resume-sovereign.md` DRIFT (global `b7074b55b7bd` vs pp `ef9dc66073ac`). This predates this session and was explicitly left untouched per scope discipline. Recommend a dedicated reconciliation pass.

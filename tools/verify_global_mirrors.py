@@ -22,6 +22,12 @@ PAIRS = [
     (r"C:\Users\User\.claude\commands\cpp-resume-sovereign.md",
      r"C:\Users\User\.claude\skills\claude-power-pack\commands"
      r"\resume-sovereign.md"),
+    # Apex Completion Standard (BL-0069, 2026-05-16): JIT Aggressive
+    # Activation law. Byte-identical; pinned `-text` in .gitattributes so
+    # core.autocrlf cannot break sha parity.
+    (r"C:\Users\User\.claude\knowledge_vault\core\apex-completion-standard.md",
+     r"C:\Users\User\.claude\skills\claude-power-pack\knowledge_vault"
+     r"\core\apex-completion-standard.md"),
 ]
 
 
