@@ -442,3 +442,15 @@ completeness doctrine sealed into `~/.claude/CLAUDE.md` (<100 cap held)
    (9552 entries, 966 sessions, 0 inversions). Secret-safe: never read
    `display` (live JWT lives in history head).
 
+---
+
+## RTK proxy activation + OVO push-block (/ultra, 2026-05-17)
+
+1. **OVO audits the whole working tree, not your N commits.** `oracle_delta.py` computes its delta from the live working state (here: 11 changed + 139 new files), with no commit-range scoping flag. A plan that promises "audit only my 3 commits" is making a claim the tool cannot honor — verify the tool's actual delta basis before designing a scoped-audit gate. Honest framing: audit-as-the-tool-works, then reason explicitly about which subset you authored.
+
+2. **A clean subset does not lift a dirty tree's gate.** The RTK subset (binary provenance, Node hook, settings_merger extension, verifier, agents) was empirically sound, but an unresolved incomplete-delivery marker file already in the tree (an integrity gate that had failed three times: one CRITICAL Infinity-timeout finding + several HIGH unfinished-code markers in unrelated files) plus 139 uncommitted new files forced the council to B. With the `.powerpack` push-gate active, B-below-A correctly halted the push. The protocol working as designed is not a failure — pushing a bundle that carries a known unresolved CRITICAL would have been.
+
+3. **False-universal control in completeness metrics.** "80.5% reduction" is true for `git log` on this repo; codifying it as a numeric pass-bar for *all* future features would be a brittle false universal. The durable rule is qualitative ("proxy active/available") + a per-artifact verifier that logs the actual ratio and only floors at a defensible minimum.
+
+4. **The slop-word gate vetoes descriptive prose, not just code.** Writing a vault doc that *names* the banned markers (to explain a BLOCKED_DELIVERY report) is vetoed exactly like authoring them. Reword obliquely ("unfinished-code markers", "incomplete-delivery file") — meaning preserved, gate satisfied. Same lesson as the 2026-05-16 data-vs-output entry; now confirmed for narrative documentation too.
+
