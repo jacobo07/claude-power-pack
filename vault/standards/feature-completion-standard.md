@@ -72,3 +72,21 @@ REJECT caused by the scanner detecting itself rather than a real defect.
    the canonical kill-switch file) is the standard of evidence.
 
 A feature that has not satisfied all four is not OVO-ready by definition.
+
+### Baseline update 2026-05-17 — context-scoped zero-issue-gate is the floor
+
+`~/.claude/hooks/zero-issue-gate.js` (global-only; no repo mirror — live-traced
+here, CLAUDE.md convention) now uses the context-scoped infinite pattern
+`/(?:timeout|delay|interval|wait|sleep)\s*[:=]\s*Infinity\b/i` (parity with
+`scaffold-auditor.js`). This IS the baseline; reverting to the bare context-free
+form is a regression. Any future pattern change to this gate MUST pass the same
+3-source proof that resolved Mistake #43: (1) `node --check` exit 0, (2)
+grep-confirmed in the live file, (3) a behavioural two-case test proving the
+false-positive class is eliminated AND a real antipattern is still blocked
+(`CONTRACT_PASS=true`). Single-case green does not count.
+
+The deeper cryptographic-exemption layer (teaching this gate the
+`JOBS-WOZ-EXEMPT` sentinel) is **Owner-only**: auto-mode classifies adding an
+exemption path to a global safety gate as Self-Modification + Security-Weaken
+and hard-denies it. It must be applied by the Owner or via an explicit Bash
+permission rule — never agent-self-applied.
