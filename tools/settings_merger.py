@@ -58,11 +58,14 @@ def _block_exists(event_arr, needle: str) -> bool:
 
 
 def _register(settings_path: str, event: str, command_str: str,
-              match_needle: str, timeout: int) -> int:
+              match_needle: str, timeout: int, match_key: str = "") -> int:
     """Append one {hooks:[{command}]} block to hooks.<event>[], bounded.
 
     match_needle: substring used for idempotency + the only allowed delta
     is hooks.<event> growing by exactly one append-only element.
+    match_key: optional Claude Code tool matcher (e.g. "Bash"). When
+    non-empty it is injected as the entry's "matcher" so the hook fires
+    only for matching tools instead of behaving as a global dispatcher.
     """
     if not os.path.isfile(settings_path):
         print(f"settings_merger: settings.json not found at {settings_path}",
@@ -95,6 +98,9 @@ def _register(settings_path: str, event: str, command_str: str,
             {"type": "command", "command": command_str, "timeout": int(timeout)}
         ]
     }
+    if match_key:
+        # Insertion order keeps "matcher" first to mirror existing entries.
+        new_entry = {"matcher": match_key, **new_entry}
     before_snapshot = copy.deepcopy(data)
     arr.append(new_entry)
 
@@ -190,6 +196,20 @@ def register_userprompt(settings_path: str, py_interp: str,
                      timeout)
 
 
+def register_pretool(settings_path: str, node_script: str,
+                      matcher: str, timeout: int) -> int:
+    # Refuse to register a hook command pointing at a missing script —
+    # a dangling PreToolUse entry would fire (and fail) on every match.
+    if not os.path.isfile(node_script):
+        print(f"settings_merger: hook script not found: {node_script}",
+              file=sys.stderr)
+        return 5
+    fwd = node_script.replace("\\", "/")
+    return _register(settings_path, "PreToolUse",
+                      f'{NODE_CMD} "{fwd}"', fwd, timeout,
+                      match_key=matcher)
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -214,12 +234,26 @@ def main():
     ru.add_argument("--settings", default=DEFAULT_SETTINGS,
                     help="path to settings.json (default ~/.claude/...)")
 
+    rp = sub.add_parser("register-pretool",
+                        help="Register a PreToolUse Node hook with a matcher")
+    rp.add_argument("--node-script", required=True,
+                    help="absolute path to the Node hook script (must exist)")
+    rp.add_argument("--matcher", default="Bash",
+                    help="Claude Code tool matcher (default Bash)")
+    rp.add_argument("--timeout", type=int, default=10,
+                    help="hook timeout in seconds (default 10)")
+    rp.add_argument("--settings", default=DEFAULT_SETTINGS,
+                    help="path to settings.json (default ~/.claude/...)")
+
     a = ap.parse_args()
     if a.cmd == "register-stop":
         return register_stop(a.settings, a.node_script, a.timeout)
     if a.cmd == "register-userprompt":
         return register_userprompt(a.settings, a.py_interp, a.py_script,
                                    a.timeout)
+    if a.cmd == "register-pretool":
+        return register_pretool(a.settings, a.node_script, a.matcher,
+                                a.timeout)
     return 2
 
 
