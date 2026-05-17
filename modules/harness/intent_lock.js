@@ -143,7 +143,7 @@ function targetsOwnLock(data, lockPath) {
 
 function ageMs(lock) {
   const t = lock && Number(lock.ts);
-  if (!t || Number.isNaN(t)) return Infinity;
+  if (!t || Number.isNaN(t)) return Number.POSITIVE_INFINITY;
   return Date.now() - t;
 }
 
