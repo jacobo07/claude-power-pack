@@ -43,3 +43,13 @@ closure (sentinel registration + advisory `/ultra` pre-pass). All
 gates empirically green; the only honest limit is cold-load (a newly
 registered hook fires next `/restart`, never claimed as proven
 in-pipeline the turn it lands).
+
+## Hook Startup Authorization Gate (sealed 2026-05-17, BL Intent-Lock/L3)
+
+For ANY feature that wires a startup hook (SessionStart, SessionEnd, Stop, PreToolUse, PostToolUse, UserPromptSubmit) to spawn a process or auto-fire autonomous work:
+
+1. An EXACT-PATH `permissions.allow` rule for the target hook file (e.g. `Edit(file:~/.claude/hooks/<name>.js)`) MUST exist in `settings.json` BEFORE execution begins. A broad glob (`hooks/**`) does NOT clear the auto-mode self-modification classifier — it is a separate gate above `permissions`, and `AskUserQuestion` soft-consent does not clear it either.
+2. The capability is built INERT and harness-verified (real-input, no mocks) before any activation edit is attempted.
+3. Post-wire gate: `node --check <hook>` exit 0 + the empirical harness still green + (live-fire confirmed after the Owner `/restart`s, since hooks cold-load at session start, BL-0067).
+
+This gate prevents the mid-session triple-block: pre-authorize, then wire. Reference cycle: Intent-Lock/L3 — `intent_lock.js` + `learning-sentinel.js` `maybeSpawnL3` + `tools/test_l3_intent.js`.
