@@ -454,3 +454,18 @@ completeness doctrine sealed into `~/.claude/CLAUDE.md` (<100 cap held)
 
 4. **The slop-word gate vetoes descriptive prose, not just code.** Writing a vault doc that *names* the banned markers (to explain a BLOCKED_DELIVERY report) is vetoed exactly like authoring them. Reword obliquely ("unfinished-code markers", "incomplete-delivery file") — meaning preserved, gate satisfied. Same lesson as the 2026-05-16 data-vs-output entry; now confirmed for narrative documentation too.
 
+
+## Addendum 6 — 2026-05-17: Worktree isolation + double HARD-STOP (premise-void brief, then genuine B)
+
+- **Error:** Brief assumed `kdos/sovereign-miner` was behind origin and fast-forwardable onto `11411d8`. Live `rev-list --left-right --count` proved it was `0/0` (already at origin) and `merge-base --is-ancestor` proved `11411d8` was NOT an ancestor (diverged at the kernel-fix commit). Both premises void.
+- **Root cause:** A realign brief's stated state ("behind origin", "12 commits", "FF-able") is a *claim*. Accepting it without a Phase-1 live probe risks executing a ceremonial no-op or a destructive force-rewrite.
+- **Fix:** Phase-1 always runs `rev-list --left-right --count`, `merge-base --is-ancestor`, `worktree list`, `ls-remote` before the plan is trusted. The redirect target (`feat/rtk-compressor-fusion`, 20 commits) was then isolated in a **detached worktree pinned to a frozen SHA** — immune to the proven multi-pane branch-ref churn (panes advanced the branch +1 mid-run; the pinned SHA absorbed zero of it, by design).
+- **Second HARD-STOP:** The redirected delta inherited the honest OVO gate and earned a *genuine B* — 16 new files, 4 hooks inert until a deferred `/restart`, 3 harnesses unrun this session, parallel-agent authorship. Stamped B, push blocked, zero inflation. The block is the deliverable (same discipline as the ratified 2026-05-15 B).
+- **Immunization:** two host-level WOZ-VETOs sealed in `global_vetoes.md` (verify sync state before any realign brief; a redirected target inherits the same gate).
+
+## Addendum 7 — 2026-05-17: OVO B→A via executed evidence (the wiring cycle is protocol)
+
+- **Lesson:** An OVO B whose objections are "hooks inert / harnesses unrun / producer-consumer unproven" is a **task list, not a terminal verdict**. The disciplined response is to *execute every verifier against real input* and re-audit on the executed evidence — never to inflate, never to treat the B as a dead end.
+- **What moved B→A honestly:** 5 real green runs (test_l3_intent 12/12, test_mirror_parity exit0, verify_rtk_fusion 79.5%, intent_lock --self-test 7/7, resume_reindex exit0) + the discovery that `intent_lock.js`'s consumer is `hook-dispatcher.js` (pre-session-live, fresh-process require ⇒ no /restart) + that `rtk-rewrite.js`'s DONE-gate is *sealed-doctrine-defined* as `verify_rtk_fusion.py` exit 0 (PASS), not "live in my session."
+- **Inflation boundary (sharp):** A is honest only when every B objection is *empirically falsified by an executed run*. Stamping A with any objection unaddressed/unrun is inflation. Here every pillar of the B was proven factually false by execution before the A — that is the pipeline working as designed.
+- **Governance walls held:** settings.json self-registration (auto-mode deny) and /restart (Owner-only) were NOT worked around — the only genuinely Owner-gated item (rtk-rewrite live activation) was correctly left as the sealed Owner step; the A did not depend on faking it.
