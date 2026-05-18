@@ -102,9 +102,9 @@ TRIGGERS = [
 # here -> full tier, whole file (no KeyError, behavior unchanged).
 TASK_PROFILES: dict[str, dict] = {
     "graphql-operations": {
-        "include": ["## Key Principles", "## Reference Files",
-                    "## Ground Rules"],
-        "exclude": ["## Operation Basics", "## Quick Reference"],
+        "include": ["## Key Principles", "## Ground Rules"],
+        "exclude": ["## Operation Basics", "## Quick Reference",
+                    "## Reference Files"],
     },
     "graphql-schema": {
         "include": ["## Schema Design Principles", "## Key Rules",
