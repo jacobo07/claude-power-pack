@@ -194,3 +194,46 @@ and `tools/resume_reindex.py` (heartbeat-contract-identical orphan scan)
 are the mechanical gate. `tools/test_mirror_parity.py` asserts
 branch-flip immunity. Green across all three under any concurrent
 working-tree branch == this law satisfied.
+
+---
+
+# Apollo Retrofit Checklist
+
+> Sealed 2026-05-18 (Apollo-retrofit cycle). EXTENDS BL-0069 (it does
+> not replace it): BL-0069 mandated latent-card + JIT-full-depth; this
+> adds the per-task compression contract Apollo Skills proved. A skill
+> that is JIT-full-depth but injects unconditional full state still
+> fails Token Austerity. Both apply or the feature is a draft.
+
+Every Power Pack skill/module wired into the JIT trigger matrix
+(`tools/jit_skill_loader.py`) MUST ship all three components. A skill
+missing any one is incomplete by definition (plan-time-audited):
+
+1. **Task profile** — an explicit `TASK_PROFILES[module]` entry naming
+   the `include` section anchors kept for the summary tier. No profile
+   ⇒ the module degrades to full verbatim (safe default, never a
+   KeyError), but an *un-profiled trigger module is not "done"*.
+2. **Explicit negative space** — the `exclude` list. Compression is not
+   only what you keep; the discarded sections (verbose walkthroughs,
+   quick-ref code dumps) must be named so the omission is intentional
+   and reviewable, never accidental truncation.
+3. **Tier selector** — the prompt maps deterministically to
+   discovery / summary / full via pinned verb regexes; the default is
+   **summary, not full** (full is the regression-risk default). Full
+   tier MUST be byte-identical to the pre-retrofit injection (golden-SHA
+   provable) so the compression layer can never silently corrupt the
+   heavy path.
+
+**Empirical gate (compression is measured, not declared):**
+`tools/measure_compression.py` MUST exit 0 — every highest-priority
+trigger module ≥ 30 % cl100k token reduction (summary vs full) AND every
+`include` anchor present verbatim post-extraction. Apollo SKILL.md
+guides have no executable done-gate; the verbatim-anchor structural
+invariant is the sanctioned substitute. **No "should be 30 %": the real
+number from the harness or it is not done.** Reference loop:
+`tools/jit_ref_correlate.py` (Stop hook, READ+PROPOSE-only, Owner-
+applied) records injected-vs-referenced anchor ratio to
+`vault/telemetry/` so future profile tightening is data-driven, not
+guessed. This checklist is the baseline for ALL future skills,
+including any forthcoming COO-Oracle prompts — no skill integrates
+without the three components and a green compression gate.
