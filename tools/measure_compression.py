@@ -39,12 +39,57 @@ def _load():
     return m
 
 
+def _rtk_probe(tok) -> dict:
+    """Honest RTK half of the unified ledger.
+
+    RTK compresses command OUTPUT, not the command string (`rtk rewrite
+    <cmd>` returns `rtk <cmd>` — a wrapper). The real saving is therefore
+    tok(raw stdout) - tok(rtk-wrapped stdout) on a fixed, safe, read-only
+    sample (`git log --stat -50` — the canonical CLAUDE.md benchmark;
+    deterministic for a fixed HEAD => reproducible within a run).
+    Binary absent / any error -> saved=0 with the true reason. Never
+    fabricates a number.
+    """
+    import os
+    import subprocess
+    rtk = os.environ.get("RTK_BIN") or str(
+        Path(os.path.expanduser("~")) / ".claude" / "bin" / "rtk.exe")
+    if not Path(rtk).is_file():
+        return {"saved": 0, "present": False, "status": "binary-absent "
+                "(hook fail-open: output passes through uncompressed)"}
+    cmd = ["git", "log", "--stat", "-50"]
+    try:
+        raw = subprocess.run(cmd, capture_output=True, text=True,
+                              timeout=15, cwd=str(PP_ROOT))
+        wrapped = subprocess.run([rtk] + cmd, capture_output=True,
+                                 text=True, timeout=15, cwd=str(PP_ROOT))
+        raw_t = tok(raw.stdout or "")
+        rtk_t = tok(wrapped.stdout or "")
+        if raw_t <= 0 or not (wrapped.stdout or "").strip():
+            return {"saved": 0, "present": True, "status":
+                    "binary-present but sample produced no comparable "
+                    "output (saved=0, not fabricated)"}
+        saved = max(0, raw_t - rtk_t)
+        pct = (saved / raw_t) if raw_t else 0.0
+        return {"saved": saved, "present": True, "status":
+                f"binary-present | `git log --stat -50` OUTPUT "
+                f"raw={raw_t}t -> rtk={rtk_t}t ({pct:.1%} compressed)"}
+    except Exception as exc:
+        return {"saved": 0, "present": False, "status":
+                f"probe-error {type(exc).__name__} "
+                "(fail-open: zero real compression counted)"}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--min", type=float, default=MIN_REDUCTION)
+    ap.add_argument("--coordinated", action="store_true",
+                    help="also print the unified RTK+JIT token ledger")
     a = ap.parse_args()
     jsl = _load()
     tok = jsl._tok
+    jit_saved = 0
+    jit_full = 0
 
     targets = sorted({m for t in getattr(jsl, "TRIGGERS", [])
                       for m in t[2]}) or TARGETS_FALLBACK
@@ -63,6 +108,8 @@ def main() -> int:
         summ = jsl._render(mod, body, "summary")
         tf, ts = tok(full), tok(summ)
         red = 1.0 - (ts / tf) if tf else 0.0
+        jit_saved += (tf - ts)
+        jit_full += tf
 
         prof = jsl.TASK_PROFILES.get(mod, {})
         anchors = prof.get("include") or []
@@ -78,6 +125,16 @@ def main() -> int:
             failures.append(f"{mod}:reduction {red:.1%}<{a.min:.0%}")
         if not ok_struct:
             failures.append(f"{mod}:anchors-missing {missing}")
+
+    if a.coordinated:
+        rtk = _rtk_probe(tok)
+        total = jit_saved + rtk["saved"]
+        print("--- UNIFIED RTK+JIT TOKEN LEDGER (one system, measured) ---")
+        print(f"  JIT input-side : -{jit_saved}t saved across {len(targets)}"
+              f" modules (of {jit_full}t full)")
+        print(f"  RTK output-side: -{rtk['saved']}t  [{rtk['status']}]")
+        print(f"  COORDINATED_TOTAL_SAVED={total}t  "
+              f"rtk_active={rtk['present']}")
 
     if failures:
         print("COMPRESSION_GATE FAIL:", " | ".join(failures))
