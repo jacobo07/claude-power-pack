@@ -92,12 +92,18 @@ function main() {
   let rewritten = (res.stdout || '').replace(/\r?\n$/, '');
 
   // rtk emits a bare `rtk <args>` invocation. Bare `rtk` only resolves if
-  // ~/.claude/bin is on PATH — it is NOT (verified). Anchor the emitted
-  // command to the absolute binary so the rewrite runs in any shell,
-  // including Claude Code's Bash context.
-  if (/^rtk(\s|$)/.test(rewritten)) {
-    rewritten = `"${RTK_BIN}"` + rewritten.slice(3);
-  }
+  // ~/.claude/bin is on PATH — it is NOT (verified). Anchor EVERY
+  // command-position `rtk` token to the absolute binary: rtk rewrites
+  // each pipeline/list segment, so a compound like
+  // `git add X && git commit Y` becomes `rtk git add X && rtk git commit Y`
+  // and a leading-only anchor would leave the post-`&&` rtk unresolved
+  // (`rtk: command not found`). Match `rtk` at string start or right
+  // after a shell operator (&& || | ; & ( newline), token-bounded.
+  const RTK_Q = `"${RTK_BIN}"`;
+  rewritten = rewritten.replace(
+    /(^|[|&;(\n]\s*)rtk(?=\s|$)/g,
+    (_m, pre) => pre + RTK_Q
+  );
 
   switch (res.status) {
     case 0: {

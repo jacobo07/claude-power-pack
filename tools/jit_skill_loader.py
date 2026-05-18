@@ -124,9 +124,8 @@ TASK_PROFILES: dict[str, dict] = {
     },
     "apollo-federation": {
         "include": ["## Core Directives Quick Reference",
-                    "## Key Patterns", "## Reference Files",
-                    "## Ground Rules"],
-        "exclude": ["## Federation 2 Schema Setup"],
+                    "## Reference Files", "## Ground Rules"],
+        "exclude": ["## Federation 2 Schema Setup", "## Key Patterns"],
     },
     "rover": {
         "include": ["## Core Commands Overview", "## Reference Files",
@@ -147,12 +146,13 @@ TASK_PROFILES: dict[str, dict] = {
                     "## Defining Custom Tools"],
     },
     "apollo-ios": {
-        "include": ["## Key Rules", "## Reference Files", "## Process"],
-        "exclude": ["## Untrusted content", "## Scripts"],
+        "include": ["## Key Rules", "## Process"],
+        "exclude": ["## Untrusted content", "## Scripts",
+                    "## Reference Files"],
     },
     "apollo-kotlin": {
-        "include": ["## Key Rules", "## Reference Files", "## Process"],
-        "exclude": ["## Scripts"],
+        "include": ["## Key Rules"],
+        "exclude": ["## Scripts", "## Process", "## Reference Files"],
     },
 }
 

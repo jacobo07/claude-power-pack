@@ -25,9 +25,10 @@ PP_ROOT = Path(__file__).resolve().parents[1]
 UPSTREAM = PP_ROOT / "vendor" / "apollo" / "upstream"
 LOADER = PP_ROOT / "tools" / "jit_skill_loader.py"
 
-# Highest-priority trigger modules (TRIGGERS prio 0-1): the ones most
-# likely to be force-injected, so the ones whose compression matters.
-TARGETS = ["apollo-client", "graphql-operations", "graphql-schema"]
+# S+ (2026-05-18): measure EVERY trigger-matrix module, derived live from
+# the loader's TRIGGERS (never hardcoded — auto-tracks the matrix). The
+# constant below is only a fail-safe if TRIGGERS cannot be imported.
+TARGETS_FALLBACK = ["apollo-client", "graphql-operations", "graphql-schema"]
 MIN_REDUCTION = 0.30
 
 
@@ -45,10 +46,13 @@ def main() -> int:
     jsl = _load()
     tok = jsl._tok
 
+    targets = sorted({m for t in getattr(jsl, "TRIGGERS", [])
+                      for m in t[2]}) or TARGETS_FALLBACK
+
     print(f"=== Apollo-retrofit compression gate (min reduction "
-          f">= {a.min:.0%}, tokenizer=cl100k) ===")
+          f">= {a.min:.0%}, tokenizer=cl100k, {len(targets)} modules) ===")
     failures: list[str] = []
-    for mod in TARGETS:
+    for mod in targets:
         skill = UPSTREAM / mod / "SKILL.md"
         if not skill.is_file():
             print(f"  [MISS] {mod}: SKILL.md absent")
