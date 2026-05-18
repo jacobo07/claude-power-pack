@@ -237,3 +237,31 @@ applied) records injected-vs-referenced anchor ratio to
 guessed. This checklist is the baseline for ALL future skills,
 including any forthcoming COO-Oracle prompts — no skill integrates
 without the three components and a green compression gate.
+
+# S+ Criteria — Absolute Baseline (sealed 2026-05-18)
+
+From the Apollo-retrofit → S+ cycle. A feature is below S+ by definition
+until ALL FOUR hold, each proven by a real number or exit code (never
+declared):
+
+1. **Total coverage measurement.** `tools/measure_compression.py` exits 0
+   over EVERY trigger-matrix module (derived live from TRIGGERS, never a
+   hardcoded subset), each at >= the reduction threshold with all
+   TASK_PROFILE anchors verbatim. Measured here: 10/10 modules, min 30%.
+2. **Unified compression ledger.** One tool prints a single
+   `COORDINATED_TOTAL_SAVED` combining JIT input-side reduction and the
+   real RTK output-side compression, reproducible to +/-0 across runs.
+   Measured here: JIT 5871t + RTK 76.1% real output-compression on the
+   canonical `git log --stat -50` sample => 18799t, identical x3.
+3. **Closed feedback loop.** The ref-correlator's pure run() consumes a
+   real session transcript + real injection telemetry and emits a
+   ref_ratio float in [0,1]. Proven here without any hook dependency.
+4. **One auto-optimization cycle.** A module whose measured ref_ratio is
+   below 0.5 has its TASK_PROFILE tightened, and re-measurement shows a
+   STRICT reduction increase. Measured here: graphql-operations
+   36.6% -> 44.5%.
+
+Disclosed residual (not a gap): the RTK PreToolUse rewriter and the
+ref-correlator Stop hook are Owner/restart-gated (BL-0067). S+
+verification uses the pure functions and real binary directly; live
+autonomous operation is the explicit Owner activation step, never faked.
