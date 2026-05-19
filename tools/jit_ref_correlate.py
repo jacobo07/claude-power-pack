@@ -199,11 +199,12 @@ if __name__ == "__main__":
         sys.exit(0)                          # fail-open: never wedge Stop
 
 # ─────────────────────────────────────────────────────────────────────
-# ACTIVATION (Owner-applied — auto-mode classifier denies agent self-
-# registration of hooks). Add to ~/.claude/settings.json hooks.Stop:
-#
-#   { "matcher": "*", "hooks": [ { "type": "command",
-#     "command": "python ~/.claude/skills/claude-power-pack/tools/jit_ref_correlate.py" } ] }
-#
-# Inert until then. Standalone-verified; cold-loads next /restart.
+# ACTIVATION (Owner-applied — auto-mode classifier denies the agent
+# editing the dispatcher's own body to self-register an auto-firing
+# hook). CORRECTED 2026-05-19: this host runs Stop through a single
+# dispatcher that fans out a sequential, shell-free child chain
+# (Windows fork-storm fix), NOT raw settings.json Stop entries. Canon-
+# ical procedure lives in `vault/standards/jit-correlate-activation.md`
+# — read it before applying. Pointer here, full detail there (Apollo
+# pattern: thin code, lazy reference).
 # ─────────────────────────────────────────────────────────────────────
