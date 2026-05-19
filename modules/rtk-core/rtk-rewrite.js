@@ -37,6 +37,44 @@ const RTK_BIN =
 
 const RTK_TIMEOUT_MS = 5000;
 
+const PP_ROOT = path.join(os.homedir(), '.claude', 'skills',
+  'claude-power-pack');
+const TELEMETRY_DIR = path.join(PP_ROOT, 'vault', 'telemetry');
+
+function sanitizeSid(raw) {
+  return String(raw || '').replace(/[^A-Za-z0-9_-]/g, '-').slice(0, 64)
+    || 'no-sid';
+}
+
+// Adoption-only telemetry: records that an RTK rewrite happened (or did
+// not). Does NOT claim per-call output token savings — those are not
+// measurable at PreToolUse time (the command has not run yet). The real
+// output-compression number is measured statically by
+// `tools/measure_compression.py --coordinated` on the canonical
+// benchmark (git log --stat -50). budget_monitor.py reads adoption_n
+// from these rows and multiplies by the static benchmark to ESTIMATE
+// savings; the row itself never carries a fabricated savings figure.
+function logTelemetry(payload, rtkExit, cmdPre, cmdPost) {
+  try {
+    const sid = sanitizeSid(payload && payload.session_id);
+    fs.mkdirSync(TELEMETRY_DIR, { recursive: true });
+    const fp = path.join(TELEMETRY_DIR, `rtk_${sid}.jsonl`);
+    const row = {
+      ts: Date.now() / 1000,
+      session_id: String((payload && payload.session_id) || ''),
+      rtk_exit: rtkExit,
+      rewritten: rtkExit === 0 || rtkExit === 3,
+      cmd_len_pre: cmdPre.length,
+      cmd_len_post: cmdPost ? cmdPost.length : cmdPre.length,
+      cmd_first_token: cmdPre.split(/\s+/)[0] || '',
+    };
+    fs.appendFileSync(fp, JSON.stringify(row) + '\n', { encoding: 'utf8' });
+  } catch (_e) {
+    // Telemetry is best-effort. A proxy must never block a real command
+    // on a logging failure.
+  }
+}
+
 function passThrough() {
   process.exit(0);
 }
@@ -107,7 +145,11 @@ function main() {
 
   switch (res.status) {
     case 0: {
-      if (!rewritten || rewritten === cmd) return passThrough();
+      if (!rewritten || rewritten === cmd) {
+        logTelemetry(payload, res.status, cmd, cmd);
+        return passThrough();
+      }
+      logTelemetry(payload, res.status, cmd, rewritten);
       const ti = Object.assign({}, toolInput, { command: rewritten });
       return emit({
         hookSpecificOutput: {
@@ -119,7 +161,11 @@ function main() {
       });
     }
     case 3: {
-      if (!rewritten) return passThrough();
+      if (!rewritten) {
+        logTelemetry(payload, res.status, cmd, cmd);
+        return passThrough();
+      }
+      logTelemetry(payload, res.status, cmd, rewritten);
       const ti = Object.assign({}, toolInput, { command: rewritten });
       return emit({
         hookSpecificOutput: {
@@ -131,6 +177,7 @@ function main() {
     case 1:
     case 2:
     default:
+      logTelemetry(payload, res.status, cmd, cmd);
       return passThrough();
   }
 }
@@ -141,8 +188,8 @@ main();
  * OWNER ACTIVATION (manual — auto-mode denies self-persistence by design)
  *
  * 1. Copy this file:
- *      cp "C:/Users/User/.claude/skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js" \
- *         "C:/Users/User/.claude/hooks/rtk-rewrite.js"
+ *      cp "~/.claude/skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js" \
+ *         "~/.claude/hooks/rtk-rewrite.js"
  *
  * 2. Add to the PreToolUse array in ~/.claude/settings.json (after existing
  *    entries; mirrors the host's absolute-node-path convention):
@@ -152,7 +199,7 @@ main();
  *      "hooks": [
  *        {
  *          "type": "command",
- *          "command": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/rtk-rewrite.js\"",
+ *          "command": "\"/c/Program Files/nodejs/node.exe\" \"~/.claude/hooks/rtk-rewrite.js\"",
  *          "timeout": 10
  *        }
  *      ]

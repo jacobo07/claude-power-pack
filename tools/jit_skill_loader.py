@@ -489,6 +489,45 @@ def _save_state(sid: str, st: dict) -> None:
         pass
 
 
+CACHE_HINTS_DIR = PP_ROOT / "vault" / "cache_hints"
+
+
+def _emit_cache_hint(module: str, tier: str, rendered: str,
+                     skill_relpath: str) -> None:
+    """Sibling cache-control hint for downstream Agent-SDK consumers.
+
+    Only emitted in programmatic mode (where the caller is using the
+    Anthropic API directly and CAN set cache_control on prompt blocks).
+    Inside Claude Code's own hook chain, cache_control is Anthropic-side
+    and we do not control it; the hint file is read by callers that DO
+    control it (validated by tools/cache_hint_apply.py).
+
+    Honest contract: the hint carries content_sha256 + cache_control
+    directive only. No fabricated savings figure, no inferred TTL.
+    """
+    try:
+        CACHE_HINTS_DIR.mkdir(parents=True, exist_ok=True)
+        digest = hashlib.sha256(rendered.encode("utf-8")).hexdigest()
+        safe = re.sub(r"[^A-Za-z0-9_.-]", "-", module)
+        out = CACHE_HINTS_DIR / f"{safe}_{tier}.json"
+        payload = {
+            "schema_version": 1,
+            "module": module,
+            "tier": tier,
+            "skill_path": skill_relpath,
+            "content_sha256": digest,
+            "content_bytes": len(rendered.encode("utf-8")),
+            "cache_control": {"type": "ephemeral"},
+            "generated_iso": time.strftime("%Y-%m-%dT%H:%M:%SZ",
+                                           time.gmtime()),
+        }
+        out.write_text(json.dumps(payload, indent=2) + "\n",
+                       encoding="utf-8")
+    except Exception as exc:
+        _log(f"cache_hint emit failed {module}/{tier}: "
+             f"{type(exc).__name__}: {exc}")
+
+
 def _telemetry(sid: str, raw_sid: str, rows: list[dict]) -> None:
     """Append one JSONL row per injected module. Fail-open, absolute path.
 
@@ -550,6 +589,9 @@ def run(data) -> dict:
                          "budget": BUDGET_BYTES,
                          "programmatic": programmatic})
             state[m] = now
+            if programmatic:
+                _emit_cache_hint(m, tier, rendered,
+                                 f"vendor/apollo/upstream/{m}/SKILL.md")
 
         if not injected:
             return {"continue": True}
