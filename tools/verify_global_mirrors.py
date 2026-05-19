@@ -67,6 +67,21 @@ PAIRS = [
     (r"C:\Users\User\.claude\hooks\learning-sentinel.js",
      r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
      r"\learning-sentinel.js"),
+    (r"C:\Users\User\.claude\hooks\hook-dispatcher.js",
+     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
+     r"\hook-dispatcher.js"),
+    (r"C:\Users\User\.claude\hooks\lazarus-livesnap.js",
+     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
+     r"\lazarus-livesnap.js"),
+    (r"C:\Users\User\.claude\hooks\resume-hide-live.js",
+     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
+     r"\resume-hide-live.js"),
+    (r"C:\Users\User\.claude\hooks\zero-issue-gate.js",
+     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
+     r"\zero-issue-gate.js"),
+    (r"C:\Users\User\.claude\hooks\jobs-woz-gatekeeper.js",
+     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
+     r"\jobs-woz-gatekeeper.js"),
 ]
 
 
