@@ -61,3 +61,20 @@ This gate prevents the mid-session triple-block: pre-authorize, then wire. Refer
 3. Timestamp del archivo = post-restart (no caché previo).
 
 Este gate aplica a cualquier hook Stop/SessionEnd que genere outputs externos. 12/12 en harness aislado es prerequisito de S+, NO de S++ — S++ exige el archivo real producido por el hook DESPLEGADO vía un evento genuino, no un `--dry-run` ni una reimplementación de harness. El archivo es el único done-gate: existe o no existe.
+
+## Apex Onboarding Standard (sealed 2026-05-19)
+
+The pre-existing Apex Completeness mandate (BL-0068) governs what a feature ships INSIDE the Power Pack. The Apex Onboarding Standard governs what makes that feature **reachable to a new operator on a clean host**. Both are mandatory, neither is sufficient alone.
+
+**Mandate.** Every NEW component that lands in `tools/`, `hooks/`, `modules/`, `commands/`, `agents/`, `vault/standards/`, or `vendor/` MUST include all four:
+
+1. **An umbrella row** in `tools/verify_full_install.py` or `tools/verify_spp.py` (whichever umbrella the component belongs to) that calls the component's own verifier and reports the result. No row, no inclusion.
+2. **A step in `install-global.ps1` + `install-global.sh`** that copies / registers the component on a fresh `~/.claude/` (or whatever the component's surface area requires), with the idempotent diff-copy semantic and exit non-zero on preflight failure.
+3. **A section in `docs/INSTALL.md` and / or `docs/INSTALL-GLOBAL.md`** that walks the new operator through the component in plain language, with no assumed prior PP knowledge.
+4. **A clean-machine verification** (Path A real `git clone` into a temp dir + HOME-redirected install, OR Path B documented dry-run + idempotent re-run) that exits 0 on the new component in under 5 minutes wall-clock.
+
+**Done-Gate.** `python tools/verify_full_install.py` exit 0 on the just-installed clean machine. The same gate the Owner runs on the reference host MUST be reachable by a stranger who only knows `git clone <url> && cd claude-power-pack && ./install-global.{ps1,sh} && python tools/verify_full_install.py`.
+
+**Status.** Effective immediately for any new feature post-2026-05-19. Pre-existing features are grandfathered — they do NOT need retroactive umbrella rows. New features that omit any of the four pillars are non-conformant and CANNOT pass OVO at verdict >= A.
+
+**Cross-link.** The Programmatic Budget Standard (`vault/standards/programmatic-budget-standard.md`, sealed 2026-05-19) is the first feature audited under this combined Apex Completeness + Onboarding gate. Its umbrella row, install-global handling (Owner-action for ~/.claude/hooks/ writes), `docs/INSTALL.md` section, and clean-machine path are the reference implementation of the standard.
