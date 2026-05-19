@@ -1,5 +1,11 @@
 # Programmatic Budget Layer — Install & Activation
 
+> **First time on this host?** This doc covers the **second** layer —
+> the RTK + JIT compression activation that minimises programmatic
+> credit burn. Start with the **5-minute global install** at
+> [`INSTALL-GLOBAL.md`](./INSTALL-GLOBAL.md), then come back here
+> to opt into the budget layer.
+
 Effective **2026-06-15**, Anthropic moves programmatic Claude usage
 (Agent SDK, `claude -p`, GitHub Actions, third-party orchestrators)
 off the subscription bucket and onto a separate metered credit at full

@@ -10,21 +10,40 @@ See the [SkillBank Index](./SKILLBANK.md) for a scannable catalog of every comma
 
 ## Quick Start
 
-```bash
-# Unix/macOS/Linux
-bash install.sh /path/to/project
+> **First-time user?** Start with the **5-minute global install**
+> below — it deploys agents + commands + verifiers into
+> `~/.claude/` for every project on this host. The per-project
+> installer in the next block is a *second* step, run once per
+> repo. Full walkthrough: [`docs/INSTALL-GLOBAL.md`](./docs/INSTALL-GLOBAL.md).
 
-# Windows PowerShell
-.\install.ps1 -TargetDir "C:\project"
+```bash
+# 1. Global install (per-user, once per host) — installs Power-Pack
+#    agents + commands into ~/.claude/. Dry-run first, always.
+.\install-global.ps1 -DryRun        # Windows
+./install-global.sh --dry-run       # POSIX
+.\install-global.ps1                # Windows — apply
+./install-global.sh                 # POSIX — apply
+# /restart Claude Code, then:
+python tools\verify_spp.py          # exit 0 = S++ baseline
 ```
 
-This installs:
+```bash
+# 2. Per-project doctrine scaffolder (run inside each repo you want
+#    the Power-Pack doctrine injected into).
+bash install.sh /path/to/project          # Unix/macOS/Linux
+.\install.ps1 -TargetDir "C:\project"     # Windows PowerShell
+```
+
+The per-project installer adds:
 - `USER_CRITERIA_MEMORY.md` — persistent learning file (AI reads before every task)
 - Doctrine block in your `CLAUDE.md` — execution rules injected into project governance
 - `claude-dispatch` — cross-repo prompt dispatcher
 - `claude-daemon` — crash recovery loop with hardware-aware memory tuning
 - `omnicapture-query` — runtime telemetry CLI
 - `zero-crash-sandbox` — process isolation wrapper
+
+Decision table (per-project vs per-user) is in
+[`docs/INSTALL-GLOBAL.md`](./docs/INSTALL-GLOBAL.md#per-project-vs-per-user-which-installer-do-i-want).
 
 ---
 
