@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "ts": 1779200534,
+  "source": "rtk-discover+local-telemetry+seed",
+  "total_observations": 23717,
+  "pinned_sha": "af8da66",
+  "entries": [
+    {
+      "cmd": "find",
+      "frequency": 3495,
+      "weight": 0.1474,
+      "tier": "light",
+      "pin_strategy": "include",
+      "benchmark_cmd": "find tools -name '*.py'"
+    },
+    {
+      "cmd": "grep",
+      "frequency": 2737,
+      "weight": 0.1154,
+      "tier": "light",
+      "pin_strategy": "include",
+      "benchmark_cmd": "grep -rn 'def ' tools"
+    },
+    {
+      "cmd": "git log",
+      "frequency": 50,
+      "weight": 0.0021,
+      "tier": "heavy",
+      "pin_strategy": "sha-pin",
+      "benchmark_cmd": "git --no-pager log --stat -50 af8da66"
+    }
+  ]
+}
