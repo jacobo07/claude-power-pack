@@ -244,10 +244,20 @@ From the Apollo-retrofit → S+ cycle. A feature is below S+ by definition
 until ALL FOUR hold, each proven by a real number or exit code (never
 declared):
 
-1. **Total coverage measurement.** `tools/measure_compression.py` exits 0
-   over EVERY trigger-matrix module (derived live from TRIGGERS, never a
-   hardcoded subset), each at >= the reduction threshold with all
-   TASK_PROFILE anchors verbatim. Measured here: 10/10 modules, min 30%.
+1. **Total coverage measurement — per-module, no aggregation.**
+   `tools/measure_compression.py --min 0.40` exits 0 over EVERY
+   trigger-matrix module (derived live from TRIGGERS, never a hardcoded
+   subset). The gate is **PER-MODULE**: every single module must be at
+   or above the 40% reduction threshold. No module of the matrix may
+   sit below 40% — averages and means are explicitly forbidden ("el
+   promedio es 40%" is not S+). TASK_PROFILE anchors must remain
+   verbatim for non-skeletal modules; for SKELETAL_MODULES the anchor
+   titles must appear as pointers (verbatim bodies are dropped by
+   design — the floor only applies when the active task profile needs
+   the bodies inline). Owner decision 2026-05-19 — supersedes any
+   prior "30% per-module" framing. Measured here: 10/10 modules, every
+   one at >=40% (range 42.3%-83.9%, apollo-federation 73.3% post
+   skeletal-extension c21fe95).
 2. **Unified compression ledger.** One tool prints a single
    `COORDINATED_TOTAL_SAVED` combining JIT input-side reduction and the
    real RTK output-side compression, reproducible to +/-0 across runs.
@@ -272,7 +282,11 @@ SHA `af8da66`** — reproducible run-to-run (measured 80.2% ×2),
 fail-closed below the floor. A numeric completion floor is only a valid
 hard gate when its underlying measurement is deterministic; live
 HEAD-variant `git log` was non-falsifiable and is no longer used.
-Per-module JIT gate is `>=30%` reduction AND profile anchors retained
+Per-module JIT gate is `>=40%` reduction AND profile anchors retained
 (skeletal modules: title-pointer, not verbatim) — 10/10 modules pass
-live via `tools/measure_compression.py`. The "≥40%" figure some specs
-cite is superseded by this measured contract.
+live via `tools/measure_compression.py --min 0.40`. The earlier "≥30%"
+floor recorded here was a prior parallel-stream framing; the Owner's
+2026-05-19 decision restores ≥40% as the per-module S+ floor and
+forbids aggregation. The two values must not be mixed: `--min 0.30` is
+the original Apollo-retrofit threshold (kept for historical
+reproducibility); S+ verification uses `--min 0.40` PER-MODULE only.
