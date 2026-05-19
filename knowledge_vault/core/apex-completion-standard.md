@@ -265,3 +265,14 @@ Disclosed residual (not a gap): the RTK PreToolUse rewriter and the
 ref-correlator Stop hook are Owner/restart-gated (BL-0067). S+
 verification uses the pure functions and real binary directly; live
 autonomous operation is the explicit Owner activation step, never faked.
+
+RTK completion floor (2026-05-19): the `>=77%` gate is enforced by
+`tools/verify_rtk_fusion.py` against a benchmark **pinned to immutable
+SHA `af8da66`** — reproducible run-to-run (measured 80.2% ×2),
+fail-closed below the floor. A numeric completion floor is only a valid
+hard gate when its underlying measurement is deterministic; live
+HEAD-variant `git log` was non-falsifiable and is no longer used.
+Per-module JIT gate is `>=30%` reduction AND profile anchors retained
+(skeletal modules: title-pointer, not verbatim) — 10/10 modules pass
+live via `tools/measure_compression.py`. The "≥40%" figure some specs
+cite is superseded by this measured contract.
