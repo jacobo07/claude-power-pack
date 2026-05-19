@@ -28,7 +28,15 @@ import os
 import subprocess
 import sys
 
-HEAVY_CMD = "git --no-pager log --stat -50"
+# Pinned to an IMMUTABLE historical SHA (first RTK commit). History at/
+# before this point never changes, so raw + rewritten outputs — and thus
+# the reduction ratio — are reproducible run-to-run, independent of new
+# commits on the branch. This makes the >=77% contract floor a falsifiable
+# gate instead of HEAD-variant theater (closes audit Gap 7). Measured
+# stable: ~80.3% on af8da66.
+PINNED_SHA = "af8da66"
+HEAVY_CMD = f"git --no-pager log --stat -50 {PINNED_SHA}"
+CONTRACT_FLOOR = 0.77
 HOME = os.path.expanduser("~")
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HOOK = os.path.join(REPO, "modules", "rtk-core", "rtk-rewrite.js")
@@ -124,11 +132,15 @@ def main() -> int:
     if reduction <= 0:
         print("FAIL: no positive token reduction — proxy not effective")
         return 1
-    if reduction >= 0.60:
-        print("PASS: >= 60% reduction with content preserved")
+    if reduction >= CONTRACT_FLOOR:
+        print(f"PASS: >= {CONTRACT_FLOOR:.0%} contract floor "
+              f"(deterministic pinned-SHA benchmark; content preserved)")
         return 0
-    print("WARN: positive but < 60% on this repo's history; ratio is evidence")
-    return 0
+    # Benchmark is deterministic now, so a sub-floor result is a real
+    # regression, not HEAD variance — fail honestly, do not WARN-pass.
+    print(f"FAIL: {reduction*100:.1f}% < {CONTRACT_FLOOR:.0%} contract "
+          f"floor on the pinned benchmark — genuine regression")
+    return 1
 
 
 if __name__ == "__main__":
