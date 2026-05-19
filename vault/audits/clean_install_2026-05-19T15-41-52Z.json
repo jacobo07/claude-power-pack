@@ -1,0 +1,173 @@
+{
+  "iso": "2026-05-19T15-41-52Z",
+  "sandbox": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z",
+  "path_a": true,
+  "env_redirects": {
+    "HOME": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z",
+    "USERPROFILE": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z",
+    "APPDATA": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z",
+    "LOCALAPPDATA": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z",
+    "CLAUDE_CONFIG_DIR": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z"
+  },
+  "phases": {
+    "dry_run": {
+      "argv": [
+        "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\install_global_core.py",
+        "--settings",
+        "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\settings.json",
+        "--dry-run"
+      ],
+      "rc": 0,
+      "elapsed_s": 1.61,
+      "stdout_tail": [
+        "permission grants. The installer prints, never writes.",
+        "",
+        "================================================================",
+        "ACTION REQUIRED — hooks (Owner-driven, NOT installer-driven)",
+        "Mirror-Sync-Direction doctrine: A1/A2 flow is loose -> PP",
+        "only; the agent classifier denies ~/.claude/hooks/<file>.js",
+        "writes. The installer therefore never touches the hooks dir.",
+        "================================================================",
+        "Canonical PP-tracked hooks (copy into ~/.claude/hooks/ on",
+        "a fresh host; existing hosts only update what they want):",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\hook-dispatcher.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\hook-dispatcher.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\jobs-woz-gatekeeper.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\jobs-woz-gatekeeper.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\lazarus-livesnap.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\lazarus-livesnap.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\learning-sentinel.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\learning-sentinel.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\resume-hide-live.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\resume-hide-live.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\zero-issue-gate.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\zero-issue-gate.js'",
+        "",
+        "Hook registrations (after the cp, run from this repo):",
+        "  python tools/settings_merger.py register-sessionstart --node-script ~/.claude/hooks/learning-sentinel.js",
+        "  python tools/settings_merger.py register-stop --node-script ~/.claude/hooks/learning-sentinel.js",
+        "",
+        "",
+        "Next step (Owner-gated):",
+        "  1. Paste the rules above into ~/.claude/settings.json",
+        "     permissions.allow (or skip if already present).",
+        "  2. cp + register hooks per the hooks checklist above.",
+        "  3. /restart   (BL-0067: hooks cold-load at session start).",
+        "  4. python tools/verify_full_install.py  # S++ self-test",
+        "",
+        "DRY-RUN — no files mutated. Re-run without --dry-run to apply."
+      ],
+      "stderr_tail": []
+    },
+    "dry_run_inventory": {
+      "agents": 0,
+      "commands": 0,
+      "hooks": 0
+    },
+    "apply": {
+      "argv": [
+        "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\install_global_core.py",
+        "--settings",
+        "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\settings.json"
+      ],
+      "rc": 1,
+      "elapsed_s": 5.31,
+      "stdout_tail": [
+        "classifier requires durable Owner authorization for",
+        "permission grants. The installer prints, never writes.",
+        "",
+        "================================================================",
+        "ACTION REQUIRED — hooks (Owner-driven, NOT installer-driven)",
+        "Mirror-Sync-Direction doctrine: A1/A2 flow is loose -> PP",
+        "only; the agent classifier denies ~/.claude/hooks/<file>.js",
+        "writes. The installer therefore never touches the hooks dir.",
+        "================================================================",
+        "Canonical PP-tracked hooks (copy into ~/.claude/hooks/ on",
+        "a fresh host; existing hosts only update what they want):",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\hook-dispatcher.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\hook-dispatcher.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\jobs-woz-gatekeeper.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\jobs-woz-gatekeeper.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\lazarus-livesnap.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\lazarus-livesnap.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\learning-sentinel.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\learning-sentinel.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\resume-hide-live.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\resume-hide-live.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\zero-issue-gate.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\zero-issue-gate.js'",
+        "",
+        "Hook registrations (after the cp, run from this repo):",
+        "  python tools/settings_merger.py register-sessionstart --node-script ~/.claude/hooks/learning-sentinel.js",
+        "  python tools/settings_merger.py register-stop --node-script ~/.claude/hooks/learning-sentinel.js",
+        "",
+        "",
+        "Next step (Owner-gated):",
+        "  1. Paste the rules above into ~/.claude/settings.json",
+        "     permissions.allow (or skip if already present).",
+        "  2. cp + register hooks per the hooks checklist above.",
+        "  3. /restart   (BL-0067: hooks cold-load at session start).",
+        "  4. python tools/verify_full_install.py  # S++ self-test",
+        ""
+      ],
+      "stderr_tail": []
+    },
+    "apply_inventory": {
+      "agents": 1,
+      "commands": 9,
+      "hooks": 0
+    },
+    "reapply": {
+      "argv": [
+        "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\install_global_core.py",
+        "--settings",
+        "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\settings.json"
+      ],
+      "rc": 1,
+      "elapsed_s": 2.11,
+      "stdout_tail": [
+        "classifier requires durable Owner authorization for",
+        "permission grants. The installer prints, never writes.",
+        "",
+        "================================================================",
+        "ACTION REQUIRED — hooks (Owner-driven, NOT installer-driven)",
+        "Mirror-Sync-Direction doctrine: A1/A2 flow is loose -> PP",
+        "only; the agent classifier denies ~/.claude/hooks/<file>.js",
+        "writes. The installer therefore never touches the hooks dir.",
+        "================================================================",
+        "Canonical PP-tracked hooks (copy into ~/.claude/hooks/ on",
+        "a fresh host; existing hosts only update what they want):",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\hook-dispatcher.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\hook-dispatcher.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\jobs-woz-gatekeeper.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\jobs-woz-gatekeeper.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\lazarus-livesnap.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\lazarus-livesnap.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\learning-sentinel.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\learning-sentinel.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\resume-hide-live.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\resume-hide-live.js'",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\zero-issue-gate.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-05-19T15-41-52Z\\.claude\\hooks\\zero-issue-gate.js'",
+        "",
+        "Hook registrations (after the cp, run from this repo):",
+        "  python tools/settings_merger.py register-sessionstart --node-script ~/.claude/hooks/learning-sentinel.js",
+        "  python tools/settings_merger.py register-stop --node-script ~/.claude/hooks/learning-sentinel.js",
+        "",
+        "",
+        "Next step (Owner-gated):",
+        "  1. Paste the rules above into ~/.claude/settings.json",
+        "     permissions.allow (or skip if already present).",
+        "  2. cp + register hooks per the hooks checklist above.",
+        "  3. /restart   (BL-0067: hooks cold-load at session start).",
+        "  4. python tools/verify_full_install.py  # S++ self-test",
+        ""
+      ],
+      "stderr_tail": []
+    },
+    "reapply_inventory": {
+      "agents": 1,
+      "commands": 9,
+      "hooks": 0
+    },
+    "reapply_breakdown": {
+      "unchanged": 10,
+      "updated": 0,
+      "installed": 0,
+      "errors": 0,
+      "missing-source": 5
+    }
+  },
+  "verdicts": {
+    "dry_run_non_destructive": true,
+    "apply_populates_tree": true,
+    "path_a_viable": true,
+    "reapply_all_unchanged": true,
+    "overall": true
+  }
+}
