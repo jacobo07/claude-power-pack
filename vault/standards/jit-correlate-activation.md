@@ -25,7 +25,7 @@ event into ONE dispatcher process that runs sub-hooks sequentially via
 ```jsonc
 // ~/.claude/settings.json — hooks.Stop (the dispatcher entry, not the sub-hook list)
 { "type": "command",
-  "command": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/hook-dispatcher.js\" --event=Stop-chain",
+  "command": "\"/c/Program Files/nodejs/node.exe\" \"~/.claude/hooks/hook-dispatcher.js\" --event=Stop-chain",
   "timeout": 300,
   "statusMessage": "Stop chain (N hooks, fork-storm-safe)" }
 ```
@@ -64,7 +64,7 @@ considered live.
 ### 1. Dispatcher still parses
 
 ```powershell
-& "C:\Program Files\nodejs\node.exe" -e "require('C:/Users/User/.claude/hooks/hook-dispatcher.js')" 2>&1
+& "C:\Program Files\nodejs\node.exe" -e "require('~/.claude/hooks/hook-dispatcher.js')" 2>&1
 ```
 
 No output (or a clean `require` return) = the new array entry is

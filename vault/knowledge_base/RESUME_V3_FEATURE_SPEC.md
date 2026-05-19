@@ -2,7 +2,7 @@
 title: /resume v3 — Lazarus v3 Feature Spec
 status: ready-for-implementation
 authority: derived from real frame-by-frame vision analysis of operator capture
-source_video: C:\Users\User\Videos\2026-05-15 18-28-33.mp4 (24.1 MB, ~221 s)
+source_video: ~\Videos\2026-05-15 18-28-33.mp4 (24.1 MB, ~221 s)
 frame_corpus: PowerPack_Sovereign_Datasets/_frames2/ (12 JPEG @ 640w, 8 global + 4 dense)
 authored: 2026-05-15
 seal: BL-0064 / Sovereign Miner v2 — Pillar 4
@@ -14,7 +14,7 @@ seal: BL-0064 / Sovereign Miner v2 — Pillar 4
 
 Every observation in §1 cites a specific frame from the operator's screen
 capture. No hypothesized pains, no inferred behavior. Frames live at
-`C:\Users\User\Downloads\PowerPack_Sovereign_Datasets\_frames2\`. The
+`~\Downloads\PowerPack_Sovereign_Datasets\_frames2\`. The
 synthesized observations were captured verbatim into `vision_notes.txt`
 in that same directory.
 

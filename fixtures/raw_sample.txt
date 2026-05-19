@@ -171,7 +171,7 @@ Actúa como APEX PRODUCT ARCHITECT & AGENT ORCHESTRATOR en MODO AGENT TEAMS (DEE
 "El Azteca es ley, pero el sistema está en deuda. Esta sesión 100% Autónoma, Desatendida y de larga duración tiene una misión: Cerrar la brecha de VAC-041, purgar los placeholders de la GEX44 y materializar el Estadio BC Place (Canadá) bajo el nuevo estándar de Grado-A."
 
 [CONTRATO DE REALIDAD: LENGUAJE HUMANO]
-"IA, escucha bien: No hay excusa para la mediocridad. Prohibidos los botones vacíos, los placeholders, los `Coming Soon`, o los errores de wiring real. Si el post en Discord llega con veredicto B o si el BC Place no refleja su techo de cables icónico, NO HAS TERMINADO. Si detectas fallos visuales o técnicos, DEBES ITERAR usando el protocolo de excelencia en: 'C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt'. Sin errores fantasma. Baseline vMAX-NULL-ERROR absoluto."
+"IA, escucha bien: No hay excusa para la mediocridad. Prohibidos los botones vacíos, los placeholders, los `Coming Soon`, o los errores de wiring real. Si el post en Discord llega con veredicto B o si el BC Place no refleja su techo de cables icónico, NO HAS TERMINADO. Si detectas fallos visuales o técnicos, DEBES ITERAR usando el protocolo de excelencia en: '~\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt'. Sin errores fantasma. Baseline vMAX-NULL-ERROR absoluto."
 
 [MODO OPERATIVO: ULTRA-PLAN -> EXECUTION]
 1. **Fase 0 (ROI Inmediato):** Antes de construir, arregla la casa. Purga `/etc/kobii-sentient.env` en la GEX44. Elimina las líneas duplicadas y los placeholders. Asegura que el daemon vea los paths reales de capturas.

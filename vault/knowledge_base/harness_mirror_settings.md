@@ -18,7 +18,7 @@ The `UserPromptSubmit` array now holds 3 entries — `hook-dispatcher.js`,
   "hooks": [
     {
       "type": "command",
-      "command": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/prd-keyword-sentinel.js\"",
+      "command": "\"/c/Program Files/nodejs/node.exe\" \"~/.claude/hooks/prd-keyword-sentinel.js\"",
       "timeout": 10,
       "statusMessage": "KARIMO PRD sentinel"
     }

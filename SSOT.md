@@ -70,7 +70,7 @@ the recipe above is the way to wire it (never copy code).
 
 - **Workspace companion manifest:** `<workspace>/docs/SSOT_KOBII_DISTILLER.md`
   (absolute on this dev host:
-  `C:\Users\User\Desktop\Cursor Projects\Minecraft Projects\KobiiCraft Workspace\KobiiCraft Core Files\docs\SSOT_KOBII_DISTILLER.md`)
+  `~\Desktop\Cursor Projects\Minecraft Projects\KobiiCraft Workspace\KobiiCraft Core Files\docs\SSOT_KOBII_DISTILLER.md`)
 - **DNA-11000 Rule-097** lives in
   `<workspace>/docs/KOBII_PHILOSOPHY/STANDARDS.md`.
 

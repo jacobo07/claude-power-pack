@@ -1,0 +1,291 @@
+#!/usr/bin/env python3
+"""normalize_paths.py — Gap-2 (path) + Gap-10 (extended secret-scan) auditor.
+
+Why this exists
+---------------
+The 2026-05-19 globalization audit found hardcoded ``C:/Users/User/...``
+paths in canonicalised hooks (e.g. ``hook-dispatcher.js:15,85``). Any
+host whose Windows username is not ``User`` (or any POSIX host) would
+break. Beyond paths, the same audit named a leak class — kobicraft VPS
+IP, ``panel.kobicraft.net``, SSH key names, ``CLAUDE_CODE_SSE_PORT=<n>``
+— that the generic ``sk-*``/AWS-class secret-scan misses.
+
+Two purposes, one tool, dual mode:
+
+* ``--check``  (default): exit 1 if any PP-tracked file matches the
+                          path-leak OR the extended-secret regex set.
+                          Suitable as a CI grep gate / pre-commit guard.
+* ``--apply``            : rewrite the path-leak matches in place
+                          (portable equivalents — never touches secret
+                          hits, those are STOP-and-Owner-review).
+
+Scope: every file ``git ls-files`` reports inside the Power Pack repo
+that is text-suffixed (.js/.py/.md/.json/.sh/.ps1/.yaml/.yml/.txt). The
+``vendor/`` tree is excluded — third-party code we do not author or ship
+as canonical mirrors.
+
+Reality contract: no silent rewrites. ``--apply`` prints every change
+made (file + line + before/after) and counts them in the final summary.
+A run that touches zero files exits 0; a run that rewrites N files
+exits 0 with ``N rewritten``; a run that detects secret-class hits
+ALWAYS exits 1 — no automatic redaction (the auditor's law).
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+
+# Path-leak class — auto-rewritable to portable equivalents.
+PATH_RE = re.compile(r"C:[/\\]Users[/\\][A-Za-z0-9_-]+")
+
+# Secret-class — Gap-10 regex set + the generic high-confidence set the
+# Owner-pane already used. Match here ⇒ STOP, no auto-rewrite.
+SECRET_RES: list[tuple[str, re.Pattern[str]]] = [
+    ("VPS IP",          re.compile(r"\b204\.168\.166\.63\b")),
+    ("kobicraft host",  re.compile(r"\bkobicraft\b", re.IGNORECASE)),
+    ("kobicraft panel", re.compile(r"\bpanel\.kobicraft\.net\b")),
+    ("personal email",  re.compile(r"\bjacobolopez\b")),
+    ("ssh key kobi",    re.compile(r"\bkobiicraft_vps\b|\bgex44\b")),
+    ("session SSE port",re.compile(r"\bCLAUDE_CODE_SSE_PORT=\d")),
+    ("anthropic sk",    re.compile(r"\bsk-ant-[A-Za-z0-9_-]{20,}\b")),
+    ("github pat",      re.compile(r"\bghp_[A-Za-z0-9]{30,}\b")),
+    ("slack token",     re.compile(r"\bxox[bapsr]-[A-Za-z0-9-]{10,}\b")),
+    ("aws akid",        re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("aws sak",         re.compile(r"\baws_secret_access_key\s*=\s*[A-Za-z0-9/+=]{40}\b",
+                                   re.IGNORECASE)),
+]
+
+# Files we never scan/rewrite (third-party + binaries + history).
+SKIP_DIRS = {".git", "node_modules", "vendor", "_quarantine"}
+SKIP_FILES_GLOB = {"*.bak", "*.userbak.*", "*.png", "*.jpg", "*.jpeg",
+                   "*.gif", "*.ico", "*.pdf", "*.zip", "*.gz", "*.exe",
+                   "*.dll", "*.db", "*.sqlite", "*.sqlite3"}
+TEXT_SUFFIXES = {".js", ".mjs", ".cjs", ".ts", ".py", ".md", ".json",
+                 ".sh", ".ps1", ".bat", ".cmd", ".yaml", ".yml", ".txt",
+                 ".html", ".css"}
+
+# Historical-narrative files: a leak written into a past lesson is the
+# lesson; rewriting it falsifies the record. Reported as advisory by
+# --check but never gate-fails or rewrites.
+WHITELIST_HISTORICAL = {
+    "vault/knowledge_base/session_lessons.md",
+}
+
+# Comment-line heuristics — only "doc" lines are safe to bulk-rewrite.
+# Code-string-literal lines must be hand-fixed with a portable derivation
+# (os.homedir(), Path.home(), process.env.USERPROFILE) — a blind ``~``
+# substitution would not be runtime-expanded.
+_COMMENT_LEADERS = {
+    ".js": ("//", "*", "/*", "*/"),
+    ".mjs": ("//", "*", "/*", "*/"),
+    ".cjs": ("//", "*", "/*", "*/"),
+    ".ts":  ("//", "*", "/*", "*/"),
+    ".py":  ("#",),
+    ".sh":  ("#",),
+    ".ps1": ("#",),
+    ".bat": ("rem", "::"),
+    ".cmd": ("rem", "::"),
+    ".yaml":("#",),
+    ".yml": ("#",),
+}
+
+
+def _line_is_doc(line: str, ext: str) -> bool:
+    """Markdown lines are doc by default; code-language lines are doc
+    only when their first non-whitespace token is a known comment
+    leader. JSON/CSS/HTML treated as code (no rewrite)."""
+    if ext == ".md" or ext == ".txt":
+        return True
+    leaders = _COMMENT_LEADERS.get(ext)
+    if not leaders:
+        return False
+    s = line.lstrip()
+    return any(s.startswith(L) for L in leaders) or s == ""
+
+
+def repo_files() -> list[Path]:
+    """Return PP-tracked files that are scannable text."""
+    try:
+        out = subprocess.check_output(
+            ["git", "ls-files"], cwd=str(REPO), text=True, encoding="utf-8")
+    except subprocess.CalledProcessError as e:
+        sys.stderr.write(f"git ls-files failed: {e}\n")
+        return []
+    files: list[Path] = []
+    for line in out.splitlines():
+        p = REPO / line
+        if not p.exists() or not p.is_file():
+            continue
+        if any(part in SKIP_DIRS for part in p.parts):
+            continue
+        if p.suffix.lower() not in TEXT_SUFFIXES:
+            continue
+        files.append(p)
+    return files
+
+
+def _read(p: Path) -> str | None:
+    try:
+        return p.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _normalize_for(text: str, file: Path) -> tuple[str, list[tuple[int, str, str, str]]]:
+    """Rewrite path-leaks to portable equivalents (doc-line only).
+
+    Each change is ``(line_no, before_line, after_line, kind)`` where
+    ``kind`` is one of:
+
+    * ``"doc"``  — markdown body or a code-language comment line;
+                   safe to auto-rewrite ``C:/Users/<n>`` → ``~``.
+    * ``"code"`` — code string literal (e.g. a constant assignment);
+                   the rewriter NEVER touches it because a bare ``~``
+                   in a runtime string is not OS-expanded. The line is
+                   reported for manual replacement with
+                   ``os.homedir()`` / ``Path.home()`` /
+                   ``process.env.USERPROFILE``.
+    """
+    changes: list[tuple[int, str, str, str]] = []
+    ext = file.suffix.lower()
+    out_lines: list[str] = []
+    for lineno, line in enumerate(text.splitlines(keepends=False), start=1):
+        if not PATH_RE.search(line):
+            out_lines.append(line)
+            continue
+        kind = "doc" if _line_is_doc(line, ext) else "code"
+        if kind == "doc":
+            new = PATH_RE.sub("~", line)
+            changes.append((lineno, line.rstrip(), new.rstrip(), kind))
+            out_lines.append(new)
+        else:
+            # Keep code line UNCHANGED; surface as manual-fix.
+            changes.append((lineno, line.rstrip(), line.rstrip(), kind))
+            out_lines.append(line)
+    new_text = "\n".join(out_lines) + ("\n" if text.endswith("\n") else "")
+    return new_text, changes
+
+
+def _scan_secrets(text: str) -> list[tuple[int, str, str]]:
+    """Return ``(line_no, label, matched_excerpt)`` for each secret hit."""
+    hits: list[tuple[int, str, str]] = []
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        for label, rx in SECRET_RES:
+            m = rx.search(line)
+            if m:
+                excerpt = line.strip()
+                if len(excerpt) > 120:
+                    excerpt = excerpt[:117] + "..."
+                hits.append((lineno, label, excerpt))
+    return hits
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
+    ap.add_argument("--check", action="store_true",
+                    help="report leaks; exit 1 on any hit (default)")
+    ap.add_argument("--apply", action="store_true",
+                    help="rewrite path-leak matches in place; secrets "
+                         "still abort with exit 1, no auto-redact")
+    ap.add_argument("--paths-only", action="store_true",
+                    help="skip the secret-class scan")
+    ap.add_argument("--secrets-only", action="store_true",
+                    help="skip the path-leak scan")
+    args = ap.parse_args()
+    if not args.check and not args.apply:
+        args.check = True
+
+    files = repo_files()
+    if not files:
+        print("normalize_paths: no PP-tracked text files in scope")
+        return 0
+
+    doc_files_with_hits: set[Path] = set()
+    code_files_with_hits: set[Path] = set()
+    whitelisted_files_with_hits: set[Path] = set()
+    total_doc_hits = 0
+    total_code_hits = 0
+    total_whitelisted_hits = 0
+    rewritten = 0
+    secret_files_with_hits: set[Path] = set()
+    total_secret_hits = 0
+
+    for f in files:
+        text = _read(f)
+        if text is None:
+            continue
+        rel = f.relative_to(REPO).as_posix()
+        is_whitelisted = rel in WHITELIST_HISTORICAL
+
+        if not args.secrets_only:
+            new_text, changes = _normalize_for(text, f)
+            if changes:
+                for lineno, before, after, kind in changes:
+                    if is_whitelisted:
+                        whitelisted_files_with_hits.add(f)
+                        total_whitelisted_hits += 1
+                        tag = "WHITELIST"
+                    elif kind == "code":
+                        code_files_with_hits.add(f)
+                        total_code_hits += 1
+                        tag = "CODE  "
+                    else:
+                        doc_files_with_hits.add(f)
+                        total_doc_hits += 1
+                        tag = "DOC   "
+                    print(f"{tag} {rel}:{lineno}")
+                    print(f"  -  {before}")
+                    if kind == "doc" and not is_whitelisted:
+                        print(f"  +  {after}")
+                    elif kind == "code":
+                        print(f"  !  manual fix required (replace with "
+                              f"os.homedir() / Path.home() / "
+                              f"process.env.USERPROFILE)")
+                if args.apply and not is_whitelisted:
+                    # only doc-classified lines were rewritten inside
+                    # new_text (_normalize_for guarantees code lines
+                    # come through untouched).
+                    if any(c[3] == "doc" for c in changes):
+                        f.write_text(new_text, encoding="utf-8")
+                        rewritten += 1
+
+        if not args.paths_only:
+            hits = _scan_secrets(text)
+            if hits:
+                secret_files_with_hits.add(f)
+                total_secret_hits += len(hits)
+                for lineno, label, excerpt in hits:
+                    print(f"SECRET[{label}]  {rel}:{lineno}  {excerpt}")
+
+    print()
+    print(f"scanned files     : {len(files)}")
+    print(f"path-leak (doc)   : {total_doc_hits} in {len(doc_files_with_hits)} file(s)"
+          + (f", rewritten {rewritten} file(s)" if args.apply else ""))
+    print(f"path-leak (code)  : {total_code_hits} in {len(code_files_with_hits)} file(s)"
+          + " — MANUAL FIX REQUIRED" if total_code_hits else "")
+    print(f"path-leak (hist.) : {total_whitelisted_hits} in {len(whitelisted_files_with_hits)} file(s) — WHITELISTED")
+    print(f"secret hits       : {total_secret_hits} in {len(secret_files_with_hits)} file(s)")
+
+    # Exit policy:
+    #   secrets present                -> always exit 1 (STOP — Owner review)
+    #   code-class path hits           -> always exit 1 (needs manual fix)
+    #   doc-class path hits in --check -> exit 1 (CI gate failure)
+    #   doc-class path hits in --apply -> exit 0 (rewritten cleanly)
+    #   historical whitelist hits      -> never gate-fail (advisory only)
+    if total_secret_hits:
+        return 1
+    if total_code_hits:
+        return 1
+    if args.check and total_doc_hits:
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -245,7 +245,7 @@ Then Edit `~/.claude/settings.json` to add the registration (always backup first
         "hooks": [
           {
             "type": "command",
-            "command": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/<name>.js\"",
+            "command": "\"/c/Program Files/nodejs/node.exe\" \"~/.claude/hooks/<name>.js\"",
             "timeout": 5000
           }
         ]

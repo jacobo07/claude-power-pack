@@ -138,7 +138,7 @@ If exit ≠ 0, surface the validator output verbatim and STOP. Do not auto-fix a
 
 ## Step 6 — Visual eyeball (first-run mandate)
 
-On the FIRST `/cpp-distill` invocation against any source file, after validator passes, open `output_root/Tier_1/Seccion_1.md` and compare against `fixtures/expected/Tier_1/Seccion_1.md`. Confirm structural parity (heading + Tandas/Partes shape + ROI block + closing markers). If a discrepancy exists, treat as failure and re-iterate via the universal iteration protocol at `C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt`.
+On the FIRST `/cpp-distill` invocation against any source file, after validator passes, open `output_root/Tier_1/Seccion_1.md` and compare against `fixtures/expected/Tier_1/Seccion_1.md`. Confirm structural parity (heading + Tandas/Partes shape + ROI block + closing markers). If a discrepancy exists, treat as failure and re-iterate via the universal iteration protocol at `~\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt`.
 
 Subsequent runs skip the eyeball step unless the operator passes `--review`.
 

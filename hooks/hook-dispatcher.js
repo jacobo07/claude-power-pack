@@ -12,7 +12,7 @@
  *   {
  *     "hooks": [{
  *       "type": "command",
- *       "command": "node \"C:/Users/User/.claude/hooks/hook-dispatcher.js\" --event=PreToolUse-default",
+ *       "command": "node \"~/.claude/hooks/hook-dispatcher.js\" --event=PreToolUse-default",
  *       "timeout": 15
  *     }]
  *   }
@@ -81,8 +81,20 @@ const EVENT_MAP = {
 // `timeoutMs` is real milliseconds (Claude Code's per-hook `timeout` was
 // authored inconsistently in settings.json; canonicalised here).
 const NODE_EXE = process.execPath; // the very node.exe running this — Win path, no bash
-const PY_EXE = process.env.CLAUDE_PY_EXE
-  || 'C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe';
+// Portable Python fallback (gap 2 fix, audit 2026-05-19): the prior
+// `C:/Users/User/AppData/Local/...` literal broke every host whose
+// Windows username is not "User" and every POSIX host. Honest contract:
+// derive from os.homedir() if a Windows-style Python install is present;
+// otherwise fall back to the PATH-resolved `python3`/`python` so the
+// hook fails at registration (settings_merger checks isfile) rather
+// than silently at runtime. Explicit CLAUDE_PY_EXE always wins.
+const PY_EXE = process.env.CLAUDE_PY_EXE || (function () {
+  const winFallback = path.join(os.homedir(), 'AppData', 'Local',
+    'Programs', 'Python', 'Python312', 'python.exe');
+  try { fs.accessSync(winFallback, fs.constants.X_OK); return winFallback; }
+  catch (_) { /* not present — defer to PATH-resolved interpreter */ }
+  return process.platform === 'win32' ? 'python.exe' : 'python3';
+})();
 
 const CHAIN_MAP = {
   'Stop-chain': [

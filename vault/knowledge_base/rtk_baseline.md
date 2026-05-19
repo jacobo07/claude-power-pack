@@ -29,8 +29,8 @@ across unrelated features would be a false universal (Owner directive Q6).
 ## Owner activation (auto-mode denies agent self-persistence — these are Owner `!`-lines)
 
 ```
-! python "C:/Users/User/.claude/skills/claude-power-pack/tools/settings_merger.py" register-pretool --node-script "C:/Users/User/.claude/skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js" --matcher Bash --timeout 10
-! cp "C:/Users/User/.claude/skills/claude-power-pack/vendor/rtk/agents/"*.md "C:/Users/User/.claude/agents/"
+! python "~/.claude/skills/claude-power-pack/tools/settings_merger.py" register-pretool --node-script "~/.claude/skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js" --matcher Bash --timeout 10
+! cp "~/.claude/skills/claude-power-pack/vendor/rtk/agents/"*.md "~/.claude/agents/"
 ```
 …then `/restart`; verify with `rtk gain` after a few Bash calls.
 
