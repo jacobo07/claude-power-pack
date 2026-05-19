@@ -61,6 +61,12 @@ PAIRS = [
     (r"C:\Users\User\.claude\knowledge_vault\core\apex-completion-standard.md",
      r"C:\Users\User\.claude\skills\claude-power-pack\knowledge_vault"
      r"\core\apex-completion-standard.md"),
+    # Globalization 2026-05-19: runtime hooks the installer ships to a new
+    # user's ~/.claude/hooks/. PP repo IS the canonical; the verifier asserts
+    # the live host has not drifted from the shipped canonical (or vice versa).
+    (r"C:\Users\User\.claude\hooks\learning-sentinel.js",
+     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
+     r"\learning-sentinel.js"),
 ]
 
 
