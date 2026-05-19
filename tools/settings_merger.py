@@ -177,6 +177,20 @@ def register_stop(settings_path: str, node_script: str, timeout: int) -> int:
                       f'{NODE_CMD} "{fwd}"', fwd, timeout)
 
 
+def register_sessionstart(settings_path: str, node_script: str,
+                          timeout: int) -> int:
+    # SessionStart carries no tool matcher (like Stop): the hook fires once
+    # per session start. Refuse a dangling command pointing at a missing
+    # script — it would error on every session start.
+    if not os.path.isfile(node_script):
+        print(f"settings_merger: hook script not found: {node_script}",
+              file=sys.stderr)
+        return 5
+    fwd = node_script.replace("\\", "/")
+    return _register(settings_path, "SessionStart",
+                     f'{NODE_CMD} "{fwd}"', fwd, timeout)
+
+
 def register_userprompt(settings_path: str, py_interp: str,
                         py_script: str, timeout: int) -> int:
     # G6 preflight: refuse to write a hook command pointing at a
@@ -234,6 +248,15 @@ def main():
     ru.add_argument("--settings", default=DEFAULT_SETTINGS,
                     help="path to settings.json (default ~/.claude/...)")
 
+    rss = sub.add_parser("register-sessionstart",
+                         help="Register a SessionStart Node hook")
+    rss.add_argument("--node-script", required=True,
+                     help="absolute path to the Node hook script (must exist)")
+    rss.add_argument("--timeout", type=int, default=5,
+                     help="hook timeout in seconds (default 5)")
+    rss.add_argument("--settings", default=DEFAULT_SETTINGS,
+                     help="path to settings.json (default ~/.claude/...)")
+
     rp = sub.add_parser("register-pretool",
                         help="Register a PreToolUse Node hook with a matcher")
     rp.add_argument("--node-script", required=True,
@@ -251,6 +274,8 @@ def main():
     if a.cmd == "register-userprompt":
         return register_userprompt(a.settings, a.py_interp, a.py_script,
                                    a.timeout)
+    if a.cmd == "register-sessionstart":
+        return register_sessionstart(a.settings, a.node_script, a.timeout)
     if a.cmd == "register-pretool":
         return register_pretool(a.settings, a.node_script, a.matcher,
                                 a.timeout)
