@@ -410,8 +410,37 @@ def _skeletal_extract(body: str, profile: dict) -> str:
     return "\n".join(out).rstrip() + "\n"
 
 
-def _render(module: str, body: str, tier: str) -> str:
-    """tier -> rendered text. full = verbatim (byte-identical)."""
+def _is_programmatic() -> bool:
+    """Programmatic-channel detection (Apollo retrofit, 2026-05-19).
+
+    From 2026-06-15 Anthropic moves Agent SDK / claude -p / GH Actions /
+    third-party orchestrators off the subscription bucket onto a separate
+    metered credit at full API rates. In that channel every byte of
+    injected context is paid for; the summary tier still includes
+    verbatim anchor bodies which the headless agent rarely needs.
+    Programmatic mode promotes EVERY profiled module to the skeletal
+    (pointer-only) renderer, not just the SKELETAL_MODULES set.
+
+    Detection precedence:
+      1. env CLAUDE_PROGRAMMATIC=1 (explicit, highest)
+      2. stdin is not a TTY (fallback)
+    """
+    if os.environ.get("CLAUDE_PROGRAMMATIC") == "1":
+        return True
+    try:
+        return not sys.stdin.isatty()
+    except Exception:
+        return False
+
+
+def _render(module: str, body: str, tier: str,
+            programmatic: bool = False) -> str:
+    """tier -> rendered text. full = verbatim (byte-identical).
+
+    When programmatic=True and the module has a TASK_PROFILE, the
+    skeletal renderer is used regardless of SKELETAL_MODULES membership
+    (programmatic channels pay per token; pointer-only is the default).
+    """
     if tier == "full":
         return body
     if tier == "discovery":
@@ -419,7 +448,7 @@ def _render(module: str, body: str, tier: str) -> str:
     prof = TASK_PROFILES.get(module)
     if not prof:
         return body  # unprofiled -> full verbatim
-    if module in SKELETAL_MODULES:
+    if programmatic or module in SKELETAL_MODULES:
         return _skeletal_extract(body, prof)
     return _summary_extract(body, prof)
 
@@ -490,6 +519,7 @@ def run(data) -> dict:
             return {"continue": True}
 
         tier = _select_tier(prompt)
+        programmatic = _is_programmatic()
         sid = _sid(data)
         raw_sid = _raw_sid(data)
         state = _load_state(sid)
@@ -503,19 +533,22 @@ def run(data) -> dict:
             if not skill.is_file():
                 continue
             body = skill.read_text(encoding="utf-8")
-            rendered = _render(m, body, tier)
+            rendered = _render(m, body, tier, programmatic=programmatic)
             size = len(rendered.encode("utf-8"))
             if total + size > BUDGET_BYTES:
                 deferred.append(m)
                 continue
+            mode = "skeletal-prog" if programmatic and tier == "summary" \
+                else tier
             blocks.append(
                 f"=== APOLLO JIT MODULE: {m} "
-                f"(tier={tier}, force-injected) ===\n{rendered}"
+                f"(tier={mode}, force-injected) ===\n{rendered}"
             )
             total += size
             injected.append(m)
             tele.append({"module": m, "tier": tier, "bytes": size,
-                         "budget": BUDGET_BYTES})
+                         "budget": BUDGET_BYTES,
+                         "programmatic": programmatic})
             state[m] = now
 
         if not injected:
