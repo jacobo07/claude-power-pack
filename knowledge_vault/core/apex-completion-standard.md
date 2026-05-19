@@ -276,6 +276,22 @@ ref-correlator Stop hook are Owner/restart-gated (BL-0067). S+
 verification uses the pure functions and real binary directly; live
 autonomous operation is the explicit Owner activation step, never faked.
 
+**Doc-accuracy as a Reality-Contract gate (2026-05-19).** An
+Owner-gated activation that is *inert pending the patch* is an
+acceptable residual ONLY when the activation procedure is documented
+with the **real, host-correct mechanism** (canonical home:
+`vault/standards/<feature>-activation.md`; in-source comments may carry
+a 6-line pointer, never the detail). A doc that describes the WRONG
+mechanism is not "cosmetic, fix later" — it is a deferred bug at the
+same severity as broken code, because the next operator who follows
+it loses an hour and arrives at an inert system. Specifically: the
+earlier `jit_ref_correlate.py` ACTIVATION comment that named raw
+`~/.claude/settings.json` Stop entries was a Reality-Contract failure
+on this host (Stop fans through `hook-dispatcher.js
+CHAIN_MAP['Stop-chain']`, not raw settings); corrected commits
+`f695d88` (in-source pointer) and `cc823b9`
+(`vault/standards/jit-correlate-activation.md`).
+
 RTK completion floor (2026-05-19): the `>=77%` gate is enforced by
 `tools/verify_rtk_fusion.py` against a benchmark **pinned to immutable
 SHA `af8da66`** — reproducible run-to-run (measured 80.2% ×2),
