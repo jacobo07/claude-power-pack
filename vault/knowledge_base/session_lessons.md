@@ -640,6 +640,19 @@ A 120-line Edit replacing a 286-line file came back as `[Tool result missing due
 
 **Immunization (B1 re-architected accordingly):** the global installer must NEVER programmatically grant permissions. It (a) copies files, (b) registers hooks via *already-authorized* `settings_merger.py` subcommands (`register-stop/sessionstart/userprompt/pretool`), and (c) PRINTS the exact `permissions.allow` lines the Owner pastes — never writes them. Same boundary as the L3 cycle (one-line activation patch handed to the Owner) and the L3 S++ Hook Startup Authorization Gate. This is the doctrinally correct division between automated install and Owner authorization, and is sealed into the Apex Onboarding Standard (F1).
 
+## Lesson — Onboarding axis seals the third leg of the apex tripod (2026-05-19, Globalization F1)
+
+**Trigger.** Cycle close-out. The Power Pack Globalization KERNEL vMAX-NULL-ERROR cycle delivered the full path from `git clone` → S++ in ≤5 min via one wrapper + one `/restart`. Sealing that as the third apex axis required reconciling three pre-existing standard surfaces: (a) the global `~/.claude/knowledge_vault/core/apex-completion-standard.md` (Owner already wrote a 5th Clause), (b) the Power-Pack-local `vault/knowledge_base/apex_baseline_doctrine.md` (Owner already wrote the four-pillar mandate), and (c) my new operational deep-dive `vault/standards/apex-onboarding-standard.md`. The mistake-class to avoid was *re-writing* either of the Owner-sealed surfaces with a third overlapping doctrine.
+
+**Distinct from prior lessons.** Lessons 1 and 2 covered tactical execution (chunked Writes, capability-grant denial). This is the strategic close-out: when the Owner has already sealed the high-level standard in two complementary surfaces, the agent's job is to ship the *operational consequence file* — the one that names every artifact + every commit + every gate — and cross-link it from both. Three concentric surfaces:
+- **Apex completion standard (global vault):** 1-paragraph normative summary, axis name only.
+- **Apex baseline doctrine (PP vault):** four-pillar mandate, no implementation details.
+- **Apex onboarding standard (PP standards):** the operational contracts (5 of them), the cross-references, the sealed-evidence table.
+
+**Rule.** When a cycle introduces a new apex axis: (1) DO NOT touch the global vault surface beyond a one-paragraph cross-link if the Owner has already written there; (2) WRITE the operational deep-dive in `vault/standards/<axis>-standard.md` matching the existing pattern (see `feature-completion-standard.md`, `mirror-parity-law.md`, `programmatic-budget-standard.md`); (3) END that file with a "sealed evidence" table naming every commit by SHA so a future operator can replay the verification path.
+
+**Vaccine.** Read the Owner-sealed surfaces FIRST before drafting the cycle close-out. If the Owner already wrote a one-paragraph normative summary, your contribution is the deep-dive, not a parallel summary. Search for the new axis name across `~/.claude/knowledge_vault/core/` + `vault/knowledge_base/` + `vault/standards/` before any Write — the Owner-pane may have landed a placeholder section heading for you to recognise as a co-write contract.
+
 ## Lesson — Internal-error generalises from Edit to Write at large payload + deep-session pressure (2026-05-19, Globalization E1)
 
 **Trigger.** A 234-line / ~7.3 KB single Write of `tools/e2e_clean_install.py` returned `[Tool result missing due to internal error]`. Probe (`ls` + `wc -l` + `head`/`tail`) confirmed the file does NOT exist — state state-unknown resolved as state-clean per BL-0012. Earlier in the same session, two larger Writes (`install_global_core.py` 448 lines, `INSTALL-GLOBAL.md` ~140 lines) succeeded. The differentiator was cumulative turn-context pressure, not raw payload size in isolation.
