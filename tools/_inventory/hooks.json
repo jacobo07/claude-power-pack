@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "kind": "hooks",
+  "generated_iso": "2026-05-19T13:09:12Z",
+  "pp_original": [
+    {
+      "name": "hook-dispatcher.js",
+      "sha256": "7b0737dcb6c408a1cc8ea45aab3381a67c482cbf04e383f6565c117a13f03014",
+      "present_in_loose": true,
+      "rationale": "PreToolUse-default bundle dispatcher"
+    },
+    {
+      "name": "learning-sentinel.js",
+      "sha256": "6bbc4d334254d7cdb8179d6c99e6ac4b1e47ec52e6616744e0956b39bb01728b",
+      "present_in_loose": true,
+      "rationale": "Compound Learnings sentinel (L3 host)"
+    },
+    {
+      "name": "lazarus-livesnap.js",
+      "sha256": "0fc058049522aa1a72f3a37715e0f71161948bb15963157f00aaf456759fc3d4",
+      "present_in_loose": true,
+      "rationale": "PreToolUse Lazarus live snapshot"
+    },
+    {
+      "name": "resume-hide-live.js",
+      "sha256": "eb8b89dabeb21fabb6bd3bb2a481fd3338a4f422618fe09acb134d4657d9c275",
+      "present_in_loose": true,
+      "rationale": "Resume picker live-session filter"
+    },
+    {
+      "name": "zero-issue-gate.js",
+      "sha256": "6fc99eb22591e98564663da7ea048cf3bbafd1654664d1ed1c7ecc23c6b71484",
+      "present_in_loose": true,
+      "rationale": "Stop-chain zero-issue safety gate"
+    },
+    {
+      "name": "jobs-woz-gatekeeper.js",
+      "sha256": "fb7a7768ccb1ce0605fc46e8e101e660992b89cca0c2b012eef0470466079a4d",
+      "present_in_loose": true,
+      "rationale": "Jobs/Woz veto gatekeeper"
+    },
+    {
+      "name": "anti-thrash.js",
+      "sha256": "001c10c93df2f23a9a7b33840644e9bb09e09622bc7f0554a28ca1866071b122",
+      "present_in_loose": true,
+      "rationale": "Edit/Write anti-thrash counter"
+    },
+    {
+      "name": "auto-vault-bootstrap.js",
+      "sha256": "a2351e7dd545c626ed576ca445e64e2cb7a5d46755ead8ab5eb5d5135c3fcf94",
+      "present_in_loose": true,
+      "rationale": "Knowledge-vault auto-bootstrap"
+    },
+    {
+      "name": "baseline-translator.js",
+      "sha256": "b19d4a44d48c69707d655c4792f180ae124e4cc4f7f7b9e63bd9b3b9212e845e",
+      "present_in_loose": true,
+      "rationale": "Baseline translator hook"
+    },
+    {
+      "name": "bug-hunter-learning.js",
+      "sha256": "fa0feb7e429890670f3dc285ff99ab22c4519d2ba800d089ce908c0c5224abb3",
+      "present_in_loose": true,
+      "rationale": "Bug-hunter learning capture"
+    },
+    {
+      "name": "correction-guard.js",
+      "sha256": "5e9a02fbe0d73ef631ed62f4c9a9f1d214ba69545c28a88b5b4b1a1d273684ab",
+      "present_in_loose": true,
+      "rationale": "User-correction protocol guard"
+    },
+    {
+      "name": "dna-flywheel.js",
+      "sha256": "d65c748f9ee8f00abb3f01bf42d4cf9f133d3ea0f8610e63101ab901384dcf6e",
+      "present_in_loose": true,
+      "rationale": "DNA mistake-flywheel"
+    },
+    {
+      "name": "error-loop.js",
+      "sha256": "c69d8c42b107ac80e5ef3cfd9e51c5ed92b531128acc0ea2d93faa1115c35151",
+      "present_in_loose": true,
+      "rationale": "Error-loop detector"
+    },
+    {
+      "name": "gatekeeper-semantic.js",
+      "sha256": "4f0727d81bc602e12db84c68429fd9bcf97d399de8124ee54a65e8ef20bd518b",
+      "present_in_loose": true,
+      "rationale": "Read/Grep semantic gatekeeper"
+    },
+    {
+      "name": "hook-utils.js",
+      "sha256": "deb599c0b0fb8600b170d8722f8d8b282df525e821eeb5833ce459a6d6623113",
+      "present_in_loose": true,
+      "rationale": "Shared hook utilities"
+    },
+    {
+      "name": "kg-sync-hook.js",
+      "sha256": "a8b09748e138f9c62df3f13165d622f35366ca04e20304b1dd4081b2359d0135",
+      "present_in_loose": true,
+      "rationale": "PostToolUse KG-sync"
+    },
+    {
+      "name": "kobiiclaw-autoresearch.js",
+      "sha256": "26375fd60ea3b9a713443cbaa3ed4f5ec48fd5df571ca2204b96204c7eb298ca",
+      "present_in_loose": true,
+      "rationale": "Autoresearch hook"
+    },
+    {
+      "name": "lazarus-heartbeat.js",
+      "sha256": "1106c415492901a58cccfbffb2ae8d4b7a04eea11df236ff4b73d5c2ea8372f4",
+      "present_in_loose": true,
+      "rationale": "Lazarus heartbeat"
+    },
+    {
+      "name": "lazarus-janitor.js",
+      "sha256": "09c9789c08df0aa6e271a8962875777198bde0b0b834d571e74262d738f0a91c",
+      "present_in_loose": true,
+      "rationale": "Lazarus janitor"
+    },
+    {
+      "name": "lazarus-snapshot.js",
+      "sha256": "fc234812f22edda01adc2680c7936fbc682e74d2fa568796a614cb476fc8b883",
+      "present_in_loose": true,
+      "rationale": "Lazarus full snapshot"
+    },
+    {
+      "name": "memory-rotation.js",
+      "sha256": "00c5e8c43ca20ba8d6caa3e8471c17aba1056b922ef4c624eb9db7b53e485d6d",
+      "present_in_loose": true,
+      "rationale": "MEMORY.md rotation"
+    },
+    {
+      "name": "power-pack-reminder.js",
+      "sha256": "f02852d5c1c4e26e56c44a6220c52304498ee7f9ab4a3cd6b88d6e59162464a9",
+      "present_in_loose": true,
+      "rationale": "PP active reminder"
+    },
+    {
+      "name": "prd-keyword-sentinel.js",
+      "sha256": "568580fa8fe01ff3e6eb90f996e85bbad30b581ac485675a942c22cd8c621bdc",
+      "present_in_loose": true,
+      "rationale": "PRD keyword sentinel"
+    },
+    {
+      "name": "quality-gate.js",
+      "sha256": "435bdabdba118c97158e96f0f8f12d108d6dfd8300da385ae5ce09327581051b",
+      "present_in_loose": true,
+      "rationale": "PreToolUse Write/Edit quality gate"
+    },
+    {
+      "name": "quality-skill-gate.js",
+      "sha256": "062fb54ef2143341b57b2937c863743818cbf84ef7912e0f6b69e90bd0baf75a",
+      "present_in_loose": true,
+      "rationale": "PreToolUse Bash quality-skill gate"
+    },
+    {
+      "name": "readonly-prompts-guard.js",
+      "sha256": "8749ada638d4e617a347a4b8a2766828c584e4e34b1f5dccf46198e89d35e4a4",
+      "present_in_loose": true,
+      "rationale": "Readonly prompts guard"
+    },
+    {
+      "name": "scaffold-auditor.js",
+      "sha256": "d4bb3ea135598d5cb936755f81119ed2313b49025284157fa5d19cdf72851f2e",
+      "present_in_loose": true,
+      "rationale": "Stop scaffold-illusion auditor"
+    },
+    {
+      "name": "secret-scanner.js",
+      "sha256": "7efee86373b43d420ef1d59f90eacdd66796691b732d580ad93adec5517f1429",
+      "present_in_loose": true,
+      "rationale": "Write/Edit secret scanner"
+    },
+    {
+      "name": "session-init.js",
+      "sha256": "92d09159e426a1c7b410049807c946a4fc845240482f168569011b82e57a0ed8",
+      "present_in_loose": true,
+      "rationale": "Session-init context surfacer"
+    },
+    {
+      "name": "session-logger.js",
+      "sha256": "a6cd98d007d8949b7fe6760028885eee5c8ac16a142a9e9fbfb869589167bab6",
+      "present_in_loose": true,
+      "rationale": "PostToolUse session logger"
+    },
+    {
+      "name": "session-summary.js",
+      "sha256": "91e4e7a342a1210a3f500eec471d94e7019b5f0fa5a43a7ee6affc08b590642c",
+      "present_in_loose": true,
+      "rationale": "Stop session summary"
+    },
+    {
+      "name": "token-optimizer-bootstrap.js",
+      "sha256": "090e494b28e0e03b9d7e205342e922920d249fec2babd9608cebfcadacea25d1",
+      "present_in_loose": true,
+      "rationale": "Token-optimizer bootstrap"
+    },
+    {
+      "name": "token-shield-refresh.js",
+      "sha256": "03b9acacc7e5f349df296a6dbf1fa9466ed4b8950e31b42c043ae77b6119bbc9",
+      "present_in_loose": true,
+      "rationale": "Token-shield refresh"
+    },
+    {
+      "name": "trace-emitter.js",
+      "sha256": "95da9f2d264d12e30d75ebdb5c4248a51d314958957105f3f48a61320af3b618",
+      "present_in_loose": true,
+      "rationale": "PostToolUse trace emitter"
+    },
+    {
+      "name": "trace-flusher.js",
+      "sha256": "d6a3750f17dd7a59966f735c7e8658e1730e3773e21eb5719ba612a9886bb6c1",
+      "present_in_loose": true,
+      "rationale": "Stop trace flusher"
+    },
+    {
+      "name": "vault-heartbeat.js",
+      "sha256": "09659c85d7e35bb328f8a35f7518e0215f0620198d546929682eb11343245c87",
+      "present_in_loose": true,
+      "rationale": "Stop vault-heartbeat"
+    },
+    {
+      "name": "vault-sync.js",
+      "sha256": "6de335af51dc1c2c62e371d69dac9c20665d7625543652a89d39b866bfc058d0",
+      "present_in_loose": true,
+      "rationale": "Vault-sync hook"
+    }
+  ],
+  "plugins": {
+    "gsd": [
+      "gsd-check-update.js",
+      "gsd-context-monitor.js",
+      "gsd-statusline.js"
+    ]
+  },
+  "user_personal": []
+}
