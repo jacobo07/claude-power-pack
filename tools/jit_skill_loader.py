@@ -166,7 +166,8 @@ TASK_PROFILES: dict[str, dict] = {
 # aplica cuando el task profile los necesita"). Modules NOT in this set
 # keep the unchanged verbatim-include summary — zero regression by
 # construction.
-SKELETAL_MODULES = {"apollo-client", "apollo-ios", "graphql-schema"}
+SKELETAL_MODULES = {"apollo-client", "apollo-ios", "graphql-schema",
+                    "apollo-federation"}
 
 # Tier verb taxonomy (pinned — deterministic; default = summary, NOT
 # full, because full is the regression-risk default).
