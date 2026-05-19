@@ -156,6 +156,18 @@ TASK_PROFILES: dict[str, dict] = {
     },
 }
 
+# Skeletal-tier modules (S+ 2026-05-19, Owner-decided per-module ≥40%).
+# For these, the summary tier renders POINTER-ONLY: frontmatter +
+# trimmed preamble + an on-demand section/reference index — anchor
+# bodies are NOT reproduced verbatim (the active task profile for these
+# does not need the bodies inline; the title+reference pointer is
+# enough, full SKILL.md is one read away). The anchor-verbatim floor
+# deliberately does NOT apply here (Owner: "el floor de anchors solo
+# aplica cuando el task profile los necesita"). Modules NOT in this set
+# keep the unchanged verbatim-include summary — zero regression by
+# construction.
+SKELETAL_MODULES = {"apollo-client", "apollo-ios", "graphql-schema"}
+
 # Tier verb taxonomy (pinned — deterministic; default = summary, NOT
 # full, because full is the regression-risk default).
 RX_DISCOVERY = re.compile(
@@ -359,6 +371,44 @@ def _summary_extract(body: str, profile: dict) -> str:
     return fm + "".join(preamble).rstrip() + "\n\n" + "".join(kept).rstrip() + "\n"
 
 
+_REF_RE = re.compile(r"\b([\w./-]+\.md)\b")
+
+
+def _skeletal_extract(body: str, profile: dict) -> str:
+    """Pointer-only: frontmatter + first preamble paragraph + an
+    on-demand index of the profile's include anchors and any referenced
+    *.md files. Anchor BODIES are intentionally not reproduced. Never
+    silent-empty (frontmatter+index always present).
+    """
+    fm, rest = _split_frontmatter(body)
+    anchors = [h[3:].strip() if h.startswith("## ") else h.strip()
+               for h in (profile.get("include") or [])]
+    lines = rest.splitlines()
+    # first non-empty preamble paragraph (before the first '## ').
+    para: list[str] = []
+    for ln in lines:
+        if re.match(r"^## ", ln):
+            break
+        if ln.strip():
+            para.append(ln.strip())
+        elif para:
+            break
+    refs = sorted({m.group(1) for m in _REF_RE.finditer(rest)
+                   if "/" in m.group(1) or m.group(1).startswith("references")})
+    out = [fm.rstrip(), ""]
+    if para:
+        out.append(" ".join(para))
+        out.append("")
+    out.append("## On-demand sections (skeletal tier — read full "
+               "SKILL.md for any of these)")
+    for a in anchors:
+        out.append(f"- {a}")
+    if refs:
+        out.append("")
+        out.append("Reference files: " + ", ".join(refs))
+    return "\n".join(out).rstrip() + "\n"
+
+
 def _render(module: str, body: str, tier: str) -> str:
     """tier -> rendered text. full = verbatim (byte-identical)."""
     if tier == "full":
@@ -368,6 +418,8 @@ def _render(module: str, body: str, tier: str) -> str:
     prof = TASK_PROFILES.get(module)
     if not prof:
         return body  # unprofiled -> full verbatim
+    if module in SKELETAL_MODULES:
+        return _skeletal_extract(body, prof)
     return _summary_extract(body, prof)
 
 

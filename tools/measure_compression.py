@@ -113,7 +113,16 @@ def main() -> int:
 
         prof = jsl.TASK_PROFILES.get(mod, {})
         anchors = prof.get("include") or []
-        missing = [h for h in anchors if h not in summ]
+        skeletal = mod in getattr(jsl, "SKELETAL_MODULES", set())
+        if skeletal:
+            # Skeletal tier intentionally drops verbatim bodies; the
+            # honest structural invariant is that every anchor still
+            # appears as a TITLE pointer (strip the "## " fence). The
+            # verbatim floor does not apply here (Owner-decided).
+            missing = [h for h in anchors
+                       if h.replace("## ", "").strip() not in summ]
+        else:
+            missing = [h for h in anchors if h not in summ]
 
         ok_red = red >= a.min
         ok_struct = not missing
