@@ -524,3 +524,50 @@ L3 S++: el cold-load gap entre 12/12 en harness y live-fire post-restart es real
 The prompt prescribed a 5-step plan whose PASO 1 was "cherry-pick RTK to a clean branch because the tree is contaminated by `BLOCKED_DELIVERY.md`". A read-only state check FIRST showed: tree clean, `BLOCKED_DELIVERY.md` gone, 0 untracked — a parallel stream had resolved the contamination between 2026-05-18 and 2026-05-19. **The cherry-pick was pointless busywork; the real unblock was simply re-running OVO on the now-clean tree (A+, pushed).** The inverse of the pre-written lesson ("cherry-pick is the pattern"): the real pattern is *probe live state before executing any workaround — a plan authored against yesterday's state can prescribe work that today's state has already obviated.* Also caught the same turn: PASO 2 (skeletal ≥40%) was already done & passing 10/10 under the real gate (≥30%+anchors-verbatim, not ≥40%); PASO 4's `--ovo --scope` flag does not exist. Three of five prescribed steps were moot/done/invalid — surfaced with evidence instead of executed as theater.
 
 **RTK 77% floor was non-falsifiable theater until pinned.** `verify_rtk_fusion.py` measured live `git log` (HEAD-variant): 74–80% by branch tip, aggregate `rtk gain` drifted 77.3%→71.0% as more varied commands ran. Any fixed floor on a moving measurement is unprovable. Fix (closes audit Gap 7): pin the benchmark to an immutable historical SHA (`af8da66`) so raw+rewritten outputs and the ratio are reproducible run-to-run → stable 80.2%×2 → `>=77%` becomes a real fail-closed gate. Rule: a numeric completion floor is only honest if the measurement under it is deterministic; otherwise pin the input or drop the number.
+
+## 2026-05-19 — Lazarus/Resume hardening (Phase B+C, 4 lessons)
+
+1. **A no-op hook is a scaffold illusion** (Mistake #16, caught by runtime
+   test). `lazarus-livesnap.js` initial RAM-pressure gate was a RATIO
+   (`freemem/totalmem < 0.06`). On a 32 GB dev box that idles at ~4.4 % free
+   (RAM-shield hooks active), the gate fired EVERY invocation -> the hook
+   never wrote a snapshot in production. `node --check` and "exit 0 silent"
+   both lied that it worked. Vaccine: a RAM-pressure guard must be an
+   ABSOLUTE floor (e.g. <256 MB free), not a ratio, on a host whose normal
+   idle is already low-free-percent. And: every hook MUST be runtime-tested
+   with a synthetic payload that verifies its primary side-effect actually
+   landed on disk, never just "exit 0".
+
+2. **Cross-tool path mismatch (git-bash vs Windows Python).** A bash variable
+   `$SNAP="/c/Users/User/.claude/lazarus/.../foo.json"` interpolated into a
+   one-line Python `io.open($SNAP)` silently FileNotFoundErrors: Python on
+   Windows treats `/c/...` as a literal forward-slash path, not the bash
+   mount-point. The hook wrote the file correctly; the TEST harness path was
+   wrong, looking pass-as-fail. Vaccine: when piping bash paths into Python
+   tests, compute the path entirely INSIDE Python (`os.path.join`,
+   `pathlib.Path`) from canonical Windows components, never inherit bash's
+   `/c/...` form across the boundary.
+
+3. **Anti-Antipattern R1 (anti-thrash) is a real guardrail, not noise.**
+   Three consecutive Edits to the same file without an intervening Read
+   triggers the PreToolUse anti-thrash hook -> BLOCKED. Recovery is Read +
+   one comprehensive Edit. The same advice in `feedback_parallel_edit_cascade`
+   memory; the live hook enforces it now. Vaccine: plan one comprehensive
+   Edit per file per turn; if you must split, Read the file between each Edit
+   to reset the counter.
+
+4. **Contract checks must distinguish assertion from quoted debunking.** When
+   the Owner banned `"5s" comments`, my first patch QUOTED the false phrase
+   inside double-quotes to label it as the prior wrong claim. The strict
+   regex check (`"every ~5s" in post`) flagged my own correction as a
+   violation. Vaccine: when stripping a falsified value from a comment,
+   remove the value entirely; describe the bug without naming the wrong
+   number, so a literal-substring contract check stays passable. The
+   contract was rewritten to: zero occurrences of the forbidden cifra in
+   ANY syntactic position (assertion or debunk).
+
+Cross-link: Phase B (lazarus-livesnap.js, sealed 2026-05-18) +
+Phase C (resume-hide-live.js threshold 60 s -> 300 s + Stop wiring,
+sealed 2026-05-19). Activation = next `/restart` (hook config loads once
+at session start per `feedback_settings_session_load`).
+
