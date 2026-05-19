@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "source_url": "https://www.anthropic.com/pricing#api",
+  "fetched_iso": "2026-05-19T00:00:00Z",
+  "currency": "USD",
+  "unit": "per_million_tokens",
+  "models": {
+    "claude-opus-4-7": {
+      "input": 15.0,
+      "output": 75.0,
+      "cache_write_5m": 18.75,
+      "cache_write_1h": 30.0,
+      "cache_read": 1.5
+    },
+    "claude-sonnet-4-6": {
+      "input": 3.0,
+      "output": 15.0,
+      "cache_write_5m": 3.75,
+      "cache_write_1h": 6.0,
+      "cache_read": 0.3
+    },
+    "claude-haiku-4-5": {
+      "input": 1.0,
+      "output": 5.0,
+      "cache_write_5m": 1.25,
+      "cache_write_1h": 2.0,
+      "cache_read": 0.1
+    }
+  },
+  "tiers": {
+    "pro": 20.0,
+    "max5x": 100.0,
+    "max20x": 200.0
+  },
+  "programmatic_cutover_iso": "2026-06-15T00:00:00Z",
+  "notes": "Provenance file consumed by tools/budget_monitor.py. If fetched_iso is older than 30 days, the monitor refuses to compute a runway and emits 'stale-pricing'. Re-fetch from source_url to refresh."
+}

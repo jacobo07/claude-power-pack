@@ -1,0 +1,7 @@
+{
+  "tier": "max20x",
+  "monthly_usd": 200.0,
+  "refill_iso": "2026-06-15T00:00:00Z",
+  "model_default": "claude-opus-4-7",
+  "_comment": "Copy this file to ~/.claude/budget.json and edit the values. The monitor's precedence is: env ANTHROPIC_PROGRAMMATIC_BUDGET_USD wins over monthly_usd; missing file falls through to 'unconfigured' (runway is not computed, no fabricated number). Tier strings: 'pro' | 'max5x' | 'max20x'. refill_iso is the next monthly reset (programmatic credits do NOT roll over)."
+}
