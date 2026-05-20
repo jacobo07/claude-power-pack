@@ -76,6 +76,15 @@
 - [Assumption about scope boundaries — what is explicitly OUT of scope]
 - [Assumption about environment / data / existing systems]
 
+## Pre-Implement Probes *(mandatory, surfaced at `/speckit-clarify` time, NOT at `/speckit-implement` time)*
+
+> Added 2026-05-20 from the InfinityOps MC-IO-74.5 cycle (cwrsync 6.4.8 upstream 404 hit at execute time). Every external dependency a plan will rely on must be empirically probed BEFORE the spec is sealed. A probe that returns "unreachable" or "ignored" or "missing" upgrades the relevant FR or fallback CL while the spec is still pliable.
+
+- **PIP-001 — Upstream availability**: for every download URL, package install command, or remote dependency named in any `FR-###` or `plan.md` step, document the empirical HEAD/200 probe result + timestamp here. Example: `curl -sI https://example.com/foo.zip 2>&1 | head -1` → `HTTP/1.1 200 OK (probed 2026-05-20T...)`. A 404 / 5xx / DNS-fail surfaces an immediate `[NEEDS CLARIFICATION]` for a fallback mechanism.
+- **PIP-002 — Evidence-path commitability**: for every archived-log path named in `FR-###` (e.g. `vault/audits/`, `11_PSMI_Memory_Evidence/...`), run `git check-ignore -v <path>` in the target repo and document the result. Gitignored paths must EITHER be moved to a non-ignored sibling OR explicitly state `force-add` in the plan's commit step. Failure to probe = execute-time surprise when `git add` silently skips.
+- **PIP-003 — Repo identity**: run `git -C <repo> log -1 --format='%an <%ae>'` in the target repo. If empty, the plan's commit step MUST supply `-c user.name=... -c user.email=...` one-shots; do NOT call `git config --global` (CLAUDE.md Git Safety Protocol).
+- **PIP-004 — Working-tree intent-lock**: if `<repo>/.claude/intent.lock` exists, parse its `ts` field, compute age, and document. Lock age <3 min = back off (Intent-Lock soft-pause active). Lock age ≥3 min + PID dead = take over with fresh lock. Document the decision; never silently overwrite.
+
 ## Power Pack Reality Contract (inherit)
 
 - Every `SC-###` is measurable and technology-agnostic. "Fast" is not measurable; "p95 latency < 200ms" is.

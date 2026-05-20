@@ -1,29 +1,18 @@
-# Session Lessons — Atomic Learning
 
-Append-only log of concrete, non-derivable learnings per session.
-One entry per `/kclear` with a `lesson` field. Keep each entry short and
-self-contained — if a future reader can't grok it without the conversation,
-rewrite it.
+## 2026-05-20 — SDD eliminates clarifications when spec covers edge cases BEFORE implement
 
----
+**Empirical**: InfinityOps MC-IO-74.5 cycle landed with **0 preventable Owner clarifications** during `/speckit.implement`. The most load-bearing test — `scoop install cwrsync` returning `HTTP/1.1 404 Not Found` for the canonical install command — was hit live; the protocol absorbed it via in-execution spec iteration (CL-004 added to `.specify/spec.md`, FR-001 amended, plan.md S1 rewritten against MSYS2 rsync 3.4.2 at `/c/msys64/usr/bin/rsync.exe`), no Owner ask.
 
-## 2026-04-22 — Shipped 5 MC-OVO cycles on claude-power-pack: sleepless_qa atomic landing (34 fi
+**Lesson**: The `/speckit.clarify` gate is the MOST important phase of the SDD workflow. If the clarifications surface are obvious or trivially answerable, the spec will be incomplete and the failure surfaces at `/speckit.implement` time — which is too late if the goal is "0 preventable clarifications".
 
-**Session:** `kpp-supremacy-v7000-marathon`
+**Rule (template-binding)**: every external dependency a plan will rely on (download URL, package name, remote service) must be empirically probed BEFORE the spec is sealed. The PP spec template now mandates this via the **Pre-Implement Probes** section (PIP-001 upstream availability, PIP-002 evidence-path commitability, PIP-003 repo identity, PIP-004 working-tree intent-lock — all derived from gaps surfaced in this very cycle). A probe that returns "unreachable" upgrades to a clarification while the spec is still pliable, not at execute-time.
 
-Before promoting any inline-one-liner failure to an audit recommendation, run the canonical tool (--help / official CLI). Mistake #52: my ad-hoc script's bug got misattributed to the audited file.
-
----
-
-## 2026-05-14 — Stop-hook PATH: bare `python` resolves to Store stub on Win11
-
-**Session:** `kobiidistilleros-genesis-v82000`
-
-Stop-chain hooks were emitting "command not found" because `hook-utils.js#getPythonCommand` returned bare `python` on win32. Windows 11's PATH includes a Microsoft Store stub `python.exe` that exits non-zero (it opens the Store), not the real interpreter under `%LOCALAPPDATA%\Programs\Python\Python3*\python.exe`. Inline copies of the same pattern existed in `kobiiclaw-autoresearch.js`, `baseline-translator.js`, `dna-flywheel.js`, `session-init.js`.
-
-Fix: `getPythonCommand()` now probes in priority — `$CLAUDE_PYTHON` → `%LOCALAPPDATA%\Programs\Python\Python3*\python.exe` → `py -3` → bare `python`. Memoized after first resolution. Added matching `getNodeCommand()` returning `process.execPath` to neutralize the same risk for bare-`node` shell-outs. `kobiiclaw-autoresearch.js` (the Stop-chain offender) migrated to call the helper.
-
-**Vaccine:** never write `const x = process.platform === 'win32' ? 'python' : 'python3'` inline; always import the helper. Reviewers reject bare-interpreter execSync templates outright.
+**Cross-references**:
+- `vault/verifications/speckit_zero_clarification_2026-05-20.md` (empirical cycle log)
+- `vault/audits/ovo_2026-05-20_Aplus_speckit-residual-closed.md` (A+ verdict)
+- `vault/templates/speckit/spec.md.template` (Pre-Implement Probes section)
+- InfinityOps commits `e722219` + `b1ddd05` (SDD artifacts + MSYS2 expose)
+mplates outright.
 
 ---
 
