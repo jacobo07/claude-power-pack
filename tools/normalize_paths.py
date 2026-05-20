@@ -111,6 +111,14 @@ ALLOWLIST: dict[str, set[str]] = {
     # Rewriting the literal makes the comment vacuous (the comment
     # documents what *was* hardcoded — the fix itself is in the code).
     "hooks/hook-dispatcher.js":    {"doc-path"},
+    # ---- blocked-delivery-prevention.md documents the *exact*
+    # PowerShell `Copy-Item` commands the Owner copy-pastes to sync
+    # the canonicalized hooks to the loose-master tree. PowerShell
+    # does NOT expand `~` inside `Copy-Item` -Path/-Destination args
+    # the way bash does, so rewriting the literal to `~\...` would
+    # break the documented procedure. The literal IS the canonical
+    # command (verbatim-copy doctrine, see standards file body).
+    "vault/standards/blocked-delivery-prevention.md": {"doc-path"},
     # ---- Inventory metadata: agents.json documents redaction reasons
     # by name (e.g. "redact_reason: references VPS IP ..." literal).
     "tools/_inventory/agents.json":{"secret"},
