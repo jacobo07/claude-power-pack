@@ -78,3 +78,17 @@ The pre-existing Apex Completeness mandate (BL-0068) governs what a feature ship
 **Status.** Effective immediately for any new feature post-2026-05-19. Pre-existing features are grandfathered — they do NOT need retroactive umbrella rows. New features that omit any of the four pillars are non-conformant and CANNOT pass OVO at verdict >= A.
 
 **Cross-link.** The Programmatic Budget Standard (`vault/standards/programmatic-budget-standard.md`, sealed 2026-05-19) is the first feature audited under this combined Apex Completeness + Onboarding gate. Its umbrella row, install-global handling (Owner-action for ~/.claude/hooks/ writes), `docs/INSTALL.md` section, and clean-machine path are the reference implementation of the standard.
+
+## Spec-Driven Gate cross-link (sealed 2026-05-20)
+
+The Spec-Driven Gate (PASO -1) governs feature *intent* upstream of the three pillars above. It is sealed in the global apex standard, not duplicated here, to preserve single-source-of-truth.
+
+> See: `~/.claude/knowledge_vault/core/apex-completion-standard.md` § **Spec-Driven Gate (sealed 2026-05-20, PASO -1)**.
+
+**Order of gates for any new feature:**
+
+1. **PASO -1** — Spec-Driven Gate (constitution + spec + plan + tasks + analyze; `vault/templates/speckit/*.template` + `commands/speckit-*.md`).
+2. **PASO 0** — Apex Onboarding Standard (this file, sealed 2026-05-19).
+3. **PASO 1+** — Apex Completeness three pillars (this file, BL-0068 sealed 2026-05-16).
+
+A feature missing PASO -1 is INCOMPLETE at the planning stage and CANNOT enter the onboarding/completeness pipeline. A feature passing PASO -1 but missing PASO 0 or the three pillars is non-conformant per the existing rules in this file.
