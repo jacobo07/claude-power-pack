@@ -548,13 +548,52 @@ def _telemetry(sid: str, raw_sid: str, rows: list[dict]) -> None:
         pass
 
 
+SPEC_CAP_BYTES = 24_000   # spec gets <=60% of the 40 KB budget; remainder for Apollo
+
+
+def _active_spec(cwd: Path) -> tuple[Path, str] | None:
+    """Detect a Spec-Driven Development active spec in the project cwd.
+
+    Honors two canonical paths:
+      1. .specify/specs/<feature-id>/spec.md (Spec Kit canonical layout)
+      2. vault/specs/<feature>.md (PP-local alternative)
+
+    Picks the most-recently-modified spec when multiple exist. Returns
+    (path, content) or None. Fail-open: any read/glob error -> None.
+    """
+    try:
+        candidates: list[Path] = []
+        speckit_root = cwd / ".specify" / "specs"
+        if speckit_root.is_dir():
+            for sub in speckit_root.iterdir():
+                if sub.is_dir():
+                    sp = sub / "spec.md"
+                    if sp.is_file():
+                        candidates.append(sp)
+        pp_specs = cwd / "vault" / "specs"
+        if pp_specs.is_dir():
+            for sp in pp_specs.glob("*.md"):
+                if sp.is_file():
+                    candidates.append(sp)
+        if not candidates:
+            return None
+        latest = max(candidates, key=lambda p: p.stat().st_mtime)
+        body = latest.read_text(encoding="utf-8")
+        if body.strip():
+            return (latest, body)
+    except Exception:
+        pass
+    return None
+
+
 def run(data) -> dict:
     try:
         data = data or {}
         prompt = str(data.get("prompt") or "")
         cwd = Path(data.get("cwd") or os.getcwd())
         mods = _match_modules(prompt, cwd)
-        if not mods:
+        spec = _active_spec(cwd)
+        if not mods and not spec:
             return {"continue": True}
 
         tier = _select_tier(prompt)
@@ -565,6 +604,35 @@ def run(data) -> dict:
         now = time.time()
         blocks, injected, deferred, tele = [], [], [], []
         total = 0
+
+        spec_injected_size = 0
+        if spec is not None:
+            spec_path, spec_body = spec
+            try:
+                rel = spec_path.relative_to(cwd)
+            except Exception:
+                rel = spec_path
+            spec_bytes = spec_body.encode("utf-8")
+            if len(spec_bytes) > SPEC_CAP_BYTES:
+                spec_body = spec_bytes[:SPEC_CAP_BYTES].decode(
+                    "utf-8", "ignore") + "\n\n[... spec truncated at " \
+                    f"{SPEC_CAP_BYTES} B cap; read {rel} for full text]\n"
+                spec_size = SPEC_CAP_BYTES
+            else:
+                spec_size = len(spec_bytes)
+            blocks.append(
+                f"=== ACTIVE PROJECT SPEC: {rel} (priority context, "
+                f"PASO -1 of the Apex Onboarding Standard) ===\n"
+                f"{spec_body}"
+            )
+            total += spec_size
+            spec_injected_size = spec_size
+            tele.append({"module": "__spec__", "tier": "active",
+                         "bytes": spec_size, "budget": BUDGET_BYTES,
+                         "programmatic": programmatic,
+                         "spec_path": str(rel)})
+            _log(f"sid={sid} spec-injected {rel} ({spec_size} B)")
+
         for m in mods:
             if m in state:
                 continue                     # already resident this session
@@ -593,17 +661,30 @@ def run(data) -> dict:
                 _emit_cache_hint(m, tier, rendered,
                                  f"vendor/apollo/upstream/{m}/SKILL.md")
 
-        if not injected:
+        if not injected and spec_injected_size == 0:
             return {"continue": True}
 
         _save_state(sid, state)
         _telemetry(sid, raw_sid, tele)
-        header = (
-            "## JIT Aggressive Activation — Apollo specialist module(s) "
-            f"loaded at tier={tier} (trigger matched this prompt/project).\n"
-            f"Injected ({total} B / {BUDGET_BYTES} B budget): "
-            f"{', '.join(injected)}."
-        )
+        if injected:
+            header = (
+                "## JIT Aggressive Activation — Apollo specialist "
+                f"module(s) loaded at tier={tier} (trigger matched this "
+                f"prompt/project).\n"
+                f"Injected ({total} B / {BUDGET_BYTES} B budget): "
+                f"{', '.join(injected)}."
+            )
+        else:
+            header = (
+                "## JIT Aggressive Activation — active project spec "
+                f"injected ({spec_injected_size} B); no Apollo trigger "
+                "matched this prompt."
+            )
+        if spec_injected_size > 0 and injected:
+            header += (
+                f" Active spec also injected as PASO -1 priority context "
+                f"({spec_injected_size} B)."
+            )
         if deferred:
             header += (
                 f" 40 KB budget reached — deferred (remain as 80-token "
@@ -611,7 +692,7 @@ def run(data) -> dict:
             )
         ctx = header + "\n\n" + "\n\n".join(blocks)
         _log(f"sid={sid} tier={tier} injected={injected} bytes={total} "
-             f"deferred={deferred}")
+             f"spec_bytes={spec_injected_size} deferred={deferred}")
         return {"continue": True, "additionalContext": ctx}
     except Exception as exc:                  # fail-open (Ley 24: logged)
         _log(f"ERROR {type(exc).__name__}: {exc}")
