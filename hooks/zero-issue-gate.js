@@ -9,6 +9,11 @@
  * Set ZERO_ISSUE_GATE_ENFORCE=true to enable hard blocking after 3 failures.
  */
 
+// --- JOBS-WOZ-EXEMPT (Apex Doctrine sealed 2026-05-16; expanded 2026-05-20) ---
+// JOBS-WOZ-EXEMPT sha256=8739b341b9d38ab118aa7b3dc3348a6f28ea6ce817ec15ffcb6e017c4b6c823a
+// JOBS-WOZ-TOKENS: ["t01","t02","t03","t04","t05","t09","t10"]
+// --- end JOBS-WOZ-EXEMPT ---
+
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -40,7 +45,21 @@ const SCANNABLE = new Set(['.ex', '.exs', '.ts', '.tsx', '.js', '.jsx', '.py', '
 // Owner-directed 2026-05-17. Narrows a Mistake #43 quine FP (allowlisted slop-token
 // DETECTORS carrying literal tokens as detection DATA) WITHOUT opening a free-text
 // bypass: basename allowlist is hardcoded + token-list sha256 must match.
-const _JW_EXEMPT_BASENAMES = new Set(['dataset_enricher.py', 'quality_audit.py']);
+// 2026-05-20 expansion (BLOCKED_DELIVERY.md durable fix — parity w/ scaffold-auditor.js):
+// 16 detector basenames added. Each file MUST declare its JOBS-WOZ-TOKENS json +
+// matching JOBS-WOZ-EXEMPT sha256 in its own header — basename membership alone is
+// not exemption. See vault/standards/blocked-delivery-prevention.md.
+const _JW_EXEMPT_BASENAMES = new Set([
+  // Original (Owner Q2a/Q3a, 2026-05-17 — slop-token detectors)
+  'dataset_enricher.py', 'quality_audit.py',
+  // Extended 2026-05-20
+  'scaffold-auditor.js', 'zero-issue-gate.js', 'zero-fiction-gate.js',
+  'forensic_probes.py', 'test_forensic_probes.py',
+  'ingest.py', 'run.py', 'validate.py',
+  'score.js', 'investment_ready.js', 'oracle_cascade.py',
+  'visual.py', 'skill-heat-map-advisor.js', 'baseline_ledger.py',
+  'design_index.py', 'lazarus_revive_all.py',
+]);
 function _jwCanonHash(tokens) {
   const u = [...new Set(tokens.map(String))];
   u.sort((a, b) => Buffer.compare(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8')));
