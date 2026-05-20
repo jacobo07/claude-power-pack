@@ -757,3 +757,61 @@ Two small successful operations beat one large operation with state-unknown roll
 **Empirical result on PP-side run.** Before fix: 70+ findings, 4 CRITICAL — BLOCKED_DELIVERY.md regenerated at failure_count=7. After fix (manual invocation of upgraded PP scaffold-auditor against the same tree): 52 findings, 0 CRITICAL. Remaining 52 are all Windows-script-encoding HIGH findings (.ps1/.bat/.cmd missing UTF-8 BOM + LF-only line endings — MC-OVO-133, separate scope).
 
 **Activation gap (Owner step).** PP hooks at `claude-power-pack/hooks/` carry the fix. LOOSE masters at `~/.claude/hooks/` are classifier-denied for direct Write under auto-mode; Owner must `Copy-Item ... -Force` both `scaffold-auditor.js` and `zero-issue-gate.js` from PP to loose, then the next Stop event uses the upgraded code and stops regenerating BLOCKED_DELIVERY.md. The activation commands are quoted verbatim in the Prevention Standard's "Activation" section.
+
+## Addendum 22 — Hard ban on `<bash> \| python -c '<heredoc>'` (2026-05-20, OVO Phase D internal-error)
+
+> *Numbering note: skipped 21 because two distinct "Addendum 20" headers exist in this file (lines 727 and 739 — concurrent-pane numbering collision, both legitimate, neither will be renamed retroactively per "integra sin clobber" doctrine). Future curator may collapse the collision; today's lesson takes A22 to keep monotonic file-position numbering.*
+
+**Trigger — repeated A16 violation.** During OVO Phase D verdict-stamp I composed `python oracle_delta.py --json 2>&1 | python -c "<inline heredoc parsing json>"` to extract `delta_id`. Tool returned `[Tool result missing due to internal error]`. **EXACTLY** the failure mode sealed in Addendum 16 (2026-05-19) — *"Bash-pipe-to-`python -c`"*. I knew the sealed lesson and shaped the call that way anyway. **Knowing-but-skipping a sealed lesson is itself a Mistake #38 regression** — applies recursively (per Addendum 19's self-recursion principle).
+
+**Permanent Rule (hard, no exceptions).** `<any bash command> | python -c '<heredoc>'` is FORBIDDEN. The same ban applies to `node -e '<heredoc>'` over piped input (identical root cause: shell escaping + tool-harness assumptions about stdin payload size + cross-process JSON-newline ambiguity). Substitute one of:
+
+1. **Write-and-read** (preferred): `cmd > /tmp/out.json 2>&1`, then `Read` the file, then process with a dedicated tool. Two safe ops > one fragile pipe.
+2. **Dedicated helper script**: if the parse logic is reusable, write `tools/_helpers/<name>.py` and call positionally — never inline.
+3. **Single-process Python** (only if the producer is also Python): `python -c "import subprocess; out = subprocess.check_output([...]).decode(); ..."` — keeps everything inside one process boundary, no shell pipe.
+
+**Mechanical pre-tool-call check.** Before any Bash tool call, mentally regex the command: if it matches `\\|\\s*(python|node)\\s+-[ec]`, REJECT and switch shape. The check is one mental regex, runs in <1 second, fires before tool dispatch. Cost of switching shape: ~10 tokens (one extra Bash to a file). Cost of internal-error: 2-3 turns of probe + lesson + retry + apology.
+
+**Why this is the THIRD lesson on the same root cause.** A16 sealed the technical trap. A22 (this) seals the *enforcement* — a sealed lesson is binding code, not a memo. If I shape a `| python -c` next session, this addendum is the receipt that I knew better. **Mistake #38 regression after a sealed lesson is itself a sealed Mistake, recursively** — applies to all future sessions until the harness mechanically rejects the shape (open question: add a Bash-pre-tool hook that vetoes the literal `| python -c` / `| node -e` pattern? cost ~30 LOC, benefit permanent).
+
+**Cross-ref.** A16 = technical trap. A18 = response discipline after error. A19 = chunking prevention for large Writes. A20 (line 727) = BL-0012 class-invariance for tiny Edits. A20 (line 739) = scaffold-auditor quine-FP class. A22 (this) = sealed-lesson enforcement. The seven compose: A19 + A22 prevent the trap, A20 verifies state if it fires, A18 surfaces recovery to the Owner.
+
+## 2026-05-20 — Tier-2 auto-compact + meta-error (3 lessons)
+
+1. **Failure-to-apply-own-vaccine (meta-error).** The Edit tool returned
+   `[Tool result missing due to internal error]` and the turn ended without
+   probing state. The exact vaccine for this case lives in MEMORY.md as
+   `feedback_internal_error_verify_before_retry` (BL-0012, 2026-05-01):
+   "state-unknown, not state-failed; probe target before retry to avoid
+   double-apply". I had the vaccine, did not apply it, the user had to
+   restart me. Vaccine reinforcement: on ANY tool result that says
+   "internal error", "missing due to", or returns no content, the very next
+   action MUST be a read-only probe of the target (Read + grep for the
+   new vs old marker) BEFORE any retry. No silent re-attempts. This applies
+   to Edit, Write, Bash, and any tool whose result is opacity.
+
+2. **Detached-spawn chain from Python subprocess silently no-ops on
+   Windows.** `subprocess.Popen([powershell.exe, ...],
+   creationflags=DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW,
+   close_fds=True)` from inside a python Stop hook produces NO daemon: no
+   log file written, no Add-Type, no flag consumption. Verified: the SAME
+   powershell command line spawned manually from bash works (daemon logs
+   `trigger consumed via SendKeys, fg=Cursor` in ~120 ms). Vaccine: use the
+   textbook Windows fire-and-forget pattern `cmd.exe /c start "" /B
+   powershell ... -File <script>`. The intermediate cmd exits immediately,
+   the started powershell survives. `creationflags=CREATE_NO_WINDOW` keeps
+   the cmd window hidden. Works in chained-detach contexts where direct
+   DETACHED_PROCESS silently fails.
+
+3. **WMI process count for "is daemon running?" can match its OWN query.**
+   `Get-WmiObject Win32_Process | Where-Object CommandLine -like
+   '*auto-compact-sendkeys-daemon*'` returns the query process itself
+   (its own CommandLine contains the literal pattern). False-positive
+   count = 1 even when no daemon exists. Vaccine for "process X running?"
+   on Windows: filter by something the query CANNOT match itself — e.g.,
+   require the path to start with `powershell.exe -NoProfile -WindowStyle
+   Hidden -ExecutionPolicy Bypass -File ` AND the command line NOT contain
+   `Get-WmiObject` or `Get-Process`. Or, more honestly, check by side-effect
+   (log file written, flag consumed, lock file present) — the artifact, not
+   the process table.
+
