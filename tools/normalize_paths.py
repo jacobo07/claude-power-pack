@@ -75,7 +75,81 @@ TEXT_SUFFIXES = {".js", ".mjs", ".cjs", ".ts", ".py", ".md", ".json",
 # --check but never gate-fails or rewrites.
 WHITELIST_HISTORICAL = {
     "vault/knowledge_base/session_lessons.md",
+    # errors.md is the same class as session_lessons.md: a frozen
+    # historical narrative naming past incidents (e.g. "Outbound SSH to
+    # 204.168.166.63 blocked"). Rewriting falsifies the audit record.
+    "vault/knowledge_base/errors.md",
 }
+
+# Per-file class allowlist. Each entry is `glob → set(of suppressed
+# classes)`. Suppressed hits still print under an ALLOWED tag (visible
+# evidence the allowlist is in effect) but do NOT contribute to the
+# gate-fail counters. Two classes:
+#   * "secret"     — suppress SECRET_RES hits in that file
+#   * "code-path"  — suppress code-class C:\Users\User\... hits
+# Every entry MUST carry a comment explaining WHY the suppression is
+# legitimate (not blanket; documented per file).
+import fnmatch as _fnmatch
+ALLOWLIST: dict[str, set[str]] = {
+    # ---- VPS-infrastructure modules: their *purpose* is to operate on
+    # the Owner's kobicraft VPS; the IP/host/user refs are operational
+    # config, not leaks.
+    "modules/agent-lightning/*":   {"secret"},
+    "modules/daemon/*":            {"secret"},
+    "modules/infrastructure/*":    {"secret"},
+    "modules/omnicapture/*":       {"secret"},
+    "modules/zero-crash/**":       {"secret"},
+    "tools/run_vps.sh":            {"secret"},
+    "tools/vps_validation_handoff.sh": {"secret"},
+    # ---- Self-aware auditor: this very file names the leak class in
+    # its docstring (matches PATH_RE in narrative text) + matches the
+    # SECRET_RES regex literals it defines. Both classes legitimate.
+    "tools/normalize_paths.py":    {"secret", "code-path", "doc-path"},
+    # ---- hook-dispatcher.js carries a comment that quotes the OLD
+    # literal (`C:/Users/User/AppData/...`) as the audit-2026-05-19
+    # before-state inside the explanation of the portable-fallback fix.
+    # Rewriting the literal makes the comment vacuous (the comment
+    # documents what *was* hardcoded — the fix itself is in the code).
+    "hooks/hook-dispatcher.js":    {"doc-path"},
+    # ---- Inventory metadata: agents.json documents redaction reasons
+    # by name (e.g. "redact_reason: references VPS IP ..." literal).
+    "tools/_inventory/agents.json":{"secret"},
+    # ---- Historical narrative: a frozen incident log naming a past
+    # event (e.g. "Outbound SSH to 204.168.166.63 blocked 2026-04-22").
+    # Same class as the session_lessons.md WHITELIST_HISTORICAL entry,
+    # which covers path-leak only; this covers the secret-class hit.
+    "vault/knowledge_base/errors.md": {"secret"},
+    # ---- Doc-class refs naming the Owner's daemon as an example.
+    "agents/oneshot-architect-auditor.md": {"secret"},
+    "SSOT.md":                     {"secret"},
+    # ---- Governance dataset describing the host/router constraint by
+    # example in a description field.
+    "modules/governance-overlay/mistake-frequency.json": {"secret"},
+    # ---- Code-path-pinned Windows operational tools. Their docstrings
+    # already declare host-pinning. Not portability candidates.
+    "tools/sovereign_miner.py":    {"code-path"},
+    "tools/merger.py":             {"code-path"},
+    "tools/quality_audit.py":      {"code-path"},
+    "tools/reconstructor.py":      {"code-path"},
+    "tools/vault_search.py":       {"code-path"},
+    # ---- The mirror verifier itself: `HARDCODED_REPO` is a *fallback*
+    # used only when env detection fails (documented in its docstring);
+    # the PAIRS list literals are the source-of-truth pair definitions.
+    "tools/verify_global_mirrors.py": {"code-path"},
+    # ---- Test fixture: assertion body intentionally uses an absolute
+    # `C:/Users/User/.claude/commands/resume.md` literal to prove the
+    # guard *blocks* writes to that exact path. Parametrising would
+    # change the test's semantics.
+    "modules/session-continuity/tests/guard.test.js": {"code-path"},
+}
+
+
+def _allowed(rel: str, klass: str) -> bool:
+    """Return True if `rel` matches an ALLOWLIST entry suppressing `klass`."""
+    for pat, classes in ALLOWLIST.items():
+        if klass in classes and _fnmatch.fnmatch(rel, pat):
+            return True
+    return False
 
 # Comment-line heuristics — only "doc" lines are safe to bulk-rewrite.
 # Code-string-literal lines must be hand-fixed with a portable derivation
@@ -215,6 +289,12 @@ def main() -> int:
     rewritten = 0
     secret_files_with_hits: set[Path] = set()
     total_secret_hits = 0
+    allowed_code_hits = 0
+    allowed_secret_hits = 0
+    allowed_doc_hits = 0
+    allowed_code_files: set[Path] = set()
+    allowed_secret_files: set[Path] = set()
+    allowed_doc_files: set[Path] = set()
 
     for f in files:
         text = _read(f)
@@ -222,6 +302,9 @@ def main() -> int:
             continue
         rel = f.relative_to(REPO).as_posix()
         is_whitelisted = rel in WHITELIST_HISTORICAL
+        code_path_allowed = _allowed(rel, "code-path")
+        secret_allowed = _allowed(rel, "secret")
+        doc_path_allowed = _allowed(rel, "doc-path")
 
         if not args.secrets_only:
             new_text, changes = _normalize_for(text, f)
@@ -231,22 +314,34 @@ def main() -> int:
                         whitelisted_files_with_hits.add(f)
                         total_whitelisted_hits += 1
                         tag = "WHITELIST"
+                    elif kind == "code" and code_path_allowed:
+                        allowed_code_files.add(f)
+                        allowed_code_hits += 1
+                        tag = "ALLOW-P"
                     elif kind == "code":
                         code_files_with_hits.add(f)
                         total_code_hits += 1
                         tag = "CODE  "
+                    elif kind == "doc" and doc_path_allowed:
+                        allowed_doc_files.add(f)
+                        allowed_doc_hits += 1
+                        tag = "ALLOW-D"
                     else:
                         doc_files_with_hits.add(f)
                         total_doc_hits += 1
                         tag = "DOC   "
                     print(f"{tag} {rel}:{lineno}")
                     print(f"  -  {before}")
-                    if kind == "doc" and not is_whitelisted:
+                    if kind == "doc" and not is_whitelisted and not doc_path_allowed:
                         print(f"  +  {after}")
-                    elif kind == "code":
+                    elif kind == "doc" and doc_path_allowed:
+                        print(f"  ~  allowlisted (narrative documents the audit pattern)")
+                    elif kind == "code" and not code_path_allowed:
                         print(f"  !  manual fix required (replace with "
                               f"os.homedir() / Path.home() / "
                               f"process.env.USERPROFILE)")
+                    elif kind == "code" and code_path_allowed:
+                        print(f"  ~  allowlisted (host-pinned by design)")
                 if args.apply and not is_whitelisted:
                     # only doc-classified lines were rewritten inside
                     # new_text (_normalize_for guarantees code lines
@@ -258,10 +353,16 @@ def main() -> int:
         if not args.paths_only:
             hits = _scan_secrets(text)
             if hits:
-                secret_files_with_hits.add(f)
-                total_secret_hits += len(hits)
-                for lineno, label, excerpt in hits:
-                    print(f"SECRET[{label}]  {rel}:{lineno}  {excerpt}")
+                if secret_allowed:
+                    allowed_secret_files.add(f)
+                    allowed_secret_hits += len(hits)
+                    for lineno, label, excerpt in hits:
+                        print(f"ALLOW-S[{label}]  {rel}:{lineno}  {excerpt}")
+                else:
+                    secret_files_with_hits.add(f)
+                    total_secret_hits += len(hits)
+                    for lineno, label, excerpt in hits:
+                        print(f"SECRET[{label}]  {rel}:{lineno}  {excerpt}")
 
     print()
     print(f"scanned files     : {len(files)}")
@@ -270,7 +371,9 @@ def main() -> int:
     print(f"path-leak (code)  : {total_code_hits} in {len(code_files_with_hits)} file(s)"
           + " — MANUAL FIX REQUIRED" if total_code_hits else "")
     print(f"path-leak (hist.) : {total_whitelisted_hits} in {len(whitelisted_files_with_hits)} file(s) — WHITELISTED")
+    print(f"path-leak (allow) : {allowed_code_hits} in {len(allowed_code_files)} file(s) — ALLOWLISTED (host-pinned)")
     print(f"secret hits       : {total_secret_hits} in {len(secret_files_with_hits)} file(s)")
+    print(f"secret (allow)    : {allowed_secret_hits} in {len(allowed_secret_files)} file(s) — ALLOWLISTED (VPS-ops/meta)")
 
     # Exit policy:
     #   secrets present                -> always exit 1 (STOP — Owner review)
