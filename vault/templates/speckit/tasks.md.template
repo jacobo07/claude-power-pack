@@ -1,0 +1,69 @@
+# Task List: [FEATURE_NAME]
+
+**Feature**: `[feature-id]`
+**Sibling of**: `spec.md`, `plan.md`
+**Created**: [DATE]
+
+> Mechanical breakdown of `plan.md` into ordered atomic actions. Authored via `/speckit-tasks`. Executed via `/speckit-implement`.
+
+## Parallel-marker convention
+
+- `[P]` after the task ID = can run in parallel with other `[P]` tasks at the same depth.
+- No marker = must run serial after the prior task completes.
+- Parallel tasks MUST share no file targets (no write races).
+
+## Tasks
+
+### T-001 [P]: [One-line action]
+- **Action**: [create-file | edit-function | run-command | write-test | ...]
+- **Targets**: [file1, file2, ...]
+- **Pre-condition**: [what must exist before this task can run]
+- **Post-condition**: [what proves it ran correctly]
+- **Verification**: `[exact shell command that returns 0 on success]`
+- **Trace**: [FR-### or US-### that drives this task]
+- **Commit**: `[type]([scope]): T-001 [one-line]`
+
+### T-002: [One-line action]
+- **Action**: [...]
+- **Targets**: [...]
+- **Pre-condition**: T-001 complete
+- **Post-condition**: [...]
+- **Verification**: `[exact command]`
+- **Trace**: [FR/US]
+- **Commit**: `[type]([scope]): T-002 [one-line]`
+
+### T-003 [P]: [One-line action]
+- **Action**: [...]
+- **Targets**: [...]
+- **Pre-condition**: [...]
+- **Post-condition**: [...]
+- **Verification**: `[exact command]`
+- **Trace**: [FR/US]
+- **Commit**: `[type]([scope]): T-003 [one-line]`
+
+[... add more tasks until the plan is fully covered. Total task count predicts total commit count.]
+
+## Progress
+
+`/speckit-implement` updates this section automatically:
+
+- [ ] T-001
+- [ ] T-002
+- [ ] T-003
+- [ ] ...
+
+## Cross-references
+
+| Task | Parent FR/US | Plan section |
+|------|--------------|--------------|
+| T-001 | FR-001 | Sequencing step 1 |
+| T-002 | FR-002 | Sequencing step 1 |
+| T-003 | US-1 | Sequencing step 2 |
+| ... | ... | ... |
+
+## Power Pack Reality Contract (inherit)
+
+- Every task's Verification command is REAL and runs on this host. "Tests pass" is not enough; it must be `pytest tests/feature/test_x.py::test_y -v` and exit 0.
+- A task is `[x]` ONLY after its Verification command returns 0.
+- Total `T-###` count predicts total commit count (Micro-Commit Discipline).
+- Three consecutive Verification failures on the same task = STOP and surface, do not bypass.

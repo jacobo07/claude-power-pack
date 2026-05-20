@@ -1,0 +1,66 @@
+# Technical Plan: [FEATURE_NAME]
+
+**Feature**: `[feature-id]` (sibling of `spec.md`)
+**Created**: [DATE]
+**Status**: Draft
+
+> Translates spec into stack, architecture, file map, sequencing. Authored via `/speckit-plan` AFTER `spec.md` is clarification-free.
+
+## Inputs (read-only)
+
+- `.specify/memory/constitution.md` — principles to honor
+- `./spec.md` — what to build
+- (none else; the plan is generated from these two)
+
+## Stack
+
+| Layer | Choice | Justification (link to principle / FR) |
+|-------|--------|---------------------------------------|
+| Language | [e.g. Python 3.11+] | [Constitution Principle III "Test-First": rich pytest ecosystem] |
+| Framework | [e.g. FastAPI] | [FR-007 "support concurrent users": ASGI native] |
+| Storage | [e.g. PostgreSQL 15] | [FR-004 "persist 30 days": durable transactional store] |
+| Test | [e.g. pytest + hypothesis] | [Principle III: property-based testing] |
+| CI | [e.g. GitHub Actions] | [Principle IV "Integration Testing": matrix builds] |
+
+## File Map
+
+Every file the plan creates or modifies. One-line purpose.
+
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/[module]/[file].py` | create | [one-line role] |
+| `tests/[feature]/test_[scenario].py` | create | [one-line scenario] |
+| `[config-file]` | edit | [one-line change] |
+
+## Sequencing
+
+> Linear graph. Each step compiles + tests cleanly before the next starts. No leap-frog dependencies.
+
+1. **[Step 1 name]** — [files touched] — [verification command]
+2. **[Step 2 name]** — [files touched] — [verification command]
+3. **[Step 3 name]** — [files touched] — [verification command]
+4. ...
+
+## Risk Register
+
+| Risk | Trigger | Impact | Rollback |
+|------|---------|--------|----------|
+| [Risk 1] | [What surfaces it] | [P1/P2/P3 user story affected] | [How to undo cleanly] |
+| [Risk 2] | [Trigger] | [Impact] | [Rollback] |
+
+## Done-Gate (REAL commands, every one runs in this repo)
+
+These exact commands must exit 0 to mark the feature complete. They run on the actual host, not aspirations.
+
+```
+[command 1, e.g. pytest tests/feature/ -v]
+[command 2, e.g. python tools/verify_full_install.py]
+[command 3, e.g. node tools/test_l3_intent.js]
+```
+
+## Power Pack Reality Contract (inherit)
+
+- Every numeric claim ("<2s latency", "70% compression") is either measured upstream OR explicitly flagged as a hypothesis to verify in `/speckit-implement`.
+- The Done-Gate is what `/ovo-audit` runs before allowing push.
+- Micro-Commit Discipline: the sequencing section maps 1:1 onto the commit chain.
+- Mistake #16: "code compiles" ≠ "feature works". Done-Gate is the only proof.
