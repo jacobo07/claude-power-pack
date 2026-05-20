@@ -117,6 +117,17 @@ composes every sub-verifier as a real subprocess row. No row is a
 fabricated boolean. If a sub-verifier is missing, the row surfaces
 as `MISSING` (red) — never silently skipped.
 
+**`verify_spp.py` exit 0 is the absolute Done-Gate.** Owner-corrected
+doctrine, 2026-05-20: a STRICT-FAIL row is a real failure regardless
+of how the failure can be classified ("doctrine-by-design",
+"pre-existing", "budget-tight under nested subprocess", etc.). Such
+classifications are diagnostic notes; they do not modify the gate.
+Pre-existing FAILs are technical debt and the contract is to close
+them, not label them. The only ADVISORY-tag the standard permits is
+`programmatic-budget`, and only because its scope is Owner-side
+config (a missing `budget.json` on a fresh install), not a defect
+in the verifier surface.
+
 Strict rows (each must exit 0):
 * `mirror-parity` — `tools/verify_global_mirrors.py`.
 * `drift-report` — `tools/drift_report.py`.

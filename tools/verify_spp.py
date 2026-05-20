@@ -55,19 +55,12 @@ ADVISORY_ROWS: set[str] = {
     # missing budget.json or stale pricing is an Owner-side concern,
     # not an S++ gate failure on a fresh install.
     "programmatic-budget",
-    # l3-engine: real end-to-end test of the L3 mechanism via a
-    # claude.exe -p child spawn. When verify_spp.py is invoked from
-    # *inside* an active claude.exe session (the common case during
-    # iterative development), parent+child contend for the same
-    # auth/cache/model and child latency degrades monotonically over
-    # the session (observed: 117s -> 121s -> 181s -> 300s+ in
-    # successive runs). Standalone (no claude.exe parent) the child
-    # completes in ~117s. The L3 mechanism itself is correct -- the
-    # ADVISORY tag reflects an *architectural constraint of the test
-    # harness*, not a real-world correctness gap. For a hard gate,
-    # run `node tools/test_l3_intent.js` in a fresh shell with no
-    # claude.exe parent: exit 0 there is the canonical L3-OK signal.
-    "l3-engine",
+    # NOTE (2026-05-20, Owner-correction): the prior ``l3-engine``
+    # advisory entry was REMOVED. Owner-directive rejected "classified
+    # FAIL" framings: verify_spp.py exit 0 means 7/7 strict-OK. The
+    # parent/child contention pattern documented earlier is real but
+    # is no longer a license to advisory-tag; the row must pass
+    # under realistic umbrella conditions or be repaired upstream.
 }
 
 ROW_BUDGET_S = 60   # individual row cap; the L3 row needs the bulk of this
