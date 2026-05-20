@@ -327,3 +327,51 @@ The 4-clause S+ Criteria block (Telemetry / Feedback loop / RTK+JIT coordinated 
 **5. Apex Onboarding.** No feature is DONE until a stranger who only has the GitHub URL can run `git clone <url> && cd claude-power-pack && ./install-global.{ps1,sh} && python tools/verify_full_install.py` and see exit 0 in under 5 minutes wall-clock. The full standard with the four onboarding pillars (umbrella row + install-global step + INSTALL.md section + clean-machine verification) lives in `vault/knowledge_base/apex_baseline_doctrine.md` "Apex Onboarding Standard".
 
 Effective 2026-05-19 for all NEW features. Pre-existing features grandfathered. Combined with the Programmatic Budget Gate (already sealed), this means: post-cutover features must ship both the per-call savings AND the new-operator reach. A feature with great savings that a new operator cannot install is non-conformant by the new combined gate.
+
+## Spec-Driven Gate (sealed 2026-05-20, PASO -1)
+
+Spec Kit (github.com/github/spec-kit) integration adds a NEW phase that precedes every other gate in this standard. The order becomes:
+
+1. **PASO -1 (NEW)** — Spec-Driven Gate (this section)
+2. PASO 0 — Apex Onboarding Standard (git clone → S++ in <=5 min)
+3. S+ Criteria — Telemetry / Feedback loop / RTK+JIT coordinated / Negative space all skills
+4. Programmatic Budget Gate (advisory until 2026-06-14, mandatory after)
+
+### Mandate
+
+Every NEW feature on the Power Pack post-2026-05-20 starts with an approved `spec.md` produced via `/speckit-spec`. No agent writes implementation code without a `tasks.md` that traces task-by-task back to the parent `spec.md`. The seven PP commands implementing this gate are at `commands/speckit-{constitution,spec,plan,tasks,implement,clarify,analyze}.md` (commit `feat(speckit): 7 PP commands — full SDD workflow integrated`).
+
+### The four pre-implementation artifacts
+
+A feature is NOT eligible for `/speckit-implement` until all four of these exist on the feature branch:
+
+1. `.specify/memory/constitution.md` — project principles (per-project, distinct from global apex doctrine), generated from `vault/templates/speckit/constitution.md.template`.
+2. `.specify/specs/<feature-id>/spec.md` — feature spec with P1/P2/P3 user stories, FR-### functional requirements, SC-### measurable success criteria, structured ambiguity markers (`[NEEDS CLARIFICATION: ...]`), Edge Cases, Assumptions, and a Clarifications audit-trail. Generated from `vault/templates/speckit/spec.md.template`.
+3. `.specify/specs/<feature-id>/plan.md` — stack + file map + sequencing graph + risk register + Done-Gate REAL commands. Every stack choice traces to a constitution principle or an FR. Generated from `vault/templates/speckit/plan.md.template`.
+4. `.specify/specs/<feature-id>/tasks.md` — atomic T-### tasks with pre/post/verify-command, FR/US trace, [P] parallel marker, 1:1 task↔commit mapping. Generated from `vault/templates/speckit/tasks.md.template`.
+
+### Cross-artifact consistency
+
+`/speckit-analyze` runs against these four artifacts BEFORE `/speckit-implement` and reports drifts as BLOCKING / CONSISTENCY / INFO. Any BLOCKING drift bars implementation until it resolves. Complements OVO post-commit verdict.
+
+### JIT injection of the active spec
+
+When the JIT loader (`tools/jit_skill_loader.py` UserPromptSubmit hook) detects `.specify/specs/<id>/spec.md` or `vault/specs/<feature>.md` in the project cwd, it prepends the most-recently-modified spec as priority context before any Apollo trigger module. The spec counts against the same 40 KB BL-0068 budget, capped at 24 KB so Apollo modules always have room. This means the implementing agent has the spec inline in every prompt, eliminating the "what does the feature require?" round-trip.
+
+### Reality Contract enforcement
+
+- Zero preventable clarifications during implement: if the implementing agent needs to ask a question whose answer is in the spec, the template is incomplete and MUST be iterated (not the spec).
+- Every commit during implement cites a `T-###` task ID.
+- Every task's verification command is REAL — runs on this host and exits 0 — before the task is `[x]`'d.
+- The gate is mandatory for features authored 2026-05-20 onward. Pre-existing features are grandfathered.
+
+### Gate condition
+
+A feature passes the Spec-Driven Gate when:
+
+- All four artifacts (constitution, spec, plan, tasks) exist on the feature branch.
+- `spec.md` contains ZERO `[NEEDS CLARIFICATION]` markers (all resolved via `/speckit-clarify`).
+- `/speckit-analyze` last report has ZERO BLOCKING drifts.
+- Every task in `tasks.md` traces to a parent FR-### or US-###.
+
+Implementations that bypass the gate by writing code without these artifacts CANNOT pass OVO at verdict >= A and CANNOT be pushed under the OVO push gate.
