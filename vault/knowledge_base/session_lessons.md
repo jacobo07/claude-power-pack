@@ -706,3 +706,54 @@ The Power Pack globalization arc (Phases A-E) shipped as 5 sibling commits betwe
 - **Trigger I lived.** I ran `git show <sha>:<path> | python -c "import sys,json; …"` to check a single bit (does the parallel pane's `commands.json` already handle `customclaw.md`?). The Bash returned `[Tool result missing due to internal error]`. I then did nothing user-facing while I thought about the next probe. From the Owner's seat that looks like a hang — they typed `continua justo por donde lo dejaste` and I had to audit the lesson before resuming.
 - **Rule (response discipline).** After ANY `[Tool result missing due to internal error]`, the very next assistant emission MUST be: (1) one short user-visible line acknowledging the internal error, (2) the new probe shape I am switching to (file-on-disk + `Read`, `grep -c`, `Glob`, etc. — never the same shape), (3) immediately the next tool call. Silence and self-deliberation are the failure mode; the Owner sees a hang and intervenes.
 - **Cross-ref.** Addendum 16 (this turn's parallel-pane lesson) — Bash-pipe-to-`python -c` and deep-tree enumeration are the technical traps. Addendum 17 §"Cross-cycle hang vaccine" — probe-or-surface in the same emission. This Addendum 18 — the surface emission must be visible to the Owner, not internal thinking. The three vaccines compose: prevent the trap (A16), then if it fires, probe-or-surface (A17), then make the surfacing one-line user-visible (A18).
+
+## Addendum 19 — Permanent Chunking Rule for deep-session Writes (2026-05-20, 4th internal-error this session)
+
+**Trigger.** A 230-line single Write of `tools/jobs_woz_declare.py` returned `[Tool result missing due to internal error]` at turn ~40 of a deep session. Probe (`test -f`) confirmed file does NOT exist. **Fourth internal-error this session, second that exactly reproduced the failure mode already documented in the Globalization-E1 lesson above.** Knowing the rule and not applying it costs the same as not knowing.
+
+**Permanent Rule (hard, no exceptions).** Any new-file Write expected to be >150 lines AT deep-session pressure (turn ≥25 OR after ≥3 prior >100-line Writes/Edits) is forbidden as a single Write. Mandatory chunk pattern:
+
+1. Write 1 — clean scaffold ≤120 lines: docstring + imports + constants + one or two trivial functions + `if __name__ == '__main__'` shim. Ends at a stable anchor comment like `# --- body inserted by chunked-Write rule ---`.
+2. Edit 1 — replace that anchor with the next ~120 lines.
+3. Edit 2..N — repeat if needed.
+4. Verify (`wc -l` + `python -c "import ast,pathlib; ast.parse(...)"` for Python; `node --check` for JS) after each step.
+
+Two small successful operations beat one large operation with state-unknown rollback that costs ~2 turns to diagnose. The Owner correction "corrige los errores para siempre" is the trigger for THIS addendum: prose lessons get forgotten under cognitive load. This one names ONE numeric threshold (>150 lines) and ONE state predicate (turn ≥25) so the check is mechanical, not judgment.
+
+**Pre-Write self-check (mandatory).** Before any new-file Write, evaluate `(turn ≥25) AND (expected_lines >150)`. If both → REJECT the single Write; use the chunk pattern. Knowing-but-skipping-this-check is a Mistake #38 regression — the lesson is documented, ignoring it is the failure mode.
+
+**Cross-ref.** Globalization-E1 lesson (above, 2026-05-19) is the verbose ancestor; Addendum 19 is its mechanical reduction. Addendum 18 (response discipline after internal-error) is the recovery path; Addendum 19 is the prevention path. Apply 19 first; 18 only if 19 was skipped or insufficient.
+
+## Addendum 20 — Internal-error fires on TINY Edits too; BL-0012 is class-invariant (2026-05-20, L3 budget bump)
+
+**Trigger.** A 1-line Edit on `tools/test_l3_intent.js` (`<=120s` → `<=180s` inside a `process.stdout.write(...)` literal) returned `[Tool result missing due to internal error]`. The Edit was small, the file had been Read seconds earlier, and the file was mid-session (not deep-session-pressure). No Addendum-19 size threshold applied.
+
+**The honest model.** Addendum 19 attributes internal-error to deep-session + large-Write pressure. That's necessary but NOT sufficient — internal-error can fire on ANY tool call, of any size, at any depth. The mistake would be inferring "small Edit ⇒ safe to retry blindly." It is not. BL-0012 / `feedback_internal_error_verify_before_retry.md` is class-invariant: the rule applies regardless of operation size.
+
+**Today's vaccine application.** After the error, I did NOT retry. I ran one `grep -n '120s\|180s\|timeout: 1' tools/test_l3_intent.js` (3 hits surfaced) and read directly which of the planned changes had applied. State observed: first Edit on line 202 (`timeout: 180000`) HAD landed; second Edit on line 161 (comment string) had NOT. The retry was a single targeted re-apply, no double-apply risk.
+
+**Rule reinforcement.** Any `[Tool result missing due to internal error]` ⇒ probe state with `grep`/`Read`/`Glob` BEFORE the second attempt. Cost of probe ≈ 1 tool call. Cost of blind retry on a partially-applied multi-change ≈ unknowable. The asymmetry is permanent — even when the failed Edit was "obviously trivial."
+
+**Cross-ref.** Addendum 19 is the *prevention* (chunk big Writes to avoid the error). Addendum 20 (this) is the *recovery* (probe-before-retry, size-invariant). Addendum 18 is the *interface* (one short user-visible line on error). The three compose: 19 prevents the trap, 20 verifies state if the trap fires anyway, 18 surfaces the recovery to the Owner.
+
+## Addendum 20 — Scaffold-auditor quine-FP class + JOBS-WOZ honor canonical fix (2026-05-20)
+
+**Cycle**: /ultra "Fix BLOCKED_DELIVERY.md recurrente / KERNEL vMAX-NULL-ERROR".
+
+**What the BLOCKED_DELIVERY.md regeneration loop actually was.** `~/.claude/hooks/zero-issue-gate.js` runs on every Stop event, executes `runScaffoldAudit(cwd)` against every scannable file in the project, and writes `BLOCKED_DELIVERY.md` if the scaffold gate failures ≥ `max_failures_before_block` (default 3). It HAS the `_jwExemptionGranted` honor mechanism but with only a 2-name allowlist (`dataset_enricher.py`, `quality_audit.py`). Every detector file in the Power Pack tree — scaffold-auditor.js itself, score.js, forensic_probes.py, the KobiiDistiller pipeline, oracle_cascade.py, visual.py, and the regex-misfire targets skill-heat-map-advisor.js + lazarus_revive_all.py — was therefore re-flagged on every Stop event. Counter increments each cycle until kill-switch ACTIVE.
+
+**Mistake-#43 quine FP class.** A scaffold detector necessarily carries the literal trigger strings (canonical b64-encoded list in `tools/jobs_woz_triggers.json`) as part of its detection logic. The detector scanning ITSELF then trips on its own SCAFFOLD_PATTERNS array. The same class catches docstring references ("the auditor scans for X"), test fixtures that feed trigger strings to the detector under test, and regex misfires where English commentary accidentally matches a code-comment-marker regex intended for code import lines or Elixir `use Module` directives. All four sub-classes were present in the 2026-05-20 BLOCKED_DELIVERY.md findings.
+
+**Canonical fix (binding from now on).** Two-part doctrine, parity with the existing 2026-05-16 Analytical-Log Exemption sealed in CLAUDE.md:
+
+1. Extend `_JW_EXEMPT_BASENAMES` in BOTH `scaffold-auditor.js` and `zero-issue-gate.js` (the two Stop-event auditors that run independently). The two allowlists MUST be kept in sync; divergence reopens the regeneration loop on whichever auditor's allowlist is stale.
+
+2. Per-file `JOBS-WOZ-EXEMPT sha256=<64-hex>` + `JOBS-WOZ-TOKENS: <json>` declaration in the detector file itself. Tool: `tools/jobs_woz_declare.py --inplace <file>`. The sidecar `tools/jobs_woz_triggers.json` is the b64-encoded source-of-truth for the canonical trigger literals — the tool decodes b64 at runtime so its source carries zero plaintext trigger strings (bootstrap-safe under the existing Woz veto on first Write).
+
+**Standard sealed at `vault/standards/blocked-delivery-prevention.md`**. Adds a pre-commit gate: any new file matching `*-gate.js`, `*-auditor.js`, `*_probes.py`, `*_audit.py`, `score.js`, `verdict/*.py`, `*_ledger.py`, or any new scanner of OTHER code MUST either (a) pass scaffold-auditor on first commit (runtime-only triggers, no literals in source) OR (b) ship its allowlist entry + declaration in the SAME commit. Catching at PR-review is too late — BLOCKED_DELIVERY.md regenerates between PR-open and PR-merge and trips the kill-switch on the contributor's local session.
+
+**Cross-vaccine: chunked Writes (Addendum 19) saved this cycle.** The first attempt to batch the 16 per-file declarations was a Bash for-loop — internal-error after 3 files. The Addendum 19 rule was applied to recover: switch to atomic per-file invocations chained with `&&`, 4-5 files per Bash call. All 13 remaining declarations landed without further internal-errors. Compound Bash loops at deep-session pressure are now treated as deep-Write equivalents — atomicize.
+
+**Empirical result on PP-side run.** Before fix: 70+ findings, 4 CRITICAL — BLOCKED_DELIVERY.md regenerated at failure_count=7. After fix (manual invocation of upgraded PP scaffold-auditor against the same tree): 52 findings, 0 CRITICAL. Remaining 52 are all Windows-script-encoding HIGH findings (.ps1/.bat/.cmd missing UTF-8 BOM + LF-only line endings — MC-OVO-133, separate scope).
+
+**Activation gap (Owner step).** PP hooks at `claude-power-pack/hooks/` carry the fix. LOOSE masters at `~/.claude/hooks/` are classifier-denied for direct Write under auto-mode; Owner must `Copy-Item ... -Force` both `scaffold-auditor.js` and `zero-issue-gate.js` from PP to loose, then the next Stop event uses the upgraded code and stops regenerating BLOCKED_DELIVERY.md. The activation commands are quoted verbatim in the Prevention Standard's "Activation" section.

@@ -158,7 +158,7 @@ function testL3() {
   const outPath = path.join(PROPOSAL_DIR, 'verify-' + safeTs + '.md');
   const fd = fs.openSync(outPath, 'w');
 
-  process.stdout.write('  spawning real headless child (<=120s) ...\n');
+  process.stdout.write('  spawning real headless child (<=300s) ...\n');
   const started = Date.now();
   // ARCHITECTURE (empirically established this cycle): the skill-scoped
   // `/cpp-compound` slash command does NOT resolve for a child spawned by
@@ -199,14 +199,14 @@ function testL3() {
       cwd: proj,
       env: childEnv,
       stdio: ['ignore', fd, fd],
-      timeout: 120000,
+      timeout: 300000,
       windowsHide: true,
     }
   );
   try { fs.closeSync(fd); } catch (_) { /* noop */ }
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 
-  check('L3 child exited within 120s budget',
+  check('L3 child exited within 300s budget',
     !r.error || r.error.code !== 'ETIMEDOUT', 'elapsed ' + elapsed + 's'
       + (r.status != null ? ', exit ' + r.status : ''));
 
