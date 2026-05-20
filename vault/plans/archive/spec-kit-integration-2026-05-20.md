@@ -115,3 +115,7 @@ Gate: real run on a synthetic feature; transcript shows zero back-and-forth that
 - Templates pass the slop-detector clean by construction.
 - "Zero preventable clarifications" means: on the synthetic verification, the implementing agent does NOT ask a question whose answer is in the spec. Any such question = template gap = iterate.
 - Spec ↔ plan ↔ tasks drift is caught by `/speckit-analyze` BEFORE implementation; OVO confirms post-commit.
+
+---
+
+> **Superseded 2026-05-20** by the completion plan at `~/.claude/plans/sorted-crafting-hanrahan.md` (executed same day). C1-C4 shipped by sibling pane commits `c10d2ad`, `567e9ac`, `fcbcdb5`, `ac45fdb`. Remaining tasks completed by completion plan: 2 session lessons (`vault/lessons/parallel-explore-cascade.md` + `plan-files-not-allowlisted.md`), PP-side cross-link in `apex_baseline_doctrine.md`, `tools/test_speckit.py` 6/6 PASS, structural E2E artifact at `vault/lessons/speckit-e2e-2026-05-20.md`. Live `/speckit-*` chain + `/cpp-ovo-audit` remain as Owner-driven actions.
