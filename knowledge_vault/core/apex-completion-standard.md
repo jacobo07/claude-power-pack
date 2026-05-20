@@ -375,3 +375,64 @@ A feature passes the Spec-Driven Gate when:
 - Every task in `tasks.md` traces to a parent FR-### or US-###.
 
 Implementations that bypass the gate by writing code without these artifacts CANNOT pass OVO at verdict >= A and CANNOT be pushed under the OVO push gate.
+
+---
+
+# Context Pressure Standard
+
+> Sealed 2026-05-20 (audio-instructed via Downloads/20260520_152847.mp4).
+> Fourth DONE axis, peer to JIT Activation Law, Concurrency & Async-Audit,
+> and Zero-Drift Mirror. Universal: every pane, tab, session, project — no
+> exceptions.
+
+## The law
+
+When a session's used-context-percentage crosses defined thresholds, the
+harness MUST react autonomously — never wait for an Owner-typed command to
+save state or to compact.
+
+- **60 % used** -> Tier-1 silent snapshot to `vault/progress.md` and
+  `vault/sleepy/context_snapshots.jsonl`. Once per session, debounced.
+- **70 % used** -> Tier-2 atomic kclear-equivalent write BEFORE any
+  /compact emits: `memory/project_session_handoff.md` (replace) +
+  `vault/knowledge_base/session_lessons.md` (append) +
+  `_audit_cache/insights.json` (update) +
+  `vault/telemetry/context_watchdog/<ts>_<sid8>.json` (empirical evidence).
+  Then drop the SendKeys-daemon trigger flag and spawn the daemon.
+
+## Save-then-free invariant
+
+Vault writes ALWAYS precede the /compact dispatch line. The kclear-equivalent
+runs mechanically inside the Stop hook (no LLM available there) and captures
+the structural floor: last assistant summary line, last user prompts (<=5),
+session_id, used_pct, cwd, transcript_path. Empty fields are honest empty;
+padding with LLM-fluff is forbidden (same posture as `kclear.md` v3).
+
+## BL-0003 + the SendKeys bypass
+
+Hooks CANNOT directly auto-fire a slash command — that ban (BL-0003) is
+intact. The honest zero-keystroke path is the out-of-band SendKeys daemon
+at `~/.claude/hooks/auto-compact-sendkeys-daemon.ps1`: it polls
+`auto-compact-trigger.flag`, checks the foreground window's process name
+WITHOUT focus theft, and either presses Enter (when Cursor is focused) or
+demotes the trigger to `auto-compact-pending.flag` for the next cycle. This
+is the same precedent `/restart` Path 2 already uses. Honest 1-keystroke
+fallback is preserved when Cursor is not in front.
+
+## Spawn invariant (Python -> daemon)
+
+A direct `subprocess.Popen` with `DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP`
+from inside a Python Stop hook silently NO-OPS in chained-detach contexts
+(verified 2026-05-20). The textbook fire-and-forget pattern that DOES work:
+`cmd.exe /c start "" /B powershell ... -File <daemon>` with
+`creationflags=CREATE_NO_WINDOW`. The intermediate cmd exits immediately;
+the powershell daemon survives. Mandatory for any future "watchdog spawns
+detached helper from Python" pattern.
+
+## DONE-gate
+
+`_TEST_CONTEXT_PCT=70` synth Stop payload MUST produce, in <8 s:
+handoff.md present, session_lessons.md append present, insights.json
+contains the tier-2 entry, telemetry/<ts>.json present, daemon log shows
+`trigger consumed via SendKeys` OR `trigger -> pending`. No artefact = NOT
+done.
