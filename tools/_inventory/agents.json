@@ -1,167 +1,78 @@
 {
-  "generated": "2026-05-19T13:29:10Z",
-  "count": 22,
-  "loose_root": "C:/Users/User/.claude/agents",
-  "pp_root": "C:/Users/User/.claude/skills/claude-power-pack/agents",
-  "items": [
-    {
-      "name": "INDEX.md",
-      "path": "C:/Users/User/.claude/agents/INDEX.md",
-      "sha256": "7bd7149a550648cab08abfb48a8deb7aa8a443a041cf6e523da5e48691a791eb",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "fabrizio-infra-specialist.md",
-      "path": "C:/Users/User/.claude/agents/fabrizio-infra-specialist.md",
-      "sha256": "7467240ab21fcdf7b6a41b97555be94610f38e9f9fbd0c6a572c80b681873e50",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "garyvee.md",
-      "path": "C:/Users/User/.claude/agents/garyvee.md",
-      "sha256": "3c3b58d5907d69c2ea4883b639618f581203da31d784b0bafba84765b5269ae3",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "gsd-codebase-mapper.md",
-      "path": "C:/Users/User/.claude/agents/gsd-codebase-mapper.md",
-      "sha256": "f19149cbb83526e4315c834e8f2340f2e212854a00054d88600f485c08febf5f",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-debugger.md",
-      "path": "C:/Users/User/.claude/agents/gsd-debugger.md",
-      "sha256": "55c498e29b1d644ddb73058214bfa358262d314561bcfca2c0a666e858298958",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-executor.md",
-      "path": "C:/Users/User/.claude/agents/gsd-executor.md",
-      "sha256": "76b26f9fbb94c6927ac0fd55f20819a4cd5b2858eb3d56412759483f3fdee706",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-integration-checker.md",
-      "path": "C:/Users/User/.claude/agents/gsd-integration-checker.md",
-      "sha256": "524838ceab56606c3847074fa2ae26b968157f97195ebd189afd942a6abe2669",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-nyquist-auditor.md",
-      "path": "C:/Users/User/.claude/agents/gsd-nyquist-auditor.md",
-      "sha256": "c8af1244d8b17f512f86b3b0b725d7ea58f044938414f0457aac66f7b50b3001",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-phase-researcher.md",
-      "path": "C:/Users/User/.claude/agents/gsd-phase-researcher.md",
-      "sha256": "3a775c6a622b2dbe2ab45504595bc00eee57c1f37a64858eeafc834f2ff9712d",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-plan-checker.md",
-      "path": "C:/Users/User/.claude/agents/gsd-plan-checker.md",
-      "sha256": "9658bc393d0522e128ad615025acd5f6051f08c8020c413960ce51512f59d673",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-planner.md",
-      "path": "C:/Users/User/.claude/agents/gsd-planner.md",
-      "sha256": "53e7449887f9dfedf20e54445e5703ff3c4119a898eedc67037058d39f5a8713",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-project-researcher.md",
-      "path": "C:/Users/User/.claude/agents/gsd-project-researcher.md",
-      "sha256": "327f3e15cc766a8f5399ec25b48d46e72e0e09582095db80fb006d838986a51d",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-research-synthesizer.md",
-      "path": "C:/Users/User/.claude/agents/gsd-research-synthesizer.md",
-      "sha256": "8c046277902058915bcd0b1ba16384a333581794d1803c8700ae070110806b15",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-roadmapper.md",
-      "path": "C:/Users/User/.claude/agents/gsd-roadmapper.md",
-      "sha256": "da944d704763b6cceda4137d28358a36e2e8686f027b1f1f38e28daa1553cce6",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd-verifier.md",
-      "path": "C:/Users/User/.claude/agents/gsd-verifier.md",
-      "sha256": "63962512ae40efa13b2c483a8d3078ea0f1ff09255261d853d204125cd252446",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "hawkins.md",
-      "path": "C:/Users/User/.claude/agents/hawkins.md",
-      "sha256": "b2b61b2f0086fdd4fea9a13a0004a7f918a2b509cf6ebe4d91940444dff609ea",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "musk.md",
-      "path": "C:/Users/User/.claude/agents/musk.md",
-      "sha256": "07dade14698a12f08df69eb4706d78dff3c451f81c6e903d79f1990fc90bfbdf",
-      "source": "host",
-      "tag": "user-personal"
-    },
+  "schema_version": 1,
+  "kind": "agents",
+  "generated_iso": "2026-05-19T13:09:12Z",
+  "pp_original": [
     {
       "name": "oneshot-architect-auditor.md",
-      "path": "C:/Users/User/.claude/agents/oneshot-architect-auditor.md",
-      "sha256": "4ec67b714c84dc9b174b73ff2c20c52154df064e9b655281bd24bf8d087691f3",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/agents/oneshot-architect-auditor.md",
-        "pp_sha256": "4ec67b714c84dc9b174b73ff2c20c52154df064e9b655281bd24bf8d087691f3",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
+      "sha256": "9d317b9bac6e02a777275a19c4a077b39b7904b15758a05c1b5f40c6b3cb58a0",
+      "present_in_loose": true,
+      "rationale": "ULTRA Phase-4 audit sub-agent; PP-tracked at agents/"
     },
     {
       "name": "rtk-testing-specialist.md",
-      "path": "C:/Users/User/.claude/agents/rtk-testing-specialist.md",
       "sha256": "121560797edecacf808affbc6e3826efbc4afbc5aad440e852dba267b3a0b2fe",
-      "source": "plugin:rtk",
-      "tag": "3rd-party-plugin"
+      "present_in_loose": true,
+      "rationale": "RTK proxy testing specialist; PP-original"
     },
     {
       "name": "rust-rtk.md",
-      "path": "C:/Users/User/.claude/agents/rust-rtk.md",
       "sha256": "070c5041ea17ac538b7689afbb29337b8c4d6699df94a01d4b8e2bd285d68627",
-      "source": "host",
-      "tag": "user-personal"
+      "present_in_loose": true,
+      "rationale": "RTK Rust development specialist; PP-original"
     },
     {
       "name": "steve-jobs.md",
-      "path": "C:/Users/User/.claude/agents/steve-jobs.md",
       "sha256": "0460076515641126debc10b6446a5b9f2883a1ecd46355560c38be918ba933f8",
-      "source": "host",
-      "tag": "user-personal"
+      "present_in_loose": true,
+      "rationale": "Steve Jobs UX/product veto persona lens"
     },
     {
       "name": "woz.md",
-      "path": "C:/Users/User/.claude/agents/woz.md",
       "sha256": "2f17e57e31a582d5ae98ec8813eb4ad36b7ea8cd5567ce78c668f8dedd634588",
-      "source": "host",
-      "tag": "user-personal"
+      "present_in_loose": true,
+      "rationale": "Woz engineering-elegance veto persona lens"
+    },
+    {
+      "name": "hawkins.md",
+      "sha256": "b2b61b2f0086fdd4fea9a13a0004a7f918a2b509cf6ebe4d91940444dff609ea",
+      "present_in_loose": true,
+      "rationale": "David Hawkins consciousness-calibration advisory lens"
+    },
+    {
+      "name": "musk.md",
+      "sha256": "07dade14698a12f08df69eb4706d78dff3c451f81c6e903d79f1990fc90bfbdf",
+      "present_in_loose": true,
+      "rationale": "Elon Musk first-principles advisory lens"
+    },
+    {
+      "name": "garyvee.md",
+      "sha256": "3c3b58d5907d69c2ea4883b639618f581203da31d784b0bafba84765b5269ae3",
+      "present_in_loose": true,
+      "rationale": "Gary Vaynerchuk attention-arbitrage advisory lens"
+    }
+  ],
+  "plugins": {
+    "gsd": [
+      "gsd-codebase-mapper.md",
+      "gsd-debugger.md",
+      "gsd-executor.md",
+      "gsd-integration-checker.md",
+      "gsd-nyquist-auditor.md",
+      "gsd-phase-researcher.md",
+      "gsd-plan-checker.md",
+      "gsd-planner.md",
+      "gsd-project-researcher.md",
+      "gsd-research-synthesizer.md",
+      "gsd-roadmapper.md",
+      "gsd-verifier.md"
+    ]
+  },
+  "user_personal": [
+    {
+      "name": "fabrizio-infra-specialist.md",
+      "rationale": "Minecraft/Pterodactyl infrastructure specialist",
+      "redact_reason": "References private VPS IP 204.168.166.63, panel.kobicraft.net, and personal SSH key names (gap 1)"
     }
   ]
 }

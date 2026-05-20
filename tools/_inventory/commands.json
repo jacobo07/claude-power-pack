@@ -1,644 +1,153 @@
 {
-  "generated": "2026-05-19T13:29:10Z",
-  "count": 80,
-  "loose_root": "C:/Users/User/.claude/commands",
-  "pp_root": "C:/Users/User/.claude/skills/claude-power-pack/commands",
-  "items": [
-    {
-      "name": "audit-all.md",
-      "path": "C:/Users/User/.claude/commands/audit-all.md",
-      "sha256": "239929be28c0f20d3723f8278fdfe3c0632a71cda7a2d1545d8d4dd6159a2496",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/audit-all.md",
-        "pp_sha256": "239929be28c0f20d3723f8278fdfe3c0632a71cda7a2d1545d8d4dd6159a2496",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "autoupdate.md",
-      "path": "C:/Users/User/.claude/commands/autoupdate.md",
-      "sha256": "b1324a24ed007eb2e0f0c5c2e2f49667ae0e98ce9b3de4b9c4c4a8d70923bbc2",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/autoupdate.md",
-        "pp_sha256": "b1324a24ed007eb2e0f0c5c2e2f49667ae0e98ce9b3de4b9c4c4a8d70923bbc2",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "bmad/architecture.md",
-      "path": "C:/Users/User/.claude/commands/bmad/architecture.md",
-      "sha256": "8e15a03a10ce63c0f6c9cc8be0b4779e5a46151ccbaa2b7a6bfac443de91cbdd",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/brainstorm.md",
-      "path": "C:/Users/User/.claude/commands/bmad/brainstorm.md",
-      "sha256": "53f8c4409c3d310e72cfd4111f8147fa5fd68c4571791b8f547890fa061699fb",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/create-agent.md",
-      "path": "C:/Users/User/.claude/commands/bmad/create-agent.md",
-      "sha256": "78672a92c146950091acf75ad097df731ab761a0d380ad65be7c8d7c49710232",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/create-story.md",
-      "path": "C:/Users/User/.claude/commands/bmad/create-story.md",
-      "sha256": "ce8be752e6ce87eaf1576f61d21efd59441d516020b7df17ba39699a24165e9a",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/create-ux-design.md",
-      "path": "C:/Users/User/.claude/commands/bmad/create-ux-design.md",
-      "sha256": "e22be90d62e66340332e61091e1a8ded771ccd2418a8194857aaf5eea53a882a",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/create-workflow.md",
-      "path": "C:/Users/User/.claude/commands/bmad/create-workflow.md",
-      "sha256": "5778a3f0eff93c3171d2b9e71f3abdb19fd3151ac17fd4f1a231ba5491811ba2",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/dev-story.md",
-      "path": "C:/Users/User/.claude/commands/bmad/dev-story.md",
-      "sha256": "30b389ca723f9f7eb4bc2c4e8aef299a6e0a9cb86c67faf93d643ecaa78e4e57",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/prd.md",
-      "path": "C:/Users/User/.claude/commands/bmad/prd.md",
-      "sha256": "be8526497b183f23e70d62d867aaf6ec2c78cecc3f48679c311aea42a5e8b5c5",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/product-brief.md",
-      "path": "C:/Users/User/.claude/commands/bmad/product-brief.md",
-      "sha256": "d1466b414019d0bdf19437e35593d57825b82b2c852d684958f73ef19f82c116",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/research.md",
-      "path": "C:/Users/User/.claude/commands/bmad/research.md",
-      "sha256": "1fa3246ef65e151b896b1a47603665dea42c8c9f75521a0c4ee10bd8dfd331b8",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/solutioning-gate-check.md",
-      "path": "C:/Users/User/.claude/commands/bmad/solutioning-gate-check.md",
-      "sha256": "60e7547caf44a4c4d532116258ec20e05698f03b8b1c573cda15c0bd74279ea5",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/sprint-planning.md",
-      "path": "C:/Users/User/.claude/commands/bmad/sprint-planning.md",
-      "sha256": "dd0062c27753371e4b3636f8f112d6c08d006d68eb71a56e485b4532fd2d6c4d",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/tech-spec.md",
-      "path": "C:/Users/User/.claude/commands/bmad/tech-spec.md",
-      "sha256": "c1a0ce44b0c9b3b2607002de86cc67fdcfbdb151f4afcb5a7bef9418877489bc",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/workflow-init.md",
-      "path": "C:/Users/User/.claude/commands/bmad/workflow-init.md",
-      "sha256": "76ac50aebf5ce786a6909df44a5416df6cd0ca7fd937867ed8f0f35cfa46e3dc",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "bmad/workflow-status.md",
-      "path": "C:/Users/User/.claude/commands/bmad/workflow-status.md",
-      "sha256": "0ae5f2b3eaef42c9c31896ea855db7f2dee39b39932d499b02c16addc802816f",
-      "source": "plugin:bmad",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/manager.md",
-      "path": "C:/Users/User/.claude/commands/carl/manager.md",
-      "sha256": "7e8f28a3561bc632bae4b3573b9beb355230a8bcf4e54356b868376dec20b16d",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/tasks/add-rule.md",
-      "path": "C:/Users/User/.claude/commands/carl/tasks/add-rule.md",
-      "sha256": "bafe766823717b2a6da3ab6d678dc13854d6f864c2821f61ed03d1b255be9914",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/tasks/create-command.md",
-      "path": "C:/Users/User/.claude/commands/carl/tasks/create-command.md",
-      "sha256": "fceeff53af5e6bd4fc0d08e8acddb4ad02adf18e81d2ec703514ca91fab88576",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/tasks/create-domain.md",
-      "path": "C:/Users/User/.claude/commands/carl/tasks/create-domain.md",
-      "sha256": "96198909f60679fec631861e3b5fc6f3dd7a79708cc3cc481f8aea381a091027",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/tasks/edit-rule.md",
-      "path": "C:/Users/User/.claude/commands/carl/tasks/edit-rule.md",
-      "sha256": "23d6abb9aa32c87e6475fc457b8eb2afe109831974a503689671b7a3c92182f6",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/tasks/toggle-domain.md",
-      "path": "C:/Users/User/.claude/commands/carl/tasks/toggle-domain.md",
-      "sha256": "43253e27cf72cfdcb3bcaa7d9f36ec630bbce4a95f7ad8281d915ca02d603448",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/templates/domain-template.md",
-      "path": "C:/Users/User/.claude/commands/carl/templates/domain-template.md",
-      "sha256": "f8a3fc010457b8966a99cc65c7f4f345734e30a71d9c206cb19b406d863f3354",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/templates/manifest-entries.md",
-      "path": "C:/Users/User/.claude/commands/carl/templates/manifest-entries.md",
-      "sha256": "e2ce4080b388f9728bb0be4a0fabae5c59c3202755cf6cad68b62f0fe725a623",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "carl/utils/manifest-parser.md",
-      "path": "C:/Users/User/.claude/commands/carl/utils/manifest-parser.md",
-      "sha256": "7d1bc0d9984e408867d0679f3fa2185d82621560e09ad3a80a033f77086a9cd3",
-      "source": "plugin:carl",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "cpp-resume-sovereign.md",
-      "path": "C:/Users/User/.claude/commands/cpp-resume-sovereign.md",
-      "sha256": "b7074b55b7bdaaf5ffd23564de55e8570f77a1d3013e625764557d335964f80b",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/resume-sovereign.md",
-        "pp_sha256": "b7074b55b7bdaaf5ffd23564de55e8570f77a1d3013e625764557d335964f80b",
-        "renamed_from": "cpp-resume-sovereign.md"
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "customclaw.md",
-      "path": "C:/Users/User/.claude/commands/customclaw.md",
-      "sha256": "4f0f1380ff0519a5fbe957279bc8382dcd0a3017a0de3a8c2fe6cea07e581b3c",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/customclaw.md",
-        "pp_sha256": "6e74700cb9ccc886dfc98ee023b89daab2f6a1499b1a259c3b0ca9c7fcb896b4",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original-drift",
-      "drift_detail": "basename matches PP, content differs; Owner decision required before installer overwrites"
-    },
-    {
-      "name": "design-md.md",
-      "path": "C:/Users/User/.claude/commands/design-md.md",
-      "sha256": "fac94d1a9275ad536a60141840c0b93c77fcc21aac567259414c4e6d240032b8",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/design-md.md",
-        "pp_sha256": "fac94d1a9275ad536a60141840c0b93c77fcc21aac567259414c4e6d240032b8",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "evaluate-repository.md",
-      "path": "C:/Users/User/.claude/commands/evaluate-repository.md",
-      "sha256": "4119f9bd54a29f21107cfda7e4d07e294062f90f6a9335209d5d5e17b3086ab4",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "gsd/add-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/add-phase.md",
-      "sha256": "5a5bca656f92c11a0d65991f1a40542f5e8c1162a74b8fcc2200e7d0109331d6",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/add-tests.md",
-      "path": "C:/Users/User/.claude/commands/gsd/add-tests.md",
-      "sha256": "4b87d89cd26dcde8c9d9eee0675967b87b5f3ba9e8380cca042e673dced4f649",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/add-todo.md",
-      "path": "C:/Users/User/.claude/commands/gsd/add-todo.md",
-      "sha256": "ea2482e6d1fc5e45bfd7fa2f97cc91c73953b4eb2d41ee44c862675976b27713",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/audit-milestone.md",
-      "path": "C:/Users/User/.claude/commands/gsd/audit-milestone.md",
-      "sha256": "e123eca0b7e1e0895ced5e30c6c93e9a5bbb99397cc30f04d6d247e61e637b10",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/check-todos.md",
-      "path": "C:/Users/User/.claude/commands/gsd/check-todos.md",
-      "sha256": "d4af598d2dfa49feff3a817c3dabaaa78ed2d94889de1c9af6ca6d4ac3c6f87e",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/cleanup.md",
-      "path": "C:/Users/User/.claude/commands/gsd/cleanup.md",
-      "sha256": "b6563589c8596a9c867a92c29ccee99a2af5dbaa649ad68bb751466664f3218c",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/complete-milestone.md",
-      "path": "C:/Users/User/.claude/commands/gsd/complete-milestone.md",
-      "sha256": "312e722cd8a51cae6ef7eacfdf7094db0c88b363600ba809bbcb75693003e7d7",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/debug.md",
-      "path": "C:/Users/User/.claude/commands/gsd/debug.md",
-      "sha256": "78cd1921d5b21272554bc192fcd4f8aec2ae39c02936300bc12448198ca19ac2",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/discuss-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/discuss-phase.md",
-      "sha256": "c4d15dd00a6ffca9501309f75a4eddfe71b1b3a05fadec02bbebd4454f53dfc3",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/execute-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/execute-phase.md",
-      "sha256": "d313f1e29a1cd6017cf3ad473cfb297cd234ecccc85d85f00f06ac2aa823a7a9",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/health.md",
-      "path": "C:/Users/User/.claude/commands/gsd/health.md",
-      "sha256": "b843ae3080d4ae29f3b6380a853868c3b186f0afb1ff4bceaf57c25d6e98bf62",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/help.md",
-      "path": "C:/Users/User/.claude/commands/gsd/help.md",
-      "sha256": "1ab2430bcf289d0a49c0040c37fe98ce73125b23d7940d57cb820dd75695ce9c",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/insert-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/insert-phase.md",
-      "sha256": "c1abb8b194a44ee4a31fb07901982ed15e05d02bfc422c66c220327d92f935d6",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/join-discord.md",
-      "path": "C:/Users/User/.claude/commands/gsd/join-discord.md",
-      "sha256": "a4fbe9bdc6e313e77a5b92cfda9422de3f084d11354c74a7fb68f158dd0892b6",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/list-phase-assumptions.md",
-      "path": "C:/Users/User/.claude/commands/gsd/list-phase-assumptions.md",
-      "sha256": "a55e2a1949f3b9ac4393c68b851e0162311a516a6efa6fc7217ab7e51f23c390",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/map-codebase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/map-codebase.md",
-      "sha256": "3dc50b80dca444934dc1bd2a49eb90e8974a44a8f4a9aadac0435794ccd25769",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/new-milestone.md",
-      "path": "C:/Users/User/.claude/commands/gsd/new-milestone.md",
-      "sha256": "104d40c2b0b83ad4634fdd16a64e5cfb1b69e835d558e6c85b108b59b481a302",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/new-project.md",
-      "path": "C:/Users/User/.claude/commands/gsd/new-project.md",
-      "sha256": "95fa0ada716f47fa8b44123be35db1d44f02ea84a88f56e17a4eaa31c263b9c8",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/pause-work.md",
-      "path": "C:/Users/User/.claude/commands/gsd/pause-work.md",
-      "sha256": "018560177e6c8134e4ac5f911564c5a65d56f6f41b8df1d9d64036a2db220338",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/plan-milestone-gaps.md",
-      "path": "C:/Users/User/.claude/commands/gsd/plan-milestone-gaps.md",
-      "sha256": "6a458edeb20c8fc3d904be51c831d48baf370521fa3df397ff503a8a47a6c7af",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/plan-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/plan-phase.md",
-      "sha256": "576eea5630cf2a2fff52e404ecb2cae93d5bd56882b9f60650648c2c326c538f",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/progress.md",
-      "path": "C:/Users/User/.claude/commands/gsd/progress.md",
-      "sha256": "96231f0903a2d757b39114bf09331f8407c217e88d57a5a98262755522198efc",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/quick.md",
-      "path": "C:/Users/User/.claude/commands/gsd/quick.md",
-      "sha256": "64215ecce3d4955c66de1832504770943ffdd9d18ca56667376c8cbae6904141",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/reapply-patches.md",
-      "path": "C:/Users/User/.claude/commands/gsd/reapply-patches.md",
-      "sha256": "32c411d4e61dd907ac8479f4fc6ad8f53875b92cdd2bfb81b228e28a23f5b2b3",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/remove-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/remove-phase.md",
-      "sha256": "17499c1ba7dd838c8faa86ffbba6dcd0daed670574dbbc160107d651fdd1ef66",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/research-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/research-phase.md",
-      "sha256": "8f4f7cdbf3b913e804cbdb803c2c6d1de6cba2b7cdd12e7ebbd1e6a9ee0dbcae",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/resume-work.md",
-      "path": "C:/Users/User/.claude/commands/gsd/resume-work.md",
-      "sha256": "596d877fd0932d19bedb87c21d6c6f18df1b7f44d950d882346c4ea657b3feda",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/set-profile.md",
-      "path": "C:/Users/User/.claude/commands/gsd/set-profile.md",
-      "sha256": "17a8b55b7b3f9d7321fc215b983f34614a611820243748adf26ce18f9ffc85b9",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/settings.md",
-      "path": "C:/Users/User/.claude/commands/gsd/settings.md",
-      "sha256": "2c42f0d4b728e7854798dd06a064d695548dc09673a3348c6715085549aecd2d",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/update.md",
-      "path": "C:/Users/User/.claude/commands/gsd/update.md",
-      "sha256": "b064cbd08b439baa9c37e579e32c46c27c7f01179d96399d6a9b13015dc004f4",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/validate-phase.md",
-      "path": "C:/Users/User/.claude/commands/gsd/validate-phase.md",
-      "sha256": "9ebfdaf7ac6a0f7be3a32af8d7e688a8d6ecb2f9fd838ba16a4a33527f929b14",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "gsd/verify-work.md",
-      "path": "C:/Users/User/.claude/commands/gsd/verify-work.md",
-      "sha256": "3641d820cf0574ad550683de549bce76c9dfca0e2b27c87dedc3d59bc72960ad",
-      "source": "plugin:gsd",
-      "tag": "3rd-party-plugin"
-    },
-    {
-      "name": "investment-ready-audit.md",
-      "path": "C:/Users/User/.claude/commands/investment-ready-audit.md",
-      "sha256": "52afdd7a1420a270a494a90d7a3e525c88bc1b67474b65bf1c9f3a7bb91b1883",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/investment-ready-audit.md",
-        "pp_sha256": "52afdd7a1420a270a494a90d7a3e525c88bc1b67474b65bf1c9f3a7bb91b1883",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "ira.md",
-      "path": "C:/Users/User/.claude/commands/ira.md",
-      "sha256": "e9f9f7bca92f4f5dafd9ebd05ebce466c750839cdcd2b02c3b6039628208c56a",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/ira.md",
-        "pp_sha256": "e9f9f7bca92f4f5dafd9ebd05ebce466c750839cdcd2b02c3b6039628208c56a",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "kclear.md",
-      "path": "C:/Users/User/.claude/commands/kclear.md",
-      "sha256": "3cf5251ccce9abba52fc6bc277c9e77a58fc660abb884f34f81f7c43fdf8f3a2",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "knowledge.md",
-      "path": "C:/Users/User/.claude/commands/knowledge.md",
-      "sha256": "8083c4072dd85feee27b3d03d45f011a82ac4dc01f987e83be9303900670e8b0",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "lazarus.md",
-      "path": "C:/Users/User/.claude/commands/lazarus.md",
-      "sha256": "a4d6f5ecaf2f00168b10c4156d43cddcbec12a5f0279bad96fefafa815c21082",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "obsidian-setup.md",
-      "path": "C:/Users/User/.claude/commands/obsidian-setup.md",
-      "sha256": "1509e598c17c2a6c05e050ae4d5ce13554b8e392d7ab29e6f7adfd6d0c9a2068",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/obsidian-setup.md",
-        "pp_sha256": "1509e598c17c2a6c05e050ae4d5ce13554b8e392d7ab29e6f7adfd6d0c9a2068",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
+  "schema_version": 1,
+  "kind": "commands",
+  "generated_iso": "2026-05-19T13:09:12Z",
+  "pp_original": [
+    {
+      "name": "ultra.md",
+      "sha256": "6d6d59af626604010d9d65897c2aab437b65784421a9edcd7a5ae0cb524eb700",
+      "present_in_loose": true,
+      "rationale": "ULTRA 7-phase ONESHOT protocol; PP-tracked"
     },
     {
       "name": "omni-verification-oracle-audit.md",
-      "path": "C:/Users/User/.claude/commands/omni-verification-oracle-audit.md",
       "sha256": "0befe1741ec3231d1bdddf4f6abfff260ec73a56633ffce2870c0572fb624203",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/omni-verification-oracle-audit.md",
-        "pp_sha256": "0befe1741ec3231d1bdddf4f6abfff260ec73a56633ffce2870c0572fb624203",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
+      "present_in_loose": true,
+      "rationale": "OVO forensic audit; PP-tracked"
     },
     {
       "name": "ovo-audit.md",
-      "path": "C:/Users/User/.claude/commands/ovo-audit.md",
       "sha256": "1293ca81edbd5db06468f80ab560e7a9cb8d9e33338c47eca57308dbb57efc4e",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/ovo-audit.md",
-        "pp_sha256": "1293ca81edbd5db06468f80ab560e7a9cb8d9e33338c47eca57308dbb57efc4e",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
+      "present_in_loose": true,
+      "rationale": "OVO alias; PP-tracked"
     },
     {
-      "name": "research-youtube.md",
-      "path": "C:/Users/User/.claude/commands/research-youtube.md",
-      "sha256": "8e7a33033bebfbd675ee0bff224812d816da8da6a966baabde1a26199011283c",
-      "source": "host",
-      "tag": "user-personal"
+      "name": "customclaw.md",
+      "sha256": "4f0f1380ff0519a5fbe957279bc8382dcd0a3017a0de3a8c2fe6cea07e581b3c",
+      "present_in_loose": true,
+      "rationale": "Project scan + custom daemon scaffolder"
     },
     {
-      "name": "restart.md",
-      "path": "C:/Users/User/.claude/commands/restart.md",
-      "sha256": "6cc797475bee3afa08c35b34b3f98d9f4208c760ae29141070d1197f4974e2e8",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "resume-clean.md",
-      "path": "C:/Users/User/.claude/commands/resume-clean.md",
-      "sha256": "ae1bb11f8980c1a1c8f03fbf6d8d16a500f78f1e109fdc49ce5672aff9a78b5b",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/resume-clean.md",
-        "pp_sha256": "ae1bb11f8980c1a1c8f03fbf6d8d16a500f78f1e109fdc49ce5672aff9a78b5b",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "saas-continue.md",
-      "path": "C:/Users/User/.claude/commands/saas-continue.md",
-      "sha256": "b4e511180a00fc0275c9e7e6d77de54825deb75119d5d5a981264ff2e0584a52",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "saas-launch.md",
-      "path": "C:/Users/User/.claude/commands/saas-launch.md",
-      "sha256": "6640da2148ef6f6f0c502fdfd74e25028b3d96e871bf07c7462b31a7e1e53174",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "saas_system_audit.md",
-      "path": "C:/Users/User/.claude/commands/saas_system_audit.md",
-      "sha256": "e892ea77eca2445a1e8f26af18220fd2be733bf9248a2daeccc58d8da51c5870",
-      "source": "host",
-      "tag": "user-personal"
-    },
-    {
-      "name": "ultra.md",
-      "path": "C:/Users/User/.claude/commands/ultra.md",
-      "sha256": "6d6d59af626604010d9d65897c2aab437b65784421a9edcd7a5ae0cb524eb700",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/ultra.md",
-        "pp_sha256": "6d6d59af626604010d9d65897c2aab437b65784421a9edcd7a5ae0cb524eb700",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
-    },
-    {
-      "name": "update.md",
-      "path": "C:/Users/User/.claude/commands/update.md",
-      "sha256": "2764856877aa55fce99c9c75fdeef6194fbd084763f268f756eb44034892ee01",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/update.md",
-        "pp_sha256": "2764856877aa55fce99c9c75fdeef6194fbd084763f268f756eb44034892ee01",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
+      "name": "obsidian-setup.md",
+      "sha256": "1509e598c17c2a6c05e050ae4d5ce13554b8e392d7ab29e6f7adfd6d0c9a2068",
+      "present_in_loose": true,
+      "rationale": "Knowledge-Graph vault scaffolder"
     },
     {
       "name": "vault-setup.md",
-      "path": "C:/Users/User/.claude/commands/vault-setup.md",
       "sha256": "f6af907fd5e3cae434a1e6fd7d3ab24432501acd3d2389075a311457cb64ac26",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/vault-setup.md",
-        "pp_sha256": "f6af907fd5e3cae434a1e6fd7d3ab24432501acd3d2389075a311457cb64ac26",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
+      "present_in_loose": true,
+      "rationale": "Governance vault extractor from CLAUDE.md"
     },
     {
       "name": "vault-sync.md",
-      "path": "C:/Users/User/.claude/commands/vault-sync.md",
       "sha256": "e98fe884fc27b4fba7235b7ab7f0da9e0989272de89f7224a26b33b448dc411a",
-      "pp_match": {
-        "pp_path": "C:/Users/User/.claude/skills/claude-power-pack/commands/vault-sync.md",
-        "pp_sha256": "e98fe884fc27b4fba7235b7ab7f0da9e0989272de89f7224a26b33b448dc411a",
-        "renamed_from": null
-      },
-      "source": "pp-repo",
-      "tag": "pp-original"
+      "present_in_loose": true,
+      "rationale": "Vault INDEX.md regeneration"
+    },
+    {
+      "name": "autoupdate.md",
+      "sha256": "b1324a24ed007eb2e0f0c5c2e2f49667ae0e98ce9b3de4b9c4c4a8d70923bbc2",
+      "present_in_loose": true,
+      "rationale": "Toggle PP auto-update"
+    },
+    {
+      "name": "update.md",
+      "sha256": "2764856877aa55fce99c9c75fdeef6194fbd084763f268f756eb44034892ee01",
+      "present_in_loose": true,
+      "rationale": "Update PP from GitHub"
+    },
+    {
+      "name": "cpp-resume-sovereign.md",
+      "sha256": "70801557f71e0a6f093c3f6d68f48662ca2b6d01924535dcf5cd09cbb7d35eb0",
+      "present_in_loose": true,
+      "rationale": "Sovereign vault resume"
+    },
+    {
+      "name": "audit-all.md",
+      "sha256": "239929be28c0f20d3723f8278fdfe3c0632a71cda7a2d1545d8d4dd6159a2496",
+      "present_in_loose": true,
+      "rationale": "Cross-subsystem repo audit"
+    },
+    {
+      "name": "design-md.md",
+      "sha256": "fac94d1a9275ad536a60141840c0b93c77fcc21aac567259414c4e6d240032b8",
+      "present_in_loose": true,
+      "rationale": "DESIGN.md (Google Labs schema) scaffolder"
+    },
+    {
+      "name": "evaluate-repository.md",
+      "sha256": "4564c383a262857ae8575789e3e0d8cc629af143063305b14be0e0cf58e3cda3",
+      "present_in_loose": true,
+      "rationale": "Awesome-Claude-Code evaluation"
+    },
+    {
+      "name": "investment-ready-audit.md",
+      "sha256": "52afdd7a1420a270a494a90d7a3e525c88bc1b67474b65bf1c9f3a7bb91b1883",
+      "present_in_loose": true,
+      "rationale": "IRA verdict"
+    },
+    {
+      "name": "ira.md",
+      "sha256": "e9f9f7bca92f4f5dafd9ebd05ebce466c750839cdcd2b02c3b6039628208c56a",
+      "present_in_loose": true,
+      "rationale": "Alias for /investment-ready-audit"
+    },
+    {
+      "name": "kclear.md",
+      "sha256": "3cf5251ccce9abba52fc6bc277c9e77a58fc660abb884f34f81f7c43fdf8f3a2",
+      "present_in_loose": true,
+      "rationale": "Session checkpoint + handoff"
+    },
+    {
+      "name": "knowledge.md",
+      "sha256": "8083c4072dd85feee27b3d03d45f011a82ac4dc01f987e83be9303900670e8b0",
+      "present_in_loose": true,
+      "rationale": "AKOS knowledge injector"
+    },
+    {
+      "name": "lazarus.md",
+      "sha256": "a4d6f5ecaf2f00168b10c4156d43cddcbec12a5f0279bad96fefafa815c21082",
+      "present_in_loose": true,
+      "rationale": "Multi-session Lazarus restore"
+    },
+    {
+      "name": "research-youtube.md",
+      "sha256": "8e7a33033bebfbd675ee0bff224812d816da8da6a966baabde1a26199011283c",
+      "present_in_loose": true,
+      "rationale": "YouTube research analyzer"
+    },
+    {
+      "name": "restart.md",
+      "sha256": "6cc797475bee3afa08c35b34b3f98d9f4208c760ae29141070d1197f4974e2e8",
+      "present_in_loose": true,
+      "rationale": "Session restart with --continue"
+    },
+    {
+      "name": "resume-clean.md",
+      "sha256": "ae1bb11f8980c1a1c8f03fbf6d8d16a500f78f1e109fdc49ce5672aff9a78b5b",
+      "present_in_loose": true,
+      "rationale": "Filtered resume picker"
+    },
+    {
+      "name": "saas_system_audit.md",
+      "sha256": "e892ea77eca2445a1e8f26af18220fd2be733bf9248a2daeccc58d8da51c5870",
+      "present_in_loose": true,
+      "rationale": "SaaS commercial-readiness audit"
+    },
+    {
+      "name": "saas-continue.md",
+      "sha256": "b4e511180a00fc0275c9e7e6d77de54825deb75119d5d5a981264ff2e0584a52",
+      "present_in_loose": true,
+      "rationale": "SaaS doctrine continuation"
+    },
+    {
+      "name": "saas-launch.md",
+      "sha256": "6640da2148ef6f6f0c502fdfd74e25028b3d96e871bf07c7462b31a7e1e53174",
+      "present_in_loose": true,
+      "rationale": "14-phase SaaS launcher"
     }
-  ]
+  ],
+  "plugins": {},
+  "user_personal": []
 }
