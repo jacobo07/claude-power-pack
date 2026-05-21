@@ -9,6 +9,17 @@ related:
   - feedback_parallel_write_batch_limit.md
 ---
 
+## Update 2026-05-21 (post-discovery)
+
+Sibling pane sealed `~/.claude/CLAUDE.md` § **Windows Bash Bridge Reliability** the same day this lesson was drafted. The sibling's analysis is sharper than the original lesson body below: the proximate cause of `[Tool result missing due to internal error]` on Windows hosts is the **Git Bash / MSYS2 bridge transport dropping stdout** for long-running or long-output commands, NOT just hook spawn overhead. Hook fanout amplifies bridge stress (more output volume → more transport drops) but the bridge IS the bottleneck.
+
+The sibling also shipped the architectural fix in `~/.claude/hooks/hook-dispatcher.js` lines 99-145: `CHAIN_MAP['PreToolUse-{Bash,Edit,Read}-chain']` collapses the per-matcher hook entries into single-process sequential chains via `spawnSync(shell:false)`. Comment at dispatcher line 113: "≳3 concurrent msys2 forks collapse the mount-table init with `add_item errno 1`" (env_git_bash_fork_storm.md). The chain code is shipped; the missing piece is removing the 12 redundant standalone settings.json entries so the chains can take over (one PreToolUse spawn per tool instead of 7-10).
+
+**Cross-references:**
+- Read first: `~/.claude/CLAUDE.md` § Windows Bash Bridge Reliability — the operational rule (default to PowerShell tool for git/mix/gh/node/npm on Windows).
+- Architectural why: this lesson body below.
+- Migration plan: `~/.claude/plans/sorted-crafting-hanrahan.md` Component E.1.
+
 ## Architectural finding
 
 `~/.claude/settings.json` (audited 2026-05-21) registers:
