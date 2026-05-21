@@ -134,8 +134,15 @@ def gate_g2() -> Gate:
         else:
             ctx = resp.get("additionalContext", "")
             ctx_size = len(ctx.encode("utf-8")) if ctx else 0
-        if ctx_size <= 4_000:
-            g.passed(f"additionalContext={ctx_size} B")
+        # Distinguish "gatekeeper ran and was slim" from "gatekeeper returned
+        # empty without running its main path" - a 0-byte PASS hides the
+        # latter case (code-review efficiency-#3 finding).
+        if ctx_size == 0:
+            g.skipped("gatekeeper returned empty - cannot prove main path ran "
+                      "with synthetic payload; manual probe required")
+        elif ctx_size <= 4_000:
+            g.passed(f"additionalContext={ctx_size} B (>0 confirms gatekeeper "
+                     f"main path ran)")
         else:
             g.failed(f"additionalContext={ctx_size} B > 4 KB")
     except Exception as e:

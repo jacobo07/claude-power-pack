@@ -74,14 +74,28 @@ function Acquire-Lock {
     }
 }
 
-function Get-CursorForegroundPid {
-    try {
-        Add-Type -Namespace W -Name K -MemberDefinition @"
+# Hoist Add-Type calls out of the per-tick path (code-review efficiency-#1).
+# After first load .NET caches the type, but PS 5.1 still re-validates the
+# source string on each call (~ms per call × 2 Hz × 180 s TTL = wasted work).
+try {
+    Add-Type -Namespace W -Name K -MemberDefinition @"
 [System.Runtime.InteropServices.DllImport("user32.dll")]
 public static extern System.IntPtr GetForegroundWindow();
 [System.Runtime.InteropServices.DllImport("user32.dll")]
 public static extern uint GetWindowThreadProcessId(System.IntPtr hWnd, out uint pid);
 "@ -ErrorAction Stop
+} catch {
+    # Type may already exist if Add-Type ran in a prior daemon spawn in
+    # this PS session. That's OK; the [W.K] type is reusable.
+}
+try {
+    Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+} catch {
+    # Same: idempotent assembly load; ignore "already loaded".
+}
+
+function Get-CursorForegroundPid {
+    try {
         $hwnd = [W.K]::GetForegroundWindow()
         if ($hwnd -eq [IntPtr]::Zero) { return 0 }
         $pidOut = 0
@@ -136,7 +150,6 @@ function Dispatch-Flag($flagPath) {
     $text = "$cmd$arg"
 
     try {
-        Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
         [System.Windows.Forms.SendKeys]::SendWait($text)
         Start-Sleep -Milliseconds 60
         [System.Windows.Forms.SendKeys]::SendWait('~')   # Enter

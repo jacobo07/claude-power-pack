@@ -592,7 +592,7 @@ def _active_spec(cwd: Path) -> tuple[Path, str] | None:
 _NEW_FEATURE_RX = re.compile(
     r"\b(?:"
     r"add\s+(?:a\s+|an\s+|the\s+)?(?:feature|function|endpoint|command|"
-    r"page|screen|button|component|hook|skill|tool|gate|hook|module|"
+    r"page|screen|button|component|hook|skill|tool|gate|module|"
     r"flag|setting|preference|integration|api|route|webhook|migration)"
     r"|implement(?:s|ing|ation)?\s+(?:a\s+|an\s+|the\s+)?\w+"
     r"|build\s+(?:a\s+|an\s+|the\s+)?(?:feature|page|screen|component|"
