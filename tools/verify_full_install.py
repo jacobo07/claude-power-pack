@@ -247,6 +247,42 @@ def check_telemetry() -> tuple[str, str, dict]:
             f"budget={len(budget)})", detail)
 
 
+def check_zero_command_layer() -> tuple[str, str, dict]:
+    """Apex Onboarding pillar #1 — umbrella row for the Zero-Command
+    Layer (Components A/B/C/D + harness G1-G9). Delegates to the
+    in-repo canonical verifier: tools/test_zero_command.py.
+
+    PASS criterion: harness exit 0 (all gates either PASSED or
+    SKIP-explained per the harness's own logic).
+    Sealed 2026-05-21 per ~/.claude/knowledge_vault/core/apex-completion-standard.md
+    § Zero-Command Standard.
+    """
+    harness = PP_ROOT / "tools" / "test_zero_command.py"
+    if not harness.is_file():
+        return ("FAIL", "tools/test_zero_command.py missing",
+                {"consumer_present": False})
+    try:
+        res = subprocess.run(
+            [sys.executable, str(harness)],
+            capture_output=True, text=True, timeout=60,
+            cwd=str(PP_ROOT))
+        # Harness prints "Summary: N PASS / M FAIL / K SKIP" on its
+        # last non-blank stdout line.
+        summary_line = ""
+        for line in reversed((res.stdout or "").splitlines()):
+            if line.startswith("Summary:"):
+                summary_line = line
+                break
+        if res.returncode == 0:
+            return ("OK", summary_line or "test_zero_command.py exit 0",
+                    {"exit": 0, "summary": summary_line})
+        return ("FAIL", summary_line or f"test_zero_command.py exit {res.returncode}",
+                {"exit": res.returncode, "summary": summary_line})
+    except Exception as exc:
+        return ("FAIL", f"test_zero_command.py crashed: {type(exc).__name__}",
+                {"error": str(exc)})
+
+
 def check_cache_hints() -> tuple[str, str, dict]:
     """Section 7: cache_hints validate via the in-repo consumer."""
     if not CACHE_HINT_APPLY.is_file():
@@ -337,13 +373,14 @@ def main() -> int:
     args = ap.parse_args()
 
     checks = [
-        ("1. RTK binary",      check_rtk_binary()),
-        ("2. RTK hook",        check_rtk_hook()),
-        ("3. JIT hook",        check_jit_hook()),
-        ("4. Budget config",   check_budget_config()),
-        ("5. Pricing fresh",   check_pricing_fresh()),
-        ("6. Telemetry",       check_telemetry()),
-        ("7. Cache hints",     check_cache_hints()),
+        ("1. RTK binary",          check_rtk_binary()),
+        ("2. RTK hook",            check_rtk_hook()),
+        ("3. JIT hook",            check_jit_hook()),
+        ("4. Budget config",       check_budget_config()),
+        ("5. Pricing fresh",       check_pricing_fresh()),
+        ("6. Telemetry",           check_telemetry()),
+        ("7. Cache hints",         check_cache_hints()),
+        ("8. Zero-Command Layer",  check_zero_command_layer()),
     ]
     critical_fail = any(s == "FAIL" for label, (s, _, _) in checks
                         if "RTK binary" in label or "Pricing" in label

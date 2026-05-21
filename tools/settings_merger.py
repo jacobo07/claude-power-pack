@@ -210,6 +210,51 @@ def register_userprompt(settings_path: str, py_interp: str,
                      timeout)
 
 
+def register_zero_command(settings_path: str, dry_run: bool) -> int:
+    """Register the four Zero-Command Layer hooks in one call.
+
+    Wires (in order, idempotent):
+      SessionStart -> ~/.claude/hooks/zero-command-bootstrap.js   (Component A)
+      SessionStart -> ~/.claude/hooks/first-time-project.js       (Component D)
+      Stop         -> ~/.claude/hooks/background-verifier.js      (Component C)
+
+    Component B.2 lives inside the existing UserPromptSubmit hook
+    (jit_skill_loader.py) — no additional registration needed.
+    Component B.3 daemon spawns from a separate Stop entry the
+    Owner installs via the auto-compact-sendkeys pattern; not
+    wired here to keep risk surface tight.
+
+    Exit codes mirror _register: 0 = all 3 entries newly wired or
+    already present (idempotent); non-zero = first failing call.
+    """
+    home = os.path.expanduser("~")
+    deploys = [
+        ("SessionStart", os.path.join(home, ".claude", "hooks", "zero-command-bootstrap.js"), 5),
+        ("SessionStart", os.path.join(home, ".claude", "hooks", "first-time-project.js"), 5),
+        ("Stop",         os.path.join(home, ".claude", "hooks", "background-verifier.js"), 5),
+    ]
+    if dry_run:
+        print("settings_merger: register-zero-command --dry-run")
+        for event, script, timeout in deploys:
+            present = "yes" if os.path.isfile(script) else "no"
+            print(f"  would register {event} -> {script}  (script-present={present})")
+        return 0
+    for event, script, timeout in deploys:
+        if not os.path.isfile(script):
+            print(f"settings_merger: deployed hook missing: {script}",
+                  file=sys.stderr)
+            print(f"  Hint: copy from claude-power-pack/hooks/<name> "
+                  f"to ~/.claude/hooks/ first, then re-run.",
+                  file=sys.stderr)
+            return 5
+        fn = register_stop if event == "Stop" else register_sessionstart
+        rc = fn(settings_path, script, timeout)
+        if rc != 0:
+            return rc
+    print("settings_merger: register-zero-command OK (3 hooks wired/idempotent)")
+    return 0
+
+
 def register_pretool(settings_path: str, node_script: str,
                       matcher: str, timeout: int) -> int:
     # Refuse to register a hook command pointing at a missing script —
@@ -257,6 +302,14 @@ def main():
     rss.add_argument("--settings", default=DEFAULT_SETTINGS,
                      help="path to settings.json (default ~/.claude/...)")
 
+    rzc = sub.add_parser("register-zero-command",
+                         help="Register the Zero-Command Layer hooks "
+                              "(Components A + C + D) in one idempotent call")
+    rzc.add_argument("--dry-run", action="store_true",
+                     help="print what would be wired without modifying settings.json")
+    rzc.add_argument("--settings", default=DEFAULT_SETTINGS,
+                     help="path to settings.json (default ~/.claude/...)")
+
     rp = sub.add_parser("register-pretool",
                         help="Register a PreToolUse Node hook with a matcher")
     rp.add_argument("--node-script", required=True,
@@ -279,6 +332,8 @@ def main():
     if a.cmd == "register-pretool":
         return register_pretool(a.settings, a.node_script, a.matcher,
                                 a.timeout)
+    if a.cmd == "register-zero-command":
+        return register_zero_command(a.settings, a.dry_run)
     return 2
 
 
