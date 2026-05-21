@@ -586,6 +586,71 @@ def _active_spec(cwd: Path) -> tuple[Path, str] | None:
     return None
 
 
+# Zero-Command B.2 — new-feature intent patterns. Match conservative: each
+# pattern must have a verb-of-creation + object class. Tuned for English EN
+# prompts; ES additions appended after the EN block.
+_NEW_FEATURE_RX = re.compile(
+    r"\b(?:"
+    r"add\s+(?:a\s+|an\s+|the\s+)?(?:feature|function|endpoint|command|"
+    r"page|screen|button|component|hook|skill|tool|gate|hook|module|"
+    r"flag|setting|preference|integration|api|route|webhook|migration)"
+    r"|implement(?:s|ing|ation)?\s+(?:a\s+|an\s+|the\s+)?\w+"
+    r"|build\s+(?:a\s+|an\s+|the\s+)?(?:feature|page|screen|component|"
+    r"dashboard|panel|widget|api|backend|frontend|cli|tool)"
+    r"|create\s+(?:a\s+|an\s+|the\s+)?(?:feature|page|screen|component|"
+    r"endpoint|api|cli|tool|hook|skill)"
+    r"|let'?s\s+build|let'?s\s+add"
+    # ES coverage — Owner speaks ES half the time
+    r"|añade|añadir|agrega|agregar|implementa|crea\s+(?:una?\s+)?(?:función|funcion|comando|página|pagina|pantalla)"
+    r")\b",
+    re.I | re.UNICODE,
+)
+
+
+def _detect_new_feature_intent_and_flag(prompt: str, cwd: Path,
+                                        spec: tuple | None,
+                                        session_id: str | None) -> dict | None:
+    """B.2 side-effect: when the prompt looks like new-feature work AND the
+    project has .specify/ AND no active spec, drop .pp-pending-spec.json so
+    the SendKeys daemon (B.3) can dispatch /speckit-spec after the agent's
+    response lands.
+
+    Returns the flag dict on write (for telemetry), or None when skipped.
+    Fail-open: any error -> None.
+    """
+    try:
+        if not prompt or len(prompt) > 8000:
+            return None  # extreme prompts skip — UUID-pending pollution risk
+        if not _NEW_FEATURE_RX.search(prompt):
+            return None
+        specify_dir = cwd / ".specify"
+        if not specify_dir.is_dir():
+            return None
+        if spec is not None:
+            return None  # active spec already exists; nothing to seed
+        flag_path = cwd / ".pp-pending-spec.json"
+        if flag_path.exists():
+            return None  # already pending; daemon will pick it up
+        import uuid
+        flag = {
+            "uuid": str(uuid.uuid4()),
+            "ts": time.time(),
+            "session_id": session_id or "unknown",
+            "prompt": prompt[:4000],  # cap; daemon reads what's here
+            "command_to_dispatch": "/speckit-spec",
+            "ttl_sec": 1800,
+        }
+        tmp = flag_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(flag, ensure_ascii=False, indent=2),
+                       encoding="utf-8")
+        os.replace(tmp, flag_path)  # atomic
+        _log(f"B.2 pending-spec flag dropped uuid={flag['uuid']} cwd={cwd}")
+        return flag
+    except Exception as exc:                      # fail-open (Ley 24)
+        _log(f"B.2 ERROR {type(exc).__name__}: {exc}")
+        return None
+
+
 def run(data) -> dict:
     try:
         data = data or {}
@@ -593,6 +658,10 @@ def run(data) -> dict:
         cwd = Path(data.get("cwd") or os.getcwd())
         mods = _match_modules(prompt, cwd)
         spec = _active_spec(cwd)
+        # Zero-Command B.2 — fire-and-forget flag drop; never blocks the
+        # prompt, never adds to additionalContext. Daemon B.3 picks it up.
+        _detect_new_feature_intent_and_flag(prompt, cwd, spec,
+                                            data.get("session_id"))
         if not mods and not spec:
             return {"continue": True}
 
