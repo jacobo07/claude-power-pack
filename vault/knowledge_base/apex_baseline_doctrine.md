@@ -92,3 +92,27 @@ The Spec-Driven Gate (PASO -1) governs feature *intent* upstream of the three pi
 3. **PASO 1+** — Apex Completeness three pillars (this file, BL-0068 sealed 2026-05-16).
 
 A feature missing PASO -1 is INCOMPLETE at the planning stage and CANNOT enter the onboarding/completeness pipeline. A feature passing PASO -1 but missing PASO 0 or the three pillars is non-conformant per the existing rules in this file.
+
+## Zero-Command Standard cross-link (sealed 2026-05-21)
+
+The Zero-Command Standard governs feature *activation* — if a PP capability improves results, saves tokens, or removes a recurring manual step, it MUST activate without an Owner-typed slash command. Sealed in the global apex standard, not duplicated here, to preserve single-source-of-truth.
+
+> See: `~/.claude/knowledge_vault/core/apex-completion-standard.md` § **Zero-Command Standard (sealed 2026-05-21)**.
+
+**Reference implementation (this commit chain on `feat/rtk-compressor-fusion`):**
+
+- Component A — `hooks/zero-command-bootstrap.js` (SessionStart). Stubs `.specify/memory/constitution.md` on first encounter of a real project (`.git` + manifest + no `.specify/`).
+- Component B.2 — `tools/jit_skill_loader.py::_detect_new_feature_intent_and_flag`. Drops `.pp-pending-spec.json` when prompt matches new-feature regex.
+- Component B.3 — `hooks/pending-keystrokes-daemon.ps1`. Generalized SendKeys dispatcher polling `~/.claude/hooks/pending-keystrokes/*.flag`. Cursor-focused dispatch only, TTL + .disabled kill-switch, BL-0003 intact.
+- Component C — `hooks/background-verifier.js` + `tools/background_verifier_run.py`. Stop-time mirror parity + OVO staleness + spec coherence; handoff-only, never auto-fixes.
+- Component D — `hooks/first-time-project.js` + `tools/first_time_project_init.py`. SessionStart prereq probe (4 quick checks).
+- Harness — `tools/test_zero_command.py` (G1-G8). Exit 0 on this host with 7 PASS + 1 SKIP (G1 awaiting sibling E.1 audit artifact).
+
+**Order of gates extended:**
+
+0. **PASO -2 (NEW)** — Zero-Command Standard. Every new capability has an auto-activation path before any of the below applies.
+1. PASO -1 — Spec-Driven Gate.
+2. PASO 0 — Apex Onboarding Standard.
+3. PASO 1+ — Apex Completeness three pillars + Programmatic Budget Gate.
+
+Pre-existing features (`/ovo-audit`, `/cpp-distill`, `/speckit-*` slash commands themselves) are grandfathered. Post-2026-05-21 features that ship slash-only must declare WHY a hook can't trigger them, in the spec's Constraints section.

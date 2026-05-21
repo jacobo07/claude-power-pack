@@ -359,10 +359,38 @@ def gate_g8() -> Gate:
     return g
 
 
+# ---------- G9: T6 sealing in apex (added per plan Task 6.3) ----------
+
+def gate_g9() -> Gate:
+    g = Gate("G9", "T6: 'Zero-Command Standard' sealed in apex + PP mirror cross-link")
+    apex = HOME / ".claude" / "knowledge_vault" / "core" / "apex-completion-standard.md"
+    mirror = PP_ROOT / "vault" / "knowledge_base" / "apex_baseline_doctrine.md"
+    if not apex.is_file():
+        g.failed(f"apex missing: {apex}")
+        return g
+    if not mirror.is_file():
+        g.failed(f"PP mirror missing: {mirror}")
+        return g
+    try:
+        apex_body = apex.read_text(encoding="utf-8", errors="replace")
+        mirror_body = mirror.read_text(encoding="utf-8", errors="replace")
+        if "Zero-Command Standard (sealed 2026-05-21)" not in apex_body:
+            g.failed("apex missing 'Zero-Command Standard (sealed 2026-05-21)' heading")
+            return g
+        if "Zero-Command Standard cross-link" not in mirror_body:
+            g.failed("PP mirror missing 'Zero-Command Standard cross-link' heading")
+            return g
+        g.passed("apex section + PP mirror cross-link present")
+    except Exception as e:
+        g.failed(f"read error: {e}")
+    return g
+
+
 def main() -> int:
     gates = [
         gate_g1(), gate_g2(), gate_g3(), gate_g4(),
         gate_g5(), gate_g6(), gate_g7(), gate_g8(),
+        gate_g9(),
     ]
     print("Zero-Command Verification Harness (T5, G1-G8)")
     print(f"Run: {datetime.now(timezone.utc).isoformat()}")
