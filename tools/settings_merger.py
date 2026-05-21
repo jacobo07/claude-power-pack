@@ -255,6 +255,57 @@ def register_zero_command(settings_path: str, dry_run: bool) -> int:
     return 0
 
 
+def register_mark_live_session(settings_path: str, dry_run: bool) -> int:
+    """Register the mark-live-session hook (SessionStart + Stop) in one call.
+
+    Replaces the legacy ~/.claude/hooks/resume-hide-live.js cloaking
+    pattern (which renamed `<uuid>.jsonl` -> `<uuid>.jsonl.live` to hide
+    live sessions). The marker hook leaves the .jsonl visible and tags
+    the latest ai-title with a leading "[live]" glyph so the native
+    /resume picker shows every session and the user can tell at a glance
+    which ones are currently open in another pane.
+
+    Source-of-truth path (registered directly into settings.json — no
+    copy to ~/.claude/hooks/, matching the RTK pattern):
+      ~/.claude/skills/claude-power-pack/hooks/mark-live-session.js
+
+    Idempotent: if either event already references the script, that
+    event registration is a no-op (handled by _register's _block_exists
+    check).
+
+    Exit codes mirror _register: 0 = both entries newly wired or
+    already present; non-zero = first failing call.
+    """
+    home = os.path.expanduser("~")
+    hook = os.path.join(home, ".claude", "skills",
+                        "claude-power-pack", "hooks", "mark-live-session.js")
+    deploys = [
+        ("SessionStart", hook, 5),
+        ("Stop",         hook, 5),
+    ]
+    if dry_run:
+        print("settings_merger: register-mark-live-session --dry-run")
+        for event, script, timeout in deploys:
+            present = "yes" if os.path.isfile(script) else "no"
+            print(f"  would register {event} -> {script}  "
+                  f"(script-present={present})")
+        return 0
+    if not os.path.isfile(hook):
+        print(f"settings_merger: hook script not found: {hook}",
+              file=sys.stderr)
+        print("  Hint: pull the latest claude-power-pack first.",
+              file=sys.stderr)
+        return 5
+    for event, script, timeout in deploys:
+        fn = register_stop if event == "Stop" else register_sessionstart
+        rc = fn(settings_path, script, timeout)
+        if rc != 0:
+            return rc
+    print("settings_merger: register-mark-live-session OK "
+          "(2 hooks wired/idempotent)")
+    return 0
+
+
 def register_pretool(settings_path: str, node_script: str,
                       matcher: str, timeout: int) -> int:
     # Refuse to register a hook command pointing at a missing script —
@@ -310,6 +361,15 @@ def main():
     rzc.add_argument("--settings", default=DEFAULT_SETTINGS,
                      help="path to settings.json (default ~/.claude/...)")
 
+    rmls = sub.add_parser("register-mark-live-session",
+                          help="Register the mark-live-session hook "
+                               "(SessionStart + Stop) — visible /resume "
+                               "marker, replaces resume-hide-live.js")
+    rmls.add_argument("--dry-run", action="store_true",
+                      help="print what would be wired without modifying settings.json")
+    rmls.add_argument("--settings", default=DEFAULT_SETTINGS,
+                      help="path to settings.json (default ~/.claude/...)")
+
     rp = sub.add_parser("register-pretool",
                         help="Register a PreToolUse Node hook with a matcher")
     rp.add_argument("--node-script", required=True,
@@ -334,6 +394,8 @@ def main():
                                 a.timeout)
     if a.cmd == "register-zero-command":
         return register_zero_command(a.settings, a.dry_run)
+    if a.cmd == "register-mark-live-session":
+        return register_mark_live_session(a.settings, a.dry_run)
     return 2
 
 

@@ -1,4 +1,39 @@
 ﻿
+## 2026-05-21 — Marker > Cloaking: `.jsonl.live` rename retired for visible `⚡ ` custom-title
+
+**Session:** Owner correction (R6) — "vamos a hacer lo del marker como en el repo KobiiSports en vez de ocultar las sesiones activas, y que esto sea siempre cuando se use la claude power pack". The earlier-same-day discriminator fix had reduced the orphan-leak but kept the architectural problem: hiding live sessions from `/resume` means the Owner can't see their own panes, and any classifier drift permanently loses sessions from the picker.
+
+**Two false starts** before the real answer surfaced:
+1. First Explore agent hedged that `.claude/intent.lock` in KobiiSports was the marker. It IS a marker — but for **concurrent-pane arbitration** (PreToolUse soft-pause via `intent_lock.js`), not /resume display. Naming collision with the `intent-lock.md` governance doc compounded the confusion.
+2. After verifying `intent.lock` was wrong, I went hunting for hooks that inject `[LIVE]` into `custom-title`. Found nothing — the mechanism the Owner had in mind **didn't exist yet**. Stopped guessing; asked for the marker shape (`⚡ <title>`), the legacy hook's fate (decommission), and rollout posture (opt-out for all power-pack users).
+
+**Fix architecture** (`claude-power-pack/hooks/mark-live-session.js`):
+- Native `/resume` picker reads the **latest** `{"type":"custom-title", ...}` record per `.jsonl`. Records are append-only by harness convention. So appending a fresh custom-title line is the standard way to mutate display state — no rename, no truncation, no migration.
+- On Stop: if last custom-title doesn't start with `⚡ `, append `{"type":"custom-title","customTitle":"⚡ <base>","sessionId":...}`. Idempotent — never double-prefix.
+- On SessionStart and on every Stop: orphan sweep across every `.jsonl` whose last custom-title carries the `⚡ ` prefix; if the session is dead (3-layer gate: mtime + live-process + lazarus index, fail-open), append a strip-line restoring the base title.
+- Reuses the SAME 3-layer discriminator from the earlier-same-day `resume-hide-live` patch — battle-tested, fail-open.
+
+**Rollout** (`tools/settings_merger.py` → new `register-mark-live-session` consolidator):
+- Single Owner-run command wires both events idempotently, matching the RTK + Zero-Command precedent. Hook script registered at the PP repo path directly — no copy to `~/.claude/hooks/`, no split-brain.
+- Legacy `resume-hide-live.js` unregistered manually (merger has no unregister verb yet). Two `Edit` calls on `~/.claude/settings.json` removed the SessionStart + Stop matcher blocks; JSON validity confirmed via `json.loads` round-trip.
+- 4 remaining `.jsonl.live` files on the host were collision-cases (a `.jsonl` already existed for the same UUID). Preserved as `<uuid>.jsonl.live.recovered-<ts>` for manual inspection — zero data loss.
+
+**Empirical**: regression-sandbox round-trip PASS (mark → idempotent re-mark → orphan-strip after stale mtime). Merger dry-run + idempotent re-run both exit 0.
+
+**Process violation caught at commit-time (R6 trigger #2)**: I built the hook from scratch without running `git log --oneline -10` first. Sibling commit `cb25f3c` (same branch, same Owner-requested theme) had already shipped marker logic — extending the legacy `resume-hide-live.js` with a `custom-title` append path. My fresh-build used the wrong field (`custom-title` was empirically verified by the prior author; I had assumed `custom-title`/`aiTitle` either would work). MEMORY rule `feedback_check_sibling_commits_before_refactor.md` exists precisely for this — and I skipped it. The prior commit's empirical field-choice saved me from shipping a hook that wouldn't render in the picker. Lesson: ALWAYS `git log --oneline -10` before executing an Owner-answered design decision; the answer to "has this already been tried" is in the log, not in memory.
+
+**Meta-vaccine — "Marker beats Mask for shared discoverability state"**: any UX surface where the user needs to see "what's active right now" should mark, not hide. Hiding requires a perfectly-reliable un-hide path (which fails when the discriminator drifts); marking degrades gracefully (a stuck marker is a cosmetic annoyance, a lost session is a data-loss event). The cost asymmetry is huge — favor marker designs by default.
+
+**Cross-references**:
+- New standard: `claude-power-pack/vault/standards/live-session-marker.md`
+- New hook: `claude-power-pack/hooks/mark-live-session.js`
+- New merger subcommand: `claude-power-pack/tools/settings_merger.py:register_mark_live_session`
+- Supersedes: `~/.claude/hooks/resume-hide-live.js` (kept on disk for rollback; unregistered from settings.json)
+- Supersedes memory: `project_native_resume_hide_live.md` (rewritten to point here)
+- Sister discriminator: `vault/lessons/discriminator-on-missing-external-dep.md`
+
+---
+
 ## 2026-05-21 — Discriminator-on-missing-external-dep: `.jsonl.live` orphan leak
 
 **Session:** post-crash `.jsonl.live` cleanup, 69 accumulated orphans across the host.
