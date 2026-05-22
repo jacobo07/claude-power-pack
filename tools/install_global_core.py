@@ -61,7 +61,7 @@ DEFAULT_REPO = HERE.parent                # claude-power-pack/
 DEFAULT_SETTINGS = GLOBAL / "settings.json"
 ISO_TS = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
 
-# Hook → (event, [matcher]) map for settings_merger. Only the hooks the
+# Hook -> (event, [matcher]) map for settings_merger. Only the hooks the
 # Power-Pack DRIVES are auto-registered here. Anything an Owner wants
 # beyond this set is their explicit register-* call. Conservative on
 # purpose (Lesson 2 doctrine — minimum-surface mutation).
@@ -74,6 +74,30 @@ HOOK_REGISTRATIONS = [
     # bundles the rest. Those are not auto-registered by this installer
     # because settings_merger has no register-postool subcommand;
     # printed in the post-install checklist instead.
+]
+
+# Session-safety stack (BL-SESSION-SAFETY-001, sealed 2026-05-21, revised
+# 2026-05-22). The CONTRACT (a doc) is installer-deployed — non-hook,
+# classifier-OK. The HOOKS are Owner-pasted per the standing
+# Mirror-Sync-Direction doctrine; the printed checklist enumerates them so
+# the Owner can `cp` + `settings_merger.py register-session-safety` in two
+# commands. See vault/plans/session-safety-global-2026-05-22.md.
+SESSION_SAFETY_ROOT_FILES = [
+    # (pp_repo_relative_path, loose_target_relative_to_GLOBAL, description)
+    ("vault/contracts/SESSION_SAFETY_CONTRACT.md",
+     "SESSION_SAFETY_CONTRACT.md",
+     "BL-SESSION-SAFETY-001 — durability + discoverability of conversations"),
+]
+SESSION_SAFETY_HOOKS_CHECKLIST = [
+    # (pp_repo_relative_path, role)
+    ("hooks/session-file-guard.js",
+     "PreToolUse(Bash|PowerShell) — blocks destructive ops on session .jsonl"),
+    ("hooks/lazarus-stub-recover.js",
+     "SessionStart — promotes hook-stub canonicals from .live siblings "
+     "(BL-2026-05-21)"),
+    ("hooks/_oneshot_solitary_empty_shell_cleanup.js",
+     "Owner-on-demand — triple-gated archive of solitary empty shells "
+     "(NOT auto-registered)"),
 ]
 
 # permissions.allow checklist the Owner must paste manually (Lesson 2
@@ -219,6 +243,20 @@ def _node_check(path: Path) -> bool:
         return False
 
 
+def _deploy_session_safety_root_files(repo: Path, dry_run: bool,
+                                       report: list,
+                                       counters: dict) -> None:
+    """Deploy root-level session-safety files (the contract is a doc, not
+    a hook — classifier-OK to install). Hooks remain Owner-pasted per
+    Mirror-Sync-Direction doctrine; see _print_hooks_checklist for them.
+    """
+    for pp_rel, loose_rel, _desc in SESSION_SAFETY_ROOT_FILES:
+        src = repo / pp_rel
+        dst = GLOBAL / loose_rel
+        verdict = _backup_then_overwrite(dst, src, dry_run, report)
+        counters[verdict] = counters.get(verdict, 0) + 1
+
+
 def _register_hooks(repo: Path, settings_path: Path,
                     dry_run: bool, report: list) -> int:
     """Drive settings_merger.py register-* for each entry in
@@ -317,6 +355,32 @@ def _print_hooks_checklist(repo: Path) -> None:
     print(f"  python tools/settings_merger.py register-stop "
           f"--node-script ~/.claude/hooks/learning-sentinel.js")
     print()
+    print("=" * 64)
+    print("SESSION-SAFETY STACK (BL-SESSION-SAFETY-001, Universal Law)")
+    print("Contract auto-deployed by step 1b above.")
+    print("Hooks (Owner cp + register) — UNIVERSAL OPT-OUT:")
+    print("=" * 64)
+    for pp_rel, role in SESSION_SAFETY_HOOKS_CHECKLIST:
+        src = pp_hooks.parent / pp_rel
+        name = Path(pp_rel).name
+        print(f"  # {role}")
+        print(f"  cp '{src}' '{GLOBAL / 'hooks' / name}'")
+    print()
+    print("Then one consolidator call wires PreToolUse(Bash|PowerShell)->guard")
+    print("and SessionStart->stub-recover (idempotent):")
+    print(f"  python tools/settings_merger.py register-session-safety")
+    print()
+    print("Layer 3 (daily snapshot) -- Scheduled Task (Windows):")
+    print(f"  schtasks /create /TN 'ClaudePP-SessionSnapshot' /SC DAILY ^")
+    print(f"     /ST 03:00 /TR 'python {repo}/tools/session-snapshot.py' /F")
+    print()
+    print("And add this 2-line pin to ~/.claude/CLAUDE.md (doctrine forbids")
+    print("the installer from auto-writing CLAUDE.md; Owner pastes):")
+    print()
+    print("  ## Session Safety (UNIVERSAL LAW)")
+    print("  See ~/.claude/SESSION_SAFETY_CONTRACT.md (BL-SESSION-SAFETY-001).")
+    print("  Durability (Sacred Invariant) + Discoverability (sister-promise).")
+    print()
 
 
 def main() -> int:
@@ -388,6 +452,12 @@ def main() -> int:
         dst = _resolve_loose_target(kind, name)
         verdict = _backup_then_overwrite(dst, src, args.dry_run, report)
         counters[verdict] = counters.get(verdict, 0) + 1
+
+    # 1b. Session-safety root-level docs (CONTRACT). Hooks for session
+    # safety stay Owner-pasted per the same doctrine that excluded hooks
+    # from step 1; see _print_hooks_checklist for the cp + register
+    # commands the Owner runs.
+    _deploy_session_safety_root_files(repo, args.dry_run, report, counters)
 
     # 2. node --check is N/A — installer no longer ships hooks.
     nc_fail = 0

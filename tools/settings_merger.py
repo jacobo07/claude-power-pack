@@ -306,6 +306,61 @@ def register_mark_live_session(settings_path: str, dry_run: bool) -> int:
     return 0
 
 
+def register_session_safety(settings_path: str, dry_run: bool) -> int:
+    """Register the session-safety stack in one idempotent call.
+
+    Wires (in order, idempotent):
+      PreToolUse(matcher=Bash|PowerShell) -> ~/.claude/hooks/session-file-guard.js
+      SessionStart                          -> ~/.claude/hooks/lazarus-stub-recover.js
+
+    The _oneshot_solitary_empty_shell_cleanup.js hook is intentionally
+    NOT auto-registered — per the contract it's Owner-on-demand only
+    (the 4a600525 incident showed why automatic cleanup of "empty
+    shells" is dangerous). The Owner runs it explicitly when they want
+    archival, not on every SessionStart.
+
+    Exit codes mirror _register: 0 = both newly wired or already
+    present (idempotent); non-zero = first failing call.
+
+    Contract: SESSION_SAFETY_CONTRACT.md (BL-SESSION-SAFETY-001).
+    """
+    home = os.path.expanduser("~")
+    guard = os.path.join(home, ".claude", "hooks", "session-file-guard.js")
+    stub_recover = os.path.join(home, ".claude", "hooks",
+                                "lazarus-stub-recover.js")
+    deploys = [
+        # (event, script, matcher_or_None, timeout)
+        ("PreToolUse",   guard,        "Bash|PowerShell", 5),
+        ("SessionStart", stub_recover, None,              5),
+    ]
+    if dry_run:
+        print("settings_merger: register-session-safety --dry-run")
+        for event, script, matcher, _t in deploys:
+            present = "yes" if os.path.isfile(script) else "no"
+            mp = f" (matcher={matcher})" if matcher else ""
+            print(f"  would register {event}{mp} -> {script}  "
+                  f"(script-present={present})")
+        return 0
+    for _event, script, _m, _t in deploys:
+        if not os.path.isfile(script):
+            print(f"settings_merger: hook script not found: {script}",
+                  file=sys.stderr)
+            print("  Hint: copy from claude-power-pack/hooks/<name> to "
+                  "~/.claude/hooks/ first (see install-global.ps1 "
+                  "checklist).", file=sys.stderr)
+            return 5
+    for event, script, matcher, timeout in deploys:
+        if event == "PreToolUse":
+            rc = register_pretool(settings_path, script, matcher, timeout)
+        else:
+            rc = register_sessionstart(settings_path, script, timeout)
+        if rc != 0:
+            return rc
+    print("settings_merger: register-session-safety OK "
+          "(2 hooks wired/idempotent)")
+    return 0
+
+
 def register_pretool(settings_path: str, node_script: str,
                       matcher: str, timeout: int) -> int:
     # Refuse to register a hook command pointing at a missing script —
@@ -361,6 +416,16 @@ def main():
     rzc.add_argument("--settings", default=DEFAULT_SETTINGS,
                      help="path to settings.json (default ~/.claude/...)")
 
+    rss2 = sub.add_parser("register-session-safety",
+                          help="Register the session-safety stack: "
+                               "PreToolUse(Bash|PowerShell)->session-file-guard "
+                               "+ SessionStart->lazarus-stub-recover. "
+                               "BL-SESSION-SAFETY-001.")
+    rss2.add_argument("--dry-run", action="store_true",
+                      help="print what would be wired without modifying settings.json")
+    rss2.add_argument("--settings", default=DEFAULT_SETTINGS,
+                      help="path to settings.json (default ~/.claude/...)")
+
     rmls = sub.add_parser("register-mark-live-session",
                           help="Register the mark-live-session hook "
                                "(SessionStart + Stop) — visible /resume "
@@ -396,6 +461,8 @@ def main():
         return register_zero_command(a.settings, a.dry_run)
     if a.cmd == "register-mark-live-session":
         return register_mark_live_session(a.settings, a.dry_run)
+    if a.cmd == "register-session-safety":
+        return register_session_safety(a.settings, a.dry_run)
     return 2
 
 
