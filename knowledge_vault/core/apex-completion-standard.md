@@ -436,3 +436,153 @@ handoff.md present, session_lessons.md append present, insights.json
 contains the tier-2 entry, telemetry/<ts>.json present, daemon log shows
 `trigger consumed via SendKeys` OR `trigger -> pending`. No artefact = NOT
 done.
+
+---
+
+# Zero-Command Standard (sealed 2026-05-21)
+
+> Fifth DONE axis, peer to JIT Activation Law, Concurrency & Async-Audit,
+> Zero-Drift Mirror, and Context Pressure Standard. Closes the gap between
+> "the capability exists" and "the capability is active without an Owner
+> command". Universal: every PP feature post-2026-05-21.
+
+## The law
+
+If a PP capability improves results, saves tokens, or removes a recurring
+manual step, it MUST activate **without an Owner-typed slash command**.
+Three acceptable activation paths:
+
+1. **SessionStart hook** — capability fires on session enter when project
+   signals match. Examples: `auto-vault-bootstrap.js` (vault extract),
+   `zero-command-bootstrap.js` (Spec Kit constitution stub),
+   `first-time-project.js` (prereq probe + onboarding handoff).
+2. **UserPromptSubmit / PostToolUse hook** — capability fires on agent
+   I/O signal. Examples: `jit_skill_loader.py` Apollo JIT injection;
+   `jit_skill_loader.py` new-feature-intent flag drop (Component B.2).
+3. **Out-of-band SendKeys daemon** — capabilities that genuinely require
+   a slash command (because the harness, not the hook, owns slash
+   dispatch — BL-0003) get surfaced via the registry pattern of
+   `pending-keystrokes-daemon.ps1`: a JSON `.flag` file dropped by any
+   hook is dispatched to Cursor when Cursor has focus, with Owner-visible
+   pre-fire delay and Owner-cancel UX (any keystroke aborts the queued
+   command). Examples: auto-compact at 70%; `/speckit-spec` after
+   new-feature intent detection.
+
+## What this rule rules OUT
+
+- **No `/restart` ritual** to load PP capabilities. The agent gets them
+  on session 1 turn 1 of any project.
+- **No `/cpp-load-tier` or `/speckit-constitution` requirement** for the
+  capability to begin operating. The hook stubs the file; the Owner can
+  refine via slash later, but the file's presence is what makes
+  downstream gates happy.
+- **No silent auto-fire of slash commands**. The SendKeys daemon path is
+  the ONLY sanctioned route, and it requires Cursor-focused + Owner-visible
+  pre-fire delay. Hooks themselves CANNOT type into the prompt — BL-0003
+  intact.
+- **No auto-push, no auto-OVO, no auto-fix of mirror drift**. The
+  Zero-Command standard accelerates *detection* and *seeding*, never
+  irreversible action.
+
+## Reach boundary
+
+Applies to PP features post-2026-05-21. Pre-existing features that
+require a slash command (e.g. `/cpp-distill`, `/ovo-audit`) are
+grandfathered — they are NOT retroactively required to ship auto-trigger
+paths. New features added post-cutover that omit auto-activation are
+non-conformant and CANNOT pass OVO at verdict >= A.
+
+## Honesty floor
+
+Surface activation on first Owner turn of any new project. Component A
++ D mark themselves via `.pp-onboarded` and `.pp-onboarded-prereqs`
+markers; the model's first-turn response MUST mention "PP auto-onboarded;
+see vault/handoffs/* for any prereqs" when those markers were freshly
+written this session. Silent auto-creation of files the Owner did not
+expect is forbidden by the same posture that governs the SendKeys daemon.
+
+## DONE-gate
+
+`python tools/test_zero_command.py` returns exit 0 with 8 gates each
+PASSED or SKIP-explained:
+
+- G1 hook fanout <=4 spawns/Write    | G5 Component B.2 flag drop
+- G2 gatekeeper additionalContext    | G6 Component B.3 daemon parse
+- G3 RTK clean (no install warning)  | G7 Component C verifier shape
+- G4 Component A stub+marker         | G8 Component D probe+marker
+
+Full plan: `~/.claude/plans/sorted-crafting-hanrahan.md` (Zero-Command
+Auto-Activation + Hook Stack Optimization, 2026-05-21). PP mirror:
+`claude-power-pack/vault/knowledge_base/apex_baseline_doctrine.md`
+§ Zero-Command Standard cross-link.
+
+## Session Safety Axis (sealed 2026-05-22, BL-SESSION-SAFETY-001)
+
+Apex-complete PP installs MUST ship the full **Session Safety** stack.
+Two promises, both required: **durability** (the `.jsonl` survives on
+disk regardless of automation behaviour) AND **discoverability** (the
+user can find the conversation via `/resume`). Either one alone is a
+partial promise; both together = "you never lose a session involuntarily".
+
+Required components (all five must be present in PP repo + wired by
+`install-global.ps1`; missing any = NOT Apex-complete):
+
+1. **Contract**: `vault/contracts/SESSION_SAFETY_CONTRACT.md` — the
+   Universal Law (§1 Sacred Invariant + §2 Triple Defense + §3
+   Sanctioned Flows allowlist + §8 Discoverability Guarantee).
+   Auto-deployed by the installer to `~/.claude/SESSION_SAFETY_CONTRACT.md`
+   (non-hook doc, classifier-OK).
+2. **Layer 2 PreToolUse guard**: `hooks/session-file-guard.js` —
+   blocks destructive ops on `~/.claude/projects/**/*.jsonl` unless a
+   §3 allowlist marker is present. Owner-pasted per Mirror-Sync-Direction.
+3. **Discoverability vaccine**: `hooks/lazarus-stub-recover.js`
+   (BL-2026-05-21) — SessionStart hook that promotes hook-stub-only
+   canonicals from sibling `.jsonl.live` / `.recovered-*` files. Owner-
+   pasted + Owner-registered via `register-session-safety` consolidator.
+4. **Live-session marker**: `claude-power-pack/hooks/mark-live-session.js`
+   — Stop + SessionStart hook that tags live sessions with `⚡ ` on the
+   latest `custom-title` record (visible in `/resume` instead of hidden).
+   Append-only, idempotent, 3-layer orphan sweep.
+5. **Layer 3 daily snapshot**: `tools/session-snapshot.py` +
+   `_register_snapshot_task` in `install_global_core.py` — Windows
+   Scheduled Task, idle-only, AC-only, 14-day rolling retention, same-day
+   idempotent overwrite. MUST carry all 5 governance layers documented
+   in `vault/lessons/heavy-io-must-be-governed.md` (single-instance
+   lock, IDLE_PRIORITY_CLASS, compresslevel 1, disk-space precheck,
+   schtasks idle-only+battery-aware).
+
+### Activation gate
+
+Single Owner-run command activates components 2+3 idempotently:
+
+```
+python claude-power-pack/tools/settings_merger.py register-session-safety
+```
+
+Wires PreToolUse(Bash|PowerShell) → session-file-guard and SessionStart →
+lazarus-stub-recover. The CLAUDE.md pin is printed by `install-global.ps1`
+for the Owner to paste (doctrine forbids auto-writing CLAUDE.md). Layer 3
+Scheduled Task is auto-registered by the installer (not a settings.json
+mutation, classifier-OK).
+
+### DONE-gate (Apex perspective)
+
+A PP install is Apex-complete on the Session Safety axis iff:
+
+1. `~/.claude/SESSION_SAFETY_CONTRACT.md` exists, byte-identical to the
+   PP-repo `vault/contracts/` copy.
+2. `~/.claude/CLAUDE.md` contains the 2-line Session Safety pin.
+3. `settings.json` registers `session-file-guard.js` on
+   `PreToolUse(Bash|PowerShell)` and `lazarus-stub-recover.js` on
+   `SessionStart` and `mark-live-session.js` on `SessionStart + Stop`.
+4. `schtasks /query /tn "ClaudePP-SessionSnapshot"` returns the task,
+   registered with `RunOnlyIfIdle=true` and `DisallowStartIfOnBatteries=true`.
+5. Synthetic smoke test passes: hook-stub canonical + sibling `.jsonl.live`
+   with real turns + trigger `lazarus-stub-recover` → canonical promoted +
+   `.stub-corrupt-*` backup left + exit 0 (the Paso 4.1 fixture pattern).
+
+Missing any of 1-5 = NOT Apex-complete on the Session Safety axis.
+
+Full plan: `claude-power-pack/vault/plans/session-safety-global-2026-05-22.md`.
+Contract: `vault/contracts/SESSION_SAFETY_CONTRACT.md`.
+Lesson: `vault/lessons/heavy-io-must-be-governed.md`.
