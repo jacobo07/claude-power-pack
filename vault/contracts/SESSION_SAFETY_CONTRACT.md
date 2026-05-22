@@ -60,12 +60,19 @@ Full snapshot of `~/.claude/projects/` to `~/.claude/backups/projects-snapshot-Y
 
 Initial snapshot from the 4a600525 incident: `~/.claude/backups/projects-snapshot-2026-05-21_220036.zip` (385 MB, 4899 files, 71% compression).
 
-Recommended automation: Windows Task Scheduler, daily at boot (or at a fixed hour). Script: `~/.claude/hooks/_oneshot_solitary_empty_shell_cleanup.js` is unrelated; the snapshot logic ran inline in the bullet-proofing session. To re-execute on demand:
+**Implementation (2026-05-22, Paso 3.1+3.2 of session-safety-global plan):**
 
-```powershell
-$ts = Get-Date -Format "yyyy-MM-dd_HHmmss"
-Compress-Archive -Path "$env:USERPROFILE\.claude\projects\*" -DestinationPath "$env:USERPROFILE\.claude\backups\projects-snapshot-$ts.zip" -CompressionLevel Optimal -Force
-```
+- **Canonical script**: `claude-power-pack/tools/session-snapshot.py` — pure Python (cross-platform-portable), `--dry-run` mode, 14-day rolling retention, same-day idempotent overwrite, file-in-use skip-and-continue. Empirically verified: 5305 files / 1462.6 MiB uncompressed → 380.9 MiB zip in ~57 s.
+- **Schedule (Windows)**: `install-global.ps1` auto-registers a Windows Scheduled Task named `ClaudePP-SessionSnapshot` running daily at 03:00. Idempotent (`schtasks /F` overwrites if present). Manual run any time via `schtasks /run /tn "ClaudePP-SessionSnapshot"`.
+- **Opt-out**: set environment variable `CLAUDEPP_SNAPSHOT_DISABLE=1` in the user/system scope. The script exits 0 with a single "DISABLED" line; the installer skips the task registration. Both layers honor the same env var for symmetry.
+- **Rotation**: oldest snapshots beyond 14 are deleted on each run. Same-day re-runs OVERWRITE today's existing zip (not rotated) so the "today" zip is always current.
+- **Manual one-off** (no schedule needed, run anywhere):
+  ```
+  python ~/.claude/skills/claude-power-pack/tools/session-snapshot.py
+  ```
+- **Status check**: `schtasks /query /tn "ClaudePP-SessionSnapshot" /fo LIST` shows next run + status.
+
+**Cross-platform note**: the Python script is portable, but the Scheduled Task registration is currently Windows-only. POSIX hosts should add a cron entry manually (e.g. `0 3 * * * /usr/bin/python3 ~/.claude/skills/claude-power-pack/tools/session-snapshot.py`); a future installer pass will auto-detect crontab on macOS/Linux.
 
 ---
 

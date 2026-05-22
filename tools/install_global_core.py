@@ -243,6 +243,58 @@ def _node_check(path: Path) -> bool:
         return False
 
 
+def _register_snapshot_task(repo: Path, dry_run: bool,
+                              report: list) -> str:
+    """Windows-only: register ClaudePP-SessionSnapshot daily Scheduled
+    Task (Layer 3 of SESSION_SAFETY_CONTRACT.md). Idempotent — uses /F
+    to overwrite. Opt-out via CLAUDEPP_SNAPSHOT_DISABLE=1 env var.
+
+    Returns one of:
+      "registered", "DRY:create-or-overwrite", "skip-not-windows",
+      "skip-opt-out", "skip-script-missing", "error", "failed".
+    """
+    if sys.platform != "win32":
+        report.append({"snapshot_task": "skip-not-windows"})
+        return "skip-not-windows"
+
+    if os.environ.get("CLAUDEPP_SNAPSHOT_DISABLE") == "1":
+        report.append({"snapshot_task": "skip-opt-out"})
+        return "skip-opt-out"
+
+    py = sys.executable
+    script = repo / "tools" / "session-snapshot.py"
+    if not script.is_file():
+        report.append({"snapshot_task": "skip-script-missing",
+                       "expected": str(script)})
+        return "skip-script-missing"
+
+    task_name = "ClaudePP-SessionSnapshot"
+    tr = f'"{py}" "{script}"'
+
+    if dry_run:
+        report.append({"snapshot_task": "DRY:create-or-overwrite",
+                       "tr": tr, "name": task_name,
+                       "schedule": "DAILY 03:00"})
+        return "DRY:create-or-overwrite"
+
+    try:
+        cp = subprocess.run(
+            ["schtasks", "/create", "/TN", task_name, "/SC", "DAILY",
+             "/ST", "03:00", "/TR", tr, "/F"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+        report.append({"snapshot_task": "error", "error": str(e)})
+        return "error"
+
+    if cp.returncode == 0:
+        report.append({"snapshot_task": "registered", "task": task_name})
+        return "registered"
+    report.append({"snapshot_task": "failed", "rc": cp.returncode,
+                   "stderr": cp.stderr.strip()})
+    return "failed"
+
+
 def _deploy_session_safety_root_files(repo: Path, dry_run: bool,
                                        report: list,
                                        counters: dict) -> None:
@@ -458,6 +510,12 @@ def main() -> int:
     # from step 1; see _print_hooks_checklist for the cp + register
     # commands the Owner runs.
     _deploy_session_safety_root_files(repo, args.dry_run, report, counters)
+
+    # 1c. Layer 3 — daily snapshot Scheduled Task (Windows-only,
+    # idempotent /F overwrite, opt-out via CLAUDEPP_SNAPSHOT_DISABLE=1).
+    # Not a settings.json mutation -> classifier-OK to auto-register.
+    snap_verdict = _register_snapshot_task(repo, args.dry_run, report)
+    print(f"snapshot task: {snap_verdict}")
 
     # 2. node --check is N/A — installer no longer ships hooks.
     nc_fail = 0
