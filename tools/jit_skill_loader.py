@@ -683,14 +683,15 @@ def _arch_check_inject(prompt: str) -> str | None:
     if not arch_check.is_file():
         return None
     try:
-        env = os.environ.copy()
-        env["CLAUDEPP_ARCHCHECK_RUNNING"] = "1"
+        # NOTE: do NOT set CLAUDEPP_ARCHCHECK_RUNNING=1 here. The
+        # recursion guard is for level-2+ chains (when /arch-decision
+        # --deep spawns claude.exe which re-fires UserPromptSubmit).
+        # The FAST piggyback is level-1 and should run normally.
         proc = subprocess.run(
             [sys.executable, str(arch_check), "--fast"],
             input=prompt.encode("utf-8"),
             capture_output=True,
             timeout=3,
-            env=env,
         )
         out = json.loads(proc.stdout.decode("utf-8", errors="replace"))
         if out.get("verdict") in ("COLLISION", "WARNING"):

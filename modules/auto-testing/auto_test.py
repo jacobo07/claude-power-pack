@@ -358,6 +358,48 @@ def _maybe_fake_sleep() -> None:
             pass
 
 
+def _run_code_review_if_enabled(cwd: Path, diff_text: str) -> dict | None:
+    """Spawn the code_reviewer alongside auto-test. Returns its JSON
+    payload, or None when disabled / unavailable / crashed.
+
+    Fail-OPEN: any error returns None and the gate proceeds with the
+    auto-test verdict only. The reviewer never blocks a real commit on
+    its own crash.
+    """
+    if os.environ.get("CLAUDEPP_CODEREVIEW_DISABLED") == "1":
+        return None
+    if os.environ.get("CLAUDEPP_CODEREVIEW_RUNNING") == "1":
+        # already inside a review chain
+        return None
+    reviewer = (
+        _HERE.parent / "code-review" / "code_reviewer.py"
+    )
+    if not reviewer.is_file():
+        return None
+    try:
+        # NOTE: do NOT set CLAUDEPP_CODEREVIEW_RUNNING=1 here. The
+        # recursion guard exists to short-circuit nested invocations
+        # from the DEEP-mode chain (when /code-review --deep spawns
+        # claude.exe which re-fires hooks). The FAST piggyback below
+        # is the FIRST level; the guard is a defence for level-2+.
+        proc = subprocess.run(
+            [sys.executable, str(reviewer), "--fast", "--cwd", str(cwd)],
+            input=diff_text.encode("utf-8"),
+            capture_output=True,
+            timeout=8,        # tight sub-budget under the 28 s hook cap
+        )
+        if proc.returncode != 0:
+            return None
+        out = json.loads(proc.stdout.decode("utf-8", errors="replace") or "{}")
+        if not isinstance(out, dict):
+            return None
+        return out
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError):
+        return None
+    except Exception:
+        return None
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(description="Auto-Testing gate / deep run")
     p.add_argument("--gate", action="store_true",
@@ -408,6 +450,50 @@ def main(argv: list[str]) -> int:
         diff_text = _read_staged_diff(cwd)
 
     verdict = run_gate(cwd, diff_text, mode=args.mode, budget_sec=args.budget)
+
+    # Code Review piggyback (PP Quality Triangle).
+    # Spawn code_reviewer.py --fast with the same diff. On BLOCK, upgrade
+    # gate verdict to "fail" so auto-test-gate.js exits 2. On WARN, leave
+    # gate verdict intact but append findings to the result body.
+    review_result = _run_code_review_if_enabled(cwd, diff_text)
+    if review_result:
+        review_verdict = review_result.get("verdict")
+        review_findings = review_result.get("findings", [])
+        review_summary = review_result.get("summary", "")
+        if review_verdict == "block":
+            verdict = GateVerdict(
+                verdict="fail",
+                project_type=verdict.project_type,
+                project_root=verdict.project_root,
+                duration_sec=verdict.duration_sec,
+                reason=(verdict.reason or "")
+                       + " | code-review BLOCK: " + review_summary,
+                test_output=(verdict.test_output or "")
+                            + "\n\n--- Code Review Findings (BLOCK) ---\n"
+                            + json.dumps(review_findings, indent=2)[:4000],
+                test_files=verdict.test_files,
+                extra={**(verdict.extra or {}),
+                       "code_review": review_result},
+            )
+        elif review_verdict == "warn":
+            verdict = GateVerdict(
+                verdict=verdict.verdict,
+                project_type=verdict.project_type,
+                project_root=verdict.project_root,
+                duration_sec=verdict.duration_sec,
+                reason=(verdict.reason or "")
+                       + " | code-review WARN: " + review_summary,
+                test_output=(verdict.test_output or "")
+                            + "\n\n--- Code Review Findings (WARN) ---\n"
+                            + json.dumps(review_findings, indent=2)[:4000],
+                test_files=verdict.test_files,
+                extra={**(verdict.extra or {}),
+                       "code_review": review_result},
+            )
+        else:
+            # pass / skip: still attach for transparency.
+            verdict.extra = {**(verdict.extra or {}),
+                             "code_review": review_result}
 
     # Side-effect log + result artifact.
     vault_io.log_auto_spawn({

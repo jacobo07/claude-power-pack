@@ -1,0 +1,63 @@
+{
+  "results": [
+    {
+      "id": "V-BLOCK-SECRET",
+      "expected": "block",
+      "actual": "block",
+      "ok": true
+    },
+    {
+      "id": "V-BLOCK-EVAL",
+      "expected": "block",
+      "actual": "block",
+      "ok": true
+    },
+    {
+      "id": "V-WARN-LENGTH",
+      "expected": "warn",
+      "actual": "warn",
+      "ok": true
+    },
+    {
+      "id": "V-WARN-DOCTRINE-1",
+      "expected": "warn",
+      "actual": "warn",
+      "ok": true
+    },
+    {
+      "id": "V-WARN-DOCTRINE-2",
+      "expected": "warn",
+      "actual": "warn",
+      "ok": true
+    },
+    {
+      "id": "V-PASS",
+      "expected": "pass",
+      "actual": "pass",
+      "ok": true
+    },
+    {
+      "id": "V-SKIP-MVN",
+      "expected": "pass+skip-tool",
+      "actual": "pass",
+      "ok": true
+    }
+  ],
+  "timing": {
+    "p05": 235,
+    "p50": 264,
+    "p95": 312,
+    "all": [
+      235,
+      235,
+      250,
+      250,
+      264,
+      264,
+      264,
+      266,
+      296,
+      312
+    ]
+  }
+}
