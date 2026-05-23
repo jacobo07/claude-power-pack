@@ -666,6 +666,88 @@ _ARCH_DESIGN_VERBS = (
 )
 
 
+# --- Prompt Quality Axis (sealed 2026-05-23): vague-prompt lint signal ---
+# Detects short prompts whose referent is unresolved ("the bug", "esto",
+# "hazlo"). Emits a one-line warning into additionalContext. Never
+# blocks, never rewrites — the agent decides whether to ask the Owner.
+# AND of three conditions, all deterministic / regex-only:
+#   1. len(prompt.split()) < 30 tokens
+#   2. at least one vague referent matches
+#   3. no mitigator present (file extension, line number, function name,
+#      >1 design verb, active .specify spec)
+# Owner spec: auto-rewriter is explicitly vetoed — risk > benefit.
+_VAGUE_REFERENT_RX = re.compile(
+    r"\b(?:"
+    # Pronouns / demonstratives (referent unresolved without context)
+    r"esto|this|it|that|eso|aquello|lo\s+de|"
+    # Definite article + opaque noun, allowing up to 3 modifier words
+    # between (e.g. "the bug", "the auth bug", "the recent ci error")
+    r"the\s+(?:\w+\s+){0,3}(?:bug|issue|error|thing|problem|stuff|"
+    r"feature|change|fix|file|code|function|method|module|component)|"
+    r"el\s+(?:\w+\s+){0,3}(?:bug|error|fallo|problema|asunto|tema|"
+    r"funcion|funci[oó]n|metodo|m[eé]todo|modulo|m[oó]dulo|"
+    r"componente|cambio|arreglo|archivo|codigo|c[oó]digo)|"
+    r"la\s+(?:\w+\s+){0,3}(?:cosa|funci[oó]n|funcion|p[aá]gina|pagina)|"
+    # Spanish imperative + enclitic-lo (hazlo, házmelo, dámelo, etc.)
+    r"hazlo|h[aá]zmelo|d[aá]melo|d[ií]melo|t[oó]malo|ponlo|"
+    r"d[eé]jalo|us[aá]lo|m[ií]ralo|m[uú]?[eé]?stra(?:me)?lo|"
+    r"hace?d?lo|haga(?:n|mos)?lo"
+    r")\b",
+    re.I | re.UNICODE)
+_FILE_HINT_RX = re.compile(
+    r"\b[\w.-]+\.(?:py|pyi|ts|tsx|js|jsx|mjs|cjs|java|kt|ex|exs|rs|go|"
+    r"cpp|cc|c|h|hpp|md|yml|yaml|json|toml|sh|ps1|sql|css|scss|html|"
+    r"xml|swift|dart|rb|php|cs|vue|svelte|astro|gradle|mod|lock)\b",
+    re.I)
+_LINE_HINT_RX = re.compile(
+    r"\b(?:line|l[ií]nea|row)\s*\d+\b|:\d+\b", re.I | re.UNICODE)
+_FUNCTION_HINT_RX = re.compile(
+    r"\b(?:function|method|def|defn|fn|fun|class|module|struct)\s+\w+"
+    r"|\b[a-zA-Z_]\w*\([^)]*\)",
+    re.I)
+VAGUE_LINT_MESSAGE = (
+    "[vague-prompt-lint] Prompt corto (<30 tok) con referente sin "
+    "concretar. Si hay ambiguedad real, pregunta al Owner que es 'X' "
+    "antes de ejecutar. No bloqueante."
+)
+
+
+def _detect_vague_prompt(prompt: str, spec) -> str | None:
+    """Owner-spec lint signal — returns one-line warning or None.
+
+    `spec` is the result of `_active_spec(cwd)`: tuple or None. We pass
+    it instead of re-walking the filesystem (already paid in run()).
+    Fail-open: any error -> None.
+    """
+    try:
+        if os.environ.get("CLAUDEPP_VAGUE_LINT_DISABLE") == "1":
+            return None
+        if os.environ.get("CLAUDEPP_JIT_RUNNING") == "1":
+            return None
+        if not prompt:
+            return None
+        if len(prompt.split()) >= 30:
+            return None
+        if spec is not None:
+            return None
+        if not _VAGUE_REFERENT_RX.search(prompt):
+            return None
+        if _FILE_HINT_RX.search(prompt):
+            return None
+        if _LINE_HINT_RX.search(prompt):
+            return None
+        if _FUNCTION_HINT_RX.search(prompt):
+            return None
+        lo = prompt.lower()
+        design_hits = sum(1 for v in _ARCH_DESIGN_VERBS if v in lo)
+        if design_hits > 1:
+            return None
+        return VAGUE_LINT_MESSAGE
+    except Exception as exc:
+        _log(f"vague-lint ERROR {type(exc).__name__}: {exc}")
+        return None
+
+
 def _arch_check_inject(prompt: str) -> str | None:
     """Spawn arch_check.py --fast; return its context block on
     COLLISION/WARNING, else None. Fail-open on any exception."""
@@ -711,13 +793,18 @@ def run(data) -> dict:
         cwd = Path(data.get("cwd") or os.getcwd())
         mods = _match_modules(prompt, cwd)
         spec = _active_spec(cwd)
+        # Prompt Quality Axis (2026-05-23): one-line lint signal for short
+        # prompts with vague referents. Spec is passed (already computed)
+        # to avoid a second .specify walk. Never blocks; advisory only.
+        vague_block = _detect_vague_prompt(prompt, spec)
         # Zero-Command B.2 — fire-and-forget flag drop; never blocks the
         # prompt, never adds to additionalContext. Daemon B.3 picks it up.
         _detect_new_feature_intent_and_flag(prompt, cwd, spec,
                                             data.get("session_id"))
         if not mods and not spec:
-            if arch_block:
-                return {"continue": True, "additionalContext": arch_block}
+            extras = "\n\n".join(b for b in (arch_block, vague_block) if b)
+            if extras:
+                return {"continue": True, "additionalContext": extras}
             return {"continue": True}
 
         tier = _select_tier(prompt)
@@ -786,8 +873,9 @@ def run(data) -> dict:
                                  f"vendor/apollo/upstream/{m}/SKILL.md")
 
         if not injected and spec_injected_size == 0:
-            if arch_block:
-                return {"continue": True, "additionalContext": arch_block}
+            extras = "\n\n".join(b for b in (arch_block, vague_block) if b)
+            if extras:
+                return {"continue": True, "additionalContext": extras}
             return {"continue": True}
 
         _save_state(sid, state)
@@ -817,11 +905,13 @@ def run(data) -> dict:
                 f"cards via SessionStart sentinel): {', '.join(deferred)}."
             )
         ctx = header + "\n\n" + "\n\n".join(blocks)
-        if arch_block:
-            ctx = ctx + "\n\n" + arch_block
+        extras = "\n\n".join(b for b in (arch_block, vague_block) if b)
+        if extras:
+            ctx = ctx + "\n\n" + extras
         _log(f"sid={sid} tier={tier} injected={injected} bytes={total} "
              f"spec_bytes={spec_injected_size} deferred={deferred} "
-             f"arch={'yes' if arch_block else 'no'}")
+             f"arch={'yes' if arch_block else 'no'} "
+             f"vague={'yes' if vague_block else 'no'}")
         return {"continue": True, "additionalContext": ctx}
     except Exception as exc:                  # fail-open (Ley 24: logged)
         _log(f"ERROR {type(exc).__name__}: {exc}")
@@ -829,7 +919,8 @@ def run(data) -> dict:
 
 
 # Importable by hook-dispatcher-style bundlers / tests.
-__all__ = ["run", "TASK_PROFILES", "TRIGGERS", "_select_tier", "_render"]
+__all__ = ["run", "TASK_PROFILES", "TRIGGERS", "_select_tier", "_render",
+           "_detect_vague_prompt", "VAGUE_LINT_MESSAGE"]
 
 
 if __name__ == "__main__":
