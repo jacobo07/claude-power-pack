@@ -685,3 +685,68 @@ intent detector -> detached `cmd.exe /c start "" /B python deep_research.py`
 spawn (auto-spawn log entry written, child python PID visible in
 Win32_Process), Stop hook returned to harness in < 200 ms (fire-and-
 forget contract honored).
+
+
+## Production Branch Standard (sealed 2026-05-23)
+
+`main` is the production branch of `claude-power-pack`. Merge from
+`feat/*` branches is gated on three hard preconditions:
+
+1. **verify_spp.py exit 0** on the feat branch — 7 of 7 STRICT-PASS
+   rows: mirror-parity, drift-report, paths+secrets, rtk-fusion,
+   intent-lock, l3-engine, programmatic-budget. A "classified FAIL"
+   is still a FAIL (per `feedback_no_classified_fails_at_done_gate`);
+   the merge does not happen until 7/7 OK.
+
+2. **Conflicts resolved manually**, not via `-X theirs` / `-X ours`.
+   Append-only ledgers (`session_lessons.md`,
+   `governance_vaccines.md`, `verdicts.jsonl`, `vendor/NOTICE.md`,
+   `SSOT.md`) use `.gitattributes merge=union` so concurrent
+   appends concatenate cleanly. Real code conflicts (anything in
+   `modules/`, `tools/`, `hooks/`, `commands/`) require human-level
+   inspection of which side has the verified empirical evidence;
+   `-X theirs` is REJECTED for code conflicts.
+
+3. **verify_full_install.py exit 0 post-merge** on main. If the
+   merge brought in main-side files that fail any audit, fix them
+   on main BEFORE pushing. The Reality Contract is: the merge is
+   done when main has the commits AND the tests pass — not when
+   the merge commit landed.
+
+### Branch lifetime
+
+Feature branches (`feat/*`) MUST live <=2 weeks. The auto-testing /
+zero-command / deep-research / session-safety / RTK / JIT / L3 /
+Spec-Kit / context-watchdog / rtk-compressor-fusion roll-up burned
+177 commits without intermediate merges and produced 10 merge
+conflicts (5 ledger, 5 code) that took deliberate manual
+resolution. Frequent merges (every 1-2 weeks) keep the conflict
+surface small and PP available to all projects sooner.
+
+### Mirror-Sync-Direction during merge
+
+The agent NEVER writes to `~/.claude/hooks/<file>.js` — loose is the
+source-of-truth there, sync direction is loose -> PP. When the
+verify_global_mirrors / drift-report tools report drift, the agent
+cp's loose -> PP locally, commits to feat, then merges to main.
+PP-only files where loose is missing (e.g. legacy
+`resume-hide-live.js`) are DELETED from PP + removed from the
+PAIRS list in `tools/verify_global_mirrors.py`.
+
+### Activation gates per hook
+
+Hooks landed by the merge become production-active only on the next
+`/restart` (per `feedback_settings_session_load`: settings.json
+changes load at session start). The agent CANNOT trigger /restart
+itself; the Owner runs it per active pane. The post-merge done-gate
+is:
+
+  python tools/verify_spp.py    -> exit 0, 7/7 OK
+  python tools/verify_full_install.py -> exit 0
+  /restart (Owner-driven, per pane)
+  _TEST_CONTEXT_PCT=70 python modules/zero-crash/hooks/context-watchdog.py
+                                -> tier-2 chain fires + Stop-event return
+
+A merge that lands the commits but does not trigger Owner /restart
+is a PARTIAL DONE — the commits are durable on origin/main, but the
+hooks are inert until reload.

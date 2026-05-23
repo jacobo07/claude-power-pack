@@ -285,3 +285,80 @@ Reality Contract under platform reality: when a test or claim hits a platform-sp
 
 ---
 
+
+
+---
+
+## 2026-05-23 — Auto-Testing Skill (PP Quality Gate) iteration log
+
+| # | Paso | Iteration finding | Resolution |
+|---|---|---|---|
+| L1 | A1 | First pass of detectors.py mis-classified PP as `node_generic` because PP has `package.json` at root but no Python manifest (no pyproject.toml/setup.py/etc.). | Added rule 4: Python-by-convention (`test_*.py>=3 AND *.py>=3` at depth<=2). Discriminates real Python projects from TEMP dirs littered with installer-derived `*.py` files. |
+| L2 | A1 | First version of the convention rule allowed `*.py>=20` alone, which false-positived $env:TEMP (25 installer `*.py` at depth<=2, 0 test files). | Tightened to require BOTH test_*.py>=3 AND *.py>=3. test_*.py is the discriminator: a real testable project always has test files. |
+| L3 | E2 | First end-to-end deep-mode run failed pytest collection with `ModuleNotFoundError: No module named '2026-05-23_153216_calc'` — the filename `<ts>_<slug>.test.py` starts with a digit and has an embedded dot, neither valid in Python identifiers. | Changed filename scheme to `test_auto_<slug>_<YYYYMMDDHHMMSS>.py`. Starts with `test_` (pytest discovery), no digits at start, no dots. Same fix applied to Node (`auto_<slug>_<ts>.test.ts`) and Java (`Auto<Slug><ts>Test.java`) generators. |
+| L4 | D1 | PowerShell here-string commit message with embedded backticks (single-quoted) got tokenized by the PS parser — git received the body as multiple positional pathspec args. | Switched all commit messages to temp files + `git commit -F <file>` for messages containing backticks or `$` characters. |
+| L5 | D1 | First regex `\bgit\b...commit` missed `& $g ... commit` (PowerShell variable-as-binary form) because the literal `git` token never appears. | Added LOOSE sister pattern: `\bcommit\b\s+(?:-F\|-m\|-am\|--amend\|...)` — flags-unique-to-git. Catches the var-in-PowerShell form without false-positiving on `svn commit` or prose. |
+| L6 | V-DET | Synthetic project with one calc.py failed detection because Python-by-convention requires `>=3 test_*.py AND >=3 *.py`. | All V-* synthetic projects now bootstrap with a `pyproject.toml` manifest (rule 3) so detection classifies them as PYTHON without relying on convention. |
+
+---
+
+## 2026-05-23 — Branch hygiene: 177-commit feat branch = real merge debt
+
+**Trigger.** `feat/rtk-compressor-fusion` accumulated 177 commits
+between 2026-04 and 2026-05-23 without a merge to `main`. When the
+final merge ran, 10 files conflicted:
+
+  - 5 append-only ledgers (session_lessons.md, governance_vaccines.md,
+    verdicts.jsonl, vendor/NOTICE.md, SSOT.md) — both sides legitimately
+    appended different rows.
+  - 5 real code conflicts (.gitignore, SKILL.md, install.ps1,
+    modules/zero-crash/hooks/context-watchdog.py,
+    modules/zero-crash/hooks/zero-fiction-gate.js) — both sides
+    edited the same regions.
+
+**Resolution cost.** 5 ledgers auto-resolved via `.gitattributes
+merge=union` (one-shot config change + cherry-pick of the
+.gitattributes onto main BEFORE the merge so the union driver
+activates during the merge). The 5 code conflicts required per-file
+inspection:
+
+  - .gitignore + install.ps1: additive both sides -> include AMBOS.
+  - SKILL.md: both added rows to the slash-command table; merge them.
+  - context-watchdog.py: feat had tier-2 kclear-equivalent (empirically
+    verified S++); take feat for all 4 conflict regions.
+  - zero-fiction-gate.js: feat added JOBS-WOZ cryptographic exemption;
+    take feat for both conflict regions (additive).
+
+**Lessons sealed.**
+
+1. **Merge frequency.** Feature branches MUST live <=2 weeks. Every
+   1-2 weeks the branch merges back into main + a fresh feat/<topic>
+   starts. 177 commits over 6 weeks = 6 weeks of accumulated divergence
+   = guaranteed merge conflicts. The Production Branch Standard
+   section in apex-completion-standard.md codifies this rule.
+
+2. **`.gitattributes merge=union` is the right pattern for ledgers
+   from day-1.** Configure it BEFORE the first divergence; otherwise
+   you spend a session debugging why git's recursive merge can't
+   reconcile two "appends" to the same file. The 5 ledger files
+   above all benefit; any future append-only JSONL/MD belongs in
+   the union list.
+
+3. **Cherry-pick the .gitattributes onto main BEFORE the merge.** Git
+   reads merge drivers from the merging-into branch's checkout, so a
+   union-driver line only on feat does not activate during a feat ->
+   main merge. Cherry-pick the .gitattributes commit onto main first,
+   then merge feat into main, then the union driver activates.
+
+4. **Reality Contract on merges.** "The merge is done when main has
+   the commits AND the tests pass" — not when the merge commit
+   landed. Post-merge verify_spp.py FAILED initially because the
+   merge brought in main-side files (lazarus_topology_push_vps.py,
+   bulk_vault_extract.json, ...) that had not been previously
+   allowlisted. Fix on main BEFORE pushing — `feedback_audit_inputs_before_merger`
+   pattern: diff merger-inputs first.
+
+**Cross-references:**
+- apex-completion-standard.md "Production Branch Standard" section
+- vault/plans/auto-testing-skill-2026-05-23.md (last 23-Paso commit on the feat branch)
+- `.gitattributes` in repo root (merge=union for 5 ledgers)
