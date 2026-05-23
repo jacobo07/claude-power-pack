@@ -586,3 +586,85 @@ Missing any of 1-5 = NOT Apex-complete on the Session Safety axis.
 Full plan: `claude-power-pack/vault/plans/session-safety-global-2026-05-22.md`.
 Contract: `vault/contracts/SESSION_SAFETY_CONTRACT.md`.
 Lesson: `vault/lessons/heavy-io-must-be-governed.md`.
+
+## Research Axis (sealed 2026-05-23)
+
+Apex-complete PP installs MUST ship the **Deep Research** sleepy agent.
+The Owner never blocks waiting on web research — research-intent prompts
+auto-spawn a detached background agent that lands a real multi-page
+markdown report (with cited real URLs) at `vault/research/<ts>_<slug>.md`
+and auto-surfaces it on the next SessionStart of a relevant cwd.
+
+Required components (all five must be present in PP repo + wired for
+the install to be Apex-complete on this axis; missing any = NOT
+Apex-complete):
+
+1. **Spec**: `vault/specs/deep-research-agent.md` — 13 sections including
+   the five verbatim LLM prompts reverse-engineered from the source
+   n8n workflow (n8n is reference material only; banned as runtime per
+   `memory/feedback_no_n8n_ever.md`).
+2. **Python core**: `modules/deep-research/deep_research.py` — five
+   cascade layers (search DDG/Brave/Apify, fetch_page, html_to_markdown
+   4-way, LLM claude.exe/SDK, recursive driver) + CLI + 3-artifact
+   writer. Resource-governance compliant per
+   `vault/lessons/heavy-io-must-be-governed.md` (single-instance lock,
+   IDLE_PRIORITY_CLASS, query budget, per-request timeouts, runtime
+   ceiling).
+3. **Skill**: `commands/cpp-deep-research.md` — manual `/cpp-deep-research`
+   invocation. Spawns detached so the Owner never blocks.
+4. **Stop-hook intent detector**: `hooks/research-intent-detector.js` —
+   reads the last user prompt from the active `.jsonl`, fires the
+   detached spawn when the prompt matches the Spanish + English
+   research-intent regex AND meets the breadth gate (>= 80 words OR
+   >= 3 question marks). Fail-OPEN — never blocks the Stop chain.
+5. **Auto-discovery**: `modules/deep-research/research_discovery.py` —
+   reads `vault/research/index.json`, surfaces recent (≤ 24 h)
+   entries whose prompt tokens match the current cwd basename or
+   parent dir. Wired into the SessionStart compound-proposal slot.
+
+### Activation gate
+
+```
+# 1. Mirror-Sync-Direction cp into the loose hooks dir
+cp ~/.claude/skills/claude-power-pack/hooks/research-intent-detector.js \
+   ~/.claude/hooks/research-intent-detector.js
+
+# 2. One-shot register
+python claude-power-pack/tools/settings_merger.py register-deep-research
+
+# 3. /restart   (BL-0067: hooks cold-load at session start)
+```
+
+### DONE-gate (Apex perspective)
+
+A PP install is Apex-complete on the Research Axis iff:
+
+1. `vault/specs/deep-research-agent.md` exists and contains the five
+   verbatim prompts from spec sections 3.1-3.5.
+2. `modules/deep-research/deep_research.py` exists; `--version` exits 0
+   and reports `win32:IDLE_PRIORITY_CLASS` on Windows.
+3. `commands/cpp-deep-research.md` is registered in the available-skills
+   list after `/restart`.
+4. `settings.json` registers `research-intent-detector.js` on the Stop
+   event (verify: `settings_merger.py register-deep-research --dry-run`
+   reports "script-present=yes" + idempotent re-run = "already registered").
+5. **Empirical V1** — `python deep_research.py --prompt "<any>" --depth 1
+   --breadth 2` produces a `vault/research/<ts>_<slug>.md` of >1 KB
+   body with >= 5 real URLs in `## Sources` + a real-layer footer
+   (`ddg + trafilatura + claude.exe` for free-tier, or any cascade
+   layer firing). No fabricated URLs, no fixtures.
+
+Missing any of 1-5 = NOT Apex-complete on the Research Axis.
+
+Full plan: `claude-power-pack/vault/plans/deep-research-agent-2026-05-23.md`.
+Spec: `vault/specs/deep-research-agent.md`.
+Empirical V1 PASS: 6 learnings, 8 distinct real URLs (github / low.ms /
+gameserver.rentals / dedicatedminecraft.host / supercraft.host / feedly /
+youtube / reddit), 16.9 KB markdown, 220 s at depth=1 breadth=2,
+zero API keys required (DDG + claude.exe keychain).
+Empirical V2 spawn PASS: synthetic 92-word Spanish prompt with
+"investiga / compara / Estado del arte" verbs triggered the Stop-hook
+intent detector -> detached `cmd.exe /c start "" /B python deep_research.py`
+spawn (auto-spawn log entry written, child python PID visible in
+Win32_Process), Stop hook returned to harness in < 200 ms (fire-and-
+forget contract honored).

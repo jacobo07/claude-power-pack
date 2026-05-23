@@ -704,11 +704,23 @@ def _llm_claude_cli(system: str, user: str, schema: dict | None,
     if model:
         args[1:1] = ["--model", model]
 
+    # RECURSION GUARD: set CLAUDEPP_DEEPRESEARCH_RUNNING=1 in the spawned
+    # claude.exe's env so research-intent-detector.js (Stop hook in the
+    # subprocess session) early-exits instead of spawning another deep
+    # research run. Empirically caught 2026-05-23 mid-V2: the generate_
+    # serp_queries prompt contains "research" + is >80 words, which made
+    # the Stop hook fire recursively from inside each LLM call. The
+    # second spawn would hit the lock and emit a 1 KB locked-template
+    # report. Sealed via env-var inheritance, belt-and-suspenders with
+    # the same guard set in main() below.
+    sub_env = os.environ.copy()
+    sub_env["CLAUDEPP_DEEPRESEARCH_RUNNING"] = "1"
     try:
         r = subprocess.run(
             args, capture_output=True, text=True,
             timeout=timeout, encoding="utf-8", errors="replace",
             input=augmented_user,
+            env=sub_env,
         )
     except (subprocess.TimeoutExpired, OSError) as e:
         raise LayerError("claude.exe", f"subprocess failed: {e}")
@@ -1412,6 +1424,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.prompt:
         # No prompt -> self-test (matches Paso 1.1 spec).
         return _self_test()
+
+    # Belt-and-suspenders recursion guard. Even though _llm_claude_cli
+    # also sets the env-var, doing it here too means ANY indirect spawn
+    # (a sub-tool, a hook, a future child) also inherits the flag.
+    os.environ["CLAUDEPP_DEEPRESEARCH_RUNNING"] = "1"
 
     out_dir = Path(args.out) if args.out else RESEARCH_DIR
 

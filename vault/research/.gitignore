@@ -1,0 +1,14 @@
+# Deep-research runtime / forensic artifacts — never commit these.
+# (Reports *.md + index.json DO ship; pattern intentionally narrow.)
+
+# Single-instance lock (held by the live python child during a run)
+.deep-research.lock
+
+# Sleepy auto-spawn log (per-host noise)
+.auto-spawned.log
+
+# Per-prompt raw query trace — large, regenerated on every run
+*.raw.jsonl
+
+# Tmp files from atomic .tmp+rename writes (visible if writer crashed)
+*.tmp.*

@@ -64,3 +64,39 @@ any done-gate failure → row in
 
 | Date  | Paso | Result | Notes |
 |-------|------|--------|-------|
+| 05-23 | PRE-1 | DONE | Dirs scaffolded; branch confirmed feat/rtk-compressor-fusion |
+| 05-23 | 1.1 | DONE | Module skeleton — `--version` exits 0, `win32:IDLE_PRIORITY_CLASS` confirmed |
+| 05-23 | 1.2 | DONE | DDG cascade — 5 real GitHub URLs returned; sponsored-result filter added after empirical y.js leak |
+| 05-23 | 1.3 | DONE | fetch + html_to_markdown — trafilatura layer fired on real github page (2270 chars). example.com firewall-blocked on this host (network condition) |
+| 05-23 | 1.4 | DONE | LLM cascade — claude.exe -p subprocess returned 'HELLO' in 17s; JSON-schema test returned `{cities:[Paris,Berlin,Madrid]}` in 26s |
+| 05-23 | 1.5 | DONE | generate_serp_queries — 3 distinct topical queries + researchGoal in 31s |
+| 05-23 | 1.6 | DONE | extract_learnings — 3 dense learnings + 3 follow-ups in 26s; quoted "Paper 75%", "Velocity 3.4" |
+| 05-23 | 1.7 | DONE | generate_report — 13.8 KB markdown, 10 H2 headings, 7/7 input learnings echoed, 121s |
+| 05-23 | 1.8 | DONE+FIX | First-run hit WinError 206 (argv length cap). Fix: pass user message via STDIN (lesson: `vault/lessons/windows-argv-limit-stdin-fix.md`). After-fix: 6 learnings, 10 URLs, 22.7 KB JEP 401 report in 276s |
+| 05-23 | 1.9 | DONE | CLI + 3-artifact writer; atomic .tmp+rename; URL dedup against index.json history |
+| 05-23 | V1 | PASS | Real CLI run: Minecraft prompt → 6 learnings, 8 real URLs, 16.9 KB report in 220s. Cascade verdict: ddg + trafilatura+bs4-strip + claude.exe. Zero API keys used. CLI exit 0 |
+| 05-23 | 2.1 | DONE | /cpp-deep-research skill in commands/cpp-deep-research.md — args + examples + activation modes + env vars |
+| 05-23 | 2.2 | DONE | research-intent-detector.js Stop hook — 220 lines, fail-OPEN; regex 13/13 PASS on test fixture (6 ES + 4 EN positives + 3 negatives) |
+| 05-23 | 2.3 | DONE | register-deep-research consolidator in settings_merger.py; idempotent --apply added Stop[3] entry |
+| 05-23 | 3.1 | DONE | vault/research/.gitignore + README — separates committable artifacts (*.md + index.json) from runtime/forensic (.lock, .auto-spawned.log, raw.jsonl, *.tmp.*) |
+| 05-23 | 3.2 | DONE | research_discovery.py standalone — discover_for_cwd() empirical: KobiiCraft cwd → surfaces Minecraft research report. Stop-word filter (drops "the/and/projects/workspace/...") prevents over-matching. Wiring into learning-sentinel.js deferred to Wave-5b follow-up |
+| 05-23 | V2 | PASS-SPAWN | Synthetic 92-word Spanish prompt with "investiga / compara / Estado del arte" triggered Stop hook → detached `cmd.exe /c start "" /B python deep_research.py` spawn. Auto-spawn log entry written; child python PID 42468 visible in Win32_Process; Stop hook returned in <200ms. Artifact-landing half: see `vault/research/` for the .md once the child completes (~5 min after spawn). Next-session SessionStart discovery half: deferred to Owner manual test (cannot fire SessionStart safely from inside this session) |
+| 05-23 | POST-1 | DONE | apex-completion-standard.md (PP + live mirror, byte-identical) now carries "Research Axis" — 5 required components + activation gate + 5-check DONE-gate. Empirical V1 + V2-spawn numbers cited inline |
+| 05-23 | POST-2 | DONE | This row + the `windows-argv-limit-stdin-fix.md` lesson captures the WinError 206 incident |
+
+## Final commits (this plan)
+
+- `5c74630` — Wave 1 (Pasos 1.1-1.4): Python core fallback layers
+- `5950cc1` — Wave 2+3 (Pasos 1.5-1.9 + V1): chains + driver + CLI + V1 PASS
+- `fa11761` — Wave 4 (Pasos 2.1-2.3): sleepy activation
+- Wave 5+6+7 commit — Pasos 3.1, 3.2, V2-spawn, POST-1, POST-2 (this commit)
+
+## Empirical evidence summary (all real, no mocks)
+
+- 4 real Claude calls (HELLO, JSON schema, query generation, learnings extraction, report generation)
+- 2 real-world depth-1 research runs (JEP 401, Minecraft servers)
+- 10+ real URLs across both runs (github, openjdk, oracle, papermc, etc.)
+- 1 real detached spawn via the Stop hook
+- Zero API keys required (DDG + claude.exe keychain OAuth)
+- Reality Contract worked under test: WinError 206 triggered INSUFFICIENT DATA fallback, not fabrication. Fix shipped.
+

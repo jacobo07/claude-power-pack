@@ -237,6 +237,23 @@ function spawnDetached(prompt) {
 }
 
 function main() {
+  // RECURSION GUARD (sealed 2026-05-23 mid-V2 empirical run).
+  //
+  // The python child calls claude.exe -p for each LLM step. claude.exe -p
+  // runs the FULL Stop-hook chain in its own subprocess session. The
+  // generate_serp_queries prompt contains the literal word "research"
+  // AND exceeds 80 words, so the intent regex matches AND the breadth
+  // gate passes -- triggering ANOTHER detached spawn from inside the
+  // first run. The second spawn hits the lock (lockverdict=held) and
+  // emits a 1KB "deep_research locked" template report. Repeats per
+  // LLM call in the recursion tree.
+  //
+  // Fix: the python child sets CLAUDEPP_DEEPRESEARCH_RUNNING=1 in the
+  // claude.exe subprocess env. We check it FIRST and exit silently.
+  if (process.env.CLAUDEPP_DEEPRESEARCH_RUNNING === '1') {
+    process.exit(0);
+  }
+
   let input;
   try { input = readStdin(); } catch (_) { failOpen('readStdin'); }
   const sessionId = input && input.session_id;
