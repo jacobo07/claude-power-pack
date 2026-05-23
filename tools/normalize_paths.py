@@ -133,6 +133,25 @@ ALLOWLIST: dict[str, set[str]] = {
     # as tools/_inventory/agents.json.
     "vault/skills_index.json":             {"code-path"},
     "vault/skills_index_unified.json":     {"code-path"},
+    # ---- Code Review Skill V-block fixtures (2026-05-23): the
+    # canonical AWS test key `AKIAIOSFODNN7EXAMPLE` appears verbatim
+    # as the V-BLOCK-SECRET payload. Test fixtures by design (the
+    # whole point of the test is to verify the detector fires on it).
+    "modules/code-review/test_v_block.py":      {"secret", "code-path"},
+    "modules/code-review/test_combined_gate.py": {"secret"},
+    "modules/code-review/test_closed_loop.py":  {"secret"},
+    # The plan file documents the V-block payloads inline as part of
+    # the empirical proof contract. Same fixture-narrative class as
+    # vault/plans/auto-testing-skill-2026-05-23.md (already allowlisted).
+    "vault/plans/code-review-skill-2026-05-23.md": {"secret"},
+    "vault/specs/code-review-skill.md":            {"secret"},
+    # Self-review report quotes the V-BLOCK payload + finding lines
+    # verbatim as part of the empirical artifact.
+    "vault/reviews/2026-05-23-203833_code-review-skill-self.md": {"secret"},
+    # Closed-loop log records the doctrine categories that fired;
+    # may contain file paths referenced in V-block diffs.
+    "vault/reviews/patterns.jsonl": {"secret"},
+    "vault/reviews/_v_block.json":  {"secret"},
     # ---- Frozen topology snapshot (2026-04-29): captured-at-test-time
     # absolute path inventory, audit-record by design.
     "vault/topology/lazarus_layout_2026-04-29.json": {"code-path"},
