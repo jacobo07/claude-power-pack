@@ -29,3 +29,4 @@ kpp-distiller-kernel/**/*.pyc
 vault/cache_hints/*.json
 vault/telemetry/rtk_*.jsonl
 vault/telemetry/budget-*.jsonl
+tests/auto-generated/

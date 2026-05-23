@@ -259,6 +259,11 @@ def run_gate(cwd: Path, diff: str, mode: str = "fast",
         )
 
     project_root = det.project_root or cwd
+    # Python generator supports deep mode. Node and Java fall back to
+    # fast mode for now (single test); deep coverage there is a future
+    # extension.
+    if lang == "python" and mode == "deep":
+        gen_kwargs = {**gen_kwargs, "mode": "deep"}
     gen_res = gen_module.generate(diff, project_root, llm_bridge.call_llm,
                                    **gen_kwargs)
     if not gen_res.ok:

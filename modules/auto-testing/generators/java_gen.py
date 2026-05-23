@@ -179,8 +179,11 @@ def generate(diff: str, project_root: Path, call_llm,
         )
 
     slug_seed = Path(target_files[0]).stem
+    # Java class names must match filename, start with letter, no dots.
+    cap = slug_seed.title().replace("_", "").replace("-", "")
+    ts_safe = ts_slug().replace("-", "").replace("_", "")
     test = TestCase(
-        filename=ts_slug() + "_" + slugify(slug_seed) + "Test.java",
+        filename="Auto" + cap + ts_safe + "Test.java",
         content=text + "\n",
         target_file=target_files[0],
         notes=("java_gen JUnit5 scaffold (" + build_system + "); "

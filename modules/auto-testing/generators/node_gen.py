@@ -150,8 +150,9 @@ def generate(diff: str, project_root: Path, call_llm) -> GenerationResult:
 
     ext = _pick_extension(target_files[0], existing)
     slug_seed = Path(target_files[0]).stem
+    ts_safe = ts_slug().replace("-", "").replace("_", "")
     test = TestCase(
-        filename=ts_slug() + "_" + slugify(slug_seed) + ext,
+        filename="auto_" + slugify(slug_seed) + "_" + ts_safe + ext,
         content=text + "\n",
         target_file=target_files[0],
         notes="node_gen vitest/jest scaffold; " + str(len(existing)) + " style refs",
