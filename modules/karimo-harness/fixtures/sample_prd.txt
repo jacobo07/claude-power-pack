@@ -1,0 +1,34 @@
+# PRD: KARIMO CORE FUSION & SOVEREIGN BASELINE SEALING
+
+## Objective
+Fuse the OpenSession/KARIMO context-engineering architecture into the
+Claude Power Pack global core so /ultra auto-ingests PRDs before Q&A.
+
+## Hard Requirements
+- The parser must extract hard constraints from any raw-text PRD.
+- The system shall emit a schema-validated PRD_BASELINE.json.
+- The cpp-design command must return at least 3 ranked results.
+- The atomic branding generator will produce an extended tailwind config.
+
+## Prohibitions
+- No vacuous interactive controls are permitted in shipped surfaces.
+- The system must not emit auth-failure responses from simulated identity.
+- Prohibido cualquier desconexion entre el frontend y el CLI.
+- Never ship a not-yet-wired feature shell into production code.
+
+## Performance Targets
+- The cpp-design latency must be < 250 ms for a warm index.
+- The PRD parser shall complete in less than 2 seconds for a 50 kb PRD.
+- Each design component must stay <= 2500 tokens.
+
+## Authentication & Wiring
+- All credential handling requires real wiring, never simulated identity.
+- The CLI-to-frontend session token must be a real JWT, never faked.
+
+## Deadlines
+- The Sovereign Baseline sealing is due before the next milestone cut.
+
+## Integrations
+- Expand the FTS5 sidecar virtual table for the 150-tool design index.
+- Wire the cpp-design command and the prd-keyword-sentinel hook.
+- Integrate with the existing merger.py vault pipeline.

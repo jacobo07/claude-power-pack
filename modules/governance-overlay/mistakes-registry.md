@@ -301,7 +301,7 @@
 
 ## Mistake #36: Hardcoded Path Injection in Global Skills
 - **Detection:** `grep -rn "C:/Users\|/home/\|/c/Users" <skill-dir>/` returns results in instruction files (`.md`). Absolute paths in scripts targeting specific VPS hosts are exempt.
-- **Example:** Global skill file references `C:/Users/kobig/Desktop/MyProject/src/main.py` instead of `./src/main.py`. Agent then fails when invoked in any other project or machine.
+- **Example:** Global skill file references `~/Desktop/MyProject/src/main.py` instead of `./src/main.py`. Agent then fails when invoked in any other project or machine.
 - **Root Causes:**
   1. Agent copies paths from exploration results directly into skill instructions
   2. Skill written while working on one project, never tested in another

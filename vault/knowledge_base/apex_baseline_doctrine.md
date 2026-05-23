@@ -1,0 +1,118 @@
+# Apex Completeness Doctrine — BL-0068
+
+**Sealed:** 2026-05-16 · mirror of the `~/.claude/CLAUDE.md` Sovereign
+Baseline section (non-git live file; this is the version-controlled
+reference).
+
+## The mandate
+
+Every NEW multi-file feature stream MUST start pre-wired with all
+three pillars. A stream missing any pillar is **incomplete by
+definition** — not a deferred follow-up, not a v2 item.
+
+1. **Isolated FTS5 sidecar** — any searchable surface gets its own
+   FTS5 content table + its own insert/delete/update triggers. It
+   never shares the conversation `turns_fts` rowid space and never
+   issues a global `('rebuild')` against a shared index. (KARIMO
+   `design_tools_fts` is the reference implementation.)
+2. **Keyword-sentinel gating** — wherever a raw-input fast path
+   exists, a deterministic UserPromptSubmit-style pre-extractor runs
+   first, fail-open, no model call, emitting structured constraints.
+   (KARIMO `prd-keyword-sentinel.js` + `prd_parser.py` is the
+   reference.)
+3. **Atomic design-token isolation** — any UI surface is fed by a
+   generator that emits self-contained design tokens, budgeted per
+   the Jobs/Woz hybrid (signature visuals → Jobs precedence;
+   utilities → Woz absolute veto; measured token threshold). (KARIMO
+   `atomic_branding.py` is the reference.)
+
+## Enforcement model
+
+Doctrine-enforced (human + agent review at plan time), deliberately
+NOT a heavyweight runtime hook — adding another synchronous gate to
+the 11-deep PreToolUse chain would tax latency for marginal benefit.
+The plan-time auditor (`oneshot-architect-auditor`) is the natural
+checkpoint: a stream proposal lacking a pillar is a gap it should
+flag.
+
+## Provenance
+
+Materialized across BL-0068 commits: PRD parser + engine, FTS5 design
+index + `/cpp-design`, atomic branding, and the config-harness
+closure (sentinel registration + advisory `/ultra` pre-pass). All
+gates empirically green; the only honest limit is cold-load (a newly
+registered hook fires next `/restart`, never claimed as proven
+in-pipeline the turn it lands).
+
+## Hook Startup Authorization Gate (sealed 2026-05-17, BL Intent-Lock/L3)
+
+For ANY feature that wires a startup hook (SessionStart, SessionEnd, Stop, PreToolUse, PostToolUse, UserPromptSubmit) to spawn a process or auto-fire autonomous work:
+
+1. An EXACT-PATH `permissions.allow` rule for the target hook file (e.g. `Edit(file:~/.claude/hooks/<name>.js)`) MUST exist in `settings.json` BEFORE execution begins. A broad glob (`hooks/**`) does NOT clear the auto-mode self-modification classifier — it is a separate gate above `permissions`, and `AskUserQuestion` soft-consent does not clear it either.
+2. The capability is built INERT and harness-verified (real-input, no mocks) before any activation edit is attempted.
+3. Post-wire gate: `node --check <hook>` exit 0 + the empirical harness still green + (live-fire confirmed after the Owner `/restart`s, since hooks cold-load at session start, BL-0067).
+
+This gate prevents the mid-session triple-block: pre-authorize, then wire. Reference cycle: Intent-Lock/L3 — `intent_lock.js` + `learning-sentinel.js` `maybeSpawnL3` + `tools/test_l3_intent.js`.
+
+## L3 / Stop-hook S++ Gate (sealed 2026-05-19)
+
+1. Hook en registry live post-restart (no solo en disco).
+2. SessionEnd real con >5 learnings → `~/.claude/cache/compound-proposals/` archivo real (bare timestamp, NOT `verify-`-prefixed).
+3. Timestamp del archivo = post-restart (no caché previo).
+
+Este gate aplica a cualquier hook Stop/SessionEnd que genere outputs externos. 12/12 en harness aislado es prerequisito de S+, NO de S++ — S++ exige el archivo real producido por el hook DESPLEGADO vía un evento genuino, no un `--dry-run` ni una reimplementación de harness. El archivo es el único done-gate: existe o no existe.
+
+## Apex Onboarding Standard (sealed 2026-05-19)
+
+The pre-existing Apex Completeness mandate (BL-0068) governs what a feature ships INSIDE the Power Pack. The Apex Onboarding Standard governs what makes that feature **reachable to a new operator on a clean host**. Both are mandatory, neither is sufficient alone.
+
+**Mandate.** Every NEW component that lands in `tools/`, `hooks/`, `modules/`, `commands/`, `agents/`, `vault/standards/`, or `vendor/` MUST include all four:
+
+1. **An umbrella row** in `tools/verify_full_install.py` or `tools/verify_spp.py` (whichever umbrella the component belongs to) that calls the component's own verifier and reports the result. No row, no inclusion.
+2. **A step in `install-global.ps1` + `install-global.sh`** that copies / registers the component on a fresh `~/.claude/` (or whatever the component's surface area requires), with the idempotent diff-copy semantic and exit non-zero on preflight failure.
+3. **A section in `docs/INSTALL.md` and / or `docs/INSTALL-GLOBAL.md`** that walks the new operator through the component in plain language, with no assumed prior PP knowledge.
+4. **A clean-machine verification** (Path A real `git clone` into a temp dir + HOME-redirected install, OR Path B documented dry-run + idempotent re-run) that exits 0 on the new component in under 5 minutes wall-clock.
+
+**Done-Gate.** `python tools/verify_full_install.py` exit 0 on the just-installed clean machine. The same gate the Owner runs on the reference host MUST be reachable by a stranger who only knows `git clone <url> && cd claude-power-pack && ./install-global.{ps1,sh} && python tools/verify_full_install.py`.
+
+**Status.** Effective immediately for any new feature post-2026-05-19. Pre-existing features are grandfathered — they do NOT need retroactive umbrella rows. New features that omit any of the four pillars are non-conformant and CANNOT pass OVO at verdict >= A.
+
+**Cross-link.** The Programmatic Budget Standard (`vault/standards/programmatic-budget-standard.md`, sealed 2026-05-19) is the first feature audited under this combined Apex Completeness + Onboarding gate. Its umbrella row, install-global handling (Owner-action for ~/.claude/hooks/ writes), `docs/INSTALL.md` section, and clean-machine path are the reference implementation of the standard.
+
+## Spec-Driven Gate cross-link (sealed 2026-05-20)
+
+The Spec-Driven Gate (PASO -1) governs feature *intent* upstream of the three pillars above. It is sealed in the global apex standard, not duplicated here, to preserve single-source-of-truth.
+
+> See: `~/.claude/knowledge_vault/core/apex-completion-standard.md` § **Spec-Driven Gate (sealed 2026-05-20, PASO -1)**.
+
+**Order of gates for any new feature:**
+
+1. **PASO -1** — Spec-Driven Gate (constitution + spec + plan + tasks + analyze; `vault/templates/speckit/*.template` + `commands/speckit-*.md`).
+2. **PASO 0** — Apex Onboarding Standard (this file, sealed 2026-05-19).
+3. **PASO 1+** — Apex Completeness three pillars (this file, BL-0068 sealed 2026-05-16).
+
+A feature missing PASO -1 is INCOMPLETE at the planning stage and CANNOT enter the onboarding/completeness pipeline. A feature passing PASO -1 but missing PASO 0 or the three pillars is non-conformant per the existing rules in this file.
+
+## Zero-Command Standard cross-link (sealed 2026-05-21)
+
+The Zero-Command Standard governs feature *activation* — if a PP capability improves results, saves tokens, or removes a recurring manual step, it MUST activate without an Owner-typed slash command. Sealed in the global apex standard, not duplicated here, to preserve single-source-of-truth.
+
+> See: `~/.claude/knowledge_vault/core/apex-completion-standard.md` § **Zero-Command Standard (sealed 2026-05-21)**.
+
+**Reference implementation (this commit chain on `feat/rtk-compressor-fusion`):**
+
+- Component A — `hooks/zero-command-bootstrap.js` (SessionStart). Stubs `.specify/memory/constitution.md` on first encounter of a real project (`.git` + manifest + no `.specify/`).
+- Component B.2 — `tools/jit_skill_loader.py::_detect_new_feature_intent_and_flag`. Drops `.pp-pending-spec.json` when prompt matches new-feature regex.
+- Component B.3 — `hooks/pending-keystrokes-daemon.ps1`. Generalized SendKeys dispatcher polling `~/.claude/hooks/pending-keystrokes/*.flag`. Cursor-focused dispatch only, TTL + .disabled kill-switch, BL-0003 intact.
+- Component C — `hooks/background-verifier.js` + `tools/background_verifier_run.py`. Stop-time mirror parity + OVO staleness + spec coherence; handoff-only, never auto-fixes.
+- Component D — `hooks/first-time-project.js` + `tools/first_time_project_init.py`. SessionStart prereq probe (4 quick checks).
+- Harness — `tools/test_zero_command.py` (G1-G8). Exit 0 on this host with 7 PASS + 1 SKIP (G1 awaiting sibling E.1 audit artifact).
+
+**Order of gates extended:**
+
+0. **PASO -2 (NEW)** — Zero-Command Standard. Every new capability has an auto-activation path before any of the below applies.
+1. PASO -1 — Spec-Driven Gate.
+2. PASO 0 — Apex Onboarding Standard.
+3. PASO 1+ — Apex Completeness three pillars + Programmatic Budget Gate.
+
+Pre-existing features (`/ovo-audit`, `/cpp-distill`, `/speckit-*` slash commands themselves) are grandfathered. Post-2026-05-21 features that ship slash-only must declare WHY a hook can't trigger them, in the spec's Constraints section.

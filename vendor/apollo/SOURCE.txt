@@ -1,0 +1,4 @@
+upstream: https://github.com/apollographql/skills.git
+commit:   64d4087d629e413da1bac780abeaefd653847440
+snapshot: 2026-05-15T22:15:08.159372+00:00
+modules:  14 (apollo-client, apollo-connectors, apollo-federation, apollo-ios, apollo-kotlin, apollo-mcp-server, apollo-router, apollo-router-plugin-creator, apollo-server, graphql-operations, graphql-schema, rover, rust-best-practices, skill-creator)

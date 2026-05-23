@@ -55,8 +55,10 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-customclaw create [name]` | Scan project, generate custom daemon | commands/customclaw.md |
 | `/cpp-vault-sync` | Regenerate vault INDEX.md and sync metadata | commands/vault-sync.md |
 | `/cpp-vault-setup` | Extract CLAUDE.md into governance vault | commands/vault-setup.md |
-| `/cpp-distill <source> [--global] [--force]` / `/cpp-distill check <path>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7 materialization; `check` subcommand validates an existing output dir | commands/distill.md |
+| `/cpp-distill <source>` / `check <path>` / `distill <source>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7. `distill` = zero-token deterministic engine (default; needs `$KOBII_DISTILLER_ENGINE_ROOT`); `check` validates an output dir | commands/distill.md |
 | `/cpp-design-md` | Lint/diff/export DESIGN.md (Google Labs design-system spec). Power-Pack default for web design. | commands/design-md.md |
+| `/cpp-resume-sovereign <q\|cid\|--list>` | Fuzzy-search Sovereign Vault (46k+) via FTS5 BM25 and inject a recovered session as read-only context + project-filtered Universal Laws | commands/resume-sovereign.md |
+| `/cpp-compound` | Compound Learnings driver: consolidates new learning files into rules/skills/hooks/agent updates. Sentinel hook at `~/.claude/hooks/learning-sentinel.js` produces `LEARNINGS_PENDING.md` markers; this command consumes. Health check: `python tools/compound_audit.py`. | commands/compound.md |
 
 ## SkillBank Index
 

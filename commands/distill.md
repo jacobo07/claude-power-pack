@@ -22,13 +22,15 @@ The driver is the running Claude session itself (no external API). Tokens are sp
 ## Invocation
 
 ```
-/cpp-distill <source-file> [--global] [--force] [--scope-only]
+/cpp-distill distill <source-file> [--global] [--live]   # zero-token deterministic engine (DEFAULT)
+/cpp-distill <source-file> [--global] [--force] [--scope-only]   # in-session LLM driver
 /cpp-distill check <path>
 ```
 
 Underlying CLI surface (used by the in-session driver and CI):
 
 ```
+python tools/distiller/run.py distill <source> [--global] [--live]
 python tools/distiller/run.py ingest <source> [--global] [--force] [--scope-only] [--verify]
 python tools/distiller/run.py check <output-dir>
 python tools/distiller/run.py <source> ...      # back-compat → ingest
@@ -40,7 +42,18 @@ Arguments:
 - `--global` — write outputs under `~/.claude/knowledge_vault/distilled/<source-stem>/` instead of `./.knowledge_vault/distilled/<source-stem>/`.
 - `--force` — override the 1 MB hard input cap (slow / costly; the cap is there to stop accidental whole-repo dumps).
 - `--scope-only` — emit only the `READY.md` orchestration manifest; do not write any Tier_N section files. Useful for dry-runs.
+- `--live` — (`distill` only) opt into LIVE Anthropic mode. Default is DRY_RUN: the canonical engine's deterministic synthesizer materializes all 22 Tandas/Partes sections with **zero token spend**.
 - `check <path>` — walk an existing output directory and run the validator. Wraps `validate.py`; same exit codes.
+
+### `distill` — deterministic engine (preferred)
+
+`run.py distill` subprocesses the canonical KobiiCraft engine
+(`kobicraft_content_intelligence.distiller.cli`) with explicit `cwd` +
+`PYTHONPATH`, then chains the validator. It is a **cross-repo dependency**:
+the engine root must be exported as `KOBII_DISTILLER_ENGINE_ROOT` (the
+KobiiCraft repo root). If unset/invalid, `distill` exits **3** with a precise
+remediation message and **never** silently falls back to the in-session LLM
+path (loud-degradation rule — Mistake #37). DRY_RUN needs no API key.
 
 If no argument is passed, AskUserQuestion: **"Which file do you want to distill? Provide an absolute path or a path relative to the current project."**
 
@@ -125,7 +138,7 @@ If exit ≠ 0, surface the validator output verbatim and STOP. Do not auto-fix a
 
 ## Step 6 — Visual eyeball (first-run mandate)
 
-On the FIRST `/cpp-distill` invocation against any source file, after validator passes, open `output_root/Tier_1/Seccion_1.md` and compare against `fixtures/expected/Tier_1/Seccion_1.md`. Confirm structural parity (heading + Tandas/Partes shape + ROI block + closing markers). If a discrepancy exists, treat as failure and re-iterate via the universal iteration protocol at `C:\Users\kobig\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt`.
+On the FIRST `/cpp-distill` invocation against any source file, after validator passes, open `output_root/Tier_1/Seccion_1.md` and compare against `fixtures/expected/Tier_1/Seccion_1.md`. Confirm structural parity (heading + Tandas/Partes shape + ROI block + closing markers). If a discrepancy exists, treat as failure and re-iterate via the universal iteration protocol at `~\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-visual.txt`.
 
 Subsequent runs skip the eyeball step unless the operator passes `--review`.
 

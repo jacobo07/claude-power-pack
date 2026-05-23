@@ -1,0 +1,43 @@
+# Synthetic fixture — 4 DELIBERATE Apollo ground-rule violations.
+# Used by tools/verify_apollo_integration.py criterion (v) and to
+# demonstrate the APOLLO-GRAPHQL auditor gate. DO NOT "fix" these.
+
+# Violation (a) — HARD VETO: anonymous operation (no name after `query`).
+query {
+  viewer {
+    id
+  }
+}
+
+# Violation (b) — HARD VETO: request-specific inline literal instead of $variable.
+query GetUserById {
+  user(id: "user-abc-123") {
+    id
+    name
+  }
+}
+
+# Violation (c) — SOFT WARNING: duplicate field selection (`id` twice in one set).
+query Me {
+  me {
+    id
+    name
+    id
+  }
+}
+
+# Violation (d) — SOFT WARNING: over-fetch (10 scalar leaf fields, no fragment spread).
+query DashboardCard {
+  account {
+    id
+    firstName
+    lastName
+    email
+    phone
+    addressLine1
+    city
+    country
+    createdAt
+    updatedAt
+  }
+}

@@ -27,3 +27,11 @@ kpp-distiller-kernel/build/
 kpp-distiller-kernel/dist/
 kpp-distiller-kernel/**/__pycache__/
 kpp-distiller-kernel/**/*.pyc
+/_quarantine/
+/lib/
+
+# Programmatic-budget layer (P3/P3b/P1) — session-generated, never committed
+vault/cache_hints/*.json
+vault/telemetry/rtk_*.jsonl
+vault/telemetry/budget-*.jsonl
+tests/auto-generated/

@@ -1,0 +1,25 @@
+{
+  "schema": "design_refresh/1.0",
+  "note": "Opt-in only. `design_index.py --refresh` applies manual_entries via INSERT OR REPLACE. The baked dataset stays canonical; nothing here runs automatically or scrapes the network (Q1: hybrid baked + explicit refresh).",
+  "sources": [
+    {
+      "system": "shadcn/ui",
+      "docs_root": "https://ui.shadcn.com/docs/components",
+      "fetch": "manual",
+      "last_reviewed": null
+    },
+    {
+      "system": "Radix Primitives",
+      "docs_root": "https://www.radix-ui.com/primitives/docs/components",
+      "fetch": "manual",
+      "last_reviewed": null
+    },
+    {
+      "system": "Framer Motion",
+      "docs_root": "https://motion.dev/docs/react",
+      "fetch": "manual",
+      "last_reviewed": null
+    }
+  ],
+  "manual_entries": []
+}

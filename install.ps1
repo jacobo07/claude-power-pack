@@ -284,6 +284,9 @@ if ((Test-Path $VendorDir) -and (Test-Path $GateScript)) {
     }
 }
 
+# --- session-continuity module (Lazarus v4) ---
+Write-Host "session-continuity: run modules/session-continuity/wire-claude-settings.ps1 and install-cursor-profiles.ps1 as the signed-in user to enable tab continuity."
+
 Write-Host ""
 Write-Host "Done! The AI will now:" -ForegroundColor Cyan
 Write-Host "  - Plan before acting (Anti-Monolith)"

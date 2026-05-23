@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "kind": "commands",
+  "generated_iso": "2026-05-19T13:09:12Z",
+  "pp_original": [
+    {
+      "name": "ultra.md",
+      "sha256": "6d6d59af626604010d9d65897c2aab437b65784421a9edcd7a5ae0cb524eb700",
+      "present_in_loose": true,
+      "rationale": "ULTRA 7-phase ONESHOT protocol; PP-tracked"
+    },
+    {
+      "name": "omni-verification-oracle-audit.md",
+      "sha256": "0befe1741ec3231d1bdddf4f6abfff260ec73a56633ffce2870c0572fb624203",
+      "present_in_loose": true,
+      "rationale": "OVO forensic audit; PP-tracked"
+    },
+    {
+      "name": "ovo-audit.md",
+      "sha256": "1293ca81edbd5db06468f80ab560e7a9cb8d9e33338c47eca57308dbb57efc4e",
+      "present_in_loose": true,
+      "rationale": "OVO alias; PP-tracked"
+    },
+    {
+      "name": "customclaw.md",
+      "sha256": "4f0f1380ff0519a5fbe957279bc8382dcd0a3017a0de3a8c2fe6cea07e581b3c",
+      "present_in_loose": true,
+      "rationale": "Project scan + custom daemon scaffolder"
+    },
+    {
+      "name": "obsidian-setup.md",
+      "sha256": "1509e598c17c2a6c05e050ae4d5ce13554b8e392d7ab29e6f7adfd6d0c9a2068",
+      "present_in_loose": true,
+      "rationale": "Knowledge-Graph vault scaffolder"
+    },
+    {
+      "name": "vault-setup.md",
+      "sha256": "f6af907fd5e3cae434a1e6fd7d3ab24432501acd3d2389075a311457cb64ac26",
+      "present_in_loose": true,
+      "rationale": "Governance vault extractor from CLAUDE.md"
+    },
+    {
+      "name": "vault-sync.md",
+      "sha256": "e98fe884fc27b4fba7235b7ab7f0da9e0989272de89f7224a26b33b448dc411a",
+      "present_in_loose": true,
+      "rationale": "Vault INDEX.md regeneration"
+    },
+    {
+      "name": "autoupdate.md",
+      "sha256": "b1324a24ed007eb2e0f0c5c2e2f49667ae0e98ce9b3de4b9c4c4a8d70923bbc2",
+      "present_in_loose": true,
+      "rationale": "Toggle PP auto-update"
+    },
+    {
+      "name": "update.md",
+      "sha256": "2764856877aa55fce99c9c75fdeef6194fbd084763f268f756eb44034892ee01",
+      "present_in_loose": true,
+      "rationale": "Update PP from GitHub"
+    },
+    {
+      "name": "cpp-resume-sovereign.md",
+      "sha256": "70801557f71e0a6f093c3f6d68f48662ca2b6d01924535dcf5cd09cbb7d35eb0",
+      "present_in_loose": true,
+      "rationale": "Sovereign vault resume"
+    },
+    {
+      "name": "audit-all.md",
+      "sha256": "239929be28c0f20d3723f8278fdfe3c0632a71cda7a2d1545d8d4dd6159a2496",
+      "present_in_loose": true,
+      "rationale": "Cross-subsystem repo audit"
+    },
+    {
+      "name": "design-md.md",
+      "sha256": "fac94d1a9275ad536a60141840c0b93c77fcc21aac567259414c4e6d240032b8",
+      "present_in_loose": true,
+      "rationale": "DESIGN.md (Google Labs schema) scaffolder"
+    },
+    {
+      "name": "evaluate-repository.md",
+      "sha256": "4564c383a262857ae8575789e3e0d8cc629af143063305b14be0e0cf58e3cda3",
+      "present_in_loose": true,
+      "rationale": "Awesome-Claude-Code evaluation"
+    },
+    {
+      "name": "investment-ready-audit.md",
+      "sha256": "52afdd7a1420a270a494a90d7a3e525c88bc1b67474b65bf1c9f3a7bb91b1883",
+      "present_in_loose": true,
+      "rationale": "IRA verdict"
+    },
+    {
+      "name": "ira.md",
+      "sha256": "e9f9f7bca92f4f5dafd9ebd05ebce466c750839cdcd2b02c3b6039628208c56a",
+      "present_in_loose": true,
+      "rationale": "Alias for /investment-ready-audit"
+    },
+    {
+      "name": "kclear.md",
+      "sha256": "3cf5251ccce9abba52fc6bc277c9e77a58fc660abb884f34f81f7c43fdf8f3a2",
+      "present_in_loose": true,
+      "rationale": "Session checkpoint + handoff"
+    },
+    {
+      "name": "knowledge.md",
+      "sha256": "8083c4072dd85feee27b3d03d45f011a82ac4dc01f987e83be9303900670e8b0",
+      "present_in_loose": true,
+      "rationale": "AKOS knowledge injector"
+    },
+    {
+      "name": "lazarus.md",
+      "sha256": "a4d6f5ecaf2f00168b10c4156d43cddcbec12a5f0279bad96fefafa815c21082",
+      "present_in_loose": true,
+      "rationale": "Multi-session Lazarus restore"
+    },
+    {
+      "name": "research-youtube.md",
+      "sha256": "8e7a33033bebfbd675ee0bff224812d816da8da6a966baabde1a26199011283c",
+      "present_in_loose": true,
+      "rationale": "YouTube research analyzer"
+    },
+    {
+      "name": "restart.md",
+      "sha256": "6cc797475bee3afa08c35b34b3f98d9f4208c760ae29141070d1197f4974e2e8",
+      "present_in_loose": true,
+      "rationale": "Session restart with --continue"
+    },
+    {
+      "name": "resume-clean.md",
+      "sha256": "ae1bb11f8980c1a1c8f03fbf6d8d16a500f78f1e109fdc49ce5672aff9a78b5b",
+      "present_in_loose": true,
+      "rationale": "Filtered resume picker"
+    },
+    {
+      "name": "saas_system_audit.md",
+      "sha256": "e892ea77eca2445a1e8f26af18220fd2be733bf9248a2daeccc58d8da51c5870",
+      "present_in_loose": true,
+      "rationale": "SaaS commercial-readiness audit"
+    },
+    {
+      "name": "saas-continue.md",
+      "sha256": "b4e511180a00fc0275c9e7e6d77de54825deb75119d5d5a981264ff2e0584a52",
+      "present_in_loose": true,
+      "rationale": "SaaS doctrine continuation"
+    },
+    {
+      "name": "saas-launch.md",
+      "sha256": "6640da2148ef6f6f0c502fdfd74e25028b3d96e871bf07c7462b31a7e1e53174",
+      "present_in_loose": true,
+      "rationale": "14-phase SaaS launcher"
+    }
+  ],
+  "plugins": {},
+  "user_personal": []
+}

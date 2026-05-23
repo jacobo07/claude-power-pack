@@ -391,4 +391,4 @@ At each step, if something fails:
 - **Step 3 scan fails for a file:** Log "Could not read {file}, skipping" and continue to next manifest. After all checks, if LANGUAGE is still unset, use `generic`.
 - **No manifest found at all:** Generate the daemon with generic/language-agnostic rules. Note in the output: "I couldn't detect a specific stack, so I created a general-purpose assistant. Edit `.claude/commands/{DAEMON_NAME}.md` to add stack-specific rules."
 - **Write fails:** Report the exact error. Suggest the user create the directory manually: `mkdir -p .claude/commands` and retry.
-- **User is in wrong directory:** If `PROJECT_ROOT` is a home directory (`~`, `/home/user`, `C:\Users\user`) with no project files, warn clearly and ask to `cd` into the project first.
+- **User is in wrong directory:** If `PROJECT_ROOT` is a home directory (`~`, `/home/user`, `~`) with no project files, warn clearly and ask to `cd` into the project first.

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "kind": "agents",
+  "generated_iso": "2026-05-19T13:09:12Z",
+  "pp_original": [
+    {
+      "name": "oneshot-architect-auditor.md",
+      "sha256": "9d317b9bac6e02a777275a19c4a077b39b7904b15758a05c1b5f40c6b3cb58a0",
+      "present_in_loose": true,
+      "rationale": "ULTRA Phase-4 audit sub-agent; PP-tracked at agents/"
+    },
+    {
+      "name": "rtk-testing-specialist.md",
+      "sha256": "121560797edecacf808affbc6e3826efbc4afbc5aad440e852dba267b3a0b2fe",
+      "present_in_loose": true,
+      "rationale": "RTK proxy testing specialist; PP-original"
+    },
+    {
+      "name": "rust-rtk.md",
+      "sha256": "070c5041ea17ac538b7689afbb29337b8c4d6699df94a01d4b8e2bd285d68627",
+      "present_in_loose": true,
+      "rationale": "RTK Rust development specialist; PP-original"
+    },
+    {
+      "name": "steve-jobs.md",
+      "sha256": "0460076515641126debc10b6446a5b9f2883a1ecd46355560c38be918ba933f8",
+      "present_in_loose": true,
+      "rationale": "Steve Jobs UX/product veto persona lens"
+    },
+    {
+      "name": "woz.md",
+      "sha256": "2f17e57e31a582d5ae98ec8813eb4ad36b7ea8cd5567ce78c668f8dedd634588",
+      "present_in_loose": true,
+      "rationale": "Woz engineering-elegance veto persona lens"
+    },
+    {
+      "name": "hawkins.md",
+      "sha256": "b2b61b2f0086fdd4fea9a13a0004a7f918a2b509cf6ebe4d91940444dff609ea",
+      "present_in_loose": true,
+      "rationale": "David Hawkins consciousness-calibration advisory lens"
+    },
+    {
+      "name": "musk.md",
+      "sha256": "07dade14698a12f08df69eb4706d78dff3c451f81c6e903d79f1990fc90bfbdf",
+      "present_in_loose": true,
+      "rationale": "Elon Musk first-principles advisory lens"
+    },
+    {
+      "name": "garyvee.md",
+      "sha256": "3c3b58d5907d69c2ea4883b639618f581203da31d784b0bafba84765b5269ae3",
+      "present_in_loose": true,
+      "rationale": "Gary Vaynerchuk attention-arbitrage advisory lens"
+    }
+  ],
+  "plugins": {
+    "gsd": [
+      "gsd-codebase-mapper.md",
+      "gsd-debugger.md",
+      "gsd-executor.md",
+      "gsd-integration-checker.md",
+      "gsd-nyquist-auditor.md",
+      "gsd-phase-researcher.md",
+      "gsd-plan-checker.md",
+      "gsd-planner.md",
+      "gsd-project-researcher.md",
+      "gsd-research-synthesizer.md",
+      "gsd-roadmapper.md",
+      "gsd-verifier.md"
+    ]
+  },
+  "user_personal": [
+    {
+      "name": "fabrizio-infra-specialist.md",
+      "rationale": "Minecraft/Pterodactyl infrastructure specialist",
+      "redact_reason": "References private VPS IP 204.168.166.63, panel.kobicraft.net, and personal SSH key names (gap 1)"
+    }
+  ]
+}

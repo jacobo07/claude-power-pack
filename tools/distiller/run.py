@@ -35,9 +35,24 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+# Cross-repo dependency: the zero-token deterministic synthesizer lives in the
+# KobiiCraft canonical engine, NOT in this repo. Its root is resolved from
+# $KOBII_DISTILLER_ENGINE_ROOT (no hardcoded user path in a global skill —
+# Mistake #36). If unset/invalid the `distill` subcommand fails LOUD; it never
+# silently falls back to in-session LLM materialization (Mistake #37).
+_ENGINE_ENV = "KOBII_DISTILLER_ENGINE_ROOT"
+_ENGINE_MODULE = "kobicraft_content_intelligence.distiller.cli"
+
+
+def _safe_source_id(name: str) -> str:
+    # Mirrors cli/__main__.py:_vault_dir_for sanitization exactly so the
+    # emitted subtree path is predictable for the chained validate step.
+    return "".join(c if c.isalnum() or c in "-_." else "_" for c in name)
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -45,7 +60,7 @@ INGEST = HERE / "ingest.py"
 VALIDATE = HERE / "validate.py"
 MOTHER_PROMPT = ROOT / "parts" / "sleepy" / "distiller.md"
 
-_SUBCMDS = {"ingest", "check", "-h", "--help"}
+_SUBCMDS = {"ingest", "check", "distill", "-h", "--help"}
 
 
 def _python() -> str:
@@ -194,6 +209,77 @@ def _run_check(args: argparse.Namespace) -> int:
     return subprocess.call(validate_cmd)
 
 
+def _run_distill(args: argparse.Namespace) -> int:
+    """Zero-token deterministic distillation via the canonical KobiiCraft engine.
+
+    Subprocesses `python -m kobicraft_content_intelligence.distiller.cli text`
+    with explicit cwd = engine root and PYTHONPATH set per the engine's test
+    contract. DRY_RUN by default (no API key, no tokens). On any unreachability
+    the function returns non-zero with a precise remediation message — it does
+    NOT fall back to in-session LLM materialization (loud-degradation rule).
+    """
+    src = Path(args.source).resolve()
+    if not src.is_file():
+        print(f"[run] not a file: {src}", file=sys.stderr)
+        return 1
+
+    engine_root = os.environ.get(_ENGINE_ENV, "").strip()
+    if not engine_root:
+        print(
+            f"[run] ERROR: {_ENGINE_ENV} is not set. The deterministic engine is a "
+            f"cross-repo dependency. Set it to the KobiiCraft repo root, e.g.:\n"
+            f'  $env:{_ENGINE_ENV} = "<path>\\KobiiCraft Core Files"\n'
+            f"Refusing to silently fall back to LLM materialization.",
+            file=sys.stderr,
+        )
+        return 3
+    engine_root_p = Path(engine_root)
+    pkg = engine_root_p / "kobicraft_content_intelligence" / "distiller" / "cli" / "__main__.py"
+    if not pkg.is_file():
+        print(
+            f"[run] ERROR: engine not found under {_ENGINE_ENV}={engine_root}\n"
+            f"  expected: {pkg}\n"
+            f"Refusing to silently fall back to LLM materialization.",
+            file=sys.stderr,
+        )
+        return 3
+
+    out_base = (
+        Path.home() / ".claude" / "knowledge_vault" / "distilled"
+        if args.use_global
+        else Path.cwd() / ".knowledge_vault" / "distilled"
+    )
+    out_base.mkdir(parents=True, exist_ok=True)
+    emitted_dir = out_base / _safe_source_id(src.name)
+
+    venv_sp = engine_root_p / "kobicraft_content_intelligence" / ".venv" / "Lib" / "site-packages"
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(engine_root_p), str(engine_root_p / "kobicraft_content_intelligence"), str(venv_sp)]
+    )
+    if args.dry_run:
+        env["DISTILLER_DRY_RUN"] = "true"
+
+    engine_cmd = [
+        _python(), "-m", _ENGINE_MODULE, "text", str(src),
+        "--mode", "dry_run" if args.dry_run else "live",
+        "--out", str(out_base),
+    ]
+    print(f"[run] distill (deterministic, cwd={engine_root_p}): {' '.join(engine_cmd)}")
+    rc = subprocess.call(engine_cmd, cwd=str(engine_root_p), env=env)
+    if rc != 0:
+        print(f"[run] engine exit {rc}; aborting (no fallback).", file=sys.stderr)
+        return rc
+
+    if not emitted_dir.is_dir():
+        print(f"[run] ERROR: engine reported success but {emitted_dir} is missing.", file=sys.stderr)
+        return 1
+
+    validate_cmd = [_python(), str(VALIDATE), str(emitted_dir)]
+    print(f"[run] check: {' '.join(validate_cmd)}")
+    return subprocess.call(validate_cmd)
+
+
 def main() -> None:
     # Back-compat shim: legacy positional callers (`run.py <source>`) get
     # `ingest` injected so they keep working. Documented in the module
@@ -241,12 +327,34 @@ def main() -> None:
     )
     p_check.add_argument("path", help="output directory to validate")
 
+    p_distill = subparsers.add_parser(
+        "distill",
+        help="Zero-token deterministic distillation via the canonical KobiiCraft "
+        "engine ($KOBII_DISTILLER_ENGINE_ROOT), then validate. No LLM fallback.",
+    )
+    p_distill.add_argument("source", help="path to raw input file")
+    p_distill.add_argument(
+        "--global",
+        dest="use_global",
+        action="store_true",
+        help="write output under ~/.claude/knowledge_vault/distilled/",
+    )
+    p_distill.add_argument(
+        "--live",
+        dest="dry_run",
+        action="store_false",
+        help="opt into LIVE Anthropic mode (default: DRY_RUN, zero tokens)",
+    )
+    p_distill.set_defaults(dry_run=True)
+
     args = parser.parse_args()
 
     if args.subcmd == "ingest":
         sys.exit(_run_ingest(args))
     elif args.subcmd == "check":
         sys.exit(_run_check(args))
+    elif args.subcmd == "distill":
+        sys.exit(_run_distill(args))
     else:
         parser.error(f"unknown subcommand: {args.subcmd}")
 

@@ -156,12 +156,246 @@ def _ledger_row(session_id: str, metrics: dict, transcript_path: str, cwd: str, 
     }
 
 
+def _kclear_equivalent(atomic_write, session_id: str, used_pct, cwd: str,
+                       transcript_path: str) -> dict:
+    """Tier-2 mechanical kclear-equivalent (sealed 2026-05-20, Owner 2a/3a).
+    Runs INSIDE a Stop hook — no LLM available, only structural extraction.
+    Writes the same artefacts as /kclear v3 would, with mechanical content:
+      <cwd>/memory/project_session_handoff.md           (atomic replace)
+      <cwd>/vault/knowledge_base/session_lessons.md     (atomic append)
+      <cwd>/_audit_cache/insights.json                  (atomic update)
+    Returns a dict of the paths actually written (None on per-file failure).
+    """
+    now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+    cwd_p = Path(cwd) if cwd else Path.cwd()
+    paths = {"handoff": None, "lessons": None, "insights": None}
+
+    last_user: list[str] = []
+    last_assistant_summary = ""
+    try:
+        tp = Path(transcript_path) if transcript_path else None
+        if tp and tp.is_file():
+            with tp.open("rb") as fh:
+                size = tp.stat().st_size
+                if size > 60_000:
+                    fh.seek(-60_000, 2)
+                    fh.readline()
+                lines = fh.read().decode("utf-8", errors="replace").splitlines()
+            for ln in reversed(lines):
+                if not ln.strip():
+                    continue
+                try:
+                    e = json.loads(ln)
+                except Exception:
+                    continue
+                t = e.get("type") or e.get("role")
+                msg = e.get("message") or e
+                if t == "user":
+                    content = msg.get("content") if isinstance(msg, dict) else ""
+                    if isinstance(content, list):
+                        content = " ".join(
+                            c.get("text", "") for c in content
+                            if isinstance(c, dict) and c.get("type") == "text"
+                        )
+                    if content and len(last_user) < 5:
+                        last_user.append(str(content)[:200])
+                elif t == "assistant" and not last_assistant_summary:
+                    content = msg.get("content") if isinstance(msg, dict) else ""
+                    if isinstance(content, list):
+                        for c in content:
+                            if isinstance(c, dict) and c.get("type") == "text":
+                                content = c.get("text", "")
+                                break
+                    first_line = str(content).splitlines()[0] if content else ""
+                    last_assistant_summary = first_line[:400]
+                if len(last_user) >= 5 and last_assistant_summary:
+                    break
+            last_user.reverse()
+    except Exception:
+        pass
+
+    summary = (last_assistant_summary
+               or f"tier-2 checkpoint at {used_pct}% — no transcript summary"
+               )[:400]
+
+    try:
+        handoff_dir = cwd_p / "memory"
+        handoff_dir.mkdir(parents=True, exist_ok=True)
+        handoff_path = handoff_dir / "project_session_handoff.md"
+        body = (
+            f"# Session Handoff (auto, tier-2 kclear-equivalent)\n\n"
+            f"- session_id: {session_id}\n"
+            f"- ts: {now_iso}\n"
+            f"- used_pct: {used_pct}\n"
+            f"- cwd: {cwd}\n\n"
+            f"## summary\n{summary}\n\n"
+            f"## pending (last user prompts)\n"
+            + ("\n".join(f"- {p}" for p in last_user)
+               if last_user else "- (none extracted)")
+            + f"\n\n## transcript\n`{transcript_path}`\n"
+        )
+        atomic_write.atomic_write_bytes(handoff_path, body.encode("utf-8"))
+        paths["handoff"] = str(handoff_path)
+    except Exception:
+        pass
+
+    try:
+        lessons_dir = cwd_p / "vault" / "knowledge_base"
+        lessons_dir.mkdir(parents=True, exist_ok=True)
+        lessons_path = lessons_dir / "session_lessons.md"
+        section = (
+            f"\n## {now_iso} — tier-2 auto-checkpoint @ {used_pct}% "
+            f"({session_id[:8]})\n{summary}\n"
+        )
+        existing = lessons_path.read_bytes() if lessons_path.exists() else b""
+        if existing and not existing.endswith(b"\n"):
+            existing += b"\n"
+        atomic_write.atomic_write_bytes(lessons_path,
+                                        existing + section.encode("utf-8"))
+        paths["lessons"] = str(lessons_path)
+    except Exception:
+        pass
+
+    try:
+        ic_dir = cwd_p / "_audit_cache"
+        ic_dir.mkdir(parents=True, exist_ok=True)
+        ic_path = ic_dir / "insights.json"
+        data: dict = {"insights": []}
+        if ic_path.exists():
+            try:
+                loaded = json.loads(ic_path.read_text(encoding="utf-8-sig"))
+                if isinstance(loaded, dict) and "insights" in loaded:
+                    data = loaded
+            except Exception:
+                pass
+        data["insights"].append({
+            "ts": now_iso,
+            "category": "context-watchdog",
+            "title": f"tier-2 checkpoint at {used_pct}%",
+            "session_id": session_id,
+            "summary": summary,
+            "tags": ["tier-2", "auto-checkpoint", "BL-0033"],
+        })
+        atomic_write.atomic_write_bytes(
+            ic_path,
+            json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+        )
+        paths["insights"] = str(ic_path)
+    except Exception:
+        pass
+
+    return paths
+
+
+def _dump_telemetry(atomic_write, session_id: str, used_pct, cwd: str,
+                    transcript_path: str, kclear_paths: dict):
+    """Empirical-evidence artefact (Owner DONE-gate 6a, 2026-05-20)."""
+    now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+    cwd_p = Path(cwd) if cwd else Path.cwd()
+    try:
+        tel_dir = cwd_p / "vault" / "telemetry" / "context_watchdog"
+        tel_dir.mkdir(parents=True, exist_ok=True)
+        safe_ts = now_iso.replace(":", "-")
+        tel_path = tel_dir / f"{safe_ts}_{session_id[:8]}.json"
+        record = {
+            "ts": now_iso,
+            "session_id": session_id,
+            "used_pct": used_pct,
+            "cwd": cwd,
+            "transcript_path": transcript_path,
+            "kclear_paths": kclear_paths,
+            "trigger": "tier-2-auto",
+            "schema_version": 1,
+        }
+        atomic_write.atomic_write_bytes(
+            tel_path, json.dumps(record, indent=2).encode("utf-8")
+        )
+        return str(tel_path)
+    except Exception:
+        return None
+
+
+def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str):
+    """Drop the SendKeys-daemon trigger flag (Owner 1c, zero-keystroke).
+    The detached PS daemon polls ~/.claude/hooks/auto-compact-trigger.flag
+    and, when Cursor is focused, sends Enter to dispatch the slash command
+    the model has just emitted. Honest 1-keystroke fallback when Cursor is
+    not focused — daemon promotes the flag to auto-compact-pending.flag.
+    """
+    now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
+    try:
+        flag_dir = Path.home() / ".claude" / "hooks"
+        flag_dir.mkdir(parents=True, exist_ok=True)
+        flag = flag_dir / "auto-compact-trigger.flag"
+        payload = json.dumps({
+            "ts": now_iso, "session_id": session_id,
+            "used_pct": used_pct, "cwd": cwd,
+        })
+        atomic_write.atomic_write_bytes(flag, (payload + "\n").encode("utf-8"))
+        return str(flag)
+    except Exception:
+        return None
+
+
+def _spawn_daemon() -> bool:
+    """Spawn the SendKeys daemon detached (Owner PASO 3, 2026-05-20).
+    Belt+suspenders: watchdog drops the trigger flag AND launches the
+    consumer immediately, instead of waiting for the next Stop to spawn it
+    via the separate auto-compact-stop-launcher.ps1 hook. Daemon enforces
+    its own single-flight; duplicate spawn is a no-op. Returns True on
+    successful Popen, False on any failure (fail-open).
+    """
+    try:
+        import subprocess
+        daemon = Path.home() / ".claude" / "hooks" / "auto-compact-sendkeys-daemon.ps1"
+        if not daemon.is_file():
+            return False
+        # Empirical fix (2026-05-20): a direct subprocess.Popen with
+        # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
+        # from inside this Python Stop hook silently NO-OPS in the
+        # chained-detach context (no log file, trigger flag never consumed).
+        # Verified by manual powershell spawn of the same command which DOES
+        # work. Vaccine: use the textbook Windows fire-and-forget pattern
+        # `cmd.exe /c start "" /B powershell ...`. The intermediate cmd exits
+        # immediately; the started powershell survives independently.
+        CREATE_NO_WINDOW = 0x08000000
+        subprocess.Popen(
+            ["cmd.exe", "/c", "start", "", "/B",
+             "powershell.exe", "-NoProfile", "-WindowStyle", "Hidden",
+             "-ExecutionPolicy", "Bypass", "-File", str(daemon)],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=CREATE_NO_WINDOW,
+        )
+        return True
+    except Exception:
+        return False
+
+
 def run(event: dict) -> dict:
     session_id = event.get("session_id")
     if not session_id:
         return {}
 
-    metrics = _read_metrics(session_id)
+    # Empirical-test override (Owner DONE-gate 6a, 2026-05-20):
+    # `_TEST_CONTEXT_PCT=<n>` forces a used_pct value so a synthetic Stop
+    # payload can exercise the full Tier-2 chain end-to-end without needing
+    # a live session to be near 70%. Bypasses the /tmp metrics file.
+    test_pct = os.environ.get("_TEST_CONTEXT_PCT")
+    if test_pct:
+        try:
+            forced = float(test_pct)
+            metrics = {
+                "used_pct": forced,
+                "remaining_percentage": max(0.0, 100.0 - forced),
+                "tokens_used": None,
+                "tokens_total": None,
+            }
+        except ValueError:
+            metrics = _read_metrics(session_id)
+    else:
+        metrics = _read_metrics(session_id)
     if not metrics:
         return {}
 
@@ -186,7 +420,7 @@ def run(event: dict) -> dict:
         except Exception:
             pass
 
-    # Tier 2 (>= 70%) — strong advisory, once per session
+    # Tier 2 (>= 70%) — kclear-equivalent + zero-keystroke compact dispatch
     if used_pct >= THRESHOLD_ADVISORY_PCT and not _flag_exists(session_id, ADVISORY_FLAG):
         try:
             atomic_write.atomic_append_jsonl(LEDGER_PATH, _ledger_row(session_id, metrics, transcript_path, cwd, "advisory"))
@@ -194,20 +428,43 @@ def run(event: dict) -> dict:
         except Exception:
             pass
 
+        # 1. Save vault BEFORE compact (Owner 2a: save then free).
+        kclear_paths = _kclear_equivalent(atomic_write, session_id, used_pct,
+                                          cwd, transcript_path)
+        # 2. Empirical-evidence telemetry (Owner DONE-gate 6a).
+        tel_path = _dump_telemetry(atomic_write, session_id, used_pct, cwd,
+                                   transcript_path, kclear_paths)
+        # 3. SendKeys-daemon trigger flag (Owner 1c, zero-keystroke).
+        flag_path = _write_trigger_flag(atomic_write, session_id, used_pct, cwd)
+        # 4. Spawn the daemon immediately (belt+suspenders alongside the
+        #    separate Stop-launcher hook). Detached, single-flight on the
+        #    daemon side; harmless if a previous one is still running.
+        daemon_spawned = _spawn_daemon()
+
         message = (
             f"CONTEXT THRESHOLD CROSSED — {used_pct}% used (>= 70%). "
-            "Pre-compact snapshot already written to vault/progress.md and "
-            "vault/sleepy/context_snapshots.jsonl. The next safe action is to "
-            "ASK THE USER to type `/compact focus on <current task description>`. "
-            "Do NOT continue large new work in this turn. Hooks cannot auto-fire "
-            "slash commands (BL-0003); the user must type it. Once /compact runs, "
-            "vault/progress.md provides the resume anchor."
+            f"Pre-compact vault checkpoint WRITTEN by tier-2 kclear-equivalent: "
+            f"handoff={kclear_paths.get('handoff')}; "
+            f"lessons={kclear_paths.get('lessons')}; "
+            f"insights={kclear_paths.get('insights')}; "
+            f"telemetry={tel_path}. "
+            f"SendKeys-daemon trigger flag DROPPED at {flag_path} — if Cursor "
+            "is the focused window the daemon will press Enter for you "
+            "(ZERO-keystroke); if it is not, the daemon promotes the flag to "
+            "auto-compact-pending.flag and the dispatch is honest 1-keystroke. "
+            "End your next response with a SINGLE trailing line — exactly "
+            "`/compact focus on <5-12 word current-task summary>` — no preface, "
+            "no markdown. Per BL-0003 the model itself cannot auto-dispatch the "
+            "slash command; emitting the pre-filled line is the model's "
+            "contribution to the chain. vault/progress.md remains the resume "
+            "anchor if compact is interrupted."
         )
+        # decision="block" + reason re-invokes the model with reason as injected
+        # context — the BL-0033 mechanism; Stop schema forbids
+        # hookSpecificOutput.additionalContext here.
         return {
-            "hookSpecificOutput": {
-                "hookEventName": "Stop",
-                "additionalContext": message,
-            }
+            "decision": "block",
+            "reason": message,
         }
 
     return {}
