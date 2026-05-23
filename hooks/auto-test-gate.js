@@ -105,17 +105,28 @@ function findPython() {
   return 'python';
 }
 
+function normalizePath(p) {
+  // Bash / MSYS2 emits paths like `/c/Users/foo`. Windows spawn
+  // rejects those with ENOENT. Convert to `C:/Users/foo`.
+  if (!p) return p;
+  const m = p.match(/^\/([a-zA-Z])\/(.*)$/);
+  if (m) return m[1].toUpperCase() + ':/' + m[2];
+  return p;
+}
+
 function resolveRepoRoot(cwd) {
   // Walk up from cwd looking for .git. If none, return cwd as-is so
-  // the runner can still detect the project type.
-  let d = path.resolve(cwd || process.cwd());
+  // the runner can still detect the project type. Path normalization
+  // handles the bash POSIX-style /c/... shape on Windows.
+  cwd = normalizePath(cwd || process.cwd());
+  let d = path.resolve(cwd);
   for (let i = 0; i < 6; i++) {
     if (fs.existsSync(path.join(d, '.git'))) return d;
     const parent = path.dirname(d);
     if (parent === d) break;
     d = parent;
   }
-  return cwd || process.cwd();
+  return cwd;
 }
 
 function extractCommand(input) {
