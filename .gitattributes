@@ -1,1 +1,14 @@
 knowledge_vault/** -text
+
+# 2026-05-23: union merge driver for append-only ledgers.
+# Both sides legitimately appended different rows -- standard recursive
+# merge falls into content conflict. Union merge concatenates both
+# sides' contributions, which is the semantic intent for these files.
+# Pairs with `git config merge.union.driver true` (configured on the
+# clone once; the .gitattributes line is what makes git ASK for the
+# driver in the first place).
+vault/knowledge_base/session_lessons.md   merge=union
+vault/knowledge_base/governance_vaccines.md merge=union
+vault/audits/verdicts.jsonl               merge=union
+vendor/NOTICE.md                          merge=union
+SSOT.md                                   merge=union
