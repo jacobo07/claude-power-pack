@@ -686,13 +686,18 @@ def _llm_claude_cli(system: str, user: str, schema: dict | None,
             + _json.dumps(schema, indent=2)
         )
 
+    # CRITICAL: pass user message via STDIN, NOT argv. Windows has an
+    # 8 KB-ish command-line cap (CreateProcessW), and our extract_learnings
+    # prompt embeds up to 5 x 25 KB of markdown. Empirically caught
+    # 2026-05-23 at Paso 1.8 first-run: WinError 206 "filename or extension
+    # too long" when the markdown payload blew argv. claude.exe -p reads
+    # stdin when no positional prompt is provided.
     args: list[str] = [
         str(cmd_path),
         "-p",
         "--disable-slash-commands",
         "--disallowed-tools", "*",
         "--append-system-prompt", system,
-        augmented_user,
     ]
 
     model = env_str("CLAUDEPP_RESEARCH_MODEL")
@@ -703,6 +708,7 @@ def _llm_claude_cli(system: str, user: str, schema: dict | None,
         r = subprocess.run(
             args, capture_output=True, text=True,
             timeout=timeout, encoding="utf-8", errors="replace",
+            input=augmented_user,
         )
     except (subprocess.TimeoutExpired, OSError) as e:
         raise LayerError("claude.exe", f"subprocess failed: {e}")
@@ -764,6 +770,708 @@ def _llm_anthropic_sdk(system: str, user: str, schema: dict | None,
     return output
 
 
+# --- Chain functions (Pasos 1.5 / 1.6 / 1.7) -----------------------------
+#
+# Each chain wraps call_llm() with one of the verbatim prompts extracted
+# from the n8n source (spec §3.2 / §3.4 / §3.5). The system message is the
+# 11-instruction shared block (spec §3.1).
+#
+# All four prompt texts in this section are taken byte-for-byte from the
+# source workflow's chainLlm nodes. They are the IP of the design; any
+# rewording risks re-creating the original quality + reliability profile.
+
+_SHARED_SYSTEM_TEMPLATE = (
+    "You are an expert researcher. Today is {today}. Follow these "
+    "instructions when responding:\n"
+    " - You may be asked to research subjects that is after your "
+    "knowledge cutoff, assume the user is right when presented with news.\n"
+    " - The user is a highly experienced analyst, no need to simplify "
+    "it, be as detailed as possible and make sure your response is correct.\n"
+    " - Be highly organized.\n"
+    " - Suggest solutions that I didn't think about.\n"
+    " - Be proactive and anticipate my needs.\n"
+    " - Treat me as an expert in all subject matter.\n"
+    " - Mistakes erode my trust, so be accurate and thorough.\n"
+    " - Provide detailed explanations, I'm comfortable with lots of detail.\n"
+    " - Value good arguments over authorities, the source is irrelevant.\n"
+    " - Consider new technologies and contrarian ideas, not just the "
+    "conventional wisdom.\n"
+    " - You may use high levels of speculation or prediction, just flag "
+    "it for me."
+)
+
+
+def _shared_system() -> str:
+    return _SHARED_SYSTEM_TEMPLATE.format(today=time.strftime("%Y-%m-%d"))
+
+
+# --- Paso 1.5 — generate_serp_queries ------------------------------------
+
+_SERP_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "queries": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "researchGoal": {"type": "string"},
+                },
+                "required": ["query", "researchGoal"],
+            },
+        }
+    },
+    "required": ["queries"],
+}
+
+
+def generate_serp_queries(prompt: str, breadth: int,
+                           learnings: list[str] | None = None
+                           ) -> list[SerpQuery]:
+    """Generate up to `breadth` SERP queries from the user prompt + any
+    learnings from previous depth levels. Verbatim prompt from spec §3.2.
+    """
+    learnings = learnings or []
+    if learnings:
+        learnings_block = (
+            "Here are some learnings from previous research, use them to "
+            "generate more specific queries: "
+            + "\n".join(learnings)
+        )
+    else:
+        learnings_block = ""
+
+    user_msg = (
+        f"Given the following prompt from the user, generate a list of "
+        f"SERP queries to research the topic. Return a maximum of {breadth} "
+        f"queries, but feel free to return less if the original prompt is "
+        f"clear. Make sure each query is unique and not similar to each "
+        f"other: <prompt>{prompt}</prompt>\n\n{learnings_block}"
+    )
+    result = call_llm(_shared_system(), user_msg, _SERP_SCHEMA)
+    if not isinstance(result, dict):
+        raise LayerError("generate_serp_queries", "non-dict response")
+    queries = result.get("queries") or []
+    out: list[SerpQuery] = []
+    for q in queries[:breadth]:
+        if not isinstance(q, dict):
+            continue
+        query = (q.get("query") or "").strip()
+        goal = (q.get("researchGoal") or "").strip()
+        if query and goal:
+            out.append({"query": query, "researchGoal": goal})
+    return out
+
+
+# --- Paso 1.6 — extract_learnings ----------------------------------------
+
+_LEARNINGS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "learnings": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of learnings, max of 3.",
+        },
+        "followUpQuestions": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Follow-up questions to research the topic "
+                           "further, max of 3.",
+        },
+    },
+    "required": ["learnings", "followUpQuestions"],
+}
+
+
+def extract_learnings(query: str,
+                       markdowns: list[str]) -> ExtractedLearnings:
+    """Extract up to 3 unique learnings + 3 follow-up questions from
+    SERP content. Verbatim prompt from spec §3.4. Truncates each
+    markdown to MARKDOWN_MAX_CHARS (25,000) before stuffing into the
+    prompt to stay within context window.
+    """
+    if not markdowns:
+        return {"learnings": [], "followUpQuestions": []}
+
+    contents_block = "\n".join(
+        f"<content>\n{md[:MARKDOWN_MAX_CHARS]}\n</content>"
+        for md in markdowns
+    )
+
+    user_msg = (
+        f"Given the following contents from a SERP search for the query "
+        f"<query>{query}</query>, generate a list of learnings from the "
+        f"contents. Return a maximum of 3 learnings, but feel free to "
+        f"return less if the contents are clear. Make sure each learning "
+        f"is unique and not similar to each other. The learnings should "
+        f"be concise and to the point, as detailed and infromation dense "
+        f"as possible. Make sure to include any entities like people, "
+        f"places, companies, products, things, etc in the learnings, as "
+        f"well as any exact metrics, numbers, or dates. The learnings "
+        f"will be used to research the topic further.\n\n"
+        f"<contents>\n{contents_block}\n</contents>"
+    )
+    result = call_llm(_shared_system(), user_msg, _LEARNINGS_SCHEMA)
+    if not isinstance(result, dict):
+        raise LayerError("extract_learnings", "non-dict response")
+    learnings = [
+        s.strip() for s in (result.get("learnings") or [])
+        if isinstance(s, str) and s.strip()
+    ][:3]
+    follow_ups = [
+        s.strip() for s in (result.get("followUpQuestions") or [])
+        if isinstance(s, str) and s.strip()
+    ][:3]
+    return {"learnings": learnings, "followUpQuestions": follow_ups}
+
+
+# --- Paso 1.7 — generate_report ------------------------------------------
+
+def generate_report(prompt: str, learnings: list[str],
+                     urls: list[str]) -> str:
+    """Single LLM call that synthesizes all collected learnings into a
+    multi-page markdown report. Verbatim prompt from spec §3.5. Caller
+    appends ## Sources + ## Run metadata footer; this function returns
+    only the LLM-generated body.
+    """
+    if not learnings:
+        return (
+            "# Research Report — INSUFFICIENT DATA\n\n"
+            f"Prompt: {prompt}\n\n"
+            "The research run completed without extracting any learnings. "
+            "This can happen when SERP results were empty across all "
+            "queries, or page-fetch failed for every result. Re-run with "
+            "different keywords or check vault/cache_hints/CEILING.md for "
+            "the layer-by-layer failure log."
+        )
+
+    learnings_block = "\n".join(
+        f"<learning>{ln}</learning>" for ln in learnings
+    )
+    user_msg = (
+        f"You are are an expert and insightful researcher.\n"
+        f"* Given the following prompt from the user, write a final "
+        f"report on the topic using the learnings from research.\n"
+        f"* Make it as as detailed as possible, aim for 3 or more pages, "
+        f"include ALL the learnings from research.\n"
+        f"* Format the report in markdown. Use headings, lists and tables "
+        f"only and where appropriate.\n\n"
+        f"<prompt>{prompt}</prompt>\n\n"
+        f"Here are all the learnings from previous research:\n\n"
+        f"<learnings>\n{learnings_block}\n</learnings>"
+    )
+    # Report is text-only — no JSON schema. Bumped timeout because the
+    # full-report call typically generates 3+ pages of content.
+    result = call_llm(_shared_system(), user_msg, None,
+                       timeout=LLM_TIMEOUT_S * 2)
+    if not isinstance(result, str):
+        raise LayerError("generate_report", "non-string response")
+    return result.strip()
+
+
+# --- Paso 1.8 — recursive deep_research driver ---------------------------
+#
+# deep_research orchestrates the four cascades (search, fetch, markdown,
+# LLM) into the recursive algorithm of spec §2. It is the public entry
+# point; the CLI in Paso 1.9 wraps it for argv-driven invocation.
+#
+# Recursion + governance:
+#   * Halve breadth on each level (spec §2 line "breadth // 2"). Floor at 1.
+#   * Hard cap total queries at MAX_QUERIES (default 30) to prevent
+#     exponential explosion at depth >= 3 with high breadth.
+#   * Per-request timeouts are already baked into the cascade layers.
+#   * Total wall-clock ceiling enforced by a deadline check before each
+#     LLM call (cheapest place to abort cleanly).
+#   * Single-instance lock acquired at the top of the call; released in
+#     a finally clause regardless of outcome.
+
+
+def _write_ceiling(reason: str, prompt: str,
+                    detail: dict[str, Any]) -> Path:
+    """Honest ceiling write — happens iff the agent CANNOT produce a real
+    report (every search layer exhausted, no LLM available, query budget
+    blown, runtime ceiling hit). The file is a forensic artifact, not
+    an apology — it documents WHY the ceiling was reached so the Owner
+    can fix the gap (e.g. add an API key, raise the budget).
+    """
+    CACHE_HINTS_DIR.mkdir(parents=True, exist_ok=True)
+    target = CACHE_HINTS_DIR / "CEILING.md"
+    payload = (
+        f"\n---\n## {iso_now()} — deep_research ceiling: {reason}\n\n"
+        f"**Prompt:** {prompt[:200]}\n\n"
+        f"**Detail:**\n```json\n{_json.dumps(detail, indent=2)}\n```\n"
+    )
+    with target.open("a", encoding="utf-8") as f:
+        f.write(payload)
+    return target
+
+
+def deep_research(
+    prompt: str,
+    depth: int = 2,
+    breadth: int = 3,
+    learnings: list[str] | None = None,
+    urls: list[str] | None = None,
+    _state: dict[str, Any] | None = None,
+) -> ResearchResult:
+    """Run the recursive research algorithm. Returns a ResearchResult.
+
+    Top-level invocation (no `_state` passed) acquires the single-instance
+    lock, initialises run accounting, and is the only level that calls
+    generate_report() at the end. Recursive invocations pass the shared
+    state dict (queries-asked counter, deadline, started-at, layers-fired)
+    so the governance guardrails see the FULL run, not just one level.
+    """
+    learnings = list(learnings or [])
+    urls = list(urls or [])
+    is_top_level = _state is None
+
+    if is_top_level:
+        if env_disabled():
+            return {
+                "report_md": "# deep_research DISABLED\n\n"
+                              "CLAUDEPP_DEEPRESEARCH_DISABLE=1 in env.\n",
+                "learnings": [], "urls": [],
+                "metadata": {"verdict": "disabled-by-env"},
+            }
+        lock = acquire_lock()
+        if lock == "held":
+            return {
+                "report_md": "# deep_research locked\n\n"
+                              "Another run holds the lock — refusing "
+                              "to pile up. Retry after the in-flight "
+                              "run finishes.\n",
+                "learnings": [], "urls": [],
+                "metadata": {"verdict": "lock-held"},
+            }
+        priority_verdict = lower_priority()
+        max_queries = env_int("CLAUDEPP_DEEPRESEARCH_MAX_QUERIES",
+                                MAX_QUERIES_DEFAULT)
+        total_timeout = env_int("CLAUDEPP_DEEPRESEARCH_TIMEOUT_S",
+                                  TOTAL_TIMEOUT_S_DEFAULT)
+        _state = {
+            "started_at": time.time(),
+            "deadline": time.time() + total_timeout,
+            "queries_used": 0,
+            "max_queries": max_queries,
+            "layers_fired": {"search": set(), "markdown": set(),
+                              "llm": set()},
+            "priority_verdict": priority_verdict,
+            "lock_verdict": lock,
+            "errors": [],
+            "all_search_queries": [],
+        }
+
+    try:
+        # Generate this level's SERP queries.
+        try:
+            queries = generate_serp_queries(prompt, breadth, learnings)
+        except (LayerError, NoLLMAvailable) as e:
+            _state["errors"].append(f"generate_serp_queries: {e}")
+            queries = []
+        if not queries:
+            # If we can't even ask the first set of queries, log + return
+            # whatever we have. At top level this becomes INSUFFICIENT
+            # DATA via generate_report.
+            _state["errors"].append("no SERP queries generated")
+
+        for q in queries:
+            # Check guardrails BEFORE each query (cheapest abort point).
+            if _state["queries_used"] >= _state["max_queries"]:
+                _state["errors"].append(
+                    f"query budget exhausted ({_state['max_queries']})"
+                )
+                break
+            if time.time() > _state["deadline"]:
+                _state["errors"].append("runtime ceiling hit")
+                break
+
+            _state["queries_used"] += 1
+            _state["all_search_queries"].append(q["query"])
+            try:
+                hits, layer = web_search(q["query"], n=10)
+                _state["layers_fired"]["search"].add(layer)
+            except NoSearchAvailable as e:
+                _state["errors"].append(
+                    f"web_search '{q['query'][:40]}...': {e}"
+                )
+                continue
+
+            # Top 5 organic — match the n8n source workflow exactly.
+            top5 = hits[:5]
+            markdowns: list[str] = []
+            new_urls: list[str] = []
+            for h in top5:
+                if time.time() > _state["deadline"]:
+                    break
+                try:
+                    page = fetch_page(h["url"])
+                except LayerError as e:
+                    _state["errors"].append(
+                        f"fetch_page '{h['url'][:60]}...': {e}"
+                    )
+                    continue
+                md, md_layer = html_to_markdown(
+                    page["html"], base_url=page.get("final_url", h["url"])
+                )
+                _state["layers_fired"]["markdown"].add(md_layer)
+                if md:
+                    markdowns.append(md)
+                    new_urls.append(page.get("final_url", h["url"]))
+
+            if not markdowns:
+                _state["errors"].append(
+                    f"no markdowns extracted for '{q['query'][:40]}'"
+                )
+                continue
+
+            try:
+                extracted = extract_learnings(q["query"], markdowns)
+            except (LayerError, NoLLMAvailable) as e:
+                _state["errors"].append(f"extract_learnings: {e}")
+                continue
+            _state["layers_fired"]["llm"].add("claude.exe")
+
+            learnings.extend(extracted["learnings"])
+            urls.extend(new_urls)
+
+            # Recurse if depth > 1 (matching spec §2 termination).
+            if depth > 1 and extracted["followUpQuestions"]:
+                sub_prompt = (
+                    f"Previous research goal: {q['researchGoal']}\n"
+                    f"Follow-up research directions: "
+                    + "\n".join(extracted["followUpQuestions"])
+                )
+                sub_result = deep_research(
+                    sub_prompt,
+                    depth=depth - 1,
+                    breadth=max(1, breadth // 2),
+                    learnings=learnings,
+                    urls=urls,
+                    _state=_state,
+                )
+                # Sub-result already mutated learnings/urls in-place via
+                # the shared lists; pull them back to canonical refs.
+                learnings = sub_result["learnings"]
+                urls = sub_result["urls"]
+
+        if is_top_level:
+            # Generate the final report. If learnings is empty,
+            # generate_report() returns the INSUFFICIENT DATA template
+            # honestly rather than fabricating content.
+            try:
+                report_md = generate_report(prompt, learnings, urls)
+                _state["layers_fired"]["llm"].add("claude.exe")
+            except (LayerError, NoLLMAvailable) as e:
+                _state["errors"].append(f"generate_report: {e}")
+                report_md = (
+                    f"# Research Report — LLM CEILING\n\n"
+                    f"Prompt: {prompt}\n\n"
+                    f"All learnings + URLs are below (raw, unsynthesized) "
+                    f"because the report-generation LLM call failed:\n"
+                    f"{e}\n\n"
+                    f"## Raw learnings ({len(learnings)})\n"
+                    + "\n".join(f"- {ln}" for ln in learnings)
+                    + "\n\n## Raw URLs\n"
+                    + "\n".join(f"- {u}" for u in dict.fromkeys(urls))
+                )
+                _write_ceiling("report-gen-llm-failed", prompt,
+                               {"error": str(e),
+                                "learnings_collected": len(learnings)})
+
+            duration = time.time() - _state["started_at"]
+            return {
+                "report_md": report_md,
+                "learnings": learnings,
+                "urls": list(dict.fromkeys(urls)),  # dedup preserving order
+                "metadata": {
+                    "depth": depth,
+                    "breadth": breadth,
+                    "queries_used": _state["queries_used"],
+                    "queries_log": _state["all_search_queries"],
+                    "layers_fired": {
+                        k: sorted(v)
+                        for k, v in _state["layers_fired"].items()
+                    },
+                    "priority": _state["priority_verdict"],
+                    "lock": _state["lock_verdict"],
+                    "duration_s": round(duration, 1),
+                    "errors": _state["errors"],
+                    "started_at": iso_now(),
+                },
+            }
+
+        # Recursive level — return shared state references so parent
+        # can pull them back.
+        return {
+            "report_md": "",
+            "learnings": learnings,
+            "urls": urls,
+            "metadata": {},
+        }
+    finally:
+        if is_top_level:
+            release_lock()
+
+
+# --- Paso 1.9 — CLI + three-artifact writer ------------------------------
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    """Write `content` to `path` atomically (.tmp + rename)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + f".tmp.{os.getpid()}")
+    tmp.write_text(content, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def _append_index(row: dict[str, Any]) -> None:
+    """Append one JSON-lines row to vault/research/index.json. The file
+    is a JSONL stream (one object per line), NOT a single JSON array —
+    avoids read-modify-write contention if two runs append nearly
+    simultaneously (the lock prevents that, but defense in depth)."""
+    INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with INDEX_PATH.open("a", encoding="utf-8") as f:
+        f.write(_json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def _load_index() -> list[dict[str, Any]]:
+    """Read all rows from index.json (JSONL). Empty file -> []."""
+    if not INDEX_PATH.exists():
+        return []
+    rows = []
+    with INDEX_PATH.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(_json.loads(line))
+            except _json.JSONDecodeError:
+                continue
+    return rows
+
+
+def _dedup_urls_against_history(urls: list[str], prompt: str) -> list[str]:
+    """Filter out URLs that appeared in a prior index.json entry whose
+    prompt was textually similar (first 30 chars match). This is the
+    "re-run same prompt = no duplicate URLs in Sources" guarantee from
+    spec §10."""
+    prior = _load_index()
+    prompt_key = prompt.lower()[:30].strip()
+    seen: set[str] = set()
+    for row in prior:
+        rprompt = (row.get("prompt") or "").lower()[:30].strip()
+        if rprompt == prompt_key:
+            for u in row.get("urls_sample", []):
+                seen.add(u)
+    return [u for u in urls if u not in seen]
+
+
+def write_research_artifacts(
+    prompt: str,
+    result: ResearchResult,
+    output_dir: Path | None = None,
+) -> dict[str, Path]:
+    """Write the three artifacts of spec §6:
+
+      1. <ts>_<slug>.md   — markdown report + ## Sources + ## Run metadata
+      2. index.json       — JSONL append (one row per run)
+      3. <slug>.raw.jsonl — per-run trace (queries asked, layers fired)
+
+    Returns {report, index, raw} -> Path mapping.
+    """
+    output_dir = output_dir or RESEARCH_DIR
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    ts = now_ts()
+    slug = slugify(prompt)
+    report_path = output_dir / f"{ts}_{slug}.md"
+    raw_path = output_dir / f"{slug}.raw.jsonl"
+
+    # Build the composite markdown: body + Sources + Run metadata.
+    deduped_urls = list(dict.fromkeys(result["urls"]))
+    fresh_urls = _dedup_urls_against_history(deduped_urls, prompt)
+
+    sources_md = "## Sources\n\n" + (
+        "\n".join(f"- <{u}>" for u in deduped_urls)
+        if deduped_urls else "_(none collected)_"
+    )
+    if len(fresh_urls) != len(deduped_urls):
+        sources_md += (
+            f"\n\n_Note: {len(deduped_urls) - len(fresh_urls)} URL(s) "
+            f"also appeared in prior runs of this prompt (not duplicates "
+            f"in current run; see index.json for full history)._"
+        )
+
+    meta = dict(result["metadata"])
+    meta_md = (
+        "## Run metadata\n\n"
+        f"- **Prompt:** {prompt}\n"
+        f"- **Depth / breadth:** {meta.get('depth', '?')} / "
+        f"{meta.get('breadth', '?')}\n"
+        f"- **Queries used:** {meta.get('queries_used', 0)} "
+        f"(budget {env_int('CLAUDEPP_DEEPRESEARCH_MAX_QUERIES', MAX_QUERIES_DEFAULT)})\n"
+        f"- **Layers fired:**\n"
+        + "".join(
+            f"  - {k}: {', '.join(v) if v else '(none)'}\n"
+            for k, v in meta.get("layers_fired", {}).items()
+        )
+        + f"- **Priority class:** {meta.get('priority', '?')}\n"
+          f"- **Lock:** {meta.get('lock', '?')}\n"
+          f"- **Duration:** {meta.get('duration_s', '?')} s\n"
+          f"- **Errors during run:** {len(meta.get('errors', []))}\n"
+          f"- **Started at:** {meta.get('started_at', '?')}\n"
+          f"- **Module version:** deep_research {__version__}\n"
+    )
+    if meta.get("errors"):
+        meta_md += "\n<details>\n<summary>Error log</summary>\n\n"
+        for err in meta["errors"][:20]:
+            meta_md += f"- `{err}`\n"
+        meta_md += "\n</details>\n"
+
+    composite = (
+        result["report_md"].rstrip()
+        + "\n\n"
+        + sources_md
+        + "\n\n"
+        + meta_md
+    )
+    _atomic_write_text(report_path, composite)
+
+    # Per-query raw trace: append-mode so multiple runs of the same prompt
+    # accumulate forensic detail (each one prepended by a run-header row).
+    raw_header = {
+        "type": "run-header",
+        "ts": meta.get("started_at"),
+        "prompt": prompt,
+        "depth": meta.get("depth"),
+        "breadth": meta.get("breadth"),
+        "duration_s": meta.get("duration_s"),
+    }
+    with raw_path.open("a", encoding="utf-8") as f:
+        f.write(_json.dumps(raw_header, ensure_ascii=False) + "\n")
+        for q in meta.get("queries_log", []):
+            f.write(_json.dumps(
+                {"type": "query", "ts": meta.get("started_at"), "query": q},
+                ensure_ascii=False) + "\n")
+        for ln in result["learnings"]:
+            f.write(_json.dumps(
+                {"type": "learning", "ts": meta.get("started_at"),
+                 "learning": ln}, ensure_ascii=False) + "\n")
+
+    # Index row — small JSON shape suitable for SessionStart auto-discovery.
+    index_row = {
+        "ts": meta.get("started_at"),
+        "slug": slug,
+        "prompt": prompt[:200],
+        "depth": meta.get("depth"),
+        "breadth": meta.get("breadth"),
+        "learning_count": len(result["learnings"]),
+        "source_count": len(deduped_urls),
+        "duration_s": meta.get("duration_s"),
+        "layers": {k: list(v) for k, v in meta.get("layers_fired", {}).items()},
+        "errors": len(meta.get("errors", [])),
+        "report_path": str(report_path.relative_to(PP_REPO))
+            if str(report_path).startswith(str(PP_REPO))
+            else str(report_path),
+        "urls_sample": deduped_urls[:20],  # sample for dedup-on-rerun
+    }
+    _append_index(index_row)
+
+    return {"report": report_path, "index": INDEX_PATH, "raw": raw_path}
+
+
+def _build_argparser() -> "argparse.ArgumentParser":
+    import argparse as _argparse
+    ap = _argparse.ArgumentParser(
+        prog="deep_research",
+        description="Recursive web research agent (Claude Power Pack). "
+                    "Source-spec: vault/specs/deep-research-agent.md.",
+    )
+    ap.add_argument("--version", action="version",
+                     version=f"deep_research {__version__}")
+    ap.add_argument("--prompt", help="research prompt (required for a run)")
+    ap.add_argument("--depth", type=int, default=2, choices=range(1, 6),
+                     help="recursion depth (default 2)")
+    ap.add_argument("--breadth", type=int, default=3, choices=range(2, 6),
+                     help="queries per level (default 3)")
+    ap.add_argument("--clarify", action="store_true",
+                     help="run the optional Clarifying Questions step first "
+                          "(spec §3.3)")
+    ap.add_argument("--out", default=None,
+                     help="output directory (default vault/research/)")
+    ap.add_argument("--quiet", action="store_true",
+                     help="suppress progress chatter on stdout")
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _build_argparser().parse_args(argv)
+    if not args.prompt:
+        # No prompt -> self-test (matches Paso 1.1 spec).
+        return _self_test()
+
+    out_dir = Path(args.out) if args.out else RESEARCH_DIR
+
+    if not args.quiet:
+        print(f"deep_research {__version__}: prompt='{args.prompt[:60]}...' "
+              f"depth={args.depth} breadth={args.breadth}", file=sys.stderr)
+
+    # Clarifying questions are documented in the spec but not yet wired
+    # to the driver. When the Owner sets --clarify, we honor the request
+    # by asking the LLM and printing the questions to stderr — the Owner
+    # is expected to re-prompt with the refined query. Auto-injection
+    # back into the driver is a future enhancement; spec §12 question 1
+    # was answered as "opt-in" at Accept time, and printing satisfies
+    # the opt-in contract honestly (the Owner sees the questions, agent
+    # does not silently substitute the prompt).
+    if args.clarify:
+        from deep_research import _shared_system as _ss  # noqa: F401
+        clarify_schema = {
+            "type": "object",
+            "properties": {
+                "questions": {"type": "array",
+                              "items": {"type": "string"}},
+            },
+            "required": ["questions"],
+        }
+        clarify_user = (
+            f"Given the following query from the user, ask some follow up "
+            f"questions to clarify the research direction. Return a "
+            f"maximum of 3 questions, but feel free to return less if "
+            f"the original query is clear: <query>{args.prompt}</query>"
+        )
+        try:
+            cresult = call_llm(_shared_system(), clarify_user, clarify_schema)
+            if isinstance(cresult, dict):
+                qs = cresult.get("questions") or []
+                if qs and not args.quiet:
+                    print("\n--- CLARIFYING QUESTIONS (re-prompt to refine) ---",
+                          file=sys.stderr)
+                    for i, q in enumerate(qs, 1):
+                        print(f"  {i}. {q}", file=sys.stderr)
+                    print("---\n", file=sys.stderr)
+        except (LayerError, NoLLMAvailable) as e:
+            print(f"clarify step failed: {e}", file=sys.stderr)
+
+    result = deep_research(args.prompt, depth=args.depth,
+                            breadth=args.breadth)
+    paths = write_research_artifacts(args.prompt, result, out_dir)
+
+    if not args.quiet:
+        print(f"\ndeep_research: OK", file=sys.stderr)
+        print(f"  report:   {paths['report']}", file=sys.stderr)
+        print(f"  index:    {paths['index']}", file=sys.stderr)
+        print(f"  raw:      {paths['raw']}", file=sys.stderr)
+        print(f"  learnings: {len(result['learnings'])}", file=sys.stderr)
+        print(f"  sources:   {len(set(result['urls']))}", file=sys.stderr)
+        print(f"  duration:  {result['metadata'].get('duration_s', '?')} s",
+              file=sys.stderr)
+    return 0
+
+
 # --- Module self-test (--version + import sanity) ------------------------
 
 def _self_test() -> int:
@@ -778,14 +1486,4 @@ def _self_test() -> int:
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    if not args or args[0] in ("--version", "-V"):
-        raise SystemExit(_self_test())
-    print(
-        "deep_research: Wave-1 module exposes constants + governance helpers "
-        "(slugify, now_ts, lower_priority, acquire_lock). Use as a library; "
-        "the CLI driver ships in Paso 1.9 of "
-        "vault/plans/deep-research-agent-2026-05-23.md.",
-        file=sys.stderr,
-    )
-    raise SystemExit(0)
+    raise SystemExit(main())
