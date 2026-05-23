@@ -56,3 +56,18 @@ DONE-gate in `apex-completion-standard.md`.
 | UKDL-PB-02 | `.gitattributes` (repo root) | 5 ledgers configured for `merge=union` (session_lessons.md, governance_vaccines.md, verdicts.jsonl, vendor/NOTICE.md, SSOT.md). Cherry-pick onto main BEFORE the merge so the union driver activates. |
 | UKDL-PB-03 | `vault/knowledge_base/session_lessons.md` "Branch hygiene: 177-commit feat branch" row | 4 lessons: merge frequency <=2 weeks; union driver from day 1; cherry-pick .gitattributes onto main first; Reality Contract = commits + tests pass, not just merge commit. |
 | UKDL-PB-04 | `vault/lessons/bash-heredoc-bom-clobber.md` | Companion pattern: Python read_bytes + write_bytes is the safe append for BOM-prefixed markdown files. Used to recover the L1-L6 rows when the union merge couldn't reconcile divergent file structures. |
+
+## Architecture Decision Skill — 2026-05-23
+
+| Ref | File | Why it matters |
+|---|---|---|
+| UKDL-AC-01 | `vault/specs/arch-decision-skill.md` | Authoritative spec: 15 sections, STDIN contract, 8 vault sources scanned, verdict shapes COLLISION/WARNING/CLEAR, DONE-gate, opt-out + recursion-guard env vars. |
+| UKDL-AC-02 | `vault/plans/arch-decision-skill-2026-05-23.md` | 14-paso plan with done-gates per paso, 6 V-tests, scoring graph. |
+| UKDL-AC-03 | `modules/arch-decision/arch_check.py` | Verdict engine: word-boundary entity matching, title+body containment scoring, fail-open on every error. Driven by STDIN, JSON stdout. |
+| UKDL-AC-04 | `modules/arch-decision/build_index.py` | Index builder: scans 8 weighted vault paths into `vault/.arch-index/index.json` + `vocab.json`. Deterministic across runs given same inputs. |
+
+## Decisions (auto-appended by /arch-decision)
+
+| Ref | File | Why it matters |
+|---|---|---|
+| UKDL-AC-DEC-01 | `vault/decisions/2026-05-23-190211_redis-sessions-tuax.md` | First sealed ADR from this skill. Redis-vs-Postgres for TUA-X sessions; verdict CLEAR (no prior decision); Status Proposed pending Owner sign-off. |

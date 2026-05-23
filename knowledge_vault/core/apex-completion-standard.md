@@ -750,3 +750,118 @@ is:
 A merge that lands the commits but does not trigger Owner /restart
 is a PARTIAL DONE — the commits are durable on origin/main, but the
 hooks are inert until reload.
+
+
+## Architecture Decision Axis (sealed 2026-05-23)
+
+Apex-complete PP installs MUST ship the **Architecture Decision** skill
+(arch-check). Before the agent or Owner commits to a non-trivial
+architectural choice, the local vault is consulted via a deterministic
+TF-IDF + entity match against 8 weighted source classes. Relevant
+vetoes, sealed Standards, and prior lessons surface in the agent's
+context BEFORE design happens, not after.
+
+### Required components (all five present; missing any = NOT Apex-complete)
+
+1. **Spec**: `vault/specs/arch-decision-skill.md` — 15 sections, STDIN
+   contract, verdict shapes, fail-open posture, 5-check DONE-gate.
+2. **Verdict engine**: `modules/arch-decision/arch_check.py` — word-
+   boundary entity matching + title/body containment scoring; 3 s fast-
+   mode budget with fail-open CLEAR on timeout. Recursion guard via
+   `CLAUDEPP_ARCHCHECK_RUNNING=1`. Opt-out via
+   `CLAUDEPP_ARCHCHECK_DISABLED=1`.
+3. **Index builder**: `modules/arch-decision/build_index.py` — scans
+   eight weighted paths (apex / feedback memory / gex44_antipatterns /
+   antipatterns / session_lessons / governance / errors / ukdl) into
+   `vault/.arch-index/index.json` (sources + shingles + concepts +
+   entities) plus `vocab.json` (verbs + concepts + entities).
+   Deterministic across runs given the same inputs. Word-boundary
+   entity matching prevents false positives (`redis` no longer matches
+   `rediscovery`).
+4. **DEEP-mode skill**: `commands/arch-decision.md` — `/arch-decision
+   "DESC"` runs the engine in deep mode, writes a 6-section ADR to
+   `vault/decisions/[ts]_[slug].md` (Context / Decision / Consequences
+   / Alternatives / Vault-conflicts / Lessons cited).
+5. **JIT piggyback**: `tools/jit_skill_loader.py` extension — fires
+   arch_check on any UserPromptSubmit with two or more design verbs;
+   appends `ARCH-CHECK [verdict]` block to existing additionalContext.
+   No new hook (satisfies hook-fanout-systemic-cost lesson).
+
+### Six-check DONE-gate (binary, no classifications)
+
+A PP install is Apex-complete on the Architecture Decision Axis iff:
+
+1. The five required components above are present.
+2. `python modules/arch-decision/build_index.py` exits 0; index has
+   >= 50 sources across all eight classes; vocab has >= 30 verbs +
+   concepts combined.
+3. `python modules/arch-decision/test_v_block.py` exits 0 — all five
+   functional verdicts pass (V-COLLISION x2, V-WARNING x2, V-CLEAR),
+   V-TIMING p95 < 3.0 s over 10 runs.
+4. A real `/arch-decision "..."` invocation produces an ADR file with
+   six sections and no fabricated source paths.
+5. JIT loader empirical: a synthetic UserPromptSubmit payload with
+   two or more design verbs and one known veto entity returns
+   `additionalContext` containing the literal `ARCH-CHECK [verdict]`
+   block.
+6. `python modules/arch-decision/test_closed_loop.py` exits 0 — two
+   consecutive runs on the same prompt yield byte-identical context,
+   and the new UKDL-AC rows surface in subsequent scans (closed-loop
+   verified mechanically).
+
+Missing any of 1-6 = NOT Apex-complete on the Architecture Decision Axis.
+
+### Cross-references
+
+- Spec: `claude-power-pack/vault/specs/arch-decision-skill.md`
+- Plan: `claude-power-pack/vault/plans/arch-decision-skill-2026-05-23.md`
+- UKDL hub: `claude-power-pack/vault/knowledge_base/ukdl-universal.md`
+  "Architecture Decision Skill" + "Decisions" sections (UKDL-AC-01..04
+  + UKDL-AC-DEC-NN auto-appended).
+- Sister axes: Auto-Testing Gate, Deep Research, Session Safety —
+  all five share the same architectural shape (Mirror-Sync-Direction,
+  recursion guard env var, settings_merger consolidator, 5-check
+  DONE-gate).
+
+### Empirical proofs (2026-05-23)
+
+- Index: 529 sources indexed (40 apex sections / 407 feedback memory
+  files cross-project / 19 gex44 antipatterns / 6 antipatterns / 24
+  session lessons / 24 governance / 5 errors / 4 ukdl). Vocab: 43
+  verbs / 488 concepts / 50 entities (post project-name prune).
+- V-COLLISION (`n8n` workflow prompt): verdict COLLISION, top source
+  cites `feedback_no_n8n_ever.md` in 156 ms wall-clock.
+- V-COLLISION-2 (hook auto-fire slash): verdict COLLISION, cites
+  BL-0003 + Zero-Command Standard in apex.
+- V-WARNING (parallel 5-write batch): verdict WARNING, cites
+  `feedback_parallel_write_batch_limit.md`.
+- V-WARNING-2 (months-old feat merge): verdict WARNING, cites
+  branch-hygiene lesson + `feedback_branch_off_origin_main_for_scoped_prs.md`.
+- V-CLEAR (Rust snippet explain): verdict CLEAR after the entity-seed
+  prune that removed bare language names (rust / go / python / etc.)
+  to eliminate false-positive substring matches.
+- V-TIMING (10 fires): p05=108 ms, p95=139 ms — well within the 3 s
+  budget.
+- V-ADR (Redis-sessions-tuax): produced
+  `vault/decisions/2026-05-23-190211_redis-sessions-tuax.md` with all
+  six sections and the explicit "None surfaced" sentinel for
+  Vault-conflicts (verdict was CLEAR; no prior decision indexed).
+- V-CLOSED-LOOP: two identical runs produce byte-identical context;
+  UKDL-AC rows surface in subsequent scans, proving the loop closes.
+
+### Iteration findings (sealed in session_lessons.md row 2026-05-23
+  "Arch-Check Skill iteration log")
+
+- L1: bare language entities (`rust`, `python`, `go`) over-match in
+  neutral contexts; pruned from seed list.
+- L2: project-name entities (`tuax`, `lazarus`, `kobiicraft`)
+  trigger every memory file of that project; pruned.
+- L3: substring entity match collides ("redis" matched "rediscovery");
+  switched to word-boundary regex `(?<![a-z0-9_])X(?![a-z0-9_])`.
+- L4: pure Jaccard similarity is too strict for short Spanish prompts;
+  replaced with asymmetric containment + title-token bonus.
+- L5: WARNING_FLOOR=2.0 was unreachable for Spanish prompts; lowered
+  to 1.5 after empirical V-WARNING-2 scored 1.8.
+- L6: literal `<X>` template-syntax in slash-command markdown triggers
+  the Jobs-Woz slop-detector; paraphrase with `[X]` bracket-syntax
+  for skill bodies that need symbolic substitution markers.

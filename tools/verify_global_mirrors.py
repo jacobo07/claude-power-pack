@@ -47,7 +47,9 @@ HARDCODED_REPO = r"C:\Users\User\.claude\skills\claude-power-pack"
 # Sealing branch: the lineage that actually owns these files (audit-verified
 # 2026-05-16). Used only as a fallback after --ref / env. Overridable so a
 # future rename does not strand the tool.
-SEALING_REF = "feat/rtk-compressor-fusion"
+SEALING_REF = "main"  # post-merge 2026-05-23: feat/rtk-compressor-fusion
+                       # was merged into main; main is now the production
+                       # branch per the Production Branch Standard.
 
 PAIRS = [
     (r"C:\Users\User\.claude\commands\ultra.md",

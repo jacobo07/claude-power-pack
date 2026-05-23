@@ -36,6 +36,7 @@ import json
 import math
 import os
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -651,10 +652,61 @@ def _detect_new_feature_intent_and_flag(prompt: str, cwd: Path,
         return None
 
 
+# --- Architecture Decision Skill piggyback ---
+# Fast-path arch_check spawn on prompts that look like design decisions.
+# Cheap pre-filter (>=2 design verbs); subprocess only on hit. Fail-open.
+_ARCH_DESIGN_VERBS = (
+    "design", "architecture", "implement", "propose", "should",
+    "choose", "between", "build", "plan", "strategy", "decide",
+    "decision", "evaluate", "alternative", "approach",
+    # Spanish
+    "diseña", "diseñar", "arquitectura", "implementar", "propon",
+    "proponer", "deberia", "deberiamos", "elegir", "construir",
+    "evaluar", "planificar", "estrategia", "decidir",
+)
+
+
+def _arch_check_inject(prompt: str) -> str | None:
+    """Spawn arch_check.py --fast; return its context block on
+    COLLISION/WARNING, else None. Fail-open on any exception."""
+    if os.environ.get("CLAUDEPP_ARCHCHECK_DISABLED") == "1":
+        return None
+    if os.environ.get("CLAUDEPP_ARCHCHECK_RUNNING") == "1":
+        return None
+    if not prompt or len(prompt) < 20:
+        return None
+    lo = prompt.lower()
+    hits = sum(1 for v in _ARCH_DESIGN_VERBS if v in lo)
+    if hits < 2:
+        return None
+    arch_check = PP_ROOT / "modules" / "arch-decision" / "arch_check.py"
+    if not arch_check.is_file():
+        return None
+    try:
+        env = os.environ.copy()
+        env["CLAUDEPP_ARCHCHECK_RUNNING"] = "1"
+        proc = subprocess.run(
+            [sys.executable, str(arch_check), "--fast"],
+            input=prompt.encode("utf-8"),
+            capture_output=True,
+            timeout=3,
+            env=env,
+        )
+        out = json.loads(proc.stdout.decode("utf-8", errors="replace"))
+        if out.get("verdict") in ("COLLISION", "WARNING"):
+            ctx = out.get("context")
+            if ctx:
+                return ctx
+    except Exception as exc:
+        _log(f"arch-check inject ERROR {type(exc).__name__}: {exc}")
+    return None
+
+
 def run(data) -> dict:
     try:
         data = data or {}
         prompt = str(data.get("prompt") or "")
+        arch_block = _arch_check_inject(prompt)
         cwd = Path(data.get("cwd") or os.getcwd())
         mods = _match_modules(prompt, cwd)
         spec = _active_spec(cwd)
@@ -663,6 +715,8 @@ def run(data) -> dict:
         _detect_new_feature_intent_and_flag(prompt, cwd, spec,
                                             data.get("session_id"))
         if not mods and not spec:
+            if arch_block:
+                return {"continue": True, "additionalContext": arch_block}
             return {"continue": True}
 
         tier = _select_tier(prompt)
@@ -731,6 +785,8 @@ def run(data) -> dict:
                                  f"vendor/apollo/upstream/{m}/SKILL.md")
 
         if not injected and spec_injected_size == 0:
+            if arch_block:
+                return {"continue": True, "additionalContext": arch_block}
             return {"continue": True}
 
         _save_state(sid, state)
@@ -760,8 +816,11 @@ def run(data) -> dict:
                 f"cards via SessionStart sentinel): {', '.join(deferred)}."
             )
         ctx = header + "\n\n" + "\n\n".join(blocks)
+        if arch_block:
+            ctx = ctx + "\n\n" + arch_block
         _log(f"sid={sid} tier={tier} injected={injected} bytes={total} "
-             f"spec_bytes={spec_injected_size} deferred={deferred}")
+             f"spec_bytes={spec_injected_size} deferred={deferred} "
+             f"arch={'yes' if arch_block else 'no'}")
         return {"continue": True, "additionalContext": ctx}
     except Exception as exc:                  # fail-open (Ley 24: logged)
         _log(f"ERROR {type(exc).__name__}: {exc}")

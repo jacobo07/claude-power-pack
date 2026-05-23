@@ -35,3 +35,8 @@ vault/cache_hints/*.json
 vault/telemetry/rtk_*.jsonl
 vault/telemetry/budget-*.jsonl
 tests/auto-generated/
+
+# Architecture Decision Skill — host-specific generated index (regenerated
+# by build_index.py; contains absolute paths). Decisions themselves ARE
+# tracked.
+vault/.arch-index/
