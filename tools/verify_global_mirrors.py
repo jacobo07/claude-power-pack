@@ -73,9 +73,10 @@ PAIRS = [
     (r"C:\Users\User\.claude\hooks\lazarus-livesnap.js",
      r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
      r"\lazarus-livesnap.js"),
-    (r"C:\Users\User\.claude\hooks\resume-hide-live.js",
-     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
-     r"\resume-hide-live.js"),
+    # NOTE 2026-05-23: resume-hide-live.js (BL-0013 .jsonl-rename
+    # cloaking) was decommissioned by mark-live-session.js. Removed
+    # from PAIRS so this verifier stops asking for a file that no
+    # longer exists on either side.
     (r"C:\Users\User\.claude\hooks\zero-issue-gate.js",
      r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
      r"\zero-issue-gate.js"),
