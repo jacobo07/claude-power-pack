@@ -1,79 +1,96 @@
-# Apex Completion Standard — JIT Aggressive Activation Law
 
-> Sealed BL-0069 (2026-05-16). Permanent, mandatory. Version-controlled
-> source of truth: `<power-pack>/knowledge_vault/core/apex-completion-standard.md`.
-> Global mirror: `~/.claude/knowledge_vault/core/apex-completion-standard.md`
-> (byte-identical; drift is a hard gate failure via `verify_global_mirrors.py`).
 
-Every skill or specialist knowledge module added to the Power Pack from
-BL-0069 onward MUST be **latent-by-default, JIT-full-depth-on-trigger**.
-Always-on injection of heavy reference material is a Reality-Contract
-violation: it taxes every unrelated turn for context the turn does not use.
-The five sections below are the unyielding blueprint. A feature that does
-not pre-wire all five is **incomplete by definition** (plan-time-audited,
-not a runtime hook).
+## Testing Gate Axis (sealed 2026-05-23)
 
-## 1. UserPromptSubmit interception contract
+A PP install is Apex-complete on the Testing Gate Axis if and only if
+all five components are present + the five-check DONE-gate passes.
 
-The activation hook runs on the `UserPromptSubmit` event. Its emitted JSON
-places injected text at **top-level `additionalContext`**, NOT nested under
-`hookSpecificOutput`. This is empirically fixed by the in-process merge
-switch in `~/.claude/hooks/hook-dispatcher.js` (lines ~156-166): only
-`PreToolUse` nests `additionalContext` inside `hookSpecificOutput`; every
-other event — `UserPromptSubmit`, `SessionStart` via the merged path,
-`Stop` — uses top-level `additionalContext`. Emitting the wrong shape =
-silently dropped injection that *looks* like success (Mistake #16). The
-hook MUST be fail-open: any internal error returns `{"continue": true}`
-and never blocks the prompt; a diagnostic line is logged (Ley 24). A
-bounded stdin watchdog (≤3 s) guarantees a response even if stdin never
-closes. Reference implementation: `tools/jit_skill_loader.py`.
+### Five required components
 
-## 2. Selective module parsing (trigger matrix)
+1. **Spec**: `vault/specs/auto-testing-gate.md` exists and contains
+   §1-§15 (purpose, reality contract, architecture, per-language
+   detection, diff scope, LLM bridge, generators, runner, hook,
+   vault IO, closed-loop, DONE-gate, opt-out, Mirror-Sync-Direction,
+   cross-references).
+2. **Core module**: `modules/auto-testing/auto_test.py` orchestrator
+   + `detectors.py` + `llm_bridge.py` + `vault_io.py`. The runner
+   honors a 30 s hard wall-clock cap with TIMEOUT verdict distinct
+   from FAIL.
+3. **Per-language generators**: `generators/python_gen.py`
+   (pytest), `generators/node_gen.py` (vitest/jest),
+   `generators/java_gen.py` (JUnit 5 + ceiling-honest). Each
+   validates the LLM output for the required language idioms
+   (`def test_` + `assert`, `describe + it + expect`,
+   `@Test + assertEquals`).
+4. **PreToolUse hook**: `hooks/auto-test-gate.js` on
+   `Bash|PowerShell` matcher with dual-regex (PRIMARY + LOOSE)
+   for `git commit` detection, 28 s hook-side budget guard,
+   fail-OPEN posture. Recursion guard via
+   `CLAUDEPP_AUTOTEST_RUNNING=1`.
+5. **Consolidator**: `tools/settings_merger.py
+   register-auto-test-gate` (idempotent, Mirror-Sync-Direction:
+   prints PowerShell paste, never auto-writes
+   `~/.claude/settings.json`).
 
-Activation is tiered-aggressive: inject the FULL reference of ONLY the
-module(s) whose trigger directly matches this prompt/cwd — never the whole
-catalog. The trigger matrix maps file extensions, dependency manifests,
-and prompt-intent regexes to specific modules with a priority rank. The
-cheap signals run first (prompt text + `package.json` dependency keys);
-the filesystem walk is the fallback, is depth-bounded (≤4), skip-dir'd,
-hard-capped at 2000 dirent stats, and early-exits on the first matching
-file. Non-matched modules stay as their latent ~80-token discovery card
-(served by the SessionStart sentinel) — they are NOT escalated.
+### Five-check DONE-gate (binary, no classifications)
 
-## 3. Context-budget validation (40 KB circuit breaker, BL-0068)
+A Testing Gate is DONE on this host when, with no manual proxy:
 
-Total force-injected bytes per activation MUST NOT exceed the BL-0068
-circuit breaker of 40,000 bytes (≈10 k tokens). When multiple modules
-match, fill by ascending priority rank until the budget would be exceeded,
-then defer the remainder (they degrade to their latent cards and a
-one-line "deferred" note is appended). The breaker is a hard guard, never
-disabled. Token Austerity (DNA-3000) is not optional: a feature that can
-blow the context window on a common path is not done.
+1. `vault/specs/auto-testing-gate.md` and
+   `vault/plans/auto-testing-skill-2026-05-23.md` both exist and
+   declare the contract above.
+2. `commands/auto-test.md` is registered in the available-skills
+   list after `/restart`.
+3. `settings.json` registers `auto-test-gate.js` on PreToolUse
+   `Bash|PowerShell` (verify:
+   `settings_merger.py register-auto-test-gate --dry-run` reports
+   `script-present=yes` + idempotent re-run = `already registered`).
+4. **Empirical V-PYTHON-FAIL/PASS**: a real `git commit` in a
+   synthetic Python project with a deliberately-broken `add(a,b)=a-b`
+   is BLOCKED (hook exit 2 + visible reason); a real `git commit`
+   with the correct `add(a,b)=a+b` is ALLOWED (hook exit 0 +
+   pass-artifact in `vault/test-results/`).
+5. **Empirical V-CEILING-JAVA/NODE**: a `.java` file in a no-pom.xml
+   project AND a `.ts` file in a node-no-test-script project both
+   produce verdict=ceiling, hook exit 0, commit ALLOWED with
+   warn-line in `.auto-spawned.log`.
 
-## 4. Session-dedupe (inject-once, resident-after)
+Missing any of 1-5 = NOT Apex-complete on the Testing Gate Axis.
 
-A module is force-injected at full depth at most ONCE per session. State
-lives in `~/.claude/state/jit-injected-<sid>.json`, written atomically
-(temp + `os.replace`). `<sid>` = the harness `session_id`; when absent,
-fall back to `cwd-<sha1(cwd)[:12]>`. Every entry carries a timestamp;
-entries older than a 2 h TTL are ignored so a stale id can never
-permanently suppress a module across sessions. State read/parse failure
-is treated as "not yet injected" (fail toward injecting). Under a
-concurrent-prompt race the worst case is one extra bounded injection —
-acceptable; a missed injection or a crash is not.
+Full plan: `claude-power-pack/vault/plans/auto-testing-skill-2026-05-23.md`.
+Spec: `vault/specs/auto-testing-gate.md`.
 
-## 5. Mandatory rule for all future skills
+### Empirical proofs (2026-05-23)
 
-Every new Power Pack skill/module MUST ship: (a) a latent ≤80-token
-discovery card warmed by the SessionStart sentinel, AND (b) a JIT
-full-depth path keyed into the `UserPromptSubmit` trigger matrix, AND
-(c) a deterministic verification criterion in the relevant gate that
-proves real injection (parsed `additionalContext`, ≥95 % of the
-reference's bytes literally present — not a summary). Always-on heavy
-injection, a card with no JIT escalation, or a JIT path with no
-empirical gate each fail this standard. Registration is via
-`python tools/settings_merger.py register-userprompt` (absolute
-interpreter preflight, append-only bounded settings merge, timestamped
+- A1 detector: 5/5 cwds correctly classified (KobiCraft / InfinityOps-UI /
+  TUA-X / PP / TEMP); Python-by-convention rule iterated to require
+  `test_*.py >= 3 AND *.py >= 3` after TEMP false-positive.
+- A2 LLM bridge: HELLO returns in 16.1 s; CLAUDEPP_AUTOTEST_RUNNING=1
+  recursion guard verified.
+- B1/B2/B3 generators empirically produce real callable tests on real
+  synthetic diffs (Python `import calc; def test_add_...; assert ==5`
+  in 15.4 s; vitest `describe + it + expect` in 20.2 s; JUnit 5
+  `@Test assertEquals(5, calculator.add(2,3))` in 16.1 s; KobiCraft
+  cwd returns CEILING("no build system") without LLM call).
+- C1 runner: 5 s pytest pass + infinite-loop killed at exactly 5 s
+  timeout (124 exit + TIMEOUT marker).
+- C2 vault IO: 4/4 atomic + rotation round-trip.
+- D1 hook regex: 9/9 positive + 9/9 negative.
+- D2 budget guard: 35 s fake-sleep killed at exactly 28 s,
+  verdict=timeout, exit 0.
+- V-DET: same diff x2 -> byte-identical scaffold.
+- V-PYTHON-FAIL: broken `add` -> exit 2 + BLOCKED message + verdict=fail
+  in 21.55 s.
+- V-PYTHON-PASS: correct `add` -> exit 0 + verdict=pass in 19.11 s
+  (vault/test-results/<ts>_pass_<slug>.md artifact written).
+- V-CEILING-JAVA: 0.41 s, verdict=ceiling, exit 0.
+- V-CEILING-NODE: 0.30 s, verdict=ceiling, exit 0.
+- V-TIMING (10 fires): p05=0.22 s, median=0.27 s, p95=23.48 s (within
+  the 5 s / 30 s bounds).
+- V-CLOSED-LOOP: planted failure sha256 7a1bd6 -> AVOID-clause fires ->
+  new test sha256 f691d4 (parametrize-based, different name); LLM
+  empirically steered to a distinct pattern.
+ped
 backup). Activation cold-loads at session start (BL-0067): the gate
 proves file-on-disk logic; live firing requires `/restart`.
 

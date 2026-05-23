@@ -911,3 +911,17 @@ combined into one visible failure:
    the receiving shell. cmd.exe / PowerShell / Git Bash / Windows Terminal
    each handle paste, env, and PATH differently. Type via SendKeys + full
    exe path is the only pattern that works across all four.
+
+
+---
+
+## 2026-05-23 — Auto-Testing Skill (PP Quality Gate) iteration log
+
+| # | Paso | Iteration finding | Resolution |
+|---|---|---|---|
+| L1 | A1 | First pass of detectors.py mis-classified PP as `node_generic` because PP has `package.json` at root but no Python manifest (no pyproject.toml/setup.py/etc.). | Added rule 4: Python-by-convention (`test_*.py>=3 AND *.py>=3` at depth<=2). Discriminates real Python projects from TEMP dirs littered with installer-derived `*.py` files. |
+| L2 | A1 | First version of the convention rule allowed `*.py>=20` alone, which false-positived $env:TEMP (25 installer `*.py` at depth<=2, 0 test files). | Tightened to require BOTH test_*.py>=3 AND *.py>=3. test_*.py is the discriminator: a real testable project always has test files. |
+| L3 | E2 | First end-to-end deep-mode run failed pytest collection with `ModuleNotFoundError: No module named '2026-05-23_153216_calc'` — the filename `<ts>_<slug>.test.py` starts with a digit and has an embedded dot, neither valid in Python identifiers. | Changed filename scheme to `test_auto_<slug>_<YYYYMMDDHHMMSS>.py`. Starts with `test_` (pytest discovery), no digits at start, no dots. Same fix applied to Node (`auto_<slug>_<ts>.test.ts`) and Java (`Auto<Slug><ts>Test.java`) generators. |
+| L4 | D1 | PowerShell here-string commit message with embedded backticks (single-quoted) got tokenized by the PS parser — git received the body as multiple positional pathspec args. | Switched all commit messages to temp files + `git commit -F <file>` for messages containing backticks or `$` characters. |
+| L5 | D1 | First regex `\bgit\b...commit` missed `& $g ... commit` (PowerShell variable-as-binary form) because the literal `git` token never appears. | Added LOOSE sister pattern: `\bcommit\b\s+(?:-F\|-m\|-am\|--amend\|...)` — flags-unique-to-git. Catches the var-in-PowerShell form without false-positiving on `svn commit` or prose. |
+| L6 | V-DET | Synthetic project with one calc.py failed detection because Python-by-convention requires `>=3 test_*.py AND >=3 *.py`. | All V-* synthetic projects now bootstrap with a `pyproject.toml` manifest (rule 3) so detection classifies them as PYTHON without relying on convention. |
