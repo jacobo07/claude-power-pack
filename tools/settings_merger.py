@@ -403,6 +403,54 @@ def register_deep_research(settings_path: str, dry_run: bool) -> int:
     return 0
 
 
+def register_auto_test_gate(settings_path: str, dry_run: bool) -> int:
+    """Register the Auto-Testing Quality Gate PreToolUse hook.
+
+    Wires:
+      PreToolUse(matcher=Bash|PowerShell) ->
+        ~/.claude/skills/claude-power-pack/hooks/auto-test-gate.js
+      (timeout: 30 s — matches the hook's 28 s budget guard with 2 s
+      margin for spawn + parse)
+
+    The hook is fail-OPEN: any internal error, missing python, missing
+    module, etc. results in exit 0 (commit proceeds). A broken gate
+    must never block real commits. The hook intercepts only
+    `git commit` invocations (excluding -h / --help variants).
+
+    Spec: claude-power-pack/vault/specs/auto-testing-gate.md
+    Plan: claude-power-pack/vault/plans/auto-testing-skill-2026-05-23.md
+
+    Idempotent: re-running on a host where the hook is already wired
+    is a no-op (handled by _register's _block_exists check).
+
+    Mirror-Sync-Direction: the registered path points at the PP repo
+    directly (no copy to ~/.claude/hooks/ required), same pattern as
+    register-mark-live-session.
+    """
+    home = os.path.expanduser("~")
+    hook = os.path.join(home, ".claude", "skills",
+                        "claude-power-pack", "hooks", "auto-test-gate.js")
+    if dry_run:
+        present = "yes" if os.path.isfile(hook) else "no"
+        print("settings_merger: register-auto-test-gate --dry-run")
+        print(f"  would register PreToolUse(matcher=Bash|PowerShell) -> {hook}  "
+              f"(script-present={present})")
+        return 0
+    if not os.path.isfile(hook):
+        print(f"settings_merger: hook script not found: {hook}",
+              file=sys.stderr)
+        print("  Hint: pull the latest claude-power-pack first; "
+              "the hook lives at hooks/auto-test-gate.js in this repo.",
+              file=sys.stderr)
+        return 5
+    rc = register_pretool(settings_path, hook, "Bash|PowerShell", 30)
+    if rc != 0:
+        return rc
+    print("settings_merger: register-auto-test-gate OK "
+          "(PreToolUse Bash|PowerShell wired/idempotent)")
+    return 0
+
+
 def register_pretool(settings_path: str, node_script: str,
                       matcher: str, timeout: int) -> int:
     # Refuse to register a hook command pointing at a missing script —
@@ -486,6 +534,15 @@ def main():
     rmls.add_argument("--settings", default=DEFAULT_SETTINGS,
                       help="path to settings.json (default ~/.claude/...)")
 
+    ratg = sub.add_parser("register-auto-test-gate",
+                          help="Register the Auto-Testing Quality Gate "
+                               "PreToolUse hook (Bash|PowerShell git commit). "
+                               "Spec: vault/specs/auto-testing-gate.md.")
+    ratg.add_argument("--dry-run", action="store_true",
+                      help="print what would be wired without modifying settings.json")
+    ratg.add_argument("--settings", default=DEFAULT_SETTINGS,
+                      help="path to settings.json (default ~/.claude/...)")
+
     rp = sub.add_parser("register-pretool",
                         help="Register a PreToolUse Node hook with a matcher")
     rp.add_argument("--node-script", required=True,
@@ -516,6 +573,8 @@ def main():
         return register_session_safety(a.settings, a.dry_run)
     if a.cmd == "register-deep-research":
         return register_deep_research(a.settings, a.dry_run)
+    if a.cmd == "register-auto-test-gate":
+        return register_auto_test_gate(a.settings, a.dry_run)
     return 2
 
 

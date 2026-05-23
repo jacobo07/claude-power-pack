@@ -341,6 +341,18 @@ def _opt_out_active() -> bool:
     return os.environ.get("CLAUDEPP_AUTOTEST_DISABLE") == "1"
 
 
+def _maybe_fake_sleep() -> None:
+    """Debug helper: when CLAUDEPP_AUTOTEST_FAKE_SLEEP_SEC=N is set,
+    sleep N seconds before any real work. Used by D2 done-gate to
+    prove the hook-side 28s budget guard kills slow runners."""
+    n = os.environ.get("CLAUDEPP_AUTOTEST_FAKE_SLEEP_SEC")
+    if n:
+        try:
+            time.sleep(float(n))
+        except (ValueError, OSError):
+            pass
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(description="Auto-Testing gate / deep run")
     p.add_argument("--gate", action="store_true",
@@ -381,6 +393,8 @@ def main(argv: list[str]) -> int:
         )
         print(verdict.to_json())
         return 0
+
+    _maybe_fake_sleep()
 
     cwd = Path(args.cwd).resolve()
     if args.diff:
