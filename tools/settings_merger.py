@@ -211,15 +211,21 @@ def register_userprompt(settings_path: str, py_interp: str,
 
 
 def register_zero_command(settings_path: str, dry_run: bool) -> int:
-    """Register the four Zero-Command Layer hooks in one call.
+    """Register the Zero-Command Layer hooks in one call.
 
     Wires (in order, idempotent):
-      SessionStart -> ~/.claude/hooks/zero-command-bootstrap.js   (Component A)
-      SessionStart -> ~/.claude/hooks/first-time-project.js       (Component D)
-      Stop         -> ~/.claude/hooks/background-verifier.js      (Component C)
+      SessionStart -> claude-power-pack/hooks/zero-command-bootstrap.js  (Component A)
+      SessionStart -> claude-power-pack/hooks/first-time-project.js      (Component D)
+      Stop         -> claude-power-pack/hooks/background-verifier.js     (Component C)
+
+    Mirror-Sync-Direction (updated 2026-05-23): the registered paths
+    point at the PP repo directly — no copy to ~/.claude/hooks/
+    required. Matches the register-mark-live-session and
+    register-auto-test-gate pattern (single source of truth, no
+    split-brain on hook drift between PP and ~/.claude/hooks/).
 
     Component B.2 lives inside the existing UserPromptSubmit hook
-    (jit_skill_loader.py) — no additional registration needed.
+    (jit_skill_loader.py) - no additional registration needed.
     Component B.3 daemon spawns from a separate Stop entry the
     Owner installs via the auto-compact-sendkeys pattern; not
     wired here to keep risk surface tight.
@@ -228,10 +234,12 @@ def register_zero_command(settings_path: str, dry_run: bool) -> int:
     already present (idempotent); non-zero = first failing call.
     """
     home = os.path.expanduser("~")
+    pp_hooks = os.path.join(home, ".claude", "skills",
+                            "claude-power-pack", "hooks")
     deploys = [
-        ("SessionStart", os.path.join(home, ".claude", "hooks", "zero-command-bootstrap.js"), 5),
-        ("SessionStart", os.path.join(home, ".claude", "hooks", "first-time-project.js"), 5),
-        ("Stop",         os.path.join(home, ".claude", "hooks", "background-verifier.js"), 5),
+        ("SessionStart", os.path.join(pp_hooks, "zero-command-bootstrap.js"), 5),
+        ("SessionStart", os.path.join(pp_hooks, "first-time-project.js"), 5),
+        ("Stop",         os.path.join(pp_hooks, "background-verifier.js"), 5),
     ]
     if dry_run:
         print("settings_merger: register-zero-command --dry-run")
@@ -241,10 +249,10 @@ def register_zero_command(settings_path: str, dry_run: bool) -> int:
         return 0
     for event, script, timeout in deploys:
         if not os.path.isfile(script):
-            print(f"settings_merger: deployed hook missing: {script}",
+            print(f"settings_merger: hook script not found: {script}",
                   file=sys.stderr)
-            print(f"  Hint: copy from claude-power-pack/hooks/<name> "
-                  f"to ~/.claude/hooks/ first, then re-run.",
+            print(f"  Hint: pull the latest claude-power-pack first; "
+                  f"the hook lives in PP's hooks/ directory.",
                   file=sys.stderr)
             return 5
         fn = register_stop if event == "Stop" else register_sessionstart
