@@ -1,25 +1,51 @@
-# Session Lessons — Atomic Learning
 
-Append-only log of concrete, non-derivable learnings per session.
-One entry per `/kclear` with a `lesson` field. Keep each entry short and
-self-contained — if a future reader can't grok it without the conversation,
-rewrite it.
+## 2026-05-23 -- Prompt Quality Axis: vague-prompt lint signal
 
----
+Owner gap audit on `tools/jit_skill_loader.py` (2026-05-23): the JIT
+loader matches concrete signals (GraphQL files, design verbs >=2,
+`.specify/` spec presence) but injects nothing for short prompts whose
+referent is unresolved (e.g. "fix the auth bug", "hazlo más rápido",
+"review this"). The newly-installed `prompt-engineering-patterns`
+skill is meta-content for the agent when DESIGNING prompts for a
+sub-LLM -- it does not intercept incoming Owner prompts. Gap was
+real and uncovered by either layer.
 
-## 2026-05-10 — BL-0073 ONESHOT cycle on Multi-Terminal Resurrection Engine
+**Resolution**: signal-only, never rewrite. `_detect_vague_prompt`
+emits a one-line `[vague-prompt-lint]` advisory into
+`additionalContext` when (a) prompt < 30 split-tokens, (b) at least
+one vague referent matches the regex, and (c) no mitigator present
+(file extension, line number, function/method name, >1 design verb,
+active spec). Owner explicitly vetoed an auto-rewriter -- the agent
+decides whether to pause and ask; the Owner remains the arbiter.
 
-**Session:** `e15093ca-c3b2-416f-a652-dff27eb39819` (same UUID as BL-0072; survived 2 prior `.jsonl.conflict.*` events from BL-0013 hide-live)
+Telemetry future-work: count how often the agent acts on the signal
+(asks the Owner) vs ignores. If acted-on rate < 20% across 2 weeks,
+recalibrate the regex or the mitigator set; the signal must earn its
+place. Until then it is on by default with opt-out via
+`CLAUDEPP_VAGUE_LINT_DISABLE=1`.
 
-Five non-derivable findings (auditor surfaced 11 gaps; verdict-defining ones below):
+V-* gates (`tools/test_vague_lint.py`):
+- V-VAGUE-1 "fix the auth bug" -> signal (158 B ctx)
+- V-VAGUE-2 "hazlo más rápido" -> signal (Spanish enclitic-lo)
+- V-CLEAN-1 "fix the null pointer in PlayerManager.java line 42" ->
+  no signal (file ext + line mitigators)
+- V-CLEAN-2 prompt >= 30 tokens -> no signal regardless of referent
+- V-TIMING 10 runs of V-VAGUE-1: p95 0.2 ms (cap 100 ms) -- regex
+  only, no LLM, no fs walk beyond what JIT already pays.
+- DISABLE-ENV `CLAUDEPP_VAGUE_LINT_DISABLE=1` short-circuits.
 
-1. **Empty registry was symptom, not bug.** `~/.claude/lazarus/terminal_registry.json` had `entries: []` despite `terminal-slot-recorder.js` having complete write logic. Root cause: registry write is gated on `process.env.LAZARUS_TERMINAL_KEY` (line 125), which is only set when Cursor profiles inject it. **No profiles were ever installed.** Implication: the BL-0072 architecture was correct; the harness step (Cursor user-settings patch) was missing. **Rule:** before "fixing" code that "should populate", check the env-var path that gates it.
+Empirical regex bug found during iteration: literal `the\s+bug`
+matched "the bug" but not "the auth bug" (modifier word between
+article and noun). Fixed by `the\s+(?:\w+\s+){0,3}(?:bug|...)`
+with bounded 0-3 modifier slack. The 30-token ceiling + mitigator
+set are the real safety bound; widening the noun list only changes
+recall, never violates V-CLEAN-2.
 
-2. **`atomic_write.js` already had EPERM retry; the recorder was bypassing it.** Lines 209-212 of recorder did raw `fs.writeFileSync` + `fs.renameSync` for the registry while the SLOTS_PATH path used `aw.atomicWriteJson`. The 7 stale `.tmp.<pid>.<hex>` orphans came from atomic_write itself (process killed before unlink-on-failure ran). **Fix:** swap to `aw.atomicWriteJson` + add a pre-write tmp-reaper for >60s siblings. **Rule:** when you see tmp orphans matching a `.tmp.<pid>.<hex>` pattern, the writer has crash-cleanup logic but no startup-cleanup. Always pair them.
-
-3. **Settings.json hide-live deletion required removing TWO entries, not one.** `~/.claude/settings.json:288` (Stop) AND `:365` (SessionStart) both registered `resume-hide-live.js`. Deleting the script alone leaves orphan refs that error on every SessionStart. `lazarus-janitor.js` also matched on `.jsonl.live` but for benign mtime fallback — left in place, no breakage. **Rule:** always grep-count refs to a hook BEFORE deleting it.
-
-4. **`.jsonl.live` orphans were 41, not 13.** Auditor estimated 13 from a partial scan; full walk showed 41 across all `~/.claude/projects/*/`. The BL-0013 hide-live hook ran for months across many projects, accumulating debris on every Alt+F4. **Rule:** when planning a purger, scope the count via Glob/find FIRST. Conservative ARCHIVE-when-both-files-exist semantics shipped because we cannot tell which is fresher without reading both — let Owner pick.
+**Cross-references:**
+- `tools/jit_skill_loader.py` `_detect_vague_prompt` + `VAGUE_LINT_MESSAGE`
+- `tools/test_vague_lint.py` (6 gates, exit 0 = all pass)
+- `knowledge_vault/core/apex-completion-standard.md` "Prompt Quality Axis (sealed 2026-05-23)"
+nt via Glob/find FIRST. Conservative ARCHIVE-when-both-files-exist semantics shipped because we cannot tell which is fresher without reading both — let Owner pick.
 
 5. **CWD-norm drift fix was a one-line PS edit, not a JS+PS twin module.** Original plan called for `lib/Get-LazarusProjectId.ps1` + `lib/project_id.js` twins. Reality: `claude_smart_resume.ps1` already computed `$cwdNorm` (line 82-83) but passed raw `$cwd` to `Get-CSRRegistryEntry`. **Rule:** before designing parallel helpers, check whether the data is already computed and just plumbed wrong.
 

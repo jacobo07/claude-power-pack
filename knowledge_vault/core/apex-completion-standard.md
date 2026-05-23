@@ -1000,3 +1000,69 @@ Missing any of 1-7 = NOT Apex-complete on the Code Review Axis.
   on the same diff produce byte-identical `patterns_history`
   citations from run 2 onwards; useful for future-LLM context
   injection without requiring an LLM to feed the loop.
+## Prompt Quality Axis (sealed 2026-05-23) -- PP Signal Layer
+
+Companion to the Architecture Decision Axis and Code Review Axis. Where
+those two axes intercept on concrete tool/decision signals, the Prompt
+Quality Axis intercepts on the *absence* of signal -- short prompts
+whose referent is unresolved get a single-line lint advisory in
+`additionalContext`, never a rewrite.
+
+### The law
+
+`tools/jit_skill_loader.py::_detect_vague_prompt(prompt, spec)` returns
+`VAGUE_LINT_MESSAGE` (one line) when AND of three conditions holds:
+
+1. `len(prompt.split()) < 30` (Owner spec threshold)
+2. `_VAGUE_REFERENT_RX` matches (definite-article+opaque-noun in EN/ES,
+   enclitic-lo Spanish imperatives, "this/that/it/esto/eso", "lo de")
+3. None of these mitigators fire:
+   - `_FILE_HINT_RX` (filename with recognized extension)
+   - `_LINE_HINT_RX` ("line 42", "linea 42", ":42")
+   - `_FUNCTION_HINT_RX` ("function foo", "foo(x, y)")
+   - `>1` `_ARCH_DESIGN_VERBS` hit (already covered by `_arch_check_inject`)
+   - Active `.specify` spec (already covered by PASO -1 spec injection)
+   - `CLAUDEPP_VAGUE_LINT_DISABLE=1` env opt-out
+   - `CLAUDEPP_JIT_RUNNING=1` recursion guard
+
+When the signal fires it is composed alongside `arch_block` in the
+`extras` slot of `run()` -- inserted into all three composition paths
+(no-mods+no-spec early return, no-injected+no-spec early return, and
+the main `ctx` assembly). Telemetry: the JIT log line carries
+`vague={yes|no}` next to `arch={yes|no}` for empirical recalibration.
+
+### What this rule rules OUT
+
+- **Auto-rewriter**: explicitly vetoed (Owner directive 2026-05-23).
+  Silent prompt mutation breaks Owner intent reproducibility. The
+  agent receives the signal and decides whether to pause for
+  clarification.
+- **Blocking the prompt**: the signal is advisory -- never returns
+  anything but `continue: true`. Fail-open semantics (Ley 24) apply
+  to every internal failure: any exception in `_detect_vague_prompt`
+  is logged to `~/.claude/logs/jit-skill-loader.log` and returns
+  `None`, never disrupting the user's prompt.
+- **LLM-based vagueness scoring**: deterministic regex only. Allows
+  the `<100 ms` budget to hold (measured p95 0.2 ms) and keeps
+  Reality Contract intact (no model-call confounders).
+
+### DONE-gate
+
+`tools/test_vague_lint.py` -- 6 gates:
+- V-VAGUE-1: "fix the auth bug" -> signal
+- V-VAGUE-2: "hazlo mas rapido" -> signal (Spanish enclitic-lo)
+- V-CLEAN-1: "fix the null pointer in PlayerManager.java line 42" -> no signal
+- V-CLEAN-2: prompt with >= 30 tokens -> no signal (any content)
+- V-TIMING: 10 runs < 100 ms each (p95 0.2 ms measured)
+- DISABLE-ENV: `CLAUDEPP_VAGUE_LINT_DISABLE=1` short-circuits
+
+Exit 0 = sealed. Re-run on any regex / mitigator edit.
+
+### Telemetry future-work
+
+Count signal-fired prompts vs signal-acted-on prompts (agent paused
+to ask Owner) over 2 weeks. If acted-on rate < 20%, the regex or
+mitigators need recalibration -- the signal must earn its presence in
+`additionalContext`. Until empirical data exists, the signal is on
+by default; opt-out is per-prompt via env var.
+
