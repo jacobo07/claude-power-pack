@@ -361,6 +361,48 @@ def register_session_safety(settings_path: str, dry_run: bool) -> int:
     return 0
 
 
+def register_deep_research(settings_path: str, dry_run: bool) -> int:
+    """Register the deep-research sleepy-spawn Stop hook in one call.
+
+    Wires:
+      Stop  ->  ~/.claude/hooks/research-intent-detector.js  (timeout 5 s)
+
+    The hook is fail-OPEN — if it crashes or the spawn target script
+    is missing, the Stop chain continues unimpeded. Single hook keeps
+    the registration symmetrical with register-session-safety + the
+    register-mark-live-session pattern.
+
+    Spec: claude-power-pack/vault/specs/deep-research-agent.md §7.2
+    Plan: claude-power-pack/vault/plans/deep-research-agent-2026-05-23.md
+
+    Idempotent: re-running on a host where the hook is already wired
+    is a no-op (handled by _register's _block_exists check).
+    """
+    home = os.path.expanduser("~")
+    hook = os.path.join(home, ".claude", "hooks",
+                         "research-intent-detector.js")
+    if dry_run:
+        present = "yes" if os.path.isfile(hook) else "no"
+        print("settings_merger: register-deep-research --dry-run")
+        print(f"  would register Stop -> {hook}  "
+              f"(script-present={present})")
+        return 0
+    if not os.path.isfile(hook):
+        print(f"settings_merger: hook script not found: {hook}",
+              file=sys.stderr)
+        print("  Hint: copy from "
+              "claude-power-pack/hooks/research-intent-detector.js to "
+              "~/.claude/hooks/ first (Mirror-Sync-Direction doctrine: "
+              "the installer prints, the Owner pastes).", file=sys.stderr)
+        return 5
+    rc = register_stop(settings_path, hook, 5)
+    if rc != 0:
+        return rc
+    print("settings_merger: register-deep-research OK "
+          "(1 hook wired/idempotent)")
+    return 0
+
+
 def register_pretool(settings_path: str, node_script: str,
                       matcher: str, timeout: int) -> int:
     # Refuse to register a hook command pointing at a missing script —
@@ -416,6 +458,15 @@ def main():
     rzc.add_argument("--settings", default=DEFAULT_SETTINGS,
                      help="path to settings.json (default ~/.claude/...)")
 
+    rdr = sub.add_parser("register-deep-research",
+                          help="Register the deep-research sleepy-spawn "
+                               "Stop hook (research-intent-detector.js). "
+                               "Spec: vault/specs/deep-research-agent.md.")
+    rdr.add_argument("--dry-run", action="store_true",
+                     help="print what would be wired without modifying settings.json")
+    rdr.add_argument("--settings", default=DEFAULT_SETTINGS,
+                     help="path to settings.json (default ~/.claude/...)")
+
     rss2 = sub.add_parser("register-session-safety",
                           help="Register the session-safety stack: "
                                "PreToolUse(Bash|PowerShell)->session-file-guard "
@@ -463,6 +514,8 @@ def main():
         return register_mark_live_session(a.settings, a.dry_run)
     if a.cmd == "register-session-safety":
         return register_session_safety(a.settings, a.dry_run)
+    if a.cmd == "register-deep-research":
+        return register_deep_research(a.settings, a.dry_run)
     return 2
 
 
