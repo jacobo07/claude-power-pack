@@ -101,6 +101,41 @@ ALLOWLIST: dict[str, set[str]] = {
     "modules/zero-crash/**":       {"secret"},
     "tools/run_vps.sh":            {"secret"},
     "tools/vps_validation_handoff.sh": {"secret"},
+    # ---- Additional VPS-class tools that came in via merge 2026-05-23.
+    # Same posture as the modules/* entries: their purpose is VPS push /
+    # heartbeat / settings-bridge, the host literals are operational
+    # config (DEFAULT_HOST fallbacks + docstring examples).
+    "tools/lazarus_topology_push_vps.py": {"secret"},
+    "tools/oracle_heartbeat.py":          {"secret"},
+    "tools/vps_settings_merge.py":        {"secret", "code-path", "doc-path"},
+    # ---- Historical bulk-extract audit dataset (2026-04-29, frozen).
+    # The vault dump preserves the worktree path literals as part of
+    # the audit record; rewriting would falsify the historical state.
+    "vault/audits/bulk_vault_extract.json": {"secret"},
+    # ---- VPS continuation plan documents the SSH commands the Owner
+    # actually runs. Allowlisted as VPS-ops narrative (same class as
+    # vault/standards/blocked-delivery-prevention.md).
+    "vault/plans/OVO_VPS_CONTINUATION.md": {"secret"},
+    # ---- Code-class allowlist additions for pre-existing host-pinned
+    # tools that came in via merge (smoke tests + topology applier +
+    # skill scanner — all reference the worktree path as fixture or
+    # canonical operational target).
+    "tools/plugin_skill_scanner.py":       {"code-path"},
+    "tools/post_restart_smoke.ps1":        {"code-path", "doc-path"},
+    "tools/post_restart_smoke.sh":         {"code-path", "doc-path"},
+    "tools/topology_apply.py":             {"code-path"},
+    # ---- Frozen video-analysis audit (2026-04-29): worktree path
+    # appears as part of the captured-at-test-time evidence.
+    "vault/topology/video_analysis_2026-04-29.md": {"doc-path"},
+    # ---- Machine-generated skill registries: absolute paths to skill
+    # source files are dataset records, not portable code. Re-indexing
+    # regenerates them from current PP layout each time. Same posture
+    # as tools/_inventory/agents.json.
+    "vault/skills_index.json":             {"code-path"},
+    "vault/skills_index_unified.json":     {"code-path"},
+    # ---- Frozen topology snapshot (2026-04-29): captured-at-test-time
+    # absolute path inventory, audit-record by design.
+    "vault/topology/lazarus_layout_2026-04-29.json": {"code-path"},
     # ---- Self-aware auditor: this very file names the leak class in
     # its docstring (matches PATH_RE in narrative text) + matches the
     # SECRET_RES regex literals it defines. Both classes legitimate.
@@ -129,7 +164,7 @@ ALLOWLIST: dict[str, set[str]] = {
     "vault/knowledge_base/errors.md": {"secret"},
     # ---- Doc-class refs naming the Owner's daemon as an example.
     "agents/oneshot-architect-auditor.md": {"secret"},
-    "SSOT.md":                     {"secret"},
+    "SSOT.md":                     {"secret", "doc-path"},
     # ---- Auto-Testing Skill artifacts (sealed 2026-05-23). These
     # docs describe the empirical ceiling case where the gate must
     # honestly say "no build system" -- KobiCraft is the canonical
