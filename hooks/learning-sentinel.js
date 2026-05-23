@@ -257,14 +257,46 @@ function readRecoveredAdvisory() {
   // attribution (recovered.old:scrape rows have project='?'), so this is
   // a GENERAL high-priority advisory, not a per-project law override.
   // Honest wiring: surface count + triage path + override semantics.
+  //
+  // Vaccine (sealed 2026-05-21, MC-LAZ-30): three stacked guards to keep
+  // scrape-detritus orphans from triggering phantom SessionStart banners.
+  //   (1) Explicit dismissal: cache may declare _tombstoned:true to opt out.
+  //   (2) Stale-cache TTL: honor obj.ttl_sec strictly (8x slack); if writer
+  //       hasn't refreshed within the window, treat as empty.
+  //   (3) Tombstone subtraction: sidecar tombstones.json carries Owner-
+  //       dismissed IDs (archive-preserved, sha256-sealed); subtract before
+  //       count.
   try {
     if (!fs.existsSync(RECOVERED_CACHE)) return null;
     const raw = fs.readFileSync(RECOVERED_CACHE, 'utf8');
     const obj = JSON.parse(raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw);
-    const n = obj && obj.count ? obj.count : 0;
+
+    if (obj && obj._tombstoned === true) return null;
+
+    const ttlSec = (obj && typeof obj.ttl_sec === 'number' && obj.ttl_sec > 0)
+      ? obj.ttl_sec : 300;
+    let mtimeMs = 0;
+    try { mtimeMs = fs.statSync(RECOVERED_CACHE).mtimeMs; } catch { /* noop */ }
+    if (mtimeMs && Date.now() - mtimeMs > ttlSec * 1000 * 8) return null;
+
+    const tombPath = path.join(
+      os.homedir(), '.claude', 'state', 'recovered-composers.tombstones.json'
+    );
+    const tombstoned = new Set();
+    try {
+      if (fs.existsSync(tombPath)) {
+        const tomb = JSON.parse(fs.readFileSync(tombPath, 'utf8'));
+        if (Array.isArray(tomb.tombstoned_ids)) {
+          for (const id of tomb.tombstoned_ids) tombstoned.add(id);
+        }
+      }
+    } catch { /* tombstones advisory only; fail-open */ }
+
+    const comp = (obj && obj.composers) ? obj.composers : {};
+    const liveIds = Object.keys(comp).filter(id => !tombstoned.has(id));
+    const n = liveIds.length;
     if (!n) return null;
-    const comp = obj.composers || {};
-    const top = Object.keys(comp).slice(0, 5);
+    const top = liveIds.slice(0, 5);
     const lines = [
       '## Lazarus Recovered Sessions (override-priority)',
       '',

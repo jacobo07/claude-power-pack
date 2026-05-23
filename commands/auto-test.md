@@ -57,7 +57,7 @@ exits 0 and the commit proceeds.
 | Verdict | Hook exit | Meaning |
 |---|---|---|
 | `pass`    | 0 | Generated test ran + passed |
-| `fail`    | 2 | Generated test ran + failed → commit BLOCKED |
+| `fail`    | 2 | Generated test ran + failed -> commit BLOCKED |
 | `ceiling` | 0 | Project has no executable test framework, OR the LLM could not generate a real test, OR the diff exceeds 8 KB |
 | `timeout` | 0 | Hook-side 28 s budget guard fired, or test runner exceeded its budget |
 | `skip`    | 0 | No staged diff, opt-out, or recursion guard fired |
@@ -75,11 +75,12 @@ blocks on ceiling would be worse than no gate.
 - **Generator output is real test code**: must contain the
   required idioms (`def test_` + `assert` for Python;
   `describe + it + expect` for Node; `@Test + assertEquals` for
-  Java). Missing any → ok=False → ceiling.
-- **CEILING-honest for Java**: KobiCraft on this host has 136
-  .java files and zero pom.xml/build.gradle. The gate returns
-  CEILING and ALLOWS the commit. Generating a JUnit class that
-  could not be executed would be theater, not testing.
+  Java). Missing any -> ok=False -> ceiling.
+- **CEILING-honest for Java**: the KobiCraft repo on this
+  development machine has 136 .java files and zero pom.xml /
+  build.gradle. The gate returns CEILING and ALLOWS the commit.
+  Generating a JUnit class that could not be executed would be
+  theater, not testing.
 
 ## Opt-out
 
@@ -111,9 +112,9 @@ used by `register-mark-live-session`, `register-deep-research`,
 
 ## Empirical verification (V1 + V2, 2026-05-23)
 
-- A1 detector: 5/5 cwds correctly classified (KobiCraft→ceiling,
-  InfinityOps/UI→node_vitest, TUA-X→python, PP→python by
-  convention, TEMP→unknown).
+- A1 detector: 5/5 cwds correctly classified (KobiCraft->ceiling,
+  InfinityOps/UI->node_vitest, TUA-X->python, PP->python by
+  convention, TEMP->unknown).
 - A2 LLM bridge: HELLO returns in 16.1 s, recursion-guard env
   propagates correctly.
 - B1 Python generator: real pytest scaffold in 15.4 s on a 30-line
@@ -121,7 +122,7 @@ used by `register-mark-live-session`, `register-deep-research`,
 - B2 Node generator: real vitest scaffold in 20.2 s with
   `describe + it + expect` for all 3 TS functions; framework
   correctly inferred from InfinityOps UI deps.
-- B3 Java generator: KobiCraft → CEILING; synthetic Maven →
+- B3 Java generator: KobiCraft -> CEILING; synthetic Maven ->
   `@Test assertEquals(5, calculator.add(2,3))` in 16.1 s.
 - C1 runner: 5 s pytest pass + infinite-loop killed at exactly 5 s
   timeout.

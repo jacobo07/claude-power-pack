@@ -110,6 +110,38 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 6000 },
     { exe: NODE_EXE, script: './vault-heartbeat.js', timeoutMs: 8000 },
   ],
+  // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
+  // Root cause: settings.json registered 7 standalone PreToolUse hooks on
+  // matcher=Bash and 9 on matcher=Edit|Write|*. Each `type:"command"`
+  // entry makes Claude Code spawn a fresh git-bash MSYS2 wrapper; ≳3
+  // concurrent forks collapse the mount-table init with `add_item errno 1`
+  // (env_git_bash_fork_storm.md). Drift evidence: the user's OWN memory
+  // file warned "NUNCA re-expandir hooks en settings.json" — but Owner
+  // chose to add them anyway over time, and the cumulative count crossed
+  // the danger threshold. Mitigation: collapse all per-matcher PreToolUse
+  // hooks into these chains; settings.json then registers ONE dispatcher
+  // entry per matcher. Same shell:false spawnSync model the Stop-chain
+  // has used since 2026-05-15 — proven fork-storm-safe in production.
+  'PreToolUse-Bash-chain': [
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/process-sandbox.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ovo-push-gate.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: './quality-skill-gate.js', timeoutMs: 15000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js', timeoutMs: 10000 },
+  ],
+  'PreToolUse-Edit-chain': [
+    { exe: NODE_EXE, script: './secret-scanner.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: './quality-gate.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: './readonly-prompts-guard.js', timeoutMs: 3000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/zero-fiction-gate.js', timeoutMs: 5000 },
+    { exe: NODE_EXE, script: './jobs-woz-gatekeeper.js', timeoutMs: 20000 },
+  ],
+  'PreToolUse-Read-chain': [
+    { exe: NODE_EXE, script: './gatekeeper-semantic.js', timeoutMs: 3000 },
+    { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
+  ],
 };
 
 // Run a chain of sub-hooks as sequential, shell-free child processes.

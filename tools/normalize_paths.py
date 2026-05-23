@@ -130,6 +130,24 @@ ALLOWLIST: dict[str, set[str]] = {
     # ---- Doc-class refs naming the Owner's daemon as an example.
     "agents/oneshot-architect-auditor.md": {"secret"},
     "SSOT.md":                     {"secret"},
+    # ---- Auto-Testing Skill artifacts (sealed 2026-05-23). These
+    # docs describe the empirical ceiling case where the gate must
+    # honestly say "no build system" -- KobiCraft is the canonical
+    # example project on this host (136 .java files, no pom.xml).
+    # The project name appears as legitimate doc reference, not as
+    # a host/IP/credential leak.
+    "commands/auto-test.md":       {"secret"},
+    "vault/specs/auto-testing-gate.md": {"secret"},
+    "vault/plans/auto-testing-skill-2026-05-23.md": {"secret"},
+    # The session_lessons.md row L4 below and the ukdl-universal.md
+    # ledger also reference KobiCraft as the canonical ceiling case.
+    "vault/knowledge_base/ukdl-universal.md": {"secret"},
+    # Apex axis section + detector + Java generator name KobiCraft as
+    # the empirical ceiling case (no pom.xml, 136 .java files). These
+    # are doc/code references to a project on the host, not credentials.
+    "knowledge_vault/core/apex-completion-standard.md": {"secret"},
+    "modules/auto-testing/detectors.py":           {"secret"},
+    "modules/auto-testing/generators/java_gen.py": {"secret"},
     # ---- Governance dataset describing the host/router constraint by
     # example in a description field.
     "modules/governance-overlay/mistake-frequency.json": {"secret"},
@@ -149,6 +167,22 @@ ALLOWLIST: dict[str, set[str]] = {
     # guard *blocks* writes to that exact path. Parametrising would
     # change the test's semantics.
     "modules/session-continuity/tests/guard.test.js": {"code-path"},
+    # ---- One-shot 2026-05-21 fork-storm migration: writes the exact
+    # Windows path of the dispatcher into settings.json entries. The
+    # script is frozen post-migration; rewriting the literal would
+    # break the one-time migration semantics (and the file is no
+    # longer re-executed after that date).
+    "tools/fork_storm_migration_2026-05-21.py": {"code-path"},
+    # ---- Auto-test-gate hook docstring: the comment shows
+    # `C:/Users/foo` as a schematic example of the Bash POSIX -> Win
+    # conversion that normalizePath() performs. The literal is
+    # illustrative, not a real host path.
+    "hooks/auto-test-gate.js":     {"doc-path"},
+    # ---- Frozen historical verification doc (2026-05-20). The
+    # absolute worktree path was the literal value the agent was
+    # working with at the moment of that verification. Rewriting
+    # destroys the audit record.
+    "vault/verifications/speckit_zero_clarification_2026-05-20.md": {"doc-path"},
 }
 
 

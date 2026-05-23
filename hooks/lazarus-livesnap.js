@@ -145,6 +145,7 @@ function main() {
   } catch (_) { prev = {}; }
   if (prev && prev.clean_exit === true) return;
 
+  const nowIso = new Date().toISOString();
   const snap = Object.assign({}, prev, {
     session_id: sessionId,
     cwd: cwd,
@@ -154,7 +155,12 @@ function main() {
     source: "lazarus-livesnap",
     event: input.hook_event_name || "unknown",
     session_log_path: prev.session_log_path || newestSessionLog(cwd),
-    live_ts: new Date().toISOString(),
+    // Schema-parity with lazarus-snapshot.js: writers used to emit only
+    // `live_ts` here, but lazarus_revive_all.py reads `timestamp` — so
+    // livesnap-only sessions silently became UNKNOWN. Mirror both keys
+    // so the reader is tolerant either way. Sealed 2026-05-21 (Session 20).
+    timestamp: nowIso,
+    live_ts: nowIso,
     live_epoch_ms: Date.now(),
   });
 
