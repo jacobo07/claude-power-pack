@@ -288,6 +288,48 @@ def read_failure_history(project_root: Path, limit: int = 20) -> list[dict[str, 
     return list(reversed(rows))[:limit]
 
 
+def read_failure_history_with_text(project_root: Path,
+                                    limit: int = 20) -> list[dict[str, Any]]:
+    """Like read_failure_history, but also extracts the full
+    generated-test text from each failure's .md file.
+
+    F1 closed-loop uses the test text to build the AVOID clause. The
+    .md file is the source of truth (index.json only carries the
+    sha256 + excerpts to keep its rows small).
+    """
+    rows = read_failure_history(project_root, limit)
+    slug = _project_slug(project_root)
+    fail_dir = VAULT_FAILURES / slug
+    out: list[dict[str, Any]] = []
+    for r in rows:
+        md_name = r.get("md") or ""
+        md_path = fail_dir / md_name
+        if not md_path.exists():
+            continue
+        try:
+            text = md_path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        marker = "## Generated test text"
+        idx = text.find(marker)
+        if idx < 0:
+            continue
+        block = text[idx + len(marker):idx + len(marker) + 8000]
+        first_fence = block.find("```")
+        if first_fence < 0:
+            continue
+        # Skip to end of opening fence line.
+        nl = block.find("\n", first_fence)
+        if nl < 0:
+            continue
+        close_fence = block.find("```", nl + 1)
+        if close_fence < 0:
+            continue
+        test_text = block[nl + 1:close_fence].strip()
+        out.append({**r, "test_text": test_text})
+    return out
+
+
 def _sha256_short(s: str) -> str:
     import hashlib
     return hashlib.sha256(s.encode("utf-8")).hexdigest()[:12]

@@ -33,6 +33,66 @@ if TYPE_CHECKING:
     from ..llm_bridge import LLMResult
 
 
+# F1 closed-loop: similarity threshold for triggering an AVOID clause
+# from prior failures. Jaccard on tokenised diff text. 0.30 is loose
+# enough to catch near-duplicates without flooding the prompt with
+# stale references.
+_AVOID_SIM_THRESHOLD = 0.30
+
+
+def _tokenize(s: str) -> set[str]:
+    """Cheap tokeniser for Jaccard similarity. Lowercase + alnum
+    split. Stopwords kept (diff content is short; stopword filtering
+    would hurt small diffs)."""
+    import re as _re
+    return set(_re.findall(r"[A-Za-z0-9_]+", (s or "").lower()))
+
+
+def _jaccard(a: str, b: str) -> float:
+    ta, tb = _tokenize(a), _tokenize(b)
+    if not ta or not tb:
+        return 0.0
+    return len(ta & tb) / len(ta | tb)
+
+
+def _maybe_avoid_clause(diff: str, project_root: Path) -> str:
+    """Look up failure history and return an AVOID clause if any
+    prior failure has Jaccard similarity >= threshold against `diff`.
+
+    Returns an empty string when no qualifying prior is found, so the
+    caller can splice it unconditionally into the prompt.
+    """
+    try:
+        import sys as _sys
+        from pathlib import Path as _P
+        _vio = _sys.modules.get("vault_io")
+        if _vio is None:
+            here = _P(__file__).resolve().parent.parent
+            _sys.path.insert(0, str(here))
+            import vault_io as _vio  # type: ignore
+    except ImportError:
+        return ""
+    try:
+        history = _vio.read_failure_history_with_text(project_root, limit=20)
+    except (OSError, AttributeError):
+        return ""
+    best_sim = 0.0
+    best_text = ""
+    for prior in history:
+        sim = _jaccard(diff, prior.get("diff_excerpt", ""))
+        if sim > best_sim:
+            best_sim = sim
+            best_text = prior.get("test_text", "")
+    if best_sim < _AVOID_SIM_THRESHOLD or not best_text:
+        return ""
+    return (
+        "\n\nA prior generation against a similar diff produced the "
+        "test below, which failed. Do NOT regenerate this pattern; "
+        "propose a different assertion shape or fixture.\n\n"
+        "```python\n" + best_text[:2000] + "\n```\n"
+    )
+
+
 _SYSTEM_FAST = (
     "You generate pytest test scaffolds. You output ONLY Python source "
     "code, no preamble, no markdown fences, no commentary. Every "
@@ -139,6 +199,9 @@ def generate(diff: str, project_root: Path, call_llm,
     )
 
     user_prompt = _build_prompt(diff, existing, target_files, mode=mode)
+    avoid = _maybe_avoid_clause(diff, project_root)
+    if avoid:
+        user_prompt += avoid
     system_prompt = _SYSTEM_DEEP if mode == "deep" else _SYSTEM_FAST
     llm_timeout = 60 if mode == "deep" else 25
     res: "LLMResult" = call_llm(system_prompt, user_prompt, timeout=llm_timeout)
