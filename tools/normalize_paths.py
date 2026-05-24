@@ -152,6 +152,29 @@ ALLOWLIST: dict[str, set[str]] = {
     # may contain file paths referenced in V-block diffs.
     "vault/reviews/patterns.jsonl": {"secret"},
     "vault/reviews/_v_block.json":  {"secret"},
+    # ---- Deployment Skill (2026-05-24, PP Quality Quadrangle close).
+    # V-FORBIDDEN-REMOTE test fixtures cite the canonical deploy
+    # remotes (kobicraft@vps204, kobicraft@204.168.166.63) as expected
+    # inputs to the pure guard; the whole point of the test is to
+    # verify the forbidden-remote check fires against them.
+    "modules/deployment/test_v_block.py": {"secret", "code-path"},
+    # Per-project deploy configs name the ssh aliases AND host paths
+    # by design -- they are operational metadata (no credentials, by
+    # invariant; the schema validator rejects credential-class keys).
+    "vault/deploy/kobiicraft.json":  {"secret"},
+    "vault/deploy/tua-x.json":       {"secret"},
+    "vault/deploy/infinityops.json": {"secret"},
+    # Spec + plan document the 4 modes by reference to the actual
+    # project topology (gex44 for KobiiCraft, vps204 for TUA-X /
+    # InfinityOps). Same posture as auto-testing spec naming
+    # KobiCraft as the canonical CEILING case.
+    "vault/specs/deployment-skill.md":            {"secret"},
+    "vault/plans/deployment-skill-2026-05-24.md": {"secret"},
+    # V-DEEP empirical receipt captures the worktree path of the
+    # InfinityOps repo + the §77 citation. Frozen empirical artefact.
+    "vault/deploys/2026-05-24-130836_infinityops_dryrun.md": {"secret", "doc-path"},
+    # Future auto-generated deploy reports inherit the same pattern.
+    "vault/deploys/*.md": {"secret", "doc-path"},
     # ---- Frozen topology snapshot (2026-04-29): captured-at-test-time
     # absolute path inventory, audit-record by design.
     "vault/topology/lazarus_layout_2026-04-29.json": {"code-path"},

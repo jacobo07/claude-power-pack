@@ -500,3 +500,38 @@ of the PP Quality Quadrangle in one session.
 - `knowledge_vault/core/apex-completion-standard.md` "Deploy Axis (sealed 2026-05-24)" section
 - `vault/knowledge_base/ukdl-universal.md` "Deployment Skill" section (UKDL-DP-01..05)
 - `modules/deployment/_v_block.json` (14/14 PASS, timing p95 23.2 ms)
+
+
+
+### Deploy Axis P15 -- verify_spp override authorization
+
+Post-implementation `verify_spp.py` final state (2026-05-24 post-commit a2cc65b):
+
+| Row | Status | Cause | Caused by Deploy Axis change? |
+|---|---|---|---|
+| mirror-parity | FAIL rc=5 | `hook-dispatcher.js` drift: global=acb16ea778ff pp=786b93721909 (loose copy newer by 1028 min) | NO -- predates this session by ~17 hours |
+| drift-report | FAIL rc=1 | Same `hook-dispatcher.js` loose-ahead 1028 min | NO -- same root cause as mirror-parity |
+| paths+secrets | OK rc=0 | n/a (resolved post-allowlist additions) | n/a |
+| rtk-fusion | OK rc=0 | n/a | n/a |
+| intent-lock | OK rc=0 | n/a | n/a |
+| l3-engine | OK rc=0 | n/a | n/a |
+| programmatic-budget | OK rc=0 | n/a | n/a |
+
+**Apex-completion-standard.md** mirror-parity row is OK (sha256 d2df939c5103 PP = d2df939c5103 live).
+This confirms the Deploy Axis P13 mirror operation succeeded byte-identically; the residual FAIL is
+attributable solely to the pre-existing hook-dispatcher.js drift.
+
+**Override authorization:** per Owner instruction (2026-05-24, /deploy P15 contract):
+"Si todos son preexistentes: override autorizado con documentación en session_lessons.md
+(patrón ya sellado en el ciclo anterior)."
+
+Push to `origin/main` proceeds. The Deploy Axis change introduces 0 new FAILs and resolves the
+apex-completion-standard.md mirror drift that would otherwise have appeared. The remaining
+hook-dispatcher.js drift is preserved as-is for separate Owner-driven resolution (the loose
+copy contains in-progress changes that should be reconciled in a dedicated session, not
+during a feature-axis seal).
+
+This pattern is now established for axis-seal cycles: when verify_spp residual FAILs are
+identifiable as preexisting AND the feature change itself introduces no new FAILs, the seal
+is overridable with this documentation row. Each cycle's override row cites the specific
+preexisting cause; blanket override is never appropriate.
