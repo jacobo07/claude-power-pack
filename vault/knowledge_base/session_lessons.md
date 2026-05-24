@@ -451,3 +451,26 @@ one session:
 - `vault/reviews/patterns.jsonl` (closed-loop log; populated by V-CLOSED-LOOP test)
 - `knowledge_vault/core/apex-completion-standard.md` "Code Review Axis (sealed 2026-05-23)" section
 - `vault/knowledge_base/ukdl-universal.md` "Code Review Skill" section (UKDL-CR-01..05)
+
+
+### verify_spp override authorization -- Prompt Lint Signal push (2026-05-24)
+
+verify_spp.py tenia 3 FAILs preexistentes al merge del Prompt Lint
+Signal. Override autorizado por Owner porque los FAILs no son
+causados por el cambio de esta sesion:
+
+- mirror-parity: 8 de 9 archivos untracked son ajenos al cambio
+  (ultra.md, oneshot-architect-auditor.md, cpp-resume-sovereign.md,
+  learning-sentinel.js, hook-dispatcher.js, lazarus-livesnap.js,
+  zero-issue-gate.js, jobs-woz-gatekeeper.js). apex-completion-standard.md
+  aparece tambien pero por ref manifest desactualizado, no por
+  byte-equality (drift-report ahora PASS).
+- paths+secrets: FileNotFoundError [WinError 2] -- herramienta
+  preexistente rota.
+- rtk-fusion: -169.2% reduction en `git log --stat -50` -- caveat
+  documentado en CLAUDE.md ("command-specific by nature").
+
+Production Branch Standard: push con FAILs preexistentes requiere
+documentacion explicita del motivo. Esta nota cumple ese contrato.
+Esos 3 rows deben tratarse como deuda separada -- no permitir que
+su persistencia normalice el push-con-FAILs en sesiones futuras.
