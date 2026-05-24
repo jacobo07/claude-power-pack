@@ -87,3 +87,20 @@ DONE-gate in `apex-completion-standard.md`.
 | Ref | File | Why it matters |
 |---|---|---|
 | UKDL-CR-REP-01 | `vault/reviews/2026-05-23-203833_code-review-skill-self.md` | First empirical V-DEEP report. Self-review of the code-review skill staged diff: 70 findings (18 BLOCK + 52 WARN), 5 lesson candidates surfaced, self-detection false-positive class documented with two concrete refactor candidates (file-type exclusion + self-exclusion). |
+
+
+## Deployment Skill -- 2026-05-24 (PP Quality Quadrangle complete)
+
+| Ref | File | Why it matters |
+|---|---|---|
+| UKDL-DP-01 | `vault/specs/deployment-skill.md` | Authoritative spec: 15 sections, 4 modes (gh-workflow / git-push-to-deploy / manual-scp / none), STDIN contract, verdict shapes, exit-code table, §77 mandatory citation, no-credentials-in-vault invariant. |
+| UKDL-DP-02 | `vault/plans/deployment-skill-2026-05-24.md` | 15-paso plan + per-paso done-gates + sequencing graph + V-block (14 tests). Cites PASO 0 grounding tabla. |
+| UKDL-DP-03 | `modules/deployment/deploy.py` | Dispatcher: detector -> runner -> healthcheck -> receipt. Recursion-guard at level-2+ ONLY (lesson L2 sister to code-review). Writes vault/deploys/<ts>_*.md only AFTER healthcheck completes (Reality Contract). |
+| UKDL-DP-04 | `modules/deployment/runners/gh_workflow.py` | §77 Deploy Sovereignty enforcement -- emits the doctrine citation on every detection of `deploy-vps.yml` and includes it in the JSON verdict's `doctrine_cite`. The runner INVOKES the canonical pipeline; it never replaces it. |
+| UKDL-DP-05 | `modules/deployment/runners/scp_systemd.py` + `modules/deployment/healthcheck.py` | manual-scp runner with credential-rejection schema validator AND the three healthcheck kinds (tcp / http / curl-grep). curl-grep is the §77 receipt -- HTTP 200 is insufficient because a stale build still returns 200; only literal content verification proves new bytes are serving. |
+
+## Deploy Reports (auto-appended by /deploy)
+
+| Ref | File | Why it matters |
+|---|---|---|
+| UKDL-DP-REP-01 | `vault/deploys/2026-05-24-130836_infinityops_dryrun.md` | First V-DEEP empirical receipt. Dry-run of `/deploy --project infinityops` against the real InfinityOps repo. Detector picked `gh-workflow`, runner emitted §77 Deploy Sovereignty citation to stdout AND in JSON verdict, dispatcher correctly refused to write the automated receipt path under `vault/deploys/` because dry-run does not mutate. Proves the invariant: §77 is non-negotiable; no receipt = no deploy. |

@@ -474,3 +474,29 @@ Production Branch Standard: push con FAILs preexistentes requiere
 documentacion explicita del motivo. Esta nota cumple ese contrato.
 Esos 3 rows deben tratarse como deuda separada -- no permitir que
 su persistencia normalice el push-con-FAILs en sesiones futuras.
+
+
+
+---
+
+## 2026-05-24 -- Deployment Skill iteration log
+
+Sister to Auto-Testing + Arch-Check + Code-Review iteration rows
+above. Empirical findings from sealing the fourth and final side
+of the PP Quality Quadrangle in one session.
+
+| # | Finding | Resolution |
+|---|---|---|
+| L1 | V-FORBIDDEN-REMOTE initial design called `run_git_push` with `remote: "origin"` and a project_root of REPO_ROOT. The dispatcher's resolve-URL step shells out to `git remote get-url origin`. On Windows PowerShell -NonInteractive, `git.exe` is not on PATH; subprocess returned exit non-zero; resolve-URL returned empty; verdict became `ceiling: remote not configured` instead of the expected `fail: refusing to push`. | Refactor: V-FORBIDDEN-REMOTE now unit-tests the pure `_is_forbidden_remote(name, url)` guard directly. 7 cases (4 forbidden by name, 1 forbidden by URL token, 2 legitimate). Independent of subprocess git availability. Sister to the PowerShell-git-PATH-gap lesson sealed 2026-05-21. |
+| L2 | STDIN BOM. PowerShell's `$payload \| python deploy.py` adds a UTF-8 BOM to the piped JSON; `json.loads` raised `Unexpected UTF-8 BOM (decode using utf-8-sig)`. | Defensive strip in `deploy.py main()`: after `sys.stdin.read().strip()`, also strip the leading BOM if present. The pattern is documented in `memory/feedback_python_utf8_bom.md` (BL-0036); applying it to every STDIN entry-point is now the standing pattern. |
+| L3 | Plan markdown's "hard constraints" row originally enumerated the Jobs/Woz forbidden-set tokens verbatim to describe what the slop-token gate rejects. The detector flagged its own description; the Write was vetoed. | Same pattern as code-review L1 (angle-bracket templates) and arch-check L6. Resolution: paraphrase via category descriptor. The plan row now says "carries zero literal markers from the forbidden set in delivered runtime files" instead of listing the tokens. Pattern is now established across all four PP axis specs: never enumerate the Jobs/Woz forbidden-set tokens verbatim in delivered markdown. |
+| L4 | The PowerShell-git-PATH gap surfaces in TWO places in this skill: (a) V-FORBIDDEN-REMOTE as documented in L1; (b) the dispatcher's `_git_head_short(project_root)` which silently returns empty string when git is not on PATH. | (a) was refactored to unit-level (L1). (b) is acceptable behaviour for the dispatcher -- a missing HEAD short SHA degrades the receipt's `HEAD:` field but does not corrupt the deploy. Real `/deploy` invocations from a shell with git on PATH will populate it. The dispatcher fails open, the receipt is honest about the missing field. |
+| L5 | `vault/deploy/tua-x.json` originally enforced `kind: curl-grep` on `https://cw.infinityops.ai/health`, but the production endpoint topology is not known to the skill. Hard-coding a URL the skill cannot independently verify violates the Reality Contract (a healthcheck spec that claims a live endpoint that does not exist on the canonical surface is fiction). | Downgraded to `kind: http` on the canonical landing URL (`https://cw.infinityops.ai/`). Notes field documents the upgrade path: when the Owner provides a real `/api/health` URL plus a stable body fragment, switch to `curl-grep` for stronger §77-style verification. Honest stop: spec what is known; do not invent surface. |
+
+**Cross-references:**
+- `vault/specs/deployment-skill.md` (parent spec; 15 sections)
+- `vault/plans/deployment-skill-2026-05-24.md` (15-paso plan)
+- `vault/deploys/2026-05-24-130836_infinityops_dryrun.md` (V-DEEP empirical)
+- `knowledge_vault/core/apex-completion-standard.md` "Deploy Axis (sealed 2026-05-24)" section
+- `vault/knowledge_base/ukdl-universal.md` "Deployment Skill" section (UKDL-DP-01..05)
+- `modules/deployment/_v_block.json` (14/14 PASS, timing p95 23.2 ms)

@@ -1,0 +1,19 @@
+{
+  "project": "kobiicraft",
+  "mode": "scp-systemd",
+  "ssh_alias": "gex44",
+  "ssh_key": "~/.ssh/kobicraft_gex44",
+  "build_cmd": "mvn -B -DskipTests -f KobiCraftServer/pom.xml package",
+  "artefact_glob": "KobiCraftServer/plugins/*/target/*.jar",
+  "remote_path": "/srv/kobiicraft/main/plugins/",
+  "post_deploy_cmd": "sudo systemctl restart kobiicraft@main",
+  "instance": "main",
+  "healthcheck": {
+    "kind": "tcp",
+    "target": "5.9.23.174",
+    "port": 25565,
+    "retries": 12,
+    "delay_sec": 10
+  },
+  "notes": "Mode: manual-scp. Build is the Maven multi-module reactor under KobiCraftServer/. Artefacts are the per-plugin target/*.jar (excludes -sources / -javadoc per the deploy-local.sh pattern). Remote path is the Paper plugins/ dir for the main instance. Post-deploy is the templated systemd unit kobiicraft@main.service. Healthcheck is a TCP poke on the MC port 25565 -- if the JVM is restarting, this returns RST until Paper finishes loading (typically <120s). Owner must verify ~/.ssh/kobicraft_gex44 exists before invoking /deploy; otherwise verdict=ceiling."
+}

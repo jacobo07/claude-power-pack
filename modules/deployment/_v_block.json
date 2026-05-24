@@ -1,0 +1,90 @@
+{
+  "passed": 14,
+  "total": 14,
+  "results": [
+    {
+      "test": "V-DETECT-GH",
+      "status": "PASS",
+      "evidence": "{\"mode\": \"gh-workflow\", \"evidence\": \"workflow file: .github\\\\workflows\\\\deploy-vps.yml\", \"config_path\": null, \"workflow_file\": \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmp995p5j1x\\\\.github\\\\workflows\\\\deploy-vps.yml\", \"remote\": null}",
+      "duration_ms": 32.0
+    },
+    {
+      "test": "V-DETECT-PUSH",
+      "status": "PASS",
+      "evidence": "{\"mode\": \"git-push-to-deploy\", \"evidence\": \"post-receive hook: deploy\\\\post-receive\", \"config_path\": null, \"workflow_file\": null, \"remote\": null}",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-DETECT-SCP",
+      "status": "PASS",
+      "evidence": "{\"mode\": \"manual-scp\", \"evidence\": \"manifest: pom.xml; config: vault\\\\deploy\\\\test.json\", \"config_path\": \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpuwa6zwtq\\\\vault\\\\deploy\\\\test.json\", \"workflow_file\": null, \"remote\": null}",
+      "duration_ms": 31.0
+    },
+    {
+      "test": "V-DETECT-NONE",
+      "status": "PASS",
+      "evidence": "{\"mode\": \"none\", \"evidence\": \"no deploy signal detected (no workflow, no post-receive, no non-origin remote, no scp-systemd config)\", \"config_path\": null, \"workflow_file\": null, \"remote\": null}",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-CEILING-SSH",
+      "status": "PASS",
+      "evidence": "{\"ok\": false, \"verdict\": \"ceiling\", \"summary\": \"SSH key not found at C:\\\\Users\\\\User\\\\.ssh\\\\__nonexistent_key_for_v_ceiling_test__; cannot deploy\", \"doctrine_cite\": null, \"receipt\": \"config.ssh_key = '~/.ssh/__nonexistent_key_for_v_ceiling_test__'\\nexpanded path  = 'C:\\\\Users\\\\User\\\\.ssh\\\\__nonexistent_key_for_v_ceiling_test__'\\naction         = Owner must create the key or fix the path\"}",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-CONFIG-INVALID",
+      "status": "PASS",
+      "evidence": "ok=False reason=forbidden key category in config: 'db_password' contains 'password'. Credentials must live in ~/.ssh/, not in vault/deploy/",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-HEALTHCHECK-MISSING",
+      "status": "PASS",
+      "evidence": "ok=False reason=required key missing: 'healthcheck'",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-HEALTHCHECK-NC",
+      "status": "PASS",
+      "evidence": "{\"ok\": true, \"attempts\": 1, \"evidence\": \"tcp connect to 127.0.0.1:53415 succeeded on attempt 1\", \"kind\": \"tcp\"}",
+      "duration_ms": 94.0
+    },
+    {
+      "test": "V-HEALTHCHECK-FAIL",
+      "status": "PASS",
+      "evidence": "{\"ok\": false, \"attempts\": 2, \"evidence\": \"tcp connect to 127.0.0.1:1 failed all 2 attempts; last error: TimeoutError: timed out\", \"kind\": \"tcp\"}",
+      "duration_ms": 1015.0
+    },
+    {
+      "test": "V-NO-AUTO-PUSH",
+      "status": "PASS",
+      "evidence": "hits=0 files-scanned=5; details=[]",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-FORBIDDEN-REMOTE",
+      "status": "PASS",
+      "evidence": "cases=7 failures=0; []",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-DOCTRINE-CITE",
+      "status": "PASS",
+      "evidence": "{\"ok\": true, \"verdict\": \"dry-run\", \"summary\": \"gh-workflow dry-run for deploy-vps.yml\", \"doctrine_cite\": \"\\u00a777 Deploy Sovereignty -- the workflow at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpybnpaj0o\\\\.github\\\\workflows\\\\deploy-vps.yml is the canonical CD pipeline. This runner INVOKES it via the gh API; it does not replace it.\", \"receipt\": \"DRY RUN -- would invoke: gh workflow run deploy-vps.yml --ref main\\nDRY RUN -- then: gh run watch --exit-status (poll until terminal state)\\nDRY RUN -- workflow file: C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpybnpaj0o\\\\.github\\\\workflows\\\\deploy-vps.yml\\nDRY RUN -- doctrine: \\u00a777 Deploy Sovereignty -- the workflow at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpybnpaj0o\\\\.github\\\\workflows\\\\deploy-vps.yml is the canonical CD pipeline. This runner INVOKES it via the gh API; it does not replace it.\"}",
+      "duration_ms": 16.0
+    },
+    {
+      "test": "V-CLOSED-LOOP",
+      "status": "PASS",
+      "evidence": "previous_deploys=['vault\\\\deploys\\\\2026-05-24-020202_demo_prod.md', 'vault\\\\deploys\\\\2026-05-24-010101_demo_prod.md']",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-TIMING",
+      "status": "PASS",
+      "evidence": "samples=[0.0, 0.0, 0.0, 0.0, 0.0, 16.0, 0.0, 15.0, 0.0, 0.0] p05=0.0ms p95=16.4ms",
+      "duration_ms": 16.4
+    }
+  ]
+}

@@ -1066,3 +1066,125 @@ mitigators need recalibration -- the signal must earn its presence in
 `additionalContext`. Until empirical data exists, the signal is on
 by default; opt-out is per-prompt via env var.
 
+
+
+---
+
+## Deploy Axis (sealed 2026-05-24) -- PP Quality Quadrangle complete
+
+**PP Quality Quadrangle completo:**
+auto-testing (correction) + arch-check (design) + code-review
+(quality / security / maintainability) + deploy (verified
+delivery). Ningún código llega a producción sin pasar los cuatro.
+
+The fourth axis closes the loop between merge and live traffic. A
+code-review-PASS commit, an auto-test-PASS run, and an arch-check
+CLEAR decision still leave one question open: did the code actually
+reach production and serve real bytes? The Deploy Axis answers
+that with a real healthcheck against the live target.
+
+### Reality contract (deploy-specific)
+
+A deploy is, by contract, NOT a deploy until a healthcheck against
+the live target returns OK. The dispatcher in
+`modules/deployment/deploy.py` refuses to write
+`vault/deploys/<ts>_<project>_<env>.md` until the healthcheck has
+run. Silent masking of a healthcheck failure is forbidden; a
+healthcheck failure on a successful deploy yields verdict
+`deploy-warn` (exit 3) AND the receipt states this explicitly.
+
+### 4 modes (detector-ordered)
+
+| Mode | Signal | Action |
+|---|---|---|
+| `gh-workflow` | `.github/workflows/deploy*.yml` exists with workflow_dispatch or push trigger | `gh workflow run --ref main` + `gh run watch --exit-status` |
+| `git-push-to-deploy` | `deploy/post-receive` OR non-origin remote URL `user@host:/path/repo.git` | `git push <non-origin-remote> main`; receipt = server post-receive output |
+| `manual-scp` | build manifest + `vault/deploy/<project>.json` with `mode: scp-systemd` | `build_cmd` -> `scp -i <key>` -> `ssh <alias> '<post_deploy_cmd>'` |
+| `none` | no signal | CEILING exit 4 (honest stop; no template generated) |
+
+The detector evaluates in this order and returns the first match.
+Real-world mapping (per PASO 0 grounding):
+
+- InfinityOps -> `gh-workflow` (canonical §77 CD pipeline)
+- TUA-X -> `git-push-to-deploy` (server-side post-receive hook)
+- KobiiCraft -> `manual-scp` (only project with a real gap)
+- New / unconfigured projects -> `none`
+
+### §77 Deploy Sovereignty -- mandatory citation
+
+When `gh_workflow.py` detects a workflow whose filename contains
+`deploy-vps.yml`, it MUST print the §77 Deploy Sovereignty citation
+to stdout AND include it in the JSON verdict's `doctrine_cite`
+field. This invariant is verified by V-DOCTRINE-CITE in the
+V-block. The skill INVOKES the canonical pipeline; it does NOT
+replace it. Reinventing §77's mechanism in PP would be a
+competing-standard antipattern.
+
+### Hard invariants (enforced by V-block)
+
+| Invariant | Verifier |
+|---|---|
+| NO secret material in `vault/deploy/<project>.json` | schema validator rejects `password` / `secret` / `token` / `api_key` (case-insensitive substring) -- V-CONFIG-INVALID |
+| NO auto-push to canonical origin | regex `\bgit\s+push\s+origin\b` over `modules/deployment/runners/*.py` AND `deploy.py` returns 0 hits -- V-NO-AUTO-PUSH |
+| Healthcheck mandatory | config without `healthcheck` -> schema FAIL before any runner action -- V-HEALTHCHECK-MISSING |
+| SSH key missing -> CEILING | expanded path checked via `os.path.exists`; missing -> verdict ceiling, exit 4, message includes expanded path -- V-CEILING-SSH |
+| n8n forbidden | `mode: n8n` (or zapier / make.com / pipedream) -> schema FAIL |
+| Recursion guard level-2+ ONLY | `CLAUDEPP_DEPLOY_RUNNING=1` never set on level-1 entry -- L2 lesson sister to code-review |
+| Receipt only after healthcheck | dispatcher writes `vault/deploys/<ts>_*.md` only AFTER `run_healthcheck` returns -- V-CLOSED-LOOP |
+
+### Healthcheck kinds (separable, reusable)
+
+| Kind | Mechanism | Used by |
+|---|---|---|
+| `tcp` | pure Python socket connect | KobiiCraft (port 25565) |
+| `http` | curl `-fsS -o /dev/null -w '%{http_code}'` with retries | TUA-X (`/` or `/health`) |
+| `curl-grep` | curl + Python regex `re.IGNORECASE` against body | InfinityOps (§77 content-verification style) |
+
+`curl-grep` is the §77 receipt: HTTP 200 is insufficient because a
+stale build still returns 200; only literal content verification
+against the live page proves new bytes are serving.
+
+### V-block (14 PASS at sealing)
+
+V-DETECT-{GH,PUSH,SCP,NONE} + V-CEILING-SSH + V-CONFIG-INVALID +
+V-HEALTHCHECK-MISSING + V-HEALTHCHECK-NC + V-HEALTHCHECK-FAIL +
+V-NO-AUTO-PUSH + V-FORBIDDEN-REMOTE + V-DOCTRINE-CITE +
+V-CLOSED-LOOP + V-TIMING.
+
+Measured (2026-05-24): 14/14 PASS. V-TIMING p95 = 23.2 ms
+on the detect-on-tmpdir hot path. Total V-block wall time < 2 s.
+
+### DONE-gate
+
+1. All V-tests PASS.
+2. `verify_spp.py` 7/7 STRICT.
+3. `verify_full_install.py` exit 0.
+4. PP source + live mirror sha256 match for this section.
+5. UKDL-DP-01..05 rows in `ukdl-universal.md`.
+6. session_lessons L1..LN rows for this cycle.
+7. V-DEEP dry-run receipt at `vault/deploys/<ts>_infinityops_dryrun.md`.
+8. `git push origin main` REMOTE_DELTA = 0.
+
+### PP Quality Quadrangle -- the four gates
+
+```
+[ Auto-Testing Gate ]   <-- "does it work?"
+       |
+       v
+[  Arch-Check         ] <-- "is the decision consistent with the vault?"
+       |
+       v
+[  Code Review        ] <-- "is it well-written, secure, maintainable?"
+       |
+       v
+[  Deploy             ] <-- "did it actually reach production AND serve traffic?"
+       |
+       v
+   PRODUCTION
+```
+
+Removing any of the four reopens a class of silent failure. The
+auto-testing gate proves correctness, arch-check proves
+consistency, code-review proves quality, deploy proves delivery.
+Four gates, four independent failure modes, four independent
+proofs.

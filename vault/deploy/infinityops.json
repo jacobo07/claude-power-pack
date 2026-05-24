@@ -1,0 +1,15 @@
+{
+  "project": "infinityops",
+  "mode": "gh-workflow",
+  "workflow_file": ".github/workflows/deploy-vps.yml",
+  "ref": "main",
+  "healthcheck": {
+    "kind": "curl-grep",
+    "url": "https://infinityops.ai/",
+    "grep_pattern": "br.jula",
+    "retries": 24,
+    "delay_sec": 15
+  },
+  "doctrine": "§77 Deploy Sovereignty",
+  "notes": "Mode: gh-workflow. InfinityOps owns the canonical CD pattern per §77 -- self-hosted GitHub Actions runner ON the VPS, forced-command SSH key pinned to 09_Provisioning/deploy_from_git.sh, dedicated CD key `infinityops_cd_deploy`, concurrency group, path-filtered triggers, 24x15s curl-grep verification. This skill INVOKES that pipeline; it does not replace it. The healthcheck mirrors the workflow's own post-deploy verify step (the literal `brujula` token from the live product page proves the Next.js rebuild served new bytes). The runner gh_workflow.py prints the §77 citation to stdout when it detects deploy-vps.yml -- this is a non-negotiable invariant."
+}

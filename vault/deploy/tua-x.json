@@ -1,0 +1,20 @@
+{
+  "project": "tua-x",
+  "mode": "git-push-to-deploy",
+  "remote_name": "vps204",
+  "branch": "main",
+  "ssh_alias": "vps204",
+  "ssh_key": "~/.ssh/kobicraft_claude_code",
+  "build_cmd": "(server-side -- post-receive hook invokes docker compose)",
+  "artefact_glob": "(n/a; docker compose rebuilds images server-side)",
+  "remote_path": "(n/a; deploy/post-receive checks out into /home/kobicraft/projects/CommonWealth-Ops/working)",
+  "post_deploy_cmd": "(n/a; deploy/post-receive runs `docker compose up -d --build cw_api cw_frontend` AND rsync landing -> /var/www/cw-landing/)",
+  "healthcheck": {
+    "kind": "http",
+    "url": "https://cw.infinityops.ai/",
+    "expect_status": 200,
+    "retries": 12,
+    "delay_sec": 10
+  },
+  "notes": "Mode: git-push-to-deploy. Push to the remote `vps204` (NOT origin) triggers the server-side post-receive hook that lives at deploy/post-receive in this repo. The hook performs the checkout + docker compose rebuild + landing rsync. Receipt is the synchronous push output (the hook prints docker compose tail to stderr, which Git surfaces to the pushing developer). Healthcheck currently uses kind=http on the canonical landing URL; if the Owner provides a JSON /api/health endpoint, switch to kind=curl-grep with a known body fragment for stronger §77-style content verification."
+}
