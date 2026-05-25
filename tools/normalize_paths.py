@@ -190,6 +190,29 @@ ALLOWLIST: dict[str, set[str]] = {
     # V-DEEP empirical receipt + future auto-generated receipts.
     "vault/backups/2026-05-25-151305_kobiicraft_dryrun.md": {"secret", "doc-path"},
     "vault/backups/*.md": {"secret", "doc-path"},
+    # ---- Rollback Axis (2026-05-25, deploy lifecycle complete).
+    # Per-project rollback configs name ssh aliases + postgres container
+    # names by design -- operational metadata. Schema validator guarantees
+    # zero credential-class keys are present. Same posture as backup/.
+    "vault/rollback/kobiicraft.json":   {"secret"},
+    "vault/rollback/tua-x.json":        {"secret"},
+    "vault/rollback/infinityops.json":  {"secret"},
+    # Spec + plan document the 3 inverse runners by reference to the actual
+    # project topology + the sec 77 doctrine extension. Same posture as
+    # backup spec/plan.
+    "vault/specs/rollback-skill.md":              {"secret"},
+    "vault/plans/rollback-skill-2026-05-25.md":   {"secret"},
+    # V-DEEP empirical receipt + future auto-generated rollback receipts.
+    "vault/rollbacks/2026-05-25-155500_kobiicraft_dryrun.md": {"secret", "doc-path"},
+    "vault/rollbacks/*.md": {"secret", "doc-path"},
+    # V-block fixtures reference fake hosts + cite the production project
+    # names by design (V-DOCTRINE-CITE-ROLLBACK uses 'infinityops' to
+    # exercise the sec 77 code-rollback path).
+    "modules/rollback/test_v_block.py": {"secret", "code-path"},
+    # /rollback command docs cite ssh aliases (gex44, vps204) in the
+    # examples by design -- the whole point of the doc is to teach the
+    # surface.
+    "commands/rollback.md": {"secret"},
     # ---- Auto-generated context-watchdog session log: cwd + transcript
     # paths are appended on every Stop hook crossing a threshold. The
     # literals are operational session metadata (this host, this user),

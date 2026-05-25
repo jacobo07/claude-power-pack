@@ -45,6 +45,20 @@ EXIT_DEPLOY_WARN = 3
 EXIT_CEILING = 4
 
 
+def _rollback_suggestion(project: str) -> str:
+    """Literal suggestion string surfaced on failed deploys.
+
+    The Rollback Axis is NEVER invoked from this module. V-NO-AUTO in
+    modules/rollback/test_v_block.py grep-asserts there is zero call site
+    of the rollback dispatcher here. This function only emits text the
+    Owner can copy and run themselves. See spec sec 10.
+    """
+    return (
+        f"To roll back: /rollback --project {project}   "
+        "(NOT auto-invoked; Owner decides)"
+    )
+
+
 def _git_head_short(project_root: str) -> str:
     import subprocess
 
@@ -85,6 +99,7 @@ def _write_receipt(
     healthcheck_result: dict[str, Any] | None,
     head_sha: str,
     duration_ms: int,
+    overall_verdict: str | None = None,
 ) -> str:
     reports_dir = project_root / "vault" / "deploys"
     reports_dir.mkdir(parents=True, exist_ok=True)
@@ -96,6 +111,14 @@ def _write_receipt(
     hc_block = "(no healthcheck spec)" if healthcheck_result is None else json.dumps(
         healthcheck_result, indent=2, ensure_ascii=False
     )
+
+    effective_verdict = overall_verdict or runner_result.get("verdict") or ""
+    if effective_verdict in {"fail", "ceiling", "deploy-warn"}:
+        rollback_block = _rollback_suggestion(project)
+    elif effective_verdict == "pass":
+        rollback_block = "(deploy succeeded -- rollback not applicable)"
+    else:
+        rollback_block = "(verdict not classified)"
 
     body = f"""# Deploy receipt -- {project} / {env}
 
@@ -129,6 +152,10 @@ def _write_receipt(
 ```
 {hc_block}
 ```
+
+## 5. Rollback
+
+{rollback_block}
 """
     fpath.write_bytes(body.encode("utf-8"))
     return str(fpath.relative_to(project_root))
@@ -292,7 +319,8 @@ def deploy(stdin_payload: dict[str, Any]) -> dict[str, Any]:
             "duration_ms": int((time.monotonic() - started) * 1000),
             "summary": (
                 f"pre-deploy backup gate FAILED (verdict={pre_backup_result.get('verdict')}): "
-                f"{pre_backup_result.get('summary', '')}. Deploy refused."
+                f"{pre_backup_result.get('summary', '')}. Deploy refused.\n  -> "
+                f"{_rollback_suggestion(project)}"
             ),
             "doctrine_cite": None,
             "pre_deploy_backup": pre_backup_result,
@@ -316,19 +344,26 @@ def deploy(stdin_payload: dict[str, Any]) -> dict[str, Any]:
     if runner_result.get("verdict") in {"fail", "ceiling"}:
         head_sha = _git_head_short(str(project_root))
         duration_ms = int((time.monotonic() - started) * 1000)
+        verdict = runner_result["verdict"]
         receipt_path = (
-            _write_receipt(project_root, project, env, detection, runner_result, None, head_sha, duration_ms)
+            _write_receipt(
+                project_root, project, env, detection, runner_result,
+                None, head_sha, duration_ms, overall_verdict=verdict,
+            )
             if not dry_run
             else None
         )
-        exit_code = EXIT_CEILING if runner_result["verdict"] == "ceiling" else EXIT_FAIL
+        exit_code = EXIT_CEILING if verdict == "ceiling" else EXIT_FAIL
+        summary = (
+            f"{runner_result.get('summary', '')}\n  -> {_rollback_suggestion(project)}"
+        )
         return {
-            "verdict": runner_result["verdict"],
+            "verdict": verdict,
             "exit_code": exit_code,
             "mode": detection["mode"],
             "head_sha": head_sha,
             "duration_ms": duration_ms,
-            "summary": runner_result.get("summary", ""),
+            "summary": summary,
             "doctrine_cite": runner_result.get("doctrine_cite"),
             "receipt_path": receipt_path,
             "previous_deploys": _previous_deploys(project_root, project),
@@ -352,8 +387,10 @@ def deploy(stdin_payload: dict[str, Any]) -> dict[str, Any]:
     hc_result = run_healthcheck(healthcheck_spec)
     head_sha = _git_head_short(str(project_root))
     duration_ms = int((time.monotonic() - started) * 1000)
+    overall_verdict_for_receipt = "pass" if hc_result.get("ok") else "deploy-warn"
     receipt_path = _write_receipt(
-        project_root, project, env, detection, runner_result, hc_result, head_sha, duration_ms
+        project_root, project, env, detection, runner_result, hc_result,
+        head_sha, duration_ms, overall_verdict=overall_verdict_for_receipt,
     )
 
     if hc_result.get("ok"):
@@ -365,7 +402,8 @@ def deploy(stdin_payload: dict[str, Any]) -> dict[str, Any]:
         exit_code = EXIT_DEPLOY_WARN
         summary = (
             f"deploy executed but healthcheck FAILED after {hc_result.get('attempts')} "
-            f"attempts -- target may not be live. Report: {receipt_path}"
+            f"attempts -- target may not be live. Report: {receipt_path}\n  -> "
+            f"{_rollback_suggestion(project)}"
         )
 
     return {

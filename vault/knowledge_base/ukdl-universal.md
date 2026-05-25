@@ -121,3 +121,16 @@ DONE-gate in `apex-completion-standard.md`.
 | Ref | File | Why it matters |
 |---|---|---|
 | UKDL-BK-REP-01 | `vault/backups/2026-05-25-151305_kobiicraft_dryrun.md` | First V-DEEP empirical receipt. Dry-run of `/backup --project kobiicraft` against the PP repo's `vault/backup/kobiicraft.json`. Detector picked `rsync-dir`, the planner emitted the full ssh+tar command, the dispatcher correctly refused to mutate (dry-run path). Proves: schema validation, ssh-key resolution, planned remote command, planned restore-test (nbt-magic on level.dat). |
+
+
+
+### Rollback Axis (sealed 2026-05-25)
+
+| ID | Lesson |
+|---|---|
+| UKDL-RB-01 | Manifest as truth source: `backups/<proj>/manifest.json` (written by `apply_retention`) is the ONLY list of verified snapshots. A `.tar.gz` on disk without a manifest entry was either never restore-tested or pre-manifest-era; the Rollback Axis must refuse it (`target_unverified` CEILING). |
+| UKDL-RB-02 | Healthcheck after restore is mandatory. A successful runner with no healthcheck verdict is by definition not a rollback (`rollback-warn` exit 3 when HC fails -- never silent). Reuse `modules/deployment/healthcheck.py:run_healthcheck` -- single source of truth. |
+| UKDL-RB-03 | No auto-rollback. Deploy SUGGESTS, never invokes. V-NO-AUTO grep-asserts zero call sites of the rollback dispatcher in `deploy.py`; V-ROLLBACK-SUGGEST asserts the suggestion DOES appear in fail-class verdicts. Hawkins lens: power, not force. |
+| UKDL-RB-04 | sec 77 extends to rollback. For InfinityOps with `include_code_rollback=true`, the dispatcher invokes `gh workflow run deploy-vps.yml --ref <prev_sha>` after printing the canonical sec 77 citation. INVOKES the canonical CD pipeline -- never reimplements it. |
+| UKDL-RB-05 | Rescue is opt-in. The `--rescue` flag takes a snapshot of the CURRENT state to `vault/rescues/<project>/` BEFORE applying the restore. Off by default (Hawkins: no destructive-by-default behaviour beyond what was asked). When the rescue itself fails, refuse the rollback (CEILING) -- a rollback without a recoverable current state is a one-way door. |
+| UKDL-RB-REP-01 | Reproducibility: `python modules/rollback/test_v_block.py` -> 15/15 PASS, p95 dry-run < 30 ms. `python modules/deployment/test_v_block.py` -> 16/16 PASS (incluyendo V-ROLLBACK-SUGGEST). `python modules/rollback/rollback.py` con `{"project": "kobiicraft", "dry_run": true}` por STDIN -> CEILING exit 4 con mensaje `manifest_absent` (V-DEEP empirical, `vault/rollbacks/2026-05-25-155500_kobiicraft_dryrun.md`). |

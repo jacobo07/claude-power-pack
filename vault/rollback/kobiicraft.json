@@ -1,0 +1,16 @@
+{
+  "project": "kobiicraft",
+  "mode": "rsync-dir",
+  "ssh_alias": "gex44",
+  "ssh_key": "~/.ssh/kobicraft_gex44",
+  "backup_source_dir": "backups/kobiicraft/",
+  "post_restore_cmd": "sudo systemctl restart kobiicraft@main",
+  "healthcheck": {
+    "kind": "tcp",
+    "target": "5.9.23.174",
+    "port": 25565,
+    "retries": 12,
+    "delay_sec": 10
+  },
+  "notes": "Inverse of vault/backup/kobiicraft.json. The rsync-dir snapshot is a tar.gz of the absolute remote paths (/srv/kobiicraft/main/{world,world_nether,world_the_end,plugins}); the restore pipes that archive back through ssh and lets tar -xzf -C / recreate every entry at its absolute path. post_restore_cmd restarts the templated systemd unit kobiicraft@main; healthcheck is a 12x10s TCP poke on Minecraft port 25565 (same shape as deploy). The .jar artefacts live INSIDE the backup tar.gz alongside the world data, so this rollback also reverts the plugin code -- scp-systemd deploy overwrites in place and leaves no on-host history."
+}

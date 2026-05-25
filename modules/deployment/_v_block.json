@@ -1,12 +1,12 @@
 {
-  "passed": 15,
-  "total": 15,
+  "passed": 16,
+  "total": 16,
   "results": [
     {
       "test": "V-DETECT-GH",
       "status": "PASS",
-      "evidence": "{\"mode\": \"gh-workflow\", \"evidence\": \"workflow file: .github\\\\workflows\\\\deploy-vps.yml\", \"config_path\": null, \"workflow_file\": \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmp26hsgi6a\\\\.github\\\\workflows\\\\deploy-vps.yml\", \"remote\": null}",
-      "duration_ms": 15.0
+      "evidence": "{\"mode\": \"gh-workflow\", \"evidence\": \"workflow file: .github\\\\workflows\\\\deploy-vps.yml\", \"config_path\": null, \"workflow_file\": \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpclgh3si1\\\\.github\\\\workflows\\\\deploy-vps.yml\", \"remote\": null}",
+      "duration_ms": 31.0
     },
     {
       "test": "V-DETECT-PUSH",
@@ -17,8 +17,8 @@
     {
       "test": "V-DETECT-SCP",
       "status": "PASS",
-      "evidence": "{\"mode\": \"manual-scp\", \"evidence\": \"manifest: pom.xml; config: vault\\\\deploy\\\\test.json\", \"config_path\": \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpar4cjev9\\\\vault\\\\deploy\\\\test.json\", \"workflow_file\": null, \"remote\": null}",
-      "duration_ms": 16.0
+      "evidence": "{\"mode\": \"manual-scp\", \"evidence\": \"manifest: pom.xml; config: vault\\\\deploy\\\\test.json\", \"config_path\": \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmppcn6qrbe\\\\vault\\\\deploy\\\\test.json\", \"workflow_file\": null, \"remote\": null}",
+      "duration_ms": 0.0
     },
     {
       "test": "V-DETECT-NONE",
@@ -30,7 +30,7 @@
       "test": "V-CEILING-SSH",
       "status": "PASS",
       "evidence": "{\"ok\": false, \"verdict\": \"ceiling\", \"summary\": \"SSH key not found at C:\\\\Users\\\\User\\\\.ssh\\\\__nonexistent_key_for_v_ceiling_test__; cannot deploy\", \"doctrine_cite\": null, \"receipt\": \"config.ssh_key = '~/.ssh/__nonexistent_key_for_v_ceiling_test__'\\nexpanded path  = 'C:\\\\Users\\\\User\\\\.ssh\\\\__nonexistent_key_for_v_ceiling_test__'\\naction         = Owner must create the key or fix the path\"}",
-      "duration_ms": 0.0
+      "duration_ms": 16.0
     },
     {
       "test": "V-CONFIG-INVALID",
@@ -47,8 +47,8 @@
     {
       "test": "V-HEALTHCHECK-NC",
       "status": "PASS",
-      "evidence": "{\"ok\": true, \"attempts\": 1, \"evidence\": \"tcp connect to 127.0.0.1:63345 succeeded on attempt 1\", \"kind\": \"tcp\"}",
-      "duration_ms": 16.0
+      "evidence": "{\"ok\": true, \"attempts\": 1, \"evidence\": \"tcp connect to 127.0.0.1:58884 succeeded on attempt 1\", \"kind\": \"tcp\"}",
+      "duration_ms": 0.0
     },
     {
       "test": "V-HEALTHCHECK-FAIL",
@@ -71,7 +71,7 @@
     {
       "test": "V-DOCTRINE-CITE",
       "status": "PASS",
-      "evidence": "{\"ok\": true, \"verdict\": \"dry-run\", \"summary\": \"gh-workflow dry-run for deploy-vps.yml\", \"doctrine_cite\": \"\\u00a777 Deploy Sovereignty -- the workflow at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpcf5aop5p\\\\.github\\\\workflows\\\\deploy-vps.yml is the canonical CD pipeline. This runner INVOKES it via the gh API; it does not replace it.\", \"receipt\": \"DRY RUN -- would invoke: gh workflow run deploy-vps.yml --ref main\\nDRY RUN -- then: gh run watch --exit-status (poll until terminal state)\\nDRY RUN -- workflow file: C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpcf5aop5p\\\\.github\\\\workflows\\\\deploy-vps.yml\\nDRY RUN -- doctrine: \\u00a777 Deploy Sovereignty -- the workflow at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpcf5aop5p\\\\.github\\\\workflows\\\\deploy-vps.yml is the canonical CD pipeline. This runner INVOKES it via the gh API; it does not replace it.\"}",
+      "evidence": "{\"ok\": true, \"verdict\": \"dry-run\", \"summary\": \"gh-workflow dry-run for deploy-vps.yml\", \"doctrine_cite\": \"\\u00a777 Deploy Sovereignty -- the workflow at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpk9ddacuc\\\\.github\\\\workflows\\\\deploy-vps.yml is the canonical CD pipeline. This runner INVOKES it via the gh API; it does not replace it.\", \"receipt\": \"DRY RUN -- would invoke: gh workflow run deploy-vps.yml --ref main\\nDRY RUN -- then: gh run watch --exit-status (poll until terminal state)\\nDRY RUN -- workflow file: C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpk9ddacuc\\\\.github\\\\workflows\\\\deploy-vps.yml\\nDRY RUN -- doctrine: \\u00a777 Deploy Sovereignty -- the workflow at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpk9ddacuc\\\\.github\\\\workflows\\\\deploy-vps.yml is the canonical CD pipeline. This runner INVOKES it via the gh API; it does not replace it.\"}",
       "duration_ms": 0.0
     },
     {
@@ -83,14 +83,20 @@
     {
       "test": "V-BACKUP-FIRST",
       "status": "PASS",
-      "evidence": "{\"verdict\": \"ceiling\", \"exit_code\": 4, \"mode\": \"gh-workflow\", \"head_sha\": \"\", \"duration_ms\": 156, \"summary\": \"pre-deploy backup gate FAILED (verdict=ceiling): backup config not found or invalid at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpp3p52f6h\\\\vault\\\\backup\\\\x.json. Deploy refused.\", \"doctrine_",
-      "duration_ms": 172.0
+      "evidence": "{\"verdict\": \"ceiling\", \"exit_code\": 4, \"mode\": \"gh-workflow\", \"head_sha\": \"\", \"duration_ms\": 186, \"summary\": \"pre-deploy backup gate FAILED (verdict=ceiling): backup config not found or invalid at C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmpk1vxg3yj\\\\vault\\\\backup\\\\x.json. Deploy refused.\\n  -> To rol",
+      "duration_ms": 203.0
+    },
+    {
+      "test": "V-ROLLBACK-SUGGEST",
+      "status": "PASS",
+      "evidence": "verdict=ceiling; suggest_in_summary=True; rollback-imports=0; rollback-calls=0",
+      "duration_ms": 297.0
     },
     {
       "test": "V-TIMING",
       "status": "PASS",
-      "evidence": "samples=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 16.0] p05=0.0ms p95=16.0ms",
-      "duration_ms": 16.0
+      "evidence": "samples=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0] p05=0.0ms p95=0.0ms",
+      "duration_ms": 0.0
     }
   ]
 }

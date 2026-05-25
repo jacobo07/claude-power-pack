@@ -410,6 +410,50 @@ def v_backup_first() -> None:
     _record("V-BACKUP-FIRST", passed, json.dumps(result)[:300], dur)
 
 
+def v_rollback_suggest() -> None:
+    """When deploy returns fail|ceiling|deploy-warn, the dispatcher
+    surfaces the rollback suggestion line. ALSO grep-asserts that
+    deploy.py never imports the rollback module (sec 10 invariant).
+    """
+    from deploy import deploy as _deploy
+
+    t0 = time.monotonic()
+    # CEILING path: re-use v_backup_first's setup (pre_deploy_backup=true,
+    # no matching backup config) -> CEILING -> summary must mention /rollback.
+    with tempfile.TemporaryDirectory() as td:
+        repo = _make_gh_repo(Path(td))
+        cfg_dir = repo / "vault" / "deploy"
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+        cfg = {
+            "project": "ceilproj",
+            "mode": "gh-workflow",
+            "workflow_file": ".github/workflows/deploy-vps.yml",
+            "ref": "main",
+            "healthcheck": {"kind": "tcp", "target": "127.0.0.1", "port": 1, "retries": 1, "delay_sec": 0},
+            "pre_deploy_backup": True,
+        }
+        (cfg_dir / "ceilproj.json").write_text(json.dumps(cfg), encoding="utf-8")
+        result = _deploy({"project_root": str(repo), "project": "ceilproj", "env": "prod", "dry_run": False})
+
+    deploy_py_text = (HERE / "deploy.py").read_text(encoding="utf-8")
+    import_hits = re.findall(r"^\s*(?:from|import)\s+.*rollback", deploy_py_text, re.MULTILINE)
+    call_hits = re.findall(r"(?<![\w\"\'])rollback\s*\(", deploy_py_text)
+
+    dur = (time.monotonic() - t0) * 1000
+    passed = (
+        result["verdict"] == "ceiling"
+        and "/rollback --project ceilproj" in result["summary"]
+        and len(import_hits) == 0
+        and len(call_hits) == 0
+    )
+    _record(
+        "V-ROLLBACK-SUGGEST",
+        passed,
+        f"verdict={result['verdict']}; suggest_in_summary={'/rollback --project ceilproj' in result['summary']}; rollback-imports={len(import_hits)}; rollback-calls={len(call_hits)}",
+        dur,
+    )
+
+
 TESTS = [
     v_detect_gh,
     v_detect_push,
@@ -425,6 +469,7 @@ TESTS = [
     v_doctrine_cite,
     v_closed_loop,
     v_backup_first,
+    v_rollback_suggest,
     v_timing,
 ]
 

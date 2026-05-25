@@ -1,0 +1,18 @@
+{
+  "project": "tua-x",
+  "mode": "pg-dump",
+  "ssh_alias": "vps204",
+  "ssh_key": "~/.ssh/kobicraft_claude_code",
+  "pg_container": "tuax-postgres",
+  "pg_user": "tuax",
+  "pg_database": "tuax_mie",
+  "backup_source_dir": "backups/tua-x/",
+  "healthcheck": {
+    "kind": "http",
+    "url": "https://cw.infinityops.ai/",
+    "expect_status": 200,
+    "retries": 12,
+    "delay_sec": 10
+  },
+  "notes": "Inverse of vault/backup/tua-x.json. cat <ts>.dump | ssh vps204 'docker exec -i tuax-postgres pg_restore -c -U tuax -d tuax_mie' clean-reloads the database. -c drops + recreates objects, which routinely emits warnings on fresh objects; the runner classifies exit-1-with-only-warnings as pass. Code rollback for TUA-X is not handled here: it is git push vps204 +<prev_sha>:main and is Owner-driven (the post-receive hook re-runs docker compose). Healthcheck is the same http kind as the deploy config; on FAIL -> rollback-warn, Owner investigates."
+}

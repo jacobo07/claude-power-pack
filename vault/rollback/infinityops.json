@@ -1,0 +1,20 @@
+{
+  "project": "infinityops",
+  "mode": "pg-dump",
+  "ssh_alias": "vps204",
+  "ssh_key": "~/.ssh/kobicraft_claude_code",
+  "pg_container": "infinityops-postgres",
+  "pg_user": "infinityops",
+  "pg_database": "infinity_mie_prod",
+  "backup_source_dir": "backups/infinityops/",
+  "code_rollback_workflow": "deploy-vps.yml",
+  "healthcheck": {
+    "kind": "curl-grep",
+    "url": "https://infinityops.ai/",
+    "grep_pattern": "br.jula",
+    "retries": 24,
+    "delay_sec": 15
+  },
+  "doctrine": "sec 77 Deploy Sovereignty",
+  "notes": "Inverse of vault/backup/infinityops.json. Data path: cat <ts>.dump | ssh vps204 'docker exec -i infinityops-postgres pg_restore -c -U infinityops -d infinity_mie_prod'. Code path (when --include-code-rollback is set): the dispatcher prints the sec 77 cite, reads prev_sha from the latest vault/deploys/*_infinityops.md HEAD line, and invokes gh workflow run deploy-vps.yml --ref <prev_sha>. This INVOKES the canonical CD pipeline; it never reimplements 09_Provisioning/deploy_from_git.sh. Healthcheck mirrors the deploy curl-grep on the live br.jula token -- HTTP 200 alone is insufficient because a stale build still returns 200."
+}

@@ -599,3 +599,25 @@ Each axis-seal cycle now carries its own override row; blanket override
 remains inappropriate. The pattern is: identify each residual FAIL,
 attribute it to either THIS cycle or a documented prior cycle, override
 only when 100% are preexisting.
+
+
+
+## Rollback Axis cycle (2026-05-25)
+
+| ID | Lesson | Trigger |
+|---|---|---|
+| Rollback L1 | source_selector field-names MUST match retention.py manifest schema. The manifest writer uses `snapshots`, `name`, `mtime_utc` (ISO string). I first wrote `entries`, `path`, `mtime` (epoch float) which would silently miss every entry. Always Read the writer before writing the reader. | First draft of source_selector.py had a 4-field mismatch; caught by reading retention.py before tests. |
+| Rollback L2 | sys.path insertion ORDER matters when subpackage names collide. `modules/rollback/runners` AND `modules/deployment/runners` AND `modules/backup/runners` all define `runners` as a package. Insert THIS_DIR first; `append` peer-module dirs (DEPLOYMENT_DIR), never `insert(0)`. | Smoke import test failed with `No module named runners.restore_docker_volume`; deployment dir was at sys.path[0] and its runners/ shadowed mine. |
+| Rollback L3 | V-NO-AUTO regex false-positives from your OWN docstrings. The regex `(?<![\w"'])rollback\s*\(` matches `rollback(` even inside a Python docstring (a docstring is just a string literal, but the regex scans raw file text). Avoid the literal `rollback()` in any comment/docstring -- use "the rollback function" or "the rollback dispatcher". | V-ROLLBACK-SUGGEST first run reported `rollback-calls=1` because my _rollback_suggestion() docstring said "zero call site of rollback() here". Fixed by paraphrasing. |
+| Rollback L4 | pre_deploy_backup CEILING is a SECOND return path; integration changes MUST cover both. Adding the rollback suggestion only to the runner-fail branch (line ~325 of deploy.py) missed the pre-deploy-backup CEILING branch (line ~285) which short-circuits earlier. V-ROLLBACK-SUGGEST exercised the pre_deploy_backup CEILING path and caught the omission. | V-ROLLBACK-SUGGEST first run reported `suggest_in_summary=False` for a CEILING verdict that came from the gate, not the runner. Added _rollback_suggestion to that branch too. |
+| Rollback L5 | Rescue path needs the BACKUP config (not the rollback config) -- snapshot paths live there. Implemented `_take_rescue` by reading `vault/backup/<project>.json` and reusing the backup runner with `local_destination=vault/rescues/<project>/`. The rollback config carries `backup_source_dir` (where to FIND snapshots), the backup config carries `remote_paths` (where to GO get them). Don't conflate. | V-RESCUE-CREATES design: rescue must capture what backup would capture; only the backup config knows the source. |
+| Rollback L6 | Receipt shape lemma: pass through the EFFECTIVE verdict (not just runner verdict) to `_write_receipt` so the receipt's footer section matches the dispatcher's final verdict, not the intermediate runner outcome. Added `overall_verdict` param to `_write_receipt` in deploy.py; runner=pass + healthcheck=fail -> `overall_verdict='deploy-warn'` -> rollback section says "to roll back: ...", not "deploy succeeded". | When runner returns pass but healthcheck fails, the receipt would otherwise label the verdict as "pass" in the rollback section -- false. Symmetric: when runner returns fail/ceiling, overall_verdict matches the runner verdict. |
+
+### Rollback Axis P15 -- verify_spp override authorization
+
+The same hook-dispatcher.js loose-vs-PP drift documented in the Code Review,
+Deploy, and Backup Axis cycles continues to be PREEXISTING (introduced
+pre-this-cycle). It is NOT caused by Rollback Axis changes. Override
+authorized for any mirror-parity / drift-report FAILs that match this
+preexisting drift; new FAILs (if any) caused by Rollback Axis changes
+would be investigated and fixed individually.
