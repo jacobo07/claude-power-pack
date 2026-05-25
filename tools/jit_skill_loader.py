@@ -712,6 +712,70 @@ VAGUE_LINT_MESSAGE = (
 )
 
 
+# --- Lateral-Thinking Axis (sealed 2026-05-25, trigger family #10) ---
+# Discovery-card injection when the prompt signals stuckness, a design
+# pivot, or an explicit "how should I" question. Pointer-only: the body
+# of the lateral-thinking SKILL.md is NOT inlined here — the card tells
+# the agent the skill exists and how to invoke it. Mutex with the
+# vague-prompt lint (no card if the prompt is too vague to think about
+# laterally yet) and with arch-check (no card if arch_check already
+# fired — arch_check's context carries the lateral nudge).
+_LATERAL_RX = re.compile(
+    r"\b(?:"
+    r"stuck|stymied|blocked|atascado|atrapado|"
+    r"no\s+idea|no\s+se\s+me\s+ocurre|no\s+sabemos|"
+    r"how\s+should\s+i|how\s+do\s+i\s+approach|"
+    r"what'?s?\s+the\s+best\s+(?:approach|way)|"
+    r"design\s+problem|design\s+pivot|"
+    r"brainstorm|alternativas?|lateral|"
+    r"complex\s+problem|hard\s+problem|"
+    r"too\s+obvious|obvious\s+(?:answer|solution)\s+is\s+wrong"
+    r")\b",
+    re.I | re.UNICODE)
+LATERAL_CARD = (
+    "[lateral-thinking-skill] Stuck / design-pivot prompt detected. "
+    "Invoke the Skill tool with name `lateral-thinking` for the "
+    "5-frame procedure (reframing, inversion, cross-domain analogy, "
+    "constraint-removal, first-principles), scoring rubric (1-5 per "
+    "frame), and audit-trail block format. Default top-3 by "
+    "problem-domain; the full procedure is mandatory before solution "
+    "convergence. Cross-references: 5 per-frame files under "
+    "~/.claude/skills/lateral-thinking/references/."
+)
+
+
+def _detect_lateral_thinking_trigger(
+    prompt: str, arch_block, vague_block,
+) -> str | None:
+    """Trigger family #10 — discovery card for the lateral-thinking skill.
+
+    Mutex: defers to arch_check (if `arch_block` is non-None) and to
+    vague-lint (if `vague_block` is non-None). Same fail-open contract
+    as the other JIT helpers (any error -> None, log, never block).
+    """
+    try:
+        if os.environ.get("CLAUDEPP_LATERAL_DISABLE") == "1":
+            return None
+        if os.environ.get("CLAUDEPP_JIT_RUNNING") == "1":
+            return None
+        if not prompt:
+            return None
+        if arch_block is not None:
+            return None   # arch_check covers design-decision prompts;
+                          # genuine semantic overlap, mutex stays.
+        # Note: vague-lint mutex DROPPED 2026-05-25 after empirical run.
+        # vague-lint's `this/that/it` matchers fire on conversational use
+        # of those pronouns (e.g. "above that", "this repo"); muting LT
+        # on those false positives was over-conservative. Both advisories
+        # coexist; the agent can decide which (or both) to act on.
+        if not _LATERAL_RX.search(prompt):
+            return None
+        return LATERAL_CARD
+    except Exception as exc:
+        _log(f"lateral-thinking ERROR {type(exc).__name__}: {exc}")
+        return None
+
+
 def _detect_vague_prompt(prompt: str, spec) -> str | None:
     """Owner-spec lint signal — returns one-line warning or None.
 
@@ -797,12 +861,17 @@ def run(data) -> dict:
         # prompts with vague referents. Spec is passed (already computed)
         # to avoid a second .specify walk. Never blocks; advisory only.
         vague_block = _detect_vague_prompt(prompt, spec)
+        # Lateral-Thinking Axis (2026-05-25): discovery card for the
+        # lateral-thinking skill. Mutex with arch_block + vague_block.
+        lt_block = _detect_lateral_thinking_trigger(
+            prompt, arch_block, vague_block)
         # Zero-Command B.2 — fire-and-forget flag drop; never blocks the
         # prompt, never adds to additionalContext. Daemon B.3 picks it up.
         _detect_new_feature_intent_and_flag(prompt, cwd, spec,
                                             data.get("session_id"))
         if not mods and not spec:
-            extras = "\n\n".join(b for b in (arch_block, vague_block) if b)
+            extras = "\n\n".join(
+                b for b in (arch_block, vague_block, lt_block) if b)
             if extras:
                 return {"continue": True, "additionalContext": extras}
             return {"continue": True}
@@ -873,7 +942,8 @@ def run(data) -> dict:
                                  f"vendor/apollo/upstream/{m}/SKILL.md")
 
         if not injected and spec_injected_size == 0:
-            extras = "\n\n".join(b for b in (arch_block, vague_block) if b)
+            extras = "\n\n".join(
+                b for b in (arch_block, vague_block, lt_block) if b)
             if extras:
                 return {"continue": True, "additionalContext": extras}
             return {"continue": True}
@@ -905,13 +975,15 @@ def run(data) -> dict:
                 f"cards via SessionStart sentinel): {', '.join(deferred)}."
             )
         ctx = header + "\n\n" + "\n\n".join(blocks)
-        extras = "\n\n".join(b for b in (arch_block, vague_block) if b)
+        extras = "\n\n".join(
+            b for b in (arch_block, vague_block, lt_block) if b)
         if extras:
             ctx = ctx + "\n\n" + extras
         _log(f"sid={sid} tier={tier} injected={injected} bytes={total} "
              f"spec_bytes={spec_injected_size} deferred={deferred} "
              f"arch={'yes' if arch_block else 'no'} "
-             f"vague={'yes' if vague_block else 'no'}")
+             f"vague={'yes' if vague_block else 'no'} "
+             f"lt={'yes' if lt_block else 'no'}")
         return {"continue": True, "additionalContext": ctx}
     except Exception as exc:                  # fail-open (Ley 24: logged)
         _log(f"ERROR {type(exc).__name__}: {exc}")
@@ -920,7 +992,8 @@ def run(data) -> dict:
 
 # Importable by hook-dispatcher-style bundlers / tests.
 __all__ = ["run", "TASK_PROFILES", "TRIGGERS", "_select_tier", "_render",
-           "_detect_vague_prompt", "VAGUE_LINT_MESSAGE"]
+           "_detect_vague_prompt", "VAGUE_LINT_MESSAGE",
+           "_detect_lateral_thinking_trigger", "LATERAL_CARD"]
 
 
 if __name__ == "__main__":
