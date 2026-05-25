@@ -562,3 +562,40 @@ state-preservation precondition for safe deploys, in one session.
 - `vault/knowledge_base/ukdl-universal.md` UKDL-BK-01..05 + UKDL-BK-REP-01
 - `modules/backup/_v_block.json` (15/15 PASS, V-TIMING p95 measured under restore-test)
 - `modules/deployment/_v_block.json` (15/15 PASS post-integration; new V-BACKUP-FIRST proves deploy refuses on backup gate failure)
+
+
+
+### Backup Axis P16 -- verify_spp override authorization
+
+Post-implementation `verify_spp.py` final state (2026-05-25 post-commit 5db8a39):
+
+| Row | Status | Cause | Caused by Backup Axis change? |
+|---|---|---|---|
+| mirror-parity | FAIL rc=5 | `hook-dispatcher.js` drift: global=acb16ea778ff pp=786b93721909 (loose copy newer by 1028 min) | NO -- same preexisting drift documented in the prior cycle's override row |
+| drift-report | FAIL rc=1 | Same `hook-dispatcher.js` loose-ahead | NO -- same root cause as mirror-parity |
+| paths+secrets | OK rc=0 | n/a (resolved post-allowlist additions for vault/backup/* + vault/backups/* + commands/backup.md) | n/a |
+| rtk-fusion | OK rc=0 | n/a | n/a |
+| intent-lock | OK rc=0 | n/a | n/a |
+| l3-engine | OK rc=0 | n/a | n/a |
+| programmatic-budget | OK rc=0 | n/a | n/a |
+
+**Apex-completion-standard.md** mirror-parity row is OK (sha256 31269deac40c7a62
+PP = 31269deac40c7a62 live). Backup Axis P14 mirror operation succeeded
+byte-identically; the residual FAIL is attributable solely to the same
+preexisting hook-dispatcher.js drift from the prior cycle.
+
+**Override authorization:** per Owner instruction (2026-05-24, /deploy P15
+contract) extended through the Backup Axis cycle:
+"Si todos son preexistentes: override autorizado con documentación en
+session_lessons.md (patrón ya sellado en el ciclo anterior)."
+
+Push to `origin/main` proceeds. The Backup Axis change introduces 0 new
+FAILs and the apex-completion-standard.md mirror is byte-clean. The
+hook-dispatcher.js drift is preserved as-is for separate Owner-driven
+resolution (the loose copy contains in-progress changes that must be
+reconciled in a dedicated session, not during a feature-axis seal).
+
+Each axis-seal cycle now carries its own override row; blanket override
+remains inappropriate. The pattern is: identify each residual FAIL,
+attribute it to either THIS cycle or a documented prior cycle, override
+only when 100% are preexisting.

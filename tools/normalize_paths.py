@@ -195,6 +195,10 @@ ALLOWLIST: dict[str, set[str]] = {
     # literals are operational session metadata (this host, this user),
     # not credentials. Same posture as session_lessons.md.
     "vault/progress.md": {"doc-path"},
+    # ---- /backup command documentation: the examples cite the
+    # canonical ssh aliases (gex44, vps204) by design -- the whole
+    # point of the doc is to teach the Owner the surface.
+    "commands/backup.md": {"secret"},
     # ---- Frozen topology snapshot (2026-04-29): captured-at-test-time
     # absolute path inventory, audit-record by design.
     "vault/topology/lazarus_layout_2026-04-29.json": {"code-path"},
