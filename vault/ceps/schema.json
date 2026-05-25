@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "schema_id": "ceps-event-v1",
+  "description": "Cascade Error Prevention System -- per-event schema. Symbolic taxonomy, no LLM in the propagation path. FTS5 sidecar lives in patterns.db (table ceps_patterns_fts, own rowid space, never touches turns_fts). See plan: vault/plans/lateral-thinking-skill-plan.md and apex axis: knowledge_vault/core/apex-completion-standard.md.",
+  "fields": {
+    "id": {
+      "type": "string",
+      "format": "ceps_<sha1[:16]>",
+      "required": true,
+      "stable_across_reruns": true
+    },
+    "ts": {
+      "type": "string",
+      "format": "ISO-8601 UTC",
+      "required": true
+    },
+    "category": {
+      "type": "enum",
+      "required": true,
+      "values": [
+        "regression",
+        "security",
+        "drift",
+        "scaffold",
+        "incomplete-shell",
+        "integration",
+        "spec-violation",
+        "tooling",
+        "env"
+      ]
+    },
+    "subsystem": {
+      "type": "string",
+      "required": true,
+      "examples": ["jit-loader", "hook-fanout", "ps-bash-bridge", "session-checkpoint", "verify-spp", "rtk-fusion", "mirror-parity", "shell-heredoc", "kclear-schema"]
+    },
+    "root_cause": {
+      "type": "string",
+      "required": true,
+      "max_chars": 600,
+      "description": "Causal mechanism, not symptom. Goes into pattern_signature normalization."
+    },
+    "pattern_signature": {
+      "type": "string",
+      "format": "sha256[:16]",
+      "required": true,
+      "derived_from": "normalize(root_cause)"
+    },
+    "prevention_rule": {
+      "type": "string",
+      "required": true,
+      "max_chars": 300,
+      "description": "Templated one-line rule the agent can apply on a future matching prompt."
+    },
+    "affected_modules": {
+      "type": "array",
+      "items": "string",
+      "required": false
+    },
+    "evidence_path": {
+      "type": "string",
+      "required": false,
+      "description": "Path or vault link to the empirical evidence."
+    },
+    "confidence": {
+      "type": "enum",
+      "required": true,
+      "values": ["low", "high"],
+      "default": "high"
+    },
+    "auto_test_eligible": {
+      "type": "boolean",
+      "required": false,
+      "derived_from": "category in {regression, security, drift}"
+    }
+  },
+  "categories_with_auto_test": ["regression", "security", "drift"],
+  "destinations": {
+    "session_lessons": "vault/knowledge_base/session_lessons.md",
+    "ukdl": "vault/knowledge_base/ukdl-universal.md",
+    "patterns_db": "vault/ceps/patterns.db (table: ceps_patterns_fts)"
+  }
+}
