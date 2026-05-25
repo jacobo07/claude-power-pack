@@ -28,8 +28,22 @@ CACHE_FILE = "source_map.json"
 # Default file patterns to scan
 DEFAULT_PATTERNS = ["**/*.java", "**/*.py", "**/*.ts", "**/*.js", "**/*.yml", "**/*.yaml", "**/*.md"]
 
-# Directories to skip
-SKIP_DIRS = {".git", "node_modules", "target", "build", "dist", "__pycache__", ".gradle", "_audit_cache", ".obsidian"}
+# Directories to skip.
+# Cross-project rule (sealed 2026-05-25 from OVO Pane 5 recovery, KobiiCraft):
+# auto-regen / build / telemetry directories must NEVER enter the source_map
+# because they inflate the OVO delta past the sub-200 honest-scan ceiling
+# and the protocol gates Phase E `--vault-post` behind A/A+, creating a
+# Catch-22. Files committed in these dirs are still version-controlled by
+# git; this skip set only excludes them from `audit_cache.source_map` scans.
+SKIP_DIRS = {
+    ".git", "node_modules", "target", "build", "dist", "__pycache__",
+    ".gradle", "_audit_cache", ".obsidian",
+    # KobiiCraft / Power-Pack additions (2026-05-25):
+    "_knowledge_graph",   # auto-regen via ~/.claude/hooks/kg-sync-hook.js (6049+ .md files)
+    ".playwright-mcp",    # Playwright MCP session telemetry
+    ".next",              # Next.js dashboard build output (any nested dashboard)
+    ".venv", "venv",      # Python virtualenvs
+}
 
 # Semantic DNA — keyword regex loaded from sidecar JSON (anti-quine: Mistake #43).
 # Keeping the literal keywords out of this file prevents the scanner from
