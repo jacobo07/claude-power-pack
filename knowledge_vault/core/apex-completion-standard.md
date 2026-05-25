@@ -1299,3 +1299,121 @@ auto-testing + arch-check + code-review + deploy; Backup is the
 precondition gate that protects Deploy from itself. Rollback (the future
 sister) closes the loop: Backup makes Deploy safe; Rollback makes Deploy
 recoverable.
+
+
+
+## Rollback Axis (sealed 2026-05-25) -- deploy lifecycle complete
+
+The Rollback Axis closes the deploy lifecycle introduced by Backup and Deploy.
+The full chain is now:
+
+` 
+Backup (safe) -> Deploy (deliver) -> Rollback (recover).
+` 
+
+No deploy is irreversible. When a deploy fails or the Owner decides to
+revert, `/rollback --project X` restores the last verified snapshot from
+`backups/<project>/manifest.json`, then runs the same post-deploy
+healthcheck against the live target. A restore whose healthcheck fails
+yields `rollback-warn` exit 3, not silent success.
+
+Three architectural invariants are sealed by this axis:
+
+1. **Manifest as truth source.** `modules/rollback/source_selector.py`
+   refuses to use any snapshot that is not in the manifest. A `.tar.gz` on
+   disk without a manifest entry was either never restore-tested or is
+   pre-manifest-era; the Rollback Axis cannot trust a snapshot that the
+   Backup Axis itself did not certify.
+
+2. **No automatic rollback.** The Deploy Axis dispatcher SUGGESTS the
+   `/rollback --project <X>` command on `verdict in {fail, ceiling,
+   deploy-warn}`; it never invokes the rollback dispatcher. V-NO-AUTO in
+   `modules/rollback/test_v_block.py` grep-asserts zero call sites of the
+   rollback function in `modules/deployment/deploy.py`. V-ROLLBACK-SUGGEST
+   in `modules/deployment/test_v_block.py` asserts the suggestion DOES
+   appear in fail-class verdicts. Hawkins lens: power, not force. The Owner
+   always decides on destructive operations.
+
+3. **sec 77 Deploy Sovereignty extends to rollback.** For `infinityops`
+   with `include_code_rollback=true`, the dispatcher invokes
+   `gh workflow run deploy-vps.yml --ref <prev_sha>` after printing the
+   sec 77 citation. The canonical CD pipeline is invoked, never
+   reimplemented. `prev_sha` is parsed from the latest
+   `vault/deploys/*_infinityops.md` HEAD line.
+
+The opt-in `--rescue` flag takes a pre-rollback snapshot of CURRENT state
+into `vault/rescues/<project>/` before applying the restore -- a safety
+net for the case where the Owner wants logs/data from the broken state
+before overwriting it. Off by default (Hawkins: no destructive-by-default
+behaviour beyond what was asked).
+
+` 
+[ Auto-Testing Gate ]   does it work?
+       v
+[  Arch-Check         ] consistent with the vault?
+       v
+[  Code Review        ] well-written, secure, maintainable?
+       v
+[  Backup             ] restore-tested snapshot on disk?
+       v
+[  Deploy             ] reached production AND serving traffic?
+       v
+[  Rollback (on fail) ] verified restore + healthcheck PASS?
+       v
+   PRODUCTION (or recovered prior state)
+` 
+
+The Quadrangle remains auto-testing + arch-check + code-review + deploy.
+Backup is the safe-deploy precondition between Code Review and Deploy.
+Rollback is the recovery escape hatch AFTER Deploy. The five-node chain is
+now complete: nothing reaches production without four gates, and nothing
+that fails after Deploy is irrecoverable.
+
+V-block evidence: 15/15 rollback tests PASS (V-LIST-VERIFIED,
+V-LIST-EMPTY, V-DRYRUN-RSYNC, V-DRYRUN-PGDUMP, V-CONFIG-INVALID,
+V-CEILING-SSH-KEY, V-TARGET-NOT-FOUND, V-TARGET-UNVERIFIED,
+V-RESCUE-CREATES, V-HEALTHCHECK-PASS, V-HEALTHCHECK-FAIL, V-NO-AUTO,
+V-DOCTRINE-CITE-ROLLBACK, V-CLOSED-LOOP, V-TIMING p95 ~20 ms).
+16/16 deployment V-block tests PASS, including new V-ROLLBACK-SUGGEST.
+
+
+## Skill Completion Axis (sealed 2026-05-25) -- baseline raised post LT+CEPS
+
+A new PP skill is complete only when all seven clauses of the Skill
+Completion Standard (`knowledge_vault/core/skill-completion-standard.md`)
+are satisfied with empirical evidence. Missing evidence == not complete.
+Reality Contract applies: the evidence is the test output, not the
+description of the test.
+
+### The seven clauses (short form -- full spec in the SCS document)
+
+1. **C1**: empirical pass-gate declared before the first byte of skill content.
+2. **C2**: side-by-side with-vs-without-skill comparison on the same prompts.
+3. **C3**: no-collision against the 10 JIT trigger families + Intent-Lock + Arch-Check + vague-lint + active hooks + 29 baseline tests.
+4. **C4**: distribution integrated with CEPS (`tools/ceps.py::record_error` + `vault/ceps/events.jsonl`).
+5. **C5**: auto-test stub via `tools/ceps_test_gen.py` for any regression / security / drift invariant.
+6. **C6**: atomic write for every markdown append (no `cat >>` -- direct consequence of the 2026-05-23 apex corruption).
+7. **C7**: RTK proxy compatibility -- no raw-stdout byte slicing in skill tooling.
+
+### Enforcement
+
+A skill that fails any clause cannot be merged to `main`. The Owner-facing
+PR description must carry a Skill Completion Standard table with one row
+per clause + evidence path + checked status. Missing rows or unchecked
+clauses block the merge.
+
+### Bootstrap references (the two skills that defined this axis)
+
+- `lateral-thinking` skill (`~/.claude/skills/lateral-thinking/`): 11 V-* gates passing in `tools/test_lateral_thinking.py`.
+- CEPS substrate (`tools/ceps.py` + `tools/ceps_test_gen.py`): 10/10 closed-loop in `tools/test_ceps_closed_loop.py`, 8/8 full-cycle in `tools/test_ceps_full_cycle.py`.
+
+These two were built simultaneously and bootstrap each other. The axis
+freezes the pattern they established.
+
+### DONE-gate
+
+`python -m pytest tests/test_forensic_probes.py tests/test_mistake_frequency_xplat.py -q`
++ `python tools/test_lateral_thinking.py`
++ `python tools/test_ceps_closed_loop.py`
++ `python tools/test_ceps_full_cycle.py`
+-- all four exit 0 = axis sealed.
