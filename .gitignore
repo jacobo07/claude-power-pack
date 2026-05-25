@@ -40,3 +40,10 @@ tests/auto-generated/
 # by build_index.py; contains absolute paths). Decisions themselves ARE
 # tracked.
 vault/.arch-index/
+
+# Backup Axis -- repo-root local snapshot dir; never commit raw
+# backup bytes. The receipts under vault/backups/ ARE tracked
+# (audit trail); the snapshots themselves stay local-only per spec
+# backup-skill.md §11. Anchor the pattern at the repo root so
+# vault/backups/ stays tracked.
+/backups/

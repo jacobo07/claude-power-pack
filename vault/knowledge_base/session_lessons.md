@@ -535,3 +535,30 @@ This pattern is now established for axis-seal cycles: when verify_spp residual F
 identifiable as preexisting AND the feature change itself introduces no new FAILs, the seal
 is overridable with this documentation row. Each cycle's override row cites the specific
 preexisting cause; blanket override is never appropriate.
+
+
+
+---
+
+## 2026-05-25 -- Backup / Snapshot Skill iteration log
+
+Sister to the Deploy Axis cycle. Empirical findings from sealing the
+state-preservation precondition for safe deploys, in one session.
+
+| # | Finding | Resolution |
+|---|---|---|
+| L1 | V-RETENTION-APPLY test initially supplied `drop_older_than_days: 999` together with `keep_last_n: 10`. The retention spec's semantics are `keep_set = keep_last_n_set UNION time_kept_set`; with 12 fixture snapshots whose mtimes were within the 999-day window, the time-based set absorbed ALL 12 -- nothing was dropped. Test failed: `kept=12 dropped=0` instead of expected `kept=10 dropped=2`. | Fixed the test to omit `drop_older_than_days` so the keep_last_n bound is the sole policy. The retention semantics themselves are correct (union is the safer default -- you only drop a snapshot when BOTH rules agree it should go). Documented this in the test comments; retention.py docstring already states the union behaviour. |
+| L2 | V-BACKUP-FIRST initial run failed with `NameError: name 'subprocess' is not defined`. The pre-deploy backup helper in `modules/deployment/deploy.py` calls `subprocess.run` but the import had not been added to deploy.py's top-level imports (only the runner modules transitively imported it). | Added `import subprocess` to deploy.py's imports. Sister to the deploy L2 lesson: when adding a level-1 piggyback spawn, audit imports BEFORE the test run -- the type system doesn't catch the missing import until the code-path executes. |
+| L3 | The dry-run path of `backup.py` creates the `local_destination` directory as a side-effect (mkdir(parents=True, exist_ok=True) happens BEFORE the disk-full guard, which itself happens before the dry-run short-circuit). Confirmed empirically: invoking `/backup --project kobiicraft --dry-run` left an empty `backups/kobiicraft/` dir on disk. | Acceptable behaviour: the dir is empty and gitignored (extended `.gitignore` with `backups/`). The alternative (defer mkdir until non-dry-run) would complicate the disk-full guard which legitimately needs the dest path to exist for `shutil.disk_usage`. Documented; cleaned up manually post-V-DEEP. |
+| L4 | The Jobs/Woz `zero-fiction-gate` veto pattern continues to surface in delivered markdown that enumerates the forbidden-set tokens verbatim (4th occurrence this month: code-review L1, arch-check L6, deploy L3, backup L4-now-deferred). For this cycle, the spec and plan files were written upfront with paraphrase-via-category-descriptor, so the gate did not fire. | Standing pattern is now: every PP-axis spec, plan, and command markdown uses category descriptors ("the forbidden-set tokens" / "credential-class keys" / "slop-token gate") instead of verbatim token enumeration. The detector source still has the literals (it must, by function), but it carries the JOBS-WOZ-EXEMPT declaration documented in CLAUDE.md's Reality Contract clause. |
+| L5 | spec §11 documents the no-off-site-auto-push rule with a rationale that is non-obvious from the contract alone: "the most catastrophic failure mode of an automated backup is a misconfigured push that silently fails or pushes corrupted bytes." Future Backup-Axis iterations adding S3/rclone will need to MAINTAIN this invariant (off-site is always an explicit Owner step), not relax it. | Documented as a hard invariant in spec §11 + cross-referenced from the apex section. The "Hawkins lens" angle: an automatic off-site push is force, not power -- it removes the Owner's audit point. Local-first respects the Owner's locus of control. |
+| L6 | `verify_restore.py`'s `nbt-magic` check requires the level.dat sample to be EITHER raw NBT (first byte 0x0a) OR gzipped NBT (first two bytes 0x1f 0x8b, then gunzip, then 0x0a). The V-RESTORE-TEST fixture builds the tar.gz with gzip-compressed NBT bytes; the verifier detects the gzip wrapper and decompresses before checking the magic. | The dual-path is the empirical correctness: Minecraft's `world/level.dat` is always gzipped on disk in modern versions, but older versions and some plugins write raw NBT. The verifier accepts both. If a future world format breaks this assumption, V-RESTORE-FAIL will catch it honestly (backup-warn, snapshot kept on disk for Owner inspection). |
+
+**Cross-references:**
+- `vault/specs/backup-skill.md` (parent spec; 16 sections)
+- `vault/plans/backup-skill-2026-05-24.md` (16-paso plan)
+- `vault/backups/2026-05-25-151305_kobiicraft_dryrun.md` (V-DEEP empirical)
+- `knowledge_vault/core/apex-completion-standard.md` "Backup Axis (sealed 2026-05-25)" section
+- `vault/knowledge_base/ukdl-universal.md` UKDL-BK-01..05 + UKDL-BK-REP-01
+- `modules/backup/_v_block.json` (15/15 PASS, V-TIMING p95 measured under restore-test)
+- `modules/deployment/_v_block.json` (15/15 PASS post-integration; new V-BACKUP-FIRST proves deploy refuses on backup gate failure)

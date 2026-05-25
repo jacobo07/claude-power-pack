@@ -1,0 +1,22 @@
+{
+  "project": "tua-x",
+  "mode": "pg-dump",
+  "ssh_alias": "vps204",
+  "ssh_key": "~/.ssh/kobicraft_claude_code",
+  "pg_container": "tuax-postgres",
+  "pg_user": "tuax",
+  "pg_database": "tuax_mie",
+  "local_destination": "backups/tua-x/",
+  "retention": {
+    "keep_last_n": 14,
+    "drop_older_than_days": 14,
+    "min_keep": 3
+  },
+  "restore_test": {
+    "extract_method": "none",
+    "sample_files": [],
+    "structural_check": "pg-dump-header"
+  },
+  "expected_size_bytes": 536870912,
+  "notes": "Mode: pg-dump. Logical Postgres backup via `docker exec tuax-postgres pg_dump -Fc -U tuax tuax_mie` piped over ssh. Custom-format dump (-Fc); restore with pg_restore. Auth: the password lives in the postgres container env (POSTGRES_PASSWORD set in docker-compose.yml on the VPS), NEVER in this file. restore_test verifies the PGDMP magic header (first 5 bytes = b'PGDMP'). expected_size_bytes=512 MiB is initial estimate; tune by observing real dumps. A future Backup Axis iteration may add the rabbitmq_data volume via a docker-volume-tar config."
+}

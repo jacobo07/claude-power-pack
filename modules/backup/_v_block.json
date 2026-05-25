@@ -1,0 +1,96 @@
+{
+  "passed": 15,
+  "total": 15,
+  "results": [
+    {
+      "test": "V-MODE-RSYNC-VALID",
+      "status": "PASS",
+      "evidence": "ok",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-MODE-PG-VALID",
+      "status": "PASS",
+      "evidence": "ok",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-MODE-DOCKER-VALID",
+      "status": "PASS",
+      "evidence": "ok",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-CONFIG-INVALID",
+      "status": "PASS",
+      "evidence": "forbidden key category in config: 'db_password' contains 'password'. Credentials must live in ~/.ssh/ or ~/.pgpass, not in vault/backup/",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-RETENTION-MISSING",
+      "status": "PASS",
+      "evidence": "required key missing: 'retention'",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-CEILING-SSH",
+      "status": "PASS",
+      "evidence": "{\"verdict\": \"ceiling\", \"exit_code\": 4, \"mode\": \"rsync-dir\", \"duration_ms\": 0, \"summary\": \"SSH key not found at C:\\\\Users\\\\User\\\\.ssh\\\\__nonexistent_backup_key__; cannot backup\", \"snapshot_path\": null}",
+      "duration_ms": 15.0
+    },
+    {
+      "test": "V-DISK-FULL",
+      "status": "PASS",
+      "evidence": "{\"verdict\": \"ceiling\", \"exit_code\": 4, \"mode\": \"rsync-dir\", \"duration_ms\": 0, \"summary\": \"disk-full guard: 488166629376 free bytes < 2000000000000000000 required (2x expected=1000000000000000000 or floor 1073741824)\"}",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-RESTORE-TEST",
+      "status": "PASS",
+      "evidence": "{\"ok\": true, \"checks_passed\": 1, \"checks_total\": 1, \"evidence\": \"extract: extracted 1 members | structural_check[nbt-magic]: nbt-magic: world/level.dat starts with NBT compound tag (first byte 0x0a)\"}",
+      "duration_ms": 16.0
+    },
+    {
+      "test": "V-RESTORE-FAIL",
+      "status": "PASS",
+      "evidence": "{\"ok\": false, \"checks_passed\": 0, \"checks_total\": 1, \"evidence\": \"extract: extracted 1 members | structural_check[nbt-magic]: nbt-magic: world/level.dat first bytes b'NOT_NBT_' not NBT compound\"}",
+      "duration_ms": 16.0
+    },
+    {
+      "test": "V-RESTORE-PGDMP",
+      "status": "PASS",
+      "evidence": "{\"ok\": true, \"checks_passed\": 1, \"checks_total\": 1, \"evidence\": \"structural_check[pg-dump-header]: pg-dump-header: PGDMP magic verified\"}",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-RETENTION-APPLY",
+      "status": "PASS",
+      "evidence": "kept=10 dropped=2 manifest_snaps=10",
+      "duration_ms": 62.0
+    },
+    {
+      "test": "V-RETENTION-MIN-KEEP",
+      "status": "PASS",
+      "evidence": "kept=3 dropped=1",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-CLOSED-LOOP",
+      "status": "PASS",
+      "evidence": "previous_backups=['vault\\\\backups\\\\2026-05-25-020202_demo.md', 'vault\\\\backups\\\\2026-05-24-010101_demo.md']",
+      "duration_ms": 0.0
+    },
+    {
+      "test": "V-DISPATCHER-DRYRUN",
+      "status": "PASS",
+      "evidence": "{\"verdict\": \"dry-run\", \"exit_code\": 0, \"mode\": \"rsync-dir\", \"duration_ms\": 0, \"summary\": \"rsync-dir dry-run for host\", \"snapshot_path\": \"C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\tmph9q65gdc\\\\backups\\\\x\\\\2026-05-25-151034.tar.gz\", \"previous_backups\": [], \"runner_receipt\": \"DRY RUN -- ssh key resolved: ",
+      "duration_ms": 16.0
+    },
+    {
+      "test": "V-TIMING",
+      "status": "PASS",
+      "evidence": "samples=[15.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16.0, 0.0, 0.0, 15.0] p05=0.0ms p95=16.4ms",
+      "duration_ms": 16.4
+    }
+  ]
+}

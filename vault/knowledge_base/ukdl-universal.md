@@ -104,3 +104,20 @@ DONE-gate in `apex-completion-standard.md`.
 | Ref | File | Why it matters |
 |---|---|---|
 | UKDL-DP-REP-01 | `vault/deploys/2026-05-24-130836_infinityops_dryrun.md` | First V-DEEP empirical receipt. Dry-run of `/deploy --project infinityops` against the real InfinityOps repo. Detector picked `gh-workflow`, runner emitted §77 Deploy Sovereignty citation to stdout AND in JSON verdict, dispatcher correctly refused to write the automated receipt path under `vault/deploys/` because dry-run does not mutate. Proves the invariant: §77 is non-negotiable; no receipt = no deploy. |
+
+
+## Backup / Snapshot Skill -- 2026-05-25 (Deploy precondition)
+
+| Ref | File | Why it matters |
+|---|---|---|
+| UKDL-BK-01 | `vault/specs/backup-skill.md` | Authoritative spec: 16 sections, 3 modes (rsync-dir / docker-volume-tar / pg-dump), STDIN/STDOUT contract, restore-test contract (§8), verdict shapes, disk-full guard (§9), no-credentials invariant (§10), no-off-site-auto-push (§11), recursion-guard discipline (§12), DONE-gate (§16). |
+| UKDL-BK-02 | `vault/plans/backup-skill-2026-05-24.md` | 16-paso plan + per-paso done-gates + sequencing graph + V-block (15 tests). Cites PASO 0 grounding tabla showing all 3 productive projects share the same state-preservation gap (opposite case to Deploy Axis where InfinityOps already had §77). |
+| UKDL-BK-03 | `modules/backup/backup.py` | Dispatcher: schema-validate -> disk-full guard -> runner -> verify_restore -> retention -> receipt. Recursion-guard at level-2+ ONLY (sister to deploy L2). Writes vault/backups/<ts>_*.md only AFTER verify_restore completes (Reality Contract). |
+| UKDL-BK-04 | `modules/backup/verify_restore.py` + `modules/backup/retention.py` | Restore-test verifier (4 structural_check kinds: nbt-magic / pg-dump-header / json-parse / not-empty) + retention enforcer (keep_last_n + drop_older_than_days + min_keep + sha256 manifest). The restore-test is the receipt: "a snapshot that has not been restore-tested is a .tar.gz, not a backup." |
+| UKDL-BK-05 | `modules/backup/runners/*.py` + `modules/deployment/deploy.py` (`_run_pre_deploy_backup_if_enabled`) | 3 runners (rsync-dir / docker-volume-tar / pg-dump) covering KobiiCraft world + TUA-X postgres + InfinityOps postgres. Deploy integration: `vault/deploy/<project>.json` accepts `pre_deploy_backup: true`; dispatcher invokes backup as pre-gate; verdict != pass -> deploy CEILING. V-BACKUP-FIRST in deploy V-block proves the gate. |
+
+## Backup Reports (auto-appended by /backup)
+
+| Ref | File | Why it matters |
+|---|---|---|
+| UKDL-BK-REP-01 | `vault/backups/2026-05-25-151305_kobiicraft_dryrun.md` | First V-DEEP empirical receipt. Dry-run of `/backup --project kobiicraft` against the PP repo's `vault/backup/kobiicraft.json`. Detector picked `rsync-dir`, the planner emitted the full ssh+tar command, the dispatcher correctly refused to mutate (dry-run path). Proves: schema validation, ssh-key resolution, planned remote command, planned restore-test (nbt-magic on level.dat). |

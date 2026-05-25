@@ -22,6 +22,7 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -156,6 +157,55 @@ def _dispatch_runner(
     }
 
 
+def _run_pre_deploy_backup_if_enabled(
+    config: dict[str, Any],
+    project: str,
+    project_root: Path,
+    dry_run: bool,
+) -> dict[str, Any] | None:
+    """If the deploy config has `pre_deploy_backup: true`, spawn the
+    backup dispatcher BEFORE the deploy runner. The backup verdict
+    gates the deploy: anything other than pass/dry-run/skip aborts
+    with CEILING.
+
+    Returns the backup result dict, or None if the gate is not enabled.
+
+    NOTE: this is a level-1 piggyback spawn. The recursion-guard env
+    var CLAUDEPP_BACKUP_RUNNING is NOT set here (lesson L2 sealed in
+    code-review + deploy cycles).
+    """
+    if not config.get("pre_deploy_backup"):
+        return None
+    if os.environ.get("CLAUDEPP_BACKUP_DISABLED") == "1":
+        return {"verdict": "skip", "summary": "backup gate skipped via CLAUDEPP_BACKUP_DISABLED=1"}
+    backup_script = Path(__file__).resolve().parent.parent / "backup" / "backup.py"
+    if not backup_script.is_file():
+        return {"verdict": "fail", "summary": f"backup dispatcher missing at {backup_script}"}
+    payload = json.dumps({
+        "project_root": str(project_root),
+        "project": project,
+        "dry_run": dry_run,
+    })
+    try:
+        result = subprocess.run(
+            [sys.executable, str(backup_script)],
+            input=payload,
+            capture_output=True,
+            text=True,
+            timeout=3700,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        return {"verdict": "fail", "summary": f"backup spawn error: {type(exc).__name__}: {exc}"}
+    out = (result.stdout or "").strip()
+    if out.startswith("﻿"):
+        out = out[1:]
+    try:
+        return json.loads(out) if out else {"verdict": "fail", "summary": "backup produced no stdout"}
+    except json.JSONDecodeError as exc:
+        return {"verdict": "fail", "summary": f"backup stdout not JSON: {exc}; raw={out[:200]}"}
+
+
 def _load_config(
     project_root: Path,
     project: str,
@@ -232,6 +282,22 @@ def deploy(stdin_payload: dict[str, Any]) -> dict[str, Any]:
             "doctrine_cite": None,
         }
 
+    pre_backup_result = _run_pre_deploy_backup_if_enabled(config, project, project_root, dry_run)
+    if pre_backup_result is not None and pre_backup_result.get("verdict") not in {"pass", "dry-run", "skip"}:
+        return {
+            "verdict": "ceiling",
+            "exit_code": EXIT_CEILING,
+            "mode": detection["mode"],
+            "head_sha": _git_head_short(str(project_root)),
+            "duration_ms": int((time.monotonic() - started) * 1000),
+            "summary": (
+                f"pre-deploy backup gate FAILED (verdict={pre_backup_result.get('verdict')}): "
+                f"{pre_backup_result.get('summary', '')}. Deploy refused."
+            ),
+            "doctrine_cite": None,
+            "pre_deploy_backup": pre_backup_result,
+        }
+
     if detection["mode"] == "manual-scp":
         ok, reason = validate_config(config)
         if not ok:
@@ -280,6 +346,7 @@ def deploy(stdin_payload: dict[str, Any]) -> dict[str, Any]:
             "doctrine_cite": runner_result.get("doctrine_cite"),
             "receipt_path": None,
             "previous_deploys": _previous_deploys(project_root, project),
+            "pre_deploy_backup": pre_backup_result,
         }
 
     hc_result = run_healthcheck(healthcheck_spec)
@@ -312,6 +379,7 @@ def deploy(stdin_payload: dict[str, Any]) -> dict[str, Any]:
         "receipt_path": receipt_path,
         "healthcheck": hc_result,
         "previous_deploys": _previous_deploys(project_root, project),
+        "pre_deploy_backup": pre_backup_result,
     }
 
 

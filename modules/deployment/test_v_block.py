@@ -379,6 +379,37 @@ def v_timing() -> None:
 # ---------------------------------------------------------------------------
 
 
+def v_backup_first() -> None:
+    """When pre_deploy_backup=true and the backup config is absent or
+    invalid, deploy must short-circuit with CEILING. We construct a
+    deploy config that has pre_deploy_backup=true but NO matching
+    backup config; the dispatcher must refuse the deploy.
+    """
+    from deploy import deploy as _deploy
+
+    t0 = time.monotonic()
+    with tempfile.TemporaryDirectory() as td:
+        repo = _make_gh_repo(Path(td))
+        cfg_dir = repo / "vault" / "deploy"
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+        cfg = {
+            "project": "x",
+            "mode": "gh-workflow",
+            "workflow_file": ".github/workflows/deploy-vps.yml",
+            "ref": "main",
+            "healthcheck": {"kind": "tcp", "target": "127.0.0.1", "port": 1, "retries": 1, "delay_sec": 0},
+            "pre_deploy_backup": True,
+        }
+        (cfg_dir / "x.json").write_text(json.dumps(cfg), encoding="utf-8")
+        result = _deploy({"project_root": str(repo), "project": "x", "env": "prod", "dry_run": False})
+    dur = (time.monotonic() - t0) * 1000
+    passed = (
+        result["verdict"] == "ceiling"
+        and "pre-deploy backup gate FAILED" in result["summary"]
+    )
+    _record("V-BACKUP-FIRST", passed, json.dumps(result)[:300], dur)
+
+
 TESTS = [
     v_detect_gh,
     v_detect_push,
@@ -393,6 +424,7 @@ TESTS = [
     v_forbidden_remote,
     v_doctrine_cite,
     v_closed_loop,
+    v_backup_first,
     v_timing,
 ]
 

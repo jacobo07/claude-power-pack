@@ -1,0 +1,25 @@
+{
+  "project": "kobiicraft",
+  "mode": "rsync-dir",
+  "ssh_alias": "gex44",
+  "ssh_key": "~/.ssh/kobicraft_gex44",
+  "remote_paths": [
+    "/srv/kobiicraft/main/world",
+    "/srv/kobiicraft/main/world_nether",
+    "/srv/kobiicraft/main/world_the_end",
+    "/srv/kobiicraft/main/plugins"
+  ],
+  "local_destination": "backups/kobiicraft/",
+  "retention": {
+    "keep_last_n": 10,
+    "drop_older_than_days": 30,
+    "min_keep": 3
+  },
+  "restore_test": {
+    "extract_method": "tar-gz",
+    "sample_files": ["srv/kobiicraft/main/world/level.dat"],
+    "structural_check": "nbt-magic"
+  },
+  "expected_size_bytes": 5368709120,
+  "notes": "Mode: rsync-dir. Snapshots the Paper server's world tree + plugin data via tar+gzip piped over ssh to local backups/kobiicraft/. The remote needs only tar+gzip (POSIX universal). restore_test extracts the level.dat NBT root and verifies the gzip-NBT magic (first byte 0x0a after gunzip). expected_size_bytes=5 GiB is a conservative estimate; tune per pilot population. Retention: keep 10 most recent OR within 30 days OR min 3, whichever yields the larger set."
+}

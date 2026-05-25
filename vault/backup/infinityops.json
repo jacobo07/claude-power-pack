@@ -1,0 +1,22 @@
+{
+  "project": "infinityops",
+  "mode": "pg-dump",
+  "ssh_alias": "vps204",
+  "ssh_key": "~/.ssh/kobicraft_claude_code",
+  "pg_container": "infinityops-postgres",
+  "pg_user": "infinityops",
+  "pg_database": "infinity_mie_prod",
+  "local_destination": "backups/infinityops/",
+  "retention": {
+    "keep_last_n": 14,
+    "drop_older_than_days": 14,
+    "min_keep": 3
+  },
+  "restore_test": {
+    "extract_method": "none",
+    "sample_files": [],
+    "structural_check": "pg-dump-header"
+  },
+  "expected_size_bytes": 268435456,
+  "notes": "Mode: pg-dump. InfinityOps Phoenix/Elixir backend uses Postgres for the MIE (Multi-Instance Execution) layer. The §77 deploy_from_git.sh on the VPS rebuilds the Elixir release without touching the DB, so a logical pg_dump captures the application state independently of the code rollback path. Container/db names are placeholders Owner must confirm on the VPS; if the actual deployment names differ, update this file before invoking /backup. restore_test verifies PGDMP magic. expected_size_bytes=256 MiB initial estimate."
+}

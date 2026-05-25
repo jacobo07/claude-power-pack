@@ -1188,3 +1188,114 @@ auto-testing gate proves correctness, arch-check proves
 consistency, code-review proves quality, deploy proves delivery.
 Four gates, four independent failure modes, four independent
 proofs.
+
+
+---
+
+## Backup Axis (sealed 2026-05-25) -- safe-deploy precondition
+
+**State preservation BEFORE the deploy event.** Deploy Axis verified the
+future (post-deploy healthcheck); the Backup Axis verifies the past
+(restore-tested snapshot of the pre-deploy state). Together they bracket
+the deploy event. The Quadrangle no longer assumes "deploy that succeeds"
+implies "system that remains recoverable" -- it now PROVES recoverability
+as a precondition.
+
+### Reality contract (backup-specific)
+
+A snapshot that has not been restore-tested is, by spec §2, **not** a
+backup. The dispatcher refuses to write a `vault/backups/<ts>_<project>.md`
+receipt unless `verify_restore.py` has executed and emitted a verdict
+(PASS or FAIL). Sha256 mismatch or restore-test failure yields verdict
+`backup-warn` (exit 3) and the receipt states the failure in plain text.
+
+### 3 backup modes (1 module, 3 runners)
+
+| Mode | Mechanism | Real-world target |
+|---|---|---|
+| `rsync-dir` | `ssh <alias> 'tar --create -P <paths...> \| gzip -1'` piped to a local file | KobiiCraft world + plugin data dirs |
+| `docker-volume-tar` | `ssh <alias> 'docker run --rm -v <volume>:/data:ro alpine tar -czf - /data'` | TUA-X postgres_data + rabbitmq_data |
+| `pg-dump` | `ssh <alias> 'docker exec <pg-container> pg_dump -Fc -U <user> <db>'` | TUA-X postgres, InfinityOps postgres |
+
+No agent required on remote; only `ssh` + the per-mode primitive (tar /
+docker / pg_dump). Snapshot bytes land in local `backups/<project>/`
+(gitignored). Off-site push is an explicit Owner step (§11), not an
+automatic side-effect.
+
+### Restore-test contract (spec §8)
+
+Every snapshot is restore-tested before the receipt is written:
+
+1. sha256 of the snapshot file computed; compared to runner-reported sha256.
+2. Snapshot extracted into a `tempfile.TemporaryDirectory()`.
+3. Each `sample_files` path verified to exist in the extracted tree.
+4. `structural_check` applied: `nbt-magic` / `pg-dump-header` / `json-parse` / `not-empty`.
+5. Returns `{ok, checks_passed, checks_total, evidence}`.
+
+`nbt-magic` is the KobiiCraft world receipt: extract `level.dat`, gunzip,
+verify the first byte is `0x0a` (NBT Compound tag). A faked snapshot that
+zips garbage will pass tar+gzip checksums but fail NBT magic; the verdict
+honestly says `backup-warn`.
+
+`pg-dump-header` is the Postgres receipt: first 5 bytes of the snapshot
+must equal `b"PGDMP"` (the custom-format magic). A pg_dump that produced
+truncated output will lack this; verdict `backup-warn`.
+
+### Hard invariants (enforced by V-block, 15 PASS)
+
+| Invariant | Verifier |
+|---|---|
+| NO credential-class keys in `vault/backup/<project>.json` | schema validator + V-CONFIG-INVALID |
+| Restore-test obligatory | V-RESTORE-TEST + V-RESTORE-FAIL + V-RESTORE-PGDMP |
+| Retention mandatory | schema FAIL if `retention` absent -- V-RETENTION-MISSING |
+| Disk-full guard pre-run | V-DISK-FULL (CEILING exit 4 when free space < 2x expected) |
+| sha256 manifest written | retention.py emits `<dest>/manifest.json` with sha256 of every retained snapshot -- V-RETENTION-APPLY + V-RETENTION-MIN-KEEP |
+| NO off-site auto-push | runners write to `local_destination` only; off-site is backlog |
+| Receipt only after verify_restore | dispatcher writes `vault/backups/<ts>_*.md` AFTER verify_restore -- V-CLOSED-LOOP |
+| Recursion guard level-2+ ONLY | `CLAUDEPP_BACKUP_RUNNING` never set on level-1 (sister to deploy L2) |
+| n8n / zapier / make.com / pipedream forbidden | schema validator |
+
+### Integration with Deploy Axis
+
+`vault/deploy/<project>.json` now supports `pre_deploy_backup: true`. When
+set, `modules/deployment/deploy.py` invokes `modules/backup/backup.py`
+BEFORE the deploy runner. Backup verdict != pass/dry-run/skip -> deploy
+CEILING with summary "pre-deploy backup gate FAILED".
+
+This is the **safe-deploy contract**: a deploy is only safe if a
+restore-tested snapshot exists from immediately before it. Verified by
+`V-BACKUP-FIRST` in the deploy V-block (deploy 15/15 PASS post-integration).
+
+### DONE-gate (spec §16)
+
+1. 15/15 V-tests in `modules/backup/test_v_block.py` PASS.
+2. 15/15 V-tests in `modules/deployment/test_v_block.py` PASS (including new V-BACKUP-FIRST).
+3. `verify_spp.py` 7/7 STRICT (or documented preexisting FAILs).
+4. PP + live mirror sha256 byte-identical for this section.
+5. UKDL-BK-01..05 + UKDL-BK-REP-01 rows.
+6. session_lessons L1..LN rows.
+7. V-DEEP dry-run receipt at `vault/backups/<ts>_kobiicraft_dryrun.md`.
+8. `git push origin main` REMOTE_DELTA = 0.
+
+### PP Quality Quadrangle (now with safe-deploy precondition)
+
+```
+[ Auto-Testing Gate ]   "does it work?"
+       v
+[  Arch-Check         ] "is the decision consistent with the vault?"
+       v
+[  Code Review        ] "is it well-written, secure, maintainable?"
+       v
+[  Backup (NEW)       ] "is a restore-tested snapshot of the pre-deploy state on disk?"
+       v
+[  Deploy             ] "did it reach production AND serve traffic?"
+       v
+   PRODUCTION
+```
+
+The Backup Axis is the 5th node in the chain (between Code Review and
+Deploy), not a 5th axis of the Quadrangle. The Quadrangle remains
+auto-testing + arch-check + code-review + deploy; Backup is the
+precondition gate that protects Deploy from itself. Rollback (the future
+sister) closes the loop: Backup makes Deploy safe; Rollback makes Deploy
+recoverable.

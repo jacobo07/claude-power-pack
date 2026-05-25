@@ -175,6 +175,26 @@ ALLOWLIST: dict[str, set[str]] = {
     "vault/deploys/2026-05-24-130836_infinityops_dryrun.md": {"secret", "doc-path"},
     # Future auto-generated deploy reports inherit the same pattern.
     "vault/deploys/*.md": {"secret", "doc-path"},
+    # ---- Backup / Snapshot Axis (2026-05-25, Deploy precondition).
+    # Per-project backup configs name ssh aliases (gex44, vps204) and
+    # remote paths (/srv/kobiicraft/main/world, postgres container
+    # names) by design -- operational metadata. Schema validator
+    # guarantees zero credential-class keys are present.
+    "vault/backup/kobiicraft.json":   {"secret"},
+    "vault/backup/tua-x.json":        {"secret"},
+    "vault/backup/infinityops.json":  {"secret"},
+    # Spec + plan document the 3 modes by reference to the actual
+    # project topology. Same posture as deploy spec/plan.
+    "vault/specs/backup-skill.md":            {"secret"},
+    "vault/plans/backup-skill-2026-05-24.md": {"secret"},
+    # V-DEEP empirical receipt + future auto-generated receipts.
+    "vault/backups/2026-05-25-151305_kobiicraft_dryrun.md": {"secret", "doc-path"},
+    "vault/backups/*.md": {"secret", "doc-path"},
+    # ---- Auto-generated context-watchdog session log: cwd + transcript
+    # paths are appended on every Stop hook crossing a threshold. The
+    # literals are operational session metadata (this host, this user),
+    # not credentials. Same posture as session_lessons.md.
+    "vault/progress.md": {"doc-path"},
     # ---- Frozen topology snapshot (2026-04-29): captured-at-test-time
     # absolute path inventory, audit-record by design.
     "vault/topology/lazarus_layout_2026-04-29.json": {"code-path"},
