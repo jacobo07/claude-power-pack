@@ -19,6 +19,7 @@ Usage:
 """
 from __future__ import annotations
 import argparse
+import calendar
 import json
 import os
 import re
@@ -172,8 +173,11 @@ def cmd_audit(args) -> int:
             continue
         ts_str = m.group(1).strip()
         try:
-            ts_epoch = time.mktime(time.strptime(ts_str[:19],
-                                                  "%Y-%m-%dT%H:%M:%S"))
+            # ts is UTC (Z suffix). calendar.timegm treats input as UTC;
+            # time.mktime would treat it as local and skew by tz offset
+            # (caught by code-reviewer 2026-05-25).
+            ts_epoch = calendar.timegm(
+                time.strptime(ts_str[:19], "%Y-%m-%dT%H:%M:%S"))
         except Exception:
             continue
         age_days = (time.time() - ts_epoch) / 86400.0

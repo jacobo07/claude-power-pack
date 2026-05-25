@@ -5,7 +5,7 @@
   "fields": {
     "id": {
       "type": "string",
-      "format": "ceps_<sha1[:16]>",
+      "format": "ceps_<sha256[:16]>",
       "required": true,
       "stable_across_reruns": true
     },
