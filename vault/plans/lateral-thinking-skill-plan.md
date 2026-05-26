@@ -260,7 +260,7 @@ visible but non-blocking. 7-day stale = pressure without asphyxiation.
 
 1. If M* fails empirical pass-gate:
 2. Auto-record with CEPS (eat-own-dog-food)
-3. Iterate using `C:\Users\User\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-universal.txt` (max 3 cycles per M*)
+3. Iterate using `~\Downloads\Promptsss\Prompts pa iterar\Universal\iteracion-avanzada-universal.txt` (max 3 cycles per M*)
 4. If cycle 3 fails → STOP, surface to Owner with evidence, await decision
 5. Never declare M* done without empirical output proving the difference
 

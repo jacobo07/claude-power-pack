@@ -39,7 +39,7 @@ PASS  V-FULL-2 record_error  id=ceps_182b990097ec38a3 sig=182b990097ec38a3
 PASS  V-FULL-3 events.jsonl-append  bytes=581
 PASS  V-FULL-4 distribute-to-2-mds  lessons=510b ukdl=234b
 PASS  V-FULL-5 propagate  top_k=1 hit=yes
-wrote C:\Users\User\AppData\Local\Temp\ceps-full-cycle-rdv21kw_\tests\ceps_generated\test_182b990097ec.py
+wrote ~\AppData\Local\Temp\ceps-full-cycle-rdv21kw_\tests\ceps_generated\test_182b990097ec.py
 
 written=1  skipped(existing)=0  total_eligible=1
 PASS  V-FULL-6 stub-generation  path=tests\ceps_generated\test_182b990097ec.py
@@ -51,7 +51,7 @@ CYCLE_PASS=true  (record -> events -> distribute -> propagate -> stub -> pytest-
 
 ## CEPS edge-cases (M4 new)
 ```
-[isolate] tmp=C:\Users\User\AppData\Local\Temp\ceps-edge-b3rmgg5c
+[isolate] tmp=~\AppData\Local\Temp\ceps-edge-b3rmgg5c
 PASS  V-NIT1-MAXCHARS  len=300 (cap=300, sub=400)
 PASS  V-NIT3-IDEMPOTENT  run1=3 run2=0 delta_jsonl=3
 PASS  V-EDGE-LONG-ROOT  600chars=ok 601chars=rejected
