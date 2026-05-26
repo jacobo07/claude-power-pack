@@ -849,6 +849,52 @@ def _arch_check_inject(prompt: str) -> str | None:
     return None
 
 
+def _tis_log_call(fn):
+    """M3: Token-Intelligence hook. Wraps jit_skill_loader.run() and
+    records a per-call TokenEvent to vault/token_logs/. Fail-open: any
+    exception in the logger is swallowed so the prompt pipeline is
+    never disrupted. The hook is local (no third-party deps); SCS C7
+    RTK-compat is preserved (we emit structured JSON, never parse raw
+    stdout)."""
+    import functools as _ft
+    @_ft.wraps(fn)
+    def _wrapper(data):
+        result = fn(data)
+        try:
+            from datetime import datetime as _dt, timezone as _tz
+            import tis as _tis
+            sid = _tis.get_session_id()
+            prompt = str((data or {}).get("prompt") or "")
+            # Estimate cl100k tokens via chars / 4 proxy. The hook
+            # itself is not an LLM call -- this is the JIT-context
+            # injection size we want forensic visibility into.
+            inp_est = max(len(prompt) // 4, 0)
+            ctx = ""
+            if isinstance(result, dict):
+                ctx = str(result.get("additionalContext") or "")
+                inner = result.get("hookSpecificOutput") or {}
+                ctx += str(inner.get("additionalContext") or "")
+            out_est = len(ctx) // 4
+            label = "jit-context-injected" if ctx else "jit-no-injection"
+            _tis.append_log(_tis.TokenEvent(
+                session_id=sid,
+                timestamp_iso=_dt.now(_tz.utc).isoformat(),
+                skill_name="jit_skill_loader.run",
+                model="claude-code-hook",
+                input_tokens=inp_est,
+                output_tokens=out_est,
+                cache_read_tokens=0,
+                cache_creation_tokens=0,
+                call_label=label,
+                project=str((data or {}).get("cwd") or ""),
+            ))
+        except Exception as _exc:
+            _log(f"tis hook ERROR {type(_exc).__name__}: {_exc}")
+        return result
+    return _wrapper
+
+
+@_tis_log_call
 def run(data) -> dict:
     try:
         data = data or {}

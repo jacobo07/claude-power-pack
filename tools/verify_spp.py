@@ -136,6 +136,9 @@ def main() -> int:
         ("programmatic-budget",
          [PY, str(PP / "tools" / "verify_full_install.py"), "--quiet"],
          30),
+        ("tis-probe",
+         [PY, str(PP / "tools" / "verify_tis.py")],
+         30),
     ]
 
     if args.row:
