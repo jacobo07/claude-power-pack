@@ -64,8 +64,21 @@ def _token_count(text: str) -> int:
 
 
 def _run(cmd: str) -> str:
+    """M9 fix: explicitly inject Git's cmd dir into PATH for the
+    subprocess on Windows. Under PowerShell -NonInteractive the parent
+    PATH may omit it, which silently degrades the pinned-SHA benchmark
+    to a 26-token 'git is not recognized' error message and reports
+    -169% reduction (false regression). Real raw output on the pinned
+    cmd is ~74KB / ~18k tokens; the gate measures real bytes, not the
+    PATH-gap artefact."""
+    env = os.environ.copy()
+    if os.name == "nt":
+        git_dir = r"C:\Program Files\Git\cmd"
+        if os.path.isdir(git_dir) and git_dir not in env.get("PATH", ""):
+            env["PATH"] = git_dir + os.pathsep + env.get("PATH", "")
     res = subprocess.run(
-        cmd, shell=True, capture_output=True, text=True, cwd=REPO, timeout=60
+        cmd, shell=True, capture_output=True, text=True, cwd=REPO,
+        timeout=60, env=env,
     )
     return (res.stdout or "") + (res.stderr or "")
 

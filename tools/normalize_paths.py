@@ -349,12 +349,35 @@ def _line_is_doc(line: str, ext: str) -> bool:
     return any(s.startswith(L) for L in leaders) or s == ""
 
 
+def _git_exe() -> str:
+    """Resolve git executable. M7 fix: on Windows under PowerShell
+    -NonInteractive the PATH may omit Git's cmd dir, breaking bare
+    `subprocess.check_output(['git', ...])` with FileNotFoundError
+    [WinError 2]. Falls back to known install paths per Windows Bash
+    Bridge Reliability doctrine."""
+    import shutil
+    p = shutil.which("git")
+    if p:
+        return p
+    if os.name == "nt":
+        for candidate in (
+            r"C:\Program Files\Git\cmd\git.exe",
+            r"C:\Program Files\Git\bin\git.exe",
+            r"C:\Program Files (x86)\Git\cmd\git.exe",
+        ):
+            if Path(candidate).is_file():
+                return candidate
+    raise FileNotFoundError(
+        "git executable not found on PATH or known Windows locations")
+
+
 def repo_files() -> list[Path]:
     """Return PP-tracked files that are scannable text."""
     try:
         out = subprocess.check_output(
-            ["git", "ls-files"], cwd=str(REPO), text=True, encoding="utf-8")
-    except subprocess.CalledProcessError as e:
+            [_git_exe(), "ls-files"], cwd=str(REPO), text=True,
+            encoding="utf-8")
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
         sys.stderr.write(f"git ls-files failed: {e}\n")
         return []
     files: list[Path] = []
@@ -427,6 +450,14 @@ def _scan_secrets(text: str) -> list[tuple[int, str, str]]:
 
 
 def main() -> int:
+    # M7 fix: scanned files may contain non-cp1252 codepoints (e.g.
+    # U+2192 arrow). Promote stdout/stderr to UTF-8 with `replace`
+    # so a single non-ANSI char in an excerpt cannot abort the probe.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     ap.add_argument("--check", action="store_true",
                     help="report leaks; exit 1 on any hit (default)")

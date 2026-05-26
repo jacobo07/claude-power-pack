@@ -94,6 +94,29 @@ def _norm_sha(data: bytes) -> str:
     return hashlib.sha256(lf).hexdigest()
 
 
+def _git_exe() -> str:
+    """Resolve git executable. M8 fix: on Windows under PowerShell
+    -NonInteractive PATH may omit Git's cmd dir; bare ['git', ...] in
+    subprocess raises FileNotFoundError which this script catches as
+    OSError and silently returns 'untracked' -- a false-positive that
+    masks real mirror state. Falls back to known install paths per
+    Windows Bash Bridge Reliability doctrine."""
+    import shutil
+    p = shutil.which("git")
+    if p:
+        return p
+    if os.name == "nt":
+        for candidate in (
+            r"C:\Program Files\Git\cmd\git.exe",
+            r"C:\Program Files\Git\bin\git.exe",
+            r"C:\Program Files (x86)\Git\cmd\git.exe",
+        ):
+            if os.path.isfile(candidate):
+                return candidate
+    raise FileNotFoundError(
+        "git executable not found on PATH or known Windows locations")
+
+
 def resolve_repo(cli_repo: str | None) -> str:
     if cli_repo and os.path.isdir(cli_repo):
         return os.path.abspath(cli_repo)
@@ -103,7 +126,7 @@ def resolve_repo(cli_repo: str | None) -> str:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     try:
         top = subprocess.run(
-            ["git", "-C", script_dir, "rev-parse", "--show-toplevel"],
+            [_git_exe(), "-C", script_dir, "rev-parse", "--show-toplevel"],
             capture_output=True, text=True, timeout=15,
         )
         if top.returncode == 0:
@@ -124,7 +147,7 @@ def repo_rel_posix(pp_abspath: str, repo_root: str) -> str:
 def _ref_tracks(repo: str, ref: str, rel_posix: str) -> bool:
     try:
         r = subprocess.run(
-            ["git", "-C", repo, "cat-file", "-e", f"{ref}:{rel_posix}"],
+            [_git_exe(), "-C", repo, "cat-file", "-e", f"{ref}:{rel_posix}"],
             capture_output=True, timeout=15,
         )
         return r.returncode == 0
@@ -135,7 +158,7 @@ def _ref_tracks(repo: str, ref: str, rel_posix: str) -> bool:
 def _sorted_heads(repo: str) -> list[str]:
     try:
         r = subprocess.run(
-            ["git", "-C", repo, "for-each-ref", "--sort=refname",
+            [_git_exe(), "-C", repo, "for-each-ref", "--sort=refname",
              "--format=%(refname:short)", "refs/heads"],
             capture_output=True, text=True, timeout=15,
         )
@@ -171,7 +194,7 @@ def git_show_blob(repo: str, ref: str, rel_posix: str):
     """Return (bytes, None) or (None, reason). returncode-checked (gap #2)."""
     try:
         r = subprocess.run(
-            ["git", "-C", repo, "show", f"{ref}:{rel_posix}"],
+            [_git_exe(), "-C", repo, "show", f"{ref}:{rel_posix}"],
             capture_output=True, timeout=20,
         )
     except (OSError, subprocess.SubprocessError) as e:
