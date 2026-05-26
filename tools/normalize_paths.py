@@ -213,6 +213,27 @@ ALLOWLIST: dict[str, set[str]] = {
     # examples by design -- the whole point of the doc is to teach the
     # surface.
     "commands/rollback.md": {"secret"},
+    # ---- Monitoring / Alert Axis (2026-05-26, deploy lifecycle observation).
+    # Per-project monitor configs name the productive healthcheck targets
+    # (TCP 5.9.23.174:25565, HTTP cw.infinityops.ai, curl-grep
+    # infinityops.ai/br.jula) and ssh aliases by design -- operational
+    # metadata that mirrors the deploy axis verbatim. Schema validator
+    # enforces zero credential-class keys.
+    "vault/monitor/kobiicraft.json":  {"secret"},
+    "vault/monitor/tua-x.json":       {"secret"},
+    "vault/monitor/infinityops.json": {"secret"},
+    # V-block + verify_monitoring fixture: tests cite the productive
+    # project names by design (V-ONCE-MULTIPROJECT exercises infinityops
+    # / tua-x / kobiicraft as the canonical 3-project surface).
+    "tools/test_monitoring.py":   {"secret", "code-path"},
+    "tools/verify_monitoring.py": {"secret", "code-path"},
+    # Alert receipts cite the project name + /rollback suggestion text
+    # + the ssh-alias-bearing evidence string from the healthcheck.
+    # Auto-generated per state transition; receipt is the audit artifact.
+    "vault/alerts/*.md": {"secret", "doc-path"},
+    # Cold-boot evidence under test-results captures the live --once
+    # output which contains the productive URLs + ssh-alias evidence.
+    "vault/test-results/cold_boot_MONITORING_*.md": {"secret", "doc-path"},
     # ---- Auto-generated context-watchdog session log: cwd + transcript
     # paths are appended on every Stop hook crossing a threshold. The
     # literals are operational session metadata (this host, this user),

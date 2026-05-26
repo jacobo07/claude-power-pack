@@ -128,14 +128,18 @@ def check_curl_grep(
     last_evidence = ""
     for attempt in range(1, retries + 1):
         try:
+            # text=False -> capture stdout as raw bytes, decode UTF-8
+            # explicitly. text=True on Windows decodes with locale
+            # (cp1252) which mangles UTF-8 bytes (e.g. "brújula"
+            # 0xC3 0xBA -> "brÃºjula"), breaking any non-ASCII grep
+            # pattern in the live page. Monitoring Axis L1 (2026-05-26).
             result = subprocess.run(
                 ["curl", "-fsS", "--max-time", str(int(timeout)), url],
                 capture_output=True,
-                text=True,
                 timeout=timeout + 5,
                 check=False,
             )
-            body = result.stdout or ""
+            body = (result.stdout or b"").decode("utf-8", errors="replace")
             if pattern.search(body):
                 return {
                     "ok": True,
@@ -143,9 +147,10 @@ def check_curl_grep(
                     "evidence": f"curl {url} contained pattern '{grep_pattern}' on attempt {attempt}",
                     "kind": "curl-grep",
                 }
+            stderr_text = (result.stderr or b"").decode("utf-8", errors="replace")
             last_evidence = (
                 f"attempt {attempt}: pattern '{grep_pattern}' not found; "
-                f"body_len={len(body)} stderr={_truncate(result.stderr)}"
+                f"body_len={len(body)} stderr={_truncate(stderr_text)}"
             )
         except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
             last_evidence = f"attempt {attempt}: {type(exc).__name__}: {exc}"

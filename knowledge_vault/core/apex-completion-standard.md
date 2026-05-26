@@ -1642,3 +1642,72 @@ Missing any of 1-5 = NOT Apex-complete on the TIS Axis.
 - M6 E2E 4/4: 3 mock dispatches -> `tis_report` non-empty ->
   `tis_handoff` detects compression candidate on repeated call_label.
 - M7 verify_spp row `tis-probe` PASS in <1s.
+
+
+
+## Monitoring / Alert Axis (sealed 2026-05-26) -- deploy lifecycle: continuous observability
+
+The Monitoring Axis is the fourth and final node of the deploy lifecycle:
+
+```
+Backup (safe) -> Deploy (deliver) -> Rollback (recover) -> Monitor (observe).
+```
+
+Until now the lifecycle was gate-once: a deploy's healthcheck verified the
+moment of release, but a service that went DOWN ten minutes later sat
+unobserved until the Owner manually noticed. The Monitoring Axis closes
+that gap: every productive project carries a `vault/monitor/<project>.json`
+whose healthcheck signal mirrors the deploy axis's verbatim. The same
+`check_tcp` / `check_http` / `check_curl_grep` functions that gate deploy
+are polled in a loop here -- single source of truth, no duplication.
+
+Five architectural invariants are sealed by this axis:
+
+1. **Single source of truth for healthcheck logic.** `modules/monitoring/monitor.py:run_check` dispatches to `modules.deployment.healthcheck` verbatim. Spec C7 (RTK compatibility) is honored: no free-text scraping. Spec C6 (atomic appends) is honored in state + alert writes (`tmp + os.replace`).
+
+2. **Debounce keeps the monitor honest.** A single failed poll does NOT flip a service to DOWN. The defaults are `consecutive_failures=3`, `consecutive_successes=2`, `min_state_duration_sec=30` -- configurable per-project. A flap that lasts < 3 polls is logged but does not alert. The empirical V-block (16 tests) exercises every transition; V-DEBOUNCE-NO-ALERT proves a 2-failure window stays UP.
+
+3. **No automatic rollback.** Even though the Rollback Axis exists and the alert receipt carries the literal `/rollback --project <X>` suggestion text, V-NO-AUTO-ROLLBACK grep-asserts zero call sites of the rollback function across `monitor.py`, `alert.py`, `observe.py`. The Owner reads the alert; the Owner decides. Hawkins lens, sealed across Rollback + Monitoring.
+
+4. **Daemon installation is Owner-gated.** `/observe --daemon` PRINTS the exact crontab + Task Scheduler commands; it never invokes them. V-DAEMON-NO-INSTALL grep-asserts zero `subprocess` call sites against `schtasks` / `crontab` / `Register-ScheduledTask`. The Owner copy-pastes; nothing auto-installs.
+
+5. **The monitor surfaces bugs the gate-once axes cannot see.** The sealing cycle uncovered a Windows-only UTF-8 decoding bug in `modules/deployment/healthcheck.py:check_curl_grep`: `subprocess.run(text=True)` decoded the live page with `cp1252`, mojibakeing the `brújula` token (UTF-8 `0xC3 0xBA` -> cp1252 `Ã + º`) so the regex `br.jula` (dot wildcard) failed to match. Fix shipped same cycle: capture stdout as bytes, decode UTF-8 explicitly. This bug had silently shadowed the Deploy + Backup + Rollback axes on Windows hosts but never surfaced because the deploy healthcheck runs from the VPS where locale is UTF-8. The monitor running locally exposed it. Reality Contract honored: the cycle that ships the observation layer is also the cycle that proves observation produces signal.
+
+```
+[ Auto-Testing Gate ]   does it work?
+       v
+[  Arch-Check         ] consistent with the vault?
+       v
+[  Code Review        ] well-written, secure, maintainable?
+       v
+[  Backup             ] restore-tested snapshot on disk?
+       v
+[  Deploy             ] reached production AND serving traffic?
+       v
+[  Rollback (on fail) ] verified restore + healthcheck PASS?
+       v
+[  Monitor            ] continuous polling + alert receipts + debounce
+       v
+   PRODUCTION (observed)
+```
+
+The Quadrangle remains auto-testing + arch-check + code-review + deploy.
+Backup is the safe-deploy precondition. Rollback is the recovery escape
+hatch. Monitoring is the continuous-observation node that watches all
+of them in production. The seven-node chain is now closed: nothing
+reaches production without four gates, nothing that fails after Deploy
+is irrecoverable, and nothing that fails AFTER Deploy succeeds is
+invisible.
+
+V-block evidence: 16/16 monitoring V-tests PASS (V-POLL-ONCE-UP/DOWN,
+V-DEBOUNCE-NO-ALERT/RECOVERY, V-STATE-PERSIST, V-ALERT-FILE-CREATED,
+V-ALERT-STDOUT, V-NO-AUTO-ROLLBACK, V-CONFIG-INHERIT, V-ONCE-FLAG,
+V-ONCE-MULTIPROJECT, V-DAEMON-NO-INSTALL, V-RETENTION-PURGE-DROP,
+V-RETENTION-PURGE-KEEP, V-ALERTS-LIST, V-STATUS-NO-CHECK).
+6/6 MONITORING_AXIS verify_spp probe sub-checks PASS.
+Empirical alert artefact: `vault/alerts/20260526T150104Z_infinityops_DOWN_TO_UP.md`
+proves the full state machine end-to-end with the live br.jula signal.
+
+P2.3 `/health-all` ABSORBED as the `--once` flag (one snapshot,
+N projects). SCS C12 (Observability-by-default) sealed in the same
+cycle to lock the standard at v4 for all future productive features.

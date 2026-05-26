@@ -171,3 +171,16 @@ DONE-gate in `apex-completion-standard.md`.
 - [pattern/telemetry] L10 -- @decorator wrap is the right pattern for adding telemetry to large critical functions. Zero body edit + fail-open `try/except` + `functools.wraps`. Example: `_tis_log_call` over `jit_skill_loader.run()`.
 - [reality-contract/honest-zero] L11 -- Any report field defaulting to zero MUST carry an explicit reason in a sibling field (`INSUFFICIENT_TELEMETRY`, `NO_CANDIDATES_DETECTED`, etc.). Silent zeros are forbidden by Reality Contract.
 - [test/subprocess] L12 -- Tests that monkey-patch module-level path constants and then spawn subprocesses must pass the relevant overrides as CLI args. Subprocesses re-import fresh and ignore in-test patches.
+
+
+
+### Monitoring/Alert Axis (sealed 2026-05-26)
+
+| ID | Lesson |
+|---|---|
+| UKDL-MON-01 | Single source of truth for healthcheck: `modules/deployment/healthcheck.py:run_healthcheck` is reused verbatim from monitor.py. No duplication. Cross-axis bugs (e.g. UTF-8 mojibake) get fixed once and the fix propagates. |
+| UKDL-MON-02 | Debounce defaults seal: `consecutive_failures=3`, `consecutive_successes=2`, `min_state_duration_sec=30`, `interval_sec=60/HTTP` `30/TCP`. Per-project overrides via `vault/monitor/<project>.json`. Synthetic-transition V-tests prove every flip direction. |
+| UKDL-MON-03 | No automatic rollback. Monitor SUGGESTS via `vault/alerts/*.md` receipt + `[ALERT]` stdout line. V-NO-AUTO-ROLLBACK grep-asserts zero call sites of `rollback(` across monitor.py + observe.py + alert.py. Hawkins lens: Owner decides on destructive operations, sealed across Rollback + Monitor. |
+| UKDL-MON-04 | Daemon installation is Owner-gated. `/observe --daemon` PRINTS exact crontab + Task Scheduler instructions; V-DAEMON-NO-INSTALL grep-asserts zero `subprocess` call sites against `schtasks` / `crontab` / `Register-ScheduledTask`. The Owner copy-pastes; nothing auto-installs. |
+| UKDL-MON-05 | Cross-axis bug discovery: the monitoring axis EXPOSED a Windows-only UTF-8 decoding bug in `check_curl_grep` (cp1252 subprocess decode mojibakeing `brújula`). The bug had been latent in deploy + backup + rollback for weeks because their healthchecks run from a UTF-8 VPS. The monitor running locally surfaced it. Reality Contract reaffirmed: the axis that observes the most is the axis that finds the most. |
+| UKDL-MON-REP-01 | Reproducibility: `python tools/test_monitoring.py` -> 16/16 PASS; `python tools/verify_monitoring.py` -> 6/6 sub-checks PASS; `python -m modules.monitoring.observe --once --project all` -> 3-row table with real signals (infinityops UP, tua-x UP, kobiicraft signal-dependent on network reachability). Empirical alert artefact: `vault/alerts/<ts>_<project>_<event>.md` after any synthetic or real transition. Cold-boot evidence in `vault/test-results/cold_boot_MONITORING_<ts>.md`. |

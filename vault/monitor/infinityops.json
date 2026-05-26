@@ -1,0 +1,16 @@
+{
+  "project": "infinityops",
+  "interval_sec": 60,
+  "debounce_consecutive_failures": 3,
+  "debounce_consecutive_successes": 2,
+  "min_state_duration_sec": 30,
+  "alert_on": ["UP_TO_DOWN", "DOWN_TO_UP"],
+  "retention_days": 30,
+  "healthcheck": {
+    "type": "curl_grep",
+    "url": "https://infinityops.ai/",
+    "grep_pattern": "br.jula",
+    "timeout_sec": 15
+  },
+  "notes": "V1 curl-grep on live landing URL. Confirmed live + br.jula token MATCH=True (PASO 0 empirical poke: HTTP 200 77236 bytes 799ms). Same content-verification doctrine as the §77 deploy-vps.yml workflow uses — HTTP 200 alone is insufficient because a stale build still returns 200; the literal token proves new bytes served."
+}

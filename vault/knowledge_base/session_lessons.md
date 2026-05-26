@@ -889,3 +889,41 @@ would be investigated and fixed individually.
 - **diagnosis**: any test that monkey-patches a module's module-level path constants AND then spawns a subprocess of a tool that uses those constants is broken by default. The subprocess re-evaluates imports from scratch.
 - **fix**: pass `--session <test-sid>` explicitly to the subprocess so it does not consult the host-side `.session_id` file. Same pattern applies to any tool with stateful sidecar files.
 - **recognition signal**: an E2E test PASSES on read-back checks but FAILS on subprocess-emitted checks. Inspect the subprocess's environment / sidecar reads, not the module-level patches.
+
+
+
+### L1: subprocess.run(text=True) on Windows decodes cp1252, not UTF-8 (cross-axis)
+
+- **trap**: `subprocess.run([...], capture_output=True, text=True)` on a Windows host with non-ASCII output (e.g. a live HTML page containing "brújula") silently mojibakes the bytes. UTF-8 `ú` (0xC3 0xBA) becomes cp1252 `Ã + º` (the `Ã` byte interpreted as a Windows-1252 char, plus the `º` byte as `º`). A regex pattern like `br.jula` (dot wildcard) was designed to match the single `ú` char and now fails because the mojibake has TWO chars between `br` and `jula`.
+- **diagnosis**: `text=True` defers decoding to `locale.getpreferredencoding(False)`, which on Windows is `cp1252`. `urllib.request` (PASO 0 used this) explicitly decoded UTF-8 and saw the page correctly; `subprocess.run` (the actual runner) saw the broken decode. The deploy/backup/rollback healthcheck axes had this bug latent for weeks but it never surfaced because production checks run from the VPS where `locale.getpreferredencoding()` is `UTF-8`.
+- **fix**: capture stdout as bytes (`text=False` -- the default; just remove `text=True`), then `body = (result.stdout or b"").decode("utf-8", errors="replace")`. Do the same for stderr if you grep it. Universal rule for any subprocess wrapping a network call on Windows.
+- **recognition signal**: a regex pattern that matches the response body in `urllib.request` but NOT in `subprocess.run(["curl", ...], text=True).stdout`, particularly with `body_len` differing between the two by a few bytes per non-ASCII char. The mojibake characters cluster around the same offsets.
+- **doctrine**: extends the Windows Bash Bridge + PowerShell-git-PATH gaps documented previously (2026-05-21 + 2026-05-22). Windows + native CLI = encoding boundary; always decode explicitly.
+- **cross-ref**: shipped fix in `modules/deployment/healthcheck.py:check_curl_grep`. Discovered DURING the Monitoring/Alert Axis sealing cycle 2026-05-26, proving the value of the monitor: it surfaces bugs the gate-once axes cannot see.
+
+### L2: Regex dot-wildcard in healthcheck grep_patterns is intentional, not a sloppy escape
+
+- **trap**: developer hygiene says "escape every literal dot in a regex". Applied to `vault/monitor/infinityops.json`'s `grep_pattern`, the developer escapes `br.jula` to `br\.jula`. The pattern now requires a LITERAL period between `br` and `jula`, which the live page (containing "brújula" -- the Spanish word for "compass" with the accented ú) does NOT have. The check fails forever.
+- **diagnosis**: the existing `vault/deploy/infinityops.json:healthcheck.grep_pattern` is literally `br.jula` (no escape). The dot is INTENTIONALLY a regex wildcard matching the accented `ú`. Pattern hygiene must yield to project convention when the project convention is the load-bearing one.
+- **fix**: do NOT escape literal-looking dots in grep patterns when copying healthcheck specs from one axis to another. The convention is set by the canonical config (vault/deploy/*.json); newer configs MUST mirror, not "improve".
+- **recognition signal**: `pattern '<X>' not found; body_len=<N>` where N is the expected body size AND the canonical deploy spec for the same project also uses the same pattern.
+- **doctrine**: SCS C7 (RTK compatibility) extends to regex-content compatibility across axes: an axis that observes the same target must use the SAME pattern. Cross-axis pattern drift is a defect.
+- **cross-ref**: same axis cycle as L1; this lesson was discovered AFTER L1 was fixed and the test still failed -- the UTF-8 fix was necessary but not sufficient. Both lessons compound: L1 makes the bytes correct, L2 keeps the pattern correct.
+
+### L3: 4-dir symmetry across vault/{deploy,backup,rollback,monitor}/ is the project's primary key
+
+- **trap**: contract specifies `vault/monitor/tuax.json` (no dash). Existing sibling configs use `vault/{deploy,backup,rollback}/tua-x.json` (with dash). If you follow the contract literally, the 4 dirs lose 1:1 mapping for the `tua-x` project, and source_selector-style joiners across axes silently break.
+- **diagnosis**: the project-id is the join key across every axis's vault config. Naming asymmetry across the 4 dirs is the WORST architectural drift because it is silent: every axis works in isolation, but cross-axis tools (`/release`, `/pilot-readiness`, `/incident`) see the project as two different entities ("tuax" in monitoring, "tua-x" everywhere else).
+- **fix**: when seeding a new axis's per-project configs, READ the existing 3 sibling dirs first. Match the filename + the `"project"` field both. The 4-dir symmetry is implicit doctrine; any contract literal that breaks it is contract drift, not architectural intent.
+- **recognition signal**: any per-project config landing under `vault/` whose stem differs from existing sibling stems for the same project. `ls vault/{deploy,backup,rollback,monitor}/<project>.json` should return 4 lines, not 3.
+- **doctrine**: project-id symmetry is a load-bearing invariant of the deploy lifecycle. Not architectural change -- preservation of existing architecture.
+- **cross-ref**: Monitoring Axis M1 decision: filename `tua-x.json` (with dash) to match 3 sibling dirs; documented in `vault/monitor/tua-x.json:notes`.
+
+### L4: SCS version must be re-read in full before incrementing (read v3, not v1 cached)
+
+- **trap**: previous session read SCS v1 (C1-C7) when it was still at v1. Cached mental model said "SCS is at v1 with 7 clauses". This cycle's contract said "add C12 to bump to v4", implying SCS was at v3 already. Mental model would have inserted C8 as the new clause.
+- **diagnosis**: SCS evolves rapidly (v1 -> v2 -> v3 -> v4 in 1 session). The current state is on disk, not in memory. ALWAYS re-read the standard before extending it.
+- **fix**: before any seal, grep `^### C\d+` against the current SCS file to enumerate existing clauses, then extend from the highest number. `grep -n "^### C" knowledge_vault/core/skill-completion-standard.md` is the cheap pre-check.
+- **recognition signal**: about to write `### C8 -- <new clause>` when running grep would show `### C11` already on disk. Stop, re-read, extend.
+- **doctrine**: standards-as-disk-state, not standards-as-memory. Same rule as the manifest-as-truth-source from Rollback Axis.
+- **cross-ref**: this cycle re-read SCS via `Read` after `Glob` told us the file was longer than the initial 173-line peek. Lesson sealed before C12 was inserted.

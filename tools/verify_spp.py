@@ -139,6 +139,9 @@ def main() -> int:
         ("tis-probe",
          [PY, str(PP / "tools" / "verify_tis.py")],
          30),
+        ("monitoring-axis",
+         [PY, str(PP / "tools" / "verify_monitoring.py")],
+         30),
     ]
 
     if args.row:

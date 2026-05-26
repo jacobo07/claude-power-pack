@@ -1,8 +1,8 @@
-# Skill Completion Standard v2 -- baseline raised post LT+CEPS + S+++ cycle
+# Skill Completion Standard v4 -- baseline raised post Monitoring/Alert Axis cycle
 
-**Sealed v1**: 2026-05-25. **Sealed v2**: 2026-05-26 (S+++ run added C8-C10 derived from real gaps observed during the post-merge hardening cycle).
+**Sealed v1**: 2026-05-25. **Sealed v2**: 2026-05-26 (S+++ run added C8-C10 derived from real gaps observed during the post-merge hardening cycle). **Sealed v3**: 2026-05-26 (TIS cycle added C11 -- Token-Intelligence-by-default). **Sealed v4**: 2026-05-26 (Monitoring/Alert Axis cycle added C12 -- Observability-by-default).
 
-A new PP skill is *complete* only when all **ten** clauses below are satisfied with empirical evidence. Missing evidence == not complete. Reality Contract applies: the evidence is the test output, not the description of the test.
+A new PP skill is *complete* only when all **twelve** clauses below are satisfied with empirical evidence. Missing evidence == not complete. Reality Contract applies: the evidence is the test output, not the description of the test.
 
 ---
 
@@ -139,6 +139,22 @@ Any feature that generates calls to a Claude model (LLM dispatch, hook injection
 
 **Evidence required**: `tis_report --by-skill` shows the feature; `tis_handoff` emits a non-placeholder `recommended_action`; the `vault/token_logs/<date>.jsonl` line is in the diff for the feature's commit.
 
+### C12 -- Observability-by-default (sealed v4, 2026-05-26)
+
+Any feature that modifies the state of a productive service (a deploy that changes what users see, a backup that captures restorable bytes, a rollback that overwrites live state) MUST register a live-monitorable signal under the Monitoring/Alert Axis:
+
+(a) a `vault/monitor/<project>.json` entry whose `healthcheck` section references the SAME signal shape used by `vault/deploy/<project>.json` (TCP, HTTP, or curl-grep). Same-source-of-truth: if the deploy verifies it, the monitor watches it. No second signal-set to drift from.
+
+(b) the project's name appears in `python -m modules.monitoring.observe --once --project all` output as a non-empty row (status `UP`, `DOWN`, or transient `UNKNOWN` during boot). A project that ships but does not appear in `--once` cannot be observed continuously and so cannot satisfy this clause.
+
+(c) at least one state transition (`UP_TO_DOWN` or `DOWN_TO_UP`) per feature lifecycle MUST be exercised and its alert receipt (`vault/alerts/<ts>_<project>_<event>.md`) committed to the diff. The V-block tests can synthesise this transition; mocking the underlying check is acceptable. An axis that never emits is indistinguishable from one that never exists.
+
+**Why this clause exists**: until 2026-05-26, the deploy lifecycle was "deploy + healthcheck once + done". A service that went DOWN 5 minutes later sat unobserved until the Owner manually noticed. The Monitoring/Alert Axis (sealed 2026-05-26) closes that gap; C12 makes the closure mandatory for all future productive-state features. No service the PP ships is allowed to be unobservable.
+
+**Default test**: per-feature integration test in the axis's V-block exercises one synthetic transition and asserts the alert receipt was written + the stdout `[ALERT]` tag was printed. Mocking is acceptable; silent skipping is not.
+
+**Evidence required**: `vault/monitor/<project>.json` in the diff, `--once` output captured in a `vault/test-results/` artifact (C8 compliance), and a `vault/alerts/*.md` from at least one transition (synthetic or real).
+
 ---
 
 ## Enforcement
@@ -158,6 +174,7 @@ A skill that fails any clause cannot be merged to `main`. The plan document for 
 | C9 schema-test reciprocity      | V-* test for every schema invariant | [x] |
 | C10 idempotency-by-default      | V-*-IDEMPOTENT test for each persistent-state trigger | [x] |
 | C11 token-intelligence-by-default | TIS hook + non-empty `--by-skill` row + handoff_*.md in diff | [x] |
+| C12 observability-by-default      | `vault/monitor/<project>.json` + non-empty `--once` row + at least one `vault/alerts/*.md` from synthetic transition | [x] |
 
 Missing rows or `[ ]` checkboxes block the merge.
 
@@ -176,6 +193,14 @@ Missing rows or `[ ]` checkboxes block the merge.
 - **verify_spp host-portability cycle** (4 STRICT-FAILs resolved): the PowerShell-NonInteractive PATH gap that surfaced inside `normalize_paths.py`, `verify_global_mirrors.py`, and `verify_rtk_fusion.py` reinforced C8 (the receipt is the proof, not the prose) -- every fix was demonstrated by re-running the failing probe and capturing the post-fix output.
 
 These five cycles bootstrap each other. v2 freezes the pattern they established.
+
+### v3 (C11) -- 2026-05-26 TIS cycle
+
+- **TIS** (`tools/tis.py`): C11 is itself the substrate. The `@_tis_log_call` decorator pattern in `tools/jit_skill_loader.py::run` is the reference; the `vault/token_logs/<date>.jsonl` append-only contract + `tools/tis_handoff.py` Capa-3 summarizer close the loop. The original 2026-05-26 commit cycle for TIS produced the seeding handoff artefact alongside the substrate -- self-bootstrapping.
+
+### v4 (C12) -- 2026-05-26 Monitoring/Alert Axis cycle
+
+- **Monitoring/Alert Axis** (`modules/monitoring/`): C12 is itself the substrate. The axis sealed the third executable node of the deploy lifecycle (Backup -> Deploy -> Rollback -> Monitor). The V-block (16 tests) bootstraps the synthetic-transition discipline; the empirical run on the 3 productive projects produced the real `vault/alerts/<ts>_infinityops_DOWN_TO_UP.md` artefact alongside the substrate -- self-bootstrapping. The cycle ALSO uncovered a Windows-only UTF-8 decoding bug in `modules/deployment/healthcheck.py:check_curl_grep` (subprocess `text=True` decoded with cp1252, mojibakeing the live `brújula` token); the fix shipped together with the axis as proof that the monitor's value is exactly to surface bugs the gate-once axes (deploy, backup, rollback) cannot see.
 
 ---
 

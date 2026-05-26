@@ -1,0 +1,16 @@
+{
+  "project": "tua-x",
+  "interval_sec": 60,
+  "debounce_consecutive_failures": 3,
+  "debounce_consecutive_successes": 2,
+  "min_state_duration_sec": 30,
+  "alert_on": ["UP_TO_DOWN", "DOWN_TO_UP"],
+  "retention_days": 30,
+  "healthcheck": {
+    "type": "http",
+    "url": "https://cw.infinityops.ai/",
+    "expect_status": 200,
+    "timeout_sec": 10
+  },
+  "notes": "V1 HTTP 200 check on landing URL. Confirmed live + reachable from anywhere (PASO 0 empirical poke: HTTP 200 23479 bytes 428ms). Filename preserves the dashed project-id (tua-x) used by sibling configs in vault/{deploy,backup,rollback}/ -- the 4-dir symmetry is the project's primary key."
+}

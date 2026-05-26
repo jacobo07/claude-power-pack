@@ -1,0 +1,16 @@
+{
+  "project": "kobiicraft",
+  "interval_sec": 30,
+  "debounce_consecutive_failures": 3,
+  "debounce_consecutive_successes": 2,
+  "min_state_duration_sec": 30,
+  "alert_on": ["UP_TO_DOWN", "DOWN_TO_UP"],
+  "retention_days": 30,
+  "healthcheck": {
+    "type": "tcp",
+    "host": "5.9.23.174",
+    "port": 25565,
+    "timeout_sec": 5
+  },
+  "notes": "V1 TCP-only per Q1. Same signal as vault/deploy/kobiicraft.json:healthcheck — single source of truth. Monitor running from local Windows may see ConnectionRefused (firewall / V-KOBIICRAFT SKIP); from gex44 itself or VPS204 the signal is reachable. Log-tail SSH for TPS/heap/players is V2 scope."
+}
