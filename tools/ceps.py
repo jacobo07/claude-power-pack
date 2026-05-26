@@ -239,6 +239,11 @@ def record_error(
             subsystem=subsystem or "unknown",
             root_cause_short=_short(root_cause, 60),
         )
+        # M1/NIT1: schema declares max_chars=300 on prevention_rule;
+        # enforce on the rendered output (templates may stretch with
+        # long subsystem identifiers).
+        if len(rule) > 300:
+            rule = rule[:297] + "..."
         event = {
             "id": f"ceps_{sig}",
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -351,15 +356,14 @@ def propagate(prompt: str, subsystem_hints=None, top_k: int = 3) -> list:
             return []
         conn = _db()
         try:
+            # M2/NIT2: flattened to a single SELECT; substr alias is
+            # bound inline so no outer wrapper is needed.
             rows = conn.execute(
                 "SELECT category, subsystem, prevention_rule, "
-                "pattern_signature_short FROM ("
-                "  SELECT category, subsystem, prevention_rule, "
-                "  substr(id, 6, 8) AS pattern_signature_short, "
-                "  rank FROM ceps_patterns_fts "
-                "  WHERE ceps_patterns_fts MATCH ? "
-                "  ORDER BY rank LIMIT ?"
-                ")",
+                "substr(id, 6, 8) AS sig "
+                "FROM ceps_patterns_fts "
+                "WHERE ceps_patterns_fts MATCH ? "
+                "ORDER BY rank LIMIT ?",
                 (q, top_k),
             ).fetchall()
         finally:
@@ -396,12 +400,41 @@ _VERIFY_FAIL_RX = re.compile(
     r"\[FAIL\]\s+(\S+)\s+rc=\d+\s+[\d.]+s\s+(.+?)(?:\n|$)")
 
 
+def _existing_sigs() -> set:
+    """M3/NIT3: scan events.jsonl for already-recorded signatures so
+    `from_verify_fail` can skip duplicates on re-invocation. Fail-open:
+    any read error -> empty set (re-record, never block)."""
+    if not EVENTS_PATH.is_file():
+        return set()
+    sigs = set()
+    try:
+        for line in EVENTS_PATH.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                sigs.add(json.loads(line).get("pattern_signature", ""))
+            except json.JSONDecodeError:
+                continue
+    except Exception as exc:
+        _log(f"_existing_sigs ERROR {type(exc).__name__}: {exc}")
+    return sigs
+
+
 def from_verify_fail(verify_stdout: str) -> list:
     """Parse `tools/verify_spp.py` STRICT-FAIL rows -> high-confidence
-    records. Returns the list of created events."""
+    records. M3/NIT3: idempotent under re-invocation -- signatures
+    already present in events.jsonl are skipped so the same stdout
+    parsed twice produces zero duplicate rows."""
+    existing = _existing_sigs()
     out = []
     for m in _VERIFY_FAIL_RX.finditer(verify_stdout):
         row, detail = m.group(1).strip(), m.group(2).strip()
+        root_cause = f"verify_spp row `{row}` FAIL: {detail}"
+        sig = pattern_signature(root_cause)
+        if sig in existing:
+            continue
+        existing.add(sig)
         # Best-guess category by row name. Conservative: default to
         # `tooling` so the record exists even for unrecognized rows.
         category = "tooling"
@@ -412,7 +445,7 @@ def from_verify_fail(verify_stdout: str) -> list:
         ev = record_error(
             category=category,
             subsystem=f"verify-spp/{row}",
-            root_cause=f"verify_spp row `{row}` FAIL: {detail}",
+            root_cause=root_cause,
             evidence_path="tools/verify_spp.py",
             confidence="high",
         )
