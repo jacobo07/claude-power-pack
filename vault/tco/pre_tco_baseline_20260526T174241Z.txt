@@ -1,0 +1,71 @@
+# TCO pre-baseline -- 20260526T174241Z
+# HEAD = 393886e (Monitoring/Alert Axis sealed)
+# Captured BEFORE TCO implementation. Post-TCO baseline goes in
+# vault/test-results/cold_boot_TCO_<ISO>.md per M9.
+
+## test_tis_core.py (6/6)
+PASS  V-TIS-APPEND  entries=1
+PASS  V-TIS-IDEMPOTENT  delta=2
+PASS  V-TIS-SCHEMA  missing=none keys=10
+PASS  V-TIS-SESSION  a=fa9cdd64 b=fa9cdd64
+PASS  V-TIS-PERSIST
+PASS  V-TIS-NONZERO  in=100 out=50 cr=25 cc=5
+TIS_CORE_PASS=6/6
+
+## test_tis_e2e.py (4/4)
+PASS  V-E2E-1 mock-dispatch  sid=e2e-test dispatched=3
+PASS  V-E2E-2 entries>=3  count=3
+PASS  V-E2E-3 report-summary  rc=0
+PASS  V-E2E-4 handoff-emits  rc=0 candidate=True
+E2E_PASS = 4/4
+
+## test_monitoring.py (16/16)
+V-POLL-ONCE-UP / V-POLL-ONCE-DOWN / V-DEBOUNCE-NO-ALERT /
+V-DEBOUNCE-RECOVERY / V-STATE-PERSIST / V-ALERT-FILE-CREATED /
+V-ALERT-STDOUT / V-NO-AUTO-ROLLBACK / V-CONFIG-INHERIT / V-ONCE-FLAG /
+V-ONCE-MULTIPROJECT / V-DAEMON-NO-INSTALL / V-RETENTION-PURGE-DROP /
+V-RETENTION-PURGE-KEEP / V-ALERTS-LIST / V-STATUS-NO-CHECK
+Result: 16/16 PASS
+
+## pytest tests/ (43/43)
+43 passed in 2.36s
+Note: esprima was installed mid-baseline (was missing -- pre-existing repo
+condition, NOT a TCO-cycle regression). Now: 43/43.
+
+## tis_report.py --summary (PRE-TCO)
+session   calls  in_tok  out_tok  cache%  cost_usd
+--------  -----  ------  -------  ------  --------
+41ab447d  81     61274   17652    0.0%    $0.00000
+58f58d5f  24     3290    5192     0.0%    $0.00105
+
+## tis_report.py --by-skill (PRE-TCO)
+skill                 calls  in_tok  out_tok  cost_usd
+--------------------  -----  ------  -------  --------
+jit_skill_loader.run  104    64464   22794    $0.00000
+tis-self-probe        1      100     50       $0.00105
+
+## monitoring.observe --once
+infinityops    | UP       | 2026-05-26T17:40:35Z
+kobiicraft     | UNKNOWN
+tua-x          | UP
+
+## verify_spp.py (9 rows -- 7 OK / 2 STRICT FAIL, both pre-existing Pane-N drift)
+[FAIL] mirror-parity  rc=5  DRIFT apex-completion-standard.md
+       global=ca6b585b5d17  pp=7d70ef53d50c
+[FAIL] drift-report   rc=1  loose-ahead 1 (apex newer by 31.9 min)
+[OK  ] paths+secrets         rc=0
+[OK  ] rtk-fusion            rc=0  PASS >= 77% floor
+[OK  ] intent-lock           rc=0  7/7 passed
+[OK  ] l3-engine             rc=0  12/12 checks passed
+[OK  ] programmatic-budget   rc=0
+[OK  ] tis-probe             rc=0  TIS_PROBE = 4/4
+[OK  ] monitoring-axis       rc=0  MONITORING_AXIS: 6/6 sub-checks PASS
+total elapsed: 174.75s
+
+## Pre-TCO Pane-N drift (out-of-cycle, do NOT sync)
+loose apex bytes: 97027
+PP    apex bytes: 92605
+delta: +4422 bytes added to loose by another Pane (NOT my work).
+L9 doctrine applied: refuse blind sync, document and continue.
+This drift will persist through TCO cycle and be resolved when Owner
+addresses Pane-N apex-stomp governance gap.
