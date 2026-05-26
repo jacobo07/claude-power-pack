@@ -1,0 +1,95 @@
+{
+  "spec_version": 2,
+  "fixture_kind": "canonical-paired",
+  "generated_iso": "2026-05-26T08:48:59Z",
+  "scoring_protocol": "vault/ceps/lt_empirical_scoring_protocol.md",
+  "pass_gate": {
+    "metric": "aggregate(novelty+depth+actionability)_with >= aggregate(without) + 1.5",
+    "n_prompts": 5,
+    "max_score_per_pair": 15,
+    "max_aggregate": 75
+  },
+  "scoring_status": "owner-scoring-pending",
+  "prompts": [
+    {
+      "domain": "algorithmic",
+      "prompt": "I'm stuck on the N-queens algorithm scaling above N=30; recursion and bitboards already tried. Any lateral angles I haven't tried?",
+      "with_skill_additional_context": "[lateral-thinking-skill] Stuck / design-pivot prompt detected. Invoke the Skill tool with name `lateral-thinking` for the 5-frame procedure (reframing, inversion, cross-domain analogy, constraint-removal, first-principles), scoring rubric (1-5 per frame), and audit-trail block format. Default top-3 by problem-domain; the full procedure is mandatory before solution convergence. Cross-references: 5 per-frame files under ~/.claude/skills/lateral-thinking/references/.",
+      "without_skill_additional_context": null,
+      "owner_score_with": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      },
+      "owner_score_without": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      }
+    },
+    {
+      "domain": "product-ux",
+      "prompt": "Checkout abandonment refuses to drop after two flow rewrites. No idea what to try next.",
+      "with_skill_additional_context": "[lateral-thinking-skill] Stuck / design-pivot prompt detected. Invoke the Skill tool with name `lateral-thinking` for the 5-frame procedure (reframing, inversion, cross-domain analogy, constraint-removal, first-principles), scoring rubric (1-5 per frame), and audit-trail block format. Default top-3 by problem-domain; the full procedure is mandatory before solution convergence. Cross-references: 5 per-frame files under ~/.claude/skills/lateral-thinking/references/.",
+      "without_skill_additional_context": null,
+      "owner_score_with": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      },
+      "owner_score_without": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      }
+    },
+    {
+      "domain": "system-design",
+      "prompt": "LiveView dashboards lag under poor mobile connections. We're atascados. Any alternativas you'd consider?",
+      "with_skill_additional_context": "[lateral-thinking-skill] Stuck / design-pivot prompt detected. Invoke the Skill tool with name `lateral-thinking` for the 5-frame procedure (reframing, inversion, cross-domain analogy, constraint-removal, first-principles), scoring rubric (1-5 per frame), and audit-trail block format. Default top-3 by problem-domain; the full procedure is mandatory before solution convergence. Cross-references: 5 per-frame files under ~/.claude/skills/lateral-thinking/references/.",
+      "without_skill_additional_context": null,
+      "owner_score_with": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      },
+      "owner_score_without": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      }
+    },
+    {
+      "domain": "debugging",
+      "prompt": "Cache eviction is failing in a complex problem -- it's correlated across tenants and the obvious answer is wrong. Brainstorm please.",
+      "with_skill_additional_context": "[vague-prompt-lint] Prompt corto (<30 tok) con referente sin concretar. Si hay ambiguedad real, pregunta al Owner que es 'X' antes de ejecutar. No bloqueante.\n\n[lateral-thinking-skill] Stuck / design-pivot prompt detected. Invoke the Skill tool with name `lateral-thinking` for the 5-frame procedure (reframing, inversion, cross-domain analogy, constraint-removal, first-principles), scoring rubric (1-5 per frame), and audit-trail block format. Default top-3 by problem-domain; the full procedure is mandatory before solution convergence. Cross-references: 5 per-frame files under ~/.claude/skills/lateral-thinking/references/.",
+      "without_skill_additional_context": "[vague-prompt-lint] Prompt corto (<30 tok) con referente sin concretar. Si hay ambiguedad real, pregunta al Owner que es 'X' antes de ejecutar. No bloqueante.",
+      "owner_score_with": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      },
+      "owner_score_without": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      }
+    },
+    {
+      "domain": "creative",
+      "prompt": "Naming a new product tier. 'Pro' / 'Premium' / 'Enterprise' feels too obvious. No idea where to start.",
+      "with_skill_additional_context": "[lateral-thinking-skill] Stuck / design-pivot prompt detected. Invoke the Skill tool with name `lateral-thinking` for the 5-frame procedure (reframing, inversion, cross-domain analogy, constraint-removal, first-principles), scoring rubric (1-5 per frame), and audit-trail block format. Default top-3 by problem-domain; the full procedure is mandatory before solution convergence. Cross-references: 5 per-frame files under ~/.claude/skills/lateral-thinking/references/.",
+      "without_skill_additional_context": null,
+      "owner_score_with": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      },
+      "owner_score_without": {
+        "novelty": null,
+        "depth": null,
+        "actionability": null
+      }
+    }
+  ]
+}
