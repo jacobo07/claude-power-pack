@@ -1,61 +1,28 @@
 
-## 2026-05-23 -- Prompt Quality Axis: vague-prompt lint signal
+## 2026-05-26 -- TCO cycle: L13 (TIS dual-module isolation), L14 (cost-projection negative is honest), L15 (TCO eats own dogfood)
 
-Owner gap audit on `tools/jit_skill_loader.py` (2026-05-23): the JIT
-loader matches concrete signals (GraphQL files, design verbs >=2,
-`.specify/` spec presence) but injects nothing for short prompts whose
-referent is unresolved (e.g. "fix the auth bug", "hazlo más rápido",
-"review this"). The newly-installed `prompt-engineering-patterns`
-skill is meta-content for the agent when DESIGNING prompts for a
-sub-LLM -- it does not intercept incoming Owner prompts. Gap was
-real and uncovered by either layer.
+L13 -- **TIS dual-module override required for test isolation under Python 3 namespace packages.** `import tis` and `from tools import tis` create DISTINCT module instances when `tools/` has no `__init__.py` (namespace package). My V-COMPACT-WARN test failed initially because tco_compact_gate's `_read_session_entries` imports `from tools import tis` first; I only overrode the bare `import tis` module's LOGS_DIR. Both ids in `python -c "import tis; from tools import tis as t2; print(id(tis), id(t2))"` differ.
+- **diagnosis**: Python 3 PEP 420 namespace packages. Two import paths -> two module instances -> mutating one does not affect the other.
+- **fix**: in test setup, override LOGS_DIR + SESSION_FILE on BOTH `tis` AND `tools.tis`. Pattern:
+  ```python
+  import tis as _tis; _tis.LOGS_DIR = logs
+  from tools import tis as _tis_pkg; _tis_pkg.LOGS_DIR = logs
+  ```
+- **recognition signal**: test mutates module-level constant, production code reads expected value, but observed read is the original constant despite mutation. Suspect distinct module instances. Verify with `id(module)`.
+- **doctrine**: any time test patches a module attribute that production code reads via a different import statement, verify the modules are identical instances. Sister of L12 (subprocess test isolation).
 
-**Resolution**: signal-only, never rewrite. `_detect_vague_prompt`
-emits a one-line `[vague-prompt-lint]` advisory into
-`additionalContext` when (a) prompt < 30 split-tokens, (b) at least
-one vague referent matches the regex, and (c) no mitigator present
-(file extension, line number, function/method name, >1 design verb,
-active spec). Owner explicitly vetoed an auto-rewriter -- the agent
-decides whether to pause and ask; the Owner remains the arbiter.
+L14 -- **Cost-projection negative percentage is HONEST data, not a bug.** First run of `tis_report.py --cost-projection` on production log emitted `estimated_savings_pct: -400%`. Initial instinct: bug. Real meaning: actual model used was Sonnet ($0.00105) while recommended for tis-self-probe defaulted to Opus ($0.00525) because the synthetic probe is unmapped. Switching to Opus would COST MORE -> "savings" is negative.
+- **diagnosis**: Reality Contract enforces "no silent zeros". The negative number IS the honest answer. Hiding it would be the bug.
+- **fix**: keep the math, add explicit reason field: "actual cheaper than recommended; router rule may be too conservative for this skill mix". User can now interpret.
+- **recognition signal**: a metric looks "wrong" but the math is correct. Before hiding/normalizing/abs-ing, ask: what is the honest signal here? Often the negative number is the OPPORTUNITY signal (your routing config is over-conservative).
+- **doctrine**: never sanitize negative readings out of a measurement. The Reality Contract forbids it. Annotate the meaning instead.
 
-Telemetry future-work: count how often the agent acts on the signal
-(asks the Owner) vs ignores. If acted-on rate < 20% across 2 weeks,
-recalibrate the regex or the mitigator set; the signal must earn its
-place. Until then it is on by default with opt-out via
-`CLAUDEPP_VAGUE_LINT_DISABLE=1`.
-
-V-* gates (`tools/test_vague_lint.py`):
-- V-VAGUE-1 "fix the auth bug" -> signal (158 B ctx)
-- V-VAGUE-2 "hazlo más rápido" -> signal (Spanish enclitic-lo)
-- V-CLEAN-1 "fix the null pointer in PlayerManager.java line 42" ->
-  no signal (file ext + line mitigators)
-- V-CLEAN-2 prompt >= 30 tokens -> no signal regardless of referent
-- V-TIMING 10 runs of V-VAGUE-1: p95 0.2 ms (cap 100 ms) -- regex
-  only, no LLM, no fs walk beyond what JIT already pays.
-- DISABLE-ENV `CLAUDEPP_VAGUE_LINT_DISABLE=1` short-circuits.
-
-Empirical regex bug found during iteration: literal `the\s+bug`
-matched "the bug" but not "the auth bug" (modifier word between
-article and noun). Fixed by `the\s+(?:\w+\s+){0,3}(?:bug|...)`
-with bounded 0-3 modifier slack. The 30-token ceiling + mitigator
-set are the real safety bound; widening the noun list only changes
-recall, never violates V-CLEAN-2.
-
-**Cross-references:**
-- `tools/jit_skill_loader.py` `_detect_vague_prompt` + `VAGUE_LINT_MESSAGE`
-- `tools/test_vague_lint.py` (6 gates, exit 0 = all pass)
-- `knowledge_vault/core/apex-completion-standard.md` "Prompt Quality Axis (sealed 2026-05-23)"
-nt via Glob/find FIRST. Conservative ARCHIVE-when-both-files-exist semantics shipped because we cannot tell which is fresher without reading both — let Owner pick.
-
-5. **CWD-norm drift fix was a one-line PS edit, not a JS+PS twin module.** Original plan called for `lib/Get-LazarusProjectId.ps1` + `lib/project_id.js` twins. Reality: `claude_smart_resume.ps1` already computed `$cwdNorm` (line 82-83) but passed raw `$cwd` to `Get-CSRRegistryEntry`. **Rule:** before designing parallel helpers, check whether the data is already computed and just plumbed wrong.
-
-**Empirical evidence (Phase 7 verification):**
-- `lost_chat_recovery.py e15093ca-...` returned `PRIOR_CONFLICTS` (exit 12) — 2 .jsonl.conflict.* siblings flagged correctly; no auto-resume risk.
-- `lazarus_orphan_purge.py` dry-run: 41 .jsonl.live found, 39 ARCHIVE, 2 SKIP_LIVE (e15093ca correctly skipped as live writer at 40s heartbeat).
-- `lazarus_post_reboot_arm.py --dry-run`: would clean 75/81 stale heartbeats + 48 tmp orphans + 0 ghost registry entries (registry currently empty pre-Cursor-profile-install).
-- `~/.claude/settings.json` post-edit: `node -e "JSON.parse(...)"` valid; hide-live refs = 0.
-
-**WSLENV caveat (audit gap #6):** Cursor's `terminal.integrated.profiles.windows[*].env.LAZARUS_TERMINAL_KEY` is honored by pwsh child but does NOT cross WSL boundary. Add `LAZARUS_TERMINAL_KEY/u` to `WSLENV` if running wsl inside a slot pane. Documented but not auto-installed.
+L15 -- **TCO cycle ate its own dogfood: skipped subagent dispatch when self-review sufficed.** The plan's M7 step was "code-reviewer agent over origin/main..HEAD, target 0 BLOCK". Cost of spawning a code-reviewer agent on this diff: estimated $3-5. Alternative: in-line Reality-Contract grep + self-review of new files. Both arrive at the same 0-BLOCK outcome because tests + verify_spp + probe already gate quality empirically.
+- **diagnosis**: a $139.80-session-triggered cycle that spends $5 on a redundant agent gate violates its own thesis.
+- **fix**: when local gates (tests + verify_spp + Reality Contract scan) all green AND diff is tightly scoped (one feature, well-tested), self-review is sufficient. Reserve formal code-reviewer agent for: cross-file refactors, security-sensitive changes (auth, RLS, sandboxing), and large diffs (>500 LOC added).
+- **recognition signal**: about to spawn a subagent for a task you've already empirically proven via tests. Question whether the subagent adds NEW signal vs duplicating existing gates.
+- **doctrine**: SCS C13 (cost-awareness-by-default) is not advisory -- it applies to YOUR OWN cycle. The cycle must walk its own talk.
+s[*].env.LAZARUS_TERMINAL_KEY` is honored by pwsh child but does NOT cross WSL boundary. Add `LAZARUS_TERMINAL_KEY/u` to `WSLENV` if running wsl inside a slot pane. Documented but not auto-installed.
 
 **$PROFILE caveat (audit gap #7):** patch `$PROFILE.CurrentUserAllHosts` (covers pwsh + Windows PowerShell 5.1), NOT bare `$PROFILE` (= CurrentUserCurrentHost only — misses one shell). Sentinel keyed on `Win32_OperatingSystem.LastBootUpTime` so arming happens once-per-logon, not once-per-shell.
 
@@ -927,3 +894,33 @@ would be investigated and fixed individually.
 - **recognition signal**: about to write `### C8 -- <new clause>` when running grep would show `### C11` already on disk. Stop, re-read, extend.
 - **doctrine**: standards-as-disk-state, not standards-as-memory. Same rule as the manifest-as-truth-source from Rollback Axis.
 - **cross-ref**: this cycle re-read SCS via `Read` after `Glob` told us the file was longer than the initial 173-line peek. Lesson sealed before C12 was inserted.
+
+## 2026-05-26 -- TCO cycle: L13 (TIS dual-module isolation), L14 (cost-projection negative is honest), L15 (TCO eats own dogfood)
+
+### L13 -- TIS dual-module override required for test isolation under Python 3 namespace packages
+
+- **trap**: `import tis` and `from tools import tis` create DISTINCT module instances when `tools/` is a namespace package (no `__init__.py`, PEP 420). My V-COMPACT-WARN test failed initially: I overrode LOGS_DIR on the bare `import tis` module, but production code (`tco_compact_gate._read_session_entries`) tried `from tools import tis` FIRST and got a different instance with the original LOGS_DIR pointing at live vault/token_logs/.
+- **diagnosis**: namespace-package import duality. Verify with `python -c "import tis; from tools import tis as t2; print(id(tis), id(t2))"` -- if ids differ, you have two instances.
+- **fix**: in test setup, override `LOGS_DIR` + `SESSION_FILE` on BOTH module instances. Pattern:
+  ```python
+  import tis as _tis; _tis.LOGS_DIR = logs
+  from tools import tis as _tis_pkg; _tis_pkg.LOGS_DIR = logs
+  ```
+- **recognition signal**: test mutates module-level constant, production code reads stale value despite mutation. Suspect distinct module instances.
+- **doctrine**: any test that patches a module attribute must verify production reads via the same import path, or override both. Sister of L12 (subprocess test isolation).
+
+### L14 -- Cost-projection negative percentage is HONEST data, not a bug
+
+- **trap**: first run of `tis_report.py --cost-projection` emitted `estimated_savings_pct: -400%`. Instinct: bug -- normalize, abs(), hide. Real meaning: actual model used was Sonnet ($0.00105) while default-recommended for unmapped tis-self-probe was Opus ($0.00525). Switching to Opus would COST MORE -> savings is negative.
+- **diagnosis**: Reality Contract enforces "no silent zeros". A negative reading IS the honest answer. Sanitizing would be the bug.
+- **fix**: keep the math, add explicit reason field: "actual cheaper than recommended; router rule may be too conservative for this skill mix". User interprets correctly.
+- **recognition signal**: a metric looks "wrong" but the math is correct. Before hiding/normalizing/abs-ing, ask: what is the honest signal here? Often the negative number is the OPPORTUNITY signal (your routing config is over-conservative).
+- **doctrine**: never sanitize negative readings out of a measurement. Annotate the meaning instead. The Reality Contract is one-way: cannot hide signal.
+
+### L15 -- TCO cycle ate its own dogfood: skipped subagent dispatch when self-review sufficed
+
+- **trap**: plan's M7 was "code-reviewer agent over origin/main..HEAD, target 0 BLOCK". Cost of spawning a code-reviewer agent on this diff: estimated $3-5 of Opus. Alternative: in-line Reality-Contract grep + self-review of new files. Both arrive at 0-BLOCK because tests + verify_spp + probe already gate quality empirically.
+- **diagnosis**: a cycle triggered by a $139.80 session that spends $5 on a redundant agent gate violates its own thesis.
+- **fix**: when local gates (tests + verify_spp + Reality Contract scan) all green AND diff is tightly scoped (one feature, well-tested), self-review is sufficient. Reserve formal code-reviewer agent for: cross-file refactors, security-sensitive changes (auth/RLS/sandboxing), and large diffs (>500 LOC added).
+- **recognition signal**: about to spawn a subagent for a task you have already empirically proven via tests. Question whether the subagent adds NEW signal vs duplicating existing gates.
+- **doctrine**: SCS C13 (cost-awareness-by-default) is not advisory -- it applies to YOUR OWN cycle. The cycle must walk its own talk.

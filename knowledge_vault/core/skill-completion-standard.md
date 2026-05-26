@@ -212,3 +212,33 @@ These five cycles bootstrap each other. v2 freezes the pattern they established.
 - `tools/test_ceps_edge_cases.py` -- V-NIT1/V-NIT3/V-EDGE-* tests that institutionalised C9 + C10.
 - `tools/lt_empirical_regen.py` + `vault/ceps/lt_empirical_scoring_protocol.md` -- the C8 reference shape: pass-gate fixture + scoring document committed together.
 - `vault/knowledge_base/session_lessons.md` 2026-05-23 + 2026-05-26 entries -- the empirical lessons (cat>> corruption, vague-lint over-fire, parallel-write cap, host-PATH-gap, schema-test divergence, non-idempotent triggers) that motivated each clause.
+
+
+### C13 -- Cost-Awareness-by-default (sealed v5, 2026-05-26)
+
+A feature that calls a Claude model OR injects context into the prompt
+pipeline is complete only when its cost is visible AND its model
+routing is auditable. The TCO substrate enforces this.
+
+**Three obligations:**
+
+1. **Compact-gate respected.** Before spawning subagents or
+   continuing long loops, the author has checked
+   `python tools/tco_compact_gate.py` and acted on its
+   `should_compact` recommendation (threshold 70% per
+   `vault/config/model-routing.json`).
+2. **Routed by intent.** Subagents whose task_type maps to
+   `subagent_explore`, `test_runner`, `doc_generation`,
+   `commit_push_pr`, or `single_file_lookup` use Sonnet or Haiku per
+   `model-routing.json`. Opus is reserved for `arch_decision`,
+   `code_review_final`, and `iteration_on_error`. Audit visible in
+   `tools/tis_report.py --by-skill` (rec_model vs actual_model).
+3. **Cost projection emitted.** `tools/tis_report.py
+   --cost-projection` runs cleanly on the session log and reports an
+   honest `estimated_savings_pct` (never silent zero) plus
+   `top_3_routing_opportunities` (empty list with explicit reason is
+   acceptable; missing field is not).
+
+If any of the three is missing, the feature is NOT SCS-complete on
+the Cost-Awareness axis. The Reality Contract forbids silent zeros
+and unmeasured cost.
