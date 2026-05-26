@@ -849,6 +849,98 @@ def _arch_check_inject(prompt: str) -> str | None:
     return None
 
 
+_TCO_TASK_KEYWORDS = (
+    # Keywords listed in priority order. First match wins.
+    ("iteration_on_error", ("error", "crash", "exception", "traceback",
+                             "failing", "bug")),
+    ("code_review_final",  ("review", "audit", "code-review",
+                             "block", "approve")),
+    ("arch_decision",      ("architecture", "arquitectura", "design",
+                             "diseno", "schema", "trade-off", "tradeoff",
+                             "ultra plan", "decision")),
+    ("test_runner",        ("test", "pytest", "verify", "smoke",
+                             "regression")),
+    ("commit_push_pr",     ("commit", "push", "pull request", "merge",
+                             "rebase")),
+    ("doc_generation",     ("readme", "changelog", "doc ", "docs ",
+                             "documentation", "release notes")),
+    ("subagent_explore",   ("explore", "find", "search", "locate",
+                             "grep", "list ", "where is")),
+    ("single_file_lookup", ("show me", "open ", "cat ", "head ", "tail ")),
+)
+
+
+def _tco_infer_task_type(prompt: str) -> str | None:
+    """Heuristic: scan prompt for keywords mapped to TCO task_types.
+    Returns the first match or None if no clear signal."""
+    if not prompt:
+        return None
+    lo = prompt.lower()
+    for task_type, kws in _TCO_TASK_KEYWORDS:
+        for kw in kws:
+            if kw in lo:
+                return task_type
+    return None
+
+
+def _tco_load_routing_cached():
+    """Cache the routing JSON for the lifetime of this process. The
+    JIT runs many times per session; re-reading the JSON each call is
+    wasteful. Cache miss => disk read => store. Cache invalidation is
+    not required because the file is human-edited at config time."""
+    if hasattr(_tco_load_routing_cached, "_cache"):
+        return _tco_load_routing_cached._cache
+    cfg_path = PP_ROOT / "vault" / "config" / "model-routing.json"
+    if not cfg_path.is_file():
+        cfg = {"default_model": "claude-opus-4-7",
+               "rules": [], "skill_to_task_type": {}}
+    else:
+        try:
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            cfg = {"default_model": "claude-opus-4-7",
+                   "rules": [], "skill_to_task_type": {}}
+    _tco_load_routing_cached._cache = cfg
+    return cfg
+
+
+def _tco_inject_routing(fn):
+    """TCO B3: append a one-line model recommendation to
+    additionalContext when the prompt heuristic infers a clear
+    task_type. Advisory only; never blocks. Fail-open."""
+    import functools as _ft
+    @_ft.wraps(fn)
+    def _wrapper(data):
+        result = fn(data)
+        try:
+            prompt = str((data or {}).get("prompt") or "")
+            task_type = _tco_infer_task_type(prompt)
+            if not task_type:
+                return result
+            cfg = _tco_load_routing_cached()
+            default = cfg.get("default_model", "claude-opus-4-7")
+            rec = default
+            for r in cfg.get("rules", []):
+                if r.get("task_type") == task_type:
+                    rec = r.get("recommended_model", default)
+                    break
+            line = (f"TCO router: prompt heuristic -> task_type="
+                    f"{task_type}; recommended model: {rec} "
+                    f"(see vault/config/model-routing.json)")
+            if not isinstance(result, dict):
+                return result
+            ac = result.get("additionalContext") or ""
+            if ac and not ac.endswith("\n"):
+                ac += "\n"
+            ac += line
+            result["additionalContext"] = ac
+            return result
+        except Exception as _exc:
+            _log(f"tco router inject ERROR {type(_exc).__name__}: {_exc}")
+            return result
+    return _wrapper
+
+
 def _tis_log_call(fn):
     """M3: Token-Intelligence hook. Wraps jit_skill_loader.run() and
     records a per-call TokenEvent to vault/token_logs/. Fail-open: any
@@ -895,6 +987,7 @@ def _tis_log_call(fn):
 
 
 @_tis_log_call
+@_tco_inject_routing
 def run(data) -> dict:
     try:
         data = data or {}

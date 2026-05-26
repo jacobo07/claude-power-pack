@@ -1,0 +1,91 @@
+{
+  "routing_version": "1.0",
+  "schema": "vault/config/model-routing.schema",
+  "default_model": "claude-opus-4-7",
+  "rationale": "Default to Opus 4.7 for architectural work; route grunt to Sonnet 4.6; Haiku reserved for trivial lookups.",
+  "pricing_source": "vault/pricing/anthropic_2026-05.json",
+  "models": {
+    "opus": "claude-opus-4-7",
+    "sonnet": "claude-sonnet-4-6",
+    "haiku": "claude-haiku-4-5"
+  },
+  "rules": [
+    {
+      "task_type": "subagent_explore",
+      "description": "Subagents de exploracion, grep, cat, ls, locate-X-in-repo",
+      "recommended_model": "claude-sonnet-4-6",
+      "rationale": "Read-only navegacion; no requiere razonamiento arquitectural.",
+      "estimated_savings_vs_opus": "5x"
+    },
+    {
+      "task_type": "test_runner",
+      "description": "Ejecutar tests, leer output, classify pass/fail",
+      "recommended_model": "claude-sonnet-4-6",
+      "rationale": "Output determinista; no decision making.",
+      "estimated_savings_vs_opus": "5x"
+    },
+    {
+      "task_type": "commit_push_pr",
+      "description": "Git commits, push, PRs, merge, status diffs",
+      "recommended_model": "claude-sonnet-4-6",
+      "rationale": "Operacion mecanica bien definida.",
+      "estimated_savings_vs_opus": "5x"
+    },
+    {
+      "task_type": "doc_generation",
+      "description": "Generar MDs, changelogs, vault entries, README",
+      "recommended_model": "claude-sonnet-4-6",
+      "rationale": "Templates conocidos; no arquitectura.",
+      "estimated_savings_vs_opus": "5x"
+    },
+    {
+      "task_type": "single_file_lookup",
+      "description": "Trivial single-file grep o lookup factual",
+      "recommended_model": "claude-haiku-4-5",
+      "rationale": "Trivial; Haiku es 15x mas barato que Opus.",
+      "estimated_savings_vs_opus": "15x"
+    },
+    {
+      "task_type": "arch_decision",
+      "description": "ULTRA-PLAN Q&A, design decisions, schema choices",
+      "recommended_model": "claude-opus-4-7",
+      "rationale": "Stakes altos; calidad maxima requerida.",
+      "estimated_savings_vs_opus": "1x"
+    },
+    {
+      "task_type": "code_review_final",
+      "description": "code-reviewer antes de merge, BLOCK gate",
+      "recommended_model": "claude-opus-4-7",
+      "rationale": "Bloqueo de calidad; no escatimar.",
+      "estimated_savings_vs_opus": "1x"
+    },
+    {
+      "task_type": "iteration_on_error",
+      "description": "Fix de errores criticos bloqueantes",
+      "recommended_model": "claude-opus-4-7",
+      "rationale": "Error grave requiere maximo razonamiento.",
+      "estimated_savings_vs_opus": "1x"
+    }
+  ],
+  "skill_to_task_type": {
+    "Explore": "subagent_explore",
+    "general-purpose": "subagent_explore",
+    "gsd-codebase-mapper": "subagent_explore",
+    "claude-code-guide": "single_file_lookup",
+    "code-reviewer": "code_review_final",
+    "superpowers:code-reviewer": "code_review_final",
+    "oneshot-architect-auditor": "code_review_final",
+    "Plan": "arch_decision",
+    "gsd-planner": "arch_decision",
+    "gsd-phase-researcher": "arch_decision",
+    "gsd-executor": "commit_push_pr",
+    "gsd-verifier": "test_runner",
+    "gsd-debugger": "iteration_on_error",
+    "gsd-integration-checker": "test_runner",
+    "rtk-testing-specialist": "test_runner",
+    "rust-rtk": "iteration_on_error",
+    "statusline-setup": "doc_generation",
+    "steve-jobs": "code_review_final",
+    "woz": "code_review_final"
+  }
+}

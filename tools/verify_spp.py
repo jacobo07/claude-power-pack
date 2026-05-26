@@ -142,6 +142,9 @@ def main() -> int:
         ("monitoring-axis",
          [PY, str(PP / "tools" / "verify_monitoring.py")],
          30),
+        ("tco-gate",
+         [PY, str(PP / "tools" / "verify_tco.py")],
+         20),
     ]
 
     if args.row:
