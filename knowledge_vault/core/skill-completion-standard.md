@@ -123,6 +123,22 @@ Any skill trigger that writes to a persistent store (events.jsonl, FTS5 db, mark
 
 **Evidence required**: V-*-IDEMPOTENT test passing for every persistent-state trigger the skill registers.
 
+### C11 -- Token-Intelligence-by-default (sealed v3, 2026-05-26)
+
+Any feature that generates calls to a Claude model (LLM dispatch, hook injection, prompt-rewriting helper) MUST:
+
+(a) emit a `tis.TokenEvent` via `tools/tis.py::append_log` -- either directly or through the `@_tis_log_call` decorator pattern established in `tools/jit_skill_loader.py::run`;
+
+(b) appear in `python tools/tis_report.py --by-skill` output with real tokens (input_tokens > 0 OR output_tokens > 0, never silently zero);
+
+(c) the feature's first commit-cycle MUST produce at least one `vault/token_logs/handoff_<sid>_<ts>.md` artifact via `tools/tis_handoff.py`, demonstrating the handoff summarizer can read its events.
+
+**Why this clause exists**: Until 2026-05-26, no cost visibility existed across the trigger matrix. A feature could silently double the prompt budget without anyone noticing until the monthly bill. The Token Intelligence System (TIS, sealed 2026-05-26) plugs this gap; C11 makes the plug mandatory for all future features.
+
+**Default test**: per-feature integration test asserts at least one entry in `vault/token_logs/<today>.jsonl` carrying the feature's `skill_name`, with positive token counts on at least one of `input_tokens` / `output_tokens`. Honest zeros (with `INSUFFICIENT_TELEMETRY` reason from `tis_handoff`) are acceptable; silent zeros are not.
+
+**Evidence required**: `tis_report --by-skill` shows the feature; `tis_handoff` emits a non-placeholder `recommended_action`; the `vault/token_logs/<date>.jsonl` line is in the diff for the feature's commit.
+
 ---
 
 ## Enforcement
@@ -141,6 +157,7 @@ A skill that fails any clause cannot be merged to `main`. The plan document for 
 | C8 evidence archived at commit  | test stdout / fixture in the diff | [x] |
 | C9 schema-test reciprocity      | V-* test for every schema invariant | [x] |
 | C10 idempotency-by-default      | V-*-IDEMPOTENT test for each persistent-state trigger | [x] |
+| C11 token-intelligence-by-default | TIS hook + non-empty `--by-skill` row + handoff_*.md in diff | [x] |
 
 Missing rows or `[ ]` checkboxes block the merge.
 

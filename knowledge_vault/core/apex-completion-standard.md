@@ -1521,3 +1521,124 @@ authed FAIL with rationale in `vault/standards/`) +
 SCS v2 visible at `knowledge_vault/core/skill-completion-standard.md`
 in both loose and PP with byte-identical sha256 -- all three satisfied
 = axis v2 sealed.
+
+
+---
+
+## World-Env Suffix Detection Axis (Pane 3, KobiiCraft -- relocated 2026-05-26 by S+++ recovery)
+
+Relocated to file-tail by TIS-cycle recovery (2026-05-26) per C6 atomic-
+write mandate. Original Pane-3 insertion stomped the Testing Gate Axis
+head; this section preserves the content, restored via atomic-append
+rather than destructive overwrite.
+
+**Sealed:** 2026-05-26 evening (Pane 3 KME-env + KME-042 follow-up).
+
+### The axis (one-line invariant)
+
+> Any code path that creates a Bukkit World via `WorldCreator` MUST detect the target Environment from the world-name suffix (`_nether` / `_the_nether` / `_end` / `_the_end` / else NORMAL) -- NEVER hardcode `.environment(NORMAL)` at the call site. Suffix detection is the single source of truth for dimension binding; hardcoding silently mis-loads nether/end twin worlds as overworlds with empty terrain.
+
+### Why this is an apex completion standard
+
+The trap is silent -- no exception, no warning, no log line indicating the env was wrong. A nether twin world loaded as NORMAL still LOADS; players can teleport in; they just see overworld terrain instead of the nether content sitting on disk in `DIM-1/region/`. Discovered empirically (Pane 3 2026-05-26 Block 5 5-world deploy) only because of the `/kobimap listworlds` post-deploy review.
+
+The canonical fix is a one-time refactor: extract a public static helper `detectEnvironment(String sanitizedName)` and call it from every WorldCreator site. Once it exists, every future WorldCreator caller inherits the right behavior. Tests are pure-logic (10 hermetic cases in `EnvironmentDetectionTest`, no MockBukkit needed).
+
+### Mandatory checks for any future world-creation code path
+
+1. NEVER write `.environment(World.Environment.NORMAL)` as a literal at a WorldCreator site.
+2. ALWAYS call `WorldService.detectEnvironment(name)` or pass an explicit `Environment` parameter.
+3. Suffix detection is case-insensitive (defensive against caller-pre-uppercased names).
+4. SUFFIX match -- substring match is wrong (`netherworld_overworld` must NOT be detected as nether).
+5. Defensive defaults: null / empty input -> NORMAL.
+6. Log the detected env on the `[WorldService] created+registered` line so it is greppable in boot logs.
+
+### What "done" looks like -- evidence contract
+
+- `WorldService.detectEnvironment(String)` is public+static, called from EVERY WorldCreator site in the codebase.
+- Hermetic test class with >=7 cases (NETHER suffix, alternate `_the_nether`, THE_END, alternate `_end`, NORMAL default, case-insensitive, substring rejection, null/empty defensive).
+- Boot log includes `env=NETHER` / `env=THE_END` / `env=NORMAL` on the WorldService init line for each registered world.
+
+### Related sibling axis -- Wrapper-Over-Tested-Core (KME-042)
+
+When adding a shorter/friendlier subcommand surface that exposes already-tested behavior (e.g., `/kobimap recreate <id>` over the existing `mirror dna <id>` path), implement it as a THIN WRAPPER that translates args and delegates -- do NOT re-implement the logic. The wrapper test surface is `hasValidArgs(args)` + `buildDelegatedArgs(input)` static helpers; the delegated body is exercised by the existing tests on the core logic. KME-042 shipped in ~1.5h vs the original 6-10h estimate (which assumed re-implementation).
+
+### Project reference
+
+`docs/server/GOLD_STANDARD_SERVERS.md` Sec 24 (World Environment Suffix Detection + Recreate Wrapper). UKDL Trap 19 (`WorldService.createOrReuseMapWorld` silently hardcodes Environment to NORMAL). Seal addendum in `docs/server/PANE3_BLOCK5_SEAL.md` (Pane 3, 2026-05-26 evening section "Addendum 2026-05-26 evening -- KME-env + KME-042 fixes shipped").
+
+
+## Token Intelligence (TIS) Axis v1 (sealed 2026-05-26) -- cost-visibility baseline
+
+A new PP feature that calls a Claude model OR injects context into the
+prompt pipeline is complete only when its activity is visible in the
+TIS log AND its handoff summarizer can produce a real
+`recommended_action`. Until 2026-05-26 there was no cost telemetry on
+the trigger matrix; this axis closes that gap as the sixth standard
+DONE axis alongside Concurrency, Async-Audit, Zero-Drift Mirror,
+Context-Pressure, Session-Safety, and Skill-Completion.
+
+### Five required components (all five must be present for Apex-complete)
+
+1. **Logger** -- `tools/tis.py` (`TokenEvent` dataclass +
+   `append_log` + `read_log` + `get_session_id`). Stdlib only;
+   atomic-write for the session id sidecar. JSONL append-only to
+   `vault/token_logs/YYYY-MM-DD.jsonl`.
+2. **Analytics CLI** -- `tools/tis_report.py` with four flags:
+   `--summary`, `--by-skill`, `--cache-ratio`, `--since`. ASCII
+   tables, stdlib only. `PRICING` constant for Sonnet 4.6 / Opus 4.7 /
+   Haiku 4.5 (extensible).
+3. **Handoff summarizer** -- `tools/tis_handoff.py` reads the active
+   session log and emits a `<context_summary>` block with
+   `top_3_expensive_calls`, `compression_candidates`,
+   `estimated_savings_next_session_tokens`, `recommended_action`.
+   Honest fallback: `INSUFFICIENT_TELEMETRY` / `NO_CANDIDATES_DETECTED`
+   are explicit reasons -- never silent zero (Reality Contract).
+4. **JIT hook** -- `tools/jit_skill_loader.py::_tis_log_call` decorator
+   wraps `run()` and records a per-call event. Fail-open on any
+   internal error.
+5. **verify_spp probe** -- `tools/verify_tis.py` 4-check probe + a
+   row in `tools/verify_spp.py::rows_spec`. Confirms the system is
+   alive from cold state.
+
+### Five-check DONE-gate (binary, no classifications)
+
+A PP install is Apex-complete on the Token Intelligence Axis iff:
+
+1. `tools/test_tis_core.py` exit 0 with TIS_CORE_PASS=6/6.
+2. `tools/test_tis_e2e.py` exit 0 with E2E_PASS=4/4.
+3. `tools/verify_tis.py` exit 0 with TIS_PROBE=4/4.
+4. `tools/tis_report.py --summary` returns at least one row of real
+   data (no synthetic-only sessions).
+5. `tools/tis_handoff.py` writes a `vault/token_logs/handoff_*.md`
+   with a real, non-empty `recommended_action`.
+
+Missing any of 1-5 = NOT Apex-complete on the TIS Axis.
+
+### Cross-references
+
+- `knowledge_vault/core/skill-completion-standard.md` C11 (Token-
+  Intelligence-by-default): the per-skill obligation derived from
+  this axis.
+- `tools/tis.py`, `tools/tis_report.py`, `tools/tis_handoff.py`,
+  `tools/verify_tis.py`, `tools/test_tis_core.py`,
+  `tools/test_tis_e2e.py`: the substrate.
+- Sister modules: `modules/token-optimizer/token_autopsy.py`
+  (post-mortem parser of `~/.claude/projects/` session JSONL). TIS
+  is the live per-skill logger; token_autopsy is the forensic
+  cross-session parser. They are complementary.
+
+### Empirical proofs (2026-05-26)
+
+- M1 self-probe: round-trip preserved `input_tokens=100`.
+- M2 V-TIS-* 6/6: APPEND / IDEMPOTENT / SCHEMA / SESSION / PERSIST / NONZERO.
+- M3 hook fires on real `jit_skill_loader.run()`: captured
+  `input_tokens=12 / output_tokens=157 / call_label=jit-context-injected`
+  on an LT trigger prompt.
+- M4 `--summary` / `--by-skill` / `--cache-ratio` / `--since`: all
+  4 flags emit non-empty tables with real data.
+- M5 handoff emits `<context_summary>` with honest
+  `NO_CANDIDATES_DETECTED` when applicable.
+- M6 E2E 4/4: 3 mock dispatches -> `tis_report` non-empty ->
+  `tis_handoff` detects compression candidate on repeated call_label.
+- M7 verify_spp row `tis-probe` PASS in <1s.

@@ -856,3 +856,36 @@ would be investigated and fixed individually.
   pitfall is inline multiline args with inner punctuation, not the
   tool itself.
 - **cross-ref**: `vault/lessons/git-commit-heredoc-argv-reparser.md`.
+
+## TIS cycle 2026-05-26 -- lessons L9-L12
+
+### L9: Cross-pane apex stomps recur (Pane-3 after Pane-4)
+
+- **trap**: Pane 3 prepended a "World-Env Suffix Detection Axis" at apex head, byte-stomping the original Testing Gate Axis opening and leaving truncated remnants ("ction recipes for the launch maneuver" at line 40). Loose was synced byte-perfectly to PP; the stomp imported into the cycle. Sister bug of Pane-4 stomp from prior cycle.
+- **diagnosis**: A1/A2 sync direction is loose -> PP regardless of loose hygiene. drift-report is byte-blind to structural truncation; only the code-reviewer caught it (L7 corollary). The recovery pattern from Pane-4 generalised cleanly to Pane-3.
+- **fix**: When drift-report flags `apex-completion-standard.md` loose-ahead AND the agent has not edited that file in the current session: STRUCTURAL-CHECK before sync. Read first 20 lines of loose AND `git show origin/main:knowledge_vault/core/apex-completion-standard.md` -- if the first H2 differs OR any truncated word fragment appears in the diff, REJECT the sync and run `tools/_apex_paneN_recovery.py`.
+- **recognition signal**: an unrelated section name at file head + truncated word remnants ("ction recipes", "ped backup)", etc.) at section boundaries. Always check head before blind sync.
+
+### L10: @tis_log_call decorator pattern -- telemetry without core surgery
+
+- **trap**: How to add token logging to `jit_skill_loader.run()` (40 KB function, 142 lines) without touching its body and risking regression in 10 trigger families + Apollo JIT + Intent-Lock + arch-check + vague-lint + lateral-thinking?
+- **diagnosis**: Decorator pattern. The decorator wraps the function externally, accesses the return value's `additionalContext`, estimates tokens, appends a `TokenEvent`, returns the unmodified result. Zero changes to `run()`'s body.
+- **fix**: `@_tis_log_call` defined ~40 LOC above `run()`. functools.wraps preserves signature. fail-open `try/except` so any exception in the hook never disrupts the prompt pipeline (preserves Ley 24 fail-open). Empirical: M3 verified, all 10 trigger families still fire correctly.
+- **recognition signal**: "I want to add telemetry to function F but F is critical/large/well-tested." Decorator-wrap, do not edit F's body.
+
+### L11: Honest-zero contract in summarizers
+
+- **trap**: `tis_handoff.py` originally would return `estimated_savings_tokens = 0` when there were no candidates. The Owner had no way to tell whether the system was healthy-with-no-opportunities OR silently broken.
+- **diagnosis**: Reality Contract forbids silent zeros. Any zero MUST carry an explicit reason in a sibling field, OR the consumer of the report cannot distinguish "no data" from "no signal" from "broken".
+- **fix**: Two explicit reasons in `tis_handoff.py::build_handoff`:
+  - `INSUFFICIENT_TELEMETRY` when calls < 3 -- the gate is unmet by data, not by absence of patterns.
+  - `NO_CANDIDATES_DETECTED` when calls >= 3 but no repeated labels and no oversized outputs -- the system is healthy and saw no compression opportunity.
+  Both surface in `recommended_action` field.
+- **recognition signal**: any report field that defaults to zero with no sibling reason. Adopt the honest-zero contract immediately.
+
+### L12: Subprocess test isolation -- session_id mismatch
+
+- **trap**: V-E2E-4 FAILED with `candidate=False` despite the test correctly seeding repeated call_label events. Root cause: subprocess for `tis_handoff.py` re-imports `tis` fresh and reads its own `.session_id` from the real PP path; the test's monkey-patched `tis.LOGS_DIR=tmp` only affects the test process, not the subprocess.
+- **diagnosis**: any test that monkey-patches a module's module-level path constants AND then spawns a subprocess of a tool that uses those constants is broken by default. The subprocess re-evaluates imports from scratch.
+- **fix**: pass `--session <test-sid>` explicitly to the subprocess so it does not consult the host-side `.session_id` file. Same pattern applies to any tool with stateful sidecar files.
+- **recognition signal**: an E2E test PASSES on read-back checks but FAILS on subprocess-emitted checks. Inspect the subprocess's environment / sidecar reads, not the module-level patches.

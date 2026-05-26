@@ -164,3 +164,10 @@ DONE-gate in `apex-completion-standard.md`.
 - [drift/sync-discipline] L6 -- A1/A2 loose->PP is byte-perfect including byte-perfect corruption. Always structural-check before sync.
 - [drift/review] L7 -- drift-report PASS != safe sync. code-reviewer is the structure-aware backstop against cross-pane stomps.
 - [tooling/shell-quoting] L8 -- PowerShell `@'...'@` heredoc into native exe (git/gh/mix/node) re-tokenizes argv on inner double-quotes. Symptom: `error: pathspec '<word>' did not match`. Fix: write body to file via Write tool, invoke `git commit -F file` (or `gh --body-file`, `mix run -f`, `node script.js`). Transversal across repos. Cross-ref: `vault/lessons/git-commit-heredoc-argv-reparser.md`.
+
+## UKDL TIS-cycle 2026-05-26
+
+- [drift/governance] L9 -- Cross-pane apex stomps recur (Pane-3 after Pane-4). Drift-report is byte-blind to structural truncation. Before any loose->PP sync of `apex-completion-standard.md`, structural-check the first 20 lines against `git show origin/main:<path>`. If diverged: run `tools/_apex_paneN_recovery.py` to relocate, never sync.
+- [pattern/telemetry] L10 -- @decorator wrap is the right pattern for adding telemetry to large critical functions. Zero body edit + fail-open `try/except` + `functools.wraps`. Example: `_tis_log_call` over `jit_skill_loader.run()`.
+- [reality-contract/honest-zero] L11 -- Any report field defaulting to zero MUST carry an explicit reason in a sibling field (`INSUFFICIENT_TELEMETRY`, `NO_CANDIDATES_DETECTED`, etc.). Silent zeros are forbidden by Reality Contract.
+- [test/subprocess] L12 -- Tests that monkey-patch module-level path constants and then spawn subprocesses must pass the relevant overrides as CLI args. Subprocesses re-import fresh and ignore in-test patches.
