@@ -1417,3 +1417,107 @@ freezes the pattern they established.
 + `python tools/test_ceps_closed_loop.py`
 + `python tools/test_ceps_full_cycle.py`
 -- all four exit 0 = axis sealed.
+
+
+---
+
+## Pterodactyl Console API Autopilot Axis (sealed 2026-05-26)
+
+Relocated to file-tail by S+++ recovery (2026-05-26) per C6 atomic-write
+mandate. Original Pane-4 insertion stomped the Testing Gate Axis head;
+this section preserves the content, restored via atomic-append rather
+than destructive overwrite.
+
+When a Pterodactyl-managed Minecraft server has prose-flagged "Owner-in-game" PASOs in its handoff docs, the Apex bar is to verify each PASO against this 11-item empirical checklist BEFORE accepting the OWNER-MANUAL classification. A PASO is autopilot-doable on Console API iff every check below either passes or has an autopilot-side substitute.
+
+### 11 empirical checklist items (>=10 needed to claim "Apex-complete on Console API Axis")
+
+1. **nbtlib `<world>/level.dat` parse**: `Data.spawn.pos` (Paper 1.21+ IntArray of 3 ints) -> produces `(SpawnX, SpawnY, SpawnZ)` literal output. nbtlib must be installed; if not, `pip install nbtlib`.
+2. **Console-API verb map**: WorldGuard `/rg`, Citizens `/npc`, FAWE `//world`+`//pos1`+`//pos2`+`//set/replace`, vanilla `/setworldspawn`, `/say`, `/save-all` all dispatch via `POST /api/client/servers/{id}/command` and produce log-side evidence.
+3. **WorldGuard `-w PREFIX` discipline**: `/rg flag -w <world> <region_id> <flag> <value>`. Never trust HTTP 204 -- grep log for `Region flag <name> set on '<id>' to '<value>'`.
+4. **Citizens comma-coord syntax**: `--at <x>,<y>,<z>,<world>` (or `--location` same form). Never space-separated. Done-evidence: `Created <name> (ID <n>).` in log; save IDs for downstream `/npc select`.
+5. **DecentHolograms player-actor wall**: hologram create/attach is impossible from console. Autopilot creates NPC + ID; generate paste-ready Owner doc for the `/dh` block using the captured IDs.
+6. **ND-7 cross-pane leak recovery**: before any `git add`, run `git diff --cached --name-only` to catch other panes' pre-staged files. If unexpected files in index: `git reset HEAD -- .` + re-add ONLY your explicit paths. Never `git add -A` (multi-pane race vaccine).
+7. **`git reset HEAD -- .` discipline**: when an inadvertent stage from another pane appears, reset the index (not the working tree). Then re-stage with explicit paths. Preserves the other pane's working-tree work; cleans your commit's staged set.
+8. **`files/write` octet-stream fallback**: the documented `files/upload` signed-URL flow (`:8080/upload/file?token=<jwt>`) returns HTTP 500 / RemoteProtocolError on this panel install. The working path is `POST /api/client/servers/{id}/files/write?file=<path>` with `Content-Type: application/octet-stream` and raw bytes as body. Empirically supports >=1.8 MB single POST.
+9. **`/save-all flush` before restart**: dispatch `/save-all flush` and wait for `Saved the game` in log before issuing `POST /power {"signal": "restart"}`. Prevents chunk corruption + ensures level.dat reflects in-memory state.
+10. **ND-1 `[HOTFIX-JAVA-APPROVED]` scope discipline**: this override token is sealed for explicit Owner-ratified Java edits. Pure-docs commits + Python-script commits MUST NOT include the token. Adding it for non-Java commits invites scope creep + auditor noise.
+11. **Vanilla `/fill` vs. FAWE `//set` decision**: `/fill` requires loaded chunks; FAWE `//set` auto-loads via EditSession but requires `//world <world>` prefix from console. Default to FAWE for any block-manipulation in worlds without active players.
+
+### Five-check DONE-gate (all must pass for Apex-complete)
+
+- [ ] nbtlib `level.dat` parse executed; coords persisted to `_audit_cache/<world>_coords.json` with paper_version + sha256[:16].
+- [ ] All non-player-only PASOs attempted via Console API with empirical log-grep evidence persisted to `docs/server/playtest-v200/paso<N>_*.log`.
+- [ ] Owner-handoff docs generated for genuine player-actor-only PASOs (DH, fresh-player verification) with paste-ready commands using autopilot-captured IDs.
+- [ ] Commit staged with explicit paths (never `-A`); ND-7 self-scan passed; ND-1 / quality-skill gate respected.
+- [ ] Sec 13 of `GOLD_STANDARD_SERVERS.md` (Console API autopilot recipes) updated with any new verb/syntax/quirk discovered this run.
+
+### Empirical receipt (Pane-4 v200 run, 2026-05-26)
+
+Pane 4 v200 pasos-restantes run closed 5/5 OWNER-MANUAL PASOs (3, 4, 5, 6, 7) into autopilot-DONE + 1 sidecar discovery (KobiWelcome Y=70->Y=182 drift fix -- the `can't stay connected` root cause). 8/14 milestones autopilot, 6/14 docs/doctrine. Wall-clock ~25 min including syntax debugging. All 11 checklist items + all 5 DONE-gates passed.
+
+
+
+## Skill Completion Axis v2 (sealed 2026-05-26) -- S+++ regression-prevention cycle
+
+The v1 axis (sealed 2026-05-25) sealed 7 clauses derived from the LT+CEPS
+bootstrap pair. The post-merge S+++ cycle on 2026-05-26 surfaced 3 real
+gaps that the v1 clauses did NOT catch:
+
+1. **NIT 1** -- the schema declared a max_chars contract that no code
+   enforced. The output happened to be within bounds in practice; the
+   contract was load-bearing for nothing until a long-subsystem seed
+   would have silently exceeded it.
+2. **NIT 3** -- `from_verify_fail` recorded duplicate events on re-run
+   of the same verify_spp stdout. The schema declared `id:
+   stable_across_reruns: true` but the code did not honour it.
+3. **PR-passage prose** -- multiple commits cited "tests pass" without
+   the test output being part of the diff. The green moment was
+   unreproducible after the fact.
+
+These gaps motivate three new clauses in the Skill Completion Standard:
+
+### C8 -- Evidence-archive at commit-time
+
+The empirical pass-gate output (test stdout, fixture JSON, verify_*
+receipts) MUST be committed alongside the code that satisfies it.
+"Trust me, it passed" is not evidence. Verbal claims of passage in
+commit messages do NOT satisfy C8.
+
+### C9 -- Schema-test reciprocity
+
+Every invariant declared in a `schema.json` (max_chars, enum values,
+format, derived_from) MUST have a corresponding test that enforces it.
+A schema without a test is a comment, not a contract.
+
+### C10 -- Idempotency-by-default for persistent-state triggers
+
+Any skill trigger that writes to a persistent store (events.jsonl,
+FTS5 db, markdown append, JSON fixture) MUST be idempotent under re-
+invocation with identical input, unless the skill's plan explicitly
+documents a rationale for non-idempotency.
+
+### Enforcement (extends v1)
+
+The Owner-facing PR description must include all TEN rows of the SCS
+table. Missing rows or `[ ]` checkboxes on C8/C9/C10 block the merge
+in addition to C1-C7.
+
+### Cross-references
+
+- `knowledge_vault/core/skill-completion-standard.md` -- full v2 spec.
+- `tools/test_ceps_edge_cases.py` -- the V-NIT1 / V-NIT3 / V-EDGE-*
+  tests that empirically grounded C9 + C10.
+- `tools/normalize_paths.py`, `tools/verify_global_mirrors.py`,
+  `tools/verify_rtk_fusion.py` -- the M7/M8/M9 host-portability fixes
+  that empirically grounded C8 (each fix proved by re-running the
+  failing probe and capturing the post-fix output).
+
+### DONE-gate
+
+`python tools/test_ceps_edge_cases.py` (6/6) +
+`python tools/verify_spp.py` (post-commit: 7/7 OK or documented Owner-
+authed FAIL with rationale in `vault/standards/`) +
+SCS v2 visible at `knowledge_vault/core/skill-completion-standard.md`
+in both loose and PP with byte-identical sha256 -- all three satisfied
+= axis v2 sealed.

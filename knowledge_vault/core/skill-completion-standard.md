@@ -1,12 +1,12 @@
-# Skill Completion Standard v1 -- baseline raised post LT+CEPS
+# Skill Completion Standard v2 -- baseline raised post LT+CEPS + S+++ cycle
 
-**Sealed**: 2026-05-25. **Predecessor**: ad-hoc skill creation. **Replaces**: implicit "build until it feels done".
+**Sealed v1**: 2026-05-25. **Sealed v2**: 2026-05-26 (S+++ run added C8-C10 derived from real gaps observed during the post-merge hardening cycle).
 
-A new PP skill is *complete* only when all seven clauses below are satisfied with empirical evidence. Missing evidence == not complete. Reality Contract applies: the evidence is the test output, not the description of the test.
+A new PP skill is *complete* only when all **ten** clauses below are satisfied with empirical evidence. Missing evidence == not complete. Reality Contract applies: the evidence is the test output, not the description of the test.
 
 ---
 
-## The seven clauses
+## The ten clauses
 
 ### C1 -- Empirical pass-gate declared *before* the skill is built
 
@@ -88,6 +88,41 @@ The contract:
 
 **Evidence required**: skill tooling does not parse arbitrary slices of raw command output (it uses subprocess capture, structured parsers, or schema-validated JSON). Free-text scraping of tool stderr is prohibited.
 
+### C8 -- Evidence-archive at commit-time (sealed v2, 2026-05-26)
+
+The empirical pass-gate output (test stdout, fixture JSON, verify_* receipts) MUST be committed alongside the code that satisfies it. "Trust me, it passed" is not evidence. A reviewer who pulls the branch must be able to re-run the exact same command and see the same artefact in the working tree.
+
+**Why this clause exists**: prior cycles claimed "tests pass" in PR descriptions without the test output being part of the diff. When a future regression was introduced, no one could replay the original empirical state -- the green moment was unreproducible.
+
+**Evidence required**: the test output (or its deterministic fixture) is in the diff. Either:
+
+- `vault/test-results/<ts>_<skill>.md` written by the runner, OR
+- a `*.json` fixture under `vault/ceps/`, OR
+- in-line CI artefacts referenced by URL with sha256 pinning.
+
+Verbal claims of passage in commit messages do NOT satisfy C8.
+
+### C9 -- Schema-test reciprocity (sealed v2, 2026-05-26)
+
+Every invariant declared in a `schema.json` (max_chars, enum values, format, derived_from) MUST have a corresponding test that enforces it. A schema without a test is a comment, not a contract.
+
+**Why this clause exists**: `vault/ceps/schema.json` declared `prevention_rule.max_chars=300` but no code or test enforced it. The rendered output happened to be short in practice, but the contract was load-bearing for nothing. Caught during the 2026-05-26 S+++ cycle (NIT 1).
+
+**Evidence required**: for every numeric / enum invariant in a referenced schema, a V-* test in the skill's test file that synthesises a value at the boundary and verifies the system honours the contract (rejects out-of-range, caps in-range output).
+
+### C10 -- Idempotency-by-default for persistent-state triggers (sealed v2, 2026-05-26)
+
+Any skill trigger that writes to a persistent store (events.jsonl, FTS5 db, markdown append, JSON fixture) MUST be idempotent under re-invocation with identical input, unless the skill's plan explicitly documents a rationale for non-idempotency.
+
+**Why this clause exists**: `tools/ceps.py::from_verify_fail` would record duplicate events when re-invoked on the same `verify_spp.py` stdout -- the schema declared `id: stable_across_reruns` but the code did not honour it. Caught during the 2026-05-26 S+++ cycle (NIT 3).
+
+**Default test**: V-*-IDEMPOTENT runs the trigger twice on the same input and asserts:
+
+- Return shape matches first invocation (or returns empty / no-op).
+- Persistent store delta on the second call == 0.
+
+**Evidence required**: V-*-IDEMPOTENT test passing for every persistent-state trigger the skill registers.
+
 ---
 
 ## Enforcement
@@ -96,30 +131,42 @@ A skill that fails any clause cannot be merged to `main`. The plan document for 
 
 | Clause | Evidence path | Status |
 |---|---|---|
-| C1 pass-gate declared | `vault/plans/<skill>-plan.md` section X | [x] |
-| C2 side-by-side test  | `tools/test_<skill>_empirical.py` | [x] |
-| C3 no-collision       | `tools/test_<skill>_collision.py` | [x] |
-| C4 CEPS distribution  | record_error call at `<file>:<line>` | [x] |
-| C5 auto-test stub     | `tests/ceps_generated/test_<sig>.py` | [x] |
-| C6 atomic appends     | grep proof: no `cat >>` against tracked .md | [x] |
-| C7 RTK compatible     | no raw-stdout slicing in skill tooling | [x] |
+| C1 pass-gate declared           | `vault/plans/<skill>-plan.md` section X | [x] |
+| C2 side-by-side test            | `tools/test_<skill>_empirical.py` | [x] |
+| C3 no-collision                 | `tools/test_<skill>_collision.py` | [x] |
+| C4 CEPS distribution            | record_error call at `<file>:<line>` | [x] |
+| C5 auto-test stub               | `tests/ceps_generated/test_<sig>.py` | [x] |
+| C6 atomic appends               | grep proof: no `cat >>` against tracked .md | [x] |
+| C7 RTK compatible               | no raw-stdout slicing in skill tooling | [x] |
+| C8 evidence archived at commit  | test stdout / fixture in the diff | [x] |
+| C9 schema-test reciprocity      | V-* test for every schema invariant | [x] |
+| C10 idempotency-by-default      | V-*-IDEMPOTENT test for each persistent-state trigger | [x] |
 
 Missing rows or `[ ]` checkboxes block the merge.
 
 ---
 
-## Bootstrap references (the two skills that defined this standard)
+## Bootstrap references (the skills that defined this standard)
+
+### v1 (C1-C7) -- 2026-05-25 LT+CEPS cycle
 
 - **lateral-thinking** (`~/.claude/skills/lateral-thinking/`): C1 met via `vault/plans/lateral-thinking-skill-plan.md` P7 section; C2 met via `tools/test_lateral_thinking.py` V-LT-FIRE + Owner-eval fixture; C3 met via V-LT-COLL 4 prompts; C4 met via the `[lateral-thinking audit]` block format that CEPS reads from `vault/ceps/events.jsonl`; C5 will be met when the first LT-attributable regression is recorded.
 - **CEPS** (`tools/ceps.py`): C1 met via plan P7 CEPS section (>=7/10 closed-loop); C2 met via `tools/test_ceps_closed_loop.py` 10/10 PASS; C3 met via FTS5 sidecar with its own rowid space (no `turns_fts` collision per BL-0068); C4 is itself the CEPS substrate; C5 met via `tools/ceps_test_gen.py` + `tests/ceps_generated/`; C6 met via `tools/ceps.py::_atomic_append`; C7 met via JSON event emission (no raw-byte slicing).
 
-These two were built simultaneously and bootstrap each other. The standard freezes the pattern they established.
+### v2 (C8-C10) -- 2026-05-26 S+++ regression-prevention cycle
+
+- **CEPS NIT-cycle** (3 deferred [NIT] items closed): NIT 1 (max_chars enforcement) seeded C9; NIT 3 (from_verify_fail idempotency) seeded C10; the explicit-archive practice of committing `vault/ceps/lt_empirical_canonical_<ts>.json` + `vault/ceps/lt_empirical_scoring_protocol.md` together with `tools/lt_empirical_regen.py` seeded C8.
+- **verify_spp host-portability cycle** (4 STRICT-FAILs resolved): the PowerShell-NonInteractive PATH gap that surfaced inside `normalize_paths.py`, `verify_global_mirrors.py`, and `verify_rtk_fusion.py` reinforced C8 (the receipt is the proof, not the prose) -- every fix was demonstrated by re-running the failing probe and capturing the post-fix output.
+
+These five cycles bootstrap each other. v2 freezes the pattern they established.
 
 ---
 
 ## Cross-references
 
 - `vault/plans/lateral-thinking-skill-plan.md` -- the originating plan
-- `knowledge_vault/core/apex-completion-standard.md` -- companion document; sealed as "Skill Completion Axis"
-- `tools/ceps.py`, `tools/ceps_test_gen.py` -- the CEPS substrate this standard depends on
-- `vault/knowledge_base/session_lessons.md` 2026-05-23 entries -- the empirical lessons (cat>> corruption, vague-lint over-fire, parallel-write cap) that motivated several clauses
+- `knowledge_vault/core/apex-completion-standard.md` -- companion document; sealed as "Skill Completion Axis" (v1) + "Skill Completion Axis v2" (this cycle).
+- `tools/ceps.py`, `tools/ceps_test_gen.py`, `tools/ceps_seed_categories.py` -- the CEPS substrate this standard depends on.
+- `tools/test_ceps_edge_cases.py` -- V-NIT1/V-NIT3/V-EDGE-* tests that institutionalised C9 + C10.
+- `tools/lt_empirical_regen.py` + `vault/ceps/lt_empirical_scoring_protocol.md` -- the C8 reference shape: pass-gate fixture + scoring document committed together.
+- `vault/knowledge_base/session_lessons.md` 2026-05-23 + 2026-05-26 entries -- the empirical lessons (cat>> corruption, vague-lint over-fire, parallel-write cap, host-PATH-gap, schema-test divergence, non-idempotent triggers) that motivated each clause.

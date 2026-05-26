@@ -214,6 +214,92 @@ function loadHook(relativePath) {
   }
 }
 
+// --- Event-family schema constants (BL-2026-05-24, Stop-schema veto fix) ----
+// Root-level fields the harness accepts on EVERY event. `hookSpecificOutput`
+// is also allowed at root but its inner shape is event-gated below.
+const ROOT_ALLOWED = new Set([
+  'continue', 'suppressOutput', 'stopReason', 'decision', 'reason',
+  'systemMessage', 'terminalSequence', 'permissionDecision',
+  'hookSpecificOutput',
+]);
+// Only these 4 events accept hookSpecificOutput.additionalContext.
+// Stop, SessionStart, SessionEnd do NOT — text MUST go to systemMessage.
+const EVENTS_HSO_ADDITIONAL_CONTEXT = new Set([
+  'UserPromptSubmit', 'PostToolUse', 'PostToolBatch',
+]);
+
+function familyOf(eventName) {
+  if (!eventName) return null;
+  for (const fam of [
+    'Stop', 'PreToolUse', 'PostToolBatch', 'PostToolUse',
+    'UserPromptSubmit', 'SessionStart', 'SessionEnd',
+  ]) {
+    if (eventName.startsWith(fam)) return fam;
+  }
+  return null;
+}
+
+// Final schema gate: whitelist root keys per family, salvage stranded text
+// into systemMessage so no child-hook drift can produce schema-invalid JSON.
+// Same guarantee whether sub-hooks emit legacy or current shape.
+function sanitizeForSchema(merged, family) {
+  if (!merged || typeof merged !== 'object') return {};
+  const clean = {};
+  const stranded = [];
+
+  for (const k of Object.keys(merged)) {
+    if (!ROOT_ALLOWED.has(k)) {
+      if (k === 'additionalContext' && typeof merged[k] === 'string' && merged[k].length > 0) {
+        stranded.push(merged[k]);
+      }
+      continue;
+    }
+    clean[k] = merged[k];
+  }
+
+  if (clean.hookSpecificOutput && typeof clean.hookSpecificOutput === 'object') {
+    const hso = clean.hookSpecificOutput;
+    if (family === 'PreToolUse') {
+      const kept = { hookEventName: 'PreToolUse' };
+      if (typeof hso.permissionDecision === 'string') kept.permissionDecision = hso.permissionDecision;
+      if (typeof hso.permissionDecisionReason === 'string') kept.permissionDecisionReason = hso.permissionDecisionReason;
+      if (hso.updatedInput && typeof hso.updatedInput === 'object') kept.updatedInput = hso.updatedInput;
+      clean.hookSpecificOutput = kept;
+    } else if (EVENTS_HSO_ADDITIONAL_CONTEXT.has(family)) {
+      const kept = { hookEventName: family };
+      if (typeof hso.additionalContext === 'string' && hso.additionalContext.length > 0) {
+        kept.additionalContext = hso.additionalContext;
+      }
+      clean.hookSpecificOutput = kept;
+    } else {
+      if (typeof hso.additionalContext === 'string' && hso.additionalContext.length > 0) {
+        stranded.push(hso.additionalContext);
+      }
+      delete clean.hookSpecificOutput;
+    }
+  }
+
+  if (clean.decision != null) {
+    if (family === 'PreToolUse') {
+      delete clean.decision; // PreToolUse uses hookSpecificOutput.permissionDecision
+    } else if (clean.decision === 'deny') {
+      clean.decision = 'block';
+    } else if (clean.decision === 'allow') {
+      clean.decision = 'approve';
+    } else if (clean.decision !== 'approve' && clean.decision !== 'block') {
+      delete clean.decision;
+    }
+  }
+
+  if (stranded.length > 0) {
+    const existing = typeof clean.systemMessage === 'string' && clean.systemMessage.length > 0
+      ? [clean.systemMessage] : [];
+    clean.systemMessage = [...existing, ...stranded].join('\n\n');
+  }
+
+  return clean;
+}
+
 function mergeOutputs(outputs, eventName) {
   const merged = {};
   const contexts = [];
@@ -240,6 +326,12 @@ function mergeOutputs(outputs, eventName) {
 
     if (out.hookSpecificOutput && typeof out.hookSpecificOutput === 'object') {
       merged.hookSpecificOutput = { ...(merged.hookSpecificOutput || {}), ...out.hookSpecificOutput };
+      // Pull additionalContext out of child hookSpecificOutput too so it can
+      // be re-routed by sanitizeForSchema for non-PreToolUse families.
+      if (typeof out.hookSpecificOutput.additionalContext === 'string'
+          && out.hookSpecificOutput.additionalContext.length > 0) {
+        contexts.push(out.hookSpecificOutput.additionalContext);
+      }
     }
 
     for (const k of Object.keys(out)) {
@@ -248,12 +340,6 @@ function mergeOutputs(outputs, eventName) {
     }
   }
 
-  // 2026-05-14 schema migration (VAC-D-HOOK-001). The harness rejects bare
-  // `decision: "allow"` at root for PreToolUse — must use
-  // `hookSpecificOutput.permissionDecision`. For other events the legacy
-  // `decision: "deny"`/`"block"` shape is still accepted. Sub-hooks may still
-  // emit the legacy shape; we translate at merge time so the dispatcher
-  // output always validates regardless of sub-hook drift.
   if (eventName && eventName.startsWith('PreToolUse')) {
     if (decisionDeny || decisionAllow) {
       merged.hookSpecificOutput = {
@@ -269,7 +355,6 @@ function mergeOutputs(outputs, eventName) {
 
   if (continueSeen) merged.continue = !continueFalse;
 
-  // For PreToolUse, additionalContext must live inside hookSpecificOutput.
   if (contexts.length > 0) {
     const joined = contexts.length === 1 ? contexts[0] : contexts.join('\n\n');
     if (eventName && eventName.startsWith('PreToolUse')) {
@@ -318,8 +403,14 @@ function readStdin(timeoutMs) {
   });
 }
 
-// --- Main ---
-(async () => {
+// --- Module exports for unit tests (BL-2026-05-24 regression-guard) -------
+// Exported BEFORE the IIFE so `require('./hook-dispatcher.js')` succeeds
+// without triggering the CLI path. The IIFE below is gated by
+// `require.main === module` so test imports do NOT block on stdin.
+module.exports = { sanitizeForSchema, familyOf, mergeOutputs };
+
+// --- Main (CLI path only — skipped when required as a module) ---
+if (require.main === module) (async () => {
   const event = parseArgs();
 
   // --- Child-process chain path (Stop event — fork-storm-safe) ---
@@ -331,7 +422,8 @@ function readStdin(timeoutMs) {
       merged.decision = 'block';
       if (blockStderr) merged.reason = blockStderr;
     }
-    try { process.stdout.write(JSON.stringify(merged)); }
+    const safe = sanitizeForSchema(merged, familyOf(event));
+    try { process.stdout.write(JSON.stringify(safe)); }
     catch (e) { logError(event, 'STDOUT', e); process.stdout.write('{}'); }
     process.exit(0);
   }
@@ -357,8 +449,9 @@ function readStdin(timeoutMs) {
   }
 
   const merged = mergeOutputs(outputs, event);
+  const safe = sanitizeForSchema(merged, familyOf(event));
   try {
-    process.stdout.write(JSON.stringify(merged));
+    process.stdout.write(JSON.stringify(safe));
   } catch (e) {
     logError(event, 'STDOUT', e);
     process.stdout.write('{}');

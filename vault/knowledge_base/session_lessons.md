@@ -621,3 +621,238 @@ pre-this-cycle). It is NOT caused by Rollback Axis changes. Override
 authorized for any mirror-parity / drift-report FAILs that match this
 preexisting drift; new FAILs (if any) caused by Rollback Axis changes
 would be investigated and fixed individually.
+
+### CEPS event ceps_c8709357ad582862 -- regression (2026-05-26T08:47:14Z)
+
+- subsystem: `windows-text-mode-io`
+- root cause: Windows os.open without os.O_BINARY translates the LF byte into CRLF on write; subsequent reads compound the regression (extra CR before each LF) until the file is corrupted. Caught by BL-0014 self-test 2026-05-02.
+- prevention rule: Before touching windows-text-mode-io, verify the regression scenario (Windows os.open without os.O_BINARY translates the LF byte ...) is still covered by a passing test.
+- pattern signature: `c8709357ad582862`
+- confidence: high
+- auto-test eligible: True
+
+### CEPS event ceps_e794f9bcb86de7aa -- security (2026-05-26T08:47:14Z)
+
+- subsystem: `claude-settings-permissions`
+- root cause: defaultMode bypassPermissions silently skips permissions.deny rules. Any deny entry under that mode is a false sense of security; only hooks are reliable mutation guards. Caught MC-OVO-114 on 2026-04-26.
+- prevention rule: When editing claude-settings-permissions, verify the security invariant (defaultMode bypassPermissions silently skips permissions.de...) is preserved and never bypassed.
+- pattern signature: `e794f9bcb86de7aa`
+- confidence: high
+- auto-test eligible: True
+
+### CEPS event ceps_192b5ecac05c07bf -- drift (2026-05-26T08:47:14Z)
+
+- subsystem: `mirror-parity`
+- root cause: Loose ~/.claude/{commands,agents,knowledge_vault}/ mirror diverges from PP-tracked counterpart when an edit is made to loose without back-sync to PP. CRLF vs LF + bare git working-tree reads make false-drift indistinguishable from real drift unless the verifier reads committed blobs via deterministic ref and LF-normalizes both sides.
+- prevention rule: Watch for drift in mirror-parity: Loose ~/.claude/{commands,agents,knowledge_vault}/ mirror d.... Sync the canonical source before editing the mirror.
+- pattern signature: `192b5ecac05c07bf`
+- confidence: high
+- auto-test eligible: True
+
+### CEPS event ceps_1060af0572194a23 -- scaffold (2026-05-26T08:47:15Z)
+
+- subsystem: `reality-contract`
+- root cause: Scaffold illusion: emitting button shells, completion-pending anchors, unimplemented-stub exception raisers, or silent exception swallowers creates the appearance of completion without the wiring. Compiles != works. Grep callers + run an integration smoke before marking done.
+- prevention rule: Do not emit incomplete shells in reality-contract: Scaffold illusion: emitting button shells, completion-pendi.... Build it end-to-end or state the gap and stop.
+- pattern signature: `1060af0572194a23`
+- confidence: high
+- auto-test eligible: False
+
+### CEPS event ceps_9acfe21ced136d6d -- incomplete-shell (2026-05-26T08:47:15Z)
+
+- subsystem: `agent-emission`
+- root cause: Agent ships a function / file / endpoint whose body describes the intended behavior in comments but executes no real work, or returns a fixture / hardcoded value. Static verification (type-check, linter) does NOT prove runtime works. The shell looks complete; the call site discovers the gap on first real invocation.
+- prevention rule: agent-emission shipped without wiring: Agent ships a function / file / endpoint whose body describ.... Verify every emitted artifact is reachable from a real call path.
+- pattern signature: `9acfe21ced136d6d`
+- confidence: high
+- auto-test eligible: False
+
+### CEPS event ceps_df9dc1b335f104a4 -- integration (2026-05-26T08:47:15Z)
+
+- subsystem: `parallel-tool-cascade`
+- root cause: Parallel batches that mix heavy-IO operations (Bash with hook-decorated output, multiple Reads on same Explore subagent) drop neighbor results as internal-error under harness pipe pressure. Hook fanout (7-15 hooks per Write/Bash, 3 per Read) is the systemic cost behind transversal internal-error hangs.
+- prevention rule: Cross-module call in parallel-tool-cascade broke: Parallel batches that mix heavy-IO operations (Bash with ho.... Run an integration smoke test that exercises the boundary.
+- pattern signature: `df9dc1b335f104a4`
+- confidence: high
+- auto-test eligible: False
+
+### CEPS event ceps_4533e5c6b6c97177 -- spec-violation (2026-05-26T08:47:15Z)
+
+- subsystem: `ultra-q-and-a-skip`
+- root cause: ULTRA / ONESHOT protocol mandates 7 phases with Q&A as phase 2 (6 questions, MANDATORY stop). Skipping Q&A and jumping to plan presentation is REJECTED because plan-quality is bounded by prompt-quality. Six honest answers beat one vague paragraph (BL-0064).
+- prevention rule: ultra-q-and-a-skip drifted from spec: ULTRA / ONESHOT protocol mandates 7 phases with Q&A as phas.... Re-read the spec section before editing the implementation.
+- pattern signature: `4533e5c6b6c97177`
+- confidence: high
+- auto-test eligible: False
+
+### CEPS event ceps_a1822e1d5da3d37a -- tooling (2026-05-26T08:47:15Z)
+
+- subsystem: `powershell-git-path-gap`
+- root cause: git executable is NOT on PowerShell -NonInteractive PATH on this Windows host. Bare `git status` errors and a silent fallback to Bash re-triggers the MSYS2 hang the Windows Bash Bridge Reliability rule was sealed to prevent. Use absolute path: & 'C:\Program Files\Git\cmd\git.exe'.
+- prevention rule: Tool failure in powershell-git-path-gap: git executable is NOT on PowerShell -NonInteractive PATH on.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+- pattern signature: `a1822e1d5da3d37a`
+- confidence: high
+- auto-test eligible: False
+
+### CEPS event ceps_2ed96b64f5dee0ed -- env (2026-05-26T08:47:15Z)
+
+- subsystem: `host-detection`
+- root cause: Failure to probe host before deciding execution path. On a remote target host the agent IS that host and must exec natively; wrapping in an outbound ssh-into-self from inside the remote is a self-detect failure. On the local workstation the agent uses SSH bridges. The per-project SSH key MUST be declared, never assumed.
+- prevention rule: Environment mismatch on host-detection: Failure to probe host before deciding execution path. On a r.... Probe the env (uname/whoami/version) before assuming the runtime.
+- pattern signature: `2ed96b64f5dee0ed`
+- confidence: high
+- auto-test eligible: False
+
+
+## S+++ cycle 2026-05-26 -- regression-prevention lessons
+
+### L1: PowerShell -NonInteractive PATH gap inside Python subprocess
+
+- **trap**: `subprocess.check_output(['git', 'ls-files'], ...)` raises
+  `FileNotFoundError: [WinError 2]` under PowerShell -NonInteractive
+  even when the user's interactive PATH has `git` available.
+- **diagnosis**: PowerShell harness PATH is a subset of the interactive
+  shell PATH; Git's `cmd` dir is one of the omissions. Python inherits
+  it; subprocess inherits Python's; `["git", ...]` resolves to nothing.
+- **fix**: `_git_exe()` helper -- `shutil.which("git")` first, then
+  fallback list `[r"C:\Program Files\Git\cmd\git.exe", ...]`.
+  Sister fix for `shell=True`: inject Git's cmd dir into the
+  subprocess `env=` PATH explicitly (verify_rtk_fusion._run).
+- **recognition signal**: `FileNotFoundError [WinError 2]` from any
+  `subprocess` call whose argv starts with a bare program name on
+  Windows. Reproducer: bare `["mix"]`, `["pnpm"]`, `["node"]`, `["gh"]`
+  all have the same exposure.
+
+### L2: cp1252 default stdout breaks on non-ANSI codepoints
+
+- **trap**: `print(f"...{excerpt}")` raises `UnicodeEncodeError:
+  'charmap' codec can't encode character '\u2192'` (right arrow) when
+  the excerpt is from a file containing that codepoint.
+- **diagnosis**: Python on Windows defaults stdout encoding to the ANSI
+  codepage (cp1252 on this host). Anything outside CP1252 -> exception.
+- **fix**: At the top of `main()`, call `sys.stdout.reconfigure(
+  encoding="utf-8", errors="replace")` and same for stderr. Wrap in
+  `try/except` because the method is Python 3.7+.
+- **recognition signal**: `'charmap' codec can't encode character` in
+  the traceback. Common offenders: arrow / em-dash / smart-quote in
+  doc-prose excerpts.
+
+### L3: subprocess `shell=True` inherits parental PATH
+
+- **trap**: `verify_rtk_fusion._run` returned 26 cl100k tokens (reduction
+  -169%) for a command that empirically produces 18k tokens.
+- **diagnosis**: Inside `_run`, `subprocess.run(cmd, shell=True, ...)`
+  invokes cmd.exe which uses the inherited Python-process PATH. If
+  Python was started by a PATH-deficient parent (PowerShell
+  -NonInteractive), the shell's `git` lookup fails and the captured
+  output is the 26-token error message "git is not recognized as an
+  internal or external command".
+- **fix**: Pass `env=` to `subprocess.run` with `PATH` explicitly
+  augmented to include Git's `cmd` dir. Affects every subprocess that
+  relies on `shell=True` + bare program names.
+- **recognition signal**: a benchmark suddenly producing implausibly
+  small token counts vs documented prior runs. Always sanity-check
+  the raw output before trusting the reduction ratio.
+
+### L4: Schema declares -> code MUST enforce (SCS C9 motivation)
+
+- **trap**: `vault/ceps/schema.json` declared `prevention_rule.max_chars
+  = 300` but `tools/ceps.py::record_error` never measured or capped the
+  rendered output. Could silently exceed under long-subsystem inputs.
+- **diagnosis**: a schema invariant without an enforcing test is a
+  comment, not a contract. Existing tests measured shape (key
+  presence, type) but not numeric bounds.
+- **fix**: After rendering `rule = RULE_TEMPLATES[category].format(...)`
+  add `if len(rule) > 300: rule = rule[:297] + "..."`. Add
+  V-NIT1-MAXCHARS test with 400-char subsystem to verify the cap is
+  honoured.
+- **recognition signal**: any schema with numeric or enum invariants
+  whose enforcement path is not greppable in the code or tests.
+  Reciprocity is the contract.
+
+### L5: Persistent-state triggers must be idempotent (SCS C10 motivation)
+
+- **trap**: `tools/ceps.py::from_verify_fail` recorded duplicate events
+  on re-invocation with identical stdout. Schema declared
+  `id.stable_across_reruns: true`; code did not honour it.
+- **diagnosis**: a fresh `_existing_sigs()` scan at function entry +
+  per-event sig check before `record_error` are the minimum
+  idempotency primitive. Without it, every re-run of `verify_spp.py`
+  would balloon events.jsonl by N rows.
+- **fix**: Add `_existing_sigs()` helper reading events.jsonl ->
+  set of sigs. Branch on `if sig in existing: continue`. Add
+  V-NIT3-IDEMPOTENT test: 2 invocations on same input -> delta == N
+  on run 1, 0 on run 2.
+- **recognition signal**: any trigger that writes to persistent state
+  (events.jsonl, FTS5 db, markdown append, JSON fixture) whose plan
+  does NOT explicitly declare "this is intentionally non-idempotent
+  because <X>" is a defect waiting for the second invocation.
+
+### L6: A1/A2 sync direction propagates corruption byte-perfectly
+
+- **trap**: `drift-report` flagged 2 loose-ahead files. Per A1/A2 law,
+  the agent ran `Copy-Item loose -> PP` byte-perfectly. Side-effect:
+  Pane-4's non-atomic destructive write to the loose copy of
+  `apex-completion-standard.md` was imported verbatim into PP --
+  stomp-included.
+- **diagnosis**: A1/A2 says "loose is canonical, sync direction is
+  loose -> PP". It does NOT say "loose is correct". A polluted loose
+  is still loose. Sync without hygiene = byte-perfect corruption
+  propagation.
+- **fix**: Before any loose -> PP sync of a tracked file, sanity-check
+  the loose head against `origin/main:<path>` -- if the first 10
+  meaningful lines no longer match the committed structure, halt and
+  surface to Owner. Recovery here used
+  `tools/_apex_pane4_recovery.py`: git show origin/main:<path> +
+  atomic-append the legitimate Pane-4 axis content to the tail.
+- **recognition signal**: drift-report shows loose-ahead by an
+  unexpectedly large byte delta (here: +12KB on a file the agent has
+  not edited in the current session).
+
+### L7: code-reviewer catches cross-pane stomps that drift-report misses
+
+- **trap**: `drift-report` PASS (9/9 equal post-sync), but the synced
+  content carried a destructive head stomp invisible to a byte-level
+  drift check.
+- **diagnosis**: byte-equality is necessary but not sufficient. The
+  reviewer reads structure (head matches the expected canon? orphan
+  fragments at section boundaries? new sections appended via
+  atomic-write or via shell `cat >>` cat?). A drift-report is
+  syntax-blind; the reviewer is structure-aware.
+- **fix**: Run a code-reviewer pass on every push that includes a
+  loose -> PP sync of tracked .md files. The reviewer is the line of
+  defense against cross-pane stomps.
+- **recognition signal**: A loose-ahead delta on a tracked .md that
+  the agent has not edited in the current session -- always trigger
+  a structural review, never a blind sync.
+
+### L8: PowerShell @'...'@ heredoc into native exe re-tokenizes argv (transversal across repos)
+
+- **trap**: `& git commit -m @'multi-line message with "inner quoted"
+  string'@` in PowerShell. The single-quoted heredoc preserves bytes
+  inside PowerShell, but at the boundary into the native `git.exe`
+  process, PowerShell's argv splitter re-tokenizes on the inner `"`
+  characters. `-m` ends up with only the first chunk; the rest land
+  as positional pathspecs.
+- **diagnosis**: PowerShell 5.1 native-command argument splitting is
+  separate from PowerShell string parsing. `@'...'@` is one logical
+  string in PowerShell-land. Once handed to `git.exe`, the C runtime
+  argv splitter re-applies the standard double-quote interpretation,
+  breaking the string apart. Error signature:
+  `error: pathspec '<inner-quoted-word>' did not match any file(s)`.
+- **fix**: Never pass a multi-line / quote-bearing commit message to
+  `-m` from PowerShell. Always:
+  1. Write the body via the Write tool (literal bytes, no shell parser).
+  2. Invoke `git commit -F <file>` (reads bytes from file, bypasses argv).
+  3. Delete the file after commit.
+  Sister-pattern fixes the same bug class with `gh issue create
+  --body-file`, `mix run -f`, `node -e` replaced with a `.js` file.
+- **recognition signal**: `error: pathspec '<random-word>' did not
+  match any file(s)` from a git commit invoked via PowerShell with an
+  inline `-m`. Stop, switch to `-F`, never retry `-m` -- the bug is
+  deterministic, not transient.
+- **doctrine**: extends the Windows Bash Bridge Reliability rule
+  (2026-05-21). PowerShell remains the right tool on Windows; the
+  pitfall is inline multiline args with inner punctuation, not the
+  tool itself.
+- **cross-ref**: `vault/lessons/git-commit-heredoc-argv-reparser.md`.

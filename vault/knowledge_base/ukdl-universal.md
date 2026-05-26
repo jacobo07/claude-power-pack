@@ -134,3 +134,33 @@ DONE-gate in `apex-completion-standard.md`.
 | UKDL-RB-04 | sec 77 extends to rollback. For InfinityOps with `include_code_rollback=true`, the dispatcher invokes `gh workflow run deploy-vps.yml --ref <prev_sha>` after printing the canonical sec 77 citation. INVOKES the canonical CD pipeline -- never reimplements it. |
 | UKDL-RB-05 | Rescue is opt-in. The `--rescue` flag takes a snapshot of the CURRENT state to `vault/rescues/<project>/` BEFORE applying the restore. Off by default (Hawkins: no destructive-by-default behaviour beyond what was asked). When the rescue itself fails, refuse the rollback (CEILING) -- a rollback without a recoverable current state is a one-way door. |
 | UKDL-RB-REP-01 | Reproducibility: `python modules/rollback/test_v_block.py` -> 15/15 PASS, p95 dry-run < 30 ms. `python modules/deployment/test_v_block.py` -> 16/16 PASS (incluyendo V-ROLLBACK-SUGGEST). `python modules/rollback/rollback.py` con `{"project": "kobiicraft", "dry_run": true}` por STDIN -> CEILING exit 4 con mensaje `manifest_absent` (V-DEEP empirical, `vault/rollbacks/2026-05-25-155500_kobiicraft_dryrun.md`). |
+
+- [regression/windows-text-mode-io] `ceps_c8709357ad582862` -- Before touching windows-text-mode-io, verify the regression scenario (Windows os.open without os.O_BINARY translates the LF byte ...) is still covered by a passing test.
+
+- [security/claude-settings-permissions] `ceps_e794f9bcb86de7aa` -- When editing claude-settings-permissions, verify the security invariant (defaultMode bypassPermissions silently skips permissions.de...) is preserved and never bypassed.
+
+- [drift/mirror-parity] `ceps_192b5ecac05c07bf` -- Watch for drift in mirror-parity: Loose ~/.claude/{commands,agents,knowledge_vault}/ mirror d.... Sync the canonical source before editing the mirror.
+
+- [scaffold/reality-contract] `ceps_1060af0572194a23` -- Do not emit incomplete shells in reality-contract: Scaffold illusion: emitting button shells, completion-pendi.... Build it end-to-end or state the gap and stop.
+
+- [incomplete-shell/agent-emission] `ceps_9acfe21ced136d6d` -- agent-emission shipped without wiring: Agent ships a function / file / endpoint whose body describ.... Verify every emitted artifact is reachable from a real call path.
+
+- [integration/parallel-tool-cascade] `ceps_df9dc1b335f104a4` -- Cross-module call in parallel-tool-cascade broke: Parallel batches that mix heavy-IO operations (Bash with ho.... Run an integration smoke test that exercises the boundary.
+
+- [spec-violation/ultra-q-and-a-skip] `ceps_4533e5c6b6c97177` -- ultra-q-and-a-skip drifted from spec: ULTRA / ONESHOT protocol mandates 7 phases with Q&A as phas.... Re-read the spec section before editing the implementation.
+
+- [tooling/powershell-git-path-gap] `ceps_a1822e1d5da3d37a` -- Tool failure in powershell-git-path-gap: git executable is NOT on PowerShell -NonInteractive PATH on.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/host-detection] `ceps_2ed96b64f5dee0ed` -- Environment mismatch on host-detection: Failure to probe host before deciding execution path. On Li.... Probe the env (uname/whoami/version) before assuming the runtime.
+
+
+## UKDL S+++ 2026-05-26
+
+- [tooling/host-portability] L1 -- `["git", ...]` bare in subprocess fails under PowerShell -NonInteractive on Windows. Use `shutil.which` + absolute-path fallback. Affects every Python tool that shells out to git/mix/pnpm/gh/node without resolution.
+- [tooling/encoding] L2 -- cp1252 stdout default on Windows Python breaks on U+2192 (and any non-ANSI). `sys.stdout.reconfigure(encoding='utf-8', errors='replace')` at main() entry.
+- [tooling/env-propagation] L3 -- `subprocess.run(shell=True)` inherits Python parent PATH. PATH-deficient parents silently degrade benchmarks (26-token error vs 18k real output). Inject Git cmd dir via `env=` to fix.
+- [spec-violation/schema] L4 -- schema invariant without enforcing test is a comment. Reciprocity is the contract (SCS C9).
+- [regression/idempotency] L5 -- persistent-state triggers must be idempotent. Plan declares "non-idempotent because X" or the V-*-IDEMPOTENT test is mandatory (SCS C10).
+- [drift/sync-discipline] L6 -- A1/A2 loose->PP is byte-perfect including byte-perfect corruption. Always structural-check before sync.
+- [drift/review] L7 -- drift-report PASS != safe sync. code-reviewer is the structure-aware backstop against cross-pane stomps.
+- [tooling/shell-quoting] L8 -- PowerShell `@'...'@` heredoc into native exe (git/gh/mix/node) re-tokenizes argv on inner double-quotes. Symptom: `error: pathspec '<word>' did not match`. Fix: write body to file via Write tool, invoke `git commit -F file` (or `gh --body-file`, `mix run -f`, `node script.js`). Transversal across repos. Cross-ref: `vault/lessons/git-commit-heredoc-argv-reparser.md`.
