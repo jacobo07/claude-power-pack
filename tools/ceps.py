@@ -211,6 +211,59 @@ def _db_insert(conn: sqlite3.Connection, event: dict) -> None:
 # M9: record_error (extractor + classifier + distributor entry point)
 # ---------------------------------------------------------------------------
 
+def compute_confidence(
+    occurrences: int,
+    resolution_success: bool = False,
+) -> float:
+    """ECC instinct-model confidence score on the 0.3-0.9 scale.
+
+    Source: ECC continuous-learning-v2 / Affaan Mustafa MIT,
+    adapted from JS/shell to Python. Reflects how much weight a
+    pattern carries: low (0.3) = first sighting, medium (0.5-0.7)
+    = recurring, high (0.8-0.9) = recurring + resolution proven.
+
+    Args:
+        occurrences: count of times this error pattern has been
+            observed. >=1.
+        resolution_success: whether the fix has been verified to
+            prevent recurrence.
+    """
+    score = 0.3
+    if occurrences >= 2:
+        score += 0.2
+    if occurrences >= 5:
+        score += 0.2
+    if resolution_success:
+        score += 0.2
+    return round(min(0.9, max(0.3, score)), 2)
+
+
+def promote_to_global(
+    error_pattern: str,
+    project_ids: list[str],
+) -> bool:
+    """Returns True iff this error pattern has been seen across
+    >=2 distinct projects, qualifying it for global scope.
+
+    Source: ECC continuous-learning-v2 / Affaan Mustafa MIT,
+    adapted from JS to Python.
+    """
+    return len(set(project_ids)) >= 2
+
+
+def _project_id_hash(project_root: Optional[str] = None) -> str:
+    """Stable short hash of the project root path. Empty if no
+    project root can be determined.
+    """
+    if project_root is None:
+        project_root = os.getcwd()
+    if not project_root:
+        return ""
+    return hashlib.sha256(
+        project_root.encode("utf-8", errors="replace")
+    ).hexdigest()[:12]
+
+
 def record_error(
     category: str,
     subsystem: str,
@@ -218,11 +271,20 @@ def record_error(
     affected_modules: Optional[list] = None,
     evidence_path: Optional[str] = None,
     confidence: str = "high",
+    confidence_score: Optional[float] = None,
+    scope: str = "project",
+    project_id: Optional[str] = None,
 ) -> Optional[dict]:
     """Validate, classify, compute signature, persist, and distribute.
 
     Returns the event dict on success, None on validation failure or any
     internal exception (fail-open per Ley 24).
+
+    ECC absorption (2026-05-27): added `confidence_score` (0.3-0.9
+    numeric, ECC instinct-model adapted from continuous-learning-v2),
+    `scope` ("project" | "global"), and `project_id` (hash of project
+    root). Existing string `confidence` ("low" | "high") remains
+    backward-compatible.
     """
     try:
         if category not in VALID_CATEGORIES:
@@ -230,6 +292,14 @@ def record_error(
             return None
         if confidence not in VALID_CONFIDENCE:
             _log(f"record_error: invalid confidence={confidence}")
+            return None
+        if scope not in ("project", "global"):
+            _log(f"record_error: invalid scope={scope}")
+            return None
+        if confidence_score is not None and not (
+            0.0 <= confidence_score <= 1.0
+        ):
+            _log(f"record_error: confidence_score out of range")
             return None
         if not root_cause or len(root_cause) > 600:
             _log("record_error: root_cause empty or too long")
@@ -255,6 +325,10 @@ def record_error(
             "affected_modules": affected_modules or [],
             "evidence_path": evidence_path,
             "confidence": confidence,
+            "confidence_score": confidence_score,
+            "scope": scope,
+            "project_id": project_id if project_id is not None
+                          else _project_id_hash(),
             "auto_test_eligible": category in AUTO_TEST_CATEGORIES,
         }
 
