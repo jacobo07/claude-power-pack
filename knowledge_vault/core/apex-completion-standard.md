@@ -1789,3 +1789,96 @@ Missing any of 1-5 = NOT Apex-complete on the TCO Axis.
   `arch_decision -> opus`; prompt "explore the codebase" routed to
   `subagent_explore -> sonnet`; neutral prompt did not inject.
 - M6 verify_tco.py TCO_PROBE 5/5 in <1s.
+
+
+## ECC Universal Quality Framework Axis v6 (sealed 2026-05-27) -- absorbed-baseline DONE
+
+The eighth Apex DONE axis. A PP install is Apex-complete on this
+axis iff the ECC-absorbed quality framework is **active**, not just
+documented. Distinct from the prior axes: this one is the assertion
+that PP applies a competitor's hard-won doctrine internally, not as
+inspiration but as importable runtime infrastructure.
+
+### Six required components (all six must be present)
+
+1. **Principle registry** -- `modules/uqf/principles/__init__.py`
+   with `register`, `get_all`, and at least 9 `Principle` subclasses
+   loaded (P01 through P09 + Error Never Silent). Each principle
+   declares its `domains` and carries `source = "ECC/Affaan Mustafa MIT"`
+   where applicable.
+2. **Audit pipeline** -- `modules/uqf/auditor.py::UQFAuditor` with
+   `audit_file`, `audit_code_str`, `audit_prompt`, `scan_all`.
+   Returns `AuditReport` with 0-100 score, passed/failed lists,
+   anti-pattern hits, fix hints, source attributions.
+3. **Anti-pattern detectors** -- `modules/uqf/anti_patterns.py`
+   with at least 7 AST-based detectors (bare_except,
+   silent_pass_in_except, missing_type_hints, magic_numbers,
+   mutable_defaults, god_function, hardcoded_paths).
+4. **Code-review helpers** -- `modules/code_review/__init__.py`
+   exposing `pre_report_gate`, `filter_false_positives`,
+   `validate_high_critical`, `derive_verdict`, `run_full_review`.
+   Importable; the pipeline drops FPs, demotes HIGH/CRITICAL
+   without triad, computes verdict.
+5. **Rules taxonomy** -- `rules/common/` (>=5 files),
+   `rules/python/` (>=4 files), `rules/elixir/` (>=4 files), each
+   with ECC MIT attribution footer. Cross-language base + 2 piloted
+   languages.
+6. **Verify probes** -- `tools/verify_uqf.py` returning UQF_PROBE
+   = 5/5 + `tools/verify_rules.py` returning RULES_PROBE = 5/5,
+   both rows in `tools/verify_spp.py`.
+
+### Six-check DONE-gate (binary, no classifications)
+
+A PP install is Apex-complete on the ECC-UQF axis iff:
+
+1. `tools/test_uqf.py` exit 0 with UQF_PASS = 15/15.
+2. `tools/verify_uqf.py` exit 0 with UQF_PROBE = 5/5.
+3. `tools/verify_rules.py` exit 0 with RULES_PROBE = 5/5.
+4. `tools/uqf_audit.py --scan-all` returns a real table with at
+   least 4 PP modules audited and scores in 0-100 (no crash).
+5. `modules/code_review/__init__.py` runs the full pipeline
+   without error on a synthetic mixed-severity findings list.
+6. `CLAUDE.md` contains the 6-rule Prompt Defense Baseline (P09)
+   AND the Code Review Doctrine section.
+
+Missing any of 1-6 = NOT Apex-complete on the ECC-UQF axis.
+
+### Empirical baseline (2026-05-27)
+
+- 9 principles registered, all with `source="ECC/Affaan Mustafa MIT"`.
+- `uqf_audit.py --scan-all` baseline:
+    modules/monitoring/monitor.py 80% (OK)
+    tools/tco_compact_gate.py    40% (WARN)
+    tools/ceps.py                20% (FAIL silent passes)
+    tools/tis.py                 20% (FAIL silent passes)
+    tools/jit_skill_loader.py    20% (FAIL silent passes)
+  The low scores reflect honest deuda -- PP fail-open patterns
+  flagged by ErrorNeverSilent. Each is documented and threshold
+  is 0% baseline at v1; future cycles raise it.
+- verify_spp.py now has 12 rows; 10/12 STRICT OK (2 pre-existing
+  Pane-N apex drift FAILs continue, unchanged by this cycle).
+- 17 rule files written with ECC MIT attribution footer.
+
+### Cross-references
+
+- `knowledge_vault/core/skill-completion-standard.md` C14
+  (ECC-UQF-Active-by-default).
+- `vault/knowledge_base/ecc-reverse-engineering.md` -- full
+  technical analysis.
+- `vault/knowledge_base/ecc-universal-baseline.md` -- 12-principle
+  reference catalog.
+- `rules/common/code-review.md` -- absorbed Pre-Report Gate +
+  Common False Positives + Proof Triad + Severity Table.
+
+### Asymmetric complement to PP-native axes
+
+This axis is the FIRST one where PP imports an external system's
+doctrine. The prior 7 axes (Concurrency, Async-Audit, Zero-Drift,
+Context-Pressure, Session-Safety, Skill-Completion, TIS, TCO,
+Monitoring) are PP-native. ECC is in the same niche but emphasizes
+different things (61 agents, 246 skills, multi-harness distribution,
+industrial test corpus). PP -> ECC absorption is one-way for this
+axis; PP retains its own axes intact.
+
+Source: ECC v2.0.0-rc.1 (github.com/affaan-m/ecc) under MIT License
+(c) 2026 Affaan Mustafa.

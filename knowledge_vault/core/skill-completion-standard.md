@@ -242,3 +242,31 @@ routing is auditable. The TCO substrate enforces this.
 If any of the three is missing, the feature is NOT SCS-complete on
 the Cost-Awareness axis. The Reality Contract forbids silent zeros
 and unmeasured cost.
+
+
+### C14 -- ECC-UQF-Active-by-default (sealed v6, 2026-05-27)
+
+Every new PP feature is complete only when it is auditable against
+the absorbed ECC quality baseline. Three obligations:
+
+1. **UQF audit runs.** `python tools/uqf_audit.py <module>` returns
+   a score (0-100) without crashing on the module's source file.
+   The score is recorded; no minimum threshold is enforced at v1
+   baseline. Future cycles raise the floor empirically.
+2. **At least one ECC principle applied where applicable.** If the
+   feature emits code-review findings, it goes through
+   `modules.code_review.run_full_review` (Pre-Report Gate + FP
+   filter + Proof Triad demotion). If the feature is an agent
+   prompt, the 6-rule Prompt Defense Baseline is present in the
+   prompt body.
+3. **No detected anti-pattern that is blocking.** If
+   `modules.uqf.anti_patterns.run_all` reports a hit in
+   `detect_bare_except` or `detect_silent_pass_in_except` AND the
+   hit is in NEW code (not pre-existing), the finding is a BLOCK
+   and must be resolved or explicitly waived with a comment + test.
+
+Without (1)+(2)+(3): the feature is not SCS-complete on the
+ECC-UQF axis.
+
+Source: ECC (github.com/affaan-m/ecc) v2.0.0-rc.1 under MIT
+License (c) 2026 Affaan Mustafa.
