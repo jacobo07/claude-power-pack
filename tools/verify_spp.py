@@ -145,6 +145,12 @@ def main() -> int:
         ("tco-gate",
          [PY, str(PP / "tools" / "verify_tco.py")],
          20),
+        ("uqf-active",
+         [PY, str(PP / "tools" / "verify_uqf.py")],
+         30),
+        ("rules-taxonomy",
+         [PY, str(PP / "tools" / "verify_rules.py")],
+         10),
     ]
 
     if args.row:
