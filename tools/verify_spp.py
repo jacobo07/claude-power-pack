@@ -151,6 +151,9 @@ def main() -> int:
         ("rules-taxonomy",
          [PY, str(PP / "tools" / "verify_rules.py")],
          10),
+        ("osa-active",
+         [PY, str(PP / "tools" / "verify_osa.py")],
+         20),
     ]
 
     if args.row:

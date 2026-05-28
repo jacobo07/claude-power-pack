@@ -335,6 +335,13 @@ def backup(stdin_payload: dict[str, Any]) -> dict[str, Any]:
             f"Receipt: {receipt_path}"
         )
 
+    # OSA post-backup hook -- non-blocking, swallow-all-errors (sealed 2026-05-28).
+    try:
+        from modules.osa.dispatcher import fire_async as _osa_fire
+        _osa_fire(project=project, kind="post-backup")
+    except Exception:
+        pass
+
     return {
         "verdict": verdict,
         "exit_code": exit_code,

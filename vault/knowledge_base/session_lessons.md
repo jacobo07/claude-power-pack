@@ -950,3 +950,25 @@ would be investigated and fixed individually.
 - **recognition signal**: questions like "what's the project convention for X in Python?" with no single answer location.
 - **recognition signal**: about to spawn a subagent for a task you have already empirically proven via tests. Question whether the subagent adds NEW signal vs duplicating existing gates.
 - **doctrine**: SCS C13 (cost-awareness-by-default) is not advisory -- it applies to YOUR OWN cycle. The cycle must walk its own talk.
+## 2026-05-26 — PANE-8 closed network outage via 4 commits: c009f99 (Prison spigot.bungeecord),
+
+**Session:** `pane8-network-launch`
+
+Micro-commit discipline saved the network outage: 4 atomic commits survived 3 YAML parse failures + 1 rollback without compounding scope. C1 stayed green while C2 iterated.
+
+---
+
+## NEVER_AGAIN — 2026-05-28T08:47:14Z — claude-power-pack — HIGH
+- **Issue**: TCO context bug: cumulative sum confused with current context window
+- **Root cause**: estimate_context_pct() summed input+output across the whole session
+- **Fix**: Replace sum() with max() of last-3 input_tokens, half-global fallback
+- **Recognizer**: If pct>=70% but session has only a few high-token calls, suspect the cumulative bug
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-28T08:47:14Z — global — HIGH
+- **Issue**: TCO context bug: cumulative sum confused with current context window
+- **Root cause**: same root cause, recorded twice
+- **Fix**: same fix
+- **Recognizer**: same recognizer
+- **Recurrence**: 2
+

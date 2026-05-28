@@ -270,3 +270,38 @@ ECC-UQF axis.
 
 Source: ECC (github.com/affaan-m/ecc) v2.0.0-rc.1 under MIT
 License (c) 2026 Affaan Mustafa.
+
+
+### C15 -- OSA-Zero-Issue-by-default (sealed v7, 2026-05-28)
+
+Every productive-state operation (deploy / rollback / backup / any
+future state-mutating axis) MUST schedule a non-blocking OSA
+post-action audit via `modules.osa.dispatcher.fire_async()`.
+
+Three obligations:
+
+1. **Non-blocking by construction.** The fire_async() callsite uses
+   `threading.Thread(daemon=True)` and swallows every exception.
+   The productive action MUST return its verdict regardless of
+   whether OSA succeeds, fails, or is throttle-gated. A proactive
+   auditor that can block its own subject is the same as no auditor
+   at all.
+2. **Reality Contract on visual QA.** `visual_qa_passed` is `null`
+   unless `screenshot` is a real file path that exists on disk.
+   Never `True`/`False` without a capture. Graceful degradation is
+   the default mode; reporting "PASS" without evidence is forbidden.
+3. **NEVER_AGAIN injection on non-trivial findings.** If the OSA
+   audit surfaces a real defect, the agent calls
+   `modules.osa.never_again.inject()` so that the next session
+   recognizes the pattern. Recurrence is tracked across cycles;
+   top-recurring entries become permanent-fix candidates.
+
+Budget gating (`modules.osa.throttle`): no autonomous `claude -p`
+invocation if `BUDGET_EXHAUSTED`. The action ships; the audit is
+queued for the next session. This is the 2026-06-15 programmatic-
+credit shift made operational rather than just monitored
+(`tools/budget_monitor.py` provides runway; throttle.py provides
+the gate).
+
+Without (1)+(2)+(3): the feature is not SCS-complete on the OSA
+axis.

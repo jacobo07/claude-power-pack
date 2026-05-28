@@ -213,3 +213,7 @@ DONE-gate in `apex-completion-standard.md`.
 | UKDL-ECC-09 | Polymorphic Principle interface (target: Any, domain: str) -> PrincipleResult allows the same registry to dispatch across code/prompts/docs/tests/workflows domains. Auditor catches type-mismatch responses as N/A; principles can be enumerated uniformly without per-shape branching. |
 | UKDL-ECC-10 | Wozniak gatekeeper sees literal tokens; doctrine docs describing anti-patterns must paraphrase them in prose (e.g. "a bare exception clause followed by a no-op body" instead of the literal Python syntax). Same pattern as CEPS seed paraphrase from prior cycles. |
 | UKDL-ECC-REP-01 | Reproducibility: `python tools/test_uqf.py` -> UQF_PASS=15/15; `python tools/verify_uqf.py` -> UQF_PROBE=5/5; `python tools/verify_rules.py` -> RULES_PROBE=5/5; `python tools/uqf_audit.py --scan-all` -> 5-module table with real 20-80% scores. Cold-boot evidence: `vault/test-results/cold_boot_ECC_UQF_<ts>.md`. Reverse-engineering: `vault/knowledge_base/ecc-reverse-engineering.md`. Universal baseline: `vault/knowledge_base/ecc-universal-baseline.md`. |
+
+- **UKDL-OSA-2026-05-28T08:47:14Z** [HIGH] claude-power-pack: TCO context bug: cumulative sum confused with current context window -- recognizer: If pct>=70% but session has only a few high-token calls, suspect the cumulative bug
+
+- **UKDL-OSA-2026-05-28T08:47:14Z** [HIGH] global: TCO context bug: cumulative sum confused with current context window -- recognizer: same recognizer

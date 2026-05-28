@@ -1712,6 +1712,83 @@ P2.3 `/health-all` ABSORBED as the `--once` flag (one snapshot,
 N projects). SCS C12 (Observability-by-default) sealed in the same
 cycle to lock the standard at v4 for all future productive features.
 
+---
+
+## § 2026-05-26 — KobiiClaw Reliability Layer F3 Doctrine (Dispatch Safety Axis)
+
+Sealed alongside the F2 Sweep Resilience Axis (same day). F3 closes the
+autonomous reliability loop: triage HIGH/ERROR item → Repair Ticket →
+file-based approval gate → Work Order (safety-guarded) → claude_cli
+dispatch via sovereign transport → result capture → brief update.
+
+**Rule 1 — Dispatch Safety Gate (UKDL RL-004)**: a Work Order is dispatched
+ONLY when BOTH gates pass: (a) the matching `.approve` file exists in
+`ops/kobiiclaw/approvals/` AND (b) `safety_check.ok=True` for the WO's
+prompt against the 10-pattern destructive-token regex (rm_recursive_force,
+shutdown_reboot, kill_minus_nine, dd_to_device, mkfs, drop_database,
+truncate_table, chmod_777_root, config_overwrite_no_backup, fork_bomb).
+Either gate failing → status="refused_blocked" with NO subprocess to
+`/usr/bin/claude`. This is a UNIVERSAL LAW for any future component on
+this host that dispatches autonomously to production: an approval signal
+without a safety signal is not enough.
+
+**Rule 2 — Dispatch Result Capture (UKDL RL-005)**: every dispatch attempt
+MUST write `dispatch_results/<wo_id>_result.json` BEFORE marking the WO
+completed/failed/refused. "Fire and forget" is forbidden. The result JSON
+is the only durable evidence of what Claude said and when; daemon log
+rotation destroys INFO lines within days. Schema: `{wo_id, ticket_id,
+dispatched_at, model, exit_code, status, duration_s, stdout_snippet,
+stderr_snippet, model_used, attempts, stdout_full_chars}`. Five terminal
+statuses cover the failure surface: success / cli_error / timeout /
+cli_not_found / refused_blocked.
+
+**Rule 3 — Lifecycle Fail-Soft (UKDL RL-006)**: every stage of the F3
+lifecycle (ticket_gen, approval_sweep, wo_gen, dispatch,
+pending_approvals_snapshot) MUST be invoked inside `sweep._safe_run()`.
+An exception in any one stage cannot abort the sweep, cannot prevent the
+next stage from running, and cannot prevent the brief from being written.
+Brief-with-honest-exception-traceback strictly dominates daemon-down. F3
+introduces 4 new directory state-spaces plus the claude_cli subprocess —
+each is a fresh failure surface and each must be contained.
+
+**Rule 4 — Sovereign Transport Reuse**: F3 dispatch MUST go through
+`kobiiclaw.claude_cli_client.ClaudeCLI` (DNA-25000), never raw
+`subprocess.run(["claude", ...])`. The wrapper handles retry, timeout,
+exit-code disambiguation, and the import-time `_detect_binary()` probe
+that fails-loud if `/usr/bin/claude` becomes missing or non-executable.
+10+ existing importers prove the surface is stable (token_router,
+cli_engine, whatsapp_handler, llm_brain, vision_oracle_connector,
+sentinel_tools, v4_engine.cli_engine, v4_engine.module_adapter,
+discord_bot.llm_brain, discord_bot.sentinel_tools).
+
+**Empirical evidence (2026-05-26)**: E2E test driver `/tmp/test_f3_e2e.py`
+7-step ALL PASS:
+- benign HIGH item → RT-2026-05-26-001 in pending/
+- `.approve` absent → check_approval=False (gate inviolable proven)
+- `.approve` present → check_approval=True → WO generated + dispatched
+- dispatch returned status="cli_error" exit=null dur=3.0s — root cause
+  `/usr/bin/claude` returned "You've hit your limit · resets May 27, 5pm
+  (UTC)" exit=1 (rate limit, NOT F3 bug). UKDL RL-006 fail-soft
+  empirically validated under real production failure mode.
+- "rm -rf /home/kobicraft/workspace" dangerous item → WO blocked,
+  hits=['rm_recursive_force'], dispatch refused_blocked, zero claude_cli
+  invocation.
+- Daemon Cycle 1 post-restart (PID 3015192) "Reliability sweep OK in
+  0.31s" + content + AutoResearch all green. Zero F1/F2 regression.
+
+**Doctrine drift guard**: any future autonomous dispatch component (e.g.
+self-healing for InfinityOps, MundiCraft auto-fixer, KobiiSports
+incident-bot) MUST adopt Rules 1+2+3+4 verbatim. The approval-gate file
+mechanism is host-portable (any user with shell + filesystem can approve);
+the safety regex set is the canonical starting point and must only GROW
+across components, never shrink.
+
+Cross-references:
+- UKDL_KOBIICLAW.md RL-004 / RL-005 / RL-006 (per-component evidence)
+- claude_cli_client.py at /home/kobicraft/workspace/kobiiclaw/
+- Plan-file backup: /home/kobicraft/workspace/ops/kobiiclaw/vault/plans/f3-lifecycle-20260526T1535Z.md
+- Stage dir local: ~\AppData\Local\Temp\kobiiclaw-reliability-stage\reliability\
+
 
 ## Token Cost Optimizer (TCO) Axis v1 (sealed 2026-05-26) -- cost-discipline baseline
 
@@ -1789,6 +1866,230 @@ Missing any of 1-5 = NOT Apex-complete on the TCO Axis.
   `arch_decision -> opus`; prompt "explore the codebase" routed to
   `subagent_explore -> sonnet`; neutral prompt did not inject.
 - M6 verify_tco.py TCO_PROBE 5/5 in <1s.
+
+---
+
+## § 2026-05-26 — KobiiClaw Reliability Layer F4 Doctrine (Pre-Launch Certification Axis)
+
+Sealed alongside the F2 Sweep Resilience and F3 Dispatch Safety axes
+(same week). F4 closes the autonomous reliability loop on its OUTPUT side:
+every sweep now ends with a pre-launch certification check, and the
+Owner receives a Discord brief — but only when the system itself is OK
+to broadcast.
+
+**Rule 1 — Pre-Launch Certification Gate (UKDL RL-007)**: every
+certification module MUST express its checks as atomic, ID'd, fail-soft
+units. Schema: `{id, status: PASS|FAIL|WARN|ERROR, detail}`. Wrapper:
+`_check(id, fn)` converts any unhandled exception into status="ERROR".
+Global rule: **CERTIFIED iff `summary.fail == 0`**; WARN and ERROR are
+visible but non-blocking. Certification gates downstream actions (Hermes
+delivery), never the daemon (sweep continues regardless).
+
+**Rule 2 — Don't-Broadcast-Broken-State (UKDL RL-008)**: if the system's
+own certification is FAILED, external delivery components (Discord
+Hermes, email, webhook, SMS) MUST refuse to broadcast with status
+`skipped_failed_cert`. Silence is more honest than a noisy half-truth.
+A broken system that spams "I am broken" notifications adds noise to the
+exact channel needed for recovery.
+
+**Rule 3 — External Delivery Fail-Soft (UKDL RL-008 part 2)**: any
+delivery failure (HTTP error, import error, file-system error, queue-full)
+returns `{ok: false, status: "<class>"}` and never raises into the sweep.
+The brief still writes. The daemon survives. Fail-soft is the floor;
+don't-broadcast-broken is the ceiling.
+
+**Rule 4 — Transport Reuse Doctrine (UKDL RL-009)**: any cross-component
+messaging MUST reuse the existing sovereign transport for that target.
+Never instantiate a new HTTP client, never spawn a new subprocess
+pattern, never re-implement authentication. Two anchored transports:
+- Claude AI ......... `claude_cli_client.ClaudeCLI` (DNA-25000)
+- Discord ........... `discord_bot.discord_bot_notifier.DiscordNotifier`
+                      (file-drop, bot consumes JSON)
+New transports may only be sealed by an explicit Owner-approved doctrine
+entry. The cost of reusing existing transport is one import line; the
+cost of rolling a new one is months of edge-case discovery.
+
+**Empirical evidence (2026-05-26)**: F4 v4.0.0-F4 production cycle (PID
+3229884):
+- `[Discord] Notification queued: morning_report` at 17:58:01 UTC
+- `Reliability sweep OK in 0.53s` immediately after
+- F1+F2+F3+F4 all green in the same Cycle 1
+- Discord bot at PID 1530347 (32-day uptime) consumed the file in <5 s
+  with zero F4-related code changes — proves Rule 4
+
+3-case empirical Hermes test (manual):
+- cert CERTIFIED -> status="sent" + new JSON written + bot consumed
+- cert FAILED (synthetic) -> status="skipped_failed_cert" + ZERO file
+- cert UNKNOWN (empty dict) -> status="skipped_failed_cert" + ZERO file
+All three returned ok=True; the calling sweep continued every time —
+proves Rules 2 + 3.
+
+**Doctrine drift guard**: any future component that performs (a) state
+certification of a system it manages or (b) external delivery to a
+human-facing surface MUST adopt Rules 1+2+3+4 verbatim. The
+check-ID convention (CS-NN, P-NN, X-NN) is universal — every check has
+a stable ID for trace/audit/PR-discussion across versions. The
+don't-broadcast-broken floor is non-negotiable: a system that lies
+about its own health is worse than a system that goes silent.
+
+Cross-references:
+- `UKDL_KOBIICLAW.md` RL-007 / RL-008 / RL-009 (per-component evidence)
+- `~/workspace/kobiiclaw/reliability/camera_safety.py` (CS-01..CS-05)
+- `~/workspace/kobiiclaw/reliability/discord_hermes.py` (file-drop wrapper)
+- Plan-file: `ops/kobiiclaw/vault/plans/f4-camera-hermes-20260526T1758Z.md`
+- Stage local: `~\AppData\Local\Temp\kobiiclaw-reliability-stage\reliability\`
+
+---
+
+## § 2026-05-26 — KobiiClaw Reliability Layer F5 Doctrine (Launch Readiness Axis)
+
+Sealed alongside F2 Sweep Resilience, F3 Dispatch Safety, F4 Pre-Launch
+Certification (same week). F5 is the LAST phase before launch: it adds
+calendar awareness (countdown), Owner-controlled mutation (freeze), and
+empirical go/no-go aggregation (readiness). T-0 for the MundiCraft v1.0
+launch is `2026-06-11` (16 days from doctrine seal at 2026-05-26).
+
+**Rule 1 — Countdown Empiricism (UKDL RL-010)**: every time-relative
+label (T-N, T-0, T+N) MUST be computed dynamically from `date.today()`
+on every sweep. Never hardcoded, never cached across cycles. The
+canonical state is `ops/kobiiclaw/launch_config.json` (`t0_date`,
+`t6_freeze_date`) — the daemon reads it, recomputes phase + label,
+returns the result. Clock corrections (NTP, TZ change) reflect on the
+next sweep without code change.
+
+**Rule 2 — Owner-Gated Launch Actions (UKDL RL-011)**: state-changing
+launch operations (`activate_freeze()`, `declare_launch()`) MUST be
+Owner-invoked. The daemon NEVER auto-triggers them. Activation is
+idempotent — re-running on an already-frozen system returns
+`{already: True}` and preserves the original baseline so accidental
+re-runs cannot reset drift detection. Hash baseline captured at freeze:
+SERVERS line sha256 + per-file reliability/*.py sha256 + combined
+files hash. Drift detected on any subsequent sweep → LR-FREEZE override
+forces verdict NO-GO regardless of other LR checks.
+
+**Rule 3 — Readiness Aggregation, Same-Sweep, No Cache (UKDL RL-012)**:
+the Launch Readiness verdict MUST aggregate artefacts from the SAME
+sweep cycle. `assess_readiness()` receives (artifacts, cert_result,
+triage_items, hermes_result, freeze_status) as parameters — never reads
+them from disk, never reads a previous cycle's brief. Cross-cycle data
+mixing is forbidden because: (a) a stale GO verdict from a previous
+sweep lies when the current sweep saw new failures, and (b) the
+time-windowed checks (CS-04 RSS, CS-05 24h dispatch_results,
+log_classifier ERROR count) must reflect the same window as the verdict.
+
+**Rule 4 — T-0 Idempotent Launch Announcement**: on launch_day phase,
+the special launch announcement may be emitted to external channels at
+most ONCE per launch. The `launch_declared` field in launch_config gates
+the announcement; once set to True (Owner action), subsequent sweeps on
+the same T-0 day do NOT re-announce. This is the launch-day equivalent
+of the F4 don't-broadcast-broken floor: silence is more honest than
+spammed-half-truth-anouncements during the most attention-sensitive
+moment of the launch.
+
+**Empirical evidence (2026-05-26)**: F5 v5.0.0-F5 Cycle 1 PID 3300262
+at 18:34 UTC produced:
+- `t_label: T-16, days_to_t0: 16, phase: pre_freeze` (countdown matches
+  manual `(date(2026,6,11) - date.today()).days` calc — Rule 1 proved)
+- `freeze_status: not_frozen, drift_detected: false` (Owner has not
+  invoked `activate_freeze()` yet — Rule 2 proved by absence)
+- `Verdict: GO (5/5 PASS)` — LR-01..LR-05 all PASS, each citing the
+  matching artefact from the same sweep (CS-04 cited "PID 3229884 RSS
+  162.1 MB", which is the F4 cert that ran milliseconds earlier in the
+  same `sweep.run()` call — Rule 3 proved)
+- `launch_declared: false` — no T-0 announcement attempted (gated)
+
+**Doctrine drift guard**: any future component performing (a) calendar
+math, (b) state mutation with operational consequence, or (c)
+aggregation across components MUST adopt Rules 1+2+3+4 verbatim. Hash
+baselines (Rule 2) are the canonical mechanism for drift detection;
+parameter-injection (Rule 3) is the canonical mechanism for fresh-data
+contracts. Same-sweep is law: the verdict is a function of the cycle
+that produced it, never a Frankenstein of multiple cycles.
+
+Cross-references:
+- `UKDL_KOBIICLAW.md` RL-010 / RL-011 / RL-012 (per-component evidence)
+- `~/workspace/kobiiclaw/reliability/launch_countdown.py` (dynamic phases)
+- `~/workspace/kobiiclaw/reliability/feature_freeze.py` (Owner-gated activate)
+- `~/workspace/kobiiclaw/reliability/launch_readiness.py` (LR-01..LR-05 + LR-FREEZE)
+- `ops/kobiiclaw/launch_config.json` (canonical mutable state)
+- Plan-file: `ops/kobiiclaw/vault/plans/f5-freeze-countdown-20260526T1835Z.md`
+
+---
+
+## § 2026-05-26 — KobiiClaw Reliability Layer Intelligence Upgrade Axis
+
+Sealed the same day F2/F3/F4/F5 shipped. The Intelligence Upgrade
+(v5.0.0-F5 → v5.1.0-F5-Intelligence) is the FIRST non-feature pass over
+the reliability layer: it audits, optimises, and adds memory to the
+existing pipeline without changing any scanner's input contract. Four
+universal rules emerged:
+
+**Rule 1 — Spike Detection by Frequency (UKDL RL-013)**: any scanner with
+categorical counts MUST treat frequency as a severity signal in its own
+right. A WARN logged N >> 1 times in one day is operationally worse than
+an ERROR logged once. Concrete mechanism: `WATCH_THRESHOLD_PER_DAY`
+(default 30) escalates the finding to WATCH; `ALERT_CONSECUTIVE_DAYS`
+(default 3) elevates WATCH to ALERT (severity HIGH). Informational
+categories (INFO, UNKNOWN equivalents) are explicitly excluded from
+escalation — they are not operational signals.
+
+**Rule 2 — Cache by Rate-of-Change (UKDL RL-014)**: a scanner is
+cacheable iff its underlying resource changes at a rate LOWER than the
+sweep cadence. The cache TTL must be the resource's rate-of-change, not
+a fixed value. Failure results (`ok=False`, `status=scanner_exception`)
+MUST NOT be cached — failure must heal on the next sweep. Cache entries
+are annotated on read with `_cache_hit` + `_cache_age_s` so the brief
+can surface freshness. Empirical: branding_lint cached with TTL 6 h
+reduced sweep p50 by 60% (0.37 s → 0.15 s).
+
+**Rule 3 — Fingerprint Dedup + Auto-Close (UKDL RL-015)**: triage items
+carry a stable sha256 fingerprint over (source, category, normalised
+summary). Fingerprint state persists in
+`ops/kobiiclaw/state/triage_fingerprints.json` and survives daemon
+restarts. Subsequent sweeps SKIP items whose fingerprint is already
+`open`. A fingerprint absent for `>= AUTO_CLOSE_HOURS` (24 h)
+auto-resolves; re-appearance after `AUTO_REOPEN_HOURS` (6 h) reopens.
+The fingerprint mechanism replaces "ticket per day" with "one
+operational record per recurring pattern" — eliminating ticket-flood
+without losing signal.
+
+**Rule 4 — Priority-Sorted Top View (Brief Output Doctrine)**: the daily
+brief MUST surface a unified, scanner-agnostic priority list at the top —
+NOT a per-scanner enumeration. Items are scored by
+`severity_weight × frequency × trend_multiplier` and the top N (default 5)
+become the brief's first content section. The Discord excerpt mirrors
+this priority: launch-relevant sections (countdown, readiness) follow,
+per-scanner detail comes last. The Owner reads ONE section and knows
+what matters; deeper investigation pulls down the brief manually.
+
+**Empirical evidence (2026-05-26)**: v5.1.0-F5-Intelligence Cycle 1 PID
+3488206 at 20:22:57 UTC produced:
+- "Reliability sweep OK in 0.24s" (vs Q3 baseline 0.37s = 35% reduction,
+  warm-cache p50 = 0.15s = 60% reduction)
+- Brief "🎯 Top Issues" #1: WATCH/log_classifier "WARN ×31/day
+  (esc=WATCH) ↗" with verbatim KobiiGuide help_pages.yml evidence —
+  the operational signal that v5.0.0-F5 silently dropped
+- triage_autopilot v1 fingerprint dedup: 2nd run on identical input
+  returned `new_items=0, per_day_dedup_skipped=1`
+- Zero F1+F2+F3+F4+F5 regression in Cycle 1 + content pipeline +
+  AutoResearch 22 recommendations all green
+
+**Doctrine drift guard**: any future scanner that produces categorical
+counts MUST adopt Rule 1 (spike detection) verbatim. Any I/O-heavy
+scanner MUST adopt Rule 2 (rate-of-change TTL) — never cache failures,
+never cache faster than the resource changes. Any cross-component triage
+MUST adopt Rule 3 (fingerprint dedup + auto-close). Any new brief
+section MUST consider Rule 4 (priority view first, detail last). The
+four rules together turn a "detector" into a "system that prioritises".
+
+Cross-references:
+- `UKDL_KOBIICLAW.md` RL-013 / RL-014 / RL-015 (per-component evidence)
+- `~/workspace/kobiiclaw/reliability/_cache.py` (generic cache)
+- `~/workspace/kobiiclaw/reliability/_constants.py` (shared truncation sizes)
+- `~/workspace/kobiiclaw/reliability/scanners/log_classifier.py` (v2 spike + trend)
+- `~/workspace/kobiiclaw/reliability/triage_autopilot.py` (v1 fingerprint + auto-close)
+- Audit report: `ops/kobiiclaw/docs/CODE_AUDIT_20260526T1900Z.md`
+- Plan-file: `ops/kobiiclaw/vault/plans/intelligence-upgrade-20260526T2025Z.md`
 
 
 ## ECC Universal Quality Framework Axis v6 (sealed 2026-05-27) -- absorbed-baseline DONE
@@ -1882,3 +2183,117 @@ axis; PP retains its own axes intact.
 
 Source: ECC v2.0.0-rc.1 (github.com/affaan-m/ecc) under MIT License
 (c) 2026 Affaan Mustafa.
+
+
+## OSA Global Agent Axis v7 (sealed 2026-05-28) -- proactive-audit DONE
+
+The ninth Apex DONE axis. A PP install is Apex-complete on this
+axis iff the Omni-Singularity Agent is **active, throttle-gated,
+and non-blocking** -- not just a documented intent.
+
+This is the second axis where PP imports external doctrine (the
+first being ECC v6). The OSA absorbs the "proactive zero-issue
+auditor + boil-the-ocean" pattern (from `OMNI-SINGULARITY_FLYWHEEL`
++ `BOIL_THE_OCEAN_PROTOCOL`) and grounds it in PP-native primitives
+(TIS / TCO / CEPS / Monitoring) so it cannot drift into theater.
+
+### Six required components (all six must be present)
+
+1. **Global agent file** -- `~/.claude/agents/omni-singularity.md`
+   with valid frontmatter (`name`, `description`, `tools`, `color`
+   only -- NO `triggers:`/`throttle:` YAML keys, which the Claude
+   Code agent loader ignores; all activation logic lives in
+   `modules/osa/dispatcher.py`).
+2. **Throttle gate** -- `modules/osa/throttle.py` reading
+   `vault/osa/config.json` for `max_daily_calls` /
+   `cooldown_minutes` / `cache_ttl_minutes`. Returns one of
+   `GO` / `CACHE_HIT:<min>` / `COOLDOWN:<min>` /
+   `BUDGET_EXHAUSTED` on every invocation, with fail-open
+   semantics on storage errors.
+3. **NEVER_AGAIN injector** -- `modules/osa/never_again.py` with
+   `inject()` (writes JSONL + session_lessons + UKDL),
+   `top_recurring()`, `query()`. Fuzzy-match dedup increments
+   `recurrence` instead of writing duplicate JSONL rows.
+4. **GPU Eyes graceful degradation** -- `modules/osa/gpu_eyes.py`
+   with `run_visual_qa()` returning `visual_qa_passed=null` when
+   no screenshot exists. SKIPPED, CAPTURE_FAILED, and CAPTURED
+   are the only valid statuses; never report PASS without a real
+   file path.
+5. **Dispatcher with non-blocking hooks** -- `modules/osa/
+   dispatcher.py` exposing `should_activate()`, `run_if_warranted()`,
+   `fire_async()`. The latter is wired into `modules/deployment/
+   deploy.py`, `modules/rollback/rollback.py`, and
+   `modules/backup/backup.py` via try/except threading patterns
+   that NEVER block the productive action.
+6. **/osa CLI + verify probe** -- `modules/osa/osa_command.py`
+   exposing `--audit`/`--status`/`--budget`/`--never-again`/
+   `--force` and `.claude/commands/osa.md` slash command;
+   `tools/verify_osa.py` returning `OSA_PROBE = 5/5`; new row
+   `osa-active` in `tools/verify_spp.py`.
+
+### Six-check DONE-gate (binary, no classifications)
+
+A PP install is Apex-complete on the OSA axis iff:
+
+1. `tools/test_osa.py` exit 0 with `OSA_PASS = 15/15`.
+2. `tools/verify_osa.py` exit 0 with `OSA_PROBE = 5/5`.
+3. `python modules/osa/throttle.py --check` returns one of the
+   four valid tokens (`GO`/`CACHE_HIT:N`/`COOLDOWN:N`/
+   `BUDGET_EXHAUSTED`) without crash.
+4. `python modules/osa/dispatcher.py --check` returns a JSON
+   payload with a non-empty `project` field.
+5. `python modules/osa/gpu_eyes.py` returns
+   `visual_qa_passed=null` on unreachable host (never PASS).
+6. `modules.osa.dispatcher.fire_async()` returns in <200 ms when
+   invoked from `deploy()` / `rollback()` / `backup()` (non-
+   blocking contract).
+
+Missing any of 1-6 = NOT Apex-complete on the OSA axis.
+
+### Empirical baseline (2026-05-28)
+
+- TCO context-pct bug fixed in the same cycle: `estimate_context_pct()`
+  now uses `MAX(input_tokens)` of the last 3 calls as the context
+  proxy, NOT cumulative `SUM(input + output)` across the session.
+  Live measurement: a 30-hour session previously reported `100%`
+  (capped) when the real context was ~10%; after fix, the same
+  session reports `5%` with a debug line surfacing
+  `max_single_input` / `proxy_used`.
+- `modules/osa/` ships with 5 modules + an `__init__.py` (throttle,
+  never_again, gpu_eyes, dispatcher, osa_command).
+- Throttle defaults: `max_daily_calls=150` (conservative vs the 212
+  `claude -p` calls observed in the last TIS-logged session;
+  re-tunable post 2026-06-15 programmatic-credit pricing).
+- GPU Eyes: empirically tested with both gex44 (5.9.23.174) and
+  the Sovereign VPS (204.168.166.63) unreachable from the test
+  host. Returned `status=SKIPPED`, `visual_qa_passed=null` --
+  graceful degradation honored.
+- `verify_spp.py` now has 13 rows; 11/13 STRICT OK including the
+  new `osa-active` (5/5). The 2 pre-existing Pane-N drift FAILs
+  (mirror-parity + drift-report on apex/SCS) are RESOLVED in the
+  same cycle by the `_osa_standards_append.py` Phase-1 cherry-pick
+  (SCS PP -> LOOSE, apex LOOSE -> PP, both lossless).
+
+### Cross-references
+
+- `knowledge_vault/core/skill-completion-standard.md` C15
+  (OSA-Zero-Issue-by-default).
+- `tools/test_osa.py` -- 15 V-gates including 2 TCO cross-checks
+  (V-TCO-CONTEXT-SINGLE, V-TCO-CONTEXT-REAL).
+- `tools/verify_osa.py` -- 5 sub-checks for the verify_spp row.
+- `vault/osa/config.json` -- externalized throttle/triggers/gpu_eyes
+  config.
+- `~/.claude/agents/omni-singularity.md` -- global agent prompt
+  with the Reality Contract on visual QA pinned as NON-NEGOTIABLE.
+
+### Asymmetric complement to the ECC axis (v6)
+
+ECC v6 absorbed code-review + principle-registry doctrine. OSA v7
+absorbs the proactive-audit + zero-issue posture. Both are
+absorptions; both retain MIT attribution on the absorbed components
+(ECC: code_review/uqf; OSA: agent prompt + boil-the-ocean doctrine).
+PP's PP-native axes (Concurrency, Async-Audit, Zero-Drift,
+Context-Pressure, Session-Safety, Skill-Completion, TIS, TCO,
+Monitoring, ECC, OSA) compose orthogonally.
+
+Sealed 2026-05-28 (BL-OSA-001).
