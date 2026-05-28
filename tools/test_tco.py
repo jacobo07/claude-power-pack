@@ -137,6 +137,44 @@ def main():
             _fail("V-COMPACT-HARD",
                   f"governor warnings missing: {state['governor_warnings']}")
 
+        # ---- V-COMPACT-CONTEXT-SINGLE: 5 calls of 10k each ----
+        # Cumulative SUM would be 50k = 25%; new MAX-of-recent proxy
+        # uses max(input_tokens) = 10k = 5% (the correct context proxy).
+        # Sealed 2026-05-28 after the cumulative-sum bug fix.
+        ctx_sid = "tco-test-context-single"
+        for _ in range(5):
+            _make_event(logs, in_tok=10000, out_tok=0, session_id=ctx_sid)
+        state = gate.check_compact_gate(ctx_sid)
+        if (state["session_pct_estimate"] <= 10
+                and state["context_max_single_input"] == 10000
+                and state["session_calls"] == 5
+                and not state["should_compact"]):
+            _ok("V-COMPACT-CONTEXT-SINGLE",
+                f"pct={state['session_pct_estimate']}% "
+                f"max_single={state['context_max_single_input']}")
+        else:
+            _fail("V-COMPACT-CONTEXT-SINGLE",
+                  f"expected pct<=10 & max_single=10000 & calls=5 & no-compact, "
+                  f"got state={state}")
+
+        # ---- V-COMPACT-CONTEXT-REAL: 1 call of 170k -> ~85% ----
+        # One large input call IS a real context-full scenario.
+        # New proxy must reflect this (170k/200k = 85%).
+        real_sid = "tco-test-context-real"
+        _make_event(logs, in_tok=170000, out_tok=0, session_id=real_sid)
+        state = gate.check_compact_gate(real_sid)
+        if (80 <= state["session_pct_estimate"] <= 90
+                and state["context_max_single_input"] == 170000
+                and state["should_compact"]
+                and "WARN" in state["recommendation"]):
+            _ok("V-COMPACT-CONTEXT-REAL",
+                f"pct={state['session_pct_estimate']}% "
+                f"max_single={state['context_max_single_input']}")
+        else:
+            _fail("V-COMPACT-CONTEXT-REAL",
+                  f"expected pct in [80,90] & max_single=170000 & WARN, "
+                  f"got state={state}")
+
         # ---- V-ROUTE-SONNET: subagent_explore -> sonnet ----
         rec = gate.load_routing("subagent_explore")
         if "sonnet" in rec:
@@ -190,7 +228,7 @@ def main():
 
     total = passes + fails
     print()
-    print(f"TCO_PASS={passes}/{total}  threshold=8/8")
+    print(f"TCO_PASS={passes}/{total}  threshold=10/10")
     return 0 if fails == 0 else 1
 
 

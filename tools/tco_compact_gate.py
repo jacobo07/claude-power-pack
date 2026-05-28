@@ -109,20 +109,39 @@ def _read_session_entries(session_id: str | None = None) -> list[dict]:
         return []
 
 
-def estimate_context_pct(session_id: str | None = None) -> int:
-    """Estimate % of max-context window consumed by accumulated I/O.
+def _compute_context_proxy(entries: list[dict]) -> int:
+    """Proxy for *current* context window size, not cumulative session
+    history. Uses the maximum input_tokens of the last 3 calls, falling
+    back to half the global max if recent calls are anomalously small
+    (e.g. trailing tool-result entries). Sealed 2026-05-28 after the
+    cumulative-sum bug reported 100% when reality was ~10%.
 
-    Heuristic, not exact: sum(input + output) for the active session
-    divided by MAX_CONTEXT_TOKENS. Directional, zero-dep, safe-on-empty.
+    Rationale: the context size for any single turn is the input_tokens
+    the model received that turn. Summing across the entire session
+    inflates with every turn and is not a context-window measurement.
+    """
+    if not entries:
+        return 0
+    inputs = [int(e.get("input_tokens", 0) or 0) for e in entries]
+    recent = inputs[-3:] if len(inputs) >= 3 else inputs
+    max_recent = max(recent) if recent else 0
+    max_global = max(inputs) if inputs else 0
+    return max(max_recent, max_global // 2)
+
+
+def estimate_context_pct(session_id: str | None = None) -> int:
+    """Estimate % of max-context window consumed by the *current* turn.
+
+    Uses MAX of last 3 input_tokens (with half-global fallback) as the
+    proxy for current context size. NOT a cumulative sum across the
+    session -- that confused historical tokens with live context and
+    reported 100% on healthy sessions.
     """
     entries = _read_session_entries(session_id)
-    total = 0
-    for e in entries:
-        total += int(e.get("input_tokens", 0) or 0)
-        total += int(e.get("output_tokens", 0) or 0)
     if MAX_CONTEXT_TOKENS <= 0:
         return 0
-    pct = int(total * 100 / MAX_CONTEXT_TOKENS)
+    proxy = _compute_context_proxy(entries)
+    pct = int(proxy * 100 / MAX_CONTEXT_TOKENS)
     return max(0, min(100, pct))
 
 
@@ -158,9 +177,12 @@ def check_compact_gate(session_id: str | None = None) -> dict:
     governor warnings, raw token total, duration seconds. One log
     read shared across all three derived metrics."""
     entries = _read_session_entries(session_id)
+    # total: cumulative session tokens (governor metric, NOT context)
     total = sum(int(e.get("input_tokens", 0) or 0) +
                 int(e.get("output_tokens", 0) or 0) for e in entries)
-    pct = (max(0, min(100, int(total * 100 / MAX_CONTEXT_TOKENS)))
+    # pct: live context proxy via MAX of last 3 input_tokens (sealed 2026-05-28)
+    proxy = _compute_context_proxy(entries)
+    pct = (max(0, min(100, int(proxy * 100 / MAX_CONTEXT_TOKENS)))
            if MAX_CONTEXT_TOKENS > 0 else 0)
     ts = []
     for e in entries:
@@ -189,9 +211,14 @@ def check_compact_gate(session_id: str | None = None) -> dict:
     else:
         rec = f"OK contexto {pct}% < {WARN_PCT}% -- continuar"
         should_compact = False
+    inputs_only = [int(e.get("input_tokens", 0) or 0) for e in entries]
+    max_single_input = max(inputs_only) if inputs_only else 0
     return {
         "session_pct_estimate": pct,
         "session_tokens_total": total,
+        "session_calls": len(entries),
+        "context_max_single_input": max_single_input,
+        "context_proxy_used": proxy,
         "session_duration_s": duration_s,
         "recommendation": rec,
         "should_compact": should_compact,
@@ -208,6 +235,13 @@ def _print_human(state: dict) -> None:
     print(f"session-tokens:         {state['session_tokens_total']:,}")
     print(f"session-duration:       {state['session_duration_s']}s")
     print(f"recommendation:         {state['recommendation']}")
+    # Debug line: surfaces the MAX vs SUM divergence visibly (sealed 2026-05-28)
+    print(
+        f"  [TCO debug] calls={state.get('session_calls', 0)}  "
+        f"max_single_input={state.get('context_max_single_input', 0):,}  "
+        f"proxy_used={state.get('context_proxy_used', 0):,}  "
+        f"pct={state['session_pct_estimate']}%"
+    )
     if state["governor_warnings"]:
         print("governor:")
         for w in state["governor_warnings"]:

@@ -1,0 +1,23 @@
+{
+  "osa_version": "1.0",
+  "sealed_iso": "2026-05-28",
+  "throttle": {
+    "max_daily_calls": 150,
+    "cooldown_minutes": 30,
+    "cache_ttl_minutes": 60,
+    "note": "Adjust max_daily_calls post 2026-06-15 programmatic-credit pricing. See tools/budget_monitor.py runway."
+  },
+  "triggers": {
+    "T3_error_cluster_threshold": 3,
+    "T4_session_timer_minutes": 120
+  },
+  "gpu_eyes": {
+    "host": "5.9.23.174",
+    "ssh_user": "root",
+    "ssh_timeout_sec": 5,
+    "display": ":98",
+    "screen_geometry": "1920x1080x24",
+    "graceful_degradation": true
+  },
+  "project_mapping_source": "modules/omnicapture/config.json"
+}
