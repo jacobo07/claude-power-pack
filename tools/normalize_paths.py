@@ -99,6 +99,17 @@ ALLOWLIST: dict[str, set[str]] = {
     "modules/infrastructure/*":    {"secret"},
     "modules/omnicapture/*":       {"secret"},
     "modules/zero-crash/**":       {"secret"},
+    # ---- OSA module (2026-05-28, GPU Eyes pipeline). Its purpose is
+    # to operate on the configured GPU host (gex44 default) for visual
+    # QA; the IP + ssh alias literals are operational config, NOT
+    # credentials. See vault/osa/config.json::gpu_eyes for runtime
+    # override surface.
+    "modules/osa/*":               {"secret"},
+    # OSA standards appender: docstring narrates the empirical test
+    # context (gex44 + Sovereign VPS unreachable) as part of the
+    # absorbed apex axis v7 body. Same posture as
+    # vault/plans/deployment-skill-2026-05-24.md.
+    "tools/_osa_standards_append.py": {"secret"},
     "tools/run_vps.sh":            {"secret"},
     "tools/vps_validation_handoff.sh": {"secret"},
     # ---- Additional VPS-class tools that came in via merge 2026-05-23.
