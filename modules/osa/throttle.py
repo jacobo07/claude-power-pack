@@ -17,7 +17,6 @@ import sys
 import tempfile
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any
 
 PP_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PP_ROOT / "vault" / "osa" / "config.json"

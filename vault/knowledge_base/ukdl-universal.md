@@ -217,3 +217,13 @@ DONE-gate in `apex-completion-standard.md`.
 - **UKDL-OSA-2026-05-28T08:47:14Z** [HIGH] claude-power-pack: TCO context bug: cumulative sum confused with current context window -- recognizer: If pct>=70% but session has only a few high-token calls, suspect the cumulative bug
 
 - **UKDL-OSA-2026-05-28T08:47:14Z** [HIGH] global: TCO context bug: cumulative sum confused with current context window -- recognizer: same recognizer
+
+
+## OSA Absorption + TCO Context Fix UKDL (2026-05-28)
+
+| UKDL-OSA-2026-05-28-L1 | Context-percent proxy MUST be MAX of recent calls' `input_tokens`, NOT cumulative SUM. The TIS log records every claude-CLI invocation; summing across them inflates with session length and is not a context-window measurement. Helper: `tools.tco_compact_gate._compute_context_proxy(entries)`. |
+| UKDL-OSA-2026-05-28-L2 | Claude Code agent loader at `~/.claude/agents/*.md` recognises ONLY `name`/`description`/`tools`/`color` YAML keys. Any other key (`triggers:`/`throttle:`/etc) is silently ignored. Activation logic lives in Python, never in markdown frontmatter. |
+| UKDL-OSA-2026-05-28-L3 | Reality Contract on visual QA: `visual_qa_passed` is `None` unless a real screenshot file exists on disk. SKIPPED + CAPTURE_FAILED + unreachable host ALL map to `None`. Reporting `True` without a capture is fraud. |
+| UKDL-OSA-2026-05-28-NON-BLOCKING | Productive actions (deploy/rollback/backup) MUST fire post-action audits via `threading.Thread(daemon=True)` and swallow all auditor exceptions. A proactive auditor that can block its own subject is the same as no auditor at all. |
+| UKDL-OSA-2026-05-28-DRIFT | Bidirectional Pane-N apex/SCS drift is resolvable via lossless cherry-pick when one side has zero unique content. Verify via per-section sha256 BEFORE bulk copy. The 2026-05-28 cycle sealed SCS PP->LOOSE + apex LOOSE->PP, both confirmed lossless. |
+| UKDL-OSA-2026-05-28-BUDGET-EXTERNALISED | Throttle parameters in `vault/osa/config.json`, NOT hardcoded. Default `max_daily_calls=150` (vs 212 observed in last TIS session) tunable post 2026-06-15 programmatic-credit shift. budget_monitor.py provides runway days; throttle.py provides the gate. |

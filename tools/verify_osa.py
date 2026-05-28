@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import json
 import sys
-import traceback
 from pathlib import Path
 
 PP = Path(__file__).resolve().parents[1]

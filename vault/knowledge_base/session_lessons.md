@@ -972,3 +972,58 @@ Micro-commit discipline saved the network outage: 4 atomic commits survived 3 YA
 - **Recognizer**: same recognizer
 - **Recurrence**: 2
 
+
+
+## OSA Absorption + TCO Context Fix — L1-L3 (2026-05-28)
+
+### L1 — TCO context-pct must use MAX-of-recent input, NOT cumulative SUM
+
+**Issue**: `estimate_context_pct()` summed `input_tokens + output_tokens` across
+the whole session and divided by `MAX_CONTEXT_TOKENS=200_000`. On a 30-hour
+session with 190 TIS-logged calls (253,674 cumulative tokens), the gate
+reported 100% (capped) when the real per-turn context window was ~10%.
+
+**Root cause**: cumulative session-wide arithmetic was confused with the
+size of the current conversation context. The TIS log records EVERY
+claude-CLI invocation, so summing across all of them inflates monotonically
+and never reflects the live window.
+
+**Fix**: new helper `_compute_context_proxy(entries)` returns the MAX
+`input_tokens` of the last 3 calls, with `max_global // 2` fallback when
+recent calls are anomalously small (e.g. trailing tool-result entries).
+Both `estimate_context_pct()` and `check_compact_gate()` use it.
+
+**Recognizer**: if `context-pct` reports >=70% but the session has only a
+handful of high-token calls, suspect the cumulative-SUM bug pattern; the
+state dict's new `context_max_single_input` field exposes the per-turn
+maximum so SUM vs MAX divergence is visible to the operator.
+
+### L2 — Agent frontmatter: only `name`/`description`/`tools`/`color` exist
+
+Claude Code's agent loader at `~/.claude/agents/<name>.md` recognizes
+exactly four YAML frontmatter keys. Custom keys like `triggers:` or
+`throttle:` are silently ignored — they look harmless in markdown
+but encode zero behavior. Activation logic, throttle policy, and
+trigger condition evaluation MUST live in Python (or another runtime),
+NOT in YAML frontmatter. Verified by reading 27 existing agent files.
+
+**Recognizer**: if an agent prompt declares `triggers:` or any non-standard
+YAML key and claims those keys "activate the agent", it is wrong — the
+agent loader passes only the four documented fields downstream.
+
+### L3 — GPU Eyes Reality Contract: `visual_qa_passed=None` is mandatory
+
+The OSA's `gpu_eyes.py` returns `visual_qa_passed=None` (not `False`,
+not `True`) when no screenshot exists. SKIPPED, CAPTURE_FAILED, and
+the absence of a screenshot file ALL map to `None`. Reporting
+`visual_qa_passed=True` without a real on-disk capture is the cardinal
+sin of proactive auditors and is prohibited by the agent prompt
+(NON-NEGOTIABLE clause).
+
+**Why this matters**: many "QA pass" theaters originate from defaulting a
+not-evaluated condition to `True` for ergonomic reasons. The third value
+(`None`) is the difference between graceful degradation and silent fraud.
+
+**Recognizer**: any visual / browser / image-analysis step that returns
+boolean without a screenshot path attribute pointing at a real file: it is
+not running, it is asserting.

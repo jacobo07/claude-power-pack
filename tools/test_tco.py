@@ -6,7 +6,6 @@ Each V-* prints PASS/FAIL with a one-line diagnostic, then a final
 TCO_PASS=N/M summary. Exit 0 iff all gates PASS."""
 from __future__ import annotations
 import json
-import os
 import shutil
 import subprocess
 import sys

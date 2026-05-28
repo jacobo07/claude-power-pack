@@ -19,13 +19,10 @@ Sealed 2026-05-28.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 PP_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PP_ROOT / "vault" / "osa" / "config.json"
