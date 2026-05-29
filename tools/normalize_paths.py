@@ -110,6 +110,13 @@ ALLOWLIST: dict[str, set[str]] = {
     # absorbed apex axis v7 body. Same posture as
     # vault/plans/deployment-skill-2026-05-24.md.
     "tools/_osa_standards_append.py": {"secret"},
+    # Frozen cold-boot evidence files reproduce TIS isolate tmpdirs
+    # verbatim as captured at test time. Same posture as the frozen
+    # session_lessons.md and bulk_vault_extract.json artifacts.
+    # (UKDL is NOT added here; the BL-GLOB-001 cycle paraphrased the
+    # offending L3 row to remove the literal path -- no allowlist
+    # expansion required.)
+    "vault/test-results/cold_boot_*.md": {"doc-path"},
     "tools/run_vps.sh":            {"secret"},
     "tools/vps_validation_handoff.sh": {"secret"},
     # ---- Additional VPS-class tools that came in via merge 2026-05-23.

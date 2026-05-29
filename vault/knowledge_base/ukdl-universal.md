@@ -234,7 +234,7 @@ DONE-gate in `apex-completion-standard.md`.
 
 - **UKDL-OSA-2026-05-29T11:58:06Z** [HIGH] claude-power-pack: Advisory-only hooks for proactive intervention -- recognizer: If a hook returns decision:block on a non-malicious Edit/Write: rewrite to advisory.
 
-- **UKDL-OSA-2026-05-29T11:58:06Z** [MEDIUM] claude-power-pack: PP_PATH resolver centralized in JS hooks -- recognizer: Any new JS hook with a literal C:/Users/User/.claude/ string is suspect; refactor to use the resolver.
+- **UKDL-OSA-2026-05-29T11:58:06Z** [MEDIUM] claude-power-pack: PP_PATH resolver centralized in JS hooks -- recognizer: Any new JS hook hardcoding the user-home `.claude` path verbatim is suspect; refactor to use the resolver.
 
 - **UKDL-OSA-2026-05-29T11:58:06Z** [HIGH] claude-power-pack: Agent schema: only name/description/tools/color -- recognizer: If an agent prompt declares triggers: or throttle: and claims those keys auto-activate the agent, it is wrong.
 
