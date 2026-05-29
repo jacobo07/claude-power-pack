@@ -2660,3 +2660,70 @@ is the registration trigger.
   approval; speaking up is now automatic across every event.
 
 Sealed 2026-05-29 (BL-HOOKS-REG-001).
+
+## PP Bug->HardRule + Cascade Guard Axis v11 (sealed 2026-05-29)
+
+The thirteenth Apex DONE axis. UKDL collects bug lessons (passive
+learning); this axis lifts the CRITICAL and recurrence>=3 subset
+into CLAUDE.md as structural stops (active gating) and revives the
+Cascade Error Prevention agent as a real proactive surface.
+
+### Six required components (all six must be present)
+
+1. **modules/hard_rules/{extractor,writer}.py** -- aggregator and
+   dual-target writer (archive + CLAUDE.md sentinel block).
+   Idempotent on content digest; backup before write.
+2. **tools/bug_to_hardrule.py** -- CLI with --scan / --propose /
+   --retroactive / --install / --list.
+3. **modules/osa/never_again.py** -- inject() auto-drops a draft
+   to vault/hard_rules/auto_*.md when severity=CRITICAL or
+   recurrence>=3.
+4. **modules/pp_agents/signals/cascade.py** -- co-occurrence
+   detector over CEPS events.jsonl (window 300s, min count 2).
+5. **~/.claude/agents/pp-cascade-guard.md** -- global advisor with
+   the PROACTIVE MODE contract (silent until cascade map is
+   non-empty AND current error matches a known source).
+6. **proactive_dispatcher.py** -- pp-cascade-guard registered with
+   cooldown 5 min, min_signal 0.7.
+
+### Six-check DONE-gate (binary)
+
+1. `python tools/test_hard_rules.py` exit 0 with
+   `HARDRULES_PASS = 14/14`.
+2. `python tools/verify_hard_rules.py` exit 0 with
+   `HARDRULES_PROBE = 7/7`.
+3. `python tools/verify_spp.py` row `hard-rules` rc=0.
+4. `python tools/bug_to_hardrule.py --list` rc=0 with at least
+   one installed HR-NNN (or honest "No hard rules" if UKDL has
+   no qualifying candidates).
+5. `~/.claude/agents/pp-cascade-guard.md` carries a PROACTIVE
+   MODE section + cascade snapshot protocol.
+6. `pytest tests/ -q` returns 0 failed (baseline 43+ intact).
+
+### Empirical baseline (2026-05-29)
+
+- 6 hard rule candidates surfaced from never_again + UKDL +
+  session_lessons under Decision A3 gating.
+- 7 hard rules installed retroactively (HR-001 through HR-007),
+  including the test artifact HR-002 from the M4 smoke probe.
+- CLAUDE.md created at PP repo root with sentinel block.
+- vault/hard_rules/HARD_RULES.md canonical archive populated.
+- pp-cascade-guard registered as 7th proactive agent.
+- Cascade map is empty today (9 events.jsonl rows, no
+  co-occurrence within 5 minutes) -- correct silent state.
+- All baselines green: pytest 43/43, test_proactive_agents 16/16,
+  test_hooks_registration 13/13, test_hard_rules 14/14.
+
+### Asymmetric complement to prior axes
+
+- **ECC v6** absorbed the quality FRAMEWORK.
+- **OSA v7** absorbed the proactive AUDIT.
+- **Globalization v8** made the framework REACH every repo.
+- **Proactive v9** made the agents SPEAK FIRST when signals fire.
+- **Hooks Registration v10** WIRES the non-prompt surfaces.
+- **Bug->HardRule + Cascade Guard v11** TURNS lessons into stops
+  and revives cascade detection -- UKDL is passive memory,
+  CLAUDE.md is active gate, CEPS co-occurrence is the early
+  warning before the second leaf falls.
+
+Sealed 2026-05-29 (BL-HARDRULE-001).

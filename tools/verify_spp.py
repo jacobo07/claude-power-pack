@@ -163,6 +163,9 @@ def main() -> int:
         ("hooks-registration",
          [PY, str(PP / "tools" / "verify_hooks_registration.py")],
          15),
+        ("hard-rules",
+         [PY, str(PP / "tools" / "verify_hard_rules.py")],
+         15),
     ]
 
     if args.row:

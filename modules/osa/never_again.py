@@ -170,7 +170,44 @@ def inject(
         _append_jsonl(entry)
     _append_md(SESSION_LESSONS, _session_lessons_block(entry))
     _append_md(UKDL_PATH, _ukdl_row(entry))
+    _maybe_auto_propose_hard_rule(entry)
     return entry
+
+
+def _maybe_auto_propose_hard_rule(entry: NeverAgainEntry) -> None:
+    """Drop a hard-rule draft when CRITICAL or recurrence>=3 (Decision A3).
+
+    Never fails (NEVER_AGAIN must not break for hard_rules issues).
+    """
+    if entry.severity != "CRITICAL" and entry.recurrence < 3:
+        return
+    try:
+        from modules.hard_rules.extractor import (
+            BugCandidate, propose_hard_rule,
+        )
+    except Exception:
+        return
+    try:
+        candidate = BugCandidate(
+            source="never_again_auto",
+            issue=entry.issue,
+            root_cause=entry.root_cause,
+            fix=entry.fix,
+            recognizer=entry.recognizer,
+            severity=entry.severity if entry.severity in (
+                "CRITICAL", "HIGH", "MEDIUM", "LOW") else "CRITICAL",
+            recurrence=entry.recurrence,
+        )
+        proposals_dir = PP_ROOT / "vault" / "hard_rules"
+        proposals_dir.mkdir(parents=True, exist_ok=True)
+        rule_text = propose_hard_rule(candidate, "HR-NEXT")
+        safe = re.sub(r"[^A-Za-z0-9_-]", "_",
+                      entry.iso.replace(":", "").replace(".", ""))
+        out = proposals_dir / f"auto_{safe}.md"
+        if not out.exists():
+            out.write_text(rule_text, encoding="utf-8")
+    except Exception:
+        pass
 
 
 def query(pattern: str) -> list[NeverAgainEntry]:

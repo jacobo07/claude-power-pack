@@ -399,3 +399,39 @@ Without (1) + (2) + (3) + (4) + dry-run: the feature is not
 SCS-complete on the global-registration axis.
 
 Sealed alongside Apex axis v10 (BL-HOOKS-REG-001).
+
+### C19 -- Bug-to-HardRule-by-default (sealed v11, 2026-05-29)
+
+Every bug whose severity is CRITICAL or whose recurrence reaches 3
+MUST graduate from a passive lesson into a structural stop. Four
+binary obligations:
+
+1. **Pipeline available** -- `tools/bug_to_hardrule.py` exists and
+   surfaces qualifying candidates with `--scan`, drafts proposals
+   with `--propose`, installs CRITICAL+recurrence>=3 with
+   `--retroactive`, lists installed rules with `--list`.
+2. **Dual-target write** -- the writer appends to BOTH
+   `vault/hard_rules/HARD_RULES.md` (canonical archive) AND
+   `CLAUDE.md` (entrypoint mirror inside the PP-HARD-RULES
+   sentinel block). Atomic write. Mandatory timestamped backup
+   of CLAUDE.md before any modification.
+3. **Idempotent** -- the same rule content (regardless of the
+   id assigned at append-time) is detected by the content digest;
+   running the pipeline twice yields the same HR-NNN id and no
+   duplicate entry.
+4. **Auto-propose from never_again** -- `modules.osa.never_again
+   .inject()` drops a draft under `vault/hard_rules/auto_*.md`
+   whenever the injected entry is CRITICAL or recurrence>=3.
+   Owner decides whether to install via the CLI.
+
+The difference between UKDL and CLAUDE.md is structural: UKDL is
+passive learning ("the agent knows it should not"); CLAUDE.md is
+the stop gate ("the agent reads the rule before acting"). A bug
+that recurs with an UKDL entry is a learning failure; a bug that
+recurs with a hard rule installed is a doctrine-insufficient rule
+that must be sharpened.
+
+Without (1) + (2) + (3) + (4): the feature is not SCS-complete on
+the bug-to-hardrule axis.
+
+Sealed alongside Apex axis v11 (BL-HARDRULE-001).

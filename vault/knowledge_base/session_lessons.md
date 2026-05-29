@@ -1112,3 +1112,52 @@ not running, it is asserting.
 - **Recognizer**: Test file in tests/ has def test_* functions that spawn subprocess pytest tests/
 - **Recurrence**: 1
 
+## NEVER_AGAIN — 2026-05-29T20:29:50Z — claude-power-pack-test — CRITICAL
+- **Issue**: TEST CRITICAL bug for auto-propose pipeline ZZZ
+- **Root cause**: Test root cause auto-propose flow
+- **Fix**: Run auto_HR-NEXT proposal drafting
+- **Recognizer**: Test recognizer for pipeline
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T20:34:36Z — hr-gate-smoke — CRITICAL
+- **Issue**: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ
+- **Root cause**: V-gate smoke probe
+- **Fix**: N/A smoke
+- **Recognizer**: Sees ZZZ-SMOKE-CRITICAL token
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T20:37:13Z — hr-gate-smoke — CRITICAL
+- **Issue**: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ
+- **Root cause**: V-gate smoke probe
+- **Fix**: N/A smoke
+- **Recognizer**: Sees ZZZ-SMOKE-CRITICAL token
+- **Recurrence**: 2
+
+## NEVER_AGAIN — 2026-05-29T20:39:34Z — claude-power-pack — HIGH
+- **Issue**: UKDL is passive learning; CLAUDE.md is the active gate -- structurally different
+- **Root cause**: UKDL is read only when the agent thinks to check; CLAUDE.md is loaded at session start and the agent reads before acting
+- **Fix**: Bug to HardRule pipeline graduates CRITICAL + recurrence>=3 from UKDL into CLAUDE.md sentinel block
+- **Recognizer**: A bug that recurs with an UKDL entry is a learning failure; a bug that recurs with a hard rule is a doctrine-insufficient rule
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T20:39:38Z — claude-power-pack — HIGH
+- **Issue**: Vague hard rule is worse than no rule -- TRIGGER must be observable, STOP must be actionable
+- **Root cause**: Sé cuidadoso is not a rule. TRIGGER Before deleting X. STOP Backup first is a rule.
+- **Fix**: extractor.py _extract_trigger maps known bug keywords (delete/auth/deploy/cascade) to concrete observable triggers; fallback to recognizer field
+- **Recognizer**: Hard rule text contains words like careful, mindful, consider, try to -- those are advisory tone, not gate tone
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T20:39:43Z — claude-power-pack — MEDIUM
+- **Issue**: Cascade guard requires CEPS event history to function -- bootstrap-silent is correct
+- **Root cause**: _build_cascade_map needs at least 2 co-occurrences within 5-minute window to emit a pattern; first session has 9 events all distinct subsystems -> 0 patterns
+- **Fix**: Silence is implicit Woz approval (first time = learning). Cascade map size grows naturally over sessions; signal activates organically when patterns repeat
+- **Recognizer**: Test expecting cascade signal on fresh repo: should return None and assert silence; complaining about empty map is wrong test
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T20:39:50Z — claude-power-pack — HIGH
+- **Issue**: Auto-install asymmetric CRITICAL vs HIGH -- CLAUDE.md is too important for blind HIGH writes
+- **Root cause**: --retroactive installs CRITICAL and recurrence>=3 automatically; HIGH requires Owner review via --propose then --install. CLAUDE.md modifications can cascade across all future sessions.
+- **Fix**: Decision A3 codified: severity gate + recurrence gate, each binary. Symmetric for CRITICAL+recurrence>=3 (auto), asymmetric for HIGH (manual review)
+- **Recognizer**: Plan calls for auto-install of HIGH severity bugs without Owner review step
+- **Recurrence**: 1
+

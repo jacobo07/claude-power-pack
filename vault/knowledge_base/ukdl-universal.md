@@ -251,3 +251,17 @@ DONE-gate in `apex-completion-standard.md`.
 - **UKDL-OSA-2026-05-29T20:06:43Z** [HIGH] claude-power-pack: Backup before modifying settings.json is MANDATORY -- corrupt config bricks entire Claude Code session -- recognizer: Script writes to a user config file owned by another system; no backup step in the flow
 
 - **UKDL-OSA-2026-05-29T20:06:51Z** [MEDIUM] claude-power-pack: Pytest auto-collects top-level test_* functions; nested subprocess pytest recurses infinitely -- recognizer: Test file in tests/ has def test_* functions that spawn subprocess pytest tests/
+
+- **UKDL-OSA-2026-05-29T20:29:50Z** [CRITICAL] claude-power-pack-test: TEST CRITICAL bug for auto-propose pipeline ZZZ -- recognizer: Test recognizer for pipeline
+
+- **UKDL-OSA-2026-05-29T20:34:36Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+- **UKDL-OSA-2026-05-29T20:37:13Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+- **UKDL-OSA-2026-05-29T20:39:34Z** [HIGH] claude-power-pack: UKDL is passive learning; CLAUDE.md is the active gate -- structurally different -- recognizer: A bug that recurs with an UKDL entry is a learning failure; a bug that recurs with a hard rule is a doctrine-insufficient rule
+
+- **UKDL-OSA-2026-05-29T20:39:38Z** [HIGH] claude-power-pack: Vague hard rule is worse than no rule -- TRIGGER must be observable, STOP must be actionable -- recognizer: Hard rule text contains words like careful, mindful, consider, try to -- those are advisory tone, not gate tone
+
+- **UKDL-OSA-2026-05-29T20:39:43Z** [MEDIUM] claude-power-pack: Cascade guard requires CEPS event history to function -- bootstrap-silent is correct -- recognizer: Test expecting cascade signal on fresh repo: should return None and assert silence; complaining about empty map is wrong test
+
+- **UKDL-OSA-2026-05-29T20:39:50Z** [HIGH] claude-power-pack: Auto-install asymmetric CRITICAL vs HIGH -- CLAUDE.md is too important for blind HIGH writes -- recognizer: Plan calls for auto-install of HIGH severity bugs without Owner review step

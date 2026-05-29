@@ -19,6 +19,7 @@ from modules.pp_agents.proactive_core import (
     evaluate_and_fire,
 )
 from modules.pp_agents.signals import (
+    cascade,
     code_quality,
     cost,
     errors,
@@ -61,6 +62,11 @@ AGENT_CONFIGS: dict[str, AgentConfig] = {
         cooldown_minutes=60,
         min_signal_strength=0.7,
     ),
+    "pp-cascade-guard": AgentConfig(
+        "pp-cascade-guard",
+        cooldown_minutes=5,
+        min_signal_strength=0.7,
+    ),
 }
 
 
@@ -93,6 +99,9 @@ def dispatch(context: dict) -> list[str]:
          lambda: lessons.evaluate(
              bool(context.get("session_had_errors", False)),
              int(context.get("errors_fixed", 0)), project)),
+        ("pp-cascade-guard",
+         lambda: cascade.evaluate(
+             context.get("current_error", ""), project)),
     ]
 
     for agent_name, signal_fn in plan:
