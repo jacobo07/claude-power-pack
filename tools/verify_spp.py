@@ -157,6 +157,9 @@ def main() -> int:
         ("globalization",
          [PY, str(PP / "tools" / "verify_globalization.py")],
          15),
+        ("proactive-agents",
+         [PY, str(PP / "tools" / "verify_proactive_agents.py")],
+         15),
     ]
 
     if args.row:

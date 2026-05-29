@@ -986,8 +986,64 @@ def _tis_log_call(fn):
     return _wrapper
 
 
+def _pp_proactive_inject(fn):
+    """PP Proactive Agents (Jobs/Woz) -- append agent advisories to
+    additionalContext when their signals fire. Sleepy-by-default,
+    non-blocking, fail-open. Sealed BL-PROACTIVE-001 (2026-05-29).
+    """
+    import functools as _ft
+
+    @_ft.wraps(fn)
+    def _wrapper(data):
+        result = fn(data)
+        try:
+            data = data or {}
+            cwd_raw = data.get("cwd") or ""
+            project = Path(cwd_raw).name.lower() if cwd_raw else "global"
+            ctx_in = {
+                "project": project or "global",
+                "last_written_code": "",
+                "last_written_file": "",
+                "current_error": "",
+                "session_had_errors": False,
+                "errors_fixed": 0,
+            }
+            try:
+                import tis as _tis
+                sid = _tis.get_session_id()
+                entries = _tis.read_log() or []
+                window = [e for e in entries
+                          if e.get("session_id") == sid][-20:]
+                ctx_in["session_had_errors"] = any(
+                    "error" in str(e.get("skill_name", "")).lower()
+                    or "fail" in str(e.get("call_label", "")).lower()
+                    for e in window
+                )
+            except Exception:
+                pass
+
+            from modules.pp_agents.proactive_dispatcher import (
+                dispatch_to_additional_context,
+            )
+            advisory_block = dispatch_to_additional_context(ctx_in)
+            if not advisory_block:
+                return result
+            if not isinstance(result, dict):
+                return result
+            ac = result.get("additionalContext") or ""
+            if ac and not ac.endswith("\n"):
+                ac += "\n"
+            ac += advisory_block
+            result["additionalContext"] = ac
+        except Exception as _exc:
+            _log(f"pp proactive inject ERROR {type(_exc).__name__}: {_exc}")
+        return result
+    return _wrapper
+
+
 @_tis_log_call
 @_tco_inject_routing
+@_pp_proactive_inject
 def run(data) -> dict:
     try:
         data = data or {}

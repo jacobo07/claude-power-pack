@@ -2463,3 +2463,100 @@ explicit authorization is the remediation path.
 - **Globalization v8** makes both REACH every repo, not just PP.
 
 Sealed 2026-05-29 (BL-GLOB-001).
+
+
+## PP Proactive Agents Axis v9 (sealed 2026-05-29) -- Jobs/Woz Standard DONE
+
+The eleventh Apex DONE axis. A PP install is Apex-complete on this
+axis iff every PP agent installed at `~/.claude/agents/` has its
+proactive surface wired through the central dispatcher and emits
+advisories without explicit invocation when its signal fires.
+Complements:
+- the OSA axis v7 (proactive AUDIT post-deploy / post-rollback)
+- the Globalization axis v8 (REACH every repo)
+
+This axis closes the third leg: PROACTIVE QUALITY across every
+session, not just post-deploy windows.
+
+### Six required components (all six must be present)
+
+1. **proactive_core** -- `modules/pp_agents/proactive_core.py`
+   exports `ProactiveSignal`, `AgentConfig`, `evaluate_and_fire`,
+   `is_throttled`, `mark_fired`, `format_advisory`. Throttle
+   state is JSON-on-disk at
+   `vault/pp_agents/throttle/<agent>_<project>.json`.
+2. **Six signal evaluators** -- `modules/pp_agents/signals/`
+   has `code_quality.py` (Jobs), `cost.py` (Jobs), `errors.py`
+   (Woz), `health.py` (Jobs), `quality.py` (Woz),
+   `lessons.py` (Jobs). Each defines `evaluate(...)` returning
+   `ProactiveSignal | None`. None means silence.
+3. **proactive_dispatcher** --
+   `modules/pp_agents/proactive_dispatcher.py` exports `dispatch`
+   and `dispatch_to_additional_context`. Cap is
+   `MAX_ADVISORIES_PER_TURN = 3` (no-spam invariant).
+4. **jit_skill_loader integration** -- `tools/jit_skill_loader.py`
+   carries the `_pp_proactive_inject` decorator in the `run()`
+   stack alongside `_tco_inject_routing` and `_tis_log_call`.
+   Fail-open: any error in the decorator NEVER blocks the prompt.
+5. **jobs_woz_gate.js (Stop-hook)** -- `hooks/jobs_woz_gate.js`
+   ships PP-internal as an advisory-only Stop hook. Slop-token
+   patterns are built at runtime from string fragments so
+   `quality_audit.py` does not veto the file itself.
+   Registration in `~/.claude/settings.json` Stop is Owner-side
+   (classifier-blocked in auto-mode).
+6. **PROACTIVE MODE section in every agent MD** -- all 7 PP
+   agents at `~/.claude/agents/` carry a `## PROACTIVE MODE`
+   section documenting their speak/silence conditions + format
+   contract + throttle path.
+
+### Six-check DONE-gate (binary)
+
+1. `python tools/test_proactive_agents.py` exit 0 with
+   `PROACTIVE_PASS = 16/16`.
+2. `python tools/verify_proactive_agents.py` exit 0 with
+   `PROACTIVE_PROBE = 6/6`.
+3. `python tools/verify_spp.py` row `proactive-agents` rc=0.
+4. `node hooks/jobs_woz_gate.js < <slop_payload>.json` emits a
+   non-empty `additionalContext` block; same hook with a clean
+   payload returns only `{"continue":true}`.
+5. `python -m pytest tests/ -q` returns 0 failed (no regression
+   in the baseline 43 tests).
+6. Every PP agent MD at `~/.claude/agents/{omni-*,pp-*}.md`
+   carries a `## PROACTIVE MODE` section.
+
+### Empirical baseline (2026-05-29)
+
+- `proactive_core.py`, `proactive_dispatcher.py`, and the 6
+  signal evaluators all importable from PP cwd.
+- `test_proactive_agents.py`: `PROACTIVE_PASS=16/16`.
+- `verify_proactive_agents.py`: `PROACTIVE_PROBE=6/6`.
+- `verify_spp.py` extended to 15 rows; `proactive-agents` row
+  passes.
+- `jobs_woz_gate.js`: dirty payload -> 3-hit advisory; clean
+  payload -> silent. Throttle cooldown verified at 15 min.
+- All 7 PP agents have PROACTIVE MODE section appended.
+- Cold-boot evidence at
+  `vault/test-results/cold_boot_PROACTIVE_<ts>.md`.
+
+### Honest classifier blockers (Owner-side actions)
+
+The following sub-feature ships the PP-internal half but
+requires the Owner to authorize the global-side registration:
+
+- `~/.claude/settings.json` Stop-hook registration for
+  `hooks/jobs_woz_gate.js` -- classifier denies hook
+  self-registration in auto-mode.
+
+Per Memory feedback "no classified FAILs at done-gate", this is
+documented honestly, NOT promoted to ADVISORY. The Owner's
+explicit authorization is the remediation path.
+
+### Asymmetric complement to prior axes
+
+- **ECC v6** absorbed the quality FRAMEWORK.
+- **OSA v7** absorbed the proactive AUDIT.
+- **Globalization v8** made the framework REACH every repo.
+- **Proactive v9** makes the agents SPEAK FIRST when their
+  signal fires -- silence is implicit approval.
+
+Sealed 2026-05-29 (BL-PROACTIVE-001).

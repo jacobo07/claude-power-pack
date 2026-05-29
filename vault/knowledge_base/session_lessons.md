@@ -1070,3 +1070,24 @@ not running, it is asserting.
 - **Recognizer**: ls ~/.claude/agents/ | grep -E ^pp-\|^omni- | wc -l should be >=7.
 - **Recurrence**: 1
 
+## NEVER_AGAIN — 2026-05-29T14:04:18Z — claude-power-pack — HIGH
+- **Issue**: Proactive agents that always speak become noise -- silence is implicit approval
+- **Root cause**: Spec without min_signal_strength gate; agent fires on weak signals; Owner learns to ignore PP agents
+- **Fix**: AgentConfig.min_signal_strength >= 0.3; signal_fn returns None when nothing meaningful to surface; per-agent thresholds tuned
+- **Recognizer**: An agent that fires on every prompt regardless of context
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T14:04:29Z — claude-power-pack — HIGH
+- **Issue**: Asymmetric throttle cooldowns mandatory -- one-size-fits-all blocks urgent signals
+- **Root cause**: Same cooldown for monitor (DOWN urgent) and never-again (daily lesson) means monitor over-throttles incidents or never-again becomes spam
+- **Fix**: Per-agent AgentConfig.cooldown_minutes: monitor=5, code-reviewer=15, tco=20, uqf=30, never-again=60
+- **Recognizer**: Throttle config is a single global constant instead of per-agent value
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T14:04:34Z — claude-power-pack — MEDIUM
+- **Issue**: Advisory length inversely proportional to impact -- 3 lines + 1 action max
+- **Root cause**: Verbose advisories require Owner parsing; parsing cost greater than signal value; Owner ignores; agent dies in silence
+- **Fix**: format_advisory enforces lines[:3] truncation; one concrete actionable string; Jobs principle
+- **Recognizer**: Advisory is a paragraph instead of a quick read
+- **Recurrence**: 1
+

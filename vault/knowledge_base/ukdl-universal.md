@@ -239,3 +239,9 @@ DONE-gate in `apex-completion-standard.md`.
 - **UKDL-OSA-2026-05-29T11:58:06Z** [HIGH] claude-power-pack: Agent schema: only name/description/tools/color -- recognizer: If an agent prompt declares triggers: or throttle: and claims those keys auto-activate the agent, it is wrong.
 
 - **UKDL-OSA-2026-05-29T11:58:06Z** [MEDIUM] claude-power-pack: 7 PP agents globally active enable FleetView dispatch from any repo -- recognizer: ls ~/.claude/agents/ | grep -E ^pp-\|^omni- | wc -l should be >=7.
+
+- **UKDL-OSA-2026-05-29T14:04:18Z** [HIGH] claude-power-pack: Proactive agents that always speak become noise -- silence is implicit approval -- recognizer: An agent that fires on every prompt regardless of context
+
+- **UKDL-OSA-2026-05-29T14:04:29Z** [HIGH] claude-power-pack: Asymmetric throttle cooldowns mandatory -- one-size-fits-all blocks urgent signals -- recognizer: Throttle config is a single global constant instead of per-agent value
+
+- **UKDL-OSA-2026-05-29T14:04:34Z** [MEDIUM] claude-power-pack: Advisory length inversely proportional to impact -- 3 lines + 1 action max -- recognizer: Advisory is a paragraph instead of a quick read

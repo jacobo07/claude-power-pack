@@ -337,3 +337,35 @@ Without (1) + (2) + (3) + (4): the feature is not SCS-complete on
 the global-intervention axis.
 
 Sealed alongside Apex axis v8 (BL-GLOB-001).
+
+
+### C17 -- Proactive-Jobs-Woz-Standard (sealed v9, 2026-05-29)
+
+Every NEW PP agent that lives at `~/.claude/agents/` (global,
+auto-discoverable) MUST be proactive by default. Four binary
+obligations:
+
+1. **One signal function** -- the agent MUST have a corresponding
+   evaluator in `modules/pp_agents/signals/<name>.py` whose
+   `evaluate(...)` returns `ProactiveSignal | None`. When the
+   evaluator returns `None`, the agent stays silent. Silence is
+   implicit approval (Jobs principle). An agent without a signal
+   function is not proactive; it is a reactive command with a
+   nicer name.
+2. **Min-signal-strength gate** -- the agent's `AgentConfig`
+   MUST set `min_signal_strength >= 0.3`. Below that, the
+   advisory is noise. An advisory the Owner ignores is worse
+   than no advisory at all -- it teaches "PP agents are spam".
+3. **Per-agent cooldown** -- the agent's `AgentConfig` MUST set
+   `cooldown_minutes >= 5`. Critical surfaces (pp-monitor on
+   DOWN) may go as low as 5; routine surfaces (pp-never-again)
+   go as high as 60. One-size-fits-all throttle is anti-pattern.
+4. **Advisory format** -- the advisory emitted via
+   `format_advisory(signal)` MUST stay <= 3 lines + one concrete
+   action. Jobs was concise. Advisory length is inversely
+   proportional to impact.
+
+Without (1) + (2) + (3) + (4): the agent is not SCS-complete on
+the proactive-Jobs-Woz axis.
+
+Sealed alongside Apex axis v9 (BL-PROACTIVE-001).
