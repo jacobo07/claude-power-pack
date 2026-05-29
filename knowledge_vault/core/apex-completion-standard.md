@@ -2296,4 +2296,170 @@ PP's PP-native axes (Concurrency, Async-Audit, Zero-Drift,
 Context-Pressure, Session-Safety, Skill-Completion, TIS, TCO,
 Monitoring, ECC, OSA) compose orthogonally.
 
+---
+
+## § 2026-05-28 — Semantic Analysis Axis (Pane 3, KobiiCraft, Sesión 13 KME-005)
+
+**Sealed:** 2026-05-28 (Pane 3 Sesión 13 of the Hypixel-parity 20-session roadmap — KME-005 Semantic Tagging Classifier shipped into production via `BlueprintAuditor` consumer hook)
+
+### The axis (one-line invariant)
+
+> Every analysis module operating on `List<BlockEntry>` (or analogous lifecycle-free data) MUST be a pure-POJO function — no Bukkit runtime in the API surface — AND must use the SAME `normalize` contract (`minecraft:` prefix strip + bracketed-state strip) as the existing pipeline so histogram keys interop across analyzers. Wire a real production consumer (DNA-046 closure) before declaring DONE; a wired POJO classifier compounds with every other analyzer that produces the same histogram keys.
+
+### Why this is an apex completion standard
+
+KME-042 (`/kobimap recreate`) shipped in 1.5h vs the 6-10h backlog estimate because Pane 3 discovered that `dnaRecreate` already existed in `MirrorCommandHandler`. KME-005 shipped in roughly the same compressed window for the same reason: `shannonEntropy` + `normalize` already existed in `EmotionalSensationAnalyzer`. The "wrap don't reimplement" rule is now a compounding meta-rule: every new analyzer should first grep the codebase for the primitives it needs (entropy, histogram, bounds, symmetry, palette) and adopt the existing pattern (or extract a shared utility) before writing from scratch.
+
+The trap on the other side: silently DUPLICATING a primitive (e.g. inlining a second `normalize` with subtly different rules) is invisible until two analyzers start producing different histogram keys for the same input. Strategy: when the primitive is small (≤10 LOC), inline + comment-cite the source; when it's larger, extract to a shared utility.
+
+### Mandatory checks for any future POJO analysis module
+
+1. The classifier `record` / `class` API touches ZERO Bukkit types — input is records / collections / primitives; output is records / primitives
+2. Reuses the `normalize` contract (`minecraft:` prefix + `[state]` strip + lowercase) so histogram keys interop with `EmotionalSensationAnalyzer` and any future analyzer
+3. If computing entropy: Shannon normalised by `log2(uniqueBuckets)` so scores are comparable across palettes of different sizes
+4. If computing symmetry: defensively test against TYPE-MISMATCHED clusters at distant X positions to defeat the consecutive-uniform-row symmetry-by-construction trap (a 4-block row is always 75 % symmetric around its midpoint)
+5. Wire a real production consumer (DNA-046 closure) — the consumer's name and code path must be greppable. A "test-only" analyzer rots; an in-pipeline analyzer compounds
+6. Do NOT pull in MockBukkit unless the surface genuinely touches Bukkit runtime — over-engineering trap, even when the dep is in the pom
+
+### Related axis — Wrapper-Over-Tested-Core for subcommand surfaces (KME-042 lesson, now meta)
+
+The KME-042 lesson generalises beyond subcommands to any "newer / friendlier" surface over existing logic. Pattern: grep for the underlying primitive (`dnaRecreate`, `shannonEntropy`, `computeBounds`, `materializeAtStaging`), then build the new surface as a thin wrapper with arg/payload translation. Test the translation pure-static; the underlying body is exercised by the existing tests on the core logic.
+
+### Project reference
+
+`docs/server/GOLD_STANDARD_SERVERS.md` §35 (Semantic Tagging Classifier Doctrine — 8 subsections A-H including the mirror-construction trap and the POJO/MockBukkit over-engineering trap). UKDL Trap 44 (POJO classifiers don't need MockBukkit) + Trap 45 (Bash heredoc append corruption — operational hazard). Seal commit chain on `kdos/v620000-kde-closure`: `63d06d8 feat(kme): KME-005 SemanticTagClassifier` + `939ec5e fix(kme): KME-005 test`.
+
 Sealed 2026-05-28 (BL-OSA-001).
+
+---
+
+## § 2026-05-29 — Map Assimilation Axis (Pane 3, KobiiCraft, Sesión 14 KME-020)
+
+**Sealed:** 2026-05-29 (Pane 3 Sesión 14 of the Hypixel-parity 20-session roadmap — KME-020 Map Assimilation Pipeline shipped as a wrapper over three existing analysis surfaces: `ReferenceMapLoader` + `DnaExtractionAdapter` + `SemanticTagClassifier`)
+
+### The axis (one-line invariant)
+
+> Any roadmap item whose verb is "Pipeline" / "Assimilation" / "Ingest" / "Pump" / "Adapter" / "Bridge" MUST start with a 3-pattern grep of the codebase BEFORE the first line of code — if 2+ existing surfaces hit, the work is COMPOSITION + STATUS ROUTING + INSTANCE LIFECYCLE, not new analysis, and the wall-clock estimate drops from 6-10h to ~1-2h. Output type MUST match whatever the existing extractor produces; do NOT shoehorn input into a richer type by synthesising fake-primitive fields from data the input does not carry.
+
+### The economic calibration
+
+KME-005 (Sesión 13) shipped 10 tests on a 6-test scope because the wrapped-core economic logic was visible from the integration boundary. KME-020 (Sesión 14) shipped exactly 4 tests on a 4-test scope because the underlying analysis (`DnaExtractionAdapter.extract`, `ReferenceMapLoader.readBlocks`, `SemanticTagClassifier.classify`) is already covered by its own hermetic suites. **The wrapper cost is N tests, not N×M, because we trust the modules below.** Composition tests lock 4 specific contract points: empty-input fast path, status enum routing, instance wiring, name carry-through. That's the calibration point for any future pipeline test suite.
+
+### Mandatory checks for any future pipeline wrapper
+
+1. **Output type matches the existing extractor** — `MapAssimilationPipeline.assimilate` returns `ProDNA` not `DnaV2Profile` because `DnaExtractionAdapter.extract` produces `ProDNA`; synthesising a richer type from an impoverished input is the KME-042 antipattern at the pipeline boundary
+2. **Status enum with mutually-exclusive terminal cases** — every reachable outcome (SUCCESS / EMPTY_INPUT / UNSUPPORTED_FORMAT / ANALYSIS_ERROR) gets a named enum value; downstream consumers route on the enum, never on exception type
+3. **Stateless singleton shared from the orchestrator** — `BlueprintAuditor.semanticTagger()` instance flows into `MapAssimilationPipeline.classifier` so a single audit pass classifies the same blocks exactly once and downstream observability stays consistent
+4. **Consumer hook on the standard orchestrator** — `BlueprintAuditor.auditWithAssimilation(blocks, name)` exposes the pipeline as a method on the auditor so external callers don't instantiate sibling pipelines; the accessor `assimilationPipeline()` is the DI hook
+5. **Defaults at the wrapper boundary** — blank profile name falls back to a safe default (`assimilated_anon`), not NPE; the wrapper owns these contract-design decisions
+6. **Tests cover composition contract only** — 4 cases is the calibration: empty input routing + status mapping + instance wiring + name carry-through. Each pipeline wrapper inherits N=4 as the default; deviate only with empirical reason
+
+### Related axis — Wrapper-Over-Tested-Core, now at three boundary tiers
+
+The Wrapper-Over-Tested-Core meta-rule (sealed at KME-042 for subcommands, extended at KME-005 for analyzers) is now at three boundary tiers:
+
+- **Subcommand wrapper** — KME-042 `/kobimap recreate` wraps `MirrorCommandHandler.dnaRecreate`
+- **Analyzer composition** — KME-005 `SemanticTagClassifier` reuses `EmotionalSensationAnalyzer.shannonEntropy` + `normalize`
+- **Pipeline composition** — KME-020 `MapAssimilationPipeline` wraps `DnaExtractionAdapter` + `ReferenceMapLoader` + `SemanticTagClassifier`
+
+The economics scale: subcommand wrapper costs 30 min, analyzer composition costs 1.5h, pipeline composition costs 45 min — because each layer reuses the trusted layer below. The compounding payoff is roughly 4× speed on every wrap-eligible work item.
+
+### Project reference
+
+`docs/server/GOLD_STANDARD_SERVERS.md` §40 (Map Assimilation Pipeline doctrine — 8 subsections A-H including wrap-vs-reimplementation economics, consumer wiring pattern, and the honest-scope-of-wrap framing). UKDL Trap 52 (Pipeline wrappers cost ~150 LOC; the assumed 800 LOC is the reimplementation antipattern). Build seal: `mvn clean test → 452 / 0F / 4 skipped / BUILD SUCCESS` + `KobiMapEngine-2.15.0.jar` (1,428,515 bytes). Seal commit chain on `kdos/v620000-kde-closure` (unpushed): C1 `feat(kme): KME-020 MapAssimilationPipeline` + C2 `docs(kme): Sesion 14 seal`.
+
+Sealed 2026-05-29 (BL-MAP-ASSIM-001).
+
+
+## PP Globalization Sprint Axis v8 (sealed 2026-05-29) -- proactive-availability DONE
+
+The tenth Apex DONE axis. A PP install is Apex-complete on this
+axis iff PP's quality tooling is **discoverable, invokable, and
+schema-valid in any repo** the Owner works from. This is the
+discovery / reach axis that complements the OSA axis v7 (proactive
+audit) and the ECC-UQF axis v6 (quality framework).
+
+### Six required components (all six must be present)
+
+1. **At least 7 PP agents globally installed** at
+   `~/.claude/agents/{omni-singularity,pp-code-reviewer,pp-monitor,
+   pp-uqf-auditor,pp-tco-advisor,pp-ceps-analyst,pp-never-again}.md`.
+   Each agent file MUST have valid YAML frontmatter (`name`,
+   `description`, `tools` -- no `triggers:`/`throttle:` keys, which
+   the Claude Code agent loader silently ignores; activation logic
+   lives in Python).
+2. **Cross-language rules taxonomy at `~/.claude/rules/`** with
+   at least `common/code-review.md` (ECC Pre-Report Gate + Zero
+   Findings Is Valid + Proof Triad doctrine) and one language
+   subdirectory (e.g. `python/testing.md` with AAA + TDD).
+3. **External verifiability** -- `tests/test_globalization.py`
+   passes from PP cwd with empirical V-gates on agent
+   schema + rules presence + cross-checks against BL-OSA-001
+   (UQF importable, TCO MAX-of-recent proxy intact, OSA
+   dispatcher returns valid tuple).
+4. **Verify probe** -- `tools/verify_globalization.py` returns
+   `GLOB_PROBE = 5/5` via a new `globalization` row in
+   `tools/verify_spp.py`.
+5. **OSA daemon setup documented** -- `vault/osa/daemon_setup.md`
+   has Linux crontab + Windows Task Scheduler instructions for the
+   `python -m modules.osa.osa_command --audit` periodic runner.
+6. **Honest blocker documentation** -- assets that require
+   Owner-side registration in `~/.claude/settings.json` or
+   `~/.claude/commands/` (classifier-blocked) are documented as
+   such in the globalization status report, NOT advisory-tagged.
+
+### Six-check DONE-gate (binary)
+
+1. `python tests/test_globalization.py` exit 0 with `GLOB_PASS = 15/15`.
+2. `python tools/verify_globalization.py` exit 0 with `GLOB_PROBE = 5/5`.
+3. `ls ~/.claude/agents/{pp-*,omni-*}.md | wc -l` >= 7.
+4. `~/.claude/rules/common/code-review.md` and
+   `~/.claude/rules/python/testing.md` both exist + carry doctrine
+   markers.
+5. `tools/verify_spp.py` row `globalization` returns rc=0 with
+   `GLOB_PROBE=5/5`.
+6. `vault/audits/globalization_status_<ts>.md` exists with a
+   36-asset matrix + Plan section ranked by ROI.
+
+### Empirical baseline (2026-05-29)
+
+- 7 PP agents installed and schema-valid: `omni-singularity`,
+  `pp-code-reviewer`, `pp-monitor`, `pp-uqf-auditor`,
+  `pp-tco-advisor`, `pp-ceps-analyst`, `pp-never-again`.
+- `~/.claude/rules/{common/code-review.md, python/testing.md}`
+  installed -- cross-language baseline.
+- `test_globalization.py` GLOB_PASS=15/15.
+- `verify_globalization.py` GLOB_PROBE=5/5.
+- `verify_spp.py` extended to 14 rows; the new `globalization`
+  row passes.
+- Daemon setup at `vault/osa/daemon_setup.md` (Linux crontab +
+  Windows Task Scheduler).
+- Globalization status report at
+  `vault/audits/globalization_status_20260529T111424Z.md` with 36
+  assets + 8-entry Plan ranked by ROI.
+
+### Honest classifier blockers (Owner-side actions)
+
+The following sub-features ship the PP-internal half but require
+the Owner to authorize the global-side registration:
+
+- `~/.claude/commands/uqf-audit.md` (new) -- classifier denies
+  agent self-modification of startup commands directory.
+- `~/.claude/commands/code-review.md` (new) -- same.
+- `~/.claude/settings.json` hook registration for
+  `uqf_pre_edit_gate` / `osa_deploy_detector` / `ceps-bridge` --
+  classifier denies hook self-registration.
+- `~/.claude/CLAUDE.md` PP-tools section append (QW-A) -- classifier
+  denies global startup-config edit.
+
+Per Memory feedback "no classified FAILs at done-gate", these are
+documented honestly, NOT promoted to ADVISORY rows. The Owner's
+explicit authorization is the remediation path.
+
+### Asymmetric complement to prior axes
+
+- **ECC v6** absorbed the quality FRAMEWORK.
+- **OSA v7** absorbed the proactive AUDIT.
+- **Globalization v8** makes both REACH every repo, not just PP.
+
+Sealed 2026-05-29 (BL-GLOB-001).

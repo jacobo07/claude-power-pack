@@ -154,6 +154,9 @@ def main() -> int:
         ("osa-active",
          [PY, str(PP / "tools" / "verify_osa.py")],
          20),
+        ("globalization",
+         [PY, str(PP / "tools" / "verify_globalization.py")],
+         15),
     ]
 
     if args.row:

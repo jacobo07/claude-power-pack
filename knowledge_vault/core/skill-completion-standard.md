@@ -305,3 +305,35 @@ the gate).
 
 Without (1)+(2)+(3): the feature is not SCS-complete on the OSA
 axis.
+
+
+### C16 -- Global-Intervention-by-default (sealed v8, 2026-05-29)
+
+Every NEW PP feature that improves code / runtime quality must
+make itself discoverable in any repo, not just from PP cwd. Four
+binary obligations:
+
+1. **One global surface area** -- the feature MUST have either a
+   hook in `~/.claude/settings.json` OR a global agent file at
+   `~/.claude/agents/<name>.md`. At least one of the two. Hooks
+   require Owner-side registration (classifier-blocked in
+   auto-mode); agents do not. Prefer agents when uncertain.
+2. **External-runnable** -- the feature MUST be verifiable from
+   `/tmp` (or any non-PP cwd) via absolute path OR via
+   `sys.path.insert` + import. The verification script lives in
+   `tests/test_globalization.py` or `tools/verify_globalization.py`.
+3. **Advisory-only for proactive intervention** -- any feature
+   that injects context or veto during ANOTHER agent's tool call
+   MUST use `continue: true` semantics (additionalContext or
+   advisory output). Blocking the Owner's agent without explicit
+   Owner authorization is forbidden.
+4. **Documented gap when classifier-blocked** -- if a sub-feature
+   requires editing `~/.claude/settings.json` or
+   `~/.claude/commands/` (both classifier-blocked in auto-mode),
+   ship the PP-internal half (hook script, command body) and
+   document the Owner-side registration step in the agent's body.
+
+Without (1) + (2) + (3) + (4): the feature is not SCS-complete on
+the global-intervention axis.
+
+Sealed alongside Apex axis v8 (BL-GLOB-001).

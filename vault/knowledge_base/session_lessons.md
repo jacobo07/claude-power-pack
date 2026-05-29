@@ -1035,3 +1035,38 @@ not running, it is asserting.
 - **Recognizer**: Si un tool del PP requiere cwd=PP_PATH o sys.path-hack para funcionar desde otro repo: no esta auto-activado globalmente, solo es globalmente invocable.
 - **Recurrence**: 1
 
+## NEVER_AGAIN — 2026-05-29T11:58:06Z — claude-power-pack — CRITICAL
+- **Issue**: Classifier blocks ~/.claude/settings.json + commands/ in auto-mode
+- **Root cause**: Claude Code auto-mode classifier hard-denies edits to ~/.claude/settings.json, ~/.claude/commands/*.md, and ~/.claude/CLAUDE.md as Self-Modification of startup config, even when explicitly requested by the user in the prompt.
+- **Fix**: Ship the PP-internal half (hook script, command body); document the Owner-side registration step in the agent body. Do not advisory-tag the gap; document honestly per L no-classified-FAILs.
+- **Recognizer**: Any plan that requires editing those three paths under auto-mode will see a Permission denied error; the agent should not retry but document and continue.
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T11:58:06Z — claude-power-pack — HIGH
+- **Issue**: Advisory-only hooks for proactive intervention
+- **Root cause**: Hooks injected by PP that could veto another agent tool call must use continue:true semantics; otherwise PP can silently break the Owner's real workflow.
+- **Fix**: PreToolUse hooks emit additionalContext, never decision:block, unless an explicit Owner authorization marker is present.
+- **Recognizer**: If a hook returns decision:block on a non-malicious Edit/Write: rewrite to advisory.
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T11:58:06Z — claude-power-pack — MEDIUM
+- **Issue**: PP_PATH resolver centralized in JS hooks
+- **Root cause**: Hardcoding C:/Users/User/.claude/skills/claude-power-pack/ in multiple JS hooks creates host-pinned breakage. _shared/.pp_path_resolver.js centralizes the lookup.
+- **Fix**: New JS hooks under hooks/_shared/ MUST require the resolver. Existing host-pinned paths to be migrated incrementally.
+- **Recognizer**: Any new JS hook with a literal C:/Users/User/.claude/ string is suspect; refactor to use the resolver.
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T11:58:06Z — claude-power-pack — HIGH
+- **Issue**: Agent schema: only name/description/tools/color
+- **Root cause**: Claude Code agent loader at ~/.claude/agents/*.md ignores any frontmatter key beyond name/description/tools/color. Custom keys like triggers:/throttle: encode zero behavior.
+- **Fix**: Activation/throttle/trigger logic lives in Python (or another runtime), NOT in YAML frontmatter. The OSA cycle BL-OSA-001 verified this empirically.
+- **Recognizer**: If an agent prompt declares triggers: or throttle: and claims those keys auto-activate the agent, it is wrong.
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T11:58:06Z — claude-power-pack — MEDIUM
+- **Issue**: 7 PP agents globally active enable FleetView dispatch from any repo
+- **Root cause**: omni-singularity + pp-code-reviewer + pp-monitor + pp-uqf-auditor + pp-tco-advisor + pp-ceps-analyst + pp-never-again all installed at ~/.claude/agents/. FleetView lists them in any repo session.
+- **Fix**: Closure of BL-GLOB-001 sprint goal: PP quality tooling discoverable globally without PP cwd requirement.
+- **Recognizer**: ls ~/.claude/agents/ | grep -E ^pp-\|^omni- | wc -l should be >=7.
+- **Recurrence**: 1
+

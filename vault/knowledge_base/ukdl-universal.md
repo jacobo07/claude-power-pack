@@ -229,3 +229,13 @@ DONE-gate in `apex-completion-standard.md`.
 | UKDL-OSA-2026-05-28-BUDGET-EXTERNALISED | Throttle parameters in `vault/osa/config.json`, NOT hardcoded. Default `max_daily_calls=150` (vs 212 observed in last TIS session) tunable post 2026-06-15 programmatic-credit shift. budget_monitor.py provides runway days; throttle.py provides the gate. |
 
 - **UKDL-OSA-2026-05-29T11:19:38Z** [MEDIUM] claude-power-pack: PP modules globalmente importables pero sin auto-activacion cross-repo -- recognizer: Si un tool del PP requiere cwd=PP_PATH o sys.path-hack para funcionar desde otro repo: no esta auto-activado globalmente, solo es globalmente invocable.
+
+- **UKDL-OSA-2026-05-29T11:58:06Z** [CRITICAL] claude-power-pack: Classifier blocks ~/.claude/settings.json + commands/ in auto-mode -- recognizer: Any plan that requires editing those three paths under auto-mode will see a Permission denied error; the agent should not retry but document and continue.
+
+- **UKDL-OSA-2026-05-29T11:58:06Z** [HIGH] claude-power-pack: Advisory-only hooks for proactive intervention -- recognizer: If a hook returns decision:block on a non-malicious Edit/Write: rewrite to advisory.
+
+- **UKDL-OSA-2026-05-29T11:58:06Z** [MEDIUM] claude-power-pack: PP_PATH resolver centralized in JS hooks -- recognizer: Any new JS hook with a literal C:/Users/User/.claude/ string is suspect; refactor to use the resolver.
+
+- **UKDL-OSA-2026-05-29T11:58:06Z** [HIGH] claude-power-pack: Agent schema: only name/description/tools/color -- recognizer: If an agent prompt declares triggers: or throttle: and claims those keys auto-activate the agent, it is wrong.
+
+- **UKDL-OSA-2026-05-29T11:58:06Z** [MEDIUM] claude-power-pack: 7 PP agents globally active enable FleetView dispatch from any repo -- recognizer: ls ~/.claude/agents/ | grep -E ^pp-\|^omni- | wc -l should be >=7.
