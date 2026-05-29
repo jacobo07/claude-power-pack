@@ -1091,3 +1091,24 @@ not running, it is asserting.
 - **Recognizer**: Advisory is a paragraph instead of a quick read
 - **Recurrence**: 1
 
+## NEVER_AGAIN — 2026-05-29T20:06:36Z — claude-power-pack — HIGH
+- **Issue**: Classifier blocks auto-writes to ~/.claude/ -- not a workaround, correct architecture
+- **Root cause**: Claude Code agent should not be able to wire its own hooks into the global config; ship-side surface (script + docs + verify) is complete, Owner runs one-time registration
+- **Fix**: tools/register_global_hooks.py + check_hook_status.py; Owner runs once from terminal; classifier-deny is by design, not a bug
+- **Recognizer**: Plan calls for self-modification of ~/.claude/settings.json or ~/.claude/commands/ in auto-mode
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T20:06:43Z — claude-power-pack — HIGH
+- **Issue**: Backup before modifying settings.json is MANDATORY -- corrupt config bricks entire Claude Code session
+- **Root cause**: Atomic JSON write race or marker-collision merge bug can leave settings.json malformed; without backup the only recovery is reinstall
+- **Fix**: shutil.copy2 to settings.pre-pp-hooks-<iso>.bak before any write, atomic os.replace for the write itself
+- **Recognizer**: Script writes to a user config file owned by another system; no backup step in the flow
+- **Recurrence**: 1
+
+## NEVER_AGAIN — 2026-05-29T20:06:51Z — claude-power-pack — MEDIUM
+- **Issue**: Pytest auto-collects top-level test_* functions; nested subprocess pytest recurses infinitely
+- **Root cause**: V-gate harness uses def test_baseline_intact() at module level which calls subprocess.run([pytest, tests/]); child pytest collects same function; infinite chain until 240s timeout
+- **Fix**: Rename V-gate functions to def _check_* so pytest does not auto-collect; call from main() only; project convention now codified
+- **Recognizer**: Test file in tests/ has def test_* functions that spawn subprocess pytest tests/
+- **Recurrence**: 1
+

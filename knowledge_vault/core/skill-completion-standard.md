@@ -369,3 +369,33 @@ Without (1) + (2) + (3) + (4): the agent is not SCS-complete on
 the proactive-Jobs-Woz axis.
 
 Sealed alongside Apex axis v9 (BL-PROACTIVE-001).
+
+### C18 -- One-Time-Registration-Pattern (sealed v10, 2026-05-29)
+
+Every PP feature that needs to write to `~/.claude/settings.json`
+(or any other Claude Code config file the classifier protects in
+auto-mode) MUST ship the wiring through a one-time Owner script.
+Four binary obligations:
+
+1. **A `tools/register_*.py` script** that the Owner runs once from
+   a terminal, never auto-invoked by Claude Code. The script is
+   purely additive (no destructive overwrites) and merges into the
+   existing config without replacing it. Bootstraps to an empty
+   `hooks` map when none exists.
+2. **A `tools/check_*_status.py` companion** that runs from any
+   working directory (cwd-agnostic) and reports the current
+   activation state. Exits non-zero when anything is unregistered.
+3. **Idempotent merge** -- unique marker strings (one per entry)
+   detect prior registration; running the script twice produces
+   identical output the second time.
+4. **Automatic timestamped backup** before any write to a config
+   file the script does not own. Backup path printed alongside the
+   commit summary so a one-liner rollback is always available.
+
+Plus a `--dry-run` flag on the registration script that prints the
+planned changes and exits without touching disk.
+
+Without (1) + (2) + (3) + (4) + dry-run: the feature is not
+SCS-complete on the global-registration axis.
+
+Sealed alongside Apex axis v10 (BL-HOOKS-REG-001).

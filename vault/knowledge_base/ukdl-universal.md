@@ -245,3 +245,9 @@ DONE-gate in `apex-completion-standard.md`.
 - **UKDL-OSA-2026-05-29T14:04:29Z** [HIGH] claude-power-pack: Asymmetric throttle cooldowns mandatory -- one-size-fits-all blocks urgent signals -- recognizer: Throttle config is a single global constant instead of per-agent value
 
 - **UKDL-OSA-2026-05-29T14:04:34Z** [MEDIUM] claude-power-pack: Advisory length inversely proportional to impact -- 3 lines + 1 action max -- recognizer: Advisory is a paragraph instead of a quick read
+
+- **UKDL-OSA-2026-05-29T20:06:36Z** [HIGH] claude-power-pack: Classifier blocks auto-writes to ~/.claude/ -- not a workaround, correct architecture -- recognizer: Plan calls for self-modification of ~/.claude/settings.json or ~/.claude/commands/ in auto-mode
+
+- **UKDL-OSA-2026-05-29T20:06:43Z** [HIGH] claude-power-pack: Backup before modifying settings.json is MANDATORY -- corrupt config bricks entire Claude Code session -- recognizer: Script writes to a user config file owned by another system; no backup step in the flow
+
+- **UKDL-OSA-2026-05-29T20:06:51Z** [MEDIUM] claude-power-pack: Pytest auto-collects top-level test_* functions; nested subprocess pytest recurses infinitely -- recognizer: Test file in tests/ has def test_* functions that spawn subprocess pytest tests/

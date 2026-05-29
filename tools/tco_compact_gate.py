@@ -258,7 +258,35 @@ def main(argv: list[str] | None = None) -> int:
                    help="Emit machine-readable JSON state")
     p.add_argument("--session", metavar="SID", default=None,
                    help="Override session id (default = active TIS session)")
+    p.add_argument("--session-start-check", action="store_true",
+                   help="SessionStart hook entry: emit advisory only "
+                        "when context_pct >= WARN_PCT, silent otherwise. "
+                        "Always exit 0 (fail-open).")
     args = p.parse_args(argv)
+
+    if args.session_start_check:
+        try:
+            state = check_compact_gate(args.session)
+            pct = int(state.get("session_pct_estimate", 0) or 0)
+        except Exception:
+            return 0
+        if pct < WARN_PCT:
+            return 0
+        msg = (
+            f"[Jobs] [pp-tco-advisor] Session-start context proxy at "
+            f"{pct}% (warn threshold {WARN_PCT}%).\n"
+            f"Carry-over from prior turn -- consider /compact before the "
+            f"first heavy task.\n"
+            f"-> python tools/tco_compact_gate.py for the full breakdown."
+        )
+        payload = {
+            "hookSpecificOutput": {
+                "hookEventName": "SessionStart",
+                "additionalContext": msg,
+            }
+        }
+        print(json.dumps(payload))
+        return 0
 
     if args.route:
         model = load_routing(args.route)
