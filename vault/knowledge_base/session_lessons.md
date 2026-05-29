@@ -1027,3 +1027,11 @@ not-evaluated condition to `True` for ergonomic reasons. The third value
 **Recognizer**: any visual / browser / image-analysis step that returns
 boolean without a screenshot path attribute pointing at a real file: it is
 not running, it is asserting.
+
+## NEVER_AGAIN — 2026-05-29T11:19:38Z — claude-power-pack — MEDIUM
+- **Issue**: PP modules globalmente importables pero sin auto-activacion cross-repo
+- **Root cause**: Los modulos PP (UQF/OSA/CEPS/anti_patterns) requieren que algo SEPA de ellos para invocarse. Hooks PP-localizados auto-disparan, pero la mayoria de tools son CLI-only o sys.path-dependent.
+- **Fix**: Plan de Globalizacion ranked-by-ROI en vault/audits/globalization_status_20260529T111424Z.md (8 entries): #1 UQF anti_patterns como hook PreToolUse Write/Edit, #2 OSA fire_async en deploys foraneos via hook PostToolUse Bash que detecte vercel/gh/kubectl/mix release, #3 CEPS auto-capture desde bug-hunter-learning.js.
+- **Recognizer**: Si un tool del PP requiere cwd=PP_PATH o sys.path-hack para funcionar desde otro repo: no esta auto-activado globalmente, solo es globalmente invocable.
+- **Recurrence**: 1
+
