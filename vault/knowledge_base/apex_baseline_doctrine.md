@@ -116,3 +116,22 @@ The Zero-Command Standard governs feature *activation* — if a PP capability im
 3. PASO 1+ — Apex Completeness three pillars + Programmatic Budget Gate.
 
 Pre-existing features (`/ovo-audit`, `/cpp-distill`, `/speckit-*` slash commands themselves) are grandfathered. Post-2026-05-21 features that ship slash-only must declare WHY a hook can't trigger them, in the spec's Constraints section.
+
+## SCS C21 — Performance-by-default in hot-path hooks (sealed 2026-05-31, BL-JIT-001)
+
+Every Python script bound to a hot Claude Code event (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`) MUST meet the three perf criteria below, OR document the gap with an empirical benchmark.
+
+1. **Always-fire decorators carry a cheap pre-check.** A decorator that imports a subpackage and dispatches work on every call MUST first check whether ANY downstream evaluator could possibly fire. The pre-check budget is one cheap filesystem scan (mtime stat on a small dir) or one env-var read — no module imports, no JSON parse beyond a handful of bytes.
+2. **Filesystem walks have a disk-persisted cache.** Any walk that scans more than ~20 dirents per call MUST persist its result to `STATE_DIR/<scope>-<sha1(cwd)>.json` with a TTL appropriate to how often the walk's answer can change (1 h for "does cwd contain *.graphql"; 5 min for "does .specify/specs/ have an active spec"; etc.).
+3. **First-prompt cold start is masked by a SessionStart pre-warmer.** When the script's end-to-end subprocess time is >300 ms cold, a SessionStart hook (detached, fire-and-forget, NEVER blocks session start) MUST spawn the script with a `PP_WARM_RUN=1` short-circuit that primes the OS page cache + walk + spec disk caches + .pyc bytecode. The warm path MUST NOT call `run()` directly (that would mark side-effects like "already injected this session" before the user has typed).
+
+**Benchmark obligation:** every PR that adds or modifies a hot-path Python hook MUST land `tools/bench_<name>.py` capturing pre/post end-to-end timings to `vault/benchmarks/<name>_pre_fix.json` + `<name>_post_fix.json`. The PR description quotes the e2e gain. ≥20 % is the soft threshold; <20 % is allowed when the script was already perf-clean (pre baseline already <300 ms e2e) and the benchmark documents it.
+
+**Reference implementation:**
+
+- `tools/jit_skill_loader.py` (the hook under control)
+- `tools/bench_jit_loader.py` (microbench)
+- `hooks/jit_warm.js` (SessionStart pre-warmer)
+- `tools/test_jit_performance.py` (11 V-JIT-* gates)
+- `vault/benchmarks/jit_loader_lazy_plan.md` (honest analysis: imports were not the bottleneck)
+- `vault/knowledge_base/ukdl-universal.md` § UKDL TRAP T-JIT-001

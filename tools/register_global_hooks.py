@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PP Global Hooks Registration -- ONE-TIME OWNER SETUP.
 
-Registers 5 PP hooks in ``~/.claude/settings.json`` so the proactive
+Registers 6 PP hooks in ``~/.claude/settings.json`` so the proactive
 agents activate while the Owner works. This script is deliberately
 NOT invoked by Claude Code in auto-mode. The Owner runs it manually
 from their terminal AFTER closing all Claude Code sessions.
@@ -22,8 +22,11 @@ HOOKS REGISTERED:
        (pp-tco-advisor warning if context_pct >= 70)
     H5 Stop                              -> jobs_woz_gate.js
        (Jobs/Woz advisory on assistant turn slop tokens)
+    H6 SessionStart                       -> jit_warm.js
+       (jit_skill_loader pre-warmer -- masks first-prompt lag,
+        sealed BL-JIT-001 2026-05-31)
 
-Sealed BL-HOOKS-REG-001 (2026-05-29).
+Sealed BL-HOOKS-REG-001 (2026-05-29) + BL-JIT-001 (2026-05-31).
 """
 from __future__ import annotations
 
@@ -90,6 +93,15 @@ def _hooks_to_register() -> list[dict]:
                 f'node "{pp}/hooks/jobs_woz_gate.js"',
             "marker": "jobs_woz_gate",
             "description": "Jobs/Woz advisory on assistant turn slop",
+        },
+        {
+            "event": "SessionStart",
+            "matcher": None,
+            "command":
+                f'node "{pp}/hooks/jit_warm.js"',
+            "marker": "jit_warm",
+            "description":
+                "jit_skill_loader pre-warmer (mask first-prompt lag)",
         },
     ]
 

@@ -169,6 +169,9 @@ def main() -> int:
         ("playwright-resilience",
          [PY, str(PP / "tools" / "test_playwright_resilience.py")],
          60),
+        ("jit-performance",
+         [PY, str(PP / "tools" / "test_jit_performance.py")],
+         60),
     ]
 
     if args.row:

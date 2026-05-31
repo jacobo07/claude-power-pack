@@ -1,0 +1,88 @@
+{
+  "timestamp_iso": "2026-05-31T12:23:42.306690+00:00",
+  "python": "3.12.10",
+  "import_ms": [
+    49,
+    21,
+    18,
+    23,
+    23
+  ],
+  "import_ms_stats": {
+    "min": 18,
+    "avg": 26.8,
+    "max": 49
+  },
+  "end_to_end_ms": [
+    475,
+    1036,
+    829
+  ],
+  "end_to_end_ms_stats": {
+    "min": 475,
+    "avg": 780,
+    "max": 1036
+  },
+  "top_imports": [
+    {
+      "us": 7335,
+      "name": "tools.jit_skill_loader"
+    },
+    {
+      "us": 4975,
+      "name": "_hashlib"
+    },
+    {
+      "us": 4105,
+      "name": "site"
+    },
+    {
+      "us": 3154,
+      "name": "__editable___akos_1_0_0_finder"
+    },
+    {
+      "us": 3000,
+      "name": "urllib.parse"
+    },
+    {
+      "us": 1971,
+      "name": "encodings"
+    },
+    {
+      "us": 1875,
+      "name": "enum"
+    },
+    {
+      "us": 1715,
+      "name": "locale"
+    },
+    {
+      "us": 1654,
+      "name": "threading"
+    },
+    {
+      "us": 1586,
+      "name": "subprocess"
+    },
+    {
+      "us": 1521,
+      "name": "json.encoder"
+    },
+    {
+      "us": 1421,
+      "name": "ipaddress"
+    },
+    {
+      "us": 1370,
+      "name": "re._compiler"
+    },
+    {
+      "us": 1346,
+      "name": "pathlib"
+    },
+    {
+      "us": 1251,
+      "name": "json.decoder"
+    }
+  ]
+}

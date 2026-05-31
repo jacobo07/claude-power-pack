@@ -228,11 +228,35 @@ def _package_deps(cwd: Path) -> str:
     return ""
 
 
+_WALK_CACHE_TTL = 3600  # 1 hour — graphql files don't appear/disappear mid-task
+
+
+def _walk_cache_path(cwd: Path) -> Path:
+    h = hashlib.sha1(str(cwd).encode("utf-8")).hexdigest()[:12]
+    return STATE_DIR / f"jit-walk-{h}.json"
+
+
 def _walk_has_graphql(cwd: Path) -> bool:
-    """Bounded DFS, early-exit on FIRST .graphql/.gql."""
+    """Bounded DFS, early-exit on FIRST .graphql/.gql. Cached 1h per cwd.
+
+    The walk costs 200-1500ms on Windows for repos with many files (PP repo:
+    ~600-2500ms measured 2026-05-31, jit_skill_loader cold lag root cause).
+    Cache file at STATE_DIR/jit-walk-<sha1>.json with {ts, found}. Cache miss
+    or expired -> do the walk + write cache. Fail-open: any cache error
+    falls through to the walk.
+    """
+    cache_path = _walk_cache_path(cwd)
+    try:
+        cached = json.loads(cache_path.read_text(encoding="utf-8"))
+        if time.time() - float(cached.get("ts", 0)) < _WALK_CACHE_TTL:
+            return bool(cached.get("found", False))
+    except (OSError, ValueError, TypeError):
+        pass
+
     stack = [(cwd, 0)]
     seen = 0
-    while stack:
+    found = False
+    while stack and not found:
         d, depth = stack.pop()
         if seen > WALK_CAP:
             break
@@ -249,12 +273,21 @@ def _walk_has_graphql(cwd: Path) -> bool:
                         elif e.is_file(follow_symlinks=False) and (
                                 e.name.endswith(".graphql")
                                 or e.name.endswith(".gql")):
-                            return True
+                            found = True
+                            break
                     except OSError:
                         continue
         except OSError:
             continue
-    return False
+
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path.write_text(
+            json.dumps({"ts": time.time(), "found": found}),
+            encoding="utf-8")
+    except OSError:
+        pass
+    return found
 
 
 def _match_modules(prompt: str, cwd: Path):
@@ -552,6 +585,14 @@ def _telemetry(sid: str, raw_sid: str, rows: list[dict]) -> None:
 SPEC_CAP_BYTES = 24_000   # spec gets <=60% of the 40 KB budget; remainder for Apollo
 
 
+_SPEC_CACHE_TTL = 300  # 5 min — specs DO change inside a working session
+
+
+def _spec_cache_path(cwd: Path) -> Path:
+    h = hashlib.sha1(str(cwd).encode("utf-8")).hexdigest()[:12]
+    return STATE_DIR / f"jit-spec-{h}.json"
+
+
 def _active_spec(cwd: Path) -> tuple[Path, str] | None:
     """Detect a Spec-Driven Development active spec in the project cwd.
 
@@ -561,7 +602,29 @@ def _active_spec(cwd: Path) -> tuple[Path, str] | None:
 
     Picks the most-recently-modified spec when multiple exist. Returns
     (path, content) or None. Fail-open: any read/glob error -> None.
+
+    Result is cached 5 min per cwd at STATE_DIR/jit-spec-<sha1>.json:
+    payload stores the spec path + mtime so the cache is invalidated if
+    a fresh write lands. None-results are cached as {"none": true}.
     """
+    cache_path = _spec_cache_path(cwd)
+    try:
+        cached = json.loads(cache_path.read_text(encoding="utf-8"))
+        ts = float(cached.get("ts", 0))
+        if time.time() - ts < _SPEC_CACHE_TTL:
+            if cached.get("none"):
+                return None
+            sp = Path(cached.get("path") or "")
+            if sp.is_file():
+                # Only honor cache if mtime matches stored one
+                # (i.e. the spec hasn't been touched since we cached).
+                stored_mtime = float(cached.get("mtime", 0))
+                if abs(sp.stat().st_mtime - stored_mtime) < 0.5:
+                    body = sp.read_text(encoding="utf-8")
+                    if body.strip():
+                        return (sp, body)
+    except (OSError, ValueError, TypeError):
+        pass
     try:
         candidates: list[Path] = []
         speckit_root = cwd / ".specify" / "specs"
@@ -577,10 +640,26 @@ def _active_spec(cwd: Path) -> tuple[Path, str] | None:
                 if sp.is_file():
                     candidates.append(sp)
         if not candidates:
+            try:
+                STATE_DIR.mkdir(parents=True, exist_ok=True)
+                cache_path.write_text(
+                    json.dumps({"ts": time.time(), "none": True}),
+                    encoding="utf-8")
+            except OSError:
+                pass
             return None
         latest = max(candidates, key=lambda p: p.stat().st_mtime)
         body = latest.read_text(encoding="utf-8")
         if body.strip():
+            try:
+                STATE_DIR.mkdir(parents=True, exist_ok=True)
+                cache_path.write_text(
+                    json.dumps({"ts": time.time(),
+                                "path": str(latest),
+                                "mtime": latest.stat().st_mtime}),
+                    encoding="utf-8")
+            except OSError:
+                pass
             return (latest, body)
     except Exception:
         pass
@@ -986,10 +1065,47 @@ def _tis_log_call(fn):
     return _wrapper
 
 
+_PROACTIVE_THROTTLE_DIR = PP_ROOT / "vault" / "pp_agents" / "throttle"
+
+
+def _proactive_any_eligible() -> bool:
+    """Cheap pre-check: would ANY agent's throttle let it fire right now?
+
+    Returns False when every throttle file in the dir was touched within
+    the shortest known cooldown (5 min, the pp-monitor / pp-cascade-guard
+    floor). In that case, the dispatcher would short-circuit on every
+    agent anyway, so skip the ~30 ms import + dispatch cost entirely.
+
+    Fail-open: any I/O error -> True (run the full dispatcher).
+    """
+    try:
+        if not _PROACTIVE_THROTTLE_DIR.is_dir():
+            return True  # no state yet -> first run could fire
+        now = time.time()
+        floor_sec = 5 * 60  # the smallest configured cooldown
+        for entry in os.scandir(_PROACTIVE_THROTTLE_DIR):
+            if not entry.name.endswith(".json"):
+                continue
+            try:
+                age = now - entry.stat().st_mtime
+            except OSError:
+                return True
+            if age >= floor_sec:
+                return True  # at least one agent is past its floor
+        return False  # every agent throttled
+    except OSError:
+        return True
+
+
 def _pp_proactive_inject(fn):
     """PP Proactive Agents (Jobs/Woz) -- append agent advisories to
     additionalContext when their signals fire. Sleepy-by-default,
     non-blocking, fail-open. Sealed BL-PROACTIVE-001 (2026-05-29).
+
+    Hot-path pre-check (T-JIT-001, sealed 2026-05-31): the dispatcher
+    import + per-agent throttle scan is ~30 ms per subprocess. When
+    every agent's throttle file is < 5 min old (the shortest cooldown),
+    no advisory could fire anyway, so skip the entire dispatch.
     """
     import functools as _ft
 
@@ -997,6 +1113,8 @@ def _pp_proactive_inject(fn):
     def _wrapper(data):
         result = fn(data)
         try:
+            if not _proactive_any_eligible():
+                return result  # all agents throttled, ~30 ms saved
             data = data or {}
             cwd_raw = data.get("cwd") or ""
             project = Path(cwd_raw).name.lower() if cwd_raw else "global"
@@ -1191,7 +1309,43 @@ __all__ = ["run", "TASK_PROFILES", "TRIGGERS", "_select_tier", "_render",
            "_detect_lateral_thinking_trigger", "LATERAL_CARD"]
 
 
+def _warm_run() -> int:
+    """SessionStart pre-warm path (PP_WARM_RUN=1, T-JIT-001).
+
+    Pays the heavy first-time costs (Python interpreter cold start,
+    module imports, walk + spec disk caches priming, tiktoken BPE load
+    on the discovery code path) so the user's first real prompt skips
+    them. Detached spawn from hooks/jit_warm.js. NEVER blocks the
+    session: any error -> exit 0 silently.
+
+    Honest scope: a subprocess pre-warm cannot share its in-process
+    caches (tiktoken handle, sys.modules) with the user's later
+    UserPromptSubmit subprocess -- those start fresh. The wins that
+    DO survive across subprocess boundaries:
+      * OS page cache for python.exe + the stdlib + jit_skill_loader.py
+      * STATE_DIR/jit-walk-<sha>.json (1 h)
+      * STATE_DIR/jit-spec-<sha>.json (5 min)
+      * .pyc bytecode files emitted by the interpreter
+
+    Does NOT call run(): we do NOT want to mark Apollo modules as
+    "already injected this session" before the user has typed (that
+    would suppress their first real Apollo injection).
+    """
+    try:
+        cwd_env = os.environ.get("PP_WARM_CWD") or os.getcwd()
+        cwd = Path(cwd_env)
+        _walk_has_graphql(cwd)
+        _active_spec(cwd)
+        sys.stdout.write("warm:ok")
+    except Exception as exc:
+        _log(f"warm-run ERROR {type(exc).__name__}: {exc}")
+    return 0
+
+
 if __name__ == "__main__":
+    if os.environ.get("PP_WARM_RUN") == "1":
+        raise SystemExit(_warm_run())
+
     import threading
 
     box = {"raw": ""}

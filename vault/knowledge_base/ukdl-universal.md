@@ -343,3 +343,89 @@ the same name -- undefined behavior in the plugin loader. The bug
 does not move; the config grows; future debugging is harder.
 
 **Cross-ref:** same files as PR-PW-001.
+
+### UKDL TRAP T-JIT-001 -- Python Cold-Start In a Hot-Path Hook
+
+**Level:** UKDL Trap (technical learning, performance edge case).
+**Sealed:** 2026-05-31.
+
+**Trap:** A Python script bound to `UserPromptSubmit` spawns a fresh
+interpreter on every prompt. Heavy module imports and per-call I/O
+inside `run()` (proactive-agent dispatcher imports, regex passes,
+filesystem walks, JSON state writes) accumulate into 400-1000 ms of
+wall-time per prompt. The user perceives this as "the first prompt
+of a new pane lags badly" because (a) every prompt pays the cost
+but (b) it is most noticeable on the first one against a cold OS
+file cache.
+
+**Root cause -- four cumulative costs:**
+
+1. **Python interpreter cold start + stdlib imports.** ~20-50 ms
+   wall. Cannot be reduced from inside the script.
+2. **Module-level imports of the script itself.** ~20-50 ms for
+   typical stdlib-only modules. The `-X importtime` breakdown
+   often shows no single >50 ms self-time entry, so "lazy load
+   the heavy import" is not the fix -- there is no single heavy
+   import.
+3. **Hot-path decorators that always fire.** A decorator like
+   `_pp_proactive_inject` that imports a subpackage and dispatches
+   N agents on every prompt -- 30-60 ms wasted when all agents
+   are throttled.
+4. **Per-call filesystem walks + JSON cache I/O** inside `run()`
+   itself: `_walk_has_graphql`, `_active_spec`, `_save_state`,
+   `_telemetry`. Each is small (~1-5 ms) but they add up.
+
+**Recognizer:**
+
+- `tools/bench_jit_loader.py` shows end-to-end >500 ms with
+  Phase 1 (import-only) <50 ms -- the import is NOT the
+  bottleneck. The body of `run()` (and its decorators) is.
+- `python -X importtime` for the script shows no single fat
+  import. The cost is per-call work, not load-time work.
+- The user complains about "first prompt of a new pane" -- this
+  IS the canonical signature of cold subprocess startup.
+
+**Correct fix (Option A -- three layers):**
+
+1. **Cheap pre-check in the always-fire decorator.** Read a single
+   throttle-dir scan (mtime of N tiny files) before importing the
+   dispatcher. If every agent is still cooled, skip the entire
+   dispatch -- saves ~30 ms per prompt.
+   File: `tools/jit_skill_loader.py:_proactive_any_eligible`.
+2. **Disk-persisted result caches** on per-call filesystem walks.
+   1 h TTL for an immutable walk (e.g. "does this cwd contain
+   *.graphql"), 5 min TTL for active-spec lookups (specs change
+   inside a working session). Cache key = sha1(cwd).
+   File: `tools/jit_skill_loader.py:_walk_cache_path` +
+   `_spec_cache_path`.
+3. **SessionStart pre-warmer**, detached subprocess with
+   `PP_WARM_RUN=1`, exits via a guarded short-circuit that does
+   NOT mark state (would suppress the user's first real Apollo
+   injection). Survives across subprocess boundaries via OS page
+   cache + walk/spec disk caches + .pyc bytecode emit.
+   Files: `hooks/jit_warm.js` (Node spawner, detached + unref +
+   windowsHide), `tools/jit_skill_loader.py:_warm_run`.
+
+**Incorrect fix (antipattern):** "lazy-import tiktoken to skip the
+240 ms cold load". Tiktoken is already lazy in the body of `_tok`;
+it only fires on the discovery tier (~5 % of prompts). Replacing
+its top-level import with a lazy one changes nothing. Same applies
+to "move `json` / `re` / `hashlib` imports inside functions" --
+their self-time on modern Python is <20 ms total.
+
+**Honest scope:** the SessionStart pre-warmer pays a real Python
+process on session start. It is fire-and-forget (detached + unref),
+NEVER blocks SessionStart, exits 0 silently on any error. The win
+is masking the FIRST-prompt cost. Subsequent prompts still pay the
+~500-800 ms end-to-end -- which the F1 + F2 fixes also reduce by
+~25 % on the empirical bench (`tools/bench_jit_loader.py`:
+780 ms -> 586 ms average, 6 runs).
+
+**Cross-ref:**
+
+- `tools/bench_jit_loader.py` (microbench, e2e + importtime).
+- `vault/benchmarks/jit_loader_pre_fix.json` (baseline).
+- `vault/benchmarks/jit_loader_post_fix.json` (after F1+F2).
+- `vault/benchmarks/jit_loader_lazy_plan.md` (honest analysis).
+- `hooks/jit_warm.js` (SessionStart pre-warmer).
+- `tools/test_jit_performance.py` (11 V-JIT-* gates).

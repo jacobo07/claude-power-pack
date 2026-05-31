@@ -1,0 +1,88 @@
+{
+  "timestamp_iso": "2026-05-31T12:32:27.366895+00:00",
+  "python": "3.12.10",
+  "import_ms": [
+    25,
+    20,
+    29,
+    21,
+    21
+  ],
+  "import_ms_stats": {
+    "min": 20,
+    "avg": 23.2,
+    "max": 29
+  },
+  "end_to_end_ms": [
+    645,
+    346,
+    766
+  ],
+  "end_to_end_ms_stats": {
+    "min": 346,
+    "avg": 585.6666666666666,
+    "max": 766
+  },
+  "top_imports": [
+    {
+      "us": 21469,
+      "name": "fnmatch"
+    },
+    {
+      "us": 17923,
+      "name": "re"
+    },
+    {
+      "us": 16582,
+      "name": "functools"
+    },
+    {
+      "us": 14406,
+      "name": "enum"
+    },
+    {
+      "us": 12975,
+      "name": "re._constants"
+    },
+    {
+      "us": 12201,
+      "name": "re._compiler"
+    },
+    {
+      "us": 11782,
+      "name": "reprlib"
+    },
+    {
+      "us": 10678,
+      "name": "collections"
+    },
+    {
+      "us": 10525,
+      "name": "urllib.parse"
+    },
+    {
+      "us": 8766,
+      "name": "operator"
+    },
+    {
+      "us": 7922,
+      "name": "copyreg"
+    },
+    {
+      "us": 7748,
+      "name": "site"
+    },
+    {
+      "us": 7253,
+      "name": "re._parser"
+    },
+    {
+      "us": 6678,
+      "name": "re._casefix"
+    },
+    {
+      "us": 6234,
+      "name": "keyword"
+    }
+  ]
+}
