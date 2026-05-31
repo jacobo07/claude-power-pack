@@ -166,6 +166,9 @@ def main() -> int:
         ("hard-rules",
          [PY, str(PP / "tools" / "verify_hard_rules.py")],
          15),
+        ("playwright-resilience",
+         [PY, str(PP / "tools" / "test_playwright_resilience.py")],
+         60),
     ]
 
     if args.row:
