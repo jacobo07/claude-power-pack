@@ -2727,3 +2727,72 @@ Cascade Error Prevention agent as a real proactive surface.
   warning before the second leaf falls.
 
 Sealed 2026-05-29 (BL-HARDRULE-001).
+
+## MCP-Plugin-Resilience Axis v12 (sealed 2026-05-31, BL-PLAYWRIGHT-001)
+
+### C20 -- MCP-Plugin-Resilience-by-default
+
+**Constraint:** every MCP server loaded via `enabledPlugins` (NOT
+`mcpServers`) in `~/.claude/settings.json` must ship with the
+following resilience stack, OR it is not done by definition:
+
+1. **Stale process killer** -- platform-appropriate script (e.g.
+   `tools/playwright_stale_killer.ps1`) that kills processes of the
+   plugin's child binary when their idle age exceeds a threshold.
+   Plugin loader respawns fresh ones with clean transport on next use.
+2. **Watchdog** -- Task Scheduler (Windows) / cron / systemd timer
+   (Posix) that invokes the killer every `interval < idle_threshold/2`.
+   Idempotent install via the script itself (`-Action start`).
+3. **Health check** -- `tools/check_<plugin>_mcp.py` (or equivalent
+   platform script) reporting: plugin enabled state, live process
+   count + ages, killer + watchdog presence, watchdog state. Verdicts:
+   READY+RESILIENT / WARN / FAIL. ASCII-safe output.
+4. **UKDL entries** -- Process Rule (mandatory verification protocol
+   for the operator) AND Trap (architectural antipattern: the
+   plugin-vs-mcpServer distinction, with the `mcp__plugin_*` tool-name
+   recognizer). Both in `vault/knowledge_base/ukdl-universal.md`.
+5. **V-gate test** -- `tools/test_<plugin>_resilience.py` with the
+   minimum 11 gates from the BL-PLAYWRIGHT-001 template:
+   killer-exists / watchdog-exists / check-exists / repro-doc /
+   ukdl-pr / ukdl-trap / plugin-signal / check-runs / watchdog-status /
+   killer-dryrun / baseline-intact.
+6. **verify_spp probe** -- row added to `tools/verify_spp.py`
+   `rows_spec` invoking the V-gate test. Budget <= 60s.
+
+**NEVER:** add `mcpServers.<pluginname>` to settings.json when the
+plugin is already loaded via `enabledPlugins`. The two mechanisms
+compete for the same name; undefined behavior in the plugin loader.
+
+### Why this axis (asymmetric complement)
+
+- **v11** (BL-HARDRULE-001) turned lessons into stops at the data /
+  deploy gate. This is the high-severity layer.
+- **v12** (BL-PLAYWRIGHT-001) is the LOW-severity, OPERATIONAL layer:
+  flow hiccups (transport disconnects, plugin process drift) that do
+  not destroy state but do interrupt work. Process Rules + watchdogs,
+  not Hard Rules. Different severity, different gate semantics. The
+  two layers compose: every PP MCP plugin now has BOTH a Hard-Rule
+  pathway for catastrophic conditions AND a Process-Rule pathway for
+  operational disconnects.
+
+### Empirical baseline (2026-05-31)
+
+- 5 node.exe @playwright/mcp procs detected alive at 15min idle.
+- Claude Code runtime: `mcp__plugin_playwright_*` DISCONNECTED in same
+  window (system-reminder evidence). Gap = transport stale, not crash.
+- Original plan (Option C/D: add `mcpServers.playwright + timeout`)
+  REJECTED at PASO 0 -- target was wrong by architecture.
+- Option A executed: killer + watchdog + health-check + signal + UKDL
+  + V-gate test + verify_spp probe. All 11 V-gates PASS. verify_spp
+  --row playwright-resilience PASS in 7.05s.
+
+### Reusability
+
+The 6-point stack is plugin-agnostic. To onboard a future MCP plugin
+(e.g. browser-use, sequential-thinking) under this axis: copy the
+`tools/playwright_*` scripts as templates, rename, update process
+matchers, register a sibling row in `verify_spp.py`. The Process Rule
+template and Trap template in UKDL are reusable as-is with name
+substitution.
+
+Sealed 2026-05-31 (BL-PLAYWRIGHT-001, Option A, Owner-approved).
