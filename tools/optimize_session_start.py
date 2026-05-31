@@ -69,6 +69,17 @@ WRAP_TARGETS = [
         "marker": "tco_compact_gate.py",
         "label": "tco-compact-gate-session-start",
     },
+    {
+        # Added 2026-05-31 evening iteration: measured 2353 ms on this
+        # host post-orphan-reaper-drop. The script itself is async-by-
+        # design but has a 2000 ms stdin timeout that nearly fully fires
+        # when subprocess.run pipes a short payload. Wrapping it routes
+        # the entire 2353 ms into background so the prompt is free.
+        # Safe to wrap: the hook header documents "Full silence on
+        # stdout (returns '{}')" -- no additionalContext is dropped.
+        "marker": "auto-vault-bootstrap.js",
+        "label": "auto-vault-bootstrap",
+    },
 ]
 ASYNC_WRAPPED_TAG = "async_wrapper.js"  # idempotency tag
 

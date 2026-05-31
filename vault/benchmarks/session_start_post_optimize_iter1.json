@@ -1,0 +1,17 @@
+﻿{
+  "timestamp_iso": "2026-05-31T21:15:30Z",
+  "label": "post-optimize iteration 1 (DROP orphan reaper + WRAP auto-compact + WRAP tco_compact_gate)",
+  "host": "Windows 11 Pro 10.0.26200",
+  "hook_count": 14,
+  "total_serial_ms": 8317,
+  "individual_max_ms": 3737.3,
+  "verdict": "FAIL",
+  "slow_hooks": [
+    {"ms": 3737.3, "cmd_prefix": "async_wrapper.js -- tco_compact_gate.py --session-start-check (subprocess-spawn variance)"},
+    {"ms": 2353.8, "cmd_prefix": "auto-vault-bootstrap.js (NEW top blocker, was hidden behind orphan reaper)"},
+    {"ms": 415.4,  "cmd_prefix": "async_wrapper.js -- auto-compact-session-start-cleanup.ps1"},
+    {"ms": 383.9,  "cmd_prefix": "token-shield-refresh.js"},
+    {"ms": 363.5,  "cmd_prefix": "jit_warm.js"}
+  ],
+  "iteration_note": "Successful: orphan reaper 4696ms DROP confirmed. Wrappers detach (direct test 200-700ms). auto-vault-bootstrap.js emerged as new top blocker -- now added to optimizer WRAP_TARGETS for iteration 2."
+}

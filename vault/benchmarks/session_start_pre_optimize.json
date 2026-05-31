@@ -1,0 +1,17 @@
+﻿{
+  "timestamp_iso": "2026-05-31T14:43:00Z",
+  "label": "pre-optimize baseline (before optimize_session_start.py + register_global_hooks.py)",
+  "host": "Windows 11 Pro 10.0.26200",
+  "hook_count": 14,
+  "total_serial_ms": 7375,
+  "individual_max_ms": 4696.6,
+  "verdict": "FAIL",
+  "slow_hooks": [
+    {"ms": 4696.6, "cmd_prefix": "orphan-dev-server-reaper.ps1 (SessionStart DUPLICATE of SessionEnd-only script)"},
+    {"ms": 899.3,  "cmd_prefix": "auto-compact-session-start-cleanup.ps1"},
+    {"ms": 539.4,  "cmd_prefix": "tco_compact_gate.py --session-start-check"},
+    {"ms": 383.7,  "cmd_prefix": "jit_warm.js"},
+    {"ms": 183.2,  "cmd_prefix": "restart-target-consumer.js"}
+  ],
+  "note": "Measured pre-activation, before optimize_session_start.py + register_global_hooks.py ran."
+}

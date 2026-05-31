@@ -557,3 +557,22 @@ Owner runs `python tools/optimize_session_start.py` once.
 - `tools/optimize_session_start.py` (idempotent rewiring).
 - `hooks/async_wrapper.js` (detached spawner).
 - `tools/test_restart_and_lag.py` (V-LAG gates).
+- `vault/benchmarks/session_start_pre_optimize.json` (baseline).
+- `vault/benchmarks/session_start_post_optimize_iter1.json` (after
+  DROP + 2 WRAP, exposed auto-vault-bootstrap as new top blocker).
+- `vault/benchmarks/session_start_post_optimize_iter2.json` (after
+  async_wrapper.js stdio:'ignore' fix -- individual max 703-993 ms,
+  78% reduction from 4696 ms baseline).
+
+**Iteration evidence (sealed 2026-05-31 evening):**
+
+| Phase | Individual max (ms) | Serial total (ms) | Verdict |
+|---|---|---|---|
+| Baseline | 4696 (orphan reaper) | 7375 | FAIL |
+| Iter 1 (DROP + 2 WRAP) | 3737 (variance) | 8317 | FAIL |
+| Iter 2 (wrapper stdio fix) | 703-993 | 2269-3695 | WARN |
+| Iter 3 (Owner re-runs optimize, wraps auto-vault-bootstrap) | TBD | TBD | TBD |
+
+Honest residual: 4 Node hooks at 150-300 ms each form a Node-cold-start floor
+that can only be reduced by consolidating into a single hook-dispatcher
+process (separate roadmap item).

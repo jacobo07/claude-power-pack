@@ -60,34 +60,27 @@ try {
   const wrappedCmd = argv[sep + 1];
   const wrappedArgs = argv.slice(sep + 2);
 
-  // Capture stdin so the wrapped hook still gets the SessionStart payload.
-  // Strip UTF-8 BOM defensively (PowerShell test harnesses inject one;
-  // production Claude Code stdin is BOM-less but cheap to guard).
-  let payload = '';
+  // Drain our own stdin so subprocess.run(shell=True, input=...) does not
+  // sit waiting for the pipe to close. Discard the bytes -- wrapped hooks
+  // do NOT receive the original SessionStart payload (sealed 2026-05-31
+  // evening, BL-LAG-001 iteration 2 after empirical variance with
+  // stdio:['pipe', ...] holding the parent alive 200-3700 ms on Windows).
+  // Wrapped hooks must derive context from cwd / env, never from stdin.
   try {
-    const raw = fs.readFileSync(0, 'utf8');
-    payload = (raw && raw.charCodeAt(0) === 0xFEFF)
-      ? raw.slice(1) : raw;
+    fs.readFileSync(0);
   } catch (stdinErr) {
-    note('stdin read failed (continuing anyway)', stdinErr);
+    // Stdin already closed by parent -- expected, not an error.
+    note('stdin drain noop', stdinErr);
   }
 
-  // Spawn detached. Pipe the captured payload via stdin to the child.
+  // Spawn fully ignored stdio. On Windows this is the only configuration
+  // where child.unref() + process.exit(0) reliably returns under 100 ms
+  // even when the wrapped script runs for several seconds.
   const child = spawn(wrappedCmd, wrappedArgs, {
     detached: true,
-    stdio: ['pipe', 'ignore', 'ignore'],
+    stdio: 'ignore',
     windowsHide: true,
   });
-
-  // Write the captured payload and close stdin so the child does not block.
-  try {
-    if (payload) {
-      child.stdin.write(payload);
-    }
-    child.stdin.end();
-  } catch (writeErr) {
-    note('child stdin write failed', writeErr);
-  }
 
   child.unref();
   note(`SPAWNED detached pid=${child.pid || '?'} cmd=${wrappedCmd}`);
