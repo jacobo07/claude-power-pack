@@ -172,6 +172,9 @@ def main() -> int:
         ("jit-performance",
          [PY, str(PP / "tools" / "test_jit_performance.py")],
          60),
+        ("restart-and-lag",
+         [PY, str(PP / "tools" / "test_restart_and_lag.py")],
+         90),
     ]
 
     if args.row:

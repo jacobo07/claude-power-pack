@@ -103,6 +103,15 @@ def _hooks_to_register() -> list[dict]:
             "description":
                 "jit_skill_loader pre-warmer (mask first-prompt lag)",
         },
+        {
+            "event": "SessionStart",
+            "matcher": None,
+            "command":
+                f'node "{pp}/hooks/restart_resume.js"',
+            "marker": "restart_resume",
+            "description":
+                "/restart marker detector (universal kclaude fallback)",
+        },
     ]
 
 

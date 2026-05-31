@@ -429,3 +429,131 @@ is masking the FIRST-prompt cost. Subsequent prompts still pay the
 - `vault/benchmarks/jit_loader_lazy_plan.md` (honest analysis).
 - `hooks/jit_warm.js` (SessionStart pre-warmer).
 - `tools/test_jit_performance.py` (11 V-JIT-* gates).
+
+### UKDL TRAP T-RESTART-001 -- /restart Was a SIGKILL Not a Graceful Exit
+
+**Level:** UKDL Trap (technical learning, UX edge case).
+**Sealed:** 2026-05-31 evening.
+
+**Trap:** The /restart slash command on Windows was implemented as
+`Stop-Process -Force` on the parent claude.exe. The pane "restarted"
+only because the kclaude.bat MC-LAZ-26 wrapper detected the orphan
+exit and respawned -- semantically a crash-and-recover, not the
+Owner-expected "exit + restore". The Owner reported the original
+pre-2026-05-24 behavior was a literal `/exit` keystroke -> claude
+shuts down via its own slash command pipeline -> kclaude relaunches
+`claude --resume <uuid>` with full session state.
+
+**Root cause:** PowerShell child processes spawned by claude.exe
+share the parent's console (verified: `GetConsoleProcessList`
+returns BOTH PIDs). PowerShell's STDIN handle is a pipe (redirected
+for tool JSON-RPC) so `GetConsoleMode` on STDIN fails. The shared
+console input buffer is reachable via `CreateFileW("CONIN$")`, and
+`WriteConsoleInputW` injects KEY_EVENT records that claude reads as
+if the Owner typed them.
+
+**Correct fix:**
+
+1. `~/.claude/scripts/restart-claude.ps1` opens `CONIN$`, writes
+   key events for `/exit\r`, then exits. claude reads the events
+   from its TUI input loop and runs its own /exit handler.
+2. `~/.claude/state/restart_pending.json` is written as a UNIVERSAL
+   fallback marker (cwd + branch + sid + timestamp + note) for
+   panes whose parent is NOT kclaude.bat. UTF-8 NO BOM via
+   `[System.IO.File]::WriteAllText` + `UTF8Encoding($false)`.
+3. `hooks/restart_resume.js` (SessionStart) reads the marker. If
+   the cwd matches AND the marker is < 5 min old, it emits an
+   additionalContext continuation hint and consumes the marker.
+   The hook is BOM-tolerant on read (defends against legacy
+   writers that wrote UTF-8 WITH BOM).
+
+**Incorrect fix (antipattern):** "Just call Stop-Process". The
+SIGKILL completes faster but loses the graceful-exit path. claude
+may have pending state writes that benefit from /exit's shutdown
+sequence. The Session Safety Contract §1 is preserved either way
+(no .jsonl destroyed by automation) but graceful is strictly
+better.
+
+**Recognizer:** if /restart visibly "kills" the pane (a stack of
+exception output, or a process-terminated noise line) before
+kclaude relaunches, the implementation is using Stop-Process not
+CONIN$ injection.
+
+**Cross-ref:**
+
+- `~/.claude/scripts/restart-claude.ps1` (3 layers: CONIN$ inject
+  -> kclaude.bat flag -> universal marker file).
+- `~/.claude/commands/restart.md` (Win32 console architecture
+  rationale).
+- `hooks/restart_resume.js` (SessionStart marker consumer).
+- `tools/test_restart_and_lag.py` (V-RESTART-* + V-LAG gates).
+
+### UKDL TRAP T-LAG-001 -- SessionStart Hooks Block the Prompt
+
+**Level:** UKDL Trap (performance, UX).
+**Sealed:** 2026-05-31 evening.
+
+**Trap:** Claude Code waits for ALL SessionStart hooks to finish
+before yielding the prompt. On this host, the SessionStart
+registration accumulated to 7400 ms wall time (measured
+2026-05-31): the orphan-dev-server-reaper.ps1 (4700 ms) was the
+single worst entry, plus three others over 300 ms. The Owner
+perceived this as input lag -- the cursor did not respond when
+they started typing in a new pane.
+
+**Root cause -- three patterns:**
+
+1. **Duplicate registration.** The orphan reaper is documented in
+   the global CLAUDE.md as a `SessionEnd` hook (its purpose is
+   cleanup AT the end of a session, when there ARE orphans). It
+   was also registered on `SessionStart` -- a 4700 ms no-op gain
+   (no orphans exist at session start by definition).
+2. **Synchronous side-effecting hooks.** Owner-side cleanup
+   scripts like `auto-compact-session-start-cleanup.ps1` (900 ms)
+   and `tco_compact_gate.py --session-start-check` (540 ms) do
+   work that does NOT need to be synchronous at SessionStart, but
+   the wrappers run them inline so the prompt waits.
+3. **Per-hook Node cold-start floor.** Each Node hook pays
+   ~150-300 ms just to load V8 even when the hook body is trivial.
+   This is OS-level; the only mitigation is to consolidate hooks
+   into one Node process (hook-dispatcher pattern, separate
+   roadmap).
+
+**Correct fix:**
+
+1. `tools/optimize_session_start.py` (Owner-runnable, idempotent):
+   removes the duplicate orphan-reaper SessionStart entry (keeping
+   it on SessionEnd) AND wraps the two slow Owner-side hooks in
+   `hooks/async_wrapper.js`.
+2. `hooks/async_wrapper.js` (PP-internal): generic detached
+   spawner -- accepts the wrapped command after `--`, captures
+   stdin, writes to wrapped child stdin, spawns detached +
+   stdio:'ignore' + unref(), exits immediately. Net cost
+   ~30-100 ms regardless of wrapped script's wall time.
+3. `tools/measure_session_start.py`: empirical verifier. Reports
+   per-hook timing + verdict (OK if individual max < 1000 ms and
+   no individual > 300 ms).
+
+**Incorrect fix (antipattern):** "Lower the hook timeout" -- does
+not solve the wall time, only times out the hook entirely
+(disabling its function). "Move all hooks into PP" -- ignores that
+the Owner-side hooks have real reasons to exist; the right move is
+to detach them, not delete them.
+
+**Recognizer:** if the first prompt of a new pane is slow to take
+input (cursor unresponsive for 1-5 seconds) BUT subsequent typing
+is fast AND the FIRST-prompt processing lag was already fixed by
+T-JIT-001 -- the bottleneck is SessionStart hooks blocking the TTY.
+Confirm with `python tools/measure_session_start.py`.
+
+**Honest scope:** the optimization is a one-time Owner action
+(per HR-001 / classifier rule: ~/.claude/settings.json mutations
+require Owner-explicit invocation). PP ships the script; the
+Owner runs `python tools/optimize_session_start.py` once.
+
+**Cross-ref:**
+
+- `tools/measure_session_start.py` (empirical timer + verdict).
+- `tools/optimize_session_start.py` (idempotent rewiring).
+- `hooks/async_wrapper.js` (detached spawner).
+- `tools/test_restart_and_lag.py` (V-LAG gates).

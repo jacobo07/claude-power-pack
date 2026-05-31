@@ -135,3 +135,34 @@ Every Python script bound to a hot Claude Code event (`UserPromptSubmit`, `PreTo
 - `tools/test_jit_performance.py` (11 V-JIT-* gates)
 - `vault/benchmarks/jit_loader_lazy_plan.md` (honest analysis: imports were not the bottleneck)
 - `vault/knowledge_base/ukdl-universal.md` § UKDL TRAP T-JIT-001
+
+## SCS C22 -- Restart-and-Input-Latency-by-default (sealed 2026-05-31 evening, BL-RESTART-001 + BL-LAG-001)
+
+Every PP slash command that exits the current session AND every SessionStart hook that PP installs MUST meet the three criteria below, OR document the gap with empirical timing.
+
+1. **/restart NEVER terminates the pane.** It MUST drop the prior session via the platform's own exit pipeline (on Windows: `WriteConsoleInputW` of `/exit\r` into the shared CONIN$ console buffer). `Stop-Process -Force` is a fallback only, gated behind a verified failure of the graceful path (e.g., CONIN$ open returned INVALID_HANDLE_VALUE OR the write returned 0 events). Every /restart write a UNIVERSAL marker (`~/.claude/state/restart_pending.json` with cwd + sid + branch + timestamp) so a SessionStart hook can offer a continuation hint when the platform-specific resume wrapper (kclaude.bat on Windows) is not the parent.
+2. **PP-owned SessionStart hooks are fire-and-forget by default.** A hook that does watchdog / cleanup / warmup work MUST spawn the heavy work detached (`stdio:'ignore'` + `child.unref()`) and exit < 100 ms, OR be explicitly justified as needing synchronous emission of additionalContext. PP ships `hooks/async_wrapper.js` to retrofit Owner-side hooks that the classifier-blocked PP cannot rewrite directly.
+3. **Empirical timing gate.** Every PR that adds or modifies a SessionStart-registered hook MUST run `tools/measure_session_start.py` and document the before/after wall time. Target: individual hook < 300 ms, total < 1000 ms wall. Failures land WITH the timing evidence; never declared resolved on theory.
+
+**Benchmark obligation:** the timing script's JSON output (`--json`) gives a `verdict` field (OK / WARN / FAIL). The PR description quotes the verdict + the slow_hooks list when the verdict is not OK, and the WHY (e.g., "Node cold-start floor; consolidating into hook-dispatcher is a separate roadmap item").
+
+**One-time Owner activation** (per HR-001 -- PP cannot mutate ~/.claude/settings.json under auto-mode): the Owner runs the appropriate optimizer once per host. PP ships the scripts; the Owner invokes them:
+
+```
+python tools/register_global_hooks.py     # registers PP hooks
+python tools/optimize_session_start.py    # removes the duplicate
+                                          # orphan reaper +
+                                          # async-wraps slow hooks
+python tools/measure_session_start.py     # verify timing
+```
+
+**Reference implementation (sealed 2026-05-31):**
+
+- `~/.claude/scripts/restart-claude.ps1` -- CONIN$ inject + flag + marker + fallback.
+- `~/.claude/commands/restart.md` -- Win32 console architecture rationale.
+- `hooks/restart_resume.js` -- SessionStart marker consumer (cwd-guarded, BOM-tolerant).
+- `hooks/async_wrapper.js` -- generic detached spawner for slow hooks.
+- `tools/optimize_session_start.py` -- Owner-runnable, idempotent rewiring.
+- `tools/measure_session_start.py` -- empirical timer + verdict.
+- `tools/test_restart_and_lag.py` -- 10 V-RESTART-* + V-LAG gates.
+- `vault/knowledge_base/ukdl-universal.md` § UKDL TRAP T-RESTART-001 + T-LAG-001.
