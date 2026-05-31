@@ -265,3 +265,81 @@ DONE-gate in `apex-completion-standard.md`.
 - **UKDL-OSA-2026-05-29T20:39:43Z** [MEDIUM] claude-power-pack: Cascade guard requires CEPS event history to function -- bootstrap-silent is correct -- recognizer: Test expecting cascade signal on fresh repo: should return None and assert silence; complaining about empty map is wrong test
 
 - **UKDL-OSA-2026-05-29T20:39:50Z** [HIGH] claude-power-pack: Auto-install asymmetric CRITICAL vs HIGH -- CLAUDE.md is too important for blind HIGH writes -- recognizer: Plan calls for auto-install of HIGH severity bugs without Owner review step
+
+## Playwright MCP Plugin Transport Resilience (Option A) -- sealed 2026-05-31
+
+### PROCESS RULE PR-PW-001 -- Playwright MCP Transport Verification
+
+**Level:** Process Rule (mandatory protocol, recoverable, NOT Hard Rule).
+**Sealed:** 2026-05-31 (BL-PLAYWRIGHT-001, Option A).
+**Production bug:** Transport IPC disconnect after idle (procs alive, IPC dead).
+
+**Mandatory protocol before any session involving Playwright MCP:**
+
+1. `python tools/check_playwright_mcp.py`
+2. If watchdog NOT INSTALLED:
+   `powershell -File tools\playwright_watchdog.ps1 -Action start`
+3. If disconnected right now (manual quick-fix):
+   `powershell -File tools\playwright_stale_killer.ps1`
+   Wait ~3 seconds, then retry the Playwright command in Claude Code.
+
+**Activation signal:** Claude Code reports `mcp__plugin_playwright_*` tools
+as DISCONNECTED in the system-reminder ambient, while
+`Get-CimInstance Win32_Process -Filter "Name='node.exe'"` still shows N
+processes running `@playwright/mcp/cli.js`. That gap = transport stale
+(not a process crash).
+
+**Why Process Rule and NOT Hard Rule:** the bug is operational (interrupts
+flow) but does not destroy state, does not affect another service's
+production, is not a deploy. Hard Rule = STOP + Owner-reporting for
+data/deploy-class kills; Process Rule = check + fix for flow-class
+hiccups. Different severity, different gate semantics.
+
+**Cross-ref:**
+- `tools/playwright_stale_killer.ps1`
+- `tools/playwright_watchdog.ps1`
+- `tools/check_playwright_mcp.py`
+- `vault/knowledge_base/playwright-transport-repro.md` (empirical diagnosis)
+
+### UKDL TRAP T-PW-001 -- Playwright Plugin vs MCP Server Architectural Antipattern
+
+**Level:** UKDL Trap (technical learning, architectural edge case).
+**Sealed:** 2026-05-31.
+
+**Trap:** Assuming Playwright MCP is configured in `mcpServers` when in
+reality it is loaded via `enabledPlugins`. Modifying the wrong site
+yields a non-fix that compiles but does not move the bug.
+
+**Root cause -- two distinct Claude Code MCP mechanisms:**
+
+1. **`mcpServers`** in `~/.claude/settings.json` (or `claude_desktop_config.json`
+   for Claude Desktop): `{ command, args, timeout, env }`. Fully
+   user-configurable. Owner spawns and owns the lifecycle.
+2. **`enabledPlugins`** in `~/.claude/settings.json`: `{ <plugin_id>: true }`.
+   The plugin loader spawns the process(es) and owns the lifecycle. NO
+   user-settable `timeout` field exists for this path; the transport
+   timeout lives inside the Claude Code SDK + plugin's own code, not
+   in user config.
+
+If the tool name starts with `mcp__plugin_*` -> mechanism (2), not (1).
+Searching `mcpServers` for that name will return nothing useful; the
+fix must be at the process / transport layer, not the config layer.
+
+**Recognizer:**
+
+- Tool name in DISCONNECT notification contains `mcp__plugin_<pluginname>__*`
+  -> plugin path, not mcpServers path.
+- `settings.json` `enabledPlugins.<pluginname>@<source>: true` confirms (2).
+- `mcpServers` block in same `settings.json` does NOT contain that
+  pluginname -> further confirmation it is path (2).
+
+**Correct fix (Option A):** stale-process killer + Task Scheduler watchdog
++ health check + Process Rule for the operator. Plugin loader respawns
+fresh processes with clean transport on the next tool use.
+
+**Incorrect fix (antipattern):** adding `mcpServers.<pluginname>` to
+`settings.json` "to set a timeout". Two mechanisms then compete for
+the same name -- undefined behavior in the plugin loader. The bug
+does not move; the config grows; future debugging is harder.
+
+**Cross-ref:** same files as PR-PW-001.
