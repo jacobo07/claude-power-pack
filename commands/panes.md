@@ -1,0 +1,48 @@
+---
+name: panes
+description: List Cursor panes registered with CPC-OS (BL-CPCOS-001). Reads ~/.claude/state/cpc_os_registry.json (atomic single-source-of-truth) and prints pane_id, cwd, task, status, last heartbeat age. Stale panes (>300s since heartbeat) are demoted to status=stale; dead panes carry a permanent dead flag. Use this to see which panes are alive before issuing /restart or /switch-session.
+---
+
+# /panes -- list active Cursor panes
+
+## What it does
+
+Reads the CPC-OS pane registry at `~/.claude/state/cpc_os_registry.json`
+and prints a tabular view of every known pane:
+
+```
+PANE-ID                STATUS    TASK                              CWD                                LAST-HB
+test-pane-1            active    testing CPC-OS                    C:/Users/User/.claude/skills/...   12s ago
+pane-2                 stale     dataset-full-ingestion-and-build  C:/Users/User/.claude/skills/...   ~6m ago
+pane-3                 dead      old benchmark sweep               C:/Users/User/.claude/skills/...   --
+```
+
+Status semantics:
+- `active`  -- heartbeat within the last 300 s
+- `stale`   -- heartbeat older than 300 s (demoted by `mark_stale_panes`)
+- `dead`    -- explicitly marked dead via `registry.mark_dead(pane_id)`
+
+## Usage
+
+```
+/panes                          # list all
+/panes --active-only            # filter to active panes
+/panes --json                   # machine-readable
+```
+
+## Programmatic equivalent
+
+```python
+from modules.cpc_os import PaneRegistry, mark_stale_panes
+
+reg = PaneRegistry.load()
+mark_stale_panes(reg)                # demote anything past threshold
+for rec in reg.panes.values():
+    print(rec.pane_id, rec.status, rec.task, rec.last_heartbeat_at)
+```
+
+## Pairs with
+
+- `/switch-session` -- route a restart/switch intent to a specific pane,
+  using the same registry as source of truth. Both commands refuse to
+  act on a pane that the registry doesn't recognize.
