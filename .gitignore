@@ -13,6 +13,9 @@ npm-debug.log*
 
 # OVO session markers (power-pack scoped; hook reads at repo root)
 /.ovo_active
+
+# SessionStart hub health-check runtime evidence (BL-TOOL-AUTO-001)
+vault/health/*.last.txt
 /.ovo_inactive
 
 # OVO snapshot artifacts (generated per audit; only .gitkeep and verdicts.jsonl tracked)

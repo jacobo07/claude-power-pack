@@ -249,6 +249,61 @@ function hookAutoVaultBootstrap() {
 }
 
 // ---------------------------------------------------------------------------
+// Hooks 6-7: detached health checks WITH output capture (BL-TOOL-AUTO-001)
+//   Unlike hooks 2-5 (stdio:ignore fire-and-forget), these two write their
+//   stdout/stderr to vault/health/<tool>.last.txt so the run leaves on-disk
+//   evidence. Only compound_audit (137 ms) and drift_report (131 ms) qualify
+//   -- both compute-only, sub-200 ms, no network (PASO 0 timing 2026-06-01).
+//   Slower tools were reclassified to Task Scheduler (Mechanism F), never
+//   here, per the >1 s rule.
+// ---------------------------------------------------------------------------
+const COMPOUND_AUDIT_PY = path.join(PP_PATH, 'tools', 'compound_audit.py');
+const DRIFT_REPORT_PY = path.join(PP_PATH, 'tools', 'drift_report.py');
+const HEALTH_DIR = path.join(PP_PATH, 'vault', 'health');
+
+function detachedSpawnLogged(label, cmd, args, logPath) {
+  try {
+    if (isAbsolutePathString(cmd) && !fs.existsSync(cmd)) {
+      note('SKIP ' + label + ' (missing ' + cmd + ')');
+      return;
+    }
+    const targetArg = args.find(isAbsolutePathString);
+    if (targetArg && !fs.existsSync(targetArg)) {
+      note('SKIP ' + label + ' (missing target ' + targetArg + ')');
+      return;
+    }
+    fs.mkdirSync(path.dirname(logPath), { recursive: true });
+    const out = fs.openSync(logPath, 'w');
+    const child = spawn(cmd, args, {
+      detached: true,
+      stdio: ['ignore', out, out],
+      env: process.env,
+      cwd: PP_PATH,
+      windowsHide: true,
+    });
+    child.unref();
+    try {
+      fs.closeSync(out);
+    } catch (closeErr) {
+      void closeErr;
+    }
+    note('SPAWNED ' + label + ' pid=' + (child.pid || '?') + ' -> ' + logPath);
+  } catch (err) {
+    note(label + ' spawn failed', err);
+  }
+}
+
+function hookCompoundAudit() {
+  detachedSpawnLogged('compound_audit', PYTHON_EXE, [COMPOUND_AUDIT_PY],
+                      path.join(HEALTH_DIR, 'compound_audit.last.txt'));
+}
+
+function hookDriftReport() {
+  detachedSpawnLogged('drift_report', PYTHON_EXE, [DRIFT_REPORT_PY],
+                      path.join(HEALTH_DIR, 'drift_report.last.txt'));
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
@@ -266,6 +321,8 @@ function main() {
     hookAutoCompactCleanup();
     hookTcoCompactGate();
     hookAutoVaultBootstrap();
+    hookCompoundAudit();
+    hookDriftReport();
   } catch (err) {
     note('hub main caught', err);
   }
