@@ -178,6 +178,9 @@ def main() -> int:
         ("restart-and-lag",
          [PY, str(PP / "tools" / "test_restart_and_lag.py")],
          90),
+        ("dataset-build",
+         [PY, str(PP / "tools" / "test_dataset_build.py")],
+         60),
     ]
 
     if args.row:
