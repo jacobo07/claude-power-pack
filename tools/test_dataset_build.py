@@ -200,6 +200,53 @@ def main() -> int:
              p.is_file() and p.stat().st_size > COMMAND_MD_MIN_BYTES,
              f"{p.name} ({p.stat().st_size if p.is_file() else 0} bytes)")
 
+    # --- M11 BUCKET B gaps ---
+    print("\n[BLOCK 9] BUCKET B gaps (M11)")
+
+    # V-GAP-1: secret_rotation_advisor returns 0 actionable hits on
+    # the live PP tree (canonical AWS test examples filtered via the
+    # KNOWN_SAFE_VALUES allowlist; real CRITICAL credentials would
+    # fail this gate -- HR-SECRET-007 rotate-first applies if so).
+    from tools.secret_rotation_advisor import advise as _advise
+    advice = _advise(ROOT)
+    gate("V-GAP-1-ROTATION-ADVISOR",
+         isinstance(advice, list) and len(advice) == 0,
+         f"advise() returns {len(advice)} actionable hit(s) (0 expected)")
+
+    # V-GAP-2: dangerous commands registry
+    from modules.cascade_prevention.dangerous_cmds import (
+        is_dangerous, reasons,
+    )
+    gate("V-GAP-2-DANGEROUS-RM",
+         is_dangerous("rm -rf /") and not is_dangerous("ls -la"),
+         "rm -rf / flagged; ls -la safe")
+    gate("V-GAP-2-DANGEROUS-DROP",
+         is_dangerous("DROP TABLE users") and "destructive SQL DROP" in
+         reasons("DROP TABLE users"),
+         "DROP TABLE flagged + reason returned")
+
+    # V-GAP-3: HR quality audit
+    from tools.hr_quality_audit import audit as _hr_audit
+    hr_report = _hr_audit()
+    full_score = [r for r in hr_report if r["score"] >= 75]
+    gate("V-GAP-3-HR-AUDIT",
+         len(hr_report) >= 7 and len(full_score) >= 1,
+         f"{len(hr_report)} rules audited; {len(full_score)} score >= 75")
+
+    # V-GAP-4: pre-mortem cascade detector
+    from modules.cascade_prevention.pre_mortem import analyze as _premortem
+    risky = _premortem("Deploy to prod without running tests first")
+    clean = _premortem("Read the docs and take notes")
+    gate("V-GAP-4-PREMORTEM",
+         len(risky) >= 1 and len(clean) == 0,
+         f"risky plan -> {len(risky)} risks; clean plan -> 0")
+
+    # V-GAP-5: output contract Stop hook present
+    hook_path = ROOT / "hooks" / "output_contract_stop.js"
+    gate("V-GAP-5-OUTPUT-CONTRACT-HOOK",
+         hook_path.is_file() and hook_path.stat().st_size > COMMAND_MD_MIN_BYTES,
+         f"hook present ({hook_path.stat().st_size if hook_path.is_file() else 0} bytes)")
+
     # --- Summary ---
     print("\n" + "=" * 72)
     passes = sum(1 for _, ok, _ in results if ok)
