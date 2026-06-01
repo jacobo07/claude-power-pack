@@ -1,0 +1,82 @@
+{
+  "settings_path": "C:\\Users\\User\\.claude\\settings.json",
+  "hook_count": 14,
+  "individual_max_ms": 195.08779991883785,
+  "total_serial_ms": 887.7459999639541,
+  "slow_individual_threshold_ms": 300,
+  "total_target_ms": 1000,
+  "slow_hooks": [],
+  "results": [
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/auto-vault-bootstrap.js\"",
+      "ms": 28.667899896390736,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/token-shield-refresh.js\"",
+      "ms": 23.56040000449866,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/skills/claude-power-pack/modules/zero-crash/hooks/terminal-slot-recorder.js\"",
+      "ms": 28.325699968263507,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/learning-sentinel.js\"",
+      "ms": 22.52770005725324,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/lazarus-livesnap.js\"",
+      "ms": 24.00820003822446,
+      "rc": 1
+    },
+    {
+      "cmd": "node \"C:/Users/User/.claude/skills/claude-power-pack/hooks/async_wrapper.js\" -- powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:/Users/User/.claude/hooks/auto-compact-session-start-cleanup.ps1\"",
+      "ms": 148.9706999855116,
+      "rc": 0
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/restart-target-consumer.js\"",
+      "ms": 28.44989998266101,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/lazarus-stub-recover.js\"",
+      "ms": 26.690600090660155,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/lazarus-index-aggregator.js\"",
+      "ms": 27.07159996498376,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/skills/claude-power-pack/hooks/zero-command-bootstrap.js\"",
+      "ms": 24.062099982984364,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/skills/claude-power-pack/hooks/first-time-project.js\"",
+      "ms": 22.27030007634312,
+      "rc": 1
+    },
+    {
+      "cmd": "node \"C:/Users/User/.claude/skills/claude-power-pack/hooks/async_wrapper.js\" -- python \"C:\\Users\\User\\.claude\\skills\\claude-power-pack/tools/tco_compact_gate.py\" --session-start-check",
+      "ms": 195.08779991883785,
+      "rc": 0
+    },
+    {
+      "cmd": "node \"C:\\Users\\User\\.claude\\skills\\claude-power-pack/hooks/jit_warm.js\"",
+      "ms": 160.83960002288222,
+      "rc": 0
+    },
+    {
+      "cmd": "node \"C:\\Users\\User\\.claude\\skills\\claude-power-pack/hooks/restart_resume.js\"",
+      "ms": 127.21349997445941,
+      "rc": 0
+    }
+  ],
+  "verdict": "OK"
+}

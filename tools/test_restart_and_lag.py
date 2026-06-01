@@ -36,6 +36,11 @@ PP_ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
 MARKER = HOME / ".claude" / "state" / "restart_pending.json"
 
+# Characters of subprocess stdout to include in failure evidence -- enough
+# to identify the failure cause without flooding the gate report.
+STDOUT_PREVIEW_CHARS = 200
+SUBPROC_TIMEOUT_S = 15
+
 PY = sys.executable
 PASS = 0
 FAIL = 0
@@ -246,17 +251,31 @@ def gate_optimizer_dryrun():
         return
     proc = subprocess.run(
         [PY, str(p), "--dry-run"],
-        capture_output=True, text=True, timeout=15,
+        capture_output=True, text=True, timeout=SUBPROC_TIMEOUT_S,
     )
-    if (proc.returncode == 0
-            and "DROP SessionStart entry" in proc.stdout
-            and "WRAP" in proc.stdout
-            and "async_wrapper" in proc.stdout):
+    if proc.returncode != 0:
+        preview = proc.stdout[:STDOUT_PREVIEW_CHARS]
+        _fail("V-OPTIMIZER-DRYRUN",
+              f"rc={proc.returncode} stdout head={preview!r}")
+        return
+    has_planned_changes = (
+        "DROP SessionStart entry" in proc.stdout
+        and "WRAP" in proc.stdout
+        and "async_wrapper" in proc.stdout)
+    is_idempotent_noop = (
+        "No changes needed" in proc.stdout
+        or "already optimal" in proc.stdout)
+    if has_planned_changes:
         _ok("V-OPTIMIZER-DRYRUN",
             "dry-run lists DROP + WRAP changes")
+    elif is_idempotent_noop:
+        _ok("V-OPTIMIZER-DRYRUN",
+            "dry-run reports idempotent no-op "
+            "(post-activation state)")
     else:
+        preview = proc.stdout[:STDOUT_PREVIEW_CHARS]
         _fail("V-OPTIMIZER-DRYRUN",
-              f"rc={proc.returncode} stdout head={proc.stdout[:120]!r}")
+              f"unexpected output: {preview!r}")
 
 
 def gate_measure_runs():

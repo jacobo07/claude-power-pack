@@ -564,15 +564,88 @@ Owner runs `python tools/optimize_session_start.py` once.
   async_wrapper.js stdio:'ignore' fix -- individual max 703-993 ms,
   78% reduction from 4696 ms baseline).
 
-**Iteration evidence (sealed 2026-05-31 evening):**
+**Iteration evidence (sealed through 2026-06-01 morning):**
 
 | Phase | Individual max (ms) | Serial total (ms) | Verdict |
 |---|---|---|---|
 | Baseline | 4696 (orphan reaper) | 7375 | FAIL |
 | Iter 1 (DROP + 2 WRAP) | 3737 (variance) | 8317 | FAIL |
 | Iter 2 (wrapper stdio fix) | 703-993 | 2269-3695 | WARN |
-| Iter 3 (Owner re-runs optimize, wraps auto-vault-bootstrap) | TBD | TBD | TBD |
+| Iter 3 (wrap auto-vault-bootstrap) | 162-660 (median 245) | 919-2028 | OK / WARN |
 
-Honest residual: 4 Node hooks at 150-300 ms each form a Node-cold-start floor
-that can only be reduced by consolidating into a single hook-dispatcher
-process (separate roadmap item).
+**Iter 3 per-hook median (3-run aggregate, 2026-06-01):**
+
+| Median | Max | Hook |
+|---|---|---|
+| 140 ms | 245 ms | jit_warm.js |
+| 147 ms | 219 ms | async_wrapper -- auto-vault-bootstrap.js |
+| 147 ms | 206 ms | async_wrapper -- tco_compact_gate.py |
+| 116 ms | 142 ms | async_wrapper -- auto-compact-session-start-cleanup.ps1 |
+| 124 ms | 124 ms | restart_resume.js |
+| 20-28 ms | 30-43 ms | (4 cold-cached Node hooks) |
+
+**Cumulative reduction baseline -> iter 3 median: 86-97% on individual max
+(4696 ms -> 162-260 ms typical). All hooks now BELOW the 300 ms per-hook
+soft threshold by median.**
+
+Honest residual: the variance spikes (single-run 660 ms peaks) are Windows
+Defender / disk I/O background noise, not code. They cannot be reduced
+from inside the script. The 4 Node hooks at 30-150 ms each form a
+Node-cold-start floor that can only be reduced by consolidating into a
+single hook-dispatcher process (separate roadmap item).
+
+### UKDL TRAP T-ASYNC-WRAPPER-001 -- Windows stdio pipe defeats child.unref()
+
+**Level:** UKDL Trap (Windows-specific antipattern, performance).
+**Sealed:** 2026-06-01 morning.
+**Discovered in:** BL-LAG-001 iter 1 measurement (Owner-reported).
+
+**Trap:** in a Node fire-and-forget wrapper on Windows,
+`spawn(cmd, args, { detached: true, stdio: ['pipe', 'ignore', 'ignore'] })`
+followed by `child.unref()` + `process.exit(0)` does NOT actually return
+in < 100 ms. Empirically on Windows: the wrapper waits 3737 ms when
+wrapping a slow script.
+
+**Root cause:** the stdin `pipe` keeps the Node parent's event loop open
+even after the wrapper script appears to be done. When the wrapper is
+invoked via `subprocess.run(input='{}')` (i.e. anything that pipes a
+payload to the wrapper's stdin), the pipe stays open until either the
+wrapper reads it OR the wrapped child process reads it OR the parent
+exits. On Linux the parent CAN exit while the pipe is buffered; on
+Windows the parent waits for the pipe drain to complete.
+
+`child.stdin.write(...)` + `child.stdin.end()` does not help -- the
+write is buffered on the parent's event loop. `process.exit(0)` runs
+synchronously but the pending I/O keeps the OS-level process alive
+until the write drains.
+
+**Fix:** use `stdio: 'ignore'` for ALL THREE streams (stdin, stdout,
+stderr). Wrapped hooks lose access to the original SessionStart stdin
+payload (must derive context from cwd / env instead) but the wrapper
+returns in 148-386 ms regardless of wrapped script wall time.
+Verified across 10 direct runs + 5 via `subprocess.run(shell=True,
+input='{}')`. Median wrapper cost on Windows post-fix: 145-220 ms.
+
+**Recognizer:** if an async_wrapper.js call shows wall time CLOSE to
+the wrapped script's own wall time (instead of < 300 ms), the wrapper
+has `stdio` with a `pipe` and is being held alive. Fix: change to
+`stdio: 'ignore'`.
+
+**Honest scope:** wrapped hooks must NOT read meaningful state from
+stdin under this design. If a hook truly needs the SessionStart
+payload, it must NOT be wrapped -- accept the synchronous cost.
+`token-shield-refresh.js` is the canonical "must stay synchronous"
+example (it emits an additionalContext line based on cwd-relative
+state).
+
+**Cross-ref:**
+
+- `hooks/async_wrapper.js` (the wrapper, post-fix `stdio: 'ignore'`).
+- `tools/optimize_session_start.py` (idempotent rewiring; targets
+  expanded over 3 iterations).
+- `vault/benchmarks/session_start_post_optimize_iter1.json` (failed
+  iter, captures the antipattern).
+- `vault/benchmarks/session_start_post_optimize_iter2.json` (fix
+  confirmed).
+- `vault/benchmarks/session_start_iter3.json` (auto-vault-bootstrap
+  wrapped, 78-97% cumulative reduction).

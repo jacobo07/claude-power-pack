@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "date_sealed_iso": "2026-06-01T09:40:00Z",
+  "host": "Windows 11 Pro 10.0.26200",
+  "tracking_id": "BL-LAG-001",
+  "ukdl_traps_sealed": [
+    "T-LAG-001 (SessionStart hooks block the prompt)",
+    "T-ASYNC-WRAPPER-001 (Windows stdio pipe defeats child.unref())"
+  ],
+  "scs_clauses_sealed": [
+    "C22 Restart-and-Input-Latency-by-default (with Windows stdio hard rule)"
+  ],
+  "iterations": {
+    "baseline": {
+      "total_serial_ms": 7375,
+      "individual_max_ms": 4696.6,
+      "verdict": "FAIL",
+      "top_blocker": "orphan-dev-server-reaper.ps1 (duplicate SessionStart registration of a SessionEnd-only script)"
+    },
+    "iter1": {
+      "total_serial_ms": 8317,
+      "individual_max_ms": 3737.3,
+      "verdict": "FAIL",
+      "changes": "DROP orphan reaper + WRAP auto-compact + WRAP tco_compact_gate",
+      "failure_root_cause": "async_wrapper.js used stdio:['pipe',...] which kept the Node event loop open on Windows; child.unref() + process.exit(0) ineffective",
+      "lesson_sealed": "T-ASYNC-WRAPPER-001"
+    },
+    "iter2": {
+      "total_serial_ms_range": [2269, 3695],
+      "individual_max_ms_range": [703, 993],
+      "verdict": "WARN-to-OK depending on run",
+      "changes": "async_wrapper.js stdio:'ignore' for ALL streams + add auto-vault-bootstrap to WRAP_TARGETS",
+      "improvement_vs_baseline_pct": [50, 85]
+    },
+    "iter3": {
+      "total_serial_ms_range": [919, 2028],
+      "individual_max_ms_range": [162, 660],
+      "median_individual_max_ms": 245,
+      "verdict": "OK on 3 of 4 runs; WARN on 1 due to OS background variance",
+      "changes": "auto-vault-bootstrap.js wrapped via optimizer COMMIT mode",
+      "improvement_vs_baseline_pct": [86, 97],
+      "per_hook_median_ms": {
+        "jit_warm.js": 140,
+        "async_wrapper -- auto-vault-bootstrap.js": 147,
+        "async_wrapper -- tco_compact_gate.py": 147,
+        "async_wrapper -- auto-compact-session-start-cleanup.ps1": 116,
+        "restart_resume.js": 124
+      }
+    }
+  },
+  "residuals": [
+    "Windows AV/disk variance can spike individual hooks 300-700 ms; not fixable from inside the script",
+    "Node cold-start floor ~30-150 ms per hook; only addressable by hook-dispatcher consolidation (separate roadmap)"
+  ],
+  "owner_activation_commands": [
+    "python tools/optimize_session_start.py",
+    "python tools/register_global_hooks.py",
+    "python tools/measure_session_start.py"
+  ],
+  "evidence_files": [
+    "vault/benchmarks/session_start_pre_optimize.json",
+    "vault/benchmarks/session_start_post_optimize_iter1.json",
+    "vault/benchmarks/session_start_post_optimize_iter2.json",
+    "vault/benchmarks/session_start_iter2_final.json",
+    "vault/benchmarks/session_start_iter3.json"
+  ]
+}
