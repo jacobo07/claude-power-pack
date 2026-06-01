@@ -1,0 +1,131 @@
+{
+  "generated": "2026-06-01T13:37:01.806861+00:00",
+  "results": [
+    {
+      "name": "cache_hint_apply",
+      "ms": 11314.5,
+      "rc": 0,
+      "verdict": "DAEMON-ONLY(F)",
+      "sess_start": true,
+      "err": null
+    },
+    {
+      "name": "check_hook_status",
+      "ms": 196.7,
+      "rc": 1,
+      "verdict": "HOOK-OK",
+      "sess_start": false,
+      "err": null
+    },
+    {
+      "name": "compound_audit",
+      "ms": 137.1,
+      "rc": 0,
+      "verdict": "HOOK-OK",
+      "sess_start": false,
+      "err": null
+    },
+    {
+      "name": "drift_report",
+      "ms": 130.6,
+      "rc": 1,
+      "verdict": "HOOK-OK",
+      "sess_start": true,
+      "err": null
+    },
+    {
+      "name": "lazarus_orphan_purge",
+      "ms": 351.6,
+      "rc": 0,
+      "verdict": "WARN(B-signal)",
+      "sess_start": true,
+      "err": null
+    },
+    {
+      "name": "resume_reindex",
+      "ms": 231.3,
+      "rc": 0,
+      "verdict": "WARN(B-signal)",
+      "sess_start": true,
+      "err": null
+    },
+    {
+      "name": "session-snapshot",
+      "ms": 12000.0,
+      "rc": null,
+      "verdict": "DAEMON-ONLY(F)",
+      "sess_start": false,
+      "err": "timeout>12s"
+    },
+    {
+      "name": "vault_summarize",
+      "ms": 358.7,
+      "rc": 1,
+      "verdict": "WARN(B-signal)",
+      "sess_start": false,
+      "err": null
+    },
+    {
+      "name": "jit_ref_correlate",
+      "ms": 3237.6,
+      "rc": 0,
+      "verdict": "DAEMON-ONLY(F)",
+      "sess_start": false,
+      "err": null
+    },
+    {
+      "name": "normalize_paths",
+      "ms": 3098.8,
+      "rc": 1,
+      "verdict": "DAEMON-ONLY(F)",
+      "sess_start": false,
+      "err": null
+    },
+    {
+      "name": "oracle_heartbeat",
+      "ms": 1300.9,
+      "rc": 2,
+      "verdict": "DAEMON-ONLY(F)",
+      "sess_start": false,
+      "err": null
+    },
+    {
+      "name": "miner_v2",
+      "ms": null,
+      "rc": null,
+      "verdict": "DAEMON-ONLY(F) [not-run: orphan-risk]",
+      "sess_start": false,
+      "err": "skipped per hygiene rule"
+    },
+    {
+      "name": "sovereign_miner",
+      "ms": null,
+      "rc": null,
+      "verdict": "DAEMON-ONLY(F) [not-run: orphan-risk]",
+      "sess_start": false,
+      "err": "skipped per hygiene rule"
+    }
+  ],
+  "buckets": {
+    "hook_safe": [
+      "check_hook_status",
+      "compound_audit",
+      "drift_report"
+    ],
+    "warn_b": [
+      "lazarus_orphan_purge",
+      "resume_reindex",
+      "vault_summarize"
+    ],
+    "daemon_f": [
+      "cache_hint_apply",
+      "jit_ref_correlate",
+      "miner_v2",
+      "normalize_paths",
+      "oracle_heartbeat",
+      "session-snapshot",
+      "sovereign_miner"
+    ],
+    "error": []
+  }
+}
