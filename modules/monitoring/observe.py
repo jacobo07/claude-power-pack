@@ -23,8 +23,14 @@ from __future__ import annotations
 import argparse
 import sys
 import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
+
+# S1.3 parallel probe doctrine: each project probe is a real network
+# call; wall time collapses to max(probe) when fanned out. Cap at 8
+# workers to honor the same harness pipe pressure cap as verify_spp.
+PROBE_MAX_WORKERS = 8
 
 THIS_DIR = Path(__file__).resolve().parent
 if str(THIS_DIR) not in sys.path:
@@ -73,27 +79,62 @@ def _on_alert_callback(state: MonitorState, alert_kind: str, config: dict[str, A
 # ---------------------------------------------------------------------------
 
 
+def _probe_one(project: str, repo_root: Path | None) -> tuple[str, tuple[str, str, str, str], bool]:
+    """Single-project probe. Returns (project, row_tuple, is_down).
+
+    Thread-safe: each invocation does its own load_config + poll_once.
+    The emit_alert side-effect writes to project-specific vault paths so
+    different projects do not race on the same file.
+    """
+    try:
+        config = load_config(project, repo_root)
+        state, alert_kind = poll_once(project, repo_root)
+        if alert_kind:
+            emit_alert(project, alert_kind, state.last_evidence or "",
+                       config, repo_root=repo_root)
+        row = (project, state.status, state.last_check_iso,
+               state.last_evidence[:80])
+        return project, row, (state.status == STATUS_DOWN)
+    except (FileNotFoundError, ValueError) as exc:
+        row = (project, "ERROR", "",
+               f"{type(exc).__name__}: {exc}")
+        return project, row, True
+
+
 def cmd_once(args: argparse.Namespace, repo_root: Path | None = None) -> int:
     projects = _resolve_projects(args.project, repo_root)
     if not projects:
         print("[observe] no monitor configs found in vault/monitor/", file=sys.stderr)
         return 4
 
-    rows: list[tuple[str, str, str, str]] = []
+    # S1.3 parallel probe doctrine: wall = max(probe), not sum.
+    rows_by_project: dict[str, tuple[str, str, str, str]] = {}
     any_down = False
-    for project in projects:
-        try:
-            config = load_config(project, repo_root)
-            state, alert_kind = poll_once(project, repo_root)
-            if alert_kind:
-                emit_alert(project, alert_kind, state.last_evidence or "", config, repo_root=repo_root)
-            rows.append((project, state.status, state.last_check_iso, state.last_evidence[:80]))
-            if state.status == STATUS_DOWN:
-                any_down = True
-        except (FileNotFoundError, ValueError) as exc:
-            rows.append((project, "ERROR", "", f"{type(exc).__name__}: {exc}"))
-            any_down = True
+    workers = min(PROBE_MAX_WORKERS, len(projects))
+    if workers <= 1:
+        # Single project, no benefit from threading.
+        _, row, is_down = _probe_one(projects[0], repo_root)
+        rows_by_project[projects[0]] = row
+        any_down = is_down
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            futures = {ex.submit(_probe_one, p, repo_root): p
+                       for p in projects}
+            for fut in as_completed(futures):
+                try:
+                    project, row, is_down = fut.result()
+                except Exception as exc:  # noqa: BLE001
+                    project = futures[fut]
+                    row = (project, "ERROR", "",
+                           f"executor: {type(exc).__name__}: {exc}")
+                    is_down = True
+                rows_by_project[project] = row
+                if is_down:
+                    any_down = True
 
+    # Render in the originally-requested order (sorted projects),
+    # not finish order.
+    rows = [rows_by_project[p] for p in projects if p in rows_by_project]
     _print_status_table(rows)
     print("\nP2.3 health-all absorbed by --once flag (one snapshot, N projects).")
     return 1 if any_down else 0

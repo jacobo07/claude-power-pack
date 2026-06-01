@@ -1,0 +1,244 @@
+[
+  {
+    "timestamp_iso": "2026-06-01T14:35:25.249250+00:00",
+    "commit": "unknown",
+    "label": "S0_quick_smoke",
+    "quick": true,
+    "results": {
+      "tco_gate_ms": 1494.7,
+      "tco_gate_rc": 0,
+      "tco_gate_head": "context-pct (estimate): 7%  [warn>=70%]",
+      "tco_gate_outer_ms": 1497.0,
+      "tis_report_ms": 1835.3,
+      "tis_report_rc": 0,
+      "tis_report_lines": 4,
+      "tis_report_outer_ms": 1836.0,
+      "osa_dispatcher_ms": 625.1,
+      "osa_dispatcher_rc": 0,
+      "osa_dispatcher_outer_ms": 625.0,
+      "proactive_dispatch_ms": 34.4,
+      "proactive_dispatch_advisories": 0,
+      "proactive_dispatch_outer_ms": 373.0,
+      "anti_patterns_ms": 61.1,
+      "anti_patterns_hits": 22,
+      "anti_patterns_outer_ms": 885.0,
+      "ceps_record_ms": 1.3,
+      "ceps_record_outer_ms": 3247.0,
+      "session_hub_ms": 596.6,
+      "session_hub_rc": 0,
+      "session_hub_stdout_bytes": 17,
+      "session_hub_direct_outer_ms": 597.0,
+      "never_again_ms": 2.1,
+      "never_again_rows": 10,
+      "never_again_outer_ms": 456.0
+    },
+    "errors": {}
+  },
+  {
+    "timestamp_iso": "2026-06-01T14:42:28.280795+00:00",
+    "commit": "unknown",
+    "label": "S0_baseline",
+    "quick": false,
+    "results": {
+      "session_start_worst_ms": 440.019000088796,
+      "session_start_total_ms": 884.3733002431691,
+      "session_start_verdict": "WARN",
+      "session_start_hook_count": 10,
+      "session_start_slow": 1,
+      "session_start_outer_ms": 1014.0,
+      "jit_cold_start_avg_ms": 170.1,
+      "jit_cold_start_min_ms": 140.3,
+      "jit_cold_start_max_ms": 226.8,
+      "jit_cold_start_stdev": 33.6,
+      "jit_cold_start_outer_ms": 851.0,
+      "uqf_scan_ms": 440.7,
+      "uqf_scan_rc": 0,
+      "uqf_scan_lines": 7,
+      "uqf_scan_outer_ms": 441.0,
+      "verify_spp_ms": 300869.0,
+      "verify_spp_rc": -1,
+      "verify_spp_pass": 0,
+      "verify_spp_fail": 0,
+      "verify_spp_outer_ms": 300901.0,
+      "pytest_total_ms": 9901.3,
+      "pytest_rc": 0,
+      "pytest_summary": "\u001b[32m\u001b[32m\u001b[1m43 passed\u001b[0m\u001b[32m in 4.09s\u001b[0m\u001b[0m",
+      "pytest_outer_ms": 9943.0,
+      "vgate_total_ms": 71204.1,
+      "vgate_count": 23,
+      "vgate_passes": 19,
+      "vgate_fails": 4,
+      "vgate_suites": [
+        {
+          "suite": "test_ceps_edge_cases.py",
+          "ms": 939.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_ceps_closed_loop.py",
+          "ms": 1426.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_atomic_branding.py",
+          "ms": 5186.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_jit_performance.py",
+          "ms": 10114.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_lateral_thinking.py",
+          "ms": 7451.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_mirror_parity.py",
+          "ms": 1136.0,
+          "rc": 1,
+          "verdict": "FAIL(rc=1)"
+        },
+        {
+          "suite": "test_monitoring.py",
+          "ms": 4172.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_manual_tools_automation.py",
+          "ms": 11044.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_karimo.py",
+          "ms": 20698.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_hard_rules.py",
+          "ms": 29879.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_ceps_full_cycle.py",
+          "ms": 41017.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_speckit.py",
+          "ms": 3843.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_osa.py",
+          "ms": 27172.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_restart_and_lag.py",
+          "ms": 16703.0,
+          "rc": 1,
+          "verdict": "FAIL(rc=1)"
+        },
+        {
+          "suite": "test_tis_core.py",
+          "ms": 1803.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_playwright_resilience.py",
+          "ms": 25634.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_vague_lint.py",
+          "ms": 2602.0,
+          "rc": 1,
+          "verdict": "FAIL(rc=1)"
+        },
+        {
+          "suite": "test_tis_e2e.py",
+          "ms": 4098.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_proactive_agents.py",
+          "ms": 32646.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_zero_command.py",
+          "ms": 8397.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_compact_rescue.py",
+          "ms": 60170.0,
+          "rc": -1,
+          "verdict": "FAIL(rc=-1)"
+        },
+        {
+          "suite": "test_tco.py",
+          "ms": 20922.0,
+          "rc": 0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_uqf.py",
+          "ms": 24254.0,
+          "rc": 0,
+          "verdict": "PASS"
+        }
+      ],
+      "vgate_suites_outer_ms": 71236.0,
+      "tco_gate_ms": 1445.3,
+      "tco_gate_rc": 0,
+      "tco_gate_head": "context-pct (estimate): 7%  [warn>=70%]",
+      "tco_gate_outer_ms": 1447.0,
+      "tis_report_ms": 1255.1,
+      "tis_report_rc": 0,
+      "tis_report_lines": 4,
+      "tis_report_outer_ms": 1255.0,
+      "osa_dispatcher_ms": 1129.4,
+      "osa_dispatcher_rc": 0,
+      "osa_dispatcher_outer_ms": 1130.0,
+      "proactive_dispatch_ms": 43.2,
+      "proactive_dispatch_advisories": 0,
+      "proactive_dispatch_outer_ms": 1172.0,
+      "monitoring_once_ms": 4429.0,
+      "monitoring_rc": 1,
+      "monitoring_outer_ms": 4429.0,
+      "anti_patterns_ms": 79.0,
+      "anti_patterns_hits": 22,
+      "anti_patterns_outer_ms": 700.0,
+      "ceps_record_ms": 1.0,
+      "ceps_record_outer_ms": 1515.0,
+      "session_hub_ms": 1072.4,
+      "session_hub_rc": 0,
+      "session_hub_stdout_bytes": 17,
+      "session_hub_direct_outer_ms": 1073.0,
+      "never_again_ms": 0.8,
+      "never_again_rows": 10,
+      "never_again_outer_ms": 1733.0
+    },
+    "errors": {}
+  }
+]

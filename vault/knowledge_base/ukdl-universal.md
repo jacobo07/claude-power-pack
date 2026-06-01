@@ -753,6 +753,193 @@ above 245 ms median) are this trap, not a regression in the fixes.
 
 ---
 
+### UKDL TRAP T-PERF-VERIFY-SPP-PARALLEL-001 -- Naive ThreadPoolExecutor on verify_spp regresses wall time
+
+**Level:** UKDL Trap (process-architecture, fixable but non-trivial).
+**Sealed:** 2026-06-01 BL-BENCH-ROADMAP S1.1 attempt.
+
+**Trap:** wrapping the `verify_spp.py` row runner in
+`ThreadPoolExecutor(max_workers=6)` should -- on paper -- collapse
+21 sequential rows into max(row_time). Empirically on this Windows
+host it produced the OPPOSITE: a clean serial run measured 155 s
+(audit commit 61d7807); the same machine with the parallel patch
+measured **>300 s** (bench_all cap hit). 1.94x REGRESSION.
+
+**Root cause hypotheses (ordered by likelihood):**
+
+1. **Shared subprocess resource contention.** Multiple rows spawn
+   `python` / `node` test harnesses that read the same files
+   (`~/.claude/settings.json`, vault/state, vault/benchmarks). Under
+   6-way parallel load the kernel file cache thrashes and per-row
+   wall time GROWS rather than shrinks.
+2. **Windows process-creation amplification.** Spawning 6
+   subprocess.run calls within milliseconds of each other on
+   Windows is materially heavier than POSIX fork+exec; the OS
+   process-creation lock + AV scan trigger (T-WIN-AV-001) combine.
+3. **Per-row timeout amplification.** When ANY row hits its own
+   timeout (the 4 STRICT FAIL rows -- mirror-parity, drift-report,
+   paths+secrets, hooks-registration -- each hit a 15-30 s cap),
+   the parallel runner still waits for the slowest cap rather than
+   short-circuiting.
+4. **L3 row contention.** The `l3-engine` row has a 360 s budget
+   and spawns Node + heavy file I/O. Under parallel load it may
+   grow further or block on shared resources used by another row.
+
+**Recognizer:** wall time on `python tools/verify_spp.py` exceeds
+the prior serial baseline by 50 % or more after a
+ThreadPoolExecutor / multiprocessing patch -- AND no individual row
+shows a faster `elapsed` line than its serial counterpart.
+
+**Fix (immediate):** rollback the patch. The serial path is the
+default; the proven 155 s wall time is the target floor under the
+current row set.
+
+**Fix (architectural -- future work, NOT recommended for one shot):**
+
+- Identify the slowest 2 rows empirically and run THOSE serially at
+  the end; pool the remaining ~19 short rows.
+- Cap PROBE_MAX_WORKERS at 2 (matches the bash-bridge-doctrine
+  recommendation for mutating-or-spawning Windows tool calls).
+- Add per-row barrier / fence so AV cold-scan is not multiplied.
+
+**Decision rule:** do NOT attempt verify_spp parallelization again
+without first writing a per-row timing profile under controlled
+load, and only attempt with PROBE_MAX_WORKERS <= 2. The 90 %
+reduction theoretical was overoptimistic; realistic upper bound on
+this Windows + this AV + this row mix is ~30 % under tightly
+controlled parallel mode.
+
+**Cross-ref:**
+
+- `vault/benchmarks/audit_verify_spp_2026-06-01T12-47-42Z.json`
+  (sealed serial baseline 155.3 s).
+- `vault/benchmarks/ledger.json` `S0_baseline` entry
+  (post-attempt-1 measurement showing >300 s timeout).
+- `feedback_parallel_read_partial_transport_fail.md` (the harness
+  pipe pressure that capped my workers=6 attempt).
+
+---
+
+### UKDL TRAP T-TOOL-SENTINEL-RECOVERY-001 -- "[Tool result missing due to internal error]" recovery is forensic, not retry
+
+**Level:** UKDL Trap (transversal, every repo, every host).
+**Sealed:** 2026-06-01 BL-BENCH-ROADMAP iteration after Owner
+re-reported "me pasa en todos mis repos" cross-project.
+
+**Trap:** a tool call returns `[Tool result missing due to internal
+error]` (the universal-drop sentinel). The naive instinct is to
+retry the same call. On a long session that often results in:
+
+- the underlying work DID land (Write / Edit / Bash / PowerShell
+  side-effects already occurred), and a naive retry double-applies
+  the operation; OR
+- the underlying work did NOT land, and a naive retry hits the same
+  multiplex-frame-budget condition and drops again, producing a
+  same-shape failure twice in a row (Anti-Antipattern Rule 12
+  violation).
+
+Worst case: the dropped tool call combines with a concurrent
+`<task-notification>` and the agent yields a turn with NO assistant
+text. The Owner sees a frozen screen and only ESC recovers. This
+is the canonical "dead screen" hang the Owner re-reports
+cross-repo.
+
+**Root cause (transversal, not fixable from inside the agent):**
+
+The Claude Code harness multiplexes tool-result frames over a
+single bidirectional channel. At high context length AND under
+PreToolUse hook fanout (7-15 hooks per Edit/Bash, 3 per Read),
+the frame budget pressure can drop the LAST frame in a wide
+parallel fan-out OR a solo frame on a hooks-decorated tool call.
+The MSYS2 bridge that backs `Bash` on Windows compounds this -- it
+is a known-fragile transport (see `feedback_bash_bridge_*`).
+
+**Recognizer:** the literal string
+`[Tool result missing due to internal error]` in a tool result
+block. ALWAYS verify state directly before any further action.
+
+**Forensic recovery (mandatory, not optional):**
+
+1. **DO NOT retry the same tool call.** Re-issuing the exact same
+   shape almost always reproduces the failure on the same multiplex
+   frame OR double-applies a side-effect.
+2. **Verify state directly.** For `Edit` / `Write`: `Read` the
+   target file to see if the change landed. For `Bash` /
+   `PowerShell`: check the side-effect (file created? commit
+   landed? service started?) via a DIFFERENT tool (Glob, Read,
+   git rev-parse, etc).
+3. **If state shows the work landed:** acknowledge and continue;
+   the sentinel was a frame drop AFTER the work, not before.
+4. **If state shows the work did NOT land:** re-issue the operation
+   via a DIFFERENT tool family. Edit -> Write (whole-file rewrite).
+   Bash -> PowerShell (different transport). Multi-file batch ->
+   single-file at a time.
+5. **If a `<task-notification>` arrived in the same turn:** the
+   "(sentinel + notification) = dead screen" rule kicks in. The
+   turn MUST end with assistant text. Always name the dropped
+   frame, name the verification done, name the next concrete
+   action.
+
+**Transversal mitigations the agent CAN apply (already in CLAUDE.md
+Background Process Hygiene + bash-bridge-doctrine-v2):**
+
+- Cap parallel reads at 4 on Windows.
+- Same-file Edits always sequential.
+- Producer-consumer pairs always sequential (mutation batch ->
+  consumption batch).
+- Agent / background-spawn tool calls always SOLO in their batch.
+- For long mutations: prefer `Write` (whole-file) over chained
+  `Edit` calls when the file is small enough -- Write produces
+  ONE tool-result frame; chained Edits produce N frames each at
+  risk of drop.
+- Use PowerShell instead of Bash for `git` / `python` / `node` /
+  `mix` on Windows.
+
+**Transversal mitigations the agent CANNOT apply (out of scope --
+require harness or transport layer change):**
+
+- Make the multiplex frame budget unbounded.
+- Replace the MSYS2 Bash bridge with a native Win32 sh.
+- Disable PreToolUse hook fanout to reduce frame pressure.
+- Force AV exclusion on `C:\Users\User\.claude\`.
+
+These are Owner-side OR Anthropic-side concerns. The PP cannot
+ship a fix for the harness itself.
+
+**Anti-Waiting closure (sealed reinforcement, 2026-06-01):**
+
+NEVER end a turn with a passive "Waiting..." / "Standing by..." /
+"The harness will notify me when..." sentence. This combines with
+the sentinel + task-notification frame interaction to produce the
+exact dead-screen hang the Owner reports across all repos. The
+turn MUST end with either:
+
+- a concrete artifact landed this turn (commit hash, file path
+  written, gate passed), OR
+- a concrete question requiring Owner action (a question mark, a
+  decision needed), OR
+- a concrete next-action sentence ("Running X next." -- not "I'll
+  run X when..."). Mandatory.
+
+This is Anti-Waiting Rule G of CLAUDE.md, restated for emphasis
+because the canonical hang reproduced this session.
+
+**Cross-ref:**
+
+- `~/.claude/CLAUDE.md` § Anti-Waiting doctrine (rules A-G).
+- `memory/feedback_bash_bridge_transversal_hang.md` (the bash
+  bridge cousin failure mode).
+- `memory/feedback_parallel_read_partial_transport_fail.md`
+  (the same-shape sentinel in parallel-read fanouts).
+- `memory/feedback_opaque_tool_internal_error.md` (prior wording
+  of the recovery rule).
+- This session's specific reproduction: SOLO Edit on
+  `tools/verify_spp.py` after a 100+ tool-call session, sentinel
+  fired, `git checkout HEAD -- <file>` confirmed the Edit had not
+  landed (state verification > retry).
+
+---
+
 ## Compact 95% Hang Recovery (BL-COMPACT-001 -- sealed 2026-06-01)
 
 Owner-reported cross-cycle bug: `/compact` reaches ~95% progress
@@ -856,3 +1043,5 @@ explicitly forbidden.
 - `clear-snooze` action drops the file on demand.
 
 - **UKDL-OSA-2026-06-01T12:35:36Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+- **UKDL-OSA-2026-06-01T14:41:08Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
