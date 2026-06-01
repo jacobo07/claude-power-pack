@@ -1,0 +1,9 @@
+{
+  "name": "docs_output",
+  "description": "Documentation contract: title + non-empty content + no docs-slop tokens.",
+  "checks": [
+    {"type": "exists", "field": "title", "weight": 30},
+    {"type": "exists", "field": "content", "weight": 40},
+    {"type": "no_slop", "field": "content", "slop_set": "docs", "weight": 30}
+  ]
+}

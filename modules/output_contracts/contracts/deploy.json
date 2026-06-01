@@ -1,0 +1,10 @@
+{
+  "name": "deploy_output",
+  "description": "Deploy contract: health endpoint + tests pass + rollback plan + staging pass.",
+  "checks": [
+    {"type": "exists", "field": "health_endpoint", "weight": 20},
+    {"type": "passes_test", "field": "tests", "weight": 30},
+    {"type": "exists", "field": "rollback_plan", "weight": 30},
+    {"type": "passes_test", "field": "staging", "weight": 20}
+  ]
+}

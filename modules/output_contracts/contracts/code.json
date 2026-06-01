@@ -1,0 +1,10 @@
+{
+  "name": "code_output",
+  "description": "Production code contract: file present + syntax OK + tests pass + no slop tokens.",
+  "checks": [
+    {"type": "exists", "field": "file_path", "weight": 20},
+    {"type": "passes_test", "field": "syntax", "weight": 20},
+    {"type": "passes_test", "field": "tests", "weight": 30},
+    {"type": "no_slop", "field": "content", "slop_set": "code", "weight": 30}
+  ]
+}

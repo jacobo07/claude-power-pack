@@ -1,0 +1,9 @@
+{
+  "name": "test_output",
+  "description": "Test contract: assertions present + coverage measured + no skip/xfail markers.",
+  "checks": [
+    {"type": "exists", "field": "assertions", "weight": 40},
+    {"type": "exists", "field": "coverage", "weight": 30},
+    {"type": "no_slop", "field": "content", "slop_set": "test", "weight": 30}
+  ]
+}
