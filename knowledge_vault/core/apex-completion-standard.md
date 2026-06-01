@@ -2905,3 +2905,44 @@ sibling row in `verify_spp.py`. The Process Rule + Trap
 templates in UKDL are reusable as-is with name substitution.
 
 Sealed 2026-06-01 (BL-COMPACT-001, Owner-approved plan inline).
+
+
+## PP Dataset Baseline Axis (sealed 2026-06-01, BL-DATASET-BUILD -- apex axis v15)
+
+A PP install is Apex-complete on the PP Dataset Baseline Axis iff:
+
+1. `vault/knowledge_base/pp_dataset/` contains the 11-file ingestion
+   of `PP_DATASET_20260531T122242Z.md` (Parts I-X + MASTER TOC).
+2. The 10 modules derived from the dataset (M1-M10) each ship under
+   `modules/` with done-gate-proven V-tests.
+3. `tools/test_dataset_build.py` returns `DATASET_BUILD_PASS=25/25`
+   exit 0 in cold state.
+4. Namespaced Hard Rules (HR-SECRET-001..007 minimum) are installed
+   in `CLAUDE.md` between the PP-HARD-RULES sentinels.
+5. The writer (`modules/hard_rules/writer.py`) recognizes
+   `HR-NAMESPACE-NNN` IDs in addition to legacy `HR-NNN`.
+
+Cross-ref: `vault/knowledge_base/apex_baseline_doctrine.md` SCS C25.
+
+
+## Security-First Axis (sealed 2026-06-01, BL-SECRET-001 -- apex axis v16)
+
+A PP install is Apex-complete on the Security-First Axis iff:
+
+1. `modules/secret_firewall/` is importable + the 9-pattern detector
+   returns CRITICAL on a fake Anthropic-shaped key.
+2. `hooks/secret_firewall_gate.js` is present (registration to
+   `~/.claude/settings.json` is Owner-side per HR-001).
+3. The PreToolUse hook returns `continue:false` on a payload
+   containing a CRITICAL pattern (verified by 7/7 V-gates).
+4. The Universal Redaction Bus (URB) is the egress sieve: any text
+   that might transit a logger, audit file, or sub-agent prompt
+   passes through `redact_for_log()` first.
+5. The BOM-strip discipline (`vault/lessons/powershell-bom-to-native-exe.md`)
+   is observed in every Node hook reading stdin -- empirically proven
+   to be the difference between a working firewall and a silent no-op.
+6. HR-SECRET-001..007 are installed and surface in
+   `bug_to_hardrule.py --list`.
+
+Cross-ref: `vault/lessons/powershell-bom-to-native-exe.md`,
+`modules/secret_firewall/detector.py`, `CLAUDE.md` HR-SECRET-001..007.

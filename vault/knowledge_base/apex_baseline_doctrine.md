@@ -220,6 +220,62 @@ python tools/measure_session_start.py     # verify post-hub OK
 
 Sealed BL-SESSION-HUB-001. Extends SCS C22, does not replace it.
 
+## SCS C25 -- Dataset-Baseline-by-default (sealed 2026-06-01, BL-DATASET-BUILD)
+
+Every system built using the Power Pack after 2026-06-01 MUST conform
+to the Dataset Baseline -- the empirical floor proven by the
+PP_DATASET_20260531T122242Z.md ingestion (15,425 lines, 10 Parts I-X
++ MASTER TOC, all under `vault/knowledge_base/pp_dataset/`):
+
+1. **Spec in vault first**: the system's capability spec lands in
+   `vault/knowledge_base/pp_dataset/` OR `vault/specs/` BEFORE the
+   first line of production code is written. Code that lands without
+   a corresponding spec is provisional, not Apex.
+
+2. **Gap-prioritized**: an actionable gap list with explicit ROI /
+   priority lives alongside the spec. Gaps not on the list are
+   implicitly out of scope.
+
+3. **Hard Rules derived before DONE**: every architectural decision
+   that risks a future bug is encoded as a namespaced Hard Rule
+   (`HR-<NAMESPACE>-NNN`) and installed in `CLAUDE.md` before the
+   capability is marked DONE. Reference series this commit:
+   HR-SECRET-001..007.
+
+4. **V-tests empirical in cold state**: every capability ships a
+   V-gate test that passes in cold state with no prior context. The
+   consolidated suite is `tools/test_dataset_build.py`; new modules
+   append at least one representative gate before DONE.
+
+5. **OD-aligned**: budgets, thresholds, and escalation flow conform
+   to the OD1..OD7 Owner-decisions table (compacted plan 2026-06-01).
+   OD3 budgets: S=$5 / M=$15 / L=$30 / XL=$100.
+   OD7 escalation: 2 fails -> Opus once, 3 -> STOP.
+
+**Sealed evidence (this baseline cycle):**
+
+| Module                  | Files | V-gates |
+|---|---|---|
+| Secret Firewall (M1)    |  5    |  9 |
+| PreToolUse hook (M2)    |  1    |  7 |
+| Hard Rules (M3)         |  2    |  3 |
+| Cascade Prevention (M4) |  5    | 14 |
+| Output Contracts (M5)   |  6    | 12 |
+| One-Shot Compiler (M6)  |  4    | 14 |
+| Cost Collapse (M7)      |  2    | 11 |
+| Backlog Autopilot (M8)  |  3    | 11 |
+| CPC-OS MVP (M9)         |  6    | 15 |
+| Slash commands (M10)    |  2    |  1 |
+
+**Consolidated done-gate**: `python tools/test_dataset_build.py` ->
+`DATASET_BUILD_PASS=25/25` exit 0.
+
+The PP_DATASET file is the quality floor for all future PP-built
+systems. A new system is NOT Apex-complete until it demonstrates
+parity with this baseline on the five clauses above.
+
+Sealed BL-DATASET-BUILD 2026-06-01.
+
 ## SCS C26 -- Benchmark-Driven-by-default (sealed 2026-06-01, BL-BENCH-ROADMAP-001)
 
 Every PP module that touches a hot path (SessionStart, UserPromptSubmit,
