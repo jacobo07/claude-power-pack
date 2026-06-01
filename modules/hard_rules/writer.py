@@ -106,7 +106,7 @@ def _extract_block(content: str) -> tuple[int, int, str]:
 
 
 def get_current_rules(claude_md_path: Path | None = None) -> list[str]:
-    """Return the list of HR-NNN IDs currently in the CLAUDE.md block."""
+    """Return the list of HR-NNN / HR-NAMESPACE-NNN IDs in CLAUDE.md."""
     path = claude_md_path or DEFAULT_CLAUDE_MD
     if not path.is_file():
         return []
@@ -114,18 +114,20 @@ def get_current_rules(claude_md_path: Path | None = None) -> list[str]:
         _, _, inner = _extract_block(_read(path))
     except ValueError:
         return []
-    return re.findall(r"^###\s+(HR-\d+)", inner, re.MULTILINE)
+    # HR- followed by either pure digits (HR-008) or a namespace token +
+    # digits (HR-SECRET-001, HR-CASCADE-007).
+    return re.findall(r"^###\s+(HR-\S+)", inner, re.MULTILINE)
 
 
 def next_rule_id(existing: list[str]) -> str:
-    if not existing:
-        return "HR-001"
+    # Only the pure-numeric HR-NNN series participates in the
+    # auto-increment sequence; namespaced rules (HR-SECRET-001,
+    # HR-CASCADE-007) live in their own caller-managed series.
     nums: list[int] = []
     for rid in existing:
-        try:
-            nums.append(int(rid.split("-")[1]))
-        except (IndexError, ValueError):
-            continue
+        m = re.fullmatch(r"HR-(\d+)", rid)
+        if m:
+            nums.append(int(m.group(1)))
     return f"HR-{(max(nums) if nums else 0) + 1:03d}"
 
 
@@ -244,7 +246,7 @@ def list_hard_rules(claude_md_path: Path | None = None) -> list[dict]:
         return []
     rules: list[dict] = []
     pattern = re.compile(
-        r"###\s+(HR-\d+)\s+--\s+(.+?)\n"
+        r"###\s+(HR-\S+)\s+--\s+(.+?)\n"
         r"TRIGGER:\s+(.+?)\n"
         r"STOP:\s+(.+?)\n"
         r"EVIDENCE:\s+(.+?)\n",
