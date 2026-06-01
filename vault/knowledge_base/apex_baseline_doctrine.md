@@ -219,3 +219,97 @@ python tools/measure_session_start.py     # verify post-hub OK
 ```
 
 Sealed BL-SESSION-HUB-001. Extends SCS C22, does not replace it.
+
+## SCS C26 -- Benchmark-Driven-by-default (sealed 2026-06-01, BL-BENCH-ROADMAP-001)
+
+Every PP module that touches a hot path (SessionStart, UserPromptSubmit,
+Stop, PreToolUse) MUST be measurable through `tools/bench_all.py`. A
+module that cannot be measured cannot be governed. A measured module
+that degrades the baseline >15% without documented justification
+violates the standard.
+
+1. **A bench is mandatory, not optional.** Adding a new PP capability
+   in a hot path is incomplete until `tools/bench_all.py` has a
+   benchmark function for it AND a corresponding entry in `TARGETS`.
+   The target value is a concrete number drawn from empirical
+   measurement, never an aspirational guess.
+
+2. **A ledger is the source of truth, not memory.** Every bench run
+   appends to `vault/benchmarks/ledger.json`. The last 50 entries
+   are retained. `python tools/bench_all.py --compare` shows the
+   delta against the prior entry; a >15% slowdown on any benchmark
+   that previously sat at OK status is a regression and must be
+   triaged before the session yields.
+
+3. **A doctrine artifact is sealed, not assumed.** Major perf changes
+   (a parallel patch, a port to a different language, a cache layer)
+   carry both: a benchmark delta line in the commit body AND a
+   UKDL trap entry in `vault/knowledge_base/ukdl-universal.md`. The
+   trap explains the physical floor or the architectural constraint
+   so the next agent does not re-attempt the same dead end.
+
+4. **A failure is the empirical floor, not a stop sign.** Some
+   benchmarks have physical floors that the PP cannot move (Windows
+   AV variance, Python cold-start, Node cold-start, real network
+   latency, SQLite cold open). When a benchmark sits at its floor,
+   the target is RAISED to the floor + 10 % rather than the
+   benchmark being "fixed". The honest read is sealed as a
+   T-PERF-FLOOR-* trap, not buried.
+
+**Sealed evidence (this host, audit 61d7807 -> S0_baseline e9d65af):**
+
+| Benchmark | Pre-roadmap (61d7807) | Post-S0/S1.3 (e9d65af) | Status | Notes |
+|---|---|---|---|---|
+| session_start_worst_ms | 231 (pass2 median) | 440 (full-suite cold AV) | WARN | T-WIN-AV-001 dominant |
+| jit_cold_start_avg_ms | 767 | 170 | OK | -78% (AV warm cache hit) |
+| verify_spp_ms | 155 268 | 155 268 (S1.1 rolled back) | unchanged | T-PERF-VERIFY-SPP-PARALLEL-001 |
+| vgate_total_ms | 111 466 (serial) | 71 204 (parallel in bench_all) | -36% | parallel runner inside bench_all |
+| monitoring_once_ms | 6 002 | 4 429 | -26% | S1.3 parallel probes (modules/monitoring/observe.py) |
+| pytest_total_ms | 27 019 | 9 901 | -63% | warm process state |
+| anti_patterns_ms | 86 | 79 | OK | at floor |
+| ceps_record_ms | 35 | 1 | OK | inner-only measurement |
+| never_again_ms | 66 | 1 | OK | log near-empty |
+
+**Reference implementation:**
+
+- `tools/bench_all.py` -- unified runner + TARGETS dict + ledger writer
+  + regression detector.
+- `vault/benchmarks/ledger.json` -- append-only history (last 50 runs).
+- `vault/benchmarks/bench_all_S0_baseline.json` -- first labeled
+  snapshot of the post-bench_all + post-S1.3 state.
+- `vault/audits/benchmark_audit_2026-06-01T12-34-21Z.md` -- the
+  pre-roadmap audit; the authoritative reference baseline.
+- `vault/knowledge_base/ukdl-universal.md` § T-PERF-VERIFY-SPP-PARALLEL-001
+  + § T-TOOL-SENTINEL-RECOVERY-001 + § T-NODE-COLD-001 + § T-WIN-AV-001
+  -- the trap library that documents physical floors.
+
+**Apex axis v16 -- Benchmark-Driven Development.** Sealed 2026-06-01.
+The PP has measured every clause it has shipped since BL-LAG-001; SCS
+C26 makes that practice contractual rather than optional. Future
+clauses that ship a hot-path component must produce a bench_all delta
+line under the BL-X-NNN sealing block.
+
+Sealed BL-BENCH-ROADMAP-001. Pairs with SCS C22 (latency floor) and
+SCS C23 (hub consolidation); the three together govern the hot-path
+budget for SessionStart + UserPromptSubmit.
+
+## UKDL TRAP T-PERF-FLOOR-001..004 -- Documented physical performance floors
+
+**Level:** UKDL Traps (OS / process-creation / network / storage floors).
+**Sealed:** 2026-06-01 BL-BENCH-ROADMAP S4.1.
+
+These are listed here in the doctrine file because SCS C26 references
+them. The full body of each entry lives in
+`vault/knowledge_base/ukdl-universal.md`.
+
+| ID | Floor | Approx wall (Windows host) | Mitigation |
+|---|---|---|---|
+| T-PERF-FLOOR-001 | Python cold-start per subprocess | ~150 ms | Port to Node OR pre-warm daemon |
+| T-PERF-FLOOR-002 | Node cold-start per process | ~25-50 ms | Consolidate via hub (already C23) |
+| T-PERF-FLOOR-003 | Real network probe (curl / tcp) | ~500-1500 ms each | Parallelize (already S1.3 monitoring) |
+| T-PERF-FLOOR-004 | SQLite cold open | ~10-20 ms first query | Pre-warm via daemon (not worth it) |
+
+Cross-floor: T-WIN-AV-001 (300-700 ms variance on cold spawn) is
+ORTHOGONAL and stacks on top of any floor above. Owner-side AV
+exclusion on `C:\Users\User\.claude\skills\claude-power-pack` is the
+ONLY mitigation; PP cannot fix this layer.
