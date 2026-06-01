@@ -1,0 +1,55 @@
+{
+  "timestamp_iso": "2026-06-01T12-42-25Z",
+  "passes": {
+    "verify_spp": {
+      "rc": -1,
+      "wall_ms": 90039.0,
+      "pass_count": 0,
+      "fail_count": 0,
+      "ok_count": 0,
+      "tail": ""
+    },
+    "session_start_3runs": {
+      "runs": [
+        {
+          "run": 1,
+          "wall_ms": 597.0,
+          "individual_max_ms": 231.0,
+          "total_serial_ms": 448.0,
+          "verdict": "OK",
+          "slow_count": 0,
+          "rc": 0
+        },
+        {
+          "run": 2,
+          "wall_ms": 639.0,
+          "individual_max_ms": 235.0,
+          "total_serial_ms": 531.0,
+          "verdict": "OK",
+          "slow_count": 0,
+          "rc": 0
+        },
+        {
+          "run": 3,
+          "wall_ms": 537.0,
+          "individual_max_ms": 216.0,
+          "total_serial_ms": 403.0,
+          "verdict": "OK",
+          "slow_count": 0,
+          "rc": 0
+        }
+      ],
+      "median_individual_max_ms": 231.0,
+      "best_individual_max_ms": 216.0,
+      "worst_individual_max_ms": 235.0
+    },
+    "monitoring_semantic": {
+      "rc": 1,
+      "wall_ms": 6577.0,
+      "interpretation": "rc=1 at least one project DOWN (semantic signal, not perf failure)",
+      "stdout_lines": 7,
+      "tail": "-------------- + -------- + ---------------------- + ------------------------------------------------------------\ninfinityops    | UP       | 2026-06-01T12:43:59Z   | curl https://infinityops.ai/ contained pattern 'br.jula' on attempt 1\nkobiicraft     | DOWN     | 2026-06-01T12:44:02Z   | tcp connect to 5.9.23.174:25565 failed all 1 attempts; last error: ConnectionRef\ntua-x          | UP       | 2026-06-01T12:44:03Z   | curl https://cw.infinityops.ai/ returned HTTP 200 on attempt 1\nP2.3 health-all absorbed by --once flag (one snapshot, N projects).",
+      "stderr_head": ""
+    }
+  }
+}

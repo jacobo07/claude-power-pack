@@ -1,0 +1,11 @@
+{
+  "timestamp_iso": "2026-06-01T12-47-42Z",
+  "rc": 1,
+  "timed_out": false,
+  "wall_ms": 155265.0,
+  "pass_count": 8,
+  "fail_count": 8,
+  "ok_count": 0,
+  "stdout_tail": "    | HOOKS_REG_PROBE=6/7\n  [...] hard-rules ...\n  [OK  ] hard-rules             rc=0     0.31s  HARDRULES_PROBE=7/7\n  [...] playwright-resilience ...\n  [OK  ] playwright-resilience  rc=0     8.20s  ================================================================\n  [...] compact-resilience ...\n  [OK  ] compact-resilience     rc=0    10.39s  ================================================================\n  [...] jit-performance ...\n  [OK  ] jit-performance        rc=0     1.47s  JIT_PERFORMANCE=11/11  threshold=11/11\n  [...] restart-and-lag ...\n  [OK  ] restart-and-lag        rc=0     4.12s  RESTART_AND_LAG=15/15  threshold=15/15\n========================================================================\n  total elapsed: 155.14s\n  STRICT FAIL: 4 row(s) \u2014 ['mirror-parity', 'drift-report', 'paths+secrets', 'hooks-registration']\n========================================================================",
+  "stderr_head": ""
+}

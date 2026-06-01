@@ -1,0 +1,231 @@
+{
+  "timestamp_iso": "2026-06-01T12-34-21Z",
+  "host_os": "nt",
+  "python_version": "3.12.10",
+  "pp_path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "benchmarks": {
+    "1_session_start": {
+      "ok": true,
+      "individual_max_ms": 1105.8313000248745,
+      "total_serial_ms": 2555.402100086212,
+      "verdict": "FAIL",
+      "hook_count": 10,
+      "slow_hooks": 2,
+      "outer_ms": 3382.0
+    },
+    "2_jit_loader_cold": {
+      "ok": true,
+      "runs_ms": [
+        407.2,
+        650.6,
+        531.0,
+        799.4,
+        1449.3
+      ],
+      "avg_ms": 767.5,
+      "min_ms": 407.2,
+      "max_ms": 1449.3,
+      "stdev_ms": 407.8,
+      "outer_ms": 3838.0
+    },
+    "3_uqf_scan": {
+      "ok": true,
+      "rc": 0,
+      "stdout_lines": 7,
+      "stderr_head": "",
+      "outer_ms": 3574.0
+    },
+    "4_verify_spp": {
+      "ok": false,
+      "error": "verify_spp.py missing",
+      "outer_ms": 0.0
+    },
+    "5_pytest": {
+      "ok": true,
+      "rc": 0,
+      "summary": "\u001b[32m\u001b[32m\u001b[1m43 passed\u001b[0m\u001b[32m in 15.88s\u001b[0m\u001b[0m",
+      "outer_ms": 27019.0
+    },
+    "6_vgate_suites": {
+      "ok": true,
+      "count": 22,
+      "passed": 20,
+      "failed": 2,
+      "total_ms": 111462.0,
+      "suites": [
+        {
+          "suite": "test_atomic_branding.py",
+          "ms": 4788.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_ceps_closed_loop.py",
+          "ms": 1138.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_ceps_edge_cases.py",
+          "ms": 1639.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_ceps_full_cycle.py",
+          "ms": 9730.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_compact_rescue.py",
+          "ms": 17669.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_hard_rules.py",
+          "ms": 6045.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_jit_performance.py",
+          "ms": 3055.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_karimo.py",
+          "ms": 3522.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_lateral_thinking.py",
+          "ms": 3983.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_mirror_parity.py",
+          "ms": 1686.0,
+          "verdict": "ERR(rc=1)"
+        },
+        {
+          "suite": "test_monitoring.py",
+          "ms": 2020.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_osa.py",
+          "ms": 9885.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_playwright_resilience.py",
+          "ms": 11554.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_proactive_agents.py",
+          "ms": 14030.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_restart_and_lag.py",
+          "ms": 6593.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_speckit.py",
+          "ms": 688.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_tco.py",
+          "ms": 3924.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_tis_core.py",
+          "ms": 257.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_tis_e2e.py",
+          "ms": 747.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_uqf.py",
+          "ms": 3386.0,
+          "verdict": "PASS"
+        },
+        {
+          "suite": "test_vague_lint.py",
+          "ms": 1941.0,
+          "verdict": "FAIL"
+        },
+        {
+          "suite": "test_zero_command.py",
+          "ms": 3182.0,
+          "verdict": "PASS"
+        }
+      ],
+      "outer_ms": 111466.0
+    },
+    "7_tco_gate": {
+      "ok": true,
+      "rc": 0,
+      "head": "context-pct (estimate): 7%  [warn>=70%]",
+      "outer_ms": 312.0
+    },
+    "8_tis_report": {
+      "ok": true,
+      "rc": 0,
+      "stdout_lines": 4,
+      "head": "session   calls  in_tok   out_tok  cache%  cost_usd",
+      "outer_ms": 399.0
+    },
+    "9_osa_dispatcher": {
+      "ok": true,
+      "rc": 0,
+      "head": "{",
+      "stderr_head": "",
+      "outer_ms": 251.0
+    },
+    "10_proactive": {
+      "ok": true,
+      "advisories": 0,
+      "inner_ms": 91.3,
+      "outer_ms": 206.0
+    },
+    "11_monitoring": {
+      "ok": false,
+      "rc": 1,
+      "stdout_lines": 7,
+      "head": "PP Monitoring -- status",
+      "stderr_head": "",
+      "outer_ms": 6002.0
+    },
+    "12_anti_patterns": {
+      "ok": true,
+      "total_hits": 22,
+      "categories": 7,
+      "inner_ms": 85.9,
+      "target": "ceps.py",
+      "outer_ms": 198.0
+    },
+    "13_ceps": {
+      "ok": true,
+      "inner_ms": 34.6,
+      "outer_ms": 133.0
+    },
+    "14_hub_invoke": {
+      "ok": true,
+      "rc": 0,
+      "stdout_bytes": 17,
+      "stdout_json_valid": true,
+      "emit_additional_context": false,
+      "outer_ms": 246.0
+    },
+    "15_never_again": {
+      "ok": true,
+      "rows": 10,
+      "inner_ms": 65.8,
+      "outer_ms": 395.0
+    }
+  }
+}
