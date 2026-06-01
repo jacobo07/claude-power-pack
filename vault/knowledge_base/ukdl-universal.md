@@ -649,3 +649,81 @@ state).
   confirmed).
 - `vault/benchmarks/session_start_iter3.json` (auto-vault-bootstrap
   wrapped, 78-97% cumulative reduction).
+
+---
+
+## Compact 95% Hang Recovery (BL-COMPACT-001 -- sealed 2026-06-01)
+
+Owner-reported cross-cycle bug: `/compact` reaches ~95% progress
+indicator and freezes indefinitely. `claude.exe` stays alive with
+high RSS (>200MB, peaks at 451MB) and low CPU (<2%); no further
+`.jsonl` writes. Root cause is the post-API render path inside
+`claude.exe` (rebuild context window + final TTY render), not the
+network. Not patchable from the Power Pack -- only escapeable.
+
+### PR-COMPACT-001 -- /compact 95% Hang Recovery (Process Rule)
+
+**Level:** Process Rule. Recoverable, no irreversible data loss.
+**Trigger:** `/compact` visual indicator stuck at ~95% for more
+than 2 minutes; no new `.jsonl` writes.
+
+**Protocol:**
+
+1. Confirm the freeze visually: progress bar fixed at ~95%,
+   keyboard input ignored, no new transcript turn appearing.
+2. Run `/compact-rescue` slash command (or invoke
+   `tools/compact_rescue.ps1` directly from PowerShell).
+3. Wait <30 seconds. `claude.exe` exits; `kclaude.bat` parent
+   loop auto-relaunches with `claude --resume <sid>` in the same
+   pane (MC-LAZ-26 contract).
+4. The session loads the pre-compact transcript intact.
+5. Optional: re-run `/compact` on the resumed session or keep
+   working without it.
+
+**What is lost:** the compact summary in mid-generation.
+**What is kept:** every transcript turn before the compact (the
+`.jsonl` is append-only; turns persist before compact starts).
+
+**Recognizer:**
+
+- Visual: progress fixed at ~95% for >2 min.
+- Process: RSS > 200MB AND CPU < 2.0% AND `.jsonl` idle > 5 min.
+- Confidence: visual signal is canonical; process heuristic has
+  false positives (long-thinking Owner with large transcript).
+
+**Why Process Rule, not Hard Rule:** transcript survives intact.
+Hard Rules are reserved for irreversible-data-loss bugs. The
+compact hang costs only the in-flight summary -- recoverable in
+one rescue + retry.
+
+**Cross-ref:**
+
+- `vault/knowledge_base/compact-95-hang-repro.md` (M0 empirical
+  diagnosis, root-cause analysis, why no auto-kill).
+- `tools/compact_rescue.ps1` (M1 Owner-triggered rescue script).
+- `commands/compact-rescue.md` (M2 slash command).
+- `tools/compact_hang_detector.py` (M3 alert-only opt-in
+  watchdog; NEVER kills).
+- `vault/knowledge_base/anthropic-issue-compact-95.md` (M6
+  upstream issue body for filing).
+
+### T-COMPACT-001 -- Heuristic auto-kill false-positive trap
+
+**Trap:** a naive watchdog matching `RSS > 200MB` AND `CPU < 2%`
+AND `.jsonl idle > 5min` will fire on a legitimate long-thinking
+Owner session. Killing that session destroys live work.
+
+**Avoidance:**
+
+- The detector at `tools/compact_hang_detector.py` ONLY alerts;
+  the Owner decides whether to run `/compact-rescue`.
+- The rescue itself has a `.jsonl` recency guard (default 120s):
+  if the `.jsonl` was touched recently, the rescue aborts with
+  `[ABORT]` and tells the Owner to wait or override with
+  `-IdleThresholdSeconds 0`.
+- Never auto-dispatch the kill from a hook or scheduler. The
+  Owner is the deciding signal.
+
+**Origin:** plan-time audit during BL-COMPACT-001 design. No
+production incident yet -- catching the antipattern before it
+ships.
