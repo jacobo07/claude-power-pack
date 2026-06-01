@@ -99,4 +99,106 @@ STOP: STOP all other work. Steps in order: (1) ROTATE at the provider FIRST (Own
 EVIDENCE: [bl-secret-001] industry-standard rotate-first-scrub-second + OD1 alignment
 SEVERITY: CRITICAL | RECURRENCE: 0x
 <!-- digest:hr-secret-007-seed01 -->
+### HR-CASCADE-001 -- STOP before deploy if tests_passed=False
+TRIGGER: Bash / PowerShell command matching `(deploy|kubectl apply|helm install|fly deploy)` without explicit verification that the relevant tests passed in this session.
+STOP: Refuse to dispatch. Surface the missing-test condition with the exact command to run tests first. EXCEPCIÓN: Owner phrase "deploy without tests authorized" for ONE turn only.
+EVIDENCE: [bl-cascade-001] modules/cascade_prevention/engine.py _detect_deploy -> C4 (block)
+SEVERITY: CRITICAL | RECURRENCE: 0x
+<!-- digest:hr-cascade-001-seed01 -->
+### HR-CASCADE-002 -- STOP before rm -rf or Remove-Item -Recurse -Force without backup
+TRIGGER: Bash `rm -rf <path>` (path NOT under /tmp) OR PowerShell `Remove-Item ... -Recurse ... -Force` without an explicit backup precondition.
+STOP: Refuse. Require an explicit `cp -r` / `Copy-Item -Recurse` backup OR Owner override. The dangerous_cmds.py registry (M11 GAP-2) is the source of truth for the pattern set.
+EVIDENCE: [bl-cascade-001] modules/cascade_prevention/dangerous_cmds.py + _detect_bash
+SEVERITY: CRITICAL | RECURRENCE: 0x
+<!-- digest:hr-cascade-002-seed01 -->
+### HR-CASCADE-003 -- STOP before commit without verification
+TRIGGER: About to invoke `git commit` without a prior successful test / lint run in the current session.
+STOP: Pause. Run the verification step OR escalate to Owner with the explicit gap. Sister of HR-CASCADE-001 for the commit surface.
+EVIDENCE: [bl-cascade-001] _detect_commit -> C3 when verified=False
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-cascade-003-seed01 -->
+### HR-CASCADE-004 -- STOP if a CRITICAL secret appears in any emission mid-turn
+TRIGGER: Any text the agent emits (response, tool output it reads, sub-agent prompt) contains a CRITICAL Secret Firewall match.
+STOP: Halt. Route through redact_for_log() BEFORE further emission. Sister of HR-SECRET-002 / HR-SECRET-006; integrates the Secret Firewall (M1) + URB into the cascade engine.
+EVIDENCE: [bl-cascade-001] integrates Secret Firewall + URB on the cascade surface
+SEVERITY: CRITICAL | RECURRENCE: 0x
+<!-- digest:hr-cascade-004-seed01 -->
+### HR-CASCADE-005 -- WARN at context >= 85% / BLOCK at context >= 95%
+TRIGGER: Context-usage proxy (input_tokens / max_context_tokens) crosses the threshold.
+STOP: 85-94% -> surface a /compact recommendation in the closing emission (advisory, do not block). 95%+ -> refuse to start new sub-agent dispatches; finish current state in-place and request Owner-driven /compact.
+EVIDENCE: [bl-cascade-001] _detect_context CONTEXT_WARN_PCT=85 / CONTEXT_BLOCK_PCT=95
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-cascade-005-seed01 -->
+### HR-OUTPUT-001 -- STOP declaring DONE if output has slop tokens
+TRIGGER: About to claim "done" / "ready" / "shipped" with a deliverable whose content matches an OQS slop pattern.
+STOP: Refuse the DONE claim. Surface the slop hit + surrounding context so the Owner sees the gap. Aligns with the Wozniak slop-veto already enforced via PreToolUse Write hook.
+EVIDENCE: [bl-output-001] modules/output_contracts/validator.py + hooks/output_contract_stop.js (advisory)
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-output-001-seed01 -->
+### HR-OUTPUT-002 -- STOP declaring DONE if tests_passed=False
+TRIGGER: About to claim "done" / "ship" for a code output where the relevant test suite has not been empirically observed to pass (tests_passed=False or unmeasured).
+STOP: Run the test and observe a real PASS, OR demote the claim to "draft, tests pending". DONE without observed PASS violates the Reality Contract (kernel vMAX-NULL-ERROR).
+EVIDENCE: [bl-output-001] OQS validator passes_test check on `tests` field
+SEVERITY: CRITICAL | RECURRENCE: 0x
+<!-- digest:hr-output-002-seed01 -->
+### HR-OUTPUT-003 -- STOP shipping code if OQS < 70
+TRIGGER: is_done(contract='code', ctx) returns (False, score) with score < OQS_DONE_THRESHOLD (70).
+STOP: Block the ship. Surface the OQS score + the failing checks (missing file_path / failed syntax / failed tests / slop in content) so the Owner sees the exact gap.
+EVIDENCE: [bl-output-001] OQS scorer + 4 contracts (code/docs/deploy/test)
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-output-003-seed01 -->
+### HR-ONESHOT-001 -- Compile contract before any L/XL task
+TRIGGER: About to start a task whose pre-estimated size is L (>$30) or XL (>$100).
+STOP: Pause. Run `compile_contract(description, size)` first. Inspect scope / out_of_scope / done_gate / budget. Confirm with Owner if estimate exceeds the OD3 cap for the chosen size.
+EVIDENCE: [bl-oneshot-001] modules/one_shot/compiler.py + OD3 budget table
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-oneshot-001-seed01 -->
+### HR-ONESHOT-002 -- STOP if execution deviates > 40% from scope
+TRIGGER: Mid-execution check: is_deviated(contract, files_touched) is True (fewer than SCOPE_DEVIATION_THRESHOLD=0.40 of touched files match scope tokens).
+STOP: Pause. Surface the touched-vs-scope diff to Owner. Either extend the contract (re-compile) OR revert the out-of-scope changes.
+EVIDENCE: [bl-oneshot-001] modules/one_shot/lock.py fidelity_score + is_deviated
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-oneshot-002-seed01 -->
+### HR-ONESHOT-003 -- After 3 consecutive fails, STOP -- Owner decision
+TRIGGER: should_stop(fail_count) is True (fail_count >= STOP_AT=3).
+STOP: Stop autonomous retries. Escalate to Owner with the failing-attempt log. Companion of anti-antipatterns Rule 12 (2-consecutive-failures pivot).
+EVIDENCE: [bl-oneshot-001] modules/one_shot/escalation.py + OD7 ladder
+SEVERITY: CRITICAL | RECURRENCE: 0x
+<!-- digest:hr-oneshot-003-seed01 -->
+### HR-COST-001 -- NEVER use Opus for format/lint/rename tasks
+TRIGGER: About to dispatch a task that route(description).route_class == NANO with a model other than claude-haiku-4-5.
+STOP: Refuse. Re-dispatch on Haiku. Opus tokens on a rename is a self-inflicted budget hole; cost discipline is non-negotiable.
+EVIDENCE: [bl-cost-001] modules/cost_collapse/router.py NANO_KEYWORDS
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-cost-001-seed01 -->
+### HR-COST-002 -- STOP if estimated cost > 2x task budget
+TRIGGER: Mid-task: running cost estimate (input + output token spend) exceeds 2x the contract's budget_usd.
+STOP: Pause. Surface the over-budget condition. Either Owner extends the budget (re-compile_contract at a higher size class) OR collapse the task scope to fit.
+EVIDENCE: [bl-cost-001] OD3 ceilings (NANO $1 / MICRO $15 / MACRO $30 / ULTRA $100)
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-cost-002-seed01 -->
+### HR-COST-003 -- Route trivial tasks to Haiku by default
+TRIGGER: About to start a task whose description has no MACRO/ULTRA keyword AND no specific reason to prefer Sonnet/Opus.
+STOP: Apply `route(description)`; respect the routed RouteClass. Default MICRO (Sonnet) for unspecified-but-non-trivial; NANO (Haiku) for keyword-matched trivial.
+EVIDENCE: [bl-cost-001] modules/cost_collapse/router.py default path
+SEVERITY: MEDIUM | RECURRENCE: 0x
+<!-- digest:hr-cost-003-seed01 -->
+### HR-BACKLOG-001 -- Run /what-now before starting new session work
+TRIGGER: SessionStart on a project with a backlog file present, about to start NEW work rather than continue prior.
+STOP: Invoke /what-now (or `modules.backlog_autopilot.what_now` programmatically). Picking a P2 over an actionable P0 is a process bug.
+EVIDENCE: [bl-backlog-001] modules/backlog_autopilot/engine.py + commands/what-now.md
+SEVERITY: MEDIUM | RECURRENCE: 0x
+<!-- digest:hr-backlog-001-seed01 -->
+### HR-BACKLOG-002 -- NEVER start L/XL task without backlog check
+TRIGGER: About to start a task whose size class is L (>$30) or XL (>$100) without consulting the project's backlog.
+STOP: Refuse. Run /what-now first. Confirm the task is the recommended item OR Owner-explicitly-authorized despite the recommendation.
+EVIDENCE: [bl-backlog-001] enforces the spirit of OD3 budget discipline
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-backlog-002-seed01 -->
+### HR-BACKLOG-003 -- STOP if new task would block a P0 item
+TRIGGER: About to start new BacklogItem when the backlog has at least one P0 item that is currently actionable (not done, not blocked).
+STOP: Refuse the lower-priority work. Surface the P0 contention. Either Owner explicitly defers the P0 OR you flip the queue.
+EVIDENCE: [bl-backlog-001] what_now() filtering + priority scoring
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-backlog-003-seed01 -->
 <!-- PP-HARD-RULES-END -->
