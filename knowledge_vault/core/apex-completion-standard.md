@@ -2796,3 +2796,92 @@ template and Trap template in UKDL are reusable as-is with name
 substitution.
 
 Sealed 2026-05-31 (BL-PLAYWRIGHT-001, Option A, Owner-approved).
+
+---
+
+## Slash-Recovery Pattern Axis v13 (sealed 2026-06-01)
+
+**Origin:** BL-COMPACT-001 -- the `/compact` 95% hang. The bug
+lives in `claude.exe` (binary, not patchable). The only Power
+Pack response is to give the Owner a clean escape when it
+happens. Generalises into a reusable axis: every slow or
+blocking PP slash command can ship a sibling `/command-rescue`.
+
+**Why an axis (not just one fix):** other commands have the same
+shape -- a chat-level invocation that hands control to a long
+internal pipeline we do not see. When that pipeline freezes, the
+Owner is stuck. Pre-registering the rescue template means we
+fix it in one place, not N times.
+
+### C21 -- Slash-Recovery by default
+
+Every PP slash command whose execution can block for >30s
+without observable progress (e.g. `/compact`, `/cpp-distill`,
+`/cpp-deep-research`, `/ultra plan`) should ship the 6-point
+recovery stack on first incident:
+
+1. **Empirical repro doc** -- `vault/knowledge_base/<cmd>-hang-repro.md`.
+   Document the symptom, root-cause hypothesis, why no auto-kill,
+   what is lost vs kept in a rescue.
+2. **Rescue script** -- `tools/<cmd>_rescue.ps1`. PowerShell-native
+   (Windows host doctrine). Owner-triggered, never auto. Includes
+   a recency guard (`.jsonl` mtime by default) so it cannot kill
+   a session that looks active. ASCII-only (PS 5.1 codepage trap).
+3. **Slash command** -- `commands/<cmd>-rescue.md`. Documents
+   when to invoke, what is lost, what is kept, dry-run mode,
+   override flag, post-rescue verification.
+4. **Alert-only detector** -- `tools/<cmd>_hang_detector.py`.
+   Opt-in scheduled task. Heuristic detection with documented
+   false positives. **NEVER kills.** Notifies the Owner; the
+   Owner decides whether to run the rescue.
+5. **UKDL Process Rule + Trap** -- PR-`<CMD>`-NNN in
+   `vault/knowledge_base/ukdl-universal.md`. Process Rule for
+   recoverable cases (no irreversible data loss); Hard Rule
+   only if the failure can destroy work. Sibling Trap entry
+   documents the heuristic false-positive surface so future
+   builders do not re-invent the auto-kill antipattern.
+6. **V-gate test + verify_spp row** -- `tools/test_<cmd>_rescue.py`
+   with 7+ V-gates (rescue exists, slash cmd exists, detector
+   exists, dry-run JSON well-formed, guard fires on active
+   session, UKDL markers present, baseline imports intact). Add
+   a row to `verify_spp.py` so the umbrella catches regressions.
+
+### Why Owner-trigger, never auto-kill
+
+The pattern looks tempting to automate -- "detect hang, kill,
+restart". Resist. Two empirical reasons:
+
+- The hang signal is heuristic: `RSS > X` AND `CPU < Y` AND
+  `.jsonl idle > Z` matches a long-thinking Owner with a large
+  transcript as readily as it matches a stuck session.
+- The cost of a false-positive kill is the entire current turn
+  (worst case mid-Edit). The cost of a false-negative
+  (waiting longer than necessary) is bounded by Owner patience.
+  Asymmetric -- favour the conservative path.
+
+The detector script can ALERT (toast, log, exit code) but the
+kill action stays human-in-the-loop via the slash command.
+
+### Empirical baseline (2026-06-01)
+
+- 40 `claude.exe` procs observed; RSS distribution skewed (top
+  3 = 451MB / 373MB / 352MB).
+- Owner-reported symptom: `/compact` indicator stuck at 95%, no
+  `.jsonl` writes. No precedent in vault -- first cycle to see it.
+- M0-M5 done-gated green: 7/7 V-gates PASS; `verify_spp --row
+  compact-resilience` STRICT PASS in ~5s.
+- Upstream issue body drafted in
+  `vault/knowledge_base/anthropic-issue-compact-95.md` for
+  filing -- the binary bug is the only path to a real fix.
+
+### Reusability
+
+The 6-point stack is command-agnostic. To onboard a future PP
+slash command under this axis: copy the
+`tools/compact_rescue.ps1` + `tools/compact_hang_detector.py` +
+`tools/test_compact_rescue.py` triad as templates, rename,
+update process matchers and recency-guard target, register a
+sibling row in `verify_spp.py`. The Process Rule + Trap
+templates in UKDL are reusable as-is with name substitution.
+
+Sealed 2026-06-01 (BL-COMPACT-001, Owner-approved plan inline).
