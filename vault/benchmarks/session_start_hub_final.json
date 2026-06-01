@@ -1,0 +1,62 @@
+{
+  "settings_path": "C:\\Users\\User\\.claude\\settings.json",
+  "hook_count": 10,
+  "individual_max_ms": 219.5830000564456,
+  "total_serial_ms": 430.0254004774615,
+  "slow_individual_threshold_ms": 300,
+  "total_target_ms": 1000,
+  "slow_hooks": [],
+  "results": [
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/token-shield-refresh.js\"",
+      "ms": 24.511400028131902,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/skills/claude-power-pack/modules/zero-crash/hooks/terminal-slot-recorder.js\"",
+      "ms": 22.12810004130006,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/learning-sentinel.js\"",
+      "ms": 23.731300025247037,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/lazarus-livesnap.js\"",
+      "ms": 22.99440000206232,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/restart-target-consumer.js\"",
+      "ms": 24.563100072555244,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/lazarus-stub-recover.js\"",
+      "ms": 21.500400034710765,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/lazarus-index-aggregator.js\"",
+      "ms": 24.635000037960708,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/skills/claude-power-pack/hooks/zero-command-bootstrap.js\"",
+      "ms": 23.265300085768104,
+      "rc": 1
+    },
+    {
+      "cmd": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/skills/claude-power-pack/hooks/first-time-project.js\"",
+      "ms": 23.11340009327978,
+      "rc": 1
+    },
+    {
+      "cmd": "node \"C:/Users/User/.claude/skills/claude-power-pack/hooks/session_start_hub.js\"",
+      "ms": 219.5830000564456,
+      "rc": 0
+    }
+  ],
+  "verdict": "OK"
+}

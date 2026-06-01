@@ -35,11 +35,15 @@ from pathlib import Path
 PP_ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
 MARKER = HOME / ".claude" / "state" / "restart_pending.json"
+HUB_PATH = PP_ROOT / "hooks" / "session_start_hub.js"
+HUB_LOG = Path(tempfile.gettempdir()) / "pp-session-hub.log"
 
 # Characters of subprocess stdout to include in failure evidence -- enough
 # to identify the failure cause without flooding the gate report.
 STDOUT_PREVIEW_CHARS = 200
 SUBPROC_TIMEOUT_S = 15
+# Wall time budget for the hub itself (sealed iter 3, hub_final).
+HUB_WALL_BUDGET_MS = 1500
 
 PY = sys.executable
 PASS = 0
@@ -301,9 +305,123 @@ def gate_measure_runs():
               f"stdout not JSON ({exc}): {proc.stdout[:120]!r}")
 
 
+def gate_hub_exists():
+    if HUB_PATH.is_file() and HUB_PATH.stat().st_size > 500:
+        _ok("V-HUB-EXISTS", str(HUB_PATH.relative_to(PP_ROOT)))
+    else:
+        _fail("V-HUB-EXISTS", f"missing or too small: {HUB_PATH}")
+
+
+def gate_hub_fast():
+    if not HUB_PATH.is_file():
+        _fail("V-HUB-FAST", "hub missing")
+        return
+    import time as _time
+    t0 = _time.perf_counter()
+    try:
+        proc = subprocess.run(
+            ["node", str(HUB_PATH)],
+            input="{}",
+            capture_output=True, text=True,
+            timeout=SUBPROC_TIMEOUT_S,
+        )
+    except subprocess.SubprocessError as exc:
+        _fail("V-HUB-FAST", f"spawn failed: {exc}")
+        return
+    wall_ms = (_time.perf_counter() - t0) * 1000
+    if proc.returncode == 0 and wall_ms < HUB_WALL_BUDGET_MS:
+        _ok("V-HUB-FAST",
+            f"{wall_ms:.0f} ms (budget {HUB_WALL_BUDGET_MS} ms)")
+    else:
+        _fail("V-HUB-FAST",
+              f"rc={proc.returncode} wall={wall_ms:.0f} ms")
+
+
+def gate_hub_log():
+    if not HUB_PATH.is_file():
+        _fail("V-HUB-LOG", "hub missing")
+        return
+    # Capture log size before, spawn the hub, expect size > before.
+    before = HUB_LOG.stat().st_size if HUB_LOG.is_file() else 0
+    try:
+        subprocess.run(
+            ["node", str(HUB_PATH)],
+            input="{}",
+            capture_output=True, text=True,
+            timeout=SUBPROC_TIMEOUT_S,
+        )
+    except subprocess.SubprocessError as exc:
+        _fail("V-HUB-LOG", f"spawn failed: {exc}")
+        return
+    if HUB_LOG.is_file() and HUB_LOG.stat().st_size > before:
+        _ok("V-HUB-LOG",
+            f"{HUB_LOG.name} grew "
+            f"{before} -> {HUB_LOG.stat().st_size} B")
+    else:
+        _fail("V-HUB-LOG", f"log did not grow: {HUB_LOG}")
+
+
+def gate_hub_resume():
+    """Hub MUST consume a matching-cwd marker and emit additionalContext."""
+    if not HUB_PATH.is_file():
+        _fail("V-HUB-RESUME", "hub missing")
+        return
+    backup = _backup_marker()
+    try:
+        cwd = str(PP_ROOT)
+        _write_marker_nobom({
+            "session_id": "v-hub-resume",
+            "cwd": cwd,
+            "branch": "main",
+            "timestamp": "2026-06-01T10:00:00Z",
+            "session_note": "V-HUB-RESUME gate",
+        })
+        proc = subprocess.run(
+            ["node", str(HUB_PATH)],
+            input=json.dumps({"cwd": cwd}),
+            capture_output=True, text=True,
+            timeout=SUBPROC_TIMEOUT_S,
+        )
+        try:
+            parsed = json.loads(proc.stdout)
+            ac = parsed.get("additionalContext", "")
+            if ("[/restart resume]" in ac
+                    and "v-hub-resume" in ac
+                    and not MARKER.exists()):
+                _ok("V-HUB-RESUME",
+                    f"hub consumed marker + emitted "
+                    f"{len(ac)} B additionalContext")
+            else:
+                _fail("V-HUB-RESUME",
+                      f"unexpected: ac={ac[:60]!r} "
+                      f"marker_exists={MARKER.exists()}")
+        except (ValueError, TypeError) as exc:
+            _fail("V-HUB-RESUME",
+                  f"stdout not JSON ({exc}): {proc.stdout[:80]!r}")
+    finally:
+        _restore_marker(backup)
+
+
+def gate_hub_registered():
+    """settings.json must list the hub on SessionStart."""
+    settings_path = HOME / ".claude" / "settings.json"
+    if not settings_path.is_file():
+        _fail("V-HUB-REGISTERED", "settings.json missing")
+        return
+    text = settings_path.read_text(encoding="utf-8-sig")
+    if "session_start_hub.js" in text:
+        _ok("V-HUB-REGISTERED",
+            "session_start_hub.js found in settings.json")
+    else:
+        _fail("V-HUB-REGISTERED",
+              "session_start_hub.js NOT in settings.json "
+              "-- Owner needs to run migrate_to_hub.py")
+
+
 def main() -> int:
     print("=" * 60)
-    print("V-RESTART + V-LAG gates (BL-RESTART-001 + BL-LAG-001)")
+    print("V-RESTART + V-LAG + V-HUB gates "
+          "(BL-RESTART-001 + BL-LAG-001 + BL-SESSION-HUB-001)")
     print("=" * 60)
     for gate in (
         gate_cmd_exists,
@@ -316,10 +434,15 @@ def main() -> int:
         gate_wrapper_exists,
         gate_optimizer_dryrun,
         gate_measure_runs,
+        gate_hub_exists,
+        gate_hub_fast,
+        gate_hub_log,
+        gate_hub_resume,
+        gate_hub_registered,
     ):
         gate()
     print()
-    print(f"RESTART_AND_LAG={PASS}/{PASS + FAIL}  threshold=10/10")
+    print(f"RESTART_AND_LAG={PASS}/{PASS + FAIL}  threshold=15/15")
     return 0 if FAIL == 0 else 1
 
 

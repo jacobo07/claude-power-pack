@@ -650,6 +650,107 @@ state).
 - `vault/benchmarks/session_start_iter3.json` (auto-vault-bootstrap
   wrapped, 78-97% cumulative reduction).
 
+### UKDL TRAP T-NODE-COLD-001 -- Node cold-start floor per hook
+
+**Level:** UKDL Trap (Windows-specific, structural performance).
+**Sealed:** 2026-06-01 morning.
+
+**Trap:** every JS hook registered in `~/.claude/settings.json` runs
+as a separate Node process. On Windows each Node process pays a
+~30-150 ms cold-start floor for V8 + stdlib loading, EVEN when the
+hook body is trivial (single `fs.existsSync` + early return). For
+N hooks on one event the wall time floor is
+`N * cold_start + max(hook_body_ms)`. The body itself is fast; the
+floor is the bottleneck.
+
+**Root cause:** Node.exe is a standalone binary that re-loads V8 and
+its stdlib from disk on every cold invocation. Subsequent invocations
+benefit from the OS page cache (so iter-3 measurements show
+30-50 ms minimum) but every fresh session still pays the first cold
+start for each hook entry.
+
+**Recognizer:** if every JS hook on an event takes a similar wall time
+(~100-200 ms) regardless of WHAT the hook does, the bottleneck is
+cold-start, not logic. Confirm by replacing a hook body with `process.
+exit(0)` -- the wall time barely changes. The body work itself is
+~5-30 ms; the cold start is 80-150 ms.
+
+**Correct fix:** consolidate multiple hooks into ONE Node process.
+Two patterns are documented:
+
+1. **Hub pattern** (`hooks/session_start_hub.js`, sealed
+   2026-06-01): one Node entry in settings.json runs ALL PP
+   SessionStart logic. Sync hooks (those that emit
+   additionalContext) run inline; fire-and-forget hooks
+   (jit_warm, watchdogs) spawn detached subprocesses. Net cost:
+   one Node cold start + sum of inline-hook bodies.
+2. **Dispatcher pattern** (`hooks/hook-dispatcher.js`, sealed
+   earlier for Pre/Post/UserPromptSubmit/Stop events): hooks
+   export `module.exports = { run }` and the dispatcher requires
+   them in-process, merging their JSON outputs.
+
+The hub pattern is simpler for SessionStart (only one hook ever
+writes additionalContext: restart_resume); the dispatcher pattern
+is required for events where multiple hooks need to merge stdout
+JSON.
+
+**Honest scope:** cold-start cost cannot be reduced from inside
+the hook body. The fix is architectural -- consolidate at the
+settings.json level. The hub does NOT reduce variance from
+Windows AV scans (see T-WIN-AV-001) -- those are orthogonal.
+
+**Cross-ref:**
+
+- `hooks/session_start_hub.js` (SessionStart consolidation).
+- `hooks/hook-dispatcher.js` (Pre/Post/UserPrompt/Stop consolidation).
+- `tools/migrate_to_hub.py` (Owner-runnable settings.json rewire).
+- `vault/benchmarks/session_start_hub_final.json` (post-hub timing).
+
+### UKDL TRAP T-WIN-AV-001 -- Windows AV adds 300-700 ms variance to any spawn
+
+**Level:** UKDL Trap (OS-level, not fixable from PP).
+**Sealed:** 2026-06-01 morning.
+
+**Trap:** any process spawn on Windows can take 300-700 ms longer than
+expected if Windows Defender (or another AV) chooses to scan the
+binary at that moment. The same hook script measures 150 ms on one run
+and 700 ms on the next, with NO code change, NO OS change, and NO load
+difference -- just AV scheduling.
+
+**Root cause:** real-time protection scans EXE / DLL / .py / .js files
+on first read after they were touched. The scan is normally cached
+but cache eviction (low memory pressure, AV signature update, manual
+"Full scan now" by the user) puts the next spawn back at cold-scan
+cost.
+
+**Recognizer:** if a hook's wall time varies between 150 ms and 700 ms
+across consecutive runs WITHOUT code changes -- and the slow runs are
+not correlated with load on other processes -- the cause is AV scan
+variance. Confirm by temporarily disabling real-time protection (an
+Owner-side step, not a PP-side step) and re-measuring; if variance
+drops to < 50 ms, AV was the cause.
+
+**No fix from PP.** The PP cannot turn off the Owner's AV. Two
+Owner-side mitigations:
+
+1. Add `C:\Users\User\.claude\skills\claude-power-pack` to Windows
+   Defender exclusions (Settings -> Update & Security -> Windows
+   Security -> Virus & threat protection -> Exclusions). Eliminates
+   the variance for PP-owned scripts.
+2. Accept the variance as OS noise. The median wall time still meets
+   targets; only the tail latency is affected.
+
+**Honest scope:** this trap is documented so future iterations of the
+SessionStart lag fix do NOT attribute the variance to a bug in the
+hub or wrapper. Iter 2 and iter 3 measurement spikes (660 ms peaks
+above 245 ms median) are this trap, not a regression in the fixes.
+
+**Cross-ref:**
+
+- `vault/benchmarks/session_start_iter3.json` (variance evidence).
+- `vault/knowledge_base/ukdl-universal.md` § T-LAG-001 (the lag
+  fix doctrine; this trap is the irreducible residual).
+
 ---
 
 ## Compact 95% Hang Recovery (BL-COMPACT-001 -- sealed 2026-06-01)

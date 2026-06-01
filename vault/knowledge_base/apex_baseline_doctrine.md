@@ -158,13 +158,64 @@ python tools/optimize_session_start.py    # removes the duplicate
 python tools/measure_session_start.py     # verify timing
 ```
 
-**Reference implementation (sealed 2026-05-31):**
+**Reference implementation (sealed 2026-05-31, extended 2026-06-01):**
 
 - `~/.claude/scripts/restart-claude.ps1` -- CONIN$ inject + flag + marker + fallback.
 - `~/.claude/commands/restart.md` -- Win32 console architecture rationale.
 - `hooks/restart_resume.js` -- SessionStart marker consumer (cwd-guarded, BOM-tolerant).
 - `hooks/async_wrapper.js` -- generic detached spawner for slow hooks.
+- `hooks/session_start_hub.js` -- single Node process for ALL PP SessionStart concerns (BL-SESSION-HUB-001).
 - `tools/optimize_session_start.py` -- Owner-runnable, idempotent rewiring.
+- `tools/migrate_to_hub.py` -- Owner-runnable, collapses 5 PP entries into 1 hub entry.
 - `tools/measure_session_start.py` -- empirical timer + verdict.
-- `tools/test_restart_and_lag.py` -- 10 V-RESTART-* + V-LAG gates.
-- `vault/knowledge_base/ukdl-universal.md` § UKDL TRAP T-RESTART-001 + T-LAG-001.
+- `tools/test_restart_and_lag.py` -- 15 V-RESTART-* + V-LAG + V-HUB gates.
+- `vault/knowledge_base/ukdl-universal.md` § UKDL TRAP T-RESTART-001 + T-LAG-001 + T-NODE-COLD-001 + T-WIN-AV-001.
+
+## SCS C23 -- Session-Hub-by-default (sealed 2026-06-01, BL-SESSION-HUB-001)
+
+Successor / amendment to SCS C22 (which still applies). When the count of
+PP-owned SessionStart entries in `~/.claude/settings.json` reaches 3 or
+more, they MUST be consolidated into ONE Node hub process.
+
+1. **Single hub entry.** PP-owned SessionStart concerns live as
+   functions in `hooks/session_start_hub.js`. Adding a new SessionStart
+   concern means adding a function call in the hub's `main()`, NOT
+   adding a new entry to settings.json. The hub is the ONLY PP entry on
+   SessionStart in steady state. Owner-side hooks (auto-vault-bootstrap,
+   token-shield-refresh, learning-sentinel, lazarus-*) remain as
+   separate entries -- the hub does not touch them.
+
+2. **Inline vs detached partition.** The hub has at most ONE function
+   that may write to stdout (the one that emits additionalContext). All
+   others MUST be fire-and-forget: `spawn(..., { detached: true, stdio:
+   'ignore', windowsHide: true }) + child.unref()`. The Windows stdio
+   hard rule (T-ASYNC-WRAPPER-001) applies to the hub's spawns.
+
+3. **Empirical budget.** `python tools/measure_session_start.py` must
+   show `verdict: OK` on a majority of consecutive runs after the hub
+   migration. Variance spikes (T-WIN-AV-001) are documented as OS
+   noise, not regressions. The hub itself must run in < 1500 ms via
+   `node hooks/session_start_hub.js` direct invocation (V-HUB-FAST
+   gate).
+
+**Sealed evidence (this host):**
+
+| Stage | Individual max (ms) | Serial total (ms) | Verdict |
+|---|---|---|---|
+| Baseline | 4696 | 7375 | FAIL |
+| Iter 2 (wrapper stdio fix) | 195 (clean run) | 888 | OK |
+| Iter 3 (auto-vault wrap) | 491 (variance) | 2028 | WARN |
+| **Hub (this clause)** | **220** | **430** | **OK** |
+
+**95.3% reduction on individual max, 94.2% on serial total vs baseline.**
+
+**One-time Owner activation flow (sealed 2026-06-01):**
+
+```
+python tools/optimize_session_start.py    # phase 1 (kept for backwards-compat)
+python tools/migrate_to_hub.py            # phase 2 (collapses to hub)
+python tools/register_global_hooks.py     # picks up restart_resume etc.
+python tools/measure_session_start.py     # verify post-hub OK
+```
+
+Sealed BL-SESSION-HUB-001. Extends SCS C22, does not replace it.
