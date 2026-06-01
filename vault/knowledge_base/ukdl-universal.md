@@ -828,3 +828,31 @@ Owner session. Killing that session destroys live work.
 **Origin:** plan-time audit during BL-COMPACT-001 design. No
 production incident yet -- catching the antipattern before it
 ships.
+
+### PR-COMPACT-001a -- 1-click interactive variant (sealed 2026-06-01)
+
+Optional opt-in upgrade of the alert flow. Install with:
+
+```
+python tools/compact_hang_detector.py --install --interactive
+```
+
+The detector then pops a `YesNoCancel` MessageBox on alert
+instead of the legacy OK-only toast. Yes runs the rescue
+immediately (guard-bypassed -- the Owner click IS the consent);
+No snoozes alerts for 60 s; Cancel / timeout are no-ops.
+
+**Why this is compatible with the never-auto-kill doctrine:**
+the kill still requires Owner consent at the moment the alert
+fires. We only collapse the friction from "open terminal + type
+command" to "click Yes". No-click paths
+(`--auto-rescue-after N`, scheduled auto-kill) remain
+explicitly forbidden.
+
+**State files:**
+
+- `~/.claude/state/compact_snooze_until.txt` -- epoch timestamp
+  until which alerts are suppressed (written on No).
+- `clear-snooze` action drops the file on demand.
+
+- **UKDL-OSA-2026-06-01T12:35:36Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token

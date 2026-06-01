@@ -2862,6 +2862,26 @@ restart". Resist. Two empirical reasons:
 The detector script can ALERT (toast, log, exit code) but the
 kill action stays human-in-the-loop via the slash command.
 
+**Low-friction 1-click helpers are compatible with this axis.**
+A `YesNoCancel` MessageBox in the alert popup -- where Yes
+spawns the rescue inline -- preserves the Owner-decision
+contract while collapsing the friction from "open terminal +
+type command" to "click Yes". The kill still requires explicit
+consent at the moment of alert. No-click paths (auto-kill on
+timeout, scheduled-task `--auto-rescue-after N`) are excluded.
+The distinction is binary: a kill needs a human decision at the
+moment it happens, even if that decision is just a mouse click.
+
+Implementation reference: `tools/compact_hang_detector.py
+--interactive` (opt-in via `--install --interactive`). On
+detection: blocks up to `INTERACTIVE_POPUP_TIMEOUT_S` (5 min)
+for an Owner click. Yes -> spawn `compact_rescue.ps1`
+(guard-bypassed since detector + Owner click already confirm
+intent). No -> write `~/.claude/state/compact_snooze_until.txt`
+suppressing alerts for `DEFAULT_SNOOZE_SECONDS` (60 s).
+Cancel / timeout -> no action. Passive (legacy OK-only popup)
+remains the default mode.
+
 ### Empirical baseline (2026-06-01)
 
 - 40 `claude.exe` procs observed; RSS distribution skewed (top
