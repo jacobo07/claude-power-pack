@@ -151,6 +151,80 @@ gate(
     "(PR+T+BL markers present)" if ukdl_ok else "(missing one or more markers)",
 )
 
+# --- V-COMPACT-INTERACTIVE-FLAG ------------------------------------------
+# Detector must accept --interactive + --dry-notify without crashing.
+# On a healthy session this returns "OK: no compact hang detected" rc=0;
+# the interactive code path is never reached, but argparse + global
+# wiring is exercised.
+DETECTOR_PY = PP / "tools" / "compact_hang_detector.py"
+if DETECTOR_PY.is_file():
+    try:
+        r = subprocess.run(
+            [sys.executable, str(DETECTOR_PY), "check",
+             "--interactive", "--dry-notify"],
+            capture_output=True, text=True, timeout=30,
+        )
+        intr_ok = r.returncode == 0 and "OK" in (r.stdout or "")
+        intr_evidence = (
+            f"(rc={r.returncode}, OK_in_stdout="
+            f"{'OK' in (r.stdout or '')})"
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        intr_ok = False
+        intr_evidence = f"(crash: {exc})"
+else:
+    intr_ok = False
+    intr_evidence = "(detector script not found)"
+gate("V-COMPACT-INTERACTIVE-FLAG", intr_ok, intr_evidence)
+
+# --- V-COMPACT-SNOOZE-CLEAR ----------------------------------------------
+# clear-snooze action must drop the snooze file. Synthesise one first
+# so the test exercises the real removal path, not the no-op branch.
+SNOOZE_FILE = Path.home() / ".claude" / "state" / "compact_snooze_until.txt"
+if DETECTOR_PY.is_file():
+    try:
+        SNOOZE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        SNOOZE_FILE.write_text(str(time.time() + 60), encoding="utf-8")
+        existed_before = SNOOZE_FILE.is_file()
+        r = subprocess.run(
+            [sys.executable, str(DETECTOR_PY), "clear-snooze"],
+            capture_output=True, text=True, timeout=10,
+        )
+        gone_after = not SNOOZE_FILE.is_file()
+        snooze_ok = (
+            r.returncode == 0 and existed_before and gone_after
+        )
+        snooze_evidence = (
+            f"(rc={r.returncode}, existed={existed_before}, "
+            f"gone_after={gone_after})"
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        snooze_ok = False
+        snooze_evidence = f"(crash: {exc})"
+else:
+    snooze_ok = False
+    snooze_evidence = "(detector script not found)"
+gate("V-COMPACT-SNOOZE-CLEAR", snooze_ok, snooze_evidence)
+
+# --- V-COMPACT-DASH-COMPAT -----------------------------------------------
+# Backwards-compatibility: old --check dash form must still work after
+# the argparse migration.
+if DETECTOR_PY.is_file():
+    try:
+        r = subprocess.run(
+            [sys.executable, str(DETECTOR_PY), "--check"],
+            capture_output=True, text=True, timeout=30,
+        )
+        dash_ok = r.returncode == 0 and "OK" in (r.stdout or "")
+        dash_evidence = f"(rc={r.returncode}, OK_present={'OK' in (r.stdout or '')})"
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        dash_ok = False
+        dash_evidence = f"(crash: {exc})"
+else:
+    dash_ok = False
+    dash_evidence = "(detector script not found)"
+gate("V-COMPACT-DASH-COMPAT", dash_ok, dash_evidence)
+
 # --- V-BASELINE-INTACT ---------------------------------------------------
 # Verify pre-existing modules still import cleanly -- catches regressions
 # from this work touching modules unintentionally.
