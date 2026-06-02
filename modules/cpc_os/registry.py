@@ -4,6 +4,12 @@ Registry is a dict[pane_id, PaneRecord] persisted as JSON. Writes
 are atomic via tempfile + os.replace -- a sibling pane reading the
 file mid-write either sees the OLD payload (in full) or the NEW
 payload (in full), never a half-written one.
+
+BL-CPCOS-002 (2026-06-02): PaneRecord gained an optional ``session_id``
+(for §208.2 same-session continuity) and the status vocabulary gained
+``paused`` (for §208.3 switch -- a source pane parked while its target
+takes focus). Both are backward compatible: old JSON records omit
+session_id (defaults to None) and never carry the paused status.
 """
 from __future__ import annotations
 
@@ -26,6 +32,9 @@ HEARTBEAT_INTERVAL_S = 30
 # considered stale and will be marked accordingly.
 STALE_THRESHOLD_S = 300
 
+# Valid lifecycle states. active <-> paused <-> active; any -> dead.
+VALID_STATUSES = ("active", "stale", "paused", "dead")
+
 
 @dataclass
 class PaneRecord:
@@ -34,7 +43,8 @@ class PaneRecord:
     task: str
     started_at: float
     last_heartbeat_at: float
-    status: str = "active"  # active | stale | dead
+    status: str = "active"  # active | stale | paused | dead
+    session_id: str | None = None  # claude conversation/session uuid (§208.2)
 
 
 def _atomic_write(path: Path, payload: str) -> None:
@@ -87,6 +97,7 @@ class PaneRegistry:
 
     def register_pane(
         self, pane_id: str, cwd: str, task: str,
+        session_id: str | None = None,
     ) -> PaneRecord:
         now = time.time()
         rec = PaneRecord(
@@ -96,6 +107,7 @@ class PaneRegistry:
             started_at=now,
             last_heartbeat_at=now,
             status="active",
+            session_id=session_id,
         )
         self.panes[pane_id] = rec
         self.save()
@@ -114,6 +126,27 @@ class PaneRegistry:
         if pane_id not in self.panes:
             return False
         self.panes[pane_id].status = "dead"
+        self.save()
+        return True
+
+    def pause_pane(self, pane_id: str) -> bool:
+        """Park a pane (§208.3 switch source). A dead pane cannot be
+        paused -- death is terminal. Returns True on a real transition."""
+        rec = self.panes.get(pane_id)
+        if rec is None or rec.status == "dead":
+            return False
+        rec.status = "paused"
+        self.save()
+        return True
+
+    def activate_pane(self, pane_id: str) -> bool:
+        """Bring a pane back to active (§208.3 switch target). A dead
+        pane cannot be revived this way. Returns True on transition."""
+        rec = self.panes.get(pane_id)
+        if rec is None or rec.status == "dead":
+            return False
+        rec.status = "active"
+        rec.last_heartbeat_at = time.time()
         self.save()
         return True
 
