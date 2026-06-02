@@ -23,9 +23,13 @@ from modules.cascade_prevention import detect, is_blocked
 from modules.cost_collapse import RouteClass, route
 from modules.cpc_os import (
     PaneRegistry,
+    detect_crash_state,
     is_pane_alive,
+    plan_parallel_backlog,
     recover_corrupt_registry,
+    restart_intent,
     route_intent,
+    switch_intent,
 )
 from modules.one_shot import (
     BUDGETS,
@@ -186,6 +190,43 @@ def main() -> int:
         gate("V-CPC-INTENT-OK",
              ir.accepted,
              "fresh intent accepted")
+
+        # section 208.2-208.5 acceptance contracts (BL-CPCOS-002).
+        # Each uses its own registry file so the cases stay isolated.
+        r2 = PaneRegistry.load(Path(td) / "r2.json")
+        r2.register_pane("p", str(Path(td)), "t", session_id="sid-x")
+        gate("V-CPC-RESTART",
+             restart_intent("p", str(Path(td)), session_id="sid-x",
+                            registry=r2)["safe"]
+             and not restart_intent("ghost", str(Path(td)),
+                                    registry=r2)["safe"],
+             "208.2 same-pane safe; unknown blocked")
+        r3 = PaneRegistry.load(Path(td) / "r3.json")
+        r3.register_pane("s", "/s", "ta")
+        r3.register_pane("g", "/g", "tb")
+        r3.pause_pane("g")
+        sw = switch_intent("s", "g", registry=r3)
+        gate("V-CPC-SWITCH",
+             sw["safe"] and r3.panes["s"].status == "paused"
+             and r3.panes["g"].status == "active",
+             "208.3 source paused, target activated")
+        r4 = PaneRegistry.load(Path(td) / "r4.json")
+        r4.register_pane("d", "/d", "t", session_id="sid-d")
+        r4.panes["d"].last_heartbeat_at -= 10000  # backdate -> stale
+        cs = detect_crash_state(registry=r4)
+        gate("V-CPC-RECOVERY",
+             cs["crash_detected"]
+             and cs["restore_plan"][0]["confidence"] == "high",
+             "208.4 stale pane -> high-confidence restore plan")
+        gate("V-CPC-BACKLOG",
+             plan_parallel_backlog([
+                 {"item_id": "x", "pane_id": "p1", "task": "A",
+                  "locks": ["f"], "deps": []},
+                 {"item_id": "y", "pane_id": "p2", "task": "B",
+                  "locks": ["f"], "deps": []},
+             ])["valid"] is False,
+             "208.5 concurrent lock collision blocked")
+
         rp.write_text("{broken json", encoding="utf-8")
         rec2, recovered = recover_corrupt_registry(rp)
         gate("V-CPC-CORRUPT-RECOVERY",
