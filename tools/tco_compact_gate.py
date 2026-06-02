@@ -91,6 +91,49 @@ def route_skill(skill_name: str) -> tuple[str, str]:
     return load_routing(task_type), task_type
 
 
+def route_prompt(prompt: str) -> dict | None:
+    """Wire modules.cost_collapse.router into the TCO surface.
+
+    Returns a cheap-first routing recommendation for a raw prompt, or
+    None when the Cost Collapse module is unavailable (fail-open -- a
+    cost-visibility tool must never block real work). MICRO (the
+    default route) returns None too: no advice needed for the common
+    case, only NANO (route down to Haiku) and MACRO/ULTRA (route up to
+    Opus) are worth surfacing.
+    """
+    if not prompt:
+        return None
+    try:
+        from modules.cost_collapse.router import route, RouteClass
+    except (ImportError, ModuleNotFoundError):
+        return None
+    try:
+        r = route(prompt)
+    except Exception:
+        return None
+    if r.route_class == RouteClass.NANO:
+        return {
+            "route_class": "NANO",
+            "model": r.model,
+            "max_budget": r.max_budget,
+            "advice": (
+                f"Cost route: {r.model} -- trivial task, Haiku suggested "
+                f"(<= ${r.max_budget:g})."
+            ),
+        }
+    if r.route_class in (RouteClass.MACRO, RouteClass.ULTRA):
+        return {
+            "route_class": r.route_class.name,
+            "model": r.model,
+            "max_budget": r.max_budget,
+            "advice": (
+                f"Cost route: {r.model} -- complex task, high reasoning "
+                f"tier (budget <= ${r.max_budget:g})."
+            ),
+        }
+    return None  # MICRO -> default, no advice
+
+
 def _read_session_entries(session_id: str | None = None) -> list[dict]:
     """Best-effort read of TIS log for the active session. Empty list
     on any failure -- callers handle the cold-start case."""
@@ -254,6 +297,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="Print recommended model id for a task_type")
     p.add_argument("--route-skill", metavar="SKILL_NAME",
                    help="Print recommended model id for a skill name")
+    p.add_argument("--route-prompt", metavar="PROMPT",
+                   help="Cheap-first route recommendation for a raw prompt "
+                        "(wires modules.cost_collapse.router)")
     p.add_argument("--json", action="store_true",
                    help="Emit machine-readable JSON state")
     p.add_argument("--session", metavar="SID", default=None,
@@ -304,6 +350,16 @@ def main(argv: list[str] | None = None) -> int:
                               "model": model}))
         else:
             print(f"{model}  (task_type={task_type})")
+        return 0
+
+    if args.route_prompt:
+        rec = route_prompt(args.route_prompt)
+        if args.json:
+            print(json.dumps(rec if rec else {"route_class": "MICRO",
+                                              "advice": None}))
+        else:
+            print(rec["advice"] if rec else
+                  "MICRO (default route) -- Sonnet, no cost advice needed")
         return 0
 
     state = check_compact_gate(args.session)
