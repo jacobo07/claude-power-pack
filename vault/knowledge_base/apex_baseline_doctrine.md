@@ -447,8 +447,55 @@ Cross-ref UKDL Trap T-ORPHAN-MODULE-001 (C27) and
 
 Scope honesty: the originating plan's DONE-GATE projected 39/39 and five
 slash commands (/secret-scan /cost-autopsy /one-shot-compile /demo-ready
-/revenue-ready) + tools secret_scan_repo.py / readiness_check.py. Those
-artifacts are NOT present on this branch; their gates were NOT added (no
-gate may reference a missing file). Real sealed total: 35/35.
+/revenue-ready) + tools secret_scan_repo.py / readiness_check.py. At C28
+seal time those artifacts were NOT present and their gates were NOT added.
+They were subsequently built against verified real APIs (commit 5a3e32a)
+and the allowlist wiring closed (commit c87950b); the gate is now 44/44.
+The projected "39/39" was never the real total -- 35 at C28 seal, 44 after
+the commands shipped honestly.
 
 Sealed BL-CPCOS-002 2026-06-02.
+
+## SCS C29 -- Dataset-spec-is-vision-not-worklist (sealed 2026-06-02, BL-DATASET-INVENTORY)
+
+A plan that asserts "N remaining gaps in the vault" is a HYPOTHESIS about
+scope, exactly as plan code is a hypothesis about API (C28). Before
+building any item a plan calls a "remaining gap", VERIFY its real
+implementation status against the repo -- do not treat a concept listed
+in a dataset spec as pending work.
+
+Empirical origin: the "BUCKET B FINAL -- ~12 remaining gaps" plan. PASO-1
+found there is NO authoritative remaining-gap tracker. `pp_dataset_04_gaps.md`
+and `_05_improvements.md` are the dataset VISION SPEC (Parts III/IV --
+cascade engine, output potency, PIEE, backlog harvester, etc.), and
+`pp_dataset_MASTER.md` is an index, not a status board. Of the plan's five
+"probable gaps":
+- **hard_rules cascade->HR derive**: ALREADY shipped (extractor.py,
+  BL-HARDRULE-001) -- it already admits cascade-failure lessons. Not a gap.
+- **secret-scan allowlist wiring**: the ONE real, safe, composable gap.
+  Built by composing the PROVEN sources (rotation_advisor.KNOWN_SAFE_VALUES
+  + allowlist.is_allowed), not the plan's imagined `KNOWN_SAFE_VALUES` on
+  the firewall. Live tree 12 CRITICAL hits -> 0 with --honor-allowlist.
+- **ukdl_sync.py**: does not exist + would mutate OTHER repos' vaults
+  (high blast radius) -> Owner-side, not auto-build.
+- **budget_monitor / session_cost_estimator "integration"**: both modules
+  exist; "integration" = settings.json / hook registration that HR-001
+  denies in auto-mode -> Owner-side (C18 one-time-registration pattern).
+
+Sealed standard:
+1. **Inventory is a hypothesis.** Glob/grep/read the repo for each named
+   gap before building. A listed concept that is already implemented,
+   already Owner-side, or high-blast cross-project is NOT this turn's work.
+2. **Build the smallest real gap with a verified API; skip the rest with a
+   reason.** Anti-monolith: one composable gap > five speculative shells.
+3. **Do not seal a triumphant "ALL N CLOSED".** Report the real number and
+   the honest disposition of each non-built item (done / Owner-side /
+   needs-architecture). A grand close on an unanchored count is the
+   output-drift cascade the dataset itself warns against (39.9 / 45.x).
+
+Gate: `python tools/test_dataset_build.py` -> 44/44 (the allowlist gate
+V-SECRET-SCAN-ALLOWLIST). Cross-ref C28 (plan code is hypothesis), C18
+(one-time-registration for config writes), and
+`feedback_plan_code_is_hypothesis_verify_source`.
+
+Sealed BL-DATASET-INVENTORY 2026-06-02.
