@@ -1242,10 +1242,112 @@ def _oneshot_contract_inject(fn):
     return _wrapper
 
 
+# --- Skill Router Axis (BL-SLEEPY-SKILLS-001 wiring) ---
+# Sleepy-by-default activation of the GENERAL skill library (the Apollo
+# modules keep their own trigger path above). On a prompt whose intent
+# clears the classifier's confidence floor, append a POINTER card naming
+# the matched skill(s) so the agent invokes them via the Skill tool with
+# no Owner command. Pointer-only: no skill body is inlined (the model
+# pulls the full SKILL.md on demand). Session-deduped, fail-open,
+# env-disable via CLAUDEPP_SKILLROUTER_DISABLE=1. Hot-path safe: the
+# index is a cached single-file read (build walks frontmatter heads only,
+# and only on cache miss).
+def _skillrouter_state_path(sid: str) -> Path:
+    return STATE_DIR / f"jit-skillrouter-{sid}.json"
+
+
+def _skillrouter_carded(sid: str) -> set:
+    """Skill names already carded this session (within the dedupe TTL)."""
+    try:
+        st = json.loads(
+            _skillrouter_state_path(sid).read_text(encoding="utf-8"))
+        now = time.time()
+        return {k for k, v in st.items()
+                if isinstance(v, (int, float)) and now - v < DEDUPE_TTL_SEC}
+    except Exception:
+        return set()
+
+
+def _skillrouter_mark(sid: str, names: list, prior: set) -> None:
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        now = time.time()
+        st = {n: now for n in prior}
+        for n in names:
+            st[n] = now
+        p = _skillrouter_state_path(sid)
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(st), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:
+        pass
+
+
+def _skill_router_inject(fn):
+    """Append a pointer card for intent-matched general skills.
+    Advisory; never blocks. Fail-open. Sealed BL-SLEEPY-SKILLS-001."""
+    import functools as _ft
+
+    @_ft.wraps(fn)
+    def _wrapper(data):
+        result = fn(data)
+        try:
+            if os.environ.get("CLAUDEPP_SKILLROUTER_DISABLE") == "1":
+                return result
+            if os.environ.get("CLAUDEPP_JIT_RUNNING") == "1":
+                return result
+            data_d = data or {}
+            prompt = str(data_d.get("prompt") or "")
+            if len(prompt) < 12:
+                return result
+            from modules.skill_router.intent_classifier import classify_intent
+            from modules.skill_router.skill_index import build_index
+            # Cached single-file read; walks frontmatter heads only on a
+            # cache miss (<=1/h), never the per-prompt DFS the Apollo path
+            # guards against.
+            skills = build_index(force=False)
+            # context_pct is intentionally omitted: the UserPromptSubmit
+            # payload carries no context-fraction field, so the
+            # classifier's forced-sleep branch is unreachable from this
+            # caller by design (it IS exercised via the public API +
+            # V-INTENT-CTX-FORCE gate). System-level context austerity is
+            # enforced separately by HR-CASCADE-005.
+            res = classify_intent(prompt, skills)
+            if not res.should_wakeup:
+                return result
+            names = [s.name for s in res.matching_skills]
+            sid = _sid(data_d)
+            prior = _skillrouter_carded(sid)
+            fresh = [n for n in names if n not in prior]
+            if not fresh:
+                return result  # already carded this session
+            card = (
+                "[sleepy-skill] Frontend/design intent detected "
+                f"(confidence {res.confidence:.2f}). Consider invoking the "
+                f"Skill tool for: {', '.join(fresh)}. Pointer only — the "
+                "full skill body loads on Skill-tool invocation (Sleepy "
+                "Skills router; CLAUDEPP_SKILLROUTER_DISABLE=1 to mute)."
+            )
+            if not isinstance(result, dict):
+                return result
+            ac = result.get("additionalContext") or ""
+            if ac and not ac.endswith("\n"):
+                ac += "\n"
+            ac += "\n" + card
+            result["additionalContext"] = ac
+            _skillrouter_mark(sid, fresh, prior)
+            return result
+        except Exception as _exc:
+            _log(f"skill-router inject ERROR {type(_exc).__name__}: {_exc}")
+            return result
+    return _wrapper
+
+
 @_tis_log_call
 @_tco_inject_routing
 @_pp_proactive_inject
 @_oneshot_contract_inject
+@_skill_router_inject
 def run(data) -> dict:
     try:
         data = data or {}
@@ -1420,6 +1522,14 @@ def _warm_run() -> int:
         cwd = Path(cwd_env)
         _walk_has_graphql(cwd)
         _active_spec(cwd)
+        # Warm the Sleepy-Skills index cache (frontmatter-head walk) so the
+        # first real prompt's _skill_router_inject hits a fresh cache and
+        # never pays the walk on the hot path.
+        try:
+            from modules.skill_router.skill_index import build_index as _bi
+            _bi(force=True)
+        except Exception:
+            pass
         sys.stdout.write("warm:ok")
     except Exception as exc:
         _log(f"warm-run ERROR {type(exc).__name__}: {exc}")

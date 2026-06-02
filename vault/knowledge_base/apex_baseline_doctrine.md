@@ -499,3 +499,56 @@ V-SECRET-SCAN-ALLOWLIST). Cross-ref C28 (plan code is hypothesis), C18
 `feedback_plan_code_is_hypothesis_verify_source`.
 
 Sealed BL-DATASET-INVENTORY 2026-06-02.
+
+## SCS C30 -- Sleepy-Skills-by-intent: extend the chokepoint, don't add a hook (sealed 2026-06-02, BL-SLEEPY-SKILLS-001)
+
+A new "inject context on prompt intent" capability is almost never a new
+hook. The UserPromptSubmit chokepoint already exists
+(`tools/jit_skill_loader.py`) with a budget, session-dedupe, fail-open
+contract, and a 5-deep decorator idiom (`_tco_inject_routing`,
+`_pp_proactive_inject`, `_oneshot_contract_inject`, ...). A second
+always-on hook for the same event is the "two systems for one job"
+anti-pattern the plan itself flagged, and it risks double-injection.
+
+Empirical origin: the "Sleepy Skills" plan proposed a parallel
+`skill_router` hook (option B) or in-place JIT edits (option A). FASE -1
+showed the JIT loader is ALREADY sleepy-by-default -- it just only
+triggers on the 11 vendored Apollo modules. The right answer was Hybrid:
+a testable `modules/skill_router/` (index + classifier) wired as ONE new
+decorator on the existing `run()`.
+
+Premise correction (report loudly, per `feedback_audit_disproves_owner_premise`):
+the plan's "87 skills x 5KB = 110K tokens wasted if all active" is false --
+skill BODIES are already lazy (loaded only on Skill-tool invocation); only
+the ~1-line descriptions sit in the always-on registry. Nothing wastes
+110K. The real gap was AUTO-ACTIVATION (the right skill firing with no
+Owner command), not token waste.
+
+Sealed standard:
+1. **Reuse the injection chokepoint.** New intent-injection = a decorator
+   on the JIT loader's `run()`, not a new UserPromptSubmit hook. Inherit
+   its budget / dedupe / fail-open / additionalContext shape.
+2. **Triggers come from the author's frontmatter `description`**, the
+   curated trigger surface -- never word-frequency counting (which
+   surfaces "should/using/context" noise). Match with WORD BOUNDARIES:
+   a substring test makes "ui" match "build" and mis-classifies everything.
+3. **Pointer cards, not bodies.** Inject an ~80-token nudge ("skill X
+   matches -- invoke it via the Skill tool"), like `LATERAL_CARD`. The
+   model pulls the full SKILL.md on demand; injecting the body is
+   redundant with the model's own Skill-tool access.
+4. **Hot path stays cache-read only.** The classifier receives a candidate
+   pool; the disk walk (frontmatter heads, never whole files) is
+   SessionStart-warm + tests, cached 1 h. Measured added cost: ~24 ms/prompt
+   (classify itself 1 ms), under the 200 ms hub floor (C21).
+5. **Negative signals are the precision layer.** A hard veto on
+   backend/ops terms (jwt, deploy, sql, server) keeps "fix the JWT bug"
+   asleep even when an incidental UI word appears.
+
+Gate: `python tools/test_sleepy_skills.py` -> 8/8 (V-SKILL-INDEX-BUILDS,
+V-SKILL-FRONTEND, V-INTENT-WAKEUP/SLEEP/CTX-FORCE/ACCURACY,
+V-JIT-INTEGRATION, V-BASELINE-INTACT) + verify_spp `sleepy-skills` row.
+Cross-ref C21 (performance-by-default in hot-path hooks), C27
+(integration-wiring: prove activation, not just unit gate), and
+`feedback_audit_disproves_owner_premise`.
+
+Sealed BL-SLEEPY-SKILLS-001 2026-06-02.
