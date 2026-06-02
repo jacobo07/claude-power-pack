@@ -22,8 +22,16 @@ number, and severity, never the raw credential.
 PP="$HOME/.claude/skills/claude-power-pack"
 python "$PP/tools/secret_scan_repo.py" --path .              # scan cwd
 python "$PP/tools/secret_scan_repo.py" --severity CRITICAL   # CRITICAL only
+python "$PP/tools/secret_scan_repo.py" --honor-allowlist     # drop known-safe
 python "$PP/tools/secret_scan_repo.py" --report              # per-hit detail
 ```
+
+`--honor-allowlist` drops hits whose matched value is a widely-published
+synthetic example (e.g. AWS's `AKIA...EXAMPLE` keys) or an Owner-managed
+sha256-allowlisted value -- the same two sources
+`secret_rotation_advisor` trusts. Without the flag you get the raw sweep
+(every pattern match); with it you get the same actionable set the
+rotation advisor reports.
 
 On Windows, run via PowerShell with the absolute python path:
 

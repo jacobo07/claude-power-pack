@@ -310,6 +310,19 @@ def main() -> int:
              and len(scan_repo(clean_dir, "CRITICAL")) == 0,
              "scan_repo: leak dir flags CRITICAL, clean dir 0")
 
+        # --honor-allowlist drops a published-example value (AWS example
+        # key, pulled from the rotation advisor's allowlist at runtime so
+        # this source carries no literal secret).
+        from tools.secret_rotation_advisor import KNOWN_SAFE_VALUES
+        safe_dir = Path(td2) / "safe"
+        safe_dir.mkdir()
+        safe_val = next(iter(KNOWN_SAFE_VALUES))
+        (safe_dir / "ex.py").write_text(f'AWS = "{safe_val}"\n', encoding="utf-8")
+        gate("V-SECRET-SCAN-ALLOWLIST",
+             len(scan_repo(safe_dir, "CRITICAL", honor_allowlist=False)) >= 1
+             and len(scan_repo(safe_dir, "CRITICAL", honor_allowlist=True)) == 0,
+             "known-safe value: flagged raw, dropped with --honor-allowlist")
+
         rc_cli = oneshot_compiler.main(["--task", "demo task", "--size", "S"])
         gate("V-ONESHOT-CLI",
              rc_cli == 0,
