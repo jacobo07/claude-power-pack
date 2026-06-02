@@ -406,3 +406,49 @@ Consolidated gate: `python tools/verify_integration_wiring.py` ->
 DONE precondition, codified as UKDL Trap T-ORPHAN-MODULE-001.
 
 Sealed BL-INTEGRATION-WIRING 2026-06-02.
+
+## SCS C28 -- Acceptance-Contracts-compose-not-reinvent (sealed 2026-06-02, BL-CPCOS-002)
+
+Every multi-step acceptance contract added to an existing module MUST be
+built against that module's REAL API and MUST compose its existing
+primitives -- never reinvent them, never clobber a sibling function, and
+never assume an API shape from a plan without verifying it in source.
+
+Empirical origin: the CPC-OS section 208.2-208.5 build. The originating
+plan supplied code against an assumed registry API (dict access,
+`pause_pane`, `session_id`, `last_heartbeat`) that did NOT exist; running
+it verbatim would have crashed on contact and would have OVERWRITTEN the
+existing `recovery.py` (corruption recovery) with a same-named crash
+detector. Reading `registry.py` / `router.py` / `handoff.py` first turned
+a broken transcription into a correct composition.
+
+Sealed standard:
+1. **Read the real API before writing against it.** A plan's code is a
+   hypothesis; the source is the contract. Diverge toward the real API
+   and document the divergence.
+2. **Compose, don't reinvent.** section 208.2/208.3 layer on the existing
+   `route_intent` (unknown/dead/stale gate) + `record_handoff`; they do
+   not re-implement pane safety.
+3. **Extend, don't overwrite.** section 208.4 ADDED `detect_crash_state`
+   alongside `recover_corrupt_registry`. A new function whose name
+   collides with an existing file's purpose is a regression in disguise.
+4. **Backward-compatible schema growth.** New `PaneRecord` fields carry
+   defaults (`session_id=None`) so pre-existing JSON records still load.
+5. **Intent-only at the session boundary.** section 208.2 restart
+   validates + records a handoff; it NEVER writes
+   `~/.claude/state/restart_pending.json` (owned by the legacy
+   restart_resume.js flow) -- mixing writers there destabilises session
+   restart (cross-ref BL-LAZ-STALE-001).
+
+Gate: `python tools/test_dataset_build.py` -> 35/35 (the four CPC-OS
+gates V-CPC-RESTART / V-CPC-SWITCH / V-CPC-RECOVERY / V-CPC-BACKLOG).
+Cross-ref UKDL Trap T-ORPHAN-MODULE-001 (C27) and
+`feedback_automation_mechanism_by_measurement`.
+
+Scope honesty: the originating plan's DONE-GATE projected 39/39 and five
+slash commands (/secret-scan /cost-autopsy /one-shot-compile /demo-ready
+/revenue-ready) + tools secret_scan_repo.py / readiness_check.py. Those
+artifacts are NOT present on this branch; their gates were NOT added (no
+gate may reference a missing file). Real sealed total: 35/35.
+
+Sealed BL-CPCOS-002 2026-06-02.
