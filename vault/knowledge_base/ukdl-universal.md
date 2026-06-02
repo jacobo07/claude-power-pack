@@ -1045,3 +1045,41 @@ explicitly forbidden.
 - **UKDL-OSA-2026-06-01T12:35:36Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
 
 - **UKDL-OSA-2026-06-01T14:41:08Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+### UKDL TRAP T-ORPHAN-MODULE-001 -- A module that imports but nobody calls
+
+**Level:** UKDL Trap
+**Sealed:** 2026-06-02, BL-INTEGRATION-WIRING
+
+**Trap:** Build a complete PP module with passing unit V-gates but
+never connect it to an activation surface (hook, signal, decorator,
+slash command, agent). The module exists in the repo and imports
+cleanly, so the build *feels* done -- but it never executes in
+production. The dataset-build cycle (2026-06-01) shipped seven modules
+this way; an audit the next day found FIVE of them ORPHAN: importable,
+zero references in settings.json / agents/ / signals/ / the JIT loader.
+
+**Recognizer (how to detect an orphan at audit time):**
+- `grep -r <module_name> ~/.claude/settings.json hooks/ modules/pp_agents/signals/ tools/jit_skill_loader.py` returns nothing, AND
+- no slash command in `commands/` imports it, AND
+- no agent in `~/.claude/agents/` references it.
+If all three are empty, the module is ORPHAN regardless of how many
+unit tests pass.
+
+**Fix:** In the SAME build cycle (or the immediately following one),
+classify the module's activation cost and wire it via the mechanism
+matched to that cost (the SCS C27 table). Then prove activation -- not
+just import -- with a consolidated gate
+(`tools/verify_integration_wiring.py`, 9/9 this cycle). The empirical
+difference is: "module importable" (necessary) vs "module invoked on a
+real event" (the actual done condition).
+
+**Why it persists:** unit V-gates test the module in isolation; they
+pass whether or not anything calls it. Only an *activation* gate --
+one that fires the hook / signal / decorator and observes the module's
+effect -- closes the loop. Build the activation gate, not just the
+unit gate.
+
+**Cross-ref:** SCS C27 (Integration-Wiring-by-default),
+`feedback_automation_mechanism_by_measurement` (mechanism chosen by
+measured latency, never tool name).

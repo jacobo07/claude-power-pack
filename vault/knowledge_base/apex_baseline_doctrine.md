@@ -369,3 +369,40 @@ Cross-floor: T-WIN-AV-001 (300-700 ms variance on cold spawn) is
 ORTHOGONAL and stacks on top of any floor above. Owner-side AV
 exclusion on `C:\Users\User\.claude\skills\claude-power-pack` is the
 ONLY mitigation; PP cannot fix this layer.
+
+## SCS C27 -- Integration-Wiring-by-default (sealed 2026-06-02, BL-INTEGRATION-WIRING)
+
+Every module built using the Power Pack MUST have its activation
+mechanism wired in the SAME build cycle. There is no "module built --
+wiring pending" state: a module that imports cleanly and passes its
+unit V-gates but is not reachable from a hook, signal, decorator,
+slash command, or agent is **not done** -- it is ORPHAN, and an orphan
+module is a false sense of progress (it never runs in production).
+
+**The wiring-mechanism decision is made by MEASURED latency**, not by
+tool name (cross-ref: `feedback_automation_mechanism_by_measurement`):
+
+| Activation cost | Mechanism | Example |
+|---|---|---|
+| < 200 ms, must see the event first | PreToolUse / Stop hook (inline) | Cascade Bash check, Secret Firewall |
+| < 50 ms, additive context | UserPromptSubmit decorator on the JIT loader | One-Shot contract, Cost route |
+| signal that fires on a condition | ProactiveSignal in the dispatcher | Backlog P0 surfacing |
+| session-lifecycle, fire-and-forget | SessionStart hub function (detached) | CPC-OS pane register |
+| > 1 s | Task Scheduler (Mechanism F), never inline | (none this cycle) |
+
+**Sealed evidence (this cycle -- 5 ORPHAN modules -> 5 WIRED):**
+
+| Module | Mechanism | Surface | V-gates |
+|---|---|---|---|
+| cascade_prevention | PreToolUse hook | hooks/cascade_check_bash.js | 6 |
+| cost_collapse | TCO-gate function | tools/tco_compact_gate.py route_prompt | 1 |
+| backlog_autopilot | ProactiveSignal | modules/pp_agents/signals/backlog.py | 8 |
+| one_shot | JIT decorator | tools/jit_skill_loader.py | 5 |
+| cpc_os | SessionStart hub | hooks/session_start_hub.js | 3 |
+
+Consolidated gate: `python tools/verify_integration_wiring.py` ->
+`INTEGRATION_WIRING_PASS=9/9`. The gap between "module importable" and
+"module active" is technical debt of the first order; closing it is a
+DONE precondition, codified as UKDL Trap T-ORPHAN-MODULE-001.
+
+Sealed BL-INTEGRATION-WIRING 2026-06-02.
