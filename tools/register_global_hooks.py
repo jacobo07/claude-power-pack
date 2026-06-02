@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """PP Global Hooks Registration -- ONE-TIME OWNER SETUP.
 
-Registers 6 PP hooks in ``~/.claude/settings.json`` so the proactive
+Registers the PP hooks in ``~/.claude/settings.json`` so the proactive
 agents activate while the Owner works. This script is deliberately
 NOT invoked by Claude Code in auto-mode. The Owner runs it manually
 from their terminal AFTER closing all Claude Code sessions.
@@ -25,8 +25,18 @@ HOOKS REGISTERED:
     H6 SessionStart                       -> jit_warm.js
        (jit_skill_loader pre-warmer -- masks first-prompt lag,
         sealed BL-JIT-001 2026-05-31)
+    H7 SessionStart                       -> restart_resume.js
+       (/restart marker detector, universal kclaude fallback)
+    H8 PreToolUse  Bash                  -> cascade_check_bash.js
+       (Cascade Prevention block on dangerous/C4 commands;
+        HR-CASCADE-001/002)
+    H9 PreToolUse  Write|Edit|MultiEdit  -> secret_firewall_gate.js
+       (Secret Firewall block on CRITICAL secret; HR-SECRET-001)
+    H10 Stop                             -> output_contract_stop.js
+       (OutputContracts slop advisory, never blocks; HR-OUTPUT-001)
 
-Sealed BL-HOOKS-REG-001 (2026-05-29) + BL-JIT-001 (2026-05-31).
+Sealed BL-HOOKS-REG-001 (2026-05-29) + BL-JIT-001 (2026-05-31)
++ BL-INTEGRATION-WIRING (2026-06-02, +cascade/secret/output).
 """
 from __future__ import annotations
 
@@ -112,6 +122,36 @@ def _hooks_to_register() -> list[dict]:
             "description":
                 "/restart marker detector (universal kclaude fallback)",
         },
+        {
+            "event": "PreToolUse",
+            "matcher": "Bash",
+            "command":
+                f'node "{pp}/hooks/cascade_check_bash.js"',
+            "marker": "cascade_check_bash",
+            "description":
+                "Cascade Prevention block on dangerous/C4 Bash commands "
+                "(HR-CASCADE-001/002)",
+        },
+        {
+            "event": "PreToolUse",
+            "matcher": "Write|Edit|MultiEdit",
+            "command":
+                f'node "{pp}/hooks/secret_firewall_gate.js"',
+            "marker": "secret_firewall_gate",
+            "description":
+                "Secret Firewall block on CRITICAL secret in writes "
+                "(HR-SECRET-001)",
+        },
+        {
+            "event": "Stop",
+            "matcher": None,
+            "command":
+                f'node "{pp}/hooks/output_contract_stop.js"',
+            "marker": "output_contract_stop",
+            "description":
+                "OutputContracts advisory on slop tokens, never blocks "
+                "(HR-OUTPUT-001)",
+        },
     ]
 
 
@@ -171,7 +211,7 @@ def _build_entry(spec: dict) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description=("Register the five PP hooks in "
+        description=("Register the PP hooks in "
                      "~/.claude/settings.json (ONE-TIME OWNER SETUP)."))
     parser.add_argument("--dry-run", action="store_true",
                         help="Print the planned changes without "
@@ -219,7 +259,8 @@ def main(argv: list[str] | None = None) -> int:
         print()
 
     if not pending:
-        print("[OK] All 5 PP hooks already registered. Nothing to do.")
+        print(f"[OK] All {len(specs)} PP hooks already registered. "
+              "Nothing to do.")
         return 0
 
     print(f"To register ({len(pending)}):")
