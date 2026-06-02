@@ -304,6 +304,33 @@ function hookDriftReport() {
 }
 
 // ---------------------------------------------------------------------------
+// Hook 8: CPC-OS pane registration (DETACHED, BL-CPCOS-001 wiring)
+//   Registers THIS pane in the atomic CPC-OS registry on session open.
+//   Fire-and-forget: the registry write happens in a detached python
+//   subprocess so it never adds to the hub's wall time. pane_id, cwd,
+//   and task are passed via env (no argv quoting of the inline script).
+// ---------------------------------------------------------------------------
+const CPC_REGISTER_SCRIPT =
+  "import os, sys\n"
+  + "sys.path.insert(0, os.environ['PP_ROOT_CPC'])\n"
+  + "from modules.cpc_os.registry import PaneRegistry\n"
+  + "reg = PaneRegistry.load()\n"
+  + "reg.register_pane(os.environ['PP_PANE_ID'], "
+  + "os.environ['PP_PANE_CWD'], os.environ.get('PP_PANE_TASK', 'active'))\n";
+
+function hookCpcOsRegister(cwd) {
+  const paneId = 'pane-' + process.pid + '-' + Date.now();
+  detachedSpawn('cpc_register', PYTHON_EXE, ['-c', CPC_REGISTER_SCRIPT],
+    Object.assign({}, process.env, {
+      PP_ROOT_CPC: PP_PATH,
+      PP_PANE_ID: paneId,
+      PP_PANE_CWD: cwd || process.cwd(),
+      PP_PANE_TASK: process.env.PP_PANE_TASK || 'active',
+      PYTHONIOENCODING: 'utf-8',
+    }));
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
@@ -323,6 +350,7 @@ function main() {
     hookAutoVaultBootstrap();
     hookCompoundAudit();
     hookDriftReport();
+    hookCpcOsRegister(cwd);
   } catch (err) {
     note('hub main caught', err);
   }
