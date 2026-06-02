@@ -44,6 +44,10 @@ from modules.secret_firewall import (
     redact_for_log,
     scan_text,
 )
+# BUCKET-C slash-command tools (importable cores, SCS C28: compose).
+from modules.one_shot import compiler as oneshot_compiler
+from tools.readiness_check import readiness
+from tools.secret_scan_repo import scan_repo
 
 # Slop tokens constructed at runtime so this test file does not itself
 # carry literal slop tokens (Wozniak doctrine).
@@ -235,7 +239,9 @@ def main() -> int:
 
     # --- M10 commands surface ---
     print("\n[BLOCK 8] Commands surface")
-    for cmd in ("what-now.md", "panes.md", "switch-session.md"):
+    for cmd in ("what-now.md", "panes.md", "switch-session.md",
+                "secret-scan.md", "cost-autopsy.md", "one-shot-compile.md",
+                "demo-ready.md", "revenue-ready.md"):
         p = ROOT / "commands" / cmd
         gate(f"V-CMD-{cmd[:-COMMAND_EXTENSION_LEN].upper()}",
              p.is_file() and p.stat().st_size > COMMAND_MD_MIN_BYTES,
@@ -287,6 +293,33 @@ def main() -> int:
     gate("V-GAP-5-OUTPUT-CONTRACT-HOOK",
          hook_path.is_file() and hook_path.stat().st_size > COMMAND_MD_MIN_BYTES,
          f"hook present ({hook_path.stat().st_size if hook_path.is_file() else 0} bytes)")
+
+    # --- BLOCK 10: BUCKET-C slash-command tools ---
+    print("\n[BLOCK 10] BUCKET-C slash-command tools")
+    with tempfile.TemporaryDirectory(prefix="bucketc_") as td2:
+        clean_dir = Path(td2) / "clean"
+        clean_dir.mkdir()
+        (clean_dir / "ok.py").write_text("x = 1\n", encoding="utf-8")
+        dirty_dir = Path(td2) / "dirty"
+        dirty_dir.mkdir()
+        (dirty_dir / "leak.py").write_text(
+            f'KEY = "{fake_key}"\n', encoding="utf-8")
+
+        gate("V-SECRET-SCAN-RUNS",
+             len(scan_repo(dirty_dir, "CRITICAL")) >= 1
+             and len(scan_repo(clean_dir, "CRITICAL")) == 0,
+             "scan_repo: leak dir flags CRITICAL, clean dir 0")
+
+        rc_cli = oneshot_compiler.main(["--task", "demo task", "--size", "S"])
+        gate("V-ONESHOT-CLI",
+             rc_cli == 0,
+             "compiler --task --size returns exit 0")
+
+        demo_ok = readiness("demo", clean_dir)["ready"]
+        rev_not_ready = readiness("revenue", clean_dir)["ready"] is False
+        gate("V-READINESS-RUNS",
+             demo_ok and rev_not_ready,
+             "demo clean=ready; revenue clean=not-ready (no monitor/HR)")
 
     # --- Summary ---
     print("\n" + "=" * 72)

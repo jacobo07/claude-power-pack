@@ -89,3 +89,47 @@ def compile_contract(
         done_gate=_derive_done_gate(description, size),
         created_at=_now_iso(),
     )
+
+
+def render_contract(c: OneShotContract) -> str:
+    """Human-readable rendering of a frozen contract -- the text the
+    Owner pastes at the top of the next prompt to lock fidelity."""
+    bar = "=" * 60
+    lines = [
+        bar,
+        f"ONE-SHOT CONTRACT: {c.task_id}",
+        bar,
+        f"Size:      {c.size}  (budget ${c.budget_usd:.2f} USD)",
+        f"Created:   {c.created_at}",
+        "",
+        "Scope (in):",
+    ]
+    lines += [f"  - {s}" for s in c.scope] or ["  (none derived)"]
+    lines += ["", "Out of scope:"]
+    lines += [f"  - {o}" for o in c.out_of_scope]
+    lines += ["", "Done gate:", f"  {c.done_gate}", bar]
+    return "\n".join(lines)
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    p = argparse.ArgumentParser(
+        description="Compile a One-Shot Contract (BL-ONESHOT-001 / OD3)."
+    )
+    p.add_argument("--task", required=True, help="Task description")
+    p.add_argument(
+        "--size", default="M", choices=list(BUDGETS),
+        help="S=$5  M=$15  L=$30  XL=$100 (OD3 budget table)",
+    )
+    args = p.parse_args(argv)
+
+    contract = compile_contract(args.task, args.size)
+    print(render_contract(contract))
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    raise SystemExit(main(sys.argv[1:]))
