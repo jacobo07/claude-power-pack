@@ -34,9 +34,13 @@ HOOKS REGISTERED:
        (Secret Firewall block on CRITICAL secret; HR-SECRET-001)
     H10 Stop                             -> output_contract_stop.js
        (OutputContracts slop advisory, never blocks; HR-OUTPUT-001)
+    H11 SessionStart                      -> budget_monitor.py --quiet
+       (programmatic-credit runway telemetry; writes
+        vault/telemetry/budget-*.jsonl, no stdout)
 
 Sealed BL-HOOKS-REG-001 (2026-05-29) + BL-JIT-001 (2026-05-31)
-+ BL-INTEGRATION-WIRING (2026-06-02, +cascade/secret/output).
++ BL-INTEGRATION-WIRING (2026-06-02, +cascade/secret/output)
++ BL-DATASET-INVENTORY (2026-06-02, +budget_monitor H11).
 """
 from __future__ import annotations
 
@@ -151,6 +155,16 @@ def _hooks_to_register() -> list[dict]:
             "description":
                 "OutputContracts advisory on slop tokens, never blocks "
                 "(HR-OUTPUT-001)",
+        },
+        {
+            "event": "SessionStart",
+            "matcher": None,
+            "command":
+                f'python "{pp}/tools/budget_monitor.py" --quiet',
+            "marker": "budget_monitor",
+            "description":
+                "programmatic-credit runway telemetry (writes "
+                "vault/telemetry/budget-*.jsonl; --quiet = no stdout)",
         },
     ]
 

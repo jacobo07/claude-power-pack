@@ -39,6 +39,9 @@ PP_HOOK_MARKERS = [
     ("jobs_woz_gate",
      "Stop",
      "Jobs/Woz judge on assistant turn"),
+    ("budget_monitor",
+     "SessionStart",
+     "programmatic-credit runway telemetry (--quiet)"),
 ]
 
 

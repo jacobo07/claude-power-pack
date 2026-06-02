@@ -241,7 +241,7 @@ def main() -> int:
     print("\n[BLOCK 8] Commands surface")
     for cmd in ("what-now.md", "panes.md", "switch-session.md",
                 "secret-scan.md", "cost-autopsy.md", "one-shot-compile.md",
-                "demo-ready.md", "revenue-ready.md"):
+                "demo-ready.md", "revenue-ready.md", "cost-estimate.md"):
         p = ROOT / "commands" / cmd
         gate(f"V-CMD-{cmd[:-COMMAND_EXTENSION_LEN].upper()}",
              p.is_file() and p.stat().st_size > COMMAND_MD_MIN_BYTES,
@@ -333,6 +333,21 @@ def main() -> int:
         gate("V-READINESS-RUNS",
              demo_ok and rev_not_ready,
              "demo clean=ready; revenue clean=not-ready (no monitor/HR)")
+
+    # --- BLOCK 11: dataset Owner-side wiring (C18 hook + slash) ---
+    print("\n[BLOCK 11] Owner-side wiring")
+    from tools.register_global_hooks import _hooks_to_register
+    specs = _hooks_to_register()
+    bm = [s for s in specs if s["marker"] == "budget_monitor"]
+    gate("V-REG-BUDGET-MONITOR",
+         len(bm) == 1 and bm[0]["event"] == "SessionStart"
+         and "budget_monitor.py" in bm[0]["command"]
+         and "--quiet" in bm[0]["command"],
+         "budget_monitor in register spec as SessionStart --quiet hook")
+    from tools.check_hook_status import PP_HOOK_MARKERS
+    gate("V-CHECK-BUDGET-MONITOR",
+         any(m[0] == "budget_monitor" for m in PP_HOOK_MARKERS),
+         "check_hook_status reports budget_monitor")
 
     # --- Summary ---
     print("\n" + "=" * 72)
