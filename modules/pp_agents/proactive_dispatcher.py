@@ -19,6 +19,7 @@ from modules.pp_agents.proactive_core import (
     evaluate_and_fire,
 )
 from modules.pp_agents.signals import (
+    backlog,
     cascade,
     code_quality,
     cost,
@@ -67,6 +68,11 @@ AGENT_CONFIGS: dict[str, AgentConfig] = {
         cooldown_minutes=5,
         min_signal_strength=0.7,
     ),
+    "pp-backlog-autopilot": AgentConfig(
+        "pp-backlog-autopilot",
+        cooldown_minutes=120,
+        min_signal_strength=0.7,
+    ),
 }
 
 
@@ -102,6 +108,7 @@ def dispatch(context: dict) -> list[str]:
         ("pp-cascade-guard",
          lambda: cascade.evaluate(
              context.get("current_error", ""), project)),
+        ("pp-backlog-autopilot", lambda: backlog.evaluate(project)),
     ]
 
     for agent_name, signal_fn in plan:
