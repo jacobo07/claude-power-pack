@@ -73,6 +73,23 @@ def gate(name: str, cond: bool, evidence: str = "") -> None:
     print(f"  {name:<35} {tag}  {evidence}")
 
 
+import contextlib  # noqa: E402
+
+
+@contextlib.contextmanager
+def _hermetic_handoffs(dir_path):
+    """Redirect cpc_os handoff writes into a temp dir so the restart/switch
+    gates stay isolated: no pollution of ~/.claude/state/handoffs and no
+    60s dedup-window collision across rapid re-runs of this suite."""
+    import modules.cpc_os.handoff as _h
+    orig = _h.HANDOFF_DIR
+    _h.HANDOFF_DIR = Path(dir_path) / "handoffs"
+    try:
+        yield
+    finally:
+        _h.HANDOFF_DIR = orig
+
+
 def main() -> int:
     print("=" * 72)
     print("test_dataset_build -- consolidated V-gate test")
@@ -180,7 +197,8 @@ def main() -> int:
 
     # --- BLOCK 7: CPC-OS (M9, M10) ---
     print("\n[BLOCK 7] CPC-OS")
-    with tempfile.TemporaryDirectory(prefix="cpc_test_") as td:
+    with tempfile.TemporaryDirectory(prefix="cpc_test_") as td, \
+            _hermetic_handoffs(td):
         rp = Path(td) / "registry.json"
         reg = PaneRegistry.load(rp)
         reg.register_pane("smoke", str(Path(td)), "smoke test")
@@ -348,6 +366,9 @@ def main() -> int:
     gate("V-CHECK-BUDGET-MONITOR",
          any(m[0] == "budget_monitor" for m in PP_HOOK_MARKERS),
          "check_hook_status reports budget_monitor")
+    gate("V-CHECK-HOOK-FULL",
+         len(PP_HOOK_MARKERS) == len(specs) and len(PP_HOOK_MARKERS) >= 11,
+         f"check_hook_status covers all {len(specs)} register hooks (no drift)")
 
     # --- Summary ---
     print("\n" + "=" * 72)

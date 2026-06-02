@@ -23,25 +23,17 @@ SETTINGS_PATH = Path.home() / ".claude" / "settings.json"
 AGENTS_DIR = Path.home() / ".claude" / "agents"
 THROTTLE_DIR = PP_PATH / "vault" / "pp_agents" / "throttle"
 
+if str(PP_PATH) not in sys.path:
+    sys.path.insert(0, str(PP_PATH))
+from tools.register_global_hooks import _hooks_to_register  # noqa: E402
+
+# Single source of truth: the hooks the registration tool installs.
+# DERIVED, not duplicated -- this closes the 6-vs-11 drift that motivated
+# the reconciliation. A new Hn added to register_global_hooks._hooks_to_
+# register() now appears here automatically (no second list to forget).
 PP_HOOK_MARKERS = [
-    ("uqf_pre_edit_gate",
-     "PreToolUse",
-     "pp-code-reviewer + pp-uqf-auditor on .py writes"),
-    ("osa_deploy_detector",
-     "PostToolUse",
-     "omni-singularity on deploy command"),
-    ("bug-hunter-ceps-bridge",
-     "PostToolUse",
-     "pp-ceps-analyst on Bash error"),
-    ("session-start-check",
-     "SessionStart",
-     "pp-tco-advisor at session start"),
-    ("jobs_woz_gate",
-     "Stop",
-     "Jobs/Woz judge on assistant turn"),
-    ("budget_monitor",
-     "SessionStart",
-     "programmatic-credit runway telemetry (--quiet)"),
+    (s["marker"], s["event"], s["description"])
+    for s in _hooks_to_register()
 ]
 
 
