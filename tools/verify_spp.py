@@ -42,7 +42,17 @@ import shutil
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+# Safe-parallel opt-in for `--parallel N` (default OFF, serial).
+# Sealed BL-VFIX-VERIFY-SPP-001 (2026-06-01 cont.):
+# Empirical floor on this host is the l3-engine row at ~86 s; max
+# parallel speed-up is ~max(L3, other_total/workers). max_workers=3
+# is the safe cap -- audit pass with max_workers=6 hit
+# T-PERF-VERIFY-SPP-PARALLEL-001 (>300 s regression).
+PARALLEL_DEFAULT_WORKERS = 3
+PARALLEL_MAX_WORKERS = 4
 
 PP = Path(__file__).resolve().parents[1]
 NODE = shutil.which("node") or shutil.which("node.exe") or "node"
@@ -110,7 +120,18 @@ def main() -> int:
                     help="suppress per-row stdout dumps; only print table")
     ap.add_argument("--row", default=None,
                     help="run a single named row, skip the rest")
+    ap.add_argument("--parallel", nargs="?", type=int,
+                    const=PARALLEL_DEFAULT_WORKERS, default=0,
+                    metavar="N",
+                    help=(
+                        "opt-in safe parallel mode: run rows across N "
+                        f"worker threads (default {PARALLEL_DEFAULT_WORKERS} "
+                        f"if no N given; max {PARALLEL_MAX_WORKERS}). "
+                        "Wall floor on this host is the l3-engine row "
+                        "(~86s). 0 (the default) = serial."
+                    ))
     args = ap.parse_args()
+    workers = max(0, min(int(args.parallel or 0), PARALLEL_MAX_WORKERS))
 
     rows_spec = [
         # (name, argv, budget)
@@ -181,6 +202,9 @@ def main() -> int:
         ("dataset-build",
          [PY, str(PP / "tools" / "test_dataset_build.py")],
          60),
+        ("benchmarks-ok",
+         [PY, str(PP / "tools" / "verify_bench_all.py")],
+         60),
     ]
 
     if args.row:
@@ -198,19 +222,52 @@ def main() -> int:
 
     t_total = time.monotonic()
     results: list[dict] = []
-    for (name, argv, budget) in rows_spec:
-        print(f"  [...] {name} ...", flush=True)
-        r = _row(name, argv, budget=budget)
-        results.append(r)
+    results_by_name: dict[str, dict] = {}
+
+    def _emit(r: dict) -> None:
+        name = r["name"]
         tag = "OK  " if r["rc"] == 0 else (
             "MISS" if r["missing"]
             else ("ADV " if name in ADVISORY_ROWS else "FAIL"))
         print(f"  [{tag}] {name:<22s} rc={r['rc']:<3d} "
-              f"{r['elapsed']:6.2f}s  {r['summary']}")
+              f"{r['elapsed']:6.2f}s  {r['summary']}", flush=True)
         if not args.quiet and r["rc"] != 0 and not r["missing"]:
             tail = (r.get("stdout") or "").splitlines()[-10:]
             for line in tail:
                 print(f"    | {line}")
+
+    if workers > 1 and not args.row and len(rows_spec) > 1:
+        # Safe-parallel mode -- ThreadPoolExecutor over the row pool.
+        # Wall = max(slowest row, sum(rest)/workers). On this host the
+        # l3-engine row is the floor at ~86 s.
+        print(f"  [parallel] dispatching {len(rows_spec)} rows "
+              f"across {workers} worker threads...", flush=True)
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            future_to_name = {
+                ex.submit(_row, name, argv, budget=budget): name
+                for (name, argv, budget) in rows_spec
+            }
+            for fut in as_completed(future_to_name):
+                name = future_to_name[fut]
+                try:
+                    r = fut.result()
+                except Exception as exc:  # noqa: BLE001
+                    r = {"name": name, "rc": 1, "elapsed": 0.0,
+                         "missing": False,
+                         "summary": f"executor error: "
+                                    f"{type(exc).__name__}: {exc}"}
+                results_by_name[name] = r
+                _emit(r)
+        # Render in spec order for stable downstream parsing.
+        results = [results_by_name[n] for (n, _, _) in rows_spec
+                   if n in results_by_name]
+    else:
+        # Serial mode (default + --row mode).
+        for (name, argv, budget) in rows_spec:
+            print(f"  [...] {name} ...", flush=True)
+            r = _row(name, argv, budget=budget)
+            results.append(r)
+            _emit(r)
 
     total_elapsed = time.monotonic() - t_total
     print("=" * 72)
