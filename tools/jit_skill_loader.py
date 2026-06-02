@@ -1159,9 +1159,93 @@ def _pp_proactive_inject(fn):
     return _wrapper
 
 
+# --- One-Shot Compiler Axis (BL-ONESHOT-001 wiring) ---
+# When a prompt looks like an L/XL build task, compile a fidelity
+# contract inline and inject it as priority context so the agent works
+# against an explicit scope / done-gate / budget from the first token.
+# Conservative gate: long prompt (>= 120 chars) + a creation verb.
+# Cooldown 30 min per session so a burst of long prompts injects once.
+_ONESHOT_XL_RX = re.compile(
+    r"\b(?:implement|build|create\s+the|develop|architect|"
+    r"refactor\s+the\s+entire|redesign|migrate|rewrite|overhaul|"
+    r"design\s+the\s+system|construye|implementa|redise[nñ]a|"
+    r"reescribe|migra)\b",
+    re.I | re.UNICODE,
+)
+_ONESHOT_MIN_PROMPT_LEN = 120
+_ONESHOT_COOLDOWN_SEC = 30 * 60
+
+
+def _oneshot_recent(sid: str) -> bool:
+    """True iff a contract was injected for this session within the
+    cooldown window. Fail-open: any error -> False (allow injection)."""
+    p = STATE_DIR / f"jit-oneshot-{sid}.json"
+    try:
+        st = json.loads(p.read_text(encoding="utf-8"))
+        return (time.time() - float(st.get("ts", 0))) < _ONESHOT_COOLDOWN_SEC
+    except Exception:
+        return False
+
+
+def _oneshot_mark(sid: str) -> None:
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        p = STATE_DIR / f"jit-oneshot-{sid}.json"
+        p.write_text(json.dumps({"ts": time.time()}), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _oneshot_contract_inject(fn):
+    """Append a compiled One-Shot fidelity contract to additionalContext
+    on L/XL build prompts. Advisory; never blocks. Fail-open."""
+    import functools as _ft
+
+    @_ft.wraps(fn)
+    def _wrapper(data):
+        result = fn(data)
+        try:
+            if os.environ.get("CLAUDEPP_ONESHOT_DISABLE") == "1":
+                return result
+            data_d = data or {}
+            prompt = str(data_d.get("prompt") or "")
+            if len(prompt) < _ONESHOT_MIN_PROMPT_LEN:
+                return result
+            if not _ONESHOT_XL_RX.search(prompt):
+                return result
+            sid = _sid(data_d)
+            if _oneshot_recent(sid):
+                return result
+            from modules.one_shot.compiler import compile_contract
+            c = compile_contract(prompt[:300], "L")
+            block = (
+                "## One-Shot Contract (BL-ONESHOT-001 -- L/XL task detected)\n"
+                f"- task_id: {c.task_id}\n"
+                f"- budget: ${c.budget_usd:g} (size L)\n"
+                f"- scope: {'; '.join(c.scope) if c.scope else '(derive from prompt)'}\n"
+                f"- done_gate: {c.done_gate}\n"
+                "- Honor the Fidelity Lock: if >40% of touched files fall "
+                "outside scope, pause and re-confirm (HR-ONESHOT-002)."
+            )
+            if not isinstance(result, dict):
+                return result
+            ac = result.get("additionalContext") or ""
+            if ac and not ac.endswith("\n"):
+                ac += "\n"
+            ac += "\n" + block
+            result["additionalContext"] = ac
+            _oneshot_mark(sid)
+            return result
+        except Exception as _exc:
+            _log(f"oneshot inject ERROR {type(_exc).__name__}: {_exc}")
+            return result
+    return _wrapper
+
+
 @_tis_log_call
 @_tco_inject_routing
 @_pp_proactive_inject
+@_oneshot_contract_inject
 def run(data) -> dict:
     try:
         data = data or {}
