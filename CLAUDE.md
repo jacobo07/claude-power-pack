@@ -201,4 +201,22 @@ STOP: Refuse the lower-priority work. Surface the P0 contention. Either Owner ex
 EVIDENCE: [bl-backlog-001] what_now() filtering + priority scoring
 SEVERITY: HIGH | RECURRENCE: 0x
 <!-- digest:hr-backlog-003-seed01 -->
+### HR-PREMISE-001 -- Verify file/function premises before executing a plan
+TRIGGER: About to act on a plan that names specific file paths, module functions, classes, or APIs that have NOT been verified to exist in THIS repo.
+STOP: Run modules.error_prevention.assert_premises([...]) (or python modules/error_prevention/premise_verifier.py --premises -) FIRST. A failing premise returns the REAL public API as the correction. Never write code against an assumed signature. EXCEPCION: Owner phrase "premises verified -- HR-PREMISE-001 OK" for ONE turn. ORIGEN: a plan asserted a 4-param compile_contract that does not exist (real signature is 2-param, description+size).
+EVIDENCE: [bl-premise-001] modules/error_prevention/premise_verifier.py + verify_spp premise-verifier row
+SEVERITY: HIGH | RECURRENCE: 1x
+<!-- digest:hr-premise-001-seed01 -->
+### HR-SPEC-001 -- L/XL task requires a spec gate check before coding
+TRIGGER: About to start coding an L (>$30) or XL (>$100) task without checking whether a spec exists in the repo.
+STOP: Run modules.spec_gate.check_spec_gate(desc, cwd, "L"|"XL"). gate_passed=False (action=create_spec) means establish a spec FIRST -- the auto-injected One-Shot contract (scope+done-gate) or the karimo PRD parser. S/M tasks are exempt. EXCEPCION: Owner phrase "spec gate waived -- HR-SPEC-001 OK" for ONE turn.
+EVIDENCE: [bl-spec-gate-001] modules/spec_gate/gate.py + one_shot compiler advisory + skill_router spec domain
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-spec-001-seed01 -->
+### HR-CONTEXT-001 -- Verify a plan's output files exist before declaring complete
+TRIGGER: About to declare a multi-file plan "complete"/"done"/"shipped" when the plan's promised output files have NOT been verified to exist on disk.
+STOP: Check every planned output -- assert_premises([{"type":"file_exists","path":p} for p in planned_outputs]). A "done" claim whose artifacts are absent is the Scaffold Illusion (Mistake #16). DONE = files exist AND a V-gate observed them working.
+EVIDENCE: [bl-premise-001] premise_verifier.verify_file_exists + Reality Contract (kernel vMAX-NULL-ERROR)
+SEVERITY: HIGH | RECURRENCE: 0x
+<!-- digest:hr-context-001-seed01 -->
 <!-- PP-HARD-RULES-END -->
