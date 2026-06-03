@@ -727,3 +727,32 @@ pytest 43, node --check OK. Cross-ref C27 (orphan/activation), C28 (read
 source before code).
 
 Sealed BL-CPCOS-SNAPSHOT-001 2026-06-03.
+
+### C33 addendum -- the write->read->restore triad (sealed 2026-06-03, BL-CPCOS-RESTORE-001)
+
+A state-snapshot writer with no reader that CONSUMES it is an incomplete
+system -- documentation, not recovery. The snapshot half (write) shipped
+first and looked done; the missing half was the restore script that READS
+the snapshot and reopens the panes. This is the orphan-field lesson at the
+SYSTEM level: a producer with no consumer is as dead as a consumer with no
+producer. A recovery feature is complete only when all three legs exist and
+are empirically chained end-to-end: WRITE (snapshot.py -> session_snapshot
+.md + .json) -> READ (restore_panes.ps1 parses the json) -> RESTORE
+(`cursor <path>` per repo + the exact `claude --resume <id>` per pane).
+
+Mechanism reality (verify before building, C28): `wt` (Windows Terminal) was
+NOT installed and, more importantly, wt tabs are a DIFFERENT surface from
+Cursor panes -- spawning wt tabs would not restore the Cursor workspace. The
+correct unit is `cursor <path>` per distinct repo (Cursor restores its own
+panes via state.vscdb layoutInfo). Exact-conversation restore works even when
+the registry never captured a session_id, by recovering the cwd's most-recent
+transcript from `~/.claude/projects/<encoded-cwd>/<uuid>.jsonl` (encoding =
+every non-alnum char -> '-'); existence-validated (BL-LAZ-STALE-001).
+
+New Hard Rule (HR-CPCOS-RESTORE): if a state snapshot/checkpoint writer
+exists and the reader/restore path does NOT, the system is INCOMPLETE by
+definition -- do not declare the feature done. Ship the reader same cycle or
+state the gap explicitly. Cross-ref C27 (orphan/activation), C28 (mechanism
+reality before code), C33 (snapshot writer).
+
+Sealed BL-CPCOS-RESTORE-001 2026-06-03.
