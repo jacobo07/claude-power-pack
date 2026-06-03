@@ -76,9 +76,27 @@ def _derive_done_gate(description: str, size: TaskSize) -> str:
 
 def compile_contract(
     description: str, size: TaskSize = "M",
+    cwd: "str | Path | None" = None,
 ) -> OneShotContract:
     if size not in BUDGETS:
         size = "M"
+    # Spec Gate (BL-SPEC-GATE-001): for L/XL tasks, surface a spec-gate
+    # advisory to stderr when a cwd is supplied and no spec exists. Opt-in
+    # via cwd -- the default (None) keeps this function pure for existing
+    # callers (e.g. the JIT _oneshot_contract_inject decorator), so
+    # behaviour is unchanged unless a caller explicitly asks for the gate.
+    if cwd is not None and size in ("L", "XL"):
+        try:
+            from pathlib import Path as _Path
+            import sys as _sys
+
+            from modules.spec_gate.gate import check_spec_gate
+            gate = check_spec_gate(description, cwd=_Path(cwd),
+                                   task_size=size)
+            if not gate.gate_passed:
+                print(f"[SPEC GATE] {gate.message}", file=_sys.stderr)
+        except Exception:
+            pass  # advisory only; never break contract compilation
     return OneShotContract(
         task_id=_task_id(),
         description=description,
@@ -124,7 +142,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = p.parse_args(argv)
 
-    contract = compile_contract(args.task, args.size)
+    from pathlib import Path
+    contract = compile_contract(args.task, args.size, cwd=Path.cwd())
     print(render_contract(contract))
     return 0
 
