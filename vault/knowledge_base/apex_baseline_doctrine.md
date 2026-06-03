@@ -603,3 +603,48 @@ Cross-ref C27 (orphan/activation), C28 (read source before code), C29
 (inventory is a hypothesis), C30 (extend the chokepoint).
 
 Sealed BL-SPEC-GATE-001 + BL-PREMISE-001 2026-06-03.
+
+## SCS C32 -- Spec-Driven Department: real-contract signals on the existing dispatcher (sealed 2026-06-03, BL-SPEC-DEPT-001)
+
+Three proactive agents -- pp-spec-guardian (L/XL task with no spec),
+pp-premise-guardian (CLASE 1 unverified-premise risk), pp-error-analyst
+(recurrence >= 3 without a Hard Rule) -- ride the EXISTING
+proactive_dispatcher, not a parallel mechanism. This is C30 applied to
+the agent layer: extend the chokepoint.
+
+FASE -1 forced four premise corrections (the plan's snippets would have
+crashed on every dispatch -- exactly the CLASE 1 class the department
+exists to prevent):
+1. Signals expose `evaluate(...) -> ProactiveSignal | None` (a dataclass),
+   not custom `check_*` functions returning raw dicts. The dispatcher
+   calls `module.evaluate(...)`.
+2. `top_recurring()` returns `list[NeverAgainEntry]` dataclasses --
+   attribute access (`.recurrence`, `.issue`), never `.get`; the field is
+   `recurrence`, not `count`.
+3. Registration is the `plan` list + `AGENT_CONFIGS` (throttle =
+   `AgentConfig.cooldown_minutes`, already built-in). `dispatch()` returns
+   `list[str]`, not dicts.
+4. The dispatcher context carried no `prompt`/`cwd` -> the spec signal
+   would be a CLASE 0 orphan. The JIT `ctx_in` now feeds both; the
+   `V-DEPT-CTX-FEED` gate asserts the wiring so it cannot silently regress.
+
+Two invariants enforced beyond the plan: (a) all three signals gate on a
+context field (`session_had_errors` / large-task `prompt`) so a clean
+context still dispatches to `[]` -- `test_proactive_agents::V-DISPATCHER-CLEAN`
+stays green (16/16, verified). (b) error_recurrence reads installed-HR
+text in-process (one file read), never a subprocess on UserPromptSubmit
+(measurement doctrine: >1s belongs in Task Scheduler, not a hot hook).
+
+HR-001: the three agent .md files are staged in `vault/agents/` + an
+installer (`tools/install_department_agents.ps1`), NOT written to
+`~/.claude/agents/` (auto-mode denies; new agent files cold-load and need
+/restart). The installer + /restart is the documented Owner-side step.
+
+Adding a new department agent = 3 artifacts: `vault/agents/<name>.md` +
+`modules/pp_agents/signals/<domain>.py` (evaluate -> ProactiveSignal) + a
+plan/AGENT_CONFIGS entry, plus a `test_spec_department.py` gate. Activation
+gate: `verify_spp --row spec-department` (13/13). Cross-ref C27
+(orphan/activation), C28 (read source before code), C30 (extend the
+chokepoint), C31 (spec-driven for L/XL).
+
+Sealed BL-SPEC-DEPT-001 2026-06-03.

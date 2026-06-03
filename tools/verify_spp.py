@@ -215,6 +215,9 @@ def main() -> int:
          [PY, str(PP / "modules" / "error_prevention" /
                   "premise_verifier.py"), "--self-test"],
          15),
+        ("spec-department",
+         [PY, str(PP / "tools" / "test_spec_department.py")],
+         60),
         ("benchmarks-ok",
          [PY, str(PP / "tools" / "verify_bench_all.py")],
          60),
