@@ -689,3 +689,41 @@ gate: `verify_spp --row spec-department` (13/13). Cross-ref C27
 chokepoint), C31 (spec-driven for L/XL).
 
 Sealed BL-SPEC-DEPT-001 2026-06-03.
+
+## SCS C33 -- CPC-OS Session Snapshot: capture the unwired field, don't add a store (sealed 2026-06-03, BL-CPCOS-SNAPSHOT-001)
+
+Goal: after any crash, restore every pane to its exact context from one
+file. PASO -1 (read source first, C28) found that most of the asked-for
+"enrich registry" work already shipped: `PaneRecord` already stores cwd,
+started_at, session_id, status; `recovery.detect_crash_state()` already
+builds a confidence-split restore plan (`claude --resume <id>` when a
+session_id is known, else `cd <cwd> && claude`). The genuine deltas were
+small and surgical:
+
+1. One new optional field (`last_commit`), backward-compatible exactly the
+   way session_id was (old JSON omits it -> None). NOT a parallel store.
+2. `snapshot.py` renders `~/.claude/state/session_snapshot.md` by COMPOSING
+   the registry + mark_stale_panes + recovery's confidence split + a live
+   per-cwd git HEAD. No new source of truth.
+3. The real bug: the SessionStart hub parsed stdin for cwd and **discarded
+   session_id**, so every record was null and recovery's high-confidence
+   `--resume` path was DEAD by starvation -- a built path with no producer
+   (CLASE-0 sibling: not an orphan module, an orphan *field*). Fix = capture
+   session_id from the single stdin parse and feed register_pane; the hub
+   then register-THEN-snapshots in one detached process (no race).
+
+Honest limitation documented, not hidden: the registry `task` is the literal
+"active" for every live pane because the SessionStart payload has no
+conversational task (no `PP_PANE_TASK` is set in practice). The snapshot
+shows what the registry honestly knows; it does not fabricate a task.
+
+Recognizer (CLASE-0-field): a data-model field + a downstream consumer that
+both exist, with NO producer populating the field -> the consumer's path is
+silently dead. Grep the producer (here: the hub's stdin parse) before
+trusting that a built recovery path actually fires. Verified end-to-end:
+piped a SessionStart payload with a session_id -> registry captured it ->
+snapshot rendered `Resume: claude --resume <id>`. Hermetic gates 9/9 x3,
+pytest 43, node --check OK. Cross-ref C27 (orphan/activation), C28 (read
+source before code).
+
+Sealed BL-CPCOS-SNAPSHOT-001 2026-06-03.
