@@ -349,6 +349,47 @@ Sealed BL-BENCH-ROADMAP-001. Pairs with SCS C22 (latency floor) and
 SCS C23 (hub consolidation); the three together govern the hot-path
 budget for SessionStart + UserPromptSubmit.
 
+### SCS C26 addendum -- verify_spp L3-row wall floor (sealed 2026-06-03)
+
+The `verify_spp.py` umbrella verifier has a wall-time floor that
+SCS C26 cannot move from outside the row implementation. The
+`l3-engine` row (`tools/test_l3_intent.js`) measures **~75-86 s
+wall on this host** in isolation. This is the L3 Intent-Lock
+end-to-end self-test; rewriting it is a separate multi-day project
+that lives OUTSIDE the perf-roadmap scope.
+
+**Empirical seal (audit `61d7807` -> seal commit):**
+
+| Mode | verify_spp wall | Notes |
+|---|---|---|
+| Serial (the default) | 155 s | Sum-of-rows; unchanged from audit baseline |
+| `--parallel 3` (Sprint 2) | 76 s | -50.6 % vs serial; L3 dominates |
+| `--parallel 3` (this seal) | 92 s | -40 % vs serial; sibling-pane rows added ~16 s of non-L3 work |
+| `--parallel 3` theoretical floor | ~76-86 s | max(L3, sum(others)/workers) |
+
+**The 90 % reduction target stated in the original roadmap plan
+was overoptimistic.** It assumed the per-row times were uniform
+and small. The empirical per-row profile (collected Sprint 2 and
+re-confirmed in this seal) shows L3 dominates everything else by
+an order of magnitude.
+
+**Decision rule for future iterations:**
+
+- `verify_spp --parallel N` with N in [2, PARALLEL_MAX_WORKERS=4]
+  is the supported optimization path. The empirically-survived
+  cap is N=3 on this host; N=6 reproduces
+  T-PERF-VERIFY-SPP-PARALLEL-001 (>300 s regression).
+- A serious-iteration roadmap targeting verify_spp wall below ~70 s
+  MUST start by either (a) rewriting the L3 test harness to
+  finish in <30 s, or (b) marking L3 as an opt-in row that
+  verify_spp can skip for "fast" runs. Either is a separate scope
+  with its own UKDL trap on landing.
+- Until then, **76-92 s is the honest verify_spp wall under
+  parallel mode on this Windows host**, not 15 s. Sealed.
+
+Cross-ref: `vault/audits/benchmark_roadmap_final_2026-06-03T08-30-00Z.md`
+for the full roadmap closure (Pane 1 perf track).
+
 ## UKDL TRAP T-PERF-FLOOR-001..004 -- Documented physical performance floors
 
 **Level:** UKDL Traps (OS / process-creation / network / storage floors).
