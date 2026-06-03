@@ -10,6 +10,11 @@ BL-CPCOS-002 (2026-06-02): PaneRecord gained an optional ``session_id``
 ``paused`` (for §208.3 switch -- a source pane parked while its target
 takes focus). Both are backward compatible: old JSON records omit
 session_id (defaults to None) and never carry the paused status.
+
+Snapshot extension (2026-06-03): PaneRecord gained an optional
+``last_commit`` (short git HEAD of cwd captured at register time, for the
+session_snapshot.md generator). Backward compatible the same way -- old
+JSON omits it and load() defaults it to None.
 """
 from __future__ import annotations
 
@@ -45,6 +50,7 @@ class PaneRecord:
     last_heartbeat_at: float
     status: str = "active"  # active | stale | paused | dead
     session_id: str | None = None  # claude conversation/session uuid (§208.2)
+    last_commit: str | None = None  # short git HEAD of cwd at register (snapshot)
 
 
 def _atomic_write(path: Path, payload: str) -> None:
@@ -98,6 +104,7 @@ class PaneRegistry:
     def register_pane(
         self, pane_id: str, cwd: str, task: str,
         session_id: str | None = None,
+        last_commit: str | None = None,
     ) -> PaneRecord:
         now = time.time()
         rec = PaneRecord(
@@ -108,6 +115,7 @@ class PaneRegistry:
             last_heartbeat_at=now,
             status="active",
             session_id=session_id,
+            last_commit=last_commit,
         )
         self.panes[pane_id] = rec
         self.save()
