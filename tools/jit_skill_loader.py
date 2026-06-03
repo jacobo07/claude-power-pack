@@ -1120,6 +1120,10 @@ def _pp_proactive_inject(fn):
             project = Path(cwd_raw).name.lower() if cwd_raw else "global"
             ctx_in = {
                 "project": project or "global",
+                # prompt + cwd feed pp-spec-guardian (BL-SPEC-DEPT-001);
+                # without them the spec signal is starved of its data.
+                "prompt": str(data.get("prompt") or ""),
+                "cwd": cwd_raw,
                 "last_written_code": "",
                 "last_written_file": "",
                 "current_error": "",

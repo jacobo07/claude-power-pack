@@ -23,10 +23,13 @@ from modules.pp_agents.signals import (
     cascade,
     code_quality,
     cost,
+    error_recurrence,
     errors,
     health,
     lessons,
+    premise_risk,
     quality,
+    spec_compliance,
 )
 
 MAX_ADVISORIES_PER_TURN = 3
@@ -73,6 +76,25 @@ AGENT_CONFIGS: dict[str, AgentConfig] = {
         cooldown_minutes=120,
         min_signal_strength=0.7,
     ),
+    # Spec-Driven Department (BL-SPEC-DEPT-001) -- asymmetric cooldowns:
+    # a fresh task = fresh context (15m), premise risk slightly longer
+    # (20m), recurrence is a slow signal (60m).
+    "pp-spec-guardian": AgentConfig(
+        "pp-spec-guardian",
+        cooldown_minutes=15,
+        min_signal_strength=0.5,
+        domains=["spec"],
+    ),
+    "pp-premise-guardian": AgentConfig(
+        "pp-premise-guardian",
+        cooldown_minutes=20,
+        min_signal_strength=0.5,
+    ),
+    "pp-error-analyst": AgentConfig(
+        "pp-error-analyst",
+        cooldown_minutes=60,
+        min_signal_strength=0.6,
+    ),
 }
 
 
@@ -81,6 +103,8 @@ def dispatch(context: dict) -> list[str]:
 
     context keys (all optional, defaults safe):
       project              -- str cwd basename, used for throttle scope
+      prompt               -- str current user prompt (spec-guardian)
+      cwd                  -- str active repo path (spec-guardian)
       last_written_code    -- str newly-written code body
       last_written_file    -- str path of the last touched file
       current_error        -- str current error message text
@@ -109,6 +133,16 @@ def dispatch(context: dict) -> list[str]:
          lambda: cascade.evaluate(
              context.get("current_error", ""), project)),
         ("pp-backlog-autopilot", lambda: backlog.evaluate(project)),
+        ("pp-spec-guardian",
+         lambda: spec_compliance.evaluate(
+             context.get("prompt", ""), context.get("cwd", ""), project)),
+        ("pp-premise-guardian",
+         lambda: premise_risk.evaluate(
+             context.get("current_error", ""),
+             bool(context.get("session_had_errors", False)), project)),
+        ("pp-error-analyst",
+         lambda: error_recurrence.evaluate(
+             bool(context.get("session_had_errors", False)), project)),
     ]
 
     for agent_name, signal_fn in plan:
