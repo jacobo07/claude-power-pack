@@ -58,6 +58,32 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
             "graphql resolver", "genserver", "stored procedure",
         ),
     },
+    "spec": {
+        # Large-task / system-build language. These phrases inherently
+        # signal L/XL work where a spec (PRD / arch decision / one-shot
+        # contract) should precede code. Kept deliberately narrow so
+        # small fixes never trip the spec domain.
+        "strong": (
+            "build a complete", "build a full", "implement a complete",
+            "create a system", "design the architecture",
+            "write a prd", "spec for", "requirements for",
+            "architecture for", "refactor the entire", "redesign the",
+            "full implementation", "from scratch", "end to end",
+            "entire system", "whole system",
+            # ES
+            "sistema completo", "desde cero", "arquitectura de",
+            "implementacion completa",
+        ),
+        "medium": (
+            "architecture", "pipeline", "roadmap", "prd",
+            "requirements", "specification", "blueprint",
+        ),
+        "negative": (
+            "fix a bug", "fix this", "fix the", "add a test",
+            "format", "rename", "comment", "lint", "typo",
+            "small change", "quick fix", "one line",
+        ),
+    },
 }
 
 

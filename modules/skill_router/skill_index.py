@@ -75,6 +75,49 @@ class SkillEntry:
     domain: str
     keywords: list[str] = field(default_factory=list)
     token_weight: int = 0
+    invoke: str = ""  # CLI command for synthetic (non-Skill-tool) entries;
+    #                   empty => the card says "invoke via the Skill tool"
+
+
+# PP repo root (this file: modules/skill_router/skill_index.py).
+PP_ROOT = Path(__file__).resolve().parents[2]
+
+# Synthetic "skills" for spec-driven CLI tools that have no SKILL.md but
+# are real runnable modules. Surfaced under the "spec" domain so the
+# skill_router can point L/XL build prompts at them. A card is emitted
+# only when the underlying file exists (checked in build_index), so a
+# broken/absent tool (e.g. auto-testing, which currently fails to import)
+# never produces a dangling pointer.
+SYNTHETIC_SPEC_SKILLS: list["SkillEntry"] = [
+    SkillEntry(
+        name="karimo PRD parser",
+        path=str(PP_ROOT / "modules" / "karimo-harness" / "prd_parser.py"),
+        description=(
+            "Use when building a new feature from scratch, implementing "
+            "user stories, or creating a system: parses a PRD into a "
+            "deterministic task list + blueprint."
+        ),
+        domain="spec",
+        keywords=["prd", "requirements", "specification", "blueprint",
+                  "user story", "from scratch"],
+        token_weight=80,
+        invoke="python modules/karimo-harness/prd_parser.py <prd-file>",
+    ),
+    SkillEntry(
+        name="architecture decision check",
+        path=str(PP_ROOT / "modules" / "arch-decision" / "arch_check.py"),
+        description=(
+            "Use when designing system architecture, choosing between "
+            "technical approaches, or reviewing an architecture decision "
+            "against existing patterns."
+        ),
+        domain="spec",
+        keywords=["architecture", "design", "decision", "trade-off",
+                  "approach", "blueprint"],
+        token_weight=80,
+        invoke="python modules/arch-decision/arch_check.py --fast",
+    ),
+]
 
 
 _FM_RE = re.compile(r"^---\s*\n(.*?\n)---\s*\n", re.S)
@@ -211,6 +254,10 @@ def build_index(force: bool = False) -> list[SkillEntry]:
                 ))
             except Exception:
                 continue
+    # Append synthetic spec-driven CLI cards whose target file exists on
+    # disk (a broken/absent tool gets no dangling pointer).
+    entries.extend(s for s in SYNTHETIC_SPEC_SKILLS
+                   if Path(s.path).is_file())
     _write_cache(entries)
     return entries
 

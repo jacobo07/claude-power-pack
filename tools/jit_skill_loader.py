@@ -1315,19 +1315,36 @@ def _skill_router_inject(fn):
             res = classify_intent(prompt, skills)
             if not res.should_wakeup:
                 return result
-            names = [s.name for s in res.matching_skills]
             sid = _sid(data_d)
+            # Mutex with the One-Shot axis: when a L/XL build prompt also
+            # triggers the One-Shot contract (which already injects scope +
+            # done-gate + budget), suppress the spec card to avoid double-
+            # injection. _skill_router_inject is OUTER of
+            # _oneshot_contract_inject in the stack, so by here the contract
+            # has already marked its session state.
+            if res.domain == "spec" and _oneshot_recent(sid):
+                return result
             prior = _skillrouter_carded(sid)
-            fresh = [n for n in names if n not in prior]
-            if not fresh:
+            fresh_skills = [s for s in res.matching_skills
+                            if s.name not in prior]
+            if not fresh_skills:
                 return result  # already carded this session
+            lines = []
+            for s in fresh_skills:
+                if s.invoke:
+                    lines.append(f"  - {s.name}: run `{s.invoke}`")
+                else:
+                    lines.append(f"  - {s.name}: invoke via the Skill tool")
+            label = ("Spec-driven (L/XL) build intent"
+                     if res.domain == "spec" else "Frontend/design intent")
             card = (
-                "[sleepy-skill] Frontend/design intent detected "
-                f"(confidence {res.confidence:.2f}). Consider invoking the "
-                f"Skill tool for: {', '.join(fresh)}. Pointer only — the "
-                "full skill body loads on Skill-tool invocation (Sleepy "
-                "Skills router; CLAUDEPP_SKILLROUTER_DISABLE=1 to mute)."
+                f"[sleepy-skill] {label} detected (confidence "
+                f"{res.confidence:.2f}). Pointer only — consider:\n"
+                + "\n".join(lines)
+                + "\n(Sleepy Skills router; "
+                "CLAUDEPP_SKILLROUTER_DISABLE=1 to mute.)"
             )
+            fresh = [s.name for s in fresh_skills]  # for _skillrouter_mark
             if not isinstance(result, dict):
                 return result
             ac = result.get("additionalContext") or ""
@@ -1346,8 +1363,8 @@ def _skill_router_inject(fn):
 @_tis_log_call
 @_tco_inject_routing
 @_pp_proactive_inject
-@_oneshot_contract_inject
 @_skill_router_inject
+@_oneshot_contract_inject
 def run(data) -> dict:
     try:
         data = data or {}
