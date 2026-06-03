@@ -552,3 +552,54 @@ Cross-ref C21 (performance-by-default in hot-path hooks), C27
 `feedback_audit_disproves_owner_premise`.
 
 Sealed BL-SLEEPY-SKILLS-001 2026-06-02.
+
+## SCS C31 -- Spec-Driven-for-L/XL + premise-verification (sealed 2026-06-03, BL-SPEC-GATE-001 + BL-PREMISE-001)
+
+Two structural fixes for the error classes the agent repeats, plus the
+honest scoping that FASE -1 forced.
+
+**Premise correction (report loudly, per C29 + feedback_audit_disproves_owner_premise):**
+the spec-driven pipeline was NOT absent -- it LARGELY pre-existed and
+fires today: `_oneshot_contract_inject` (scope+done-gate+budget on L/XL),
+`_arch_check_inject` (design prompts), `_active_spec` (.specify + vault/specs
+injection), `_detect_new_feature_intent_and_flag` (drops .pp-pending-spec.json
+-> /speckit-spec). This block ADDED the missing pieces, it did not build
+a parallel pipeline. And the plan's `compile_contract(task, size, max_files,
+cwd)` 4-param signature did not exist (real: `compile_contract(description,
+size)`) -- caught at plan time, which is the whole point of premise verification.
+
+**Evidence-based taxonomy (the plan's assumed classes vs the NEVER_AGAIN
+data):** the real #1 recurring PP error is "modules built but not
+auto-activated cross-repo" (the orphan/wiring class -- already SCS C27),
+NOT "plan assumes a nonexistent API" (CLASE 1, real but less-evidenced).
+So premise_verifier was wired Tool + HR + verify_spp row (never a bare
+library), because shipping it as a plain module would have made it an
+instance of the very #1 error it is meant to prevent.
+
+Sealed standard:
+1. **L/XL gets a spec gate; S/M does not.** `modules.spec_gate.check_spec_gate`
+   finds an existing spec (.specify/vault/specs/vault/plans/PRD.md/...) ->
+   read_spec; none -> create_spec (One-Shot contract or karimo PRD parser).
+   Advisory, never hard-block. The One-Shot compiler's optional `cwd`
+   surfaces the advisory WITHOUT polluting the pure frozen-contract builder.
+2. **Verify premises before acting on a plan.** `assert_premises([...])`
+   confirms named files/functions exist and returns the REAL API as the
+   correction on failure. A premise verifier shipped as a bare library is
+   an orphan -- wire it (CLI self-test + HR-PREMISE-001 + verify_spp row).
+3. **Mutex overlapping auto-injectors.** The spec-domain sleepy card is
+   suppressed when `_oneshot_contract_inject` already fired (decorator
+   reorder so skill_router runs outer of one_shot). Adding a domain that
+   overlaps an existing always-on injector without a mutex = triple-injection
+   noise.
+4. **Synthetic cards only for tools that import.** auto-testing fails to
+   import -> no card; karimo + arch-decision work -> cards emitted, and
+   only when the target file exists on disk.
+
+Gate: `python tools/test_spec_driven.py` -> 11/11 (spec domain, spec gate,
+premise file/fn true+false, cross-repo, baseline-intact) + verify_spp
+`spec-driven` & `premise-verifier` rows. HR-PREMISE-001 / HR-SPEC-001 /
+HR-CONTEXT-001 sealed in the CLAUDE.md HARD RULES block (34 total).
+Cross-ref C27 (orphan/activation), C28 (read source before code), C29
+(inventory is a hypothesis), C30 (extend the chokepoint).
+
+Sealed BL-SPEC-GATE-001 + BL-PREMISE-001 2026-06-03.

@@ -208,6 +208,13 @@ def main() -> int:
         ("sleepy-skills",
          [PY, str(PP / "tools" / "test_sleepy_skills.py")],
          30),
+        ("spec-driven",
+         [PY, str(PP / "tools" / "test_spec_driven.py")],
+         60),
+        ("premise-verifier",
+         [PY, str(PP / "modules" / "error_prevention" /
+                  "premise_verifier.py"), "--self-test"],
+         15),
         ("benchmarks-ok",
          [PY, str(PP / "tools" / "verify_bench_all.py")],
          60),
