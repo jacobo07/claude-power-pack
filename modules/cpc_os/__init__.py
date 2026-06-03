@@ -27,10 +27,16 @@ from .registry import (
 )
 from .restart import restart_intent
 from .router import INTENT_STALE_THRESHOLD_S, IntentResult, route_intent
+from .snapshot import (
+    DEFAULT_SNAPSHOT_PATH,
+    build_snapshot_text,
+    generate_snapshot,
+)
 from .switch import switch_intent
 
 __all__ = [
     "DEFAULT_REGISTRY_PATH",
+    "DEFAULT_SNAPSHOT_PATH",
     "HANDOFF_DIR",
     "HEARTBEAT_INTERVAL_S",
     "HandoffRecord",
@@ -39,7 +45,9 @@ __all__ = [
     "PaneRecord",
     "PaneRegistry",
     "STALE_THRESHOLD_S",
+    "build_snapshot_text",
     "detect_crash_state",
+    "generate_snapshot",
     "is_pane_alive",
     "list_handoffs",
     "mark_stale_panes",
