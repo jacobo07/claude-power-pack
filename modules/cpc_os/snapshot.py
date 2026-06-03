@@ -1,28 +1,36 @@
 """CPC-OS session snapshot -- human + machine readable pane manifest.
 
 Reads the atomic pane registry and renders ~/.claude/state/session_snapshot.md
-so that after ANY crash the Owner can open one file and restore every pane
-to its exact context. Composes existing CPC-OS primitives (SCS C28):
+(plus a session_snapshot.json sidecar) so that after ANY crash the Owner can
+run one restore command and every repo reopens as a Cursor window with the
+exact conversation to resume. Composes existing CPC-OS primitives (SCS C28):
 
   * PaneRegistry            -- the single source of truth (cwd, task, started_at,
                                session_id, last_commit, status).
   * mark_stale_panes()      -- demotes panes with no recent heartbeat so the
                                snapshot reflects honest liveness.
   * recovery confidence     -- a pane with a known session_id gets the
-                               high-confidence ``claude --resume <id>`` line;
-                               otherwise the safe ``cd <cwd> && claude``
-                               fallback (same split as recovery.detect_crash_state).
+                               high-confidence ``claude --resume <id>`` line.
+
+Exact-conversation recovery: when the registry never captured a session_id
+(records that predate the hub fix), the LAST active conversation for a cwd is
+recovered from Claude Code's own transcript store at
+``~/.claude/projects/<encoded-cwd>/<uuid>.jsonl`` -- the encoding maps every
+non-alphanumeric char to ``-`` and the most-recently-modified .jsonl is the
+last active session. Validated for existence before it is offered (the
+BL-LAZ-STALE-001 transcript guard). Per-pane resume preference:
+  1. registry session_id (exact pane) when its transcript exists,
+  2. else the repo's latest resolved session (claude --resume <id>),
+  3. else ``cd <cwd> && claude`` (a fresh session in the right repo).
 
 The commit shown per pane is derived LIVE from each pane's cwd at snapshot
-time (so it is never stale), falling back to the registry's stored
-last_commit, then to a literal sentinel when git is unavailable.
-
-Pure read of the registry plus one git rev-parse per distinct cwd -- safe to
-run on every SessionStart. The write itself is atomic (tempfile + os.replace),
-inherited from registry._atomic_write.
+time. Pure reads (registry + one git probe + one transcript-dir glob per
+distinct cwd) -> safe on every SessionStart. Writes are atomic.
 """
 from __future__ import annotations
 
+import json
+import re
 import shutil
 import subprocess
 import time
@@ -31,34 +39,64 @@ from pathlib import Path
 
 from .registry import DEFAULT_REGISTRY_PATH, PaneRegistry, _atomic_write
 
-# Snapshot lives beside the registry in the user-scope state dir.
+# Repo root (modules/cpc_os/snapshot.py -> parents[2] == repo root).
+_PP_ROOT = Path(__file__).resolve().parents[2]
+
+# Snapshot + sidecar live beside the registry in the user-scope state dir.
 DEFAULT_SNAPSHOT_PATH = Path.home() / ".claude" / "state" / "session_snapshot.md"
 
+# Claude Code's per-project transcript store.
+PROJECTS_DIR = Path.home() / ".claude" / "projects"
+
+# Absolute path to the restore script (host-correct, cwd-independent).
+RESTORE_SCRIPT = _PP_ROOT / "tools" / "restore_panes.ps1"
+
 # Sentinel used when a commit cannot be resolved (git missing / not a repo).
-# Built at runtime so the literal never trips the slop auditor and so it is
-# unambiguous to a downstream parser.
 _NO_COMMIT = "no-" + "commit"
 
-# Box rule width for the human header.
 _RULE = "=" * 32
-
-# Statuses a snapshot lists (dead panes are intentionally terminal -> omitted).
 _LIVE_STATUSES = ("active", "stale", "paused")
-
-# Order panes by liveness first, then by start time.
 _STATUS_RANK = {"active": 0, "paused": 1, "stale": 2}
 
 
 def _iso(epoch: float) -> str:
-    """Epoch seconds -> ISO-8601 UTC with a trailing Z."""
     return datetime.fromtimestamp(epoch, tz=timezone.utc).strftime(
         "%Y-%m-%dT%H:%M:%SZ"
     )
 
 
+def _encode_project_dir(cwd: str) -> str:
+    """cwd -> Claude Code projects-dir name. Every non-alphanumeric char
+    maps to '-' (verified against the live store: 'C:\\Users\\User\\.claude'
+    -> 'C--Users-User--claude'). No dash collapsing."""
+    return re.sub(r"[^A-Za-z0-9]", "-", cwd)
+
+
+def _transcript_path(cwd: str, session_id: str) -> Path:
+    return PROJECTS_DIR / _encode_project_dir(cwd) / f"{session_id}.jsonl"
+
+
+def resolve_last_session(cwd: str) -> str | None:
+    """The uuid of the most-recently-modified transcript for ``cwd``, or None.
+    This recovers the last active conversation even when the registry never
+    captured a session_id."""
+    d = PROJECTS_DIR / _encode_project_dir(cwd)
+    if not d.is_dir():
+        return None
+    latest, latest_mtime = None, -1.0
+    try:
+        for p in d.glob("*.jsonl"):
+            if not p.is_file():
+                continue
+            m = p.stat().st_mtime
+            if m > latest_mtime:
+                latest, latest_mtime = p.stem, m
+    except OSError:
+        return None
+    return latest
+
+
 def _git_short_head(cwd: str) -> str | None:
-    """Short HEAD of the repo at ``cwd``. Returns None on any failure
-    (git absent, not a repo, timeout) -- callers fall back gracefully."""
     git = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
     if not Path(git).is_file() and shutil.which("git") is None:
         return None
@@ -76,8 +114,6 @@ def _git_short_head(cwd: str) -> str | None:
 
 
 def _commit_for(rec, cwd_cache: dict[str, str | None]) -> str:
-    """Resolve the commit for a pane: live git HEAD (cached per cwd),
-    then the registry's stored last_commit, then the sentinel."""
     if rec.cwd not in cwd_cache:
         cwd_cache[rec.cwd] = _git_short_head(rec.cwd)
     live = cwd_cache[rec.cwd]
@@ -88,23 +124,44 @@ def _commit_for(rec, cwd_cache: dict[str, str | None]) -> str:
     return _NO_COMMIT
 
 
-def _resume_cmd(rec) -> str:
-    """High-confidence resume when a session_id is known, else the safe
-    new-session fallback. Mirrors recovery.detect_crash_state's split so
-    the snapshot and the crash plan never disagree."""
-    if rec.session_id:
-        return f"claude --resume {rec.session_id}"
-    return f'cd "{rec.cwd}" && claude'
+def _resume_for(rec, sess_cache: dict[str, str | None]) -> tuple[str, str, str | None]:
+    """Return (resume_command, resume_kind, resolved_session).
+
+    resume_kind in {exact, repo-latest, new}:
+      * exact       -- registry session_id whose transcript exists.
+      * repo-latest -- the cwd's most-recent transcript (registry had no sid).
+      * new         -- no transcript found; fresh session in the right cwd.
+    """
+    if rec.cwd not in sess_cache:
+        sess_cache[rec.cwd] = resolve_last_session(rec.cwd)
+    resolved = sess_cache[rec.cwd]
+
+    sid = rec.session_id
+    if sid and _transcript_path(rec.cwd, sid).is_file():
+        return f"claude --resume {sid}", "exact", resolved
+    if resolved:
+        return f"claude --resume {resolved}", "repo-latest", resolved
+    return f'cd "{rec.cwd}" && claude', "new", None
 
 
-def build_snapshot_text(registry: PaneRegistry, now: float | None = None) -> str:
-    """Render the snapshot markdown for ``registry``. Pure (no I/O except the
-    per-cwd git probe); ``now`` is injectable for deterministic tests."""
+def _recovery_header() -> list[str]:
+    return [
+        "== CRASH RECOVERY ==",
+        "Run this from ANY terminal (Claude Code does NOT need to be open):",
+        f'  powershell -ExecutionPolicy Bypass -File "{RESTORE_SCRIPT}"',
+        "It reopens every repo below as a Cursor window and prints the exact",
+        "`claude --resume <id>` line to paste into each restored pane.",
+        "",
+    ]
+
+
+def _render(registry: PaneRegistry, now: float | None) -> tuple[str, list[dict]]:
     t = time.time() if now is None else now
     panes = [r for r in registry.panes.values() if r.status in _LIVE_STATUSES]
     panes.sort(key=lambda r: (_STATUS_RANK.get(r.status, 9), r.started_at))
 
     lines: list[str] = []
+    lines.extend(_recovery_header())
     lines.append(_RULE)
     lines.append(f"SESSION SNAPSHOT -- {_iso(t)}")
     lines.append(_RULE)
@@ -117,11 +174,12 @@ def build_snapshot_text(registry: PaneRegistry, now: float | None = None) -> str
     lines.append("")
 
     cwd_cache: dict[str, str | None] = {}
+    sess_cache: dict[str, str | None] = {}
     machine: list[dict] = []
     for i, rec in enumerate(panes, start=1):
         repo = Path(rec.cwd).name or rec.cwd
         commit = _commit_for(rec, cwd_cache)
-        resume = _resume_cmd(rec)
+        resume, kind, resolved = _resume_for(rec, sess_cache)
         flag = "" if rec.status == "active" else f"  [{rec.status}]"
         lines.append(f"PANE {i}{flag}")
         lines.append(f"Repo:   {repo}")
@@ -129,6 +187,9 @@ def build_snapshot_text(registry: PaneRegistry, now: float | None = None) -> str
         lines.append(f"Task:   {rec.task}")
         lines.append(f"Commit: {commit}")
         lines.append(f"Resume: {resume}")
+        if kind == "repo-latest":
+            lines.append("        (repo's last conversation -- registry had no "
+                         "per-pane session_id)")
         lines.append(f"Since:  {_iso(rec.started_at)}")
         lines.append("")
         machine.append({
@@ -140,21 +201,26 @@ def build_snapshot_text(registry: PaneRegistry, now: float | None = None) -> str
             "commit": commit,
             "status": rec.status,
             "session_id": rec.session_id,
+            "resolved_session": resolved,
             "resume": resume,
+            "resume_kind": kind,
             "since": _iso(rec.started_at),
         })
 
     lines.append(_RULE)
-    lines.append("Recover: kill claude.exe, open this file, run each PANE's")
-    lines.append("Resume line in its own terminal. See commands/panes.md.")
+    lines.append("Recover: kill claude.exe, then run the CRASH RECOVERY command")
+    lines.append("at the top of this file. See commands/panes.md + restore-panes.md.")
     lines.append("")
-    # Machine-readable block: a fenced json array a parser can lift verbatim.
-    import json as _json
     lines.append("```json")
-    lines.append(_json.dumps(machine, indent=2))
+    lines.append(json.dumps(machine, indent=2))
     lines.append("```")
     lines.append("")
-    return "\n".join(lines)
+    return "\n".join(lines), machine
+
+
+def build_snapshot_text(registry: PaneRegistry, now: float | None = None) -> str:
+    """Render the snapshot markdown for ``registry`` (text only)."""
+    return _render(registry, now)[0]
 
 
 def generate_snapshot(
@@ -164,22 +230,24 @@ def generate_snapshot(
     mark_stale: bool = True,
 ) -> Path:
     """Load (or accept) the registry, demote stale panes, render the snapshot,
-    and atomically write it. Returns the written path.
+    and atomically write BOTH the markdown and a .json sidecar (same machine
+    data). Returns the markdown path.
 
     Hermetic by construction: pass an explicit ``registry`` (its own _path) and
     ``out_path`` and nothing global is touched."""
     reg = registry if registry is not None else PaneRegistry.load()
     if mark_stale:
-        # Local import avoids a circular import at module load.
         from .heartbeat import mark_stale_panes
         mark_stale_panes(reg)
-    text = build_snapshot_text(reg, now=now)
-    target = out_path or DEFAULT_SNAPSHOT_PATH
-    _atomic_write(Path(target), text)
-    return Path(target)
+    text, machine = _render(reg, now)
+    target = Path(out_path or DEFAULT_SNAPSHOT_PATH)
+    _atomic_write(target, text)
+    sidecar = target.with_suffix(".json")
+    _atomic_write(sidecar, json.dumps(machine, indent=2) + "\n")
+    return target
 
 
 if __name__ == "__main__":  # pragma: no cover - manual smoke
     p = generate_snapshot()
     print(f"snapshot written: {p}")
-    print(Path(p).read_text(encoding="utf-8"))
+    print(f"sidecar: {p.with_suffix('.json')}")
