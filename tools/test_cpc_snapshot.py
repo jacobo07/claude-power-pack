@@ -1,17 +1,18 @@
-"""V-gates for the CPC-OS session snapshot (modules/cpc_os/snapshot.py).
+"""V-gates for the CPC-OS session snapshot + restore (snapshot.py + restore_panes.ps1).
 
-Hermetic by construction: every gate builds a PaneRegistry whose _path is a
-tmpdir file and renders to a tmpdir out_path, so nothing under ~/.claude is
-read or written. Determinism comes from (a) an injected ``now`` for header
-timestamps and (b) an explicit stored last_commit on one pane, so the commit
-gate does not depend on git being installed. Designed to pass identically on
-rapid back-to-back runs (the V-CPC-RESTART flaky-gate lesson).
+Hermetic by construction: every gate builds a tmpdir PaneRegistry and renders to
+a tmpdir out_path, AND monkeypatches snapshot.PROJECTS_DIR to a tmp transcript
+store so the session resolver / resume-kind logic is deterministic and
+host-independent (no dependency on the real ~/.claude/projects or on git).
+Transcript recency is forced with explicit os.utime mtimes. Designed to pass
+identically on rapid back-to-back runs (the V-CPC-RESTART flaky-gate lesson).
 
-Run: python tools/test_cpc_snapshot.py   ->   SNAPSHOT_PASS=8/8
+Run: python tools/test_cpc_snapshot.py   ->   SNAPSHOT_PASS=15/15
 """
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -20,11 +21,13 @@ PP_ROOT = Path(__file__).resolve().parent.parent
 if str(PP_ROOT) not in sys.path:
     sys.path.insert(0, str(PP_ROOT))
 
+from modules.cpc_os import snapshot as snap  # noqa: E402
 from modules.cpc_os.registry import PaneRegistry  # noqa: E402
 from modules.cpc_os.snapshot import (  # noqa: E402
-    _NO_COMMIT,
+    _encode_project_dir,
     build_snapshot_text,
     generate_snapshot,
+    resolve_last_session,
 )
 
 passes = 0
@@ -43,19 +46,15 @@ def _fail(gate: str, ev: str) -> None:
     print(f"FAIL {gate}: {ev}")
 
 
-def _build_reg(tmp: Path) -> PaneRegistry:
-    """A registry with two live panes: A in the real PP repo (live commit +
-    session_id -> high-confidence resume), B in a non-repo path with a stored
-    commit and no session_id (fallback commit + cd resume)."""
-    reg = PaneRegistry(_path=tmp / "reg.json")
-    reg.register_pane("paneA", str(PP_ROOT), "task-A", session_id="sid-A")
-    reg.register_pane("paneB", str(tmp / "workdir"), "task-B",
-                      last_commit="fa11ba7")
-    return reg
+def _touch_transcript(projects: Path, cwd: str, uuid: str, mtime: float) -> None:
+    d = projects / _encode_project_dir(cwd)
+    d.mkdir(parents=True, exist_ok=True)
+    f = d / f"{uuid}.jsonl"
+    f.write_text("{}\n", encoding="utf-8")
+    os.utime(f, (mtime, mtime))
 
 
 def _extract_machine_block(text: str) -> list:
-    """Lift the fenced ```json array back out of the markdown."""
     lines = text.splitlines()
     start = None
     for i, ln in enumerate(lines):
@@ -75,80 +74,137 @@ def _extract_machine_block(text: str) -> list:
 def main() -> int:
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
-        snap = tmp / "session_snapshot.md"
-        reg = _build_reg(tmp)
+        projects = tmp / "projects"
+        projects.mkdir()
+        snap.PROJECTS_DIR = projects  # hermetic transcript store
+
+        cwd_a = str(tmp / "repoA")   # exact: sid-A transcript exists
+        cwd_b = str(tmp / "repoB")   # repo-latest: two transcripts, newer wins
+        cwd_c = str(tmp / "repoC")   # new: no transcript dir at all
+
+        _touch_transcript(projects, cwd_a, "sid-A", 1000.0)
+        _touch_transcript(projects, cwd_b, "older", 1000.0)
+        _touch_transcript(projects, cwd_b, "newer", 2000.0)
+
+        reg = PaneRegistry(_path=tmp / "reg.json")
+        reg.register_pane("paneA", cwd_a, "task-A", session_id="sid-A")
+        reg.register_pane("paneB", cwd_b, "task-B", last_commit="fa11ba7")
+        reg.register_pane("paneC", cwd_c, "task-C")
+
+        snap_md = tmp / "session_snapshot.md"
 
         # V-SNAPSHOT-GENERATES
-        out = generate_snapshot(registry=reg, out_path=snap, now=1700000000.0)
-        if Path(out) == snap and snap.is_file() and snap.stat().st_size > 0:
-            _ok("V-SNAPSHOT-GENERATES", f"file written {snap.stat().st_size}B")
+        out = generate_snapshot(registry=reg, out_path=snap_md, now=1700000000.0)
+        if Path(out) == snap_md and snap_md.is_file() and snap_md.stat().st_size > 0:
+            _ok("V-SNAPSHOT-GENERATES", f"md written {snap_md.stat().st_size}B")
         else:
-            _fail("V-SNAPSHOT-GENERATES", "snapshot file missing/empty")
+            _fail("V-SNAPSHOT-GENERATES", "snapshot md missing/empty")
 
-        text = snap.read_text(encoding="utf-8")
+        text = snap_md.read_text(encoding="utf-8")
 
-        # V-SNAPSHOT-HAS-PANE  -- >=1 pane with a real cwd
-        if "PANE 1" in text and str(PP_ROOT) in text and "task-A" in text:
+        # V-SNAPSHOT-SIDECAR  -- .json sidecar exists + equals embedded block
+        sidecar = snap_md.with_suffix(".json")
+        machine_md = _extract_machine_block(text)
+        if sidecar.is_file():
+            machine_json = json.loads(sidecar.read_text(encoding="utf-8"))
+            if machine_json == machine_md and len(machine_json) == 3:
+                _ok("V-SNAPSHOT-SIDECAR", f"sidecar == embedded ({len(machine_json)})")
+            else:
+                _fail("V-SNAPSHOT-SIDECAR", "sidecar != embedded block")
+        else:
+            _fail("V-SNAPSHOT-SIDECAR", "no .json sidecar written")
+
+        # V-SNAPSHOT-RECOVERY-HEADER  -- top-of-file crash recovery + script path
+        if ("== CRASH RECOVERY ==" in text
+                and "restore_panes.ps1" in text
+                and text.splitlines()[0].strip() == "== CRASH RECOVERY =="):
+            _ok("V-SNAPSHOT-RECOVERY-HEADER", "header + restore script path on top")
+        else:
+            _fail("V-SNAPSHOT-RECOVERY-HEADER", "recovery header missing/not first")
+
+        # V-SNAPSHOT-HAS-PANE
+        if "PANE 1" in text and cwd_a in text and "task-A" in text:
             _ok("V-SNAPSHOT-HAS-PANE", "PANE 1 + real cwd + task present")
         else:
             _fail("V-SNAPSHOT-HAS-PANE", "no pane with real cwd")
 
-        # V-SNAPSHOT-HAS-COMMIT  -- a real commit hash appears (stored fallback
-        # is deterministic; the live PP_ROOT commit is a bonus when git exists)
-        if "fa11ba7" in text and f"Commit: {_NO_COMMIT}" not in (
-            "\n".join(l for l in text.splitlines() if "paneB" in l)
-        ):
+        # V-SNAPSHOT-HAS-COMMIT  -- paneB fallback commit (git-independent)
+        if "fa11ba7" in text:
             _ok("V-SNAPSHOT-HAS-COMMIT", "commit hash fa11ba7 rendered")
         else:
             _fail("V-SNAPSHOT-HAS-COMMIT", "no commit hash in snapshot")
 
-        # V-SNAPSHOT-READABLE  -- header + valid machine json block
-        machine = _extract_machine_block(text)
-        if ("SESSION SNAPSHOT" in text and isinstance(machine, list)
-                and len(machine) == 2
-                and {m["pane_id"] for m in machine} == {"paneA", "paneB"}):
-            _ok("V-SNAPSHOT-READABLE", "header + json block parse (2 panes)")
+        # V-RESOLVE-SESSION  -- newest transcript wins
+        if resolve_last_session(cwd_b) == "newer" and resolve_last_session(cwd_a) == "sid-A":
+            _ok("V-RESOLVE-SESSION", "newest .jsonl resolved per cwd")
         else:
-            _fail("V-SNAPSHOT-READABLE", f"machine block invalid: {machine!r}")
+            _fail("V-RESOLVE-SESSION",
+                  f"resolver wrong B={resolve_last_session(cwd_b)}")
 
-        # V-SNAPSHOT-RESUME-SPLIT  -- bonus correctness: sid -> --resume,
-        # no sid -> cd fallback (mirrors recovery confidence)
-        a = next((m for m in (machine or []) if m["pane_id"] == "paneA"), {})
-        b = next((m for m in (machine or []) if m["pane_id"] == "paneB"), {})
-        if a.get("resume") == "claude --resume sid-A" and b.get(
-                "resume", "").startswith("cd "):
-            _ok("V-SNAPSHOT-RESUME-SPLIT",
-                "high-confidence vs cd fallback correct")
+        by_id = {m["pane_id"]: m for m in (machine_md or [])}
+        a, b, c = by_id.get("paneA", {}), by_id.get("paneB", {}), by_id.get("paneC", {})
+
+        # V-RESUME-EXACT  -- captured session_id whose transcript exists
+        if a.get("resume_kind") == "exact" and a.get("resume") == "claude --resume sid-A":
+            _ok("V-RESUME-EXACT", "paneA -> claude --resume sid-A [exact]")
         else:
-            _fail("V-SNAPSHOT-RESUME-SPLIT",
-                  f"resume split wrong A={a.get('resume')} B={b.get('resume')}")
+            _fail("V-RESUME-EXACT", f"paneA resume={a.get('resume')} kind={a.get('resume_kind')}")
+
+        # V-RESUME-REPO-LATEST  -- null sid, recovered from transcript store
+        if b.get("resume_kind") == "repo-latest" and b.get("resume") == "claude --resume newer":
+            _ok("V-RESUME-REPO-LATEST", "paneB -> claude --resume newer [repo-latest]")
+        else:
+            _fail("V-RESUME-REPO-LATEST", f"paneB resume={b.get('resume')} kind={b.get('resume_kind')}")
+
+        # V-RESUME-NEW  -- no transcript -> cd fallback
+        if c.get("resume_kind") == "new" and str(c.get("resume", "")).startswith("cd "):
+            _ok("V-RESUME-NEW", "paneC -> cd fallback [new]")
+        else:
+            _fail("V-RESUME-NEW", f"paneC resume={c.get('resume')} kind={c.get('resume_kind')}")
+
+        # V-SNAPSHOT-READABLE  -- machine block parses, 3 panes
+        if isinstance(machine_md, list) and len(machine_md) == 3 and (
+                {m["pane_id"] for m in machine_md} == {"paneA", "paneB", "paneC"}):
+            _ok("V-SNAPSHOT-READABLE", "json block parse (3 panes)")
+        else:
+            _fail("V-SNAPSHOT-READABLE", f"machine block invalid: {machine_md!r}")
 
         # V-SNAPSHOT-UPDATES  -- a second generation after a new pane differs
         text_v1 = build_snapshot_text(reg, now=1700000000.0)
-        reg.register_pane("paneC", str(tmp / "third"), "task-C")
+        reg.register_pane("paneD", str(tmp / "repoD"), "task-D")
         text_v2 = build_snapshot_text(reg, now=1700000050.0)
-        if text_v1 != text_v2 and "task-C" in text_v2 and "task-C" not in text_v1:
+        if text_v1 != text_v2 and "task-D" in text_v2 and "task-D" not in text_v1:
             _ok("V-SNAPSHOT-UPDATES", "second render reflects new pane")
         else:
             _fail("V-SNAPSHOT-UPDATES", "snapshot did not update")
 
-        # V-HUB-TRIGGERS  -- hub source is wired to capture sid + gen snapshot
-        hub = (PP_ROOT / "hooks" / "session_start_hub.js").read_text(
-            encoding="utf-8")
-        if "generate_snapshot" in hub and "PP_PANE_SID" in hub and (
-                "session_id=sid" in hub):
-            _ok("V-HUB-TRIGGERS",
-                "hub captures session_id + regenerates snapshot")
+        # V-HUB-TRIGGERS  -- hub source wired to capture sid + gen snapshot
+        hub = (PP_ROOT / "hooks" / "session_start_hub.js").read_text(encoding="utf-8")
+        if "generate_snapshot" in hub and "PP_PANE_SID" in hub and "session_id=sid" in hub:
+            _ok("V-HUB-TRIGGERS", "hub captures session_id + regenerates snapshot")
         else:
             _fail("V-HUB-TRIGGERS", "hub not wired to snapshot/session_id")
 
-        # V-PANES-CMD-EXISTS  -- the command documents crash recovery
+        # V-PANES-CMD-EXISTS  -- both /panes recovery + /restore-panes documented
         cmd = (PP_ROOT / "commands" / "panes.md").read_text(encoding="utf-8")
-        if ("Crash recovery" in cmd and "session_snapshot.md" in cmd
-                and "claude --resume" in cmd):
-            _ok("V-PANES-CMD-EXISTS", "panes.md has recovery section")
+        rp = PP_ROOT / "commands" / "restore-panes.md"
+        if ("Crash recovery" in cmd and rp.is_file()
+                and "claude --resume" in rp.read_text(encoding="utf-8")):
+            _ok("V-PANES-CMD-EXISTS", "panes.md + restore-panes.md present")
         else:
-            _fail("V-PANES-CMD-EXISTS", "panes.md missing recovery section")
+            _fail("V-PANES-CMD-EXISTS", "command docs missing")
+
+        # V-RESTORE-SCRIPT-EXISTS  -- the ps1 reads the json + opens cursor
+        ps1 = PP_ROOT / "tools" / "restore_panes.ps1"
+        if ps1.is_file():
+            body = ps1.read_text(encoding="utf-8")
+            if ("session_snapshot.json" in body and "cursor" in body.lower()
+                    and "resume" in body.lower()):
+                _ok("V-RESTORE-SCRIPT-EXISTS", "restore_panes.ps1 reads json + cursor")
+            else:
+                _fail("V-RESTORE-SCRIPT-EXISTS", "ps1 missing json/cursor/resume wiring")
+        else:
+            _fail("V-RESTORE-SCRIPT-EXISTS", "restore_panes.ps1 absent")
 
         # V-BASELINE-INTACT  -- cpc_os package surface still imports clean
         try:
@@ -164,9 +220,7 @@ def main() -> int:
             _fail("V-BASELINE-INTACT", f"import regression: {exc}")
 
     total = passes + fails
-    # 8 required gates (M5 contract) + 1 bonus (V-SNAPSHOT-RESUME-SPLIT).
-    print(f"SNAPSHOT_PASS={passes}/{total}  threshold={total}/{total} "
-          f"(8 required + 1 bonus)")
+    print(f"SNAPSHOT_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1
 
 
