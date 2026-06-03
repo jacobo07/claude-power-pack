@@ -113,20 +113,21 @@ function readStdin() {
   }
 }
 
-function getCwdFromStdin() {
+function getStdinPayload() {
+  // fd 0 can be read only ONCE -- parse the whole payload here and let
+  // callers pull cwd / session_id from the returned object. A second
+  // readFileSync(0) would return empty and silently drop session_id.
   const raw = readStdin();
   if (!raw) {
-    return process.cwd();
+    return {};
   }
   try {
     const payload = JSON.parse(raw);
-    if (payload && typeof payload.cwd === 'string' && payload.cwd) {
-      return payload.cwd;
-    }
+    return (payload && typeof payload === 'object') ? payload : {};
   } catch (err) {
     note('stdin not JSON', err);
+    return {};
   }
-  return process.cwd();
 }
 
 function hookRestartResume(cwd) {
@@ -304,21 +305,32 @@ function hookDriftReport() {
 }
 
 // ---------------------------------------------------------------------------
-// Hook 8: CPC-OS pane registration (DETACHED, BL-CPCOS-001 wiring)
-//   Registers THIS pane in the atomic CPC-OS registry on session open.
-//   Fire-and-forget: the registry write happens in a detached python
-//   subprocess so it never adds to the hub's wall time. pane_id, cwd,
-//   and task are passed via env (no argv quoting of the inline script).
+// Hook 8: CPC-OS pane registration + snapshot (DETACHED, BL-CPCOS-001 wiring)
+//   Registers THIS pane in the atomic CPC-OS registry on session open, then
+//   regenerates ~/.claude/state/session_snapshot.md so the crash-recovery
+//   manifest always includes the just-opened pane. Both happen in ONE
+//   detached python subprocess (register THEN snapshot, sequential, no race)
+//   so it never adds to the hub's wall time. pane_id, cwd, task, and the
+//   claude session_id are passed via env (no argv quoting of the inline
+//   script). Capturing session_id is what makes recovery's high-confidence
+//   `claude --resume <id>` line live instead of the cd-only fallback.
 // ---------------------------------------------------------------------------
 const CPC_REGISTER_SCRIPT =
   "import os, sys\n"
   + "sys.path.insert(0, os.environ['PP_ROOT_CPC'])\n"
   + "from modules.cpc_os.registry import PaneRegistry\n"
   + "reg = PaneRegistry.load()\n"
+  + "sid = os.environ.get('PP_PANE_SID') or None\n"
   + "reg.register_pane(os.environ['PP_PANE_ID'], "
-  + "os.environ['PP_PANE_CWD'], os.environ.get('PP_PANE_TASK', 'active'))\n";
+  + "os.environ['PP_PANE_CWD'], os.environ.get('PP_PANE_TASK', 'active'), "
+  + "session_id=sid)\n"
+  + "try:\n"
+  + "    from modules.cpc_os.snapshot import generate_snapshot\n"
+  + "    generate_snapshot()\n"
+  + "except Exception:\n"
+  + "    pass\n";
 
-function hookCpcOsRegister(cwd) {
+function hookCpcOsRegister(cwd, sessionId) {
   const paneId = 'pane-' + process.pid + '-' + Date.now();
   detachedSpawn('cpc_register', PYTHON_EXE, ['-c', CPC_REGISTER_SCRIPT],
     Object.assign({}, process.env, {
@@ -326,6 +338,7 @@ function hookCpcOsRegister(cwd) {
       PP_PANE_ID: paneId,
       PP_PANE_CWD: cwd || process.cwd(),
       PP_PANE_TASK: process.env.PP_PANE_TASK || 'active',
+      PP_PANE_SID: sessionId || '',
       PYTHONIOENCODING: 'utf-8',
     }));
 }
@@ -338,7 +351,11 @@ function main() {
   let additionalContext = null;
 
   try {
-    const cwd = getCwdFromStdin();
+    const payload = getStdinPayload();
+    const cwd = (typeof payload.cwd === 'string' && payload.cwd)
+      ? payload.cwd : process.cwd();
+    const sessionId = (typeof payload.session_id === 'string')
+      ? payload.session_id : '';
 
     // 1. Sync hook (may write to stdout).
     additionalContext = hookRestartResume(cwd);
@@ -350,7 +367,7 @@ function main() {
     hookAutoVaultBootstrap();
     hookCompoundAudit();
     hookDriftReport();
-    hookCpcOsRegister(cwd);
+    hookCpcOsRegister(cwd, sessionId);
   } catch (err) {
     note('hub main caught', err);
   }
