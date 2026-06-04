@@ -484,6 +484,22 @@ if (require.main === module) (async () => {
   if (event && CHAIN_MAP[event]) {
     const rawIn = await readStdin(3000);
     const { outputs, blocked, blockStderr } = runChain(event, CHAIN_MAP[event], rawIn || '');
+    // COMPANION IN-PROCESS BUNDLE (2026-06-04): a "<fam>-chain" event ALSO runs
+    // its "<fam>-default" EVENT_MAP bundle IN-PROCESS (require, ~0 extra spawn)
+    // and merges the outputs. Empirically (live timing): 2 in-process UPS hooks
+    // = 62 ms vs a child cold-start ~250 ms each. This lets a folded event keep
+    // its fast Node hooks (power-pack-reminder + baseline-translator) in-process
+    // while only the heterogeneous / Python hooks (jit_skill_loader.py) stay as
+    // shell-free child spawns. Only UserPromptSubmit-chain has a matching
+    // EVENT_MAP companion today; every other *-chain has none -> no-op for them.
+    const companionKey = event.replace(/-chain$/, '-default');
+    if (companionKey !== event && EVENT_MAP[companionKey]) {
+      let cData = {};
+      try { cData = JSON.parse(rawIn || '{}'); } catch (_) { /* keep empty */ }
+      for (const modPath of EVENT_MAP[companionKey]) {
+        outputs.push(await runHook(event, modPath, cData));
+      }
+    }
     const merged = mergeOutputs(outputs, event);
     if (blocked) {
       const fam = familyOf(event);
