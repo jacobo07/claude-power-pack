@@ -53,7 +53,10 @@ function stubConstitution(cwd) {
 }
 
 rt.runHook(logErr, async (event) => {
-  const cwd = event && event.cwd;
+  // Env-payload fallback (BL-SESSION-FOLD-001): the hub detached-spawns this
+  // hook with no stdin, passing cwd via PP_EVT_CWD. The standalone entry
+  // still supplies cwd via stdin.
+  const cwd = (event && event.cwd) || process.env.PP_EVT_CWD;
   if (!cwd) return;
 
   const marker = path.join(cwd, '.pp-onboarded');

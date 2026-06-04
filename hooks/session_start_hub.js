@@ -439,6 +439,52 @@ function hookCpcOsRegister(cwd, sessionId) {
 }
 
 // ---------------------------------------------------------------------------
+// Hooks 9-11: fire-and-forget SessionStart hooks folded from standalone
+//   settings.json entries (BL-SESSION-FOLD-001, 2026-06-04). Each was its own
+//   SessionStart spawn; the hub now detached-spawns them so Claude Code pays
+//   ONE SessionStart Node cold start instead of four (T-NODE-COLD-001).
+//
+//   They are stdin-payload-coupled (need cwd/session_id from the SessionStart
+//   event). A detached child gets no stdin, so the hub passes the payload via
+//   env (PP_EVT_CWD / PP_EVT_SID); each hook reads those as a fallback when its
+//   own stdin is empty. All three are idempotent (append-only / marker-gated),
+//   so the brief double-run window before the settings.json migration
+//   (tools/migrate_sessionstart_fold.py --apply) is benign.
+//
+//   Only fire-and-forget hooks are folded here. stdout-consumed hooks
+//   (restart-target-consumer, learning-sentinel, token-shield-refresh) and
+//   load-bearing recovery hooks (lazarus-*, terminal-slot-recorder) stay
+//   standalone -- they are NOT safe to detach (UKDL T-SESSIONFOLD-001).
+// ---------------------------------------------------------------------------
+const MARK_LIVE_SESSION_JS = path.join(PP_PATH, 'hooks', 'mark-live-session.js');
+const ZERO_COMMAND_BOOTSTRAP_JS = path.join(PP_PATH, 'hooks',
+                                            'zero-command-bootstrap.js');
+const FIRST_TIME_PROJECT_JS = path.join(PP_PATH, 'hooks', 'first-time-project.js');
+
+function foldedEnv(cwd, sessionId) {
+  return Object.assign({}, process.env, {
+    PP_EVT_CWD: cwd || '',
+    PP_EVT_SID: sessionId || '',
+    PP_EVT_EVENT: 'SessionStart',
+  });
+}
+
+function hookMarkLiveSession(cwd, sessionId) {
+  detachedSpawn('mark_live_session', NODE_EXE, [MARK_LIVE_SESSION_JS],
+                foldedEnv(cwd, sessionId));
+}
+
+function hookZeroCommandBootstrap(cwd, sessionId) {
+  detachedSpawn('zero_command_bootstrap', NODE_EXE, [ZERO_COMMAND_BOOTSTRAP_JS],
+                foldedEnv(cwd, sessionId));
+}
+
+function hookFirstTimeProject(cwd, sessionId) {
+  detachedSpawn('first_time_project', NODE_EXE, [FIRST_TIME_PROJECT_JS],
+                foldedEnv(cwd, sessionId));
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
@@ -471,6 +517,11 @@ function main() {
     hookCompoundAudit();
     hookDriftReport();
     hookCpcOsRegister(cwd, sessionId);
+
+    // 9-11. Folded fire-and-forget hooks (BL-SESSION-FOLD-001).
+    hookMarkLiveSession(cwd, sessionId);
+    hookZeroCommandBootstrap(cwd, sessionId);
+    hookFirstTimeProject(cwd, sessionId);
   } catch (err) {
     note('hub main caught', err);
   }

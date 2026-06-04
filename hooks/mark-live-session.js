@@ -232,17 +232,22 @@ function orphanMarkSweep(ownSessionId) {
 
 function main() {
   const input = readStdin();
-  const event = input.hook_event_name || input.event || '';
-  orphanMarkSweep(input.session_id);
+  // Env-payload fallback (BL-SESSION-FOLD-001): when session_start_hub.js
+  // detached-spawns this hook, the child has no stdin, so cwd/session_id/event
+  // arrive via env. The standalone settings.json entry still feeds stdin.
+  const sessionId = input.session_id || process.env.PP_EVT_SID || '';
+  const event = input.hook_event_name || input.event
+    || process.env.PP_EVT_EVENT || '';
+  orphanMarkSweep(sessionId);
   // On Stop we also refresh our own marker. On SessionStart the .jsonl
   // for this session usually doesn't exist yet, so markOwnSessionLive is
   // a no-op there — the first Stop after the first assistant turn will
   // apply it.
   if (event === 'Stop' || event === '') {
-    markOwnSessionLive(input.session_id);
+    markOwnSessionLive(sessionId);
   } else if (event === 'SessionStart') {
     // Attempt mark anyway — harmless if the .jsonl already exists.
-    markOwnSessionLive(input.session_id);
+    markOwnSessionLive(sessionId);
   }
   process.exit(0);
 }
