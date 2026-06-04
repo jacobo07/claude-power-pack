@@ -230,6 +230,9 @@ def main() -> int:
         ("claude-md-size",
          [PY, str(PP / "tools" / "verify_claude_md_size.py")],
          10),
+        ("claude-md-router",
+         [PY, str(PP / "tools" / "test_claude_md_router.py")],
+         60),
     ]
 
     if args.row:

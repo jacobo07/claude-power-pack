@@ -862,3 +862,58 @@ test_auto_reset.py 8/8 x3, pytest 43/43, verify_spp rows ram-optimization +
 auto-reset. Cross-ref C28, C33 (orphan field), C34 (RAM forensics).
 
 Sealed BL-AUTO-RESET-001 2026-06-04.
+
+## SCS C36 -- CLAUDE.md Char-Budget Router: trim provenance, NEVER relocate always-on safety rules (sealed 2026-06-04, BL-CLAUDEMD-ROUTER)
+
+Goal: keep the GLOBAL ~/.claude/CLAUDE.md under Claude Code's 40,000-char
+performance-warning limit (it loads every session -> direct context/RAM cost).
+
+PASO -1 disproved the premise (3rd time in the session): "40K lineas" was
+Owner shorthand for ~40K CHARS. The file was already 196 lines / 40,214 chars
+-- NOT 40K lines. The DONE-GATE's own `wc -l < 200` was already met. The real
+issue was ~214 chars over the 40k char warning.
+
+The dangerous part of the original plan -- "move all content to vault, router
+< 200 lines" -- would have RELOCATED the two biggest sections (49% of the
+file): the always-on Windows safety doctrines (Bash-Bridge, Parallel-Subagent
+caps, Anti-Waiting). Those MUST load every session; moving them to vault brings
+back the MSYS2 hangs, dead-screen freezes, and parallel-tool cascades that took
+13+ documented host crashes to fix. REJECTED.
+
+What shipped (char-budget, not line-count; safety rules stay INLINE):
+1. trim_claude_md.py +R4 (self-contained dated provenance parens; [^()] cannot
+   cross a paren so it never reaches a rule) +R5 (header-label paren "(LABEL —
+   ...date)" -> "(LABEL)", kept label excludes commas so OPERATIVE comma-lists
+   survive). Each removal span dry-run-inspected BEFORE apply -- the first
+   em-dash-to-EOL attempt was REJECTED after the dry-run showed it ate the
+   Read/Glob/Grep<=4 cap rule. 40,174 -> 39,658 (provenance-only) + GAL dedupe.
+2. verify_claude_md_size.py + verify_spp row 'claude-md-size' (FAIL >= 40k).
+3. claude_md_linter_stop.js: Stop advisory at MARGIN/HARD (non-blocking).
+4. claude_md_firewall.js: PreToolUse, DENY a Write/Edit whose RESULT >= 40k.
+   Char-budget, NOT prose-line counting (the original "block prose > 5 lines"
+   would block legitimate safety-rule maintenance). Fail-open.
+5. test_claude_md_router.py: 8 V-gates (size, router, safety-intact, trim-safe,
+   firewall blocks/allows, linter, baseline) -> 8/8 x3.
+
+Recalibration reported loudly: TARGET_MARGIN 39,000 -> 39,750 and the linter's
+"early warning" 38,000 -> 39,750. The file's OPERATIVE-SAFETY FLOOR is ~39,658
+(it is almost all legitimate always-on doctrine); a 39,000 margin / 38,000
+warning is unreachable without cutting safety content, so the thresholds sit
+one append (~250 chars) below the 40k hard limit. The firewall is the real
+prevention; clearing to just-under-40k + the firewall = complete.
+
+New Hard Rule (HR-CLAUDEMD-FIREWALL / UKDL Trap): NEVER move the always-on
+host-safety doctrines (Bash-Bridge, Parallel-Subagent caps, Anti-Waiting) out
+of the global CLAUDE.md to vault/. The global CLAUDE.md is the ONLY surface
+loaded every session; relocating safety rules = they stop loading = host
+freezes return. Trim PROVENANCE (dates/seals/incident refs), never RULES.
+When CLAUDE.md nears 40k, trim provenance or put NEW non-safety doctrine in
+vault -- never evict a safety rule.
+
+Recognizer: on "distill/shrink the config", verify line-vs-char and check
+whether the bulk is operative-always-on vs relocatable. If a section is a
+host-safety rule loaded every session, it is INELIGIBLE for relocation by
+definition. Cross-ref C28 (read source first), C34 (RAM forensics: the same
+"40K = chars not lines" Owner shorthand).
+
+Sealed BL-CLAUDEMD-ROUTER 2026-06-04.
