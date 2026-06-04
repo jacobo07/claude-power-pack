@@ -400,6 +400,44 @@ appends a classified row to `vault/telemetry/mcp_health/mcp_state.jsonl` each
 run. After N sessions the rows reveal the pattern; THEN this trap gets sealed
 with the empirical death-mode + its specific fix. Do not seal on a hypothesis.
 
+### UKDL TRAP T-SESSIONFOLD-001 -- folding a SessionStart hook needs payload + mechanism care
+
+**Level:** UKDL Trap (architectural edge case).
+**Sealed:** 2026-06-04 (BL-SESSION-FOLD-001).
+
+**Trap A -- wrong mechanism.** Reaching for `migrate_hub_fold.py` to fold
+SessionStart. That tool folds Stop / UserPromptSubmit / PostToolUse into
+`hook-dispatcher.js` CHAIN_MAP and EXPLICITLY leaves SessionStart untouched
+(guard #3 in its docstring). SessionStart uses a DIFFERENT model:
+`session_start_hub.js` detached-spawns the folded hooks. Running
+`migrate_hub_fold.py` against SessionStart is a no-op. Use the dedicated
+`migrate_sessionstart_fold.py`.
+
+**Trap B -- payload starvation.** A SessionStart hook that reads `cwd` /
+`session_id` from stdin CANNOT be folded by a naive detached spawn: a detached
+child gets no stdin, so the hook silently no-ops (cwd undefined -> early
+return). Fix: the hub passes the payload via env (`PP_EVT_CWD` / `PP_EVT_SID`,
+the existing `cpc_register` / `jit_warm` pattern) AND each folded hook reads env
+as a fallback when stdin is empty -- `const cwd = (event && event.cwd) ||
+process.env.PP_EVT_CWD;`. Verify the env path does REAL work (not just that the
+hub spawns the child): run the hook with empty stdin + the env var set and
+confirm its side effect lands.
+
+**Trap C -- folding the wrong class.** Only fire-and-forget hooks (side-effect
+only, silence on stdout) are safe to detach. stdout-consumed hooks (they emit
+`additionalContext`) and load-bearing recovery hooks (lazarus-*, restart-*,
+terminal-slot-recorder writing the Lazarus registry) MUST stay standalone --
+detaching them drops their consumed output or their recovery write. The biggest
+wall-time hooks are often exactly the recovery ones, so the safe fold buys
+spawn-count, not the multi-second win.
+
+**Recognizer:** grep the candidate hooks for `additionalContext` /
+`process.stdout.write` (stdout-consumed) and for writes under `lazarus/` or a
+recovery registry (load-bearing). Anything that matches stays standalone.
+
+**Cross-ref:** `tools/migrate_sessionstart_fold.py`,
+`hooks/session_start_hub.js`, `vault/knowledge_base/sessionstart-fold.md`.
+
 ### UKDL TRAP T-JIT-001 -- Python Cold-Start In a Hot-Path Hook
 
 **Level:** UKDL Trap (technical learning, performance edge case).
