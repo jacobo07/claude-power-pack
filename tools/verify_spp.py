@@ -227,6 +227,9 @@ def main() -> int:
         ("auto-reset",
          [PY, str(PP / "tools" / "test_auto_reset.py")],
          60),
+        ("claude-md-size",
+         [PY, str(PP / "tools" / "verify_claude_md_size.py")],
+         10),
     ]
 
     if args.row:
