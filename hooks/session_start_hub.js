@@ -186,6 +186,88 @@ function hookRestartResume(cwd) {
 }
 
 // ---------------------------------------------------------------------------
+// Hook 1b: work_state resume (INLINE, Auto-Reset Orchestrator M5, 2026-06-04)
+//   After a /compact or /kclear auto-reset, the orchestrator (M3) saved a
+//   structured work_state (task + last_commit + last_file + pending). This
+//   injects it into the NEW session so it continues exactly where it left off.
+//   Unlike hookRestartResume (gated on the /restart marker), this fires on
+//   EVERY SessionStart, matches by cwd (the new session has a fresh
+//   session_id), is freshness-bounded (< 6h), and is single-shot (consumes the
+//   file so it never re-injects). Fail-open: never breaks SessionStart.
+// ---------------------------------------------------------------------------
+const WORK_STATE_MAX_AGE_MS = 6 * 60 * MS_PER_MINUTE;  // 6h freshness window
+const WORK_STATE_PENDING_SHOWN = 5;
+
+function hookWorkStateResume(cwd) {
+  try {
+    const cwdL = (cwd || '').toLowerCase();
+    if (!cwdL) {
+      return null;
+    }
+    let files;
+    try {
+      files = fs.readdirSync(STATE_DIR)
+        .filter(f => f.startsWith('work_state_') && f.endsWith('.json'));
+    } catch (readDirErr) {
+      return null;  // no state dir yet -- nothing to resume
+    }
+    let best = null;
+    let bestMtime = -1;
+    for (const f of files) {
+      const fp = path.join(STATE_DIR, f);
+      let st;
+      try {
+        st = fs.statSync(fp);
+      } catch (statErr) {
+        continue;
+      }
+      if (Date.now() - st.mtimeMs > WORK_STATE_MAX_AGE_MS) {
+        continue;  // stale reset context -- ignore
+      }
+      let rec;
+      try {
+        let raw = fs.readFileSync(fp, 'utf8');
+        if (raw && raw.charCodeAt(0) === UTF8_BOM_CHARCODE) {
+          raw = raw.slice(1);
+        }
+        rec = JSON.parse(raw);
+      } catch (parseErr) {
+        continue;
+      }
+      if ((rec.cwd || '').toLowerCase() !== cwdL) {
+        continue;  // different repo -- leave for the right session
+      }
+      if (st.mtimeMs > bestMtime) {
+        best = { rec, fp };
+        bestMtime = st.mtimeMs;
+      }
+    }
+    if (!best) {
+      return null;
+    }
+    const r = best.rec;
+    const pending = (Array.isArray(r.pending) && r.pending.length)
+      ? r.pending.slice(0, WORK_STATE_PENDING_SHOWN).join('; ')
+      : '(none)';
+    const line = '[auto-reset resume] Continuing from a context reset. '
+      + 'Task: ' + (r.task || '(unknown)') + '. '
+      + 'Last commit: ' + (r.last_commit || '(none)') + '. '
+      + 'Last file: ' + (r.last_file || '(none)') + '. '
+      + 'Pending: ' + pending + '.';
+    // Single-shot: consume so it never re-injects on a later SessionStart.
+    try {
+      fs.unlinkSync(best.fp);
+    } catch (delErr) {
+      note('work_state unlink failed', delErr);
+    }
+    return line;
+  } catch (err) {
+    note('work_state resume failed', err);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Hooks 2-5: detached fire-and-forget spawns
 // ---------------------------------------------------------------------------
 function isAbsolutePathString(p) {
@@ -372,6 +454,14 @@ function main() {
 
     // 1. Sync hook (may write to stdout).
     additionalContext = hookRestartResume(cwd);
+
+    // 1b. Auto-Reset Orchestrator M5: inject saved work_state after a reset.
+    const workStateLine = hookWorkStateResume(cwd);
+    if (workStateLine) {
+      additionalContext = additionalContext
+        ? (additionalContext + '\n' + workStateLine)
+        : workStateLine;
+    }
 
     // 2-5. Fire-and-forget spawns (all detached, no waiting).
     hookJitWarm(cwd);
