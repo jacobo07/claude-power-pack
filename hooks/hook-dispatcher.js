@@ -109,6 +109,21 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ram-shield.js', timeoutMs: 6000 },
     { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 6000 },
     { exe: NODE_EXE, script: './vault-heartbeat.js', timeoutMs: 8000 },
+    // --- Folded standalone Stop hooks (hub-fold 2026-06-04) ---------------
+    // These were separate top-level settings.json Stop entries (9 spawns /
+    // ~2 s). Folded here so the Stop event spawns ONE dispatcher (no
+    // fork-storm). grep process.exit(2) over all of them is clean -> none
+    // use the exit-code-2 block mechanism, so any blocking is via stdout
+    // JSON which mergeOutputs already preserves -> block:false safe.
+    // (auto-compact-stop-launcher.ps1 stays standalone: PowerShell, not part
+    // of the node fork-storm.)
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/claude_md_linter_stop.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/mark-live-session.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: './research-intent-detector.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/background-verifier.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jobs_woz_gate.js', timeoutMs: 15000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jit_correlate_stop.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_snapshot_stop.js', timeoutMs: 10000 },
   ],
   // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
   // Root cause: settings.json registered 7 standalone PreToolUse hooks on
@@ -141,6 +156,23 @@ const CHAIN_MAP = {
   'PreToolUse-Read-chain': [
     { exe: NODE_EXE, script: './gatekeeper-semantic.js', timeoutMs: 3000 },
     { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
+  ],
+  // UserPromptSubmit standalone fold (hub-fold 2026-06-04). The EVENT_MAP
+  // 'UserPromptSubmit-default' bundle (power-pack-reminder + baseline-
+  // translator) stays in-process; these 3 were separate top-level entries.
+  // jit_skill_loader is Python -> PY_EXE child. grep exit(2) clean.
+  'UserPromptSubmit-chain': [
+    { exe: NODE_EXE, script: './correction-guard.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: './prd-keyword-sentinel.js', timeoutMs: 8000 },
+    { exe: PY_EXE, script: '../skills/claude-power-pack/tools/jit_skill_loader.py', timeoutMs: 12000 },
+  ],
+  // PostToolUse matcher=Bash standalone fold (hub-fold 2026-06-04). Post-hoc
+  // hooks; none block. kg-sync-hook (matcher Write|Edit) stays standalone.
+  'PostToolUse-Bash-chain': [
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/tty-restore.js', timeoutMs: 6000 },
+    { exe: NODE_EXE, script: './bug-hunter-learning.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/osa_deploy_detector.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/bug-hunter-ceps-bridge.js', timeoutMs: 8000 },
   ],
 };
 
