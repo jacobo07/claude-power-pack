@@ -1141,3 +1141,83 @@ unit gate.
 measured latency, never tool name).
 
 - **UKDL-OSA-2026-06-03T17:32:43Z** [HIGH] claude-power-pack: State-snapshot writer shipped without the restore reader -- system half-built -- recognizer: A snapshot/checkpoint/state file exists but no script READS it to act -> system incomplete. Grep for the reader before declaring a recovery feature done.
+
+### UKDL TRAP T-HOOK-MIRROR-001 -- Edited the canonical, forgot the live mirror
+
+**Level:** UKDL Trap
+**Sealed:** 2026-06-04, hook-hub fold final sprint
+
+**Trap:** `hook-dispatcher.js` exists TWICE: the git-tracked canonical
+at `skills/claude-power-pack/hooks/hook-dispatcher.js` (what commits and
+tests touch) AND the LIVE mirror at `~/.claude/hooks/hook-dispatcher.js`
+(what settings.json actually invokes at runtime). They are SEPARATE files
+(no symlink). Editing + committing the canonical changes NOTHING at runtime
+until the canonical is COPIED to the live path. A whole session's dispatcher
+fix can pass every unit test and parity check against the canonical while the
+running hook is the stale version. `verify_global_mirrors.py` PAIRS enforces
+LF-normalized SHA parity between the two; a [DRIFT] there means the runtime
+is stale.
+
+**Recognizer:** A hook script registered in settings.json by an absolute
+`~/.claude/hooks/<x>.js` path, while the repo tracks `hooks/<x>.js`. The
+runtime path is the loose one; the repo path is canonical. `migrate_hub_fold.py`
+and `measure_hook_event.py` both operate on the LIVE side -- so AFTER
+measurements only reflect changes that were mirrored.
+
+**Fix:** every dispatcher (or any PAIRS-listed hook) change is a 4-step
+cycle, not 1: edit canonical -> commit -> `Copy-Item canonical live -Force`
+-> `verify_global_mirrors.py` shows [OK]. New gate `verify_hook_dispatcher.py`
+V-HOOK-DISP-MIRROR asserts it.
+
+**Cross-ref:** `feedback_mirror_sync_direction_and_hooks_dir_deny`,
+`feedback_write_without_read_incomplete_system` (built but not live).
+
+### UKDL TRAP T-HOOK-ORPHAN-CHAIN-001 -- A CHAIN_MAP key no --event names
+
+**Level:** UKDL Trap
+**Sealed:** 2026-06-04, hook-hub fold final sprint
+
+**Trap:** A `CHAIN_MAP['Foo-chain']` array exists in the dispatcher source,
+so the fold *looks* built -- but settings.json invokes
+`--event=Foo-default` (which routes to `EVENT_MAP`, never the chain). The
+chain is dead code: no `--event` arg names it. Empirically UPS and
+PostToolUse both shipped this way -- the chains existed, were never wired,
+and (UPS) were INCOMPLETE (missing `power-pack-reminder` +
+`baseline-translator`, which lived in the `-default` EVENT_MAP bundle).
+`migrate_hub_fold.py` correctly REFUSES to remove the standalone strays in
+this state (removing them would drop hooks entirely): guard #2 reachability
+prints "ORPHAN; removing strays would drop them. Wire the chain first."
+
+**Recognizer:** before adding chains, assert the literal `--event=X` value
+in settings.json equals the `CHAIN_MAP` key. `parse_chain_map` presence is
+NOT reachability.
+
+**Fix:** wire settings `--event=Foo-chain` AND make the chain a COMPLETE
+superset of (old `-default` bundle + standalone strays). When the bundle has
+fast in-process Node hooks, use the COMPANION path (a `-chain` event also
+runs its `-default` EVENT_MAP bundle in-process) instead of converting them
+to child cold-starts -- empirical: 2 in-process UPS hooks = 62ms vs ~250ms
+per child spawn. Folding parallel top-level spawns into one sequential
+dispatcher trades wall time for spawn count: worth it for Bash (MSYS2
+fork-storm-prone), marginal for node/python events -- measure before folding.
+
+### UKDL TRAP T-HOOK-ANTI-THRASH-001 -- Plan dispatcher edits at session start
+
+**Level:** UKDL Trap
+**Sealed:** 2026-06-04, hook-hub fold final sprint
+
+**Trap:** `hook-dispatcher.js` is gated by an anti-thrash edit budget
+(~2 edits/session, fungible: Write+Edit+Edit=3). Discovering a needed 3rd
+dispatcher edit AT THE END of a session = silently blocked. The Edit tool's
+non-adjacent-region constraint compounds this: N change-regions need N Edits
+unless grouped into one contiguous block.
+
+**Fix:** enumerate ALL dispatcher change-regions at PLAN time, group into
+<=2 contiguous edits, and spend them on the highest-value changes first
+(here: HSO routing fix #1, companion-bundle #2). If a 3rd is needed, defer
+to the next session rather than thrash.
+
+**Cross-ref:** SCS C38 (Hook-Dispatcher-by-default: ~1 settings entry per
+folded event; new logic goes in dispatcher CHAIN_MAP/EVENT_MAP/companion,
+not new settings entries; mergeOutputs always routes additionalContext to
+hookSpecificOutput for UPS/PostToolUse/PostToolBatch, never stranded).
