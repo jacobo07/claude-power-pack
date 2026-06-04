@@ -412,9 +412,21 @@ function mergeOutputs(outputs, eventName) {
 
   if (contexts.length > 0) {
     const joined = contexts.length === 1 ? contexts[0] : contexts.join('\n\n');
-    if (eventName && eventName.startsWith('PreToolUse')) {
+    const fam = familyOf(eventName);
+    // HSO-ROUTING FIX (2026-06-04): additionalContext is a valid
+    // hookSpecificOutput field for PreToolUse AND the
+    // EVENTS_HSO_ADDITIONAL_CONTEXT families (UserPromptSubmit, PostToolUse,
+    // PostToolBatch). Route it INTO hookSpecificOutput for all of those so it
+    // actually reaches the MODEL context. The prior code special-cased only
+    // PreToolUse and dumped UPS/PostToolUse context to root
+    // merged.additionalContext -> sanitizeForSchema then stranded it into
+    // systemMessage (UI-only), so the jit_skill_loader / power-pack-reminder
+    // UPS injections never reached the model. Stop / SessionStart / SessionEnd
+    // genuinely do NOT accept additionalContext -> leave at root for
+    // sanitizeForSchema to salvage into systemMessage.
+    if (fam === 'PreToolUse' || EVENTS_HSO_ADDITIONAL_CONTEXT.has(fam)) {
       merged.hookSpecificOutput = {
-        hookEventName: 'PreToolUse',
+        hookEventName: fam,
         ...(merged.hookSpecificOutput || {}),
         additionalContext: joined,
       };
