@@ -344,6 +344,62 @@ does not move; the config grows; future debugging is harder.
 
 **Cross-ref:** same files as PR-PW-001.
 
+### UKDL TRAP T-MCP-RECONNECT-001 -- stdio mcpServer -32000 is NOT externally recoverable
+
+**Level:** UKDL Trap (architectural edge case).
+**Sealed:** 2026-06-04 (BL-MCP-STABILITY-001).
+**Production reality:** `magic-ui` + `coplay-mcp` stdio mcpServers found DEAD
+(zero processes) emitting JSON-RPC `-32000`.
+
+**Trap:** Treating a stdio `mcpServer` `-32000` like a network/plugin failure
+and "fixing" it with an external watchdog/launcher (Task Scheduler relaunch,
+a `npx <pkg>` respawn script). This does NOT reconnect the server -- it
+creates an ORPHAN.
+
+**Root cause -- who owns the pipe:** a stdio `mcpServer` (the `~/.claude.json`
+`mcpServers` mechanism, T-PW-001 path 1) is a CHILD of `claude.exe`,
+communicating over claude's own stdin/stdout pipe. When it exits you get
+`-32000`. An externally-spawned process has its OWN stdio and is not wired to
+claude's pipe -- it is a leaked orphan, not a reconnection. Only a Claude-side
+action resurrects it:
+1. `/mcp` -> reconnect `<name>` (client re-spawns the child).
+2. Restart Claude Code (full re-spawn).
+
+**Contrast with the plugin path (playwright, T-PW-001 path 2):** the plugin
+LOADER owns the lifecycle and respawns clean transport on next tool use, so
+killing stale procs IS recovery -- there an external watchdog works. The two
+mechanisms have OPPOSITE recovery models; do not apply the playwright watchdog
+design to a stdio server.
+
+**Recognizer:**
+- Server name appears under `mcpServers` in `~/.claude.json` (not
+  `mcp__plugin_*`) -> stdio path -> external relaunch is wrong.
+- `-32000` + zero matching node/bun/uv processes -> the client-owned child
+  died -> Claude-side reconnect only.
+
+**Correct fix:** DETECTION + ADVISORY (`tools/mcp_health_check.py` reports
+DEAD + prints the `/mcp` reconnect command) + telemetry to classify the
+death-mode. NEVER an external relauncher for a stdio server.
+
+**Cross-ref:** `tools/mcp_health_check.py`, `tools/verify_mcp_health.py`,
+`vault/telemetry/mcp_health/mcp_state.jsonl`,
+`vault/knowledge_base/mcp-stability.md`.
+
+### UKDL TRAP T-MCP-IDLE-001 -- stdio death-mode is unknown until classified (PENDING)
+
+**Level:** UKDL Trap (PENDING -- not yet sealed; awaiting telemetry).
+**Opened:** 2026-06-04 (BL-MCP-STABILITY-001).
+
+**Trap (anticipated):** stdio mcpServers may die at session start vs after
+idle vs randomly. Each death-mode needs a DIFFERENT fix (config/spawn fix vs
+keep-alive vs crash handling). Asserting one cause without evidence is a guess.
+
+**Status:** the Owner could not name when `magic-ui` dies ("not sure / always
+-32000"). Rather than guess, `tools/mcp_health_check.py --source session_start`
+appends a classified row to `vault/telemetry/mcp_health/mcp_state.jsonl` each
+run. After N sessions the rows reveal the pattern; THEN this trap gets sealed
+with the empirical death-mode + its specific fix. Do not seal on a hypothesis.
+
 ### UKDL TRAP T-JIT-001 -- Python Cold-Start In a Hot-Path Hook
 
 **Level:** UKDL Trap (technical learning, performance edge case).
@@ -1083,3 +1139,5 @@ unit gate.
 **Cross-ref:** SCS C27 (Integration-Wiring-by-default),
 `feedback_automation_mechanism_by_measurement` (mechanism chosen by
 measured latency, never tool name).
+
+- **UKDL-OSA-2026-06-03T17:32:43Z** [HIGH] claude-power-pack: State-snapshot writer shipped without the restore reader -- system half-built -- recognizer: A snapshot/checkpoint/state file exists but no script READS it to act -> system incomplete. Grep for the reader before declaring a recovery feature done.
