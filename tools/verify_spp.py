@@ -224,6 +224,9 @@ def main() -> int:
         ("ram-optimization",
          [PY, str(PP / "tools" / "test_ram_optimization.py")],
          30),
+        ("auto-reset",
+         [PY, str(PP / "tools" / "test_auto_reset.py")],
+         60),
     ]
 
     if args.row:

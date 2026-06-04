@@ -813,3 +813,52 @@ small controllable hygiene without overselling its impact. Cross-ref C28
 (read source / verify mechanism first), C33 (orphan field/path).
 
 Sealed BL-RAM-OPT-001 2026-06-04.
+
+## SCS C35 -- Auto-Reset Orchestrator: compose the existing pieces, save state before you free it (sealed 2026-06-04, BL-AUTO-RESET-001)
+
+Goal: when context pressure crosses a threshold, pause cleanly, compress
+(/compact or /kclear by severity), and resume knowing EXACTLY what was in
+progress -- sin intervencion del Owner, sin perdida de contexto de trabajo.
+
+PASO -1 (read source first, C28) disproved the premise -- like the RAM sprint,
+the two "missing" pieces ALREADY EXISTED and were live:
+* context_pct proxy = gsd-statusline.js (registered statusLine) writing
+  /tmp/claude-ctx-<sid>.json from Claude Code's NATIVE
+  context_window.remaining_percentage (not the error-prone TIS SUM proxy).
+  Verified producing 3s-fresh for the live session.
+* orchestrator = context-watchdog.py in hook-dispatcher.js Stop-chain
+  (telemetry dated 2026-06-01 proved it fired): tier-1 snapshot >=60%, tier-2
+  kclear-equivalent + SendKeys /compact dispatch >=70%.
+
+So the genuine delta was NOT a new orchestrator -- it was STRUCTURED,
+resume-injectable work_state (the existing handoff is prose, not machine-
+readable for resume). Built by COMPOSING (SCS C28), all in editable PP-repo
+files (never the write-denied ~/.claude/hooks):
+1. context_monitor.py (M1): unified HEALTHY/COMPACT_NEEDED/KCLEAR_NEEDED from
+   3 proxies (ram_guard RAM + active-jsonl bytes + turns). RAM primary.
+2. work_state_saver.py (M2): {task, last_file, last_commit, branch, pending}
+   to work_state_<sid>.json; resume reconciles by CWD.
+3. auto_reset_orchestrator.py (M3): save-then-free -> advisory embedding the
+   exact state + the pre-filled /compact|/kclear slash line.
+4. context-watchdog overlay (M4): runs M1-M3 first (RAM probe throttled 180s),
+   supersedes the plain context_pct advisory, fail-open; legacy tiers intact.
+5. session_start_hub hookWorkStateResume (M5): every-SessionStart, cwd-matched,
+   <6h, single-shot injection of the saved work_state into the new session.
+
+Recalibration/intent-over-literal, reported loudly: (a) work_state keyed by
+session_id (Stop event has it, NOT pane_id) and rejoined by cwd; (b) resume
+injection went in the WIRED hub, not the orphan restart_resume.js; (c) it
+fires on EVERY SessionStart because a /compact writes no /restart marker.
+
+Honest ceiling (BL-0003): a hook CANNOT auto-fire a slash command. The system
+saves state + emits an urgent advisory + makes resume automatic; the model
+emitting the slash line + the SendKeys daemon (zero-keystroke when Cursor
+focused, else 1-keystroke) is the closest to no-touch the platform allows.
+
+Recognizer: on "build an orchestrator that unites X/Y/Z", verify X/Y/Z exist
+and are WIRED before building (orphan/starvation check) -- the real work is
+usually the one un-built composing piece, not a parallel duplicate. Gates:
+test_auto_reset.py 8/8 x3, pytest 43/43, verify_spp rows ram-optimization +
+auto-reset. Cross-ref C28, C33 (orphan field), C34 (RAM forensics).
+
+Sealed BL-AUTO-RESET-001 2026-06-04.
