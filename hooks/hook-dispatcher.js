@@ -98,7 +98,7 @@ const PY_EXE = process.env.CLAUDE_PY_EXE || (function () {
 
 const CHAIN_MAP = {
   'Stop-chain': [
-    { exe: NODE_EXE, script: './zero-issue-gate.js', timeoutMs: 60000, block: true },
+    { exe: NODE_EXE, script: './zero-issue-gate.js', timeoutMs: 70000, block: true },
     { exe: NODE_EXE, script: './kobiiclaw-autoresearch.js', timeoutMs: 30000 },
     { exe: NODE_EXE, script: './trace-flusher.js', timeoutMs: 15000 },
     { exe: NODE_EXE, script: './session-summary.js', timeoutMs: 20000 },
@@ -106,7 +106,8 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: './lazarus-snapshot.js', timeoutMs: 10000 },
     { exe: PY_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py', timeoutMs: 6000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ram-watchdog.js', timeoutMs: 6000 },
-    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ram-shield.js', timeoutMs: 6000 },
+    // ram-shield.js removed 2026-06-04: never existed (phantom ref produced a
+    // recurring Stop-hook "script missing" error). ram-watchdog.js is the real one.
     { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 6000 },
     { exe: NODE_EXE, script: './vault-heartbeat.js', timeoutMs: 8000 },
     // --- Folded standalone Stop hooks (hub-fold 2026-06-04) ---------------
