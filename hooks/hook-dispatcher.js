@@ -145,6 +145,16 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js', timeoutMs: 10000 },
   ],
   'PreToolUse-Edit-chain': [
+    // SECURITY FIX (2026-06-04, Owner-authorized "Wire firewall + fix
+    // dispatcher block-bug"): wire the HR-SECRET-001 firewall into the
+    // already-registered Edit-chain. Investigation found secret_firewall_gate.js
+    // was BUILT but NEVER registered -- absent from settings.json AND from the
+    // loose ~/.claude/hooks dir -> the secret firewall was INACTIVE. The legacy
+    // secret-scanner below blocks via stderr + exit(2); pre-fix runChain
+    // swallowed that, post-fix it is honored too. secret_firewall_gate blocks
+    // via {continue:false}, preserved by mergeOutputs. Verified: secret passes
+    // pre-fix, blocks post-fix.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/secret_firewall_gate.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: './secret-scanner.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './quality-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
@@ -202,11 +212,18 @@ function runChain(event, chain, rawStdin) {
       const s = r.stdout.trim();
       if (s) { try { outputs.push(JSON.parse(s)); } catch (_) { /* non-JSON stdout: ignored, like Claude Code */ } }
     }
-    // Stop blocking contract: exit code 2 blocks the stop; stderr is shown.
-    if (step.block && r.status === 2) {
+    // Hook block contract (Claude Code): exit code 2 = block the tool/stop.
+    // BLOCK-BUG FIX (2026-06-04): honor exit-2 from ANY step, not only those
+    // flagged block:true. Exit-2-only gates (secret-scanner = stderr+exit2,
+    // session-file-guard, windows-bash-bridge-guard, anti-thrash,
+    // readonly-prompts-guard, agent-solo-guard) were silently swallowed
+    // in-chain because runChain previously gated on step.block. main() now
+    // maps `blocked` to the family-correct field (PreToolUse ->
+    // permissionDecision:deny; Stop -> decision:block).
+    if (r.status === 2) {
       blocked = true;
       if (r.stderr) blockStderr.push(String(r.stderr).trim());
-    } else if (r.status && r.status !== 0 && r.status !== 2) {
+    } else if (r.status && r.status !== 0) {
       logError(event, step.script, new Error('exit ' + r.status + (r.stderr ? ': ' + String(r.stderr).slice(0, 400) : '')));
     }
   }
@@ -344,7 +361,12 @@ function mergeOutputs(outputs, eventName) {
   for (const out of outputs) {
     if (!out || typeof out !== 'object') continue;
 
-    if (out.decision === 'deny') decisionDeny = true;
+    // BLOCK-BUG FIX (2026-06-04): legacy gates emit {decision:"block"} (the
+    // pre-2026-04 wire shape, e.g. windows-bash-bridge-guard). Treat it the
+    // same as "deny" so a chained gate's block is not silently dropped. For
+    // PreToolUse this maps to permissionDecision:deny; for Stop it round-trips
+    // back to decision:block via sanitizeForSchema.
+    if (out.decision === 'deny' || out.decision === 'block') decisionDeny = true;
     else if (out.decision === 'allow') decisionAllow = true;
 
     if (Object.prototype.hasOwnProperty.call(out, 'continue')) {
@@ -451,8 +473,23 @@ if (require.main === module) (async () => {
     const { outputs, blocked, blockStderr } = runChain(event, CHAIN_MAP[event], rawIn || '');
     const merged = mergeOutputs(outputs, event);
     if (blocked) {
-      merged.decision = 'block';
-      if (blockStderr) merged.reason = blockStderr;
+      const fam = familyOf(event);
+      if (fam === 'PreToolUse') {
+        // exit-2 from a PreToolUse gate = DENY the tool. Use a GENERIC reason
+        // -- never echo raw stderr: a secret gate's stderr can contain the
+        // matched value (HR-SECRET-002). The redaction-safe block detail comes
+        // from secret_firewall_gate's own stdout {continue:false, stopReason}.
+        merged.hookSpecificOutput = Object.assign(
+          { hookEventName: 'PreToolUse' }, merged.hookSpecificOutput || {},
+          {
+            permissionDecision: 'deny',
+            permissionDecisionReason:
+              'Blocked by a PreToolUse gate (exit 2). See hook output.',
+          });
+      } else {
+        merged.decision = 'block';
+        if (blockStderr) merged.reason = blockStderr;
+      }
     }
     const safe = sanitizeForSchema(merged, familyOf(event));
     try { process.stdout.write(JSON.stringify(safe)); }
