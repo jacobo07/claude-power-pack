@@ -756,3 +756,60 @@ state the gap explicitly. Cross-ref C27 (orphan/activation), C28 (mechanism
 reality before code), C33 (snapshot writer).
 
 Sealed BL-CPCOS-RESTORE-001 2026-06-03.
+
+## SCS C34 -- RAM Optimization: measure first, optimize the controllable, monitor the rest (sealed 2026-06-04, BL-RAM-OPT-001)
+
+Goal: reduce the RAM footprint of the Claude Code session. FASE -1 forensics
+(mandatory diagnosis before planning) overturned the headline premise and
+three plan premises:
+
+* The crash driver is **claude.exe itself** -- a native V8 heap that grew
+  5.9 GB -> 25 GB resident (65 GB committed across 2 procs) within ONE long
+  session, stable across samples. It is >99.9% of the controllable-vs-not
+  split. The PP cannot shrink it by killing processes or dropping caches; the
+  ONLY lever is reducing context (`/kclear`, `/compact`, restart).
+* The PP's OWN footprint is a flat **~12 MB** steady-state. The "378 MB node"
+  reading at session start was a hook-fanout spike that self-cleaned to
+  ~10 MB within minutes -- proving `child.unref()` works, NOT a leak. There
+  was no PP RAM to reclaim.
+* Premise corrections (the recurring "plan code is a hypothesis" pattern):
+  (a) the hub's `unref()` audit was already satisfied; (b) `lazarus_orphan
+  _purge.py` retires `.jsonl.live` DISK files, not RAM zombies (0 zombies
+  found); (c) `budget_monitor.py` is a $-credit tracker with zero RAM code --
+  a RAM monitor had to be a NEW tool (`ram_guard.py`), not a bolt-on.
+
+What shipped (controllable only, honest about KB-vs-GB scale):
+1. `bench_all.py` gains `ram_footprint_mb` (Get-Process, never CIM -- CIM
+   hung twice under -NonInteractive, sealed). Gated <= 300 MB; claude.exe WS/
+   private recorded as UNGATED context. The Reality-Contract number is real.
+2. `tools/ram_guard.py` + `hooks/ram-guard-stop.js` (throttled 5-min, fail-
+   open): claude.exe WS >= WARN_GB -> /kclear advisory + ensure snapshot;
+   >= CRIT_GB -> force snapshot now. Advisory, never kills, never blocks Stop.
+3. `registry.prune_stale()` wired into SessionStart. `walk_cache_guard.py`
+   bounds state caches (size + TTL), wired the same path.
+
+Two empirical recalibrations, reported loudly (NOT silent deviations):
+* ram_guard thresholds: plan said 8/11 GB; forensics saw 25 GB STABLE without
+  a crash, so 8/11 would cry wolf every long session (monitor theater).
+  Recalibrated to 20/28 GB, env-overridable.
+* prune_stale window: plan said ">24h"; on real data ALL 119 stale panes were
+  same-day (0.16h-18.6h old) so 24h pruned ZERO -- a unit-test-passes-but-
+  prod-is-a-no-op trap (orphan-path family). A pane gets `stale` status only
+  after 300s of missed 30s beats, so one silent 2h is unambiguously abandoned.
+  Recalibrated default 24h -> 2h. Empirical before/after: registry 121 -> 29
+  panes (pruned 92; 2 active untouched). This honored the plan's STATED
+  OUTCOME ("-> active-only") over its inconsistent literal.
+
+STOP #2 honored: the controllable reclaim (registry KB, caches KB) is <0.001%
+of a 25 GB process. Documented as the real limit; no marginal chase. The
+materially-smaller number comes ONLY from the ram_guard -> /kclear cycle on
+claude.exe, which the benchmark records and the guard triggers.
+
+Recognizer: when asked to "optimize RAM/CPU/disk", run the forensic
+breakdown FIRST and split controllable vs not. If the dominant source is
+native/uncontrollable (>80%), say so honestly (STOP #1), ship the
+measurement + the behavioral monitor for the uncontrollable part, and do the
+small controllable hygiene without overselling its impact. Cross-ref C28
+(read source / verify mechanism first), C33 (orphan field/path).
+
+Sealed BL-RAM-OPT-001 2026-06-04.

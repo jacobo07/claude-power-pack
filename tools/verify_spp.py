@@ -221,6 +221,9 @@ def main() -> int:
         ("benchmarks-ok",
          [PY, str(PP / "tools" / "verify_bench_all.py")],
          60),
+        ("ram-optimization",
+         [PY, str(PP / "tools" / "test_ram_optimization.py")],
+         30),
     ]
 
     if args.row:

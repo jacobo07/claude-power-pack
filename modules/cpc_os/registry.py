@@ -160,3 +160,37 @@ class PaneRegistry:
 
     def get_active_panes(self) -> list[PaneRecord]:
         return [r for r in self.panes.values() if r.status == "active"]
+
+    def prune_stale(self, max_age_s: int = 7200,
+                    now: float | None = None) -> int:
+        """Drop panes that are dead/stale AND have not heartbeat for
+        ``max_age_s`` seconds (default 2h). Active and paused panes are
+        NEVER pruned regardless of age -- only terminal/abandoned ones.
+
+        FASE -1 forensics (2026-06-04) found the registry at 121 panes
+        (119 stale / 2 active / 0 dead) -- pure same-day accumulation: every
+        SessionStart registers a fresh pane and nothing prunes them. The
+        stale panes' last heartbeat ranged 0.16h-18.6h old, NONE older than
+        24h -- so the originally-planned 24h window pruned ZERO. A pane only
+        receives ``stale`` status after STALE_THRESHOLD_S (300s) of missed
+        30s heartbeats, so one silent for 2h (240 missed beats) is
+        unambiguously abandoned. Default recalibrated 24h -> 2h to actually
+        achieve the plan's stated outcome (registry -> active + recent-stale
+        only). Env/param-overridable. The reclaimed bytes are KB-scale; the
+        value is keeping the registry honest so crash-recovery and switch
+        logic iterate only live panes.
+
+        Returns the number of panes removed. Saves only if >0 changed.
+        """
+        now = time.time() if now is None else now
+        prunable = {"stale", "dead"}
+        victims = [
+            pid for pid, rec in self.panes.items()
+            if rec.status in prunable
+            and (now - rec.last_heartbeat_at) > max_age_s
+        ]
+        for pid in victims:
+            del self.panes[pid]
+        if victims:
+            self.save()
+        return len(victims)

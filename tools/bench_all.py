@@ -55,6 +55,12 @@ TARGETS = {
     "ceps_record_ms": 25,
     "session_hub_ms": 200,
     "never_again_ms": 20,
+    # RAM Optimization Sprint (2026-06-04): PP-overhead footprint in MB.
+    # Forensics measured steady-state node+python at ~12 MB; the 300 MB
+    # target is the SCS C34 ceiling. claude.exe RAM (claude_ws_mb /
+    # claude_private_mb) is recorded as context but NOT gated -- it is
+    # native and not PP-controllable.
+    "ram_footprint_mb": 300,
 }
 
 
@@ -379,7 +385,56 @@ def bench_never_again():
         return {"never_again_error": f"parse: {exc}"}
 
 
+# PowerShell measurement (NO Get-CimInstance -- it hung twice under
+# -NonInteractive on this host, sealed 2026-06-04). Get-Process only.
+_PS_RAM = (
+    "$ErrorActionPreference='SilentlyContinue';"
+    "function S($n){$p=Get-Process $n -ErrorAction SilentlyContinue;"
+    "if($p){[math]::Round((($p|Measure-Object WorkingSet64 -Sum).Sum)/1MB,1)}"
+    "else{0}}"
+    "$node=S 'node'; $py=S 'python';"
+    "$c=Get-Process claude -ErrorAction SilentlyContinue;"
+    "$cws=if($c){[math]::Round((($c|Measure-Object WorkingSet64 -Sum)"
+    ".Sum)/1MB,1)}else{0};"
+    "$cpv=if($c){[math]::Round((($c|Measure-Object PrivateMemorySize64 -Sum)"
+    ".Sum)/1MB,1)}else{0};"
+    "ConvertTo-Json -Compress @{pp_overhead_mb=($node+$py);node_mb=$node;"
+    "python_mb=$py;claude_ws_mb=$cws;claude_private_mb=$cpv}"
+)
+
+
+def bench_ram_footprint():
+    """Measure the PP RAM footprint (node hooks + python) and record
+    claude.exe RAM as ungated context. Reality contract: real Get-Process
+    sample; honest error if no PowerShell. ``ram_footprint_mb`` is the
+    gated PP-overhead number (SCS C34 ceiling 300 MB)."""
+    so = ""
+    for exe in ("powershell.exe", "powershell", "pwsh"):
+        rc, so, se = _run(
+            [exe, "-NoProfile", "-NonInteractive", "-Command", _PS_RAM],
+            timeout=20,
+        )
+        if rc == 0 and so.strip():
+            break
+    else:
+        return {"ram_footprint_error":
+                "no powershell / measurement failed"}
+    try:
+        data = json.loads(so.strip().lstrip("﻿").splitlines()[-1])
+    except Exception as exc:  # noqa: BLE001
+        return {"ram_footprint_error": f"parse: {exc}"}
+    pp = data.get("pp_overhead_mb")
+    return {
+        "ram_footprint_mb": pp,            # gated: node + python overhead
+        "ram_node_mb": data.get("node_mb"),
+        "ram_python_mb": data.get("python_mb"),
+        "claude_ws_mb": data.get("claude_ws_mb"),         # ungated context
+        "claude_private_mb": data.get("claude_private_mb"),
+    }
+
+
 ALL_BENCHES = [
+    ("ram_footprint", bench_ram_footprint),
     ("session_start", bench_session_start),
     ("jit_cold_start", bench_jit_cold_start),
     ("uqf_scan", bench_uqf_scan),
@@ -398,6 +453,7 @@ ALL_BENCHES = [
 ]
 
 QUICK_NAMES = {
+    "ram_footprint",
     "tco_gate", "tis_report", "osa_dispatcher", "proactive_dispatch",
     "anti_patterns", "ceps_record", "session_hub_direct", "never_again",
 }

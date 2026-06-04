@@ -324,6 +324,19 @@ const CPC_REGISTER_SCRIPT =
   + "reg.register_pane(os.environ['PP_PANE_ID'], "
   + "os.environ['PP_PANE_CWD'], os.environ.get('PP_PANE_TASK', 'active'), "
   + "session_id=sid)\n"
+  // C1 (RAM Optimization Sprint 2026-06-04): prune dead/stale panes >24h.
+  // Forensics found 115 panes (112 stale); keep the registry honest so
+  // recovery/switch iterate only live panes.
+  + "try:\n"
+  + "    reg.prune_stale()\n"
+  + "except Exception:\n"
+  + "    pass\n"
+  // C2: bound the state-dir walk caches (size + TTL insurance).
+  + "try:\n"
+  + "    from tools.walk_cache_guard import prune_walk_caches\n"
+  + "    prune_walk_caches(apply=True)\n"
+  + "except Exception:\n"
+  + "    pass\n"
   + "try:\n"
   + "    from modules.cpc_os.snapshot import generate_snapshot\n"
   + "    generate_snapshot()\n"
