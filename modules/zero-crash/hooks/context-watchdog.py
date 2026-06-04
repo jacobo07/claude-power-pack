@@ -373,10 +373,93 @@ def _spawn_daemon() -> bool:
         return False
 
 
+# ---------------------------------------------------------------------------
+# Auto-Reset Orchestrator overlay (M4, 2026-06-04, BL-AUTO-RESET-001)
+#   Runs the multi-proxy context_monitor (RAM via ram_guard + active-jsonl
+#   bytes + turn count) BEFORE the legacy context_pct tiers. On COMPACT/
+#   KCLEAR it SAVES structured work_state (task + last_commit + last_file +
+#   pending) and emits a resume-injectable advisory -- strictly richer than
+#   the plain context_pct advisory, so it supersedes it. The RAM probe spawns
+#   PowerShell, so it is THROTTLED (every ORCH_THROTTLE_S); between checks the
+#   legacy context_pct tiers still run every Stop. Fail-open: any error falls
+#   through to the legacy path. _TEST_ORCH_STATE forces a state (hermetic E2E).
+# ---------------------------------------------------------------------------
+ORCH_THROTTLE_S = 180
+ORCH_THROTTLE_FLAG = "claude-orch-{session_id}.ts"
+
+
+def _now_ts() -> float:
+    return _dt.datetime.now(_dt.timezone.utc).timestamp()
+
+
+def _orch_throttled(session_id: str) -> bool:
+    flag = Path(tempfile.gettempdir()) / ORCH_THROTTLE_FLAG.format(
+        session_id=session_id)
+    try:
+        return (_now_ts() - float(flag.read_text())) < ORCH_THROTTLE_S
+    except Exception:
+        return False
+
+
+def _orch_stamp(session_id: str) -> None:
+    flag = Path(tempfile.gettempdir()) / ORCH_THROTTLE_FLAG.format(
+        session_id=session_id)
+    try:
+        flag.write_text(str(_now_ts()), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _orchestrator_overlay(event: dict) -> dict | None:
+    """Return a Stop decision:block dict when the orchestrator fires, else
+    None (fall through to the legacy context_pct tiers). Never raises."""
+    session_id = event.get("session_id")
+    if not session_id:
+        return None
+    cwd = event.get("cwd") or os.getcwd()
+    try:
+        sys.path.insert(0, str(ROOT))
+        from modules.cpc_os.auto_reset_orchestrator import orchestrate
+    except Exception:
+        return None
+
+    forced = os.environ.get("_TEST_ORCH_STATE")
+    try:
+        if forced:
+            def _assess(_c, _s):
+                return {"state": forced, "tripped": ["_TEST_ORCH_STATE"],
+                        "signals": {}}
+            result = orchestrate(cwd, session_id, assess_fn=_assess)
+        else:
+            if _orch_throttled(session_id):
+                return None
+            _orch_stamp(session_id)
+            result = orchestrate(cwd, session_id)
+    except Exception:
+        return None
+
+    if result.get("action") in ("compact", "kclear"):
+        # decision:block re-invokes the model with the advisory as injected
+        # context -- the BL-0033 mechanism; Stop schema forbids
+        # hookSpecificOutput.additionalContext here.
+        return {"decision": "block", "reason": result["advisory"]}
+    return None
+
+
 def run(event: dict) -> dict:
     session_id = event.get("session_id")
     if not session_id:
         return {}
+
+    # Auto-Reset Orchestrator overlay (M4): multi-proxy RAM/jsonl/turns check
+    # that saves work_state + emits a resume-injectable advisory. Runs first;
+    # supersedes the plain context_pct advisory. Throttled + fail-open.
+    try:
+        overlay = _orchestrator_overlay(event)
+        if overlay:
+            return overlay
+    except Exception:
+        pass
 
     # Empirical-test override (Owner DONE-gate 6a, 2026-05-20):
     # `_TEST_CONTEXT_PCT=<n>` forces a used_pct value so a synthetic Stop
