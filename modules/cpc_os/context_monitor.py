@@ -47,10 +47,14 @@ KCLEAR_NEEDED = "KCLEAR_NEEDED"
 # Thresholds (env-tunable). RAM defaults mirror ram_guard.
 WARN_GB = float(os.environ.get("PP_RAM_WARN_GB", "20"))
 CRIT_GB = float(os.environ.get("PP_RAM_CRIT_GB", "28"))
-COMPACT_MB = float(os.environ.get("PP_CTX_COMPACT_MB", "4"))
-KCLEAR_MB = float(os.environ.get("PP_CTX_KCLEAR_MB", "6"))
-COMPACT_TURNS = int(os.environ.get("PP_CTX_COMPACT_TURNS", "1200"))
-KCLEAR_TURNS = int(os.environ.get("PP_CTX_KCLEAR_TURNS", "2400"))
+# Thresholds softened 2026-06-05 (Owner: "less aggressive"). jsonl/turns are
+# SECONDARY proxies; RAM (WARN/CRIT GB above) stays the primary OOM trigger.
+# A Claude Code transcript embeds full tool outputs, so a multi-MB jsonl is
+# normal -- the old 4/6 MB + 1200/2400-line gates tripped on healthy sessions.
+COMPACT_MB = float(os.environ.get("PP_CTX_COMPACT_MB", "16"))
+KCLEAR_MB = float(os.environ.get("PP_CTX_KCLEAR_MB", "24"))
+COMPACT_TURNS = int(os.environ.get("PP_CTX_COMPACT_TURNS", "6000"))
+KCLEAR_TURNS = int(os.environ.get("PP_CTX_KCLEAR_TURNS", "12000"))
 
 _BYTES_PER_MB = 1024 * 1024
 

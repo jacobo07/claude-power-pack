@@ -115,6 +115,53 @@ def _registry_task(session_id: str | None, cwd: str) -> str | None:
     return None
 
 
+def _last_user_prompt(cwd: str, session_id: str | None) -> str | None:
+    """The most-recent genuine user text prompt from the active transcript --
+    the actual current intent. A far better 'task' than the last commit, which
+    is already-COMPLETED work (the old fallback showed a stale/cross-repo
+    commit as the task, e.g. a KobiiCraft commit on a power-pack session).
+    Best-effort; None on any failure. Reuses context_monitor's transcript
+    resolver (SCS C28: compose, do not duplicate)."""
+    tail_bytes = 200_000  # transcript tail bytes scanned for the last user turn
+    try:
+        sys.path.insert(0, str(_PP_ROOT))
+        from modules.cpc_os.context_monitor import _active_transcript  # type: ignore
+        tp = _active_transcript(cwd, session_id)
+        if not tp or not tp.is_file():
+            return None
+        with tp.open("rb") as fh:
+            size = tp.stat().st_size
+            if size > tail_bytes:
+                fh.seek(-tail_bytes, 2)
+                fh.readline()
+            lines = fh.read().decode("utf-8", errors="replace").splitlines()
+        for ln in reversed(lines):
+            ln = ln.strip()
+            if not ln:
+                continue
+            try:
+                e = json.loads(ln)
+            except Exception:
+                continue
+            if (e.get("type") or e.get("role")) != "user":
+                continue
+            msg = e.get("message") or e
+            content = msg.get("content") if isinstance(msg, dict) else ""
+            if isinstance(content, list):
+                # Keep real text; skip tool_result-only user turns.
+                text = " ".join(
+                    c.get("text", "") for c in content
+                    if isinstance(c, dict) and c.get("type") == "text"
+                ).strip()
+            else:
+                text = str(content).strip()
+            if text:
+                return text[:120]
+    except Exception:  # noqa: BLE001
+        return None
+    return None
+
+
 def _resolve_task(cwd: str, session_id: str | None,
                   task: str | None) -> str:
     if task:
@@ -125,6 +172,10 @@ def _resolve_task(cwd: str, session_id: str | None,
     reg_task = _registry_task(session_id, cwd)
     if reg_task:
         return reg_task
+    # The user's last request is the live intent -- prefer it over a commit.
+    prompt = _last_user_prompt(cwd, session_id)
+    if prompt:
+        return f"(from last request) {prompt}"
     head = _head_commit(cwd)
     if head:
         # last commit subject as a weak "what was happening" hint

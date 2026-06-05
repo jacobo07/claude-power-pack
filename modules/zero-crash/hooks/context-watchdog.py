@@ -386,6 +386,9 @@ def _spawn_daemon() -> bool:
 # ---------------------------------------------------------------------------
 ORCH_THROTTLE_S = 180
 ORCH_THROTTLE_FLAG = "claude-orch-{session_id}.ts"
+# No-nag (2026-06-05): emit the auto-reset advisory ONCE per session, like the
+# legacy tier-2 ADVISORY_FLAG. The 180s throttle still bounds the RAM probe.
+ORCH_ADVISORY_FLAG = "claude-orch-adv-{session_id}.flag"
 
 
 def _now_ts() -> float:
@@ -411,8 +414,15 @@ def _orch_stamp(session_id: str) -> None:
 
 
 def _orchestrator_overlay(event: dict) -> dict | None:
-    """Return a Stop decision:block dict when the orchestrator fires, else
-    None (fall through to the legacy context_pct tiers). Never raises."""
+    """Return a Stop {systemMessage: advisory} dict when the orchestrator
+    fires, else None (fall through to the legacy context_pct tiers). Never
+    raises.
+
+    Softened 2026-06-05 (BL-AUTO-RESET): non-blocking + once-per-session.
+    Previously returned decision:block, which the harness renders as a "Stop
+    hook error" and which re-invokes the model every throttle window. Now it
+    surfaces a single non-blocking systemMessage; the Owner runs /kclear or
+    /compact at will. The work-state is still saved (accurate resume)."""
     session_id = event.get("session_id")
     if not session_id:
         return None
@@ -433,16 +443,23 @@ def _orchestrator_overlay(event: dict) -> dict | None:
         else:
             if _orch_throttled(session_id):
                 return None
+            # No-nag: emit the advisory ONCE per session, not every window.
+            if _flag_exists(session_id, ORCH_ADVISORY_FLAG):
+                return None
             _orch_stamp(session_id)
             result = orchestrate(cwd, session_id)
     except Exception:
         return None
 
     if result.get("action") in ("compact", "kclear"):
-        # decision:block re-invokes the model with the advisory as injected
-        # context -- the BL-0033 mechanism; Stop schema forbids
-        # hookSpecificOutput.additionalContext here.
-        return {"decision": "block", "reason": result["advisory"]}
+        if not forced:
+            _set_flag(session_id, ORCH_ADVISORY_FLAG)
+        # Non-blocking advisory. Stop schema accepts `systemMessage` (NOT
+        # hookSpecificOutput.additionalContext -- that is gated to
+        # UPS/PostToolUse; verified hook-dispatcher.js:275). systemMessage
+        # surfaces the advisory to the Owner WITHOUT blocking the stop, WITHOUT
+        # the "Stop hook error" framing, and WITHOUT re-invoking the model.
+        return {"systemMessage": result["advisory"]}
     return None
 
 
