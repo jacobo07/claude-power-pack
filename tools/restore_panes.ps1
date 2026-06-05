@@ -11,11 +11,20 @@
   resume command(s) to paste into each restored terminal so the EXACT
   conversation comes back -- not just the cwd.
 
+  With -AutoRun it ALSO writes a .vscode/tasks.json into each repo so Cursor
+  auto-runs `claude --resume <id>` per pane on folder open -- no pasting.
+
   Runs from ANY terminal; Claude Code does NOT need to be open. The
   snapshot path is absolute, so the script works from any cwd (e.g. C:\).
 
 .PARAMETER DryRun
   Print what would be opened without launching Cursor. Use to preview.
+  Combined with -AutoRun, previews the tasks.json without writing it.
+
+.PARAMETER AutoRun
+  Also write a .vscode/tasks.json into each repo so Cursor AUTO-RUNS
+  `claude --resume <id>` per pane on folder open (no pasting). Opt-in and
+  non-destructive: merges with any existing tasks.json, backup-first.
 
 .PARAMETER SnapshotPath
   Override the snapshot json path (default: ~/.claude/state/session_snapshot.json).
@@ -27,6 +36,7 @@
 [CmdletBinding()]
 param(
     [switch]$DryRun,
+    [switch]$AutoRun,
     [string]$SnapshotPath = (Join-Path $HOME '.claude\state\session_snapshot.json')
 )
 
@@ -36,6 +46,14 @@ function Resolve-CursorExe {
     $cmd = Get-Command cursor -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }
     $fallback = Join-Path $env:LOCALAPPDATA 'Programs\cursor\resources\app\bin\cursor.cmd'
+    if (Test-Path $fallback) { return $fallback }
+    return $null
+}
+
+function Resolve-PythonExe {
+    $cmd = Get-Command python -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    $fallback = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'
     if (Test-Path $fallback) { return $fallback }
     return $null
 }
@@ -76,6 +94,27 @@ if (-not $cursorExe) {
     Write-Host ''
 }
 
+# -AutoRun: write the per-repo .vscode/tasks.json BEFORE opening Cursor so the
+# folderOpen tasks are present when each window opens. Non-destructive (the
+# Python generator merges + backs up). Falls back to manual mode if python is
+# unavailable.
+if ($AutoRun) {
+    $pythonExe = Resolve-PythonExe
+    if (-not $pythonExe) {
+        Write-Host '[WARN] python not found -- cannot write auto-run tasks.json.'
+        Write-Host '       Falling back to the manual resume manifest below.'
+        Write-Host ''
+        $AutoRun = $false
+    } else {
+        $autorunScript = Join-Path $PSScriptRoot '..\modules\cpc_os\vscode_autorun.py'
+        Write-Host 'Auto-run: writing .vscode/tasks.json per repo (claude --resume on folder open)...'
+        $genArgs = @($autorunScript, '--snapshot', $SnapshotPath)
+        if ($DryRun) { $genArgs += '--dry-run' }
+        & $pythonExe @genArgs
+        Write-Host ''
+    }
+}
+
 Write-Host ("Restoring {0} repo(s)..." -f $total)
 $i = 0
 foreach ($repo in $repos) {
@@ -97,7 +136,13 @@ foreach ($repo in $repos) {
 }
 
 Write-Host ''
-Write-Host 'Per-pane resume (paste into each restored terminal):'
+if ($AutoRun) {
+    Write-Host 'Auto-run armed. On first folder-open Cursor asks to allow automatic'
+    Write-Host 'tasks -- click Allow once per repo; each pane then resumes by itself.'
+    Write-Host 'Reference (also runnable by hand if a pane does not auto-start):'
+} else {
+    Write-Host 'Per-pane resume (paste into each restored terminal):'
+}
 Write-Host ''
 foreach ($repo in $repos) {
     $cwd = $repo.Name

@@ -40,7 +40,32 @@ Direct (no Claude Code needed):
 powershell -ExecutionPolicy Bypass -File <pp>\tools\restore_panes.ps1
 powershell ... restore_panes.ps1 -DryRun         # preview, opens nothing
 powershell ... restore_panes.ps1 -SnapshotPath X # alternate snapshot
+powershell ... restore_panes.ps1 -AutoRun        # auto-resume, no pasting
 ```
+
+## Auto-run mode (`-AutoRun`)
+
+By default you paste the printed `claude --resume <id>` line into each pane.
+`-AutoRun` removes that last step: it writes a `.vscode/tasks.json` into every
+repo so Cursor AUTO-RUNS the resume command(s) when the folder opens -- one
+dedicated terminal per distinct pane session, each launching straight into its
+exact conversation.
+
+```
+powershell -ExecutionPolicy Bypass -File <pp>\tools\restore_panes.ps1 -AutoRun
+```
+
+- **First time per repo:** Cursor shows "Allow Automatic Tasks in Folder" --
+  click Allow once. (VS Code/Cursor requires this trust step before any
+  `folderOpen` task runs; it is one-time, not per-restore.)
+- **Non-destructive:** if a repo already has a `tasks.json`, your tasks are
+  preserved -- only `CPC-Restore:`-labelled tasks are (re)written, and the
+  prior file is copied to `tasks.json.cpc-bak` first.
+- **Point-in-time:** session ids change every session, so re-run `-AutoRun`
+  at each restore to refresh the tasks.json. The generator is
+  `modules/cpc_os/vscode_autorun.py` (also runnable directly, with `--dry-run`).
+- **To remove:** delete the `CPC-Restore:`-labelled tasks (or the generated
+  `.vscode/tasks.json`) from a repo.
 
 ## The recovery flow
 
@@ -58,9 +83,10 @@ powershell ... restore_panes.ps1 -SnapshotPath X # alternate snapshot
 - A repo with multiple panes that all predate the session_id capture can
   only be resolved to the repo's single latest conversation (`repo-latest`);
   panes opened after the capture landed each restore exactly (`[exact]`).
-- `cursor <path>` reopens the window; Cursor restores its panes, but does
-  not auto-run claude in them -- you paste the printed resume line. (A fully
-  auto-run-claude profile is a separate, more invasive opt-in.)
+- Default mode: `cursor <path>` reopens the window and Cursor restores its
+  panes, but does not auto-run claude in them -- you paste the printed resume
+  line. Use `-AutoRun` (see above) to skip the paste and have each pane resume
+  itself on folder open.
 - Requires the `cursor` CLI on PATH. If absent, the resume manifest still
   prints so you can restore by hand.
 
