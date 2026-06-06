@@ -205,12 +205,84 @@ def test_bench_ram_footprint() -> None:
               f"PP overhead {pp}MB > {OVERHEAD_CEIL_MB}MB ceiling")
 
 
+# --------------------------------------------------------------------------
+# Gaming Mode -- javaw.exe detection, aggressive thresholds, work-state advisory
+# --------------------------------------------------------------------------
+def test_gaming_mode() -> None:
+    import os
+    from tools.ram_guard import (
+        resolve_thresholds, minecraft_active, build_gaming_advisory, evaluate,
+    )
+    gb = 1024
+
+    # (1) gaming lowers DEFAULTS to 8/12; normal stays 20/28
+    g = resolve_thresholds(True)
+    n = resolve_thresholds(False)
+    if g == (8.0, 12.0) and n == (20.0, 28.0):
+        _ok("V-RAM-GAMING-THRESHOLDS", f"gaming={g} normal={n}")
+    else:
+        _fail("V-RAM-GAMING-THRESHOLDS", f"gaming={g} normal={n}")
+
+    # (2) explicit env override wins even in gaming mode
+    saved = os.environ.get("PP_RAM_WARN_GB")
+    try:
+        os.environ["PP_RAM_WARN_GB"] = "15"
+        w, c = resolve_thresholds(True)
+        if w == 15.0 and c == 12.0:
+            _ok("V-RAM-GAMING-ENV-OVERRIDE",
+                "PP_RAM_WARN_GB=15 wins; crit stays gaming default 12")
+        else:
+            _fail("V-RAM-GAMING-ENV-OVERRIDE", f"warn={w} crit={c}")
+    finally:
+        if saved is None:
+            os.environ.pop("PP_RAM_WARN_GB", None)
+        else:
+            os.environ["PP_RAM_WARN_GB"] = saved
+
+    # (3) javaw detection (injectable; fail-safe on error -> False)
+    def _boom():
+        raise RuntimeError("boom")
+    if (minecraft_active(_count_fn=lambda: 1) is True
+            and minecraft_active(_count_fn=lambda: 0) is False
+            and minecraft_active(_count_fn=_boom) is False):
+        _ok("V-RAM-GAMING-DETECT", "javaw>0 -> True; 0 -> False; error -> False")
+    else:
+        _fail("V-RAM-GAMING-DETECT", "detection logic wrong")
+
+    # (4) gaming thresholds fire EARLIER than normal (8/12 vs 20/28)
+    warn9 = evaluate(9 * gb, warn_gb=8, crit_gb=12)["level"]
+    crit13 = evaluate(13 * gb, warn_gb=8, crit_gb=12)["level"]
+    ok9 = evaluate(9 * gb, warn_gb=20, crit_gb=28)["level"]
+    if warn9 == "warn" and crit13 == "critical" and ok9 == "ok":
+        _ok("V-RAM-GAMING-EARLIER",
+            "9GB=warn / 13GB=critical at 8/12; 9GB=ok at 20/28")
+    else:
+        _fail("V-RAM-GAMING-EARLIER", f"warn9={warn9} crit13={crit13} ok9={ok9}")
+
+    # (5) advisory embeds work_state (task+commit+resume+/kclear); None=fail-open
+    verdict = {"level": "critical", "ws_gb": 13.0, "warn_gb": 8.0, "crit_gb": 12.0}
+    ws = {"task": "Gaming Mode RAM guard", "last_commit": "7d0f60c x",
+          "session_id": "abc-123"}
+    adv = build_gaming_advisory(verdict, ws)
+    has_all = ("Gaming Mode RAM guard" in adv and "7d0f60c" in adv
+               and "claude --resume abc-123" in adv and "/kclear" in adv
+               and "[GAMING MODE]" in adv)
+    adv_none = build_gaming_advisory(verdict, None)
+    failopen = "/kclear" in adv_none and "fail-open" in adv_none
+    if has_all and failopen:
+        _ok("V-RAM-GAMING-ADVISORY",
+            "advisory carries task+commit+resume+/kclear; None -> fail-open")
+    else:
+        _fail("V-RAM-GAMING-ADVISORY", f"has_all={has_all} failopen={failopen}")
+
+
 def main() -> int:
     print("=" * 64)
     print("test_ram_optimization -- RAM Optimization Sprint V-gates")
     print("=" * 64)
     for fn in (test_prune_stale, test_walk_cache_guard,
-               test_ram_guard_evaluate, test_bench_ram_footprint):
+               test_ram_guard_evaluate, test_bench_ram_footprint,
+               test_gaming_mode):
         try:
             fn()
         except Exception as exc:  # noqa: BLE001

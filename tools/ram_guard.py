@@ -52,9 +52,118 @@ from pathlib import Path
 
 PP_PATH = Path(__file__).resolve().parents[1]
 
-# Env-tunable thresholds in GB (see module docstring for calibration).
-WARN_GB = float(os.environ.get("PP_RAM_WARN_GB", "20"))
-CRIT_GB = float(os.environ.get("PP_RAM_CRIT_GB", "28"))
+# Threshold calibration (GB). NORMAL = the forensic danger zone (claude.exe was
+# stable at 25 GB without crashing). GAMING = aggressive thresholds for when a
+# Minecraft JVM (javaw.exe) is co-resident eating 4-8 GB, so a 32 GB host
+# exhausts far sooner -- fire the /kclear advisory EARLY, before OOM.
+NORMAL_WARN_GB = 20.0
+NORMAL_CRIT_GB = 28.0
+GAMING_WARN_GB = 8.0
+GAMING_CRIT_GB = 12.0
+
+# Backward-compatible module constants (evaluate() defaults + any importer):
+# the NORMAL thresholds, env-overridable. Gaming resolution happens per-run in
+# resolve_thresholds() so an explicit env override ALWAYS wins.
+WARN_GB = float(os.environ.get("PP_RAM_WARN_GB", NORMAL_WARN_GB))
+CRIT_GB = float(os.environ.get("PP_RAM_CRIT_GB", NORMAL_CRIT_GB))
+
+
+def resolve_thresholds(gaming_mode: bool) -> tuple[float, float]:
+    """(warn_gb, crit_gb) for this run. Gaming mode lowers the DEFAULTS to 8/12;
+    an explicit PP_RAM_WARN_GB / PP_RAM_CRIT_GB env var always wins (a
+    host-specific override is honored gaming or not)."""
+    warn_default = GAMING_WARN_GB if gaming_mode else NORMAL_WARN_GB
+    crit_default = GAMING_CRIT_GB if gaming_mode else NORMAL_CRIT_GB
+    warn = float(os.environ.get("PP_RAM_WARN_GB", warn_default))
+    crit = float(os.environ.get("PP_RAM_CRIT_GB", crit_default))
+    return warn, crit
+
+
+def _javaw_count(timeout: int = 10) -> int:
+    """Number of javaw.exe (Minecraft JVM) processes. psutil first, PowerShell
+    Get-Process fallback (NOT CIM -- the host-hang sentinel). 0 on any failure
+    (fail-safe: never falsely activate gaming mode)."""
+    try:
+        import psutil  # type: ignore
+        return sum(
+            1 for p in psutil.process_iter(["name"])
+            if (p.info.get("name") or "").lower() in ("javaw.exe", "javaw")
+        )
+    except Exception:  # noqa: BLE001
+        pass
+    cmd = ("(Get-Process javaw -ErrorAction SilentlyContinue | "
+           "Measure-Object).Count")
+    for exe in ("powershell.exe", "powershell", "pwsh"):
+        try:
+            r = subprocess.run(
+                [exe, "-NoProfile", "-NonInteractive", "-Command", cmd],
+                capture_output=True, text=True, timeout=timeout,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+        except Exception:  # noqa: BLE001
+            return 0
+        out = (r.stdout or "").strip().lstrip("﻿")
+        if r.returncode == 0 and out:
+            try:
+                return int(out.splitlines()[-1].strip())
+            except ValueError:
+                return 0
+    return 0
+
+
+def minecraft_active(_count_fn=None) -> bool:
+    """True when a Minecraft JVM (javaw.exe) is running -> Gaming Mode.
+    _count_fn injectable for hermetic tests. Fail-safe: any error -> False."""
+    fn = _count_fn or _javaw_count
+    try:
+        return fn() > 0
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def build_gaming_advisory(verdict: dict, work_state: dict | None) -> str:
+    """Gaming-mode advisory embedding the saved work_state (task + commit +
+    exact resume). ASCII-only ([GAMING MODE] marker, not an emoji) so it is
+    safe to print on a cp1252 Windows console. Fail-open: work_state None ->
+    still a valid /kclear advisory."""
+    ws_gb = verdict.get("ws_gb")
+    warn_gb = verdict.get("warn_gb")
+    crit_gb = verdict.get("crit_gb")
+    crit = verdict.get("level") == "critical"
+    tag = "RAM CRITICAL" if crit else "RAM high"
+    if work_state:
+        task = work_state.get("task") or "(unknown task)"
+        commit = work_state.get("last_commit") or "(none)"
+        sid = work_state.get("session_id") or ""
+        resume = f"claude --resume {sid}" if sid else "claude --resume <session_id>"
+        saved = (f"Work state SAVED: {task[:80]} ({commit}). "
+                 f"After /kclear, resume with: {resume}. ")
+    else:
+        saved = "Work-state save unavailable (fail-open -- advisory still fires). "
+    return (
+        f"[GAMING MODE] {tag}: claude.exe {ws_gb} GB "
+        f"(Minecraft/javaw active -> aggressive thresholds {warn_gb}/{crit_gb} GB). "
+        f"{saved}Run /kclear now to reclaim context RAM before the host OOMs."
+    )
+
+
+def _save_work_state_safe(cwd: str, session_id: str | None) -> dict | None:
+    """save_work_state, fail-open. Resolves an exact session_id from the cwd's
+    latest transcript when none was passed, so the resume line is exact even
+    when ram_guard runs without --session-id. None on any failure."""
+    try:
+        sys.path.insert(0, str(PP_PATH))
+        from modules.cpc_os.work_state_saver import save_work_state  # type: ignore
+        if not session_id:
+            try:
+                from modules.cpc_os.snapshot import resolve_last_session  # type: ignore
+                session_id = resolve_last_session(cwd)
+            except Exception:  # noqa: BLE001
+                session_id = None
+        return save_work_state(cwd, session_id=session_id)
+    except Exception:  # noqa: BLE001
+        return None
 
 # PowerShell measurement: Get-Process only (no CIM). Sums WorkingSet64
 # across every claude.exe process and writes the MB integer to stdout.
@@ -181,11 +290,36 @@ def main(argv=None) -> int:
                     help="emit JSON verdict on stdout")
     ap.add_argument("--no-snapshot", action="store_true",
                     help="do not force/ensure a snapshot even at warn/crit")
+    ap.add_argument("--cwd", default=None,
+                    help="session cwd for work-state (default: getcwd)")
+    ap.add_argument("--session-id", default=None,
+                    help="session id for the exact resume line (default: "
+                         "PP_EVT_SID env, else resolved from cwd's transcript)")
     args = ap.parse_args(argv)
 
-    verdict = evaluate(claude_ram_mb())
+    cwd = args.cwd or os.getcwd()
+    session_id = args.session_id or os.environ.get("PP_EVT_SID")
+
+    # Gaming Mode: a Minecraft JVM (javaw.exe) co-resident -> aggressive
+    # thresholds (8/12 GB) so the /kclear advisory fires before the 32 GB host
+    # OOMs. Non-gaming -> identical to before (NORMAL 20/28).
+    gaming = minecraft_active()
+    warn_gb, crit_gb = resolve_thresholds(gaming)
+
+    verdict = evaluate(claude_ram_mb(), warn_gb=warn_gb, crit_gb=crit_gb)
+    verdict["gaming_mode"] = gaming
+
     if verdict["snapshot"] and not args.no_snapshot:
+        # Gaming order (M2): save work_state FIRST (fail-open), THEN refresh the
+        # snapshot (M3), THEN emit the advisory embedding the saved state. The
+        # non-gaming path is byte-identical to before.
+        work_state = None
+        if gaming:
+            work_state = _save_work_state_safe(cwd, session_id)
+            verdict["work_state_path"] = (work_state or {}).get("_path")
         verdict["snapshot_result"] = ensure_snapshot()
+        if gaming:
+            verdict["advisory"] = build_gaming_advisory(verdict, work_state)
 
     if args.json:
         print(json.dumps(verdict))
