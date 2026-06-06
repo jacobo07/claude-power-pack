@@ -67,6 +67,32 @@ powershell -ExecutionPolicy Bypass -File <pp>\tools\restore_panes.ps1 -AutoRun
 - **To remove:** delete the `CPC-Restore:`-labelled tasks (or the generated
   `.vscode/tasks.json`) from a repo.
 
+## Proactive auto-restore (background, zero-action)
+
+`-AutoRun` is manual. For a crash you did not see coming -- a 3am reboot, a hard
+lock -- the `tasks.json` must already be on disk BEFORE the crash.
+`tools/snapshot_auto_writer.ps1` keeps them fresh: a Task Scheduler job
+(`pp-snapshot-writer`, every 15 min, no admin) that each cycle (1) regenerates
+`session_snapshot.json` from the live registry and (2) writes the per-repo
+`.vscode/tasks.json` -- WITHOUT opening any Cursor window (idempotent-skip leaves
+unchanged repos untouched). So whenever you reopen Cursor after a crash, the
+auto-run tasks are already there and every pane resumes itself.
+
+```
+powershell -File <pp>\tools\snapshot_auto_writer.ps1 -Action start    # install
+powershell -File <pp>\tools\snapshot_auto_writer.ps1 -Action status   # state + coverage
+powershell -File <pp>\tools\snapshot_auto_writer.ps1 -Action stop     # uninstall
+```
+
+Distinct from the daily `\ClaudePP-SessionSnapshot` task (that one zips
+`~/.claude/projects/` for disaster recovery; this one refreshes the pane
+manifest + tasks.json for crash restore).
+
+> **Process rule:** before a long nocturnal session, or any session with
+> Minecraft / a heavy workload open, confirm the writer is active --
+> `snapshot_auto_writer.ps1 -Action status` should report `State: Ready`.
+> Without it, the restore is only as fresh as the last manual `-AutoRun`.
+
 ## The recovery flow
 
 ```

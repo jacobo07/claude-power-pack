@@ -50,3 +50,9 @@ vault/.arch-index/
 # backup-skill.md §11. Anchor the pattern at the repo root so
 # vault/backups/ stays tracked.
 /backups/
+
+# CPC-OS crash-restore auto-writer artifacts (session-specific: regenerated
+# every 15 min by tools/snapshot_auto_writer.ps1 and carry rotating session
+# UUIDs -- never version-control them).
+.vscode/tasks.json
+.vscode/tasks.json.cpc-bak

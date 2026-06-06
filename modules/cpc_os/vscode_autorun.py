@@ -166,16 +166,28 @@ def write_autorun_for_cwd(
     existing, parse_ok = _read_existing(tasks_path)
     merged = merge_tasks(existing if parse_ok else None, cpc_tasks)
 
+    if dry_run:
+        action = "dry-run"
+    elif existing is None:
+        action = "create"
+    elif parse_ok and existing == merged:
+        # Idempotent: the on-disk doc already matches. Critical for the 15-min
+        # periodic writer -- skip the write so unchanged repos do not churn
+        # (no mtime bump, no backup rewrite) every cycle.
+        action = "unchanged"
+    else:
+        action = "update"
+
     result = {
         "cwd": cwd,
         "tasks_path": str(tasks_path),
         "n_tasks": len(cpc_tasks),
-        "action": "dry-run" if dry_run else ("update" if existing is not None else "create"),
+        "action": action,
         "backed_up": False,
         "parse_ok": parse_ok,
         "doc": merged,
     }
-    if dry_run:
+    if dry_run or action == "unchanged":
         return result
 
     vdir.mkdir(parents=True, exist_ok=True)

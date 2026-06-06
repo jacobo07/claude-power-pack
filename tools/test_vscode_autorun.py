@@ -108,17 +108,24 @@ def main() -> int:
             _fail("V-AUTORUN-WRITE-HERMETIC",
                   f"exists={tasks_path.is_file()} folderOpen={n_folderopen} action={res['action']}")
 
-        # --- backup-first + idempotency on a second write --------------
+        # --- idempotent skip on unchanged + backup on real change ------
         res2 = va.write_autorun_for_cwd("C:\\repoA", panes, vscode_dir=vdir)
         bak = tasks_path.with_name(tasks_path.name + va.BACKUP_SUFFIX)
-        doc2 = json.loads(tasks_path.read_text(encoding="utf-8"))
-        n_cpc = sum(1 for t in doc2["tasks"] if t["label"].startswith("CPC-Restore:"))
-        if res2["backed_up"] and bak.is_file() and n_cpc == 2:
-            _ok("V-AUTORUN-BACKUP-IDEMPOTENT",
-                f"backup written; rerun kept {n_cpc} CPC tasks (no dup)")
+        unchanged_ok = (res2["action"] == "unchanged"
+                        and not res2["backed_up"] and not bak.is_file())
+        # change the panes -> a real update must back up first then rewrite
+        panes_changed = panes + [_pane("C:\\repoA", "claude --resume ccc", "exact")]
+        res3 = va.write_autorun_for_cwd("C:\\repoA", panes_changed, vscode_dir=vdir)
+        doc3 = json.loads(tasks_path.read_text(encoding="utf-8"))
+        n_cpc = sum(1 for t in doc3["tasks"] if t["label"].startswith("CPC-Restore:"))
+        if (unchanged_ok and res3["action"] == "update"
+                and res3["backed_up"] and bak.is_file() and n_cpc == 3):
+            _ok("V-AUTORUN-IDEMPOTENT-SKIP",
+                "unchanged rerun skipped (no write/backup); changed -> update+backup, 3 CPC")
         else:
-            _fail("V-AUTORUN-BACKUP-IDEMPOTENT",
-                  f"backed_up={res2['backed_up']} bak={bak.is_file()} n_cpc={n_cpc}")
+            _fail("V-AUTORUN-IDEMPOTENT-SKIP",
+                  f"unchanged={unchanged_ok} action3={res3['action']} "
+                  f"backed3={res3['backed_up']} n_cpc={n_cpc}")
 
     # --- JSONC existing -> backed up, fresh written, parse_ok False -----
     with tempfile.TemporaryDirectory() as td:
