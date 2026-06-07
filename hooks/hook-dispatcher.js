@@ -139,6 +139,13 @@ const CHAIN_MAP = {
   // entry per matcher. Same shell:false spawnSync model the Stop-chain
   // has used since 2026-05-15 — proven fork-storm-safe in production.
   'PreToolUse-Bash-chain': [
+    // Folded standalone PreToolUse Bash guard (PreToolUse-fold 2026-06-07).
+    // Was a top-level matcher=Bash settings.json entry; blocks git/mix/gh/npm/
+    // pnpm/corepack via Bash on Windows (emits {decision:"block"} + exit 2 --
+    // both now honored by runChain/mergeOutputs). Matcher Bash == chain matcher
+    // Bash, so folding loses no coverage. Live-relative path (lives in
+    // ~/.claude/hooks, same convention as the Stop-chain ./ entries).
+    { exe: NODE_EXE, script: './windows-bash-bridge-guard.js', timeoutMs: 5000, block: true },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/process-sandbox.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ovo-push-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
@@ -163,6 +170,16 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/zero-fiction-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './jobs-woz-gatekeeper.js', timeoutMs: 20000 },
+    // Folded standalone PreToolUse Edit guards (PreToolUse-fold 2026-06-07).
+    // Were top-level matcher=Write|Edit|MultiEdit entries (a subset of this
+    // chain's Write|Edit|MultiEdit|NotebookEdit matcher -> only EXPANDS to
+    // NotebookEdit, no coverage loss; both are inert on non-target paths).
+    // uqf_pre_edit_gate = advisory only (.py AST hints via additionalContext);
+    // claude_md_firewall = DENY via hookSpecificOutput.permissionDecision when a
+    // Write/Edit/MultiEdit would push ~/.claude/CLAUDE.md >= 40000 chars. Both
+    // survive mergeOutputs (HSO shallow-merge keeps permissionDecision:deny).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/uqf_pre_edit_gate.js', timeoutMs: 8000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/claude_md_firewall.js', timeoutMs: 8000, block: true },
   ],
   'PreToolUse-Read-chain': [
     { exe: NODE_EXE, script: './gatekeeper-semantic.js', timeoutMs: 3000 },

@@ -38,7 +38,15 @@ SETTINGS = os.path.join(HOME, ".claude", "settings.json")
 
 # Thresholds for events that have been folded. An event NOT listed here is
 # reported advisory-only (not yet folded -> not gated).
-FOLDED_MAX_ENTRIES = {"UserPromptSubmit": 1, "Stop": 2}
+FOLDED_MAX_ENTRIES = {
+    "UserPromptSubmit": 1,
+    "Stop": 2,
+    # SessionStart fold (hub spawns 3 fire-and-forget hooks): 11 -> 8.
+    # PreToolUse fold (3 strays into Bash/Edit chains): 11 -> 8. The cap is the
+    # post-fold ceiling so a re-added folded stray (regression) fails the gate.
+    "SessionStart": 8,
+    "PreToolUse": 8,
+}
 
 _passes = 0
 _fails = 0
