@@ -1267,3 +1267,40 @@ to the next session rather than thrash.
 folded event; new logic goes in dispatcher CHAIN_MAP/EVENT_MAP/companion,
 not new settings entries; mergeOutputs always routes additionalContext to
 hookSpecificOutput for UPS/PostToolUse/PostToolBatch, never stranded).
+
+### SCS C38 ADDENDUM -- SessionStart + PreToolUse fold COMPLETED (2026-06-07)
+
+**Sealed:** 2026-06-07, commit 8f2214c. The two events DEFERRED at the
+2026-06-04 final sprint are now folded.
+
+- **SessionStart 11 -> 8:** ran the existing tested `migrate_sessionstart_fold.py
+  --apply` (backup-first) to remove the 3 strays already spawned detached by
+  `session_start_hub.js` (mark-live-session, zero-command-bootstrap,
+  first-time-project). stdout-consumed (token-shield, learning-sentinel,
+  restart-target-consumer) + load-bearing recovery (lazarus-*,
+  terminal-slot-recorder) stay standalone.
+- **PreToolUse 11 -> 8:** folded windows-bash-bridge-guard -> Bash-chain and
+  uqf_pre_edit_gate + claude_md_firewall -> Edit-chain (2 dispatcher edits =
+  full anti-thrash budget). NEW `migrate_pretooluse_fold.py` adds the
+  MATCHER-COMPAT guard (stray matcher must be SUBSET of chain matcher) so the
+  broad-matcher Bash|PowerShell strays (session-file-guard, auto-test-gate) are
+  correctly KEPT -- folding them into the Bash-only chain would drop PowerShell.
+- **Enforcement:** verify_hook_dispatcher FOLDED_MAX_ENTRIES now gates
+  SessionStart<=8 and PreToolUse<=8 (was advisory) -> a re-added stray fails the
+  gate. NEW verify_pretooluse_security.py proves the folded chains still block
+  (secret firewall + bash-bridge-guard) -- 3/3.
+
+**Trap T-HOOK-FOLD-SELFTHRASH-001:** once a fold makes the Edit-chain LIVE,
+your OWN iterative edits to a file go through it -- anti-thrash exit-2 blocks
+the 3rd edit/Write in a window. Pivot (Rule 12) = PowerShell file-write
+(Bash-matcher, bypasses Edit-chain), never a same-shape retry.
+
+**Trap T-PS-DANGEROUS-LITERAL-001:** a dangerous literal (`rm -rf /`, even `\n`)
+inside a PowerShell here-string -- as DATA being string-matched -- trips the
+sandbox "Remove-Item on system path" guard. So does `Remove-Item` near any
+quoted path. Fix: never put the literal in the command (concat / regex-anchor
+around it); never pre-delete temp helpers (leave them in $env:TEMP).
+
+**Finding:** the PreToolUse Bash-chain does NOT block `rm -rf /` -- cascade /
+HR-CASCADE-002 is Hard-Rule/agent-layer, NOT a PreToolUse hook here. Test the
+gate the change actually touches, not an assumed one.
