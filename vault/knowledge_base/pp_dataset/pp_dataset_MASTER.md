@@ -1,38 +1,41 @@
 # PP Dataset -- Master Index
 
-**Source:** C:\\Users\\User\\Downloads\\PP_DATASET_20260531T122242Z (1).md
-**Sealed:** 2026-06-01 BL-DATASET-001
-**Total source lines:** 15,425 / 329 KB
-**Sections ingested:** 10 content files + 1 cross-ref + this master
-
-This dataset is the **canonical quality baseline** for the Power Pack as of
-2026-06-01. Any new system built after this date MUST satisfy the contracts
-documented here or explicitly declare why not (SCS C25, sealed in M14).
+**Source (v2):** PP_DATASET_20260531T122242Z (2).md @ 330e261
+**Source sha256:** 40ef5bde1bea2031
+**Updated:** Sprint 1 / M2 -- Parts XI-XXIII ingested (completeness recovery; Parts I-X unchanged from v1).
+**Files:** 23 content files + this master
 
 ## Table of Contents
 
-| # | File | Dataset Part | Lines | Bytes |
-|---|---|---|---|---|
-| 01 | [pp_dataset_01_identity.md](pp_dataset_01_identity.md) | see file header | 1217 | 58929 |
-| 02 | [pp_dataset_02_capabilities.md](pp_dataset_02_capabilities.md) | see file header | 1122 | 32094 |
-| 03 | [pp_dataset_03_perf_metrics.md](pp_dataset_03_perf_metrics.md) | see file header | 1550 | 31616 |
-| 04 | [pp_dataset_04_gaps.md](pp_dataset_04_gaps.md) | see file header | 1407 | 33884 |
-| 05 | [pp_dataset_05_improvements.md](pp_dataset_05_improvements.md) | see file header | 1157 | 24967 |
-| 06 | [pp_dataset_06_tech_debt.md](pp_dataset_06_tech_debt.md) | see file header | 966 | 19713 |
-| 07 | [pp_dataset_07_architecture.md](pp_dataset_07_architecture.md) | see file header | 976 | 20549 |
-| 08 | [pp_dataset_08_onboarding.md](pp_dataset_08_onboarding.md) | see file header | 1908 | 31692 |
-| 10 | [pp_dataset_10_cpc_os_spec.md](pp_dataset_10_cpc_os_spec.md) | see file header | 5122 | 92712 |
-| 09 | [pp_dataset_09_benchmarks.md](pp_dataset_09_benchmarks.md) | cross-ref | - | - |
+| File | Lines | Bytes |
+|---|---|---|
+| [pp_dataset_01_identity.md](pp_dataset_01_identity.md) | 1226 | 58929 |
+| [pp_dataset_02_capabilities.md](pp_dataset_02_capabilities.md) | 1131 | 32094 |
+| [pp_dataset_03_perf_metrics.md](pp_dataset_03_perf_metrics.md) | 1559 | 31616 |
+| [pp_dataset_04_gaps.md](pp_dataset_04_gaps.md) | 1416 | 33884 |
+| [pp_dataset_05_improvements.md](pp_dataset_05_improvements.md) | 1166 | 24967 |
+| [pp_dataset_06_tech_debt.md](pp_dataset_06_tech_debt.md) | 975 | 19713 |
+| [pp_dataset_07_architecture.md](pp_dataset_07_architecture.md) | 985 | 20549 |
+| [pp_dataset_08_onboarding.md](pp_dataset_08_onboarding.md) | 1917 | 31692 |
+| [pp_dataset_09_benchmarks.md](pp_dataset_09_benchmarks.md) | 23 | 1122 |
+| [pp_dataset_10_cpc_os_spec.md](pp_dataset_10_cpc_os_spec.md) | 5131 | 92712 |
+| [pp_dataset_11_crash_to_exact_terminal_topology_guarantee_for_c.md](pp_dataset_11_crash_to_exact_terminal_topology_guarantee_for_c.md) | 1289 | 25853 |
+| [pp_dataset_12_ram_stewardship_os_oom_crash_survival_memory_pre.md](pp_dataset_12_ram_stewardship_os_oom_crash_survival_memory_pre.md) | 1394 | 28007 |
+| [pp_dataset_13_resource_governor_os.md](pp_dataset_13_resource_governor_os.md) | 1271 | 23366 |
+| [pp_dataset_14_resilient_workbench_os.md](pp_dataset_14_resilient_workbench_os.md) | 1184 | 21864 |
+| [pp_dataset_15_self_safe_evolution_os.md](pp_dataset_15_self_safe_evolution_os.md) | 1202 | 24617 |
+| [pp_dataset_16_universal_meta_analysis_layer_for_every_bug_fail.md](pp_dataset_16_universal_meta_analysis_layer_for_every_bug_fail.md) | 1400 | 30832 |
+| [pp_dataset_17_predictive_stack_immunity_os.md](pp_dataset_17_predictive_stack_immunity_os.md) | 1355 | 26594 |
+| [pp_dataset_18_order_of_magnitude_compounding_os.md](pp_dataset_18_order_of_magnitude_compounding_os.md) | 1451 | 29313 |
+| [pp_dataset_19_sovereign_stack_governance_network.md](pp_dataset_19_sovereign_stack_governance_network.md) | 1274 | 24649 |
+| [pp_dataset_20_sovereign_control_plane_os.md](pp_dataset_20_sovereign_control_plane_os.md) | 1253 | 24428 |
+| [pp_dataset_21_sovereign_agent_fleet_os.md](pp_dataset_21_sovereign_agent_fleet_os.md) | 1251 | 24573 |
+| [pp_dataset_22_sovereign_execution_runtime.md](pp_dataset_22_sovereign_execution_runtime.md) | 1023 | 21292 |
+| [pp_dataset_23_sovereign_assurance_os.md](pp_dataset_23_sovereign_assurance_os.md) | 993 | 19097 |
+| **total** | | **671763** |
 
-## How to read this
+## Provenance
 
-- Each file is a contiguous slice of the source dataset with a header.
-- Headers state the exact line range and the dataset Part label.
-- pp_dataset_10_cpc_os_spec.md is the CPC-OS spec (Parts VIII+IX+X, ~5,100 lines).
-- For metrics/benchmarks indexes see pp_dataset_09_benchmarks.md.
+- Parts I-X: ingested from the (1) 328 KB export, sealed 2026-06-01 BL-DATASET-001 (byte-stable, untouched here).
+- Parts XI-XXIII: ingested from the (2) 631 KB export by `tools/dataset_v2_ingest.py`. Verified a clean append over (1) by `tools/dataset_v2_diff.py` (0 grown / 0 shrunk common sections).
 
-## Doctrine reference
-
-- knowledge_vault/core/apex-completion-standard.md -- v15 axis sealed by M14 references this dataset as the baseline.
-- ault/knowledge_base/ukdl-universal.md -- Hard Rules and Traps derived from the dataset land here.
-- CLAUDE.md -- HR-001..HR-NNN, with dataset-derived HRs sealed by M3+M12.

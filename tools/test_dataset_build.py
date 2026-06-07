@@ -370,6 +370,28 @@ def main() -> int:
          len(PP_HOOK_MARKERS) == len(specs) and len(PP_HOOK_MARKERS) >= 11,
          f"check_hook_status covers all {len(specs)} register hooks (no drift)")
 
+    # --- BLOCK 12: Dataset v2 ingestion (Sprint 1 / M2) ---
+    print("\n[BLOCK 12] Dataset v2 ingestion (Parts XI-XXIII)")
+    ds_dir = ROOT / "vault" / "knowledge_base" / "pp_dataset"
+    new_parts = (sorted(ds_dir.glob("pp_dataset_1[1-9]_*.md"))
+                 + sorted(ds_dir.glob("pp_dataset_2[0-3]_*.md")))
+    gate("V-DATASET-V2-PARTS-EXIST",
+         len(new_parts) == 13
+         and all(p.stat().st_size > COMMAND_MD_MIN_BYTES for p in new_parts),
+         f"{len(new_parts)} new Part files (XI-XXIII), all non-trivial")
+    ingest_prov = "tools/dataset_v2_ingest.py"
+    gate("V-DATASET-V2-PROVENANCE",
+         bool(new_parts) and all(
+             ingest_prov in p.read_text(encoding="utf-8", errors="replace")[:700]
+             for p in new_parts),
+         "every new Part carries the ingest provenance header")
+    master_p = ds_dir / "pp_dataset_MASTER.md"
+    master_txt = (master_p.read_text(encoding="utf-8", errors="replace")
+                  if master_p.is_file() else "")
+    gate("V-DATASET-V2-MASTER",
+         bool(new_parts) and all(p.name in master_txt for p in new_parts),
+         "MASTER TOC references all new Part files")
+
     # --- Summary ---
     print("\n" + "=" * 72)
     passes = sum(1 for _, ok, _ in results if ok)

@@ -97,8 +97,16 @@ def _iter_scan_targets(root: Path):
             rel = p.relative_to(root)
         except ValueError:
             continue
-        # Skip any path under a known-skip dir.
+        # Skip any path under a known-skip dir. Two cases:
+        #  (1) single-component skips (__pycache__, .git, vendor, ...)
+        #      can appear at ANY depth (e.g. tools/__pycache__/), so we
+        #      test path-component membership -- a root-anchored
+        #      startswith() misses nested ones and leaks compiled .pyc;
+        #  (2) multi-segment skips (vault/handoffs, ...) need a prefix
+        #      match against the relative path.
         rel_str = str(rel).replace("\\", "/")
+        if set(rel_str.split("/")) & _SKIP_DIRS:
+            continue
         if any(rel_str.startswith(d + "/") or rel_str == d
                for d in _SKIP_DIRS):
             continue
