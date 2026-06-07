@@ -188,9 +188,14 @@ The auditor scores any prompt/agent `.md` for coverage; >= 4 of 6 = pass.
 language (coding-style, hooks, patterns, security, testing) + a
 common base of 7 cross-language rules.
 
-**Apply in PP:** `rules/common/` (7 files), `rules/python/` (5
-files), `rules/elixir/` (5 files). Future cycles add typescript,
-rust, go, etc.
+**Apply in PP:** COMPLETED in the 2026-06-06 gap pass. `rules/` now
+mirrors ECC's full taxonomy -- 19 languages: common (11) + python (6)
++ elixir (5, PP-only) + the 17 absorbed via `tools/absorb_ecc_rules.py`
+(angular, arkts, cpp, csharp, dart, fsharp, golang, java, kotlin,
+perl, php, react, ruby, rust, swift, typescript, web). Each mirrored
+file preserves ECC's `paths:` frontmatter + an MIT-attribution comment;
+PP's own customized common/python files were preserved (skip-if-exists).
+Gate: `tools/verify_rules.py` R6 (17 langs present, all files attributed).
 
 ---
 

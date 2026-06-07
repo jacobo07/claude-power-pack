@@ -75,12 +75,41 @@ def r5():
     return False, "code-review.md missing key sections"
 
 
+# Languages mirrored from ECC in the 2026-06-06 gap pass (elixir is PP-only,
+# common/python pre-existed -> covered by R1/R2/R4).
+ABSORBED_LANGS = ["angular", "arkts", "cpp", "csharp", "dart", "fsharp",
+                  "golang", "java", "kotlin", "perl", "php", "react", "ruby",
+                  "rust", "swift", "typescript", "web"]
+
+
+def r6():
+    """Every absorbed language dir exists and every mirrored file carries the
+    ECC MIT attribution (proves the gap-pass mirror is complete + well-formed)."""
+    missing_lang = [l for l in ABSORBED_LANGS if not (RULES / l).is_dir()]
+    if missing_lang:
+        return False, f"absorbed langs missing: {missing_lang}"
+    no_attrib = []
+    nfiles = 0
+    for lang in ABSORBED_LANGS:
+        for f in (RULES / lang).glob("*.md"):
+            nfiles += 1
+            body = f.read_text(encoding="utf-8", errors="replace")
+            if "Affaan Mustafa" not in body or "MIT" not in body:
+                no_attrib.append(f"{lang}/{f.name}")
+    if no_attrib:
+        return False, (f"{len(no_attrib)} absorbed files miss attribution: "
+                       f"{no_attrib[:5]}")
+    return True, (f"{len(ABSORBED_LANGS)} absorbed langs present; all {nfiles} "
+                  f"files carry ECC MIT attribution")
+
+
 def main() -> int:
     checks = [("R1-common-files", r1),
               ("R2-python-files", r2),
               ("R3-elixir-files", r3),
               ("R4-attribution", r4),
-              ("R5-code-review-sections", r5)]
+              ("R5-code-review-sections", r5),
+              ("R6-absorbed-langs", r6)]
     ok = 0
     for name, fn in checks:
         try:
