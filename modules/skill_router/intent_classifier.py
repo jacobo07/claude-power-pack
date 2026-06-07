@@ -66,17 +66,23 @@ INTENT_SIGNALS: dict[str, dict[str, tuple[str, ...]]] = {
         "strong": (
             "build a complete", "build a full", "implement a complete",
             "create a system", "design the architecture",
-            "write a prd", "spec for", "requirements for",
+            "write a prd", "prd for", "spec for", "requirements for",
             "architecture for", "refactor the entire", "redesign the",
             "full implementation", "from scratch", "end to end",
             "entire system", "whole system",
+            # SDD-OS triggers (PARTE I sec. 4) -- spec-first work.
+            "spec-driven", "cross-repo", "for any repo", "new os",
+            "universal framework",
             # ES
             "sistema completo", "desde cero", "arquitectura de",
-            "implementacion completa",
+            "implementacion completa", "para cualquier repo",
         ),
         "medium": (
             "architecture", "pipeline", "roadmap", "prd",
             "requirements", "specification", "blueprint",
+            # SDD-OS vocabulary -- two of these together wake the domain.
+            "framework", "universal", "platform", "governance",
+            "standard",
         ),
         "negative": (
             "fix a bug", "fix this", "fix the", "add a test",

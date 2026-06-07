@@ -107,3 +107,27 @@ def score(contract_name: str, ctx: dict) -> int:
 def is_done(contract_name: str, ctx: dict) -> tuple[bool, int]:
     oqs = score(contract_name, ctx)
     return oqs >= OQS_DONE_THRESHOLD, oqs
+
+
+# --- Per-tier OQS floors (SDD-OS, Sprint 2 / M8) -----------------------
+# Higher SDD-OS tiers demand a higher output-quality floor. This is an
+# ADDITIONAL, stricter, tier-aware layer; the global OQS_DONE_THRESHOLD
+# (70) remains the default for is_done() so HR-OUTPUT-003 is unchanged.
+TIER_OQS_FLOOR: dict[int, int] = {0: 60, 1: 70, 2: 80, 3: 90}
+
+
+def tier_floor(tier: int) -> int:
+    """OQS floor for an SDD-OS tier (0-3); unknown tier -> global default."""
+    return TIER_OQS_FLOOR.get(tier, OQS_DONE_THRESHOLD)
+
+
+def is_done_for_tier(contract_name: str, ctx: dict,
+                     tier: int) -> tuple[bool, int, int]:
+    """Like is_done(), but gate against the per-tier OQS floor.
+
+    Returns (passed, oqs, floor). A Tier 3 deliverable scoring 80 is
+    "done" by the global threshold but NOT by its Tier 3 floor (90).
+    """
+    oqs = score(contract_name, ctx)
+    floor = tier_floor(tier)
+    return oqs >= floor, oqs, floor
