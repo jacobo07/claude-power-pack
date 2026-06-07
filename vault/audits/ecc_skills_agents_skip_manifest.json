@@ -1,0 +1,1243 @@
+{
+  "absorbed_agents": [
+    "python-reviewer",
+    "typescript-reviewer",
+    "rust-reviewer",
+    "java-reviewer",
+    "go-reviewer",
+    "cpp-reviewer",
+    "silent-failure-hunter",
+    "type-design-analyzer",
+    "comment-analyzer",
+    "harness-optimizer"
+  ],
+  "absorbed_skills": [
+    "agent-architecture-audit",
+    "agent-eval",
+    "eval-harness",
+    "agent-harness-construction",
+    "autonomous-loops",
+    "agentic-os",
+    "agent-introspection-debugging",
+    "verification-loop",
+    "recursive-decision-ledger",
+    "intent-driven-development"
+  ],
+  "skipped_agents": [
+    {
+      "name": "a11y-architect",
+      "desc": "Accessibility Architect specializing in WCAG 2.2 compliance for Web and Native platforms. Use PROACTIVELY when designing UI components, esta"
+    },
+    {
+      "name": "architect",
+      "desc": "Software architecture specialist for system design, scalability, and technical decision-making. Use PROACTIVELY when planning new features, "
+    },
+    {
+      "name": "build-error-resolver",
+      "desc": "Build and TypeScript error resolution specialist. Use PROACTIVELY when build fails or type errors occur. Fixes build/type errors only with m"
+    },
+    {
+      "name": "chief-of-staff",
+      "desc": "Personal communication chief of staff that triages email, Slack, LINE, and Messenger. Classifies messages into 4 tiers (skip/info_only/meeti"
+    },
+    {
+      "name": "code-architect",
+      "desc": "Designs feature architectures by analyzing existing codebase patterns and conventions, then providing implementation blueprints with concret"
+    },
+    {
+      "name": "code-explorer",
+      "desc": "Deeply analyzes existing codebase features by tracing execution paths, mapping architecture layers, and documenting dependencies to inform n"
+    },
+    {
+      "name": "code-simplifier",
+      "desc": "Simplifies and refines code for clarity, consistency, and maintainability while preserving behavior. Focus on recently modified code unless "
+    },
+    {
+      "name": "conversation-analyzer",
+      "desc": "Use this agent when analyzing conversation transcripts to find behaviors worth preventing with hooks. Triggered by /hookify without argument"
+    },
+    {
+      "name": "cpp-build-resolver",
+      "desc": "C++ build, CMake, and compilation error resolution specialist. Fixes build errors, linker issues, and template errors with minimal changes. "
+    },
+    {
+      "name": "csharp-reviewer",
+      "desc": "Expert C# code reviewer specializing in .NET conventions, async patterns, security, nullable reference types, and performance. Use for all C"
+    },
+    {
+      "name": "dart-build-resolver",
+      "desc": "Dart/Flutter build, analysis, and dependency error resolution specialist. Fixes `dart analyze` errors, Flutter compilation failures, pub dep"
+    },
+    {
+      "name": "database-reviewer",
+      "desc": "PostgreSQL database specialist for query optimization, schema design, security, and performance. Use PROACTIVELY when writing SQL, creating "
+    },
+    {
+      "name": "django-build-resolver",
+      "desc": "Django/Python build, migration, and dependency error resolution specialist. Fixes pip/Poetry errors, migration conflicts, import errors, Dja"
+    },
+    {
+      "name": "django-reviewer",
+      "desc": "Expert Django code reviewer specializing in ORM correctness, DRF patterns, migration safety, security misconfigurations, and production-grad"
+    },
+    {
+      "name": "doc-updater",
+      "desc": "Documentation and codemap specialist. Use PROACTIVELY for updating codemaps and documentation. Runs /update-codemaps and /update-docs, gener"
+    },
+    {
+      "name": "docs-lookup",
+      "desc": "When the user asks how to use a library, framework, or API or needs up-to-date code examples, use Context7 MCP to fetch current documentatio"
+    },
+    {
+      "name": "e2e-runner",
+      "desc": "End-to-end testing specialist using Vercel Agent Browser (preferred) with Playwright fallback. Use PROACTIVELY for generating, maintaining, "
+    },
+    {
+      "name": "fastapi-reviewer",
+      "desc": "Reviews FastAPI applications for async correctness, dependency injection, Pydantic schemas, security, OpenAPI quality, testing, and producti"
+    },
+    {
+      "name": "flutter-reviewer",
+      "desc": "Flutter and Dart code reviewer. Reviews Flutter code for widget best practices, state management patterns, Dart idioms, performance pitfalls"
+    },
+    {
+      "name": "fsharp-reviewer",
+      "desc": "Expert F# code reviewer specializing in functional idioms, type safety, pattern matching, computation expressions, and performance. Use for "
+    },
+    {
+      "name": "gan-evaluator",
+      "desc": "GAN Harness \u2014 Evaluator agent. Tests the live running application via Playwright, scores against rubric, and provides actionable feedback to"
+    },
+    {
+      "name": "gan-generator",
+      "desc": "GAN Harness \u2014 Generator agent. Implements features according to the spec, reads evaluator feedback, and iterates until quality threshold is "
+    },
+    {
+      "name": "gan-planner",
+      "desc": "GAN Harness \u2014 Planner agent. Expands a one-line prompt into a full product specification with features, sprints, evaluation criteria, and de"
+    },
+    {
+      "name": "go-build-resolver",
+      "desc": "Go build, vet, and compilation error resolution specialist. Fixes build errors, go vet issues, and linter warnings with minimal changes. Use"
+    },
+    {
+      "name": "harmonyos-app-resolver",
+      "desc": "HarmonyOS application development expert specializing in ArkTS and ArkUI. Reviews code for V2 state management compliance, Navigation routin"
+    },
+    {
+      "name": "healthcare-reviewer",
+      "desc": "Reviews healthcare application code for clinical safety, CDSS accuracy, PHI compliance, and medical data integrity. Specialized for EMR/EHR,"
+    },
+    {
+      "name": "homelab-architect",
+      "desc": "Designs home and small-lab network plans from hardware inventory, goals, and operator experience level, with safe staged changes and rollbac"
+    },
+    {
+      "name": "java-build-resolver",
+      "desc": "Java/Maven/Gradle build, compilation, and dependency error resolution specialist. Automatically detects Spring Boot or Quarkus and applies f"
+    },
+    {
+      "name": "kotlin-build-resolver",
+      "desc": "Kotlin/Gradle build, compilation, and dependency error resolution specialist. Fixes build errors, Kotlin compiler errors, and Gradle issues "
+    },
+    {
+      "name": "kotlin-reviewer",
+      "desc": "Kotlin and Android/KMP code reviewer. Reviews Kotlin code for idiomatic patterns, coroutine safety, Compose best practices, clean architectu"
+    },
+    {
+      "name": "loop-operator",
+      "desc": "Operate autonomous agent loops, monitor progress, and intervene safely when loops stall."
+    },
+    {
+      "name": "marketing-agent",
+      "desc": "Marketing strategist and copywriter for campaign planning, audience research, positioning, copy creation, and content review. Covers landing"
+    },
+    {
+      "name": "mle-reviewer",
+      "desc": "Production machine-learning engineering reviewer for data contracts, feature pipelines, training reproducibility, offline/online evaluation,"
+    },
+    {
+      "name": "network-architect",
+      "desc": "Designs enterprise or multi-site network architecture from requirements, using existing network skills for focused routing, validation, auto"
+    },
+    {
+      "name": "network-config-reviewer",
+      "desc": "Reviews router and switch configurations for security, correctness, stale references, risky change-window commands, and missing operational "
+    },
+    {
+      "name": "network-troubleshooter",
+      "desc": "Diagnoses network connectivity, routing, DNS, interface, and policy symptoms with a read-only OSI-layer workflow and evidence-backed root ca"
+    },
+    {
+      "name": "opensource-forker",
+      "desc": "Fork any project for open-sourcing. Copies files, strips secrets and credentials (20+ patterns), replaces internal references with placehold"
+    },
+    {
+      "name": "opensource-packager",
+      "desc": "Generate complete open-source packaging for a sanitized project. Produces CLAUDE.md, setup.sh, README.md, LICENSE, CONTRIBUTING.md, and GitH"
+    },
+    {
+      "name": "opensource-sanitizer",
+      "desc": "Verify an open-source fork is fully sanitized before release. Scans for leaked secrets, PII, internal references, and dangerous files using "
+    },
+    {
+      "name": "performance-optimizer",
+      "desc": "Performance analysis and optimization specialist. Use PROACTIVELY for identifying bottlenecks, optimizing slow code, reducing bundle sizes, "
+    },
+    {
+      "name": "php-reviewer",
+      "desc": "Expert PHP code reviewer specializing in PSR-12 compliance, PHP type system, Eloquent ORM patterns, security, and performance. Use for all P"
+    },
+    {
+      "name": "planner",
+      "desc": "Expert planning specialist for complex features and refactoring. Use PROACTIVELY when users request feature implementation, architectural ch"
+    },
+    {
+      "name": "pr-test-analyzer",
+      "desc": "Review pull request test coverage quality and completeness, with emphasis on behavioral coverage and real bug prevention."
+    },
+    {
+      "name": "pytorch-build-resolver",
+      "desc": "PyTorch runtime, CUDA, and training error resolution specialist. Fixes tensor shape mismatches, device errors, gradient issues, DataLoader p"
+    },
+    {
+      "name": "react-build-resolver",
+      "desc": "Diagnose and fix React build failures across Vite, webpack, Next.js, CRA, Parcel, esbuild, and Bun. Handles JSX/TSX compile errors, hydratio"
+    },
+    {
+      "name": "react-reviewer",
+      "desc": "Expert React/JSX code reviewer specializing in hook correctness, render performance, server/client component boundaries, accessibility, and "
+    },
+    {
+      "name": "refactor-cleaner",
+      "desc": "Dead code cleanup and consolidation specialist. Use PROACTIVELY for removing unused code, duplicates, and refactoring. Runs analysis tools ("
+    },
+    {
+      "name": "rust-build-resolver",
+      "desc": "Rust build, compilation, and dependency error resolution specialist. Fixes cargo build errors, borrow checker issues, and Cargo.toml problem"
+    },
+    {
+      "name": "security-reviewer",
+      "desc": "Security vulnerability detection and remediation specialist. Use PROACTIVELY after writing code that handles user input, authentication, API"
+    },
+    {
+      "name": "seo-specialist",
+      "desc": "SEO specialist for technical SEO audits, on-page optimization, structured data, Core Web Vitals, and content/keyword mapping. Use for site a"
+    },
+    {
+      "name": "swift-build-resolver",
+      "desc": "Swift/Xcode build, compilation, and dependency error resolution specialist. Fixes swift build errors, Xcode build failures, SPM dependency i"
+    },
+    {
+      "name": "swift-reviewer",
+      "desc": "Expert Swift code reviewer specializing in protocol-oriented design, value semantics, ARC memory management, Swift Concurrency, and idiomati"
+    },
+    {
+      "name": "tdd-guide",
+      "desc": "Test-Driven Development specialist enforcing write-tests-first methodology. Use PROACTIVELY when writing new features, fixing bugs, or refac"
+    }
+  ],
+  "skipped_skills": [
+    {
+      "name": "accessibility",
+      "desc": "Design, implement, and audit inclusive digital products using WCAG 2.2 Level AA"
+    },
+    {
+      "name": "agent-payment-x402",
+      "desc": "Add x402 payment execution to AI agents with per-task budgets, spending controls, and non-custodial wallets. Supports Base through agentwall"
+    },
+    {
+      "name": "agent-sort",
+      "desc": "Build an evidence-backed ECC install plan for a specific repo by sorting skills, commands, rules, hooks, and extras into DAILY vs LIBRARY bu"
+    },
+    {
+      "name": "agentic-engineering",
+      "desc": "Operate as an agentic engineer using eval-first execution, decomposition, and cost-aware model routing."
+    },
+    {
+      "name": "ai-first-engineering",
+      "desc": "Engineering operating model for teams where AI agents generate a large share of implementation output."
+    },
+    {
+      "name": "ai-regression-testing",
+      "desc": "Regression testing strategies for AI-assisted development. Sandbox-mode API testing without database dependencies, automated bug-check workf"
+    },
+    {
+      "name": "android-clean-architecture",
+      "desc": "Clean Architecture patterns for Android and Kotlin Multiplatform projects \u2014 module structure, dependency rules, UseCases, Repositories, and "
+    },
+    {
+      "name": "angular-developer",
+      "desc": "Generates Angular code and provides architectural guidance. Trigger when creating projects, components, or services, or for best practices o"
+    },
+    {
+      "name": "api-connector-builder",
+      "desc": "Build a new API connector or provider by matching the target repo's existing integration pattern exactly. Use when adding one more integrati"
+    },
+    {
+      "name": "api-design",
+      "desc": "REST API design patterns including resource naming, status codes, pagination, filtering, error responses, versioning, and rate limiting for "
+    },
+    {
+      "name": "architecture-decision-records",
+      "desc": "Capture architectural decisions made during Claude Code sessions as structured ADRs. Auto-detects decision moments, records context, alterna"
+    },
+    {
+      "name": "article-writing",
+      "desc": "Write articles, guides, blog posts, tutorials, newsletter issues, and other long-form content in a distinctive voice derived from supplied e"
+    },
+    {
+      "name": "automation-audit-ops",
+      "desc": "Evidence-first automation inventory and overlap audit workflow for ECC. Use when the user wants to know which jobs, hooks, connectors, MCP s"
+    },
+    {
+      "name": "autonomous-agent-harness",
+      "desc": "Transform Claude Code into a fully autonomous agent system with persistent memory, scheduled operations, computer use, and task queuing. Rep"
+    },
+    {
+      "name": "backend-patterns",
+      "desc": "Backend architecture patterns, API design, database optimization, and server-side best practices for Node.js, Express, and Next.js API route"
+    },
+    {
+      "name": "benchmark",
+      "desc": "Use this skill to measure performance baselines, detect regressions before/after PRs, and compare stack alternatives."
+    },
+    {
+      "name": "benchmark-optimization-loop",
+      "desc": "Use when the user asks to make something faster, try many variants, run recursive optimization, benchmark latency/throughput/cost, or choose"
+    },
+    {
+      "name": "blender-motion-state-inspection",
+      "desc": "Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion "
+    },
+    {
+      "name": "blueprint",
+      "desc": ">-"
+    },
+    {
+      "name": "brand-voice",
+      "desc": "Build a source-derived writing style profile from real posts, essays, launch notes, docs, or site copy, then reuse that profile across conte"
+    },
+    {
+      "name": "browser-qa",
+      "desc": "Use this skill to automate visual testing and UI interaction verification using browser automation after deploying features."
+    },
+    {
+      "name": "bun-runtime",
+      "desc": "Bun as runtime, package manager, bundler, and test runner. When to choose Bun vs Node, migration notes, and Vercel support."
+    },
+    {
+      "name": "canary-watch",
+      "desc": "Use this skill to monitor and verify a deployed URL after releases \u2014 checks HTTP endpoints, SSE streams, static assets, console errors, and "
+    },
+    {
+      "name": "carrier-relationship-management",
+      "desc": ">"
+    },
+    {
+      "name": "cisco-ios-patterns",
+      "desc": "Cisco IOS and IOS-XE review patterns for show commands, config hierarchy, wildcard masks, ACL placement, interface hygiene, and safe change-"
+    },
+    {
+      "name": "ck",
+      "desc": "Persistent per-project memory for Claude Code. Auto-loads project context on session start, tracks sessions with git activity, and writes to"
+    },
+    {
+      "name": "claude-devfleet",
+      "desc": "Orchestrate multi-agent coding tasks via Claude DevFleet \u2014 plan projects, dispatch parallel agents in isolated worktrees, monitor progress, "
+    },
+    {
+      "name": "click-path-audit",
+      "desc": "Trace every user-facing button/touchpoint through its full state change sequence to find bugs where functions individually work but cancel e"
+    },
+    {
+      "name": "clickhouse-io",
+      "desc": "ClickHouse database patterns, query optimization, analytics, and data engineering best practices for high-performance analytical workloads."
+    },
+    {
+      "name": "code-tour",
+      "desc": "Create CodeTour `.tour` files \u2014 persona-targeted, step-by-step walkthroughs with real file and line anchors. Use for onboarding tours, archi"
+    },
+    {
+      "name": "codebase-onboarding",
+      "desc": "Analyze an unfamiliar codebase and generate a structured onboarding guide with architecture map, key entry points, conventions, and a starte"
+    },
+    {
+      "name": "codehealth-mcp",
+      "desc": "Real-time structural Code Health via CodeScene MCP \u2014 review before edits, verify score deltas after changes, gate commits and PRs. Use when "
+    },
+    {
+      "name": "coding-standards",
+      "desc": "Baseline cross-project coding conventions for naming, readability, immutability, and code-quality review. Use detailed frontend or backend s"
+    },
+    {
+      "name": "compose-multiplatform-patterns",
+      "desc": "Compose Multiplatform and Jetpack Compose patterns for KMP projects \u2014 state management, navigation, theming, performance, and platform-speci"
+    },
+    {
+      "name": "configure-ecc",
+      "desc": "Interactive installer for Everything Claude Code \u2014 guides users through selecting and installing skills and rules to user-level or project-l"
+    },
+    {
+      "name": "connections-optimizer",
+      "desc": "Reorganize the user's X and LinkedIn network with review-first pruning, add/follow recommendations, and channel-specific warm outreach draft"
+    },
+    {
+      "name": "content-engine",
+      "desc": "Create platform-native content systems for X, LinkedIn, TikTok, YouTube, newsletters, and repurposed multi-platform campaigns. Use when the "
+    },
+    {
+      "name": "content-hash-cache-pattern",
+      "desc": "Cache expensive file processing results using SHA-256 content hashes \u2014 path-independent, auto-invalidating, with service layer separation."
+    },
+    {
+      "name": "context-budget",
+      "desc": "Audits Claude Code context window consumption across agents, skills, MCP servers, and rules. Identifies bloat, redundant components, and pro"
+    },
+    {
+      "name": "continuous-agent-loop",
+      "desc": "Patterns for continuous autonomous agent loops with quality gates, evals, and recovery controls."
+    },
+    {
+      "name": "continuous-learning",
+      "desc": "[DEPRECATED - use continuous-learning-v2] Legacy v1 stop-hook skill extractor. v2 is a strict superset with instinct-based, project-scoped, "
+    },
+    {
+      "name": "continuous-learning-v2",
+      "desc": "Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into ski"
+    },
+    {
+      "name": "cost-aware-llm-pipeline",
+      "desc": "Cost optimization patterns for LLM API usage \u2014 model routing by task complexity, budget tracking, retry logic, and prompt caching."
+    },
+    {
+      "name": "cost-tracking",
+      "desc": "Track and report Claude Code token usage, spending, and budgets from a local cost-tracking database. Use when the user asks about costs, spe"
+    },
+    {
+      "name": "council",
+      "desc": "Convene a four-voice council for ambiguous decisions, tradeoffs, and go/no-go calls. Use when multiple valid paths exist and you need struct"
+    },
+    {
+      "name": "cpp-coding-standards",
+      "desc": "C++ coding standards based on the C++ Core Guidelines (isocpp.github.io). Use when writing, reviewing, or refactoring C++ code to enforce mo"
+    },
+    {
+      "name": "cpp-testing",
+      "desc": "Use only when writing/updating/fixing C++ tests, configuring GoogleTest/CTest, diagnosing failing or flaky tests, or adding coverage/sanitiz"
+    },
+    {
+      "name": "crosspost",
+      "desc": "Multi-platform content distribution across X, LinkedIn, Threads, and Bluesky. Adapts content per platform using content-engine patterns. Nev"
+    },
+    {
+      "name": "csharp-testing",
+      "desc": "C# and .NET testing patterns with xUnit, FluentAssertions, mocking, integration tests, and test organization best practices."
+    },
+    {
+      "name": "customer-billing-ops",
+      "desc": "Operate customer billing workflows such as subscriptions, refunds, churn triage, billing-portal recovery, and plan analysis using connected "
+    },
+    {
+      "name": "customs-trade-compliance",
+      "desc": ">"
+    },
+    {
+      "name": "dart-flutter-patterns",
+      "desc": "Production-ready Dart and Flutter patterns covering null safety, immutable state, async composition, widget architecture, popular state mana"
+    },
+    {
+      "name": "dashboard-builder",
+      "desc": "Build monitoring dashboards that answer real operator questions for Grafana, SigNoz, and similar platforms. Use when turning metrics into a "
+    },
+    {
+      "name": "data-scraper-agent",
+      "desc": "Build a fully automated AI-powered data collection agent for any public source \u2014 job boards, prices, news, GitHub, sports, anything. Scrapes"
+    },
+    {
+      "name": "data-throughput-accelerator",
+      "desc": "Use when large data ingestion, backfill, export, ETL, warehouse loading, manifest catch-up, or table synchronization needs to become much fa"
+    },
+    {
+      "name": "database-migrations",
+      "desc": "Database migration best practices for schema changes, data migrations, rollbacks, and zero-downtime deployments across PostgreSQL, MySQL, an"
+    },
+    {
+      "name": "deep-research",
+      "desc": "Multi-source deep research using firecrawl and exa MCPs. Searches the web, synthesizes findings, and delivers cited reports with source attr"
+    },
+    {
+      "name": "defi-amm-security",
+      "desc": "Security checklist for Solidity AMM contracts, liquidity pools, and swap flows. Covers reentrancy, CEI ordering, donation or inflation attac"
+    },
+    {
+      "name": "deployment-patterns",
+      "desc": "Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checkli"
+    },
+    {
+      "name": "design-system",
+      "desc": "Use this skill to generate or audit design systems, check visual consistency, and review PRs that touch styling."
+    },
+    {
+      "name": "django-celery",
+      "desc": "Django + Celery async task patterns \u2014 configuration, task design, beat scheduling, retries, canvas workflows, monitoring, and testing. Use w"
+    },
+    {
+      "name": "django-patterns",
+      "desc": "Django architecture patterns, REST API design with DRF, ORM best practices, caching, signals, middleware, and production-grade Django apps."
+    },
+    {
+      "name": "django-security",
+      "desc": "Django security best practices, authentication, authorization, CSRF protection, SQL injection prevention, XSS prevention, and secure deploym"
+    },
+    {
+      "name": "django-tdd",
+      "desc": "Django testing strategies with pytest-django, TDD methodology, factory_boy, mocking, coverage, and testing Django REST Framework APIs."
+    },
+    {
+      "name": "django-verification",
+      "desc": "Verification loop for Django projects: migrations, linting, tests with coverage, security scans, and deployment readiness checks before rele"
+    },
+    {
+      "name": "dmux-workflows",
+      "desc": "Multi-agent orchestration using dmux (tmux pane manager for AI agents). Patterns for parallel agent workflows across Claude Code, Codex, Ope"
+    },
+    {
+      "name": "docker-patterns",
+      "desc": "Docker and Docker Compose patterns for local development, container security, networking, volume strategies, and multi-service orchestration"
+    },
+    {
+      "name": "documentation-lookup",
+      "desc": "Use up-to-date library and framework docs via Context7 MCP instead of training data. Activates for setup questions, API references, code exa"
+    },
+    {
+      "name": "dotnet-patterns",
+      "desc": "Idiomatic C# and .NET patterns, conventions, dependency injection, async/await, and best practices for building robust, maintainable .NET ap"
+    },
+    {
+      "name": "dynamic-workflow-mode",
+      "desc": "Design task-local harnesses, eval gates, and reusable skill extraction for Claude dynamic workflow mode and other adaptive agent harnesses."
+    },
+    {
+      "name": "e2e-testing",
+      "desc": "Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies."
+    },
+    {
+      "name": "ecc-guide",
+      "desc": "Guide users through ECC's current agents, skills, commands, hooks, rules, install profiles, and project onboarding by reading the live repos"
+    },
+    {
+      "name": "ecc-tools-cost-audit",
+      "desc": "Evidence-first ECC Tools burn and billing audit workflow. Use when investigating runaway PR creation, quota bypass, premium-model leakage, d"
+    },
+    {
+      "name": "email-ops",
+      "desc": "Evidence-first mailbox triage, drafting, send verification, and sent-mail-safe follow-up workflow for ECC. Use when the user wants to organi"
+    },
+    {
+      "name": "energy-procurement",
+      "desc": ">"
+    },
+    {
+      "name": "enterprise-agent-ops",
+      "desc": "Operate long-lived agent workloads with observability, security boundaries, and lifecycle management."
+    },
+    {
+      "name": "error-handling",
+      "desc": "Patterns for robust error handling across TypeScript, Python, and Go. Covers typed errors, error boundaries, retries, circuit breakers, and "
+    },
+    {
+      "name": "evm-token-decimals",
+      "desc": "Prevent silent decimal mismatch bugs across EVM chains. Covers runtime decimal lookup, chain-aware caching, bridged-token precision drift, a"
+    },
+    {
+      "name": "exa-search",
+      "desc": "Neural search via Exa MCP for web, code, and company research. Use when the user needs web search, code examples, company intel, people look"
+    },
+    {
+      "name": "fal-ai-media",
+      "desc": "Unified media generation via fal.ai MCP \u2014 image, video, and audio. Covers text-to-image (Nano Banana), text/image-to-video (Seedance, Kling,"
+    },
+    {
+      "name": "fastapi-patterns",
+      "desc": "FastAPI best practices covering project structure, Pydantic v2 schemas, dependency injection, async handlers, authentication, authorization,"
+    },
+    {
+      "name": "finance-billing-ops",
+      "desc": "Evidence-first revenue, pricing, refunds, team-billing, and billing-model truth workflow for ECC. Use when the user wants a sales snapshot, "
+    },
+    {
+      "name": "flox-environments",
+      "desc": "Create reproducible, cross-platform development environments with Flox \u2014 a declarative environment manager built on Nix. ALWAYS use this ski"
+    },
+    {
+      "name": "flutter-dart-code-review",
+      "desc": "Library-agnostic Flutter/Dart code review checklist covering widget best practices, state management patterns (BLoC, Riverpod, Provider, Get"
+    },
+    {
+      "name": "foundation-models-on-device",
+      "desc": "Apple FoundationModels framework for on-device LLM \u2014 text generation, guided generation with @Generable, tool calling, and snapshot streamin"
+    },
+    {
+      "name": "frontend-a11y",
+      "desc": ">"
+    },
+    {
+      "name": "frontend-design-direction",
+      "desc": "Set an ECC-specific frontend design direction for production UI work. Use when building or improving websites, dashboards, applications, com"
+    },
+    {
+      "name": "frontend-patterns",
+      "desc": "Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices."
+    },
+    {
+      "name": "frontend-slides",
+      "desc": "Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presen"
+    },
+    {
+      "name": "fsharp-testing",
+      "desc": "F# testing patterns with xUnit, FsUnit, Unquote, FsCheck property-based testing, integration tests, and test organization best practices."
+    },
+    {
+      "name": "gan-style-harness",
+      "desc": "GAN-inspired Generator-Evaluator agent harness for building high-quality applications autonomously. Based on Anthropic's March 2026 harness "
+    },
+    {
+      "name": "gateguard",
+      "desc": "Fact-forcing gate that blocks Edit/Write/Bash (including MultiEdit) and demands concrete investigation (importers, data schemas, user instru"
+    },
+    {
+      "name": "git-workflow",
+      "desc": "Git workflow patterns including branching strategies, commit conventions, merge vs rebase, conflict resolution, and collaborative developmen"
+    },
+    {
+      "name": "github-ops",
+      "desc": "GitHub repository operations, automation, and management. Issue triage, PR management, CI/CD operations, release management, and security mo"
+    },
+    {
+      "name": "golang-patterns",
+      "desc": "Idiomatic Go patterns, best practices, and conventions for building robust, efficient, and maintainable Go applications."
+    },
+    {
+      "name": "golang-testing",
+      "desc": "Go testing patterns including table-driven tests, subtests, benchmarks, fuzzing, and test coverage. Follows TDD methodology with idiomatic G"
+    },
+    {
+      "name": "google-workspace-ops",
+      "desc": "Operate across Google Drive, Docs, Sheets, and Slides as one workflow surface for plans, trackers, decks, and shared documents. Use when the"
+    },
+    {
+      "name": "healthcare-cdss-patterns",
+      "desc": "Clinical Decision Support System (CDSS) development patterns. Drug interaction checking, dose validation, clinical scoring (NEWS2, qSOFA), a"
+    },
+    {
+      "name": "healthcare-emr-patterns",
+      "desc": "EMR/EHR development patterns for healthcare applications. Clinical safety, encounter workflows, prescription generation, clinical decision s"
+    },
+    {
+      "name": "healthcare-eval-harness",
+      "desc": "Patient safety evaluation harness for healthcare application deployments. Automated test suites for CDSS accuracy, PHI exposure, clinical wo"
+    },
+    {
+      "name": "healthcare-phi-compliance",
+      "desc": "Protected Health Information (PHI) and Personally Identifiable Information (PII) compliance patterns for healthcare applications. Covers dat"
+    },
+    {
+      "name": "hermes-imports",
+      "desc": "Convert local Hermes operator workflows into sanitized ECC skills and release-pack artifacts. Use when preparing a Hermes workflow for publi"
+    },
+    {
+      "name": "hexagonal-architecture",
+      "desc": "Design, implement, and refactor Ports & Adapters systems with clear domain boundaries, dependency inversion, and testable use-case orchestra"
+    },
+    {
+      "name": "hipaa-compliance",
+      "desc": "HIPAA-specific entrypoint for healthcare privacy and security work. Use when a task is explicitly framed around HIPAA, PHI handling, covered"
+    },
+    {
+      "name": "homelab-network-readiness",
+      "desc": "Readiness checklist for homelab VLAN segmentation, local DNS filtering, and WireGuard-style remote access before changing router, firewall, "
+    },
+    {
+      "name": "homelab-network-setup",
+      "desc": "Practical home and homelab network planning for gateways, switches, access points, IP ranges, DHCP reservations, DNS, cabling, and common be"
+    },
+    {
+      "name": "homelab-pihole-dns",
+      "desc": "Pi-hole installation, blocklist management, DNS-over-HTTPS setup, DHCP integration, local DNS records, and troubleshooting broken DNS resolu"
+    },
+    {
+      "name": "homelab-vlan-segmentation",
+      "desc": "Segmenting home networks into VLANs for IoT, guest, trusted, and server traffic using UniFi, pfSense/OPNsense, and MikroTik \u2014 including swit"
+    },
+    {
+      "name": "homelab-wireguard-vpn",
+      "desc": "WireGuard VPN server setup, peer configuration, key generation, split tunneling vs full tunnel routing, and remote access to a home network "
+    },
+    {
+      "name": "hookify-rules",
+      "desc": "This skill should be used when the user asks to create a hookify rule, write a hook rule, configure hookify, add a hookify rule, or needs gu"
+    },
+    {
+      "name": "inherit-legacy-style",
+      "desc": "Legacy-project style inheritance skill. Use when the user types /inherit-legacy-style, or when onboarding an AI coding agent onto a hand-wri"
+    },
+    {
+      "name": "inventory-demand-planning",
+      "desc": ">"
+    },
+    {
+      "name": "investor-materials",
+      "desc": "Create and update pitch decks, one-pagers, investor memos, accelerator applications, financial models, and fundraising materials. Use when t"
+    },
+    {
+      "name": "investor-outreach",
+      "desc": "Draft cold emails, warm intro blurbs, follow-ups, update emails, and investor communications for fundraising. Use when the user wants outrea"
+    },
+    {
+      "name": "ios-icon-gen",
+      "desc": "Generate iOS app icons as PNG imagesets for Xcode asset catalogs from SF Symbols (5000+ Apple-native) or Iconify API (275k+ open source icon"
+    },
+    {
+      "name": "iterative-retrieval",
+      "desc": "Pattern for progressively refining context retrieval to solve the subagent context problem"
+    },
+    {
+      "name": "ito-basket-compare",
+      "desc": "Compare It\u00f4 prediction-market baskets against a user's knowledge base, portfolio notes, financial context, watchlist, or research thesis. Us"
+    },
+    {
+      "name": "ito-data-atlas-agent",
+      "desc": "Design background Data Atlas style agents for It\u00f4 basket research, market discovery, parameter drafting, and human-in-the-loop editing. Use "
+    },
+    {
+      "name": "ito-market-intelligence",
+      "desc": "Research prediction-market events, venues, underliers, liquidity, and news context for It\u00f4 basket workflows. Use for read-only market intell"
+    },
+    {
+      "name": "ito-trade-planner",
+      "desc": "Build a non-advisory prediction-market trade planning worksheet for It\u00f4 or venue workflows. Use to inspect venues, underliers, constraints, "
+    },
+    {
+      "name": "java-coding-standards",
+      "desc": "Java coding standards for Spring Boot and Quarkus services: naming, immutability, Optional usage, streams, exceptions, generics, CDI, reacti"
+    },
+    {
+      "name": "jira-integration",
+      "desc": "Use this skill when retrieving Jira tickets, analyzing requirements, updating ticket status, adding comments, or transitioning issues. Provi"
+    },
+    {
+      "name": "jpa-patterns",
+      "desc": "JPA/Hibernate patterns for entity design, relationships, query optimization, transactions, auditing, indexing, pagination, and pooling in Sp"
+    },
+    {
+      "name": "knowledge-ops",
+      "desc": "Knowledge base management, ingestion, sync, and retrieval across multiple storage layers (local files, MCP memory, vector stores, Git repos)"
+    },
+    {
+      "name": "kotlin-coroutines-flows",
+      "desc": "Kotlin Coroutines and Flow patterns for Android and KMP \u2014 structured concurrency, Flow operators, StateFlow, error handling, and testing."
+    },
+    {
+      "name": "kotlin-exposed-patterns",
+      "desc": "JetBrains Exposed ORM patterns including DSL queries, DAO pattern, transactions, HikariCP connection pooling, Flyway migrations, and reposit"
+    },
+    {
+      "name": "kotlin-ktor-patterns",
+      "desc": "Ktor server patterns including routing DSL, plugins, authentication, Koin DI, kotlinx.serialization, WebSockets, and testApplication testing"
+    },
+    {
+      "name": "kotlin-patterns",
+      "desc": "Idiomatic Kotlin patterns, best practices, and conventions for building robust, efficient, and maintainable Kotlin applications with corouti"
+    },
+    {
+      "name": "kotlin-testing",
+      "desc": "Kotlin testing patterns with Kotest, MockK, coroutine testing, property-based testing, and Kover coverage. Follows TDD methodology with idio"
+    },
+    {
+      "name": "kubernetes-patterns",
+      "desc": "Kubernetes workload patterns, resource management, RBAC, probes, autoscaling, ConfigMap/Secret handling, and kubectl debugging for productio"
+    },
+    {
+      "name": "laravel-patterns",
+      "desc": "Laravel architecture patterns, routing/controllers, Eloquent ORM, service layers, queues, events, caching, and API resources for production "
+    },
+    {
+      "name": "laravel-plugin-discovery",
+      "desc": "Discover and evaluate Laravel packages via LaraPlugins.io MCP. Use when the user wants to find plugins, check package health, or assess Lara"
+    },
+    {
+      "name": "laravel-security",
+      "desc": "Laravel security best practices \u2014 authentication, authorization, Eloquent safety, CSRF, XSS prevention, API security, and secure deployment "
+    },
+    {
+      "name": "laravel-tdd",
+      "desc": "Laravel testing strategies with PHPUnit, Pest, model factories, HTTP tests, Sanctum authentication testing, mocking, and coverage."
+    },
+    {
+      "name": "laravel-verification",
+      "desc": "Verification loop for Laravel projects: env checks, linting, static analysis, tests with coverage, security scans, and deployment readiness."
+    },
+    {
+      "name": "latency-critical-systems",
+      "desc": "Use for latency-sensitive systems such as realtime dashboards, market data, streaming agents, execution gateways, queues, caches, or HFT-lik"
+    },
+    {
+      "name": "lead-intelligence",
+      "desc": "AI-native lead intelligence and outreach pipeline. Replaces Apollo, Clay, and ZoomInfo with agent-powered signal scoring, mutual ranking, wa"
+    },
+    {
+      "name": "liquid-glass-design",
+      "desc": "iOS 26 Liquid Glass design system \u2014 dynamic glass material with blur, reflection, and interactive morphing for SwiftUI, UIKit, and WidgetKit"
+    },
+    {
+      "name": "llm-trading-agent-security",
+      "desc": "Security patterns for autonomous trading agents with wallet or transaction authority. Covers prompt injection, spend limits, pre-send simula"
+    },
+    {
+      "name": "logistics-exception-management",
+      "desc": ">"
+    },
+    {
+      "name": "make-interfaces-feel-better",
+      "desc": "Apply concrete design-engineering details that make interfaces feel polished. Use when reviewing or improving UI spacing, typography, border"
+    },
+    {
+      "name": "manim-video",
+      "desc": "Build reusable Manim explainers for technical concepts, graphs, system diagrams, and product walkthroughs, then hand off to the wider ECC vi"
+    },
+    {
+      "name": "market-research",
+      "desc": "Conduct market research, competitive analysis, investor due diligence, and industry intelligence with source attribution and decision-orient"
+    },
+    {
+      "name": "marketing-campaign",
+      "desc": "End-to-end marketing campaign planning and execution. Covers audience research, positioning, campaign angle definition, landing page copy, e"
+    },
+    {
+      "name": "mcp-server-patterns",
+      "desc": "Build MCP servers with Node/TypeScript SDK \u2014 tools, resources, prompts, Zod validation, stdio vs Streamable HTTP. Use Context7 or official M"
+    },
+    {
+      "name": "messages-ops",
+      "desc": "Evidence-first live messaging workflow for ECC. Use when the user wants to read texts or DMs, recover a recent one-time code, inspect a thre"
+    },
+    {
+      "name": "mle-workflow",
+      "desc": "Production machine-learning engineering workflow for data contracts, reproducible training, model evaluation, deployment, monitoring, and ro"
+    },
+    {
+      "name": "motion-advanced",
+      "desc": "Advanced motion patterns for React / Next.js \u2014 drag & drop, gestures, text animations, SVG path drawing, custom hooks, imperative sequences "
+    },
+    {
+      "name": "motion-foundations",
+      "desc": "Motion tokens, spring presets, performance rules, device adaptation, accessibility enforcement, and SSR safety for React / Next.js using mot"
+    },
+    {
+      "name": "motion-patterns",
+      "desc": "Production-ready animation patterns for React / Next.js \u2014 button, modal, toast, stagger, page transitions, exit animations, scroll, and layo"
+    },
+    {
+      "name": "motion-ui",
+      "desc": "Production-ready UI motion system for React/Next.js. Use when implementing animations, transitions, or motion patterns."
+    },
+    {
+      "name": "mysql-patterns",
+      "desc": "MySQL and MariaDB schema, query, indexing, transaction, replication, and connection-pool patterns for production backends."
+    },
+    {
+      "name": "nanoclaw-repl",
+      "desc": "Operate and extend NanoClaw v2, ECC's zero-dependency session-aware REPL built on claude -p."
+    },
+    {
+      "name": "nestjs-patterns",
+      "desc": "NestJS architecture patterns for modules, controllers, providers, DTO validation, guards, interceptors, config, and production-grade TypeScr"
+    },
+    {
+      "name": "netmiko-ssh-automation",
+      "desc": "Safe Python Netmiko patterns for read-only collection, bounded batch SSH, TextFSM parsing, guarded config changes, timeouts, and network aut"
+    },
+    {
+      "name": "network-bgp-diagnostics",
+      "desc": "Diagnostics-only BGP troubleshooting patterns for neighbor state, route exchange, prefix policy, AS path inspection, and safe evidence colle"
+    },
+    {
+      "name": "network-config-validation",
+      "desc": "Pre-deployment checks for router and switch configuration, including dangerous commands, duplicate addresses, subnet overlaps, stale referen"
+    },
+    {
+      "name": "network-interface-health",
+      "desc": "Diagnose interface errors, drops, CRCs, duplex mismatches, flapping, speed negotiation issues, and counter trends on routers, switches, and "
+    },
+    {
+      "name": "nextjs-turbopack",
+      "desc": "Next.js 16+ and Turbopack \u2014 incremental bundling, FS caching, dev speed, and when to use Turbopack vs webpack."
+    },
+    {
+      "name": "nodejs-keccak256",
+      "desc": "Prevent Ethereum hashing bugs in JavaScript and TypeScript. Node's sha3-256 is NIST SHA3, not Ethereum Keccak-256, and silently breaks selec"
+    },
+    {
+      "name": "nutrient-document-processing",
+      "desc": "Process, convert, OCR, extract, redact, sign, and fill documents using the Nutrient DWS API. Works with PDFs, DOCX, XLSX, PPTX, HTML, and im"
+    },
+    {
+      "name": "nuxt4-patterns",
+      "desc": "Nuxt 4 app patterns for hydration safety, performance, route rules, lazy loading, and SSR-safe data fetching with useFetch and useAsyncData."
+    },
+    {
+      "name": "openclaw-persona-forge",
+      "desc": "\u4e3a OpenClaw AI Agent \u953b\u9020\u5b8c\u6574\u7684\u9f99\u867e\u7075\u9b42\u65b9\u6848\u3002\u6839\u636e\u7528\u6237\u504f\u597d\u6216\u968f\u673a\u62bd\u5361\uff0c \u8f93\u51fa\u8eab\u4efd\u5b9a\u4f4d\u3001\u7075\u9b42\u63cf\u8ff0(SOUL.md)\u3001\u89d2\u8272\u5316\u5e95\u7ebf\u89c4\u5219\u3001\u540d\u5b57\u548c\u5934\u50cf\u751f\u56fe\u63d0\u793a\u8bcd\u3002 \u5982\u5f53\u524d\u73af\u5883\u63d0\u4f9b\u5df2\u5ba1\u6838\u7684\u751f\u56fe skill\uff0c\u53ef\u81ea\u52a8\u751f\u6210\u7edf\u4e00\u98ce\u683c\u5934\u50cf\u56fe\u7247\u3002 \u5f53\u7528\u6237\u9700\u8981\u521b\u5efa\u3001\u8bbe\u8ba1\u6216\u5b9a\u5236 OpenC"
+    },
+    {
+      "name": "opensource-pipeline",
+      "desc": "Open-source pipeline: fork, sanitize, and package private projects for safe public release. Chains 3 agents (forker, sanitizer, packager). T"
+    },
+    {
+      "name": "orch-add-feature",
+      "desc": "Orchestrate building a brand-new feature end to end \u2014 research, plan, TDD implementation, review, and gated commit \u2014 by delegating each phas"
+    },
+    {
+      "name": "orch-build-mvp",
+      "desc": "Orchestrate bootstrapping a working MVP from a design or spec document \u2014 ingest the doc, plan thin vertical slices, scaffold the first end-t"
+    },
+    {
+      "name": "orch-change-feature",
+      "desc": "Orchestrate altering an existing, working feature to new desired behavior \u2014 update its tests to the new spec, change the implementation to m"
+    },
+    {
+      "name": "orch-fix-defect",
+      "desc": "Orchestrate fixing a bug \u2014 reproduce it as a failing regression test, fix to green, review, and gated commit \u2014 by delegating each phase to t"
+    },
+    {
+      "name": "orch-pipeline",
+      "desc": "Shared orchestration engine for the orch-* skill family. Defines the gated Research-Plan-TDD-Review-Commit pipeline, the size classifier, th"
+    },
+    {
+      "name": "orch-refine-code",
+      "desc": "Orchestrate a behavior-preserving refactor \u2014 confirm tests are green, restructure without changing behavior, keep tests green, review, and g"
+    },
+    {
+      "name": "parallel-execution-optimizer",
+      "desc": "Use when the user wants a task done much faster through parallel work, concurrent agents, batched tool calls, isolated worktrees, or many in"
+    },
+    {
+      "name": "perl-patterns",
+      "desc": "Modern Perl 5.36+ idioms, best practices, and conventions for building robust, maintainable Perl applications."
+    },
+    {
+      "name": "perl-security",
+      "desc": "Comprehensive Perl security covering taint mode, input validation, safe process execution, DBI parameterized queries, web security (XSS/SQLi"
+    },
+    {
+      "name": "perl-testing",
+      "desc": "Perl testing patterns using Test2::V0, Test::More, prove runner, mocking, coverage with Devel::Cover, and TDD methodology."
+    },
+    {
+      "name": "plan-orchestrate",
+      "desc": "Read a plan document, decompose it into steps, design a per-step agent chain from the ECC catalogue, and emit ready-to-paste /orchestrate cu"
+    },
+    {
+      "name": "plankton-code-quality",
+      "desc": "Write-time code quality enforcement using Plankton \u2014 auto-formatting, linting, and Claude-powered fixes on every file edit via hooks."
+    },
+    {
+      "name": "postgres-patterns",
+      "desc": "PostgreSQL database patterns for query optimization, schema design, indexing, and security. Based on Supabase best practices."
+    },
+    {
+      "name": "prediction-market-oracle-research",
+      "desc": "Research prediction markets as data sources or oracle signals for products, agents, dashboards, and corporate decision intelligence. Use for"
+    },
+    {
+      "name": "prediction-market-risk-review",
+      "desc": "Review prediction-market, basket, oracle, and trading-agent workflows for compliance, safety, data-quality, privacy, and execution risk. Use"
+    },
+    {
+      "name": "prisma-patterns",
+      "desc": "Prisma ORM patterns for TypeScript backends \u2014 schema design, query optimization, transactions, pagination, and critical traps like updateMan"
+    },
+    {
+      "name": "product-capability",
+      "desc": "Translate PRD intent, roadmap asks, or product discussions into an implementation-ready capability plan that exposes constraints, invariants"
+    },
+    {
+      "name": "product-lens",
+      "desc": "Use this skill to validate the \"why\" before building, run product diagnostics, and pressure-test product direction before the request become"
+    },
+    {
+      "name": "production-audit",
+      "desc": "Local-evidence production readiness audit for shipped apps, pre-launch reviews, post-merge checks, and \"what breaks in prod?\" questions with"
+    },
+    {
+      "name": "production-scheduling",
+      "desc": ">"
+    },
+    {
+      "name": "project-flow-ops",
+      "desc": "Operate execution flow across GitHub and Linear by triaging issues and pull requests, linking active work, and keeping GitHub public-facing "
+    },
+    {
+      "name": "prompt-optimizer",
+      "desc": ">-"
+    },
+    {
+      "name": "python-patterns",
+      "desc": "Pythonic idioms, PEP 8 standards, type hints, and best practices for building robust, efficient, and maintainable Python applications."
+    },
+    {
+      "name": "python-testing",
+      "desc": "Python testing strategies using pytest, TDD methodology, fixtures, mocking, parametrization, and coverage requirements."
+    },
+    {
+      "name": "pytorch-patterns",
+      "desc": "PyTorch deep learning patterns and best practices for building robust, efficient, and reproducible training pipelines, model architectures, "
+    },
+    {
+      "name": "quality-nonconformance",
+      "desc": ">"
+    },
+    {
+      "name": "quarkus-patterns",
+      "desc": "Quarkus 3.x LTS architecture patterns with Camel for messaging, RESTful API design, CDI services, data access with Panache, and async proces"
+    },
+    {
+      "name": "quarkus-security",
+      "desc": "Quarkus Security best practices for authentication, authorization, JWT/OIDC, RBAC, input validation, CSRF, secrets management, and dependenc"
+    },
+    {
+      "name": "quarkus-tdd",
+      "desc": "Test-driven development for Quarkus 3.x LTS using JUnit 5, Mockito, REST Assured, Camel testing, and JaCoCo. Use when adding features, fixin"
+    },
+    {
+      "name": "quarkus-verification",
+      "desc": "Verification loop for Quarkus projects: build, static analysis, tests with coverage, security scans, native compilation, and diff review bef"
+    },
+    {
+      "name": "ralphinho-rfc-pipeline",
+      "desc": "RFC-driven multi-agent DAG execution pattern with quality gates, merge queues, and work unit orchestration."
+    },
+    {
+      "name": "react-patterns",
+      "desc": "React 18/19 patterns including hooks discipline, server/client component boundaries, Suspense + error boundaries, form actions, data fetchin"
+    },
+    {
+      "name": "react-performance",
+      "desc": "React and Next.js performance optimization patterns adapted from Vercel Engineering's React Best Practices (https://github.com/vercel-labs/a"
+    },
+    {
+      "name": "react-testing",
+      "desc": "React component testing with React Testing Library, Vitest/Jest, MSW for network mocking, accessibility assertions with axe, and the decisio"
+    },
+    {
+      "name": "recsys-pipeline-architect",
+      "desc": "Design composable recommendation, ranking, and feed pipelines using the six-stage Source\u2192Hydrator\u2192Filter\u2192Scorer\u2192Selector\u2192SideEffect framewor"
+    },
+    {
+      "name": "redis-patterns",
+      "desc": "Redis data structure patterns, caching strategies, distributed locks, rate limiting, pub/sub, and connection management for production appli"
+    },
+    {
+      "name": "regex-vs-llm-structured-text",
+      "desc": "Decision framework for choosing between regex and LLM when parsing structured text \u2014 start with regex, add LLM only for low-confidence edge "
+    },
+    {
+      "name": "remotion-video-creation",
+      "desc": "Best practices for Remotion - Video creation in React. 29 domain-specific rules covering 3D, animations, audio, captions, charts, transition"
+    },
+    {
+      "name": "repo-scan",
+      "desc": "Cross-stack source code asset audit \u2014 classifies every file, detects embedded third-party libraries, and delivers actionable four-level verd"
+    },
+    {
+      "name": "research-ops",
+      "desc": "Evidence-first current-state research workflow for ECC. Use when the user wants fresh facts, comparisons, enrichment, or a recommendation bu"
+    },
+    {
+      "name": "returns-reverse-logistics",
+      "desc": ">"
+    },
+    {
+      "name": "rules-distill",
+      "desc": "Scan skills to extract cross-cutting principles and distill them into rules \u2014 append, revise, or create new rule files"
+    },
+    {
+      "name": "rust-patterns",
+      "desc": "Idiomatic Rust patterns, ownership, error handling, traits, concurrency, and best practices for building safe, performant applications."
+    },
+    {
+      "name": "rust-testing",
+      "desc": "Rust testing patterns including unit tests, integration tests, async testing, property-based testing, mocking, and coverage. Follows TDD met"
+    },
+    {
+      "name": "safety-guard",
+      "desc": "Use this skill to prevent destructive operations when working on production systems or running agents autonomously."
+    },
+    {
+      "name": "santa-method",
+      "desc": "Multi-agent adversarial verification with convergence loop. Two independent review agents must both pass before output ships."
+    },
+    {
+      "name": "pubmed-database",
+      "desc": "Direct PubMed and NCBI E-utilities search workflows for biomedical literature, MeSH queries, PMID lookup, citation retrieval, and API-backed"
+    },
+    {
+      "name": "uspto-database",
+      "desc": "USPTO patent and trademark data workflow for official record lookup, PatentSearch queries, TSDR checks, assignment data, and reproducible IP"
+    },
+    {
+      "name": "gget",
+      "desc": "gget CLI and Python workflow for quick genomic database queries, sequence lookup, BLAST-style searches, enrichment checks, and reproducible "
+    },
+    {
+      "name": "literature-review",
+      "desc": "Systematic literature-review workflow for academic, biomedical, technical, and scientific topics, including search planning, source screenin"
+    },
+    {
+      "name": "scholar-evaluation",
+      "desc": "Structured scholarly-work evaluation for papers, proposals, literature reviews, methods sections, evidence quality, citation support, and re"
+    },
+    {
+      "name": "search-first",
+      "desc": "Research-before-coding workflow. Search for existing tools, libraries, and patterns before writing custom code. Invokes the researcher agent"
+    },
+    {
+      "name": "security-bounty-hunter",
+      "desc": "Hunt for exploitable, bounty-worthy security issues in repositories. Focuses on remotely reachable vulnerabilities that qualify for real rep"
+    },
+    {
+      "name": "security-review",
+      "desc": "Use this skill when adding authentication, handling user input, working with secrets, creating API endpoints, or implementing payment/sensit"
+    },
+    {
+      "name": "security-scan",
+      "desc": "Scan your Claude Code configuration (.claude/ directory) for security vulnerabilities, misconfigurations, and injection risks using AgentShi"
+    },
+    {
+      "name": "skill-comply",
+      "desc": "Visualize whether skills, rules, and agent definitions are actually followed \u2014 auto-generates scenarios at 3 prompt strictness levels, runs "
+    },
+    {
+      "name": "skill-scout",
+      "desc": "Search existing local, marketplace, GitHub, and web skill sources before creating a new skill. Use when the user wants to create, build, for"
+    },
+    {
+      "name": "skill-stocktake",
+      "desc": "Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential"
+    },
+    {
+      "name": "social-graph-ranker",
+      "desc": "Weighted social-graph ranking for warm intro discovery, bridge scoring, and network gap analysis across X and LinkedIn. Use when the user wa"
+    },
+    {
+      "name": "social-publisher",
+      "desc": "Agent-driven scheduling and publishing of social media posts across 13 platforms via SocialClaw. Use when the user wants to publish to X, Li"
+    },
+    {
+      "name": "springboot-patterns",
+      "desc": "Spring Boot architecture patterns, REST API design, layered services, data access, caching, async processing, and logging. Use for Java Spri"
+    },
+    {
+      "name": "springboot-security",
+      "desc": "Spring Security best practices for authn/authz, validation, CSRF, secrets, headers, rate limiting, and dependency security in Java Spring Bo"
+    },
+    {
+      "name": "springboot-tdd",
+      "desc": "Test-driven development for Spring Boot using JUnit 5, Mockito, MockMvc, Testcontainers, and JaCoCo. Use when adding features, fixing bugs, "
+    },
+    {
+      "name": "springboot-verification",
+      "desc": "Verification loop for Spring Boot projects: build, static analysis, tests with coverage, security scans, and diff review before release or P"
+    },
+    {
+      "name": "strategic-compact",
+      "desc": "Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction."
+    },
+    {
+      "name": "swift-actor-persistence",
+      "desc": "Thread-safe data persistence in Swift using actors \u2014 in-memory cache with file-backed storage, eliminating data races by design."
+    },
+    {
+      "name": "swift-concurrency-6-2",
+      "desc": "Swift 6.2 Approachable Concurrency \u2014 single-threaded by default, @concurrent for explicit background offloading, isolated conformances for m"
+    },
+    {
+      "name": "swift-protocol-di-testing",
+      "desc": "Protocol-based dependency injection for testable Swift code \u2014 mock file system, network, and external APIs using focused protocols and Swift"
+    },
+    {
+      "name": "swiftui-patterns",
+      "desc": "SwiftUI architecture patterns, state management with @Observable, view composition, navigation, performance optimization, and modern iOS/mac"
+    },
+    {
+      "name": "tdd-workflow",
+      "desc": "Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including un"
+    },
+    {
+      "name": "team-agent-orchestration",
+      "desc": "Run team-based orchestration for agent squads using work items, ownership, agent Kanban, merge gates, and control pane handoffs."
+    },
+    {
+      "name": "team-builder",
+      "desc": "Interactive agent picker for composing and dispatching parallel teams"
+    },
+    {
+      "name": "terminal-ops",
+      "desc": "Evidence-first repo execution workflow for ECC. Use when the user wants a command run, a repo checked, a CI failure debugged, or a narrow fi"
+    },
+    {
+      "name": "tinystruct-patterns",
+      "desc": "Expert guidance for developing with the tinystruct Java framework. Use when working on the tinystruct codebase or any project built on tinys"
+    },
+    {
+      "name": "token-budget-advisor",
+      "desc": ">-"
+    },
+    {
+      "name": "ui-demo",
+      "desc": "Record polished UI demo videos using Playwright. Use when the user asks to create a demo, walkthrough, screen recording, or tutorial video o"
+    },
+    {
+      "name": "ui-to-vue",
+      "desc": "Use when the user has UI screenshots or design exports that need batch conversion into Vue 3 components, especially with Vant, Element Plus,"
+    },
+    {
+      "name": "uncloud",
+      "desc": "Use when managing an Uncloud cluster \u2014 deploying services, configuring Caddy ingress, adding static proxy routes for non-cluster devices, pu"
+    },
+    {
+      "name": "unified-notifications-ops",
+      "desc": "Operate notifications as one ECC-native workflow across GitHub, Linear, desktop alerts, hooks, and connected communication surfaces. Use whe"
+    },
+    {
+      "name": "video-editing",
+      "desc": "AI-assisted video editing workflows for cutting, structuring, and augmenting real footage. Covers the full pipeline from raw capture through"
+    },
+    {
+      "name": "videodb",
+      "desc": "See, Understand, Act on video and audio. See- ingest from local files, URLs, RTSP/live feeds, or live record desktop; return realtime contex"
+    },
+    {
+      "name": "visa-doc-translate",
+      "desc": "Translate visa application documents (images) to English and create a bilingual PDF with original and translation"
+    },
+    {
+      "name": "vite-patterns",
+      "desc": "Vite build tool patterns including config, plugins, HMR, env variables, proxy setup, SSR, library mode, dependency pre-bundling, and build o"
+    },
+    {
+      "name": "windows-desktop-e2e",
+      "desc": "E2E testing for Windows native desktop apps (WPF, WinForms, Win32/MFC, Qt) using pywinauto and Windows UI Automation."
+    },
+    {
+      "name": "workspace-surface-audit",
+      "desc": "Audit the active repo, MCP servers, plugins, connectors, env surfaces, and harness setup, then recommend the highest-value ECC-native skills"
+    },
+    {
+      "name": "x-api",
+      "desc": "X/Twitter API integration for posting tweets, threads, reading timelines, search, and analytics. Covers OAuth auth patterns, rate limits, an"
+    }
+  ],
+  "skip_reason": "Not in the curated PP-aligned gem-set: out-of-scope domain, redundant with the absorbed rules taxonomy (*-patterns/*-testing/*-security), ECC self-management, or overlaps an existing PP skill/agent."
+}
