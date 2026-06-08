@@ -2946,3 +2946,66 @@ A PP install is Apex-complete on the Security-First Axis iff:
 
 Cross-ref: `vault/lessons/powershell-bom-to-native-exe.md`,
 `modules/secret_firewall/detector.py`, `CLAUDE.md` HR-SECRET-001..007.
+
+
+> **Clause-numbering reconciliation (2026-06-08).** Between v16 and this
+> entry, commit subjects and `session_lessons` referenced SCS clauses as
+> high as "C42". Those numbers were never written into this ledger -- the
+> written clause line resumes here at **C26**. The "C28..C42" tags in git
+> history are session shorthand, not canonical clauses; treat this file as
+> the source of truth for clause existence. See
+> `vault/audits/session_close_2026-06-08.md`.
+
+
+## Integration-Wiring Axis (sealed 2026-06-08, BL-INTEGRATION-WIRING -- apex axis v17, SCS C26)
+
+A PP module is Apex-complete on the Integration-Wiring Axis iff:
+
+1. It has an **activation gate** that fires the real hook / signal /
+   decorator and observes the effect -- not only a unit gate that
+   imports the module in isolation. A unit gate passes whether or not
+   anything calls the module.
+2. Every consumer branch that reads a record/config field has a
+   **producer** demonstrably writing that field in the live path. A
+   field that is null/default across all live records is starved
+   (orphan-field, CLASE-0) -- grep the producer before declaring done.
+3. A state **writer** ships with the **reader** that consumes it in the
+   same cycle (WRITE->READ->ACT). A writer with no reader is
+   documentation, not a feature.
+4. `tools/verify_integration_wiring.py` returns its full pass count
+   (9/9 at seal time) -- empty refs in `settings.json` + `commands/` +
+   `agents/` + signals + JIT == orphan.
+
+Cross-ref: `memory/feedback_orphan_module_wiring.md`,
+`memory/feedback_orphan_field_dead_recovery_path.md`,
+`memory/feedback_write_without_read_incomplete_system.md`,
+`tools/verify_integration_wiring.py`.
+
+
+## Recovery-Completeness Axis (sealed 2026-06-08, BL-CPCOS-RESTORE -- apex axis v18, SCS C27)
+
+A PP recovery / state-persistence feature is Apex-complete on the
+Recovery-Completeness Axis iff:
+
+1. It ships the full **WRITE->READ->ACT** cycle, gated end-to-end:
+   kill -> read the persisted state -> restore -> observe the restored
+   surface. A writer-only gate (snapshot exists, tests pass, hub
+   triggers it) is incomplete if nothing reads the snapshot to reopen
+   the work.
+2. The **mechanism reality** is verified, not assumed: the right unit
+   was `cursor <path>` per repo + `claude --resume <id>` per pane, NOT
+   `wt` tabs. Verify the restoration primitive against the real host
+   surface before sealing.
+3. Exact-conversation resume degrades gracefully: when the registry
+   `session_id` is null, the resolver falls back to the
+   `~/.claude/projects/<encoded-cwd>/<uuid>.jsonl` transcript (non-alnum
+   -> `-`) and validates the transcript exists before `--resume`
+   (a stale id cancels SessionEnd hooks).
+4. Artifacts present + proven: `modules/cpc_os/snapshot.py` (writer),
+   `tools/restore_panes.ps1` (reader+actor), `modules/cpc_os/recovery.py`,
+   `modules/cpc_os/work_state_saver.py`.
+
+Cross-ref: `memory/feedback_write_without_read_incomplete_system.md`,
+`memory/feedback_orphan_field_dead_recovery_path.md`,
+`memory/feedback_lazarus_validate_transcript_before_resume.md`,
+`tools/restore_panes.ps1`.
