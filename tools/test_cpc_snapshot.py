@@ -150,17 +150,24 @@ def main() -> int:
         else:
             _fail("V-RESUME-EXACT", f"paneA resume={a.get('resume')} kind={a.get('resume_kind')}")
 
-        # V-RESUME-REPO-LATEST  -- null sid, recovered from transcript store
-        if b.get("resume_kind") == "repo-latest" and b.get("resume") == "claude --resume newer":
-            _ok("V-RESUME-REPO-LATEST", "paneB -> claude --resume newer [repo-latest]")
+        # V-RESUME-NO-SUBSTITUTION  -- a pane whose own session_id is unrecoverable
+        # must NEVER be silently swapped for the repo's latest transcript (that
+        # restored a DIFFERENT conversation under the pane's identity). paneB has
+        # no sid AND repoB HAS transcripts ('older'/'newer'); the resume must be a
+        # FRESH claude in the cwd, NOT "claude --resume newer". This is the exact
+        # wrong-chat bug the Owner reported (BL-CPCOS-RESTORE-002).
+        if (b.get("resume_kind") == "missing"
+                and str(b.get("resume", "")).startswith("cd ")
+                and "newer" not in str(b.get("resume", ""))):
+            _ok("V-RESUME-NO-SUBSTITUTION", "paneB -> fresh claude, NOT repo-latest")
         else:
-            _fail("V-RESUME-REPO-LATEST", f"paneB resume={b.get('resume')} kind={b.get('resume_kind')}")
+            _fail("V-RESUME-NO-SUBSTITUTION", f"paneB resume={b.get('resume')} kind={b.get('resume_kind')}")
 
-        # V-RESUME-NEW  -- no transcript -> cd fallback
-        if c.get("resume_kind") == "new" and str(c.get("resume", "")).startswith("cd "):
-            _ok("V-RESUME-NEW", "paneC -> cd fallback [new]")
+        # V-RESUME-MISSING  -- no sid + no transcript -> fresh claude in cwd
+        if c.get("resume_kind") == "missing" and str(c.get("resume", "")).startswith("cd "):
+            _ok("V-RESUME-MISSING", "paneC -> fresh claude [missing]")
         else:
-            _fail("V-RESUME-NEW", f"paneC resume={c.get('resume')} kind={c.get('resume_kind')}")
+            _fail("V-RESUME-MISSING", f"paneC resume={c.get('resume')} kind={c.get('resume_kind')}")
 
         # V-SNAPSHOT-READABLE  -- machine block parses, 3 panes
         if isinstance(machine_md, list) and len(machine_md) == 3 and (
@@ -218,6 +225,22 @@ def main() -> int:
             _ok("V-BASELINE-INTACT", "cpc_os package imports clean (new+old)")
         except Exception as exc:  # noqa: BLE001
             _fail("V-BASELINE-INTACT", f"import regression: {exc}")
+
+        # V-DEDUP-BY-SESSION  -- N pane rows for ONE conversation collapse to ONE.
+        # Every SessionStart re-registers a fresh row for the same chat
+        # (startup/resume/compact), so without dedup the restore opens N identical
+        # tabs. Two rows sharing (cwd, session_id) must render as ONE pane
+        # (BL-CPCOS-RESTORE-002).
+        reg2 = PaneRegistry(_path=tmp / "reg2.json")
+        reg2.register_pane("dupe1", cwd_a, "t", session_id="sid-A")
+        reg2.register_pane("dupe2", cwd_a, "t", session_id="sid-A")
+        reg2.register_pane("solo", cwd_a, "t", session_id="sid-Z")
+        m2 = snap._render(reg2, 1700000000.0)[1]
+        sids2 = sorted(x["session_id"] for x in m2)
+        if len(m2) == 2 and sids2 == ["sid-A", "sid-Z"]:
+            _ok("V-DEDUP-BY-SESSION", "3 rows (2 share sid-A) -> 2 distinct panes")
+        else:
+            _fail("V-DEDUP-BY-SESSION", f"dedup wrong: {len(m2)} panes sids={sids2}")
 
     total = passes + fails
     print(f"SNAPSHOT_PASS={passes}/{total}  threshold={total}/{total}")

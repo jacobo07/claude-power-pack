@@ -127,21 +127,26 @@ def _commit_for(rec, cwd_cache: dict[str, str | None]) -> str:
 def _resume_for(rec, sess_cache: dict[str, str | None]) -> tuple[str, str, str | None]:
     """Return (resume_command, resume_kind, resolved_session).
 
-    resume_kind in {exact, repo-latest, new}:
-      * exact       -- registry session_id whose transcript exists.
-      * repo-latest -- the cwd's most-recent transcript (registry had no sid).
-      * new         -- no transcript found; fresh session in the right cwd.
-    """
-    if rec.cwd not in sess_cache:
-        sess_cache[rec.cwd] = resolve_last_session(rec.cwd)
-    resolved = sess_cache[rec.cwd]
+    resume_kind in {exact, missing}:
+      * exact   -- registry session_id whose transcript EXISTS on disk. This is
+                   the ONLY way a pane resumes a specific conversation.
+      * missing -- the pane's own session_id has no transcript (it predates the
+                   sid capture, or the conversation was abandoned). We open a
+                   FRESH ``claude`` in the right cwd rather than resuming.
 
+    DELIBERATELY NO repo-latest substitution (removed 2026-06-08, BL-CPCOS-RESTORE
+    -002): the old behaviour silently resumed the cwd's most-recent transcript
+    when a pane's own sid was unrecoverable. With several chats per repo that
+    restored a DIFFERENT conversation under a pane's identity -- so two panes
+    both resolved to the same "latest" chat and the user's real chats vanished
+    (empirically: pane sid 952104da had no transcript -> was swapped for the
+    repo's 2c3ece60). A missing chat is genuinely gone; we never fabricate it
+    from another pane's conversation. ``sess_cache`` is retained for signature
+    stability but no longer consulted."""
     sid = rec.session_id
     if sid and _transcript_path(rec.cwd, sid).is_file():
-        return f"claude --resume {sid}", "exact", resolved
-    if resolved:
-        return f"claude --resume {resolved}", "repo-latest", resolved
-    return f'cd "{rec.cwd}" && claude', "new", None
+        return f"claude --resume {sid}", "exact", sid
+    return f'cd "{rec.cwd}" && claude', "missing", None
 
 
 def _recovery_header() -> list[str]:
@@ -158,6 +163,23 @@ def _recovery_header() -> list[str]:
 def _render(registry: PaneRegistry, now: float | None) -> tuple[str, list[dict]]:
     t = time.time() if now is None else now
     panes = [r for r in registry.panes.values() if r.status in _LIVE_STATUSES]
+    # Dedup by (cwd, session_id). Every SessionStart re-registers a NEW pane row
+    # for the SAME conversation (startup / resume / compact / clear each fire
+    # SessionStart), so one chat accumulates many rows -- empirically 7 rows for
+    # a single KobiiCraft session. Collapse to ONE pane per distinct
+    # conversation, keeping the BEST row: active beats stale/paused, then the
+    # most-recent started_at. Panes with no session_id keep their own identity
+    # (keyed by pane_id) since they cannot be merged. Without this the restore
+    # opens N identical tabs for one chat (BL-CPCOS-RESTORE-002).
+    _best: dict[tuple, "PaneRecord"] = {}
+    for r in panes:
+        key = (r.cwd, r.session_id) if r.session_id else (r.cwd, r.pane_id)
+        cur = _best.get(key)
+        if cur is None or (
+            _STATUS_RANK.get(r.status, 9), -r.started_at
+        ) < (_STATUS_RANK.get(cur.status, 9), -cur.started_at):
+            _best[key] = r
+    panes = list(_best.values())
     panes.sort(key=lambda r: (_STATUS_RANK.get(r.status, 9), r.started_at))
 
     lines: list[str] = []

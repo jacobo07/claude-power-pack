@@ -73,16 +73,26 @@ def parse_resume(resume: str) -> tuple[str, list[str]]:
 def build_pane_task(resume: str, label_key: str) -> dict:
     """One folderOpen task that launches a pane's resume command in its own
     dedicated terminal panel. ``label_key`` makes the label unique+stable."""
-    command, args = parse_resume(resume)
+    _command, args = parse_resume(resume)
+    # Run via kclaude.bat -- the SAME wrapper the Owner's "Claude" terminal
+    # profile uses (cmd /K kclaude.bat ...). It passes args straight through to
+    # `claude` on first launch (claude %*) and adds the /restart loop, so a
+    # restored tab behaves exactly like a hand-opened Claude terminal but pinned
+    # to the exact session. args are ["--resume","<sid>"] (exact) or [] (fresh).
+    kclaude = "${env:USERPROFILE}\\.claude\\kclaude.bat"
     return {
         "label": f"{RESTORE_LABEL_PREFIX} {label_key}",
         "type": "shell",
-        "command": command,
+        "command": kclaude,
         "args": args,
         "options": {"cwd": "${workspaceFolder}"},
         "presentation": {
             "panel": "dedicated",
-            "group": "cpc-restore",
+            # NO shared "group": in VS Code / Cursor a shared presentation.group
+            # SPLITS every task into one terminal group (side-by-side panes).
+            # The Owner wants each restored chat as its OWN terminal TAB, so we
+            # omit group entirely -> panel:"dedicated" alone gives one dedicated
+            # tab per task (BL-CPCOS-RESTORE-002, 2026-06-08).
             "reveal": "always",
             "focus": False,
             "echo": False,

@@ -423,6 +423,16 @@ const CPC_REGISTER_SCRIPT =
   + "    from modules.cpc_os.snapshot import generate_snapshot\n"
   + "    generate_snapshot()\n"
   + "except Exception:\n"
+  + "    pass\n"
+  // Refresh THIS repo's .vscode/tasks.json from the fresh snapshot so a Cursor
+  // reopen auto-restores each live chat as its OWN dedicated terminal tab
+  // (BL-CPCOS-RESTORE-002). Current cwd only -> low churn; generate_from_snapshot
+  // is idempotent (skips the write when the doc is unchanged) and merge-safe.
+  + "try:\n"
+  + "    from modules.cpc_os import vscode_autorun\n"
+  + "    _snap = os.path.join(os.path.expanduser('~'), '.claude', 'state', 'session_snapshot.json')\n"
+  + "    vscode_autorun.generate_from_snapshot(_snap, cwds=[os.environ.get('PP_PANE_CWD') or os.getcwd()])\n"
+  + "except Exception:\n"
   + "    pass\n";
 
 function hookCpcOsRegister(cwd, sessionId) {
