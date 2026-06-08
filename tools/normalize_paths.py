@@ -151,6 +151,13 @@ ALLOWLIST: dict[str, set[str]] = {
     # as tools/_inventory/agents.json.
     "vault/skills_index.json":             {"code-path"},
     "vault/skills_index_unified.json":     {"code-path"},
+    # ---- Machine-generated SessionStart-hub benchmark records
+    # (2026-06, BL-HOOK-MIRROR cycle). The `cmd` / `settings_path`
+    # fields capture the REAL hook command lines as executed on this
+    # host -- the path literals ARE the measured evidence; rewriting
+    # them would falsify the benchmark. Same posture as
+    # vault/skills_index.json and vault/audits/bulk_vault_extract.json.
+    "vault/benchmarks/session_start_*.json": {"code-path"},
     # ---- Code Review Skill V-block fixtures (2026-05-23): the
     # canonical AWS test key `AKIAIOSFODNN7EXAMPLE` appears verbatim
     # as the V-BLOCK-SECRET payload. Test fixtures by design (the
