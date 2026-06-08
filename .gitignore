@@ -56,3 +56,4 @@ vault/.arch-index/
 # UUIDs -- never version-control them).
 .vscode/tasks.json
 .vscode/tasks.json.cpc-bak
+vault/setup_os/profiles/

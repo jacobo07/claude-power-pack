@@ -142,9 +142,14 @@ def main() -> int:
         "errors_fixed": 0,
     })
     _reset_throttle(proj)
+    # Governance Propagation (BL-GOV-PROP-001, SCS C43): sdd_tier TOOK the spec
+    # slot in the dispatch plan (tier-aware, supersedes the binary
+    # spec_compliance gate). The gate's intent -- spec governance surfaces via
+    # dispatch -- is unchanged; the agent is now pp-sdd-tier. The
+    # spec_compliance UNIT gates (V-DEPT-SPEC-*) still exercise it directly.
     _check("V-DEPT-DISPATCH-SPEC",
-           any("pp-spec-guardian" in a for a in adv),
-           "spec-guardian surfaced via dispatch",
+           any("pp-sdd-tier" in a for a in adv),
+           "spec governance (pp-sdd-tier) surfaced via dispatch",
            f"advisories={adv!r}")
 
     agents_dir = PP / "vault" / "agents"

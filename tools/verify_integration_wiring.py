@@ -111,7 +111,10 @@ def main() -> int:
         encoding="utf-8")
     gate("V-CPCOS-HUB-WIRED",
          "function hookCpcOsRegister" in hub_src
-         and "hookCpcOsRegister(cwd)" in hub_src,
+         # call signature gained `sessionId` when session_id capture was wired
+         # (BL-CPCOS-SNAPSHOT-001); match the prefix so the gate tracks the real
+         # call `hookCpcOsRegister(cwd, sessionId)` and not the stale 1-arg form.
+         and "hookCpcOsRegister(cwd" in hub_src,
          "hookCpcOsRegister defined + called")
 
     # 8. Hub still runs within budget (SCS C23: < 1500 ms) + valid JSON

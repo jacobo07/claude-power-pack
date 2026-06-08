@@ -1304,3 +1304,36 @@ around it); never pre-delete temp helpers (leave them in $env:TEMP).
 **Finding:** the PreToolUse Bash-chain does NOT block `rm -rf /` -- cascade /
 HR-CASCADE-002 is Hard-Rule/agent-layer, NOT a PreToolUse hook here. Test the
 gate the change actually touches, not an assumed one.
+
+### SCS C43 -- PP-Governance-Global-by-default (2026-06-08, BL-GOV-PROP-001)
+
+PP governance systems (SDD-OS tiers, PRD/spec requirement, Setup-OS scan) fire
+in ANY repo via `proactive_dispatcher`, not just security. No per-repo config.
+**Silence = approval for Tier 0-1; Tier >= 2 without a spec = automatic
+advisory.** Implementation:
+
+- The cross-repo rail ALREADY existed (FASE -1 correction): `jit_skill_loader.py`
+  (UserPromptSubmit hook, runs in any cwd) -> `_pp_proactive_inject` ->
+  `dispatch_to_additional_context(ctx_in)` with the real `prompt`+`cwd`. The gap
+  was only the missing signals; the wiring was done.
+- `signals/sdd_tier.py` composes `spec_gate.classify_tier` + `check_spec_gate`:
+  advisory only if Tier >= 2 AND no spec; silent for Tier 0-1. It TOOK the spec
+  slot in the dispatch plan (tier-aware; supersedes the binary spec_compliance,
+  whose UNIT tests stay -- only the dispatch line + the one dispatch-integration
+  assertion swapped to pp-sdd-tier).
+- `signals/setup_scan.py` composes `setup_os/registry.has_profile(cwd)`:
+  un-profiled repo -> `/scan-repo` advisory (24h throttle); silent once scanned;
+  returns None on empty cwd (no repo context -> no nag -- this also preserved the
+  clean-context invariant in the proactive/spec suites).
+- `setup_os/registry.py` central store at `vault/setup_os/profiles/<slug>_<hash>`
+  in the PP repo (keyed by resolved path; external repos never polluted).
+  `scanner.py --save` persists; bootstraps PP_ROOT onto sys.path so it runs from
+  ANY cwd.
+- Throttle: sdd_tier 5m, setup_scan 1440m (no-spam invariant; dispatcher caps 3).
+
+Lesson (compose-not-rebuild): every primitive existed and was cwd-aware
+(`classify_tier`, `check_spec_gate`, `scanner.scan`); the prompt's premise that
+"the mechanism isn't wired cross-repo" was disproved in FASE -1 -- verify the
+live rail before planning a rebuild. Gates: test_governance_propagation 7/7 x3
+hermetic; proactive 16/16; spec_department 13/13; sdd_os 10/10; setup_os 8/8;
+integration_wiring 9/9 (fixed a stale pre-existing assertion in the same pass).

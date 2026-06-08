@@ -1,7 +1,7 @@
 """PP Proactive Dispatcher -- Jobs/Woz Standard.
 
 Single entry point called from tools/jit_skill_loader.py on every
-UserPromptSubmit. Evaluates the six signal modules in priority order,
+UserPromptSubmit. Evaluates the signal modules in priority order,
 respects per-agent throttle, and returns at most three advisories per
 turn (no-spam invariant).
 """
@@ -29,6 +29,8 @@ from modules.pp_agents.signals import (
     lessons,
     premise_risk,
     quality,
+    sdd_tier,
+    setup_scan,
     spec_compliance,
 )
 
@@ -85,6 +87,21 @@ AGENT_CONFIGS: dict[str, AgentConfig] = {
         min_signal_strength=0.5,
         domains=["spec"],
     ),
+    # Governance Propagation (BL-GOV-PROP-001) -- cross-repo governance signals.
+    # pp-sdd-tier TAKES the spec slot (tier-aware; supersedes the binary
+    # spec_compliance gate in the dispatch plan). pp-setup-scan nudges an
+    # un-profiled repo once per day.
+    "pp-sdd-tier": AgentConfig(
+        "pp-sdd-tier",
+        cooldown_minutes=5,
+        min_signal_strength=0.5,
+        domains=["spec"],
+    ),
+    "pp-setup-scan": AgentConfig(
+        "pp-setup-scan",
+        cooldown_minutes=1440,   # once per repo per day
+        min_signal_strength=0.5,
+    ),
     "pp-premise-guardian": AgentConfig(
         "pp-premise-guardian",
         cooldown_minutes=20,
@@ -103,8 +120,8 @@ def dispatch(context: dict) -> list[str]:
 
     context keys (all optional, defaults safe):
       project              -- str cwd basename, used for throttle scope
-      prompt               -- str current user prompt (spec-guardian)
-      cwd                  -- str active repo path (spec-guardian)
+      prompt               -- str current user prompt (spec/tier signals)
+      cwd                  -- str active repo path (spec/tier/setup signals)
       last_written_code    -- str newly-written code body
       last_written_file    -- str path of the last touched file
       current_error        -- str current error message text
@@ -133,9 +150,16 @@ def dispatch(context: dict) -> list[str]:
          lambda: cascade.evaluate(
              context.get("current_error", ""), project)),
         ("pp-backlog-autopilot", lambda: backlog.evaluate(project)),
-        ("pp-spec-guardian",
-         lambda: spec_compliance.evaluate(
+        # Governance Propagation (BL-GOV-PROP-001): sdd_tier takes the spec slot
+        # (tier-aware; supersedes the binary spec_compliance gate); setup_scan
+        # nudges an un-profiled repo. Both run cross-repo (any cwd). The legacy
+        # spec_compliance module is retained (its unit tests still cover it) but
+        # is no longer in the dispatch plan -- sdd_tier subsumes its concern.
+        ("pp-sdd-tier",
+         lambda: sdd_tier.evaluate(
              context.get("prompt", ""), context.get("cwd", ""), project)),
+        ("pp-setup-scan",
+         lambda: setup_scan.evaluate(context.get("cwd", ""), project)),
         ("pp-premise-guardian",
          lambda: premise_risk.evaluate(
              context.get("current_error", ""),

@@ -15,8 +15,17 @@ import argparse
 import json
 from collections import Counter
 from dataclasses import asdict, dataclass, field as dc_field
+import sys
 from enum import Enum
 from pathlib import Path
+
+# Allow running as a standalone script from ANY cwd (e.g. /scan-repo invoked
+# inside an external repo): put the PP repo root on sys.path so the absolute
+# `from modules.setup_os.registry import ...` used by --save resolves in every
+# invocation mode (python -m modules.setup_os.scanner OR python <abs>/scanner.py).
+_PP_ROOT = Path(__file__).resolve().parents[2]
+if str(_PP_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PP_ROOT))
 
 MAX_FILES = 20000          # walk cap -- a runaway tree never hangs the scan
 _SKIP_DIRS = frozenset({
@@ -335,8 +344,19 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Project Intelligence Scanner")
     ap.add_argument("--path", default=".")
     ap.add_argument("--json", action="store_true", help="emit full JSON profile")
+    ap.add_argument("--save", action="store_true",
+                    help="persist the profile to the Setup-OS registry "
+                         "(PP vault/setup_os/profiles/, keyed by repo path) so "
+                         "the pp-setup-scan signal knows this repo is profiled")
     args = ap.parse_args(argv)
     p = scan(args.path)
+    if args.save:
+        try:
+            from modules.setup_os.registry import save_profile
+            dest = save_profile(args.path, p.to_dict())
+            print(f"profile saved: {dest}")
+        except Exception as exc:  # noqa: BLE001 -- never fail the scan on save
+            print(f"[warn] profile not saved: {type(exc).__name__}: {exc}")
     if args.json:
         print(json.dumps(p.to_dict(), indent=2, default=str))
     else:

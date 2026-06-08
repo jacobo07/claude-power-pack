@@ -14,10 +14,19 @@ source (`detected_from_file` / `_config` / `_command` /
 
 ## Run
 
+Works from ANY cwd (the scanner bootstraps the PP repo onto sys.path), so you
+can profile the repo you are currently in:
+
 ```
-python -m modules.setup_os.scanner --path <repo>          # human summary
-python -m modules.setup_os.scanner --path <repo> --json   # full profile
+python -m modules.setup_os.scanner --path .               # human summary
+python -m modules.setup_os.scanner --path . --json        # full profile
+python -m modules.setup_os.scanner --path . --save        # persist to registry
 ```
+
+`--save` writes the ProjectProfile to the Setup-OS registry in the PP repo
+(`vault/setup_os/profiles/<slug>_<pathhash>.json`, keyed by the repo's resolved
+path — never written into the scanned repo). Once saved, the cross-repo
+`pp-setup-scan` signal stays silent for that repo (it stops nudging you to scan).
 
 ## Output
 - A one-line profile summary + a `setup_readiness_score` (0-100).
