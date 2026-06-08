@@ -85,7 +85,13 @@ function readStdin() {
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', c => { buf += c; });
     process.stdin.on('end', () => resolve(buf));
-    setTimeout(() => resolve(buf), 4500);
+    // RAM-regression fix 2026-06-08: the SessionStart JSON arrives in a
+    // single <1 KB chunk, but the 4500 ms fallback was firing on every
+    // session-open (measured 4561 ms ≈ full timeout). Across a 10-pane
+    // startup it cost ~45 s of churn. 800 ms keeps a generous margin for
+    // event-loop scheduling delay under multi-pane contention while
+    // cutting ~3.7 s/pane. Fast path (stdin 'end') is unchanged.
+    setTimeout(() => resolve(buf), 800);
   });
 }
 

@@ -58,6 +58,12 @@ DISCOVERY_TOK = 80              # hard cap for the discovery card
 SKIP_DIRS = {
     "node_modules", ".git", "dist", "build", "vendor", ".next", "out",
     "coverage", ".turbo", ".cache", "target", ".venv", "__pycache__",
+    # RAM-regression fix 2026-06-08: test fixtures must NOT drive runtime
+    # skill injection. A single tests/fixtures/*.graphql made the FS-walk
+    # classify the whole repo as a GraphQL project and force-inject ~15 KB
+    # of Apollo context on EVERY prompt (per-pane heap inflation). Real
+    # GraphQL projects keep .graphql under src/, which the walk still finds.
+    "tests", "test", "__tests__", "fixtures", "testdata",
 }
 
 # (name, regex over prompt+package deps, [modules], priority).
