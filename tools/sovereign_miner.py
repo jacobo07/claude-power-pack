@@ -30,12 +30,17 @@ import hashlib
 import subprocess
 from collections import Counter, defaultdict
 
-PROJECTS_DIR = r"C:\Users\User\.claude\projects"
-CURSOR_DIR = r"C:\Users\User\Desktop\Cursor Projects"
-PP_DIR = r"C:\Users\User\.claude\skills\claude-power-pack"
-CLAUDE_DIR = r"C:\Users\User\.claude"
-OUT_DIR = r"C:\Users\User\Downloads\PowerPack_Sovereign_Datasets"
-FFMPEG = r"C:\Users\User\tools\ffmpeg\ffmpeg.exe"
+# Host-derived from ~ so the miner is correct on any user/host
+# (T-PATH-HARDCODE-001: dynamic cwd/home always, never a hardcoded
+# C:\Users\<name>\... prefix). Roots unchanged: Cursor Projects is the
+# Owner's active dev-repo root (NOT Repos-GitHub).
+_HOME = os.path.expanduser("~")
+PROJECTS_DIR = os.path.join(_HOME, ".claude", "projects")
+CURSOR_DIR = os.path.join(_HOME, "Desktop", "Cursor Projects")
+PP_DIR = os.path.join(_HOME, ".claude", "skills", "claude-power-pack")
+CLAUDE_DIR = os.path.join(_HOME, ".claude")
+OUT_DIR = os.path.join(_HOME, "Downloads", "PowerPack_Sovereign_Datasets")
+FFMPEG = os.path.join(_HOME, "tools", "ffmpeg", "ffmpeg.exe")
 VIDEO = r"C:\Users\User\Videos\2026-05-15 18-28-33.mp4"
 
 LINE_BYTE_CAP = 5 * 1024 * 1024  # skip a single jsonl line larger than 5 MB

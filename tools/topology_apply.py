@@ -99,9 +99,16 @@ def main(argv: list[str] | None = None) -> int:
                              "If Cursor processes exist, still refuses (exit 4).")
     parser.add_argument("--search-roots", nargs="*",
                         default=[
-                            "C:/Users/kobig/Desktop/Repos-GitHub",
-                            "C:/Users/kobig",
-                            "C:/Users/kobig/Documents",
+                            # Dynamic per-host roots — the Owner's active dev
+                            # repos live in Desktop/Cursor Projects (NOT
+                            # Repos-GitHub, which holds only knowledge vaults),
+                            # plus Apps for tooling repos. Derived from
+                            # Path.home() so it is correct on any host/user
+                            # (the prior hardcoded C:/Users/kobig/... defaults
+                            # were dead: that user does not exist here).
+                            str(Path.home() / "Desktop" / "Cursor Projects"),
+                            str(Path.home() / "Apps"),
+                            str(Path.home()),
                         ],
                         help="Directories to scan for workspace hints.")
     args = parser.parse_args(argv)
