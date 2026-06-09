@@ -124,15 +124,31 @@ def _commit_for(rec, cwd_cache: dict[str, str | None]) -> str:
     return _NO_COMMIT
 
 
-def _resume_for(rec, sess_cache: dict[str, str | None]) -> tuple[str, str, str | None]:
+def _resume_for(
+    rec,
+    sess_cache: dict[str, str | None],
+    live_sids: frozenset[str] | None = None,
+) -> tuple[str, str, str | None]:
     """Return (resume_command, resume_kind, resolved_session).
 
     resume_kind in {exact, missing}:
-      * exact   -- registry session_id whose transcript EXISTS on disk. This is
+      * exact   -- registry session_id whose transcript EXISTS on disk, OR the
+                   session that is LIVE right now (``sid in live_sids``). This is
                    the ONLY way a pane resumes a specific conversation.
       * missing -- the pane's own session_id has no transcript (it predates the
                    sid capture, or the conversation was abandoned). We open a
                    FRESH ``claude`` in the right cwd rather than resuming.
+
+    LIVE-SESSION TRUST (BL-CPCOS-RESTORE-003, 2026-06-09): the SessionStart hub
+    regenerates the snapshot the instant a pane opens, but Claude Code creates
+    the session's own ``<sid>.jsonl`` transcript ~1-2 MINUTES LATER (empirically:
+    snapshot at 14:53:44Z, transcript born 14:55:29Z). So the CURRENT live
+    session always failed the ``is_file()`` check at capture time and was baked
+    into tasks.json as a FRESH ``claude`` -> on Cursor reopen the most important
+    pane (the one you are in) opened a NEW session with "History restored"
+    instead of resuming the exact conversation. The hub passes its own
+    ``PP_PANE_SID`` as a live sid; a live sid is trusted by IDENTITY because its
+    transcript provably WILL exist by restore time (the process is running).
 
     DELIBERATELY NO repo-latest substitution (removed 2026-06-08, BL-CPCOS-RESTORE
     -002): the old behaviour silently resumed the cwd's most-recent transcript
@@ -144,7 +160,9 @@ def _resume_for(rec, sess_cache: dict[str, str | None]) -> tuple[str, str, str |
     from another pane's conversation. ``sess_cache`` is retained for signature
     stability but no longer consulted."""
     sid = rec.session_id
-    if sid and _transcript_path(rec.cwd, sid).is_file():
+    if sid and (
+        (live_sids and sid in live_sids) or _transcript_path(rec.cwd, sid).is_file()
+    ):
         return f"claude --resume {sid}", "exact", sid
     return f'cd "{rec.cwd}" && claude', "missing", None
 
@@ -160,7 +178,11 @@ def _recovery_header() -> list[str]:
     ]
 
 
-def _render(registry: PaneRegistry, now: float | None) -> tuple[str, list[dict]]:
+def _render(
+    registry: PaneRegistry,
+    now: float | None,
+    live_sids: frozenset[str] | None = None,
+) -> tuple[str, list[dict]]:
     t = time.time() if now is None else now
     panes = [r for r in registry.panes.values() if r.status in _LIVE_STATUSES]
     # Dedup by (cwd, session_id). Every SessionStart re-registers a NEW pane row
@@ -201,7 +223,7 @@ def _render(registry: PaneRegistry, now: float | None) -> tuple[str, list[dict]]
     for i, rec in enumerate(panes, start=1):
         repo = Path(rec.cwd).name or rec.cwd
         commit = _commit_for(rec, cwd_cache)
-        resume, kind, resolved = _resume_for(rec, sess_cache)
+        resume, kind, resolved = _resume_for(rec, sess_cache, live_sids)
         flag = "" if rec.status == "active" else f"  [{rec.status}]"
         lines.append(f"PANE {i}{flag}")
         lines.append(f"Repo:   {repo}")
@@ -240,9 +262,13 @@ def _render(registry: PaneRegistry, now: float | None) -> tuple[str, list[dict]]
     return "\n".join(lines), machine
 
 
-def build_snapshot_text(registry: PaneRegistry, now: float | None = None) -> str:
+def build_snapshot_text(
+    registry: PaneRegistry,
+    now: float | None = None,
+    live_sids: frozenset[str] | None = None,
+) -> str:
     """Render the snapshot markdown for ``registry`` (text only)."""
-    return _render(registry, now)[0]
+    return _render(registry, now, live_sids)[0]
 
 
 def generate_snapshot(
@@ -250,6 +276,7 @@ def generate_snapshot(
     out_path: Path | None = None,
     now: float | None = None,
     mark_stale: bool = True,
+    live_sid: str | None = None,
 ) -> Path:
     """Load (or accept) the registry, demote stale panes, render the snapshot,
     and atomically write BOTH the markdown and a .json sidecar (same machine
@@ -261,7 +288,8 @@ def generate_snapshot(
     if mark_stale:
         from .heartbeat import mark_stale_panes
         mark_stale_panes(reg)
-    text, machine = _render(reg, now)
+    live = frozenset([live_sid]) if live_sid else None
+    text, machine = _render(reg, now, live)
     target = Path(out_path or DEFAULT_SNAPSHOT_PATH)
     _atomic_write(target, text)
     sidecar = target.with_suffix(".json")

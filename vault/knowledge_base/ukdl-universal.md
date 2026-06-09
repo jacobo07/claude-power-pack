@@ -1337,3 +1337,47 @@ Lesson (compose-not-rebuild): every primitive existed and was cwd-aware
 live rail before planning a rebuild. Gates: test_governance_propagation 7/7 x3
 hermetic; proactive 16/16; spec_department 13/13; sdd_os 10/10; setup_os 8/8;
 integration_wiring 9/9 (fixed a stale pre-existing assertion in the same pass).
+
+### T-RESTORE-STALE-SID-001 -- current session restores as a fresh "History restored" pane instead of `--resume <sid>`
+
+**Trap:** the CPC-OS restore baked the WRONG resume command for the CURRENT
+session into `.vscode/tasks.json`, so on Cursor reopen the pane you were
+actually in opened a brand-new session (banner "History restored") instead of
+resuming the exact conversation. The other panes (older sessions) resumed fine
+-- only the live one failed, which is the one that matters most.
+
+**Real mechanism (empirically diagnosed 2026-06-09, NOT the hypothesised
+"stale sid from a previous session"):** a transcript-creation RACE.
+`session_start_hub.js` Hook 8 regenerates the snapshot the instant a pane opens
+and `snapshot._resume_for` decided `exact` vs `missing` by
+`_transcript_path(cwd, sid).is_file()`. But Claude Code creates the session's
+own `~/.claude/projects/<enc-cwd>/<sid>.jsonl` **~1-2 minutes AFTER**
+SessionStart (measured: snapshot written 14:53:44Z, transcript born 14:55:29Z).
+So the current session's sid ALWAYS failed `is_file()` at capture time ->
+`resume_kind=missing` -> `vscode_autorun` wrote a generic `kclaude.bat` (no
+`--resume`) task -> fresh session on reopen.
+
+**Avoidance / fix (BL-CPCOS-RESTORE-003):** trust the LIVE session's sid by
+IDENTITY, not by file-existence-at-an-unlucky-moment. The hub passes its own
+`PP_PANE_SID` as `live_sid` to `generate_snapshot(live_sid=...)`; `_resume_for`
+treats `sid in live_sids` as `exact` even before the transcript flushes -- the
+process is running, so the transcript provably WILL exist by restore time.
+Non-live sids keep the `is_file()` guard, so genuinely-abandoned sids still
+resolve `missing` (preserves BL-CPCOS-RESTORE-002 no-substitution +
+BL-LAZ-STALE-001 transcript guard). The 15-min `snapshot_auto_writer` and the
+next SessionStart self-heal any sid that never produces a transcript.
+
+**Recognizer:** a resume manifest / autorun artifact decides "resume vs fresh"
+by a file the SAME event is racing to create. If the artifact is generated at
+SessionStart but the file it checks is written later by the host, the
+just-started entity always loses the race. Resolve such artifacts by identity
+of the live process, or regenerate them after the file is guaranteed present
+(Stop hook / periodic writer) -- never bake a point-in-time existence check of
+a not-yet-written file into a persisted restore command.
+
+**Gates:** `tools/test_cpc_snapshot.py` 17/17 (new `V-RESUME-LIVE-SID`, hermetic
+x2); `tools/test_vscode_autorun.py` 10/10. Verified live: post-fix
+`claude-power-pack/.vscode/tasks.json` carries `--resume f78deb41...` for the
+current pane (was a no-arg "new" task pre-fix). SCS C33 lineage (writer ->
+reader -> ACT): this closes the RESOLVE leg -- the reader read a field the
+producer had not yet populated for the live session.

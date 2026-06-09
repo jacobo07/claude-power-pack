@@ -242,6 +242,31 @@ def main() -> int:
         else:
             _fail("V-DEDUP-BY-SESSION", f"dedup wrong: {len(m2)} panes sids={sids2}")
 
+        # V-RESUME-LIVE-SID  -- the CURRENT live session must resume EXACTLY even
+        # when Claude Code has NOT yet flushed its <sid>.jsonl. The hub passes
+        # PP_PANE_SID as live_sid; a live sid is trusted by IDENTITY (its
+        # transcript provably appears ~1-2 min later -- empirically snapshot at
+        # 14:53:44Z, transcript born 14:55:29Z). A non-live sid with no transcript
+        # stays "missing". Without this the current pane -- the one you are in --
+        # opened a fresh "History restored" session (BL-CPCOS-RESTORE-003).
+        reg3 = PaneRegistry(_path=tmp / "reg3.json")
+        cwd_live = str(tmp / "repoLive")          # NO transcript on disk for either sid
+        reg3.register_pane("paneLive", cwd_live, "t", session_id="sid-LIVE")
+        reg3.register_pane("paneDead", cwd_live, "t", session_id="sid-DEAD")
+        m3 = {x["session_id"]: x for x in snap._render(
+            reg3, 1700000000.0, frozenset({"sid-LIVE"}))[1]}
+        live_rec, dead_rec = m3.get("sid-LIVE", {}), m3.get("sid-DEAD", {})
+        if (live_rec.get("resume_kind") == "exact"
+                and live_rec.get("resume") == "claude --resume sid-LIVE"
+                and dead_rec.get("resume_kind") == "missing"
+                and "sid-DEAD" not in str(dead_rec.get("resume", ""))):
+            _ok("V-RESUME-LIVE-SID",
+                "live sid -> exact w/o transcript; non-live sid -> missing")
+        else:
+            _fail("V-RESUME-LIVE-SID",
+                  f"live={live_rec.get('resume_kind')}/{live_rec.get('resume')} "
+                  f"dead={dead_rec.get('resume_kind')}/{dead_rec.get('resume')}")
+
     total = passes + fails
     print(f"SNAPSHOT_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1

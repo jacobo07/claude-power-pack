@@ -421,7 +421,11 @@ const CPC_REGISTER_SCRIPT =
   + "    pass\n"
   + "try:\n"
   + "    from modules.cpc_os.snapshot import generate_snapshot\n"
-  + "    generate_snapshot()\n"
+  // Trust THIS live session's sid even before Claude Code flushes its
+  // <sid>.jsonl (~1-2 min after SessionStart) so the current pane resumes
+  // EXACTLY instead of opening a fresh "History restored" session
+  // (BL-CPCOS-RESTORE-003).
+  + "    generate_snapshot(live_sid=sid)\n"
   + "except Exception:\n"
   + "    pass\n"
   // Refresh THIS repo's .vscode/tasks.json from the fresh snapshot so a Cursor
