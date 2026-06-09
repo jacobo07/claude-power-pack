@@ -125,6 +125,13 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jobs_woz_gate.js', timeoutMs: 15000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jit_correlate_stop.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_snapshot_stop.js', timeoutMs: 10000 },
+    // ADS auto-documentation (BL-ADS-001). Reads cwd from the Stop JSON,
+    // diffs the working tree, writes docs/{prd,arch,constitution,changelog}
+    // for CREATED/UPDATED modules. NEVER stages/commits; fail-open (always
+    // exit 0) so it can never block Stop; block:false. timeoutMs:6000 caps
+    // the git+AST work (audit gap #2). MINOR/DELETED are silent; a per-repo
+    // docs/.ads-disabled file is the kill switch.
+    { exe: PY_EXE, script: '../skills/claude-power-pack/tools/ads_sync.py', timeoutMs: 6000 },
   ],
   // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
   // Root cause: settings.json registered 7 standalone PreToolUse hooks on
