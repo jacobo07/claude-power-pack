@@ -103,10 +103,27 @@ def build_pane_task(resume: str, label_key: str) -> dict:
     }
 
 
-def build_cpc_tasks(panes_for_cwd: list[dict]) -> list[dict]:
+def build_cpc_tasks(
+    panes_for_cwd: list[dict],
+    target_count: int | None = None,
+) -> list[dict]:
     """Deduped list of CPC-Restore tasks for one repo. Dedup key is the resume
     command itself (panes that resolve to the same session share one terminal,
-    mirroring restore_panes.ps1). Label key prefers a readable session tail."""
+    mirroring restore_panes.ps1). Label key prefers a readable session tail.
+
+    ``target_count`` (Cursor-authoritative, BL-CPCOS-RESTORE-004): when given,
+    the result is forced to EXACTLY this many tasks -- the number of terminal
+    shells Cursor actually had open for this repo (from
+    topology_reconcile.live_tab_counts). This neutralises the count-drift
+    sources entirely:
+      * fewer distinct resumes than tabs -> PAD with uniquely-labelled fresh
+        ``claude`` tasks so N non-resumable chats survive as N terminals instead
+        of collapsing to one (RC-2);
+      * more distinct resumes than tabs -> TRUNCATE to the live count (the extra
+        sessions belong to tabs the Owner has since closed).
+    ``target_count=None`` keeps the legacy derived behaviour unchanged (so a
+    host without captured topology never regresses). A non-positive
+    ``target_count`` is ignored (degenerate) and also falls back to derived."""
     seen: "OrderedDict[str, dict]" = OrderedDict()
     for p in panes_for_cwd:
         resume = (p.get("resume") or "").strip()
@@ -122,7 +139,23 @@ def build_cpc_tasks(panes_for_cwd: list[dict]) -> list[dict]:
         else:
             label_key = f"new [{p.get('repo') or 'repo'}]"
         seen[resume] = build_pane_task(resume, label_key)
-    return list(seen.values())
+    tasks = list(seen.values())
+
+    if not target_count or target_count <= 0:
+        return tasks
+    if len(tasks) >= target_count:
+        # Truncate extras -- closed tabs. Keep the first (snapshot order =
+        # active-first, most-recent-first) so the survivors are the live ones.
+        return tasks[:target_count]
+    # Pad with uniquely-labelled fresh `claude` tabs (bare command -> launches
+    # in ${workspaceFolder}). Distinct labels keep VS Code from deduping them,
+    # so the COUNT lands exactly on the live tab count.
+    repo = next((p.get("repo") for p in panes_for_cwd if p.get("repo")), "repo")
+    k = 0
+    while len(tasks) < target_count:
+        k += 1
+        tasks.append(build_pane_task("", f"new {k} [{repo}]"))
+    return tasks
 
 
 def _is_cpc_task(task: dict) -> bool:
@@ -164,12 +197,15 @@ def write_autorun_for_cwd(
     panes_for_cwd: list[dict],
     vscode_dir: Path | str | None = None,
     dry_run: bool = False,
+    target_count: int | None = None,
 ) -> dict:
     """Generate/merge ``<cwd>/.vscode/tasks.json`` for one repo. Returns a
     result dict: {cwd, tasks_path, n_tasks, action, backed_up, parse_ok}.
     ``vscode_dir`` overrides the .vscode location (hermetic tests). dry_run
-    computes everything and returns the doc WITHOUT touching disk."""
-    cpc_tasks = build_cpc_tasks(panes_for_cwd)
+    computes everything and returns the doc WITHOUT touching disk.
+    ``target_count`` (Cursor-authoritative tab count) forces exactly that many
+    tasks; None keeps the legacy derived count (BL-CPCOS-RESTORE-004)."""
+    cpc_tasks = build_cpc_tasks(panes_for_cwd, target_count=target_count)
     vdir = Path(vscode_dir) if vscode_dir else Path(cwd) / ".vscode"
     tasks_path = vdir / "tasks.json"
 
@@ -225,19 +261,28 @@ def generate_from_snapshot(
     snapshot_json: Path | str,
     cwds: list[str] | None = None,
     dry_run: bool = False,
+    tab_counts: dict[str, int] | None = None,
 ) -> list[dict]:
     """Read the snapshot sidecar and write an auto-run tasks.json per repo.
-    ``cwds`` (optional) restricts to specific repos. Returns one result per
-    repo. Raises FileNotFoundError if the snapshot is missing (the caller
-    surfaces a clean message)."""
+    ``cwds`` restricts to specific repos. ``tab_counts`` maps norm_path(cwd) to
+    a live terminal-tab count; None captures it live (fail-open to {})."""
     path = Path(snapshot_json)
     panes = json.loads(path.read_text(encoding="utf-8-sig"))
+    if tab_counts is None:
+        try:
+            from . import topology_reconcile
+            tab_counts = topology_reconcile.current_tab_counts()
+        except Exception:
+            tab_counts = {}
+    from .topology_reconcile import norm_path
     wanted = set(cwds) if cwds else None
     results: list[dict] = []
     for cwd, group in _group_by_cwd(panes).items():
         if wanted is not None and cwd not in wanted:
             continue
-        results.append(write_autorun_for_cwd(cwd, group, dry_run=dry_run))
+        target = (tab_counts or {}).get(norm_path(cwd))
+        results.append(write_autorun_for_cwd(
+            cwd, group, dry_run=dry_run, target_count=target))
     return results
 
 

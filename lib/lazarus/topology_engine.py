@@ -150,11 +150,20 @@ def read_topology(db_path: str) -> dict[str, Any]:
 
 
 def snapshot_workspace(ws: dict[str, Any]) -> dict[str, Any]:
-    """Capture one workspace's full topology snapshot."""
+    """Capture one workspace's full topology snapshot.
+
+    ``db_mtime`` (state.vscdb mtime) lets a consumer pick the LIVE workspace
+    when one folder appears under several stale workspaceStorage hashes
+    (topology_reconcile.live_tab_counts). Excluded from envelope_hash."""
+    try:
+        db_mtime: float | None = os.path.getmtime(ws["db_path"])
+    except OSError:
+        db_mtime = None
     return {
         "hash": ws["hash"],
         "folder": ws["folder"],
         "captured_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "db_mtime": db_mtime,
         "topology": read_topology(ws["db_path"]),
         "gaps": {
             "scroll_position_per_terminal": "NOT CAPTURED -- xterm.js renderer state, requires Cursor extension",
@@ -187,9 +196,10 @@ def snapshot_all() -> dict[str, Any]:
 
 def envelope_hash(envelope: dict[str, Any]) -> str:
     """Stable hash of the topology snapshots (skips timestamps)."""
+    _skip = ("captured_at", "db_mtime")
     payload = {
         "snapshots": [
-            {k: v for k, v in s.items() if k != "captured_at"} for s in envelope["snapshots"]
+            {k: v for k, v in s.items() if k not in _skip} for s in envelope["snapshots"]
         ],
     }
     blob = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
