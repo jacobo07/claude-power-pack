@@ -1,0 +1,77 @@
+{
+  "name": "pp-sessions",
+  "displayName": "PP Sessions",
+  "description": "Side panel of resumable Claude Code panes derived from disk truth. One-click exact resume, no 'History restored'.",
+  "version": "0.1.0",
+  "publisher": "kobii",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ppSessions",
+          "title": "PP Sessions",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ppSessions": [
+        {
+          "id": "ppSessionsView",
+          "name": "Panes"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "ppSessions.refresh",
+        "title": "PP Sessions: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "ppSessions.resume",
+        "title": "PP Sessions: Resume in new terminal"
+      },
+      {
+        "command": "ppSessions.copyResume",
+        "title": "PP Sessions: Copy resume command"
+      },
+      {
+        "command": "ppSessions.openMap",
+        "title": "PP Sessions: Open pane_map.md"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "ppSessions.refresh",
+          "when": "view == ppSessionsView",
+          "group": "navigation"
+        },
+        {
+          "command": "ppSessions.openMap",
+          "when": "view == ppSessionsView",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "ppSessions.copyResume",
+          "when": "view == ppSessionsView && viewItem == ppPane",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "license": "SEE LICENSE IN LICENSE.txt"
+}
