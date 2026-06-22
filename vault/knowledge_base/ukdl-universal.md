@@ -708,6 +708,53 @@ a native-/clear measurement, not to /kclear.
 performs Y. If the doc/command only *recommends* the action that does Y,
 the gate must test the recommendation + the real effect's true owner.
 
+### UKDL TRAP T-PERSISTENT-SESSIONS-TASKS-CONFLICT-001 -- Two Reload Restorers Double Every Pane
+
+**Level:** UKDL Trap (redundant mechanism; UX duplication).
+**Sealed:** 2026-06-22 (no-duplicate-panes execution).
+
+**Trap:** `terminal.integrated.enablePersistentSessions: true` +
+`task.allowAutomaticTasks: "on"` + `.vscode/tasks.json` restore tasks with
+`runOptions.runOn: "folderOpen"` = duplication GUARANTEED on Reload Window.
+Persistent sessions reconnects the live terminals AND the `folderOpen` tasks
+spawn fresh `kclaude.bat --resume <sid>` terminals on top -> 2x terminals per
+session. The Owner sees two panes per repo. It is NOT a reload-kills-terminals
+bug (reload is non-destructive by default); it is two restorers running at once.
+
+**Why one dumb lever can't fix both reload and cold start:** `folderOpen` fires
+identically on reload (terminals alive) and cold start (terminals gone), so the
+task layer can satisfy reload-clean OR cold-restore, never both. Satisfying both
+needs a GUARDED restorer (check whether a terminal already exists for the cwd
+before launching) -- see T-TASK-NO-GUARD-001.
+
+**Fix:** `task.allowAutomaticTasks: "off"` in Cursor User settings -- persistent
+sessions becomes the sole reload restorer (exact N, zero dup); cold-start restore
+goes manual via the PP Sessions panel / `pane_map.md`. One global, reversible
+setting; mutates no repo's tasks.json (multi-pane hazard avoided).
+
+**Recognizer:** two mechanisms both claiming to restore the same resource on the
+same trigger = duplication. Pick one primary; demote the other to a guarded
+fallback or disable it.
+
+### UKDL TRAP T-TASK-NO-GUARD-001 -- A Restore Task With No Liveness Check Always Launches
+
+**Level:** UKDL Trap (idempotence; fail-open discipline).
+**Sealed:** 2026-06-22 (no-duplicate-panes execution).
+
+**Trap:** a `claude --resume` launcher (tasks.json `folderOpen` task, autoresume
+wrapper, extension restorer) that does NOT first check whether a terminal/session
+is already live for that cwd will launch unconditionally -- duplicating any pane
+the persistent pty host already restored. The dumb `folderOpen` task is the
+canonical instance.
+
+**Fix:** any auto-restorer must diff the desired resumable set (`pane_map.json`,
+transcript-on-disk) against the live terminals (by cwd) and launch `--resume`
+ONLY where no terminal exists. The guard is fail-open: if the liveness probe
+errors, launch anyway -- a duplicate pane is recoverable, a lost pane is not.
+
+**Recognizer:** an auto-launch path whose first action is the launch (no "does it
+already exist?" probe) = a duplicator under any retry/reload.
+
 ### UKDL TRAP T-LAG-001 -- SessionStart Hooks Block the Prompt
 
 **Level:** UKDL Trap (performance, UX).

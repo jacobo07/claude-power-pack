@@ -25,6 +25,36 @@ If a pane ever does come back as a fresh "History restored" session, open the
 **PP Sessions** panel and click **Resume** on that pane, or
 `PP Sessions: Open pane_map.md` and paste the exact `claude --resume <sid>`.
 
+## No duplicate panes on reload (folderOpen restore tasks)
+
+Persistent sessions alone is non-destructive, but a **second** restorer used to
+fire on top of it and double every pane. Each repo's `.vscode/tasks.json` holds
+`CPC-Restore` tasks with `runOptions.runOn: "folderOpen"`, and a Cursor reload
+re-triggers `folderOpen` when `task.allowAutomaticTasks` is `"on"`. So a reload
+produced **two terminals per session**: the persistent (reconnected) one *and* a
+fresh `kclaude.bat --resume <sid>` from the task. That is the duplication the
+Owner saw — not a reload bug, a *redundant-restorer* bug.
+
+`folderOpen` is a dumb trigger: it cannot tell a reload (terminals alive) from a
+cold start (terminals gone). Fix — make persistent sessions the sole reload
+restorer by disabling the auto-task layer in
+`%APPDATA%\Cursor\User\settings.json`:
+
+```jsonc
+"task.allowAutomaticTasks": "off",
+```
+
+After this, a reload restores **exactly N panes** (the reconnected ones, no
+duplicates). Trade-off: a **cold start** (full quit → reopen, pty host gone) no
+longer auto-restores from tasks.json — restore manually from the **PP Sessions**
+panel (one-click exact `--resume`) or `pane_map.md`. This matches the standing
+model: persistent-sessions + pane_map are the net; reload is Owner-driven.
+
+Re-enabling auto-restore for cold starts *without* re-introducing reload
+duplication requires a guarded restorer (extension diffs `pane_map.json` against
+live terminals by cwd, launches `--resume` only where no terminal exists) — a
+deliberate follow-up, not the dumb `folderOpen` layer.
+
 ## Start straight in the editor (no welcome / Agents home)
 
 Cursor opens the welcome / Agents home when `workbench.startupEditor` is unset
