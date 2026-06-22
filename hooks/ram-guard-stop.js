@@ -84,6 +84,7 @@ function main() {
       timeout: EXEC_TIMEOUT_MS,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'ignore'],
+      windowsHide: true,
     });
   } catch (e) {
     emit({ continue: true }); return;   // fail-open

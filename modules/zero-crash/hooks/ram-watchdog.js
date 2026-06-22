@@ -86,7 +86,7 @@ function getClaudeRssMbPosix() {
   // Posix fallback: ps -eo rss=,comm= | grep claude | sum.
   let raw = '';
   try {
-    raw = execSync('ps -eo rss=,comm=', { encoding: 'utf8', timeout: 2000 });
+    raw = execSync('ps -eo rss=,comm=', { encoding: 'utf8', timeout: 2000, windowsHide: true });
   } catch {
     return null;
   }

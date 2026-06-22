@@ -158,6 +158,7 @@ process.stdin.on('end', () => {
                 encoding: 'utf8',
                 stdio: ['ignore', 'pipe', 'pipe'],
                 timeout: 5000,
+                windowsHide: true,
             });
             fires.push({ num: m.num, label: m.label, status: 'fired', stdout: out.trim() });
         } catch (err) {

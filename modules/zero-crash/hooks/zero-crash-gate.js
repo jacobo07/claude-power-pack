@@ -65,6 +65,7 @@ function runGate(name, command, cwd, timeout = 30000) {
       timeout,
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true,
     });
     return { passed: true, gate: name, output: output.substring(0, 2000) };
   } catch (err) {
