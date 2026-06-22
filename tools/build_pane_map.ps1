@@ -21,9 +21,22 @@
     4. classify and emit.
   Never invents a session id; every emitted pane has a transcript on disk.
 
-  Outputs:
-    ~/.claude/state/pane_map.json   (machine-readable, read by the extension)
-    ~/.claude/state/pane_map.md     (human-readable recovery map)
+  LIVE vs RECENT (added 2026-06-22 after the InfinityOps reload RCA): the map is
+  deliberately over-inclusive (any transcript <=RecentHours) so it never DROPS a
+  recoverable pane. That over-inclusion conflated "open tab at risk on reload"
+  with "closed conversation you could reopen". We now mark each pane `live`:
+    live = sid is in the snapshot live-registry  OR  transcript written within
+           LiveMinutes (actively being written == an open tab right now).
+  `live:true`  -> an OPEN tab; persistent-sessions is supposed to revive it, the
+                  card is the deterministic fallback if it does not.
+  `live:false` -> a RECENT but closed conversation; a reopen candidate, not a
+                  pane you "lost". `status` (RESUMABLE/OLD) is unchanged so the
+                  extension needs no rebuild; `live` is purely additive.
+
+  Outputs (all under ~/.claude/state):
+    pane_map.json            machine-readable, read by the PP Sessions extension
+    pane_map.md              human-readable recovery map, grouped by repo
+    reload_recovery_card.md  paste-ready resume commands, grouped by repo
 
   Usage: powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_pane_map.ps1
 #>
@@ -32,7 +45,8 @@ param(
   [string]$StateDir = (Join-Path $env:USERPROFILE ".claude\state"),
   [string]$ProjBase = (Join-Path $env:USERPROFILE ".claude\projects"),
   [int]$RecentHours = 24,
-  [int]$OldHours = 48
+  [int]$OldHours = 48,
+  [int]$LiveMinutes = 12
 )
 $ErrorActionPreference = "Stop"
 $nowUtc = (Get-Date).ToUniversalTime()
@@ -88,9 +102,13 @@ function Get-TranscriptCwd($jsonl) {
 $snapPath = Join-Path $StateDir "session_snapshot.json"
 $activeCwds = @{}
 $snap = $null
+$snapSids = @{}
 if (Test-Path $snapPath) {
   $snap = Get-Content $snapPath -Raw -Encoding UTF8 | ConvertFrom-Json
-  foreach ($p in $snap) { if ($p.cwd) { $activeCwds[$p.cwd] = $true } }
+  foreach ($p in $snap) {
+    if ($p.cwd) { $activeCwds[$p.cwd] = $true }
+    if ($p.session_id) { $snapSids[$p.session_id] = $true }   # live registry
+  }
 }
 # disk discovery: any project dir holding a transcript touched within RecentHours
 # contributes its own recorded cwd -- this rescues repos the snapshot dropped.
@@ -116,20 +134,22 @@ foreach ($cwd in $activeCwds.Keys) {
     $sid = $f.BaseName
     if ($seen.ContainsKey($sid)) { continue }
     $ageH = ($nowUtc - $f.LastWriteTime.ToUniversalTime()).TotalHours
+    $ageMin = ($nowUtc - $f.LastWriteTime.ToUniversalTime()).TotalMinutes
     # recency gate: keep sessions touched within the work window OR still
     # registered in the snapshot (idle-but-open tabs)
-    $inSnap = $false
-    if ($snap) { foreach ($p in $snap) { if ($p.session_id -eq $sid) { $inSnap = $true; break } } }
+    $inSnap = $snapSids.ContainsKey($sid)
     if ($ageH -gt $RecentHours -and -not $inSnap) { continue }
     $meta = Get-SessionMeta $f.FullName
     if ($meta.isSub) { continue }                          # not a tab
     $seen[$sid] = $true
     $status = if ($ageH -gt $OldHours) { "OLD" } else { "RESUMABLE" }
+    # LIVE = in the snapshot live-registry OR actively written within LiveMinutes
+    $isLive = $inSnap -or ($ageMin -le $LiveMinutes)
     $items += [ordered]@{
       repo = $repo; cwd = $cwd; sessionId = $sid; topic = $meta.topic
       lastActivity = $f.LastWriteTime.ToUniversalTime().ToString('o')
       ageHours = [math]::Round($ageH, 1)
-      status = $status; resumeCmd = "claude --resume $sid"; confidence = "HIGH"
+      status = $status; live = $isLive; resumeCmd = "claude --resume $sid"; confidence = "HIGH"
     }
   }
 }
@@ -139,26 +159,31 @@ $items = @($items | Sort-Object { [datetime]$_.lastActivity } -Descending)
 $counts = [ordered]@{
   resumable = ($items | Where-Object { $_.status -eq 'RESUMABLE' }).Count
   old       = ($items | Where-Object { $_.status -eq 'OLD' }).Count
+  live      = ($items | Where-Object { $_.live }).Count
   repos     = (@($items | ForEach-Object { $_.repo }) | Sort-Object -Unique).Count
 }
-$payload = [ordered]@{ generatedAt = $nowUtc.ToString('o'); source = "transcripts-on-disk (active repos = snapshot UNION disk-discovered cwds)"; counts = $counts; panes = $items }
+$payload = [ordered]@{ generatedAt = $nowUtc.ToString('o'); source = "transcripts-on-disk (active repos = snapshot UNION disk-discovered cwds)"; liveMinutes = $LiveMinutes; counts = $counts; panes = $items }
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText((Join-Path $StateDir "pane_map.json"), ($payload | ConvertTo-Json -Depth 6), $utf8)
 
-# Markdown view, grouped by repo (most-recent-first)
+$repoNames = @(@($items | ForEach-Object { $_.repo }) | Sort-Object -Unique)
+
+# --- pane_map.md : human-readable recovery map, grouped by repo ---
 $sb = New-Object System.Text.StringBuilder
 function W($s) { [void]$sb.AppendLine($s) }
 W "# PP PANE MAP -- Recovery Safety Net"
 W ("Generated: " + (Get-Date).ToString('yyyy-MM-dd HH:mm') + " local | Source: transcripts-on-disk (active repos = snapshot UNION disk-discovered)")
+W ("LIVE = open tab right now (in snapshot or written < {0} min ago) -- at risk on reload. recent = closed conversation, a reopen candidate." -f $LiveMinutes)
 W "If a Cursor reload loses a pane, paste the exact command below into a terminal in the right repo."
 W ""
-$repoNames = @(@($items | ForEach-Object { $_.repo }) | Sort-Object -Unique)
 foreach ($rn in $repoNames) {
   $grpItems = @($items | Where-Object { $_.repo -eq $rn })
-  W ("## {0} ({1})" -f $rn, $grpItems.Count); W ""
+  $liveN = @($grpItems | Where-Object { $_.live }).Count
+  W ("## {0} ({1} -- {2} LIVE)" -f $rn, $grpItems.Count, $liveN); W ""
   foreach ($it in $grpItems) {
-    W ("- **{0}** ({1}h ago, {2})" -f $it.topic, $it.ageHours, $it.status)
+    $tag = if ($it.live) { "LIVE" } else { "recent" }
+    W ("- **[{0}] {1}** ({2}h ago, {3})" -f $tag, $it.topic, $it.ageHours, $it.status)
     W ("  - ``cd `"{0}`" ; {1}``" -f $it.cwd, $it.resumeCmd); W ""
   }
 }
@@ -166,4 +191,28 @@ W "---"
 W "Built from disk transcripts. Active repos = snapshot UNION disk-discovered cwds. Sub-sessions (local-command, research/SERP agent prompts) are excluded. Every entry has a transcript on disk (confidence HIGH)."
 [System.IO.File]::WriteAllText((Join-Path $StateDir "pane_map.md"), $sb.ToString(), $utf8)
 
-Write-Output ("pane_map written | resumable={0} old={1} repos={2} total={3}" -f $counts.resumable, $counts.old, $counts.repos, $items.Count)
+# --- reload_recovery_card.md : paste-ready resume commands, grouped by repo ---
+$cb = New-Object System.Text.StringBuilder
+function C($s) { [void]$cb.AppendLine($s) }
+C "=== RELOAD RECOVERY CARD ==="
+C ("Generated: " + (Get-Date).ToString('yyyy-MM-dd HH:mm') + " local  (" + $items.Count + " panes / " + $counts.repos + " repos / " + $counts.live + " LIVE)")
+C ""
+C ("[LIVE] = an OPEN tab right now (snapshot or written < {0} min ago); these are the ones a reload can drop." -f $LiveMinutes)
+C "[recent] = a closed conversation you can reopen. Every command resumes the EXACT conversation (no 'History restored')."
+C "If a pane does NOT survive Ctrl+Shift+P -> Reload Window, paste its command in a terminal in the right repo."
+C ""
+foreach ($rn in $repoNames) {
+  $grp = @($items | Where-Object { $_.repo -eq $rn })
+  $liveN = @($grp | Where-Object { $_.live }).Count
+  C ("---- {0} ({1} -- {2} LIVE) ----" -f $rn, $grp.Count, $liveN)
+  foreach ($it in $grp) {
+    $tag = if ($it.live) { "LIVE  " } else { "recent" }
+    C ("  # [{0}] {1}  ({2}h ago)" -f $tag, $it.topic, $it.ageHours)
+    C ("  cd `"{0}`" ; {1}" -f $it.cwd, $it.resumeCmd)
+    C ""
+  }
+}
+C "=== END CARD ==="
+[System.IO.File]::WriteAllText((Join-Path $StateDir "reload_recovery_card.md"), $cb.ToString(), $utf8)
+
+Write-Output ("pane_map written | resumable={0} old={1} live={2} repos={3} total={4}" -f $counts.resumable, $counts.old, $counts.live, $counts.repos, $items.Count)
