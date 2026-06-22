@@ -1,5 +1,17 @@
 # /restart bug — SendKeys pane eviction when claude.exe IS the shell
 
+> ⚠️ **SUPERSEDED (2026-06-22, restart-kclear recursive audit PF-2).** The fix prescribed
+> below — *"always open a new top-level terminal window"* (external-window approach) — was
+> itself **reverted on 2026-05-31**. The current, shipped `/restart` is **in-pane**: it
+> injects `/exit\r` into the shared console input buffer (`CONIN$` + `WriteConsoleInputW`)
+> so claude exits gracefully and `kclaude.bat` resumes the SAME pane via `claude --resume
+> <sid>`. See `~/.claude/commands/restart.md`, `~/.claude/scripts/restart-claude.ps1`, and
+> the authoritative UKDL entry **T-RESTART-001**. Do NOT re-introduce the external-window /
+> SendKeys design from this lesson — it is kept only as the historical record of the
+> 2026-05-24 SendKeys-eviction bug. The `Write-RestartTarget` removal noted at the bottom
+> of this file is also why the `restart-target.json` self-heal is now permanently inert
+> (see UKDL **T-RESTART-SELFHEAL-OBSOLETE-001**).
+
 **Sealed:** 2026-05-24 (Owner report: "/restart cierra el pane actual y manda 'claude resume' como mensaje al pane equivocado")
 **Component:** `~/.claude/scripts/restart-claude.ps1`, `~/.claude/commands/restart.md`
 

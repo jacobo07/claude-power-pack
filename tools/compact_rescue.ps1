@@ -141,9 +141,17 @@ try {
     Write-Log "state dir create failed: $($_.Exception.Message)" 'WARN'
 }
 try {
-    ($rescueInfo | ConvertTo-Json -Depth 3) |
-        Set-Content -Path "$StateDir\restart_pending.json" -Encoding UTF8
-    Write-Log "Wrote $StateDir\restart_pending.json"
+    # BOM-free UTF-8 to honor the sealed no-BOM marker contract (UKDL
+    # T-RESTART-001 step 2). Set-Content -Encoding UTF8 writes a BOM in PS 5.1;
+    # the hub consumer is defensively BOM-tolerant, but a SECOND producer of
+    # restart_pending.json must emit the same byte shape as restart-claude.ps1.
+    # (restart-kclear recursive audit R2-2, 2026-06-22.)
+    $rpJson = ($rescueInfo | ConvertTo-Json -Depth 3)
+    [System.IO.File]::WriteAllText(
+        "$StateDir\restart_pending.json",
+        $rpJson,
+        [System.Text.UTF8Encoding]::new($false))
+    Write-Log "Wrote $StateDir\restart_pending.json (UTF-8 no BOM)"
 } catch {
     Write-Log "restart_pending.json write failed: $($_.Exception.Message)" 'WARN'
 }

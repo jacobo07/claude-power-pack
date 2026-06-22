@@ -555,11 +555,15 @@ if the Owner typed them.
    fallback marker (cwd + branch + sid + timestamp + note) for
    panes whose parent is NOT kclaude.bat. UTF-8 NO BOM via
    `[System.IO.File]::WriteAllText` + `UTF8Encoding($false)`.
-3. `hooks/restart_resume.js` (SessionStart) reads the marker. If
-   the cwd matches AND the marker is < 5 min old, it emits an
+3. The SessionStart marker logic reads the marker. If the cwd
+   matches AND the marker is < 5 min old, it emits an
    additionalContext continuation hint and consumes the marker.
-   The hook is BOM-tolerant on read (defends against legacy
-   writers that wrote UTF-8 WITH BOM).
+   It is BOM-tolerant on read (defends against legacy writers that
+   wrote UTF-8 WITH BOM). **Fold note (2026-06-22, PF-7):** this
+   logic runs as `hookRestartResume` INSIDE
+   `hooks/session_start_hub.js` (hub-fold 2026-06-04). The
+   standalone `hooks/restart_resume.js` is REFERENCE-ONLY and is
+   NOT registered in settings.json.
 
 **Incorrect fix (antipattern):** "Just call Stop-Process". The
 SIGKILL completes faster but loses the graceful-exit path. claude
@@ -579,8 +583,130 @@ CONIN$ injection.
   -> kclaude.bat flag -> universal marker file).
 - `~/.claude/commands/restart.md` (Win32 console architecture
   rationale).
-- `hooks/restart_resume.js` (SessionStart marker consumer).
-- `tools/test_restart_and_lag.py` (V-RESTART-* + V-LAG gates).
+- `hooks/session_start_hub.js` (hookRestartResume -- the LIVE marker
+  consumer); `hooks/restart_resume.js` (reference-only, folded).
+- `tools/test_restart_and_lag.py` (V-RESTART-* + V-LAG gates);
+  `tools/test_restart_kclear.py` (PF-1..7 recursive-audit gates).
+
+### UKDL TRAP T-RESTART-SELFHEAL-OBSOLETE-001 -- restart-target.json Self-Heal Is Permanently Inert (Reader Without Producer)
+
+**Level:** UKDL Trap (CLASE-0 orphan consumer; dead recovery path).
+**Sealed:** 2026-06-22 (restart-kclear recursive audit PF-1).
+
+**Trap:** `~/.claude/hooks/restart-target-consumer.js` (registered
+standalone in settings.json SessionStart) reads
+`~/.claude/lazarus/restart-target.json`, compares `target.session_id`
+to the new session's id, and on MISMATCH spawns
+`~/.claude/scripts/lazarus-revive.ps1 -Launch -OnlySession <sid>` as a
+self-heal (sealed "BL-NULL-ERROR Step 5"). But **nothing writes
+`restart-target.json`** -- the producer `Write-RestartTarget` was
+DELETED on 2026-05-24 when /restart stopped killing claude
+(`vault/lessons/restart-command-pane-eviction.md`, "Removed the
+Restore-LiveJsonl and Write-RestartTarget machinery"). The consumer was
+never removed. It runs every SessionStart and always early-exits at
+`!fs.existsSync(TARGET_FILE)`. The advertised self-heal NEVER fires =
+false safety net + a wasted spawn per session.
+
+**Why NOT to "fix" it by reviving the producer (the obvious trap):**
+the consumer matches on `session_id` EQUALITY, but a successful
+/restart lands a *fresh* session_id by design -- the SessionStart hub
+matches its `restart_pending.json` marker by **cwd, not sid**, exactly
+because `claude --resume`/`--continue` does not guarantee the same
+session_id in the SessionStart payload. So a revived
+`Write-RestartTarget` would make the consumer read EVERY successful
+restart as a mismatch and spawn a spurious `lazarus-revive` every time
+-- strictly worse than dead. (Audited and rejected 2026-06-22.)
+
+**Correct resolution:** the mechanism is OBSOLETE BY DESIGN (it only
+made sense in the kill-and-respawn era). The live resume path is
+`restart_pending.json` (cwd-matched, hub). The dead-mechanism surface is
+actually THREE references, all harmless no-ops while no producer exists:
+(1) `~/.claude/hooks/restart-target-consumer.js` (SessionStart
+match/revive), (2) its `lazarus-revive.ps1` spawn target, and (3)
+`~/.claude/hooks/lazarus-janitor.js` "BL-NULL-ERROR Step 9" zombie-marker
+pruner -- whose comment "the consumer deletes the marker after a
+SessionStart" is now counterfactual. Owner-side step: deregister
+`restart-target-consumer.js` from `~/.claude/settings.json` SessionStart
+(HR-001: agent documents, Owner applies); the `lazarus-janitor.js` pruner
+can stay (it no-ops and would still serve a future producer). Until then
+all three are harmless. (Janitor reference added: restart-kclear audit
+R2-1, 2026-06-22.)
+
+**Recognizer:** a registered hook whose first real action is
+`if (!existsSync(FILE)) exit(0)` against a file no producer writes =
+orphan consumer. Grep the codebase for the WRITE of that path; zero
+hits = dead.
+
+### UKDL TRAP T-RAM-DEDUP-001 -- Two RAM Advisories, Recalibration Reached the Orphan Not the Live Hook
+
+**Level:** UKDL Trap (drift; alert fatigue / monitor theater).
+**Sealed:** 2026-06-22 (restart-kclear recursive audit PF-3/PF-4).
+
+**Trap:** Two RAM advisories fire on the Stop-chain:
+`modules/zero-crash/hooks/ram-watchdog.js` (was 1500 MB) and
+`context_monitor` via `context-watchdog.py` (20/28 GB, the M4
+auto-reset overlay). The 2026-06-04 RAM Optimization Sprint recalibrated
+thresholds UP (8/11 -> 20/28 GB) to kill alert fatigue -- but that fix
+landed in `tools/ram_guard.py` + `context_monitor`, while the dominant
+LIVE hook (`ram-watchdog.js`) kept firing at 1.5 GB, i.e. on essentially
+every session-end. Meanwhile `hooks/ram-guard-stop.js` (the wrapper that
+exposes ram_guard's richer gaming-mode + snapshot-before-OOM advisory)
+is NOT in the Stop-chain and NOT in settings.json -- orphan.
+
+**Fix:** raise `ram-watchdog.js` `RSS_THRESHOLD_MB` to 20480 (20 GB warn
+level) so the two stop double-firing on healthy sessions; document that
+context_monitor (WorkingSet64, 20/28 GB) is the AUTHORITATIVE trip and
+ram-watchdog is a coarse tasklist-private-WS backstop (different metric,
+summed across procs -- not a precise mirror). Keep `ram-guard-stop.js`
+dormant + header-deprecated; do NOT register it alongside ram-watchdog
+or the advisory double-fires again.
+
+**Recognizer:** a recalibration commit that edits a library/module but
+not the hook that actually fires on the event = the fix never ships.
+Always trace from the registered hook (settings.json / CHAIN_MAP)
+BACKWARD to the constant, not forward from the module.
+
+### UKDL TRAP T-RESTART-INTENT-ORPHAN-001 -- cpc_os/restart.py Validates an Intent Nobody Submits
+
+**Level:** UKDL Trap (orphan module; intent-only-by-design).
+**Sealed:** 2026-06-22 (restart-kclear recursive audit PF-5).
+
+**Trap:** `modules/cpc_os/restart.py::restart_intent` is a §208.2
+acceptance-contract validator (cwd/session/dedup invariants) with NO
+live caller -- the shipped /restart path bypasses it entirely. Its own
+docstring already declares it intent-only and explicitly refuses to
+write `restart_pending.json` (to avoid a second writer destabilising the
+marker). It is exercised only by tests + dataset docs.
+
+**Resolution:** documented inert-by-design (not a regression). Available
+to wire as a future pre-flight gate inside restart-claude.ps1 (a python
+call) IF the Owner wants the §208.2 invariants enforced before the
+CONIN$ inject. Until then, leaving it uncalled is correct.
+
+### UKDL TRAP T-KCLEAR-RAM-SEMANTICS-001 -- /kclear Checkpoints, /clear Frees RAM
+
+**Level:** UKDL Trap (expectation gap; honest-gate doctrine).
+**Sealed:** 2026-06-22 (restart-kclear recursive audit PF-6).
+
+**Trap:** the mental model "/kclear frees RAM" is FALSE.
+`~/.claude/commands/kclear.md` -> `tools/session_checkpoint.py record`
+writes a handoff + insights + lesson atomically and then SUGGESTS the
+native `/clear`. It does NOT kill claude.exe and does NOT shrink the V8
+heap. RAM is reclaimed by the subsequent native `/clear` (context
+reset), not by /kclear. Likewise `work_state` is saved by the AUTO-RESET
+path (auto_reset_orchestrator via context-watchdog), NOT by manual
+/kclear.
+
+**Honest gate (Reality Contract):** a `V-KCLEAR-RAM-DROPS` gate that
+asserts /kclear reclaims RAM would be theater. The defensible gate
+asserts (a) checkpoint integrity -- handoff + insights written
+atomically; (b) the /clear suggestion is emitted; (c) RAM-free is
+attributed to native /clear in the docs. Empirical RAM-delta belongs to
+a native-/clear measurement, not to /kclear.
+
+**Recognizer:** before writing a `V-X-DOES-Y` gate, confirm X actually
+performs Y. If the doc/command only *recommends* the action that does Y,
+the gate must test the recommendation + the real effect's true owner.
 
 ### UKDL TRAP T-LAG-001 -- SessionStart Hooks Block the Prompt
 

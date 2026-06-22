@@ -2,6 +2,11 @@
 /**
  * restart_resume.js -- SessionStart marker detector for /restart.
  *
+ * FOLD NOTE (2026-06-22, restart-kclear audit PF-7): this standalone file is now
+ * REFERENCE-ONLY. The live SessionStart logic runs as hookRestartResume INSIDE
+ * hooks/session_start_hub.js (hub-fold 2026-06-04); this file is NOT registered in
+ * settings.json. Keep the two in sync if either changes. See UKDL T-RESTART-001.
+ *
  * /restart writes a marker file at ~/.claude/state/restart_pending.json
  * with the prior session's SID, cwd, branch, and timestamp. When a NEW
  * Claude Code session starts and this hook fires, if the marker exists

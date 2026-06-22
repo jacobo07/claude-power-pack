@@ -15,6 +15,14 @@ updated, no duplicate session, no infinite loop.
 Composition: route_intent() supplies the base safety gate (unknown /
 dead pane, stale intent); this layer adds the cwd + session-id + dedup
 invariants specific to restart.
+
+LIVE-PATH NOTE (2026-06-22, restart-kclear audit PF-5): this module is an
+INTENT-VALIDATION LIBRARY with NO live caller. The shipped /restart path is
+~/.claude/commands/restart.md -> ~/.claude/scripts/restart-claude.ps1 (CONIN$
+/exit inject + kclaude resume) + the SessionStart hub (restart_pending.json,
+cwd-matched); none of them call restart_intent(). It is exercised only by
+tests/dataset. Available for a future pre-flight gate; until wired it is
+inert-by-design, not a regression. See UKDL T-RESTART-INTENT-ORPHAN-001.
 """
 from __future__ import annotations
 

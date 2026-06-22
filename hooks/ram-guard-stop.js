@@ -3,6 +3,16 @@
 // ---------------------------------------------------------------------------
 // ram-guard-stop.js -- Stop-hook wrapper for tools/ram_guard.py (B1).
 //
+// *** SUPERSEDED / UNREGISTERED BY DESIGN (2026-06-22, restart-kclear audit PF-4) ***
+// This wrapper is NOT in the Stop-chain (hook-dispatcher.js CHAIN_MAP) and NOT in
+// ~/.claude/settings.json. The live RAM advisory on the Stop event is
+// modules/zero-crash/hooks/ram-watchdog.js (threshold aligned to 20 GB, PF-3); the
+// authoritative pressure decision is context_monitor (20/28 GB) via context-watchdog.py.
+// ram_guard.py's claude_ram_mb() is still reached as a LIBRARY by context_monitor; only
+// this CLI-wrapper hook is dormant. Kept as reference (gaming-mode + snapshot-before-OOM)
+// for a future Owner-side wiring; do NOT register it alongside ram-watchdog.js or the
+// /kclear advisory will double-fire again. See UKDL T-RAM-DEDUP-001.
+//
 // RAM Optimization Sprint (2026-06-04). FASE -1 forensics proved the RAM that
 // crashes the host is claude.exe's own V8 heap (grew 5.9 GB -> 25 GB in one
 // session), NOT the PP's ~12 MB footprint. The PP cannot kill that heap; the

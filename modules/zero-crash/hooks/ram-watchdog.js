@@ -25,7 +25,21 @@ const os = require('os');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const RSS_THRESHOLD_MB = 1500;
+// THRESHOLD ALIGNMENT (2026-06-22, restart-kclear audit PF-3): raised 1500 -> 20480.
+// The 1500 MB value fired on essentially EVERY session-end (claude.exe is multi-GB from
+// the first long turn) => alert fatigue / "monitor theater" -- the exact failure the
+// 2026-06-04 RAM Optimization Sprint recalibrated AWAY from (8/11 -> 20/28 GB). That
+// recalibration landed in tools/ram_guard.py + context_monitor (the authoritative trip:
+// 20 GB warn / 28 GB crit, via the context-watchdog Stop hook) but never reached THIS
+// hook, which kept firing at 1.5 GB. Aligned to the 20 GB warn level so the two
+// advisories no longer double-fire on healthy sessions.
+//
+// METRIC CAVEAT (honest): this hook sums tasklist "Mem Usage" (private working set, KB)
+// across all claude.exe procs; context_monitor reads WorkingSet64 (full WS incl. shared
+// pages). These are NOT the same number -- tasklist Mem Usage is typically lower. So
+// 20480 here is a COARSE backstop advisory, not a precise mirror of the 20 GB WorkingSet
+// trip; context_monitor remains the authoritative pressure decision. See UKDL T-RAM-DEDUP-001.
+const RSS_THRESHOLD_MB = 20480;
 const STDIN_TIMEOUT_MS = 3000;
 const FLAG_TMPL = sid => path.join(os.tmpdir(), `claude-ramwd-${sid}.flag`);
 
