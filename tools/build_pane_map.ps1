@@ -4,11 +4,18 @@
   Single source of truth for the PP Sessions extension and for manual recovery.
 
   Source of truth = the transcript .jsonl files on disk, NOT the snapshot. The
-  session_snapshot.json under-records (it only holds sessions the SessionStart
-  hub processed) -- e.g. it listed 5 TUA-X panes while disk had 10. So we:
-    1. take the set of ACTIVE repos (distinct cwds the snapshot knows are open),
+  session_snapshot.json under-records in TWO ways and we correct BOTH:
+    (a) within a repo it misses sids (it only holds sessions the SessionStart
+        hub processed) -- fixed by unioning disk transcripts per repo;
+    (b) it can drop a whole repo from its active-cwd set (e.g. it listed 0
+        TUA-X panes while disk had 6 touched 90 min ago) -- fixed by ALSO
+        discovering active repos from disk: any transcript touched within
+        RecentHours contributes its own recorded `cwd` to the active set.
+  So we:
+    1. take the set of ACTIVE repos = snapshot cwds UNION cwds discovered from
+       recently-touched transcripts on disk (additive -- never drops a repo),
     2. for each repo, UNION the snapshot's sids with EVERY recent transcript on
-       disk for that cwd (this is the fix -- disk is complete),
+       disk for that cwd (disk is complete),
     3. filter out sub-sessions (local-command caveats, research/SERP agent
        prompts) -- those are spawned under a tab, they are not tabs,
     4. classify and emit.
@@ -65,12 +72,35 @@ function Get-SessionMeta($jsonl) {
   return @{ topic = $topic; isSub = $isSub }
 }
 
-# 1. active repos = distinct cwds the snapshot knows are open
+function Get-TranscriptCwd($jsonl) {
+  # Reads the transcript's own recorded cwd (cheap regex, no full JSON parse).
+  # Claude Code stamps "cwd":"C:\\..." on transcript records; this lets us learn
+  # the real working dir without inverting the lossy project-dir encoding.
+  $n = 0
+  foreach ($ln in [System.IO.File]::ReadLines($jsonl, [System.Text.Encoding]::UTF8)) {
+    $n++; if ($n -gt 40) { break }
+    if ($ln -match '"cwd"\s*:\s*"((?:[^"\\]|\\.)*)"') { return ($matches[1] -replace '\\\\', '\') }
+  }
+  return $null
+}
+
+# 1. active repos = snapshot cwds UNION cwds discovered from recent disk transcripts
 $snapPath = Join-Path $StateDir "session_snapshot.json"
 $activeCwds = @{}
+$snap = $null
 if (Test-Path $snapPath) {
   $snap = Get-Content $snapPath -Raw -Encoding UTF8 | ConvertFrom-Json
   foreach ($p in $snap) { if ($p.cwd) { $activeCwds[$p.cwd] = $true } }
+}
+# disk discovery: any project dir holding a transcript touched within RecentHours
+# contributes its own recorded cwd -- this rescues repos the snapshot dropped.
+foreach ($dir in (Get-ChildItem $ProjBase -Directory -EA SilentlyContinue)) {
+  $recent = Get-ChildItem $dir.FullName -Filter *.jsonl -File -EA SilentlyContinue |
+    Where-Object { ($nowUtc - $_.LastWriteTime.ToUniversalTime()).TotalHours -le $RecentHours }
+  foreach ($rf in $recent) {
+    $cwd = Get-TranscriptCwd $rf.FullName
+    if ($cwd -and (Test-Path $cwd)) { $activeCwds[$cwd] = $true }
+  }
 }
 
 # 2+3. per repo: union snapshot sids with recent disk transcripts; filter subs
@@ -111,7 +141,7 @@ $counts = [ordered]@{
   old       = ($items | Where-Object { $_.status -eq 'OLD' }).Count
   repos     = (@($items | ForEach-Object { $_.repo }) | Sort-Object -Unique).Count
 }
-$payload = [ordered]@{ generatedAt = $nowUtc.ToString('o'); source = "transcripts-on-disk (per active repo) + snapshot union"; counts = $counts; panes = $items }
+$payload = [ordered]@{ generatedAt = $nowUtc.ToString('o'); source = "transcripts-on-disk (active repos = snapshot UNION disk-discovered cwds)"; counts = $counts; panes = $items }
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText((Join-Path $StateDir "pane_map.json"), ($payload | ConvertTo-Json -Depth 6), $utf8)
@@ -120,7 +150,7 @@ $utf8 = New-Object System.Text.UTF8Encoding($false)
 $sb = New-Object System.Text.StringBuilder
 function W($s) { [void]$sb.AppendLine($s) }
 W "# PP PANE MAP -- Recovery Safety Net"
-W ("Generated: " + (Get-Date).ToString('yyyy-MM-dd HH:mm') + " local | Source: transcripts-on-disk per active repo (complete; snapshot is union-only)")
+W ("Generated: " + (Get-Date).ToString('yyyy-MM-dd HH:mm') + " local | Source: transcripts-on-disk (active repos = snapshot UNION disk-discovered)")
 W "If a Cursor reload loses a pane, paste the exact command below into a terminal in the right repo."
 W ""
 $repoNames = @(@($items | ForEach-Object { $_.repo }) | Sort-Object -Unique)
@@ -133,7 +163,7 @@ foreach ($rn in $repoNames) {
   }
 }
 W "---"
-W "Built from disk transcripts per active repo. Sub-sessions (local-command, research/SERP agent prompts) are excluded. Every entry has a transcript on disk (confidence HIGH)."
+W "Built from disk transcripts. Active repos = snapshot UNION disk-discovered cwds. Sub-sessions (local-command, research/SERP agent prompts) are excluded. Every entry has a transcript on disk (confidence HIGH)."
 [System.IO.File]::WriteAllText((Join-Path $StateDir "pane_map.md"), $sb.ToString(), $utf8)
 
 Write-Output ("pane_map written | resumable={0} old={1} repos={2} total={3}" -f $counts.resumable, $counts.old, $counts.repos, $items.Count)
