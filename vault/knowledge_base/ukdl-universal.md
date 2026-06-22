@@ -755,6 +755,60 @@ errors, launch anyway -- a duplicate pane is recoverable, a lost pane is not.
 **Recognizer:** an auto-launch path whose first action is the launch (no "does it
 already exist?" probe) = a duplicator under any retry/reload.
 
+### UKDL TRAP T-CMD-FLASH-EXTERNAL-001 -- cmd.exe Flash Sources Live Outside the PP Repo
+
+**Level:** UKDL Trap (audit-scope blindness).
+**Sealed:** 2026-06-23 (cmd-flash remaining-sources execution).
+
+**Trap:** F0 (b144eba) made `audit_spawn_windows.py` PASS 42/42 on PP-repo hooks,
+but flashes persisted because the audit's scope was the REPO only. Real flash
+sources also live in: (1) `~/.claude/settings.json` hook *commands* -- a
+`powershell.exe`/`cmd.exe` launcher without `-WindowStyle Hidden` flashes (the
+SessionEnd orphan-reaper, settings.json:342, was exactly this); (2) live-only
+hooks in `~/.claude/hooks/` that have NO canonical copy in the repo (see
+T-LIVE-ONLY-HOOK-FLASH-001); (3) Claude Code's OWN spawning of hook processes /
+Bash / PowerShell tool calls + plugin-internal MCP children -- NOT PP-controllable.
+
+**Fix:** extend the audit -- `--settings` gates settings.json launchers,
+`--live` scans the global hook dir. Owner-global fixes (allow-listed
+`Edit(~/.claude/hooks/**)`, backup settings.json first): reaper +WindowStyle
+Hidden; `bug-hunter-learning.js` (PostToolUse/Bash, fired every Bash) +
+`zero-issue-gate.js` (live mirror) +windowsHide. Note honestly what stays:
+per-prompt flashes that survive are almost certainly CC-native (FUENTE 4),
+outside PP control -- verified by the Owner's empirical 3-prompt test.
+
+**Recognizer:** a green repo-scoped gate + a symptom that persists = the gate's
+SCOPE is wrong, not the code. Widen to every path the symptom can originate from
+(config, mirror, third-party, host) before concluding "fixed".
+
+### UKDL TRAP T-LIVE-ONLY-HOOK-FLASH-001 -- Global Hooks With No Canonical Copy Are Invisible to a Repo Gate
+
+**Level:** UKDL Trap (split-brain; orphan-direction inverse).
+**Sealed:** 2026-06-23 (cmd-flash remaining-sources execution).
+
+**Trap:** the split-brain doctrine usually means canonical (repo) drifts from
+live (`~/.claude/hooks/`). The INVERSE also exists: live hooks with NO canonical
+counterpart at all (`bug-hunter-learning.js`, `baseline-translator.js`,
+`dna-flywheel.js`, `kobiiclaw-autoresearch.js`, `lazarus-{heartbeat,snapshot}.js`,
+`quality-skill-gate.js`, `prd-keyword-sentinel.js`, `session-init.js`). A
+repo-scoped audit is STRUCTURALLY blind to them. Many fire: the live
+`hook-dispatcher.js` runs them via CHAIN_MAP (spawned children) or an in-process
+require() bundle. The dispatcher spawns children with `windowsHide:true`, but a
+child's OWN `execSync('git ...')` without `windowsHide` can still flash as a
+GRANDCHILD (a hidden, console-less parent makes the grandchild allocate a new
+console).
+
+**Fix:** audit `--live` enumerates them; fix = add `windowsHide:true` to each
+firing hook's execSync/spawn options. Because mass-editing the global hook dir
+while sibling panes are active is the multi-pane hazard
+([[feedback_edit_modified_since_read_is_live_concurrent_pane]]), batch the
+remaining firing hooks behind one Owner approval rather than editing N global
+files unilaterally mid-session.
+
+**Recognizer:** `--live` advisory shows a hook absent from the repo glob = a
+live-only hook; cross-check the dispatcher CHAIN_MAP / in-process list to learn
+if it fires before deciding it is dead.
+
 ### UKDL TRAP T-LAG-001 -- SessionStart Hooks Block the Prompt
 
 **Level:** UKDL Trap (performance, UX).
