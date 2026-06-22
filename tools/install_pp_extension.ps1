@@ -27,7 +27,7 @@ $manifest = @'
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Language="en-US" Id="pp-sessions" Version="0.1.0" Publisher="kobii" />
+    <Identity Language="en-US" Id="pp-sessions" Version="0.1.1" Publisher="kobii" />
     <DisplayName>PP Sessions</DisplayName>
     <Description xml:space="preserve">Side panel of resumable Claude Code panes derived from disk truth. One-click exact resume, no History restored.</Description>
     <Tags>claude-code,sessions,resume,cursor</Tags>
@@ -80,7 +80,7 @@ if (-not (Test-Path $CursorCli)) { throw "Cursor CLI not found: $CursorCli" }
 if ($LASTEXITCODE -ne 0) { throw "cursor --install-extension failed (exit $LASTEXITCODE)" }
 
 Write-Output "[4/4] Verifying..."
-$installed = & $CursorCli --list-extensions --show-versions 2>$null | Select-String -Pattern "pp-sessions"
+$installed = & $CursorCli --list-extensions --show-versions | Select-String -Pattern "pp-sessions"
 if ($installed) {
   Write-Output ("    OK: " + $installed)
   Write-Output "Done. Reload Cursor (Reload Window) to activate the PP Sessions panel."
