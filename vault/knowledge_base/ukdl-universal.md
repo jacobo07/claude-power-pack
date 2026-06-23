@@ -1608,3 +1608,48 @@ x2); `tools/test_vscode_autorun.py` 10/10. Verified live: post-fix
 current pane (was a no-arg "new" task pre-fix). SCS C33 lineage (writer ->
 reader -> ACT): this closes the RESOLVE leg -- the reader read a field the
 producer had not yet populated for the live session.
+
+---
+
+### T-TCO-TRACKING-GAP-001 -- the dedicated token logger measures injection, not real usage
+
+**TRIGGER:** auditing token/TCO health; about to trust `tis.py` (or any
+UserPromptSubmit-piggyback logger) as the record of real session spend.
+
+**TRAP:** TIS writes `vault/token_logs/YYYY-MM-DD.jsonl` continuously and looks
+like the cost ledger -- but its rows carry `model="claude-code-hook"`,
+`call_label="jit-context-injected"`, and `cache_*_tokens` always 0. Those
+`input_tokens`/`output_tokens` are the size of the JIT context being INJECTED,
+not the model turn's real usage. The real per-turn `input/output/cache_read/
+cache_creation` (billions of cache reads) live ONLY in Claude Code's own
+transcripts `~/.claude/projects/<enc-cwd>/<sid>.jsonl` under `message.usage`.
+
+**ACCIÓN:** for real token TCO, read the transcripts
+(`tools/token_ground_truth.py::analyze` or `token_autopsy.py`). Treat a
+hook-cadence logger as an injection-overhead signal, never as session spend.
+`budget_monitor.py` is a THIRD thing (programmatic metered-credit bucket,
+post-2026-06-15) -- it cannot "match" transcript burn because it tracks a
+different bucket; `unconfigured`/`stale-pricing` are honest for a flat-rate Max
+Owner with no programmatic workloads.
+
+**ORIGEN:** FASE -1 TCO audit 2026-06-23 -- 532/545 transcripts carry usage;
+TIS daily logs were injection sizes; budget.json absent + pricing 35d stale.
+Closed by `tools/token_ground_truth.py` (the missing aggregated real tracker).
+
+### T-CACHE-RATIO-HEALTHY-001 -- measure before optimizing cache
+
+**TRIGGER:** about to "optimize the cache ratio" or split sessions for token
+pressure on assumption, without measuring the real ratio first.
+
+**TRAP:** the plan assumed cache might be < 30-50% (variable-prompt churn). Real
+measurement: 96.4% today / 96.6% lifetime across 532 transcripts, and ZERO
+sessions above 100k average fresh input/turn. The prompt cache absorbs ~96% of
+all input-side tokens; average FRESH input/turn is 8-375 tokens even on 12k-turn
+sessions. The `T-CACHE-RATIO-LOW-001` optimization does not apply when the ratio
+is already healthy -- optimizing it is a no-op chasing a number that is fine.
+
+**ACCIÓN:** compute the real ratio
+(`cache_read / (cache_read + input + cache_creation)`) from transcripts FIRST;
+only act if it is genuinely below ~50%. Whole-session size pressure is gated
+separately by `context_monitor` (16/24 MB jsonl, 6000/12000 turns), not by the
+cache ratio. ORIGEN: same 2026-06-23 audit.

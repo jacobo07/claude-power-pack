@@ -406,7 +406,8 @@ def generate_report(sessions: list[dict], output_path: Path, top_n: int = 10) ->
     if total_tokens > 100000:
         lines.append(f"4. **High token burn** — {total_tokens:,} tokens in this session. Consider splitting into smaller tasks.")
 
-    if not (repeated_files or len(agents) > 3 or mass_ops or total_tokens > 100000):
+    if not (repeated_files or len(agents) > 3 or mass_greps or mass_bash
+            or total_tokens > 100000):
         lines.append("Session looks efficient. No major waste detected.")
 
     lines.append("")
