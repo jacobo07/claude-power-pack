@@ -189,6 +189,34 @@ def analyze(proj_base=None, since: str | None = None,
     }
 
 
+def today_output_tokens(proj_base=None, now: datetime | None = None) -> int | None:
+    """Fast launch-gate burn: sum output_tokens from transcripts MODIFIED today.
+
+    A full analyze() scans every transcript (hundreds of files) -- too slow for
+    a pre-launch gate. This stats-filters to files touched since local midnight
+    and parses only those. Approximation: a multi-day session file touched today
+    contributes its whole output (earlier turns included) -- acceptable for an
+    advisory and clearly an over-estimate, never an under-count. Returns None
+    (honest "unmeasured") when no transcript was touched today, never a fake 0.
+    """
+    now = now or datetime.now()
+    start = datetime(now.year, now.month, now.day).timestamp()
+    total = 0
+    seen = False
+    for fp in iter_transcripts(proj_base):
+        try:
+            if fp.stat().st_mtime < start:
+                continue
+        except OSError:
+            continue
+        info = parse_session(fp)
+        if not info or info["turns"] == 0:
+            continue
+        seen = True
+        total += info["agg"]["output_tokens"]
+    return total if seen else None
+
+
 def _fmt_agg(a: dict) -> str:
     return (f"in={a['input_tokens']:,} out={a['output_tokens']:,} "
             f"cache_rd={a['cache_read_input_tokens']:,} "
