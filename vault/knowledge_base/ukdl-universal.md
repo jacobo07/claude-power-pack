@@ -1653,3 +1653,56 @@ is already healthy -- optimizing it is a no-op chasing a number that is fine.
 only act if it is genuinely below ~50%. Whole-session size pressure is gated
 separately by `context_monitor` (16/24 MB jsonl, 6000/12000 turns), not by the
 cache ratio. ORIGEN: same 2026-06-23 audit.
+
+---
+
+### T-WRAPPER-W5-SOURCE-001 -- cost gate reads transcripts, never budget_monitor/TIS
+
+**TRIGGER:** building/extending the kclaude W5 cost gate (or any "how much have
+I spent today" feature) and about to read budget_monitor or TIS for the number.
+
+**TRAP:** budget_monitor.py tracks the PROGRAMMATIC metered-credit bucket
+(Agent SDK / `claude -p`, post-2026-06-15) and is inert for a flat-rate Max
+Owner; TIS logs JIT-INJECTION size (cache fields always 0), not real turns.
+Either as the W5 source shows a gate on data unrelated to the Owner's actual
+session usage. The ONLY valid source is the transcripts via
+`token_ground_truth.today_output_tokens` / `analyze` (SCS C53,
+T-TCO-TRACKING-GAP-001).
+
+**ACCIÓN:** W5 burn = `token_ground_truth.today_output_tokens(now=)` (mtime-
+filtered fast path; over-estimates by including earlier turns of multi-day
+files -- documented, never under-counts). Best-effort within its 0.5s timeout;
+if it cannot compute in time -> SILENT (no fake 0). ORIGEN: wrapper W5
+2026-06-23 (SCS C48).
+
+### T-WRAPPER-TIMEOUT-001 -- per-feature timeouts must run CONCURRENTLY
+
+**TRIGGER:** composing N pre-launch features each with its own timeout under a
+total overhead budget.
+
+**TRAP:** running them sequentially makes the worst-case overhead the SUM of the
+timeouts. kclaude's W1+W4+W5+W2 timeouts (1.0+0.5+0.5+1.0) sum to 3.0s -- over
+the <2s launch budget -- if run one-after-another. The spec's per-feature
+timeouts and the total budget are only mutually satisfiable if the features run
+concurrently.
+
+**ACCIÓN:** submit all features to a thread pool, collect each with its own
+`result(timeout=...)`; wall-time becomes the LONGEST single timeout (~1s), not
+the sum. `prelaunch.py` does this; `ex.shutdown(wait=False)` + `os._exit(0)` so
+a hung feature thread never blocks process teardown. Measured overhead ~1.6s.
+ORIGEN: wrapper W6 2026-06-23.
+
+### T-WRAPPER-RESTART-ABSORB-001 -- a launcher wrapper must preserve the loop it replaces
+
+**TRIGGER:** replacing an existing `kclaude`/launcher that the Owner already
+uses, with a richer wrapper.
+
+**TRAP:** the old kclaude.bat was a /restart LOOP (relaunch `claude --resume
+<sid>` when a flag drops). A naive new wrapper that launches claude once and
+exits silently breaks /restart's in-terminal relaunch -- a regression the
+done-gate would not catch because the wrapper "works" on first launch.
+
+**ACCIÓN:** read the artifact you are superseding (SCS C28); absorb its loop.
+kclaude.ps1 runs pre-launch intelligence ONCE, then enters the same flag-driven
+relaunch loop; the old .bat is backed up `.superseded`, never deleted. ORIGEN:
+wrapper W7 2026-06-23.
