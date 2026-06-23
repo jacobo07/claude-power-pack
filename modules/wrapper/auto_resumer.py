@@ -108,6 +108,22 @@ def _panemap_candidates(cwd: str, state_dir, proj_base) -> list[dict]:
     return cands
 
 
+def list_candidates(cwd: str, state_dir=None, proj_base=None) -> list[dict]:
+    """Public: transcript-verified resumable candidates for `cwd`, newest first.
+
+    pane_map.json primary (each `<sid>.jsonl` re-verified on disk), raw disk
+    scan fallback. Each item: {session_id, topic, lastActivity}. Reused by W4
+    (repo_coordinator) for the same anchor guarantees as W2. Fail-open [].
+    """
+    try:
+        cands = _panemap_candidates(cwd, state_dir, proj_base)
+        if cands:
+            return cands
+        return _disk_candidates(cwd, proj_base)
+    except Exception:  # noqa: BLE001
+        return []
+
+
 def get_resume(cwd: str, state_dir=None, proj_base=None) -> ResumeResult:
     """Resolve the resumable session for `cwd`. Fail-open."""
     try:
