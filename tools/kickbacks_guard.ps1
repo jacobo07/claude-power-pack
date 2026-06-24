@@ -1,59 +1,83 @@
 <#
   kickbacks_guard.ps1 -- keep BOTH the Kickbacks ad AND the Claude Code context
-  bar alive, self-healing, so neither disconnects unless the Owner does it on
-  purpose.
+  bar alive, AND notify the Owner the instant Kickbacks loses its session, so
+  nothing disconnects silently and recovery is one click.
 
-  Why this exists (empirical, 2026-06-23): Kickbacks owns
-  ~/.vibe-ads/cli-prev-statusline.json -- the "chain capture" the ad script
-  reads to stack the user's own status line (the gsd context-bar HUD) under the
-  ad. Kickbacks periodically re-captures/clears that file (install, update,
-  restart). Every time it clears it with no valid prior status line, the gsd
-  chain -- and the context bar -- vanishes, while the ad keeps showing. Audit
-  proved it: full-chain bar reliability was 0/30 with the file absent, 20/20
-  once restored. So the bar "sometimes fails" because this Kickbacks-owned file
-  keeps disappearing.
+  Why this exists (empirical):
+    * Bar loss (2026-06-23): Kickbacks owns ~/.vibe-ads/cli-prev-statusline.json
+      (the chain capture its ad script reads to stack the gsd context-bar HUD
+      under the ad) and periodically clears it on re-capture -> bar vanishes
+      while the ad still shows. Audit: full-chain bar 0/30 with file absent,
+      20/20 once restored.
+    * Session loss (2026-06-24): the Kickbacks auth token lives in Cursor
+      SecretStorage (state.vscdb rows secret://kickbacksai.kickbacks-ai/
+      kickbacks.access + .refresh, DPAPI-encrypted). It SURVIVES Reload Window
+      and Cursor restart -- /clear cannot touch it. "Sign in" therefore comes
+      from SERVER-SIDE token expiry/revocation, which the PP cannot and must
+      not auto-fix (re-auth needs the Owner; backing up the token = storing a
+      credential on disk = forbidden). The safe mitigation is DETECT + NOTIFY:
+      when signed out, Kickbacks stops refreshing ads, so cli-ad.json goes
+      stale -- a credential-free signed-out proxy.
 
-  This guard enforces two invariants and is FAIL-OPEN (any error -> exit 0,
-  never removes a working chain):
-    INV-CHAIN (always repaired -- ~/.vibe-ads, fully in scope):
-        cli-prev-statusline.json MUST be { statusLine: { type: command,
-        command: '"<node>" "<gsd>"' } } with a cmd.exe-valid Windows path.
-        Rewritten whenever absent / MSYS-pathed / not pointing at the HUD.
-    INV-SETTINGS (detected always; repaired only with -RepairSettings):
-        ~/.claude/settings.json statusLine.command should point at the Kickbacks
-        vibe-ads script (so the ad earns). Auto-mutating ~/.claude/settings.json
-        from a background timer is risky, so by default we only WARN; pass
-        -RepairSettings to restore it (backs up first).
-
-  Run -SelfTest to execute the real chain with synthetic stdin and assert the
-  bar renders.
+  Invariants (FAIL-OPEN -- any error -> exit 0, never breaks a working setup):
+    INV-CHAIN   (always repaired, ~/.vibe-ads): chain file points at the gsd HUD
+                with a cmd.exe-valid Windows path.
+    INV-SETTINGS(detect; repair only with -RepairSettings): ~/.claude/settings.json
+                statusLine stays the vibe-ads ad (so the ad earns).
+    INV-AUTH    (detect + notify): if ads stop refreshing while Cursor is running
+                (signed-out proxy), raise a Windows toast + a durable flag with
+                the exact restore step, on state transition, throttled. Clears
+                the flag on recovery. Never reads the credential value.
 
   Usage:
     powershell -NoProfile -ExecutionPolicy Bypass -File tools/kickbacks_guard.ps1
     powershell ... tools/kickbacks_guard.ps1 -SelfTest
-    powershell ... tools/kickbacks_guard.ps1 -RepairSettings   (Owner-intent)
+    powershell ... tools/kickbacks_guard.ps1 -RepairSettings          (Owner intent)
+    powershell ... tools/kickbacks_guard.ps1 -SimulateSignedOut       (test notify path)
 #>
 [CmdletBinding()]
 param(
   [switch]$RepairSettings,
   [switch]$SelfTest,
+  [switch]$SimulateSignedOut,
+  [int]$AdStaleMinutes = 20,
+  [int]$RenotifyMinutes = 30,
   [string]$Node = "C:\Program Files\nodejs\node.exe",
   [string]$Gsd  = "C:\Users\User\.claude\hooks\gsd-statusline.js",
   [string]$Mjs  = "C:\Users\User\.vibe-ads\vibe-ads-statusline.mjs",
   [string]$ChainFile = "C:\Users\User\.vibe-ads\cli-prev-statusline.json",
   [string]$Settings  = "C:\Users\User\.claude\settings.json",
   [string]$AdCache   = "C:\Users\User\.vibe-ads\cli-ad.json",
-  [string]$LogFile   = "C:\Users\User\.claude\state\kickbacks_guard.log"
+  [string]$LogFile   = "C:\Users\User\.claude\state\kickbacks_guard.log",
+  [string]$AuthState = "C:\Users\User\.claude\state\kickbacks_auth_state.json",
+  [string]$SignInFlag= "C:\Users\User\.claude\state\kickbacks_signin_needed.flag"
 )
 $ErrorActionPreference = "Continue"   # fail-open: a guard must never break a working setup
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $healed = @()
 $warns  = @()
+$notes  = @()
 $stamp  = (Get-Date).ToUniversalTime().ToString('o')
+
+function Show-Toast($title, $msg) {
+  try {
+    $null = [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime]
+    $null = [Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType=WindowsRuntime]
+    $xml = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+    $t = $xml.GetElementsByTagName("text")
+    $t.Item(0).AppendChild($xml.CreateTextNode($title)) | Out-Null
+    $t.Item(1).AppendChild($xml.CreateTextNode($msg)) | Out-Null
+    $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
+    $appId = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
+    [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId).Show($toast)
+    return $true
+  } catch { return $false }
+}
+function Test-CursorRunning { return [bool](Get-Process -Name "Cursor" -ErrorAction SilentlyContinue) }
 
 # --- INV-CHAIN: ~/.vibe-ads/cli-prev-statusline.json must point at the gsd HUD ---
 try {
-  if (Test-Path $Mjs) {                       # only meaningful when Kickbacks is installed
+  if (Test-Path $Mjs) {
     $needsFix = $true
     if (Test-Path $ChainFile) {
       $cur = Get-Content $ChainFile -Raw -ErrorAction SilentlyContinue
@@ -62,57 +86,80 @@ try {
     if ($needsFix) {
       $cmd = '"{0}" "{1}"' -f $Node, $Gsd
       $obj = @{ statusLine = @{ type = "command"; command = $cmd } }
-      $json = $obj | ConvertTo-Json -Compress -Depth 4
-      [System.IO.File]::WriteAllText($ChainFile, $json, $utf8)
+      [System.IO.File]::WriteAllText($ChainFile, ($obj | ConvertTo-Json -Compress -Depth 4), $utf8)
       $healed += "chain(restored gsd HUD)"
     }
-  } else {
-    $warns += "Kickbacks vibe-ads script absent -- nothing to chain"
-  }
+  } else { $warns += "Kickbacks vibe-ads script absent -- nothing to chain" }
 } catch { $warns += ("chain check error: " + $_.Exception.Message) }
 
 # --- INV-SETTINGS: ~/.claude/settings.json statusLine should be the vibe-ads ad ---
 try {
-  if (Test-Path $Settings) {
+  if ((Test-Path $Settings) -and (Test-Path $Mjs)) {
     $o = Get-Content $Settings -Raw | ConvertFrom-Json
     $slCmd = if ($o.statusLine) { [string]$o.statusLine.command } else { "" }
-    $kickbacksActive = $slCmd -match 'vibe-ads-statusline'
-    if (Test-Path $Mjs) {
-      if (-not $kickbacksActive) {
-        if ($RepairSettings) {
-          # If a real, non-vibe status line is currently set, preserve it as the
-          # chain capture so the user's own HUD keeps rendering below the ad.
-          if ($slCmd -and ($slCmd -notmatch 'vibe-ads')) {
-            $cap = @{ statusLine = @{ type = "command"; command = $slCmd } }
-            [System.IO.File]::WriteAllText($ChainFile, ($cap | ConvertTo-Json -Compress -Depth 4), $utf8)
-          }
-          Copy-Item $Settings ($Settings + ".bak-guard") -Force -ErrorAction SilentlyContinue
-          $want = 'node "C:\Users\User\.vibe-ads\vibe-ads-statusline.mjs"'
-          if ($o.PSObject.Properties.Name -contains 'statusLine') {
-            $o.statusLine = [pscustomobject]@{ type = "command"; command = $want }
-          } else {
-            $o | Add-Member -NotePropertyName statusLine -NotePropertyValue ([pscustomobject]@{ type = "command"; command = $want })
-          }
-          [System.IO.File]::WriteAllText($Settings, ($o | ConvertTo-Json -Depth 20), $utf8)
-          $healed += "settings(restored Kickbacks statusLine)"
-        } else {
-          $warns += "settings.statusLine NOT pointing at Kickbacks -- run with -RepairSettings to restore (Owner intent)"
+    if ($slCmd -notmatch 'vibe-ads-statusline') {
+      if ($RepairSettings) {
+        if ($slCmd -and ($slCmd -notmatch 'vibe-ads')) {
+          $cap = @{ statusLine = @{ type = "command"; command = $slCmd } }
+          [System.IO.File]::WriteAllText($ChainFile, ($cap | ConvertTo-Json -Compress -Depth 4), $utf8)
         }
-      }
+        Copy-Item $Settings ($Settings + ".bak-guard") -Force -ErrorAction SilentlyContinue
+        $want = 'node "C:\Users\User\.vibe-ads\vibe-ads-statusline.mjs"'
+        if ($o.PSObject.Properties.Name -contains 'statusLine') { $o.statusLine = [pscustomobject]@{ type = "command"; command = $want } }
+        else { $o | Add-Member -NotePropertyName statusLine -NotePropertyValue ([pscustomobject]@{ type = "command"; command = $want }) }
+        [System.IO.File]::WriteAllText($Settings, ($o | ConvertTo-Json -Depth 20), $utf8)
+        $healed += "settings(restored Kickbacks statusLine)"
+      } else { $warns += "settings.statusLine NOT pointing at Kickbacks -- run with -RepairSettings (Owner intent)" }
     }
   }
 } catch { $warns += ("settings check error: " + $_.Exception.Message) }
 
-# --- INV-AD: report Kickbacks ad freshness (cannot manufacture ads -- detect only) ---
+# --- INV-AUTH: detect signed-out (ad-refresh stalled while Cursor running) + notify ---
 try {
+  $cursorUp = Test-CursorRunning
+  # earning proxy: cli-ad.json refreshed within AdStaleMinutes
+  $earning = $false; $adAge = $null
   if (Test-Path $AdCache) {
-    $ad = Get-Content $AdCache -Raw | ConvertFrom-Json
-    if ($ad.ts) {
-      $ageMin = ((Get-Date).ToUniversalTime() - [datetimeoffset]::FromUnixTimeMilliseconds([int64]$ad.ts).UtcDateTime).TotalMinutes
-      if ($ageMin -gt 60) { $warns += ("ad cache stale " + [math]::Round($ageMin) + " min -- Kickbacks refresher may be down (ad will stop showing)") }
-    }
+    try { $ad = Get-Content $AdCache -Raw | ConvertFrom-Json
+          $adAge = ((Get-Date).ToUniversalTime() - [datetimeoffset]::FromUnixTimeMilliseconds([int64]$ad.ts).UtcDateTime).TotalMinutes
+          $earning = $adAge -le $AdStaleMinutes } catch {}
   }
-} catch { $warns += ("ad cache check error: " + $_.Exception.Message) }
+  if ($SimulateSignedOut) { $cursorUp = $true; $earning = $false; $adAge = 999 }
+
+  # only judge auth while Cursor is actually running (closed Cursor != signed out)
+  if ($cursorUp) {
+    $state = if ($earning) { "OK" } else { "SIGNED_OUT" }
+  } else {
+    $state = "CURSOR_CLOSED"   # indeterminate; do not alarm
+  }
+
+  # previous state + last-notify
+  $prev = "OK"; $lastNotify = [datetime]"2000-01-01"
+  if (Test-Path $AuthState) {
+    try { $ps = Get-Content $AuthState -Raw | ConvertFrom-Json
+          if ($ps.state) { $prev = $ps.state }
+          if ($ps.lastNotify) { $lastNotify = [datetime]$ps.lastNotify } } catch {}
+  }
+
+  if ($state -eq "SIGNED_OUT") {
+    $minsSince = ((Get-Date) - $lastNotify).TotalMinutes
+    $transition = ($prev -ne "SIGNED_OUT")
+    if ($transition -or ($minsSince -ge $RenotifyMinutes)) {
+      $title = "Kickbacks session lost"
+      $body  = "Restore in one click: Ctrl+Shift+P  ->  Kickbacks: Sign in"
+      $shown = Show-Toast $title $body
+      $flagText = "$stamp  Kickbacks appears SIGNED OUT (ads stopped refreshing; ad age=$adAge min).`r`nRestore: Command Palette (Ctrl+Shift+P) -> 'Kickbacks: Sign in'  (command id kickbacks.signIn).`r`nIf the bar/ad still misbehave after sign-in: 'Kickbacks: Restore Claude Code'."
+      [System.IO.File]::WriteAllText($SignInFlag, $flagText, $utf8)
+      $lastNotify = Get-Date
+      $notes += ("AUTH: signed-out detected -> notified (toast=" + $shown + ", flag written)")
+    } else {
+      $notes += "AUTH: still signed-out (within renotify throttle)"
+    }
+  } elseif ($state -eq "OK") {
+    if (Test-Path $SignInFlag) { try { [System.IO.File]::Delete($SignInFlag); $notes += "AUTH: recovered -> flag cleared" } catch {} }
+  }
+  [System.IO.File]::WriteAllText($AuthState, (@{ state = $state; lastNotify = $lastNotify.ToString('o'); adAgeMin = $adAge } | ConvertTo-Json -Compress), $utf8)
+} catch { $warns += ("auth check error: " + $_.Exception.Message) }
 
 # --- optional self-test: run the real chain, assert the bar ---
 $selfTestResult = ""
@@ -124,8 +171,7 @@ if ($SelfTest) {
     [System.IO.File]::WriteAllText($inFile, $payload, $utf8)
     $cmdline = '"{0}" "{1}" < "{2}"' -f $Node, $Mjs, $inFile
     $out = cmd /c $cmdline | Out-String
-    $hasBar = $out -match '\d+%'
-    $hasAd  = $out -match 'ad'
+    $hasBar = $out -match '\d+%'; $hasAd = $out -match 'ad'
     $selfTestResult = "selftest bar=$hasBar ad=$hasAd"
     if (-not $hasBar) { $warns += "SELFTEST: bar did NOT render through the chain" }
     try { [System.IO.File]::Delete($inFile) } catch {}
@@ -134,7 +180,7 @@ if ($SelfTest) {
 
 # --- log (append, capped) + report ---
 try {
-  $line = "$stamp healed=[" + ($healed -join '; ') + "] warns=[" + ($warns -join '; ') + "] $selfTestResult"
+  $line = "$stamp healed=[" + ($healed -join '; ') + "] warns=[" + ($warns -join '; ') + "] notes=[" + ($notes -join '; ') + "] $selfTestResult"
   $dir = Split-Path $LogFile -Parent
   if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
   Add-Content -Path $LogFile -Value $line -Encoding UTF8
@@ -144,5 +190,6 @@ try {
 
 if ($healed.Count) { Write-Output ("HEALED: " + ($healed -join '; ')) } else { Write-Output "OK: invariants already satisfied (no change)" }
 foreach ($w in $warns) { Write-Output ("WARN: " + $w) }
+foreach ($n in $notes) { Write-Output ($n) }
 if ($selfTestResult) { Write-Output $selfTestResult }
 exit 0
