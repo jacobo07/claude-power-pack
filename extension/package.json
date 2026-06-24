@@ -2,7 +2,7 @@
   "name": "pp-sessions",
   "displayName": "PP Sessions",
   "description": "Side panel of resumable Claude Code panes derived from disk truth. One-click exact resume, no 'History restored'.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "kobii",
   "engines": {
     "vscode": "^1.80.0"
@@ -49,6 +49,10 @@
       {
         "command": "ppSessions.openMap",
         "title": "PP Sessions: Open pane_map.md"
+      },
+      {
+        "command": "ppSessions.restoreColdStart",
+        "title": "PP Sessions: Restore cold-start panes now"
       }
     ],
     "menus": {
@@ -71,6 +75,16 @@
           "group": "inline"
         }
       ]
+    },
+    "configuration": {
+      "title": "PP Sessions",
+      "properties": {
+        "ppSessions.autoRestoreOnColdStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "On a cold start (window opened with no live terminals), auto-launch 'claude --resume' for this repo's open panes. Skipped on Reload Window (persistent sessions already reconnected the terminals), preventing duplicate panes (SCS C50 Option C)."
+        }
+      }
     }
   },
   "license": "SEE LICENSE IN LICENSE.txt"
