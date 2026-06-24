@@ -46,10 +46,29 @@ manually via the PP Sessions panel / `pane_map.md`.
   manual via PP Sessions. Full cold-start auto without reload duplication is the
   guarded-extension follow-up (Option C).
 
-## Follow-up (optional, Option C)
+## Option C — SHIPPED 2026-06-24 (615ebbb)
 
-Extension-as-sole-restorer: on activate, diff `pane_map.json` (resumable) against
-live `vscode.window.terminals` by cwd, launch `--resume` only for repos with no
-live terminal. Satisfies reload-clean AND cold-start-auto. Deferred — it edits
-`extension/src` (shipped 2026-06-22, 113099b), so it carries sibling-collision
-risk and needs its own session.
+Extension-as-sole-restorer, implemented in the PP Sessions extension (v0.2.0).
+On activate (after a settle delay) it reads `pane_map.json` and counts live
+`vscode.window.terminals`: on a cold start (zero live terminals) it launches
+`claude --resume <sid>` for this repo's `live` panes; on a reload (terminals
+already reconnected by persistent sessions) it launches NOTHING — the
+terminal-count guard is what keeps reload duplicate-free. Pure decision in
+`extension/src/restore_guard.js` (vscode-free), wired by
+`extension/src/extension.js`. Setting `ppSessions.autoRestoreOnColdStart`
+(default true) is the reversible kill switch; command
+`PP Sessions: Restore cold-start panes now` (force-bypasses the terminal guard)
+tests it without a real cold start.
+
+This is why "History restored" still appeared after dae50c7: every active repo
+already had a `tasks.json`, but `allowAutomaticTasks:"off"` gates the folderOpen
+layer off on cold start too — so nothing auto-restored. Option C is the cold-
+start restorer that does NOT re-introduce reload duplication. A second
+`tasks.json` generator (e.g. teaching `build_pane_map.ps1` to write tasks.json)
+is the WRONG fix — it re-creates the two-restorer race this card sealed.
+
+Verification: `node tools/test_restore_guard.js` → RG_PASS=10/10 (cold-start
+launch, reload guard, dedupe, cwd-filter, non-live exclusion, opt-out, path
+norm). E1 (cold start → exact resume, no "History restored") and E2 (reload →
+N == N, zero duplicates) remain Owner-run UI checks after
+`tools/install_pp_extension.ps1`.
