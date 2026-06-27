@@ -251,9 +251,69 @@ def gates_integration() -> None:
         _fail("V-BASELINE-INTACT", f"import regression: {exc}")
 
 
+def gates_g3() -> None:
+    from modules.session_resilience import snapshot_versioning as G3M
+    sh = G4.models.state_hash
+
+    # V-G3-DELTA: identical -> 0 ops; one change -> small (proportional) delta
+    same = G3M.compute_delta(_state(scroll_a=0.50), _state(scroll_a=0.50)).size()
+    one = G3M.compute_delta(_state(scroll_a=0.50), _state(scroll_a=0.51)).size()
+    if same == 0 and 1 <= one <= 2:
+        _ok("V-G3-DELTA", f"identical->0, one-change->{one} (proportional)")
+    else:
+        _fail("V-G3-DELTA", f"same={same} one={one}")
+
+    A, B = _state(scroll_a=0.10), _state(scroll_a=0.50)
+    C = _state(scroll_a=0.90, tabs=("a.py", "b.py", "c.py"))
+    with tempfile.TemporaryDirectory() as td:
+        s = G3M.SessionVersionStore(Path(td))
+        a = s.record(A, "A")
+        b = s.record(B, "B")
+        c = s.record(C, "C")
+        rA, rB, rC = s.reconstruct(a), s.reconstruct(b), s.reconstruct(c)
+
+        # V-G3-VERSION-RESTORE: restore to prior version B exactly (not A, not C)
+        if sh(rB) == sh(B) and sh(rB) != sh(rC) and sh(rB) != sh(rA):
+            _ok("V-G3-VERSION-RESTORE", "restore to B exact; != A and != C")
+        else:
+            _fail("V-G3-VERSION-RESTORE", f"B==recon(B):{sh(rB)==sh(B)}")
+
+        # V-G3-G4-VALIDATED: reconstructed version validated by the G4 arbiter
+        gate = G4.acceptance_gate(G4.score_recovery(B, rB))
+        if gate.verdict == G4.RECOVERED and gate.allow_complete:
+            _ok("V-G3-G4-VALIDATED", f"reconstructed B -> G4 {gate.verdict}")
+        else:
+            _fail("V-G3-G4-VALIDATED", f"verdict={gate.verdict} allow={gate.allow_complete}")
+
+        # V-G3-CHAIN-INTEGRITY: tampered delta -> integrity break, withheld
+        s._data["versions"][2]["delta"]["set"].append([["captured_at"], "TAMPERED"])
+        try:
+            s.reconstruct(c)
+            _fail("V-G3-CHAIN-INTEGRITY", "tampered chain not detected (no raise)")
+        except ValueError:
+            _ok("V-G3-CHAIN-INTEGRITY", "tampered delta detected -> reconstruct withheld")
+
+    # V-G3-COMPACTION: tagged version survives prune, stays reconstructable, ids unique
+    with tempfile.TemporaryDirectory() as td:
+        s = G3M.SessionVersionStore(Path(td), max_versions=3)
+        s.record(_state(scroll_a=0.10), "A")
+        keep = s.record(_state(scroll_a=0.20), "B", tag="keepB")
+        s.record(_state(scroll_a=0.30), "C")
+        s.record(_state(scroll_a=0.40), "D")
+        s.record(_state(scroll_a=0.50), "E")
+        ids = [v.version_id for v in s.catalog()]
+        unique = len(ids) == len(set(ids))
+        rk = s.reconstruct(keep)
+        if keep in ids and unique and sh(rk) == sh(_state(scroll_a=0.20)):
+            _ok("V-G3-COMPACTION", f"tagged kept+reconstructs; unique ids {ids}")
+        else:
+            _fail("V-G3-COMPACTION", f"keep_in={keep in ids} unique={unique} ids={ids}")
+
+
 def main() -> int:
     gates_g4()
     gates_g5()
+    gates_g3()
     gates_integration()
     print("--- ADVISORY (OWNER-RUN, not counted) ---")
     print("OWNER  V-G1-CONTRACT: 'OOM crash == Reload Window' visual indistinguishability is a")
