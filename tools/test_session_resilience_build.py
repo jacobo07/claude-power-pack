@@ -482,6 +482,51 @@ def gates_g1() -> None:
         _fail("V-G1-EXTENSION-SPEC", f"spec_exists={spec.is_file()}")
 
 
+def gates_sprint6() -> None:
+    from modules.session_resilience import integration as INT
+
+    A = _state(scroll_a=0.5)
+
+    # V-INTEGRATION-HUB: crash with state preserved -> RECOVERED verdict from hub
+    with tempfile.TemporaryDirectory() as td:
+        INT.on_session_start(Path(td), A, crash_suspected=False)      # v0 = A
+        r = INT.on_session_start(Path(td), A, crash_suspected=True)   # current==prior -> RECOVERED
+        if r.get("recovery") and r["recovery"]["verdict"] == G4.RECOVERED and not r["fail_open"]:
+            _ok("V-INTEGRATION-HUB", f"crash + preserved state -> hub verdict {r['recovery']['verdict']}")
+        else:
+            _fail("V-INTEGRATION-HUB", f"r={r}")
+
+    # V-INTEGRATION-HUB-GAP: crash with changed state -> gap detected + G5 event
+    with tempfile.TemporaryDirectory() as td:
+        INT.on_session_start(Path(td), A, crash_suspected=False)
+        B = _state(scroll_a=0.5, tabs=("a.py",))  # differs (tabs/editor)
+        r = INT.on_session_start(Path(td), B, crash_suspected=True)
+        evs = G5.RecoveryEventCollector(state_dir=Path(td)).read()
+        has_crash = any(e.get("type") == "crash_detected" for e in evs)
+        if r["recovery"]["verdict"] != G4.RECOVERED and has_crash:
+            _ok("V-INTEGRATION-HUB-GAP", f"gap -> {r['recovery']['verdict']}; G5 logged crash_detected")
+        else:
+            _fail("V-INTEGRATION-HUB-GAP", f"verdict={r['recovery']['verdict']} crash_logged={has_crash}")
+
+    # V-INTEGRATION-HUB-FAILOPEN: a storage failure must NOT block session start
+    with tempfile.TemporaryDirectory() as td:
+        afile = Path(td) / "not_a_dir"
+        afile.write_text("x", encoding="utf-8")
+        r = INT.on_session_start(afile, A, crash_suspected=False)
+        if r.get("fail_open"):
+            _ok("V-INTEGRATION-HUB-FAILOPEN", "store failure -> fail-open, session start not blocked")
+        else:
+            _fail("V-INTEGRATION-HUB-FAILOPEN", f"r={r}")
+
+    # V-INTEGRATION-RAM: ram threshold -> validated snapshot + safe advisory
+    with tempfile.TemporaryDirectory() as td:
+        r = INT.on_ram_threshold(Path(td), A)
+        if r["valid"] and r["advisory"] == "snapshot seguro guardado":
+            _ok("V-INTEGRATION-RAM", "ram threshold -> G4-validated snapshot; advisory='snapshot seguro guardado'")
+        else:
+            _fail("V-INTEGRATION-RAM", f"r={r}")
+
+
 def main() -> int:
     gates_g4()
     gates_g5()
@@ -489,6 +534,7 @@ def main() -> int:
     gates_g2()
     gates_g1()
     gates_integration()
+    gates_sprint6()
     print("--- ADVISORY (OWNER-RUN, not counted) ---")
     print("OWNER  V-G1-CONTRACT: 'OOM crash == Reload Window' visual indistinguishability is a")
     print("       GUI check with no CLI -- run after the G1 extension lands (SCS C50 precedent).")
