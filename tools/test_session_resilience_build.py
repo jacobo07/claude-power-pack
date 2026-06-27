@@ -310,10 +310,106 @@ def gates_g3() -> None:
             _fail("V-G3-COMPACTION", f"keep_in={keep in ids} unique={unique} ids={ids}")
 
 
+def gates_g2() -> None:
+    from modules.session_resilience import multi_window as G2M
+    from modules.session_resilience import snapshot_versioning as G3M
+    with tempfile.TemporaryDirectory() as td:
+        r = [Path(td) / f"r{i}" for i in range(3)]
+        for p in r:
+            p.mkdir()
+        reg = G2M.WindowRegistry(Path(td))
+        reg.register("win-1", str(r[0]), foreground=True,
+                     panes=[{"pane_id": "p1", "cwd": str(r[0]), "conversation_id": "X"}])
+        reg.register("win-2", str(r[1]),
+                     panes=[{"pane_id": "p2", "cwd": str(r[1]), "conversation_id": "Y"}])
+        reg.register("win-3", str(r[2]),
+                     panes=[{"pane_id": "p3", "cwd": str(r[2]), "conversation_id": "Z"}])
+        topo = G2M.cross_window_topology(reg)
+
+        # V-G2-WINDOWS-DETECTED: 3 windows captured individually
+        if len(reg.windows()) == 3 and topo["count"] == 3 and topo["foreground"] == "win-1":
+            _ok("V-G2-WINDOWS-DETECTED", f"3 windows captured, fg={topo['foreground']}")
+        else:
+            _fail("V-G2-WINDOWS-DETECTED", f"topo={topo}")
+
+        # V-G2-IDENTITY: stable, PID-free, marker-disambiguated
+        i1 = G2M.resolve_window_identity(str(r[0]), "m1")
+        i1b = G2M.resolve_window_identity(str(r[0]), "m1")
+        i2 = G2M.resolve_window_identity(str(r[0]), "m2")
+        if i1 == i1b and i1 != i2 and i1.startswith("win-"):
+            _ok("V-G2-IDENTITY", "stable + PID-free + marker disambiguates same workspace")
+        else:
+            _fail("V-G2-IDENTITY", f"i1={i1} i1b={i1b} i2={i2}")
+
+        # V-G2-BINDING: existing dir ok; missing path flagged
+        ok1, _ = G2M.bind_workspace(str(r[0]))
+        ok2, _ = G2M.bind_workspace(str(Path(td) / "ghost"))
+        if ok1 and not ok2:
+            _ok("V-G2-BINDING", "existing workspace ok; missing path blocked-with-reason")
+        else:
+            _fail("V-G2-BINDING", f"ok1={ok1} ok2={ok2}")
+
+        # V-G2-WINDOW-RESTORE: crash disappearance preserves the window + census
+        life = G2M.WindowLifecycle(reg)
+        life.crash_gone("win-2")
+        if (reg.expected_census() == 3 and reg.get("win-2").status == G2M.RECOVERY_PENDING
+                and reg.get("win-1").status == G2M.OPEN and reg.get("win-3").status == G2M.OPEN):
+            _ok("V-G2-WINDOW-RESTORE", "crashed win-2 preserved (recovery_pending); census stays 3")
+        else:
+            _fail("V-G2-WINDOW-RESTORE", f"census={reg.expected_census()}")
+
+        # V-G2-ISOLATION: clean-close one window does not affect the others
+        life.clean_close("win-3")
+        if reg.expected_census() == 2 and reg.get("win-1").status == G2M.OPEN:
+            _ok("V-G2-ISOLATION", "clean-close win-3 -> census 2; win-1 untouched")
+        else:
+            _fail("V-G2-ISOLATION", f"census={reg.expected_census()} win1={reg.get('win-1').status}")
+
+        # V-G2-FOCUS: exactly one foreground after restore
+        fg, why = G2M.arbitrate_focus(reg)
+        if fg == "win-1":
+            _ok("V-G2-FOCUS", f"single foreground -> {fg} ({why})")
+        else:
+            _fail("V-G2-FOCUS", f"fg={fg} ({why})")
+
+        # V-G2-LOCK: two windows claiming one conversation -> conflict, single grant
+        reg.register("win-4", str(r[0]),
+                     panes=[{"pane_id": "p4", "cwd": str(r[0]), "conversation_id": "X"}])
+        lc = G2M.lock_coordinator(reg)
+        confs = [c for c in lc["conflicts"] if c["conversation_id"] == "X"]
+        if confs and lc["grants"]["X"] == "win-1" and "win-4" in confs[0]["blocked"]:
+            _ok("V-G2-LOCK", "conflict on X -> granted to foreground win-1, win-4 blocked")
+        else:
+            _fail("V-G2-LOCK", f"conflicts={lc['conflicts']} grants={lc['grants']}")
+
+        # V-G2-ORDER: sequential under resource pressure; locked window first
+        reg.get("win-2").panes = [{"pane_id": "p2", "cwd": str(r[1]),
+                                   "conversation_id": "Y", "locked": True}]
+        reg._save()
+        plan = G2M.restoration_order(reg, resource_pressure=True)
+        if not plan["parallel_allowed"] and plan["order"][0] == "win-2":
+            _ok("V-G2-ORDER", f"sequential under pressure; locked win-2 first: {plan['order']}")
+        else:
+            _fail("V-G2-ORDER", f"plan={plan}")
+
+        # V-G2-G3-BRIDGE: per-window description -> G3 versioned -> G4 RECOVERED
+        wdesc = G2M.window_state_description(reg.get("win-1"))
+        with tempfile.TemporaryDirectory() as td2:
+            st = G3M.SessionVersionStore(Path(td2))
+            v = st.record(wdesc, "w1")
+            back = st.reconstruct(v)
+        gate = G4.acceptance_gate(G4.score_recovery(wdesc, back))
+        if gate.verdict == G4.RECOVERED:
+            _ok("V-G2-G3-BRIDGE", "per-window desc -> G3 versioned -> G4 RECOVERED")
+        else:
+            _fail("V-G2-G3-BRIDGE", f"verdict={gate.verdict}")
+
+
 def main() -> int:
     gates_g4()
     gates_g5()
     gates_g3()
+    gates_g2()
     gates_integration()
     print("--- ADVISORY (OWNER-RUN, not counted) ---")
     print("OWNER  V-G1-CONTRACT: 'OOM crash == Reload Window' visual indistinguishability is a")
