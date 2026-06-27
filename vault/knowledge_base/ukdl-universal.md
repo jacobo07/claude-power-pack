@@ -1706,3 +1706,47 @@ done-gate would not catch because the wrapper "works" on first launch.
 kclaude.ps1 runs pre-launch intelligence ONCE, then enters the same flag-driven
 relaunch loop; the old .bat is backed up `.superseded`, never deleted. ORIGEN:
 wrapper W7 2026-06-23.
+
+### HR-SESSION-RESILIENCE-001 -- no recovery is complete without a G4 verdict
+
+**TRIGGER:** declaring a session/crash recovery "complete", "restored" or "done".
+
+**ACCIÓN:** STOP. A recovery is complete ONLY when the G4 Recovery Acceptance
+Framework returns `RECOVERED` (`modules/session_resilience/acceptance.acceptance_gate`).
+`PARTIAL`/`FAILED` hold the claim and enumerate the missing dimensions; the
+acceptance gate fails safe (holds) on `UNKNOWN`. G4 is the arbiter -- without its
+verdict nothing is done. ORIGEN: Session Resilience OS build, SCS C56, 2026-06-27.
+
+### PR-SNAPSHOT-BEFORE-RISK-001 -- snapshot + validate before a risky operation
+
+**TRIGGER:** about to hit an OOM threshold, run an update, or force-kill a process.
+
+**ACCIÓN:** call `integration.on_ram_threshold` (or `on_session_start`) FIRST: G3
+records a snapshot, G4 validates it reconstructs+scores clean, G5 logs it. Both
+entry points are FAIL-OPEN -- if any step fails the operation still proceeds; the
+guard never blocks real work. ORIGEN: Session Resilience OS build, SCS C56.
+
+### T-UI-STATE-API-LIMITS-001 -- do not force a UI API that does not exist
+
+**TRIGGER:** capturing/restoring editor scroll, focus or tab order.
+
+**TRAP:** scroll/focus/tab-order live in the editor host; Python cannot touch
+them and scroll restore is host-APPROXIMATE (`revealRange`). Forcing a
+non-existent API is the trap.
+
+**ACCIÓN:** capture/apply is extension-JS (`G1_EXTENSION_CAPTURE_SPEC.md`). G4 is
+capability-aware (`ui_state.g4_host_capabilities`): a property the host cannot
+restore is excluded from equivalence and logged by G5 -- never silently failed,
+never silently dropped. ORIGEN: Session Resilience OS build, SCS C56.
+
+### T-DEPENDENCY-GRAPH-INVERSION-001 -- read the code before trusting a prompt's graph
+
+**TRIGGER:** a plan/prompt asserts a dependency graph between systems.
+
+**TRAP:** the build prompt's graph (`G4 independent, G3->G4, G1->G2/G3`) was
+INVERTED. The datasets+source show data flows `G1 -> {G2, G3} -> G4 -> G5`
+(G2/G3 consume G1; G4 consumes G3; G5 consumes G4).
+
+**ACCIÓN:** verify dependencies against the datasets and real source before
+implementing; correct the literal, honor the intent. ORIGEN: Session Resilience
+OS build, SCS C56, 2026-06-27.
