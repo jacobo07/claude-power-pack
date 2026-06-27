@@ -405,11 +405,89 @@ def gates_g2() -> None:
             _fail("V-G2-G3-BRIDGE", f"verdict={gate.verdict}")
 
 
+def gates_g1() -> None:
+    from modules.session_resilience import ui_state as G1M
+    from modules.session_resilience import multi_window as G2M
+    from modules.session_resilience import snapshot_versioning as G3M
+
+    def _ed(scroll):
+        return G1M.build_editor(
+            tabs=[{"path": "a.py", "group": 0, "order": 0, "pinned": False, "preview": False},
+                  {"path": "b.py", "group": 0, "order": 1, "pinned": True, "preview": False}],
+            focus={"window_id": "w1", "group": 0, "path": "a.py"},
+            scroll={"a.py": scroll, "b.py": 0.2})
+
+    # V-G1-MODEL: manifest builds + validates; bad focus is rejected
+    ok_good, _ = G1M.validate_editor(_ed(0.6))
+    bad = G1M.build_editor(tabs=[{"path": "a.py", "group": 0, "order": 0}],
+                           focus={"window_id": "w1", "group": 0, "path": "ghost.py"})
+    ok_bad, _ = G1M.validate_editor(bad)
+    if ok_good and not ok_bad:
+        _ok("V-G1-MODEL", "manifest valid; focus-not-in-tabs rejected")
+    else:
+        _fail("V-G1-MODEL", f"good={ok_good} bad={ok_bad}")
+
+    # V-G1-DIFF: canonical stable; one scroll change -> small leaf delta
+    stable = G1M.canonical_editor(_ed(0.6)) == G1M.canonical_editor(_ed(0.6))
+    n = G1M.editor_change_count(_ed(0.6), _ed(0.61))
+    if stable and 1 <= n <= 2:
+        _ok("V-G1-DIFF", f"canonical stable; one-change leaves={n} (proportional)")
+    else:
+        _fail("V-G1-DIFF", f"stable={stable} n={n}")
+
+    # V-G1-CAPABILITY: host that cannot restore scroll -> dropped + reported
+    full, rep_full = G1M.mark_unrestorable(_ed(0.6), G1M.DEFAULT_HOST_CAPABILITIES)
+    ltd, rep_ltd = G1M.mark_unrestorable(_ed(0.6), frozenset({"tabs", "focus"}))
+    if "scroll" in full and "scroll" not in ltd and any("scroll" in r for r in rep_ltd):
+        _ok("V-G1-CAPABILITY", "limited host drops+reports scroll; full host keeps it")
+    else:
+        _fail("V-G1-CAPABILITY", f"full_has_scroll={'scroll' in full} ltd_has={'scroll' in ltd}")
+
+    # V-G1-G4-CAPABILITY-WIRE: scroll-limited host -> RECOVERED; full host -> FAILED
+    def _desc(ed):
+        return {"schema_version": 1, "captured_at": "t", "windows": [{
+            "window_id": "w1", "workspace_path": "C:/r", "foreground": True,
+            "terminals": [{"pane_id": "p1", "cwd": "C:/r", "conversation_id": "X"}],
+            "editor": ed}]}
+    sc = G4.score_recovery(_desc(_ed(0.6)), _desc(_ed(0.1)))  # scroll diverges beyond tol
+    v_ltd = G4.equivalence_verdict(sc, host_capabilities=G1M.g4_host_capabilities(frozenset({"tabs", "focus"})))
+    v_full = G4.equivalence_verdict(sc, host_capabilities=G1M.g4_host_capabilities())
+    if v_ltd == G4.RECOVERED and v_full == G4.FAILED:
+        _ok("V-G1-G4-CAPABILITY-WIRE", "scroll-limited host -> RECOVERED; scroll-capable -> FAILED")
+    else:
+        _fail("V-G1-G4-CAPABILITY-WIRE", f"limited={v_ltd} full={v_full}")
+
+    # V-G1-COMPOSE: editor -> per-window desc (G2) -> G3 versioned -> G4 RECOVERED
+    with tempfile.TemporaryDirectory() as td:
+        wsp = Path(td) / "repo"
+        wsp.mkdir()
+        reg = G2M.WindowRegistry(Path(td))
+        reg.register("w1", str(wsp), foreground=True,
+                     panes=[{"pane_id": "p1", "cwd": str(wsp), "conversation_id": "X"}])
+        wdesc = G2M.window_state_description(reg.get("w1"), editor=_ed(0.6))
+        with tempfile.TemporaryDirectory() as td2:
+            st = G3M.SessionVersionStore(Path(td2))
+            back = st.reconstruct(st.record(wdesc, "w1"))
+        gate = G4.acceptance_gate(G4.score_recovery(wdesc, back))
+        if gate.verdict == G4.RECOVERED:
+            _ok("V-G1-COMPOSE", "editor -> G2 window desc -> G3 versioned -> G4 RECOVERED")
+        else:
+            _fail("V-G1-COMPOSE", f"verdict={gate.verdict}")
+
+    # V-G1-EXTENSION-SPEC: the capture/apply contract artifact exists (not stubbed code)
+    spec = _ROOT / "vault" / "knowledge_base" / "session_resilience" / "G1_EXTENSION_CAPTURE_SPEC.md"
+    if spec.is_file() and "Owner-run" in spec.read_text(encoding="utf-8-sig"):
+        _ok("V-G1-EXTENSION-SPEC", "extension capture/apply spec present; visual gate marked Owner-run")
+    else:
+        _fail("V-G1-EXTENSION-SPEC", f"spec_exists={spec.is_file()}")
+
+
 def main() -> int:
     gates_g4()
     gates_g5()
     gates_g3()
     gates_g2()
+    gates_g1()
     gates_integration()
     print("--- ADVISORY (OWNER-RUN, not counted) ---")
     print("OWNER  V-G1-CONTRACT: 'OOM crash == Reload Window' visual indistinguishability is a")
