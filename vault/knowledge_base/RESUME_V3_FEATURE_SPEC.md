@@ -265,3 +265,60 @@ message); none are satisfied by "no error" alone.
 Frames `g_*` were sampled `fps=1/27` over the full 221 s clip;
 frames `d_*` were sampled `fps=1/10` from the 3:00 dense-pain window.
 Both extractions are deterministic given the input video.
+
+---
+
+## §8 — Session Identity Extension (added 2026-06-28, Workspace-Continuity reality scan)
+
+This section EXTENDS the existing /resume v3 spec rather than creating a parallel "Resume Identity
+OS". The Workspace-Continuity reality scan confirmed that C1–C5 above (topology snapshot, redundancy
+filter, grouped rehydrate, heartbeat) already own the structural half of resume identity, and that
+`tools/resume_reindex.py`, `vault/standards/live-session-marker.md` and `tools/lost_chat_recovery.py`
+already exist. The remaining goal — sessions with *genuinely useful* identity — is realized as
+extensions of those systems, with host limits documented where Cursor's own picker bounds what is
+possible.
+
+### §8.1 — Stable descriptive names (realized)
+
+The descriptive-name gap (§1 "half the corpus is untitled", §2.4) is closed *outside* the native
+picker by `~/.claude/state/NAMED_RECOVERY_INDEX.md`, generated from `pane_map.json` disk truth: each
+chat is grouped by repo with a descriptive name derived from its first meaningful prompt (noise
+prefixes such as `MODO:`, `PREFLIGHT:`, `ULTRA-PLAN MODE` stripped), a `[LIVE]`/`rec.` tag, an age,
+and the exact `cd "<cwd>" ; claude --resume <id>` command. This is the sanctioned identity surface
+because of the host limit in §8.5. The name is *stable* in that it derives deterministically from the
+transcript's first user message, which never changes for a given session.
+
+### §8.2 — Clear metadata (realized via C1, surfaced)
+
+Every datum the C1 topology snapshot already records — repo/project, cwd, branch, age (`last_seen`),
+liveness, file size, PR refs — is the session's metadata. The extension is to *surface* it in the
+named index and the PP Sessions panel rather than leave it implicit, so a session is identifiable by
+repo + task + age + liveness at a glance instead of by content-preview hunting.
+
+### §8.3 — Classification by work type (best-effort)
+
+Sessions are classified into a small, fixed taxonomy — feature, debug, research, architecture,
+review — by keyword evidence in the first prompt and early tool pattern (e.g. `ULTRA-PLAN`/`design`
+→ architecture; `bug`/`error`/`fix` → debug; `research`/`audit` → research). The classification is
+advisory metadata, never a destructive filter: an unclassifiable session is tagged `general`, not
+hidden. It composes with §8.1 so the index can group or badge by type.
+
+### §8.4 — Semantic search and scalable navigation (best-effort, host-bounded)
+
+For hundreds of sessions, flat scrolling does not scale (§2.2). The extension is a search over the
+*index* (names + metadata + first-prompt text), not over the native modal, ranked by relevance and
+recency, reusing the BM25/FTS substrate the PP already runs for other corpora rather than building a
+new engine. Navigation scales by the C3 grouping (project × window) plus the type badge from §8.3, so
+a operator narrows by repo, then type, then recency without opening each session. This is read-only
+discovery; selection still flows through the existing `--resume` command.
+
+### §8.5 — Host limit (documented, not worked around)
+
+The native /resume picker derives each row's title from the session's *first user message*; there is
+no API to rename a row, and editing the transcript to change the title would mutate session history
+and violate the Session Safety Contract (§1 Sacred Invariant). Therefore none of §8.1–§8.4 edits the
+native picker or any `.jsonl`; they all operate on the external index and PP Sessions panel. The honest
+consequence: inside the *native* modal, untitled-derived rows remain as Cursor renders them; the
+useful-identity guarantee holds on the PP-owned surfaces, which the Owner is directed to as the source
+of truth (consistent with §6 "Renaming or reorganizing the native picker itself" being out of scope).
+If Cursor later exposes a title API, §8.1 names become the input to it with no further design needed.

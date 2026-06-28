@@ -14,14 +14,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FAM = ROOT / "vault" / "knowledge_base" / "session_resilience"
 INDEX = FAM / "SESSION_RESILIENCE_OS_INDEX.md"
+RESUME_SPEC = ROOT / "vault" / "knowledge_base" / "RESUME_V3_FEATURE_SPEC.md"
 
+G6 = FAM / "session_resilience_06_power_transition_and_wake_recovery_engine.md"
 DATASETS = [
     FAM / "session_resilience_01_ui_editor_state_persistence_layer.md",
     FAM / "session_resilience_02_multi_window_coordinator.md",
     FAM / "session_resilience_03_incremental_snapshot_and_session_versioning_engine.md",
     FAM / "session_resilience_04_recovery_acceptance_framework.md",
     FAM / "session_resilience_05_recovery_telemetry_and_diagnostics_layer.md",
+    G6,
 ]
+
+G6_WORD_FLOOR = 2500  # Workspace-Continuity standard for the new G6 dataset
 
 # Existing PP systems each dataset must reference as a dependency (non-duplication anchor).
 EXISTING_SYSTEMS = ["CETTG", "RS-OS", "RW-OS", "CPC-OS", "pp_dataset"]
@@ -124,6 +129,26 @@ def main() -> int:
         _fail("V-BASELINE-INTACT", f"non-md additions={non_md} master_intact={master_ok}")
     else:
         _ok("V-BASELINE-INTACT", "family is markdown-only; pp_dataset_MASTER.md intact")
+
+    # V-G6-DEPTH: the new power-transition dataset meets the raised 2500-word standard
+    g6_words = _wordcount(bodies[G6]) if G6 in bodies else 0
+    if g6_words >= G6_WORD_FLOOR:
+        _ok("V-G6-DEPTH", f"G6 power-transition dataset = {g6_words} words (>= {G6_WORD_FLOOR})")
+    else:
+        _fail("V-G6-DEPTH", f"G6 below {G6_WORD_FLOOR} words: {g6_words}")
+
+    # V-RESUME-IDENTITY: RESUME_V3 extended in place (no parallel Resume Identity OS)
+    if not RESUME_SPEC.is_file():
+        _fail("V-RESUME-IDENTITY", f"missing {RESUME_SPEC.name}")
+    else:
+        rb = _read(RESUME_SPEC)
+        needed = ["Session Identity Extension", "descriptive names", "classification",
+                  "semantic search", "Host limit", "NAMED_RECOVERY_INDEX"]
+        miss = [t for t in needed if t.lower() not in rb.lower()]
+        if miss:
+            _fail("V-RESUME-IDENTITY", f"RESUME_V3 §8 missing tokens: {miss}")
+        else:
+            _ok("V-RESUME-IDENTITY", "RESUME_V3 §8 identity extension present (names/class/search/host-limit)")
 
     print(f"SESSION_RESILIENCE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
