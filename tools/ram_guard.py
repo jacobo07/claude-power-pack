@@ -272,6 +272,20 @@ def evaluate(ws_mb: float | None,
     }
 
 
+def _write_beacon_safe(cwd: str, session_id: str | None) -> dict:
+    """G6 (BL-G6-RUNTIME): mark the session active+durable (fsync beacon) BEFORE a
+    possible OOM, so a crash is classified ``ungraceful-shutdown`` and the
+    cold-start reentry records a recovery. Fail-open: never blocks the advisory."""
+    try:
+        sys.path.insert(0, str(PP_PATH))
+        from modules.session_resilience.power_beacon import write_active_beacon  # type: ignore
+        state_dir = Path.home() / ".claude" / "state"
+        write_active_beacon(state_dir, session_id=session_id, cwd=cwd)
+        return {"ok": True}
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "detail": f"{type(exc).__name__}: {exc}"}
+
+
 def ensure_snapshot() -> dict:
     """Best-effort crash-recovery snapshot via the CPC-OS snapshot module.
     Never raises; returns {ok, detail}."""
@@ -318,6 +332,7 @@ def main(argv=None) -> int:
             work_state = _save_work_state_safe(cwd, session_id)
             verdict["work_state_path"] = (work_state or {}).get("_path")
         verdict["snapshot_result"] = ensure_snapshot()
+        verdict["beacon"] = _write_beacon_safe(cwd, session_id)
         if gaming:
             verdict["advisory"] = build_gaming_advisory(verdict, work_state)
 

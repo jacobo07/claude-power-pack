@@ -437,6 +437,17 @@ const CPC_REGISTER_SCRIPT =
   + "    _snap = os.path.join(os.path.expanduser('~'), '.claude', 'state', 'session_snapshot.json')\n"
   + "    vscode_autorun.generate_from_snapshot(_snap, cwds=[os.environ.get('PP_PANE_CWD') or os.getcwd()])\n"
   + "except Exception:\n"
+  + "    pass\n"
+  // G6 (BL-G6-RUNTIME): mark this session active+durable with an fsync'd power
+  // beacon, so a later ungraceful power-loss (lid-close -> freeze -> reboot) is
+  // classified ungraceful at next startup and the cold-start reentry records a
+  // recovery. Reuses THIS existing detached python -- no new SessionStart cold
+  // start. The graceful counterpart is written at SessionEnd (see activation doc).
+  + "try:\n"
+  + "    from modules.session_resilience.power_beacon import write_active_beacon\n"
+  + "    _bsd = os.path.join(os.path.expanduser('~'), '.claude', 'state')\n"
+  + "    write_active_beacon(_bsd, session_id=sid, cwd=os.environ.get('PP_PANE_CWD'))\n"
+  + "except Exception:\n"
   + "    pass\n";
 
 function hookCpcOsRegister(cwd, sessionId) {

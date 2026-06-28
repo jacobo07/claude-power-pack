@@ -527,6 +527,138 @@ def gates_sprint6() -> None:
             _fail("V-INTEGRATION-RAM", f"r={r}")
 
 
+def gates_g6() -> None:
+    from modules.session_resilience import power_beacon as PB
+    from modules.session_resilience import reentry as RE
+    from modules.session_resilience import resume_identity as RI
+
+    NOW = "2026-06-29T12:00:00Z"
+
+    # V-G6-BEACON-PERSISTS: an active beacon survives a simulated power-loss (the
+    # process dies without a graceful close) -- the fsync'd file is on disk and a
+    # fresh classify reads it as ungraceful via the two-signal rule.
+    with tempfile.TemporaryDirectory() as td:
+        PB.write_active_beacon(td, session_id="s1", cwd="C:/repos/pp", now=NOW)
+        persisted = (Path(td) / PB.BEACON_FILENAME).is_file()  # survived "kill -9"
+        cls = PB.classify_startup(td, live_terminal_count=0)
+        if persisted and cls["class"] == PB.UNGRACEFUL and len(cls["signals"]) >= 2:
+            _ok("V-G6-BEACON-PERSISTS",
+                f"fsync'd beacon survives crash -> {cls['class']} ({len(cls['signals'])} signals)")
+        else:
+            _fail("V-G6-BEACON-PERSISTS", f"persisted={persisted} cls={cls['class']}")
+
+    # V-G6-CLASSIFY: first-run vs reload vs graceful-reopen are all distinct.
+    with tempfile.TemporaryDirectory() as td:
+        first = PB.classify_startup(td, 0)["class"]
+        PB.write_active_beacon(td, now=NOW)
+        reload_c = PB.classify_startup(td, live_terminal_count=3)["class"]
+        PB.write_graceful_exit(td, now=NOW)
+        graceful = PB.classify_startup(td, 0)["class"]
+        if first == PB.FIRST_RUN and reload_c == PB.RELOAD and graceful == PB.GRACEFUL_REOPEN:
+            _ok("V-G6-CLASSIFY", f"first={first} reload={reload_c} graceful={graceful} (distinct)")
+        else:
+            _fail("V-G6-CLASSIFY", f"first={first} reload={reload_c} graceful={graceful}")
+
+    pane_map = {"panes": [
+        {"sessionId": "aaa", "cwd": "C:/repos/pp", "repo": "pp",
+         "resumeCmd": "claude --resume aaa", "live": True, "topic": "G6 power transitions build"},
+        {"sessionId": "bbb", "cwd": "C:/repos/x", "repo": "x",
+         "resumeCmd": "claude --resume bbb", "live": True, "topic": "fix crash in loader"},
+        {"sessionId": "ccc", "cwd": "C:/repos/y", "repo": "y",
+         "resumeCmd": "claude --resume ccc", "live": False, "topic": "old research audit"},
+    ]}
+
+    # V-G6-REENTRY-EVENT: ungraceful -> G5 stream w/ cause + G4 RECOVERED (all live restorable).
+    with tempfile.TemporaryDirectory() as td:
+        PB.write_active_beacon(td, now=NOW)
+        cls = PB.classify_startup(td, 0)
+        res = RE.record_reentry(td, cls, pane_map, now=NOW)
+        evs = G5.RecoveryEventCollector(state_dir=Path(td)).read()
+        started = [e for e in evs if e.get("type") == "recovery_started" and e.get("cause") == RE.CAUSE]
+        completed = [e for e in evs if e.get("type") == "recovery_completed"]
+        if (res["verdict"] == G4.RECOVERED and res["restorable_panes"] == 2
+                and started and completed and completed[0]["verdict"] == G4.RECOVERED):
+            _ok("V-G6-REENTRY-EVENT",
+                f"ungraceful -> G5 cause={RE.CAUSE}, G4={res['verdict']}, panes={res['restorable_panes']}")
+        else:
+            _fail("V-G6-REENTRY-EVENT",
+                  f"res={res} started={len(started)} completed={len(completed)}")
+
+    # V-G6-REENTRY-GAP: a live pane missing its session id is a real miss -> not RECOVERED.
+    gap_map = {"panes": [
+        {"sessionId": "aaa", "cwd": "C:/repos/pp", "repo": "pp",
+         "resumeCmd": "claude --resume aaa", "live": True, "topic": "build"},
+        {"sessionId": "", "cwd": "C:/repos/z", "repo": "z",
+         "resumeCmd": "", "live": True, "topic": "unrestorable pane"},
+    ]}
+    with tempfile.TemporaryDirectory() as td:
+        PB.write_active_beacon(td, now=NOW)
+        cls = PB.classify_startup(td, 0)
+        res = RE.record_reentry(td, cls, gap_map, now=NOW)
+        if res["verdict"] != G4.RECOVERED and res["missing"] and res["restorable_panes"] == 1:
+            _ok("V-G6-REENTRY-GAP",
+                f"unrestorable live pane -> {res['verdict']}, missing={len(res['missing'])}")
+        else:
+            _fail("V-G6-REENTRY-GAP", f"res={res}")
+
+    # V-G6-NO-OP: a graceful reopen records NOTHING (no false recovery).
+    with tempfile.TemporaryDirectory() as td:
+        PB.write_graceful_exit(td, now=NOW)
+        cls = PB.classify_startup(td, 0)
+        res = RE.record_reentry(td, cls, pane_map, now=NOW)
+        evs = G5.RecoveryEventCollector(state_dir=Path(td)).read()
+        if res["verdict"] is None and not evs:
+            _ok("V-G6-NO-OP", "graceful reopen -> no recovery recorded (no false positive)")
+        else:
+            _fail("V-G6-NO-OP", f"res={res} evs={len(evs)}")
+
+    # V-RESUME-TASKTYPE: work-type classification across the taxonomy.
+    cases = {
+        "fix the crash in the loader": "debug",
+        "ULTRA-PLAN MODE design the dataset family": "architecture",
+        "research the audit findings": "research",
+        "build G6 runtime and wire it": "feature",
+        "say hello": "general",
+    }
+    got = {k: RI.classify_task_type(k) for k in cases}
+    if got == cases:
+        _ok("V-RESUME-TASKTYPE", f"5/5 work-types classified: {sorted(set(got.values()))}")
+    else:
+        _fail("V-RESUME-TASKTYPE", f"got={got}")
+
+    # V-RESUME-LABEL: a human label, never a raw UUID.
+    lbl = RI.build_label("claude-power-pack", "G6 Power Transitions runtime build", task_type="feature")
+    uuid_lbl = RI.build_label("pp", "4fc2ab12-0000-1111-2222-333344445555")
+    if RI.label_is_human(lbl) and "(feature)" in lbl and not RI.label_is_human(uuid_lbl):
+        _ok("V-RESUME-LABEL", f"human label '{lbl}'; raw-uuid topic flagged non-human")
+    else:
+        _fail("V-RESUME-LABEL",
+              f"lbl='{lbl}' human={RI.label_is_human(lbl)} uuid_human={RI.label_is_human(uuid_lbl)}")
+
+    # V-RESUME-CATALOG: persisted catalog with real fields.
+    with tempfile.TemporaryDirectory() as td:
+        cat = RI.build_catalog(pane_map["panes"], td, now=NOW)
+        loaded = RI.load_catalog(td)
+        entry = next((e for e in loaded if e["session_id"] == "aaa"), None)
+        if ((Path(td) / RI.CATALOG_FILENAME).is_file() and len(cat) == 3
+                and entry and entry["task_type"] and entry["repo"] == "pp"):
+            _ok("V-RESUME-CATALOG",
+                f"{len(cat)} sessions persisted; real fields (aaa type={entry['task_type']})")
+        else:
+            _fail("V-RESUME-CATALOG", f"cat={len(cat)} entry={entry}")
+
+    # V-RESUME-SEARCH: relevant query ranks; nonsense query returns [].
+    with tempfile.TemporaryDirectory() as td:
+        RI.build_catalog(pane_map["panes"], td, now=NOW)
+        cat = RI.load_catalog(td)
+        hits = RI.search(cat, "crash loader")
+        none = RI.search(cat, "zzzznomatch")
+        if hits and hits[0]["session_id"] == "bbb" and not none:
+            _ok("V-RESUME-SEARCH", f"'crash loader' -> {hits[0]['repo']} top; nonsense -> []")
+        else:
+            _fail("V-RESUME-SEARCH", f"hits={[h['session_id'] for h in hits]} none={none}")
+
+
 def main() -> int:
     gates_g4()
     gates_g5()
@@ -535,6 +667,7 @@ def main() -> int:
     gates_g1()
     gates_integration()
     gates_sprint6()
+    gates_g6()
     print("--- ADVISORY (OWNER-RUN, not counted) ---")
     print("OWNER  V-G1-CONTRACT: 'OOM crash == Reload Window' visual indistinguishability is a")
     print("       GUI check with no CLI -- run after the G1 extension lands (SCS C50 precedent).")
