@@ -8,20 +8,20 @@ overhead budget). Each feature runs in its own thread with an INDIVIDUAL timeout
 the longest single timeout (~1s), not the sum. A feature that overruns or raises
 is abandoned and the others still complete -- fail-open, never blocks the launch.
 
-Cognitive OS (CO-08): a 6th concurrent feature computes the hard hot-session-cap
-verdict for a NEW pane on this cwd. It is the only field the orchestrator may act
-on to BLOCK (rung-3 enforcement); every other field stays advisory. Fail-open:
-an errored/timed-out gate yields verdict "proceed", never a spurious refusal.
+Cognitive OS:
+  CO-08 (gate)       -- the hard hot-session-cap verdict for a NEW pane; the only
+                        field the orchestrator may act on to BLOCK (rung-3).
+  CO-00 (resume_gate)-- the effective-context advisory for the RESUME target; an
+                        honest rung-2 warning (a block on resume is counter-
+                        productive -- a session must be opened to be /compact-ed).
+Both fail-open: an errored/timed-out gate yields a benign proceed/no-advice.
 
 Output (stdout, one JSON object):
   {
-    "advisories": [ "<W1 context-pressure>", "<W5 cost lines...>" ],
-    "coord":  {"active":bool,"warning":str|null,"default_resume":str|null,
-               "source":str},
-    "resume": {"resume_arg":str|null,"session_id":str|null,"source":str},
-    "known_sids": ["..."],
-    "gate":   {"verdict":"proceed"|"refuse","reasons":[...],"satisfy":[...],
-               "hot_count":int,"same_repo_count":int,"cap":int}
+    "advisories": [...], "coord": {...}, "resume": {...}, "known_sids": [...],
+    "gate":        {"verdict":"proceed"|"refuse","reasons":[...],"satisfy":[...],
+                    "hot_count":int,"same_repo_count":int,"cap":int},
+    "resume_gate": {"band":str,"advise":bool,"message":str|null}
   }
 """
 from __future__ import annotations
@@ -36,9 +36,9 @@ _PP_ROOT = Path(__file__).resolve().parents[2]
 if str(_PP_ROOT) not in sys.path:
     sys.path.insert(0, str(_PP_ROOT))
 
-# Fail-open default the orchestrator can always act on safely (never blocks).
 _GATE_PROCEED = {"verdict": "proceed", "reasons": [], "satisfy": [],
                  "hot_count": 0, "same_repo_count": 0, "cap": 0}
+_RESUME_GATE_NONE = {"band": "UNKNOWN", "advise": False, "message": None}
 
 
 def _res(fut, timeout, default):
@@ -93,6 +93,20 @@ def _gate(cwd):
             "cap": v.cap}
 
 
+def _resume_gate(cwd, resume):
+    """CO-00 effective-context advisory for the RESUME target (rung-2). Fast:
+    one bridge read + one stat. Fail-open -> no advice."""
+    sid = (resume or {}).get("session_id")
+    if not sid:
+        return dict(_RESUME_GATE_NONE)
+    try:
+        from modules.cognitive_os.context import resume_advisory
+        a = resume_advisory(sid, cwd)
+        return {"band": a.band, "advise": a.advise, "message": a.message}
+    except Exception:  # noqa: BLE001 -- fail-open
+        return dict(_RESUME_GATE_NONE)
+
+
 def run(cwd, description=None):
     """All features run CONCURRENTLY (independent disk reads) so wall-time is
     the longest single timeout (~1s), not their sum -- keeps launch overhead
@@ -106,10 +120,6 @@ def run(cwd, description=None):
         f_known = ex.submit(_known_sids, cwd)
         f_gate = ex.submit(_gate, cwd)
         w1 = _res(f_w1, 1.0, None)
-        # W4/W5 bumped 0.5->1.0s: each now reads transcripts (parallel-burn scan
-        # / per-turn weekly window). Threads run concurrently so wall-time stays
-        # the longest single timeout (~1.0s, == W1/W2), NOT the sum -- no launch
-        # overhead regression.
         coord = _res(f_w4, 1.0, {"active": False, "warning": None,
                                  "default_resume": None, "source": "timeout",
                                  "burn_warning": None})
@@ -117,15 +127,16 @@ def run(cwd, description=None):
         resume = _res(f_w2, 1.0, {"resume_arg": None, "session_id": None,
                                   "source": "timeout"})
         known = _res(f_known, 0.5, [])
-        # Gate scans the whole project tree (global hot count) -> 1.0s budget,
-        # same concurrent window. Timeout/err -> proceed (never a false refusal).
         gate = _res(f_gate, 1.0, dict(_GATE_PROCEED))
     finally:
         ex.shutdown(wait=False)  # never block on a hung feature thread
+    # CO-00 resume advisory: depends on the resolved resume target, so computed
+    # after collection (fast: bridge read + stat). Fail-open inside _resume_gate.
+    resume_gate = _resume_gate(cwd, resume)
     burn = (coord or {}).get("burn_warning")
     advisories = ([w1] if w1 else []) + list(w5 or []) + ([burn] if burn else [])
     return {"advisories": advisories, "coord": coord, "resume": resume,
-            "known_sids": known, "gate": gate}
+            "known_sids": known, "gate": gate, "resume_gate": resume_gate}
 
 
 def main(argv=None):
@@ -141,7 +152,7 @@ def main(argv=None):
                "default_resume": None, "source": "error"},
                "resume": {"resume_arg": None, "session_id": None,
                           "source": "error"}, "known_sids": [],
-               "gate": dict(_GATE_PROCEED)}
+               "gate": dict(_GATE_PROCEED), "resume_gate": dict(_RESUME_GATE_NONE)}
     sys.stdout.write(json.dumps(out, ensure_ascii=False))
     sys.stdout.flush()
     os._exit(0)  # bounded exit: never block process teardown on a stray thread

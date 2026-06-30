@@ -304,6 +304,81 @@ def test_co09_loop_budget() -> None:
         _fail("V-SUBAGENT-ATTRIBUTE", "attribution wrong")
 
 
+# --------------------------------------------------------------------------
+# CO-00 -- effective-context estimate + 60% ceiling bands
+# --------------------------------------------------------------------------
+def test_co00_context() -> None:
+    from modules.cognitive_os import context as C
+
+    # V-CTX-BAND: the four bands + honest unknown.
+    if (C.band_of(30) == C.GREEN and C.band_of(50) == C.AMBER
+            and C.band_of(58) == C.RED and C.band_of(72) == C.BREACH
+            and C.band_of(None) == C.UNKNOWN):
+        _ok("V-CTX-BAND", "30 GREEN / 50 AMBER / 58 RED / 72 BREACH / None UNKNOWN")
+    else:
+        _fail("V-CTX-BAND", "band edges wrong")
+
+    now = 1_000_000.0
+    # V-CTX-FRESH-BRIDGE: a fresh statusline bridge is the high-confidence primary.
+    est = C.effective_context(
+        "s1", "C:/r", now=now,
+        bridge_fn=lambda sid, td: {"used_pct": 58, "timestamp": now - 10})
+    if (est.pct == 58 and est.band == C.RED and est.source == "statusline"
+            and est.confidence == "high"):
+        _ok("V-CTX-FRESH-BRIDGE", "fresh bridge 58% -> RED (statusline/high)")
+    else:
+        _fail("V-CTX-FRESH-BRIDGE", f"got {est}")
+
+    # V-CTX-STALE-FALLBACK: a stale bridge is NOT trusted -> jsonl, flagged stale.
+    est = C.effective_context(
+        "s1", "C:/r", now=now,
+        bridge_fn=lambda sid, td: {"used_pct": 58, "timestamp": now - 5000},
+        jsonl_fn=lambda sid, cwd, pb: 20.0)
+    if (est.source == "jsonl" and est.band == C.AMBER and est.stale
+            and est.confidence == "low" and est.pct is None):
+        _ok("V-CTX-STALE-FALLBACK",
+            "stale bridge -> jsonl 20MB AMBER, stale flagged, pct unknown")
+    else:
+        _fail("V-CTX-STALE-FALLBACK", f"got {est}")
+
+    # V-CTX-UNKNOWN-HONEST: no signal -> UNKNOWN, never a fabricated GREEN.
+    est = C.effective_context("s1", "C:/r", now=now,
+                              bridge_fn=lambda sid, td: None,
+                              jsonl_fn=lambda sid, cwd, pb: None)
+    if est.band == C.UNKNOWN:
+        _ok("V-CTX-UNKNOWN-HONEST", "no signal -> UNKNOWN (not GREEN)")
+    else:
+        _fail("V-CTX-UNKNOWN-HONEST", f"expected UNKNOWN, got {est.band}")
+
+    # V-CTX-FAILOPEN: an exploding sensor -> UNKNOWN (fail-open, never fabricate).
+    def _boom(*a, **k):
+        raise RuntimeError("sensor down")
+    est = C.effective_context("s1", "C:/r", now=now, bridge_fn=_boom)
+    if est.band == C.UNKNOWN:
+        _ok("V-CTX-FAILOPEN", "sensor error -> UNKNOWN")
+    else:
+        _fail("V-CTX-FAILOPEN", f"expected UNKNOWN, got {est.band}")
+
+    # V-CTX-RESUME-ADVISE: RED/BREACH resume target -> advisory; GREEN -> none.
+    red = lambda s, c, **k: C.ContextEstimate(58, C.RED, "statusline", "high")  # noqa: E731
+    grn = lambda s, c, **k: C.ContextEstimate(20, C.GREEN, "statusline", "high")  # noqa: E731
+    a = C.resume_advisory("s1", "C:/r", estimate_fn=red)
+    a2 = C.resume_advisory("s1", "C:/r", estimate_fn=grn)
+    if a.advise and a.message and "ceiling" in a.message.lower() and not a2.advise:
+        _ok("V-CTX-RESUME-ADVISE", "RED resume -> advise; GREEN -> silent")
+    else:
+        _fail("V-CTX-RESUME-ADVISE", f"got advise={a.advise}/{a2.advise}")
+
+    # V-PRELAUNCH-RESUME-GATE: prelaunch surfaces the resume_gate field.
+    from modules.wrapper import prelaunch
+    out = prelaunch.run(str(_PP_ROOT))
+    if "resume_gate" in out and "band" in out["resume_gate"]:
+        _ok("V-PRELAUNCH-RESUME-GATE",
+            f"prelaunch emits resume_gate.band={out['resume_gate']['band']}")
+    else:
+        _fail("V-PRELAUNCH-RESUME-GATE", f"no resume_gate: {list(out)}")
+
+
 def main() -> int:
     import tempfile
     print("== Cognitive OS build done-gates ==")
@@ -317,6 +392,8 @@ def main() -> int:
         test_co01_economics(Path(td))
     print("[CO-09 loop/subagent budget]")
     test_co09_loop_budget()
+    print("[CO-00 context -- 60% ceiling]")
+    test_co00_context()
     print("[integration -- prelaunch gate]")
     test_prelaunch_gate()
     total = _passes + _fails

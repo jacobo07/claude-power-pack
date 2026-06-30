@@ -118,6 +118,14 @@ if ($newSession -and $decision -and $decision.gate -and $decision.gate.verdict -
   }
 }
 
+# --- CO-00 resume context advisory (rung-2) ----------------------------------
+# A session must be OPENED to be /compact-ed, so resuming a near/over-ceiling
+# session is WARNED, not blocked (an honest rung-2 advisory). The true rung-3
+# block stays with the CO-08 cap above. Fail-open: no advice -> silent.
+if ($resumeArg -and $decision -and $decision.resume_gate -and $decision.resume_gate.advise) {
+  Write-Host $decision.resume_gate.message -ForegroundColor Yellow
+}
+
 # --- W3 session naming (background, non-blocking) ----------------------------
 if ($py -and (Test-Path $namer)) {
   try {
