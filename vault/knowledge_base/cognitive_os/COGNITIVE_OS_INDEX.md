@@ -103,6 +103,35 @@ CO-00  Hard Context Budget Contract            ← ROOT LAW (inherited by all)
 | **Total** | **11/11 written** | **22191** |
 | SCS C61 seal | ✅ sealed (`cognitive_os_scs_c61.md`) | — |
 
+## Live implementation (SCS C62 — built 2026-06-30)
+
+The architecture (SCS C61) is now **live code**, built in bounded waves, each tested +
+committed + pushed (REMOTE_DELTA 0 0). `tools/test_cognitive_os_build.py` = **68/68
+done-gates**, hermetic (re-runnable). Module = `modules/cognitive_os/`.
+
+| Dataset | Module | What is live | Honest level (CO-10) |
+|---|---|---|---|
+| CO-08 | `scheduler.py` | hard hot-session cap; refuses over-cap NEW pane in kclaude | WRAPPER (rung-3 block) |
+| CO-01 | `economics.py` | WU/MTok, ledger fed by real gate verdicts | HOOK (measure) |
+| CO-09 | `loop_budget.py` | 7-part loop admission + kill switch + subagent routing | WRAPPER + iter-boundary |
+| CO-00 | `context.py` | effective-context estimate + bands; resume advisory | WRAPPER block + HOOK warn |
+| CO-03 | `router.py` | Vault→asset→deterministic→Haiku→Sonnet→Opus cascade (active) | HOOK (selection) |
+| CO-05 | `registry.py` | verified-only asset registry w/ freshness; CO-03 rung-1/2 | HOOK (retrieval) |
+| CO-02 | `governor.py` | nested envelope, DOWNGRADE-over-REFUSE, violation registry | WRAPPER block/downgrade |
+| CO-04 | `memory.py` | HOT/WARM/COLD/EXTERNAL tiers, lossless demotion | HOOK (load discipline) |
+| CO-06 | `gc.py` | eviction policy (recency/relevance/aging); never `.jsonl` | HOOK (hygiene) |
+| CO-07 | `hibernation.py` | freeze/compress/store-then-destroy/restore (G4 verdict) | WRAPPER (durability) |
+| CO-10 | `guarantee_ledger.py` | 5-level ladder + inflation audit + un-gated detector | classification layer |
+
+**Wired live in `kclaude.ps1` (mirrored to `~/.claude/bin`):** CO-08 cap refusal (rung-3
+block, no bypass) + CO-00 resume advisory (rung-2). All Python lives at the repo skills
+path, so it is active the moment it is saved. Commits `e8279d2`→`06df80f`.
+
+**Honest residuals (CO-10, never hidden):** enforcement is rung-3 = kclaude-launched only
+(a bare `claude` escapes — `un_gated_sessions` flags it); WU ledger sparse → low-confidence
+until gates accrue; `cost_gate.weekly_burn` 13.6s deferred (`vault/backlog/2026-06-30_costgate-weeklyburn-slow.md`);
+CO-05 Vault/asset rungs miss on an empty registry (cascade falls to a model, today's behavior).
+
 ## V-gates (FASE 4 done-gate) — honest scorecard
 
 | Gate | Status | Evidence |

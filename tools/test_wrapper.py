@@ -234,7 +234,8 @@ def gate_cost_gate_real_data():
 def gate_cost_gate_silent_fail():
     g = cost_gate.cost_gate(
         r"C:\fake\R", burn_fn=lambda **k: None,
-        assess_fn=lambda c, s: {"state": "HEALTHY"})
+        assess_fn=lambda c, s: {"state": "HEALTHY"},
+        proj_base=r"C:\__cgnone__")   # hermetic: weekly_burn sees no transcripts
     if g.source == "silent" and g.lines == []:
         _ok("V-COST-GATE-SILENT-FAIL", "no data -> silence")
     else:
@@ -268,7 +269,8 @@ def gate_w3w4w5_failopen():
 
     # W5: burn + assess raise -> silent, no crash
     try:
-        g = cost_gate.cost_gate(r"C:\x", burn_fn=boom, assess_fn=boom)
+        g = cost_gate.cost_gate(r"C:\x", burn_fn=boom, assess_fn=boom,
+                                proj_base=r"C:\__cgnone__")  # hermetic weekly_burn
         if g.lines:
             errs.append(f"W5 leaked lines {g.lines}")
     except Exception as e:  # noqa: BLE001
