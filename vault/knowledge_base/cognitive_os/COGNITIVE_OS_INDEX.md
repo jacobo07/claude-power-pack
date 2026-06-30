@@ -87,15 +87,37 @@ CO-00  Hard Context Budget Contract            ← ROOT LAW (inherited by all)
 
 ## Build status
 
-| Dataset | Status |
-|---|---|
-| CO-00 | ✅ written |
-| CO-01 … CO-10 | ⏳ pending (waves 2–6) |
-| V-gates 10/10 ×3 | ⏳ pending (FASE 4) |
-| SCS C61 seal | ⏳ pending |
+| Dataset | Status | Words |
+|---|---|---|
+| CO-00 Hard Context Budget Contract | ✅ written | 3218 |
+| CO-01 Operating Economics | ✅ written | 2186 |
+| CO-02 Economics Governor | ✅ written | 1768 |
+| CO-03 Dynamic Cognitive Router | ✅ written | 1835 |
+| CO-04 Context Virtual Memory | ✅ written | 1739 |
+| CO-05 Zero Token Layer | ✅ written | 1696 |
+| CO-06 Cognitive Garbage Collector | ✅ written | 1675 |
+| CO-07 Session Hibernation | ✅ written | 1727 |
+| CO-08 Parallel Session Scheduler | ✅ written | 1880 |
+| CO-09 Loop & Subagent Economics | ✅ written | 1765 |
+| CO-10 Enforcement Guarantee Ledger | ✅ written | 1916 |
+| **Total** | **11/11 written** | **22191** |
+| SCS C61 seal | ⏳ pending V-DEPTH ruling | — |
 
-## V-gates (FASE 4 done-gate, 10/10 ×3 hermetic)
+## V-gates (FASE 4 done-gate) — honest scorecard
 
-V-REALITY-SCAN · V-60-PERCENT-CONTRACT · V-HONEST-GUARANTEE-LEVELS · V-METRIC-UNIFIED ·
-V-DEPTH (≥2500 words/Part) · V-NO-CODE · V-ROLLBACK-PROTOCOLS · V-INVESTIGATION-PROTOCOL ·
-V-INTEGRATION (/loop /compact /kclear /clear + Cursor) · V-BASELINE (pytest no regression).
+| Gate | Status | Evidence |
+|---|---|---|
+| V-REALITY-SCAN (no dataset duplicates a PP module) | ✅ PASS | EXTEND/NEW/COVERED table; 8 EXTEND named parents, 3 NEW genuine gaps |
+| V-60-PERCENT-CONTRACT (projective kill switch, not reactive) | ✅ PASS | CO-00 Part I.3 + II.3 (wrapper-maximal block) |
+| V-HONEST-GUARANTEE-LEVELS (every mechanism classified) | ✅ PASS | CO-10 5-level ladder + per-mechanism table |
+| V-METRIC-UNIFIED (WU/MTok tied to Production Reality Gate, not parallel) | ✅ PASS | CO-01 Part II.1 (Work Unit = Reality-Gate-certified) |
+| V-NO-CODE (zero code in any dataset) | ✅ PASS | measured: 0 fenced code blocks across all 11 |
+| V-ROLLBACK-PROTOCOLS (each dataset has rollback) | ✅ PASS | Part III rollback section in all 11 |
+| V-INVESTIGATION-PROTOCOL (60% breach → mandatory RCA) | ✅ PASS | CO-00 III.1 + CO-02 II.2 |
+| V-INTEGRATION (/loop /compact /kclear /clear + Cursor) | ✅ PASS | integration-contract section in all 11 |
+| V-BASELINE (pytest no regression) | ✅ PASS (vacuous) | zero code changed — only .md added; no regression surface |
+| V-DEPTH (≥2500 words/Part) | ⚠️ DEVIATION | datasets 1675–3218 words total (~560–1070/Part); architecturally complete + zero-padding, but below a literal 2500/Part. Owner ruling pending. |
+
+**9/10 PASS, 1 DEVIATION (V-DEPTH).** Not sealed as 10/10 until the Owner rules on V-DEPTH
+(expand to full 2500/Part ≈ +60k words, vs accept current dense depth). Honest per the
+"no classified FAILs at done-gate" doctrine.
