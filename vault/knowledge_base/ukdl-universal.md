@@ -1796,3 +1796,55 @@ features. The detector modules/wrapper/repo_coordinator.py parallel_burn()
 (wired into prelaunch _w4) now surfaces this pattern as a fail-open advisory.
 
 **ORIGEN:** Weekly-Burn-RCA 2026-06-30, SCS C59.
+
+### UKDL TRAP T-KICKBACKS-BOOT-CANCELED-001 -- boot-canary false positive skips the patch and hides the earnings bar
+
+**Level:** UKDL Trap (third-party extension race; PP-mitigable, not PP-fixable).
+
+**TRIGGER:** Cursor shows *"Kickbacks: prior activation didn't complete cleanly --
+skipping automatic patch this run. Click the status bar to manually re-enable…"*,
+or the green `Kickbacks $X today` earnings status-bar item disappears intermittently.
+
+**TRAP:** Kickbacks (`dist/extension.js` bootCanary) writes `~/.vibe-ads/boot.canary`
+at activation start and self-deletes it 5s later via an `.unref()`'d `setTimeout`
+(`SETTLE_MS=5000`). A Cursor reload / activation-cancel within those 5s (logged
+`activate.fatal {"msg":"Canceled","stack":"Canceled: Canceled"}`) drops the unref'd
+timer, so the canary survives. The next activation within 90s (`CANARY_STALE_MS`)
+reads the stale canary as a crash -> `suspendServing()` -> `servingVerdict()="freeze"`
+-> `canPatch()=false` (PATCH SKIPPED + warning toast) AND the earnings `StatusBarItem`
+blanks. Both reported symptoms (patch-activation-failed + status-bar-hidden) are the
+SAME false positive. Trigger = rapid Cursor reloads / ungraceful shutdown / a
+Kickbacks self-update (it auto-updated 2026-06-27, build 06-13 -> 06-27).
+
+**ACCIÓN / mitigation (PP side only -- Kickbacks code NEVER touched):** INV-CANARY in
+`tools/kickbacks_guard.ps1` (scheduled task `PP-KickbacksGuard`, every 2 min) reaps a
+`boot.canary` older than 15s (past the 5s settle, so never a live activation) so the
+next reload patches clean. Recovery when it already fired: click the status bar
+(`kickbacks.debugMenu`) or Command Palette -> `Kickbacks: Restore Claude Code`
+(`kickbacks.restore`); last resort delete the stale canary + Reload Window. Full
+runbook: `~/.claude/state/kickbacks_recovery.md`.
+
+**Honest limit:** the PP cannot pre-empt the FIRST hit in the seconds right after a
+rapid reload (race lives inside Kickbacks' 5s window) nor force its own status-bar item
+to show -- only the suspend trigger is removable. Guard shortens recurrence to <=2 min.
+
+**ORIGEN:** Kickbacks dual-bug EXECUTION 2026-06-30, SCS C60. Cross-ref
+`PR-STATUSLINE-GUARD-ALWAYS-001`.
+
+### PROCESS RULE PR-STATUSLINE-GUARD-ALWAYS-001 -- the statusline/Kickbacks guard runs always, not reactively
+
+**Level:** Process Rule (cross-session, recoverable).
+
+**TRIGGER:** relying on a Kickbacks/statusline self-heal to keep the ad + context bar +
+patch alive.
+
+**RULE:** the guard MUST run continuously and idempotently, NOT only when a problem is
+detected. Kickbacks can auto-update or re-capture the chain / leave a stale canary at
+ANY time and break the chain or skip the patch with no warning. A SessionStart-only
+hook heals only at the next session start; the correct mechanism is the 2-min scheduled
+task (`PP-KickbacksGuard`, at logon + every 2 min) -- it strictly dominates SessionStart
+and caps any broken-state window at ~2 min regardless of what Claude is doing. Each
+invariant (INV-CHAIN/SETTINGS/AUTH/CANARY) is fail-open: any error -> exit 0, never
+breaks a working setup.
+
+**ORIGEN:** Kickbacks dual-bug EXECUTION 2026-06-30, SCS C60.

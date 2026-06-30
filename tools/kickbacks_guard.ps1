@@ -28,6 +28,12 @@
                 (signed-out proxy), raise a Windows toast + a durable flag with
                 the exact restore step, on state transition, throttled. Clears
                 the flag on recovery. Never reads the credential value.
+    INV-CANARY  (reap stale lock): delete a leftover ~/.vibe-ads/boot.canary that
+                survived a canceled activation (age >= 15s, past Kickbacks' 5s
+                settle window) so the next activation does NOT misread it as
+                "prior activation didn't complete cleanly" -> skip-patch + bar
+                blank. Pre-empts the patch-activation-failed + earnings-bar-hidden
+                false positive at its shared root. Never touches Kickbacks code.
 
   Usage:
     powershell -NoProfile -ExecutionPolicy Bypass -File tools/kickbacks_guard.ps1
@@ -160,6 +166,30 @@ try {
   }
   [System.IO.File]::WriteAllText($AuthState, (@{ state = $state; lastNotify = $lastNotify.ToString('o'); adAgeMin = $adAge } | ConvertTo-Json -Compress), $utf8)
 } catch { $warns += ("auth check error: " + $_.Exception.Message) }
+
+# --- INV-CANARY: reap a leftover boot.canary that survived a canceled activation ---
+# Kickbacks writes ~/.vibe-ads/boot.canary at activation start and self-deletes it
+# 5s later via an .unref()'d timer (dist/extension.js bootCanary, SETTLE_MS=5000).
+# If Cursor reloads / cancels activation within those 5s, the unref'd timer is
+# dropped and the canary survives. The NEXT activation within 90s (CANARY_STALE_MS)
+# reads the stale canary as "prior activation didn't complete cleanly" -> calls
+# suspendServing() -> servingVerdict()="freeze" -> canPatch()=false (patch skipped,
+# warning toast shown) AND the green earnings status-bar item blanks. Reaping a
+# canary older than the 5s settle window (it can no longer be a live in-flight
+# activation -- real boots settle in <5s per boot.cycle.done timestamps) pre-empts
+# that false positive on the next reload. File-only: never touches Kickbacks code.
+try {
+  $canary = Join-Path (Split-Path $ChainFile -Parent) "boot.canary"
+  if (Test-Path $canary) {
+    $canaryAge = ((Get-Date).ToUniversalTime() - (Get-Item $canary).LastWriteTimeUtc).TotalSeconds
+    if ($canaryAge -ge 15) {
+      [System.IO.File]::Delete($canary)
+      $healed += ("canary(reaped stale boot.canary age=" + [int]$canaryAge + "s -> next activation patches clean)")
+    } else {
+      $notes += ("canary present but fresh (age=" + [int]$canaryAge + "s) -- possible in-flight activation, left intact")
+    }
+  }
+} catch { $warns += ("canary check error: " + $_.Exception.Message) }
 
 # --- optional self-test: run the real chain, assert the bar ---
 $selfTestResult = ""
