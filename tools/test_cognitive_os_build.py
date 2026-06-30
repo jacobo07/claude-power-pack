@@ -222,6 +222,88 @@ def test_co01_economics(tmp: Path) -> None:
         _fail("V-WU-REPORT", f"expected 4.0/low, got {r.wu_per_mtok}/{r.confidence}")
 
 
+# --------------------------------------------------------------------------
+# CO-09 -- loop & subagent budget
+# --------------------------------------------------------------------------
+def test_co09_loop_budget() -> None:
+    from types import SimpleNamespace
+    from modules.cognitive_os import loop_budget as L
+
+    # V-LOOP-UNCAPPED: an uncapped loop is refused outright (the #1 rule).
+    v = L.admit_loop(L.LoopBudget(max_iterations=None))
+    if v.verdict == "refuse" and any("uncapped" in r for r in v.reasons):
+        _ok("V-LOOP-UNCAPPED", "no max_iterations -> refuse")
+    else:
+        _fail("V-LOOP-UNCAPPED", f"expected refuse, got {v.verdict}")
+
+    # V-LOOP-CEILING: projected context breaches 60% before the cap -> refuse.
+    b = L.LoopBudget(max_iterations=10, start_context_pct=50, per_iter_context_pct=5,
+                     checkpoint=True, resume_plan=True, stop_gates=["x"])
+    v = L.admit_loop(b)
+    if (v.verdict == "refuse" and v.projected_context_pct == 100
+            and any("max_iterations" in s for s in v.satisfy)):
+        _ok("V-LOOP-CEILING",
+            f"proj {v.projected_context_pct:.0f}% -> refuse w/ lower-cap satisfy")
+    else:
+        _fail("V-LOOP-CEILING", f"got {v.verdict}/{v.projected_context_pct}")
+
+    # V-LOOP-ADMIT: a complete, bounded, under-ceiling loop -> proceed.
+    b = L.LoopBudget(max_iterations=5, start_context_pct=40, per_iter_context_pct=2,
+                     checkpoint=True, resume_plan=True, stop_gates=["converged"])
+    v = L.admit_loop(b)
+    if v.verdict == "proceed":
+        _ok("V-LOOP-ADMIT",
+            f"bounded under-ceiling loop ({v.projected_context_pct:.0f}%) -> proceed")
+    else:
+        _fail("V-LOOP-ADMIT", f"expected proceed, got {v.verdict} {v.reasons}")
+
+    # V-LOOP-KILL-COST: cost > 2x budget -> kill (HR-COST-002).
+    st = L.LoopState(cost_so_far_tokens=250, current_context_pct=10,
+                     per_iter_context_pct=1)
+    k = L.kill_check(st, L.LoopBudget(max_iterations=10, budget_tokens=100))
+    if k.kill and any("HR-COST-002" in r for r in k.reasons):
+        _ok("V-LOOP-KILL-COST", "cost 250 > 2x100 -> kill")
+    else:
+        _fail("V-LOOP-KILL-COST", f"expected kill, got {k.kill}")
+
+    # V-LOOP-KILL-FAILS: 2 consecutive failures -> kill (Rule 12).
+    st = L.LoopState(consecutive_failures=2, current_context_pct=10,
+                     per_iter_context_pct=1)
+    k = L.kill_check(st, L.LoopBudget(max_iterations=10, budget_tokens=10_000))
+    if k.kill and any("consecutive" in r for r in k.reasons):
+        _ok("V-LOOP-KILL-FAILS", "2 consecutive failures -> kill")
+    else:
+        _fail("V-LOOP-KILL-FAILS", f"expected kill, got {k.kill}/{k.reasons}")
+
+    # V-LOOP-KILL-CONTINUE: under all limits -> no kill.
+    st = L.LoopState(cost_so_far_tokens=50, current_context_pct=20,
+                     per_iter_context_pct=2, consecutive_failures=0)
+    k = L.kill_check(st, L.LoopBudget(max_iterations=10, budget_tokens=10_000))
+    if not k.kill:
+        _ok("V-LOOP-KILL-CONTINUE", "under all limits -> continue")
+    else:
+        _fail("V-LOOP-KILL-CONTINUE", f"expected continue, got kill {k.reasons}")
+
+    # V-SUBAGENT-ROUTE: real NANO task -> Haiku; Opus-on-NANO refused+corrected.
+    v = L.admit_subagent("fix the import formatting", budget_remaining_tokens=100000)
+    haiku_ok = "haiku" in v.model.lower()
+    fake = lambda d: SimpleNamespace(  # noqa: E731
+        model="claude-opus-4-8", route_class=SimpleNamespace(value="nano"))
+    v2 = L.admit_subagent("trivial rename", budget_remaining_tokens=100000,
+                          route_fn=fake)
+    if haiku_ok and v2.verdict == "refuse" and "haiku" in v2.model.lower():
+        _ok("V-SUBAGENT-ROUTE",
+            "NANO->Haiku; Opus-on-NANO refused+corrected (HR-COST-001)")
+    else:
+        _fail("V-SUBAGENT-ROUTE", f"got {v.model} / {v2.verdict}:{v2.model}")
+
+    # V-SUBAGENT-ATTRIBUTE: subagent cost adds to the parent (blind-spot fix).
+    if L.attribute_subagent_cost(1000, 500) == 1500:
+        _ok("V-SUBAGENT-ATTRIBUTE", "subagent 500 attributed to parent 1000 -> 1500")
+    else:
+        _fail("V-SUBAGENT-ATTRIBUTE", "attribution wrong")
+
+
 def main() -> int:
     import tempfile
     print("== Cognitive OS build done-gates ==")
@@ -233,6 +315,8 @@ def main() -> int:
     print("[CO-01 economics -- WU/MTok]")
     with tempfile.TemporaryDirectory() as td:
         test_co01_economics(Path(td))
+    print("[CO-09 loop/subagent budget]")
+    test_co09_loop_budget()
     print("[integration -- prelaunch gate]")
     test_prelaunch_gate()
     total = _passes + _fails
