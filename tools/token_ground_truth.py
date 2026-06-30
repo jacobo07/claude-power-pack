@@ -217,6 +217,74 @@ def today_output_tokens(proj_base=None, now: datetime | None = None) -> int | No
     return total if seen else None
 
 
+def _parse_turn_ts(s):
+    """ISO8601 (with trailing Z) -> aware datetime, else None."""
+    if not isinstance(s, str) or len(s) < 19:
+        return None
+    try:
+        from datetime import datetime as _dt
+        d = _dt.fromisoformat(s.replace("Z", "+00:00"))
+        return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def window_output(hours: float, proj_base=None,
+                  now: datetime | None = None) -> int | None:
+    """Output tokens for turns whose OWN timestamp falls in the last `hours`.
+
+    Unlike today_output_tokens() (file-mtime bucket, whole-file sum, an
+    over-estimate), this filters per-TURN by the turn's `timestamp`, so a
+    long-running session contributes only the turns that actually fired inside
+    the window -- the precision the weekly-burn projection needs.
+
+    mtime pre-filter is LOSSLESS here: a turn at time T implies the file was
+    written at/after T, so a file whose mtime predates the window cannot hold an
+    in-window turn. That bounds the scan to recently-touched transcripts.
+
+    Returns the summed output (>=0), or None when NO transcript was touched in
+    the window at all (honest "unmeasured", never a fake 0).
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    from datetime import timedelta
+    start = now - timedelta(hours=hours)
+    start_epoch = start.timestamp()
+    total = 0
+    seen = False
+    for fp in iter_transcripts(proj_base):
+        try:
+            if fp.stat().st_mtime < start_epoch:
+                continue
+        except OSError:
+            continue
+        try:
+            text = fp.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for line in text.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            msg = entry.get("message")
+            if not isinstance(msg, dict):
+                continue
+            usage = msg.get("usage")
+            if not isinstance(usage, dict) or not usage:
+                continue
+            ts = _parse_turn_ts(entry.get("timestamp"))
+            if ts is None or ts < start:
+                continue
+            seen = True
+            total += usage.get("output_tokens", 0) or 0
+    return total if seen else None
+
+
 def _fmt_agg(a: dict) -> str:
     return (f"in={a['input_tokens']:,} out={a['output_tokens']:,} "
             f"cache_rd={a['cache_read_input_tokens']:,} "

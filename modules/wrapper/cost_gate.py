@@ -37,12 +37,75 @@ if str(_PP_ROOT) not in sys.path:
 # heavy day. Configurable.
 DEFAULT_OUTPUT_THRESHOLD = 100_000_000
 
+# Weekly-burn dashboard (D1, Weekly-Burn-RCA 2026-06-30). Output tokens are the
+# dominant Claude-Max cost driver; these are the empirical anchors from the
+# forensic (vault/plans/weekly-limit-burn-rca-2026-06-30.md):
+#   - June measured average output/day = 13.5M (per-turn ts, 29 active days).
+#   - The 48h burn was 49.2M output == "74% of the weekly limit" per the Owner,
+#     so the weekly output-equivalent limit ~= 49.2M / 0.74 ~= 66M. This is an
+#     OWNER-DERIVED ESTIMATE (Anthropic's exact weekly weighting is not exposed
+#     in transcripts), configurable, used only for an advisory projection.
+HIST_DAILY_OUTPUT_AVG = 13_500_000
+WEEKLY_OUTPUT_LIMIT_EST = 66_000_000
+ELEVATED_FACTOR = 1.5      # 24h rate above this * the June avg -> "elevated"
+
 
 @dataclass
 class CostGate:
     lines: list = field(default_factory=list)   # advisory strings (empty=silent)
     burn_output_today: int | None = None
     source: str = "silent"                       # advisory | silent | error
+
+
+@dataclass
+class WeeklyBurn:
+    burn_24h: int | None = None
+    burn_7d: int | None = None
+    rate_factor: float | None = None   # 24h burn / June daily avg
+    days_left: float | None = None     # at the 24h rate, days to exhaust limit
+    elevated: bool = False
+    line: str | None = None            # advisory string, or None (silent)
+
+
+def weekly_burn(proj_base=None, now=None, *,
+                hist_daily_avg: int = HIST_DAILY_OUTPUT_AVG,
+                weekly_limit: int = WEEKLY_OUTPUT_LIMIT_EST,
+                elevated_factor: float = ELEVATED_FACTOR,
+                w24_fn=None, w7_fn=None) -> WeeklyBurn:
+    """Real weekly burn + projection from per-turn transcript output (D1).
+
+    Fires the advisory when the last-24h output rate exceeds
+    `elevated_factor` * the June daily average. The projection ("limite agotado
+    en ~N dias") uses the 24h rate against the remaining weekly allowance.
+    Fail-open: any missing measurement -> silent (line=None), never a fake 0.
+    """
+    try:
+        if w24_fn is None or w7_fn is None:
+            from tools.token_ground_truth import window_output  # type: ignore
+        b24 = (w24_fn or (lambda: window_output(24, proj_base, now)))()
+        b7 = (w7_fn or (lambda: window_output(24 * 7, proj_base, now)))()
+        if not isinstance(b24, int) or hist_daily_avg <= 0:
+            return WeeklyBurn(burn_24h=b24, burn_7d=b7)
+        factor = b24 / hist_daily_avg
+        # Projection: at the current 24h rate, how many days does ONE weekly
+        # allowance last? = weekly_limit / burn_24h. Reset-anchor-free and fully
+        # real (a trailing-7d sum would span weekly resets and falsely read
+        # "exhausted"). days_left < 7 => the current pace cannot last a week.
+        days_left = (weekly_limit / b24) if b24 > 0 else None
+        elevated = factor >= elevated_factor
+        line = None
+        if elevated:
+            proj = (f" A este ritmo una asignacion semanal dura ~{days_left:.1f} "
+                    f"dias{' (insostenible, <7)' if days_left < 7 else ''}."
+                    if days_left is not None else "")
+            line = (f"PP: burn semanal elevado -- {factor:.1f}x el ritmo normal "
+                    f"(~{b24 / 1_000_000:.0f}M out/24h vs "
+                    f"~{hist_daily_avg / 1_000_000:.0f}M media).{proj} "
+                    f"Considera prompts mas pequenos o pausar build no urgente.")
+        return WeeklyBurn(burn_24h=b24, burn_7d=b7, rate_factor=factor,
+                          days_left=days_left, elevated=elevated, line=line)
+    except Exception:  # noqa: BLE001 -- fail-open
+        return WeeklyBurn()
 
 
 def _latest_context_tokens(cwd: str, proj_base=None):
@@ -112,6 +175,15 @@ def cost_gate(cwd: str, *, description: str | None = None,
                 lines.append(
                     f"PP: /compact reclamaria ~{ctx / 1000:.0f}k tokens de "
                     f"contexto en esta sesion ({state}).")
+    except Exception:  # noqa: BLE001
+        pass
+
+    # 3b. weekly burn -- real per-turn output, projection to limit (D1).
+    #     Independent fail-open; only a line when the 24h rate is elevated.
+    try:
+        wb = weekly_burn(proj_base=proj_base, now=now)
+        if wb.line:
+            lines.append(wb.line)
     except Exception:  # noqa: BLE001
         pass
 
