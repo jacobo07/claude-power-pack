@@ -1848,3 +1848,51 @@ invariant (INV-CHAIN/SETTINGS/AUTH/CANARY) is fail-open: any error -> exit 0, ne
 breaks a working setup.
 
 **ORIGEN:** Kickbacks dual-bug EXECUTION 2026-06-30, SCS C60.
+
+### UKDL TRAP T-KICKBACKS-GUARD-GLOBAL-001 -- the guard is system-global by design, not per-repo
+
+**Level:** UKDL Trap (scope clarification; no code change).
+
+**TRIGGER:** wondering whether the Kickbacks/statusline guard only protects the
+window where the PP repo is open, or all Cursor windows.
+
+**FACT:** it protects ALL Cursor windows simultaneously, by design, because (1)
+Kickbacks keeps a SINGLE per-user `~/.vibe-ads/` for every window (`boot.canary`,
+`cli-ad.json`, `cli-prev-statusline.json` are per-user, not per-workspace), so
+INV-CANARY/CHAIN/SETTINGS/AUTH operating on those paths heal every window at once;
+and (2) `PP-KickbacksGuard` is a USER-level scheduled task (at-logon + 2-min) running
+`powershell -File "…\tools\kickbacks_guard.ps1"` as the user -- NOT bound to any Cursor
+process/workspace; it fires whatever (or nothing) is open. Verified
+`schtasks /query /tn PP-KickbacksGuard /v` -> Estado=Listo, trigger=logon+interval.
+
+**Honest coupling:** the script FILE lives in the PP repo dir, so the task needs that
+path on disk -- but NOT the repo open in Cursor. Moving/deleting the repo -> task
+no-ops (fail-open), never misfires.
+
+**ORIGEN:** Kickbacks global-scope + context-% compat EXECUTION 2026-06-30, SCS C60 addendum.
+
+### UKDL TRAP T-STATUSLINE-CHAIN-ISOLATED-001 -- context-% HUD failure cannot hide the Kickbacks ad (hypothesis disproven)
+
+**Level:** UKDL Trap (verified property; no fix needed).
+
+**TRIGGER:** suspecting the context-% statusline and the Kickbacks ad conflict, so a
+context-% change/absence hides the whole line including the ad.
+
+**FINDING (disproven with code + empirical evidence):** the line is ONE invocation
+(`settings.json statusLine` = `node vibe-ads-statusline.mjs`) that prints the ad FIRST
+via synchronous `writeSync(1,…)`, THEN spawns the PP HUD (`gsd-statusline.js`) as an
+isolated child (5s hard timeout, never-throws) and stacks its output below. The HUD
+guards `context_window.remaining_percentage` with optional chaining + `if (remaining
+!= null)` -> missing/null context simply OMITS the % segment (model+dir still print),
+never crashes. Even a HUD that throws can only drop the HUD line; the ad is already on
+the pipe. Empirical (real chain, 4 payloads): ad present in ALL 4 -- normal (ad+46%),
+no `context_window` (ad, no %), `context_window:null` (ad, no %), garbage stdin that
+makes the HUD `JSON.parse` THROW (ad, no %).
+
+**ACCIÓN:** none -- both layers are independently fail-open; no defect to fix
+(constraint: don't invent a fix when the hypothesis isn't confirmed). The green
+`$X today` earnings bar is a separate Cursor `StatusBarItem`, not in this terminal
+chain; its hiding is the boot-canary `suspendServing()` path already fixed in `b9148de`
+(T-KICKBACKS-BOOT-CANCELED-001).
+
+**ORIGEN:** Kickbacks context-% compat EXECUTION 2026-06-30, SCS C60 addendum.

@@ -61,3 +61,43 @@ window reloads / ungraceful shutdown / a Kickbacks self-update (it auto-updated
   guard → `HEALED: canary(reaped stale boot.canary …)`.
 
 Cross-ref: UKDL `T-KICKBACKS-BOOT-CANCELED-001`, `PR-STATUSLINE-GUARD-ALWAYS-001`.
+
+---
+
+## C60 addendum (2026-06-30) — global scope confirmed + context-% hypothesis disproven
+
+Follow-up EXECUTION on two Owner questions. **No code change** — both resolved by
+verification + documentation.
+
+### 1. Guard is system-global (confirmed)
+
+The INV-CANARY/CHAIN/SETTINGS/AUTH guard covers **all** Cursor windows, not just the
+one with the PP repo open:
+- Kickbacks keeps a SINGLE per-user `~/.vibe-ads/` for every window (`boot.canary`,
+  `cli-ad.json`, `cli-prev-statusline.json` are per-user, not per-workspace) → reaping
+  those paths heals every window at once.
+- `PP-KickbacksGuard` is a USER-level scheduled task (verified
+  `schtasks /query /tn PP-KickbacksGuard /v`: Estado=Listo, trigger at-logon + 2-min,
+  run-as User), invoking `powershell -File "…\tools\kickbacks_guard.ps1"` regardless of
+  what is open. Honest coupling: the script FILE must exist on disk (PP repo dir), but
+  the repo need not be OPEN. UKDL `T-KICKBACKS-GUARD-GLOBAL-001`.
+
+### 2. Context-% ↔ ad compatibility (hypothesis DISPROVEN)
+
+Owner hypothesis: a context-% read failure hides the whole statusline including the
+ad. **False, with code + empirical evidence.** The line is one invocation
+(`vibe-ads-statusline.mjs`) that prints the ad FIRST (synchronous `writeSync`), THEN
+spawns the PP HUD (`gsd-statusline.js`) isolated (5s timeout, never-throws). The HUD
+omits the % segment via optional chaining + `if (remaining != null)` when context is
+absent; a HUD that throws drops only its own line. Real-chain test, 4 payloads — ad
+present in ALL: normal (ad+46%), no `context_window` (ad), `context_window:null` (ad),
+garbage stdin → HUD `JSON.parse` throws (ad). No defect → no fix (constraint honored).
+The green `$X today` bar is a separate Cursor `StatusBarItem` (boot-canary path, fixed
+in b9148de), not this terminal chain. UKDL `T-STATUSLINE-CHAIN-ISOLATED-001`.
+
+### Verify (addendum)
+
+- `schtasks /query /tn PP-KickbacksGuard /v` → Estado=Listo, logon+interval, run-as User.
+- Chain isolation: pipe garbage stdin through `vibe-ads-statusline.mjs` → ad line still
+  prints (HUD segment absent). Repeated across 3 distinct `current_dir` values → render
+  is per-user-state, not per-repo.
