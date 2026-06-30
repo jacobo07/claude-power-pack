@@ -568,6 +568,103 @@ def test_co02_governor(tmp: Path) -> None:
         _fail("V-GOV-VIOLATION-REGISTRY", f"got {recent}")
 
 
+# --------------------------------------------------------------------------
+# CO-04 -- Context Virtual Memory (tiers)
+# --------------------------------------------------------------------------
+def test_co04_memory() -> None:
+    from modules.cognitive_os import memory as M
+
+    # V-MEM-TIER-OF: kinds map to the right tier; unknown -> EXTERNAL.
+    if (M.tier_of("skill-full") == M.HOT and M.tier_of("vault-asset") == M.WARM
+            and M.tier_of("transcript") == M.COLD and M.tier_of("web") == M.EXTERNAL
+            and M.tier_of("???") == M.EXTERNAL):
+        _ok("V-MEM-TIER-OF", "skill-full HOT / vault WARM / transcript COLD / web EXTERNAL")
+    else:
+        _fail("V-MEM-TIER-OF", "tier map wrong")
+
+    # V-MEM-EXTERNAL-UNTRUSTED: EXTERNAL tier is untrusted until validated.
+    ext = M.MemoryItem("e1", "web")
+    if M.is_external_untrusted(ext) and M.TIER_TRUST[M.EXTERNAL] == "untrusted":
+        _ok("V-MEM-EXTERNAL-UNTRUSTED", "EXTERNAL untrusted until validated")
+    else:
+        _fail("V-MEM-EXTERNAL-UNTRUSTED", "external trust wrong")
+
+    # V-MEM-PAGE-IN-MIN: minimum depth (discovery default; never full unasked).
+    if M.page_in_depth(None) == "discovery" and M.page_in_depth("summary") == "summary":
+        _ok("V-MEM-PAGE-IN-MIN", "page-in defaults to the cheapest depth")
+    else:
+        _fail("V-MEM-PAGE-IN-MIN", "page-in depth wrong")
+
+    # V-MEM-DEMOTE-LOSSLESS: HOT->WARM pointer; original content not destroyed.
+    hot = M.MemoryItem("x", "skill-full")
+    d = M.demote(hot)
+    if d.tier == M.WARM and d.depth == "summary" and hot.tier == M.HOT:
+        _ok("V-MEM-DEMOTE-LOSSLESS", "demote HOT->WARM pointer (lossless)")
+    else:
+        _fail("V-MEM-DEMOTE-LOSSLESS", f"got {d.tier}/{d.depth}, orig {hot.tier}")
+
+    # V-MEM-COST-ORDER + working set: HOT costs most; cheaper tier preferred.
+    ws = M.working_set([M.MemoryItem("a", "skill-full", in_working_set=True),
+                        M.MemoryItem("b", "vault-asset")])
+    if (M.cheaper_tier_preferred(M.HOT, M.WARM) == M.WARM
+            and len(ws) == 1 and ws[0].id == "a"):
+        _ok("V-MEM-COST-ORDER", "WARM cheaper than HOT; working_set filters")
+    else:
+        _fail("V-MEM-COST-ORDER", "cost order / working set wrong")
+
+
+# --------------------------------------------------------------------------
+# CO-06 -- Cognitive Garbage Collector (policy)
+# --------------------------------------------------------------------------
+def test_co06_gc() -> None:
+    from datetime import datetime, timezone, timedelta
+    from modules.cognitive_os import gc as GC
+
+    CT = 10
+    stale = GC.GCItem("stale", last_ref_turn=0, hot_since_turn=0, depth="full")
+    fresh = GC.GCItem("fresh", last_ref_turn=CT, hot_since_turn=CT, depth="discovery")
+    pinned = GC.GCItem("pin", last_ref_turn=0, hot_since_turn=0, in_working_set=True)
+    hardrule = GC.GCItem("hr", kind="hard-rule", last_ref_turn=0, hot_since_turn=0)
+    items = [stale, fresh, pinned, hardrule]
+
+    # V-GC-PIN-WORKING-SET: pinned + hard-rule items are never candidates.
+    amber = GC.eviction_candidates(items, current_turn=CT, band="AMBER")
+    amber_ids = {i.id for i in amber}
+    if "pin" not in amber_ids and "hr" not in amber_ids and "stale" in amber_ids:
+        _ok("V-GC-PIN-WORKING-SET", "working-set + hard-rule pinned; stale evicted")
+    else:
+        _fail("V-GC-PIN-WORKING-SET", f"amber={amber_ids}")
+
+    # V-GC-GRADUATED: RED evicts more than AMBER (a fresh off-WS item joins).
+    red = GC.eviction_candidates(items, current_turn=CT, band="RED")
+    if len(red) > len(amber) and "fresh" in {i.id for i in red}:
+        _ok("V-GC-GRADUATED", f"AMBER {len(amber)} < RED {len(red)} candidates")
+    else:
+        _fail("V-GC-GRADUATED", f"amber={len(amber)} red={len(red)}")
+
+    # V-GC-NEVER-TRANSCRIPT: a .jsonl is categorically excluded from pruning,
+    # even when 0-retrieval and very old (Session Safety Contract).
+    now = datetime.now(timezone.utc)
+    old = (now - timedelta(days=400)).isoformat()
+    assets = [
+        {"key": "t", "path": "x/sess.jsonl", "retrievals": 0, "stored_ts": old},
+        {"key": "dead", "path": "x/note.md", "retrievals": 0, "stored_ts": old},
+        {"key": "used", "path": "x/u.md", "retrievals": 5, "stored_ts": old},
+        {"key": "hr", "kind": "hard-rule", "retrievals": 0, "stored_ts": old},
+    ]
+    pruned = {a["key"] for a in GC.prune_candidates(assets, now=now, retention_days=30)}
+    if "t" not in pruned and "used" not in pruned and "hr" not in pruned and "dead" in pruned:
+        _ok("V-GC-NEVER-TRANSCRIPT",
+            "transcript + used + hard-rule kept; only dead derived asset pruned")
+    else:
+        _fail("V-GC-NEVER-TRANSCRIPT", f"pruned={pruned}")
+
+    if GC.is_transcript("a/b.jsonl") and not GC.is_transcript("a/b.md"):
+        _ok("V-GC-TRANSCRIPT-GUARD", ".jsonl detected, .md not")
+    else:
+        _fail("V-GC-TRANSCRIPT-GUARD", "transcript guard wrong")
+
+
 def main() -> int:
     import tempfile
     print("== Cognitive OS build done-gates ==")
@@ -591,6 +688,10 @@ def main() -> int:
     print("[CO-02 governor -- budget envelope]")
     with tempfile.TemporaryDirectory() as td:
         test_co02_governor(Path(td))
+    print("[CO-04 memory -- tiers]")
+    test_co04_memory()
+    print("[CO-06 gc -- eviction policy]")
+    test_co06_gc()
     print("[integration -- prelaunch gate]")
     test_prelaunch_gate()
     total = _passes + _fails
