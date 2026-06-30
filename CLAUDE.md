@@ -2,6 +2,9 @@
 
 Power Pack execution doctrine inline. Hard rules below are sealed bug stops. See `vault/hard_rules/HARD_RULES.md` for the canonical archive.
 
+## Mode Selection (router -> PR-MODE-SELECTION-001)
+Before a structured prompt: **EXECUTION MODE by default** (clear path, extends existing systems); **ULTRA-PLAN only** for a genuine architectural decision or a new-from-scratch system. ULTRA-PLAN costs ~3-5x the output. Full rule + evidence: `vault/knowledge_base/ukdl-universal.md` (PR-MODE-SELECTION-001 + T-PARALLEL-PANES-BURN-001).
+
 <!-- PP-HARD-RULES-START -->
 
 ## HARD RULES (NON-NEGOTIABLE -- sealed production bugs)

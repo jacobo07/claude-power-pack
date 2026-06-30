@@ -1750,3 +1750,49 @@ INVERTED. The datasets+source show data flows `G1 -> {G2, G3} -> G4 -> G5`
 **ACCIÓN:** verify dependencies against the datasets and real source before
 implementing; correct the literal, honor the intent. ORIGEN: Session Resilience
 OS build, SCS C56, 2026-06-27.
+
+### PROCESS RULE PR-MODE-SELECTION-001 -- EXECUTION by default, ULTRA-PLAN only for genuine architecture
+
+**Level:** Process Rule (mandatory protocol, cross-project, recoverable -- NOT a
+data/deploy-class Hard Rule).
+
+**TRIGGER:** before choosing the MODE of a structured prompt (EXECUTION MODE
+vs ULTRA-PLAN MODE).
+
+**RULE:**
+- **EXECUTION MODE** when: the work has a clear path, extends existing systems,
+  needs no new architectural decision. This is the DEFAULT.
+- **ULTRA-PLAN MODE** only when: there is a genuine architectural decision with
+  multiple valid options, or a brand-new system is being designed from scratch.
+- NEVER use ULTRA-PLAN as the default for incremental features. Its FASE -1
+  (extensive read) + Q&A + multi-sprint pass costs ~3-5x the output of an
+  equivalent EXECUTION MODE prompt.
+
+**EVIDENCE:** Weekly-Burn-RCA 2026-06-30 -- 49.2M output tokens in 48h, 1.81x
+the June daily average (13.5M/day), driven by large structured prompts
+(EXECUTION/ULTRA-PLAN, ~80k-230k output each) fired in consecutive tandas ~40min
+apart. Measured cost: one EXECUTION MODE cycle ~= 194k output tokens.
+
+**ORIGEN:** vault/plans/weekly-limit-burn-rca-2026-06-30.md. Enforced advisory:
+modules/wrapper/cost_gate.py weekly_burn() (fires at >=1.5x the June rate).
+
+### UKDL TRAP T-PARALLEL-PANES-BURN-001 -- same-repo parallel panes multiply burn without progress
+
+**Level:** UKDL Trap (cost / workflow edge case).
+
+**TRIGGER:** opening a 2nd (or Nth) pane on the SAME repo and firing large
+structured prompts in parallel.
+
+**TRAP:** 2+ panes of the same repo each launching EXECUTION/ULTRA-PLAN prompts
+in a short window multiplies OUTPUT without multiplying real progress -- each
+pane rebuilds similar context and regenerates overlapping work. In the 48h
+forensic, TUA-X 74c7668b + 8cce8060 + InfinityOps f1acb1ec ran in parallel
+06-28 15:00-21:00, pushing hourly output to 2.5-2.9M/h (above single-session
+ceilings). The W4 coordinator warned of a 2nd pane but only to offer RESUME; it
+never flagged the burn risk.
+
+**ACCIÓN:** prefer one pane per feature, sequential, with /kclear between large
+features. The detector modules/wrapper/repo_coordinator.py parallel_burn()
+(wired into prelaunch _w4) now surfaces this pattern as a fail-open advisory.
+
+**ORIGEN:** Weekly-Burn-RCA 2026-06-30, SCS C59.
