@@ -162,6 +162,66 @@ def test_prelaunch_gate() -> None:
         _fail("V-PRELAUNCH-GATE", f"no gate field in prelaunch output: {list(out)}")
 
 
+# --------------------------------------------------------------------------
+# CO-01 -- Work-Units-per-MTok economics
+# --------------------------------------------------------------------------
+def test_co01_economics(tmp: Path) -> None:
+    from datetime import datetime, timezone, timedelta
+    from modules.cognitive_os import economics as E
+
+    # V-WU-CREDITED: a Work Unit requires a FULLY-passed gate (fail -> 0).
+    if E.credited_wu(8, 8) == 8 and E.credited_wu(7, 8) == 0 and E.credited_wu(0, 0) == 0:
+        _ok("V-WU-CREDITED", "8/8->8, 7/8->0 (failed gate earns nothing), 0/0->0")
+    else:
+        _fail("V-WU-CREDITED", f"crediting wrong: {E.credited_wu(7, 8)}")
+
+    # V-WU-TRUECOST: denominator = output + cache-creation, excludes cache-read.
+    agg = {"input_tokens": 100, "output_tokens": 500,
+           "cache_creation_input_tokens": 50, "cache_read_input_tokens": 9000}
+    if E.true_cost_tokens(agg) == 550:
+        _ok("V-WU-TRUECOST", "true cost = output+cache_create (cache-read free)")
+    else:
+        _fail("V-WU-TRUECOST", f"expected 550, got {E.true_cost_tokens(agg)}")
+
+    # V-WU-RATIO: 10 WU over 2M tokens = 5.0; zero denominator -> None.
+    if E.wu_per_mtok(10, 2_000_000) == 5.0 and E.wu_per_mtok(5, 0) is None:
+        _ok("V-WU-RATIO", "10 WU / 2MTok = 5.0; div-by-zero -> None (honest)")
+    else:
+        _fail("V-WU-RATIO", f"ratio wrong: {E.wu_per_mtok(10, 2_000_000)}")
+
+    # V-WU-COSTVEC-HONEST: unmeasured dims are None (unknown), never zeroed.
+    cv = E.cost_vector(agg)
+    if cv["risk"] is None and cv["recovery"] is None and cv["token"] == 550:
+        _ok("V-WU-COSTVEC-HONEST", "risk/recovery = None (not faked); token real")
+    else:
+        _fail("V-WU-COSTVEC-HONEST", f"cost vector dishonest: {cv}")
+
+    # V-WU-LEDGER: record + read round-trip with window filtering.
+    led = tmp / "wu_ledger.jsonl"
+    now = datetime.now(timezone.utc)
+    E.record_work_units("gateA", 4, 4, now=now, ledger_path=led)          # +4
+    E.record_work_units("gateB", 3, 5, now=now, ledger_path=led)          # +0 (failed)
+    E.record_work_units("old", 9, 9, now=now - timedelta(hours=48), ledger_path=led)  # out of window
+    wu, n = E.read_work_units(since=now - timedelta(hours=24), now=now, ledger_path=led)
+    if wu == 4 and n == 2:
+        _ok("V-WU-LEDGER", f"in-window WU={wu} from {n} recent records (old excluded)")
+    else:
+        _fail("V-WU-LEDGER", f"expected (4,2), got ({wu},{n})")
+
+    # V-WU-REPORT: join ledger to an injected token window -> ratio + confidence.
+    def fake_analyze(proj_base=None, since=None):
+        return {"today": {"output_tokens": 800_000,
+                          "cache_creation_input_tokens": 200_000,
+                          "input_tokens": 0, "cache_read_input_tokens": 0}}
+    r = E.economics_report(ledger_path=led, window_hours=24, now=now,
+                           analyze_fn=fake_analyze)
+    # 4 WU over 1.0M true-cost tokens = 4.0 WU/MTok; 2 records < 3 -> low conf.
+    if r.wu_per_mtok == 4.0 and r.confidence == "low":
+        _ok("V-WU-REPORT", f"WU/MTok={r.wu_per_mtok} conf={r.confidence} (sparse-honest)")
+    else:
+        _fail("V-WU-REPORT", f"expected 4.0/low, got {r.wu_per_mtok}/{r.confidence}")
+
+
 def main() -> int:
     import tempfile
     print("== Cognitive OS build done-gates ==")
@@ -170,10 +230,20 @@ def main() -> int:
     print("[CO-08 cap -- real gather]")
     with tempfile.TemporaryDirectory() as td:
         test_co08_gather(Path(td))
+    print("[CO-01 economics -- WU/MTok]")
+    with tempfile.TemporaryDirectory() as td:
+        test_co01_economics(Path(td))
     print("[integration -- prelaunch gate]")
     test_prelaunch_gate()
     total = _passes + _fails
     print(f"\nCOGNITIVE_OS_BUILD_PASS={_passes}/{total}  threshold={total}/{total}")
+    # Live loop (CO-01): this suite IS a done-gate; record its OWN verdict into
+    # the real WU ledger so the metric is fed by real certified work, not mocks.
+    try:
+        from modules.cognitive_os.economics import record_work_units
+        record_work_units("cognitive_os_build", _passes, total)
+    except Exception:  # noqa: BLE001 -- logging must never fail the gate
+        pass
     return 0 if _fails == 0 else 1
 
 
