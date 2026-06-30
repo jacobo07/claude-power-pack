@@ -175,6 +175,11 @@ def generate_digest(
                 link = sig.get("link", "")
                 sig_type = sig.get("type", "unknown")
                 lines.append(f"- **[{score:.2f}]** [{title}]({link}) ({sig_type} via {src})")
+                enriched = sig.get("enriched")
+                if enriched:
+                    excerpt = " ".join(enriched.split())[:240]
+                    lines.append(f"    > {excerpt} ... _(enriched via "
+                                 f"{sig.get('enriched_via', '')})_")
             lines.append("")
 
     if cross_signals:
@@ -218,6 +223,15 @@ def main() -> None:
     dedup_cache = load_dedup_cache(DEDUP_CACHE_PATH)
     accepted = filter_signals(all_signals, config, dedup_cache)
     save_dedup_cache(DEDUP_CACHE_PATH, dedup_cache)
+
+    # Block C (2026-06-30): enrich top accepted signals with full text via
+    # Agent-Reach credential-free primitives (Jina web reader + yt-dlp). Additive
+    # and fail-open -- enrichment must never break the digest.
+    try:
+        from enricher import enrich_signals
+        enrich_signals(accepted, config)
+    except Exception as exc:
+        logger.warning("Enrichment stage skipped: %s", exc)
 
     # Find cross-project relevance for accepted signals
     all_cross_signals: list[dict[str, Any]] = []

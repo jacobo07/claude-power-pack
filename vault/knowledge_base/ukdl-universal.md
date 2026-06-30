@@ -1896,3 +1896,43 @@ chain; its hiding is the boot-canary `suspendServing()` path already fixed in `b
 (T-KICKBACKS-BOOT-CANCELED-001).
 
 **ORIGEN:** Kickbacks context-% compat EXECUTION 2026-06-30, SCS C60 addendum.
+
+### PR-RESEARCH-OFFLOAD-VPS-001 -- Offload screen-interrupting research/scraping to the VPS
+
+**TRIGGER:** A scheduled task or Stop/SessionStart hook that runs research/scraping
+and interrupts the Owner's local session (a window flash OR a hook systemMessage).
+
+**ACCIÓN:** Evaluate it for offload to the VPS. Criterion: it needs NO local
+Cursor/session state and can run autonomously. If so -> run it on the VPS (cron +
+isolated venv), silence the local interruption, and PULL results into SessionStart
+(detached, TTL-gated, additionalContext -- never a blocking message). The local
+machine is for the Owner's interactive work, not background polling.
+
+**ORIGEN:** AutoResearch was an orphan -- a Stop hook printed "[KobiiClaw AutoResearch
+v2] trigger saved" on every session exit while the engine (nightcrawler.py) was never
+actually scheduled. Migrated to KobiiClaw VPS 2026-06-30 (SCS C64).
+
+### T-DEDICATED-ACCOUNTS-001 -- Social automation uses dedicated accounts, never the Owner's
+
+**TRIGGER:** Wiring Twitter/Reddit/Instagram/etc. into an automation (cookies/creds).
+
+**ACCIÓN:** Use a SECONDARY dedicated account, never the Owner's personal account
+(ban risk from non-human-detected behavior). Store cookies VPS-only at perms 600,
+never in the repo. The agent cannot create these accounts -- the Owner provides them.
+
+**ORIGEN:** Agent-Reach expansion 2026-06-30; deferred Twitter/Reddit to credential-free
+channels (Jina web reader + yt-dlp) until dedicated-account cookies are provided.
+
+### T-AGENT-REACH-AGENT-FACING-001 -- Agent-Reach CLI is agent-facing, not a fetch API
+
+**TRIGGER:** Planning to "use the Agent-Reach CLIs" from a headless script/cron.
+
+**ACCIÓN:** Don't. Agent-Reach's CLI is `setup/doctor/configure/transcribe/format/
+skill` -- it installs+blesses tools and registers an agent skill; there is NO
+`agent-reach fetch <url>` / per-channel command. For a headless pipeline call the
+underlying credential-free PRIMITIVES it sets up: Jina Reader (`GET https://r.jina.ai/<url>`)
+and `yt-dlp`. Verify the real surface (`--help`) before coding against an assumed one.
+
+**ORIGEN:** Block C 2026-06-30 -- the plan assumed "AutoResearch usa los CLIs de
+Agent-Reach"; `pip install agent-reach` 404s on PyPI (install is the GitHub zip), and
+the CLI exposes no fetch command. Integration is via Jina + yt-dlp. SCS C64.

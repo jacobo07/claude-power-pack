@@ -15,6 +15,18 @@
     "bot_token_env": "TELEGRAM_BOT_TOKEN",
     "chat_id_env": "TELEGRAM_CHAT_ID"
   },
+  "enrichment": {
+    "enabled": true,
+    "max_signals": 8,
+    "jina_enabled": true,
+    "jina_max_chars": 1200,
+    "jina_timeout_s": 25,
+    "ytdlp_enabled": true,
+    "ytdlp_path": "~/.agent-reach-venv/bin/yt-dlp",
+    "ytdlp_max_chars": 1500,
+    "ytdlp_timeout_s": 60,
+    "ytdlp_sub_lang": "en"
+  },
   "projects": {
     "moneymaker-skill": {
       "domain": "prediction_markets",
