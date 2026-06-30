@@ -665,6 +665,113 @@ def test_co06_gc() -> None:
         _fail("V-GC-TRANSCRIPT-GUARD", "transcript guard wrong")
 
 
+# --------------------------------------------------------------------------
+# CO-07 -- Session Hibernation (store-then-destroy)
+# --------------------------------------------------------------------------
+def test_co07_hibernation(tmp: Path) -> None:
+    import json as _json
+    from modules.cognitive_os import hibernation as H
+
+    reg = tmp / "hibernation.jsonl"
+    yes = lambda *a, **k: True   # noqa: E731
+    no = lambda *a, **k: False   # noqa: E731
+
+    # V-HIB-STORE-THEN-DESTROY: a verified anchor -> stored, slot may free.
+    r = H.hibernate("s1", str(tmp), task="design", registry_path=reg,
+                    anchor_exists_fn=yes)
+    if r.ok and r.verdict == "HIBERNATED" and r.hot_slot_freed:
+        _ok("V-HIB-STORE-THEN-DESTROY", "stored+verified -> hot slot may free")
+    else:
+        _fail("V-HIB-STORE-THEN-DESTROY", f"got {r.verdict}/{r.ok}")
+    archive_id = r.archive_id
+
+    # V-HIB-REFUSE-NO-ANCHOR: missing anchor -> REFUSED, session stays HOT.
+    r2 = H.hibernate("s2", str(tmp), registry_path=reg, anchor_exists_fn=no)
+    if (not r2.ok) and r2.verdict == "REFUSED" and not r2.hot_slot_freed:
+        _ok("V-HIB-REFUSE-NO-ANCHOR", "no anchor -> stays HOT (never lose a session)")
+    else:
+        _fail("V-HIB-REFUSE-NO-ANCHOR", f"got {r2.verdict}/{r2.ok}")
+
+    # V-HIB-RESTORE-RECOVERED: restore (cwd=tmp exists) -> RECOVERED, state intact.
+    rr = H.restore(archive_id, registry_path=reg, anchor_exists_fn=yes)
+    if rr.verdict == "RECOVERED" and rr.state and rr.state["sid"] == "s1":
+        _ok("V-HIB-RESTORE-RECOVERED", "integrity-verified restore -> RECOVERED")
+    else:
+        _fail("V-HIB-RESTORE-RECOVERED", f"got {rr.verdict} {rr.state}")
+
+    # V-HIB-ANCHOR-GONE: anchor vanished at restore -> FAILED (never silent).
+    rg = H.restore(archive_id, registry_path=reg, anchor_exists_fn=no)
+    if rg.verdict == "FAILED" and "transcript" in rg.missing:
+        _ok("V-HIB-ANCHOR-GONE", "anchor gone -> FAILED, not a false RECOVERED")
+    else:
+        _fail("V-HIB-ANCHOR-GONE", f"got {rg.verdict}")
+
+    # V-HIB-PARTIAL-CWD: cwd moved under the archive -> PARTIAL (enumerated).
+    rp = H.hibernate("s3", "C:/gone/nowhere", registry_path=reg, anchor_exists_fn=yes)
+    pr = H.restore(rp.archive_id, registry_path=reg, anchor_exists_fn=yes)
+    if pr.verdict == "PARTIAL" and "cwd" in pr.missing:
+        _ok("V-HIB-PARTIAL-CWD", "moved cwd -> PARTIAL (missing enumerated)")
+    else:
+        _fail("V-HIB-PARTIAL-CWD", f"got {pr.verdict}/{pr.missing}")
+
+    # V-HIB-CORRUPT-DETECTED: a tampered archive blob -> FAILED integrity.
+    bad = tmp / "bad.jsonl"
+    bad.write_text(_json.dumps({"archive_id": "bad@1", "sid": "z",
+                                "cwd": str(tmp), "blob": "@@not-valid@@",
+                                "anchor_hash": "deadbeef"}) + "\n", encoding="utf-8")
+    rc = H.restore("bad@1", registry_path=bad, anchor_exists_fn=yes)
+    if rc.verdict == "FAILED" and "integrity" in rc.missing:
+        _ok("V-HIB-CORRUPT-DETECTED",
+            "tampered archive -> FAILED, never restored wrong")
+    else:
+        _fail("V-HIB-CORRUPT-DETECTED", f"got {rc.verdict}")
+
+
+# --------------------------------------------------------------------------
+# CO-10 -- Enforcement Guarantee Ledger (honesty)
+# --------------------------------------------------------------------------
+def test_co10_guarantee_ledger() -> None:
+    from modules.cognitive_os import guarantee_ledger as L
+
+    # V-LEDGER-CLASSIFY: the cap is honestly a WRAPPER (rung-3 block) mechanism.
+    e = L.classify("CO-08-cap")
+    if e and e.level == L.WRAPPER and "manual" in e.residual.lower():
+        _ok("V-LEDGER-CLASSIFY", "CO-08 cap = WRAPPER; residual = manual terminal")
+    else:
+        _fail("V-LEDGER-CLASSIFY", f"got {e}")
+
+    # V-LEDGER-CO00-HONEST: the flagship ceiling is rung-3 block; the residual
+    # names the in-turn limit -- never a claimed physical mid-turn switch.
+    c = L.classify("CO-00-ceiling")
+    if c and L.block_power(c.level) == 3 and "mid-generation" in c.residual:
+        _ok("V-LEDGER-CO00-HONEST", "ceiling = rung-3 block; in-turn residual named")
+    else:
+        _fail("V-LEDGER-CO00-HONEST", f"got {c}")
+
+    # V-LEDGER-INFLATION: a HOOK mechanism claiming WRAPPER block -> flagged.
+    a = L.audit_claim("CO-03-router", L.WRAPPER)
+    if a.inflated:
+        _ok("V-LEDGER-INFLATION", "HOOK claiming WRAPPER block -> inflation flagged")
+    else:
+        _fail("V-LEDGER-INFLATION", "inflation not caught")
+
+    # V-LEDGER-NO-INFLATION: valid claim ok; unregistered claim flagged.
+    a2 = L.audit_claim("CO-08-cap", L.WRAPPER)
+    a3 = L.audit_claim("CO-99-fake", L.WRAPPER)
+    if (not a2.inflated) and a3.inflated:
+        _ok("V-LEDGER-NO-INFLATION", "valid claim ok; unregistered claim flagged")
+    else:
+        _fail("V-LEDGER-NO-INFLATION", f"got {a2.inflated}/{a3.inflated}")
+
+    # V-LEDGER-UNGATED: live sessions with no wrapper record are surfaced.
+    rep = L.un_gated_sessions(["a", "b", "c"], ["a"])
+    if rep.un_gated == ["b", "c"] and rep.covered == ["a"]:
+        _ok("V-LEDGER-UNGATED",
+            "un-gated sids surfaced (counted, never claimed governed)")
+    else:
+        _fail("V-LEDGER-UNGATED", f"got {rep.un_gated}")
+
+
 def main() -> int:
     import tempfile
     print("== Cognitive OS build done-gates ==")
@@ -692,6 +799,11 @@ def main() -> int:
     test_co04_memory()
     print("[CO-06 gc -- eviction policy]")
     test_co06_gc()
+    print("[CO-07 hibernation -- store-then-destroy]")
+    with tempfile.TemporaryDirectory() as td:
+        test_co07_hibernation(Path(td))
+    print("[CO-10 guarantee ledger -- honesty]")
+    test_co10_guarantee_ledger()
     print("[integration -- prelaunch gate]")
     test_prelaunch_gate()
     total = _passes + _fails
