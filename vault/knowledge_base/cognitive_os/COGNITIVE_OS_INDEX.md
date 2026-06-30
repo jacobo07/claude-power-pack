@@ -101,7 +101,7 @@ CO-00  Hard Context Budget Contract            ← ROOT LAW (inherited by all)
 | CO-09 Loop & Subagent Economics | ✅ written | 1765 |
 | CO-10 Enforcement Guarantee Ledger | ✅ written | 1916 |
 | **Total** | **11/11 written** | **22191** |
-| SCS C61 seal | ⏳ pending V-DEPTH ruling | — |
+| SCS C61 seal | ✅ sealed (`cognitive_os_scs_c61.md`) | — |
 
 ## V-gates (FASE 4 done-gate) — honest scorecard
 
@@ -116,8 +116,10 @@ CO-00  Hard Context Budget Contract            ← ROOT LAW (inherited by all)
 | V-INVESTIGATION-PROTOCOL (60% breach → mandatory RCA) | ✅ PASS | CO-00 III.1 + CO-02 II.2 |
 | V-INTEGRATION (/loop /compact /kclear /clear + Cursor) | ✅ PASS | integration-contract section in all 11 |
 | V-BASELINE (pytest no regression) | ✅ PASS (vacuous) | zero code changed — only .md added; no regression surface |
-| V-DEPTH (≥2500 words/Part) | ⚠️ DEVIATION | datasets 1675–3218 words total (~560–1070/Part); architecturally complete + zero-padding, but below a literal 2500/Part. Owner ruling pending. |
+| V-DEPTH (≥2500 words/Part) | ⚠️ ACCEPTED DEVIATION (Owner-ruled 2026-06-30) | datasets 1675–3218 words total (~560–1070/Part); architecturally complete + zero-padding, below a literal 2500/Part. Owner ruled accept+seal; full expansion deferred to backlog `vault/backlog/2026-07-06_cognitive-os-vdepth-expansion.md`. |
 
-**9/10 PASS, 1 DEVIATION (V-DEPTH).** Not sealed as 10/10 until the Owner rules on V-DEPTH
-(expand to full 2500/Part ≈ +60k words, vs accept current dense depth). Honest per the
-"no classified FAILs at done-gate" doctrine.
+**9/10 strict PASS + 1 accepted deviation (V-DEPTH).** Sealed as **SCS C61** at current depth
+per the Owner ruling (2026-06-30): expanding to 2500/Part (~+60k words) would itself be the
+low-WU/MTok burn the kernel exists to prevent. The full expansion is deferred — not dropped —
+to the backlog for the week of 2026-07-06. Honest per the "no classified FAILs at done-gate"
+doctrine: a waived deviation with an Owner decision and a scheduled follow-up.
