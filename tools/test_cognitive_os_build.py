@@ -379,6 +379,81 @@ def test_co00_context() -> None:
         _fail("V-PRELAUNCH-RESUME-GATE", f"no resume_gate: {list(out)}")
 
 
+# --------------------------------------------------------------------------
+# CO-03 -- Dynamic Cognitive Router (cheapest-first cascade)
+# --------------------------------------------------------------------------
+def test_co03_router() -> None:
+    from modules.cognitive_os import router as R
+
+    # V-ROUTE-VAULT: a Vault hit short-circuits even an Opus-class task (zero tok).
+    d = R.route("re-architect the whole platform", vault_fn=lambda t: "stored ADR-12")
+    if d.rung == "vault" and d.model is None and d.cost == "zero":
+        _ok("V-ROUTE-VAULT", "vault hit -> zero-token (even for an XL task)")
+    else:
+        _fail("V-ROUTE-VAULT", f"got {d.rung}/{d.model}")
+
+    # V-ROUTE-ASSET: a reusable asset resolves before any model.
+    d = R.route("apply the standard handler pattern", asset_fn=lambda t: "template T7")
+    if d.rung == "asset" and d.model is None:
+        _ok("V-ROUTE-ASSET", "asset applies -> zero-token")
+    else:
+        _fail("V-ROUTE-ASSET", f"got {d.rung}")
+
+    # V-ROUTE-DETERMINISTIC: a recovery op routes to no model (real default).
+    d = R.route("/compact the session now")
+    if d.rung == "deterministic" and d.model is None:
+        _ok("V-ROUTE-DETERMINISTIC", "/compact -> deterministic, no model")
+    else:
+        _fail("V-ROUTE-DETERMINISTIC", f"got {d.rung}")
+
+    # V-ROUTE-HAIKU: a trivial NANO task -> Haiku, not Opus.
+    d = R.route("fix a typo in the comment")
+    if d.rung == "haiku":
+        _ok("V-ROUTE-HAIKU", f"trivial task -> {d.model}")
+    else:
+        _fail("V-ROUTE-HAIKU", f"expected haiku, got {d.rung} ({d.reason})")
+
+    # V-ROUTE-OPUS: an architectural task -> Opus (last resort, justified).
+    d = R.route("re-architect the system from the ground up")
+    if d.rung == "opus":
+        _ok("V-ROUTE-OPUS", f"architectural -> {d.model}")
+    else:
+        _fail("V-ROUTE-OPUS", f"expected opus, got {d.rung} ({d.reason})")
+
+    # V-ROUTE-FLOOR: task-shape floor beats a cheap keyword (no under-serving).
+    # 'format' is NANO, but 'authentication/system' makes it tier-2 -> Sonnet wins.
+    d = R.route("format the authentication system end to end")
+    if d.rung == "sonnet" and d.tier >= 2:
+        _ok("V-ROUTE-FLOOR",
+            f"tier {d.tier} floor beats NANO keyword -> {d.rung} (not haiku)")
+    else:
+        _fail("V-ROUTE-FLOOR", f"floor not respected: {d.rung}/tier{d.tier}")
+
+    # V-ROUTE-OPUS-NOT-DEFAULT: an unspecified task -> Sonnet, never Opus.
+    d = R.route("do some work on the thing")
+    if d.rung != "opus":
+        _ok("V-ROUTE-OPUS-NOT-DEFAULT", f"unspecified -> {d.rung} (Opus not default)")
+    else:
+        _fail("V-ROUTE-OPUS-NOT-DEFAULT", "Opus chosen by default")
+
+    # V-ROUTE-BUDGET-PRESSURE: a MACRO keyword inflates a tier-1 task to Opus;
+    # under budget pressure it steps one rung cheaper (Sonnet), never below floor.
+    inflated = R.route("audit this small helper")
+    relieved = R.route("audit this small helper", budget_pressure=True)
+    if inflated.rung == "opus" and relieved.rung == "sonnet":
+        _ok("V-ROUTE-BUDGET-PRESSURE",
+            "MACRO->opus; under pressure -> sonnet (one cheaper, above floor)")
+    else:
+        _fail("V-ROUTE-BUDGET-PRESSURE", f"got {inflated.rung}->{relieved.rung}")
+
+    # V-ROUTE-ESCALATE: the upward path haiku->sonnet->opus, capped at opus.
+    if (R.escalate(R.HAIKU) == R.SONNET and R.escalate(R.SONNET) == R.OPUS
+            and R.escalate(R.OPUS) == R.OPUS):
+        _ok("V-ROUTE-ESCALATE", "haiku->sonnet->opus, capped at opus")
+    else:
+        _fail("V-ROUTE-ESCALATE", "escalation ladder wrong")
+
+
 def main() -> int:
     import tempfile
     print("== Cognitive OS build done-gates ==")
@@ -394,6 +469,8 @@ def main() -> int:
     test_co09_loop_budget()
     print("[CO-00 context -- 60% ceiling]")
     test_co00_context()
+    print("[CO-03 router -- cascade]")
+    test_co03_router()
     print("[integration -- prelaunch gate]")
     test_prelaunch_gate()
     total = _passes + _fails
