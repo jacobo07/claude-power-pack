@@ -90,6 +90,34 @@ if ($decision -and $decision.coord -and $decision.coord.active) {
   $newSession = $false
 }
 
+# --- CO-08 hot-session cap (rung-3 block; ONLY for a genuinely NEW pane) ------
+# Resuming consumes no new slot, so the cap fires only when a new pane would be
+# opened. No bypass flag (CO-00 II.4 / CO-08 III.4): the only paths past a
+# refusal are SATISFACTION -- resume the existing session, or free a slot and
+# retry. Fail-open: a missing/proceed gate never blocks.
+if ($newSession -and $decision -and $decision.gate -and $decision.gate.verdict -eq 'refuse') {
+  Write-Host ""
+  Write-Host "PP CO-08: hot-session cap reached -- opening a NEW pane is refused." -ForegroundColor Red
+  foreach ($r in $decision.gate.reasons) { Write-Host ("  - " + $r) -ForegroundColor Red }
+  Write-Host "Satisfy (no bypass -- only these make it fit):" -ForegroundColor Yellow
+  foreach ($s in $decision.gate.satisfy) { Write-Host ("  > " + $s) -ForegroundColor Yellow }
+  $rt = $null
+  if ($decision.coord -and $decision.coord.default_resume) { $rt = $decision.coord.default_resume }
+  elseif ($decision.resume -and $decision.resume.resume_arg) { $rt = $decision.resume.resume_arg }
+  if ($rt) {
+    Write-Host ("Resume the existing session instead? [S/n]  (" + $rt + ")") -ForegroundColor Cyan
+    $capAns = Read-Host
+    if ($capAns -match '^[Nn]') {
+      Write-Host "[kclaude] Cap not satisfied -- launch declined. Free a slot, then retry." -ForegroundColor Red
+      exit 9
+    }
+    $resumeArg = $rt; $newSession = $false
+  } else {
+    Write-Host "[kclaude] Cap not satisfied -- launch declined. Free a slot (/compact or close the longest hot session), then retry." -ForegroundColor Red
+    exit 9
+  }
+}
+
 # --- W3 session naming (background, non-blocking) ----------------------------
 if ($py -and (Test-Path $namer)) {
   try {
