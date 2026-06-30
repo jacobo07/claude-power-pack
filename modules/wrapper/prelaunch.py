@@ -44,11 +44,13 @@ def _w1(cwd):
 
 
 def _w4(cwd):
-    from modules.wrapper.repo_coordinator import coordinate
+    from modules.wrapper.repo_coordinator import coordinate, parallel_burn
     d = coordinate(cwd)
+    pb = parallel_burn(cwd)   # D2: same-repo parallel large-prompt burn pattern
     return {"active": d.active, "warning": d.warning,
             "default_resume": d.default_resume, "source": d.source,
-            "candidates": [c.get("session_id") for c in (d.candidates or [])]}
+            "candidates": [c.get("session_id") for c in (d.candidates or [])],
+            "burn_warning": pb.warning, "burn_panes": pb.panes}
 
 
 def _w5(cwd, description):
@@ -82,15 +84,21 @@ def run(cwd, description=None):
         f_w2 = ex.submit(_w2, cwd)
         f_known = ex.submit(_known_sids, cwd)
         w1 = _res(f_w1, 1.0, None)
-        coord = _res(f_w4, 0.5, {"active": False, "warning": None,
-                                 "default_resume": None, "source": "timeout"})
-        w5 = _res(f_w5, 0.5, [])
+        # W4/W5 bumped 0.5->1.0s: each now reads transcripts (parallel-burn scan
+        # / per-turn weekly window). Threads run concurrently so wall-time stays
+        # the longest single timeout (~1.0s, == W1/W2), NOT the sum -- no launch
+        # overhead regression.
+        coord = _res(f_w4, 1.0, {"active": False, "warning": None,
+                                 "default_resume": None, "source": "timeout",
+                                 "burn_warning": None})
+        w5 = _res(f_w5, 1.0, [])
         resume = _res(f_w2, 1.0, {"resume_arg": None, "session_id": None,
                                   "source": "timeout"})
         known = _res(f_known, 0.5, [])
     finally:
         ex.shutdown(wait=False)  # never block on a hung feature thread
-    advisories = ([w1] if w1 else []) + list(w5 or [])
+    burn = (coord or {}).get("burn_warning")
+    advisories = ([w1] if w1 else []) + list(w5 or []) + ([burn] if burn else [])
     return {"advisories": advisories, "coord": coord, "resume": resume,
             "known_sids": known}
 
