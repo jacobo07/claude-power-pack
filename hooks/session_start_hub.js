@@ -510,6 +510,85 @@ function hookFirstTimeProject(cwd, sessionId) {
 }
 
 // ---------------------------------------------------------------------------
+// Hook 12: AutoResearch VPS digest (BL-AUTORESEARCH-VPS-001, 2026-06-30)
+//   AutoResearch runs on the KobiiClaw VPS (cron, every 6h). This hub PULLS the
+//   latest digest into a local cache for SessionStart context -- pull, never
+//   push, zero interruption (the old local Stop-hook "Stop says" message was
+//   silenced in V4). Two halves:
+//     - hookAutoResearchDigest (INLINE): read the local cache (a plain file
+//       read, no network) and surface a short pointer as additionalContext.
+//     - hookAutoResearchPull (DETACHED): TTL-gated background scp that refreshes
+//       the cache from the VPS for the NEXT session. Never awaited (the >1s rule:
+//       network egress must not block SessionStart), windowsHide:true (Block A
+//       hygiene), fail-open. detachedSpawn SKIPs it when the SSH key is absent
+//       (non-laptop hosts), so it is a no-op off the Owner's laptop.
+// ---------------------------------------------------------------------------
+const AUTORESEARCH_DIR = path.join(HOME, '.claude', 'autoresearch-triggers');
+const VPS_DIGEST_CACHE = path.join(AUTORESEARCH_DIR, 'vps_digest.md');
+const VPS_SSH_KEY = path.join(HOME, '.ssh', 'kobicraft_vps');
+const VPS_TARGET = 'kobicraft@204.168.166.63';
+const VPS_DIGEST_REMOTE = '.claude/autoresearch-triggers/latest_digest.md';
+const DIGEST_PULL_TTL_MS = 6 * 60 * MS_PER_MINUTE;   // refresh at most every 6h
+const DIGEST_SHOWN_CHARS = 600;
+
+function hookAutoResearchDigest() {
+  try {
+    if (!fs.existsSync(VPS_DIGEST_CACHE)) {
+      return null;
+    }
+    let raw = fs.readFileSync(VPS_DIGEST_CACHE, 'utf8');
+    if (raw && raw.charCodeAt(0) === UTF8_BOM_CHARCODE) {
+      raw = raw.slice(1);
+    }
+    raw = raw.trim();
+    if (!raw) {
+      return null;
+    }
+    const stat = fs.statSync(VPS_DIGEST_CACHE);
+    const ageH = ((Date.now() - stat.mtimeMs) / MS_PER_MINUTE / 60).toFixed(1);
+    const body = raw.length > DIGEST_SHOWN_CHARS
+      ? raw.slice(0, DIGEST_SHOWN_CHARS) + '\n... (truncated; full digest at '
+        + VPS_DIGEST_CACHE + ')'
+      : raw;
+    return '[AutoResearch VPS] Latest digest (cache pulled ' + ageH
+      + 'h ago from KobiiClaw):\n' + body;
+  } catch (err) {
+    note('autoresearch digest read failed', err);
+    return null;
+  }
+}
+
+function hookAutoResearchPull() {
+  try {
+    let needPull = true;
+    try {
+      const stat = fs.statSync(VPS_DIGEST_CACHE);
+      if (Date.now() - stat.mtimeMs < DIGEST_PULL_TTL_MS) {
+        needPull = false;  // cache fresh -- skip the network round trip
+      }
+    } catch (statErr) {
+      void statErr;  // missing cache -> pull
+    }
+    if (!needPull) {
+      return;
+    }
+    fs.mkdirSync(AUTORESEARCH_DIR, { recursive: true });
+    // detachedSpawn SKIPs when VPS_SSH_KEY (first absolute arg) is absent, so
+    // this is a clean no-op on hosts without the laptop's key.
+    detachedSpawn('autoresearch_pull', 'scp', [
+      '-i', VPS_SSH_KEY,
+      '-o', 'BatchMode=yes',
+      '-o', 'ConnectTimeout=10',
+      '-o', 'StrictHostKeyChecking=accept-new',
+      VPS_TARGET + ':' + VPS_DIGEST_REMOTE,
+      VPS_DIGEST_CACHE,
+    ]);
+  } catch (err) {
+    note('autoresearch pull failed', err);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
@@ -534,6 +613,14 @@ function main() {
         : workStateLine;
     }
 
+    // 12. AutoResearch VPS digest -- inline read of the local cache.
+    const digestLine = hookAutoResearchDigest();
+    if (digestLine) {
+      additionalContext = additionalContext
+        ? (additionalContext + '\n' + digestLine)
+        : digestLine;
+    }
+
     // 2-5. Fire-and-forget spawns (all detached, no waiting).
     hookJitWarm(cwd);
     hookAutoCompactCleanup();
@@ -542,6 +629,8 @@ function main() {
     hookCompoundAudit();
     hookDriftReport();
     hookCpcOsRegister(cwd, sessionId);
+    // 12b. AutoResearch VPS digest -- detached TTL-gated pull for next session.
+    hookAutoResearchPull();
 
     // 9-11. Folded fire-and-forget hooks (BL-SESSION-FOLD-001).
     hookMarkLiveSession(cwd, sessionId);
