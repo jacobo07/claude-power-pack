@@ -78,23 +78,27 @@ def route(task: str, *, budget_pressure: bool = False,
     """Walk the cascade; stop at the first rung that resolves `task`. Fail-open:
     any error in the cheap rungs falls through to model routing; a total failure
     defaults to Sonnet (never Opus-by-default, never a crash)."""
-    # Rung 1 -- Vault (CO-05 stored answer). Pluggable; default miss.
+    # Rung 1 -- Vault (CO-05 stored answer). Defaults to the live asset registry
+    # (CO-05); an empty registry simply misses, so the cascade stays live today
+    # and gains zero-token hits as verified assets accrue.
     try:
-        if vault_fn:
-            hit = vault_fn(task)
-            if hit:
-                return RouteDecision("vault", None, f"vault hit: {hit}",
-                                     cost="zero")
+        vfn = vault_fn
+        if vfn is None:
+            from modules.cognitive_os.registry import vault_resolver as vfn  # type: ignore
+        hit = vfn(task)
+        if hit:
+            return RouteDecision("vault", None, f"vault hit: {hit}", cost="zero")
     except Exception:  # noqa: BLE001 -- a cheap-rung error never blocks routing
         pass
 
-    # Rung 2 -- reusable asset (CO-05 template/rule). Pluggable; default miss.
+    # Rung 2 -- reusable asset (CO-05 template/rule applied without reasoning).
     try:
-        if asset_fn:
-            hit = asset_fn(task)
-            if hit:
-                return RouteDecision("asset", None, f"asset applies: {hit}",
-                                     cost="zero")
+        afn = asset_fn
+        if afn is None:
+            from modules.cognitive_os.registry import asset_resolver as afn  # type: ignore
+        hit = afn(task)
+        if hit:
+            return RouteDecision("asset", None, f"asset applies: {hit}", cost="zero")
     except Exception:  # noqa: BLE001
         pass
 

@@ -454,6 +454,120 @@ def test_co03_router() -> None:
         _fail("V-ROUTE-ESCALATE", "escalation ladder wrong")
 
 
+# --------------------------------------------------------------------------
+# CO-05 -- Zero Token Layer & asset registry
+# --------------------------------------------------------------------------
+def test_co05_registry(tmp: Path) -> None:
+    from modules.cognitive_os import registry as G
+
+    reg = tmp / "asset_registry.jsonl"
+    src = tmp / "source.txt"
+    src.write_text("original", encoding="utf-8")
+    anchor = {"type": "file", "path": str(src), "hash": G.file_hash(src)}
+
+    # V-ASSET-VERIFY-GATE: store only the VERIFIED and recurrence>=3.
+    s_unver = G.store_asset("a1", "knowledge", "x", verified=False,
+                            recurrence=5, registry_path=reg)
+    s_low = G.store_asset("a2", "knowledge", "x", verified=True,
+                          recurrence=2, registry_path=reg)
+    s_ok = G.store_asset(
+        "git-path-pivot", "knowledge",
+        "use C:/Program Files/Git/cmd/git.exe",
+        applicability=["git path", "powershell git"], anchor=anchor,
+        verified=True, recurrence=3, registry_path=reg)
+    if (not s_unver) and (not s_low) and s_ok:
+        _ok("V-ASSET-VERIFY-GATE",
+            "unverified + sub-threshold rejected; verified 3+ stored")
+    else:
+        _fail("V-ASSET-VERIFY-GATE", f"got {s_unver}/{s_low}/{s_ok}")
+
+    # V-ASSET-LOOKUP-ZERO: a fresh matching asset resolves at zero new tokens.
+    hit = G.vault_resolver("how to fix the powershell git path", registry_path=reg)
+    miss = G.vault_resolver("something totally unrelated", registry_path=reg)
+    if hit and "git.exe" in hit and miss is None:
+        _ok("V-ASSET-LOOKUP-ZERO", "fresh match -> content; non-match -> miss")
+    else:
+        _fail("V-ASSET-LOOKUP-ZERO", f"hit={hit!r} miss={miss!r}")
+
+    # V-ASSET-STALE-NOT-SERVED: change the source -> anchor mismatch -> not served.
+    src.write_text("CHANGED", encoding="utf-8")
+    stale = G.vault_resolver("how to fix the powershell git path", registry_path=reg)
+    if stale is None:
+        _ok("V-ASSET-STALE-NOT-SERVED",
+            "source changed -> stale asset not served blind")
+    else:
+        _fail("V-ASSET-STALE-NOT-SERVED", f"served stale: {stale!r}")
+
+    # V-ASSET-ROUTER-DEFAULT: route() defaults to the registry; an empty/irrelevant
+    # registry simply misses and the cascade still routes to a model.
+    from modules.cognitive_os import router as R
+    d = R.route("fix a typo")
+    if d.rung == "haiku":
+        _ok("V-ASSET-ROUTER-DEFAULT", "empty registry -> miss -> model (haiku)")
+    else:
+        _fail("V-ASSET-ROUTER-DEFAULT", f"unexpected rung {d.rung}")
+
+
+# --------------------------------------------------------------------------
+# CO-02 -- Economics Governor & violation registry
+# --------------------------------------------------------------------------
+def test_co02_governor(tmp: Path) -> None:
+    from datetime import datetime, timezone, timedelta
+    from modules.cognitive_os import governor as G
+
+    LIMIT = 100
+    # V-GOV-BANDS: 50% GREEN / 75% AMBER / 95% RED.
+    if (G.band_of(50, LIMIT) == G.GREEN and G.band_of(75, LIMIT) == G.AMBER
+            and G.band_of(95, LIMIT) == G.RED):
+        _ok("V-GOV-BANDS", "50% GREEN / 75% AMBER / 95% RED")
+    else:
+        _fail("V-GOV-BANDS", "band edges wrong")
+
+    # V-GOV-ADMIT-GREEN: small op, low spend -> ADMIT.
+    v = G.admit(10, week_spent=20, week_limit=LIMIT)
+    if v.verdict == G.ADMIT and v.band == G.GREEN:
+        _ok("V-GOV-ADMIT-GREEN", "GREEN + fits -> ADMIT")
+    else:
+        _fail("V-GOV-ADMIT-GREEN", f"got {v.verdict}/{v.band}")
+
+    # V-GOV-DOWNGRADE: AMBER band -> prefer ADMIT-DOWNGRADED over refuse.
+    v = G.admit(5, week_spent=75, week_limit=LIMIT, can_downgrade=True)
+    if v.verdict == G.DOWNGRADED:
+        _ok("V-GOV-DOWNGRADE", f"AMBER -> {v.verdict} (cheaper form admitted)")
+    else:
+        _fail("V-GOV-DOWNGRADE", f"got {v.verdict}")
+
+    # V-GOV-REFUSE-MINVIABLE: even minimum-viable breaches -> REFUSE, no bypass.
+    v = G.admit(50, week_spent=95, week_limit=LIMIT, min_viable=20)
+    if v.verdict == G.REFUSE and any("bypass" in s.lower() for s in v.satisfy):
+        _ok("V-GOV-REFUSE-MINVIABLE", "min-viable breaches -> REFUSE (no bypass)")
+    else:
+        _fail("V-GOV-REFUSE-MINVIABLE", f"got {v.verdict} {v.satisfy}")
+
+    # V-GOV-REFUSE-NODOWNGRADE: full op breaches + cannot downgrade -> REFUSE.
+    v = G.admit(50, week_spent=80, week_limit=LIMIT, can_downgrade=False)
+    if v.verdict == G.REFUSE:
+        _ok("V-GOV-REFUSE-NODOWNGRADE", "breach + no downgrade -> REFUSE")
+    else:
+        _fail("V-GOV-REFUSE-NODOWNGRADE", f"got {v.verdict}")
+
+    # V-GOV-VIOLATION-REGISTRY: durable breach record + window filter + un_gated.
+    vp = tmp / "violations.jsonl"
+    now = datetime.now(timezone.utc)
+    G.record_violation("week", op_class="ultra", model="opus", projected=100,
+                       actual=180, wu=2, disposition="downgrade-ignored",
+                       un_gated=True, now=now, registry_path=vp)
+    G.record_violation("session", projected=10, actual=12,
+                       now=now - timedelta(hours=48), registry_path=vp)
+    recent = G.read_violations(since=now - timedelta(hours=24), registry_path=vp)
+    if (len(recent) == 1 and recent[0]["un_gated"] is True
+            and recent[0]["tier"] == "week"):
+        _ok("V-GOV-VIOLATION-REGISTRY",
+            "breach recorded; window filter + un_gated flag preserved")
+    else:
+        _fail("V-GOV-VIOLATION-REGISTRY", f"got {recent}")
+
+
 def main() -> int:
     import tempfile
     print("== Cognitive OS build done-gates ==")
@@ -471,6 +585,12 @@ def main() -> int:
     test_co00_context()
     print("[CO-03 router -- cascade]")
     test_co03_router()
+    print("[CO-05 registry -- zero-token assets]")
+    with tempfile.TemporaryDirectory() as td:
+        test_co05_registry(Path(td))
+    print("[CO-02 governor -- budget envelope]")
+    with tempfile.TemporaryDirectory() as td:
+        test_co02_governor(Path(td))
     print("[integration -- prelaunch gate]")
     test_prelaunch_gate()
     total = _passes + _fails

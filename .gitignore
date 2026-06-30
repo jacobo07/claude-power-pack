@@ -58,7 +58,8 @@ vault/.arch-index/
 .vscode/tasks.json.cpc-bak
 vault/setup_os/profiles/
 
-# Cognitive OS (CO-01) Work-Unit ledger -- append-only runtime telemetry fed by
-# done-gate verdicts; accumulates per-session and would churn/conflict across
-# panes. Local-only, like vault/ceps + vault/token_logs.
-vault/cognitive_os/wu_ledger.jsonl
+# Cognitive OS append-only runtime ledgers (CO-01 Work-Units, CO-05 asset
+# registry, CO-02 budget violations) -- fed by gate verdicts / discoveries;
+# accumulate per-session and would churn/conflict across panes. Local-only,
+# like vault/ceps + vault/token_logs.
+vault/cognitive_os/*.jsonl
