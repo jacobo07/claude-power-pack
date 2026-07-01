@@ -109,6 +109,18 @@ own sealed depth ruling (2026-06-30). Honest per the "no classified FAILs at don
 | PM-05 Speculative Prefetch | ✅ written | CO-04/05 |
 | SCS C65 seal | ✅ sealed (`parallel_mesh_scs_c65.md`) | — |
 
+## Live implementation (SCS C66 — built 2026-07-01)
+
+The architecture (SCS C65) is now **live code** under `modules/parallel_mesh/`, built
+in five bounded sprints (each tested + committed + pushed, REMOTE_DELTA 0 0):
+`pm_02_intent.py` (scope-gate recalibration of CO-08), `pm_03_bus.py` (findings bus +
+redundancy tax), `pm_01_brain.py` (repo shared brain), `pm_04_auction.py` (budget
+auction + modes), `pm_05_prefetch.py` (speculative prefetch). Done-gate:
+`tools/test_parallel_mesh.py` = **26/26 hermetic (3× re-runnable)**;
+`test_cognitive_os_build.py` **68/68** (no regression — scheduler extended
+backward-compatibly). Hub wiring is Owner-side (`hub_wiring_instructions.md`, HR-001).
+Sealed as **SCS C66** (`parallel_mesh_scs_c66.md`). Commits `092585e`→PM-05+seal.
+
 ## The fundamental property of the whole system
 
 > **Parallel allowed. Duplicate cognition forbidden.** Repo Shared Brain: common state, generated
