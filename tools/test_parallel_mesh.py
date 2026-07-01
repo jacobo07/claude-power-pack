@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """test_parallel_mesh.py -- Parallel Cognitive Mesh done-gates. Hermetic
-(tmp state dirs, injected gather_fn/head_fn/scan_fn/burn_fn, fixed clock),
-re-runnable. Grows one sprint at a time.
+(tmp state dirs, injected gather_fn/head_fn/scan_fn/burn_fn/cheap_fn, fixed
+clock), re-runnable. Grows one sprint at a time.
 
 Sprint 1 (PM-02): scope-gate recalibration of CO-08's blunt same-repo cap.
 Sprint 2 (PM-03): shared findings bus + redundancy tax.
 Sprint 3 (PM-01): repo shared brain + PM-01/02/03 coexistence.
 Sprint 4 (PM-04): budget auction + concurrency modes + opus singleton.
+Sprint 5 (PM-05): speculative prefetch (cheap + idle + net-positive).
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ from modules.parallel_mesh import pm_02_intent as PM2  # noqa: E402
 from modules.parallel_mesh import pm_03_bus as PM3     # noqa: E402
 from modules.parallel_mesh import pm_01_brain as PM1   # noqa: E402
 from modules.parallel_mesh import pm_04_auction as PM4  # noqa: E402
+from modules.parallel_mesh import pm_05_prefetch as PM5  # noqa: E402
 
 _p = 0
 _f = 0
@@ -287,7 +289,6 @@ def sprint3():
 def sprint4():
     print("[PM-04 -- budget auction + concurrency modes]")
 
-    # V-PM04-GREEN-NO-FRICTION: low burn -> Green -> Opus without any advisory.
     mv = PM4.current_mode(burn_fn=lambda: 0.8)
     g = PM4.budget_gate(mv, model="opus", roi=1.0)
     if mv.mode == PM4.GREEN and not g.lines and g.suggested_model == "opus" \
@@ -298,7 +299,6 @@ def sprint4():
         _fail("V-PM04-GREEN-NO-FRICTION",
               f"mode={mv.mode} lines={g.lines} suggested={g.suggested_model}")
 
-    # V-PM04-YELLOW-OPUS-ADVISORY: elevated burn -> Opus w/o ROI -> advisory+Sonnet.
     mv = PM4.current_mode(burn_fn=lambda: 1.3)
     g = PM4.budget_gate(mv, model="opus", roi=1.0, roi_justified=False)
     if mv.mode == PM4.YELLOW and any("Opus requested without ROI" in ln
@@ -310,7 +310,6 @@ def sprint4():
         _fail("V-PM04-YELLOW-OPUS-ADVISORY",
               f"mode={mv.mode} lines={g.lines} suggested={g.suggested_model}")
 
-    # V-PM04-BLACK-COMPACT-ADVISORY: extreme burn -> compact/kclear advisory.
     mv = PM4.current_mode(burn_fn=lambda: 2.5)
     g = PM4.budget_gate(mv, model="sonnet")
     if mv.mode == PM4.BLACK and any("/compact" in ln for ln in g.lines):
@@ -320,7 +319,6 @@ def sprint4():
         _fail("V-PM04-BLACK-COMPACT-ADVISORY",
               f"mode={mv.mode} lines={g.lines}")
 
-    # V-PM04-OPUS-SINGLETON-ADVISORY: 2nd Opus on same repo in Yellow+ -> advisory.
     mv = PM4.current_mode(burn_fn=lambda: 1.3)
     g = PM4.budget_gate(mv, model="opus", opus_incumbents=1, roi_justified=False,
                         repo=REPO)
@@ -330,7 +328,6 @@ def sprint4():
     else:
         _fail("V-PM04-OPUS-SINGLETON-ADVISORY", f"lines={g.lines}")
 
-    # V-PM04-FAILOPEN-OWNER-OVERRIDE: even Black+Opus never hard-blocks.
     mv = PM4.current_mode(burn_fn=lambda: 3.0)
     g = PM4.budget_gate(mv, model="opus", opus_incumbents=2, roi_justified=False)
     if mv.mode == PM4.BLACK and g.blocks is False and g.lines:
@@ -340,9 +337,6 @@ def sprint4():
         _fail("V-PM04-FAILOPEN-OWNER-OVERRIDE",
               f"mode={mv.mode} blocks={g.blocks} lines={len(g.lines)}")
 
-    # V-PM04-READS-REAL-BURN: (a) the REAL cost_gate path runs on an empty proj
-    # base (no fake number, no crash); (b) an injected real-shaped factor drives
-    # the mode (not a constant).
     with tempfile.TemporaryDirectory() as empty:
         real = PM4.current_mode(proj_base=empty)
         inj = PM4.current_mode(burn_fn=lambda: 1.7)
@@ -356,11 +350,66 @@ def sprint4():
                   f"real=({real.mode},{real.source}) inj=({inj.mode},{inj.factor})")
 
 
+def sprint5():
+    print("[PM-05 -- speculative prefetch (cheap + idle + net-positive)]")
+
+    # V-PM05-CHEAP-ONLY: an Opus-tier prefetch is refused (routing violation).
+    eng = PM5.SpeculativePrefetch()
+    calls = []
+    r = eng.prefetch(REPO, "index", lambda: calls.append(1) or "asset",
+                     mode=PM4.GREEN, hot_count=0, tier="opus")
+    if (not r.ran) and "cheap-only" in r.reason and not calls:
+        _ok("V-PM05-CHEAP-ONLY", "Opus-tier prefetch refused; producer never ran")
+    else:
+        _fail("V-PM05-CHEAP-ONLY", f"ran={r.ran} reason={r.reason} calls={len(calls)}")
+
+    # V-PM05-GREEN-ONLY: non-Green mode -> no prefetch.
+    eng = PM5.SpeculativePrefetch()
+    r = eng.prefetch(REPO, "index", lambda: "asset", mode=PM4.YELLOW, hot_count=0)
+    if (not r.ran) and "GREEN" in r.reason:
+        _ok("V-PM05-GREEN-ONLY", "Yellow mode -> prefetch suspended (idle-only)")
+    else:
+        _fail("V-PM05-GREEN-ONLY", f"ran={r.ran} reason={r.reason}")
+
+    # V-PM05-IDLE-ONLY: a hot pane -> fail-stop even in Green.
+    eng = PM5.SpeculativePrefetch()
+    r = eng.prefetch(REPO, "index", lambda: "asset", mode=PM4.GREEN, hot_count=1)
+    if (not r.ran) and "fail-stop" in r.reason:
+        _ok("V-PM05-IDLE-ONLY", "a hot pane -> fail-stop (no prefetch while active)")
+    else:
+        _fail("V-PM05-IDLE-ONLY", f"ran={r.ran} reason={r.reason}")
+
+    # V-PM05-NET-POSITIVE-DISABLE: a net-negative class is auto-disabled.
+    ledger = PM5.NetPositiveLedger()
+    for _ in range(3):
+        ledger.record_prefetch("depmap", spent=10)   # 30 spent, 0 saved
+    eng = PM5.SpeculativePrefetch(ledger=ledger)
+    r = eng.prefetch(REPO, "depmap", lambda: "asset", mode=PM4.GREEN, hot_count=0)
+    if (not r.ran) and "net-negative" in r.reason:
+        _ok("V-PM05-NET-POSITIVE-DISABLE",
+            "class costing more than it saves auto-disabled")
+    else:
+        _fail("V-PM05-NET-POSITIVE-DISABLE", f"ran={r.ran} reason={r.reason}")
+
+    # V-PM05-RUNS-WHEN-IDLE: all gates pass -> the cheap producer runs once.
+    eng = PM5.SpeculativePrefetch()
+    calls = []
+    r = eng.prefetch(REPO, "index", lambda: calls.append(1) or "<index>",
+                     mode=PM4.GREEN, hot_count=0, tier="deterministic")
+    if r.ran and r.asset == "<index>" and len(calls) == 1:
+        _ok("V-PM05-RUNS-WHEN-IDLE",
+            "green + idle + cheap + net-positive -> prefetch ran once")
+    else:
+        _fail("V-PM05-RUNS-WHEN-IDLE",
+              f"ran={r.ran} asset={r.asset!r} calls={len(calls)}")
+
+
 def main():
     sprint1()
     sprint2()
     sprint3()
     sprint4()
+    sprint5()
     total = _p + _f
     print(f"PARALLEL_MESH_PASS={_p}/{total}  threshold={total}/{total}")
     return 0 if _f == 0 else 1
