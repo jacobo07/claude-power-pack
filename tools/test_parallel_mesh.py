@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """test_parallel_mesh.py -- Parallel Cognitive Mesh done-gates. Hermetic
-(tmp state dirs, injected gather_fn, fixed clock), re-runnable. Grows one
-sprint at a time.
+(tmp state dirs, injected gather_fn/head_fn/scan_fn, fixed clock), re-runnable.
+Grows one sprint at a time.
 
 Sprint 1 (PM-02): scope-gate recalibration of CO-08's blunt same-repo cap.
 Sprint 2 (PM-03): shared findings bus + redundancy tax.
+Sprint 3 (PM-01): repo shared brain + PM-01/02/03 coexistence.
 """
 from __future__ import annotations
 
@@ -20,6 +21,7 @@ if str(_PP_ROOT) not in sys.path:
 from modules.cognitive_os import scheduler as S       # noqa: E402
 from modules.parallel_mesh import pm_02_intent as PM2  # noqa: E402
 from modules.parallel_mesh import pm_03_bus as PM3     # noqa: E402
+from modules.parallel_mesh import pm_01_brain as PM1   # noqa: E402
 
 _p = 0
 _f = 0
@@ -44,12 +46,10 @@ NOW = datetime(2026, 7, 1, 12, 0, 0, tzinfo=timezone.utc)
 
 
 def _hot(*sids):
-    """Build scheduler hot items for the same repo."""
     return [{"sid": s, "encs": [ENC]} for s in sids]
 
 
 def _gather(hot):
-    """Injected gather_fn honoring exclude_sid, ignoring the rest."""
     def g(**kw):
         ex = kw.get("exclude_sid")
         return [h for h in hot if h["sid"] != ex]
@@ -59,7 +59,6 @@ def _gather(hot):
 def sprint1():
     print("[PM-02 -- scope-gate recalibration]")
 
-    # V-PM02-INTENT-ALLOWED: two declared, disjoint same-repo panes -> both run.
     with tempfile.TemporaryDirectory() as td:
         reg = PM2.PaneIntentRegistry(state_dir=td)
         reg.declare("A", CWD, ["modules/x.py"], now=NOW)
@@ -72,7 +71,6 @@ def sprint1():
             _fail("V-PM02-INTENT-ALLOWED",
                   f"expected proceed, got {v.verdict}: {v.reasons}")
 
-    # V-PM02-COLLISION-REFUSED: two declared, OVERLAPPING scopes -> refuse.
     with tempfile.TemporaryDirectory() as td:
         reg = PM2.PaneIntentRegistry(state_dir=td)
         reg.declare("A", CWD, ["modules/x.py"], now=NOW)
@@ -85,8 +83,6 @@ def sprint1():
             _fail("V-PM02-COLLISION-REFUSED",
                   f"expected refuse-on-collision, got {v.verdict}: {v.reasons}")
 
-    # V-PM02-UNKNOWNSCOPE-REFUSED: declared pane, but incumbent has no intent ->
-    # non-overlap cannot be proven -> refuse (conservative).
     with tempfile.TemporaryDirectory() as td:
         reg = PM2.PaneIntentRegistry(state_dir=td)  # A intentionally NOT declared
         v = PM2.scope_gated_admit(CWD, "B", ["modules/y.py"], registry=reg,
@@ -99,7 +95,6 @@ def sprint1():
             _fail("V-PM02-UNKNOWNSCOPE-REFUSED",
                   f"expected refuse-unknown, got {v.verdict}: {v.reasons}")
 
-    # V-SCHEDULER-FAILSAFE: undeclared pane -> blunt SAME_REPO_CAP=1 intact.
     with tempfile.TemporaryDirectory() as td:
         reg = PM2.PaneIntentRegistry(state_dir=td)
         v = PM2.scope_gated_admit(CWD, "C", None, registry=reg, now=NOW,
@@ -111,8 +106,6 @@ def sprint1():
             _fail("V-SCHEDULER-FAILSAFE",
                   f"expected blunt-cap refuse, got {v.verdict}: {v.reasons}")
 
-    # V-PM02-REGISTRY-ROUNDTRIP: declared intent reads back fresh; expires past
-    # the freshness window.
     with tempfile.TemporaryDirectory() as td:
         reg = PM2.PaneIntentRegistry(state_dir=td)
         reg.declare("A", CWD, ["a.py"], now=NOW)
@@ -125,9 +118,8 @@ def sprint1():
             _fail("V-PM02-REGISTRY-ROUNDTRIP",
                   f"fresh={[i.sid for i in fresh]} stale={[i.sid for i in stale]}")
 
-    # V-BASELINE-INTACT: decide(declared=None) reproduces sealed CO-08 behavior.
-    v0 = S.decide(_hot("A"), CWD, is_new=True)   # 1 same-repo, undeclared
-    v1 = S.decide([], CWD, is_new=True)          # empty
+    v0 = S.decide(_hot("A"), CWD, is_new=True)
+    v1 = S.decide([], CWD, is_new=True)
     if v0.verdict == "refuse" and v1.verdict == "proceed":
         _ok("V-BASELINE-INTACT",
             "decide(declared=None) unchanged: 1-incumbent refuse / empty proceed")
@@ -139,7 +131,6 @@ def sprint1():
 def sprint2():
     print("[PM-03 -- shared findings bus + redundancy tax]")
 
-    # V-PM03-REDUNDANCY-TAX: a bus hit reuses; reason_fn NEVER runs (0 tokens).
     with tempfile.TemporaryDirectory() as td:
         bus = PM3.FindingsBus(state_dir=td)
         bus.publish(REPO, "optimize loops in tua-x", "batch the io calls",
@@ -160,7 +151,6 @@ def sprint2():
             _fail("V-PM03-REDUNDANCY-TAX",
                   f"reused={reused} calls={len(calls)} claim={claim!r}")
 
-    # V-PM03-MISS-REASONS: a miss reasons once, publishes, then becomes a hit.
     with tempfile.TemporaryDirectory() as td:
         tax = PM3.RedundancyTax(bus=PM3.FindingsBus(state_dir=td))
         calls = []
@@ -179,18 +169,15 @@ def sprint2():
             _fail("V-PM03-MISS-REASONS",
                   f"reused={reused} calls={len(calls)} hit={hit} claim={claim!r}")
 
-    # V-PM03-BUS-PERSISTS: a finding survives across bus instances (== sessions).
     with tempfile.TemporaryDirectory() as td:
         PM3.FindingsBus(state_dir=td).publish(REPO, "t", "c", sid="A", now=NOW)
-        reloaded = PM3.FindingsBus(state_dir=td).load(REPO)  # new instance, same disk
+        reloaded = PM3.FindingsBus(state_dir=td).load(REPO)
         if len(reloaded) == 1 and reloaded[0].claim == "c":
             _ok("V-PM03-BUS-PERSISTS",
                 "finding persisted on disk across bus instances (survives sessions)")
         else:
-            _fail("V-PM03-BUS-PERSISTS",
-                  f"reloaded={[f.claim for f in reloaded]}")
+            _fail("V-PM03-BUS-PERSISTS", f"reloaded={[f.claim for f in reloaded]}")
 
-    # V-PM03-DEDUP: identical finding published twice -> stored once.
     with tempfile.TemporaryDirectory() as td:
         bus = PM3.FindingsBus(state_dir=td)
         bus.publish(REPO, "T", "same claim", sid="A", now=NOW)
@@ -202,8 +189,6 @@ def sprint2():
         else:
             _fail("V-PM03-DEDUP", f"expected 1 stored, got {n}")
 
-    # V-PM03-PUBLISH-ON-SESSION-END: Stop-hook publishes new findings; malformed
-    # entries skipped.
     with tempfile.TemporaryDirectory() as td:
         n = PM3.publish_session_findings(REPO, [
             {"topic": "a", "claim": "c1"},
@@ -219,9 +204,95 @@ def sprint2():
                   f"published={n} loaded={len(loaded)}")
 
 
+def sprint3():
+    print("[PM-01 -- repo shared brain + coexistence]")
+
+    # V-PM01-BRAIN-GENERATED-ONCE + V-PM01-CONSUMERS-USE-BRAIN: 3 panes, 1 scan.
+    with tempfile.TemporaryDirectory() as td:
+        store = PM1.BrainStore(state_dir=td)
+        scans = []
+
+        def _scan():
+            scans.append(1)
+            return "repo: modules/, tools/. decisions: jsonl bus. traps: bash-bridge."
+
+        cons = PM1.RepoBrainConsumer(store=store, head_fn=lambda r: "H1")
+        b1, g1 = cons.get_or_generate(REPO, _scan, now=NOW)
+        b2, g2 = cons.get_or_generate(REPO, _scan, now=NOW)
+        b3, g3 = cons.get_or_generate(REPO, _scan, now=NOW)
+        if len(scans) == 1 and g1 and not g2 and not g3:
+            _ok("V-PM01-BRAIN-GENERATED-ONCE",
+                "3 same-repo panes -> exactly 1 repo scan (first generates)")
+        else:
+            _fail("V-PM01-BRAIN-GENERATED-ONCE",
+                  f"scans={len(scans)} g=({g1},{g2},{g3})")
+        if (not g2) and b2.content == b1.content and b3.content == b1.content:
+            _ok("V-PM01-CONSUMERS-USE-BRAIN",
+                "panes 2+3 consumed the existing brain (identical content, no rescan)")
+        else:
+            _fail("V-PM01-CONSUMERS-USE-BRAIN",
+                  f"g2={g2} content_match={b2.content == b1.content}")
+
+    # V-PM01-STALE-ON-COMMIT: a new commit invalidates the brain -> regenerate.
+    with tempfile.TemporaryDirectory() as td:
+        store = PM1.BrainStore(state_dir=td)
+        scans = []
+
+        def _scan():
+            scans.append(1)
+            return f"scan-{len(scans)}"
+
+        c1 = PM1.RepoBrainConsumer(store=store, head_fn=lambda r: "H1")
+        _b1, g1 = c1.get_or_generate(REPO, _scan, now=NOW)
+        c2 = PM1.RepoBrainConsumer(store=store, head_fn=lambda r: "H2")
+        b2, g2 = c2.get_or_generate(REPO, _scan, now=NOW)
+        if g1 and g2 and len(scans) == 2 and b2.head == "H2":
+            _ok("V-PM01-STALE-ON-COMMIT",
+                "new commit (H1->H2) marked brain stale -> regenerated at new head")
+        else:
+            _fail("V-PM01-STALE-ON-COMMIT",
+                  f"g=({g1},{g2}) scans={len(scans)} head={b2.head}")
+
+    # V-PM01-COEXISTS-PM02-PM03: the STOP #3 2-pane flow, all three systems in
+    # ONE shared state dir (proves no cross-write conflict on disk).
+    with tempfile.TemporaryDirectory() as td:
+        reg = PM2.PaneIntentRegistry(state_dir=td)
+        brainstore = PM1.BrainStore(state_dir=td)
+        bus = PM3.FindingsBus(state_dir=td)
+        scans = []
+
+        def _scan():
+            scans.append(1)
+            return "repo brief"
+
+        # Pane A: declare intent X, generate brain, publish a finding.
+        reg.declare("A", REPO, ["modules/x.py"], now=NOW)
+        consA = PM1.RepoBrainConsumer(store=brainstore, head_fn=lambda r: "H1")
+        _bA, gA = consA.get_or_generate(REPO, _scan, now=NOW)
+        bus.publish(REPO, "loop opt", "batch io", sid="A", now=NOW)
+
+        # Pane B: declare intent Y (disjoint -> admitted), consume brain (no
+        # rescan), consult bus (finds A's finding).
+        admit = PM2.scope_gated_admit(REPO, "B", ["modules/y.py"], registry=reg,
+                                      now=NOW, gather_fn=_gather(_hot("A")))
+        consB = PM1.RepoBrainConsumer(store=brainstore, head_fn=lambda r: "H1")
+        _bB, gB = consB.get_or_generate(REPO, _scan, now=NOW)
+        hitB, fB, _ = PM3.RedundancyTax(bus=bus).consult(REPO, "loop opt")
+
+        if (admit.verdict == "proceed" and gA and not gB and len(scans) == 1
+                and hitB and fB is not None and fB.claim == "batch io"):
+            _ok("V-PM01-COEXISTS-PM02-PM03",
+                "2-pane flow: B admitted, consumed brain (1 scan total), found A's finding")
+        else:
+            _fail("V-PM01-COEXISTS-PM02-PM03",
+                  f"admit={admit.verdict} gA={gA} gB={gB} scans={len(scans)} "
+                  f"hitB={hitB}")
+
+
 def main():
     sprint1()
     sprint2()
+    sprint3()
     total = _p + _f
     print(f"PARALLEL_MESH_PASS={_p}/{total}  threshold={total}/{total}")
     return 0 if _f == 0 else 1
