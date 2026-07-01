@@ -1936,3 +1936,9 @@ and `yt-dlp`. Verify the real surface (`--help`) before coding against an assume
 **ORIGEN:** Block C 2026-06-30 -- the plan assumed "AutoResearch usa los CLIs de
 Agent-Reach"; `pip install agent-reach` 404s on PyPI (install is the GitHub zip), and
 the CLI exposes no fetch command. Integration is via Jina + yt-dlp. SCS C64.
+
+## Cursor Terminal Profile -- kClaude -- 2026-07-01
+
+| Ref | File | Why it matters |
+|---|---|---|
+| T-CURSOR-PROFILE-ORDER-001 | `vault/plans/kclaude-terminal-profile-2026-07-01.md` | kClaude terminal profile added to Cursor `+` menu. Premise-corrected: the `Claude` profile launches the OLD `~/.claude/kclaude.bat` (simple restart wrapper), NOT claude.exe; `kClaude` launches the SMART `~/.claude/bin/kclaude.ps1` (W6 pre-launch intelligence: W1 context / W4 coordinator / W5 cost / W2 auto-resume / W3 naming) via `bin/kclaude.cmd`. Icon/color cloned byte-identical from `Claude` (sparkle / terminal.ansiMagenta). Ordering: profile is FIRST key in `terminal.integrated.profiles.windows`; "Last session" stays pinned as `defaultProfile.windows` (unchanged). VS Code/Cursor renders remaining profiles in config-object (insertion) order on this host -> Last session / kClaude / Claude; alphabetical fallback (kClaude after Claude) remedy = rename key. Backup: `settings.json.bak.20260701T130248Z`. Arg passthrough + launch chain empirically proven. |
