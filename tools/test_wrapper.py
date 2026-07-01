@@ -37,6 +37,7 @@ if str(PP_ROOT) not in sys.path:
 
 from modules.wrapper import (  # noqa: E402
     turn_counter, auto_resumer, session_namer, repo_coordinator, cost_gate,
+    prelaunch,
 )
 
 PASS = 0
@@ -280,6 +281,110 @@ def gate_w3w4w5_failopen():
         _fail("V-W3W4W5-FAILOPEN", "; ".join(errs))
 
 
+# --- prelaunch fast/advisories split (startup-blank fix) ----------------
+def gate_prelaunch_fast_bundle():
+    # Launch-critical bundle only; excludes the W1/W5 corpus scans. A fake empty
+    # cwd resolves no transcripts so this measures the pure launch path.
+    import time
+    with tempfile.TemporaryDirectory() as td:
+        cwd = str(Path(td) / "EmptyRepo")
+        t0 = time.perf_counter()
+        out = prelaunch.run_fast(cwd)
+        ms = (time.perf_counter() - t0) * 1000
+    keys = all(k in out for k in ("coord", "resume", "gate", "resume_gate"))
+    if keys and out.get("advisories") == [] and ms < 2000:
+        _ok("V-STARTUP-FAST-BUNDLE",
+            f"launch-critical bundle {ms:.0f} ms, advisories=[]")
+    else:
+        _fail("V-STARTUP-FAST-BUNDLE",
+              f"ms={ms:.0f} keys={keys} adv={out.get('advisories')}")
+
+
+def gate_fast_excludes_scan():
+    # The slow scans (W1 turn, W5 cost) must NOT sit on the fast path.
+    def boom(*a, **k):
+        raise RuntimeError("scan must not run on the fast path")
+    orig1, orig5 = prelaunch._w1, prelaunch._w5
+    prelaunch._w1, prelaunch._w5 = boom, boom
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            out = prelaunch.run_fast(str(Path(td) / "R"))
+        if out.get("advisories") == []:
+            _ok("V-FAST-NO-SCAN", "run_fast clean with W1/W5 stubbed to raise")
+        else:
+            _fail("V-FAST-NO-SCAN", f"advisories leaked: {out.get('advisories')}")
+    except Exception as e:  # noqa: BLE001
+        _fail("V-FAST-NO-SCAN", f"run_fast touched a scan: {e!r}")
+    finally:
+        prelaunch._w1, prelaunch._w5 = orig1, orig5
+
+
+def gate_advisory_cache_write():
+    canned = ["PP: advisory one", "PP: advisory two"]
+    orig1, orig5, origb = prelaunch._w1, prelaunch._w5, prelaunch._w4_burn
+    prelaunch._w1 = lambda cwd: canned[0]
+    prelaunch._w5 = lambda cwd, desc: [canned[1]]
+    prelaunch._w4_burn = lambda cwd: None
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            adv = prelaunch.run_advisories(r"C:\fake\R")
+            cache = Path(td) / "adv.json"
+            prelaunch.write_cache(r"C:\fake\R", adv, cache_path=cache)
+            raw = cache.read_bytes()
+            payload = json.loads(raw.decode("utf-8"))
+            no_bom = raw[:3] != b"\xef\xbb\xbf"
+            if (adv == canned and no_bom and payload["cwd"] == r"C:\fake\R"
+                    and payload["advisories"] == canned and payload.get("ts")):
+                _ok("V-ADVISORY-CACHE",
+                    f"cache no-BOM, {len(payload['advisories'])} lines")
+            else:
+                _fail("V-ADVISORY-CACHE",
+                      f"adv={adv} no_bom={no_bom} payload={payload}")
+    finally:
+        prelaunch._w1, prelaunch._w5, prelaunch._w4_burn = orig1, orig5, origb
+
+
+def gate_single_session_silent():
+    # One active session -> source 'active' -> PS auto-resumes with NO dialog.
+    cwd = r"C:\fake\SoloRepo"
+    recent = (NOW - timedelta(minutes=20)).isoformat()
+    cands = [{"session_id": "SOLO", "topic": "w", "lastActivity": recent}]
+    d = repo_coordinator.coordinate(cwd, now=NOW, list_fn=lambda *a, **k: cands)
+    if d.active and d.source == "active" and d.default_resume == "--resume SOLO":
+        _ok("V-SINGLE-SESSION-SILENT",
+            "one active -> source=active (PS auto-resumes silently)")
+    else:
+        _fail("V-SINGLE-SESSION-SILENT",
+              f"active={d.active} source={d.source} dr={d.default_resume}")
+
+
+def gate_multi_session_prompt():
+    # Two active sessions -> source 'multiple' -> PS shows the numbered list.
+    cwd = r"C:\fake\MultiRepo"
+    a = (NOW - timedelta(minutes=10)).isoformat()
+    b = (NOW - timedelta(minutes=40)).isoformat()
+    cands = [{"session_id": "NEW", "topic": "n", "lastActivity": a},
+             {"session_id": "OLD", "topic": "o", "lastActivity": b}]
+    d = repo_coordinator.coordinate(cwd, now=NOW, list_fn=lambda *x, **k: cands)
+    if d.active and d.source == "multiple" and d.default_resume == "--resume NEW":
+        _ok("V-MULTI-SESSION-PROMPT",
+            "two active -> source=multiple, default=most recent")
+    else:
+        _fail("V-MULTI-SESSION-PROMPT",
+              f"active={d.active} source={d.source} dr={d.default_resume}")
+
+
+def gate_no_session_silent():
+    # Zero active sessions -> not active -> PS launches a new session silently.
+    cwd = r"C:\fake\FreshRepo"
+    d = repo_coordinator.coordinate(cwd, now=NOW, list_fn=lambda *a, **k: [])
+    if not d.active and d.source == "none":
+        _ok("V-NO-SESSION-SILENT",
+            "zero active -> not active (PS launches new silently)")
+    else:
+        _fail("V-NO-SESSION-SILENT", f"active={d.active} source={d.source}")
+
+
 def main() -> int:
     print("=" * 62)
     print("kclaude wrapper V-gates (W1 turn / W2 resume / W3 name / W4 coord / W5 cost)")
@@ -292,6 +397,10 @@ def main() -> int:
         gate_coordinator_warn_and_default, gate_coordinator_stale_not_active,
         gate_cost_gate_real_data, gate_cost_gate_silent_fail,
         gate_w3w4w5_failopen,
+        gate_prelaunch_fast_bundle, gate_fast_excludes_scan,
+        gate_advisory_cache_write,
+        gate_single_session_silent, gate_multi_session_prompt,
+        gate_no_session_silent,
     )
     for g in gates:
         try:
@@ -299,7 +408,7 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             _fail(g.__name__, f"raised {type(exc).__name__}: {exc}")
     print()
-    print(f"WRAPPER={PASS}/{PASS + FAIL}  threshold=15/15")
+    print(f"WRAPPER={PASS}/{PASS + FAIL}  threshold=21/21")
     return 0 if FAIL == 0 else 1
 
 

@@ -1717,6 +1717,63 @@ Framework returns `RECOVERED` (`modules/session_resilience/acceptance.acceptance
 acceptance gate fails safe (holds) on `UNKNOWN`. G4 is the arbiter -- without its
 verdict nothing is done. ORIGEN: Session Resilience OS build, SCS C56, 2026-06-27.
 
+### T-KCLAUDE-STARTUP-BLANK-001 -- a slow advisory scan must never sit on the launch path
+
+**TRIGGER:** a launcher runs pre-launch modules synchronously before spawning
+the child, and one module scans a large corpus.
+
+**TRAP:** kclaude's W5 cost_gate scans the whole ~/.claude/projects transcript
+corpus (24h + 7d windows via `token_ground_truth.window_output`) = 17-27s. On
+the blocking path the terminal is blank for that whole time; the 1s per-feature
+timeout both silently DROPS the advisory AND, under GIL / cold cache, fails to
+clip -> the 15s blank the Owner saw. The launch-critical work (resume decision +
+CO-08 gate) is ~30ms; the slow scan is a pure advisory that never changes the
+launch args.
+
+**ACCIÓN:** split prelaunch into `--mode fast` (launch-critical only: W2 resume
++ W4 coordinate + CO-08 gate + CO-00 advisory) and `--mode advisories` (W1 turn
++ W5 cost + parallel_burn), the latter run DETACHED, writing
+`~/.claude/cache/kclaude_advisories.json` that the NEXT launch prints instantly.
+claude launches on the fast bundle; advisories are one-launch-stale, never
+blocking. Measured time-to-launch 333ms (<3s) vs 15s. ORIGEN: kclaude startup
+fix 2026-07-01.
+
+### T-W4-DIALOG-SINGLE-SESSION-001 -- no confirmation prompt for the single-session base case
+
+**TRIGGER:** a coordinator offers to resume an existing session before launch.
+
+**TRAP:** kclaude's W4 fired a blocking `Read-Host` whenever ANY active session
+existed -- including the common single-session case -- so every launch stalled
+on "Resumir? [S/n]" before claude started. `coordinate()` already distinguishes
+`source=active` (one) vs `multiple`; the orchestrator ignored the distinction.
+
+**ACCIÓN:** a SINGLE active session (source=active) -> SILENT auto-resume, zero
+dialog. Only `source=multiple` shows a numbered list, and even then a 3s timed
+read defaults to the most recent. Zero active -> new session, silent. A
+`-n/--new` escape hatch preserves "start fresh on an active repo"; an explicit
+`--resume/--continue` is honored verbatim. ORIGEN: kclaude startup fix
+2026-07-01.
+
+### HR-RESTART-VIA-KCLAUDE-001 -- /restart always relaunches via kclaude, never bare claude
+
+**TRIGGER:** /restart resolves how to relaunch the session after the graceful
+/exit.
+
+**ACCIÓN:** relaunch through the kclaude wrapper so the Cognitive OS (CO-00 /
+CO-08) is active after every restart. `kclaude.ps1`'s restart loop re-runs the
+fast CO gates before relaunch; `restart-claude.ps1`'s clipboard fallback targets
+the live `bin/kclaude.ps1` (then the repo copy, then bare claude -- fail-open,
+never breaks /restart). SPLIT-BRAIN NOTE: the Cursor kClaude profile runs
+`~/.claude/bin/kclaude.ps1`, a MIRROR of `tools/kclaude.ps1` -- edits to the repo
+copy are INERT until copied to bin. ORIGEN: kclaude restart fix 2026-07-01.
+
+**SCS C48 addendum v2 (2026-07-01):** kclaude startup < 3s (fast/advisories
+split; time-to-launch 333ms measured). Single active session auto-resumes
+silently. /restart always via kclaude (CO active post-restart, fail-open to bare
+claude). **SCS C63 addendum:** the W6 launcher's LIVE copy is `bin/kclaude.ps1`
+(byte mirror of `tools/kclaude.ps1`); prelaunch.py is read live from the skills
+path (no mirror). Keep the launcher mirror in sync on every kclaude.ps1 edit.
+
 ### PR-SNAPSHOT-BEFORE-RISK-001 -- snapshot + validate before a risky operation
 
 **TRIGGER:** about to hit an OOM threshold, run an update, or force-kill a process.

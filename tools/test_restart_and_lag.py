@@ -418,6 +418,48 @@ def gate_hub_registered():
               "-- Owner needs to run migrate_to_hub.py")
 
 
+def gate_restart_via_kclaude():
+    """restart-claude.ps1 must build a kclaude resume command, and kclaude.ps1's
+    restart loop must re-run the fast CO gates (HR-RESTART-VIA-KCLAUDE-001)."""
+    ps1 = HOME / ".claude" / "scripts" / "restart-claude.ps1"
+    kcl = PP_ROOT / "tools" / "kclaude.ps1"
+    if not ps1.is_file() or not kcl.is_file():
+        _fail("V-RESTART-VIA-KCLAUDE",
+              f"missing ps1={ps1.is_file()} kclaude={kcl.is_file()}")
+        return
+    rbody = ps1.read_text(encoding="utf-8", errors="replace")
+    kbody = kcl.read_text(encoding="utf-8", errors="replace")
+    clip_kclaude = "kclaude.ps1" in rbody and "$viaKclaude" in rbody
+    loop_reprelaunch = ("Get-FastDecision" in kbody
+                        and "Restart detected" in kbody
+                        and "CO active" in kbody)
+    if clip_kclaude and loop_reprelaunch:
+        _ok("V-RESTART-VIA-KCLAUDE",
+            "restart-claude.ps1 -> kclaude resume + kclaude.ps1 loop re-runs CO gates")
+    else:
+        _fail("V-RESTART-VIA-KCLAUDE",
+              f"clip_kclaude={clip_kclaude} loop_reprelaunch={loop_reprelaunch}")
+
+
+def gate_restart_failopen():
+    """When the kclaude wrapper is absent, restart-claude.ps1 must fall back to
+    bare claude (never break /restart)."""
+    ps1 = HOME / ".claude" / "scripts" / "restart-claude.ps1"
+    if not ps1.is_file():
+        _fail("V-RESTART-FAILOPEN", f"missing: {ps1}")
+        return
+    body = ps1.read_text(encoding="utf-8", errors="replace")
+    has_guard = ("$viaKclaude = [bool]$kclaudePs1" in body
+                 and "Test-Path $kclaudeBin" in body)
+    has_bare_fallback = "$claudePath" in body and "wrapper not found" in body
+    if has_guard and has_bare_fallback:
+        _ok("V-RESTART-FAILOPEN",
+            "Test-Path guard + bare-claude fallback branch present")
+    else:
+        _fail("V-RESTART-FAILOPEN",
+              f"guard={has_guard} bare_fallback={has_bare_fallback}")
+
+
 def main() -> int:
     print("=" * 60)
     print("V-RESTART + V-LAG + V-HUB gates "
@@ -439,10 +481,12 @@ def main() -> int:
         gate_hub_log,
         gate_hub_resume,
         gate_hub_registered,
+        gate_restart_via_kclaude,
+        gate_restart_failopen,
     ):
         gate()
     print()
-    print(f"RESTART_AND_LAG={PASS}/{PASS + FAIL}  threshold=15/15")
+    print(f"RESTART_AND_LAG={PASS}/{PASS + FAIL}  threshold=17/17")
     return 0 if FAIL == 0 else 1
 
 

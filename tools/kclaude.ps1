@@ -1,17 +1,17 @@
 <#
   kclaude.ps1 -- kclaude wrapper orchestrator (W6).
 
-  Pre-launch intelligence, then launch claude, then name the session:
-    1. W1 turn-guard      context-pressure advisory   (<=1.0s)
-    2. W4 coordinator     same-repo active-pane check  (<=0.5s)
-    3. W5 cost gate        daily burn / compaction      (<=0.5s)
-    4. W2 auto-resume     transcript-anchored resume   (<=1.0s)
-    5. claude [args]      launch (foreground)
-    6. W3 session naming  background, NON-blocking
+  Launch order (startup-blank fix, T-KCLAUDE-STARTUP-BLANK-001):
+    1. prelaunch --mode fast   launch-critical only (W2 resume + W4 coord +
+                               CO-08 gate + CO-00 advisory)         (<0.5s)
+    2. cached advisories       printed instantly from the last refresh
+    3. background refresh       prelaunch --mode advisories, detached (W1/W5)
+    4. claude [args]           launch (foreground)
+    5. W3 session naming        background, NON-blocking
 
-  Steps 1-4 run in ONE python process (modules/wrapper/prelaunch.py) with
-  per-feature timeouts running concurrently -> total overhead < 2s. Fail-open
-  ABSOLUTE: any error at any step and claude still launches.
+  The slow advisory scan (W1 turn ~1.3s + W5 cost ~17-27s) is NEVER on the
+  blocking path: it runs detached and writes a cache the NEXT launch reads.
+  Fail-open ABSOLUTE: any error at any step and claude still launches.
 
   ASCII-only source (PS 5.1 / Task-Scheduler codepage safety).
 #>
@@ -24,12 +24,15 @@ $ErrorActionPreference = 'Continue'   # fail-open: never abort the launch
 if ($ClaudeArgs.Count -eq 1 -and ($ClaudeArgs[0] -in @('--help', '-h', '/?'))) {
   Write-Host "kclaude -- Claude Code launcher (Power Pack wrapper)"
   Write-Host ""
-  Write-Host "  Pre-launch: context-pressure advisory (W1), same-repo coordinator (W4),"
-  Write-Host "  cost/compaction gate (W5), transcript-anchored auto-resume (W2);"
-  Write-Host "  names new sessions in the background (W3)."
+  Write-Host "  Pre-launch (fast): transcript-anchored auto-resume (W2), same-repo"
+  Write-Host "  coordinator (W4), CO-08 hot-session cap; advisories (W1 context, W5"
+  Write-Host "  cost/burn) print from a background-refreshed cache. Names new"
+  Write-Host "  sessions in the background (W3)."
   Write-Host ""
   Write-Host "  Usage:  kclaude [claude args...]    all args pass through to claude"
   Write-Host "          cd <repo> ; kclaude          auto-resumes that repo's latest session"
+  Write-Host "          kclaude -n | --new           force a NEW session (skip auto-resume)"
+  Write-Host "          kclaude --resume <sid>       resume a specific session (honored as-is)"
   Write-Host "          kclaude -h                   this help"
   Write-Host ""
   Write-Host "  Fail-open: if any pre-launch feature errors, claude launches anyway."
@@ -47,31 +50,105 @@ if (-not (Test-Path $py)) {
 $ppRoot = Join-Path $env:USERPROFILE ".claude\skills\claude-power-pack"
 $pre = Join-Path $ppRoot "modules\wrapper\prelaunch.py"
 $namer = Join-Path $ppRoot "modules\wrapper\session_namer.py"
+$advCache = Join-Path $env:USERPROFILE ".claude\cache\kclaude_advisories.json"
 
-# --- run prelaunch (W1+W4+W5+W2 in one process); fail-open to null -----------
-$decision = $null
-if ($py -and (Test-Path $pre)) {
-  try {
-    $env:PYTHONIOENCODING = 'utf-8'
-    $raw = & $py $pre --cwd $cwd 2>$null
-    if ($raw) { $decision = ($raw | ConvertFrom-Json) }
-  } catch { $decision = $null }
+# --- helper: fast (launch-critical) prelaunch decision, or $null -------------
+function Get-FastDecision {
+  $d = $null
+  if ($py -and (Test-Path $pre)) {
+    try {
+      $env:PYTHONIOENCODING = 'utf-8'
+      $raw = & $py $pre --cwd $cwd --mode fast 2>$null
+      if ($raw) { $d = ($raw | ConvertFrom-Json) }
+    } catch { $d = $null }
+  }
+  return $d
 }
 
-# --- advisories (W1 + W5) ----------------------------------------------------
-if ($decision -and $decision.advisories) {
-  foreach ($a in $decision.advisories) {
-    if ($a) { Write-Host $a -ForegroundColor Yellow }
+# --- helper: print cached advisories from the previous launch (fail-open) ----
+function Show-CachedAdvisories {
+  try {
+    if (-not (Test-Path $advCache)) { return }
+    $c = Get-Content $advCache -Raw -ErrorAction Stop | ConvertFrom-Json
+    if (-not $c) { return }
+    if ($c.cwd -and ($c.cwd -ne $cwd)) { return }   # advisories are per-cwd
+    $ts = [datetime]::MinValue
+    if ([datetime]::TryParse([string]$c.ts, [ref]$ts)) {
+      if (((Get-Date).ToUniversalTime() - $ts.ToUniversalTime()).TotalHours -gt 6) { return }
+    }
+    foreach ($a in @($c.advisories)) { if ($a) { Write-Host $a -ForegroundColor Yellow } }
+  } catch { }
+}
+
+# --- helper: detached background advisory refresh (non-blocking) -------------
+function Start-AdvisoryRefresh {
+  if ($py -and (Test-Path $pre)) {
+    try {
+      Start-Process -FilePath $py -WindowStyle Hidden `
+        -ArgumentList @($pre, '--cwd', $cwd, '--mode', 'advisories') | Out-Null
+    } catch { }
   }
 }
+
+# --- helper: timed key read (multiple-session pick; default on timeout) ------
+function Read-HostTimed([int]$timeoutSec) {
+  try {
+    $sb = New-Object System.Text.StringBuilder
+    $deadline = (Get-Date).AddSeconds($timeoutSec)
+    while ((Get-Date) -lt $deadline) {
+      if ([Console]::KeyAvailable) {
+        $k = [Console]::ReadKey($true)
+        if ($k.Key -eq 'Enter') { return $sb.ToString() }
+        if ($k.Key -eq 'Escape') { return '__ESC__' }
+        if ($k.KeyChar) { [void]$sb.Append($k.KeyChar); Write-Host -NoNewline $k.KeyChar }
+      } else { Start-Sleep -Milliseconds 80 }
+    }
+    Write-Host ""
+    return $sb.ToString()   # timeout -> empty -> default to most recent
+  } catch { return '' }     # non-interactive / redirected input -> default
+}
+
+# --- passthrough arg inspection ----------------------------------------------
+# Honor an explicit --resume/--continue (skip auto-resume); strip -n/--new.
+$explicitResume = $false
+$forceNew = $false
+if ($ClaudeArgs) {
+  $filtered = @()
+  foreach ($a in $ClaudeArgs) {
+    if ($a -in @('-n', '--new')) { $forceNew = $true; continue }
+    if ($a -in @('--resume', '-r', '--continue', '-c') -or $a -like '--resume=*') {
+      $explicitResume = $true
+    }
+    $filtered += $a
+  }
+  $ClaudeArgs = $filtered
+}
+
+# --- run FAST prelaunch (launch-critical) ------------------------------------
+$decision = Get-FastDecision
+
+# --- advisories: print cached (instant) + refresh in the background ----------
+Show-CachedAdvisories
+Start-AdvisoryRefresh
 
 # --- decide resume vs new ----------------------------------------------------
 $resumeArg = $null
 $newSession = $true
-if ($decision -and $decision.coord -and $decision.coord.active) {
+
+if ($explicitResume) {
+  # Owner passed --resume/--continue: pass it through verbatim, no auto-resume.
+  $newSession = $false
+} elseif ($forceNew) {
+  # -n/--new: force a fresh session even when one is active (the escape hatch
+  # that keeps "start new on an active repo" reachable after the F2 silent-resume).
+  $newSession = $true
+} elseif ($decision -and $decision.coord -and $decision.coord.active -and
+          $decision.coord.source -eq 'multiple') {
+  # MULTIPLE active sessions on this repo -> numbered list, 3s timed default.
   Write-Host $decision.coord.warning -ForegroundColor Cyan
-  $ans = Read-Host
-  if ($ans -match '^[Nn]') {
+  Write-Host "  [Enter=mas reciente | numero=elegir | n=nueva | 3s auto]" -ForegroundColor DarkGray
+  $ans = Read-HostTimed 3
+  if ($ans -eq '__ESC__' -or $ans -match '^[Nn]') {
     $newSession = $true                                   # explicit new
   } elseif ($ans -match '^\d+$' -and $decision.coord.candidates) {
     $i = [int]$ans - 1
@@ -82,12 +159,16 @@ if ($decision -and $decision.coord -and $decision.coord.active) {
       $resumeArg = $decision.coord.default_resume; $newSession = $false
     }
   } else {
-    $resumeArg = $decision.coord.default_resume           # default S
+    $resumeArg = $decision.coord.default_resume           # Enter / timeout -> most recent
     $newSession = $false
   }
+} elseif ($decision -and $decision.coord -and $decision.coord.active) {
+  # SINGLE active session -> SILENT auto-resume, no dialog (F2,
+  # T-W4-DIALOG-SINGLE-SESSION-001). This is the base case and must be quiet.
+  $resumeArg = $decision.coord.default_resume; $newSession = $false
 } elseif ($decision -and $decision.resume -and $decision.resume.resume_arg) {
-  $resumeArg = $decision.resume.resume_arg                # auto-resume, no prompt
-  $newSession = $false
+  # No recent "active" session, but a resumable transcript exists -> auto-resume.
+  $resumeArg = $decision.resume.resume_arg; $newSession = $false
 }
 
 # --- CO-08 hot-session cap (rung-3 block; ONLY for a genuinely NEW pane) ------
@@ -120,8 +201,7 @@ if ($newSession -and $decision -and $decision.gate -and $decision.gate.verdict -
 
 # --- CO-00 resume context advisory (rung-2) ----------------------------------
 # A session must be OPENED to be /compact-ed, so resuming a near/over-ceiling
-# session is WARNED, not blocked (an honest rung-2 advisory). The true rung-3
-# block stays with the CO-08 cap above. Fail-open: no advice -> silent.
+# session is WARNED, not blocked (an honest rung-2 advisory). Fail-open: silent.
 if ($resumeArg -and $decision -and $decision.resume_gate -and $decision.resume_gate.advise) {
   Write-Host $decision.resume_gate.message -ForegroundColor Yellow
 }
@@ -144,7 +224,8 @@ if ($py -and (Test-Path $namer)) {
 # --- launch claude, with /restart loop (supersedes kclaude.bat) --------------
 # Absorbs the MC-LAZ-26 resume loop: when /restart drops a flag, relaunch the
 # SAME session (--resume <sid> from the lazarus SID file, else --continue) in
-# this same terminal. Pre-launch intelligence (above) ran ONCE; restarts skip it.
+# this same terminal. On restart the fast CO gates RE-RUN (F3a,
+# HR-RESTART-VIA-KCLAUDE-001) so CO-00/CO-08 stay active after every restart.
 $flagPattern = Join-Path $env:TEMP 'claude-restart-*.flag'
 $sidFile = Join-Path $env:USERPROFILE '.claude\lazarus\kclaude-restart-sid.txt'
 Remove-Item $flagPattern -Force -ErrorAction SilentlyContinue   # purge stale flags
@@ -166,12 +247,19 @@ while ($true) {
     Remove-Item $sidFile -Force -ErrorAction SilentlyContinue
   }
   Write-Host ""
+  # F3a: re-run the fast CO gates so the Cognitive OS is ACTIVE after restart.
+  $rd = Get-FastDecision
+  if ($rd -and $rd.resume_gate -and $rd.resume_gate.advise) {
+    Write-Host $rd.resume_gate.message -ForegroundColor Yellow
+  }
+  Show-CachedAdvisories
+  Start-AdvisoryRefresh
   if ($sid) {
-    Write-Host "[kclaude] Restart detected. Relaunching with --resume $sid..." -ForegroundColor Green
+    Write-Host "[kclaude] Restart detected. Relaunching --resume $sid (CO active)..." -ForegroundColor Green
     Start-Sleep -Seconds 1
     $launch = @('--resume', $sid)
   } else {
-    Write-Host "[kclaude] Restart detected. Relaunching with --continue..." -ForegroundColor Green
+    Write-Host "[kclaude] Restart detected. Relaunching --continue (CO active)..." -ForegroundColor Green
     Start-Sleep -Seconds 1
     $launch = @('--continue')
   }

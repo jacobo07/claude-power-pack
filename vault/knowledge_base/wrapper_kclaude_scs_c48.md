@@ -52,3 +52,31 @@ old kclaude.bat /restart loop. Invariants:
 - build_pane_map.ps1 untouched (disk-truth regenerator; W3 bridges, never fights).
 - budget_monitor / TIS untouched (wrong source for W5; documented).
 - old ~/.claude/kclaude.bat preserved as a .superseded backup in ~/.claude/bin.
+
+## Addendum v2 (2026-07-01) -- startup < 3s + silent single-session + /restart via kclaude
+
+Invariant #2 (one pre-launch process, ~1.6s) proved too slow in practice: W5
+cost_gate scans the whole transcript corpus (17-27s), the 1s timeout silently
+dropped its advisory, and under GIL/cold-cache the blank reached ~15s. Three
+fixes (T-KCLAUDE-STARTUP-BLANK-001, T-W4-DIALOG-SINGLE-SESSION-001,
+HR-RESTART-VIA-KCLAUDE-001):
+
+1. **Fast/advisories split.** `prelaunch.py --mode fast` runs ONLY the
+   launch-critical bundle (W2 resume + W4 coordinate + CO-08 gate + CO-00
+   advisory). The slow bundle (W1 turn + W5 cost + parallel_burn) runs detached
+   via `--mode advisories`, writing `~/.claude/cache/kclaude_advisories.json`
+   that the next launch prints instantly. Measured time-to-launch 333ms (<3s).
+2. **Silent single-session (supersedes invariant #4's always-prompt).** One
+   active session -> auto-resume, no dialog. Only multiple active sessions show
+   a numbered list (3s timed default to most recent). `-n/--new` forces a fresh
+   session; explicit `--resume/--continue` honored verbatim.
+3. **/restart via kclaude.** The restart loop re-runs the fast CO gates so
+   CO-00/CO-08 are active post-restart; restart-claude.ps1's clipboard targets
+   the live bin/kclaude.ps1 (fail-open to bare claude).
+
+**Live copy:** the Cursor kClaude profile runs `~/.claude/bin/kclaude.ps1` (byte
+mirror of `tools/kclaude.ps1`). Every kclaude.ps1 edit MUST be mirrored to bin;
+prelaunch.py is read live from the skills path (no mirror).
+
+**Evidence:** tools/test_wrapper.py 21/21 x3 hermetic; tools/test_restart_and_lag.py
+17/17 x3; tools/test_cognitive_os_build.py 68/68 (no regression on prelaunch.run).
