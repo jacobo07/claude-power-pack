@@ -352,7 +352,8 @@ def gate_single_session_silent():
     d = repo_coordinator.coordinate(cwd, now=NOW, list_fn=lambda *a, **k: cands)
     if d.active and d.source == "active" and d.default_resume == "--resume SOLO":
         _ok("V-SINGLE-SESSION-SILENT",
-            "one active -> source=active (PS auto-resumes silently)")
+            "one active -> coordinate source=active (module data contract; "
+            "the launcher no longer auto-resumes -- see V-LAUNCH-NEW-ON-BARE)")
     else:
         _fail("V-SINGLE-SESSION-SILENT",
               f"active={d.active} source={d.source} dr={d.default_resume}")
@@ -385,6 +386,45 @@ def gate_no_session_silent():
         _fail("V-NO-SESSION-SILENT", f"active={d.active} source={d.source}")
 
 
+# --- launch context: bare -> NEW, explicit -> resume (T-KCLAUDE-LAUNCH-CONTEXT-001)
+# Static contract checks on the wrapper source; the runtime proof is the
+# behavioral harness tools/test_kclaude_launch.ps1 (stubs claude, asserts args).
+_KCLAUDE_PS1 = PP_ROOT / "tools" / "kclaude.ps1"
+
+
+def gate_launch_new_on_bare():
+    body = _KCLAUDE_PS1.read_text(encoding="utf-8", errors="replace")
+    no_autoresume = "coord.active" not in body and "resume.resume_arg" not in body
+    bare_new = "bare launch -> a fresh session" in body
+    if no_autoresume and bare_new:
+        _ok("V-LAUNCH-NEW-ON-BARE",
+            "no coord.active/resume_arg auto-resume; bare launch -> new session")
+    else:
+        _fail("V-LAUNCH-NEW-ON-BARE",
+              f"no_autoresume={no_autoresume} bare_new={bare_new}")
+
+
+def gate_launch_resume_explicit():
+    body = _KCLAUDE_PS1.read_text(encoding="utf-8", errors="replace")
+    honored = ("honor explicit resume" in body
+               and "$explicitResume = $true" in body)
+    _ok("V-LAUNCH-RESUME-EXPLICIT", "explicit --resume/--continue honored") \
+        if honored else _fail("V-LAUNCH-RESUME-EXPLICIT",
+                              "explicit resume path missing")
+
+
+def gate_restart_still_resumes():
+    body = _KCLAUDE_PS1.read_text(encoding="utf-8", errors="replace")
+    loop_resumes = "@('--resume', $sid)" in body          # F3 restart loop intact
+    co08_advisory = "opening a new one anyway" in body and "Read-Host" not in body
+    if loop_resumes and co08_advisory:
+        _ok("V-RESTART-STILL-RESUMES",
+            "restart loop resumes SID; CO-08 advisory (no Read-Host block)")
+    else:
+        _fail("V-RESTART-STILL-RESUMES",
+              f"loop_resumes={loop_resumes} co08_advisory={co08_advisory}")
+
+
 def main() -> int:
     print("=" * 62)
     print("kclaude wrapper V-gates (W1 turn / W2 resume / W3 name / W4 coord / W5 cost)")
@@ -401,6 +441,8 @@ def main() -> int:
         gate_advisory_cache_write,
         gate_single_session_silent, gate_multi_session_prompt,
         gate_no_session_silent,
+        gate_launch_new_on_bare, gate_launch_resume_explicit,
+        gate_restart_still_resumes,
     )
     for g in gates:
         try:
@@ -408,7 +450,7 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             _fail(g.__name__, f"raised {type(exc).__name__}: {exc}")
     print()
-    print(f"WRAPPER={PASS}/{PASS + FAIL}  threshold=21/21")
+    print(f"WRAPPER={PASS}/{PASS + FAIL}  threshold=24/24")
     return 0 if FAIL == 0 else 1
 
 

@@ -1818,6 +1818,35 @@ profile (menu: Last session / kClaude / Claude; icon `sparkle` + color
 active). "Last session" now also routes through the smart wrapper via
 lazarus-shell-autoresume.bat. Profile changes require a Cursor window reload.
 
+### T-KCLAUDE-LAUNCH-CONTEXT-001 -- a terminal-profile launch opens a NEW session, never auto-resume
+
+**TRIGGER:** a launcher wrapper is used in BOTH a terminal-profile context (a new
+pane from the "+" menu) and a resume context (/restart, explicit --resume).
+
+**TRAP:** auto-resume tuned for /restart (fec5c3a F2: single active session ->
+silent resume) is WRONG for the terminal button. Clicking kClaude landed the
+Owner in the PRIOR session instead of a fresh one (BUG A); and because resuming
+loads the whole transcript, it also blew the <3s startup budget (BUG B -- SAME
+root cause). Worse, the CO-08 rung-3 block (previously bypassed because F2
+resumed first) would, once F2 is removed, PROMPT "resume instead?" -- re-
+introducing the same landing-in-a-session.
+
+**ACCIÓN:** distinguish contexts by the explicit --resume/--continue ARG, not by
+whether a resumable session exists. A bare launch (no explicit resume) -> ALWAYS
+a NEW session (parity with the native Claude button). Auto-resume ONLY on an
+explicit --resume (Owner, the "Last session" lazarus route, the /restart
+clipboard) or the restart loop. CO-08 becomes ADVISORY on a bare launch (warns,
+proceeds new; never blocks / force-resumes) -- "gates active, but never
+auto-resume". A new session loads no transcript, so startup returns to
+wrapper-overhead only (~333ms). Runtime proof: tools/test_kclaude_launch.ps1
+stubs `claude` and asserts bare->new, explicit->resume. ORIGEN: kClaude
+new-session fix 2026-07-01 (BUG A + BUG B).
+
+**SCS C48 addendum v3 (2026-07-01):** kclaude bare launch -> NEW session; kclaude
+--resume <sid> -> explicit resume; /restart -> auto-resume (loop). CO-08 advisory
+on a bare launch (no block). bin/kclaude.ps1 re-mirrored from tools/kclaude.ps1.
+Startup < 3s (new session = no transcript load, the BUG B root cause).
+
 ### PR-SNAPSHOT-BEFORE-RISK-001 -- snapshot + validate before a risky operation
 
 **TRIGGER:** about to hit an OOM threshold, run an update, or force-kill a process.

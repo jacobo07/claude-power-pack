@@ -90,32 +90,14 @@ function Start-AdvisoryRefresh {
   }
 }
 
-# --- helper: timed key read (multiple-session pick; default on timeout) ------
-function Read-HostTimed([int]$timeoutSec) {
-  try {
-    $sb = New-Object System.Text.StringBuilder
-    $deadline = (Get-Date).AddSeconds($timeoutSec)
-    while ((Get-Date) -lt $deadline) {
-      if ([Console]::KeyAvailable) {
-        $k = [Console]::ReadKey($true)
-        if ($k.Key -eq 'Enter') { return $sb.ToString() }
-        if ($k.Key -eq 'Escape') { return '__ESC__' }
-        if ($k.KeyChar) { [void]$sb.Append($k.KeyChar); Write-Host -NoNewline $k.KeyChar }
-      } else { Start-Sleep -Milliseconds 80 }
-    }
-    Write-Host ""
-    return $sb.ToString()   # timeout -> empty -> default to most recent
-  } catch { return '' }     # non-interactive / redirected input -> default
-}
-
 # --- passthrough arg inspection ----------------------------------------------
-# Honor an explicit --resume/--continue (skip auto-resume); strip -n/--new.
+# Honor an explicit --resume/--continue; strip -n/--new (now a no-op -- a bare
+# terminal-profile launch already opens a NEW session by default).
 $explicitResume = $false
-$forceNew = $false
 if ($ClaudeArgs) {
   $filtered = @()
   foreach ($a in $ClaudeArgs) {
-    if ($a -in @('-n', '--new')) { $forceNew = $true; continue }
+    if ($a -in @('-n', '--new')) { continue }             # no-op: new is default
     if ($a -in @('--resume', '-r', '--continue', '-c') -or $a -like '--resume=*') {
       $explicitResume = $true
     }
@@ -132,71 +114,29 @@ Show-CachedAdvisories
 Start-AdvisoryRefresh
 
 # --- decide resume vs new ----------------------------------------------------
+# T-KCLAUDE-LAUNCH-CONTEXT-001: a terminal-profile / bare launch ALWAYS opens a
+# NEW session (parity with the native Claude button). Auto-resume happens ONLY
+# on an explicit --resume/--continue -- from the Owner, from the "Last session"
+# lazarus route, from the /restart clipboard, or from the restart loop below.
+# The coordinator + advisories are informational only; they never auto-resume.
 $resumeArg = $null
-$newSession = $true
-
 if ($explicitResume) {
-  # Owner passed --resume/--continue: pass it through verbatim, no auto-resume.
-  $newSession = $false
-} elseif ($forceNew) {
-  # -n/--new: force a fresh session even when one is active (the escape hatch
-  # that keeps "start new on an active repo" reachable after the F2 silent-resume).
-  $newSession = $true
-} elseif ($decision -and $decision.coord -and $decision.coord.active -and
-          $decision.coord.source -eq 'multiple') {
-  # MULTIPLE active sessions on this repo -> numbered list, 3s timed default.
-  Write-Host $decision.coord.warning -ForegroundColor Cyan
-  Write-Host "  [Enter=mas reciente | numero=elegir | n=nueva | 3s auto]" -ForegroundColor DarkGray
-  $ans = Read-HostTimed 3
-  if ($ans -eq '__ESC__' -or $ans -match '^[Nn]') {
-    $newSession = $true                                   # explicit new
-  } elseif ($ans -match '^\d+$' -and $decision.coord.candidates) {
-    $i = [int]$ans - 1
-    $cands = @($decision.coord.candidates)
-    if ($i -ge 0 -and $i -lt $cands.Count) {
-      $resumeArg = "--resume " + $cands[$i]; $newSession = $false
-    } else {
-      $resumeArg = $decision.coord.default_resume; $newSession = $false
-    }
-  } else {
-    $resumeArg = $decision.coord.default_resume           # Enter / timeout -> most recent
-    $newSession = $false
-  }
-} elseif ($decision -and $decision.coord -and $decision.coord.active) {
-  # SINGLE active session -> SILENT auto-resume, no dialog (F2,
-  # T-W4-DIALOG-SINGLE-SESSION-001). This is the base case and must be quiet.
-  $resumeArg = $decision.coord.default_resume; $newSession = $false
-} elseif ($decision -and $decision.resume -and $decision.resume.resume_arg) {
-  # No recent "active" session, but a resumable transcript exists -> auto-resume.
-  $resumeArg = $decision.resume.resume_arg; $newSession = $false
+  $newSession = $false                 # honor explicit resume, pass through
+} else {
+  $newSession = $true                  # bare launch -> a fresh session
 }
 
-# --- CO-08 hot-session cap (rung-3 block; ONLY for a genuinely NEW pane) ------
-# Resuming consumes no new slot, so the cap fires only when a new pane would be
-# opened. No bypass flag (CO-00 II.4 / CO-08 III.4): the only paths past a
-# refusal are SATISFACTION -- resume the existing session, or free a slot and
-# retry. Fail-open: a missing/proceed gate never blocks.
+# --- CO-08 hot-session cap (ADVISORY on a bare launch) -----------------------
+# "Gates active, but never auto-resume": the CO-08 cap still EVALUATES and WARNS
+# when hot-session pressure is high, but a terminal-profile launch always
+# proceeds with the new session -- it never blocks or force-resumes (that would
+# re-introduce landing in a prior session, the exact BUG A). An explicit
+# --resume never reaches here (newSession is false). Fail-open: silent when the
+# gate is missing or proceed.
 if ($newSession -and $decision -and $decision.gate -and $decision.gate.verdict -eq 'refuse') {
-  Write-Host ""
-  Write-Host "PP CO-08: hot-session cap reached -- opening a NEW pane is refused." -ForegroundColor Red
-  foreach ($r in $decision.gate.reasons) { Write-Host ("  - " + $r) -ForegroundColor Red }
-  Write-Host "Satisfy (no bypass -- only these make it fit):" -ForegroundColor Yellow
-  foreach ($s in $decision.gate.satisfy) { Write-Host ("  > " + $s) -ForegroundColor Yellow }
-  $rt = $null
-  if ($decision.coord -and $decision.coord.default_resume) { $rt = $decision.coord.default_resume }
-  elseif ($decision.resume -and $decision.resume.resume_arg) { $rt = $decision.resume.resume_arg }
-  if ($rt) {
-    Write-Host ("Resume the existing session instead? [S/n]  (" + $rt + ")") -ForegroundColor Cyan
-    $capAns = Read-Host
-    if ($capAns -match '^[Nn]') {
-      Write-Host "[kclaude] Cap not satisfied -- launch declined. Free a slot, then retry." -ForegroundColor Red
-      exit 9
-    }
-    $resumeArg = $rt; $newSession = $false
-  } else {
-    Write-Host "[kclaude] Cap not satisfied -- launch declined. Free a slot (/compact or close the longest hot session), then retry." -ForegroundColor Red
-    exit 9
-  }
+  $hot = $decision.gate.hot_count; $cap = $decision.gate.cap
+  Write-Host ("PP CO-08: $hot hot session(s) on this repo (soft cap $cap) -- opening a new one anyway.") -ForegroundColor Yellow
+  Write-Host "  Tip: /compact or close an idle session to relieve token pressure." -ForegroundColor DarkGray
 }
 
 # --- CO-00 resume context advisory (rung-2) ----------------------------------
