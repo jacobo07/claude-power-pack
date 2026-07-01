@@ -1774,6 +1774,50 @@ claude). **SCS C63 addendum:** the W6 launcher's LIVE copy is `bin/kclaude.ps1`
 (byte mirror of `tools/kclaude.ps1`); prelaunch.py is read live from the skills
 path (no mirror). Keep the launcher mirror in sync on every kclaude.ps1 edit.
 
+### T-CURSOR-PROFILE-ORDER-001 -- Cursor sorts terminal profiles alphabetically, not by array order
+
+**TRIGGER:** adding a Cursor terminal profile that must appear at a specific
+position in the "+" menu.
+
+**TRAP:** the menu does NOT honor `terminal.integrated.profiles.windows` array
+order. Cursor's `_sortProfileQuickPickItems` pins the DEFAULT profile first, then
+sorts every other profile by `localeCompare(name)`. So a profile keyed "kClaude"
+lands AFTER "Claude" (k > C). Array position is irrelevant.
+
+**ACCIÓN:** key the profile " kClaude" (single LEADING SPACE):
+`" kClaude".localeCompare("Claude") === -1`, so it collates immediately after the
+pinned default ("Last session") and before "Claude" -> menu = Last session /
+kClaude / Claude. The space renders as a ~1px indent (label reads "kClaude").
+Terminal-profile edits need a Cursor WINDOW RELOAD to appear -- a profile present
+in settings.json but absent from the running "+" menu is almost always an
+un-reloaded window, not a missing profile. ORIGEN: kClaude Cursor profile
+2026-07-01 (BUG 4 premise disproved: the profile was already present + correctly
+sorted; the gap was an un-reloaded window).
+
+### T-LAST-SESSION-SMART-WRAPPER-001 -- route "Last session" through the smart W6 wrapper for CO
+
+**TRIGGER:** wiring a Cursor "Last session" / autoresume profile so the Cognitive
+OS (CO-00/CO-08) is active in the revived terminal.
+
+**TRAP:** the "Last session" profile runs `lazarus-shell-autoresume.bat`, which
+resolves the session then launched the OLD `kclaude.bat` (bare `claude` in a
+restart loop, NO pre-launch intelligence) -- so CO was inactive from "Last
+session" even though the kClaude profile has it.
+
+**ACCIÓN:** in lazarus-shell-autoresume.bat, the resume launch AND the doskey
+fallback prefer `bin\kclaude.cmd` (-> bin\kclaude.ps1, the smart W6 wrapper),
+falling back to kclaude.bat then bare claude. Preserves lazarus crash-recovery /
+termkey resolution while adding CO; the smart wrapper honors the explicit
+`--resume <sid>` (skips its own auto-resume). ORIGEN: kClaude Cursor profile
+2026-07-01 (BUG 5). lazarus is a GLOBAL ~/.claude/hooks file (not in the repo);
+the "Last session (PS)" .ps1 variant is a separate follow-up.
+
+**SCS C49 addendum v2 (2026-07-01):** kClaude is the preferred Cursor terminal
+profile (menu: Last session / kClaude / Claude; icon `sparkle` + color
+`ansiMagenta` identical to Claude); it launches the smart bin/kclaude.ps1 (CO
+active). "Last session" now also routes through the smart wrapper via
+lazarus-shell-autoresume.bat. Profile changes require a Cursor window reload.
+
 ### PR-SNAPSHOT-BEFORE-RISK-001 -- snapshot + validate before a risky operation
 
 **TRIGGER:** about to hit an OOM threshold, run an update, or force-kill a process.
