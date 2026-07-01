@@ -32,8 +32,8 @@ Owner INTENT honored: the new `kClaude` profile is the one that launches the sma
 
 ## What shipped
 
-`%APPDATA%\Cursor\User\settings.json` — new first key under
-`terminal.integrated.profiles.windows`:
+`%APPDATA%\Cursor\User\settings.json` — new profile keyed `" kClaude"` (leading
+space, see ordering section below) under `terminal.integrated.profiles.windows`:
 
 - `path`: Sysnative/System32 `cmd.exe` (identical host to `Claude`)
 - `args`: `/K`, `${env:USERPROFILE}\.claude\bin\kclaude.cmd`,
@@ -68,17 +68,29 @@ Backup written to `settings.json.bak.20260701T130248Z` before editing.
       open the terminal `+` dropdown, confirm `kClaude` shows with the sparkle/
       magenta glyph and launches the smart wrapper.
 
-## Menu-ordering note (honest)
+## Menu-ordering — SOLVED (proven from Cursor source, not guessed)
 
-`kClaude` is placed as the FIRST key in the profiles object, before `Claude`.
-"Last session (Default)" is pinned to the top of the `+` menu because it is the
-`defaultProfile`. The remaining profiles are rendered by Cursor/VS Code from the
-config object; observed behavior on this host (pre-existing order matched JSON
-key order) is consistent with **insertion-order rendering**, which yields
-`Last session / kClaude / Claude`.
+Cursor does NOT render terminal profiles in config/insertion order. Its
+`_sortProfileQuickPickItems` (extracted from
+`resources/app/out/vs/workbench/workbench.desktop.main.js`) is:
 
-If the live menu instead sorts **alphabetically**, `kClaude` (k) sorts AFTER
-`Claude` (c) → `Last session / Claude / … / kClaude`. Remedy if so: rename the
-key to something that sorts first (e.g. `Claude (k)`), or accept the position —
-the button is fully functional either way. This is the single Owner-verifiable
-gate.
+```js
+n.sort((t,i)=> i.profileName===e ? 1 : t.profileName===e ? -1
+             : t.profileName.localeCompare(i.profileName))
+```
+
+i.e. the **default** profile (`e` = "Last session") is force-pinned first, and
+**every other profile is sorted alphabetically** by name via `localeCompare`.
+Insertion order is irrelevant. So a key named `kClaude` sorts AFTER `Claude`
+(c < k) — the wrong slot.
+
+**Fix:** the profile key is `" kClaude"` (single **leading space**).
+`" kClaude".localeCompare("Claude") < 0` (verified in Node, same ICU collation as
+Cursor's Electron), so it collates before `Claude` — and before every other
+non-default profile — landing it as the first item under the pinned default.
+The leading space renders as a ~1px indent, essentially invisible; the label
+reads "kClaude". Not a homoglyph/zero-width trick — a plain ASCII space.
+
+Simulated resulting menu (Cursor's own sort algorithm replayed on the live file):
+`Last session (Default) / kClaude / Claude / Claude (VPS) / …`. Matches the
+requested position exactly.
