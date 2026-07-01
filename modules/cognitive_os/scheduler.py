@@ -81,9 +81,20 @@ def _item_encs(item: dict) -> list:
 
 
 def decide(hot, cwd, *, is_new=True,
-           cap: int = HOT_CAP, same_repo_cap: int = SAME_REPO_CAP) -> CapVerdict:
+           cap: int = HOT_CAP, same_repo_cap: int = SAME_REPO_CAP,
+           declared=None, hot_scopes=None) -> CapVerdict:
     """Pure cap decision. `hot` = distinct currently-hot sessions (the
-    about-to-launch one is NOT in it). Resuming -> proceed."""
+    about-to-launch one is NOT in it). Resuming -> proceed.
+
+    PM-02 recalibration (SCS C65 architecture; wired live SCS C66): `declared`
+    is the launching pane's declared scope (an iterable of normalized path
+    tokens) or None. When None, the original blunt SAME_REPO_CAP applies
+    (fail-safe -- exactly the sealed C62 behavior). When provided, the
+    same-repo dimension is scope-gated: the pane is admitted alongside
+    same-repo incumbents whose declared scopes (from `hot_scopes`, a
+    {sid: scope} map) do NOT intersect it. An incumbent whose scope is unknown
+    is treated as a collision (non-overlap cannot be proven). The global cap
+    and every other property are unchanged."""
     same_enc = _enc(cwd)
     same_repo = [h for h in hot if same_enc in _item_encs(h)]
     n_global = len(hot)
@@ -96,16 +107,42 @@ def decide(hot, cwd, *, is_new=True,
     reasons: list[str] = []
     satisfy: list[str] = []
 
-    if n_same >= same_repo_cap:
-        reasons.append(
-            f"{n_same} hot session(s) already on this repo "
-            f"({Path(cwd).name or cwd}); same-repo cap is {same_repo_cap}")
-        sid = same_repo[0].get("sid")
-        satisfy.append(
-            "resume the existing session"
-            + (f" (--resume {sid})" if sid else "")
-            + " instead of a 2nd hot pane")
-        satisfy.append("or run the extra work as bounded subagents in it (CO-09)")
+    if declared is None:
+        # Undeclared pane: original blunt same-repo cap (fail-safe, unchanged).
+        if n_same >= same_repo_cap:
+            reasons.append(
+                f"{n_same} hot session(s) already on this repo "
+                f"({Path(cwd).name or cwd}); same-repo cap is {same_repo_cap} "
+                f"(no intent declared -- blunt cap applies)")
+            sid = same_repo[0].get("sid")
+            satisfy.append(
+                "declare this pane's intent + scope to enable mesh admission (PM-02)")
+            satisfy.append(
+                "resume the existing session"
+                + (f" (--resume {sid})" if sid else "")
+                + " instead of a 2nd hot pane")
+            satisfy.append("or run the extra work as bounded subagents in it (CO-09)")
+    else:
+        # Declared pane: scope-gate. Collision iff a same-repo incumbent's
+        # declared scope intersects ours, or its scope is unknown.
+        declared_set = {str(t) for t in declared}
+        scopes = hot_scopes or {}
+        for h in same_repo:
+            sid = h.get("sid")
+            sc = scopes.get(sid)
+            if sc is None:
+                reasons.append(
+                    f"same-repo incumbent {sid or '?'} has no declared scope; "
+                    f"non-overlap cannot be proven")
+            else:
+                overlap = sorted(declared_set & {str(t) for t in sc})
+                if overlap:
+                    reasons.append(
+                        f"declared scope collides with {sid or '?'} on {overlap}")
+        if reasons:
+            satisfy.append(
+                "resolve the collision (PM-02): fuse the panes / split the scopes "
+                "/ demote one to reviewer / reuse the other's output")
 
     if n_global + 1 > cap:
         reasons.append(
