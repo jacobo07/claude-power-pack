@@ -104,6 +104,8 @@ def decide(pane: PaneProc, *, idle_threshold_min: float = IDLE_THRESHOLD_MIN
     wakeable = pane.wrapper_kind in WAKEABLE_KINDS
     reasons: list[str] = []
 
+    if not pane.sid:
+        reasons.append("no session id resolved -- cannot --resume (fail-safe keep)")
     if pane.is_foreground:
         reasons.append("foreground pane (Owner is looking at it)")
     if pane.is_loop:

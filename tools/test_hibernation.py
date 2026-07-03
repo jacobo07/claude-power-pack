@@ -19,9 +19,18 @@ if str(_PP_ROOT) not in sys.path:
     sys.path.insert(0, str(_PP_ROOT))
 
 from modules.cognitive_os import process_governor as pg  # noqa: E402
+from modules.cognitive_os import hibernate_runner as hr  # noqa: E402
 
 _passes = 0
 _fails = 0
+
+
+class _FakeHR:
+    """Stand-in for CO-07 hibernation.HibernationResult (store outcome)."""
+    def __init__(self, ok, reason="", archive_id="arc-1"):
+        self.ok = ok
+        self.reason = reason
+        self.archive_id = archive_id
 
 
 def _ok(gate: str, evidence: str) -> None:
@@ -155,6 +164,99 @@ def test_idle_age_reader_missing():
         _fail("V-IDLE-AGE-MISSING", f"expected None, got {age}")
 
 
+def test_governor_keeps_no_sid():
+    d = pg.decide(_pane(sid=None))
+    if d.verdict == pg.KEEP and any("session id" in r for r in d.reasons):
+        _ok("V-GOVERNOR-KEEPS-NOSID", "unresolved sid -> keep (cannot --resume)")
+    else:
+        _fail("V-GOVERNOR-KEEPS-NOSID", f"got {d.verdict} {d.reasons}")
+
+
+# --- SPRINT 3: hibernation executor (store -> flag -> kill) -------------------
+
+def test_hibernate_store_then_kill():
+    # Arrange
+    with tempfile.TemporaryDirectory() as td:
+        killed = []
+        pane = _pane(pid=4242, wrapper_pid=900, ws_mb=250.0)
+
+        def kill_fn(pid):
+            # Order gate: the wake flag MUST already exist when we kill.
+            flag = hr.flag_path_for(900, td)
+            if not flag.is_file():
+                return False  # would mean flag written AFTER kill -> wrong order
+            killed.append(pid)
+            return True
+
+        # Act
+        run = hr.hibernate_pane(pane, flag_dir=td,
+                                hibernate_fn=lambda *a, **k: _FakeHR(True),
+                                kill_fn=kill_fn, now=NOW)
+        # Assert
+        flag = hr.flag_path_for(900, td)
+        if (run.ok and run.verdict == "HIBERNATED" and killed == [4242]
+                and flag.is_file() and run.reclaim_mb == 250.0):
+            payload = json.loads(flag.read_text(encoding="utf-8"))
+            if payload.get("sid") == pane.sid:
+                _ok("V-HIBERNATE-STORE-THEN-KILL",
+                    "store->flag->kill in order; flag carries sid; "
+                    f"reclaim {run.reclaim_mb}MB")
+            else:
+                _fail("V-HIBERNATE-STORE-THEN-KILL", f"flag sid wrong: {payload}")
+        else:
+            _fail("V-HIBERNATE-STORE-THEN-KILL",
+                  f"verdict={run.verdict} killed={killed} flag={flag.is_file()}")
+
+
+def test_hibernate_refuse_no_store():
+    with tempfile.TemporaryDirectory() as td:
+        killed = []
+        run = hr.hibernate_pane(
+            _pane(pid=5, wrapper_pid=901), flag_dir=td,
+            hibernate_fn=lambda *a, **k: _FakeHR(False, "anchor missing"),
+            kill_fn=lambda pid: killed.append(pid) or True, now=NOW)
+        flag = hr.flag_path_for(901, td)
+        if (not run.ok and run.verdict == "REFUSED" and not killed
+                and not flag.is_file()):
+            _ok("V-HIBERNATE-REFUSE-NO-STORE",
+                "CO-07 refused -> no flag, no kill, process untouched")
+        else:
+            _fail("V-HIBERNATE-REFUSE-NO-STORE",
+                  f"verdict={run.verdict} killed={killed} flag={flag.is_file()}")
+
+
+def test_hibernate_kill_rollback():
+    with tempfile.TemporaryDirectory() as td:
+        run = hr.hibernate_pane(
+            _pane(pid=6, wrapper_pid=902), flag_dir=td,
+            hibernate_fn=lambda *a, **k: _FakeHR(True),
+            kill_fn=lambda pid: False, now=NOW)  # kill fails
+        flag = hr.flag_path_for(902, td)
+        if (not run.ok and run.verdict == "KILL_FAILED" and not run.killed
+                and not flag.is_file()):
+            _ok("V-HIBERNATE-KILL-ROLLBACK",
+                "kill failed -> flag rolled back (no stale flag traps wrapper)")
+        else:
+            _fail("V-HIBERNATE-KILL-ROLLBACK",
+                  f"verdict={run.verdict} flag_exists={flag.is_file()}")
+
+
+def test_run_plan_executes_targets():
+    with tempfile.TemporaryDirectory() as td:
+        panes = [_pane(pid=10, wrapper_pid=910, ws_mb=200.0),
+                 _pane(pid=11, is_foreground=True)]  # 2nd kept
+        gp = pg.plan(panes)
+        runs = hr.run_plan(gp, flag_dir=td,
+                           hibernate_fn=lambda *a, **k: _FakeHR(True),
+                           kill_fn=lambda pid: True, now=NOW)
+        if len(runs) == 1 and runs[0].ok and runs[0].pid == 10:
+            _ok("V-RAM-FREED",
+                f"plan executed 1 target (foreground skipped), reclaim "
+                f"{runs[0].reclaim_mb}MB freed")
+        else:
+            _fail("V-RAM-FREED", f"runs={[(r.pid, r.verdict) for r in runs]}")
+
+
 def main() -> int:
     print("== Transparent Process Hibernation -- FASE A V-gates ==")
     print("- SPRINT 1: Resource Governor")
@@ -165,9 +267,14 @@ def main() -> int:
                test_governor_keeps_unknown_idle,
                test_governor_keeps_no_anchor,
                test_governor_keeps_raw_pane,
+               test_governor_keeps_no_sid,
                test_plan_aggregates_reclaim,
                test_idle_age_reader,
-               test_idle_age_reader_missing):
+               test_idle_age_reader_missing,
+               test_hibernate_store_then_kill,
+               test_hibernate_refuse_no_store,
+               test_hibernate_kill_rollback,
+               test_run_plan_executes_targets):
         try:
             fn()
         except Exception as exc:  # noqa: BLE001
