@@ -2145,3 +2145,67 @@ Advisory only -- never blocks. Owner action: reinstall the extension manually fr
 **ORIGEN:** Same forensic. Observed stuck on 0.3.177 (target 0.3.178) since >=30-jun,
 `consecutiveFails` climbing. Monitor added 2026-07-03. Cross-ref SCS C60 addendum (2026-07-03).
 | T-CURSOR-PROFILE-ORDER-001 | `vault/plans/kclaude-terminal-profile-2026-07-01.md` | kClaude terminal profile added to Cursor `+` menu. Premise-corrected: the `Claude` profile launches the OLD `~/.claude/kclaude.bat` (simple restart wrapper), NOT claude.exe; `kClaude` launches the SMART `~/.claude/bin/kclaude.ps1` (W6 pre-launch intelligence: W1 context / W4 coordinator / W5 cost / W2 auto-resume / W3 naming) via `bin/kclaude.cmd`. Icon/color cloned byte-identical from `Claude` (sparkle / terminal.ansiMagenta). Ordering (proven from Cursor source, NOT insertion order): `_sortProfileQuickPickItems` pins the default then `localeCompare`-sorts the rest alphabetically. So the profile key is `" kClaude"` (leading ASCII space) because `" kClaude".localeCompare("Claude")<0` -> collates first among non-defaults -> menu = Last session (Default) / kClaude / Claude. "Last session" stays `defaultProfile.windows` (unchanged). Insertion order is irrelevant; verified by replaying Cursor's own sort on the live file. Backup: `settings.json.bak.20260701T130248Z`. Arg passthrough + launch chain empirically proven. |
+
+## Conversation Quality Audit -- behavioral inefficiency patterns -- 2026-07-03
+
+Source: `tools/conversation_quality_audit.py` over 646 sessions. Costs are real
+`message.usage.output_tokens` of the offending turns. Report:
+`vault/plans/conversation-quality-report-2026-07-03.md`. Cross-ref SCS C69.
+
+### UKDL TRAP T-AGENT-SELF-CORRECTION-001 -- agent corrects itself in consecutive turns
+
+**TRIGGER:** Two consecutive assistant turns (no Owner between) where the second
+opens with a correction cue (`I made an error`, `corrijo`, `where I was wrong`).
+
+**ACCION:** The first turn shipped an unverified claim; the redo is pure waste.
+Gate DONE/assert turns behind observed evidence (superpowers:verification-before-completion).
+Measured cost: **370,081 tokens across 71 occurrences** (the corpus's single
+largest behavioral cost).
+
+**ORIGEN:** Conversation Quality Audit 2026-07-03. Highest-frequency pattern.
+
+### UKDL TRAP T-OWNER-REPEAT-INSTRUCTION-001 -- Owner re-sends an unresolved instruction/blocker
+
+**TRIGGER:** Two similar Owner messages (>0.7 keyword overlap) with the agent's
+between-turn(s) containing NO tool_use (prose-only acknowledgement, no action).
+
+**ACCION:** On any imperative, the NEXT turn must contain the executing tool_use
+or an explicit blocker -- never prose-only "sure, I will". Measured cost:
+**74,530 tokens across 19 occurrences** (concentrated in error-retry sessions
+where the Owner re-pastes the same unresolved blocker). Harness `<local-command>`
+wrappers are excluded (not Owner instructions).
+
+**ORIGEN:** Conversation Quality Audit 2026-07-03.
+
+### UKDL TRAP T-PLAN-EXECUTION-DIVERGENCE-001 -- executed files diverge from the approved plan (LOW confidence)
+
+**TRIGGER:** Agent posts a plan listing >=2 file paths, Owner gives a short
+approval, next execution turn writes files overlapping the plan <40%.
+
+**ACCION:** Bind execution to the approved plan's file list (HR-ONESHOT-002
+fidelity lock); on >40% divergence, pause and re-confirm. Measured cost:
+**249,170 tokens across 44 occurrences** -- but this is an **UPPER BOUND**:
+"planned" = every path in the plan block, INCLUDING read-context files, so each
+hit needs manual review, not auto-fix. LOW-confidence detector by design.
+
+**ORIGEN:** Conversation Quality Audit 2026-07-03.
+
+### UKDL TRAP T-REPEATED-QUESTION-001 -- agent re-asks a question already answered in-session
+
+**TRIGGER:** An assistant interrogative clause (cue-bearing, ends in `?`) whose
+keyword set overlaps >0.7 with an EARLIER assistant question that the Owner
+already answered.
+
+**ACCION:** Consult the Findings Bus (PM-03) -- `RedundancyTax.reason_or_reuse`
+-- before asking; a question resolved earlier in the same session must not
+recur. Measured cost: **90,349 tokens across 33 occurrences**. Turns that merely
+contain a `?` without an interrogative cue are excluded (FP-hardened).
+
+**ORIGEN:** Conversation Quality Audit 2026-07-03.
+
+### UKDL NOTE T-DUPLICATE-REALITY-SCAN-001 -- NOT FOUND (freq 0)
+
+Cross-session duplicate Reality Scans (same repo, <7 days, >0.6 overlap) were
+**not found with significant frequency (0 occurrences)** -- no fix proposed.
+Interpretation: scans differ enough per task, and/or PM-01 Repo Brain already
+suppresses redundant scanning. Re-check if the corpus behavior shifts.
