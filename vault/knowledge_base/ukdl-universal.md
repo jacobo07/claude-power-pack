@@ -2209,3 +2209,75 @@ Cross-session duplicate Reality Scans (same repo, <7 days, >0.6 overlap) were
 **not found with significant frequency (0 occurrences)** -- no fix proposed.
 Interpretation: scans differ enough per task, and/or PM-01 Repo Brain already
 suppresses redundant scanning. Re-check if the corpus behavior shifts.
+
+
+## Cognitive Cost Leak Taxonomy -- non-token leak families -- 2026-07-03
+
+Source: `vault/plans/cognitive-leak-taxonomy-2026-07-03.md` (SCS C70). The token
+audits (C68 volume / C69 behavior) are blind to the OS + coordination axes; these
+are the leaks they cannot see, with real data measured this sprint.
+
+### UKDL TRAP T-SCHEDULED-TASK-LEAK-001 -- PP scheduled tasks that fail/idle-fire
+
+**TRIGGER:** A Windows scheduled task fires and (a) exits nonzero every run,
+(b) goes STALE vs its own cadence, or (c) fires every few minutes unconditionally
+whether or not a session is active.
+
+**COST:** Real, measured 2026-07-03: of 13 PP tasks, **5 FAILING** (Miner-V2,
+Normalize-Paths, Sovereign-Miner, Vault-Summarize, SessionSnapshot) + **5
+HIGH_FREQ** (q2-5min: Hibernation, KobiiNetworkHealthDaemonV2, WSTrim,
+KickbacksGuard, Playwright-Watchdog). No token cost; CPU + host-RAM + scheduler
+churn (37 node procs / 231 MB co-resident; reaper culling continuously).
+
+**FIX:** `tools/scheduled_task_health.py` -- pure `classify_task` (hermetic) +
+live `scan_live` (schtasks). Verdicts FAILING/STALE/HIGH_FREQ/OK, each with a
+NON-destructive recommendation. NEVER auto-disables (verify-before-destructive:
+a `--check` task exits nonzero BY CONVENTION -- blanket disable would be wrong).
+One clean script-side repair shipped: `vault_summarize.py` now finds the repo's
+errors.md via a script-relative PP-root fallback (was exit-2 daily from any cwd).
+
+**ORIGEN:** Cognitive Leak Taxonomy FASE -1. The entire OS axis was unmeasured.
+
+### UKDL TRAP T-VERIFY-BEFORE-EMIT-001 -- prevent the self-correction redo (C69 P1)
+
+**TRIGGER:** A draft emission asserts completion ("done", "fixed", "tests pass",
+"listo") but the turn's evidence stream carries NO verification signal
+(PASS/FAIL, exit code, N/N gate).
+
+**COST:** C69 P1 = 71 self-corrections, **370,081 output tokens** -- the corpus's
+single largest behavioral leak. Each is a turn shipping an unverified claim that
+the next turn redoes.
+
+**FIX:** `modules/wrapper/verify_before_emit.py` -- pre-emission advisory (the
+complement of HR-OUTPUT-002, which fires post-hoc). Fires only on
+claim-without-evidence; silent when evidence is in the draft OR the stream, on
+negation, or on no-claim. Fail-open. Wiring is Owner-side (HR-001, documented).
+
+**ORIGEN:** Cognitive Leak Taxonomy FASE 2 (quick win C).
+
+### UKDL TRAP T-PM03-INERT-001 -- P5 persists because the Findings Bus is never populated
+
+**TRIGGER:** Measuring why C69 P5 (repeated in-session question, 33 cases / 90k
+tok) is not being prevented despite PM-03 (Findings Bus + RedundancyTax) being
+fully BUILT.
+
+**FINDING (measured 2026-07-03):** the PM-03 bus state dir
+`~/.claude/state/parallel_mesh/` **does not exist -> 0 findings ever published
+across all repos.** PM-03 is built but its SessionStart-digest + Stop-publish
+wiring (Owner-side, HR-001) was never installed. The dedup mechanism is inert.
+
+**FIX (Owner-side):** P5's fix is to WIRE PM-03, NOT to build a new gate --
+install the SessionStart `--digest` inject + Stop `publish_session_findings`
+call. Re-measured on every audit run via `conversation_quality_audit.pm03_health()`
+(the "measure before build" that saved building the wrong thing).
+
+**ORIGEN:** Cognitive Leak Taxonomy FASE 2 (measurement B).
+
+### UKDL NOTE T-XPANE-FIRSTLOAD-LEAK-001 -- cross-pane first-load multiplier
+
+Peak hours run **17-26 concurrent panes** (A5); each cache-CREATES its own ~57k
+first-load prefix (Anthropic cache is per-conversation, not shared cross-pane),
+so ~26 x 57k = ~1.48M near-identical cache-create tokens co-resident at peak.
+This MULTIPLIES the value of the already-drafted first-load trim (Proposal A/B,
+propose-only per HR-001) by the concurrency factor. No new build; surfaced for
+the Owner-side trim install.
