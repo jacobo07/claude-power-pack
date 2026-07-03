@@ -1564,6 +1564,11 @@ def main():
         "--quiet", "-q", action="store_true",
         help="Suppress progress messages",
     )
+    parser.add_argument(
+        "--knowledge", "-k", action="store_true",
+        help="Also index GK-03/04 knowledge nodes + typed edges (datasets, UKDL, "
+             "decisions, contracts, SCS seals, traps, tests, sessions, systems)",
+    )
 
     args = parser.parse_args()
 
@@ -1585,6 +1590,18 @@ def main():
 
     # Print summary to stdout (machine-readable)
     print(json.dumps(stats, indent=2))
+
+    # GK-03/04 extension: widen the graph to non-code knowledge nodes + typed
+    # edges. Fail-open — a companion error must never break the code grapher.
+    if getattr(args, "knowledge", False):
+        try:
+            import graphify_knowledge
+            knodes = graphify_knowledge.build_nodes(builder.project_dir, quiet=args.quiet)
+            kcache = graphify_knowledge.write_knowledge(builder.project_dir, knodes, quiet=args.quiet)
+            present = [t for t, c in kcache["node_types"].items() if c]
+            print(json.dumps({"knowledge_nodes": len(knodes), "types_present": present}, indent=2))
+        except Exception as e:
+            print(f"[graphify] knowledge extension skipped: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
