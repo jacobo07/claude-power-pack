@@ -589,6 +589,78 @@ function hookAutoResearchPull() {
 }
 
 // ---------------------------------------------------------------------------
+// Hook 13: PM-03 Findings Bus digest (INLINE, SCS C70 wiring)
+//   Consume side of the Parallel Mesh Findings Bus. Reads the repo's append-only
+//   JSONL bus DIRECTLY (a plain fs read, like hookAutoResearchDigest -- NOT a
+//   synchronous python shell-out, which would add ~300 ms python cold-start to
+//   every SessionStart and violate the hub latency doctrine, SCS C23). Emits a
+//   compact topic digest so a launching pane consults what other panes already
+//   concluded before re-reasoning (targets the C69 P5 repeated-question leak).
+//   Publish stays agent-driven via the pm_03_bus CLI (hub_wiring_instructions.md).
+//   Bounded + fail-open: any error -> null (silent), never blocks SessionStart.
+// ---------------------------------------------------------------------------
+const PARALLEL_MESH_DIR = path.join(STATE_DIR, 'parallel_mesh');
+const BUS_MAX_TOPICS = 20;
+const BUS_CLAIM_CHARS = 140;
+
+function hookFindingsBusDigest(cwd) {
+  try {
+    const enc = (cwd || '').replace(/[^a-zA-Z0-9]/g, '-');
+    if (!enc) {
+      return null;
+    }
+    const busFile = path.join(PARALLEL_MESH_DIR, 'findings_bus_' + enc + '.jsonl');
+    if (!fs.existsSync(busFile)) {
+      return null;
+    }
+    let raw = fs.readFileSync(busFile, 'utf8');
+    if (raw && raw.charCodeAt(0) === UTF8_BOM_CHARCODE) {
+      raw = raw.slice(1);
+    }
+    // topic -> newest {claim, ts}; dedup so the digest is topics, not a log.
+    const byTopic = new Map();
+    for (const line of raw.split('\n')) {
+      const s = line.trim();
+      if (!s) {
+        continue;
+      }
+      let rec;
+      try {
+        rec = JSON.parse(s);
+      } catch (parseErr) {
+        continue;
+      }
+      const topic = (rec && rec.topic) ? String(rec.topic) : '';
+      if (!topic) {
+        continue;
+      }
+      const ts = (rec.ts || '');
+      const prev = byTopic.get(topic);
+      if (!prev || ts > prev.ts) {
+        byTopic.set(topic, { claim: String(rec.claim || ''), ts: ts });
+      }
+    }
+    if (byTopic.size === 0) {
+      return null;
+    }
+    const topics = Array.from(byTopic.keys()).sort().slice(0, BUS_MAX_TOPICS);
+    const lines = ['[Findings Bus] Conclusions other panes already reached in '
+      + 'this repo -- consult BEFORE re-reasoning (PM-03, SCS C70):'];
+    for (const topic of topics) {
+      let claim = byTopic.get(topic).claim.replace(/\s+/g, ' ');
+      if (claim.length > BUS_CLAIM_CHARS) {
+        claim = claim.slice(0, BUS_CLAIM_CHARS) + '...';
+      }
+      lines.push('- ' + topic + ': ' + claim);
+    }
+    return lines.join('\n');
+  } catch (err) {
+    note('findings bus digest failed', err);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
@@ -619,6 +691,14 @@ function main() {
       additionalContext = additionalContext
         ? (additionalContext + '\n' + digestLine)
         : digestLine;
+    }
+
+    // 13. PM-03 Findings Bus digest -- inline read of the repo's bus (SCS C70).
+    const busLine = hookFindingsBusDigest(cwd);
+    if (busLine) {
+      additionalContext = additionalContext
+        ? (additionalContext + '\n' + busLine)
+        : busLine;
     }
 
     // 2-5. Fire-and-forget spawns (all detached, no waiting).

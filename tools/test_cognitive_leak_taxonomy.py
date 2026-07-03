@@ -121,6 +121,24 @@ def main() -> int:
         _fail("V-EXTENDS-NOT-DUPLICATES",
               f"extends={extends} no_parallel_reader={no_parallel_reader}")
 
+    # ---- V-PM03-WIRED : consume hook shipped in the hub + bus round-trips -
+    hub_src = (_ROOT / "hooks" / "session_start_hub.js").read_text(
+        encoding="utf-8")
+    hub_wired = ("function hookFindingsBusDigest(" in hub_src
+                 and "const busLine = hookFindingsBusDigest(cwd)" in hub_src)
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        (d / "findings_bus_r.jsonl").write_text(
+            json.dumps({"topic": "t", "claim": "c", "ts": "2026-07-03"}) + "\n",
+            encoding="utf-8")
+        bus_wired = CQA.pm03_health(state_dir=str(d))["wired"]
+    if hub_wired and bus_wired is True:
+        _ok("V-PM03-WIRED",
+            "SessionStart Findings-Bus digest hook shipped in hub + main() calls "
+            "it; bus-consume round-trips (live sync + restart is Owner-side)")
+    else:
+        _fail("V-PM03-WIRED", f"hub_wired={hub_wired} bus_wired={bus_wired}")
+
     # ---- V-TAXONOMY-COMPLETE + V-ROI-RANKED ------------------------------
     doc = _ROOT / "vault" / "plans" / "cognitive-leak-taxonomy-2026-07-03.md"
     txt = doc.read_text(encoding="utf-8") if doc.exists() else ""
