@@ -73,7 +73,7 @@ A context-cutting kernel that ships 2500w essays is self-refuting.
 V-REALITY-SCAN · V-COORDINATE-SPINE (GK-01/02 stable identity ≠ path) · V-GRAPH-CORE ·
 V-ROUTE-COMPILER · V-WRITEBACK · V-OBSERVATORY · V-GLOBAL-SCOPE · V-HONEST-GUARANTEES ·
 V-NO-CODE · V-PARENT-REFS · V-BASELINE(pytest no-regression) · V-DEPTH(per ruling).
-GRAPHIFY_INDEX.md master + SCS C69 seal + `REMOTE_DELTA = 0 0`.
+GRAPHIFY_INDEX.md master + SCS C71 seal + `REMOTE_DELTA = 0 0`.
 
 ## Deferred to EXECUTION-mode (not this session)
 Live librarian agent `~/.claude/agents/graphify-*.md` (cold-load, needs /restart) ·

@@ -157,4 +157,4 @@ unverified conclusion."
 close-boundary) — it turns each session's verified discoveries into durable graph structure so
 navigation compounds; it writes at boundaries on disk, not live mid-turn, and gates promotion on
 verification so writeback compounds knowledge, not noise. Parent: **PM-03 Commit Protocol**.
-*Sealed under SCS C69.*
+*Sealed under SCS C71.*

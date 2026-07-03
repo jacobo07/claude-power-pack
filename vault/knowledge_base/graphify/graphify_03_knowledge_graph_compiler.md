@@ -156,4 +156,4 @@ never "serve a stale node as fresh."
 **Guarantee level (honest):** GK-03 is an *ingestion/compression* layer (level-2 class,
 boundary-triggered) — it makes the ecosystem navigable and smaller than its corpus; it is as fresh
 as its last scan and defers the staleness verdict to GK-07, never claiming live omniscience.
-Parents: **kobi_graphify + audit_cache**, widened to the full ontology. *Sealed under SCS C69.*
+Parents: **kobi_graphify + audit_cache**, widened to the full ontology. *Sealed under SCS C71.*

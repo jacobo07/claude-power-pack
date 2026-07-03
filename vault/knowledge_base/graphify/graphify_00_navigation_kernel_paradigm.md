@@ -157,4 +157,4 @@ back the contract; only the *discipline* pauses.
 **Guarantee level (honest):** GK-00 is a *contract/classification* layer (level-2 class) — it
 enforces nothing itself; it defines the paradigm every GK engine implements and every PP consumer
 obeys, and it names the residual (a task that explores anyway) rather than pretending to prevent
-it. Parent: **sibling of CO-00**. *Sealed under SCS C69.*
+it. Parent: **sibling of CO-00**. *Sealed under SCS C71.*

@@ -155,4 +155,4 @@ direction is "keep them separate" — under-merge — never "collapse them and h
 one resource addressable by any of its names when the equivalence is evidenced; it cannot
 guarantee it has seen every alias, and it errs toward under-merge because a false split is
 recoverable while a false merge is data loss. Parents: **CO-05 dedup discipline + GK-01**.
-*Sealed under SCS C69.*
+*Sealed under SCS C71.*

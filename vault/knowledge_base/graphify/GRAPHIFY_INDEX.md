@@ -21,7 +21,7 @@
 >
 > Scope approved by Owner 2026-07-03 (STOP #1, two rounds): **13 datasets**, depth inherited from the
 > CO/PM lineage (~560-1070 words/Part, Owner-ruled), live agents/global-store deferred to
-> EXECUTION-mode. Sealed as **SCS C69**.
+> EXECUTION-mode. Sealed as **SCS C71**.
 
 ---
 

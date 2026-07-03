@@ -165,4 +165,4 @@ paradigm's honest labeling remains.
 it enforces nothing physically; it makes the graph-first rule bite by detection-and-redirect,
 measures the residual honestly, and keeps every GK guarantee from inflating past its real strength.
 It is the dataset that guarantees the family tells the truth about what it guarantees. Parent:
-**CO-10**. *Sealed under SCS C69.*
+**CO-10**. *Sealed under SCS C71.*

@@ -153,4 +153,4 @@ against source," never "trust a stale edge."
 **Guarantee level (honest):** GK-04 is a *relationship-governance* layer (level-2 class,
 deterministic lookup) — it makes relations navigable, auditable, and confidence-graded; an edge is
 a stored assertion re-verified against source when stale, and an inferred edge is honestly weaker
-than an observed one. Parent: **audit_cache.depends_on**, generalized. *Sealed under SCS C69.*
+than an observed one. Parent: **audit_cache.depends_on**, generalized. *Sealed under SCS C71.*

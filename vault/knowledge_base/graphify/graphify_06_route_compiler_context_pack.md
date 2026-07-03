@@ -152,4 +152,4 @@ stale route."
 **Guarantee level (honest):** GK-06 is a *route-assembly* layer (level-2 class, cheapest-first) —
 it turns found coordinates into the minimal pack that completes a task, learns the true working set
 from execution, and carries honest confidence/cost; a stale route is re-validated, never replayed
-blind. Parents: **CO-03 cascade + CO-04 tiers + sleepy nav**. *Sealed under SCS C69.*
+blind. Parents: **CO-03 cascade + CO-04 tiers + sleepy nav**. *Sealed under SCS C71.*

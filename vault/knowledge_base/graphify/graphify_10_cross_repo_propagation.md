@@ -152,4 +152,4 @@ each repo re-derive," never "propagate a corrupting merge or a stale global asse
 boundary-polled) — it turns local learning into an ecosystem asset and reconciles overlap without
 corruption; propagation is disk-at-boundaries not IPC, and a cross-repo link is an inferred reuse
 candidate requiring verification, never an assertion of identity. Parent: **deferred PM-06
-(vault + CEPS + cross_signal_bus)**. *Sealed under SCS C69.*
+(vault + CEPS + cross_signal_bus)**. *Sealed under SCS C71.*

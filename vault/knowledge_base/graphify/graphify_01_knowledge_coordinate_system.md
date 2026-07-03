@@ -162,4 +162,4 @@ never "trust a stale coordinate."
 one-lookup resolution) — it makes location *stable and reusable* when a coordinate exists; it
 cannot guarantee a coordinate for an unmapped resource, and a stale binding is a lead re-verified
 against source, never trusted blind. Parents: **kobi_graphify + audit_cache**, unified global.
-*Sealed under SCS C69.*
+*Sealed under SCS C71.*

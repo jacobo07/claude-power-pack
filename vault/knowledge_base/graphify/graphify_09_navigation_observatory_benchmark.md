@@ -159,4 +159,4 @@ the last `ledger.json` snapshot persists as the honest record.
 the kernel's value and health measured rather than asserted, enforces the compression invariant
 empirically, and names its own bounds; it gates nothing and drives improvement only by feeding the
 learners and the Owner. Parents: **CO-01 ROI + session_resilience telemetry + ledger.json**.
-*Sealed under SCS C69.*
+*Sealed under SCS C71.*

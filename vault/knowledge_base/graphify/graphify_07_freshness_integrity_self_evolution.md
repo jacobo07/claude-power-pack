@@ -161,4 +161,4 @@ graph's content is never altered by rolling GK-07 back — only its active repai
 **Guarantee level (honest):** GK-07 is a *freshness/integrity/evolution* layer (level-2 class,
 scan-time) — it keeps the graph trustworthy or honestly declares it untrustworthy, auto-applies only
 unambiguous repairs, and proposes the rest; it detects that a node *may* have drifted, never claims
-live omniscience. Parents: **CO-05 freshness + CO-06 GC**. *Sealed under SCS C69.*
+live omniscience. Parents: **CO-05 freshness + CO-06 GC**. *Sealed under SCS C71.*

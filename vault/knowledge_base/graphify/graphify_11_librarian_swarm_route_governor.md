@@ -161,4 +161,4 @@ librarian reason."
 live agents deferred) — specialized cheap finders that compress knowledge to a route so expensive
 agents never explore, arbitrated to a single minimal answer and measured against the locate-not-
 reason / never-consume-more-than-you-save contract. Parents: **GK-05/06 + Explore pattern**.
-*Sealed under SCS C69.*
+*Sealed under SCS C71.*

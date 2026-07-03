@@ -154,4 +154,4 @@ through to exploration and write back," never "fabricate a coordinate to avoid t
 cheapest-first) — it makes finding cheap and identity-based when the graph holds the answer; it
 cannot guarantee a hit for an unmapped resource, and a miss falls through to exploration that writes
 back so it is paid once. Parents: **sleepy nav doctrine + jit_skill_loader + CO-03**.
-*Sealed under SCS C69.*
+*Sealed under SCS C71.*

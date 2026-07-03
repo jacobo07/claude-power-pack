@@ -1,6 +1,7 @@
-# SCS C69 — Graphify Intelligence Kernel (Knowledge Navigation Kernel) — SEALED
+# SCS C71 — Graphify Intelligence Kernel (Knowledge Navigation Kernel) — SEALED
 
 **Sealed:** 2026-07-03
+**Slot note:** originally sealed as C69 in parallel with `scs/scs_c69_conversation_quality.md`; reassigned **C69 → C71** on 2026-07-03 (Owner-approved) to resolve the two-pane collision — conversation_quality keeps C69 (first claim + canonical `scs/` dir), this kernel moves to the next free slot C71.
 **Session:** GraphifyKernel-KnowledgeNavigation-SEALED
 **Family:** `vault/knowledge_base/graphify/` — GK-00…GK-12 (13 datasets) + GRAPHIFY_INDEX.md
 **Parents (substrate, consumed never rebuilt):** Cognitive OS (CO-00…CO-10) · Parallel Mesh (PM-01…PM-05) · `tools/kobi_graphify.py` · `tools/audit_cache.py` · `parts/sleepy/knowledge-graph.md`
