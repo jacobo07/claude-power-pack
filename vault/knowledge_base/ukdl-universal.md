@@ -2144,6 +2144,24 @@ Advisory only -- never blocks. Owner action: reinstall the extension manually fr
 
 **ORIGEN:** Same forensic. Observed stuck on 0.3.177 (target 0.3.178) since >=30-jun,
 `consecutiveFails` climbing. Monitor added 2026-07-03. Cross-ref SCS C60 addendum (2026-07-03).
+
+### UKDL TRAP T-KICKBACKS-RECURRING-GAP-ACTIVITY-001 -- same-day "recurring gaps" are work-rhythm breaks, not a periodic system fault
+
+**TRIGGER:** Kickbacks ledger shows two+ gaps the same day at a suspiciously regular interval
+(e.g. ~5h apart); tempting to hunt a periodic timer / 5h TTL / cron.
+
+**ACCION:** Test the periodic hypothesis against REAL logs before believing it. Checklist that
+DISCARDED it 2026-07-03: (1) no auth failure at gap-start -- the first gap (10:08Z) had ZERO;
+auth throws are `transient:true` and recover immediately. (2) No scheduled task at ~5h cadence
+touches Kickbacks (only `PP-KickbacksGuard` @2min; the 3-6h tasks are benign Windows built-ins:
+CEIP, OneSettings, Storage Tiers, WER). (3) Tokens rotate hourly, not 5h. (4) selfupdate/vsix
+fails all day, unaligned to gaps. (5) `killed:true` only appears transiently (23:00Z / now),
+never at a gap. Gaps = tail of a work burst -> break; impressions RESUME when work resumes
+(142 -> 154 across the "gap"). Churn does NOT multiply impressions (server-side per-interval
+dedup) -> rapid reload/restart can SUPPRESS earnings. n=2 at 5h30m = human rhythm, not a period.
+
+**ORIGEN:** PM forensic 2026-07-03 (`vault/audits/kickbacks_recurring_gap_2026-07-03.md`).
+Reinforces `T-KICKBACKS-SESSION-CHURN-001`. Cross-ref SCS C60 addendum v3.
 | T-CURSOR-PROFILE-ORDER-001 | `vault/plans/kclaude-terminal-profile-2026-07-01.md` | kClaude terminal profile added to Cursor `+` menu. Premise-corrected: the `Claude` profile launches the OLD `~/.claude/kclaude.bat` (simple restart wrapper), NOT claude.exe; `kClaude` launches the SMART `~/.claude/bin/kclaude.ps1` (W6 pre-launch intelligence: W1 context / W4 coordinator / W5 cost / W2 auto-resume / W3 naming) via `bin/kclaude.cmd`. Icon/color cloned byte-identical from `Claude` (sparkle / terminal.ansiMagenta). Ordering (proven from Cursor source, NOT insertion order): `_sortProfileQuickPickItems` pins the default then `localeCompare`-sorts the rest alphabetically. So the profile key is `" kClaude"` (leading ASCII space) because `" kClaude".localeCompare("Claude")<0` -> collates first among non-defaults -> menu = Last session (Default) / kClaude / Claude. "Last session" stays `defaultProfile.windows` (unchanged). Insertion order is irrelevant; verified by replaying Cursor's own sort on the live file. Backup: `settings.json.bak.20260701T130248Z`. Arg passthrough + launch chain empirically proven. |
 
 ## Conversation Quality Audit -- behavioral inefficiency patterns -- 2026-07-03

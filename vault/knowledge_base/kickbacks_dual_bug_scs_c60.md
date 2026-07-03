@@ -131,3 +131,18 @@ UKDL: `T-KICKBACKS-SESSION-CHURN-001`, `T-KICKBACKS-VSIX-BLOCKED-001`.
 
 - `powershell -File tools/kickbacks_guard.ps1 -SimulateVsixBlocked` -> `WARN: Kickbacks no puede actualizarse (vsix-url-blocked, 99 fallos consecutivos)...`.
 - Normal run with real `consecutiveFails <= 10` -> no vsix warning (silent).
+
+---
+
+## C60 addendum v3 (2026-07-03 PM) -- recurring same-day gaps are work-rhythm, not periodic
+
+Owner flagged a SECOND gap (17:38 local) ~5h after the first (12:08), questioning the AM
+"activity/churn" verdict. Tested 5 hypotheses (auth-fail-at-Nh / ~5h scheduled task / 5h token
+TTL / vsix-degraded / Cursor 5h GC) against real logs -- ALL DISCARDED: no auth failure at the
+first gap-start, no ~5h task touching Kickbacks (only benign Windows built-ins + PP guard @2min),
+hourly token rotation, vsix fails all day unaligned, `killed:true` only transient at 23:00Z/now
+(never at a gap), zero rate-limit/quota/429 events. Both gaps are break-plateaus at the tail of
+active work; impressions resumed 142 -> 154 across the first gap. Churn does not ADD impressions
+(server-side dedup) and can suppress them. NOW (mid-gap): CLI active, self-test `bar=True ad=True`,
+no canary -> pipeline healthy. External earning-model behavior, no PP fix. UKDL
+`T-KICKBACKS-RECURRING-GAP-ACTIVITY-001`. Audit: `vault/audits/kickbacks_recurring_gap_2026-07-03.md`.
