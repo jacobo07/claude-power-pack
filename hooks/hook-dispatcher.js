@@ -158,6 +158,9 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './quality-skill-gate.js', timeoutMs: 15000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js', timeoutMs: 10000 },
+    // GK-12 Graph-First advisory (level-2, NEVER blocks): nudges toward a graph
+    // query before a Bash filesystem search (grep/find/ls). Fail-open; no block.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/graph_first_gate.js', timeoutMs: 4000 },
   ],
   'PreToolUse-Edit-chain': [
     // SECURITY FIX (2026-06-04, Owner-authorized "Wire firewall + fix
@@ -191,6 +194,9 @@ const CHAIN_MAP = {
   'PreToolUse-Read-chain': [
     { exe: NODE_EXE, script: './gatekeeper-semantic.js', timeoutMs: 3000 },
     { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
+    // GK-12 Graph-First advisory (level-2, NEVER blocks): the Read|Grep matcher
+    // catches Grep, the primary file-exploration tool. Fail-open; no block flag.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/graph_first_gate.js', timeoutMs: 4000 },
   ],
   // UserPromptSubmit standalone fold (hub-fold 2026-06-04). The EVENT_MAP
   // 'UserPromptSubmit-default' bundle (power-pack-reminder + baseline-
