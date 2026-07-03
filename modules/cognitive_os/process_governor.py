@@ -209,6 +209,47 @@ def anchor_exists(sid, cwd, transcript_path, proj_base=None) -> bool:
         return False
 
 
+def _enc(cwd: str) -> str:
+    """Claude Code's project-dir encoder (non-alnum -> '-'). Matches scheduler."""
+    return re.sub(r"[^a-zA-Z0-9]", "-", cwd or "")
+
+
+def enrich_panes(raw, *, now: datetime | None = None, proj_base=None) -> list:
+    """Turn RAW scan records (from scan_panes.ps1) into fully-resolved PaneProc:
+    derive the transcript path from (cwd, sid), read idle age + anchor from it,
+    and read the per-pane idle age from its transcript tail.
+
+    Idle age (minutes since the last turn) is the SOLE hotness signal here, at the
+    15-min hibernation granularity -- deliberately NOT the CO-08 120-min launch-cap
+    hot set, which would force-keep every pane active in the last 2h and defeat
+    hibernation of the 20-119-min-idle panes that are exactly the targets.
+
+    Raw record keys: pid, wrapper_pid, ws_mb, wrapper_kind, sid, cwd,
+    is_foreground, is_loop. Fail-open per pane: any parse issue -> conservative
+    (idle unknown / no anchor -> the governor keeps it)."""
+    base = Path(proj_base) if proj_base else (Path.home() / ".claude" / "projects")
+    panes: list[PaneProc] = []
+    for r in (raw or []):
+        sid = r.get("sid")
+        cwd = r.get("cwd")
+        tp = str(base / _enc(cwd) / f"{sid}.jsonl") if (sid and cwd) else None
+        idle = last_turn_age_min(tp, now=now) if tp else None
+        anchor = anchor_exists(sid, cwd, tp, proj_base) if sid else False
+        try:
+            panes.append(PaneProc(
+                pid=int(r.get("pid", 0)),
+                wrapper_pid=int(r.get("wrapper_pid", 0)),
+                sid=sid, cwd=cwd, ws_mb=float(r.get("ws_mb", 0.0)),
+                idle_min=idle,
+                is_foreground=bool(r.get("is_foreground", False)),
+                is_loop=bool(r.get("is_loop", False)),
+                wrapper_kind=r.get("wrapper_kind", "none"),
+                has_anchor=anchor, transcript_path=tp))
+        except (ValueError, TypeError):
+            continue
+    return panes
+
+
 def format_plan(gp: GovernorPlan) -> str:
     """ASCII Owner-facing summary of a governor plan."""
     lines = [f"# Resource Governor -- {gp.scanned} pane(s) scanned"]
@@ -232,11 +273,20 @@ def main(argv=None) -> int:  # pragma: no cover - thin CLI; scan is Windows-only
     ap.add_argument("--idle-min", type=float, default=IDLE_THRESHOLD_MIN)
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--panes-json", default=None,
-                    help="path to a JSON list of PaneProc dicts (from scan_panes.ps1)")
+                    help="path to a JSON list of pre-enriched PaneProc dicts")
+    ap.add_argument("--from-scan", default=None,
+                    help="path to a RAW scan_panes.ps1 JSON array; enriched here")
+    ap.add_argument("--proj-base", default=None)
     args = ap.parse_args(argv)
 
     panes: list[PaneProc] = []
-    if args.panes_json and Path(args.panes_json).is_file():
+    if args.from_scan and Path(args.from_scan).is_file():
+        try:
+            raw = json.loads(Path(args.from_scan).read_text(encoding="utf-8-sig"))
+            panes = enrich_panes(raw, proj_base=args.proj_base)
+        except (ValueError, OSError, TypeError):
+            pass
+    elif args.panes_json and Path(args.panes_json).is_file():
         try:
             raw = json.loads(Path(args.panes_json).read_text(encoding="utf-8-sig"))
             for r in raw:

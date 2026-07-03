@@ -320,6 +320,40 @@ def test_rehydrate_flag_roundtrip():
             _fail("V-REHYDRATE-FLAG-ROUNDTRIP", f"payload={payload}")
 
 
+def test_enrich_resolves_idle_and_anchor():
+    # Hermetic: a tmp projects base with a real transcript whose last turn is
+    # 40min old. enrich must resolve idle_min + has_anchor from it and, since
+    # 40min > 15min threshold (and NOT force-kept by the 120min CO-08 window),
+    # the pane is selected. Guards the enrich/idle-granularity bug.
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td)
+        cwd = "C:/work/repoX"
+        sid = "sess-enrich-1"
+        enc = pg._enc(cwd)
+        (base / enc).mkdir(parents=True)
+        tp = base / enc / f"{sid}.jsonl"
+        old = (NOW - timedelta(minutes=40)).isoformat()
+        tp.write_text(json.dumps({"timestamp": old, "type": "user"}) + "\n",
+                      encoding="utf-8")
+        raw = [{"pid": 321, "wrapper_pid": 320, "ws_mb": 240.0,
+                "wrapper_kind": "ps1", "sid": sid, "cwd": cwd,
+                "is_foreground": False, "is_loop": False}]
+        panes = pg.enrich_panes(raw, now=NOW, proj_base=str(base))
+        if not panes:
+            _fail("V-ENRICH-RESOLVES", "enrich returned no panes")
+            return
+        p = panes[0]
+        d = pg.decide(p)
+        if (p.has_anchor and p.idle_min is not None
+                and abs(p.idle_min - 40.0) < 0.5 and d.verdict == pg.HIBERNATE):
+            _ok("V-ENRICH-RESOLVES",
+                f"raw scan -> idle {p.idle_min:.0f}min + anchor -> hibernate "
+                f"(120min window correctly NOT force-keeping a 40min-idle pane)")
+        else:
+            _fail("V-ENRICH-RESOLVES",
+                  f"idle={p.idle_min} anchor={p.has_anchor} decide={d.verdict}")
+
+
 def main() -> int:
     print("== Transparent Process Hibernation -- FASE A V-gates ==")
     print("- SPRINT 1/3/4: Governor + executor + rehydrate")
@@ -340,7 +374,8 @@ def main() -> int:
                test_run_plan_executes_targets,
                test_g4_verified_roundtrip,
                test_g4_failed_sid_mismatch,
-               test_rehydrate_flag_roundtrip):
+               test_rehydrate_flag_roundtrip,
+               test_enrich_resolves_idle_and_anchor):
         try:
             fn()
         except Exception as exc:  # noqa: BLE001
