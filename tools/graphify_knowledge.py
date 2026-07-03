@@ -200,7 +200,11 @@ def _classify(rel: str) -> str:
         return "contract"
     if "/sessions/" in "/" + low or base.startswith("session_"):
         return "session"
-    if re.search(r"_\d{2}_", base) or "/knowledge_base/" in "/" + low or "/datasets/" in "/" + low:
+    # 'dataset' is reserved for genuine architecture datasets — files that live
+    # under a knowledge_base/ or datasets/ tree. A bare `_NN_` in a filename
+    # (report_01_, 2026_07_) is NOT a dataset; it falls through to 'doc' so the
+    # global layer is not polluted with per-repo report noise (GK-10 over-promotion).
+    if "/knowledge_base/" in "/" + low or "/datasets/" in "/" + low:
         return "dataset"
     return "doc"
 
