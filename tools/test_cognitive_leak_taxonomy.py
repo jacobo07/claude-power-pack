@@ -149,8 +149,14 @@ def main() -> int:
     gdir = kb / "graphify"
     old_gone = not (gdir / "graphify_scs_c69.md").exists()
     new_exists = (gdir / "graphify_scs_c71.md").exists()
+    # A graphify file "still seals C69" only if a line claims SCS C69 WITHOUT
+    # naming C71. A reassignment/history line names BOTH (e.g. "SCS C69->C71
+    # collision fix") -- that documents the fix, it is not a live collision.
+    def _still_seals_c69(text: str) -> bool:
+        return any("SCS C69" in ln and "C71" not in ln
+                   for ln in text.splitlines())
     graphify_still_c69 = any(
-        "SCS C69" in p.read_text(encoding="utf-8") for p in gdir.glob("*.md"))
+        _still_seals_c69(p.read_text(encoding="utf-8")) for p in gdir.glob("*.md"))
     c69_scs = list((kb / "scs").glob("scs_c69*.md"))
     one_canonical_c69 = (len(c69_scs) == 1
                          and "conversation_quality" in c69_scs[0].name)

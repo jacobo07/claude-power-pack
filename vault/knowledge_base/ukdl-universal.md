@@ -2299,3 +2299,44 @@ so ~26 x 57k = ~1.48M near-identical cache-create tokens co-resident at peak.
 This MULTIPLIES the value of the already-drafted first-load trim (Proposal A/B,
 propose-only per HR-001) by the concurrency factor. No new build; surfaced for
 the Owner-side trim install.
+
+**UPDATE (2026-07-03, SCS C73):** T-PM03-INERT-001 is RESOLVED. The C70 sprint
+wired PM-03's consume side (`session_start_hub.js` Hook 13) and seeded the bus;
+Scope A published a 4th real finding in an active session and proved the digest
+round-trips. The bus dir + file now exist and are non-empty. Consume is live;
+Stop-auto-publish stays agent-driven (CLI) per hub_wiring_instructions.
+
+### T-INERT-ARCHITECTURE-TAX-001 -- the biggest reasoning-tax is built-but-inert, not missing
+
+**TRIGGER:** A prompt proposes building NEW cognitive systems/datasets on a mature
+stack (CO/PM/GK/G already sealed) to "reduce reasoning".
+
+**FINDING (2026-07-03):** on a mature stack the dominant reasoning-tax is
+architecture that is **already built but inert or unverified**, not architecture
+that is missing. Scope A found PM-03 consume + GK-12 dispatcher already LIVE
+(GK-12 0-drift, advisory reaching the model in-session) and the CO-08 scope-gate
+already built+tested (26/26) -- only the `prelaunch.py::_gate` wrapper routing and
+the declare-intent HABIT remained. Building more would have duplicated C70.
+
+**FIX (doctrine, SCS C73 Activate-Before-Build):** verify liveness of the existing
+systems with REAL data BEFORE proposing new ones. Read the live hook/module, run
+the round-trip, observe the advisory in-context. Activate-and-prove precedes
+design-and-build. `tools/test_scope_a_activation.py` is the regression gate.
+
+**ORIGEN:** Cognitive Kernel Reality Scan -> Scope A execution.
+
+### T-SCS-COLLISION-GATE-FP-001 -- a history line documenting "C69->C71" is not a live collision
+
+**TRIGGER:** The `V-SCS-NO-COLLISION` gate (`test_cognitive_leak_taxonomy.py`)
+FAILs with `graphify_c69=True` after the C69->C71 reassignment was completed.
+
+**FINDING:** the gate's `any("SCS C69" in text)` fired on
+`graphify_live_scs_c72.md:23` -- the sentence *"SCS C69->C71 collision fix"*, which
+DOCUMENTS the fix, the opposite of a live re-seal. A blunt substring test cannot
+tell a history note from an active claim (same class as C69's own P5 FP).
+
+**FIX:** a file "still seals C69" only if a line names C69 WITHOUT naming C71 (a
+reassignment/history line names both). FP-hardened -> 9/9. Pre-existing at HEAD,
+fixed via RCA rather than waved as "not mine" (no classified FAILs at done-gate).
+
+**ORIGEN:** Scope A baseline run surfaced the pre-existing FAIL.
