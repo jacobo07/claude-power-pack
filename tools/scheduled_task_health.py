@@ -68,6 +68,11 @@ def classify_task(info: dict, *, now_epoch: float | None = None) -> TaskVerdict:
     last_run = info.get("last_run_epoch")
     now = now_epoch if now_epoch is not None else info.get("now_epoch")
 
+    # 0. DISABLED -- a disabled task cannot fire, so it is not a live leak
+    #    regardless of a stale nonzero last_result. Resolved, not a problem.
+    if str(info.get("state", "")).lower() == "disabled":
+        return TaskVerdict(name, "DISABLED", "task disabled (will not run)", "")
+
     # 1. FAILING -- ran and exited a non-benign, nonzero code.
     if isinstance(res, int) and res not in BENIGN_RESULTS:
         return TaskVerdict(

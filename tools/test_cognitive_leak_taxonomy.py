@@ -67,13 +67,18 @@ def main() -> int:
     ok_v = STH.classify_task({"name": "d", "last_result": 0,
                               "last_run_epoch": 940, "now_epoch": 1000,
                               "interval_seconds": 86400})
+    # a DISABLED task with a failing last_result is resolved, NOT a live leak
+    dis_v = STH.classify_task({"name": "e", "state": "Disabled",
+                               "last_result": 2, "now_epoch": 1000})
     if (fail_v.verdict == "FAILING" and stale_v.verdict == "STALE"
-            and hf_v.verdict == "HIGH_FREQ" and ok_v.verdict == "OK"):
+            and hf_v.verdict == "HIGH_FREQ" and ok_v.verdict == "OK"
+            and dis_v.verdict == "DISABLED"):
         _ok("V-FIXES-MEASURED/L-SCHED",
-            f"FAILING/STALE/HIGH_FREQ/OK classified correctly")
+            "FAILING/STALE/HIGH_FREQ/OK/DISABLED classified correctly")
     else:
         _fail("V-FIXES-MEASURED/L-SCHED",
-              f"{fail_v.verdict}/{stale_v.verdict}/{hf_v.verdict}/{ok_v.verdict}")
+              f"{fail_v.verdict}/{stale_v.verdict}/{hf_v.verdict}/"
+              f"{ok_v.verdict}/{dis_v.verdict}")
 
     # ---- V-FIXES-MEASURED : L-SELFCORR verify-before-emit ----------------
     a_advise = VBE.verify_before_emit("All done, I fixed the bug.", "")
@@ -138,6 +143,25 @@ def main() -> int:
             "it; bus-consume round-trips (live sync + restart is Owner-side)")
     else:
         _fail("V-PM03-WIRED", f"hub_wired={hub_wired} bus_wired={bus_wired}")
+
+    # ---- V-SCS-NO-COLLISION : the C69 dual-seal was reassigned to C71 -----
+    kb = _ROOT / "vault" / "knowledge_base"
+    gdir = kb / "graphify"
+    old_gone = not (gdir / "graphify_scs_c69.md").exists()
+    new_exists = (gdir / "graphify_scs_c71.md").exists()
+    graphify_still_c69 = any(
+        "SCS C69" in p.read_text(encoding="utf-8") for p in gdir.glob("*.md"))
+    c69_scs = list((kb / "scs").glob("scs_c69*.md"))
+    one_canonical_c69 = (len(c69_scs) == 1
+                         and "conversation_quality" in c69_scs[0].name)
+    if old_gone and new_exists and not graphify_still_c69 and one_canonical_c69:
+        _ok("V-SCS-NO-COLLISION",
+            "graphify reassigned C69->C71; C69 = conversation_quality only, "
+            "no graphify file still seals C69")
+    else:
+        _fail("V-SCS-NO-COLLISION",
+              f"old_gone={old_gone} new={new_exists} "
+              f"graphify_c69={graphify_still_c69} one_c69={one_canonical_c69}")
 
     # ---- V-TAXONOMY-COMPLETE + V-ROI-RANKED ------------------------------
     doc = _ROOT / "vault" / "plans" / "cognitive-leak-taxonomy-2026-07-03.md"
