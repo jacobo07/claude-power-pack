@@ -70,7 +70,20 @@ update the `SCS C69` string in the 16 graphify files + GRAPHIFY_INDEX + the plan
 
 ---
 
+## EXECUTED (Owner-approved, same session)
+
+**ITEM B — all 4 actions applied (host mutations, reversible, one-by-one):**
+- ClaudePP-SessionSnapshot → **Disabled** (confirmed superseded: it runs the hanging legacy `session-snapshot.py`; `pp-snapshot-writer` runs `snapshot_auto_writer.ps1` q15min healthy).
+- PP-Normalize-Paths → **Disabled** (CI/pre-commit path-leak gate; belongs in CI, not a daily task).
+- PP-Miner-V2 → **args fixed to `--build`** (was no-args → usage/exit 2). `last_result` refreshes at its next 03:30 off-peak run.
+- PP-Sovereign-Miner → **investigated, left ENABLED** (ExecutionTimeLimit=PT30M; runs >30s then exits 1 — a real nonzero within the limit, not a timeout kill; needs a deeper root-cause pass, flagged not disabled).
+- Detector updated: `classify_task` now returns **DISABLED** for disabled tasks (a disabled task can't fire → not a live leak), covered by V-FIXES-MEASURED/L-SCHED.
+- **Live result: FAILING 5 → 2** ({DISABLED:2, OK:4, HIGH_FREQ:5, FAILING:2}). The 2 remaining: Miner-V2 (fixed, stale `last_result` until next run) + Sovereign-Miner (under investigation).
+
+**ITEM C — rename executed:** `git mv graphify_scs_c69.md → graphify_scs_c71.md`; `SCS C69 → C71` across 16 files (13 GK + INDEX + seal + plan); provenance note added; **0 residual C69 refs in graphify**; `SCS C69` now resolves only to `scs_c69_conversation_quality.md`. Gate **V-SCS-NO-COLLISION** seals it.
+
 ## Status
-- ✅ A: PM-03 wired (consume) + live (3 findings) + V-PM03-WIRED 8/8 ×3
-- ◐ B: 1/5 FAILING fixed; 4 pending Owner per-task decision (table above)
-- ⏸ C: collision confirmed; C71 rename proposed; STOPPED for Owner approval
+- ✅ A: PM-03 wired (consume) + live (3 findings) + V-PM03-WIRED
+- ✅ B: vault_summarize fixed + 2 disabled + miner_v2 args fixed + sovereign investigated → FAILING 5→2 (both remaining explained)
+- ✅ C: collision resolved (graphify → C71) + V-SCS-NO-COLLISION
+- Done-gate **9/9 ×3** (V-SCS-NO-COLLISION added). `V-SCHED-NO-FAILING` still not sealed: 2 FAILING remain (1 fixed-pending-run, 1 under-investigation) — honest, not fabricated.
