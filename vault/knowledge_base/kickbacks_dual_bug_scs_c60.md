@@ -101,3 +101,33 @@ in b9148de), not this terminal chain. UKDL `T-STATUSLINE-CHAIN-ISOLATED-001`.
 - Chain isolation: pipe garbage stdin through `vibe-ads-statusline.mjs` → ad line still
   prints (HUD segment absent). Repeated across 3 distinct `current_dir` values → render
   is per-user-state, not per-repo.
+
+---
+
+## C60 addendum (2026-07-03) -- impression-gap forensic + vsix-blocked monitor
+
+Follow-up EXECUTION. Owner reported low Kickbacks revenue today ($0.828 vs $40.24/7d) and
+hypothesized an orphan `boot.canary` freeze was cutting impression reporting.
+
+**Hypothesis DISCARDED (evidence-first).** At the 12:08-local (10:08Z) cutoff the CLI was
+idle -- only `auth.refresh` + `selfupdate` housekeeping, no `activate`/injection between
+10:08Z and 10:44Z. Impressions accrue only while an active Claude Code statusline renders
+the ad. After the cutoff the pipeline was demonstrably healthy: `signedIn:true,
+authHealthy:ok, injectionOn:true, hasAd:true` repeatedly to 13:03 local; `boot.canary`
+absent; guard self-test `bar=True ad=True`; `cli-ad.json` age 0.3 min; guard runs clean
+every 2 min (`healed=[] warns=[] notes=[]`). Real cause: low active-CC time + heavy session
+churn (reloads/restart cancelling activation in the 5s settle window). The dashboard "no
+impressions 24h" widget contradicts its own 142-event history -> Kickbacks-side display
+artifact. Full audit: `vault/audits/kickbacks_impression_gap_2026-07-03.md`.
+
+**Monitor added (INV-VSIX).** `tools/kickbacks_guard.ps1` now advises (WARN, throttled
+1x/day, fail-open) when the most-recent `selfupdate.failed {vsix-url-blocked}`
+`consecutiveFails` > 10 -- Kickbacks stuck on 0.3.177 (target 0.3.178) since >=30-jun.
+Advisory only, never blocks.
+
+UKDL: `T-KICKBACKS-SESSION-CHURN-001`, `T-KICKBACKS-VSIX-BLOCKED-001`.
+
+### Verify (2026-07-03 addendum)
+
+- `powershell -File tools/kickbacks_guard.ps1 -SimulateVsixBlocked` -> `WARN: Kickbacks no puede actualizarse (vsix-url-blocked, 99 fallos consecutivos)...`.
+- Normal run with real `consecutiveFails <= 10` -> no vsix warning (silent).

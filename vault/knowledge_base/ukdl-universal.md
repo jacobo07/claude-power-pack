@@ -2115,4 +2115,33 @@ the CLI exposes no fetch command. Integration is via Jina + yt-dlp. SCS C64.
 
 | Ref | File | Why it matters |
 |---|---|---|
+
+## Kickbacks session-churn + vsix-blocked -- 2026-07-03
+
+### UKDL TRAP T-KICKBACKS-SESSION-CHURN-001 -- reloads/restart inside the 5s settle window burn bar-minutes with no impressions
+
+**TRIGGER:** Kickbacks earnings look low while the ad + earnings bar are otherwise healthy.
+
+**ACCION:** Frequent Cursor reloads and /restart that land inside Kickbacks' 5s
+activation-settle window cancel the activation (logged `activate.fatal Canceled`). Each
+cancel = statusline minutes without a counted impression. Impressions accrue ONLY while
+an active Claude Code statusline renders the ad. To maximize Kickbacks revenue keep LONG,
+STABLE sessions; avoid unnecessary reloads during active work.
+
+**ORIGEN:** Impression-gap forensic 2026-07-03 (`vault/audits/kickbacks_impression_gap_2026-07-03.md`).
+Canary-freeze hypothesis DISCARDED: at the 12:08-local (10:08Z) cutoff the CLI was idle
+(no activate/injection); the ad pipeline reached `hasAd:true`+`authHealthy:ok` after it;
+`boot.canary` absent; guard clean. Cause external to PP. Cross-ref SCS C60.
+
+### UKDL TRAP T-KICKBACKS-VSIX-BLOCKED-001 -- stuck selfupdate can strand Kickbacks on an old version
+
+**TRIGGER:** `selfupdate.failed {reason:"vsix-url-blocked"}` recurring in `~/.vibe-ads/debug.log`.
+
+**ACCION:** Not an immediate earning bug, but a chronic block strands the extension on an
+old build (accumulating incompatibilities). `tools/kickbacks_guard.ps1` INV-VSIX now
+advises (WARN, throttled 1x/day, fail-open) when the most-recent `consecutiveFails` > 10.
+Advisory only -- never blocks. Owner action: reinstall the extension manually from kickbacks.ai.
+
+**ORIGEN:** Same forensic. Observed stuck on 0.3.177 (target 0.3.178) since >=30-jun,
+`consecutiveFails` climbing. Monitor added 2026-07-03. Cross-ref SCS C60 addendum (2026-07-03).
 | T-CURSOR-PROFILE-ORDER-001 | `vault/plans/kclaude-terminal-profile-2026-07-01.md` | kClaude terminal profile added to Cursor `+` menu. Premise-corrected: the `Claude` profile launches the OLD `~/.claude/kclaude.bat` (simple restart wrapper), NOT claude.exe; `kClaude` launches the SMART `~/.claude/bin/kclaude.ps1` (W6 pre-launch intelligence: W1 context / W4 coordinator / W5 cost / W2 auto-resume / W3 naming) via `bin/kclaude.cmd`. Icon/color cloned byte-identical from `Claude` (sparkle / terminal.ansiMagenta). Ordering (proven from Cursor source, NOT insertion order): `_sortProfileQuickPickItems` pins the default then `localeCompare`-sorts the rest alphabetically. So the profile key is `" kClaude"` (leading ASCII space) because `" kClaude".localeCompare("Claude")<0` -> collates first among non-defaults -> menu = Last session (Default) / kClaude / Claude. "Last session" stays `defaultProfile.windows` (unchanged). Insertion order is irrelevant; verified by replaying Cursor's own sort on the live file. Backup: `settings.json.bak.20260701T130248Z`. Arg passthrough + launch chain empirically proven. |

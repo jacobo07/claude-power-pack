@@ -46,6 +46,7 @@ param(
   [switch]$RepairSettings,
   [switch]$SelfTest,
   [switch]$SimulateSignedOut,
+  [switch]$SimulateVsixBlocked,
   [int]$AdStaleMinutes = 20,
   [int]$RenotifyMinutes = 30,
   [string]$Node = "C:\Program Files\nodejs\node.exe",
@@ -56,7 +57,9 @@ param(
   [string]$AdCache   = "C:\Users\User\.vibe-ads\cli-ad.json",
   [string]$LogFile   = "C:\Users\User\.claude\state\kickbacks_guard.log",
   [string]$AuthState = "C:\Users\User\.claude\state\kickbacks_auth_state.json",
-  [string]$SignInFlag= "C:\Users\User\.claude\state\kickbacks_signin_needed.flag"
+  [string]$SignInFlag= "C:\Users\User\.claude\state\kickbacks_signin_needed.flag",
+  [string]$DebugLog  = "C:\Users\User\.vibe-ads\debug.log",
+  [string]$VsixState = "C:\Users\User\.claude\state\kickbacks_vsix_state.json"
 )
 $ErrorActionPreference = "Continue"   # fail-open: a guard must never break a working setup
 $utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -190,6 +193,43 @@ try {
     }
   }
 } catch { $warns += ("canary check error: " + $_.Exception.Message) }
+
+# --- INV-VSIX: advise (throttled 1x/day) if Kickbacks selfupdate is chronically blocked ---
+# Kickbacks logs selfupdate.failed {reason:"vsix-url-blocked", consecutiveFails:N} when it
+# cannot fetch the newer VSIX -> the extension stays stuck on an old version. Not an immediate
+# earning bug, so advisory only: warn once/day when the most-recent consecutiveFails > 10.
+# Fail-open: no log / parse error -> silence.
+try {
+  $vsixFails = 0
+  if ($SimulateVsixBlocked) {
+    $vsixFails = 99
+  } elseif (Test-Path $DebugLog) {
+    $tail = Get-Content $DebugLog -Tail 400 -ErrorAction SilentlyContinue
+    for ($i = $tail.Count - 1; $i -ge 0; $i--) {
+      $ln = $tail[$i]
+      if (($ln -match 'selfupdate\.failed') -and ($ln -match 'vsix-url-blocked')) {
+        if ($ln -match '"consecutiveFails":\s*(\d+)') { $vsixFails = [int]$Matches[1] }
+        break
+      }
+    }
+  }
+  if ($vsixFails -gt 10) {
+    $lastVsixNotify = [datetime]"2000-01-01"
+    if (Test-Path $VsixState) {
+      try { $vx = Get-Content $VsixState -Raw | ConvertFrom-Json
+            if ($vx.lastNotify) { $lastVsixNotify = [datetime]$vx.lastNotify } } catch {}
+    }
+    $hrsSince = ((Get-Date) - $lastVsixNotify).TotalHours
+    if ($SimulateVsixBlocked -or ($hrsSince -ge 24)) {
+      $warns += ("Kickbacks no puede actualizarse (vsix-url-blocked, " + $vsixFails + " fallos consecutivos). Considerar reinstalar la extension manualmente desde kickbacks.ai")
+      if (-not $SimulateVsixBlocked) {
+        [System.IO.File]::WriteAllText($VsixState, (@{ lastNotify = (Get-Date).ToString('o'); consecutiveFails = $vsixFails } | ConvertTo-Json -Compress), $utf8)
+      }
+    } else {
+      $notes += ("vsix-blocked present (fails=" + $vsixFails + ") -- within 24h renotify throttle")
+    }
+  }
+} catch { $warns += ("vsix check error: " + $_.Exception.Message) }
 
 # --- optional self-test: run the real chain, assert the bar ---
 $selfTestResult = ""
