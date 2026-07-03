@@ -34,12 +34,28 @@ this commit (Sprint 5). SCS C69→C71 collision fix: `4d7f727` (concurrent pane)
   citing real counts (688 repo + 232 cross-repo), silent for git/Edit/Read,
   throttle + fail-open confirmed; `node --check` clean.
 
+## Activation — CONFIRMED 2026-07-03
+
+The Owner synced `~/.claude/hooks/hook-dispatcher.js` from canonical. Verified
+live, observed evidence (not assumption):
+- **graph_first_gate fires and REACHES THE MODEL** — a Grep PreToolUse through the
+  live Read-chain returns the advisory in `hookSpecificOutput.additionalContext`.
+- **session_writeback advances the store** — a Stop event re-indexed PP (695
+  nodes), `graphify_global.json` `updated_at` advanced, `writeback.log` receipt written.
+- **test_graphify_live** 3/3, dispatcher `node --check` clean, canonical↔live IN SYNC.
+
+**Bug fixed en route (`026573e`):** the dispatcher's `sanitizeForSchema` dropped
+`additionalContext` for the PreToolUse family while `mergeOutputs` added it — an
+internal contradiction that had silently muted EVERY PreToolUse context-injector
+(not just GK-12). PreToolUse `additionalContext` is a first-class field (official
+hooks docs, verified). Kept in the PreToolUse branch. Re-sync was required after
+the fix — the drift recurs on any canonical dispatcher change (T-HOOK-DISPATCHER-DRIFT-001).
+
 ## Honest residuals (level-2, per GK-12 — named, not closed)
 
-- **Activation is Owner-side (HR-001).** The live dispatcher mirror
-  `~/.claude/hooks/hook-dispatcher.js` must be synced from canonical for the
-  Graph-First gate + writeback hook to fire; the live copy has zero unique lines,
-  so the sync is non-destructive. The agent cannot write `~/.claude/hooks/`.
+- **Re-sync on every canonical dispatcher change (HR-001).** The agent cannot
+  write `~/.claude/hooks/`; each new hook wired into canonical stays inert until
+  an Owner `Copy-Item` canonical→live. Runbook + drift trap capture the ritual.
 - **Librarian swarm (GK-11 / Sprint 4) deferred** — Owner-side `~/.claude/agents/`
   registration; datasets designed, live agents not yet dispatched.
 - **Big-repo writeback defers** (> 4000 md files) to the scheduled `indexer --all`
