@@ -43,6 +43,11 @@ PROMOTABLE = {"hard_rule", "scs_seal", "decision", "contract", "dataset", "trap"
 
 
 def state_dir() -> Path:
+    # GRAPHIFY_STATE_DIR redirects the whole store (tests set it to a tmp dir so
+    # they never touch the real ~/.claude/state — hermetic, no global writes).
+    override = os.environ.get("GRAPHIFY_STATE_DIR")
+    if override:
+        return Path(override)
     return Path(os.path.expanduser("~")) / ".claude" / "state" / "graphify"
 
 

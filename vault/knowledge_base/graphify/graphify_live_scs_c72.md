@@ -1,0 +1,51 @@
+# SCS C72 — Graphify Knowledge Navigation Kernel — LIVE BUILD — SEALED
+
+> The **architecture** of the Graphify Intelligence Kernel was sealed under
+> **SCS C71** (13 datasets, GK-00..GK-12). **This** seal, **SCS C72**, covers the
+> **live implementation** — the running code that makes the kernel navigate, not
+> just describe. C71 is the map; C72 is the territory.
+
+---
+
+## What is sealed (the live surface)
+
+| Sprint | Artifact | Role |
+|---|---|---|
+| 1 | `tools/graphify_knowledge.py` + `kobi_graphify.py --knowledge` | GK-03/04 knowledge-node + typed-edge grapher; extends the existing code grapher, does not reimplement it |
+| 2 | `modules/graphify/global_store.py` | GK-10 central cross-repo store (`~/.claude/state/graphify/`); signal-gated promotion, union-with-provenance merge (HR-006) |
+| 2 | `modules/graphify/indexer.py` | active-repo discovery from `terminal_slots.json` + standalone runner |
+| 3 | `hooks/graph_first_gate.js` | GK-12 Graph-First advisory (level-2, never blocks), wired into the Bash + Read/Grep PreToolUse chains |
+| 5 | `modules/graphify/session_writeback.py` | GK-08 writeback Stop hook — re-indexes the repo at session close, bounded + fail-open |
+| 5 | `tests/test_graphify_live.py` | 3 hermetic V-gates (classify / promotion / writeback-loop) |
+| 5 | `graphify_hard_rules.md` | HR-GRAPH-FIRST-001 + T-GRAPHIFY-STALE-NODE-001 |
+
+Commits: `2d80b27` (Sprint 1), `7ef61ab` (Sprint 2), `0b2a837` (Sprint 3),
+this commit (Sprint 5). SCS C69→C71 collision fix: `4d7f727` (concurrent pane).
+
+## Done-gate (observed evidence)
+
+- **Cross-repo query** spans **6 repos**; `ukdl-universal` merged from 3 origins,
+  `HR-001..006` from 2 — union-with-provenance proven, no directional overwrite.
+- **Promotion discipline**: global_nodes **8069 → 232** after the signal gate;
+  GEO-audit promotion **7516 → 76** of 8312 nodes (selective, not a flood).
+- **`test_graphify_live.py`**: `GRAPHIFY_LIVE_PASS=3/3`, exit 0, on two
+  consecutive hermetic runs (re-run-safe, no global writes).
+- **`graph_first_gate`**: runtime-verified — advisory fires for Grep / Bash-search
+  citing real counts (688 repo + 232 cross-repo), silent for git/Edit/Read,
+  throttle + fail-open confirmed; `node --check` clean.
+
+## Honest residuals (level-2, per GK-12 — named, not closed)
+
+- **Activation is Owner-side (HR-001).** The live dispatcher mirror
+  `~/.claude/hooks/hook-dispatcher.js` must be synced from canonical for the
+  Graph-First gate + writeback hook to fire; the live copy has zero unique lines,
+  so the sync is non-destructive. The agent cannot write `~/.claude/hooks/`.
+- **Librarian swarm (GK-11 / Sprint 4) deferred** — Owner-side `~/.claude/agents/`
+  registration; datasets designed, live agents not yet dispatched.
+- **Big-repo writeback defers** (> 4000 md files) to the scheduled `indexer --all`
+  — a bounded, logged residual, not a silent skip.
+- **Glob + Task matchers** are an optional future `settings.json` extension; today
+  the gate covers Grep (Read chain) + Bash-search.
+
+*Live build sealed under **SCS C72**. Architecture: [[graphify_live_scs_c72|C71]].
+Parent conscience: [[graphify_12_graph_first_enforcement]] (CO-10 ladder).*

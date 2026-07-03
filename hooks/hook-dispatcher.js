@@ -132,6 +132,12 @@ const CHAIN_MAP = {
     // the git+AST work (audit gap #2). MINOR/DELETED are silent; a per-repo
     // docs/.ads-disabled file is the kill switch.
     { exe: PY_EXE, script: '../skills/claude-power-pack/tools/ads_sync.py', timeoutMs: 6000 },
+    // GK-08 Session Writeback: re-index the current repo into the central graph
+    // store at session close so this session's knowledge changes are navigable
+    // next session (bounded: repos > 4000 md files defer to the scheduled
+    // indexer --all). Fail-open, ALWAYS exit 0, never blocks Stop; closes the
+    // WRITE->READ loop the GK-12 Graph-First gate reads from.
+    { exe: PY_EXE, script: '../skills/claude-power-pack/modules/graphify/session_writeback.py', timeoutMs: 8000 },
   ],
   // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
   // Root cause: settings.json registered 7 standalone PreToolUse hooks on
