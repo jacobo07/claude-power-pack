@@ -20,6 +20,8 @@ if str(_PP_ROOT) not in sys.path:
 
 from modules.cognitive_os import process_governor as pg  # noqa: E402
 from modules.cognitive_os import hibernate_runner as hr  # noqa: E402
+from modules.cognitive_os import hibernation  # noqa: E402
+from modules.cognitive_os import rehydration as rehy  # noqa: E402
 
 _passes = 0
 _fails = 0
@@ -257,9 +259,70 @@ def test_run_plan_executes_targets():
             _fail("V-RAM-FREED", f"runs={[(r.pid, r.verdict) for r in runs]}")
 
 
+# --- SPRINT 4: rehydration + G4 identity verify (real CO-07 round-trip) -------
+
+def test_g4_verified_roundtrip():
+    # REAL hibernate -> restore -> G4 identity verify (no mocks anywhere).
+    with tempfile.TemporaryDirectory() as td:
+        tdp = Path(td)
+        reg = tdp / "hib.jsonl"
+        anchor = tdp / "sess.jsonl"
+        anchor.write_text("{}\n", encoding="utf-8")
+        sid = "sess-abcd-1234"
+        res = hibernation.hibernate(sid, str(tdp), transcript_path=str(anchor),
+                                    now=NOW, registry_path=str(reg))
+        if not res.ok:
+            _fail("V-G4-VERIFIED", f"CO-07 store failed: {res.reason}")
+            return
+        v = rehy.verify_rehydration(res.archive_id, sid, registry_path=str(reg))
+        if v.verdict == "RECOVERED" and v.sid == sid and v.accepted:
+            _ok("V-G4-VERIFIED",
+                "real hibernate->restore->verify: RECOVERED, sid matches")
+        else:
+            _fail("V-G4-VERIFIED",
+                  f"verdict={v.verdict} sid={v.sid} reason={v.reason}")
+
+
+def test_g4_failed_sid_mismatch():
+    with tempfile.TemporaryDirectory() as td:
+        tdp = Path(td)
+        reg = tdp / "hib.jsonl"
+        anchor = tdp / "sess.jsonl"
+        anchor.write_text("{}\n", encoding="utf-8")
+        res = hibernation.hibernate("real-sid", str(tdp),
+                                    transcript_path=str(anchor), now=NOW,
+                                    registry_path=str(reg))
+        v = rehy.verify_rehydration(res.archive_id, "WRONG-sid",
+                                    registry_path=str(reg))
+        if v.verdict == "FAILED" and "identity" in v.missing:
+            _ok("V-G4-FAILED-MISMATCH",
+                "restored sid != resumed sid -> FAILED (never the wrong session)")
+        else:
+            _fail("V-G4-FAILED-MISMATCH", f"verdict={v.verdict} missing={v.missing}")
+
+
+def test_rehydrate_flag_roundtrip():
+    # The wrapper reads the wake flag via ConvertFrom-Json; prove the contract.
+    with tempfile.TemporaryDirectory() as td:
+        pane = _pane(pid=77, wrapper_pid=903, sid="sess-77", cwd="C:/some/repo")
+        run = hr.hibernate_pane(
+            pane, flag_dir=td,
+            hibernate_fn=lambda *a, **k: _FakeHR(True, archive_id="arc-77"),
+            kill_fn=lambda pid: True, now=NOW)
+        flag = hr.flag_path_for(903, td)
+        payload = json.loads(flag.read_text(encoding="utf-8"))
+        if (run.ok and payload.get("sid") == "sess-77"
+                and payload.get("cwd") == "C:/some/repo"
+                and payload.get("archive_id") == "arc-77"):
+            _ok("V-REHYDRATE-FLAG-ROUNDTRIP",
+                "wrapper reads sid+cwd+archive from the wake flag (contract intact)")
+        else:
+            _fail("V-REHYDRATE-FLAG-ROUNDTRIP", f"payload={payload}")
+
+
 def main() -> int:
     print("== Transparent Process Hibernation -- FASE A V-gates ==")
-    print("- SPRINT 1: Resource Governor")
+    print("- SPRINT 1/3/4: Governor + executor + rehydrate")
     for fn in (test_governor_hibernates_clean_idle,
                test_governor_respects_foreground,
                test_governor_respects_loop,
@@ -274,7 +337,10 @@ def main() -> int:
                test_hibernate_store_then_kill,
                test_hibernate_refuse_no_store,
                test_hibernate_kill_rollback,
-               test_run_plan_executes_targets):
+               test_run_plan_executes_targets,
+               test_g4_verified_roundtrip,
+               test_g4_failed_sid_mismatch,
+               test_rehydrate_flag_roundtrip):
         try:
             fn()
         except Exception as exc:  # noqa: BLE001

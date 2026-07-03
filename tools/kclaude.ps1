@@ -90,6 +90,21 @@ function Start-AdvisoryRefresh {
   }
 }
 
+# --- helper: beacon this pane's session id for the Resource Governor ----------
+# FASE A hibernation (process_governor): the governor maps a live claude.exe ->
+# its session by reading %TEMP%\kclaude-pane-<wrapperpid>.sid. Without a beacon
+# the pane has no resolvable sid and the governor KEEPS it (no-sid fail-safe), so
+# this is best-effort and fail-open; it never blocks the launch.
+function Write-PaneSidBeacon($sid) {
+  if (-not $sid) { return }
+  try {
+    $b = Join-Path $env:TEMP ("kclaude-pane-{0}.sid" -f $PID)
+    $o = [pscustomobject]@{ sid = $sid; cwd = $cwd; pid = $PID;
+      ts = (Get-Date).ToUniversalTime().ToString('o') }
+    ($o | ConvertTo-Json -Compress) | Set-Content -Path $b -Encoding UTF8 -NoNewline
+  } catch { }
+}
+
 # --- passthrough arg inspection ----------------------------------------------
 # Honor an explicit --resume/--continue; strip -n/--new (now a no-op -- a bare
 # terminal-profile launch already opens a NEW session by default).
@@ -175,10 +190,54 @@ if ($resumeArg) { $launch += ($resumeArg -split '\s+') }
 if ($ClaudeArgs) { $launch += $ClaudeArgs }
 
 while ($true) {
+  # FASE A: beacon our session id (when known) so the Resource Governor can map
+  # this pane's claude.exe -> its session for hibernation. Covers every relaunch
+  # (initial resume, /restart, hibernate rehydrate). A new never-resumed session
+  # has no sid here and is left alone (governor no-sid keep).
+  $paneSid = $null
+  for ($i = 0; $i -lt $launch.Count; $i++) {
+    if (($launch[$i] -in @('--resume', '-r')) -and (($i + 1) -lt $launch.Count)) {
+      $paneSid = $launch[$i + 1]
+    }
+  }
+  Write-PaneSidBeacon $paneSid
+
   & claude @launch
   $code = $LASTEXITCODE
+
+  # FASE A: HIBERNATION WAKE. The Resource Governor may have killed THIS pane to
+  # reclaim RAM, arming a wake flag keyed by our own pid. Park at a status line
+  # and rehydrate --resume on the first keystroke. Honest limit: the keystroke is
+  # a WAKE, not a message -- ConPTY stdin cannot deliver it into resumed claude,
+  # so the Owner presses any key, then types. The terminal scrollback stays intact.
+  $hibFlag = Join-Path $env:TEMP ("claude-hibernate-{0}.flag" -f $PID)
+  if (Test-Path $hibFlag) {
+    $hsid = $null; $hcwd = $null; $hts = $null
+    try {
+      $hj = Get-Content $hibFlag -Raw -ErrorAction Stop | ConvertFrom-Json
+      $hsid = $hj.sid; $hcwd = $hj.cwd; $hts = $hj.ts
+    } catch { }
+    $label = if ($hcwd) { Split-Path $hcwd -Leaf } else { 'session' }
+    Write-Host ""
+    Write-Host ("  [*] '$label' hibernated to free RAM. Press any key to continue.") -ForegroundColor Cyan
+    Write-Host ("      Conversation preserved -- rehydrates via --resume. Idle since $hts.") -ForegroundColor DarkGray
+    try { [void][System.Console]::ReadKey($true) } catch { }
+    Remove-Item $hibFlag -Force -ErrorAction SilentlyContinue
+    Write-Host "  [~] Rehydrating session..." -ForegroundColor Green
+    if ($hsid) { $launch = @('--resume', $hsid) } else { $launch = @('--continue') }
+    # Re-run the fast CO gates so the Cognitive OS is active after rehydrate.
+    $null = Get-FastDecision
+    Show-CachedAdvisories
+    Start-AdvisoryRefresh
+    continue
+  }
+
   $flag = Get-ChildItem $flagPattern -ErrorAction SilentlyContinue | Select-Object -First 1
-  if (-not $flag) { exit $code }
+  if (-not $flag) {
+    Remove-Item (Join-Path $env:TEMP ("kclaude-pane-{0}.sid" -f $PID)) `
+      -Force -ErrorAction SilentlyContinue
+    exit $code
+  }
   Remove-Item $flag.FullName -Force -ErrorAction SilentlyContinue
   $sid = $null
   if (Test-Path $sidFile) {
