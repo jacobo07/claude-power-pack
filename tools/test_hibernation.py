@@ -22,6 +22,21 @@ from modules.cognitive_os import process_governor as pg  # noqa: E402
 from modules.cognitive_os import hibernate_runner as hr  # noqa: E402
 from modules.cognitive_os import hibernation  # noqa: E402
 from modules.cognitive_os import rehydration as rehy  # noqa: E402
+import run_hibernation as rhn  # noqa: E402  (tools/ is sys.path[0] when run direct)
+
+
+def _proj_with_idle_pane(base: Path, cwd: str, sid: str, idle_min: float):
+    """Materialize a tmp projects tree with one transcript whose last turn is
+    ``idle_min`` old, and return the raw scan record that maps to it."""
+    enc = pg._enc(cwd)
+    (base / enc).mkdir(parents=True, exist_ok=True)
+    tp = base / enc / f"{sid}.jsonl"
+    ts = (NOW - timedelta(minutes=idle_min)).isoformat()
+    tp.write_text(json.dumps({"timestamp": ts, "type": "user"}) + "\n",
+                  encoding="utf-8")
+    return {"pid": 700, "wrapper_pid": 701, "ws_mb": 260.0,
+            "wrapper_kind": "ps1", "sid": sid, "cwd": cwd,
+            "is_foreground": False, "is_loop": False}
 
 _passes = 0
 _fails = 0
@@ -354,9 +369,47 @@ def test_enrich_resolves_idle_and_anchor():
                   f"idle={p.idle_min} anchor={p.has_anchor} decide={d.verdict}")
 
 
+def test_orchestrator_dry_no_side_effects():
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td) / "proj"
+        flags = Path(td) / "flags"
+        flags.mkdir()
+        raw = [_proj_with_idle_pane(base, "C:/w/rx", "sess-dry", 40.0)]
+        gp, runs = rhn.run(raw, flag_dir=str(flags), live=False,
+                           proj_base=str(base), now=NOW)
+        flag = hr.flag_path_for(701, str(flags))
+        if (gp.hibernate_count == 1 and runs == []
+                and not flag.is_file() and not any(flags.iterdir())):
+            _ok("V-ORCHESTRATOR-DRY",
+                "dry run: plan selects 1 target but writes NO flag + kills nothing")
+        else:
+            _fail("V-ORCHESTRATOR-DRY",
+                  f"hib={gp.hibernate_count} runs={len(runs)} flag={flag.is_file()}")
+
+
+def test_orchestrator_live_executes():
+    with tempfile.TemporaryDirectory() as td:
+        base = Path(td) / "proj"
+        flags = Path(td) / "flags"
+        flags.mkdir()
+        raw = [_proj_with_idle_pane(base, "C:/w/rx", "sess-live", 40.0)]
+        killed = []
+        gp, runs = rhn.run(raw, flag_dir=str(flags), live=True,
+                           proj_base=str(base), now=NOW,
+                           hibernate_fn=lambda *a, **k: _FakeHR(True),
+                           kill_fn=lambda pid: killed.append(pid) or True)
+        if (gp.hibernate_count == 1 and len(runs) == 1 and runs[0].ok
+                and killed == [700]):
+            _ok("V-ORCHESTRATOR-LIVE",
+                f"live run: executed 1 target, killed pid {killed[0]}")
+        else:
+            _fail("V-ORCHESTRATOR-LIVE",
+                  f"hib={gp.hibernate_count} runs={len(runs)} killed={killed}")
+
+
 def main() -> int:
     print("== Transparent Process Hibernation -- FASE A V-gates ==")
-    print("- SPRINT 1/3/4: Governor + executor + rehydrate")
+    print("- SPRINT 1/3/4/5: Governor + executor + rehydrate + orchestrator")
     for fn in (test_governor_hibernates_clean_idle,
                test_governor_respects_foreground,
                test_governor_respects_loop,
@@ -375,7 +428,9 @@ def main() -> int:
                test_g4_verified_roundtrip,
                test_g4_failed_sid_mismatch,
                test_rehydrate_flag_roundtrip,
-               test_enrich_resolves_idle_and_anchor):
+               test_enrich_resolves_idle_and_anchor,
+               test_orchestrator_dry_no_side_effects,
+               test_orchestrator_live_executes):
         try:
             fn()
         except Exception as exc:  # noqa: BLE001
