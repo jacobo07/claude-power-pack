@@ -137,10 +137,11 @@ def main() -> int:
     else:
         _fail("V-AUTORUN-LEGACY", f"legacy task count={len(legacy)}")
 
-    # ---- target_count pads fresh tabs (RC-2 cure) ---------------------------
-    # Repo had 3 terminals but only 1 resumable session known -> emit EXACTLY 3
-    # tasks: 1 exact + 2 uniquely-labelled fresh (so they survive as 3 terminals
-    # instead of collapsing to 1).
+    # ---- empty shells are NEVER recreated (BL-CPCOS-RESTORE-005) ------------
+    # Repo had 3 terminals but only 1 resumable session; the other 2 were empty
+    # shells (opened, no transcript on disk). Even with target_count=3, emit
+    # EXACTLY 1 task -- the resumable one. Shells are not padded back as
+    # throwaway `claude` sessions (Owner "no recrear empty shells", 2026-07-03).
     one_known = [
         {"resume": "claude --resume aaaaaaaa1111", "resume_kind": "exact",
          "repo": "GEO-audit", "cwd": r"C:\x\GEO-audit"},
@@ -151,10 +152,10 @@ def main() -> int:
     ]
     padded = va.build_cpc_tasks(one_known, target_count=3)
     labels = _cpc_labels(padded)
-    if len(padded) == 3 and len(set(labels)) == 3:
-        _ok("V-AUTORUN-PAD", f"3 terminals -> 3 distinct tasks ({len(set(labels))} unique labels)")
+    if len(padded) == 1 and all(t["args"] for t in padded):
+        _ok("V-AUTORUN-NO-PAD-SHELLS", "1 exact + 2 shells, target 3 -> 1 task (shells not recreated)")
     else:
-        _fail("V-AUTORUN-PAD", f"count={len(padded)} labels={labels}")
+        _fail("V-AUTORUN-NO-PAD-SHELLS", f"count={len(padded)} labels={labels}")
 
     # ---- target_count truncates extras (closed-tab cure) --------------------
     # Registry knows 2 resumable sessions but Cursor shows only 1 tab now (the
@@ -184,27 +185,34 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as td:
         snap_json = Path(td) / "session_snapshot.json"
         cwd = str(Path(td) / "GEO-audit")
-        # ONE resumable pane in the snapshot, but topology says 3 tabs.
+        # THREE resumable panes, topology says 2 tabs. BL-CPCOS-RESTORE-005:
+        # tab_counts wires in and only TRUNCATES to the live count (empty shells
+        # are never padded back in; the extra resolved session is a closed tab).
         snap_json.write_text(json.dumps([
             {"resume": "claude --resume aaaaaaaa1111", "resume_kind": "exact",
+             "repo": "GEO-audit", "cwd": cwd},
+            {"resume": "claude --resume bbbbbbbb2222", "resume_kind": "exact",
+             "repo": "GEO-audit", "cwd": cwd},
+            {"resume": "claude --resume cccccccc3333", "resume_kind": "exact",
              "repo": "GEO-audit", "cwd": cwd},
         ]), encoding="utf-8")
         results = va.generate_from_snapshot(
             snap_json, dry_run=True,
-            tab_counts={tr.norm_path(cwd): 3},
+            tab_counts={tr.norm_path(cwd): 2},
         )
         n = results[0]["n_tasks"] if results else -1
-        if len(results) == 1 and n == 3:
-            _ok("V-AUTORUN-WIRED", "snapshot 1 pane + topology 3 -> 3 tasks")
+        if len(results) == 1 and n == 2:
+            _ok("V-AUTORUN-WIRED", "snapshot 3 exact + topology 2 -> truncated to 2")
         else:
             _fail("V-AUTORUN-WIRED", f"results={[(r['cwd'], r['n_tasks']) for r in results]}")
 
-        # Fail-open: unknown cwd in tab_counts -> legacy derived behaviour (1).
+        # No topology count for this cwd -> no truncation: every RESOLVED session
+        # is kept (3). Empty shells are still never fabricated (BL-CPCOS-RESTORE-005).
         results2 = va.generate_from_snapshot(
             snap_json, dry_run=True, tab_counts={},
         )
-        if results2 and results2[0]["n_tasks"] == 1:
-            _ok("V-AUTORUN-FAILOPEN", "no topology count -> legacy 1 task (no regression)")
+        if results2 and results2[0]["n_tasks"] == 3:
+            _ok("V-AUTORUN-FAILOPEN", "no topology count -> 3 resolved kept (no pad, no truncate)")
         else:
             _fail("V-AUTORUN-FAILOPEN", f"n={results2[0]['n_tasks'] if results2 else None}")
 

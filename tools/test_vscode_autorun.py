@@ -73,6 +73,50 @@ def main() -> int:
     else:
         _fail("V-AUTORUN-DEDUP", f"expected 2, got {len(tasks)}")
 
+    # --- empty-shell exclusion (BL-CPCOS-RESTORE-005) -------------------
+    # A pane whose resume is a bare `cd && claude` (no --resume <sid>) is an
+    # empty shell: never emit a task for it, never pad it back in.
+    shells = [
+        _pane("C:\\repoA", 'cd "C:\\repoA" && claude', "missing"),
+        _pane("C:\\repoA", 'cd "C:\\repoA" && claude', "missing"),
+    ]
+    if va.build_cpc_tasks(shells) == []:
+        _ok("V-AUTORUN-SKIP-EMPTY-SHELL", "2 missing panes -> 0 tasks")
+    else:
+        _fail("V-AUTORUN-SKIP-EMPTY-SHELL",
+              f"expected 0, got {len(va.build_cpc_tasks(shells))}")
+
+    # mixed: only the resolvable (exact) pane survives
+    mixed = [
+        _pane("C:\\repoA", "claude --resume real111", "exact"),
+        _pane("C:\\repoA", 'cd "C:\\repoA" && claude', "missing"),
+    ]
+    mt = va.build_cpc_tasks(mixed)
+    if len(mt) == 1 and mt[0]["args"] == ["--resume", "real111"]:
+        _ok("V-AUTORUN-MIXED-ONLY-EXACT", "1 exact + 1 shell -> 1 exact task")
+    else:
+        _fail("V-AUTORUN-MIXED-ONLY-EXACT", f"got {[t['args'] for t in mt]}")
+
+    # target_count NEVER pads with bare tasks (empty shells not resurrected)
+    padded = va.build_cpc_tasks(mixed, target_count=5)
+    if len(padded) == 1 and all(t["args"] for t in padded):
+        _ok("V-AUTORUN-NO-PAD", "target_count=5 with 1 exact -> 1 task, no bare pad")
+    else:
+        _fail("V-AUTORUN-NO-PAD",
+              f"expected 1 non-bare, got {[t['args'] for t in padded]}")
+
+    # target_count still TRUNCATES when resolved sessions exceed live tabs
+    many = [
+        _pane("C:\\repoA", "claude --resume s1", "exact"),
+        _pane("C:\\repoA", "claude --resume s2", "exact"),
+        _pane("C:\\repoA", "claude --resume s3", "exact"),
+    ]
+    trunc = va.build_cpc_tasks(many, target_count=2)
+    if len(trunc) == 2 and trunc[0]["args"] == ["--resume", "s1"]:
+        _ok("V-AUTORUN-TRUNCATE", "3 exact / target 2 -> 2 (most-recent-first kept)")
+    else:
+        _fail("V-AUTORUN-TRUNCATE", f"expected 2, got {len(trunc)}")
+
     # --- merge preserves the Owner's own tasks --------------------------
     existing = {
         "version": "2.0.0",

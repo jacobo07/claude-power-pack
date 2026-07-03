@@ -1602,6 +1602,50 @@ of the live process, or regenerate them after the file is guaranteed present
 (Stop hook / periodic writer) -- never bake a point-in-time existence check of
 a not-yet-written file into a persisted restore command.
 
+### T-RESTORE-EMPTY-SHELL-002 -- reviving panes shows CO-08 + "History restored" on some tabs (CO-08 is INNOCENT)
+
+**Symptom (2026-07-03):** close a repo window with the X, reopen it -> some panes
+resume the exact conversation (the native "Resuming the full session..." prompt)
+but OTHERS open fresh with "History restored" + `PP CO-08: N hot session(s) on
+this repo (soft cap 2) -- opening a new one anyway`. Read as "CO-08 vetoed my
+resume and lost the session."
+
+**Disproven premise -- CO-08 does NOT interfere with resume.** The resume-vs-new
+distinction already exists at BOTH layers: `scheduler.decide()`
+(`co_08_parallel_cap.py`) returns `proceed` for `is_new=False`, and `kclaude.ps1`
+gates the CO-08 warning behind `$newSession`; an explicit `--resume` sets
+`$explicitResume -> $newSession=false`, making the warning UNREACHABLE on any
+resume. On a bare launch CO-08 is advisory-only -- it prints yellow text and
+proceeds new, never blocks or force-resumes (T-KCLAUDE-LAUNCH-CONTEXT-001). The
+CO-08 line is a downstream WITNESS of a bare launch, not its cause. (Cosmetic:
+`kclaude.ps1` labels the GLOBAL hot_count "on this repo".)
+
+**Real mechanism (empirically diagnosed from disk):** the fresh tabs were EMPTY
+SHELLS. Of 9 same-repo panes, 4 had real transcripts (resolved `exact` ->
+`kclaude --resume <sid>` -> resume fine) and 5 had session ids that NEVER
+produced a `<sid>.jsonl` (verified absent on disk, 0 bytes -- opened but never
+used, or the BL-CPCOS-RESTORE-003 race uncovered for the panes NOT carrying
+`PP_PANE_SID`). Those resolved `missing` in `snapshot._resume_for` and
+`vscode_autorun.build_cpc_tasks` PADded them (BL-CPCOS-RESTORE-004 count-parity)
+into bare `kclaude.bat` folderOpen tasks (`args: []`) -> new session +
+"History restored" + CO-08 on every reopen.
+
+**Fix (BL-CPCOS-RESTORE-005, Owner decision "no recrear empty shells"):**
+`build_cpc_tasks` emits a task ONLY for panes whose resume resolves to an
+explicit `--resume <sid>` (empty shells never recreated), and NEVER pads to the
+live tab count with bare tasks. `target_count` keeps only its TRUNCATE role
+(more resolved sessions than tabs = tabs since closed). Supersedes the
+RESTORE-004 padding. An unused shell is not worth resurrecting as an empty Claude
+tab. Evidence: this repo's live `.vscode/tasks.json` regenerated 8 -> 4 tasks (4
+exact, 0 bare); test_vscode_autorun 14/14, test_topology_reconcile 12/12,
+cognitive_os_build 68/68 (CO-08 intact).
+
+**Recognizer:** a scary advisory ("opening a new one anyway") on a restore path
+is often a WITNESS, not the culprit. Before "fixing" the gate that prints it,
+trace what actually issued the launch it is describing -- here the launch was
+correct-by-design (bare = new) and the real defect was UPSTREAM (recreating
+sessions that never existed).
+
 **Gates:** `tools/test_cpc_snapshot.py` 17/17 (new `V-RESUME-LIVE-SID`, hermetic
 x2); `tools/test_vscode_autorun.py` 10/10. Verified live: post-fix
 `claude-power-pack/.vscode/tasks.json` carries `--resume f78deb41...` for the

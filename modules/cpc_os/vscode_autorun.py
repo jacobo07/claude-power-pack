@@ -111,50 +111,37 @@ def build_cpc_tasks(
     command itself (panes that resolve to the same session share one terminal,
     mirroring restore_panes.ps1). Label key prefers a readable session tail.
 
-    ``target_count`` (Cursor-authoritative, BL-CPCOS-RESTORE-004): when given,
-    the result is forced to EXACTLY this many tasks -- the number of terminal
-    shells Cursor actually had open for this repo (from
-    topology_reconcile.live_tab_counts). This neutralises the count-drift
-    sources entirely:
-      * fewer distinct resumes than tabs -> PAD with uniquely-labelled fresh
-        ``claude`` tasks so N non-resumable chats survive as N terminals instead
-        of collapsing to one (RC-2);
-      * more distinct resumes than tabs -> TRUNCATE to the live count (the extra
-        sessions belong to tabs the Owner has since closed).
-    ``target_count=None`` keeps the legacy derived behaviour unchanged (so a
-    host without captured topology never regresses). A non-positive
-    ``target_count`` is ignored (degenerate) and also falls back to derived."""
+    EMPTY-SHELL EXCLUSION (BL-CPCOS-RESTORE-005, 2026-07-03, Owner decision "no
+    recrear empty shells"): a pane whose resume does NOT resolve to an explicit
+    ``--resume <sid>`` is an EMPTY SHELL -- a tab that opened but never produced
+    a transcript (its ``<sid>.jsonl`` was never born, verified absent on disk).
+    Recreating it launches a THROWAWAY fresh ``claude`` (+ the CO-08 "opening a
+    new one anyway" advisory + Cursor's "History restored"), which the Owner
+    reads as a lost session. So a non-resumable pane emits NO task and is NEVER
+    padded back in. This SUPERSEDES the BL-CPCOS-RESTORE-004 count-parity
+    padding: an unused shell is not worth resurrecting as an empty Claude tab.
+
+    ``target_count`` (Cursor-authoritative) now serves ONLY to TRUNCATE: when
+    more distinct RESOLVED sessions exist than live tabs, the extras belong to
+    tabs the Owner has since closed. It never pads. ``None`` / non-positive ->
+    no truncation (every resolved session becomes a task)."""
     seen: "OrderedDict[str, dict]" = OrderedDict()
     for p in panes_for_cwd:
         resume = (p.get("resume") or "").strip()
-        if not resume:
-            continue
-        if resume in seen:
+        if not resume or resume in seen:
             continue
         _cmd, args = parse_resume(resume)
-        if len(args) == 2:                       # ["--resume", "<sid>"]
-            sid = args[1]
-            kind = p.get("resume_kind") or "exact"
-            label_key = f"{sid[:8]} [{kind}]"
-        else:
-            label_key = f"new [{p.get('repo') or 'repo'}]"
-        seen[resume] = build_pane_task(resume, label_key)
+        if len(args) != 2:                       # empty shell -> never recreate
+            continue
+        sid = args[1]                            # args == ["--resume", "<sid>"]
+        kind = p.get("resume_kind") or "exact"
+        seen[resume] = build_pane_task(resume, f"{sid[:8]} [{kind}]")
     tasks = list(seen.values())
 
-    if not target_count or target_count <= 0:
-        return tasks
-    if len(tasks) >= target_count:
+    if target_count and target_count > 0 and len(tasks) > target_count:
         # Truncate extras -- closed tabs. Keep the first (snapshot order =
         # active-first, most-recent-first) so the survivors are the live ones.
-        return tasks[:target_count]
-    # Pad with uniquely-labelled fresh `claude` tabs (bare command -> launches
-    # in ${workspaceFolder}). Distinct labels keep VS Code from deduping them,
-    # so the COUNT lands exactly on the live tab count.
-    repo = next((p.get("repo") for p in panes_for_cwd if p.get("repo")), "repo")
-    k = 0
-    while len(tasks) < target_count:
-        k += 1
-        tasks.append(build_pane_task("", f"new {k} [{repo}]"))
+        tasks = tasks[:target_count]
     return tasks
 
 
