@@ -343,7 +343,34 @@ def _resolve_p3(scan_index, pat):
                     break
 
 
-def audit(proj_base=None):
+def pm03_health(state_dir=None):
+    """L-SELFCORR/P5 root-cause probe (C70): is the PM-03 Findings Bus actually
+    populated? P5 (repeated in-session question, 90k tok) is supposed to be
+    prevented by RedundancyTax consulting the bus -- but the bus only helps if it
+    HOLDS findings. Measures real population across all repos. `wired` is False
+    when the bus has zero findings anywhere: then P5's fix is 'WIRE PM-03'
+    (Owner-side SessionStart digest + Stop publish, HR-001), NOT a new gate.
+    Fail-open: any error -> unknown (wired=None)."""
+    try:
+        d = Path(state_dir) if state_dir else (
+            Path.home() / ".claude" / "state" / "parallel_mesh")
+        if not d.is_dir():
+            return {"bus_dir": str(d), "files": 0, "findings": 0, "wired": False}
+        files = list(d.glob("findings_bus_*.jsonl"))
+        total = 0
+        for f in files:
+            try:
+                total += sum(1 for ln in f.read_text(
+                    encoding="utf-8", errors="replace").split("\n") if ln.strip())
+            except OSError:
+                continue
+        return {"bus_dir": str(d), "files": len(files), "findings": total,
+                "wired": total > 0}
+    except Exception:  # noqa: BLE001 -- fail-open
+        return {"bus_dir": None, "files": 0, "findings": 0, "wired": None}
+
+
+def audit(proj_base=None, state_dir=None):
     pats = {
         "P1": _Pat("agent self-correction"),
         "P2": _Pat("owner repeats instruction"),
@@ -361,7 +388,7 @@ def audit(proj_base=None):
         _detect(s, pats, scan_index)
     _resolve_p3(scan_index, pats["P3"])
     return {"generated": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "n_sessions": n, "pats": pats}
+            "n_sessions": n, "pats": pats, "pm03": pm03_health(state_dir)}
 
 
 _FIX = {
@@ -438,6 +465,11 @@ def main(argv=None) -> int:
         flag = "FIX" if p.count >= FIX_MIN else "skip"
         print(f"  {key} {p.name[:34]:34s} freq={p.count:4d} "
               f"tok={p.tokens:>10,} [{flag}]")
+    pm = d["pm03"]
+    print(f"  PM-03 bus: files={pm['files']} findings={pm['findings']} "
+          f"wired={pm['wired']}"
+          + ("  -> P5 fix = WIRE PM-03 (bus inert)"
+             if pm["wired"] is False else ""))
     if args.report:
         out = Path(args.report)
         out.parent.mkdir(parents=True, exist_ok=True)
