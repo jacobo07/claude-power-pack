@@ -45,5 +45,26 @@
 
 ---
 
+## T-HOOK-DISPATCHER-DRIFT-001 — Committed hooks stay inert until the live mirror syncs
+
+- **TRIGGER:** New sub-hooks are added to the CANONICAL dispatcher
+  `skills/claude-power-pack/hooks/hook-dispatcher.js` (and committed) but the LIVE
+  mirror `~/.claude/hooks/hook-dispatcher.js` is not synced. The hooks are in git
+  yet DO NOT FIRE — the running dispatcher is the stale live copy.
+- **LESSON:** A committed hook is not an active hook. The agent cannot write
+  `~/.claude/hooks/` (HR-001), so activation is an Owner-side `Copy-Item`
+  canonical→live. Before instructing the sync, `Compare-Object` the two files and
+  confirm the live copy has ZERO unique lines (canonical strictly ahead) — only
+  then is a `-Force` overwrite non-destructive. Never assume "committed" == "live";
+  verify the diff, back up the live file, then sync.
+- **RESIDUAL:** the drift window between commit and sync — the hook is dark until
+  the Owner acts. Detection: a `graph_first_gate`/`ads_sync`/`session_writeback`
+  ref count of 0 in the live file while > 0 in canonical.
+- **ORIGEN:** the 2026-07-03 Graphify live build — GK-12 gate + GK-08 writeback +
+  ADS all committed to canonical, all inert until the activation Copy-Item.
+
+---
+
 *Cross-ref: project UKDL `vault/knowledge_base/ukdl-universal.md` §HARD-RULES.
-Sealed alongside the live build under SCS C72 ([[graphify_live_scs_c72]]).*
+Sealed alongside the live build under SCS C72 ([[graphify_live_scs_c72]]).
+Activation runbook: `vault/plans/graphify-activation-2026-07-03.md`.*
