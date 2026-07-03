@@ -142,6 +142,16 @@ def main() -> int:
     errors_path = root / ERRORS_REL
     index_path = root / INDEX_REL
 
+    # L-SCHED repair (C70): as a scheduled task this runs with an arbitrary cwd,
+    # so the default --project="." missed the repo's errors.md and exited 2 every
+    # day. Fall back to the script-relative PP root, which the log actually lives
+    # under. Masks nothing: a genuinely absent errors.md still fails below.
+    if not errors_path.exists():
+        pp_root = Path(__file__).resolve().parents[1]
+        if (pp_root / ERRORS_REL).exists():
+            root, errors_path, index_path = (
+                pp_root, pp_root / ERRORS_REL, pp_root / INDEX_REL)
+
     if args.check:
         if not errors_path.exists():
             print("ERROR: errors.md missing", file=sys.stderr)
