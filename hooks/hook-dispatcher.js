@@ -350,6 +350,13 @@ function sanitizeForSchema(merged, family) {
       if (typeof hso.permissionDecision === 'string') kept.permissionDecision = hso.permissionDecision;
       if (typeof hso.permissionDecisionReason === 'string') kept.permissionDecisionReason = hso.permissionDecisionReason;
       if (hso.updatedInput && typeof hso.updatedInput === 'object') kept.updatedInput = hso.updatedInput;
+      // PreToolUse DOES accept hookSpecificOutput.additionalContext (verified
+      // against the official hooks docs 2026-07-03: injected into Claude's
+      // context at hook-fire time). The prior branch dropped it, silently
+      // muting every PreToolUse context-injector (e.g. GK-12 graph_first_gate).
+      if (typeof hso.additionalContext === 'string' && hso.additionalContext.length > 0) {
+        kept.additionalContext = hso.additionalContext;
+      }
       clean.hookSpecificOutput = kept;
     } else if (EVENTS_HSO_ADDITIONAL_CONTEXT.has(family)) {
       const kept = { hookEventName: family };
