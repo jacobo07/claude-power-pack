@@ -152,3 +152,30 @@ per the Owner ruling (2026-06-30): expanding to 2500/Part (~+60k words) would it
 low-WU/MTok burn the kernel exists to prevent. The full expansion is deferred — not dropped —
 to the backlog for the week of 2026-07-06. Honest per the "no classified FAILs at done-gate"
 doctrine: a waived deviation with an Owner decision and a scheduled follow-up.
+
+---
+
+## CO-NextGen extension — CO-12 (SCS C74, 2026-07-04)
+
+The sealed family above is CO-00..CO-10 (SCS C61/C62); this section records later single-dataset
+extensions that take the next free CO ids. The CO-NextGen Reality Scan
+(`vault/plans/co-nextgen-datasets-2026-07-04.md`) found 7/9 proposed systems already COVERED,
+Loop-Compression COVERED by CO-09, and **two genuine gaps** (CO-11 Output Budget Governor, CO-12
+Cognitive Readiness Telemetry). Owner approved **CO-12 first** (measure-before-more-building).
+CO-09/CO-10 are never reused.
+
+| ID | Dataset | Verdict | Parent / reuse | Status |
+|---|---|---|---|---|
+| CO-11 | Output Budget Governor | **GAP-REAL** (approved, deferred) | `output_contracts` (quality→+economy) + CO-01 + CO-08/CO-09 | not built (Owner chose CO-12 first) |
+| CO-12 | [Cognitive Readiness Telemetry](cognitive_os_12_cognitive_readiness_telemetry.md) | **GAP-REAL** | C68/C69/C70 audit family + CO-01 WU/MTok + GK-09 observatory | ✅ written |
+
+**CO-12 in one line:** the *adoption axis* — a Cognitive Readiness Score (adoption rate over eligible
+opportunities, per lever/cohort) that ties to CO-01 WU/MTok, plus the **Telemetry-Before-Claims
+Contract** (no saving claim without a `(metric, source, value)` triple; else it is a hypothesis).
+Metrics name their data source and read *unknown* when the instrument is pending — never a faked 0/100.
+
+**CO-12 V-gates (`tools/test_co12_readiness_telemetry.py`, hermetic ×3):** V-REALITY-SCAN (declares
+COVERED set + real parents), V-CORRECT-IDS (never claims CO-09/CO-10), V-TELEMETRY-REAL (every metric
+names a concrete data source), V-PARENT-REFS, V-NO-CODE (0 code fences), V-CONTRACT (Telemetry-Before-
+Claims present), V-NO-REGRESSION (C68/C69/C70 suites still green). V-DEPTH inherits the CO-family
+Owner ruling (~600–1100 words/Part, architecturally complete, zero-padding).
