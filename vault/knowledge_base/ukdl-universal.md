@@ -2433,3 +2433,28 @@ Companion of HR-PREMISE-001 (verify APIs) and the no-classified-FAILs law. Cross
 
 **ORIGEN:** the C75 Process-Hibernation build + this housekeeping/PM-03 sprint -- both opened
 by verifying (not trusting) the handoff, which is exactly why the false premises were caught.
+
+### T-INERT-ARCHITECTURE-TAX-002 -- a system's LOGIC can be built + tested yet never reach the live path
+
+**TRIGGER:** A prompt asks to "build/recalibrate" behavior X, but a Reality Scan shows X's
+pure logic already exists + is unit-green -- the real gap is that the LIVE entry point never
+calls it.
+
+**FINDING (empirical, 2026-07-04):** two systems in one week were "built but inert at the
+call site", not unbuilt: (1) PM-03 -- consume side wired (Hook 13), publish side had no Stop
+hook; (2) CO-08 -- `scheduler.decide(declared=…)` scope-gate built + tested (C65/C66), but the
+live launch gate `modules/wrapper/prelaunch._gate` called the blunt `scheduler.admit()` and
+never passed `declared`, so the intent-gate was unreachable at launch. Unit-green hides this:
+the tests exercise the logic directly, never the live entry point. This is the **inert
+architecture tax** -- building the smart layer earns zero savings until the live caller is
+rewired to use it.
+
+**FIX:** when a Reality Scan finds the logic present, do NOT rebuild it -- trace the LIVE
+entry point (hook, `prelaunch`, wrapper, scheduler `admit`) and wire IT to the built logic,
+fail-open, with a test that drives the ENTRY POINT (not just the pure core). If the final
+hop is a live `~/.claude/` hook or the wrapper, ship the PP-internal wiring + document the
+Owner-side activation (HR-001). Companion of [[PR-VERIFY-HANDOFF-PREMISES-001]] (verify the
+premise) -- this one says: once verified-as-built, wire the caller, don't duplicate the layer.
+
+**ORIGEN:** CO-08 intent-gate live-path wiring (`prelaunch._gate` -> PM-02), sealed
+`[[scs_c76_co08_intent_gate]]`; PM-03 publish wiring the day before (`[[scs_c75_process_hibernation]]` sprint).

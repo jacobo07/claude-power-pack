@@ -423,12 +423,80 @@ def sprint5():
               f"ran={r.ran} asset={r.asset!r} calls={len(calls)}")
 
 
+def sprint6():
+    print("[CO-08 -- intent-gate wired into the live launch path (prelaunch._gate)]")
+    import os
+    from modules.wrapper import prelaunch as PRE
+
+    # V-CO08-DIFFERENT-REPO-FREE (pure): a hot pane on a DIFFERENT repo never
+    # counts toward this repo's same-repo cap.
+    other = [{"sid": "X", "encs": [S._enc("/repo/other")]}]
+    d = S.decide(other, CWD, is_new=True, declared=("modules/x.py",), hot_scopes={})
+    if d.verdict == "proceed" and d.same_repo_count == 0:
+        _ok("V-CO08-DIFFERENT-REPO-FREE",
+            "hot incumbent on a different repo -> no same-repo restriction")
+    else:
+        _fail("V-CO08-DIFFERENT-REPO-FREE",
+              f"verdict={d.verdict} same_repo={d.same_repo_count}")
+
+    def _run_gate(scope_env, sid_env, **kw):
+        prev = (os.environ.get("PP_PANE_SCOPE"), os.environ.get("PP_PANE_SID"))
+        try:
+            for k, val in (("PP_PANE_SCOPE", scope_env), ("PP_PANE_SID", sid_env)):
+                if val is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = val
+            return PRE._gate(CWD, now=NOW, **kw)
+        finally:
+            for k, val in (("PP_PANE_SCOPE", prev[0]), ("PP_PANE_SID", prev[1])):
+                if val is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = val
+
+    # V-CO08-NOINTENT-CAPPED: no PP_PANE_SCOPE -> blunt cap; a same-repo hot refuses.
+    g = _run_gate(None, None, gather_fn=_gather(_hot("A")))
+    if g["verdict"] == "refuse" and any("blunt cap" in r for r in g["reasons"]):
+        _ok("V-CO08-NOINTENT-CAPPED",
+            "undeclared launch + 1 same-repo hot -> blunt SAME_REPO_CAP refuses")
+    else:
+        _fail("V-CO08-NOINTENT-CAPPED",
+              f"verdict={g['verdict']} reasons={g['reasons']}")
+
+    # V-CO08-INTENT-ALLOWED: declared disjoint scope -> live gate admits a 2nd
+    # same-repo pane alongside an incumbent with a NON-overlapping intent.
+    with tempfile.TemporaryDirectory() as td:
+        reg = PM2.PaneIntentRegistry(state_dir=td)
+        reg.declare("A", CWD, ["modules/y.py"], now=NOW)
+        g = _run_gate("modules/x.py", "B", gather_fn=_gather(_hot("A")), registry=reg)
+        if g["verdict"] == "proceed":
+            _ok("V-CO08-INTENT-ALLOWED",
+                "declared disjoint scope -> live gate admits 2nd same-repo pane")
+        else:
+            _fail("V-CO08-INTENT-ALLOWED",
+                  f"verdict={g['verdict']} reasons={g['reasons']}")
+
+    # V-CO08-INTENT-COLLISION: declared OVERLAPPING scope -> live gate refuses.
+    with tempfile.TemporaryDirectory() as td:
+        reg = PM2.PaneIntentRegistry(state_dir=td)
+        reg.declare("A", CWD, ["modules/x.py"], now=NOW)
+        g = _run_gate("modules/x.py", "B", gather_fn=_gather(_hot("A")), registry=reg)
+        if g["verdict"] == "refuse" and any("collides" in r for r in g["reasons"]):
+            _ok("V-CO08-INTENT-COLLISION",
+                "declared overlapping scope -> live gate refuses (collision)")
+        else:
+            _fail("V-CO08-INTENT-COLLISION",
+                  f"verdict={g['verdict']} reasons={g['reasons']}")
+
+
 def main():
     sprint1()
     sprint2()
     sprint3()
     sprint4()
     sprint5()
+    sprint6()
     total = _p + _f
     print(f"PARALLEL_MESH_PASS={_p}/{total}  threshold={total}/{total}")
     return 0 if _f == 0 else 1

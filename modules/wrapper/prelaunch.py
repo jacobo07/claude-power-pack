@@ -109,11 +109,35 @@ def _known_sids(cwd):
     return [c["session_id"] for c in list_candidates(cwd)]
 
 
-def _gate(cwd):
+def _gate(cwd, *, now=None, proj_base=None, gather_fn=None, registry=None):
     """CO-08 hard hot-session cap verdict for a NEW pane on this cwd. The only
-    field the orchestrator may act on to block; fail-open to proceed."""
+    field the orchestrator may act on to block; fail-open to proceed.
+
+    Intent-aware (PM-02 wiring, SCS C76): when this launch DECLARES a scope via
+    the ``PP_PANE_SCOPE`` env (comma-separated path tokens), the same-repo
+    dimension is scope-gated -- disjoint declared same-repo panes coexist instead
+    of hitting the blunt cap. When no scope is declared, CO-08's blunt
+    SAME_REPO_CAP applies unchanged (the sealed failsafe). ``PP_PANE_SID`` (if the
+    pane pre-declared) excludes its own intent from the incumbent set. Any error
+    -> the blunt cap (never widen admission on a bug)."""
     from modules.cognitive_os.scheduler import admit
-    v = admit(cwd, is_new=True)
+    try:
+        scope_env = os.environ.get("PP_PANE_SCOPE", "").strip()
+        if scope_env:
+            from modules.parallel_mesh.pm_02_intent import scope_gated_admit
+            sid = os.environ.get("PP_PANE_SID", "") or ""
+            scope = [s for s in scope_env.split(",") if s.strip()]
+            v = scope_gated_admit(cwd, sid, scope, registry=registry,
+                                  proj_base=proj_base, now=now, gather_fn=gather_fn)
+        else:
+            v = admit(cwd, is_new=True, proj_base=proj_base, now=now,
+                      gather_fn=gather_fn)
+    except Exception:  # noqa: BLE001 -- fail-open to the blunt cap
+        try:
+            v = admit(cwd, is_new=True, proj_base=proj_base, now=now,
+                      gather_fn=gather_fn)
+        except Exception:  # noqa: BLE001
+            return dict(_GATE_PROCEED)
     return {"verdict": v.verdict, "reasons": v.reasons, "satisfy": v.satisfy,
             "hot_count": v.hot_count, "same_repo_count": v.same_repo_count,
             "cap": v.cap}
