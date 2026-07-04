@@ -260,6 +260,62 @@ def publish_session_findings(repo: str, findings, *, sid: str = "",
         return 0
 
 
+def _staging_path(repo: str, sid: str, state_dir=None) -> Path:
+    """Per-session staging file the agent appends findings to during work; the Stop
+    hook drains it into the bus. One file per (repo, sid) so concurrent panes never
+    collide."""
+    d = Path(state_dir) if state_dir else _default_state_dir()
+    return d / f"session_findings_staging_{_enc(repo)}_{_enc(sid)}.jsonl"
+
+
+def stage_finding(repo: str, sid: str, topic: str, claim: str, *,
+                  evidence: str = "", state_dir=None) -> bool:
+    """Producer side: append ONE reusable conclusion to this session's staging file
+    the moment it is reached. Drained to the bus at Stop by drain_staging_findings.
+    Fail-open -> False (a staging write must never break the agent's work)."""
+    try:
+        if not topic or not claim:
+            return False
+        p = _staging_path(repo, sid, state_dir)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with p.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"topic": topic, "claim": claim,
+                                 "evidence": evidence}, ensure_ascii=False) + "\n")
+        return True
+    except OSError:
+        return False
+
+
+def drain_staging_findings(repo: str, sid: str, *, now: datetime | None = None,
+                           state_dir=None) -> int:
+    """Stop side (Cross-Pane Commit): publish every staged finding to the bus, then
+    clear the staging file. Returns the count published. Fail-open -> 0, and the
+    staging file is cleared ONLY after a publish attempt (never lose findings on a
+    read error). Cheap to call every turn-end: no staging file -> 0, no bus write."""
+    try:
+        p = _staging_path(repo, sid, state_dir)
+        if not p.is_file():
+            return 0
+        findings = []
+        for line in p.read_text(encoding="utf-8", errors="replace").split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                findings.append(json.loads(line))
+            except (json.JSONDecodeError, ValueError):
+                continue
+        n = publish_session_findings(repo, findings, sid=sid, now=now,
+                                     state_dir=state_dir)
+        try:
+            p.unlink()
+        except OSError:
+            pass
+        return n
+    except Exception:  # noqa: BLE001 -- fail-open
+        return 0
+
+
 def load_context_digest(repo: str, *, state_dir=None, max_topics: int = 40) -> str:
     """SessionStart side: the compact bus digest a launching pane consults."""
     try:
@@ -280,10 +336,23 @@ def main(argv=None) -> int:
     ap.add_argument("--sid", default="")
     ap.add_argument("--query", action="store_true")
     ap.add_argument("--digest", action="store_true")
+    ap.add_argument("--stage", action="store_true",
+                    help="append a finding to this session's staging file")
+    ap.add_argument("--drain", action="store_true",
+                    help="Stop side: publish staged findings to the bus + clear")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
     repo = args.repo or os.getcwd()
     bus = FindingsBus()
+    if args.stage:
+        ok = stage_finding(repo, args.sid, args.topic, args.claim,
+                           evidence=args.evidence)
+        print(f"# staged={ok} topic={args.topic!r}")
+        return 0
+    if args.drain:
+        n = drain_staging_findings(repo, args.sid)
+        print(f"# drained {n} finding(s) to the bus")
+        return 0
     if args.publish:
         f = bus.publish(repo, args.topic, args.claim, evidence=args.evidence,
                         sid=args.sid)

@@ -207,6 +207,25 @@ def sprint2():
             _fail("V-PM03-PUBLISH-ON-SESSION-END",
                   f"published={n} loaded={len(loaded)}")
 
+    with tempfile.TemporaryDirectory() as td:
+        sid = "sess-drain-1"
+        PM3.stage_finding(REPO, sid, "dead fn foo", "foo() is unreferenced",
+                          evidence="grep -rn foo", state_dir=td)
+        PM3.stage_finding(REPO, sid, "real sig bar", "bar(x, y) not bar(x)",
+                          state_dir=td)
+        PM3.stage_finding(REPO, sid, "", "skip-me", state_dir=td)  # guarded out
+        n = PM3.drain_staging_findings(REPO, sid, now=NOW, state_dir=td)
+        loaded = PM3.FindingsBus(state_dir=td).load(REPO)
+        again = PM3.drain_staging_findings(REPO, sid, now=NOW, state_dir=td)
+        staging = PM3._staging_path(REPO, sid, td)
+        if n == 2 and len(loaded) == 2 and again == 0 and not staging.exists():
+            _ok("V-PM03-STAGE-DRAIN",
+                "staged 3 (1 guarded) -> drained 2 to bus, staging cleared, re-drain=0")
+        else:
+            _fail("V-PM03-STAGE-DRAIN",
+                  f"n={n} loaded={len(loaded)} again={again} "
+                  f"staging={staging.exists()}")
+
 
 def sprint3():
     print("[PM-01 -- repo shared brain + coexistence]")

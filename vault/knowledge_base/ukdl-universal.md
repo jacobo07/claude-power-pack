@@ -2408,3 +2408,28 @@ WARN. Both are advisory (see [[HR-STALLED-SESSION-ADVISORY-001]]); neither kills
 
 **ORIGEN:** Process Hibernation Sprint 2 loop-boundedness (post-Kickbacks). Sealed under
 `[[scs_c75_process_hibernation]]`; corpus-level sibling in `co_12_telemetry.loop_boundedness`.
+
+### PR-VERIFY-HANDOFF-PREMISES-001 -- verify a handoff's factual premises with tools before acting
+
+**TRIGGER:** A new sprint/prompt supplies premises about prior state -- "task registered in
+DRY", "SCS C73 addendum", "module at path X", "X is already wired" -- written by a prior
+pane/session and not re-verified this session.
+
+**FINDING (empirical, 2026-07-03..04):** handoff premises are frequently STALE or WRONG when
+multiple panes work in parallel or across compactions. Four real misses in three sprints:
+(1) "PP-Hibernation task registered in DRY, pending LIVE" -> `schtasks /query` proved it was
+NEVER registered; (2) "SCS C73 addendum" -> C73 is Activate-Before-Build; the work belonged
+in a new C75; (3) module path `modules/session_resilience/hibernation/` -> real path is
+`modules/cognitive_os/`; (4) "PM-03 inert / needs wiring" -> the CONSUME side was already
+wired (Hook 13, C73); only the PUBLISH side was the gap. Each was caught by a real tool
+probe, not assumed.
+
+**FIX:** before acting on any handoff premise, verify with a real tool -- `schtasks`,
+`& git log`, `Glob`/`Read`, `ls`, `pm03_health()` -- that the described state actually holds.
+On a disproven premise: honor the INTENT, correct the LITERAL, report loudly
+(audit-disproves-premise). NEVER blind-execute a premise into an irreversible action.
+Companion of HR-PREMISE-001 (verify APIs) and the no-classified-FAILs law. Cross-ref
+[[T-UNBOUNDED-SESSION-001]].
+
+**ORIGEN:** the C75 Process-Hibernation build + this housekeeping/PM-03 sprint -- both opened
+by verifying (not trusting) the handoff, which is exactly why the false premises were caught.

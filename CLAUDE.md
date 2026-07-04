@@ -222,4 +222,10 @@ STOP: Check every planned output -- assert_premises([{"type":"file_exists","path
 EVIDENCE: [bl-premise-001] premise_verifier.verify_file_exists + Reality Contract (kernel vMAX-NULL-ERROR)
 SEVERITY: HIGH | RECURRENCE: 0x
 <!-- digest:hr-context-001-seed01 -->
+### HR-STALLED-SESSION-ADVISORY-001 -- Stalled/unbounded session is advisory only; never auto-kill
+TRIGGER: The Process Hibernation governor (modules/cognitive_os/process_governor.py loop_advisory) flags a pane STALLED (no output >30min AND session >1h total) or UNBOUNDED (active >2h without a /compact reset).
+STOP: Surface a VISIBLE advisory to the Owner ONLY. NEVER change the hibernate/keep verdict and NEVER auto-kill a process -- a long-running pane may be real continuous work; the Owner decides /kclear or close. Fail-open: unmeasurable session age -> silence (never a false positive). EXCEPCION: none -- no phrase authorizes auto-killing on a stall/unbounded signal.
+EVIDENCE: [kickbacks] a session hung ~10h undetected caused the Kickbacks suspension (2026-07-04); loop-boundedness added to the governor as a VISIBILITY net, never an autonomous kill. Sealed SCS C75; UKDL T-UNBOUNDED-SESSION-001.
+SEVERITY: HIGH | RECURRENCE: 1x
+<!-- digest:c442a805144bbe7b -->
 <!-- PP-HARD-RULES-END -->
