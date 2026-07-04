@@ -2340,3 +2340,28 @@ reassignment/history line names both). FP-hardened -> 9/9. Pre-existing at HEAD,
 fixed via RCA rather than waved as "not mine" (no classified FAILs at done-gate).
 
 **ORIGEN:** Scope A baseline run surfaced the pre-existing FAIL.
+
+### T-CLAUDE-MD-SIZE-001 -- CLAUDE.md is at its operative floor; trimming cannot shrink it further
+
+**TRIGGER:** The `claude_md_firewall` / `trim_claude_md.py --check` WARNs that
+`~/.claude/CLAUDE.md` is >= the 39750 margin (approaching the 40000 hard limit),
+and a request asks to trim it below some target.
+
+**FINDING (measured 2026-07-04):** the global CLAUDE.md is ~all OPERATIVE always-on
+safety doctrine (Bash-Bridge, Parallel-Subagent caps, Anti-Waiting, HR/PR/T). The
+safe provenance-only trim (`trim_claude_md.py`) removes just the dated-parenthetical
++ deep-link provenance: at 39967 chars it cut **57 chars -> 39910** and no more. The
+operative floor is ~39,658 (BL-CLAUDEMD-ROUTER, 2026-06-04). **A target below ~39,900
+is UNREACHABLE without deleting operative safety rules** -- which is forbidden. A
+"<38000" done-gate is therefore impossible by trimming; it is an audit-disproves-
+premise case (verify, honor intent = clear the 40k warning, correct the literal,
+report loudly -- never blind-execute or fake the number).
+
+**FIX:** (1) run `--dry-run`, apply the safe provenance trim (small, reversible,
+HR/PR/T intact); (2) if more headroom is genuinely needed, the ONLY honest lever is
+an Owner decision to relocate a specific OPERATIVE-but-non-safety block to a
+JIT-loaded surface -- NEVER the Bash-Bridge / Parallel-Subagent / Anti-Waiting sets
+(they must stay always-on). Do not claim a sub-floor size as achieved.
+
+**ORIGEN:** the CLAUDE.md-trim + CO-12-wiring EXECUTION sprint (2026-07-04): the
+<38000 target was below the operative floor; only 57 provenance chars were trimmable.

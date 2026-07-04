@@ -49,6 +49,29 @@ building"). CO-11 remains approved-but-deferred. No CO-09/CO-10 reuse.
   GK-09 presentation pattern. Its genuinely-new material is the adoption-rate metric set + the
   Telemetry-Before-Claims contract.
 
+## Addendum — CO-12 instruments wired (EXECUTION, 2026-07-04)
+
+The C74 dataset specified three instrument-pending signals. This addendum records their wiring in
+`modules/cognitive_os/co_12_telemetry.py` (the instrument layer; the dataset stays code-free):
+
+- **loop-boundedness — LIVE with real data.** Corpus-derived (reads `~/.claude/projects/*/*.jsonl`,
+  the C68/C69/C70 reader pattern; `_SID_RE`-filtered to real session transcripts). First run on the
+  live corpus classified **625 sessions → 431 bounded, 194 unbounded** (threshold 800 entries; top
+  offenders 20,458 / 19,647 / 18,673 entries — the long/hung-session pattern the signal targets).
+  This satisfies the reality contract "≥1 signal wired with real data".
+- **opus-avoided — WIRED, honest 0.** `route_and_record()` routes via CO-03 then records the
+  opus-avoided classification to a JSONL sink (fail-open). It accrues real data when called
+  (proved: `V-OPUS-WIRED`); the live count is 0 because `route()` is not yet on the live
+  model-selection path (CO-10 residual) — reported as such, never faked.
+- **dedup-hit — PENDING (honest).** PM-03 consume is wired (Hook 13, C73), but the RedundancyTax
+  hit-producer is agent-driven, off the live path. `readiness_report()` marks it
+  `instrument-pending`; the datum is not invented.
+
+Done-gate: `tools/test_co12_telemetry.py` **8/8 ×3 hermetic** (synthetic corpus + temp sink; router
+untouched — `V-NO-REGRESSION` = `test_cognitive_os_build` 68/68). Companion sprint item: CLAUDE.md
+safe-trimmed 39,967→39,910; the `<38000` target proved below the ~39,658 operative floor
+(see `[[T-CLAUDE-MD-SIZE-001]]`) — reported, not faked.
+
 ## Verification
 
 `tools/test_co12_readiness_telemetry.py` — 8 V-gates (V-NO-CODE, V-CORRECT-IDS, V-PARENT-REFS,
