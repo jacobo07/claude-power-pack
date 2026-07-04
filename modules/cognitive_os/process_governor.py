@@ -28,6 +28,14 @@ Never-hibernate invariants (fail-SAFE, in priority order):
 The worst outcome this module can produce is a MISSED ECONOMY (a pane that could
 have hibernated stays alive), NEVER a killed pane that cannot be rehydrated and
 NEVER a lost session. Fail-open ABSOLUTE: any error -> the pane is KEPT.
+
+Loop-boundedness advisory (Sprint 2, post-Kickbacks incident 2026-07-04): a SECOND,
+purely-advisory axis that never touches the hibernate/keep verdict and never kills.
+It makes a wall-clock stall / unbounded-session VISIBLE to the Owner -- the safety
+net for a session that hung ~10h without detection. See ``loop_advisory``. This is
+the per-live-pane sibling of CO-12's corpus-level loop-boundedness telemetry
+(modules/cognitive_os/co_12_telemetry.py): CO-12 is retrospective over the whole
+transcript corpus; this fires in-flight on the panes alive right now.
 """
 from __future__ import annotations
 
@@ -56,6 +64,16 @@ WAKEABLE_KINDS = frozenset({"ps1", "bat", "cmd"})
 HIBERNATE = "hibernate"
 KEEP = "keep"
 
+# --- Loop-boundedness advisory thresholds (ADVISORY ONLY) --------------------
+# These NEVER change a hibernate/keep verdict and NEVER kill a process -- they
+# surface a wall-clock warning so the Owner decides (HR-STALLED-SESSION-ADVISORY-001).
+# ORIGEN: a session hung ~10h with no detection caused the Kickbacks suspension
+# (2026-07-04). Env-tunable so the Owner can tighten/loosen without a code change.
+import os  # noqa: E402 -- kept local to the advisory block it configures
+UNBOUNDED_SESSION_MIN = float(os.environ.get("PP_GOV_UNBOUNDED_MIN", "120"))
+STALLED_IDLE_MIN = float(os.environ.get("PP_GOV_STALLED_IDLE_MIN", "30"))
+STALLED_SESSION_MIN = float(os.environ.get("PP_GOV_STALLED_SESSION_MIN", "60"))
+
 
 @dataclass
 class PaneProc:
@@ -73,6 +91,7 @@ class PaneProc:
     wrapper_kind: str = "none"     # ps1 | bat | cmd | none
     has_anchor: bool = True        # a resume anchor (transcript .jsonl) exists
     transcript_path: str | None = None
+    session_age_min: float | None = None  # wall-clock age since 1st turn (None=unknown)
 
 
 @dataclass
@@ -91,6 +110,7 @@ class GovernorPlan:
     keep_count: int = 0
     reclaim_mb: float = 0.0
     scanned: int = 0
+    advisories: list = field(default_factory=list)  # loop-boundedness (advisory only)
 
     def hibernate_targets(self) -> list:
         return [d for d in self.decisions if d.verdict == HIBERNATE]
@@ -132,17 +152,68 @@ def decide(pane: PaneProc, *, idle_threshold_min: float = IDLE_THRESHOLD_MIN
         pane.ws_mb, wakeable)
 
 
+def loop_advisory(pane: PaneProc, *,
+                  unbounded_min: float = UNBOUNDED_SESSION_MIN,
+                  stalled_idle_min: float = STALLED_IDLE_MIN,
+                  stalled_session_min: float = STALLED_SESSION_MIN) -> dict | None:
+    """Wall-clock loop-boundedness advisory for ONE pane, or None.
+
+    ADVISORY ONLY -- this NEVER changes decide()'s verdict and NEVER kills a
+    process; it only surfaces a warning the Owner acts on (or ignores).
+    Two levels, stalled checked first (stronger + more actionable):
+
+      stalled   -- no new turn in >= stalled_idle_min AND the session has run
+                   >= stalled_session_min total: probably hung.
+      unbounded -- session active >= unbounded_min (2h) without a /compact reset
+                   (a reset starts a fresh transcript, so a long wall-clock age
+                   proxies "no compact"): accumulating context, possibly hung.
+                   Informational -- fine to ignore if the work is real+continuous.
+
+    Fail-open ABSOLUTE: session age unknown -> None (silence, NEVER a false
+    positive). A pane with real recent work never trips (small age, small idle)."""
+    try:
+        age = pane.session_age_min
+        if age is None:
+            return None  # cannot measure -> silence (never a false positive)
+        idle = pane.idle_min
+        label = (pane.sid or "?")[:8]
+        if (idle is not None and idle >= stalled_idle_min
+                and age >= stalled_session_min):
+            return {
+                "level": "stalled", "pane": pane,
+                "session_age_min": age, "idle_min": idle,
+                "message": (f"WARN [{label}] looks stalled: no output in "
+                            f"{idle:.0f}min, session running {age:.0f}min total. "
+                            f"Consider /kclear or closing the pane."),
+            }
+        if age >= unbounded_min:
+            return {
+                "level": "unbounded", "pane": pane,
+                "session_age_min": age, "idle_min": idle,
+                "message": (f"NOTE [{label}] unbounded: active {age:.0f}min "
+                            f"(> {unbounded_min:.0f}min) without a /compact reset. "
+                            f"Informational -- ignore if work is real+continuous."),
+            }
+        return None
+    except Exception:  # noqa: BLE001 -- advisory must never break the governor
+        return None
+
+
 def plan(panes, *, idle_threshold_min: float = IDLE_THRESHOLD_MIN) -> GovernorPlan:
-    """Decide across a set of panes and summarize the reclaim. Pure."""
-    decisions = [decide(p, idle_threshold_min=idle_threshold_min)
-                 for p in (panes or [])]
+    """Decide across a set of panes and summarize the reclaim. Pure. Also collects
+    loop-boundedness advisories (advisory only -- they do NOT affect the plan's
+    hibernate/keep counts or reclaim)."""
+    panes = panes or []
+    decisions = [decide(p, idle_threshold_min=idle_threshold_min) for p in panes]
     hib = [d for d in decisions if d.verdict == HIBERNATE]
+    advisories = [a for a in (loop_advisory(p) for p in panes) if a]
     return GovernorPlan(
         decisions=decisions,
         hibernate_count=len(hib),
         keep_count=len(decisions) - len(hib),
         reclaim_mb=round(sum(d.reclaim_mb for d in hib), 1),
-        scanned=len(decisions))
+        scanned=len(decisions),
+        advisories=advisories)
 
 
 # --- idle age reader (isolated; mirrors scheduler's proven tail pattern) ------
@@ -182,6 +253,40 @@ def last_turn_age_min(transcript_path, now: datetime | None = None,
     if last is None:
         return None
     return max(0.0, (now - last).total_seconds() / 60.0)
+
+
+def session_start_age_min(transcript_path, now: datetime | None = None,
+                          head_bytes: int = _TAIL_BYTES) -> float | None:
+    """Minutes since the transcript's FIRST timestamped turn -- the session's
+    wall-clock age. None if unreadable/unparseable (-> advisory silence). Reads
+    the HEAD (the first turns live at the top of the JSONL), so it is as cheap as
+    the tail reader. A /compact or /kclear starts a fresh transcript, so this age
+    is bounded by the last reset -- exactly the 'unbounded since last compact'
+    signal the advisory wants."""
+    now = now or datetime.now(timezone.utc)
+    try:
+        p = Path(transcript_path)
+        with p.open("rb") as fh:
+            chunk = fh.read(head_bytes).decode("utf-8", "replace")
+    except OSError:
+        return None
+    for line in chunk.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            e = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        ts = e.get("timestamp")
+        if isinstance(ts, str) and len(ts) >= 19:
+            try:
+                d = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                d = d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+                return max(0.0, (now - d).total_seconds() / 60.0)
+            except ValueError:
+                continue
+    return None
 
 
 def hot_sids(proj_base=None, now: datetime | None = None,
@@ -234,6 +339,7 @@ def enrich_panes(raw, *, now: datetime | None = None, proj_base=None) -> list:
         cwd = r.get("cwd")
         tp = str(base / _enc(cwd) / f"{sid}.jsonl") if (sid and cwd) else None
         idle = last_turn_age_min(tp, now=now) if tp else None
+        sage = session_start_age_min(tp, now=now) if tp else None
         anchor = anchor_exists(sid, cwd, tp, proj_base) if sid else False
         try:
             panes.append(PaneProc(
@@ -244,7 +350,8 @@ def enrich_panes(raw, *, now: datetime | None = None, proj_base=None) -> list:
                 is_foreground=bool(r.get("is_foreground", False)),
                 is_loop=bool(r.get("is_loop", False)),
                 wrapper_kind=r.get("wrapper_kind", "none"),
-                has_anchor=anchor, transcript_path=tp))
+                has_anchor=anchor, transcript_path=tp,
+                session_age_min=sage))
         except (ValueError, TypeError):
             continue
     return panes
@@ -264,6 +371,11 @@ def format_plan(gp: GovernorPlan) -> str:
     lines.append(
         f"# hibernate {gp.hibernate_count} / keep {gp.keep_count} "
         f"-> reclaim ~{gp.reclaim_mb:.0f}MB")
+    if gp.advisories:
+        lines.append(f"# loop-boundedness advisories ({len(gp.advisories)}) "
+                     f"-- advisory only, no pane killed:")
+        for a in gp.advisories:
+            lines.append(f"    {a.get('message', '')}")
     return "\n".join(lines)
 
 
@@ -300,7 +412,8 @@ def main(argv=None) -> int:  # pragma: no cover - thin CLI; scan is Windows-only
                     is_loop=bool(r.get("is_loop", False)),
                     wrapper_kind=r.get("wrapper_kind", "none"),
                     has_anchor=bool(r.get("has_anchor", True)),
-                    transcript_path=r.get("transcript_path")))
+                    transcript_path=r.get("transcript_path"),
+                    session_age_min=r.get("session_age_min")))
         except (ValueError, OSError, TypeError):
             pass
 
@@ -309,6 +422,10 @@ def main(argv=None) -> int:  # pragma: no cover - thin CLI; scan is Windows-only
         print(json.dumps({
             "hibernate_count": gp.hibernate_count, "keep_count": gp.keep_count,
             "reclaim_mb": gp.reclaim_mb, "scanned": gp.scanned,
+            "advisories": [{"level": a.get("level"), "message": a.get("message"),
+                            "session_age_min": a.get("session_age_min"),
+                            "idle_min": a.get("idle_min")}
+                           for a in gp.advisories],
             "targets": [{"pid": d.pane.pid, "wrapper_pid": d.pane.wrapper_pid,
                          "sid": d.pane.sid, "cwd": d.pane.cwd,
                          "ws_mb": d.pane.ws_mb} for d in gp.hibernate_targets()]}))

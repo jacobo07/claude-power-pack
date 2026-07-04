@@ -2365,3 +2365,46 @@ JIT-loaded surface -- NEVER the Bash-Bridge / Parallel-Subagent / Anti-Waiting s
 
 **ORIGEN:** the CLAUDE.md-trim + CO-12-wiring EXECUTION sprint (2026-07-04): the
 <38000 target was below the operative floor; only 57 provenance chars were trimmable.
+
+### HR-STALLED-SESSION-ADVISORY-001 -- a stalled/unbounded session is ADVISORY only; NEVER auto-kill
+
+**TRIGGER:** The Process Hibernation governor (`modules/cognitive_os/process_governor.py`
+`loop_advisory`) detects a pane with no new output for >30min while the session has run
+>1h total (STALLED), or a session active >2h without a `/compact` reset (UNBOUNDED).
+
+**ACCIÓN:** STOP at "surface a visible advisory to the Owner" -- the stalled/unbounded
+signal NEVER changes the hibernate/keep verdict and NEVER kills a process. A long-running
+pane may be doing real continuous work; only the Owner decides to `/kclear` or close it.
+Fail-open ABSOLUTE: if session age is unmeasurable, emit NOTHING (silence, never a false
+positive). The advisory is orthogonal to `decide()` -- proven by `V-GOVERNOR-ACTIVE-NOT-
+HIBERNATED`. Formal sealing into the generator-owned `vault/hard_rules/HARD_RULES.md`
+(digest-keyed, regenerates the inline mirror) is an Owner-side `tools/bug_to_hardrule.py`
+step; this UKDL entry is the hand-maintained doctrine home.
+
+**EXCEPCIÓN:** none -- there is no phrase that authorizes auto-killing a pane on a
+stall/unbounded signal. Killing a live session is only ever the hibernation path
+(idle>15min + not-hot + wakeable + anchored), which is a DIFFERENT gate.
+
+**ORIGEN:** a session hung ~10h with no detection caused the Kickbacks suspension
+(2026-07-04). Loop-boundedness was added to the governor as the safety net -- but as a
+VISIBILITY signal, never an autonomous kill (a wrongly-killed active session is worse
+than a missed advisory). Sibling of CO-12 corpus-level loop-boundedness telemetry.
+
+### T-UNBOUNDED-SESSION-001 -- sessions >2h without /compact accrue context; the NOTE is informational
+
+**TRIGGER:** A pane's session wall-clock age (first-turn-to-now, read from the transcript
+head by `process_governor.session_start_age_min`) exceeds 2h with no `/compact`/`/kclear`
+reset (a reset starts a fresh transcript, so the age is bounded by the last reset).
+
+**FINDING (2026-07-04):** an unbounded session is NOT proof of a hang -- it may be real,
+continuous work. The governor emits it as an `unbounded` NOTE (informational), distinct
+from the stronger `stalled` WARN (which additionally requires >30min of no output). The
+NOTE is safe to ignore when the work is genuinely ongoing; its value is making the "am I
+in a 10h runaway?" question answerable at a glance instead of never.
+
+**FIX:** treat the NOTE as a prompt to consider `/compact` (context economy) -- not a
+mandate. Only the compound signal (unbounded age AND >30min idle) escalates to the stalled
+WARN. Both are advisory (see [[HR-STALLED-SESSION-ADVISORY-001]]); neither kills.
+
+**ORIGEN:** Process Hibernation Sprint 2 loop-boundedness (post-Kickbacks). Sealed under
+`[[scs_c75_process_hibernation]]`; corpus-level sibling in `co_12_telemetry.loop_boundedness`.

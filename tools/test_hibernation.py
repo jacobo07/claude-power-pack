@@ -189,6 +189,95 @@ def test_governor_keeps_no_sid():
         _fail("V-GOVERNOR-KEEPS-NOSID", f"got {d.verdict} {d.reasons}")
 
 
+# --- SPRINT 2: loop-boundedness advisory (post-Kickbacks, advisory only) ------
+
+def test_advisory_unbounded():
+    # Session active 150min (> 2h) but recently working (idle 10min) -> unbounded
+    # NOTE (informational), never stalled.
+    a = pg.loop_advisory(_pane(session_age_min=150.0, idle_min=10.0))
+    if a and a["level"] == "unbounded" and "unbounded" in a["message"]:
+        _ok("V-UNBOUNDED-ADVISORY",
+            "150min session, idle 10min -> unbounded NOTE (informational)")
+    else:
+        _fail("V-UNBOUNDED-ADVISORY", f"got {a}")
+
+
+def test_advisory_stalled():
+    # No output in 45min AND session 90min total -> stalled WARN (stronger).
+    a = pg.loop_advisory(_pane(session_age_min=90.0, idle_min=45.0))
+    if a and a["level"] == "stalled" and "stalled" in a["message"]:
+        _ok("V-STALLED-ADVISORY",
+            "idle 45min + session 90min -> stalled WARN (probably hung)")
+    else:
+        _fail("V-STALLED-ADVISORY", f"got {a}")
+
+
+def test_advisory_active_silent():
+    # A pane with real recent work (idle 2min, session 40min) -> SILENCE.
+    a = pg.loop_advisory(_pane(session_age_min=40.0, idle_min=2.0))
+    d = pg.decide(_pane(session_age_min=40.0, idle_min=2.0))
+    if a is None and d.verdict == pg.KEEP:
+        _ok("V-ACTIVE-SILENT",
+            "active pane (idle 2min) -> no advisory + kept (not hibernated)")
+    else:
+        _fail("V-ACTIVE-SILENT", f"advisory={a} verdict={d.verdict}")
+
+
+def test_advisory_failopen_unknown_age():
+    # Session age unknown -> None (silence, NEVER a false positive).
+    a = pg.loop_advisory(_pane(session_age_min=None, idle_min=200.0))
+    if a is None:
+        _ok("V-LOOP-BOUNDEDNESS-FAILOPEN",
+            "unknown session age -> None (fail-open silence, no false positive)")
+    else:
+        _fail("V-LOOP-BOUNDEDNESS-FAILOPEN", f"expected None, got {a}")
+
+
+def test_advisory_orthogonal_to_verdict():
+    # An unbounded/foreground pane: decide() KEEPS it (foreground) AND the
+    # advisory fires -- proving the advisory never drives the kill decision.
+    pane = _pane(is_foreground=True, session_age_min=200.0, idle_min=5.0)
+    d = pg.decide(pane)
+    a = pg.loop_advisory(pane)
+    if d.verdict == pg.KEEP and a and a["level"] == "unbounded":
+        _ok("V-GOVERNOR-ACTIVE-NOT-HIBERNATED",
+            "advisory is orthogonal: foreground kept, unbounded NOTE still emitted")
+    else:
+        _fail("V-GOVERNOR-ACTIVE-NOT-HIBERNATED", f"verdict={d.verdict} adv={a}")
+
+
+def test_session_age_reader():
+    # Hermetic: a transcript whose FIRST turn is 150min before NOW.
+    with tempfile.TemporaryDirectory() as td:
+        tp = Path(td) / "sess.jsonl"
+        first = (NOW - timedelta(minutes=150)).isoformat()
+        last = (NOW - timedelta(minutes=5)).isoformat()
+        tp.write_text(
+            json.dumps({"timestamp": first, "type": "user"}) + "\n"
+            + json.dumps({"timestamp": last, "type": "assistant"}) + "\n",
+            encoding="utf-8")
+        age = pg.session_start_age_min(tp, now=NOW)
+        if age is not None and abs(age - 150.0) < 0.5:
+            _ok("V-SESSION-AGE-READER",
+                f"read session start age = {age:.0f}min (from first turn)")
+        else:
+            _fail("V-SESSION-AGE-READER", f"expected ~150, got {age}")
+
+
+def test_plan_collects_advisories():
+    # plan() collects advisories WITHOUT altering hibernate/keep counts.
+    panes = [_pane(pid=1, session_age_min=150.0, idle_min=40.0),  # stalled
+             _pane(pid=2, session_age_min=30.0, idle_min=20.0)]   # clean, silent
+    gp = pg.plan(panes)
+    if (len(gp.advisories) == 1 and gp.advisories[0]["level"] == "stalled"
+            and gp.hibernate_count == 2 and gp.keep_count == 0):
+        _ok("V-ADVISORY-IN-PLAN",
+            "plan collects 1 advisory; hibernate/keep counts unaffected")
+    else:
+        _fail("V-ADVISORY-IN-PLAN",
+              f"adv={len(gp.advisories)} hib={gp.hibernate_count} keep={gp.keep_count}")
+
+
 # --- SPRINT 3: hibernation executor (store -> flag -> kill) -------------------
 
 def test_hibernate_store_then_kill():
@@ -418,6 +507,13 @@ def main() -> int:
                test_governor_keeps_no_anchor,
                test_governor_keeps_raw_pane,
                test_governor_keeps_no_sid,
+               test_advisory_unbounded,
+               test_advisory_stalled,
+               test_advisory_active_silent,
+               test_advisory_failopen_unknown_age,
+               test_advisory_orthogonal_to_verdict,
+               test_session_age_reader,
+               test_plan_collects_advisories,
                test_plan_aggregates_reclaim,
                test_idle_age_reader,
                test_idle_age_reader_missing,
