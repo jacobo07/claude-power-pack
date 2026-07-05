@@ -2509,3 +2509,40 @@ step) and the mirror-sync-direction doctrine.
 **ORIGEN:** GK-11 Librarian agent files (`graphify-librarian` / `graphify-route-governor` /
 `graphify-writeback`) shipped canonical-in-`vault/agents/` + copied live, sealed as the SCS C72
 addendum (`[[graphify_live_scs_c72]]`).
+
+### PR-CDIO-REVIEW-GATE-001 -- a visual output is not "done" until it clears the CDIO review gate
+
+**TRIGGER:** About to declare a visual surface (UI, landing, dashboard, component, onboarding
+flow, rendered marketing copy) "done" / "ready" / "shipped".
+
+**RULE:** The surface must pass a CDIO review first. Run the `cdio-reviewer` agent (or the
+deterministic `modules.cdio.scorer.score_review` over the recorded verdicts). The done-gate is
+**Design Quality Score >= 80 AND zero critical issues** (verdict APPROVE). A score below 80, or
+any critical issue at any score (accessibility-floor failure, broken/dead-end state, buried or
+absent primary action, fabricated trust signal, dark pattern), is **REVISE** or **BLOCK** — and a
+REVISE/BLOCK surface is not done. This gate is part of the PP completion standard for visual
+output, not an optional polish step. Zero Findings Is Valid — a surface that clears every
+threshold gets a clean 100/APPROVE and never has a defect manufactured to justify the review.
+
+**ORIGEN:** CDIO build, sealed SCS C78 (`[[scs_c78_cdio_active]]`). The score is computed by
+`modules/cdio/scorer.py` verbatim from CDIO-05 §4, so the gate is a reproducible measurement, not
+a reviewer's opinion. Companion of `[[T-DESIGN-OPINION-VS-CRITERIA-001]]`.
+
+### T-DESIGN-OPINION-VS-CRITERIA-001 -- CDIO gives criteria, never opinions
+
+**TRAP:** Emitting a design judgment as an adjective ("this looks better", "the CTA doesn't pop",
+"feels cheap"). Such a statement is not actionable, not reproducible, and not falsifiable — two
+reviewers disagree and neither can prove the other wrong.
+
+**RULE:** Every CDIO finding names a **measurable criterion** and the **observed value** that
+meets or fails it. "The CTA contrast is 3.2:1, below the 4.5:1 WCAG AA floor" is valid; "the CTA
+looks weak" is not. A finding a reviewer cannot state as (criterion + observed value + threshold +
+severity + fix) is an impression, and CDIO does not record impressions — the deterministic scorer
+drops any verdict with no observed value. This applies to praise too: "the spacing is nice" is
+invalid; "all spacing resolves to the 8px base unit" is valid. Taste-level judgment that no
+threshold captures (brand character, emotional tone) is handed to the human design authority, not
+faked as a measurement.
+
+**ORIGEN:** CDIO build, sealed SCS C78 (`[[scs_c78_cdio_active]]`). This is the reality contract
+of CDIO-00 applied to every emission; it is what lets the rest of the PP trust a CDIO verdict the
+way it trusts a test result. Companion of `[[PR-CDIO-REVIEW-GATE-001]]`.

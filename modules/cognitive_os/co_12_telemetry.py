@@ -217,9 +217,19 @@ def readiness_report(proj_base=None, *, state_dir=None) -> dict:
     opus_status = ("live" if opus["opportunities"] > 0
                    else "wired; 0 opportunities recorded "
                         "(route() not yet on the live path)")
+    # CDIO design-review metrics. Lazy import: modules.cdio.telemetry imports
+    # this module at load, so we resolve it at call time to avoid a cycle.
+    try:
+        from modules.cdio import telemetry as _cdio_tel
+        cdio = _cdio_tel.cdio_readiness(state_dir=state_dir)
+    except Exception:  # noqa: BLE001 -- fail-open: telemetry never breaks the report
+        cdio = {"design_reviews_count": 0, "avg_design_quality_score": None,
+                "critical_issues_caught": 0, "antipatterns_prevented": 0,
+                "measured": False}
     return {
         "loop_boundedness": loop,          # REAL data now
         "opus_avoided": {**opus, "status": opus_status},
+        "cdio": cdio,                      # REAL data once reviews record
         "dedup_hit": {"status": "instrument-pending",
                       "reason": "PM-03 consume wired (Hook 13, C73); "
                                 "RedundancyTax hit-producer is agent-driven, "

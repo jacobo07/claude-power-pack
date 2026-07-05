@@ -147,7 +147,7 @@ def _promote(glob_nodes: dict, node: dict, rid: str, repo_path: str) -> None:
 
 
 # A governance identity token — the mark of a genuinely cross-repo artifact.
-_GOV_ID = re.compile(r"\b(CO-\d|PM-\d|GK-\d|HR-[A-Z0-9]|BL-\d|SCS ?C\d|T-[A-Z])", re.IGNORECASE)
+_GOV_ID = re.compile(r"\b(CDIO-\d|CO-\d|PM-\d|GK-\d|HR-[A-Z0-9]|BL-\d|SCS ?C\d|T-[A-Z])", re.IGNORECASE)
 
 
 def _is_promotable(nd: dict) -> bool:
