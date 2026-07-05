@@ -2458,3 +2458,29 @@ premise) -- this one says: once verified-as-built, wire the caller, don't duplic
 
 **ORIGEN:** CO-08 intent-gate live-path wiring (`prelaunch._gate` -> PM-02), sealed
 `[[scs_c76_co08_intent_gate]]`; PM-03 publish wiring the day before (`[[scs_c75_process_hibernation]]` sprint).
+
+### T-SCOPE-GATE-OPT-IN-ANTIPATTERN-001 -- a gate that needs a manual per-launch action is inert in production
+
+**TRIGGER:** A gate/feature is wired to a switch the Owner must flip by hand EVERY launch
+(export an env var, pass a flag, run a CLI first) -- and the plan treats "it works when you
+set the var" as done.
+
+**FINDING (empirical, 2026-07-05):** the CO-08 scope-gate (`[[scs_c76_co08_intent_gate]]`)
+was reachable at the live path but only *activated* when the Owner exported `PP_PANE_SCOPE`
+by hand each launch. A per-launch manual step is not remembered -> the gate is effectively
+inert, the same net outcome as [[T-INERT-ARCHITECTURE-TAX-002]] but one layer out (the caller
+IS wired; the *activation* isn't). Distinct trap because the fix is different: not "wire the
+caller" but "automate the activation IN the wrapper". The paired sprint premise -- "kclaude
+derives the scope from a `pane_map` given the cwd" -- was itself disproven at PASO -1 (no
+`pane_map`; scope is per-pane INTENT, one repo -> many panes -> many distinct scopes, so it is
+NOT a function of cwd; a cold pane has no sid) -- a 5th instance for [[PR-VERIFY-HANDOFF-PREMISES-001]].
+
+**FIX:** automate the activation where the pane is actually born -- the launcher/wrapper.
+Two honest auto-paths only: (1) a first-class flag for the case only the Owner can supply
+(a cold pane's intended scope), `kclaude --scope "a,b"`; (2) RECALL of what the pane itself
+already declared, keyed by the real `(cwd, sid)`, on resume/restart/rehydrate so a
+declaration made once persists. Never fabricate a derivation the architecture can't support
+(cwd->scope). Keep the failsafe (no declaration -> blunt cap) and fail-open at every hop.
+
+**ORIGEN:** kclaude scope auto-export (`tools/kclaude.ps1` `--scope` + `prelaunch --sid`
+recall of `pm_02_intent.resolve_launch_scope`), sealed `[[scs_c77_co08_scope_autoexport]]`.

@@ -2,7 +2,7 @@
 
 The authoritative list of sealed SCS entries. Each row: ID, name, the modules/tools
 that carry it, the UKDL hard-rules/traps it sealed, seal date, state. New seals append
-here (the next free slot is **C77** — C71/C72 are Graphify, C73/C74/C75/C76 below).
+here (the next free slot is **C78** — C71/C72 are Graphify, C73/C74/C75/C76/C77 below).
 
 Note: SCS files live in two places — `vault/knowledge_base/scs/` (C68+) and
 `vault/knowledge_base/` root / `graphify/` / `cognitive_os/` (older + domain-grouped).
@@ -19,6 +19,7 @@ This index is the single ledger across both.
 | C74 | CO-NextGen — CO-12 Cognitive-Readiness-Telemetry | `modules/cognitive_os/co_12_telemetry.py` | `T-CLAUDE-MD-SIZE-001` | 2026-07-04 | Sealed |
 | C75 | Process-Hibernation (FASE A + loop-boundedness advisory) | `modules/cognitive_os/process_governor.py`, `hibernate_runner.py`, `rehydration.py`; `tools/run_hibernation.py`, `test_hibernation.py` | `HR-STALLED-SESSION-ADVISORY-001`, `T-UNBOUNDED-SESSION-001` | 2026-07-04 | Sealed |
 | C76 | CO-08 Intent-Gate live-path wiring | `modules/wrapper/prelaunch.py` (`_gate`), `modules/cognitive_os/scheduler.py` (`decide`), `modules/parallel_mesh/pm_02_intent.py` (`scope_gated_admit`) | `T-INERT-ARCHITECTURE-TAX-002` | 2026-07-04 | Sealed |
+| C77 | CO-08 Scope-Gate auto-activation (kclaude exports PP_PANE_SCOPE) | `modules/parallel_mesh/pm_02_intent.py` (`resolve_launch_scope`), `modules/wrapper/prelaunch.py` (`_apply_launch_scope`, `--sid`), `tools/kclaude.ps1` (`--scope`, sid recall) | `T-SCOPE-GATE-OPT-IN-ANTIPATTERN-001` | 2026-07-05 | Sealed |
 
 ## Notes
 

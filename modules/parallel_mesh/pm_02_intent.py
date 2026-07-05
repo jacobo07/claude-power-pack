@@ -243,6 +243,38 @@ def scope_gated_admit(cwd: str, sid: str, declared_scope=None, *,
                                      [], 0, 0, _sched.HOT_CAP, "error")
 
 
+def resolve_launch_scope(cwd: str, sid: str | None = None, *,
+                         registry: PaneIntentRegistry | None = None,
+                         now: datetime | None = None,
+                         window_min: float = INTENT_WINDOW_MIN,
+                         state_dir=None) -> str:
+    """Comma-joined declared scope a launcher should export as PP_PANE_SCOPE for a
+    pane resuming under `sid` on `cwd`. "" when no FRESH intent was declared for
+    that (cwd, sid) -- the launcher then exports nothing and CO-08's blunt
+    SAME_REPO_CAP failsafe applies unchanged.
+
+    This is the ONLY honest automatic source of a pane's scope: scope is per-pane
+    INTENT (one repo -> many panes -> many distinct scopes by design), so it can
+    never be derived from cwd alone -- only recalled from what the pane itself
+    declared. Fail-open ABSOLUTE: any error -> "" (the failsafe direction)."""
+    try:
+        if not sid:
+            return ""
+        registry = registry or PaneIntentRegistry(state_dir=state_dir)
+        now = now or datetime.now(timezone.utc)
+        cutoff = now - timedelta(minutes=window_min)
+        f = registry._file_for(cwd, sid)
+        if not f.is_file():
+            return ""
+        intent = Intent.from_json(json.loads(f.read_text(encoding="utf-8")))
+        ts = _parse_iso(intent.ts)
+        if ts is None or ts < cutoff:
+            return ""
+        return ",".join(intent.scope)
+    except Exception:  # noqa: BLE001 -- fail-open
+        return ""
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])

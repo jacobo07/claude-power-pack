@@ -490,6 +490,52 @@ def sprint6():
                   f"verdict={g['verdict']} reasons={g['reasons']}")
 
 
+def sprint7():
+    print("[CO-08 -- launch-scope recall (kclaude auto-export source)]")
+
+    # V-SCOPE-RESOLVED-FROM-INTENT: a pane's OWN declared intent for (cwd, sid)
+    # is recalled as the comma-joined PP_PANE_SCOPE the launcher exports on resume.
+    with tempfile.TemporaryDirectory() as td:
+        reg = PM2.PaneIntentRegistry(state_dir=td)
+        reg.declare("S1", CWD, ["modules/x.py", "tools/y.py"], now=NOW)
+        scope = PM2.resolve_launch_scope(CWD, "S1", now=NOW, state_dir=td)
+        if scope == "modules/x.py,tools/y.py":
+            _ok("V-SCOPE-RESOLVED-FROM-INTENT",
+                f"declared (cwd,sid) intent recalled as PP_PANE_SCOPE={scope!r}")
+        else:
+            _fail("V-SCOPE-RESOLVED-FROM-INTENT", f"got {scope!r}")
+
+    # V-SCOPE-EMPTY-WITHOUT-INTENT: unknown sid AND missing sid both -> '' ->
+    # launcher exports nothing -> CO-08 blunt SAME_REPO_CAP failsafe applies.
+    with tempfile.TemporaryDirectory() as td:
+        reg = PM2.PaneIntentRegistry(state_dir=td)
+        reg.declare("S1", CWD, ["modules/x.py"], now=NOW)
+        no_entry = PM2.resolve_launch_scope(CWD, "S2", now=NOW, state_dir=td)
+        no_sid = PM2.resolve_launch_scope(CWD, None, now=NOW, state_dir=td)
+        if no_entry == "" and no_sid == "":
+            _ok("V-SCOPE-EMPTY-WITHOUT-INTENT",
+                "unknown sid and missing sid both -> '' (failsafe direction)")
+        else:
+            _fail("V-SCOPE-EMPTY-WITHOUT-INTENT",
+                  f"no_entry={no_entry!r} no_sid={no_sid!r}")
+
+    # V-SCOPE-FAILOPEN-STALE: an intent older than the 120min window -> '' (a
+    # pane no longer hot must not re-export a phantom scope); missing state -> ''.
+    with tempfile.TemporaryDirectory() as td:
+        reg = PM2.PaneIntentRegistry(state_dir=td)
+        reg.declare("S1", CWD, ["modules/x.py"], now=NOW)
+        stale = PM2.resolve_launch_scope(CWD, "S1",
+                                         now=NOW + timedelta(minutes=200),
+                                         state_dir=td)
+        missing = PM2.resolve_launch_scope(CWD, "S1", now=NOW,
+                                           state_dir=str(Path(td) / "nope"))
+        if stale == "" and missing == "":
+            _ok("V-SCOPE-FAILOPEN-STALE",
+                "stale (>120min) and missing state both fail-open to ''")
+        else:
+            _fail("V-SCOPE-FAILOPEN-STALE", f"stale={stale!r} missing={missing!r}")
+
+
 def main():
     sprint1()
     sprint2()
@@ -497,6 +543,7 @@ def main():
     sprint4()
     sprint5()
     sprint6()
+    sprint7()
     total = _p + _f
     print(f"PARALLEL_MESH_PASS={_p}/{total}  threshold={total}/{total}")
     return 0 if _f == 0 else 1

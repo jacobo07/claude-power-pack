@@ -189,11 +189,34 @@ def run(cwd, description=None):
             "known_sids": known, "gate": gate, "resume_gate": resume_gate}
 
 
-def run_fast(cwd):
+def _apply_launch_scope(cwd, sid):
+    """Recall this pane's declared PM-02 intent for (cwd, sid) and apply it to
+    PP_PANE_SCOPE so the CO-08 gate this launch is intent-aware AND the launcher
+    can re-export it to the resumed claude. An explicit env / --scope flag wins
+    (never overwritten). Fail-open ABSOLUTE: any error -> no-op (blunt cap)."""
+    try:
+        if os.environ.get("PP_PANE_SCOPE", "").strip():
+            return  # explicit --scope / env already declared this pane
+        if not sid:
+            return
+        from modules.parallel_mesh.pm_02_intent import resolve_launch_scope
+        scope = resolve_launch_scope(cwd, sid)
+        if scope:
+            os.environ["PP_PANE_SCOPE"] = scope
+            os.environ["PP_PANE_SID"] = sid
+    except Exception:  # noqa: BLE001 -- fail-open
+        pass
+
+
+def run_fast(cwd, sid=None):
     """Launch-critical features only: W2 resume, W4 coordinate (no
     parallel_burn), known_sids, CO-08 gate, then CO-00 resume advisory.
     W1/W5 are advisory-only and deferred to run_advisories(). `advisories`
-    is empty here; the orchestrator prints the cached bundle instead."""
+    is empty here; the orchestrator prints the cached bundle instead.
+
+    `sid` (the resume target, when known) lets the CO-08 gate recall this pane's
+    own declared scope (PM-02) so a scope declared once survives restarts."""
+    _apply_launch_scope(cwd, sid)
     ex = ThreadPoolExecutor(max_workers=4)
     try:
         f_w4 = ex.submit(_w4_coord_only, cwd)
@@ -211,7 +234,9 @@ def run_fast(cwd):
         ex.shutdown(wait=False)
     resume_gate = _resume_gate(cwd, resume)
     return {"advisories": [], "coord": coord, "resume": resume,
-            "known_sids": known, "gate": gate, "resume_gate": resume_gate}
+            "known_sids": known, "gate": gate, "resume_gate": resume_gate,
+            "launch_scope": os.environ.get("PP_PANE_SCOPE", ""),
+            "launch_sid": os.environ.get("PP_PANE_SID", "")}
 
 
 def run_advisories(cwd, description=None):
@@ -252,7 +277,8 @@ def _fail_open_full():
             "default_resume": None, "source": "error", "candidates": []},
             "resume": {"resume_arg": None, "session_id": None,
                        "source": "error"}, "known_sids": [],
-            "gate": dict(_GATE_PROCEED), "resume_gate": dict(_RESUME_GATE_NONE)}
+            "gate": dict(_GATE_PROCEED), "resume_gate": dict(_RESUME_GATE_NONE),
+            "launch_scope": "", "launch_sid": ""}
 
 
 def main(argv=None):
@@ -260,6 +286,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     ap.add_argument("--cwd", default=None)
     ap.add_argument("--description", default=None)
+    ap.add_argument("--sid", default=None,
+                    help="resume-target sid; recalls this pane's PM-02 scope")
     ap.add_argument("--mode", choices=("full", "fast", "advisories"),
                     default="full")
     args = ap.parse_args(argv)
@@ -278,7 +306,8 @@ def main(argv=None):
         os._exit(0)
 
     try:
-        out = run_fast(cwd) if args.mode == "fast" else run(cwd, args.description)
+        out = run_fast(cwd, args.sid) if args.mode == "fast" \
+            else run(cwd, args.description)
     except Exception:  # noqa: BLE001 -- absolute fail-open
         out = _fail_open_full()
     sys.stdout.write(json.dumps(out, ensure_ascii=False))

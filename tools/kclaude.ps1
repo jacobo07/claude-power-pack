@@ -13,6 +13,12 @@
   blocking path: it runs detached and writes a cache the NEXT launch reads.
   Fail-open ABSOLUTE: any error at any step and claude still launches.
 
+  CO-08 scope-gate (PM-02, SCS C77): a pane's declared scope reaches the gate
+  automatically. --scope declares a fresh pane in one flag; on resume the pane's
+  own prior intent is recalled by prelaunch (--sid) and re-exported, so a scope
+  declared once survives restarts. No declaration -> nothing exported ->
+  SAME_REPO_CAP failsafe unchanged.
+
   ASCII-only source (PS 5.1 / Task-Scheduler codepage safety).
 #>
 [CmdletBinding()]
@@ -33,6 +39,7 @@ if ($ClaudeArgs.Count -eq 1 -and ($ClaudeArgs[0] -in @('--help', '-h', '/?'))) {
   Write-Host "          cd <repo> ; kclaude          auto-resumes that repo's latest session"
   Write-Host "          kclaude -n | --new           force a NEW session (skip auto-resume)"
   Write-Host "          kclaude --resume <sid>       resume a specific session (honored as-is)"
+  Write-Host "          kclaude --scope <a,b>        declare this pane's CO-08 scope (PM-02)"
   Write-Host "          kclaude -h                   this help"
   Write-Host ""
   Write-Host "  Fail-open: if any pre-launch feature errors, claude launches anyway."
@@ -53,16 +60,34 @@ $namer = Join-Path $ppRoot "modules\wrapper\session_namer.py"
 $advCache = Join-Path $env:USERPROFILE ".claude\cache\kclaude_advisories.json"
 
 # --- helper: fast (launch-critical) prelaunch decision, or $null -------------
+# $SidArg (when known: the resume target) lets prelaunch recall this pane's own
+# declared PM-02 scope so the CO-08 gate is intent-aware after a restart.
 function Get-FastDecision {
+  param([string] $SidArg)
   $d = $null
   if ($py -and (Test-Path $pre)) {
     try {
       $env:PYTHONIOENCODING = 'utf-8'
-      $raw = & $py $pre --cwd $cwd --mode fast 2>$null
+      $fastArgs = @($pre, '--cwd', $cwd, '--mode', 'fast')
+      if ($SidArg) { $fastArgs += @('--sid', $SidArg) }
+      $raw = & $py @fastArgs 2>$null
       if ($raw) { $d = ($raw | ConvertFrom-Json) }
     } catch { $d = $null }
   }
   return $d
+}
+
+# --- helper: export the CO-08 scope prelaunch resolved into the launch env ----
+# prelaunch echoes the scope it applied (from a --scope env or a recalled intent)
+# as launch_scope/launch_sid; propagate them so the launched claude inherits the
+# pane's active scope. Fail-open: absent fields -> no change (SAME_REPO_CAP).
+function Set-LaunchScopeEnv($decision) {
+  if ($decision -and $decision.launch_scope) {
+    $env:PP_PANE_SCOPE = [string]$decision.launch_scope
+  }
+  if ($decision -and $decision.launch_sid) {
+    $env:PP_PANE_SID = [string]$decision.launch_sid
+  }
 }
 
 # --- helper: print cached advisories from the previous launch (fail-open) ----
@@ -107,12 +132,21 @@ function Write-PaneSidBeacon($sid) {
 
 # --- passthrough arg inspection ----------------------------------------------
 # Honor an explicit --resume/--continue; strip -n/--new (now a no-op -- a bare
-# terminal-profile launch already opens a NEW session by default).
+# terminal-profile launch already opens a NEW session by default). Capture a
+# --scope <tokens> flag (kclaude-only; never passed to claude) as this pane's
+# CO-08 scope declaration.
 $explicitResume = $false
+$scopeFlag = $null
 if ($ClaudeArgs) {
   $filtered = @()
-  foreach ($a in $ClaudeArgs) {
+  for ($i = 0; $i -lt $ClaudeArgs.Count; $i++) {
+    $a = $ClaudeArgs[$i]
     if ($a -in @('-n', '--new')) { continue }             # no-op: new is default
+    if ($a -eq '--scope') {
+      if (($i + 1) -lt $ClaudeArgs.Count) { $scopeFlag = $ClaudeArgs[$i + 1]; $i++ }
+      continue
+    }
+    if ($a -like '--scope=*') { $scopeFlag = $a.Substring(8); continue }
     if ($a -in @('--resume', '-r', '--continue', '-c') -or $a -like '--resume=*') {
       $explicitResume = $true
     }
@@ -121,8 +155,30 @@ if ($ClaudeArgs) {
   $ClaudeArgs = $filtered
 }
 
+# CO-08 scope-gate (PM-02, SCS C77): a --scope flag declares this pane's intent
+# for a NEW pane in one command -- the only honest scope source for a cold pane
+# (only the Owner knows what a fresh pane will touch). Exported BEFORE the fast
+# prelaunch so the CO-08 gate is scope-aware THIS launch. Fail-open: no flag ->
+# nothing exported -> SAME_REPO_CAP failsafe.
+if ($scopeFlag) { $env:PP_PANE_SCOPE = $scopeFlag }
+
+# --- resolve the initial resume sid (for CO-08 scope recall on resume) --------
+# On an explicit --resume <sid> the pane's previously-declared intent (if any) is
+# recalled from the PM-02 registry by prelaunch (--sid) and re-applied, so a
+# scope declared once survives restarts. A fresh pane has no sid here -> nothing
+# recalled (only a --scope flag can scope a cold pane).
+$initSid = $null
+for ($i = 0; $i -lt $ClaudeArgs.Count; $i++) {
+  if (($ClaudeArgs[$i] -in @('--resume', '-r')) -and (($i + 1) -lt $ClaudeArgs.Count)) {
+    $initSid = $ClaudeArgs[$i + 1]
+  } elseif ($ClaudeArgs[$i] -like '--resume=*') {
+    $initSid = $ClaudeArgs[$i].Substring(9)
+  }
+}
+
 # --- run FAST prelaunch (launch-critical) ------------------------------------
-$decision = Get-FastDecision
+$decision = Get-FastDecision $initSid
+Set-LaunchScopeEnv $decision
 
 # --- advisories: print cached (instant) + refresh in the background ----------
 Show-CachedAdvisories
@@ -225,8 +281,10 @@ while ($true) {
     Remove-Item $hibFlag -Force -ErrorAction SilentlyContinue
     Write-Host "  [~] Rehydrating session..." -ForegroundColor Green
     if ($hsid) { $launch = @('--resume', $hsid) } else { $launch = @('--continue') }
-    # Re-run the fast CO gates so the Cognitive OS is active after rehydrate.
-    $null = Get-FastDecision
+    # Re-run the fast CO gates so the Cognitive OS is active after rehydrate; pass
+    # the sid so this pane's declared CO-08 scope is recalled + re-exported.
+    $rdH = Get-FastDecision $hsid
+    Set-LaunchScopeEnv $rdH
     Show-CachedAdvisories
     Start-AdvisoryRefresh
     continue
@@ -246,11 +304,13 @@ while ($true) {
     Remove-Item $sidFile -Force -ErrorAction SilentlyContinue
   }
   Write-Host ""
-  # F3a: re-run the fast CO gates so the Cognitive OS is ACTIVE after restart.
-  $rd = Get-FastDecision
+  # F3a: re-run the fast CO gates so the Cognitive OS is ACTIVE after restart;
+  # pass the sid so the pane's declared CO-08 scope is recalled + re-exported.
+  $rd = Get-FastDecision $sid
   if ($rd -and $rd.resume_gate -and $rd.resume_gate.advise) {
     Write-Host $rd.resume_gate.message -ForegroundColor Yellow
   }
+  Set-LaunchScopeEnv $rd
   Show-CachedAdvisories
   Start-AdvisoryRefresh
   if ($sid) {
