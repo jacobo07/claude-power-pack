@@ -65,3 +65,35 @@ the fix — the drift recurs on any canonical dispatcher change (T-HOOK-DISPATCH
 
 *Live build sealed under **SCS C72**. Architecture: [[graphify_live_scs_c72|C71]].
 Parent conscience: [[graphify_12_graph_first_enforcement]] (CO-10 ladder).*
+
+---
+
+## Addendum — GK-11 Librarian agents shipped (2026-07-05)
+
+The GK-11 residual above ("Librarian swarm deferred — Owner-side `~/.claude/agents/`
+registration") is now closed on the PP-internal side. Three librarian agent files were
+created — canonical source under `vault/agents/` (version-controlled), copied to the live
+`~/.claude/agents/`:
+
+- **`graphify-librarian.md`** — GK-11 locate-not-reason finder; navigates the coordinate graph
+  (`indexer --query`) and returns a compressed route with an explicit confidence label; also runs
+  the freshness/integrity pass. Cheap model (sonnet, HR-COST-001).
+- **`graphify-route-governor.md`** — GK-11 Route Governor; arbitrates competing librarian
+  proposals into one minimal route and audits GK-06 route quality; proposes optimizations, never
+  auto-applies.
+- **`graphify-writeback.md`** — GK-08 deep writeback; complements the automatic
+  `session_writeback.py` Stop hook with on-demand extraction of edges / decisions /
+  negative-knowledge, verified before promotion.
+
+All three ground on real invocations (`python -m modules.graphify.indexer`, `session_writeback`,
+`tools/kobi_graphify.py` / `graphify_knowledge.py`), carry valid frontmatter (name / description /
+tools / model / color), and contain zero placeholders (slop-scanned clean).
+
+**Honest residual (cold-load, `[[PR-AGENT-FILES-IN-REPO-001]]`):** agent files cold-load like
+hooks — the three are on disk in `~/.claude/agents/` but become dispatchable only after a
+`/restart`. The canonical copy is `vault/agents/`; the live copy is what Claude dispatches — keep
+both in sync (Copy-Item on any change; same drift discipline as the dispatcher,
+`[[T-HOOK-DISPATCHER-DRIFT-001]]`).
+
+With GK-11 agents shipped, the **Graphify Knowledge Navigation Kernel (GK-00..GK-12) is completely
+built** — architecture (C71) + live code (C72) + the librarian agent family.

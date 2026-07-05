@@ -144,7 +144,10 @@ Consistent with the CO/PM sealed depth rulings. Honest per the "no classified FA
 
 ## Deferred to EXECUTION-mode (not this session — architecture only)
 
-- Live librarian agents `~/.claude/agents/graphify-*.md` (cold-load, need `/restart`; Windows cap-2 dispatch).
+- ✅ **Live librarian agents `~/.claude/agents/graphify-*.md` — SHIPPED 2026-07-05.** 3 files
+  (`graphify-librarian`, `graphify-route-governor`, `graphify-writeback`); canonical source
+  `vault/agents/`, copied live; cold-load (need `/restart`); Windows cap-2 dispatch. See the
+  SCS C72 addendum + `[[PR-AGENT-FILES-IN-REPO-001]]`. GK-11 now COMPLETE.
 - Live global cross-repo coordinate store (GK-10 propagation transport).
 - `kobi_graphify.py` node-type extension (code-only → all ontology types).
 - Graph-First detection hook (GK-12 level-2 PreToolUse advisory).

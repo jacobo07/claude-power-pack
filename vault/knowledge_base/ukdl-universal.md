@@ -2484,3 +2484,28 @@ declaration made once persists. Never fabricate a derivation the architecture ca
 
 **ORIGEN:** kclaude scope auto-export (`tools/kclaude.ps1` `--scope` + `prelaunch --sid`
 recall of `pm_02_intent.resolve_launch_scope`), sealed `[[scs_c77_co08_scope_autoexport]]`.
+
+### PR-AGENT-FILES-IN-REPO-001 -- an agent file's canonical copy lives in the repo; the ~/.claude copy is a live mirror
+
+**TRIGGER:** Creating or editing a Claude sub-agent (`~/.claude/agents/*.md`), a slash command,
+or any agent-owned global config that Claude loads from `~/.claude/` but that has no
+version-controlled home.
+
+**FINDING (2026-07-05):** the file Claude actually dispatches lives in `~/.claude/agents/`, but
+that directory is outside any repo -- an edit there is untracked, un-reviewable, and lost on a
+machine reset. The durable source of truth must be the repo (`vault/agents/`), with the
+`~/.claude/agents/` copy treated as a deployed mirror. Same shape as the canonical-vs-live hook
+dispatcher drift (`[[T-HOOK-DISPATCHER-DRIFT-001]]`): two copies, the repo one authoritative, the
+live one what the runtime uses. Agent files also **cold-load** -- a new/edited `~/.claude/agents/*.md`
+is not dispatchable until a `/restart` (unlike hot-loaded commands).
+
+**FIX:** write the canonical agent file to `vault/agents/` (committed), then `Copy-Item` it to
+`~/.claude/agents/` (Owner-authorized; the dir is writable). Keep both in sync on every change --
+the repo copy is reviewed + version-controlled, the live copy is deployed. Document the `/restart`
+cold-load requirement. NEVER edit only the `~/.claude/` copy: an untracked agent is a mirror-drift
+waiting to be overwritten. Companion of HR-001 (ship the PP-internal half, document the Owner-side
+step) and the mirror-sync-direction doctrine.
+
+**ORIGEN:** GK-11 Librarian agent files (`graphify-librarian` / `graphify-route-governor` /
+`graphify-writeback`) shipped canonical-in-`vault/agents/` + copied live, sealed as the SCS C72
+addendum (`[[graphify_live_scs_c72]]`).
