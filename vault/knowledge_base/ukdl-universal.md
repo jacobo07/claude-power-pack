@@ -2819,3 +2819,37 @@ impressions for an advertiser = fraud. The only honest lever is VISIBILITY so th
 to resume. Verified 3/3 (fresh->no flag; -SimulateRenderStale->toast+flag; fresh->cleared).
 ORIGEN: 2026-07-06 follow-up; the render bridge (a PP context-monitor artifact) turned out to
 be the exact per-render impression proxy the closed extension never exposed.
+
+### T-KICKBACKS-GAP-PATTERN-001 ADDENDUM v3 -- render-staleness DISPROVEN; the bridge is NOT an ad-render proxy; INV-RENDER RETRACTED
+
+**CORRECTION (loud).** v2 claimed the `%TEMP%/claude-ctx-<sid>.json` bridge is a faithful
+per-render/impression proxy and shipped INV-RENDER on it. That was WRONG. The Owner was
+ACTIVELY prompting Claude 15:45-16:27, so renders were continuous -- yet the bridge mtimes were
+sparse (10-16 min gaps). That is impossible if the bridge tracked renders. It does not.
+
+**WHY the bridge is not a render proxy (live probe, deterministic).** The bridge is written by
+`gsd-statusline.js` (the PP HUD chained BELOW the ad), ONLY inside `if (remaining != null)`.
+Probe: pipe a CC statusline payload WITH `context_window.remaining_percentage` -> ad prints AND
+bridge written; pipe the SAME payload WITHOUT it -> the ad STILL prints (impression happens) but
+NO bridge is written. So any render whose payload lacks context (common: early session, many
+refresh types) displays the ad but leaves no bridge. Confirmed in the wild: active session
+029d13b9 (InfinityOps) ran with ZERO bridges ever. Bridge-staleness is a MEASUREMENT ARTIFACT
+of the `remaining!=null` gate, not an ad-render gap -> a detector on it FALSE-ALARMS during
+active use. INV-RENDER retracted to an inert note (2026-07-06); params kept but unused.
+
+**What is actually known now.** Config is global + uniform (every pane's statusLine is the ad
+-> gsd; no project/local override, verified). The ad (`vibe-ads-statusline.mjs` top branch)
+writes NOTHING when it renders, so there is currently NO reliable LOCAL proxy for an ad
+impression. During the gap the ad was almost certainly rendering (active panes, fresh cache,
+ad prints even on null-ctx). Therefore the impression gap is NOT a CLI-render gap -- it lies in
+the CLOSED extension's impression accounting/reporting, which PP cannot observe. Focus,
+render-staleness, auth, vsix, canary are ALL disproven for this gap.
+
+**Only valid path forward (Owner-gated, not yet shipped).** An UNGATED per-invocation append
+log (rotated, never-throw) at the TOP of `gsd-statusline.js` records ts+sid on EVERY render
+regardless of context -> ground-truth per-pane render cadence. If the next gap shows gsd firing
+continuously (ad rendering) while the dashboard shows no impressions, the fault is proven
+extension-side and PP genuinely cannot fix it (only surface it). HARD LINE unchanged: never
+auto-render to fake impressions (fraud). LESSON (meta): two detectors (INV-FOCUS, INV-RENDER)
+were shipped on proxies that did not hold; per anti-antipattern Rule 12, STOP building detectors
+on unvalidated proxies -- instrument for ground truth first, then detect.

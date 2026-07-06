@@ -93,3 +93,45 @@ Render activity == billing activity. Gaps are CC-idle windows, orthogonal to foc
 PP MUST NEVER auto-invoke the statusline to fake a render -- that manufactures ad impressions
 for an advertiser = **fraud**. The only honest lever is VISIBILITY so the Owner resumes by
 actually using Claude Code. This is why INV-RENDER only advises; it never renders.
+
+---
+
+# SCS C60 addendum v6 -- render-staleness DISPROVEN; INV-RENDER RETRACTED
+
+**Sealed:** 2026-07-06 (same day, second follow-up)
+**Retracts the v5 detector.**
+
+## Correction
+
+v5 shipped INV-RENDER on `%TEMP%/claude-ctx-<sid>.json` bridge staleness. The Owner reported he
+was actively prompting Claude 15:45-16:27 -- continuous renders -- yet the bridge mtimes were
+sparse (10-16 min gaps). Impossible if the bridge tracked renders.
+
+## Why the bridge is not a render/impression proxy (live probe)
+
+The bridge is written by `gsd-statusline.js` (HUD chained below the ad) ONLY when the CC
+statusline payload has `context_window.remaining_percentage`:
+
+| probe payload | ad prints? | bridge written? |
+|---|---|---|
+| with `remaining_percentage` | yes | yes |
+| WITHOUT it (null ctx) | **yes** | **no** |
+
+So a null-context render displays the ad (impression) but leaves no bridge. Wild proof: active
+session `029d13b9` (InfinityOps) ran with zero bridges ever. Bridge-staleness is a measurement
+artifact of the `remaining!=null` gate -> a detector on it false-alarms during active use.
+
+## State after this turn
+
+- INV-RENDER retracted to an inert note (params retained, unused). Guard parse OK, ASCII-clean.
+- INV-FOCUS kept as a secondary net; fixed a TZ bug (UTC read) that made its age go negative.
+- INV-AUTHSTREAK / INV-VSIX / INV-CANARY unchanged.
+
+## Honest standing conclusion
+
+Config is global + uniform; the ad was almost certainly rendering during the gap. The ad render
+leaves NO local trace, so there is NO reliable local impression proxy today -- impression
+accounting is extension-internal (closed). Focus, render-staleness, auth, vsix, canary are ALL
+disproven for this gap. The only ground-truth instrument left is an ungated per-invocation log
+at the top of `gsd-statusline.js` (Owner-gated, hot path, deferred). Meta-lesson (Rule 12): stop
+shipping detectors on unvalidated proxies -- instrument for ground truth first.

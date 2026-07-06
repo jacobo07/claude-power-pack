@@ -34,16 +34,15 @@
                 "prior activation didn't complete cleanly" -> skip-patch + bar
                 blank. Pre-empts the patch-activation-failed + earnings-bar-hidden
                 false positive at its shared root. Never touches Kickbacks code.
-    INV-RENDER  (detect + notify) [PRIMARY earning-health signal]: the TRUE billing gate is
-                the ad actually RENDERING. Elimination forensic (2026-07-06): a real gap had
-                EVERY local signal green AND window-focus 100% green, yet no impressions --
-                so billing is neither timer-while-serving nor focus-gated; it needs a render.
-                The CLI ad is drawn by the statusline, which Claude Code re-invokes only on
-                ACTIVITY, so idle panes (even focused) stop rendering -> ad stops -> billing
-                pauses. gsd-statusline.js rewrites %TEMP%/claude-ctx-<sid>.json per render;
-                the newest such mtime == the last moment any ad billed. When it is >=
-                RenderStaleMinutes old while Cursor runs, advise the Owner to run a prompt.
-                PP MUST NEVER fake a render (ad fraud). Fail-open: no bridge -> silence.
+    INV-RENDER  RETRACTED 2026-07-06 (was WRONG). It flagged billing gaps from staleness of the
+                %TEMP%/claude-ctx-<sid>.json gsd bridge, but the bridge is only written when the
+                CC statusline payload carries context_window.remaining_percentage; a NULL-context
+                render still prints the ad (impression) with NO bridge, so bridge-staleness is a
+                measurement artifact that false-alarms during active use (proven: the Owner was
+                actively prompting during the gap; session 029d13b9 was active with zero bridges).
+                The ad render leaves NO local trace, so there is NO reliable local impression
+                proxy today; accounting is extension-internal. A valid render signal needs an
+                ungated log in gsd-statusline.js (deferred, Owner-gated). Block is now inert.
     INV-FOCUS   (detect + notify) [secondary]: focus loss is ONE reason renders can stop, but
                 the 2026-07-06 gap proved focus is neither necessary nor sufficient (focus was
                 green, billing still gapped). Kept as a contributing explainer; INV-RENDER is
@@ -284,54 +283,22 @@ try {
   }
 } catch { $warns += ("vsix check error: " + $_.Exception.Message) }
 
-# --- INV-RENDER: statusline render staleness = the TRUE earning gate (2026-07-06 v5) ---
-# Elimination forensic: during a real billing gap (2026-07-06 15:45+) EVERY local signal
-# was green -- auth ok, vsix low, signedIn:true, killed:false, hasAd:true THE WHOLE TIME,
-# and window-focus was 100% green on the dashboard. Billing still gapped. Therefore billing
-# is NOT timer-based-while-serving and NOT focus-gated -- it requires the ad to actually
-# RENDER/DISPLAY. The CLI ad is drawn by the statusline, which Claude Code only re-invokes
-# on ACTIVITY (a turn running / spinner ticking); idle panes (even focused) stop rendering
-# -> the ad stops displaying -> impressions pause. Proof: gsd-statusline.js rewrites
-# %TEMP%/claude-ctx-<sid>.json on every render, and the newest such mtime went sparse at
-# EXACTLY 15:45 -- the same instant the dashboard Activity Ledger's last row landed. So the
-# newest bridge mtime across live sessions == the last moment any ad could have billed.
-# PP must NEVER fake a render to inflate impressions (ad fraud) -- the only honest move is to
-# make the earning-pause VISIBLE so the Owner can run a prompt to resume. Fail-open: no bridge
-# files / error -> silence. Only UUID-named session bridges count (excludes guard-selftest/test).
-try {
-  if (Test-CursorRunning) {
-    $tmpDir = [System.IO.Path]::GetTempPath()
-    $bridges = @(Get-ChildItem $tmpDir -Filter "claude-ctx-*.json" -ErrorAction SilentlyContinue |
-                 Where-Object { $_.Name -match '^claude-ctx-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-' })
-    if ($bridges.Count -eq 0) {
-      $notes += "RENDER: no session bridge files -- indeterminate, skipped"
-    } else {
-      $newest = $bridges | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-      $renderAge = if ($SimulateRenderStale) { 999 } else { ((Get-Date) - $newest.LastWriteTime).TotalMinutes }
-      $rLastNotify = [datetime]"2000-01-01"; $rPrevStale = $false
-      if (Test-Path $RenderState) {
-        try { $rs = Get-Content $RenderState -Raw | ConvertFrom-Json
-              if ($rs.lastNotify) { $rLastNotify = [datetime]$rs.lastNotify }
-              if ($null -ne $rs.stale) { $rPrevStale = [bool]$rs.stale } } catch {}
-      }
-      $stale = $renderAge -ge $RenderStaleMinutes
-      if ($stale) {
-        $minsSince = ((Get-Date) - $rLastNotify).TotalMinutes
-        if ((-not $rPrevStale) -or ($minsSince -ge $RenotifyMinutes)) {
-          $body = ("Sin render del statusline en {0} min -> Kickbacks no acumula impresiones (Claude Code inactivo, aunque Cursor tenga foco). Ejecuta un prompt para reanudar el billing." -f [int]$renderAge)
-          $shown = Show-Toast "Kickbacks no esta cobrando" $body
-          [System.IO.File]::WriteAllText($RenderFlag, ("$stamp  " + $body), $utf8)
-          $rLastNotify = Get-Date
-          $notes += ("RENDER: stale " + [int]$renderAge + "min -> notified (toast=" + $shown + ", flag written)")
-        } else { $notes += ("RENDER: still stale (" + [int]$renderAge + "min, within renotify throttle)") }
-      } else {
-        if (Test-Path $RenderFlag) { try { [System.IO.File]::Delete($RenderFlag); $notes += "RENDER: fresh again -> flag cleared" } catch {} }
-        $notes += ("RENDER: fresh (" + [int]$renderAge + "min old) -- ad displaying, billing eligible")
-      }
-      [System.IO.File]::WriteAllText($RenderState, (@{ renderAgeMin = [math]::Round($renderAge,1); stale = $stale; lastNotify = $rLastNotify.ToString('o'); newest = $newest.Name } | ConvertTo-Json -Compress), $utf8)
-    }
-  }
-} catch { $warns += ("render check error: " + $_.Exception.Message) }
+# --- INV-RENDER: RETRACTED 2026-07-06 (v5 was WRONG -- do NOT reinstate on the bridge proxy) ---
+# v5 detected billing gaps from staleness of %TEMP%/claude-ctx-<sid>.json (the gsd HUD bridge).
+# DISPROVEN the same day: the Owner was actively prompting Claude 15:45-16:27 yet the bridge
+# mtimes were sparse (10-16 min gaps). Root reason (live probe): gsd-statusline.js only writes
+# the bridge when the CC statusline payload carries context_window.remaining_percentage
+# (`if remaining != null`). A render with NULL context STILL prints the ad (impression happens)
+# but writes NO bridge -- proven: session 029d13b9 (InfinityOps) was active with ZERO bridges
+# ever. So bridge-staleness is a MEASUREMENT ARTIFACT, not an ad-render gap; a detector on it
+# false-alarms during active use. The ad (vibe-ads-statusline.mjs top branch) leaves NO local
+# trace when it renders, so there is currently NO reliable local proxy for an ad impression.
+# Impression accounting is extension-internal (closed) and not locally observable. Reinstating a
+# render-staleness invariant REQUIRES a valid ungated render signal (an ungated per-invocation
+# log at the top of gsd-statusline.js) -- deferred, Owner-gated (hot path). Params RenderState/
+# RenderFlag/RenderStaleMinutes/SimulateRenderStale are retained but inert. See UKDL
+# T-KICKBACKS-GAP-PATTERN-001 addendum v3.
+$notes += "RENDER: detector retracted (bridge proxy invalid -- see UKDL T-KICKBACKS-GAP-PATTERN-001 v3)"
 
 # --- INV-FOCUS: sustained Cursor focus loss (impressions bill ONLY while focused) ---
 # ROOT CAUSE (2026-07-06 forensic): billing gaps occurred while the extension was
@@ -355,7 +322,9 @@ try {
       $lastFocused = $nowUtc; $lastFNotify = [datetime]"2000-01-01"; $prevFocused = $true
       if (Test-Path $FocusState) {
         try { $fs = Get-Content $FocusState -Raw | ConvertFrom-Json
-              if ($fs.lastFocusedUtc) { $lastFocused = [datetime]$fs.lastFocusedUtc }
+              # ToUniversalTime on read: 'o'-format UTC strings parse back as Local-kind, and
+              # DateTime subtraction is raw-tick (Kind-blind) -> a TZ-offset error (negative age).
+              if ($fs.lastFocusedUtc) { $lastFocused = ([datetime]$fs.lastFocusedUtc).ToUniversalTime() }
               if ($fs.lastNotify)     { $lastFNotify = [datetime]$fs.lastNotify }
               if ($null -ne $fs.focused) { $prevFocused = [bool]$fs.focused } } catch {}
       }
