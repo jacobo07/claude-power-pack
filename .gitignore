@@ -63,3 +63,29 @@ vault/setup_os/profiles/
 # accumulate per-session and would churn/conflict across panes. Local-only,
 # like vault/ceps + vault/token_logs.
 vault/cognitive_os/*.jsonl
+
+# --- Surgical-commit sweep (2026-07-06): session churn, binaries, artifacts ---
+# Editor/run logs and backup snapshots (never versioned)
+_logs/
+*.bak
+*.bak.*
+CLAUDE.md.pre-hr-*.bak
+.pp-onboarded
+.pp-onboarded-prereqs
+# Compiled VS Code / Cursor extensions (build outputs, not source)
+*.vsix
+# Per-pane session churn ledgers (local-only, like vault/ceps + token_logs)
+vault/handoffs/
+vault/ceps/
+vault/token_logs/
+vault/monitor/*_state.json
+vault/osa/budget_*.json
+# Auto-spawned test logs (curated *.md test results stay tracked)
+vault/test-results/*.log
+vault/test-results/*.log.*
+vault/test-results/.auto-spawned.log*
+# Sleepy session snapshots (curated INDEX.md stays tracked)
+vault/sleepy/*.jsonl
+vault/sleepy/sleepy_index_*.json
+# auto-browser render artifacts (screenshots/run data, not vendored source)
+vendor/auto-browser/clone/data/artifacts/
