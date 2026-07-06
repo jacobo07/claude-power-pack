@@ -2853,3 +2853,22 @@ extension-side and PP genuinely cannot fix it (only surface it). HARD LINE uncha
 auto-render to fake impressions (fraud). LESSON (meta): two detectors (INV-FOCUS, INV-RENDER)
 were shipped on proxies that did not hold; per anti-antipattern Rule 12, STOP building detectors
 on unvalidated proxies -- instrument for ground truth first, then detect.
+
+---
+
+### PR-PANE-MAP-LIVE-ONLY-001 (2026-07-06, SCS C80)
+
+The PP Sessions panel and post-crash restore use only the panel-facing pane map
+(OPEN-NOW + ACTIVE + RECENT tiers); the history exists but is separated
+(`pane_map_archive.*`, `pane_map_history/`). **"54 panes in a repo" is a filtering
+/ framing bug, not reality** -- the builder lists every transcript touched within
+the collection window, so the total conflates open tabs with recent closed
+conversations. The map now leads with the OPEN-NOW count and demotes stale-content
+panes (real last turn older than the RECENT boundary, dragged in by a batch
+mtime-touch) to ARCHIVE. Tier = INTERNAL-timestamp age, never file mtime
+(cross-ref `T-PANE-MAP-FALSE-LIVE-MTIME-001`); the 12-min OPEN-NOW floor is proven
+and must not be relaxed. Versioning snapshots on topology change + >=15min gate,
+7-day retention; the Workspace Session Registry (`workspace_sessions.jsonl`)
+records which repos held OPEN-NOW panes at each snapshot instant.
+Artifacts: `tools/build_pane_map.ps1`, `tools/pane_map_snapshot.py`,
+`tools/test_pane_map_snapshot.py`.

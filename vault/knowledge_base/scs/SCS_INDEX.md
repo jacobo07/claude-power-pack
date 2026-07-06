@@ -22,6 +22,7 @@ This index is the single ledger across both.
 | C77 | CO-08 Scope-Gate auto-activation (kclaude exports PP_PANE_SCOPE) | `modules/parallel_mesh/pm_02_intent.py` (`resolve_launch_scope`), `modules/wrapper/prelaunch.py` (`_apply_launch_scope`, `--sid`), `tools/kclaude.ps1` (`--scope`, sid recall) | `T-SCOPE-GATE-OPT-IN-ANTIPATTERN-001` | 2026-07-05 | Sealed |
 | C78 | CDIO — Chief Design Intelligence Officer (design-intelligence layer) | `agents/cdio-*.md`, `vault/knowledge_base/cdio/`, `modules/cdio/` | design-opinion-vs-criteria + review gate | 2026-07-05 | Sealed |
 | C79 | pane_map + PP Sessions resume uses kclaude (wrapper active on every resume) | `tools/build_pane_map.ps1`, `extension/src/restore_guard.js`, `extension/src/extension.js`; tests `test_pane_map.py`, `verify_session_ext.py`, `test_restore_guard.js` | `HR-RESTART-VIA-KCLAUDE-001` (C79 addendum) | 2026-07-06 | Sealed (Tier-1; cpc_os/lazarus Tier-2 pending) |
+| C80 | Pane-Map-Versioned + Workspace Session Registry (4-tier LIVE/RECENT/ARCHIVE, 15-min snapshots, 7-day retention, repos_live per timestamp) | `tools/build_pane_map.ps1`, `tools/pane_map_snapshot.py`; test `test_pane_map_snapshot.py` (6/6) | `PR-PANE-MAP-LIVE-ONLY-001` | 2026-07-06 | Sealed |
 
 ## Notes
 
