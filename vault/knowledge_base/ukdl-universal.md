@@ -2626,3 +2626,51 @@ on a real tab before assuming any rename wins.
 is auto-tasks (`task.allowAutomaticTasks:"on"`) and `pane_map.json` already carries `topic`. Shipped C+B
 (Owner-approved): `AUTORUN_PASS=17/17` incl. V-TERMINAL-NAMED-FROM-PANE-MAP + V-FALLBACK-TO-REPO.
 SCS C78 addendum v4 ([[scs_restore_all_panes_c78_addendum_v4]]).
+
+---
+
+## PR-TRANSCRIPT-RENAME-SAFETY-001 -- Retroactive session rename is APPEND-ONLY, never whole-file-immutable
+
+**RULE.** Before any retroactive rename of existing sessions:
+
+1. Establish the naming mechanism EMPIRICALLY, not by assumption. Verified 2026-07-06:
+   the /resume picker renders the LATEST
+   `{"type":"custom-title","customTitle":"<name>","sessionId":"<uuid>"}` record inside
+   `<proj>/<uuid>.jsonl`. There is NO separate metadata file -- the name lives INLINE in
+   the transcript, append-only. Ctrl+R and `hooks/mark-live-session.js` both set the name
+   the same way: by appending one custom-title line. (A prompt CONTEXT block asserting a
+   "separate metadata.json" was FALSE; PASO -1 forensics disproved it.)
+
+2. The "sha256 of the .jsonl identical before/after" gate is IMPOSSIBLE and wrong -- an
+   append changes the whole-file hash, and Ctrl+R itself would fail it. The correct
+   invariant is PREFIX-BYTE-IDENTITY: `sha256(original_bytes[0:N])` unchanged, the file
+   grows by exactly one valid record, the appended tail decodes to the expected object.
+   Verify per file; on any mismatch, truncate back to N (revert).
+
+3. Encoding must match the harness byte-for-byte: UTF-8 no-BOM, LF terminator, no-space
+   JSON separators, key order type/customTitle/sessionId. Binary append (no text-mode
+   CRLF translation, no BOM).
+
+4. Name source = the session's own ai-title (clean, Claude-generated). NOT the pane_map
+   topic (raw first prompt) and NOT a first-prompt fallback (leaks sub-agent boilerplate).
+   Rename only sessions whose effective custom-title is empty or a bare hex UUID (the
+   mark-live fallback that shadows the real name). Never overwrite a real Ctrl+R name.
+
+5. Exclude sub-sessions (SUB_PREFIXES, the same set as `build_pane_map.ps1`) and MISLOCATED
+   copies -- a transcript whose recorded cwd does not munge to its physical project dir is
+   a resumed-from-elsewhere fork; renaming it only pollutes the wrong picker.
+
+6. DRY-RUN always before --apply. Apply in WAVES per project dir (a wave failure stops
+   before the next). Protect the running session via --skip-sid.
+
+7. If ANY doubt about the mechanism: do not rename. Ugly names beat a corrupted transcript.
+
+**TOOLS.** `tools/rename_sessions.py` (--dry-run/--apply, --all, per-file verify+revert);
+`tools/test_rename_sessions.py` (V-gates, RENAME_PASS=9/9 on a real transcript temp copy).
+
+**EVIDENCE (2026-07-06).** All-repos apply: 574 scanned, 164 renamed OK / 0 failed across
+23 project dirs; 351 sub-sessions + 47 mislocated copies + 10 no-ai-title excluded. 9/9
+safety V-gates PASS. Live sessions compose with the live-marker hook (baseTitle re-stamped
+with the voltage prefix). ORIGEN: escalated EXECUTION-MODE prompt whose CONTEXT falsely
+asserted a separate metadata.json; the tool was already built on the real inline-append
+mechanism, so the corrected premise changed the documentation, not the code.
