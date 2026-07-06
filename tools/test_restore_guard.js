@@ -68,8 +68,8 @@ const noCmd = panesToRestore(
   { panes: [{ repo: "R", cwd: CWD, sessionId: "sidZ", live: true }] },
   [CWD], 0, { enabled: true });
 check("V-RG-RESUMECMD-FALLBACK",
-  noCmd.length === 1 && noCmd[0].resumeCmd === "claude --resume sidZ",
-  "missing resumeCmd -> 'claude --resume sidZ'");
+  noCmd.length === 1 && noCmd[0].resumeCmd === "kclaude --resume sidZ",
+  "missing resumeCmd -> 'kclaude --resume sidZ'");
 
 const total = pass + fail;
 console.log("RG_PASS=" + pass + "/" + total + "  threshold=" + total + "/" + total);

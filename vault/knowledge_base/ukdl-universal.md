@@ -1818,6 +1818,23 @@ claude). **SCS C63 addendum:** the W6 launcher's LIVE copy is `bin/kclaude.ps1`
 (byte mirror of `tools/kclaude.ps1`); prelaunch.py is read live from the skills
 path (no mirror). Keep the launcher mirror in sync on every kclaude.ps1 edit.
 
+**SCS C79 addendum (2026-07-06):** the rule now covers the RESUME surface, not
+just /restart. Every resume command the pane_map ecosystem generates uses
+`kclaude --resume`, never bare `claude --resume`. Source of truth =
+`tools/build_pane_map.ps1` (the `resumeCmd` field written into `pane_map.json`);
+the PP Sessions extension (Resume button, copy-to-clipboard, cold-start
+auto-launch) reads that field, and its fallbacks (`extension/src/restore_guard.js`,
+`extension/src/extension.js`) also synthesize `kclaude`. A resume via bare
+`claude` bypasses the whole wrapper -- CO-00 (60% ceiling), CO-08 (parallel cap),
+W1-W5 -- leaving the Cognitive OS INERT in that session until the Owner closes and
+reopens with kclaude. ORIGEN: pane_map/PP-Sessions resume audit 2026-07-06.
+TIER-2 PENDING (documented, not done this seal): the cpc_os snapshot recovery
+chain (`modules/cpc_os/snapshot.py:166` and its consumers `recovery.py`,
+`auto_reset_orchestrator.py`, `vscode_autorun.py`, `ram_guard.py`),
+`modules/session-continuity/restore.ps1`, `session_resilience/resume_identity.py`,
+and `tools/lazarus_revive_all.py` still emit bare `claude --resume`; a scoped
+follow-up sweep (a distinct subsystem with its own tests) is recommended.
+
 ### T-CURSOR-PROFILE-ORDER-001 -- Cursor sorts terminal profiles alphabetically, not by array order
 
 **TRIGGER:** adding a Cursor terminal profile that must appear at a specific

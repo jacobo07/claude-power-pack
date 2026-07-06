@@ -41,7 +41,7 @@ function panesToRestore(map, cwds, liveTerminalCount, opts) {
       sessionId: sid,
       cwd: p.cwd,
       repo: p.repo || "",
-      resumeCmd: p.resumeCmd || ("claude --resume " + sid),
+      resumeCmd: p.resumeCmd || ("kclaude --resume " + sid),
     });
   }
   return out;
