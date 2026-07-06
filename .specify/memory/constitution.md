@@ -1,0 +1,44 @@
+# claude-power-pack Constitution
+
+> Per-project PASO -1 governance layer. Inherits and specializes global Power Pack doctrine (`~/.claude/knowledge_vault/core/`). Authored via `/speckit-constitution`.
+
+## Core Principles
+
+### I. [PRINCIPLE_1_NAME]
+[PRINCIPLE_1_DESCRIPTION — one paragraph, non-negotiable, with the consequences of violating it spelled out]
+
+### II. [PRINCIPLE_2_NAME]
+[PRINCIPLE_2_DESCRIPTION]
+
+### III. [PRINCIPLE_3_NAME]
+[PRINCIPLE_3_DESCRIPTION]
+
+### IV. [PRINCIPLE_4_NAME]
+[PRINCIPLE_4_DESCRIPTION]
+
+### V. [PRINCIPLE_5_NAME]
+[PRINCIPLE_5_DESCRIPTION]
+
+## Power Pack non-negotiables (inherit; do NOT delete)
+
+These five clauses are inherited from the global apex standard and MUST be preserved in every project constitution. The project can ADD principles but cannot remove these.
+
+1. **Reality Contract** — every claim traces to a measurement, file, log, or explicit user statement. No fabricated numbers, no scaffold illusion, no deferred-work stubs in shipped code.
+2. **Micro-Commit Discipline** — one commit per logical step; commit subject cites the task ID (`T-###`) when applicable.
+3. **OVO Push Gate** — `git push` only after `/ovo-audit` returns verdict `A` or `A+` (TTL 600s); no bypass, no force, no `--no-verify`.
+4. **Mirror Parity** — wherever a file has a global ↔ PP-repo pair, `tools/verify_global_mirrors.py` MUST exit 0 before the feature is done.
+5. **Apex Onboarding** — a stranger with the GitHub URL must reach `verify_full_install.py` exit 0 in under 5 minutes wall-clock via the documented install path.
+
+## [SECTION_2_NAME]
+[SECTION_2_CONTENT — additional constraints, security requirements, performance standards, deployment policies, etc.]
+
+## [SECTION_3_NAME]
+[SECTION_3_CONTENT — development workflow, review process, quality gates, etc.]
+
+## Governance
+
+- Amendments to this constitution require: a feature spec describing the change, Owner approval, and a migration plan for any in-flight work that breaks.
+- The five Power Pack non-negotiables CANNOT be amended at the project level; they require a change to the global apex standard.
+- Every PR review verifies compliance with this constitution. Violations are rejected at review, not at merge.
+
+**Version**: [CONSTITUTION_VERSION]  |  **Ratified**: [RATIFICATION_DATE]  |  **Last Amended**: [LAST_AMENDED_DATE]
