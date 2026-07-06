@@ -34,12 +34,20 @@
                 "prior activation didn't complete cleanly" -> skip-patch + bar
                 blank. Pre-empts the patch-activation-failed + earnings-bar-hidden
                 false positive at its shared root. Never touches Kickbacks code.
-    INV-FOCUS   (detect + notify): billing is window-focus-gated ("100% billed while
-                focused"). When Cursor loses the foreground for >= FocusLossMinutes while
-                running, impressions are suppressed server-side though the extension is
-                locally healthy -- the root cause of the periodic gaps prior forensics
-                missed (all local signals green). PP cannot force focus (Host-limited);
-                it raises a visible advisory so the invisible suppression becomes visible.
+    INV-RENDER  (detect + notify) [PRIMARY earning-health signal]: the TRUE billing gate is
+                the ad actually RENDERING. Elimination forensic (2026-07-06): a real gap had
+                EVERY local signal green AND window-focus 100% green, yet no impressions --
+                so billing is neither timer-while-serving nor focus-gated; it needs a render.
+                The CLI ad is drawn by the statusline, which Claude Code re-invokes only on
+                ACTIVITY, so idle panes (even focused) stop rendering -> ad stops -> billing
+                pauses. gsd-statusline.js rewrites %TEMP%/claude-ctx-<sid>.json per render;
+                the newest such mtime == the last moment any ad billed. When it is >=
+                RenderStaleMinutes old while Cursor runs, advise the Owner to run a prompt.
+                PP MUST NEVER fake a render (ad fraud). Fail-open: no bridge -> silence.
+    INV-FOCUS   (detect + notify) [secondary]: focus loss is ONE reason renders can stop, but
+                the 2026-07-06 gap proved focus is neither necessary nor sufficient (focus was
+                green, billing still gapped). Kept as a contributing explainer; INV-RENDER is
+                authoritative. Fires when Cursor is unfocused >= FocusLossMinutes while running.
                 Fail-open: indeterminate foreground -> silence, never a false alarm.
     INV-AUTHSTREAK (detect + notify): a trailing run of failed auth.refresh (>= AuthFailStreak,
                 last outcome still a failure) means the session is about to drop -> ads
@@ -53,6 +61,7 @@
     powershell ... tools/kickbacks_guard.ps1 -SimulateSignedOut       (test notify path)
     powershell ... tools/kickbacks_guard.ps1 -SimulateUnfocused       (test focus advisory)
     powershell ... tools/kickbacks_guard.ps1 -SimulateAuthStreak      (test auth-streak advisory)
+    powershell ... tools/kickbacks_guard.ps1 -SimulateRenderStale     (test render-stale advisory)
 #>
 [CmdletBinding()]
 param(
@@ -62,11 +71,13 @@ param(
   [switch]$SimulateVsixBlocked,
   [switch]$SimulateUnfocused,
   [switch]$SimulateAuthStreak,
+  [switch]$SimulateRenderStale,
   [int]$AdStaleMinutes = 20,
   [int]$RenotifyMinutes = 30,
   [int]$FocusLossMinutes = 5,
   [int]$FocusRenotifyMinutes = 30,
   [int]$AuthFailStreak = 5,
+  [int]$RenderStaleMinutes = 10,
   [string]$Node = "C:\Program Files\nodejs\node.exe",
   [string]$Gsd  = "C:\Users\User\.claude\hooks\gsd-statusline.js",
   [string]$Mjs  = "C:\Users\User\.vibe-ads\vibe-ads-statusline.mjs",
@@ -80,7 +91,9 @@ param(
   [string]$VsixState = "C:\Users\User\.claude\state\kickbacks_vsix_state.json",
   [string]$FocusState= "C:\Users\User\.claude\state\kickbacks_focus_state.json",
   [string]$FocusFlag = "C:\Users\User\.claude\state\kickbacks_focus_lost.flag",
-  [string]$AuthStreakState = "C:\Users\User\.claude\state\kickbacks_authstreak_state.json"
+  [string]$AuthStreakState = "C:\Users\User\.claude\state\kickbacks_authstreak_state.json",
+  [string]$RenderState = "C:\Users\User\.claude\state\kickbacks_render_state.json",
+  [string]$RenderFlag  = "C:\Users\User\.claude\state\kickbacks_render_stale.flag"
 )
 $ErrorActionPreference = "Continue"   # fail-open: a guard must never break a working setup
 $utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -270,6 +283,55 @@ try {
     }
   }
 } catch { $warns += ("vsix check error: " + $_.Exception.Message) }
+
+# --- INV-RENDER: statusline render staleness = the TRUE earning gate (2026-07-06 v5) ---
+# Elimination forensic: during a real billing gap (2026-07-06 15:45+) EVERY local signal
+# was green -- auth ok, vsix low, signedIn:true, killed:false, hasAd:true THE WHOLE TIME,
+# and window-focus was 100% green on the dashboard. Billing still gapped. Therefore billing
+# is NOT timer-based-while-serving and NOT focus-gated -- it requires the ad to actually
+# RENDER/DISPLAY. The CLI ad is drawn by the statusline, which Claude Code only re-invokes
+# on ACTIVITY (a turn running / spinner ticking); idle panes (even focused) stop rendering
+# -> the ad stops displaying -> impressions pause. Proof: gsd-statusline.js rewrites
+# %TEMP%/claude-ctx-<sid>.json on every render, and the newest such mtime went sparse at
+# EXACTLY 15:45 -- the same instant the dashboard Activity Ledger's last row landed. So the
+# newest bridge mtime across live sessions == the last moment any ad could have billed.
+# PP must NEVER fake a render to inflate impressions (ad fraud) -- the only honest move is to
+# make the earning-pause VISIBLE so the Owner can run a prompt to resume. Fail-open: no bridge
+# files / error -> silence. Only UUID-named session bridges count (excludes guard-selftest/test).
+try {
+  if (Test-CursorRunning) {
+    $tmpDir = [System.IO.Path]::GetTempPath()
+    $bridges = @(Get-ChildItem $tmpDir -Filter "claude-ctx-*.json" -ErrorAction SilentlyContinue |
+                 Where-Object { $_.Name -match '^claude-ctx-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-' })
+    if ($bridges.Count -eq 0) {
+      $notes += "RENDER: no session bridge files -- indeterminate, skipped"
+    } else {
+      $newest = $bridges | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+      $renderAge = if ($SimulateRenderStale) { 999 } else { ((Get-Date) - $newest.LastWriteTime).TotalMinutes }
+      $rLastNotify = [datetime]"2000-01-01"; $rPrevStale = $false
+      if (Test-Path $RenderState) {
+        try { $rs = Get-Content $RenderState -Raw | ConvertFrom-Json
+              if ($rs.lastNotify) { $rLastNotify = [datetime]$rs.lastNotify }
+              if ($null -ne $rs.stale) { $rPrevStale = [bool]$rs.stale } } catch {}
+      }
+      $stale = $renderAge -ge $RenderStaleMinutes
+      if ($stale) {
+        $minsSince = ((Get-Date) - $rLastNotify).TotalMinutes
+        if ((-not $rPrevStale) -or ($minsSince -ge $RenotifyMinutes)) {
+          $body = ("Sin render del statusline en {0} min -> Kickbacks no acumula impresiones (Claude Code inactivo, aunque Cursor tenga foco). Ejecuta un prompt para reanudar el billing." -f [int]$renderAge)
+          $shown = Show-Toast "Kickbacks no esta cobrando" $body
+          [System.IO.File]::WriteAllText($RenderFlag, ("$stamp  " + $body), $utf8)
+          $rLastNotify = Get-Date
+          $notes += ("RENDER: stale " + [int]$renderAge + "min -> notified (toast=" + $shown + ", flag written)")
+        } else { $notes += ("RENDER: still stale (" + [int]$renderAge + "min, within renotify throttle)") }
+      } else {
+        if (Test-Path $RenderFlag) { try { [System.IO.File]::Delete($RenderFlag); $notes += "RENDER: fresh again -> flag cleared" } catch {} }
+        $notes += ("RENDER: fresh (" + [int]$renderAge + "min old) -- ad displaying, billing eligible")
+      }
+      [System.IO.File]::WriteAllText($RenderState, (@{ renderAgeMin = [math]::Round($renderAge,1); stale = $stale; lastNotify = $rLastNotify.ToString('o'); newest = $newest.Name } | ConvertTo-Json -Compress), $utf8)
+    }
+  }
+} catch { $warns += ("render check error: " + $_.Exception.Message) }
 
 # --- INV-FOCUS: sustained Cursor focus loss (impressions bill ONLY while focused) ---
 # ROOT CAUSE (2026-07-06 forensic): billing gaps occurred while the extension was

@@ -2789,3 +2789,33 @@ auto-act. Guard runs LogonType=InteractiveToken so foreground is queryable. Veri
 plain=billing-eligible+no flag; -SimulateUnfocused=toast+flag written; plain=regained+flag
 cleared; -SimulateAuthStreak=warn. ORIGEN: 2026-07-06 EXECUTION-MODE "esto no deberia pasar
 nunca mas"; prior forensic stopped at local-green and never checked focus.
+
+### T-KICKBACKS-GAP-PATTERN-001 ADDENDUM v2 -- focus DISPROVEN; render-staleness is the true gate
+
+**CORRECTION (loud, per no-classified-FAILs + premise-disproved doctrine).** v1 above named
+window focus the "primary, evidence-backed" cause. The Owner then checked the dashboard's
+Window-focus section: **100% green, zero red bars -- the gap happened WITH Cursor focused.**
+Focus is therefore NEITHER the cause of this gap NOR a sufficient explanation. INV-FOCUS stays
+as a secondary net (focus loss is one way renders can stop) but is NOT authoritative.
+
+**TRUE ROOT CAUSE (elimination, not hypothesis).** During the gap the extension had
+`hasAd:true` the WHOLE time, so billing is NOT timer-based-while-serving; and focus was green,
+so it is NOT focus-gated. Everything local was green. The only remaining gate is the ad
+actually RENDERING/DISPLAYING. The CLI ad is drawn by the statusline, which Claude Code
+re-invokes ONLY on activity (a turn running / spinner ticking). Idle panes -- even focused --
+stop rendering -> the ad stops displaying -> impressions pause. **Proof:** gsd-statusline.js
+rewrites `%TEMP%/claude-ctx-<sid>.json` on every render; the newest such mtime across live
+sessions went SPARSE at exactly 15:45 (renders/min: ~11 at 15:42, then 1 every 10-16 min),
+the SAME instant the dashboard Activity Ledger's last row landed. Render activity == billing
+activity. The gaps are CC-idle windows (Owner not actively running Claude turns), orthogonal
+to focus.
+
+**FIX SHIPPED (KickbacksGuard v5).** INV-RENDER: newest UUID-named `claude-ctx-*.json` bridge
+mtime; when >= RenderStaleMinutes (10) old while Cursor runs, advisory + flag "sin render del
+statusline en X min -> Kickbacks no acumula impresiones ... ejecuta un prompt para reanudar".
+It is the AUTHORITATIVE earning-health signal (focus/auth/vsix are secondary). **HARD ETHICAL
+LINE:** PP MUST NEVER auto-invoke the statusline to fake a render -- that is manufacturing ad
+impressions for an advertiser = fraud. The only honest lever is VISIBILITY so the Owner chooses
+to resume. Verified 3/3 (fresh->no flag; -SimulateRenderStale->toast+flag; fresh->cleared).
+ORIGEN: 2026-07-06 follow-up; the render bridge (a PP context-monitor artifact) turned out to
+be the exact per-render impression proxy the closed extension never exposed.

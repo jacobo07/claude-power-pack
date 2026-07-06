@@ -48,3 +48,48 @@ PP cannot force window focus, re-authenticate, or fix the backend. The only miti
 is DETECT + visible advisory. If the Owner legitimately works in another app, the focus
 advisory is expected (not a bug) -- it exists to make an otherwise-invisible billing
 suppression visible, so the Owner can choose to return focus to Cursor.
+
+---
+
+# SCS C60 addendum v5 -- focus DISPROVEN; render-staleness is the true earning gate
+
+**Sealed:** 2026-07-06 (same day, follow-up)
+**Supersedes the ROOT CAUSE of v4** (INV-FOCUS demoted to secondary net; code kept).
+
+## Correction
+
+v4 named window focus the primary cause. The Owner checked the dashboard: **Window focus
+100% green, gap happened WITH Cursor focused.** Focus disproven.
+
+## True root cause (elimination)
+
+During the gap the extension had `hasAd:true` throughout (not timer-billing) and focus was
+green (not focus-gated) -- every local signal green. The only remaining gate is the ad
+actually RENDERING. The CLI ad is drawn by the statusline, which Claude Code re-invokes only
+on activity; idle panes (even focused) stop rendering -> ad stops -> impressions pause.
+
+**Proof:** `gsd-statusline.js` rewrites `%TEMP%/claude-ctx-<sid>.json` per render. Newest
+mtime across live sessions:
+
+```
+15:42  renders=11   (Cursor resume burst)
+15:45  renders=1    <- last dense render == dashboard Activity Ledger last row (15:45)
+15:57  renders=1    <- then sparse: 12/16/10-min gaps == the reported gap
+16:13  renders=1
+16:46  renders=8    (session active again)
+```
+
+Render activity == billing activity. Gaps are CC-idle windows, orthogonal to focus.
+
+## Shipped (KickbacksGuard v5)
+
+- **INV-RENDER [authoritative]** -- newest UUID-named `claude-ctx-*.json` mtime; stale >=
+  `RenderStaleMinutes` (10) while Cursor runs -> advisory + flag "ejecuta un prompt para
+  reanudar el billing". Fail-open: no bridge -> silence. Verified 3/3.
+- INV-FOCUS demoted to secondary explainer (kept, not authoritative).
+
+## HARD ETHICAL LINE
+
+PP MUST NEVER auto-invoke the statusline to fake a render -- that manufactures ad impressions
+for an advertiser = **fraud**. The only honest lever is VISIBILITY so the Owner resumes by
+actually using Claude Code. This is why INV-RENDER only advises; it never renders.
