@@ -249,28 +249,34 @@ def generate_from_snapshot(
     cwds: list[str] | None = None,
     dry_run: bool = False,
     tab_counts: dict[str, int] | None = None,
+    truncate: bool = True,
 ) -> list[dict]:
     """Read the snapshot sidecar and write an auto-run tasks.json per repo.
     ``cwds`` restricts to specific repos. ``tab_counts`` maps norm_path(cwd) to
-    a live terminal-tab count; None captures it live (fail-open to {})."""
+    a live terminal-tab count; None captures it live (fail-open to {}).
+    ``truncate`` False -> write ALL panes per repo (no tab-count cap): the
+    pane_map-driven "restore every pane" mode (restore_panes.ps1 --no-truncate).
+    When False we never import topology (no Cursor-state read needed)."""
     path = Path(snapshot_json)
     panes = json.loads(path.read_text(encoding="utf-8-sig"))
-    if tab_counts is None:
+    norm_path = None
+    if truncate:
+        if tab_counts is None:
+            try:
+                from . import topology_reconcile
+                tab_counts = topology_reconcile.current_tab_counts()
+            except Exception:
+                tab_counts = {}
         try:
-            from . import topology_reconcile
-            tab_counts = topology_reconcile.current_tab_counts()
-        except Exception:
-            tab_counts = {}
-    try:
-        from .topology_reconcile import norm_path
-    except ImportError:  # run as a script (restore_panes.ps1 passes a file path,
-        from topology_reconcile import norm_path  # not -m): own dir is on sys.path
+            from .topology_reconcile import norm_path as norm_path
+        except ImportError:  # run as a script (restore_panes.ps1 passes a file
+            from topology_reconcile import norm_path as norm_path  # path, not -m)
     wanted = set(cwds) if cwds else None
     results: list[dict] = []
     for cwd, group in _group_by_cwd(panes).items():
         if wanted is not None and cwd not in wanted:
             continue
-        target = (tab_counts or {}).get(norm_path(cwd))
+        target = (tab_counts or {}).get(norm_path(cwd)) if truncate else None
         results.append(write_autorun_for_cwd(
             cwd, group, dry_run=dry_run, target_count=target))
     return results
@@ -295,6 +301,9 @@ def main(argv=None) -> int:
                     help="restrict to these repo cwd(s); repeatable")
     ap.add_argument("--dry-run", action="store_true",
                     help="preview without writing")
+    ap.add_argument("--no-truncate", action="store_true",
+                    help="write ALL panes per repo (no Cursor tab-count cap) -- "
+                         "the pane_map-driven full-restore mode")
     args = ap.parse_args(argv)
 
     snap = Path(args.snapshot) if args.snapshot else _default_snapshot()
@@ -302,7 +311,8 @@ def main(argv=None) -> int:
         print(f"[ERROR] snapshot not found: {snap}")
         return 1
     try:
-        results = generate_from_snapshot(snap, cwds=args.cwd, dry_run=args.dry_run)
+        results = generate_from_snapshot(snap, cwds=args.cwd, dry_run=args.dry_run,
+                                         truncate=not args.no_truncate)
     except (OSError, ValueError) as e:  # noqa: BLE001
         print(f"[ERROR] cannot read snapshot: {e}")
         return 1
