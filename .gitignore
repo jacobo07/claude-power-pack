@@ -88,4 +88,20 @@ vault/test-results/.auto-spawned.log*
 vault/sleepy/*.jsonl
 vault/sleepy/sleepy_index_*.json
 # auto-browser render artifacts (screenshots/run data, not vendored source)
-vendor/auto-browser/clone/data/artifacts/
+vendor/auto-browser/
+
+# Second-wave churn (surgical-commit sweep 2026-07-06):
+# Per-session telemetry ledgers (budget-* already ignored above; jit_usage churns per session)
+vault/telemetry/*.jsonl
+# Programmatic budget/cache layer (session-generated, never committed)
+vault/cache_hints/
+# Agent throttle runtime state
+vault/pp_agents/
+# Auto-captured test failure digests (curated test-results/*.md stay tracked)
+vault/test-failures/
+vault/test-results/*_fail_*.md
+vault/test-results/hook_smoke_*.md
+# Agent persistent auto-memory (regenerated/appended every session)
+memory/
+# Stray redirect artifact
+claude-power-pack...
