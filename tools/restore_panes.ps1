@@ -63,6 +63,7 @@ param(
     [string]$PaneMapPath  = (Join-Path $HOME '.claude\state\pane_map.json'),
     [string]$SnapshotPath = (Join-Path $HOME '.claude\state\session_snapshot.json'),
     [switch]$FromSnapshot,
+    [switch]$LiveOnly,          # restore only panes flagged LIVE ("where they were" at crash)
     [int]$OpenDelayMs = 500,
     [int]$LargeRepoPanes = 5,
     [int]$LargeRepoDelayMs = 1200
@@ -163,6 +164,13 @@ if (-not $panes -or $panes.Count -eq 0) {
     exit 0
 }
 Write-Host ("Source: {0}" -f $sourceLabel)
+
+# -LiveOnly: restore only the panes that were OPEN at crash time (LIVE flag).
+if ($LiveOnly) {
+    $panes = @($panes | Where-Object { $_.live })
+    Write-Host ("LiveOnly: {0} LIVE pane(s) selected." -f $panes.Count)
+    if ($panes.Count -eq 0) { Write-Host '[INFO] No LIVE panes to restore.'; exit 0 }
+}
 
 # Dedup by cwd -> distinct repos, preserving first-seen (already LIVE-first) order.
 $repoOrder = @()
