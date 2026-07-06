@@ -1,0 +1,32 @@
+# Research Report — INSUFFICIENT DATA
+
+Prompt: MODO: EXECUTION MODE — AUTONOMÍA TOTAL AUTORIZADA
+
+The research run completed without extracting any learnings. This can happen when SERP results were empty across all queries, or page-fetch failed for every result. Re-run with different keywords or check vault/cache_hints/CEILING.md for the layer-by-layer failure log.
+
+## Sources
+
+_(none collected)_
+
+## Run metadata
+
+- **Prompt:** MODO: EXECUTION MODE — AUTONOMÍA TOTAL AUTORIZADA
+- **Depth / breadth:** 2 / 3
+- **Queries used:** 0 (budget 30)
+- **Layers fired:**
+  - search: (none)
+  - markdown: (none)
+  - llm: claude.exe
+- **Priority class:** win32:IDLE_PRIORITY_CLASS
+- **Lock:** acquired
+- **Duration:** 32.9 s
+- **Errors during run:** 1
+- **Started at:** 2026-06-26T11:56:55Z
+- **Module version:** deep_research 0.1.0
+
+<details>
+<summary>Error log</summary>
+
+- `no SERP queries generated`
+
+</details>
