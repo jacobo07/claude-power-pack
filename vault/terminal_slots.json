@@ -1,1 +1,551 @@
-{"schema_version":1,"slots":{"c:/Users/kobig/Desktop/MyProject":{"session_id":"test-session-def","started_at":"2026-05-03T14:32:18+00:00","transcript_path":"/foo/bar.jsonl","source":"resume","previous_session_id":"test-session-abc"}}}
+{
+  "schema_version": 1,
+  "slots": {
+    "c:/Users/kobig/Desktop/MyProject": {
+      "session_id": "test-session-def",
+      "started_at": "2026-05-03T14:32:18+00:00",
+      "transcript_path": "/foo/bar.jsonl",
+      "source": "resume",
+      "previous_session_id": "test-session-abc"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Minecraft Projects/KobiiCraft Workspace/KobiiCraft Core Files": {
+      "session_id": "e0106c23-fa4d-4138-bdc5-07f3795020d7",
+      "started_at": "2026-07-06T15:19:11+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\e0106c23-fa4d-4138-bdc5-07f3795020d7.jsonl",
+      "source": "startup",
+      "previous_session_id": "41c2457c-e04b-49ed-9e64-e9825cab3734"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/TUA-X": {
+      "session_id": "0e257257-0b39-4b21-9a68-95153153a236",
+      "started_at": "2026-07-06T15:33:20+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\0e257257-0b39-4b21-9a68-95153153a236.jsonl",
+      "source": "resume",
+      "previous_session_id": "0e257257-0b39-4b21-9a68-95153153a236"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Computer Personal Ops": {
+      "session_id": "b219fc69-d44f-45a7-9d88-bce616af1ae8",
+      "started_at": "2026-06-20T17:17:06+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Computer-Personal-Ops\\b219fc69-d44f-45a7-9d88-bce616af1ae8.jsonl",
+      "source": "startup",
+      "previous_session_id": "f31038d9-822e-45c2-a258-3249d518eb7d"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Vibe Coding Projects/KobiiAI": {
+      "session_id": "6e1eb062-7728-4b88-b9ca-2d33416668be",
+      "started_at": "2026-06-07T17:23:21+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-KobiiAI\\6e1eb062-7728-4b88-b9ca-2d33416668be.jsonl",
+      "source": "clear",
+      "previous_session_id": "7002f97d-8bb8-4fb6-b2a7-8dcb86cbe054"
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-8v6CRB": {
+      "session_id": "1ab7761e-b95e-455a-8f16-c2ffbb3c15d2",
+      "started_at": "2026-05-26T14:15:08+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-8v6CRB\\1ab7761e-b95e-455a-8f16-c2ffbb3c15d2.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-SnPXBg": {
+      "session_id": "a0d20a2a-ab2a-4199-ac3f-cdafc31ef2dd",
+      "started_at": "2026-05-26T14:27:25+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-SnPXBg\\a0d20a2a-ab2a-4199-ac3f-cdafc31ef2dd.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-wY6xWv": {
+      "session_id": "6445b7f0-d303-406c-a824-b834eac25d37",
+      "started_at": "2026-05-26T14:27:44+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-wY6xWv\\6445b7f0-d303-406c-a824-b834eac25d37.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/InfinityOps": {
+      "session_id": "c7283e16-7185-433b-bee2-4de8abfa7378",
+      "started_at": "2026-07-06T14:50:21+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\c7283e16-7185-433b-bee2-4de8abfa7378.jsonl",
+      "source": "startup",
+      "previous_session_id": "d1a01b2c-0d61-4a93-8be7-54cbd4ff0484"
+    },
+    "c:/Users/User/Apps/whisprflow-apk": {
+      "session_id": "56b87206-f122-4cf2-a97d-15a0e1ec658c",
+      "started_at": "2026-05-30T11:29:43+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Computer-Personal-Ops\\56b87206-f122-4cf2-a97d-15a0e1ec658c.jsonl",
+      "source": "compact",
+      "previous_session_id": "56b87206-f122-4cf2-a97d-15a0e1ec658c"
+    },
+    "c:/Users/User/.claude/skills/claude-power-pack": {
+      "session_id": "fe513e0d-5879-48d7-9bb0-c8a82eece134",
+      "started_at": "2026-07-06T15:26:06+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\fe513e0d-5879-48d7-9bb0-c8a82eece134.jsonl",
+      "source": "startup",
+      "previous_session_id": "ed90eb20-5aba-48b6-98f9-038fb3999a6f"
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-R3Gbdx": {
+      "session_id": "5375a6c5-68df-4f41-8fa9-9de1987e7e74",
+      "started_at": "2026-05-26T17:38:16+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-R3Gbdx\\5375a6c5-68df-4f41-8fa9-9de1987e7e74.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-ouGezV": {
+      "session_id": "c51c79cf-294b-4410-9dce-e41c2368900c",
+      "started_at": "2026-05-26T17:57:44+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-ouGezV\\c51c79cf-294b-4410-9dce-e41c2368900c.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-c4cWeh": {
+      "session_id": "b342d02f-9257-4c7d-8c9d-c888673b46f3",
+      "started_at": "2026-05-26T18:03:25+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-c4cWeh\\b342d02f-9257-4c7d-8c9d-c888673b46f3.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/GEO-audit": {
+      "session_id": "69ba968f-0143-4dba-9a97-fefe1d771999",
+      "started_at": "2026-07-06T14:39:23+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-GEO-audit\\69ba968f-0143-4dba-9a97-fefe1d771999.jsonl",
+      "source": "startup",
+      "previous_session_id": "1e0cbced-dc54-44e5-8ab1-db3dcfd61e9e"
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-rsjIDO": {
+      "session_id": "d0b8c376-0e33-4907-932f-6ba5476d9932",
+      "started_at": "2026-05-28T09:15:20+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-rsjIDO\\d0b8c376-0e33-4907-932f-6ba5476d9932.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/WINDOWS/temp/l3proj-KEibel": {
+      "session_id": "df909626-f43b-4ae3-ac2d-d02d7e35694a",
+      "started_at": "2026-05-28T09:30:05+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--WINDOWS-temp-l3proj-KEibel\\df909626-f43b-4ae3-ac2d-d02d7e35694a.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-jnfxYY": {
+      "session_id": "847e673f-c25f-4cf9-af10-fe9af58afbfe",
+      "started_at": "2026-05-28T09:32:09+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-jnfxYY\\847e673f-c25f-4cf9-af10-fe9af58afbfe.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-XRg5jf": {
+      "session_id": "bd76736c-0a42-4010-9993-a5d555766683",
+      "started_at": "2026-05-28T09:44:17+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-XRg5jf\\bd76736c-0a42-4010-9993-a5d555766683.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/AKOS": {
+      "session_id": "ccb4a870-eda9-47f9-b970-2b5acf6a49e9",
+      "started_at": "2026-05-28T10:14:04+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-AKOS\\ccb4a870-eda9-47f9-b970-2b5acf6a49e9.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp": {
+      "session_id": "fbd57253-b182-44ec-822c-3f1e341b7fc7",
+      "started_at": "2026-05-30T09:52:21+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp\\fbd57253-b182-44ec-822c-3f1e341b7fc7.jsonl",
+      "source": "startup",
+      "previous_session_id": "21ff1d62-e12e-4406-837d-ba1294612f30"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/CostaLuz Lawyers": {
+      "session_id": "62b62266-48f7-496d-8e4e-812b3f571c0c",
+      "started_at": "2026-06-08T13:47:39+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-CostaLuz-Lawyers\\62b62266-48f7-496d-8e4e-812b3f571c0c.jsonl",
+      "source": "clear",
+      "previous_session_id": "e2a3a1c0-e3db-43ae-856b-b91d80ba4c82"
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-7EPZgW": {
+      "session_id": "135b15dc-1cdf-42d9-ba5c-6a9551ae1960",
+      "started_at": "2026-05-29T13:40:22+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-7EPZgW\\135b15dc-1cdf-42d9-ba5c-6a9551ae1960.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-lQIGyT": {
+      "session_id": "a4b8ef7c-e615-4c36-89f2-5d6be2da87c9",
+      "started_at": "2026-05-29T20:19:41+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-lQIGyT\\a4b8ef7c-e615-4c36-89f2-5d6be2da87c9.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/InfinityOps/17_Businesses/QuickLease": {
+      "session_id": "dd7d33b9-57b4-4af2-bf9f-3bd946053034",
+      "started_at": "2026-06-03T17:18:25+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps-17-Businesses-QuickLease\\dd7d33b9-57b4-4af2-bf9f-3bd946053034.jsonl",
+      "source": "resume",
+      "previous_session_id": "e6f1c930-fa55-4863-9661-4e81e57076a4"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/CostaLuz Lawyers/costaluz-companion": {
+      "session_id": "4b0ffefd-703c-4f6a-8020-317c693262d1",
+      "started_at": "2026-05-30T14:09:43+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-CostaLuz-Lawyers\\4b0ffefd-703c-4f6a-8020-317c693262d1.jsonl",
+      "source": "compact",
+      "previous_session_id": "4b0ffefd-703c-4f6a-8020-317c693262d1"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/LaptOps": {
+      "session_id": "0220b268-5f4d-4d35-8f9a-f862d16d8470",
+      "started_at": "2026-05-30T15:08:40+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-LaptOps\\0220b268-5f4d-4d35-8f9a-f862d16d8470.jsonl",
+      "source": "compact",
+      "previous_session_id": "0220b268-5f4d-4d35-8f9a-f862d16d8470"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Vibe Coding Projects/Software para Provs/Proveedores/Deng Chaowei/Website": {
+      "session_id": "58e30559-b9c9-4ecf-8df5-97047526f0c3",
+      "started_at": "2026-05-31T14:54:21+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Software-para-Provs-Proveedores-Deng-Chaowei-Website\\58e30559-b9c9-4ecf-8df5-97047526f0c3.jsonl",
+      "source": "resume",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-9T9CB2": {
+      "session_id": "222dcfdf-04d4-4174-a02d-8af57248a008",
+      "started_at": "2026-06-01T12:42:40+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-9T9CB2\\222dcfdf-04d4-4174-a02d-8af57248a008.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-71AxfC": {
+      "session_id": "5b1d2480-939e-44f7-b70b-03bfc5e44593",
+      "started_at": "2026-06-01T12:45:21+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-71AxfC\\5b1d2480-939e-44f7-b70b-03bfc5e44593.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/claude": {
+      "session_id": "b3dc162d-b066-4b49-81c9-7ca601695dcb",
+      "started_at": "2026-06-04T14:04:50+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-claude\\b3dc162d-b066-4b49-81c9-7ca601695dcb.jsonl",
+      "source": "startup",
+      "previous_session_id": "e7c80857-defc-4a47-8b0a-8a44b509b722"
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-iXuGCc": {
+      "session_id": "614bf1e5-d286-43b3-aea6-2e26c273b49c",
+      "started_at": "2026-06-02T10:23:50+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-iXuGCc\\614bf1e5-d286-43b3-aea6-2e26c273b49c.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-ORCORY": {
+      "session_id": "4842e6dd-28b4-4036-bab0-01d1fef6698d",
+      "started_at": "2026-06-02T10:27:39+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-ORCORY\\4842e6dd-28b4-4036-bab0-01d1fef6698d.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-benQEA": {
+      "session_id": "20b3641e-ebd2-4130-a3ec-28ede73d95e1",
+      "started_at": "2026-06-03T14:58:02+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-benQEA\\20b3641e-ebd2-4130-a3ec-28ede73d95e1.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Wii Projects/KobiiSports Resort/CursorProjects": {
+      "session_id": "e0b02415-341a-419b-accc-586c9ac273ca",
+      "started_at": "2026-06-26T14:40:25+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Wii-Projects-KobiiSports-Resort-CursorProjects\\e0b02415-341a-419b-accc-586c9ac273ca.jsonl",
+      "source": "startup",
+      "previous_session_id": "cb60625e-d68d-4fff-aac3-29ca0750c998"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/TUA-X/CW_UGC_SYSTEM": {
+      "session_id": "374506f9-7a6d-4b17-9fff-a25e843e854c",
+      "started_at": "2026-06-06T11:02:16+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X-CW-UGC-SYSTEM\\374506f9-7a6d-4b17-9fff-a25e843e854c.jsonl",
+      "source": "startup",
+      "previous_session_id": "5f69aaf4-c78e-4562-b300-7cd7f820b74d"
+    },
+    "c:/Users/User/Desktop/Cursor Projects provisional": {
+      "session_id": "efd096b2-cfaa-4911-8cbb-63598e8f38e0",
+      "started_at": "2026-06-07T17:24:54+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-provisional\\efd096b2-cfaa-4911-8cbb-63598e8f38e0.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-OEQVNY": {
+      "session_id": "14715f35-b21c-4329-8153-427becb8aa82",
+      "started_at": "2026-06-08T14:38:52+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-OEQVNY\\14715f35-b21c-4329-8153-427becb8aa82.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/AppData/Local/Temp/l3proj-M18O0j": {
+      "session_id": "6512d0aa-f515-451c-8399-fadfaeb149f9",
+      "started_at": "2026-06-08T14:41:30+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-l3proj-M18O0j\\6512d0aa-f515-451c-8399-fadfaeb149f9.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/InfinityOps/13_UI_Product_Layer/infinity_ui": {
+      "session_id": "17bb5353-3e05-44eb-aa01-3fcf4e4c2b1e",
+      "started_at": "2026-06-12T12:34:17+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\17bb5353-3e05-44eb-aa01-3fcf4e4c2b1e.jsonl",
+      "source": "compact",
+      "previous_session_id": "17bb5353-3e05-44eb-aa01-3fcf4e4c2b1e"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Regina Margheritta": {
+      "session_id": "26e886f9-f1a4-44eb-a048-0078e12cd992",
+      "started_at": "2026-06-15T19:08:43+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Regina-Margheritta\\26e886f9-f1a4-44eb-a048-0078e12cd992.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/tuax-cblr": {
+      "session_id": "de6d54eb-f645-42ba-87ff-822d76376e2b",
+      "started_at": "2026-06-17T19:47:25+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\de6d54eb-f645-42ba-87ff-822d76376e2b.jsonl",
+      "source": "compact",
+      "previous_session_id": "de6d54eb-f645-42ba-87ff-822d76376e2b"
+    },
+    "c:/Users/User/Apps/tuax-mme": {
+      "session_id": "7cbc8cc3-67f7-489f-9bc8-19c96e11ef4b",
+      "started_at": "2026-06-24T15:04:18+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\7cbc8cc3-67f7-489f-9bc8-19c96e11ef4b.jsonl",
+      "source": "compact",
+      "previous_session_id": "7cbc8cc3-67f7-489f-9bc8-19c96e11ef4b"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Club Náutico": {
+      "session_id": "2b6d43f8-10fb-40fc-812c-6ac178b3eeba",
+      "started_at": "2026-06-18T19:10:25+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Club-N-utico\\2b6d43f8-10fb-40fc-812c-6ac178b3eeba.jsonl",
+      "source": "startup",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/tuax-cblr-sre": {
+      "session_id": "8cce8060-5261-4a0b-9a8a-f8dc55eeb44b",
+      "started_at": "2026-07-03T11:02:40+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\8cce8060-5261-4a0b-9a8a-f8dc55eeb44b.jsonl",
+      "source": "compact",
+      "previous_session_id": "8cce8060-5261-4a0b-9a8a-f8dc55eeb44b"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Minecraft Projects/KobiiCraft Workspace/KobiiCraft Core Files/vault/kme/build-intelligence/_forensics": {
+      "session_id": "b0b0b629-00ab-4116-a0f0-9e0225533076",
+      "started_at": "2026-06-21T11:36:51+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\b0b0b629-00ab-4116-a0f0-9e0225533076.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/tuax-waitlist": {
+      "session_id": "18ad6789-8ee8-4bc0-b466-73c81f9657ae",
+      "started_at": "2026-06-25T14:49:42+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\18ad6789-8ee8-4bc0-b466-73c81f9657ae.jsonl",
+      "source": "compact",
+      "previous_session_id": "18ad6789-8ee8-4bc0-b466-73c81f9657ae"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Vibe Coding Projects/Skills Creator Cursor Project/knowledge-vault-cursor-project/skills/claude-code/moneymaker-skill": {
+      "session_id": "a663aa60-024b-425b-8019-426e9aec7c8d",
+      "started_at": "2026-07-01T14:05:15+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Skills-Creator-Cursor-Project-knowledge-vault-cursor-project-skills-claude-code-moneymaker-skill\\a663aa60-024b-425b-8019-426e9aec7c8d.jsonl",
+      "source": "resume",
+      "previous_session_id": "a663aa60-024b-425b-8019-426e9aec7c8d"
+    },
+    "c:/Users/User/Apps/tuax-seo-hl": {
+      "session_id": "8ffb675a-576b-4e17-a891-658a21536bbf",
+      "started_at": "2026-06-25T18:55:45+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\8ffb675a-576b-4e17-a891-658a21536bbf.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/io-s5-wt": {
+      "session_id": "beede3cb-19f5-4fd3-a36f-fcc045584414",
+      "started_at": "2026-06-25T19:19:51+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\beede3cb-19f5-4fd3-a36f-fcc045584414.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/tuax-seo-hl/frontend": {
+      "session_id": "8ffb675a-576b-4e17-a891-658a21536bbf",
+      "started_at": "2026-06-29T20:42:06+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\8ffb675a-576b-4e17-a891-658a21536bbf.jsonl",
+      "source": "compact",
+      "previous_session_id": "3608ea91-ff43-4532-8ff2-455aa548ebb7"
+    },
+    "c:/Users/User/Apps/ude-worktree": {
+      "session_id": "1f797880-bdf3-4619-a2e5-2ca1d5b51195",
+      "started_at": "2026-06-28T08:41:04+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\1f797880-bdf3-4619-a2e5-2ca1d5b51195.jsonl",
+      "source": "compact",
+      "previous_session_id": "1f797880-bdf3-4619-a2e5-2ca1d5b51195"
+    },
+    "c:/Users/User/Apps/ds-fase3-worktree/01_Core_Systems/infinity_mie": {
+      "session_id": "1f797880-bdf3-4619-a2e5-2ca1d5b51195",
+      "started_at": "2026-06-27T13:06:07+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\1f797880-bdf3-4619-a2e5-2ca1d5b51195.jsonl",
+      "source": "compact",
+      "previous_session_id": "1f797880-bdf3-4619-a2e5-2ca1d5b51195"
+    },
+    "c:/Users/User/Apps/infinityops-m2/01_Core_Systems/infinity_mie": {
+      "session_id": "cd4822bc-4ef8-4c4b-a447-d239e74ee1a8",
+      "started_at": "2026-06-26T14:04:37+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\cd4822bc-4ef8-4c4b-a447-d239e74ee1a8.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/io-ddil": {
+      "session_id": "029d13b9-04e4-4220-b0ae-f6191162b400",
+      "started_at": "2026-07-06T13:40:48+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\029d13b9-04e4-4220-b0ae-f6191162b400.jsonl",
+      "source": "resume",
+      "previous_session_id": "f4e6f6d2-e60d-4f3c-8ee3-65fd886b03c7"
+    },
+    "c:/Users/User/Apps/_wt-gsr-provenance": {
+      "session_id": "c6a40bfb-fc7b-4a43-b68b-c51e23953e89",
+      "started_at": "2026-06-28T11:05:12+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\c6a40bfb-fc7b-4a43-b68b-c51e23953e89.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/_wt-aple-decay": {
+      "session_id": "c6a40bfb-fc7b-4a43-b68b-c51e23953e89",
+      "started_at": "2026-06-28T19:40:16+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\c6a40bfb-fc7b-4a43-b68b-c51e23953e89.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Vibe Coding Projects/Skills Creator Cursor Project/knowledge-vault-cursor-project/skills/claude-code/moneymaker-skill/backend": {
+      "session_id": "1720ab88-4069-4027-9e45-3d43854d1996",
+      "started_at": "2026-06-30T12:42:35+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Skills-Creator-Cursor-Project-knowledge-vault-cursor-project-skills-claude-code-moneymaker-skill\\1720ab88-4069-4027-9e45-3d43854d1996.jsonl",
+      "source": "compact",
+      "previous_session_id": "1720ab88-4069-4027-9e45-3d43854d1996"
+    },
+    "c:/Users/User/Apps/io-dil-s3": {
+      "session_id": "df0fe766-03e6-46bb-9cde-819f883511d4",
+      "started_at": "2026-06-28T20:42:19+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\df0fe766-03e6-46bb-9cde-819f883511d4.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/io-ces": {
+      "session_id": "98f23ce2-0b1b-48cd-8513-8b210f6600b8",
+      "started_at": "2026-07-03T13:36:32+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\98f23ce2-0b1b-48cd-8513-8b210f6600b8.jsonl",
+      "source": "compact",
+      "previous_session_id": "98f23ce2-0b1b-48cd-8513-8b210f6600b8"
+    },
+    "c:/Users/User/Apps/io-ddil-qal-int": {
+      "session_id": "1f797880-bdf3-4619-a2e5-2ca1d5b51195",
+      "started_at": "2026-06-29T10:24:19+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\1f797880-bdf3-4619-a2e5-2ca1d5b51195.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/io-sos": {
+      "session_id": "ab90727c-7bce-414e-9c66-acad2ebb99b9",
+      "started_at": "2026-06-29T20:59:30+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Apps-io-sos\\ab90727c-7bce-414e-9c66-acad2ebb99b9.jsonl",
+      "source": "startup",
+      "previous_session_id": "4c113ce1-f802-4965-95db-1e72845b264c"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Vibe Coding Projects/Skills Creator Cursor Project/knowledge-vault-cursor-project/skills/claude-code/moneymaker-skill/webapp": {
+      "session_id": "1720ab88-4069-4027-9e45-3d43854d1996",
+      "started_at": "2026-06-29T11:39:00+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Vibe-Coding-Projects-Skills-Creator-Cursor-Project-knowledge-vault-cursor-project-skills-claude-code-moneymaker-skill\\1720ab88-4069-4027-9e45-3d43854d1996.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/tuax-psis/frontend": {
+      "session_id": "e8ce392f-ea14-4667-b92c-df4177c8a79c",
+      "started_at": "2026-06-30T10:45:54+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\e8ce392f-ea14-4667-b92c-df4177c8a79c.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/InfinityOps/03_Datasets/_engine": {
+      "session_id": "98f23ce2-0b1b-48cd-8513-8b210f6600b8",
+      "started_at": "2026-06-30T10:49:35+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\98f23ce2-0b1b-48cd-8513-8b210f6600b8.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/io-journal-w38": {
+      "session_id": "70ff625d-5932-4c92-906b-1ec5951b0784",
+      "started_at": "2026-06-30T10:55:45+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\70ff625d-5932-4c92-906b-1ec5951b0784.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/TUA-X/operator-essence-intelligence-system": {
+      "session_id": "e5d09f84-c777-41c3-a59e-c07ed39814da",
+      "started_at": "2026-06-30T11:19:09+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\e5d09f84-c777-41c3-a59e-c07ed39814da.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/_wt-aple-cpm/frontend": {
+      "session_id": "c6a40bfb-fc7b-4a43-b68b-c51e23953e89",
+      "started_at": "2026-07-01T15:40:20+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\c6a40bfb-fc7b-4a43-b68b-c51e23953e89.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/tuax-s6/frontend": {
+      "session_id": "69ccd6b1-73d9-4a3a-903e-79a42540d264",
+      "started_at": "2026-07-01T15:49:14+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\69ccd6b1-73d9-4a3a-903e-79a42540d264.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Jacobo": {
+      "session_id": "115c5b6f-6f9a-4220-866c-906acb3c312e",
+      "started_at": "2026-07-06T10:46:35+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Jacobo\\115c5b6f-6f9a-4220-866c-906acb3c312e.jsonl",
+      "source": "resume",
+      "previous_session_id": "115c5b6f-6f9a-4220-866c-906acb3c312e"
+    },
+    "c:/Users/User/Apps/tuax-wrre-runner": {
+      "session_id": "1826f833-178f-4edf-9534-89c7bdf2576b",
+      "started_at": "2026-07-04T12:08:51+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\1826f833-178f-4edf-9534-89c7bdf2576b.jsonl",
+      "source": "compact",
+      "previous_session_id": "1826f833-178f-4edf-9534-89c7bdf2576b"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Minecraft Projects/KobiiCraft Workspace/KobiiCraft Core Files/KobiCraftServer/plugins/KobiMapEngine": {
+      "session_id": "6124ee9d-541a-4b51-bd7f-a69faf04b2d2",
+      "started_at": "2026-07-03T15:27:29+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Minecraft-Projects-KobiiCraft-Workspace-KobiiCraft-Core-Files\\6124ee9d-541a-4b51-bd7f-a69faf04b2d2.jsonl",
+      "source": "compact",
+      "previous_session_id": "ef85872e-e32d-4e55-b3a7-b0ff1b815171"
+    },
+    "c:/Users/User/Apps/tuax-s8": {
+      "session_id": "69ccd6b1-73d9-4a3a-903e-79a42540d264",
+      "started_at": "2026-07-02T21:15:06+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\69ccd6b1-73d9-4a3a-903e-79a42540d264.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/io-journal-w39": {
+      "session_id": "70ff625d-5932-4c92-906b-1ec5951b0784",
+      "started_at": "2026-07-03T13:51:44+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\70ff625d-5932-4c92-906b-1ec5951b0784.jsonl",
+      "source": "compact",
+      "previous_session_id": "70ff625d-5932-4c92-906b-1ec5951b0784"
+    },
+    "c:/Users/User/Desktop/Cursor Projects/Mytilus Belgian Restaurant": {
+      "session_id": "a1b6550b-43e7-4ba5-9458-b1f8c1826467",
+      "started_at": "2026-07-03T13:37:37+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-Mytilus-Belgian-Restaurant\\a1b6550b-43e7-4ba5-9458-b1f8c1826467.jsonl",
+      "source": "compact",
+      "previous_session_id": "a1b6550b-43e7-4ba5-9458-b1f8c1826467"
+    },
+    "c:/Users/User/Apps/io-ddil-tier3": {
+      "session_id": "1f797880-bdf3-4619-a2e5-2ca1d5b51195",
+      "started_at": "2026-07-03T12:20:25+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\1f797880-bdf3-4619-a2e5-2ca1d5b51195.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/_wt-rtges-s1": {
+      "session_id": "035d904e-d80f-4681-9cc7-76719f3d23f1",
+      "started_at": "2026-07-03T14:10:35+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-TUA-X\\035d904e-d80f-4681-9cc7-76719f3d23f1.jsonl",
+      "source": "compact",
+      "previous_session_id": null
+    },
+    "c:/Users/User/Apps/io-bas": {
+      "session_id": "62ea5cc0-2f15-4c23-98eb-bc8f0bfd433d",
+      "started_at": "2026-07-05T16:20:19+00:00",
+      "transcript_path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-Desktop-Cursor-Projects-InfinityOps\\62ea5cc0-2f15-4c23-98eb-bc8f0bfd433d.jsonl",
+      "source": "compact",
+      "previous_session_id": "62ea5cc0-2f15-4c23-98eb-bc8f0bfd433d"
+    }
+  }
+}
