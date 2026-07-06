@@ -102,7 +102,14 @@ def load_insights(root: Path) -> dict:
     path = root / INSIGHTS_REL
     if path.exists():
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                return {"schema": INSIGHTS_SCHEMA, "entries": []}
+            # Guard: a sibling tool (context-watchdog) shares this file with an
+            # "insights" key but no "entries"; ensure the key exists so the
+            # append path never KeyErrors. Both schemas coexist in one file.
+            data.setdefault("entries", [])
+            return data
         except json.JSONDecodeError:
             return {"schema": INSIGHTS_SCHEMA, "entries": []}
     return {"schema": INSIGHTS_SCHEMA, "entries": []}

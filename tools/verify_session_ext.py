@@ -69,7 +69,7 @@ else:
 bad = []
 for p in panes:
     if p.get("status") in ("RESUMABLE", "OLD"):
-        want = f"claude --resume {p['sessionId']}"
+        want = f"kclaude --resume {p['sessionId']}"
         jsonl = os.path.join(PROJ, encode_cwd(p["cwd"]), p["sessionId"] + ".jsonl")
         if p.get("resumeCmd") != want or not os.path.isfile(jsonl):
             bad.append(p["sessionId"][:8])
