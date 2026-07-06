@@ -2854,6 +2854,42 @@ auto-render to fake impressions (fraud). LESSON (meta): two detectors (INV-FOCUS
 were shipped on proxies that did not hold; per anti-antipattern Rule 12, STOP building detectors
 on unvalidated proxies -- instrument for ground truth first, then detect.
 
+### T-KICKBACKS-GAP-PATTERN-001 ADDENDUM v4 -- ROOT CAUSE CONFIRMED: extension event-loop suspension; instruments A+B shipped
+
+**CONFIRMED (two independent timelines, Owner-supplied).** The impression ledger resumed at
+**16:15**; the Kickbacks debug.log woke from a dead silence at **16:11:52 local**
+(`auth.refresh ok`). It went silent at **15:43:24** vs the ledger's last row at **15:45**.
+So: impression gap 15:45->16:15 (30 min) ~= extension event-loop silence 15:43->16:11:52
+(28 min), both edges aligned (~3 min wake->refresh->first-counted-render lag on resume).
+
+**ROOT CAUSE.** The Kickbacks extension-host background loop was SUSPENDED / timer-throttled for
+~28 min while Cursor was focused and the Owner was actively prompting Claude. During suspension
+ALL of its periodic work halted -- `auth.refresh`, `session.state`, ad-cache refresh, and
+impression accounting -- so no impressions billed despite continuous CC statusline renders and
+green window focus. Not focus, not render (the ad kept rendering), not auth/vsix/canary: the
+extension's own clock stopped. Most likely OS/Electron timer or power throttling of the ext-host
+process (independent of top-level window focus). Host-level, NOT PP-fixable -- but now capturable.
+
+**INSTRUMENTS SHIPPED (both, pure data capture, no alarm).**
+- **A (guard, repo-tracked):** INV-TELEMETRY appends every 2 min to
+  `~/.claude/state/kickbacks_earning_timeline.log`: adAge (cli-ad.json freshness), dbgAge
+  (debug.log mtime age == extension-quiet proxy), renderAge (claude-lastrender.json), fg,
+  cursor. Rotated 2000 lines, fail-open. Verified: logged `adAge=0 dbgAge=21.8 renderAge=0
+  fg=Cursor cursor=1` -- and dbgAge=21.8 min at capture time was itself a live quiet window.
+- **B (gsd-statusline.js, LIVE-ONLY -- NOT repo-tracked):** an UNGATED marker at the top of the
+  render path writes `%TEMP%/claude-lastrender.json {ts,session}` on EVERY render (fixes the
+  null-context blind spot that made the old bridge a false proxy). Verified: updates on BOTH
+  with-context and null-context renders (old bridge updated only the former). Durability note:
+  `~/.claude/hooks/gsd-statusline.js` is a global hook outside the power-pack repo, so this edit
+  is not version-controlled; if ~/.claude/hooks is ever reset, re-apply this line after the
+  `const remaining = ...` line (best-effort, never throws):
+  `try { fs.writeFileSync(path.join(os.tmpdir(),'claude-lastrender.json'), JSON.stringify({ts:Math.floor(Date.now()/1000),session})); } catch (e) { /* best-effort marker */ }`
+
+**PROMOTION PATH (deferred until validated).** Once the timeline captures a full gap, a detector
+can fire on `dbgAge >= <validated-threshold> while cursor=1` (extension-quiet == not earning) --
+a signal tied to the CONFIRMED mechanism, unlike the two retracted proxy-detectors. Thresholds
+from real data, not a guess. HARD LINE unchanged: never auto-render to fake impressions (fraud).
+
 ---
 
 ### PR-PANE-MAP-LIVE-ONLY-001 (2026-07-06, SCS C80)

@@ -385,6 +385,39 @@ try {
   }
 } catch { $warns += ("authstreak check error: " + $_.Exception.Message) }
 
+# --- INV-TELEMETRY: earning-health timeline (PURE INSTRUMENT -- no alarm, no verdict) ---
+# 2026-07-06 root cause: a real impression gap (ledger 15:45->16:15) matched a ~28-min
+# Kickbacks event-loop SILENCE in debug.log (15:43->16:11:52) almost exactly -- the extension
+# host was suspended/throttled while Cursor was focused & active, so impression accounting +
+# ad-cache refresh + auth.refresh all halted. Capture the three signals every 2 min so the NEXT
+# gap is measured, not inferred: (1) ad-cache freshness (cli-ad.json ts), (2) extension-quiet
+# (debug.log mtime age -- rises during a suspension), (3) render cadence (claude-lastrender.json,
+# written UNGATED by gsd-statusline.js if instrument B is deployed; "?" until then). NO verdict
+# yet -- promote to a detector only after a threshold is validated against a captured gap
+# (the two prior proxy-detectors were retracted for firing on unvalidated proxies). Rotated,
+# fail-open.
+try {
+  $telLog = "C:\Users\User\.claude\state\kickbacks_earning_timeline.log"
+  $lastRender = Join-Path ([System.IO.Path]::GetTempPath()) "claude-lastrender.json"
+  $adAgeT = "?"
+  try { $adT = Get-Content $AdCache -Raw | ConvertFrom-Json
+        $adAgeT = [math]::Round(((Get-Date).ToUniversalTime() - [datetimeoffset]::FromUnixTimeMilliseconds([int64]$adT.ts).UtcDateTime).TotalMinutes,1) } catch {}
+  $dbgAge = "?"
+  try { if (Test-Path $DebugLog) { $dbgAge = [math]::Round(((Get-Date) - (Get-Item $DebugLog).LastWriteTime).TotalMinutes,1) } } catch {}
+  $rndAge = "?"
+  try { if (Test-Path $lastRender) { $rndAge = [math]::Round(((Get-Date) - (Get-Item $lastRender).LastWriteTime).TotalMinutes,1) } } catch {}
+  $fgT = "?"; try { $fgT = Get-ForegroundProcName } catch {}
+  if ($null -eq $fgT) { $fgT = "none" }
+  $curT = if (Test-CursorRunning) { 1 } else { 0 }
+  $tline = ("{0}`tadAge={1}`tdbgAge={2}`trenderAge={3}`tfg={4}`tcursor={5}" -f $stamp, $adAgeT, $dbgAge, $rndAge, $fgT, $curT)
+  $tdir = Split-Path $telLog -Parent
+  if (-not (Test-Path $tdir)) { New-Item -ItemType Directory -Path $tdir -Force | Out-Null }
+  Add-Content -Path $telLog -Value $tline -Encoding UTF8
+  $allT = Get-Content $telLog -ErrorAction SilentlyContinue
+  if ($allT.Count -gt 2000) { $allT[-2000..-1] | Set-Content -Path $telLog -Encoding UTF8 }
+  $notes += ("TELEMETRY: adAge=" + $adAgeT + " dbgAge=" + $dbgAge + " renderAge=" + $rndAge + " (instrument, no alarm)")
+} catch { $warns += ("telemetry error: " + $_.Exception.Message) }
+
 # --- optional self-test: run the real chain, assert the bar ---
 $selfTestResult = ""
 if ($SelfTest) {
