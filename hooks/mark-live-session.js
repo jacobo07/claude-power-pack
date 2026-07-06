@@ -65,6 +65,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { deriveReadableTitle, isHashTitle } = require('./session-title-lib.js');
 
 const LIVE_PREFIX = '⚡ ';                 // "⚡ " (HIGH VOLTAGE SIGN + space)
 const STALE_MS = 300 * 1000;
@@ -168,11 +169,8 @@ function appendCustomTitle(filePath, sessionId, title) {
   }
 }
 
-function fallbackTitle(sessionId) {
-  // 8-char UUID prefix is what /resume shows for un-titled sessions
-  // anyway, so the fallback degrades gracefully — never blank.
-  return sessionId ? sessionId.slice(0, 8) : 'session';
-}
+// Base-title resolution now lives in session-title-lib.deriveReadableTitle,
+// which yields "[repo] — [first Owner prompt 50c]" (hash only as last resort).
 
 function isSessionAlive(projName, uuid, filePath) {
   let stat;
@@ -200,8 +198,15 @@ function markOwnSessionLive(sessionId) {
   const found = findSessionFile(sessionId);
   if (!found) return;
   const last = lastCustomTitle(found.filePath);
-  if (last && last.hasPrefix) return;
-  const base = (last && last.baseTitle) || fallbackTitle(sessionId);
+  // Resolve the readable base: keep an existing non-hash base; otherwise derive
+  // "[repo] — [first prompt]" from the transcript. This also SELF-HEALS a legacy
+  // "⚡ <hash>" title (the old fallbackTitle wrote the UUID prefix as the base).
+  let base = last && last.baseTitle;
+  if (!base || isHashTitle(base)) {
+    base = deriveReadableTitle(found.filePath, sessionId);
+  }
+  // Already live with the correct base -> nothing to do (idempotent).
+  if (last && last.hasPrefix && last.baseTitle === base) return;
   appendCustomTitle(found.filePath, sessionId, LIVE_PREFIX + base);
 }
 

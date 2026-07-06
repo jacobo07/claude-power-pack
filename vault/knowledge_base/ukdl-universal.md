@@ -2674,3 +2674,49 @@ safety V-gates PASS. Live sessions compose with the live-marker hook (baseTitle 
 with the voltage prefix). ORIGEN: escalated EXECUTION-MODE prompt whose CONTEXT falsely
 asserted a separate metadata.json; the tool was already built on the real inline-append
 mechanism, so the corrected premise changed the documentation, not the code.
+
+### PR-TRANSCRIPT-RENAME-SAFETY-001 ADDENDUM -- forward/live automation (mark-live self-heals hash -> ai-title)
+
+**RULE.** `rename_sessions.py` is the RETROACTIVE authority (a one-shot bulk sweep). The
+FORWARD path -- a brand-new session getting a readable name automatically, without re-running
+the sweep -- lives in `hooks/mark-live-session.js` (the per-Stop custom-title writer). Its
+base title MUST come from `hooks/session-title-lib.js::deriveReadableTitle`, which returns the
+session's own CLEAN ai-title (truncated 50 + "…", byte-consistent with rename_sessions.py's
+`make_title`), NEVER the raw first prompt. Behaviour: on each Stop, if the current base is
+empty/hash/UUID it is re-derived; once the ai-title lands, `⚡ <hash>` self-heals to
+`⚡ <ai-title>` (idempotent thereafter). A real Ctrl+R name (non-hash) is never overwritten.
+Because mark-live only ever touches the OWN live session, no sub-session / mislocated-copy
+exclusion is needed on this path (that is a BULK concern rename_sessions.py owns).
+
+**ROOT CAUSE this closed.** `mark-live-session.js` was the ONLY per-Stop custom-title writer
+and its old `fallbackTitle()` wrote `sessionId.slice(0,8)` (the hash) as the base -- so every
+new session showed a hash in /resume until the retroactive sweep was re-run. Fixed by routing
+the base through the ai-title lib + a hash->ai-title self-heal.
+
+**TOOLS.** `hooks/session-title-lib.js` (ai-title source, `lastCustomTitle`, `isHashTitle`);
+`tools/test_session_naming.js` (SESSION_NAMING_PASS=6/6: ai-title-source, no-boilerplate,
+truncate, hash-fallback, self-heal, respect-Ctrl+R). Forward path only; retroactive V-gates
+stay in `tools/test_rename_sessions.py`.
+
+### UKDL TRAP T-VERIFY-EXISTING-TOOLING-BEFORE-BUILD-001 -- PASO -1 greps for a solution that already exists, not just the files the prompt names
+
+**Level:** UKDL Trap (governance; process rule, no runtime code).
+
+**TRIGGER:** A prompt frames an objective as "feature X is missing / not working" and names a
+specific file to inspect (here: W3 `session_namer.py`). About to build the fix.
+
+**ACCIÓN:** PASO -1 MUST also grep the repo for tooling that already SOLVES the objective
+(`tools/*<verb>*`, matching UKDL/SCS entries), not only read the file the prompt names. A
+prompt's premise about what exists can be stale -- the real solution may have shipped hours
+earlier under a different name.
+
+**ORIGEN:** 2026-07-06. A prompt said "W3 no produce nombres en /resume"; PASO -1 read W3 +
+mark-live and (correctly) found the hash root cause -- but did NOT search for existing rename
+tooling. `tools/rename_sessions.py` (sealed the SAME day, `PR-TRANSCRIPT-RENAME-SAFETY-001`)
+already implemented the retroactive fix. The duplicate `retro_session_titles.js` was built AND
+its `--apply` polluted ~360 sub-session/mislocated transcripts with raw-first-prompt titles
+(violating the sealed rule's ai-title-source + exclusion clauses) before the collision was
+caught. Fully reverted (append-only truncate-revert, prefix-byte-identity); authority
+re-asserted (`rename_sessions.py --all --apply` -> to-rename 0, 0 failed). Only the genuinely-
+new forward/live automation was kept. Cost: a wasted build + a corpus round-trip that a
+one-line grep at PASO -1 would have prevented.
