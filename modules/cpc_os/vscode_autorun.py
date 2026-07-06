@@ -261,7 +261,10 @@ def generate_from_snapshot(
             tab_counts = topology_reconcile.current_tab_counts()
         except Exception:
             tab_counts = {}
-    from .topology_reconcile import norm_path
+    try:
+        from .topology_reconcile import norm_path
+    except ImportError:  # run as a script (restore_panes.ps1 passes a file path,
+        from topology_reconcile import norm_path  # not -m): own dir is on sys.path
     wanted = set(cwds) if cwds else None
     results: list[dict] = []
     for cwd, group in _group_by_cwd(panes).items():
