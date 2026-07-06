@@ -112,14 +112,24 @@ def test_format_matches_harness() -> None:
 
 
 def test_classifiers() -> None:
+    # is_reclaimable_title(base, repo): machine-derived / legacy-residue titles are
+    # reclaimable (True); a genuine human Ctrl+R name is not (False). Includes the
+    # exact legacy patterns the 2026-07-06 reconciliation had to reclaim.
+    repo = "claude-power-pack"
     cases = {
-        "": True, "1a2b3c4d": True, "ABCDEF01": True,
-        "0d3d7cb2-7d8d-4c75-a839-1e29a772022c": True,
-        "Optimize RAM footprint": False, "Fix bug 12345": False,
+        "": True,                                          # empty
+        "1a2b3c4d": True, "ABCDEF01": True,                # bare 8-hex fallback
+        "0d3d7cb2-7d8d-4c75-a839-1e29a772022c": True,      # full UUID
+        "claude-power-pack": True,                          # bare repo token
+        "claude-power-pack — PREFLIGHT: git fetch": True,   # legacy '<repo> — ' residue
+        "SUB - SERP: erlang otp": True,                     # our own SUB label -> refine
+        "Optimize RAM footprint": False,                    # real name
+        "Fix bug 12345": False,                             # real name
     }
-    good = all(R.is_uuid_fallback_title(k) == v for k, v in cases.items())
-    _ok("V-RENAME-FALLBACK-DETECT", "6/6 fallback-title cases correct") if good \
-        else _fail("V-RENAME-FALLBACK-DETECT", "misclassified a title")
+    bad = {k: R.is_reclaimable_title(k, repo) for k, v in cases.items()
+           if R.is_reclaimable_title(k, repo) != v}
+    _ok("V-RENAME-RECLAIM-DETECT", f"{len(cases)}/{len(cases)} reclaim cases correct") \
+        if not bad else _fail("V-RENAME-RECLAIM-DETECT", f"misclassified: {bad}")
 
     proj = R.DEFAULT_PROJECT
     canon = R.is_canonical_location(proj, str(Path.home() / ".claude" / "skills" / "claude-power-pack"))
