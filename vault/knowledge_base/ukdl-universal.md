@@ -2720,3 +2720,36 @@ caught. Fully reverted (append-only truncate-revert, prefix-byte-identity); auth
 re-asserted (`rename_sessions.py --all --apply` -> to-rename 0, 0 failed). Only the genuinely-
 new forward/live automation was kept. Cost: a wasted build + a corpus round-trip that a
 one-line grep at PASO -1 would have prevented.
+
+### UKDL TRAP T-KICKBACKS-UI-DEATH-NO-DISK-SIGNAL-001 -- empty statusbar with every disk signal GREEN is a live extension-host UI death, not a canary/guard fault
+
+**Level:** UKDL Trap (governance; diagnosis rule, no runtime code changed).
+
+**TRIGGER:** Owner reports "Kickbacks statusbar vacía + 'Kickbacks: Sign in' no responde" and
+the reflex is to blame the boot.canary / PP-KickbacksGuard.
+
+**ACCIÓN:** Read the disk signals FIRST, and know that ALL of them can be GREEN while the UI is
+dead. In the 2026-07-06 incident: boot.canary ABSENT (not the cause); PP-KickbacksGuard Ready +
+running clean every 2 min (healed=[] warns=[]); `kickbacks_auth_state.json` state=OK; cli-ad.json
+0.3 min fresh (background ad-refresh alive) -> guard's signed-out proxy correctly GREEN. The
+empty statusbar + dead command is the extension's UI layer (statusbar item + command handler
+registered in `activate()`) never coming up in the CURRENT window, while the background service
+survives. The debug.log even logged a clean last boot (`session.state hasAd:true`) -- so there
+is NO trailing disk marker of the freeze. **The ONLY fix is an Owner UI action:** Ctrl+Shift+P ->
+"Developer: Reload Window" (re-runs activate() clean); if it persists -> "Kickbacks: Restore
+Claude Code", or disable/enable the extension. The agent CANNOT press Reload for the Owner.
+
+**DO-NOT:** do NOT ship a guard "UI-freeze detector" for this. The current real debug.log tail is
+clean (hasAd:true AFTER the last `activate.fatal Canceled`), so any log-tail signal would say
+"not frozen" on the very state the Owner reports as frozen -- a detector that misses the real
+positive is false confidence (Reality Contract / HR-OUTPUT-002). This failure mode has no
+reliable disk footprint; INV-CANARY/INV-AUTH cannot see it BY CONSTRUCTION. Documenting the
+limitation is the correct seal, not a fragile detector.
+
+**ORIGEN:** 2026-07-06 escalated EXECUTION-MODE prompt assumed a stale canary was blocking boot.
+Diagnosis disproved the premise (canary absent, guard healthy, ads fresh). 67 activate.fatal
+/boot.cycle lines in debug.log; a cascade of `activate.fatal {"msg":"Canceled"}` at 13:11 UTC
+(4 activates in 16 s = extension-host thrash) is the likely origin of a wedged host, but the
+last boot (13:26 UTC) logged clean -- confirming the freeze is a live-render state only the
+Owner sees. Kickbacks token lives in Cursor SecretStorage (DPAPI) and survives reload; re-auth
+is Owner-only. REMOTE_DELTA unaffected (docs-only seal).
