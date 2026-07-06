@@ -62,4 +62,10 @@ STOP: Surface a VISIBLE advisory to the Owner ONLY. NEVER change the hibernate/k
 EVIDENCE: [kickbacks] a session hung ~10h undetected caused the Kickbacks suspension (2026-07-04); loop-boundedness added to the governor as a VISIBILITY net, never an autonomous kill. Sealed SCS C75; UKDL T-UNBOUNDED-SESSION-001.
 SEVERITY: HIGH | RECURRENCE: 1x
 <!-- digest:c442a805144bbe7b -->
+### HR-PANE-MAP-FRESHNESS-001 -- The pane_map is the only post-crash recovery mechanism; freshness is a production requirement
+TRIGGER: Relying on ~/.claude/state/pane_map.md/.json for pane recovery, OR classifying a pane as LIVE.
+STOP: (1) Freshness: the pane_map MUST be regenerated on a bounded cadence (PP-PaneMapUpdate scheduled task, every 5 min + onlogon). If it is stale > 5 min during active sessions the recovery net has already failed -- regenerate before trusting it. (2) Liveness: NEVER classify LIVE by file mtime -- a batch sweep (heartbeat merger, backup, git checkout, AV) rewrites transcript mtimes en masse and forges false-LIVE. Classify by the transcript's INTERNAL last-message timestamp OR the snapshot live-registry only. EXCEPCION: none.
+EVIDENCE: [rca 2026-07-06] Cursor crash -> pane_map 8 days stale (no scheduled task registered, only the Cursor extension regenerated it). Regen showed 30 "LIVE"; internal-timestamp forensics proved only 1 genuinely live (this session) + 35 files sharing one mtime spike ~11 min old while their real last turn was 14h-7d old. Fix: build_pane_map.ps1 Get-LastInternalAgeMin + PP-PaneMapUpdate task. UKDL T-PANE-MAP-STALENESS-ROOT-CAUSE-001 + T-PANE-MAP-FALSE-LIVE-MTIME-001. Sealed SCS C79.
+SEVERITY: HIGH | RECURRENCE: 1x
+<!-- digest:pane-map-freshness-001 -->
 <!-- PP-HARD-RULES-END -->

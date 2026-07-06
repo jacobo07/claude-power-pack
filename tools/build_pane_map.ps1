@@ -98,6 +98,35 @@ function Get-TranscriptCwd($jsonl) {
   return $null
 }
 
+function Get-LastInternalAgeMin($jsonl, $nowUtc) {
+  # Age (minutes) of the transcript's NEWEST internal "timestamp" record -- i.e.
+  # when a real conversation turn last landed, NOT the file's LastWriteTime.
+  # File mtime is unreliable for liveness: any batch sweep (heartbeat merger,
+  # backup, git checkout, AV scan) rewrites mtimes en masse and makes every
+  # transcript look "written seconds ago" (proven 2026-07-06: 35 files shared one
+  # mtime spike while their real last turn was 14h-7d old). The internal timestamp
+  # is content, so a metadata-only touch cannot forge it. Reads a bounded tail.
+  try {
+    $fs = [System.IO.File]::Open($jsonl, 'Open', 'Read', 'ReadWrite')
+    try {
+      $len = $fs.Length
+      $back = [Math]::Min($len, 200000)
+      [void]$fs.Seek($len - $back, 'Begin')
+      $buf = New-Object byte[] $back
+      [void]$fs.Read($buf, 0, $back)
+    } finally { $fs.Close() }
+    $text = [System.Text.Encoding]::UTF8.GetString($buf)
+    $lastTs = $null
+    foreach ($m in [regex]::Matches($text, '"timestamp"\s*:\s*"([^"]+)"')) { $lastTs = $m.Groups[1].Value }
+    if ($lastTs) {
+      $t = [datetime]::Parse($lastTs, $null,
+        ([System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal))
+      return ($nowUtc - $t).TotalMinutes
+    }
+  } catch { }
+  return [double]::PositiveInfinity
+}
+
 # 1. active repos = snapshot cwds UNION cwds discovered from recent disk transcripts
 $snapPath = Join-Path $StateDir "session_snapshot.json"
 $activeCwds = @{}
@@ -143,8 +172,13 @@ foreach ($cwd in $activeCwds.Keys) {
     if ($meta.isSub) { continue }                          # not a tab
     $seen[$sid] = $true
     $status = if ($ageH -gt $OldHours) { "OLD" } else { "RESUMABLE" }
-    # LIVE = in the snapshot live-registry OR actively written within LiveMinutes
-    $isLive = $inSnap -or ($ageMin -le $LiveMinutes)
+    # LIVE = in the snapshot live-registry OR a REAL conversation turn landed
+    # within LiveMinutes. We use the internal-timestamp age (content), NOT the
+    # file mtime ($ageMin), because a batch mtime-touch forges mtime-based
+    # liveness and floods the map with false-LIVE panes (RCA 2026-07-06,
+    # T-PANE-MAP-FALSE-LIVE-MTIME-001). $ageMin is retained only for display.
+    $internalAgeMin = Get-LastInternalAgeMin $f.FullName $nowUtc
+    $isLive = $inSnap -or ($internalAgeMin -le $LiveMinutes)
     $items += [ordered]@{
       repo = $repo; cwd = $cwd; sessionId = $sid; topic = $meta.topic
       lastActivity = $f.LastWriteTime.ToUniversalTime().ToString('o')
