@@ -2753,3 +2753,39 @@ Diagnosis disproved the premise (canary absent, guard healthy, ads fresh). 67 ac
 last boot (13:26 UTC) logged clean -- confirming the freeze is a live-render state only the
 Owner sees. Kickbacks token lives in Cursor SecretStorage (DPAPI) and survives reload; re-auth
 is Owner-only. REMOTE_DELTA unaffected (docs-only seal).
+
+### UKDL TRAP T-KICKBACKS-GAP-PATTERN-001 -- periodic billing gaps with the extension 100% healthy locally = window-focus-gated billing, not a local fault
+
+**Level:** UKDL Trap + guard invariant (INV-FOCUS / INV-AUTHSTREAK shipped in kickbacks_guard.ps1).
+
+**TRIGGER:** Kickbacks stops registering impressions periodically during "active" sessions
+(pattern: 2026-07-03 gaps ~12:08 & 17:32; 2026-07-06 gap 15:45+), extension VISUALLY active,
+and the reflex is to hunt a local fault (canary / auth / vsix / killed).
+
+**ACCIÓN:** Know that EVERY locally-observable signal can be GREEN during a real billing gap.
+2026-07-06 forensic (gap 13:43-14:13Z): auth.refresh 6/6 ok, vsix consecutiveFails=3 (backup
+URL works), session.state signedIn:true killed:false hasAd:true throughout, canary absent. The
+ad renderer `vibe-ads-statusline.mjs` is a PURE renderer -- ZERO network / ZERO impression
+report -- so impression accounting lives entirely in the CLOSED extension + backend, which
+bills ONLY while the Cursor window is FOREGROUND (dashboard label "100% billed while focused").
+The gap is focus-gated suppression behaving AS DESIGNED, invisible because PP had no focus
+telemetry -- which is exactly why the prior forensics (all local, all green) never found it.
+The debug.log records NO focus / impression / billing / serving events at all; confirm the
+cause on the dashboard's own "Window focus" section (red bars in the gap = confirmed).
+
+**CAUSES (all Host-limited -> notifiable, none PP-preventable):** (a) window focus lost while
+Cursor runs [primary, evidence-backed]; (b) auth.refresh failure streak dropping the session;
+(c) vsix-url-blocked degrading the extension (already covered by INV-VSIX >10). PP CANNOT force
+focus, re-auth, or fix the backend -- the honest fix is DETECT + visible advisory before the
+gap widens, turning an invisible problem into a visible one.
+
+**FIX SHIPPED.** `tools/kickbacks_guard.ps1` (SCS C28: read-before-modify satisfied) gained:
+INV-FOCUS (Win32 GetForegroundWindow; advisory + flag when Cursor unfocused >= 5 min while
+running; fail-open to SILENCE on indeterminate foreground so it can NEVER false-alarm; anchor
+is a known-focused sample so the first unfocused sample can't fire; throttled 30 min; clears
+the flag on regain) and INV-AUTHSTREAK (trailing auth.refresh ok:false streak >= 5 -> warn;
+dormant when last outcome is ok). Both advisory-only (HR-STALLED-SESSION-ADVISORY-001), never
+auto-act. Guard runs LogonType=InteractiveToken so foreground is queryable. Verified 4/4:
+plain=billing-eligible+no flag; -SimulateUnfocused=toast+flag written; plain=regained+flag
+cleared; -SimulateAuthStreak=warn. ORIGEN: 2026-07-06 EXECUTION-MODE "esto no deberia pasar
+nunca mas"; prior forensic stopped at local-green and never checked focus.

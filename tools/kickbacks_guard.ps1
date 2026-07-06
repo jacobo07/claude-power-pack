@@ -34,12 +34,25 @@
                 "prior activation didn't complete cleanly" -> skip-patch + bar
                 blank. Pre-empts the patch-activation-failed + earnings-bar-hidden
                 false positive at its shared root. Never touches Kickbacks code.
+    INV-FOCUS   (detect + notify): billing is window-focus-gated ("100% billed while
+                focused"). When Cursor loses the foreground for >= FocusLossMinutes while
+                running, impressions are suppressed server-side though the extension is
+                locally healthy -- the root cause of the periodic gaps prior forensics
+                missed (all local signals green). PP cannot force focus (Host-limited);
+                it raises a visible advisory so the invisible suppression becomes visible.
+                Fail-open: indeterminate foreground -> silence, never a false alarm.
+    INV-AUTHSTREAK (detect + notify): a trailing run of failed auth.refresh (>= AuthFailStreak,
+                last outcome still a failure) means the session is about to drop -> ads
+                stop -> billing stops. Warn before the gap widens. Dormant when the last
+                auth.refresh is ok. A DIFFERENT gap cause than focus; a defense-in-depth net.
 
   Usage:
     powershell -NoProfile -ExecutionPolicy Bypass -File tools/kickbacks_guard.ps1
     powershell ... tools/kickbacks_guard.ps1 -SelfTest
     powershell ... tools/kickbacks_guard.ps1 -RepairSettings          (Owner intent)
     powershell ... tools/kickbacks_guard.ps1 -SimulateSignedOut       (test notify path)
+    powershell ... tools/kickbacks_guard.ps1 -SimulateUnfocused       (test focus advisory)
+    powershell ... tools/kickbacks_guard.ps1 -SimulateAuthStreak      (test auth-streak advisory)
 #>
 [CmdletBinding()]
 param(
@@ -47,8 +60,13 @@ param(
   [switch]$SelfTest,
   [switch]$SimulateSignedOut,
   [switch]$SimulateVsixBlocked,
+  [switch]$SimulateUnfocused,
+  [switch]$SimulateAuthStreak,
   [int]$AdStaleMinutes = 20,
   [int]$RenotifyMinutes = 30,
+  [int]$FocusLossMinutes = 5,
+  [int]$FocusRenotifyMinutes = 30,
+  [int]$AuthFailStreak = 5,
   [string]$Node = "C:\Program Files\nodejs\node.exe",
   [string]$Gsd  = "C:\Users\User\.claude\hooks\gsd-statusline.js",
   [string]$Mjs  = "C:\Users\User\.vibe-ads\vibe-ads-statusline.mjs",
@@ -59,7 +77,10 @@ param(
   [string]$AuthState = "C:\Users\User\.claude\state\kickbacks_auth_state.json",
   [string]$SignInFlag= "C:\Users\User\.claude\state\kickbacks_signin_needed.flag",
   [string]$DebugLog  = "C:\Users\User\.vibe-ads\debug.log",
-  [string]$VsixState = "C:\Users\User\.claude\state\kickbacks_vsix_state.json"
+  [string]$VsixState = "C:\Users\User\.claude\state\kickbacks_vsix_state.json",
+  [string]$FocusState= "C:\Users\User\.claude\state\kickbacks_focus_state.json",
+  [string]$FocusFlag = "C:\Users\User\.claude\state\kickbacks_focus_lost.flag",
+  [string]$AuthStreakState = "C:\Users\User\.claude\state\kickbacks_authstreak_state.json"
 )
 $ErrorActionPreference = "Continue"   # fail-open: a guard must never break a working setup
 $utf8 = New-Object System.Text.UTF8Encoding($false)
@@ -83,6 +104,25 @@ function Show-Toast($title, $msg) {
   } catch { return $false }
 }
 function Test-CursorRunning { return [bool](Get-Process -Name "Cursor" -ErrorAction SilentlyContinue) }
+
+# Foreground process name via Win32. Returns $null when INDETERMINATE (no
+# foreground HWND / unresolvable pid -- e.g. locked screen, session race) so
+# INV-FOCUS fails-open to SILENCE and can never raise a false "unfocused" alarm.
+function Get-ForegroundProcName {
+  try {
+    Add-Type -Namespace KBGuard -Name Win -ErrorAction SilentlyContinue -MemberDefinition @'
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow();
+[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr hWnd, out uint pid);
+'@
+    $h = [KBGuard.Win]::GetForegroundWindow()
+    if ($h -eq [System.IntPtr]::Zero) { return $null }
+    $procId = 0; [void][KBGuard.Win]::GetWindowThreadProcessId($h, [ref]$procId)
+    if ($procId -eq 0) { return $null }
+    $p = Get-Process -Id $procId -ErrorAction SilentlyContinue
+    if ($null -eq $p) { return $null }
+    return $p.ProcessName
+  } catch { return $null }
+}
 
 # --- INV-CHAIN: ~/.vibe-ads/cli-prev-statusline.json must point at the gsd HUD ---
 try {
@@ -230,6 +270,89 @@ try {
     }
   }
 } catch { $warns += ("vsix check error: " + $_.Exception.Message) }
+
+# --- INV-FOCUS: sustained Cursor focus loss (impressions bill ONLY while focused) ---
+# ROOT CAUSE (2026-07-06 forensic): billing gaps occurred while the extension was
+# 100% healthy locally (auth ok, killed:false, hasAd:true, vsix fails low). The ad
+# renderer (vibe-ads-statusline.mjs) is a PURE renderer -- no impression report -- so
+# accounting lives entirely in the closed extension + backend, which bills only while
+# the Cursor window is FOREGROUND ("100% billed while focused"). PP has no focus
+# telemetry, so prior forensics (all local, all green) never saw this. PP CANNOT force
+# focus (Host-limited); the only honest mitigation is DETECT + NOTIFY -- turn the
+# invisible suppression into a visible advisory. Fail-open: indeterminate foreground or
+# any error -> silence, never a false alarm. Anchor is a KNOWN-focused sample, so the
+# first unfocused sample cannot fire (no anchor in the past yet).
+try {
+  if (Test-CursorRunning) {
+    $fgName = if ($SimulateUnfocused) { "Brave" } else { Get-ForegroundProcName }
+    if ($null -eq $fgName) {
+      $notes += "FOCUS: foreground indeterminate -- skipped (no false positive)"
+    } else {
+      $focused = ($fgName -ieq "Cursor")
+      $nowUtc = (Get-Date).ToUniversalTime()
+      $lastFocused = $nowUtc; $lastFNotify = [datetime]"2000-01-01"; $prevFocused = $true
+      if (Test-Path $FocusState) {
+        try { $fs = Get-Content $FocusState -Raw | ConvertFrom-Json
+              if ($fs.lastFocusedUtc) { $lastFocused = [datetime]$fs.lastFocusedUtc }
+              if ($fs.lastNotify)     { $lastFNotify = [datetime]$fs.lastNotify }
+              if ($null -ne $fs.focused) { $prevFocused = [bool]$fs.focused } } catch {}
+      }
+      if ($focused) {
+        $lastFocused = $nowUtc
+        if (Test-Path $FocusFlag) { try { [System.IO.File]::Delete($FocusFlag); $notes += "FOCUS: regained -> flag cleared" } catch {} }
+        $notes += "FOCUS: Cursor foreground -- billing eligible"
+      } else {
+        $minsUnfocused = if ($SimulateUnfocused) { 999 } else { ($nowUtc - $lastFocused).TotalMinutes }
+        if ($minsUnfocused -ge $FocusLossMinutes) {
+          $minsSince = ((Get-Date) - $lastFNotify).TotalMinutes
+          if ($prevFocused -or ($minsSince -ge $FocusRenotifyMinutes)) {
+            $body = ("Cursor sin foco {0} min (primer plano: {1}) -> Kickbacks no cobra impresiones. Vuelve a Cursor para reanudar el billing." -f [int]$minsUnfocused, $fgName)
+            $shown = Show-Toast "Kickbacks no esta cobrando" $body
+            [System.IO.File]::WriteAllText($FocusFlag, ("$stamp  " + $body), $utf8)
+            $lastFNotify = Get-Date
+            $notes += ("FOCUS: unfocused " + [int]$minsUnfocused + "min -> notified (toast=" + $shown + ", flag written)")
+          } else { $notes += "FOCUS: still unfocused (within renotify throttle)" }
+        } else { $notes += ("FOCUS: unfocused " + [int]$minsUnfocused + "min (< " + $FocusLossMinutes + "min threshold, not yet billing-relevant)") }
+      }
+      [System.IO.File]::WriteAllText($FocusState, (@{ lastFocusedUtc = $lastFocused.ToString('o'); lastNotify = $lastFNotify.ToString('o'); focused = $focused; fg = $fgName } | ConvertTo-Json -Compress), $utf8)
+    }
+  } else { $notes += "FOCUS: Cursor not running -- indeterminate, skipped" }
+} catch { $warns += ("focus check error: " + $_.Exception.Message) }
+
+# --- INV-AUTHSTREAK: a TRAILING run of failed auth.refresh (session at risk of dropping) ---
+# Secondary net for a DIFFERENT future gap cause than focus: if the token refresh loop
+# starts failing repeatedly and the last outcome is still a failure, the session is about
+# to drop -> ads stop -> billing stops. Warn BEFORE the gap widens. Counts only the
+# CURRENT trailing streak (resets the instant an ok:true appears). Fail-open: no/garbled
+# log -> silence. Today this is dormant by design (last auth.refresh ok:true -> streak 0).
+try {
+  $streak = 0
+  if ($SimulateAuthStreak) {
+    $streak = 99
+  } elseif (Test-Path $DebugLog) {
+    $tail = Get-Content $DebugLog -Tail 80 -ErrorAction SilentlyContinue
+    for ($i = $tail.Count - 1; $i -ge 0; $i--) {
+      $ln = $tail[$i]
+      if ($ln -match 'auth\.refresh') {
+        if ($ln -match '"ok":true') { break }
+        elseif ($ln -match '"ok":false') { $streak++ }
+      }
+    }
+  }
+  if ($streak -ge $AuthFailStreak) {
+    $lastASNotify = [datetime]"2000-01-01"
+    if (Test-Path $AuthStreakState) {
+      try { $as = Get-Content $AuthStreakState -Raw | ConvertFrom-Json
+            if ($as.lastNotify) { $lastASNotify = [datetime]$as.lastNotify } } catch {}
+    }
+    if ($SimulateAuthStreak -or (((Get-Date) - $lastASNotify).TotalMinutes -ge $RenotifyMinutes)) {
+      $warns += ("Kickbacks auth.refresh fallando (" + $streak + " seguidos) -- si persiste perderas la sesion y el billing. Ctrl+Shift+P -> 'Kickbacks: Sign in' si se detiene.")
+      if (-not $SimulateAuthStreak) {
+        [System.IO.File]::WriteAllText($AuthStreakState, (@{ lastNotify = (Get-Date).ToString('o'); streak = $streak } | ConvertTo-Json -Compress), $utf8)
+      }
+    } else { $notes += ("AUTHSTREAK: present (streak=" + $streak + ") -- within renotify throttle") }
+  }
+} catch { $warns += ("authstreak check error: " + $_.Exception.Message) }
 
 # --- optional self-test: run the real chain, assert the bar ---
 $selfTestResult = ""
