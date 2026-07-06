@@ -1161,3 +1161,86 @@ not running, it is asserting.
 - **Recognizer**: Plan calls for auto-install of HIGH severity bugs without Owner review step
 - **Recurrence**: 1
 
+
+## 2026-05-31T10:36:43+00:00 — tier-2 auto-checkpoint @ 71% (3f8d60d4)
+═══════════════════════════════════════════════════════════════
+
+## 2026-06-01T08:51:24+00:00 — tier-2 auto-checkpoint @ 71% (d15b2df3)
+Investigación inicial revela una arquitectura compleja que el Owner ya tiene en marcha. Voy a ser honesto sobre lo que sabemos y lo que NO:
+## 2026-06-01 — SessionStart lag converged across 4 iters: 4697ms baseline -> 220ms hub_final (9
+
+**Session:** `3f8d60d4-9f8b-4e7e-8234-c805c49a9e60`
+
+On Windows >=3 PP SessionStart entries -> consolidate to hub (SCS C23). stdio:'ignore' all 3 streams; pipes defeat detachment. Measure empirically pre+post each fix.
+
+---
+
+## NEVER_AGAIN — 2026-06-01T12:35:36Z — hr-gate-smoke — CRITICAL
+- **Issue**: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ
+- **Root cause**: V-gate smoke probe
+- **Fix**: N/A smoke
+- **Recognizer**: Sees ZZZ-SMOKE-CRITICAL token
+- **Recurrence**: 3
+
+## NEVER_AGAIN — 2026-06-01T14:41:08Z — hr-gate-smoke — CRITICAL
+- **Issue**: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ
+- **Root cause**: V-gate smoke probe
+- **Fix**: N/A smoke
+- **Recognizer**: Sees ZZZ-SMOKE-CRITICAL token
+- **Recurrence**: 4
+
+## 2026-06-02 — Integration Wiring: wired 5 ORPHAN PP modules (cascade_prevention, cost_collapse
+
+**Session:** `unknown`
+
+Module that imports + passes unit tests but is unreachable from any hook/signal/decorator/command is ORPHAN; build the activation gate, wire same cycle.
+
+---
+
+## NEVER_AGAIN — 2026-06-03T17:32:43Z — claude-power-pack — HIGH
+- **Issue**: State-snapshot writer shipped without the restore reader -- system half-built
+- **Root cause**: A producer (snapshot writer) was treated as the whole feature; the consumer/restore path that READS the snapshot and reopens panes was never built. Orphan-field lesson at the system level.
+- **Fix**: Ship write->read->restore as one cycle: snapshot.py writes .md+.json, restore_panes.ps1 reads json + cursor <path> per repo + claude --resume <id> per pane. Verify the chain end-to-end.
+- **Recognizer**: A snapshot/checkpoint/state file exists but no script READS it to act -> system incomplete. Grep for the reader before declaring a recovery feature done.
+- **Recurrence**: 1
+
+## 2026-06-04 — Hook-hub fold M1+M2+M5 (pushed 5cf4a31..3f8290f): removed phantom ram-shield.js;
+
+**Session:** `c718d3f5-7a13-4c49-86ef-3f4c5ed63a43`
+
+Before removing a folded hook stray, verify the chain is REACHABLE via the exact --event arg (CHAIN_MAP[X] else EVENT_MAP[X]); presence in source != wired, an unreferenced chain is dead code.
+
+---
+
+## 2026-06-06 — 6 commits: softened auto-reset Stop advisory + work-state task fix (e5ecedf); .v
+
+**Session:** `4b080ceb-8416-42f6-b5c2-a3abba3c9974`
+
+Name-diff over-counts net-new ~10x: ECC's 323 'new' skills/agents were ~90% redundant/out-of-scope. Curate by purpose, mirror-with-attribution, skip-manifest the rest.
+
+---
+
+## 2026-06-07 — Triple-dataset session: ingested PP Dataset v2 Parts XI-XXIII (completeness reco
+
+**Session:** `7c44a1b9-6cdd-4dc2-abd9-29e2019c1dc9`
+
+Dataset-build needs triage-first: datasets describe aspirational infra mostly already in PP. Build only real gaps; document DEFER/SKIP with activation criteria; gate no-duplication by object identity.
+
+---
+
+## 2026-06-08 — Three builds shipped+pushed: (1) hook-hub fold SessionStart+PreToolUse 11->8 (8f
+
+**Session:** `99df26b5-c92d-4b88-8f8f-6af4e9098c22`
+
+Once a fold makes the PreToolUse Edit-chain live, your OWN iterative edits to a file trip anti-thrash (exit-2); pivot to a PowerShell file-write, never retry the same Edit shape.
+
+---
+
+## 2026-07-01 — Built the Cognitive OS: implemented all 11 SCS-C61 datasets (CO-00..CO-10) as li
+
+**Session:** `f2910b35-5d62-485c-a011-f556e8b13657`
+
+A long session's own token burn can fail baseline tests reading live burn data (weekly_burn 1.7x); verify data-dependence vs code before calling it a regression; isolate the live read.
+
+---
+
