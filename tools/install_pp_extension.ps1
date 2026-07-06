@@ -27,7 +27,7 @@ $manifest = @'
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Language="en-US" Id="pp-sessions" Version="0.2.0" Publisher="kobii" />
+    <Identity Language="en-US" Id="pp-sessions" Version="0.3.0" Publisher="kobii" />
     <DisplayName>PP Sessions</DisplayName>
     <Description xml:space="preserve">Side panel of resumable Claude Code panes derived from disk truth. One-click exact resume, no History restored.</Description>
     <Tags>claude-code,sessions,resume,cursor</Tags>

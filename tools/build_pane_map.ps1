@@ -46,7 +46,8 @@ param(
   [string]$ProjBase = (Join-Path $env:USERPROFILE ".claude\projects"),
   [int]$RecentHours = 24,
   [int]$OldHours = 48,
-  [int]$LiveMinutes = 12
+  [int]$LiveMinutes = 12,
+  [string]$TabOrderFile = (Join-Path $StateDir "tab_order.json")
 )
 $ErrorActionPreference = "Stop"
 $nowUtc = (Get-Date).ToUniversalTime()
@@ -183,12 +184,37 @@ foreach ($cwd in $activeCwds.Keys) {
       repo = $repo; cwd = $cwd; sessionId = $sid; topic = $meta.topic
       lastActivity = $f.LastWriteTime.ToUniversalTime().ToString('o')
       ageHours = [math]::Round($ageH, 1)
-      status = $status; live = $isLive; resumeCmd = "claude --resume $sid"; confidence = "HIGH"
+      status = $status; live = $isLive; resumeCmd = "kclaude --resume $sid"; confidence = "HIGH"
     }
   }
 }
-# most-recent-first within the whole map
-$items = @($items | Sort-Object { [datetime]$_.lastActivity } -Descending)
+# --- tab-order overlay (SCS C78 addendum v2) --------------------------------
+# If the PP Sessions extension has recorded the real left-to-right tab order
+# (~/.claude/state/tab_order.json via vscode.window.tabGroups), lead the map with
+# panes in that visual order; the rest stay most-recent-first (prior behavior).
+# The join key is the 8-hex session-id prefix the extension embeds in each pane
+# terminal's name (T-TAB-ORDER-EXTENSION-ONLY-001). Fail-open: absent/malformed
+# file, or zero matches -> every pane ties at rank MaxValue and the map is pure
+# lastActivity order, exactly as before.
+$tabRank = @{}
+if (Test-Path $TabOrderFile) {
+  try {
+    $to = Get-Content $TabOrderFile -Raw -Encoding UTF8 | ConvertFrom-Json
+    $r = 0
+    foreach ($t in @($to.tabs)) {
+      $pfx = ("" + $t.sidPrefix).ToLower()
+      if ($pfx -and -not $tabRank.ContainsKey($pfx)) { $tabRank[$pfx] = $r; $r++ }
+    }
+  } catch { $tabRank = @{} }   # malformed JSON -> fail-open to lastActivity
+}
+function Get-TabRank($sid) {
+  $s = "" + $sid
+  $pfx = $s.Substring(0, [Math]::Min(8, $s.Length)).ToLower()
+  if ($tabRank.ContainsKey($pfx)) { return $tabRank[$pfx] }
+  return [int]::MaxValue
+}
+# matched panes first in real tab order; unmatched tail most-recent-first
+$items = @($items | Sort-Object @{ Expression = { Get-TabRank $_.sessionId }; Ascending = $true }, @{ Expression = { [datetime]$_.lastActivity }; Descending = $true })
 
 $counts = [ordered]@{
   resumable = ($items | Where-Object { $_.status -eq 'RESUMABLE' }).Count

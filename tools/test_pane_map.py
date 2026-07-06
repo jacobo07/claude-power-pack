@@ -74,9 +74,9 @@ else:
     _fail("V-EVERY-PANE-HAS-TRANSCRIPT", f"no transcript for: {missing}")
 
 # V-RESUME-EXACT
-bad = [p["sessionId"][:8] for p in panes if p.get("resumeCmd") != f"claude --resume {p['sessionId']}"]
+bad = [p["sessionId"][:8] for p in panes if p.get("resumeCmd") != f"kclaude --resume {p['sessionId']}"]
 if not bad:
-    _ok("V-RESUME-EXACT", "every pane resumeCmd == 'claude --resume <sid>'")
+    _ok("V-PANE-MAP-USES-KCLAUDE", "every pane resumeCmd == 'kclaude --resume <sid>' (wrapper active on resume)")
 else:
     _fail("V-RESUME-EXACT", f"wrong resumeCmd: {bad}")
 
@@ -102,12 +102,28 @@ if not leaked:
 else:
     _fail("V-NO-SUBSESSIONS", f"sub-session leaked: {leaked}")
 
-# V-SORTED-RECENT-FIRST
-acts = [p.get("lastActivity", "") for p in panes]
-if acts == sorted(acts, reverse=True):
-    _ok("V-SORTED-RECENT-FIRST", "panes ordered most-recent-first")
+# V-SORTED-RECENT-FIRST (tab-order-aware, SCS C78 addendum v2)
+# Panes matched to a real Cursor tab lead in visual tab order (not time order);
+# the UNMATCHED tail must remain most-recent-first. With no tab_order.json present
+# every pane is unmatched, so this reduces to the original full recent-first check.
+TAB_ORDER = os.path.join(HOME, ".claude", "state", "tab_order.json")
+tab_prefixes = set()
+if os.path.isfile(TAB_ORDER):
+    try:
+        with open(TAB_ORDER, "r", encoding="utf-8-sig") as f:
+            for t in (json.load(f).get("tabs") or []):
+                pfx = (t.get("sidPrefix") or "").lower()
+                if pfx:
+                    tab_prefixes.add(pfx)
+    except Exception:
+        tab_prefixes = set()
+unmatched_acts = [p.get("lastActivity", "") for p in panes
+                  if p.get("sessionId", "")[:8].lower() not in tab_prefixes]
+if unmatched_acts == sorted(unmatched_acts, reverse=True):
+    _ok("V-SORTED-RECENT-FIRST",
+        f"unmatched tail recent-first ({len(unmatched_acts)}/{len(panes)} panes not tab-ordered)")
 else:
-    _fail("V-SORTED-RECENT-FIRST", "panes not sorted by lastActivity desc")
+    _fail("V-SORTED-RECENT-FIRST", "unmatched panes not sorted by lastActivity desc")
 
 total = passes + fails
 print(f"\nPANE_MAP_PASS={passes}/{total}  threshold={total}/{total}")

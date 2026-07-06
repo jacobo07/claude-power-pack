@@ -29,6 +29,19 @@ Panes are grouped by status:
 The status-bar item `PP: N` shows the number of active resumable panes; click it to
 focus the panel.
 
+## Tab order
+
+The real left-to-right order of your tabs is only reachable from inside the extension
+(`vscode.window.tabGroups`); `build_pane_map.ps1` cannot derive it. On startup and on
+every tab change (reorder / open / close / switch) PP Sessions atomically writes the
+visual order to `~/.claude/state/tab_order.json`. `build_pane_map.ps1` then leads the
+pane map with panes in that real order (matched by the 8-hex session-id prefix in each
+pane terminal's name); panes with no matching tab keep their most-recent-first order.
+Fail-open: if the file is absent or unreadable, the map falls back to `lastActivity`.
+
+Only terminals in the **editor area** (real tabs) are captured — panel terminals are
+not part of `tabGroups` and fall back to `lastActivity`.
+
 ## Commands
 
 - `PP Sessions: Refresh` — re-read `pane_map.json`.

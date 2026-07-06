@@ -2,7 +2,7 @@
   "name": "pp-sessions",
   "displayName": "PP Sessions",
   "description": "Side panel of resumable Claude Code panes derived from disk truth. One-click exact resume, no 'History restored'.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "kobii",
   "engines": {
     "vscode": "^1.80.0"
