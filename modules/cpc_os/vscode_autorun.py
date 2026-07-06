@@ -43,11 +43,35 @@ import shutil
 from collections import OrderedDict
 from pathlib import Path
 
-# Every injected task carries this label prefix so a re-generate replaces ONLY
-# our tasks and leaves the Owner's own tasks untouched.
+# Legacy label prefix (pre-2026-07-06). Still detected on merge so a regenerate
+# CLEANS old-format tasks, but new tasks no longer carry it in the visible label
+# (the tab name is now the pane_map topic -- T-TERMINAL-NAME-FROM-PROFILE-001).
 RESTORE_LABEL_PREFIX = "CPC-Restore:"
+# The stable sentinel that marks a task as ours now lives in the task `detail`
+# field, NOT the label -- so the label is free to be the human-readable topic
+# while merge_tasks/_is_cpc_task still replace only our tasks idempotently.
+RESTORE_DETAIL = "CPC-Restore autorun (pane_map label)"
 TASKS_VERSION = "2.0.0"
 BACKUP_SUFFIX = ".cpc-bak"
+# Visible topic budget for the terminal/tab name (~40 chars "legible"); the
+# 8-hex session id is appended AFTER this as the join key tab_order.js reads.
+TERM_LABEL_MAX = 40
+
+
+def _term_label(topic: str | None, repo: str | None, sid8: str) -> str:
+    """Terminal/tab name for a restored pane: ``<repo> - <topic>`` truncated to
+    TERM_LABEL_MAX, with the 8-hex session id appended so tab_order.js's
+    ``sidPrefixOf`` can still join the tab back to a pane_map record. Fail-open
+    (T-TERMINAL-NAME-FROM-PROFILE-001): no topic -> the repo name alone; no repo
+    either -> a bare ``claude`` -- never an empty label (VS Code needs a label)."""
+    topic = (topic or "").strip()
+    repo = (repo or "").strip()
+    if topic:
+        base = f"{repo} - {topic}" if repo else topic
+    else:
+        base = repo or "claude"
+    base = base[:TERM_LABEL_MAX].rstrip()
+    return f"{base} {sid8}".strip()
 
 
 def parse_resume(resume: str) -> tuple[str, list[str]]:
@@ -70,9 +94,13 @@ def parse_resume(resume: str) -> tuple[str, list[str]]:
     return "claude", []
 
 
-def build_pane_task(resume: str, label_key: str) -> dict:
+def build_pane_task(resume: str, sid8: str, topic: str | None = None,
+                    repo: str | None = None) -> dict:
     """One folderOpen task that launches a pane's resume command in its own
-    dedicated terminal panel. ``label_key`` makes the label unique+stable."""
+    dedicated terminal panel. The task ``label`` is the pane_map topic (VS Code
+    names the task's terminal after its label -> the tab shows the topic, not the
+    shell name "claude"/"cmd"). ``sid8`` (the 8-hex session id) keeps the label
+    unique+stable AND is the join key tab_order.js reads back."""
     _command, args = parse_resume(resume)
     # Run via kclaude.bat -- the SAME wrapper the Owner's "Claude" terminal
     # profile uses (cmd /K kclaude.bat ...). It passes args straight through to
@@ -81,7 +109,9 @@ def build_pane_task(resume: str, label_key: str) -> dict:
     # to the exact session. args are ["--resume","<sid>"] (exact) or [] (fresh).
     kclaude = "${env:USERPROFILE}\\.claude\\kclaude.bat"
     return {
-        "label": f"{RESTORE_LABEL_PREFIX} {label_key}",
+        "label": _term_label(topic, repo, sid8),
+        # Stable sentinel (NOT the label) so merge_tasks replaces only our tasks.
+        "detail": RESTORE_DETAIL,
         "type": "shell",
         "command": kclaude,
         "args": args,
@@ -134,8 +164,9 @@ def build_cpc_tasks(
         if len(args) != 2:                       # empty shell -> never recreate
             continue
         sid = args[1]                            # args == ["--resume", "<sid>"]
-        kind = p.get("resume_kind") or "exact"
-        seen[resume] = build_pane_task(resume, f"{sid[:8]} [{kind}]")
+        topic = p.get("topic")
+        repo = p.get("repo") or (Path(p["cwd"]).name if p.get("cwd") else "")
+        seen[resume] = build_pane_task(resume, sid[:8], topic=topic, repo=repo)
     tasks = list(seen.values())
 
     if target_count and target_count > 0 and len(tasks) > target_count:
@@ -146,9 +177,14 @@ def build_cpc_tasks(
 
 
 def _is_cpc_task(task: dict) -> bool:
-    return isinstance(task, dict) and str(
-        task.get("label", "")
-    ).startswith(RESTORE_LABEL_PREFIX)
+    # Match new tasks by the stable `detail` sentinel; still match the legacy
+    # label prefix so a regenerate cleans pre-2026-07-06 tasks (topic labels
+    # carry no prefix). Either signal -> ours -> replaced idempotently.
+    if not isinstance(task, dict):
+        return False
+    if task.get("detail") == RESTORE_DETAIL:
+        return True
+    return str(task.get("label", "")).startswith(RESTORE_LABEL_PREFIX)
 
 
 def merge_tasks(existing: dict | None, cpc_tasks: list[dict]) -> dict:

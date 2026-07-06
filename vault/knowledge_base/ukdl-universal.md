@@ -2596,3 +2596,33 @@ prompts. Audit disproved both premises before any edit (`[[feedback_audit_dispro
 `HR-PREMISE-001`). Owner elected to seal this note instead of a no-op commit. The filter this
 premise asked for already exists (added in a prior session; see build_pane_map docstring line 19-20
 and footer line 251 "research/SERP agent prompts are excluded"). SCS C78 addendum v5.
+
+---
+
+## T-TERMINAL-NAME-FROM-PROFILE-001 — restored terminal shows the profile name, not the pane label
+
+**TRIGGER:** A restored/reconnected Cursor terminal shows the terminal-profile or shell name
+("claude", "cmd", "pwsh") as its tab name instead of the pane's distinguishing label.
+
+**LESSON:** Terminals opened from a Cursor terminal profile (or reconnected by persistent-sessions)
+inherit the PROFILE name, not the pane label. Three levers, in order of reliability:
+(a) **task-fired terminals** → set the `folderOpen` task **label** to the topic; VS Code names a
+task's terminal after its task label — no settings change, documented behavior (chosen: `vscode_autorun.py`
+`_term_label` = `"<repo> - <topic>"[:40] + " " + sid8`, with the "is-ours" sentinel in the task `detail`
+field so merge stays idempotent while the label is free to be the topic);
+(b) **extension-created terminals** → pass `name` to `createTerminal` — authoritative and immutable by
+shell OSC (`extension.js::termName`);
+(c) **OSC rename** `\x1b]0;<label>\x07` reaches profile terminals but, under the default
+`terminal.integrated.tabs.title` (`${process}`), surfaces only as the tab *description* — needs
+`${sequence}` in that setting AND is host-limited (verify visually, cannot confirm headless).
+
+**TRAPS:** `vscode.Terminal.name` is READ-ONLY — an already-open terminal cannot be renamed via the API
+(only at `createTerminal` time). Keep the 8-hex session id IN the visible label — `tab_order.js::sidPrefixOf`
+joins the tab back to a pane_map record by the first 8-hex run; dropping it degrades tab-order fidelity
+(fail-open to lastActivity). `claude.exe`/`cmd` may stamp its own console title over a task label — verify
+on a real tab before assuming any rename wins.
+
+**ORIGEN:** 2026-07-06 EXECUTION-MODE prompt. Feasibility (PASO -1) established the dominant restore path
+is auto-tasks (`task.allowAutomaticTasks:"on"`) and `pane_map.json` already carries `topic`. Shipped C+B
+(Owner-approved): `AUTORUN_PASS=17/17` incl. V-TERMINAL-NAMED-FROM-PANE-MAP + V-FALLBACK-TO-REPO.
+SCS C78 addendum v4 ([[scs_restore_all_panes_c78_addendum_v4]]).

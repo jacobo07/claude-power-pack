@@ -141,10 +141,25 @@ class PaneProvider {
   }
 }
 
+// Terminal/tab name = pane_map topic (truncated), prefixed by the repo, with the
+// 8-hex session id appended as tab_order.js's join key. Mirrors
+// vscode_autorun.py::_term_label so extension-created tabs and auto-task tabs read
+// identically (T-TERMINAL-NAME-FROM-PROFILE-001). Fail-open: no topic -> repo
+// name; no repo -> "claude" -- never an empty terminal name.
+const TERM_LABEL_MAX = 40;
+function termName(p) {
+  const sid8 = String((p && p.sessionId) || "").slice(0, 8);
+  const topic = ((p && p.topic) || "").trim();
+  const repo = ((p && p.repo) || "").trim();
+  let base = topic ? (repo ? `${repo} - ${topic}` : topic) : repo || "claude";
+  base = base.slice(0, TERM_LABEL_MAX).trim();
+  return `${base} ${sid8}`.trim();
+}
+
 function resumePane(p) {
   if (!p) return;
   const term = vscode.window.createTerminal({
-    name: `${p.repo} ${String(p.sessionId).slice(0, 8)}`,
+    name: termName(p),
     cwd: p.cwd,
   });
   term.show(true);
@@ -172,7 +187,7 @@ function runColdStartRestore(provider, opts) {
   const panes = panesToRestore(provider.map, currentCwds(), liveTerms, { enabled });
   for (const p of panes) {
     const term = vscode.window.createTerminal({
-      name: `${p.repo} ${String(p.sessionId).slice(0, 8)}`,
+      name: termName(p),
       cwd: p.cwd,
     });
     term.show(false);

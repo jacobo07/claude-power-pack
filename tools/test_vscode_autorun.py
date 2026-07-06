@@ -33,9 +33,9 @@ def _fail(gate: str, diag: str) -> None:
 
 
 def _pane(cwd: str, resume: str, kind: str = "exact", repo: str = "r",
-          pane_id: str = "p") -> dict:
+          pane_id: str = "p", topic: str | None = None) -> dict:
     return {"cwd": cwd, "resume": resume, "resume_kind": kind, "repo": repo,
-            "pane_id": pane_id}
+            "pane_id": pane_id, "topic": topic}
 
 
 def main() -> int:
@@ -52,14 +52,51 @@ def main() -> int:
     else:
         _fail("V-AUTORUN-PARSE-NEW", f"got {cmd} {args}")
 
-    # --- task shape: folderOpen + dedicated -----------------------------
-    task = va.build_pane_task("claude --resume zzz99999", "zzz99999 [exact]")
+    # --- task shape: folderOpen + dedicated + detail sentinel -----------
+    task = va.build_pane_task("claude --resume zzz99999", "zzz99999",
+                              topic="MODO: X build", repo="repoA")
     ro = task.get("runOptions", {}).get("runOn")
     panel = task.get("presentation", {}).get("panel")
-    if ro == "folderOpen" and panel == "dedicated" and task["args"] == ["--resume", "zzz99999"]:
-        _ok("V-AUTORUN-TASK-FOLDEROPEN", f"runOn={ro}, panel={panel}")
+    if (ro == "folderOpen" and panel == "dedicated"
+            and task["args"] == ["--resume", "zzz99999"]
+            and task.get("detail") == va.RESTORE_DETAIL):
+        _ok("V-AUTORUN-TASK-FOLDEROPEN", f"runOn={ro}, panel={panel}, detail set")
     else:
-        _fail("V-AUTORUN-TASK-FOLDEROPEN", f"runOn={ro}, panel={panel}, args={task['args']}")
+        _fail("V-AUTORUN-TASK-FOLDEROPEN",
+              f"runOn={ro}, panel={panel}, args={task['args']}, detail={task.get('detail')}")
+
+    # --- terminal name = pane_map topic (T-TERMINAL-NAME-FROM-PROFILE-001) ---
+    topic_panes = [_pane("C:\\repoTUA", "claude --resume 1022d113beef", "exact",
+                         repo="TUA-X",
+                         topic="MODO: EXECUTION MODE Business Physics engine rewrite")]
+    tt = va.build_cpc_tasks(topic_panes)
+    lbl = tt[0]["label"] if tt else ""
+    if (len(tt) == 1 and lbl.startswith("TUA-X - MODO: EXECUTION")
+            and lbl.endswith("1022d113") and len(lbl) <= va.TERM_LABEL_MAX + 10
+            and tt[0].get("detail") == va.RESTORE_DETAIL):
+        _ok("V-TERMINAL-NAMED-FROM-PANE-MAP", f"label={lbl!r}")
+    else:
+        _fail("V-TERMINAL-NAMED-FROM-PANE-MAP", f"label={lbl!r} n={len(tt)}")
+
+    # --- fallback to repo name when the pane has no topic ---------------
+    notopic = [_pane("C:\\repoX", "claude --resume deadbeef1234", "exact",
+                     repo="repoX", topic=None)]
+    nt = va.build_cpc_tasks(notopic)
+    nlbl = nt[0]["label"] if nt else ""
+    if len(nt) == 1 and nlbl == "repoX deadbeef":
+        _ok("V-FALLBACK-TO-REPO", f"no topic -> repo-name label={nlbl!r}")
+    else:
+        _fail("V-FALLBACK-TO-REPO", f"label={nlbl!r} n={len(nt)}")
+
+    # --- fallback to cwd leaf when neither topic nor repo present -------
+    bare = [{"cwd": "C:\\a\\repoLeaf", "resume": "claude --resume cafe0001beef",
+             "resume_kind": "exact"}]
+    bt = va.build_cpc_tasks(bare)
+    blbl = bt[0]["label"] if bt else ""
+    if len(bt) == 1 and blbl == "repoLeaf cafe0001":
+        _ok("V-FALLBACK-TO-CWD-LEAF", f"no topic/repo -> cwd leaf label={blbl!r}")
+    else:
+        _fail("V-FALLBACK-TO-CWD-LEAF", f"label={blbl!r} n={len(bt)}")
 
     # --- dedup: same resume -> 1 task, distinct -> 2 --------------------
     panes = [
@@ -117,11 +154,12 @@ def main() -> int:
     else:
         _fail("V-AUTORUN-TRUNCATE", f"expected 2, got {len(trunc)}")
 
-    # --- merge preserves the Owner's own tasks --------------------------
+    # --- merge preserves the Owner's own tasks + cleans legacy CPC ------
     existing = {
         "version": "2.0.0",
         "tasks": [
             {"label": "Build", "type": "shell", "command": "npm run build"},
+            # legacy-format CPC task (label prefix, no detail) must still be dropped
             {"label": "CPC-Restore: old [exact]", "type": "shell", "command": "claude"},
         ],
     }
@@ -129,9 +167,9 @@ def main() -> int:
     labels = [t["label"] for t in merged["tasks"]]
     has_owner = "Build" in labels
     old_cpc_gone = "CPC-Restore: old [exact]" not in labels
-    has_new_cpc = any(l.startswith("CPC-Restore:") for l in labels)
+    has_new_cpc = any(t.get("detail") == va.RESTORE_DETAIL for t in merged["tasks"])
     if has_owner and old_cpc_gone and has_new_cpc:
-        _ok("V-AUTORUN-MERGE-PRESERVES", f"kept Build; replaced old CPC; labels={labels}")
+        _ok("V-AUTORUN-MERGE-PRESERVES", f"kept Build; dropped legacy CPC; labels={labels}")
     else:
         _fail("V-AUTORUN-MERGE-PRESERVES",
               f"owner={has_owner} old_gone={old_cpc_gone} new={has_new_cpc} labels={labels}")
@@ -161,7 +199,7 @@ def main() -> int:
         panes_changed = panes + [_pane("C:\\repoA", "claude --resume ccc", "exact")]
         res3 = va.write_autorun_for_cwd("C:\\repoA", panes_changed, vscode_dir=vdir)
         doc3 = json.loads(tasks_path.read_text(encoding="utf-8"))
-        n_cpc = sum(1 for t in doc3["tasks"] if t["label"].startswith("CPC-Restore:"))
+        n_cpc = sum(1 for t in doc3["tasks"] if t.get("detail") == va.RESTORE_DETAIL)
         if (unchanged_ok and res3["action"] == "update"
                 and res3["backed_up"] and bak.is_file() and n_cpc == 3):
             _ok("V-AUTORUN-IDEMPOTENT-SKIP",

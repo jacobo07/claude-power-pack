@@ -125,6 +125,8 @@ function Get-PanesFromPaneMap {
                 live         = [bool]$p.live
                 status       = $p.status
                 lastActivity = $p.lastActivity
+                topic        = $p.topic   # pane_map label -> vscode_autorun task label -> terminal tab name
+                repo         = $p.repo
             }
         }
     }
@@ -203,7 +205,7 @@ if ($AutoRun) {
     } else {
         # Write the pane_map-derived records to a temp snapshot for vscode_autorun.
         $snapForAutoRun = Join-Path $env:TEMP ("cpc_restore_autorun_{0}.json" -f $PID)
-        $arr = @($panes | ForEach-Object { [ordered]@{ cwd = $_.cwd; session_id = $_.session_id; resume = $_.resume; resume_kind = $_.resume_kind } })
+        $arr = @($panes | ForEach-Object { [ordered]@{ cwd = $_.cwd; session_id = $_.session_id; resume = $_.resume; resume_kind = $_.resume_kind; topic = $_.topic; repo = $_.repo } })
         $utf8 = New-Object System.Text.UTF8Encoding($false)
         [System.IO.File]::WriteAllText($snapForAutoRun, ($arr | ConvertTo-Json -Depth 5), $utf8)
 
