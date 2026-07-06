@@ -2890,6 +2890,36 @@ can fire on `dbgAge >= <validated-threshold> while cursor=1` (extension-quiet ==
 a signal tied to the CONFIRMED mechanism, unlike the two retracted proxy-detectors. Thresholds
 from real data, not a guess. HARD LINE unchanged: never auto-render to fake impressions (fraud).
 
+### T-KICKBACKS-GAP-PATTERN-001 ADDENDUM v5 -- candidate FIX applied: --disable-background-timer-throttling on Cursor launch
+
+**HYPOTHESIS FIX (Owner-approved, host-side, pending telemetry validation).** If the ~28-min
+event-loop suspensions are Chromium renderer/timer throttling of the ext-host, disabling that
+throttle should PREVENT them (not just surface them). Applied `--disable-background-timer-throttling`
+to Cursor's launch shortcuts (Cursor.exe took no flags before). `argv.json` was NOT usable --
+the VS Code-family runtime-args file only honours a fixed allowlist that excludes this switch;
+the shortcut Arguments are the reliable carrier.
+
+**WHAT CHANGED (reversible).** Three shortcuts, all pointing at
+`%LOCALAPPDATA%\Programs\cursor\Cursor.exe`, Args set from empty to the flag:
+Start Menu `Programs\Cursor.lnk`, `Programs\Cursor\Cursor.lnk`, and the Taskbar pin
+`...\Quick Launch\User Pinned\TaskBar\Cursor.lnk`. Each backed up once to `<lnk>.bak-preflag`.
+REVERT: `tools/cursor_apply_perf_flags.ps1 -Revert` (or restore the .bak-preflag copies).
+
+**TOOL (repo).** `tools/cursor_apply_perf_flags.ps1` -- idempotent apply/-Revert of the flag(s)
+across all discovered Cursor shortcuts, backup-once, ASCII-clean, PSParser-0. Re-run AFTER a
+Cursor auto-update (updates can recreate Start Menu shortcuts and drop the flag).
+
+**TAKES EFFECT ON FULL RESTART ONLY.** A single-instance re-launch onto a running Cursor just
+focuses it without the flag. Owner must quit ALL Cursor windows then relaunch. Verify live:
+`Get-CimInstance Win32_Process -Filter "Name='Cursor.exe'" | ? { $_.CommandLine -notmatch '--type=' } | Select CommandLine`
+should show the flag on the main process.
+
+**VALIDATION LOOP.** Instrument A (`kickbacks_earning_timeline.log`) is the judge: after the
+restart, if `dbgAge` stops spiking while `cursor=1` (no more extension-quiet windows) and the
+dashboard shows no new gaps, the fix is proven on this machine. If gaps persist, escalate to the
+sibling switches `--disable-renderer-backgrounding` + `--disable-backgrounding-occluded-windows`
+(pass all three via `-Flags`). Change ONE variable, measure, iterate -- do not stack blindly.
+
 ---
 
 ### PR-PANE-MAP-LIVE-ONLY-001 (2026-07-06, SCS C80)
