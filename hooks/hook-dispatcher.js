@@ -196,6 +196,12 @@ const CHAIN_MAP = {
     // survive mergeOutputs (HSO shallow-merge keeps permissionDecision:deny).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/uqf_pre_edit_gate.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/claude_md_firewall.js', timeoutMs: 8000, block: true },
+    // CDIO I4 advisory (level-2, NEVER blocks): on a Write/Edit to a visual
+    // surface (frontend ext, or a landing/dashboard/component/hero filename),
+    // inject a reminder to run cdio-reviewer before declaring it done
+    // (PR-CDIO-REVIEW-GATE-001). Fail-open, throttled per surface-family per 15
+    // min, BOM-tolerant; no block flag. Sealed SCS C78.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/cdio_visual_advisory.js', timeoutMs: 4000 },
   ],
   'PreToolUse-Read-chain': [
     { exe: NODE_EXE, script: './gatekeeper-semantic.js', timeoutMs: 3000 },
