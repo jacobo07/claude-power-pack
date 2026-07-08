@@ -2938,3 +2938,35 @@ and must not be relaxed. Versioning snapshots on topology change + >=15min gate,
 records which repos held OPEN-NOW panes at each snapshot instant.
 Artifacts: `tools/build_pane_map.ps1`, `tools/pane_map_snapshot.py`,
 `tools/test_pane_map_snapshot.py`.
+
+---
+
+### PR-TEST-AUDIT-BEFORE-FEATURE-001 (2026-07-08, SCS C81)
+
+Before any NEW feature in a repo, verify there is no active F1 (logica critica sin
+test) on the surface the feature touches. If there is, write the minimum test for the
+critical functionality FIRST, then build the feature. Rationale from the Global Testing
+Audit: a healthy aggregate test count is NOT evidence for any specific surface --
+KobiiCraft has 268 JUnit files and 1,596 passing assertions yet `EconomyService` (money
+transfer, the most abusable surface) has ZERO test references. Grep the specific surface
+you are about to modify; never infer its coverage from the repo total. Cross-ref the F1-F8
+taxonomy (`vault/knowledge_base/testing/testing_failure_taxonomy.md`) and the V-gates x3
+hermetic standard (`testing_universal_standards.md`).
+
+### T-MINECRAFT-TESTING-CONCENTRATION-001 (2026-07-08, SCS C81)
+
+**Rewritten from the disproved `T-MINECRAFT-TESTING-BLIND-SPOT-001` premise.** The plan
+asserted Minecraft plugins run "sin ningun test" -- disk evidence disproves it: KobiiCraft
+has 268 JUnit files under `src/test/java` and `mvn -o test` on JDK 21 runs 1,596 + 10
+green assertions. The real finding is CONCENTRATION, not absence: 232 of 268 test files
+(87%) live in ONE plugin (KobiMapEngine), MockBukkit is wired in 1 of 90 poms, and the
+operator-risk surfaces (economy in kobicore, rewards in KobiiLuckyArena, permissions) sit
+nearly untested -- the inverse of where the tests are. MockBukkit permits headless,
+hermetic plugin testing without a live server (proven: 1,596 green offline); the harness
+works, it is simply concentrated in one non-gameplay-critical plugin. Toolchain contract:
+the prebuilt test classes are Java 21 (class file 65); JDK 17 fails with
+"compiled by a more recent version" -- pin `JAVA_HOME` = JDK 21. Fix: wire MockBukkit into
+kobicore, write `EconomyServiceTest` (transfer allow / deny-insufficient / boundary /
+concurrency). ORIGEN: Global Testing Audit 2026-07-08; the plan's original wording was
+empirically false and would have sealed an invented falencia
+(cross-ref feedback `no-classified-fails-at-done-gate`, `plan-code-is-hypothesis`).
