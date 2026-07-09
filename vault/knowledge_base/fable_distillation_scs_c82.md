@@ -66,3 +66,40 @@ the loop runs live and the cohort data accrues.
 
 Cross-ref: FD_INDEX.md · [[ukdl-universal]] `PR-FABLE-DELTA-ONLY-001` · CO-12 (metric) · SCS C41
 (do-not-build-what-exists + anti-test-theater) · SCS C61/C65/C71 (the CO/PM/GK families this extends).
+
+## EXECUTION-mode addendum (SCS C82, 2026-07-09) -- FD-00 gate + FD-07 flywheel LIVE
+
+The two hooks the datasets documented as their next build are now code on the real session
+path, not architecture:
+
+- **FD-00 admission gate** -- `modules/fable_distillation/fd_00_gate.py`.
+  `check_admission(task) -> {ADMIT, DECLINE, ROUTE_CHEAPER, ANSWER_FROM_ASSET, DEFER}`
+  (`.action` = admit|reject|defer). It CONSULTS the real CO-03 `route()` and CO-05
+  `vault/asset_resolver` and the knowledge_base floor; it never re-implements routing.
+  Advisory, fail-open ABSOLUTE -> ADMIT (never blocks the Owner). Verified: a mechanical
+  transform and a dataset-covered task REJECT; a floor-silent above-floor discovery ADMITs;
+  a non-str input fails open to ADMIT without raising.
+- **FD-07 close-boundary flywheel** -- `modules/fable_distillation/fd_07_flywheel.py`,
+  registered in the dispatcher Stop-chain after GK-08 `session_writeback.py`. At a frontier
+  session's Stop it reads this session's PM-03 findings, classifies each (NEW/STRONGER/DUP/
+  DISCARD), triages a destination (hard_rule/benchmark/prompt_fragment/asset/dataset_part),
+  and writes each back idempotently (SHA-256) to the deposits ledger (+ Owner-promotable UKDL
+  candidate for rule/trap; gated CO-05 `store_asset` for asset). Reports THROUGH CO-12, never
+  a parallel metric. Gated on `PP_FRONTIER_SESSION` (T-FRONTIER-SESSION-DETECTION-001).
+- **CO-12 fd_metrics** -- `co_12_telemetry.fd_metrics()` + folded into `readiness_report()`:
+  fd_sessions_count / fd_frontier_calls_admitted / fd_admissions_declined / fd_rejection_rate
+  / fd_deltas_extracted / fd_assets_written / fd_portability_slope_proxy, reading the same
+  `signals.jsonl`. instrument-pending until the loop accrues on live frontier sessions.
+
+**Done-gate cleared.** `tools/test_fable_distillation.py` = `DATASET_FAMILY_VERDICT=PASS`
+(12/12) x3 hermetic. Live proof of Reality-Contract #2: on first frontier Stop the flywheel
+distilled **7 real PM-03 findings** into classified deposits at
+`~/.claude/state/fable_distillation/` (destinations asset/benchmark/dataset_part). Reality
+#1: the gate REJECTS a Sonnet-sufficient / dataset-covered / mechanical task.
+
+**Honest residual (CO-10):** activation is rung-2 advisory + rung-3 at the Stop boundary,
+but LIVE requires the Owner Copy-Item of the canonical dispatcher + kclaude to their
+`~/.claude/` mirrors (T-HOOK-DISPATCHER-DRIFT-001) -- the PP-internal half ships this turn;
+the mirror step is the documented Owner registration (HR-001). No dependence-reduction figure
+is claimed: CO-12 reads the fd_* metrics as instrument-pending until the loop runs across
+many live sessions (Telemetry-Before-Claims).

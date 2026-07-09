@@ -3003,3 +3003,34 @@ ratio**, reused, never re-invented. No dependence-reduction claim without a
 **SCS C82** 2026-07-09. Root law of FD-00; the routing rule FD-01/FD-05 feed into CO-03.
 Cross-ref: `fable_distillation_scs_c82.md`, `fable_distillation/FD_INDEX.md`,
 `fable_distillation/fd_00_fable_advantage_doctrine_and_session_protocol.md`.
+
+---
+
+## T-FRONTIER-SESSION-DETECTION-001 -- FD-07 flywheel fires only on frontier sessions
+
+**TRIGGER:** the FD-07 close-boundary flywheel (Stop-chain child
+`modules/fable_distillation/fd_07_flywheel.py`) deciding whether to turn the distillation
+loop at a session's close.
+
+**REGLA:** the flywheel turns ONLY when `PP_FRONTIER_SESSION=1` is exported. `kclaude.ps1`
+sets it unconditionally because kclaude launches the host default model, which is Opus (a
+frontier model) on this host -- so a kclaude session IS a frontier session by construction.
+A bare `claude` launch never sets it, so the Stop hook runs normally WITHOUT the flywheel (a
+silent no-op). The launched claude and every hook child it spawns inherit the env var.
+
+**POR QUE:** the flywheel is only worth its close-verification + writeback cost on a session
+that actually spent frontier tokens; running it on every Sonnet/Haiku session would pay the
+loop overhead with no delta to compound (FD-07 II.6 token-ROI priced over the class).
+
+**FAIL-OPEN:** unset env -> no loop turn, session closes normally; malformed Stop JSON ->
+cwd falls back to `os.getcwd()`; any flywheel error -> swallowed, `main()` ALWAYS exits 0.
+The flywheel never blocks session close (mirrors the GK-08 session_writeback contract).
+
+**HONEST (CO-10):** live only after the canonical dispatcher + kclaude are Copy-Item'd to
+their live mirrors (`~/.claude/hooks/hook-dispatcher.js`, `~/.claude/kclaude.ps1`,
+`~/.claude/bin/kclaude.ps1`) -- the Owner-side registration step (T-HOOK-DISPATCHER-DRIFT-001).
+A v2 refinement gates on the actual launch model rather than assuming kclaude == frontier.
+
+**ORIGEN:** FD EXECUTION-mode activation (H2), SCS C82 addendum 2026-07-09.
+Cross-ref: `fable_distillation_scs_c82.md`, `fd_07_fable_learning_flywheel.md`,
+`plans/fd-hooks-activation-2026-07-09.md`.
