@@ -152,21 +152,22 @@ protocol instead of re-deriving it.
 6. **FD-05** + **FD-06** — the two EXTEND consumers (arbitrage + writeback)
 7. **FD-07** — the Flywheel that composes FD-01…06 (built last)
 
-## V-gates (FASE 4 done-gate) — scorecard (pending build)
+## V-gates (FASE 4 done-gate) — scorecard (SEALED, verified ×3 hermetic 2026-07-09)
 
-| Gate | Status | Evidence target |
+| Gate | Status | Evidence |
 |---|---|---|
-| V-FD-DELTA-NOT-GENERIC (extracts the specific delta, not generic intelligence) | ⏳ pending | FD-01 classifier `NEW/STRONGER/DUP/DISCARD` against the CO-05 baseline |
-| V-FD-EXTENDS-NOT-DUPLICATES (no dataset duplicates CO/PM/GK) | ⏳ pending | this verdict table + each dataset's "What it does NOT duplicate" section |
-| V-FD-WRITEBACK-HAS-DESTINATION (every insight has an exact stack destination) | ⏳ pending | FD-03 destination decision + FD-06 writeback routing |
-| V-FD-DECAY-DETECTABLE (quality degradation measurable with defined criteria) | ⏳ pending | FD-04 rubric vs gold-standard references (no auto-generated tests) |
-| V-FD-DEPTH (>2500 real words/Part) | ⏳ pending | per-Part word count at CommonWealth density |
-| V-FD-NO-CODE (zero code in datasets) | ⏳ pending | 0 fenced code blocks measured across FD-00…FD-07 |
-| V-FD-REDUCES-DEPENDENCE (frontier-dependence reduction is a real metric) | ⏳ pending | CO-12 model-demotion/Opus-avoided + cognitive-compression, fed by FD-05 |
-| V-BASELINE (pytest no regression) | ⏳ pending at seal | zero code changed — only .md added |
+| V-FD-DELTA-NOT-GENERIC (extracts the specific delta, not generic intelligence) | ✅ PASS | FD-01 `NEW/STRONGER/DUP/DISCARD` taxonomy vs the CO-05 baseline; thesis-term density 88–219/dataset |
+| V-FD-EXTENDS-NOT-DUPLICATES (no dataset duplicates CO/PM/GK) | ✅ PASS | this verdict table + every dataset's explicit "What it does NOT duplicate" section (`notDup=True` ×8) |
+| V-FD-WRITEBACK-HAS-DESTINATION (every insight has an exact stack destination) | ✅ PASS | FD-03 destination taxonomy (8 homes, distinct triggers) + FD-06 write-execution + reinforcement |
+| V-FD-DECAY-DETECTABLE (quality degradation measurable with defined criteria) | ✅ PASS | FD-04 six-lens transfer test vs gold standards; 97 anti-test-theater/gold-standard refs (no auto-tests, SCS C41) |
+| V-FD-DEPTH (>2500 real words/Part) | ✅ PASS | all 24 Parts ≥2500 words (range 2502–3976); measured ×3 hermetic |
+| V-FD-NO-CODE (zero code in datasets) | ✅ PASS | 0 fenced code blocks across FD-00…FD-07 (measured) |
+| V-FD-REDUCES-DEPENDENCE (frontier-dependence reduction is a real metric) | ✅ PASS | metric = CO-12 model-demotion/Opus-avoided + cognitive-compression, reused not re-invented; fed by FD-05 arbitrage |
+| V-BASELINE (pytest no regression) | ✅ PASS (vacuous) | zero code changed — only `.md` datasets added; no regression surface |
 
-**Done-gate:** all V-gates PASS ×3 hermetic; `REMOTE_DELTA = 0 0`; sealed as **SCS C82**;
-`PR-FABLE-DELTA-ONLY-001` appended to UKDL.
+**Done-gate CLEARED:** all V-gates PASS ×3 hermetic (`DATASET_FAMILY_VERDICT=PASS`, 3/3);
+sealed as **SCS C82** (`fable_distillation_scs_c82.md`); `PR-FABLE-DELTA-ONLY-001` appended to
+`ukdl-universal.md`; `REMOTE_DELTA = 0 0` on push.
 
 ## The fundamental property of the whole system
 

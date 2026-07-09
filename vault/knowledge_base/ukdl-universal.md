@@ -2970,3 +2970,36 @@ kobicore, write `EconomyServiceTest` (transfer allow / deny-insufficient / bound
 concurrency). ORIGEN: Global Testing Audit 2026-07-08; the plan's original wording was
 empirically false and would have sealed an invented falencia
 (cross-ref feedback `no-classified-fails-at-done-gate`, `plan-code-is-hypothesis`).
+
+## PR-FABLE-DELTA-ONLY-001 — Spend frontier tokens only on the delta (2026-07-09)
+
+**TIPO:** Process Rule (sealed with the Fable Advantage Distillation Suite, SCS C82).
+
+**REGLA (verbatim, inheritable):** When a frontier model is available, spend its tokens
+only on what the existing PP systems cannot already produce. If the PP can produce the
+result — by CO-03 routing, CO-05 asset reuse, GK navigation, a deterministic rung, or a
+prior distilled protocol — the frontier model is **not invoked**. Every frontier
+interaction that *does* occur **must deposit a classified delta before the session closes**
+(NEW / STRONGER / DUP / DISCARD against the CO-05 baseline). A session that spent a frontier
+token and closed with no classified deposit has leaked a moat's worth of capital as a log
+line.
+
+**POR QUÉ (cost asymmetry):** a wrongly-*declined* call costs one bounded retry; a
+wrongly-*admitted* at-floor call costs the recurring frontier bill for that entire class
+every time it is asked again without a distilled replacement — an unbounded, silent,
+compounding error. Symmetrically, a missed deposit costs every future session that would
+have started from the higher floor. Weight the gates toward declining on admission and
+forcing on deposit.
+
+**CÓMO SE APLICA:** FD-01 is the classifier of this decision (delta vs at-floor); FD-05
+converts the frequently-admitted classes into CO-03 routing rules + CO-05 assets so the
+next ask is served cheaper; FD-04 proves a distilled capability actually survives the
+downgrade (else it stays `frontier-only`, an honest hypothesis, not a claimed advantage).
+Success metric = **CO-12 model-demotion / Opus-avoided count + cognitive-compression
+ratio**, reused, never re-invented. No dependence-reduction claim without a
+`(metric, source, value)` triple (CO-12 Telemetry-Before-Claims).
+
+**ORIGEN:** Fable Advantage Distillation Reinforcement Suite (FD-00…FD-07), sealed
+**SCS C82** 2026-07-09. Root law of FD-00; the routing rule FD-01/FD-05 feed into CO-03.
+Cross-ref: `fable_distillation_scs_c82.md`, `fable_distillation/FD_INDEX.md`,
+`fable_distillation/fd_00_fable_advantage_doctrine_and_session_protocol.md`.
