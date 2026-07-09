@@ -209,6 +209,53 @@ def loop_boundedness(proj_base=None, *,
 # --------------------------------------------------------------------------- #
 # Readiness report -- honest composite (real signals + pending markers).
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Fable Advantage Distillation (FD) loop metrics -- REUSED, not re-invented.
+# --------------------------------------------------------------------------- #
+def fd_metrics(*, state_dir=None) -> dict:
+    """FD suite loop metrics, computed from the fd_* signals the FD-00 admission
+    gate and the FD-07 flywheel emit into the SAME signals.jsonl this module owns.
+    This is the anti-duplication boundary the suite guards (FD-07 I.4, Invariant 1):
+    CO-12 is the single dependence instrument; FD feeds it, never forks it. No
+    separate dependence NUMBER is computed here -- the ground truth is opus_avoided
+    + loop_boundedness above; FD adds the admission/deposit/portability signals that
+    move them. instrument-pending until the loop runs on live frontier sessions."""
+    sigs = load_signals(state_dir=state_dir)
+    admitted = [s for s in sigs if s.get("kind") == "fd_frontier_call_admitted"]
+    declined = [s for s in sigs if s.get("kind") == "fd_admission_declined"]
+    deposits = [s for s in sigs if s.get("kind") == "fd_delta_deposited"]
+    turns = [s for s in sigs if s.get("kind") == "fd_flywheel_turn"]
+    total_adm = len(admitted) + len(declined)
+    processed = sum(int(t.get("processed", 0) or 0) for t in turns)
+    dep_count = len(deposits)
+    frontier_only = sum(1 for d in deposits
+                        if d.get("portability_target") == "frontier-only")
+    proven = sum(1 for d in deposits if d.get("portability_proven"))
+    measured = bool(admitted or declined or deposits or turns)
+    return {
+        "fd_sessions_count": len(turns),
+        "fd_frontier_calls_admitted": len(admitted),
+        "fd_admissions_declined": len(declined),
+        # rejection rate: fraction of admission decisions the gate sent below frontier.
+        "fd_rejection_rate": (round(len(declined) / total_adm, 3)
+                              if total_adm else None),
+        "fd_deltas_extracted": processed,
+        "fd_assets_written": dep_count,
+        "fd_portability_frontier_only": frontier_only,
+        "fd_portability_proven": proven,
+        # portability slope proxy: 1 - frontier_only/total; rises only on FD-04-
+        # proven downgrades in v2 (portability_proven), never on estimates.
+        "fd_portability_slope_proxy": (round(1 - frontier_only / dep_count, 3)
+                                       if dep_count else None),
+        "fd_dependence_reduction": "reuses opus_avoided + loop_boundedness (FD feeds "
+                                   "them; no separate number -- Invariant 1)",
+        "status": ("live" if measured else
+                   "instrument-pending -- no fd_* signal yet (accrues on live "
+                   "frontier sessions via the FD-07 Stop hook + FD-00 gate)"),
+        "measured": measured,
+    }
+
+
 def readiness_report(proj_base=None, *, state_dir=None) -> dict:
     """The CO-12 readiness surface. Real signals carry values; pending
     instruments read 'instrument-pending', never a faked number."""
@@ -226,15 +273,20 @@ def readiness_report(proj_base=None, *, state_dir=None) -> dict:
         cdio = {"design_reviews_count": 0, "avg_design_quality_score": None,
                 "critical_issues_caught": 0, "antipatterns_prevented": 0,
                 "measured": False}
+    fd = fd_metrics(state_dir=state_dir)
+    pending = ["dedup_hit"]
+    if not fd.get("measured"):
+        pending.append("fd_distillation")
     return {
         "loop_boundedness": loop,          # REAL data now
         "opus_avoided": {**opus, "status": opus_status},
         "cdio": cdio,                      # REAL data once reviews record
+        "fd_distillation": fd,             # REAL data once the FD loop runs live
         "dedup_hit": {"status": "instrument-pending",
                       "reason": "PM-03 consume wired (Hook 13, C73); "
                                 "RedundancyTax hit-producer is agent-driven, "
                                 "not on the live path -- datum not invented"},
-        "instruments_pending": ["dedup_hit"],
+        "instruments_pending": pending,
     }
 
 
