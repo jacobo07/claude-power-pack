@@ -138,6 +138,16 @@ const CHAIN_MAP = {
     // indexer --all). Fail-open, ALWAYS exit 0, never blocks Stop; closes the
     // WRITE->READ loop the GK-12 Graph-First gate reads from.
     { exe: PY_EXE, script: '../skills/claude-power-pack/modules/graphify/session_writeback.py', timeoutMs: 8000 },
+    // FD-07 Fable Learning Flywheel (SCS C82 EXECUTION-mode): at a FRONTIER
+    // session's close (kclaude exports PP_FRONTIER_SESSION=1) read this session's
+    // captured deltas from the PM-03 bus, classify/triage/writeback each
+    // idempotently to the deposits ledger (+ UKDL candidate / CO-05 asset side-
+    // writes), and report loop health THROUGH CO-12 (no parallel metric). Gated on
+    // PP_FRONTIER_SESSION -> a bare (non-kclaude) session is a silent no-op.
+    // Fail-open, ALWAYS exit 0, never blocks Stop; rides this GK-08 Stop boundary
+    // (no new plumbing, FD-07 I.4). Live only after Copy-Item canonical->live
+    // (T-HOOK-DISPATCHER-DRIFT-001).
+    { exe: PY_EXE, script: '../skills/claude-power-pack/modules/fable_distillation/fd_07_flywheel.py', timeoutMs: 8000 },
   ],
   // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
   // Root cause: settings.json registered 7 standalone PreToolUse hooks on

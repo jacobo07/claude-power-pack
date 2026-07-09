@@ -48,6 +48,16 @@ if ($ClaudeArgs.Count -eq 1 -and ($ClaudeArgs[0] -in @('--help', '-h', '/?'))) {
 
 $cwd = (Get-Location).Path
 
+# --- FD-00/FD-07 frontier-session marker (SCS C82 EXECUTION-mode) -------------
+# kclaude launches Claude Code on the host default model, which is Opus (a
+# frontier model) on this host -- so a kclaude session IS a frontier session by
+# construction. Export PP_FRONTIER_SESSION so the FD-07 close-boundary flywheel (a
+# Stop-chain child) knows to turn the distillation loop at this session's close;
+# the launched claude and every hook child it spawns inherit this env var. A bare
+# `claude` launch never sets it, so the flywheel is a silent no-op there. Purely
+# advisory downstream (ASCII-only, PS 5.1 safe); nothing here can abort the launch.
+$env:PP_FRONTIER_SESSION = '1'
+
 # --- resolve python (host install, then PATH) --------------------------------
 $py = Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\python.exe"
 if (-not (Test-Path $py)) {
