@@ -108,6 +108,25 @@ it can be run over *any* corpus, including a project's own architecture.
    code, that is a *separate* build in that project — this module hands over the
    doctrine and the noun-map, not an implementation.
 
+## Runtime (executable interpreter)
+
+The doctrine above is also **executable**, without reimplementing anything. The
+`runtime/` package parses the corpus contract layer (PART V ops, PART VI
+pipelines, PART VII gates), applies the repo's noun-map, and emits a concrete,
+gate-checked execution plan — deterministic, zero-LLM, corpus read-only.
+
+- `runtime/corpus_parser.py` — corpus (read-only) → structured `MetaSystemSpec`.
+- `runtime/noun_map.py` — load `<repo>/.pp_meta_systems.json`; generic fail-open;
+  `propose` candidate nouns from `CLAUDE.md` (propose-never-map).
+- `runtime/executor.py` — spec + noun-map → `ExecutionPlan` (the domain-substituted plan).
+- `runtime/loop.py` — the seven in corpus loop order.
+- `runtime/runtime.py` — CLI: `list · show · apply · loop · audit · propose`
+  (`audit` == `apply MS-6`). Findings publish to PM-03 (optional, fail-open).
+
+Invoke via `/cpp-meta-systems` or `python -m runtime <cmd>` (module dir on
+PYTHONPATH). Tests: `tools/test_meta_systems_runtime.py` (7 V-gates, hermetic).
+The runtime's specificity is exactly as rich as the noun-map — no richer.
+
 ## Files in this module
 
 - `index.md` — quick-reference map of the seven + the loop + corpus paths.

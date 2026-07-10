@@ -7,6 +7,38 @@ applicable across PP-shipped projects and not specific to one repo.
 Entries are append-only; never remove a row. If a lesson is
 superseded, append the superseding row referring back to the older.
 
+## Universal Meta-Systems Runtime (SCS C86) — 2026-07-10
+
+Runtime that makes the 7 universal meta-systems executable in any repo WITHOUT
+reimplementing them. The corpus (SHA `45dd1f9`) is machine-parseable doctrine —
+**38 named operations** across 7 datasets (PART V ops with `*Guarantee:*` +
+optional `*Never:*`, PART VI pipelines, PART VII lifecycle + `GV-N` gates). The
+runtime parses that contract layer, applies the repo's noun-map
+(`.pp_meta_systems.json`, generic fail-open, propose-from-CLAUDE.md), and emits a
+domain-substituted, gate-checked execution plan. Architecture: **Option C
+(interpreter)**, chosen over B (7 runners = reimplementation) and A (corpus-blind
+= empty abstraction). Audit == MS-6 applied to the repo (no separate audit engine
+— that would reimplement the Absence Engine). Carries:
+`modules/universal-meta-systems/runtime/` (corpus_parser · noun_map · executor ·
+loop · runtime); test `tools/test_meta_systems_runtime.py` (7 V-gates ×3 hermetic).
+
+### PROCESS RULE PR-META-SYSTEMS-EXPOSE-NOT-REIMPLEMENT-001
+The meta-systems runtime NEVER reimplements a meta-system. It reads the corpus,
+applies the noun-map, and produces an execution plan. The logic lives in the
+corpus; the runtime is an interpreter, not a copy. Corollary 1: a per-meta-system
+"runner" that encodes the meta-system's own logic in code is a reimplementation
+and is rejected — the parser + noun-map is the only permitted mechanism.
+Corollary 2: an "audit engine" that re-derives gap-detection logic is a
+reimplementation of MS-6; audit MUST be `apply(MS-6, repo)`.
+
+### UKDL TRAP T-META-SYSTEMS-CORPUS-READONLY-001
+The meta-systems corpus is read-only for the runtime. No corpus file may be
+modified by the parser, executor, loop runner, or audit engine. Modifying the
+corpus from the runtime is an architecture violation. Detection: V-CORPUS-UNTOUCHED
+snapshots the datasets hash before/after a full run and asserts equality (+ git
+HEAD @ `45dd1f9`). Origin: an editor-that-writes-back would couple the universal
+source to one consumer; the runtime must interpret doctrine, never edit it.
+
 ## Workspace Recovery Control Plane — Execution Mode (SCS C83) — 2026-07-10
 
 | Ref | File | Why it matters |

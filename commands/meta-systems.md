@@ -29,6 +29,30 @@ Corpus is **read-only** at SHA `45dd1f9` (locate via
 
 `MS-N` is one of `MS-0`…`MS-6`.
 
+## Runtime (executable backing)
+
+The subcommands are backed by a deterministic, zero-LLM interpreter at
+`modules/universal-meta-systems/runtime/` that parses the read-only corpus,
+applies the repo's noun-map, and emits the plan. It never reimplements a
+meta-system and never writes to the corpus.
+
+```
+# from the module dir (or with it on PYTHONPATH):
+python -m runtime list
+python -m runtime show  MS-0            [--json]
+python -m runtime apply MS-0 --repo <path> [--json] [--publish --sid <id>]
+python -m runtime loop  --repo <path> [--stop-after N] [--publish]
+python -m runtime audit --repo <path>   # == apply MS-6 (Absence Engine)
+python -m runtime propose --repo <path> # candidate nouns from CLAUDE.md
+```
+
+Domain specialization comes from `<repo>/.pp_meta_systems.json`:
+`{ "noun_map": {"artifact": "<local noun>", ...}, "enabled": ["MS-0", ...] }`.
+With no such file the runtime fails open to the GENERIC (universal, unsubstituted)
+plan and warns; `propose` surfaces candidate local nouns from the repo's
+`CLAUDE.md` for the Owner to map (a proposal, never an auto-mapping).
+Findings publish to PM-03 (`--publish`); the bus is optional and fails open.
+
 ## What each subcommand does
 
 - **list** — Load `modules/universal-meta-systems/index.md`; print the seven
