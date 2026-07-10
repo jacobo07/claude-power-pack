@@ -3245,3 +3245,77 @@ implementable there. Precedent: `prd-keyword-sentinel.js`. Do not "fix" this by 
 **ORIGEN:** D2A gate wiring, SCS C85 addendum, 2026-07-10. Companion of
 `[[PR-DUPLICATE-TO-ADVANTAGE-001]]`. Cross-ref: `hooks/d2a_gate.js`,
 `hooks/hook-dispatcher.js` (UserPromptSubmit-chain), `[[T-HOOK-DISPATCHER-DRIFT-001]]`.
+
+---
+
+### PROCESS RULE PR-LIVENESS-CHECK-BEFORE-SHIP-001
+
+**TRIGGER:** Declaring a wired component "done"/"shipped" (a hook entry, a Stop-chain
+producer, a scheduled task, an extension surface).
+
+**ACCIÓN:** The ecosystem verifies at CONSTRUCTION time (V-gates, hermetic x3) and is
+blind POST-SHIP: a V-gate proves code works WHEN INVOKED, nothing proves anything
+invokes it. `built != wired` is therefore a recurring CLASS (dispatcher drift, the
+PM-03 producer-without-consumer bus, orphan modules/fields, the FD then FIOS Copy-Item
+last-miles). No new wired component is complete without a row in the D1 Liveness Ledger
+(`modules/liveness/liveness_ledger.py` `default_registry()`) declaring its surface +
+a deterministic evidence probe (hash-drift / co12-signal-recency / pm-bus / file-mtime).
+Ship + silence surfaces as WIRED-BUT-SILENT within a day; the loop is *ship -> is it
+alive?*, closed by the ledger, not rediscovered sessions later.
+
+**ORIGEN:** Strategic-gaps audit D1, SCS C87, 2026-07-10. The activation gap had bitten
+>=8 sealed lessons as one shape before it was made a monitored invariant. Cross-ref:
+`modules/liveness/liveness_ledger.py`, `vault/audits/liveness_report.md`,
+`[[T-HOOK-DISPATCHER-DRIFT-001]]`, `[[T-OWNER-QUEUE-INVISIBLE-001]]`.
+
+---
+
+### UKDL TRAP T-OWNER-QUEUE-INVISIBLE-001
+
+**TRIGGER:** The agent ships the PP-internal half of a change and DOCUMENTS an
+Owner-side residual (HR-001 Copy-Item, a scheduled-task registration, a settings.json
+hook entry) somewhere -- a vault/plans doc, a memory file, a session-end emission.
+
+**SÍNTOMA:** Those residuals were tracked nowhere as a SET, so built->live latency was
+unbounded and invisible: the PM-03 consumer wiring sat pending 6+ days with nobody
+watching. A documented-but-unqueued residual is a silent gap.
+
+**ACCIÓN:** Every Owner-side residual goes into the durable `vault/OWNER_QUEUE.md` at
+SHIP TIME (same commit), each item copy-paste-ready. The D4 activation layer
+(`modules/owner_queue`) ingests its `[PENDING]` sections into a materialized view the
+SessionStart hub surfaces past a 24h grace, and auto-clears a row when its component
+goes LIVE (D1 composition). One human surface (the vault doc), one dynamic layer
+(the engine) -- never a second competing queue.
+
+**ORIGEN:** Strategic-gaps audit D4, SCS C87, 2026-07-10. Reconciled with a
+parallel-pane `vault/OWNER_QUEUE.md` (commit 1fedb79) instead of shipping a duplicate.
+Cross-ref: `modules/owner_queue/owner_queue.py`, `hooks/session_start_hub.js` (Hook 14),
+`[[PR-LIVENESS-CHECK-BEFORE-SHIP-001]]`.
+
+---
+
+### SCS C87 -- Strategic-Gaps-Closed (post-ship blindness -> monitored invariants)
+
+Five deterministic, model-free systems from the 2026-07-10 frontier strategic-gap
+audit (`vault/plans/strategic-gap-audit-2026-07-10.md`). Root theme: strong at
+construction-time verification, blind at post-ship liveness + value. Each closes one
+instance of *ship -> is it alive? -> is it earning?*:
+
+- **D1 Liveness Ledger** (`modules/liveness/`): post-ship blindness closed. Registry +
+  daily probe -> LIVE / WIRED-BUT-SILENT / DRIFTED / ORPHANED. First run flagged the
+  PM-03 bus WIRED-BUT-SILENT (the class made visible).
+- **D4 OWNER_QUEUE** (`modules/owner_queue/`): HR-001 residuals visible at SessionStart,
+  auto-cleared by D1. Two layers, one human surface (the durable vault doc).
+- **D5 session_active guard + miner repair** (`tools/session_active.py`): idle-fire
+  waste cut; gate only session-scoped tasks (reapers/monitors intentionally exempt);
+  both miners' pythonw headless-stdout exit-1 fixed (0 FAILING, verified on the real
+  scheduled tasks).
+- **D2 Federated FD ledger** (`modules/fable_distillation/federated_ledger.py`): premise
+  corrected (the ledger was ALREADY per-repo); shipped the missing cross-repo aggregate
+  + PR-/HR- lesson propagation (17 rules -> TUA-X + KobiiCraft) + FDI-0 Stop advisory.
+- **D3 Recall-ROI** (`modules/recall_roi/`): KB eviction evidence-based. Reads the
+  existing JIT usage log (no fork) -> kb_injection_count=1240 live through CO-12 +
+  RETIREMENT_CANDIDATES.md.
+
+Gates: `tools/test_strategic_gaps.py` 21/21 hermetic x3. Commits 9b725a2 (D1),
+24782cd (D4), a52a102 (D5), 5655cc0 (D2), 56d8814 (D3).
