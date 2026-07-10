@@ -3103,3 +3103,30 @@ over the datasets it scans.
 responsibility (whole-KB dataset evolution; FD-06 mutates assets, GK-07 the graph, the
 cdio-librarian only CDIO -- none did whole-KB).
 Cross-ref: `frontier_intelligence_os/FIOS_INDEX.md`, `evolution_engine.py`.
+
+## T-FIOS-FRONTIER-SESSION-DETECT-001 -- PP_FRONTIER_SESSION is the FIOS activation signal
+
+**TRIGGER:** wiring any FIOS engine (session_compiler preflight, token_irr Stop) to a
+live surface, or reasoning about when FIOS should fire.
+
+**REGLA:** `PP_FRONTIER_SESSION=1` is the single signal that a session is frontier
+(R&D-worth). `tools/kclaude.ps1` exports it UNCONDITIONALLY (kclaude launches Opus, a
+frontier model, by construction; a bare `claude` launch never sets it). So:
+- The **token_irr Stop entry** gates on it alone -- exactly like `fd_07_flywheel.py`.
+- The **session_compiler preflight** gates on it AND an Owner-declared objective (env
+  `PP_SESSION_OBJECTIVE` or repo `.pp_frontier.json`). The extra gate is mandatory: since
+  kclaude sets the flag on every launch, firing the compiler on the flag alone would write
+  a near-empty SESSION_ZERO per launch = the bloat `evolution_engine` exists to flag
+  (PR-FABLE-DELTA-ONLY-001). Verify the flag is already exported before inventing new
+  detection infrastructure.
+
+**POR QUE:** a single, already-exported activation signal avoids a parallel detector; the
+objective sub-gate keeps the "compile a plan" surface from degrading into per-launch spam
+(profundidad sobre cantidad).
+
+**FAIL-OPEN:** flag unset / python missing / compile error -> the launch and the Stop both
+proceed with zero FIOS output. FIOS never blocks the session it serves.
+
+**ORIGEN:** FIOS live-path wiring, SCS C84 addendum, 2026-07-10. Mirror of the FD-07 cadence
+gate (`_is_frontier_session`). Cross-ref: `FIOS_INDEX.md`, `tools/kclaude.ps1`,
+`hooks/hook-dispatcher.js`, `T-HOOK-DISPATCHER-DRIFT-001`.

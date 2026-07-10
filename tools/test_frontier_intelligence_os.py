@@ -245,6 +245,90 @@ def gate_evolution() -> None:
         _fail("V-FIOS-EVOLUTION-FAILOPEN", f"RAISED (must fail-open): {e}")
 
 
+def gate_wiring() -> None:
+    # V-FIOS-PREFLIGHT-FIRES: a declared objective compiles + writes a SESSION_ZERO.
+    out = _tmp("fios_pf_")
+    line = SC.preflight("FIOS-WIRE", out_dir=out, env={
+        "PP_SESSION_OBJECTIVE": "reduce frontier dependence for pane isolation",
+        "PP_SESSION_QUESTIONS": "design a new isolation architecture; reformat the typo",
+        "PP_SESSION_BUDGET": "50000"})
+    wrote = list(out.glob("SESSION_ZERO_*.md"))
+    if line and "FIOS: SESSION_ZERO" in line and len(wrote) == 1:
+        _ok("V-FIOS-PREFLIGHT-FIRES", f"3-line summary + {wrote[0].name}")
+    else:
+        _fail("V-FIOS-PREFLIGHT-FIRES", f"line={line!r} wrote={wrote}")
+
+    # V-FIOS-PREFLIGHT-SILENT: no objective + no decl file -> None, nothing written.
+    out2 = _tmp("fios_pf_silent_")
+    repo2 = _tmp("fios_pf_repo_")            # a clean repo dir: no .pp_frontier.json
+    silent = SC.preflight(str(repo2), out_dir=out2, env={})
+    if silent is None and not list(out2.glob("SESSION_ZERO_*.md")):
+        _ok("V-FIOS-PREFLIGHT-SILENT", "no declaration -> None, 0 files (no bloat)")
+    else:
+        _fail("V-FIOS-PREFLIGHT-SILENT", f"silent={silent!r} files={list(out2.glob('*'))}")
+
+    # V-FIOS-PREFLIGHT-FAILOPEN: a compile blow-up -> None, never a raise.
+    orig = SC.compile_session
+    try:
+        def _boom(*a, **k):                  # noqa: ANN001
+            raise RuntimeError("forced")
+        SC.compile_session = _boom           # type: ignore
+        r = SC.preflight("FIOS-WIRE", out_dir=_tmp("fios_pf_fo_"),
+                         env={"PP_SESSION_OBJECTIVE": "x"})
+        if r is None:
+            _ok("V-FIOS-PREFLIGHT-FAILOPEN", "compile raise -> None (fail-open)")
+        else:
+            _fail("V-FIOS-PREFLIGHT-FAILOPEN", f"expected None, got {r!r}")
+    except Exception as e:  # noqa: BLE001
+        _fail("V-FIOS-PREFLIGHT-FAILOPEN", f"RAISED (must fail-open): {e}")
+    finally:
+        SC.compile_session = orig            # type: ignore
+
+    # V-FIOS-IRR-ON-STOP: the Stop readout reports a real IRR + the honest-empty line.
+    rep = IRR.compute_irr("FIOS-TEST", tokens_spent=8000, deposits=[
+        {"destination": "asset", "portability_target": "deterministic"},
+        {"destination": "dataset_part", "portability_target": "frontier-only"}])
+    hot = IRR._stop_line(rep)
+    empty = IRR._stop_line(IRR.compute_irr("EMPTY", 0, deposits=[]))
+    if hot.startswith("FIOS IRR:") and "assets" in hot and "0 assets tracked" in empty:
+        _ok("V-FIOS-IRR-ON-STOP", f"readout: {hot[:56]}...")
+    else:
+        _fail("V-FIOS-IRR-ON-STOP", f"hot={hot!r} empty={empty!r}")
+
+    # V-FIOS-STOP-FRONTIER-GATE: the Stop entry runs only for a frontier session.
+    prev = os.environ.get("PP_FRONTIER_SESSION")
+    try:
+        os.environ.pop("PP_FRONTIER_SESSION", None)
+        off = IRR._is_frontier_session()
+        os.environ["PP_FRONTIER_SESSION"] = "1"
+        on = IRR._is_frontier_session()
+        if on and not off:
+            _ok("V-FIOS-STOP-FRONTIER-GATE", "frontier=1 -> run; unset -> silent no-op")
+        else:
+            _fail("V-FIOS-STOP-FRONTIER-GATE", f"on={on} off={off}")
+    finally:
+        if prev is None:
+            os.environ.pop("PP_FRONTIER_SESSION", None)
+        else:
+            os.environ["PP_FRONTIER_SESSION"] = prev
+
+    # V-FIOS-LIVE-PATH-WIRED (static): the dispatcher Stop-chain runs token_irr, and
+    # kclaude runs the compiler preflight gated on PP_FRONTIER_SESSION. The glue IS
+    # the deliverable this addendum ships -- prove it exists, not just the engines.
+    disp = (_PP_ROOT / "hooks" / "hook-dispatcher.js").read_text(encoding="utf-8")
+    kcl = (_PP_ROOT / "tools" / "kclaude.ps1").read_text(encoding="utf-8")
+    checks = [
+        ("frontier_intelligence/token_irr.py" in disp, "dispatcher Stop-chain -> token_irr"),
+        ("session_compiler.py" in kcl and "--preflight" in kcl, "kclaude -> compiler --preflight"),
+        ("PP_FRONTIER_SESSION" in kcl, "kclaude gates the preflight on frontier"),
+    ]
+    bad = [m for ok, m in checks if not ok]
+    if not bad:
+        _ok("V-FIOS-LIVE-PATH-WIRED", "dispatcher + kclaude reference the engines")
+    else:
+        _fail("V-FIOS-LIVE-PATH-WIRED", f"missing: {bad}")
+
+
 def main() -> int:
     print("== FIOS execution-layer V-gates ==")
     print("[compose / anti-duplication]")
@@ -255,6 +339,8 @@ def main() -> int:
     gate_irr()
     print("[evolution_engine]")
     gate_evolution()
+    print("[live-path wiring]")
+    gate_wiring()
     total = _passes + _fails
     print(f"\nFIOS_ACTIVATION_PASS={_passes}/{total}  threshold={total}/{total}")
     verdict = "PASS" if _fails == 0 else "FAIL"

@@ -51,7 +51,36 @@ are code, not prose) → **3 engines + 1 doctrine index, zero new prose datasets
 - The 7 thin-extends ship as sections/fields in the doctrine + compiler output, not
   standalone systems.
 
+## Addendum -- live-path wiring (2026-07-10)
+
+The engines are no longer advisory-only: both are wired to their live surface with the
+FD-00/FD-07 pattern (no new plumbing).
+
+| Surface | Wiring |
+|---|---|
+| kclaude preflight | `Invoke-FiosPreflight` (`tools/kclaude.ps1`) runs `session_compiler.py --preflight` when a session is FRONTIER (`PP_FRONTIER_SESSION=1`) AND an objective is declared (env `PP_SESSION_OBJECTIVE` or repo `.pp_frontier.json`) -> writes a `SESSION_ZERO` + prints a 3-line summary. No objective -> silent, no python spawn. |
+| Stop-chain | `token_irr.py` gained `stop_entry()` + an argv-dispatch; added as a `PY_EXE` entry to `hooks/hook-dispatcher.js` Stop-chain, frontier-gated exactly like `fd_07_flywheel.py`. Emits `FIOS IRR: ...` via `systemMessage` + feeds CO-12. |
+
+**Honest refinements over the literal wiring plan** (documented, not silently dropped):
+
+- Preflight fires on frontier AND a declared objective, not every launch -- kclaude sets
+  `PP_FRONTIER_SESSION=1` unconditionally, so per-launch firing would spam empty
+  `SESSION_ZERO`s (the exact bloat `evolution_engine` flags, `PR-FABLE-DELTA-ONLY-001`).
+- The IRR Stop is frontier-gated (like FD-07), not "every session" -- avoids a CO-12 signal
+  per turn on bare sessions; a kclaude session IS frontier, so `/kclear` emits.
+- `tokens_spent` at Stop = optional `PP_SESSION_TOKENS`, else unmeasured (0). The
+  model-independence metrics (assets / FDI / reuse / balance sheet) need no token count.
+
+**New V-gates:** `V-FIOS-PREFLIGHT-FIRES` / `-SILENT` / `-FAILOPEN`, `V-FIOS-IRR-ON-STOP`,
+`V-FIOS-STOP-FRONTIER-GATE`, `V-FIOS-LIVE-PATH-WIRED` (`test_frontier_intelligence_os.py`,
+19/19 hermetic ×3). UKDL: `T-FIOS-FRONTIER-SESSION-DETECT-001`.
+
+**Owner-side residual (HR-001 / `T-HOOK-DISPATCHER-DRIFT-001`):** the canonical
+`hooks/hook-dispatcher.js` must be `Copy-Item`-ed to `~/.claude/hooks/hook-dispatcher.js`
+and /restart before the Stop entry fires live -- identical staging to the FD-07 flywheel.
+
 ## Cross-ref
 
-`FIOS_INDEX.md` · `ukdl-universal.md` (PR-FRONTIER-AS-RD-001, T-FIOS-EVOLUTION-LOCK-001)
-· parents: `fable_distillation_scs_c82.md`, `cognitive_os/COGNITIVE_OS_INDEX.md`.
+`FIOS_INDEX.md` · `ukdl-universal.md` (PR-FRONTIER-AS-RD-001, T-FIOS-EVOLUTION-LOCK-001,
+T-FIOS-FRONTIER-SESSION-DETECT-001) · parents: `fable_distillation_scs_c82.md`,
+`cognitive_os/COGNITIVE_OS_INDEX.md`.

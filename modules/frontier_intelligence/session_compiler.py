@@ -381,6 +381,57 @@ def _decl_from_obj(data: dict) -> SessionDeclaration:
         horizon_months=int(data.get("horizon_months", 12) or 12))
 
 
+def _decl_from_env_or_file(repo: str, env=None) -> SessionDeclaration | None:
+    """Resolve a session declaration from a repo-local `.pp_frontier.json` (a full
+    declaration) or the `PP_SESSION_OBJECTIVE` env (+ optional `PP_SESSION_QUESTIONS`
+    / `PP_SESSION_BUDGET`). Returns None when neither exists -> the preflight stays
+    silent: a plan with no declared objective is boilerplate, not a plan."""
+    env = env if env is not None else os.environ
+    try:
+        f = Path(repo) / ".pp_frontier.json"
+        if f.is_file():
+            data = json.loads(f.read_text(encoding="utf-8-sig") or "{}")
+            data.setdefault("repo", repo)
+            return _decl_from_obj(data)
+    except (OSError, json.JSONDecodeError, ValueError):
+        pass
+    obj = str(env.get("PP_SESSION_OBJECTIVE", "") or "").strip()
+    if not obj:
+        return None
+    qs = [q.strip() for q in re.split(r"[;\n]", str(env.get("PP_SESSION_QUESTIONS", "") or ""))
+          if q.strip()]
+    try:
+        budget = int(env.get("PP_SESSION_BUDGET", "0") or 0)
+    except (TypeError, ValueError):
+        budget = 0
+    return SessionDeclaration(objective=obj, candidate_questions=qs, repo=repo,
+                              token_budget=budget)
+
+
+def preflight(repo: str, *, out_dir=None, env=None, now: datetime | None = None):
+    """kclaude frontier preflight. If the Owner declared an objective, compile the
+    SESSION_ZERO and return a 3-line ASCII summary (kclaude prints it); no
+    declaration -> None (silent). Fail-open -> None, never raises: a preflight must
+    not block the launch it prepares."""
+    try:
+        decl = _decl_from_env_or_file(repo, env)
+        if decl is None:
+            return None
+        plan = compile_session(decl, now=now)
+        p = write_plan(plan, out_dir=out_dir)
+        worthy = sum(1 for q in plan.questions if q.frontier_worthy)
+        where = f"  ({p})" if p else "  (write fail-open)"
+        return "\n".join([
+            f"FIOS: SESSION_ZERO generado para {plan.repo}{where}",
+            f"FIOS: preguntas frontier-worthy {worthy}/{len(plan.questions)} "
+            f"| floor {plan.floor_size} deposito(s)",
+            "FIOS: presupuesto discovery 30% architecture 25% critique 20% "
+            "validation 15% emergency 10%",
+        ])
+    except Exception:  # noqa: BLE001 -- fail-open ABSOLUTE
+        return None
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="FIOS Session Compiler -- declaration -> SESSION_ZERO plan")
@@ -392,7 +443,16 @@ def main(argv=None) -> int:
                     help="read the full declaration as JSON on stdin")
     ap.add_argument("--out-dir", default=None)
     ap.add_argument("--print", action="store_true", help="print the plan, do not write")
+    ap.add_argument("--preflight", action="store_true",
+                    help="kclaude frontier preflight: compile from env/.pp_frontier.json, "
+                         "write SESSION_ZERO + print a 3-line summary; silent if no declaration")
     args = ap.parse_args(argv)
+    if args.preflight:
+        line = preflight(args.repo or os.getcwd(),
+                         out_dir=Path(args.out_dir) if args.out_dir else None)
+        if line:
+            print(line)
+        return 0
     if args.json_in and not sys.stdin.isatty():
         try:
             decl = _decl_from_obj(json.loads(sys.stdin.read() or "{}"))

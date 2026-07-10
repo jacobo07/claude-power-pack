@@ -147,6 +147,63 @@ def record_irr(report: IRRReport, *, state_dir=None) -> bool:
         return False
 
 
+# --------------------------------------------------------------------------- #
+# Stop-hook entry (rides the Stop-chain, same shape as fd_07_flywheel.main).
+# --------------------------------------------------------------------------- #
+def _is_frontier_session() -> bool:
+    """kclaude exports PP_FRONTIER_SESSION=1 for a frontier (Opus) launch. Absent
+    -> the Stop entry is a silent no-op (the IRR of frontier tokens is only
+    meaningful in a frontier session -- same cadence gate as the FD-07 flywheel)."""
+    return str(os.environ.get("PP_FRONTIER_SESSION", "")).strip() in ("1", "true", "yes")
+
+
+def _stop_line(rep: "IRRReport") -> str:
+    """The one-line IRR readout the Stop emits (honest: never a fake token number)."""
+    if not rep.assets:
+        return "FIOS IRR: 0 assets tracked -- populate the FD-07 ledger for a real IRR"
+    net = rep.balance_sheet.get("net_portable_assets", 0)
+    tok = f"{rep.tokens_spent} tok" if rep.tokens_spent else "tokens unmeasured"
+    return (f"FIOS IRR: {rep.assets} assets / {tok} / immediate {rep.immediate_roi}/1k "
+            f"/ reuse x{rep.reuse_multiplier} / FDI {rep.frontier_dependence_index} "
+            f"/ net portable {net}")
+
+
+def stop_entry() -> int:
+    """Stop-chain entry: read the Stop JSON on stdin, gate on a frontier session,
+    compute the repo's Token IRR, feed it to CO-12, emit a systemMessage. ALWAYS
+    exit 0 -- an IRR readout never blocks session close. Fail-open ABSOLUTE."""
+    raw = ""
+    try:
+        raw = sys.stdin.read()
+    except OSError:
+        raw = ""
+    try:
+        data = json.loads(raw or "{}")
+    except (json.JSONDecodeError, ValueError):
+        data = {}
+    if not _is_frontier_session():
+        try:
+            sys.stdout.write("{}")          # bare session -> silent no-op
+        except OSError:
+            pass
+        return 0
+    try:
+        cwd = data.get("cwd") or os.getcwd()
+        try:                                 # optional honest token source; else 0
+            tokens = int(os.environ.get("PP_SESSION_TOKENS", "0") or 0)
+        except (TypeError, ValueError):
+            tokens = 0
+        rep = compute_irr(cwd, tokens)
+        record_irr(rep)                      # feed CO-12 (one producer, never a fork)
+        sys.stdout.write(json.dumps({"systemMessage": _stop_line(rep)}))
+    except Exception:  # noqa: BLE001 -- fail-open ABSOLUTE: never block Stop
+        try:
+            sys.stdout.write("{}")
+        except OSError:
+            pass
+    return 0
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="FIOS Token IRR -- frontier tokens as R&D capital")
@@ -170,4 +227,7 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    # A human CLI passes args (--repo/--tokens/--record/--json); the Stop-chain
+    # dispatcher invokes this bare (no args) with the Stop JSON on stdin. Disambiguate
+    # on argv so one file serves both without a glue module (mirrors fd_07_flywheel).
+    raise SystemExit(main() if len(sys.argv) > 1 else stop_entry())

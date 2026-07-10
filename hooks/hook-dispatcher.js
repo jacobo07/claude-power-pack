@@ -148,6 +148,13 @@ const CHAIN_MAP = {
     // (no new plumbing, FD-07 I.4). Live only after Copy-Item canonical->live
     // (T-HOOK-DISPATCHER-DRIFT-001).
     { exe: PY_EXE, script: '../skills/claude-power-pack/modules/fable_distillation/fd_07_flywheel.py', timeoutMs: 8000 },
+    // FIOS Token IRR (SCS C84 wiring): at a FRONTIER session's close, price this
+    // session's accumulated deposits as R&D capital (assets / reuse / FDI / balance
+    // sheet) and feed the IRR to CO-12 as one producer signal -- never a parallel
+    // accountant. Gated on PP_FRONTIER_SESSION (same cadence as fd_07_flywheel); a
+    // bare session's Stop is a silent no-op. Fail-open, ALWAYS exit 0, never blocks
+    // Stop. Live only after Copy-Item canonical->live (T-HOOK-DISPATCHER-DRIFT-001).
+    { exe: PY_EXE, script: '../skills/claude-power-pack/modules/frontier_intelligence/token_irr.py', timeoutMs: 8000 },
   ],
   // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
   // Root cause: settings.json registered 7 standalone PreToolUse hooks on

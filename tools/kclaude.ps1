@@ -242,6 +242,27 @@ if ($py -and (Test-Path $namer)) {
   } catch { }
 }
 
+# --- FIOS session-compiler preflight (SCS C84 wiring) ------------------------
+# A frontier session (PP_FRONTIER_SESSION=1, set above) with an Owner-declared
+# objective (env PP_SESSION_OBJECTIVE or a repo-local .pp_frontier.json) compiles a
+# SESSION_ZERO plan and prints a 3-line summary before the prompt. No objective ->
+# silent, no python spawn: a plan with no questions is bloat, not a plan
+# (PR-FABLE-DELTA-ONLY-001). Fail-open ABSOLUTE: any error -> launch proceeds.
+function Invoke-FiosPreflight {
+  try {
+    if ($env:PP_FRONTIER_SESSION -ne '1') { return }
+    $declFile = Join-Path $cwd '.pp_frontier.json'
+    if (-not $env:PP_SESSION_OBJECTIVE -and -not (Test-Path $declFile)) { return }
+    if (-not $py) { return }
+    $comp = Join-Path $ppRoot 'modules\frontier_intelligence\session_compiler.py'
+    if (-not (Test-Path $comp)) { return }
+    $env:PYTHONIOENCODING = 'utf-8'
+    $out = & $py $comp --preflight --repo $cwd 2>$null
+    if ($out) { foreach ($ln in $out) { if ($ln) { Write-Host $ln -ForegroundColor Cyan } } }
+  } catch { }
+}
+Invoke-FiosPreflight
+
 # --- launch claude, with /restart loop (supersedes kclaude.bat) --------------
 # Absorbs the MC-LAZ-26 resume loop: when /restart drops a flag, relaunch the
 # SAME session (--resume <sid> from the lazarus SID file, else --continue) in
