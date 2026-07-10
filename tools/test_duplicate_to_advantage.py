@@ -316,14 +316,52 @@ def main(argv=None) -> int:
         else:
             _fail("V-D2A-GATE-GLOBAL", f"rc={rc} stdout_len={len(out)} from home cwd")
 
-    # V-D2A-GATE-REGISTERED: the dispatcher's UserPromptSubmit chain carries the gate.
+    # V-D2A-GATE-REGISTERED: the canonical dispatcher's UserPromptSubmit chain carries
+    # the gate. NOTE: a string match proves REGISTRATION, never EXECUTION -- see
+    # V-D2A-GATE-LIVE-WIRED below, which drives the real dispatcher. Built != wired.
     disp = _PP_ROOT / "hooks" / "hook-dispatcher.js"
     dtext = disp.read_text(encoding="utf-8", errors="replace") if disp.is_file() else ""
     ups = dtext.split("'UserPromptSubmit-chain'", 1)[-1].split("],", 1)[0]
     if "d2a_gate.js" in ups:
-        _ok("V-D2A-GATE-REGISTERED", "d2a_gate.js present in UserPromptSubmit-chain")
+        _ok("V-D2A-GATE-REGISTERED", "d2a_gate.js present in canonical UserPromptSubmit-chain")
     else:
         _fail("V-D2A-GATE-REGISTERED", "d2a_gate.js missing from UserPromptSubmit-chain")
+
+    # V-D2A-GATE-LIVE-WIRED: drive the LIVE dispatcher exactly as settings.json does
+    # (--event=UserPromptSubmit-chain) and require the advisory to reach its merged
+    # output. The only gate proving the chain EXECUTES d2a_gate and that mergeOutputs
+    # preserves additionalContext. Doubles as the drift detector for
+    # T-HOOK-DISPATCHER-DRIFT-001 (canonical edited, live not Copy-Item'd yet).
+    live_disp = Path.home() / ".claude" / "hooks" / "hook-dispatcher.js"
+    if not (_NODE and live_disp.is_file()):
+        _ok("V-D2A-GATE-LIVE-WIRED",
+            f"SKIPPED (no live dispatcher at {live_disp}) -- canonical registration verified")
+    else:
+        payload = json.dumps({
+            "prompt": "quiero crear un router de modelos que elija entre haiku sonnet "
+                      "y opus segun el coste",
+            "session_id": f"vgate{os.getpid()}_{next(_SID)}",
+            "cwd": str(Path.home()),
+        })
+        try:
+            p = subprocess.run([_NODE, str(live_disp), "--event=UserPromptSubmit-chain"],
+                               input=payload, capture_output=True, text=True, timeout=120,
+                               cwd=str(_PP_ROOT))
+            merged, rc = (p.stdout or ""), p.returncode
+        except Exception:  # noqa: BLE001
+            merged, rc = "", 99
+        live_txt = live_disp.read_text(encoding="utf-8", errors="replace")
+        if rc == 0 and "D2A duplicate advisory" in merged and "DUPE VERDICT" in merged:
+            _ok("V-D2A-GATE-LIVE-WIRED",
+                f"live dispatcher emits the D2A advisory ({len(merged)} B, rc=0)")
+        elif "d2a_gate.js" not in live_txt:
+            _fail("V-D2A-GATE-LIVE-WIRED",
+                  "live dispatcher is STALE (no d2a_gate.js) -- run the Copy-Item "
+                  "(T-HOOK-DISPATCHER-DRIFT-001)")
+        else:
+            _fail("V-D2A-GATE-LIVE-WIRED",
+                  f"live registered but advisory absent (rc={rc}, {len(merged)} B) -- "
+                  "chain executed but output not merged")
 
     # V-D2A-BASELINE -- FD + FIOS suites still green (no regression).
     fd_rc, fd_tail = _run_suite("test_fable_distillation.py")
