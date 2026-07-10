@@ -3389,3 +3389,57 @@ bilingual axes + FD-04 portability agenda in session_compiler, Deposit.question_
 fd_07_flywheel). Cross-ref: `[[PR-HARVEST-BEFORE-FRONTIER-001]]`,
 `[[PR-DUPLICATE-TO-ADVANTAGE-001]]`, `[[PR-FRONTIER-AS-RD-001]]`, `FIOS_INDEX.md`,
 `D2A_INDEX.md`.
+
+## PR-PROOF-OR-HYPOTHESIS-001 -- a deposit without an FD-04 proof is hypothesis, not capital
+
+**TRIGGER:** declaring a frontier session (or its writeback) complete, or citing a
+deposited delta as established knowledge, while its fingerprint has no PROVEN record in
+the FD-04 proofs ledger.
+
+**REGLA:** the frontier-session done-gate includes the prover: (1) every deterministic-
+checkable deposit gets `fd_04_prover.prove()` with real probes before the session's
+value is claimed; (2) mid/small-model deposits get an evidence-backed `attest()` from
+the substrate that re-derived them, or stay explicitly hypothesis; (3) session close
+runs `--recheck` -- a regressed probe names knowledge that silently rotted and reopens
+its deposit. CO-12 `fd_portability_proven` is the only number that may be cited (single
+accountant); the estimate field on the deposit row never counts.
+
+**POR QUE:** Session #1 closed with 7/7 deposits carrying `portability_proven: False`
+and the ecosystem had NO code path that could ever flip one -- every claimed delta was
+structurally condemned to remain a hypothesis while being cited as capital. The prover
+turns each proof into a stored, re-runnable probe set, so proving portability, generating
+the evaluation, replaying it, and regression-detecting it are one artifact.
+
+**FAIL-OPEN:** consumers of the proofs ledger (`proven_fingerprints`) degrade to the
+pre-FD-04 behavior on any error; proving itself is fail-CLOSED (an error is never PROVEN).
+
+**ORIGEN:** Frontier architecture optimization, 2026-07-11. Reality Gate: 3 real
+Session-#1 deposits proven with live probes (CO-12 0->3), portability agenda 7->4,
+recheck 3/3 green. Cross-ref: `[[T-PRODUCERLESS-FIELD-001]]`,
+`[[PR-HARVEST-BEFORE-FRONTIER-001]]`, `modules/fable_distillation/fd_04_prover.py`.
+
+## T-PRODUCERLESS-FIELD-001 -- a field with consumers but no producer is a dead loop
+
+**TRIGGER:** designing or reviewing any schema field / ledger column / state flag that
+downstream code branches on (`if x.get("field")`), before shipping.
+
+**REGLA:** grep the PRODUCER before shipping (or trusting) the consumers: some code path
+must be able to write every value the consumers branch on. A field initialized to a
+constant at write time with N readers and zero writers of the other value is dead
+infrastructure -- the branch will never fire, and every metric derived from it is
+structurally frozen at its initial value. The fix is never "more consumers": build the
+producer or delete the field.
+
+**POR QUE:** `portability_proven` shipped with three consumers (compiler agenda,
+harvester skip, CO-12 count) and a writer that hard-codes `False` -- the FD loop's core
+yield metric could never move, and "0 proven" was indistinguishable from "prover ran,
+nothing proved". Second in-repo instance of the pattern (first: a recovery-path field
+whose producer never ran); two instances = trap, not incident.
+
+**FAIL-OPEN:** n/a (design-time rule); at runtime a consumer that cannot resolve the
+producer's output degrades to its pre-field behavior, never crashes.
+
+**ORIGEN:** FD-04 Reality Scan, 2026-07-11 -- grep showed `portability_proven` written
+always-False at fd_07_flywheel deposit time, read at session_compiler / question_harvester
+/ co_12_telemetry, flippable by nothing. Producer shipped as fd_04_prover.
+Cross-ref: `[[PR-PROOF-OR-HYPOTHESIS-001]]`.

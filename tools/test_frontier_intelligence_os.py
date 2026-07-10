@@ -528,6 +528,145 @@ def gate_portfolio() -> None:
         _fail("V-FIOS-HARVEST-WIRED", f"missing: {bad}")
 
 
+def gate_fd04() -> None:
+    """FD-04 prover: the only producer for portability_proven; stored probes
+    double as the replay + regression pipeline; consumers join on the proofs."""
+    from modules.fable_distillation import fd_04_prover as P
+    from modules.fable_distillation import fd_07_flywheel as FD07
+    from modules.frontier_intelligence import question_harvester as QH
+    from modules.cognitive_os.co_12_telemetry import fd_metrics
+
+    st = _tmp("fd04_state_")
+    fake_repo = _tmp("fd04_repo_")
+    (fake_repo / "target.py").write_text(
+        "def pm_probe_target():\n    return 1\n", encoding="utf-8")
+    repo = str(fake_repo)
+    dep_det = {"fingerprint": "fp-det", "claim": "the probe target module exists",
+               "portability_target": "deterministic", "portability_proven": False,
+               "destination": "benchmark"}
+    dep_mid = {"fingerprint": "fp-mid", "claim": "a mid-model architectural claim",
+               "portability_target": "mid-model", "portability_proven": False,
+               "destination": "hard_rule"}
+    FD07._append_jsonl(FD07._deposits_path(repo, st), dep_det)
+    FD07._append_jsonl(FD07._deposits_path(repo, st), dep_mid)
+
+    # V-FD04-PROVE-DETERMINISTIC: all probes pass -> PROVEN with evidence.
+    probes = [{"type": "file_exists", "path": "target.py"},
+              {"type": "grep", "path": "target.py", "pattern": r"def pm_probe_target"}]
+    r = P.prove(repo, "fp-det", probes, state_dir=st)
+    if r.get("verdict") == "PROVEN" and len(r.get("probes", [])) == 2 \
+            and all(p.get("ok") and p.get("evidence") for p in r["probes"]):
+        _ok("V-FD04-PROVE-DETERMINISTIC", "2 probes pass -> PROVEN, evidence stored")
+    else:
+        _fail("V-FD04-PROVE-DETERMINISTIC", f"r={r}")
+
+    # V-FD04-FAILED-NOT-COUNTED: a failing probe records FAILED, never counts.
+    bad = P.prove(repo, "fp-mid", [{"type": "file_exists", "path": "missing.xyz"}],
+                  state_dir=st)
+    if bad.get("verdict") == "FAILED" \
+            and P.proven_fingerprints(repo, st) == {"fp-det"}:
+        _ok("V-FD04-FAILED-NOT-COUNTED", "FAILED recorded; proven set = {fp-det}")
+    else:
+        _fail("V-FD04-FAILED-NOT-COUNTED",
+              f"bad={bad.get('verdict')} proven={P.proven_fingerprints(repo, st)}")
+
+    # V-FD04-IDEMPOTENT: re-prove returns the existing record, no second signal.
+    again = P.prove(repo, "fp-det", probes, state_dir=st)
+    sigs = [s for s in load_signals(state_dir=st)
+            if s.get("kind") == "fd_portability_proven"]
+    if "already-proven" in again.get("note", "") and len(sigs) == 1:
+        _ok("V-FD04-IDEMPOTENT", "re-prove -> existing record, 1 signal total")
+    else:
+        _fail("V-FD04-IDEMPOTENT", f"note={again.get('note')!r} sigs={len(sigs)}")
+
+    # V-FD04-ATTEST: evidence-backed attestation proves fp-mid (FAILED -> PROVEN
+    # upgrade path); an unevidenced attestation is refused.
+    att = P.attest(repo, "fp-mid", substrate="mid-model",
+                   evidence="re-derived on Sonnet, checklist output identical",
+                   state_dir=st)
+    no_ev = P.attest(repo, "fp-mid2x", substrate="mid-model", evidence="  ",
+                     state_dir=st)
+    if att.get("verdict") == "PROVEN" and att.get("method") == "attestation" \
+            and no_ev.get("verdict") == "ERROR":
+        _ok("V-FD04-ATTEST", "attestation PROVEN; empty evidence refused")
+    else:
+        _fail("V-FD04-ATTEST", f"att={att.get('verdict')} no_ev={no_ev.get('verdict')}")
+
+    # V-CO12-PROVEN-COUNT: fd_metrics counts distinct proven fingerprints (was
+    # structurally 0 before the producer existed).
+    m = fd_metrics(state_dir=st)
+    if m.get("fd_portability_proven") == 2 and m.get("measured"):
+        _ok("V-CO12-PROVEN-COUNT", "fd_portability_proven=2 (fp-det + fp-mid)")
+    else:
+        _fail("V-CO12-PROVEN-COUNT", f"m={m.get('fd_portability_proven')}")
+
+    # V-FD04-CONSUMERS-SKIP-PROVEN: harvester + compiler agenda drop proven rows.
+    hq = QH._from_deposits(repo, state_dir=st)
+    agenda = SC._portability_agenda([dep_det, dep_mid], SC._proven_floor(repo, st))
+    if hq == [] and agenda == []:
+        _ok("V-FD04-CONSUMERS-SKIP-PROVEN",
+            "both proven deposits leave the harvest and the agenda")
+    else:
+        _fail("V-FD04-CONSUMERS-SKIP-PROVEN", f"harvest={len(hq)} agenda={len(agenda)}")
+
+    # V-FD04-RECHECK-REGRESSION: replay green while the probe target lives; a
+    # deleted target names the regressed deposit. Attestations are skipped.
+    green = P.recheck(repo, state_dir=st)
+    (fake_repo / "target.py").unlink()
+    red = P.recheck(repo, state_dir=st)
+    if green == {"checked": 1, "ok": 1, "regressed": []} \
+            and red.get("regressed") == ["fp-det"]:
+        _ok("V-FD04-RECHECK-REGRESSION",
+            "recheck green -> target deleted -> fp-det flagged regressed")
+    else:
+        _fail("V-FD04-RECHECK-REGRESSION", f"green={green} red={red}")
+
+    # V-FD04-FAILOPEN: proving an undeposited claim is an ERROR (fail-closed);
+    # the read surface on garbage is an empty set (fail-open).
+    ghost = P.prove(repo, "fp-ghost", probes, state_dir=st)
+    if ghost.get("verdict") == "ERROR" \
+            and P.proven_fingerprints(12345, None) == set():  # type: ignore
+        _ok("V-FD04-FAILOPEN", "missing deposit -> ERROR; garbage read -> set()")
+    else:
+        _fail("V-FD04-FAILOPEN", f"ghost={ghost.get('verdict')}")
+
+    # V-FIOS-AGENDA-SIDECAR: write_plan emits the machine-readable carrier; the
+    # loader round-trips it; DECLINE'd questions never ride along.
+    od = _tmp("fd04_sidecar_")
+    decl = SC.SessionDeclaration(
+        objective="sidecar carrier",
+        candidate_questions=[
+            {"text": "design the novel architecture for the deterministic "
+                      "prover loop", "source_ref": "ukdl:T-S-001",
+             "expected_asset": "hard_rule"},
+            "What color should the dashboard be"],
+        repo="FD04-SIDE")
+    plan = SC.compile_session(decl, state_dir=_tmp("fd04_side_floor_"))
+    SC.write_plan(plan, out_dir=od)
+    ag = SC.load_latest_agenda("FD04-SIDE", out_dir=od)
+    files = sorted(f.name for f in od.iterdir())
+    want_keys = {"stamp", "repo", "objective", "admit", "subfrontier",
+                 "follow_ups", "proof_agenda"}
+    if ag and want_keys.issubset(ag) and len(ag["admit"]) == 1 \
+            and len(ag["subfrontier"]) == 1 \
+            and all(q["verdict"] != "DECLINE"
+                    for q in ag["admit"] + ag["subfrontier"]) \
+            and any(f.endswith(".agenda.json") for f in files):
+        _ok("V-FIOS-AGENDA-SIDECAR",
+            f"admit=1 subfrontier=1 (ROUTE_CHEAPER carried, DECLINE excluded)")
+    else:
+        _fail("V-FIOS-AGENDA-SIDECAR", f"files={files} ag={ag}")
+
+    # V-FD04-MIRROR-DELETED (static): the compiler imports the one fingerprint
+    # algorithm; the divergence-prone local copy is gone.
+    sc_src = Path(SC.__file__).read_text(encoding="utf-8")
+    if "hashlib" not in sc_src \
+            and "question_harvester import question_fingerprint" in sc_src:
+        _ok("V-FD04-MIRROR-DELETED", "direct import only; no local fallback copy")
+    else:
+        _fail("V-FD04-MIRROR-DELETED", "mirror or hashlib still present")
+
+
 def main() -> int:
     print("== FIOS execution-layer V-gates ==")
     print("[compose / anti-duplication]")
@@ -544,6 +683,8 @@ def main() -> int:
     gate_harvester()
     print("[portfolio upgrades]")
     gate_portfolio()
+    print("[fd-04 prover]")
+    gate_fd04()
     total = _passes + _fails
     print(f"\nFIOS_ACTIVATION_PASS={_passes}/{total}  threshold={total}/{total}")
     verdict = "PASS" if _fails == 0 else "FAIL"
