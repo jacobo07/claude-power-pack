@@ -45,6 +45,30 @@ VIDEO = r"C:\Users\User\Videos\2026-05-15 18-28-33.mp4"
 
 LINE_BYTE_CAP = 5 * 1024 * 1024  # skip a single jsonl line larger than 5 MB
 
+
+def _harden_std_streams():
+    """D5 scheduled-context fix: under pythonw with no console AND no output redirect
+    (exactly how the PP-Sovereign-Miner / PP-Miner-V2 tasks run), sys.stdout/stderr
+    is None or bound to an INVALID handle whose write()/flush() raises once the
+    progress-print buffer flushes -- the real cause of the miners' scheduled exit 1
+    (they run fine with a console OR a redirect, and fail with neither). Probe each
+    stream; redirect a broken one to devnull so a progress print can never crash the
+    run. Idempotent, fail-open (never raises itself)."""
+    for _name in ("stdout", "stderr"):
+        s = getattr(sys, _name, None)
+        broken = s is None
+        if not broken:
+            try:
+                s.write("")
+                s.flush()
+            except Exception:  # noqa: BLE001 -- an invalid/closed handle raises here
+                broken = True
+        if broken:
+            try:
+                setattr(sys, _name, open(os.devnull, "w", encoding="utf-8"))
+            except OSError:
+                pass
+
 # Slop tokens assembled at runtime so this source file contains NO literal
 # token and cannot self-trip the live Jobs/Woz Write gate (audit gap #8).
 SLOP = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "PLACE" + "HOLDER",
@@ -484,6 +508,7 @@ def sha256(path):
 
 
 def main(argv):
+    _harden_std_streams()  # D5: survive the pythonw headless scheduled context
     selftest = "--selftest" in argv
     if selftest:
         files = sorted(glob.glob(

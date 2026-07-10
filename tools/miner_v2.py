@@ -497,6 +497,7 @@ def extract_frames():
 
 
 def main(argv):
+    v1._harden_std_streams()  # D5: survive the pythonw headless scheduled context
     if "--selftest" in argv:
         n = len(_db_files())
         print(f"SELFTEST: db_files enumerated={n} (explicit names only)")

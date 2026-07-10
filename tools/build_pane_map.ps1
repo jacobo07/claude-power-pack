@@ -53,6 +53,23 @@ param(
   [string]$TabOrderFile = (Join-Path $StateDir "tab_order.json")
 )
 $ErrorActionPreference = "Stop"
+
+# D5 session-active gate (SCS strategic-gaps): the pane map is regenerated at
+# SessionStart, and with no Claude session active recently there are no live panes
+# to (re)map -- so skip the full build when idle. Internal-timestamp based
+# (session_active.py), NOT file mtime. Fail-open: skip ONLY on an explicit IDLE
+# (exit 1); any guard error builds as before. The last active-build still marks the
+# open panes for recovery (idle = no new turns, so the map does not go stale).
+try {
+  $__saPy = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'
+  if (-not (Test-Path $__saPy)) { $__c = Get-Command python -ErrorAction SilentlyContinue; if ($__c) { $__saPy = $__c.Source } }
+  $__saGuard = Join-Path $PSScriptRoot 'session_active.py'
+  if ((Test-Path $__saPy) -and (Test-Path $__saGuard)) {
+    & $__saPy $__saGuard --quiet 2>$null
+    if ($LASTEXITCODE -eq 1) { exit 0 }
+  }
+} catch { }
+
 $nowUtc = (Get-Date).ToUniversalTime()
 $OldHours = 48                   # legacy status boundary (RESUMABLE/OLD) -- unchanged
 $RecentMin = $RecentDays * 24 * 60
