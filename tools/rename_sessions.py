@@ -426,6 +426,21 @@ def effective_base(custom_raw: str | None) -> str:
     return custom_raw[len(LIVE_PREFIX):] if custom_raw.startswith(LIVE_PREFIX) else custom_raw
 
 
+def is_truncated_ai_title(base: str, ai: str) -> bool:
+    """True when `base` is OUR own ai-title name applied under an earlier, shorter
+    truncation limit (MAX_LABEL was 50, now 60): base minus its trailing ellipsis
+    is a prefix of the full ai-title, but shorter than it. Refreshing yields the
+    full ideal ai-title (PR-AITITLE-DIRECT-001). A human Ctrl+R name would not be
+    an exact prefix of the auto-generated title. Guard len>=8 against coincidence."""
+    if not ai:
+        return False
+    core = base.strip().rstrip("…").rstrip(".").rstrip()
+    if len(core) < 8:
+        return False
+    ai_clean = _clean(ai)
+    return ai_clean.startswith(core) and len(ai_clean) > len(core)
+
+
 def is_reclaimable_title(base: str, repo: str) -> bool:
     """True when the current title is machine-derived / legacy residue and may be
     overwritten: empty, a bare 8-hex / full UUID, a bare repo token, the legacy
@@ -533,7 +548,8 @@ def plan_project(proj_dir: Path, repo_prefix: bool, skip_sids: set[str],
         # in a prior run -> reclaimable so an improved format can overwrite it. A
         # human Ctrl+R name (stored title != our derivation) is NOT in the manifest
         # match and stays protected.
-        ours = bool(reclaim_manifest) and reclaim_manifest.get(uuid) == base
+        ours = ((bool(reclaim_manifest) and reclaim_manifest.get(uuid) == base)
+                or is_truncated_ai_title(base, s["ai"]))
         row = {
             "uuid": uuid, "path": path, "repo": repo, "proj": proj_dir.name,
             "current": base if base else "(none)",
