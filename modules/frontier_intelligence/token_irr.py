@@ -195,7 +195,15 @@ def stop_entry() -> int:
             tokens = 0
         rep = compute_irr(cwd, tokens)
         record_irr(rep)                      # feed CO-12 (one producer, never a fork)
-        sys.stdout.write(json.dumps({"systemMessage": _stop_line(rep)}))
+        msg = _stop_line(rep)
+        try:                                 # D2: nudge a non-PP repo with 0 deposits
+            from modules.fable_distillation.federated_ledger import fdi_advisory
+            adv = fdi_advisory(cwd)
+            if adv:
+                msg = msg + " | " + adv
+        except Exception:  # noqa: BLE001 -- fail-open: the advisory never blocks Stop
+            pass
+        sys.stdout.write(json.dumps({"systemMessage": msg}))
     except Exception:  # noqa: BLE001 -- fail-open ABSOLUTE: never block Stop
         try:
             sys.stdout.write("{}")

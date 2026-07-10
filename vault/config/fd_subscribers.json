@@ -1,0 +1,7 @@
+{
+  "_doc": "D2 Federated FD Ledger subscribers. The source (claude-power-pack) mirrors its transversal PR-/HR- doctrine into each subscriber's vault/knowledge_base/UKDL_PROPAGATED.md (append-only, own-file). Roots are ~-relative and expanduser'd at load. Owner-maintained per host; add a repo here to enroll it.",
+  "subscribers": [
+    { "slug": "tua-x", "root": "~/Desktop/Cursor Projects/TUA-X" },
+    { "slug": "kobiicraft", "root": "~/Desktop/Cursor Projects/Minecraft Projects/KobiiCraft Workspace/KobiiCraft Core Files" }
+  ]
+}
