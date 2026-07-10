@@ -97,3 +97,24 @@ recovery path. Truncation belongs only to the live-reconcile path, not recovery.
 V-NO-DUPLICATE-MANIFEST, V-COMPONENT-EXCLUSIVE-RESP). Complements
 `tools/test_restore_all_panes.py` (build_cpc_tasks / snapshot layer) -- different
 layer, no overlapping gate.
+
+## Addendum 2026-07-10 -- activation runbook + OWNER_QUEUE
+
+The Sprint-1 orphan-activation last-mile is Owner-gated (HR-001) and now has a
+copy-paste runbook, mirroring the `fios-dispatcher-resync` pattern:
+
+- `vault/plans/recovery-beacon-activation-2026-07-10.md` -- the exact 2-step
+  activation for `session_end_graceful_beacon.js` (Copy-Item to `~/.claude/hooks/`
+  + the SessionEnd settings.json block + verification). Verified state: beacon is
+  in the repo, NOT mirrored to live; settings.json "SessionEnd" is an array of
+  `{hooks:[{type,command,timeout}]}` blocks.
+- `vault/OWNER_QUEUE.md` -- durable, versioned queue of pending Owner activations.
+  Item 1 = graceful beacon (1-line copy + register). Item 2 = Recovery Accuracy
+  Score (G4/G5): NOT a 1-line copy -- the verdict needs the live-terminal count
+  and is only meaningful on an ungraceful boot, so it requires a SessionStart wire
+  (extend `session_start_hub.js` to call `classify_startup` -> `record_reentry`),
+  and it depends on item 1 being live first.
+
+G2/G4/G5 status re-confirmed 2026-07-10: `reentry.record_reentry`,
+`power_beacon.classify_startup/write_graceful_exit`, `integration.on_session_start`
+all have only their own `_main` CLIs -- still 0 external hook callers (orphaned).
