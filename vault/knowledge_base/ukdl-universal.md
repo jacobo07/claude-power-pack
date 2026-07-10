@@ -3130,3 +3130,54 @@ proceed with zero FIOS output. FIOS never blocks the session it serves.
 **ORIGEN:** FIOS live-path wiring, SCS C84 addendum, 2026-07-10. Mirror of the FD-07 cadence
 gate (`_is_frontier_session`). Cross-ref: `FIOS_INDEX.md`, `tools/kclaude.ps1`,
 `hooks/hook-dispatcher.js`, `T-HOOK-DISPATCHER-DRIFT-001`.
+
+## PR-DUPLICATE-TO-ADVANTAGE-001 -- ninguna duplicidad termina en rechazo (2026-07-10)
+
+**TRIGGER:** detecting that a proposed system, dataset, module, or capability overlaps
+something the ecosystem already owns (a duplicate / near-duplicate architecture proposal).
+
+**REGLA:** a detected duplicate is NEVER a bare rejection. It is a search signal. Every
+detection activates the D2A Engine (`modules/duplicate_to_advantage/d2a_engine.py`):
+detect (3-axis coverage) -> map the capability gap around the parent (14 dimensions) ->
+generate vertical + horizontal reinforcement candidates -> score the portfolio on 16
+dimensions by expected-compound-value / (complexity + maintenance + debt) -> emit a
+minimal BUILD CONTRACT under the 10-rule anti-inflation gate. The duplication is the
+coordinate of the frontier of the non-redundant capability space, not a dead end.
+
+**POR QUE:** every sealed family (CO 9->2, PM, GK 40->13, FD 26->8, FIOS 17->3+doctrine)
+executed this procedure by hand under STOP-#1 pressure. Making it repeatable, deterministic,
+and zero-token stops the ecosystem from either accreting near-duplicates (skipped scan) or
+rejecting the adjacent capability the duplicate points at.
+
+**FAIL-OPEN:** empty / pathological proposal -> a DEFER verdict, never a raise, never a
+wrong block. The governor of builds must never itself block a build by failing. Propose-
+never-build: the engine renders a verdict; only the Owner promotes a BUILD CONTRACT.
+
+**ORIGEN:** D2A Engine, SCS C85, 2026-07-10. Reality Scan found 0/6 proposed components
+pure-NEW; the honest build (D2A applied to itself) is 1 doctrine + 1 engine, not 6 datasets.
+Cross-ref: `duplicate_to_advantage/D2A_INDEX.md`, `d2a_engine.py`,
+`[[T-D2A-ANTIINFLATION-VIOLATION-001]]`, `[[PR-FABLE-DELTA-ONLY-001]]`.
+
+## T-D2A-ANTIINFLATION-VIOLATION-001 -- a dataset where a Part would suffice is a violation
+
+**TRIGGER:** the D2A Build Governor (or any agent following D2A doctrine) about to
+recommend a full new dataset / module / family for a reinforcement capability.
+
+**REGLA:** every new dataset must first BEAT four cheaper alternatives, in order: a new
+UKDL rule, a new dataset Part, a new eval, and not-building-at-all. The artifact ladder
+(`ukdl_rule < eval < dataset_part < benchmark < interface < tool < gate < protocol <
+dataset`) is climbed from the bottom; a full dataset is reachable only for a genuinely-new,
+low-coverage, low-reuse candidate that has cleared every lighter rung. Recommending a
+dataset while parent coverage >= 40% is a contract violation. More files is never success.
+
+**POR QUE:** the most expensive mistake in a mature ecosystem is building a whole family
+when a Part, rule, or eval carries the entire delta -- the exact bloat GK-00 (one system,
+no parallels), SCS C41, and PR-FABLE-DELTA-ONLY-001 forbid. A governor that exempts its own
+family is theatre; D2A ran itself through the pipeline and shipped 1 doctrine + 1 engine.
+
+**FAIL-OPEN:** the anti-inflation ledger is advisory metadata on the BUILD CONTRACT; a
+failing rule surfaces which and why, it never crashes the verdict. The Owner rules.
+
+**ORIGEN:** D2A Engine, SCS C85, 2026-07-10. Companion of `[[PR-DUPLICATE-TO-ADVANTAGE-001]]`
+and the FIOS execution-first precedent (17 systems -> 3 engines + 1 doctrine, zero prose
+datasets). Cross-ref: `d2a_00_duplicate_to_advantage_doctrine.md` Part III.

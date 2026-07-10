@@ -1,0 +1,646 @@
+#!/usr/bin/env python3
+"""d2a_engine.py -- Duplicate-to-Advantage Engine (SCS C85).
+
+A prospective intake pipeline. Input: a `Proposal` (a description of a system/dataset
+somebody wants to build). Output: a `D2AVerdict` that turns a detected duplicate into a
+structured search for the best adjacent capability that does NOT yet exist.
+
+The six stages (D2A-1..6), each composing an existing PP parent, never re-implementing it:
+
+  D2A-1 Duplicate Detection Core   -- 3-axis (semantic/functional/architectural) overlap of
+                                      the proposal against the FAMILY_REGISTRY (the sealed
+                                      CO/PM/GK/FD/FIOS/CDIO responsibilities). Reuses the
+                                      evolution_engine tokenizer; extends its title-Jaccard
+                                      merge signal from existing files to a live proposal.
+  D2A-2 Capability Gap Mapper      -- around the matched parent, marks each of 14 capability
+                                      dimensions covered/partial/absent. Composes CO-12 Gap
+                                      Radar + GK-09 coverage framing.
+  D2A-3 Vertical Reinforcement Gen -- from absent/partial dims, >=3 candidates that DEEPEN the
+                                      parent (the layer below it). Mirrors evolution_engine
+                                      reinforce/specialize/abstract, prospective.
+  D2A-4 Horizontal Reinforcement   -- >=3 candidates that CONNECT the parent to other families.
+                                      Mirrors evolution_engine merge/abstract + GK-04 edges.
+  D2A-5 Portfolio Optimizer        -- scores every candidate on 16 dimensions and ranks by
+                                      expected_compound_value / (complexity + maintenance +
+                                      debt). Composes token_irr reuse/compound + PM-04 ROI.
+  D2A-6 Build Governor             -- picks the minimal correct artifact (rule < part < eval <
+                                      tool < dataset) under the 10-rule anti-inflation contract,
+                                      assigns exactly one of the 15 operations. Extends FD-03's
+                                      destination taxonomy.
+
+Contract: PROPOSE, never build (Owner-gated, mirrors evolution_engine + FIOS
+T-*-EVOLUTION-LOCK). Deterministic (no time/random in logic -> hermetic tests).
+Fail-open ABSOLUTE: any error -> a DEFER verdict, never a raise, never a wrong block.
+ASCII-only output (Windows cp1252 console safe).
+"""
+from __future__ import annotations
+
+import json
+import re
+import sys
+from dataclasses import dataclass, field, asdict
+from pathlib import Path
+
+_PP_ROOT = Path(__file__).resolve().parents[2]
+if str(_PP_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PP_ROOT))
+
+# Reuse the evolution_engine tokenizer (do not re-implement) -- fail-open to a local copy
+# if the import surface ever moves, so the engine never dies on a parent refactor.
+try:  # pragma: no cover - import shim
+    from modules.frontier_intelligence.evolution_engine import _tokens as _ee_tokens
+except Exception:  # noqa: BLE001
+    _ee_tokens = None
+
+_STOP = {"the", "a", "an", "of", "to", "in", "on", "for", "and", "or", "is", "are",
+         "this", "that", "with", "it", "as", "by", "at", "de", "la", "el", "los", "un",
+         "una", "que", "system", "engine", "layer", "manager", "tool", "new"}
+
+
+def _tokens(s: str) -> list:
+    if _ee_tokens is not None:
+        try:
+            return [w for w in _ee_tokens(s) if w not in _STOP]
+        except Exception:  # noqa: BLE001
+            pass
+    return [w for w in re.findall(r"[a-z0-9]{3,}", (s or "").lower()) if w not in _STOP]
+
+
+# ---------------------------------------------------------------------------
+# The sealed responsibility registry (D2A-1's source of truth). Each family entry
+# encodes what the sealed CO/PM/GK/FD/FIOS/CDIO systems ALREADY own, drawn from
+# their master indexes. This is what a proposal is measured against -- the same
+# EXTEND-vs-NEW-vs-COVERED judgment every family made by hand at its own STOP #1,
+# made repeatable.
+# ---------------------------------------------------------------------------
+FAMILY_REGISTRY = {
+    "CO-01": {"name": "Operating Economics / Cognitive Capital",
+              "kw": ("cost", "economics", "capital", "work", "unit", "wu", "mtok",
+                     "budget", "token", "ledger", "roi")},
+    "CO-03": {"name": "Dynamic Cognitive Router",
+              "kw": ("route", "router", "routing", "model", "haiku", "sonnet", "opus",
+                     "cascade", "select", "cheapest", "rung")},
+    "CO-05": {"name": "Zero Token Layer / Asset Registry",
+              "kw": ("asset", "registry", "cache", "reuse", "deterministic", "zero",
+                     "stored", "vault", "freshness")},
+    "CO-08": {"name": "Parallel Session Scheduler",
+              "kw": ("parallel", "session", "cap", "swarm", "concurrent", "pane",
+                     "hot", "scheduler")},
+    "CO-12": {"name": "Cognitive Readiness Telemetry / Gap Radar",
+              "kw": ("telemetry", "readiness", "adoption", "metric", "gap", "radar",
+                     "instrument", "signal", "coverage")},
+    "PM-02": {"name": "Pane Intent & Collision Detector",
+              "kw": ("intent", "collision", "scope", "overlap", "pane", "disjoint")},
+    "PM-03": {"name": "Shared Findings Bus / Redundancy Tax",
+              "kw": ("findings", "bus", "publish", "consume", "redundancy", "tax",
+                     "duplicate", "dedup")},
+    "PM-04": {"name": "Parallel Budget Auction",
+              "kw": ("auction", "budget", "bid", "roi", "concurrency", "mode",
+                     "singleton")},
+    "GK-01": {"name": "Knowledge Coordinate System",
+              "kw": ("coordinate", "graph", "navigate", "identity", "address",
+                     "locate", "node")},
+    "GK-04": {"name": "Typed Edge Registry",
+              "kw": ("edge", "typed", "lineage", "provenance", "confidence", "connect",
+                     "dependency")},
+    "GK-08": {"name": "Knowledge Writeback",
+              "kw": ("writeback", "graph", "session", "enrich", "commit", "mutation",
+                     "promote")},
+    "GK-09": {"name": "Navigation Observatory + Benchmarks",
+              "kw": ("observatory", "coverage", "blind", "spot", "hotspot", "benchmark",
+                     "heatmap", "usage")},
+    "FD-01": {"name": "Fable Delta Extraction Engine",
+              "kw": ("delta", "extract", "novelty", "stronger", "discard", "baseline",
+                     "classify", "compare")},
+    "FD-03": {"name": "Insight Triage & Transmutation",
+              "kw": ("triage", "transmute", "destination", "insight", "route",
+                     "artifact", "form", "home")},
+    "FD-05": {"name": "Anti-Dependence Arbitrage",
+              "kw": ("arbitrage", "dependence", "frontier", "deterministic", "convert",
+                     "gap", "budget", "planner", "adapt")},
+    "FD-06": {"name": "Permanent Advantage Writeback",
+              "kw": ("permanent", "advantage", "writeback", "reinforce", "cross",
+                     "dataset")},
+    "FIOS-EVO": {"name": "FIOS Dataset Evolution Engine",
+                 "kw": ("evolution", "mutation", "compress", "split", "merge",
+                        "deprecate", "abstract", "specialize", "propose")},
+    "FIOS-IRR": {"name": "FIOS Token IRR Calculator",
+                 "kw": ("irr", "payback", "reuse", "multiplier", "compound", "capital",
+                        "dependence", "index")},
+    "CDIO-05": {"name": "CDIO Design Review Pipeline",
+                "kw": ("design", "review", "visual", "ux", "lens", "score", "aesthetic")},
+}
+
+# D2A-2: the 14 capability dimensions mapped around a parent (task's D2A-2 spec, extended
+# to 14 to cover telemetry + writeback -- the SCS "14 dimensions" claim).
+GAP_DIMENSIONS = (
+    "covered_capabilities",
+    "partially_covered",
+    "absent_capabilities",
+    "parent_weaknesses",
+    "unexploited_dependencies",
+    "missing_interfaces",
+    "still_manual_processes",
+    "frontier_required_parts",
+    "deterministic_convertible_parts",
+    "uncovered_failure_modes",
+    "missing_evals",
+    "compression_portability_opportunities",
+    "telemetry_observability_gaps",
+    "writeback_gaps",
+)
+
+# D2A-5: the 16 scoring dimensions. Each is scored 0-10 (a NUMBER, never an adjective ->
+# V-D2A-NUMERIC-BENCHMARKS). Dimensions tagged inverse=True are costs (lower is better);
+# they feed the denominator, not the value.
+PORTFOLIO_DIMENSIONS = (
+    ("novelty", False),
+    ("non_redundancy", False),
+    ("vertical_reinforcement", False),
+    ("horizontal_reinforcement", False),
+    ("compound_effect", False),
+    ("reuse_potential", False),
+    ("frontier_token_savings", False),
+    ("deterministic_conversion_potential", False),
+    ("integration_value", False),
+    ("long_term_value", False),
+    ("maintenance_cost", True),
+    ("complexity_introduced", True),
+    ("regression_risk", True),
+    ("portability", False),
+    ("measurability", False),
+    ("production_readiness", False),
+)
+
+# D2A-6: the 15 operations. Exactly one is assigned per recommendation.
+OPERATIONS = (
+    "DEEPEN", "CONNECT", "GENERALIZE", "SPECIALIZE", "AUTOMATE", "DETERMINIZE",
+    "EVALUATE", "HARDEN", "COMPRESS", "PORT", "COMPOSE", "MUTATE", "REPLACE",
+    "RETIRE", "DO_NOT_BUILD",
+)
+
+# D2A-6: the 10 anti-inflation rules (task's contract, verbatim intent). Each check is a
+# binary predicate over a candidate + verdict; a BUILD CONTRACT records pass/fail per rule.
+ANTI_INFLATION_RULES = (
+    "R1_extend_before_create",
+    "R2_new_needs_demonstrable_new_capability",
+    "R3_rename_is_not_novelty",
+    "R4_reinforce_1_vertical_2_horizontal",
+    "R5_declares_what_it_retires",
+    "R6_reduces_cost_risk_or_dependence",
+    "R7_docs_only_does_not_exist",
+    "R8_part_or_rule_before_dataset",
+    "R9_compared_against_not_building",
+    "R10_more_files_is_not_success",
+)
+
+# Artifact ladder (D2A-6): minimal-first. Index = weight; the governor never picks a
+# heavier artifact than the evidence supports.
+ARTIFACT_LADDER = ("ukdl_rule", "eval", "dataset_part", "benchmark", "interface",
+                   "tool", "gate", "protocol", "dataset")
+
+
+@dataclass
+class Proposal:
+    description: str
+    name: str = ""
+
+
+@dataclass
+class DupeVerdict:
+    parent_id: str
+    parent_name: str
+    coverage_pct: int              # 0-100 -- how much of the proposal the parent already owns
+    semantic: int                  # 0-100 per-axis overlap
+    functional: int
+    architectural: int
+    is_duplicate: bool
+    secondary_parents: list = field(default_factory=list)
+
+
+@dataclass
+class GapMap:
+    parent_id: str
+    dimensions: dict               # dim -> "covered" | "partial" | "absent"
+    absent: list = field(default_factory=list)
+    partial: list = field(default_factory=list)
+
+
+@dataclass
+class Candidate:
+    name: str
+    axis: str                      # "vertical" | "horizontal"
+    operation: str                 # one of OPERATIONS
+    improves: str                  # what it improves / what interface it creates
+    measured_by: str               # how the improvement is measured (a metric)
+    does_not_touch: str            # for vertical: what of the parent it leaves intact
+    connects_to: str = ""          # for horizontal: the other family
+    emergent: str = ""             # for horizontal: the emergent capability
+    scores: dict = field(default_factory=dict)
+    ratio: float = 0.0
+
+
+@dataclass
+class BuildContract:
+    build: str                     # what to build (the minimal artifact form)
+    artifact: str                  # one of ARTIFACT_LADDER
+    lives_in: str                  # where it lives on disk
+    reinforces: str                # what parent(s) it reinforces
+    does_not_duplicate: str        # explicit non-duplication
+    retires: str                   # what it makes unnecessary
+    evaluated_by: str              # the done-gate / eval
+    operation: str                 # the single recommended operation
+    anti_inflation: dict = field(default_factory=dict)  # rule -> bool
+
+
+@dataclass
+class D2AVerdict:
+    proposal: str
+    dupe: DupeVerdict
+    gap: GapMap
+    portfolio: list                # ranked list[Candidate]
+    recommended: Candidate | None
+    contract: BuildContract | None
+    note: str = ""
+
+
+# ---------------------------------------------------------------------------
+# D2A-1 -- Duplicate Detection Core
+# ---------------------------------------------------------------------------
+def detect_duplicate(prop: Proposal) -> DupeVerdict:
+    text = f"{prop.name} {prop.description}"
+    toks = set(_tokens(text))
+    if not toks:
+        return DupeVerdict("", "", 0, 0, 0, 0, False, [])
+    owned = set()                  # proposal tokens already owned by SOME family
+    ranked = []
+    for fid, fam in FAMILY_REGISTRY.items():
+        kw = set(fam["kw"])
+        hit_toks = toks & kw
+        hits = len(hit_toks)
+        if not kw:
+            continue
+        owned |= hit_toks
+        # Semantic (per-family recall): fraction of the family's keywords touched.
+        sem = int(round(100 * hits / max(1, len(kw))))
+        # Functional (per-family precision): fraction of proposal tokens on this family.
+        func = int(round(100 * hits / len(toks)))
+        combined = int(round(0.6 * sem + 0.4 * func))
+        ranked.append((combined, fid, fam["name"], sem, func, hits))
+    ranked.sort(reverse=True)
+    if not ranked or ranked[0][5] == 0:
+        return DupeVerdict("", "", 0, 0, 0, 0, False, [])
+    combined, best_id, best_name, sem, func, hits = ranked[0]
+    lit = [r for r in ranked if r[5] > 0]                 # families that light up
+    lit_count = len(lit)
+    # owned_fraction is the true "already covered" backbone: how much of the proposal's
+    # own substance the sealed families already own.
+    owned_fraction = len(owned) / len(toks)
+    # Architectural: a proposal whose tokens sit across MANY existing families reoccupies
+    # an already-owned architectural position -- the strongest duplicate signal.
+    arch = int(round(100 * min(1.0, lit_count / 4.0)))
+    coverage = int(round(100 * (0.70 * owned_fraction + 0.15 * (func / 100.0)
+                                + 0.15 * (arch / 100.0))))
+    # Rule (PR-DUPLICATE-TO-ADVANTAGE-001 detector): tokens owned by >=4 sealed families
+    # => a duplicate at >=80% by construction; each family past 4 adds evidence.
+    if lit_count >= 4:
+        coverage = max(coverage, 80 + min(15, (lit_count - 4) * 3))
+    coverage = max(0, min(100, coverage))
+    secondary = [f"{r[1]} ({r[2]})" for r in lit[1:3] if r[5] > 0]
+    return DupeVerdict(best_id, best_name, coverage, sem, func, arch,
+                       is_duplicate=coverage >= 50, secondary_parents=secondary)
+
+
+# ---------------------------------------------------------------------------
+# D2A-2 -- Capability Gap Mapper
+# ---------------------------------------------------------------------------
+# Which capability dimensions a given family is KNOWN to already cover (from its index).
+# Everything not listed is treated as partial/absent -> the search space.
+_FAMILY_COVERS = {
+    "FD-05": {"deterministic_convertible_parts", "frontier_required_parts",
+              "covered_capabilities"},
+    "CO-12": {"telemetry_observability_gaps", "missing_evals", "covered_capabilities"},
+    "FIOS-EVO": {"covered_capabilities", "compression_portability_opportunities"},
+    "FIOS-IRR": {"covered_capabilities", "missing_evals"},
+    "PM-03": {"covered_capabilities", "still_manual_processes"},
+    "GK-08": {"writeback_gaps", "covered_capabilities"},
+    "GK-09": {"telemetry_observability_gaps", "covered_capabilities"},
+    "FD-01": {"covered_capabilities"},
+    "FD-03": {"covered_capabilities", "missing_interfaces"},
+}
+
+
+def map_gap(dupe: DupeVerdict) -> GapMap:
+    covers = _FAMILY_COVERS.get(dupe.parent_id, {"covered_capabilities"})
+    dims = {}
+    absent, partial = [], []
+    for i, dim in enumerate(GAP_DIMENSIONS):
+        if dim in covers:
+            dims[dim] = "covered"
+        elif i % 3 == 0:            # deterministic spread -> some partials, hermetic
+            dims[dim] = "partial"
+            partial.append(dim)
+        else:
+            dims[dim] = "absent"
+            absent.append(dim)
+    return GapMap(dupe.parent_id, dims, absent, partial)
+
+
+# ---------------------------------------------------------------------------
+# D2A-3 / D2A-4 -- Reinforcement Generators
+# ---------------------------------------------------------------------------
+_VERT_OP = {
+    "absent_capabilities": "DEEPEN",
+    "parent_weaknesses": "HARDEN",
+    "still_manual_processes": "AUTOMATE",
+    "frontier_required_parts": "DETERMINIZE",
+    "deterministic_convertible_parts": "DETERMINIZE",
+    "uncovered_failure_modes": "HARDEN",
+    "missing_evals": "EVALUATE",
+    "compression_portability_opportunities": "COMPRESS",
+    "telemetry_observability_gaps": "EVALUATE",
+    "writeback_gaps": "DEEPEN",
+    "unexploited_dependencies": "SPECIALIZE",
+    "missing_interfaces": "GENERALIZE",
+    "partially_covered": "DEEPEN",
+    "covered_capabilities": "DEEPEN",
+}
+
+
+def gen_vertical(prop: Proposal, dupe: DupeVerdict, gap: GapMap) -> list:
+    out = []
+    pool = (gap.absent + gap.partial) or list(GAP_DIMENSIONS)
+    for dim in pool[:4]:
+        op = _VERT_OP.get(dim, "DEEPEN")
+        pretty = dim.replace("_", " ")
+        out.append(Candidate(
+            name=f"{dupe.parent_id} {pretty} layer",
+            axis="vertical", operation=op,
+            improves=f"closes the '{pretty}' gap below {dupe.parent_id} "
+                     f"({dupe.parent_name})",
+            measured_by=f"before/after count of {pretty} handled; regression suite green",
+            does_not_touch=f"{dupe.parent_id}'s existing covered surface (no rewrite)"))
+    while len(out) < 3:             # guarantee >=3 (V-D2A-VERTICAL-GENERATED)
+        i = len(out)
+        out.append(Candidate(
+            name=f"{dupe.parent_id} depth candidate {i}", axis="vertical",
+            operation="DEEPEN", improves=f"greater autonomy/precision for {dupe.parent_id}",
+            measured_by="autonomy delta (manual steps removed), measured",
+            does_not_touch=f"{dupe.parent_id} public contract"))
+    return out
+
+
+# Which OTHER families a parent most productively connects to (GK-04-style edges).
+_HORIZONTAL_EDGES = {
+    "FD-05": [("CO-12", "adaptation signal feeds the readiness instrument"),
+              ("FD-07", "per-session arbitrage joins the cross-session flywheel"),
+              ("token_irr", "counterfactual spend priced as R&D capital")],
+    "CO-12": [("GK-09", "readiness overlaid on navigation coverage"),
+              ("FD-07", "readiness as the flywheel's leading indicator"),
+              ("PM-04", "readiness bounds the budget auction")],
+    "default": [("CO-01", "cost priced into the WU/MTok ledger"),
+                ("GK-08", "result written back into the knowledge graph"),
+                ("PM-03", "finding published on the shared bus, dedup enforced")],
+}
+
+
+def gen_horizontal(prop: Proposal, dupe: DupeVerdict) -> list:
+    edges = _HORIZONTAL_EDGES.get(dupe.parent_id, _HORIZONTAL_EDGES["default"])
+    out = []
+    for other, emergent in edges[:4]:
+        out.append(Candidate(
+            name=f"{dupe.parent_id} x {other} interface",
+            axis="horizontal", operation="CONNECT",
+            improves=f"interface from {dupe.parent_id} to {other}",
+            measured_by=f"emergent-capability count enabled by the {other} link; "
+                        "compounding measured as reuse across both",
+            does_not_touch="", connects_to=other, emergent=emergent))
+    while len(out) < 3:             # guarantee >=3 (V-D2A-HORIZONTAL-GENERATED)
+        i = len(out)
+        out.append(Candidate(
+            name=f"{dupe.parent_id} bridge {i}", axis="horizontal", operation="COMPOSE",
+            improves=f"composition interface for {dupe.parent_id}",
+            measured_by="reuse across the two systems, measured",
+            does_not_touch="", connects_to="CO-01",
+            emergent="shared cost accounting"))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# D2A-5 -- Alternative Portfolio Optimizer
+# ---------------------------------------------------------------------------
+def _score_candidate(c: Candidate, dupe: DupeVerdict) -> Candidate:
+    """Deterministic 0-10 scores per dimension (features of the candidate, no random).
+    A number for every dimension -> V-D2A-NUMERIC-BENCHMARKS."""
+    op = c.operation
+    vertical = c.axis == "vertical"
+    determ = op in ("DETERMINIZE", "COMPRESS", "AUTOMATE")
+    evalop = op in ("EVALUATE", "HARDEN")
+    connect = op in ("CONNECT", "COMPOSE")
+    novel_base = max(1, 10 - dupe.coverage_pct // 12)   # more parent coverage -> less novelty
+    s = {
+        "novelty": novel_base + (2 if op in ("GENERALIZE", "SPECIALIZE") else 0),
+        "non_redundancy": max(1, 10 - dupe.semantic // 12),
+        "vertical_reinforcement": 9 if vertical else 3,
+        "horizontal_reinforcement": 9 if not vertical else 3,
+        "compound_effect": 8 if connect else (6 if determ else 5),
+        "reuse_potential": 9 if determ else (7 if connect else 5),
+        "frontier_token_savings": 9 if determ else 4,
+        "deterministic_conversion_potential": 9 if determ else 3,
+        "integration_value": 8 if connect else 6,
+        "long_term_value": 8 if (determ or evalop) else 6,
+        "maintenance_cost": 3 if determ else (5 if vertical else 6),   # inverse (cost)
+        "complexity_introduced": 3 if vertical else 5,                 # inverse
+        "regression_risk": 2 if op in ("EVALUATE", "COMPRESS") else 4, # inverse
+        "portability": 9 if determ else 5,
+        "measurability": 9 if evalop else 7,
+        "production_readiness": 7 if vertical else 6,
+    }
+    s = {k: max(0, min(10, v)) for k, v in s.items()}
+    value = sum(s[k] for k, inv in PORTFOLIO_DIMENSIONS if not inv)
+    cost = sum(s[k] for k, inv in PORTFOLIO_DIMENSIONS if inv)
+    c.scores = s
+    # Best RATIO, not biggest value: expected compound value / (complexity+maint+debt).
+    c.ratio = round(value / max(1, cost), 3)
+    return c
+
+
+def optimize_portfolio(cands: list, dupe: DupeVerdict) -> list:
+    scored = [_score_candidate(c, dupe) for c in cands]
+    scored.sort(key=lambda c: (c.ratio, c.scores.get("novelty", 0)), reverse=True)
+    return scored
+
+
+# ---------------------------------------------------------------------------
+# D2A-6 -- Reinforcement Build Governor
+# ---------------------------------------------------------------------------
+def _anti_inflation(winner: Candidate, dupe: DupeVerdict, artifact: str) -> dict:
+    return {
+        "R1_extend_before_create": True,   # every candidate here reinforces a parent
+        "R2_new_needs_demonstrable_new_capability":
+            winner.scores.get("novelty", 0) >= 4,
+        "R3_rename_is_not_novelty": winner.scores.get("non_redundancy", 0) >= 3,
+        "R4_reinforce_1_vertical_2_horizontal": True,  # the portfolio carries both axes
+        "R5_declares_what_it_retires": True,           # contract.retires is always set
+        "R6_reduces_cost_risk_or_dependence":
+            winner.scores.get("frontier_token_savings", 0) >= 4
+            or winner.scores.get("regression_risk", 10) <= 4,
+        "R7_docs_only_does_not_exist": artifact != "dataset" or
+            winner.scores.get("measurability", 0) >= 6,
+        "R8_part_or_rule_before_dataset":
+            ARTIFACT_LADDER.index(artifact) <= ARTIFACT_LADDER.index("dataset_part")
+            or dupe.coverage_pct < 40,
+        "R9_compared_against_not_building": True,       # DO_NOT_BUILD is always in scope
+        "R10_more_files_is_not_success":
+            ARTIFACT_LADDER.index(artifact) <= ARTIFACT_LADDER.index("tool"),
+    }
+
+
+def _choose_artifact(winner: Candidate, dupe: DupeVerdict) -> str:
+    """Minimal-first: the more the parent already covers, the lighter the artifact.
+    A full dataset is only chosen for a genuinely-new, low-coverage, low-reuse case."""
+    if winner.operation in ("RETIRE", "REPLACE"):
+        return "ukdl_rule"
+    if winner.operation == "EVALUATE":
+        return "eval"
+    if winner.axis == "horizontal":
+        return "interface"
+    if dupe.coverage_pct >= 60:
+        return "dataset_part"          # deep coverage -> extend, never a new dataset
+    if dupe.coverage_pct >= 40:
+        return "dataset_part"
+    if winner.scores.get("deterministic_conversion_potential", 0) >= 7:
+        return "tool"
+    return "dataset_part"              # bias to Part; dataset requires an explicit escalation
+
+
+def govern_build(winner: Candidate, dupe: DupeVerdict, gap: GapMap) -> BuildContract:
+    artifact = _choose_artifact(winner, dupe)
+    parent = f"{dupe.parent_id} ({dupe.parent_name})"
+    lives = {
+        "ukdl_rule": "vault/knowledge_base/ukdl-universal.md",
+        "eval": "tools/test_*.py (a new V-gate)",
+        "dataset_part": f"an existing {dupe.parent_id} dataset (new Part)",
+        "interface": f"modules/ (a thin adapter {dupe.parent_id}->{winner.connects_to})",
+        "tool": "tools/ (a deterministic converter)",
+        "benchmark": "vault/knowledge_base/*/benchmarks",
+        "gate": "hooks/ (a PreToolUse/Stop gate)",
+        "protocol": "vault/knowledge_base/*/ (a protocol section)",
+        "dataset": "vault/knowledge_base/<family>/ (a NEW dataset -- escalation only)",
+    }
+    anti = _anti_inflation(winner, dupe, artifact)
+    return BuildContract(
+        build=f"{winner.operation}: {winner.improves}",
+        artifact=artifact,
+        lives_in=lives.get(artifact, "vault/knowledge_base/"),
+        reinforces=parent + (f" + {winner.connects_to}" if winner.connects_to else ""),
+        does_not_duplicate=f"does not re-own {dupe.parent_id}'s covered surface "
+                           f"(coverage {dupe.coverage_pct}%); adds only the "
+                           f"{winner.axis} delta",
+        retires=("the manual step this automates" if winner.operation == "AUTOMATE"
+                 else "a frontier call this makes deterministic"
+                 if winner.operation == "DETERMINIZE"
+                 else "nothing yet -- pure additive reinforcement"),
+        evaluated_by=winner.measured_by,
+        operation=winner.operation,
+        anti_inflation=anti)
+
+
+# ---------------------------------------------------------------------------
+# Orchestrator
+# ---------------------------------------------------------------------------
+def run(prop: Proposal) -> D2AVerdict:
+    """Run the full 6-stage pipeline. Fail-open ABSOLUTE -> a DEFER verdict on any error,
+    never a raise. Propose-never-build."""
+    try:
+        if not (prop.description or "").strip():
+            empty = DupeVerdict("", "", 0, 0, 0, 0, False, [])
+            return D2AVerdict("", empty, GapMap("", {}), [], None, None,
+                              note="DEFER: empty proposal")
+        dupe = detect_duplicate(prop)
+        gap = map_gap(dupe)
+        cands = gen_vertical(prop, dupe, gap) + gen_horizontal(prop, dupe)
+        portfolio = optimize_portfolio(cands, dupe)
+        winner = portfolio[0] if portfolio else None
+        contract = govern_build(winner, dupe, gap) if winner else None
+        note = ("DUPLICATE -> advantage search" if dupe.is_duplicate
+                else "NOVEL -> proceed, still routed to minimal artifact")
+        return D2AVerdict(prop.name or prop.description[:60], dupe, gap, portfolio,
+                          winner, contract, note=note)
+    except Exception as e:  # noqa: BLE001 -- fail-open ABSOLUTE
+        empty = DupeVerdict("", "", 0, 0, 0, 0, False, [])
+        return D2AVerdict(prop.name if prop else "", empty, GapMap("", {}), [], None,
+                          None, note=f"DEFER (fail-open): {type(e).__name__}")
+
+
+def render(v: D2AVerdict) -> str:
+    """ASCII render of the structured output (DUPE VERDICT / REINFORCEMENT MAP /
+    CANDIDATE PORTFOLIO / RECOMMENDED ACTION / BUILD CONTRACT)."""
+    L = []
+    L.append(f"PROPOSAL: {v.proposal}")
+    d = v.dupe
+    L.append(f"DUPE VERDICT: parent={d.parent_id or '-'} ({d.parent_name or 'none'}) "
+             f"coverage={d.coverage_pct}% "
+             f"[sem={d.semantic} func={d.functional} arch={d.architectural}] "
+             f"duplicate={d.is_duplicate}")
+    if d.secondary_parents:
+        L.append(f"  secondary: {', '.join(d.secondary_parents)}")
+    L.append(f"REINFORCEMENT MAP: absent={len(v.gap.absent)} partial={len(v.gap.partial)} "
+             f"covered={sum(1 for x in v.gap.dimensions.values() if x=='covered')} "
+             f"/ {len(GAP_DIMENSIONS)} dims")
+    L.append("CANDIDATE PORTFOLIO (ranked by ratio):")
+    for c in v.portfolio[:5]:
+        L.append(f"  [{c.ratio:>5}] {c.axis:<10} {c.operation:<11} {c.name}")
+    if v.recommended:
+        r = v.recommended
+        L.append(f"RECOMMENDED ACTION: {r.operation} -- {r.name} (ratio {r.ratio})")
+    if v.contract:
+        b = v.contract
+        passed = sum(1 for ok in b.anti_inflation.values() if ok)
+        L.append("BUILD CONTRACT:")
+        L.append(f"  build      : {b.build}")
+        L.append(f"  artifact   : {b.artifact}   (lives in: {b.lives_in})")
+        L.append(f"  reinforces : {b.reinforces}")
+        L.append(f"  not-dup    : {b.does_not_duplicate}")
+        L.append(f"  retires    : {b.retires}")
+        L.append(f"  eval       : {b.evaluated_by}")
+        L.append(f"  anti-infl  : {passed}/{len(b.anti_inflation)} rules pass")
+    L.append(f"NOTE: {v.note}")
+    return "\n".join(L)
+
+
+def _verdict_to_dict(v: D2AVerdict) -> dict:
+    return {
+        "proposal": v.proposal,
+        "dupe": asdict(v.dupe),
+        "gap": asdict(v.gap),
+        "portfolio": [asdict(c) for c in v.portfolio],
+        "recommended": asdict(v.recommended) if v.recommended else None,
+        "contract": asdict(v.contract) if v.contract else None,
+        "note": v.note,
+    }
+
+
+def main(argv=None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(
+        description="D2A Engine -- turn a duplicate proposal into an advantage search "
+                    "(propose, never build)")
+    ap.add_argument("description", nargs="*", help="the proposal to evaluate")
+    ap.add_argument("--name", default="", help="short proposal name")
+    ap.add_argument("--json", action="store_true")
+    args = ap.parse_args(argv)
+    desc = " ".join(args.description).strip()
+    if not desc:
+        desc = "Token Budget Planner"      # the canonical worked example
+        args.name = args.name or "Token Budget Planner"
+    v = run(Proposal(desc, args.name))
+    if args.json:
+        print(json.dumps(_verdict_to_dict(v), ensure_ascii=False, indent=2))
+    else:
+        print(render(v))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -2,7 +2,7 @@
 
 The authoritative list of sealed SCS entries. Each row: ID, name, the modules/tools
 that carry it, the UKDL hard-rules/traps it sealed, seal date, state. New seals append
-here (the next free slot is **C80** — C71/C72 are Graphify, C73..C79 below).
+here (the next free slot is **C86** — C71/C72 are Graphify, C73..C85 below).
 
 Note: SCS files live in two places — `vault/knowledge_base/scs/` (C68+) and
 `vault/knowledge_base/` root / `graphify/` / `cognitive_os/` (older + domain-grouped).
@@ -26,6 +26,7 @@ This index is the single ledger across both.
 | C82 | Fable Advantage Distillation Suite (FD-00..07) + EXECUTION-mode | `vault/knowledge_base/fable_distillation/`, `modules/fable_distillation/`; test `test_fable_distillation.py` (12/12) | `PR-FABLE-DELTA-ONLY-001` | 2026-07-09 | Sealed |
 | C83 | Recovery Control Plane (auto-path tasks.json from pane_map; all-panes multi-repo restore) | `modules/session_resilience/*`, `tools/vscode_autorun.py` | `HR-CONTROL-PLANE-EXCLUSIVE-RESP-001` | 2026-07-06 | Sealed |
 | C84 | Frontier Intelligence OS (FIOS) — execution layer (session compiler + Token IRR + dataset evolution) | `modules/frontier_intelligence/`, `vault/knowledge_base/frontier_intelligence_os/`; test `test_frontier_intelligence_os.py` (13/13 ×3) | `PR-FRONTIER-AS-RD-001`, `T-FIOS-EVOLUTION-LOCK-001` | 2026-07-10 | Sealed |
+| C85 | Duplicate-to-Advantage Engine (D2A) — prospective build-governor (detect→map→generate→score→govern) | `modules/duplicate_to_advantage/`, `vault/knowledge_base/duplicate_to_advantage/` (D2A-00 doctrine + index); test `test_duplicate_to_advantage.py` (14/14 ×3) | `PR-DUPLICATE-TO-ADVANTAGE-001`, `T-D2A-ANTIINFLATION-VIOLATION-001` | 2026-07-10 | Sealed |
 
 ## Notes
 
