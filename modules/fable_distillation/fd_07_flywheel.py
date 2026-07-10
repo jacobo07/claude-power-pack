@@ -181,6 +181,9 @@ class Deposit:
     sid: str
     ts: str
     evidence: str = ""
+    question_ref: str = ""      # SESSION_ZERO question fingerprint that paid for
+                                # this delta (per-question ROI; optional, empty when
+                                # the finding was not question-tagged)
 
 
 def _load_deposits(repo: str, state_dir=None) -> list:
@@ -289,21 +292,25 @@ def run_flywheel(repo: str, sid: str = "", *, findings=None, state_dir=None,
 
         raw = findings if findings is not None else _session_findings(
             repo, sid, state_dir=state_dir)
-        # Normalize to (topic, claim, evidence) tuples.
+        # Normalize to (topic, claim, evidence, question_ref) tuples. question_ref
+        # is the SESSION_ZERO question fingerprint the session tagged the finding
+        # with (optional -- untagged findings deposit exactly as before).
         items = []
         for f in raw or []:
             topic = getattr(f, "topic", None) if not isinstance(f, dict) else f.get("topic")
             claim = getattr(f, "claim", None) if not isinstance(f, dict) else f.get("claim")
             evid = (getattr(f, "evidence", "") if not isinstance(f, dict)
                     else f.get("evidence", "")) or ""
+            qref = (getattr(f, "question_ref", "") if not isinstance(f, dict)
+                    else f.get("question_ref", "")) or ""
             if claim:
-                items.append((topic or "", str(claim), str(evid)))
+                items.append((topic or "", str(claim), str(evid), str(qref)))
 
         if len(items) > max_findings:
             res.truncated = True
             items = items[:max_findings]
 
-        for topic, claim, evidence in items:
+        for topic, claim, evidence, question_ref in items:
             res.processed += 1
             cls, conf = classify_delta(claim, seen_fps, prior_token_sets)
             if cls == "DISCARD":
@@ -320,7 +327,8 @@ def run_flywheel(repo: str, sid: str = "", *, findings=None, state_dir=None,
                 delta_class=cls, destination=dest,
                 portability_target=estimate_portability(dest),
                 portability_proven=False, confidence=round(float(conf), 3),
-                baseline_ref="co05+deposits", sid=sid, ts=ts, evidence=evidence)
+                baseline_ref="co05+deposits", sid=sid, ts=ts, evidence=evidence,
+                question_ref=question_ref)
             _writeback(repo, dep, state_dir=state_dir)
             seen_fps.add(fp)
             prior_token_sets.append(_tokens(claim))
@@ -348,7 +356,8 @@ def _record_deposit_signal(dep: Deposit, state_dir) -> None:
                       {"delta_class": dep.delta_class, "destination": dep.destination,
                        "portability_target": dep.portability_target,
                        "portability_proven": dep.portability_proven,
-                       "fingerprint": dep.fingerprint}, state_dir=state_dir)
+                       "fingerprint": dep.fingerprint,
+                       "question_ref": dep.question_ref}, state_dir=state_dir)
     except Exception:  # noqa: BLE001
         pass
 
