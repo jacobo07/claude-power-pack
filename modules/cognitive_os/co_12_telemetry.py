@@ -230,8 +230,13 @@ def fd_metrics(*, state_dir=None) -> dict:
     dep_count = len(deposits)
     frontier_only = sum(1 for d in deposits
                         if d.get("portability_target") == "frontier-only")
-    proven = sum(1 for d in deposits if d.get("portability_proven"))
-    measured = bool(admitted or declined or deposits or turns)
+    # Proven = distinct fingerprints the FD-04 prover signalled (the only
+    # producer that can flip the estimate) plus any deposit-flagged rows.
+    proofs = [s for s in sigs if s.get("kind") == "fd_portability_proven"]
+    proven = len({s.get("fingerprint") for s in proofs if s.get("fingerprint")}
+                 | {d.get("fingerprint") for d in deposits
+                    if d.get("portability_proven")})
+    measured = bool(admitted or declined or deposits or turns or proofs)
     return {
         "fd_sessions_count": len(turns),
         "fd_frontier_calls_admitted": len(admitted),

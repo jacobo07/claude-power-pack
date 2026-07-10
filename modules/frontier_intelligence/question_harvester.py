@@ -96,9 +96,14 @@ def _snip(s: str, n: int) -> str:
 def _from_deposits(repo: str, *, state_dir=None, cap: int = _MAX_PER_SOURCE) -> list:
     try:
         from modules.fable_distillation.fd_07_flywheel import _load_deposits
+        try:  # FD-04 join surface: a proven deposit stops generating questions
+            from modules.fable_distillation.fd_04_prover import proven_fingerprints
+            proven = proven_fingerprints(repo, state_dir)
+        except Exception:  # noqa: BLE001 -- fail-open: behave as pre-FD-04
+            proven = set()
         out = []
         for d in _load_deposits(repo, state_dir):
-            if d.get("portability_proven"):
+            if d.get("portability_proven") or d.get("fingerprint") in proven:
                 continue
             claim = _snip(d.get("claim", ""), _SNIP_CLAIM)
             if not claim:

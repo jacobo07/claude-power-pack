@@ -37,7 +37,6 @@ never an exception -- a planning tool must not block the session it plans for.
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -101,16 +100,14 @@ _CTX_CHAR_BUDGET = _CTX_TOKEN_BUDGET * 4
 _DEDUP_JACCARD = 0.60
 _AGENDA_CAP = 10               # portability-agenda rows rendered (bounded)
 _QUESTION_COL = 80             # question text width in the section-2 table
-_FP_FALLBACK_LEN = 12          # fingerprint hex length (mirror of the harvester's)
 _STOP = {"the", "a", "an", "of", "to", "in", "on", "for", "and", "or", "is", "are",
          "this", "that", "with", "how", "what", "we", "our", "us", "do", "does"}
 
-try:  # single fingerprint algorithm ecosystem-wide -- the harvester owns it
-    from modules.frontier_intelligence.question_harvester import question_fingerprint
-except Exception:  # noqa: BLE001 -- fail-open mirror (same algorithm, never raises)
-    def question_fingerprint(text: str) -> str:  # type: ignore
-        norm = re.sub(r"\s+", " ", (text or "").strip().lower())
-        return "q:" + hashlib.sha256(norm.encode("utf-8")).hexdigest()[:_FP_FALLBACK_LEN]
+# Single fingerprint algorithm ecosystem-wide -- the harvester owns it. Direct
+# same-package import: a divergence-prone fallback mirror was deleted here (a
+# copy that can only ever drift protects nothing a hard import failure would
+# not surface louder).
+from modules.frontier_intelligence.question_harvester import question_fingerprint  # noqa: E402
 
 
 def _now(now: datetime | None = None) -> datetime:
@@ -354,14 +351,25 @@ def _bounded_context(decl: SessionDeclaration, floor: list) -> tuple[str, int]:
     return (text, len(text) // 4)
 
 
-def _portability_agenda(floor: list) -> list:
+def _proven_floor(repo: str, state_dir=None) -> frozenset:
+    """FD-04 join surface (fail-open -> empty: behave as pre-FD-04)."""
+    try:
+        from modules.fable_distillation.fd_04_prover import proven_fingerprints
+        return frozenset(proven_fingerprints(repo, state_dir))
+    except Exception:  # noqa: BLE001
+        return frozenset()
+
+
+def _portability_agenda(floor: list, proven: frozenset = frozenset()) -> list:
     """Component 10: the FD-04 validation agenda -- every unproven deposit on the
     floor is a downgrade-test target for THIS session (the prior session's
-    frontier-only deltas become the next session's proof work by construction)."""
+    frontier-only deltas become the next session's proof work by construction).
+    A deposit the FD-04 prover has PROVEN leaves the agenda -- the shrink is the
+    measurable yield signal."""
     agenda = []
     for d in floor or []:
         try:
-            if d.get("portability_proven"):
+            if d.get("portability_proven") or d.get("fingerprint") in proven:
                 continue
             agenda.append({
                 "fingerprint": d.get("fingerprint", "?"),
@@ -445,7 +453,8 @@ def compile_session(decl: SessionDeclaration, *, kb_dir=None, route_fn=None,
             writeback_plan=writeback_plan, distillation_plan=distillation_plan,
             transfer_plan=transfer_plan, floor_size=len(floor), note=note,
             dropped=dropped, follow_ups=follow_ups,
-            portability_agenda=_portability_agenda(floor))
+            portability_agenda=_portability_agenda(
+                floor, _proven_floor(decl.repo, state_dir)))
     except Exception as e:  # noqa: BLE001 -- fail-open ABSOLUTE
         return SessionPlan(
             stamp=_iso_stamp(_now(now)), repo=str(decl.repo), objective=decl.objective,
