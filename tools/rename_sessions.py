@@ -127,6 +127,17 @@ SKIP_LINE_RE = re.compile(
 # "MODO: <mode> (<real intent>)" -> the parenthetical is the substantive part.
 MODO_PAREN_RE = re.compile(r"MODO\s*[:=].*?\((.+?)(?:\)|$)", re.I | re.S)
 
+# Status / anchor preamble lines that precede the real objective in the standard
+# loop-session template (MODO -> CONTRATO -> Prod:/Pane status -> anchors ->
+# OBJECTIVE). These describe deploy state, not the task -> skip to reach the
+# objective paragraph below (PR-NAME-OBJECTIVE-001, Owner-chosen 2026-07-10).
+STATUS_LINE_RE = re.compile(
+    r"^(Prod\s*[:=]|Pane\s*\d|smoke\s+\d|KILL[\s-]?SWITCH\b|SESSION\s+ANCHOR\b|"
+    r"TUAX[_A-Z0-9]*\s*[:=]|PR-[A-Z0-9-]+\s*[:\-]|HEAD\s+real\b|git\s+fetch\b|"
+    r"Owner\s+dashboard\b|Operador\s+surface\b|kernel\s+v|HEAD\s+confirmad)",
+    re.I,
+)
+
 # "PANE NUEVO: X", "SESIÓN: X", "SPRINT: X" -> the text after the header is the name.
 HEADER_RE = re.compile(
     r"^(?:PANE(?:\s+NUEVO)?|SESI[ÓO]N|SPRINT|TAREA|TASK|FEATURE|OBJETIVO|GOAL|TARGET)"
@@ -224,6 +235,8 @@ def clean_prompt(text: str) -> str:
             continue
         if SKIP_LINE_RE.match(line):
             continue
+        if STATUS_LINE_RE.match(line):
+            continue                       # deploy/status/anchor preamble -> keep looking
         if CMD_RE.search(line):
             continue
         hm = HEADER_RE.match(line)
@@ -506,7 +519,8 @@ def build_record(uuid: str, title: str) -> bytes:
 # --------------------------------------------------------------------------- #
 # Planning
 # --------------------------------------------------------------------------- #
-def plan_project(proj_dir: Path, repo_prefix: bool, skip_sids: set[str]) -> list[dict]:
+def plan_project(proj_dir: Path, repo_prefix: bool, skip_sids: set[str],
+                 reclaim_manifest: dict | None = None) -> list[dict]:
     rows: list[dict] = []
     for path in sorted(proj_dir.glob("*.jsonl")):
         uuid = path.stem
@@ -515,6 +529,11 @@ def plan_project(proj_dir: Path, repo_prefix: bool, skip_sids: set[str]) -> list
         s = scan_session(path)
         base = effective_base(s["last_custom"])
         repo = repo_of(proj_dir, s["cwd"])
+        # A stored title equal to its reclaim-manifest entry is a name WE generated
+        # in a prior run -> reclaimable so an improved format can overwrite it. A
+        # human Ctrl+R name (stored title != our derivation) is NOT in the manifest
+        # match and stays protected.
+        ours = bool(reclaim_manifest) and reclaim_manifest.get(uuid) == base
         row = {
             "uuid": uuid, "path": path, "repo": repo, "proj": proj_dir.name,
             "current": base if base else "(none)",
@@ -524,7 +543,7 @@ def plan_project(proj_dir: Path, repo_prefix: bool, skip_sids: set[str]) -> list
             row["action"] = "SKIP (running/protected)"
         elif not is_canonical_location(proj_dir, s["cwd"]):
             row["action"] = "SKIP (mislocated copy)"
-        elif not is_reclaimable_title(base, repo):
+        elif not (is_reclaimable_title(base, repo) or ours):
             row["action"] = "SKIP (has custom name)"
         else:
             name, src = derive_name(s)
@@ -639,6 +658,7 @@ def main() -> int:
     ap.add_argument("--skip-sid", action="append", default=[], help="never touch this session id (repeatable)")
     ap.add_argument("--sample", type=int, default=0, help="print at most N rename rows per group (0 = all)")
     ap.add_argument("--verbose", action="store_true", help="show skipped rows too")
+    ap.add_argument("--reclaim-manifest", default="", help="JSON {uuid: prior-title} of names WE generated; a stored title matching its entry is reclaimable for reformat (human names are untouched)")
     args = ap.parse_args()
 
     skip_sids = {s.lower() for s in args.skip_sid}
@@ -646,6 +666,14 @@ def main() -> int:
         v = os.environ.get(env_key)
         if v:
             skip_sids.add(v.lower())
+
+    reclaim_manifest: dict = {}
+    if args.reclaim_manifest:
+        try:
+            reclaim_manifest = json.loads(Path(args.reclaim_manifest).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(f"ERROR: could not read --reclaim-manifest: {e}", file=sys.stderr)
+            return 2
 
     if args.all_repos:
         proj_dirs = iter_project_dirs()
@@ -659,7 +687,7 @@ def main() -> int:
     # Plan, keeping physical-dir grouping (mislocated copies never merge across dirs).
     groups: list[dict] = []   # {proj, label, rows}
     for pd in proj_dirs:
-        rows = plan_project(pd, args.repo_prefix, skip_sids)
+        rows = plan_project(pd, args.repo_prefix, skip_sids, reclaim_manifest)
         if not rows:
             continue
         label = rows[0]["repo"]
