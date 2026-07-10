@@ -3042,3 +3042,64 @@ A v2 refinement gates on the actual launch model rather than assuming kclaude ==
 **ORIGEN:** FD EXECUTION-mode activation (H2), SCS C82 addendum 2026-07-09.
 Cross-ref: `fable_distillation_scs_c82.md`, `fd_07_fable_learning_flywheel.md`,
 `plans/fd-hooks-activation-2026-07-09.md`.
+
+---
+
+## PR-FRONTIER-AS-RD-001 -- a frontier session is an R&D operation, not a query
+
+**TRIGGER:** about to launch or plan a session with a frontier model (Opus/Fable) for
+discovery, architecture, critique, or synthesis work.
+
+**REGLA:** treat every frontier token as R&D capital, not operational cost. Compile the
+session first (`modules/frontier_intelligence/session_compiler.py` -> the 9-component
+SESSION_ZERO plan: minimal context <2000 tok, ROI-ranked questions, 5-category budget,
+stopping criteria, writeback + distillation + transfer plan), and close it with a
+writeback (the FD-07 flywheel). A session without a compiled plan and without a
+writeback is capital spent with no asset kept.
+
+**POR QUE:** the durable advantage is not the answer (commodity) but the permanent asset
+the session deposits that lowers the need for future frontier tokens. The Token IRR
+(`modules/frontier_intelligence/token_irr.py`) measures the return numerically:
+immediate_roi, reuse_multiplier, compound_roi, payback, and the Frontier Dependence
+Index -- fed to CO-12, never a parallel accountant (FD-07 Invariant 1). No ROI claim
+without its `(metric, source, value)` triple.
+
+**COMO SE APLICA:** FIOS is the EXECUTION layer over the FD KNOWLEDGE: FD-00 defines what
+a distillation is; FIOS compiles/prices/evolves. session_compiler ranks questions via the
+FD-00 admission gate and the FD-07 deposits floor; token_irr reads the deposits ledger +
+CO-12 fd_metrics; nothing forks the dependence metric.
+
+**FAIL-OPEN:** every FIOS engine swallows its own errors and returns a benign result --
+a planning/metric/evolution tool must never block the session it serves.
+
+**ORIGEN:** FIOS execution-first build, SCS C84, 2026-07-10. Reality scan of 17 candidate
+systems -> 3 NEW (code) / 7 thin-extend / 5 covered by FD/CO/PM/GK.
+Cross-ref: `frontier_intelligence_os/FIOS_INDEX.md`, `modules/frontier_intelligence/`.
+
+---
+
+## T-FIOS-EVOLUTION-LOCK-001 -- the Dataset Evolution Engine proposes, never applies
+
+**TRIGGER:** the FIOS Dataset Evolution Engine
+(`modules/frontier_intelligence/evolution_engine.py`) detecting a mutation candidate
+(compress / split / merge / reinforce / deprecate / abstract / specialize) in a
+knowledge_base dataset.
+
+**REGLA:** the engine writes a proposal to
+`frontier_intelligence_os/pending_mutations.md` and STOPS. It never edits, splits, merges,
+or deletes a dataset. Every mutation to a sealed dataset requires explicit Owner promotion
+by hand. Unapproved proposals accumulate in the pending file for periodic review.
+
+**POR QUE:** a sealed dataset is a curated, cross-referenced artifact; an automatic
+mutation could silently corrupt a family's invariants or drop load-bearing content. This
+mirrors the cdio-standards-librarian and graphify agents (propose-with-evidence,
+never-auto-apply) and the HR-SECRET-003 recommend-and-wait discipline.
+
+**FAIL-OPEN:** a missing/unreadable kb dir -> zero proposals (never a raise); a failed
+proposal-file write -> None, the scan result is still returned. The engine is read-only
+over the datasets it scans.
+
+**ORIGEN:** FIOS execution-first build, SCS C84, 2026-07-10. The one genuinely-new FIOS
+responsibility (whole-KB dataset evolution; FD-06 mutates assets, GK-07 the graph, the
+cdio-librarian only CDIO -- none did whole-KB).
+Cross-ref: `frontier_intelligence_os/FIOS_INDEX.md`, `evolution_engine.py`.

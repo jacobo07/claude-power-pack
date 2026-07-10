@@ -23,6 +23,9 @@ This index is the single ledger across both.
 | C78 | CDIO — Chief Design Intelligence Officer (design-intelligence layer) | `agents/cdio-*.md`, `vault/knowledge_base/cdio/`, `modules/cdio/` | design-opinion-vs-criteria + review gate | 2026-07-05 | Sealed |
 | C79 | pane_map + PP Sessions resume uses kclaude (wrapper active on every resume) | `tools/build_pane_map.ps1`, `extension/src/restore_guard.js`, `extension/src/extension.js`; tests `test_pane_map.py`, `verify_session_ext.py`, `test_restore_guard.js` | `HR-RESTART-VIA-KCLAUDE-001` (C79 addendum) | 2026-07-06 | Sealed (Tier-1; cpc_os/lazarus Tier-2 pending) |
 | C80 | Pane-Map-Versioned + Workspace Session Registry (4-tier LIVE/RECENT/ARCHIVE, 15-min snapshots, 7-day retention, repos_live per timestamp) | `tools/build_pane_map.ps1`, `tools/pane_map_snapshot.py`; test `test_pane_map_snapshot.py` (6/6) | `PR-PANE-MAP-LIVE-ONLY-001` | 2026-07-06 | Sealed |
+| C82 | Fable Advantage Distillation Suite (FD-00..07) + EXECUTION-mode | `vault/knowledge_base/fable_distillation/`, `modules/fable_distillation/`; test `test_fable_distillation.py` (12/12) | `PR-FABLE-DELTA-ONLY-001` | 2026-07-09 | Sealed |
+| C83 | Recovery Control Plane (auto-path tasks.json from pane_map; all-panes multi-repo restore) | `modules/session_resilience/*`, `tools/vscode_autorun.py` | `HR-CONTROL-PLANE-EXCLUSIVE-RESP-001` | 2026-07-06 | Sealed |
+| C84 | Frontier Intelligence OS (FIOS) — execution layer (session compiler + Token IRR + dataset evolution) | `modules/frontier_intelligence/`, `vault/knowledge_base/frontier_intelligence_os/`; test `test_frontier_intelligence_os.py` (13/13 ×3) | `PR-FRONTIER-AS-RD-001`, `T-FIOS-EVOLUTION-LOCK-001` | 2026-07-10 | Sealed |
 
 ## Notes
 
