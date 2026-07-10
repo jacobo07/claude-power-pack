@@ -329,6 +329,205 @@ def gate_wiring() -> None:
         _fail("V-FIOS-LIVE-PATH-WIRED", f"missing: {bad}")
 
 
+def gate_harvester() -> None:
+    """FIOS I-4 question_harvester: 5 sources, provenance, bounded, fail-open."""
+    from modules.frontier_intelligence import question_harvester as QH
+    from modules.fable_distillation import fd_07_flywheel as FD07
+    from modules.owner_queue.owner_queue import append as oq_append
+
+    repo = "FIOS-HARVEST-TEST"
+    dep_state = _tmp("fios_qh_dep_")
+    FD07._append_jsonl(FD07._deposits_path(repo, dep_state), {
+        "fingerprint": "abc123", "claim": "the staging bus lives under the state dir",
+        "portability_target": "frontier-only", "portability_proven": False,
+        "destination": "dataset_part"})
+    FD07._append_jsonl(FD07._deposits_path(repo, dep_state), {
+        "fingerprint": "def456", "claim": "an already proven recipe",
+        "portability_target": "deterministic", "portability_proven": True,
+        "destination": "asset"})
+    oq_state = _tmp("fios_qh_oq_")
+    oq_append("Copy the canonical dispatcher to the live mirror",
+              "runbook step", state_dir=oq_state)
+    co12_state = _tmp("fios_qh_co12_")       # empty signals -> instrument-pending
+    kb = _tmp("fios_qh_kb_") / "ukdl-test.md"
+    kb.write_text(
+        "### UKDL TRAP T-ALPHA-WIDGET-001 -- widget breaks on reload\n\nbody\n\n"
+        "### UKDL TRAP T-ZEBRA-CROSSING-001 -- zebra crossing\n\n"
+        "### PROCESS RULE PR-ZEBRA-CROSSING-001 -- covers the zebra trap\n",
+        encoding="utf-8")
+    vd = _tmp("fios_qh_vault_")
+    (vd / "scs_note.md").write_text(
+        "# Note\n\nHonest residual: the live mirror copy is a manual Owner step.\n",
+        encoding="utf-8")
+
+    qs = QH.harvest(repo, state_dir=dep_state, oq_state_dir=oq_state,
+                    co12_state_dir=co12_state, kb_file=kb, vault_dirs=[vd])
+    by_src = {}
+    for q in qs:
+        by_src.setdefault(q.source, []).append(q)
+
+    # V-FIOS-HARVEST-SOURCES: every one of the 5 sources contributes a question.
+    want = {"deposits", "owner_queue", "co12", "ukdl_trap", "honest_residual"}
+    if want.issubset(by_src) and len(by_src["deposits"]) == 1:
+        _ok("V-FIOS-HARVEST-SOURCES",
+            f"{len(qs)} question(s) from {sorted(by_src)}; proven deposit skipped")
+    else:
+        _fail("V-FIOS-HARVEST-SOURCES",
+              f"sources={sorted(by_src)} deposits={len(by_src.get('deposits', []))}")
+
+    # V-FIOS-HARVEST-PROVENANCE: source_ref + expected_asset + fingerprint on all.
+    forms = {"hard_rule", "benchmark", "asset", "dataset_part"}
+    good = all(q.source_ref and q.expected_asset in forms
+               and q.fingerprint.startswith("q:") for q in qs)
+    if qs and good:
+        _ok("V-FIOS-HARVEST-PROVENANCE",
+            f"all {len(qs)} carry source_ref + expected_asset + fingerprint")
+    else:
+        _fail("V-FIOS-HARVEST-PROVENANCE", f"qs={[(q.source_ref, q.expected_asset) for q in qs]}")
+
+    # V-FIOS-HARVEST-UKDL-COVERAGE: uncovered trap harvested, covered trap skipped.
+    refs = {q.source_ref for q in qs}
+    if "ukdl:T-ALPHA-WIDGET-001" in refs and \
+            not any("T-ZEBRA-CROSSING" in r for r in refs):
+        _ok("V-FIOS-HARVEST-UKDL-COVERAGE",
+            "uncovered trap harvested; PR-covered trap skipped")
+    else:
+        _fail("V-FIOS-HARVEST-UKDL-COVERAGE", f"refs={sorted(refs)}")
+
+    # V-FIOS-HARVEST-FAILOPEN: garbage inputs -> [] or list, never a raise.
+    nowhere = Path(tempfile.gettempdir()) / "fios_qh_nonexistent_xyz"
+    try:
+        z = QH.harvest(12345, state_dir=nowhere, oq_state_dir=nowhere,  # type: ignore
+                       co12_state_dir=nowhere, kb_file=nowhere / "x.md",
+                       vault_dirs=[nowhere])
+        _ok("V-FIOS-HARVEST-FAILOPEN", f"garbage -> list({len(z)}), no raise")
+    except Exception as e:  # noqa: BLE001
+        _fail("V-FIOS-HARVEST-FAILOPEN", f"RAISED (must fail-open): {e}")
+
+
+def gate_portfolio() -> None:
+    """Compiler portfolio upgrades: dedup, depends_on, provenance render, agenda,
+    bilingual axes, FD-07 question_ref roundtrip, preflight auto-harvest."""
+    from modules.fable_distillation import fd_07_flywheel as FD07
+
+    kb = _tmp("fios_port_kb_")
+    route = lambda t: _FakeDecision("opus")  # noqa: E731
+    a = {"text": "design a novel rebase-safe isolation architecture from scratch",
+         "source_ref": "ukdl:T-TEST-001", "expected_asset": "hard_rule"}
+    a_fp = SC.question_fingerprint(a["text"])
+    dup = {"text": "design a novel rebase-safe isolation architecture completely from scratch",
+           "source_ref": "owner_queue:q-1", "expected_asset": "asset"}
+    b = {"text": "critique the adversarial edge case where that isolation approach fails",
+         "source_ref": "deposit:abc", "expected_asset": "benchmark",
+         "depends_on": a_fp}
+    floor_state = _tmp("fios_port_floor_")
+    FD07._append_jsonl(FD07._deposits_path("FIOS-PORT-TEST", floor_state), {
+        "fingerprint": "flr001", "claim": "the bus lives under state/parallel_mesh",
+        "portability_target": "frontier-only", "portability_proven": False,
+        "destination": "dataset_part"})
+    decl = SC.SessionDeclaration(objective="portfolio upgrades",
+                                 candidate_questions=[a, dup, b],
+                                 repo="FIOS-PORT-TEST", token_budget=10000)
+    plan = SC.compile_session(decl, kb_dir=kb, route_fn=route,
+                              state_dir=floor_state)
+    md = SC.render_plan(plan)
+
+    # V-FIOS-QDEDUP: near-identical candidate dropped, logged with its dup_of ref.
+    if len(plan.dropped) == 1 and plan.dropped[0].get("dup_of") == a_fp:
+        _ok("V-FIOS-QDEDUP", f"1 drop logged, dup_of={a_fp}")
+    else:
+        _fail("V-FIOS-QDEDUP", f"dropped={plan.dropped}")
+
+    # V-FIOS-QDEPENDS: the dependent question defers to follow_ups, not the lead list.
+    fu_fps = {q.fingerprint for q in plan.follow_ups}
+    main_texts = [q.text for q in plan.questions]
+    if SC.question_fingerprint(b["text"]) in fu_fps and b["text"] not in main_texts:
+        _ok("V-FIOS-QDEPENDS", "depends_on question deferred to follow-ups")
+    else:
+        _fail("V-FIOS-QDEPENDS",
+              f"follow_ups={sorted(fu_fps)} main={len(main_texts)}")
+
+    # V-FIOS-QPROVENANCE: source_ref/expected_asset/fingerprint survive to the render.
+    lead = plan.questions[0] if plan.questions else None
+    if lead and lead.source_ref == "ukdl:T-TEST-001" \
+            and lead.expected_asset == "hard_rule" \
+            and f"`{a_fp}`" in md and "ukdl:T-TEST-001" in md:
+        _ok("V-FIOS-QPROVENANCE", f"lead carries {lead.source_ref} -> rendered")
+    else:
+        _fail("V-FIOS-QPROVENANCE", f"lead={lead}")
+
+    # V-FIOS-PORTABILITY-AGENDA: the floor's unproven deposit becomes section 10.
+    if len(plan.portability_agenda) == 1 \
+            and plan.portability_agenda[0]["fingerprint"] == "flr001" \
+            and "## 10. Agenda de portabilidad" in md:
+        _ok("V-FIOS-PORTABILITY-AGENDA", "unproven floor deposit -> FD-04 agenda")
+    else:
+        _fail("V-FIOS-PORTABILITY-AGENDA", f"agenda={plan.portability_agenda}")
+
+    # V-FIOS-BILINGUAL-AXES: a Spanish question scores on the leverage axes.
+    lev, axes = SC._leverage(
+        "disena la arquitectura determinista: bajo que caso borde se rompe siempre?")
+    if lev >= 0.75:
+        _ok("V-FIOS-BILINGUAL-AXES", f"es-question leverage={lev} axes={axes}")
+    else:
+        _fail("V-FIOS-BILINGUAL-AXES", f"leverage={lev} axes={axes}")
+
+    # V-FD07-QUESTION-REF: a tagged finding deposits with question_ref; an
+    # untagged one still deposits (backward-compatible).
+    st = _tmp("fios_qref_")
+    res = FD07.run_flywheel("FIOS-QREF", findings=[
+        {"topic": "iso", "claim": "a genuinely novel architectural invariant "
+         "about pane isolation boundaries", "evidence": "e1",
+         "question_ref": "q:deadbeef1234"},
+        {"topic": "sched", "claim": "scheduler admission thresholds saturate "
+         "beyond twelve concurrent panes", "evidence": "e2"},
+    ], state_dir=st, record=False)
+    rows = FD07._load_deposits("FIOS-QREF", st)
+    tagged = [r for r in rows if r.get("question_ref") == "q:deadbeef1234"]
+    untagged = [r for r in rows if r.get("question_ref") == ""]
+    if res.deposited == 2 and len(tagged) == 1 and len(untagged) == 1:
+        _ok("V-FD07-QUESTION-REF",
+            "tagged deposit carries question_ref; untagged deposits unchanged")
+    else:
+        _fail("V-FD07-QUESTION-REF",
+              f"deposited={res.deposited} rows={[(r.get('question_ref')) for r in rows]}")
+
+    # V-FIOS-AUTOHARVEST-PREFLIGHT: an objective with no questions harvests; the
+    # kill-switch env disables it. Monkeypatched harvest -> hermetic.
+    orig = SC._auto_harvest
+    try:
+        SC._auto_harvest = lambda repo: [  # type: ignore
+            {"text": "design a novel frontier-worthy architecture question",
+             "source_ref": "deposit:x", "expected_asset": "benchmark"}]
+        line = SC.preflight("FIOS-AH", out_dir=_tmp("fios_ah_"),
+                            env={"PP_SESSION_OBJECTIVE": "objective sans questions"})
+        line2 = SC.preflight("FIOS-AH", out_dir=_tmp("fios_ah2_"),
+                             env={"PP_SESSION_OBJECTIVE": "objective sans questions",
+                                  "PP_SESSION_NO_HARVEST": "1"})
+        if line and "auto-harvest 1" in line and line2 and "auto-harvest" not in line2:
+            _ok("V-FIOS-AUTOHARVEST-PREFLIGHT",
+                "empty portfolio auto-harvested; kill-switch honored")
+        else:
+            _fail("V-FIOS-AUTOHARVEST-PREFLIGHT", f"line={line!r} line2={line2!r}")
+    finally:
+        SC._auto_harvest = orig              # type: ignore
+
+    # V-FIOS-HARVEST-WIRED (static): the compiler composes the harvester and the
+    # flywheel persists the provenance field -- the glue is the deliverable.
+    sc_src = Path(SC.__file__).read_text(encoding="utf-8")
+    fd_src = Path(FD07.__file__).read_text(encoding="utf-8")
+    checks = [
+        ("question_harvester" in sc_src, "compiler imports the harvester"),
+        ("_auto_harvest" in sc_src, "preflight auto-harvests an empty portfolio"),
+        ("question_ref" in fd_src, "flywheel persists question_ref"),
+    ]
+    bad = [m for ok, m in checks if not ok]
+    if not bad:
+        _ok("V-FIOS-HARVEST-WIRED", "compiler->harvester + flywheel provenance wired")
+    else:
+        _fail("V-FIOS-HARVEST-WIRED", f"missing: {bad}")
+
+
 def main() -> int:
     print("== FIOS execution-layer V-gates ==")
     print("[compose / anti-duplication]")
@@ -341,6 +540,10 @@ def main() -> int:
     gate_evolution()
     print("[live-path wiring]")
     gate_wiring()
+    print("[question harvester]")
+    gate_harvester()
+    print("[portfolio upgrades]")
+    gate_portfolio()
     total = _passes + _fails
     print(f"\nFIOS_ACTIVATION_PASS={_passes}/{total}  threshold={total}/{total}")
     verdict = "PASS" if _fails == 0 else "FAIL"

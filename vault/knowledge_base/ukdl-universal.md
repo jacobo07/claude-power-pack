@@ -3319,3 +3319,73 @@ instance of *ship -> is it alive? -> is it earning?*:
 
 Gates: `tools/test_strategic_gaps.py` 21/21 hermetic x3. Commits 9b725a2 (D1),
 24782cd (D4), a52a102 (D5), 5655cc0 (D2), 56d8814 (D3).
+
+---
+
+## PR-HARVEST-BEFORE-FRONTIER-001 -- never launch a frontier session with an empty question portfolio (2026-07-10)
+
+**TRIGGER:** compiling a SESSION_ZERO (FIOS session_compiler preflight or CLI) for a
+frontier session whose declaration has an objective but zero `candidate_questions`.
+
+**REGLA:** an empty portfolio is filled BEFORE launch by the deterministic
+question_harvester (`modules/frontier_intelligence/question_harvester.py`): it mines
+candidates from state the stack already records -- FD-07 unproven deposits (-> FD-04
+downgrade-test questions), OWNER_QUEUE residuals (-> retire-the-class questions),
+CO-12 instrument-pending fd metrics (-> instrumentation questions), UKDL traps with no
+covering PR/HR id (-> hardening questions), vault honest-residual markers (-> closure
+questions). Then the pipeline is harvest -> FD-00 admission rank -> candidate-vs-candidate
+dedup (Jaccard, drop LOGGED) -> depends_on deferral -> SESSION_ZERO. Every question
+carries `source_ref` + `expected_asset` + a `fingerprint` the session tags its PM-03
+findings with, so each FD-07 deposit records the `question_ref` that paid for it
+(per-question ROI, read through CO-12 -- no parallel metric). Kill-switch:
+`PP_SESSION_NO_HARVEST=1`.
+
+**POR QUE:** Session #1 (SESSION_ZERO_2026-07-10T162015Z) launched with 0 candidates --
+the compiler ranked an empty set and the session improvised its questions, so nothing
+linked deposits back to intent and the ranking/dedup machinery ran idle. The harvester
+never invents: it only converts already-recorded gaps into questions, and the FD-00 gate
+remains the sole admission arbiter (a harvested question the floor covers is DECLINE'd
+there, correctly -- most harvested questions routing ROUTE_CHEAPER is the system working,
+not failing: that work belongs below frontier).
+
+**FAIL-OPEN:** any harvester source error -> that source contributes nothing; harvest()
+never raises; preflight without a declaration stays silent (no per-launch bloat,
+T-FIOS-FRONTIER-SESSION-DETECT-001 unchanged).
+
+**ORIGEN:** Frontier Session #2 preparation build, 2026-07-10. Production Reality Gate:
+the live harvest on claude-power-pack produced 16 candidates from all 5 sources vs
+Session #1's 0, with a dedup drop logged and all 7 unproven deposits on the FD-04 agenda
+(SESSION_ZERO_2026-07-10T200936Z). Gates: `tools/test_frontier_intelligence_os.py`
+31/31 hermetic x3. Cross-ref: `[[PR-FRONTIER-AS-RD-001]]`, `[[PR-FABLE-DELTA-ONLY-001]]`,
+`fable_distillation/fd_02_high_leverage_question_compiler.md` (the doctrine this executes).
+
+## T-UFIEL-IS-COMPOSITION-001 -- a "Universal Frontier Intelligence Economics Layer" is FD+FIOS+D2A, already built
+
+**TRIGGER:** a prompt (any phrasing: frontier economics layer, reasoning-capital OS,
+cognitive-capital budget, universal model arbitrage, frontier constitution, reasoning
+portfolio optimizer) proposing a NEW permanent layer that governs how frontier reasoning
+is consumed, distilled, reused, and retired.
+
+**REGLA:** do not build the layer -- it exists as a composition, verified 2026-07-10 for
+the third consecutive ask of this shape: escalation ladder / zero-repeat = FD-00 gate
+consulting CO-03 route() + CO-05 assets + the deposits floor; reasoning compression +
+writeback = FD-07 flywheel (Stop-chain); conversation compiler = session_compiler
+(9-component SESSION_ZERO + question_harvester intake); session economics / cognitive
+IRR = token_irr + CO-12 fd_metrics (single accountant); duplicate arbitration = D2A
+engine + gate; constitution = PR-FABLE-DELTA-ONLY-001 + PR-FRONTIER-AS-RD-001; evolution
+/ retirement proposals = evolution_engine (Owner-gated). The honest response to the next
+such prompt is a Reality Scan overlap report + thin extensions of the named modules
+(EXECUTION MODE), never a parallel layer, registry, accountant, or router.
+
+**POR QUE:** the FIOS (SCS C84: 17 systems -> 3 engines) and D2A (SCS C85: 6 datasets ->
+1 doctrine + 1 engine) precedents each burned a full Reality Scan to reach the same
+verdict. Sealing the composition as negative knowledge makes the fourth ask resolve in
+one lookup instead of a fourth scan (PR-DUPLICATE-TO-ADVANTAGE-001: the duplicate points
+at its parents).
+
+**ORIGEN:** Frontier Session #2 / UFIEL ROI analysis, 2026-07-10. Verdict: ~90% covered;
+genuine deltas shipped as extensions (question_harvester, portfolio dedup + depends_on +
+bilingual axes + FD-04 portability agenda in session_compiler, Deposit.question_ref in
+fd_07_flywheel). Cross-ref: `[[PR-HARVEST-BEFORE-FRONTIER-001]]`,
+`[[PR-DUPLICATE-TO-ADVANTAGE-001]]`, `[[PR-FRONTIER-AS-RD-001]]`, `FIOS_INDEX.md`,
+`D2A_INDEX.md`.
