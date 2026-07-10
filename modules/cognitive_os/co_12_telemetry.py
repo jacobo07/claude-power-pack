@@ -274,14 +274,26 @@ def readiness_report(proj_base=None, *, state_dir=None) -> dict:
                 "critical_issues_caught": 0, "antipatterns_prevented": 0,
                 "measured": False}
     fd = fd_metrics(state_dir=state_dir)
+    # D3 recall-ROI: kb_injection_count + ceps_recurrence, read from the JIT usage
+    # log (recall_roi feeds this instrument, never forks a parallel accountant).
+    try:
+        from modules.recall_roi.recall_roi import co12_metrics as _recall_metrics
+        recall = _recall_metrics()
+    except Exception:  # noqa: BLE001 -- fail-open: telemetry never breaks the report
+        recall = {"kb_injection_count": 0, "distinct_lessons": 0,
+                  "ceps_recurrent_concepts": 0, "measured": False,
+                  "status": "instrument-pending"}
     pending = ["dedup_hit"]
     if not fd.get("measured"):
         pending.append("fd_distillation")
+    if not recall.get("measured"):
+        pending.append("recall_roi")
     return {
         "loop_boundedness": loop,          # REAL data now
         "opus_avoided": {**opus, "status": opus_status},
         "cdio": cdio,                      # REAL data once reviews record
         "fd_distillation": fd,             # REAL data once the FD loop runs live
+        "recall_roi": recall,              # REAL data from the JIT usage log (D3)
         "dedup_hit": {"status": "instrument-pending",
                       "reason": "PM-03 consume wired (Hook 13, C73); "
                                 "RedundancyTax hit-producer is agent-driven, "
