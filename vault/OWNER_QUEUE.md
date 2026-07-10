@@ -62,3 +62,24 @@ live-terminal count into `reentry.py`, not just a Copy-Item.
 - The `pp-snapshot-writer` 15-min task now sources `--pane-map` automatically on
   its next cycle (no Owner action); to apply immediately:
   `powershell -File tools\snapshot_auto_writer.ps1 -Action run`.
+
+---
+
+## 4. Register PP-LivenessCheck daily task  (D1 Liveness Ledger)  [PENDING]
+
+**System:** `modules/liveness/liveness_ledger.py`
+**Why:** D1's `vault/audits/liveness_report.md` only refreshes on a manual run
+without a scheduler. A daily task keeps the post-ship liveness verdict current so a
+component that goes silent (a Stop-chain that stopped firing, a drifted dispatcher)
+surfaces within a day instead of on the next incident.
+
+```powershell
+Register-ScheduledTask -TaskName 'PP-LivenessCheck' -Force `
+  -Trigger (New-ScheduledTaskTrigger -Daily -At 9am) `
+  -Action (New-ScheduledTaskAction `
+    -Execute 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe' `
+    -Argument 'C:\Users\User\.claude\skills\claude-power-pack\modules\liveness\liveness_ledger.py --report')
+```
+**Verify:** `Get-ScheduledTask -TaskName PP-LivenessCheck` -> State Ready; after it
+runs, `vault/audits/liveness_report.md` mtime is same-day. Remove the `[PENDING]`
+tag above once registered (the engine flips the row done on re-ingest).

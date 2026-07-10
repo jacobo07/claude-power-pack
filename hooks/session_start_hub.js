@@ -661,6 +661,85 @@ function hookFindingsBusDigest(cwd) {
 }
 
 // ---------------------------------------------------------------------------
+// Hook 14: OWNER_QUEUE digest (INLINE, D4 strategic-gaps)
+//   HR-001 Owner-side residuals (a Copy-Item, a scheduled-task registration)
+//   were tracked nowhere as a set, so a stale one could hide for days (the PM-03
+//   wiring sat pending 6+ days). The OWNER_QUEUE engine (modules/owner_queue)
+//   maintains a materialized OWNER_QUEUE.pending.json; this reads it DIRECTLY (a
+//   plain fs read, NOT a python shell-out -- the hub latency doctrine, SCS C23)
+//   and surfaces only residuals past the grace window (> 24h) so a fresh
+//   same-session residual does not nag. When the residual's component goes LIVE,
+//   the D1 auditor auto-clears the row -- so a cleared item drops off silently.
+//   Bounded + fail-open: any error -> null, never blocks SessionStart.
+// ---------------------------------------------------------------------------
+const OWNER_QUEUE_PENDING = path.join(STATE_DIR, 'OWNER_QUEUE.pending.json');
+const OWNER_QUEUE_GRACE_MINUTES = 24 * 60;  // surface residuals pending > 24h
+const OWNER_QUEUE_GRACE_MS = OWNER_QUEUE_GRACE_MINUTES * MS_PER_MINUTE;
+const OWNER_QUEUE_SHOWN = 8;
+
+function hookOwnerQueue() {
+  try {
+    if (!fs.existsSync(OWNER_QUEUE_PENDING)) {
+      return null;
+    }
+    let raw = fs.readFileSync(OWNER_QUEUE_PENDING, 'utf8');
+    if (raw && raw.charCodeAt(0) === UTF8_BOM_CHARCODE) {
+      raw = raw.slice(1);
+    }
+    raw = raw.trim();
+    if (!raw) {
+      return null;
+    }
+    let rows;
+    try {
+      rows = JSON.parse(raw);
+    } catch (parseErr) {
+      return null;
+    }
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return null;
+    }
+    const now = Date.now();
+    const stale = rows.filter((r) => {
+      if (!r || r.status !== 'pending') {
+        return false;
+      }
+      const t = Date.parse(r.created || '');
+      if (Number.isNaN(t)) {
+        return true;  // unparseable age -> surface (fail toward visibility)
+      }
+      return (now - t) >= OWNER_QUEUE_GRACE_MS;
+    });
+    if (stale.length === 0) {
+      return null;
+    }
+    const lines = ['[OWNER_QUEUE] ' + stale.length + ' HR-001 residual(s) pending '
+      + '> 24h -- run the exact command, then it auto-clears:'];
+    for (const r of stale.slice(0, OWNER_QUEUE_SHOWN)) {
+      const cmd = (r.command || '').replace(/\s+/g, ' ');
+      lines.push('- ' + (r.action || '(action?)') + ': ' + cmd);
+    }
+    return lines.join('\n');
+  } catch (err) {
+    note('owner_queue digest failed', err);
+    return null;
+  }
+}
+
+// Hook 14b (DETACHED): refresh the materialized pending view from the durable
+// vault/OWNER_QUEUE.md so the inline read above stays synced. Detached python
+// (the hub forbids a synchronous python shell-out inline, SCS C23) -> this
+// refreshes pending.json for the NEXT session; the inline hookOwnerQueue reads
+// the CURRENT one. Same one-session-lag pattern as the AutoResearch pull. The
+// ingest is idempotent and fail-open (never touches the durable md).
+const OWNER_QUEUE_PY = path.join(PP_PATH, 'modules', 'owner_queue', 'owner_queue.py');
+
+function hookOwnerQueueIngest() {
+  detachedSpawn('owner_queue_ingest', PYTHON_EXE, [OWNER_QUEUE_PY, '--ingest'],
+    Object.assign({}, process.env, { PYTHONIOENCODING: 'utf-8' }));
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
@@ -701,6 +780,14 @@ function main() {
         : busLine;
     }
 
+    // 14. OWNER_QUEUE digest -- inline read of the materialized pending view (D4).
+    const ownerQueueLine = hookOwnerQueue();
+    if (ownerQueueLine) {
+      additionalContext = additionalContext
+        ? (additionalContext + '\n' + ownerQueueLine)
+        : ownerQueueLine;
+    }
+
     // 2-5. Fire-and-forget spawns (all detached, no waiting).
     hookJitWarm(cwd);
     hookAutoCompactCleanup();
@@ -711,6 +798,8 @@ function main() {
     hookCpcOsRegister(cwd, sessionId);
     // 12b. AutoResearch VPS digest -- detached TTL-gated pull for next session.
     hookAutoResearchPull();
+    // 14b. OWNER_QUEUE ingest -- detached refresh of pending.json from the vault doc.
+    hookOwnerQueueIngest();
 
     // 9-11. Folded fire-and-forget hooks (BL-SESSION-FOLD-001).
     hookMarkLiveSession(cwd, sessionId);

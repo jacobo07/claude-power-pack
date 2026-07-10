@@ -182,9 +182,9 @@ def _probe_pm_bus(spec: dict, *, mesh_dir: Path, signals: list, now: datetime,
     if fresh_consume:
         return LIVE, f"{len(producers)} producer file(s), consume signal '{consume_kind}' recent"
     if producers:
-        return SILENT, (f"{len(producers)} producer file(s) written, NO '{consume_kind}' "
-                        f"consumer signal -- written, never read")
-    return ORPHANED, f"no producer files and no consumer -- bus inert"
+        return SILENT, (f"{len(producers)} producer file(s); consumer is the SessionStart "
+                        f"hub read but emits no '{consume_kind}' signal -- consumption unmeasured")
+    return ORPHANED, "no producer files and no consumer -- bus inert"
 
 
 def _probe_file_mtime(spec: dict, *, repo_root: Path, now: datetime,
@@ -284,6 +284,14 @@ def write_report(rows=None, *, out_path=None, now=None, **audit_kw) -> Path:
     now = now or datetime.now(timezone.utc)
     if rows is None:
         rows = audit(now=now, **audit_kw)
+    # D1 -> D4 composition: a component now LIVE auto-clears its OWNER_QUEUE
+    # residual, so the Owner never bookkeeps completion. Fail-open: a queue
+    # error never disturbs report generation.
+    try:
+        from modules.owner_queue.owner_queue import autoclear
+        autoclear([r["id"] for r in rows if r.get("verdict") == LIVE], now=now)
+    except Exception:  # noqa: BLE001 -- fail-open
+        pass
     out = Path(out_path) if out_path else (_repo_root() / "vault" / "audits" / "liveness_report.md")
     try:
         out.parent.mkdir(parents=True, exist_ok=True)
