@@ -7,6 +7,14 @@ applicable across PP-shipped projects and not specific to one repo.
 Entries are append-only; never remove a row. If a lesson is
 superseded, append the superseding row referring back to the older.
 
+## Workspace Recovery Control Plane — Execution Mode (SCS C83) — 2026-07-10
+
+| Ref | File | Why it matters |
+|---|---|---|
+| UKDL-WRCP-01 | `vault/lessons/recovery-control-plane-scs-c83.md` | Sealed lesson: Reality-Scan verdict (Execution Mode, not a new Control Plane), the 3 root causes (1-pane-per-repo, shutdown!=restart, only-works-in-PP), the Sprint-0 wiring fix, HR-CONTROL-PLANE-EXCLUSIVE-RESP-001 + T-RECOVERY-HOST-COUPLING-001 + PR-RECOVERY-MANIFEST-SOURCE-001, and Owner-gated orphan-activation follow-ups. |
+| UKDL-WRCP-02 | `modules/cpc_os/vscode_autorun.py` (`generate_from_pane_map`) + `tools/snapshot_auto_writer.ps1` | The fix: automatic restore artifact (tasks.json) now derives from the corrected pane_map.json (all repos, all panes, no truncation) via one shared adapter — killing the host-coupled per-cwd/legacy-snapshot regression. |
+| UKDL-WRCP-03 | `tools/test_recovery_control_plane.py` | 6 V-gates x3 hermetic proving all-panes/multi-repo/parity/no-duplicate-manifest/exclusive-responsibility. Complements test_restore_all_panes.py (different layer). |
+
 ## Auto-Testing Skill (Quality Gate) — 2026-05-23
 
 | Ref | File | Why it matters |

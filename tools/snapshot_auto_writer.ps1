@@ -85,11 +85,26 @@ function Invoke-Cycle {
         $env:PYTHONIOENCODING = 'utf-8'
         & $py -c "from modules.cpc_os.snapshot import generate_snapshot; print('snapshot:', generate_snapshot())" 2>&1 | ForEach-Object { Write-Log "[snap] $_" }
         $snapRc = $LASTEXITCODE
-        # 2. Write .vscode/tasks.json per repo from the refreshed snapshot
-        #    (no Cursor windows). Idempotent-skip handles unchanged repos.
-        & $py $AutorunScript --snapshot $SnapshotJson 2>&1 | ForEach-Object { Write-Log "[autorun] $_" }
-        $genRc = $LASTEXITCODE
-        Write-Log "[CYCLE] snapshot_rc=$snapRc autorun_rc=$genRc"
+        # 2. Write .vscode/tasks.json per repo. PREFER the corrected pane_map.json
+        #    (all repos, all panes -- refreshed by the PP-PaneMapUpdate task) over
+        #    the legacy session_snapshot.json (which under-records repos+sids and,
+        #    without --no-truncate, capped each repo to its live tab count -> the
+        #    "1 pane per repo" + "only works in PP" automatic-path regressions).
+        #    --pane-map implies no truncation, so every resumable pane of every
+        #    repo becomes its own folderOpen task (the tasks.json Cursor auto-runs
+        #    on a reboot -> shutdown restores like a restart). Fail-open: if the
+        #    pane_map is missing, fall back to the legacy snapshot path so a cycle
+        #    never writes nothing. No Cursor windows; idempotent-skip unchanged.
+        $PaneMapJson = Join-Path $HOME ".claude\state\pane_map.json"
+        if (Test-Path $PaneMapJson) {
+            & $py $AutorunScript --pane-map $PaneMapJson 2>&1 | ForEach-Object { Write-Log "[autorun] $_" }
+            $genRc = $LASTEXITCODE
+            Write-Log "[CYCLE] source=pane_map snapshot_rc=$snapRc autorun_rc=$genRc"
+        } else {
+            & $py $AutorunScript --snapshot $SnapshotJson 2>&1 | ForEach-Object { Write-Log "[autorun] $_" }
+            $genRc = $LASTEXITCODE
+            Write-Log "[CYCLE] source=snapshot(fallback) snapshot_rc=$snapRc autorun_rc=$genRc"
+        }
         Write-Host "OK: cycle complete (snapshot_rc=$snapRc autorun_rc=$genRc)"
         return 0
     } finally {

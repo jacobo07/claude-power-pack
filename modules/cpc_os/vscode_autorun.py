@@ -318,8 +318,73 @@ def generate_from_snapshot(
     return results
 
 
+def _panes_from_pane_map(pane_map: dict) -> list[dict]:
+    """Adapt pane_map.json records to the internal pane shape generate_from_snapshot
+    consumes. The pane_map (built by build_pane_map.ps1 from disk truth) is the
+    CORRECTED, all-repos/all-panes manifest -- it does not under-record repos/sids
+    the way the legacy session_snapshot.json does, and its panel-facing `panes`
+    array already excludes ARCHIVE-tier (stale-content) panes. Each record carries
+    {cwd, sessionId, resumeCmd, topic, repo}; we map it to {cwd, session_id,
+    resume:"claude --resume <sid>", topic, repo}. A pane with no sessionId or cwd is
+    dropped (build_cpc_tasks would reject it anyway as an empty shell)."""
+    out: list[dict] = []
+    for p in (pane_map.get("panes") or []):
+        if not isinstance(p, dict):
+            continue
+        sid = p.get("sessionId")
+        cwd = p.get("cwd")
+        if not sid or not cwd:
+            continue
+        out.append({
+            "cwd": cwd,
+            "session_id": sid,
+            # Normalize to the "claude --resume <sid>" form parse_resume expects;
+            # build_pane_task rewrites the command to kclaude.bat regardless.
+            "resume": f"claude --resume {sid}",
+            "topic": p.get("topic"),
+            "repo": p.get("repo") or (Path(cwd).name if cwd else ""),
+        })
+    return out
+
+
+def generate_from_pane_map(
+    pane_map_json: Path | str,
+    cwds: list[str] | None = None,
+    dry_run: bool = False,
+) -> list[dict]:
+    """Write an auto-run tasks.json per repo from the pane_map (disk-truth) source.
+
+    This is the ALL-PANES, ALL-REPOS restore path: unlike generate_from_snapshot
+    (which reads the under-recording session_snapshot.json and truncates to the
+    live Cursor tab count), this reads the corrected pane_map.json and NEVER
+    truncates (target_count=None) -- so every resumable pane of every repo becomes
+    its own folderOpen task. Fixes the "1 pane per repo" + "only works in PP"
+    automatic-path regressions at the source (the tasks.json Cursor auto-runs on a
+    reboot). ``cwds`` restricts to specific repos; None = all repos in the map.
+
+    Shared by tools/snapshot_auto_writer.ps1 (15-min background writer) and
+    tools/restore_panes.ps1 -AutoRun so the pane_map->task transform lives in ONE
+    place (no PowerShell/Python duplication)."""
+    path = Path(pane_map_json)
+    pane_map = json.loads(path.read_text(encoding="utf-8-sig"))
+    panes = _panes_from_pane_map(pane_map)
+    wanted = set(cwds) if cwds else None
+    results: list[dict] = []
+    for cwd, group in _group_by_cwd(panes).items():
+        if wanted is not None and cwd not in wanted:
+            continue
+        # target_count=None -> no truncation: write ALL panes for this repo.
+        results.append(write_autorun_for_cwd(
+            cwd, group, dry_run=dry_run, target_count=None))
+    return results
+
+
 def _default_snapshot() -> Path:
     return Path.home() / ".claude" / "state" / "session_snapshot.json"
+
+
+def _default_pane_map() -> Path:
+    return Path.home() / ".claude" / "state" / "pane_map.json"
 
 
 def main(argv=None) -> int:
@@ -333,6 +398,11 @@ def main(argv=None) -> int:
     )
     ap.add_argument("--snapshot", default=None,
                     help="snapshot json (default ~/.claude/state/session_snapshot.json)")
+    ap.add_argument("--pane-map", dest="pane_map", nargs="?", const="__default__",
+                    default=None,
+                    help="read the corrected pane_map.json (all repos, all panes) "
+                         "instead of the legacy snapshot; implies --no-truncate. "
+                         "Bare flag uses ~/.claude/state/pane_map.json.")
     ap.add_argument("--cwd", action="append", default=None,
                     help="restrict to these repo cwd(s); repeatable")
     ap.add_argument("--dry-run", action="store_true",
@@ -341,6 +411,27 @@ def main(argv=None) -> int:
                     help="write ALL panes per repo (no Cursor tab-count cap) -- "
                          "the pane_map-driven full-restore mode")
     args = ap.parse_args(argv)
+
+    # pane_map source (all repos, all panes -- the corrected disk-truth manifest).
+    # Takes precedence over --snapshot; never truncates (that is the whole point).
+    if args.pane_map is not None:
+        pm = _default_pane_map() if args.pane_map == "__default__" else Path(args.pane_map)
+        if not pm.is_file():
+            print(f"[ERROR] pane_map not found: {pm}")
+            return 1
+        try:
+            results = generate_from_pane_map(pm, cwds=args.cwd, dry_run=args.dry_run)
+        except (OSError, ValueError) as e:  # noqa: BLE001
+            print(f"[ERROR] cannot read pane_map: {e}")
+            return 1
+        for r in results:
+            warn = "" if r["parse_ok"] else "  [existing tasks.json was JSONC -> backed up]"
+            bak = "  (backup written)" if r.get("backed_up") else ""
+            print(f"[{r['action']}] {r['cwd']}  ({r['n_tasks']} task(s)) "
+                  f"-> {r['tasks_path']}{bak}{warn}")
+        if not results:
+            print("[INFO] no repos in pane_map; nothing to auto-run.")
+        return 0
 
     snap = Path(args.snapshot) if args.snapshot else _default_snapshot()
     if not snap.is_file():
