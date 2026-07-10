@@ -36,6 +36,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | governance vault, leyes, mistakes, gates, vault sync | GV: Governance Vault | `parts/sleepy/governance-vault.md` |
 | destila, destilar, KobiiDistillerOS, prompt madre, tier 1 2 3, vMAX, 22 secciones, Tandas, Partes, UKDL | D: KobiiDistiller | `parts/sleepy/distiller.md` |
 | multi-file search, audit, "find every", > 3 files, > 40 KB raw read | SR: Subagent Routing | `parts/sleepy/subagent-routing.md` |
+| meta-systems, meta-sistemas, provenance substrate, composition fabric, intent compiler, compounding substrate, capital ledger, absence engine, closed loop, MS-0…MS-6, apply the meta-systems | **UMS: Universal Meta-Systems** (7 domain-blind meta-systems; opt-in; exposes read-only corpus `45dd1f9`, never modifies it) | `parts/sleepy/meta-systems.md` |
 
 ## Quick Reference
 
@@ -58,6 +59,7 @@ Universal AI execution framework. Project-agnostic. Tiered loading.
 | `/cpp-distill <source>` / `check <path>` / `distill <source>` | Atomic-ingest + 22-section distillation (Tandas & Partes) + IRE-7. `distill` = zero-token deterministic engine (default; needs `$KOBII_DISTILLER_ENGINE_ROOT`); `check` validates an output dir | commands/distill.md |
 | `/cpp-design-md` | Lint/diff/export DESIGN.md (Google Labs design-system spec). Power-Pack default for web design. | commands/design-md.md |
 | `/cpp-resume-sovereign <q\|cid\|--list>` | Fuzzy-search Sovereign Vault (46k+) via FTS5 BM25 and inject a recovered session as read-only context + project-filtered Universal Laws | commands/resume-sovereign.md |
+| `/cpp-meta-systems <list\|show MS-N\|apply MS-N to "<intent>"\|loop "<target>"\|audit>` | Apply the 7 universal domain-blind meta-systems (provenance/composition/intent-compiler/compounding/capital/evolution/absence) to any project via noun-substitution. Opt-in; exposes read-only corpus `45dd1f9`, never modifies it. | commands/meta-systems.md |
 | `/cpp-compound` | Compound Learnings driver: consolidates new learning files into rules/skills/hooks/agent updates. Sentinel hook at `~/.claude/hooks/learning-sentinel.js` produces `LEARNINGS_PENDING.md` markers; this command consumes. Health check: `python tools/compound_audit.py`. | commands/compound.md |
 
 ## SkillBank Index

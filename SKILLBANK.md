@@ -17,7 +17,7 @@ purpose: Single-page index of every activatable surface in this skill. Makes the
 - **Output** — the observable artifact produced.
 - **Path** — where the skill lives.
 
-## Slash Commands (11)
+## Slash Commands (12)
 
 | Skill | Type | Process | Rules | Output | Path |
 |-------|------|---------|-------|--------|------|
@@ -33,11 +33,13 @@ purpose: Single-page index of every activatable surface in this skill. Makes the
 | `/cpp-update` | cmd | Update Claude Power Pack to latest from GitHub. | Preserves local patches; reapply via `gsd:reapply-patches`. | Updated SKILL.md + modules. | `commands/update.md` |
 | `/cpp-vault-setup` | cmd | Extract monolithic CLAUDE.md into an Obsidian governance vault. | On-demand loading; keeps CLAUDE.md < 100 lines. | `~/.claude/vault/INDEX.md` + topic pages. | `commands/vault-setup.md` |
 | `/cpp-vault-sync` | cmd | Regenerate governance vault INDEX.md + sync metadata. | Wikilinks must resolve; entries 1-line compressed. | Refreshed INDEX.md + frontmatter. | `commands/vault-sync.md` |
+| `/cpp-meta-systems <list\|show\|apply\|loop\|audit>` | cmd | Opt-in entry to the 7 universal domain-blind meta-systems; applies one (or the closed loop) to any project via noun-substitution against the read-only corpus. | Corpus read-only at SHA `45dd1f9`; never hardcode a domain; expose-don't-reimplement; opt-in only. | Meta-system instantiated for the user's domain (noun-map + laws + universality verdict). | `commands/meta-systems.md` |
 
-## Modules (13)
+## Modules (14)
 
 | Skill | Type | Process | Rules | Output | Path |
 |-------|------|---------|-------|--------|------|
+| `universal-meta-systems` | mod | Read-only bridge to a corpus of 7 universal, domain-blind meta-systems (provenance / composition / intent-compiler / compounding / capital / evolution / absence). Applies one — or the whole closed loop — to any project via noun-substitution; exposes the corpus, never reimplements it. | Corpus read-only at SHA `45dd1f9`; universality preserved (no hardcoded domain); opt-in only; expose-don't-reimplement. | Meta-system instantiated for the user's domain (noun-map + verbatim laws + universality verdict). | `modules/universal-meta-systems/` |
 | `agent-governance` | mod | AGT policy scaffolding, Ring 0-3 privilege mapping, OWASP ASI 10-item check. | Default Ring 3 (least privilege); kill switch required per loop. | Policy file + agent audit. | `modules/agent-governance/` |
 | `agent-lightning` | mod | Lightweight agent dispatch shim. | Respects blast-radius limits. | Dispatched task result. | `modules/agent-lightning/` |
 | `autoresearch` | mod | Self-improving competitive intelligence (3-4×/day on every SaaS). | RSS + YouTube firehose + cross-signal bus. | `signal_scorer` rankings. | `modules/autoresearch/` |
@@ -53,10 +55,11 @@ purpose: Single-page index of every activatable surface in this skill. Makes the
 | `zero-crash` | mod | TTY isolation, advisory quality gates, process sandboxing, golden-pattern injection. | TTY restore mandatory after every Bash. | Sandboxed shell + gate verdict. | `modules/zero-crash/` |
 | `distiller` | mod | KobiiDistillerOS v1.2 — 3-Tier / **22-section** destilation pipeline with Tandas & Partes structural layer (T1/T2/T3 × I/II/III), kernel vMAX-NULL-ERROR (placeholder + ROI + Hawkins + voice gates), Markdown emitter, UKDL bridge, vaccine synth. v1.2: **all 22 sections materialized, zero gap markers**; DRY_RUN synthesizer emits the full Tandas/Partes skeleton deterministically (zero tokens). | All 22 section titles ratified; validator enforces structural markers + global voice gate; deterministic synthesizer is the default (no API key); LIVE Anthropic mode is opt-in. | `Tier_N/Seccion_N.md` × 22 + ledger row + vaccines. Engine at `kobicraft_content_intelligence/distiller/`, wired via `run.py distill` + `$KOBII_DISTILLER_ENGINE_ROOT`. | `modules/distiller/` |
 
-## Sleepy Parts (10 — load only on trigger)
+## Sleepy Parts (11 — load only on trigger)
 
 | Skill | Type | Process | Rules | Output | Path |
 |-------|------|---------|-------|--------|------|
+| `meta-systems` (UMS) | sleepy | Load on meta-systems / MS-0…MS-6 / provenance substrate / composition fabric / intent compiler / compounding substrate / capital ledger / absence engine / closed loop keywords. Tiered: LIGHT=index, STANDARD=one dataset, DEEP=loop, FORENSIC=universality audit. | Opt-in; corpus read-only at `45dd1f9`; nouns stay abstract (no domain hardcode). | Meta-systems on-ramp + noun-substitution protocol loaded. | `parts/sleepy/meta-systems.md` |
 | `agent-governance` (W) | sleepy | Load when task involves agent systems. | Triggers on `langchain/langgraph/crewai/autogen/ag2/claude_agent_sdk/semantic_kernel`. | Agent overlay rules loaded. | `parts/sleepy/agent-governance.md` |
 | `autoresearch` (G) | sleepy | Load on /autoresearch or competitive research. | Cross-signal dedup; score threshold. | Research rules loaded. | `parts/sleepy/autoresearch.md` |
 | `executionos` (I) | sleepy | Load when user requests ExecutionOS / governance overlay. | Follows tier routing. | ExecutionOS rules loaded. | `parts/sleepy/executionos.md` |
