@@ -3181,3 +3181,35 @@ failing rule surfaces which and why, it never crashes the verdict. The Owner rul
 **ORIGEN:** D2A Engine, SCS C85, 2026-07-10. Companion of `[[PR-DUPLICATE-TO-ADVANTAGE-001]]`
 and the FIOS execution-first precedent (17 systems -> 3 engines + 1 doctrine, zero prose
 datasets). Cross-ref: `d2a_00_duplicate_to_advantage_doctrine.md` Part III.
+
+## T-D2A-GATE-KEYWORD-SCOPE-001 -- the D2A gate intercepts CREATION only
+
+**TRIGGER:** the D2A advisory gate (`hooks/d2a_gate.js`, UserPromptSubmit) evaluating an
+Owner prompt, or any change to its keyword sets.
+
+**REGLA:** the gate fires ONLY on a proposal to CREATE a new system / dataset / module.
+Detection is CONJUNCTIVE: (a creation verb) AND (an architecture-level noun) AND NOT (a
+verb acting on something that already exists). It NEVER intercepts use, query, extension,
+wiring, activation, testing, refactor, rename, or modification of an existing system.
+**A false positive is strictly worse than a false negative** -- an advisory on a prompt
+that was never a creation proposal trains the Owner to ignore the gate, which destroys the
+only value it has. When in doubt, stay silent.
+
+**POR QUE:** the gate's authority is entirely borrowed from its precision. It never blocks,
+so its only lever is the Owner's attention; spending that attention on a false positive is
+the one unrecoverable failure. Under-firing costs a missed nudge; over-firing costs the
+gate itself.
+
+**FAIL-OPEN:** engine missing / python broken / timeout / non-JSON stdin / unparseable
+verdict -> empty stdout, exit 0. The gate NEVER exits 2, NEVER denies, NEVER blocks
+(level-2 on the CO-10 ladder, mirroring `graph_first_gate.js` / GK-12). A silent gate is
+always preferable to a gate that stops the Owner's work.
+
+**SURFACE NOTE (empirical):** it is a **UserPromptSubmit** hook, not PreToolUse. A
+PreToolUse hook receives `{tool_name, tool_input}` and never sees the Owner's prompt text,
+so "advise before Claude starts building, based on the Owner's own words" is not
+implementable there. Precedent: `prd-keyword-sentinel.js`. Do not "fix" this by moving it.
+
+**ORIGEN:** D2A gate wiring, SCS C85 addendum, 2026-07-10. Companion of
+`[[PR-DUPLICATE-TO-ADVANTAGE-001]]`. Cross-ref: `hooks/d2a_gate.js`,
+`hooks/hook-dispatcher.js` (UserPromptSubmit-chain), `[[T-HOOK-DISPATCHER-DRIFT-001]]`.

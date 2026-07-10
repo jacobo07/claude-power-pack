@@ -27,6 +27,7 @@ This index is the single ledger across both.
 | C83 | Recovery Control Plane (auto-path tasks.json from pane_map; all-panes multi-repo restore) | `modules/session_resilience/*`, `tools/vscode_autorun.py` | `HR-CONTROL-PLANE-EXCLUSIVE-RESP-001` | 2026-07-06 | Sealed |
 | C84 | Frontier Intelligence OS (FIOS) — execution layer (session compiler + Token IRR + dataset evolution) | `modules/frontier_intelligence/`, `vault/knowledge_base/frontier_intelligence_os/`; test `test_frontier_intelligence_os.py` (13/13 ×3) | `PR-FRONTIER-AS-RD-001`, `T-FIOS-EVOLUTION-LOCK-001` | 2026-07-10 | Sealed |
 | C85 | Duplicate-to-Advantage Engine (D2A) — prospective build-governor (detect→map→generate→score→govern) | `modules/duplicate_to_advantage/`, `vault/knowledge_base/duplicate_to_advantage/` (D2A-00 doctrine + index); test `test_duplicate_to_advantage.py` (14/14 ×3) | `PR-DUPLICATE-TO-ADVANTAGE-001`, `T-D2A-ANTIINFLATION-VIOLATION-001` | 2026-07-10 | Sealed |
+| C85 addendum | D2A gate wired — advisory before any build, global, fail-open | `hooks/d2a_gate.js` (UserPromptSubmit, level-2 advisory), `hooks/hook-dispatcher.js` (UserPromptSubmit-chain), `d2a_engine.py --stdin` + bilingual alias layer; test `test_duplicate_to_advantage.py` (21/21 ×3) | `T-D2A-GATE-KEYWORD-SCOPE-001` | 2026-07-10 | Sealed (live after Owner `Copy-Item` of hook-dispatcher.js — `T-HOOK-DISPATCHER-DRIFT-001`) |
 
 ## Notes
 

@@ -54,16 +54,49 @@ except Exception:  # noqa: BLE001
 
 _STOP = {"the", "a", "an", "of", "to", "in", "on", "for", "and", "or", "is", "are",
          "this", "that", "with", "it", "as", "by", "at", "de", "la", "el", "los", "un",
-         "una", "que", "system", "engine", "layer", "manager", "tool", "new"}
+         "una", "que", "system", "engine", "layer", "manager", "tool", "new",
+         # Creation verbs + filler. A proposal ALWAYS says "build/create ..."; those
+         # words carry no responsibility signal and would dilute the owned-fraction
+         # (they are what the gate matched on, not what the proposal is ABOUT).
+         "create", "build", "make", "implement", "design", "want", "need", "add",
+         "crear", "crea", "construye", "construir", "implementa", "implementar",
+         "disena", "diseñar", "disenar", "quiero", "necesito", "nuevo", "nueva",
+         "entre", "segun", "según", "elija", "elegir", "para", "con", "por", "como",
+         "mas", "más", "sobre", "cual", "cuando", "todo", "cada", "puede"}
+
+# Bilingual normalization. ONLY terms whose English form already exists in
+# FAMILY_REGISTRY -- this is a lookup alias, not a new vocabulary. Without it a
+# Spanish proposal ("router de modelos", "coste") cannot match a registry that is
+# written in English, and the detector silently under-reports duplication.
+_ALIASES = {
+    "modelos": "model", "modelo": "model",
+    "coste": "cost", "costo": "cost", "costes": "cost", "costos": "cost",
+    "enrutador": "router", "enrutamiento": "routing", "ruta": "route",
+    "presupuesto": "budget", "presupuestos": "budget",
+    "sesion": "session", "sesión": "session", "sesiones": "session",
+    "memoria": "memory", "agente": "agent", "agentes": "agent",
+    "conocimiento": "knowledge", "grafo": "graph", "coordenada": "coordinate",
+    "duplicado": "duplicate", "duplicados": "duplicate", "solape": "overlap",
+    "hallazgos": "findings", "hallazgo": "findings",
+    "paralelo": "parallel", "panel": "pane", "paneles": "pane",
+    "activo": "asset", "activos": "asset", "registro": "registry",
+    "metrica": "metric", "métrica": "metric", "metricas": "metric",
+    "dependencia": "dependence", "dependencias": "dependence",
+    "cobertura": "coverage", "brecha": "gap", "brechas": "gap",
+    "planificador": "planner", "capital": "capital", "reutilizacion": "reuse",
+    "reutilización": "reuse", "determinista": "deterministic",
+}
 
 
 def _tokens(s: str) -> list:
     if _ee_tokens is not None:
         try:
-            return [w for w in _ee_tokens(s) if w not in _STOP]
+            raw = _ee_tokens(s)
         except Exception:  # noqa: BLE001
-            pass
-    return [w for w in re.findall(r"[a-z0-9]{3,}", (s or "").lower()) if w not in _STOP]
+            raw = re.findall(r"[a-z0-9]{3,}", (s or "").lower())
+    else:
+        raw = re.findall(r"[a-z0-9]{3,}", (s or "").lower())
+    return [_ALIASES.get(w, w) for w in raw if w not in _STOP]
 
 
 # ---------------------------------------------------------------------------
@@ -628,10 +661,24 @@ def main(argv=None) -> int:
                     "(propose, never build)")
     ap.add_argument("description", nargs="*", help="the proposal to evaluate")
     ap.add_argument("--name", default="", help="short proposal name")
+    ap.add_argument("--stdin", action="store_true",
+                    help="read the proposal text from stdin (hook/gate entry point)")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
-    desc = " ".join(args.description).strip()
+    if args.stdin:
+        try:
+            raw = sys.stdin.read()
+        except Exception:  # noqa: BLE001 -- fail-open
+            raw = ""
+        desc = raw.lstrip("﻿").strip()   # strip a BOM a caller may have prepended
+    else:
+        desc = " ".join(args.description).strip()
     if not desc:
+        if args.stdin:                        # empty stdin -> honest DEFER, never a demo
+            v = run(Proposal("", args.name))
+            print(json.dumps(_verdict_to_dict(v), ensure_ascii=False)
+                  if args.json else render(v))
+            return 0
         desc = "Token Budget Planner"      # the canonical worked example
         args.name = args.name or "Token Budget Planner"
     v = run(Proposal(desc, args.name))

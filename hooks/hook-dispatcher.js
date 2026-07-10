@@ -234,6 +234,11 @@ const CHAIN_MAP = {
   'UserPromptSubmit-chain': [
     { exe: NODE_EXE, script: './correction-guard.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: './prd-keyword-sentinel.js', timeoutMs: 8000 },
+    // D2A duplicate advisory (SCS C85 addendum, level-2 — NEVER blocks). Fires only
+    // when the prompt PROPOSES CREATING a new system/dataset; spawns the engine
+    // (python child) and surfaces the DUPE VERDICT + BUILD CONTRACT before Claude
+    // builds. Silent on novel proposals and on use/extend/fix. Fail-open absolute.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/d2a_gate.js', timeoutMs: 12000 },
     { exe: PY_EXE, script: '../skills/claude-power-pack/tools/jit_skill_loader.py', timeoutMs: 12000 },
   ],
   // PostToolUse matcher=Bash standalone fold (hub-fold 2026-06-04). Post-hoc

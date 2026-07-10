@@ -9,7 +9,11 @@ Run: python tools/test_duplicate_to_advantage.py [--json]
 """
 from __future__ import annotations
 
+import itertools
+import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -67,6 +71,32 @@ def _part_word_counts(md_path: Path) -> list:
         words = len(re.findall(r"[A-Za-z0-9][A-Za-z0-9'\-]*", seg))
         counts.append(words)
     return counts
+
+
+_GATE = _PP_ROOT / "hooks" / "d2a_gate.js"
+_NODE = shutil.which("node")
+# Every gate call gets a unique session id: the gate throttles per (session, prompt),
+# so a shared id would silence the second assertion and make the suite non-hermetic.
+_SID = itertools.count()
+
+
+def _run_gate_raw(raw_stdin: str, cwd: str | None = None) -> tuple:
+    """Spawn the gate exactly as the dispatcher does (shell-free, stdin->stdout).
+    Returns (exit_code, stdout)."""
+    if not _NODE or not _GATE.is_file():
+        return (99, "")
+    try:
+        p = subprocess.run([_NODE, str(_GATE)], input=raw_stdin, capture_output=True,
+                           text=True, timeout=60, cwd=cwd or str(_PP_ROOT))
+        return (p.returncode, p.stdout or "")
+    except Exception:  # noqa: BLE001
+        return (99, "")
+
+
+def _run_gate(prompt: str, cwd: str | None = None) -> tuple:
+    payload = json.dumps({"prompt": prompt,
+                          "session_id": f"t{os.getpid()}_{next(_SID)}"})
+    return _run_gate_raw(payload, cwd=cwd)
 
 
 def _run_suite(script: str) -> tuple:
@@ -215,6 +245,86 @@ def main(argv=None) -> int:
     else:
         _fail("V-D2A-OPERATIONS", f"{len(OPERATIONS)} ops")
 
+    # ---- D2A gate (SCS C85 addendum) -- wiring gates over the real CLI path ----
+    gate_ok = _NODE is not None and _GATE.is_file()
+    if not gate_ok:
+        _fail("V-D2A-GATE-FIRES", f"node={_NODE} gate_exists={_GATE.is_file()}")
+    else:
+        # V-D2A-GATE-FIRES: a creation proposal that duplicates -> gate emits advisory.
+        rc, out = _run_gate("build a new system to plan and allocate the frontier token "
+                            "budget, pricing cost as capital")
+        if rc == 0 and out.strip():
+            _ok("V-D2A-GATE-FIRES", f"creation+duplicate -> advisory ({len(out)} B), rc=0")
+        else:
+            _fail("V-D2A-GATE-FIRES", f"rc={rc} stdout_len={len(out)}")
+
+        # V-D2A-ADVISORY-VISIBLE: the advisory rides additionalContext (Owner-visible),
+        # and carries the DUPE VERDICT + the BUILD CONTRACT alternative.
+        ctx = ""
+        try:
+            hso = (json.loads(out) or {}).get("hookSpecificOutput", {})
+            ctx = hso.get("additionalContext", "") if \
+                hso.get("hookEventName") == "UserPromptSubmit" else ""
+        except Exception:  # noqa: BLE001
+            ctx = ""
+        if ("DUPE VERDICT" in ctx and "BUILD CONTRACT" in ctx
+                and "RECOMMENDED ACTION" in ctx and "never blocks" in ctx):
+            _ok("V-D2A-ADVISORY-VISIBLE",
+                "additionalContext carries DUPE VERDICT + RECOMMENDED + BUILD CONTRACT")
+        else:
+            _fail("V-D2A-ADVISORY-VISIBLE", f"ctx_len={len(ctx)} (missing sections)")
+
+        # V-D2A-SILENCE-ON-NOVEL: a genuinely-new proposal -> zero gate output.
+        rc, out = _run_gate("create a new system for holographic tactile feedback in "
+                            "underwater sonar imaging")
+        if rc == 0 and not out.strip():
+            _ok("V-D2A-SILENCE-ON-NOVEL", "novel creation proposal -> silent, rc=0")
+        else:
+            _fail("V-D2A-SILENCE-ON-NOVEL", f"rc={rc} stdout={out[:120]!r}")
+
+        # V-D2A-GATE-KEYWORD-SCOPE: use/extend/fix/read are NEVER intercepted
+        # (T-D2A-GATE-KEYWORD-SCOPE-001: false positives are the expensive failure).
+        negatives = [
+            "extend CO-03 router with a new deterministic rung",
+            "fix the typo in line 5",
+            "read the dataset and tell me what it says",
+            "run the test suite for the router module",
+        ]
+        noisy = [p for p in negatives if _run_gate(p)[1].strip()]
+        if not noisy:
+            _ok("V-D2A-GATE-KEYWORD-SCOPE",
+                f"{len(negatives)} non-creation prompts -> all silent")
+        else:
+            _fail("V-D2A-GATE-KEYWORD-SCOPE", f"false positives: {noisy}")
+
+        # V-D2A-GATE-FAILOPEN: garbage / non-JSON stdin -> exit 0, empty stdout.
+        rc1, o1 = _run_gate_raw("this is not json at all")
+        rc2, o2 = _run_gate_raw("")
+        rc3, o3 = _run_gate_raw('{"prompt": 12345}')
+        if (rc1, rc2, rc3) == (0, 0, 0) and not (o1.strip() or o2.strip() or o3.strip()):
+            _ok("V-D2A-GATE-FAILOPEN",
+                "non-JSON / empty / wrong-type stdin -> exit 0, empty stdout (never 2)")
+        else:
+            _fail("V-D2A-GATE-FAILOPEN", f"rcs={(rc1, rc2, rc3)}")
+
+        # V-D2A-GATE-GLOBAL: works from ANY cwd (engine + registry resolved absolutely),
+        # so a proposal in another repo still gets the PP ecosystem verdict.
+        rc, out = _run_gate("build a new system to plan and allocate the frontier token "
+                            "budget, pricing cost as capital", cwd=str(Path.home()))
+        if rc == 0 and out.strip():
+            _ok("V-D2A-GATE-GLOBAL", f"advisory from cwd={Path.home()} (no per-repo config)")
+        else:
+            _fail("V-D2A-GATE-GLOBAL", f"rc={rc} stdout_len={len(out)} from home cwd")
+
+    # V-D2A-GATE-REGISTERED: the dispatcher's UserPromptSubmit chain carries the gate.
+    disp = _PP_ROOT / "hooks" / "hook-dispatcher.js"
+    dtext = disp.read_text(encoding="utf-8", errors="replace") if disp.is_file() else ""
+    ups = dtext.split("'UserPromptSubmit-chain'", 1)[-1].split("],", 1)[0]
+    if "d2a_gate.js" in ups:
+        _ok("V-D2A-GATE-REGISTERED", "d2a_gate.js present in UserPromptSubmit-chain")
+    else:
+        _fail("V-D2A-GATE-REGISTERED", "d2a_gate.js missing from UserPromptSubmit-chain")
+
     # V-D2A-BASELINE -- FD + FIOS suites still green (no regression).
     fd_rc, fd_tail = _run_suite("test_fable_distillation.py")
     fi_rc, fi_tail = _run_suite("test_frontier_intelligence_os.py")
@@ -225,7 +335,9 @@ def main(argv=None) -> int:
 
     total = _passes + _fails
     if as_json:
-        import json
+        # NOTE: no local `import json` here -- a function-local import would make
+        # `json` local to all of main(), and the earlier json.loads() would raise
+        # UnboundLocalError (silently swallowed into a false ADVISORY-VISIBLE fail).
         print(json.dumps({"passes": _passes, "fails": _fails,
                           "log": [{"status": s, "gate": g, "evidence": e}
                                   for s, g, e in _log]}, indent=2))
