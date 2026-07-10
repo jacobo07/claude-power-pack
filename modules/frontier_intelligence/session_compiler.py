@@ -542,16 +542,58 @@ def render_plan(plan: SessionPlan) -> str:
     return "\n".join(L)
 
 
+def agenda_payload(plan: SessionPlan) -> dict:
+    """The machine-readable session agenda. ROUTE_CHEAPER questions strand in a
+    rendered table otherwise -- this is their carrier to whichever sub-frontier
+    session (Sonnet / Claude Code) picks them up. DECLINE'd questions are
+    excluded (the floor already answers them -- carrying them re-buys knowledge)."""
+    def _q(q) -> dict:
+        return {"fingerprint": q.fingerprint, "text": q.text, "verdict": q.verdict,
+                "expected_asset": q.expected_asset, "source_ref": q.source_ref}
+    return {
+        "stamp": plan.stamp, "repo": plan.repo, "objective": plan.objective,
+        "admit": [_q(q) for q in plan.questions if q.frontier_worthy],
+        "subfrontier": [_q(q) for q in plan.questions
+                        if not q.frontier_worthy and q.verdict == "ROUTE_CHEAPER"],
+        "follow_ups": list(plan.follow_ups),
+        "proof_agenda": list(plan.portability_agenda),
+    }
+
+
 def write_plan(plan: SessionPlan, *, out_dir=None) -> Path | None:
     """Write the rendered plan to vault/sessions/SESSION_ZERO_<stamp>.md (or a
-    supplied dir). Fail-open -> None on any I/O error."""
+    supplied dir) plus the machine-readable `.agenda.json` sidecar. Fail-open ->
+    None on any I/O error; a sidecar failure never loses the plan itself."""
     try:
         base = Path(out_dir) if out_dir else (_PP_ROOT / "vault" / "sessions")
         base.mkdir(parents=True, exist_ok=True)
         p = base / f"SESSION_ZERO_{plan.stamp}.md"
         p.write_text(render_plan(plan), encoding="utf-8")
-        return p
     except OSError:
+        return None
+    try:
+        (base / f"SESSION_ZERO_{plan.stamp}.agenda.json").write_text(
+            json.dumps(agenda_payload(plan), ensure_ascii=False, indent=2),
+            encoding="utf-8")
+    except (OSError, TypeError, ValueError):
+        pass
+    return p
+
+
+def load_latest_agenda(repo: str = "", *, out_dir=None) -> dict | None:
+    """One-call consumption surface for any non-frontier session: the newest
+    `.agenda.json` (optionally filtered to `repo`). Fail-open -> None."""
+    try:
+        base = Path(out_dir) if out_dir else (_PP_ROOT / "vault" / "sessions")
+        for f in sorted(base.glob("SESSION_ZERO_*.agenda.json"), reverse=True):
+            try:
+                data = json.loads(f.read_text(encoding="utf-8-sig"))
+            except (OSError, json.JSONDecodeError, ValueError):
+                continue
+            if not repo or data.get("repo") == repo:
+                return data
+        return None
+    except Exception:  # noqa: BLE001 -- fail-open
         return None
 
 
@@ -604,6 +646,22 @@ def _auto_harvest(repo: str) -> list:
         return []
 
 
+def _at_cap_note(questions: list) -> str:
+    """No-silent-caps: a source that returned exactly its per-source cap may have
+    dropped candidates -- name it in the summary instead of hiding the bound."""
+    try:
+        from modules.frontier_intelligence.question_harvester import _MAX_PER_SOURCE
+        counts: dict = {}
+        for q in questions or []:
+            src = (q or {}).get("source", "") if isinstance(q, dict) else ""
+            if src:
+                counts[src] = counts.get(src, 0) + 1
+        hit = sorted(s for s, c in counts.items() if c >= _MAX_PER_SOURCE)
+        return f" (at-cap: {','.join(hit)})" if hit else ""
+    except Exception:  # noqa: BLE001 -- a note never breaks the preflight
+        return ""
+
+
 def preflight(repo: str, *, out_dir=None, env=None, now: datetime | None = None):
     """kclaude frontier preflight. If the Owner declared an objective, compile the
     SESSION_ZERO and return a 3-line ASCII summary (kclaude prints it); no
@@ -618,14 +676,16 @@ def preflight(repo: str, *, out_dir=None, env=None, now: datetime | None = None)
         harvested = 0
         no_harvest = str(env_map.get("PP_SESSION_NO_HARVEST", "")).strip() in (
             "1", "true", "yes")
+        at_cap = ""
         if not decl.candidate_questions and not no_harvest:
             decl.candidate_questions = _auto_harvest(repo)
             harvested = len(decl.candidate_questions)
+            at_cap = _at_cap_note(decl.candidate_questions)
         plan = compile_session(decl, now=now)
         p = write_plan(plan, out_dir=out_dir)
         worthy = sum(1 for q in plan.questions if q.frontier_worthy)
         where = f"  ({p})" if p else "  (write fail-open)"
-        harvest_note = f" | auto-harvest {harvested}" if harvested else ""
+        harvest_note = f" | auto-harvest {harvested}{at_cap}" if harvested else ""
         return "\n".join([
             f"FIOS: SESSION_ZERO generado para {plan.repo}{where}",
             f"FIOS: preguntas frontier-worthy {worthy}/{len(plan.questions)}"
