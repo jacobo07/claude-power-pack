@@ -65,7 +65,10 @@ live-terminal count into `reentry.py`, not just a Copy-Item.
 
 ---
 
-## 4. Register PP-LivenessCheck daily task  (D1 Liveness Ledger)  [PENDING]
+## 4. Register PP-LivenessCheck daily task  (D1 Liveness Ledger)  [DONE 2026-07-10]
+
+**Registered 2026-07-10:** `Get-ScheduledTask PP-LivenessCheck` -> State Ready,
+NextRun 2026-07-11 09:00; triggered once -> LastTaskResult=0, report mtime same-day.
 
 **System:** `modules/liveness/liveness_ledger.py`
 **Why:** D1's `vault/audits/liveness_report.md` only refreshes on a manual run
