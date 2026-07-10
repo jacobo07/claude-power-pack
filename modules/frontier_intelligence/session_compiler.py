@@ -15,19 +15,29 @@ It COMPOSES, never re-implements:
   - The FD-02 leverage taxonomy (irreversible / system-generating / critique /
     dependence-reducing) is REFERENCED as the ORDER heuristic among admitted
     questions; it is not re-derived as a parallel compiler (FD-02 owns that doctrine).
+  - The question_harvester (FIOS I-4) fills an EMPTY declaration: when the Owner
+    declares an objective but no candidate_questions, preflight harvests them from
+    the stack's own state (PR-HARVEST-BEFORE-FRONTIER-001) -- Session #1 launched
+    with 0 candidates; that stage is never empty again.
 
-The output is the 9-component plan the spec requires, rendered to
-`vault/sessions/SESSION_ZERO_<iso>.md` (or a supplied dir):
+Candidate questions may be plain strings or dicts ({text, source_ref,
+expected_asset, depends_on}); the dict form preserves provenance through ranking
+so the session can tag PM-03 findings with the question's fingerprint (FD-07
+`question_ref` -- per-question ROI, read by CO-12, never a parallel metric).
+
+The output is the 9-component plan the spec requires (+ the FD-04 portability
+agenda), rendered to `vault/sessions/SESSION_ZERO_<iso>.md` (or a supplied dir):
   1 minimal verified context   2 ROI-ranked questions   3 optimal order
   4 recommended budget (5 categories)   5 next-session escalation criteria
   6 early-stop / saturation criteria   7 writeback plan   8 distillation plan
-  9 Opus / Claude-Code transfer plan
+  9 Opus / Claude-Code transfer plan   10 portability agenda (FD-04 targets)
 
 Fail-open ABSOLUTE: any error yields a best-effort plan (or an honest empty one),
 never an exception -- a planning tool must not block the session it plans for.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -42,15 +52,25 @@ if str(_PP_ROOT) not in sys.path:
 
 # FD-02 leverage-axis signals -- REFERENCED to ORDER admitted questions, not to
 # re-compile them. Whole-word / phrase matched (same discipline as fd_00_gate).
+# Bilingual EN+ES: the D2A gate proved Spanish prompts under-detect on EN-only
+# keywords (owned-fraction 34% -> 90% after aliasing) -- same fix applied here.
 _IRREVERSIBLE_KW = ("architecture", "architect", "protocol", "data model", "schema",
-                    "design", "irreversible", "commit", "standard", "foundation")
+                    "design", "irreversible", "commit", "standard", "foundation",
+                    "arquitectura", "protocolo", "esquema", "estandar", "fundacion",
+                    "irreversible", "disena", "diseno")
 _SYSTEM_KW = ("always", "every", "reusable", "recipe", "policy", "invariant",
-              "how should we", "general rule", "pattern", "framework")
+              "how should we", "general rule", "pattern", "framework",
+              "siempre", "cada", "reutilizable", "receta", "politica",
+              "invariante", "regla general", "patron")
 _CRITIQUE_KW = ("what is wrong", "flaw", "fails", "critique", "adversarial",
-                "under what", "attack", "break", "weakness", "edge case")
+                "under what", "attack", "break", "weakness", "edge case",
+                "que falla", "fallo", "defecto", "critica", "romper",
+                "debilidad", "caso borde", "bajo que")
 _DEPENDENCE_KW = ("deterministic", "without a model", "without a frontier",
                   "cheaper", "reduce dependence", "checklist", "rule that",
-                  "small model", "offline")
+                  "small model", "offline",
+                  "determinista", "sin modelo", "mas barato",
+                  "reducir dependencia", "modelo pequeno")
 # Default 5-category budget split (FIOS-OPS-2 folded in as a field). Sums to 1.0;
 # emergency is the reserve the session redistributes from as it learns.
 _BUDGET_SPLIT = {
@@ -75,8 +95,22 @@ _STATE_MACHINE = [
 # is the rough industry proxy; bounded conservatively.
 _CTX_TOKEN_BUDGET = 2000
 _CTX_CHAR_BUDGET = _CTX_TOKEN_BUDGET * 4
+# Candidate-vs-candidate overlap band: at/above this Jaccard two candidates ask
+# the same thing; the higher-leverage one survives, the drop is LOGGED (never
+# silent). The gate dedups vs the FLOOR; this dedups the portfolio itself.
+_DEDUP_JACCARD = 0.60
+_AGENDA_CAP = 10               # portability-agenda rows rendered (bounded)
+_QUESTION_COL = 80             # question text width in the section-2 table
+_FP_FALLBACK_LEN = 12          # fingerprint hex length (mirror of the harvester's)
 _STOP = {"the", "a", "an", "of", "to", "in", "on", "for", "and", "or", "is", "are",
          "this", "that", "with", "how", "what", "we", "our", "us", "do", "does"}
+
+try:  # single fingerprint algorithm ecosystem-wide -- the harvester owns it
+    from modules.frontier_intelligence.question_harvester import question_fingerprint
+except Exception:  # noqa: BLE001 -- fail-open mirror (same algorithm, never raises)
+    def question_fingerprint(text: str) -> str:  # type: ignore
+        norm = re.sub(r"\s+", " ", (text or "").strip().lower())
+        return "q:" + hashlib.sha256(norm.encode("utf-8")).hexdigest()[:_FP_FALLBACK_LEN]
 
 
 def _now(now: datetime | None = None) -> datetime:
@@ -109,7 +143,7 @@ class SessionDeclaration:
     objective: str = ""
     constraints: list = field(default_factory=list)
     unknowns: list = field(default_factory=list)
-    candidate_questions: list = field(default_factory=list)
+    candidate_questions: list = field(default_factory=list)   # str | dict entries
     repo: str = ""
     token_budget: int = 0          # 0 = unspecified -> percentages only, no absolute
     horizon_months: int = 12       # for the next-session escalation framing
@@ -123,6 +157,10 @@ class RankedQuestion:
     leverage: float                # [0,1] order key among admitted questions
     axes: dict = field(default_factory=dict)
     reason: str = ""
+    source_ref: str = ""           # provenance (harvester source or Owner-declared)
+    expected_asset: str = ""       # the permanent form the answer must take
+    depends_on: str = ""           # fingerprint of a prerequisite question
+    fingerprint: str = ""          # tag for PM-03 findings -> FD-07 question_ref
 
 
 @dataclass
@@ -141,6 +179,9 @@ class SessionPlan:
     transfer_plan: list            # component 9
     floor_size: int                # deposits already on the floor
     note: str = ""
+    dropped: list = field(default_factory=list)        # dedup log (never silent)
+    follow_ups: list = field(default_factory=list)     # dependency-deferred questions
+    portability_agenda: list = field(default_factory=list)  # component 10 (FD-04)
 
 
 # --------------------------------------------------------------------------- #
@@ -173,24 +214,48 @@ def _leverage(question: str) -> tuple[float, dict]:
     return (round(score, 3), axes)
 
 
+def _qnorm(q) -> dict | None:
+    """Normalize a candidate (str or dict) to {text, source_ref, expected_asset,
+    depends_on}. Fail-open -> None (a bad candidate is skipped, never fatal)."""
+    try:
+        if isinstance(q, dict):
+            text = str(q.get("text", "") or "").strip()
+            if not text:
+                return None
+            return {"text": text,
+                    "source_ref": str(q.get("source_ref", "") or ""),
+                    "expected_asset": str(q.get("expected_asset", "") or ""),
+                    "depends_on": str(q.get("depends_on", "") or "")}
+        text = str(q or "").strip()
+        return {"text": text, "source_ref": "", "expected_asset": "",
+                "depends_on": ""} if text else None
+    except Exception:  # noqa: BLE001 -- fail-open
+        return None
+
+
 def rank_questions(candidates, *, kb_dir=None, route_fn=None,
                    state_dir=None) -> list:
     """Rank candidate questions: FD-00 admission decides frontier-worthiness, the
     FD-02 leverage axes decide order among the worthy ones. A question whose answer
-    the floor already covers is DECLINE'd by the gate and drops. Fail-open."""
+    the floor already covers is DECLINE'd by the gate and drops. Candidates may be
+    strings or provenance dicts (harvester output). Fail-open."""
     out = []
     try:
         from modules.fable_distillation.fd_00_gate import check_admission
     except Exception:  # noqa: BLE001 -- fail-open: no gate -> everything is a DEFER
         check_admission = None  # type: ignore
-    for q in candidates or []:
-        q = str(q or "").strip()
-        if not q:
+    for cand in candidates or []:
+        c = _qnorm(cand)
+        if not c:
             continue
+        q = c["text"]
+        meta = {"source_ref": c["source_ref"], "expected_asset": c["expected_asset"],
+                "depends_on": c["depends_on"],
+                "fingerprint": question_fingerprint(q)}
         if check_admission is None:
             lev, axes = _leverage(q)
             out.append(RankedQuestion(q, "DEFER", False, lev, axes,
-                                      "admission gate unavailable"))
+                                      "admission gate unavailable", **meta))
             continue
         try:
             dec = check_admission(q, kb_dir=kb_dir, route_fn=route_fn,
@@ -198,13 +263,60 @@ def rank_questions(candidates, *, kb_dir=None, route_fn=None,
             lev, axes = _leverage(q)
             out.append(RankedQuestion(
                 text=q, verdict=dec.verdict, frontier_worthy=(dec.action == "admit"),
-                leverage=lev, axes=axes, reason=dec.reason))
+                leverage=lev, axes=axes, reason=dec.reason, **meta))
         except Exception as e:  # noqa: BLE001 -- one bad question never breaks the plan
             lev, axes = _leverage(q)
-            out.append(RankedQuestion(q, "DEFER", False, lev, axes, f"error: {e}"))
+            out.append(RankedQuestion(q, "DEFER", False, lev, axes, f"error: {e}",
+                                      **meta))
     # Frontier-worthy first, then by leverage desc, then stable by original text.
     out.sort(key=lambda r: (not r.frontier_worthy, -r.leverage))
     return out
+
+
+def dedupe_ranked(ranked) -> tuple[list, list]:
+    """Candidate-vs-candidate dedup (the FD-00 gate dedups vs the FLOOR; this
+    dedups the portfolio itself). Greedy over the ranked order so the
+    higher-priority phrasing survives. Returns (kept, dropped_log); the drop is
+    LOGGED, never silent (no-silent-caps doctrine). Fail-open -> (ranked, [])."""
+    try:
+        kept, dropped, kept_toks = [], [], []
+        for q in ranked or []:
+            toks = _tokens(q.text)
+            dup_of = None
+            for i, kt in enumerate(kept_toks):
+                if not toks or not kt:
+                    continue
+                j = len(toks & kt) / (len(toks | kt) or 1)
+                if j >= _DEDUP_JACCARD:
+                    dup_of = kept[i]
+                    break
+            if dup_of is not None:
+                dropped.append({"text": q.text, "fingerprint": q.fingerprint,
+                                "dup_of": dup_of.fingerprint})
+                continue
+            kept.append(q)
+            kept_toks.append(toks)
+        return (kept, dropped)
+    except Exception:  # noqa: BLE001 -- fail-open
+        return (list(ranked or []), [])
+
+
+def split_dependencies(ranked) -> tuple[list, list]:
+    """Honor `depends_on`: a question whose prerequisite is also in the portfolio
+    is a FOLLOW-UP (asked after its prerequisite's answer lands), not a lead
+    question. A depends_on pointing outside the portfolio stands alone.
+    Fail-open -> (ranked, [])."""
+    try:
+        fps = {q.fingerprint for q in ranked or []}
+        main, follow = [], []
+        for q in ranked or []:
+            if q.depends_on and q.depends_on in fps and q.depends_on != q.fingerprint:
+                follow.append(q)
+            else:
+                main.append(q)
+        return (main, follow)
+    except Exception:  # noqa: BLE001 -- fail-open
+        return (list(ranked or []), [])
 
 
 # --------------------------------------------------------------------------- #
@@ -242,15 +354,37 @@ def _bounded_context(decl: SessionDeclaration, floor: list) -> tuple[str, int]:
     return (text, len(text) // 4)
 
 
+def _portability_agenda(floor: list) -> list:
+    """Component 10: the FD-04 validation agenda -- every unproven deposit on the
+    floor is a downgrade-test target for THIS session (the prior session's
+    frontier-only deltas become the next session's proof work by construction)."""
+    agenda = []
+    for d in floor or []:
+        try:
+            if d.get("portability_proven"):
+                continue
+            agenda.append({
+                "fingerprint": d.get("fingerprint", "?"),
+                "portability_target": d.get("portability_target", "?"),
+                "destination": d.get("destination", "?"),
+                "claim": re.sub(r"\s+", " ", str(d.get("claim", "")))[:_QUESTION_COL]})
+        except Exception:  # noqa: BLE001 -- one bad row never breaks the agenda
+            continue
+    return agenda[:_AGENDA_CAP]
+
+
 def compile_session(decl: SessionDeclaration, *, kb_dir=None, route_fn=None,
                     state_dir=None, now: datetime | None = None) -> SessionPlan:
-    """Compile a declaration into the 9-component session plan. Pure (no file
-    write) -- render_plan() and write_plan() handle materialization. Fail-open."""
+    """Compile a declaration into the 9-component session plan (+ the FD-04
+    portability agenda). Pure (no file write) -- render_plan() and write_plan()
+    handle materialization. Fail-open."""
     try:
         floor = _floor_claims(decl.repo, state_dir=state_dir)
         ctx, ctx_tok = _bounded_context(decl, floor)
-        questions = rank_questions(decl.candidate_questions, kb_dir=kb_dir,
-                                   route_fn=route_fn, state_dir=state_dir)
+        ranked = rank_questions(decl.candidate_questions, kb_dir=kb_dir,
+                                route_fn=route_fn, state_dir=state_dir)
+        deduped, dropped = dedupe_ranked(ranked)
+        questions, follow_ups = split_dependencies(deduped)
         worthy = [q for q in questions if q.frontier_worthy]
         # Component 6: early-stop / saturation criteria (S-SATURATION folded in).
         stopping = [
@@ -274,6 +408,8 @@ def compile_session(decl: SessionDeclaration, *, kb_dir=None, route_fn=None,
         writeback_plan = [
             "Al cierre: el Stop hook FD-07 (PP_FRONTIER_SESSION=1) drena el bus "
             "PM-03 y deposita cada delta clasificado en el ledger idempotente.",
+            "Cada finding PM-03 debe llevar el `question_ref` (columna ref de la "
+            "seccion 2) para que el deposito enlace con la pregunta que lo pago.",
             "Reglas/traps -> candidato UKDL (Owner promueve); recetas -> CO-05 "
             "(solo verified+recurrent); nada se auto-muta.",
             "Emitir las senales CO-12 (fd_frontier_call_admitted, fd_delta_deposited).",
@@ -295,18 +431,24 @@ def compile_session(decl: SessionDeclaration, *, kb_dir=None, route_fn=None,
             "Un delta que solo funciona con el modelo frontier NO esta destilado: "
             "queda como hipotesis hasta que FD-04 pruebe el downgrade.",
         ]
+        note = (f"{len(worthy)} pregunta(s) frontier-worthy de "
+                f"{len(ranked)} candidata(s)")
+        if dropped:
+            note += f", {len(dropped)} descartada(s) por dedup"
+        if follow_ups:
+            note += f", {len(follow_ups)} follow-up(s) dependiente(s)"
         return SessionPlan(
             stamp=_iso_stamp(_now(now)), repo=decl.repo or "(repo sin declarar)",
             objective=decl.objective, context=ctx, context_tokens_est=ctx_tok,
             questions=questions, budget=_budget(decl.token_budget),
             escalation=escalation, stopping=stopping,
             writeback_plan=writeback_plan, distillation_plan=distillation_plan,
-            transfer_plan=transfer_plan, floor_size=len(floor),
-            note=(f"{len(worthy)} pregunta(s) frontier-worthy de "
-                  f"{len(questions)} candidata(s)"))
+            transfer_plan=transfer_plan, floor_size=len(floor), note=note,
+            dropped=dropped, follow_ups=follow_ups,
+            portability_agenda=_portability_agenda(floor))
     except Exception as e:  # noqa: BLE001 -- fail-open ABSOLUTE
         return SessionPlan(
-            stamp=_iso_stamp(_now(now)), repo=decl.repo, objective=decl.objective,
+            stamp=_iso_stamp(_now(now)), repo=str(decl.repo), objective=decl.objective,
             context="(error al compilar -- fail-open)", context_tokens_est=0,
             questions=[], budget=_budget(decl.token_budget), escalation=[],
             stopping=[], writeback_plan=[], distillation_plan=[], transfer_plan=[],
@@ -316,26 +458,47 @@ def compile_session(decl: SessionDeclaration, *, kb_dir=None, route_fn=None,
 # --------------------------------------------------------------------------- #
 # Render + write.
 # --------------------------------------------------------------------------- #
+def _qcell(text: str) -> str:
+    return text[:_QUESTION_COL].replace("|", "/")
+
+
 def render_plan(plan: SessionPlan) -> str:
-    """Render the plan as the SESSION_ZERO markdown (the 9 components)."""
+    """Render the plan as the SESSION_ZERO markdown (the 9+1 components)."""
     L = [f"# SESSION ZERO -- {plan.stamp}", "",
          f"> Repo: `{plan.repo}`  ·  Floor: {plan.floor_size} deposito(s)  ·  {plan.note}",
-         "> Generado por FIOS session_compiler (FD-00 gate + FD-07 floor + FD-02 axes).",
+         "> Generado por FIOS session_compiler (FD-00 gate + FD-07 floor + FD-02 axes"
+         " + question_harvester).",
          "> Ley PR-FRONTIER-AS-RD-001: cada token frontier es capital de I+D.", ""]
     L += ["## 1. Contexto minimo verificado (<2000 tok)",
           f"*(estimado ~{plan.context_tokens_est} tok)*", "", "```",
           plan.context, "```", ""]
     L += ["## 2. Preguntas priorizadas por ROI  ·  ## 3. Orden optimo", ""]
     if plan.questions:
-        L.append("| # | worthy | leverage | verdict | pregunta |")
-        L.append("|---|---|---|---|---|")
+        L.append("| # | worthy | leverage | verdict | asset esperado | ref | fuente | pregunta |")
+        L.append("|---|---|---|---|---|---|---|---|")
         for i, q in enumerate(plan.questions, 1):
             mark = "SI" if q.frontier_worthy else "no"
             L.append(f"| {i} | {mark} | {q.leverage:.2f} | {q.verdict} | "
-                     f"{q.text[:90].replace('|', '/')} |")
+                     f"{q.expected_asset or '-'} | `{q.fingerprint}` | "
+                     f"{_qcell(q.source_ref) or 'owner'} | {_qcell(q.text)} |")
+        L.append("")
+        L.append("Cada finding PM-03 de la sesion debe llevar `question_ref` = la "
+                 "columna `ref` de su pregunta (FD-07 lo deposita con provenance).")
     else:
-        L.append("*(sin preguntas candidatas -- declara `candidate_questions`)*")
+        L.append("*(sin preguntas candidatas -- declara `candidate_questions` o "
+                 "ejecuta el question_harvester)*")
     L.append("")
+    if plan.dropped:
+        L.append(f"**Dedup ({len(plan.dropped)} descartada(s), log honesto):**")
+        L += [f"- `{d.get('fingerprint','?')}` dup-of `{d.get('dup_of','?')}`: "
+              f"{_qcell(str(d.get('text','')))}" for d in plan.dropped]
+        L.append("")
+    if plan.follow_ups:
+        L.append(f"**Follow-ups dependientes ({len(plan.follow_ups)}) -- preguntar "
+                 "tras la respuesta de su prerequisito:**")
+        L += [f"- `{q.fingerprint}` (tras `{q.depends_on}`): {_qcell(q.text)}"
+              for q in plan.follow_ups]
+        L.append("")
     L += ["## 4. Presupuesto recomendado (5 categorias)", "",
           "| categoria | % | tokens |", "|---|---|---|"]
     for cat, row in plan.budget.items():
@@ -349,6 +512,19 @@ def render_plan(plan: SessionPlan) -> str:
         L.append(f"## {title}")
         L += [f"- {it}" for it in items] or ["- (n/a)"]
         L.append("")
+    L.append("## 10. Agenda de portabilidad (FD-04 -- deltas del floor sin probar)")
+    if plan.portability_agenda:
+        L.append("| deposito | destino | target | claim |")
+        L.append("|---|---|---|---|")
+        for a in plan.portability_agenda:
+            L.append(f"| `{a['fingerprint']}` | {a['destination']} | "
+                     f"{a['portability_target']} | {_qcell(a['claim'])} |")
+        L.append("")
+        L.append("Probar el downgrade de cada fila (FD-04): un delta sin prueba de "
+                 "portabilidad sigue siendo hipotesis, no capital.")
+    else:
+        L.append("*(sin deltas pendientes de portabilidad en el floor)*")
+    L.append("")
     L += ["## Maquina de estados de la sesion (binaria, no avanzar sin cerrar la previa)",
           "", "| estado | criterio de entrada |", "|---|---|"]
     for st, crit in _STATE_MACHINE:
@@ -408,23 +584,43 @@ def _decl_from_env_or_file(repo: str, env=None) -> SessionDeclaration | None:
                               token_budget=budget)
 
 
+def _auto_harvest(repo: str) -> list:
+    """PR-HARVEST-BEFORE-FRONTIER-001: an empty portfolio is filled from the
+    stack's own state before launch. Fail-open -> [] (never blocks the launch)."""
+    try:
+        from modules.frontier_intelligence.question_harvester import (
+            harvest, as_declaration_questions)
+        return as_declaration_questions(harvest(repo))
+    except Exception:  # noqa: BLE001 -- fail-open
+        return []
+
+
 def preflight(repo: str, *, out_dir=None, env=None, now: datetime | None = None):
     """kclaude frontier preflight. If the Owner declared an objective, compile the
     SESSION_ZERO and return a 3-line ASCII summary (kclaude prints it); no
-    declaration -> None (silent). Fail-open -> None, never raises: a preflight must
-    not block the launch it prepares."""
+    declaration -> None (silent). An objective WITHOUT candidate questions
+    auto-harvests them (disable with PP_SESSION_NO_HARVEST=1). Fail-open -> None,
+    never raises: a preflight must not block the launch it prepares."""
     try:
-        decl = _decl_from_env_or_file(repo, env)
+        env_map = env if env is not None else os.environ
+        decl = _decl_from_env_or_file(repo, env_map)
         if decl is None:
             return None
+        harvested = 0
+        no_harvest = str(env_map.get("PP_SESSION_NO_HARVEST", "")).strip() in (
+            "1", "true", "yes")
+        if not decl.candidate_questions and not no_harvest:
+            decl.candidate_questions = _auto_harvest(repo)
+            harvested = len(decl.candidate_questions)
         plan = compile_session(decl, now=now)
         p = write_plan(plan, out_dir=out_dir)
         worthy = sum(1 for q in plan.questions if q.frontier_worthy)
         where = f"  ({p})" if p else "  (write fail-open)"
+        harvest_note = f" | auto-harvest {harvested}" if harvested else ""
         return "\n".join([
             f"FIOS: SESSION_ZERO generado para {plan.repo}{where}",
-            f"FIOS: preguntas frontier-worthy {worthy}/{len(plan.questions)} "
-            f"| floor {plan.floor_size} deposito(s)",
+            f"FIOS: preguntas frontier-worthy {worthy}/{len(plan.questions)}"
+            f"{harvest_note} | floor {plan.floor_size} deposito(s)",
             "FIOS: presupuesto discovery 30% architecture 25% critique 20% "
             "validation 15% emergency 10%",
         ])
@@ -439,6 +635,8 @@ def main(argv=None) -> int:
     ap.add_argument("--repo", default="")
     ap.add_argument("--question", action="append", dest="questions", default=[])
     ap.add_argument("--budget", type=int, default=0)
+    ap.add_argument("--harvest", action="store_true",
+                    help="merge harvested candidate questions into the declaration")
     ap.add_argument("--json-in", action="store_true",
                     help="read the full declaration as JSON on stdin")
     ap.add_argument("--out-dir", default=None)
@@ -463,6 +661,8 @@ def main(argv=None) -> int:
                                   candidate_questions=args.questions,
                                   repo=args.repo or os.getcwd(),
                                   token_budget=args.budget)
+    if args.harvest:
+        decl.candidate_questions = list(decl.candidate_questions) + _auto_harvest(decl.repo)
     plan = compile_session(decl)
     if args.print:
         print(render_plan(plan))
