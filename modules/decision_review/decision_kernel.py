@@ -226,14 +226,42 @@ def _highest_precedence(candidates: list[Verdict]) -> Verdict:
     return Verdict.DEFER
 
 
+def _resolve_live(obj: DecisionObject) -> dict:
+    """Ask the real providers (arch-decision / D2A / ACIS ladder / spec_gate /
+    cost_collapse) for their verdicts. Imported lazily so the kernel keeps working
+    -- with injected fixtures -- even if a provider module is absent or broken.
+    Fail-open: an unavailable provider layer yields no inputs, never an error."""
+    try:
+        from . import providers
+        return providers.resolve_all(obj)
+    except Exception:  # noqa: BLE001 -- fail-open: no providers is not a failure
+        return {}
+
+
 def review_decision(obj: DecisionObject, *, precedent: dict | None = None,
                     placement: dict | None = None,
                     registry: Registry | None = None,
-                    ts: str = "") -> DecisionRecord:
+                    ts: str = "", live: bool = False) -> DecisionRecord:
     """The nine-stage sieve. Returns a DecisionRecord; writes it at L1+.
-    Fail-open: any exception yields a DEFER record."""
+
+    Provider inputs (`precedent`, `placement`) may be injected by the caller --
+    which is what the test suite does, keeping every gate hermetic -- or resolved
+    from the real sealed modules by passing `live=True` (providers.resolve_all).
+    Injection always wins: an explicitly-passed provider is never overwritten by
+    a live lookup, so a fixture can pin any branch.
+
+    Fail-open: any exception yields a DEFER record, and a provider that cannot
+    answer contributes nothing rather than a wrong answer.
+    """
     reg = registry if registry is not None else Registry()
     try:
+        if live:
+            resolved = _resolve_live(obj)
+            if precedent is None:
+                precedent = resolved.get("precedent")
+            if placement is None:
+                placement = resolved.get("placement")
+
         # Stage 3 (partial): classify (needed for the scope test too).
         reversibility = classify_reversibility(obj)
         blast = compute_blast_radius(obj)

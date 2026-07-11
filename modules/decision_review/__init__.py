@@ -20,6 +20,12 @@ from .decision_record import (
     ReviewTier,
     Registry,
 )
+from .decision_kernel import review_decision
+
+# proactive_scanner is deliberately NOT re-exported here: it is run as
+# `python -m modules.decision_review.proactive_scanner`, and importing it from the
+# package __init__ makes runpy emit a double-import RuntimeWarning on every
+# scheduled run. Import it from its own module.
 
 __all__ = [
     "DecisionObject",
@@ -30,4 +36,5 @@ __all__ = [
     "Verdict",
     "ReviewTier",
     "Registry",
+    "review_decision",
 ]
