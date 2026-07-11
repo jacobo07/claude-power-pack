@@ -1,0 +1,135 @@
+{
+  "stamp": "2026-07-11T112609Z",
+  "repo": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+  "objective": "ACIS Generation Zero: fundar la ciencia autoevolutiva del PP -- formalizar la escalera epistemologica E0-E7 sobre el pipeline sellado, formular leyes candidatas falsables, y emitir la agenda Generation One",
+  "admit": [
+    {
+      "fingerprint": "q:f06fdfdbb3a3",
+      "text": "What always/never rule would structurally prevent trap T-PW-001 ('Playwright Plugin vs MCP Server Architectural Antipattern') at design time, and under what edge case does the current mitigation break?",
+      "verdict": "ADMIT",
+      "expected_asset": "hard_rule",
+      "source_ref": "ukdl:T-PW-001"
+    }
+  ],
+  "subfrontier": [
+    {
+      "fingerprint": "q:b0873c71e132",
+      "text": "Critique the deposited claim 'Never fix an MCP surface before resolving its process-lifecycle owner; always resolve the': under what edge case does it fail, and design the deterministic checklist that reproduces it without a frontier model?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "benchmark",
+      "source_ref": "deposit:6fe4d8a7be715833"
+    },
+    {
+      "fingerprint": "q:6f50cc506e39",
+      "text": "Critique the deposited claim 'PM-03 bus was inert (0 findings, state dir absent); SessionStart consume hook added to ses': under what edge case does it fail, and design the deterministic checklist that reproduces it without a frontier model?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "benchmark",
+      "source_ref": "deposit:1e088a917d1577e6"
+    },
+    {
+      "fingerprint": "q:20a498e1b6ad",
+      "text": "Critique the deposited claim 'Scope-A reality scan: PM-03 consume (Hook 13) + GK-12 dispatcher already live (0 drift, ha': under what edge case does it fail, and design the deterministic checklist that reproduces it without a frontier model?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "benchmark",
+      "source_ref": "deposit:f4aa749f9d7dc351"
+    },
+    {
+      "fingerprint": "q:55612db59ff0",
+      "text": "Design the permanent system or always-applied general rule that eliminates the entire class of residual 'Activate recovery graceful-beacon (SCS C83)' so it never recurs -- which reusable pattern retires it?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "asset",
+      "source_ref": "owner_queue:qv-777c9e0394"
+    },
+    {
+      "fingerprint": "q:17454e24b2d3",
+      "text": "What always/never rule would structurally prevent trap T-MCP-RECONNECT-001 ('stdio mcpServer -32000 is NOT externally recoverable') at design time, and under what edge case does the current mitigation break?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "hard_rule",
+      "source_ref": "ukdl:T-MCP-RECONNECT-001"
+    },
+    {
+      "fingerprint": "q:6f4d2e553ba6",
+      "text": "What always/never rule would structurally prevent trap T-MCP-IDLE-001 ('stdio death-mode is unknown until classified (PENDING)') at design time, and under what edge case does the current mitigation break?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "hard_rule",
+      "source_ref": "ukdl:T-MCP-IDLE-001"
+    },
+    {
+      "fingerprint": "q:534ff50edba6",
+      "text": "What always/never rule would structurally prevent trap T-SESSIONFOLD-001 ('folding a SessionStart hook needs payload + mechanism care') at design time, and under what edge case does the current mitigation break?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "hard_rule",
+      "source_ref": "ukdl:T-SESSIONFOLD-001"
+    },
+    {
+      "fingerprint": "q:3519c7fd2efa",
+      "text": "What always/never rule would structurally prevent trap T-JIT-001 ('Python Cold-Start In a Hot-Path Hook') at design time, and under what edge case does the current mitigation break?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "hard_rule",
+      "source_ref": "ukdl:T-JIT-001"
+    },
+    {
+      "fingerprint": "q:0e590e454e57",
+      "text": "What always/never rule would structurally prevent trap T-RAM-DEDUP-001 ('Two RAM Advisories, Recalibration Reached the Orphan Not the') at design time, and under what edge case does the current mitigation break?",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "hard_rule",
+      "source_ref": "ukdl:T-RAM-DEDUP-001"
+    },
+    {
+      "fingerprint": "q:d956cf68433a",
+      "text": "Formalizar la escalera E0-E7 mapeada sobre deposit->proof->UKDL->HR: definicion por nivel, regla de promocion, regla de no-autopromocion",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "",
+      "source_ref": ""
+    },
+    {
+      "fingerprint": "q:51b94f306fe7",
+      "text": "Formular las leyes candidatas Generation Zero (irrepetibilidad evitable, compresion limitada, transferencia imperfecta, deuda cognitiva, saturacion marginal, writeback obligatorio, evidencia operacional, determinizacion selectiva) con mecanismo causal y falsadores, e intentar destruirlas contra la doctrina sellada",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "",
+      "source_ref": ""
+    },
+    {
+      "fingerprint": "q:867183b9bafc",
+      "text": "Detectar contradicciones entre las familias selladas FD/FIOS/CO/D2A/UKDL",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "",
+      "source_ref": ""
+    },
+    {
+      "fingerprint": "q:d4087b2d0391",
+      "text": "Definir el modelo causal de separacion de efectos (modelo/prompt/contexto/planning/repo/tiempo)",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "",
+      "source_ref": ""
+    },
+    {
+      "fingerprint": "q:14428423e1c5",
+      "text": "Generar el Unknown-Unknown set: preguntas que amenazan ACIS + agenda Generation One",
+      "verdict": "ROUTE_CHEAPER",
+      "expected_asset": "",
+      "source_ref": ""
+    }
+  ],
+  "follow_ups": [],
+  "proof_agenda": [
+    {
+      "fingerprint": "1e088a917d1577e6",
+      "portability_target": "frontier-only",
+      "destination": "dataset_part",
+      "claim": "PM-03 bus was inert (0 findings, state dir absent); SessionStart consume hook ad"
+    },
+    {
+      "fingerprint": "f4aa749f9d7dc351",
+      "portability_target": "frontier-only",
+      "destination": "dataset_part",
+      "claim": "Scope-A reality scan: PM-03 consume (Hook 13) + GK-12 dispatcher already live (0"
+    },
+    {
+      "fingerprint": "6fe4d8a7be715833",
+      "portability_target": "mid-model",
+      "destination": "hard_rule",
+      "claim": "Never fix an MCP surface before resolving its process-lifecycle owner; always re"
+    }
+  ]
+}
