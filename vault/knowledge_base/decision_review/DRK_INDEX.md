@@ -124,7 +124,7 @@ suites still green).
 | decision_kernel.py | ✅ built | 9-stage sieve · reversibility/DBR/DCS · verdict precedence · block-gate |
 | accountability.py | ✅ built | prediction scoring · 4-source attribution · 3-bias calibration |
 | tools/test_decision_review.py | ✅ green | 11/11 hermetic ×3 · V-BASELINE (D2A 22/22, FD, FIOS) green |
-| UKDL (2 rules) | ⏳ next | PR-DECISION-AUTHORITY-LIMITS-001 + T-DECISION-AUTHORITY-CAPTURE-001 |
+| UKDL (2 rules) | ✅ sealed | PR-DECISION-AUTHORITY-LIMITS-001 + T-DECISION-AUTHORITY-CAPTURE-001 (ukdl-universal.md) |
 
 ## The fundamental property
 

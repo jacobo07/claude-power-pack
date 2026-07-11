@@ -3545,3 +3545,60 @@ never a blocked prompt or a raised harvest.
 the `/knowledge` command's engine path was stale (TUAX_UGC_SYSTEM gone; real engine under the AKOS/
 repo), and briefs already existed widely on disk. Cross-ref: `[[feedback_write_without_read_incomplete_system.md]]`,
 `[[feedback_orphan_module_wiring.md]]`.
+
+---
+
+## Decision Review Kernel (DRK) — Decision Axis (sealed 2026-07-11)
+
+The executable Decision axis of the PP: authenticate a decision (record, reversibility, blast radius,
+precedent, evidence-burden) before action, and judge its reasoning — not just its outcome — after.
+DEEPENs the shallow SDD-OS Parte V (Decision OS) enumeration into an operating discipline and ships
+the runtime Parte V never had. Doctrine: `vault/knowledge_base/decision_review/` (DRK-00…07) +
+`vault/knowledge_base/sdd_os/sdd_os_06_*` (accountability). Code: `modules/decision_review/`. Gate:
+`tools/test_decision_review.py` (11/11 hermetic ×3). Sealed via Reality Scan → STOP #1 → Owner
+override to fuller corpus (`vault/plans/decision-intelligence-2026-07-11.md`).
+
+### PROCESS RULE PR-DECISION-AUTHORITY-LIMITS-001 — the authority is block-narrow, recommend-wide
+
+**Level:** Process Rule (governance, constitutional).
+**Sealed:** 2026-07-11.
+
+**Rule:** The PP's decision authority has a limited scope. It **may block** — refuse autonomous
+action, holding a decision for the Owner — **only when the impact is irreversible (Tipo C) AND the
+evidence is insufficient (below ACIS E3).** In every other case it **only recommends**. The Owner may
+always annul a verdict with a **registered override** (appended to the Decision Record, never a silent
+reversal; the disagreement is kept and later judged on reasoning). The discipline evaluates its own
+errors with the same rigor it applies to other systems — its overrides and high-confidence errors
+enter the same calibration population (SDD-OS Parte VI) it uses to judge others.
+
+**Mechanism:** `modules/decision_review/decision_kernel.py` fires the block-gate iff
+`tier == L4 ∧ reversibility == C ∧ max_evidence_level < E3`; asserted by `V-DRK-BLOCK-GATE`
+(blocks under the twin-condition, never otherwise). Constitution: `drk_07_governance_evolution_authority.md`.
+
+**Cross-ref:** `drk_00_foundations_canonical_objects.md` (verdict ontology, review-tier routing),
+`drk_07_governance_evolution_authority.md` (override protocol, anti-capture), `sdd_os_06_*`
+(self-error calibration), `modules/one_shot/escalation.py` + `modules/owner_queue` (escalation transport).
+
+### UKDL TRAP T-DECISION-AUTHORITY-CAPTURE-001 — the three biases of a decision authority
+
+**Level:** UKDL Trap (governance, self-capture).
+**Sealed:** 2026-07-11.
+
+**Trap:** A decision authority **that never rejects anything is theater**; **one that always rejects
+is a block**; **one that always recommends platform/consolidation has a bias toward complexity.**
+Each is a distinct failure and each is invisible to the authority that has it — the never-rejecter
+feels helpful, the always-rejecter feels safe, the always-platformer feels principled.
+
+**Recognizer:** the three biases are **calibration drifts in the population of Decision Records**, not
+opinions: approval rate ≈ 1.0 (never-reject), reject+block rate ≥ 0.5 (always-reject), consolidate
+rate ≥ 0.5 with keep-local ≈ 0 (always-platform). Detected by `modules/decision_review/accountability.py::calibrate`
+above a population threshold (telemetry-before-claims; below it, `insufficient_data`), and each has a
+dedicated scenario in `V-DRK-3-BIAS`.
+
+**Rule:** Calibrating against all three biases is part of the discipline's **done criteria** — a
+decision authority is not complete until it can be shown *not* to be any of the three. A healthy
+verdict distribution matches the population of decisions actually seen, never a target distribution.
+
+**Cross-ref:** `drk_07_governance_evolution_authority.md` §II.4 (the three biases + correctives),
+`sdd_os_06_decision_accountability_attribution.md` (calibration), `tools/test_decision_review.py`
+(`V-DRK-3-BIAS`). Sister of `PR-DECISION-AUTHORITY-LIMITS-001`.
