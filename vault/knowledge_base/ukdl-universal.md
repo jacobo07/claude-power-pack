@@ -3443,3 +3443,83 @@ producer's output degrades to its pre-field behavior, never crashes.
 always-False at fd_07_flywheel deposit time, read at session_compiler / question_harvester
 / co_12_telemetry, flippable by nothing. Producer shipped as fd_04_prover.
 Cross-ref: `[[PR-PROOF-OR-HYPOTHESIS-001]]`.
+
+## PR-ACIS-FALSIFIABILITY-001 -- no claim becomes infrastructure without a falsifier
+
+**TRIGGER:** about to promote any ACIS claim (a candidate law, a theorem record, a deposited
+delta) past hypothesis -- i.e. treat it as an operational rule (E4) or higher.
+
+**REGLA:** a claim may occupy only the epistemic level its on-disk evidence licenses, and the
+PRODUCER of a claim may never certify its own level. E0-E3 is the most a single model (Fable
+included) may author. E4+ requires an artifact authored by a DIFFERENT actor: an Owner-promoted
+UKDL rule (E4/E5) or a sealed Hard Rule (E6). Every claim carries an explicit falsifier -- a
+concrete, observable refutation condition the pipeline can actually measure; a claim with no
+falsifier is not a weak claim, it is not a theorem, and is dropped at authoring time. Evidence
+must be independent of the model that proposed the claim (a probe re-run, or a different
+substrate re-deriving it), and a claim with no production-impact chain may be kept as research
+but never declared E4+.
+
+**POR QUE:** the epistemic ladder E0-E7 names the sealed promotion chain (deposit E2 -> FD-04
+prove/attest E3 -> Owner UKDL rule E4 -> Hard Rule E6). Without the falsifier gate, a confident
+deposit reads as a law; without the different-actor rule, a model ratifies its own output and
+calls it validation (the CWOPS degenerate-feedback trap at the level of epistemics).
+
+**FAIL-OPEN:** `epistemic_level()` fails CLOSED on promotion (an unreadable artifact degrades a
+claim's level DOWNWARD, never up -- an error must never inflate a claim) and fail-open on reads
+(garbage fingerprint -> E0). Enforced by `V-NO-AUTOPROMOTION` + `V-THEOREM-SCHEMA-COMPLETE`.
+
+**ORIGEN:** ACIS Generation Zero, 2026-07-11. Live proof: 8 deposits resolve to 5xE3 + 3xE2,
+zero E4+ (no sealed rule cites a deposit ref) -- the No-Autopromotion Invariant working, not a
+bug. Extends `[[PR-PROOF-OR-HYPOTHESIS-001]]` (a deposit without an FD-04 proof is hypothesis);
+this rule generalizes it to every level of the ladder. Cross-ref: `[[T-ACIS-MODEL-CONSENSUS-001]]`,
+`[[T-ACIS-GOODHART-001]]`, `ACIS_INDEX.md`.
+
+## T-ACIS-MODEL-CONSENSUS-001 -- same-model consensus is not independent evidence
+
+**TRIGGER:** about to treat agreement among agents of the SAME model (a Fable critic ratifying a
+Fable claim; a swarm of one model's instances voting) as validation that promotes a claim past E3.
+
+**REGLA:** consensus among instances of one model is not independent evidence -- they share the
+weights that produced the claim, so their agreement is correlated, not confirmatory. A claim's
+E3->E4+ promotion requires a DIFFERENT actor: the Owner (who authors the rule) or a different
+model that re-derives the capability, and even a different model is only weak independence until
+production evidence confirms it. A destruction attempt an author runs on its own claim strengthens
+the hypothesis but never validates it.
+
+**POR QUE:** ACIS-01's candidate laws were authored AND stress-tested by Fable; if that self-test
+counted as validation, every ACIS law would self-promote to operational on the strength of its own
+author's approval -- the exact failure the No-Autopromotion Invariant exists to stop.
+
+**FAIL-OPEN:** design-time epistemics rule; the mechanical half is the `epistemic_level()` E3 cap,
+which never reads a model's self-assessment as a referent -- only on-disk artifacts by other actors.
+
+**ORIGEN:** ACIS Generation Zero, 2026-07-11. This rule is itself listed in the Generation One
+agenda as a claim to be attacked (is a different model genuinely independent, or is model diversity
+illusory?) -- the rule ACIS proposes threatens itself, which is the discipline working. Cross-ref:
+`[[PR-ACIS-FALSIFIABILITY-001]]`.
+
+## T-ACIS-GOODHART-001 -- every ACIS metric is a proxy; the master check is the CO-12 ratio
+
+**TRIGGER:** about to optimize, report, or gate on any ACIS/PCCR metric (Cognitive IRR, Frontier
+Dependence Index, Portability Score, Compression Loss, Reuse Horizon, Production Impact Confidence,
+Infrastructure Delta, Theory Maturity).
+
+**REGLA:** each ACIS metric is a proxy anchored to an EXISTING accountant (token_irr, CO-12
+dependence metric, fd_portability_proven, FD-04 DEGRADED, recall_roi, D1 liveness, FD-07 deposit
+precision, the derived E-level counts) -- never a new number. The master ground-truth check remains
+the CO-12 cognitive-compression ratio; if it does not move, the proxies are theater regardless of
+their values. Do NOT re-derive an anti-Goodhart mechanism for ACIS: the doctrine is already sealed
+(FD-00 III.1 metric-decoupling + deposit-count Goodharting; FD-07 names the CO-12 ratio the master
+signal). This trap is a genealogy pointer, not a new system -- re-deriving it would be the exact
+duplication D2A forbids (`DO_NOT_BUILD`).
+
+**POR QUE:** Theory Maturity climbing (deposits moving E2->E3) looks like progress, but a stack can
+lift every claim to E3 with cheap probes while the dependence curve stays flat -- the volume-theater
+failure FD already catalogs, now reachable through an ACIS proxy.
+
+**FAIL-OPEN:** advisory epistemics rule; the derived metrics carry no gate that can fire on the proxy
+alone -- the CO-12 ratio remains the single accountant.
+
+**ORIGEN:** ACIS Generation Zero, 2026-07-11. PCCR-to-existing-accountant map in `ACIS_INDEX.md`;
+anti-Goodhart genealogy in `[[fd_00_fable_advantage_doctrine_and_session_protocol]]` III.1.
+Cross-ref: `[[PR-ACIS-FALSIFIABILITY-001]]`.

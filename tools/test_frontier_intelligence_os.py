@@ -22,6 +22,7 @@ done-gate grep. Exit 0 iff all gates pass.
 from __future__ import annotations
 
 import os
+import re
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -667,6 +668,132 @@ def gate_fd04() -> None:
         _fail("V-FD04-MIRROR-DELETED", "mirror or hashlib still present")
 
 
+def gate_acis() -> None:
+    """ACIS-00/01: the epistemic ladder derives level from the pipeline (never
+    stores it); the No-Autopromotion Invariant caps at E3 without an Owner-authored
+    referent; every candidate law carries a falsifier + mechanism; Theory Maturity
+    rides CO-12 without forking it."""
+    from modules.fable_distillation import epistemic_ladder as EL
+    from modules.fable_distillation import fd_07_flywheel as FD07
+    from modules.fable_distillation import fd_04_prover as P
+    from modules.cognitive_os.co_12_telemetry import fd_metrics
+
+    _KB = Path(SC.__file__).resolve().parents[2] / "vault" / "knowledge_base" / "acis"
+    a00 = (_KB / "acis_00_epistemic_ladder_and_theorem_schema.md").read_text(
+        encoding="utf-8")
+    a01 = (_KB / "acis_01_generation_zero_laws.md").read_text(encoding="utf-8")
+
+    # V-ACIS-OVERLAP-CLEAN (static): the datasets cite their parents as genealogy
+    # rather than re-deriving them -- no parallel system claimed.
+    if all(t in a00 for t in ("EXTEND", "genealogy", "FD-00", "fd_04_prover",
+                              "REFERENCE")) \
+            and "FD-03 IS this system" in (_KB / "ACIS_INDEX.md").read_text(
+                encoding="utf-8"):
+        _ok("V-ACIS-OVERLAP-CLEAN", "datasets cite parents; FD-03 referenced, not rebuilt")
+    else:
+        _fail("V-ACIS-OVERLAP-CLEAN", "missing genealogy/reference markers")
+
+    # V-THEOREM-SCHEMA-COMPLETE: every LAW- record carries a falsifier line.
+    laws = re.findall(r"^## LAW-\d+.*?(?=^## LAW-|\Z)", a01, re.MULTILINE | re.DOTALL)
+    laws_ok = laws and all("falsifiers:**" in blk for blk in laws)
+    if laws_ok and len(laws) >= 8:
+        _ok("V-THEOREM-SCHEMA-COMPLETE", f"{len(laws)} laws, each with a falsifier")
+    else:
+        _fail("V-THEOREM-SCHEMA-COMPLETE", f"laws={len(laws)} all-falsifier={bool(laws_ok)}")
+
+    # V-LAWS-HAVE-MECHANISM: no law without a causal mechanism.
+    if laws and all("causal_mechanism:**" in blk for blk in laws):
+        _ok("V-LAWS-HAVE-MECHANISM", f"all {len(laws)} laws name a causal mechanism")
+    else:
+        _fail("V-LAWS-HAVE-MECHANISM", "a law is missing its mechanism")
+
+    # V-GENERATION-ONE-AGENDA: the open-questions artifact exists in vault/sessions.
+    sess = Path(SC.__file__).resolve().parents[2] / "vault" / "sessions"
+    g1 = list(sess.glob("ACIS_GENERATION_ONE_AGENDA_*.md"))
+    if g1 and "threatens" in g1[0].read_text(encoding="utf-8").lower():
+        _ok("V-GENERATION-ONE-AGENDA", f"{g1[0].name} present with invalidating questions")
+    else:
+        _fail("V-GENERATION-ONE-AGENDA", f"agenda artifact absent ({len(g1)})")
+
+    # ---- hermetic derived-level scenarios (monkeypatch the corpus paths) ----
+    st = _tmp("acis_state_")
+    fake_ukdl = _tmp("acis_ukdl_") / "ukdl.md"
+    fake_hr = _tmp("acis_hr_") / "hr.md"
+    fake_repo = _tmp("acis_repo_")
+    (fake_repo / "exists.py").write_text("x = 1\n", encoding="utf-8")
+    repo = str(fake_repo)  # repo string doubles as the probe-resolution root
+    orig_ukdl, orig_hr = EL._UKDL, EL._HARD_RULES
+    EL._UKDL, EL._HARD_RULES = fake_ukdl, fake_hr
+    try:
+        # E2: a deposit with a claim and no proof / no rule.
+        FD07._append_jsonl(FD07._deposits_path(repo, st),
+                           {"fingerprint": "acis-x", "claim": "a testable claim",
+                            "question_ref": "q:acis0001",
+                            "portability_target": "deterministic"})
+        FD07._append_jsonl(FD07._deposits_path(repo, st),
+                           {"fingerprint": "acis-y", "claim": "a portable claim",
+                            "question_ref": "q:acis0002",
+                            "portability_target": "mid-model"})
+        fake_ukdl.write_text("no citations here\n", encoding="utf-8")
+        fake_hr.write_text("no citations here\n", encoding="utf-8")
+        lvl_e2 = EL.epistemic_level("acis-x", repo, state_dir=st)
+
+        # E3: a deterministic probe proves acis-x.
+        P.prove(repo, "acis-x", [{"type": "file_exists", "path": "exists.py"}],
+                achieved_target="deterministic", sid="", state_dir=st,
+                now=None)  # deposit lives in st; repo slug matches
+        # prove() re-checks the deposit ledger in `repo`; align the paths:
+        lvl_e3 = EL.epistemic_level("acis-x", repo, state_dir=st)
+
+        # E4: an Owner UKDL rule now cites acis-x (deterministic proof -> E4, not E5).
+        fake_ukdl.write_text("PR-SOMETHING-001 references q:acis0001 here\n",
+                             encoding="utf-8")
+        lvl_e4 = EL.epistemic_level("acis-x", repo, state_dir=st)
+
+        # E5: acis-y attested on a cross-model substrate + cited by an Owner rule.
+        P.attest(repo, "acis-y", substrate="mid-model",
+                 evidence="re-derived on Sonnet", state_dir=st)
+        fake_ukdl.write_text("PR-A-001 q:acis0001\nPR-B-001 q:acis0002\n",
+                             encoding="utf-8")
+        lvl_e5 = EL.epistemic_level("acis-y", repo, state_dir=st)
+
+        # E6: a Hard Rule cites acis-x -> constitutional, overrides E4.
+        fake_hr.write_text("HR-ACIS-X q:acis0001\n", encoding="utf-8")
+        lvl_e6 = EL.epistemic_level("acis-x", repo, state_dir=st)
+
+        if (lvl_e2, lvl_e3, lvl_e4, lvl_e5, lvl_e6) == ("E2", "E3", "E4", "E5", "E6"):
+            _ok("V-EPISTEMIC-LEVEL-ASSIGNED",
+                "E2->E3->E4->E5->E6 across proof + rule + hard-rule referents")
+        else:
+            _fail("V-EPISTEMIC-LEVEL-ASSIGNED",
+                  f"got {(lvl_e2, lvl_e3, lvl_e4, lvl_e5, lvl_e6)}")
+
+        # V-NO-AUTOPROMOTION: with the corpus citing nothing, a proven deposit
+        # caps at E3 -- the producer can never lift its own claim past evidence.
+        fake_ukdl.write_text("nothing relevant\n", encoding="utf-8")
+        fake_hr.write_text("nothing relevant\n", encoding="utf-8")
+        capped = EL.epistemic_level("acis-x", repo, state_dir=st)
+        # a garbage fingerprint fails open to E0, never inflates.
+        ghost = EL.epistemic_level("no-such-fp", repo, state_dir=st)
+        if capped == "E3" and ghost == "E0":
+            _ok("V-NO-AUTOPROMOTION", "proven-but-uncited caps at E3; unknown -> E0")
+        else:
+            _fail("V-NO-AUTOPROMOTION", f"capped={capped} ghost={ghost}")
+
+        # V-CO12-WIRED: Theory Maturity is a repo-scoped projection, absent without
+        # a repo -- no new signal, no accountant fork (Invariant 1).
+        no_repo = fd_metrics(state_dir=st).get("fd_theory_maturity")
+        with_repo = fd_metrics(state_dir=st, repo=repo).get("fd_theory_maturity")
+        if no_repo is None and isinstance(with_repo, dict) \
+                and sum(with_repo.values()) == 2:
+            _ok("V-CO12-WIRED",
+                f"maturity None without repo; {with_repo} with repo (no fork)")
+        else:
+            _fail("V-CO12-WIRED", f"no_repo={no_repo} with_repo={with_repo}")
+    finally:
+        EL._UKDL, EL._HARD_RULES = orig_ukdl, orig_hr
+
+
 def main() -> int:
     print("== FIOS execution-layer V-gates ==")
     print("[compose / anti-duplication]")
@@ -685,6 +812,8 @@ def main() -> int:
     gate_portfolio()
     print("[fd-04 prover]")
     gate_fd04()
+    print("[acis epistemic ladder]")
+    gate_acis()
     total = _passes + _fails
     print(f"\nFIOS_ACTIVATION_PASS={_passes}/{total}  threshold={total}/{total}")
     verdict = "PASS" if _fails == 0 else "FAIL"

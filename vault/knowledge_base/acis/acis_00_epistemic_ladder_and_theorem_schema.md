@@ -207,6 +207,10 @@ so no theorem *registry* code is built; the epistemic level is **derived**, so n
 is built; PCCR metrics **ride CO-12**, so no accountant is forked; the safety constitution is
 **the 30+ Hard Rules already sealed**, so no new constitution document is authored — only two
 UKDL candidates (no-autopromotion, model-consensus) are proposed for the Owner to promote. The
-only new code in the entire ACIS family is one derived function that reads four ledgers and
-returns a level. Everything else is a naming, a schema, and a set of falsifiable laws — the
-E0–E3 work that is exactly what a frontier session is *for*.
+Knowledge-to-Production Compiler that ACIS's third proposed organism describes is a
+**REFERENCE**, not a build: FD-03 already routes every insight to its exact destination (Hard
+Rule / Process Rule / Trap / dataset Part / benchmark / prompt fragment / discard) and transmutes
+its form — ACIS points at it, it does not rebuild it. The only new code in the entire ACIS
+family is one derived function that reads four ledgers and returns a level. Everything else is a
+naming, a schema, and a set of falsifiable laws — the E0–E3 work that is exactly what a frontier
+session is *for*.
