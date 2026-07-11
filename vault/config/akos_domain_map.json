@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "_doc": "AKOS domain map. Maps a repo (matched against any lowercased path component of the session cwd) to the AKOS knowledge domains relevant to it. A repo gets AKOS units injected ONLY when it has BOTH a brief on disk AND an entry here (conservative: better silence than irrelevant units). Target domains are intersected with the domains actually present in that repo's brief; a target with no matching brief section contributes nothing. Domains in a brief: saas, sales, ai_automation, scaling, mindset, gaming, copywriting, seo, marketing, ecommerce, outreach, social_media, wealth.",
+  "max_units": 6,
+  "per_domain": 3,
+  "repos": {
+    "claude-power-pack": ["ai_automation", "scaling"],
+    "infinityops": ["saas", "sales", "ai_automation", "scaling"],
+    "tua-x": ["saas", "sales", "scaling", "copywriting"],
+    "tuax": ["saas", "sales", "scaling", "copywriting"],
+    "cw_ugc_system": ["saas", "sales", "copywriting"],
+    "commonwealth": ["saas", "sales", "scaling"],
+    "kobiicraft": ["gaming"],
+    "kobicraft": ["gaming"],
+    "geo-audit": ["seo", "marketing"],
+    "geo-seo-os": ["seo", "marketing"]
+  }
+}
