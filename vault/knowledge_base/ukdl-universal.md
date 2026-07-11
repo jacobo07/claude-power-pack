@@ -3523,3 +3523,25 @@ alone -- the CO-12 ratio remains the single accountant.
 **ORIGEN:** ACIS Generation Zero, 2026-07-11. PCCR-to-existing-accountant map in `ACIS_INDEX.md`;
 anti-Goodhart genealogy in `[[fd_00_fable_advantage_doctrine_and_session_protocol]]` III.1.
 Cross-ref: `[[PR-ACIS-FALSIFIABILITY-001]]`.
+
+### UKDL TRAP T-AKOS-KNOWLEDGE-DEAD-001 -- a store that only GENERATES a brief, with no active consumption path, never composes
+
+**REGLA:** a knowledge store needs four steps to compose: generate + inject + harvest + measure.
+With only generate, the artifact sits on disk unread. AKOS generated 89 domain-tagged units into
+`<repo>/knowledge/AKOS_KNOWLEDGE_BRIEF.md` across ~15 repos, but no hook, module, or command read any
+of them into an active session -- the gap was CONSUMPTION, not generation. Fix (2026-07-11): a shared
+parser (`modules/akos_knowledge`) feeding two live consumers -- JIT session injection
+(`_akos_knowledge_inject`, domain-matched, throttled 1/session, CO-12-measured) and the FIOS
+question harvester (`_from_akos`). Consume-existing-only; brief-exists AND repo-mapped policy.
+
+**POR QUE:** an unconsumed artifact reads as "done" (the file exists, the units were matched) while
+delivering zero value to any session -- the write-without-read pattern (`[[feedback_write_without_read_incomplete_system.md]]`)
+applied to a knowledge store rather than a recovery path.
+
+**FAIL-OPEN:** absolute at every seam -- unmapped repo, missing brief, or parse error yields silence,
+never a blocked prompt or a raised harvest.
+
+**ORIGEN:** AKOS Knowledge Brief integration, 2026-07-11. Two plan premises corrected during PASO -1:
+the `/knowledge` command's engine path was stale (TUAX_UGC_SYSTEM gone; real engine under the AKOS/
+repo), and briefs already existed widely on disk. Cross-ref: `[[feedback_write_without_read_incomplete_system.md]]`,
+`[[feedback_orphan_module_wiring.md]]`.
