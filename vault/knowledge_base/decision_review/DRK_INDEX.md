@@ -121,10 +121,27 @@ suites still green).
 | SDD-OS Parte VI Accountability | ✅ written | ~2500w · two-ledger · 4-source attribution · calibration (I author) |
 | DRK-07 Governance/Evolution | ✅ written | ~2600w · block-narrow constitution · 3-bias · propose-never-apply (I author) |
 | decision_record.py | ✅ built | canonical objects + append-only fail-open Registry |
-| decision_kernel.py | ✅ built | 9-stage sieve · reversibility/DBR/DCS · verdict precedence · block-gate |
+| decision_kernel.py | ✅ built | 9-stage sieve · reversibility/DBR/DCS · verdict precedence · block-gate · `live=True` resolves real providers |
 | accountability.py | ✅ built | prediction scoring · 4-source attribution · 3-bias calibration |
-| tools/test_decision_review.py | ✅ green | 11/11 hermetic ×3 · V-BASELINE (D2A 22/22, FD, FIOS) green |
-| UKDL (2 rules) | ✅ sealed | PR-DECISION-AUTHORITY-LIMITS-001 + T-DECISION-AUTHORITY-CAPTURE-001 (ukdl-universal.md) |
+| providers.py | ✅ **wired live** | 6 adapters (arch-decision · d2a_engine · epistemic_ladder · spec_gate · cost_collapse · owner_queue), each fail-open + budgeted. Signatures verified at source first (HR-PREMISE-001); **3 asserted premises were false** |
+| proactive_scanner.py | ✅ **live** | 4 evidence-mandatory detectors (D1 liveness · D3 recall-ROI · D4 residuals · unrecorded decisions); daily task `PP-DRKScan`; output → `vault/audits/drk_proactive_*.md` + OWNER_QUEUE |
+| tools/register_drk_scan.ps1 | ✅ shipped | idempotent per-user Scheduled Task (Owner runs once) |
+| tools/test_decision_review.py | ✅ green | **18/18 hermetic ×3** · V-BASELINE (strategic-gaps 21/21, D2A 22/22, FIOS 48/48, FD 12/12) green |
+| D1 Liveness ledger | ✅ LIVE | `drk-kernel` + `drk-proactive` rows added; both probe **LIVE** (earned: a real Decision Record + a real audit report exist) |
+| UKDL (4 rules) | ✅ sealed | PR-DECISION-AUTHORITY-LIMITS-001 · T-DECISION-AUTHORITY-CAPTURE-001 · T-DRK-PROACTIVE-NOISE-001 · T-DRK-PRECEDENT-LENGTH-BIAS-001 |
+| `DEC-0001` | ✅ recorded | the wiring decision, reviewed by the kernel itself: APPROVE-WITH-CONDITIONS · Tipo-B · L3 · DCS 92 |
+
+## The self-review that found the bug
+
+The wiring decision was submitted to the kernel as its first real input. It returned **REJECT**
+(`precedent-collision-on-veto`). The collision was false: `arch_check`'s score rises with input
+LENGTH, and 86% of its index is veto-class, so feeding it a long statement+problem+rationale blob
+made every substantial decision "collide with a Hard Rule". That is the always-reject bias of
+`T-DECISION-AUTHORITY-CAPTURE-001` arriving through an adapter rather than a doctrine. Fixed
+(statement-only input; `on_veto` mirrors arch_check's own COLLISION condition), gated
+(`V-DRK-NO-LENGTH-BIAS`), sealed (`T-DRK-PRECEDENT-LENGTH-BIAS-001`). The corrected review returns
+APPROVE-WITH-CONDITIONS with the precedent cited as a WARNING — surfaced, not vetoing. **A decision
+authority that cannot survive its own review is not an authority.**
 
 ## The fundamental property
 

@@ -127,6 +127,22 @@ def default_registry() -> list[dict]:
                       "glob": "vault/sessions/SESSION_ZERO_*.md",
                       "root": "repo"},
         },
+        {
+            "id": "drk-kernel",
+            "surface": "decision-registry",
+            "desc": "DRK review kernel -- every reviewed decision appends a record",
+            "probe": {"type": "file-mtime",
+                      "glob": "vault/decision_registry/records.jsonl",
+                      "root": "repo"},
+        },
+        {
+            "id": "drk-proactive",
+            "surface": "audits",
+            "desc": "DRK proactive scanner -- daily sweep proposing decisions nobody asked about",
+            "probe": {"type": "file-mtime",
+                      "glob": "vault/audits/drk_proactive_*.md",
+                      "root": "repo"},
+        },
     ]
 
 

@@ -369,12 +369,207 @@ def test_dcs():
         _fail("V-DRK-DCS", f"strong={strong} one_opt={one_opt}")
 
 
+# ----------------------------------------------------------------------------
+# V-DRK-PROVIDERS-LIVE -- the kernel off the bench: real providers, not fixtures
+# ----------------------------------------------------------------------------
+def test_providers_live():
+    from modules.decision_review import providers as P
+    obj = _obj(statement="run a schema migration that drops the legacy table",
+               is_build_decision=True, evidence=[_fact()],
+               discarded_alternatives=["keep it"], accepted_risks=["data loss"])
+    res = P.resolve_all(obj)
+    # spec_gate.classify_tier and cost_collapse.route are pure functions: they
+    # always answer. If they do not, the adapters are not really wired.
+    tier_ok = isinstance(res.get("tier"), dict) and "tier" in res["tier"]
+    route_ok = isinstance(res.get("route"), dict) and res["route"].get("model")
+    rec = review_decision(obj, registry=_tmp_registry(), ts="t", live=True)
+    verdict_ok = rec.verdict is not None
+    if tier_ok and route_ok and verdict_ok:
+        _ok("V-DRK-PROVIDERS-LIVE",
+            f"tier={res['tier']['tier']} route={res['route']['model']} "
+            f"verdict={rec.verdict.value} (no fixture injected)")
+    else:
+        _fail("V-DRK-PROVIDERS-LIVE",
+              f"tier_ok={tier_ok} route_ok={route_ok} verdict_ok={verdict_ok}")
+
+
+# ----------------------------------------------------------------------------
+# V-DRK-FAILOPEN-PROVIDER -- a dead provider degrades the review, never stops it
+# ----------------------------------------------------------------------------
+def test_failopen_provider():
+    from modules.decision_review import providers as P
+    obj = _obj(statement="refactor the module dependency", evidence=[_fact()],
+               discarded_alternatives=["leave it"], accepted_risks=["churn"])
+    orig_loader, orig_placement = P._load_arch_check, P.placement_for
+    try:
+        P._load_arch_check = lambda: None            # arch-decision unreadable
+        def _boom(*a, **k):                          # D2A raises
+            raise RuntimeError("provider down")
+        P.placement_for = _boom
+        res = P.resolve_all(obj)
+        rec = review_decision(obj, registry=_tmp_registry(), ts="t", live=True)
+    finally:
+        P._load_arch_check, P.placement_for = orig_loader, orig_placement
+    degraded = res.get("precedent") is None
+    survived = res.get("route") is not None and rec.verdict is not None
+    if degraded and survived:
+        _ok("V-DRK-FAILOPEN-PROVIDER",
+            f"arch-decision dead + D2A raising -> verdict still {rec.verdict.value} "
+            f"from the surviving providers")
+    else:
+        _fail("V-DRK-FAILOPEN-PROVIDER",
+              f"degraded={degraded} survived={survived} verdict={rec.verdict}")
+
+
+# ----------------------------------------------------------------------------
+# V-DRK-NO-LENGTH-BIAS -- a verbose decision must not be rejected FOR being
+# verbose. Regression gate for the always-reject bias
+# (T-DECISION-AUTHORITY-CAPTURE-001 / T-DRK-PRECEDENT-LENGTH-BIAS-001): the
+# precedent provider's score rises with input length and 86% of its index is
+# veto-class, so a naive adapter turns "this is a big decision" into "this
+# collides with a Hard Rule" and REJECTs every substantial decision.
+# ----------------------------------------------------------------------------
+def test_no_length_bias():
+    from modules.decision_review import providers as P
+    short = "Add a daily scanner"
+    verbose = (short + " that composes the arch-decision precedent index, the D2A "
+               "placement engine, the ACIS epistemic ladder, the spec_gate tier "
+               "classifier, the cost_collapse router, the OWNER_QUEUE residual "
+               "ledger and the D1 liveness ledger, writing an audit report and "
+               "publishing high-urgency findings without blocking the workflow")
+    pv = P.precedent_for(verbose)
+    if pv is None:
+        _ok("V-DRK-NO-LENGTH-BIAS",
+            "arch-index unavailable -> provider silent (fail-open)")
+        return
+    # on_veto is True only when a source actually clears the COLLISION floor --
+    # not merely because a veto-class source appears (86% of the index is).
+    floor = 4.5
+    veto_earned = (not pv["on_veto"]) or any(s["score"] >= floor
+                                             for s in pv["sources"])
+    # A verbose restatement of a benign decision must not escalate to REJECT.
+    obj = _obj(statement=verbose, evidence=[_fact()],
+               discarded_alternatives=["do nothing"], accepted_risks=["noise"])
+    rec = review_decision(obj, registry=_tmp_registry(), ts="t", live=True)
+    not_rejected = rec.verdict != Verdict.REJECT
+    if veto_earned and not_rejected:
+        _ok("V-DRK-NO-LENGTH-BIAS",
+            f"verbose({len(verbose.split())}w) -> precedent={pv['verdict']} "
+            f"on_veto={pv['on_veto']} verdict={rec.verdict.value} (not REJECT)")
+    else:
+        _fail("V-DRK-NO-LENGTH-BIAS",
+              f"veto_earned={veto_earned} verdict={rec.verdict} "
+              f"precedent={pv['verdict']}/{pv['on_veto']}")
+
+
+# ----------------------------------------------------------------------------
+# V-DRK-SCANNER-RUNS -- runs on a real repo; an empty repo is [] not an error
+# ----------------------------------------------------------------------------
+def test_scanner_runs():
+    from modules.decision_review.proactive_scanner import scan_repo
+    td = Path(tempfile.mkdtemp(prefix="drk_scan_"))
+    real = scan_repo(PP_ROOT, state_dir=td, td=td, registry=_tmp_registry())
+    empty = scan_repo(td, state_dir=td, td=td, registry=_tmp_registry())
+    missing = scan_repo(td / "does_not_exist", state_dir=td, td=td)
+    # An empty repo must yield ZERO findings. PP-global ledgers (D1 liveness, D3
+    # recall-ROI) describe the pack, not the target: leaking them into a foreign
+    # repo's scan would be inventing evidence about a repo that has none.
+    if isinstance(real, list) and real and empty == [] and missing == []:
+        _ok("V-DRK-SCANNER-RUNS",
+            f"PP repo -> {len(real)} real suggestion(s); empty repo -> 0 "
+            f"(no PP-ledger leakage); missing repo -> []")
+    else:
+        _fail("V-DRK-SCANNER-RUNS",
+              f"real={len(real) if isinstance(real, list) else real} "
+              f"empty={len(empty) if isinstance(empty, list) else empty} "
+              f"missing={missing}")
+
+
+# ----------------------------------------------------------------------------
+# V-DRK-SCANNER-EVIDENCE -- every suggestion cites a REAL repo artifact
+# (T-DRK-PROACTIVE-NOISE-001: no evidence -> not published)
+# ----------------------------------------------------------------------------
+def test_scanner_evidence():
+    from modules.decision_review.proactive_scanner import scan_repo, HIGH
+    from modules.decision_review.proactive_scanner import HIGH_BLAST_MAGNITUDE
+    td = Path(tempfile.mkdtemp(prefix="drk_scan_"))
+    sugg = scan_repo(PP_ROOT, state_dir=td, td=td, registry=_tmp_registry())
+    ungrounded = [s.path for s in sugg if not s.is_publishable()]
+    # every module-path suggestion must name a directory that actually exists
+    fake_paths = [s.path for s in sugg
+                  if s.path.startswith("modules/") and s.path != "modules/"
+                  and not (PP_ROOT / s.path).is_dir()]
+    # high urgency must be earned: a verifiable blast magnitude or a DRIFTED gate
+    unearned = [s.path for s in sugg if s.urgency == HIGH
+                and s.blast.get("magnitude", 0) < HIGH_BLAST_MAGNITUDE
+                and s.detector != "liveness"]
+    if not ungrounded and not fake_paths and not unearned:
+        _ok("V-DRK-SCANNER-EVIDENCE",
+            f"{len(sugg)} suggestion(s): 0 ungrounded, 0 invented paths, "
+            f"0 unearned-high")
+    else:
+        _fail("V-DRK-SCANNER-EVIDENCE",
+              f"ungrounded={ungrounded} invented={fake_paths} unearned_high={unearned}")
+
+
+# ----------------------------------------------------------------------------
+# V-DRK-QUEUE-INTEGRATION -- a high-urgency finding reaches the OWNER_QUEUE (D4)
+# ----------------------------------------------------------------------------
+def test_queue_integration():
+    from modules.decision_review.proactive_scanner import (
+        ProactiveSuggestion, publish, HIGH, LOW)
+    from modules.owner_queue.owner_queue import pending
+    td = Path(tempfile.mkdtemp(prefix="drk_q_"))
+    high = ProactiveSuggestion(
+        type="orphan", description="a shipped gate is not deployed",
+        repo="pp", path="liveness:hooks-dir/hook-dispatcher",
+        verdict_hint="APPROVE-WITH-CONDITIONS", urgency=HIGH,
+        evidence="D1 liveness audit -> DRIFTED: hash mismatch", detector="liveness")
+    low = ProactiveSuggestion(
+        type="opportunity", description="a dataset is never recalled", repo="pp",
+        path="vault/specs/x.md", verdict_hint="REMOVE", urgency=LOW,
+        evidence="D3 recall-ROI: 0 injections", detector="recall_roi")
+    ids = publish([high, low], state_dir=td)
+    rows = pending(td)
+    only_high = len(ids) == 1 and len(rows) == 1 \
+        and "shipped gate" in rows[0].get("action", "")
+    # idempotent: a daily re-scan of an unfixed finding must not duplicate the row
+    publish([high, low], state_dir=td)
+    idempotent = len(pending(td)) == 1
+    if only_high and idempotent:
+        _ok("V-DRK-QUEUE-INTEGRATION",
+            f"high -> OWNER_QUEUE row {ids[0]}; low withheld; re-scan idempotent")
+    else:
+        _fail("V-DRK-QUEUE-INTEGRATION",
+              f"ids={ids} rows={len(rows)} idempotent={idempotent}")
+
+
+# ----------------------------------------------------------------------------
+# V-DRK-LIVENESS-ENTRY -- DRK is in the D1 ledger (PR-LIVENESS-CHECK-BEFORE-SHIP-001)
+# ----------------------------------------------------------------------------
+def test_liveness_entry():
+    from modules.liveness.liveness_ledger import default_registry, audit
+    ids = {r.get("id") for r in default_registry()}
+    have = {"drk-kernel", "drk-proactive"} <= ids
+    rows = {r["id"]: r for r in audit(repo_root=PP_ROOT)}
+    probed = "drk-kernel" in rows and rows["drk-kernel"].get("verdict")
+    if have and probed:
+        _ok("V-DRK-LIVENESS-ENTRY",
+            f"drk-kernel={rows['drk-kernel']['verdict']} "
+            f"drk-proactive={rows['drk-proactive']['verdict']} (probed, not asserted)")
+    else:
+        _fail("V-DRK-LIVENESS-ENTRY", f"registered={have} probed={probed}")
+
+
 def main() -> int:
     print("== DRK done-gate: tools/test_decision_review.py ==")
     for t in (test_reversibility, test_scope_l0, test_record_canonical,
               test_verdict_ontology, test_block_gate, test_failopen,
               test_accountability, test_attribution, test_three_bias,
-              test_fase5_scenarios, test_dcs):
+              test_fase5_scenarios, test_dcs,
+              test_providers_live, test_failopen_provider, test_no_length_bias,
+              test_scanner_runs, test_scanner_evidence, test_queue_integration,
+              test_liveness_entry):
         t()
     total = _passes + _fails
     print(f"\nDRK_PASS={_passes}/{total}  threshold={total}/{total}")

@@ -3548,6 +3548,63 @@ repo), and briefs already existed widely on disk. Cross-ref: `[[feedback_write_w
 
 ---
 
+## DRK Live Wiring + Proactive Mode (sealed 2026-07-11)
+
+### UKDL TRAP T-DRK-PROACTIVE-NOISE-001 -- a proactive scanner that emits too much is worse than absent
+
+**REGLA:** a scanner that produces more suggestions than the Owner will read becomes noise and is
+ignored -- at which point it is WORSE than having none, because the stack believes that surface is
+covered. Three rules hold the line, enforced in code, not intention: (1) every suggestion cites a
+REAL path or ledger row (`ProactiveSuggestion.is_publishable()` filters at the egress, so a sloppy
+detector cannot leak an ungrounded finding); (2) `high` urgency is EARNED -- a kernel-computed blast
+magnitude at or above the threshold, or a DRIFTED gate the stack believes is enforcing and which
+provably is not deployed -- never a heuristic; (3) a volume cap is REPORTED as a row, never applied
+silently. A detector that cannot cite evidence emits nothing.
+
+**POR QUE:** the value of a proactive system is entirely in its precision. One ignorable false
+positive per day trains the Owner to skip the report, and the true positive that follows dies with
+it. Silence is a valid scan; noise is not.
+
+**FAIL-OPEN:** per-detector. One that raises is skipped and the scan continues; the scanner never
+blocks a workflow and never gates a commit.
+
+**ORIGEN:** DRK proactive scanner, 2026-07-11. A first implementation ran the D1-liveness and
+D3-recall-ROI detectors against ANY target repo -- but those read PP-global ledgers, so scanning a
+foreign repo reported the pack's own silent systems as findings ABOUT that repo (an empty directory
+produced 7 suggestions). Evidence that does not belong to the thing being scanned is fabrication,
+not detection. Fixed by scoping PP-global detectors to the pack itself; gated by
+`V-DRK-SCANNER-RUNS` (empty repo -> 0) and `V-DRK-SCANNER-EVIDENCE`.
+
+### UKDL TRAP T-DRK-PRECEDENT-LENGTH-BIAS-001 -- a length-sensitive advisory provider mapped to a hard verdict rejects every big decision
+
+**REGLA:** before mapping a provider's output onto a hard verdict, measure the DISTRIBUTION of that
+output over real inputs. `arch_check`'s relevance score rises monotonically with input length
+(body-token matches score per-token up to a cap, entity hits score higher), and 86% of its index
+(459/531 sources) is veto-class. So a naive adapter that (a) fed it a concatenated
+statement+problem+rationale blob and (b) read `on_veto` as "any veto-class source in the top 3"
+converted "this is a big decision" into "this collides with a Hard Rule" -- and REJECTED it. The same
+decision scored 1.50 as a 28-word statement and 4.05 as a 78-word blob, climbing toward the 4.5
+COLLISION floor purely by growing. Feed a provider the input shape its thresholds were calibrated on
+(here: the STATEMENT, a prompt-sized intent), and mirror its OWN escalation condition rather than
+inventing a looser one.
+
+**POR QUE:** this is the always-reject bias of `[[T-DECISION-AUTHORITY-CAPTURE-001]]` arriving through
+the back door -- not from a doctrine that likes saying no, but from an adapter whose signal correlates
+with verbosity. A decision authority that rejects every substantial decision is not strict; it is
+broken, and it will be routed around within a week. An ADVISORY provider ("this is advisory, the agent
+decides what to weigh") must not be able to unilaterally veto.
+
+**FAIL-OPEN:** an unavailable provider contributes NO input (None), never a CLEAR. Absence of a
+precedent signal is not evidence of no precedent.
+
+**ORIGEN:** DRK live wiring, 2026-07-11. Found by submitting the wiring decision ITSELF to the kernel:
+it returned REJECT on `precedent-collision-on-veto`. The collision was an artifact of text length, not
+a precedent. After the fix the same decision returns APPROVE-WITH-CONDITIONS with the precedent cited
+as a WARNING -- surfaced, not vetoing. Regression gate: `V-DRK-NO-LENGTH-BIAS`. Cross-ref:
+`[[PR-DECISION-AUTHORITY-LIMITS-001]]` (block-narrow, recommend-wide), `[[feedback_plan_code_is_hypothesis_verify_source.md]]`.
+
+---
+
 ## Decision Review Kernel (DRK) — Decision Axis (sealed 2026-07-11)
 
 The executable Decision axis of the PP: authenticate a decision (record, reversibility, blast radius,
