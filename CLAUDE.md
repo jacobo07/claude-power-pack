@@ -5,6 +5,21 @@ Power Pack execution doctrine inline. Hard rules below are sealed bug stops. See
 ## Mode Selection (router -> PR-MODE-SELECTION-001)
 Before a structured prompt: **EXECUTION MODE by default** (clear path, extends existing systems); **ULTRA-PLAN only** for a genuine architectural decision or a new-from-scratch system. ULTRA-PLAN costs ~3-5x the output. Full rule + evidence: `vault/knowledge_base/ukdl-universal.md` (PR-MODE-SELECTION-001 + T-PARALLEL-PANES-BURN-001).
 
+## Project Governance & Knowledge (added 2026-07-11)
+Normative rules that every project using Claude Power Pack obeys from its first commit live
+in `governance/` (one domain per file, imperative, each rule cites a real incident):
+- `governance/COPY_GOVERNANCE.md` — humanized copy is a done-gate (V-COPY-01); read before any deploy that changes user-visible strings.
+- `governance/DEPLOY_GOVERNANCE.md` — DONE means HTTP 200 on the real domain; pre-deploy checklist + headless-Vercel + `allowBuilds`/`CI=true`.
+- `governance/REPO_SECURITY_GOVERNANCE.md` — private by default; PII/secret pre-commit greps; read before the first commit of any project.
+- `governance/SESSION_CONTINUITY_GOVERNANCE.md` — RESUMPTION_FILE for any multi-session task.
+- `governance/KNOWN_FALSE_POSITIVES.md` — check FIRST on any confusing hook/gate signal (FIOS/IRR/FD-07 cross-contamination, BLOCKED_DELIVERY npm, scaffold/Woz literal matcher, 3rd-edit block).
+- `governance/README.md` — index + how to apply in a new project.
+
+Confirmed learnings (origin + rule + where they apply): `knowledge/PORTFOLIO_LEARNINGS.md`.
+Standing obligation: a new false positive goes into `KNOWN_FALSE_POSITIVES.md`, and a new
+learned pattern into `knowledge/PORTFOLIO_LEARNINGS.md`, the SAME session it is found — zero
+knowledge debt. Governance is the first artifact of a new project, not an afterthought.
+
 <!-- PP-HARD-RULES-START -->
 
 ## HARD RULES (NON-NEGOTIABLE -- sealed production bugs)
