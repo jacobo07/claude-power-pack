@@ -1370,9 +1370,106 @@ def _skill_router_inject(fn):
     return _wrapper
 
 
+# --- AKOS Knowledge Axis (T-AKOS-KNOWLEDGE-DEAD-001 wiring) ---
+# The AKOS engine writes a domain-partitioned brief into each repo's
+# knowledge/ dir; ~15 repos have one but nothing consumed them. This axis
+# injects the domain-matched top-N units ONCE per session as additional
+# context, so the business knowledge (SaaS/sales/scaling/gaming) actually
+# reaches an active session. Consume-existing-only (no engine call at
+# runtime); brief-exists AND repo-mapped policy; fail-open ABSOLUTE.
+_AKOS_STATE_TTL = DEDUPE_TTL_SEC        # 1 injection per session (2 h window)
+
+
+def _akos_recent(sid: str) -> bool:
+    """True iff AKOS units were injected for this session within the TTL.
+    Fail-open: any error -> False (allow injection)."""
+    p = STATE_DIR / f"jit-akos-{sid}.json"
+    try:
+        st = json.loads(p.read_text(encoding="utf-8"))
+        return (time.time() - float(st.get("ts", 0))) < _AKOS_STATE_TTL
+    except Exception:
+        return False
+
+
+def _akos_mark(sid: str) -> None:
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        p = STATE_DIR / f"jit-akos-{sid}.json"
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps({"ts": time.time()}), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:
+        pass
+
+
+def _akos_knowledge_inject(fn):
+    """Append domain-matched AKOS knowledge units to additionalContext,
+    once per session. Advisory; never blocks. Fail-open. Also records a
+    CO-12 `akos_injection` signal (A4) so D3 Recall-ROI can measure whether
+    the units are consumed. Sealed T-AKOS-KNOWLEDGE-DEAD-001."""
+    import functools as _ft
+
+    @_ft.wraps(fn)
+    def _wrapper(data):
+        result = fn(data)
+        try:
+            if os.environ.get("CLAUDEPP_AKOS_DISABLE") == "1":
+                return result
+            if not isinstance(result, dict):
+                return result
+            data_d = data or {}
+            sid = _sid(data_d)
+            if _akos_recent(sid):
+                return result           # throttle: 1 injection per session
+            cwd = data_d.get("cwd") or os.getcwd()
+            from modules.akos_knowledge.akos import units_for_cwd
+            brief, domains, units = units_for_cwd(cwd)
+            if not units:
+                return result           # unmapped repo / no brief / no overlap
+            lines = "\n".join(f"  - {u.one_line()}" for u in units)
+            try:
+                rel = str(Path(brief).name)
+            except Exception:
+                rel = "AKOS_KNOWLEDGE_BRIEF.md"
+            block = (
+                "## AKOS Knowledge (domain-matched: "
+                f"{', '.join(domains)})\n"
+                f"Business knowledge relevant to this repo (from "
+                f"knowledge/{rel}; showing {len(units)} top units):\n"
+                f"{lines}\n"
+                "(AKOS knowledge injector; CLAUDEPP_AKOS_DISABLE=1 to mute.)"
+            )
+            ac = result.get("additionalContext") or ""
+            if ac and not ac.endswith("\n"):
+                ac += "\n"
+            ac += "\n" + block
+            result["additionalContext"] = ac
+            _akos_mark(sid)
+            # A4 — CO-12 telemetry: measure consumption (D3 Recall-ROI).
+            try:
+                from modules.cognitive_os.co_12_telemetry import record_signal
+                record_signal("akos_injection", {
+                    "session_id": _raw_sid(data_d),
+                    "repo": Path(cwd).name if cwd else "",
+                    "domains": domains,
+                    "units_count": len(units),
+                    "brief": str(brief) if brief else "",
+                })
+            except Exception as _exc:
+                _log(f"akos co12 signal ERROR {type(_exc).__name__}: {_exc}")
+            _log(f"sid={sid} akos-injected units={len(units)} "
+                 f"domains={domains} brief={rel}")
+            return result
+        except Exception as _exc:
+            _log(f"akos inject ERROR {type(_exc).__name__}: {_exc}")
+            return result
+    return _wrapper
+
+
 @_tis_log_call
 @_tco_inject_routing
 @_pp_proactive_inject
+@_akos_knowledge_inject
 @_skill_router_inject
 @_oneshot_contract_inject
 def run(data) -> dict:
