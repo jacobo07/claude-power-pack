@@ -212,14 +212,18 @@ def loop_boundedness(proj_base=None, *,
 # --------------------------------------------------------------------------- #
 # Fable Advantage Distillation (FD) loop metrics -- REUSED, not re-invented.
 # --------------------------------------------------------------------------- #
-def fd_metrics(*, state_dir=None) -> dict:
+def fd_metrics(*, state_dir=None, repo=None) -> dict:
     """FD suite loop metrics, computed from the fd_* signals the FD-00 admission
     gate and the FD-07 flywheel emit into the SAME signals.jsonl this module owns.
     This is the anti-duplication boundary the suite guards (FD-07 I.4, Invariant 1):
     CO-12 is the single dependence instrument; FD feeds it, never forks it. No
     separate dependence NUMBER is computed here -- the ground truth is opus_avoided
     + loop_boundedness above; FD adds the admission/deposit/portability signals that
-    move them. instrument-pending until the loop runs on live frontier sessions."""
+    move them. instrument-pending until the loop runs on live frontier sessions.
+
+    When `repo` is given, an ACIS Theory Maturity projection (deposits counted by
+    derived E-level) is added -- a read-only view over the deposits ledger, never a
+    new signal or accountant (ACIS single-accountant discipline, Invariant 1)."""
     sigs = load_signals(state_dir=state_dir)
     admitted = [s for s in sigs if s.get("kind") == "fd_frontier_call_admitted"]
     declined = [s for s in sigs if s.get("kind") == "fd_admission_declined"]
@@ -237,6 +241,15 @@ def fd_metrics(*, state_dir=None) -> dict:
                  | {d.get("fingerprint") for d in deposits
                     if d.get("portability_proven")})
     measured = bool(admitted or declined or deposits or turns or proofs)
+    # ACIS Theory Maturity -- derived projection (deposits by E-level), repo-scoped
+    # and optional; fail-open so an ACIS-less checkout is unaffected.
+    maturity = None
+    if repo:
+        try:
+            from modules.fable_distillation.epistemic_ladder import theory_maturity
+            maturity = theory_maturity(repo, state_dir=state_dir)
+        except Exception:  # noqa: BLE001 -- a projection never breaks the accountant
+            maturity = None
     return {
         "fd_sessions_count": len(turns),
         "fd_frontier_calls_admitted": len(admitted),
@@ -254,6 +267,7 @@ def fd_metrics(*, state_dir=None) -> dict:
                                        if dep_count else None),
         "fd_dependence_reduction": "reuses opus_avoided + loop_boundedness (FD feeds "
                                    "them; no separate number -- Invariant 1)",
+        "fd_theory_maturity": maturity,
         "status": ("live" if measured else
                    "instrument-pending -- no fd_* signal yet (accrues on live "
                    "frontier sessions via the FD-07 Stop hook + FD-00 gate)"),
