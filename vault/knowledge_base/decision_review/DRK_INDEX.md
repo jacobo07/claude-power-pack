@@ -115,16 +115,16 @@ suites still green).
 | DRK-01 Review Kernel | ✅ written | ~2600w · 3 Parts · 9-stage sieve · 7 composition contracts · block-gate |
 | DRK-02 Reversibility/Blast/Entropy | ✅ written | 4186w · Tipo A/B/C classifier · DBR · entropy ledger · verified (0 fence/0 contam) |
 | DRK-03 Evidence/Confidence | ✅ written | 3447w · burden-by-reversibility · DCS derivation · verified (0 fence/0 contam) |
-| DRK-04 Counterfactual/Horizons | ⏳ delegating | subagent wave 2 |
-| DRK-05 Debt/Memory | ⏳ delegating | subagent wave 2 |
-| DRK-06 Tensions/Quality | ⬜ pending | delegate wave 3 / I author |
+| DRK-04 Counterfactual/Horizons | ✅ written | 4147w · adaptive horizons · 3-trajectory counterfactual · verified (0 fence/0 contam) |
+| DRK-05 Debt/Memory | ✅ written | 4405w · 6-axis decision debt · genome · precedent-reversal · verified (0 fence/0 contam) |
+| DRK-06 Tensions/Quality | ✅ written | ~2500w · 8-tension catalog · 6-way quality separation (I author) |
 | SDD-OS Parte VI Accountability | ✅ written | ~2500w · two-ledger · 4-source attribution · calibration (I author) |
 | DRK-07 Governance/Evolution | ✅ written | ~2600w · block-narrow constitution · 3-bias · propose-never-apply (I author) |
-| decision_record.py | ⬜ pending | — |
-| decision_kernel.py | ⬜ pending | — |
-| accountability.py | ⬜ pending | — |
-| tools/test_decision_review.py | ⬜ pending | — |
-| UKDL (2 rules) | ⬜ pending | — |
+| decision_record.py | ✅ built | canonical objects + append-only fail-open Registry |
+| decision_kernel.py | ✅ built | 9-stage sieve · reversibility/DBR/DCS · verdict precedence · block-gate |
+| accountability.py | ✅ built | prediction scoring · 4-source attribution · 3-bias calibration |
+| tools/test_decision_review.py | ✅ green | 11/11 hermetic ×3 · V-BASELINE (D2A 22/22, FD, FIOS) green |
+| UKDL (2 rules) | ⏳ next | PR-DECISION-AUTHORITY-LIMITS-001 + T-DECISION-AUTHORITY-CAPTURE-001 |
 
 ## The fundamental property
 
