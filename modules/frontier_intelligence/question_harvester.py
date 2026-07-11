@@ -253,6 +253,39 @@ def _from_residuals(*, vault_dirs=None, cap: int = _MAX_PER_SOURCE) -> list:
 
 
 # --------------------------------------------------------------------------- #
+# Source 6 -- AKOS brief units: domain-matched insight -> operationalize-as-rule.
+# The AKOS knowledge store is a 6th natural intake: a domain-relevant unit
+# becomes a "how do I apply X to this project" question whose answer must take
+# a permanent form (process rule / hard rule). Composes the shared parser
+# (modules.akos_knowledge) -- never re-implements brief parsing.
+# --------------------------------------------------------------------------- #
+def _from_akos(repo: str, *, cap: int = _MAX_PER_SOURCE) -> list:
+    try:
+        from modules.akos_knowledge.akos import units_for_cwd
+        _brief, _domains, units = units_for_cwd(repo or ".")
+        out = []
+        for u in units:
+            title = _snip(re.sub(r"^\d+\s*-\s*", "", getattr(u, "title", "")),
+                          _SNIP_TITLE)
+            if not title:
+                continue
+            dom = getattr(u, "domain", "")
+            out.append(HarvestedQuestion(
+                text=(f"How would you operationalize the AKOS {dom} insight "
+                      f"'{title}' as a permanent process rule or hard rule for "
+                      f"this project -- what concrete always/never encodes it, "
+                      f"and under what edge case would it mislead?"),
+                source="akos",
+                source_ref=f"akos:{dom}:{title[:40]}",
+                expected_asset="hard_rule"))
+            if len(out) >= cap:
+                break
+        return out
+    except Exception:  # noqa: BLE001 -- fail-open
+        return []
+
+
+# --------------------------------------------------------------------------- #
 # Harvest -- all sources, fingerprint-deduped, bounded.
 # --------------------------------------------------------------------------- #
 def harvest(repo: str, *, state_dir=None, oq_state_dir=None, co12_state_dir=None,
@@ -268,6 +301,7 @@ def harvest(repo: str, *, state_dir=None, oq_state_dir=None, co12_state_dir=None
             _from_co12(co12_state_dir=co12_state_dir, cap=max_per_source),
             _from_ukdl(kb_file=kb_file, cap=max_per_source),
             _from_residuals(vault_dirs=vault_dirs, cap=max_per_source),
+            _from_akos(repo, cap=max_per_source),
         )
         seen, out = set(), []
         for batch in batches:
