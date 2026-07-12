@@ -1,0 +1,851 @@
+DFP-00 — DATASET FIRST PROTOCOL — DOCTRINE AND CONSTITUTION
+Claude Power Pack — Knowledge-Necessity Axis — v1 — sealed 2026-07-12
+
+Binding ontology: CANONICAL_ONTOLOGY.md. Every term used here is defined there and nowhere
+else. This dataset states the law. DFP-02 states the lifecycle the law invokes. DFP-05 states
+the science that is permitted to prove the law wrong.
+
+
+PART I — THE THESIS, AND THE EVIDENCE THAT PRODUCED IT
+
+I.1 The law, stated once. Never build permanent infrastructure when the institutional science
+that must govern it does not yet exist. A system built before its governing science is not
+merely early; it is a decision made by accident. The concrete sets around whatever the builder
+happened to assume on the afternoon they wrote it, and that assumption becomes the shape of
+every future thing that touches it. The cost is not the code. Code is cheap and deletable. The
+cost is the ontology the code silently ratifies, the names it fixes, the boundaries it draws,
+and the dozen downstream artifacts that will be built against those names and boundaries
+before anyone notices they were guesses.
+
+I.2 The second half of the law, which is not optional. A protocol that always demands a corpus
+before code is exactly as destructive as one that never does. It becomes a tax. The Owner
+routes around a tax, and a rule routed around is not a rule; it is a decoration that consumes
+attention and returns nothing. The discipline in this family earns its authority only by being
+calibrated against evidence, and DFP-05 exists for the sole purpose of being permitted to
+retire it. Any reading of DFP-00 that treats the first half of the law as the whole law is a
+misreading, and it is the misreading that will kill this family if it is allowed to stand.
+
+I.3 The evidence that produced the thesis, from this repository. The Power Pack has shipped
+more than ten dataset families — ACIS, DRK, SQI, FD, CO, graphify, CDIO, D2A, SDD-OS, FIOS.
+Every one of them was, in effect, a bet that writing the science down before building the
+machine would pay. Not one of them measured whether it did. The families were built on an
+intuition that has never been audited, and an intuition that has never been audited is a
+superstition with good manners. This dataset states the intuition precisely enough that
+DFP-05 can attack it.
+
+I.4 The failure mode the thesis names, in its concrete form. Consider what happens when a
+review authority is built before the ontology of a review exists. The builder must decide, in
+the moment of writing the first function, what a verdict is. They will choose a set. The set
+will be shaped by the three examples in their head that afternoon. Every subsequent artifact —
+the record schema, the test names, the hook that consumes the output, the dashboard that
+renders it — is built against that set. Two months later the set is discovered to be missing a
+member. The cost of adding it is now not one enum line; it is one enum line plus every
+consumer that assumed the set was closed, plus every stored record written under the old
+cardinality, plus the doctrine file that declared the set closed and must now be amended
+without lying about its own history. The science was cheap before the concrete. It is
+expensive after.
+
+I.5 Why this is not simply "write a spec first." It is not, and the distinction is the entire
+reason this family exists rather than being a footnote in an existing one. The Power Pack
+already forbids executing a Tier 2 or Tier 3 task without a PRD; spec_gate enforces it and
+HR-SPEC-001 seals it. That law is settled and DFP does not relitigate it. The question DFP
+asks sits one level above: when is a spec itself insufficient, and a governing corpus
+required? A spec answers "what shall we build." A corpus answers "what is true about the
+domain in which we are building, such that a spec could even be correct." A spec written
+without the corpus is a confident answer to a question nobody has yet established is the
+right question. Part II gives this distinction its mechanism.
+
+I.6 The scope of "permanent." Permanence is not duration; it is entrenchment. An artifact is
+permanent, for the purposes of this law, when the cost of reversing it exceeds the cost of
+building it — when other things will be built against it before anyone learns whether it was
+right. A rule is permanent. A gate is permanent. An ontology is permanent to the point of
+being the definition of the word. A feature behind a flag, in one module, with one caller, is
+not permanent no matter how long it lives, because deleting it costs one afternoon and
+disappoints no dependent. This is why the reversibility classification is delegated wholesale
+to DRK-02 rather than reinvented here. Permanence is a blast-radius question, and blast radius
+already has an owner.
+
+I.7 What this dataset will not do. It will not re-explain what a decision is; DRK owns that.
+It will not assign epistemic levels; ACIS owns those, and a DFP that graded its own evidence
+would be committing the exact self-promotion offence ACIS was built to prevent. It will not
+detect duplicates; D2A owns that. It will not classify task tiers; spec_gate owns that. Every
+one of those surfaces is cross-referenced by name and left alone. A Part of this family that
+re-narrates a parent system instead of pointing at it is rejected and rewritten, and that
+rejection criterion is not a stylistic preference — it is the mechanism by which a thin family
+over a thick substrate stays thin.
+
+PART I FINAL LAW — The law has two halves and neither is optional: build no permanent
+infrastructure before its governing science exists, and demand no science that cannot be shown
+to have paid for itself.
+
+
+PART II — THE CORPUS-VERSUS-SPEC DISTINCTION
+
+II.1 The distinction, precisely. A specification is an answer. A corpus is the body of
+knowledge that makes an answer checkable. The spec says "the verdict set has these members."
+The corpus says "here is what a verdict is, here is why the set is closed, here is the
+taxonomy that generated the members, here is the failure each absent member would produce, and
+here is the evidence that this partition of the space is the right partition." A spec is
+falsifiable only against itself: did we build what we said. A corpus is falsifiable against
+the world: was what we said the right thing to say.
+
+II.2 The test that separates them. Ask of the proposed work: if a competent engineer, reading
+only what this repository already contains, sat down to build this, would they be forced to
+invent a durable abstraction that nobody has yet checked? If the answer is no — the
+abstractions exist, are named, and are proven — then a spec suffices and DFP is silent. If the
+answer is yes, and the abstraction they would be forced to invent will outlive them and be
+built against, then the spec is a confident guess dressed as a plan, and the corpus is owed
+first. This is the operative test of the entire family and it is deliberately narrow.
+
+II.3 The four things a corpus contains that a spec cannot. First, the ontology: what the
+things are and what each is called, such that two modules cannot name one concept twice.
+Second, the taxonomy: what the kinds are and where the boundaries sit, such that an edge case
+is discovered on paper rather than in production. Third, the failure catalogue: what breaks,
+under what input, and why the existing guards do not catch it. Fourth, the evaluator: the
+mechanical means by which a claim about this domain can be checked, without which every
+subsequent claim is an opinion. A spec that contains all four is not a spec; it is a corpus
+that has been mislabelled, and it should be moved.
+
+II.4 The asymmetry of cost. Writing the corpus before the code costs days and produces an
+artifact that is cheap to change, because nothing has been built against it yet. Writing the
+corpus after the code costs the same days plus the entire cost of retrofitting every artifact
+that was built against the guesses. The asymmetry is the whole argument, and it is also the
+whole danger: the argument is so clean that it invites universal application, and universal
+application is the bureaucracy failure of Part III. The asymmetry is real only where the
+entrenchment is real.
+
+II.5 The relationship to spec_gate, stated so the boundary cannot drift. spec_gate classifies
+a free-text task into Tier 0 through Tier 3 and requires a PRD at Tier 2 and above. DFP does
+not re-derive that tier; it reads it. The classifier in modules/dataset_first delegates the
+tier question wholesale, and a DFP that computed its own tier would have forked spec_gate,
+which INV-7 forbids. What DFP adds is orthogonal: the tier tells you how big the work is;
+the sufficiency verdict tells you whether the knowledge to govern it exists. A Tier 3 task in
+a well-understood domain needs a PRD and nothing more. A Tier 2 task in a domain whose
+ontology has never been written may need a corpus. Size and knowledge are different axes, and
+conflating them is how a protocol becomes a size-gate wearing a knowledge-gate's name.
+
+II.6 The worked distinction, on synthetic data. A proposal arrives: build a rate limiter for
+the outbound API client. Domain complexity is low, precedent is abundant, the abstraction —
+a token bucket — is a named, proven, externally-validated thing. The sufficiency verdict is
+sufficient, the class is direct implementation, DFP is silent, and spec_gate's PRD requirement
+at whatever tier it lands is the entire governance. A second proposal arrives: build the
+authority that decides which agent may modify a sealed corpus. Domain complexity is high, there
+is no precedent in this repository, and the builder would be forced to invent, on the spot, an
+ontology of authority, a taxonomy of modification, and a failure model for capture — three
+durable abstractions that every future governance artifact will be built against. The
+sufficiency verdict is insufficient, the class is knowledge-first, and the corpus is owed. The
+two proposals may be identical in tier. They are not identical in what they entrench.
+
+II.7 The trap in the distinction. The corpus-versus-spec test is a judgment, and judgments
+drift toward whichever answer is more flattering to the person making them. Writing a corpus
+feels like serious work; writing a rate limiter feels like a chore. An agent left to apply
+this test unaided will find corpora owed everywhere, because the test rewards the answer that
+produces the more interesting task. This is not a hypothetical bias; it is the specific
+mechanism by which this family becomes bureaucracy. The countermeasure is that the verdict is
+not the agent's to render: it is computed from ten scored dimensions by code, submitted to
+DRK's kernel as a provider, and recorded with a prediction that DFP-05 will later grade.
+
+PART II FINAL LAW — A spec answers what to build; a corpus establishes what is true about the
+domain in which an answer could be correct, and only the second is owed when the build would
+force the invention of a durable abstraction nobody has checked.
+
+
+PART III — WHEN THE PROTOCOL DOES NOT APPLY
+
+III.1 This Part is stated as forcefully as Part I, and it is stated third rather than last so
+that no reader can absorb the law without absorbing its limit. The most likely death of this
+family is not that it is ignored. It is that it is obeyed everywhere, produces four thin
+corpora nobody reads, costs weeks, and is then correctly resented and correctly abandoned. A
+protocol dies of false positives, not false negatives. Part III is the immune system.
+
+III.2 The protocol does not apply to reversible work. If the artifact can be deleted in an
+afternoon and nothing else will have been built against it, the entrenchment premise fails and
+the entire argument of Part II collapses. DRK-02 returns Tipo A for this class. A Tipo A
+proposal is never knowledge-first, regardless of how intellectually interesting the domain is.
+Interest is not a signal. Entrenchment is the signal.
+
+III.3 The protocol does not apply where precedent is abundant. If the abstraction the builder
+would be forced to invent has in fact already been invented — externally, by an industry, and
+validated across a thousand implementations — then the science exists; it simply does not live
+in this repository. Reading it is not the same as writing it. A team that writes a corpus on
+rate limiting has not produced knowledge; it has produced a book report. The signal that
+distinguishes them is whether the open question is answerable by reading, or only by thinking.
+
+III.4 The protocol does not apply where the uncertainty is empirical rather than conceptual.
+If the open question is "will this actually behave the way we think under real load" — a
+question about reality, not about design — then neither code nor corpus is the correct next
+artifact. The correct next artifact is a cheap probe. This is the entire reason the taxonomy
+carries an experiment-first class rather than collapsing to a binary, and it is why DRK's
+existing run-experiment verdict is reused rather than a new one invented. An expensive corpus
+written to resolve a question that a two-hour experiment would have settled is the most
+embarrassing failure this family can produce, because it is the failure of a thinking system
+that refused to look.
+
+III.5 The protocol does not apply to work whose knowledge is already sealed. If a corpus
+governing this domain already exists in the vault and is certified, the science exists and the
+build proceeds. The sufficiency engine reads the existing assets and the ACIS ceiling they
+reach. A protocol that demanded a second corpus because it failed to notice the first would be
+a duplicate-generator, and D2A exists to stop exactly that.
+
+III.6 The protocol does not apply merely because a task is large. Size is spec_gate's axis.
+A large task in a well-understood domain is a large task, and the governance it needs is a PRD
+and a done-gate, both of which already exist. The single most common way this family will
+misfire is by becoming a second size-gate, firing on the word "system" or "universal" in a
+prompt, demanding a corpus for work whose science was settled a decade ago. The classifier's
+keyword signals are deliberately weighted so that transversality and irreversibility dominate
+and raw size does not.
+
+III.7 The bureaucracy signature, so it can be recognised early. Four symptoms, any two of
+which together are a diagnosis. The corpora being produced are thin — near the floor of the
+density band, because they were written to satisfy a gate rather than to record a science. The
+predictions attached to the necessity records are trivially true, because a prediction written
+to be graded favourably is written to be unfalsifiable. The Owner's override rate is climbing,
+and the overrides are correct. And the implementations that follow the corpora do not cite
+them — the corpus was produced, filed, and never read, which is the purest possible proof that
+it was never needed. DFP-05 owns the measurement of all four, and the honest consequence of
+finding them is not to tune the thresholds; it is to retire the protocol.
+
+III.8 The standing instruction that follows from this Part. When the sufficiency verdict is
+close to the boundary — when the score sits within a few points of a threshold — the protocol
+resolves toward direct implementation, not toward the corpus. The asymmetry is deliberate. A
+false negative costs a refactor. A false positive costs the credibility of the whole
+discipline, and credibility, once spent, does not come back with a threshold adjustment.
+
+PART III FINAL LAW — This protocol dies of false positives, not false negatives; when the
+verdict is near the boundary it resolves toward building, and a corpus that the subsequent
+implementation never cites is proof the corpus was never owed.
+
+
+PART IV — THE FOUR PROJECT CLASSES
+
+IV.1 The taxonomy is closed at four members and the closure is defended. Direct
+implementation. Experiment first. Hybrid. Knowledge first. A fifth member has been proposed
+and rejected in the drafting of this dataset — a "documentation only" class — on the grounds
+that it describes an artifact, not a state of knowledge, and the taxonomy classifies states of
+knowledge. The test of whether a proposed member belongs is whether it names a distinct
+relationship between what is known and what is about to be entrenched. Anything else is a
+different taxonomy wearing this one's name.
+
+IV.2 Direct implementation. The knowledge that must govern this build exists, is named, and is
+reachable. The builder will invent nothing durable that has not been checked. This is the
+default, the most common verdict, and the one the protocol should return most often. A
+protocol whose modal verdict is anything else is a protocol that has mistaken itself for the
+main event. The deciding question: could a competent engineer, reading what we already have,
+build this correctly without guessing at an abstraction that will outlive them?
+
+IV.3 Experiment first. The open question is about reality rather than design, and it is
+cheaply answerable by observation. Neither the code nor the corpus is the correct next
+artifact, because both would encode an assumption that an afternoon of measurement would
+replace with a fact. This class maps onto DRK's existing run-experiment verdict, which is
+reused rather than duplicated. The deciding question: is the thing we do not know a fact about
+the world, and is there a probe that would tell us?
+
+IV.4 Hybrid. The core of the domain is understood and its edges are genuinely not. The corpus
+grows alongside the implementation rather than blocking it: the ontology and the failure
+catalogue are written as the build reveals them, and the certification comes at the end rather
+than the beginning. This is the class that prevents the taxonomy from being a binary, and it
+is the correct home for most genuinely hard work. It carries a specific risk: hybrid is the
+comfortable answer, and a classifier that returns it too often has learned to avoid committing.
+DFP-05 tracks the hybrid rate for exactly this reason, and a hybrid rate above half is a
+gaming signal, not a sign of nuance.
+
+IV.5 Knowledge first. The build, undertaken now, would permanently encode a decision nobody yet
+knows how to make. Implementation is blocked until the corpus is certified, and that block is
+the only block this family owns. The deciding question, stated as sharply as it can be: would
+building this now force the invention of a durable abstraction that every future artifact will
+be built against, and that nobody has checked?
+
+IV.6 The mapping into DRK, which is the mechanism by which this family has authority without
+being an authority. DFP does not own a verdict space. It maps into DRK's sealed one: direct
+implementation to approve or approve-with-conditions, experiment first to run-experiment,
+hybrid to approve-with-conditions, and knowledge first to a verdict DRK did not have. The
+eleventh member — build-knowledge-first — is the single genuinely-new element, and Part VIII
+describes the governed amendment by which it was added rather than assumed.
+
+IV.7 The classes are ordered by cost, and the ordering is the tiebreak rule. Direct
+implementation is cheapest. Experiment first is next. Hybrid is next. Knowledge first is the
+most expensive thing this stack can ask for. When two classes are within the noise of each
+other, the cheaper wins. This rule exists because the alternative — resolving ties toward the
+more thorough-sounding class — is precisely how a protocol inflates, and it inflates in the
+direction that feels most responsible, which is why it is never noticed until the Owner is
+routing around it.
+
+IV.8 A worked classification, on synthetic data, to fix the boundaries in something concrete.
+Four proposals arrive in one week. The first: add a retry with exponential backoff to the
+outbound notification client. Domain complexity two, reuse breadth three, cost of error two,
+governance need zero, uncertainty one, lifespan three, transversality one, criticality four,
+institutional capacity one, prior-science need one. Aggregate eighteen. Direct implementation,
+and the protocol says nothing at all, which is the correct behaviour and the most common one.
+
+IV.9 The second: build a scheduler that decides which of several concurrent agent panes may
+hold a write lock on a shared index. Domain complexity seven, reuse breadth six, cost of error
+eight, governance need seven, uncertainty six, lifespan seven, transversality six, criticality
+eight, institutional capacity three, prior-science need five. Aggregate sixty-three. Hybrid:
+the core is understood — locks, leases, fencing tokens are all named and proven abstractions —
+but the edges, specifically what a pane's identity is across a restart, are genuinely unknown
+in this repository. The corpus grows alongside the implementation and certification comes at
+the end. Note that the institutional-capacity score of three is what keeps this out of the
+knowledge-first class despite the high total: the science mostly exists.
+
+IV.10 The third: build the authority that decides which agent may modify a sealed corpus.
+Domain complexity eight, reuse breadth eight, cost of error nine, governance need ten,
+uncertainty seven, lifespan nine, transversality eight, criticality eight, institutional
+capacity eight, prior-science need eight. Aggregate eighty-three, with institutional capacity
+at eight. Knowledge first. The builder would be forced to invent an ontology of authority, a
+taxonomy of modification, and a failure model for capture, on the spot, and every future
+governance artifact in the repository would be built against those three inventions. Three of
+the seven kinds — governance, ontology, taxonomy — are named absent, satisfying INV-1.
+
+IV.11 The fourth: determine whether the retrieval layer's latency degrades non-linearly past
+ten thousand indexed coordinates. Domain complexity six, uncertainty nine, and the uncertainty
+is empirical — it is a question about how a real system behaves under a real load, and there
+exists a probe that would answer it in two hours. Experiment first. Neither code nor corpus is
+the correct next artifact, because both would encode an assumption that a measurement would
+replace with a fact. This is the class the protocol most enjoys returning, and the one an
+undisciplined agent most reliably skips, because running the probe is less interesting than
+writing the science.
+
+IV.12 What the four cases demonstrate together. The aggregate score alone would have ranked
+the third and second proposals adjacently; the institutional-capacity conjunct separated them
+decisively. The fourth proposal scored high enough on complexity to tempt a corpus and was
+saved by the empirical-uncertainty clause. And the first, which is the overwhelming majority of
+all real work, was untouched by the protocol entirely. A week in which the protocol fires once
+is a healthy week. A week in which it fires three times is a protocol that has begun to
+inflate, and the verdict distribution metric in Part X exists to notice exactly that.
+
+PART IV FINAL LAW — The taxonomy is closed at four and ordered by cost, and a tie between two
+classes resolves to the cheaper one, because inflation always disguises itself as thoroughness.
+
+
+PART V — THE SEVEN KINDS OF KNOWLEDGE
+
+V.1 Sufficiency is never a scalar in isolation. A build can be rich in protocol and starved of
+ontology, and it will fail precisely where it is starved — not diffusely, not proportionally,
+but at the exact joint where the missing kind of knowledge was load-bearing. The seven kinds
+exist so that the sufficiency verdict can say what is missing rather than merely how much.
+
+V.2 Foundational science: why the domain behaves as it does. Absent, it produces architectures
+that fight the domain's grain — systems that are correct in every function and wrong in every
+seam, because they were built against a model of the domain that the domain does not share.
+This is the most expensive absence and the hardest to detect, because the resulting system
+passes all of its own tests.
+
+V.3 Governance: who decides, with what authority, and what is forbidden. Absent, it produces
+parallel authorities. Two systems each believe they hold the final say on the same question,
+each is individually coherent, and the contradiction surfaces only when they disagree in
+production. The Power Pack has a sealed trap for this exact pathology, and this family's own
+refusal to build a second review court is the trap being obeyed rather than described.
+
+V.4 Ontology: what the things are and what each is called. Absent, it produces synonym drift —
+two modules naming one concept twice, a third module bridging them with a translation layer,
+and a fourth built against the translation layer rather than either original. The cost is
+invisible until someone tries to change the concept and discovers it has three names and no
+owner.
+
+V.5 Taxonomy: what the kinds are and where the boundaries sit. Absent, it produces
+unclassifiable edge cases discovered in production, each one patched where it was found, until
+the taxonomy exists implicitly as a scatter of special cases in a dozen call sites and can no
+longer be stated.
+
+V.6 Protocol: what the sequence is and what the states are. Absent, it produces races and
+undefined transitions — the class of bug that reproduces only under load and only on the
+machine that does not have a debugger attached.
+
+V.7 Benchmark: what good looks like, numerically. Absent, it produces the adjective as a
+verdict. A system without benchmarks does not lack rigour; it lacks the ability to be wrong,
+which is worse, because it will report success indefinitely.
+
+V.8 Evaluator: how a claim is checked mechanically. Absent, it produces claims that cannot be
+falsified and green signals that mean nothing. This is the kind whose absence is most
+correlated with a system that looks finished and is not, and it is the kind the Power Pack's
+verification family exists to supply.
+
+V.9 The operative rule. Knowledge-first requires at least one named missing kind. A verdict of
+insufficiency that cannot say which of the seven is absent is not a verdict; it is a feeling
+with a number attached, and INV-1 rejects it. This single requirement does more to prevent
+bureaucracy than any threshold, because it forces the protocol to be specific about what it is
+demanding, and a specific demand can be argued with.
+
+V.10 The kinds are not equally expensive to supply, and the ordering matters when a corpus must
+be scoped under a budget. Ontology is the cheapest and the highest-leverage: naming the things
+correctly costs days and prevents the synonym drift that costs quarters. Taxonomy is next, and
+it is nearly free once the ontology exists, because a taxonomy is a partition of a named space.
+Protocol follows, since sequences and states can be written once the things and the kinds are
+fixed. Evaluators are moderately expensive but they are the kind that converts every subsequent
+claim from an opinion into a check, which is why a corpus that ships without them ages badly.
+Benchmarks are expensive, because a number that means something requires an instrument that
+produces it. Governance is expensive in a different currency — it costs agreement rather than
+effort, and agreement cannot be parallelised. Foundational science is the most expensive of all,
+and the one most often skipped, because its absence is the one that does not announce itself.
+
+V.11 The scoping rule that follows. When a knowledge-first verdict is returned under a
+constrained budget, the corpus is scoped by supplying the missing kinds in the order above,
+cheapest first, and the build is unblocked at the earliest point where the remaining absences
+are demonstrably not load-bearing for the work at hand. This is what prevents a knowledge-first
+verdict from being an unbounded demand. The verdict names which kinds are missing; the manifest
+declares which of them this corpus will supply; and anything not supplied is recorded as a known
+absence rather than quietly omitted, so that the next builder who trips on it finds a note
+rather than a mystery.
+
+V.12 The interaction with the epistemics family, stated so the boundary holds. The seven kinds
+describe what a piece of knowledge IS. The epistemic ladder describes how well proven it is. A
+corpus can be rich in all seven kinds and sit entirely at the lower rungs of that ladder — every
+kind present, nothing proven — and such a corpus is a well-organised hypothesis, which is
+valuable and must not be mistaken for a certified science. The sufficiency verdict therefore
+reads both: which kinds exist, and how high the existing assets climb. A high count of kinds at
+a low epistemic level is the precise signature of a corpus written from assertion rather than
+from evidence, and this family, by its own Part IX, currently carries that signature itself.
+
+PART V FINAL LAW — Sufficiency is sufficiency of a kind, and a verdict of insufficiency that
+cannot name which of the seven kinds is missing is a feeling with a number attached.
+
+
+PART VI — THE SUFFICIENCY ENGINE AND ITS THRESHOLDS
+
+VI.1 Ten dimensions, each scored zero to ten, each a number and never an adjective. Domain
+complexity. Reuse breadth. Cost of error. Governance need. Uncertainty. Lifespan.
+Transversality. Criticality. Institutional capacity. Prior-science need. The full definitions
+live in the canonical ontology and are not restated here; what this Part owns is why the
+aggregation is shaped the way it is and where it will break.
+
+VI.2 The aggregate score is the sum, normalised to a hundred. The thresholds: at or above
+seventy with institutional capacity at or above six, knowledge first. At or above seventy with
+high uncertainty that is empirical in nature, experiment first. Between forty and sixty-nine,
+hybrid. Below forty, direct implementation.
+
+VI.3 The institutional-capacity conjunct is the most important clause in the engine and the
+easiest to miss. A high total score alone does not produce a knowledge-first verdict. The
+score must be high AND the institutional capacity dimension — which measures how little
+governing knowledge already exists — must itself be high. Without this conjunct, a large,
+critical, long-lived build in a domain whose science is already fully written would be sent to
+write a second corpus, because every other dimension is screaming. The conjunct is what makes
+the engine a knowledge gate rather than an importance gate, and importance gates are what
+bureaucracies are made of.
+
+VI.4 The thresholds are hypotheses, and the dataset says so in its own constitution. They were
+seeded from the evidence available at founding, which is thin: a handful of families, none of
+them measured. A threshold seeded from thin evidence and never moved is not a calibrated
+instrument; it is a guess that has been left alone long enough to look official. DFP-05 owns
+their movement, and a threshold that has not moved after twenty recorded verdicts is either
+perfect or unmeasured. It is never perfect.
+
+VI.5 The composition, which is where the engine gets its actual intelligence. The engine does
+not compute reversibility; it reads DRK-02. It does not compute the epistemic level of the
+existing assets; it reads the ACIS ceiling. It does not compute the task tier; it reads
+spec_gate. It does not compute whether the proposal duplicates something already built; it
+reads D2A. Four of the ten dimensions are, in effect, thin adapters over sealed providers, and
+the engine's own contribution is the aggregation and the conjunct. This is what a thin family
+over a thick substrate looks like in code, and it is the reason the engine is a few hundred
+lines rather than a few thousand.
+
+VI.6 The provider-distribution warning, learned from a sibling's scar. DRK wired an adapter to
+a precedent-checker whose score rose with the LENGTH of its input, and eighty-six percent of
+that checker's index was veto-class; the result was an always-reject bias that arrived through
+the adapter rather than through the doctrine, and it rejected DRK's own wiring decision. The
+lesson is sealed and it binds here: a provider's score distribution must be measured before it
+is mapped to a hard verdict. Every one of the four adapters in this engine is therefore
+measured against a control set before its output is allowed to move a dimension, and the
+measurement is a gate, not a comment.
+
+VI.7 The known weakness of the engine, stated rather than hidden. The four adapted dimensions
+are as good as their providers. The six remaining dimensions — complexity, uncertainty,
+lifespan, criticality, prior-science need, and governance need — are scored from signals
+extracted from the proposal text, which means they are scored from what the proposer wrote,
+which means an eloquent proposal scores higher than a terse one describing identical work.
+This is a real bias, it is the same class as the length bias DRK found, and the countermeasure
+is that the six text-derived dimensions are capped in their aggregate contribution so that
+they cannot alone carry a proposal across the threshold. Eloquence can move the verdict within
+a class. It cannot move it between classes.
+
+VI.8 The control-set discipline, which is how the provider-distribution warning becomes a
+mechanism rather than a caution. Before any adapter is permitted to move a dimension, it is run
+against a control set: a small, fixed collection of proposals whose correct classification is
+known and agreed in advance, spanning the range from trivial to foundational. The adapter's
+output distribution across that set is recorded, and three properties are checked. The
+distribution must have spread — an adapter returning nearly the same score for a rate limiter
+and for a governance authority is measuring something other than what it claims. The ordering
+must be monotonic in the right direction — the foundational cases must outscore the trivial
+ones, and an adapter that inverts is worse than no adapter, because it is confidently wrong.
+And the score must not correlate with an irrelevant property of the input, of which the two
+known offenders are the length of the proposal text and the eloquence of its vocabulary.
+
+VI.9 Why length is the specific offender to test for, rather than a hypothetical. It has already
+happened in this repository, in a sibling family, and it was caught only because that family
+submitted its own wiring decision to its own kernel and received a rejection it could not
+explain. The investigation found that the underlying checker's score rose with input length and
+that most of its index was veto-class, so any sufficiently long and substantive proposal
+collided with something. The bias arrived through an adapter, not through a doctrine, and no
+doctrine review would ever have found it. Only measurement found it. This family therefore
+treats every adapter as guilty until its distribution is measured, and the measurement is a gate
+that fails the build rather than a note in a document nobody reads at three in the morning.
+
+VI.10 The aggregate cap on text-derived dimensions, stated as a rule. The six dimensions scored
+from the proposal's prose may not, in aggregate, carry a proposal across a class boundary on
+their own. Concretely: if the four provider-read dimensions — reversibility from the decision
+family, epistemic ceiling from the epistemics family, tier from the spec gate, and duplication
+from the duplicate engine — are all low, the six text-derived dimensions cannot lift the verdict
+past hybrid, however compellingly the proposal is written. Eloquence may move the score within a
+class. It may not move the class. This one rule is what stops the protocol from becoming an
+instrument that rewards whoever writes the most impressive prompt, and the failure it prevents
+is not hypothetical either: an agent that learns its verdicts are driven by its own description
+of the work has learned to write better descriptions, not to do better work.
+
+VI.11 The engine returns a verdict and a confidence, and the confidence is the distance to the
+runner-up class rather than a feeling. A proposal scoring sixty-nine and a proposal scoring
+forty-one both land in hybrid, and they are not equally hybrid. The first is one point from
+knowledge-first and the second is one point from direct implementation, and a system reporting
+both as confidently hybrid has discarded the only information that would let a human usefully
+disagree with it. Confidence is separation. Near a boundary the protocol is required to say so,
+and to resolve toward the cheaper class, per the tiebreak rule of Part IV.
+
+PART VI FINAL LAW — A high score alone never produces a knowledge-first verdict; the score
+must be high and the governing knowledge must be measurably absent, or the engine has become
+an importance gate wearing a knowledge gate's name.
+
+
+PART VII — THE CONSTITUTIONAL INVARIANTS
+
+VII.1 No corpus without a named missing science. A knowledge-first verdict must name at least
+one absent kind from the seven. "This feels big" is not a signal, and a verdict that cannot be
+argued with is a verdict that cannot be corrected.
+
+VII.2 No self-grading. This family never assigns an epistemic level. It reads one, from ACIS.
+A protocol that graded the maturity of its own evidence would be committing the precise
+self-promotion offence that the epistemics family was built to prevent, and it would be
+committing it while citing that family as its authority, which compounds the offence with
+hypocrisy.
+
+VII.3 Every necessity decision is recorded, and every record carries a prediction written
+before the outcome is knowable. This is the falsifiability contract. A protocol that records
+what it decided but not what it expected that decision to produce cannot be proven wrong, and
+a discipline that cannot be proven wrong is a belief. The prediction is not decoration; it is
+the only thing that makes DFP-05 possible, and a record lacking one is inadmissible as
+calibration evidence.
+
+VII.4 The protocol is falsifiable, and its retirement signal is reachable. If no possible
+evidence could ever cause this family to recommend its own deletion, it is unfalsifiable and
+must be deleted on those grounds alone, without further argument. A gate asserts the
+reachability with a synthetic evidence set that flips the signal.
+
+VII.5 Fail-open, absolutely. Any error in any surface of this family yields silence and the
+session continues. DFP is an advisor wired into an authority; it is not itself an authority,
+and it never blocks on its own account. A knowledge gate that crashes and takes the session
+with it has caused more damage in one turn than the entire discipline can repay in a quarter.
+
+VII.6 The corpus terminates. The planned Part count is declared at the architecture stage and
+is immutable thereafter. A family that grows its own denominator mid-flight is gaming its own
+completion gate, and a mode that cannot terminate is not a mode.
+
+VII.7 Compose, never fork. Every capability owned by a sibling is cross-referenced by name and
+left alone. This invariant is enforced mechanically, by a gate that fails when a Part
+re-explains a parent rather than pointing at it, because the failure it prevents — the slow
+accretion of a parallel system that agrees with the original until the day it does not — is
+invisible at every individual commit and fatal in aggregate.
+
+VII.8 An override is data, not a defeat. When the Owner overrides a verdict, the override is
+recorded and becomes calibration evidence of the highest quality available, because it is the
+one signal that comes from outside the protocol's own model of itself. A protocol overridden
+often, and correctly, is a protocol that is wrong. It is required to notice this about itself,
+and DFP-05 is the instrument by which it does.
+
+VII.9 Why these eight and not others, since an invariant list is the easiest place in any
+constitution to hide a wish. Each of the eight names a specific way this family could become
+harmful, and each is enforced by a mechanism rather than by intention. The first prevents the
+vague verdict, and it is enforced by a required field: a knowledge-first verdict without a named
+absent kind does not validate. The second prevents self-promotion, and it is enforced by the
+absence of any code path in this family that writes an epistemic level. The third prevents
+unfalsifiability, enforced by an admissibility check that drops prediction-less records from the
+calibration set. The fourth prevents the unkillable protocol, enforced by a gate that asserts the
+retirement verdict is reachable. The fifth prevents collateral damage, enforced by a
+catch-everything boundary at every entry point. The sixth prevents the runaway corpus, enforced
+by an immutable declared denominator. The seventh prevents the parallel system, enforced by a
+gate that reads the prose and fails on re-narration. The eighth prevents the protocol from
+mistaking obedience for correctness, and it is enforced by making the override a recorded input
+to the calibration rather than an exception to it.
+
+VII.10 The invariant that is deliberately absent, and why. There is no invariant requiring the
+Owner to follow the verdict. It was considered and rejected. A protocol that binds the Owner is
+not a protocol; it is a captor, and the failure mode of a captured Owner is not compliance but
+abandonment — the Owner stops asking, routes around the gate, and the protocol goes on emitting
+verdicts about work it never sees, which is the most useless possible state for a governance
+system, because it is also the state in which it still looks like it is working.
+
+VII.11 The relationship between the invariants and the gates, stated so that neither is mistaken
+for the other. An invariant is a claim about what must always be true. A gate is a mechanism
+that fails a build when the claim is violated. An invariant without a gate is an aspiration, and
+this repository has a long institutional memory of aspirations that were believed because they
+were written down. Every invariant above names its gate. When a future amendment adds a ninth,
+it arrives with its gate or it does not arrive.
+
+PART VII FINAL LAW — The invariants that bind hardest are the ones that bind the protocol
+rather than its subjects: it may not grade its own evidence, may not block on its own account,
+may not escape falsification, and must treat every override as evidence against itself.
+
+
+PART VIII — AUTHORITY WITHOUT BEING AN AUTHORITY
+
+VIII.1 The temptation this family refused. The source specification for this work proposed a
+collegiate court — a panel of judges with distinct perspectives, deliberating on whether a
+corpus is necessary, with its own protocol and its own override mechanism. It is an attractive
+design and it was rejected, because a review kernel with an adversarial pass, a closed verdict
+ontology, and a block-gate authority already exists in this repository, and a second one would
+be a parallel authority. The trap that forbids it is sealed, it was sealed by the very family
+that would have been forked, and the correct move was not to build a court but to add a single
+verdict to the court that exists.
+
+VIII.2 What a parallel authority actually costs, so the refusal is understood rather than
+merely obeyed. Two authorities on one question do not produce redundancy; they produce a race.
+Each is individually coherent. Each accumulates its own precedent, its own override history,
+its own calibration. They agree for months, which is what makes them dangerous, because the
+agreement is read as validation rather than as coincidence. Then they disagree on a case that
+matters, and there is no principled way to resolve it, because the thing that would resolve it
+— a single authority — is precisely the thing that was not built.
+
+VIII.3 The amendment, and why it was governed rather than assumed. The existing verdict
+ontology is declared closed, and its closure is asserted by a gate. The knowledge-first class
+has no home in it: request-evidence means go and get evidence for this decision, which is a
+different instruction with a different exit than the science that must govern this build does
+not exist yet. So an eleventh member is owed. Extending a closed ontology is exactly the act
+that the sibling family's governance dataset exists to regulate, and therefore the amendment
+was not made by editing an enum. It was submitted to that family's own kernel as a decision,
+reviewed by it, and recorded — the same self-review that once caught a real bias bug in the
+reviewer itself.
+
+VIII.4 Doctrine and code move together or neither moves. The eleventh member is added to the
+enum, the doctrine that declares the cardinality is amended in the same change, and the index
+records the new number. A codebase whose enum has eleven members and whose doctrine says ten
+has not gained a feature; it has gained a lie, and the lie will be believed by the next reader
+because doctrine is what people read when the code is too large to hold.
+
+VIII.5 The general principle, which outlives this instance. When a family needs a capability
+that a sibling nearly has, there are exactly three honest moves: extend the sibling through
+its own governed amendment protocol, compose the sibling as a provider and add only the delta,
+or demonstrate that the sibling genuinely cannot host the capability and build the minimum
+that can. There is a fourth move, which is to build a parallel system and call it a
+distinction, and it is the move that every duplicated subsystem in every codebase was born
+from. It always looks like the responsible choice at the moment it is made.
+
+VIII.6 How this family is wired, concretely. The classifier and the sufficiency engine run as
+a provider inside the existing decision kernel, alongside the six providers already there.
+They are fail-open and budgeted. They return a verdict and a confidence, and the kernel
+decides. DFP holds no block authority of its own, and the one block it cares about — do not
+implement before the corpus is certified — is exercised through the kernel's existing gate,
+under the kernel's existing rules, subject to the kernel's existing override protocol. The
+family's entire authority is borrowed, and it is borrowed on purpose.
+
+VIII.7 The test that distinguishes a genuine distinction from a rationalised fork, since every
+fork in history was defended as a distinction. Ask what the sibling would have to change to host
+the capability. If the answer is "add a member to an existing set," or "accept one more provider,"
+or "widen a field," then the sibling can host it and a fork is unjustifiable. If the answer is
+"invert its core assumption," or "abandon an invariant it exists to enforce," then the capability
+genuinely does not belong there, and the honest move is to build the minimum that can host it and
+to state plainly which of the sibling's assumptions it is refusing. The test is a one-line
+question and it takes minutes, and skipping it is how a codebase acquires two of everything.
+
+VIII.8 Applied to this family, the test returns cleanly, which is the reason the court was
+refused rather than merely disliked. To host the knowledge-first verdict, the decision family had
+to add one member to a set and accept one more provider. It did not have to invert an assumption
+or abandon an invariant. Its block-gate already blocks the irreversible and under-evidenced; a
+build whose governing science does not exist is precisely an irreversible act taken under
+insufficient evidence, which means the new verdict is not a foreign concept being bolted on — it
+is a case the existing authority was already shaped to hold, and had simply never been given a
+name for.
+
+VIII.9 The residual risk of composition, named so it is not discovered later as a surprise. A
+family whose authority is entirely borrowed is a family that dies when the lender changes. If the
+decision kernel's verdict ontology is restructured, this family's mapping breaks, and the break
+will be silent, because a mapping into an enum fails by producing a wrong verdict rather than an
+error. The countermeasure is a gate that asserts every one of the four project classes still
+resolves to a live member of the sibling's ontology, and that gate runs in this family's suite
+rather than the sibling's, because the party that depends on a contract is the party that must
+test it.
+
+PART VIII FINAL LAW — When a sibling nearly has the capability you need, extend it through its
+own amendment protocol or compose it as a provider; building a parallel system and calling it a
+distinction is how every duplicated subsystem in every codebase was born.
+
+
+PART IX — THE SELF-EXEMPTION, WRITTEN LOUDLY
+
+IX.1 This Part records that the protocol, applied to itself at the moment of its founding,
+returned a verdict that the founding ignored. It is written here, in the constitution, rather
+than in a footnote, because a protocol whose first act is to exempt itself silently is a fraud,
+and the only defence against that charge is to make the exemption the loudest thing in the
+document.
+
+IX.2 The facts. At this family's founding review, the repository held one open corpus with zero
+sealed Parts — a sibling family whose architecture had been approved the same day and whose
+datasets were all unwritten. The signal table in this family's own ontology carries a signal
+for exactly that condition, and its verdict is defer. Applied honestly, the protocol's first
+output was: do not build me yet.
+
+IX.3 The second, deeper finding, which is worse. The source science for this family did not
+exist. There was no dataset, no prior corpus, no external body of knowledge being imported —
+the thesis arrived as a paragraph in a prompt. The protocol whose entire law is do not build
+permanent infrastructure before its governing science exists was itself being built with no
+governing science beyond an assertion. Its own sufficiency engine, run on itself, returns
+knowledge-first, and the knowledge does not exist. This is not an irony to be enjoyed. It is
+the protocol's first and best test case, and it failed it.
+
+IX.4 What was done, and by whom. Both findings were surfaced to the Owner before a line of the
+corpus was written, together with the recommendation implied by the protocol's own verdict. The
+Owner reviewed them and directed the build to proceed, in a parallel pane, with the scope
+collapsed from seven datasets to three. That is a legitimate exercise of the override authority
+that the constitution explicitly reserves, and it is exactly the kind of event that INV-8
+classifies as data rather than defeat.
+
+IX.5 Why the override may well be right, stated fairly rather than defensively. The thesis in
+the prompt is not nothing; it is a compressed statement of a real discipline, and the corpus
+built from it is an attempt to make that discipline precise enough to be attacked. Under the
+protocol's own hybrid class, a domain whose core is understood and whose edges are not is
+correctly built as a corpus that grows alongside the work. There is a defensible reading of
+this family's founding in which the correct class was hybrid, the Owner selected it, and the
+protocol's own classifier — being new, uncalibrated, and seeded from thin evidence — was simply
+wrong. That reading cannot currently be distinguished from the alternative, and saying so is
+the point.
+
+IX.6 The receipt. The override is recorded as this family's first necessity record. It carries
+a prediction, as INV-3 requires: that a corpus built from an asserted thesis, in parallel with
+an unfinished sibling, will show a measurably lower citation rate from subsequent
+implementations than a corpus built from an established source. If the prediction proves true,
+the override was wrong and the protocol was right, and the record proves the protocol said so
+in advance. If it proves false, the protocol's classifier is miscalibrated at exactly the
+boundary it cares most about, and DFP-05 has its first threshold to move. Either outcome is
+information. That is the whole design.
+
+IX.7 The general law extracted from the incident, which is the reason this Part exists at all.
+A governance system's first real test is whether it will apply itself to its own founding. Most
+do not, and the failure is almost never a decision; it is an omission, made in the excitement of
+building, discovered years later by someone who notices that the rules begin at version two.
+The countermeasure is mechanical: the first record in the ledger is the ledger's own creation,
+and if that record is missing, the ledger is not trusted.
+
+IX.8 The objection that must be answered, because a reader who is paying attention will raise it.
+If the protocol says do not build without the science, and this family was built without the
+science, then either the protocol is wrong or the family is illegitimate — and a document that
+declines to choose between those has simply declared itself above its own law. The answer is that
+neither horn is accepted, and the reason is the hybrid class. A domain whose core is understood
+and whose edges are not is correctly built as a corpus that grows alongside the work, with
+certification at the end rather than the beginning. The thesis in the founding prompt was not
+nothing; it was a compressed statement of a real discipline, which is exactly the profile of a
+domain with a known core and unknown edges. Under the taxonomy of Part IV, this family's honest
+class was plausibly hybrid, and hybrid does not block.
+
+IX.9 Why that answer is offered as a defence and not as a proof. The classifier, run on this
+family, returned knowledge-first, not hybrid. It may have been right. It may equally have been
+miscalibrated at exactly the boundary it cares most about — a new instrument, seeded from thin
+evidence, systematically over-classifying its own domain as foundational, which is the most
+predictable bias a self-describing protocol could possibly have and the one it is least equipped
+to notice. Both readings fit the evidence available today, and the whole point of Part IX is to
+refuse to resolve them by assertion. The record carries the prediction. The calibration science
+will resolve it with data, or it will not resolve it at all, and either way the resolution will
+not come from this paragraph.
+
+IX.10 The instruction to the future reader, which is the only actionable thing this Part
+contains. If you are reading this because you are about to found a new family and you want to
+know whether the exemption granted here licenses one for you: it does not. What it licenses is
+the disclosure. Run the protocol on your own founding, record what it says, and if you override
+it, write the override into your constitution at the top rather than the bottom, with the
+prediction that would prove you wrong. The exemption is not the precedent. The receipt is.
+
+PART IX FINAL LAW — A governance system that will not apply itself to its own founding has
+already failed its first test, and the only honest defence is to write the exemption louder than
+the law it exempts.
+
+
+PART X — FAILURE MODES, METRICS, AND DONE
+
+X.1 The adversarial cases, each with the guard that catches it. An agent that wants the more
+interesting task inflates the sufficiency score to earn a corpus; caught by the
+institutional-capacity conjunct, which requires the governing knowledge to be measurably absent
+rather than merely the work to be interesting. An agent that wants to skip the gate writes a
+terse proposal to score low; caught by the fact that four of the ten dimensions are read from
+providers that look at the repository rather than at the prose. An agent writes a thin corpus
+to satisfy the gate and proceed; caught by the density floor and the citation metric, since a
+corpus nothing cites was never owed. A proposal is split into three small proposals to stay
+below the threshold; caught by the transversality dimension, which scores the union rather than
+the parts, and by the duplicate engine, which sees three proposals landing on one parent.
+
+X.2 The failure mode with no mechanical guard, named honestly. A sufficiently motivated agent
+can write a corpus that is dense, well-cited, internally consistent, and about the wrong
+domain — a beautiful science governing a system nobody needed. No gate in this family catches
+that, because every gate here measures the corpus against itself. The only instrument that
+catches it is the citation rate from subsequent implementations, which is a lagging indicator
+measured in months, and the only authority that catches it early is the Owner. This is stated
+rather than papered over because a family that claims complete mechanical coverage of its own
+failure modes is lying, and the lie is more dangerous than the gap.
+
+X.3 The metrics, each with the countermetric that detects its own gaming. Verdict distribution
+across the four classes, countered by the hybrid rate, since a classifier that has learned to
+avoid committing hides in hybrid. Corpus density, countered by the citation rate, since a
+corpus can be padded to the floor but cannot be cited into existence. Override rate, countered
+by override correctness, since a low override rate means either that the protocol is right or
+that the Owner has stopped reading it, and those two states are indistinguishable from the
+protocol's side. Time-to-certification, countered by the amendment rate afterwards, since a
+corpus rushed to certification pays for it in amendments. Every metric in this family is
+paired, and an unpaired metric is a gaming surface with a dashboard.
+
+X.4 The anti-Goodhart position, stated as a principle rather than a list. The moment any of
+these numbers becomes a target, it becomes a lie, and the specific lie will be told by a system
+that is trying to be helpful. The countermeasure is not vigilance, which does not scale; it is
+that no single metric here is permitted to be a gate on its own, and every gate is a
+conjunction of a metric and its countermetric. A gate that fires on one number is a gate that
+will be gamed by moving one number.
+
+X.5 The done criteria for this dataset. Ten Parts, each within the density band, each carrying
+a final law. Zero code. Zero contamination from any external domain. Every sibling capability
+cross-referenced rather than re-narrated, verified by a gate that reads the text and fails on
+re-narration. The self-exemption recorded in Part IX rather than in a footnote. The eleventh
+verdict added through the sibling's own amendment protocol, with doctrine and code moved in the
+same change. And the retirement clause reachable, proven by a synthetic evidence set that flips
+it.
+
+X.6 The done criterion for the family, which is different and harder. This family is done when
+it has been measured. Not when three datasets exist, not when the gates are green, not when the
+modules import cleanly — those are the conditions under which measurement becomes possible, and
+they are frequently mistaken for the thing itself. The family is done when DFP-05 has graded
+enough necessity records to say, with evidence, whether the discipline paid for itself. Until
+then every claim in this constitution, including this sentence, is a hypothesis with good
+formatting.
+
+X.7 The final position. This dataset states a law, refuses four of its own proposed
+capabilities on the grounds that siblings already own them, borrows its entire authority from a
+sibling rather than building a rival, exempts itself from its own verdict in writing, and
+supplies the instrument by which it can be proven wrong and deleted. If the law is right, that
+architecture costs nothing. If the law is wrong, that architecture is the only reason anyone
+will find out.
+
+X.8 The maturity levels of this family, so that its current state can be stated honestly rather
+than aspirationally. Level zero: the thesis exists as an assertion and nothing is measured. This
+is where the family stood at its founding, and Part IX records it. Level one: the corpus exists,
+the gates are green, and the modules import — the condition that is most often mistaken for
+completion. Level two: the protocol is wired into the decision authority and is firing on real
+proposals, and its verdicts are being recorded with predictions. Level three: enough records
+exist that the two error rates can be computed, and the protocol can state, with evidence, how
+often it is wrong and in which direction. Level four: the thresholds have moved at least once
+under evidence, which is the first proof that the calibration loop is closed rather than merely
+described. Level five: the protocol has correctly recommended against itself in at least one
+case — has told the Owner not to build a corpus that the Owner wanted — which is the only
+evidence that it is an instrument rather than a mirror.
+
+X.9 The family is at level one on the day this dataset is sealed, and saying so is not modesty.
+It is the single most important fact a future reader needs, because the natural reading of a
+dense, confident, internally-consistent corpus is that the discipline it describes has been
+validated, and it has not. Every gate in this family currently proves that the corpus is
+well-formed. Not one of them proves that the corpus is right. The distinction between a
+well-formed knowledge system and a correct one is the distinction this entire repository's
+verification family exists to enforce, and it applies to this family with no exemption.
+
+X.10 What would falsify the whole thesis, stated concretely so that nobody has to guess. If,
+after twenty recorded necessity decisions, the implementations that followed a certified corpus
+show no measurable advantage over the implementations that went direct — no lower rework, no
+fewer regressions, no higher reuse, no faster subsequent builds — then the discipline does not
+pay for itself, and the honest response is not to adjust a threshold. It is to retire the
+protocol, delete the modules, keep the three datasets as a record of a well-conducted negative
+result, and write the trap that stops the next agent from proposing it again. That outcome is
+not a failure of this family. It is the only outcome under which this family will have done its
+job, if its job was to find out.
+
+PART X FINAL LAW — This family is not done when its datasets exist and its gates are green; it
+is done when it has been measured, and until then every claim in this constitution is a
+hypothesis with good formatting.
