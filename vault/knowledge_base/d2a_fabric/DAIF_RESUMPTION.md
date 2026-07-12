@@ -18,15 +18,20 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
 
 - Phase 2 CLOSED: `DAIF_CANONICAL_MAP.md` = 22 candidates → **8 build · 6 do-not-build · 8 folded**.
 - 8 sovereign datasets in `DAIF_INDEX.md` manifest: DAIF-00,01,02,03,04,07,08,21.
-- Datasets SEALED: **2/8** (DAIF-00 30,417w; DAIF-01 33,509w). Parts: **40/160**, 63,926 words. Gate: `DAIF_PASS=12/12` exit 0.
+- Datasets SEALED: **3/8** (DAIF-00 30,417w; DAIF-01 33,509w; DAIF-02 34,826w). Parts: **60/160**, 98,752 words.
+  Gate: `DAIF_PASS=18/18` exit 0.
 - Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY≥1200/FABRICATION/CONTAMINATION/NONDUP).
-  Observed to refuse then pass — a real gate. Agents over-report word counts; the orchestrator's independent count governs.
-- **NEXT = DAIF-02** (Cognitive Intermediate Representations, CIR-0…11), `SOVEREIGNTY_PROVEN`, 0/20. The spine.
-  Absorbs D2A-13 economics, D2A-17 provenance, D2A-20 lowering. CIR-2 composes ACIS; CIR-3 one_shot; CIR-4 DRK
-  decision_record; CIR-9 SQI; CIR-10 UKDL. 12 CIRs (0=Raw,1=Semantic,2=Epistemic,3=Intent,4=Decision,5=Obligation,
-  6=Causal,7=Dependency,8=Procedural,9=Evaluation,10=Institutional,11=Executable-Context). Each CIR: object model,
-  fields, invariants, valid/invalid transforms, linking, lowering, promotion, failure modes.
-  Then DAIF-03 (fidelity/loss) → 07 (obligations) → 04 (contracts) → 08 (context/mission) → 21 (reality sync).
+  Observed to refuse then pass — a real gate. Agents over-report word counts by ~5-8%; the orchestrator's independent
+  count governs. Only the 1,200 floor is binding — there is NO upper ceiling; never cut mechanism to hit a word target.
+- **NEXT = DAIF-03** (Fidelity, Loss Budget & Behavioral Equivalence), `SOVEREIGNTY_PROVEN`, 0/20. The gate that makes
+  compilation safe rather than lossy — without it the CIR fabric is just a summarizer. Absorbs the Metric-Authority
+  candidate (Owner ruled: fold, not standalone). Composes FD-04's six-lens transfer test + CO-12 Telemetry-Before-Claims.
+  Content: the 10 fidelity dimensions (semantic/intent/constraint/decision/epistemic/obligation/causal/evaluation/
+  provenance/BEHAVIORAL — the last is the definitive test); loss budget L0 lossless → L4 disposable, with the rule that
+  an L3 output may never execute a critical migration; behavioral-equivalence testing (control = full sources vs
+  compiled = Mission Pack, compare correctness/constraints-violated/rework); golden cognitive benchmarks; fail-visible
+  abstention (the compiler must REFUSE when it cannot guarantee fidelity); the canonical metric registry + anti-Goodhart.
+  Then DAIF-07 (obligations) → 04 (contracts) → 08 (context/mission) → 21 (reality sync).
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
