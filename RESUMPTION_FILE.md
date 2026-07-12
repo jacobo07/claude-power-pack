@@ -26,20 +26,20 @@ Architecture (approved at STOP #1): `vault/plans/sqi-uqios-architecture-2026-07-
   ontology, Q0–Q5 / L1–L7 / R0–R4 ladders, 8 Quality Laws, the no-parallel-system boundary.
 - `vault/knowledge_base/sqi/sqi_00_constitution_v1.txt` — **20/20 Parts, 25,782 words, COMPLETE.**
 - `vault/knowledge_base/sqi/sqi_01_repository_reality_v1.txt` — **20/20 Parts, 26,989 words, COMPLETE.**
-- `tools/test_sqi.py` — the family done-gate. **12/12, ×3 hermetic, exit 0, datasets=2.**
+- `vault/knowledge_base/sqi/sqi_02_test_reach_v1.txt` ★ — **20/20 Parts, 28,596 words, COMPLETE.**
+- `tools/test_sqi.py` — the family done-gate. **18/18, ×3 hermetic, exit 0, datasets=3.**
 - `vault/knowledge_base/sqi/SQI_INDEX.md` — live status.
 - UKDL: `T-SQI-PARALLEL-SYSTEM-001`, `PR-SQI-COMPOUND-INTELLIGENCE-001`,
   `T-SQI-SELF-EVOLUTION-UNCONTROLLED-001` sealed in `vault/knowledge_base/ukdl-universal.md`.
 
 **Coherence anchor — these must all agree or something has drifted:**
 `tools/test_sqi.py` reports `datasets=N` and `SQI_PASS=6N/6N` · `SQI_INDEX.md` lists exactly N as
-`COMPLETE` · `vault/knowledge_base/sqi/sqi_*_v1.txt` is exactly N files. Today **N = 2**.
+`COMPLETE` · `vault/knowledge_base/sqi/sqi_*_v1.txt` is exactly N files. Today **N = 3**.
 
-**PENDING (the active scope):**
+**PENDING (the active scope) — ONE dataset remains:**
 
-- `sqi_02_test_reach_v1.txt` ★ — `IN_PROGRESS` — an agent was authoring this. **Verify before
-  trusting:** run the gate. If the file is absent or fails, author it yourself per Block 4.
-- `sqi_03_environment_qualification_v1.txt` — 0/20 — `NOT_STARTED`
+- `sqi_03_environment_qualification_v1.txt` — 0/20 — `NOT_STARTED`. This is the last dataset of
+  the approved spearhead scope. On completion the scope is closed and FASE 6/7 begins.
 
 **DEFERRED (backlog, Owner-approved, not abandoned):** SQI-04…SQI-13. Verdicts already fixed
 in `SQI_INDEX.md`. Do not build them in this scope. Do not re-litigate their verdicts.

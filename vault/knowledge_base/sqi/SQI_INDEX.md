@@ -64,7 +64,7 @@ A dataset is `COMPLETE` only when every Part is `VERIFIED` against the quality r
 |---|---|---|---|---|
 | **SQI-00** Constitution & Canonical Ontology | `sqi_00_constitution_v1.txt` | **20/20** | 25,782 | **`COMPLETE`** |
 | **SQI-01** Repository Reality & Domain Intelligence | `sqi_01_repository_reality_v1.txt` | **20/20** | 26,989 | **`COMPLETE`** |
-| **SQI-02** Test Reach & Signal Integrity ★ | `sqi_02_test_reach_v1.txt` | 0/20 | — | `NOT_STARTED` |
+| **SQI-02** Test Reach & Signal Integrity ★ | `sqi_02_test_reach_v1.txt` | **20/20** | 28,596 | **`COMPLETE`** |
 | **SQI-03** Environment Qualification & Reproducibility | `sqi_03_environment_qualification_v1.txt` | 0/20 | — | `NOT_STARTED` |
 
 ### Done-gate — `python tools/test_sqi.py`
