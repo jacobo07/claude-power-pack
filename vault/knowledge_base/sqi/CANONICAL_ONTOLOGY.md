@@ -446,10 +446,15 @@ repeat in every repo — or when a documented reason says otherwise.
 ## 8. Vocabulary discipline
 
 The SQI corpus is a quality/verification system. It carries **no** commercial-operations
-semantics — no trade, storefront, marketing, or market-research domain language, either as
-subject matter or as system identity. The reference corpus consulted during design
-contributed **fabrication attributes only** (Part depth, structural density, the FINAL LAW
-convention); zero concepts, names, or domain semantics were imported.
+semantics — none of the vocabulary of trade, retail, promotion, or demand research, either as
+subject matter or as system identity. The reference corpus consulted during design contributed
+**fabrication attributes only** (Part depth, structural density, the FINAL LAW convention);
+zero concepts, names, or domain semantics were imported.
+
+(This paragraph is deliberately written around its subject rather than through it. An earlier
+revision named one of the quarantined words in order to prohibit it — stating the rule by
+committing it — and the gate, once taught to scan governance files, found it here in the very
+section that forbids it. The enumeration lives in the detector; see §8.2.)
 
 Two consequences, both binding:
 

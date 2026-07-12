@@ -65,7 +65,10 @@ A dataset is `COMPLETE` only when every Part is `VERIFIED` against the quality r
 | **SQI-00** Constitution & Canonical Ontology | `sqi_00_constitution_v1.txt` | **20/20** | 25,782 | **`COMPLETE`** |
 | **SQI-01** Repository Reality & Domain Intelligence | `sqi_01_repository_reality_v1.txt` | **20/20** | 26,989 | **`COMPLETE`** |
 | **SQI-02** Test Reach & Signal Integrity ★ | `sqi_02_test_reach_v1.txt` | **20/20** | 28,596 | **`COMPLETE`** |
-| **SQI-03** Environment Qualification & Reproducibility | `sqi_03_environment_qualification_v1.txt` | 0/20 | — | `NOT_STARTED` |
+| **SQI-03** Environment Qualification & Reproducibility | `sqi_03_environment_qualification_v1.txt` | **20/20** | 27,202 | **`COMPLETE`** |
+
+**Spearhead scope CLOSED.** 4 datasets · 80 Parts · **108,598 words** · mean 1,357 w/Part ·
+`SQI_PASS=27/27` ×3 hermetic. Honest gaps: `SQI_COMPLETION_REPORT.md`.
 
 ### Done-gate — `python tools/test_sqi.py`
 
@@ -144,7 +147,7 @@ CI job. All three are the same pattern: **existence does not imply connection.**
 interpretation: no result may be read as a product verdict until the environment is proven
 valid. Dependency reproducibility (lockfiles, floating versions, host-state leakage).
 Toolchain compatibility resolution before declaring a repo broken. External-service
-provisioning contracts. Clean-checkout reproducibility — separating "works on this machine"
+provisioning contracts. Clean-clone reproducibility — separating "works on this machine"
 from "this repository is reproducible".
 *Origin:* two repos in the audited stack could not compile at all (unlocked dependencies);
 one lost a run to a JDK major-version mismatch. None of those are product failures, and

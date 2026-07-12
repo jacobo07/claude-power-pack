@@ -46,7 +46,16 @@ _BANNED = [
     "conver" + "sion", "advert" + "ising", "market rese" + "arch",
     "customer acq" + "uisition", "funn" + "el", "campai" + "gn",
     "shopp" + "ing", "merchan" + "t", "check" + "out", "brand equ" + "ity",
+    # Commerce metrics. These are ACRONYMS and MUST be word-boundary matched: a naive
+    # substring scan reports the third of them ~37 times against this very corpus, and
+    # every single hit is the interior of the word "cache". A detector that cannot
+    # distinguish a hit from a substring manufactures findings, and a manufactured
+    # finding is precisely the defect this corpus exists to prevent.
+    "GM" + "V", "RO" + "AS", "CA" + "C", "LT" + "V",
 ]
+
+# Word-boundary matching for every literal -- never substring containment.
+_BANNED_RX = [(b, re.compile(r"\b" + re.escape(b) + r"\b", re.I)) for b in _BANNED]
 
 _SLOP = [
     "TO" + "DO", "FIX" + "ME", "PLACE" + "HOLDER", "HA" + "CK",
@@ -104,8 +113,7 @@ def check_dataset(path: Path) -> None:
     else:
         _fail(f"V-{stem}-FABRICATION", str(viol))
 
-    lowered = text.lower()
-    hits = {b: lowered.count(b) for b in _BANNED if b in lowered}
+    hits = {b: n for b, rx in _BANNED_RX if (n := len(rx.findall(text)))}
     if not hits:
         _ok(f"V-{stem}-CONTAMINATION", f"0 hits across {len(_BANNED)} quarantined literals")
     else:
@@ -116,6 +124,89 @@ def check_dataset(path: Path) -> None:
         _ok(f"V-{stem}-REALITY", "0 slop/stub tokens")
     else:
         _fail(f"V-{stem}-REALITY", str(slop))
+
+
+def check_governance(paths: list[Path]) -> None:
+    """The governance artifacts are part of the corpus and are quarantined too.
+
+    An earlier revision scanned only the .txt datasets. Both real contamination hits in
+    the corpus were therefore in .md files and invisible to the gate -- including one in
+    CANONICAL_ONTOLOGY itself, where the prohibition was stated by enumerating the very
+    literal it forbids. A gate that does not scan an artifact cannot protect it.
+    """
+    dirty = {}
+    for p in paths:
+        text = p.read_text(encoding="utf-8")
+        hits = {b: n for b, rx in _BANNED_RX if (n := len(rx.findall(text)))}
+        if hits:
+            dirty[p.name] = hits
+    if not dirty:
+        _ok(
+            "V-SQI-GOVERNANCE-CONTAMINATION",
+            f"{len(paths)} governance artifact(s) clean across {len(_BANNED)} literals",
+        )
+    else:
+        _fail("V-SQI-GOVERNANCE-CONTAMINATION", str(dirty))
+
+
+def check_family(datasets: list[Path]) -> None:
+    """Family-level gates. These enforce T-SQI-PARALLEL-SYSTEM-001 mechanically:
+    a corpus that silently forks a system the estate already owns is the single
+    most likely failure of this family, and good intentions do not detect it."""
+
+    # Every dataset downstream of the constitution must visibly DEFER to the parent
+    # substrate rather than re-implement it. Deference is expressed by role, so that
+    # the prose cannot drift into standing up a rival.
+    # Deference is admissible EITHER as a role paraphrase ("the frontier layer's
+    # router") OR as the owning system's proper name ("FD-03", "graphify"). Naming the
+    # owner outright is the stronger form, and an earlier revision of this gate scored
+    # it as zero -- a detector whose vocabulary was too narrow, which is a broken
+    # instrument and not a real finding. Widening it here is a repair. Lowering the
+    # >=3 threshold to make a genuine shortfall disappear would be the Gate Mutation
+    # the corpus forbids (SQI-00 PART XIII); the threshold is untouched.
+    roles = [
+        # by role
+        "epistemic layer", "evidence ladder", "decision layer", "decision kernel",
+        "frontier layer", "navigation layer", "hard-rule extractor", "hard-rules module",
+        "output-contract layer", "premise verifier", "knowledge graph",
+        # by owner
+        "acis", "drk", "fd-03", "graphify", "hard_rules", "output_contracts",
+    ]
+    weak = []
+    for path in datasets:
+        if path.stem.startswith("sqi_00"):
+            continue  # the constitution DEFINES the boundary; it need not cite it
+        lowered = path.read_text(encoding="utf-8").lower()
+        found = {r for r in roles if r in lowered}
+        if len(found) < 3:
+            weak.append((path.stem, sorted(found)))
+    if not weak:
+        _ok(
+            "V-SQI-FAMILY-DEFERENCE",
+            f"every downstream dataset cites >=3 parent-owned capabilities by role",
+        )
+    else:
+        _fail("V-SQI-FAMILY-DEFERENCE", f"insufficient deference: {weak}")
+
+    # Coherence anchor: the gate, the index, and the disk must agree on how many
+    # datasets are sealed. A drifting index is how a corpus starts lying about itself.
+    index = SQI_DIR / "SQI_INDEX.md"
+    if not index.is_file():
+        _fail("V-SQI-FAMILY-COHERENCE", "SQI_INDEX.md missing")
+        return
+    complete = index.read_text(encoding="utf-8").count("`COMPLETE`")
+    # the index also marks CANONICAL_ONTOLOGY + the gate itself as COMPLETE
+    sealed = sum(1 for _ in datasets)
+    if complete >= sealed:
+        _ok(
+            "V-SQI-FAMILY-COHERENCE",
+            f"index accounts for all {sealed} sealed dataset(s) on disk",
+        )
+    else:
+        _fail(
+            "V-SQI-FAMILY-COHERENCE",
+            f"{sealed} datasets on disk, index marks only {complete} COMPLETE",
+        )
 
 
 def main() -> int:
@@ -130,6 +221,9 @@ def main() -> int:
 
     for path in datasets:
         check_dataset(path)
+
+    check_family(datasets)
+    check_governance(sorted(SQI_DIR.glob("*.md")))
 
     for line in _passes:
         print(line)
