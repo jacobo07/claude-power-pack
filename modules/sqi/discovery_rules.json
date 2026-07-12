@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "sealed": "2026-07-12",
+  "contract": "SQI-02 Part III. This file is a GOVERNED artifact, not configuration. Widening `exclusions` narrows the authored denominator and inflates every reach ratio in the corpus without connecting a single test -- SQI-02 section 11.11, the census trap, the only trap in the catalogue that can only be deliberate. Changes here are reviewed as changes to the measurement instrument. Per-rule hit counts and the uncertainty count are emitted on every run so that a narrowing is visible in the output.",
+
+  "stacks": {
+    "python": {
+      "test_patterns": ["test_*.py", "*_test.py"],
+      "manifests": ["pyproject.toml", "setup.cfg", "setup.py", "requirements.txt"],
+      "runner_configs": ["pytest.ini", "tox.ini", "pyproject.toml", "setup.cfg"],
+      "locks": ["poetry.lock", "uv.lock", "Pipfile.lock", "requirements.lock"],
+      "runner": "pytest",
+      "collect_argv": ["-m", "pytest", "--collect-only", "-q"],
+      "case_granularity": true
+    },
+    "elixir": {
+      "test_patterns": ["*_test.exs"],
+      "manifests": ["mix.exs"],
+      "runner_configs": ["mix.exs"],
+      "locks": ["mix.lock"],
+      "runner": "mix test",
+      "collect_argv": null,
+      "case_granularity": false
+    },
+    "java": {
+      "test_patterns": ["*Test.java", "Test*.java", "*Tests.java"],
+      "manifests": ["pom.xml", "build.gradle", "build.gradle.kts"],
+      "runner_configs": ["pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle"],
+      "locks": ["gradle.lockfile"],
+      "runner": "maven|gradle",
+      "collect_argv": null,
+      "case_granularity": false
+    },
+    "javascript": {
+      "test_patterns": ["*.test.js", "*.spec.js", "*.test.ts", "*.spec.ts", "*.test.tsx", "*.spec.tsx"],
+      "manifests": ["package.json"],
+      "runner_configs": ["jest.config.js", "vitest.config.ts", "package.json"],
+      "locks": ["package-lock.json", "pnpm-lock.yaml", "yarn.lock"],
+      "runner": "node",
+      "collect_argv": null,
+      "case_granularity": false
+    },
+    "c": {
+      "test_patterns": ["test_*.c", "*_test.c"],
+      "manifests": ["Makefile", "CMakeLists.txt"],
+      "runner_configs": ["Makefile", "CMakeLists.txt"],
+      "locks": [],
+      "runner": "make",
+      "collect_argv": null,
+      "case_granularity": false
+    }
+  },
+
+  "exclusions": [
+    ".git", ".hg", ".svn",
+    "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache",
+    "node_modules", "site-packages",
+    ".venv", "venv", "env",
+    "dist", "build", "target", "out",
+    "vendor", "third_party", "deps", "_build",
+    "backups", "_quarantine", "_archive"
+  ],
+  "exclusion_rationale": {
+    ".git": "version-control internals, not authored protection",
+    "__pycache__": "compiled artifacts of files already counted",
+    "node_modules": "test files belonging to other projects",
+    "site-packages": "test files belonging to other projects",
+    "vendor": "test files belonging to other projects",
+    "backups": "prior copies of files already counted; counting them double-counts protection",
+    "_quarantine": "explicitly withdrawn from the tree by the Owner",
+    "_build": "compiled artifacts",
+    "dist": "compiled artifacts",
+    "target": "compiled artifacts"
+  },
+
+  "uncertainty_dirs": ["test", "tests", "spec", "specs", "__tests__", "testing", "t"],
+
+  "guard_declarations": {
+    "python": ["bandit", "ruff", "mypy", "pylint", "flake8", "safety", "pip-audit"],
+    "elixir": ["sobelow", "credo", "dialyxir"],
+    "javascript": ["eslint", "tsc"],
+    "java": ["spotbugs", "checkstyle", "pmd"]
+  },
+
+  "domains": [
+    "hosted_service", "backend_service", "frontend_application", "library",
+    "cli_tool", "infrastructure", "plugin", "game", "firmware",
+    "hardware_coupled", "data_pipeline", "content_vault", "dataset",
+    "prompt_system", "agent_system", "hybrid_monorepo"
+  ]
+}
