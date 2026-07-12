@@ -1,9 +1,9 @@
 {
-  "generated": "2026-07-12 16:27 UTC",
+  "generated": "2026-07-12 16:56 UTC",
   "reality": {
     "repo": "claude-power-pack",
     "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
-    "commit": "ca05e467aa62b74b323a38effa135778f4f54307",
+    "commit": "f52db918b72fbf17b06e5437111c0376dc6e405a",
     "language_contexts": [
       {
         "language": "python",
@@ -823,7 +823,7 @@
   },
   "reconciliation": {
     "repo": "claude-power-pack",
-    "commit": "ca05e467aa62b74b323a38effa135778f4f54307",
+    "commit": "f52db918b72fbf17b06e5437111c0376dc6e405a",
     "authored_files": [
       "_logs/_m1_secret_firewall_test.py",
       "_logs/_m3_backlog_signal_test.py",
@@ -940,7 +940,7 @@
           "tests/test_forensic_probes.py",
           "tests/test_sqi_engine.py"
         ],
-        "executed_cases": 76,
+        "executed_cases": 86,
         "collection_errors": 0,
         "deselected": 0,
         "blocker": null,
@@ -962,7 +962,7 @@
         "executed_cases": null,
         "collection_errors": 0,
         "deselected": 0,
-        "blocker": "INTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 0.89s\nmainloop: caught unexpected SystemExit!",
+        "blocker": "INTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 0.72s\nmainloop: caught unexpected SystemExit!",
         "verdict": "UNKNOWN",
         "inert_in_root": []
       }
@@ -1175,7 +1175,7 @@
     "hermetic_stable": true,
     "findings": [
       "INERT-IN-ROOT (4): authored test files that live INSIDE a canonical invocation's root and yield zero collected cases. They are inside the reach boundary and protect nothing. The founding audit counted these as reached, because it counted files in the directory rather than identities in the manifest: ['tests/test_globalization.py', 'tests/test_graphify_live.py', 'tests/test_hooks_registration.py', 'tests/test_mistake_frequency_xplat.py']",
-      "AUTHORITATIVE INVOCATION BROKEN: `pytest` (oracle=zero_arg_default) exits 3 and produces no manifest. Reach under the estate's de facto canonical command is UNKNOWN, not zero. Blocker (verbatim):\nINTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 0.89s\nmainloop: caught unexpected SystemExit!"
+      "AUTHORITATIVE INVOCATION BROKEN: `pytest` (oracle=zero_arg_default) exits 3 and produces no manifest. Reach under the estate's de facto canonical command is UNKNOWN, not zero. Blocker (verbatim):\nINTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 0.72s\nmainloop: caught unexpected SystemExit!"
     ],
     "error": null
   },
@@ -1186,7 +1186,7 @@
     "observed_env": "b5ec3ed51c2f23b1",
     "updated": false,
     "baseline_path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\audits\\sqi_baseline.json",
-    "summary": "BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (stable)",
+    "summary": "BASELINE_PASS: 86 executed across 1 root(s), 101 authored, reach=3.0% (stable)",
     "error": null,
     "failing": false
   },
@@ -1194,7 +1194,16 @@
     "verdict": "WEAKENING_PASS",
     "weakenings": [],
     "reviews": [],
-    "advisories": [],
+    "advisories": [
+      {
+        "gate": "mocks",
+        "path": "tests/test_sqi_engine.py",
+        "baseline": null,
+        "observed": 4,
+        "severity": "ADVISORY",
+        "note": "4 mocked collaborators. Past this point the unit under test is the only real object in the room, and the test is asserting that a function calls the stubs it was told to call (15.6)."
+      }
+    ],
     "unknowns": [
       "_logs/_m3_backlog_signal_test.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
       "_logs/_m4_oneshot_jit_test.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
@@ -1221,14 +1230,355 @@
       "tools/test_zero_command.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
     ],
     "files_tracked": 101,
+    "no_verification": [
+      "modules/auto-testing/auto_test.py",
+      "tools/test_atomic_branding.py",
+      "tools/test_ceps_edge_cases.py",
+      "tools/test_ceps_full_cycle.py",
+      "tools/test_karimo.py",
+      "tools/test_lateral_thinking.py",
+      "tools/test_mirror_parity.py",
+      "tools/test_tis_core.py",
+      "tools/test_tis_e2e.py"
+    ],
     "updated": true,
     "baseline_path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\audits\\sqi_weakening_baseline.json",
-    "summary": "WEAKENING_PASS: 101 file(s) tracked, 2106 assertion(s), 0 for review, 0 advisory, 23 unknown. No assertion was lost.",
+    "summary": "WEAKENING_PASS: 101 file(s) tracked, 2158 assertion(s), 0 for review, 1 advisory, 23 unknown, 9 verifying NOTHING. No assertion was lost.",
     "error": null,
     "failing": false
   },
   "mutation_probe": {
-    "status": "NOT_RUN",
-    "note": "the mutation probe is opt-in (--mutation-probe): it mutates source and executes tests. NOT_RUN is not zero survivors -- it is the absence of a measurement, and the tautological assertion (15.8) is undetectable by every other instrument in this report."
+    "invocation": "pytest tests/",
+    "mutants": [
+      {
+        "target": "modules/ads/detector.py",
+        "line": 113,
+        "original": "\"git\"",
+        "mutated_to": "None",
+        "killed_by": [],
+        "survived_by": [],
+        "referencing_tests": [],
+        "status": "NOT_REFERENCED",
+        "note": "no test the canonical invocation reaches even mentions this unit. There is nothing to survive the mutation, and nothing protecting the unit."
+      },
+      {
+        "target": "modules/ads/doc_generator.py",
+        "line": 69,
+        "original": "target.is_dir() and any((target / m).exists() for m in _PKG_MARKERS)",
+        "mutated_to": "None",
+        "killed_by": [],
+        "survived_by": [],
+        "referencing_tests": [],
+        "status": "NOT_REFERENCED",
+        "note": "no test the canonical invocation reaches even mentions this unit. There is nothing to survive the mutation, and nothing protecting the unit."
+      },
+      {
+        "target": "modules/ads/doc_updater.py",
+        "line": 47,
+        "original": "text[i:j], \"ok\"",
+        "mutated_to": "None",
+        "killed_by": [],
+        "survived_by": [],
+        "referencing_tests": [],
+        "status": "NOT_REFERENCED",
+        "note": "no test the canonical invocation reaches even mentions this unit. There is nothing to survive the mutation, and nothing protecting the unit."
+      },
+      {
+        "target": "modules/sqi/baseline_guardian.py",
+        "line": 71,
+        "original": "repo / \"vault\" / \"audits\" / \"sqi_baseline.json\"",
+        "mutated_to": "None",
+        "killed_by": [
+          "tests/test_sqi_engine.py::test_baseline_path_honours_the_environment_override"
+        ],
+        "survived_by": [
+          "tests/test_sqi_engine.py::test_assertion_counter_ignores_comments_and_strings",
+          "tests/test_sqi_engine.py::test_assertion_counter_sees_the_v_gate_idiom",
+          "tests/test_sqi_engine.py::test_content_hash_is_review_never_a_build_failure",
+          "tests/test_sqi_engine.py::test_engine_reports_its_own_reach",
+          "tests/test_sqi_engine.py::test_executed_protection_ratio_counts_the_guarded_not_the_guards",
+          "tests/test_sqi_engine.py::test_exit_code_gate_is_unknown_never_zero",
+          "tests/test_sqi_engine.py::test_guardian_blocks_the_deletion_attack",
+          "tests/test_sqi_engine.py::test_guardian_catches_a_root_that_vanished",
+          "tests/test_sqi_engine.py::test_guardian_fails_open_to_unknown_on_a_corrupt_baseline",
+          "tests/test_sqi_engine.py::test_guardian_fails_the_build_on_a_silent_decrease",
+          "tests/test_sqi_engine.py::test_guardian_first_run_creates_baseline",
+          "tests/test_sqi_engine.py::test_guardian_lowering_requires_an_attributed_act",
+          "tests/test_sqi_engine.py::test_guardian_passes_when_stable",
+          "tests/test_sqi_engine.py::test_guardian_ratchets_the_baseline_upward",
+          "tests/test_sqi_engine.py::test_guardian_refuses_to_compare_across_environments",
+          "tests/test_sqi_engine.py::test_join_key_normalizes_both_sides",
+          "tests/test_sqi_engine.py::test_join_sanity_is_asserted",
+          "tests/test_sqi_engine.py::test_manifest_parser_harvests_identities_not_counts",
+          "tests/test_sqi_engine.py::test_mutation_probe_finds_the_tautological_assertion",
+          "tests/test_sqi_engine.py::test_oracle_precedence_zero_arg_default_is_authoritative_without_ci",
+          "tests/test_sqi_engine.py::test_over_mocking_gate_is_a_delta_never_a_ratio",
+          "tests/test_sqi_engine.py::test_qualifier_blocks_with_a_verbatim_blocker_when_no_toolchain",
+          "tests/test_sqi_engine.py::test_qualifier_never_grants_qualified_without_observing_every_gate",
+          "tests/test_sqi_engine.py::test_qualifier_runs_seven_gates_and_marks_unevaluated_as_unknown",
+          "tests/test_sqi_engine.py::test_reconcile_finds_orphans_in_this_repository",
+          "tests/test_sqi_engine.py::test_reconcile_reports_authoritative_reach_as_unknown_not_zero",
+          "tests/test_sqi_engine.py::test_scanner_assigns_domains_as_a_set_not_a_label",
+          "tests/test_sqi_engine.py::test_scanner_detects_python_context",
+          "tests/test_sqi_engine.py::test_scanner_fails_open_on_unknown_stack",
+          "tests/test_sqi_engine.py::test_scanner_never_invokes_repository_code",
+          "tests/test_sqi_engine.py::test_scanner_reports_its_own_uncertainty",
+          "tests/test_sqi_engine.py::test_surprise_set_is_the_instruments_self_audit",
+          "tests/test_sqi_engine.py::test_test_case_reach_is_unknown_never_estimated",
+          "tests/test_sqi_engine.py::test_this_repository_is_not_true_green",
+          "tests/test_sqi_engine.py::test_verdict_probe1_examined_nothing_is_unverified_green",
+          "tests/test_sqi_engine.py::test_verdict_probe2_unqualified_environment_is_environment_dependent",
+          "tests/test_sqi_engine.py::test_verdict_probe3_default_without_reconciliation_is_misleading_green",
+          "tests/test_sqi_engine.py::test_verdict_probe4_orphans_present_is_partial_green",
+          "tests/test_sqi_engine.py::test_verdict_true_green_is_reachable_but_requires_everything",
+          "tests/test_sqi_engine.py::test_weakening_baseline_fails_on_a_removed_assertion",
+          "tests/test_sqi_engine.py::test_weakening_baseline_passes_and_ratchets_on_an_added_assertion",
+          "tests/test_sqi_engine.py::test_weakening_fails_open_to_unknown_never_a_false_pass"
+        ],
+        "referencing_tests": [
+          "tests/test_sqi_engine.py"
+        ],
+        "status": "KILLED",
+        "note": "1 test(s) noticed the broken return value and 42 did not. KILLED is the verdict for the SITE, and it is not a certificate for the file: this probe breaks ONE return value per target, so a kill proves that one value is protected and says nothing about the rest."
+      },
+      {
+        "target": "modules/sqi/environment_qualifier.py",
+        "line": 235,
+        "original": "EnvironmentRecord(\n        state=state,\n        gates=gates,\n        host=host,\n",
+        "mutated_to": "None",
+        "killed_by": [
+          "tests/test_sqi_engine.py::test_qualifier_never_grants_qualified_without_observing_every_gate",
+          "tests/test_sqi_engine.py::test_qualifier_runs_seven_gates_and_marks_unevaluated_as_unknown"
+        ],
+        "survived_by": [
+          "tests/test_sqi_engine.py::test_assertion_counter_ignores_comments_and_strings",
+          "tests/test_sqi_engine.py::test_assertion_counter_sees_the_v_gate_idiom",
+          "tests/test_sqi_engine.py::test_baseline_path_honours_the_environment_override",
+          "tests/test_sqi_engine.py::test_content_hash_is_review_never_a_build_failure",
+          "tests/test_sqi_engine.py::test_engine_reports_its_own_reach",
+          "tests/test_sqi_engine.py::test_executed_protection_ratio_counts_the_guarded_not_the_guards",
+          "tests/test_sqi_engine.py::test_exit_code_gate_is_unknown_never_zero",
+          "tests/test_sqi_engine.py::test_guardian_blocks_the_deletion_attack",
+          "tests/test_sqi_engine.py::test_guardian_catches_a_root_that_vanished",
+          "tests/test_sqi_engine.py::test_guardian_fails_open_to_unknown_on_a_corrupt_baseline",
+          "tests/test_sqi_engine.py::test_guardian_fails_the_build_on_a_silent_decrease",
+          "tests/test_sqi_engine.py::test_guardian_first_run_creates_baseline",
+          "tests/test_sqi_engine.py::test_guardian_lowering_requires_an_attributed_act",
+          "tests/test_sqi_engine.py::test_guardian_passes_when_stable",
+          "tests/test_sqi_engine.py::test_guardian_ratchets_the_baseline_upward",
+          "tests/test_sqi_engine.py::test_guardian_refuses_to_compare_across_environments",
+          "tests/test_sqi_engine.py::test_join_key_normalizes_both_sides",
+          "tests/test_sqi_engine.py::test_join_sanity_is_asserted",
+          "tests/test_sqi_engine.py::test_manifest_parser_harvests_identities_not_counts",
+          "tests/test_sqi_engine.py::test_mutation_probe_finds_the_tautological_assertion",
+          "tests/test_sqi_engine.py::test_oracle_precedence_zero_arg_default_is_authoritative_without_ci",
+          "tests/test_sqi_engine.py::test_over_mocking_gate_is_a_delta_never_a_ratio",
+          "tests/test_sqi_engine.py::test_qualifier_blocks_with_a_verbatim_blocker_when_no_toolchain",
+          "tests/test_sqi_engine.py::test_reconcile_finds_orphans_in_this_repository",
+          "tests/test_sqi_engine.py::test_reconcile_reports_authoritative_reach_as_unknown_not_zero",
+          "tests/test_sqi_engine.py::test_scanner_assigns_domains_as_a_set_not_a_label",
+          "tests/test_sqi_engine.py::test_scanner_detects_python_context",
+          "tests/test_sqi_engine.py::test_scanner_fails_open_on_unknown_stack",
+          "tests/test_sqi_engine.py::test_scanner_never_invokes_repository_code",
+          "tests/test_sqi_engine.py::test_scanner_reports_its_own_uncertainty",
+          "tests/test_sqi_engine.py::test_surprise_set_is_the_instruments_self_audit",
+          "tests/test_sqi_engine.py::test_test_case_reach_is_unknown_never_estimated",
+          "tests/test_sqi_engine.py::test_this_repository_is_not_true_green",
+          "tests/test_sqi_engine.py::test_verdict_probe1_examined_nothing_is_unverified_green",
+          "tests/test_sqi_engine.py::test_verdict_probe2_unqualified_environment_is_environment_dependent",
+          "tests/test_sqi_engine.py::test_verdict_probe3_default_without_reconciliation_is_misleading_green",
+          "tests/test_sqi_engine.py::test_verdict_probe4_orphans_present_is_partial_green",
+          "tests/test_sqi_engine.py::test_verdict_true_green_is_reachable_but_requires_everything",
+          "tests/test_sqi_engine.py::test_weakening_baseline_fails_on_a_removed_assertion",
+          "tests/test_sqi_engine.py::test_weakening_baseline_passes_and_ratchets_on_an_added_assertion",
+          "tests/test_sqi_engine.py::test_weakening_fails_open_to_unknown_never_a_false_pass"
+        ],
+        "referencing_tests": [
+          "tests/test_sqi_engine.py"
+        ],
+        "status": "KILLED",
+        "note": "2 test(s) noticed the broken return value and 41 did not. KILLED is the verdict for the SITE, and it is not a certificate for the file: this probe breaks ONE return value per target, so a kill proves that one value is protected and says nothing about the rest."
+      },
+      {
+        "target": "modules/sqi/reconcile.py",
+        "line": 152,
+        "original": "p.casefold()",
+        "mutated_to": "None",
+        "killed_by": [
+          "tests/test_sqi_engine.py::test_content_hash_is_review_never_a_build_failure",
+          "tests/test_sqi_engine.py::test_engine_reports_its_own_reach",
+          "tests/test_sqi_engine.py::test_executed_protection_ratio_counts_the_guarded_not_the_guards",
+          "tests/test_sqi_engine.py::test_guardian_blocks_the_deletion_attack",
+          "tests/test_sqi_engine.py::test_guardian_catches_a_root_that_vanished",
+          "tests/test_sqi_engine.py::test_guardian_fails_open_to_unknown_on_a_corrupt_baseline",
+          "tests/test_sqi_engine.py::test_guardian_fails_the_build_on_a_silent_decrease",
+          "tests/test_sqi_engine.py::test_guardian_first_run_creates_baseline",
+          "tests/test_sqi_engine.py::test_guardian_lowering_requires_an_attributed_act",
+          "tests/test_sqi_engine.py::test_guardian_passes_when_stable",
+          "tests/test_sqi_engine.py::test_guardian_ratchets_the_baseline_upward",
+          "tests/test_sqi_engine.py::test_guardian_refuses_to_compare_across_environments",
+          "tests/test_sqi_engine.py::test_join_key_normalizes_both_sides",
+          "tests/test_sqi_engine.py::test_join_sanity_is_asserted",
+          "tests/test_sqi_engine.py::test_manifest_parser_harvests_identities_not_counts",
+          "tests/test_sqi_engine.py::test_mutation_probe_finds_the_tautological_assertion",
+          "tests/test_sqi_engine.py::test_over_mocking_gate_is_a_delta_never_a_ratio",
+          "tests/test_sqi_engine.py::test_reconcile_finds_orphans_in_this_repository",
+          "tests/test_sqi_engine.py::test_reconcile_reports_authoritative_reach_as_unknown_not_zero",
+          "tests/test_sqi_engine.py::test_surprise_set_is_the_instruments_self_audit",
+          "tests/test_sqi_engine.py::test_test_case_reach_is_unknown_never_estimated",
+          "tests/test_sqi_engine.py::test_this_repository_is_not_true_green",
+          "tests/test_sqi_engine.py::test_weakening_baseline_fails_on_a_removed_assertion",
+          "tests/test_sqi_engine.py::test_weakening_baseline_passes_and_ratchets_on_an_added_assertion"
+        ],
+        "survived_by": [
+          "tests/test_sqi_engine.py::test_assertion_counter_ignores_comments_and_strings",
+          "tests/test_sqi_engine.py::test_assertion_counter_sees_the_v_gate_idiom",
+          "tests/test_sqi_engine.py::test_baseline_path_honours_the_environment_override",
+          "tests/test_sqi_engine.py::test_exit_code_gate_is_unknown_never_zero",
+          "tests/test_sqi_engine.py::test_oracle_precedence_zero_arg_default_is_authoritative_without_ci",
+          "tests/test_sqi_engine.py::test_qualifier_blocks_with_a_verbatim_blocker_when_no_toolchain",
+          "tests/test_sqi_engine.py::test_qualifier_never_grants_qualified_without_observing_every_gate",
+          "tests/test_sqi_engine.py::test_qualifier_runs_seven_gates_and_marks_unevaluated_as_unknown",
+          "tests/test_sqi_engine.py::test_scanner_assigns_domains_as_a_set_not_a_label",
+          "tests/test_sqi_engine.py::test_scanner_detects_python_context",
+          "tests/test_sqi_engine.py::test_scanner_fails_open_on_unknown_stack",
+          "tests/test_sqi_engine.py::test_scanner_never_invokes_repository_code",
+          "tests/test_sqi_engine.py::test_scanner_reports_its_own_uncertainty",
+          "tests/test_sqi_engine.py::test_verdict_probe1_examined_nothing_is_unverified_green",
+          "tests/test_sqi_engine.py::test_verdict_probe2_unqualified_environment_is_environment_dependent",
+          "tests/test_sqi_engine.py::test_verdict_probe3_default_without_reconciliation_is_misleading_green",
+          "tests/test_sqi_engine.py::test_verdict_probe4_orphans_present_is_partial_green",
+          "tests/test_sqi_engine.py::test_verdict_true_green_is_reachable_but_requires_everything",
+          "tests/test_sqi_engine.py::test_weakening_fails_open_to_unknown_never_a_false_pass"
+        ],
+        "referencing_tests": [
+          "tests/test_sqi_engine.py"
+        ],
+        "status": "KILLED",
+        "note": "24 test(s) noticed the broken return value and 19 did not. KILLED is the verdict for the SITE, and it is not a certificate for the file: this probe breaks ONE return value per target, so a kill proves that one value is protected and says nothing about the rest."
+      },
+      {
+        "target": "modules/sqi/repo_reality_scanner.py",
+        "line": 80,
+        "original": "json.loads(RULES_PATH.read_text(encoding=\"utf-8-sig\"))",
+        "mutated_to": "None",
+        "killed_by": [
+          "tests/test_sqi_engine.py::test_engine_reports_its_own_reach",
+          "tests/test_sqi_engine.py::test_executed_protection_ratio_counts_the_guarded_not_the_guards",
+          "tests/test_sqi_engine.py::test_guardian_blocks_the_deletion_attack",
+          "tests/test_sqi_engine.py::test_guardian_catches_a_root_that_vanished",
+          "tests/test_sqi_engine.py::test_guardian_fails_open_to_unknown_on_a_corrupt_baseline",
+          "tests/test_sqi_engine.py::test_guardian_fails_the_build_on_a_silent_decrease",
+          "tests/test_sqi_engine.py::test_guardian_first_run_creates_baseline",
+          "tests/test_sqi_engine.py::test_guardian_lowering_requires_an_attributed_act",
+          "tests/test_sqi_engine.py::test_guardian_passes_when_stable",
+          "tests/test_sqi_engine.py::test_guardian_ratchets_the_baseline_upward",
+          "tests/test_sqi_engine.py::test_guardian_refuses_to_compare_across_environments",
+          "tests/test_sqi_engine.py::test_join_sanity_is_asserted",
+          "tests/test_sqi_engine.py::test_qualifier_never_grants_qualified_without_observing_every_gate",
+          "tests/test_sqi_engine.py::test_qualifier_runs_seven_gates_and_marks_unevaluated_as_unknown",
+          "tests/test_sqi_engine.py::test_reconcile_finds_orphans_in_this_repository",
+          "tests/test_sqi_engine.py::test_reconcile_reports_authoritative_reach_as_unknown_not_zero",
+          "tests/test_sqi_engine.py::test_scanner_assigns_domains_as_a_set_not_a_label",
+          "tests/test_sqi_engine.py::test_scanner_detects_python_context",
+          "tests/test_sqi_engine.py::test_scanner_fails_open_on_unknown_stack",
+          "tests/test_sqi_engine.py::test_scanner_never_invokes_repository_code",
+          "tests/test_sqi_engine.py::test_scanner_reports_its_own_uncertainty",
+          "tests/test_sqi_engine.py::test_surprise_set_is_the_instruments_self_audit",
+          "tests/test_sqi_engine.py::test_test_case_reach_is_unknown_never_estimated",
+          "tests/test_sqi_engine.py::test_this_repository_is_not_true_green"
+        ],
+        "survived_by": [
+          "tests/test_sqi_engine.py::test_assertion_counter_ignores_comments_and_strings",
+          "tests/test_sqi_engine.py::test_assertion_counter_sees_the_v_gate_idiom",
+          "tests/test_sqi_engine.py::test_baseline_path_honours_the_environment_override",
+          "tests/test_sqi_engine.py::test_content_hash_is_review_never_a_build_failure",
+          "tests/test_sqi_engine.py::test_exit_code_gate_is_unknown_never_zero",
+          "tests/test_sqi_engine.py::test_join_key_normalizes_both_sides",
+          "tests/test_sqi_engine.py::test_manifest_parser_harvests_identities_not_counts",
+          "tests/test_sqi_engine.py::test_mutation_probe_finds_the_tautological_assertion",
+          "tests/test_sqi_engine.py::test_oracle_precedence_zero_arg_default_is_authoritative_without_ci",
+          "tests/test_sqi_engine.py::test_over_mocking_gate_is_a_delta_never_a_ratio",
+          "tests/test_sqi_engine.py::test_qualifier_blocks_with_a_verbatim_blocker_when_no_toolchain",
+          "tests/test_sqi_engine.py::test_verdict_probe1_examined_nothing_is_unverified_green",
+          "tests/test_sqi_engine.py::test_verdict_probe2_unqualified_environment_is_environment_dependent",
+          "tests/test_sqi_engine.py::test_verdict_probe3_default_without_reconciliation_is_misleading_green",
+          "tests/test_sqi_engine.py::test_verdict_probe4_orphans_present_is_partial_green",
+          "tests/test_sqi_engine.py::test_verdict_true_green_is_reachable_but_requires_everything",
+          "tests/test_sqi_engine.py::test_weakening_baseline_fails_on_a_removed_assertion",
+          "tests/test_sqi_engine.py::test_weakening_baseline_passes_and_ratchets_on_an_added_assertion",
+          "tests/test_sqi_engine.py::test_weakening_fails_open_to_unknown_never_a_false_pass"
+        ],
+        "referencing_tests": [
+          "tests/test_sqi_engine.py"
+        ],
+        "status": "KILLED",
+        "note": "24 test(s) noticed the broken return value and 19 did not. KILLED is the verdict for the SITE, and it is not a certificate for the file: this probe breaks ONE return value per target, so a kill proves that one value is protected and says nothing about the rest."
+      },
+      {
+        "target": "modules/sqi/weakening_baseline.py",
+        "line": 64,
+        "original": "Path(repo) / \"vault\" / \"audits\" / \"sqi_weakening_baseline.json\"",
+        "mutated_to": "None",
+        "killed_by": [
+          "tests/test_sqi_engine.py::test_baseline_path_honours_the_environment_override"
+        ],
+        "survived_by": [
+          "tests/test_sqi_engine.py::test_assertion_counter_ignores_comments_and_strings",
+          "tests/test_sqi_engine.py::test_assertion_counter_sees_the_v_gate_idiom",
+          "tests/test_sqi_engine.py::test_content_hash_is_review_never_a_build_failure",
+          "tests/test_sqi_engine.py::test_engine_reports_its_own_reach",
+          "tests/test_sqi_engine.py::test_executed_protection_ratio_counts_the_guarded_not_the_guards",
+          "tests/test_sqi_engine.py::test_exit_code_gate_is_unknown_never_zero",
+          "tests/test_sqi_engine.py::test_guardian_blocks_the_deletion_attack",
+          "tests/test_sqi_engine.py::test_guardian_catches_a_root_that_vanished",
+          "tests/test_sqi_engine.py::test_guardian_fails_open_to_unknown_on_a_corrupt_baseline",
+          "tests/test_sqi_engine.py::test_guardian_fails_the_build_on_a_silent_decrease",
+          "tests/test_sqi_engine.py::test_guardian_first_run_creates_baseline",
+          "tests/test_sqi_engine.py::test_guardian_lowering_requires_an_attributed_act",
+          "tests/test_sqi_engine.py::test_guardian_passes_when_stable",
+          "tests/test_sqi_engine.py::test_guardian_ratchets_the_baseline_upward",
+          "tests/test_sqi_engine.py::test_guardian_refuses_to_compare_across_environments",
+          "tests/test_sqi_engine.py::test_join_key_normalizes_both_sides",
+          "tests/test_sqi_engine.py::test_join_sanity_is_asserted",
+          "tests/test_sqi_engine.py::test_manifest_parser_harvests_identities_not_counts",
+          "tests/test_sqi_engine.py::test_mutation_probe_finds_the_tautological_assertion",
+          "tests/test_sqi_engine.py::test_oracle_precedence_zero_arg_default_is_authoritative_without_ci",
+          "tests/test_sqi_engine.py::test_over_mocking_gate_is_a_delta_never_a_ratio",
+          "tests/test_sqi_engine.py::test_qualifier_blocks_with_a_verbatim_blocker_when_no_toolchain",
+          "tests/test_sqi_engine.py::test_qualifier_never_grants_qualified_without_observing_every_gate",
+          "tests/test_sqi_engine.py::test_qualifier_runs_seven_gates_and_marks_unevaluated_as_unknown",
+          "tests/test_sqi_engine.py::test_reconcile_finds_orphans_in_this_repository",
+          "tests/test_sqi_engine.py::test_reconcile_reports_authoritative_reach_as_unknown_not_zero",
+          "tests/test_sqi_engine.py::test_scanner_assigns_domains_as_a_set_not_a_label",
+          "tests/test_sqi_engine.py::test_scanner_detects_python_context",
+          "tests/test_sqi_engine.py::test_scanner_fails_open_on_unknown_stack",
+          "tests/test_sqi_engine.py::test_scanner_never_invokes_repository_code",
+          "tests/test_sqi_engine.py::test_scanner_reports_its_own_uncertainty",
+          "tests/test_sqi_engine.py::test_surprise_set_is_the_instruments_self_audit",
+          "tests/test_sqi_engine.py::test_test_case_reach_is_unknown_never_estimated",
+          "tests/test_sqi_engine.py::test_this_repository_is_not_true_green",
+          "tests/test_sqi_engine.py::test_verdict_probe1_examined_nothing_is_unverified_green",
+          "tests/test_sqi_engine.py::test_verdict_probe2_unqualified_environment_is_environment_dependent",
+          "tests/test_sqi_engine.py::test_verdict_probe3_default_without_reconciliation_is_misleading_green",
+          "tests/test_sqi_engine.py::test_verdict_probe4_orphans_present_is_partial_green",
+          "tests/test_sqi_engine.py::test_verdict_true_green_is_reachable_but_requires_everything",
+          "tests/test_sqi_engine.py::test_weakening_baseline_fails_on_a_removed_assertion",
+          "tests/test_sqi_engine.py::test_weakening_baseline_passes_and_ratchets_on_an_added_assertion",
+          "tests/test_sqi_engine.py::test_weakening_fails_open_to_unknown_never_a_false_pass"
+        ],
+        "referencing_tests": [
+          "tests/test_sqi_engine.py"
+        ],
+        "status": "KILLED",
+        "note": "1 test(s) noticed the broken return value and 42 did not. KILLED is the verdict for the SITE, and it is not a certificate for the file: this probe breaks ONE return value per target, so a kill proves that one value is protected and says nothing about the rest."
+      }
+    ],
+    "survivors": 0,
+    "killed": 5,
+    "skipped": [
+      "modules/sqi/weakening_detectors.py: the working tree copy is modified or its state is unknown. The probe will not mutate a file whose only copy of a change is on disk."
+    ],
+    "error": null
   }
 }

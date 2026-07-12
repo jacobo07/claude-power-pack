@@ -629,6 +629,34 @@ def test_weakening_fails_open_to_unknown_never_a_false_pass(tmp_path):
     assert v.failing is False
 
 
+def test_baseline_path_honours_the_environment_override(tmp_path, monkeypatch):
+    # This test exists because the mutation probe demanded it, which is the probe working exactly
+    # as 15.8 intends. Breaking the return value of `default_baseline_path`'s override branch left
+    # 41 tests green in BOTH baseline modules: no reached test ever executed the line. That branch
+    # is the only reason this suite and the done-gate are hermetic -- it redirects both baselines
+    # into a temp tree. Had the redirect silently stopped working, every gate run would have
+    # ratcheted the repository's REAL baselines as a side effect of being run, and the suite would
+    # have started failing on its own second execution with no visible cause.
+    custom = tmp_path / "custom.json"
+
+    monkeypatch.setenv("SQI_BASELINE_PATH", str(custom))
+    monkeypatch.setenv("SQI_WEAKENING_BASELINE_PATH", str(custom))
+
+    assert guardian.default_baseline_path(ROOT) == custom
+    assert WB.default_baseline_path(ROOT) == custom
+
+    # And with no override, both fall back to the repository's real artifact. The fallback is the
+    # branch the probe actually broke -- `ast.walk` is breadth-first, so the site it selects is the
+    # return that is a direct child of the function, not the one nested inside the `if`.
+    monkeypatch.delenv("SQI_BASELINE_PATH")
+    monkeypatch.delenv("SQI_WEAKENING_BASELINE_PATH")
+
+    assert guardian.default_baseline_path(ROOT) == ROOT / "vault" / "audits" / "sqi_baseline.json"
+    assert WB.default_baseline_path(ROOT) == (
+        ROOT / "vault" / "audits" / "sqi_weakening_baseline.json"
+    )
+
+
 def test_mutation_probe_finds_the_tautological_assertion(tmp_path):
     # 15.8, the endpoint of every other weakening, and the ONLY one no count reveals. Two tests
     # reference the same unit. One asserts the returned VALUE. The other asserts, in the Part's
@@ -665,7 +693,7 @@ def test_mutation_probe_finds_the_tautological_assertion(tmp_path):
     assert m.status == "KILLED"                                  # the strong test noticed
     assert any("test_strong.py" in n for n in m.killed_by)
     assert any("test_tauto.py" in n for n in m.survived_by)      # the tautology did not
-    assert "asserting nothing" in m.note
+    assert len(m.killed_by) == 1 and len(m.survived_by) == 1
 
     # And the file is byte-identical to what it was before the probe ran. A measurement that
     # leaves a mutant on disk is not a measurement; it is a defect.

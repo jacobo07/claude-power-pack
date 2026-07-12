@@ -415,8 +415,13 @@ def _run_suite(repo: Path, invocation: str, timeout: int) -> dict[str, str]:
 
 
 def _mutation_site(path: Path) -> tuple[int, int, int, int, str] | None:
-    """The first `return <non-trivial value>` in the file. Breaking it is the cheapest possible
-    perturbation of the unit's observable output, which is exactly what 15.8 asks for."""
+    """One `return <non-trivial value>` per file. Breaking it is the cheapest possible
+    perturbation of the unit's observable output, which is exactly what 15.8 asks for.
+
+    `ast.walk` is breadth-first, so the site chosen is not necessarily the first in SOURCE order:
+    a return that is a direct child of the function is reached before one nested inside an `if`.
+    That is left as-is -- what a probe needs from a site selector is DETERMINISM, not source-order
+    intuition. It does mean a KILLED verdict certifies one value, never a whole file."""
     try:
         src = Path(path).read_text(encoding="utf-8-sig")
     except OSError:
@@ -583,17 +588,23 @@ def mutation_probe(
             rep.killed += 1
             if mut.survived_by:
                 mut.note = (
-                    f"{len(mut.survived_by)} referencing test(s) stayed green through a broken "
-                    f"return value. Each is asserting nothing about the value it claims to "
-                    f"protect (15.8)."
+                    f"{len(mut.killed_by)} test(s) noticed the broken return value and "
+                    f"{len(mut.survived_by)} did not. KILLED is the verdict for the SITE, and it "
+                    f"is not a certificate for the file: this probe breaks ONE return value per "
+                    f"target, so a kill proves that one value is protected and says nothing "
+                    f"about the rest."
                 )
         elif mut.survived_by:
             mut.status = "SURVIVED"
             rep.survivors += 1
             mut.note = (
                 "every referencing test stayed green while the unit returned a broken value. "
-                "The tests execute the unit and assert nothing about its output -- the "
-                "tautological assertion (15.8), which no count in this corpus can reveal."
+                "That means ONE of two things, and the probe alone cannot say which: either no "
+                "reached test ever executes this line, or one does and asserts nothing about "
+                "what it returned. From the point of view of protection the two are the same "
+                "fact -- the value is unprotected, and a change to it would ship green (15.8). "
+                "The distinction matters only when choosing the repair: the first wants a test, "
+                "the second wants an assertion."
             )
         else:
             mut.status = UNKNOWN

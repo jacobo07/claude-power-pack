@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "recorded": "2026-07-12T16:42:25.530911+00:00",
-  "commit": "ca05e467aa62b74b323a38effa135778f4f54307",
+  "recorded": "2026-07-12T17:01:24.916898+00:00",
+  "commit": "f52db918b72fbf17b06e5437111c0376dc6e405a",
   "environment_key": "b5ec3ed51c2f23b1",
   "files": {
     "_logs/_m1_secret_firewall_test.py": {
@@ -246,10 +246,10 @@
     },
     "tests/test_sqi_engine.py": {
       "path": "tests/test_sqi_engine.py",
-      "assertions": 116,
-      "mocks": 0,
-      "sha256": "abd2a94dabe590f472456b45bc342c52f5a5a6526b649b8f3b7ec17096e97b04",
-      "cases": 42,
+      "assertions": 120,
+      "mocks": 4,
+      "sha256": "c6cbed744ad04ce15886fb4e87eff89612babf8af28ca187963cd8fae26f3b14",
+      "cases": 43,
       "broad_catches": 0,
       "verification": "assertions",
       "error": null

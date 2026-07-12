@@ -32,8 +32,12 @@ Do not rewrite either.
 - `sqi_00_constitution_v1.txt` · `sqi_01_repository_reality_v1.txt` ·
   `sqi_02_test_reach_v1.txt` ★ · `sqi_03_environment_qualification_v1.txt` — 20/20 Parts each.
 - `modules/sqi/repo_reality_scanner.py` · `environment_qualifier.py` · `reconcile.py` ·
-  `baseline_guardian.py` · `discovery_rules.json` (**governed artifact** — widening its
-  exclusions is the census trap).
+  `baseline_guardian.py` · `weakening_detectors.py` · `weakening_baseline.py` ·
+  `discovery_rules.json` (**governed artifact** — widening its `exclusions` is the census trap;
+  **narrowing its `assertion_vocabulary` is the inverse trap**, and blinds the weakening gate).
+- `vault/audits/sqi_weakening_baseline.json` — per-file `{assertions, mocks, cases, sha256}`,
+  NOT environment-keyed (the counts are static; keying them would let a host change erase them).
+  Currently: **101 files, 2,158 assertions, 23 exit-code-gate (UNKNOWN), 9 verifying nothing.**
 - `tools/run_sqi.py` → `vault/audits/sqi_report_<date>.md` + JSON sidecar + the guardian verdict.
   **It exits non-zero on an unexplained decrease.** `--accept-baseline --reason … --author …`
   is the only path that may LOWER a baseline.
@@ -49,9 +53,10 @@ Do not rewrite either.
   `T-SQI-SCOPE-LAUNDERING-001`.
 
 **Coherence anchor — these must agree or something has drifted:**
-`python tools/test_sqi.py` reports `SQI_PASS=45/45` and `datasets=4` · `SQI_INDEX.md` marks 4
-datasets `COMPLETE` · `vault/knowledge_base/sqi/sqi_*_v1.txt` is exactly 4 files ·
-`modules/sqi/*.py` is exactly 5 files (4 engines + `__init__`).
+`python tools/test_sqi.py` reports `SQI_PASS=53/53` and `datasets=4` · `pytest tests/` reports
+**86 passed** · `SQI_INDEX.md` marks 4 datasets `COMPLETE` ·
+`vault/knowledge_base/sqi/sqi_*_v1.txt` is exactly 4 files · `modules/sqi/*.py` is exactly 7 files
+(6 engines + `__init__`).
 
 **What the engine measures about this repository right now** (do not re-derive; re-run it):
 Test File Reach **3.0%** (3 of 100) · Orphaned **97** · Executed Protection Ratio **1.6%** ·
@@ -94,18 +99,18 @@ SQI-04…SQI-13. Ten datasets.
 
 ## 4. Next actions (imperative — highest value first)
 
-1. **Build SQI-02 Part XV weakening detection.** This is now the largest gap, and it is the
-   attack the guardian *cannot* see. The guardian gates the executed **count**, so it catches
-   deletion, skips, and relocation. Weakening lowers **nothing**: a removed assertion, a widened
-   exception handler, an unreal fixture, over-mocking, a lowered threshold, a tautological
-   assertion — in every one the file is present, the case is collected, the case passes, **the
-   count is identical, and the protection is gone.** Weakening is the perfect attack on a
-   count-based instrument, and this instrument is count-based. Part XV specifies the detectors:
-   assertion counts per case, mock counts per test, content hashes (already recorded in the
-   topology map for exactly this reason), and a cheap mutation probe — break one return value in
-   a "protected" unit, run the tests that reference it, and record which stay green. Every green
-   one is asserting nothing about the value it claims to protect.
-2. **Point `run_sqi.py` at the rest of the estate.** It takes a path argument and has never been
+1. ~~Build SQI-02 Part XV weakening detection.~~ **DONE — SCS C94.** `weakening_detectors.py` +
+   `weakening_baseline.py`; four gates (assertions fell → FAIL; mocks rose ∧ assertions did not →
+   FAIL; hash moved ∧ arithmetic held → REVIEW; broad handlers rose → REVIEW) + the §15.8 mutation
+   probe (`--mutation-probe`, opt-in). **Do NOT gate the mocks/assertions ratio** — a ratio falls
+   when its denominator rises, and the cheapest way to raise an assertion count is a tautological
+   assertion, which IS weakening §15.8. The assertion vocabulary is a governed artifact:
+   **narrowing it hides removals, because zero cannot fall.**
+2. **Build the threshold inventory (§15.7)** — the one weakening still undetected. Every numeric
+   threshold in the repository, versioned, each change a governance event with a reason. Each
+   individual relaxation is defensible; the sum, over a year, is a set of gates that constrain
+   nothing. It is invisible without a ledger and lethal with one.
+3. **Point `run_sqi.py` at the rest of the estate.** It takes a path argument and has never been
    run outside PP. TUA-X's 390 orphaned tests are one `testpaths` line; CostaLuz's scanner is
    declared and never invoked; the two Elixir repos cannot compile. The engine detects all three
    classes already. Nothing has pointed it at them.

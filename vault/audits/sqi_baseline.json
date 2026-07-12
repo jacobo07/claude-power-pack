@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "recorded": "2026-07-12T15:46:16.845892+00:00",
-  "commit": "6541399c1b216e50293e820d91bf6de3e97fb078",
+  "recorded": "2026-07-12T16:52:24.804613+00:00",
+  "commit": "f52db918b72fbf17b06e5437111c0376dc6e405a",
   "environment_key": "b5ec3ed51c2f23b1",
   "roots": {
     "pytest tests/": {
       "invocation": "pytest tests/",
       "oracle": "documentation",
-      "executed_cases": 76,
+      "executed_cases": 86,
       "executed_files": [
         "tests/test_cascade_populator.py",
         "tests/test_forensic_probes.py",

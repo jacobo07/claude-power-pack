@@ -103,7 +103,7 @@ def _probe_targets(rep) -> list[str]:
     return out
 
 
-def _render(profile, env, rep, verdict, weak, target: Path, stamp: str) -> str:
+def _render(profile, env, rep, verdict, weak, mutation, target: Path, stamp: str) -> str:
     L: list[str] = []
     A = L.append
 
@@ -233,6 +233,33 @@ def _render(profile, env, rep, verdict, weak, target: Path, stamp: str) -> str:
             A(f"- `{u.split(':', 1)[0]}`")
         if len(weak.unknowns) > 12:
             A(f"- … and {len(weak.unknowns) - 12} more")
+        A("")
+
+    if mutation is not None:
+        A("### Mutation probe (§15.8) — the tautological assertion")
+        A("")
+        A(f"Invocation: `{mutation.invocation}` · mutants **{len(mutation.mutants)}** · killed "
+          f"**{mutation.killed}** · **survived {mutation.survivors}**")
+        A("")
+        A("The tautological assertion is the endpoint of every other weakening and the only one "
+          "**no count reveals**: an assertion that a result is not null, or that a call did not "
+          "raise, passes for every implementation *including a broken one*. It raises no count, "
+          "lowers no count, and appears in a coverage report as a covered line. The probe breaks "
+          "**one return value** per target and records which referencing tests stay green.")
+        A("")
+        if mutation.error:
+            A(f"**UNKNOWN:** {mutation.error}")
+            A("")
+        for m in mutation.mutants:
+            if m.status == "SURVIVED":
+                A(f"**SURVIVOR** — `{m.target}:{m.line}` (`{m.original}` → `None`)")
+                A("")
+                A(f"  {m.note}")
+                A("")
+        A("A **KILLED** verdict is a verdict on the *site*, not a certificate for the file: one "
+          "return value was broken and one was noticed. **NOT_REFERENCED** means no reached test "
+          "so much as mentions the unit — there was nothing to survive the mutation, and there is "
+          "nothing protecting the unit.")
         A("")
 
     A("**Not detected here, and declared rather than faked:** the lowered threshold (§15.7) "
@@ -463,7 +490,9 @@ def main(argv: list[str]) -> int:
     md_path = audit_dir / f"sqi_report_{date}.md"
     json_path = audit_dir / f"sqi_report_{date}.json"
 
-    md_path.write_text(_render(profile, env, rep, verdict, weak, target, stamp), encoding="utf-8")
+    md_path.write_text(
+        _render(profile, env, rep, verdict, weak, mutation, target, stamp), encoding="utf-8"
+    )
     json_path.write_text(
         json.dumps(
             {

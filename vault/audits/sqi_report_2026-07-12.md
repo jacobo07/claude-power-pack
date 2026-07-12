@@ -1,6 +1,6 @@
 # SQI Report — claude-power-pack
 
-> Generated 2026-07-12 16:27 UTC by `tools/run_sqi.py`. Commit `ca05e467`.
+> Generated 2026-07-12 16:56 UTC by `tools/run_sqi.py`. Commit `f52db918`.
 > The executable layer of the SQI corpus. Doctrine: `vault/knowledge_base/sqi/`.
 
 ## Verdict
@@ -14,15 +14,61 @@
 
 ## Baseline guardian (SQI-02 Part XII)
 
-BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (stable)
+BASELINE_PASS: 86 executed across 1 root(s), 101 authored, reach=3.0% (stable)
 
 Baseline: `sqi_baseline.json` · environment `b5ec3ed51c2f23b1` · ratcheted this run: False
 
 ## Weakening detectors (SQI-02 Part XV)
 
-WEAKENING_PASS: 101 file(s) tracked, 2106 assertion(s), 0 for review, 0 advisory, 23 unknown. No assertion was lost.
+WEAKENING_PASS: 101 file(s) tracked, 2158 assertion(s), 0 for review, 1 advisory, 23 unknown, 9 verifying NOTHING. No assertion was lost.
 
 The guardian above gates **counts**, so it catches deletion, the skip, and the relocation. Weakening lowers **no count at all**: the file is present, the case is collected, the case passes, and the protection is gone (§15.1). These gates read the **content** of the surviving tests.
+
+### Over-mocking advisories (1)
+
+Files with ≥4 mocked collaborators. Past that point the unit under test is the only real object in the room, and the test is asserting that a function calls the stubs it was told to call (§15.6). Advisory: the smell may predate this commit, and a gate that fails a build for a condition the current change did not cause is a gate that gets disabled.
+
+- `tests/test_sqi_engine.py`: 4 mocked collaborators
+
+### Files that verify nothing (9)
+
+No assertion of any recognized form, and no exit-code gate. **A test with zero assertions is not a test; it is an execution, and every runner reports it as passing** (§15.2). These are also the one population this layer can never protect: their count is zero, and **zero cannot fall**.
+
+- `modules/auto-testing/auto_test.py`
+- `tools/test_atomic_branding.py`
+- `tools/test_ceps_edge_cases.py`
+- `tools/test_ceps_full_cycle.py`
+- `tools/test_karimo.py`
+- `tools/test_lateral_thinking.py`
+- `tools/test_mirror_parity.py`
+- `tools/test_tis_core.py`
+- `tools/test_tis_e2e.py`
+
+### Assertion count inapplicable (23)
+
+These files gate on a **non-zero exit code**, not on an assertion — the estate's results-table idiom. Recording them as zero assertions would have been the worst available answer: it would call them unprotected *and* hand the gate a number that can never raise an alarm. They are `UNKNOWN` and tracked **by content hash only** (gate C). *Zero is a measurement; this is the absence of one.*
+
+- `_logs/_m3_backlog_signal_test.py`
+- `_logs/_m4_oneshot_jit_test.py`
+- `modules/arch-decision/test_closed_loop.py`
+- `modules/arch-decision/test_v_block.py`
+- `modules/backup/test_v_block.py`
+- `modules/code-review/test_closed_loop.py`
+- `modules/code-review/test_combined_gate.py`
+- `modules/code-review/test_v_block.py`
+- `modules/deployment/test_v_block.py`
+- `modules/rollback/test_v_block.py`
+- `tests/test_mistake_frequency_xplat.py`
+- `tools/ghost_driver_test.py`
+- … and 11 more
+
+### Mutation probe (§15.8) — the tautological assertion
+
+Invocation: `pytest tests/` · mutants **8** · killed **5** · **survived 0**
+
+The tautological assertion is the endpoint of every other weakening and the only one **no count reveals**: an assertion that a result is not null, or that a call did not raise, passes for every implementation *including a broken one*. It raises no count, lowers no count, and appears in a coverage report as a covered line. The probe breaks **one return value** per target and records which referencing tests stay green.
+
+A **KILLED** verdict is a verdict on the *site*, not a certificate for the file: one return value was broken and one was noticed. **NOT_REFERENCED** means no reached test so much as mentions the unit — there was nothing to survive the mutation, and there is nothing protecting the unit.
 
 **Not detected here, and declared rather than faked:** the lowered threshold (§15.7) needs a threshold inventory that does not exist in this repository, and the unreal fixture (§15.4) has no counting detector by the Part's own admission. The tautological assertion (§15.8) is detectable **only** by a mutation probe — `--mutation-probe` runs it; it executes tests and mutates source, so it is never part of a default measurement.
 
@@ -38,7 +84,7 @@ The guardian above gates **counts**, so it catches deletion, the skip, and the r
   INTERNALERROR>   File "C:\Users\User\.claude\skills\claude-power-pack\_logs\_m1_secret_firewall_test.py", line 118, in <module>
   INTERNALERROR>     sys.exit(0 if passes == total else 1)
   INTERNALERROR> SystemExit: 0
-  no tests collected in 0.89s
+  no tests collected in 0.72s
   mainloop: caught unexpected SystemExit!
   ```
 
@@ -69,7 +115,7 @@ The guardian above gates **counts**, so it catches deletion, the skip, and the r
 
 | oracle | command | authoritative | status | exit | files | cases | verdict |
 |---|---|---|---|---|---|---|---|
-| documentation | `pytest tests/` | no | `OK` | 0 | 3 | 76 | `PARTIAL_GREEN` |
+| documentation | `pytest tests/` | no | `OK` | 0 | 3 | 86 | `PARTIAL_GREEN` |
 | zero_arg_default | `pytest` | **yes** | `BROKEN` | 3 | 0 | UNKNOWN | `UNKNOWN` |
 
 Precedence (SQI-02 §9.4): a CI job is authoritative where one exists, because it is the only oracle backed by an observation rather than an intention. Where none exists, the zero-argument default is authoritative — it is what a human, a hook, or an agent with no prior context will actually type. **Documentation is never authoritative.**

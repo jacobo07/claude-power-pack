@@ -3810,3 +3810,55 @@ governance; the same gate loosened at midnight by the agent it is blocking is an
 PART XX (amendment). Sister of `PR-ACIS-FALSIFIABILITY-001` (No-Autopromotion).
 
 - **UKDL-OSA-2026-07-12T14:21:33Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+---
+
+### T-SQI-WEAKENING-INVISIBLE-001 — a guardian that counts is blind to weakening
+
+**Trap.** A baseline guardian gates COUNTS, so it catches every failure that lowers a number:
+a deletion, a skip, a relocation. **Weakening lowers nothing.** A removed assertion, a widened
+exception handler, an unreal fixture, over-mocking, a lowered threshold, a tautological assertion
+— in every one the file is present, the case is collected, the case passes, **the count is
+identical, and the protection is gone.** Weakening is the perfect attack on a count-based
+instrument, and a count-based instrument is exactly what a guardian is. A guardian without
+weakening detection is a locked door in a building with no walls.
+
+**Rule.** Gate the CONTENT of the tests that survive, not only their number: assertion counts per
+file, mock counts as a delta, content hashes, and — for the tautological assertion, which no count
+can ever reveal — a mutation probe. Break one return value in a unit the instrument calls
+protected, run the tests that reference it, and record which stay green. **Every green one is
+asserting nothing about the value it claims to protect.**
+
+**Origin.** SQI-02 Part XV, built 2026-07-12 (SCS C94). The probe immediately found two returns in
+this repository's own baseline modules whose mutation left 41 tests green — the branch that makes
+the entire done-gate hermetic. It was fixed the same hour.
+
+**Cross-ref:** `PR-SQI-SIGNAL-MUST-GATE-001` (the guardian), `T-SQI-RATIO-GATE-REWARDS-DELETION-001`.
+
+---
+
+### T-SQI-NARROW-VOCABULARY-BLINDS-THE-GATE-001 — zero cannot fall
+
+**Trap.** A gate that fails when a count DROPS is defined by what it can COUNT. Give it a narrow
+vocabulary and it reports zero for every file written in an idiom it does not recognize — and
+**zero cannot fall.** The gate then declares the file unprotected *and* is permanently incapable
+of raising an alarm about it. Both halves are wrong, and the second is the dangerous one: the file
+looks gated and is not.
+
+This is the census trap (`SQI-02 §11.11`) inverted. Widening a census `exclusions` list inflates
+reach; **narrowing a vocabulary list hides removals.** The two dangers run in opposite directions,
+so the same instinct — "keep the list tight" — is right for one and catastrophic for the other.
+
+**Rule.** The assertion vocabulary is a GOVERNED artifact, versioned beside the census rules, and
+narrowing it is a reviewable act. And any file whose protection cannot be expressed as a count
+(the exit-code gate: build a results table, `sys.exit(fails)`) is recorded as **UNKNOWN, never
+zero.** *Zero is a measurement; this is the absence of one.*
+
+**Origin.** 2026-07-12 (SCS C94). First run of the weakening detector on Claude Power Pack: 230
+assertions across 101 authored test files. 92 of those files reported **zero** — and 60 of them had
+been verifying things all along, in the estate's own V-gate idiom (`_ok` / `_fail`), one file **139
+times over.** Every one of those 139 gates could have been deleted without moving a single number.
+Corrected vocabulary: **2,158** assertions. The detector's first finding was about the detector.
+
+**Cross-ref:** `T-SQI-DIRECTORY-NOT-MANIFEST-001` (counting the wrong thing),
+`FOUNDING-FINDING-IS-A-HYPOTHESIS` (re-measure with an independent instrument).
