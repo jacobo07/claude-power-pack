@@ -1,0 +1,49 @@
+{
+  "_comment": "This build's own artifact contract. P2 gating P1-P4. Done is what is on disk.",
+  "contracts": [
+    {
+      "name": "kill_switch_digest",
+      "path": "C:/Users/User/.claude/knowledge_vault/core/HARD-RULES-DIGEST.md",
+      "kind": "file",
+      "min_bytes": 500
+    },
+    {
+      "name": "validated_rule_db",
+      "path": "vault/hard_rules/compiled/rules_db.json",
+      "kind": "json",
+      "min_count": 5,
+      "required_keys": ["compiled_at", "counts", "rules"]
+    },
+    {
+      "name": "rejection_report",
+      "path": "vault/hard_rules/compiled/rejections.md",
+      "kind": "file",
+      "min_bytes": 1000
+    },
+    {
+      "name": "sweep_ledger",
+      "path": "vault/sweeps/sweeps.jsonl",
+      "kind": "jsonl",
+      "min_count": 1,
+      "required_keys": ["rule_id", "verdict", "sites_audited", "gaps_found"]
+    },
+    {
+      "name": "refcheck_report",
+      "path": "vault/audits/refcheck_report.md",
+      "kind": "file",
+      "min_bytes": 200
+    },
+    {
+      "name": "enforcement_done_gate",
+      "path": "tools/test_enforcement_systems.py",
+      "kind": "file",
+      "min_bytes": 5000
+    },
+    {
+      "name": "scs_c92",
+      "path": "vault/knowledge_base/enforcement/enforcement_scs_c92.md",
+      "kind": "file",
+      "min_bytes": 2000
+    }
+  ]
+}
