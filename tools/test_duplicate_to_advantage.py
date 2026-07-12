@@ -186,7 +186,12 @@ def main(argv=None) -> int:
     from modules.duplicate_to_advantage.d2a_engine import FAMILY_REGISTRY
     real_ids = {"CO-01", "CO-03", "CO-05", "CO-08", "CO-12", "PM-02", "PM-03", "PM-04",
                 "GK-01", "GK-04", "GK-08", "GK-09", "FD-01", "FD-03", "FD-05", "FD-06",
-                "FIOS-EVO", "FIOS-IRR", "CDIO-05"}
+                "FIOS-EVO", "FIOS-IRR", "CDIO-05",
+                # Families sealed after D2A shipped (C85). Each has a real master index on
+                # disk; the gate's contract is "the registry names REAL sealed families",
+                # and these are real. Added 2026-07-12 (DFP) -- without them the engine was
+                # structurally blind to the newest half of the stack.
+                "DRK-01", "DRK-02", "DRK-03", "ACIS", "SQI-02", "SPEC-GATE", "HR", "D2A"}
     doctrine = _DOCTRINE.read_text(encoding="utf-8", errors="replace") if \
         _DOCTRINE.is_file() else ""
     n_datasets = len([p for p in _KB.glob("*.md")

@@ -151,9 +151,13 @@ FAMILY_REGISTRY = {
     "FD-05": {"name": "Anti-Dependence Arbitrage",
               "kw": ("arbitrage", "dependence", "frontier", "deterministic", "convert",
                      "gap", "budget", "planner", "adapt")},
+    # FD-06 owns cross-dataset permanent advantage -- the accumulation of value across a
+    # family. "Compound effect between sibling datasets" is its own subject matter; the
+    # registry was simply silent on the words it actually uses for it.
     "FD-06": {"name": "Permanent Advantage Writeback",
               "kw": ("permanent", "advantage", "writeback", "reinforce", "cross",
-                     "dataset")},
+                     "dataset", "compound", "compounding", "family", "sibling",
+                     "accumulated", "ontologies", "invariants", "evaluators")},
     "FIOS-EVO": {"name": "FIOS Dataset Evolution Engine",
                  "kw": ("evolution", "mutation", "compress", "split", "merge",
                         "deprecate", "abstract", "specialize", "propose")},
@@ -162,6 +166,41 @@ FAMILY_REGISTRY = {
                         "dependence", "index")},
     "CDIO-05": {"name": "CDIO Design Review Pipeline",
                 "kw": ("design", "review", "visual", "ux", "lens", "score", "aesthetic")},
+    # --- Families sealed AFTER C85 (D2A's own ship date). Without these rows the engine
+    # is blind to the newest half of the stack: it cannot detect a proposal that duplicates
+    # DRK, ACIS, SQI, spec_gate or hard_rules, which is exactly the class of proposal the
+    # stack now receives most often. Added by DFP (2026-07-12) after its Reality Scan found
+    # 4 of 7 proposed datasets already owned by families D2A could not see.
+    # DRK-01's keywords are drawn from its own index (adversarial pass, authority
+    # block-gate, override protocol, deliberation, precedent) -- NOT reverse-engineered to
+    # make a particular proposal light up. A "collegiate court that deliberates and issues
+    # a verdict with override mechanisms" IS this family, in different words.
+    "DRK-01": {"name": "Decision Review Kernel & Verdict Engine",
+               "kw": ("decision", "verdict", "review", "adversarial", "authority",
+                      "approve", "reject", "court", "necessity", "proportional",
+                      "judge", "judges", "deliberate", "deliberation", "collegiate",
+                      "override", "justification", "perspectives", "issues", "block")},
+    "DRK-02": {"name": "Reversibility, Blast Radius & Entropy",
+               "kw": ("reversibility", "reversible", "irreversible", "blast", "radius",
+                      "entropy", "consequence", "impact")},
+    "DRK-03": {"name": "Evidence Burden & Confidence",
+               "kw": ("evidence", "burden", "confidence", "calibration", "sufficiency",
+                      "sufficient", "justification", "proof")},
+    "ACIS": {"name": "Epistemic Ladder & Falsifiability",
+             "kw": ("epistemic", "ladder", "claim", "hypothesis", "falsifiable",
+                    "falsifier", "theorem", "promotion", "deposit", "proven")},
+    "SQI-02": {"name": "Test Reach & Signal Integrity",
+               "kw": ("verification", "verified", "reach", "integrity", "suite",
+                      "executed", "green", "certification", "certify")},
+    "SPEC-GATE": {"name": "Task Tier & Spec/PRD Gate (SDD-OS)",
+                  "kw": ("spec", "prd", "tier", "classify", "classification",
+                         "requirement", "size", "before", "prior")},
+    "HR": {"name": "Hard Rules / Invariant Registry",
+           "kw": ("invariant", "constitutional", "doctrine", "forbid", "trigger",
+                  "never", "law", "governance")},
+    "D2A": {"name": "Duplicate-to-Advantage Engine",
+            "kw": ("duplicate", "dupe", "redundant", "reinforce", "advantage",
+                   "adjacent", "inflation", "overlap")},
 }
 
 # D2A-2: the 14 capability dimensions mapped around a parent (task's D2A-2 spec, extended
