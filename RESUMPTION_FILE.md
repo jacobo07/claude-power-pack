@@ -1,3 +1,15 @@
+# ACTIVE-TASK ROUTER (read first)
+
+**ACTIVE build (2026-07-12): DAIF — Duplicate-to-Advantage Institutional Fabric.**
+Resume it from `vault/knowledge_base/d2a_fabric/DAIF_RESUMPTION.md` → then `DAIF_INDEX.md` →
+`DAIF_CANONICAL_MAP.md`. Owner re-spec approved; 22 candidates → 8 sovereign datasets; building DAIF-00.
+
+**PRIOR task below — SQI — is SEALED (SCS C90/C91/C94) and pushed.** Its content is preserved verbatim;
+its backlog (threshold inventory §15.7, pointing `run_sqi` at the estate, surfacing the 4 PP findings) is
+unstarted but lower priority than the active DAIF build. Do not delete the SQI section.
+
+---
+
 # RESUMPTION — SQI / UQIOS
 
 You are continuing work on the **Sovereign Quality Intelligence (SQI)** axis in
