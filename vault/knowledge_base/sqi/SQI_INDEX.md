@@ -60,18 +60,41 @@ Status vocabulary: `NOT_STARTED` · `IN_PROGRESS` · `DRAFTED` · `VERIFIED` · 
 A dataset is `COMPLETE` only when every Part is `VERIFIED` against the quality rubric.
 **`COMPLETE` is never declared while any Part is `NOT_STARTED`.**
 
-| dataset | file | Parts | status |
-|---|---|---|---|
-| **SQI-00** Constitution & Canonical Ontology | `sqi_00_constitution_v1.txt` | 0/20 | `NOT_STARTED` |
-| **SQI-01** Repository Reality & Domain Intelligence | `sqi_01_repository_reality_v1.txt` | 0/20 | `NOT_STARTED` |
-| **SQI-02** Test Reach & Signal Integrity ★ | `sqi_02_test_reach_v1.txt` | 0/20 | `NOT_STARTED` |
-| **SQI-03** Environment Qualification & Reproducibility | `sqi_03_environment_qualification_v1.txt` | 0/20 | `NOT_STARTED` |
+| dataset | file | Parts | words | status |
+|---|---|---|---|---|
+| **SQI-00** Constitution & Canonical Ontology | `sqi_00_constitution_v1.txt` | **20/20** | 25,782 | **`COMPLETE`** |
+| **SQI-01** Repository Reality & Domain Intelligence | `sqi_01_repository_reality_v1.txt` | 0/20 | — | `NOT_STARTED` |
+| **SQI-02** Test Reach & Signal Integrity ★ | `sqi_02_test_reach_v1.txt` | 0/20 | — | `NOT_STARTED` |
+| **SQI-03** Environment Qualification & Reproducibility | `sqi_03_environment_qualification_v1.txt` | 0/20 | — | `NOT_STARTED` |
+
+### Done-gate — `python tools/test_sqi.py`
+
+Observed evidence, not a description of evidence. SQI-00 sealed at `SQI_PASS=6/6`,
+×3 hermetic (three consecutive runs, identical output, exit 0):
+
+`V-SQI-00-PARTS` (20 Parts I..XX in order) · `V-SQI-00-FINALLAW` (every Part closed by a
+FINAL LAW) · `V-SQI-00-DENSITY` (every Part ≥ 1,200w; mean 1,289) · `V-SQI-00-FABRICATION`
+(dense prose; 0 headings/bullets/tables/fences) · `V-SQI-00-CONTAMINATION` (0 hits across
+14 quarantined literals) · `V-SQI-00-REALITY` (0 slop/stub tokens).
+
+**The gate has been observed to refuse.** On first execution it failed two gates against
+real defects — seven Parts below the density floor and one contamination hit. Both were
+repaired and re-verified. Per SQI-00 Part XX, a gate that has never been seen to refuse
+anything is in the epistemic position of a regression test never seen to fail: it may be
+working, it may be inert, and from the outside the two are indistinguishable. This one has
+fired.
+
+Density is measured against the extracted reference standard (operational tier, 1,145 w/Part
+mean). SQI-00's mean of 1,289 sits above it; the floor was **not** relaxed to accommodate the
+draft, because moving a criterion to fit a result is the scope-laundering the corpus itself
+condemns (SQI-00 Part XVI).
 
 ### Governance artifacts
 
 | artifact | status |
 |---|---|
 | `CANONICAL_ONTOLOGY.md` | `COMPLETE` |
+| `tools/test_sqi.py` (family done-gate) | `COMPLETE` — 6/6 ×3 hermetic |
 | `SQI_INDEX.md` (this file) | `IN_PROGRESS` — updated after every sealed dataset |
 | `SQI_CONTAMINATION_AUDIT.md` | `NOT_STARTED` (FASE 7) |
 | `SQI_COVERAGE_AUDIT.md` | `NOT_STARTED` (FASE 7) |
