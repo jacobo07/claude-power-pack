@@ -3,6 +3,14 @@
   "sealed": "2026-07-12",
   "contract": "SQI-02 Part III. This file is a GOVERNED artifact, not configuration. Widening `exclusions` narrows the authored denominator and inflates every reach ratio in the corpus without connecting a single test -- SQI-02 section 11.11, the census trap, the only trap in the catalogue that can only be deliberate. Changes here are reviewed as changes to the measurement instrument. Per-rule hit counts and the uncertainty count are emitted on every run so that a narrowing is visible in the output.",
 
+  "assertion_vocabulary": {
+    "python": {
+      "call_names": ["_ok", "_fail", "_check", "_assert", "expect", "should"],
+      "attr_tails": ["raises", "warns", "should", "expect"]
+    }
+  },
+  "assertion_vocabulary_rationale": "SQI-02 Part XV, section 15.2. Gate A fails a build when a file's assertion count falls, so the vocabulary decides what the gate can SEE. The direction of danger is the opposite of `exclusions`: widening this list makes MORE verifications visible and the gate STRICTER, while NARROWING it makes removed assertions invisible -- a file whose entire protective content is written in an unrecognized idiom has an assertion count of zero, and zero cannot fall. Measured on this repository at the moment the detector was first run: 92 of 101 authored test files reported ZERO assertions, and 60 of those were using the estate's own V-gate idiom (`_ok` / `_fail`), one of them 139 times. Every one of those 139 gates could have been deleted without moving a single number. The `assert` statement is recognized structurally and needs no entry here; this list is for the CALL forms a repository uses to express the same thing.",
+
   "stacks": {
     "python": {
       "test_patterns": ["test_*.py", "*_test.py"],

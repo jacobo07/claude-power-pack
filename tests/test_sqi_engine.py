@@ -38,6 +38,20 @@ from modules.sqi.reconcile import (
     ENVIRONMENT_DEPENDENT_GREEN, VERDICT_TO_ONTOLOGY,
 )
 from modules.sqi import baseline_guardian as guardian
+from modules.sqi import weakening_detectors as WD
+from modules.sqi import weakening_baseline as WB
+
+
+class _FakeReport:
+    """The weakening layer needs exactly two things from a reconciliation: the authored identity
+    set and a commit. Constructing a real report over a scratch tree would spawn pytest
+    subprocesses to measure a reach nobody is asserting -- an expensive way to obtain two fields.
+    This is a boundary stub (rules/python/testing.md: mock at the boundary), not a stand-in for
+    any logic under test: every count these tests check is computed from a real file on disk."""
+
+    def __init__(self, authored_files, commit="deadbeef"):
+        self.authored_files = list(authored_files)
+        self.commit = commit
 
 
 @pytest.fixture(scope="module")
@@ -437,3 +451,222 @@ def test_guardian_catches_a_root_that_vanished(tmp_path, report):
 
     assert v.verdict == guardian.REGRESSED
     assert any(r.root == "pytest ghost/" and r.observed == 0 for r in v.regressions)
+
+
+# --- SQI-02 Part XV: the weakening detectors -----------------------------------------
+#
+# The guardian above gates COUNTS, so it catches every failure that lowers a number. These gate
+# the CONTENT of the tests that survive, because weakening lowers nothing at all: the file is
+# present, the case is collected, the case passes, and the protection is gone (15.1).
+
+
+def _rec(tmp_path, name: str, body: str) -> tuple[Path, str]:
+    f = tmp_path / name
+    f.write_text(body, encoding="utf-8")
+    return f, _norm(name)
+
+
+def test_assertion_counter_ignores_comments_and_strings(tmp_path):
+    # An instrument that can be satisfied by writing the word `assert` in a comment will be
+    # satisfied exactly when somebody is trying to satisfy it. Hence the AST, never a regex.
+    f, _ = _rec(tmp_path, "test_x.py", (
+        '"""A docstring that says assert assert assert."""\n'
+        "def test_a():\n"
+        "    # assert this is not counted\n"
+        '    s = "assert neither is this"\n'
+        "    assert s\n"
+        "    assert len(s) > 3\n"
+    ))
+
+    assert WD.count_assertions(f) == 2
+
+
+def test_assertion_counter_sees_the_v_gate_idiom(tmp_path):
+    # The finding that produced the governed vocabulary: 60 of this repository's 101 authored
+    # test files verify through `_ok` / `_fail`, one of them 139 times, and a detector blind to
+    # that idiom would grade the majority of the suite as protecting nothing -- while being
+    # unable to notice if it ever stopped, because zero cannot fall.
+    f, _ = _rec(tmp_path, "test_v.py", (
+        "def main():\n"
+        "    if cond:\n"
+        '        _ok("V-A", "evidence")\n'
+        "    else:\n"
+        '        _fail("V-A", "diagnostic")\n'
+        '    _ok("V-B", "more")\n'
+    ))
+
+    assert WD.count_assertions(f) == 3
+
+
+def test_exit_code_gate_is_unknown_never_zero(tmp_path):
+    # A file whose protection is `sys.exit(main())` has no assertion of any form. Recording it as
+    # ZERO would be the worst available answer: zero cannot fall, so the gate would be
+    # permanently blind to it, while the report called it unprotected. Both halves wrong.
+    f, rel = _rec(tmp_path, "test_gate.py", (
+        "import sys\n"
+        "def main():\n"
+        "    fails = 0\n"
+        "    return 1 if fails else 0\n"
+        "sys.exit(main())\n"
+    ))
+
+    r = WD.scan_file(tmp_path, f)
+
+    assert r.assertions is None            # UNKNOWN
+    assert r.assertions != 0               # and explicitly NOT a zero
+    assert r.verification == "exit_code_gate"
+    assert r.sha256                        # still hash-tracked: gate C is its only cover
+
+
+def test_weakening_baseline_fails_on_a_removed_assertion(tmp_path):
+    # Gate A (15.2). The file is present, the case is collected, the case passes -- and it
+    # asserts one thing less than it did. Nothing else in SQI can see this.
+    f, rel = _rec(tmp_path, "test_a.py", "def test_a():\n    assert 1\n    assert 2\n    assert 3\n")
+    rep = _FakeReport([rel])
+    p = tmp_path / "wb.json"
+    assert WB.check(rep, repo=tmp_path, baseline_path=p).verdict == WB.CREATED
+
+    f.write_text("def test_a():\n    assert 1\n    assert 2\n", encoding="utf-8")
+    v = WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    assert v.verdict == WB.WEAKENED
+    assert v.failing is True
+    assert any(w.gate == "assertions" and w.baseline == 3 and w.observed == 2
+               for w in v.weakenings)
+
+
+def test_weakening_baseline_passes_and_ratchets_on_an_added_assertion(tmp_path):
+    # An increase requires nothing (12.2), and it ratchets: the added assertion becomes the new
+    # floor, so removing it tomorrow fails the build.
+    f, rel = _rec(tmp_path, "test_a.py", "def test_a():\n    assert 1\n")
+    rep = _FakeReport([rel])
+    p = tmp_path / "wb.json"
+    WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    f.write_text("def test_a():\n    assert 1\n    assert 2\n", encoding="utf-8")
+    v = WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    assert v.verdict == WB.PASS
+    assert v.failing is False
+    assert json.loads(p.read_text(encoding="utf-8"))["files"][rel]["assertions"] == 2
+
+
+def test_over_mocking_gate_is_a_delta_never_a_ratio(tmp_path):
+    # 15.6, and the reason the inline plan's `mocks / assertions > threshold` gate was NOT built.
+    # A ratio falls when its denominator rises, and the cheapest way to raise an assertion count
+    # is `assert x is not None` -- an assertion that passes for every implementation including a
+    # broken one, which is weakening 15.8. A ratio gate is quieted by the very attack Part XV
+    # exists to catch. This asserts the delta rule instead: mocks rose, assertions did not.
+    f, rel = _rec(tmp_path, "test_m.py", (
+        "def test_a(monkeypatch):\n"
+        "    m = Mock()\n"
+        "    assert m\n"
+    ))
+    rep = _FakeReport([rel])
+    p = tmp_path / "wb.json"
+    WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    # Three more collaborators stubbed out; the assertion count does not move. The test has moved
+    # away from reality without moving away from green.
+    f.write_text(
+        "def test_a(monkeypatch):\n"
+        "    m = Mock()\n"
+        "    m2 = MagicMock()\n"
+        "    m3 = create_autospec(object)\n"
+        "    monkeypatch.setattr('x', 'y')\n"
+        "    assert m\n",
+        encoding="utf-8",
+    )
+    v = WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    assert v.verdict == WB.WEAKENED
+    assert any(w.gate == "mocks" for w in v.weakenings)
+
+    # And the ratio-gate defeat, proven rather than argued: adding a tautological assertion
+    # LOWERS mocks/assertions from 4.0 to 1.33. A ratio gate would now report an improvement.
+    ratio_before, ratio_after = 4 / 1, 4 / 3
+    assert ratio_after < ratio_before
+
+
+def test_content_hash_is_review_never_a_build_failure(tmp_path):
+    # 15.4 / 15.9. The content moved and the arithmetic held -- the signature of a weakened
+    # fixture and of a same-name rewrite. It is ALSO the signature of every honest refactor, and
+    # 15.3/15.4 are explicit that this produces "a candidate list for review rather than a
+    # verdict". A gate that failed the build here would be switched off within a week.
+    f, rel = _rec(tmp_path, "test_c.py", "def test_a():\n    payload = {'a': 1, 'b': 2}\n    assert payload\n")
+    rep = _FakeReport([rel])
+    p = tmp_path / "wb.json"
+    WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    # The fixture becomes minimal. Assertions: 1. Cases: 1. Mocks: 0. Nothing moved but the bytes.
+    f.write_text("def test_a():\n    payload = {'a': 1}\n    assert payload\n", encoding="utf-8")
+    v = WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    assert v.verdict == WB.REVIEW
+    assert v.failing is False
+    assert any(w.gate == "content" and w.path == rel for w in v.reviews)
+
+
+def test_weakening_fails_open_to_unknown_never_a_false_pass(tmp_path):
+    # Two independent fail-open paths, and neither may produce a PASS.
+    f, rel = _rec(tmp_path, "test_u.py", "def test_a(:\n  syntax error\n")
+    rep = _FakeReport([rel])
+
+    # (1) an unparseable file is UNKNOWN, not zero assertions -- otherwise a syntax error would
+    # manufacture a weakening event out of nothing.
+    r = WD.scan_file(tmp_path, f)
+    assert r.assertions is None
+    assert r.error
+
+    # (2) a corrupt baseline disarms the guard, and a disarmed guard reporting success is the
+    # exact artifact this corpus exists to discredit.
+    p = tmp_path / "wb.json"
+    p.write_text("{ not json", encoding="utf-8")
+    v = WB.check(rep, repo=tmp_path, baseline_path=p)
+
+    assert v.verdict == WB.UNKNOWN
+    assert v.verdict != WB.PASS
+    assert v.failing is False
+
+
+def test_mutation_probe_finds_the_tautological_assertion(tmp_path):
+    # 15.8, the endpoint of every other weakening, and the ONLY one no count reveals. Two tests
+    # reference the same unit. One asserts the returned VALUE. The other asserts, in the Part's
+    # own words, "that a call did not raise" -- it executes the unit and says nothing about what
+    # came back. Both are green, both are collected, both have an assertion count of ONE, and
+    # both appear in a coverage report as covered lines. Every instrument in this corpus except
+    # this one calls them equivalent. Break the return value and exactly one of them notices.
+    (tmp_path / "unit.py").write_text("def value():\n    return 42\n", encoding="utf-8")
+    (tmp_path / "test_strong.py").write_text(
+        "from unit import value\n"
+        "def test_strong():\n"
+        "    assert value() == 42\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "test_tauto.py").write_text(
+        "from unit import value\n"
+        "def test_tauto():\n"
+        "    value()\n"
+        "    assert True\n",
+        encoding="utf-8",
+    )
+
+    probe = WD.mutation_probe(
+        tmp_path,
+        invocation="pytest .",
+        targets=["unit.py"],
+        test_files=["test_strong.py", "test_tauto.py"],
+        allow_dirty=True,          # a scratch tree, not a working tree
+        timeout=180,
+    )
+
+    assert len(probe.mutants) == 1
+    m = probe.mutants[0]
+    assert m.status == "KILLED"                                  # the strong test noticed
+    assert any("test_strong.py" in n for n in m.killed_by)
+    assert any("test_tauto.py" in n for n in m.survived_by)      # the tautology did not
+    assert "asserting nothing" in m.note
+
+    # And the file is byte-identical to what it was before the probe ran. A measurement that
+    # leaves a mutant on disk is not a measurement; it is a defect.
+    assert (tmp_path / "unit.py").read_text(encoding="utf-8") == "def value():\n    return 42\n"

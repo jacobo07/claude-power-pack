@@ -506,6 +506,216 @@ def check_guardian(rep) -> None:
               "no test reached by a canonical invocation exercises the guardian")
 
 
+def check_weakening(rep) -> None:
+    """SQI-02 Part XV. The guardian gates COUNTS; these gate the CONTENT of what survives.
+
+    Deletion is loud: it lowers a count, and a lowered count fails a build. Weakening lowers
+    NOTHING -- the file is present, the case is collected, the case passes, and the protection is
+    gone. It is the perfect attack on a count-based instrument, and the guardian is a count-based
+    instrument.
+
+    Every gate writes only inside a temp tree, for the same reason the guardian's do: a gate that
+    ratcheted the repository's real weakening baseline as a side effect of being run would stop
+    being hermetic on its own second execution.
+    """
+    import json as _json
+    import os
+    import subprocess
+    import tempfile
+
+    try:
+        from modules.sqi import weakening_detectors as WD
+        from modules.sqi import weakening_baseline as WB
+    except ImportError as exc:
+        _fail("V-WEAKENING-IMPORT", f"the weakening detectors do not import: {exc}")
+        return
+
+    class _Rep:
+        def __init__(self, files, commit="gate"):
+            self.authored_files = list(files)
+            self.commit = commit
+
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+
+        # --- Gate A: a removed assertion FAILS THE BUILD. Nothing else in SQI can see this. ---
+        f = tmp / "test_a.py"
+        f.write_text("def test_a():\n    assert 1\n    assert 2\n    assert 3\n", encoding="utf-8")
+        r = _Rep(["test_a.py"])
+        p = tmp / "wb.json"
+        WB.check(r, repo=tmp, baseline_path=p)
+        f.write_text("def test_a():\n    assert 1\n    assert 2\n", encoding="utf-8")
+        v = WB.check(r, repo=tmp, baseline_path=p)
+        if v.verdict == WB.WEAKENED and v.failing and not v.updated:
+            w = v.weakenings[0]
+            _ok("V-ASSERT-COUNT-DETECTS-REMOVAL",
+                f"{v.verdict}; {w.gate}@{w.path}: {w.baseline} -> {w.observed}. The file is "
+                f"present, the case is collected, the case passes -- and it asserts one thing "
+                f"less. A test with zero assertions is not a test; it is an execution (15.2)")
+        else:
+            _fail("V-ASSERT-COUNT-DETECTS-REMOVAL",
+                  f"a removed assertion bought a green: {v.verdict} failing={v.failing}")
+
+        # --- an added assertion is free, and it RATCHETS: removing it tomorrow fails. ---
+        f.write_text(
+            "def test_a():\n    assert 1\n    assert 2\n    assert 3\n    assert 4\n",
+            encoding="utf-8",
+        )
+        v = WB.check(r, repo=tmp, baseline_path=p)
+        now = _json.loads(p.read_text(encoding="utf-8"))["files"]["test_a.py"]["assertions"]
+        if v.verdict == WB.PASS and not v.failing and now == 4:
+            _ok("V-ASSERT-COUNT-PASSES-ADDITION",
+                f"{v.verdict}; baseline ratcheted 2 -> {now}. An increase requires nothing (12.2)")
+        else:
+            _fail("V-ASSERT-COUNT-PASSES-ADDITION",
+                  f"{v.verdict} failing={v.failing} baseline_now={now}")
+
+        # --- Gate B: over-mocking as a DELTA, never a ratio. The inline plan specified
+        # `mocks / assertions > threshold`; a ratio falls when its denominator rises, and the
+        # cheapest way to raise an assertion count is `assert x is not None` -- weakening 15.8.
+        # A ratio gate is quieted by the exact attack Part XV exists to catch.
+        g = tmp / "test_m.py"
+        g.write_text("def test_a(monkeypatch):\n    m = Mock()\n    assert m\n", encoding="utf-8")
+        rm = _Rep(["test_m.py"])
+        pm = tmp / "wm.json"
+        WB.check(rm, repo=tmp, baseline_path=pm)
+        g.write_text(
+            "def test_a(monkeypatch):\n"
+            "    m = Mock()\n"
+            "    m2 = MagicMock()\n"
+            "    m3 = create_autospec(object)\n"
+            "    monkeypatch.setattr('x', 'y')\n"
+            "    assert m\n",
+            encoding="utf-8",
+        )
+        v = WB.check(rm, repo=tmp, baseline_path=pm)
+        mock_regs = [w for w in v.weakenings if w.gate == "mocks"]
+        if v.verdict == WB.WEAKENED and v.failing and mock_regs:
+            _ok("V-MOCK-DELTA-ALARM",
+                f"{v.verdict}; mocks {mock_regs[0].baseline} -> {mock_regs[0].observed}. Mocked "
+                f"collaborators rose while the assertion count did not: the test moved away from "
+                f"reality without moving away from green (15.6). Gated as a DELTA on two "
+                f"absolutes -- a mocks/assertions RATIO would be quieted by adding a tautological "
+                f"assertion, which is weakening 15.8")
+        else:
+            _fail("V-MOCK-DELTA-ALARM", f"over-mocking bought a green: {v.verdict}")
+
+        # --- Gate C: the content moved, the arithmetic held. REVIEW, never a build failure:
+        # 15.3/15.4 are explicit that this is "a candidate list for review rather than a verdict".
+        h = tmp / "test_c.py"
+        h.write_text(
+            "def test_a():\n    payload = {'a': 1, 'b': 2, 'c': 3}\n    assert payload\n",
+            encoding="utf-8",
+        )
+        rc = _Rep(["test_c.py"])
+        pc = tmp / "wc.json"
+        WB.check(rc, repo=tmp, baseline_path=pc)
+        h.write_text("def test_a():\n    payload = {'a': 1}\n    assert payload\n", encoding="utf-8")
+        v = WB.check(rc, repo=tmp, baseline_path=pc)
+        content = [w for w in v.reviews if w.gate == "content"]
+        if v.verdict == WB.REVIEW and not v.failing and content:
+            _ok("V-CONTENT-HASH-DETECTS-CHANGE",
+                f"{v.verdict}; {content[0].baseline} -> {content[0].observed}. The fixture "
+                f"shrank and every count held -- the signature of the unreal fixture (15.4) and "
+                f"of the same-name rewrite (15.9), invisible to any instrument storing numbers")
+        else:
+            _fail("V-CONTENT-HASH-DETECTS-CHANGE", f"{v.verdict} reviews={len(v.reviews)}")
+
+        # --- 15.8: the tautological assertion, the endpoint of every other weakening and the one
+        # NO count reveals. Two tests, one unit, one assertion each, both green, both covered.
+        # Break the return value: exactly one notices.
+        (tmp / "unit.py").write_text("def value():\n    return 42\n", encoding="utf-8")
+        (tmp / "test_strong.py").write_text(
+            "from unit import value\ndef test_strong():\n    assert value() == 42\n",
+            encoding="utf-8",
+        )
+        (tmp / "test_tauto.py").write_text(
+            "from unit import value\ndef test_tauto():\n    value()\n    assert True\n",
+            encoding="utf-8",
+        )
+        probe = WD.mutation_probe(
+            tmp, invocation="pytest .", targets=["unit.py"],
+            test_files=["test_strong.py", "test_tauto.py"], allow_dirty=True, timeout=300,
+        )
+        intact = (tmp / "unit.py").read_text(encoding="utf-8") == "def value():\n    return 42\n"
+        m = probe.mutants[0] if probe.mutants else None
+        if m and m.killed_by and m.survived_by and intact:
+            _ok("V-MUTATION-PROBE-FINDS-TAUTOLOGY",
+                f"killed_by={m.killed_by} survived_by={m.survived_by}; the surviving test stayed "
+                f"green through a broken return value -- it is asserting nothing about the value "
+                f"it claims to protect (15.8). Source restored byte-identical after the probe")
+        else:
+            _fail("V-MUTATION-PROBE-FINDS-TAUTOLOGY",
+                  f"mutants={len(probe.mutants)} error={probe.error} restored={intact}")
+
+        # --- fail-open, on both legs. Neither may produce a PASS. ---
+        bad = tmp / "test_bad.py"
+        bad.write_text("def test_a(:\n  syntax error\n", encoding="utf-8")
+        rec = WD.scan_file(tmp, bad)
+        pu = tmp / "corrupt.json"
+        pu.write_text("{ not json", encoding="utf-8")
+        v = WB.check(_Rep(["test_bad.py"]), repo=tmp, baseline_path=pu)
+        if rec.assertions is None and rec.error and v.verdict == WB.UNKNOWN and not v.failing:
+            _ok("V-WEAKENING-FAILOPEN-UNKNOWN",
+                f"unparseable file -> assertions=None (not 0: a zero could never fall, and would "
+                f"manufacture a weakening event out of a syntax error); corrupt baseline -> "
+                f"{v.verdict}, never a false PASS")
+        else:
+            _fail("V-WEAKENING-FAILOPEN-UNKNOWN",
+                  f"assertions={rec.assertions} verdict={v.verdict} failing={v.failing}")
+
+        # --- END TO END: run_sqi.py must EXIT NON-ZERO on a weakening. Everything above tests
+        # the library; this tests the GATE. The forged baseline claims one real file had one more
+        # assertion than it does, so the live scan reads as a removal. Baselines and the audit
+        # dir are redirected into the temp tree; the repository's artifacts are untouched.
+        records = WD.scan(REPO, rep.authored_files)
+        victim = next(
+            (k for k, r in records.items() if (r.get("assertions") or 0) > 0), None
+        )
+        if victim is None:
+            _fail("V-WEAKENING-PIPELINE-BLOCKS", "no file with a positive assertion count to forge")
+        else:
+            forged = WB.snapshot(records, rep.commit, None)
+            forged["files"][victim] = dict(records[victim])
+            forged["files"][victim]["assertions"] = records[victim]["assertions"] + 1
+            wb_path = tmp / "pipeline_weak.json"
+            WB.save_baseline(wb_path, forged)
+
+            env = dict(os.environ)
+            env["SQI_WEAKENING_BASELINE_PATH"] = str(wb_path)
+            env["SQI_BASELINE_PATH"] = str(tmp / "pipeline_guard.json")
+            env["SQI_AUDIT_DIR"] = str(tmp / "audits")
+            env["PYTHONIOENCODING"] = "utf-8"
+            proc = subprocess.run(
+                [sys.executable, str(REPO / "tools" / "run_sqi.py"), "--quiet"],
+                cwd=str(REPO), capture_output=True, text=True, timeout=900,
+                env=env, errors="replace",
+            )
+            out = (proc.stdout or "") + (proc.stderr or "")
+            if proc.returncode != 0 and WB.WEAKENED in out:
+                _ok("V-WEAKENING-PIPELINE-BLOCKS",
+                    f"run_sqi.py exit={proc.returncode} on a removed assertion in {victim}. "
+                    f"The count of executed cases never moved -- the guardian saw nothing. "
+                    f"Measuring the CONTENT became gating")
+            else:
+                _fail("V-WEAKENING-PIPELINE-BLOCKS",
+                      f"a removed assertion bought a green build: exit={proc.returncode} "
+                      f"weakened_in_output={WB.WEAKENED in out}")
+
+    # --- the detectors are inside the surface they audit (5.10) ---
+    reached = [
+        p for p in rep.reached_files
+        if "weakening" in (REPO / p).read_text(encoding="utf-8-sig", errors="replace")
+    ]
+    if reached:
+        _ok("V-WEAKENING-SELF-REACH",
+            f"the weakening detectors are exercised by {reached} -- a control that has never "
+            f"been observed to refuse is indistinguishable from one that is not connected (17.10)")
+    else:
+        _fail("V-WEAKENING-SELF-REACH",
+              "no test reached by a canonical invocation exercises the weakening detectors")
+
+
 def main() -> int:
     if not SQI_DIR.is_dir():
         print(f"SQI directory not found: {SQI_DIR}")
@@ -524,6 +734,7 @@ def main() -> int:
     rep = check_engines()
     if rep is not None:
         check_guardian(rep)
+        check_weakening(rep)
 
     for line in _passes:
         print(line)

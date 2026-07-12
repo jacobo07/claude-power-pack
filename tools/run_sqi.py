@@ -37,6 +37,8 @@ from modules.sqi.repo_reality_scanner import scan_repo
 from modules.sqi.environment_qualifier import qualify, QUALIFIED, PARTIALLY_QUALIFIED
 from modules.sqi.reconcile import reconcile
 from modules.sqi import baseline_guardian as guardian
+from modules.sqi import weakening_baseline as weakness
+from modules.sqi import weakening_detectors as WEAK
 
 HERMETIC_RUNS = 3  # the estate's own standard: three runs from a clean state, same result
 
@@ -72,7 +74,36 @@ def _flag(argv: list[str], name: str) -> str:
     return ""
 
 
-def _render(profile, env, rep, verdict, target: Path, stamp: str) -> str:
+def _probe_invocation(rep) -> str:
+    """The probe must run under an invocation that actually collects. The authoritative one here
+    does not -- it is BROKEN, and that is a standing Owner finding, not something this runner may
+    quietly route around. So the probe runs under the first invocation whose status is OK, and
+    reports which one it used."""
+    for inv in rep.invocations:
+        if inv.status == "OK" and inv.executed_cases:
+            return inv.command
+    return "pytest tests/"
+
+
+def _probe_targets(rep) -> list[str]:
+    """The units the instrument CLAIMS are protected -- the packages NOT in the unprotected
+    surface. Mutating a unit that no reached test references proves nothing the unprotected list
+    has not already said out loud (§15.8: take the units the sentinel says are protected)."""
+    unprotected = set(rep.unprotected_surface)
+    out: list[str] = []
+    modules_dir = ROOT / "modules"
+    if not modules_dir.is_dir():
+        return out
+    for pkg in sorted(p for p in modules_dir.iterdir() if p.is_dir()):
+        if pkg.name in unprotected or pkg.name.startswith("__"):
+            continue
+        for f in sorted(pkg.glob("*.py")):
+            if f.name != "__init__.py":
+                out.append(f"modules/{pkg.name}/{f.name}")
+    return out
+
+
+def _render(profile, env, rep, verdict, weak, target: Path, stamp: str) -> str:
     L: list[str] = []
     A = L.append
 
@@ -88,6 +119,8 @@ def _render(profile, env, rep, verdict, target: Path, stamp: str) -> str:
     A("")
     A(f"- **Baseline guardian:** `{verdict.verdict}`"
       + ("  ← **THE BUILD FAILS**" if verdict.failing else ""))
+    A(f"- **Weakening detectors:** `{weak.verdict}`"
+      + ("  ← **THE BUILD FAILS**" if weak.failing else ""))
     A(f"- **Signal integrity:** `{rep.signal_integrity_verdict}` → ontology "
       f"`{rep.ontology_verdict}`")
     A(f"- **Environment:** `{env.state}` — verdict ceiling: {env.verdict_ceiling}")
@@ -128,6 +161,86 @@ def _render(profile, env, rep, verdict, target: Path, stamp: str) -> str:
         A(f"Baseline: `{Path(verdict.baseline_path).name}` · environment "
           f"`{verdict.baseline_env}` · ratcheted this run: {verdict.updated}")
         A("")
+
+    A("## Weakening detectors (SQI-02 Part XV)")
+    A("")
+    A(weak.summary)
+    A("")
+    A("The guardian above gates **counts**, so it catches deletion, the skip, and the "
+      "relocation. Weakening lowers **no count at all**: the file is present, the case is "
+      "collected, the case passes, and the protection is gone (§15.1). These gates read the "
+      "**content** of the surviving tests.")
+    A("")
+    if weak.weakenings:
+        A("| gate | file | baseline | observed |")
+        A("|---|---|---|---|")
+        for w in weak.weakenings:
+            A(f"| `{w.gate}` | `{w.path}` | {w.baseline} | {w.observed} |")
+        A("")
+        for w in weak.weakenings:
+            A(f"**`{w.gate}` @ `{w.path}`** — {w.note}")
+            A("")
+    if weak.reviews:
+        A(f"### For review ({len(weak.reviews)}) — candidates, never verdicts")
+        A("")
+        A("§15.3 and §15.4 are explicit that these produce a *candidate list for review rather "
+          "than a verdict*: a broad handler is sometimes correct, and there is **no counting "
+          "detector for the unreal fixture** — claiming one would be dishonest. A gate that "
+          "failed a build on either would be wrong often enough to be switched off, and a "
+          "switched-off gate protects nothing.")
+        A("")
+        for w in weak.reviews[:20]:
+            A(f"- `{w.gate}` `{w.path}`: {w.baseline} → {w.observed}")
+        if len(weak.reviews) > 20:
+            A(f"- … and {len(weak.reviews) - 20} more")
+        A("")
+    if weak.advisories:
+        A(f"### Over-mocking advisories ({len(weak.advisories)})")
+        A("")
+        A(f"Files with ≥{WEAK.MOCK_SMELL_FLOOR} mocked collaborators. Past that point the unit "
+          f"under test is the only real object in the room, and the test is asserting that a "
+          f"function calls the stubs it was told to call (§15.6). Advisory: the smell may predate "
+          f"this commit, and a gate that fails a build for a condition the current change did not "
+          f"cause is a gate that gets disabled.")
+        A("")
+        for w in weak.advisories[:15]:
+            A(f"- `{w.path}`: {w.observed} mocked collaborators")
+        if len(weak.advisories) > 15:
+            A(f"- … and {len(weak.advisories) - 15} more")
+        A("")
+    if weak.no_verification:
+        A(f"### Files that verify nothing ({len(weak.no_verification)})")
+        A("")
+        A("No assertion of any recognized form, and no exit-code gate. **A test with zero "
+          "assertions is not a test; it is an execution, and every runner reports it as "
+          "passing** (§15.2). These are also the one population this layer can never protect: "
+          "their count is zero, and **zero cannot fall**.")
+        A("")
+        for p in weak.no_verification:
+            A(f"- `{p}`")
+        A("")
+
+    if weak.unknowns:
+        A(f"### Assertion count inapplicable ({len(weak.unknowns)})")
+        A("")
+        A("These files gate on a **non-zero exit code**, not on an assertion — the estate's "
+          "results-table idiom. Recording them as zero assertions would have been the worst "
+          "available answer: it would call them unprotected *and* hand the gate a number that "
+          "can never raise an alarm. They are `UNKNOWN` and tracked **by content hash only** "
+          "(gate C). *Zero is a measurement; this is the absence of one.*")
+        A("")
+        for u in weak.unknowns[:12]:
+            A(f"- `{u.split(':', 1)[0]}`")
+        if len(weak.unknowns) > 12:
+            A(f"- … and {len(weak.unknowns) - 12} more")
+        A("")
+
+    A("**Not detected here, and declared rather than faked:** the lowered threshold (§15.7) "
+      "needs a threshold inventory that does not exist in this repository, and the unreal "
+      "fixture (§15.4) has no counting detector by the Part's own admission. The tautological "
+      "assertion (§15.8) is detectable **only** by a mutation probe — `--mutation-probe` runs "
+      "it; it executes tests and mutates source, so it is never part of a default measurement.")
+    A("")
 
     if rep.findings:
         A("## Findings")
@@ -308,12 +421,49 @@ def main(argv: list[str]) -> int:
             summary="guardian crashed", error=traceback.format_exc(limit=3),
         )
 
+    # Layer 5 -- the weakening detectors. The guardian gates COUNTS, which is every failure that
+    # lowers a number: a deletion, a skip, a relocation. Weakening lowers NOTHING (§15.1) -- a
+    # removed assertion, a mock that replaced a real collaborator, a tautological rewrite -- and
+    # against a count-based instrument it is the perfect attack. This layer reads the CONTENT of
+    # the tests that survived. Same fail-open contract: a crash is UNKNOWN, never a silent pass.
+    try:
+        weak = weakness.check(
+            rep,
+            env.env_hash,
+            repo=target,
+            accept="--accept-weakening" in argv,
+            reason=_flag(argv, "--reason"),
+            author=_flag(argv, "--author"),
+        )
+    except Exception:  # noqa: BLE001
+        weak = weakness.WeakeningVerdict(
+            verdict=weakness.UNKNOWN, summary="weakening detectors crashed",
+            error=traceback.format_exc(limit=3),
+        )
+
+    # §15.8 -- the tautological assertion, which no count reveals and only a probe can. Opt-in:
+    # it mutates source and executes tests, and a measurement that alters what it measures as a
+    # side effect of measuring it is not a measurement. Absent the flag it is NOT RUN, which is
+    # reported as such -- never as zero survivors.
+    mutation = None
+    if "--mutation-probe" in argv:
+        try:
+            mutation = WEAK.mutation_probe(
+                target,
+                invocation=_probe_invocation(rep),
+                targets=_probe_targets(rep),
+                test_files=rep.reached_files,
+            )
+        except Exception:  # noqa: BLE001
+            mutation = None
+            print("SQI: mutation probe crashed\n" + traceback.format_exc(), file=sys.stderr)
+
     audit_dir = _audit_dir()
     audit_dir.mkdir(parents=True, exist_ok=True)
     md_path = audit_dir / f"sqi_report_{date}.md"
     json_path = audit_dir / f"sqi_report_{date}.json"
 
-    md_path.write_text(_render(profile, env, rep, verdict, target, stamp), encoding="utf-8")
+    md_path.write_text(_render(profile, env, rep, verdict, weak, target, stamp), encoding="utf-8")
     json_path.write_text(
         json.dumps(
             {
@@ -322,6 +472,14 @@ def main(argv: list[str]) -> int:
                 "environment": env.to_dict(),
                 "reconciliation": rep.to_dict(),
                 "guardian": verdict.to_dict(),
+                "weakening": weak.to_dict(),
+                "mutation_probe": mutation.to_dict() if mutation else {
+                    "status": "NOT_RUN",
+                    "note": "the mutation probe is opt-in (--mutation-probe): it mutates source "
+                            "and executes tests. NOT_RUN is not zero survivors -- it is the "
+                            "absence of a measurement, and the tautological assertion (15.8) is "
+                            "undetectable by every other instrument in this report.",
+                },
             },
             indent=2,
         ),
@@ -348,6 +506,10 @@ def main(argv: list[str]) -> int:
                 "sqi_self_reach": rep.self_reach["reached"],
                 "sqi_environment": env.state,
                 "sqi_unprotected_surface": len(rep.unprotected_surface),
+                "sqi_weakening_verdict": weak.verdict,
+                "sqi_weakenings": len(weak.weakenings),
+                "sqi_weakening_reviews": len(weak.reviews),
+                "sqi_mutation_survivors": mutation.survivors if mutation else None,
             },
         )
     except Exception:  # noqa: BLE001 -- telemetry is never load-bearing
@@ -379,15 +541,41 @@ def main(argv: list[str]) -> int:
         f"orphaned={rep.orphaned_count}/{rep.authored_count} "
         f"authoritative_reach={rep.authoritative_reach_state} "
         f"self_reach={rep.self_reach['reached']} "
-        f"guardian={verdict.verdict}"
+        f"guardian={verdict.verdict} "
+        f"weakening={weak.verdict}"
     )
     print(f"SQI_GUARDIAN: {verdict.summary}")
+    print(f"SQI_WEAKENING: {weak.summary}")
+
+    if not quiet and weak.weakenings:
+        print()
+        for w in weak.weakenings:
+            print(f"WEAKENED [{w.gate}] {w.path}: {w.baseline} -> {w.observed}")
+        print()
+
+    if mutation is not None:
+        print(
+            f"SQI_MUTATION: invocation={mutation.invocation!r} "
+            f"mutants={len(mutation.mutants)} killed={mutation.killed} "
+            f"survived={mutation.survivors}"
+            + (f" error={mutation.error}" if mutation.error else "")
+        )
+        for m in mutation.mutants:
+            if m.status == "SURVIVED":
+                print(f"  SURVIVOR {m.target}:{m.line} -- {len(m.survived_by)} test(s) stayed "
+                      f"green through a broken return value")
 
     # The exit code is where measuring becomes gating. It is NOT a pass/fail on the LEVEL of
     # reach -- gating a level would fail every honest repository forever. It gates the
     # DERIVATIVE: an unexplained decrease, and nothing else (§12.2). An inadmissible report
     # (the auditor exempt from its own audit) also refuses, at a distinct code.
-    if verdict.failing:
+    #
+    # Two failing conditions, and they are complementary rather than redundant: the guardian
+    # refuses when protection is WITHDRAWN, and the weakening detectors refuse when the tests
+    # that remain STOPPED ASSERTING ANYTHING. A build can pass the first while failing the
+    # second, and that combination -- the count intact, the content hollow -- is the exact
+    # artifact Part XV exists to make impossible.
+    if verdict.failing or weak.failing:
         return 1
     return 0 if rep.self_reach["admissible"] else 2
 

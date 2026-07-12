@@ -1,9 +1,9 @@
 {
-  "generated": "2026-07-12 15:45 UTC",
+  "generated": "2026-07-12 16:27 UTC",
   "reality": {
     "repo": "claude-power-pack",
     "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
-    "commit": "6541399c1b216e50293e820d91bf6de3e97fb078",
+    "commit": "ca05e467aa62b74b323a38effa135778f4f54307",
     "language_contexts": [
       {
         "language": "python",
@@ -823,7 +823,7 @@
   },
   "reconciliation": {
     "repo": "claude-power-pack",
-    "commit": "6541399c1b216e50293e820d91bf6de3e97fb078",
+    "commit": "ca05e467aa62b74b323a38effa135778f4f54307",
     "authored_files": [
       "_logs/_m1_secret_firewall_test.py",
       "_logs/_m3_backlog_signal_test.py",
@@ -962,7 +962,7 @@
         "executed_cases": null,
         "collection_errors": 0,
         "deselected": 0,
-        "blocker": "INTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 1.20s\nmainloop: caught unexpected SystemExit!",
+        "blocker": "INTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 0.89s\nmainloop: caught unexpected SystemExit!",
         "verdict": "UNKNOWN",
         "inert_in_root": []
       }
@@ -1175,7 +1175,7 @@
     "hermetic_stable": true,
     "findings": [
       "INERT-IN-ROOT (4): authored test files that live INSIDE a canonical invocation's root and yield zero collected cases. They are inside the reach boundary and protect nothing. The founding audit counted these as reached, because it counted files in the directory rather than identities in the manifest: ['tests/test_globalization.py', 'tests/test_graphify_live.py', 'tests/test_hooks_registration.py', 'tests/test_mistake_frequency_xplat.py']",
-      "AUTHORITATIVE INVOCATION BROKEN: `pytest` (oracle=zero_arg_default) exits 3 and produces no manifest. Reach under the estate's de facto canonical command is UNKNOWN, not zero. Blocker (verbatim):\nINTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 1.20s\nmainloop: caught unexpected SystemExit!"
+      "AUTHORITATIVE INVOCATION BROKEN: `pytest` (oracle=zero_arg_default) exits 3 and produces no manifest. Reach under the estate's de facto canonical command is UNKNOWN, not zero. Blocker (verbatim):\nINTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 0.89s\nmainloop: caught unexpected SystemExit!"
     ],
     "error": null
   },
@@ -1184,10 +1184,51 @@
     "regressions": [],
     "baseline_env": "b5ec3ed51c2f23b1",
     "observed_env": "b5ec3ed51c2f23b1",
-    "updated": true,
+    "updated": false,
     "baseline_path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\audits\\sqi_baseline.json",
-    "summary": "BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (baseline ratcheted up)",
+    "summary": "BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (stable)",
     "error": null,
     "failing": false
+  },
+  "weakening": {
+    "verdict": "WEAKENING_PASS",
+    "weakenings": [],
+    "reviews": [],
+    "advisories": [],
+    "unknowns": [
+      "_logs/_m3_backlog_signal_test.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "_logs/_m4_oneshot_jit_test.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/arch-decision/test_closed_loop.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/arch-decision/test_v_block.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/backup/test_v_block.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/code-review/test_closed_loop.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/code-review/test_combined_gate.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/code-review/test_v_block.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/deployment/test_v_block.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "modules/rollback/test_v_block.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tests/test_mistake_frequency_xplat.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/ghost_driver_test.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_ads.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_build_everything.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_compact_rescue.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_dataset_build.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_monitoring.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_playwright_resilience.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_sdd_os.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_setup_os.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_sovereign.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_speckit.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only.",
+      "tools/test_zero_command.py: protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    ],
+    "files_tracked": 101,
+    "updated": true,
+    "baseline_path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\audits\\sqi_weakening_baseline.json",
+    "summary": "WEAKENING_PASS: 101 file(s) tracked, 2106 assertion(s), 0 for review, 0 advisory, 23 unknown. No assertion was lost.",
+    "error": null,
+    "failing": false
+  },
+  "mutation_probe": {
+    "status": "NOT_RUN",
+    "note": "the mutation probe is opt-in (--mutation-probe): it mutates source and executes tests. NOT_RUN is not zero survivors -- it is the absence of a measurement, and the tautological assertion (15.8) is undetectable by every other instrument in this report."
   }
 }

@@ -1,11 +1,12 @@
 # SQI Report — claude-power-pack
 
-> Generated 2026-07-12 15:45 UTC by `tools/run_sqi.py`. Commit `6541399c`.
+> Generated 2026-07-12 16:27 UTC by `tools/run_sqi.py`. Commit `ca05e467`.
 > The executable layer of the SQI corpus. Doctrine: `vault/knowledge_base/sqi/`.
 
 ## Verdict
 
 - **Baseline guardian:** `BASELINE_PASS`
+- **Weakening detectors:** `WEAKENING_PASS`
 - **Signal integrity:** `PARTIAL_GREEN` → ontology `PARTIALLY-VERIFIED`
 - **Environment:** `PARTIALLY_QUALIFIED` — verdict ceiling: per-surface; UNVERIFIED or BLOCKED for the unobserved
 - **Reach under the authoritative invocation:** `UNKNOWN`
@@ -13,9 +14,17 @@
 
 ## Baseline guardian (SQI-02 Part XII)
 
-BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (baseline ratcheted up)
+BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (stable)
 
-Baseline: `sqi_baseline.json` · environment `b5ec3ed51c2f23b1` · ratcheted this run: True
+Baseline: `sqi_baseline.json` · environment `b5ec3ed51c2f23b1` · ratcheted this run: False
+
+## Weakening detectors (SQI-02 Part XV)
+
+WEAKENING_PASS: 101 file(s) tracked, 2106 assertion(s), 0 for review, 0 advisory, 23 unknown. No assertion was lost.
+
+The guardian above gates **counts**, so it catches deletion, the skip, and the relocation. Weakening lowers **no count at all**: the file is present, the case is collected, the case passes, and the protection is gone (§15.1). These gates read the **content** of the surviving tests.
+
+**Not detected here, and declared rather than faked:** the lowered threshold (§15.7) needs a threshold inventory that does not exist in this repository, and the unreal fixture (§15.4) has no counting detector by the Part's own admission. The tautological assertion (§15.8) is detectable **only** by a mutation probe — `--mutation-probe` runs it; it executes tests and mutates source, so it is never part of a default measurement.
 
 ## Findings
 
@@ -29,7 +38,7 @@ Baseline: `sqi_baseline.json` · environment `b5ec3ed51c2f23b1` · ratcheted thi
   INTERNALERROR>   File "C:\Users\User\.claude\skills\claude-power-pack\_logs\_m1_secret_firewall_test.py", line 118, in <module>
   INTERNALERROR>     sys.exit(0 if passes == total else 1)
   INTERNALERROR> SystemExit: 0
-  no tests collected in 1.20s
+  no tests collected in 0.89s
   mainloop: caught unexpected SystemExit!
   ```
 

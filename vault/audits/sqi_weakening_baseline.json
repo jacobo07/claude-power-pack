@@ -1,0 +1,1021 @@
+{
+  "version": 1,
+  "recorded": "2026-07-12T16:42:25.530911+00:00",
+  "commit": "ca05e467aa62b74b323a38effa135778f4f54307",
+  "environment_key": "b5ec3ed51c2f23b1",
+  "files": {
+    "_logs/_m1_secret_firewall_test.py": {
+      "path": "_logs/_m1_secret_firewall_test.py",
+      "assertions": 19,
+      "mocks": 0,
+      "sha256": "7d498110379e18a789069cf34e06d6f60cca452ac2eb2c386debe341de986822",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "_logs/_m3_backlog_signal_test.py": {
+      "path": "_logs/_m3_backlog_signal_test.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "0ba866a6a234df61037cb08c73c7554d592ed9621d8c20f014bb5d3b3a4d0f77",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "_logs/_m4_cascade_prevention_test.py": {
+      "path": "_logs/_m4_cascade_prevention_test.py",
+      "assertions": 27,
+      "mocks": 0,
+      "sha256": "3d5c6d5e87c5e62ee4f03d5deb70927bf66963272c18759ed70ddd710bb170d3",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "_logs/_m4_oneshot_jit_test.py": {
+      "path": "_logs/_m4_oneshot_jit_test.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "88622c7fcef14600510f121233fd2a38ce339b71fc7f20ee36dcccc04dbdb57e",
+      "cases": 0,
+      "broad_catches": 2,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "_logs/_m5_output_contracts_test.py": {
+      "path": "_logs/_m5_output_contracts_test.py",
+      "assertions": 24,
+      "mocks": 0,
+      "sha256": "4e2431aa50442a0034e3295e655982c9d7e7cd9325e12dbb31fbb7f69ca01928",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "_logs/_m6_one_shot_test.py": {
+      "path": "_logs/_m6_one_shot_test.py",
+      "assertions": 28,
+      "mocks": 0,
+      "sha256": "777f33fdefb61031518e16ac9ec7cef0b22cc2f05cb82dc321631ebbf829f447",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "_logs/_m7_cost_collapse_test.py": {
+      "path": "_logs/_m7_cost_collapse_test.py",
+      "assertions": 22,
+      "mocks": 0,
+      "sha256": "5d90e7eba29d78dda88326c7be10fd26f338c1dcfda7f445bc28277cb2cf6fce",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "_logs/_m8_backlog_test.py": {
+      "path": "_logs/_m8_backlog_test.py",
+      "assertions": 22,
+      "mocks": 0,
+      "sha256": "720ce9f958949cc3b52eaaa5fdfc169f3de14ff1fa7b698202509c81135f2cb1",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "_logs/_m9_cpc_os_test.py": {
+      "path": "_logs/_m9_cpc_os_test.py",
+      "assertions": 32,
+      "mocks": 0,
+      "sha256": "943e0bd4916dd5aa34d5e77be4bf33b310a62961bfd1d302bcedf601eeed05d4",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "modules/arch-decision/test_closed_loop.py": {
+      "path": "modules/arch-decision/test_closed_loop.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "6a3e5ed79f0be97bb7f57ea55d413b9afacfcb1b5cbbafbcf33f9c9572a93f33",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "modules/arch-decision/test_v_block.py": {
+      "path": "modules/arch-decision/test_v_block.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "3bd102d34e12652c22a759988cebdcb2a56c4914e44952b50b27d861253cd6ad",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "modules/auto-testing/auto_test.py": {
+      "path": "modules/auto-testing/auto_test.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "ebcd6c5d85f13e5c16f057d1d126aae6ae563bda43a9c1bc219547ebba8a22ee",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "none",
+      "error": null
+    },
+    "modules/backup/test_v_block.py": {
+      "path": "modules/backup/test_v_block.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "8e0a5a8dd5d5c987ffac8a7190a4d599bc829a4191832882f2e332480f76726b",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "modules/code-review/test_closed_loop.py": {
+      "path": "modules/code-review/test_closed_loop.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "aea815f39ce1b32953fdb44826098dacb51d1621f88af795c8b83ea13d2dc3c7",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "modules/code-review/test_combined_gate.py": {
+      "path": "modules/code-review/test_combined_gate.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "a096890dd8e8b6fd0cca10158f1d02fec0304db58055689faaf3b37773c7312a",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "modules/code-review/test_v_block.py": {
+      "path": "modules/code-review/test_v_block.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "ab62b384db35b4e512d0d57444f00e02c2eaaf45e1a7bb6af5dbd7262d861b6e",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "modules/deployment/test_v_block.py": {
+      "path": "modules/deployment/test_v_block.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "6cea1cab7fa1c78c13fb663ab206093d99ef3ff0409fdbac43a5d7b50bb14ec3",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "modules/rollback/test_v_block.py": {
+      "path": "modules/rollback/test_v_block.py",
+      "assertions": null,
+      "mocks": 2,
+      "sha256": "271fb38f26a9c5862426553079bc10865f68a784a2dc48c9493eeb6e84febf03",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tests/test_cascade_populator.py": {
+      "path": "tests/test_cascade_populator.py",
+      "assertions": 30,
+      "mocks": 0,
+      "sha256": "b7ddaeaf2a99521d12a1b031b3ec5ef5467070360a2bfc60a4fba541c68c851e",
+      "cases": 14,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tests/test_forensic_probes.py": {
+      "path": "tests/test_forensic_probes.py",
+      "assertions": 53,
+      "mocks": 0,
+      "sha256": "b5434cc6ebf7ca8a40343e2203f15e2efbcb5cfb91abe051e1b063cbc41f14de",
+      "cases": 29,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tests/test_globalization.py": {
+      "path": "tests/test_globalization.py",
+      "assertions": 36,
+      "mocks": 0,
+      "sha256": "12fb2fbb0a7d615fbe9bdcf6224a637ff107417aaf654e159649c21eee304147",
+      "cases": 0,
+      "broad_catches": 4,
+      "verification": "assertions",
+      "error": null
+    },
+    "tests/test_graphify_live.py": {
+      "path": "tests/test_graphify_live.py",
+      "assertions": 6,
+      "mocks": 0,
+      "sha256": "5dcb363e4897f67bd83d34c1015ceec219f29333dd0154f26781d25827a0ca8b",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tests/test_hooks_registration.py": {
+      "path": "tests/test_hooks_registration.py",
+      "assertions": 18,
+      "mocks": 0,
+      "sha256": "531627faabe06c8eb7d12666aa98e6da0c7fe95b3c5b4a3ae8ed737b355e656b",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tests/test_mistake_frequency_xplat.py": {
+      "path": "tests/test_mistake_frequency_xplat.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "6cf66a56cc92dcedc99be07cbaa27ec5cfb673b5b750bb35ea5c2702ae77e46e",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tests/test_sqi_engine.py": {
+      "path": "tests/test_sqi_engine.py",
+      "assertions": 116,
+      "mocks": 0,
+      "sha256": "abd2a94dabe590f472456b45bc342c52f5a5a6526b649b8f3b7ec17096e97b04",
+      "cases": 42,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/ghost_driver_test.py": {
+      "path": "tools/ghost_driver_test.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "1eff6a2c969940fefe62094d1985d75ae48d9b119f36c5dbf9d9596dd8f557f5",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/lazarus_forensic_test.py": {
+      "path": "tools/lazarus_forensic_test.py",
+      "assertions": 28,
+      "mocks": 0,
+      "sha256": "6fcd8c2ec0069352de98f90d952025103fa6a51279fd65025fe97abb8ff60418",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/shadow_sandbox_test.py": {
+      "path": "tools/shadow_sandbox_test.py",
+      "assertions": 16,
+      "mocks": 0,
+      "sha256": "d179bcf73b7b4b88810b2505282bb4e454edc3ae24ebbc6e4d67de10a92d833e",
+      "cases": 0,
+      "broad_catches": 5,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_ads.py": {
+      "path": "tools/test_ads.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "eb3df33fd70f1bf9cfa8236b51b189e9028a41131a57704b9ae4a7322bef2c89",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_akos_integration.py": {
+      "path": "tools/test_akos_integration.py",
+      "assertions": 24,
+      "mocks": 0,
+      "sha256": "de40af2e035c7b410c0d802062264e4fa28c5cc2edf8b41a6837c109ec050ccc",
+      "cases": 5,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_atomic_branding.py": {
+      "path": "tools/test_atomic_branding.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "3eadfe1650ba8cd52fce483686083f0849a42091ddde7ec7b4cc69e89414eeb7",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_auto_reset.py": {
+      "path": "tools/test_auto_reset.py",
+      "assertions": 20,
+      "mocks": 0,
+      "sha256": "2e1cd73490246744aa11a4cc319816c503547f89793181aa1eae63f52dba2ea5",
+      "cases": 5,
+      "broad_catches": 3,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_autoresearch_vps.py": {
+      "path": "tools/test_autoresearch_vps.py",
+      "assertions": 17,
+      "mocks": 0,
+      "sha256": "b226630c44f1b70a7d309a0b39f7164d2c7ea145d0180cee367a9e65c38fce9b",
+      "cases": 0,
+      "broad_catches": 2,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_build_everything.py": {
+      "path": "tools/test_build_everything.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "f1e5c7b49e87c959ea0b4c2461c843b6d9a7b694d12c6970e0758b6ab5ac1f9c",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_cdio.py": {
+      "path": "tools/test_cdio.py",
+      "assertions": 17,
+      "mocks": 0,
+      "sha256": "e3c3772185468d4c40f914665f00a484db6b68dfa842db837cad78e09b71cfd5",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_ceps_closed_loop.py": {
+      "path": "tools/test_ceps_closed_loop.py",
+      "assertions": 1,
+      "mocks": 0,
+      "sha256": "20901ed4a1de717ef6f20b3b1bb72de21774fe0ef36b2f8b35bd3037aaf8c0da",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_ceps_edge_cases.py": {
+      "path": "tools/test_ceps_edge_cases.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "5ec93ccd67f433b5ec41f9496d6103d99db51dda6f0156e267aba187789c7833",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_ceps_full_cycle.py": {
+      "path": "tools/test_ceps_full_cycle.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "c6d0151f4321acef3ea589c3dfd76da314041ba16dfd5de3c7ed75ec2face8af",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_claude_md_router.py": {
+      "path": "tools/test_claude_md_router.py",
+      "assertions": 21,
+      "mocks": 0,
+      "sha256": "c7f15cd5101d9865d50e618cb786bff7cb97301e34038624e55a8213001faf00",
+      "cases": 8,
+      "broad_catches": 6,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_co12_readiness_telemetry.py": {
+      "path": "tools/test_co12_readiness_telemetry.py",
+      "assertions": 17,
+      "mocks": 0,
+      "sha256": "41b7767e17ba69cceb60f4cab170be257a9ccb10a5bf33e244f826318082f965",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_co12_telemetry.py": {
+      "path": "tools/test_co12_telemetry.py",
+      "assertions": 18,
+      "mocks": 0,
+      "sha256": "22ab1cb1494864b28097b8fb48df6ea77b17ac417ae590c2126e88069003bb62",
+      "cases": 7,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_cognitive_leak_taxonomy.py": {
+      "path": "tools/test_cognitive_leak_taxonomy.py",
+      "assertions": 19,
+      "mocks": 0,
+      "sha256": "7f409ad8c3bf74297ab02a312137b9c89f9bac102a2e6b8de8f22864d0dbdc67",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_cognitive_os_build.py": {
+      "path": "tools/test_cognitive_os_build.py",
+      "assertions": 137,
+      "mocks": 0,
+      "sha256": "cc6f05e467e046ff07c0d57169abf45fc4dc225884c272eb81f2315c8a8633bf",
+      "cases": 13,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_compact_rescue.py": {
+      "path": "tools/test_compact_rescue.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "e9740e4a6d419b61c2a4be9d8c2e372feb9bbc5bd0a4ba0c020106aadd8c77ad",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_conversation_quality_audit.py": {
+      "path": "tools/test_conversation_quality_audit.py",
+      "assertions": 12,
+      "mocks": 0,
+      "sha256": "5d3c9f769eea27d6995683bc735e812359d8145c375136a54708bb972a6e5793",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_cpc_snapshot.py": {
+      "path": "tools/test_cpc_snapshot.py",
+      "assertions": 36,
+      "mocks": 0,
+      "sha256": "26a36a38a097238fc1fd4b922e41975877db45b93b47b34e76b15a552ae82cf7",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_dataset_build.py": {
+      "path": "tools/test_dataset_build.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "7d04f741d3e8d05ab88d9a4b798aa4efdce3ec7e2a7022e88c3875eb1f26e729",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_dataset_first_protocol.py": {
+      "path": "tools/test_dataset_first_protocol.py",
+      "assertions": 38,
+      "mocks": 0,
+      "sha256": "db79d4f6e3adb4c4bcc6769d89f2db764a7211f8890d4e3113ffe9d9d182446a",
+      "cases": 0,
+      "broad_catches": 5,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_decision_review.py": {
+      "path": "tools/test_decision_review.py",
+      "assertions": 38,
+      "mocks": 0,
+      "sha256": "7899b55c4a27ad642f97a10c77a0a7cce8c5f860976aacc19706fb1db9a8fce0",
+      "cases": 18,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_duplicate_to_advantage.py": {
+      "path": "tools/test_duplicate_to_advantage.py",
+      "assertions": 48,
+      "mocks": 0,
+      "sha256": "601f1a8cc27cd3eba84032b47737df7145806f0e6c658618dc3a65883e089880",
+      "cases": 0,
+      "broad_catches": 5,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_enforcement_systems.py": {
+      "path": "tools/test_enforcement_systems.py",
+      "assertions": 49,
+      "mocks": 0,
+      "sha256": "2f968e6e77ad2dd6316f65817be35f66ebc92d49dd04d39ca64d65e4bf3f3ad0",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_fable_distillation.py": {
+      "path": "tools/test_fable_distillation.py",
+      "assertions": 26,
+      "mocks": 0,
+      "sha256": "6fae7ea1f77a80aa9da8770e8215a2d4089543efbcfe96b063b4270d318439ad",
+      "cases": 0,
+      "broad_catches": 2,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_frontier_intelligence_os.py": {
+      "path": "tools/test_frontier_intelligence_os.py",
+      "assertions": 97,
+      "mocks": 0,
+      "sha256": "16deecdbfb2ab5d827bb2f5155930cb4f4297081da024361345694792a8cd63f",
+      "cases": 0,
+      "broad_catches": 4,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_governance_propagation.py": {
+      "path": "tools/test_governance_propagation.py",
+      "assertions": 16,
+      "mocks": 0,
+      "sha256": "4f12aedc563ac115a3e339a57b7718bb76fc095946b83575b417605026ab8c00",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_hard_rules.py": {
+      "path": "tools/test_hard_rules.py",
+      "assertions": 40,
+      "mocks": 0,
+      "sha256": "9f63cf14712be20630fda3a3809d591e8f9047ab2fef5dc482b0fe3b45c08ccc",
+      "cases": 0,
+      "broad_catches": 11,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_hibernation.py": {
+      "path": "tools/test_hibernation.py",
+      "assertions": 60,
+      "mocks": 0,
+      "sha256": "92951120e8ce5ac9cc395269ff9ada62a48cf9c40e00f66bb3f7aa90e6d47a84",
+      "cases": 28,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_hook_hubs.py": {
+      "path": "tools/test_hook_hubs.py",
+      "assertions": 19,
+      "mocks": 0,
+      "sha256": "0d0d65be4933ea42ca202adc565942fac2e14b1b99317a3774efd2ad37c19b5d",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_jit_performance.py": {
+      "path": "tools/test_jit_performance.py",
+      "assertions": 33,
+      "mocks": 0,
+      "sha256": "291aa03b703b01c098f51f0de3060b26978d6af145aaf13504b8b9c9c199cca7",
+      "cases": 0,
+      "broad_catches": 2,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_karimo.py": {
+      "path": "tools/test_karimo.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "a3f319837c04cb3fe1a06fd7f4085ddbeef84d33776018a80d45863b5b1a4d52",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_lateral_thinking.py": {
+      "path": "tools/test_lateral_thinking.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "66ba24f5abfe1a041d1dd5fa58d2a7c9ce671362531cd5f0651aa02849ede532",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_manual_tools_automation.py": {
+      "path": "tools/test_manual_tools_automation.py",
+      "assertions": 22,
+      "mocks": 0,
+      "sha256": "1d8484d17b5c23c21efa78aff10f20a3eaf0e4cbbaf652b56172bd5c85bb6e5b",
+      "cases": 0,
+      "broad_catches": 4,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_meta_systems_runtime.py": {
+      "path": "tools/test_meta_systems_runtime.py",
+      "assertions": 16,
+      "mocks": 0,
+      "sha256": "5ca5c5c5b94c843034927045a4ac62e05f3d5cfab3f97d88414cbdd929f4a9eb",
+      "cases": 0,
+      "broad_catches": 2,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_mirror_parity.py": {
+      "path": "tools/test_mirror_parity.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "6706de8fddd848954e240dac0bff886c3a8cc0273bda7e31f0710a13f2b0cba1",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_monitoring.py": {
+      "path": "tools/test_monitoring.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "4941ef09e955e369e9a2483f2ca27818387d299bc46070717a483cf37ee08591",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_osa.py": {
+      "path": "tools/test_osa.py",
+      "assertions": 30,
+      "mocks": 0,
+      "sha256": "40d768aecfc9992a950cd10c9901e0a483e6b5ab65a096f38c104835f821d848",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_pane_map.py": {
+      "path": "tools/test_pane_map.py",
+      "assertions": 16,
+      "mocks": 0,
+      "sha256": "38e663c84e8c182a4859a2d57297c336489a0ddbdefcd556a445fd28fb005fb7",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_pane_map_snapshot.py": {
+      "path": "tools/test_pane_map_snapshot.py",
+      "assertions": 21,
+      "mocks": 0,
+      "sha256": "8af92c83f837ca4144980cb002c37987eb54d86df984b39b45f9d6cf0af4a06a",
+      "cases": 5,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_parallel_mesh.py": {
+      "path": "tools/test_parallel_mesh.py",
+      "assertions": 68,
+      "mocks": 0,
+      "sha256": "3c32e2ca5b0851e090832a3425c2bbe62c31a6783732ee92b922b616aaef4fdc",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_playwright_resilience.py": {
+      "path": "tools/test_playwright_resilience.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "0df7f74d3aa657a877827a80629e96702272f2535eff4fd91dc3fa89f9a51dd8",
+      "cases": 0,
+      "broad_catches": 4,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_proactive_agents.py": {
+      "path": "tools/test_proactive_agents.py",
+      "assertions": 39,
+      "mocks": 0,
+      "sha256": "4abacc67d6789c7d32b34e9b4c3926d60ff88f1b919e1a93c4533455eb2595d9",
+      "cases": 16,
+      "broad_catches": 3,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_ram_optimization.py": {
+      "path": "tools/test_ram_optimization.py",
+      "assertions": 25,
+      "mocks": 0,
+      "sha256": "29fe77e3a84a33ee2a432d8f21da44f33f10c9eae23117397299e4a7b7df5686",
+      "cases": 5,
+      "broad_catches": 2,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_recovery_control_plane.py": {
+      "path": "tools/test_recovery_control_plane.py",
+      "assertions": 12,
+      "mocks": 0,
+      "sha256": "b89ede6707e7390d965c7251e32b001c4e48e4f636b02c792affbfb44f349fc6",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_rename_sessions.py": {
+      "path": "tools/test_rename_sessions.py",
+      "assertions": 19,
+      "mocks": 0,
+      "sha256": "25f5ee8df109112cf4f023143515cbc1b27763968203b012cdc5fb27247e2457",
+      "cases": 3,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_restart_and_lag.py": {
+      "path": "tools/test_restart_and_lag.py",
+      "assertions": 51,
+      "mocks": 0,
+      "sha256": "612820f2b69167a273394a2d01f47dd23d75a1a1b59282885b60074527d3d551",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_restart_kclear.py": {
+      "path": "tools/test_restart_kclear.py",
+      "assertions": 34,
+      "mocks": 0,
+      "sha256": "8a61ace14016ece18c0d5af5482dc1ce457567a3095f184a81615a5dd480f371",
+      "cases": 0,
+      "broad_catches": 2,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_restore_all_panes.py": {
+      "path": "tools/test_restore_all_panes.py",
+      "assertions": 10,
+      "mocks": 0,
+      "sha256": "5f4fb304ee0cbeaf3784c801cddf65b0e9ff69914de3fe4bea61b1aa7b2d1afc",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_scope_a_activation.py": {
+      "path": "tools/test_scope_a_activation.py",
+      "assertions": 14,
+      "mocks": 0,
+      "sha256": "bfd51a40e3bd76222d6b5916f15c24907abd18454611f2dbf78babddb190ebc8",
+      "cases": 6,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_sdd_os.py": {
+      "path": "tools/test_sdd_os.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "42cd9d0751b8c0f73f164411c274990b15081cbd2435086b11152fb628d7d457",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_session_resilience.py": {
+      "path": "tools/test_session_resilience.py",
+      "assertions": 21,
+      "mocks": 0,
+      "sha256": "37e762ab4c4af05355c099341657bff8126a5c53e6bf405c1874faeac35fb073",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_session_resilience_build.py": {
+      "path": "tools/test_session_resilience_build.py",
+      "assertions": 98,
+      "mocks": 0,
+      "sha256": "df164401e6e3f35dc7eb79a8d58fc0dc294daf00f710cb12cd0034771540896a",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_setup_os.py": {
+      "path": "tools/test_setup_os.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "056a6fad4489998b13e8b9f2c53093ba433834986eb67594f25725e4c55058db",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_sleepy_skills.py": {
+      "path": "tools/test_sleepy_skills.py",
+      "assertions": 16,
+      "mocks": 0,
+      "sha256": "68b9bc1141e310e6af57fd5ba5554602aa33d935e50da4ef6367c126ccc50073",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_sovereign.py": {
+      "path": "tools/test_sovereign.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "13620b52ab8bcdff47051bf97fc55a84acb84c787943a538b5f0f7f4fedd5243",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_spec_department.py": {
+      "path": "tools/test_spec_department.py",
+      "assertions": 16,
+      "mocks": 0,
+      "sha256": "37e9bcd5af0b1530f3ade0c1c034b7ab30d5ceadad317b5febbc2380a105e1b2",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_spec_driven.py": {
+      "path": "tools/test_spec_driven.py",
+      "assertions": 13,
+      "mocks": 0,
+      "sha256": "5e78b2c38a7241afa84437990d95151ec0983e042f2fccd06e05ce3964d425bc",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_speckit.py": {
+      "path": "tools/test_speckit.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "65e8eb13562a746ac2e0ba726c6fb3a5c41c0a9f9c9e07b807ce8e11dfa9181a",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    },
+    "tools/test_sqi.py": {
+      "path": "tools/test_sqi.py",
+      "assertions": 77,
+      "mocks": 0,
+      "sha256": "20d0e06857e424f28e1bf1378c9e34fd4d17a38ee0c6bea25e2c57cc527a9c8e",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_strategic_gaps.py": {
+      "path": "tools/test_strategic_gaps.py",
+      "assertions": 42,
+      "mocks": 0,
+      "sha256": "db553f1964996b28015912c8c2889f1cba7bf089b7df5fda089751785a6f6895",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_tab_order.py": {
+      "path": "tools/test_tab_order.py",
+      "assertions": 7,
+      "mocks": 0,
+      "sha256": "29ca8f03e83c8026c2153cc4be4262518137451151f7aa509b6d1095e5b2e774",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_tco.py": {
+      "path": "tools/test_tco.py",
+      "assertions": 20,
+      "mocks": 0,
+      "sha256": "cbb48ae4298131ce32cc0ae20dba7ba12ef6503e11259e973fa867b9c465b661",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_tco_tracking.py": {
+      "path": "tools/test_tco_tracking.py",
+      "assertions": 13,
+      "mocks": 0,
+      "sha256": "66ae6b03f5daa8099bfe2095101665ca4e1934df777209cdb98c87547c3708b5",
+      "cases": 0,
+      "broad_catches": 1,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_tis_core.py": {
+      "path": "tools/test_tis_core.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "d029dc49d644e794a48f1cd18b5a6427453ecb5fa7a482702871cc5a4ee3301e",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_tis_e2e.py": {
+      "path": "tools/test_tis_e2e.py",
+      "assertions": 0,
+      "mocks": 0,
+      "sha256": "531c4c5d35bad7d8f0dc8f21f867325d80a9a4d7d6d4f4668bc02bf0d95efe9d",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "none",
+      "error": null
+    },
+    "tools/test_token_corpus_audit.py": {
+      "path": "tools/test_token_corpus_audit.py",
+      "assertions": 12,
+      "mocks": 0,
+      "sha256": "74faad5eaf60ca6cf488313fede32aebba42acfe91bb8abc2f8c8509cf2c089a",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_topology_reconcile.py": {
+      "path": "tools/test_topology_reconcile.py",
+      "assertions": 24,
+      "mocks": 0,
+      "sha256": "fcb05638b03296a81cc0818da1d8522ecd45b1712654ca09e025bfb867baf124",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_uqf.py": {
+      "path": "tools/test_uqf.py",
+      "assertions": 30,
+      "mocks": 0,
+      "sha256": "f2d5c646032f9d956067c45d3575d618e4762249ed0e2111a6a7c50802960cdd",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_vague_lint.py": {
+      "path": "tools/test_vague_lint.py",
+      "assertions": 1,
+      "mocks": 0,
+      "sha256": "1d4ee935765fcea7aa6b627411775fbe6a0d30ac75052847fd90b48d6e70f6f8",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_vscode_autorun.py": {
+      "path": "tools/test_vscode_autorun.py",
+      "assertions": 34,
+      "mocks": 0,
+      "sha256": "72513af0dc9c14ad37982bd2bc266d94db11e69d6786a4ab3ea7a4f7e47e0aa7",
+      "cases": 0,
+      "broad_catches": 0,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_weekly_burn_tracking.py": {
+      "path": "tools/test_weekly_burn_tracking.py",
+      "assertions": 23,
+      "mocks": 0,
+      "sha256": "ad581cf738481ec991e9ae22179fb6c82e5fe29d8b27165f82719c30b6b589ee",
+      "cases": 0,
+      "broad_catches": 2,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_wrapper.py": {
+      "path": "tools/test_wrapper.py",
+      "assertions": 50,
+      "mocks": 0,
+      "sha256": "96745d566531323815d188c820b8bb393ba7df057b7c62f49ee997595b6760fe",
+      "cases": 0,
+      "broad_catches": 5,
+      "verification": "assertions",
+      "error": null
+    },
+    "tools/test_zero_command.py": {
+      "path": "tools/test_zero_command.py",
+      "assertions": null,
+      "mocks": 0,
+      "sha256": "aa40723256dc85c213ac2c96d2b3808f7645f36140a7581dd15bdf5d90878cc5",
+      "cases": 0,
+      "broad_catches": 6,
+      "verification": "exit_code_gate",
+      "error": "protection is an exit-code gate, not an assertion. The assertion count is INAPPLICABLE here, not zero -- a zero could never fall, and a gate holding one would be permanently blind to this file. Tracked by content hash only."
+    }
+  },
+  "reason": "",
+  "author": "",
+  "accepted_losses": []
+}
