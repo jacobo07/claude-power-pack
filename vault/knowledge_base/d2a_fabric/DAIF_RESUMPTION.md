@@ -18,20 +18,25 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
 
 - Phase 2 CLOSED: `DAIF_CANONICAL_MAP.md` = 22 candidates → **8 build · 6 do-not-build · 8 folded**.
 - 8 sovereign datasets in `DAIF_INDEX.md` manifest: DAIF-00,01,02,03,04,07,08,21.
-- Datasets SEALED: **3/8** (DAIF-00 30,417w; DAIF-01 33,509w; DAIF-02 34,826w). Parts: **60/160**, 98,752 words.
-  Gate: `DAIF_PASS=18/18` exit 0.
+- Datasets SEALED: **4/8** (DAIF-00 30,417w; DAIF-01 33,509w; DAIF-02 34,826w; DAIF-03 38,694w).
+  Parts: **80/160**, **137,446 words**. Gate: `DAIF_PASS=24/24` exit 0. **The spine is complete**
+  (constitution → types → representations → fidelity).
 - Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY≥1200/FABRICATION/CONTAMINATION/NONDUP).
   Observed to refuse then pass — a real gate. Agents over-report word counts by ~5-8%; the orchestrator's independent
   count governs. Only the 1,200 floor is binding — there is NO upper ceiling; never cut mechanism to hit a word target.
-- **NEXT = DAIF-03** (Fidelity, Loss Budget & Behavioral Equivalence), `SOVEREIGNTY_PROVEN`, 0/20. The gate that makes
-  compilation safe rather than lossy — without it the CIR fabric is just a summarizer. Absorbs the Metric-Authority
-  candidate (Owner ruled: fold, not standalone). Composes FD-04's six-lens transfer test + CO-12 Telemetry-Before-Claims.
-  Content: the 10 fidelity dimensions (semantic/intent/constraint/decision/epistemic/obligation/causal/evaluation/
-  provenance/BEHAVIORAL — the last is the definitive test); loss budget L0 lossless → L4 disposable, with the rule that
-  an L3 output may never execute a critical migration; behavioral-equivalence testing (control = full sources vs
-  compiled = Mission Pack, compare correctness/constraints-violated/rework); golden cognitive benchmarks; fail-visible
-  abstention (the compiler must REFUSE when it cannot guarantee fidelity); the canonical metric registry + anti-Goodhart.
-  Then DAIF-07 (obligations) → 04 (contracts) → 08 (context/mission) → 21 (reality sync).
+- **NEXT = DAIF-07** (Obligation Lifecycle & Work Completion Authority), `SOVEREIGNTY_PROVEN`, 0/20. **The founding idea
+  of the whole source brainstorm** (the Unfinished Work Watcher), now arriving correctly: it does NOT scan loose text —
+  it CONSUMES CIR-5 (DAIF-02) as a formal IR, exactly as the source itself prescribed. Obligation object: id · type ·
+  origin · source · owner · authority · scope · priority · risk · impact · dependencies · blockers · state · lifecycle ·
+  age · evidence · closure conditions · done-gate · expiry · escalation · abandonment risk · supersession. Obligation
+  kinds: task · promise · open decision · pending verification/test/acceptance/rollout/deployment/migration · unfinished
+  dataset · incomplete PRD · missing evidence · unresolved contradiction · deferred work · abandoned experiment ·
+  forgotten conversation · undocumented implementation · operational + institutional debt. Engines: detectors ·
+  prioritizers · aging models · closure verifiers · the obligation ledger · longitudinal analysis · prediction.
+  WRITES INTO (never forks): owner_queue (D4) · backlog_autopilot · liveness (D1) · scaffold-auditor · Lazarus/session
+  continuity · learning-sentinel. Obligation fidelity is BINARY (DAIF-03 Part V) — obligation loss is silent, and
+  silence is why it is the most damaging failure class.
+  Then DAIF-04 (contracts) → 08 (context/mission runtime) → 21 (reality sync) → Phase 7 compounding map → Phase 8 seal SCS C95.
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
