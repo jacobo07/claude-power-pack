@@ -18,12 +18,17 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
 
 - Phase 2 CLOSED: `DAIF_CANONICAL_MAP.md` = 22 candidates → **8 build · 6 do-not-build · 8 folded**.
 - 8 sovereign datasets in `DAIF_INDEX.md` manifest: DAIF-00,01,02,03,04,07,08,21.
-- Datasets SEALED: **1/8** (DAIF-00, 20/20 Parts, 30,417 words, `DAIF_PASS=6/6` exit 0). Parts: **20/160**.
-- **DAIF-00 SEALED.** Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY/FABRICATION/
-  CONTAMINATION/NONDUP). Observed to refuse (caught 'catalog'/'stored' substrings) then pass — a real gate.
-- **NEXT = DAIF-01** (Cognitive Type System & Canonical Ontology), `SOVEREIGNTY_PROVEN`, 0/20. Absorbs D2A-09
-  schemas + D2A-16 authority types. Composes SQI-00 verdict ontology · ACIS ladder · hard_rules authority.
-  Then DAIF-02 (CIRs) → 03 (fidelity/loss) → 07 (obligations) → 04 (contracts) → 08 (context/mission) → 21 (reality sync).
+- Datasets SEALED: **2/8** (DAIF-00 30,417w; DAIF-01 33,509w). Parts: **40/160**, 63,926 words. Gate: `DAIF_PASS=12/12` exit 0.
+- Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY≥1200/FABRICATION/CONTAMINATION/NONDUP).
+  Observed to refuse then pass — a real gate. Agents over-report word counts; the orchestrator's independent count governs.
+- **NEXT = DAIF-02** (Cognitive Intermediate Representations, CIR-0…11), `SOVEREIGNTY_PROVEN`, 0/20. The spine.
+  Absorbs D2A-13 economics, D2A-17 provenance, D2A-20 lowering. CIR-2 composes ACIS; CIR-3 one_shot; CIR-4 DRK
+  decision_record; CIR-9 SQI; CIR-10 UKDL. 12 CIRs (0=Raw,1=Semantic,2=Epistemic,3=Intent,4=Decision,5=Obligation,
+  6=Causal,7=Dependency,8=Procedural,9=Evaluation,10=Institutional,11=Executable-Context). Each CIR: object model,
+  fields, invariants, valid/invalid transforms, linking, lowering, promotion, failure modes.
+  Then DAIF-03 (fidelity/loss) → 07 (obligations) → 04 (contracts) → 08 (context/mission) → 21 (reality sync).
+- Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
+  seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
   `.txt`, PART I…XX, FINAL LAW per Part, dense prose, no headings/bullets/tables/fences, 1,200–1,500 w/Part.
 
