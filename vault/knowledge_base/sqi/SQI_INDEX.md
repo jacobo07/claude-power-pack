@@ -63,14 +63,18 @@ A dataset is `COMPLETE` only when every Part is `VERIFIED` against the quality r
 | dataset | file | Parts | words | status |
 |---|---|---|---|---|
 | **SQI-00** Constitution & Canonical Ontology | `sqi_00_constitution_v1.txt` | **20/20** | 25,782 | **`COMPLETE`** |
-| **SQI-01** Repository Reality & Domain Intelligence | `sqi_01_repository_reality_v1.txt` | 0/20 | — | `NOT_STARTED` |
+| **SQI-01** Repository Reality & Domain Intelligence | `sqi_01_repository_reality_v1.txt` | **20/20** | 26,989 | **`COMPLETE`** |
 | **SQI-02** Test Reach & Signal Integrity ★ | `sqi_02_test_reach_v1.txt` | 0/20 | — | `NOT_STARTED` |
 | **SQI-03** Environment Qualification & Reproducibility | `sqi_03_environment_qualification_v1.txt` | 0/20 | — | `NOT_STARTED` |
 
 ### Done-gate — `python tools/test_sqi.py`
 
-Observed evidence, not a description of evidence. SQI-00 sealed at `SQI_PASS=6/6`,
-×3 hermetic (three consecutive runs, identical output, exit 0):
+Observed evidence, not a description of evidence. **Current: `SQI_PASS=12/12`, ×3 hermetic,
+exit 0, datasets=2** (SQI-00 + SQI-01). Verified by the orchestrator independently, not
+accepted from the producing agent's self-report — the producer never certifies its own claim
+(SQI-00 Article Six).
+
+Per dataset, six gates:
 
 `V-SQI-00-PARTS` (20 Parts I..XX in order) · `V-SQI-00-FINALLAW` (every Part closed by a
 FINAL LAW) · `V-SQI-00-DENSITY` (every Part ≥ 1,200w; mean 1,289) · `V-SQI-00-FABRICATION`
