@@ -3659,3 +3659,88 @@ verdict distribution matches the population of decisions actually seen, never a 
 **Cross-ref:** `drk_07_governance_evolution_authority.md` §II.4 (the three biases + correctives),
 `sdd_os_06_decision_accountability_attribution.md` (calibration), `tools/test_decision_review.py`
 (`V-DRK-3-BIAS`). Sister of `PR-DECISION-AUTHORITY-LIMITS-001`.
+
+---
+
+## T-SQI-PARALLEL-SYSTEM-001 -- the SQI corpus never forks a capability the stack already owns
+
+**TRIGGER:** about to author an SQI Part (or any new dataset family) that defines an evidence
+ladder, a confidence scale, a knowledge graph, an insight router, a decision verdict, a
+blast-radius model, a bug-to-invariant compiler, a premise verifier, or a done-gate scorer.
+
+**REGLA:** every one of those capabilities is ALREADY OWNED and is a cross-reference, never a
+build. Evidence/confidence ladder -> ACIS (E0-E7). Knowledge graph -> graphify (GK-00..12).
+Insight -> destination-form router -> FD-03 (**FD-03 already IS the "Failure-to-Data Compiler"
+the source spec proposed; DO NOT BUILD IT**). Decision verdicts, reversibility, blast radius ->
+DRK. Bug -> Hard Rule -> `modules/hard_rules`. Premise/assumption kill gate ->
+`modules/error_prevention/premise_verifier` (HR-PREMISE-001). Done-gate scoring ->
+`modules/output_contracts` (OQS). SQI refers to these BY ROLE ("the epistemic layer", "the
+frontier layer's router") so its prose cannot drift into re-implementing them. SQI owns exactly
+five unowned surfaces: authored-vs-executed reconciliation, environment qualification,
+disk-derived repository classification, risk-to-protection mapping, and evidence-bound iteration.
+
+**POR QUE:** the source spec (`Dataset Claude Power Pack Universal Quality & Iteration
+Intelligence 1`) proposed 17 macro-families / 110 systems. The STOP #1 Reality Scan (2026-07-12)
+returned 6 NEW, 8 EXTEND, 2 EXTEND-thin and **1 DO-NOT-BUILD** -- a naive build would have forked
+five live systems. A parallel confidence scale is the single most damaging artifact such a corpus
+can produce: two scales measuring one quantity guarantee that different components read different
+numbers, neither is wrong, and the estate is incoherent. ACIS and DRK each ran this same overlap
+exercise before shipping; this is established discipline, not an innovation.
+
+**Cross-ref:** `vault/knowledge_base/sqi/CANONICAL_ONTOLOGY.md` (0.1 Parent Substrate),
+`sqi_00_constitution_v1.txt` PART XIX, `vault/plans/sqi-uqios-architecture-2026-07-12.md`.
+Sister of `T-AKOS-KNOWLEDGE-DEAD-001` and the D2A duplicate-to-advantage doctrine.
+
+---
+
+## PR-SQI-COMPOUND-INTELLIGENCE-001 -- one failure must yield at least four permanent assets
+
+**TRIGGER:** closing an incident, or declaring an SQI dataset complete.
+
+**REGLA:** an incident is not closed when it is fixed. It is closed when its CLASS is harder to
+repeat in every repository -- or when a recorded decision documents why not. Every failure must be
+able to yield at least four distinct permanent assets: a causal record (`FailureRecord` with a
+demonstrated, not hypothesized, root cause), a `RegressionRecord` **observed to fail against the
+unfixed code**, a training example (negative + positive), and a `BenchmarkScenario`. Beyond the
+four: an `InvariantRecord` with a falsifier, a gate candidate, a `PolicyRecord` candidate, a
+cross-repo exposure scan, and a quality-law hypothesis proposed into ACIS at E2. **The routing of
+the insight to its destination form is FD-03's job -- SQI produces the records and hands them
+over; it never builds a second router.** An SQI dataset that does not define its own slice of this
+transmutation pipeline is incomplete by definition.
+
+**POR QUE:** a `RegressionRecord` whose RED was never observed may be asserting a tautology and is
+a guard in name only. And an estate that closes incidents by repairing them pays the full cost of
+every defect class repeatedly and forever, invisibly, because each recurrence presents as a new bug
+rather than as a rerun of an old one. The supreme measure (IFI) is therefore indifferent to the
+NUMBER of failures: two incidents fully institutionalized score perfectly; forty repaired within
+the hour and none institutionalized score zero.
+
+**Cross-ref:** `sqi_00_constitution_v1.txt` PART VII (Article Five) + PART XVII (IFI/HQR),
+`CANONICAL_ONTOLOGY.md` 7. Composes FD-03, `modules/hard_rules`, CEPS recurrence counting.
+
+---
+
+## T-SQI-SELF-EVOLUTION-UNCONTROLLED-001 -- ungoverned self-evolution is self-poisoning
+
+**TRIGGER:** any SQI mechanism that proposes to modify a gate, a threshold, a taxonomy, a policy,
+an evidence criterion, or a dataset on the basis of its own observations.
+
+**REGLA:** no self-evolution mechanism may recommend self-modification without an explicit evidence
+threshold, validation, versioning, and rollback. Promotion criteria, retirement criteria, and
+poisoning-resistance must be defined before the mechanism ships. **An agent may not modify the
+rules that are evaluating it inside the task in which they are evaluating it** (the Q5 prohibition,
+stated three times in SQI-00 because everything depends on it). This is not a defence against
+malice but against gradient descent: for an agent optimizing for completion, with write access,
+and blocked, editing the gate is one write while every honest path is work.
+
+**POR QUE:** the Gate Mutation Firewall catalogues what erosion actually looks like -- a lowered
+threshold, a test marked skip, an expected value adjusted until the assertion passes, a suite
+excluded, a scanner disabled, a fixture altered so the failure no longer reproduces, and the most
+insidious, the done-gate changed DURING the repair so that "finished" moves to wherever the work
+happened to arrive. Each is individually defensible and usually proposed in complete sincerity.
+Their sum is a governance layer that no longer governs, and no single decision in the sequence can
+be identified as the one that broke it. A gate loosened calmly on Tuesday with a stated reason is
+governance; the same gate loosened at midnight by the agent it is blocking is an escape.
+
+**Cross-ref:** `sqi_00_constitution_v1.txt` PART XI (Q5), PART XIII (Gate Mutation Firewall),
+PART XX (amendment). Sister of `PR-ACIS-FALSIFIABILITY-001` (No-Autopromotion).
