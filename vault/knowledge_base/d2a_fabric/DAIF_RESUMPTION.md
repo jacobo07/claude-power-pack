@@ -18,29 +18,27 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
 
 - Phase 2 CLOSED: `DAIF_CANONICAL_MAP.md` = 22 candidates → **8 build · 6 do-not-build · 8 folded**.
 - 8 sovereign datasets in `DAIF_INDEX.md` manifest: DAIF-00,01,02,03,04,07,08,21.
-- Datasets SEALED: **5/8** (DAIF-00 30,417w; DAIF-01 33,509w; DAIF-02 34,826w; DAIF-03 38,694w; DAIF-07 38,435w).
-  Parts: **100/160**, **175,881 words**. Gate: `DAIF_PASS=30/30` exit 0. **Spine + the founding idea are complete**
-  (constitution → types → representations → fidelity → obligations).
+- ## ✅ CORPUS COMPLETE — 8/8 SEALED · 160/160 Parts · **292,276 words** · `DAIF_PASS=48/48` exit 0
+  DAIF-00 30,417w · DAIF-01 33,509w · DAIF-02 34,826w · DAIF-03 38,694w · DAIF-04 39,939w ·
+  DAIF-07 38,435w · DAIF-08 40,125w · DAIF-21 36,331w. Mean **1,827 w/Part** (reference standard: 1,357).
+  Phase 7 + Phase 8 CLOSED: `DAIF_COMPOUNDING_MAP.md` (9 compounding couplings · coverage matrix ·
+  **11/11 final-audit gates PASS** · zero classified FAILs · honest residuals · 4 UKDL rules).
 - Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY≥1200/FABRICATION/CONTAMINATION/NONDUP).
   Observed to refuse then pass — a real gate. Agents over-report word counts by ~5-8%; the orchestrator's independent
   count governs. Only the 1,200 floor is binding — there is NO upper ceiling; never cut mechanism to hit a word target.
-- **NEXT = DAIF-04** (Institutional Contract Fabric), `D2A_CLASSIFIED`, 0/20. CREATE (thin). Absorbs the D2A-19 event
-  candidate (typed event SCHEMA only — transport stays PM-03/CEPS, never forked). Content: typed contracts between
-  agents · datasets · commands · hooks · engines · missions · memories · registries · evaluators · runtime components.
-  Per contract: preconditions · postconditions · inputs · outputs · authority · ownership · scope · lifecycle · evidence ·
-  done-gates · failure · timeout · retries · escalation · rollback · compensation · compatibility · inheritance ·
-  composition · version negotiation · breach detection · breach response · observability · testing · migration ·
-  deprecation. Composes `done_gate`, `spec_gate`, the per-dataset integration-contract convention, DAIF-01 types/authority.
-  Then DAIF-08 (Context Assembly & Mission Runtime — EXTEND of GK-06 Minimal Context Pack + CO-04 Context VM +
-  session_compiler; absorbs D2A-18 Mission Assembly; delta = page faults, expansion handles, progressive disclosure,
-  profile-guided optimization; consumes CIR-11)
-  → DAIF-21 (Reality Synchronization & Semantic Change — absorbs D2A-14; detects textual vs semantic vs behavioral vs
-  authority vs scope change; triggers invalidation → recompilation → obligation creation → re-evaluation; composes SQI
-  reality-supremacy + GK-07 freshness)
-  → Phase 7 (Cross-Dataset Compounding Map + Coverage Matrix + Gap/Contradiction registers)
-  → Phase 8 (final corpus audit: contamination, depth, non-duplication, mechanism, implementability, anti-bureaucracy,
-  reality gate) → seal **SCS C95** + UKDL rules (T-IIC-CIVILIZATION-DUPLICATION-001, PR-IIC-DATASET-FIRST-GOVERNS-001,
-  T-IIC-ORGCHART-IS-NOT-MECHANISM-001, PR-DAIF-D2A-PLUS-DEFAULT-001) → push REMOTE_DELTA 0 0.
+- **THE CORPUS IS A SPECIFICATION, NOT A RUNNING SYSTEM.** No compiler runs; no page fault has fired; no obligation has
+  been extracted from a real conversation. This is stated in the corpus itself (DAIF-21 Part XIX, a dedicated self-audit
+  naming 4 unproven claims, 3 honest risks, and its own falsifiers). Presenting a specification as a running system is
+  the exact failure the corpus exists to prevent.
+- **NEXT (if work resumes) = THE FIRST PROVING VERTICAL**, and nothing else should precede it: the Session Continuity
+  Cognitive Compiler (DAIF-08 Part XI — the source's own prescribed MVP). It exists so the FIRST claim made about DAIF
+  is a MEASURED one. Build it against the substrate that already exists (`modules/frontier_intelligence/session_compiler.py`,
+  Lazarus, `/kclear`, CO-07 hibernation, G1–G6). Its done-gate: after a context reset, a session continues a complex
+  mission with less context while preserving **100% of hard constraints and 100% of open obligations**; state correctly
+  identified; no indiscriminate re-reading; every critical claim linked to evidence; a changed source detected; and
+  **VISIBLE failure** when fidelity cannot be guaranteed. **No savings figure may be asserted in advance**
+  (CO-12 Telemetry-Before-Claims; DAIF-03 Part X behavioral trial supplies the method).
+  Do NOT build the other derived systems first. Do NOT expand the corpus. Measure it.
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):

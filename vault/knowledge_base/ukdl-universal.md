@@ -1,37 +1,17 @@
 
----
+## DAIF — Duplicate-to-Advantage Institutional Fabric (SCS C95, sealed 2026-07-13)
 
-## T-DESIGN-SLOP-001 — the anti-slop rule lived in prose and could refuse nothing
+**`T-IIC-CIVILIZATION-DUPLICATION-001`** — A "civilization" that duplicates a sealed PP system (SQI, DRK, FD, ACIS, D2A, CO, GK, PM) without a genuine delta is architectural debt. The Wave-0 Reality Audit is the only mechanism that prevents it. *Observed:* the source brainstorm proposed 30 guardians — **22 already shipped**. Its 22 dataset candidates reduced to **8** under its own law. Without STOP #1, the corpus would have produced ~500,000 words duplicating the 108,598 SQI already holds.
 
-**Trap.** The Power Pack forbade visual slop in two places — the `frontend-design` skill and
-`rules/web/design-quality.md` — and enforced it in **zero executable lines**. `modules/cdio/scorer.py`
-ran 251 lines of real, deterministic checks (contrast, tap target, type levels, line measure,
-spacing, CTA count) and had **no check for typography or palette at all**. So the most-cited design
-rule in the repo was the one rule no gate could ever fail. It was a preference in a gate's clothing.
+**`PR-IIC-DATASET-FIRST-GOVERNS-001`** — DAIF follows the Dataset First Protocol: reality inspection → corpus architecture → dataset contracts → construction → integration → validation → *only then* implementation. The corpus builds the substrate that lets production systems be built correctly; it does not build them.
 
-**Origin.** The `awesome-claude-design` absorption (2026-07-12). The reality scan found the whole
-CDIO evaluative layer already live and mature — and found that the PP's OWN canonical token template
-(`modules/design-md/DESIGN.md.template`) shipped Inter as its body font and a generic framework blue
-as its accent. The baseline itself emitted the exact slop the baseline forbade, and nothing detected
-it, because nothing *could*. Every project inheriting the template was born in slop.
+**`T-IIC-ORGCHART-IS-NOT-MECHANISM-001`** — Naming a layer "Supreme Court", "Senate", "Immune System", or "Digital Twin" adds zero mechanism. A dataset ships only if it names an engine, a gate, and an evaluator. *Rejected under this rule:* the Civilization Digital Twin ("50,000 simulations" — no specifiable mechanism), the 18-macrofamily governance org-chart, and the five-civilization framing.
 
-**Rule.** A design rule that no gate can refuse is not a standard, it is a preference. Anti-slop is
-now mechanical: `check_font_stack`, `check_palette_cliche`, `check_family_declared`,
-`check_design_md_exists` in `modules/cdio/scorer.py`, entrypoint `tools/design_gate.py`, severity
-CRITICAL (a critical forces BLOCK at any score). Observed refusing: `V-DESIGN-SLOP-BLOCKS` →
-`verdict=BLOCK score=25`, three criticals.
+**`PR-DAIF-D2A-PLUS-DEFAULT-001`** — Every candidate in a corpus build passes the D2A+ pipeline before construction; `CREATE_NEW` is the rarest verdict; the anti-inflation gate applies to the proposal itself. *Origin:* the Phase-2 map turned the Owner's own 22-candidate list into 8 by the Owner's own law.
 
-**How to apply.** Generalizes past design: when you write a rule into prose, ask what code refuses
-when it is broken. If the answer is "a reviewer who remembers to look", you have written
-documentation. Sister of PR-SQI-SIGNAL-MUST-GATE-001 (a metric with no guardian) — same disease,
-different organ: **a rule with no refusal is furniture.**
-
----
-
-## T-DESIGN-DEFAULT-WITHOUT-INTENT-001 — a default is not slop; a default without a declared intent is
-
-**Trap.** The obvious anti-slop gate is a blocklist: fail any surface using Inter, Roboto, or Arial.
-It is also **wrong**, and shipping it would have made the gate a liar. The source doctrine forbids
+**Corpus:** `vault/knowledge_base/d2a_fabric/` — 8 datasets · 160 Parts · 292,276 words · `python tools/test_daif.py` → `DAIF_PASS=48/48` exit 0 · 11/11 final-audit gates PASS.
+**Status:** SPECIFICATION, not a running system (DAIF-21 Part XIX is a dedicated self-audit). The first proving vertical — the Session Continuity Cognitive Compiler (DAIF-08 Part XI) — exists so the first claim made about DAIF is a **measured** one.
+g**, and shipping it would have made the gate a liar. The source doctrine forbids
 those fonts *"as defaults without intent"* — and three of its own nine aesthetic families (Editorial
 Minimalism, Data-Dense Pro, Playful Color) use Inter **deliberately**, for stated reasons. Linear and
 Stripe are not slop. A blanket ban would have failed the exemplars the doctrine cites as proof.
