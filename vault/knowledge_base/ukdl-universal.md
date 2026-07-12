@@ -1,90 +1,94 @@
 
 ---
 
-## PR-SQI-EXECUTABLE-GOVERNANCE-001 — a dataset that specifies an engine must ship the engine
+## PR-SQI-SIGNAL-MUST-GATE-001 — a metric without a guardian is documentation
 
-**Rule.** By the SQI corpus's own Executable Governance Law, a policy without enforcement is
-documentation. Any SQI dataset that specifies a detection system MUST have its corresponding
-implementation under `modules/sqi/` before it may be described as operational. Doctrine without
-execution is the same gap as a test without a runner — the artifact exists, it is correct, it is
-well-authored, and nothing invokes it.
+**Rule.** By SQI-02 §8.4, a signal that is emitted and never read is functionally identical to
+one that was never computed. Quality signals do not decay by concealment — they decay by
+**non-consumption**. Therefore: every SQI engine that measures a metric MUST ship a guardian
+that **fails the build on a silent decrease** in that metric. Measuring without gating is
+documentation wearing an instrument's clothes.
 
-**Origin.** SQI-00…03 shipped as 108,598 words of doctrine in which SQI-01 specified a reality
-scanner, SQI-02 a reconciliation engine, and SQI-03 an environment qualifier. None of the three
-existed as code. `SQI_COMPLETION_REPORT.md` §4.1 named this as the corpus's largest gap in its own
-voice: *"The datasets are currently documentation."* The corpus had described the disease and not
-treated it. Closed 2026-07-12 by `modules/sqi/{repo_reality_scanner,environment_qualifier,reconcile}.py`
-+ `tools/run_sqi.py`, gated by `tools/test_sqi.py` (36/36 ×3).
+**Origin.** SCS C91 shipped three engines that reconciled Claude Power Pack and reported Test
+File Reach at 3.0%, 98 orphaned files, and an authoritative invocation that collects nothing.
+Every number was correct, every number was durable, and **nothing consumed any of them.** The
+report was furniture. On Part XVII's own five-state ladder the SQI axis stood at `invoked` —
+which has a small non-zero protective value — and not at `enforced`, which is where the value
+actually lives. The distance between the two is one suppressed exit code.
 
-**How to apply.** When a dataset specifies an engine, the engine is part of the dataset's
-done-gate, not a follow-up. A dataset that ships without it is `PARTIALLY-VERIFIED` at best, and
-saying so in the completion report is the minimum honesty; building it is the actual close.
+Closed 2026-07-12 (SCS C93): `modules/sqi/baseline_guardian.py` + `tools/run_sqi.py` exiting
+non-zero on an unexplained decrease. `SQI_PASS=45/45` ×3.
 
----
-
-## T-SQI-FINDING-FABRICATION-001 — never adjust the engine so the number confirms the hypothesis
-
-**Trap.** An engine built to reproduce a known finding will be tuned, in complete sincerity, until
-it reproduces it. The plan for the reconciliation engine predicted an orphan ratio near 0.92
-(the 70-of-76 finding that founded the corpus). Every measured number came out different, and each
-difference was a real fact about the repository rather than a bug in the instrument.
-
-**What the engine actually measured, 2026-07-12:**
-
-- The authored census is **100 python test files, not 76**. Ten were authored in the four days
-  after the audit — including `tools/test_sqi.py`, the corpus's own gate — and every one landed
-  outside the canonical invocation. A further thirteen matched `*_test.py`, a suffix class the
-  founding audit's discovery rule never counted at all. The gap did not close; it widened.
-- The canonical invocation reaches **2 files, not 6**. Four of the six files inside `tests/`
-  are script-style V-gate runners with zero pytest-discoverable cases. The audit counted **files
-  in a directory**; the engine counts **identities in a manifest**. Reach is 3.0%, not 7.9%.
-- The **authoritative** invocation reaches nothing at all. There is no CI, so by the oracle
-  precedence the zero-argument default (`pytest`) is canonical — and it exits 3 with an
-  INTERNALERROR, collecting zero tests, because one file under `_logs/` calls `sys.exit()` at
-  module scope during collection. Reach under the estate's de facto canonical command is
-  **UNKNOWN**, and reporting it as zero would attribute to the repository a defect belonging to
-  the invocation.
-
-**Rule.** Report the number the instrument produces. If it disagrees with the hypothesis, the
-disagreement is the finding. A number adjusted to confirm a prior belief is worse than no engine,
-because it launders the belief into evidence.
-
-**Cross-ref:** `PR-PROOF-OR-HYPOTHESIS-001`, `sqi_02_test_reach_v1.txt` PART XVIII (the eleven
-attacks on the instrument's own metrics).
+**How to apply.** When you add a metric, ask what refuses when it worsens. If the answer is
+"a human reading the report", the metric is not instrumented — it is published. A guard that
+has never been observed to refuse anything is in the epistemic position of a test that has
+never failed: it may be working perfectly, it may be entirely disconnected, and from the
+outside those two states are indistinguishable.
 
 ---
 
-## T-SQI-DIRECTORY-NOT-MANIFEST-001 — a file inside the test root can still be inert
+## T-SQI-RATIO-GATE-REWARDS-DELETION-001 — never gate on a ratio; gate on the absolute
 
-**Trap.** Counting the test files inside the canonical invocation's directory is not the same as
-counting the test files the canonical invocation collects, and the difference is invisible to
-every instrument that reads a directory listing. A file can sit **inside** the reach boundary,
-correctly named, syntactically perfect, and yield zero collected cases — because its assertions
-live under a `main()` and a `sys.exit()` rather than in functions the runner discovers.
+**Trap.** A guardian that gates on a coverage or reach **ratio** can be satisfied by shrinking
+its denominator. `reach = reached / authored`. In Claude Power Pack today: 3 reached, 101
+authored, reach 3.0%. **Delete the 98 orphaned test files and reach becomes 100% while the
+executed count never moves.** Every ratio improves, the repository is measurably worse by 98
+test files, and no ratio-based rule anywhere has been violated. The guardian reports a triumph.
 
-**Origin.** The founding audit reported "43 tests from **6 files**" for Claude Power Pack. The
-reconciliation engine, harvesting node identities from the runner's own structured output rather
-than listing the directory, reports **2 files**. `tests/test_globalization.py`,
-`test_graphify_live.py`, `test_hooks_registration.py`, and `test_mistake_frequency_xplat.py` are
-all inside `tests/`, all reached by the invocation, and all contribute nothing. They are not
-orphans — orphans are outside. They are a fifth class the corpus had not named: **inert-in-root**.
+This is SQI-02 Part XVIII's **first** attack on its own instrument, and the plan for the
+guardian proposed exactly the gate it defeats (`check falla si reach_pct < baseline.reach_pct`).
 
-**Rule.** Reach is measured against the manifest, never against the filesystem listing of the
-invocation's root. Any engine that asks the directory what the runner collected has substituted a
-proxy for the observation. `modules/sqi/reconcile.py` reports `inert_in_root` per invocation as a
-first-class finding.
+**Rule.** Gate on **absolutes**, and let the ratio be subordinate:
 
-**Cross-ref:** `sqi_02_test_reach_v1.txt` 5.2 (identities, never counts) and 3.2 (the circularity
-trap). Sister of `T-SQI-FINDING-FABRICATION-001`.
-reter)**, chosen over B (7 runners = reimplementation) and A (corpus-blind
-= empty abstraction). Audit == MS-6 applied to the repo (no separate audit engine
-— that would reimplement the Absence Engine). Carries:
-`modules/universal-meta-systems/runtime/` (corpus_parser · noun_map · executor ·
-loop · runtime); test `tools/test_meta_systems_runtime.py` (7 V-gates ×3 hermetic).
+- **executed cases, per root** — protection withdrawn (a skip, a scope line, a relocation).
+- **authored count** — the deletion attack. A ratio can be improved by growing or shrinking its
+  denominator; an absolute cannot (§8.2).
+- **reach** — drift, and it is only *safe* to gate once the two absolutes above are in place.
 
-### PROCESS RULE PR-META-SYSTEMS-EXPOSE-NOT-REIMPLEMENT-001
-The meta-systems runtime NEVER reimplements a meta-system. It reads the corpus,
-applies the noun-map, and produces an execution plan. The logic lives in the
+Corollaries, all from the same source: a **repository total** permits redistribution — an entire
+root can die while a growing sibling absorbs the difference and the total *rises* — so baselines
+are **per-root** (§12.3). A baseline is keyed by the **environment**, because the same repository
+yields 1,606 assertions under one toolchain and zero under a runtime one major version behind,
+and a comparison across environment keys is not a comparison (§12.4). And a baseline carries
+**node identities**, not counts, because a delta of three is an alarm and three names are an
+action (§12.5) — identities are also the only thing that catches a relocation or a same-name
+rewrite, both invisible to any instrument that stores numbers (§15.9).
+
+**Verified:** `V-GUARDIAN-BLOCKS-DELETION-ATTACK` forges reach to 100% by deleting every
+orphan and asserts the guardian **refuses**, naming all 98 lost files.
+
+**Cross-ref:** `T-SQI-FINDING-FABRICATION-001` (never tune the instrument to the hypothesis);
+`sqi_02_test_reach_v1.txt` Parts XII, XV, XVIII.
+
+---
+
+## T-SQI-SCOPE-LAUNDERING-001 — do not adjust the instrument because the number is embarrassing
+
+**Trap.** When a reach figure comes back bad, the cheapest repair is not to connect a test — it
+is to redefine what was being measured. Re-nominate the canonical invocation. Widen the
+discovery exclusions. Lower the baseline inside the same commit that broke it. Each is one
+write; every honest path is work; and the gradient is followed by sincere parties as reliably as
+by hostile ones.
+
+**Rule.** The invocation is discovered, recorded, and hashed **before** the reach is computed;
+reconsidering it afterwards is scope laundering with no adversary to blame (SQI-02 §9.10). If
+the zero-argument default fails or returns UNKNOWN, **that is a real finding requiring an Owner
+governance decision** — not an instrument adjustment to improve the number.
+
+Concretely, in this repository: the zero-argument default crashes with an INTERNALERROR and
+collects zero tests. It would have been trivial to declare `pytest tests/` the canon instead and
+report a comfortable figure. It was not done. The finding stands, unrepaired, in the report.
+
+**The firewall (§12.7):** the party whose change caused a decrease may not, in the same task,
+author the baseline update that permits it. A baseline lowered calmly, in its own commit, with a
+stated reason and an author, is governance. The same baseline lowered inside the commit that made
+it necessary is an escape, and **the two are indistinguishable in the artifact unless the
+firewall separates them in time.** Hence `--accept-baseline --reason … --author …` as a separate,
+attributed, reviewable act that records exactly which identities were surrendered.
+
+**Cross-ref:** `sqi_00_constitution_v1.txt` PART XIII (Gate Mutation Firewall), PART XVI (the
+six self-deceptions); `PR-ACIS-FALSIFIABILITY-001` (No-Autopromotion).
+
 corpus; the runtime is an interpreter, not a copy. Corollary 1: a per-meta-system
 "runner" that encodes the meta-system's own logic in code is a reimplementation
 and is rejected — the parser + noun-map is the only permitted mechanism.
@@ -3804,3 +3808,5 @@ governance; the same gate loosened at midnight by the agent it is blocking is an
 
 **Cross-ref:** `sqi_00_constitution_v1.txt` PART XI (Q5), PART XIII (Gate Mutation Firewall),
 PART XX (amendment). Sister of `PR-ACIS-FALSIFIABILITY-001` (No-Autopromotion).
+
+- **UKDL-OSA-2026-07-12T14:21:33Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token

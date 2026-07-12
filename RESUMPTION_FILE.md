@@ -32,19 +32,26 @@ Do not rewrite either.
 - `sqi_00_constitution_v1.txt` · `sqi_01_repository_reality_v1.txt` ·
   `sqi_02_test_reach_v1.txt` ★ · `sqi_03_environment_qualification_v1.txt` — 20/20 Parts each.
 - `modules/sqi/repo_reality_scanner.py` · `environment_qualifier.py` · `reconcile.py` ·
-  `discovery_rules.json` (**governed artifact** — widening its exclusions is the census trap).
-- `tools/run_sqi.py` → `vault/audits/sqi_report_<date>.md` + JSON sidecar.
-- `tests/test_sqi_engine.py` — 24 tests, **inside** `tests/` so the engine is reached by the
-  canonical invocation. It is there because the engine reported SELF-REACH ZERO about itself.
+  `baseline_guardian.py` · `discovery_rules.json` (**governed artifact** — widening its
+  exclusions is the census trap).
+- `tools/run_sqi.py` → `vault/audits/sqi_report_<date>.md` + JSON sidecar + the guardian verdict.
+  **It exits non-zero on an unexplained decrease.** `--accept-baseline --reason … --author …`
+  is the only path that may LOWER a baseline.
+- `vault/audits/sqi_baseline.json` — per-root, env-keyed, identity-carrying. Currently: **76**
+  executed in root `pytest tests/`, 101 authored, reach 3.0%, env `b5ec3ed51c2f23b1`.
+- `tests/test_sqi_engine.py` — 33 tests, **inside** `tests/` so the engine and the guardian are
+  reached. It is there because the engine reported SELF-REACH ZERO about itself.
 - `sqi-runner` in the D1 Liveness Ledger. CO-12 signal kind `sqi_reconcile`.
 - UKDL: `T-SQI-PARALLEL-SYSTEM-001`, `PR-SQI-COMPOUND-INTELLIGENCE-001`,
   `T-SQI-SELF-EVOLUTION-UNCONTROLLED-001`, `PR-SQI-EXECUTABLE-GOVERNANCE-001`,
-  `T-SQI-FINDING-FABRICATION-001`, `T-SQI-DIRECTORY-NOT-MANIFEST-001`.
+  `T-SQI-FINDING-FABRICATION-001`, `T-SQI-DIRECTORY-NOT-MANIFEST-001`,
+  `PR-SQI-SIGNAL-MUST-GATE-001`, `T-SQI-RATIO-GATE-REWARDS-DELETION-001`,
+  `T-SQI-SCOPE-LAUNDERING-001`.
 
 **Coherence anchor — these must agree or something has drifted:**
-`python tools/test_sqi.py` reports `SQI_PASS=36/36` and `datasets=4` · `SQI_INDEX.md` marks 4
+`python tools/test_sqi.py` reports `SQI_PASS=45/45` and `datasets=4` · `SQI_INDEX.md` marks 4
 datasets `COMPLETE` · `vault/knowledge_base/sqi/sqi_*_v1.txt` is exactly 4 files ·
-`modules/sqi/*.py` is exactly 4 files (3 engines + `__init__`).
+`modules/sqi/*.py` is exactly 5 files (4 engines + `__init__`).
 
 **What the engine measures about this repository right now** (do not re-derive; re-run it):
 Test File Reach **3.0%** (3 of 100) · Orphaned **97** · Executed Protection Ratio **1.6%** ·
@@ -87,22 +94,25 @@ SQI-04…SQI-13. Ten datasets.
 
 ## 4. Next actions (imperative — highest value first)
 
-1. **Build the SQI-02 Part XII baseline guardian.** This is now the largest gap: the engine
-   *measures* and does not *gate*. Per-root, keyed by the environment hash, carrying node
-   identities (a delta of three is an alarm; three names are an action). An increase is free; a
-   silent **decrease** fails the build. The party whose change caused the decrease may not, in
-   the same task, author the baseline update that permits it. Wire it into a done-gate. This
-   moves SQI from `invoked` to `enforced` on Part XVII's own five-state ladder — and a signal
-   that is emitted and never read is functionally identical to one never computed (§8.4).
+1. **Build SQI-02 Part XV weakening detection.** This is now the largest gap, and it is the
+   attack the guardian *cannot* see. The guardian gates the executed **count**, so it catches
+   deletion, skips, and relocation. Weakening lowers **nothing**: a removed assertion, a widened
+   exception handler, an unreal fixture, over-mocking, a lowered threshold, a tautological
+   assertion — in every one the file is present, the case is collected, the case passes, **the
+   count is identical, and the protection is gone.** Weakening is the perfect attack on a
+   count-based instrument, and this instrument is count-based. Part XV specifies the detectors:
+   assertion counts per case, mock counts per test, content hashes (already recorded in the
+   topology map for exactly this reason), and a cheap mutation probe — break one return value in
+   a "protected" unit, run the tests that reference it, and record which stay green. Every green
+   one is asserting nothing about the value it claims to protect.
 2. **Point `run_sqi.py` at the rest of the estate.** It takes a path argument and has never been
    run outside PP. TUA-X's 390 orphaned tests are one `testpaths` line; CostaLuz's scanner is
    declared and never invoked; the two Elixir repos cannot compile. The engine detects all three
    classes already. Nothing has pointed it at them.
-3. **Surface the three PP findings to the Owner** (they are governance decisions, not agent
-   work): the broken zero-argument default, the absent root pytest config, and the 63 unprotected
-   module packages including `secret_firewall`.
-4. **Only then** consider SQI-04…13 from the backlog. Ten more datasets of doctrine on top of an
-   engine that cannot yet refuse anything would deepen the gap, not close it.
+3. **Surface the four PP findings to the Owner** (governance decisions, not agent work): the
+   broken zero-argument default, the absent root pytest config, the canonical invocation, and the
+   63 unprotected module packages including `secret_firewall` and `cascade_prevention`.
+4. **Only then** consider SQI-04…13 from the backlog.
 
 ---
 

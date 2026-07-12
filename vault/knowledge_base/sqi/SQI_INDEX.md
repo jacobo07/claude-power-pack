@@ -32,10 +32,19 @@ without enforcement is documentation — so a dataset that specifies an engine s
 | `modules/sqi/reconcile.py` | SQI-02 | `COMPLETE` |
 | `modules/sqi/discovery_rules.json` | SQI-02 §3.4 — **governed artifact** | `COMPLETE` |
 | `tools/run_sqi.py` | unified runner → `vault/audits/sqi_report_<date>.md` | `COMPLETE` |
-| `tests/test_sqi_engine.py` | 24 tests, inside the canonical invocation (§5.10) | `COMPLETE` |
-| SQI-02 Part XII baseline guardian | fails the build on a silent decrease | `NOT_STARTED` |
+| `tests/test_sqi_engine.py` | 33 tests, inside the canonical invocation (§5.10) | `COMPLETE` |
+| `modules/sqi/baseline_guardian.py` | SQI-02 Part XII — **fails the build on a silent decrease** (SCS C93) | `COMPLETE` |
+| `vault/audits/sqi_baseline.json` | the recorded derivative: per-root, env-keyed, identity-carrying | `COMPLETE` |
+| SQI-02 Part XV weakening detection | assertion counts, mock counts, content hashes, mutation probe | `NOT_STARTED` |
 
-**Gate:** `python tools/test_sqi.py` → `SQI_PASS=36/36` ×3 hermetic (27 corpus + 9 engine).
+**Gate:** `python tools/test_sqi.py` → `SQI_PASS=45/45` ×3 hermetic (27 corpus + 9 engine + 9 guardian).
+
+**The guardian gates three ABSOLUTES, never a ratio** — because `reach = reached/authored`, and
+deleting the 98 orphans would take reach to 100% while the executed count never moved. A
+ratio-gated guardian celebrates that. This one refuses, and names all 98 lost files
+(`T-SQI-RATIO-GATE-REWARDS-DELETION-001`). An increase ratchets automatically; **a decrease never
+auto-updates** — lowering a baseline needs `--accept-baseline --reason … --author …`, because the
+party whose change caused the decrease may not, in the same task, author the update permitting it.
 
 **What it measures about this repository** (2026-07-12, from the disk):
 Test File Reach **3.0%** (3 of 100 authored) · Orphaned **97** · Executed Protection Ratio
