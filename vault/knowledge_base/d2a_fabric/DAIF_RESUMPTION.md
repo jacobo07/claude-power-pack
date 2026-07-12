@@ -18,25 +18,29 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
 
 - Phase 2 CLOSED: `DAIF_CANONICAL_MAP.md` = 22 candidates → **8 build · 6 do-not-build · 8 folded**.
 - 8 sovereign datasets in `DAIF_INDEX.md` manifest: DAIF-00,01,02,03,04,07,08,21.
-- Datasets SEALED: **4/8** (DAIF-00 30,417w; DAIF-01 33,509w; DAIF-02 34,826w; DAIF-03 38,694w).
-  Parts: **80/160**, **137,446 words**. Gate: `DAIF_PASS=24/24` exit 0. **The spine is complete**
-  (constitution → types → representations → fidelity).
+- Datasets SEALED: **5/8** (DAIF-00 30,417w; DAIF-01 33,509w; DAIF-02 34,826w; DAIF-03 38,694w; DAIF-07 38,435w).
+  Parts: **100/160**, **175,881 words**. Gate: `DAIF_PASS=30/30` exit 0. **Spine + the founding idea are complete**
+  (constitution → types → representations → fidelity → obligations).
 - Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY≥1200/FABRICATION/CONTAMINATION/NONDUP).
   Observed to refuse then pass — a real gate. Agents over-report word counts by ~5-8%; the orchestrator's independent
   count governs. Only the 1,200 floor is binding — there is NO upper ceiling; never cut mechanism to hit a word target.
-- **NEXT = DAIF-07** (Obligation Lifecycle & Work Completion Authority), `SOVEREIGNTY_PROVEN`, 0/20. **The founding idea
-  of the whole source brainstorm** (the Unfinished Work Watcher), now arriving correctly: it does NOT scan loose text —
-  it CONSUMES CIR-5 (DAIF-02) as a formal IR, exactly as the source itself prescribed. Obligation object: id · type ·
-  origin · source · owner · authority · scope · priority · risk · impact · dependencies · blockers · state · lifecycle ·
-  age · evidence · closure conditions · done-gate · expiry · escalation · abandonment risk · supersession. Obligation
-  kinds: task · promise · open decision · pending verification/test/acceptance/rollout/deployment/migration · unfinished
-  dataset · incomplete PRD · missing evidence · unresolved contradiction · deferred work · abandoned experiment ·
-  forgotten conversation · undocumented implementation · operational + institutional debt. Engines: detectors ·
-  prioritizers · aging models · closure verifiers · the obligation ledger · longitudinal analysis · prediction.
-  WRITES INTO (never forks): owner_queue (D4) · backlog_autopilot · liveness (D1) · scaffold-auditor · Lazarus/session
-  continuity · learning-sentinel. Obligation fidelity is BINARY (DAIF-03 Part V) — obligation loss is silent, and
-  silence is why it is the most damaging failure class.
-  Then DAIF-04 (contracts) → 08 (context/mission runtime) → 21 (reality sync) → Phase 7 compounding map → Phase 8 seal SCS C95.
+- **NEXT = DAIF-04** (Institutional Contract Fabric), `D2A_CLASSIFIED`, 0/20. CREATE (thin). Absorbs the D2A-19 event
+  candidate (typed event SCHEMA only — transport stays PM-03/CEPS, never forked). Content: typed contracts between
+  agents · datasets · commands · hooks · engines · missions · memories · registries · evaluators · runtime components.
+  Per contract: preconditions · postconditions · inputs · outputs · authority · ownership · scope · lifecycle · evidence ·
+  done-gates · failure · timeout · retries · escalation · rollback · compensation · compatibility · inheritance ·
+  composition · version negotiation · breach detection · breach response · observability · testing · migration ·
+  deprecation. Composes `done_gate`, `spec_gate`, the per-dataset integration-contract convention, DAIF-01 types/authority.
+  Then DAIF-08 (Context Assembly & Mission Runtime — EXTEND of GK-06 Minimal Context Pack + CO-04 Context VM +
+  session_compiler; absorbs D2A-18 Mission Assembly; delta = page faults, expansion handles, progressive disclosure,
+  profile-guided optimization; consumes CIR-11)
+  → DAIF-21 (Reality Synchronization & Semantic Change — absorbs D2A-14; detects textual vs semantic vs behavioral vs
+  authority vs scope change; triggers invalidation → recompilation → obligation creation → re-evaluation; composes SQI
+  reality-supremacy + GK-07 freshness)
+  → Phase 7 (Cross-Dataset Compounding Map + Coverage Matrix + Gap/Contradiction registers)
+  → Phase 8 (final corpus audit: contamination, depth, non-duplication, mechanism, implementability, anti-bureaucracy,
+  reality gate) → seal **SCS C95** + UKDL rules (T-IIC-CIVILIZATION-DUPLICATION-001, PR-IIC-DATASET-FIRST-GOVERNS-001,
+  T-IIC-ORGCHART-IS-NOT-MECHANISM-001, PR-DAIF-D2A-PLUS-DEFAULT-001) → push REMOTE_DELTA 0 0.
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
