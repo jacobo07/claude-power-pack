@@ -17,6 +17,8 @@ tree.
 
 from __future__ import annotations
 
+import copy
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -35,6 +37,7 @@ from modules.sqi.reconcile import (
     TRUE_GREEN, PARTIAL_GREEN, MISLEADING_GREEN, UNVERIFIED_GREEN,
     ENVIRONMENT_DEPENDENT_GREEN, VERDICT_TO_ONTOLOGY,
 )
+from modules.sqi import baseline_guardian as guardian
 
 
 @pytest.fixture(scope="module")
@@ -277,3 +280,160 @@ def test_verdict_true_green_is_reachable_but_requires_everything():
 def test_this_repository_is_not_true_green(report):
     # The whole point. 98 orphans and 63 unprotected surface elements.
     assert report.signal_integrity_verdict != TRUE_GREEN
+
+
+# --- SQI-02 Part XII: the baseline guardian --------------------------------------------
+#
+# Every gate below writes only inside a tmp_path. A guardian test that touched the real
+# vault/audits/sqi_baseline.json would ratchet it as a side effect of being run, and the suite
+# would stop being hermetic on its own second execution.
+
+ENV = "test-env-key"
+
+
+def _base(tmp_path, rep, env=ENV):
+    p = tmp_path / "baseline.json"
+    guardian.save_baseline(p, guardian.snapshot(rep, env))
+    return p
+
+
+def test_guardian_first_run_creates_baseline(tmp_path, report):
+    p = tmp_path / "baseline.json"
+
+    v = guardian.check(report, ENV, repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.CREATED
+    assert v.failing is False
+    assert p.is_file()
+
+
+def test_guardian_passes_when_stable(tmp_path, report):
+    p = _base(tmp_path, report)
+
+    v = guardian.check(report, ENV, repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.PASS
+    assert v.failing is False
+    assert v.updated is False  # nothing improved; nothing to ratchet
+
+
+def test_guardian_fails_the_build_on_a_silent_decrease(tmp_path, report):
+    # 12.2: an increase requires nothing, and a decrease fails the build.
+    snap = guardian.snapshot(report, ENV)
+    root = next(iter(snap["roots"]))
+    snap["roots"][root]["executed_cases"] += 1  # baseline remembers one more than we observe
+    p = tmp_path / "baseline.json"
+    guardian.save_baseline(p, snap)
+
+    v = guardian.check(report, ENV, repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.REGRESSED
+    assert v.failing is True
+    assert v.updated is False, "a decrease must NEVER auto-update the baseline (12.7)"
+    assert any(r.gate == "executed" for r in v.regressions)
+
+
+def test_guardian_ratchets_the_baseline_upward(tmp_path, report):
+    snap = guardian.snapshot(report, ENV)
+    root = next(iter(snap["roots"]))
+    observed = snap["roots"][root]["executed_cases"]
+    snap["roots"][root]["executed_cases"] = observed - 1  # we have grown since the baseline
+    p = tmp_path / "baseline.json"
+    guardian.save_baseline(p, snap)
+
+    v = guardian.check(report, ENV, repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.PASS
+    assert v.updated is True
+    after = json.loads(p.read_text(encoding="utf-8"))
+    assert after["roots"][root]["executed_cases"] == observed
+
+
+def test_guardian_blocks_the_deletion_attack(tmp_path, report):
+    """SQI-02 18.2, the FIRST attack on this instrument.
+
+    Delete the orphans and reach goes from 3% to 100% while the executed count never moves. A
+    guardian that gated on the ratio would report a triumph over a repository that had just lost
+    98 test files. The countermeasure is that the ABSOLUTE authored count must not fall.
+    """
+    p = _base(tmp_path, report)
+
+    attacked = copy.deepcopy(report)
+    reached = set(attacked.reached_files)
+    attacked.authored_files = sorted(reached)   # every orphan deleted
+    attacked.authored_count = len(reached)
+    attacked.orphaned_files, attacked.orphaned_count = [], 0
+    attacked.test_file_reach = 1.0              # a perfect score
+
+    v = guardian.check(attacked, ENV, repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.REGRESSED, "the deletion attack bought a green"
+    assert v.failing is True
+    authored = [r for r in v.regressions if r.gate == "authored"]
+    assert authored, "reach hit 100% and no gate fired -- the ratio was gameable"
+    assert len(authored[0].lost_identities) > 50  # every deleted file is NAMED
+
+
+def test_guardian_lowering_requires_an_attributed_act(tmp_path, report):
+    # 12.7, the firewall. A baseline lowered calmly, in its own commit, with a stated reason, is
+    # governance. The same baseline lowered inside the commit that made it necessary is an escape.
+    p = _base(tmp_path, report)
+    attacked = copy.deepcopy(report)
+    attacked.authored_files = sorted(set(attacked.reached_files))
+    attacked.authored_count = len(attacked.authored_files)
+
+    v = guardian.check(
+        attacked, ENV, repo=ROOT, baseline_path=p,
+        accept=True, reason="module retired", author="owner",
+    )
+
+    assert v.verdict == guardian.PASS
+    assert v.updated is True
+    rec = json.loads(p.read_text(encoding="utf-8"))
+    assert rec["author"] == "owner"
+    assert rec["reason"] == "module retired"
+    assert rec["removed_identities"], "an acceptance must record WHAT it accepted losing"
+
+
+def test_guardian_refuses_to_compare_across_environments(tmp_path, report):
+    # 12.4: the same repository yields 1,606 assertions under one toolchain and zero under a
+    # runtime one major version behind. An alarm here would dispatch an engineer to hunt for
+    # deleted tests that nobody deleted. The guardian says so rather than raising an alarm it
+    # cannot substantiate.
+    p = _base(tmp_path, report, env="host-a")
+
+    v = guardian.check(report, "host-b", repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.ENV_MISMATCH
+    assert v.failing is False
+    assert not v.regressions
+
+
+def test_guardian_fails_open_to_unknown_on_a_corrupt_baseline(tmp_path, report):
+    # A disarmed guard that reports success is the exact artifact this corpus discredits.
+    p = tmp_path / "baseline.json"
+    p.write_text("{ this is not json", encoding="utf-8")
+
+    v = guardian.check(report, ENV, repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.UNKNOWN
+    assert v.failing is False   # it cannot substantiate a FAIL
+    assert v.verdict != guardian.PASS  # and it must never claim one
+    assert v.error
+
+
+def test_guardian_catches_a_root_that_vanished(tmp_path, report):
+    # 12.3: a repository total permits redistribution -- an entire root can die while a growing
+    # sibling absorbs the difference and the total RISES. Per-root baselines make that impossible.
+    snap = guardian.snapshot(report, ENV)
+    snap["roots"]["pytest ghost/"] = {
+        "invocation": "pytest ghost/", "oracle": "ci",
+        "executed_cases": 500, "executed_files": ["ghost/test_x.py"],
+    }
+    p = tmp_path / "baseline.json"
+    guardian.save_baseline(p, snap)
+
+    v = guardian.check(report, ENV, repo=ROOT, baseline_path=p)
+
+    assert v.verdict == guardian.REGRESSED
+    assert any(r.root == "pytest ghost/" and r.observed == 0 for r in v.regressions)

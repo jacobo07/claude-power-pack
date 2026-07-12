@@ -1,9 +1,9 @@
 {
-  "generated": "2026-07-12 14:02 UTC",
+  "generated": "2026-07-12 15:45 UTC",
   "reality": {
     "repo": "claude-power-pack",
     "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
-    "commit": "67139f197f814a79cbccb239cfdc50bbcc593fa3",
+    "commit": "6541399c1b216e50293e820d91bf6de3e97fb078",
     "language_contexts": [
       {
         "language": "python",
@@ -344,6 +344,12 @@
       },
       {
         "path": "tools/test_duplicate_to_advantage.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_enforcement_systems.py",
         "stack": "python",
         "rule": "test_*.py",
         "kind": "test_file"
@@ -705,7 +711,7 @@
     ],
     "declared_guards": [],
     "per_rule_hits": {
-      "python:test_*.py": 87,
+      "python:test_*.py": 88,
       "python:*_test.py": 13,
       "javascript:*.test.js": 5
     },
@@ -817,7 +823,7 @@
   },
   "reconciliation": {
     "repo": "claude-power-pack",
-    "commit": "67139f197f814a79cbccb239cfdc50bbcc593fa3",
+    "commit": "6541399c1b216e50293e820d91bf6de3e97fb078",
     "authored_files": [
       "_logs/_m1_secret_firewall_test.py",
       "_logs/_m3_backlog_signal_test.py",
@@ -869,6 +875,7 @@
       "tools/test_dataset_first_protocol.py",
       "tools/test_decision_review.py",
       "tools/test_duplicate_to_advantage.py",
+      "tools/test_enforcement_systems.py",
       "tools/test_fable_distillation.py",
       "tools/test_frontier_intelligence_os.py",
       "tools/test_governance_propagation.py",
@@ -920,7 +927,7 @@
       "tools/test_wrapper.py",
       "tools/test_zero_command.py"
     ],
-    "authored_count": 100,
+    "authored_count": 101,
     "invocations": [
       {
         "command": "pytest tests/",
@@ -933,7 +940,7 @@
           "tests/test_forensic_probes.py",
           "tests/test_sqi_engine.py"
         ],
-        "executed_cases": 67,
+        "executed_cases": 76,
         "collection_errors": 0,
         "deselected": 0,
         "blocker": null,
@@ -955,7 +962,7 @@
         "executed_cases": null,
         "collection_errors": 0,
         "deselected": 0,
-        "blocker": "INTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 2.57s\nmainloop: caught unexpected SystemExit!",
+        "blocker": "INTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 1.20s\nmainloop: caught unexpected SystemExit!",
         "verdict": "UNKNOWN",
         "inert_in_root": []
       }
@@ -1014,6 +1021,7 @@
       "tools/test_dataset_first_protocol.py",
       "tools/test_decision_review.py",
       "tools/test_duplicate_to_advantage.py",
+      "tools/test_enforcement_systems.py",
       "tools/test_fable_distillation.py",
       "tools/test_frontier_intelligence_os.py",
       "tools/test_governance_propagation.py",
@@ -1066,13 +1074,13 @@
       "tools/test_zero_command.py"
     ],
     "surprise_files": [],
-    "test_file_reach": 0.03,
+    "test_file_reach": 0.0297029702970297,
     "test_case_reach": null,
     "suite_activation_ratio": 0.1111111111111111,
-    "orphaned_count": 97,
-    "orphaned_ratio": 0.97,
+    "orphaned_count": 98,
+    "orphaned_ratio": 0.9702970297029703,
     "silent_collection_loss": 0,
-    "executed_protection_ratio": 0.045454545454545456,
+    "executed_protection_ratio": 0.04411764705882353,
     "unprotected_surface": [
       "agent-governance",
       "agent-lightning",
@@ -1121,6 +1129,7 @@
       "parallel_mesh",
       "pp_agents",
       "recall_roi",
+      "refcheck",
       "rollback",
       "rtk-core",
       "rule_compiler",
@@ -1132,6 +1141,7 @@
       "skill_router",
       "sleepless_qa",
       "spec_gate",
+      "sweep_enforcer",
       "token-optimizer",
       "universal-meta-systems",
       "uqf",
@@ -1156,7 +1166,7 @@
       "note": ""
     },
     "per_rule_hits": {
-      "python:test_*.py": 87,
+      "python:test_*.py": 88,
       "python:*_test.py": 13,
       "javascript:*.test.js": 5
     },
@@ -1165,8 +1175,19 @@
     "hermetic_stable": true,
     "findings": [
       "INERT-IN-ROOT (4): authored test files that live INSIDE a canonical invocation's root and yield zero collected cases. They are inside the reach boundary and protect nothing. The founding audit counted these as reached, because it counted files in the directory rather than identities in the manifest: ['tests/test_globalization.py', 'tests/test_graphify_live.py', 'tests/test_hooks_registration.py', 'tests/test_mistake_frequency_xplat.py']",
-      "AUTHORITATIVE INVOCATION BROKEN: `pytest` (oracle=zero_arg_default) exits 3 and produces no manifest. Reach under the estate's de facto canonical command is UNKNOWN, not zero. Blocker (verbatim):\nINTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 2.57s\nmainloop: caught unexpected SystemExit!"
+      "AUTHORITATIVE INVOCATION BROKEN: `pytest` (oracle=zero_arg_default) exits 3 and produces no manifest. Reach under the estate's de facto canonical command is UNKNOWN, not zero. Blocker (verbatim):\nINTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 1.20s\nmainloop: caught unexpected SystemExit!"
     ],
     "error": null
+  },
+  "guardian": {
+    "verdict": "BASELINE_PASS",
+    "regressions": [],
+    "baseline_env": "b5ec3ed51c2f23b1",
+    "observed_env": "b5ec3ed51c2f23b1",
+    "updated": true,
+    "baseline_path": "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\vault\\audits\\sqi_baseline.json",
+    "summary": "BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (baseline ratcheted up)",
+    "error": null,
+    "failing": false
   }
 }

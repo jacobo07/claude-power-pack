@@ -1,14 +1,21 @@
 # SQI Report — claude-power-pack
 
-> Generated 2026-07-12 14:02 UTC by `tools/run_sqi.py`. Commit `67139f19`.
+> Generated 2026-07-12 15:45 UTC by `tools/run_sqi.py`. Commit `6541399c`.
 > The executable layer of the SQI corpus. Doctrine: `vault/knowledge_base/sqi/`.
 
 ## Verdict
 
+- **Baseline guardian:** `BASELINE_PASS`
 - **Signal integrity:** `PARTIAL_GREEN` → ontology `PARTIALLY-VERIFIED`
 - **Environment:** `PARTIALLY_QUALIFIED` — verdict ceiling: per-surface; UNVERIFIED or BLOCKED for the unobserved
 - **Reach under the authoritative invocation:** `UNKNOWN`
-- **Orphaned test files:** **97** of 100 authored
+- **Orphaned test files:** **98** of 101 authored
+
+## Baseline guardian (SQI-02 Part XII)
+
+BASELINE_PASS: 76 executed across 1 root(s), 101 authored, reach=3.0% (baseline ratcheted up)
+
+Baseline: `sqi_baseline.json` · environment `b5ec3ed51c2f23b1` · ratcheted this run: True
 
 ## Findings
 
@@ -22,7 +29,7 @@
   INTERNALERROR>   File "C:\Users\User\.claude\skills\claude-power-pack\_logs\_m1_secret_firewall_test.py", line 118, in <module>
   INTERNALERROR>     sys.exit(0 if passes == total else 1)
   INTERNALERROR> SystemExit: 0
-  no tests collected in 2.57s
+  no tests collected in 1.20s
   mainloop: caught unexpected SystemExit!
   ```
 
@@ -31,8 +38,8 @@
 - Languages: python, javascript
 - Domains: agent_system, prompt_system, content_vault, frontend_application, cli_tool, hybrid_monorepo, library
 - Lock state: python=UNLOCKED, javascript=UNLOCKED
-- Authored test artifacts: 105
-- Discovery rule hits: `{"python:test_*.py": 87, "python:*_test.py": 13, "javascript:*.test.js": 5}`
+- Authored test artifacts: 106
+- Discovery rule hits: `{"python:test_*.py": 88, "python:*_test.py": 13, "javascript:*.test.js": 5}`
 - **Engine uncertainty:** 2 files matched no rule but live where tests live
 
 ## 2. Environment qualification (SQI-03)
@@ -53,7 +60,7 @@
 
 | oracle | command | authoritative | status | exit | files | cases | verdict |
 |---|---|---|---|---|---|---|---|
-| documentation | `pytest tests/` | no | `OK` | 0 | 3 | 67 | `PARTIAL_GREEN` |
+| documentation | `pytest tests/` | no | `OK` | 0 | 3 | 76 | `PARTIAL_GREEN` |
 | zero_arg_default | `pytest` | **yes** | `BROKEN` | 3 | 0 | UNKNOWN | `UNKNOWN` |
 
 Precedence (SQI-02 §9.4): a CI job is authoritative where one exists, because it is the only oracle backed by an observation rather than an intention. Where none exists, the zero-argument default is authoritative — it is what a human, a hook, or an agent with no prior context will actually type. **Documentation is never authoritative.**
@@ -62,13 +69,13 @@ Precedence (SQI-02 §9.4): a CI job is authoritative where one exists, because i
 
 | metric | value |
 |---|---|
-| Test File Reach | 3.0% (3/100) |
+| Test File Reach | 3.0% (3/101) |
 | Test Case Reach | UNKNOWN |
 | Suite Activation Ratio | 11.1% |
-| **Orphaned Test Count** | **97** (absolute) |
+| **Orphaned Test Count** | **98** (absolute) |
 | Orphaned Ratio | 97.0% |
 | Silent Collection Loss | 0 |
-| Executed Protection Ratio | 4.5% |
+| Executed Protection Ratio | 4.4% |
 | Surprise set (self-audit) | 0 |
 | Hermetic runs | 3 → stable: True |
 
@@ -81,7 +88,7 @@ Test Case Reach is `UNKNOWN` and is not estimated. Establishing it requires pars
 
 *An auditor exempt from its own audit is not an auditor.* A report without a positive self-reach assertion is inadmissible.
 
-### Unprotected surface (63 elements)
+### Unprotected surface (65 elements)
 
 Module packages with **zero references from any test the canonical invocation reaches**. This is the only metric here whose denominator is risk rather than tests (SQI-02 §8.6) — the metric that catches a green suite standing beside an unprotected surface.
 
@@ -132,6 +139,7 @@ Module packages with **zero references from any test the canonical invocation re
 - `modules/parallel_mesh`
 - `modules/pp_agents`
 - `modules/recall_roi`
+- `modules/refcheck`
 - `modules/rollback`
 - `modules/rtk-core`
 - `modules/rule_compiler`
@@ -143,13 +151,14 @@ Module packages with **zero references from any test the canonical invocation re
 - `modules/skill_router`
 - `modules/sleepless_qa`
 - `modules/spec_gate`
+- `modules/sweep_enforcer`
 - `modules/token-optimizer`
 - `modules/universal-meta-systems`
 - `modules/uqf`
 - `modules/wrapper`
 - `modules/zero-crash`
 
-### Orphaned test files (97)
+### Orphaned test files (98)
 
 The list, not the percentage. A reader shown 98 paths reacts differently from a reader shown a percentage, and the difference in reaction is the entire point of publishing it (SQI-02 §8.2).
 
@@ -200,6 +209,7 @@ The list, not the percentage. A reader shown 98 paths reacts differently from a 
 - `tools/test_dataset_first_protocol.py`
 - `tools/test_decision_review.py`
 - `tools/test_duplicate_to_advantage.py`
+- `tools/test_enforcement_systems.py`
 - `tools/test_fable_distillation.py`
 - `tools/test_frontier_intelligence_os.py`
 - `tools/test_governance_propagation.py`

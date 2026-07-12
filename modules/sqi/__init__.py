@@ -18,6 +18,7 @@ attribution error the corpus exists to forbid.
 from modules.sqi.repo_reality_scanner import scan_repo, RepoRealityProfile
 from modules.sqi.environment_qualifier import qualify, EnvironmentRecord
 from modules.sqi.reconcile import reconcile, ReconciliationReport
+from modules.sqi.baseline_guardian import check, GuardianVerdict
 
 __all__ = [
     "scan_repo",
@@ -26,4 +27,6 @@ __all__ = [
     "EnvironmentRecord",
     "reconcile",
     "ReconciliationReport",
+    "check",
+    "GuardianVerdict",
 ]

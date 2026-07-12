@@ -336,6 +336,175 @@ def check_engines() -> None:
     except ImportError as exc:
         _fail("V-SQI-LIVENESS", f"liveness ledger does not import: {exc}")
 
+    # Handed to the guardian gates so the reconciliation is paid for exactly once.
+    return rep
+
+
+def check_guardian(rep) -> None:
+    """SQI-02 Part XII. The engines MEASURE; the guardian is the only one that can REFUSE.
+
+    Every gate here writes only inside a temp directory. A guardian gate that touched the real
+    vault/audits/sqi_baseline.json would ratchet it as a side effect of being run, and the suite
+    would stop being hermetic on its own second execution.
+    """
+    import copy
+    import json as _json
+    import os
+    import subprocess
+    import tempfile
+
+    try:
+        from modules.sqi import baseline_guardian as G
+    except ImportError as exc:
+        _fail("V-GUARDIAN-IMPORT", f"the guardian does not import: {exc}")
+        return
+
+    ENV = "gate-env-key"
+
+    def _write(tmp, snap, name="b.json"):
+        p = Path(tmp) / name
+        G.save_baseline(p, snap)
+        return p
+
+    with tempfile.TemporaryDirectory() as td:
+        base = G.snapshot(rep, ENV)
+        root = next(iter(base["roots"]), None)
+        if root is None:
+            _fail("V-GUARDIAN-FIRST-RUN", "no OK invocation; nothing to baseline")
+            return
+
+        # --- first run: no baseline on disk -> CREATED, and it exists afterwards ---
+        p = Path(td) / "fresh.json"
+        v = G.check(rep, ENV, repo=REPO, baseline_path=p)
+        if v.verdict == G.CREATED and not v.failing and p.is_file():
+            _ok("V-GUARDIAN-FIRST-RUN",
+                f"{v.verdict}; baseline written: "
+                f"{base['roots'][root]['executed_cases']} executed, "
+                f"{base['authored_count']} authored, env={ENV}")
+        else:
+            _fail("V-GUARDIAN-FIRST-RUN", f"{v.verdict} failing={v.failing} exists={p.is_file()}")
+
+        # --- stable -> PASS, no ratchet ---
+        p = _write(td, base, "stable.json")
+        v = G.check(rep, ENV, repo=REPO, baseline_path=p)
+        if v.verdict == G.PASS and not v.failing and not v.updated:
+            _ok("V-GUARDIAN-PASSES-STABLE", f"{v.verdict}; nothing fell, nothing ratcheted")
+        else:
+            _fail("V-GUARDIAN-PASSES-STABLE",
+                  f"{v.verdict} failing={v.failing} updated={v.updated}")
+
+        # --- a silent decrease FAILS THE BUILD, and names what vanished ---
+        snap = copy.deepcopy(base)
+        snap["roots"][root]["executed_cases"] += 1
+        p = _write(td, snap, "drop.json")
+        v = G.check(rep, ENV, repo=REPO, baseline_path=p)
+        if v.verdict == G.REGRESSED and v.failing and not v.updated:
+            r = v.regressions[0]
+            _ok("V-GUARDIAN-DETECTS-REGRESSION",
+                f"{v.verdict}; {r.gate}@{r.root}: {r.baseline} -> {r.observed}; "
+                f"a decrease never auto-updates the baseline (12.7)")
+        else:
+            _fail("V-GUARDIAN-DETECTS-REGRESSION",
+                  f"{v.verdict} failing={v.failing} updated={v.updated}")
+
+        # --- an increase is free, and it ratchets ---
+        snap = copy.deepcopy(base)
+        observed = base["roots"][root]["executed_cases"]
+        snap["roots"][root]["executed_cases"] = observed - 1
+        p = _write(td, snap, "grew.json")
+        v = G.check(rep, ENV, repo=REPO, baseline_path=p)
+        after = _json.loads(p.read_text(encoding="utf-8"))["roots"][root]["executed_cases"]
+        if v.verdict == G.PASS and v.updated and after == observed:
+            _ok("V-GUARDIAN-UPDATES-BASELINE",
+                f"{v.verdict}; baseline ratcheted {observed - 1} -> {after}")
+        else:
+            _fail("V-GUARDIAN-UPDATES-BASELINE",
+                  f"{v.verdict} updated={v.updated} baseline_now={after} expected={observed}")
+
+        # --- THE DELETION ATTACK (18.2). Deleting the orphans takes reach to 100% and never
+        # touches the executed count. A ratio-gated guardian celebrates. This one must refuse.
+        attacked = copy.deepcopy(rep)
+        reached = set(attacked.reached_files)
+        attacked.authored_files = sorted(reached)
+        attacked.authored_count = len(reached)
+        attacked.orphaned_files, attacked.orphaned_count = [], 0
+        attacked.test_file_reach = 1.0
+        p = _write(td, base, "attack.json")
+        v = G.check(attacked, ENV, repo=REPO, baseline_path=p)
+        authored_regs = [r for r in v.regressions if r.gate == "authored"]
+        if v.verdict == G.REGRESSED and v.failing and authored_regs:
+            _ok("V-GUARDIAN-BLOCKS-DELETION-ATTACK",
+                f"{v.verdict}; reach forged to 100% by deleting "
+                f"{len(authored_regs[0].lost_identities)} authored files -> REFUSED on the "
+                f"absolute ({authored_regs[0].baseline} -> {authored_regs[0].observed}). "
+                f"A ratio can be improved by shrinking its denominator; an absolute cannot (8.2)")
+        else:
+            _fail("V-GUARDIAN-BLOCKS-DELETION-ATTACK",
+                  f"the deletion attack bought a green: {v.verdict} failing={v.failing}")
+
+        # --- a cross-environment comparison is not a comparison (12.4) ---
+        p = _write(td, G.snapshot(rep, "host-a"), "env.json")
+        v = G.check(rep, "host-b", repo=REPO, baseline_path=p)
+        if v.verdict == G.ENV_MISMATCH and not v.failing and not v.regressions:
+            _ok("V-GUARDIAN-ENV-MISMATCH",
+                f"{v.verdict}; two measurements of two different systems -- the guardian "
+                f"refuses to raise an alarm it cannot substantiate")
+        else:
+            _fail("V-GUARDIAN-ENV-MISMATCH", f"{v.verdict} failing={v.failing}")
+
+        # --- corrupt baseline -> UNKNOWN. Never a false PASS. ---
+        p = Path(td) / "corrupt.json"
+        p.write_text("{ not json", encoding="utf-8")
+        v = G.check(rep, ENV, repo=REPO, baseline_path=p)
+        if v.verdict == G.UNKNOWN and v.verdict != G.PASS and v.error:
+            _ok("V-GUARDIAN-FAILOPEN-CORRUPT",
+                f"{v.verdict}; a disarmed guard reports UNKNOWN, never success")
+        else:
+            _fail("V-GUARDIAN-FAILOPEN-CORRUPT", f"{v.verdict} error={v.error}")
+
+        # --- END TO END: the runner must actually EXIT NON-ZERO on a regression. Everything
+        # above tests the library; this tests the gate. Both the baseline and the audit dir are
+        # redirected into the temp tree, so the repository's real artifacts are untouched.
+        # env_key=None so the subprocess -- which computes the REAL host env hash -- compares
+        # rather than short-circuiting on ENVIRONMENT_MISMATCH. A baseline recorded under a
+        # synthetic key would make the runner correctly refuse to compare, and the gate would be
+        # asserting nothing.
+        snap = G.snapshot(rep, None)
+        snap["roots"][root]["executed_cases"] += 5
+        pipe_base = _write(td, snap, "pipeline.json")
+        env = dict(os.environ)
+        env["SQI_BASELINE_PATH"] = str(pipe_base)
+        env["SQI_AUDIT_DIR"] = str(Path(td) / "audits")
+        env["PYTHONIOENCODING"] = "utf-8"
+        proc = subprocess.run(
+            [sys.executable, str(REPO / "tools" / "run_sqi.py"), "--quiet"],
+            cwd=str(REPO), capture_output=True, text=True, timeout=600,
+            env=env, errors="replace",
+        )
+        out = (proc.stdout or "") + (proc.stderr or "")
+        wrote = (Path(td) / "audits").is_dir()
+        if proc.returncode != 0 and G.REGRESSED in out and wrote:
+            _ok("V-GUARDIAN-IN-PIPELINE",
+                f"run_sqi.py exit={proc.returncode} on a regression; report still written. "
+                f"Measuring became gating.")
+        else:
+            _fail("V-GUARDIAN-IN-PIPELINE",
+                  f"exit={proc.returncode} regressed_in_output={G.REGRESSED in out} "
+                  f"report_written={wrote}")
+
+    # --- the guardian is inside the surface it audits (5.10) ---
+    guarded = [
+        p for p in rep.reached_files
+        if "baseline_guardian" in (REPO / p).read_text(encoding="utf-8-sig", errors="replace")
+    ]
+    if guarded:
+        _ok("V-GUARDIAN-SELF-REACH",
+            f"the guardian is exercised by {guarded} -- a control that has never been observed "
+            f"to refuse is indistinguishable from one that is not connected (17.10)")
+    else:
+        _fail("V-GUARDIAN-SELF-REACH",
+              "no test reached by a canonical invocation exercises the guardian")
+
 
 def main() -> int:
     if not SQI_DIR.is_dir():
@@ -352,7 +521,9 @@ def main() -> int:
 
     check_family(datasets)
     check_governance(sorted(SQI_DIR.glob("*.md")))
-    check_engines()
+    rep = check_engines()
+    if rep is not None:
+        check_guardian(rep)
 
     for line in _passes:
         print(line)

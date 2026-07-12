@@ -24,6 +24,7 @@ layer that cannot run reports UNKNOWN rather than a zero.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -35,16 +36,43 @@ sys.path.insert(0, str(ROOT))
 from modules.sqi.repo_reality_scanner import scan_repo
 from modules.sqi.environment_qualifier import qualify, QUALIFIED, PARTIALLY_QUALIFIED
 from modules.sqi.reconcile import reconcile
+from modules.sqi import baseline_guardian as guardian
 
-AUDIT_DIR = ROOT / "vault" / "audits"
 HERMETIC_RUNS = 3  # the estate's own standard: three runs from a clean state, same result
+
+
+def _audit_dir() -> Path:
+    """Overridable via SQI_AUDIT_DIR. The done-gate exercises this runner end-to-end, and a gate
+    that writes to the repository's real audit directory would overwrite the very artifact it is
+    validating -- a global write, which is the classic way a suite stops being hermetic and
+    starts failing on its own second run."""
+    override = os.environ.get("SQI_AUDIT_DIR")
+    return Path(override) if override else ROOT / "vault" / "audits"
+
+
+def _rel(p: Path) -> str:
+    try:
+        return str(p.relative_to(ROOT))
+    except ValueError:
+        return str(p)  # a redirected audit dir lives outside the repo
 
 
 def _pct(x: float | None) -> str:
     return "UNKNOWN" if x is None else f"{x * 100:.1f}%"
 
 
-def _render(profile, env, rep, target: Path, stamp: str) -> str:
+def _flag(argv: list[str], name: str) -> str:
+    """`--reason "..."` / `--author "..."`. Both are needed to LOWER a baseline, and neither has
+    a default, because an unattributed acceptance is exactly the escape the firewall exists to
+    prevent (§12.7)."""
+    if name in argv:
+        i = argv.index(name)
+        if i + 1 < len(argv) and not argv[i + 1].startswith("--"):
+            return argv[i + 1]
+    return ""
+
+
+def _render(profile, env, rep, verdict, target: Path, stamp: str) -> str:
     L: list[str] = []
     A = L.append
 
@@ -58,12 +86,48 @@ def _render(profile, env, rep, target: Path, stamp: str) -> str:
     # percentage; people remediate a list of paths (SQI-02 8.10).
     A("## Verdict")
     A("")
+    A(f"- **Baseline guardian:** `{verdict.verdict}`"
+      + ("  ← **THE BUILD FAILS**" if verdict.failing else ""))
     A(f"- **Signal integrity:** `{rep.signal_integrity_verdict}` → ontology "
       f"`{rep.ontology_verdict}`")
     A(f"- **Environment:** `{env.state}` — verdict ceiling: {env.verdict_ceiling}")
     A(f"- **Reach under the authoritative invocation:** `{rep.authoritative_reach_state}`")
     A(f"- **Orphaned test files:** **{rep.orphaned_count}** of {rep.authored_count} authored")
     A("")
+
+    A("## Baseline guardian (SQI-02 Part XII)")
+    A("")
+    A(verdict.summary)
+    A("")
+    if verdict.regressions:
+        A("Increases are free. A **decrease fails the build** — and the identities of what "
+          "vanished are named, because a delta of three is an alarm and three names are an "
+          "action (§12.5).")
+        A("")
+        A("| gate | root | baseline | observed | lost |")
+        A("|---|---|---|---|---|")
+        for r in verdict.regressions:
+            A(f"| `{r.gate}` | `{r.root}` | {r.baseline} | {r.observed} | "
+              f"{len(r.lost_identities)} |")
+        A("")
+        for r in verdict.regressions:
+            A(f"**`{r.gate}` @ `{r.root}`** — {r.note}")
+            A("")
+            for i in r.lost_identities[:25]:
+                A(f"- lost: `{i}`")
+            if len(r.lost_identities) > 25:
+                A(f"- … and {len(r.lost_identities) - 25} more")
+            A("")
+        A("A decrease **never** auto-updates the baseline. Lowering it requires a separate, "
+          "attributed act — `run_sqi.py --accept-baseline --reason \"…\" --author \"…\"` — "
+          "because the party whose change caused the decrease may not, in the same task, author "
+          "the update that permits it (§12.7). The guardian does not prevent deletion; it "
+          "prevents deletion from being **invisible**.")
+        A("")
+    else:
+        A(f"Baseline: `{Path(verdict.baseline_path).name}` · environment "
+          f"`{verdict.baseline_env}` · ratcheted this run: {verdict.updated}")
+        A("")
 
     if rep.findings:
         A("## Findings")
@@ -224,11 +288,32 @@ def main(argv: list[str]) -> int:
         print("SQI: reconciliation engine crashed\n" + traceback.format_exc(), file=sys.stderr)
         return 1
 
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
-    md_path = AUDIT_DIR / f"sqi_report_{date}.md"
-    json_path = AUDIT_DIR / f"sqi_report_{date}.json"
+    # Layer 4 -- the guardian. The three layers above measure a STATE; this measures the
+    # DERIVATIVE, and it is the only one of the four that can REFUSE. Until it existed, the
+    # reach figure trended in a report that nothing consumed -- and a quality signal that is
+    # emitted and never read is functionally identical to one that was never computed (§8.4).
+    try:
+        verdict = guardian.check(
+            rep,
+            env.env_hash,
+            repo=target,
+            accept="--accept-baseline" in argv,
+            reason=_flag(argv, "--reason"),
+            author=_flag(argv, "--author"),
+        )
+    except Exception:  # noqa: BLE001 -- a crashed guardian is UNKNOWN, never a silent pass
+        verdict = guardian.GuardianVerdict(
+            verdict=guardian.UNKNOWN, regressions=[], baseline_env=None,
+            observed_env=env.env_hash, updated=False, baseline_path="",
+            summary="guardian crashed", error=traceback.format_exc(limit=3),
+        )
 
-    md_path.write_text(_render(profile, env, rep, target, stamp), encoding="utf-8")
+    audit_dir = _audit_dir()
+    audit_dir.mkdir(parents=True, exist_ok=True)
+    md_path = audit_dir / f"sqi_report_{date}.md"
+    json_path = audit_dir / f"sqi_report_{date}.json"
+
+    md_path.write_text(_render(profile, env, rep, verdict, target, stamp), encoding="utf-8")
     json_path.write_text(
         json.dumps(
             {
@@ -236,6 +321,7 @@ def main(argv: list[str]) -> int:
                 "reality": profile.to_dict(),
                 "environment": env.to_dict(),
                 "reconciliation": rep.to_dict(),
+                "guardian": verdict.to_dict(),
             },
             indent=2,
         ),
@@ -268,11 +354,21 @@ def main(argv: list[str]) -> int:
         pass
 
     if not quiet:
-        print(f"SQI report -> {md_path.relative_to(ROOT)}")
-        print(f"SQI sidecar -> {json_path.relative_to(ROOT)}")
+        print(f"SQI report -> {_rel(md_path)}")
+        print(f"SQI sidecar -> {_rel(json_path)}")
         print()
         for f in rep.findings:
             print("FINDING:", f.splitlines()[0])
+        print()
+
+    if not quiet and verdict.regressions:
+        print()
+        for r in verdict.regressions:
+            print(f"REGRESSION [{r.gate}] {r.root}: {r.baseline} -> {r.observed}")
+            for i in r.lost_identities[:10]:
+                print(f"    lost: {i}")
+            if len(r.lost_identities) > 10:
+                print(f"    ... and {len(r.lost_identities) - 10} more")
         print()
 
     print(
@@ -282,11 +378,17 @@ def main(argv: list[str]) -> int:
         f"reach={_pct(rep.test_file_reach)} "
         f"orphaned={rep.orphaned_count}/{rep.authored_count} "
         f"authoritative_reach={rep.authoritative_reach_state} "
-        f"self_reach={rep.self_reach['reached']}"
+        f"self_reach={rep.self_reach['reached']} "
+        f"guardian={verdict.verdict}"
     )
-    # Exit code is NOT a pass/fail on reach -- that is the baseline guardian's job, and it
-    # gates on a DECREASE, not on a level. This runner exits non-zero only when its own
-    # report is inadmissible, i.e. when the auditor is exempt from its own audit.
+    print(f"SQI_GUARDIAN: {verdict.summary}")
+
+    # The exit code is where measuring becomes gating. It is NOT a pass/fail on the LEVEL of
+    # reach -- gating a level would fail every honest repository forever. It gates the
+    # DERIVATIVE: an unexplained decrease, and nothing else (§12.2). An inadmissible report
+    # (the auditor exempt from its own audit) also refuses, at a distinct code.
+    if verdict.failing:
+        return 1
     return 0 if rep.self_reach["admissible"] else 2
 
 
