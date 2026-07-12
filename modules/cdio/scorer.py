@@ -24,6 +24,7 @@ Verdict (CDIO-05 sec.5 / PR-CDIO-REVIEW-GATE-001):
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field, asdict
 
 # --- CDIO-05 fixed constants (the contract; mirrored in CDIO-05 dataset) ----
@@ -248,3 +249,162 @@ def check_single_primary_cta(count: int, *, criterion: str = "single-primary-cta
     return Verdict(criterion=criterion, dimension="conversion", status="fail",
                    severity="major", observed=f"{count} competing primary CTAs",
                    recommendation="demote all but one CTA to secondary emphasis")
+
+
+# --------------------------------------------------------------------------- #
+# CDIO-06 anti-slop checks -- the GENERATIVE axis, enforced mechanically.
+#
+# Before these, the Anti-Slop Kit lived in two prose files and zero executable
+# lines: the PP could not FAIL an output for visual slop, so the rule was a
+# preference, not a gate. These four checks make it refusable.
+#
+# The load-bearing nuance (CDIO-06 sec.1): a default is not slop; a default
+# WITHOUT A DECLARED INTENT is slop. Three of the nine families use Inter
+# deliberately and for stated reasons, so check_font_stack does not blanket-fail
+# a default-tier font -- it fails one whose declared family does not sanction it.
+# --------------------------------------------------------------------------- #
+
+# Families that deliberately sanction a default-tier font (CDIO-06 sec.1):
+#   F1 Editorial Minimalism (Inter -- restraint is the point)
+#   F4 Data-Dense Pro       (Inter -- for its tabular numerals)
+#   F6 Playful Color        (Inter -- paired against a characterful display face)
+KNOWN_FAMILIES = {f"F{i}" for i in range(1, 10)}
+FAMILIES_SANCTIONING_DEFAULT_FONTS = {"F1", "F4", "F6"}
+
+DEFAULT_TIER_FONTS = {
+    "inter", "roboto", "arial", "helvetica", "helvetica neue", "system-ui",
+    "-apple-system", "blinkmacsystemfont", "segoe ui", "sans-serif", "serif",
+}
+
+# The teal fingerprint (CDIO-06 sec.4) -- a specific machine-default tell.
+CLICHE_ACCENTS = {"#16d5e6"}
+
+# Purple-family hue window, in degrees. The clichéd gradient the Anti-Slop Kit
+# names explicitly is a purple accent over a near-white or near-black ground.
+PURPLE_HUE_MIN = 255
+PURPLE_HUE_MAX = 300
+CLICHE_SATURATION_MIN = 0.35   # below this it is a grey, not a purple
+GROUND_LIGHT_MIN = 0.85        # relative luminance of a "white" ground
+GROUND_DARK_MAX = 0.10         # relative luminance of a "black" ground
+
+
+def _hue_sat(hex_color: str):
+    """Return (hue_degrees, saturation) for a hex color. HSV-style saturation."""
+    r, g, b = (c / 255.0 for c in _hex_to_rgb(hex_color))
+    hi, lo = max(r, g, b), min(r, g, b)
+    delta = hi - lo
+    sat = 0.0 if hi == 0 else delta / hi
+    if delta == 0:
+        hue = 0.0
+    elif hi == r:
+        hue = 60 * (((g - b) / delta) % 6)
+    elif hi == g:
+        hue = 60 * (((b - r) / delta) + 2)
+    else:
+        hue = 60 * (((r - g) / delta) + 4)
+    return hue, sat
+
+
+def _is_purple(hex_color: str) -> bool:
+    try:
+        hue, sat = _hue_sat(hex_color)
+    except ValueError:
+        return False
+    return PURPLE_HUE_MIN <= hue <= PURPLE_HUE_MAX and sat >= CLICHE_SATURATION_MIN
+
+
+def check_family_declared(family, *, criterion: str = "aesthetic-family-declared") -> Verdict:
+    """A surface with no declared aesthetic family cannot be reviewed, only reacted
+    to. Absent or unknown -> CRITICAL (forces BLOCK at any score). This is what makes
+    PR-DESIGN-FAMILY-BEFORE-BUILD-001 enforceable rather than aspirational."""
+    fam = str(family or "").strip().upper()
+    if fam in KNOWN_FAMILIES:
+        return Verdict(criterion=criterion, dimension="visual", status="pass",
+                       observed=f"aesthetic_family={fam} (CDIO-06)")
+    if not fam:
+        return Verdict(
+            criterion=criterion, dimension="visual", status="fail", severity="critical",
+            observed="aesthetic_family absent from DESIGN.md front-matter",
+            recommendation="run the CDIO-06 sec.2 three-question picker; declare one of F1..F9")
+    return Verdict(
+        criterion=criterion, dimension="visual", status="fail", severity="critical",
+        observed=f"aesthetic_family={fam!r} is not one of F1..F9",
+        recommendation="declare a known CDIO-06 family (F1..F9)")
+
+
+def check_font_stack(fonts, family, *, criterion: str = "font-stack-intent") -> Verdict:
+    """Fail a default-tier font stack UNLESS the declared family sanctions it.
+
+    `fonts` is the set of font families the surface actually uses. A stack whose
+    non-default fonts are empty -- every font in it is default-tier -- was inherited,
+    not chosen. That is the slop condition.
+    """
+    names = [str(f).strip().lower() for f in (fonts or []) if str(f).strip()]
+    if not names:
+        return Verdict(criterion=criterion, dimension="visual", status="fail",
+                       severity="major", observed="no font families declared",
+                       recommendation="declare the typography stack in DESIGN.md")
+
+    fam = str(family or "").strip().upper()
+    defaults = sorted({n for n in names if n in DEFAULT_TIER_FONTS})
+    chosen = sorted({n for n in names if n not in DEFAULT_TIER_FONTS})
+
+    if chosen:
+        return Verdict(criterion=criterion, dimension="visual", status="pass",
+                       observed=f"characterful font(s) present: {chosen}")
+    if fam in FAMILIES_SANCTIONING_DEFAULT_FONTS:
+        return Verdict(
+            criterion=criterion, dimension="visual", status="pass",
+            observed=f"default-tier stack {defaults} sanctioned by declared family {fam}")
+    return Verdict(
+        criterion=criterion, dimension="visual", status="fail", severity="critical",
+        observed=f"every font is default-tier {defaults}; declared family "
+                 f"{fam or '(none)'} does not sanction a default stack",
+        recommendation="choose a typeface for the brand story (CDIO-06); a framework's "
+                       "inherited font is not a typographic decision")
+
+
+def check_palette_cliche(colors, *, background=None,
+                         criterion: str = "palette-cliche") -> Verdict:
+    """Fail the clichéd palettes the Anti-Slop Kit names: a purple-family accent over
+    a near-white or near-black ground, and the teal `#16d5e6` fingerprint."""
+    vals = [str(c).strip() for c in (colors or []) if str(c).strip()]
+    hits = []
+
+    for c in vals:
+        if c.lower() in CLICHE_ACCENTS:
+            hits.append(f"{c} (teal default fingerprint, CDIO-06 sec.4)")
+
+    if background:
+        try:
+            ground = _rel_luminance(_hex_to_rgb(str(background)))
+        except ValueError:
+            ground = None
+        if ground is not None and (ground >= GROUND_LIGHT_MIN or ground <= GROUND_DARK_MAX):
+            tone = "white" if ground >= GROUND_LIGHT_MIN else "black"
+            for c in vals:
+                if _is_purple(c):
+                    hits.append(f"{c} (purple accent on a near-{tone} ground)")
+
+    if not hits:
+        return Verdict(criterion=criterion, dimension="visual", status="pass",
+                       observed=f"{len(vals)} color(s), no clichéd palette detected")
+    return Verdict(
+        criterion=criterion, dimension="visual", status="fail", severity="critical",
+        observed="; ".join(hits),
+        recommendation="ground the palette in the product narrative (CDIO-06 sec.4); "
+                       "declare a brand-specific accent in DESIGN.md first")
+
+
+def check_design_md_exists(path, *, criterion: str = "design-md-present") -> Verdict:
+    """A visual surface built with no DESIGN.md is built with no tokens, and every
+    token it invents is an unreviewable one-off. CRITICAL."""
+    p = str(path or "")
+    if p and os.path.isfile(p):
+        return Verdict(criterion=criterion, dimension="visual", status="pass",
+                       observed=f"DESIGN.md present at {p}")
+    return Verdict(
+        criterion=criterion, dimension="visual", status="fail", severity="critical",
+        observed=f"no DESIGN.md at {p or '(no path given)'}",
+        recommendation="create DESIGN.md from modules/design-md/DESIGN.md.template and "
+                       "declare an aesthetic_family before building the surface")

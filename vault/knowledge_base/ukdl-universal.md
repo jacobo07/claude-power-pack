@@ -1,6 +1,82 @@
 
 ---
 
+## T-DESIGN-SLOP-001 — the anti-slop rule lived in prose and could refuse nothing
+
+**Trap.** The Power Pack forbade visual slop in two places — the `frontend-design` skill and
+`rules/web/design-quality.md` — and enforced it in **zero executable lines**. `modules/cdio/scorer.py`
+ran 251 lines of real, deterministic checks (contrast, tap target, type levels, line measure,
+spacing, CTA count) and had **no check for typography or palette at all**. So the most-cited design
+rule in the repo was the one rule no gate could ever fail. It was a preference in a gate's clothing.
+
+**Origin.** The `awesome-claude-design` absorption (2026-07-12). The reality scan found the whole
+CDIO evaluative layer already live and mature — and found that the PP's OWN canonical token template
+(`modules/design-md/DESIGN.md.template`) shipped Inter as its body font and a generic framework blue
+as its accent. The baseline itself emitted the exact slop the baseline forbade, and nothing detected
+it, because nothing *could*. Every project inheriting the template was born in slop.
+
+**Rule.** A design rule that no gate can refuse is not a standard, it is a preference. Anti-slop is
+now mechanical: `check_font_stack`, `check_palette_cliche`, `check_family_declared`,
+`check_design_md_exists` in `modules/cdio/scorer.py`, entrypoint `tools/design_gate.py`, severity
+CRITICAL (a critical forces BLOCK at any score). Observed refusing: `V-DESIGN-SLOP-BLOCKS` →
+`verdict=BLOCK score=25`, three criticals.
+
+**How to apply.** Generalizes past design: when you write a rule into prose, ask what code refuses
+when it is broken. If the answer is "a reviewer who remembers to look", you have written
+documentation. Sister of PR-SQI-SIGNAL-MUST-GATE-001 (a metric with no guardian) — same disease,
+different organ: **a rule with no refusal is furniture.**
+
+---
+
+## T-DESIGN-DEFAULT-WITHOUT-INTENT-001 — a default is not slop; a default without a declared intent is
+
+**Trap.** The obvious anti-slop gate is a blocklist: fail any surface using Inter, Roboto, or Arial.
+It is also **wrong**, and shipping it would have made the gate a liar. The source doctrine forbids
+those fonts *"as defaults without intent"* — and three of its own nine aesthetic families (Editorial
+Minimalism, Data-Dense Pro, Playful Color) use Inter **deliberately**, for stated reasons. Linear and
+Stripe are not slop. A blanket ban would have failed the exemplars the doctrine cites as proof.
+
+**Rule.** Slop is not a property of a token; it is the **absence of a declared reason** for that
+token. So the gate does not ask "is this font on the blocklist" — it asks "does this surface's
+declared aesthetic family sanction this font". `check_font_stack(fonts, family)` fails a default-tier
+stack only when the declared family (CDIO-06) does not sanction it. F1/F4/F6 keep Inter; everyone else
+earns their typeface. Pinned by `V-DESIGN-SANCTIONED-FONT-PASSES` — if that gate ever goes red, the
+gate has degenerated into a blocklist.
+
+**How to apply.** Generalizes to every quality gate that pattern-matches on an artifact: before you
+ban a token, check whether the thing you are really banning is *unexamined inheritance*. If so, the
+gate's subject is the **declaration**, not the token. Gates that ban tokens produce workarounds; gates
+that demand declarations produce decisions.
+
+---
+
+## PR-DESIGN-FAMILY-BEFORE-BUILD-001 — declare the aesthetic family before the first token
+
+**Rule.** No visual component is built in a Power Pack project before that project's DESIGN.md
+declares an `aesthetic_family` (F1–F9, CDIO-06). The family is reached with the three-question picker
+(CDIO-06 §2), never by preference and never retroactively. An absent or unknown family is a CRITICAL
+finding and BLOCKs (`check_family_declared`) — the surface is not reviewable, only reactable-to.
+
+**Why it is enforceable now.** This rule was aspirational until 2026-07-12, because `aesthetic_family`
+did not exist as a field: nothing could be checked, so nothing was. Adding the field to
+`DESIGN.md.template` is what converted the intention into a gate. **A rule is exactly as real as the
+field it reads.**
+
+**Corollary — mismatch is a structural defect, not a taste dispute.** The family governs type, color,
+density and motion at once, so a wrong family produces *systematic* incoherence: every component is
+individually defensible and the whole is wrong. Terminal-Core on a consumer product, or Playful Color
+on a technical dashboard, cannot be corrected at the component level — the symptom is a product that
+is endlessly polished and never feels right. Fix the family, and most component-level debt dissolves.
+(CDIO-06 §6.)
+
+**Limit, stated honestly.** `design_gate.py` reads a DESIGN.md, so it knows what a project *declared*
+and nothing about what it *rendered*. A passing DESIGN.md whose hero ignores its own tokens still
+passes. APPROVE here is necessary, never sufficient; the sufficient condition remains
+PR-CDIO-REVIEW-GATE-001 on the surface as rendered. A gate that oversells its coverage is a rubber
+stamp, and a rubber stamp launders a bad surface with the authority of a green check.
+
+---
+
 ## PR-SQI-SIGNAL-MUST-GATE-001 — a metric without a guardian is documentation
 
 **Rule.** By SQI-02 §8.4, a signal that is emitted and never read is functionally identical to

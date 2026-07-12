@@ -2,36 +2,48 @@
 version: alpha
 name: ProjectName
 description: One-line summary of the visual identity (e.g. Heritage editorial, type-led, minimal motion)
+# REQUIRED. One of F1..F9 from CDIO-06 (vault/knowledge_base/cdio/CDIO-06-aesthetic-families.md).
+# Reach it with the three-question picker (CDIO-06 sec.2). An absent or unknown value
+# fails `check_family_declared` and BLOCKS the design gate — a surface with no declared
+# family cannot be reviewed, only reacted to (PR-DESIGN-FAMILY-BEFORE-BUILD-001).
+# This template ships F3 as a starting point, not as a default to leave unexamined:
+# if F3 is not your product's family, change it before you change anything else.
+aesthetic_family: F3   # Warm Editorial — serif body, terracotta on cream, humanized prosumer
 colors:
-  primary: "#1A1C1E"
-  secondary: "#6C7278"
-  tertiary: "#3B82F6"
-  neutral: "#F8F9FA"
-  surface: "#FFFFFF"
-  on-surface: "#0F172A"
-  error: "#DC2626"
+  primary: "#191817"       # clay — headlines, core text
+  secondary: "#6b665f"     # warm slate — borders, captions, metadata
+  accent: "#c96442"        # terracotta — the single interactive hue
+  neutral: "#f4f3ee"       # cream — page ground, warmer than white
+  surface: "#fffdf9"       # raised surface, still off-white
+  on-surface: "#191817"
+  error: "#a33a28"         # desaturated to sit inside the warm palette
 typography:
   h1:
-    fontFamily: Public Sans
-    fontSize: 48px
-    fontWeight: 700
-    lineHeight: 1.1
-    letterSpacing: -0.02em
+    fontFamily: Instrument Serif
+    fontSize: 52px
+    fontWeight: 400
+    lineHeight: 1.05
+    letterSpacing: -0.01em
   h2:
-    fontFamily: Public Sans
-    fontSize: 36px
-    fontWeight: 600
+    fontFamily: Instrument Serif
+    fontSize: 34px
+    fontWeight: 400
     lineHeight: 1.2
   body-md:
-    fontFamily: Inter
-    fontSize: 16px
+    fontFamily: Lora
+    fontSize: 17px
     fontWeight: 400
-    lineHeight: 1.6
+    lineHeight: 1.65
   label-sm:
-    fontFamily: Inter
+    fontFamily: Work Sans
     fontSize: 13px
     fontWeight: 500
     lineHeight: 1.4
+    letterSpacing: 0.02em
+  mono:
+    fontFamily: JetBrains Mono
+    fontSize: 14px
+    lineHeight: 1.5
 spacing:
   xs: 4px
   sm: 8px
@@ -46,12 +58,12 @@ rounded:
   full: 9999px
 components:
   button-primary:
-    backgroundColor: "{colors.primary}"
+    backgroundColor: "{colors.accent}"
     textColor: "{colors.surface}"
     rounded: "{rounded.md}"
     padding: 12px
   button-primary-hover:
-    backgroundColor: "{colors.tertiary}"
+    backgroundColor: "{colors.primary}"
   button-secondary:
     backgroundColor: "{colors.neutral}"
     textColor: "{colors.on-surface}"
@@ -70,51 +82,92 @@ components:
 
 ## Overview
 
-This file is the single source of truth for the project's visual identity. Every UI surface — landing pages, dashboards, marketing site, mobile app — derives its tokens from the YAML front-matter above and respects the rationale below. Coding agents read this file before generating any frontend code.
+This file is the single source of truth for the project's visual identity. Every UI
+surface — landing pages, dashboards, marketing site, mobile app — derives its tokens
+from the YAML front-matter above and respects the rationale below. Coding agents read
+this file before generating any frontend code, and the design gate
+(`tools/design_gate.py`) reads it before letting a visual surface be declared done.
+
+## Aesthetic Family
+
+`aesthetic_family` is the first decision, and every other decision on this page is
+downstream of it. It is declared, not implied. This template declares **F3 — Warm
+Editorial**: a serif body on cream with a single terracotta accent, for products that
+should feel made by people rather than assembled by a framework.
+
+If your product is a developer tool, a dashboard, or a statement piece, F3 is the
+wrong family and the tokens below are the wrong tokens. Run the three-question picker
+in CDIO-06 sec. 2 and replace them. Changing the accent hex while leaving `F3` in
+place is how a design system quietly becomes a default again.
 
 ## Colors
 
-The palette is rooted in high-contrast neutrals with a single evocative accent.
+Warm neutrals with one evocative accent. Temperature is the character here: cream and
+clay carry it, and a cool grey would erase it.
 
-- **Primary (#1A1C1E):** Deep ink for headlines and core text. Permanence and readability.
-- **Secondary (#6C7278):** Slate for utility — borders, captions, metadata. Never competes with primary.
-- **Tertiary (#3B82F6):** Reserved for interaction — primary CTAs, links, focus rings. Use sparingly.
-- **Neutral (#F8F9FA):** Page background. Softer than pure white; warmer light reflectance.
-- **Error (#DC2626):** Reserved for state semantics. Do not repurpose for branding.
+- **Primary (#191817):** clay-black for headlines and core text. Permanence, readability.
+- **Secondary (#6b665f):** warm slate for utility — borders, captions, metadata. Never competes with primary.
+- **Accent (#c96442):** terracotta, reserved for interaction — primary CTAs, links, focus rings. Exactly one accent hue survives; a second is indecision (CDIO-06 sec. 3, rule 2).
+- **Neutral (#f4f3ee):** the page ground. Cream, not white — the single largest carrier of warmth on the page.
+- **Error (#a33a28):** state semantics only. Desaturated so it belongs to this palette instead of shouting over it. Do not repurpose for branding.
 
-Contrast: every color used as text must hit WCAG AA (≥4.5:1 for body, ≥3:1 for large text).
+Contrast: every color used as text must clear WCAG AA (≥ 4.5:1 body, ≥ 3:1 large text).
+This is a floor, not a target, and it is not arbitrable against character (CDIO-06 sec. 3, rule 5).
 
 ## Typography
 
-Two families: **Public Sans** for narrative weight, **Inter** for body and UI chrome.
+Three families, each with a job: **Instrument Serif** for display, **Lora** for body,
+**Work Sans** for UI chrome, plus **JetBrains Mono** where code appears.
 
-- **Headlines (h1, h2):** Public Sans semi-bold. Institutional, trustworthy, generous x-height.
-- **Body (body-md):** Inter regular at 16px. Optimized for screen readability across densities.
-- **Labels (label-sm):** Inter medium at 13px for metadata, captions, form helpers.
+- **Headlines (h1, h2):** Instrument Serif at regular weight. Editorial authority without institutional stiffness; the low weight at large sizes is the restraint that keeps it from shouting.
+- **Body (body-md):** Lora at 17px. A serif body is the F3 commitment — it is what makes long-form reading feel like reading rather than scanning.
+- **Labels (label-sm):** Work Sans medium at 13px with positive tracking, for metadata, captions, and form helpers. The one place a grotesque earns its place: chrome should recede.
+- **Mono:** JetBrains Mono at 14px for code and tabular data.
 
-Line-height contracts upward as size grows (1.1 for h1, 1.6 for body) — deliberate hierarchy signal.
+Line-height contracts as size grows (1.05 at h1, 1.65 at body) — a deliberate hierarchy signal.
+
+No default-tier font stack (Inter, Roboto, Arial, system-ui) appears here, because F3
+does not sanction one. Three of the nine families do sanction Inter, deliberately and
+for stated reasons; F3 is not among them. Inheriting a framework's font is not a
+typographic decision, and `check_font_stack` will fail it.
 
 ## Layout
 
-Strict 8px grid. Every spacing token is a multiple of 4px. Page max-width: `min(1280px, 92vw)`.
-
-Section vertical rhythm: `xl` (32px) between top-level sections, `lg` (24px) within a section.
+Strict 8px grid; every spacing token is a multiple of 4px. Page max-width `min(1280px, 92vw)`.
+Section rhythm: `xl` (32px) between top-level sections, `lg` (24px) within a section.
+Nesting depth is capped at two semantic levels — stacked padding with no semantic
+purpose is the container-soup fingerprint (CDIO-06 sec. 4).
 
 ## Elevation & Depth
 
-Depth is conveyed through tonal layers and borders, not heavy shadows. Default surface sits on neutral background; elevated surfaces use pure white with a subtle border (1px secondary at 12% opacity).
+Depth comes from tonal layers and borders, not heavy shadows. The default surface sits
+on the cream ground; elevated surfaces use the off-white surface token with a 1px
+secondary border at 12% opacity.
 
 ## Shapes
 
-Architectural softness — `md` (8px) for buttons, inputs, cards. `lg` (12px) for hero panels. `full` reserved for avatars and pill badges only. Sharp corners forbidden for interactive surfaces.
+Architectural softness — `md` (8px) for buttons, inputs, cards. `lg` (12px) for hero
+panels. `full` reserved for avatars and pill badges only. Sharp corners are forbidden
+on interactive surfaces.
+
+## Motion
+
+Motion clarifies flow; it does not decorate. One well-orchestrated entrance with
+staggered reveals beats scattered micro-interactions. Hover, focus, and active states
+must all feel designed — an interactive element with no considered focus state is an
+accessibility failure, not a styling omission. No animated status indicators.
 
 ## Components
 
-Component tokens reference primitives via `{path.to.token}` — never hardcode colors at the component level. Variants for state (hover, active, disabled) suffix the component name with the state.
+Component tokens reference primitives via `{path.to.token}` — never hardcode a color at
+the component level. State variants suffix the component name (`-hover`, `-active`,
+`-disabled`).
 
 ## Do's and Don'ts
 
-- Do use the primary color for the single most important action per screen.
-- Don't mix rounded and sharp corners in the same view.
-- Do maintain WCAG AA contrast for all text.
-- Don't use more than two font families on a single screen.
+- Do declare `aesthetic_family` before writing a single token.
+- Do use the accent for the single most important action per screen.
+- Don't mix rounded and sharp corners in one view.
+- Do maintain WCAG AA contrast for all text — the floor is not tradeable.
+- Don't use more than two font families in a single viewport.
+- Don't inherit a font from a framework and call it a choice.

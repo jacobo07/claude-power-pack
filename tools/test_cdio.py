@@ -34,6 +34,12 @@ if ROOT not in sys.path:
 DATASETS = os.path.join(ROOT, "vault", "knowledge_base", "cdio")
 AGENTS = os.path.join(ROOT, "vault", "agents")
 
+# CDIO-00..05 (the evaluative axis) + CDIO-06 (the generative axis: aesthetic
+# families, added 2026-07-12). An EQUALITY gate on purpose: a dataset silently
+# vanishing must fail just as loudly as an unregistered one appearing. Raise this
+# only alongside a real sealed dataset -- never to make a red suite go green.
+EXPECTED_DATASETS = 7
+
 # Fragment-assembled so the literals never appear verbatim in this file.
 _SLOP = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "PLACE" + "HOLDER", "XX" + "X",
          "Not" + "Implemented", "Coming" + r"\s+" + "Soon", "lorem" + r"\s+" + "ipsum"]
@@ -83,8 +89,10 @@ def v_agent_files_complete():
 
 def v_datasets_depth():
     files = sorted(glob.glob(os.path.join(DATASETS, "CDIO-*.md")))
-    if len(files) != 6:
-        _fail("V-DATASETS-DEPTH", f"expected 6 datasets, found {len(files)}")
+    if len(files) != EXPECTED_DATASETS:
+        _fail("V-DATASETS-DEPTH",
+              f"expected {EXPECTED_DATASETS} datasets, found {len(files)}: "
+              f"{[os.path.basename(f) for f in files]}")
         return
     under = []
     for f in files:
@@ -94,7 +102,7 @@ def v_datasets_depth():
     if under:
         _fail("V-DATASETS-DEPTH", f"under 2000 words: {under}")
     else:
-        _ok("V-DATASETS-DEPTH", "6 datasets, all > 2000 words")
+        _ok("V-DATASETS-DEPTH", f"{EXPECTED_DATASETS} datasets, all > 2000 words")
 
 
 def v_graph_nodes():
@@ -102,18 +110,22 @@ def v_graph_nodes():
     # cross-repo layer because _GOV_ID now matches the CDIO-NN governance token.
     from modules.graphify.global_store import _GOV_ID, _is_promotable
     files = sorted(glob.glob(os.path.join(DATASETS, "CDIO-*.md")))
-    tokens_ok = all(_GOV_ID.search(f"CDIO-0{i}") for i in range(6))
+    tokens_ok = all(_GOV_ID.search(f"CDIO-0{i}") for i in range(EXPECTED_DATASETS))
     # a dataset node (type 'dataset') carrying a CDIO token is promotable
     node = {"node_type": "dataset", "node_id": "cdio-00",
             "name": "CDIO-00 Design Intelligence Kernel",
             "summary": "the CDIO-00 kernel", "edges": []}
     promotable = _is_promotable(node)
     have_ids = all("CDIO-0" in open(f, encoding="utf-8").read() for f in files)
-    if tokens_ok and promotable and have_ids and len(files) == 6:
+    count_ok = len(files) == EXPECTED_DATASETS
+    if tokens_ok and promotable and have_ids and count_ok:
         _ok("V-GRAPH-NODES", "CDIO datasets carry a promotable governance token")
     else:
+        # `count` was previously absent from this diagnostic, so a count-only failure
+        # printed three True values next to a FAIL and read as a phantom bug.
         _fail("V-GRAPH-NODES",
-              f"token={tokens_ok} promotable={promotable} ids={have_ids}")
+              f"token={tokens_ok} promotable={promotable} ids={have_ids} "
+              f"count={len(files)}/{EXPECTED_DATASETS}")
 
 
 def v_bus_publishes(state_dir):
