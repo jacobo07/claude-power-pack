@@ -18,7 +18,12 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
 
 - Phase 2 CLOSED: `DAIF_CANONICAL_MAP.md` = 22 candidates → **8 build · 6 do-not-build · 8 folded**.
 - 8 sovereign datasets in `DAIF_INDEX.md` manifest: DAIF-00,01,02,03,04,07,08,21.
-- Datasets written so far: **0/8 SEALED.** Parts: **0/160.** (Update this line after every sealed Part-batch.)
+- Datasets SEALED: **1/8** (DAIF-00, 20/20 Parts, 30,417 words, `DAIF_PASS=6/6` exit 0). Parts: **20/160**.
+- **DAIF-00 SEALED.** Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY/FABRICATION/
+  CONTAMINATION/NONDUP). Observed to refuse (caught 'catalog'/'stored' substrings) then pass — a real gate.
+- **NEXT = DAIF-01** (Cognitive Type System & Canonical Ontology), `SOVEREIGNTY_PROVEN`, 0/20. Absorbs D2A-09
+  schemas + D2A-16 authority types. Composes SQI-00 verdict ontology · ACIS ladder · hard_rules authority.
+  Then DAIF-02 (CIRs) → 03 (fidelity/loss) → 07 (obligations) → 04 (contracts) → 08 (context/mission) → 21 (reality sync).
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
   `.txt`, PART I…XX, FINAL LAW per Part, dense prose, no headings/bullets/tables/fences, 1,200–1,500 w/Part.
 
