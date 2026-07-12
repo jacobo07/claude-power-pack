@@ -31,7 +31,7 @@ CONTENT_COMPLETE → INTEGRATED → BENCHMARKED → HARDENED → SEALED`. **Only
 | **DAIF-02** | Cognitive Intermediate Representations (CIR-0…11) | CREATE | `SEALED` | 20/20 | 34,826 | `daif_02_cir_fabric_v1.txt` |
 | **DAIF-03** | Fidelity, Loss Budget & Behavioral Equivalence | CREATE | `SEALED` | 20/20 | 38,694 | `daif_03_fidelity_loss_v1.txt` |
 | **DAIF-04** | Institutional Contract Fabric | CREATE (thin) | `D2A_CLASSIFIED` | 0/20 | 0 | `daif_04_contract_fabric_v1.txt` |
-| **DAIF-07** | Obligation Lifecycle & Work Completion Authority | CREATE | `SOVEREIGNTY_PROVEN` | 0/20 | 0 | `daif_07_obligation_fabric_v1.txt` |
+| **DAIF-07** | Obligation Lifecycle & Work Completion Authority | CREATE | `IN_PROGRESS` | 7/20 | ~10,800 | `daif_07_obligation_fabric_v1.txt` |
 | **DAIF-08** | Context Assembly & Mission Runtime | EXTEND | `D2A_CLASSIFIED` | 0/20 | 0 | `daif_08_context_runtime_v1.txt` |
 | **DAIF-21** | Reality Synchronization & Semantic Change | CREATE (thin) | `D2A_CLASSIFIED` | 0/20 | 0 | `daif_21_reality_sync_v1.txt` |
 | | **Total** | | **4/8 SEALED** | **80/160** | **137,446** | target ~216k |
