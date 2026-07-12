@@ -30,11 +30,11 @@ CONTENT_COMPLETE → INTEGRATED → BENCHMARKED → HARDENED → SEALED`. **Only
 | **DAIF-01** | Cognitive Type System & Canonical Ontology | CREATE | `SEALED` | 20/20 | 33,509 | `daif_01_type_system_v1.txt` |
 | **DAIF-02** | Cognitive Intermediate Representations (CIR-0…11) | CREATE | `SEALED` | 20/20 | 34,826 | `daif_02_cir_fabric_v1.txt` |
 | **DAIF-03** | Fidelity, Loss Budget & Behavioral Equivalence | CREATE | `SEALED` | 20/20 | 38,694 | `daif_03_fidelity_loss_v1.txt` |
-| **DAIF-04** | Institutional Contract Fabric | CREATE (thin) | `IN_PROGRESS` | 14/20 | ~24,000 | `daif_04_contract_fabric_v1.txt` |
+| **DAIF-04** | Institutional Contract Fabric | CREATE (thin) | `SEALED` | 20/20 | 39,939 | `daif_04_contract_fabric_v1.txt` |
 | **DAIF-07** | Obligation Lifecycle & Work Completion Authority | CREATE | `SEALED` | 20/20 | 38,435 | `daif_07_obligation_fabric_v1.txt` |
 | **DAIF-08** | Context Assembly & Mission Runtime | EXTEND | `D2A_CLASSIFIED` | 0/20 | 0 | `daif_08_context_runtime_v1.txt` |
 | **DAIF-21** | Reality Synchronization & Semantic Change | CREATE (thin) | `D2A_CLASSIFIED` | 0/20 | 0 | `daif_21_reality_sync_v1.txt` |
-| | **Total** | | **5/8 SEALED** | **100/160** | **175,881** | target ~216k |
+| | **Total** | | **6/8 SEALED** | **120/160** | **215,820** | target ~216k |
 
 **Coherence anchor:** manifest lists exactly the 8 CREATE/EXTEND rows of `DAIF_CANONICAL_MAP.md` §2. Any
 row here without a matching map verdict, or any map `CREATE`/`EXTEND` without a row here, is a drift defect.
