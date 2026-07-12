@@ -27,7 +27,7 @@ CONTENT_COMPLETE → INTEGRATED → BENCHMARKED → HARDENED → SEALED`. **Only
 | ID | Dataset | Verdict | State | Parts | Words | File |
 |---|---|---|---|---|---|---|
 | **DAIF-00** | D2A+ Constitution & Duplicate Ontology | EXTEND→dataset | `SEALED` | 20/20 | 30,417 | `daif_00_d2a_constitution_v1.txt` |
-| **DAIF-01** | Cognitive Type System & Canonical Ontology | CREATE | `SOVEREIGNTY_PROVEN` | 0/20 | 0 | `daif_01_type_system_v1.txt` |
+| **DAIF-01** | Cognitive Type System & Canonical Ontology | CREATE | `IN_PROGRESS` | 7/20 | ~9,900 | `daif_01_type_system_v1.txt` |
 | **DAIF-02** | Cognitive Intermediate Representations (CIR-0…11) | CREATE | `SOVEREIGNTY_PROVEN` | 0/20 | 0 | `daif_02_cir_fabric_v1.txt` |
 | **DAIF-03** | Fidelity, Loss Budget & Behavioral Equivalence | CREATE | `SOVEREIGNTY_PROVEN` | 0/20 | 0 | `daif_03_fidelity_loss_v1.txt` |
 | **DAIF-04** | Institutional Contract Fabric | CREATE (thin) | `D2A_CLASSIFIED` | 0/20 | 0 | `daif_04_contract_fabric_v1.txt` |
