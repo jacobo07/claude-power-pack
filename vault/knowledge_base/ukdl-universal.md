@@ -1,75 +1,82 @@
-# Universal Knowledge / Documentation / Lessons — cross-reference ledger
 
-This file is the "ukdl-universal" reference index — each row points
-at a sealed lesson, learning, or session note that is broadly
-applicable across PP-shipped projects and not specific to one repo.
+---
 
-Entries are append-only; never remove a row. If a lesson is
-superseded, append the superseding row referring back to the older.
+## PR-SQI-EXECUTABLE-GOVERNANCE-001 — a dataset that specifies an engine must ship the engine
 
-## Dataset First Protocol (SCS C90) — 2026-07-12
+**Rule.** By the SQI corpus's own Executable Governance Law, a policy without enforcement is
+documentation. Any SQI dataset that specifies a detection system MUST have its corresponding
+implementation under `modules/sqi/` before it may be described as operational. Doctrine without
+execution is the same gap as a test without a runner — the artifact exists, it is correct, it is
+well-authored, and nothing invokes it.
 
-**PR-DATASET-FIRST-001.** Before implementing a system of high complexity, long lifespan, or
-transversal impact: run the Knowledge Sufficiency Engine
-(`modules.dataset_first.knowledge_sufficiency.evaluate`). A `DATASET_FIRST_MANDATORY` verdict
-means the governing corpus is built FIRST and implementation begins only after certification.
-This is constitutional, not advisory. **But it fires far less often than its name suggests,
-and that is by design**: the protocol resolves toward BUILDING near a boundary, because it
-dies of false positives, not false negatives (DFP-00 Part III).
-→ `vault/knowledge_base/dataset_first/dfp_00_doctrine_constitution_v1.txt`
+**Origin.** SQI-00…03 shipped as 108,598 words of doctrine in which SQI-01 specified a reality
+scanner, SQI-02 a reconciliation engine, and SQI-03 an environment qualifier. None of the three
+existed as code. `SQI_COMPLETION_REPORT.md` §4.1 named this as the corpus's largest gap in its own
+voice: *"The datasets are currently documentation."* The corpus had described the disease and not
+treated it. Closed 2026-07-12 by `modules/sqi/{repo_reality_scanner,environment_qualifier,reconcile}.py`
++ `tools/run_sqi.py`, gated by `tools/test_sqi.py` (36/36 ×3).
 
-**T-DATASET-FIRST-DOGMA-001.** A protocol that ALWAYS requires a corpus before any
-implementation is exactly as harmful as one that never does. Systematic false positives turn
-DFP into bureaucracy the Owner will route around, and a rule routed around is not a rule.
-Recalibration against real evidence (DFP-05, `modules.dataset_first.calibrator`) is MANDATORY,
-and the `retirement_signal` — the protocol recommending its own deletion — must stay reachable.
-A discipline that cannot be proven wrong is a belief, not a science.
+**How to apply.** When a dataset specifies an engine, the engine is part of the dataset's
+done-gate, not a follow-up. A dataset that ships without it is `PARTIALLY-VERIFIED` at best, and
+saying so in the completion report is the minimum honesty; building it is the actual close.
 
-**T-DFP-COVERAGE-AS-CAPACITY-001.** NEVER map a composite provider score to a hard verdict
-without measuring its distribution first. D2A's `coverage_pct` is inflated by an architectural
-term that forces ≥80% whenever a proposal's tokens touch ≥4 families — which a long,
-vocabulary-rich, foundational proposal does BY CONSTRUCTION. Measured: a genuinely-novel
-proposal scored `coverage 92% / functional 7%`, while a true duplicate scored
-`coverage 95% / functional 29%`. Only the per-family `functional` precision separates them.
-Mapping coverage to `institutional_capacity` made `DATASET_FIRST_MANDATORY` **silently
-UNREACHABLE** — the family's central verdict was dead, and with it the eleventh DRK verdict
-built to host it. **Same failure class as `T-DRK-PRECEDENT-LENGTH-BIAS-001` (score rose with
-input LENGTH) and `T-D2A-LEXICAL-BLINDNESS-001` (score matches WORDS, not architecture).**
-Origin: DFP's own doctrine (VI.6) states this law, and DFP's own first implementation violated
-it. Countermeasure: the control-set discipline (DFP-00 VI.8) and a gate asserting BOTH poles of
-the taxonomy are reachable.
+---
 
-**T-D2A-REGISTRY-STALENESS-001.** A duplicate-detector whose family registry stops at its own
-ship date grows blinder every week it is not updated. D2A's `FAMILY_REGISTRY` held 19 families,
-all sealed at or before D2A's own ship date (C85), and contained no row for DRK, ACIS, SQI,
-`spec_gate`, `hard_rules`, or D2A itself — the newest half of the stack, and precisely the half
-a proposal arriving today is most likely to duplicate. Fixed: 19 → 27 families. **Standing
-obligation: a newly-sealed family adds its registry row in the same cycle it seals.**
+## T-SQI-FINDING-FABRICATION-001 — never adjust the engine so the number confirms the hypothesis
 
-**T-D2A-LEXICAL-BLINDNESS-001.** D2A's coverage score is a SIGNAL, never a VERDICT. The
-detector matches words, not architecture. It systematically UNDER-reports a duplicate whose
-proposal is written in vocabulary different from its parent's index (a "collegiate court that
-deliberates and issues verdicts" IS DRK-01, and scored 36% before its keywords were corrected),
-and it can carry a correct duplicate verdict on the WRONG parent (high `arch` with near-zero
-`sem`/`func` is the tell). **A low coverage score is not clearance to build.** Read the parent's
-index before trusting either the number or the name attached to it.
+**Trap.** An engine built to reproduce a known finding will be tuned, in complete sincerity, until
+it reproduces it. The plan for the reconciliation engine predicted an orphan ratio near 0.92
+(the 70-of-76 finding that founded the corpus). Every measured number came out different, and each
+difference was a real fact about the repository rather than a bug in the instrument.
 
-**Anti-pattern sealed — the vacuous gate.** `V-DFP-INV1-NAMED-MISSING` asserted `all(v.missing
-for v in kf if v.verdict == DATASET_FIRST)` over a list that was EMPTY, because no case reached
-the class. `all([])` is True, so the gate passed green while the class it guarded was
-unreachable. **A gate that cannot fail is not a gate.** Any gate whose predicate iterates a
-filtered collection MUST first assert that the collection is non-empty.
+**What the engine actually measured, 2026-07-12:**
 
-## Universal Meta-Systems Runtime (SCS C86) — 2026-07-10
+- The authored census is **100 python test files, not 76**. Ten were authored in the four days
+  after the audit — including `tools/test_sqi.py`, the corpus's own gate — and every one landed
+  outside the canonical invocation. A further thirteen matched `*_test.py`, a suffix class the
+  founding audit's discovery rule never counted at all. The gap did not close; it widened.
+- The canonical invocation reaches **2 files, not 6**. Four of the six files inside `tests/`
+  are script-style V-gate runners with zero pytest-discoverable cases. The audit counted **files
+  in a directory**; the engine counts **identities in a manifest**. Reach is 3.0%, not 7.9%.
+- The **authoritative** invocation reaches nothing at all. There is no CI, so by the oracle
+  precedence the zero-argument default (`pytest`) is canonical — and it exits 3 with an
+  INTERNALERROR, collecting zero tests, because one file under `_logs/` calls `sys.exit()` at
+  module scope during collection. Reach under the estate's de facto canonical command is
+  **UNKNOWN**, and reporting it as zero would attribute to the repository a defect belonging to
+  the invocation.
 
-Runtime that makes the 7 universal meta-systems executable in any repo WITHOUT
-reimplementing them. The corpus (SHA `45dd1f9`) is machine-parseable doctrine —
-**38 named operations** across 7 datasets (PART V ops with `*Guarantee:*` +
-optional `*Never:*`, PART VI pipelines, PART VII lifecycle + `GV-N` gates). The
-runtime parses that contract layer, applies the repo's noun-map
-(`.pp_meta_systems.json`, generic fail-open, propose-from-CLAUDE.md), and emits a
-domain-substituted, gate-checked execution plan. Architecture: **Option C
-(interpreter)**, chosen over B (7 runners = reimplementation) and A (corpus-blind
+**Rule.** Report the number the instrument produces. If it disagrees with the hypothesis, the
+disagreement is the finding. A number adjusted to confirm a prior belief is worse than no engine,
+because it launders the belief into evidence.
+
+**Cross-ref:** `PR-PROOF-OR-HYPOTHESIS-001`, `sqi_02_test_reach_v1.txt` PART XVIII (the eleven
+attacks on the instrument's own metrics).
+
+---
+
+## T-SQI-DIRECTORY-NOT-MANIFEST-001 — a file inside the test root can still be inert
+
+**Trap.** Counting the test files inside the canonical invocation's directory is not the same as
+counting the test files the canonical invocation collects, and the difference is invisible to
+every instrument that reads a directory listing. A file can sit **inside** the reach boundary,
+correctly named, syntactically perfect, and yield zero collected cases — because its assertions
+live under a `main()` and a `sys.exit()` rather than in functions the runner discovers.
+
+**Origin.** The founding audit reported "43 tests from **6 files**" for Claude Power Pack. The
+reconciliation engine, harvesting node identities from the runner's own structured output rather
+than listing the directory, reports **2 files**. `tests/test_globalization.py`,
+`test_graphify_live.py`, `test_hooks_registration.py`, and `test_mistake_frequency_xplat.py` are
+all inside `tests/`, all reached by the invocation, and all contribute nothing. They are not
+orphans — orphans are outside. They are a fifth class the corpus had not named: **inert-in-root**.
+
+**Rule.** Reach is measured against the manifest, never against the filesystem listing of the
+invocation's root. Any engine that asks the directory what the runner collected has substituted a
+proxy for the observation. `modules/sqi/reconcile.py` reports `inert_in_root` per invocation as a
+first-class finding.
+
+**Cross-ref:** `sqi_02_test_reach_v1.txt` 5.2 (identities, never counts) and 3.2 (the circularity
+trap). Sister of `T-SQI-FINDING-FABRICATION-001`.
+reter)**, chosen over B (7 runners = reimplementation) and A (corpus-blind
 = empty abstraction). Audit == MS-6 applied to the repo (no separate audit engine
 — that would reimplement the Absence Engine). Carries:
 `modules/universal-meta-systems/runtime/` (corpus_parser · noun_map · executor ·

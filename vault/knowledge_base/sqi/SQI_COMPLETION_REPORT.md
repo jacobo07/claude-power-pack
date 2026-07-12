@@ -76,16 +76,35 @@ matching was the repair. Detail: `SQI_CONTAMINATION_AUDIT.md`.
 
 ## 4. Honest gaps
 
-1. **The corpus is doctrine, not yet executable.** SQI-01/02/03 specify engines — a reality
-   scanner, a reconciliation engine, an environment qualifier — and **none of them is
-   implemented**. `tools/test_sqi.py` gates the *corpus*; it does not reconcile a single repo.
-   By the corpus's own Executable Governance Law, a policy without enforcement is documentation.
-   The datasets are currently documentation. **This is the single largest open gap.**
+1. ~~**The corpus is doctrine, not yet executable.**~~ **CLOSED 2026-07-12 (SCS C91).** All three
+   engines are implemented: `modules/sqi/repo_reality_scanner.py` (SQI-01),
+   `modules/sqi/environment_qualifier.py` (SQI-03), `modules/sqi/reconcile.py` (SQI-02), plus
+   `tools/run_sqi.py`. The gate is `SQI_PASS=36/36` ×3 hermetic (27 corpus + 9 engine), the
+   runner writes `vault/audits/sqi_report_<date>.md`, and `sqi-runner` is registered in the D1
+   Liveness Ledger. Sealed as `PR-SQI-EXECUTABLE-GOVERNANCE-001`.
 
-2. **The findings that motivated the corpus are still unfixed.** PP still has 70 of 76 test
-   files outside its canonical invocation. TUA-X still has 390 orphaned tests. CostaLuz's
-   scanner is still inert. Two Elixir repos still cannot compile. SQI-02 describes precisely how
-   to detect all of these; nothing has yet detected them automatically.
+   **What the engine measured on first contact — the founding numbers were optimistic:**
+   the authored census is **100** files, not 76 (the gap *widened*: ten new test files in the
+   four days after the audit, all orphaned, including this corpus's own gate); the canonical
+   invocation reaches **2** files, not 6 (four of the six inside `tests/` are script-style and
+   collect zero cases — the new **inert-in-root** class); and the *authoritative* invocation,
+   which is the zero-argument default because there is no CI, **crashes and collects nothing**,
+   so reach under the estate's de facto canonical command is **UNKNOWN, not zero**.
+
+2. **The findings that motivated the corpus are still unfixed — and are now measured.** The
+   engine reports them automatically; it does not remediate them, because widening a canonical
+   invocation is a governance event (SQI-02 §9.10) and belongs to the Owner. PP's Test File
+   Reach is **3.0%**; its Executed Protection Ratio is **1.6%** (63 of 64 module packages have
+   zero references from any reached test, including `secret_firewall` and `cascade_prevention`,
+   which back seven CRITICAL Hard Rules). TUA-X's 390 orphaned tests, CostaLuz's inert scanner,
+   and the two Elixir repos that cannot compile remain unaddressed — the engine runs against
+   any repository, and has not yet been pointed at them.
+
+2b. **The engine measures; it does not yet gate.** SQI-02 Part XII specifies a baseline guardian
+   that fails the build on a silent *decrease* in the executed count. It is not built. Until it
+   is, the reach figure trends in a report that nothing consumes — and a quality signal that is
+   emitted and never read is functionally identical to one that was never computed (§8.4).
+   **This is now the single largest open gap.**
 
 3. **10 datasets unbuilt** (SQI-04…13), by approved scope decision, verdicts already fixed in
    `SQI_INDEX.md`.
@@ -106,15 +125,21 @@ matching was the repair. Detail: `SQI_CONTAMINATION_AUDIT.md`.
 
 ## 5. Next action (the highest-value one)
 
-Implement the SQI-02 reconciliation engine and run it against Claude Power Pack itself. The
-corpus was founded on PP's own 70-of-76 finding; until an engine reproduces that number
-automatically and fails the build when it worsens, SQI has described the disease and not
-treated it.
+~~Implement the SQI-02 reconciliation engine~~ — **done, SCS C91.** The engine reproduces the
+founding finding automatically, and corrects it: the real reach is 3.0%, not 7.9%.
+
+**The next action is the second half of that sentence: *fail the build when it worsens.*** Build
+the SQI-02 Part XII baseline guardian — per-root, keyed by environment, carrying node identities,
+with an increase free and a silent decrease failing. Then wire it into a done-gate. An engine that
+only measures produces a report; an engine whose refusal can stop a commit produces a control, and
+the distance between the two is the distance between `invoked` and `enforced` on SQI-02 Part
+XVII's own five-state ladder.
 
 ---
 
 ## 6. Reproduce
 
 ```
-python tools/test_sqi.py     # SQI_PASS=27/27, exit 0, x3 hermetic
+python tools/test_sqi.py     # SQI_PASS=36/36, exit 0, x3 hermetic (27 corpus + 9 engine)
+python tools/run_sqi.py      # writes vault/audits/sqi_report_<date>.md + JSON sidecar
 ```

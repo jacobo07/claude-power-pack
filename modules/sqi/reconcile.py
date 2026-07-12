@@ -62,6 +62,10 @@ _NODE = re.compile(r"^(?P<file>[^\s:]+\.py)::")
 _SUMMARY = re.compile(r"(\d+)\s+tests?\s+collected")
 _ERRORS = re.compile(r"(\d+)\s+error")
 _DESELECTED = re.compile(r"(\d+)\s+deselected")
+# The blocker is recorded verbatim, meaning the diagnostic exactly as the tool emitted it
+# (SQI-03 3.9). Terminal colour codes are not part of the diagnostic -- they are transport
+# noise, and stripping them is not paraphrasing.
+_ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 
 SELF_SYMBOL = "modules.sqi"
 
@@ -154,7 +158,7 @@ def _collect(root: Path, argv: list[str], timeout: int = 180) -> tuple[int, str]
             [sys.executable] + argv, cwd=str(root), capture_output=True,
             text=True, timeout=timeout, errors="replace",
         )
-        return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
+        return proc.returncode, _ANSI.sub("", (proc.stdout or "") + (proc.stderr or ""))
     except subprocess.TimeoutExpired:
         return 124, f"collection timed out after {timeout}s"
     except OSError as exc:

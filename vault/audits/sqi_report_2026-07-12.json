@@ -1,0 +1,1172 @@
+{
+  "generated": "2026-07-12 14:02 UTC",
+  "reality": {
+    "repo": "claude-power-pack",
+    "root": "C:\\Users\\User\\.claude\\skills\\claude-power-pack",
+    "commit": "67139f197f814a79cbccb239cfdc50bbcc593fa3",
+    "language_contexts": [
+      {
+        "language": "python",
+        "runner": "pytest",
+        "test_patterns": [
+          "test_*.py",
+          "*_test.py"
+        ],
+        "manifests": [
+          "kpp-distiller-kernel/pyproject.toml",
+          "modules/omnicapture/vps/requirements.txt",
+          "modules/sleepless_qa/vps/requirements.txt"
+        ],
+        "lock_state": "UNLOCKED",
+        "toolchain_constraint": "UNKNOWN",
+        "evidence": [
+          "kpp-distiller-kernel/pyproject.toml",
+          "modules/omnicapture/vps/requirements.txt",
+          "modules/sleepless_qa/vps/requirements.txt"
+        ]
+      },
+      {
+        "language": "javascript",
+        "runner": "node",
+        "test_patterns": [
+          "*.test.js",
+          "*.spec.js",
+          "*.test.ts",
+          "*.spec.ts",
+          "*.test.tsx",
+          "*.spec.tsx"
+        ],
+        "manifests": [
+          "package.json",
+          "extension/package.json",
+          "tests/fixtures/apollo-corrupted/package.json"
+        ],
+        "lock_state": "UNLOCKED",
+        "toolchain_constraint": "UNKNOWN",
+        "evidence": [
+          "package.json",
+          "extension/package.json",
+          "tests/fixtures/apollo-corrupted/package.json"
+        ]
+      }
+    ],
+    "domains": [
+      "agent_system",
+      "prompt_system",
+      "content_vault",
+      "frontend_application",
+      "cli_tool",
+      "hybrid_monorepo",
+      "library"
+    ],
+    "suite_roots": [
+      "_logs",
+      "modules/arch-decision",
+      "modules/auto-testing",
+      "modules/backup",
+      "modules/code-review",
+      "modules/deployment",
+      "modules/rollback",
+      "modules/session-continuity/tests",
+      "tests",
+      "tools"
+    ],
+    "test_artifacts": [
+      {
+        "path": "modules/arch-decision/test_closed_loop.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/arch-decision/test_v_block.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/auto-testing/auto_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/backup/test_v_block.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/code-review/test_closed_loop.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/code-review/test_combined_gate.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/code-review/test_v_block.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/deployment/test_v_block.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/rollback/test_v_block.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/session-continuity/tests/guard.test.js",
+        "stack": "javascript",
+        "rule": "*.test.js",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/session-continuity/tests/mark.test.js",
+        "stack": "javascript",
+        "rule": "*.test.js",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/session-continuity/tests/recorder.test.js",
+        "stack": "javascript",
+        "rule": "*.test.js",
+        "kind": "test_file"
+      },
+      {
+        "path": "modules/session-continuity/tests/registry.test.js",
+        "stack": "javascript",
+        "rule": "*.test.js",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/license_gate.test.js",
+        "stack": "javascript",
+        "rule": "*.test.js",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/test_cascade_populator.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/test_forensic_probes.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/test_globalization.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/test_graphify_live.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/test_hooks_registration.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/test_mistake_frequency_xplat.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tests/test_sqi_engine.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/ghost_driver_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/lazarus_forensic_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/shadow_sandbox_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_ads.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_akos_integration.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_atomic_branding.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_autoresearch_vps.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_auto_reset.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_build_everything.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_cdio.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_ceps_closed_loop.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_ceps_edge_cases.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_ceps_full_cycle.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_claude_md_router.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_co12_readiness_telemetry.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_co12_telemetry.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_cognitive_leak_taxonomy.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_cognitive_os_build.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_compact_rescue.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_conversation_quality_audit.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_cpc_snapshot.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_dataset_build.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_dataset_first_protocol.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_decision_review.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_duplicate_to_advantage.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_fable_distillation.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_frontier_intelligence_os.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_governance_propagation.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_hard_rules.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_hibernation.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_hook_hubs.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_jit_performance.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_karimo.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_lateral_thinking.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_manual_tools_automation.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_meta_systems_runtime.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_mirror_parity.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_monitoring.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_osa.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_pane_map.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_pane_map_snapshot.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_parallel_mesh.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_playwright_resilience.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_proactive_agents.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_ram_optimization.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_recovery_control_plane.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_rename_sessions.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_restart_and_lag.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_restart_kclear.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_restore_all_panes.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_scope_a_activation.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_sdd_os.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_session_resilience.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_session_resilience_build.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_setup_os.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_sleepy_skills.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_sovereign.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_speckit.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_spec_department.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_spec_driven.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_sqi.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_strategic_gaps.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_tab_order.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_tco.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_tco_tracking.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_tis_core.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_tis_e2e.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_token_corpus_audit.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_topology_reconcile.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_uqf.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_vague_lint.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_vscode_autorun.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_weekly_burn_tracking.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_wrapper.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "tools/test_zero_command.py",
+        "stack": "python",
+        "rule": "test_*.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m1_secret_firewall_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m3_backlog_signal_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m4_cascade_prevention_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m4_oneshot_jit_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m5_output_contracts_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m6_one_shot_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m7_cost_collapse_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m8_backlog_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      },
+      {
+        "path": "_logs/_m9_cpc_os_test.py",
+        "stack": "python",
+        "rule": "*_test.py",
+        "kind": "test_file"
+      }
+    ],
+    "declared_guards": [],
+    "per_rule_hits": {
+      "python:test_*.py": 87,
+      "python:*_test.py": 13,
+      "javascript:*.test.js": 5
+    },
+    "uncertainty_count": 2,
+    "uncertainty_files": [
+      "modules/session-continuity/tests/e2e_continuity.py",
+      "modules/session-continuity/tests/e2e_reboot_cycle.py"
+    ],
+    "exclusions_applied": [
+      ".git",
+      ".hg",
+      ".svn",
+      "__pycache__",
+      ".pytest_cache",
+      ".ruff_cache",
+      ".mypy_cache",
+      "node_modules",
+      "site-packages",
+      ".venv",
+      "venv",
+      "env",
+      "dist",
+      "build",
+      "target",
+      "out",
+      "vendor",
+      "third_party",
+      "deps",
+      "_build",
+      "backups",
+      "_quarantine",
+      "_archive"
+    ],
+    "unknowns": [],
+    "scan_error": null
+  },
+  "environment": {
+    "state": "PARTIALLY_QUALIFIED",
+    "gates": [
+      {
+        "gate": "host_census",
+        "passed": true,
+        "observed": "Windows 11 / py3.12.10",
+        "command": null,
+        "blocker": null
+      },
+      {
+        "gate": "toolchain_presence",
+        "passed": true,
+        "observed": "present: ['python', 'javascript']; absent: []",
+        "command": "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe|node",
+        "blocker": null
+      },
+      {
+        "gate": "toolchain_version",
+        "passed": true,
+        "observed": "python=Python 3.12.10; javascript=v24.15.0",
+        "command": null,
+        "blocker": null
+      },
+      {
+        "gate": "dependency_resolvability",
+        "passed": null,
+        "observed": "manifest present with no resolved lock: ['python', 'javascript']",
+        "command": null,
+        "blocker": "unlocked dependency set: ['python', 'javascript']"
+      },
+      {
+        "gate": "build_reachability",
+        "passed": true,
+        "observed": "pytest 9.0.3",
+        "command": "python -m pytest --version",
+        "blocker": null
+      },
+      {
+        "gate": "service_availability",
+        "passed": null,
+        "observed": "no external service contract declared; not evaluated",
+        "command": null,
+        "blocker": null
+      },
+      {
+        "gate": "harness_containment",
+        "passed": null,
+        "observed": "requires a differential observation around a run; not performed",
+        "command": null,
+        "blocker": null
+      }
+    ],
+    "host": {
+      "platform": "Windows",
+      "release": "11",
+      "machine": "AMD64",
+      "python": "3.12.10",
+      "cwd": "C:\\Users\\User\\.claude\\skills\\claude-power-pack"
+    },
+    "toolchains": {
+      "python": "Python 3.12.10",
+      "javascript": "v24.15.0"
+    },
+    "lock_state": {
+      "python": "UNLOCKED",
+      "javascript": "UNLOCKED"
+    },
+    "blockers": [],
+    "verdict_ceiling": "per-surface; UNVERIFIED or BLOCKED for the unobserved",
+    "env_hash": "b5ec3ed51c2f23b1",
+    "error": null
+  },
+  "reconciliation": {
+    "repo": "claude-power-pack",
+    "commit": "67139f197f814a79cbccb239cfdc50bbcc593fa3",
+    "authored_files": [
+      "_logs/_m1_secret_firewall_test.py",
+      "_logs/_m3_backlog_signal_test.py",
+      "_logs/_m4_cascade_prevention_test.py",
+      "_logs/_m4_oneshot_jit_test.py",
+      "_logs/_m5_output_contracts_test.py",
+      "_logs/_m6_one_shot_test.py",
+      "_logs/_m7_cost_collapse_test.py",
+      "_logs/_m8_backlog_test.py",
+      "_logs/_m9_cpc_os_test.py",
+      "modules/arch-decision/test_closed_loop.py",
+      "modules/arch-decision/test_v_block.py",
+      "modules/auto-testing/auto_test.py",
+      "modules/backup/test_v_block.py",
+      "modules/code-review/test_closed_loop.py",
+      "modules/code-review/test_combined_gate.py",
+      "modules/code-review/test_v_block.py",
+      "modules/deployment/test_v_block.py",
+      "modules/rollback/test_v_block.py",
+      "tests/test_cascade_populator.py",
+      "tests/test_forensic_probes.py",
+      "tests/test_globalization.py",
+      "tests/test_graphify_live.py",
+      "tests/test_hooks_registration.py",
+      "tests/test_mistake_frequency_xplat.py",
+      "tests/test_sqi_engine.py",
+      "tools/ghost_driver_test.py",
+      "tools/lazarus_forensic_test.py",
+      "tools/shadow_sandbox_test.py",
+      "tools/test_ads.py",
+      "tools/test_akos_integration.py",
+      "tools/test_atomic_branding.py",
+      "tools/test_auto_reset.py",
+      "tools/test_autoresearch_vps.py",
+      "tools/test_build_everything.py",
+      "tools/test_cdio.py",
+      "tools/test_ceps_closed_loop.py",
+      "tools/test_ceps_edge_cases.py",
+      "tools/test_ceps_full_cycle.py",
+      "tools/test_claude_md_router.py",
+      "tools/test_co12_readiness_telemetry.py",
+      "tools/test_co12_telemetry.py",
+      "tools/test_cognitive_leak_taxonomy.py",
+      "tools/test_cognitive_os_build.py",
+      "tools/test_compact_rescue.py",
+      "tools/test_conversation_quality_audit.py",
+      "tools/test_cpc_snapshot.py",
+      "tools/test_dataset_build.py",
+      "tools/test_dataset_first_protocol.py",
+      "tools/test_decision_review.py",
+      "tools/test_duplicate_to_advantage.py",
+      "tools/test_fable_distillation.py",
+      "tools/test_frontier_intelligence_os.py",
+      "tools/test_governance_propagation.py",
+      "tools/test_hard_rules.py",
+      "tools/test_hibernation.py",
+      "tools/test_hook_hubs.py",
+      "tools/test_jit_performance.py",
+      "tools/test_karimo.py",
+      "tools/test_lateral_thinking.py",
+      "tools/test_manual_tools_automation.py",
+      "tools/test_meta_systems_runtime.py",
+      "tools/test_mirror_parity.py",
+      "tools/test_monitoring.py",
+      "tools/test_osa.py",
+      "tools/test_pane_map.py",
+      "tools/test_pane_map_snapshot.py",
+      "tools/test_parallel_mesh.py",
+      "tools/test_playwright_resilience.py",
+      "tools/test_proactive_agents.py",
+      "tools/test_ram_optimization.py",
+      "tools/test_recovery_control_plane.py",
+      "tools/test_rename_sessions.py",
+      "tools/test_restart_and_lag.py",
+      "tools/test_restart_kclear.py",
+      "tools/test_restore_all_panes.py",
+      "tools/test_scope_a_activation.py",
+      "tools/test_sdd_os.py",
+      "tools/test_session_resilience.py",
+      "tools/test_session_resilience_build.py",
+      "tools/test_setup_os.py",
+      "tools/test_sleepy_skills.py",
+      "tools/test_sovereign.py",
+      "tools/test_spec_department.py",
+      "tools/test_spec_driven.py",
+      "tools/test_speckit.py",
+      "tools/test_sqi.py",
+      "tools/test_strategic_gaps.py",
+      "tools/test_tab_order.py",
+      "tools/test_tco.py",
+      "tools/test_tco_tracking.py",
+      "tools/test_tis_core.py",
+      "tools/test_tis_e2e.py",
+      "tools/test_token_corpus_audit.py",
+      "tools/test_topology_reconcile.py",
+      "tools/test_uqf.py",
+      "tools/test_vague_lint.py",
+      "tools/test_vscode_autorun.py",
+      "tools/test_weekly_burn_tracking.py",
+      "tools/test_wrapper.py",
+      "tools/test_zero_command.py"
+    ],
+    "authored_count": 100,
+    "invocations": [
+      {
+        "command": "pytest tests/",
+        "oracle": "documentation",
+        "authoritative": false,
+        "status": "OK",
+        "exit_code": 0,
+        "executed_files": [
+          "tests/test_cascade_populator.py",
+          "tests/test_forensic_probes.py",
+          "tests/test_sqi_engine.py"
+        ],
+        "executed_cases": 67,
+        "collection_errors": 0,
+        "deselected": 0,
+        "blocker": null,
+        "verdict": "PARTIAL_GREEN",
+        "inert_in_root": [
+          "tests/test_globalization.py",
+          "tests/test_graphify_live.py",
+          "tests/test_hooks_registration.py",
+          "tests/test_mistake_frequency_xplat.py"
+        ]
+      },
+      {
+        "command": "pytest",
+        "oracle": "zero_arg_default",
+        "authoritative": true,
+        "status": "BROKEN",
+        "exit_code": 3,
+        "executed_files": [],
+        "executed_cases": null,
+        "collection_errors": 0,
+        "deselected": 0,
+        "blocker": "INTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 2.57s\nmainloop: caught unexpected SystemExit!",
+        "verdict": "UNKNOWN",
+        "inert_in_root": []
+      }
+    ],
+    "authoritative_command": "pytest",
+    "reached_files": [
+      "tests/test_cascade_populator.py",
+      "tests/test_forensic_probes.py",
+      "tests/test_sqi_engine.py"
+    ],
+    "orphaned_files": [
+      "_logs/_m1_secret_firewall_test.py",
+      "_logs/_m3_backlog_signal_test.py",
+      "_logs/_m4_cascade_prevention_test.py",
+      "_logs/_m4_oneshot_jit_test.py",
+      "_logs/_m5_output_contracts_test.py",
+      "_logs/_m6_one_shot_test.py",
+      "_logs/_m7_cost_collapse_test.py",
+      "_logs/_m8_backlog_test.py",
+      "_logs/_m9_cpc_os_test.py",
+      "modules/arch-decision/test_closed_loop.py",
+      "modules/arch-decision/test_v_block.py",
+      "modules/auto-testing/auto_test.py",
+      "modules/backup/test_v_block.py",
+      "modules/code-review/test_closed_loop.py",
+      "modules/code-review/test_combined_gate.py",
+      "modules/code-review/test_v_block.py",
+      "modules/deployment/test_v_block.py",
+      "modules/rollback/test_v_block.py",
+      "tests/test_globalization.py",
+      "tests/test_graphify_live.py",
+      "tests/test_hooks_registration.py",
+      "tests/test_mistake_frequency_xplat.py",
+      "tools/ghost_driver_test.py",
+      "tools/lazarus_forensic_test.py",
+      "tools/shadow_sandbox_test.py",
+      "tools/test_ads.py",
+      "tools/test_akos_integration.py",
+      "tools/test_atomic_branding.py",
+      "tools/test_auto_reset.py",
+      "tools/test_autoresearch_vps.py",
+      "tools/test_build_everything.py",
+      "tools/test_cdio.py",
+      "tools/test_ceps_closed_loop.py",
+      "tools/test_ceps_edge_cases.py",
+      "tools/test_ceps_full_cycle.py",
+      "tools/test_claude_md_router.py",
+      "tools/test_co12_readiness_telemetry.py",
+      "tools/test_co12_telemetry.py",
+      "tools/test_cognitive_leak_taxonomy.py",
+      "tools/test_cognitive_os_build.py",
+      "tools/test_compact_rescue.py",
+      "tools/test_conversation_quality_audit.py",
+      "tools/test_cpc_snapshot.py",
+      "tools/test_dataset_build.py",
+      "tools/test_dataset_first_protocol.py",
+      "tools/test_decision_review.py",
+      "tools/test_duplicate_to_advantage.py",
+      "tools/test_fable_distillation.py",
+      "tools/test_frontier_intelligence_os.py",
+      "tools/test_governance_propagation.py",
+      "tools/test_hard_rules.py",
+      "tools/test_hibernation.py",
+      "tools/test_hook_hubs.py",
+      "tools/test_jit_performance.py",
+      "tools/test_karimo.py",
+      "tools/test_lateral_thinking.py",
+      "tools/test_manual_tools_automation.py",
+      "tools/test_meta_systems_runtime.py",
+      "tools/test_mirror_parity.py",
+      "tools/test_monitoring.py",
+      "tools/test_osa.py",
+      "tools/test_pane_map.py",
+      "tools/test_pane_map_snapshot.py",
+      "tools/test_parallel_mesh.py",
+      "tools/test_playwright_resilience.py",
+      "tools/test_proactive_agents.py",
+      "tools/test_ram_optimization.py",
+      "tools/test_recovery_control_plane.py",
+      "tools/test_rename_sessions.py",
+      "tools/test_restart_and_lag.py",
+      "tools/test_restart_kclear.py",
+      "tools/test_restore_all_panes.py",
+      "tools/test_scope_a_activation.py",
+      "tools/test_sdd_os.py",
+      "tools/test_session_resilience.py",
+      "tools/test_session_resilience_build.py",
+      "tools/test_setup_os.py",
+      "tools/test_sleepy_skills.py",
+      "tools/test_sovereign.py",
+      "tools/test_spec_department.py",
+      "tools/test_spec_driven.py",
+      "tools/test_speckit.py",
+      "tools/test_sqi.py",
+      "tools/test_strategic_gaps.py",
+      "tools/test_tab_order.py",
+      "tools/test_tco.py",
+      "tools/test_tco_tracking.py",
+      "tools/test_tis_core.py",
+      "tools/test_tis_e2e.py",
+      "tools/test_token_corpus_audit.py",
+      "tools/test_topology_reconcile.py",
+      "tools/test_uqf.py",
+      "tools/test_vague_lint.py",
+      "tools/test_vscode_autorun.py",
+      "tools/test_weekly_burn_tracking.py",
+      "tools/test_wrapper.py",
+      "tools/test_zero_command.py"
+    ],
+    "surprise_files": [],
+    "test_file_reach": 0.03,
+    "test_case_reach": null,
+    "suite_activation_ratio": 0.1111111111111111,
+    "orphaned_count": 97,
+    "orphaned_ratio": 0.97,
+    "silent_collection_loss": 0,
+    "executed_protection_ratio": 0.045454545454545456,
+    "unprotected_surface": [
+      "agent-governance",
+      "agent-lightning",
+      "akos_knowledge",
+      "arch-decision",
+      "auto-testing",
+      "autoresearch",
+      "backlog_autopilot",
+      "backup",
+      "bug-hunter",
+      "cascade_prevention",
+      "cdio",
+      "code-review",
+      "code_review",
+      "cognitive_os",
+      "cost_collapse",
+      "cpc_os",
+      "daemon",
+      "dataset_first",
+      "decision_review",
+      "deep-research",
+      "deployment",
+      "design-md",
+      "dispatcher",
+      "done_gate",
+      "duplicate_to_advantage",
+      "error_prevention",
+      "executionos-lite",
+      "fable_distillation",
+      "frontier_intelligence",
+      "governance-overlay",
+      "graphify",
+      "hard_rules",
+      "harness",
+      "infrastructure",
+      "karimo-harness",
+      "liveness",
+      "memory-engine",
+      "monitoring",
+      "omnicapture",
+      "omniram-sentinel",
+      "one_shot",
+      "osa",
+      "output_contracts",
+      "owner_queue",
+      "parallel_mesh",
+      "pp_agents",
+      "recall_roi",
+      "rollback",
+      "rtk-core",
+      "rule_compiler",
+      "sdd_os",
+      "secret_firewall",
+      "session-continuity",
+      "session_resilience",
+      "setup_os",
+      "skill_router",
+      "sleepless_qa",
+      "spec_gate",
+      "token-optimizer",
+      "universal-meta-systems",
+      "uqf",
+      "wrapper",
+      "zero-crash"
+    ],
+    "signal_integrity_verdict": "PARTIAL_GREEN",
+    "ontology_verdict": "PARTIALLY-VERIFIED",
+    "authoritative_reach_state": "UNKNOWN",
+    "self_reach": {
+      "engine": "modules/sqi",
+      "symbol": "modules.sqi",
+      "reached_by": [
+        "tests/test_sqi_engine.py"
+      ],
+      "reached": true,
+      "admissible": true
+    },
+    "join_sanity": {
+      "intersection": 3,
+      "sane": true,
+      "note": ""
+    },
+    "per_rule_hits": {
+      "python:test_*.py": 87,
+      "python:*_test.py": 13,
+      "javascript:*.test.js": 5
+    },
+    "uncertainty_count": 2,
+    "hermetic_runs": 3,
+    "hermetic_stable": true,
+    "findings": [
+      "INERT-IN-ROOT (4): authored test files that live INSIDE a canonical invocation's root and yield zero collected cases. They are inside the reach boundary and protect nothing. The founding audit counted these as reached, because it counted files in the directory rather than identities in the manifest: ['tests/test_globalization.py', 'tests/test_graphify_live.py', 'tests/test_hooks_registration.py', 'tests/test_mistake_frequency_xplat.py']",
+      "AUTHORITATIVE INVOCATION BROKEN: `pytest` (oracle=zero_arg_default) exits 3 and produces no manifest. Reach under the estate's de facto canonical command is UNKNOWN, not zero. Blocker (verbatim):\nINTERNALERROR>   File \"<frozen importlib._bootstrap>\", line 935, in _load_unlocked\nINTERNALERROR>   File \"C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_pytest\\assertion\\rewrite.py\", line 197, in exec_module\nINTERNALERROR>     exec(co, module.__dict__)\nINTERNALERROR>   File \"C:\\Users\\User\\.claude\\skills\\claude-power-pack\\_logs\\_m1_secret_firewall_test.py\", line 118, in <module>\nINTERNALERROR>     sys.exit(0 if passes == total else 1)\nINTERNALERROR> SystemExit: 0\nno tests collected in 2.57s\nmainloop: caught unexpected SystemExit!"
+    ],
+    "error": null
+  }
+}

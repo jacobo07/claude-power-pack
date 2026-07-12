@@ -19,6 +19,36 @@
 
 ---
 
+## Executable layer (SCS C91 — sealed 2026-07-12)
+
+The corpus states the laws; these enforce them. By SQI-00's Executable Governance Law, a policy
+without enforcement is documentation — so a dataset that specifies an engine ships the engine
+(`PR-SQI-EXECUTABLE-GOVERNANCE-001`).
+
+| module | dataset | status |
+|---|---|---|
+| `modules/sqi/repo_reality_scanner.py` | SQI-01 | `COMPLETE` |
+| `modules/sqi/environment_qualifier.py` | SQI-03 | `COMPLETE` |
+| `modules/sqi/reconcile.py` | SQI-02 | `COMPLETE` |
+| `modules/sqi/discovery_rules.json` | SQI-02 §3.4 — **governed artifact** | `COMPLETE` |
+| `tools/run_sqi.py` | unified runner → `vault/audits/sqi_report_<date>.md` | `COMPLETE` |
+| `tests/test_sqi_engine.py` | 24 tests, inside the canonical invocation (§5.10) | `COMPLETE` |
+| SQI-02 Part XII baseline guardian | fails the build on a silent decrease | `NOT_STARTED` |
+
+**Gate:** `python tools/test_sqi.py` → `SQI_PASS=36/36` ×3 hermetic (27 corpus + 9 engine).
+
+**What it measures about this repository** (2026-07-12, from the disk):
+Test File Reach **3.0%** (3 of 100 authored) · Orphaned **97** · Executed Protection Ratio
+**1.6%** · the **authoritative** invocation (the zero-argument default, since there is no CI)
+**crashes and collects nothing**, so reach under the estate's de facto canonical command is
+**UNKNOWN, not zero**. The founding audit's "6 of 76" was optimistic on both terms — see
+`sqi_scs_c91.md`.
+
+The engine **measures**; it does not yet **gate**, and it does not remediate: widening a
+canonical invocation is a governance event (SQI-02 §9.10) and belongs to the Owner.
+
+---
+
 ## Scope decision (Owner, STOP #1, 2026-07-12)
 
 **Spearhead approved: Tier 0 + Tier 1 (SQI-00…03).** The remaining 10 datasets are held in

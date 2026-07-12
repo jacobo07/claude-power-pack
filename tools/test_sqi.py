@@ -17,7 +17,8 @@ import re
 import sys
 from pathlib import Path
 
-SQI_DIR = Path(__file__).resolve().parent.parent / "vault" / "knowledge_base" / "sqi"
+REPO = Path(__file__).resolve().parent.parent
+SQI_DIR = REPO / "vault" / "knowledge_base" / "sqi"
 
 ROMAN_20 = [
     "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
@@ -209,6 +210,133 @@ def check_family(datasets: list[Path]) -> None:
         )
 
 
+def check_engines() -> None:
+    """The executable layer. SQI-00's Executable Governance Law: a policy without
+    enforcement is documentation. Until these gates existed, this file gated the CORPUS
+    and reconciled nothing -- the corpus was, by its own law, documentation.
+
+    Hermetic: every gate here reads, or writes only inside a temporary directory that is
+    destroyed on exit. Nothing global is touched, so three consecutive runs are identical.
+    """
+    import tempfile
+
+    sys.path.insert(0, str(REPO))
+    try:
+        from modules.sqi.repo_reality_scanner import scan_repo
+        from modules.sqi.environment_qualifier import qualify, QUALIFIED, GATES
+        from modules.sqi.reconcile import reconcile
+    except ImportError as exc:
+        _fail("V-SQI-ENGINE-IMPORT", f"the SQI engines do not import: {exc}")
+        return
+
+    # --- the scanner runs, and detects this repository's real runner ---
+    profile = scan_repo(REPO)
+    py = [c for c in profile.language_contexts if c.language == "python"]
+    if py and py[0].runner == "pytest" and profile.test_artifacts:
+        _ok("V-SQI-SCANNER-RUNS",
+            f"pytest detected; {len(profile.test_artifacts)} authored artifacts; "
+            f"domains={len(profile.domains)}")
+    else:
+        _fail("V-SQI-SCANNER-RUNS",
+              f"contexts={[c.language for c in profile.language_contexts]} "
+              f"artifacts={len(profile.test_artifacts)}")
+
+    # --- fail-open: an unrecognized tree yields UNKNOWN, never a raise ---
+    with tempfile.TemporaryDirectory() as td:
+        (Path(td) / "notes.md").write_text("no code here", encoding="utf-8")
+        blind = scan_repo(td)
+    if not blind.language_contexts and blind.scan_error is None:
+        _ok("V-SQI-SCANNER-FAILOPEN",
+            f"unknown stack -> domains={blind.domains}, unknowns={blind.unknowns}, no raise")
+    else:
+        _fail("V-SQI-SCANNER-FAILOPEN",
+              f"contexts={blind.language_contexts} error={blind.scan_error}")
+
+    # --- the qualifier runs all seven gates and never grants QUALIFIED by silence ---
+    env = qualify(REPO, profile=profile)
+    if [g.gate for g in env.gates] == GATES and env.state != QUALIFIED:
+        unk = sum(1 for g in env.gates if g.passed is None)
+        _ok("V-SQI-QUALIFIER-RUNS",
+            f"7 gates evaluated; state={env.state}; {unk} UNKNOWN (never coerced to pass); "
+            f"ceiling={env.verdict_ceiling[:32]}")
+    else:
+        _fail("V-SQI-QUALIFIER-RUNS",
+              f"gates={[g.gate for g in env.gates]} state={env.state}")
+
+    # --- the reconciler finds real orphans in this repository ---
+    rep = reconcile(REPO, hermetic_runs=1)
+    if rep.orphaned_count > 0 and rep.orphaned_ratio and rep.orphaned_ratio > 0.5:
+        _ok("V-SQI-RECONCILE-FINDS-ORPHANS",
+            f"{rep.orphaned_count}/{rep.authored_count} authored test files unreached "
+            f"(ratio={rep.orphaned_ratio:.3f}); reach={rep.test_file_reach:.3f}; "
+            f"surprise_set={len(rep.surprise_files)}")
+    else:
+        _fail("V-SQI-RECONCILE-FINDS-ORPHANS",
+              f"orphans={rep.orphaned_count} ratio={rep.orphaned_ratio}")
+
+    # --- fail-open: a tree with no runnable suite yields UNKNOWN metrics, never zeros ---
+    with tempfile.TemporaryDirectory() as td:
+        empty = reconcile(td, hermetic_runs=1)
+    if empty.test_file_reach is None and empty.orphaned_ratio is None:
+        _ok("V-SQI-RECONCILE-FAILOPEN",
+            "no runnable suite -> reach=UNKNOWN (not 0.0); no raise. Zero is a "
+            "measurement; this is the absence of one (SQI-02 5.8)")
+    else:
+        _fail("V-SQI-RECONCILE-FAILOPEN",
+              f"reach={empty.test_file_reach} ratio={empty.orphaned_ratio} -- "
+              f"an unrunnable suite was rounded to a measurement")
+
+    # --- the engine is inside the surface it audits (SQI-02 5.10, mandatory) ---
+    if rep.self_reach["reached"] and rep.self_reach["admissible"]:
+        _ok("V-SQI-SELF-REACH",
+            f"engine exercised by {rep.self_reach['reached_by']}; report admissible")
+    else:
+        _fail("V-SQI-SELF-REACH",
+              "the engine's own code is reached by no canonical invocation -- "
+              "an auditor exempt from its own audit is not an auditor")
+
+    # --- the runner produced a durable, citable artifact (the 6th chain stage) ---
+    reports = sorted((REPO / "vault" / "audits").glob("sqi_report_*.md"))
+    sidecars = sorted((REPO / "vault" / "audits").glob("sqi_report_*.json"))
+    if reports and sidecars:
+        _ok("V-SQI-RUNNER-WRITES-REPORT",
+            f"{reports[-1].relative_to(REPO).as_posix()} + JSON sidecar; a pass that "
+            f"leaves no artifact cannot be compared against tomorrow (SQI-02 6.6)")
+    else:
+        _fail("V-SQI-RUNNER-WRITES-REPORT",
+              "no vault/audits/sqi_report_*.{md,json} -- run `python tools/run_sqi.py`")
+
+    # --- the founding finding is reproduced from the disk, not from a fixture ---
+    if sidecars:
+        import json as _json
+
+        data = _json.loads(sidecars[-1].read_text(encoding="utf-8"))
+        r = data.get("reconciliation", {})
+        auth_state = r.get("authoritative_reach_state")
+        if r.get("orphaned_count", 0) > 0 and r.get("test_file_reach") is not None:
+            _ok("V-SQI-FINDING-REPRODUCED",
+                f"orphaned={r['orphaned_count']}/{r['authored_count']} "
+                f"reach={r['test_file_reach']:.3f} verdict={r['signal_integrity_verdict']} "
+                f"authoritative_reach={auth_state} -- measured, not asserted")
+        else:
+            _fail("V-SQI-FINDING-REPRODUCED",
+                  f"the sidecar carries no reproduced finding: {r.get('orphaned_count')}")
+
+    # --- the engine is registered where its own liveness will be probed ---
+    try:
+        from modules.liveness.liveness_ledger import default_registry
+
+        ids = {e["id"] for e in default_registry()}
+        if "sqi-runner" in ids:
+            _ok("V-SQI-LIVENESS",
+                "sqi-runner in the D1 Liveness Ledger -- a reach engine that is itself "
+                "never invoked is the inert node it was built to detect")
+        else:
+            _fail("V-SQI-LIVENESS", f"sqi-runner absent from the ledger: {sorted(ids)}")
+    except ImportError as exc:
+        _fail("V-SQI-LIVENESS", f"liveness ledger does not import: {exc}")
+
+
 def main() -> int:
     if not SQI_DIR.is_dir():
         print(f"SQI directory not found: {SQI_DIR}")
@@ -224,6 +352,7 @@ def main() -> int:
 
     check_family(datasets)
     check_governance(sorted(SQI_DIR.glob("*.md")))
+    check_engines()
 
     for line in _passes:
         print(line)

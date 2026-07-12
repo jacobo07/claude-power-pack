@@ -153,6 +153,17 @@ def default_registry() -> list[dict]:
                       "glob": "vault/dataset_first/necessity_ledger.jsonl",
                       "root": "repo"},
         },
+        {
+            "id": "sqi-runner",
+            "surface": "audits",
+            "desc": ("SQI reconciliation runner (tools/run_sqi.py) -- reports what fraction "
+                     "of authored protection the canonical invocation actually reaches. A "
+                     "reach engine that is itself never invoked is the exact inert node it "
+                     "was built to detect (SQI-02 5.10), so its own liveness is probed here."),
+            "probe": {"type": "file-mtime",
+                      "glob": "vault/audits/sqi_report_*.md",
+                      "root": "repo"},
+        },
     ]
 
 
