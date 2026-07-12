@@ -7,6 +7,59 @@ applicable across PP-shipped projects and not specific to one repo.
 Entries are append-only; never remove a row. If a lesson is
 superseded, append the superseding row referring back to the older.
 
+## Dataset First Protocol (SCS C90) — 2026-07-12
+
+**PR-DATASET-FIRST-001.** Before implementing a system of high complexity, long lifespan, or
+transversal impact: run the Knowledge Sufficiency Engine
+(`modules.dataset_first.knowledge_sufficiency.evaluate`). A `DATASET_FIRST_MANDATORY` verdict
+means the governing corpus is built FIRST and implementation begins only after certification.
+This is constitutional, not advisory. **But it fires far less often than its name suggests,
+and that is by design**: the protocol resolves toward BUILDING near a boundary, because it
+dies of false positives, not false negatives (DFP-00 Part III).
+→ `vault/knowledge_base/dataset_first/dfp_00_doctrine_constitution_v1.txt`
+
+**T-DATASET-FIRST-DOGMA-001.** A protocol that ALWAYS requires a corpus before any
+implementation is exactly as harmful as one that never does. Systematic false positives turn
+DFP into bureaucracy the Owner will route around, and a rule routed around is not a rule.
+Recalibration against real evidence (DFP-05, `modules.dataset_first.calibrator`) is MANDATORY,
+and the `retirement_signal` — the protocol recommending its own deletion — must stay reachable.
+A discipline that cannot be proven wrong is a belief, not a science.
+
+**T-DFP-COVERAGE-AS-CAPACITY-001.** NEVER map a composite provider score to a hard verdict
+without measuring its distribution first. D2A's `coverage_pct` is inflated by an architectural
+term that forces ≥80% whenever a proposal's tokens touch ≥4 families — which a long,
+vocabulary-rich, foundational proposal does BY CONSTRUCTION. Measured: a genuinely-novel
+proposal scored `coverage 92% / functional 7%`, while a true duplicate scored
+`coverage 95% / functional 29%`. Only the per-family `functional` precision separates them.
+Mapping coverage to `institutional_capacity` made `DATASET_FIRST_MANDATORY` **silently
+UNREACHABLE** — the family's central verdict was dead, and with it the eleventh DRK verdict
+built to host it. **Same failure class as `T-DRK-PRECEDENT-LENGTH-BIAS-001` (score rose with
+input LENGTH) and `T-D2A-LEXICAL-BLINDNESS-001` (score matches WORDS, not architecture).**
+Origin: DFP's own doctrine (VI.6) states this law, and DFP's own first implementation violated
+it. Countermeasure: the control-set discipline (DFP-00 VI.8) and a gate asserting BOTH poles of
+the taxonomy are reachable.
+
+**T-D2A-REGISTRY-STALENESS-001.** A duplicate-detector whose family registry stops at its own
+ship date grows blinder every week it is not updated. D2A's `FAMILY_REGISTRY` held 19 families,
+all sealed at or before D2A's own ship date (C85), and contained no row for DRK, ACIS, SQI,
+`spec_gate`, `hard_rules`, or D2A itself — the newest half of the stack, and precisely the half
+a proposal arriving today is most likely to duplicate. Fixed: 19 → 27 families. **Standing
+obligation: a newly-sealed family adds its registry row in the same cycle it seals.**
+
+**T-D2A-LEXICAL-BLINDNESS-001.** D2A's coverage score is a SIGNAL, never a VERDICT. The
+detector matches words, not architecture. It systematically UNDER-reports a duplicate whose
+proposal is written in vocabulary different from its parent's index (a "collegiate court that
+deliberates and issues verdicts" IS DRK-01, and scored 36% before its keywords were corrected),
+and it can carry a correct duplicate verdict on the WRONG parent (high `arch` with near-zero
+`sem`/`func` is the tell). **A low coverage score is not clearance to build.** Read the parent's
+index before trusting either the number or the name attached to it.
+
+**Anti-pattern sealed — the vacuous gate.** `V-DFP-INV1-NAMED-MISSING` asserted `all(v.missing
+for v in kf if v.verdict == DATASET_FIRST)` over a list that was EMPTY, because no case reached
+the class. `all([])` is True, so the gate passed green while the class it guarded was
+unreachable. **A gate that cannot fail is not a gate.** Any gate whose predicate iterates a
+filtered collection MUST first assert that the collection is non-empty.
+
 ## Universal Meta-Systems Runtime (SCS C86) — 2026-07-10
 
 Runtime that makes the 7 universal meta-systems executable in any repo WITHOUT

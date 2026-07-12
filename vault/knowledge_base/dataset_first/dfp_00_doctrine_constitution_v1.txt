@@ -313,6 +313,38 @@ all real work, was untouched by the protocol entirely. A week in which the proto
 is a healthy week. A week in which it fires three times is a protocol that has begun to
 inflate, and the verdict distribution metric in Part X exists to notice exactly that.
 
+IV.13 The four cases above are HAND-SCORED illustrations of the ten dimensions — a human
+reading the proposal and assigning each dimension a number. They are not claims about what
+the engine outputs, and on the day this dataset was sealed the engine did not agree with two
+of them. Run through the implementation, the third case returned hybrid at an aggregate of
+sixty-one rather than knowledge-first at eighty-three, and the fourth returned direct
+implementation rather than experiment-first. This divergence is recorded here, in the
+doctrine, on the day it was found, rather than being quietly resolved by adjusting either the
+example or the threshold.
+
+IV.14 The fourth case was a genuine defect and was fixed. Experiment-first had been gated
+behind the same high aggregate score as knowledge-first, which made it unreachable for
+precisely the proposals it exists to catch: a cheap empirical probe is low-scoring by
+construction, because the aggregate measures how much governing knowledge is needed and not
+how cheaply the open question could be settled by looking. The gate was removed; an empirical
+question with high uncertainty now routes to experiment-first regardless of aggregate. A
+protocol that sends a two-hour measurement to write a corpus has failed in the most
+embarrassing way available to a thinking system, and it was one threshold away from doing so.
+
+IV.15 The third case was NOT fixed, and the refusal is the point. The engine's six
+text-derived dimensions score from keyword evidence, which is crude, and they under-scored a
+proposal whose governing science is genuinely absent. The temptation was to lower the
+threshold until the worked example passed. That is fitting the instrument to the anecdote, it
+is the same overfitting this family refused when its duplicate-detector disagreed with it, and
+it would have produced a protocol calibrated to exactly one case — the case its own author
+wrote. The divergence is therefore left standing and recorded as this family's first
+calibration datum. Either the engine is under-classifying at the boundary it cares most about,
+in which case DFP-05 has its first threshold to move once real records exist, or the
+hand-scored example was inflated by an author who wanted his own example to be interesting, in
+which case the engine is right and the doctrine is what needs correcting. Both readings fit
+the evidence available today. The instrument that will decide between them is a ledger with
+records in it, and that ledger currently has none.
+
 PART IV FINAL LAW — The taxonomy is closed at four and ordered by cost, and a tie between two
 classes resolves to the cheaper one, because inflation always disguises itself as thoroughness.
 
@@ -683,9 +715,26 @@ IX.3 The second, deeper finding, which is worse. The source science for this fam
 exist. There was no dataset, no prior corpus, no external body of knowledge being imported —
 the thesis arrived as a paragraph in a prompt. The protocol whose entire law is do not build
 permanent infrastructure before its governing science exists was itself being built with no
-governing science beyond an assertion. Its own sufficiency engine, run on itself, returns
-knowledge-first, and the knowledge does not exist. This is not an irony to be enjoyed. It is
-the protocol's first and best test case, and it failed it.
+governing science beyond an assertion. This is not an irony to be enjoyed. It is the
+protocol's first and best test case.
+
+IX.3a And the test produced a result its author did not expect, which is the only reason it
+is worth anything. The author's hand-scored expectation was that the sufficiency engine, run
+on this family, would return knowledge-first — the dramatic result, the one that makes the
+irony sharp. It does not. Run on its own founding proposal, the engine returns hybrid at a
+score of forty-five: the core of the domain is understood, the edges are not, and the corpus
+should grow alongside the work rather than block it. That is precisely the class the Owner
+selected. The engine agreed with the decision; it was the author who was wrong. What the
+protocol actually objected to was narrower and entirely real — the open-corpus signal, which
+fires when another family in the repository is mid-build with unsealed Parts, and which
+returns defer. That signal, and only that signal, was overridden.
+
+IX.3b The correction is recorded rather than buried because the first draft of this Part
+asserted the dramatic result without running the engine, and the engine disproved it. A
+constitution that states what its own instrument returns, without having asked the instrument,
+is doing the exact thing this family exists to forbid: entrenching a confident guess as
+permanent doctrine. It happened here, in the document that forbids it, and it was caught by
+running the code.
 
 IX.4 What was done, and by whom. Both findings were surfaced to the Owner before a line of the
 corpus was written, together with the recommendation implied by the protocol's own verdict. The
@@ -694,15 +743,17 @@ collapsed from seven datasets to three. That is a legitimate exercise of the ove
 that the constitution explicitly reserves, and it is exactly the kind of event that INV-8
 classifies as data rather than defeat.
 
-IX.5 Why the override may well be right, stated fairly rather than defensively. The thesis in
-the prompt is not nothing; it is a compressed statement of a real discipline, and the corpus
-built from it is an attempt to make that discipline precise enough to be attacked. Under the
-protocol's own hybrid class, a domain whose core is understood and whose edges are not is
-correctly built as a corpus that grows alongside the work. There is a defensible reading of
-this family's founding in which the correct class was hybrid, the Owner selected it, and the
-protocol's own classifier — being new, uncalibrated, and seeded from thin evidence — was simply
-wrong. That reading cannot currently be distinguished from the alternative, and saying so is
-the point.
+IX.5 Why the override was almost certainly right, stated fairly rather than defensively. The
+thesis in the prompt is not nothing; it is a compressed statement of a real discipline, and the
+corpus built from it is an attempt to make that discipline precise enough to be attacked. Under
+the protocol's own hybrid class, a domain whose core is understood and whose edges are not is
+correctly built as a corpus that grows alongside the work — and hybrid is what the engine
+returned, and hybrid is what the Owner chose. On the question of CLASS, there was never a
+disagreement to override; there was only an author who had assumed a more dramatic answer than
+his own instrument gave. What remains genuinely overridden is the open-corpus signal, and that
+one is not resolved by argument. Running two knowledge families in parallel, with neither
+finished, is either a legitimate use of parallel panes or a measurable degradation of both, and
+the only thing that can tell us which is a ledger with records in it.
 
 IX.6 The receipt. The override is recorded as this family's first necessity record. It carries
 a prediction, as INV-3 requires: that a corpus built from an asserted thesis, in parallel with

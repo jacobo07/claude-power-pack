@@ -88,10 +88,21 @@ SDD-OS Parte V (enumeration) + ACIS + D2A + CO + FIOS + one_shot + owner_queue +
 
 ## Verdict ontology (composes SDD-OS approval pipeline + explicit set)
 
-`REJECT · REFRAME · REQUEST-EVIDENCE · RUN-EXPERIMENT · DEFER · KEEP-LOCAL · CONSOLIDATE · REMOVE ·
-APPROVE-WITH-CONDITIONS · APPROVE`. The authority **blocks** only on `Tipo-C irreversible ∧ evidence <
-E3`; everywhere else it **recommends**. Every block or approval writes a DecisionRecord; every Owner
-override is recorded (`PR-DECISION-AUTHORITY-LIMITS-001`).
+`REJECT · REFRAME · REQUEST-EVIDENCE · RUN-EXPERIMENT · BUILD-KNOWLEDGE-FIRST · DEFER · KEEP-LOCAL ·
+CONSOLIDATE · REMOVE · APPROVE-WITH-CONDITIONS · APPROVE`. The authority **blocks** only on `Tipo-C
+irreversible ∧ evidence < E3`; everywhere else it **recommends**. Every block or approval writes a
+DecisionRecord; every Owner override is recorded (`PR-DECISION-AUTHORITY-LIMITS-001`).
+
+**Amendment — 2026-07-12 (cardinality 10 → 11).** `BUILD-KNOWLEDGE-FIRST` was added by the **DFP**
+family (`vault/knowledge_base/dataset_first/`) under DRK-07's evolution protocol. It is *not* a
+synonym for `REQUEST-EVIDENCE`: that verdict says *go and get evidence for this decision*; the new
+one says *the decision is not the problem — the governing science does not exist yet*. Different
+instruction, different exit. DFP refused to build the "Dataset Necessity Court" its own source
+specification proposed, on the grounds that DRK-01 **is** that court and a second colegiado authority
+is forbidden by `T-DECISION-AUTHORITY-CAPTURE-001`; the honest delta was one enum member, not a rival
+kernel. The fork test (DFP-00 VIII.7): to host the capability DRK had to add one member and accept
+one provider — it did not have to invert an assumption or abandon an invariant. Doctrine and code
+moved in the same change.
 
 ## V-gates (FASE 4 done-gate) — planned scorecard
 

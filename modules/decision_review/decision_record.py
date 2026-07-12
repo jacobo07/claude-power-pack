@@ -77,12 +77,25 @@ class ReviewTier(str, Enum):
 
 
 class Verdict(str, Enum):
-    """DRK-00 II.2 -- the closed ten-verdict ontology."""
+    """DRK-00 II.2 -- the closed ELEVEN-verdict ontology.
+
+    Amended 2026-07-12 (DFP, governed under DRK-07's evolution protocol; recorded as a
+    DecisionRecord and reviewed by this kernel itself before being made).
+
+    BUILD-KNOWLEDGE-FIRST is the eleventh member. It is NOT a synonym for
+    REQUEST-EVIDENCE: that verdict means "go and get evidence FOR THIS DECISION", whereas
+    this one means "the decision is not the problem -- the governing science does not
+    exist yet, and building now would permanently encode a choice nobody knows how to
+    make." Different instruction, different exit. The kernel was already shaped to hold
+    the case (a build whose governing science is absent IS an irreversible act taken under
+    insufficient evidence); it had simply never been given a name for it.
+    """
 
     REJECT = "REJECT"
     REFRAME = "REFRAME"
     REQUEST_EVIDENCE = "REQUEST-EVIDENCE"
     RUN_EXPERIMENT = "RUN-EXPERIMENT"
+    BUILD_KNOWLEDGE_FIRST = "BUILD-KNOWLEDGE-FIRST"
     DEFER = "DEFER"
     KEEP_LOCAL = "KEEP-LOCAL"
     CONSOLIDATE = "CONSOLIDATE"

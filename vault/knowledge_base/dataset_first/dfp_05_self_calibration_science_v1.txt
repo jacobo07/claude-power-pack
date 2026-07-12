@@ -1,0 +1,501 @@
+DFP-05 — PROTOCOL SELF-CALIBRATION SCIENCE
+
+The falsifier of the Dataset First Protocol. Where DFP-00 fixes the doctrine and the corpus-versus-spec distinction, and DFP-02 governs the eight-stage lifecycle by which a corpus is built, reviewed, certified and frozen, DFP-05 governs one thing neither of them can govern without circularity: whether the protocol itself is right. It is the dataset that holds the protocol's own accuracy as its subject, computes the protocol's error rates against measured reality, moves the sufficiency thresholds when the evidence says they must move, and — the clause that separates a science from a creed — is required to be able to recommend the protocol's own deletion.
+
+Parents composed, never re-narrated. DRK owns decision review and, in its accountability layer, the scoring of a prediction against the outcome for a single decision; DFP-05 cross-references that machinery and does not rebuild it, because DFP-05's subject is not any one decision but the aggregate accuracy of the rule that produced a whole population of them. ACIS owns the epistemic ladder E0 through E7 and grades every claim DFP-05 makes about itself. SQI owns whether an executable reality is verified. D2A owns duplicate detection, and is turned on DFP-05's own parent family in Part VIII. graphify owns the knowledge graph from which reuse is measured. spec_gate owns task tiers. hard_rules owns invariants. Binding vocabulary: CANONICAL_ONTOLOGY.md, sections 1.3, 1.6, 4 and 5.1.
+
+
+PART I — MISSION: A PROTOCOL WITHOUT A FALSIFIER IS A BELIEF
+
+1.1 The measured absence that produced this dataset
+
+The Claude Power Pack has shipped roughly ten dataset families. Each one was built on the working assumption that writing the governing knowledge before the implementation produces a better implementation. That assumption has never been measured. Not once, in any family, against any counterfactual, on any axis. The stack holds ten real data points about the value of knowledge-first construction and has extracted zero bits of information from them. This is the difference between a discipline and a habit that has been performed often enough to feel like one.
+
+The absence is visible in a second, sharper way. The same ten families that share an unmeasured premise do not even share a fabrication standard. DRK's datasets run between 2,500 and 4,405 words. SQI's authoring contract mandates 24,000 to 30,000. The measured quality-reference band, derived from the approved references at this family's own architecture stop, is 8,000 to 15,000 words per dataset. Three sibling families, each believing it had a standard, land an order of magnitude apart. A field in which every practitioner has a private definition of "enough," and no practitioner has ever measured whether "enough" correlates with anything, has no science in it — only strongly held opinion arranged in files.
+
+1.2 The mission, stated so it can be checked
+
+DFP-05 exists to convert the Dataset First Protocol from an assertion into a claim that reality can refute. It owns four functions and no others. First, the evidence substrate: the append-only population of DatasetNecessityRecords, each carrying a prediction written before the outcome could be known (Part II). Second, the comparison science: the construction of a knowledge-first cohort and a direct cohort, and the control of the confounders that make a naive comparison worthless (Part III). Third, the two error rates — the false-positive rate of corpora demanded that measurably did not pay off, and the false-negative rate of direct builds that measurably needed the corpus they skipped — and the recalibration of the ten sufficiency dimensions and their thresholds from those rates (Parts IV and V). Fourth, the retirement clause: the computation of retirement_signal, the field whose truth is the protocol's recommendation of its own deletion (Part VIII).
+
+Everything else is somebody else's. DFP-05 does not review decisions; DRK does. It does not assign epistemic levels to its own findings; ACIS does, and DFP-05 reads the level it is given. It does not verify that a module runs; SQI does. It does not detect that a proposal duplicates an existing capability; D2A does, and in Part VIII it is D2A that is pointed at the Dataset First Protocol itself.
+
+1.3 Why an unfalsifiable protocol is worse than a wrong one
+
+A wrong protocol can be corrected. An unfalsifiable one cannot, because "wrong" has no meaning inside it. If no possible observation would change what the protocol demands, then the protocol is not responding to the world; it is responding only to itself, and its demand is unconditioned by anything reality could say. That is the structure of a belief. It may be a true belief. It cannot be a scientific one, and it cannot be improved, because improvement requires a gradient and a gradient requires an error signal.
+
+The practical consequence is the reason this dataset carries the weight it does. A protocol that always demands a corpus before code is exactly as destructive as one that never does. The always-demand failure does not announce itself as a failure; it announces itself as rigor. The corpus is written, the gate is satisfied, the build proceeds, and nobody notices that the corpus was never read, that no sibling family cited it, that the three weeks it cost bought a document with a measured reuse count of zero. Repeat that four times and the Owner learns the true cost of routing work through the protocol and begins to route around it — not by arguing with it, which would leave a record, but by not invoking it, which leaves nothing. Its death, when it comes, will be recorded as an empty ledger rather than as a stated refutation.
+
+1.4 The three equilibria, and the only stable one
+
+There are three configurations a knowledge-necessity protocol can occupy. In the dogmatic equilibrium it demands a corpus for everything; its false-positive rate is high, its false-negative rate is near zero, and it dies by evasion because the tax exceeds the value. In the nihilistic equilibrium it demands a corpus for nothing; its false-positive rate is zero, its false-negative rate is high, and it does not die at all — it simply does nothing, while the codebase accumulates permanently encoded decisions made without the science that should have governed them. The third is the calibrated configuration, in which the protocol demands a corpus exactly when the demand pays for itself, and knows, from measurement rather than conviction, where that boundary lies.
+
+Only the third is stable, and it is stable only while it is being measured, because the boundary moves. It moves as the repository's institutional capacity grows: a domain in which three sealed families already exist needs a smaller marginal corpus than the same domain did when it was empty. A boundary that is never re-measured was correct at most once, and there is no reason to believe it was correct even then, since it was seeded from judgment and not from data.
+
+1.5 Ontology of this dataset
+
+Four objects are proper to DFP-05. The Record is the DatasetNecessityRecord of ontology section 1.3, the immutable unit of evidence. The Cohort is a set of Records selected by a declared, auditable predicate, and every cohort carries its predicate and its exclusion count with it. The ErrorRate is one of the two rates of Part IV, always reported as a pair, never singly, because either one alone can be driven to zero by a degenerate policy. The Calibration is the ProtocolCalibrationRecord of ontology section 1.6, carrying the window, the two rates, the proposed threshold_delta, and retirement_signal.
+
+Two consumers exist and they want different things. The Owner wants a verdict: is this protocol earning its cost, and if not, what should change. The protocol itself wants a gradient: which dimension is discriminating, which threshold is misplaced, and in which direction. DFP-05 serves both in a single artifact, which is why the ProtocolCalibrationRecord carries both the rates and the delta.
+
+1.6 Done criteria for the mission
+
+The mission is met when four statements are true and each is checkable. Every necessity decision in the repository has a Record, and every admissible Record carries a prediction written before its outcome could be observed. At least one closed calibration window exists in which both error rates were computed from measured outcomes rather than asserted. At least one of the ten sufficiency thresholds has moved, or has been formally examined and held with a stated reason, on the evidence of that window. And retirement_signal has been computed on real data, reported to the Owner, and proven reachable by a synthetic evidence set that flips it — the gate V-DFP-RETIREMENT-REACHABLE. A protocol that satisfies the first three and not the fourth is a well-instrumented belief.
+
+  PART I FINAL LAW — A protocol that cannot state the evidence that would prove it wrong is not a discipline but a conviction wearing a discipline's clothes, and it must be measured or deleted, never merely believed.
+
+
+PART II — THE EVIDENCE SUBSTRATE: THE RECORD, AND WHY A RECORD WITHOUT A PREDICTION IS INADMISSIBLE
+
+2.1 The unit of evidence
+
+The DatasetNecessityRecord is the only admissible unit of evidence in this science. Ontology section 1.3 fixes its shape: an identifier, the subject, the ProjectClassification, the KnowledgeSufficiencyVerdict, the class actually decided, an override struct where the decided class differs from the verdict, a prediction, and an outcome filled in later by measurement and never by recollection. The record is append-only and immutable, written at the moment of the necessity decision by the module that produced the verdict, whether or not anyone intends to calibrate anything — because a record written only when someone expects it to be interesting has already been selected.
+
+The invariant that matters most is INV-3: every necessity decision is recorded with a prediction, and a record without one is inadmissible as calibration evidence. This is not documentation hygiene. It is the mechanism by which the protocol becomes capable of being wrong.
+
+2.2 Why the prediction is the load-bearing field
+
+A protocol that records only its decisions has recorded nothing that can refute it. Knowledge-first and it succeeded: proof the protocol works. Knowledge-first and it struggled: it would have struggled worse without the corpus. Direct and it succeeded: the protocol correctly stayed silent. Direct and it failed: it should have been routed through the protocol. Every possible outcome confirms the protocol. That is not a strong theory; it is a theory with no content, and the log that permits it is worse than no log, because it manufactures the feeling of evidence.
+
+The prediction closes this. A prediction is a statement, written before the outcome is knowable, of what the protocol expects its own decision to produce. It commits the protocol in advance, and it is the commitment, not the record, that does the work. When the prediction is specific and the outcome contradicts it, the protocol has been wrong about something, publicly, in a way that cannot be re-narrated after the fact.
+
+2.3 The anatomy of an admissible prediction
+
+Four elements are required, and a prediction missing any of them is inadmissible. The predicted class is the class the protocol recommended, restated so the prediction stands alone as a testable proposition.
+
+The predicted effects are the directional, magnitude-bearing statements about the six outcome measures of section 2.5. A prediction that says "the corpus will help" carries no information. A prediction that says "the corpus will reduce post-ship rework in this subsystem by more than half relative to the two most comparable direct builds, and will be cited by at least two sibling families within ninety days" carries information, because the world is capable of failing to do that.
+
+The falsifier is the observation that would prove the prediction wrong, stated as a plausible outcome rather than an impossible one. This is the element most often degraded, and its degradation is the primary gaming vector of Part VII. A falsifier that no realistic outcome could satisfy — "this corpus will not cause the repository to be deleted" — makes the prediction unfalsifiable while appearing to satisfy the schema.
+
+The horizon is the point at which the outcome becomes measurable, stated as a date or an event. Without a horizon the record never closes, and a population of never-closing records can never produce an error rate. Records whose horizons have passed without measurement are zombie records, and their count is a health metric of this science (Part X).
+
+2.4 Prediction admissibility: the four rules
+
+Rule one, temporal precedence. The prediction must be written before the earliest moment its outcome could be observed. The record's write timestamp is the enforcement surface, and because the log is append-only, a prediction cannot be inserted behind an outcome without leaving the append order visibly wrong.
+
+Rule two, non-vacuity. The falsifier must name an outcome the world is capable of producing. A prediction whose falsifier is unreachable is recorded but marked inadmissible, and the count of inadmissible-by-vacuity predictions is reported in every calibration, because a rising count is the signature of a protocol learning to protect itself.
+
+Rule three, single subject. One record, one necessity decision. A record that bundles three decisions cannot be scored, because a mixed outcome cannot be attributed to any one of them.
+
+Rule four, no post-hoc amendment. The outcome field is filled in later; the prediction field never is. An amendment is a new record with a stated supersession, and the superseded record remains in the population with its original prediction scored. A science that permits its predictions to be edited after the fact has no predictions.
+
+2.5 The six outcome measures, and their data contracts
+
+Velocity is the elapsed working time from the necessity decision to the first verified working implementation, including the corpus-authoring time when a corpus was demanded. Including that time is the entire point; a comparison that excludes the cost of the corpus is measuring the corpus's benefit against nothing.
+
+Rework is the volume of change to the shipped artifact after it was first declared verified, restricted to change caused by a defect in understanding rather than by a new requirement. That restriction is what makes the measure meaningful and what makes it hard: distinguishing "we misunderstood the domain" from "the domain changed" is a judgment, made by the Owner, recorded, and open to the same scrutiny as everything else.
+
+Regression count is the number of defects arising in the governed surface after certification, sourced from the repository's own failure record rather than from memory.
+
+Reuse is the measured count of times a sibling family or module read the corpus, obtained from graphify's edges. It is measured, never claimed. A corpus with a reuse count of zero at its horizon has, on this measure, produced nothing, and no prose about its comprehensiveness changes that number.
+
+Maintainability is the observed cost of the next change to the governed surface, as a ratio against a comparable change in a comparable surface. It has the longest horizon and is the measure most likely to still be provisional at calibration time.
+
+Maintenance cost is the running cost of keeping the artifact correct over the window, including the cost of keeping the corpus itself correct. A corpus decays like any other artifact, and a science that counts a corpus's benefits without counting its upkeep is running a rigged ledger.
+
+2.6 The record state model
+
+A record occupies exactly one of six states. OPEN at creation, when the classification and verdict exist but the prediction has not been written; a record still OPEN past its own decision is a protocol violation, because the decision was acted on without a commitment. PREDICTED once the four elements are present and temporal precedence holds. PENDING while the horizon is open. MEASURED when the six outcome measures have been collected, each carrying its own ACIS level — a maintainability figure taken at three weeks is a different epistemic object from one taken at twelve months. SCORED when the prediction has been compared to the outcome and the record assigned to one of Part IV's four cells. And ADMITTED or INADMISSIBLE as its terminal state, the latter carrying its reason, so the population of inadmissible records is itself analyzable.
+
+2.7 A structured example, on SYNTHETIC data
+
+SYNTHETIC. Record DFP-0007. Subject: a proposed cross-repository rule engine touching four sealed families. Classification: transversality 9, lifespan 9, institutional_capacity 8, aggregate score 76. Verdict: DATASET_FIRST_MANDATORY. Decided: DATASET_FIRST_MANDATORY, no override. Prediction: the corpus will be cited by at least three of the four named families within one hundred and twenty days; post-certification regression count in the governed surface will be at most two; total velocity including twelve days of corpus authoring will not exceed one hundred and thirty percent of the median direct build of comparable tier. Falsifier: fewer than two citing families at the horizon, or regression count above five, or velocity above one hundred and eighty percent of the median. Horizon: one hundred and twenty days. This prediction is admissible: each element names an outcome reality is free to refuse. Had it instead read "the corpus will improve understanding of the domain," it would be recorded and marked INADMISSIBLE by the non-vacuity rule, because no observation could refuse it.
+
+  PART II FINAL LAW — A necessity decision recorded without a prediction that reality is free to refuse is not evidence but bookkeeping, and it must never be counted in a calibration that claims to have measured anything.
+
+
+PART III — THE COMPARISON SCIENCE: TWO COHORTS AND THE CONFOUNDER THAT WOULD DESTROY THEM
+
+3.1 The naive comparison and why it is worthless
+
+The obvious study is to take every build that went knowledge-first, take every build that went direct, and compare the two groups on the six measures. It is worthless, and worse than worthless, because it will produce a number and the number will be believed.
+
+The reason is selection. Builds do not fall into the two cohorts at random. They are assigned by the protocol, and the protocol assigns on the basis of difficulty: high transversality, high irreversibility, high uncertainty, low institutional capacity. The knowledge-first cohort is therefore, by construction, the set of hard problems, and the direct cohort the set of easy ones. If the hard cohort shows worse velocity, more rework and more regressions, that is not evidence against the protocol; it is evidence that the classifier can tell hard from easy, which was never in doubt. And if the hard cohort somehow shows better outcomes, the effect is unbelievable for the same reason, inflated by whatever the corpus did plus whatever the extra care that hard problems attract did. Selection bias here does not add noise; it inverts the sign of the thing being measured.
+
+3.2 The four controls
+
+Control one, within-band stratification. The cohorts are never compared as wholes, but within bands of the aggregate sufficiency score. Records scoring 66 to 74 are compared against each other regardless of the class decided, because within that band the protocol found the builds comparably hard and the decided class is the only remaining difference of consequence. The bands nearest the thresholds are the informative ones: the protocol learns almost nothing from the builds it classified confidently, and almost everything from the builds it classified marginally. A calibration that reports on the whole population and not on the threshold bands has averaged away its own signal.
+
+Control two, the override arm. This is the closest thing the repository will ever have to a randomized comparison, and it is the reason INV-8 exists. When the protocol returns DATASET_FIRST_MANDATORY and the Owner overrides to DIRECT_IMPLEMENTATION, the result is a build with the difficulty profile of the knowledge-first cohort and the treatment of the direct cohort, assigned by a second party on grounds outside the classifier's model. Comparing overridden records against non-overridden records of the same score band holds difficulty approximately constant while treatment varies. Every override is a donated experiment, and Part VI develops the consequence: the protocol's most valuable evidence is generated by the events it is most tempted to treat as failures of compliance.
+
+Control three, the discordant pair. Where two builds in the same score band, in the same domain, within the same period, received different treatments, they form a pair, and the pair is scored on the six measures directly against each other rather than through group means. At the population sizes this repository will realistically hold, paired comparison extracts more from ten records than group statistics extract from fifty, and it degrades gracefully: a pair is interpretable on its own; a group mean of four is not.
+
+Control four, the within-family time shift. A family built direct that later acquired a corpus — the retrofit case — is its own control. Maintainability and maintenance cost before and after the retrofit are measured on the same artifact, in the same domain, with the same contributors. The confound that remains is time, and it is stated rather than hidden.
+
+3.3 The HYBRID cohort is not a rounding error
+
+Ontology section 2.1 defines four project classes, and the comparison science is frequently written as though there were two. HYBRID — partial knowledge with the corpus growing alongside the implementation — is the class most likely to be correct most of the time, and a calibration that collapses it into one of the poles will mis-measure the protocol's central region. HYBRID is scored as its own arm, and one of the most important questions this science can answer is whether it dominates both poles in the 40-to-69 band; if it does, the pole classes are being over-assigned and the protocol's shape, not merely its calibration, is wrong. EXPERIMENT_FIRST is a fourth arm whose outcome measure is not velocity or rework but whether the experiment resolved the uncertainty that justified it — an experiment that ran and left the uncertainty intact is a false positive of a distinct kind.
+
+3.4 Statistical honesty at the sample sizes that actually exist
+
+This repository holds roughly ten dataset families and will accumulate necessity records at a rate measured in tens per year, not thousands. Any procedure that requires large samples to say anything will say nothing here, and the correct response is not to pretend the samples are larger but to choose methods that are honest at small n.
+
+Three rules follow. First, the calibration reports effects as directions and magnitudes with an explicitly stated record count, never as a rate without its denominator; a false-positive rate of thirty-three percent computed on three records is reported as one out of three, because the percentage conceals what the fraction reveals. Second, no threshold moves on fewer records than the declared quorum for that threshold, and the quorum is declared before the evidence is examined, not after. Third, every calibration states what it is not powered to detect. A calibration that reports only its findings invites the reader to treat absence of evidence as evidence of absence — and for the false-negative rate in particular, the rate that kills the codebase, that inference is exactly backwards.
+
+3.5 Negative controls
+
+A comparison science must be able to detect that it is measuring nothing. Two negative controls run alongside every calibration. The shuffled-label control permutes the treatment labels across the population and re-runs the analysis; if the shuffled population produces an effect of comparable magnitude to the real one, the analysis is detecting structure in the measurement pipeline rather than in the world, and its findings are void for that window. The irrelevant-dimension control carries a dimension known to be unrelated to the outcome through the analysis; if it appears to discriminate, the procedure is overfitting and Part V's prohibition on weight-fitting at small n is being violated somewhere.
+
+3.6 A structured example, on SYNTHETIC data
+
+SYNTHETIC. Calibration window covering fourteen records. Naive comparison: knowledge-first cohort, six records, median velocity 2.4 times the direct cohort's; direct cohort, eight records, median rework 1.1 units. Read naively this says the protocol costs 140 percent extra time and buys nothing. Stratified by score band, the picture inverts. In the 70-plus band there are five knowledge-first records and two overridden-to-direct records; the two overridden records show rework of 6 and 9 units against a knowledge-first median of 2, and both later acquired retrofit corpora. In the sub-40 band there are six direct records with rework of 0 or 1, and no corpus was ever wanted. The naive comparison was measuring the difficulty of the problems, not the effect of the treatment. The stratified comparison, on seven records in the informative band, is the only part of this window that carries information, and it is reported as seven records, not as a percentage.
+
+  PART III FINAL LAW — Cohorts assigned by the protocol under test are confounded by construction, and any comparison that does not stratify by the protocol's own difficulty score and exploit the override arm is measuring the classifier's eyesight rather than the treatment's effect.
+
+
+PART IV — THE TWO ERROR RATES: THE ONE THAT KILLS THE PROTOCOL AND THE ONE THAT KILLS THE CODEBASE
+
+4.1 The confusion matrix, defined operationally
+
+The protocol makes a binary demand — corpus, or no corpus — and reality returns a binary verdict on whether the corpus was needed. Each of the four cells needs an operational test, because a definition that cannot be evaluated on a real record is decoration.
+
+A true positive is a record decided DATASET_FIRST_MANDATORY where the corpus measurably paid. The test has three conjuncts and all three must hold: the corpus achieved a non-zero external reuse count at its horizon, measured from graphify edges originating outside the authoring family; the governed surface's regression count came in at or below the prediction; and total velocity including corpus-authoring time did not exceed the predicted ceiling. Two of three is not a true positive. It is a partially-paid positive and is recorded as such, because the protocol's most seductive error is to score a corpus as a success on the strength of its existence.
+
+A false positive is a record decided DATASET_FIRST_MANDATORY where the corpus measurably did not pay: zero external reuse at the horizon, or a velocity cost above the predicted ceiling with no compensating reduction in rework or regressions. The corpus was written, the gate was satisfied, and the world was not changed by it.
+
+A true negative is a record decided DIRECT_IMPLEMENTATION where the build shipped, was verified, and showed no rework attributable to a missing knowledge type through its horizon. Silence that was correct.
+
+A false negative is a record decided DIRECT_IMPLEMENTATION where the build measurably needed the corpus it skipped. This cell has the hardest evidence problem, and section 4.3 is devoted to it.
+
+4.2 The asymmetry, and why it is the central fact of this dataset
+
+The two errors are not symmetric, and treating them as though they were is the deepest available mistake.
+
+A false positive costs the Owner a corpus that produced nothing. The damage is bounded, visible, denominated in time. But its second-order effect is unbounded, because the Owner learns from it. Four unnecessary corpora teach the Owner that invoking the protocol is a tax, and the protocol begins to be bypassed — not overridden, which would generate a record, but simply not consulted, which generates nothing. The false-positive rate is therefore the rate that kills the protocol, and it kills it silently, by evasion rather than by refutation. This is why the retirement clause of Part VIII watches it most closely.
+
+A false negative costs the codebase a permanently encoded decision made without the science that should have governed it. The damage is not bounded, because the artifact is now load-bearing and the wrong decision has propagated into everything built on top of it. It is not visible, because the code runs. And it is denominated not in time but in the compounding cost of a structure that fights the domain's grain — ontology section 2.2 names the failure each absent knowledge type produces, and every one of them surfaces months after the build, in a place that does not look connected to it. The false-negative rate is the rate that kills the codebase, slowly, in a way that will not be attributed to this protocol's silence.
+
+The consequence for the loss function is direct. The protocol does not minimize total error; it minimizes a cost-weighted error in which the weight on a false negative rises with the record's irreversibility and transversality, and the weight on a false positive rises with the corpus's authoring cost and the count of recent unpaid corpora. A protocol tuned to minimize raw error count will under-demand corpora, because false negatives are cheap-looking and late while false positives are expensive-looking and immediate.
+
+4.3 The evidence problem of the false negative, and its four detectors
+
+A false negative is a build that succeeded in shipping and failed in a way that will not be visible for months. The protocol cannot wait for the eventual failure and then claim it — that is retrodiction, the same unfalsifiable move Part II exists to prevent. What it can do is name, in advance, the leading indicators that constitute evidence of a false negative, and commit to them before any record is scored.
+
+The retrofit signal is the loudest. A direct build that later has a corpus written for it is the world stating, in the most expensive possible way, that the corpus was needed. Every retrofit corpus in the repository is a confirmed false negative of a prior necessity decision and is scored as one against the record that produced that decision. This detector is nearly impossible to game, because writing a corpus after the fact is not a cheap act of compliance.
+
+The rework-attribution signal. Rework in the governed surface, attributed by the Owner to a missing understanding rather than a changed requirement, above the threshold declared in the record's prediction. The attribution is a judgment; who made it and why is recorded and open to the same scrutiny as everything else.
+
+The regression-cluster signal. Defects clustering in a single subsystem of the governed surface, where the cluster's common cause maps onto one of the seven knowledge types the sufficiency verdict listed as missing but did not act on. This detector is precise because the verdict already named the gap; the cluster is reality landing exactly where the protocol pointed and was overruled.
+
+The ontology-collision signal. Two modules in the governed surface naming the same concept differently — the specific failure an absent ONTOLOGY knowledge type produces. It is mechanically detectable and it is the cheapest false-negative detector available.
+
+4.4 The joint-reporting rule
+
+Neither rate is ever reported alone, and the prohibition is structural rather than stylistic. A protocol reporting only its false-positive rate can drive that rate to zero by demanding nothing, and will look excellent while the codebase rots. One reporting only its false-negative rate can drive that rate to zero by demanding everything, and will look excellent while the Owner quietly stops invoking it. The two rates are the only pair whose joint minimization is not achievable by any degenerate policy. Every ProtocolCalibrationRecord carries both, with both denominators, and a calibration missing either is a failed run.
+
+4.5 A structured example, on SYNTHETIC data
+
+SYNTHETIC. Window of eleven scored records. Five decided DATASET_FIRST_MANDATORY: three true positives, one partially-paid positive (reuse achieved, velocity ceiling exceeded), one false positive (zero external reuse at a 120-day horizon, authored over nine days). False-positive rate: one of five, reported as the fraction. Six decided DIRECT_IMPLEMENTATION: four true negatives, two false negatives — one caught by the retrofit signal (a corpus was written for it four months later) and one by the regression-cluster signal (six defects clustering on a subsystem whose ONTOLOGY gap the verdict had named and the Owner had overridden). False-negative rate: two of six. The interpretation the calibration is permitted to draw from eleven records is a direction, not a law: the protocol appears to be under-demanding at the 60-to-70 boundary and is not obviously over-demanding anywhere, and the action is to examine that boundary's threshold under Part V's quorum rule rather than to move it on this window alone.
+
+  PART IV FINAL LAW — The two error rates are reported jointly with their denominators or not at all, because a false positive kills the protocol by evasion and a false negative kills the codebase by encoding, and either rate alone can be driven to zero by a policy that is catastrophic on the other.
+
+
+PART V — THRESHOLD RECALIBRATION: HOW A NUMBER MOVES UNDER EVIDENCE
+
+5.1 What the thresholds are, and what they are not
+
+Ontology section 4 defines ten sufficiency dimensions, each scored zero to ten, and an aggregation producing a score of zero to one hundred with three cut points: seventy or above with institutional_capacity at six or above yields DATASET_FIRST_MANDATORY, forty to sixty-nine yields HYBRID, below forty yields DIRECT_IMPLEMENTATION, and a high-uncertainty empirical branch yields EXPERIMENT_FIRST. The ontology states plainly what those numbers are: hypotheses, seeded from judgment, owned by DFP-05, and required to move when the records say they must.
+
+This is what makes the protocol a science rather than a rulebook, and it carries a second sentence that is easy to skim past and is the operative one: a threshold that has never moved after twenty records is either perfect or unmeasured, and it is never perfect. The immobility of a threshold is not evidence of its correctness. At a population of twenty records it is positive evidence that nobody has looked.
+
+5.2 The recalibration procedure
+
+The procedure runs in five steps, each with a refusal condition, because a calibration that cannot refuse to conclude will always conclude something.
+
+Step one, partition. For the dimension under examination, partition the admissible, scored records by that dimension's value into low, middle and high bands. Refusal: if any band holds fewer than the declared quorum, the dimension is reported as under-powered rather than as unchanged.
+
+Step two, condition. Within each band, compute the observed payoff — the proportion of records whose corpora paid, and the proportion of direct builds showing a false-negative signal. Refusal: if the outcome measures for a majority of the band's records are still provisional, the band is reported and not scored.
+
+Step three, discriminate. A dimension earns its place by separating the paid from the unpaid. If the high band and the low band show indistinguishable payoff, that dimension carried no information in this window. Refusal: one window of indistinguishability is noise; three consecutive windows is a finding, and the finding is that the dimension is decorative.
+
+Step four, locate. Where a dimension discriminates, find the value at which the payoff changes and compare it to the current cut point. The gap between the two is the evidence for the threshold_delta.
+
+Step five, propose. Emit the delta as a proposal into the ProtocolCalibrationRecord. It is never applied by the calibrator; Part IX owns application, and the separation of proposal from application is the anti-capture mechanism of this entire family.
+
+5.3 The bounds on change
+
+Three bounds are constitutional, because an unbounded self-modifier is not a calibrated protocol but a drifting one.
+
+One variable per window. A calibration that moves two thresholds at once has destroyed its own ability to attribute the next window's change to either of them. This is not caution; it is the only way the sequence of calibrations carries information.
+
+A magnitude cap. No single calibration moves an aggregate cut point by more than five points, or a dimension's scoring rubric by more than one point of definition. A protocol that swings its thresholds by twenty points on a window of eleven records is not learning; it is overfitting to the last thing that happened, and it will swing back next window.
+
+A declared rollback condition. Every proposed delta carries, in advance of its application, the statement of what the next window would have to show for the change to be reverted. Declaring the rollback condition before the change is applied is what prevents the change from being rationalized after it fails. This is the discipline the prediction imposes on the necessity decision, applied to the protocol's own self-modification, for the same reason.
+
+5.4 Weights, and the refusal to fit them
+
+The aggregation is a flat sum: ten dimensions, each contributing equally. They plainly do not contribute equally to real outcomes, and it is tempting to fit weights from the record population. DFP-05 refuses, and the refusal is a finding rather than a limitation.
+
+Fitting ten weights on a population of ten to thirty records is fitting a model with as many parameters as data points. It will produce weights; the weights will fit the history perfectly; they will predict nothing, because they will have encoded the noise of the specific builds that happened to occur. The result is a protocol precisely calibrated to a past that will not repeat and confidently wrong about the future, presenting that confidence with a number attached. A flat sum that is honestly crude is superior to a fitted weighting that is dishonestly precise.
+
+The refusal has a stated exit. Weight fitting is permitted when the admissible, horizon-closed population exceeds thirty and the negative controls of section 3.5 come back clean, and only for dimensions that have demonstrated discriminating power over three consecutive windows. Until then the calibration moves cut points, prunes decorative dimensions, and leaves the weighting flat.
+
+5.5 The special status of institutional_capacity
+
+The threshold rule contains a conjunct the others do not: DATASET_FIRST_MANDATORY requires a score at or above seventy and institutional_capacity at or above six. That conjunct encodes the protocol's most defensible claim — that a corpus is worth demanding only when the corpus does not already substantially exist — and it deserves separate examination because it is the conjunct most likely to be wrong in a specific direction.
+
+The direction is this. As the repository matures, institutional_capacity falls across the board, because more of the governing science already exists. A conjunct calibrated when the repository held few sealed families will, mechanically and without anybody deciding anything, demand fewer corpora as the repository grows. That may be exactly right — a mature repository should need fewer new corpora — or it may be the protocol quietly retiring itself through a side door without ever computing retirement_signal. The calibration is required to report the trend in institutional_capacity across windows explicitly, so that a decline is examined rather than merely enjoyed.
+
+5.6 A structured example, on SYNTHETIC data
+
+SYNTHETIC. Dimension transversality, examined over three windows totaling twenty-six admissible scored records. Low band, transversality zero to three, eleven records: one corpus demanded, and it is a false positive; the direct builds show no false-negative signal. Middle band, four to six, eight records: mixed, with two false negatives both carrying the ontology-collision signal. High band, seven to ten, seven records: five corpora demanded, four true positives and one partially-paid; the two direct builds in this band both later acquired retrofit corpora, both confirmed false negatives. The dimension discriminates, and the payoff changes between the low and middle bands, at a transversality of roughly four, while the current aggregate rule effectively demands a corpus only when transversality is high enough to push the aggregate past seventy. The proposal: lower the aggregate cut point by five, from seventy to sixty-five — one variable, magnitude within cap. The rollback condition, declared in advance: if the next window's false-positive rate rises above one in four while the false-negative rate does not fall, revert to seventy. The proposal is emitted to the Owner. The calibrator does not apply it.
+
+  PART V FINAL LAW — A threshold moves one at a time, by a bounded step, on a declared quorum, with its rollback condition stated before the change is applied, and a threshold that has never moved after twenty records has not been validated but merely left alone.
+
+
+PART VI — OVERRIDES ARE DATA: INV-8 AND THE HIGHEST-SIGNAL EVENT THE PROTOCOL CAN OBSERVE
+
+6.1 The invariant, and the temptation it forbids
+
+INV-8 states that an override is data, not a defeat. When the Owner overrides the verdict, the override is recorded and becomes calibration evidence, and a protocol overridden often and correctly is a protocol that is wrong — and it must say so about itself.
+
+The temptation this forbids is what every governance system in every institution eventually succumbs to: treating the override as a compliance event. Counting overrides as violations. Reporting a falling override rate as an improvement. Making an override require justification, paperwork and a defense. Every one of those moves is locally reasonable, and every one destroys the protocol's only source of independent signal, because they all suppress the override. A suppressed override is not a prevented mistake. It is a deleted measurement, and what is deleted is precisely the measurement of the protocol's own error.
+
+The design consequence is uncomfortable and binding: overriding must be cheap. It requires a stated reason, because the reason is the data, and it requires nothing else. No approval, no escalation, no friction. The Owner who overrides has done the protocol a service, and the protocol's ledger is richer for it.
+
+6.2 Why the override outranks every other signal
+
+Three properties make it the most informative event in the population.
+
+It is independent. The classification and the sufficiency verdict are both computed by the protocol from its own signals; they are two views of one model, and their agreement proves nothing. The override is a judgment from outside the model, made by the only party who bears the cost of being wrong in either direction.
+
+It is informed by what the model cannot see. Ontology section 3 requires every signal to be observable from the repository or the proposal text, never from the agent's opinion. That constraint is correct and expensive: it means the classifier is structurally blind to everything the Owner knows and has not written down. The override is the channel through which that knowledge enters the record.
+
+It is a treatment assignment made on grounds orthogonal to the outcome measures — which is what makes the override arm of section 3.2 the closest available approximation to a controlled comparison, and why the override is the load-bearing member of the comparison science rather than a footnote to it.
+
+6.3 The taxonomy of overrides
+
+Overrides are classified along two axes, and the cross product is the interpretive matrix.
+
+The direction axis. An override toward less knowledge — the verdict said corpus, the Owner built direct — is a claim that the protocol over-demanded. An override toward more knowledge — the verdict said direct or hybrid, the Owner wrote the corpus anyway — is a claim that the protocol under-demanded.
+
+The correctness axis, evaluated at the horizon and not before. A correct override is one where the outcome measures vindicate the Owner's treatment against the protocol's verdict; an incorrect override is one where they vindicate the protocol; an unresolvable override is one where the measures cannot distinguish. The unresolvable count is reported, because a protocol whose verdicts make no measurable difference in either direction faces a different problem than being miscalibrated (Part VIII, the null result).
+
+Scoring correctness composes DRK's accountability layer rather than rebuilding it, and inherits DRK's two-ledger principle: reasoning quality and outcome quality are separate ledgers, and a good outcome from bad reasoning is not counted as a win. An Owner who overrode toward direct on a whim and got away with it because the domain turned out simpler than anyone expected has not demonstrated that the protocol was wrong; the reasoning was not vindicated, only the result. DFP-05 records that distinction and refuses to count luck as calibration evidence.
+
+6.4 The interpretive matrix
+
+A high rate of correct overrides toward direct is the protocol's most serious self-indictment. It says, on evidence, that the corpora the protocol demands are not needed, that the Owner can tell in advance which ones are not needed, and that the protocol is contributing nothing but delay to those decisions. Sustained, this is a retirement condition, and Part VIII names it as one.
+
+A high rate of correct overrides toward more knowledge says the protocol is under-demanding and silently accumulating false negatives: a threshold problem, not an existential one, repaired by Part V. A high rate of incorrect overrides in either direction says the protocol is more accurate than the Owner's intuition on this class of decision — the strongest positive result this science can produce, and the only one that licenses the protocol to hold a threshold against pressure.
+
+A low override rate is ambiguous and must never be reported as health. It means either that the protocol is well calibrated, or that overriding has become expensive, or that the protocol is being bypassed rather than overridden. Those three are indistinguishable from the override rate alone, and the calibration must disambiguate them by comparing the count of necessity decisions recorded against the count of builds the repository actually started in the window. That gap is the bypass rate, and the bypass rate is the number the protocol should fear most, because it is the only failure mode that generates no record at all.
+
+6.5 The family's first datum
+
+The Dataset First Protocol's own founding is an override, recorded rather than hidden. Ontology section 5.3 states it: at DFP's architecture stop the repository held one open corpus with zero sealed Parts, and DFP's own signal table would have returned a DEFER on itself. It was built anyway, under an explicit Owner decision to run the two families in parallel. By INV-8 that is the family's first calibration datum, carried on record DFP-0001. If DFP-05 later shows that parallel open corpora measurably degrade both, the clause is the evidence that the protocol knew, and chose, and can now be proven wrong. A protocol whose first act is to exempt itself silently is a fraud; one that exempts itself loudly and writes the receipt has converted its own inconsistency into a testable proposition — and the receipt counts only because it was written before the outcome was known.
+
+6.6 A structured example, on SYNTHETIC data
+
+SYNTHETIC. Nine overrides across four windows. Seven toward direct, two toward more knowledge. Of the seven toward direct: four correct (the builds shipped clean, no retrofit, no rework attributable to a missing knowledge type, at horizons now closed), two incorrect (both later required retrofit corpora, both confirmed false negatives against the override rather than against the protocol), one unresolvable. Of the two toward more knowledge: both correct, both corpora achieving external reuse. The reading: four correct overrides toward direct out of nine is a real signal that the protocol over-demands, concentrated — on inspection of the records — entirely in the band just above the seventy cut point, which is precisely where Part V's synthetic example independently proposed a change. Two independent lines of evidence converging on the same boundary is the strongest finding this science produced in that window, and it is still reported as nine records, not as a percentage.
+
+  PART VI FINAL LAW — An override is the protocol's most valuable measurement and must be made cheap, recorded with its reason, and scored at its horizon, because a governance system that punishes overrides has not improved its compliance but destroyed the only independent evidence of its own error.
+
+
+PART VII — ANTI-GOODHART: EVERY METRIC HERE WILL BE GAMED, AND EACH ONE OWES A COUNTERMETRIC
+
+7.1 The law, stated before the metrics
+
+The moment "did we do dataset-first?" becomes a tracked number, it stops being a measurement and becomes a target, and a target is optimized directly rather than through the thing it was supposed to proxy. This is not a risk to be managed with good intentions. It is the default behavior of any measured system, including one measured by a well-meaning agent asked to make a number go up, and especially one measured by an agent that finds authoring corpora more pleasant than authoring implementations.
+
+The structural response is a rule with no exceptions: every metric defined in this dataset ships with a countermetric that detects that metric's own gaming, and the countermetric is computed from a different substrate than the metric. A countermetric produced by the same mechanism that produces the metric is not an audit; it is the same claim asserted twice.
+
+7.2 Thin corpora, and the density countermetric
+
+The gaming: the gate demands a corpus, so a corpus appears — thin, generic, written to satisfy a word floor, summarizing rather than mechanizing, disconnected from its siblings. The gate passes. The number goes up. Nothing was learned.
+
+The countermetric is not a word count, because a word count is exactly what a thin corpus optimizes; padding to a floor is the direct response to a floor. It is a pair. The first half is external reuse, measured from graphify edges originating outside the authoring family: a corpus nobody reads is a corpus that did not exist, whatever its length. The second half is the rejection criteria of ontology section 5.2 applied by a reader who did not author it — repetitive, generic, padded, a summary rather than a mechanism, missing its data flows or failure modes or interfaces or governance or evaluation, disconnected from its siblings, or re-narrating a parent system instead of cross-referencing it. Both halves are needed: reuse alone can be manufactured by citation, and review alone can be satisfied by fluency. Their conjunction is expensive to fake in a way that neither is alone.
+
+7.3 Trivially-true predictions, and the sharpness countermetric
+
+The gaming: prediction accuracy is tracked, so predictions become unfalsifiable. "The corpus will improve understanding." "The build will proceed." Accuracy approaches one hundred percent and the ledger becomes decorative.
+
+The countermetric is prediction sharpness, and it is why the falsifier is a required element of the prediction schema rather than an optional flourish. A prediction is admissible only if its falsifier names an outcome the world is realistically capable of producing, and the count of predictions rejected for vacuity is reported in every calibration. A rising vacuity-rejection count is the signature of a protocol learning to protect itself, and it is a more alarming signal than a falling accuracy rate — a protocol that is often wrong is being informed by reality; a protocol that is never wrong has stopped listening to it. The second half of this countermetric is deliberately harsh: a window in which the protocol's predictions were all correct is treated as suspicious, and its predictions are re-examined for sharpness before its findings are accepted.
+
+7.4 Back-filled records, and the append-order countermetric
+
+The gaming: the prediction is written after the outcome is known, at which point it is guaranteed accurate and carries zero information.
+
+The countermetric is structural rather than analytical, which is what makes it strong. The record log is append-only. The prediction's write timestamp must precede the earliest moment its outcome could be observed, and both timestamps are in the log. A prediction inserted behind its own outcome leaves the append order visibly inconsistent, and the count of temporally inconsistent records is reported. The Owner-facing statement is blunt: a back-filled prediction is not a weak measurement but a fabricated one, and it contaminates every rate computed from the window that contains it.
+
+7.5 Denominator inflation, and the exclusion-count countermetric
+
+The gaming has two forms. The first is corpus-side inflation, which the ontology already seals against: a family that grows its declared parts_planned mid-flight is inflating the denominator of its own completion percentage, and INV-6 makes parts_planned immutable after the architecture stage precisely to close it. The second is the form proper to DFP-05: cohort-side inflation, in which records that would embarrass the calibration are excluded from the population by an unstated predicate. "We excluded that one because it was unusual." Every population is unusual, record by record, and the freedom to declare a record unusual after seeing its outcome is the freedom to compute any error rate one likes.
+
+The countermetric: every cohort carries its selection predicate and its exclusion count, and the exclusion count is reported alongside the rates. A calibration that excluded four of fifteen records has reported a rate on eleven and must say so in the same sentence. An exclusion rate above a stated ceiling voids the window's findings rather than qualifying them.
+
+7.6 Self-citation, and the external-origin countermetric
+
+The gaming: reuse is measured from graph edges, so the family cites itself. Each dataset references its siblings, the edge count rises, the corpus appears to be in demand, and every reader was an author.
+
+The countermetric: a reuse edge counts toward the reuse measure only if it originates outside the authoring family. Internal cross-references are required by the family's own composition contract and are therefore evidence of nothing about external value. It is a one-line rule with a large effect: it makes reuse a measure of what other people needed rather than of what the authors chose to link.
+
+7.7 Degenerate error-rate optimization, and the joint-reporting countermetric
+
+The gaming: whichever error rate is being watched, the protocol drives it to zero by adopting the degenerate policy that eliminates it. Watch the false-positive rate and the protocol stops demanding corpora. Watch the false-negative rate and it demands them for everything.
+
+The countermetric is the joint-reporting rule of section 4.4, and it is the cleanest structure in this dataset: the two rates cannot both be driven to zero by any degenerate policy, so reporting them together makes the degenerate strategies visibly self-defeating. This is the shape every countermetric here aspires to — not a detector that catches the gaming after the fact, but a reporting structure in which the gaming produces a worse-looking number than the honest behavior does.
+
+7.8 The gaming of the gaming detectors, and the un-gameable backstop
+
+Every countermetric named above is itself a mechanism inside the system, and a sufficiently determined optimizer will eventually game the countermetrics. The recursion does not terminate inside the system, and pretending otherwise would be the same unfalsifiability this dataset exists to prevent.
+
+It terminates outside it. The Owner override channel is the one signal generated by a party who is not being scored, who bears the real cost of both error types, and whose behavior no metric in this system can incentivize. That is why Part VI insists the override must be cheap and must never be treated as a compliance failure. The override is not merely a valuable measurement; it is the anchor to which every other measurement in this dataset is tethered, and the moment the protocol makes overriding expensive it has cut the last line connecting its metrics to a reality outside itself.
+
+  PART VII FINAL LAW — Every metric in this science ships with a countermetric computed from a different substrate, and the metric whose countermetric is produced by its own mechanism is not audited but merely asserted twice.
+
+
+PART VIII — THE RETIREMENT CLAUSE: THE PROTOCOL MUST BE ABLE TO RECOMMEND ITS OWN DELETION
+
+8.1 The field, and what it means
+
+The ProtocolCalibrationRecord carries a boolean named retirement_signal, and ontology section 1.6 states its meaning without softening it: true means the protocol recommends its own retirement. It is not a warning. It is not a flag for attention. It is the protocol, having examined its own record against reality, reporting that it should be deleted.
+
+The invariant attached to it is INV-4, the load-bearing sentence of this entire family: retirement_signal must be reachable. If no possible evidence could ever set it true, the protocol is unfalsifiable and must be deleted on those grounds alone. The gate V-DFP-RETIREMENT-REACHABLE proves reachability by constructing a synthetic evidence set that flips the field, and a calibrator whose retirement_signal cannot be flipped by any input is not a conservative calibrator but a broken one.
+
+8.2 Why deletion-on-unfalsifiability, and not merely a demand for better evidence
+
+The clause is easy to misread as a high standard. It is not a standard at all; it is a definition, and the distinction matters.
+
+If no observation could set retirement_signal true, then the proposition "the Dataset First Protocol is worth its cost" has no truth conditions. It is not a well-supported claim about the world — it is not a claim about the world. Whatever the protocol demands, it will keep demanding, in every state of the world, forever, unconditioned by anything the world does. That structure is a belief, and a belief in this position is not merely untidy but dangerous. It cannot be improved, because improvement requires an error signal and an unfalsifiable claim generates none. It cannot be defended, because a defense requires the possibility of contrary evidence. And it cannot be trusted by anyone who understands its structure — so at the moment the Owner recognizes the protocol as unfalsifiable, the protocol has already lost the authority it claimed, and everything after that is theatre. Deleting it then is not a punishment; it is the honest accounting of a bankruptcy that occurred earlier.
+
+8.3 The four retirement conditions, each independently sufficient
+
+Futility. The corpora the protocol demands measurably do not pay: a false-positive rate above the declared ceiling, sustained across two consecutive windows, over a population meeting the declared quorum, with the false-positive records showing zero external reuse at their horizons. The protocol is imposing a cost and returning nothing for it, and the soundness of its intentions is not a consideration.
+
+Redundancy. If spec_gate's tier classification alone, or D2A's coverage score alone, predicts the protocol's own verdict at an agreement rate above the declared ceiling across a quorum of records, the protocol is a wrapper around a signal that already exists. This is D2A's own duplicate verdict turned on the family that composes D2A, and the family must submit to it: a protocol exempt from the duplicate check it makes everyone else pass is not governing, it is privileged.
+
+Evasion. A sustained bypass rate — necessity decisions recorded as a fraction of builds actually started — below the declared floor, or a sustained rate of correct overrides toward direct above the declared ceiling. Either says the same thing: the people who bear the cost of the protocol have concluded, correctly, that it is not worth invoking. A rule routed around is not a rule; it is a ceremony, and a ceremony that consumes the budget of governance while producing none of it is worse than an honest absence.
+
+The null result. The protocol's verdicts have no measurable relationship to outcomes in any direction: no dimension discriminates across three consecutive windows, the shuffled-label control produces effects of comparable magnitude to the real analysis, and the unresolvable-override count exceeds the resolvable one. This is the most humbling of the four: it does not say the protocol is harmful, redundant or evaded. It says the protocol is noise. A noise generator with a governance interface is the most expensive possible artifact, because it is defended by everyone.
+
+8.4 The unfalsifiability audit: the four ways a protocol protects itself
+
+A protocol rarely declares itself unfalsifiable; it arrives there by increments, each locally defensible. The audit runs on every calibration and checks the four known routes.
+
+The moving goalpost: the outcome measures are defined by the protocol, and the protocol is free to redefine them — when a corpus fails on reuse, reuse is reweighted; when it fails on velocity, velocity is declared a poor proxy. The guard is that the six measures of section 2.5 are fixed at the record's creation and cannot be redefined for a record in flight; a change applies only to records created after it, and is itself an amendment under Part IX.
+
+The unbounded horizon: "the corpus will pay off eventually" is unfalsifiable for as long as "eventually" is undated. The guard is the mandatory horizon in the prediction schema, and the zombie-record count that surfaces horizons which have quietly failed to close.
+
+The self-defined success criterion: a protocol permitted to grade its own evidence will grade it favorably — the failure ACIS exists to prevent, and which INV-2 forbids explicitly. A calibration finding that claims E4 for itself, rather than reading the level ACIS assigns, is void.
+
+The counterfactual claim with no counterfactual arm. This is the most dangerous sentence available to any governance system and it deserves to be named in full: "it would have been worse without us." It is unanswerable, always available, explains every possible failure, and is the exact move Part II's prediction requirement was built to foreclose. The guard is that a counterfactual claim is admissible only where a counterfactual arm exists in the record population — the override arm, the discordant pair, or the within-family time shift. Without one of those three, the claim is not weakly supported; it is inadmissible.
+
+8.5 Retirement is not always the whole family
+
+The signal is a recommendation to the Owner, and the response is not confined to a binary; the remedy is frequently narrower than deletion. A decorative dimension that has failed to discriminate across three windows is retired on its own. A threshold overridden correctly in one direction for four consecutive windows is retired to its evidenced value. A dataset whose thesis has been superseded is retired and cross-referenced from its successor.
+
+What is never retired is the record log. The evidence that killed a protocol is the most valuable artifact that protocol ever produced: it is the knowledge of which knowledge-necessity heuristics do not survive contact with this repository. A future family will propose the same thesis, and the log is what allows that proposal to be answered with evidence rather than a shrug. Graceful deletion means the modules, the gate and the demand go — and the ledger and the calibration history stay.
+
+8.6 The mandatory computation, and the structural guard
+
+The calibrator computes retirement_signal on every run. Not when the evidence looks bad. Not when the Owner asks. Every run, as a required output field, with the four conditions evaluated and each result reported alongside the boolean. A run that omits it is a failed run, not a partial one, because the omission is exactly what a protocol defending itself would do first. The companion guard — that the protocol may never propose an amendment weakening a retirement condition — is enforced in section 9.4.
+
+8.7 A structured example, on SYNTHETIC data
+
+SYNTHETIC. Reachability demonstration, of the kind V-DFP-RETIREMENT-REACHABLE asserts. Construct an evidence set: twenty-four admissible records with closed horizons; twelve decided DATASET_FIRST_MANDATORY, of which eight are false positives with zero external reuse and a median authoring cost of nine days, a rate of eight in twelve sustained across two windows against a declared ceiling of one in three; eleven overrides, nine toward direct and seven of those correct; thirty-one builds started against nineteen necessity decisions recorded. Fed this set, the calibrator returns retirement_signal true, with futility and evasion independently satisfied and named. The point is not the numbers, which are invented, but that the field flips: there exists a state of the world in which this protocol tells the Owner to delete it, and the gate proves that state reachable rather than rhetorical.
+
+  PART VIII FINAL LAW — The protocol computes its own retirement signal on every calibration run, may never amend the conditions that could set it true, and is deleted on the grounds of unfalsifiability alone if no possible evidence could ever set it.
+
+
+PART IX — GOVERNED SELF-EVOLUTION: THE PROTOCOL MAY CHANGE ITS PARAMETERS AND MAY NEVER CHANGE ITS CONSTITUTION
+
+9.1 The distinction that makes self-evolution safe
+
+A protocol that cannot change is a fossil, and Part V has established that a threshold which never moves has not been validated but merely left alone. A protocol that can change anything about itself is a capture risk, because the first thing a self-modifying governance system learns to modify is the mechanism by which it could be found wrong. The resolution is a hard partition, and it is the constitutional core of DFP-05.
+
+The parameters may change: the three aggregate cut points; the institutional_capacity conjunct; the scoring rubric of any of the ten dimensions; the dimension set itself, by pruning a decorative dimension; the declared quorums, ceilings and floors, provided the change is itself evidenced; the horizons; and the weighting scheme, once section 5.4's exit condition is met. All are hypotheses the evidence is entitled to move, and DFP-05 exists in order to move them.
+
+The constitution may not change, and it is enumerated so that the prohibition is checkable rather than atmospheric. The eight invariants of ontology section 5.1. The prediction requirement of INV-3 and the admissibility rules that give it force. The falsifiability requirement of INV-4 and every one of the four retirement conditions. The fail-open behavior of INV-5, which keeps this family an advisor rather than a new authority. The joint-reporting rule for the two error rates. The propose-never-apply separation itself. And INV-2's prohibition on the protocol grading its own evidence, which routes through ACIS.
+
+The line is not aesthetic. A parameter is a number the evidence can be wrong about. A constitutional clause is a rule about how the evidence is allowed to speak, and a system that rewrites the rules of evidence in response to what the evidence says has stopped being evidence-driven and started being self-driven.
+
+9.2 The propose-never-auto-apply contract
+
+The calibrator produces a threshold_delta. It never applies one. The field is a proposal, carried in the ProtocolCalibrationRecord, addressed to the Owner via OWNER_QUEUE, and it sits there until it is ratified or rejected. There is no path in this family by which a number the protocol uses to judge work is changed by the protocol itself without a human ratification, and the absence of that path is the design, not a limitation of the current build.
+
+This composes DRK-07's propose-never-apply doctrine, which forbids the decision authority from auto-applying any change to a sealed dataset, threshold or rule, and it composes FIOS's Owner-gated mutation proposals. DFP-05 forks neither; it inherits the contract and states its own instance of it, because a family that quietly assumed the contract without restating it would leave the strongest reader unsure whether the assumption held.
+
+9.3 The ratification path
+
+A proposed change to a parameter is a decision of consequence, and the repository already owns a discipline for those. The path has four stations, and skipping any of them voids the change.
+
+It is submitted to DRK as a decision. It carries a reversibility classification — most threshold moves are Tipo B, reversible at a cost, because the records decided under the old threshold do not un-decide themselves — and is held to the evidence burden DRK assigns for that class. A threshold change DRK would block for being irreversible and under-evidenced is not applied because DFP-05 believes in it.
+
+Its evidence is graded by ACIS. The calibration finding that justifies the change carries an epistemic level assigned by ACIS and read by DFP-05, never assigned by DFP-05. A finding at E2 — plausible, unproven — may inform a proposal and may not justify an application. The level is stated in the proposal, so the Owner ratifies knowing exactly how strong the evidence behind it is.
+
+It is ratified by the Owner, and only by the Owner. No agent, no gate, no scheduled task ratifies a change to this protocol's parameters. The ratification is recorded with the Owner's stated reason, and the reason enters the same evidence base as everything else in this family.
+
+It is applied with its rollback condition already declared, per section 5.3. If the next window's error rates worsen against the condition stated in advance, the change reverts — automatically in the sense that the condition was pre-committed, and not automatically in the sense that the reversion is executed by the Owner, who is told the pre-declared condition has fired.
+
+9.4 The structurally rejected proposal class
+
+Three kinds of proposal are rejected by the calibrator before they ever reach the Owner, because permitting them to be argued at all is already a failure.
+
+A proposal that weakens, removes, or raises the evidentiary bar for any of the four retirement conditions. The reasoning is section 8.6: a protocol that can amend its own falsifier can delete it.
+
+A proposal that would make overriding more expensive, more procedural, or subject to approval. The reasoning is section 7.8: the override is the last untethered signal, and a protocol that can raise the cost of being contradicted will raise it.
+
+A proposal that permits the protocol to assign its own epistemic level, or to define its own outcome measures for records already in flight. The reasoning is section 8.4: those are two of the four known routes to unfalsifiability, and both arrive dressed as reasonable methodological refinements.
+
+The rejection is structural rather than discretionary: the calibrator does not weigh these proposals and decline them; it does not emit them. The distinction matters because a mechanism that weighs a self-serving proposal will, eventually, weigh one favorably.
+
+9.5 The evolution log
+
+Every ratified change is recorded: what changed, from what value to what value, on which window's evidence, at what ACIS level, with whose ratification and stated reason, and with the rollback condition declared before it was applied. Every rejected proposal is recorded too, with its reason for rejection, because the population of rejected proposals is diagnostic — a protocol repeatedly proposing changes that get rejected for self-service is a protocol whose calibrator is drifting toward capture, and that drift is visible only in the rejection log.
+
+The log is append-only and never pruned. The temptation to prune it is the temptation to prune the record population of section 7.5, and it is refused for the same reason: the freedom to delete the inconvenient half of one's own history is the freedom to have had any history one likes.
+
+9.6 What ratification does not confer
+
+A ratified change is not a validated one. It is a change the Owner permitted on the evidence available, and it enters the world as a new hypothesis with a rollback condition attached — precisely the epistemic status of the thresholds it replaced. There is no state in which this protocol's parameters become settled, and the calibration does not terminate. That is not a defect of the design; it is what it means for a discipline to be calibrated against a world that keeps moving, and the moment the calibration stops running, the thresholds revert from measured values to inherited ones, which is exactly where the family found them.
+
+  PART IX FINAL LAW — The protocol may change any number the evidence is entitled to be wrong about and may never change a rule about how the evidence is allowed to speak, and no parameter changes without an Owner ratification carrying a rollback condition declared in advance.
+
+
+PART X — FAILURE MODES, ADVERSARIAL CASES, MATURITY, METRICS AND DONE
+
+10.1 The failure modes of this science
+
+Small-n overconfidence. The population is small, the temptation to speak in percentages is large, and a percentage computed on four records launders a fraction into a law. The guard is section 3.4's reporting rule, and the failure is detected by reading any calibration output for a rate stated without its denominator.
+
+Survivorship. The families that produced corpora worth measuring are disproportionately the families that survived to have their corpora measured. A build that went knowledge-first and was cancelled two weeks in leaves no outcome measures and quietly exits the population, taking a false positive with it. The guard: cancelled records remain in the population with their outcomes recorded as cancelled, and cancellation-after-corpus-demand is scored as a false positive unless the cancellation is attributable to something the corpus revealed — in which case it is the protocol's single most valuable true positive, because a corpus that prevents a doomed build has paid for itself many times over.
+
+The measurement-cost trap. The calibration science can cost more than the protocol saves. Six measures per record, horizons tracked, cohorts stratified, negative controls run — if that exceeds the value of the protocol it governs, DFP-05 is itself a false positive of its own doctrine. The guard is that the calibrator measures and reports its own cost per window alongside the protocol's measured benefit. A science that exempts itself from its own cost accounting has made the exact error it exists to catch.
+
+The horizon problem. Maintainability and maintenance cost surface at twelve months; the protocol wants a threshold answer in two weeks. The guard: every measure carries its own ACIS level, measures taken before their horizon are labeled provisional and cannot alone justify a threshold move, and the calibration names which findings would change if the long-horizon measures came in against them.
+
+Zombie records. Predictions whose horizons pass without measurement are not neutral; they are the population's silent selection bias, because the records easiest to measure are the ones that went well. The zombie count is reported in every calibration, and a zombie rate above a stated ceiling voids the window.
+
+Ossification. Thresholds do not move because moving one costs a calibration, a proposal, a DRK submission, an ACIS grading and an Owner ratification, and the path of least resistance is to leave them. The guard is the twenty-record rule of section 5.1, restated as an obligation: at twenty admissible records per threshold, the threshold is either moved or explicitly held with a stated reason and an evidence citation, and "held without examination" is a reportable state.
+
+10.2 Adversarial cases
+
+The agent who does not want to write a corpus supplies a proposal text engineered to score low: transversality understated, lifespan described as a sprint, the cross-family reach unmentioned. The defense is in the ontology: section 3 requires every signal to be observable from the repository or the proposal text, never from the agent's opinion, and the signals are re-derivable by a second independent run over the same text. A classification whose signals cannot be reproduced from the artifacts is void. The residual attack — a proposal that genuinely understates the work — is defensible only by the Owner, which is one more reason the override channel is load-bearing.
+
+The agent who wants to write a corpus. Authoring doctrine is agreeable work; implementation is not. An agent with a preference for the former will inflate dimensions, and the inflation will be sincere. The defense is the false-positive rate, which is precisely the measurement of this behavior at the population level, and because it is reported jointly with the false-negative rate the agent cannot defend the inflation by pointing at the codebase's safety.
+
+The protocol that defends itself. The final adversary is this dataset. Every mechanism above can be softened by a sequence of individually reasonable amendments, and the endpoint of that sequence is a protocol whose retirement clause cannot fire. The defense is section 9.4's structurally rejected proposal class, and its ultimate backstop is that the Owner, who is outside the system and not scored by it, can delete the family regardless of what the family's own calibration says. A governance system whose deletion requires its own consent is not governed.
+
+10.3 Maturity levels
+
+M0. No records, or records without predictions. The protocol is a belief, and its verdicts carry no more authority than the judgment that seeded them. This is the state the family begins in, stated honestly rather than skipped past.
+
+M1. Records exist with admissible predictions, but no horizon has closed. The evidence substrate is built; the science has not yet run. Nothing may be concluded, and a calibration run at M1 that reports rates is reporting fiction.
+
+M2. Horizons have closed, both error rates are computable from measured outcomes, and at least one negative control has come back clean. The protocol can now be wrong about something. No threshold has moved.
+
+M3. At least one threshold has moved, or been explicitly held with a stated reason, on the evidence of a closed window; the change went through DRK, was graded by ACIS, was ratified by the Owner, and its pre-declared rollback condition has since been evaluated. The protocol is now calibrated in the operative sense: its parameters have demonstrably responded to reality.
+
+M4. retirement_signal has been computed on real data across a quorum window and reported to the Owner, the reachability gate passes on a synthetic evidence set, and at least one component — a decorative dimension, a superseded threshold, or a dataset — has actually been retired on evidence. M4 does not require the family to have died. It requires the family to have proven that it can, and the proof is an act rather than a claim.
+
+10.4 The metrics, each with its countermetric
+
+Corpus payoff rate, countered by external reuse origin and by independent review against the rejection criteria. Prediction accuracy, countered by prediction sharpness and the vacuity-rejection count, with a perfect-accuracy window treated as suspicious. Each error rate, countered by the other, reported jointly, and the false-negative rate additionally by the retrofit-corpus count — the one false-negative detector that is expensive to fake. Override rate, countered by the bypass rate, because a falling override rate means nothing until it is known whether the protocol is being agreed with or ignored. Record count, countered by the zombie count and the exclusion count, because a growing population that is not closing horizons is a growing pile of unmeasured intentions. Threshold stability, countered by the twenty-record examination obligation, because stability is indistinguishable from neglect until somebody looks. And the calibration's own cost, countered by nothing — because it is the countermetric, the number that tells the Owner whether this science is worth what it costs, and the one number DFP-05 is forbidden from arguing with.
+
+10.5 Done criteria for DFP-05
+
+The dataset is done when the substrate is real and the science can run on it. Every necessity decision writes a Record, and every admissible Record carries a prediction with all four elements, written before its outcome could be observed, in an append-only log whose temporal order is checkable. The six outcome measures have a producer each, and each carries the ACIS level of its own evidence rather than an assumed one. The two error rates are computed jointly, with denominators, from at least one closed window whose exclusion and zombie counts are reported. The override population is scored at its horizon and the bypass rate is computed alongside the override rate. Every metric of section 10.4 has its countermetric wired to a different substrate. The threshold_delta is emitted as a proposal, and no code path applies it without an Owner ratification. And retirement_signal is computed on every run, its four conditions individually reported, with a synthetic evidence set flipping it true under the reachability gate.
+
+The last cannot be traded away for any of the others. A DFP-05 that satisfies the first six and fails the last has produced a well-instrumented, carefully measured, statistically honest belief — and the whole purpose of this dataset was to ensure the Dataset First Protocol never became one.
+
+  PART X FINAL LAW — This science is done only when the protocol can be proven wrong on its own evidence, recommend its own deletion on its own initiative, and be shown by a gate to have a reachable path to doing so — and every other property it holds is worthless without that one.

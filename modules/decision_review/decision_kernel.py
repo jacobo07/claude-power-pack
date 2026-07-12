@@ -211,9 +211,48 @@ def _resolve_placement(placement: dict | None) -> Verdict | None:
 
 
 # Verdict precedence (DRK-01 I.3), most-restrictive first.
+def _resolve_knowledge(knowledge: dict | None) -> Verdict | None:
+    """DFP knowledge-sufficiency provider (amendment 2026-07-12).
+
+    Maps the Dataset First Protocol's ProjectClass onto this kernel's ontology. Only
+    DATASET_FIRST_MANDATORY produces a distinct verdict -- the other three classes already
+    have homes here, and minting synonyms for them would be the parallel-verdict-space
+    failure that the amendment exists to avoid.
+    """
+    if not knowledge:
+        return None
+    cls = (knowledge.get("project_class") or "").upper()
+    mapping = {
+        "DATASET_FIRST_MANDATORY": Verdict.BUILD_KNOWLEDGE_FIRST,
+        "EXPERIMENT_FIRST": Verdict.RUN_EXPERIMENT,      # already ours
+        "HYBRID": Verdict.APPROVE_WITH_CONDITIONS,       # already ours
+    }
+    return mapping.get(cls)
+
+
+def _resolve_knowledge_live(obj: DecisionObject) -> dict | None:
+    """Ask the real DFP engine whether the governing science exists. Statement-only input
+    (T-DRK-PRECEDENT-LENGTH-BIAS-001: never feed an adapter a long blob whose score rises
+    with length). Lazy import + fail-open: no DFP is not a failure, it is silence."""
+    try:
+        from modules.dataset_first.knowledge_sufficiency import evaluate
+        rev = getattr(getattr(obj, "reversibility", None), "value", None)
+        v = evaluate(str(getattr(obj, "statement", "") or ""),
+                     reversibility=rev if rev in ("A", "B", "C") else None)
+        return {"project_class": v.verdict, "missing": list(v.missing),
+                "score": v.score, "confidence": v.confidence}
+    except Exception:  # noqa: BLE001 -- fail-open ABSOLUTE
+        return None
+
+
+# Ordered by severity, FIRST MATCH WINS. BUILD_KNOWLEDGE_FIRST sits AFTER RUN_EXPERIMENT
+# on purpose: when both fire, the cheaper remedy wins, because a two-hour probe that would
+# settle the question beats demanding a corpus (DFP-00 IV.7 -- a tie resolves to the
+# cheaper class, since inflation always disguises itself as thoroughness).
 _PRECEDENCE = [
     Verdict.REJECT, Verdict.REFRAME, Verdict.REQUEST_EVIDENCE,
-    Verdict.RUN_EXPERIMENT, Verdict.CONSOLIDATE, Verdict.KEEP_LOCAL,
+    Verdict.RUN_EXPERIMENT, Verdict.BUILD_KNOWLEDGE_FIRST,
+    Verdict.CONSOLIDATE, Verdict.KEEP_LOCAL,
     Verdict.REMOVE, Verdict.DEFER, Verdict.APPROVE_WITH_CONDITIONS,
     Verdict.APPROVE,
 ]
@@ -240,15 +279,20 @@ def _resolve_live(obj: DecisionObject) -> dict:
 
 def review_decision(obj: DecisionObject, *, precedent: dict | None = None,
                     placement: dict | None = None,
+                    knowledge: dict | None = None,
                     registry: Registry | None = None,
                     ts: str = "", live: bool = False) -> DecisionRecord:
     """The nine-stage sieve. Returns a DecisionRecord; writes it at L1+.
 
-    Provider inputs (`precedent`, `placement`) may be injected by the caller --
-    which is what the test suite does, keeping every gate hermetic -- or resolved
-    from the real sealed modules by passing `live=True` (providers.resolve_all).
-    Injection always wins: an explicitly-passed provider is never overwritten by
-    a live lookup, so a fixture can pin any branch.
+    Provider inputs (`precedent`, `placement`, `knowledge`) may be injected by the
+    caller -- which is what the test suite does, keeping every gate hermetic -- or
+    resolved from the real sealed modules by passing `live=True`
+    (providers.resolve_all). Injection always wins: an explicitly-passed provider is
+    never overwritten by a live lookup, so a fixture can pin any branch.
+
+    `knowledge` is the DFP provider (amendment 2026-07-12): a dict carrying
+    `project_class` and `missing`. It is what makes BUILD-KNOWLEDGE-FIRST reachable;
+    without a producer the eleventh verdict would be dead by starvation.
 
     Fail-open: any exception yields a DEFER record, and a provider that cannot
     answer contributes nothing rather than a wrong answer.
@@ -261,6 +305,8 @@ def review_decision(obj: DecisionObject, *, precedent: dict | None = None,
                 precedent = resolved.get("precedent")
             if placement is None:
                 placement = resolved.get("placement")
+            if knowledge is None:
+                knowledge = _resolve_knowledge_live(obj)
 
         # Stage 3 (partial): classify (needed for the scope test too).
         reversibility = classify_reversibility(obj)
@@ -311,6 +357,19 @@ def review_decision(obj: DecisionObject, *, precedent: dict | None = None,
             if pv is not None:
                 cited.append({"provider": "d2a", **(placement or {})})
                 candidates.append(pv)
+
+        # Stage 7b: knowledge sufficiency (DFP provider; amendment 2026-07-12).
+        # Does the institutional science that must govern this build exist yet? DFP is an
+        # ADVISOR here, never an authority -- it contributes a candidate verdict and this
+        # kernel decides, under this kernel's precedence and override protocol.
+        if obj.is_build_decision:
+            kv = _resolve_knowledge(knowledge)
+            if kv is not None:
+                cited.append({"provider": "dfp", **(knowledge or {})})
+                candidates.append(kv)
+                if kv == Verdict.BUILD_KNOWLEDGE_FIRST:
+                    missing = ",".join((knowledge or {}).get("missing", []))
+                    guards.append("knowledge-absent:" + (missing or "unnamed"))
 
         # Stage 8: adversarial pass (L3+).
         if tier in (ReviewTier.L3, ReviewTier.L4):

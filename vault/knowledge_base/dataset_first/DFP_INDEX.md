@@ -67,21 +67,76 @@ A dataset is `COMPLETE` only when every Part is `VERIFIED` against the §5.2 rub
 
 | dataset | file | Parts | words | status |
 |---|---|---|---|---|
-| **DFP-00** Doctrine & Constitution | `dfp_00_doctrine_constitution_v1.txt` | 0/10 | — | `NOT_STARTED` |
-| **DFP-02** Knowledge Infrastructure Mode | `dfp_02_knowledge_infrastructure_mode_v1.txt` | 0/10 | — | `NOT_STARTED` |
-| **DFP-05** Protocol Self-Calibration Science | `dfp_05_self_calibration_science_v1.txt` | 0/10 | — | `NOT_STARTED` |
+| **DFP-00** Doctrine & Constitution | `dfp_00_doctrine_constitution_v1.txt` | 10/10 | 11,383 | `COMPLETE` |
+| **DFP-02** Knowledge Infrastructure Mode | `dfp_02_knowledge_infrastructure_mode_v1.txt` | 10/10 | 14,435 | `COMPLETE` |
+| **DFP-05** Protocol Self-Calibration Science | `dfp_05_self_calibration_science_v1.txt` | 10/10 | 14,268 | `COMPLETE` |
+
+Every Part ≥ 800 words; every dataset inside the measured 8k–15k band; 0 code fences;
+0 contamination. Verified by `V-DFP-DEPTH` / `V-DFP-NO-CODE-IN-DOCTRINE` /
+`V-DFP-CONTAMINATION`, not by assertion.
 
 ### Governance artifacts
 
 | artifact | status |
 |---|---|
 | `CANONICAL_ONTOLOGY.md` | `COMPLETE` |
-| `DFP_INDEX.md` (this file) | `IN_PROGRESS` — updated after every sealed unit |
-| `DFP_D2A_VERDICTS.md` | `NOT_STARTED` (FASE 2) |
-| `DFP_DEPENDENCY_GRAPH.md` | `NOT_STARTED` (FASE 4) |
-| `DFP_GOVERNANCE.md` | `NOT_STARTED` (FASE 4) |
-| `DFP_CONTAMINATION_AUDIT.md` | `NOT_STARTED` (FASE 4) |
-| `DFP_COMPLETION_REPORT.md` | `NOT_STARTED` (FASE 4) |
+| `DFP_INDEX.md` (this file) | `COMPLETE` |
+| `DFP_D2A_VERDICTS.md` | `COMPLETE` — the 4 not-built candidates + the 2 honest disagreements |
+| `DFP_COMPLETION_REPORT.md` | `COMPLETE` — contamination audit, dependency graph, governance, honest state |
+
+### Done-gate
+
+`tools/test_dataset_first_protocol.py` — **17/17, hermetic ×3.**
+`V-BASELINE`: DRK 18/18 + D2A 22/22 still green after the amendment.
+
+---
+
+## The three bugs this family found in itself (and did not hide)
+
+The build's most valuable output was not the corpus. It was three defects the corpus's own
+gates caught in the corpus's own code — each one an instance of a failure class the doctrine
+had already named, committed anyway, by the author who named it.
+
+| # | defect | consequence had it shipped |
+|---|---|---|
+| 1 | **`EXPERIMENT_FIRST` was gated behind the aggregate score.** A cheap empirical probe is low-scoring *by construction*. | The class was unreachable. A two-hour measurement would have been sent to write a corpus — DFP-00 III.4's named "most embarrassing failure". |
+| 2 | **`institutional_capacity` was derived from D2A's `coverage_pct`.** Coverage is inflated by an architectural term that forces ≥80% whenever a proposal's tokens touch ≥4 families — which a long foundational proposal does purely from vocabulary. | **`DATASET_FIRST_MANDATORY` was UNREACHABLE.** The family's central verdict was dead, and with it the eleventh DRK verdict built to host it. The whole protocol was inert. Sealed as `T-DFP-COVERAGE-AS-CAPACITY-001`. |
+| 3 | **`V-DFP-INV1-NAMED-MISSING` passed vacuously.** It asserted `all(...)` over a list that was empty because *no case reached the class*. | A green gate concealing defect #2. A gate that cannot fail is not a gate. |
+
+Defect #2 is the important one. DFP-00 VI.6 states, in its own doctrine, that *a provider's
+score distribution must be measured before it is mapped to a hard verdict* — the lesson DRK
+paid for with `T-DRK-PRECEDENT-LENGTH-BIAS-001`. The first implementation of this family
+mapped an unmeasured provider score straight to a hard conjunct anyway. It was caught by
+measuring the distribution (`coverage 92% / functional 7%` on a genuinely novel proposal),
+exactly as VI.8 prescribes. **The doctrine was right and its author did not obey it.** That is
+the strongest available argument for the control-set discipline, and it is why the gate now
+asserts both poles are reachable rather than trusting a conjunct.
+
+---
+
+## UKDL rules sealed by this family
+
+- `PR-DATASET-FIRST-001` — before implementing a system of high complexity, long lifespan or
+  transversal impact, run the Knowledge Sufficiency Engine. A `BUILD-KNOWLEDGE-FIRST` verdict
+  means the governing corpus is built first and implementation begins only after
+  certification. **Constitutional, not advisory** — but it fires far less often than its name
+  suggests, and that is by design (DFP-00 III).
+- `T-DATASET-FIRST-DOGMA-001` — a protocol that always demands a corpus is as harmful as one
+  that never does. Systematic false positives turn DFP into bureaucracy the Owner will route
+  around, and a rule routed around is not a rule. Recalibration against real evidence
+  (DFP-05) is mandatory; the retirement signal must stay reachable.
+- `T-DFP-COVERAGE-AS-CAPACITY-001` — never map a composite provider score to a hard verdict
+  without measuring its distribution first. D2A's `coverage_pct` rises with proposal length
+  and vocabulary breadth; only its per-family `functional` precision separates a true
+  duplicate (29) from a rich novel proposal (7). Mapping coverage to capacity killed this
+  family's central class silently. Same class as `T-DRK-PRECEDENT-LENGTH-BIAS-001` and
+  `T-D2A-LEXICAL-BLINDNESS-001`.
+- `T-D2A-REGISTRY-STALENESS-001` — a duplicate-detector whose family registry stops at its own
+  ship date grows blinder every week. D2A held 19 families and could not see DRK, ACIS, SQI,
+  `spec_gate` or `hard_rules` — the newest half of the stack, and the half a proposal arriving
+  today is most likely to duplicate. Registry 19 → 27.
+- `T-D2A-LEXICAL-BLINDNESS-001` — D2A's coverage score is a SIGNAL, never a VERDICT. It
+  matches words, not architecture. A low score is not clearance to build.
 
 ---
 

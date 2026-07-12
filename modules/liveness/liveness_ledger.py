@@ -143,6 +143,16 @@ def default_registry() -> list[dict]:
                       "glob": "vault/audits/drk_proactive_*.md",
                       "root": "repo"},
         },
+        {
+            "id": "dfp-necessity-ledger",
+            "surface": "decision-registry",
+            "desc": ("DFP necessity ledger -- every knowledge-first decision appends a "
+                     "record carrying a PREDICTION. No records => the protocol is "
+                     "UNMEASURED, and DFP-05 has nothing to grade (INV-3)."),
+            "probe": {"type": "file-mtime",
+                      "glob": "vault/dataset_first/necessity_ledger.jsonl",
+                      "root": "repo"},
+        },
     ]
 
 
