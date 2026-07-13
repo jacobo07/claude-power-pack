@@ -22,6 +22,31 @@ knowledge debt. Governance is the first artifact of a new project, not an aftert
 
 <!-- PP-HARD-RULES-START -->
 
+## Liveness Standard (MANDATORY -- sealed 2026-07-13)
+
+**Shipping a module is not the same as wiring it.** A V-gate proves code works WHEN
+INVOKED; it says nothing about whether anything invokes it. PP had 156 modules that
+existed, imported cleanly and passed their tests while no live surface reached them --
+including the recovery ACCEPTANCE arbiter, which had never judged a single real recovery,
+which is exactly why an incomplete restore was always accepted in silence.
+
+Before declaring any new module done: `python modules/liveness/reachability.py` (or
+`/liveness`). Exit 1 names a module no hook, command, agent or tool-invoked-by-one can
+reach. Clear it by WIRING it, by DECLARING it in `vault/liveness/reachability_registry.json`
+(`LIBRARY` / `SCHEDULED` / `DEPRECATED` / `PLANNED`+OWNER_QUEUE), or by DELETING it.
+Silence is not an exemption and a malformed class is not an exemption. After wiring one,
+`--baseline` so the standing debt falls BY NAME.
+
+Standing debt is a NAMED SET, never a count or a ratio: a threshold is satisfied by
+deleting a module, a ratio by adding a reachable one. Only names force the number down for
+the right reason. A NEW module that lands unreachable and undeclared fails the gate.
+
+Corollary (PR-COVERAGE-BY-CONSTRUCTION-001): **an audit whose subjects are enrolled by
+hand measures memory, not reality.** The Liveness Ledger audited eight hand-declared
+components, so an undeclared one was not scored UNKNOWN -- it was absent from the
+denominator, and absence read as health. Any registry, checklist or audit set must be
+DISCOVERED from what exists, never curated from what someone remembered.
+
 ## HARD RULES (NON-NEGOTIABLE -- sealed production bugs)
 
 These are not suggestions. Each block was generated from a real
