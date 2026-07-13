@@ -44,17 +44,29 @@ def main():
     else:
         _fail("V-RESTORE-ALL-PANES", f"expected 13 got {len(tasks)}")
 
+    # A task now has TWO possible shapes (T-FOLDEROPEN-STAMPEDE-001): wave 0
+    # launches immediately (command = kclaude.bat, args = ["--resume", sid]),
+    # later waves launch through a delay wrapper (command = cmd, args =
+    # ["/c", 'timeout /t N ... & "<kclaude>" --resume <sid>']). Both gates below
+    # assert the INVARIANT that must hold in EITHER shape -- so they get stronger,
+    # not weaker, as the stagger is applied.
+    def launch_text(t: dict) -> str:
+        return (str(t.get("command", "")) + " " + " ".join(map(str, t.get("args", [])))).lower()
+
     # V-RESTORE-ORDER: task order preserves input order (LIVE-first as fed)
-    if all(tasks[i]["args"][1] == sids[i] for i in range(len(tasks))):
-        _ok("V-RESTORE-ORDER", "task order preserves fed (LIVE-first) order")
+    if all(sids[i] in launch_text(tasks[i]) for i in range(len(tasks))):
+        _ok("V-RESTORE-ORDER", "task order preserves fed (LIVE-first) order, both shapes")
     else:
         _fail("V-RESTORE-ORDER", "order not preserved")
 
-    # V-RESTORE-USES-KCLAUDE: every task launches through the kclaude wrapper
-    if tasks and all("kclaude" in t["command"].lower() for t in tasks):
-        _ok("V-RESTORE-USES-KCLAUDE", tasks[0]["command"])
+    # V-RESTORE-USES-KCLAUDE: every task launches through the kclaude wrapper,
+    # whether directly (wave 0) or inside the delay wrapper (later waves).
+    if tasks and all("kclaude" in launch_text(t) for t in tasks):
+        n_delayed = sum(1 for t in tasks if t["type"] == "process")
+        _ok("V-RESTORE-USES-KCLAUDE",
+            f"13/13 launch via kclaude ({len(tasks) - n_delayed} immediate, {n_delayed} staggered)")
     else:
-        _fail("V-RESTORE-USES-KCLAUDE", tasks[0]["command"] if tasks else "no tasks")
+        _fail("V-RESTORE-USES-KCLAUDE", launch_text(tasks[0]) if tasks else "no tasks")
 
     # V-RESTORE-TRUNCATE-DEFAULT: the Cursor-tab cap still works when requested
     capped = va.build_cpc_tasks(panes, target_count=2)

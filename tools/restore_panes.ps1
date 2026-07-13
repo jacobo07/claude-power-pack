@@ -66,8 +66,41 @@ param(
     [switch]$LiveOnly,          # restore only panes flagged LIVE ("where they were" at crash)
     [int]$OpenDelayMs = 500,
     [int]$LargeRepoPanes = 5,
-    [int]$LargeRepoDelayMs = 1200
+    [int]$LargeRepoDelayMs = 1200,
+    [switch]$TierOrder,         # open repos by TIER_ORDER priority instead of pane_map recency
+    [int]$WaveSize = 5,         # panes launched per wave inside a repo (-AutoRun); 0 = no stagger
+    [int]$WaveIntervalS = 8     # seconds between waves (-AutoRun); 0 = no stagger
 )
+
+# -TierOrder priority. Lower tier opens first. A repo not listed here lands in
+# TIER_DEFAULT, after every named tier. Matching is a case-insensitive substring
+# test against the repo's cwd, so a nested path (e.g. the KobiiCraft workspace)
+# still resolves. Within a tier the pane_map's own order (LIVE first, then
+# most-recent-first) is preserved -- the tier is a partition, not a re-sort.
+# An ARRAY of tier records, never an [ordered] hashtable keyed by int: in
+# PowerShell an integer indexer on an OrderedDictionary selects BY POSITION, not
+# by key, so $TIER_ORDER[1] silently returned the SECOND tier. That shifted the
+# whole map and dropped claude-power-pack (tier 1) into TIER_DEFAULT -- caught by
+# the -DryRun gate, which is exactly what it is for. No indexer, no trap.
+$TIER_ORDER = @(
+    @{ Tier = 1; Match = @('claude-power-pack') },
+    @{ Tier = 2; Match = @('TUA-X', 'InfinityOps') },
+    @{ Tier = 3; Match = @('KobiiCraft', 'KobiiSports') },
+    @{ Tier = 4; Match = @('Jacobo', 'AKOS', 'GEO-audit') }
+)
+$TIER_DEFAULT = 99
+
+function Get-RepoTier {
+    param([string]$Cwd)
+    if (-not $Cwd) { return $TIER_DEFAULT }
+    $lc = $Cwd.ToLower()
+    foreach ($t in $TIER_ORDER) {
+        foreach ($needle in $t.Match) {
+            if ($lc.Contains($needle.ToLower())) { return [int]$t.Tier }
+        }
+    }
+    return $TIER_DEFAULT
+}
 
 $ErrorActionPreference = 'Stop'
 
@@ -183,6 +216,17 @@ foreach ($p in $panes) {
     if (-not $repoPanes.Contains($cwd)) { $repoPanes[$cwd] = @(); $repoOrder += $cwd }
     $repoPanes[$cwd] += $p
 }
+if ($TierOrder) {
+    # Stable partition by tier: PowerShell's Sort-Object is stable, so repos
+    # inside one tier keep their pane_map order (LIVE-first, most-recent-first).
+    $repoOrder = @($repoOrder | Sort-Object { Get-RepoTier $_ })
+    Write-Host 'TierOrder: repos open by priority tier (1=claude-power-pack first).'
+    foreach ($c in $repoOrder) {
+        Write-Host ("    [tier {0}] {1}" -f (Get-RepoTier $c), (Split-Path $c -Leaf))
+    }
+    Write-Host ''
+}
+
 $total = $repoOrder.Count
 Write-Host ("Found {0} pane(s) across {1} repo(s)." -f $panes.Count, $total)
 Write-Host ''
@@ -211,8 +255,10 @@ if ($AutoRun) {
 
         $autorunScript = Join-Path $PSScriptRoot '..\modules\cpc_os\vscode_autorun.py'
         Write-Host 'Auto-run: writing .vscode/tasks.json per repo (ALL panes, kclaude --resume on folder open)...'
-        $genArgs = @($autorunScript, '--snapshot', $snapForAutoRun, '--no-truncate')
+        $genArgs = @($autorunScript, '--snapshot', $snapForAutoRun, '--no-truncate',
+                     '--wave-size', $WaveSize, '--wave-interval', $WaveIntervalS)
         if ($DryRun) { $genArgs += '--dry-run' }
+        Write-Host ("        (wave stagger: {0} pane(s) every {1}s within each repo)" -f $WaveSize, $WaveIntervalS)
         try { & $pythonExe @genArgs } catch { Write-Host ("        [WARN] tasks.json generation failed: {0}" -f $_.Exception.Message) }
         Write-Host ''
     }

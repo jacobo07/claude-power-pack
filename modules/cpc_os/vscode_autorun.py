@@ -57,6 +57,26 @@ BACKUP_SUFFIX = ".cpc-bak"
 # 8-hex session id is appended AFTER this as the join key tab_order.js reads.
 TERM_LABEL_MAX = 40
 
+# Wave stagger (T-FOLDEROPEN-STAMPEDE-001). Every pane task carries
+# runOn:folderOpen, and Cursor fires ALL of a repo's folderOpen tasks at once --
+# so a 30-pane repo spawns 30 concurrent `claude --resume` handshakes on window
+# open. dependsOn/dependsOrder cannot serialize them: a Claude session never
+# exits, so a sequence chain would deadlock on the first task forever. The delay
+# therefore lives INSIDE each task's command. Pane i waits
+# (i // WAVE_SIZE) * WAVE_INTERVAL_S seconds, so panes start in waves of
+# WAVE_SIZE. 0 disables the stagger (every task launches immediately).
+WAVE_SIZE_DEFAULT = 5
+WAVE_INTERVAL_S_DEFAULT = 8
+
+
+def wave_delay_s(index: int, wave_size: int, interval_s: int) -> int:
+    """Seconds pane ``index`` (0-based, within its repo) waits before launching.
+    Wave 0 launches immediately, so the first WAVE_SIZE panes are never delayed
+    and keep the exact pre-stagger task shape."""
+    if wave_size <= 0 or interval_s <= 0 or index < 0:
+        return 0
+    return (index // wave_size) * interval_s
+
 
 def _term_label(topic: str | None, repo: str | None, sid8: str) -> str:
     """Terminal/tab name for a restored pane: ``<repo> - <topic>`` truncated to
@@ -95,12 +115,22 @@ def parse_resume(resume: str) -> tuple[str, list[str]]:
 
 
 def build_pane_task(resume: str, sid8: str, topic: str | None = None,
-                    repo: str | None = None) -> dict:
+                    repo: str | None = None, delay_s: int = 0) -> dict:
     """One folderOpen task that launches a pane's resume command in its own
     dedicated terminal panel. The task ``label`` is the pane_map topic (VS Code
     names the task's terminal after its label -> the tab shows the topic, not the
     shell name "claude"/"cmd"). ``sid8`` (the 8-hex session id) keeps the label
-    unique+stable AND is the join key tab_order.js reads back."""
+    unique+stable AND is the join key tab_order.js reads back.
+
+    ``delay_s`` > 0 staggers the launch (see WAVE_SIZE_DEFAULT): the task runs
+    ``cmd /c timeout /t <delay_s> & kclaude.bat --resume <sid>``. Notes on the
+    exact shape, both load-bearing:
+      * ``type: process`` (not ``shell``) -- args reach cmd.exe as argv with no
+        second round of shell quoting, which the default profile ("Last session")
+        makes unpredictable.
+      * ``&`` and NOT ``&&`` -- an unconditional chain. If ``timeout`` ever fails
+        (e.g. stdin not a console), kclaude STILL launches: the stagger degrades
+        to "no delay", never to "pane never came back"."""
     _command, args = parse_resume(resume)
     # Run via kclaude.bat -- the SAME wrapper the Owner's "Claude" terminal
     # profile uses (cmd /K kclaude.bat ...). It passes args straight through to
@@ -108,13 +138,25 @@ def build_pane_task(resume: str, sid8: str, topic: str | None = None,
     # restored tab behaves exactly like a hand-opened Claude terminal but pinned
     # to the exact session. args are ["--resume","<sid>"] (exact) or [] (fresh).
     kclaude = "${env:USERPROFILE}\\.claude\\kclaude.bat"
+    if delay_s > 0:
+        tail = (" " + " ".join(args)) if args else ""
+        task_type = "process"
+        command = "cmd"
+        task_args = [
+            "/c",
+            f'timeout /t {delay_s} /nobreak >nul & "{kclaude}"{tail}',
+        ]
+    else:
+        task_type = "shell"
+        command = kclaude
+        task_args = args
     return {
         "label": _term_label(topic, repo, sid8),
         # Stable sentinel (NOT the label) so merge_tasks replaces only our tasks.
         "detail": RESTORE_DETAIL,
-        "type": "shell",
-        "command": kclaude,
-        "args": args,
+        "type": task_type,
+        "command": command,
+        "args": task_args,
         "options": {"cwd": "${workspaceFolder}"},
         "presentation": {
             "panel": "dedicated",
@@ -136,6 +178,8 @@ def build_pane_task(resume: str, sid8: str, topic: str | None = None,
 def build_cpc_tasks(
     panes_for_cwd: list[dict],
     target_count: int | None = None,
+    wave_size: int = WAVE_SIZE_DEFAULT,
+    wave_interval_s: int = WAVE_INTERVAL_S_DEFAULT,
 ) -> list[dict]:
     """Deduped list of CPC-Restore tasks for one repo. Dedup key is the resume
     command itself (panes that resolve to the same session share one terminal,
@@ -166,7 +210,12 @@ def build_cpc_tasks(
         sid = args[1]                            # args == ["--resume", "<sid>"]
         topic = p.get("topic")
         repo = p.get("repo") or (Path(p["cwd"]).name if p.get("cwd") else "")
-        seen[resume] = build_pane_task(resume, sid[:8], topic=topic, repo=repo)
+        # Wave index is the POST-dedup position, so two panes sharing a session
+        # (one task) never burn a slot. Truncation below keeps the first N tasks,
+        # so the surviving delays stay a contiguous 0, 0.., interval, .. ladder.
+        delay_s = wave_delay_s(len(seen), wave_size, wave_interval_s)
+        seen[resume] = build_pane_task(resume, sid[:8], topic=topic, repo=repo,
+                                       delay_s=delay_s)
     tasks = list(seen.values())
 
     if target_count and target_count > 0 and len(tasks) > target_count:
@@ -221,6 +270,8 @@ def write_autorun_for_cwd(
     vscode_dir: Path | str | None = None,
     dry_run: bool = False,
     target_count: int | None = None,
+    wave_size: int = WAVE_SIZE_DEFAULT,
+    wave_interval_s: int = WAVE_INTERVAL_S_DEFAULT,
 ) -> dict:
     """Generate/merge ``<cwd>/.vscode/tasks.json`` for one repo. Returns a
     result dict: {cwd, tasks_path, n_tasks, action, backed_up, parse_ok}.
@@ -228,7 +279,9 @@ def write_autorun_for_cwd(
     computes everything and returns the doc WITHOUT touching disk.
     ``target_count`` (Cursor-authoritative tab count) forces exactly that many
     tasks; None keeps the legacy derived count (BL-CPCOS-RESTORE-004)."""
-    cpc_tasks = build_cpc_tasks(panes_for_cwd, target_count=target_count)
+    cpc_tasks = build_cpc_tasks(panes_for_cwd, target_count=target_count,
+                                wave_size=wave_size,
+                                wave_interval_s=wave_interval_s)
     vdir = Path(vscode_dir) if vscode_dir else Path(cwd) / ".vscode"
     tasks_path = vdir / "tasks.json"
 
@@ -351,6 +404,8 @@ def generate_from_pane_map(
     pane_map_json: Path | str,
     cwds: list[str] | None = None,
     dry_run: bool = False,
+    wave_size: int = WAVE_SIZE_DEFAULT,
+    wave_interval_s: int = WAVE_INTERVAL_S_DEFAULT,
 ) -> list[dict]:
     """Write an auto-run tasks.json per repo from the pane_map (disk-truth) source.
 
@@ -375,7 +430,8 @@ def generate_from_pane_map(
             continue
         # target_count=None -> no truncation: write ALL panes for this repo.
         results.append(write_autorun_for_cwd(
-            cwd, group, dry_run=dry_run, target_count=None))
+            cwd, group, dry_run=dry_run, target_count=None,
+            wave_size=wave_size, wave_interval_s=wave_interval_s))
     return results
 
 
@@ -410,6 +466,12 @@ def main(argv=None) -> int:
     ap.add_argument("--no-truncate", action="store_true",
                     help="write ALL panes per repo (no Cursor tab-count cap) -- "
                          "the pane_map-driven full-restore mode")
+    ap.add_argument("--wave-size", type=int, default=WAVE_SIZE_DEFAULT,
+                    help=f"panes launched per wave on folder open "
+                         f"(default {WAVE_SIZE_DEFAULT}; 0 disables the stagger)")
+    ap.add_argument("--wave-interval", type=int, default=WAVE_INTERVAL_S_DEFAULT,
+                    help=f"seconds between waves (default {WAVE_INTERVAL_S_DEFAULT}; "
+                         f"0 disables the stagger)")
     args = ap.parse_args(argv)
 
     # pane_map source (all repos, all panes -- the corrected disk-truth manifest).
@@ -420,7 +482,9 @@ def main(argv=None) -> int:
             print(f"[ERROR] pane_map not found: {pm}")
             return 1
         try:
-            results = generate_from_pane_map(pm, cwds=args.cwd, dry_run=args.dry_run)
+            results = generate_from_pane_map(
+                pm, cwds=args.cwd, dry_run=args.dry_run,
+                wave_size=args.wave_size, wave_interval_s=args.wave_interval)
         except (OSError, ValueError) as e:  # noqa: BLE001
             print(f"[ERROR] cannot read pane_map: {e}")
             return 1
