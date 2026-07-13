@@ -101,6 +101,9 @@ vault/pp_agents/
 vault/test-failures/
 vault/test-results/*_fail_*.md
 vault/test-results/hook_smoke_*.md
+# DAIF resume packs: runtime artifacts carrying verbatim session prose. Compiled per session,
+# never committed -- a package is evidence for the actor that resumes, not repo content.
+vault/sessions/continuity_*.json
 # Agent persistent auto-memory (regenerated/appended every session)
 memory/
 # Stray redirect artifact
