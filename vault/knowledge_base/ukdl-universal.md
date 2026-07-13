@@ -167,6 +167,16 @@ source to one consumer; the runtime must interpret doctrine, never edit it.
 | UKDL-WRCP-02 | `modules/cpc_os/vscode_autorun.py` (`generate_from_pane_map`) + `tools/snapshot_auto_writer.ps1` | The fix: automatic restore artifact (tasks.json) now derives from the corrected pane_map.json (all repos, all panes, no truncation) via one shared adapter — killing the host-coupled per-cwd/legacy-snapshot regression. |
 | UKDL-WRCP-03 | `tools/test_recovery_control_plane.py` | 6 V-gates x3 hermetic proving all-panes/multi-repo/parity/no-duplicate-manifest/exclusive-responsibility. Complements test_restore_all_panes.py (different layer). |
 
+## Cursor Session Auto-Backup Watcher — 2026-07-13
+
+External tool at `~/.claude/tools/cursor-session-watcher/` (NOT in the PP repo). Passed the anti-duplication kill switch (HR-CONTROL-PLANE-EXCLUSIVE-RESP-001): its exclusive, verifiable responsibility is an out-of-process, timestamped, rotated backup of Cursor's own workspace/tab state that survives a power-off mid-write — distinct from pane_map.json (Claude sessions) and the PP Sessions extension (in-process, dies with Cursor).
+
+| Ref | Rule | Why it matters |
+|---|---|---|
+| PR-CURSOR-SESSION-LIVENESS-001 | The watcher must be alive whenever Cursor is. Before ANY computer move, run `restore_query.py` and confirm `cursor_tabs_latest.json` has a timestamp within the last 5 minutes. A backup older than 1 hour while Cursor is open = the watcher is down; restart it (`schtasks /run /tn CursorSessionWatcher`) before powering off. | A recovery tool gives false safety unless its freshness is checked at the moment it matters — right before the risk event (the move). |
+| T-CURSOR-SILENT-DEATH-001 | A watcher that dies silently is worse than no watcher — it gives false confidence. The engine writes `cursor_watcher.log` on every change it processes; if the log has no entries in the last 30 min while Cursor is open, the watcher is dead. Verify the log AND the process (`Get-CimInstance Win32_Process ... watcher.ps1`) before trusting the last backup. | Liveness must be verified by an independent signal (log + process), never inferred from a stale artifact's existence (mirrors T-UNBOUNDED-SESSION-001 / pane_map mtime-forges-liveness). |
+| PR-CURSOR-VSCDB-BACKUP-API-001 | Reading a live `state.vscdb` MUST use SQLite's online-backup API (`sqlite3 .backup()` to a temp copy), never a raw file copy or a bare read — the 420 KB live WAL means an uncoordinated read is torn. This is why the engine is Python (stdlib sqlite3), not pure PowerShell (which can only reach the folder URI, missing the tabs). | The tabs — the whole point — live in SQLite, not workspace.json; a naive copy would silently back up nothing useful. |
+
 ## Auto-Testing Skill (Quality Gate) — 2026-05-23
 
 | Ref | File | Why it matters |
