@@ -43,7 +43,7 @@ import time
 from pathlib import Path
 from typing import Any, TypedDict
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 # --- Paths ----------------------------------------------------------------
@@ -177,28 +177,110 @@ def lower_priority() -> str:
 
 # --- Single-instance lock -------------------------------------------------
 
+def _this_host() -> str:
+    return (os.uname().nodename if hasattr(os, "uname")
+            else os.environ.get("COMPUTERNAME", "?"))
+
+
+def _pid_alive(pid: int) -> bool:
+    """True iff `pid` is a live process on THIS host.
+
+    A false "dead" (e.g. the handle is denied to us) only causes an earlier
+    reclaim, which is the pre-existing time-based behaviour — so the error
+    direction is safe. PID reuse could produce a false "alive", which just
+    preserves the old conservative refusal.
+    """
+    if pid <= 0:
+        return False
+    try:
+        if sys.platform == "win32":
+            import ctypes
+            from ctypes import wintypes
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            STILL_ACTIVE = 259
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            kernel32.OpenProcess.restype = wintypes.HANDLE
+            kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL,
+                                              wintypes.DWORD]
+            handle = kernel32.OpenProcess(
+                PROCESS_QUERY_LIMITED_INFORMATION, False, pid
+            )
+            if not handle:
+                return False
+            try:
+                code = wintypes.DWORD()
+                kernel32.GetExitCodeProcess.argtypes = [
+                    wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)
+                ]
+                if kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+                    return code.value == STILL_ACTIVE
+                return True
+            finally:
+                kernel32.CloseHandle(handle)
+        os.kill(pid, 0)
+        return True
+    except (OSError, ValueError, OverflowError):
+        return False
+
+
+def _read_lock_payload() -> tuple[int, str]:
+    """Return (pid, host) from the lock file. (0, "") when unreadable."""
+    try:
+        text = LOCK_PATH.read_text(encoding="utf-8")
+    except OSError:
+        return 0, ""
+    pid, host = 0, ""
+    for line in text.splitlines():
+        if line.startswith("pid="):
+            try:
+                pid = int(line[4:].strip())
+            except ValueError:
+                pid = 0
+        elif line.startswith("host="):
+            host = line[5:].strip()
+    return pid, host
+
+
 def acquire_lock() -> str:
-    """Cooperative lock with 4-h stale-reclaim. Returns:
-      "acquired"        — caller proceeds
-      "stale-reclaimed" — old lock detected + reclaimed; caller proceeds
-      "held"            — another live run holds the lock; caller MUST abort
-      "error:<msg>"     — IO error; fail-open, caller proceeds with warning
+    """Cooperative lock with orphan + stale reclaim. Returns:
+      "acquired"         — caller proceeds
+      "orphan-reclaimed" — owner PID is dead on this host; reclaimed
+      "stale-reclaimed"  — lock older than 4 h; reclaimed
+      "held"             — another LIVE run holds the lock; caller MUST abort
+      "error:<msg>"      — IO error; fail-open, caller proceeds with warning
+
+    The orphan check exists because time-based staleness alone is not enough.
+    Empirically (2026-07-13): a run died without releasing, and the 4-h
+    threshold then silently disabled every subsequent run for the rest of
+    that window — the module answered "locked" to a lock whose owner had not
+    existed for three hours. A lock must be held by something that is alive,
+    otherwise it is not a lock, it is a headstone.
     """
     try:
         LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
         if LOCK_PATH.exists():
+            pid, host = _read_lock_payload()
+            owner_dead = (
+                pid > 0 and host == _this_host() and not _pid_alive(pid)
+            )
             try:
                 age = time.time() - LOCK_PATH.stat().st_mtime
             except OSError:
                 age = LOCK_STALE_SECONDS + 1
-            if age < LOCK_STALE_SECONDS:
+
+            if owner_dead:
+                verdict = "orphan-reclaimed"
+            elif age >= LOCK_STALE_SECONDS:
+                verdict = "stale-reclaimed"
+            else:
                 return "held"
+
             try:
                 LOCK_PATH.unlink()
             except OSError:
                 pass
             _write_lock_payload()
-            return "stale-reclaimed"
+            return verdict
         _write_lock_payload()
         return "acquired"
     except OSError as e:
@@ -817,6 +899,42 @@ def _shared_system() -> str:
     return _SHARED_SYSTEM_TEMPLATE.format(today=time.strftime("%Y-%m-%d"))
 
 
+# --- Quality layer (v0.2.0, 2026-07-13) ----------------------------------
+#
+# The query + learnings prompts below are NO LONGER the verbatim n8n text.
+# The "verbatim = IP, any rewording risks the quality profile" clause above
+# was WRONG, and it is what shipped three defects to production:
+#   1. "generate SERP queries" -> the LLM returned keyword soup, not questions
+#   2. "as information dense as possible" with no prohibition -> CLI commands,
+#      YAML and field names came back AS the learnings
+#   3. no relevance gate at all -> everything persisted, relevant or not
+# The corrected prompts and the gates that enforce them live in
+# research_quality.py. Spec §3.2 / §3.4 are superseded by §3.6.
+
+_MODULE_DIR = str(Path(__file__).resolve().parent)
+if _MODULE_DIR not in sys.path:
+    sys.path.insert(0, _MODULE_DIR)
+
+from research_quality import (  # noqa: E402
+    KEEP_LEVELS,
+    RELEVANCE_SCHEMA,
+    RELEVANCE_UNRATED,
+    build_learnings_prompt,
+    build_query_correction_prompt,
+    build_relevance_prompt,
+    build_serp_query_prompt,
+    find_code_in_learning,
+    is_natural_question,
+    log_discarded,
+    parse_relevance_ratings,
+)
+
+# Every learning a gate throws away is appended here, with the reason. A gate
+# that discards silently is indistinguishable from a bug; this file is how the
+# Owner tunes the gates instead of guessing at them.
+DISCARD_LOG_PATH = RESEARCH_DIR / "discarded_learnings.jsonl"
+
+
 # --- Paso 1.5 — generate_serp_queries ------------------------------------
 
 _SERP_SCHEMA = {
@@ -838,42 +956,74 @@ _SERP_SCHEMA = {
 }
 
 
-def generate_serp_queries(prompt: str, breadth: int,
-                           learnings: list[str] | None = None
-                           ) -> list[SerpQuery]:
-    """Generate up to `breadth` SERP queries from the user prompt + any
-    learnings from previous depth levels. Verbatim prompt from spec §3.2.
-    """
-    learnings = learnings or []
-    if learnings:
-        learnings_block = (
-            "Here are some learnings from previous research, use them to "
-            "generate more specific queries: "
-            + "\n".join(learnings)
-        )
-    else:
-        learnings_block = ""
+def _ask_for_queries(user_msg: str, breadth: int
+                      ) -> tuple[list[SerpQuery], list[tuple[str, str]]]:
+    """One LLM round-trip. Returns (accepted, rejected).
 
-    user_msg = (
-        f"Given the following prompt from the user, generate a list of "
-        f"SERP queries to research the topic. Return a maximum of {breadth} "
-        f"queries, but feel free to return less if the original prompt is "
-        f"clear. Make sure each query is unique and not similar to each "
-        f"other: <prompt>{prompt}</prompt>\n\n{learnings_block}"
-    )
+    `rejected` is [(query, why)] for queries the natural-question gate
+    refused — they are keyword piles, not questions, and searching them
+    returns worse sources than a real question would.
+    """
     result = call_llm(_shared_system(), user_msg, _SERP_SCHEMA)
     if not isinstance(result, dict):
         raise LayerError("generate_serp_queries", "non-dict response")
-    queries = result.get("queries") or []
-    out: list[SerpQuery] = []
-    for q in queries[:breadth]:
+
+    accepted: list[SerpQuery] = []
+    rejected: list[tuple[str, str]] = []
+    for q in (result.get("queries") or [])[:breadth]:
         if not isinstance(q, dict):
             continue
         query = (q.get("query") or "").strip()
         goal = (q.get("researchGoal") or "").strip()
-        if query and goal:
-            out.append({"query": query, "researchGoal": goal})
-    return out
+        if not query or not goal:
+            continue
+        ok, why = is_natural_question(query)
+        if ok:
+            accepted.append({"query": query, "researchGoal": goal})
+        else:
+            rejected.append((query, why))
+    return accepted, rejected
+
+
+def generate_serp_queries(prompt: str, breadth: int,
+                           learnings: list[str] | None = None,
+                           _state: dict[str, Any] | None = None,
+                           ) -> list[SerpQuery]:
+    """Generate up to `breadth` NATURAL-LANGUAGE research questions.
+
+    A search query is a question a human would type into Google or ask an
+    expert — not a concatenation of the topic's technical vocabulary. The
+    vocabulary is what the research is supposed to DISCOVER; seeding the
+    query with it just retrieves documents that already agree with our
+    guess. Every returned query passes is_natural_question().
+
+    On a total rejection (zero usable questions) we re-ask ONCE with the
+    rejection reasons attached. There is no second retry: a repeat failure
+    is a model/prompt mismatch, not a transient miss, and Anti-Antipattern
+    Regla 12 forbids a third identical attempt.
+    """
+    learnings = learnings or []
+    user_msg = build_serp_query_prompt(prompt, breadth, learnings)
+
+    accepted, rejected = _ask_for_queries(user_msg, breadth)
+
+    if not accepted and rejected:
+        correction = build_query_correction_prompt(rejected, breadth)
+        retry_accepted, retry_rejected = _ask_for_queries(
+            f"{user_msg}\n\n{correction}", breadth
+        )
+        accepted = retry_accepted
+        rejected = rejected + retry_rejected
+
+    if _state is not None and rejected:
+        _state.setdefault("queries_rejected", []).extend(
+            {"query": q, "reason": why} for q, why in rejected
+        )
+        for q, why in rejected:
+            _state["errors"].append(
+                f"query rejected (not a question): {q[:60]!r} — {why}"
+            )
+    return accepted
 
 
 # --- Paso 1.6 — extract_learnings ----------------------------------------
@@ -898,11 +1048,21 @@ _LEARNINGS_SCHEMA = {
 
 
 def extract_learnings(query: str,
-                       markdowns: list[str]) -> ExtractedLearnings:
-    """Extract up to 3 unique learnings + 3 follow-up questions from
-    SERP content. Verbatim prompt from spec §3.4. Truncates each
-    markdown to MARKDOWN_MAX_CHARS (25,000) before stuffing into the
-    prompt to stay within context window.
+                       markdowns: list[str],
+                       _state: dict[str, Any] | None = None,
+                       ) -> ExtractedLearnings:
+    """Extract up to 3 prose learnings + 3 follow-up questions from SERP
+    content. Truncates each markdown to MARKDOWN_MAX_CHARS (25,000).
+
+    The reader of a learning is a founder/operator, never a data engineer.
+    A learning that carries code — a CLI invocation, a YAML fragment, a
+    field name — is a defect of THIS system, not of the source content: the
+    source is allowed to be technical, the learning is not.
+
+    The prompt asks for prose; find_code_in_learning() then GUARANTEES it.
+    That second layer is not redundancy — a prompt is a request, a gate is a
+    contract, and only the gate survives an LLM that ignores the request.
+    Every drop is logged with its reason to DISCARD_LOG_PATH.
     """
     if not markdowns:
         return {"learnings": [], "followUpQuestions": []}
@@ -912,31 +1072,126 @@ def extract_learnings(query: str,
         for md in markdowns
     )
 
-    user_msg = (
-        f"Given the following contents from a SERP search for the query "
-        f"<query>{query}</query>, generate a list of learnings from the "
-        f"contents. Return a maximum of 3 learnings, but feel free to "
-        f"return less if the contents are clear. Make sure each learning "
-        f"is unique and not similar to each other. The learnings should "
-        f"be concise and to the point, as detailed and infromation dense "
-        f"as possible. Make sure to include any entities like people, "
-        f"places, companies, products, things, etc in the learnings, as "
-        f"well as any exact metrics, numbers, or dates. The learnings "
-        f"will be used to research the topic further.\n\n"
-        f"<contents>\n{contents_block}\n</contents>"
-    )
+    user_msg = build_learnings_prompt(query, contents_block)
     result = call_llm(_shared_system(), user_msg, _LEARNINGS_SCHEMA)
     if not isinstance(result, dict):
         raise LayerError("extract_learnings", "non-dict response")
-    learnings = [
+
+    raw = [
         s.strip() for s in (result.get("learnings") or [])
         if isinstance(s, str) and s.strip()
-    ][:3]
+    ]
+
+    kept: list[str] = []
+    dropped: list[dict[str, Any]] = []
+    for learning in raw:
+        code_reason = find_code_in_learning(learning)
+        if code_reason:
+            dropped.append({
+                "ts": iso_now(),
+                "gate": "code",
+                "query": query,
+                "reason": code_reason,
+                "learning": learning,
+            })
+        else:
+            kept.append(learning)
+
+    if dropped:
+        log_discarded(dropped, DISCARD_LOG_PATH)
+        if _state is not None:
+            _state["discarded_code"] = (
+                _state.get("discarded_code", 0) + len(dropped)
+            )
+            for d in dropped:
+                _state["errors"].append(
+                    f"learning dropped (code gate): {d['reason']}"
+                )
+
     follow_ups = [
         s.strip() for s in (result.get("followUpQuestions") or [])
         if isinstance(s, str) and s.strip()
     ][:3]
-    return {"learnings": learnings, "followUpQuestions": follow_ups}
+    return {"learnings": kept[:3], "followUpQuestions": follow_ups}
+
+
+# --- Relevance gate (v0.2.0) ---------------------------------------------
+
+
+def filter_by_relevance(learnings: list[str],
+                         operator_context: str | None = None,
+                         _state: dict[str, Any] | None = None,
+                         ) -> list[str]:
+    """Keep only the learnings an operator can actually act on.
+
+    Doctrine: better to lose a valid learning than to persist an irrelevant
+    one. An irrelevant learning is not neutral — the vault is read back as
+    context by every later run, so noise persisted once is paid for forever.
+
+    Runs BEFORE the learning enters the corpus, so a dropped learning also
+    never seeds a follow-up query. Only HIGH/MEDIUM survive; LOW and DISCARD
+    are logged to DISCARD_LOG_PATH with the rater's reason.
+
+    Fail behaviour is asymmetric by design. The code gate above is
+    deterministic and cannot fail. This gate needs an LLM and therefore CAN
+    be unavailable — when it is, the learnings are kept but marked UNRATED in
+    the run metadata. We never pass unrated content off as vetted, and we
+    never silently destroy a whole run's work because a judge was offline.
+    """
+    if not learnings:
+        return []
+
+    user_msg = build_relevance_prompt(learnings, operator_context)
+    try:
+        result = call_llm(_shared_system(), user_msg, RELEVANCE_SCHEMA)
+    except (LayerError, NoLLMAvailable) as e:
+        if _state is not None:
+            _state["relevance_verdict"] = RELEVANCE_UNRATED
+            _state["errors"].append(f"relevance filter unavailable: {e}")
+        return list(learnings)
+
+    if not isinstance(result, dict):
+        if _state is not None:
+            _state["relevance_verdict"] = RELEVANCE_UNRATED
+            _state["errors"].append("relevance filter: non-dict response")
+        return list(learnings)
+
+    ratings = parse_relevance_ratings(result, len(learnings))
+
+    kept: list[str] = []
+    dropped: list[dict[str, Any]] = []
+    for i, learning in enumerate(learnings):
+        rating = ratings.get(i)
+        if rating is None:
+            # The rater skipped this one, or emitted a level outside the
+            # scale. Keep it — losing work to a malformed response is worse
+            # than keeping an unrated line — but say so in the metadata.
+            kept.append(learning)
+            if _state is not None:
+                _state["errors"].append(
+                    f"learning {i} unrated by relevance filter — kept, "
+                    f"flagged {RELEVANCE_UNRATED}"
+                )
+            continue
+        if rating["relevance"] in KEEP_LEVELS:
+            kept.append(learning)
+        else:
+            dropped.append({
+                "ts": iso_now(),
+                "gate": "relevance",
+                "relevance": rating["relevance"],
+                "reason": rating["reason"],
+                "learning": learning,
+            })
+
+    if dropped:
+        log_discarded(dropped, DISCARD_LOG_PATH)
+        if _state is not None:
+            _state["discarded_relevance"] = (
+                _state.get("discarded_relevance", 0) + len(dropped)
+            )
+
+    return kept
 
 
 # --- Paso 1.7 — generate_report ------------------------------------------
@@ -1026,6 +1281,7 @@ def deep_research(
     breadth: int = 3,
     learnings: list[str] | None = None,
     urls: list[str] | None = None,
+    operator_context: str | None = None,
     _state: dict[str, Any] | None = None,
 ) -> ResearchResult:
     """Run the recursive research algorithm. Returns a ResearchResult.
@@ -1074,12 +1330,24 @@ def deep_research(
             "lock_verdict": lock,
             "errors": [],
             "all_search_queries": [],
+            # Quality-layer accounting (v0.2.0). Stored on the shared state
+            # so recursion levels all report into the same counters.
+            "operator_context": (
+                operator_context
+                or env_str("CLAUDEPP_RESEARCH_OPERATOR_CONTEXT")
+                or None
+            ),
+            "queries_rejected": [],
+            "discarded_code": 0,
+            "discarded_relevance": 0,
+            "relevance_verdict": "rated",
         }
 
     try:
-        # Generate this level's SERP queries.
+        # Generate this level's research questions.
         try:
-            queries = generate_serp_queries(prompt, breadth, learnings)
+            queries = generate_serp_queries(prompt, breadth, learnings,
+                                             _state=_state)
         except (LayerError, NoLLMAvailable) as e:
             _state["errors"].append(f"generate_serp_queries: {e}")
             queries = []
@@ -1140,14 +1408,28 @@ def deep_research(
                 continue
 
             try:
-                extracted = extract_learnings(q["query"], markdowns)
+                extracted = extract_learnings(q["query"], markdowns,
+                                               _state=_state)
             except (LayerError, NoLLMAvailable) as e:
                 _state["errors"].append(f"extract_learnings: {e}")
                 continue
             _state["layers_fired"]["llm"].add("claude.exe")
 
-            learnings.extend(extracted["learnings"])
-            urls.extend(new_urls)
+            # Relevance gate runs HERE — before the learning enters the
+            # corpus — so an irrelevant learning is never persisted AND
+            # never seeds a follow-up query at the next depth level.
+            relevant = filter_by_relevance(
+                extracted["learnings"],
+                operator_context=_state.get("operator_context"),
+                _state=_state,
+            )
+
+            learnings.extend(relevant)
+            # Only cite pages that actually produced a surviving learning.
+            # Listing a source whose every learning was discarded implies a
+            # contribution it did not make.
+            if relevant:
+                urls.extend(new_urls)
 
             # Recurse if depth > 1 (matching spec §2 termination).
             if depth > 1 and extracted["followUpQuestions"]:
@@ -1212,6 +1494,14 @@ def deep_research(
                     "duration_s": round(duration, 1),
                     "errors": _state["errors"],
                     "started_at": iso_now(),
+                    # Quality layer — what the gates threw away, and why.
+                    # Surfaced in the report footer so a run that silently
+                    # discarded most of its yield is visible, not hidden.
+                    "queries_rejected": _state["queries_rejected"],
+                    "discarded_code": _state["discarded_code"],
+                    "discarded_relevance": _state["discarded_relevance"],
+                    "relevance_verdict": _state["relevance_verdict"],
+                    "discard_log": str(DISCARD_LOG_PATH),
                 },
             }
 
@@ -1336,7 +1626,15 @@ def write_research_artifacts(
           f"- **Errors during run:** {len(meta.get('errors', []))}\n"
           f"- **Started at:** {meta.get('started_at', '?')}\n"
           f"- **Module version:** deep_research {__version__}\n"
+          f"- **Quality gates:** "
+          f"{len(meta.get('queries_rejected', []))} query/queries rejected as "
+          f"keyword soup · {meta.get('discarded_code', 0)} learning(s) dropped "
+          f"for containing code · {meta.get('discarded_relevance', 0)} dropped "
+          f"as not operator-actionable "
+          f"(relevance: {meta.get('relevance_verdict', '?')})\n"
     )
+    if meta.get("discard_log"):
+        meta_md += f"- **Discard log:** `{meta['discard_log']}`\n"
     if meta.get("errors"):
         meta_md += "\n<details>\n<summary>Error log</summary>\n\n"
         for err in meta["errors"][:20]:
@@ -1412,6 +1710,11 @@ def _build_argparser() -> "argparse.ArgumentParser":
     ap.add_argument("--clarify", action="store_true",
                      help="run the optional Clarifying Questions step first "
                           "(spec §3.3)")
+    ap.add_argument("--operator-context", default=None,
+                     help="who will read the learnings, so the relevance "
+                          "gate can judge what is actionable for THEM. "
+                          "Defaults to CLAUDEPP_RESEARCH_OPERATOR_CONTEXT, "
+                          "then to a generic founder/operator.")
     ap.add_argument("--out", default=None,
                      help="output directory (default vault/research/)")
     ap.add_argument("--quiet", action="store_true",
@@ -1474,7 +1777,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"clarify step failed: {e}", file=sys.stderr)
 
     result = deep_research(args.prompt, depth=args.depth,
-                            breadth=args.breadth)
+                            breadth=args.breadth,
+                            operator_context=args.operator_context)
     paths = write_research_artifacts(args.prompt, result, out_dir)
 
     if not args.quiet:

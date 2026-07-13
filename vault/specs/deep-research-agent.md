@@ -60,6 +60,11 @@ Three exits:
 
 ## 3. Verbatim prompts (the IP)
 
+> **SUPERSEDED for §3.2 and §3.4 as of v0.2.0 (2026-07-13). See §3.6.**
+> The claim below — that the prompts are IP and must be copied byte-for-byte —
+> was wrong, and it is the direct cause of three production defects. §3.1
+> (shared system) and §3.5 (report) are unchanged and still verbatim.
+
 All four LLM-call prompts are extracted byte-for-byte from the source
 workflow. Templating uses Python `string.Template` or f-strings (the n8n
 `{{ ... }}` becomes Python interpolation).
@@ -154,6 +159,55 @@ Here are all the learnings from previous research:
 ```
 
 Expected output: raw markdown string (no JSON wrapper).
+
+### 3.6 Quality layer — supersedes §3.2 and §3.4 (v0.2.0, 2026-07-13)
+
+**The defect.** §3 declared the n8n prompts untouchable IP. Copying them
+byte-for-byte also copied their assumptions, and three defects shipped:
+
+| # | Verbatim prompt said | What the LLM did |
+|---|---|---|
+| 1 | "generate a list of **SERP queries**" | Returned keyword soup: `data mesh product contract semantic layer composable insight envelope schema versioning` — a pile of nouns, not a question |
+| 2 | "as detailed and **information dense** as possible" (no prohibition) | Returned CLI commands, YAML and field names *as* the learnings: ``datacontract lint --old ...@main`` |
+| 3 | (nothing) | Persisted every learning regardless of whether any operator could act on it |
+
+**The doctrine.**
+
+1. **A query is a question, not a vocabulary dump.** Seeding a search with
+   the topic's technical terms retrieves documents that already agree with our
+   guess. The vocabulary is what research is supposed to *discover*. Enforced
+   by `is_natural_question()`; one bounded corrective re-ask, never a loop.
+2. **A learning never contains code.** The reader is a founder/operator. The
+   *source* is allowed to be technical; the *learning* is not. Enforced by
+   `find_code_in_learning()`.
+3. **Relevance is gated before persistence.** Only `HIGH`/`MEDIUM` reach the
+   vault. An irrelevant learning is not neutral — the vault is read back as
+   context on every later run, so noise persisted once is paid for forever.
+   Better to lose a valid learning than to keep an irrelevant one.
+
+**A prompt is a request; a gate is a contract.** Both layers are required.
+The prompt raises the odds; only the gate survives an LLM that ignores it.
+
+**Fail behaviour is asymmetric on purpose.** The code gate is deterministic
+and cannot fail open. The relevance gate needs an LLM and therefore *can* be
+unavailable — when it is, learnings are kept but stamped `UNRATED` in the run
+metadata. Unrated content is never passed off as vetted, and a whole run's
+work is never destroyed because a judge was offline.
+
+**Calibration bias: a false discard is worse than a marginal keep.** The
+first version of the code gate discarded two *good* learnings on the live run
+— a payments-company anecdote whose whole point was a renamed field, and a
+Spanish sentence that merely named a tool (`dbt ya existen`). Both are now
+regression fixtures. A single field name inside a story is prose; two or more
+identifiers is a schema. A tool *named* is prose; a tool *invoked* is code.
+
+**Every discard is logged** to `vault/research/discarded_learnings.jsonl` with
+its reason. A gate that discards silently is indistinguishable from a bug —
+that log is how these two false positives were caught within one run.
+
+Implementation: `modules/deep-research/research_quality.py`.
+Gates: `python modules/deep-research/test_research_quality.py` → exit 0,
+fixtures are the verbatim production defect.
 
 ## 4. External dependencies + the fallback chain
 
