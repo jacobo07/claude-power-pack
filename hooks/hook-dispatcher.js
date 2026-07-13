@@ -213,12 +213,18 @@ const CHAIN_MAP = {
     // survive mergeOutputs (HSO shallow-merge keeps permissionDecision:deny).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/uqf_pre_edit_gate.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/claude_md_firewall.js', timeoutMs: 8000, block: true },
-    // CDIO I4 advisory (level-2, NEVER blocks): on a Write/Edit to a visual
-    // surface (frontend ext, or a landing/dashboard/component/hero filename),
-    // inject a reminder to run cdio-reviewer before declaring it done
-    // (PR-CDIO-REVIEW-GATE-001). Fail-open, throttled per surface-family per 15
-    // min, BOM-tolerant; no block flag. Sealed SCS C78.
-    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/cdio_visual_advisory.js', timeoutMs: 4000 },
+    // CDIO I4 design gate (2026-07-13): on a Write/Edit to a visual surface
+    // (frontend ext, or a landing/dashboard/component/hero filename), RUN
+    // tools/design_gate.py against the project's DESIGN.md. Two tiers:
+    //   - project HAS a DESIGN.md -> it adopted the system, so slop against its own
+    //     declared system is refusable: DENY on BLOCK (needs block:true to survive
+    //     mergeOutputs, same as claude_md_firewall above).
+    //   - project has NO DESIGN.md -> never opted in: advise, never deny.
+    // A BLOCK is never throttled (the 15-min throttle covers only the advisory).
+    // Fail-open absolute: no python / spawn error / timeout / bad JSON -> {}.
+    // Was advisory-only under SCS C78; a gate you must remember to invoke is not a
+    // gate (T-DESIGN-SLOP-001). timeoutMs raised for the python child.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/cdio_visual_advisory.js', timeoutMs: 10000, block: true },
   ],
   'PreToolUse-Read-chain': [
     { exe: NODE_EXE, script: './gatekeeper-semantic.js', timeoutMs: 3000 },
