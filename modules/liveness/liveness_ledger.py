@@ -164,7 +164,24 @@ def default_registry() -> list[dict]:
                       "glob": "vault/audits/sqi_report_*.md",
                       "root": "repo"},
         },
-    ]
+    ] + _discovered_registry()
+
+
+def _discovered_registry(repo_root: Path | None = None) -> list[dict]:
+    """Every module in the repo, auto-enrolled -- coverage by construction.
+
+    The eight rows above are what a human remembered to declare. That is the ledger's
+    original defect: an undeclared component is not audited and not missed, so absence
+    of a probe reads as health. These rows remove the memory step, so a module is
+    audited because it EXISTS, not because someone wrote it down.
+
+    Fail-open: if the scanner cannot run, the hand-written rows still audit.
+    """
+    try:
+        from modules.liveness import reachability
+        return reachability.discovered_rows(repo_root)
+    except Exception:  # noqa: BLE001 -- fail-open
+        return []
 
 
 # --------------------------------------------------------------------------- #
@@ -247,6 +264,32 @@ def _probe_file_mtime(spec: dict, *, repo_root: Path, now: datetime,
 # --------------------------------------------------------------------------- #
 # Auditor.
 # --------------------------------------------------------------------------- #
+def _reach_index(repo_root: Path) -> dict[str, dict]:
+    """One reachability scan per audit, shared by every module row. Scanning per-row
+    would re-read the whole repo 276 times. Fail-open: an empty index degrades every
+    module row to UNKNOWN, never to a false LIVE."""
+    try:
+        from modules.liveness import reachability
+        return {r["unit"]: r for r in reachability.scan(repo_root)}
+    except Exception:  # noqa: BLE001 -- fail-open
+        return {}
+
+
+def _probe_reachability(spec: dict, *, index: dict[str, dict]) -> tuple[str, str]:
+    """Is this module invoked from a live surface? ORPHANED is the whole point of the
+    probe -- a module that exists, passes its tests, and is called by nothing."""
+    unit = spec.get("unit", "")
+    row = index.get(unit)
+    if row is None:
+        return UNKNOWN, f"{unit}: not in the reachability index"
+    if row["status"] == "REACHABLE":
+        return LIVE, f"reached from {row['via']}"
+    klass = row.get("klass")
+    if klass:
+        return SILENT, f"unreachable; declared {klass}"
+    return ORPHANED, "no live surface reaches this module"
+
+
 def audit(registry=None, *, repo_root=None, hooks_live_dir=None, mesh_dir=None,
           state_dir=None, now=None, max_age_h: float = DEFAULT_MAX_AGE_H) -> list[dict]:
     """Run every registry probe, return one verdict row per component. Fail-open
@@ -261,13 +304,18 @@ def audit(registry=None, *, repo_root=None, hooks_live_dir=None, mesh_dir=None,
         signals = load_signals(state_dir=state_dir)
     except Exception:  # noqa: BLE001 -- fail-open
         signals = []
+    reach: dict[str, dict] | None = None
     rows = []
     for entry in reg:
         pid = entry.get("id", "?")
         spec = entry.get("probe", {}) or {}
         ptype = spec.get("type", "")
         try:
-            if ptype == "hash-drift":
+            if ptype == "reachability":
+                if reach is None:
+                    reach = _reach_index(repo_root)
+                verdict, ev = _probe_reachability(spec, index=reach)
+            elif ptype == "hash-drift":
                 verdict, ev = _probe_hash_drift(spec, repo_root=repo_root, hooks_live_dir=hooks_live_dir)
             elif ptype == "co12-signal":
                 verdict, ev = _probe_co12_signal(spec, signals=signals, now=now, max_age_h=max_age_h)
