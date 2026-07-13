@@ -3289,6 +3289,36 @@ objective sub-gate keeps the "compile a plan" surface from degrading into per-la
 **FAIL-OPEN:** flag unset / python missing / compile error -> the launch and the Stop both
 proceed with zero FIOS output. FIOS never blocks the session it serves.
 
+## T-STALE-RESIDUAL-REGENERATES-MISSION-001 -- an undischarged residual is a false NEXT
+
+**TRIGGER:** a knowledge_base / SCS doc gains an addendum that COMPLETES work its own
+"Honest residuals" (or "Open items" / "NEXT") section still lists as pending. Also fires
+when opening any mission whose premise came from a handoff's NEXT line.
+
+**REGLA:** when an addendum discharges a residual, **strike the residual in the SAME
+commit**. A document may never hold a residual and its discharge simultaneously. On the
+consuming side: a handoff's NEXT is a HYPOTHESIS about state, never state itself --
+verify on disk before planning against it. Cheapest possible verification first (does the
+function exist? does the hash match? do the gates pass?), and only then plan.
+
+**ORIGEN:** empirical, 2026-07-13. `frontier_intelligence_os_scs_c84.md` carried a residual
+reading "live-path wiring is the Owner-authorized EXECUTION-mode follow-up" ten lines above
+an addendum stating that exact wiring had shipped on 2026-07-10, plus an "Owner-side
+residual: Copy-Item the dispatcher" that the Owner had already performed. A later session
+trusted the residual over the addendum and re-planned the whole completed mission (W1-W4).
+PASO -1 caught it: `Invoke-FiosPreflight` already in `kclaude.ps1`, `token_irr.py` already
+in the Stop-chain, canonical and live dispatcher byte-identical, 48/48 gates green,
+REMOTE_DELTA `0 0`. Zero lines of the "planned" work needed writing.
+
+**COSTE DE NO APLICARLA:** a full re-build of already-sealed work -- the most expensive
+class of duplicate there is, because every gate passes and nothing looks wrong. This is the
+doc-layer twin of `PR-DUPLICATE-TO-ADVANTAGE-001`: the fix is not to delete the stale text
+but to convert it into a liveness proof + this trap, so the next reader gets evidence where
+the false NEXT used to be.
+
+Cross-ref: `PR-LIVENESS-CHECK-BEFORE-SHIP-001`, `HR-PREMISE-001`,
+`frontier_intelligence_os/frontier_intelligence_os_scs_c84.md` (§ Liveness proof).
+
 **ORIGEN:** FIOS live-path wiring, SCS C84 addendum, 2026-07-10. Mirror of the FD-07 cadence
 gate (`_is_frontier_session`). Cross-ref: `FIOS_INDEX.md`, `tools/kclaude.ps1`,
 `hooks/hook-dispatcher.js`, `T-HOOK-DISPATCHER-DRIFT-001`.

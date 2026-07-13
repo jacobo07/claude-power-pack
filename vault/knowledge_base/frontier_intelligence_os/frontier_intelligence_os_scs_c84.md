@@ -42,9 +42,11 @@ are code, not prose) → **3 engines + 1 doctrine index, zero new prose datasets
 
 ## Honest residuals (CO-10)
 
-- Engines are advisory + fail-open (rung-1/2). Live-path wiring (kclaude preflight for
+- ~~Engines are advisory + fail-open (rung-1/2). Live-path wiring (kclaude preflight for
   the compiler, Stop-chain IRR emission) is the Owner-authorized EXECUTION-mode
-  follow-up — same staging as PM-02's scheduler and FD-00's v2 hook.
+  follow-up — same staging as PM-02's scheduler and FD-00's v2 hook.~~
+  **CLOSED 2026-07-10** by the Addendum below. Engines are wired and live. This bullet is
+  struck rather than deleted so the record shows the residual existed and was discharged.
 - The evolution engine's `deprecate` signal reads a top-of-file banner window (600
   chars) to avoid prose false positives; `abstract`/`specialize` kinds are defined but
   not yet emitted (they need cross-family pattern detection — a v2 pass).
@@ -75,9 +77,37 @@ FD-00/FD-07 pattern (no new plumbing).
 `V-FIOS-STOP-FRONTIER-GATE`, `V-FIOS-LIVE-PATH-WIRED` (`test_frontier_intelligence_os.py`,
 19/19 hermetic ×3). UKDL: `T-FIOS-FRONTIER-SESSION-DETECT-001`.
 
-**Owner-side residual (HR-001 / `T-HOOK-DISPATCHER-DRIFT-001`):** the canonical
-`hooks/hook-dispatcher.js` must be `Copy-Item`-ed to `~/.claude/hooks/hook-dispatcher.js`
-and /restart before the Stop entry fires live -- identical staging to the FD-07 flywheel.
+**Owner-side residual (HR-001 / `T-HOOK-DISPATCHER-DRIFT-001`) -- DISCHARGED 2026-07-13.**
+The canonical `hooks/hook-dispatcher.js` had to be `Copy-Item`-ed to
+`~/.claude/hooks/hook-dispatcher.js` + /restart before the Stop entry could fire live. The
+Owner did so: canonical and live are byte-identical (sha256
+`1E08BB34616B2CE00F80DA27E1B5610DE771EA2E75714C8FB6F4EAAB84277212`), and the live file
+carries the `token_irr` / `fd_07_flywheel` / `session_writeback` Stop entries. Verified by
+hash, not by assumption.
+
+## Liveness proof (2026-07-13 re-verification)
+
+FIOS is not "wired on paper" -- it has run in production. Re-verified with an independent
+check because the residuals above had gone stale and re-triggered an already-completed
+wiring mission (see the trap below):
+
+| Claim | Instrument | Result |
+|---|---|---|
+| Preflight is wired | `tools/kclaude.ps1` `Invoke-FiosPreflight` (line ~251) | present, frontier+objective gated, fail-open |
+| Stop IRR is wired | `hooks/hook-dispatcher.js` Stop-chain `PY_EXE` entry | present (`token_irr.py`, 8000 ms) |
+| Live path == canonical | sha256 of both dispatcher copies | identical -- no drift |
+| Preflight really fires | `vault/sessions/SESSION_ZERO_*.md` | 6 real files from kclaude launches on 07-10 / 07-11 (test artifacts are hermetic and land in a temp dir, so these are production, not fixtures) |
+| Gates hold | `tools/test_frontier_intelligence_os.py` | `FIOS_ACTIVATION_PASS=48/48`, exit 0 |
+| Sealed upstream | `git rev-list --left-right --count origin/main...HEAD` | `0 0` |
+
+**T-STALE-RESIDUAL-REGENERATES-MISSION-001.** A "Honest residuals" section that is not
+updated when its addendum discharges it becomes a false NEXT. Here the residuals block still
+read "live-path wiring is the follow-up" ten lines above an addendum stating the wiring had
+shipped -- a self-contradicting document. A later session trusted the residual, not the
+addendum, and re-planned a completed mission. **Rule:** when an addendum closes a residual,
+strike the residual in the SAME commit; a document may not hold a residual and its discharge
+simultaneously. The generalization is the estate's own law -- a handoff's NEXT is a
+hypothesis about state, and state is verified on disk (`PR-LIVENESS-CHECK-BEFORE-SHIP-001`).
 
 ## Cross-ref
 
