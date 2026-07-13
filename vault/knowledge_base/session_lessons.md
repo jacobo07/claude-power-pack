@@ -1,4 +1,47 @@
 
+## SCS C96 -- 2026-07-13 -- DAIF Session Continuity Cognitive Compiler: the corpus's first measured claim
+
+**Seal.** `modules/daif/` = obligation_extractor (DAIF-07) + constraint_extractor (DAIF-01) +
+session_continuity_compiler (DAIF-08 Part XI) + resume_reader (the far side of the boundary).
+Done-gate `tools/test_daif_session_compiler.py` -> `DAIF_COMPILER_PASS=9/9`, hermetic x3; corpus
+gate unregressed at `DAIF_PASS=48/48`; `pytest tests/ -q` 86 passed.
+
+**The numbers, which are the point.** Against a real 6.4 MB session transcript, package compiled to
+`vault/sessions/continuity_<sid>.json` (15,270 est. tokens), then handed to a FRESH OS PROCESS with
+the package as its only input -- no transcript, no repository, no import of the compiler:
+- **hard constraints surviving the reset: 100% (74/74)**
+- **open obligations surviving CLOSEABLE (DAIF-07 12.5, all five elements): 100% (10/10)**
+- **invented claims: 0**
+- Clauses 3 and 4 of the 11.5 gate: **UNVERIFIED.** They are behavioral (state identified; no
+  indiscriminate re-reading) and need the two-arm trial of 11.7. Declared, not claimed.
+- **Savings figure: none, and none may be quoted** (11.7 forbids asserting one in advance).
+
+**L1 -- The far side of a boundary must be a real boundary.** The verifier is a separate process, in
+a separate working directory, importing nothing from the pack. A verifier that could fall back on
+the session or the repo is the near side wearing a costume, and it would certify a package no
+resumed actor could actually use. The isolation IS the measurement.
+
+**L2 -- The archaeologist recovers words, not force.** The first extractor pass returned four
+"pending verification" obligations that were corpus PROSE ABOUT verification. The fix was not a
+longer pattern list but a required commitment frame (a person, a deontic, or a pendency). A text
+detector over residue must prove its precision on a real session before its output is admitted to a
+ledger: a ledger padded with half-found obligations poisons itself, and the poisoning is worse than
+the missing (DAIF-07 4.7).
+
+**L3 -- An over-budget pack means the BUDGET is wrong.** 74 hard constraints alone exceeded the 12k
+token budget I had invented. The corpus (11.3, Part VIII) is explicit that constraints are a FLOOR
+and may never be abridged to fit a percentage -- so the pack does not trim the law, it fails visibly
+and hands the budget question to the authority. Lowering a floor to fit a draft is the failure;
+raising a budget that was never derived from anything is not.
+
+**L4 -- The accident proved the clause.** A mistyped session UUID made the compiler refuse
+(`FAIL_VISIBLE`, "0 readable turns") rather than emit a plausible empty pack. The done-gate now
+forces three refusals every run (0-turn session, unreadable package, source that moved behind the
+pack's back), because a gate never observed to refuse is indistinguishable from an inert one.
+
+**Cross-ref:** UKDL `T-DAIF-CORPUS-IS-NOT-COMPILER-001`, `PR-DAIF-MEASURE-BEFORE-CLAIM-001`,
+`T-DAIF-ARCHAEOLOGY-IS-NOT-CAPTURE-001`, `PR-FAIL-VISIBLE-OR-INERT-001`.
+
 ## 2026-05-26 -- TCO cycle: L13 (TIS dual-module isolation), L14 (cost-projection negative is honest), L15 (TCO eats own dogfood)
 
 L13 -- **TIS dual-module override required for test isolation under Python 3 namespace packages.** `import tis` and `from tools import tis` create DISTINCT module instances when `tools/` has no `__init__.py` (namespace package). My V-COMPACT-WARN test failed initially because tco_compact_gate's `_read_session_entries` imports `from tools import tis` first; I only overrode the bare `import tis` module's LOGS_DIR. Both ids in `python -c "import tis; from tools import tis as t2; print(id(tis), id(t2))"` differ.
@@ -1241,6 +1284,21 @@ Once a fold makes the PreToolUse Edit-chain live, your OWN iterative edits to a 
 **Session:** `f2910b35-5d62-485c-a011-f556e8b13657`
 
 A long session's own token burn can fail baseline tests reading live burn data (weekly_burn 1.7x); verify data-dependence vs code before calling it a regression; isolate the live read.
+
+---
+
+## NEVER_AGAIN — 2026-07-12T14:21:33Z — hr-gate-smoke — CRITICAL
+- **Issue**: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ
+- **Root cause**: V-gate smoke probe
+- **Fix**: N/A smoke
+- **Recognizer**: Sees ZZZ-SMOKE-CRITICAL token
+- **Recurrence**: 5
+
+## 2026-07-13 — Built and sealed the DAIF corpus (SCS C95): 8 datasets, 160/160 Parts, 292,276 w
+
+**Session:** `be51d52e`
+
+A corpus spec's candidate list is a hypothesis about gaps, not a build order. Applying the estate's own anti-duplication law to the Owner's own 22 candidates cut them to 8 and avoided ~500k duplicated words.
 
 ---
 

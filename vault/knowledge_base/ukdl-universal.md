@@ -1,4 +1,46 @@
 
+## DAIF Session Continuity Cognitive Compiler (SCS C96, sealed 2026-07-13)
+
+**`T-DAIF-CORPUS-IS-NOT-COMPILER-001`** — The 292,276-word DAIF corpus *specifies* how the
+Session Continuity Cognitive Compiler must work. It **is not** the compiler; it is the compiler's
+specification. Until the compiler exists, compiles a real session, and passes the corpus's own
+done-gate, the corpus is a specification without a proof, and the estate may not describe it as
+"the DAIF system working." *Observed:* DAIF-08 Part XI had been sealed for a day, its six-clause
+gate written in full, and nothing on disk could compile a single pack. A dataset that specifies a
+mechanism and a mechanism are two different assets, and the first is routinely mistaken for the
+second because it reads exactly like the second.
+
+**`PR-DAIF-MEASURE-BEFORE-CLAIM-001`** — No claim about DAIF may be made without a measured
+number. The compiler is the estate's first instrument that produces real ones: the percentage of
+hard constraints that survive a context reset, and the percentage of open obligations that survive
+it *closeable*. Any assertion about token savings, continuity improvement, or reduced context loss
+that does not cite a number this compiler measured is inadmissible under DAIF-21 Part XIX and
+CO-12's Telemetry-Before-Claims. **First measurement (2026-07-13, real 6.4 MB session, fresh-process
+reset): hard constraints 100% (74/74); open obligations 100% (10/10), all closeable.** Clauses 3
+and 4 of the 11.5 gate — the behavioral ones — remain **UNVERIFIED**, because they require the
+two-arm trial of 11.7 and were not run. They are declared, not claimed. **No savings figure exists,
+and none may be quoted.**
+
+**`T-DAIF-ARCHAEOLOGY-IS-NOT-CAPTURE-001`** — The obligation extractor reads a finished transcript,
+which DAIF-07 Part IV names **archaeology** and rates strictly below capture-at-creation: it
+recovers the sentence after the context that made it legible has decayed. Every obligation it emits
+therefore carries `intake='archaeology'` and low confidence, so no consumer mistakes it for a CIR-5
+object compiled at t=0. *Observed during the build:* the first extractor pass returned four
+"pending verification" obligations that were **corpus prose about verification**, not commitments to
+verify — the archaeologist recovering words without their force. The fix was a required commitment
+frame (a person, a deontic, or a pendency), not a longer pattern list. **The durable form of this
+rule is that a text detector over residue must prove its precision on a real session before its
+output is admitted to a ledger — a ledger padded with half-found obligations poisons itself, and
+the poisoning is worse than the missing.**
+
+**`PR-FAIL-VISIBLE-OR-INERT-001`** — The seventh clause of the DAIF-08 11.5 gate (fail visibly when
+fidelity cannot be guaranteed) is what makes the other six safe, and a gate never *observed* to
+refuse is indistinguishable from an inert one. The done-gate therefore forces three real refusals
+every run: a session with zero readable turns, an unreadable package, and a constraint source that
+changed behind the pack's back. *Observed:* during the build a mistyped session UUID produced a
+genuine accidental refusal — the compiler declined to claim survival for a boundary it never saw.
+That accident is the clause working.
+
 ## DAIF — Duplicate-to-Advantage Institutional Fabric (SCS C95, sealed 2026-07-13)
 
 **`T-IIC-CIVILIZATION-DUPLICATION-001`** — A "civilization" that duplicates a sealed PP system (SQI, DRK, FD, ACIS, D2A, CO, GK, PM) without a genuine delta is architectural debt. The Wave-0 Reality Audit is the only mechanism that prevents it. *Observed:* the source brainstorm proposed 30 guardians — **22 already shipped**. Its 22 dataset candidates reduced to **8** under its own law. Without STOP #1, the corpus would have produced ~500,000 words duplicating the 108,598 SQI already holds.

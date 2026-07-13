@@ -26,18 +26,26 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
 - Done-gate: `python tools/test_daif.py` (V-DAIF-PARTS/FINALLAW/DENSITY≥1200/FABRICATION/CONTAMINATION/NONDUP).
   Observed to refuse then pass — a real gate. Agents over-report word counts by ~5-8%; the orchestrator's independent
   count governs. Only the 1,200 floor is binding — there is NO upper ceiling; never cut mechanism to hit a word target.
-- **THE CORPUS IS A SPECIFICATION, NOT A RUNNING SYSTEM.** No compiler runs; no page fault has fired; no obligation has
-  been extracted from a real conversation. This is stated in the corpus itself (DAIF-21 Part XIX, a dedicated self-audit
-  naming 4 unproven claims, 3 honest risks, and its own falsifiers). Presenting a specification as a running system is
-  the exact failure the corpus exists to prevent.
-- **NEXT (if work resumes) = THE FIRST PROVING VERTICAL**, and nothing else should precede it: the Session Continuity
-  Cognitive Compiler (DAIF-08 Part XI — the source's own prescribed MVP). It exists so the FIRST claim made about DAIF
-  is a MEASURED one. Build it against the substrate that already exists (`modules/frontier_intelligence/session_compiler.py`,
-  Lazarus, `/kclear`, CO-07 hibernation, G1–G6). Its done-gate: after a context reset, a session continues a complex
-  mission with less context while preserving **100% of hard constraints and 100% of open obligations**; state correctly
-  identified; no indiscriminate re-reading; every critical claim linked to evidence; a changed source detected; and
-  **VISIBLE failure** when fidelity cannot be guaranteed. **No savings figure may be asserted in advance**
-  (CO-12 Telemetry-Before-Claims; DAIF-03 Part X behavioral trial supplies the method).
+- **THE CORPUS IS STILL A SPECIFICATION — but it now has ONE running vertical (SCS C96, 2026-07-13).**
+  The rest of the corpus remains unproven, and DAIF-21 Part XIX's self-audit (4 unproven claims, 3 honest risks)
+  still stands for everything outside this vertical. Presenting a specification as a running system is the exact
+  failure the corpus exists to prevent, and it is now a *narrower* claim, not a retired one.
+- **FIRST PROVING VERTICAL — BUILT AND MEASURED (DAIF-08 Part XI).** `modules/daif/`:
+  `obligation_extractor.py` (DAIF-07 object, taxonomy, intake gate, de-dup) ·
+  `constraint_extractor.py` (DAIF-01 typed constraints; hard = `Strength=hard`) ·
+  `session_continuity_compiler.py` (the 8 contents of 11.3; `status=FAIL_VISIBLE` is clause 7) ·
+  `resume_reader.py` (the far side: stdlib only, package as its ONLY input).
+  Package lands at `vault/sessions/continuity_<session_id>.json`.
+  Done-gate: `python tools/test_daif_session_compiler.py` → `DAIF_COMPILER_PASS=9/9`, hermetic ×3.
+  **MEASURED (real 6.4 MB session, fresh-process reset): hard constraints 100% (74/74) ·
+  open obligations 100% (10/10), all closeable per DAIF-07 12.5 · 0 invented claims.**
+  **UNVERIFIED:** clauses 3 and 4 (state correctly identified; no indiscriminate re-reading) are
+  BEHAVIORAL and need the two-arm trial of 11.7. They are declared, never claimed.
+  **No savings figure exists and none may be quoted** (11.7 / CO-12).
+- **NEXT = the two-arm behavioral trial (11.7)**, which is the only thing that can close clauses 3 and 4:
+  the same mission at the same boundary, continued twice — once by re-reading, once from the compiled pack —
+  recording reasoning cost, fidelity (behavioral equivalence), and rework on each arm. Only after that
+  triple is measured does any figure enter this corpus, attributed to the trial that produced it.
   Do NOT build the other derived systems first. Do NOT expand the corpus. Measure it.
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
