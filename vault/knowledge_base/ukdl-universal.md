@@ -1,4 +1,59 @@
 
+## DAIF Two-Arm Behavioral Trial (SCS C97, sealed 2026-07-13)
+
+**`PR-DAIF-TWO-ARM-MANDATORY-001`** — Clauses 3 and 4 of the Session Continuity Compiler's done-gate
+close ONLY by the two-arm behavioral trial of DAIF-08 §11.7, whose method is DAIF-03 Part X. No other
+experiment, no inference, and no estimate closes them. **Result of the first trial (3 sealed missions,
+`claude-sonnet-5`, real API tokens): clause 3 = FAIL/PASS/PASS. Clause 4 = FAIL on 3 of 3.** The
+resumed actor asked for the source anyway — `git status`, whether a named test file exists, the
+transcript itself. **The Part XI done-gate therefore REMAINS OPEN**, and the compiler may not be
+described as passing it. A cheaper pack that is not sufficient is a cheaper pack, not a solved
+problem.
+
+**`T-DAIF-NEGATIVE-DELTA-HONEST-001`** — If the resume pack consumes more tokens than the full source,
+the number is reported NEGATIVE. There is no floor at zero, no adjustment, and no re-run to hunt a
+different result — DAIF-21 Part XIX already lists this as one of its three honest risks, and a risk
+the corpus named in advance is not a result the estate gets to be surprised by. **Measured (B − A):
++76,336 / +41,973 / +40,466 tokens — the pack was cheaper on all three missions.** The gate asserts
+`token_delta_saved == B − A` exactly and greps its own source for a zero-floor, because the honest
+reporting of a bad number must itself be enforced, not merely intended.
+
+**`T-DAIF-INSTRUMENT-FABRICATES-THE-VERDICT-001`** — Two bugs in the trial harness each produced a
+FALSE FAIL before any verdict was trusted, and both were in the *instrument*, not the subject. (1) The
+model's reply was truncated to 8k chars BEFORE parsing, severing the closing brace of a long answer,
+so a correct arm read as "emitted no parseable state at all". (2) The sealed strict matcher scored
+PARAPHRASES of real packet constraints as inventions — the arm wrote *"Liveness Standard (sealed
+2026-07-13)"* where the packet says *"Liveness Standard (MANDATORY -- sealed 2026-07-13)"* — because
+the adjudicator accepted only opaque hash ids while the task prompt explicitly permitted "identifier
+**or short name**". **An adjudicator that contradicts the instructions its subject was given
+fabricates its own finding.** Rule: before recording ANY adverse verdict, read the subject's raw
+output and confirm the instrument saw what actually happened. A measured FAIL is only worth what the
+measuring device is worth.
+
+**`PR-DAIF-MATCHER-AMENDED-ONCE-DISCLOSED-001`** — The lenient matcher was added AFTER the first arm's
+outputs were visible. DAIF-03 10.4 holds that a rubric amended once the outputs exist is a rubric
+fitted to them, so: the amendment is DISCLOSED in every trial record, the strict count is never
+dropped, and **the matcher was NOT amended a second time** to erase mission 1's remaining 15 ungrounded
+citations (range roll-ups such as `HR-CASCADE-001..005`, which are compressions of units that ARE in
+the pack). The rubric may be repaired when it demonstrably misreads reality; it may never be relaxed
+until the finding disappears. The line between the two is whether the change survives being written
+down for the reader.
+
+**`T-DAIF-CLAUSE-NUMBERS-ARE-LOAD-BEARING-001`** — The brief for this work numbered the clauses as
+"c3 = no re-reading, c4 = no invented claims". The corpus (11.5) says **c3 = the current state is
+correctly identified; c4 = the actor continues without indiscriminate re-reading**, and "no invented
+claims" is **not one of the six clauses** at all — it is an extra gate. Re-read the clause you are
+about to close before you claim to have closed it; a done-gate discharged against a misremembered
+clause discharges nothing.
+
+**Honest limits of this trial, declared rather than discovered later:** the sample post-dates the
+artifact (DAIF-03 10.2 scores such a sample UNMEASURED, never PASS, at the artifact level); only the
+representative stratum was run, not the adversarial or regression strata; three missions is small
+(10.6: "a single passing mission proves that a single mission passed"); and clause 3 is adjudicated in
+a weakened form — that a GROUNDED state was produced, not that it is TRUE — because the estate's only
+obligation ledger is the artifact's own producer, and scoring the artifact against its own output is
+the circular rubric 10.7 forbids. **Artifact-level fidelity verdict: DEGRADE.**
+
 ## DAIF Session Continuity Cognitive Compiler (SCS C96, sealed 2026-07-13)
 
 **`T-DAIF-CORPUS-IS-NOT-COMPILER-001`** — The 292,276-word DAIF corpus *specifies* how the

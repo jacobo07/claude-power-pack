@@ -1,4 +1,55 @@
 
+## SCS C97 -- 2026-07-13 -- DAIF Two-Arm Behavioral Trial: clauses 3 and 4 measured, and clause 4 FAILS
+
+**Seal.** `modules/daif/two_arm_trial.py` + `tools/test_daif_two_arm_trial.py`. The trial DAIF-08
+11.7 demands, whose method is DAIF-03 Part X, run for real against 3 sealed missions with
+`claude-sonnet-5`: two arms, zero tools in BOTH, so the input packet is the only variable (10.3).
+Arm B = the full conversational source; Arm A = the compiled resume pack with no path to the source.
+`DAIF_TRIAL_PASS=8/8` hermetic x3; `DAIF_COMPILER_PASS=9/9` unregressed; `pytest` 86 passed.
+
+**The numbers (real API tokens, never estimates).**
+- token delta saved (B - A): **+76,336 / +41,973 / +40,466** -- the pack is cheaper on 3/3.
+- **clause 3** (state correctly identified): **FAIL / PASS / PASS**
+- **clause 4** (continues without indiscriminate re-reading): **FAIL / FAIL / FAIL**
+- Session overhead (~76.5k tokens of system prompt + CLAUDE.md + hooks) is identical in both arms
+  and cancels in the delta; it is measured and reported, not assumed away.
+
+**The finding: the done-gate REMAINS OPEN.** The pack is cheaper and it is not yet sufficient. On
+every mission the resumed actor asked for the source anyway -- `git status` (the pack reports N
+uncommitted paths but not WHICH), whether a named test file exists, the transcript itself. DAIF-03
+10.5 calls source re-reads the sharpest single signal in the procedure: an actor that goes looking
+for what the artifact lacks has told the estate exactly where the artifact is thin. It did, and the
+answer is: the pack carries a COUNT of uncommitted work where the actor needs the LIST, and it names
+files whose existence it does not confirm.
+
+**L1 -- The instrument fabricates the verdict if you let it.** TWO bugs in the harness each produced
+a false FAIL before any verdict was trusted. (a) The reply was truncated to 8k chars BEFORE parsing,
+severing the closing brace of a long answer, so a correct arm read as "emitted nothing parseable".
+(b) The sealed matcher scored PARAPHRASES of real pack constraints as inventions, because it accepted
+only opaque hash ids while the prompt it had itself written explicitly permitted "identifier or short
+name". An adjudicator that contradicts the instructions its subject was given is not measuring, it is
+inventing. **Read the subject's raw output before recording an adverse verdict.**
+
+**L2 -- Repair a matcher, never relax it until the finding disappears.** The lenient matcher was added
+after outputs were visible, which DAIF-03 10.4 warns is how a rubric gets fitted to its data. It is
+therefore disclosed in every trial record and the strict count is never dropped -- and the matcher was
+NOT amended a second time to erase mission 1's remaining 15 ungrounded citations (range roll-ups like
+`HR-CASCADE-001..005`). The test of the difference is whether the change survives being written down.
+
+**L3 -- Re-read the clause before claiming to close it.** The brief numbered the clauses "c3 = no
+re-reading, c4 = no invented claims". The corpus says c3 = state correctly identified, c4 = no
+indiscriminate re-reading, and "no invented claims" is not one of the six clauses at all.
+
+**Declared limits (not discovered later).** Sample post-dates the artifact (10.2 -> artifact-level
+verdict capped at **DEGRADE**, never PASS); only the representative stratum ran; 3 missions is small
+(10.6); clause 3 is adjudicated in its weakened form -- a GROUNDED state was produced, not a TRUE one
+-- because the estate's only obligation ledger is the artifact's own producer and scoring it against
+its own output is the circular rubric 10.7 forbids.
+
+**Cross-ref:** UKDL `PR-DAIF-TWO-ARM-MANDATORY-001`, `T-DAIF-NEGATIVE-DELTA-HONEST-001`,
+`T-DAIF-INSTRUMENT-FABRICATES-THE-VERDICT-001`, `PR-DAIF-MATCHER-AMENDED-ONCE-DISCLOSED-001`,
+`T-DAIF-CLAUSE-NUMBERS-ARE-LOAD-BEARING-001`.
+
 ## SCS C96 -- 2026-07-13 -- DAIF Session Continuity Cognitive Compiler: the corpus's first measured claim
 
 **Seal.** `modules/daif/` = obligation_extractor (DAIF-07) + constraint_extractor (DAIF-01) +

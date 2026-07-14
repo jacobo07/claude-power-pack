@@ -39,14 +39,24 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
   Done-gate: `python tools/test_daif_session_compiler.py` → `DAIF_COMPILER_PASS=9/9`, hermetic ×3.
   **MEASURED (real 6.4 MB session, fresh-process reset): hard constraints 100% (74/74) ·
   open obligations 100% (10/10), all closeable per DAIF-07 12.5 · 0 invented claims.**
-  **UNVERIFIED:** clauses 3 and 4 (state correctly identified; no indiscriminate re-reading) are
-  BEHAVIORAL and need the two-arm trial of 11.7. They are declared, never claimed.
-  **No savings figure exists and none may be quoted** (11.7 / CO-12).
-- **NEXT = the two-arm behavioral trial (11.7)**, which is the only thing that can close clauses 3 and 4:
-  the same mission at the same boundary, continued twice — once by re-reading, once from the compiled pack —
-  recording reasoning cost, fidelity (behavioral equivalence), and rework on each arm. Only after that
-  triple is measured does any figure enter this corpus, attributed to the trial that produced it.
-  Do NOT build the other derived systems first. Do NOT expand the corpus. Measure it.
+- **TWO-ARM TRIAL RUN — clauses 3 and 4 MEASURED (SCS C97, 2026-07-13).** `modules/daif/two_arm_trial.py`;
+  gate `python tools/test_daif_two_arm_trial.py` → `DAIF_TRIAL_PASS=8/8` (records in `vault/trials/`,
+  gitignored — re-run `--sample` to regenerate; it costs real API money and the gate REFUSES rather
+  than passing on absent evidence). 3 sealed missions, `claude-sonnet-5`, zero tools in both arms.
+  **token delta saved (B−A): +76,336 / +41,973 / +40,466 — the pack is cheaper 3/3.**
+  **clause 3: FAIL / PASS / PASS. clause 4: FAIL / FAIL / FAIL.**
+- **THE PART XI DONE-GATE REMAINS OPEN.** Clause 4 fails on every mission: the resumed actor asks for
+  the source anyway. The pack is cheaper and it is NOT yet sufficient. Do not describe the compiler as
+  passing its gate. Artifact-level fidelity verdict: **DEGRADE** (sample post-dates the artifact,
+  DAIF-03 10.2; representative stratum only; n=3, 10.6).
+- **NEXT = close clause 4, which the trial LOCALIZED.** The arms named exactly what the pack lacks, in
+  their own words, across all three missions: (1) `current_reality` carries a COUNT of uncommitted
+  paths where the actor needs the LIST (and the diff); (2) the pack names files whose existence it
+  never confirms, so the actor asks "does `tools/test_ram_optimization.py` exist?"; (3) no
+  `decisions_with_justifications` — still declared `unknown`, and 11.3 says a decision without its
+  reason is worse than none. Fix those three, re-run `--sample`, and see whether clause 4 moves.
+  Then run the adversarial + regression strata (DAIF-03 10.2), which have never run.
+  Do NOT expand the corpus. Do NOT build the other derived systems first.
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
