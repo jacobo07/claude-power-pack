@@ -4000,3 +4000,71 @@ Corrected vocabulary: **2,158** assertions. The detector's first finding was abo
 
 **Cross-ref:** `T-SQI-DIRECTORY-NOT-MANIFEST-001` (counting the wrong thing),
 `FOUNDING-FINDING-IS-A-HYPOTHESIS` (re-measure with an independent instrument).
+
+---
+
+## HR-RECOVERY-REFERENCE-001 -- a verdict scored against post-interruption state is VOID
+
+**Rule.** A recovery may never be judged against a reference DERIVED FROM THE STATE THAT SURVIVED
+IT. The reference must be pinned at the interruption boundary, from state recorded while the system
+was still healthy, and frozen until the recovery is accepted or explicitly dismissed. A reference
+that can advance while the recovery is open will advance INTO the damage. If no pre-interruption
+reference exists, the verdict is HELD -- never RECOVERED. Silence is not acceptance, and an absent
+reference is not a passing one.
+
+**Origin.** 2026-07-14 (SCS C97). PP's recovery arbiter was correct and had two callers, both of
+which fed it a post-crash reference. `reentry` scored the surviving panes against the restorable
+subset of those same panes; `recovery_verdict` took the NEWEST pane_map snapshot, and the 5-minute
+snapshotter keeps running after a bad restore, so within ~20 minutes the reference BECAME the
+damage. Measured live: `RECOVERED -- 8/8 windows, 13/13 conversations` on a host whose history
+peaked at 21 live panes. Replayed on real snapshots: 4 of 6 panes gone, newest reference -> RECOVERED
+(exit 0); pinned reference -> FAILED (exit 3), four panes named. Same verdict code; only the
+reference differed.
+
+**Cross-ref:** `NEVER-GATE-ON-A-RATIO` (a denominator that can shrink), `ZERO-CANNOT-FALL`,
+`PR-COVERAGE-BY-CONSTRUCTION-001`.
+
+## PR-PIN-THE-BOUNDARY-001 -- capture the evidence before the recovery overwrites it
+
+**Rule.** The act of recovering DESTROYS the evidence of what was lost: the restarting process
+rewrites the liveness map, the beacon, the registry. Therefore any state that proves what existed
+BEFORE an interruption must be (a) written durably while the system is healthy, (b) read at startup
+BEFORE the recovering process writes its own, and (c) idempotent under the N-way race of N panes
+starting at once (key it by the interruption instant, never re-pin). Ordering here is load-bearing,
+not cosmetic: in PP the recovery gate MUST run before the SessionStart hub writes the new ACTIVE
+beacon, because that old beacon is the only proof the previous session never closed.
+
+Corollary -- **a detection window that closes automatically must be treated as a deadline.** If the
+truth is only knowable for 20 minutes after the event, a verdict that depends on a human choosing to
+ask for it will usually be asked for too late. The judgment must be triggered BY the boundary.
+
+**Origin.** 2026-07-14 (SCS C97). `classify_startup`, `epoch` and `reentry` were reachable from no
+hook, command or task: the interruption was never detected, so the restore was never judged, so an
+incomplete one was accepted in silence. The arbiter had judged zero real recoveries in its lifetime.
+
+**Cross-ref:** `HR-RECOVERY-REFERENCE-001`, Liveness Standard (shipping is not wiring).
+
+## T-REFERENCE-SHRINK-001 -- the self-shrinking denominator
+
+**Trap.** A gate whose reference is RE-DERIVED from current state cannot witness a loss -- it will
+always report full recovery, because the thing it compares against has already lost exactly what the
+system lost. The failure is invisible precisely BECAUSE the measurement is self-consistent: every
+dimension matches, the scorecard is green, and the panes are gone. This is the same family as gating
+on a ratio (shrink the denominator) and as `ZERO-CANNOT-FALL` (an unrecognised idiom counts as zero,
+and zero never falls). The tell is structural, not statistical: **ask what the reference is a
+function of.** If the answer includes the state being judged, the gate is decorative.
+
+**Detector.** For any acceptance gate, assert BOTH poles on real data: construct a genuine loss and
+prove the gate REFUSES. A fix asserted without first reproducing the failure it fixes is a fix
+nobody has seen work. PP's done-gate runs the identical verdict code twice over the same 4-of-6
+pane loss and asserts RECOVERED with the old reference and FAILED with the pinned one -- the bug and
+the fix in one pair, so neither can pass vacuously.
+
+**Origin.** 2026-07-14 (SCS C97), found in the recovery arbiter, and the same day inside the
+Liveness probe itself: `_TOOL_RE` matched only a contiguous `tools/x.py` while every hook in the
+repo builds that path in segments, so no tool a hook actually runs was seeded and everything
+reachable only through one was reported dead. The instrument was blind to the idiom it audits.
+
+**Cross-ref:** `NEVER-GATE-ON-A-RATIO`, `FOUNDING-FINDING-IS-A-HYPOTHESIS`, `T-ORPHAN-FIELD-001`
+(a field declared and never produced: `snapshot_ref` shipped with the beacon and had no producer for
+its whole life -- the pin the architecture had already named).
