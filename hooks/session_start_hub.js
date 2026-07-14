@@ -82,6 +82,14 @@ const AUTO_VAULT_BOOTSTRAP_JS = path.join(HOME, '.claude', 'hooks',
                                           'auto-vault-bootstrap.js');
 const TCO_COMPACT_GATE_PY = path.join(PP_PATH, 'tools', 'tco_compact_gate.py');
 const JIT_SKILL_LOADER_PY = path.join(PP_PATH, 'tools', 'jit_skill_loader.py');
+const RECOVERY_EPOCH_GATE_PY = path.join(PP_PATH, 'tools', 'recovery_epoch_gate.py');
+
+// The recovery gate is the ONE hook here that must run synchronously: its whole
+// product is a line the Owner reads THIS session ("4 panes did not come back").
+// Detached, the answer would arrive after the turn it belongs to. Measured at
+// ~176 ms on this host and silent on a healthy start (nothing printed, no epoch),
+// which is inside the inline-hook budget.
+const RECOVERY_GATE_TIMEOUT_MS = 8000;
 
 // ---------------------------------------------------------------------------
 // Logging
@@ -276,6 +284,25 @@ function isAbsolutePathString(p) {
   return path.isAbsolute(p);
 }
 
+// Detects the interruption, pins the pre-crash topology, judges what came back.
+// Fail-open in every branch: a recovery gate that can block a session start is a
+// worse failure than the silence it exists to end.
+function hookRecoveryEpoch() {
+  try {
+    if (!fs.existsSync(RECOVERY_EPOCH_GATE_PY)) return null;
+    const out = require('child_process').execFileSync(
+      PYTHON_EXE, [RECOVERY_EPOCH_GATE_PY],
+      { encoding: 'utf8', timeout: RECOVERY_GATE_TIMEOUT_MS,
+        env: Object.assign({}, process.env, { PYTHONIOENCODING: 'utf-8' }) });
+    const line = (out || '').trim();
+    if (line) note('recovery epoch: ' + line.slice(0, 120));
+    return line || null;
+  } catch (err) {
+    note('recovery epoch gate failed (fail-open)', err);
+    return null;
+  }
+}
+
 function detachedSpawn(label, cmd, args, env) {
   try {
     if (isAbsolutePathString(cmd) && !fs.existsSync(cmd)) {
@@ -445,8 +472,14 @@ const CPC_REGISTER_SCRIPT =
   // start. The graceful counterpart is written at SessionEnd (see activation doc).
   + "try:\n"
   + "    from modules.session_resilience.power_beacon import write_active_beacon\n"
+  + "    from modules.session_resilience.epoch import newest_snapshot\n"
   + "    _bsd = os.path.join(os.path.expanduser('~'), '.claude', 'state')\n"
-  + "    write_active_beacon(_bsd, session_id=sid, cwd=os.environ.get('PP_PANE_CWD'))\n"
+  // snapshot_ref is the pin: the topology recorded while this session is ALIVE.
+  // The field was declared when the beacon shipped and no producer ever wrote it,
+  // so every recovery had to fall back to guessing a reference from post-crash
+  // state. Filling it here is what makes the next crash judgeable.
+  + "    write_active_beacon(_bsd, session_id=sid, cwd=os.environ.get('PP_PANE_CWD'),\n"
+  + "                        snapshot_ref=newest_snapshot(_bsd))\n"
   + "except Exception:\n"
   + "    pass\n";
 
@@ -755,6 +788,17 @@ function main() {
 
     // 1. Sync hook (may write to stdout).
     additionalContext = hookRestartResume(cwd);
+
+    // 1a. Recovery epoch. MUST run before hookCpcOsRegister, which writes a fresh
+    // ACTIVE beacon: that beacon is what proves the PREVIOUS session died without
+    // closing, and overwriting it before reading it would destroy the evidence of
+    // the very crash we are recovering from. Order is load-bearing, not cosmetic.
+    const recoveryLine = hookRecoveryEpoch();
+    if (recoveryLine) {
+      additionalContext = additionalContext
+        ? (additionalContext + '\n' + recoveryLine)
+        : recoveryLine;
+    }
 
     // 1b. Auto-Reset Orchestrator M5: inject saved work_state after a reset.
     const workStateLine = hookWorkStateResume(cwd);
