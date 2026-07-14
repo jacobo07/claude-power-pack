@@ -85,6 +85,13 @@ _FROM_RE = re.compile(r"from\s+modules\.([A-Za-z0-9_.]+)\s+import\s+([^\n#]+)")
 # `from . import models` / `from .acceptance import X` -- resolved against the package.
 _REL_RE = re.compile(r"from\s+\.([A-Za-z0-9_]*)\s+import\s+([^\n#]+)")
 _TOOL_RE = re.compile(r"tools[./\\]([A-Za-z0-9_\-]+)\.py")
+# The hooks' dominant idiom builds the path in SEGMENTS -- path.join(PP_PATH, 'tools',
+# 'recovery_epoch_gate.py') -- so the contiguous form above never matches them, and every
+# tool a hook actually runs was read as unreachable. The probe was under-counting the very
+# surfaces it exists to trace: an instrument blind to the repo's own idiom measures its
+# vocabulary, not the code.
+_TOOL_SEG_RE = re.compile(
+    r"""['"]tools['"]\s*,\s*['"]([A-Za-z0-9_\-]+)\.py['"]""")
 # A plugin loader -- `import_module(f"modules.uqf.principles.{name}")` -- is a genuine
 # live reference whose target is only known at runtime. Text-matching cannot name the
 # module, but it CAN name the package being loaded, so every module directly under that
@@ -197,6 +204,7 @@ def _tool_seeds(texts: list[str], repo_root: Path) -> list[Path]:
     names: set[str] = set()
     for t in texts:
         names.update(_TOOL_RE.findall(t))
+        names.update(_TOOL_SEG_RE.findall(t))
     return [p for p in (repo_root / "tools" / f"{n}.py" for n in sorted(names)) if p.is_file()]
 
 

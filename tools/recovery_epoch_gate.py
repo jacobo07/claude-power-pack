@@ -45,6 +45,16 @@ from modules.session_resilience import epoch  # noqa: E402
 STATE_DIR = Path.home() / ".claude" / "state"
 
 
+def _read_pane_map(state_dir: Path) -> dict:
+    p = state_dir / "pane_map.json"
+    if not p.is_file():
+        return {"panes": []}
+    try:
+        return json.loads(p.read_text(encoding="utf-8-sig"))
+    except (ValueError, OSError):
+        return {"panes": []}
+
+
 def banner(state_dir: Path) -> str:
     """The Owner-facing line, or '' when there is nothing to report."""
     import tools.recovery_verdict as rv
@@ -103,6 +113,13 @@ def main(argv=None) -> int:
         det = epoch.detect_interruption(state, live_terminal_count=a.live_terminals)
         if det.get("interrupted"):
             epoch.open_epoch(state, det)
+            # The epoch is pinned, so reentry can now judge the relaunch PLAN against
+            # the board we HAD and emit the G5 recovery event stream (recovery_started
+            # / pane_restored / acceptance_scored). Only on a real interruption -- a
+            # healthy start emits nothing, because nothing was recovered.
+            from modules.session_resilience import power_beacon, reentry
+            reentry.record_reentry(
+                state, {"class": power_beacon.UNGRACEFUL}, _read_pane_map(state))
         line = banner(state)
     except Exception as exc:  # noqa: BLE001 -- a SessionStart gate never blocks a session
         if a.json:
