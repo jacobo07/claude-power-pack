@@ -1,0 +1,48 @@
+[
+  {
+    "fingerprint": "6fe4d8a7be715833",
+    "kind": "judgment",
+    "task_class": "mcp-lifecycle",
+    "origin": "fable-session-2-2026-07-11 (q:f06fdfdbb3a3)",
+    "prompt": "You are given two field-observed failure patterns from a Claude Code installation on Windows. Derive the single always/never engineering rule that structurally prevents BOTH, and state the deterministic checklist an engineer follows to apply it without needing a model.\n\nPATTERN A: A Playwright MCP integration, registered through the plugin system, goes dead. Its tools appear with the prefix mcp__plugin_playwright__. An engineer adds a longer timeout to the config; nothing changes, because no such timeout setting exists for it. Killing the stale node processes makes the integration come back on its own.\n\nPATTERN B: A different MCP server, registered under an mcpServers entry that specifies a `command`, goes dead mid-session. Killing its process does NOT bring it back; an external watchdog that restarts it produces a second, useless process. Only running /mcp reconnect, or restarting the client entirely, heals it.\n\nAlso observed: an mcpServers entry may instead specify a `url` and no `command`. And one name was once registered in BOTH the plugin list and mcpServers at the same time.\n\nGive the rule and the checklist. Be specific about what determines the correct recovery in each case.",
+    "gold_answer": "Never fix an MCP surface before resolving its process-lifecycle owner; always resolve the owner deterministically: tool prefix mcp__plugin_* or enabledPlugins entry -> plugin loader owns it (kill stale procs, loader respawns; config timeout does not exist); mcpServers entry with command -> claude.exe stdio child (only /mcp reconnect or client restart heals; an external watchdog creates an orphan); mcpServers entry with url and no command -> remote host owns it (fix server-side/tunnel; local kills touch nothing). Never register one name in both enabledPlugins and mcpServers -- the collision is itself the bug and must be removed first. Recovery patterns never cross rows: the watchdog that heals a plugin orphans a stdio child.",
+    "required_elements": [
+      {"id": "lifecycle-owner-is-the-primitive", "patterns": ["lifecycle", "who owns|owner of the process|process owner|ownership"]},
+      {"id": "plugin-loader-row", "patterns": ["enabledPlugins|mcp__plugin|plugin loader|plugin system"]},
+      {"id": "stdio-child-row", "patterns": ["stdio|child process of|spawned by the client"]},
+      {"id": "remote-url-row", "patterns": ["url|remote host|server-side|tunnel"]},
+      {"id": "dual-registration-is-the-bug", "patterns": ["both|collision|shadow|duplicate registration|registered twice"]},
+      {"id": "recovery-does-not-cross-rows", "patterns": ["watchdog|orphan"]}
+    ]
+  },
+  {
+    "fingerprint": "1cc518cc2d576b50",
+    "kind": "judgment",
+    "task_class": "acis-epistemics",
+    "origin": "acis-generation-zero-2026-07-11 (q:d956cf68433a)",
+    "prompt": "A software system accumulates knowledge in four append-only ledgers: (1) deposits -- claims the system made about itself; (2) portability proofs -- records that a claim was independently re-verified; (3) a sealed rule archive -- rules promoted by a human owner; (4) hard rules -- the constitutional subset that can halt execution.\n\nWe want to assign every claim an epistemic status on an 8-level ladder from E0 (unfounded assertion) to E7 (constitutional law). Design the mechanism.\n\nAnswer two questions precisely:\n(a) Where does a claim's level live -- is it a field written at deposit time, or something else? Justify.\n(b) The function that computes the level is itself part of the system that produced the claims. What ceiling, if any, does that place on the level such a function may legitimately assign, and why?\n\nBe rigorous about the second question. It is the load-bearing one.",
+    "gold_answer": "The epistemic status of every stack claim is a level E0-E7 DERIVED by reading four existing ledgers (deposits, fd04 proofs, sealed UKDL, Hard Rules), never stored; the producer of a claim can never certify its own level, so a derived function caps at E3 without a different-actor referent.",
+    "required_elements": [
+      {"id": "level-is-derived", "patterns": ["deriv|comput|calculat"]},
+      {"id": "never-stored-as-a-field", "patterns": ["never stored|not stored|not a field|not persisted|never a field|never persist"]},
+      {"id": "read-from-the-ledgers", "patterns": ["ledger"]},
+      {"id": "no-self-certification", "patterns": ["certify its own|self-certif|cannot certify|its own level|different actor|independent (actor|referent|witness)|second actor"]},
+      {"id": "explicit-ceiling", "patterns": ["cap|ceiling|cannot exceed|no higher than|upper bound"]}
+    ]
+  },
+  {
+    "fingerprint": "893b9a6eda68d5d1",
+    "kind": "judgment",
+    "task_class": "acis-laws",
+    "origin": "acis-generation-zero-2026-07-11 (q:51b94f306fe7)",
+    "prompt": "We are founding a small science of cognitive infrastructure: we want to state candidate LAWS about how an AI engineering system behaves (for example: 'an avoidable repetition is a measurable defect', or 'knowledge not compressed decays').\n\nDefine the recording schema a candidate law must satisfy to be admitted at all. Then answer the hard question: what do we do with a proposed law that is clearly insightful, widely agreed, and useful -- but for which no one can state a concrete way the system could observe it to be false?\n\nDo not hedge. Give the disposition and the reason.",
+    "gold_answer": "A candidate law of cognitive infrastructure is recorded as a falsifiable E2 theorem with a causal mechanism, an operational falsifier the pipeline can measure, and a same-model destruction attempt; a law with no falsifier is not a weak law but a non-law and is dropped at authoring time.",
+    "required_elements": [
+      {"id": "falsifier-is-mandatory", "patterns": ["falsif"]},
+      {"id": "causal-mechanism", "patterns": ["mechanism|causal"]},
+      {"id": "operationally-measurable", "patterns": ["measur|operational|observ"]},
+      {"id": "destruction-attempt", "patterns": ["destruction|refut|attempt to break|attack|disprove|counterexample"]},
+      {"id": "no-falsifier-is-a-non-law", "patterns": ["non-law|not a law|is not a weak|drop|reject|discard|excluded"]}
+    ]
+  }
+]

@@ -1,0 +1,5 @@
+[
+  {"type": "file_exists", "path": "hooks/session_start_hub.js"},
+  {"type": "grep", "path": "hooks/session_start_hub.js", "pattern": "pm_?03"},
+  {"type": "grep", "path": "tools/conversation_quality_audit.py", "pattern": "def pm03_health\\("}
+]

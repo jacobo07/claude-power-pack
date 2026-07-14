@@ -4123,3 +4123,93 @@ reachable only through one was reported dead. The instrument was blind to the id
 **Cross-ref:** `NEVER-GATE-ON-A-RATIO`, `FOUNDING-FINDING-IS-A-HYPOTHESIS`, `T-ORPHAN-FIELD-001`
 (a field declared and never produced: `snapshot_ref` shipped with the beacon and had no producer for
 its whole life -- the pin the architecture had already named).
+
+## T-PORTABILITY-SELF-LABEL-001 -- the frontier label nobody measured
+
+**Trap.** A deposit's `portability_target` is written by the very session that produced the delta.
+It is a self-assessment wearing the clothes of a measurement. Nothing downstream distinguishes the
+two, so a capability gets billed to the frontier tier forever on the strength of a guess its own
+author made in the moment of authorship.
+
+Measured, the guess collapsed. Three judgments deposited by two Fable sessions -- two labelled
+`mid-model`, one labelled `frontier-only` -- were posed cold to the CHEAPEST rung, with no tools and
+no repo access. Sonnet reproduced all three: 6/6, 5/5 and 5/5 required elements. Opus scored PARTIAL
+on the one Sonnet aced. **Frontier residue for the round: zero.** The `frontier-only` label was not
+merely optimistic, it was inverted.
+
+The deeper confusion the trap feeds on: **proving a claim TRUE is not proving it PORTABLE.** The
+five deposits already marked PROVEN had been settled by `file_exists` and `grep` probes -- which
+establish that the claim is factually correct about the repo, and say exactly nothing about whether
+a cheaper model could have reached it. Two different questions had one verdict field between them,
+so the ledger read as healthy while the portability axis had never once been exercised.
+
+**Detector.** Never accept a self-assigned portability tier. Before billing a capability class to a
+frontier model, run the cheapest rung on the same cold question and score it against the load-bearing
+elements of the frontier answer. Both poles must be reachable first (the frontier answer must score
+REPRODUCED against its own rubric, an empty answer must score FAILED) -- otherwise a model's failure
+means only that the rubric was impossible. `modules/fable_distillation/fd_04_contrast.py`;
+`python tools/test_faitp_contrast.py` (7/7).
+
+**Origin.** 2026-07-14, FAITP round. Deposits `6fe4d8a7be715833`, `1cc518cc2d576b50`,
+`893b9a6eda68d5d1`.
+
+**Cross-ref:** `PR-CONTRAST-BEFORE-FRONTIER-001`, `PR-PROOF-OR-HYPOTHESIS-001`,
+`T-DRK-PRECEDENT-LENGTH-BIAS-001` (measure a provider's distribution before trusting its verdict).
+
+## PR-CONTRAST-BEFORE-FRONTIER-001 -- measure the residue before you pay for it
+
+**Process rule.** A capability is frontier-only when a cheaper substrate has been OBSERVED to fail
+it, never because a session declared it so. Run the ladder cheapest-first on the cold question; the
+cheapest rung that reproduces the judgment is the rung the capability retires to, and that retirement
+is the deliverable -- not the frontier answer.
+
+A round that opens by spending frontier tokens on capabilities it never measured deposits more
+hypotheses into a ledger that already holds unproven ones. The contrast is cheap (six isolated
+`claude -p` children, roughly six minutes) and it either retires the class or names the residue. Both
+outcomes are worth more than another unmeasured answer.
+
+**Origin.** 2026-07-14. The FAITP round's highest-value act consumed zero frontier tokens: it built
+the instrument that could have told the two prior sessions they were not needed.
+
+**Cross-ref:** `T-PORTABILITY-SELF-LABEL-001`, `PR-FABLE-DELTA-ONLY-001` (spend frontier tokens only
+on the delta -- which presupposes you have measured what the delta IS).
+
+## HR-MCP-LIFECYCLE-OWNER-001 -- resolve the process owner before touching the surface
+
+**Hard Rule.** Never repair an MCP surface before resolving which process owns its lifecycle. Resolve
+the owner deterministically, then apply only that row's recovery:
+
+- tool prefix `mcp__plugin_*`, or an `enabledPlugins` entry -> the **plugin loader** owns it. Kill the
+  stale processes; the loader respawns them. A config timeout for this row does not exist.
+- an `mcpServers` entry with a `command` -> a **stdio child of the client**. Only `/mcp reconnect` or a
+  client restart heals it; an external watchdog produces an orphan, never a fix.
+- an `mcpServers` entry with a `url` and no `command` -> the **remote host** owns it. Fix it
+  server-side or at the tunnel; local kills touch nothing.
+
+Never register one name in both `enabledPlugins` and `mcpServers`. That collision is itself the bug
+and is removed before any other repair. Recovery patterns never cross rows: the watchdog that heals a
+plugin orphans a stdio child.
+
+**Promoted 2026-07-14** from deposit `6fe4d8a7be715833` (queued as an unpromoted candidate for three
+days). The promotion is warranted precisely because the judgment proved PORTABLE: Sonnet re-derived
+all six discriminating clauses from the raw symptoms alone, which is the independent-actor evidence
+this ledger requires before a frontier answer becomes a rule. Unifies `T-PW-001` and
+`T-MCP-RECONNECT-001`, whose recovery models are exact opposites under one owner test.
+
+## PR-NO-SELF-CERTIFICATION-001 -- a producer cannot certify its own claim
+
+**Process rule.** An epistemic level is DERIVED by reading the ledgers (deposits, portability proofs,
+sealed rules, hard rules) at the moment it is asked for -- never written as a field at deposit time.
+A stored level is an assertion; a derived one is a reading.
+
+And the function that derives it belongs to the same system that produced the claims, so it caps at
+E3 (independently verified) and can go no higher on its own authority. E4 requires a different actor:
+a sealed rule that cites the deposit. A system that could promote its own claims to law would have
+built a machine for believing itself.
+
+**Promoted 2026-07-14** from deposit `1cc518cc2d576b50`. Same portability evidence: Sonnet derived
+the derived-not-stored mechanism, the ledger sourcing, the self-certification bar and the explicit
+ceiling, cold. Live effect of this round: the ladder moved from 5xE3 + 3xE2 to **10xE3**, and E4
+remains 0 until rules cite deposits -- which these two promotions are the first to do.
+
+**Cross-ref:** `PR-ACIS-FALSIFIABILITY-001`, `T-PORTABILITY-SELF-LABEL-001`.

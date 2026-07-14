@@ -231,6 +231,48 @@ def attest(repo: str, fingerprint: str, *, substrate: str, evidence: str,
                 "note": f"attest error (fail-closed): {type(e).__name__}: {e}"}
 
 
+def record_cross_model(repo: str, fingerprint: str, *, results: list,
+                       sid: str = "", state_dir=None,
+                       now: datetime | None = None) -> dict:
+    """Record a cross-model contrast run (fd_04_contrast is the instrument; this
+    is the ledger authority). A deposit is PROVEN portable when at least one
+    non-frontier substrate REPRODUCED the judgment; the achieved target is the
+    CHEAPEST such substrate, because that is the rung the capability retires to.
+
+    No substrate reproducing is not an error -- it is the measurement. It records
+    FAILED, and that deposit is the round's frontier residue.
+    """
+    try:
+        if not isinstance(results, list) or not results:
+            return {"verdict": "ERROR", "fingerprint": fingerprint,
+                    "note": "no substrate results -- a contrast without a run is a claim"}
+        if not _deposit_exists(repo, fingerprint, state_dir):
+            return {"verdict": "ERROR", "fingerprint": fingerprint,
+                    "note": "deposit not found in ledger"}
+
+        order = {t: i for i, t in enumerate(("small-model", "mid-model"))}
+        won = [r for r in results if r.get("verdict") == "REPRODUCED"
+               and r.get("substrate") in order]
+        won.sort(key=lambda r: order.get(r.get("substrate"), 99))
+        achieved = won[0]["substrate"] if won else None
+
+        rec = {"fingerprint": fingerprint,
+               "verdict": "PROVEN" if won else "FAILED",
+               "method": "cross_model",
+               "achieved_target": achieved or "none",
+               "probes": [], "results": results,
+               "sid": sid, "ts": _now(now).isoformat()}
+        _append_jsonl(_proofs_path(repo, state_dir), rec)
+        _signal("fd_portability_proven" if won else "fd_portability_residue",
+                {"fingerprint": fingerprint, "achieved_target": achieved or "none",
+                 "method": "cross_model", "substrates": len(results)}, state_dir)
+        return rec
+    except Exception as e:  # noqa: BLE001 -- fail-closed: an error is never PROVEN
+        return {"verdict": "ERROR", "fingerprint": fingerprint,
+                "note": f"cross-model record error (fail-closed): "
+                        f"{type(e).__name__}: {e}"}
+
+
 # --------------------------------------------------------------------------- #
 # recheck -- the replay + regression pipeline: re-run every stored probe set.
 # --------------------------------------------------------------------------- #

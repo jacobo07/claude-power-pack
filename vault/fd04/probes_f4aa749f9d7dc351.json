@@ -1,0 +1,5 @@
+[
+  {"type": "file_exists", "path": "modules/parallel_mesh/pm_02_intent.py"},
+  {"type": "grep", "path": "modules/parallel_mesh/pm_02_intent.py", "pattern": "def scope_gated_admit\\("},
+  {"type": "file_exists", "path": "hooks/session_start_hub.js"}
+]
