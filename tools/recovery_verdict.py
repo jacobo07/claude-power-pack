@@ -37,7 +37,7 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from modules.session_resilience import acceptance, models  # noqa: E402
+from modules.session_resilience import acceptance, epoch, models  # noqa: E402
 
 # The dimensions a pane_map can actually witness. The rest are excluded from the
 # denominator rather than scored as passes.
@@ -88,12 +88,37 @@ def _live_only(payload: dict) -> dict:
     return {**payload, "panes": panes}
 
 
-def latest_reference() -> Path | None:
-    """The newest pre-interruption snapshot. Absent history -> no reference -> HELD."""
+def newest_snapshot() -> Path | None:
+    """The freshest snapshot on disk. NOT a valid reference after an interruption:
+    the 5-minute snapshotter keeps running once the panes come back, so within
+    ~20 minutes this file records the DAMAGE, and scoring the damage against
+    itself always returns RECOVERED. Only used when no epoch is open (a routine
+    check with nothing to recover from)."""
     if not HISTORY_DIR.is_dir():
         return None
     snaps = sorted(HISTORY_DIR.glob("pane_map_*.json"))
     return snaps[-1] if snaps else None
+
+
+def resolve_reference() -> tuple[Path | None, dict | None, str]:
+    """The reference this verdict must be scored against.
+
+    When an epoch is OPEN, the reference is the snapshot PINNED at the interruption
+    boundary -- the last topology recorded while the session was still alive. It is
+    frozen: it cannot advance as the panes trickle back, so a loss stays visible.
+    An open epoch whose pinned snapshot is missing yields no reference at all, and
+    the caller HOLDS -- a recovery is never declared complete against a reference
+    that does not exist.
+    """
+    ep = epoch.read_epoch(STATE_DIR)
+    if ep and ep.get("status") == epoch.OPEN:
+        pinned = epoch.reference_path(STATE_DIR, ep)
+        return pinned, ep, "pinned"
+    return newest_snapshot(), ep, "newest"
+
+
+# Kept for callers/tests that predate the epoch.
+latest_reference = newest_snapshot
 
 
 def verdict(reference: dict, observed: dict) -> tuple[acceptance.GateDecision,
@@ -166,13 +191,23 @@ def main(argv=None) -> int:
     ap.add_argument("--no-receipt", action="store_true")
     args = ap.parse_args(argv)
 
-    ref_path = Path(args.reference) if args.reference else latest_reference()
+    ep, source = None, "explicit"
+    if args.reference:
+        ref_path = Path(args.reference)
+    else:
+        ref_path, ep, source = resolve_reference()
     obs_path = Path(args.observed) if args.observed else STATE_DIR / "pane_map.json"
 
     if ref_path is None or not ref_path.is_file():
-        print("HELD: no pre-interruption snapshot to compare against "
-              "(~/.claude/state/pane_map_history is empty). A recovery cannot be "
-              "declared complete against a reference that does not exist.")
+        if ep and ep.get("status") == epoch.OPEN:
+            print("HELD: an interruption is open "
+                  f"(since {ep.get('interrupted_at')}) but its pinned reference "
+                  f"({ep.get('reference_file')}) is not on disk. A recovery cannot be "
+                  "declared complete against a reference that does not exist.")
+        else:
+            print("HELD: no pre-interruption snapshot to compare against "
+                  "(~/.claude/state/pane_map_history is empty). A recovery cannot be "
+                  "declared complete against a reference that does not exist.")
         return 2
     if not obs_path.is_file():
         print(f"HELD: no observed pane_map at {obs_path}")
@@ -193,16 +228,30 @@ def main(argv=None) -> int:
     summary = summarize(reference, observed)
     now = datetime.now(timezone.utc)
 
+    # A verdict scored against an open epoch is the judgment OF that recovery, so it
+    # belongs on the epoch: RECOVERED closes it, a shortfall keeps it open and keeps
+    # surfacing until it is really recovered or the Owner dismisses it.
+    if source == "pinned" and not args.observed:
+        epoch.record_verdict(STATE_DIR, decision.verdict, missing)
+
     if args.json:
         print(json.dumps({
             "verdict": decision.verdict,
             "allow_complete": decision.allow_complete,
             "reason": decision.reason,
             "reference": ref_path.name,
+            "reference_source": source,
+            "interrupted_at": (ep or {}).get("interrupted_at"),
             "dimensions": {k: {"matched": v.matched, "summary": summary.get(k, "")}
                            for k, v in card.dimensions.items()},
         }, indent=2))
     else:
+        if source == "pinned":
+            print(f"interruption at {(ep or {}).get('interrupted_at')} "
+                  f"-- scored against the topology pinned before it ({ref_path.name})")
+        elif source == "newest":
+            print(f"no open interruption -- scored against the newest snapshot "
+                  f"({ref_path.name}); this cannot witness a loss, it is a routine check")
         print(f"{decision.verdict} -- {decision.reason}")
         for name, res in sorted(card.dimensions.items()):
             print(f"  {'ok  ' if res.matched else 'MISS'} {name}: {summary.get(name, '')}")

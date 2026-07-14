@@ -55,10 +55,14 @@ def _beacon_path(state_dir: Path | str) -> Path:
     return Path(state_dir) / BEACON_FILENAME
 
 
-def _durable_write_json(path: Path, obj: dict) -> None:
+def durable_write_json(path: Path, obj: dict) -> None:
     """Atomic + fsync'd write. The file either reflects the prior state or the
     new state in full -- never a half-written record, even on power loss right
-    after the call (HR-G6-BEACON-001: no async/buffered-only writes)."""
+    after the call (HR-G6-BEACON-001: no async/buffered-only writes).
+
+    Public because the recovery epoch (epoch.py) pins its reference with exactly
+    the same durability contract: a pin that does not survive the power loss it
+    exists to describe is not a pin."""
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     data = json.dumps(obj, ensure_ascii=False, indent=2)
@@ -105,7 +109,7 @@ def write_active_beacon(state_dir: Path | str, session_id: str | None = None,
         "cwd": cwd,
         "snapshot_ref": snapshot_ref,
     }
-    _durable_write_json(_beacon_path(state_dir), rec)
+    durable_write_json(_beacon_path(state_dir), rec)
     return rec
 
 
@@ -121,7 +125,7 @@ def write_graceful_exit(state_dir: Path | str, session_id: str | None = None,
         "session_id": session_id,
         "cwd": cwd,
     }
-    _durable_write_json(_beacon_path(state_dir), rec)
+    durable_write_json(_beacon_path(state_dir), rec)
     return rec
 
 
