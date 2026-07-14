@@ -14,7 +14,38 @@
 | `1cc518cc2d576b50` | derived epistemic level + no self-certification | mid-model | **REPRODUCED** 5/5 | REPRODUCED 5/5 | **small-model** |
 | `893b9a6eda68d5d1` | falsifier-or-non-law | **frontier-only** | **REPRODUCED** 5/5 | PARTIAL 4/5 | **small-model** |
 
-**Frontier residue: 0 of 3.** Not one deposited judgment required the frontier model.
+**Frontier residue on the deposited floor: 0 of 3.** Not one judgment the stack had already banked
+required the frontier model.
+
+## Arc B — the one question that did
+
+Arc A's gate closed with zero residue, so Arc B was opened for a single question: **what governs when
+two Hard Rules fire on the same action and their required actions are not jointly satisfiable** — the
+one capability with real evidence of failure in this repo (SCS C92: the kill switch was inert, and the
+plugin-install trigger class still has zero rules). Fable was asked once, cold. The answer was
+deposited (`b253f93aabab48f4`) and contrasted **in the same turn**, against the frontier answer itself
+as the standard — not against a summary of it.
+
+| deposit | judgment | Sonnet | Opus | measured tier |
+|---|---|---|---|---|
+| `b253f93aabab48f4` | prohibitions do not conflict; declare the residual move | **PARTIAL** 3/8 | **PARTIAL** 4/8 | **frontier-only (measured)** |
+
+Neither cheaper substrate reproduced it. Both missed the reframing (*these are three defects wearing
+one costume, not one problem*), the solution (*a move guaranteed legal under every join*), and the
+root defect in the bypass primitive (*"one turn" is the wrong unit — a turn is agent-relative and
+unbounded*). Sonnet also never reached the load-bearing observation that every rule is a
+**prohibition**, which is what makes the whole conflict dissolve.
+
+The sharpest signal is the one nobody asked for twice: **neither Sonnet nor Opus named its own
+failure mode**, though the prompt demanded it in the same words for all three. Fable named it
+unprompted and precisely — over-escalation with queue rot, and the observation that a residual move
+protected by a compile-time gate sits *outside* the bug-to-rule mechanism and therefore becomes the
+one component the constitution can never learn about. Adversarial self-critique looks like the actual
+frontier capability here, not architectural reasoning as such.
+
+**This is the round's only frontier residue, and it is measured, not declared.** The instrument that
+retired three capability classes is the same instrument that refused to retire this one — which is
+what makes the three retirements credible.
 
 Two details worth keeping. The deposit labelled `frontier-only` — the strongest possible claim of
 frontier necessity — was reproduced by the **cheapest** rung. And on that same case Opus scored

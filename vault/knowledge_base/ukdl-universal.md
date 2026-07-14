@@ -4213,3 +4213,47 @@ ceiling, cold. Live effect of this round: the ladder moved from 5xE3 + 3xE2 to *
 remains 0 until rules cite deposits -- which these two promotions are the first to do.
 
 **Cross-ref:** `PR-ACIS-FALSIFIABILITY-001`, `T-PORTABILITY-SELF-LABEL-001`.
+
+## PR-PROHIBITIONS-DO-NOT-CONFLICT-001 -- the residual move
+
+**Process rule.** Every Hard Rule is a prohibition, and prohibitions cannot contradict one another --
+they can only jointly shrink the set of legal moves. So there is no precedence to compute and no
+priority order to maintain. A "conflict" is the appearance of an empty legal set, and it appears for
+exactly one reason: **no move has been declared legal under every possible join**, so the agent
+invents one by recency.
+
+Declare it. The **residual move** is legal under any join: halt the guarded frontier; write a block
+artifact naming every fired rule and each rule's unblock phrase; close the turn with an active
+statement of what landed and the single Owner action that unblocks. It is the one move class with no
+incident anywhere in the ORIGIN history of any rule -- safe by the same empirical standard that
+justifies every rule, not by assertion. Rule-addition stays one-at-a-time: the only new gate is
+local, *does this rule forbid the residual?*
+
+Two corollaries dissolve the observed deadlocks. **A STOP binds exactly the object its own TRIGGER
+names, never wider** -- `HR-SECRET-007`'s "STOP all other work" binds the tainted stream, not the
+turn's ability to speak; `HR-CASCADE-003` forbids commit-without-verify, not not-committing. And an
+**empty rule class is a router-completeness bug that must never reach conflict machinery**:
+empty-with-inert-rejects is fail-closed (that is the disarmed kill switch this repo already lived
+through, SCS C92), while a virgin class with no incident is fail-open plus a visible Owner-queue
+entry -- fail-closed on virgin classes would contradict the founding epistemology that a prohibition
+requires an incident.
+
+**Status: adopted as a design principle, NOT promoted to a Hard Rule.** Portability was measured and
+FAILED -- Sonnet 3/8, Opus 4/8 -- so the judgment is genuinely frontier-irreducible. But irreducible
+is not the same as correct: no independent actor has confirmed it, and this ledger does not promote a
+frontier answer to constitutional law on the strength of its own author (`PR-NO-SELF-CERTIFICATION-001`).
+It becomes a Hard Rule when an implementation of the residual survives a real conflict.
+
+**Falsifier** (named by the frontier answer itself, which is why it is admissible at all,
+`PR-ACIS-FALSIFIABILITY-001`): over-escalation with queue rot. The residual is always legal, always
+safe and never punished, so under ambiguity the agent will always take it; with an often-absent Owner
+the failure migrates from a loud frozen screen to a silently growing escalation queue nobody drains,
+and throughput dies without a visible incident. Sharper still: the compile-time gate "no rule may
+forbid the residual" places the residual OUTSIDE the bug-to-rule mechanism, so if the residual itself
+ever causes an incident, the system cannot encode that lesson as a rule. **Watch that seam.** The
+mitigation must live in the residual's own definition (redacted block artifacts, queue-age alarms),
+because no future rule will be permitted to patch it.
+
+**Origin.** 2026-07-14, FAITP Arc B, deposit `b253f93aabab48f4`. The round's only frontier residue.
+
+**Cross-ref:** `T-PORTABILITY-SELF-LABEL-001`, `PR-CONTRAST-BEFORE-FRONTIER-001`, SCS C92.
