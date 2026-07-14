@@ -1,0 +1,97 @@
+[
+  {
+    "id": "SCS-C92-SHAPE-1-deadlock-by-design",
+    "note": "The credential deadlock. HR-SECRET-007 halts the tainted stream, HR-SECRET-003 forbids the agent from rotating, the anti-waiting doctrine forbids a passive closer. Read as three bans on 'proceeding' this looked like an empty legal set. Read as what each TRIGGER actually names, the residual survives untouched.",
+    "expect_verdict": "RESIDUAL_AVAILABLE",
+    "fired": [
+      {
+        "rule_id": "HR-SECRET-007",
+        "trigger": "post-commit audit flags a secret already in commit history",
+        "stop": "STOP all other work; rotate at the provider FIRST, never assume rotation can wait",
+        "exception": "(none)",
+        "forbids": ["PROCEED_ON_GUARDED_OBJECT", "COMMIT", "DEPLOY"]
+      },
+      {
+        "rule_id": "HR-SECRET-003",
+        "trigger": "detector classifies a secret as CRITICAL",
+        "stop": "never auto-rotate; surface a recommendation and wait for Owner authorisation",
+        "exception": "(none -- Owner approval required for every rotation action)",
+        "forbids": ["ROTATE_CREDENTIAL"]
+      },
+      {
+        "rule_id": "DOCTRINE-ANTI-WAITING",
+        "trigger": "about to end a turn",
+        "stop": "never close with a passive waiting line -- the frozen screen the Owner must ESC out of",
+        "exception": "(none)",
+        "forbids": ["CLOSE_WITH_PASSIVE_WAIT"]
+      }
+    ]
+  },
+  {
+    "id": "SCS-C92-SHAPE-2-mutual-block",
+    "note": "Context at >=95% forbids a dispatch; no commit without verification forbids the commit. Neither forbids NOT committing -- the deadlock only exists if you smuggle in an unwritten rule that the work must land this turn. No such rule has an ORIGIN.",
+    "expect_verdict": "RESIDUAL_AVAILABLE",
+    "fired": [
+      {
+        "rule_id": "HR-CASCADE-005",
+        "trigger": "context usage >= 95%",
+        "stop": "refuse to start new sub-agent dispatches; finish current state in place",
+        "exception": "(none)",
+        "forbids": ["DISPATCH_SUBAGENT"]
+      },
+      {
+        "rule_id": "HR-CASCADE-003",
+        "trigger": "about to invoke git commit",
+        "stop": "never commit without a prior successful test / lint run in this session",
+        "exception": "(none)",
+        "forbids": ["COMMIT"]
+      }
+    ]
+  },
+  {
+    "id": "REFUSAL-mandate-in-the-join",
+    "note": "A genuine mandate. Mandates CAN contradict, so the prohibition argument does not apply and the compiler must refuse rather than manufacture a resolution. This is the pole that proves the compiler is not a rubber stamp.",
+    "expect_verdict": "UNSAFE_JOIN",
+    "fired": [
+      {
+        "rule_id": "SYNTH-MANDATE-001",
+        "trigger": "a credential is detected",
+        "stop": "always immediately rotate the credential",
+        "kind": "MANDATE",
+        "forbids": []
+      },
+      {
+        "rule_id": "HR-SECRET-003",
+        "trigger": "detector classifies a secret as CRITICAL",
+        "stop": "never auto-rotate; Owner authorises every rotation",
+        "forbids": ["ROTATE_CREDENTIAL"]
+      }
+    ]
+  },
+  {
+    "id": "REFUSAL-undeclared-forbidden-object",
+    "note": "A rule whose forbidden object cannot be determined. Guessing the scope of a STOP is exactly the recency bug; fail-closed and name the rule.",
+    "expect_verdict": "UNDECIDABLE",
+    "fired": [
+      {
+        "rule_id": "SYNTH-VAGUE-001",
+        "trigger": "something happens",
+        "stop": "never do the wrong thing",
+        "forbids": []
+      }
+    ]
+  },
+  {
+    "id": "REFUSAL-a-rule-forbids-the-residual",
+    "note": "The seam the frontier answer named against its own design: a rule that forbids the residual breaks the constitutional guarantee. The compiler surfaces it instead of resolving.",
+    "expect_verdict": "NO_RESIDUAL",
+    "fired": [
+      {
+        "rule_id": "SYNTH-FORBIDS-RESIDUAL-001",
+        "trigger": "any block",
+        "stop": "never halt and escalate",
+        "forbids": ["RESIDUAL"]
+      }
+    ]
+  }
+]

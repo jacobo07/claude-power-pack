@@ -4257,3 +4257,38 @@ because no future rule will be permitted to patch it.
 **Origin.** 2026-07-14, FAITP Arc B, deposit `b253f93aabab48f4`. The round's only frontier residue.
 
 **Cross-ref:** `T-PORTABILITY-SELF-LABEL-001`, `PR-CONTRAST-BEFORE-FRONTIER-001`, SCS C92.
+
+**Implementation (2026-07-14):** `modules/hard_rules/residual.py` compiles the join and refuses in
+three ways on purpose -- a MANDATE in the join (`UNSAFE_JOIN`), an undeterminable forbidden object
+(`UNDECIDABLE`), and a rule that forbids the residual (`NO_RESIDUAL`, the named seam). It resolves
+the real SCS C92 deadlock to a legal residual rather than to "the Hard Rules conflict", which is the
+sentence that was always the bug. **The premise was measured, not assumed:** a deterministic
+classifier over the live corpus finds **156 rules -- 126 prohibitions, 0 mandates, 30 undeterminable**.
+Zero mandates in 156 rules is independent support for the frontier claim; the 30 are fail-closed, not
+waved through. Promotion to a Hard Rule still waits for a REAL conflict to exercise it (`gate_new_rule`
+is the local addition check that keeps rules addable one-at-a-time).
+
+## T-UKDL-CANDIDATES-WRITE-ONLY-001 -- the status field nobody could transition
+
+**Trap.** The UKDL candidates ledger already HAD a `status` field. That was never the defect. The
+field was a **constant** the producer stamped at write time -- `"candidate -- Owner promotes to
+ukdl-universal.md"` -- which no producer anywhere could ever change. A field with no transition
+producer is not state, it is decoration, and it is *worse than no field at all*: it looks like state,
+so an audit that reads it reports health.
+
+The ledger was caught lying. On 2026-07-14 all three candidates had already been promoted into this
+archive, and all three rows still read `candidate`. Nobody could tell, from the queue, which items
+were pending, which were promoted, and to what.
+
+**Detector.** When a queue looks write-only, do not add a field -- **grep for the producer that would
+change the one it already has.** If no code path can write any value but the initial one, the state
+machine is missing, not the schema. Ship the transition producer as an append-only SIBLING ledger
+(never rewrite rows -- the same discipline `fd04_proofs` keeps toward `deposits`) and DERIVE the
+effective status as latest-transition-wins, defaulting to `pending`. Make promotion fail-closed on the
+lie that matters: **a promotion naming a rule that does not exist in the archive is refused** -- a
+pointer to a rule nobody wrote is `T-ORPHAN-FIELD-001` in a promotion's clothes.
+
+**Origin.** 2026-07-14. `modules/fable_distillation/ukdl_queue.py`; `tools/test_faitp_debts.py` (14/14).
+
+**Cross-ref:** `T-OWNER-QUEUE-INVISIBLE-001` (same shape: information produced and never consumed),
+`T-ORPHAN-FIELD-001`, `WRITE-WITHOUT-READ`.
