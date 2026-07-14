@@ -213,6 +213,20 @@ def main() -> int:
         else:
             _fail("V-EPOCH-IDEMPOTENT", f"the pin moved: {ep2}")
 
+        # --- reentry judges the PLAN against the same pin ----------------------
+        from modules.session_resilience import reentry
+        live_map = json.loads((state / "pane_map.json").read_text(encoding="utf-8"))
+        res = reentry.record_reentry(
+            state, {"class": power_beacon.UNGRACEFUL},
+            live_map, now=T_NOW.isoformat())
+        if res["expected_panes"] == 6:
+            _ok("V-REENTRY-PINNED-REFERENCE",
+                f"reentry expects the 6 panes we HAD, not the {len(live_map['panes'][:2])} "
+                "that survived")
+        else:
+            _fail("V-REENTRY-PINNED-REFERENCE",
+                  f"reentry still scores the survivors against themselves: {res}")
+
         # --- A shortfall stays open; only a real recovery closes it ------------
         cur = epoch.read_epoch(state)
         if cur and cur.get("status") == epoch.OPEN and cur.get("verdict") in ("PARTIAL", "FAILED"):

@@ -23,6 +23,7 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import epoch as epoch_mod
 from . import power_beacon
 from .acceptance import (
     FAILED,
@@ -47,6 +48,25 @@ def _now_iso(now: str | None) -> str:
 
 def live_panes(pane_map: dict) -> list[dict]:
     return [p for p in (pane_map.get("panes") or []) if p and p.get("live")]
+
+
+def reference_panes(state_dir: Path | str, pane_map: dict) -> list[dict]:
+    """The board as it stood BEFORE the interruption.
+
+    Prefers the snapshot pinned by the open epoch -- the last topology recorded
+    while the session was alive. Falls back to the live panes of the current
+    pane_map only when no epoch pinned anything (no history yet): that fallback
+    cannot witness a loss, and it is the pre-epoch behaviour, kept solely so a
+    host with no snapshot history still produces a verdict rather than crashing.
+    """
+    pinned = epoch_mod.reference_path(state_dir)
+    if pinned is not None:
+        try:
+            data = json.loads(pinned.read_text(encoding="utf-8-sig"))
+        except (ValueError, OSError):
+            return live_panes(pane_map)
+        return live_panes(data)
+    return live_panes(pane_map)
 
 
 def is_restorable(pane: dict) -> bool:
@@ -97,7 +117,18 @@ def record_reentry(state_dir: Path | str, classification: dict, pane_map: dict,
     col = collector or RecoveryEventCollector(state_dir=Path(state_dir))
     ts = _now_iso(now)
     rid = "reentry-" + ts
-    live = live_panes(pane_map)
+    # The reference is the board we HAD, not the board that survived. Taking the
+    # live panes of the post-crash pane_map (what this did before) asks "can we
+    # relaunch what is left?" -- a question whose answer is yes even when most of
+    # the board is gone. The pinned epoch reference asks the only question that
+    # matters: can we get back what we had before the lights went out?
+    #
+    # This verdict judges the PLAN (every pre-crash pane has a relaunch path), not
+    # the RESULT (they came back) -- reentry runs before the extension relaunches
+    # anything, so scoring against what is live right now would fail a plan that has
+    # not executed yet. tools/recovery_verdict.py judges the result later, against
+    # the same pin.
+    live = reference_panes(state_dir, pane_map)
     restorable = [p for p in live if is_restorable(p)]
 
     col.emit({"ts": ts, "type": "recovery_started", "recovery_id": rid,
