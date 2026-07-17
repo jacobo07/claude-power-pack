@@ -13,7 +13,9 @@ A visual surface that builds and returns HTTP 200 is NOT done. Done requires the
 gate: a Design Quality Score ≥ 80 (project pane-gates may set ≥ 85) AND zero critical.
 A surface MAY ship with a log warning. A surface MUST NOT ship failing VQ-1 (material),
 VQ-4 (colour), or VQ-6 (identity). "It looks fine" is not a verdict — every judgment
-names a criterion and an OBSERVED value (`T-DESIGN-OPINION-VS-CRITERIA-001`).
+names a criterion and an OBSERVED value (`T-DESIGN-OPINION-VS-CRITERIA-001`). A SPA
+visual claim (Angular / React / Next.js) is additionally verified against the real
+post-JavaScript render, never `curl` alone (VQ-8, Section 7).
 
 ## Section 1 — Design System Authority
 `DESIGN.md` at the repo root is the single source of visual truth. Read it before
@@ -77,6 +79,9 @@ not by the reviewer's opinion. Required outcomes:
 - **VQ-4** colour discipline — `check_color_discipline` ≤ 2 fills/card (MAJOR).
 - **VQ-6** logo swap — ≥ 3/4 rendered tells before merge (MAJOR; a done-gate by doctrine).
 - **VQ-7** token consumption — every value from a token, or a commented legitimate literal (MAJOR).
+- **VQ-8** render verification — a SPA visual claim is verified via the render service
+  (post-JS DOM / screenshot), never `curl` alone. Process gate, not scorer-mechanical
+  (it needs a runtime render); see Section 7 (`HR-RENDER-SERVICE-FOR-SPA-VERIFICATION-001`).
 - Verdict math: any critical ⇒ BLOCK; score < 60 ⇒ BLOCK; 60–79 ⇒ REVISE; ≥ 80 (≥ 85 on
   pane-gated repos) and zero critical ⇒ APPROVE. Zero Findings Is Valid — never manufacture
   a finding to justify the review.
@@ -92,6 +97,28 @@ not by the reviewer's opinion. Required outcomes:
 5. Declaring a surface done from material alone. Material (VQ-1) and identity (VQ-6) are
    orthogonal gates — passing one says nothing about the other
    (`T-DASH-GLASS-FIXES-EVERYTHING-001`).
+6. Declaring a SPA visual surface done from `curl` output — curl returns the pre-JS shell,
+   not the render; a `curl | grep` "pass" is a false positive on the injection, not the
+   render (`T-CURL-SPA-VERIFICATION-TRAP-001`). Verify via the render service (VQ-8).
+
+## Section 7 — Visual Verification Standard (VQ-8, render-not-curl)
+A visual claim about a **SPA** (Angular / React / Next.js) is verified against the real
+post-JavaScript render, NEVER against `curl`. `curl` returns the pre-JS HTML shell; the
+logo, icons, dynamic copy and framework-rendered nodes do not exist in it — so a
+`curl | grep` "pass" is a false positive on the injection, not the render
+(`T-CURL-SPA-VERIFICATION-TRAP-001`). pass.kobicraft.net passed a curl test and failed
+visually; VQ-8 exists so that cannot recur.
+- **Use the KobiiCraft render service** on KobiiClaw: `POST http://127.0.0.1:8130/render`
+  (pm2 `kobicraft-render`; localhost-only, SSH-tunnel for remote). It returns the post-JS
+  DOM (`html`), an optional `screenshot`, and per-`selectors` extracts.
+- **Assert what a user SEES** with `selectors:["body"]` → `elements.body.text` (visible
+  `inner_text`) — NOT the raw `html`, which still contains `display:none` nodes and will
+  false-positive on hidden text.
+- **Health-gate first:** `GET /health` → `{"status":"ok","chromium":"ready"}` before use;
+  on failure `pm2 restart kobicraft-render`, never silently fall back to curl
+  (`PR-RENDER-SERVICE-HEALTH-CHECK-001`).
+- **VQ-8 verdict:** a SPA visual done-gate that relies on `curl` alone FAILS VQ-8. Design
+  source of record: `vault/docs/RENDER_SERVICE_DESIGN_2026-07-17.md` (KobiiCraft Core).
 
 ## Applies to
 Any pull request or deploy that adds or restyles a user-facing visual surface.
