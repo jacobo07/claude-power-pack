@@ -41,6 +41,8 @@ MEASURE_MAX_CHARS = 75       # CDIO-01 line-length ceiling
 MEASURE_MIN_CHARS = 45       # CDIO-01 line-length floor
 TYPE_LEVELS_MAX = 3          # CDIO-01 hierarchy ceiling
 DEFAULT_SPACING_BASE = 8     # base grid unit; 4 also common
+TINT_FILL_OPACITY_MIN = 0.10 # a fill above this opacity reads as a competing tint (VQ-4)
+MAX_TINT_FILLS_PER_CARD = 2  # CDIO-01 system-tint discipline: max competing fills per card
 
 
 @dataclass
@@ -249,6 +251,42 @@ def check_single_primary_cta(count: int, *, criterion: str = "single-primary-cta
     return Verdict(criterion=criterion, dimension="conversion", status="fail",
                    severity="major", observed=f"{count} competing primary CTAs",
                    recommendation="demote all but one CTA to secondary emphasis")
+
+
+def check_color_discipline(fill_opacities, *, threshold: float = TINT_FILL_OPACITY_MIN,
+                           max_fills: int = MAX_TINT_FILLS_PER_CARD,
+                           criterion: str = "color-discipline") -> Verdict:
+    """VQ-4 System-Tint Discipline, made mechanically refusable.
+
+    Counts the tint FILLS whose opacity exceeds `threshold` within a SINGLE card /
+    container. Outline chips (transparent background) and text-only tints are 0-fill
+    and correctly do not count. More than `max_fills` competing fills is the
+    color-noise anti-pattern (T-DESIGN-MORE-COLORS-MORE-INFORMATION-001): colour is
+    processed pre-attentively, so when everything is filled the eye cannot find the
+    dominant datum -- a colour chart, not an information system. -> MAJOR.
+
+    The VQ-4 semantic-colour exemption is for a *hue* being reused as a state signal
+    (a red left-border echoing a red status), NOT for stacking N filled tint surfaces
+    in one card. This check measures FILLS, so it does not fire on hue repetition
+    across outline/border/text elements -- only on genuine competing fills.
+
+    `fill_opacities`: the fill opacities (0..1) of the tinted, non-transparent
+    surfaces in ONE card. Example -- the fixed /ai-ops/tasks card is [0.12]
+    (StatusBadge pill only) -> PASS; the pre-fix card was [0.12, 0.12, 0.12]
+    (pill + two specificity-bugged "outline" chips rendered as fills) -> FAIL.
+    """
+    active = [round(float(o), 3) for o in (fill_opacities or [])
+              if isinstance(o, (int, float)) and float(o) > threshold]
+    pct = int(round(threshold * 100))
+    if len(active) <= max_fills:
+        return Verdict(criterion=criterion, dimension="visual", status="pass",
+                       observed=f"{len(active)} tint fill(s) >{pct}% opacity <= {max_fills}/card")
+    return Verdict(
+        criterion=criterion, dimension="visual", status="fail", severity="major",
+        observed=f"{len(active)} tint fills >{pct}% opacity in one card > {max_fills}: {active}",
+        recommendation=f"reduce to <= {max_fills} competing tint fills; subordinate the rest to "
+                       "outline (transparent) or text-only, leaving one dominant fill = the most "
+                       "urgent datum")
 
 
 # --------------------------------------------------------------------------- #
