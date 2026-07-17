@@ -4292,3 +4292,74 @@ pointer to a rule nobody wrote is `T-ORPHAN-FIELD-001` in a promotion's clothes.
 
 **Cross-ref:** `T-OWNER-QUEUE-INVISIBLE-001` (same shape: information produced and never consumed),
 `T-ORPHAN-FIELD-001`, `WRITE-WITHOUT-READ`.
+
+
+## T-REVIVAL-FOLDER-RESTORE-DEPENDENCY-001 -- the revival command is correct and still never runs
+
+**Trap.** "Session revival opens new sessions instead of resuming" is almost never a wrong launch
+command. The whole revival is a set of `.vscode/tasks.json` tasks with `runOn: folderOpen`. That
+mechanism has TWO interdependent Cursor settings, and satisfying only one leaves it fully inert:
+
+- `task.allowAutomaticTasks` must be `"on"` -- with it `"off"`, the folderOpen tasks never fire, so
+  `kclaude --resume <sid>` never executes. Cursor's built-in `terminal.integrated.defaultProfile =
+  "Last session"` + `persistentSessionReviveProcess` then refill with bare shells / fresh `claude` =
+  what the Owner reads as "new sessions".
+- `window.restoreWindows` must be `"all"` -- if Cursor does not REOPEN the workspace folders on
+  launch, the folderOpen task has nothing to open, so it never fires either.
+
+**Detector.** When told "revival launches new sessions", verify in this order and stop at the first
+miss: (1) does the named launcher file even exist (a 2026-07-17 prompt named a fictional
+`staged_revival.py`); (2) `task.allowAutomaticTasks`; (3) `window.restoreWindows` +
+`persistentSessionReviveProcess`; (4) pane_map `sessionId` validity. The launch command is the LAST
+thing to suspect -- confirm `restore_panes.ps1` / `vscode_autorun.py` already emit
+`kclaude --resume <sid>` before touching anything.
+
+**Origin.** 2026-07-17. `%APPDATA%\Cursor\User\settings.json` (`allowAutomaticTasks` was `off`);
+`tools/restore_panes.ps1`, `modules/cpc_os/vscode_autorun.py`.
+
+**Cross-ref:** `T-REVIVAL-WRAPPER-SPLITBRAIN-001`, `T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001`.
+
+
+## T-REVIVAL-WRAPPER-SPLITBRAIN-001 -- revived panes silently ran without the CO gate stack
+
+**Trap.** The revival tasks launched `~/.claude/kclaude.bat` (an OLD wrapper: `claude %*` + a
+/restart loop, NO Cognitive-OS gates), while the Owner's live terminal profile launched
+`~/.claude/bin/kclaude.cmd` (an 86-byte shim to `bin/kclaude.ps1`, the W6 orchestrator WITH the full
+gate stack: prelaunch resume/coord, CO-08 cap eval, CO-00 advisory, scope recall+export, FIOS
+preflight, and the /restart loop that re-runs the gates). Split-brain. The `.bat` was even superseded
+on 2026-06-23 (`bin/kclaude.bat.superseded.<ts>`), but `vscode_autorun.py:140` still hardcoded it.
+Result: revived panes resumed the right conversation but operated with LESS governance -- no
+token-burn alerts, no model routing, no scope gate. A SILENT degradation: the panes look correct.
+
+**Detector.** When two wrappers exist for the same tool, grep every launch surface (tasks.json,
+terminal profiles, restart scripts) for which one each uses; a launcher that resumes correctly is not
+proof it runs the gates. The fix was one line (`kclaude.bat` -> `bin\kclaude.cmd` in `build_pane_task`)
+plus updating the two tests that asserted `.bat` (`test_wave_stagger.py`). `bin/kclaude.cmd --resume
+<sid>` -> `bin/kclaude.ps1 --resume <sid>` -> gates + `claude --resume <sid>`.
+
+**Origin.** 2026-07-17. `modules/cpc_os/vscode_autorun.py`; `tools/test_wave_stagger.py`.
+
+**Cross-ref:** `T-REVIVAL-FOLDER-RESTORE-DEPENDENCY-001`, `orphan_module_wiring`.
+
+
+## T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001 -- "on" + no-truncate = an auto-launch swarm
+
+**Trap.** Two safe-in-isolation decisions compose into a hazard. `snapshot_auto_writer.ps1`
+deliberately writes tasks.json with `--pane-map` (NO truncation) so a reboot "restores like a restart"
+-- every RESUMABLE pane of the last 7 days becomes a folderOpen task (fix for a prior "1 pane per
+repo" regression). Separately, `task.allowAutomaticTasks` was flipped to `"on"` to make revival fire.
+Composed: opening one repo auto-launches EVERY historical pane. Measured 2026-07-17: the PP folder's
+tasks.json held 33 distinct-session tasks -- 16x the CO-08 soft cap of 2 -- all of which would spawn
+on folder open (waved 5 every 8s). While `allowAutomaticTasks` was `off` the no-truncate file was
+inert; turning it `on` made the whole 7-day history live at once.
+
+**Detector.** Whenever you enable an auto-run surface, COUNT what it will auto-run, don't assume it
+mirrors the live set. no-truncate is correct for an INTERACTIVE crash-restore
+(`restore_panes.ps1 -AutoRun`, Owner watching) but wrong for an ALWAYS-ON folderOpen file that fires
+unattended on every open. The honest fix is a tier filter (restore openNow/active panes, not 7 days of
+recent-tier history) or a per-repo cap -- an Owner design decision, not a silent flip.
+
+**Origin.** 2026-07-17. `tools/snapshot_auto_writer.ps1` (no-truncate by design);
+`%APPDATA%\Cursor\User\settings.json` (`allowAutomaticTasks:on`); measured via `pane_map.json` (PP=33).
+
+**Cross-ref:** `T-REVIVAL-FOLDER-RESTORE-DEPENDENCY-001`, `HR-CASCADE-005` (context/resource pressure).

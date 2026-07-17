@@ -108,7 +108,7 @@ def v_revival_failopen() -> None:
     body = delayed[0]["args"][1]
     if "&&" in body:
         _fail("V-REVIVAL-FAILOPEN", f"conditional chain would strand the pane: {body!r}")
-    elif "&" in body and "kclaude.bat" in body:
+    elif "&" in body and "kclaude.cmd" in body:
         _ok("V-REVIVAL-FAILOPEN", "unconditional `&`: timeout failure still launches kclaude")
     else:
         _fail("V-REVIVAL-FAILOPEN", f"no launch chain found in {body!r}")
@@ -116,11 +116,11 @@ def v_revival_failopen() -> None:
 
 def v_revival_wave0_unchanged() -> None:
     """Wave 0 keeps the EXACT pre-stagger task shape (type shell, command =
-    kclaude.bat, args = --resume <sid>). Zero regression for the common case
+    bin/kclaude.cmd, args = --resume <sid>). Zero regression for the common case
     of a repo with <= wave_size panes."""
     tasks = build_cpc_tasks(_panes(3), wave_size=5, wave_interval_s=8)
     bad = [t for t in tasks
-           if t["type"] != "shell" or not str(t["command"]).endswith("kclaude.bat")]
+           if t["type"] != "shell" or not str(t["command"]).endswith("kclaude.cmd")]
     if not bad and all(t["args"][0] == "--resume" for t in tasks):
         _ok("V-REVIVAL-WAVE0", "3 panes -> 3 undelayed shell/kclaude tasks (shape unchanged)")
     else:

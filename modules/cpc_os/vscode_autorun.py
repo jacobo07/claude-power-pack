@@ -123,7 +123,7 @@ def build_pane_task(resume: str, sid8: str, topic: str | None = None,
     unique+stable AND is the join key tab_order.js reads back.
 
     ``delay_s`` > 0 staggers the launch (see WAVE_SIZE_DEFAULT): the task runs
-    ``cmd /c timeout /t <delay_s> & kclaude.bat --resume <sid>``. Notes on the
+    ``cmd /c timeout /t <delay_s> & bin/kclaude.cmd --resume <sid>``. Notes on the
     exact shape, both load-bearing:
       * ``type: process`` (not ``shell``) -- args reach cmd.exe as argv with no
         second round of shell quoting, which the default profile ("Last session")
@@ -132,12 +132,15 @@ def build_pane_task(resume: str, sid8: str, topic: str | None = None,
         (e.g. stdin not a console), kclaude STILL launches: the stagger degrades
         to "no delay", never to "pane never came back"."""
     _command, args = parse_resume(resume)
-    # Run via kclaude.bat -- the SAME wrapper the Owner's "Claude" terminal
-    # profile uses (cmd /K kclaude.bat ...). It passes args straight through to
-    # `claude` on first launch (claude %*) and adds the /restart loop, so a
-    # restored tab behaves exactly like a hand-opened Claude terminal but pinned
-    # to the exact session. args are ["--resume","<sid>"] (exact) or [] (fresh).
-    kclaude = "${env:USERPROFILE}\\.claude\\kclaude.bat"
+    # Run via bin\kclaude.cmd -- the SAME wrapper the Owner's " kClaude" terminal
+    # profile uses. kclaude.cmd is an 86-byte shim to bin\kclaude.ps1 (the W6
+    # orchestrator), so a restored tab inherits the FULL CO gate stack (prelaunch
+    # resume/coord + CO-08 cap eval + CO-00 advisory + scope recall/export + FIOS
+    # preflight + the /restart loop that re-runs the gates) AND resumes the exact
+    # session -- NOT the old ~/.claude/kclaude.bat (`claude %*`, no gates, itself
+    # superseded 2026-06-23). Split-brain fix: T-REVIVAL-WRAPPER-SPLITBRAIN-001.
+    # args are ["--resume","<sid>"] (exact) or [] (fresh).
+    kclaude = "${env:USERPROFILE}\\.claude\\bin\\kclaude.cmd"
     if delay_s > 0:
         tail = (" " + " ".join(args)) if args else ""
         task_type = "process"
@@ -392,7 +395,7 @@ def _panes_from_pane_map(pane_map: dict) -> list[dict]:
             "cwd": cwd,
             "session_id": sid,
             # Normalize to the "claude --resume <sid>" form parse_resume expects;
-            # build_pane_task rewrites the command to kclaude.bat regardless.
+            # build_pane_task rewrites the command to bin\kclaude.cmd regardless.
             "resume": f"claude --resume {sid}",
             "topic": p.get("topic"),
             "repo": p.get("repo") or (Path(cwd).name if cwd else ""),
