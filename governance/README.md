@@ -9,6 +9,7 @@ rule cites the real incident that produced it — no generic advice.
 | File | Domain | Read it before… |
 |---|---|---|
 | `COPY_GOVERNANCE.md` | End-user copy | any deploy that changes user-visible strings |
+| `DESIGN_GOVERNANCE.md` | Visual quality (colour, identity, material, CDIO gate) | building or restyling any user-facing surface |
 | `DEPLOY_GOVERNANCE.md` | Production deploys | any deploy to production |
 | `REPO_SECURITY_GOVERNANCE.md` | Repository security | the first commit of any project |
 | `SESSION_CONTINUITY_GOVERNANCE.md` | Multi-session work | starting any multi-day task |
@@ -18,9 +19,11 @@ rule cites the real incident that produced it — no generic advice.
 1. Clone or reference `claude-power-pack`; point the new project's `CLAUDE.md` at this
    folder.
 2. Before the first commit: apply `REPO_SECURITY_GOVERNANCE.md`.
-3. Before any deploy: apply `DEPLOY_GOVERNANCE.md` (and `COPY_GOVERNANCE.md` if copy changed).
-4. On any long build: apply `SESSION_CONTINUITY_GOVERNANCE.md`.
-5. On any confusing hook signal: check `KNOWN_FALSE_POSITIVES.md` FIRST.
+3. Before building/restyling any visual surface: apply `DESIGN_GOVERNANCE.md` (read the
+   repo's `DESIGN.md` first, then run `cdio-reviewer` before calling the surface done).
+4. Before any deploy: apply `DEPLOY_GOVERNANCE.md` (and `COPY_GOVERNANCE.md` if copy changed).
+5. On any long build: apply `SESSION_CONTINUITY_GOVERNANCE.md`.
+6. On any confusing hook signal: check `KNOWN_FALSE_POSITIVES.md` FIRST.
 
 ## Standing obligations (zero knowledge debt)
 - A new false positive is added to `KNOWN_FALSE_POSITIVES.md` the same session it appears.
