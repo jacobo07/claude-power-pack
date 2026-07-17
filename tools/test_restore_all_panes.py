@@ -87,6 +87,53 @@ def main():
         else:
             _fail("V-RESTORE-GEN-NO-TRUNCATE", f"expected 13 got {n}")
 
+    # V-REVIVAL-TIER-FILTER: _panes_from_pane_map(tiers={OPEN-NOW,ACTIVE}) drops
+    # RECENT-tier history so the always-on writer restores only what was actually
+    # open, not 7 days of every session (T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001).
+    pm = {"panes": [
+        {"cwd": r"C:\r", "sessionId": "a" * 8, "tier": "OPEN-NOW"},
+        {"cwd": r"C:\r", "sessionId": "b" * 8, "tier": "ACTIVE"},
+        {"cwd": r"C:\r", "sessionId": "c" * 8, "tier": "RECENT"},
+        {"cwd": r"C:\r", "sessionId": "d" * 8, "tier": "RECENT"},
+    ]}
+    all_panes = va._panes_from_pane_map(pm)
+    scoped = va._panes_from_pane_map(pm, tiers={"OPEN-NOW", "ACTIVE"})
+    if (len(all_panes) == 4 and len(scoped) == 2
+            and {p["session_id"] for p in scoped} == {"a" * 8, "b" * 8}):
+        _ok("V-REVIVAL-TIER-FILTER",
+            "4 panes -> 2 kept under {OPEN-NOW, ACTIVE} (RECENT history dropped)")
+    else:
+        _fail("V-REVIVAL-TIER-FILTER",
+              f"all={len(all_panes)} scoped={len(scoped)} "
+              f"sids={sorted(p['session_id'] for p in scoped)}")
+
+    # V-REVIVAL-STRIP-EMPTY: a repo that drops to 0 open panes under the tier
+    # filter but HAS an existing tasks.json gets its CPC tasks STRIPPED (not left
+    # as a stale no-truncate swarm), while foreign (non-CPC) tasks are preserved.
+    # This is the other half of T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001.
+    with tempfile.TemporaryDirectory() as td:
+        repo = os.path.join(td, "StaleRepo")
+        vdir = os.path.join(repo, ".vscode")
+        os.makedirs(vdir)
+        seed = {"version": "2.0.0", "tasks": [
+            {"label": "old-restore", "detail": va.RESTORE_DETAIL, "command": "x", "args": []},
+            {"label": "keepme", "type": "shell", "command": "echo"},
+        ]}
+        with open(os.path.join(vdir, "tasks.json"), "w", encoding="utf-8") as f:
+            json.dump(seed, f)
+        pm = os.path.join(td, "pane_map.json")
+        with open(pm, "w", encoding="utf-8") as f:
+            json.dump({"panes": [{"cwd": repo, "sessionId": "e" * 8, "tier": "RECENT"}]}, f)
+        va.generate_from_pane_map(pm, tiers={"OPEN-NOW", "ACTIVE"})
+        with open(os.path.join(vdir, "tasks.json"), encoding="utf-8") as f:
+            after = json.load(f)
+        labels = [t.get("label") for t in after["tasks"]]
+        cpc_left = [t for t in after["tasks"] if t.get("detail") == va.RESTORE_DETAIL]
+        if not cpc_left and "keepme" in labels:
+            _ok("V-REVIVAL-STRIP-EMPTY", "0 open panes -> CPC tasks stripped, foreign task kept")
+        else:
+            _fail("V-REVIVAL-STRIP-EMPTY", f"cpc_left={len(cpc_left)} labels={labels}")
+
     print(f"RESTORE_PASS={passes}/{passes + fails}  threshold={passes + fails}/{passes + fails}")
     return 0 if fails == 0 else 1
 

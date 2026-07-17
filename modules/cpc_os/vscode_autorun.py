@@ -374,7 +374,8 @@ def generate_from_snapshot(
     return results
 
 
-def _panes_from_pane_map(pane_map: dict) -> list[dict]:
+def _panes_from_pane_map(pane_map: dict,
+                         tiers: "set[str] | None" = None) -> list[dict]:
     """Adapt pane_map.json records to the internal pane shape generate_from_snapshot
     consumes. The pane_map (built by build_pane_map.ps1 from disk truth) is the
     CORRECTED, all-repos/all-panes manifest -- it does not under-record repos/sids
@@ -382,7 +383,14 @@ def _panes_from_pane_map(pane_map: dict) -> list[dict]:
     array already excludes ARCHIVE-tier (stale-content) panes. Each record carries
     {cwd, sessionId, resumeCmd, topic, repo}; we map it to {cwd, session_id,
     resume:"claude --resume <sid>", topic, repo}. A pane with no sessionId or cwd is
-    dropped (build_cpc_tasks would reject it anyway as an empty shell)."""
+    dropped (build_cpc_tasks would reject it anyway as an empty shell).
+
+    ``tiers`` (upper-case pane_map tier names, e.g. {"OPEN-NOW", "ACTIVE"}) scopes
+    the result to panes that were ACTUALLY OPEN, dropping RECENT-tier history. This
+    is the fix for T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001: the always-on
+    folderOpen writer must restore where the Owner WAS, not 7 days of every session
+    (PP measured 33 panes -> 4 under {OPEN-NOW, ACTIVE}). None = no tier filter (the
+    full-restore behavior the interactive restore_panes.ps1 -AutoRun keeps)."""
     out: list[dict] = []
     for p in (pane_map.get("panes") or []):
         if not isinstance(p, dict):
@@ -391,6 +399,8 @@ def _panes_from_pane_map(pane_map: dict) -> list[dict]:
         cwd = p.get("cwd")
         if not sid or not cwd:
             continue
+        if tiers is not None and (p.get("tier") or "").upper() not in tiers:
+            continue                             # scope to what was actually open
         out.append({
             "cwd": cwd,
             "session_id": sid,
@@ -409,6 +419,7 @@ def generate_from_pane_map(
     dry_run: bool = False,
     wave_size: int = WAVE_SIZE_DEFAULT,
     wave_interval_s: int = WAVE_INTERVAL_S_DEFAULT,
+    tiers: "set[str] | None" = None,
 ) -> list[dict]:
     """Write an auto-run tasks.json per repo from the pane_map (disk-truth) source.
 
@@ -425,13 +436,28 @@ def generate_from_pane_map(
     place (no PowerShell/Python duplication)."""
     path = Path(pane_map_json)
     pane_map = json.loads(path.read_text(encoding="utf-8-sig"))
-    panes = _panes_from_pane_map(pane_map)
+    all_panes = _panes_from_pane_map(pane_map)              # every repo (full set)
+    kept = _panes_from_pane_map(pane_map, tiers=tiers)      # tier-scoped subset
+    kept_by_cwd = _group_by_cwd(kept)
+    # Iterate the repo order from the FULL set, not just the tier-scoped one: a repo
+    # that drops to zero open panes under the filter must still be VISITED so its
+    # stale CPC tasks (from a prior no-truncate write) get STRIPPED -- otherwise a
+    # repo with nothing open keeps auto-launching its old 7-day swarm
+    # (T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001). With tiers=None kept == all_panes,
+    # so every group is non-empty and this is byte-identical to the old behavior.
+    repo_order = list(_group_by_cwd(all_panes).keys())
     wanted = set(cwds) if cwds else None
     results: list[dict] = []
-    for cwd, group in _group_by_cwd(panes).items():
+    for cwd in repo_order:
         if wanted is not None and cwd not in wanted:
             continue
-        # target_count=None -> no truncation: write ALL panes for this repo.
+        group = kept_by_cwd.get(cwd, [])
+        # Never CREATE an empty tasks.json where none exists; only visit an
+        # empty-after-filter repo when it HAS a tasks.json whose CPC tasks need
+        # stripping. merge_tasks preserves the repo's non-CPC tasks either way.
+        if not group and not (Path(cwd) / ".vscode" / "tasks.json").is_file():
+            continue
+        # target_count=None -> no truncation WITHIN the (already tier-scoped) group.
         results.append(write_autorun_for_cwd(
             cwd, group, dry_run=dry_run, target_count=None,
             wave_size=wave_size, wave_interval_s=wave_interval_s))
@@ -475,7 +501,15 @@ def main(argv=None) -> int:
     ap.add_argument("--wave-interval", type=int, default=WAVE_INTERVAL_S_DEFAULT,
                     help=f"seconds between waves (default {WAVE_INTERVAL_S_DEFAULT}; "
                          f"0 disables the stagger)")
+    ap.add_argument("--tiers", default=None,
+                    help="comma-separated pane_map tiers to keep (e.g. "
+                         "OPEN-NOW,ACTIVE); default keeps every resumable pane. "
+                         "Scopes the always-on folderOpen file to what was actually "
+                         "open, not 7 days of history "
+                         "(T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001).")
     args = ap.parse_args(argv)
+    tiers = ({t.strip().upper() for t in args.tiers.split(",") if t.strip()}
+             if args.tiers else None)
 
     # pane_map source (all repos, all panes -- the corrected disk-truth manifest).
     # Takes precedence over --snapshot; never truncates (that is the whole point).
@@ -487,7 +521,8 @@ def main(argv=None) -> int:
         try:
             results = generate_from_pane_map(
                 pm, cwds=args.cwd, dry_run=args.dry_run,
-                wave_size=args.wave_size, wave_interval_s=args.wave_interval)
+                wave_size=args.wave_size, wave_interval_s=args.wave_interval,
+                tiers=tiers)
         except (OSError, ValueError) as e:  # noqa: BLE001
             print(f"[ERROR] cannot read pane_map: {e}")
             return 1

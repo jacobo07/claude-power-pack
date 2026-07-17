@@ -95,9 +95,14 @@ function Invoke-Cycle {
         #    on a reboot -> shutdown restores like a restart). Fail-open: if the
         #    pane_map is missing, fall back to the legacy snapshot path so a cycle
         #    never writes nothing. No Cursor windows; idempotent-skip unchanged.
+        #    --tiers OPEN-NOW,ACTIVE scopes the ALWAYS-ON folderOpen file to panes
+        #    that were actually open, NOT 7 days of RECENT-tier history. Without it,
+        #    allowAutomaticTasks:on would auto-launch every historical pane on open
+        #    (PP measured 33 -> 4). Interactive full crash-restore stays in
+        #    restore_panes.ps1 -AutoRun (no --tiers). T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001.
         $PaneMapJson = Join-Path $HOME ".claude\state\pane_map.json"
         if (Test-Path $PaneMapJson) {
-            & $py $AutorunScript --pane-map $PaneMapJson 2>&1 | ForEach-Object { Write-Log "[autorun] $_" }
+            & $py $AutorunScript --pane-map $PaneMapJson --tiers OPEN-NOW,ACTIVE 2>&1 | ForEach-Object { Write-Log "[autorun] $_" }
             $genRc = $LASTEXITCODE
             Write-Log "[CYCLE] source=pane_map snapshot_rc=$snapRc autorun_rc=$genRc"
         } else {
