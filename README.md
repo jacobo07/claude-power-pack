@@ -333,8 +333,20 @@ claude-power-pack/
 │   ├── chatgpt_distiller.py    # Transcript distiller
 │   └── electron_priority_manager.ps1 # OS priority management for Electron
 ├── _audit_cache/               # Token Shield artifacts (source_map.json generated, semantic_tags.json committed)
+├── templates/                  # Reusable aesthetic systems (read in full before building a surface)
+│   └── INKLING_DESIGN.md       # F7 "Atmospheric Editorial" — deep-layered dark, serif display, one accent
 └── knowledge/                  # AKOS briefs, playbooks, integration plans, iteration prompts, doctrine-laws registry
 ```
+
+### Aesthetic templates
+
+| Template | Family | Use for | Do NOT use for |
+|----------|--------|---------|----------------|
+| `templates/INKLING_DESIGN.md` | F7 Atmospheric Editorial | Landing pages, manifestos, long-form reading, report covers, magazine indexes | Ops instruments (tables, meters, log streams, admin queues) — those want a data-dense family + neutral grotesk |
+
+An aesthetic family is an **app-level, ratified decision**, not a page-level one. Before applying
+a template to a screen inside an app that already has a design source of truth, reconcile with
+that app's governing doc first (`INKLING_DESIGN.md` §7 anti-pattern 6).
 
 ---
 
