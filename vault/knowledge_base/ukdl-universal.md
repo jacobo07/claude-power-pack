@@ -4495,5 +4495,100 @@ the tripwire (asserts `allowAutomaticTasks=on`,
 **Origin.** 2026-07-19 (generalised from the 2026-07-17 `allowAutomaticTasks:off`
 incident, which cost a full diagnosis cycle).
 
-**Cross-ref:** `T-REVIVAL-FOLDER-RESTORE-DEPENDENCY-001`,
+**Cross-ref:** `T-REVIVAL-FOLDER-RESTORE-DEPENDENCY-001`.
+
+---
+
+## T-ORPHAN-HOOK-001 — a hook built and documented but never registered in settings.json is a module that never runs
+
+**Trap.** `modules/governance-overlay/hooks/mistake-ingest.js` (PostToolUse, meant to
+auto-ingest new `## Mistake #N` entries from `mistakes-registry.md` into
+`session_checkpoint.py learn-error`) shipped complete: correct stdin/stdout
+hook contract, correct diff-against-cache logic, its own header comment
+documenting the exact JSON block to add to `~/.claude/settings.json`. It sat
+that way from creation until the 2026-07-19 audit — the registration was a
+manual step the header asked the Owner to do, and it never happened. A hook
+with zero registration entries in the live `hooks.PostToolUse` array is not
+degraded, it is **dead code that imports cleanly and passes any unit test run
+against it directly** — exactly the orphan-module pattern in
+`feedback_orphan_module_wiring` generalised to the hook surface. The 2026-07-19
+audit also found the hook's OWN logic had two more latent bugs invisible until
+someone actually tried to wire it: bare `execFileSync('python', ...)` instead
+of an absolute interpreter path (only the sibling `bug-hunter-ceps-bridge.js`,
+the one hook that IS registered and functional, used the safe absolute-path
+form), and an off-by-one in project-root resolution (4× `'..'` where the
+3-segment `REGISTRY_REL` only needs 3) masked in production solely because a
+`.git`-walk fallback happened to catch it.
+
+**Rule.** A line in a hook's header comment naming the exact settings.json
+block the Owner should paste in is not a done-gate, it is an unassigned
+action item with no owner and no expiry. The done-gate for any new hook is
+the registration itself, verified two ways: (1) `hooks.<Event>` in the live
+settings.json actually contains an entry whose `command` references the hook
+file — grep it, don't assume it — and (2) the hook's own execution path
+(subprocess spawn, absolute interpreter, project-root resolution) is
+exercised end-to-end against a synthetic payload, because "the JSON entry is
+present" and "the hook actually runs without erroring" are two different
+claims and only the second is the one that matters. Corollary: a hook you
+can't test in-session because settings.json hooks load once at session start
+(`feedback_settings_session_load`) is not untestable — invoke the script
+directly with a crafted stdin payload against an isolated tmp repo skeleton;
+that is a truer test than a live fire because it doesn't depend on the
+harness having reloaded config.
+
+**Verified:** `tools/test_governance_overlay.py` — `V-GOV-HOOK-REGISTERED`
+(greps the live PostToolUse array for the hook's command string) +
+`V-GOV-HOOK-INVOKABLE` + `V-GOV-MISTAKE-INGEST-FIRES` (both run the real hook
+script via subprocess against a hermetic isolated repo, confirming it exits 0
+and actually invokes `learn-error`). 5/5 gates PASS ×3 consecutive runs.
+
+**Origin.** 2026-07-19 audit of "Governance overlay / ExecutionOS / CEPS" in
+claude-power-pack — CEPS was found FUNCTIONAL (hook registered, tests pass,
+real downstream consumer); Governance Overlay was found PARTIALLY_FUNCTIONAL
+for exactly this reason. Fixed same session: `189b117`/`af996da` (hook fix),
+settings.json registration (out-of-band, global config), `c14bb72` (tests).
+
+**Cross-ref:** `feedback_orphan_module_wiring`, `feedback_write_without_read_incomplete_system`,
+`feedback_settings_session_load`.
+
+---
+
+## PR-PROMPT-DOCTRINE-NEEDS-STRUCTURAL-TESTS-001 — a system made of prompt doctrine still has a testable skeleton
+
+**Trap.** ExecutionOS Lite and (the markdown half of) Governance Overlay are
+pure prompt doctrine: `core.md`, `phases/*.md`, `overlays/*.md` — tiered
+instructions a session reads and is expected to follow. There is no
+`record_error() -> events.jsonl -> read back` loop to assert against, so the
+reflex is "this can't be tested" and it ships with zero tests, same as it did
+before the 2026-07-19 audit found both modules PARTIALLY_FUNCTIONAL for
+exactly that gap. But "can't verify the agent obeyed the doctrine" and "can't
+verify the doctrine's own files are intact" are different claims — the second
+one is fully mechanical and a refactor, a rename, or a half-finished edit can
+silently break it with no test to catch it: a phase file goes empty, an
+overlay gets deleted, `SKILL.md`'s router table drifts from the file it
+points at, and nothing fails until a session tries to load a dead path.
+
+**Rule.** For any prompt-doctrine module, ship the structural floor even
+though the behavioral ceiling is unreachable: (1) every file the router
+promises to load actually exists and is non-stub (a length floor is enough —
+catches truncation and accidental empties), (2) every glob the doctrine
+references (`phases/*.md`, `overlays/*.md`) resolves to at least one real
+file, (3) the router chain itself — the literal path strings one doc uses to
+point at the next — is walked end to end and every link exists. None of this
+proves the agent followed OBSERVE→PLAN→EXECUTE→VERIFY on a given task; all of
+it proves the doctrine a session WOULD read is the doctrine that is actually
+there. Zero tests on a doctrine module is not "can't be verified, skip it" —
+it is an unclosed gap identical in kind to a code module with 0% coverage.
+
+**Verified:** `tools/test_executionos_lite.py` — `V-EXEC-PHASES-EXIST` (4
+phase files, non-stub), `V-EXEC-OVERLAYS-EXIST` (19 overlays, non-stub, floor
+15), `V-EXEC-ROUTER-REFS-VALID` (walks `SKILL.md` → `parts/sleepy/executionos.md`
+→ `core.md` → `{phases,overlays}/*.md`, zero broken refs). 4/4 gates PASS ×3.
+
+**Origin.** Same 2026-07-19 audit as `T-ORPHAN-HOOK-001`. Generalises past the
+one governance hook to the whole class of doc-only PP modules (ExecutionOS
+Lite, and the markdown half of Governance Overlay once its hook is separately
+covered).
+
+**Cross-ref:** `T-ORPHAN-HOOK-001`, `feedback_hermetic_test_global_writes_time_window`.
 `T-CURSOR-GHOST-BUFFER-IS-NOT-RESUME-001`.
