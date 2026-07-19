@@ -39,7 +39,9 @@ API (all hermetic -- pass explicit paths so tests touch only temp dirs):
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import tempfile
 from collections import OrderedDict
 from pathlib import Path
 
@@ -326,6 +328,89 @@ def write_autorun_for_cwd(
     return result
 
 
+def live_beacon_sids() -> set[str]:
+    """Session ids whose pane is OPEN RIGHT NOW, proven by a live process.
+
+    ``kclaude.ps1`` writes ``%TEMP%/kclaude-pane-<wrapperpid>.sid`` at launch and
+    deletes it on clean exit, so the file survives a crash -- its mere existence
+    proves nothing (172 beacons were observed against 14 live panes on
+    2026-07-19). The PID must still be RUNNING.
+
+    This is the SAME liveness definition ``tools/build_pane_map.ps1`` applies, so
+    both tasks.json writers (the SessionStart hub via generate_from_snapshot, and
+    the 15-min scheduled writer via the pane_map) agree on which panes are open.
+    They previously disagreed -- the snapshot path had NO liveness test at all and
+    ``snapshot._LIVE_STATUSES`` includes ``stale`` -- so each writer clobbered the
+    other's CPC tasks through merge_tasks and whichever ran last won. That race is
+    what resurrected long-dead sessions as folderOpen tasks
+    (T-REVIVAL-SELF-REINFORCING-LOOP-001).
+
+    Fail-open ABSOLUTE: any error returns an empty set, and every caller treats an
+    empty set as "cannot measure -> do not filter", preserving prior behavior.
+    """
+    beacons = Path(tempfile.gettempdir()).glob("kclaude-pane-*.sid")
+    sids: set[str] = set()
+    try:
+        for b in beacons:
+            try:
+                pid = int(b.stem.rsplit("-", 1)[1])
+            except (ValueError, IndexError):
+                continue
+            if not _pid_alive(pid):
+                continue
+            try:
+                data = json.loads(b.read_text(encoding="utf-8-sig"))
+            except (OSError, ValueError):
+                continue
+            sid = (data or {}).get("sid")
+            if sid:
+                sids.add(str(sid))
+    except OSError:
+        return set()
+    return sids
+
+
+def _pid_alive(pid: int) -> bool:
+    """True if ``pid`` is a running process. Windows: OpenProcess on the limited
+    QUERY_LIMITED_INFORMATION right (works without elevation, and unlike
+    os.kill(pid, 0) does not raise on access-denied for a foreign-owner process).
+    POSIX: signal 0. Any error -> False (a beacon we cannot verify is not trusted;
+    the caller's empty-set fail-open handles a total measurement failure)."""
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        try:
+            import ctypes
+
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            SYNCHRONIZE = 0x00100000
+            WAIT_TIMEOUT = 0x102
+            handle = ctypes.windll.kernel32.OpenProcess(
+                PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, False, pid)
+            if not handle:
+                return False
+            try:
+                # OpenProcess ALONE is not a liveness test: a terminated process
+                # keeps a valid handle-table entry until every handle closes, so
+                # OpenProcess succeeds on corpses. Measured 2026-07-19 -- it
+                # reported 14 live panes where Get-Process saw 12, and the 2 extras
+                # (9d495311, 5053e2e4) were exited. Feeding those into the tasks.json
+                # liveness gate would re-admit exactly the dead sessions this gate
+                # exists to reject. A wait object is only SIGNALLED once the process
+                # actually exits, so WAIT_TIMEOUT (still blocking) means running.
+                return ctypes.windll.kernel32.WaitForSingleObject(
+                    handle, 0) == WAIT_TIMEOUT
+            finally:
+                ctypes.windll.kernel32.CloseHandle(handle)
+        except Exception:  # noqa: BLE001 - ctypes surface varies; never raise
+            return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except (OSError, ProcessLookupError):
+        return False
+
+
 def _group_by_cwd(panes: list[dict]) -> "OrderedDict[str, list[dict]]":
     groups: "OrderedDict[str, list[dict]]" = OrderedDict()
     for p in panes:
@@ -342,15 +427,39 @@ def generate_from_snapshot(
     dry_run: bool = False,
     tab_counts: dict[str, int] | None = None,
     truncate: bool = True,
+    keep_sids: "set[str] | None" = None,
 ) -> list[dict]:
     """Read the snapshot sidecar and write an auto-run tasks.json per repo.
     ``cwds`` restricts to specific repos. ``tab_counts`` maps norm_path(cwd) to
     a live terminal-tab count; None captures it live (fail-open to {}).
     ``truncate`` False -> write ALL panes per repo (no tab-count cap): the
     pane_map-driven "restore every pane" mode (restore_panes.ps1 --no-truncate).
-    When False we never import topology (no Cursor-state read needed)."""
+    When False we never import topology (no Cursor-state read needed).
+
+    ``keep_sids`` are session ids the caller KNOWS are live and that the beacon
+    sweep may not see -- above all the caller's OWN session. This is not optional
+    polish: measured 2026-07-19, the calling session (aa863758) was carrying
+    ``status="stale"`` in the snapshot and had NO beacon, so a beacon-only gate
+    dropped the pane the Owner was actively typing in, and Cursor would reopen
+    without it. That is the reported bug, not a fix for it. The hub passes its
+    PP_PANE_SID here; it extends (never replaces) the beacon set."""
     path = Path(snapshot_json)
     panes = json.loads(path.read_text(encoding="utf-8-sig"))
+    # LIVENESS GATE (T-REVIVAL-SELF-REINFORCING-LOOP-001, 2026-07-19).
+    # snapshot._LIVE_STATUSES includes "stale", and nothing reliably retires a pane
+    # from the registry, so this path happily emitted a folderOpen task for a
+    # session abandoned days ago. Cursor fires every folderOpen task on open, so
+    # each corpse re-launched `kclaude --resume <dead sid>` in its own terminal --
+    # and that relaunch re-registered the sid as a fresh pane, regenerating the very
+    # task that spawned it. Gate on the same live-process beacon the pane_map
+    # classifier uses so BOTH tasks.json writers share one definition of "open"
+    # (they clobber each other's CPC tasks via merge_tasks, so a disagreement made
+    # the result depend on which writer ran last -- the observed inconsistency).
+    # Fail-open: no measurable beacons -> no filtering -> prior behavior intact.
+    live = live_beacon_sids() | set(keep_sids or ())
+    if live:
+        panes = [p for p in panes
+                 if not p.get("session_id") or p.get("session_id") in live]
     norm_path = None
     if truncate:
         if tab_counts is None:

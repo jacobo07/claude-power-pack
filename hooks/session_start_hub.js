@@ -462,7 +462,12 @@ const CPC_REGISTER_SCRIPT =
   + "try:\n"
   + "    from modules.cpc_os import vscode_autorun\n"
   + "    _snap = os.path.join(os.path.expanduser('~'), '.claude', 'state', 'session_snapshot.json')\n"
-  + "    vscode_autorun.generate_from_snapshot(_snap, cwds=[os.environ.get('PP_PANE_CWD') or os.getcwd()])\n"
+  // keep_sids pins THIS session: the snapshot marks a pane "stale" the moment its
+  // heartbeat lapses, and a beacon may not exist for it, so the liveness gate that
+  // drops abandoned panes would otherwise drop the pane the Owner is typing in
+  // (measured 2026-07-19 on sid aa863758). Beacon set UNION own sid.
+  + "    vscode_autorun.generate_from_snapshot(_snap, cwds=[os.environ.get('PP_PANE_CWD') or os.getcwd()],\n"
+  + "                                          keep_sids=({sid} if sid else None))\n"
   + "except Exception:\n"
   + "    pass\n"
   // G6 (BL-G6-RUNTIME): mark this session active+durable with an fsync'd power
