@@ -147,6 +147,29 @@ function Get-LastInternalAgeMin($jsonl, $nowUtc) {
   return [double]::PositiveInfinity
 }
 
+# 0. LIVE-PANE BEACONS -- the only falsifiable "this pane is open" signal.
+# kclaude.ps1 writes %TEMP%\kclaude-pane-<wrapperpid>.sid {sid,cwd,pid,ts} at launch
+# and deletes it on clean exit; a crash leaves the file behind, so the file alone
+# proves nothing -- the PID must still be RUNNING. Beacons accumulate (172 observed
+# on 2026-07-19 against 14 live panes), hence the liveness test, not a file count.
+# One Get-Process sweep up front keeps this O(1) rather than O(panes).
+# Fail-open by construction: on any error $liveSids stays empty and every pane falls
+# back to pure content-age classification (the pre-2026-07-19 behavior).
+$liveSids = @{}
+try {
+  $alivePids = @{}
+  foreach ($pr in (Get-Process -EA SilentlyContinue)) { $alivePids[$pr.Id] = $true }
+  foreach ($b in (Get-ChildItem (Join-Path $env:TEMP 'kclaude-pane-*.sid') -EA SilentlyContinue)) {
+    $wpid = 0
+    if (-not [int]::TryParse(($b.BaseName -replace '^kclaude-pane-', ''), [ref]$wpid)) { continue }
+    if (-not $alivePids.ContainsKey($wpid)) { continue }
+    try {
+      $bj = Get-Content -LiteralPath $b.FullName -Raw -EA Stop | ConvertFrom-Json
+      if ($bj -and $bj.sid) { $liveSids[[string]$bj.sid] = $true }
+    } catch { }
+  }
+} catch { $liveSids = @{} }
+
 # 1. active repos = snapshot cwds UNION cwds discovered from recent disk transcripts
 $snapPath = Join-Path $StateDir "session_snapshot.json"
 $activeCwds = @{}
@@ -196,8 +219,31 @@ foreach ($cwd in $activeCwds.Keys) {
     # mtime-touch forges mtime-based liveness (RCA 2026-07-06,
     # T-PANE-MAP-FALSE-LIVE-MTIME-001). $ageH/$ageMin retained for display only.
     $internalAgeMin = Get-LastInternalAgeMin $f.FullName $nowUtc
+    # OPEN-NESS IS A PROCESS FACT, NOT A RECENCY GUESS (HR-SESSION-REVIVAL-
+    # INVARIANT-001, 2026-07-19). Owner contract: "lo que dure Cursor es lo que dura
+    # una sesion de los panes que quiero recuperar" -- a pane that was OPEN when
+    # Cursor closed must come back, even if nobody typed in it for 8 hours. So
+    # elapsed time is the WRONG discriminator here; an idle-but-open pane and an
+    # abandoned corpse can share an identical internal age.
+    #
+    # $inSnap (session_snapshot.json membership) was the old proxy and it is not
+    # falsifiable: a pane enters that file and nothing reliably retires it, so it
+    # pinned OPEN-NOW forever. That fed a SELF-REINFORCING LOOP -- a stale
+    # folderOpen task resumes a dead session -> the SessionStart hub re-registers
+    # the sid as a fresh pane -> it re-enters the snapshot -> the writer regenerates
+    # the same stale task, and prune_stale() can never reclaim it because every
+    # folder-open resets its heartbeat (T-REVIVAL-SELF-REINFORCING-LOOP-001).
+    #
+    # $liveSids is the honest signal: kclaude.ps1 beacons %TEMP%\kclaude-pane-
+    # <wrapperpid>.sid for its pane and removes it on clean exit, so a beacon whose
+    # PID is STILL RUNNING proves the pane is open right now -- at any idle age.
+    # A dead PID proves nothing and falls through to the content-age tiers.
+    # FAIL-OPEN: if the beacon sweep yields nothing (e.g. %TEMP% cleared), $liveSids
+    # is empty and every pane is classified by age exactly as before -- degraded,
+    # never blocked.
+    $isLivePane = $liveSids.ContainsKey($sid)
     $tier =
-      if ($inSnap -or $internalAgeMin -le $LiveMinutes) { 'OPEN-NOW' }
+      if ($isLivePane -or $internalAgeMin -le $LiveMinutes) { 'OPEN-NOW' }
       elseif ($internalAgeMin -le $ActiveMinutes) { 'ACTIVE' }
       elseif ($internalAgeMin -le $RecentMin) { 'RECENT' }
       else { 'ARCHIVE' }
