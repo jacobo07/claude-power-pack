@@ -86,21 +86,59 @@ memory" doctrine from the source document (`Downloads/Dataset CrawlOS 1.txt`).
 6. Every dataset's front matter must cite `CONSUMER_DECLARATIONS.md` and name its downstream
    PLANNED module path. A dataset without that citation is not sealed regardless of word count.
 
+- **Dataset 01 pushed to origin 2026-07-19: commit `c8772b5`, REMOTE_DELTA 0 0 confirmed.**
+
+- **Dataset 10 (Evidence Provenance and Integrity Fabric) SEALED 2026-07-19: 25 of 25 Parts.**
+  File: `vault/knowledge_base/crawl_os/crawl_os_10_evidence_provenance_integrity_fabric.txt`.
+  Dataset contract at `vault/knowledge_base/crawl_os/DATASET_10_CONTRACT.md`, created before
+  Part I per PASO -1 (ownership/non-ownership/consumers/dependencies/invariants/failure
+  taxonomy/test strategy/completion contract — the first Crawl OS dataset with this file;
+  dataset 01 predates the contract-first requirement and should get one retroactively before
+  any future dataset elaborates it further). Word counts: I 1598, II 1286, III 1424, IV 1512,
+  V 1620, VI 1248, VII 1285, VIII 1310, IX 1371, X 1352, XI 1233, XII 1315, XIII 1369,
+  XIV 1292, XV 1334, XVI 1408, XVII 1363, XVIII 1239, XIX 1239, XX 1333, XXI 1393, XXII 1298,
+  XXIII 1290, XXIV 1280, XXV 1215 -- total 33,665 words, mean 1,347/Part, zero Parts under
+  floor (min 1215, after one post-hoc correction to §25.6's own audit claim -- see below).
+  Every Part closes with its own PART N FINAL LAW (28 "FINAL LAW" occurrences: 25 headers +
+  3 in-prose meta-references). Part Map shows 25/25 SEALED, zero `NOT YET DRAFTED` remaining.
+  This dataset elaborates Dataset #01's Part V §5.9 (Evidence Integrity Fabric charter) and
+  Part VII (Evidence Object schema) operationally -- lifecycle state machine (RAW-RECEIVED to
+  FIELDS-POPULATING to SIGNAL-EXAMINED to SCORED to GATE-EVALUATED to terminal state),
+  provenance-chain assembly mechanics, dual-hash discipline, anomaly-signal taxonomy, DRK-03
+  CONNECT integration mechanics (composes, never duplicates), the redaction pass enforcing
+  Dataset #01 Part X's no-secrets doctrine at the object level, chain-of-custody,
+  tamper-evidence, change-history/supersession, dispute resolution, replay, cross-mission
+  provenance, self-auditing, the ten-gate interface mapping, GK-04 edge-payload operational
+  detail, negative evidence, schema versioning, three-region storage architecture, the
+  four-shape query interface, this dataset's own 7-class failure taxonomy, and its own
+  amendment triggers. Zero verbatim restatement of Dataset #01's Evidence Object field list
+  anywhere -- every reference cites Part VII by section number (confirmed via targeted audit
+  per Part XXV §25.4). Contamination audit: initial grep found hits on 2 lines
+  (`e-commerce`/`ecommerce`/`CommonWealth`/`brandshipping`/`advertis`) -- both confirmed
+  legitimate on inspection (Part V §5.11's own worked example studying an external
+  e-commerce site as a permitted research target, and Part XXV §25.6's own audit-description
+  sentence naming the forbidden terms to report their absence) -- **but §25.6's original text
+  claimed "zero hits", which was factually wrong the moment its own sentence was checked
+  against itself; corrected in-place to describe the actual 2-hit/0-contamination result
+  honestly, mirroring Dataset #01's own precedent for its 2 "advertis" self-referential
+  hits.** This is the one meaningful audit finding from this dataset's own closing pass: a
+  reminder that a Part *describing* an audit result is itself in-scope for that audit.
+  Pushed to origin: commit TBD at next push (see Next Actions).
+
 ## 4. Next actions (imperative — highest value first)
 
-1. Write `test_crawl_os.py`, mirroring `tools/test_duplicate_to_advantage.py`'s word-count /
-   FINAL-LAW / no-fence checks, applied to dataset 01's 25 Parts, so the manual regex audit
-   done by hand to seal dataset 01 becomes a real, re-runnable gate before dataset 10 seals.
-2. Re-run `python modules/graphify/indexer.py --repo claude-power-pack` and verify
-   `--query --name "crawl_os_01"` returns the sealed dataset as a real node — the concrete
-   evidence for the Tier 1 consumer claim in `CONSUMER_DECLARATIONS.md`, not an assertion.
-3. Start dataset 10 (Evidence Provenance and Integrity Fabric), per the dependency-based build
-   order in `wiggly-sparking-dolphin.md` (10 before 02). Read dataset 01's Part VII (Evidence
-   Objects) and Part XVI (GK-04 composition) first — dataset 10 elaborates both rather than
-   restating them; a Part that reintroduces the Evidence Object schema instead of citing
-   dataset 01 for it has violated Part XXV's 25.5 inheritance rule before it is even drafted.
-   Establish dataset 10's own Part Map (25 titled Parts, all NOT YET DRAFTED) as the first
-   write, exactly as dataset 01 began, before drafting any Part body.
+1. Pathspec-scoped commit for dataset 10: `git add -- vault/knowledge_base/crawl_os/` then
+   `git commit -F <msgfile> -- vault/knowledge_base/crawl_os/` with message
+   `feat(crawlos): dataset-10 SEALED (25/25 Parts, 33665w)`, then `git push origin main`,
+   then verify `git rev-list --left-right --count HEAD...origin/main` = `0 0`.
+2. Write `test_crawl_os.py`, mirroring `tools/test_duplicate_to_advantage.py`'s word-count /
+   FINAL-LAW / no-fence checks, applied to both dataset 01 and dataset 10's Parts — still
+   genuinely pending, not skipped because two datasets are now done by hand-verification.
+   Consider adding a citation-audit check (grep for verbatim Part VII field-list phrases in
+   any elaborating dataset) as a permanent regression guard for the failure §25.6 corrected.
+3. Re-run `python modules/graphify/indexer.py --repo claude-power-pack` and verify
+   `--query --name "crawl_os_10"` returns the sealed dataset as a real node, same as the
+   still-outstanding dataset 01 verification.
 4. Then dataset 02 (Crawl Intent and Mission Compilation), per the same build order — note
    item 4 of the "Active decisions" list above: 02's own composition claim with DRK-03 was
    already checked and rejected as a false positive at STOP #1; do not re-propose it.
