@@ -5,4 +5,5 @@ Nothing here narrates; every module produces an object the corpus defined.
 """
 from __future__ import annotations
 
-__all__ = ["obligation_extractor", "constraint_extractor", "session_continuity_compiler"]
+__all__ = ["obligation_extractor", "constraint_extractor", "decision_extractor",
+          "session_continuity_compiler", "two_arm_trial", "resume_reader"]

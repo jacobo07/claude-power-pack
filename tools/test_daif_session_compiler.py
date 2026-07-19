@@ -15,6 +15,9 @@ Gates:
   V-OBLIGATION-EXTRACTOR-REAL      obligations lifted from a real session, not a fixture
   V-OBLIGATION-EXTRACTOR-FAILOPEN  empty / corrupt / missing session -> [], exit 0
   V-CONSTRAINT-EXTRACTOR-REAL      the PP's own sealed hard rules, with their file:line
+  V-DECISION-EXTRACTOR-REAL        decisions with BOTH chosen+rationale, from a real session
+  V-CURRENT-REALITY-LISTS-PATHS    uncommitted paths are a LIST, not just a count; truncation disclosed
+  V-REFERENCED-FILES-CHECKED       every named file's exists flag independently verified against disk
   V-COMPILER-PRODUCES-PACKAGE      every slot DAIF-08 11.3 requires is present
   V-CONTINUITY-GATE-CONSTRAINTS    100% of hard constraints survive the reset, or FAIL with detail
   V-CONTINUITY-GATE-OBLIGATIONS    100% of open obligations survive the reset, or FAIL with detail
@@ -39,6 +42,7 @@ sys.path.insert(0, str(ROOT))
 
 from modules.daif.constraint_extractor import extract_constraints   # noqa: E402
 from modules.daif.obligation_extractor import extract_obligations   # noqa: E402
+from modules.daif.decision_extractor import extract_decisions       # noqa: E402
 from modules.daif.session_continuity_compiler import (              # noqa: E402
     compile_session, write_package,
 )
@@ -139,6 +143,85 @@ def gate_constraint_extractor_real() -> None:
     _ok("V-CONSTRAINT-EXTRACTOR-REAL",
         f"{len(hard)} hard ({len(sealed)} sealed HR-*), every one provenanced; "
         f"e.g. {sample.identifier} @ {sample.provenance}")
+
+
+def gate_decision_extractor_real(session: Path) -> None:
+    """SCS C97's trial localized decisions_with_justifications='unknown' as one of three gaps
+    driving clause-4 re-read requests. This gate proves the extractor runs on a real session and
+    every recovered decision actually carries both halves 11.3 requires — chosen AND rationale."""
+    decisions, report = extract_decisions(session, ROOT)
+    if report["turns_scanned"] == 0:
+        _fail("V-DECISION-EXTRACTOR-REAL", f"0 turns scanned from {session.name}")
+        return
+    incomplete = [d.identifier for d in decisions if not d.chosen.strip() or not d.rationale.strip()]
+    if incomplete:
+        _fail("V-DECISION-EXTRACTOR-REAL",
+              f"{len(incomplete)} decision(s) missing chosen or rationale: {', '.join(incomplete[:5])}")
+        return
+    unsourced = [d.identifier for d in decisions if not d.source]
+    if unsourced:
+        _fail("V-DECISION-EXTRACTOR-REAL", f"{len(unsourced)} decision(s) carry no source pointer")
+        return
+    _ok("V-DECISION-EXTRACTOR-REAL",
+        f"{report['found']} decision(s) with chosen+rationale from {report['turns_scanned']} turns "
+        f"({report['drk_matched']} DRK-matched, {report['refused_as_meta_discussion']} meta-discussion "
+        f"refused) — 0 incomplete, 0 unsourced")
+
+
+def gate_current_reality_lists_paths(package: dict) -> None:
+    """SCS C97 evidence: the arm's FIRST source request was to see the uncommitted paths a count
+    had hidden. This gate proves the pack now carries the list, not just the number, and that the
+    truncation (if any) is disclosed rather than silently presented as complete."""
+    cr = package.get("current_reality", {})
+    files = cr.get("uncommitted_files")
+    count = cr.get("uncommitted_paths")
+    if files is None or not isinstance(files, list):
+        _fail("V-CURRENT-REALITY-LISTS-PATHS", "current_reality.uncommitted_files is missing or not a list")
+        return
+    if not isinstance(count, int):
+        _fail("V-CURRENT-REALITY-LISTS-PATHS", "current_reality.uncommitted_paths is not an int")
+        return
+    if len(files) > count:
+        _fail("V-CURRENT-REALITY-LISTS-PATHS",
+              f"{len(files)} listed files exceeds the {count} counted paths — inconsistent instrument")
+        return
+    truncated_flag = cr.get("uncommitted_files_truncated")
+    if count > len(files) and truncated_flag is not True:
+        _fail("V-CURRENT-REALITY-LISTS-PATHS",
+              f"{count} paths but only {len(files)} listed, and truncation was not disclosed")
+        return
+    _ok("V-CURRENT-REALITY-LISTS-PATHS",
+        f"{count} uncommitted path(s), {len(files)} listed"
+        + (" (truncation disclosed)" if truncated_flag else ""))
+
+
+def gate_referenced_files_checked(package: dict) -> None:
+    """SCS C97 evidence: the arm asked "does X exist?" for files the pack only named. This gate
+    proves every referenced_files entry's exists flag is independently correct against this disk,
+    not merely present as a field."""
+    refs = package.get("referenced_files")
+    if refs is None or not isinstance(refs, list):
+        _fail("V-REFERENCED-FILES-CHECKED", "referenced_files is missing or not a list")
+        return
+    if not refs:
+        _ok("V-REFERENCED-FILES-CHECKED", "0 file-path tokens found in this pack's constraint/"
+            "obligation/decision text — nothing to confirm, which is itself checked (not asserted)")
+        return
+    wrong = []
+    for entry in refs:
+        path, claimed = entry.get("path"), entry.get("exists")
+        if not isinstance(path, str) or not isinstance(claimed, bool):
+            wrong.append(f"{entry} (malformed)")
+            continue
+        actual = (ROOT / path).exists()
+        if actual != claimed:
+            wrong.append(f"{path} (claimed={claimed}, actual={actual})")
+    if wrong:
+        _fail("V-REFERENCED-FILES-CHECKED", f"{len(wrong)} entrie(s) disagree with disk: "
+              + "; ".join(wrong[:5]))
+        return
+    _ok("V-REFERENCED-FILES-CHECKED",
+        f"{len(refs)} referenced file(s), every exists flag independently verified against disk")
 
 
 def gate_compiler_produces_package(package: dict) -> None:
@@ -307,9 +390,12 @@ def main() -> int:
     gate_obligation_extractor_real(session)
     gate_obligation_extractor_failopen()
     gate_constraint_extractor_real()
+    gate_decision_extractor_real(session)
 
     package = compile_session(ROOT, session)
     gate_compiler_produces_package(package)
+    gate_current_reality_lists_paths(package)
+    gate_referenced_files_checked(package)
 
     with tempfile.TemporaryDirectory() as td:
         workdir = Path(td)

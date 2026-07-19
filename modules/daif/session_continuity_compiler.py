@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from dataclasses import asdict
@@ -46,6 +47,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from modules.daif.constraint_extractor import extract_constraints  # noqa: E402
 from modules.daif.obligation_extractor import extract_obligations  # noqa: E402
+from modules.daif.decision_extractor import extract_decisions  # noqa: E402
+
+# Recognizable file-path tokens in free text -- shared shape with decision_extractor's
+# _PATH_TOKEN_RE. Used to confirm existence of every file a constraint or obligation NAMES,
+# so the resumed actor does not have to ask "does this file exist" (the c4 re-reading trigger
+# the SCS C97 trial measured directly: two-arm trial evidence named this as a driver).
+_PATH_TOKEN_RE = re.compile(
+    r"\b[\w./\\-]+\.(?:py|js|ts|tsx|jsx|json|md|txt|yml|yaml|toml|cfg|ini|ps1|sh)\b"
+)
 
 # A pack too large to sit in a model's context alongside its work is not a pack, it is the
 # monolith of DAIF-08 Part XVII level 1 wearing a new name. The budget is declared, not derived:
@@ -90,16 +100,54 @@ def _git(project: Path, *args: str) -> str:
     return "unknown"
 
 
+# Two-arm trial evidence (vault/trials/two_arm_c718d3f5*.json, SCS C97): the resumed actor's
+# FIRST source request was "git log / git status ... shows 87 uncommitted paths -- need to see
+# what those paths are before continuing." A count is not current reality (11.3) -- it is a
+# summary of current reality that forces exactly the re-read the gate exists to prevent. The
+# LIST is the observation; a cap exists because the pack has a token budget too (TOKEN_BUDGET).
+MAX_LISTED_PATHS = 15
+
+
 def _current_reality(project: Path) -> dict[str, Any]:
     dirty = _git(project, "status", "--porcelain")
+    dirty_lines = [] if dirty in ("", "unknown") else dirty.splitlines()
+    uncommitted_files = [line[3:].strip() if len(line) > 3 else line.strip()
+                         for line in dirty_lines[:MAX_LISTED_PATHS]]
+    # The per-file table is the expensive part and the totals line carries the signal that
+    # matters at pack scale (how much moved); the full table is one `git diff --stat HEAD`
+    # away and is exactly what expansion_handles names as available on request.
+    diff_stat_full = _git(project, "diff", "--stat", "HEAD")
+    diff_stat_lines = diff_stat_full.splitlines() if diff_stat_full != "unknown" else []
+    diff_summary = diff_stat_lines[-1] if diff_stat_lines else ""
     return {
         "head_commit": _git(project, "log", "-1", "--format=%H"),
         "head_subject": _git(project, "log", "-1", "--format=%s"),
         "branch": _git(project, "rev-parse", "--abbrev-ref", "HEAD"),
-        "uncommitted_paths": 0 if dirty in ("", "unknown") else len(dirty.splitlines()),
+        "uncommitted_paths": len(dirty_lines),
+        "uncommitted_files": uncommitted_files,
+        "uncommitted_files_truncated": len(dirty_lines) > MAX_LISTED_PATHS,
+        "diff_summary": diff_summary,
         "observed_at": datetime.now(timezone.utc).isoformat(),
         "instrument": "git",
     }
+
+
+def _referenced_files(project: Path, texts: list[str]) -> list[dict[str, Any]]:
+    """Every file a constraint or obligation NAMES, with existence confirmed here rather than
+    left for the resumed actor to ask about -- the second gap the SCS C97 trial localized
+    ("the pack names files whose existence it never confirms")."""
+    tokens: set[str] = set()
+    for text in texts:
+        tokens.update(_PATH_TOKEN_RE.findall(text))
+    out = []
+    for tok in sorted(tokens):
+        candidate = (project / tok)
+        try:
+            exists = candidate.exists()
+        except OSError:
+            exists = False
+        out.append({"path": tok, "exists": exists})
+    return out
 
 
 def _mission_contract(session_path: Path, obligations: list[Any]) -> dict[str, Any]:
@@ -143,6 +191,7 @@ def compile_session(project_path: str | Path, session_path: str | Path) -> dict[
 
     constraints, c_report = extract_constraints(project)
     obligations, o_report = extract_obligations(session)
+    decisions, d_report = extract_decisions(session, project)
     hard = [c for c in constraints if c.strength == "hard"]
 
     # 11.6 — name what cannot be guaranteed, do not paper over it.
@@ -177,16 +226,32 @@ def compile_session(project_path: str | Path, session_path: str | Path) -> dict[
         "hard_constraints": [asdict(c) for c in hard],
         "open_obligations": [asdict(o) for o in obligations],
         "decisions_with_justifications": {
-            "value": "unknown",
-            "reason": "no decision extractor exists yet. DAIF-08 11.3 holds that a decision "
-                      "carried WITHOUT its justification will be either violated as arbitrary or "
-                      "obeyed as inscrutable, and both are worse than not carrying it — so this "
-                      "slot is declared empty rather than filled with a reconstruction.",
+            "value": [asdict(d) for d in decisions],
+            "intake_report": d_report,
+            "reason": (
+                f"{d_report['found']} decision(s) with a stated rationale recovered from the "
+                f"session by archaeology ({d_report['drk_matched']} cross-matched against the "
+                "DRK Decision Registry). This is archaeology, not capture-at-creation (DAIF-08 "
+                "11.3): a low-confidence recovered pair is still carried, because a decision "
+                "without its reason is worse than not carrying it, but a decision the archaeology "
+                "never found is not fabricated to fill the slot."
+                if decisions else
+                "0 decisions with a stated rationale were found in-session or in the DRK "
+                "registry. This is a real, checked absence, not the prior unmeasured default: "
+                f"{d_report['turns_scanned']} turns scanned, "
+                f"{d_report['drk_registry_records_checked']} DRK records checked."
+            ),
         },
         "current_reality": _current_reality(project),
+        "referenced_files": _referenced_files(
+            project,
+            [c.text for c in hard] + [o.text for o in obligations]
+            + [d.chosen + " " + d.rationale for d in decisions],
+        ),
         "evidence_pointers": {
             "constraints": [c.provenance for c in hard],
             "obligations": [p for o in obligations for p in o.source],
+            "decisions": [p for d in decisions for p in d.source],
         },
         "expansion_handles": [
             {
@@ -207,6 +272,21 @@ def compile_session(project_path: str | Path, session_path: str | Path) -> dict[
                 "target": "vault/knowledge_base/d2a_fabric/",
                 "exclusion_reason": "excluded by scope — the corpus SPECIFIES this pack, it is not "
                                     "context the resumed mission needs to execute",
+            },
+            {
+                "handle": "full_diff_stat",
+                "target": "git diff --stat HEAD",
+                "exclusion_reason": "excluded by budget — current_reality.diff_summary carries the "
+                                    "totals line; the per-file table costs pack budget the totals "
+                                    "line does not, and is one command away if the actor needs it",
+            },
+            {
+                "handle": "uncommitted_files_full_list",
+                "target": "git status --porcelain",
+                "exclusion_reason": f"excluded by budget — current_reality.uncommitted_files caps at "
+                                    f"{MAX_LISTED_PATHS} of the real, uncapped list; a truncated list "
+                                    "is disclosed via uncommitted_files_truncated rather than silently "
+                                    "presented as complete",
             },
         ],
         "done_gate": {

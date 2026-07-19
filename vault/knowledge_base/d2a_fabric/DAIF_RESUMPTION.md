@@ -49,14 +49,71 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
   the source anyway. The pack is cheaper and it is NOT yet sufficient. Do not describe the compiler as
   passing its gate. Artifact-level fidelity verdict: **DEGRADE** (sample post-dates the artifact,
   DAIF-03 10.2; representative stratum only; n=3, 10.6).
-- **NEXT = close clause 4, which the trial LOCALIZED.** The arms named exactly what the pack lacks, in
-  their own words, across all three missions: (1) `current_reality` carries a COUNT of uncommitted
-  paths where the actor needs the LIST (and the diff); (2) the pack names files whose existence it
-  never confirms, so the actor asks "does `tools/test_ram_optimization.py` exist?"; (3) no
-  `decisions_with_justifications` — still declared `unknown`, and 11.3 says a decision without its
-  reason is worse than none. Fix those three, re-run `--sample`, and see whether clause 4 moves.
-  Then run the adversarial + regression strata (DAIF-03 10.2), which have never run.
-  Do NOT expand the corpus. Do NOT build the other derived systems first.
+- **THE THREE LOCALIZED GAPS ARE FIXED (2026-07-19); RE-RUN IN PROGRESS.** `_current_reality` now
+  emits `uncommitted_files` (a real, capped LIST, `MAX_LISTED_PATHS=15`, truncation disclosed) plus
+  `diff_summary` (the totals line — the full per-file table is an `expansion_handle`, not silently
+  dropped), not just a count. `_referenced_files` scans every hard-constraint/obligation/decision
+  text for file-path tokens and confirms each one's existence against disk before the actor has to
+  ask. `modules/daif/decision_extractor.py` (new) recovers `decisions_with_justifications` by the
+  same archaeology pattern as `obligation_extractor.py` — chosen+rationale pairs, cross-matched
+  against the DRK Decision Registry (composed, not forked) — and replaces the permanent `"unknown"`
+  with either real recovered pairs or a checked, honest "0 found, N turns scanned" absence.
+  `tools/test_daif_session_compiler.py` gained 3 gates for these (`V-DECISION-EXTRACTOR-REAL`,
+  `V-CURRENT-REALITY-LISTS-PATHS`, `V-REFERENCED-FILES-CHECKED`) — **`DAIF_COMPILER_PASS=12/12`**
+  (was 9/9), no regression, `DAIF_PASS=48/48` corpus gate still holds.
+  **Budget note:** the fix pushed mission `c718d3f5...`'s pack to `FAIL_VISIBLE` (est. tokens over
+  `TOKEN_BUDGET=20,000` even after trimming `MAX_LISTED_PATHS` 60→15 and the diff to a one-line
+  summary) — the hard-constraint set alone has grown 74→75 since the original trial (CLAUDE.md
+  grows independent of this fix), and the compiler's own doctrine reserves raising `TOKEN_BUDGET`
+  for the authority, not the agent; not moved unilaterally.
+- **RE-RUN COMPLETE (2026-07-19) — CLAUSE 4 DID NOT MOVE. Do not describe the fix as having closed
+  the gate.** `python modules/daif/two_arm_trial.py --sample`, same 3 sealed missions, records in
+  `vault/trials/two_arm_*.json` (overwritten in place — the originals are in this file's history and
+  in commit `bb55634` if a byte-for-byte diff is ever needed).
+  **clause 4 (no re-reading): FAIL / FAIL / FAIL — unchanged from the original trial.** All three
+  arms still asked for source access. Mission 1's requests were now about the pack's OWN disclosed
+  limits (wants the un-truncated `git status`/`git diff`, notes `RESUMPTION_FILE.md` and
+  `vault/progress.md` show as uncommitted) rather than blind guesses — the fixed fields are being
+  read and reasoned about, they just were not sufficient to stop the ask. **Six Arm-A runs across
+  the original trial and this rerun; clause 4 has passed zero of them.**
+  **clause 3 / invention — mixed, not a clean improvement:** mission 1 went FAIL→PASS on both
+  (92 citations, all grounded — the fix's added content is directly why). Missions 2 and 3 went
+  PASS→FAIL on both, driven largely by citations like `"HR-BACKLOG-001 through HR-BACKLOG-003"` and
+  `"HR-CASCADE-001 through HR-CASCADE-005"` — the arm summarizing several really-present pack
+  constraints as one range, which the adjudicator's per-citation matcher (built for single-unit
+  paraphrases, DAIF-03 10.4) does not recognize and scores as invented. This is flagged, not
+  resolved: it may be a real regression, or it may be the adjudicator failing to parse a valid
+  compression, and the two explanations are not yet distinguished.
+  **token delta saved (B−A), this rerun: +67,107 / +43,286 / +42,829 — pack still cheaper 3/3**,
+  smaller than the original because the pack itself is larger now (more real content).
+  **NEW, HIGHER-PRIORITY FINDING: `session_overhead_tokens` measured at 74,063** for a trivial
+  "reply with exactly: OK" call with the SAME `claude -p --disallowed-tools ...` invocation the
+  trial arms use. `--disallowed-tools` blocks ACTIONS (Read/Bash/etc.) but there is no flag in
+  `_call_model()` suppressing the CLI's own automatic project-context loading (CLAUDE.md, skills,
+  hooks) — meaning Arm A may not be resuming from ONLY the compiled pack the trial constructs; it
+  may ALSO be sitting inside this repo's live CLAUDE.md via the CLI's normal onboarding, which
+  would explain both the volume of the overhead and would call into question what clause 3/4/
+  invention have actually been measuring, in THIS rerun and in the original SCS C97 trial alike.
+  **CONFIRMED, not just hypothesized: `claude --help`'s own text states the default system prompt
+  includes "CLAUDE.md auto-discovery," and `_call_model()` passes neither `--system-prompt` nor
+  `--exclude-dynamic-system-prompt-sections` nor any other isolation flag — both arms run with this
+  repo's live CLAUDE.md/skills/hooks loaded on top of whatever packet is fed via stdin.** This most
+  plausibly explains the mission-2/3 citation pattern above: an arm citing real CLAUDE.md content
+  the extractor classified SOFT (excluded from the pack by design) is not inventing, it is reporting
+  what its own onboarding handed it — the adjudicator has no way to tell that apart from a genuine
+  invention because it only checks citations against `pack_texts`. Clause 4's verdict is more
+  likely trustworthy despite the leak (CLAUDE.md content carries no session-specific obligations or
+  current-reality facts, so it cannot be what lets an arm avoid asking for the session); clause 3 and
+  invention are the ones the leak most directly compromises, in this rerun AND in the original SCS
+  C97 trial alike. **Fix path, not yet applied:** re-run with `--system-prompt-file <packet-only>`
+  or `--append-system-prompt` replacing the bare packet-as-stdin approach, so Arm A's ONLY system
+  content is the compiled pack — or run the CLI from a directory with no CLAUDE.md at all. Either
+  requires changing `_call_model()` and re-spending real API money; not done unilaterally here.
+- **STANDING STATE: the Part XI done-gate remains OPEN.** Clause 4 has never passed. Do not build
+  further derived systems on top of an unclosed proving vertical. The immediate next action is the
+  overhead/isolation question above, not another content fix to the pack — six failed Arm-A runs on
+  the same clause is the anti-antipattern-protocol's 2-consecutive-failures law, applied: change the
+  approach, don't retry the same shape a third time.
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
