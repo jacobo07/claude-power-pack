@@ -7,6 +7,37 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## 0. RECURRING -- verify revival settings after EVERY Cursor update  [STANDING]
+
+**Trigger:** any Cursor version update, or any settings change made through the
+Cursor settings UI.
+
+**Why:** revival depends on Cursor settings an update can reset with **no visible
+error**. `task.allowAutomaticTasks` back to `off` kills every `folderOpen` task,
+so no pane is restored at all and the only symptom is "the revival is flaky
+again" (this exact reset cost a full diagnosis cycle on 2026-07-17).
+`persistentSessionReviveProcess` back to a revive value re-introduces ghost
+scrollback tabs whose live process is a NEW empty session
+(`T-CURSOR-GHOST-BUFFER-IS-NOT-RESUME-001`).
+
+```powershell
+$env:PYTHONIOENCODING='utf-8'
+Set-Location "$env:USERPROFILE\.claude\skills\claude-power-pack"
+& "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" tools\test_session_revival.py
+```
+
+**Expect:** `REVIVAL_PASS=8/8`. If `V-SETTINGS-REQUIRED` fails it prints the exact
+key and the wanted value; restore it in `%APPDATA%\Cursor\User\settings.json`.
+
+**Do NOT re-add** `terminal.integrated.restoreTerminals` -- it is not a real
+Cursor setting (0 occurrences in `workbench.desktop.main.js`), it is inert, and
+its presence makes terminal restore look disabled while it is fully active.
+
+**Refs:** `T-CURSOR-UPDATE-RESETS-AUTOTASKS-001`,
+`docs/prd/SESSION_REVIVAL_CONTRACT.md` §8.
+
+---
+
 ## 1. Activate recovery graceful-beacon  (SCS C83)  [PENDING]
 
 **System:** `hooks/session_end_graceful_beacon.js`

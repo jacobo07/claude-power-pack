@@ -4363,3 +4363,137 @@ recent-tier history) or a per-repo cap -- an Owner design decision, not a silent
 `%APPDATA%\Cursor\User\settings.json` (`allowAutomaticTasks:on`); measured via `pane_map.json` (PP=33).
 
 **Cross-ref:** `T-REVIVAL-FOLDER-RESTORE-DEPENDENCY-001`, `HR-CASCADE-005` (context/resource pressure).
+
+
+## HR-SESSION-REVIVAL-INVARIANT-001 -- pane open-ness is a PROCESS FACT, never recency or registry membership
+
+**TRIGGER:** classifying a pane as live/open/restorable, or deciding which sessions
+earn a `folderOpen` task.
+
+**ACCIÓN:** STOP. Open-ness is decided ONLY by a kclaude beacon
+(`%TEMP%\kclaude-pane-<pid>.sid`) whose PID is STILL RUNNING. Never by elapsed
+time, never by membership in `session_snapshot.json`. Any writer that emits
+`tasks.json` applies this identical test AND pins its own sid via `keep_sids`.
+
+**Trap.** Two non-facts were used as liveness proxies and both failed:
+
+1. *Registry membership* (`$inSnap`). Not falsifiable -- a sid enters
+   `session_snapshot.json` and nothing reliably retires it, so it read OPEN-NOW
+   forever. `snapshot._LIVE_STATUSES` deliberately includes `stale` (a lapsed
+   heartbeat does not prove closure -- correct for a crash manifest, fatal as a
+   task source).
+2. *Recency.* Rejected against the Owner contract "lo que dure Cursor es lo que
+   dura una sesión de los panes que quiero recuperar": an idle-but-open pane and
+   an abandoned corpse have IDENTICAL elapsed times. A 120-min ceiling was
+   implemented and measured -- it dropped three genuinely-open panes idle 2, 6
+   and 8 days (`70e1c9fc`, `00400465`, `f0830618`). Only a process fact separates
+   the two.
+
+**Sub-trap (Windows).** `OpenProcess` ALONE is not a liveness test: a terminated
+process keeps a valid handle-table entry until every handle closes, so
+OpenProcess SUCCEEDS on corpses. Measured: 14 "live" sids vs 12 from
+`Get-Process`; both extras were exited, and both would have been re-admitted as
+exactly the dead sessions the gate exists to reject. Gate on
+`WaitForSingleObject(h,0) == WAIT_TIMEOUT`.
+
+**Sub-trap (own session).** A beacon-only gate DROPS THE CALLER'S OWN PANE: the
+live session is routinely marked `stale` and may have no beacon (measured on
+`aa863758` while the Owner was typing in it). Shipping that would BE the reported
+bug, not a fix for it. Hence `keep_sids`.
+
+**Fail-open:** unmeasurable liveness -> filter NOTHING. Losing a pane is worse
+than keeping a corpse.
+
+**Origin.** 2026-07-19. `tools/build_pane_map.ps1`,
+`modules/cpc_os/vscode_autorun.py`, `hooks/session_start_hub.js`.
+Gate: `python tools/test_session_revival.py`.
+
+**Cross-ref:** `T-REVIVAL-SELF-REINFORCING-LOOP-001`,
+`T-CURSOR-GHOST-BUFFER-IS-NOT-RESUME-001`, `docs/prd/SESSION_REVIVAL_CONTRACT.md`.
+
+
+## T-REVIVAL-SELF-REINFORCING-LOOP-001 -- resuming a dead session regenerates the task that resurrected it
+
+**Trap.** A stale `folderOpen` task is not inert debris; it is a PUMP. Cursor
+fires every `folderOpen` task on open, so the task runs
+`kclaude --resume <dead sid>`; that relaunch re-registers the sid as a FRESH pane
+in `PaneRegistry`; the pane re-enters `session_snapshot.json`; the tasks.json
+writer regenerates the identical task. `prune_stale()` (2 h) can never reclaim it
+because every folder-open resets its heartbeat. Deleting the task by hand is
+undone by the next writer cycle -- the loop must be broken at the CLASSIFIER.
+
+Proven live: sid `db5cb9f7` recorded `clean_exit` 2026-07-14 and was still
+running as a resurrected zombie with its own task on 2026-07-19, five days later.
+
+**Second-order trap (why it looked intermittent).** TWO writers maintained the
+same `.vscode/tasks.json` with DIFFERENT policies -- the SessionStart hub from
+`session_snapshot.json` (no liveness test at all) and `pp-snapshot-writer` from
+`pane_map.json` (tier + sub-agent filtered) -- and `merge_tasks` REPLACES every
+CPC task. So the surviving set depended on which writer ran last. Inconsistency
+across panes is therefore a DIAGNOSTIC SIGNAL of multiple writers or multiple
+entry points, never evidence of randomness.
+
+**Detector.** Any state that is both an INPUT to a classifier and an OUTPUT of
+the action that classifier authorises is a candidate pump. Ask: "does acting on
+this record re-create the record?" If yes, the retirement path must not depend on
+the action being absent.
+
+**Origin.** 2026-07-19. `modules/cpc_os/vscode_autorun.py`,
+`hooks/session_start_hub.js`, `tools/snapshot_auto_writer.ps1`.
+
+**Cross-ref:** `HR-SESSION-REVIVAL-INVARIANT-001`,
+`T-REVIVAL-NOTRUNCATE-AUTORUN-HAZARD-001`.
+
+
+## T-CURSOR-GHOST-BUFFER-IS-NOT-RESUME-001 -- restored scrollback over a NEW shell reads as a lost session
+
+**Trap.** `terminal.integrated.persistentSessionReviveProcess` restores session
+"contents/history" **and RECREATES the process** (Cursor's own wording). Across a
+full quit the original process is gone, so Cursor repaints the old SCROLLBACK and
+starts a BRAND-NEW shell underneath it. Symptom, verbatim: *"revivía el historial
+correcto pero me mandaba a escribir a una sesión nueva y vacía"* -- the visible
+history belongs to a corpse, the live process is a newborn. It also DUPLICATES
+panes, because the `folderOpen` task opens a real terminal for that same session.
+
+A restored BUFFER is not a restored SESSION. Reading history proves nothing about
+where input goes.
+
+**Sub-trap.** `terminal.integrated.restoreTerminals` DOES NOT EXIST in Cursor
+(0 occurrences in `workbench.desktop.main.js`). It had been set `false` as a
+guard; being inert, it made terminal restore APPEAR disabled while it was fully
+active, and sent three prior fix attempts down the wrong path. **Verify a setting
+is registered before trusting it as a control** -- grep the workbench bundle.
+
+**Fix.** `persistentSessionReviveProcess: "never"`. PP owns cross-quit restore
+deterministically (one `folderOpen` task per live pane, each `--resume <exact
+sid>`), so the visible history IS the live session's. Keep
+`enablePersistentSessions: true` -- a different mechanism (genuine pty reconnect
+on window RELOAD), and the source of a CORRECT "History restored".
+
+**Origin.** 2026-07-19. `%APPDATA%\Cursor\User\settings.json`; semantics read from
+`resources/app/out/nls.messages.json` S(10723-10726).
+
+**Cross-ref:** `T-CURSOR-UPDATE-RESETS-AUTOTASKS-001`,
+`HR-SESSION-REVIVAL-INVARIANT-001`.
+
+
+## T-CURSOR-UPDATE-RESETS-AUTOTASKS-001 -- a Cursor update can silently disable the entire revival pipeline
+
+**Trap.** Revival depends on Cursor settings that an update (or a settings-UI
+edit) can reset with NO visible error: `task.allowAutomaticTasks` back to `off`
+kills EVERY `folderOpen` task -- total revival failure, silent -- and
+`persistentSessionReviveProcess` back to a revive value re-introduces ghost
+buffers. Nothing logs it; the only symptom is panes not coming back, which reads
+as "the revival is flaky again".
+
+**Detector.** `python tools/test_session_revival.py` -> `V-SETTINGS-REQUIRED` is
+the tripwire (asserts `allowAutomaticTasks=on`,
+`persistentSessionReviveProcess=never`, `enablePersistentSessions=true`,
+`restoreWindows=all`, and that the non-existent `restoreTerminals` is absent).
+**Run it after every Cursor update.** Owner-queued.
+
+**Origin.** 2026-07-19 (generalised from the 2026-07-17 `allowAutomaticTasks:off`
+incident, which cost a full diagnosis cycle).
+
+**Cross-ref:** `T-REVIVAL-FOLDER-RESTORE-DEPENDENCY-001`,
+`T-CURSOR-GHOST-BUFFER-IS-NOT-RESUME-001`.
