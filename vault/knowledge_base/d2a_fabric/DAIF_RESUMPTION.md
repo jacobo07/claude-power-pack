@@ -105,15 +105,82 @@ ACIS, CO, GK, PM, D2A-engine) **compound**, not a re-build of any of them.
   likely trustworthy despite the leak (CLAUDE.md content carries no session-specific obligations or
   current-reality facts, so it cannot be what lets an arm avoid asking for the session); clause 3 and
   invention are the ones the leak most directly compromises, in this rerun AND in the original SCS
-  C97 trial alike. **Fix path, not yet applied:** re-run with `--system-prompt-file <packet-only>`
-  or `--append-system-prompt` replacing the bare packet-as-stdin approach, so Arm A's ONLY system
-  content is the compiled pack — or run the CLI from a directory with no CLAUDE.md at all. Either
-  requires changing `_call_model()` and re-spending real API money; not done unilaterally here.
-- **STANDING STATE: the Part XI done-gate remains OPEN.** Clause 4 has never passed. Do not build
-  further derived systems on top of an unclosed proving vertical. The immediate next action is the
-  overhead/isolation question above, not another content fix to the pack — six failed Arm-A runs on
-  the same clause is the anti-antipattern-protocol's 2-consecutive-failures law, applied: change the
-  approach, don't retry the same shape a third time.
+  C97 trial alike.
+- **ISOLATION AUDIT (2026-07-19) + FIX APPLIED, commits `6a5680d` + `a69e27d`.** Exact call site:
+  `modules/daif/two_arm_trial.py` `_call_model()` (was line ~166). `claude --help` flags probed
+  live, not assumed: `--bare` breaks auth outright on this host (OAuth/keychain — its own help
+  text says those are "never read" under it; live probe returned `"Not logged in"`). `--safe-mode`
+  preserves auth (help text: "Auth ... work normally", confirmed live) while disabling
+  CLAUDE.md/skills/hooks/plugins. `--tools ""` (omit tool definitions entirely) beat
+  `--disallowed-tools <list>` for a zero-tool arm — cheaper (definitions never enter context) and
+  more literally "zero tools" than "many tools, all denied". `ISOLATION_FLAGS = ["--safe-mode",
+  "--tools", ""]`, applied to **Arm A only, by design** — Arm B (full transcript) stays
+  unisolated on purpose, since it represents the real re-reading path as it actually runs today.
+  Verified via the real function, not just a hand probe: `measure_session_overhead(isolate=True)`
+  = 4,895 tokens (down from 74,063); `isolate=False` = 74,076 (Arm B unchanged, as intended).
+  `TrialResult` gained `arm_b_overhead_tokens` — `session_overhead_tokens` is now Arm A's isolated
+  floor specifically, not a shared number.
+- **SINGLE-MISSION CHECK (78014709) BEFORE THE FULL RE-RUN — as F2 instructed.** Arm A tokens
+  114,553 → 48,549 (near the real pack size, confirming isolation is real). Clause 4's request
+  became legibly REASONED from the pack itself — the arm correctly noted "pack discloses only 15"
+  paths and still wanted the full list, which is a genuinely more trustworthy FAIL signal than
+  anything pre-isolation produced. Clause 3/invention still showed 5 "ungrounded" citations, but
+  every one had the shape `"HR-CASCADE-002: STOP before destructive delete without backup"` — an
+  id plus a paraphrase, exactly what `CONTINUATION_TASK`'s own prompt invites ("identifier OR
+  short name"). Checked all 5 bare ids against the real compiled pack via a free, local,
+  no-API call (`compile_session` + set membership): **5/5 present in the pack, 0/5 invented.**
+  Fixed the adjudicator (`_is_grounded_strict`, `a69e27d`): an "id: gloss" citation is now grounded
+  if the id-prefix exactly matches a `pack_id`. Re-adjudicated the SAME saved data, no new model
+  call: clause 3 and invention both moved FAIL → PASS, 0 remaining ghosts. `tools/test_daif_two_
+  arm_trial.py` still `DAIF_TRIAL_PASS=8/8` (the fabricated-id adversarial case still FAILs
+  correctly — this isn't a matcher that now says yes to everything).
+- **FULL --sample RE-RUN COMPLETE (2026-07-19) with both fixes live — clean signal at last.**
+  `DAIF_TRIAL_PASS=8/8`. **Clause 3: PASS/PASS/PASS — all 92/86/83 citations grounded on the
+  STRICT matcher alone, 0 needing the lenient fallback.** This clause was never really "mixed" —
+  it was the isolation leak plus the id-prefix matcher gap, both closed, and the noise is gone.
+  **Invention: PASS/PASS/PASS**, same reason. **Token delta saved (B−A): +141,081 / +109,376 /
+  +106,735** — roughly double the pre-isolation numbers, because Arm A is no longer billed for a
+  phantom CLAUDE.md load it never needed.
+  **Clause 4: FAIL/FAIL/FAIL — unchanged, but now for three legible, DIFFERENT, diagnostic
+  reasons per mission (full requests in `vault/trials/two_arm_*.json`), not noise:**
+  - **Mission `c718d3f5`**: the pack was `FAIL_VISIBLE` (still over `TOKEN_BUDGET`, the known,
+    Owner-decision-pending issue). The arm's own words: *"the pack itself is FAIL_VISIBLE (20272
+    est. tokens against a 20000 budget) and cannot certify mission completion without this
+    check."* This is the compiler correctly failing visibly (clause 7) and the actor correctly
+    trusting that refusal — not a content-quality failure to fix.
+  - **Mission `78014709`**: top request is the untruncated `git status`/`git diff` (pack
+    discloses 15 of 107 paths) — the same MAX_LISTED_PATHS budget tension as mission 1, one step
+    short of FAIL_VISIBLE. The remaining requests (`vault/progress.md`, `RESUMPTION_FILE.md`,
+    `d2a_engine.py`) are all `referenced_files`-CONFIRMED-to-exist but content-unread — the actor
+    wants to verify CONTENT, not just existence, before acting, which is HR-PREMISE-001 (itself a
+    constraint IN the pack) working as designed, not paranoia.
+  - **Mission `f2910b35`**: wants live external state no compiled pack of this design could ever
+    carry — Cursor/Kickbacks extension logs, status-bar config, PP-side patch code for a task the
+    pack only summarizes. Tellingly, **Arm B (full raw transcript) PASSED clause 4 on this
+    mission** — the narrative detail a full re-read preserves is exactly what an
+    obligation/constraint EXTRACTION (this compiler's whole design) does not carry forward. This
+    is evidence of an architectural ceiling on extraction-based compilation, not a fixable field.
+  **VERDICT: the anti-antipattern-protocol's 2-consecutive-failures law applies — clause 4 has
+  now failed 3/3 across THREE independent measurement rounds (9 total Arm-A runs, 0 passes:
+  original SCS C97, first rerun, this isolation-fixed rerun). Per F2's own instruction, this is
+  NOT another content patch. It is a decision for the Owner, not the agent, between:**
+  (a) **narrow the vertical's claim** — DAIF-08 11.5 clause 4 demands ZERO re-reading with NO
+  partial credit; the measured reality is LARGE, real reductions (avg ~119K tokens saved per
+  mission) with occasional, diagnosable follow-up requests, which is a different and still
+  valuable claim, just not the one currently written; or
+  (b) **raise `TOKEN_BUDGET`** to close missions 1 and 2's specific failure mode (2 of 3), which
+  would leave mission 3's architectural ceiling as the sole open question; or
+  (c) **accept the ceiling** — some missions need the full transcript's narrative, and the
+  vertical's real contribution is being CHEAPER and SUFFICIENT for the missions where extraction
+  captures what's needed, with a visible, honest FAIL for the ones where it doesn't (which is
+  what clause 7 already does — the system IS failing visibly, exactly as designed, on mission 3).
+  None of these are decided here. **Do not attempt a fourth content fix without an Owner call on
+  (a)/(b)/(c) first** — that would be the exact 3rd-retry-of-the-same-shape the doctrine forbids.
+- **STANDING STATE: the Part XI done-gate remains OPEN, and it now stays open by an INFORMED
+  decision, not a still-noisy measurement.** The trial is doing precisely what DAIF-08 11.7 says
+  it should: producing a real, attributed number and refusing to assert an unearned claim. Do not
+  build further derived systems on top of an unclosed proving vertical; do not re-attempt closing
+  clause 4 without first resolving (a)/(b)/(c) above with the Owner.
 - Batching pattern that works: 3 batches/dataset (I–VII, VIII–XIV, XV–XX) via Agent SOLO; verify+merge+gate+commit each;
   seal on full-20 gate pass; push after seal.
 - Directory: `vault/knowledge_base/d2a_fabric/`. Fabrication contract = SQI's (`sqi/CANONICAL_ONTOLOGY.md` §9):
