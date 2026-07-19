@@ -5,11 +5,19 @@
 fidelity as behavioral equivalence, rework) and composes the method DAIF-03 Part X already defines.
 This module is that method, run against real sessions with a real model.
 
-The two arms (DAIF-03 10.3), identical in every respect except the input packet:
-  Arm B (control) : the full conversational source of the session.
-  Arm A (compiled): the resume pack, with NO tool by which the source could be reached.
+The two arms (DAIF-03 10.3):
+  Arm B (control) : the full conversational source of the session. UNISOLATED — runs under this
+                    repo's normal CLAUDE.md/skills/hooks, because that is the real, current
+                    re-reading path and isolating it would test a baseline nobody actually has.
+  Arm A (compiled): the resume pack, with NO tool by which the source could be reached, and
+                    ISOLATED via ISOLATION_FLAGS (T-DAIF-ISOLATION-LEAK-001) so the pack is its
+                    ONLY context — no repo CLAUDE.md, skills, or hooks auto-loaded on top of it.
 Same model, same build, same window, same task verbatim, and zero tools in BOTH arms — an arm that
-can silently reach the source is not testing the artifact, it is testing the source with extra steps.
+can silently reach the source is not testing the artifact, it is testing the source with extra
+steps. The isolation asymmetry is deliberate, not an oversight: clause 3 and 4 are measured on
+Arm A alone, and what they measure is whether the PACK is sufficient — which requires Arm A to
+have nothing else to fall back on. Arm B's role is only the token/cost baseline and the control-arm
+clause-4 reading; it was never the surface those clauses are adjudicated against.
 
 Adjudication (10.4) is deterministic code with the arm labels stripped, against the rubric sealed in
 vault/plans/daif-two-arm-trial-2026-07-13.md BEFORE any arm ran. The adjudicator is not the compiler
@@ -48,6 +56,21 @@ TRIAL_MODEL = "claude-sonnet-5"
 # 10.3 — no tool by which the source could be reached, in EITHER arm.
 DENIED_TOOLS = ["Read", "Glob", "Grep", "Bash", "PowerShell", "Edit", "Write", "NotebookEdit",
                 "Task", "Agent", "WebFetch", "WebSearch", "TodoWrite"]
+
+# T-DAIF-ISOLATION-LEAK-001. `claude -p` auto-discovers this repo's CLAUDE.md/skills/hooks/plugins
+# regardless of --disallowed-tools -- confirmed via `claude --help` and a live probe: an isolated
+# Arm A call measured session_overhead at 74,063 tokens BEFORE this fix, and the same trivial call
+# under --safe-mode dropped to 28,074, then to ~6,156 once tool DEFINITIONS (not just invocation)
+# were also stripped via --tools "" instead of listing DENIED_TOOLS. --bare is NOT usable here: its
+# own help text says OAuth/keychain auth "are never read" under it, and this host authenticates via
+# OAuth -- probed live, --bare returned "Not logged in". --safe-mode's help text explicitly says
+# "Auth ... work normally", and a live probe confirmed it.
+#
+# Applied to Arm A ONLY, by design: the compiled pack must be the actor's ONLY context, which is
+# exactly what clause 3 and 4 measure. Arm B (the full transcript) is deliberately left
+# UNISOLATED -- it represents the real, current re-reading path, which in normal use DOES run
+# inside this repo's live CLAUDE.md, so isolating it would test a baseline nobody actually has.
+ISOLATION_FLAGS = ["--safe-mode", "--tools", ""]
 
 CLI_TIMEOUT_S = 900
 
@@ -126,7 +149,14 @@ class TrialResult:
     safety_verdict: str = "N/A"   # read-only mission; recorded as N/A, never as a pass
     arm_a: dict[str, Any] = field(default_factory=dict)
     arm_b: dict[str, Any] = field(default_factory=dict)
+    # T-DAIF-ISOLATION-LEAK-001 — the two arms are no longer isolated identically (Arm A is
+    # isolated via ISOLATION_FLAGS, Arm B deliberately is not), so they no longer share one
+    # overhead figure. session_overhead_tokens is kept, RE-DEFINED as Arm A's (isolated) floor —
+    # the number the F1 done-gate names ("session_overhead en Arm A cae ... hacia el tamano real
+    # del pack"). arm_b_overhead_tokens is new and reports Arm B's (unisolated) floor honestly
+    # rather than silently reusing Arm A's now-much-smaller number for both.
     session_overhead_tokens: int = 0
+    arm_b_overhead_tokens: int = 0
     notes: list[str] = field(default_factory=list)
 
 
@@ -161,10 +191,13 @@ def session_source_text(session_path: Path) -> str:
     return "\n\n".join(out)
 
 
-def _call_model(prompt: str) -> dict[str, Any]:
-    """One arm, one call. Zero tools. Real tokens from the API, never an estimate."""
-    cmd = ["claude", "-p", "--output-format", "json", "--model", TRIAL_MODEL,
-           "--disallowed-tools", *DENIED_TOOLS]
+def _call_model(prompt: str, isolate: bool = False) -> dict[str, Any]:
+    """One arm, one call. Zero tools. Real tokens from the API, never an estimate.
+
+    isolate=True (Arm A only) adds ISOLATION_FLAGS so the pack is the actor's ONLY context —
+    no repo CLAUDE.md, skills, or hooks auto-loaded (T-DAIF-ISOLATION-LEAK-001)."""
+    cmd = ["claude", "-p", "--output-format", "json", "--model", TRIAL_MODEL]
+    cmd += ISOLATION_FLAGS if isolate else ["--disallowed-tools", *DENIED_TOOLS]
     try:
         proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
                               encoding="utf-8", errors="replace", timeout=CLI_TIMEOUT_S)
@@ -187,7 +220,7 @@ def _call_model(prompt: str) -> dict[str, Any]:
 def _arm(arm: str, packet_name: str, context_block: str) -> ArmResult:
     prompt = f"CONTEXT ({packet_name}):\n{context_block}\n\n---\n\n{CONTINUATION_TASK}"
     res = ArmResult(arm=arm, packet=packet_name, ok=False, packet_chars=len(context_block))
-    call = _call_model(prompt)
+    call = _call_model(prompt, isolate=(arm == "A_compiled"))
     if not call["ok"]:
         res.error = call["error"]
         return res
@@ -363,10 +396,12 @@ def adjudicate_invention(parsed: dict[str, Any], pack_ids: set[str], pack_texts:
                     f"(disclosed, not dropped)")
 
 
-def measure_session_overhead() -> int:
-    """The CLI carries a system prompt, CLAUDE.md, hooks and skills into every call. It is IDENTICAL
-    in both arms and cancels in the delta, but it is measured rather than assumed, and reported."""
-    call = _call_model("Reply with exactly: OK")
+def measure_session_overhead(isolate: bool = False) -> int:
+    """T-DAIF-ISOLATION-LEAK-001 — the CLI carries a system prompt, and (unless isolate=True)
+    this repo's CLAUDE.md, hooks and skills, into every call. Since Arm A and Arm B no longer run
+    under the same flags, this is no longer one identical-in-both-arms number; call it once per
+    arm's isolation setting and report both, rather than assuming they cancel."""
+    call = _call_model("Reply with exactly: OK", isolate=isolate)
     if not call["ok"]:
         return 0
     u = call["envelope"].get("usage", {}) or {}
@@ -374,7 +409,8 @@ def measure_session_overhead() -> int:
             + int(u.get("cache_read_input_tokens", 0) or 0) + int(u.get("output_tokens", 0) or 0))
 
 
-def run_trial(session_path: str | Path, overhead: int | None = None) -> TrialResult:
+def run_trial(session_path: str | Path, overhead_a: int | None = None,
+              overhead_b: int | None = None) -> TrialResult:
     session = Path(session_path)
     notes: list[str] = []
 
@@ -398,8 +434,10 @@ def run_trial(session_path: str | Path, overhead: int | None = None) -> TrialRes
     arm_a = _arm("A_compiled", "the compiled DAIF-08 resume pack for this session",
                  json.dumps(package, ensure_ascii=False, indent=2))
 
-    if overhead is None:
-        overhead = measure_session_overhead()
+    if overhead_a is None:
+        overhead_a = measure_session_overhead(isolate=True)
+    if overhead_b is None:
+        overhead_b = measure_session_overhead(isolate=False)
 
     c3, c3_ev = adjudicate_clause_3(arm_a.parsed, pack_ids, pack_texts, pack_wordsets)
     c4, c4_ev = adjudicate_clause_4(arm_a.parsed)
@@ -440,7 +478,8 @@ def run_trial(session_path: str | Path, overhead: int | None = None) -> TrialRes
         invention_verdict=inv, invention_evidence=inv_ev,
         equivalence_overlap=round(overlap, 3),
         arm_a=asdict(arm_a), arm_b=asdict(arm_b),
-        session_overhead_tokens=overhead,
+        session_overhead_tokens=overhead_a,
+        arm_b_overhead_tokens=overhead_b,
         notes=notes,
     )
 
@@ -477,11 +516,13 @@ def main(argv: list[str] | None = None) -> int:
                   f"status={pkg['status']}")
         return 0
 
-    overhead = measure_session_overhead()
-    print(f"session overhead (identical in both arms, cancels in the delta): {overhead:,} tokens\n")
+    overhead_a = measure_session_overhead(isolate=True)
+    overhead_b = measure_session_overhead(isolate=False)
+    print(f"session overhead — arm A (isolated, ISOLATION_FLAGS)   : {overhead_a:,} tokens")
+    print(f"session overhead — arm B (unisolated, natural baseline): {overhead_b:,} tokens\n")
 
     for t in targets:
-        r = run_trial(t, overhead=overhead)
+        r = run_trial(t, overhead_a=overhead_a, overhead_b=overhead_b)
         path = write_trial(r, args.out if len(targets) == 1 else None)
         print(f"== {r.session_id} ==")
         print(f"  arm B (control, full source) : {r.arm_b_tokens:>9,} tokens  ${r.arm_b['cost_usd']:.4f}")
