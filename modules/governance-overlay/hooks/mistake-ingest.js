@@ -33,6 +33,10 @@ const { execFileSync } = require('child_process');
 const REGISTRY_REL = 'modules/governance-overlay/mistakes-registry.md';
 const CACHE_REL = '_audit_cache/seen_mistakes.json';
 const CHECKPOINT_TOOL_REL = 'tools/session_checkpoint.py';
+// Absolute path, not bare 'python' — matches the proven-working pattern in
+// hooks/bug-hunter-ceps-bridge.js. Bare 'python' depends on PATH resolution
+// inside the hook runner's child process, which is not guaranteed.
+const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
 
 const MISTAKE_HEADER_REGEX = /^## Mistake #(\d+):\s*(.+?)\s*$/gm;
 
@@ -72,7 +76,7 @@ process.stdin.on('end', () => {
     // Resolve project root — walk up from the edited file until we hit the repo root
     let projectRoot;
     try {
-        projectRoot = path.resolve(filePath, '..', '..', '..', '..');  // modules/governance-overlay/ → repo
+        projectRoot = path.resolve(filePath, '..', '..', '..');  // mistakes-registry.md → governance-overlay/ → modules/ → repo
         // Sanity: registry should exist at the resolved root
         if (!fs.existsSync(path.join(projectRoot, REGISTRY_REL))) {
             // Fallback: walk up from filePath looking for .git
@@ -147,7 +151,7 @@ process.stdin.on('end', () => {
         try {
             // Verified signature (session_checkpoint.py learn-error --help):
             // --category CATEGORY | --symptom SYMPTOM | --root-cause ROOT_CAUSE | --fix FIX
-            const out = execFileSync('python', [
+            const out = execFileSync(PY, [
                 checkpointTool, 'learn-error',
                 '--category', 'governance-mistake',
                 '--symptom', symptom,
