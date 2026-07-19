@@ -7,6 +7,12 @@ depth tiers using keyword heuristics, and prints a migration report.
 
 Usage:
     python migrate.py <path-to-executionos.md> [--verify]
+
+Status: historical tool, already executed, no active role. It produced
+the tiered structure that now lives under core.md / phases/ / overlays/
+in this directory; nothing in the repo calls migrate.py at runtime.
+Kept for provenance and for re-running the same classification if the
+source ExecutionOS markdown ever needs re-migrating from scratch.
 """
 
 import argparse
