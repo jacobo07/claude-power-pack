@@ -430,6 +430,19 @@ const CPC_REGISTER_SCRIPT =
   + "from modules.cpc_os.registry import PaneRegistry\n"
   + "reg = PaneRegistry.load()\n"
   + "sid = os.environ.get('PP_PANE_SID') or None\n"
+  // Beacon FIRST, before the heavier registry/snapshot work: the ancestor walk
+  // needs this process's parent chain still present in the process table, and
+  // that chain runs back through the node hub which is exiting. kclaude.ps1 can
+  // only beacon a session whose id it knows AT LAUNCH (--resume), so a FRESH
+  // session never got one and fell out of tasks.json as soon as it idled past
+  // the ACTIVE tier -- exactly the day-old pane the Owner expects back
+  // (T-BEACON-NEW-SESSION-GAP-001). Idempotent and fail-open: returns None and
+  // writes nothing when the id or the owning claude.exe cannot be resolved.
+  + "try:\n"
+  + "    from modules.cpc_os.beacon import write_session_beacon\n"
+  + "    write_session_beacon(sid, os.environ.get('PP_PANE_CWD'))\n"
+  + "except Exception:\n"
+  + "    pass\n"
   + "reg.register_pane(os.environ['PP_PANE_ID'], "
   + "os.environ['PP_PANE_CWD'], os.environ.get('PP_PANE_TASK', 'active'), "
   + "session_id=sid)\n"

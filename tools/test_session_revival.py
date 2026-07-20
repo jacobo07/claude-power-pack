@@ -333,6 +333,71 @@ def test_settings_required() -> None:
               "persistentSessions=true, restoreWindows=all, no restoreTerminals")
 
 
+# ---------------------------------------------------------------------------
+# V-BEACON-NEW-SESSION
+#   T-BEACON-NEW-SESSION-GAP-001: kclaude.ps1 beacons only a session whose id it
+#   knows at launch (--resume), so a FRESH session had none and vanished from
+#   tasks.json once it idled past ACTIVE. The hub closes that -- but only if the
+#   beacon it writes is READABLE BY THE READER, which is a different module.
+#   Hermetic: TEMP is redirected, so no real beacon is created or deleted.
+# ---------------------------------------------------------------------------
+def test_beacon_new_session() -> None:
+    gate = "V-BEACON-NEW-SESSION"
+    import tempfile as _tf
+
+    from modules.cpc_os import beacon as _b
+    from modules.cpc_os import vscode_autorun as _va
+
+    detail = []
+
+    hub_src = (_PP_ROOT / "hooks" / "session_start_hub.js").read_text(
+        encoding="utf-8", errors="replace")
+    if "write_session_beacon" not in hub_src:
+        _fail(gate, "hub does not call write_session_beacon -- new sessions "
+                    "still get no beacon")
+        return
+    detail.append("hub wires it")
+
+    # An absent session id must write nothing rather than beacon a null sid.
+    if _b.write_session_beacon("") is not None:
+        _fail(gate, "empty sid produced a beacon")
+        return
+    # A bogus start pid must fail open (None), never raise, inside SessionStart.
+    if _b.owning_pane_pid(start_pid=0) is not None:
+        _fail(gate, "owning_pane_pid(0) resolved an owner")
+        return
+    detail.append("fail-open on empty sid and bad pid")
+
+    owner = _b.owning_pane_pid()
+    if owner is None:
+        _ok(gate, "; ".join(detail) + "; writer/reader parity unmeasurable "
+                                      "(no claude.exe ancestor from this host)")
+        return
+
+    real = _tf.gettempdir
+    with tempfile.TemporaryDirectory() as sandbox:
+        _tf.gettempdir = lambda: sandbox
+        try:
+            sid = "beacon-gate-0000-1111-222233334444"
+            wrote = _b.write_session_beacon(sid, sandbox)
+            if not wrote:
+                _fail(gate, "writer produced no beacon despite a live owner pid")
+                return
+            if sid not in _va.live_beacon_sids():
+                _fail(gate, "beacon written but INVISIBLE to live_beacon_sids -- "
+                            "writer and reader disagree on format or naming")
+                return
+            if _b.write_session_beacon(sid, sandbox) is not None:
+                _fail(gate, "second write duplicated an existing beacon "
+                            "(would clobber kclaude.ps1's on a resumed pane)")
+                return
+        finally:
+            _tf.gettempdir = real
+    detail.append(f"beacon for owner pid {owner} round-trips to the reader; "
+                  "re-entry is a no-op")
+    _ok(gate, "; ".join(detail))
+
+
 def main() -> int:
     print("SESSION REVIVAL GATES")
     print("=" * 60)
@@ -343,7 +408,8 @@ def main() -> int:
                test_no_duplicate_folderopen,
                test_no_silent_new,
                test_writers_agree,
-               test_settings_required):
+               test_settings_required,
+               test_beacon_new_session):
         try:
             fn()
         except Exception as e:  # noqa: BLE001 - a crashing gate is a failing gate
