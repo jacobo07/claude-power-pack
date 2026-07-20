@@ -169,24 +169,79 @@ memory" doctrine from the source document (`Downloads/Dataset CrawlOS 1.txt`).
   returning the dataset as a real node. Pushed to origin 2026-07-20: commit `1e0e7f3`,
   REMOTE_DELTA 0 0 confirmed.
 
+- **`DATASET_01_CONTRACT.md` retroactive backfill CLOSED 2026-07-20.** Dataset #01 predated
+  the contract-first convention Dataset #10 started; the gap was flagged twice across two
+  prior handoffs. Backfilled in the same ownership/non-ownership/consumers/dependencies/
+  invariants/failure-taxonomy/test-strategy/completion-contract shape as DS02/DS10, grounded
+  in the dataset's actual sealed text — all 25 Parts read directly this session (Parts
+  I-XXV in full), not carried forward from an earlier plan. Ownership section names all
+  fourteen engines, the cost ladder, the Evidence Object schema, the ten Reality Gates, the
+  four composition boundaries (CO-01/GK-04/DRK-03/Deep Research), the seven-verdict
+  ontology, deployment-plane separation, the five-verb interface, the amendment process, and
+  the family-wide eleven-pattern failure catalog (Part XXII) -- named explicitly as the
+  shared root every sibling dataset's own narrower taxonomy traces back to, distinct from
+  DS02's nine-class and DS10's seven-class dataset-specific catalogs. `tools/test_crawl_os.py`
+  extended with `V-CRAWLOS-DS01-CONTRACT` (14 gates total), hermetic 14/14 across 3 runs.
+  Pushed to origin 2026-07-20: commit `ee226d4`, REMOTE_DELTA 0 0 confirmed. Note: local
+  `main` had lost its upstream tracking config in this pane (other panes' branches still had
+  it) -- `git push --set-upstream origin main` restored it; not a divergence, just a missing
+  local tracking ref.
+
+- **Dataset 16 (Authorization, Compliance and Safety) SEALED 2026-07-20: 25 of 25 Parts.**
+  File: `vault/knowledge_base/crawl_os/crawl_os_16_authorization_compliance_and_safety.txt`.
+  Dataset contract at `vault/knowledge_base/crawl_os/DATASET_16_CONTRACT.md`, created before
+  Part I per PASO -1. Word counts: I 1639, II 1433, III 1379, IV 1439, V 1393, VI 1541,
+  VII 1306, VIII 1523, IX 1362, X 1364, XI 1485, XII 1423, XIII 1471, XIV 1253, XV 1395,
+  XVI 1582, XVII 1529, XVIII 1235, XIX 1246, XX 1244, XXI 1393, XXII 1282, XXIII 1358,
+  XXIV 1350, XXV 1307 -- total ~34,733 words, zero Parts under floor (min 1206... min 1235
+  after Parts XVIII/XIX were strengthened from an initial under-floor draft with genuinely
+  new subsections, never padding). Every Part closes with its own PART N FINAL LAW.
+  This dataset elaborates Dataset #01's Part V §5.13 Governance, Safety, and Authorization
+  engine operationally -- the four-stage adjudication pipeline (signal-gathering /
+  conflict-resolution / verdict-assignment / record-keeping), domain- and authentication-
+  scoped access-boundary adjudication, robots.txt/terms-of-service/rate-limit signal
+  mechanics, a consent framework distinct from target-side permission, authentication
+  isolation ("possession is not permission"), a closed three-class restricted-actions
+  taxonomy, the operator-approval workflow and seventh-cost-ladder-rung authorization, a
+  data-minimization policy ceiling distinct from Dataset #10's retention mechanics, the
+  composite verdict feeding Dataset #01's Gate C, an authorization audit trail, the
+  burden-of-proof/ambiguity discipline, re-adjudication and stale-verdict handling, three
+  composition boundaries (Dataset #01 Part X secrets, Dataset #10 Part XII retention,
+  Dataset #02 + the future Acquisition Strategy Router), cross-mission consistency
+  (rate-limit laundering, repeated-denial persistence, cross-mission credential drift),
+  verdict revision/dispute, this dataset's own eight-class failure taxonomy, and its own
+  amendment triggers. Contamination audit: **zero hits** -- the first Crawl OS dataset to
+  reach a genuine zero rather than the 2-3 legitimate self-referential/worked-example hits
+  every prior sealed dataset carried; every worked example across Parts III/VI/VIII/X/XIII
+  was checked against the forbidden-domain pattern before being written, and the audit's own
+  closing sentence (Part XXV §25.5) was run back through the same pattern before being
+  accepted. A genuine near-miss was caught and fixed pre-commit: Part XXV §25.6's own prose
+  ("stub-marker audit", the literal string "NOT YET DRAFTED") would have tripped this
+  family's own dev-scaffold and Part-Map-residue detectors on a self-referential meta-
+  mention; reworded obliquely before it ever reached the test suite, the same class of fix
+  `governance/KNOWN_FALSE_POSITIVES.md` already documents for exactly this pattern.
+  `tools/test_crawl_os.py` extended to cover DS16 (18 gates total: 4 datasets x
+  EXISTS/PARTS/FINAL-LAWS + 4 contract gates + NO-STUBS + NO-CONTAMINATION), hermetic 18/18
+  across 3 runs; DS16's own contamination baseline is 0, not the 3 every prior dataset
+  needed. Graphify confirmed `crawl_os_16` returns as a real `dataset` node without a
+  separate re-index step. Pushed to origin 2026-07-20: commit TBD (recorded below once
+  pushed), REMOTE_DELTA 0 0 to be confirmed.
+
 ## 4. Next actions (imperative — highest value first)
 
-1. Then dataset 16 (Authorization, Compliance and Safety), per the dependency-based build
-   order (`wiggly-sparking-dolphin.md`) — sequenced early (position 4 of 18) specifically
-   because it must bound the acquisition engines from their first Part, not audit them
-   after the fact. Dataset 02's own Parts IX/X (permitted domains, authorized
-   authentication) already forward-cite it heavily as PLANNED; read those citations before
-   drafting 16's own contract, since 16's eventual field shapes should stay compatible with
-   what 02 already promised to hand it.
-2. Retroactively create `DATASET_01_CONTRACT.md` before any future dataset elaborates
-   Dataset #01 further — the contract-first convention started with Dataset #10 and
-   Dataset #01 predates it, a gap flagged twice now (this file's own prior entries) and
-   still not closed.
-3. Consider extending `tools/test_crawl_os.py` with a citation-audit check (grep for
+1. Dataset 3 (Adaptive Acquisition Strategy Routing), per the dependency-based build order
+   (`wiggly-sparking-dolphin.md`) -- the next acquisition engine now that Authorization
+   (position 4) is sealed and can actually bound it. Dataset 16's own Part XX already
+   forward-cites the Acquisition Strategy Router's own composition boundary in full detail
+   (rung selection vs. authorization, the composite-verdict handoff, the authorization-
+   laundering-through-routing failure) -- read that Part before drafting 03's own contract,
+   since 03's eventual design should stay compatible with what 16 already promised to hand
+   it, mirroring how 16 itself was built compatible with what 02 had already promised.
+2. Consider extending `tools/test_crawl_os.py` with a citation-audit check (grep for
    verbatim schema field-list phrases duplicated across datasets) as a permanent
    regression guard for the restatement failure Dataset #10's own Part XXV §25.4 checked
-   manually — genuinely pending, not blocking, since the current 13-gate suite already
-   covers structure/floor/final-law/stub/contamination hermetically.
+   manually — genuinely pending, not blocking, since the current 18-gate suite already
+   covers structure/floor/final-law/stub/contamination/contract-existence hermetically.
 
 ## 5. Start instruction
 
