@@ -4,6 +4,54 @@
 // blocks (Stop must always succeed). BOM-strip defensive.
 'use strict';
 
+const fs = require('fs');
+
+// Returns the concatenated text blocks of the most recent assistant turn.
+// Fail-open: any read/parse problem yields '' (hook stays silent) rather
+// than throwing inside a Stop hook, which must always succeed.
+function readLastAssistantText(transcriptPath) {
+  if (!transcriptPath || typeof transcriptPath !== 'string') return '';
+  let raw;
+  try {
+    const { size } = fs.statSync(transcriptPath);
+    // Bounded tail read -- transcripts grow unbounded over a session.
+    const TAIL = 512 * 1024;
+    const start = size > TAIL ? size - TAIL : 0;
+    const fd = fs.openSync(transcriptPath, 'r');
+    try {
+      const buf = Buffer.alloc(size - start);
+      fs.readSync(fd, buf, 0, buf.length, start);
+      raw = buf.toString('utf8');
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch {
+    return '';
+  }
+
+  // A first line truncated by the tail offset simply fails JSON.parse
+  // below and is skipped, so it needs no special handling.
+  const lines = raw.split('\n');
+  const out = [];
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    let rec;
+    try { rec = JSON.parse(line); } catch { continue; }
+    // Walking back, stop at the user message that opened this turn.
+    if (rec.type === 'user') break;
+    if (rec.type !== 'assistant') continue;
+    const content = rec.message && rec.message.content;
+    if (!Array.isArray(content)) continue;
+    for (const block of content) {
+      if (block && block.type === 'text' && typeof block.text === 'string') {
+        out.push(block.text);
+      }
+    }
+  }
+  return out.join('\n');
+}
+
 (async () => {
   let payload = '';
   try {
@@ -38,9 +86,10 @@
     process.exit(0);
   }
 
-  // The Stop payload schema is harness-defined and may evolve;
-  // stringify-and-scan is robust to schema drift.
-  const transcript = JSON.stringify(req).toLowerCase();
+  // The Stop payload carries transcript_path (a path), never the turn's
+  // prose -- scanning the payload itself matches nothing the harness ever
+  // sends. Read the transcript and scan the last assistant turn's text.
+  const transcript = readLastAssistantText(req.transcript_path).toLowerCase();
   const hitCount = MARKERS.filter(t => transcript.includes(t)).length;
 
   if (hitCount === 0) {

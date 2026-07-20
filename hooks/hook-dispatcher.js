@@ -125,6 +125,9 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jobs_woz_gate.js', timeoutMs: 15000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/jit_correlate_stop.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_snapshot_stop.js', timeoutMs: 10000 },
+    // Wired 2026-07-20 (PP audit). Was built + documented as enforcing
+    // HR-OUTPUT-001 but registered nowhere. Advisory only, block:false.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/output_contract_stop.js', timeoutMs: 8000 },
     // ADS auto-documentation (BL-ADS-001). Reads cwd from the Stop JSON,
     // diffs the working tree, writes docs/{prd,arch,constitution,changelog}
     // for CREATED/UPDATED modules. NEVER stages/commits; fail-open (always
