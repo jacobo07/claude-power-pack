@@ -224,8 +224,8 @@ memory" doctrine from the source document (`Downloads/Dataset CrawlOS 1.txt`).
   EXISTS/PARTS/FINAL-LAWS + 4 contract gates + NO-STUBS + NO-CONTAMINATION), hermetic 18/18
   across 3 runs; DS16's own contamination baseline is 0, not the 3 every prior dataset
   needed. Graphify confirmed `crawl_os_16` returns as a real `dataset` node without a
-  separate re-index step. Pushed to origin 2026-07-20: commit TBD (recorded below once
-  pushed), REMOTE_DELTA 0 0 to be confirmed.
+  separate re-index step. Pushed to origin 2026-07-20: commit `455a58e`, REMOTE_DELTA 0 0
+  confirmed.
 
 ## 4. Next actions (imperative — highest value first)
 
