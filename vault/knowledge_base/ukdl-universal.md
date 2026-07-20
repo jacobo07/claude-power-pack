@@ -4771,6 +4771,51 @@ The same error the D2A engine makes mechanically (false FOLDs by token overlap)
 is reproducible by hand — two instruments, one bias, one direction. Content-tier
 verification is the only gate that prevents either.
 
+### AMENDMENT (same day) — the counter-bias, and why "grep returns zero" is NOT proof
+
+The rule as first sealed said evidence of absence means "a targeted grep returning
+zero." **That is insufficient, and is itself a failure mode.** Measured during the
+Tribunal re-run that this rule was written to govern:
+
+A verifier grepped DAIF-02 for the proposal's specific pass names
+(`assumption hoisting`, `subproblem memoization`, `tool-call coalescing`,
+`verification fusion`), got zero hits, and concluded the file had no optimizer —
+while **`PART XV — THE OPTIMIZER PIPELINE` sat in that same file**, defining "a
+pipeline of named passes, each taking a declared input class… each gated." The
+mechanism was present under the owner's OWN vocabulary. A second verifier nearly
+repeated it: grepping `depreciat|amortiz|impairment`, finding nothing, and almost
+declaring asset depreciation absent — when it exists as a `DECLINING → RETIRED`
+lifecycle with evidence gates.
+
+**A targeted grep proves a TERM is absent. Only reading the owner's section index
+proves a MECHANISM is.**
+
+So there are TWO opposed biases, and a corpus audit must be defended against both:
+
+| bias | direction | cause | defense |
+|---|---|---|---|
+| title matching | over-ABSORB | shared metaphor read as shared subject | check the SUBJECT matches, not the name |
+| vocabulary-absence | over-KEEP | the proposal's words absent ≠ the owner's mechanism absent | read the owner's Part/section index FIRST, learn ITS vocabulary, then grep |
+
+MANDATORY ORDER OF OPERATIONS for any ownership verdict:
+1. Read the candidate owner's section index; learn the vocabulary it uses.
+2. Read the relevant sections in that vocabulary.
+3. Only then run absence greps, reading a zero as "this term is absent."
+4. DISCOVER the denominator — rank candidates by mechanism-vocabulary hit density
+   across the whole corpus. The named owner is a hypothesis, not the search scope.
+
+EVIDENCE THE CORRECTION IS NOT ITSELF A BIAS: of the first five verdicts re-checked,
+four moved to EXTEND and **one survived as ABSORB at 90%**, with the verifier
+reporting zero findings and explicitly declining to manufacture one. A re-audit in
+which everything flips is measuring its own method, not its subject. One surviving
+verdict is what makes the other four credible.
+
+RELATED DEFECT FOUND IN THE SAME ARTIFACT — **circular ownership.** The Tribunal
+credited Science III to "Reasoning Compiler (exists)". No such module exists; the
+name traces back to the proposal itself. An owner column populated by name-lookup
+can cite a proposal as its own owner and read as ABSORB. Verify every claimed owner
+EXISTS before crediting it.
+
 ## T-D2A-REGISTRY-BLIND-SPOT-001 — a registry a gate depends on must be discovered, never curated
 Sealed 2026-07-20. Sibling of `PR-COVERAGE-BY-CONSTRUCTION-001`.
 
