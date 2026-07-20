@@ -106,7 +106,7 @@ def _tokens(s: str) -> list:
 # EXTEND-vs-NEW-vs-COVERED judgment every family made by hand at its own STOP #1,
 # made repeatable.
 # ---------------------------------------------------------------------------
-FAMILY_REGISTRY = {
+_CURATED_REGISTRY = {
     "CO-01": {"name": "Operating Economics / Cognitive Capital",
               "kw": ("cost", "economics", "capital", "work", "unit", "wu", "mtok",
                      "budget", "token", "ledger", "roi")},
@@ -236,6 +236,135 @@ FAMILY_REGISTRY = {
                               "warmth", "belonging", "emotional", "humiliation",
                               "cooperation", "nostalgia")},
 }
+
+# ---------------------------------------------------------------------------
+# Filesystem-derived families (T-D2A-REGISTRY-BLIND-SPOT-001, sealed 2026-07-20).
+#
+# The curated block above is high-precision but hand-enrolled, and was measured
+# blind to ~68% of the estate (973,500 of 1,422,209 words). Two error directions
+# were confirmed live: false FOLDs binding a wrong parent at 80-92% confidence by
+# matching the nearest registered vocabulary, and -- the dangerous one -- a false
+# KEEP on Counterfactual Intelligence, whose real owner (DRK-04) simply had no
+# row, which would have authorized building what already exists.
+#
+# A registry a gate depends on must be DISCOVERED from the filesystem, never
+# curated. Curated entries win on collision (they are more precise); discovery
+# only fills what nobody enrolled.
+# ---------------------------------------------------------------------------
+_KB_ROOT = _PP_ROOT / "vault" / "knowledge_base"
+
+# EVERY knowledge_base directory is derived, including those with curated rows.
+#
+# The first cut of this fix skipped directories that already had a curated ID, to
+# avoid double-counting their tokens. That exclusion list reproduced the defect it
+# was written to fix: nearly every curated family covers only SOME of its datasets
+# (DRK has 3 curated rows of 7 files, SQI 1 of 4, GK 4 of 13), so skipping the
+# directory kept the uncovered datasets invisible -- and the false KEEP on
+# Counterfactual Intelligence survived, because drk_04_counterfactual_* was in a
+# skipped directory. An exclusion list IS hand-curation.
+#
+# The double-counting fear was unfounded: `owned` is a set union, so a token held
+# by both a curated and a derived row is counted once in owned_fraction. Only
+# lit_count grows, and its threshold now scales with registry size.
+_CURATED_DIR_ALIASES = frozenset()   # retained for callers; deliberately empty
+
+_DERIVED_KW_CAP = 16          # median curated kw length; sem is recall over kw,
+                              # so an unbounded list dilutes its own family's score
+_COMMON_TOKEN_SHARE = 0.40    # a token in >40% of families discriminates nothing
+
+
+def _derive_kw(fdir):
+    """Derive a family's keyword set from its directory and dataset filenames.
+
+    Filenames, not contents: a family's own file naming is its most stable
+    self-description, and reading 478k words at import time is not acceptable.
+    """
+    counts = {}
+    for tok in _tokens(fdir.name.replace("_", " ")):
+        counts[tok] = counts.get(tok, 0) + 3        # directory name weighs most
+    for p in sorted(fdir.rglob("*.md")) + sorted(fdir.rglob("*.txt")):
+        if not p.is_file():
+            continue
+        stem = re.sub(r"\b[vV]?\d+\b", " ", p.stem.replace("_", " ").replace("-", " "))
+        for tok in _tokens(stem):
+            counts[tok] = counts.get(tok, 0) + 1
+    ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    return [t for t, _ in ordered[:_DERIVED_KW_CAP]]
+
+
+def _discover_families():
+    out = {}
+    try:
+        if not _KB_ROOT.is_dir():
+            return out                                  # fail-open: curated only
+        dirs = sorted(d for d in _KB_ROOT.iterdir() if d.is_dir())
+    except Exception:  # noqa: BLE001
+        return out
+    for d in dirs:
+        if d.name in _CURATED_DIR_ALIASES:
+            continue
+        try:
+            kw = _derive_kw(d)
+        except Exception:  # noqa: BLE001
+            continue
+        if len(kw) < 3:                                 # too thin to discriminate
+            continue
+        fid = "KB-" + d.name.upper().replace("_", "-")
+        out[fid] = {"name": f"{d.name} (knowledge_base family, filesystem-derived)",
+                    "kw": tuple(kw), "derived": True}
+    return out
+
+
+def _prune_common_tokens(reg):
+    """Drop tokens from DERIVED families that appear across many families.
+
+    A token present in most families carries no ownership signal -- it is exactly
+    what turned HR into a catch-all attractor (5 of 17 measured FOLDs). Curated
+    entries are left untouched: they were authored against a family's own stated
+    responsibilities and their precision is the reason they win on collision.
+    """
+    if not reg:
+        return
+    freq = {}
+    for fam in reg.values():
+        for tok in set(fam["kw"]):
+            freq[tok] = freq.get(tok, 0) + 1
+    ceiling = max(2, int(len(reg) * _COMMON_TOKEN_SHARE))
+    for fam in reg.values():
+        if not fam.get("derived"):
+            continue
+        pruned = tuple(t for t in fam["kw"] if freq.get(t, 0) <= ceiling)
+        if len(pruned) >= 3:
+            fam["kw"] = pruned
+
+
+FAMILY_REGISTRY = dict(_CURATED_REGISTRY)
+for _fid, _fam in _discover_families().items():
+    FAMILY_REGISTRY.setdefault(_fid, _fam)
+_prune_common_tokens(FAMILY_REGISTRY)
+
+
+def registry_gaps():
+    """knowledge_base directories with no registry entry. Empty is the passing state.
+
+    Discovery makes this self-healing for whole-family absence; it stays the gate
+    for a family that exists but derives no usable vocabulary, and it is what
+    V-D2A-REGISTRY-COMPLETE asserts.
+    """
+    try:
+        if not _KB_ROOT.is_dir():
+            return []
+        dirs = sorted(d.name for d in _KB_ROOT.iterdir() if d.is_dir())
+    except Exception:  # noqa: BLE001
+        return []
+    gaps = []
+    for name in dirs:
+        if name in _CURATED_DIR_ALIASES:
+            continue
+        if "KB-" + name.upper().replace("_", "-") not in FAMILY_REGISTRY:
+            gaps.append(name)
+    return gaps
+
 
 # D2A-2: the 14 capability dimensions mapped around a parent (task's D2A-2 spec, extended
 # to 14 to cover telemetry + writeback -- the SCS "14 dimensions" claim).
@@ -404,14 +533,27 @@ def detect_duplicate(prop: Proposal) -> DupeVerdict:
     owned_fraction = len(owned) / len(toks)
     # Architectural: a proposal whose tokens sit across MANY existing families reoccupies
     # an already-owned architectural position -- the strongest duplicate signal.
-    arch = int(round(100 * min(1.0, lit_count / 4.0)))
+    # The threshold is a RATIO of the registry, not the literal 4 it was written as
+    # when the registry held 32 hand-entries. Holding 4 fixed while the registry grows
+    # makes every proposal light up >=4 families and pins coverage at the 80% floor --
+    # converting a partial false-FOLD problem into a universal one.
+    denom = max(4, int(round(0.125 * len(FAMILY_REGISTRY))))
+    arch = int(round(100 * min(1.0, lit_count / float(denom))))
     coverage = int(round(100 * (0.70 * owned_fraction + 0.15 * (func / 100.0)
                                 + 0.15 * (arch / 100.0))))
-    # Rule (PR-DUPLICATE-TO-ADVANTAGE-001 detector): tokens owned by >=4 sealed families
-    # => a duplicate at >=80% by construction; each family past 4 adds evidence.
-    if lit_count >= 4:
-        coverage = max(coverage, 80 + min(15, (lit_count - 4) * 3))
+    # Rule (PR-DUPLICATE-TO-ADVANTAGE-001 detector): tokens owned by >=denom sealed
+    # families => a duplicate at >=80% by construction; each past denom adds evidence.
+    if lit_count >= denom:
+        coverage = max(coverage, 80 + min(15, (lit_count - denom) * 3))
     coverage = max(0, min(100, coverage))
+    # Plausibility floor (R2). sem is RECALL over a parent's keyword list, so a short
+    # kw list scores high on a proposal that merely shares its metaphor -- the exact
+    # signature of the measured false FOLDs (Reasoning Compiler -> SQI-02 at 92%,
+    # World Model Federation -> PM-02 at 89%). Precision is the discriminator: a parent
+    # touching almost none of the proposal's own substance is not its owner. Below the
+    # floor the verdict DEFERS rather than claiming a parent it cannot justify.
+    if not ((func >= 15) or (sem >= 50 and func >= 8)):
+        coverage = min(coverage, 45)                  # under the >=50 duplicate line
     secondary = [f"{r[1]} ({r[2]})" for r in lit[1:3] if r[5] > 0]
     return DupeVerdict(best_id, best_name, coverage, sem, func, arch,
                        is_duplicate=coverage >= 50, secondary_parents=secondary)

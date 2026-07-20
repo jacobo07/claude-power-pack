@@ -308,8 +308,18 @@ def main(argv=None) -> int:
 
     # --- V-BASELINE -- the families DFP touched are still green -----------------------
     base = {}
-    for script, want in (("test_decision_review.py", "18/18"),
-                         ("test_duplicate_to_advantage.py", "22/22")):
+    # Assert the VERDICT, not a hardcoded gate count. This pinned "22/22" while the
+    # D2A suite had already grown to 25 gates, so the D2A leg of this gate was failing
+    # before the registry work touched it -- a stale literal, silently red. Same defect
+    # class as T-D2A-REGISTRY-BLIND-SPOT-001: a hand-maintained number that drifts the
+    # moment the thing it counts grows. A suite that adds a gate is healthier, not
+    # broken, so the durable assertion is that it still ends in PASS.
+    # The token asserted must be COUNT-FREE and one the suite actually emits: DRK ends
+    # with "DRK_PASS=18/18" and never prints a VERDICT line, D2A prints both. Pairing a
+    # count-free token with rc==0 proves the suite ran to completion AND passed, without
+    # re-pinning a number that goes stale the moment a gate is added.
+    for script, want in (("test_decision_review.py", "DRK_PASS="),
+                         ("test_duplicate_to_advantage.py", "D2A_PASS=")):
         try:
             p = subprocess.run([sys.executable, str(_PP_ROOT / "tools" / script)],
                                capture_output=True, text=True, cwd=str(_PP_ROOT),

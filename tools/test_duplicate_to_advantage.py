@@ -218,13 +218,42 @@ def main(argv=None) -> int:
                       and "index" not in p.name.lower()])
     declares = ("does NOT duplicate" in doctrine or "not duplicate" in doctrine.lower()
                 or "non-duplication" in doctrine.lower())
-    if set(FAMILY_REGISTRY.keys()) <= real_ids and declares and n_datasets == 1:
+    # The allow-list above governs CURATED rows only. Derived rows (2026-07-20) prove
+    # themselves by construction: each must resolve to a real knowledge_base directory
+    # on disk. Asserting a hand-maintained allow-list over a filesystem-derived registry
+    # would re-impose the very hand-enrollment the derivation exists to remove -- the
+    # gate would have to be edited by hand every time a family is added, which is how
+    # the registry went blind to 68% of the estate in the first place.
+    from modules.duplicate_to_advantage.d2a_engine import _KB_ROOT
+    curated_ids = {k for k, v in FAMILY_REGISTRY.items() if not v.get("derived")}
+    derived_ids = {k for k, v in FAMILY_REGISTRY.items() if v.get("derived")}
+    unreal_derived = sorted(
+        fid for fid in derived_ids
+        if not any(d.is_dir() and "KB-" + d.name.upper().replace("_", "-") == fid
+                   for d in (_KB_ROOT.iterdir() if _KB_ROOT.is_dir() else []))
+    )
+    registry_ok = (curated_ids <= real_ids) and not unreal_derived
+    if registry_ok and declares and n_datasets == 1:
         _ok("V-D2A-NO-DUPLICATE",
-            f"registry {len(FAMILY_REGISTRY)} real families; 1 prose dataset (anti-inflation)")
+            f"{len(curated_ids)} curated + {len(derived_ids)} derived families, all real; "
+            f"1 prose dataset (anti-inflation)")
     else:
         _fail("V-D2A-NO-DUPLICATE",
-              f"registry_ok={set(FAMILY_REGISTRY.keys()) <= real_ids} "
+              f"curated_ok={curated_ids <= real_ids} unreal_derived={unreal_derived} "
               f"declares={declares} datasets={n_datasets}")
+
+    # V-D2A-REGISTRY-COMPLETE -- every knowledge_base family resolves to a registry
+    # entry. T-D2A-REGISTRY-BLIND-SPOT-001: a duplication detector blind to a family
+    # reports false-NEW for it and binds false parents at high confidence for everything
+    # else. This gate is what keeps the registry honest as the estate grows.
+    from modules.duplicate_to_advantage.d2a_engine import registry_gaps
+    gaps = registry_gaps()
+    n_kb = len([d for d in (_KB_ROOT.iterdir() if _KB_ROOT.is_dir() else []) if d.is_dir()])
+    if not gaps:
+        _ok("V-D2A-REGISTRY-COMPLETE",
+            f"all {n_kb} knowledge_base families resolve to a registry entry")
+    else:
+        _fail("V-D2A-REGISTRY-COMPLETE", f"unregistered families: {gaps}")
 
     # V-D2A-DEPTH -- each doctrine Part > 2500 real words.
     counts = _part_word_counts(_DOCTRINE)
