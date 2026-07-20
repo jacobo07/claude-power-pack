@@ -26,8 +26,12 @@ Set-Location "$env:USERPROFILE\.claude\skills\claude-power-pack"
 & "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" tools\test_session_revival.py
 ```
 
-**Expect:** `REVIVAL_PASS=8/8`. If `V-SETTINGS-REQUIRED` fails it prints the exact
+**Expect:** `REVIVAL_PASS=9/9`. If `V-SETTINGS-REQUIRED` fails it prints the exact
 key and the wanted value; restore it in `%APPDATA%\Cursor\User\settings.json`.
+If `V-BEACON-NEW-SESSION` fails, freshly-created sessions are no longer beaconed
+and will disappear from `tasks.json` once they idle past the ACTIVE tier
+(`T-BEACON-NEW-SESSION-GAP-001`) -- the symptom is "the pane I left open
+overnight did not come back", which reads as flakiness rather than a hole.
 
 **Do NOT re-add** `terminal.integrated.restoreTerminals` -- it is not a real
 Cursor setting (0 occurrences in `workbench.desktop.main.js`), it is inert, and

@@ -4486,6 +4486,45 @@ on window RELOAD), and the source of a CORRECT "History restored".
 `HR-SESSION-REVIVAL-INVARIANT-001`.
 
 
+## T-BEACON-NEW-SESSION-GAP-001 -- a liveness signal that only covers resumed sessions deletes the panes worth keeping
+
+**TRIGGER:** adding or tightening any filter that drops panes from `tasks.json`
+on the strength of a liveness beacon.
+
+**WHAT HAPPENED:** `kclaude.ps1` writes `%TEMP%/kclaude-pane-<pid>.sid` by calling
+`Write-PaneSidBeacon $paneSid`, and `$paneSid` is parsed out of `--resume`. A
+session created FRESH has no id at launch -- Claude Code mints it afterwards --
+so the guard `if (-not $sid) { return }` fires and no beacon is ever written. The
+coverage hole is not random: it is exactly the set of NEW sessions, which is
+exactly the set the Owner most wants back after a day's work. Measured: 23
+`folderOpen` tasks against 5 beacons, and the session being typed in had none.
+
+**WHY IT MATTERS:** the gap is invisible while a pane is active, because the
+content-age tiers carry it. It only bites once the pane idles past ACTIVE -- so
+"left open overnight, gone in the morning" is the signature, and it looks like
+flakiness rather than a systematic hole.
+
+**RULE:** before gating on a signal, ask which populations it structurally cannot
+observe. A beacon written at launch cannot know an id minted after launch. The
+fix belongs where the id IS known: the SessionStart hub, which has `PP_PANE_SID`
+and runs for every session regardless of origin -- not in `kclaude.ps1`, which
+cannot be made to know what does not yet exist.
+
+**IMPLEMENTATION:** `modules/cpc_os/beacon.py` walks the process tree to the
+ancestor `claude.exe`, because the hub's own node process and its detached python
+child both exit within seconds and a beacon keyed to a dead pid is invisible by
+design. Every step validates creation times -- Windows reuses pids, so a parent
+younger than its child is a reused pid, not an ancestor. Fail-open throughout.
+
+**Compiled as:** `HR-REVIVAL-BEACON-COVERS-NEW-SESSIONS-001`.
+**Gate:** `V-BEACON-NEW-SESSION` -- asserts the WRITER's beacon is readable by the
+READER, since they are different modules and a beacon invisible to
+`live_beacon_sids()` would close nothing.
+
+**Cross-ref:** `HR-SESSION-REVIVAL-INVARIANT-001`,
+`T-REVIVAL-SELF-REINFORCING-LOOP-001`.
+
+
 ## T-CURSOR-UPDATE-RESETS-AUTOTASKS-001 -- a Cursor update can silently disable the entire revival pipeline
 
 **Trap.** Revival depends on Cursor settings that an update (or a settings-UI
