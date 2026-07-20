@@ -24,7 +24,7 @@ if str(_PP_ROOT) not in sys.path:
 
 from modules.duplicate_to_advantage import (  # noqa: E402
     Proposal, run, OPERATIONS, ANTI_INFLATION_RULES, GAP_DIMENSIONS,
-    PORTFOLIO_DIMENSIONS,
+    PORTFOLIO_DIMENSIONS, run_family,
 )
 from modules.duplicate_to_advantage.d2a_engine import render  # noqa: E402
 
@@ -191,7 +191,26 @@ def main(argv=None) -> int:
                 # disk; the gate's contract is "the registry names REAL sealed families",
                 # and these are real. Added 2026-07-12 (DFP) -- without them the engine was
                 # structurally blind to the newest half of the stack.
-                "DRK-01", "DRK-02", "DRK-03", "ACIS", "SQI-02", "SPEC-GATE", "HR", "D2A"}
+                "DRK-01", "DRK-02", "DRK-03", "ACIS", "SQI-02", "SPEC-GATE", "HR", "D2A",
+                # Added auditing Crawl OS STOP #1 (C96): two real, git-verified, live
+                # modules (modules/deep-research/deep_research.py, 1810 lines, sealed;
+                # modules/autoresearch/nightcrawler.py + rss_sniffer.py + youtube_firehose.py,
+                # scheduled) the registry was blind to before.
+                "DEEP-RESEARCH", "AUTORESEARCH",
+                # Added auditing the CavEX II Asset Foundry STOP #1 (2026-07-20). All three
+                # verified by direct read this session, not assumed:
+                #   CAVEX-GOV      -- CONSTITUTION.md (10 Laws), governance/HARD_RULES.md
+                #                     (HR-01..HR-15), governance/PRD.md, ARCHITECTURE.md
+                #   CRAWLOS        -- vault/knowledge_base/crawl_os/: dataset 01 SEALED
+                #                     (25 Parts, 32,888 words), dataset 10 at 12/25 Parts
+                #   KOBII-IDENTITY -- knowledge-vault/kobiicraft-identity/, 7 documents
+                # NOTE: CAVEX-GOV and KOBII-IDENTITY are the first rows in this registry
+                # that live OUTSIDE this repository (they are in the CavEX repo). That is
+                # deliberate -- the detector serves any corpus this estate builds, and a
+                # family it cannot see is a family it cannot protect -- but it does widen
+                # the gate's "real sealed family" contract from PP-internal to cross-repo.
+                # Flagged here rather than blurred silently.
+                "CAVEX-GOV", "CRAWLOS", "KOBII-IDENTITY"}
     doctrine = _DOCTRINE.read_text(encoding="utf-8", errors="replace") if \
         _DOCTRINE.is_file() else ""
     n_datasets = len([p for p in _KB.glob("*.md")
@@ -249,6 +268,62 @@ def main(argv=None) -> int:
         _ok("V-D2A-OPERATIONS", "15 operations; every candidate uses a valid op")
     else:
         _fail("V-D2A-OPERATIONS", f"{len(OPERATIONS)} ops")
+
+    # ---- Family Sizing Mode (Owner directive, C96 -- "always offered" for a proposed
+    # family of N candidate datasets/systems, not just a single proposal) ----
+    _fam_fold_case = [
+        Proposal("route the model budget, price frontier token cost as capital, plan "
+                 "reuse and deterministic conversion, adapt the session budget",
+                 "Budget Planner A"),
+        Proposal("holographic tactile feedback surface for underwater sonar imaging",
+                 "Sonar Haptics"),
+    ]
+    fam_fold = run_family(_fam_fold_case)
+    # V-D2A-FAMILY-DETECTS-FOLD -- a known-duplicate item in the family is FOLDed, the
+    # genuinely-novel sibling is KEPT.
+    fold_names = {it.name for it in fam_fold.fold}
+    kept_names = {it.name for it in fam_fold.keep if it.disposition == "KEEP"}
+    if "Budget Planner A" in fold_names and "Sonar Haptics" in kept_names:
+        _ok("V-D2A-FAMILY-DETECTS-FOLD",
+            f"fold={fold_names} keep={kept_names} recommended={fam_fold.recommended_count}"
+            f"/{fam_fold.proposed_count}")
+    else:
+        _fail("V-D2A-FAMILY-DETECTS-FOLD", f"fold={fold_names} keep={kept_names}")
+
+    _fam_merge_case = [
+        Proposal("crawl web pages and extract structured evidence with provenance and "
+                 "source hashes for later verification", "Evidence Capture Engine"),
+        Proposal("extract structured evidence from crawled web pages, hash the content "
+                 "and preserve provenance for verification later", "Provenance Extractor"),
+        Proposal("holographic tactile feedback surface for underwater sonar imaging",
+                 "Sonar Haptics 2"),
+    ]
+    fam_merge = run_family(_fam_merge_case)
+    # V-D2A-FAMILY-DETECTS-MERGE -- two near-identical siblings collapse into one group;
+    # the unrelated third item stays separate.
+    merged_pair = any({"Evidence Capture Engine", "Provenance Extractor"} <= set(g)
+                      for g in fam_merge.merge_groups)
+    sonar_not_merged = not any("Sonar Haptics 2" in g for g in fam_merge.merge_groups)
+    if merged_pair and sonar_not_merged and fam_merge.recommended_count < 3:
+        _ok("V-D2A-FAMILY-DETECTS-MERGE",
+            f"groups={fam_merge.merge_groups} recommended={fam_merge.recommended_count}"
+            f"/{fam_merge.proposed_count}")
+    else:
+        _fail("V-D2A-FAMILY-DETECTS-MERGE",
+              f"groups={fam_merge.merge_groups} recommended={fam_merge.recommended_count}")
+
+    # V-D2A-FAMILY-FAILOPEN -- empty family list and a pathological item never raise.
+    try:
+        empty_fam = run_family([])
+        weird_fam = run_family([Proposal("\x00﻿   ", "x" * 5000)])
+        if (empty_fam.proposed_count == 0 and weird_fam.proposed_count == 1
+                and weird_fam is not None):
+            _ok("V-D2A-FAMILY-FAILOPEN",
+                "empty list -> 0 items; pathological item -> no raise")
+        else:
+            _fail("V-D2A-FAMILY-FAILOPEN", f"empty={empty_fam.proposed_count}")
+    except Exception as e:  # noqa: BLE001
+        _fail("V-D2A-FAMILY-FAILOPEN", f"raised {type(e).__name__} (must never raise)")
 
     # ---- D2A gate (SCS C85 addendum) -- wiring gates over the real CLI path ----
     gate_ok = _NODE is not None and _GATE.is_file()

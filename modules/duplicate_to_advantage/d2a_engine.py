@@ -201,6 +201,40 @@ FAMILY_REGISTRY = {
     "D2A": {"name": "Duplicate-to-Advantage Engine",
             "kw": ("duplicate", "dupe", "redundant", "reinforce", "advantage",
                    "adjacent", "inflation", "overlap")},
+    # Two real, sealed, LIVE modules the registry was blind to before this entry -- both
+    # shipped with git history and V-gates, neither ever added here, so D2A-1 could not
+    # detect a proposal re-inventing either one (found auditing Crawl OS STOP #1, C96).
+    "DEEP-RESEARCH": {"name": "Deep Research Agent (recursive SERP research)",
+                      "kw": ("research", "serp", "query", "queries", "recursive",
+                             "learnings", "citation", "cited", "breadth", "followup",
+                             "follow-up", "researchgoal")},
+    "AUTORESEARCH": {"name": "Autoresearch (scheduled RSS/YouTube acquisition)",
+                     "kw": ("rss", "feed", "feeds", "youtube", "channel", "channels",
+                            "poll", "polling", "nightcrawler", "firehose", "sniffer",
+                            "cross-signal", "digest")},
+    # Three families the registry was blind to before this entry, found auditing the
+    # CavEX II Asset Foundry STOP #1 (2026-07-20). Same failure shape as the C96
+    # DEEP-RESEARCH/AUTORESEARCH addition: a 150-item family sizing returned 6 FOLD
+    # verdicts of which 5 were cross-domain vocabulary collisions, while the two overlaps
+    # that actually mattered (asset provenance vs the Crawl OS evidence fabric; stable
+    # asset identity vs an indirection CavEX already implements) could not be detected at
+    # all, because neither parent had a row here. Keywords below are drawn from what each
+    # family's own documents state they own -- NOT reverse-engineered to make a particular
+    # Asset Foundry proposal light up.
+    "CAVEX-GOV": {"name": "CavEX II Governance (Constitution, Hard Rules, PRD, Roadmap)",
+                  "kw": ("cavex", "wii", "homebrew", "devkitppc", "console", "hardware",
+                         "mem1", "mem2", "beta", "upstream", "roadmap", "candidate",
+                         "boot", "packaging", "platform", "atlas", "texture", "build")},
+    "CRAWLOS": {"name": "Crawl OS (web/document acquisition and evidence corpus)",
+                "kw": ("crawl", "crawling", "crawler", "fetch", "fetching", "download",
+                       "url", "snapshot", "acquisition", "acquire", "acquired",
+                       "redirect", "harvest", "web", "browser", "selector",
+                       "reproducible", "custody", "tamper")},
+    "KOBII-IDENTITY": {"name": "KobiiCraft Identity Layer (tone, voice, player treatment)",
+                       "kw": ("identity", "philosophy", "tone", "voice", "copy",
+                              "atmosphere", "hospitality", "player", "treatment",
+                              "warmth", "belonging", "emotional", "humiliation",
+                              "cooperation", "nostalgia")},
 }
 
 # D2A-2: the 14 capability dimensions mapped around a parent (task's D2A-2 spec, extended
@@ -645,6 +679,133 @@ def run(prop: Proposal) -> D2AVerdict:
                           None, note=f"DEFER (fail-open): {type(e).__name__}")
 
 
+# ---------------------------------------------------------------------------
+# Family Sizing Mode -- run D2A-1/D2A-2 across a WHOLE proposed family (N candidate
+# datasets/systems at once) rather than one proposal at a time. A single-proposal run
+# only catches duplication against the sealed parents; a family of N candidates can also
+# duplicate EACH OTHER (two "Part XXV" candidates that are the same idea twice). This
+# closes that gap with a pairwise Jaccard pass over the SAME `_tokens()` the single-item
+# path already uses -- no new vocabulary, no new detector, just applied across the list.
+# Contract: same as `run()` -- fail-open, propose-never-build, deterministic (no time/
+# random). Always offered before sizing a multi-item family (Owner directive, C96).
+# ---------------------------------------------------------------------------
+_SIBLING_OVERLAP_THRESHOLD = 0.35  # Jaccard on token sets -> MERGE candidate pair
+
+
+@dataclass
+class FamilyItemVerdict:
+    name: str
+    disposition: str               # "KEEP" | "FOLD" | "MERGE"
+    reason: str
+    verdict: D2AVerdict
+    merge_with: list = field(default_factory=list)   # sibling names, if disposition==MERGE
+
+
+@dataclass
+class FamilySizingReport:
+    proposed_count: int
+    keep: list = field(default_factory=list)     # list[FamilyItemVerdict]
+    fold: list = field(default_factory=list)
+    merge_groups: list = field(default_factory=list)  # list[list[str]]
+    recommended_count: int = 0
+
+
+def run_family(items: list) -> FamilySizingReport:
+    """items: list[Proposal]. Returns a FamilySizingReport. Fail-open ABSOLUTE: any error
+    on one item DEFERs that item (KEEP, unclassified) rather than aborting the batch."""
+    verdicts = []
+    for p in items:
+        try:
+            verdicts.append((p, run(p)))
+        except Exception:  # noqa: BLE001 -- fail-open per item, never abort the batch
+            verdicts.append((p, None))
+
+    # Pairwise sibling overlap (within THIS family only, not against sealed parents).
+    tok_sets = [set(_tokens(f"{p.name} {p.description}")) for p, _ in verdicts]
+    n = len(verdicts)
+    merged_into: dict = {}   # index -> group id
+    groups: list = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            a, b = tok_sets[i], tok_sets[j]
+            if not a or not b:
+                continue
+            jac = len(a & b) / len(a | b)
+            if jac >= _SIBLING_OVERLAP_THRESHOLD:
+                gi, gj = merged_into.get(i), merged_into.get(j)
+                if gi is None and gj is None:
+                    groups.append([i, j])
+                    merged_into[i] = merged_into[j] = len(groups) - 1
+                elif gi is not None and gj is None:
+                    groups[gi].append(j)
+                    merged_into[j] = gi
+                elif gj is not None and gi is None:
+                    groups[gj].append(i)
+                    merged_into[i] = gj
+                elif gi != gj:
+                    groups[gi].extend(groups[gj])
+                    for k in groups[gj]:
+                        merged_into[k] = gi
+                    groups[gj] = []
+
+    report = FamilySizingReport(proposed_count=n)
+    for i, (p, v) in enumerate(verdicts):
+        if v is None:
+            report.keep.append(FamilyItemVerdict(
+                p.name, "KEEP", "DEFER (fail-open): could not evaluate", v))
+            continue
+        if i in merged_into and groups[merged_into[i]]:
+            gid = merged_into[i]
+            siblings = [verdicts[k][0].name for k in groups[gid] if k != i]
+            report.merge_groups.append([verdicts[k][0].name for k in groups[gid]])
+            report.keep.append(FamilyItemVerdict(
+                p.name, "MERGE",
+                f"overlaps sibling(s) in this family (Jaccard >= "
+                f"{_SIBLING_OVERLAP_THRESHOLD})", v, merge_with=siblings))
+        elif v.dupe.is_duplicate and v.dupe.coverage_pct >= 50:
+            report.fold.append(FamilyItemVerdict(
+                p.name, "FOLD",
+                f"{v.dupe.coverage_pct}% owned by {v.dupe.parent_id} "
+                f"({v.dupe.parent_name}) -- extend that parent, do not create", v))
+        else:
+            report.keep.append(FamilyItemVerdict(
+                p.name, "KEEP",
+                f"coverage={v.dupe.coverage_pct}% (< 50%, no sealed parent) -- "
+                "genuinely new", v))
+    # dedupe merge_groups (each pair may have been recorded from both sides)
+    seen = set()
+    uniq_groups = []
+    for g in report.merge_groups:
+        key = tuple(sorted(g))
+        if key not in seen:
+            seen.add(key)
+            uniq_groups.append(list(key))
+    report.merge_groups = uniq_groups
+    report.recommended_count = (
+        len([x for x in report.keep if x.disposition == "KEEP"]) + len(uniq_groups))
+    return report
+
+
+def render_family(r: FamilySizingReport) -> str:
+    L = [f"FAMILY SIZING: {r.proposed_count} proposed -> "
+         f"{r.recommended_count} recommended"]
+    if r.fold:
+        L.append(f"FOLD ({len(r.fold)}) -- already owned by a sealed parent, extend it:")
+        for it in r.fold:
+            L.append(f"  - {it.name}: {it.reason}")
+    if r.merge_groups:
+        L.append(f"MERGE ({len(r.merge_groups)} group(s)) -- collapse into one dataset:")
+        for g in r.merge_groups:
+            L.append(f"  - {' + '.join(g)}")
+    kept = [x for x in r.keep if x.disposition == "KEEP"]
+    if kept:
+        L.append(f"KEEP ({len(kept)}) -- genuinely new, no sealed parent, no sibling "
+                 "overlap:")
+        for it in kept:
+            L.append(f"  - {it.name}: {it.reason}")
+    return "\n".join(L)
+
+
 def render(v: D2AVerdict) -> str:
     """ASCII render of the structured output (DUPE VERDICT / REINFORCEMENT MAP /
     CANDIDATE PORTFOLIO / RECOMMENDED ACTION / BUILD CONTRACT)."""
@@ -703,7 +864,32 @@ def main(argv=None) -> int:
     ap.add_argument("--stdin", action="store_true",
                     help="read the proposal text from stdin (hook/gate entry point)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--family-file", default="",
+                    help="path to a JSON list of {name, description} -- size a whole "
+                         "proposed family at once instead of one proposal")
     args = ap.parse_args(argv)
+    if args.family_file:
+        try:
+            raw = json.loads(Path(args.family_file).read_text(encoding="utf-8"))
+        except Exception as e:  # noqa: BLE001 -- fail-open
+            print(f"NOTE: DEFER (fail-open): could not read/parse "
+                  f"{args.family_file}: {type(e).__name__}")
+            return 0
+        items = [Proposal(it.get("description", ""), it.get("name", ""))
+                 for it in raw if isinstance(it, dict)]
+        rep = run_family(items)
+        if args.json:
+            print(json.dumps({
+                "proposed_count": rep.proposed_count,
+                "recommended_count": rep.recommended_count,
+                "fold": [{"name": it.name, "reason": it.reason} for it in rep.fold],
+                "merge_groups": rep.merge_groups,
+                "keep": [{"name": it.name, "reason": it.reason}
+                        for it in rep.keep if it.disposition == "KEEP"],
+            }, ensure_ascii=False, indent=2))
+        else:
+            print(render_family(rep))
+        return 0
     if args.stdin:
         try:
             raw = sys.stdin.read()
