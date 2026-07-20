@@ -166,8 +166,8 @@ memory" doctrine from the source document (`Downloads/Dataset CrawlOS 1.txt`).
   case-insensitively, which would have misfired on the Spanish word for "everything"
   ("guarda todo esto...") in this dataset's own worked examples; fixed to exact-case match
   for that one marker only. Graphify re-indexed and `--query --name "crawl_os_02"` confirmed
-  returning the dataset as a real node. Pushed to origin: commit TBD at next push (see Next
-  Actions).
+  returning the dataset as a real node. Pushed to origin 2026-07-20: commit `1e0e7f3`,
+  REMOTE_DELTA 0 0 confirmed.
 
 ## 4. Next actions (imperative — highest value first)
 
