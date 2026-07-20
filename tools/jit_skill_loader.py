@@ -797,6 +797,83 @@ VAGUE_LINT_MESSAGE = (
 )
 
 
+# --- PP Capability Axis (sealed 2026-07-20, trigger family #11) ---
+# Discovery card for the claude-power-pack skill in NON-PP repos.
+# Addresses T-PP-SILENT-SKILL-001: PP's trigger vocabulary lived inside
+# SKILL.md, unreadable until after invocation, so 1/30 of the Owner's
+# repos ever referenced it. Pointer-only -- the card names the matched
+# capability family and how to invoke; it never inlines the skill body.
+# Silent inside the PP repo (the active-spec path already covers it),
+# silent after the first fire per session, fail-open absolute.
+_PP_FAMILIES = [
+    ("architecture / new system", re.compile(
+        r"\b(?:architect\w*|arquitectur\w*|from\s+scratch|desde\s+cero|"
+        r"new\s+system|design\s+decision)\b", re.I | re.UNICODE)),
+    ("done-gate / deploy", re.compile(
+        r"\b(?:is\s+this\s+done|ready\s+to\s+ship|done[-\s]gate|deploy\w*|"
+        r"to\s+production|en\s+producci)\b", re.I | re.UNICODE)),
+    ("recurring failure", re.compile(
+        r"\b(?:keeps?\s+(?:breaking|failing)|recurring|recurrente|"
+        r"vuelve\s+a\s+fallar|same\s+error\s+again)\b", re.I | re.UNICODE)),
+    ("audit / code review", re.compile(
+        r"\b(?:audit\w*|auditar|auditor[ií]a|code\s+review|"
+        r"security\s+review|revisi[oó]n\s+de\s+c[oó]digo)\b",
+        re.I | re.UNICODE)),
+    ("dataset / knowledge vault", re.compile(
+        r"\b(?:dataset|knowledge\s+vault|distill\w*|destila\w*|ukdl)\b",
+        re.I | re.UNICODE)),
+    ("token / context cost", re.compile(
+        r"\b(?:token\s+(?:budget|audit|burn)|context\s+pressure|"
+        r"coste\s+de\s+tokens)\b", re.I | re.UNICODE)),
+    ("session recovery / handoff", re.compile(
+        r"\b(?:handoff|session\s+recovery|resumption|lazarus|kclear)\b",
+        re.I | re.UNICODE)),
+    ("infra / VPS / hooks", re.compile(
+        r"\b(?:vps\b|daemon|systemd|pterodactyl|liveness|"
+        r"hook\s+(?:chain|dispatcher))\b", re.I | re.UNICODE)),
+]
+PP_CARD_KEY = "__pp_capability_card__"
+PP_CARD_TMPL = (
+    "[claude-power-pack] Task matches PP activation criteria ({caps}). "
+    "Invoke the Skill tool with name `claude-power-pack` for tiered "
+    "execution doctrine, zero-issue completion gates, CEPS recurring-error "
+    "prevention, governance overlay and the /cpp-* command set. Full "
+    "criteria table: ~/.claude/CLAUDE.md -> 'PP Activation Criteria'. "
+    "Advisory: skip on a trivial single-file edit."
+)
+
+
+def _detect_pp_capability_trigger(
+    prompt: str, cwd: Path, sid: str,
+) -> str | None:
+    """Trigger family #11 -- discovery card for claude-power-pack.
+
+    Once per session (PP_CARD_KEY in the shared JIT dedupe state, same
+    2 h TTL as module dedupe). Silent inside the PP repo itself. Any
+    error -> None: the card is never worth blocking a prompt for.
+    """
+    try:
+        if not prompt:
+            return None
+        try:
+            if PP_ROOT == cwd or PP_ROOT in cwd.parents:
+                return None          # PP repo: active-spec path covers it
+        except Exception:
+            pass
+        matched = [name for name, rx in _PP_FAMILIES if rx.search(prompt)]
+        if not matched:
+            return None
+        st = _load_state(sid)
+        if PP_CARD_KEY in st:
+            return None              # already surfaced this session
+        st[PP_CARD_KEY] = time.time()
+        _save_state(sid, st)
+        return PP_CARD_TMPL.format(caps="; ".join(matched[:3]))
+    except Exception as exc:
+        _log(f"pp-capability-card error: {exc}")
+        return None
+
+
 # --- Lateral-Thinking Axis (sealed 2026-05-25, trigger family #10) ---
 # Discovery-card injection when the prompt signals stuckness, a design
 # pivot, or an explicit "how should I" question. Pointer-only: the body
@@ -1488,13 +1565,16 @@ def run(data) -> dict:
         # lateral-thinking skill. Mutex with arch_block + vague_block.
         lt_block = _detect_lateral_thinking_trigger(
             prompt, arch_block, vague_block)
+        # PP Capability Axis (2026-07-20): once-per-session discovery card
+        # for claude-power-pack in non-PP repos. Silent in the PP repo.
+        pp_block = _detect_pp_capability_trigger(prompt, cwd, _sid(data))
         # Zero-Command B.2 — fire-and-forget flag drop; never blocks the
         # prompt, never adds to additionalContext. Daemon B.3 picks it up.
         _detect_new_feature_intent_and_flag(prompt, cwd, spec,
                                             data.get("session_id"))
         if not mods and not spec:
             extras = "\n\n".join(
-                b for b in (arch_block, vague_block, lt_block) if b)
+                b for b in (arch_block, vague_block, lt_block, pp_block) if b)
             if extras:
                 return {"continue": True, "additionalContext": extras}
             return {"continue": True}
@@ -1566,7 +1646,7 @@ def run(data) -> dict:
 
         if not injected and spec_injected_size == 0:
             extras = "\n\n".join(
-                b for b in (arch_block, vague_block, lt_block) if b)
+                b for b in (arch_block, vague_block, lt_block, pp_block) if b)
             if extras:
                 return {"continue": True, "additionalContext": extras}
             return {"continue": True}

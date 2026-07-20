@@ -4601,3 +4601,40 @@ covered).
 
 **Cross-ref:** `T-ORPHAN-HOOK-001`, `feedback_hermetic_test_global_writes_time_window`.
 `T-CURSOR-GHOST-BUFFER-IS-NOT-RESUME-001`.
+---
+
+## T-PP-SILENT-SKILL-001 -- A skill's description is its only trigger (2026-07-20)
+
+A skill whose `description` names what it IS rather than WHEN to use it will not
+be auto-invoked, however rich its internals. PP's description read "Universal AI
+execution framework -- tiered loading, zero-issue delivery, self-healing": zero
+task nouns, zero task verbs. Meanwhile `SKILL.md:27-39` carried a ~14-row trigger
+table with hundreds of keywords -- unreadable until AFTER invocation. The trigger
+vocabulary was inside the box it was meant to open.
+
+Measured consequence: 1 of 30 of the Owner's repos referenced PP (3%). The ~25 PP
+hooks were running in every repo the whole time -- as GUARDS (block secrets, ingest
+errors, sync the graph), never as OFFERS. PP was present in TUA-X and simply never
+said what it could do.
+
+Contrast the skills that do fire from the same listing: `frontend-design` ("Use
+this skill when the user asks to build web components, pages..."),
+`ui-ux-pro-max` (enumerates Actions / Projects / Elements / Styles),
+`agent-reach` ("MUST USE when..."). Their description is a trigger list. PP's
+was a tagline.
+
+## PR-PP-ACTIVATION-EXPLICIT-001 -- State the criterion where the decision is made
+
+For any capability that must activate in real projects, the activation criterion
+belongs in the string read BEFORE the decision: the skill `description` and an
+IF/THEN table in `CLAUDE.md`. A criterion stated only inside the artifact it
+gates ("the agent should know") is not a criterion -- it is a wish without
+enforcement. A self-assessed tier ("on STANDARD+ tasks") is the same failure: it
+defers the gate to per-session judgement, which is inconsistent by definition.
+
+Corollary -- activation is MEASURABLE, and the honest denominator is adoption, not
+inventory: count the repos that reference the capability, never the modules that
+exist. Sibling of PR-COVERAGE-BY-CONSTRUCTION-001 (discover the audit set, do not
+curate it) and of the Liveness Standard (shipping is not wiring).
+
+Gate: `python tools/test_pp_activation.py` -- 7/7, hermetic x3.
