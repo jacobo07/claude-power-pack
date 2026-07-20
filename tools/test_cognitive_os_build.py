@@ -165,6 +165,23 @@ def test_prelaunch_gate() -> None:
 # --------------------------------------------------------------------------
 # CO-01 -- Work-Units-per-MTok economics
 # --------------------------------------------------------------------------
+try:  # pytest is optional -- this file also runs standalone via main().
+    import pytest
+
+    @pytest.fixture
+    def tmp(tmp_path: Path) -> Path:
+        """Supply the empty temp dir that main() passes positionally.
+
+        Without this the gates below are collected by pytest (they match
+        test_*) but error at setup on a missing fixture, so they had never
+        actually run under pytest.
+        """
+        return tmp_path
+
+except ImportError:  # pragma: no cover - standalone execution path
+    pass
+
+
 def test_co01_economics(tmp: Path) -> None:
     from datetime import datetime, timezone, timedelta
     from modules.cognitive_os import economics as E

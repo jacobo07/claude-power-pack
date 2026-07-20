@@ -248,4 +248,15 @@ print()
 print("=" * 64)
 print(f"RESULT: {_pass} PASS / {_fail} FAIL ({_pass + _fail} total)")
 print("=" * 64)
-sys.exit(0 if _fail == 0 else 1)
+def test_gate():
+    """Expose the V-gate result to pytest.
+
+    The module body above runs at import and computes _fail. Without this
+    assertion pytest would collect the file, execute the gate, and report
+    green regardless of the outcome.
+    """
+    assert _fail == 0, f"{_fail} V-gate failure(s)"
+
+
+if __name__ == "__main__":
+    sys.exit(0 if _fail == 0 else 1)

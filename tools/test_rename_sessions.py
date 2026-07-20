@@ -42,6 +42,26 @@ def pick_sample() -> Path | None:
     return None
 
 
+try:  # pytest is optional -- this file also runs standalone via main().
+    import pytest
+
+    @pytest.fixture
+    def sample() -> Path:
+        """Supply the transcript main() picks at line ~145.
+
+        pick_sample() returns None on a machine with no non-empty
+        transcript; skip rather than fail, since that is an environment
+        property and not a defect in rename_sessions.
+        """
+        picked = pick_sample()
+        if picked is None:
+            pytest.skip("no non-empty transcript available to sample")
+        return picked
+
+except ImportError:  # pragma: no cover - standalone execution path
+    pass
+
+
 def test_append_intact(sample: Path) -> None:
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td) / sample.name

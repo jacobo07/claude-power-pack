@@ -127,4 +127,10 @@ else:
 
 total = passes + fails
 print(f"\nPANE_MAP_PASS={passes}/{total}  threshold={total}/{total}")
-sys.exit(0 if fails == 0 else 1)
+def test_gate():
+    """Expose the V-gate result to pytest (see test_compact_rescue.py)."""
+    assert fails == 0, f"{fails} V-gate failure(s)"
+
+
+if __name__ == "__main__":
+    sys.exit(0 if fails == 0 else 1)
