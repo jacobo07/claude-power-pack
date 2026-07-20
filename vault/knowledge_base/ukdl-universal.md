@@ -4367,6 +4367,15 @@ recent-tier history) or a per-repo cap -- an Owner design decision, not a silent
 
 ## HR-SESSION-REVIVAL-INVARIANT-001 -- pane open-ness is a PROCESS FACT, never recency or registry membership
 
+> **Compiled.** This entry and the revival traps below it are the NARRATIVE; the
+> enforceable form lives in `vault/hard_rules/HARD_RULES.md` as
+> `HR-REVIVAL-LIVENESS-IS-PROCESS-001`, `HR-REVIVAL-BEACON-COVERS-NEW-SESSIONS-001`,
+> `HR-REVIVAL-STALE-TASK-IS-A-PUMP-001`, `HR-REVIVAL-GHOST-BUFFER-NOT-RESUME-001`
+> and `HR-REVIVAL-VERIFY-AFTER-CURSOR-UPDATE-001`. The rule compiler reads only the
+> two HARD_RULES archives, so an entry that lives here alone is library knowledge
+> the kill switch cannot fire on -- which is what these were until they were
+> promoted. Edit BOTH or the enforcement drifts from the story.
+
 **TRIGGER:** classifying a pane as live/open/restorable, or deciding which sessions
 earn a `folderOpen` task.
 
