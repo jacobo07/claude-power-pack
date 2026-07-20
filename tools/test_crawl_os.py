@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""test_crawl_os.py -- structural done-gate for sealed Crawl OS datasets (#01, #10).
+"""test_crawl_os.py -- structural done-gate for sealed Crawl OS datasets (#01, #02, #10).
 
 V-CRAWLOS-* gates, hermetic (re-runnable x3, byte-identical -- pure file reads, no
 mutation, no network, no subprocess). Verifies word-count-floor claims and contamination-
@@ -19,21 +19,24 @@ _PP_ROOT = Path(__file__).resolve().parents[1]
 _KB = _PP_ROOT / "vault" / "knowledge_base" / "crawl_os"
 
 _DS01 = _KB / "crawl_os_01_constitutional_architecture.txt"
+_DS02 = _KB / "crawl_os_02_crawl_intent_and_mission_compilation.txt"
 _DS10 = _KB / "crawl_os_10_evidence_provenance_integrity_fabric.txt"
+_DS02_CONTRACT = _KB / "DATASET_02_CONTRACT.md"
 _DS10_CONTRACT = _KB / "DATASET_10_CONTRACT.md"
+_ALL_DATASETS = (_DS01, _DS02, _DS10)
 
 _WORD_FLOOR = 1200
 _PART_COUNT = 25
 
-# Contamination baseline pinned to the audited SEALED state (CRAWLOS_RESUMPTION.md): both
-# datasets carry exactly 2 legitimate hit-lines each (3 raw token matches each -- one line
-# in each file matches the pattern twice) -- prohibition clauses / a worked example /
-# self-referential audit prose naming the forbidden domain in order to forbid or report on
-# it, never actual domain contamination. A count above this ceiling is new, unaudited
-# contamination and must fail; the exact-match keeps a silent drift downward (an audited
-# legitimate line quietly disappearing) visible too.
+# Contamination baseline pinned to each dataset's own audited SEALED state
+# (CRAWLOS_RESUMPTION.md has the per-line breakdown): every dataset's hits are prohibition
+# clauses / worked examples / self-referential audit prose naming the forbidden domain in
+# order to forbid or report on it, never actual domain contamination. A count above this
+# ceiling is new, unaudited contamination and must fail; the exact-match keeps a silent
+# drift downward (an audited legitimate line quietly disappearing) visible too.
 _CONTAMINATION_BASELINE = {
     "crawl_os_01_constitutional_architecture.txt": 3,
+    "crawl_os_02_crawl_intent_and_mission_compilation.txt": 3,
     "crawl_os_10_evidence_provenance_integrity_fabric.txt": 3,
 }
 _CONTAMINATION_PATTERN = re.compile(
@@ -42,9 +45,17 @@ _CONTAMINATION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 # Built from joined fragments rather than literal dev-scaffold tokens so this detector's
-# own source does not itself trip the estate's write-gate literal-token veto.
-_DEV_MARKERS = ["TO" + "DO", "FIX" + "ME", "st" + "ub"]
-_STUB_PATTERN = re.compile(r"\b(?:" + "|".join(_DEV_MARKERS) + r")\b", re.IGNORECASE)
+# own source does not itself trip the estate's write-gate literal-token veto. The
+# to-do-style marker fragment is matched exact-case only (not folded to lowercase): the
+# corpus's Spanish worked-request quotes ("guarda todo esto...") legitimately contain the
+# lowercase Spanish word for "everything", which a case-folded match would misfire on --
+# the real dev-scaffold marker is conventionally all-caps, so exact-case is the correct
+# disambiguator, not a loophole.
+_DEV_MARKERS_ANY_CASE = ["FIX" + "ME", "st" + "ub"]
+_DEV_MARKER_EXACT_CASE = "TO" + "DO"
+_STUB_PATTERN = re.compile(
+    r"\b(?:" + "|".join(_DEV_MARKERS_ANY_CASE) + r")\b", re.IGNORECASE)
+_EXACT_CASE_PATTERN = re.compile(r"\b" + _DEV_MARKER_EXACT_CASE + r"\b")
 
 _passes = 0
 _fails = 0
@@ -121,40 +132,46 @@ def main(argv=None) -> int:
     as_json = "--json" in (argv or sys.argv[1:])
 
     _check_dataset("DS01", _DS01)
+    _check_dataset("DS02", _DS02)
     _check_dataset("DS10", _DS10)
 
-    # V-CRAWLOS-DS10-CONTRACT -- the dataset contract exists and is non-empty (PASO -1
-    # of the contract-first convention this dataset established).
-    contract_exists = _DS10_CONTRACT.is_file()
-    contract_text = _DS10_CONTRACT.read_text(encoding="utf-8", errors="replace") \
-        if contract_exists else ""
-    if contract_exists and len(contract_text.strip()) > 0:
-        _ok("V-CRAWLOS-DS10-CONTRACT",
-            f"{_DS10_CONTRACT.name} exists, {len(contract_text)} bytes")
-    else:
-        _fail("V-CRAWLOS-DS10-CONTRACT",
-              f"exists={contract_exists} non_empty={len(contract_text.strip()) > 0}")
+    # V-CRAWLOS-DS02-CONTRACT / V-CRAWLOS-DS10-CONTRACT -- each dataset's contract file
+    # exists and is non-empty (PASO -1 of the contract-first convention DS10 established
+    # and DS02 followed).
+    for tag, contract_path in (("DS02", _DS02_CONTRACT), ("DS10", _DS10_CONTRACT)):
+        contract_exists = contract_path.is_file()
+        contract_text = contract_path.read_text(encoding="utf-8", errors="replace") \
+            if contract_exists else ""
+        if contract_exists and len(contract_text.strip()) > 0:
+            _ok(f"V-CRAWLOS-{tag}-CONTRACT",
+                f"{contract_path.name} exists, {len(contract_text)} bytes")
+        else:
+            _fail(f"V-CRAWLOS-{tag}-CONTRACT",
+                  f"exists={contract_exists} non_empty={len(contract_text.strip()) > 0}")
 
-    # V-CRAWLOS-NO-STUBS -- zero dev-scaffold markers in either sealed dataset.
+    # V-CRAWLOS-NO-STUBS -- zero dev-scaffold markers in any sealed dataset. Two patterns:
+    # exact-case for the to-do-style marker (Spanish "todo" collision, see pattern comment
+    # above) and case-insensitive for the other two, which have no such collision risk.
     stub_hits = {}
-    for path in (_DS01, _DS10):
+    for path in _ALL_DATASETS:
         text = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
-        hits = _STUB_PATTERN.findall(text)
+        hits = _STUB_PATTERN.findall(text) + _EXACT_CASE_PATTERN.findall(text)
         if hits:
             stub_hits[path.name] = hits
     if not stub_hits:
-        _ok("V-CRAWLOS-NO-STUBS", "0 dev-scaffold-marker hits across DS01 + DS10")
+        _ok("V-CRAWLOS-NO-STUBS",
+            f"0 dev-scaffold-marker hits across {len(_ALL_DATASETS)} datasets")
     else:
         _fail("V-CRAWLOS-NO-STUBS", f"hits={stub_hits}")
 
-    # V-CRAWLOS-NO-CONTAMINATION -- forbidden-domain token hits pinned to the audited
-    # SEALED baseline (both files' hits are prohibition clauses / worked examples / a
-    # self-referential audit sentence naming the forbidden terms, never real
+    # V-CRAWLOS-NO-CONTAMINATION -- forbidden-domain token hits pinned to each dataset's
+    # own audited SEALED baseline (every file's hits are prohibition clauses / worked
+    # examples / a self-referential audit sentence naming the forbidden terms, never real
     # contamination -- see CRAWLOS_RESUMPTION.md for the per-line audit). A count above
     # baseline is new, unaudited contamination.
     contamination_over = {}
     contamination_evidence = {}
-    for path in (_DS01, _DS10):
+    for path in _ALL_DATASETS:
         text = path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
         hits = _CONTAMINATION_PATTERN.findall(text)
         baseline = _CONTAMINATION_BASELINE.get(path.name, 0)

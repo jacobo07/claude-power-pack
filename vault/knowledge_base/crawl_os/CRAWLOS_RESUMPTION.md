@@ -49,10 +49,8 @@ memory" doctrine from the source document (`Downloads/Dataset CrawlOS 1.txt`).
   estate's own write-gate watches for, anywhere in the file.
   Verification method used throughout: `python3 -c "..."` regex-splitting the file on
   `\n\nPART ([IVXLCDM]+) — ` and counting words per captured body (run inline via Bash, no
-  saved script). **`test_crawl_os.py` per Resumption action 2 below is still genuinely
-  pending** -- the manual regex check above is not a substitute and should be formalized
-  into a real gate mirroring `tools/test_duplicate_to_advantage.py` before dataset 10 seals,
-  not skipped because dataset 01 is now done.
+  saved script). `tools/test_crawl_os.py` (see the Dataset 10 entry below) now formalizes
+  this check as a real hermetic gate covering this dataset too -- no longer pending.
   Note: the write-gate (Woz literal-token veto) rejects any append containing a single-word
   scaffold-adjacent literal inside in-universe prose, even when describing a redaction
   marker on a stripped credential in the doctrine's own voice -- swap the exact word for a
@@ -123,25 +121,72 @@ memory" doctrine from the source document (`Downloads/Dataset CrawlOS 1.txt`).
   honestly, mirroring Dataset #01's own precedent for its 2 "advertis" self-referential
   hits.** This is the one meaningful audit finding from this dataset's own closing pass: a
   reminder that a Part *describing* an audit result is itself in-scope for that audit.
-  Pushed to origin: commit TBD at next push (see Next Actions).
+  Pushed to origin 2026-07-19: commit `dd5c9d2`, REMOTE_DELTA 0 0 confirmed.
+
+- **`tools/test_crawl_os.py` created and green 2026-07-20**: 9 V-CRAWLOS-* structural gates
+  (EXISTS/PARTS/FINAL-LAWS x2 datasets, DS10-CONTRACT, NO-STUBS, NO-CONTAMINATION) over
+  DS01+DS10, hermetic 9/9 across 3 runs, pathspec-scoped commit `4ae6e8a`, pushed. Also ran
+  `python modules/graphify/indexer.py --repo .` fresh and confirmed both
+  `--query --name "crawl_os_10"` and `--query --name "crawl_os_01"` return real `dataset`
+  nodes -- both prior "still-outstanding" verification items now closed.
+
+- **Dataset 02 (Crawl Intent and Mission Compilation) SEALED 2026-07-20: 25 of 25 Parts.**
+  File: `vault/knowledge_base/crawl_os/crawl_os_02_crawl_intent_and_mission_compilation.txt`.
+  Dataset contract at `vault/knowledge_base/crawl_os/DATASET_02_CONTRACT.md`, created before
+  Part I per PASO -1. Word counts: I 1386, II 1361, III 1359, IV 1395, V 1478, VI 1377,
+  VII 1466, VIII 1328, IX 1284, X 1276, XI 1343, XII 1243, XIII 1290, XIV 1319, XV 1273,
+  XVI 1344, XVII 1321, XVIII 1342, XIX 1272, XX 1252, XXI 1206, XXII 1311, XXIII 1249,
+  XXIV 1319, XXV 1384 -- total 33,178 words, mean 1,327/Part, zero Parts under floor
+  (min 1206). Every Part closes with its own PART N FINAL LAW (26 "FINAL LAW" occurrences:
+  25 headers + 1 in-prose meta-reference in §25.3). Part Map shows 25/25 SEALED.
+  This dataset elaborates Dataset #01's Part V Crawl Intent Compiler engine operationally --
+  the Crawl Mission Contract's own sixteen-field schema (objective, entities, expected
+  sources, depth, breadth, freshness, required evidence, permitted domains, authorized
+  authentication, maximum cost, maximum time, stop conditions, output schema,
+  confidence-level requirement, update policy, preservation obligation), the three-stage
+  compilation pipeline (parsing/normalizing/field-assigning), the compilation state machine
+  (RECEIVED through VALIDATED or REJECTED, with an ESCALATION-PENDING sub-state), ambiguity
+  escalation, six canonical mission templates, revision/amendment, a five-class rejection
+  taxonomy, multi-entity disambiguation, the mission-to-engine handoff interface, auditing/
+  traceability, this dataset's own nine-class failure taxonomy, and its own amendment
+  triggers. Unlike Dataset #10 (which elaborates a schema Dataset #01 already owns), this
+  dataset owns its sixteen-field schema outright -- the discipline that matters here runs
+  the other direction, toward never reimplementing CO-01's cost/token accounting or DRK-03's
+  CONNECT confidence computation, tested explicitly in Parts VIII, X, and XIII and audited
+  in §25.4. Contamination audit: grep found hits on 2 lines / 3 raw token matches -- both
+  confirmed legitimate (Part V §5.11's own worked example studying an external e-commerce
+  site as a permitted research target under Dataset #01 Part IV §4.9, and Part XXV §25.6's
+  own audit-description sentence naming the forbidden terms to report on their search) --
+  **the same self-referential bug class Dataset #10 hit was caught and fixed during this
+  dataset's own drafting too: an earlier draft of §25.6 claimed a single hit before the
+  Part V §5.11 worked-example hit was separately caught and the sentence corrected to
+  report both honestly.** `tools/test_crawl_os.py` extended to cover DS01+DS02+DS10 (13
+  gates total), hermetic 13/13 across 3 runs -- also fixed a real false-positive risk found
+  while extending it: the dev-scaffold-marker check's to-do-style token was matched
+  case-insensitively, which would have misfired on the Spanish word for "everything"
+  ("guarda todo esto...") in this dataset's own worked examples; fixed to exact-case match
+  for that one marker only. Graphify re-indexed and `--query --name "crawl_os_02"` confirmed
+  returning the dataset as a real node. Pushed to origin: commit TBD at next push (see Next
+  Actions).
 
 ## 4. Next actions (imperative — highest value first)
 
-1. Pathspec-scoped commit for dataset 10: `git add -- vault/knowledge_base/crawl_os/` then
-   `git commit -F <msgfile> -- vault/knowledge_base/crawl_os/` with message
-   `feat(crawlos): dataset-10 SEALED (25/25 Parts, 33665w)`, then `git push origin main`,
-   then verify `git rev-list --left-right --count HEAD...origin/main` = `0 0`.
-2. Write `test_crawl_os.py`, mirroring `tools/test_duplicate_to_advantage.py`'s word-count /
-   FINAL-LAW / no-fence checks, applied to both dataset 01 and dataset 10's Parts — still
-   genuinely pending, not skipped because two datasets are now done by hand-verification.
-   Consider adding a citation-audit check (grep for verbatim Part VII field-list phrases in
-   any elaborating dataset) as a permanent regression guard for the failure §25.6 corrected.
-3. Re-run `python modules/graphify/indexer.py --repo claude-power-pack` and verify
-   `--query --name "crawl_os_10"` returns the sealed dataset as a real node, same as the
-   still-outstanding dataset 01 verification.
-4. Then dataset 02 (Crawl Intent and Mission Compilation), per the same build order — note
-   item 4 of the "Active decisions" list above: 02's own composition claim with DRK-03 was
-   already checked and rejected as a false positive at STOP #1; do not re-propose it.
+1. Then dataset 16 (Authorization, Compliance and Safety), per the dependency-based build
+   order (`wiggly-sparking-dolphin.md`) — sequenced early (position 4 of 18) specifically
+   because it must bound the acquisition engines from their first Part, not audit them
+   after the fact. Dataset 02's own Parts IX/X (permitted domains, authorized
+   authentication) already forward-cite it heavily as PLANNED; read those citations before
+   drafting 16's own contract, since 16's eventual field shapes should stay compatible with
+   what 02 already promised to hand it.
+2. Retroactively create `DATASET_01_CONTRACT.md` before any future dataset elaborates
+   Dataset #01 further — the contract-first convention started with Dataset #10 and
+   Dataset #01 predates it, a gap flagged twice now (this file's own prior entries) and
+   still not closed.
+3. Consider extending `tools/test_crawl_os.py` with a citation-audit check (grep for
+   verbatim schema field-list phrases duplicated across datasets) as a permanent
+   regression guard for the restatement failure Dataset #10's own Part XXV §25.4 checked
+   manually — genuinely pending, not blocking, since the current 13-gate suite already
+   covers structure/floor/final-law/stub/contamination hermetically.
 
 ## 5. Start instruction
 
