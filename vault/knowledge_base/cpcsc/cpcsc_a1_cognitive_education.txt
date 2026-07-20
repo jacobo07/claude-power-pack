@@ -504,3 +504,476 @@ estate already owns. Its one inviolable rule: the apprentice must progressively 
 its own attempts, and the master who teaches may never certify what it taught. An apprenticeship
 that records the master's competence instead of the apprentice's, or lets the teacher grade its own
 pupil, has produced a transcript and called it a diploma.
+
+===============================================================================================
+PART VII — SYNTHETIC EXPERIENCE: MANUFACTURED PRACTICE WITHOUT PRODUCTION RISK
+===============================================================================================
+
+7.1 The problem synthetic experience solves. A learner cannot acquire FLUENCY or MASTERY from
+reading; it acquires them from doing. But letting an UNPROVEN learner "do" on production is precisely
+the risk A1 exists to prevent — the untaught capability trusted anyway, discovering its first failure
+in production (Part I §1.3). Synthetic experience resolves the contradiction: manufactured practice
+cases, indistinguishable to the learner from real ones in the competences they exercise, run on a
+substrate where a failure costs nothing. (DEFINED: synthetic experience is the supply of realistic
+practice inputs decoupled from real consequences, so that a learner accumulates the doing-evidence a
+curriculum's success criteria demand without any real doing-risk.)
+
+7.2 A1 does not build the sandbox; it uses G1's. The substrate on which synthetic practice runs is
+not A1's to build. IAS-G1 owns THE MUTATION SANDBOX (PART X) and THE EVOLUTION PLANNER (PART XI) — a
+safe place to try a change without touching the live estate. (Boundary, Article II: G1's object is
+architectural experimentation — trying a mutation to a system; A1's object is pedagogic practice —
+a learner exercising a competence. Same sandbox substrate, different purpose.) A1 CONFIGURES a G1
+sandbox as a practice environment and reads the learner's actions within it as practice-evidence.
+The mechanism A1 adds over G1 is the manufacture of the practice CASES and their pedagogic sequencing
+— G1 supplies the isolated arena; A1 supplies the curriculum-ordered scenarios the learner faces in
+it. (NORMATIVE: A1 reimplements no isolation machinery; a synthetic-experience Part that duplicated
+G1's sandbox would be the exact absorption error this dataset was audited to avoid.)
+
+7.3 Manufacturing a realistic case. A synthetic case must exercise the same competence the real work
+would, or it teaches nothing transferable. A1 manufactures cases three ways, in ascending realism.
+CONSTRUCTED: a hand-specified input designed to require exactly one competence node — the cleanest
+signal, the least realism. PERTURBED: a real historical input (drawn from logs, with any credential
+material redacted through the estate's redaction bus before it ever enters a case — HR-SECRET-006
+cited, not restated) mutated to remove its resolved outcome, so the learner must produce the outcome
+fresh. REPLAYED: a full historical episode replayed with the learner substituted for the original
+actor, its output compared against what actually happened. (DEFINED, three case-manufacture methods.)
+Realism rises CONSTRUCTED → PERTURBED → REPLAYED; so does manufacturing cost, so A1 uses the cheapest
+method that exercises the target competence, reserving REPLAYED for MASTERY nodes where the
+interaction with real complexity is itself the competence.
+
+7.4 The redaction precondition, stated as a hard gate. Any synthetic case derived from real
+material — PERTURBED or REPLAYED — passes through the estate's Universal Redaction Bus before it
+becomes a case. (NORMATIVE, HR-SECRET-006 cited: all such text must pass through redact_for_log()
+first; a training case is exactly the "sub-agent prompt that may include file content" the rule
+governs.) A synthetic case is a teaching artifact that may be read by many learners and educators; a
+credential surviving into a case would be a leak with a wide blast radius. A1's case-manufacture
+pipeline treats redaction as a precondition of case existence, not a post-hoc scrub — an
+un-redacted candidate is not a case yet.
+
+7.5 The fidelity question: does synthetic competence transfer? The load-bearing risk of all synthetic
+experience is that a learner becomes fluent at the synthetic cases without becoming competent at real
+work — competence that does not transfer past the sandbox boundary. (CONTESTED, and A1 does not
+pretend it away.) A1's answer is the same discipline SQI's evidence physics applies to any proxy: a
+synthetic case is a proxy for real work, and a proxy is trusted only as far as it is validated
+against reality. Therefore the graduation ladder (Part XVII) never certifies FULL on synthetic
+evidence alone — FULL requires PRACTICUM evidence (Part IX), real work under supervision. Synthetic
+experience builds and evidences FOUNDATION and FLUENCY cheaply; it can never be the sole basis for
+FULL autonomy, because it is a proxy and the estate does not certify on proxies.
+
+7.6 Coverage: the cases must span the competence graph, not cluster on the easy nodes. A synthetic
+curriculum that manufactures fifty cases for the happy path and none for the irreversible failure
+modes has taught the learner exactly the competences that did not need teaching. (NORMATIVE: case
+coverage is measured against the curriculum's competence graph — every FOUNDATION node, especially
+every irreversible-failure node, must have synthetic cases exercising it, and coverage is a
+registration-gate check in Part XIX.) This mirrors the estate's own test-coverage floor discipline,
+relocated from code to pedagogy: the branches that handle the dangerous states each need a dedicated
+case, not just the happy path.
+
+7.7 Synthetic experience across the learner classes. For a CAPABILITY learner, synthetic cases are
+manufactured inputs to the capability. For an AGENT-ROLE learner, they are synthetic task prompts the
+subagent handles in an isolated dispatch. For a MODEL-INSTANCE learner, they are the onboarding probe
+battery of Part XVI — a fixed suite of cases with known-good outcomes that a new model instance must
+handle before any real routing. (DERIVED: one manufacture pipeline, three substrates, uniform because
+the learner object is uniform.) In every class the invariant holds: synthetic evidence is necessary,
+cheap, and coverage-checked — and never sufficient for FULL.
+
+FINAL LAW — PART VII. Synthetic experience buys doing-evidence without doing-risk, on G1's sandbox
+substrate the estate already owns, with real-derived cases redacted before they exist and coverage
+measured against every dangerous node — not clustered on the easy ones. But a synthetic case is a
+proxy for real work, and the estate certifies nothing on a proxy: synthetic experience earns
+FOUNDATION and FLUENCY, and FULL autonomy waits for the practicum, always.
+
+===============================================================================================
+PART VIII — FAILURE SIMULATION: TEACHING THROUGH DESIGNED, SAFE FAILURE
+===============================================================================================
+
+8.1 Why failure must be taught, not merely avoided. A curriculum that only ever shows a learner the
+success path produces a learner competent only while nothing goes wrong — and the competences whose
+absence is most dangerous (Part V §5.4's irreversible failure modes) are exactly the ones a
+success-only curriculum never exercises. Failure simulation is the deliberate, safe manufacture of
+the failure conditions a learner must learn to recognize, prevent, and recover from. (DEFINED: where
+synthetic experience of Part VII manufactures cases to exercise a competence, failure simulation
+manufactures the FAILURE MODES themselves — the fault injected, the precondition violated, the
+adversary present — so the learner meets each named failure in a place it costs nothing.)
+
+8.2 A1 does not author the failures; it sequences the estate's real ones. The estate already holds a
+rich record of real failure: IAS-D2's incident record and antibody catalogue (PARTS VIII-IX), the
+CEPS error-event log, the NEVER_AGAIN vault, the Hard Rules — each Hard Rule being a real
+production bug distilled into a stop. (Boundary, Article II: D2's object is IMMUNIZATION — turning
+an incident into preventive protection so it does not recur; A1's object is EDUCATION — teaching a
+learner to recognize and handle the failure class. D2 makes the estate immune; A1 makes the learner
+competent. Same incident record, read for two different purposes.) A1's failure-simulation library
+is DERIVED from D2's incident record and the Hard Rules: each real, distilled failure becomes a
+teachable scenario, sequenced into curricula by the pedagogic ordering that is A1's actual
+contribution. A1 manufactures no synthetic bugs when the estate's own scar tissue supplies real ones.
+
+8.3 The three teaching goals of a simulated failure. A simulated failure teaches three distinct
+competences, and a curriculum names which it is targeting. RECOGNITION: can the learner identify the
+failure condition before it causes harm — the earliest and cheapest competence. PREVENTION: does the
+learner take the action that stops the failure occurring — the FOUNDATION competence for irreversible
+modes. RECOVERY: when the failure has occurred, does the learner execute the correct compensation
+path — the competence that bounds the damage. (DEFINED, three goals.) A single real incident from
+D2's record can seed all three: recognize the precondition, prevent by the guard, recover by the
+rollback. The curriculum decides which goal each stage targets and in which order — recognition
+before prevention before recovery, because you cannot prevent what you cannot recognize.
+
+8.4 The safety envelope of a simulated failure. A simulated failure must fail SAFELY — the whole
+point is that the learner experiences the failure's shape without the failure's cost. Simulated
+failures therefore run inside the Part VII synthetic-experience envelope (G1's sandbox), never on
+production, and irreversible-failure simulations in particular are gated so that the simulated
+irreversible action touches only synthetic state. (NORMATIVE, and cited from the cascade-prevention
+doctrine: teaching a destructive-command failure must itself never destroy anything real — the
+simulation of an irreversible action is run against a scratch substrate with a declared compensation
+path, exactly as daif_04 §7.7 requires of any real irreversible action.) A failure simulation that
+could itself cause a real failure is not a lesson; it is the accident it was meant to teach against.
+
+8.5 Progressive difficulty and the anti-trauma bound. Failure simulations escalate: a learner meets
+a single clean failure first, then compound failures, then cascades (the CEPS chains where error A
+precedes B precedes C). (DEFINED, and here A1 reuses CEPS's cascade knowledge — cited, not rebuilt —
+as the source of realistic multi-failure sequences.) But escalation is bounded: the goal is a learner
+who handles failure competently, not one drowned in unrecoverable scenarios that teach only
+helplessness. (CONTESTED-honest: a curriculum that only ever presents unwinnable cascades teaches the
+learner nothing actionable — every simulated failure must have a competent response the learner can
+evidence, or it is not a lesson, it is a demonstration that the situation is hopeless.) The bound:
+every simulated failure is winnable by the competence being taught.
+
+8.6 Failure simulation as the bridge to the immune system. There is a productive loop between A1 and
+IAS-D2 that this Part makes explicit without crossing the boundary. When a learner in failure
+simulation discovers a failure MODE the estate's incident record did not contain — a novel way the
+capability breaks, surfaced by a naive learner doing something an expert never would — that discovery
+is a candidate incident for D2, not a curriculum artifact. (DERIVED: A1 hands the novel failure to
+D2's incident intake; D2 decides whether it warrants an antibody; if D2 immunizes it, the new
+antibody becomes new teaching material for A1. Education surfaces failures the immune system then
+owns, and the immune system's antibodies become education's next lessons — a loop, with each system
+keeping its own object.) This is the single most valuable emergent property of an education system: a
+naive learner is a failure-discovery instrument an expert cannot replicate, because the expert has
+already unlearned the naive mistakes.
+
+8.7 The distinction from adversarial testing, reserved to Part XXII. Failure simulation teaches a
+learner to handle failures that ARISE — faults, mistakes, self-inflicted errors, the six classes of
+D2's closed self-inflicted taxonomy. It is not the same as teaching a learner to withstand an
+ADVERSARY acting with intent — that is the pathogen class of Part XXII (and the Tier-B7 gap in D2's
+own taxonomy). (Boundary noted here, developed there: self-inflicted failure is a mistake; an
+adversary is a will. A1 teaches both, but they are different curricula with different scenario
+sources, and conflating them would teach a learner to treat malice as if it were error.)
+
+FINAL LAW — PART VIII. A learner shown only the success path is competent only until something goes
+wrong — and the failures whose mishandling is irreversible are exactly the ones success never
+exercises. A1 teaches failure from the estate's own scar tissue — D2's incidents, CEPS's cascades,
+the Hard Rules — sequenced recognition-before-prevention-before-recovery, every simulation safe and
+winnable. And when a naive learner breaks the capability in a way no expert would, that novel failure
+belongs to the immune system, whose next antibody becomes the education's next lesson.
+
+===============================================================================================
+PART IX — THE PRACTICUM: BOUNDED REAL WORK UNDER SUPERVISION
+===============================================================================================
+
+9.1 Why the practicum is not optional. Parts VII and VIII build competence and evidence it cheaply,
+on synthetic substrate — and Part VII §7.5 conceded the load-bearing limit: synthetic evidence is a
+proxy, and the estate certifies nothing FULL on a proxy. The practicum is where that limit is
+answered: bounded REAL work, on real consequences, under supervision tight enough that a learner's
+failure is caught before it causes irreversible harm. (DEFINED: the practicum is supervised real
+practice — the learner does actual estate work, and a supervisor holds a veto over any irreversible
+step until the learner has evidenced the competence to take it alone.) It is the bridge from "evidenced
+competent on synthetic cases" to "certified competent on reality," and no learner crosses to FULL
+without it.
+
+9.2 The supervision envelope. A practicum runs inside a supervision envelope: a declared boundary of
+what the learner may do unsupervised (reversible actions, within a scoped domain) and what requires
+the supervisor's explicit approval before commit (every irreversible action, anything outside scope).
+(DEFINED, and cited from the estate's own routing and cascade discipline — the envelope is the
+Intent-Lock / bounded-autonomy soft-pause relocated to a learner: the learner acts freely on the
+reversible and pauses for review on the irreversible.) The envelope tightens as competence
+accumulates: early practicum reviews every action; late practicum reviews only the irreversible; the
+envelope's final loosening to nothing IS the FULL certification. The supervisor is a party certified
+FULL on the capability, and — per the Part VI §6.5 conflict rule — the supervisor's approvals are
+evidence of the learner's competence but the supervisor does not itself issue the certification.
+
+9.3 Bounding the practicum's blast radius. Real work carries real risk, so the practicum is bounded
+so that the worst case of a learner's failure is recoverable. (NORMATIVE: a practicum is scoped to a
+domain where the supervisor's veto plus the estate's existing safety gates — backups before
+destructive actions, tests before commits, the Hard Rules — bound the damage of a caught-late
+failure to something reversible.) A1 does not weaken any of the estate's production safety gates for
+a practicum; it runs the learner INSIDE them, with an added supervisory veto, so the practicum is
+strictly safer than ordinary production, never laxer. A practicum that suspended a safety gate "so
+the learner can practice the dangerous thing" would have inverted its own purpose — the learner
+practices the dangerous thing precisely under MORE guard rails, not fewer.
+
+9.4 What the practicum evidences that synthetic experience cannot. Three things transfer only through
+real work. INTERACTION WITH REAL COMPLEXITY: production inputs carry irregularity a manufactured case
+cannot fully reproduce, and competence at the real distribution is a distinct competence from
+competence at the synthetic one (Part VII §7.5's transfer gap, closed here by construction).
+CONSEQUENCE-AWARENESS: a learner who knows an action is real behaves differently from one who knows
+it is a drill, and the estate needs the former. JUDGMENT UNDER GENUINE UNCERTAINTY: the MASTERY
+competences that no criterion exhausts (Part VI) are evidenced only when the uncertainty is real.
+(DERIVED: these three are exactly the competences a proxy cannot certify, which is why the practicum
+is the necessary complement to synthetic experience, not a redundant repetition of it.)
+
+9.5 The practicum's evidence is graded on outcome-against-reality, not effort. A practicum action is
+evidence only if its outcome is checked against reality — did the real work actually succeed, verified
+by the estate's own gates, not by the learner's report that it did. (NORMATIVE, SQI evidence physics
+cited: the auditor asks whether the same reality reproduces the same result; a practicum graded on
+the learner's self-report is graded on a proxy.) A1 reads the practicum's evidence from the real
+verification the estate already runs — the test that passed, the deploy that returned HTTP 200, the
+gate that cleared — never from a narrative of the attempt. This is the Reality Contract applied to
+the learner's own work: the evidence is the observed outcome, not the description of it.
+
+9.6 The stalled practicum and the honest exit. Some learners will not graduate a practicum — the
+competence does not consolidate, the evidence does not accumulate. (CONTESTED-honest: A1 does not
+pretend every learner reaches FULL.) A practicum that runs many cycles without graduating evidence is
+flagged, per the Part III §3.5 stalled-learner rule, for an educator's explicit judgment: extend with
+fresh justification, hold the learner at its current stage (SUPERVISED or BOUNDED is a valid terminal
+state for a learner whose competence is real but bounded), or — where a model instance simply cannot
+hold a non-negotiable competence — a documented non-graduation. A non-graduation is not a failure of
+A1; it is A1 working: the learner that could not evidence FOUNDATION competence is precisely the one
+the router must never send unsupervised, and the practicum caught it before production did.
+
+9.7 The practicum across the learner classes. A CAPABILITY learner's practicum is real estate work
+using the capability under a FULL operator's veto. An AGENT-ROLE learner's practicum is real dispatches
+whose outputs pass through the estate's verification gates, with the orchestrator holding the veto on
+acting on un-verified output. A MODEL-INSTANCE learner's practicum is real work at the tightest
+envelope — every action reviewed — loosening only as the instance evidences the estate's competences,
+the final step of the Part XVI onboarding pipeline. (DERIVED: uniform shape, three substrates, the
+envelope-tightening-to-nothing being the certification event in all three.)
+
+FINAL LAW — PART IX. Synthetic experience is a proxy, and reality is the only thing the estate
+certifies on — so FULL autonomy is earned in the practicum: bounded real work, inside every safety
+gate the estate already runs plus a supervisor's veto over the irreversible, graded on outcome-
+against-reality and never on the learner's own report. The envelope tightens as competence
+accumulates, and its final loosening to nothing is the certification itself. A learner who cannot
+evidence the practicum has not failed A1 — it has proven the one thing the router most needed to know.
+
+===============================================================================================
+PART X — ASSESSMENT WITHOUT PROXY-GAMING
+===============================================================================================
+
+10.1 Assessment is the load-bearing act of the whole dataset. Every Part before this one produces
+evidence; assessment is where evidence becomes a verdict on competence, and a certification is only
+as sound as the assessment behind it. (DEFINED: assessment is the operation that reads a learner's
+evidence_ledger against a curriculum's success criteria and returns, per competence node, EVIDENCED /
+NOT-EVIDENCED / INSUFFICIENT.) If assessment can be gamed — if a learner can produce the appearance of
+competence without the competence — then every downstream certification is a proxy, and the router
+trusts learners on nothing. This Part is therefore where A1 inherits, most heavily and most
+deliberately, the estate's evidence physics.
+
+10.2 The proxy-gaming failure, named exactly. The universal failure of assessment is that the measured
+signal (the proxy) and the real competence diverge, and the learner optimizes the proxy. (OBSERVED,
+this is the estate's own most-repeated lesson under many names: teaching-to-the-test, the coherent
+fabrication that passes review, the metric gamed once it becomes a target, the nine proxies a
+compilation passes while failing behaviorally.) A1 does not get to solve proxy-gaming in general — no
+one does — but it inherits the estate's hard-won partial answer and applies it to its own object.
+
+10.3 The inherited discipline: reviewer versus auditor. SQI-00 §10.7 draws the line A1's assessment
+is built on (cited verbatim by reference, not restated): a reviewer reads what was produced and asks
+whether it is coherent, and a coherent fabrication passes review effortlessly; an auditor asks whether
+the same reality produces the same artifact, and a fabrication does not survive that question. (NORMATIVE,
+inherited wholesale.) A1's assessment is an AUDITOR of competence, not a reviewer of it: it does not
+ask whether the learner's output looks right, it asks whether the same competence reproduces the
+right outcome across independent cases the learner could not have specifically prepared for. A single
+passed case is a review; a passed outcome across held-out, unforeseeable cases is an audit.
+
+10.4 The three anti-gaming mechanisms A1 applies. HELD-OUT CASES: the assessment cases are drawn from
+a pool the learner was not taught against, so competence at them cannot be memorization of the taught
+cases — the same held-out discipline the D2A baseline-guardian and any honest evaluation uses. OUTCOME-
+NOT-ARTIFACT GRADING: the grade is the reality-checked outcome (Part IX §9.5), never the learner's
+self-report or the surface plausibility of its work. INDEPENDENT REPRODUCTION: a competence is
+EVIDENCED only if the correct outcome reproduces across multiple independent cases — one success is
+noise, a reproduced success is signal. (DEFINED, three mechanisms, each a direct relocation of an
+existing estate evidence discipline to the learner.) A learner cannot game all three at once without
+actually holding the competence — which is the point: the cheapest path to passing the assessment is
+to become competent.
+
+10.5 The INSUFFICIENT verdict and why it is distinct from NOT-EVIDENCED. Assessment returns three
+verdicts, not two. EVIDENCED: the competence reproduced across held-out cases. NOT-EVIDENCED: the
+learner attempted and the outcome was wrong — evidence of incompetence. INSUFFICIENT: not enough
+observations to decide either way. (DEFINED, and this three-way split is the same epistemic honesty
+the estate enforces elsewhere — the difference between "observed to be false" and "not yet observed,"
+which collapsing to a binary would erase.) INSUFFICIENT is not a failing grade; it is a demand for
+more practicum. Certifying on INSUFFICIENT would be certifying on absence of evidence — the exact
+UNPROVEN-versus-UNTRUSTED confusion Part III §3.4 forbade, now at the assessment layer. A learner
+advances on EVIDENCED, remediates on NOT-EVIDENCED, and practices more on INSUFFICIENT.
+
+10.6 The assessor's independence. The party that assesses is not the party that taught (Part VI §6.5)
+and not the party being assessed. (NORMATIVE, and the anti-self-grading rule cited from IAS-C1 §14.5:
+a competence's evidence may not be computed from the teacher's or the learner's own self-report.) In
+practice the assessor is the estate's own verification gates — the tests, the reality probes, the
+deploy checks — read as an impartial third party, because a gate has no incentive to flatter the
+learner. This is why A1's assessment leans so heavily on the estate's existing evidence
+infrastructure rather than building a new grader: the existing gates are already the impartial auditor
+A1 needs, and a purpose-built grader would be a new party with a new opportunity to be gamed.
+
+10.7 Assessment produces the certification input, not the certification. Assessment's output — the
+per-node EVIDENCED/NOT-EVIDENCED/INSUFFICIENT verdict against the pinned curriculum — is the INPUT to
+certification (Part XI), not the certification itself. (DERIVED boundary: assessment measures; the
+certification is the standing, expiring credential the router reads. Keeping them separate lets a
+certification decay (Part XII) while its original assessment stays a fixed historical record — the
+learner was EVIDENCED then; the credential expires now; both are true.) The separation is the same
+pin-the-reference discipline as the curriculum version: the assessment is a dated observation, the
+certification a decaying claim built on it.
+
+FINAL LAW — PART X. A certification is only as sound as the assessment beneath it, and an assessment
+that can be gamed certifies proxies. A1 assesses as an auditor, never a reviewer — held-out cases the
+learner could not prepare for, graded on reality-checked outcome not surface plausibility, requiring
+independent reproduction — so that the cheapest path to passing is to actually become competent.
+Three verdicts, never two: EVIDENCED advances, NOT-EVIDENCED remediates, and INSUFFICIENT is a demand
+for more practice, never a licence to certify on the absence of evidence.
+
+===============================================================================================
+PART XI — CERTIFICATION: THE GRADUATION GATE FROM LEARNER TO MEMBER
+===============================================================================================
+
+11.1 What a certification asserts, stated with maximum precision. A certification is a standing,
+dated, expiring claim that a named party (the learner) holds a named competence (a curriculum, at a
+pinned version) to a named stage (a rung on the Part XVII ladder), on named evidence (the assessment
+of Part X). (DEFINED.) Every clause is load-bearing and its omission is a known failure: a
+certification without a pinned curriculum version cannot be audited (Part IV §4.5); without an
+evidence basis it is a guess (Part I); without an expiry it is the permanent credential Part XII
+forbids; without a named stage it conflates SUPERVISED with FULL. A certification is the artifact the
+router reads to answer "may I trust this party here," and it must carry everything the router needs to
+trust it responsibly — including its own limits.
+
+11.2 Certification is a gate, not a ceremony. The certification act is the reading of the assessment
+verdicts against the curriculum's graduation rule for the target stage, and it PASSES only if every
+required competence node is EVIDENCED. (NORMATIVE: a single INSUFFICIENT or NOT-EVIDENCED node on a
+required competence blocks the certification for that stage — there is no "close enough," no
+averaging, no compensating a failed FOUNDATION node with excellent FLUENCY.) This is the conjunctive
+gate discipline the estate learned the hard way and sealed as doctrine: a composite score mapped onto
+a hard verdict silently passes a fatal individual failure. FOUNDATION nodes especially are ANDed, not
+averaged — the learner competent at everything except the one irreversible failure mode is precisely
+the learner the certification must not pass to FULL.
+
+11.3 The stage-specific graduation rules. Each ladder stage has its own certification rule, drawn from
+the curriculum strata of Part V §5.3. SUPERVISED certification requires every FOUNDATION node
+EVIDENCED — the learner may now do reversible work under review. BOUNDED certification requires every
+FOUNDATION and FLUENCY node EVIDENCED — the learner may now do scoped work with only irreversible
+steps reviewed. FULL certification requires every node including MASTERY EVIDENCED, and — per Part VII
+§7.5 and Part IX — requires PRACTICUM evidence, never synthetic evidence alone. (DEFINED, three gates.)
+The gates are strictly nested: FULL implies BOUNDED implies SUPERVISED, so a certification is always
+a high-water mark of evidenced competence, never a claim that outruns its evidence.
+
+11.4 The certification is issued by an independent party. Per the conflict rules of Parts VI §6.5 and
+X §10.6, the certification is issued neither by the teacher nor by the learner, but by the assessment
+infrastructure reading the evidence_ledger against the pinned curriculum — an impartial act, because
+the estate's gates have no stake in the outcome. (NORMATIVE.) In operational terms the certification
+is a derived record: given a learner's evidence_ledger and a curriculum version, the certification is
+a pure function of them, re-derivable and auditable. This is deliberately the same shape as ACIS's
+one derived function that reads ledgers and returns a level — A1 cites that shape as precedent: a
+certification, like an ACIS level, is a read-only projection of evidence, writing nothing new,
+inventing nothing, only reporting what the evidence already supports.
+
+11.5 What certification changes downstream. The moment a certification is issued or upgraded, the
+learner's current_stage field (Part III §3.3) changes, and every consumer reading that field sees the
+new stage: the IAS-A1 router may now send the newly-FULL learner unsupervised work; the portfolio
+(IAS-C1) may fold the now-certified capability's operator-readiness into its valuation; the
+model-onboarding pipeline (Part XVI) may admit the newly-certified instance to real routing. (DERIVED:
+the certification is A1's single write to the rest of the estate — everything else A1 does is internal
+to its own pipeline; the certification state is the one field the estate consumes.) This is why the
+certification must be precise: it is the interface, and an imprecise interface is trusted imprecisely.
+
+11.6 Certification from learner to MEMBER — the meaning of the transition. A FULL certification is
+the transition from learner to MEMBER: a party the estate trusts to act unsupervised within the
+certified capability's scope. (DEFINED.) Membership is not permanent (Part XII) and not unbounded
+(it is scoped to the certified competences), but within its scope and its validity window it is the
+estate's statement that this party has been taught, and proven, to do this work. The whole pipeline —
+curriculum, apprenticeship, synthetic experience, failure simulation, practicum, assessment — exists
+to make this one transition trustworthy, converting the implicit session judgment of Part I §1.2 into
+an evidenced, auditable, expiring credential. The estate's first-ever explicit answer to "is this
+participant ready" is a Part XI certification.
+
+11.7 The honest limits a certification must carry. A certification asserts competence at the pinned
+curriculum's competence graph — no more. It does not assert the learner is competent at competences
+the curriculum did not test, at a newer curriculum version it was not assessed against, or outside the
+certified capability's scope. (NORMATIVE, and this is the anti-inflation discipline of the credential
+itself: a certification that is read as asserting more than it evidenced is a credential-inflation
+failure, Part XX.) A well-formed certification is therefore as notable for what it withholds as for
+what it grants — it is FULL on this, and silent on everything else, and the router must read the
+silence as UNPROVEN, never as competent-by-association.
+
+FINAL LAW — PART XI. A certification is a dated, expiring, evidence-backed claim that a named party
+holds a named competence to a named stage — and it passes only when every required node is EVIDENCED,
+FOUNDATION nodes ANDed and never averaged, because the learner competent at all but the one
+irreversible failure is the learner the gate exists to stop. It is the single field the estate
+consumes and A1's one write to the world; it grants exactly what it evidenced and withholds
+everything else, and the router reads its silence as UNPROVEN, never as competence by association.
+
+===============================================================================================
+PART XII — RECERTIFICATION AND DECAY: EDUCATION IS NOT A ONE-TIME EVENT
+===============================================================================================
+
+12.1 The permanence fallacy, and why A1 forbids it. The most seductive error in any certification
+system is to treat a credential as permanent — issued once, held forever. (OBSERVED, this is a failure
+the estate has already diagnosed in a sibling domain: IAS-D2 §13.2's rule that "a test that already
+passed once will continue to report CLEAR indefinitely unless something makes the underlying artifact
+re-readable and re-evaluated.") A1 relocates that diagnosis to competence: a certification asserted
+once and never revisited reports "competent" indefinitely, whether or not the competence survives.
+Every A1 certification therefore carries an expiry from the moment it is issued (Part XI §11.1), and
+membership is a decaying state, not a permanent title.
+
+12.2 The three decay processes A1 tracks. Competence certifications erode for three distinct reasons,
+and A1 names each because they trigger different recertifications. SUBSTRATE DRIFT: the capability the
+learner was certified on changed — a new failure mode, a tightened invariant, a new curriculum version
+(Part IV §4.5) — so the certification, pinned to the old version, no longer covers the current
+capability. COMPETENCE DECAY: the learner's own competence may erode unexercised — a rarely-used
+MASTERY competence, unpracticed across a long window, is no longer safely assumed. EVIDENCE STALENESS:
+the observations the certification rests on age, and old evidence of competence is weaker evidence of
+present competence, per IAS-E1's per-hop evidence drift (cited: STABLE/DECAYED/INFLATED). (DEFINED,
+three decay processes.) A1 does not author the decay proofs — IAS-D2 and IAS-E1 and FD-04 own those;
+A1 owns the educational CONSEQUENCE: which decay triggers which recertification.
+
+12.3 The boundary with IAS-D2 and FD-04, drawn explicitly. IAS-D2 §13 owns IMMUNITY DECAY MONITORING —
+the erosion of an antibody's validity — and FD-04 is titled Intelligence Decay. (Boundary, Article II:
+D2's object is the estate's immunity to a failure; FD-04's object is a distilled intelligence asset's
+decay; A1's object is a LEARNER's certified competence.) A1 SUBSCRIBES to D2's and E1's and FD-04's
+decay signals as recertification TRIGGERS — when D2 reports that the substrate a learner was certified
+on has a new antibody (a new failure mode), A1 marks every certification pinned to the old curriculum
+for recertification. A1 authors no decay mechanism of its own; it is a consumer of the estate's decay
+telemetry, translating a decay event on a capability into a recertification demand on that capability's
+certified learners.
+
+12.4 What recertification is, precisely. Recertification is re-evidencing a learner's competence
+against the current curriculum version after a decay trigger. (DEFINED, and expressible only because
+the curriculum is a pinned artifact — Part IV §4.7.) It is not re-teaching from scratch: a learner
+recertifying after substrate drift is assessed against the DELTA — the new or changed competence nodes
+— not the whole graph, if its prior certification on the unchanged nodes is still within their validity
+window. (DERIVED: recertification is scoped to what decayed, the same delta-discipline the estate
+applies everywhere — distill the delta, not the answer; teach the delta, not the course.) A learner
+whose whole certification has expired recertifies against the whole graph; a learner facing a
+two-node curriculum update recertifies on two nodes. Recertification cost scales with the decay, not
+with the curriculum's size.
+
+12.5 The lapsed certification and the router's correct default. When a certification expires and is not
+yet recertified, the learner's stage does not silently hold — it drops. (NORMATIVE: a lapsed FULL
+certification drops the learner to the highest stage whose evidence is still valid, or to UNPROVEN if
+none is. The router, reading the dropped stage, reverts to supervising work it would have sent
+unsupervised the day before.) This is the only safe default: a certification whose evidence has aged
+past its validity window is, epistemically, a certification the estate can no longer defend, and the
+router must treat the party as UNPROVEN on the lapsed competence, not as competent-until-proven-
+otherwise. The asymmetry is deliberate and matches the estate's evidence doctrine: competence is
+asserted only on current evidence, and absence of current evidence is UNPROVEN, never assumed-still-
+good.
+
+12.6 Recertification as the mechanism that makes membership meaningful. A membership that never
+expired would, over a long enough horizon, certify a roster of parties whose competence no current
+evidence supports — the diploma-mill failure (Part XX) reached not by fraud but by neglect. (DERIVED:
+decay-and-recertification is what keeps the certified roster HONEST — at any moment, every FULL
+certification in the estate is backed by evidence still inside its validity window, or it has already
+dropped. The roster's trustworthiness is a direct consequence of its credentials expiring.) This is
+the same insight IAS-C1 §15 encodes for capital positions — a position with no DECLINING-to-RETIRED
+flow is not necessarily healthy — relocated to competence: a certified roster with no expiry-and-
+recertification flow is not a healthy roster, it is an unaudited one.
+
+12.7 The recertification economy, handed to Part XXI. Recertification consumes teaching capital, and a
+naive policy — recertify everything constantly — would spend the estate into the ground. (CONTESTED,
+resolved in Part XXI: recertification frequency is risk-weighted — a FOUNDATION competence on a
+high-risk irreversible capability recertifies aggressively; a low-risk FLUENCY competence recertifies
+lazily.) The decay clock's rate is set by the competence's risk surface, the same arbiter that sized
+the curriculum (Part V §5.5). A1 does not recertify uniformly; it recertifies where the cost of a
+stale certification is highest, and lets low-stakes certifications age on a longer clock.
+
+FINAL LAW — PART XII. A certification held forever reports "competent" forever, whether or not the
+competence survived — so A1 issues none without an expiry, and membership is a decaying state, not a
+title. It authors no decay proof — D2, E1, and FD-04 own those — but it owns the consequence:
+substrate drift, competence decay, and evidence staleness each trigger a recertification scoped to
+what decayed. A lapsed certification drops the learner to UNPROVEN and the router re-supervises,
+because the roster is trustworthy for exactly one reason — every credential on it is backed by
+evidence still inside its window, or it is already gone.
