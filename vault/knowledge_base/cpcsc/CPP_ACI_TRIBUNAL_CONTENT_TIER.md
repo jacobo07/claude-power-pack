@@ -25,20 +25,27 @@ one row before any verdict is tested. This re-run uses the table.
 | XII | Autopoietic / Meta-Science | ABSORB → REFERENCE | **EXTEND** | ~55% | ~55% |
 | III | Reasoning Compilation | ABSORB → REFERENCE | **EXTEND** | ~0% (owner does not exist) | **60%** |
 | IX | Cognitive Capital | ABSORB → REFERENCE | **ABSORB — survives** | partial | **~90%** |
-| IV | Capability Genesis | ABSORB → REFERENCE | *pending wave 2* | | |
-| VIII | Learning Dynamics | ABSORB → REFERENCE | *pending wave 2* | | |
-| VI | Execution Reality | ABSORB → REFERENCE | *pending wave 2* | | |
-| VII | Evidence Physics | ABSORB → REFERENCE | *pending wave 2* | | |
+| IV | Capability Genesis | ABSORB → REFERENCE | **EXTEND** | owner mis-set both ways | **80%** |
+| VIII | Learning Dynamics | ABSORB → REFERENCE | **ABSORB — survives** | partial | **~95%** |
+| VI | Execution Reality | ABSORB → REFERENCE | **EXTEND** | thin (schema only) | **85%** |
+| VII | Evidence Physics | ABSORB → REFERENCE | **ABSORB — survives** | partial | **~90%** |
 | V | Mission Computation | EXTEND | *pending wave 3 (spot-check)* | | |
 | X | Governance Yield | EXTEND | *pending wave 3 (spot-check)* | | |
 | XI | Evolutionary Ecology | EXTEND-thin | *pending wave 3 (spot-check)* | | |
 
-**Running tally: 5 verified — 4 overturned to EXTEND, 1 survived as ABSORB.**
+**Running tally: 9 verified — 6 overturned to EXTEND, 3 survived as ABSORB.**
 
-That one survivor is load-bearing. A re-audit in which every verdict flips is measuring
-its own method, not its subject. Science IX surviving at ~90%, with the verifier reporting
-zero findings and explicitly declining to manufacture one, is what makes the other four
-credible.
+Those three survivors are load-bearing. A re-audit in which every verdict flips is
+measuring its own method, not its subject. Science VII in particular held at 90% with the
+verifier stating it ruled "on its own merits and not for consistency with SQI's
+reputation" — it was warned not to flip for consistency, and it did not.
+
+**The owner column is wrong far more often than the verdict column.** Of 9 verified, the
+verdict changed in 6 cases but the *owner-set* was wrong in 8. Science IV is the sharpest
+case: the Tribunal's ABSORB was **right for the wrong reason** — it credited DFP, which
+does not own the subject, while the real owner went unscored. A correct-verdict/wrong-owner
+outcome would survive any audit that re-checked only verdicts. That is the argument for
+having done this at content tier rather than re-reading the conclusions.
 
 ---
 
@@ -115,6 +122,141 @@ of its existing holdings **have stopped earning their keep**."
 IAS-C1 and the DAIF/CO datasets are *specifications*, while only `token_irr.py` and
 `token_ground_truth.py` run. If Science IX were re-proposed, its sole defensible delta is
 wiring IAS-C1's portfolio lifecycle into an executable, not new doctrine.
+
+---
+
+## IV — Capability Genesis → EXTEND (80%)
+
+**The Tribunal's owner-set was wrong in both directions.** DFP should be *struck*: it
+governs whether the governing corpus exists before a build, and its DFP-02 lifecycle is
+the lifecycle of **a corpus**, not of a capability — 8 stages ending at CERTIFICATION and
+FREEZE. That is the reverse vector from a dataset→system foundry. Citing it is
+"lifecycle" as shared metaphor.
+
+The true owners were never scored: `ias_d1_system_ecology.txt` carries
+`PART XX — THE DATASET GENOME AND LINEAGE` with a formal definition (§20.2) — "A system's
+GENOME, DEFINED, is the heritable subset of its property record… that transfers, with
+evidenced completeness, to whatever successor system a speciation, merger, or
+succession-resolution event produces" — at 69 hits on the genome vocabulary, an order of
+magnitude above anything the Tribunal scored, plus `PART IX — NICHE DISCOVERY`. And
+`ias_c1` §15.2 owns the capability lifecycle outright: PROPOSED → FUNDED → TESTING →
+SETTLED → MATURE → DECLINING → RETIRED, "gated by evidence, never by elapsed time alone."
+D2A was correctly credited and already hands its birth score to IAS-C1 §15.2 — the two
+families are wired.
+
+**Mechanism absent — the foundry step itself.** Nothing downstream of DFP's FREEZE emits
+an executable artifact. `ias_a1` §10.6 explicitly disclaims construction: closing a
+decomposition gap by BUILDING a capability is "outside this dataset's own authority," and
+IAS-C2 forecasts demand without fabricating. The estate can detect a vacancy, price it,
+score a candidate, write a build contract, ratify capital, and govern the position's whole
+life — but **the arrow from certified corpus to running capability is drawn by a human
+session every time.**
+
+**Unique remainder:** corpus→executable transduction — the seam between DFP's FREEZE gate
+and IAS-C1's FUNDED state.
+
+---
+
+## VIII — Learning Dynamics → ABSORB SURVIVES (~95%)
+
+The verifier states it looked hard for a gap and did not find one worth naming.
+
+**All three legs owned.** Learning closure is FD-07's organizing thesis, not an incidental
+feature: "question → delta → novelty → triage → transmute → writeback → eval → benchmark →
+transfer-test → registry → prompt-improvement." Promotion economy is FD-03's 8-home
+taxonomy composed over compound-learnings' signal thresholds, and is an economy in the
+strict sense — contention and waste over promotion effort (`fd_03:610`: "two panes each
+independently deciding that a capability warrants promotion… and both spending the
+transmutation effort").
+
+**Non-recurrence proof is owned by an unscored file — and this is where failure mode B
+would have bitten.** Grepping `non.?recurrence|cannot recur` returns essentially nothing in
+`ias_d2_immune_system.txt`. **The term is absent; the mechanism is the file's entire
+subject.** Its Part index names `PART VIII — IMMUNIZATION: FROM INCIDENT TO PREVENTIVE
+PROTECTION`, `PART IX — THE ANTIBODY RECORD`, `PART XIII — IMMUNITY DECAY MONITORING`.
+
+**The owner is ahead of the proposal, not behind it.** IAS-D2 does not merely provide
+non-recurrence proof — it refutes the proposal's framing as unsound. §13.1: "three
+independent processes erode a confirmed antibody's validity over time without any single
+one of them announcing itself as a regression." §13.2: "a test that already passed once
+will continue to report CLEAR indefinitely unless something makes the underlying artifact
+re-readable and re-evaluated." **A static non-recurrence proof is precisely the artifact
+PART XIII exists to catch.** Building it as specified would install the failure mode the
+owner was written to prevent.
+
+**Unique remainder:** the 5% is a rename, not a mechanism — no artifact carries "learning
+dynamics" as an index entry, so the material is reachable only through four families'
+separate vocabularies. A navigation cost (a GK-06 route), not a build.
+
+---
+
+## VI — Execution Reality → EXTEND (85%)
+
+**`pp_dataset_22` assessed on the ACIS standard: a schema skeleton, not a mechanism.**
+Seventeen field-lists (`EXECUTION_LEASE`, `EXECUTION_CAPSULE`, `EXECUTION_SAGA`,
+`ROLLBACK_DECISION`) where every entry is a bare field name with no semantics —
+`rollback_available:`, `state_before:`, `state_after:`. It names the parts of a sovereign
+runtime; it does not specify how any of them decides anything.
+
+**Mechanism present, in files never scored.** `daif_04` PART IV defines an action contract
+as a triple — subject, predicate, evaluator — and rules that "an assertion with no named
+evaluator is undecidable in practice regardless of how decidable it looks on paper," with
+UNVERIFIED as a distinct terminal state. §7.7 carries reversibility: "a contract with
+irreversible effects MUST declare a compensation path before it may be executed at all.
+Not before it fails — before it runs." §7.8 forbids "the undeclared partial, which is a
+promise that produces an unknowable world." `daif_07` §6.5 supplies proof-of-reality-change
+via a ranked closure hierarchy topped by an observed reality probe. `ias_f3` §2.3 owns the
+intended-vs-observed delta object outright via its DIVERGENCE RECORD. `drk_02` carries
+decision-layer reversibility at the highest hit density in the estate.
+
+**A candidate correctly rejected.** DAIF-21 is a title match, not a subject match: its
+PART I is "every compiled artifact is a photograph of a world that has since moved on" —
+subject is staleness of derived representations, not side effects of executed actions.
+Adjacent, not owner.
+
+**Mechanism absent — the undeclared side effect.** 731 hits across 111 files for the
+side-effect vocabulary, and every one governs *declared* effects: postconditions promised,
+halting states enumerated, irreversible effects registered, forecasts predicted. Nothing
+discovers effects **nobody declared** — a world-diff observed before and after an action,
+reconciled against its effect manifest, surfacing an unenumerated mutation as unauthorized.
+
+**Unique remainder (~15%):** the per-action side-effect ledger over undeclared mutations.
+
+---
+
+## VII — Evidence Physics → ABSORB SURVIVES (~90%)
+
+Held on its own merits; the verifier was explicitly warned not to flip it for consistency
+with SQI's reputation, and states it did not.
+
+**Mechanism present.** SQI-00 §10.2 is a literal court with rules of standing — Builder,
+Prosecutor, Defender, Court, Auditor, Guardian — and §10.7 carries the load: "a reviewer
+reads what was produced and asks whether it is coherent, and a coherent fabrication passes
+review effortlessly. An Auditor asks whether the same reality produces the same artifact,
+and a fabrication does not survive that question."
+
+Proxy extermination is owned by an unscored file, and better than the proposal states it:
+`daif_03` PART VII — "But the screens are proxies and this is the criterion. A compilation
+that passes all nine proxies and fails behaviorally has failed, and the nine proxies were
+wrong about it" — then §7.6 names *why* proxies pass while reality fails, and keeps them
+anyway on an explicit economic argument. `ias_e1` PART VIII adds per-hop evidence drift
+classified `STABLE | DECAYED | INFLATED`, where "INFLATION is more dangerous than decay
+because decay merely loses information, while inflation actively manufactures false
+confidence."
+
+SQI's root law is backed by an executed instrument rather than prose alone:
+`baseline_guardian.py` gates three absolutes, refuses ratios, and was *observed refusing* —
+two real failures on first execution, repaired and re-verified.
+
+**Mechanism absent — the artifact reality graph as a single queryable object.** The
+capability exists but is distributed and un-unified: E1 graphs claims across hops, DAIF-02
+holds provenance, GK-04 holds typed derivation edges, ACIS holds the ladder. Nothing binds
+a *shipped artifact* to the evidence licensing belief in it. The nearest declared owner,
+**SQI-09 Evidence Admissibility & Chain of Custody, is DEFERRED — not built.** The court
+exists and sits; its rules of evidence are backlog.
+
+**Unique remainder (~10%):** the unified artifact→evidence graph, and its join to E1's
+drift records so an inflation event can be traced to the artifact it contaminated.
 
 ---
 
