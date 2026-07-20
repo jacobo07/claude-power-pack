@@ -29,23 +29,49 @@ one row before any verdict is tested. This re-run uses the table.
 | VIII | Learning Dynamics | ABSORB → REFERENCE | **ABSORB — survives** | partial | **~95%** |
 | VI | Execution Reality | ABSORB → REFERENCE | **EXTEND** | thin (schema only) | **85%** |
 | VII | Evidence Physics | ABSORB → REFERENCE | **ABSORB — survives** | partial | **~90%** |
-| V | Mission Computation | EXTEND | *pending wave 3 (spot-check)* | | |
-| X | Governance Yield | EXTEND | *pending wave 3 (spot-check)* | | |
-| XI | Evolutionary Ecology | EXTEND-thin | *pending wave 3 (spot-check)* | | |
+| V | Mission Computation | EXTEND (white-space) | **EXTEND — shrinks hard** | — | **80% owned** |
+| X | Governance Yield | EXTEND | **ABSORB — moves the other way** | — | owned by name |
+| XI | Evolutionary Ecology | EXTEND-thin | **ABSORB — moves the other way** | — | owned outright |
 
-**Running tally: 9 verified — 6 overturned to EXTEND, 3 survived as ABSORB.**
+## FINAL: 12 of 12 verified
 
-Those three survivors are load-bearing. A re-audit in which every verdict flips is
-measuring its own method, not its subject. Science VII in particular held at 90% with the
-verifier stating it ruled "on its own merits and not for consistency with SQI's
-reputation" — it was warned not to flip for consistency, and it did not.
+| | Tribunal (title tier) | Content tier |
+|---|---|---|
+| ABSORB | 9 (I II III IV VI VII VIII IX XII) | **5** (VII VIII IX X XI) |
+| EXTEND | 3 (V X XI) | **7** (I II III IV V VI XII) |
+| KEEP-AS-NEW | 0 | **0** |
 
-**The owner column is wrong far more often than the verdict column.** Of 9 verified, the
-verdict changed in 6 cases but the *owner-set* was wrong in 8. Science IV is the sharpest
-case: the Tribunal's ABSORB was **right for the wrong reason** — it credited DFP, which
+**The correction runs in BOTH directions.** Six ABSORB verdicts fell to EXTEND — and
+three moved the opposite way: X and XI became ABSORB, and V collapsed from "genuine
+white-space" to 80%-owned with a one-Part remainder. Nine of twelve verdicts changed, in
+opposing directions.
+
+This is the strongest available evidence that the content-tier method measures its subject
+rather than its own bias. A correction that only ever produced "more new" would be
+indistinguishable from a method that rewards finding gaps.
+
+**The owner column is wrong far more often than the verdict column.** The verdict changed
+in 9 of 12 cases; the owner-set was wrong or incomplete in **12 of 12**. Science IV is the
+sharpest: the Tribunal's ABSORB was **right for the wrong reason** — it credited DFP, which
 does not own the subject, while the real owner went unscored. A correct-verdict/wrong-owner
-outcome would survive any audit that re-checked only verdicts. That is the argument for
-having done this at content tier rather than re-reading the conclusions.
+outcome survives any audit that re-checks only conclusions.
+
+### Root cause — and why this re-run was only possible after Task 1
+
+The Tribunal's error was structural, not incidental: **it scored the code surface
+(`modules/`, `commands/`) while the mechanisms live in the dataset surface
+(`vault/knowledge_base/cpp_ias/`)** — a 14-file, ~34k-word-per-file family it appears
+never to have opened.
+
+It could not have opened it. On 2026-07-12 CPP-IAS sat unversioned in `Downloads`, outside
+the repository entirely. The denominator defect was not carelessness; it was a corpus that
+was **physically outside the audit's reach**. Repatriating it (`6b83358`) is what made this
+re-run possible, and `ias_c1_capability_portfolio.txt` alone turns out to be the true or
+co-true owner of Sciences IX, IV, V, X and XI — named in none of them.
+
+That is the enrollment defect at its most consequential: not a registry row someone forgot,
+but half a million words of owner-evidence sitting one directory outside the boundary,
+silently converting "we already own this" and "this is white-space" into coin flips.
 
 ---
 
@@ -257,6 +283,94 @@ exists and sits; its rules of evidence are backlog.
 
 **Unique remainder (~10%):** the unified artifact→evidence graph, and its join to E1's
 drift records so an inflation event can be traced to the artifact it contaminated.
+
+---
+
+## V — Mission Computation → EXTEND, but shrinks from "white-space" to ~20% remainder
+
+Three of four pillars are already built. **Dynamic org assembly** is `ias_a1` PART VII
+verbatim: the runtime structure that "DISSOLVES once the mission completes, leaving no
+standing artifact in the ensemble beyond the route trace… builds and discards by design."
+It even bounds a failure mode the Science would have had to rediscover.
+
+**Mission market** is owned by `ias_c1` PARTS VI and IX — a clearing mechanism for missions
+competing over a finite capability pool, expressed in portfolio vocabulary rather than
+market vocabulary. Textbook failure mode B: grepping "mission market" returns 0 in c1 while
+the mechanism is a named Part. **Mission hypervisor** splits across `ias_a2` PARTS XII–XIII
+and `ias_a1` PART XI.
+
+**Absent:** mission constitution as a per-mission normative object. The 82 constitution hits
+resolve to the estate-level `CONSTITUTION.md` and F1/F2 federation law — a *standing*
+constitution, not one compiled per mission and retired with it. Subject genuinely differs.
+
+**Unique remainder:** a per-mission normative envelope (which rules bind, which are waived,
+who may amend, expiry at dissolution) attaching to a1's PART VII workflow instance.
+**Roughly one Part, not a Science.**
+
+---
+
+## X — Governance Yield → ABSORB (moves the opposite way)
+
+The Tribunal's stated delta was "*measured* yield (value ÷ cost)". That exists **by name**:
+`ias_c1` **PART XIV — MEASURED GOVERNANCE YIELD: THE COST OF GOVERNING, PRICED HONESTLY**
+(:1461), defining it as "the value-to-cost ratio of the estate's governance mechanisms
+specifically, computed by the SAME valuation discipline (Part IV)". At :1483 it states it is
+answering this very proposal: "this is precisely the honest discipline 'measured governance
+yield' was reaching for."
+
+It also carries the two hard parts the proposal never named: a **prevented-harm** advantage
+term (§14.3 — governance value is what does *not* happen, invisible to consumer-count), and
+an **anti-gaming countermetric** (§14.5 — "a governance position's yield may never be
+computed from its OWN self-reported activity log alone"). **The Science as proposed would
+have shipped the naive ratio and hit exactly that trap.**
+
+Honest caveat recorded by the verifier: `ias_e1` PART XIX's theater-detection signature is
+about *observability* theater, not governance theater — close but not identical. c1
+§14.4–14.5 covers the governance-specific case, so the pair closes it.
+
+**Unique remainder: near-nil.** At most, wiring c1's formula to real audit-log block counts
+so the yield is computed rather than defined — an implementation ticket, not a Science.
+
+---
+
+## XI — Evolutionary Ecology → ABSORB (moves the opposite way)
+
+`ias_d1_system_ecology.txt` (42,779 w, 26 Parts) owns all four primitives outright.
+**Fitness** → PARTS II–IV, and PART III's title alone encodes a constraint the proposal
+lacks: *fitness per environment, never one global number*. **Extinction** → PART XV
+(retiring a system while preserving its useful law). **Speciation** → PARTS XI–XII.
+
+**Mutation** is the one term genuinely thin in d1 — one hit. And it is the textbook failure
+mode B trap: the mechanism is not absent, it is in a sibling's named Part —
+`ias_g1` **PART X — THE MUTATION SANDBOX** plus PART XI *The Evolution Planner*, with d1
+PART XXII supplying governed-change discipline.
+
+d1 also owns material the Science never proposed: niche discovery and breadth/overlap, a
+Biodiversity Governor with anti-monoculture *and* anti-proliferation poles, dataset genome
+and lineage, and adversarial cases against gaming the ecology's own mechanisms. Its PART I
+is literally titled *"Why Neither D2A Nor EVOLUTION_ENGINE Already Owns It"* — d1
+pre-adjudicated its boundary against two of the Tribunal's three claimed owners.
+
+**Unique remainder: none worth a Science.** At most a bridge from g1's mutation sandbox to
+d1's fitness landscape — and d1 PART XXVI already names that integration.
+
+---
+
+## The genuine delta after 12 content-tier verdicts
+
+Seven EXTENDs, each with a named remainder. Ordered by how much is actually missing:
+
+| Science | remainder | size |
+|---|---|---|
+| XII | the theory generator / law extraction from evidence — "a tribunal without a legislature" | large |
+| I | unknown-unknown generation (every owner detects divergence in what is already represented) | large |
+| II | claim-level confidence calibration · epistemic debt as a standing balance · **unification** of five owners' overlapping algebras | medium |
+| III | live-trace ingestion · decompiler · cognitive VM · unified pre-execution entry gate | medium |
+| IV | corpus→executable transduction — the seam between DFP's FREEZE and IAS-C1's FUNDED | medium |
+| VI | the undeclared side-effect ledger | small |
+| V | mission constitution — one Part | one Part |
+
+Five ABSORBs with no material remainder: VII, VIII, IX, X, XI.
 
 ---
 
