@@ -1,6 +1,6 @@
 ---
 name: claude-power-pack
-description: "Universal AI execution framework — tiered loading, zero-issue delivery, self-healing"
+description: "Use in ANY repo when a task involves: architecture or design decisions, a multi-file feature, a new system from scratch, debugging a recurring or cross-session failure, QA and done-gates (\"is this done\", \"ready to ship\"), deploys and production risk, datasets or knowledge-vault work, token/context/cost audits, governance rules or hard rules, code review and quality gates, session recovery or handoff, prompt distillation, or infra/VPS/daemon operations. Also on: \"audit this\", \"why does this keep breaking\", \"plan this\", \"verify this works\", and every /cpp-*, /ultra, /liveness, /kclear, /osa, /ira, /what-now command. Provides tiered execution doctrine (LIGHT/STANDARD/DEEP/FORENSIC), zero-issue completion gates, CEPS recurring-error prevention, reachability/liveness checks, governance overlay, knowledge graph, and 100+ commands."
 ---
 
 # Claude Power Pack v8.0
