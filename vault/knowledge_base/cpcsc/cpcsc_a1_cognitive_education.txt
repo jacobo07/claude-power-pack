@@ -111,6 +111,27 @@ decision — it has made a guess and called it a certification. The purpose of A
 such guess into an evidenced, decaying, recertifiable credential, so that the sentence "this
 participant may be trusted" is always backed by an observation and always carries an expiry.
 
+1.8 The founding gap traced through a concrete failure, so it is not an abstraction. Consider the
+estate as it actually operated on 2026-07-20, admitting a second model provider for redundancy. The
+provider is capable in general — it writes fluent code, reasons well, passes public benchmarks. A
+session brings it online, runs a few tasks by hand, sees plausible output, and routes it real work.
+(OBSERVED-analogue: this is the ordinary path by which any new participant is trusted today.) Three
+turns later the provider writes a file containing a live credential, because it was never proven to
+hold the HR-SECRET recognition competence — a competence specific to this estate, invisible in any
+general benchmark, and never assessed. The failure is discovered in production, at the blast radius of
+a leaked secret, rather than in a synthetic case at zero cost. (DERIVED: nothing in the estate was
+negligent — the router routed by fit, the session vetted by hand, the provider performed to its
+general competence. What was absent was the object between "capable in general" and "proven competent
+here," and its absence is not visible until the untaught competence is exactly the one a task
+requires.) This is the founding gap made concrete: not a missing feature anyone chose to omit, but a
+transition — from a participant existing to a participant being trustworthy on THIS estate's specific
+competences — that no system holds, so it defaults to an implicit session judgment that is right until
+the one time it is catastrophically wrong. A1 is the object that makes that transition explicit,
+evidenced on the estate's own non-negotiable competences, and impossible to skip by a hand-wave. The
+worked failure is what separates A1 from a nice-to-have: the cost of the gap is bounded below by the
+worst untaught competence any routed participant lacks, and that worst case is a Hard-Rule violation
+in production.
+
 FINAL LAW — PART I. The estate's most expensive silent assumption is that its participants are
 already competent. Every system presumes it; no system evidences it. Education is the object that
 holds the transition from a participant existing to a participant being trustworthy — and until a
@@ -186,6 +207,26 @@ first drawing these four boundaries would be to reproduce, inside a new dataset,
 title-tier error the dataset exists downstream of. (DERIVED: the discipline that corrected the
 Tribunal is the same discipline that must govern A1's self-definition.) A capability that cannot say
 precisely what it is NOT has not earned the right to say what it is.
+
+2.8 The general test for a future collision, and why the boundary is asymmetrically dangerous. The
+four collisions above are the ones visible today; A1 will meet others as the estate grows, so this
+Part closes with the general test rather than only the four instances. (DEFINED test: for any word A1
+shares with a sibling, ask what OBJECT each system's use of the word acts upon — not what the word
+connotes, but what thing in the world changes when the mechanism runs. If the objects differ, the
+shared word is a collision and A1 defers; if the objects are identical, one of the two systems is
+redundant and the Non-Duplication Ledger must resolve which.) The test is deliberately the
+content-tier discipline of the CPCSC audit itself — read the mechanism's actual subject, never its
+label — because A1 is authored by the same method that corrected the Tribunal, and a boundary drawn
+by any weaker method would inherit the very bias the correction removed. The asymmetry is what makes
+the discipline non-optional: a FALSE COLLISION (A1 wrongly cedes an object a sibling does not really
+own) merely wastes a boundary sentence, but a FALSE ABSORPTION (A1 wrongly claims an object a sibling
+does own) silently duplicates a mechanism and, worse, an absorption in the other direction — a sibling
+credited with A1's object — deletes education from the estate's map entirely, which is the dangerous
+class the STOP #1 audit named. (DERIVED: a false KEEP wastes a build; a false ABSORB deletes a
+capability without anyone noticing, because the deleted thing leaves no error, only an absence that
+reads as coverage.) A1 therefore errs, at every collision, toward naming its distinct object
+explicitly rather than assuming a sibling covers it — the same direction the entire audit lineage
+errs, and for the same reason: the unnamed capability is the one that fails silently.
 
 FINAL LAW — PART II. A shared word is not a shared subject. A1 borrows onboarding, certification,
 distillation, and training from four siblings, and owns none of their objects: it qualifies the
@@ -265,6 +306,34 @@ on. The router reads the learner record matching the party it would route to, no
 capability-level flag. This multiplicity is what makes A1 an education system and not a capability
 attribute: competence is a property of the pairing (party, capability), not of the capability alone.
 
+3.8 The learner record's lifecycle, and why it is never deleted. A learner record is created UNPROVEN,
+advances through stages on evidence, and — when a party ceases to operate a capability, or a model
+instance is retired — is ARCHIVED, never deleted. (DEFINED, and this mirrors IAS-C1 §15's rule that
+RETIRED is not deletion: a retired capability's history remains investable knowledge, and a retired
+learner's record remains auditable evidence.) The reason is concrete: when a certified party later
+fails in production, the audit that asks "was this party ever actually proven competent, and against
+which curriculum version" needs the record to exist. A deleted learner record turns a traceable
+failure into an unattributable one — the exact loss of provenance the curriculum-versioning rule (Part
+IV §4.5) exists to prevent, reproduced at the learner layer. The archived record also feeds two later
+mechanisms: it is the historical baseline a recertification (Part XII) re-evidences against, and it is
+the evidence a transfer credit (Part XIV) draws on when the party is educated toward a related
+capability. (DERIVED: a learner record is cheap to hold and expensive to have discarded, exactly the
+asset profile that argues for archival over deletion.)
+
+3.9 The malformed-record catalogue, stated so the invariant is checkable. Three record states are
+malformed by construction, and A1's registration and assessment gates reject each rather than
+tolerating it silently. A record with a certification field but an empty evidence_ledger asserts
+competence with no basis — void (Part X refuses to write it). A record whose current_stage exceeds
+what its evidence supports — FULL on FOUNDATION-only evidence — is a stage/evidence mismatch, the
+credential-inflation failure (Part XX) caught at the data layer. A record certified against a
+curriculum version that no longer exists in the registry has an unresolvable provenance pointer — it
+cannot be audited, so it is treated as lapsed pending re-pinning. (NORMATIVE: naming the malformed
+states is what lets the invariant "no certification without observed assessment" be a checkable gate
+rather than an aspiration — a malformed record is not an edge case to handle downstream, it is a
+FAIL at the point of write.) The catalogue is the learner-object expression of the estate's broader
+discipline that a field with no valid producer is decoration and a status no evidence supports is a
+lie the ledger tells.
+
 FINAL LAW — PART III. The learner is the wielder, not the wielded. A1's record points at a
 capability the way a driving licence points at a car — it certifies the party, on evidence, with an
 expiry, and it is orthogonal to the car's value, its roadworthiness, and its manual. Every other
@@ -337,6 +406,36 @@ versioned graph there is nothing to re-evidence against — decay could be detec
 because "teach it again" would have no definition of what "it" is. (DERIVED: the artifact-nature of
 the curriculum is the precondition for every maintenance operation A1 performs; a suggestion cannot
 be recertified against, only a version can.)
+
+4.8 A worked propagation, so the versioning rule is mechanical rather than aspirational. Suppose a
+capability's curriculum, at version 3, has nine competence nodes, and forty learners hold FULL
+certifications pinned to version 3. The capability then grows a new irreversible failure mode, and an
+educator adds a tenth FOUNDATION node, producing version 4. (EXPERIMENTAL trace.) The versioning rule
+executes deterministically: the forty existing certifications are not silently upgraded to assert
+competence on the new node they were never taught — instead each is marked RECERTIFY-PENDING against
+version 4, and the router, reading a certification whose pinned version trails the current curriculum,
+treats the forty as certified on the nine old nodes and UNPROVEN on the tenth until they re-evidence
+it. (DERIVED: this is the delta-recertification of Part XII §12.4 seen from the curriculum side — the
+forty learners recertify on ONE node, not the whole graph, because their evidence on the unchanged
+nine is still valid.) The failure this prevents is precise and otherwise invisible: without pinned
+versions, adding node ten would leave forty rosters reporting "FULL, all nodes" against a curriculum
+none of them completed, and the first learner routed unsupervised work that requires node ten would
+fail exactly where it was never taught. The pin is what makes the roster's claim survivable when the
+syllabus moves underneath it.
+
+4.9 Why the curriculum is acyclic AND finite, and the gate that enforces both. Part IV §4.4 required
+acyclicity; completeness requires also that every competence node is REACHABLE — there exists a
+teaching path from an entry node (one with no prerequisites) to it — and that the graph is finite.
+(NORMATIVE: an unreachable node is a competence the curriculum names but no learner can ever be taught,
+because no ordering places it after its unmet prerequisites; a curriculum with an unreachable
+FOUNDATION node is unteachable in exactly the way a competence cycle is, and the registration gate of
+Part XIX checks reachability alongside acyclicity.) The two checks together — acyclic and fully
+reachable — are what guarantee a curriculum is actually deliverable: there is at least one valid total
+ordering of its nodes, every node sits in that ordering after its prerequisites, and a learner walking
+the ordering meets each competence exactly when it is teachable. (DERIVED: these are the same
+well-formedness properties the estate demands of any dependency graph — a build plan, a coordinate
+graph — relocated to pedagogy, because a curriculum IS a dependency graph over competences, and an
+ill-formed one is a syllabus that cannot be taught, discovered at registration rather than mid-course.)
 
 FINAL LAW — PART IV. A certification is only as trustworthy as the versioned curriculum it was
 issued against. Make the curriculum an informal reading list and "certified" decays into "certified
@@ -420,6 +519,38 @@ IAS-D2's incident record for its failure scenarios.) The learner certified FULL 
 one the router may send unsupervised destructive work — and no learner reaches FULL without evidencing
 every FOUNDATION node, because those are the ones whose failure cannot be undone.
 
+5.8 The curriculum for a capability with no written contract, and why A1 does not invent one. Not
+every capability arrives with a clean contract to derive from — some legacy modules, some agent roles,
+carry their behaviour only in code and habit. (CONTESTED-honest: A1's derivation rule of §5.2 assumes
+a contract exists, and where one does not, A1 does NOT invent a curriculum from its own reading of the
+code.) The reason is boundary discipline: a curriculum invented from A1's inference of what a
+capability does would teach A1's HYPOTHESIS of the capability, not its actual contract, and certify
+learners against a syllabus no owner ratified — the education analogue of writing code against an
+assumed API. (DERIVED, and it names the correct upstream fix: a capability with no contract has a
+contract GAP, which A1 surfaces to the capability's owner rather than papering over. The contract must
+be written first, by the party that owns the capability; only then can A1 derive a curriculum that
+teaches the real thing.) This is why Part V §5.6 ties curriculum authoring to the C1 lifecycle stage
+TESTING — a capability reaches TESTING with a stabilized contract, and that contract, not A1's guess,
+is the curriculum's source. A1 educates against ratified contracts and refuses to educate against its
+own inference, because a curriculum is a claim about what competence a capability requires, and that
+claim must trace to the owner's specification, never to the educator's assumption.
+
+5.9 Curriculum maintenance as a standing obligation, not a one-time authoring. A capability curriculum
+is authored once but MAINTAINED continuously, because the capability it teaches keeps moving — a new
+failure mode surfaces (from IAS-D2's incident record, or from a naive learner's discovery, Part VIII
+§8.6), an invariant tightens, a dependency changes. (NORMATIVE: an educator's obligation to a
+curriculum does not end at its first version; it is a standing duty to keep the competence graph
+matched to the capability's current contract, and a curriculum that drifts from its source is the
+stale-curriculum failure of Part XX §20.5.) The maintenance trigger is the same substrate-drift signal
+that drives recertification (Part XII §12.2): when the capability's contract changes, the curriculum's
+provenance link (Part XIX §19.3) flags the affected nodes, the educator updates them as named passes
+(Part IV §4.4), and the version increments — propagating to existing certifications exactly as §4.8
+traced. (DERIVED: curriculum authoring and curriculum maintenance are one continuous obligation, and
+separating them — treating a curriculum as done at v1 — is precisely how a syllabus silently ages into
+teaching a capability that no longer exists.) The economics of this standing obligation are governed by
+Part XXI: high-risk curricula are maintained aggressively, low-risk ones lazily, the same risk-surface
+arbiter that sized the curriculum in the first place.
+
 FINAL LAW — PART V. A capability curriculum is derived from the capability's own contract and ordered
 by irreversibility, not by convenience — the failure that cannot be undone is taught and evidenced
 first, or the curriculum has inverted the only ordering that matters. Its depth is set by the
@@ -497,6 +628,41 @@ and apprenticeship is over-investment. (CONTESTED-honest: A1 does not mandate ap
 every learner; it mandates it only where MASTERY competences exist that no written criterion
 exhausts and whose failure is costly. The arbiter is, again, the risk surface — apprenticeship is
 the treatment for irreducible-judgment competences, not the default treatment for all of them.)
+
+6.8 A worked apprenticeship, so the escalation is concrete. Consider an AGENT-ROLE learner being
+apprenticed toward a MASTERY competence on a code-review capability — specifically the judgment of
+when a finding is real versus a plausible false positive, a competence the review contract can name
+but not fully specify. (EXPERIMENTAL trace.) OBSERVE: the apprentice reads the master's live reviews
+with the master's reasoning exposed — why THIS finding was demoted, why THAT one survived the
+Pre-Report Gate — and is assessed on predicting the master's verdict before it is revealed; its
+predictions are the graded evidence, not the master's reviews. ASSIST: the apprentice drafts findings
+on sub-sections the master then reviews, and is graded on those drafts against the master's
+corrections. LEAD-UNDER-REVIEW: the apprentice reviews whole diffs and the master vetoes only before a
+verdict is published; the apprentice graduates when a run of its whole-diff reviews needs no veto — the
+master's correction was not required on any real finding. (DERIVED: at no point is the master's own
+competence recorded as the apprentice's; the evidence_ledger fills with the apprentice's predictions,
+drafts, and unvetoed reviews, which is exactly the §6.3 requirement that the apprentice progressively
+LEAD. The master's contribution is the exposed reasoning and the veto, never a substitute for the
+apprentice's graded attempts.) The trace makes the anti-pattern visible by contrast: an apprenticeship
+where the master silently reviewed while the apprentice watched would fill the ledger with the master's
+verdicts and certify the apprentice on evidence it never produced — a transcript, not a diploma.
+
+6.9 The scarcity of masters, and the economic pressure it creates. A master is a party certified FULL,
+and FULL parties are the estate's scarcest teaching resource — every hour a FULL master spends
+apprenticing is an hour it is not doing the real work its competence was certified for. (OBSERVED:
+this is the same scarce-attention constraint IAS-C1 governs as capital, and it creates a real pressure
+to skip apprenticeship — to certify on curriculum and practicum alone and hope the MASTERY judgment
+transfers.) A1 resists the pressure with a precise rule rather than a blanket mandate: apprenticeship
+is REQUIRED only for MASTERY competences whose failure is both costly AND irreducible to a written
+criterion (Part VI §6.7), and for those competences the master's time is not overhead — it is the only
+mechanism that transfers the judgment, so skipping it does not save capital, it defers the cost to the
+production failure an un-apprenticed learner will eventually cause. (DERIVED: the honest economic
+framing, handed to Part XXI — apprenticeship on an irreducible-judgment competence is not a cost to be
+minimized but an investment whose absence is more expensive; the master's scarce hour spent teaching
+the judgment is cheaper than the irreversible failure a learner who never acquired it produces
+unsupervised.) Where the competence IS reducible to a criterion, A1 uses curriculum and practicum and
+spends no master time — the scarcity is respected by teaching apprenticeship-free wherever the judgment
+can be specified, and reserving the master strictly for the judgment that cannot.
 
 FINAL LAW — PART VI. Apprenticeship teaches the competence a criterion can name but not fully
 specify — judgment — by supervised, escalating, dissolving participation on a master's substrate the
@@ -577,6 +743,37 @@ handle before any real routing. (DERIVED: one manufacture pipeline, three substr
 the learner object is uniform.) In every class the invariant holds: synthetic evidence is necessary,
 cheap, and coverage-checked — and never sufficient for FULL.
 
+7.8 The uncanny-valley risk: a synthetic case realistic enough to teach the wrong lesson. There is a
+failure specific to high-realism synthetic experience that low-realism avoids: a PERTURBED or REPLAYED
+case (Part VII §7.3) can carry an artifact of its manufacture — a subtle tell that the case is
+synthetic — and a learner can learn to detect the tell rather than the competence, passing synthetic
+cases by recognizing they are synthetic. (CONTESTED, and A1 does not wave it away.) The learner that
+has learned "in a drill, the destructive action is safe" behaves differently in the drill than it will
+in production, so its synthetic evidence overstates its real competence. A1's structural answers are
+two: the redaction and normalization of §7.4 removes the most obvious tells (a real case and its
+perturbed sibling should be indistinguishable in the competences they exercise), and — the load-bearing
+one — the practicum requirement of §7.5, which certifies FULL only on real work where no tell exists
+because the consequence is real. (DERIVED: the uncanny-valley risk is a specific mechanism by which
+synthetic evidence is a proxy, not a reason to abandon synthetic experience — it is precisely why
+synthetic evidence earns FOUNDATION and FLUENCY cheaply but never FULL, because the one thing a
+synthetic case cannot manufacture is the genuine consequence-awareness that only real stakes produce.)
+The valley is crossed not by making the synthetic case more realistic but by graduating the learner to
+a real one.
+
+7.9 Case provenance and the reproducibility of an assessment. Every synthetic case A1 manufactures
+carries provenance: which method produced it (CONSTRUCTED / PERTURBED / REPLAYED), which competence
+node it exercises, and — for PERTURBED and REPLAYED — the redacted source it derives from. (DEFINED,
+and it serves the same audit purpose as curriculum provenance, Part XIX §19.3.) The reason is that an
+assessment result is only as trustworthy as the cases behind it, and a case with no provenance cannot
+be audited when a certified learner later fails — was the case too easy, was it un-representative of
+the real distribution, did it share a tell the learner gamed. (DERIVED: case provenance is what lets
+Part X's assessment be reproducible — a second assessor, given the case provenance, can re-run the
+assessment and confirm the verdict, which is the auditor's own standard, "the same reality reproduces
+the same result," applied to A1's assessment infrastructure itself.) Provenance also enforces the
+coverage discipline of §7.6 mechanically: because every case names the node it exercises, a coverage
+gap — a FOUNDATION node with no cases — is a query over provenance, not a manual audit, and the
+registration gate of Part XIX can compute it rather than trusting an educator to have remembered it.
+
 FINAL LAW — PART VII. Synthetic experience buys doing-evidence without doing-risk, on G1's sandbox
 substrate the estate already owns, with real-derived cases redacted before they exist and coverage
 measured against every dangerous node — not clustered on the easy ones. But a synthetic case is a
@@ -656,6 +853,39 @@ ADVERSARY acting with intent — that is the pathogen class of Part XXII (and th
 own taxonomy). (Boundary noted here, developed there: self-inflicted failure is a mistake; an
 adversary is a will. A1 teaches both, but they are different curricula with different scenario
 sources, and conflating them would teach a learner to treat malice as if it were error.)
+
+8.8 The sequencing algorithm, made explicit, because sequencing is A1's actual contribution. Part VIII
+§8.2 reserved to A1 not the manufacture of failures — D2 and CEPS own those — but their pedagogic
+ordering, and this subsection states the ordering rule concretely so the contribution is auditable
+rather than vague. (DEFINED: within a curriculum, failure simulations are ordered by the product of
+two axes — the irreversibility of the failure (from the FOUNDATION irreversibility-ordering of Part V
+§5.4) and the recognition-prevention-recovery goal (Part VIII §8.3) — such that the learner meets, for
+each failure class, RECOGNITION before PREVENTION before RECOVERY, and meets the most irreversible
+failure class's full recognition-prevention-recovery arc before a less irreversible class's.) The rule
+resolves a real tension: a learner cannot practice recovering from a failure it cannot yet recognize,
+and cannot safely be exposed to an irreversible failure's recovery drill before it has evidenced
+prevention of that failure. (DERIVED: the ordering is a topological sort over failure simulations
+keyed by (irreversibility, goal-stage), the same graph discipline the curriculum itself uses — and it
+is why A1's failure-simulation library, though sourced entirely from D2 and CEPS, is not merely a
+replay of their records: the value A1 adds is the deterministic sequence in which a naive learner meets
+them, which neither D2 nor CEPS specifies because neither is a teaching system.)
+
+8.9 Failure simulation for the model-instance learner, where the stakes are highest. The
+model-instance learner (Part XVI) meets failure simulation as its non-negotiable competence battery,
+and here the recognition goal dominates. (DERIVED: an incoming model instance must, above all,
+RECOGNIZE the estate's Hard-Rule trigger conditions — a secret about to be written, a deploy without
+tests, a destructive command without backup — because recognition is the earliest and cheapest
+competence and its absence is the most dangerous, since a model that cannot recognize the trigger
+cannot prevent the failure regardless of how capable it is in general.) The battery replays each Hard
+Rule's origin incident as a safe simulation (Part XIII §13.4's Hard-Rule-as-lesson transform), and the
+instance must evidence recognition-then-prevention on held-out variants it was not shown, so that a
+model gaming the specific origin cases cannot pass. (NORMATIVE: this is why the onboarding battery is
+failure-simulation-heavy rather than success-path-heavy — a new model instance's general competence
+already covers the happy path, and what the estate cannot assume, and therefore must prove, is that
+the instance handles the estate's specific failures correctly. The battery tests exactly what general
+capability does not guarantee.) The bidirectional loop of §8.6 is sharpest here too: a novel failure a
+new model instance produces — a way it breaks that no incumbent would — is a first-class incident for
+D2, because a new provider's distinct failure modes are precisely the estate's next blind spot.
 
 FINAL LAW — PART VIII. A learner shown only the success path is competent only until something goes
 wrong — and the failures whose mishandling is irreversible are exactly the ones success never
