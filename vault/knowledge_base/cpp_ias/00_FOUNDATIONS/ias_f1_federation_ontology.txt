@@ -1,0 +1,2176 @@
+IAS-F1 — FEDERATION ONTOLOGY AND THE SYSTEM-OF-SYSTEMS OBJECT
+Claude Power Pack Institutional Advantage Systems — Tier 0 Foundation
+Depth contract: PART I..PART XVIII, 1200-1500 words per Part, a FINAL LAW closing every Part.
+Epistemic marking on every load-bearing claim: DEFINED / OBSERVED / DERIVED / HYPOTHESIZED /
+NORMATIVE / EXPERIMENTAL / CONTESTED / UNRESOLVED.
+Parents strengthened (never rebuilt): every existing PP system, because F1 gives them one shared
+vocabulary for what a system, an ensemble, and a second-order capability are.
+Distinct institutional object: the vocabulary and object model of the FEDERATION itself — the thing
+no single existing system defines, because each existing system defines only its own resource.
+
+===============================================================================================
+PART I — WHY A FEDERATION NEEDS AN ONTOLOGY BEFORE IT NEEDS ANOTHER SYSTEM
+===============================================================================================
+
+1.1 The founding observation. Claude Power Pack contains, as OBSERVED on disk on 2026-07-12,
+more than seventy executable modules and eighteen sealed dataset domains totalling roughly
+524,000 words. Each of those artifacts was built to govern one resource. The Cognitive OS governs
+the cost of a session. The Parallel Mesh governs the coordination of panes on one repository. The
+Graphify kernel governs the location of knowledge. The Duplicate-to-Advantage engine governs what
+happens when one proposal overlaps one existing capability. Each is internally coherent. Each names
+its own objects — a session, a pane, a coordinate, a proposal — with precision. And there, precisely,
+is the gap this dataset exists to close: no artifact in the estate names the object that all of them
+compose. There is no shared word for "the seventy systems considered as one thing", and because there
+is no word, there is no reasoning about it, and because there is no reasoning about it, the estate
+cannot be allocated, observed, defended, or evolved as a whole. (OBSERVED: the eighteen domain
+indices each define their own local ontology; DERIVED: none defines a cross-estate object model,
+because each index scopes itself to its own family.)
+
+1.2 The trap of building the seventy-first system. The natural reflex, when an institution feels
+uncoordinated, is to build a coordinator — a seventy-first system that sits above the seventy and
+directs them. That reflex is wrong here, and it is wrong for a reason the estate has already paid to
+learn. A coordinator built without a shared ontology does not coordinate; it adds one more local
+vocabulary that the other seventy do not speak, and it must then translate every interaction through
+its own private terms. (DERIVED from the Duplicate-to-Advantage root law: a new system whose objects
+duplicate existing objects under new names is naming-only novelty, which the D2A engine classifies as
+REJECT.) The correct first move is not a new governor but a shared language: a set of definitions so
+exact that any two systems, and any agent reasoning across them, mean the same thing by the same word.
+An ontology is cheaper than a coordinator, it is a prerequisite for every coordinator worth building,
+and — this is the decisive property — it strengthens all seventy systems at once without modifying any
+of them, because it gives each a stable name by which the others can address it. (NORMATIVE: the
+ontology precedes the mechanism; every later IAS dataset resolves its objects here.)
+
+1.3 What an ontology is, in this corpus. An ontology, as DEFINED here, is not a glossary and not a
+taxonomy. A glossary lists words. A taxonomy arranges them in a tree. An ontology specifies the
+objects a domain contains, the properties each object carries, the relations objects may hold to one
+another, and the rules that constrain which configurations are legal. The federation ontology of
+CPP-IAS therefore answers four questions the estate cannot currently answer with one voice: what kinds
+of things exist in the federation (the object classes of Part II and III); what may be truly said of
+each (the property model of Part V); how they connect (the relation model of Part VI and Part IX); and
+what configurations are forbidden (the invariants of Part IV and Part XV). Everything the later
+datasets do — routing across systems, allocating capital across systems, observing systems, defending
+systems, evolving systems — is an operation over these objects, these properties, and these relations.
+If the objects are ill-defined, every operation over them inherits the ambiguity. (DERIVED: operational
+precision downstream is bounded above by definitional precision here.)
+
+1.4 The level distinction, stated once and carried throughout. The single most important idea in this
+dataset, and the one that makes the whole CPP-IAS family non-duplicative, is the distinction between a
+resource level and the ensemble level. A resource-level system governs instances of one kind: sessions,
+panes, knowledge nodes, model calls, decisions, duplications. An ensemble-level system governs the set
+of resource-level systems considered as a managed whole. The Cognitive OS asks "what should this session
+cost?" — a resource-level question. The ensemble level asks "which of our seventy systems earned their
+keep this month, which are dead weight, and which two together are worth more than their sum?" — a
+question no resource-level system can even phrase, because none of them can see past its own resource.
+(OBSERVED: CO-03 routes models, GK-05 routes knowledge, skill_router routes skills — three routers, each
+blind to the others' resource; DERIVED: a router over the routers is a different object at a different
+level, not a fourth sibling.) This dataset defines the ensemble level so exactly that a later dataset
+can build on it without re-litigating whether it is duplicating a resource-level parent.
+
+1.5 Why this is a foundation and not an application. F1 is deliberately the first dataset built and the
+one on which every other depends, because a vocabulary that arrives after the systems that use it arrives
+too late — the systems will each have coined their own terms, and the corpus will spend its life
+translating. (This is not hypothetical: the Dataset First Protocol OBSERVED an order-of-magnitude density
+spread across sibling PP families precisely because each invented its own fabrication rubric with no
+shared standard.) By sealing the ontology first, every subsequent IAS dataset inherits a settled object
+model and spends its depth on mechanism rather than on definitions. The cost is that F1 must be
+authored before its consumers exist to validate it, which imposes a discipline: every object defined
+here must be justified by an OBSERVED feature of the real estate, never by an anticipated convenience.
+An ontology invented for the mechanisms one hopes to build is a fiction; an ontology extracted from the
+systems that already exist is a map. This dataset builds the map. (NORMATIVE.)
+
+1.6 Worked example: the vocabulary gap made concrete. Consider a synthetic mission, illustrative only, in
+which a routing decision must choose between two candidate systems to answer a knowledge-grounded question
+under a cost ceiling. Before any ensemble-level vocabulary exists, the decision must ask the Cognitive OS
+what it means by "priority" and ask the Graphify kernel what it means by "priority," and — OBSERVED across
+the estate's existing routers named already in §1.4 (CO-03, GK-05, skill_router) — the honest answer is
+that each system's internal notion of priority is scoped to its own resource: CO's priority orders sessions
+by cost urgency, GK's priority orders knowledge nodes by staleness, and neither notion composes with the
+other without a translation invented ad hoc for this one decision. DERIVED: a federation without a shared
+vocabulary does not fail to route; it routes anyway, using a private, undocumented translation its author
+invents under deadline pressure, invisible to every other system that might need to reason about the same
+decision later — and because the translation is never recorded, the next router facing the same composition
+problem invents its own, incompatible with the first. This is the vocabulary gap in its most literal form:
+not an absence of communication but an abundance of ad hoc, unrecorded, mutually incompatible communication,
+each instance solving the same translation problem freshly and producing nothing reusable. Under F1, the
+synthetic mission resolves differently. "Priority" is never used as an ensemble-level term at all, because
+Part IV's property model gives the routing decision typed fields — COST, EVIDENCE LEVEL, REUSE HORIZON —
+that both CO's and GK's outputs can be expressed in without either system changing its own internal
+vocabulary; the routing decision consumes one shared property record rather than inventing a translation.
+(NORMATIVE: the fix is not that CO and GK must agree on a word; it is that neither needs to, because the
+ensemble-level record sits above both, and every future router inherits the same record rather than
+re-solving the same translation problem a third time.)
+
+FINAL LAW — PART I. An institution of seventy systems that share no word for "the seventy" cannot
+reason about itself; the first act of federation is not a governor but a language, and that language
+must be extracted from the systems that exist, never invented for the systems one wishes existed.
+
+===============================================================================================
+PART II — THE PRIMITIVE OBJECTS: SYSTEM, SUBSYSTEM, ENGINE, CAPABILITY
+===============================================================================================
+
+2.1 System, defined. A SYSTEM, as DEFINED in this corpus, is a bounded unit of the federation that
+owns a distinct institutional object, holds authority over a resource or a decision class, exposes
+inputs and outputs, and can be named, located, and addressed independently of the others. The
+Cognitive OS is a system; the Duplicate-to-Advantage engine is a system; the Graphify kernel is a
+system. The test for systemhood is fourfold and conjunctive: distinct object (it governs something
+no other system governs), authority (it may decide or act within its scope), interface (it takes
+input and yields output observable from outside), and addressability (it has a stable identity that
+survives where its bytes live). (DERIVED from the estate: the seventy modules that pass all four are
+systems; scripts and helpers that pass fewer are not — they are components of a system, addressed in
+2.3.) The definition is strict on purpose: a federation that counts every file as a system inflates
+its own size and cannot allocate honestly, a failure the MACRO_AUDIT OBSERVED under the name
+clone-family metric inflation.
+
+2.2 The distinct-object criterion as the load-bearing test. Of the four tests, the distinct-object
+criterion carries the weight, because it is the one that separates a real system from a rename. Two
+artifacts that govern the same institutional object are not two systems; they are one system and one
+duplicate, however different their code. (This is the exact judgment the D2A engine renders, and F1
+imports its verdict vocabulary by reference rather than rebuilding it.) The distinct object of a
+system is stated as the answer to one question: "what would break, or go ungoverned, if this system
+did not exist?" If the honest answer names something no other system covers, the object is distinct.
+If the honest answer is "nothing — another system already covers it", the artifact is a duplicate, and
+under the federation's supreme law it is not deleted but converted into a second-order capability
+(Part VIII). (NORMATIVE + DERIVED.)
+
+2.3 Subsystem and component. A SUBSYSTEM is a bounded unit inside a system that would satisfy the
+systemhood tests except that its authority is delegated by, and its object is a facet of, its parent
+system's object. The Cognitive OS's router (CO-03) is a subsystem of the Cognitive OS: it has an
+interface and an object (routing) but its authority is the parent's and its object is a facet of the
+parent's cost-governance object. A COMPONENT is finer still: a file, function, or helper that
+contributes to a subsystem but owns no object and holds no independent authority. The federation
+ontology cares about the boundary between system and subsystem because allocation, observation, and
+evolution — the operations of the later datasets — apply at the system level; a change proposed at the
+component level that is described as a "new system" is a category error that inflates the estate. (OBSERVED:
+the estate's own registries sometimes list subsystems as systems; F1's definitions let the later
+Observability Fabric (IAS-E1) count honestly.)
+
+2.4 Capability, the currency of the federation. A CAPABILITY, as DEFINED, is what a system can do,
+expressed independently of the system that provides it. "Route a model by cost" is a capability;
+the Cognitive OS provides it, but the capability is nameable without naming the provider. This
+separation of capability from provider is not pedantry — it is the hinge on which the entire CPP-IAS
+family turns. Because a capability is provider-independent, two systems can provide the same
+capability (redundancy, which the ecology dataset IAS-D1 must judge as either healthy or parasitic);
+one system can provide many capabilities (which the portfolio dataset IAS-C1 must value separately);
+and a capability can outlive the system that first provided it (which the continuity and succession
+logic of IAS-D1 must preserve). (DERIVED: capability-as-currency is what lets the federation be
+reasoned about as an economy rather than a list of programs.) A capability carries, minimally, a name,
+the object it acts on, its inputs and outputs, and its provider(s); the fuller capability record — with
+cost, evidence level, reuse horizon, and model-dependence — is specified in Part V and consumed by the
+economics datasets.
+
+2.5 Why these four and not more. The primitive layer is deliberately small: system, subsystem, engine
+(the executable core of a system or subsystem, DEFINED in Part III), and capability. A larger primitive
+set would pre-judge the mechanisms the later datasets are meant to design, and would risk re-narrating
+objects the estate already owns — a session is CO's object, a coordinate is GK's object, a decision is
+DRK's object, and F1 does not redefine them; it defines only the federation-level objects that no
+existing system owns. (NORMATIVE: F1 introduces the minimum vocabulary sufficient to phrase every
+ensemble-level operation, and not one term more, because an ontology inflated beyond necessity is the
+governance theater the estate has learned to detect.) The four primitives compose upward into the
+ensemble object (Part III) and outward into the relation model (Part VI); everything else the family
+needs is built from them.
+
+2.6 Worked example: system, subsystem, and component on one synthetic capability. Consider a synthetic
+capability, illustrative only, named "resolve which knowledge node answers a mission's grounding question."
+The mechanism includes a parent module that owns the capability's authority and interface — System K — a
+router inside K that ranks candidate nodes — Subsystem K-R — and a helper function inside K-R that scores
+string similarity between a query and a candidate title — Component K-R-sim. Applying Part II's tests
+literally: System K passes all four (distinct object: which node grounds a mission, owned by no other
+system; authority: K decides, subject to Part X; interface: K takes a query and returns a node;
+addressability: K has a stable identity per Part IX). Subsystem K-R fails only authority and distinct-object
+on its own — its ranking is delegated by K and reversible by K, and its object is a facet of K's object, not
+a distinct one — exactly the shape §2.3 DEFINES as a subsystem. Component K-R-sim fails every test but a
+trivial interface: it owns no object anyone would ask "what would go ungoverned without it" about, because
+the honest answer is "K-R would use a different scoring method, and K would still resolve nodes." (DERIVED:
+the boundary is not about code size — K-R-sim could be hundreds of tuned lines and K a hundred-line
+dispatcher, yet the ranking is unchanged, because Part II's tests weigh object and authority, never
+implementation weight.)
+
+2.7 Edge case: the shadow system, a subsystem that outgrows its delegation. A recurring edge case in a
+maturing federation is the SHADOW SYSTEM: a subsystem, correctly DEFINED at creation as a facet of a
+parent's object, that over time accumulates its own consumers and its own de facto decision authority while
+still being addressed, budgeted, and counted as part of its parent. Continuing §2.6's example: if K-R's
+ranking logic is extended, across several missions, to also decide WHETHER a mission needs grounding at all
+— a decision K itself no longer makes, because K-R's extended logic now runs first and short-circuits K for
+ungrounded missions — K-R has acquired a distinct object, "whether grounding applies," that K does not share
+and cannot reverse without redesigning K-R: a de facto authority transfer the estate's records do not yet
+reflect. The detection signal is OBSERVABLE and specific: a subsystem whose CONSUMERS property (Part IV
+§4.2), measured independently of its parent, would be non-trivial and would include consumers that never
+touch the parent's own interface. (NORMATIVE: a shadow system is not itself an Invariant Three violation —
+K still formally holds final authority — but it is a state the property model cannot represent honestly,
+because K-R's true object has drifted past "facet of K's object," and the correct resolution is promotion:
+K-R is re-tested against §2.1's four criteria in full, and if it now passes all four independently, it is
+re-addressed under Part IX as its own system rather than counted, dishonestly, inside K's record.)
+
+FINAL LAW — PART II. A system is a distinct institutional object under authority with an interface and
+an address; anything that fails the distinct-object test is not a smaller system but a duplicate or a
+component, and counting it as a system is how a federation lies to itself about its own size.
+
+===============================================================================================
+PART III — THE ENSEMBLE OBJECT: THE SYSTEM-OF-SYSTEMS AS ONE THING
+===============================================================================================
+
+3.1 The object no system owns. The ENSEMBLE, or system-of-systems, is DEFINED as the complete set of
+the federation's systems taken together with the relations among them, considered as a single managed
+object with properties that none of its member systems possesses. This is the central object of the
+entire CPP-IAS family, and its defining feature is emergence: the ensemble has properties — total
+cognitive capital, aggregate failure exposure, architectural complexity, portfolio balance,
+biodiversity — that are not properties of any single system and cannot be computed by any single
+system, because each system sees only itself. (DERIVED: a property that requires reading all seventy
+systems at once belongs to the ensemble, not to any member; OBSERVED: no existing module reads all
+seventy — each scopes to its own resource.) The ensemble object is what makes the later datasets
+non-duplicative: they do not govern sessions or panes or coordinates; they govern the ensemble, which
+is unowned.
+
+3.2 Why the ensemble is more than the sum. A list of seventy systems is not an ensemble; it becomes an
+ensemble when the relations among the systems are part of the object. Two systems that share consumers,
+or feed one another, or compete for the same budget, or duplicate one another's coverage, stand in
+relations that change the value of each. (DERIVED: the value of a system is not intrinsic; it is a
+function of its position in the relation graph — a system with no consumers is worth less than an
+identical system that ten others depend on.) The ensemble object therefore includes, by definition, the
+typed relation graph over its systems (specified in Part VI), and the emergent properties are computed
+over that graph, not over the bare list. This is the precise sense in which the federation is a fabric
+and not a folder: the threads matter as much as the nodes.
+
+3.3 The ensemble's state. The ensemble object carries a STATE, DEFINED as the current configuration of
+its systems and relations together with the values of its emergent properties at a moment in time. The
+ensemble state is what the Observability Fabric (IAS-E1) reads, what the Digital Twin (IAS-F3) simulates,
+what the Portfolio (IAS-C1) allocates over, and what the Ecology (IAS-D1) evolves. Because the state is a
+first-class object here, the later datasets can speak of "the state of the federation before and after a
+mission" without inventing the notion each time. (NORMATIVE: one definition of ensemble state, consumed
+by all; a family in which each dataset defines "state" locally would fracture into mutually untranslatable
+dialects — the exact failure DFP-02 was built to prevent.) The ensemble state is explicitly a claimed
+state until observed: F1 imports SQI's root discipline that a described state is a hypothesis until
+reconciled against the disk, and the ensemble state carries an evidence level like any other claim.
+
+3.4 Boundaries: what is inside the ensemble and what is not. The ensemble is bounded to the Claude Power
+Pack estate: its systems, its datasets, its modules, and the projects the estate governs. It does not
+include the external world, the model provider, or the host machine except as those appear as
+constraints — objects the Environmental Reality parents already own and F1 references rather than
+redefines. (DERIVED: the boundary is drawn where the estate's authority ends; a federation that claims
+the host as a member system claims authority it does not have.) The boundary matters because the later
+datasets must not, in the name of governing the ensemble, reach past the estate into territory owned by
+other systems or by no system at all. The immune system (IAS-D2) defends the ensemble's members; it does
+not defend the host. The portfolio (IAS-C1) allocates the estate's cognitive capital; it does not
+allocate the provider's tokens except as the estate consumes them. (NORMATIVE: precise boundaries are
+what keep an ambitious family from becoming an imperial one.)
+
+3.5 The ensemble as the unit of the family's non-duplication. Every dataset in CPP-IAS is admitted only
+if its institutional object is the ensemble or a facet of it that no resource-level system owns. This is
+the operational meaning of the ensemble definition: it is the test the Non-Duplication Ledger applies.
+A proposed dataset that governs a resource — a session, a pane, a coordinate — is duplicating a parent
+and is rejected or folded. A proposed dataset that governs the ensemble — the portfolio of all systems,
+the ecology of all systems, the observability of all systems — is admissible, because that object is
+genuinely unowned. (DERIVED: the ensemble definition is not decoration; it is the family's admission
+criterion made precise.) F1 thus earns its place as the foundation by supplying the very test that
+governs which of its siblings may exist.
+
+3.6 Worked example: ensemble state before and after a synthetic mission. Consider a synthetic snapshot,
+illustrative only, of a small four-system slice of the ensemble before a mission executes: System P and
+System Q compete for the same allocation (Part VI §6.4), System K feeds both, and no duplicates edge is
+open. The ensemble state at this moment carries an emergent property — call it slice cognitive capital —
+computed as the sum of P's and Q's cost properties (Part IV §4.2) weighted by K's strengthens contribution
+(Part VI §6.6), a number no single one of P, Q, or K can compute alone, because each sees only its own cost
+field, not the weighted sum across the slice. After the mission executes and routes to P, the ensemble state
+changes in a way no single system's own record changes to reflect: P's CONSUMERS property increments by one
+OBSERVED dependency (Part IV §4.6), Q's competes-with edge to P is unaffected in type but its practical
+allocation pressure for the next mission is lower, and the slice's aggregate failure exposure — another
+emergent property — now weights P's depends-on edge to K more heavily than before, because more of the
+slice's near-term throughput now runs through the P-to-K path. (DERIVED: neither P's nor Q's nor K's own
+internal state captures this shift; only the ensemble state, read as the graph plus its emergent properties
+per §3.1–§3.2, represents what changed, which is the precise operational content of "the ensemble is more
+than the sum.")
+
+3.7 Failure mode: boundary creep, and its detection signal. A specific failure mode threatens the ensemble
+object's boundary (§3.4) over time even when no single act violates it: BOUNDARY CREEP, in which a system's
+authority expands one small, individually reasonable step at a time — a defense capability that starts by
+protecting one project, is extended to protect "related" projects, then to protect infrastructure the
+estate merely depends on but does not own — until the estate's authority claims territory Part V's
+Invariant Four (§5.5) forbids, without any single step having triggered a review. Boundary creep is
+dangerous precisely because it is invisible to a snapshot check: at any given moment the ensemble state may
+still formally satisfy Invariant Four, and only the TRAJECTORY across snapshots reveals the drift. The
+detection signal, DERIVED from this property, is therefore not a state check but a delta check: a system
+whose declared authority scope, compared across successive property-record reconciliations (Part IV §4.3),
+grows monotonically over several consecutive reconciliation cycles without a corresponding, explicitly
+reviewed authority grant is exhibiting boundary creep, whether or not its current scope happens to still
+pass the invariant. (NORMATIVE: the Non-Duplication Ledger and the invariant sweep (Part V §5.1) both check
+state; only a trend read across F1's provenance timestamps (Part XII) can catch creep before it becomes a
+violation, which is the specific reason F1 mandates staleness and reconciliation timestamps as first-class
+fields rather than optional metadata — a boundary that can only be checked at a single instant is a boundary
+that creep will eventually cross unnoticed.)
+
+FINAL LAW — PART III. The ensemble is the set of systems plus their relations taken as one managed
+object with emergent properties no member possesses; it is unowned by every resource-level system, and
+that unownedness is the precise reason the CPP-IAS family neither duplicates the estate nor could have
+been assembled from the estate's existing parts.
+
+===============================================================================================
+PART IV — THE PROPERTY MODEL: WHAT MAY BE TRULY SAID OF A SYSTEM
+===============================================================================================
+
+4.1 Why a definition is not enough. Part II supplies the four tests of systemhood; those tests answer
+"is this a system" but not "what is true of this system compared to another system." Without a shared
+answer to the second question, IAS-C1 (Capability Portfolio) cannot rank the Cognitive OS against the
+Graphify kernel, IAS-E1 (Observability Fabric) cannot say which systems are dead weight, and IAS-G1
+(Architecture Intelligence) cannot price a topology change. Each of those datasets needs to read a
+FIXED set of typed fields, filled the same way for every system, so that comparison is comparison and
+not translation. This dataset therefore DEFINES the PROPERTY MODEL: the schema of attributes every
+system record carries, each attribute paired with a value and an evidence level, so that "true of a
+system" has one meaning across the whole estate rather than one meaning per consuming dataset. (NORMATIVE:
+a property model authored once here and imported everywhere else is the alternative to fourteen
+datasets each inventing its own measurement of "how much does this system cost," which would silently
+re-fragment the very federation this dataset exists to unify.)
+
+4.2 The six canonical properties. F1 fixes six fields as the minimum sufficient schema, chosen because
+each is independently required by at least one downstream IAS dataset and none is redundant with the
+others. COST is the resource a system consumes to operate and to maintain — token share, session
+overhead, human maintenance burden — and is DERIVED from the Cognitive OS's existing telemetry rather
+than re-measured; F1 does not build a second cost meter, it names the field the existing meter fills.
+EVIDENCE LEVEL is the epistemic status of the system's claimed value, using the exact vocabulary of
+Article V applied at system granularity: a system whose value is OBSERVED (measured against real
+missions) is a different portfolio bet than one whose value is HYPOTHESIZED (asserted, never checked),
+and collapsing that distinction is how an estate quietly funds theater. REUSE HORIZON is how many future
+missions, or how much future time, a system's capability remains applicable without redesign — imported
+in spirit from the anti-model-dependence discipline of the distillation family, but applied here to
+systems rather than to knowledge deposits. MODEL-DEPENDENCE states whether a system's function is bound
+to one model or toolchain generation or portable across them, again a system-level application of a
+concept the estate already validates elsewhere for artifacts. CONSUMERS is the set, and the count, of
+other systems or mission types that depend on this system's output; it is technically a relation-derived
+property (computed from the typed graph of Part VI) but is named here as a first-class scalar because
+portfolio and observability math need a number to rank on, not a graph traversal each time they ask.
+AUTHORITY is the decision right the system holds — whether its outputs are advisory (a recommendation
+another system may override) or final (a decision no other system may reverse without escalation) —
+and is specified fully in Part X; the property model carries only the field, Part X carries the rule
+for how the field is set and changed.
+
+4.3 Provenance and staleness are part of the property, not an afterthought. A property record without a
+timestamp and a source is a claim with no way to be doubted, which violates the estate's evidence
+discipline before any downstream dataset even touches it. Every property carries, DEFINED here, a
+"last-reconciled" marker and a source reference — the module or observation that produced the value —
+so that a property can decay from OBSERVED toward stale-and-unverified the same way any other claim
+does. (DERIVED from the ensemble-state discipline of Part III: state is claimed until observed, and a
+property is a fragment of state, so it inherits the same discipline at finer grain.) A system record with
+a cost figure six months old, never reconciled against a live measurement, is not lying, but it is
+overdue; F1 does not mandate a reconciliation cadence — that operational decision belongs to whichever
+IAS system reads the record — but it does mandate that staleness be representable, because a schema that
+cannot express "this might be wrong now" cannot be trusted with capital allocation decisions.
+
+4.4 The property record as shared interchange, and the duplication it prevents. Before this schema, the
+natural failure mode is that IAS-C1 measures "cost" one way for its portfolio math, IAS-E1 measures a
+different "cost" for its dead-capability sweep, and IAS-G1 measures a third "cost" for its complexity
+budget — three numbers, three methodologies, and three answers that cannot be reconciled when a decision
+needs all three data threads at once. By fixing one property record that all three read, F1 converts
+what would have been three parallel measurement systems (a duplication the Non-Duplication Ledger would
+have to catch retroactively) into three consumers of one shared fact. (DERIVED: this is the specific
+mechanism by which F1 strengthens IAS-C1, IAS-E1, and IAS-G1 without building any capability those
+datasets own — F1 supplies the noun, they supply the verb.)
+
+4.5 Worked example: two systems compared on the record. Consider two hypothetical members of the estate,
+named here only to illustrate the schema and not to assert real measurements of any actual PP module.
+"System Alpha" carries: cost LOW (small token share, no dedicated maintenance window), evidence level
+OBSERVED (its output has been checked against real mission outcomes across multiple sessions), reuse
+horizon HIGH (its capability generalizes across mission types and has not required redesign across two
+toolchain generations), model-dependence LOW (its logic does not assume a specific model family), twelve
+consumers, and advisory authority. "System Beta" carries: cost HIGH, evidence level HYPOTHESIZED (its
+value has been asserted in its own documentation but never checked against an outcome), reuse horizon
+UNKNOWN (too new to have been tested against a second mission type), model-dependence HIGH (its prompts
+are tuned to one model's quirks), two consumers, and final authority over its decision class. Read side
+by side, the record already tells a portfolio story without any additional computation: Alpha is a cheap,
+proven, portable, well-consumed capability with low individual risk because its authority is advisory
+(another system can override a bad Alpha output); Beta is an expensive, unproven, narrow, thinly-consumed
+capability whose final authority means a Beta error propagates uncorrected. Neither verdict is stated
+here as a portfolio recommendation — that judgment belongs to IAS-C1 — but the property model is what
+makes the judgment computable rather than anecdotal.
+
+4.6 Edge cases in the property model. Two failure shapes recur. The first is the DOUBLE-BOOKED CONSUMER:
+two systems each claim the same downstream mission type as "their" consumer, inflating both consumer
+counts and double-counting the ensemble's true reach. The resolution is that CONSUMERS is defined as an
+observed dependency (a mission actually invoked this system's output), not a claimed audience, so the
+property is falsifiable against the Control Bus's event log (IAS-A2) rather than against either system's
+self-report. The second is the UNMEASURED PROPERTY: a system with no cost telemetry, no evidence trail,
+and no consumer log — typically a very new or very small system. F1 does not force a default value onto
+an unmeasured field, because a fabricated "medium" cost is worse than an honest blank; the property model
+permits a field to be UNRESOLVED, and any downstream dataset that treats an UNRESOLVED field as zero or
+as average is committing the exact error Part XIII catalogues as a failure mode of the ontology, not of
+the system being measured.
+
+FINAL LAW — PART IV. A system's properties are not opinions to be re-measured by every consumer; they
+are one shared, evidence-leveled, staleness-aware record — and a field the estate has not yet measured
+must be marked UNRESOLVED rather than guessed, because a guessed property is capital allocated on a
+fiction.
+
+===============================================================================================
+PART V — INVARIANTS: LEGAL VERSUS ILLEGAL ENSEMBLE CONFIGURATIONS
+===============================================================================================
+
+5.1 Why an ontology needs invariants and not only definitions. A definition says what a thing is; an
+invariant says what configuration of things is not allowed to persist. Without invariants, the ensemble
+object of Part III is a passive description — a snapshot — rather than a governed structure, and nothing
+in the federation can be checked as "wrong" versus merely "different." F1 therefore DEFINES a small set
+of INVARIANTS: conditions over the ensemble's systems and relations that must hold in every legal state,
+such that a state violating one is, by definition, a defect the estate must resolve rather than a valid
+but unusual configuration. (NORMATIVE: invariants are the ontology's only enforcement surface; F1 itself
+enforces nothing operationally — that is Article X's governed-self-evolution boundary — but it specifies
+the conditions a later enforcement mechanism, such as a sweep or a gate, would check.)
+
+5.2 Invariant One — no orphan system. Every system in a legal ensemble state has at least one inbound or
+outbound edge in the relation graph of Part VI: it consumes something, produces something consumed, or
+both. A system with zero edges is not merely low-value; it is UNDETECTABLE by any of the loop-based IAS
+mechanisms (the primary loop, the amplification spine, the defense loop, the foresight loop all move
+along edges), and an ensemble that tolerates orphan systems is tolerating capability no compounding
+mechanism can ever reach. This invariant is DERIVED directly from the Compounding Graph's own admission
+rule for IAS datasets ("a dataset with no inbound and no outbound edge is an orphan and is REJECTED")
+generalized from the fourteen IAS datasets to every system in the estate, because the same reasoning
+that disqualifies an orphan dataset disqualifies an orphan system.
+
+5.3 Invariant Two — no unresolved duplicate. Two systems whose distinct-object test (Part II §2.2)
+resolves to the same honest answer for "what would go ungoverned if this did not exist" may not both
+persist in FINAL authority over that object without one of the six D2A dispositions (BUILD, MERGE-INTO-
+FAMILY, SUBENGINE, EXTEND, COMPOSITION, REFERENCE) resolving the overlap. A state with two systems both
+claiming final authority over the same object is not a rich federation; it is a governance failure
+waiting for the first mission where the two disagree. (DERIVED from Article I; F1 does not re-run D2A's
+judgment, it names the invariant D2A's judgment exists to satisfy.)
+
+5.4 Invariant Three — authority is singular per decision class. For any given decision class (a bounded
+kind of decision, such as "which model serves this session" or "which knowledge node is canonical"),
+exactly one system holds final authority at any moment, though many systems may hold advisory input into
+that decision. Multiple systems with final authority over the same decision class is a race condition at
+the institutional level: two systems can each correctly execute their own logic and still produce a
+contradiction the ensemble cannot resolve, because neither is wrong by its own rules. This invariant is
+the ensemble-level generalization of the multi-system conflict resolution problem the ledger routes to
+IAS-A2; F1 states the invariant IAS-A2's arbitration mechanism exists to restore when it is violated.
+
+5.5 Invariant Four — the boundary invariant. No system's authority extends past the ensemble boundary
+defined in Part III §3.4. A system that claims authority over the host machine, the model provider, or
+a project the estate does not govern is not exercising ensemble authority; it is an imperial excursion,
+and Part XIV names this specific failure the imperial-boundary adversarial case. The boundary invariant
+is what keeps ambitious systems — an immune system eager to "defend" beyond its members, an observability
+fabric eager to "observe" beyond the estate — from converting legitimate ensemble authority into
+authority the ensemble was never granted.
+
+5.6 Invariant Five — property honesty. No system record may assert an evidence level higher than its
+last reconciliation supports; a system whose cost, evidence, or reuse-horizon field has gone stale (Part
+IV §4.3) beyond its declared reconciliation cadence must have that staleness represented in the record,
+not silently carried forward as if fresh. A federation that lets stale claims masquerade as current
+claims is a federation whose portfolio math (IAS-C1) is quietly wrong, and the invariant exists so that
+staleness is a visible, checkable condition rather than an invisible one. Read together, the five
+invariants are not a complete axiomatization of a healthy ensemble — Part XV's metrics and Part XIII's
+failure modes extend the picture — but they are the minimum set that separates a state the ontology
+recognizes as legal from one it recognizes as a defect requiring resolution, and every later IAS
+mechanism that "fixes" the ensemble is, at bottom, restoring one of these five invariants.
+
+5.7 Worked example: two invariants under simultaneous pressure, and the ordering that resolves them.
+Consider a synthetic trace, illustrative only, constructed to show the invariants interacting rather than
+operating one at a time. A system S-0201 provides "summarize a mission's outcome for downstream review."
+A second system, S-0247, is proposed with the near-identical capability "produce a mission outcome
+summary," and before the duplicates relation (Invariant Two) has been reviewed, S-0247 is also granted
+final authority over the decision class "which summary format ships to the Owner" — a class S-0201 already
+holds final authority over. At the moment S-0247 is ADMITTED, the ensemble state violates both Invariant
+Two (an unresolved duplicate) and Invariant Three (two final authorities over one decision class)
+simultaneously, and the question this worked example exists to answer is which violation gets resolved
+first, because resolving them in the wrong order can produce a worse intermediate state than either
+violation alone. The correct ordering, DERIVED from the invariants' own dependency structure rather than
+from convenience, is Invariant Two before Invariant Three: until the duplicates relation is disposed by a
+D2A verdict, it is not yet settled whether S-0201 and S-0247 are properly one system or two, and an
+authority conflict cannot be meaningfully arbitrated between two candidates whose very distinctness is
+still in question. Resolving the authority conflict first — for instance, by simply revoking S-0247's
+grant — could paper over a genuine duplication that should have triggered a MERGE-INTO-FAMILY verdict,
+silently returning the ensemble to Invariant Three compliance while leaving Invariant Two's underlying
+question (is this one system or two) never actually answered. The general rule this example licenses:
+where two invariant violations touch the same pair of systems, the STRUCTURAL invariants (One and Two,
+which ask whether the systems named are even properly distinct) resolve before the RELATIONAL invariants
+(Three, Four, and Five, which presuppose distinctness and ask about behavior between distinct systems).
+
+5.8 Why the invariants are necessary but not sufficient for ensemble health. A state that satisfies all
+five invariants is LEGAL under this ontology, but legality is a floor, not a ceiling: a legal ensemble can
+still be poorly allocated, architecturally brittle, or biodiverse in name only, because the invariants
+police only the conditions under which the ensemble's own bookkeeping is coherent — that every system is
+reachable, every duplicate is disposed, every authority is singular, every boundary is respected, and every
+property is honestly aged. None of the five invariants say anything about whether the RIGHT systems hold
+final authority, whether the ensemble's biodiversity (Part XV §15.4) is healthy, or whether its cognitive
+capital is well spent — those are the substantive judgments of IAS-C1, IAS-D1, and IAS-G1, built on top of
+a legal state rather than replacing the need for one. (NORMATIVE: F1's invariants are a hygiene floor; the
+value judgments above the floor belong, by the ensemble-object boundary of Article II, to the sibling
+datasets whose distinct object those judgments are.) A federation that mistook invariant compliance for
+institutional health would be making the same category error Part XIII warns against at the ontology
+level: confusing "the bookkeeping is coherent" with "the enterprise is thriving," two claims this dataset
+is careful never to conflate.
+
+FINAL LAW — PART V. An ensemble state is legal only if every system has an edge, every duplicate is
+disposed by a named verdict, every decision class has exactly one final authority, no authority reaches
+past the estate's boundary, and no property claims freshness it has not earned — five conditions, and a
+violation of any one is a defect, not a variant.
+
+===============================================================================================
+PART VI — THE TYPED RELATION GRAPH OVER SYSTEMS
+===============================================================================================
+
+6.1 Why relations need types, not just edges. Part III established that the ensemble is systems plus
+relations, and that the relations carry as much of the object's meaning as the systems themselves. An
+untyped graph — a plain "A connects to B" — cannot support any of the reasoning the later datasets need,
+because "connects to" collapses six operationally distinct situations into one edge. F1 therefore DEFINES
+a small, closed set of relation types, each with a distinct semantics, a distinct direction convention,
+and a distinct consequence for the invariants of Part V.
+
+6.2 FEEDS. System A feeds System B when A's output is consumed as B's input in the normal operation of
+B's capability, without B depending on A for its own authority or existence. Feeds edges are the substrate
+of the Compounding Graph's four loops (primary, amplification, defense, foresight): each arrow in those
+loops is a feeds edge at the ensemble scale, generalized from specific IAS-to-IAS relationships to the
+general case of any system feeding any other. A feeds edge is DIRECTIONAL and may be one of many; a
+system can feed, and be fed by, many others simultaneously, and the count of inbound feeds edges is
+exactly the CONSUMERS property of Part IV read from the other direction.
+
+6.3 DEPENDS-ON. System A depends on System B when A cannot correctly execute its capability if B is
+absent or degraded — a stronger relation than feeds, because a feeds edge can be interrupted with
+degraded-but-functional output on the receiving side, while a depends-on edge propagates failure. This
+distinction matters for IAS-E2 (Cognitive Reliability): a failure budget for System A must account for
+every system A depends on, but need not account for every system that merely feeds A optionally. DERIVED:
+depends-on is feeds plus a criticality flag, not a separate primitive graph, so the schema stays minimal
+while still letting reliability math distinguish "nice to have" from "load-bearing."
+
+6.4 COMPETES-WITH. Two systems compete when they draw on the same scarce ensemble resource — cognitive
+capital, a shared decision class, a shared consumer's attention — such that more allocation to one is
+less available to the other. Competition is not itself a defect (Part V's invariants do not forbid it);
+it is information IAS-C1 needs to allocate honestly, and information IAS-D1 needs to judge whether the
+competition is healthy diversity or wasteful redundancy. A competes-with edge is UNDIRECTED, unlike
+feeds and depends-on, because the resource pressure runs both ways.
+
+6.5 DUPLICATES. System A duplicates System B when their distinct-object tests resolve to the same
+honest answer (Part V's Invariant Two). A duplicates edge is a temporary, must-be-resolved edge: its
+presence in a legal ensemble state is itself evidence the state is in transition toward a D2A disposition,
+never a steady-state relation. F1 marks this explicitly because a family that treated "duplicates" as a
+permanent relation type, on par with feeds or competes-with, would be normalizing the exact condition
+Article I exists to eliminate.
+
+6.6 STRENGTHENS. System A strengthens System B when A makes B produce more value, decide better, or cost
+less BECAUSE A exists — the precise relation the Strengthening Matrix requires every IAS dataset to
+declare against at least two parents. A strengthens edge is the relation type F1 itself holds toward
+every other system in the estate (Part I §1.2), and it is distinguished from feeds by asymmetry of
+purpose: a feeds edge moves data in the course of normal operation, while a strengthens edge specifically
+improves the receiving system's own internal function — F1 does not feed the Cognitive OS a data stream,
+it gives the Cognitive OS a vocabulary that makes CO's own decisions more precise.
+
+6.7 CONSUMES. System A consumes System B's capability when A invokes B as a service within a mission,
+without the deep interdependence of depends-on or the mere passive receipt of feeds; consumes is the
+relation type a routing decision (IAS-A1) creates at mission time, and it is the most volatile of the
+six — a consumes edge can exist for one mission and never recur, while feeds, depends-on, competes-with,
+and strengthens describe standing structural relationships. Distinguishing consumes from feeds lets
+IAS-A1's routing traces be recorded without inflating the standing relation graph with every transient
+invocation.
+
+6.8 The graph as the substrate for emergence. Read together, these six types are what let Part III's
+emergent properties be computed rather than asserted: total cognitive capital sums cost properties
+weighted by strengthens and feeds fan-out; architectural complexity is a function of the depends-on
+subgraph's depth; portfolio balance reads competes-with clusters for redundancy; biodiversity (Part
+XV) reads how many distinct feeds-and-strengthens patterns exist rather than how many systems exist.
+No emergent property in this family is computed over the bare system list; every one is computed over
+this typed graph, which is the specific technical sense in which F1 makes the ensemble "more than a
+folder" operational rather than rhetorical.
+
+6.9 Worked example: tracing one mission across all six relation types. Consider a synthetic mission,
+illustrative only, that needs a knowledge-grounded answer delivered under a cost ceiling. IAS-A1 CONSUMES
+the routing capability of two candidate answer-providers, System P (cheap, narrow) and System Q
+(expensive, broad); this consumes edge is transient, recorded for this mission only. System P DEPENDS-ON
+a knowledge-lookup system, System K, without which P cannot function at all; if K is degraded, P's failure
+is not optional-quality-loss but total. System Q, by contrast, merely FEEDS from K — Q can answer without
+K's input, just less precisely, so a K outage degrades Q's output without breaking it. P and Q COMPETE-WITH
+each other for this mission's allocation, because the ensemble's cost ceiling means serving the mission
+with Q makes P's allocation for this cycle unavailable and vice versa. Suppose, further, that a third
+system, R, was proposed six months prior with a capability nearly identical to P's, and the DUPLICATES
+relation between P and R is still under CONTESTED review (Part XI §11.2) — R's authority over its own
+decision class has been downgraded to advisory in the interim, so R is not a live candidate for this
+mission at all, though its duplicates edge to P remains visible in the graph. Finally, System K itself
+STRENGTHENS both P and Q, not by feeding them data in the course of one mission (that is the feeds edge
+already named) but by having, at its own admission eighteen months prior, made both P's and Q's outputs
+measurably more accurate against held-out evaluation — a standing strengthens edge distinct from, and
+coexisting with, the feeds edge that carries this particular mission's data. This single worked trace uses
+all six relation types over four systems and one mission, and it demonstrates the operational payoff of
+Part VI's typing discipline directly: an untyped graph would show P and Q each connected to K, P and Q
+connected to each other, and P connected to R, five edges that look structurally identical and convey
+nothing about which failure propagates, which is merely transient, and which is a standing dispute
+requiring resolution — exactly the information IAS-A1's routing decision, IAS-E2's failure-budget
+calculation, and IAS-D1's ecology read from the SAME five edges, each reading a different typed subset for
+a different purpose.
+
+6.10 Why FEEDS is the highest-cardinality relation and what that implies for graph size. Of the six types,
+feeds is expected, as a matter of ordinary estate structure, to be by far the most numerous: nearly every
+system that produces output feeds at least one consumer, while depends-on (a stronger, rarer claim),
+competes-with (bounded by genuine resource scarcity), duplicates (temporary by design, Part VI §6.5), and
+strengthens (a specific, provable claim, not a default) are each expected to be comparatively sparse. This
+asymmetry is not a defect to correct; it is DERIVED directly from the relations' own definitions, and it
+has one practical consequence worth naming explicitly for the graph's future implementers: an ensemble-
+wide sweep that treats all six relation types as equally costly to traverse will be dominated by feeds-edge
+traversal, and IAS-E1's observability work in particular should expect its heaviest computational cost to
+sit in the feeds subgraph, not in the sparser, more decision-critical depends-on, duplicates, or
+strengthens subgraphs that carry proportionally more of the ensemble's governance weight per edge.
+
+FINAL LAW — PART VI. Six typed relations — feeds, depends-on, competes-with, duplicates, strengthens,
+consumes — and no untyped edge, because an ontology that lets "connects to" stand in for all six has
+defined a graph that computes nothing.
+
+===============================================================================================
+PART VII — THE SECOND-ORDER CAPABILITY: THE CRUX DEFINITION
+===============================================================================================
+
+7.1 The problem this Part exists to solve. Article I states the supreme law: a duplication is converted
+into a second-order capability that makes the duplicated system, and at least one other, more valuable.
+That law is unusable without a precise answer to what a second-order capability IS, as opposed to a
+first-order one, and this Part supplies that answer, because every one of the fourteen sealed IAS
+datasets is a claim to be exactly this kind of object, and a family whose founding move cannot be defined
+precisely is a family built on a slogan.
+
+7.2 First-order versus second-order capability, defined. A FIRST-ORDER CAPABILITY, DEFINED, is a
+capability (Part II §2.4) whose object is a resource: a session, a pane, a coordinate, a decision, a
+model call. A SECOND-ORDER CAPABILITY, DEFINED, is a capability whose object is one or more OTHER
+CAPABILITIES or SYSTEMS — it does not act on a session, it acts on the system that acts on sessions; it
+does not route a model, it routes across the routers that route models. The distinguishing test is
+recursive and mechanical: ask what the capability directly acts upon; if the answer is a resource-level
+object, the capability is first-order; if the answer names another capability or system as its object,
+the capability is second-order. (DERIVED: this is exactly the resource-level-versus-ensemble-level
+distinction of Part I §1.4, restated as a property of a capability rather than of a system, because a
+system can be said to BE second-order only insofar as its capability's object is second-order.)
+
+7.3 Why second-order is not merely "meta" or "recursive" in the informal sense. Casual usage often calls
+any self-referential mechanism "meta." That usage is too loose for this ontology, because a system that
+merely reads its own logs is self-referential without being second-order — it acts on its own resource
+(its logs), not on another capability. The test in §7.2 excludes this case cleanly: reading your own logs
+is a first-order capability whose object happens to be data about yourself; routing across seventy other
+systems' capabilities is a second-order capability whose object is those seventy capabilities
+themselves. (NORMATIVE: precision here prevents every future IAS dataset from claiming second-order
+status by rhetorical resemblance rather than by passing the test.)
+
+7.4 The second-order capability is what makes duplication convertible rather than merely deletable. Article
+I's supreme law only makes sense because a second-order capability can absorb a first-order duplicate's
+overlap without competing with it at the first-order level: if System A and System B both provide the
+first-order capability "answer a question," a naive resolution deletes one; but a second-order capability
+— "decide which of A or B should answer this kind of question, and learn from the outcome" — resolves the
+duplication by governing the choice between A and B rather than by replacing either, and in doing so
+strengthens BOTH, exactly as the Strengthening Matrix requires. This is the mechanism, not merely the
+slogan, behind Duplicate-to-Advantage: conversion to second-order is not a euphemism for deletion, it is
+a distinct operation with a distinct object (the relation between the duplicates, not either duplicate).
+
+7.5 Worked example across the fourteen datasets. IAS-A1's object is not a mission — it is the routing
+decision across the systems that could serve a mission, which is second-order by the §7.2 test (its
+direct object is other systems' capabilities, specifically their applicability to a mission). IAS-D2's
+object is not one project's crash — it is the fingerprint-and-federation of failures across projects,
+second-order because its direct object is the failure-handling behavior of many first-order systems
+(cascade_prevention, secret_firewall) considered together. By contrast, a hypothetical "better crash
+handler for one project" would be first-order — its object is the crash itself, a resource-level event —
+and such a proposal, however well-built, would duplicate cascade_prevention rather than strengthen it,
+failing the Non-Duplication Ledger's test precisely because it never clears the second-order bar.
+
+7.6 The limit case: is F1 itself second-order? F1's capability is "define the shared object model of the
+ensemble." Its direct object is not a resource and not, strictly, another capability in operation — it is
+the VOCABULARY every other capability is expressed in. This is a genuine edge of the definition, and F1
+resolves it explicitly rather than hiding the ambiguity: F1 is CONTESTED as either a zero-order
+capability (a precondition for capability-talk at all, prior to the first/second distinction) or a
+degenerate second-order capability whose object-set is "every capability's own self-description." Both
+readings agree on the operational consequence — F1 governs no resource and duplicates no first-order
+system — so the family's admission criterion (Part III §3.5) is satisfied under either reading, and F1
+leaves the deeper classification UNRESOLVED as a matter for the epistemics ladder rather than for this
+foundation to force.
+
+7.7 Near-misses: capabilities that read as second-order but fail the test on inspection. Three shapes
+recur often enough to name individually, each superficially resembling a second-order capability while
+failing §7.2's mechanical test once traced to its actual object. The AGGREGATOR NEAR-MISS: a capability
+that collects output from many systems and presents it as one report — a mission dashboard, a combined
+log — reads as ensemble-scoped because it touches many systems, but its direct object is the display of
+data, a resource-level artifact, not a change to how any of the source systems themselves operate or
+decide; it is first-order regardless of how many systems it draws from, and Part VIII §8.4's majority-
+object rule confirms this: what it PRODUCES is a report, not a decision over other capabilities. The
+DELEGATOR NEAR-MISS: a capability that simply forwards a request to whichever system claims to handle it,
+without evaluating, ranking, or deciding among candidates — a lookup table dressed as a router — reads as
+second-order because it sits "above" other systems structurally, but its direct object is a single
+resource-level dispatch, not a genuine decision over the ensemble's capabilities; the distinguishing
+question is whether the capability could, in principle, be wrong about which system to choose and be held
+accountable for that choice, and a pure forwarding table cannot be wrong in that sense because it makes no
+judgment at all. The OBSERVER NEAR-MISS: a capability that watches many systems and logs their behavior
+reads as second-order because its inputs span the ensemble, but per Part VIII §8.4 its object is what it
+PRODUCES or DECIDES, and pure logging produces a record, not a decision over capabilities; it becomes
+genuinely second-order only at the moment it begins to act on what it observes — flagging, ranking, or
+recommending — which is precisely the boundary IAS-E1 (Observability Fabric) must cross to justify its own
+second-order status, and which this dataset does not adjudicate on IAS-E1's behalf, only names as the test
+IAS-E1 must pass.
+
+7.8 The positive converse: a small first-order capability nested inside a genuinely second-order system.
+The near-misses above should not be read as implying that every component of a second-order system must
+itself be second-order; the reverse is normal and expected. A second-order router (IAS-A1) necessarily
+contains first-order machinery — a lookup step, a cost comparison, a simple ranking sort — and none of
+that internal machinery needs to individually pass the second-order test, because Part II §2.3's
+subsystem/component distinction already applies: the internal machinery is a component of a second-order
+system, not a candidate system in its own right, and only the system's own direct object (the routing
+decision itself) is evaluated by §7.2. This converse matters because it prevents an overcorrection where
+every internal helper function of a legitimate second-order system is mistakenly interrogated for its own
+second-order status, a category error the size-inflation adversarial case (Part XIV §14.3) already
+warns against from a different angle.
+
+FINAL LAW — PART VII. A capability is second-order exactly when its direct object is another capability
+or system rather than a resource; that single mechanical test is what separates genuine institutional
+advantage from a first-order feature wearing a second-order name.
+
+===============================================================================================
+PART VIII — RESOURCE-LEVEL VERSUS ENSEMBLE-LEVEL, FORMALIZED
+===============================================================================================
+
+8.1 From informal distinction to formal test. Part I §1.4 introduced resource-level and ensemble-level
+informally, as a way of explaining why F1 is a foundation. This Part formalizes the distinction into a
+test any proposed system or dataset can be run through, because the informal version is intuitive but not
+mechanical, and the family needs a mechanical version for the Non-Duplication Ledger to apply consistently
+across all fourteen datasets and any future proposal.
+
+8.2 The formal test, in three questions. A candidate system or capability is RESOURCE-LEVEL if the honest
+answer to "what does this act on?" names a member of a bounded, enumerable resource class owned by one
+existing system (sessions, panes, coordinates, decisions, duplications, model calls). It is ENSEMBLE-LEVEL
+if the honest answer names the set of systems, the set of capabilities, or the relation graph among them —
+an object that is not enumerable within any single existing system's scope. The third question, asked only
+when the first two are ambiguous, is the second-order test of Part VII §7.2: does the capability's direct
+object recurse onto another capability? A "yes" to the third question is sufficient, on its own, to
+establish ensemble-level status even when the first two questions are unclear, because the second-order
+property is definitionally an ensemble-level property.
+
+8.3 Formal statement of the level boundary. DEFINED: Level(X) = RESOURCE if object(X) ⊆ some existing
+system's owned resource class; Level(X) = ENSEMBLE if object(X) ⊆ {systems} ∪ {capabilities} ∪
+{relations(systems)} and object(X) is not contained in any single system's owned resource class. This
+formalization is deliberately simple — a two-way partition, not a spectrum — because Article II requires
+a bright line: "the instant a dataset would govern models (CO owns), panes (PM owns)... it is duplicating
+a parent." A spectrum would let a proposal claim to be "mostly" ensemble-level while quietly governing a
+resource; the bright line forces a clean verdict.
+
+8.4 Mixed capabilities and the majority-object rule. Some real capabilities touch both levels: IAS-A1's
+router reads resource-level mission requirements (a specific session's needs) in order to make an
+ensemble-level routing decision (which system serves it). F1 resolves this with the MAJORITY-OBJECT RULE,
+DERIVED from the second-order test: a capability is classified by what it DECIDES upon or PRODUCES, not
+by what it READS as input. IAS-A1 reads session-level data but decides system-level routing; its object,
+by the test, is the routing decision over systems, which is ensemble-level, and the resource-level data
+it reads is an input, not its object. (NORMATIVE: without the majority-object rule, almost every ensemble-
+level system would fail the test on a technicality, because ensemble-level decisions are almost always
+informed by resource-level data.)
+
+8.5 Why the boundary is generative, not merely classificatory. The formal test does more than sort
+proposals into two bins after the fact; it generates the search space for what a legitimate fifteenth (or
+fiftieth) IAS dataset could ever be. Any future proposal whose object formalizes to RESOURCE is, by this
+Part's own logic, either folded into an existing resource-level system or rejected outright — it cannot
+be admitted as an IAS dataset regardless of how well-built it is, because IAS is defined, by its own
+founding documents, as the ensemble-level family. This is the precise mechanism by which F1 protects the
+other thirteen datasets from a fifteenth sibling quietly re-litigating the resource/ensemble boundary
+project by project; the boundary is fixed here, once, for the whole family to inherit.
+
+8.6 The boundary's own failure mode, named and deferred. A boundary this load-bearing has a corresponding
+failure mode: a system that games the majority-object rule by describing a resource-level function in
+ensemble-level language without an actual second-order mechanism underneath — asserting "I decide across
+systems" while, in fact, only executing one resource-level operation with cross-system-sounding
+documentation. This is the specific adversarial case Part XIV names as naming-only novelty at the system
+level (as distinct from the dataset level Article I already covers), and it is why the level test is
+paired, in practice, with the second-order test of Part VII: a claimed ensemble-level object without a
+passing second-order test is a claim, not a fact, and Part XII's provenance discipline requires the claim
+to be evidenced before it is trusted.
+
+8.7 Worked retrodiction: applying the formal test to three estate-derived shapes without knowing the
+answer in advance. To demonstrate the test's mechanics rather than merely assert them, consider three
+capability shapes drawn from the general pattern of the estate's own documented history, described
+generically enough to avoid re-narrating any single existing module. Shape One: "given a session's stated
+budget, pick the model tier to serve it." Object(X): the model tier assigned to one session — an
+enumerable resource owned by the Cognitive OS. Level(X) = RESOURCE. This shape is correctly a first-order
+capability regardless of how sophisticated its cost-modeling internals are, because sophistication is not
+one of the four tests. Shape Two: "given the full set of routers the estate currently runs (model,
+knowledge, skill), decide which router's verdict governs when two disagree about the same mission."
+Object(X): a decision over the ROUTERS themselves, not over any resource a router assigns. Level(X) =
+ENSEMBLE, and the second-order test confirms it independently: the direct object is other capabilities
+(the routers' verdicts), satisfying §7.2. Shape Three: "track, across all sessions this month, which
+model tier was assigned most often." Object(X): a count over historical resource-level assignments. This
+is the AGGREGATOR NEAR-MISS of Part VII §7.7 in level-test form: despite summarizing many sessions, its
+produced object is a report about a resource-level quantity, not a decision over systems or capabilities,
+so Level(X) = RESOURCE under the majority-object rule (Part VIII §8.4) even though its INPUT spans the
+whole estate. The three shapes were chosen specifically to include one clean resource-level case, one
+clean ensemble-level case, and one case designed to tempt a level-test error by input breadth alone — and
+the test, applied literally, resolves all three without ambiguity, which is the retrodiction protocol
+Part XVI §16.3 formalizes for a larger, independently-sourced sample.
+
+8.8 The boundary's relationship to organizational scale, and why F1 does not gate on system count. A
+natural but incorrect intuition holds that "ensemble-level" should mean "governs many systems" and
+"resource-level" should mean "governs few" — a headcount heuristic. F1 explicitly rejects this heuristic:
+a capability governing the interaction of exactly two systems (a narrow arbitration between one router and
+one fallback) is ensemble-level if its object is the relation between those two capabilities, while a
+capability touching a thousand sessions is resource-level if its object remains the individual session
+each time it acts. (DERIVED: the level test of §8.2 is defined over the OBJECT's type, never over a count
+of instances or systems touched, precisely because a count-based heuristic would be trivially gameable —
+any first-order capability could claim ensemble status merely by being applied to enough resources, which
+is a variant of the size-inflation adversarial case, Part XIV §14.3, applied to capabilities instead of
+system counts.) This is why the formal test in §8.3 is stated as set membership over object TYPES, not as
+a threshold over object COUNTS.
+
+FINAL LAW — PART VIII. Level is decided by what a capability decides upon or produces, never by what it
+merely reads; a capability that touches resource-level data but decides at the ensemble level is
+ensemble-level in full, and a capability that decides at the resource level while describing itself in
+ensemble language has not crossed the boundary — it has only borrowed its vocabulary.
+
+===============================================================================================
+PART IX — ADDRESSING AND STABLE IDENTITY OF A SYSTEM
+===============================================================================================
+
+9.1 Why addressability is its own Part, not a footnote to Part II. Systemhood's fourth test (Part II
+§2.1) requires that a system "can be named, located, and addressed independently of the others," and it
+is tempting to treat that as satisfied by a file path. It is not. A file path is where a system's bytes
+currently live; an ADDRESS, as DEFINED here, is a stable identifier that survives every legitimate change
+to those bytes — a rename, a relocation, a refactor across modules, a merge with a subengine, even a
+change of implementing model or language. Every ensemble-level operation in this family — routing (IAS-
+A1), event delivery (IAS-A2), portfolio tracking (IAS-C1), observability (IAS-E1) — depends on being able
+to say "this is the same system as before" across such changes, and a federation that addresses its
+members by file path breaks that guarantee on the first refactor.
+
+9.2 The three components of an address. F1 DEFINES a system's address as a triple: a STABLE ID (an
+identifier assigned at the system's creation and never reused, even after retirement — the ensemble-level
+analogue of a primary key that outlives its row), a CAPABILITY SIGNATURE (the set of capability names,
+Part II §2.4, the system currently provides — this component changes as the system evolves, which is
+expected and tracked, not forbidden), and a CURRENT LOCATOR (the file path, module name, or service
+endpoint where the system's bytes presently execute — this component is expected to change over the
+system's life and carries no identity weight on its own). Two systems are the SAME system, under this
+ontology, if and only if they share a stable ID; two systems that share a capability signature but not a
+stable ID are, at best, systems providing overlapping capabilities (a competes-with or duplicates relation,
+Part VI), never the same system under a new name.
+
+9.3 Why the stable ID must be assigned once and never reused. A federation that reissues stable IDs after
+retirement risks the single worst addressing failure available to it: a new, unrelated system inheriting
+the reputation, relation-graph edges, and property history of a retired one, silently corrupting every
+downstream decision that trusted the old ID's track record. (DERIVED from the ensemble's own state
+discipline, Part III §3.3: state is only meaningful if it can be reconciled against a stable referent, and
+an ID that can point to two different systems across time is not a stable referent.) F1 therefore treats
+ID reuse as a hard violation, not a style preference; a retired system's ID is retired with it (Part XI
+specifies the retirement state), and any successor, however similar, receives a new ID with an explicit
+SUCCEEDS relation to the old one recorded in its provenance (Part XII), preserving lineage without
+conflating identity.
+
+9.4 Addressing across the resource/ensemble boundary. A subtlety follows directly from Part VIII: a
+subsystem (Part II §2.3) does not receive its own stable ID in the ensemble-level address space, because
+subsystems are facets of a parent system's object, not independent systems; addressing a subsystem
+separately would silently promote it to systemhood by the back door, exactly the size-inflation failure
+Part II §2.1 was written to prevent. A subsystem is addressed, when it must be referenced at all, as a
+qualified path under its parent's stable ID — parent-ID plus subsystem-name — never as a peer stable ID
+of its own. This rule is what keeps the ensemble's system count honest even as the estate's internal
+module count grows.
+
+9.5 Worked example: tracing a system through a refactor. Suppose a system with stable ID S-0031 initially
+provides the capability "route a model by cost" from a single module. Over three refactors it: splits its
+routing logic into two files (locator changes, capability signature unchanged, stable ID unchanged — same
+system); absorbs a second capability, "route a model by latency," from a system that is folded into it
+under a D2A MERGE-INTO-FAMILY verdict (capability signature grows, stable ID unchanged, and the folded
+system's own stable ID is retired with a SUCCEEDS-BY edge pointing to S-0031); and is finally rewritten in
+a different orchestration layer entirely (locator changes completely, capability signature and stable ID
+both unchanged). At every step, every downstream IAS system that had a relation-graph edge to S-0031
+continues to resolve correctly, because none of those edges were ever anchored to the locator. This is the
+entire operational payoff of separating the three address components: change is absorbed, not propagated
+as breakage.
+
+9.6 Addressing failure modes deferred to Part XIII. Two address-specific failures recur in practice and
+are catalogued fully in Part XIII rather than here: ID COLLISION (two systems independently assigned
+overlapping IDs, typically when the estate's registries are not the single source of truth for ID
+issuance) and LOCATOR-AS-IDENTITY DRIFT (a downstream system quietly begins matching on file path instead
+of stable ID because the path was, historically, a reliable proxy — until the day it is not). Both are
+named here so the property model (Part IV) and the provenance model (Part XII) can each carry the fields
+needed to detect them, even though their full failure analysis belongs to Part XIII.
+
+9.7 Cross-project addressing: the same capability signature, two distinct stable IDs. A recurring question
+for IAS-D2's federated failure-fingerprint work is whether a nearly identical capability, independently
+implemented in two different projects the estate governs, is one system or two under this addressing
+model. F1's answer is unambiguous once the address triple (§9.2) is applied literally: two independently
+created instances receive two independent stable IDs at their respective ADMITTED moments (Part XI §11.2),
+regardless of how similar their capability signatures are, because a stable ID is assigned at creation and
+identity is defined by ID persistence, not by signature resemblance. Two systems sharing a capability
+signature but not a stable ID are, per Part VI §6.5, at most in a DUPLICATES relation — and whether that
+relation should trigger a cross-project D2A disposition (folding one project's implementation into a
+shared, reusable system) or should remain two legitimately independent systems serving genuinely separate
+projects is a judgment this Part does not make unilaterally; it belongs to whichever authority (Part X)
+governs cross-project capability consolidation. What F1 does guarantee is that the QUESTION is askable in
+the first place, because without independent stable IDs, IAS-D2 could not even express "this failure
+fingerprint recurred in project B after being fixed in project A" as a formal claim — the fingerprint
+needs to attach to two distinct, stably addressed systems to prove recurrence rather than coincidence, the
+exact mechanism the Strengthening Matrix's evidence requirement for IAS-D2 depends on ("a failure
+fingerprint matched across ≥2 projects").
+
+9.8 The address as the anchor for every other Part's claims. Read retrospectively, every claim this
+ontology makes about a system — its properties (Part IV), its relations (Part VI), its authority (Part X),
+its lifecycle state (Part XI), its provenance (Part XII) — is a claim ABOUT the stable ID, not about the
+locator or the capability signature at any given moment, which is why this Part, despite appearing ninth
+in the sequence, is in a precise sense prior to every Part that follows it: a property record, a relation
+edge, or an authority grant that is not anchored to a stable ID is not anchored to anything durable at
+all, and would silently break at the next refactor. F1 places this Part after the property, invariant, and
+relation Parts (IV through VIII) rather than immediately following Part II for expository reasons only —
+addressing is easier to motivate once the reader has seen what needs to be addressed — but its logical
+priority is total, and any implementation reading this ontology into a registry (per the Dataset-to-
+Runtime Translation section) should treat the stable-ID field as the one field that exists before any
+other field can be attached to a record.
+
+FINAL LAW — PART IX. A system's identity is its stable ID and nothing else; its capability signature may
+grow, its locator may move, its implementation may be rewritten in full, and it remains the same system
+exactly as long as, and no longer than, its stable ID persists.
+
+===============================================================================================
+PART X — AUTHORITY AND DECISION-RIGHTS OVER THE ENSEMBLE
+===============================================================================================
+
+10.1 Authority as a first-class ensemble object. Part IV named AUTHORITY as one of six canonical
+properties without specifying how it is granted, contested, or transferred; Part V's Invariant Three
+requires exactly one system hold final authority per decision class without specifying the mechanism that
+enforces singularity. This Part supplies both: authority is DEFINED as the right to render a decision
+within a bounded DECISION CLASS such that the decision stands unless and until a higher authority or an
+explicit escalation reverses it.
+
+10.2 The two authority modes: advisory and final. An ADVISORY authority may recommend, score, or flag
+within a decision class, but its output may be overridden by any system holding final authority over that
+same class without requiring justification beyond the override itself being logged. A FINAL authority's
+decision stands as the ensemble's decision unless reversed through an explicit ESCALATION (§10.4). Most
+systems in the estate hold advisory authority over decision classes outside their own core object and
+final authority only over their own: the Cognitive OS holds final authority over "what should this session
+cost," and at most advisory input into, say, a knowledge-canonicalization decision it does not own.
+(OBSERVED: this pattern already exists informally across the estate — DRK owns final decision authority,
+D2A owns final duplication verdicts — and F1's contribution is naming the pattern so it can be checked
+for the Invariant Three violation systematically rather than case by case.)
+
+10.3 Decision classes must be enumerable and bounded. Authority cannot be granted over "everything a
+system might ever decide," because an unbounded decision class cannot be checked against Invariant Three
+— there would be no way to tell whether two systems' unbounded classes overlap. F1 therefore requires
+every decision class referenced in an authority grant to be stated as a bounded predicate over the
+ensemble's objects (e.g., "which model serves a session below cost threshold T," not "model decisions" in
+general), and an authority grant over an unbounded class is, by this Part's own rule, not a legal grant —
+it is an unresolved invariant violation waiting to surface at the first genuine conflict.
+
+10.4 Escalation: how a final decision is reversed. An ESCALATION is the protocol by which a final
+authority's decision is challenged and potentially reversed, and it requires three elements: a CHALLENGER
+(a system or the Owner asserting the decision was wrong, with the specific evidence), a REVIEW (the
+final-authority system, or a designated superior authority for that class, re-examines the decision
+against the challenger's evidence), and a DISPOSITION (uphold, reverse, or defer to Owner). F1 does not
+specify who reviews what for any concrete decision class — that is an operational detail for the system
+that owns the class — but it specifies that no final decision is UNCHALLENGEABLE; a decision class with
+no escalation path at all is a defect (a variant of Invariant Three: authority without any check is
+authority no other part of the ensemble can correct, which the estate's own Article IX governed-self-
+evolution principle already forbids at the estate-mutation level, and which this Part imports as a
+constraint on any decision class).
+
+10.5 The Owner as the ceiling of the authority hierarchy. Every decision class in the ensemble, however
+final its assigned system-level authority, is subordinate to Owner override, consistent with Article IX's
+"IAS proposes, the Owner promotes" and with the estate-wide pattern of Owner-decide gates (rotation
+decisions, self-modification, irreversible actions) that recur throughout the estate's hard rules. F1
+states this as an ontological fact about the authority model, not as a new rule of its own: no system-
+level "final" authority is final in the absolute sense; it is final among systems, and the Owner sits
+above the entire graph as the one node whose decisions require no escalation protocol to reverse anything
+beneath it. (NORMATIVE, and DERIVED from the estate's existing Owner-decide precedent rather than
+invented for this ontology.)
+
+10.6 Authority conflicts as the concrete trigger for IAS-A2. When two systems each assert final authority
+over what turns out, on inspection, to be the same or an overlapping decision class — a violation of
+Invariant Three that was not caught at grant time — the concrete resolution mechanism is the Multi-System
+Conflict Resolver folded into IAS-A2 (Non-Duplication Ledger candidate 7). F1's contribution here is
+precise: it defines what a decision class and an authority grant ARE, so that IAS-A2's arbitration has a
+formal object to arbitrate over rather than an ad hoc dispute. Without this Part, "which system decides"
+disputes would each require bespoke reasoning about what was even in contention; with it, every dispute
+reduces to checking whether two authority grants' decision-class predicates overlap, a mechanical
+question rather than a political one.
+
+10.7 Worked example: an authority grant traced from creation through a contested escalation. Consider a
+synthetic trace, illustrative only. System T is ADMITTED with a final-authority grant over the decision
+class "which knowledge-freshness threshold triggers a re-index" — a narrowly bounded predicate satisfying
+§10.3. For fourteen months T's decisions stand unchallenged, each logged but never escalated. In month
+fifteen, System U — a newly built observability capability — presents evidence that T's threshold choices
+have, on three occasions, triggered re-indexing too late, measurably degrading a downstream consumer's
+output; U is not itself a final authority over T's decision class, only a challenger under §10.4. U's
+challenge triggers a REVIEW: because T's own grant names no explicit superior reviewer for this class
+(a gap the grant should have specified per §10.3 but did not), the review escalates one level to the
+Owner, consistent with §10.5's ceiling principle. The Owner's DISPOSITION is a partial reversal: T's past
+three decisions are not retroactively undone (an irreversible-action caution consistent with the estate's
+broader Owner-decide precedent for destructive reversals), but T's grant is amended, going forward, to
+require a secondary advisory check from U before T's decision takes final effect. This trace demonstrates
+three things at once: that a final authority genuinely can be checked (§10.4 is not merely aspirational),
+that an authority grant missing an explicit reviewer defaults, correctly, to the Owner rather than to no
+reviewer at all, and that an escalation's disposition can be a structural amendment to the grant itself,
+not only a binary uphold-or-reverse of one past decision — a nuance the bare §10.4 definition states in
+principle and this example makes concrete.
+
+10.8 Authority grants versus capability provision: why holding a capability does not imply holding
+authority over it. A system that PROVIDES a capability (Part II §2.4) does not automatically hold final
+authority over the decision class that capability serves; the two are related but distinct facts about a
+system, and conflating them is a common design error this Part names explicitly to forestall. A knowledge-
+freshness-scoring capability might be provided by System T, while final authority over "which freshness
+score justifies action" could legitimately be granted to a different system entirely — the provider
+computes, the authority decides, and an ensemble that assumes the two are always the same system loses
+the ability to represent the checks-and-balances pattern the worked example above depends on (System U
+checking System T without U itself providing T's capability). (DERIVED: this separation is what makes the
+escalation protocol of §10.4 meaningful in the general case rather than only in the special case where
+provider and authority happen to coincide.)
+
+FINAL LAW — PART X. Authority is a bounded grant over an enumerable decision class, advisory unless
+declared final, never uncontestable, and never higher than the Owner — an ensemble in which any of these
+four conditions fails has not distributed authority, it has fragmented it.
+
+===============================================================================================
+PART XI — THE SYSTEM LIFECYCLE AND STATE MODEL
+===============================================================================================
+
+11.1 Why systems need a lifecycle, not just a static definition. Every prior Part has treated a system as
+if its properties, relations, and authority were fixed at a point in time. In the real estate, systems
+are PROPOSED, BUILT, GROWN, MERGED, SPLIT, and eventually RETIRED, and an ontology that only describes
+the steady state cannot answer the questions the later datasets most need answered under change: is this
+system still legitimate mid-refactor? What happens to its relation-graph edges when it merges with
+another? This Part DEFINES the system lifecycle as a state machine, deliberately mirrored in structure
+on the dataset state machine of the Constitution (DISCOVERED → MAPPED → CONTRACTED → OUTLINED →
+IN_PROGRESS → CONTENT_COMPLETE → INTEGRATED → EVALUATED → HARDENED → SEALED), because both are instances
+of the same general pattern: an ensemble-level object earns increasing trust through a sequence of
+checkable gates, never by declaration.
+
+11.2 The seven system-lifecycle states. PROPOSED — a candidate capability has been named and its
+distinct-object test attempted, but not yet passed; it holds no stable ID yet. ADMITTED — the distinct-
+object test (Part II §2.2) and the level test (Part VIII §8.2) both pass; a stable ID is issued (Part IX
+§9.3) and the system enters the ensemble's registry, but its property record (Part IV) is still largely
+UNRESOLVED. ACTIVE — the system has at least one OBSERVED property and at least one relation-graph edge
+(satisfying Invariant One), and is in normal operation. UNDER-REVISION — the system is undergoing a
+change to its capability signature, locator, or authority grant that has not yet stabilized; relations
+and properties from the prior ACTIVE state remain in force but are flagged provisional. CONTESTED — a
+duplicates relation (Part VI §6.5) or an authority conflict (Part X §10.6) has been raised against the
+system and a D2A or IAS-A2 disposition is pending; the system's authority is suspended to advisory-only
+for the contested decision class until resolved, a direct enforcement of Invariant Two and Three during
+the transition rather than after it. RETIRED — the system's stable ID is closed to new relations, its
+existing edges are marked historical, and any successor relation (Part IX §9.3) is recorded; RETIRED is
+terminal and the ID is never reissued. SUCCEEDED — a variant of RETIRED specifically where a successor
+system exists and carries a SUCCEEDS edge; distinguished from plain RETIRED (capability simply no longer
+needed) because the ecology dataset (IAS-D1) treats succession and extinction as different events with
+different fitness implications.
+
+11.3 Transitions are gated, not automatic. Movement between states requires the specific evidence named
+at each gate — ADMITTED requires passing tests, not merely being proposed with confidence; ACTIVE requires
+an observed property and a real edge, not merely a claim of readiness; RETIRED requires the successor
+recording step if one exists. This gating is DERIVED directly from Article XI of the Constitution ("only
+SEALED counts... completeness is judged on inspected content, not file existence"), generalized from
+dataset-sealing to system-lifecycle transitions: a system is not ACTIVE because someone says so, it is
+ACTIVE because its property and relation records show it.
+
+11.4 The CONTESTED state as the lifecycle's safety valve. Of the seven states, CONTESTED is the one doing
+the most protective work, because it is the state that prevents an authority conflict or an unresolved
+duplicate from silently continuing to make binding decisions while the estate figures out what to do
+about it. Downgrading a contested system's authority to advisory-only, rather than freezing the system
+entirely, is a deliberate design choice: a system under genuine dispute may still be right most of the
+time, and an ensemble that halts every contested system loses more value to false-positive freezes than
+it gains in false-negative prevention. This is a NORMATIVE choice, not a DERIVED necessity, and it is
+CONTESTED within this very dataset — an intentional and acknowledged instance of the ontology naming its
+own open design tension rather than hiding it.
+
+11.5 Lifecycle and the property record's staleness rule. A system's transition into UNDER-REVISION or
+CONTESTED is itself an event that should trigger a property-record reconciliation (Part IV §4.3): a
+system whose capability signature is actively changing is precisely the system whose cost, evidence-
+level, and reuse-horizon fields are most likely to have drifted from their last-reconciled values. F1
+does not mandate an automatic reconciliation trigger — that is an implementation decision for whichever
+mechanism enforces the lifecycle — but it specifies the coupling: lifecycle state and property freshness
+are related facts about the same system, and a downstream dataset that reads one without the other is
+reading half the picture.
+
+11.6 Worked example: a full lifecycle trace. A capability begins PROPOSED as an entry in a design
+document; passes its tests and is ADMITTED with stable ID S-0104 and a property record entirely
+UNRESOLVED; after its first real mission produces an OBSERVED cost and a first feeds edge, it becomes
+ACTIVE; eighteen months later a near-identical capability is proposed elsewhere in the estate, triggering
+CONTESTED status and an Invariant Two review; the D2A verdict is MERGE-INTO-FAMILY, so S-0104 transitions
+to RETIRED with a SUCCEEDS-BY edge to the surviving system, which itself moves through UNDER-REVISION
+while it absorbs S-0104's capability signature, then returns to ACTIVE with a grown signature. Every
+state in this trace is checkable against the record; nothing in the trace required trusting a claim that
+could not be verified against the ensemble's own graph.
+
+11.7 Lifecycle interaction with authority: what a state transition does to an existing grant. A question
+the seven states raise but do not, on their own, fully answer: when a system moves from ACTIVE into
+UNDER-REVISION or CONTESTED, what happens to the authority grants (Part X) it currently holds? F1's
+answer, stated here to close the gap explicitly rather than leave it implicit across two Parts, is that a
+final-authority grant survives an UNDER-REVISION transition unchanged — a system actively being refactored
+may still correctly exercise authority over its unchanged decision classes, and halting authority every
+time a system is touched would make routine maintenance indistinguishable from a genuine dispute — but a
+CONTESTED transition specifically downgrades the grant to advisory-only for the contested decision class
+alone, per Part XI §11.2's own CONTESTED definition, leaving any OTHER decision classes the same system
+might hold final authority over untouched by the dispute. This distinction matters because a system rarely
+holds authority over only one decision class; a partial downgrade, scoped to the specific class under
+dispute, is what keeps a CONTESTED state from cascading into an unrelated freeze of the system's other,
+unchallenged functions — the same proportionality principle that motivated CONTESTED as a downgrade rather
+than a halt in the first place (§11.4).
+
+11.8 Why RETIRED is deliberately harder to reach than any other state. Of the seven transitions, the path
+into RETIRED (or its SUCCEEDED variant) is the only one this Part treats as requiring more evidence than
+symmetry would suggest — moving OUT of ACTIVE into RETIRED should, by the general gating principle of
+§11.3, require comparable evidence to moving INTO ACTIVE, but F1 asymmetrically raises the bar specifically
+for retirement, requiring not only that the system's own object has genuinely ceased to be needed but that
+every inbound relation-graph edge (Part VI) pointing to it has been either migrated to a successor or
+confirmed obsolete. (NORMATIVE: this asymmetry exists because Invariant One (Part V §5.2) forbids orphan
+systems, but says nothing about orphaned CONSUMERS of a retiring system — a system retired while other
+systems still hold live feeds or depends-on edges to it would silently create broken edges rather than a
+clean invariant violation, a failure mode worse than an orphan because it is not even detectable by
+Invariant One's own test, which checks for absent edges, not for edges pointing at a corpse.) The
+asymmetry is a deliberate compensating control for a gap the invariants alone do not close.
+
+FINAL LAW — PART XI. A system's legitimacy is not a fact asserted once at birth; it is a state earned and
+re-earned through seven gated transitions, and a system whose current state cannot be justified by its
+own property and relation record is not really in that state — it is only claiming to be.
+
+===============================================================================================
+PART XII — PROVENANCE AND EVIDENCE FOR ENSEMBLE STATE
+===============================================================================================
+
+12.1 Importing the claimed-until-observed discipline. Part III §3.3 already stated, in passing, that
+ensemble state is claimed until observed, crediting the discipline to the estate's own SQI root
+principle. This Part makes that discipline operational for every object this ontology defines: systems,
+properties, relations, authority grants, and lifecycle states each carry a PROVENANCE record, DEFINED as
+the source, method, and timestamp by which the current value was established, and an EVIDENCE LEVEL drawn
+from the Constitution's Article V vocabulary (DEFINED, OBSERVED, DERIVED, HYPOTHESIZED, NORMATIVE,
+EXPERIMENTAL, CONTESTED, UNRESOLVED).
+
+12.2 Why provenance must be per-fact, not per-record. A naive implementation would attach one evidence
+level to an entire system record — "System S-0104 is OBSERVED" — but this loses exactly the information
+the property model (Part IV) needs, because a system's cost may be OBSERVED (measured this month) while
+its reuse horizon is HYPOTHESIZED (no second mission type has tested it yet) and its consumer count is
+DERIVED (computed from the relation graph rather than directly measured). F1 requires provenance at the
+granularity of the individual fact — one field, one relation edge, one authority grant — not at the
+granularity of the whole record, because a single blended evidence level would average away precisely the
+distinctions that let a downstream dataset know which parts of a record to trust for a high-stakes
+decision and which to treat as a working hypothesis.
+
+12.3 The provenance chain for a DERIVED fact. A fact marked DERIVED must carry not only its own timestamp
+but a pointer to the DEFINED or OBSERVED premises it was derived from, and the reasoning step connecting
+them, so that a challenge to the derived fact can be resolved by checking the premises rather than by
+re-litigating the whole claim from scratch. This is the ontology-level instance of a general estate
+discipline (the ACIS ladder's falsifier-as-gate principle, imported by reference, never rebuilt here):
+a claim without a traceable derivation chain is not evidence, it is assertion wearing an evidence label.
+
+12.4 Evidence decay and re-certification. An OBSERVED fact does not remain OBSERVED indefinitely; it
+decays toward a lower-confidence status as the gap since its last reconciliation (Part IV §4.3) grows,
+and F1 specifies the decay direction — OBSERVED degrades toward DERIVED-from-stale-observation, never
+silently remains OBSERVED forever — without specifying a universal decay rate, because the correct
+reconciliation cadence differs by property (cost telemetry is cheap to refresh often; reuse horizon needs
+a genuinely new mission type to re-test and cannot be refreshed on a calendar). The re-certification event
+that resets a fact to fresh OBSERVED status must itself be logged with its own provenance, so that the
+history of a fact's confidence over time is itself an inspectable record, not a single current snapshot
+that has forgotten how it got there.
+
+12.5 CONTESTED and UNRESOLVED as first-class provenance outcomes, not failures. When two provenance chains
+for the same fact disagree — one system's telemetry says a shared dependency costs X, another's says Y —
+the correct outcome is not to silently pick one, average them, or hide the disagreement behind a single
+merged number; it is to mark the fact CONTESTED and record both chains side by side until the discrepancy
+is resolved by a system with authority over that measurement (Part X). Similarly, a fact with no chain at
+all is UNRESOLVED, not defaulted to a plausible-sounding guess (this repeats, at the provenance layer, the
+same discipline Part IV §4.6 stated at the property layer, because the two Parts describe the same
+discipline from different angles — properties are WHAT is tracked, provenance is HOW its truth-status is
+tracked). F1 treats both CONTESTED and UNRESOLVED as legitimate, expected, and non-embarrassing states
+for a live federation's evidence base to be in — the embarrassment is a federation that hides them.
+
+12.6 Provenance as the substrate the Observability Fabric reads. IAS-E1's entire mandate — surfacing dead
+capabilities, dark matter, and real flow — is only possible if the ensemble's provenance records are
+honest about what has and has not actually been observed; a federation whose systems all self-report
+OBSERVED status without genuine reconciliation would make IAS-E1 indistinguishable from a system that
+simply repeats each system's own marketing. (DERIVED: this is the specific mechanism by which F1's
+provenance discipline strengthens IAS-E1 — not by building observability, but by making the facts
+observability reads trustworthy in the first place.) The same coupling holds for IAS-D2 (a failure
+fingerprint with weak provenance cannot be safely federated across projects) and IAS-F3 (a simulation
+built on HYPOTHESIZED inputs it treats as OBSERVED will simulate a fiction with high confidence, the
+single most dangerous failure a digital twin can commit).
+
+12.7 Worked example: a provenance chain traced from a portfolio ranking back to its OBSERVED root. Consider
+a synthetic allocation decision, illustrative only. IAS-C1 ranks System V above System W for the next
+cycle's cognitive-capital allocation, citing V's higher "value-per-cost" score. Tracing the chain per
+§12.3: the value-per-cost score is DERIVED from two premises — V's cost property (Part IV §4.2), marked
+OBSERVED as of a reconciliation three weeks prior against the Cognitive OS's telemetry, and V's "consumer
+count" property, marked DERIVED from the relation graph (Part VI), itself computed from twelve individually
+OBSERVED feeds edges, each logged by the Control Bus (IAS-A2) at the moment the corresponding mission
+executed. Every link in this chain terminates, when followed to its root, in either a direct telemetry
+OBSERVATION or a direct event-log OBSERVATION — no HYPOTHESIZED premise appears anywhere in the chain, and
+the ranking is therefore entitled to the confidence IAS-C1 places in it. Contrast this with a second,
+adjacent case in the same allocation cycle: System X is ranked above System Y on a similar value-per-cost
+score, but X's "reuse horizon" property (Part IV §4.2), a significant input into its value score, traces
+back not to an observation but to a single HYPOTHESIZED assertion in X's own original design document,
+never independently reconciled against a second mission type. Per §12.5, this second ranking should carry
+a visible CONTESTED-or-HYPOTHESIZED flag on its reuse-horizon component, and an allocation decision that
+treats X's ranking with the same confidence as V's — without surfacing that one chain terminates in
+evidence and the other terminates in an unverified assertion — has committed exactly the evidence-
+laundering adversarial case Part XIV §14.5 catalogues, even though no single step in X's chain was
+individually dishonest; the dishonesty, if any occurs, would be in how the FINAL ranking is presented,
+collapsing two different confidence levels into one undifferentiated number.
+
+12.8 Provenance cost and the case for selective reconciliation. Maintaining a full provenance chain for
+every fact about every system, refreshed continuously, is not free — each reconciliation event (§12.4)
+consumes real cognitive capital to perform, which is precisely why Part XV §15.6 pairs provenance coverage
+with a reconciliation-cost countermetric rather than treating "reconcile everything constantly" as an
+unqualified good. F1 does not mandate universal, maximal-frequency reconciliation; it mandates only that
+STALENESS BE REPRESENTABLE and that a fact's confidence never exceed what its actual chain supports.
+This leaves room for a legitimate, NORMATIVE operational policy — not specified by F1, but consistent with
+it — in which high-stakes decision classes (final authority grants, portfolio allocations above a
+threshold) require fresh reconciliation before being acted on, while low-stakes, exploratory uses of a
+property may tolerate a longer staleness window. The ontology supports this differentiated policy by
+carrying staleness as a first-class, checkable fact (Part IV §4.3) rather than forcing a single global
+reconciliation cadence on every property regardless of what is riding on it.
+
+FINAL LAW — PART XII. Every fact about the ensemble carries its own evidence level and its own chain back
+to what was actually measured; a fact that cannot show its chain is not entitled to look more certain
+than UNRESOLVED, however convenient certainty would be for the system that wants to act on it.
+
+===============================================================================================
+PART XIII — FAILURE MODES OF A MIS-SPECIFIED ONTOLOGY
+===============================================================================================
+
+13.1 Why the ontology itself needs a failure catalogue. Every mechanism this family will ever build rests
+on the objects, properties, relations, and invariants this dataset defines; if the ontology itself is
+wrong in a specific, recurring way, every downstream dataset inherits that wrongness silently, because
+none of them re-derive the definitions — they consume them. This Part catalogues the failure modes that
+threaten the ontology's own integrity, distinct from the failure modes of any system the ontology
+describes.
+
+13.2 UNDER-SPECIFICATION: the missing-object failure. The ontology omits an object class a real ensemble
+phenomenon needs, forcing every downstream dataset to informally invent ad hoc vocabulary for it — the
+exact fragmentation Part I §1.5 warned against. Symptom: two or more IAS datasets independently coin
+similar-but-not-identical terms for what turns out to be the same phenomenon (an early warning sign is
+present already in this corpus's own vocabulary — "leverage point" in IAS-B1 and "amplification" in the
+Compounding Graph's spine both gesture at a similar underlying object; whether that is a genuine gap in
+F1 or a legitimate difference in emphasis is left CONTESTED for the sibling dataset to resolve against
+this ontology rather than around it). Prevention: any new IAS dataset that finds itself needing a term
+F1 does not supply must propose the addition back to F1 under Part XVII's versioning discipline, rather
+than defining it locally and letting the fragmentation compound.
+
+13.3 OVER-SPECIFICATION: the inflation failure. The ontology defines more object classes, properties, or
+relation types than the estate's real complexity requires, and the surplus vocabulary becomes governance
+theater — categories that exist in the schema but describe nothing anyone measures, which is precisely
+the failure Part II §2.5 pre-empted by keeping the primitive layer to four objects and Part VI kept to
+six relation types. The test for over-specification is operational: any object class, property, or
+relation type in this ontology that no sealed IAS dataset and no OBSERVED estate fact currently populates
+is a candidate for removal at the next version (Part XVII), because an unused category is not neutral —
+it is a standing invitation for a future proposal to fabricate use of it just to look thorough.
+
+13.4 CATEGORY DRIFT: definitions used inconsistently across consumers. Two IAS datasets both use the term
+"system" or "capability" but apply subtly different tests in practice — one treating a subsystem as a
+peer system because its own domain never needed the Part II §2.3 distinction, another correctly applying
+the full four-test check. Category drift is the most dangerous failure mode precisely because it is
+invisible in any single dataset's own text; it only surfaces when two datasets' outputs are compared and
+found incompatible, often at the moment a cross-system decision (IAS-A2) most needs them to agree. The
+prevention is structural, not procedural: every later IAS dataset is REQUIRED, under this ontology's own
+authority (which is DEFINED here as final over vocabulary, per Part X, even though F1 holds no authority
+over any resource), to resolve its objects against F1's definitions explicitly, with zero undefined terms
+— the exact evidence requirement the Strengthening Matrix lists for this dataset's own row.
+
+13.5 PREMATURE FORMALIZATION: locking a definition before the phenomenon is understood. The inverse risk
+of under-specification: F1 defines an object class with false precision before enough of the estate's
+real behavior around that object has been observed, producing a formal definition that is elegant but
+does not actually carve the phenomenon at its real joints. The second-order capability test (Part VII) is
+the highest-risk candidate for this failure in the current version, because it was derived from a small
+number of worked examples (the fourteen IAS datasets themselves) rather than from a large corpus of
+independently-arising cases; F1 marks this HYPOTHESIZED-STRUCTURE rather than DEFINED-FROM-EVIDENCE and
+commits, under Part XVII, to revisiting the test's precision once a larger population of second-order
+proposals — beyond the founding fourteen — has been evaluated against it.
+
+13.6 SILENT INVARIANT VIOLATION: a defect the ontology cannot detect because nothing checks it. Part V's
+five invariants describe what a legal state looks like, but this dataset builds no enforcement mechanism
+of its own (Article VIII: specification, not implementation). Until a later system operationalizes a
+sweep against these invariants, a violation — an orphan system, an unresolved duplicate, a double final
+authority — can persist indefinitely, undetected, simply because no one is checking. This is not a defect
+in the invariants; it is the honest boundary of what a foundation dataset can guarantee versus what an
+enforcement mechanism must additionally provide, and F1 states the boundary explicitly rather than
+implying an enforcement it does not, itself, perform.
+
+13.7 The meta-failure: an ontology audited only by its own authors. The single hardest failure to self-
+detect is that every check in this Part was written by the same authorial process that wrote the
+definitions being checked, which means genuine blind spots are, by construction, invisible from within
+this text. The honest mitigation available at this stage is not a claim of completeness but a standing
+commitment, carried into Part XVI's evaluation protocol: every sibling IAS dataset's act of resolving its
+own objects against F1 is itself a test of F1, and a resolution that requires bending, stretching, or
+silently reinterpreting a definition to make the sibling's object fit is evidence against this ontology's
+correctness, to be fed back through Part XVII's versioning process rather than absorbed quietly as a
+one-off exception.
+
+13.8 Worked failure trace: a compound failure spanning three of the catalogued modes. Real ontology
+failures rarely arrive as one clean, isolated instance of a single catalogued mode; they compound. Consider
+a synthetic trace, illustrative only. A new IAS-adjacent proposal needs to describe "how much a system's
+capability has generalized beyond its original mission type." No such property exists in Part IV's six
+canonical fields (an under-specification gap, §13.2). Rather than raise the gap back to F1 under §17.5's
+trigger conditions, the proposal's authors informally repurpose the existing REUSE HORIZON field to carry
+this new meaning alongside its original one (a category-drift seed, §13.4), and because the repurposed
+usage is not itself independently validated against real cases before being written into a sealed sibling
+dataset, the redefinition is adopted with unwarranted confidence (a premature-formalization instance,
+§13.5). Three months later, a second, unrelated sibling dataset uses REUSE HORIZON in its original,
+narrower sense, and the two siblings' portfolio math (IAS-C1) silently disagrees about what a given
+system's reuse horizon score even measures — a disagreement invisible in either sibling's own text,
+surfacing only when their outputs are compared directly, exactly as §13.4 predicts. This compound trace is
+included specifically to demonstrate that the four failure modes above are not mutually exclusive
+categories to be diagnosed one at a time; a single real incident, traced fully, typically implicates two
+or three at once, and a remediation that treats only the most visible symptom (in this trace, the
+disagreement) without tracing back through category drift to the original under-specification gap will
+recur in a different guise the next time a proposal needs a similar-but-not-identical property.
+
+13.9 The relationship between this Part's failure catalogue and the adversarial catalogue of Part XIV. A
+distinction worth making explicit before moving to Part XIV: every failure mode named in this Part
+originates in HONEST imprecision — a genuine gap, a genuine ambiguity, a genuine premature commitment —
+while Part XIV's adversarial cases originate in a proposal EXPLOITING the ontology's exact wording toward
+an unearned status. The distinction matters operationally because the correct response differs: a Part
+XIII failure is remediated by improving the ontology itself (an additive or revisory version change, Part
+XVII), while a Part XIV adversarial case is remediated by correctly applying the EXISTING tests more
+literally, with no change to the ontology required at all. Conflating the two — treating an adversarial
+gaming attempt as evidence the ontology needs to change, or treating a genuine gap as if a proposal were
+gaming the system — produces exactly the wrong remedy in each direction, which is why F1 maintains them as
+two separate Parts rather than one combined "problems" catalogue.
+
+FINAL LAW — PART XIII. An ontology fails by defining too little, too much, or inconsistently, by locking
+precision before the phenomenon is understood, or by naming invariants no mechanism yet checks — and the
+only defense against the failure mode no one inside the text can see is treating every downstream
+dataset's friction against these definitions as evidence, not as someone else's problem to work around.
+
+===============================================================================================
+PART XIV — ADVERSARIAL CASES: GAMING THE ONTOLOGY
+===============================================================================================
+
+14.1 Why an ontology needs an adversarial posture, not only a descriptive one. Part XIII catalogued
+failures that arise from honest imprecision. This Part catalogues a different threat: proposals that
+understand the ontology correctly and exploit its exact wording to claim a status — ensemble-level,
+second-order, distinct-object — that the underlying capability does not, in substance, earn. An
+adversarial case is not necessarily malicious; a well-intentioned proposal under schedule pressure to
+justify its own existence produces the same pattern as a deliberately gamed one, and the ontology must
+be equally resistant to both.
+
+14.2 NAMING-ONLY NOVELTY AT THE SYSTEM LEVEL. Article I already names naming-only novelty as grounds for
+REJECT at the dataset level; this case is its finer-grained twin, occurring inside an otherwise-legitimate
+system. A capability renames a first-order function in ensemble-sounding language — "cross-system
+insight orchestration" describing what is, on inspection, a single system's internal retry logic — without
+its direct object actually recursing onto another capability. Detection: apply the second-order test
+(Part VII §7.2) literally, ignoring the capability's own name and documentation, and ask only what object
+the capability's output changes. If the answer is a resource-level object despite ensemble-level prose,
+the case fails, regardless of how the proposal describes itself. This is the single most common adversarial
+pattern this Part anticipates, precisely because ensemble-level status confers legitimacy within this
+family, creating a direct incentive to claim it.
+
+14.3 SIZE INFLATION: counting components as systems to inflate ensemble metrics. A proposal, or an audit
+under pressure to show a large, impressive ensemble, counts subsystems and even components (Part II §2.3)
+as independent systems, inflating the ensemble's apparent size, its apparent biodiversity (Part XV), and
+the apparent reach of whatever second-order capability claims to govern "all N systems." The MACRO_AUDIT
+precedent already OBSERVED this exact pattern under the name clone-family metric inflation (Part II
+§2.1), and this Part generalizes the specific historical incident into a standing adversarial category:
+any count of "systems" in the ensemble must be reproducible by re-running the four-test systemhood check
+(Part II §2.1) against each counted item, and a count that cannot be so reproduced is inflated by
+definition, whatever total it claims.
+
+14.4 IMPERIAL BOUNDARY CREEP: authority claimed past the ensemble's edge. Named already at Part V's
+Invariant Four and Part III §3.4, this case deserves adversarial treatment because it rarely arrives as
+an explicit claim — no proposal states "I claim authority over the host machine." It arrives as scope
+creep: an observability system that starts by observing estate systems and gradually begins reporting on
+host-level metrics because they were "easy to include"; an immune system that starts by fingerprinting
+estate failures and gradually begins proposing changes to provider-level configuration because the
+failure originated there. Detection is the boundary test of Part III §3.4 applied at every scope
+expansion, not only at initial design: does the new object of governance belong to the estate, or does
+it belong to something the estate merely interacts with? A creeping boundary violation is corrected the
+same way a designed one is — by scoping the claim back to what the estate actually has authority over —
+but it is harder to catch because no single change looks like an overreach; the overreach is cumulative.
+
+14.5 EVIDENCE LAUNDERING: claiming OBSERVED status via a chain that terminates in a HYPOTHESIZED premise.
+Part XII required every DERIVED fact to carry a chain back to DEFINED or OBSERVED premises; the
+adversarial version of this requirement being violated is subtle — a fact's immediate provenance record
+looks correct (it cites a chain), but the chain, followed to its root, terminates in a HYPOTHESIZED claim
+that was never itself upgraded, meaning several layers of DERIVED reasoning have quietly manufactured the
+appearance of OBSERVED confidence out of an unverified starting assumption. This is "laundering" in the
+precise sense that each individual step in the chain looks locally valid; only tracing the full chain to
+its root reveals the fabricated confidence. Prevention: any evaluation of a fact's evidence level (Part
+XVI) must trace to the root premise, never stop at the first cited source, because a citation is not the
+same as verification.
+
+14.6 STALE-DUPLICATE MASKING: keeping two systems un-merged by continuously relabeling one as
+"experimental." A duplicates relation (Part VI §6.5) is supposed to be temporary and force resolution;
+the adversarial evasion is to keep one of the two duplicating systems perpetually in an UNDER-REVISION or
+early-lifecycle state (Part XI §11.2) so that its distinct-object test is never definitively run against
+the other, indefinitely deferring the D2A disposition Invariant Two requires. This case matters because
+it exploits the lifecycle's own leniency — UNDER-REVISION exists to give a genuinely changing system room
+to stabilize, and the adversarial pattern abuses that room as a permanent hiding place. Detection: a
+system that has remained in a non-ACTIVE lifecycle state for longer than any comparable system's typical
+transition time, with a duplicates relation outstanding against it the entire period, is presumptively a
+masking case and should be forced to a CONTESTED resolution rather than left in perpetual limbo.
+
+14.7 The general countermeasure: literal application over stated intent. Every adversarial case above
+shares one structural weakness the ontology exploits in its defense: each depends on a reader accepting
+the proposal's own framing rather than mechanically applying the tests this dataset defines. F1's
+adversarial posture, therefore, is not a list of new rules beyond Parts II through XIII — it is a
+standing instruction that every test in this ontology (distinct-object, level, second-order, invariant
+compliance, evidence chain, lifecycle state) is applied to what a capability actually does, traced to its
+root, never to what its documentation, name, or self-report claims it does. (NORMATIVE.)
+
+14.8 A combined adversarial case: naming-only novelty layered under stale-duplicate masking. The six cases
+above are presented individually for clarity, but the hardest real cases to catch combine two or more. A
+synthetic composite, illustrative only: a proposal is drafted describing itself as "ensemble-wide
+capability-gap orchestration," a name suggesting second-order status. Applying the literal test (§14.2), it
+turns out the proposal's direct object is a single resource-level report of missing capabilities in one
+project — a naming-only-novelty failure on its own. Rather than accept this verdict, a revised version of
+the proposal claims a DUPLICATES relation to an existing, genuinely second-order system (invoking Part VI
+§6.5) and argues it should be treated as "experimental variant, pending merge" rather than independently
+re-evaluated — invoking the CONTESTED lifecycle state's leniency (§14.6) to avoid a clean rejection under
+§14.2. This composite is dangerous specifically because each individual move, examined alone, has a
+legitimate use elsewhere in the ontology: claiming a duplicates relation is normal and expected behavior
+when two systems genuinely overlap, and CONTESTED is a legitimate, non-embarrassing lifecycle state. The
+composite exploits the LEGITIMACY of each individual mechanism to delay the one test (§14.2) that would
+resolve the matter cleanly. Detection requires applying the second-order test FIRST, before accepting any
+claimed duplicates relation at face value, because a proposal that fails the second-order test outright
+has no legitimate claim to be "merged" with a second-order system at all — merger presupposes both
+candidates are systems of a comparable kind, and a first-order proposal claiming kinship with a second-
+order system is not requesting a merger, it is requesting an unearned promotion by association.
+
+14.9 The adversarial catalogue's own limit: cases this Part does not yet anticipate. Consistent with Part
+XIII §13.7's standing commitment to treat every downstream friction as evidence rather than someone else's
+problem, this Part does not claim its six named cases (plus the composite of §14.8) exhaust the space of
+possible gaming strategies against this ontology. New adversarial patterns should be expected to emerge
+specifically in response to whichever enforcement mechanism a later mission eventually builds against
+these tests (Decision D4), because an enforced test attracts adversarial pressure an unenforced one does
+not; a proposal has little incentive to game a test that carries no consequence. F1 marks this explicitly,
+UNRESOLVED, as the honest limit of a red-team catalogue authored before any real enforcement exists to
+provoke real adversarial behavior against it, and commits this limit to Part XVII's trigger conditions
+(§17.5) as a standing, open channel for new adversarial cases to be added additively as they are observed.
+
+FINAL LAW — PART XIV. Every adversarial case in this Part is the same move wearing different clothes —
+claiming a status the ontology confers without doing the work the status requires — and the only durable
+defense is applying every test literally, to the traced mechanism, never to the proposal's own account of
+itself.
+
+===============================================================================================
+PART XV — METRICS OF ONTOLOGY HEALTH
+===============================================================================================
+
+15.1 Why the ontology needs metrics about itself, distinct from metrics about the ensemble. IAS-E1 will
+measure the health of the ensemble — which systems are used, dead, or dark. This Part measures a
+different, prior question: is the ONTOLOGY that IAS-E1 reasons in good repair? A federation can have a
+healthy-looking ensemble measured through a broken lens and never know it, because the lens is exactly
+what is not being checked. F1 therefore defines a small set of ontology-health metrics, each paired with
+an anti-Goodhart countermetric, because a metric optimized in isolation becomes exactly the failure it
+was meant to detect.
+
+15.2 UNRESOLVED-TERM RATE, countered by DEFINITION-INFLATION RATE. The primary metric the Strengthening
+Matrix itself demands: the count of terms used across the fourteen (and any future) IAS datasets that do
+NOT resolve to a Part II–XII definition, ideally zero. But a naive drive toward zero unresolved terms
+creates a perverse incentive to keep adding ad hoc F1 definitions reactively every time a sibling dataset
+needs a word, which is exactly the over-specification failure of Part XIII §13.3. The countermetric —
+DEFINITION-INFLATION RATE, the count of object classes, properties, or relation types added to F1 per
+sealed sibling dataset — must stay low even as unresolved-term rate stays at zero; a healthy ontology
+resolves new terminology by combining existing primitives (Part II §2.5's minimality principle), not by
+perpetually growing its own vocabulary.
+
+15.3 INVARIANT VIOLATION COUNT, countered by DETECTION LATENCY. The count of Part V invariant violations
+found in the ensemble at any audit point (orphan systems, unresolved duplicates, double final authorities,
+boundary breaches, stale-uncorrected properties) is a direct health signal — but a federation could drive
+this count toward zero simply by auditing rarely or narrowly, making violations undetected rather than
+absent. The countermetric, DETECTION LATENCY — the time between a violation's actual occurrence and its
+discovery — must stay bounded and, ideally, shrink, because a violation count of zero achieved by not
+looking is worse than a nonzero count caught quickly; the two metrics together distinguish a genuinely
+healthy ensemble from a merely unaudited one.
+
+15.4 BIODIVERSITY, countered by COORDINATION OVERHEAD. Biodiversity, informally introduced in Part III
+§3.2 and formalized here, is the count of structurally distinct feeds-and-strengthens patterns (Part VI)
+present in the relation graph — a rough measure of how many genuinely different ways systems combine to
+produce value, as opposed to one dominant pattern repeated across many pairs. High biodiversity signals a
+federation not monocultured around a single architecture, resilient to a single pattern's failure; but
+biodiversity pursued for its own sake produces unnecessary relation-graph complexity that costs every
+system more to reason about its neighbors. COORDINATION OVERHEAD — the average number of relation-graph
+hops a routing decision (IAS-A1) must traverse to find a serving system — is the countermetric: it must
+stay low even as biodiversity is protected, and a version of the ensemble with maximal biodiversity but
+unusable coordination overhead has optimized the wrong side of the trade-off.
+
+15.5 SECOND-ORDER RATIO, countered by FIRST-ORDER STARVATION. The proportion of the ensemble's newly
+admitted systems (Part XI §11.2, ADMITTED state) that pass the second-order test (Part VII §7.2) is a
+signal of whether the estate is compounding its own capability (second-order growth) versus simply adding
+more first-order point solutions. A healthy federation should show this ratio rising over time as the
+estate matures, consistent with the Compounding Graph's thesis that the estate "gets better at getting
+better." But a ratio pursued in isolation risks FIRST-ORDER STARVATION: an estate that stops building any
+new resource-level capability because only second-order proposals are rewarded, even when a genuine new
+resource-level need (a new session-cost concern, a new pane-coordination concern) has arisen and has no
+second-order angle to legitimately claim. The countermetric tracks first-order admissions directly, and a
+second-order ratio approaching 100% while a known first-order gap sits unaddressed is evidence the ratio
+is being gamed, not evidence of health.
+
+15.6 PROVENANCE COVERAGE, countered by RECONCILIATION COST. The proportion of ensemble facts (properties,
+relations, authority grants) carrying a full provenance chain (Part XII) to a DEFINED or OBSERVED root, as
+opposed to terminating in HYPOTHESIZED or UNRESOLVED, measures how much of the ensemble's self-knowledge
+is actually evidenced. Driving this toward 100% by fiat — simply relabeling HYPOTHESIZED facts as OBSERVED
+without genuine reconciliation — is evidence laundering (Part XIV §14.5) in metric form; the countermetric,
+RECONCILIATION COST (the actual token/time/mission cost of performing the reconciliation that upgraded a
+fact's evidence level), must be nonzero and roughly proportionate to the number of upgrades claimed in a
+period, so that a suspiciously cheap wave of evidence upgrades is itself a signal to audit rather than to
+celebrate.
+
+15.7 The composite reading, and its own limit. No single metric in this Part is meant to be read alone;
+each is paired specifically because isolated optimization of any one metric produces a specific, named
+failure this Part has already anticipated. Read together, the six metrics (three health signals, three
+countermetrics) give a genuine — though EXPERIMENTAL, since no version of this ontology has yet
+accumulated enough sealed sibling history to validate the pairs empirically — picture of whether the
+federation's shared vocabulary is doing its job. F1 commits, under Part XVII, to revisiting every metric
+pair once a larger population of sibling datasets and ensemble audits exists to test them against.
+
+15.8 Worked example: reading all three metric pairs against one synthetic ensemble snapshot. To show the
+pairs operating together rather than in isolation, consider a synthetic snapshot, illustrative only. The
+snapshot shows: unresolved-term rate at zero across all sealed siblings (good), with definition-inflation
+rate at three new terms added in the same period across five sealings (elevated relative to the one-per-
+five ratio a healthy ontology should show per §15.2, worth investigating before the sixth sibling adds a
+fourth). Invariant violation count at four (two orphan systems, one unresolved duplicate, one stale
+property), with detection latency averaging eleven days from occurrence to discovery — a nonzero,
+honestly-caught count read together with a bounded latency is, per §15.3, a HEALTHIER signal than a zero
+violation count would be on an estate this size, precisely because the latency figure shows the sweep is
+actually looking. Biodiversity shows six structurally distinct feeds-and-strengthens patterns, with
+coordination overhead averaging 2.3 relation-graph hops per routing decision — both within the ranges
+§15.4 would read as healthy, neither dominating the other. Second-order ratio among newly admitted systems
+this period stands at 40%, with zero first-order gaps sitting unaddressed on the backlog per the
+countermetric of §15.5 — a ratio that would look concerning read alone (most new admissions are still
+first-order) but reads as healthy once the countermetric confirms no known first-order need is being
+starved to chase the ratio. Provenance coverage sits at 78% of facts carrying a full chain to a DEFINED or
+OBSERVED root, with reconciliation cost this period proportionate to the number of upgrades claimed (per
+§15.6, no suspicious cheap wave) — a real, non-total coverage figure that is more trustworthy than a
+higher figure achieved without matching reconciliation cost would be. Read individually, several of these
+six numbers would each, alone, prompt either false alarm or false confidence; read as three pairs, the
+snapshot supports a specific, qualified verdict: broadly healthy, with one flagged concern (definition-
+inflation rate) worth a targeted follow-up rather than a global alarm.
+
+FINAL LAW — PART XV. A metric measured without its paired countermetric is not a health signal; it is an
+invitation to game the number instead of the health, and this ontology names six metrics precisely so
+that none of them can be optimized alone.
+
+===============================================================================================
+PART XVI — EVALUATION: HOW TO TEST THE ONTOLOGY
+===============================================================================================
+
+16.1 What "testing an ontology" means, precisely. Unlike a mechanism, an ontology has no runtime behavior
+to execute against test cases in the conventional sense; it has definitions, tests (the mechanical checks
+of Parts II, VII, VIII), and invariants (Part V). "Evaluating" F1 means running its own tests against real
+and synthetic cases and checking whether the verdicts match what an informed reader of the estate would,
+independently, judge to be correct — a form of validity testing closer to inter-rater reliability than to
+unit testing, and this Part specifies the protocol.
+
+16.2 Protocol One — the resolution-without-friction test. For every sealed sibling IAS dataset (Parts
+XVIII of this dataset names all thirteen), verify that the dataset's own text resolves every ensemble-
+level object it references against an F1 definition, with zero terms left informally defined in the
+sibling's own words. This is the literal evidence requirement the Strengthening Matrix assigns to F1's
+row, and it is EXPERIMENTAL in the strict sense: it carries its own test (grep the sibling dataset's text
+against F1's defined-term list; any ensemble-level noun not found is a failure) and is falsifiable by a
+single counterexample.
+
+16.3 Protocol Two — the historical retrodiction test. Apply the systemhood test (Part II §2.1), the level
+test (Part VIII §8.2), and the second-order test (Part VII §7.2) to a sample of the estate's already-
+existing modules, chosen before knowing the answer, and check whether the verdicts match the estate's own
+prior informal classification (module vs. subsystem vs. helper) as recorded in existing indices. Agreement
+is evidence the tests carve real joints in the estate rather than joints invented for this corpus;
+disagreement is not automatically a failure of the ontology — the estate's prior informal classification
+could itself be wrong, exactly the size-inflation pattern Part XIV §14.3 anticipates — but any
+disagreement must be individually adjudicated and recorded, never silently discarded as noise.
+
+16.4 Protocol Three — the adversarial red-team test. Construct, deliberately, a small set of proposals
+engineered to pass one of Part XIV's adversarial cases (a naming-only-novelty proposal dressed in
+ensemble language, a size-inflated system count, an evidence-laundered chain) and verify that the literal
+application of the relevant test (per Part XIV §14.7) correctly rejects each. A red-team case the ontology
+fails to catch is not a footnote; it is a defect in this dataset requiring a version update under Part
+XVII, because an adversarial case named in text but not actually caught by the literal test is a promise
+the ontology does not keep.
+
+16.5 Protocol Four — the invariant sweep dry run. Without building the enforcement mechanism this dataset
+explicitly declines to build (Article VIII), manually walk a snapshot of the estate's known systems and
+relations against Part V's five invariants and record what a real sweep would find: orphan systems,
+unresolved duplicates, dual final authorities, boundary breaches, stale-uncorrected properties. This dry
+run does not need to find zero violations to count as a successful evaluation — Article XI already
+distinguishes CONTENT_COMPLETE from SEALED, and a dry run that finds real, nameable violations is doing
+its job; a dry run engineered to find nothing, on a federation this large and this newly ontologized, is
+the more suspicious outcome, because it more likely reflects an under-powered sweep than a genuinely
+violation-free estate.
+
+16.6 What passes, what fails, and what remains open. F1 is judged to have passed its evaluation protocol
+if: every sealed sibling resolves with zero undefined terms (Protocol One); the retrodiction test's
+disagreements are individually explainable rather than systematic (Protocol Two); every constructed
+adversarial case is caught (Protocol Three); and the invariant dry run produces a nameable, non-empty,
+plausible violation list rather than an implausibly clean one (Protocol Four). F1 does not claim, at the
+time of this writing, to have executed all four protocols against the full estate — that execution is
+itself downstream operational work belonging to whichever mechanism eventually reads this ontology into
+a sweep or router — and this Part is EXPERIMENTAL: it specifies the test, not yet the result. Marking the
+result UNRESOLVED here, rather than fabricating a passing score, is itself the evaluation protocol's
+first honest application.
+
+16.7 Illustrative excerpt: what a Protocol Four dry run would record. To make the dry-run protocol
+concrete rather than purely procedural, consider the shape a real excerpt would take, using synthetic
+findings only, since no live sweep has been run against the estate as of this dataset's sealing. A dry
+run entry for Invariant One might read: "System M-0088 (a small, recently admitted knowledge-formatting
+capability) shows zero inbound and zero outbound edges in the relation graph as of the audit timestamp —
+candidate orphan, pending confirmation that its single expected consumer has simply not yet executed a
+mission that would create the edge, versus genuine disuse." A dry run entry for Invariant Three might
+read: "Decision class 'which coordinate format ships to a new knowledge node' shows two grants, one to
+System N (final, granted eleven months ago) and one to System O (final, granted two months ago, likely a
+newer proposal that did not check for an existing grant) — a genuine Invariant Three violation requiring
+IAS-A2 arbitration." Each entry in a real dry run would carry its own provenance (per Part XII) — how the
+finding was produced, from what snapshot, at what timestamp — because a dry-run finding is itself a fact
+about the ensemble and inherits the same evidence discipline as every other fact this ontology governs;
+an unattributed dry-run finding would be exactly as untrustworthy as an unattributed cost figure.
+
+16.8 The relationship between the four protocols and the epistemic markers used throughout this dataset.
+Each protocol is designed to interrogate a different epistemic claim this dataset makes about itself.
+Protocol One tests whether F1's DEFINED terms are actually usable by independent authors (a claim about
+DEFINED status holding up under real application). Protocol Two tests whether F1's tests, applied to
+OBSERVED estate history, produce DERIVED verdicts that agree with prior informal judgment (a claim about
+DERIVED reasoning tracking reality). Protocol Three tests whether F1's NORMATIVE adversarial defenses
+(Part XIV) actually catch what they claim to catch (a claim about a NORMATIVE rule having real teeth).
+Protocol Four tests whether F1's invariants, as HYPOTHESIZED conditions for ensemble health until checked
+against a real snapshot, survive contact with actual data. Read this way, the four protocols are not an
+arbitrary checklist; they are the specific verification each of F1's four dominant epistemic-marker
+categories requires before the marker is more than a label, and a future audit of this dataset's own
+epistemic honesty (Part XIII §13.7) should check that every DEFINED, DERIVED, NORMATIVE, and HYPOTHESIZED
+claim in F1 maps to at least one of these four protocols rather than floating unverifiable.
+
+16.9 A metric for evaluation-protocol health, and its anti-Goodhart countermetric. A tempting summary
+metric for this Part's own protocols is PROTOCOLS EXECUTED — a raw count of how many of the four protocols
+have been run against how much of the estate. That metric is DEFECTIVE as a sole measure of evaluation
+health, because it rewards running a protocol cheaply and often over running it against a genuinely hard
+case: a Protocol Three red-team exercise that constructs one trivial naming-only-novelty proposal and
+confirms it is rejected inflates the same "protocols executed" count as one that constructs a subtle
+evidence-laundered chain (Part XIV §14.6) crafted specifically to probe the test's blind spots, and an
+evaluator optimizing the raw count will, predictably, prefer the cheap case — the exact Goodhart failure the
+ontology's own epistemic-honesty discipline (Article V) exists to catch elsewhere. The countermetric F1
+specifies is PROTOCOL-FOUND VIOLATION RATE relative to a red-team difficulty floor: a Protocol Four dry run
+(§16.5) is credited only if it discloses at least one nameable, non-trivial violation candidate (per the
+illustrative excerpt of §16.7), and a Protocol Three red-team case is credited only if it was constructed to
+actually resemble a real adversarial pattern from Part XIV rather than a straw case built to be caught.
+(NORMATIVE: an evaluation regime that counts protocol RUNS is measuring effort; one that counts protocol
+FINDINGS against a difficulty floor is measuring whether the ontology's tests still have teeth, and only the
+second is fit to answer the question Part XVII's versioning discipline actually needs — whether F1 requires
+revision — because a version-worthy defect is discovered by a hard case, never by a cheap one.)
+
+FINAL LAW — PART XVI. An ontology is evaluated the same way any claim in this corpus is evaluated — by
+a protocol that could, in principle, fail it — and a foundation dataset that specifies its own tests
+without yet claiming to have passed them is more trustworthy than one that claims victory it has not run.
+
+===============================================================================================
+PART XVII — ONTOLOGY EVOLUTION AND VERSIONING
+===============================================================================================
+
+17.1 Why a foundation must be able to change without breaking what depends on it. Article IX forbids
+uncontrolled self-modification of the estate; this Part specifies how F1 itself — the dataset every other
+IAS dataset depends on absolutely — is allowed to evolve without violating that same discipline against
+itself. A foundation that can never change ossifies against Part XIII's own predicted failure modes
+(under- and over-specification are discovered only after sealing); a foundation that changes carelessly
+breaks every sibling's resolved-term guarantee (Part XVI, Protocol One) retroactively. F1 resolves the
+tension with explicit VERSIONING.
+
+17.2 The version boundary: additive versus revisory changes. An ADDITIVE change introduces a new object
+class, property, relation type, or invariant without altering the meaning of any existing one — for
+example, adding a seventh relation type to Part VI's six if a genuine new relation pattern is observed
+across enough sibling datasets to justify it (subject to Part XV §15.2's definition-inflation
+countermetric). A REVISORY change alters the meaning, test, or boundary of an existing definition — for
+example, narrowing or widening the second-order test of Part VII. Additive changes are backward-
+compatible by construction: no sibling dataset's prior resolution becomes wrong. Revisory changes are
+NOT backward-compatible by default and require the migration protocol of §17.3.
+
+17.3 The migration protocol for revisory changes. A revisory change to F1 must, before being adopted:
+(a) name every sealed sibling dataset whose resolved terms depend on the changed definition; (b)
+re-run Protocol One (Part XVI §16.2) against each named sibling under the proposed new definition; (c)
+record, for each sibling, whether its resolution still holds, breaks cleanly (the sibling's own object
+was mis-resolved and the fix is local to the sibling), or requires the sibling's own content to change
+materially. Only after this accounting is complete may the revisory change be adopted, and it is adopted
+with a new version number, never as a silent edit to the existing text — a revisory change that
+overwrites F1's prior wording without a version marker is, under this Part's own rule, itself a violation
+of the provenance discipline (Part XII) applied to the ontology's own history.
+
+17.4 Version identity and the ontology's own address. Consistent with Part IX's addressing model applied
+reflexively to F1 itself: F1 carries a stable ID for the DATASET (its position in the estate's registries)
+distinct from a VERSION NUMBER for the ontology's current content, exactly mirroring the system-address
+triple of stable-ID / capability-signature / locator. A sibling dataset resolving a term against "F1"
+should, under a mature versioning regime, resolve against a specific version, so that a later revisory
+change to F1 cannot silently invalidate a sibling sealed against an earlier version without the migration
+protocol of §17.3 having been run.
+
+17.5 The trigger conditions for considering a version change. F1 does not evolve on a calendar; it evolves
+when one of four conditions is met, each traceable to a specific mechanism defined earlier in this
+dataset: an UNRESOLVED-TERM RATE (Part XV §15.2) above zero that persists across more than one sibling
+dataset, suggesting a genuine gap rather than a one-off; a red-team case (Part XVI, Protocol Three) the
+current tests fail to catch; a Protocol Two retrodiction disagreement that turns out to be systematic
+rather than an isolated estate anomaly; or an explicit Owner directive to extend the ontology for a new
+class of system the estate has begun building that the current four primitives (Part II §2.5) cannot
+honestly describe.
+
+17.6 What versioning does NOT permit. Versioning is not a license to loosen a test that an adversarial
+case (Part XIV) has correctly caught, merely because the tightened test is inconvenient for a proposal
+that wants to pass it; a revisory change motivated by "this definition is blocking my proposal" rather
+than by a genuine gap or error in the ontology is, itself, an instance of the naming-only-novelty pattern
+one level up — gaming the ontology's own evolution process rather than gaming an individual test. Every
+proposed revisory change must state, explicitly, which of the four §17.5 trigger conditions it satisfies,
+and a proposed change that satisfies none of them is not a version update; it is special pleading, and
+this Part instructs it be rejected on that basis alone regardless of the technical merit of the specific
+wording proposed.
+
+17.7 Worked example: a hypothetical additive version walked through the protocol end to end. To make the
+versioning process concrete, trace a plausible future additive change from trigger to adoption. Suppose,
+after five sealed sibling datasets have each independently needed to describe a relationship where one
+system's RETIREMENT frees capacity that a second, unrelated system then consumes — a pattern none of the
+six existing relation types (Part VI) cleanly names — the unresolved-term rate (§17.5's first trigger
+condition) crosses zero on the same missing concept twice, satisfying the persistence bar. A proposal is
+drafted: add a seventh relation type, SUCCEEDS-INTO-CAPACITY, distinct from the existing SUCCEEDS lifecycle
+edge (Part IX §9.3, which tracks identity continuity) because this new relation tracks resource
+reallocation rather than identity. Classification per §17.2: this is ADDITIVE — it introduces a new
+relation type without altering the meaning of feeds, depends-on, competes-with, duplicates, strengthens,
+or consumes, and no sibling's prior resolution becomes wrong by its introduction. Because it is additive,
+the full migration protocol of §17.3 is not required, but F1's authors still, as a matter of the discipline
+this dataset holds itself to throughout, check the definition-inflation countermetric (Part XV §15.2)
+before adopting it: is this the first new relation type since sealing, or the fifth? A first addition after
+demonstrated, repeated need across independent siblings passes the countermetric; a rapid, unexamined
+sequence of additions would not, regardless of how well-motivated the seventh addition alone appears. The
+change is adopted as version 1.1, with the addition recorded in the version ledger (§17.4) and the six
+existing relation types in Part VI left textually untouched — an ADDITIVE change, correctly executed,
+changes what is possible to say, never what was already said.
+
+17.8 Why revisory changes are rare by design, and what that implies for the ontology's expected shape over
+time. Because the vast majority of anticipated evolution — new relation types, new metrics, new lifecycle
+sub-states for a pattern not yet observed — falls into the additive category, and because revisory changes
+carry the full migration burden of §17.3 specifically to make them costly relative to additive ones, F1's
+expected trajectory is a foundation that GROWS by accretion far more often than it CHANGES by revision.
+This is a deliberate asymmetry, not an accident of drafting: a foundation whose core tests (systemhood,
+level, second-order) revise frequently would undermine the very stability the thirteen siblings depend on
+(Part XVIII), while a foundation whose vocabulary grows to name newly-observed patterns is doing exactly
+what Part I §1.5 required of it — extracting the ontology from the systems that exist, including systems
+and patterns that did not yet exist at the moment of original sealing. (NORMATIVE: this asymmetry is the
+intended shape of a mature foundation dataset, and a future audit that finds F1 has undergone many
+revisory changes and few additive ones should treat that pattern itself as a signal worth investigating,
+independent of whether any single revisory change was individually well-justified.)
+
+FINAL LAW — PART XVII. A foundation earns the right to change only through a named trigger and a
+migration accounting of every dependent it might break — never through a silent edit, and never merely
+because the current definition is inconvenient for whoever is proposing the change.
+
+===============================================================================================
+PART XVIII — HOW THE THIRTEEN SIBLING DATASETS CONSUME THIS ONTOLOGY
+===============================================================================================
+
+18.1 The purpose of this closing Part. Parts IV through XVII built the vocabulary; this Part demonstrates,
+concretely, that the vocabulary is load-bearing by tracing, for each of the thirteen sibling IAS datasets
+named in the Non-Duplication Ledger and the Strengthening Matrix, exactly which F1 objects it resolves
+against. This is not a summary of the siblings' own content — F1 does not know their mechanisms in detail,
+and re-narrating them here would violate Article VI's prohibition on re-narrating a parent system instead
+of cross-referencing it — it is an inventory of the DEPENDENCY, which is itself the Protocol One evaluation
+(Part XVI §16.2) partially conducted in advance, at design time rather than audit time.
+
+18.2 IAS-F2 (Advantage Algebra) resolves against: the property model (Part IV) for the numeric fields its
+fusion and advantage formulas operate on, the evidence-level vocabulary (Part XII) for weighting a metric
+by its provenance rather than treating every input as equally certain, and the ensemble-versus-resource
+level test (Part VIII) to ensure its formulas are computing over genuinely ensemble-level quantities
+rather than resource-level ones dressed in aggregate notation.
+
+18.3 IAS-A1 (Capability Router) resolves against: the capability definition and provider-independence
+principle (Part II §2.4) to route by capability rather than by hardcoded system name, the second-order
+test (Part VII) to establish its own routing decision as second-order rather than a glorified dispatch
+table, the CONSUMES relation type (Part VI §6.7) to record its routing traces without inflating the
+standing relation graph, and the authority model (Part X) to establish that its routing decisions are
+advisory unless a decision class explicitly grants it final say.
+
+18.4 IAS-A2 (Control Bus) resolves against: all six relation types of Part VI as the typed edges its
+events travel along, the authority and escalation model (Part X) as the formal object its conflict-
+resolution subengine arbitrates over, and the ensemble boundary (Part III §3.4) to ensure the events it
+carries never smuggle authority claims past the estate's edge.
+
+18.5 IAS-B1 (Cognitive Multiplier) and IAS-B2 (Insight Synthesis) resolve against: the strengthens relation
+(Part VI §6.6) as the precise mechanism a "leverage point" must exploit to count as high-value, the
+second-order test (Part VII) to distinguish a genuine cross-system insight from a first-order finding
+described in ambitious language, and the provenance chain (Part XII) to ensure an insight's claimed
+cross-system origin is traceable to real DERIVED reasoning over ≥2 datasets rather than asserted.
+
+18.6 IAS-C1 (Capability Portfolio) and IAS-C2 (Demand Forecasting) resolve against: the full property
+model (Part IV) as the record their allocation and forecasting math is computed over, the competes-with
+relation (Part VI §6.4) to distinguish healthy diversity from wasteful redundancy in allocation decisions,
+the lifecycle model (Part XI) to treat a PROPOSED or ADMITTED system's forecasted demand differently from
+an ACTIVE system's observed demand, and the metrics-with-countermetrics discipline (Part XV) as the
+template their own portfolio and forecast metrics must follow to avoid being gamed the same way.
+
+18.7 IAS-D1 (System Ecology) resolves against: nearly the whole ontology directly — the relation graph
+(Part VI) as its fitness landscape, the lifecycle model (Part XI, especially the RETIRED/SUCCEEDED
+distinction) as its extinction-versus-succession vocabulary, competes-with and duplicates (Part VI §6.4,
+§6.5) as its parasitism and speciation signals, and biodiversity (Part XV §15.4) as a metric it directly
+consumes and extends.
+
+18.8 IAS-D2 (Immune System) resolves against: the provenance and evidence model (Part XII) to determine
+when a failure fingerprint is trustworthy enough to federate across projects, the ensemble boundary (Part
+III §3.4) to distinguish an estate-internal failure from a host- or provider-level fault outside its
+authority, and the addressing model (Part IX) to ensure a fingerprint attaches to a stable system ID and
+survives the refactors that would otherwise sever the link between a past failure and its current owner.
+
+18.9 IAS-E1 (Observability Fabric) resolves against: the entire property and provenance apparatus (Parts
+IV and XII) as the substrate its dead-capability and dark-matter sweeps read, the systemhood and level
+tests (Parts II, VIII) to avoid the size-inflation adversarial case (Part XIV §14.3) in its own counts,
+and the invariant list (Part V) as the concrete conditions its visibility work exists to surface violations
+of, even without itself being the enforcement mechanism.
+
+18.10 IAS-E2 (Cognitive Reliability) resolves against: the depends-on relation specifically (Part VI §6.3)
+as the criticality signal its failure budgets must weight against, and the lifecycle model's CONTESTED
+state (Part XI §11.4) as a precedent for its own graceful-degradation logic — a system under authority
+dispute and a system under reliability stress share the structural pattern of downgrading to advisory
+rather than halting outright.
+
+18.11 IAS-F3 (Digital Twin) resolves against: the provenance discipline (Part XII) most heavily of any
+sibling, because a simulation is only as honest as the evidence level of what it treats as a known input
+versus a simulated variable (Part XIV §14.5's evidence-laundering case is the exact failure a digital twin
+commits if it ignores this), and the ensemble state model (Part III §3.3) as the object it simulates
+transitions of.
+
+18.12 IAS-G1 (Architecture Intelligence) resolves against: the depends-on subgraph (Part VI §6.3) as its
+topology object, the invariants (Part V) as the conditions its drift detection checks for violation of at
+estate scale, and the addressing model (Part IX) to track a system's topology position stably across the
+very refactors its own recommendations propose.
+
+18.13 The closing observation. Every one of the thirteen siblings resolves against a distinct SUBSET of
+this ontology's objects, never the whole of it identically, which is itself evidence — read against
+Protocol Two's retrodiction logic (Part XVI §16.3) — that F1 defined genuine, separable primitives rather
+than one monolithic concept wearing eighteen Parts of prose: a vocabulary where every consumer needed
+every term would be a sign the terms were not actually distinct, and a vocabulary no consumer needed
+would be a sign the terms were invented rather than extracted. F1's thirteen distinct, partial-but-
+nonzero resolution patterns are the closest thing this foundation dataset has, at sealing time, to
+empirical evidence of its own correctness.
+
+18.14 What F1 deliberately does NOT provide to any sibling, stated as a closing boundary. Having traced
+what each sibling consumes, it is equally important to state what none of them receive from F1, because
+an unstated boundary invites the imperial-boundary-creep pattern (Part XIV §14.4) from the foundation's
+own side. F1 provides no operational mechanism, no scoring formula, no enforcement, no routing logic, and
+no data pipeline to any sibling — every sibling's actual engine, algorithm, and implementation-level
+design is entirely its own, built on top of F1's nouns but never supplied by F1's verbs. IAS-F2's fusion
+formula is F2's own invention, merely expressed in terms F1 defines; IAS-A1's routing algorithm is A1's
+own invention, merely operating over objects F1 addresses; IAS-D1's fitness function is D1's own
+invention, merely computed over the relation graph F1 types. This boundary is the precise operational
+meaning of Article III's "strengthen, never replace" from F1's own side of the relationship: F1 makes
+every sibling's own mechanism possible to state precisely, without ever building any sibling's mechanism
+on its behalf, and a future reviewer who finds F1's text drifting toward specifying HOW a sibling should
+compute its own scores, route its own missions, or arbitrate its own conflicts should read that drift as
+a boundary violation to be corrected, not as helpful elaboration.
+
+18.15 The corpus-level test this Part sets up for the next thirteen sealings. Because F1 is, as OBSERVED
+at the time of this dataset's own authorship, sealed BEFORE most of its thirteen named siblings, the
+resolution inventory in §18.2 through §18.13 is necessarily a FORWARD claim about what those siblings
+WILL need, authored from F1's own anticipation of the family's shape (informed by the Non-Duplication
+Ledger, the Strengthening Matrix, and the Compounding Graph, all read in full before this dataset was
+drafted) rather than a backward confirmation of what they DID resolve against. This is stated honestly,
+per Article V, as a DERIVED-and-partially-HYPOTHESIZED set of claims: DERIVED where the consuming
+mechanism is already named precisely enough in the three governing documents to predict the dependency
+with confidence (as with IAS-A2's reliance on the six relation types, which the ledger's own candidate
+descriptions make explicit), HYPOTHESIZED where the future sibling's own authors may yet find F1's
+vocabulary insufficient in a way this dataset could not anticipate. Each future sibling's own sealing is,
+in this precise sense, simultaneously an act of consuming this ontology and an act of testing it — Protocol
+One (Part XVI §16.2) applied for real, one dataset at a time, and the corpus is not fully validated until
+every one of the thirteen forward claims in this Part has been checked against the sibling's actual sealed
+text rather than against F1's own prediction of it.
+
+FINAL LAW — PART XVIII. A foundation dataset is proven not by its own eighteen Parts of argument but by
+whether thirteen independently-authored siblings can resolve their objects against it without inventing
+a single word of their own — and where they cannot, the gap belongs to F1's next version, not to their
+workaround.
+
+===============================================================================================
+DECISION LOG
+===============================================================================================
+
+D1. DECISION: Fix the primitive object layer at exactly four classes — system, subsystem, engine,
+capability (Part II §2.5) — rather than a larger taxonomy covering, e.g., "process," "artifact," or
+"protocol" as separate primitives. ALTERNATIVES CONSIDERED: (a) a richer eight-to-ten-class taxonomy
+mirroring general software-architecture ontologies; (b) a two-class minimal model (system, capability
+only), folding subsystem and engine into system with a "scope" flag. WHY THIS: four classes are the
+minimum sufficient to phrase every operation the thirteen sibling datasets need (verified in Part XVIII's
+resolution inventory), and the richer taxonomy risked re-narrating objects the estate's existing systems
+already own (a session, a coordinate, a decision), duplicating rather than federating them. TRADE-OFFS:
+the four-class model pushes some real distinctions (e.g., "protocol" versus "engine") into prose within
+a Part rather than into the schema, which costs precision for concepts a future dataset might need
+formalized. REVERSAL CONDITIONS: if two or more sealed siblings independently need to distinguish an
+object this layer currently collapses (Part XV §15.2's unresolved-term rate rising on the same missing
+term twice), the primitive layer is a candidate for an ADDITIVE version change under Part XVII.
+
+D2. DECISION: Define the second-order capability test (Part VII §7.2) as a single mechanical question —
+"what does the capability's output directly change?" — rather than a multi-factor scoring rubric.
+ALTERNATIVES CONSIDERED: (a) a weighted rubric scoring "meta-ness" across several dimensions (recursion
+depth, breadth of systems touched, self-reference); (b) a purely case-law approach, deciding second-order
+status dataset-by-dataset with no general test at all. WHY THIS: a single mechanical test is falsifiable
+and resistant to the naming-only-novelty adversarial case (Part XIV §14.2) in a way a weighted rubric is
+not — a rubric can be gamed by maximizing the scored dimensions without actually crossing the level
+boundary, exactly the failure Part VIII §8.6 anticipates. TRADE-OFFS: a binary mechanical test cannot
+express partial or emergent second-order status, and the limit case of F1 itself (Part VII §7.6) shows
+the test has a genuine boundary where it must be left CONTESTED rather than resolved. REVERSAL CONDITIONS:
+if Protocol Three's red-team evaluation (Part XVI §16.4) finds cases the mechanical test misclassifies
+systematically, not just at acknowledged limit cases, the test is a revisory-change candidate under §17.5.
+
+D3. DECISION: Require per-fact provenance and evidence marking (Part XII §12.2) rather than per-record
+marking. ALTERNATIVES CONSIDERED: (a) one evidence level per system record, set to the lowest-confidence
+field it contains, a conservative blended approach; (b) no formal evidence marking at all, relying on
+each consuming dataset's own judgment of a record's trustworthiness. WHY THIS: per-fact marking is the
+only granularity that lets IAS-C1 trust a system's OBSERVED cost while treating its HYPOTHESIZED reuse
+horizon as a separate, lower-confidence bet in the same allocation decision — a blended per-record level
+would either overstate the record's weakest field or understate its strongest, and no formal marking at
+all would re-fragment the estate's evidence discipline exactly the way Part I §1.5 warns against.
+TRADE-OFFS: per-fact provenance is materially more bookkeeping than per-record, and Part XII §12.6
+already names the risk that this bookkeeping itself becomes stale or is skipped under schedule pressure.
+REVERSAL CONDITIONS: none anticipated — this decision is treated as close to load-bearing as any in the
+dataset, because reversing it would silently re-open the evidence-laundering adversarial case (Part XIV
+§14.5) at the record level instead of the chain level.
+
+D4. DECISION: Build no enforcement mechanism for the five invariants (Part V) or the metrics (Part XV)
+within this dataset, per Article VIII, and state the boundary explicitly (Part XIII §13.6) rather than
+implying enforcement the dataset does not perform. ALTERNATIVES CONSIDERED: (a) specify a sweep mechanism
+in enough operational detail that it reads as a de facto implementation; (b) omit any mention of
+enforcement at all, leaving the invariants purely descriptive. WHY THIS: Article VIII forbids production
+code and implementation-level specification this mission; a dataset that specified a sweep in operational
+detail would violate the letter of Article VIII while pretending to honor its spirit, and a dataset that
+omitted enforcement entirely would leave Part V's invariants unenforceable even in principle, undermining
+their normative force. TRADE-OFFS: the explicit boundary means F1, on its own, cannot claim any invariant
+is actually being checked anywhere in the live estate — that gap is real and is named, not hidden.
+REVERSAL CONDITIONS: when a later mission is authorized to build implementation (post Article VIII's
+"this mission"), the invariant-sweep specification in Part XVI §16.5 is the direct handoff artifact.
+
+D5. DECISION: Resolve F1's own second-order classification as CONTESTED (Part VII §7.6) rather than
+forcing a DEFINED answer. ALTERNATIVES CONSIDERED: (a) declare F1 a zero-order, pre-capability foundation
+outside the first/second distinction entirely; (b) declare F1 a degenerate second-order capability by
+fiat, satisfying the family's admission test cleanly. WHY THIS: forcing either answer would misrepresent
+the actual state of the reasoning — F1's object genuinely does not cleanly fit either category under the
+mechanical test of §7.2, and Article V requires an honest UNRESOLVED/CONTESTED marking over a convenient
+DEFINED one whenever the evidence does not settle the question. TRADE-OFFS: leaving F1's own
+classification open is a mild rhetorical weakness in a foundation dataset that otherwise argues for
+precision everywhere else; a reader could reasonably ask "why is the most important classification in
+the document the one left unresolved." REVERSAL CONDITIONS: resolved only if a future epistemics-ladder
+review (referenced in Part VII §7.6) produces a principled answer, not by editorial convenience.
+
+D6. DECISION: Adopt the additive-versus-revisory version boundary (Part XVII §17.2) rather than a single
+undifferentiated versioning scheme. ALTERNATIVES CONSIDERED: (a) treat every change to F1 as requiring
+the full migration protocol, regardless of whether it is additive; (b) treat all changes as low-cost and
+permit silent edits with only a changelog note. WHY THIS: the additive/revisory split is the only scheme
+that lets the ontology grow (Part XV's expected additive evolution as sibling count increases) without
+imposing full-migration overhead on every trivial addition, while still protecting siblings from breaking
+silently on the changes that actually threaten their resolved terms. TRADE-OFFS: the split requires a
+correct classification of every proposed change as additive or revisory, and a misclassified revisory
+change dressed as additive is itself a new, subtle failure mode this dataset has not separately catalogued
+beyond the general caution of Part XVII §17.6. REVERSAL CONDITIONS: if misclassification recurs, Part
+XVII's own criteria for the additive/revisory boundary become a revisory-change candidate.
+
+===============================================================================================
+GAP META-ANALYSIS
+===============================================================================================
+
+GAP CLOSED. Before this dataset, the estate had seventy-plus systems and eighteen dataset domains each
+defining its own local vocabulary for its own resource, and no artifact defined the object all of them
+compose together — the gap named precisely in Part I §1.1. That gap was not a missing feature of any one
+system; it was the absence of a shared reference frame, which is why no single existing system could have
+closed it by extending itself (Article II's ensemble-object boundary makes this structurally true, not
+merely a design preference). F1 closes the gap by supplying: a bounded primitive object layer (system,
+subsystem, engine, capability), a property model, five invariants, a typed relation graph, the second-
+order capability test that operationalizes Article I's supreme law, formal resource/ensemble level tests,
+an addressing model, an authority model, a lifecycle model, a provenance model, and self-directed failure,
+adversarial, metric, evaluation, and versioning disciplines — eighteen Parts constituting the first
+complete, checkable answer to "what is the ensemble, and what may be truly said of it."
+
+SYSTEMS STRENGTHENED. Per the Strengthening Matrix's own row for IAS-F1, the claimed beneficiary is ALL
+existing and future PP systems, on the specific mechanism that each gains one shared name for "system /
+ensemble / second-order capability" rather than inventing its own. This dataset provides the checkable
+evidence the matrix requires — every other IAS dataset resolves its objects against F1 with zero
+undefined terms — through Part XVIII's explicit, per-sibling resolution inventory, which is itself the
+design-time execution of Part XVI's Protocol One. The strengthening is real but narrow in mechanism: F1
+adds no new capability to any existing system; it makes every existing system's own claims about itself
+comparable to every other system's claims, which is a precondition for capital allocation (IAS-C1),
+observability (IAS-E1), and every other second-order mechanism the family will build, without F1 having
+built any of them itself.
+
+DUPLICATIONS AVOIDED. F1's own text repeatedly declines to redefine objects the estate's existing systems
+already own — a session (CO's object), a pane (PM's object), a coordinate (GK's object), a decision
+(DRK's object), a duplication (D2A's object) — a discipline stated explicitly in Part II §2.5 and again
+in Part III §3.4's boundary discussion. This is not incidental restraint; it is the direct application of
+Article II, and the dataset's own Part XVIII resolution inventory demonstrates the avoidance empirically:
+no sibling dataset needed F1 to redefine a resource-level object, only to define the ensemble-level
+objects layered above them.
+
+NEW CAPABILITIES ENABLED (specification-level, per Article VIII). The ontology enables, as future
+implementation candidates rather than as anything built here: a system registry conforming to the
+addressing model (Part IX); a property-record store conforming to the property and provenance models
+(Parts IV, XII); an invariant sweep conforming to Part V and specified operationally in Part XVI's
+Protocol Four; and a versioning process for the ontology itself (Part XVII). None of these are built in
+this dataset — Article VIII forbids it — but each is now specifiable precisely because the objects they
+would operate over are now defined.
+
+OPEN RISKS. Three risks are carried forward honestly rather than resolved by assertion. First, the
+premature-formalization risk named in Part XIII §13.5: the second-order test was derived from a small,
+non-independent sample (the fourteen founding IAS datasets), and its precision at scale is EXPERIMENTAL
+until tested against a larger, more diverse population per Part XVI's evaluation protocol. Second, the
+enforcement gap named in Part XIII §13.6 and Decision D4: every invariant and metric in this dataset is
+specified but not, as of this sealing, checked anywhere in the live estate, so the ontology's practical
+protective value is currently zero until a later mission builds the sweep. Third, the four protocols of
+Part XVI have been specified but not, as of this writing, executed against the full estate — F1's own
+correctness is therefore an EXPERIMENTAL claim carrying its test, not yet a validated one, and this gap
+meta-analysis states that plainly rather than rounding it up to SEALED.
+
+===============================================================================================
+ANTI-PATTERNS
+===============================================================================================
+
+ANTI-PATTERN 1 — TREATING THE PRIMITIVE LAYER AS EXHAUSTIVE FOR EVERY DOMAIN'S OWN VOCABULARY. The most
+likely implementation error, once a later mission builds against this ontology, is a sibling system
+trying to force every one of its own domain concepts through F1's four primitives and six relation types,
+producing awkward, over-general prose where a domain-specific term would have been clearer, because the
+author mistakenly believes F1 requires every noun to be an F1 noun. PREVENTION: F1 requires only that
+ENSEMBLE-LEVEL objects resolve against its definitions (Part XVIII's inventory shows each sibling uses a
+SUBSET, not the whole); a sibling's own resource-level or domain-internal vocabulary is exempt by
+construction (Part VIII's level test), and any implementer who finds themselves stretching an F1 term to
+cover a resource-level concept has misapplied the boundary, not discovered a gap in F1.
+
+ANTI-PATTERN 2 — SKIPPING THE PROVENANCE CHAIN AND MARKING FACTS OBSERVED BY DEFAULT. Under schedule
+pressure, the second most likely error is treating provenance and evidence-level marking (Part XII) as
+optional bookkeeping to be filled in later, defaulting new facts to OBSERVED for convenience rather than
+UNRESOLVED for honesty — the exact failure Part IV §4.6 and Part XII §12.5 both warn against from
+different angles. This is dangerous specifically because it is invisible at the moment it happens; the
+record looks complete and confident, and the gap only surfaces when a downstream decision (an allocation,
+a simulation) is built on a fact that was never actually checked. PREVENTION: treat UNRESOLVED as the
+default state for any newly introduced fact, and require an explicit reconciliation event (Part IV §4.3)
+before any fact may be marked OBSERVED — never let "not yet marked" silently read as "confirmed."
+
+ANTI-PATTERN 3 — CONFLATING SUBSYSTEM PROMOTION WITH GENUINE NEW-SYSTEM ADMISSION. The third likely
+error, especially as the estate's module count grows, is treating an increasingly capable subsystem
+(Part II §2.3) as having "graduated" to systemhood based on its growing sophistication alone, without
+re-running the actual four-test systemhood check (Part II §2.1) — a soft version of the size-inflation
+adversarial case (Part XIV §14.3) that arises from genuine growth rather than deliberate gaming, but
+produces the identical harm: an inflated system count and a false orphan-edge reading, because a promoted
+subsystem inherits its parent's existing relation edges rather than earning its own. PREVENTION: any
+subsystem-to-system promotion must independently satisfy all four systemhood tests and receive its own
+stable ID (Part IX) with genuinely new relation edges (Part VI), never inherited wholesale from its former
+parent; a promotion that cannot independently pass the distinct-object test (§2.2) has not graduated, it
+has simply grown large within its parent's object.
+
+===============================================================================================
+FUSION SCORE
+===============================================================================================
+
+SYSTEMS STRENGTHENED: broad but shallow-per-system, by design. F1 touches every existing and future PP
+system (the widest possible reach in the corpus, matching its "ALL (foundation)" row in the Strengthening
+Matrix), but the depth of strengthening per system is deliberately thin — a shared vocabulary, not a new
+capability. This is the correct shape for a Tier-0 foundation: width without depth here is what allows
+every other IAS dataset to supply the depth against a common base, rather than F1 attempting to be
+deep everywhere and shallow nowhere useful.
+
+INTEGRATION QUALITY: high on paper, EXPERIMENTAL in practice. Part XVIII's explicit per-sibling resolution
+inventory is a strong design-time integration signal — every one of the thirteen siblings has a named,
+specific dependency on a named F1 Part, not a vague "uses the ontology" gesture. But integration quality
+in the fullest sense requires Protocol One (Part XVI §16.2) to actually be run against each sibling's
+sealed text, which has not yet occurred; the FUSION SCORE for integration is therefore assessed as
+strong-by-design, unconfirmed-by-audit.
+
+REUSE: maximal, structurally guaranteed. Every object F1 defines is, by the family's own construction
+(Article III, Article II), required to be reused by every sibling that touches an ensemble-level concern
+— there is no alternate ontology a sibling could legitimately consult instead, which makes reuse close to
+total rather than merely likely. This is a genuine strength but also a genuine concentration risk, named
+below under complexity cost.
+
+COMPLEXITY COST: low at the definitional layer, concentrated at the dependency layer. The ontology itself
+is modest in mechanism — four primitives, six relation types, five invariants, no runtime component — so
+its own complexity cost is small. But because every sibling depends on it absolutely (Part XVII §17.1),
+the ontology is a single point of definitional failure for the entire corpus: a revisory error here
+propagates, in principle, to all thirteen siblings simultaneously, which is precisely why Part XVII's
+migration protocol exists and why Decision D6 treats versioning as load-bearing rather than incidental.
+
+REDUNDANCY RISK: low, verified against the Non-Duplication Ledger's own routing of the 150 original
+candidates. F1's object — the vocabulary and object model of the federation itself — has no competing
+claimant among the fourteen sealed datasets or the folded/referenced candidate families; the closest
+adjacent object, IAS-F2's Advantage Algebra, explicitly consumes F1's property model rather than
+redefining it (Part XVIII §18.2), which is the concrete evidence against redundancy rather than a mere
+assertion of non-overlap.
+
+===============================================================================================
+DATASET-TO-RUNTIME TRANSLATION
+===============================================================================================
+
+This section names specification-level candidates only, per Article VIII; no code accompanies this
+dataset and none is implied to exist.
+
+REGISTRY (system registry, spec-level). A structured store keyed on the stable-ID component of the
+addressing model (Part IX §9.2), one record per admitted system, carrying the property model (Part IV),
+current lifecycle state (Part XI), and authority grants (Part X). This is the most direct translation
+candidate: nearly every later mechanism in the family reads from a structure shaped exactly like this.
+
+SCHEMA (property + provenance record, spec-level). A per-fact schema implementing Part IV's six
+properties and Part XII's provenance/evidence-level fields, with the per-fact (not per-record) granularity
+Decision D3 requires. The schema's field set is exactly enumerable from this dataset's text and needs no
+further design decisions to specify.
+
+EVALUATOR (systemhood / level / second-order tests, spec-level). Three composable evaluator specifications
+corresponding to Part II §2.1's four-test systemhood check, Part VIII §8.2's level test, and Part VII
+§7.2's second-order test, each stated in this dataset as a mechanical, falsifiable procedure suitable for
+direct translation into an evaluator without further interpretation.
+
+GATE (invariant sweep, spec-level). A gate specification corresponding to Part V's five invariants and
+Part XVI's Protocol Four dry-run procedure — the direct handoff artifact named in Decision D4 for
+whichever later mission is authorized to implement enforcement.
+
+ROUTER (none proposed by F1 itself). F1 explicitly declines to specify a router; IAS-A1 owns that
+translation candidate, consuming F1's capability and level definitions as its own inputs (Part XVIII
+§18.3) rather than F1 producing a router of its own — naming this absence is itself part of honest
+translation, since a foundation dataset that proposed a router would be encroaching on a sibling's object.
+
+METRIC (ontology-health metric pairs, spec-level). The six paired metrics/countermetrics of Part XV are
+directly specifiable as measurement definitions (numerator, denominator, or count over the registry and
+relation-graph schema above) without further design work, though their EXPERIMENTAL status (Part XV
+§15.7) should be carried into any implementation as an explicit caveat on the metric's current confidence.
+
+REGISTRY-OF-VERSIONS (ontology versioning ledger, spec-level). A minimal append-only record of F1's own
+version history per Part XVII §17.4, distinct from the system registry above, needed so that a sibling's
+"resolved against F1" claim (Part XVIII, Protocol One) can be pinned to a specific version rather than to
+a moving target.
+
+===============================================================================================
+EXISTING-SYSTEM REINFORCEMENT MAP
+===============================================================================================
+
+PP SYSTEMS STRENGTHENED, WITH EVIDENCE. Per the Strengthening Matrix row for IAS-F1 ("ALL (foundation)"),
+the evidence artifact required is: every other IAS dataset resolves its objects against F1 with zero
+undefined terms. This dataset supplies that evidence in two forms — Part XVIII's explicit, named,
+per-sibling resolution inventory (thirteen entries, each citing specific F1 Parts) and Part XVI's Protocol
+One specification for auditing the claim mechanically rather than by assertion. Both are necessary: the
+inventory shows the dependency was designed deliberately; the protocol shows it can be checked rather than
+merely believed.
+
+CAPABILITIES REUSED, NOT REBUILT. F1 explicitly reuses, by reference rather than rebuilding: the D2A
+verdict vocabulary (BUILD, MERGE-INTO-FAMILY, SUBENGINE, EXTEND, COMPOSITION, REFERENCE, REJECT — Part II
+§2.2, Part V §5.3), the Article V epistemic vocabulary (used verbatim throughout, not re-derived), the
+SQI claimed-until-observed discipline (Part III §3.3, Part XII §12.1), the ACIS falsifier-as-gate
+principle (Part XII §12.3), and the estate's existing Owner-decide precedent for irreversible or
+governance-level actions (Part X §10.5). In every case, F1 names the borrowed principle and applies it at
+a new (ensemble) grain rather than re-implementing it, which is the specific technical meaning of
+"strengthens, never replaces" applied to F1's own authorship.
+
+MECHANISMS DELIBERATELY NOT REPEATED. F1 does not build: a cost meter (reuses CO's telemetry as the
+source for the COST property, Part IV §4.2), a routing mechanism (leaves this to IAS-A1, Part XVIII
+§18.3), a conflict-arbitration mechanism (leaves this to IAS-A2, Part X §10.6), an enforcement sweep
+(leaves this to a future mission per Article VIII and Decision D4), or a knowledge-location mechanism
+(GK's object, never touched). Each omission is a deliberate application of Article II's ensemble-object
+boundary, not an oversight; the Gap Meta-Analysis above lists the corresponding specification-level
+candidates this dataset hands off rather than builds.
+
+NEW CONTRACTS ESTABLISHED. F1 establishes, for the first time in the estate's history as OBSERVED by this
+dataset's authors, four contracts every future IAS (and, in principle, future PP) system is bound by:
+the systemhood contract (Part II §2.1, four conjunctive tests), the level contract (Part VIII §8.2, the
+resource/ensemble bright line), the second-order contract (Part VII §7.2, the mechanical recursion test),
+and the evidence-provenance contract (Part XII, per-fact marking with traceable chains). These four
+contracts are the operational content of "strengthen, never replace" made checkable rather than aspirational.
+
+SHARED EVALUATIONS ENABLED. Because every sibling now resolves against the same object model, a single
+evaluation protocol (Part XVI) can, in principle, be run once and interpreted consistently across all
+thirteen siblings, rather than each sibling requiring its own bespoke correctness check for its ensemble-
+level claims — a direct efficiency the ontology enables precisely because it is shared rather than
+per-dataset.
+
+===============================================================================================
+D2A DECISION RECORD
+===============================================================================================
+
+ORIGINAL D2A VERDICT. Per the Non-Duplication Ledger, IAS-F1 was not itself one of the 150 original
+numbered candidates; it is the Tier-0 foundation the ledger's own methodology required before any of the
+150 could be resolved, since resolving "what is the unique ensemble object" for candidates 1 through 150
+presupposes a definition of "ensemble object" to test against. F1's own D2A verdict, applied reflexively,
+is BUILD: no existing system, resource-level or otherwise, owns the vocabulary and object model of the
+federation itself, and the four-test systemhood check plus the level test — both defined within F1 —
+confirm F1's own distinct object when run against F1 as if it were a candidate.
+
+IRREDUCIBLE CORE DEMONSTRATED. The irreducible core of F1, isolated from everything that could in
+principle be deferred to a later version or delegated to a sibling, is the resource/ensemble level
+boundary (Part VIII) together with the second-order capability test (Part VII): these two mechanical
+tests are what every other definition in this dataset ultimately serves, and every one of the fourteen
+IAS datasets' own admissibility depends on them. Parts IV, VI, IX, X, XI, and XII (property, relation,
+addressing, authority, lifecycle, provenance) are richer elaborations that make the core usable in
+practice, but the core claim — that "resource-level" and "ensemble-level" are a real, checkable
+distinction, and that "second-order capability" is a real, mechanically testable category — is what would
+remain if every other Part were stripped away, and it is what no other system in the estate could have
+supplied without becoming, itself, this dataset.
+
+SOVEREIGNTY TEST RESULT. Applying the family's own sovereignty question — "what would break, or go
+ungoverned, if this system did not exist?" (Part II §2.2) — to F1 itself: without F1, no other IAS
+dataset could establish, on checkable grounds rather than assertion, that its own object was genuinely
+ensemble-level rather than a resource-level duplicate wearing ambitious language; the Non-Duplication
+Ledger's verdicts for candidates 1 through 150 would each rest on an informal, dataset-author's private
+judgment of "distinct enough," reintroducing exactly the fragmentation and naming-only-novelty risk
+Article I exists to close. The sovereignty test result is PASS: F1's object is not covered, even
+partially, by any existing PP system or by any other sealed IAS dataset, and its absence would leave
+every sibling's own non-duplication claim unverifiable rather than merely less convenient — the strongest
+form of irreducibility this corpus recognizes.
+
+===============================================================================================
+END OF IAS-F1 — FEDERATION ONTOLOGY AND THE SYSTEM-OF-SYSTEMS OBJECT
+===============================================================================================
