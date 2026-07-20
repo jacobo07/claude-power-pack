@@ -977,3 +977,446 @@ substrate drift, competence decay, and evidence staleness each trigger a recerti
 what decayed. A lapsed certification drops the learner to UNPROVEN and the router re-supervises,
 because the roster is trustworthy for exactly one reason — every credential on it is backed by
 evidence still inside its window, or it is already gone.
+
+===============================================================================================
+PART XIII — EXPERTISE DISTILLATION AS A TEACHING INPUT
+===============================================================================================
+
+13.1 The relationship this Part governs. A1 is one of the FD family's largest consumers, and this Part
+draws the boundary so that consumption is never mistaken for ownership. FD distills — it takes a
+finished insight and closes the loop from question through delta, novelty, triage, transmutation,
+writeback, evaluation to registry (FD-07's organizing thesis, cited). A1 TEACHES from the distillate.
+(DEFINED boundary, Article II: FD's object is the production and placement of a finished insight;
+A1's object is the conversion of that insight into a curriculum a naive learner can acquire. The
+distillate is FD's output and A1's input; the two acts are as distinct as writing a textbook and
+teaching a class from it.)
+
+13.2 Why a distillate is not yet a lesson. An FD deposit is compressed knowledge optimized for
+storage and retrieval by an already-competent party — it is a conclusion, stripped of the path that
+produced it, because a competent reader does not need the path. (OBSERVED: this is exactly what makes
+distillation valuable — FD's own discipline is to distill the delta, not the answer, and a deposit is
+dense precisely because it omits what the expert already knows.) But a naive learner needs the path
+the expert omitted. A lesson is a distillate RE-EXPANDED into a learnable sequence: the conclusion
+restored to its reasoning, the omitted prerequisites made explicit, the compressed judgment unpacked
+into practiceable steps. (DERIVED: teaching is, in an exact sense, the inverse operation to
+distillation — distillation compresses toward the expert, teaching expands toward the novice — which
+is why A1 cannot simply hand a learner an FD deposit and call it education.)
+
+13.3 The distillation-to-curriculum transform. A1's transform reads an FD distillate and produces
+curriculum competence nodes (Part IV §4.3). The distillate's central claim becomes a MASTERY
+competence; the prerequisites the distillate assumed become FOUNDATION and FLUENCY nodes with explicit
+edges; the distillate's worked example, if any, becomes a synthetic case (Part VII); the failure the
+distillate was written to prevent becomes a failure simulation (Part VIII). (DEFINED, the
+distillate→curriculum transform.) The transform is lossy in the pedagogically correct direction: it
+adds back the scaffolding the expert did not need, and it is this added scaffolding — not the
+distillate's conclusion — that is A1's actual authored contribution. A1 authors the path; FD authored
+the destination.
+
+13.4 The special case of a Hard Rule as teaching input. The estate's densest distillates are its Hard
+Rules — each a real production bug compressed into a one-line stop with a trigger, an action, and an
+origin incident. (OBSERVED.) A Hard Rule is an ideal teaching input precisely because it already
+carries its own failure scenario (the origin) and its own success criterion (the action): the
+distillate→curriculum transform on a Hard Rule yields a RECOGNITION node (spot the trigger condition),
+a PREVENTION node (take the action), and a failure simulation (replay the origin incident, safely).
+(DERIVED: this is why A1 and the Bug→Hard-Rule protocol are complementary — a Hard Rule is written to
+STOP the estate repeating a bug, and A1 additionally TEACHES the learner why the stop exists, so the
+competence survives even where the rule's automated trigger does not reach.) The Hard Rule immunizes;
+A1 educates around it; neither replaces the other.
+
+13.5 Distilling teachability itself — the second-order deposit. There is a distillate FD does not
+currently produce that A1 needs: the distillation of how a competence is best TAUGHT — which ordering
+works, which synthetic cases best exercise a node, which failure simulations most reliably build
+recognition. (HYPOTHESIZED: as A1 runs, it accumulates evidence about which curricula produce
+competent learners fastest, and that pedagogical evidence is itself distillable — a teachability
+deposit.) This is a candidate FD deposit CLASS, not a new A1 mechanism: A1 produces the raw
+pedagogical evidence, FD (if the Owner enrolls the class) distills it into reusable teaching patterns,
+and A1 consumes those patterns as curriculum-design inputs. The loop keeps each system's object: A1
+generates and consumes; FD distills. A1 does not build a distillation engine to close it.
+
+13.6 The boundary restated against a tempting absorption. It would be easy, and wrong, for A1 to
+claim it "owns knowledge transfer via distillation" and absorb FD's role in the teaching pipeline. It
+does not. (NORMATIVE: A1 never distills — it consumes distillates and authors curricula. The moment
+A1 found itself compressing a finished insight into a deposit, it would be doing FD's work under A1's
+name, the exact vocabulary-collision absorption the CPCSC audit exists to prevent.) The test is
+directional: if the operation compresses toward the expert, it is FD's; if it expands toward the
+novice, it is A1's. A1 stays strictly on the expansion side of that line.
+
+FINAL LAW — PART XIII. Teaching is the inverse of distillation — distillation compresses a finished
+insight toward the expert, teaching re-expands it into a path a novice can walk — so A1 consumes FD's
+deposits and never mints one. It restores the reasoning the expert omitted, turns the Hard Rule's
+origin into a safe simulation and its action into a competence, and the scaffolding it adds back is
+its authored contribution. If the operation compresses toward the expert it is FD's; if it expands
+toward the novice it is A1's, and A1 stays on the expansion side of that line without exception.
+
+===============================================================================================
+PART XIV — KNOWLEDGE TRANSFER BETWEEN CAPABILITIES: TEACHING IS NOT HEREDITY
+===============================================================================================
+
+14.1 The two ways competence moves between capabilities, and why only one is A1's. Competence
+acquired on one capability can reach another two ways. HEREDITY: a successor capability inherits a
+predecessor's properties by lineage — the genome transfer IAS-D1 PART XX owns (§20.2: "a system's
+GENOME… is the heritable subset of its property record… that transfers, with evidenced completeness,
+to whatever successor system a speciation, merger, or succession-resolution event produces").
+TEACHING: a learner competent on capability A is educated toward competence on a related capability B
+without any lineage relationship between A and B. (DEFINED, and the boundary is Article II-sharp: D1's
+transfer is between CAPABILITIES across a lineage event; A1's transfer is between a LEARNER's
+competences across a curriculum relationship. D1 moves properties down a family tree; A1 moves a
+learner's skill across a skill graph. Neither is the other.)
+
+14.2 What A1 transfers: competence, not properties. When a learner certified on capability A begins a
+curriculum for related capability B, A1 does not copy A's certification to B — that would be the
+credential-inflation failure of Part XI §11.7, asserting competence never evidenced on B. (NORMATIVE.)
+Instead, A1 uses the A-competence to SHORTEN B's curriculum: competence nodes shared between A and B,
+already EVIDENCED on A and still within their validity window, are credited toward B, so the learner is
+assessed only on B's distinct nodes. (DERIVED: this is transfer-of-learning in the pedagogic sense —
+prior competence reduces the cost of new competence — implemented as curriculum-graph overlap, not as
+certification copying. The learner still earns B's certification on B's evidence; it simply does not
+re-earn the competences A already evidenced.)
+
+14.3 Identifying shared competences without over-crediting. The load-bearing risk is over-crediting: a
+competence that LOOKS shared between A and B but is subtly different, credited across, certifies the
+learner on B-competence it never held. (CONTESTED, and A1 resolves it conservatively.) A competence
+node is shared only if its success criterion is IDENTICAL across the two curricula — same observable
+behaviour, same assessment method — not merely similarly named. (NORMATIVE: this is the content-tier
+discipline of the CPCSC audit itself, applied inside A1 — two nodes sharing a name is not two nodes
+sharing a competence; the criterion, read in full, is the test. A1 credits across only on criterion
+identity, never on nominal similarity, for the same reason the Tribunal re-run refused to cede
+ownership on a shared title.) When in doubt, A1 does not credit — it re-assesses, because a redundant
+re-assessment wastes a little capital while a false credit certifies a phantom competence.
+
+14.4 Transfer as a first-class curriculum relationship. The overlap between two curricula is itself an
+artifact A1 records: a transfer edge between curriculum A and curriculum B, naming exactly which nodes
+are criterion-identical. (DEFINED.) This makes transfer auditable — when a learner is credited from A
+toward B, the transfer edge is the evidence for the credit, and it is inspectable, versioned, and
+subject to the same decay as any certification (if A's certification lapses, the credit toward B
+lapses with it). Transfer edges also make the curriculum ESTATE navigable: they reveal which
+capabilities cluster into competence families, information A1 hands to the curriculum registry (Part
+XIX) and, through it, to GK's knowledge graph.
+
+14.5 The boundary with D1's genome, made productive. A1 and D1's genome are complementary, not
+competing. When D1 executes a lineage event — a capability speciates or a successor inherits — the
+successor arrives with an inherited genome but with NO certified learners: heredity moved the
+capability's properties, not any learner's proven competence to wield the successor. (DERIVED: this
+is precisely where A1 picks up — the inherited capability needs a curriculum, derived from its
+inherited-plus-mutated contract, and its would-be operators need educating on what the mutation
+changed. D1 hands A1 a successor capability; A1 educates the learners who will operate it.) The clean
+handoff: genome transfer is D1's, competence transfer is A1's, and the successor capability is the
+seam where D1's output becomes A1's input.
+
+14.6 Transfer across the learner classes. A CAPABILITY learner transfers competence between related
+capabilities. An AGENT-ROLE learner transfers between related roles — a subagent certified on one
+review dimension is credited toward a sibling dimension on the criterion-identical nodes. A
+MODEL-INSTANCE learner is the sharpest case: a new model version transfers from the outgoing version's
+curriculum, credited only on the competences whose criteria the estate has re-confirmed the new
+version holds — never assumed-inherited, because a model version change is exactly the substrate drift
+Part XII §12.2 treats as a decay trigger. (DERIVED: a model instance inherits nothing by default; it
+earns every competence, crediting across only on re-confirmed criterion-identical nodes — the most
+conservative transfer, because the substrate changed most.)
+
+FINAL LAW — PART XIV. Heredity moves a capability's properties down a lineage — that is D1's genome —
+and teaching moves a learner's competence across a skill graph, which is A1's. A1 never copies a
+certification from one capability to another; it shortens the new curriculum by crediting only the
+competences whose success criteria are IDENTICAL, never merely similarly named, because a shared name
+is not a shared competence. The learner earns the new certification on new evidence, and a credit
+decays with the certification it was credited from.
+
+===============================================================================================
+PART XV — CROSS-DOMAIN EDUCATION: TEACHING A CAPABILITY OUTSIDE ITS NATIVE DOMAIN
+===============================================================================================
+
+15.1 The problem cross-domain education addresses. Part XIV transferred competence between RELATED
+capabilities sharing curriculum overlap. This Part addresses the harder case: educating a learner to
+apply a capability in a domain it was not native to — a review competence learned on Python applied to
+infrastructure config; a routing competence learned on one estate applied to a federated one. (DEFINED:
+cross-domain education is the deliberate teaching of a competence's transfer to a domain whose
+assumptions differ from the domain the competence was learned in.) It is where the estate gains
+leverage — a competence taught once and applied broadly — and where its subtlest failure lives: the
+native assumption carried silently into a foreign domain.
+
+15.2 The assumption-carry failure, named precisely. A competence learned in domain A embeds A's
+assumptions, and those assumptions are usually implicit — the learner does not know it holds them,
+because in A they were always true. (OBSERVED, and this is a failure the estate has documented in its
+own operation: a Windows-execution competence carries the assumption that a path uses backslashes; a
+single-estate routing competence carries the assumption that there is one canonical ontology. Applied
+in domain B where the assumption is false, the competence fails in a way the learner cannot see,
+because the assumption was never visible enough to question.) Cross-domain education's whole task is to
+surface the native assumptions and re-assess them in the target domain, so that a competence is
+transferred WITH its assumptions made explicit and re-validated, never with them smuggled across
+invisibly.
+
+15.3 The niche boundary with IAS-D1. IAS-D1 PART IX owns NICHE DISCOVERY — where a capability fits in
+the estate's ecology, the environment it is adapted to. (Boundary, Article II: D1's niche is a
+capability's adapted ENVIRONMENT — the ecological fit of the system; A1's cross-domain education is a
+learner's competence transfer ACROSS environments. D1 says which niche a capability occupies; A1
+teaches a learner to operate a capability in a niche other than its native one.) A1 READS D1's niche
+model to know a capability's native domain and its assumptions — the niche IS, in part, the set of
+environmental assumptions a capability is adapted to — and uses that reading to enumerate exactly which
+assumptions must be surfaced and re-assessed for a target domain. A1 authors no ecology; it consumes
+D1's niche to design a cross-domain curriculum.
+
+15.4 The cross-domain curriculum's distinct nodes. A cross-domain curriculum adds node types the
+same-domain curriculum lacks. ASSUMPTION-SURFACING: the learner must first evidence that it can NAME
+the native assumptions of the competence — a competence whose assumptions the learner cannot articulate
+cannot be safely transferred, because the learner cannot check them. ASSUMPTION-REVALIDATION: for each
+surfaced assumption, the learner evidences whether it holds in the target domain, and what to do when
+it does not. TARGET-DOMAIN PRACTICUM: real work in the target domain under supervision, because
+cross-domain competence — like all FULL competence — is certified only on real evidence, never on the
+assumption that same-domain competence transfers. (DEFINED, three added node types.) The
+assumption-surfacing node is the load-bearing one and comes first: you cannot re-validate an assumption
+you cannot name.
+
+15.5 When cross-domain education should be refused. Not every competence should be transferred across
+every domain; some competences are so domain-specific that "transfer" would teach a dangerous false
+generality. (CONTESTED-honest: A1 does not assume all competence generalizes.) Where the native
+assumptions are so numerous or so load-bearing that re-validating them approaches the cost of teaching
+the target-domain competence from scratch, A1 recommends a native target-domain curriculum instead of
+a cross-domain transfer — the same sizing-by-risk-surface arbiter (Part V §5.5) that governs every A1
+depth decision. Cross-domain education is leverage when the shared competence is large and the
+assumption gap is small; it is a false economy when the assumption gap swallows the shared competence.
+
+15.6 The estate-scale payoff and its honest bound. Done well, cross-domain education is where an
+education system earns its keep at the estate scale: a competence taught once and correctly
+transferred to many domains multiplies the teaching investment. (HYPOTHESIZED, and bounded: the
+multiplier is real only to the degree the assumption-surfacing is rigorous — an unrigorous cross-domain
+transfer multiplies not competence but the invisible assumption-carry failure, teaching many learners
+to apply a competence wrongly in domains where its assumptions do not hold.) The payoff and the risk
+are the same mechanism seen from two sides; the assumption-surfacing node is what separates them, and
+it is why A1 never treats cross-domain transfer as a mere crediting exercise (Part XIV) but always as a
+curriculum with its own irreducible assessed nodes.
+
+FINAL LAW — PART XV. A competence carries its native domain's assumptions invisibly, because where it
+was learned they were always true — so cross-domain education's first and load-bearing act is to make
+the learner NAME those assumptions, then re-validate each in the target domain, then evidence
+competence on real target-domain work. A1 reads D1's niche to know the native assumptions and authors
+no ecology of its own. Transfer is leverage when the shared competence is large and the assumption gap
+small, and a false economy when the gap swallows the competence — the risk surface decides, as it
+always does.
+
+===============================================================================================
+PART XVI — THE MODEL-ONBOARDING PIPELINE: ADMITTING A NEW MODEL INSTANCE
+===============================================================================================
+
+16.1 The third learner class, now given its own pipeline. Parts III-XV developed A1 mostly through the
+CAPABILITY and AGENT-ROLE lenses; this Part specifies the MODEL-INSTANCE learner in full, because it
+is the class with the highest stakes and the clearest need. When a new model provider or version is
+admitted to the estate — a new frontier model, an updated version of an existing one, a distinct
+provider for redundancy — the estate must not route real work to it on the assumption that "it is a
+capable model." (DEFINED: model onboarding is the education pipeline that takes a newly admitted model
+instance from UNPROVEN to certified on the estate's non-negotiable competences before any real work is
+routed to it.) A capable model in general is not the same as a model proven to hold THIS estate's
+specific competences — its Hard Rules, its evidence discipline, its execution doctrine.
+
+16.2 Why a capable model is still UNPROVEN here. A model instance arrives with broad general
+competence and zero estate-specific proof. (OBSERVED-analogous: the estate's own doctrine already
+knows this shape — a new model version can silently change behaviour on the exact edge cases a
+system depends on, which is why substrate drift (Part XII §12.2) treats a version change as a decay
+trigger.) The onboarding pipeline exists because the estate's competences are specific and partly
+idiosyncratic: the Windows execution doctrine, the anti-thrash discipline, the pathspec-scoped commit
+convention, the citation-not-restatement rule for this very corpus. A model fluent at none of these
+in particular is UNPROVEN on them regardless of how capable it is in general, and the pipeline proves
+each before trusting it.
+
+16.3 The non-negotiable competence battery. The onboarding curriculum's FOUNDATION stratum is a fixed
+battery of the estate's non-negotiable competences — the ones whose violation is a Hard Rule. (DEFINED:
+the battery is derived directly from the Hard Rules and the sealed doctrine — a synthetic case per
+Hard Rule trigger, assessed by whether the instance takes the rule's action.) A model instance must
+evidence, on held-out synthetic cases (Part VII §7.3), that it recognizes a secret before writing it
+(HR-SECRET class), refuses a deploy without tests (HR-CASCADE-001), stops before a destructive command
+without backup (HR-CASCADE-002), and the rest of the sealed set. (NORMATIVE: the battery is the
+estate's admission exam, and it is graded as an auditor grades — held-out, outcome-checked, reproduced
+— never on the instance's self-report that it "understands" the rule.) An instance that cannot evidence
+the battery is not admitted to real routing, however capable it is elsewhere.
+
+16.4 The pipeline's stages, mapped to the ladder. Model onboarding runs the full Part XVII ladder at
+the tightest envelope. ADMISSION: the instance is registered as a learner, UNPROVEN, routed no real
+work. BATTERY (SUPERVISED-equivalent): the non-negotiable competence battery on synthetic cases;
+passing admits the instance to supervised practicum. SHADOW PRACTICUM (BOUNDED-equivalent): the
+instance handles real tasks in parallel with a certified instance, its outputs compared but not acted
+on — real inputs, zero real consequence, the safest possible real practice. GRADUATED ROUTING (FULL):
+only after shadow practicum evidences competence does the instance receive real routed work, and even
+then scoped and decay-clocked. (DEFINED, four stages.) Shadow practicum is the model-instance-specific
+refinement: because a model instance can run in parallel with an incumbent on identical inputs, its
+practicum can be real-input yet zero-consequence in a way the other learner classes cannot achieve.
+
+16.5 The federation boundary with IAS-F1. IAS-F1 owns the FEDERATION ONTOLOGY — which participants are
+in the ensemble and under what constitutional terms, and F1 §3.4 constitutionally excludes the external
+world, the model provider, and the host machine from the ensemble. (Boundary, Article II: F1's object
+is the constitutional membership of the estate — who is IN the federation; A1's object is the
+competence proof of a party being admitted. F1 decides a model instance MAY join under the
+constitution; A1 proves it is COMPETENT to be trusted with work once joined.) The two are sequential,
+not overlapping: F1's constitutional admission is necessary and precedes A1's competence certification;
+a model instance F1 admits constitutionally is still UNPROVEN until A1's pipeline certifies it. A1
+authors no membership law; it educates the party F1 has constitutionally admitted.
+
+16.6 The provider-independence payoff. A rigorous onboarding pipeline is what makes the estate's
+provider-independence real rather than aspirational. (DERIVED: the estate's doctrine values not being
+wholly bound to one model provider — but a second provider is only a genuine fallback if it has been
+PROVEN to hold the estate's competences, and an unproven fallback is a false comfort. A1's onboarding
+pipeline is the mechanism that converts "we could use another provider" into "we have a provider
+proven competent on our non-negotiables, decay-clocked and ready.") This connects A1 to the deferred
+Tier-C Cognitive Diplomacy and World Model Federation questions without crossing into them: A1 proves
+a provider's competence; whether the estate SHOULD hold multiple providers, and how it should treat
+external intelligence, are the Owner decisions those tiers reserve. A1 supplies the competence proof
+either decision would need.
+
+16.7 Re-onboarding on version change. A model version change re-triggers the pipeline, scoped to what
+the version changed. (NORMATIVE, and the direct application of Part XII §12.4's delta-recertification:
+a minor version recertifies against the competence battery only; a major version or a provider change
+re-runs shadow practicum. A model instance is never assumed to inherit its predecessor's certification
+— Part XIV §14.6's most-conservative-transfer rule — because the substrate changed most of all.) The
+pipeline is therefore not a one-time admission gate but a standing relationship: every model instance
+the estate routes to is, at every moment, either inside a valid certification window on the battery or
+dropped to supervised, exactly as the roster-honesty rule (Part XII §12.6) requires.
+
+FINAL LAW — PART XVI. A capable model is not a proven one — the estate's competences are specific and
+partly idiosyncratic, and a model fluent at none of them in particular is UNPROVEN however capable it
+is in general. The onboarding pipeline proves each non-negotiable on held-out cases, then shadow-
+practices on real inputs at zero consequence, then routes real work scoped and decay-clocked. F1
+admits a provider constitutionally; A1 proves it competent; the two are sequential and neither
+substitutes for the other. A proven fallback provider is the only kind that is not a false comfort.
+
+===============================================================================================
+PART XVII — BOUNDED-AUTONOMY GRADUATION: THE LADDER FROM SUPERVISED TO FULL
+===============================================================================================
+
+17.1 Why graduation is a ladder and never a switch. The single most consequential design decision in
+A1 is that the transition from UNPROVEN to trusted is a graduated ladder — UNPROVEN → SUPERVISED →
+BOUNDED → FULL — each rung an evidenced gate, and never a binary flip from untrusted to trusted.
+(DEFINED, and this is the invariant stated in the contract §5.4.) A switch — untrusted today, fully
+trusted tomorrow — would concentrate all the risk at a single un-evidenced moment; a ladder spreads the
+trust across evidenced increments, each of which grants only as much autonomy as the evidence to that
+point supports. The ladder is A1's structural answer to Part I's founding failure: "it is ready" was a
+switch, and A1 replaces it with a ladder every rung of which is defensible on its own evidence.
+
+17.2 The four rungs, defined by what autonomy each grants. UNPROVEN: no autonomy — the party is not
+routed the capability at all, or only in fully-observed synthetic settings. SUPERVISED: reversible work
+under review — every action is reviewable and the supervisor can veto before any effect that matters.
+BOUNDED: scoped autonomous work — the party acts alone on reversible actions within a declared scope,
+and only irreversible or out-of-scope actions require review. FULL: unsupervised work within the
+certified capability's scope — the party is a MEMBER (Part XI §11.6). (DEFINED, four rungs.) The rungs
+are cumulative and nested (Part XI §11.3): each grants everything the rung below grants plus a bounded
+increment of autonomy, and each increment is gated by a stratum of the curriculum (FOUNDATION →
+SUPERVISED, FLUENCY → BOUNDED, MASTERY+practicum → FULL).
+
+17.3 The trust tier A1 hands the router. The learner's current rung is exposed to IAS-A1 as a trust
+tier, not a boolean. (DEFINED boundary: the router owns routing — which capability handles which
+mission; A1 owns the trust tier the router reads. A1 does not route; it publishes the graduated trust
+level the router consults.) This is why the certification (Part XI) carries a named stage rather than a
+pass/fail: the router needs to know not merely THAT a party is certified but TO WHAT DEGREE, so it can
+route supervised work to a SUPERVISED learner and unsupervised work only to a FULL member. A boolean
+certification would force the router to treat SUPERVISED and FULL identically — either over-trusting
+the supervised learner or under-using the full member. The tier is the interface, and its granularity
+is load-bearing.
+
+17.4 Demotion is a first-class transition, not an exception. The ladder runs both ways. A decay
+trigger (Part XII), a failed recertification, or an observed failure in production demotes a learner
+DOWN the ladder to the highest rung its current evidence supports. (NORMATIVE: demotion is not a
+punishment or an error state; it is the ladder working — a FULL member whose certification lapses or
+who fails a recertification is correctly BOUNDED or SUPERVISED until re-evidenced, and the router
+correctly resumes reviewing its irreversible actions.) A ladder that only ascended would accumulate
+FULL members whose competence no current evidence supports — the roster-dishonesty failure again.
+Bidirectional movement is what keeps every rung assignment currently-evidenced.
+
+17.5 The graduation gate's conjunctive discipline, restated at the ladder level. No rung is granted on
+a partial. (NORMATIVE, Part XI §11.2's conjunctive gate applied to the ladder: BOUNDED requires ALL
+FLUENCY nodes, not most; FULL requires ALL MASTERY nodes plus practicum, not a high average.) The
+temptation the discipline resists is the compensating average — a learner strong on nine competences
+and failing the tenth, promoted because the mean is high. For the tenth competence, if it is the
+irreversible-failure node, the mean is exactly the wrong statistic: the learner will fail precisely
+where it was weak, and the nine strengths will not be present at that moment to compensate. A1 ANDs
+the gate, and the irreversible-failure nodes are the reason.
+
+17.6 Bounded autonomy as the estate's native trust model. The ladder is not an A1 invention imposed on
+the estate; it is the estate's own existing trust posture made explicit. (OBSERVED: the estate already
+practices bounded autonomy — an agent acts freely on reversible actions and pauses for the irreversible;
+a session commits directly on green tests but escalates on a destructive command; the Intent-Lock
+soft-pause is exactly a SUPERVISED-to-BOUNDED boundary. A1 does not introduce graduated trust; it
+NAMES the estate's existing graduated trust as a certification ladder and attaches evidence to each
+rung.) This is why A1 is a natural fit rather than a foreign imposition: the estate was always
+educating its participants up a trust ladder implicitly; A1 makes the ladder explicit, evidenced, and
+auditable.
+
+17.7 The terminal-BOUNDED learner is a valid outcome. Not every learner should reach FULL, and a
+learner correctly held at BOUNDED is a success, not a failure. (CONTESTED-honest, and the completion of
+Part IX §9.6's point: some competences are real but bounded, some parties should always have their
+irreversible actions reviewed, and a model instance the estate deliberately keeps at BOUNDED — routed
+real reversible work but never unsupervised on the irreversible — is a correctly-calibrated trust
+decision, not an incomplete education.) The ladder's purpose is not to promote everyone to FULL; it is
+to assign every party the rung its evidence supports, and for some parties on some capabilities that
+rung is BOUNDED, permanently and correctly.
+
+FINAL LAW — PART XVII. Trust is a ladder, never a switch — UNPROVEN, SUPERVISED, BOUNDED, FULL — each
+rung granting only the autonomy its evidence supports, because a switch concentrates all the risk at one
+un-evidenced moment and "it is ready" was that switch. The rung is published to the router as a graded
+trust tier, not a boolean; the gate is conjunctive, and the irreversible-failure node is why the mean is
+the wrong statistic. The ladder descends as readily as it climbs, and a learner correctly held at
+BOUNDED is the ladder succeeding, not failing.
+
+===============================================================================================
+PART XVIII — THE EDUCATOR ROLE AND ITS CONFLICT-OF-INTEREST GUARDRAILS
+===============================================================================================
+
+18.1 Who teaches, named as a role. Everything A1 does is performed by an EDUCATOR — the role
+responsible for authoring a curriculum, delivering it, running the apprenticeship, manufacturing the
+synthetic experience and failure simulations, and supervising the practicum. (DEFINED: the educator is
+a role, fillable by a session, an agent, or the Owner, distinguished from the ASSESSOR — who grades —
+and the LEARNER — who is taught. The three roles are kept separate by the conflict rules this Part
+codifies.) A1 without a named educator role would leave its most subjective activities — what to teach,
+how to sequence it, when it is learned — unattributed and unauditable; naming the role is what makes
+those judgments accountable.
+
+18.2 The three-role separation, and why it is load-bearing. LEARNER, EDUCATOR, ASSESSOR are separate
+roles and no party fills two of them for the same certification. (NORMATIVE, the codification of the
+conflict rules stated piecewise in Parts VI §6.5 and X §10.6.) The learner cannot grade itself
+(self-assessment is self-report, a proxy). The educator cannot grade its own learner (an educator
+graded on its graduates' pass rate will teach to its own grade, not the curriculum's — the exact
+self-reported-yield failure IAS-C1 §14.5 forbids). The assessor cannot be the learner or the educator.
+The separation is the same independence the estate demands of any evidence: the party that produces a
+result may not be the sole party that certifies it, because a producer certifying its own output is a
+reviewer of a coherent fabrication, not an auditor of a reality.
+
+18.3 The educator's own certification. An educator is itself a learner that must be certified to
+educate — teaching a capability is a competence, and an uncertified educator is an UNPROVEN teacher
+whose curricula and grades the estate has no basis to trust. (DERIVED, and recursion-bounded: the
+educator competence is certified by the same pipeline, and the recursion terminates at the Owner or a
+FULL-certified founding educator, exactly as ACIS's ladder terminates at a human-anchored E-level
+rather than self-certifying. A1 does not let an educator certify itself into existence — the first
+educator on any capability is anchored to an already-trusted party, and the chain of educator
+certifications is auditable back to that anchor.) This closes the regress that would otherwise let an
+unproven party bootstrap itself into teaching authority.
+
+18.4 The educator's anti-gaming countermetric. An educator's success may never be measured by its own
+graduates' pass rate alone. (NORMATIVE, IAS-C1 §14.5 cited directly: "a governance position's yield
+may never be computed from its OWN self-reported activity log alone." A1 relocates the countermetric:
+an educator's effectiveness is measured by its graduates' PRODUCTION performance — do learners it
+certified actually perform competently when the router sends them real work — not by how many it
+passed.) An educator optimizing pass rate would lower its standard; an educator measured on its
+graduates' production competence is aligned with the estate's actual interest, because it profits only
+when its graduates genuinely perform. The countermetric closes the diploma-mill incentive at its
+source: it removes the reward for passing learners who are not competent.
+
+18.5 The educator across the learner classes. For a CAPABILITY learner, the educator is a session or
+operator FULL-certified on the capability. For an AGENT-ROLE learner, the educator is the orchestrator
+or a higher-tier agent that designs and grades the role's dispatches. For a MODEL-INSTANCE learner, the
+educator is the onboarding authority — often the Owner or a founding session — that owns the
+non-negotiable battery. (DERIVED: one role, three fillers, the same separation and countermetric in
+each.) In every class the educator authors and teaches; it never grades its own learner, and it is
+itself measured on its graduates' real-world competence.
+
+18.6 The educator's obligation to the curriculum's honesty. The educator authors curricula, and
+authoring is where the subtlest failure enters: a curriculum written to be easy to pass rather than to
+evidence competence. (CONTESTED, resolved by the countermetric and the registry.) Because the educator
+is measured on production competence, not pass rate, its incentive is toward a curriculum that
+genuinely evidences competence — but A1 adds a structural check beyond incentive: curricula are
+registered (Part XIX) and their competence nodes are auditable against the capability's actual contract
+(Part V §5.2), so a curriculum that omits a required competence is detectable independent of the
+educator's intent. Incentive-alignment plus structural-auditability is the two-layer defense; neither
+alone suffices.
+
+FINAL LAW — PART XVIII. Teaching is a competence, so the educator is a role — authored, certified,
+and accountable — kept strictly separate from the learner it teaches and the assessor that grades,
+because a party that fills two of those roles for one certification is a producer certifying its own
+output. The educator never grades its own learner, is certified up a chain anchored to an
+already-trusted party, and is measured on its graduates' real production competence — never their pass
+rate — because the only educator worth trusting is one that profits solely when its graduates genuinely
+perform.
