@@ -185,6 +185,26 @@ def test_ram_guard_evaluate() -> None:
 # A1 -- bench_ram_footprint (live; advisory if no measurement)
 # --------------------------------------------------------------------------
 def test_bench_ram_footprint() -> None:
+    """Gate PP's own overhead against a FIXED ceiling, on an ATTRIBUTED number.
+
+    This failed for a long time (920.6MB > 300MB) and the obvious repair was to
+    scale the ceiling with the number of open panes. Two live measurements
+    falsify that: 920.6MB at 13 live panes, then 445.3MB at 15. Consumption fell
+    as panes rose, so a `per_pane * N + base` formula would be fitted to a
+    correlation the data denies -- and, being tied to a growing N, would excuse
+    almost any regression.
+
+    The real defect was attribution, not the threshold: the measurement summed
+    EVERY node.exe and python.exe on the host. Of 445.3MB, 190.8 was Playwright
+    MCP, 106.4 Notion MCP and 38.3 plugin MCP servers -- none of it PP's. Scoped
+    to processes launched from the PP repo or ~/.claude/hooks, PP's overhead is
+    ~104MB, and the original 300MB ceiling holds unchanged. The ceiling was never
+    wrong; the number under it was.
+
+    When attribution is impossible (no CIM -> scope 'host') the reading is
+    host-wide again and can only be advisory: a number that cannot be attributed
+    must not fail a gate, and must not silently pass one either.
+    """
     from tools.bench_all import bench_ram_footprint
     r = bench_ram_footprint()
     if "ram_footprint_error" in r:
@@ -195,14 +215,20 @@ def test_bench_ram_footprint() -> None:
     if not isinstance(pp, (int, float)):
         _fail("V-RAM-PP-OVERHEAD", f"no numeric ram_footprint_mb: {r}")
         return
+    context = (f"node {r.get('ram_node_mb')} + python {r.get('ram_python_mb')}; "
+               f"foreign {r.get('ram_foreign_mb')}MB excluded; "
+               f"claude.exe {r.get('claude_ws_mb')}MB ungated")
+    if r.get("ram_scope") != "pp":
+        _adv("V-RAM-PP-OVERHEAD",
+             f"host-wide reading {pp}MB -- not attributable to PP (no CIM), "
+             f"advisory only; {context}")
+        return
     if pp <= OVERHEAD_CEIL_MB:
         _ok("V-RAM-PP-OVERHEAD",
-            f"PP overhead {pp}MB <= {OVERHEAD_CEIL_MB}MB "
-            f"(node {r.get('ram_node_mb')} + python {r.get('ram_python_mb')}; "
-            f"claude.exe {r.get('claude_ws_mb')}MB ungated)")
+            f"PP overhead {pp}MB <= {OVERHEAD_CEIL_MB}MB ({context})")
     else:
         _fail("V-RAM-PP-OVERHEAD",
-              f"PP overhead {pp}MB > {OVERHEAD_CEIL_MB}MB ceiling")
+              f"PP overhead {pp}MB > {OVERHEAD_CEIL_MB}MB ceiling ({context})")
 
 
 # --------------------------------------------------------------------------

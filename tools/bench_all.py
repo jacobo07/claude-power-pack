@@ -387,19 +387,46 @@ def bench_never_again():
 
 # PowerShell measurement (NO Get-CimInstance -- it hung twice under
 # -NonInteractive on this host, sealed 2026-06-04). Get-Process only.
+# Attribution, not a headcount. Summing EVERY node.exe + python.exe on the host
+# and calling it "PP overhead" charges PP for whatever else happens to be
+# running: measured on this host, 190.8 MB of Playwright MCP, 106.4 MB of Notion
+# MCP and 38.3 MB of plugin MCP servers were billed to PP, against 92.1 MB that
+# was genuinely PP (the hook dispatcher and a PP module). A process is PP's only
+# if its command line comes from the PP repo or ~/.claude/hooks; everything else
+# is reported as foreign_mb and left ungated.
+#
+# CommandLine needs Win32_Process, so if CIM is unavailable the query degrades to
+# the old host-wide sum and says so via `scope`. An unattributable number must
+# not gate -- see test_bench_ram_footprint.
 _PS_RAM = (
     "$ErrorActionPreference='SilentlyContinue';"
-    "function S($n){$p=Get-Process $n -ErrorAction SilentlyContinue;"
-    "if($p){[math]::Round((($p|Measure-Object WorkingSet64 -Sum).Sum)/1MB,1)}"
-    "else{0}}"
-    "$node=S 'node'; $py=S 'python';"
     "$c=Get-Process claude -ErrorAction SilentlyContinue;"
-    "$cws=if($c){[math]::Round((($c|Measure-Object WorkingSet64 -Sum)"
-    ".Sum)/1MB,1)}else{0};"
-    "$cpv=if($c){[math]::Round((($c|Measure-Object PrivateMemorySize64 -Sum)"
-    ".Sum)/1MB,1)}else{0};"
-    "ConvertTo-Json -Compress @{pp_overhead_mb=($node+$py);node_mb=$node;"
-    "python_mb=$py;claude_ws_mb=$cws;claude_private_mb=$cpv}"
+    "$cws=0;$cpv=0;"
+    "if($c){$cws=[math]::Round((($c|Measure-Object WorkingSet64 -Sum).Sum)/1MB,1);"
+    "$cpv=[math]::Round((($c|Measure-Object PrivateMemorySize64 -Sum).Sum)/1MB,1)}"
+    "$rows=@(Get-CimInstance Win32_Process -Filter "
+    "\"Name='node.exe' OR Name='python.exe'\" -ErrorAction SilentlyContinue);"
+    "$scope='pp';$pp=0.0;$fo=0.0;$nd=0.0;$py=0.0;"
+    "if($rows.Count -eq 0){"
+    "  $scope='host';"
+    "  function S($n){$p=Get-Process $n -ErrorAction SilentlyContinue;"
+    "  if($p){(($p|Measure-Object WorkingSet64 -Sum).Sum)/1MB}else{0}}"
+    "  $nd=S 'node';$py=S 'python';$pp=$nd+$py"
+    "}else{"
+    "  foreach($r in $rows){"
+    "    $p=Get-Process -Id $r.ProcessId -ErrorAction SilentlyContinue;"
+    "    if(-not $p){continue}"
+    "    $mb=$p.WorkingSet64/1MB;$cl=[string]$r.CommandLine;"
+    "    if($cl -match 'claude-power-pack' -or $cl -match '\\.claude[\\\\/]hooks'){"
+    "      $pp+=$mb;"
+    "      if($r.Name -eq 'node.exe'){$nd+=$mb}else{$py+=$mb}"
+    "    }else{$fo+=$mb}"
+    "  }"
+    "}"
+    "ConvertTo-Json -Compress @{scope=$scope;"
+    "pp_overhead_mb=[math]::Round($pp,1);foreign_mb=[math]::Round($fo,1);"
+    "node_mb=[math]::Round($nd,1);python_mb=[math]::Round($py,1);"
+    "claude_ws_mb=$cws;claude_private_mb=$cpv}"
 )
 
 
@@ -425,7 +452,9 @@ def bench_ram_footprint():
         return {"ram_footprint_error": f"parse: {exc}"}
     pp = data.get("pp_overhead_mb")
     return {
-        "ram_footprint_mb": pp,            # gated: node + python overhead
+        "ram_footprint_mb": pp,            # gated: PP-attributable only
+        "ram_scope": data.get("scope"),    # 'pp' = attributed, 'host' = degraded
+        "ram_foreign_mb": data.get("foreign_mb"),   # other node/python, ungated
         "ram_node_mb": data.get("node_mb"),
         "ram_python_mb": data.get("python_mb"),
         "claude_ws_mb": data.get("claude_ws_mb"),         # ungated context
