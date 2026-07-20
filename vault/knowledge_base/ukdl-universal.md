@@ -4744,3 +4744,77 @@ registration instructions in its header comment -- written by an author who knew
 exactly what was needed, and it still never happened. Code that ships with
 "run the registrar later" is complete-looking and inert. A step that depends on
 memory is not a step, it is a wish.
+
+## PR-CORPUS-AUDIT-CONTENT-TIER-001 — an ABSORB must name a mechanism, not a vocabulary
+Sealed 2026-07-20 (CPCSC STOP #1 + CPP-ACI Tribunal re-run).
+
+No ABSORB or REJECT verdict may be sealed on vocabulary matching between a
+candidate's title and an owner's title. The audit must read BOTH bodies and name
+the specific mechanism the owner possesses and the specific one it lacks, with
+evidence of absence being a targeted grep returning zero — not an impression.
+
+ORIGIN. A 20-domain ownership audit was conducted at title/index level. Six
+verdicts were then re-checked at content level: **6 of 6 moved toward less-owned,
+0 moved the other way.** Two "already built, REJECT" calls collapsed to 10% and
+5% coverage because the supposed owner's thesis was the OPPOSITE of the
+proposal's — IAS-F1's "federation" federates SYSTEMS and exists to impose ONE
+ontology; the proposal federated WORLD MODELS and required many. DAIF-02
+compiles KNOWLEDGE ARTIFACTS; the proposal compiled REASONING EXECUTION. Shared
+metaphor, opposite subject.
+
+THE ASYMMETRY THAT MAKES THIS A HARD RULE. A false KEEP wastes a build and is
+discovered the moment the work starts. A false ABSORB silently kills a real
+capability and is never discovered at all, because nobody looks for a thing they
+were told already exists. Verify BEFORE rejecting, not before building.
+
+The same error the D2A engine makes mechanically (false FOLDs by token overlap)
+is reproducible by hand — two instruments, one bias, one direction. Content-tier
+verification is the only gate that prevents either.
+
+## T-D2A-REGISTRY-BLIND-SPOT-001 — a registry a gate depends on must be discovered, never curated
+Sealed 2026-07-20. Sibling of `PR-COVERAGE-BY-CONSTRUCTION-001`.
+
+A duplication detector whose parent registry is hand-curated reports false-NEW
+for every family nobody enrolled, and binds false parents at high confidence for
+everything else by matching the nearest registered vocabulary.
+
+MEASURED. The D2A `FAMILY_REGISTRY` was blind to ~68% of the estate (973,500 of
+1,422,209 words): DAIF 299k, CPP-IAS 478k, pp_dataset 86k, DFP 45k all absent.
+Four named false FOLDs at 80–92% confidence, one catch-all parent absorbing 5 of
+17 verdicts, and one false KEEP (Counterfactual Intelligence, whose owner drk_04
+had no row) that would have authorized rebuilding an existing dataset.
+
+**FIVE INSTANCES OF ONE DEFECT**, all found in a single session: (1) the
+2026-07-12 CPP-ACI audit denominator, which measured 524k because 478k lived
+outside the repo boundary; (2) the Liveness Ledger's eight hand-declared
+components; (3) the D2A `FAMILY_REGISTRY`; (4) `corpus_roi.py CORPUS_REGISTRY`;
+(5) CPP-IAS's own `SYSTEM_REGISTRY.md`, which omits DAIF — the largest family in
+the estate — so that corpus asserted non-duplication against a denominator
+missing its nearest neighbour.
+
+TWO COROLLARIES, both learned the hard way while fixing it:
+
+**(a) An exclusion list IS hand-curation.** The first cut of the fix derived the
+registry from the filesystem but skipped directories that already had a curated
+row, to avoid double-counting. Most curated families cover only SOME of their
+datasets (DRK 3 rows of 7, SQI 1 of 4), so the skip kept the rest invisible and
+the false KEEP survived the fix. The exclusion list reproduced the defect it was
+written to remove.
+
+**(b) Completing a registry without fixing a global coverage formula makes it
+worse.** The detector floored coverage at 80% once ≥4 families matched any token
+— a constant written when the registry held 32 entries. Growing the registry
+under a fixed threshold pins EVERY proposal at "duplicate", converting a partial
+false-FOLD problem into a universal one. Any threshold expressed as a count over
+a growing set must be a ratio of that set.
+
+The discriminator between a real parent and a metaphor-sharing one is PRECISION,
+not recall: recall over a short keyword list scores high on anything sharing the
+family's vocabulary. A parent touching almost none of the proposal's own
+substance is not its owner; below that floor the verdict must DEFER rather than
+claim a parent it cannot justify.
+
+This is the same law as THE REGISTRAR IS THE ANTIPATTERN (above), applied to a
+data structure rather than a build step: a registry that depends on someone
+remembering to enroll a family is not a registry, it is a wish. Enforced by
+`V-D2A-REGISTRY-COMPLETE`.
