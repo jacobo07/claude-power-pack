@@ -966,6 +966,36 @@ envelope — every action reviewed — loosening only as the instance evidences 
 the final step of the Part XVI onboarding pipeline. (DERIVED: uniform shape, three substrates, the
 envelope-tightening-to-nothing being the certification event in all three.)
 
+9.8 The supervisor's veto as a first-class, logged decision. The practicum's safety rests on the
+supervisor's veto over irreversible actions (Part IX §9.2), and A1 treats every exercise of that veto
+as first-class evidence, not an interruption to be forgotten. (DEFINED: a veto is logged with the
+action it stopped, the reason, and the learner's proposed alternative after correction — because a veto
+is the sharpest possible evidence about a learner's competence, marking the exact boundary where its
+judgment failed.) A learner whose vetoes cluster on one competence node has a specific, located gap
+the curriculum can target; a learner whose vetoes taper to zero across a run is demonstrating the
+graduating evidence FULL certification requires. (DERIVED: the veto log is the practicum's richest
+signal, and discarding it would waste the most informative observations the practicum produces — the
+moments the learner was about to fail and did not, only because the supervisor was there. Those moments
+are exactly what must be absent, on the learner's own action, before the envelope loosens to FULL.) The
+veto is therefore not a failure of the practicum but its instrument: the envelope tightens and loosens
+by reading the veto log, and the certification event IS the log going quiet on irreversible actions.
+
+9.9 The practicum's honest asymmetry: it can prove competence but not omniscience. A practicum
+evidences that a learner handled the cases it actually met, competently — it cannot evidence that the
+learner will handle a case the practicum never presented. (CONTESTED-honest, and stated because
+overclaiming here is the credential-inflation failure at its source.) A1 does not pretend a FULL
+certification is a guarantee of competence on every future input; it is a claim, backed by evidence,
+that across a representative-and-adversarial sample of real work the learner performed to the
+curriculum's standard, and that its FOUNDATION competences — especially the irreversible-failure ones —
+were each independently evidenced. (DERIVED: this is why decay (Part XII) and the router's continued
+reading of the trust tier matter even after FULL — certification is the best evidence available at a
+moment, not a permanent proof, and a FULL member that begins failing in production is demoted (Part
+XVII §17.4) on that new evidence, not defended by its old certification.) The honest bound is the same
+one every evidence-based claim in the estate carries: the certification asserts what the evidence
+supports and no more, and the router that reads it must treat a novel, un-practiced situation as a
+place where even a FULL member's competence is, strictly, unproven — which is why the ladder descends
+on contrary evidence as readily as it climbed on supporting evidence.
+
 FINAL LAW — PART IX. Synthetic experience is a proxy, and reality is the only thing the estate
 certifies on — so FULL autonomy is earned in the practicum: bounded real work, inside every safety
 gate the estate already runs plus a supervisor's veto over the irreversible, graded on outcome-
@@ -1040,6 +1070,38 @@ certification decay (Part XII) while its original assessment stays a fixed histo
 learner was EVIDENCED then; the credential expires now; both are true.) The separation is the same
 pin-the-reference discipline as the curriculum version: the assessment is a dated observation, the
 certification a decaying claim built on it.
+
+10.8 The calibration of the assessment itself — who assesses the assessor. An assessment can fail in
+two directions, and A1 names both because a defense against only one is a false comfort. A LENIENT
+assessment passes learners who are not competent (its false positives reach production); a HARSH
+assessment fails learners who are competent (its false negatives waste teaching capital re-practicing
+an already-held skill). (DEFINED, two error directions.) A1's calibration signal is the same
+production-competence countermetric that governs the educator (Part XVIII §18.4): an assessment's
+leniency is measured by how often its EVIDENCED verdicts are followed by production failures, and its
+harshness by how often its NOT-EVIDENCED verdicts precede a learner who, re-assessed, easily passes.
+(DERIVED: the assessment is itself a mechanism with a yield, and — per the anti-self-grading rule — its
+yield may not be computed from its own pass rate but from the downstream reality of its graduates,
+exactly as every other governance mechanism in the estate is measured against what does or does not
+happen, never against its own activity log.) A1 leans deliberately toward the harsh error over the
+lenient one, because their costs are asymmetric: a false negative wastes a bounded amount of practice
+capital, while a false positive certifies an incompetent party the router then trusts unsupervised —
+the same asymmetry that orders every safety decision in the dataset, and the same reason INSUFFICIENT
+(§10.5) resolves toward more practice rather than a hopeful pass.
+
+10.9 Assessment cost, and why the cheapest impartial assessor is the estate's own gates. Assessment is
+not free — held-out cases must be manufactured, outcomes must be reality-checked, reproduction requires
+multiple independent runs — and a naive assessment design could cost more than the teaching it grades.
+(OBSERVED: this is why §10.6 leans the assessor on the estate's EXISTING verification gates rather than
+a purpose-built grader.) The tests that already run, the reality probes the estate already performs,
+the deploy checks already in place — these are an impartial auditor the estate already pays for, and
+reusing them as the assessment's evidence source makes A1's assessment nearly free at the margin while
+keeping it maximally impartial. (DERIVED: a purpose-built grader would be both an added cost and an
+added attack surface — a new party with a new opportunity to be gamed or to drift — whereas the
+estate's gates have no stake in any learner's outcome and were hardened against gaming for their own
+sake. A1 gets impartiality and low cost from the same decision: assess with the reality-checks that
+already exist.) The design rule generalizes: wherever A1 needs an impartial observation of competence,
+it reaches first for an estate mechanism that already produces that observation for its own reasons,
+and builds a new assessor only where no existing gate observes the competence in question.
 
 FINAL LAW — PART X. A certification is only as sound as the assessment beneath it, and an assessment
 that can be gamed certifies proxies. A1 assesses as an auditor, never a reviewer — held-out cases the
@@ -1118,6 +1180,38 @@ itself: a certification that is read as asserting more than it evidenced is a cr
 failure, Part XX.) A well-formed certification is therefore as notable for what it withholds as for
 what it grants — it is FULL on this, and silent on everything else, and the router must read the
 silence as UNPROVEN, never as competent-by-association.
+
+11.8 The certification as a pure, re-derivable function, and what that buys. Part XI §11.4 stated the
+certification is a pure function of the evidence_ledger and the pinned curriculum; this subsection draws
+out the three properties that purity buys, because they are the difference between a credential the
+estate can trust and one it merely stores. RE-DERIVABILITY: given the same ledger and curriculum
+version, the certification recomputes identically — so a certification is never a stored claim that
+could drift from its evidence; it is a view over evidence, always recomputable and always consistent
+with what the evidence supports. AUDITABILITY: because the function is pure, an auditor can re-run it
+and confirm the certification was correctly issued — the certification carries its own proof of
+correctness in the form of the evidence it reads. NON-FORGEABILITY: because the certification writes
+nothing and invents nothing, it cannot be forged directly (Part XXII §22.7) — an adversary can only
+attack the evidence, which is where A1's guards concentrate. (DERIVED: this is deliberately the same
+shape ACIS gives its ladder — one derived, read-only function over ledgers — and A1 adopts it for the
+same reason ACIS did: a projection that writes nothing cannot lie about anything except by reading
+corrupted inputs, so all the integrity work moves to the inputs, where it can be concentrated and
+audited.) A certification that were instead a mutable stored record would need its own integrity
+machinery; a derived projection needs only honest evidence.
+
+11.9 The failed certification is informative, not merely negative. When the conjunctive gate blocks a
+certification because one required node is NOT-EVIDENCED or INSUFFICIENT (Part XI §11.2), the block is
+not a dead end — it is a precisely located diagnosis. (DEFINED: a failed certification names the exact
+node that blocked it, which is the exact competence the learner must still evidence, which is the exact
+next practicum or lesson the curriculum must deliver.) This is why A1 records a blocked certification
+with its blocking node rather than discarding it as a mere non-event: the block is the most
+actionable output the assessment produces, converting "not yet certified" into "certified except for
+node N, remediate here." (DERIVED: contrast the alternative — a pass/fail certification that reported
+only "failed" would waste the diagnosis, forcing the educator to re-discover which competence was
+missing. A1's node-level block is the same discipline as a good test failure that names the assertion
+that failed rather than merely reporting red.) The blocked certification also feeds the educator
+countermetric honestly: an educator whose learners repeatedly block on the same node has a curriculum
+or delivery gap at that node, surfaced by the pattern of blocks, and addressable before it becomes a
+production failure.
 
 FINAL LAW — PART XI. A certification is a dated, expiring, evidence-backed claim that a named party
 holds a named competence to a named stage — and it passes only when every required node is EVIDENCED,
@@ -1200,6 +1294,37 @@ lazily.) The decay clock's rate is set by the competence's risk surface, the sam
 the curriculum (Part V §5.5). A1 does not recertify uniformly; it recertifies where the cost of a
 stale certification is highest, and lets low-stakes certifications age on a longer clock.
 
+12.8 The decay clock is a property of the competence, not a global cadence. A naive decay design sets
+one expiry period for all certifications; A1 rejects it because competences decay at wildly different
+rates. (DEFINED: each competence node carries its own decay rate, derived from three observable inputs
+— how fast its underlying substrate changes (a competence on a volatile capability decays faster than
+one on a stable primitive), how often the competence is exercised (an unexercised MASTERY skill decays
+faster than a daily-used FLUENCY one), and how strong the original evidence was (a competence
+EVIDENCED across many reproductions decays slower than one that barely cleared the bar).) A uniform
+clock would either expire stable, well-evidenced competences needlessly or let volatile ones persist
+past their validity — both failures, in opposite directions. (DERIVED: the per-competence decay rate is
+the same risk-and-substrate reasoning that sizes the curriculum (Part V §5.5) and sets recertification
+frequency (Part XII §12.7), applied to the expiry itself — the decay clock is not a policy imposed on
+competences but a property read off each competence's own volatility, exercise, and evidence strength.)
+This is what makes the roster-honesty guarantee affordable: A1 does not recertify everything constantly:
+it recertifies each competence exactly as fast as that competence actually decays, which is the only
+cadence that is neither wasteful nor unsafe.
+
+12.9 Recertification versus re-teaching, and the cost that distinguishes them. A decayed certification
+does not always require re-teaching — often the competence is intact and only its EVIDENCE has aged, so
+recertification is a fresh assessment against held-out cases with no new curriculum delivery at all.
+(DEFINED, three recertification depths by cause: EVIDENCE STALENESS needs only re-assessment, the
+cheapest; COMPETENCE DECAY (the skill itself eroded, unexercised) needs targeted re-practice on the
+decayed nodes; SUBSTRATE DRIFT needs re-teaching of the changed nodes plus re-assessment.) A1 diagnoses
+the cause from the decay trigger — an E1 evidence-drift signal points to staleness, a long
+non-exercise window to competence decay, a D2 antibody or curriculum-version bump to substrate drift —
+and applies the cheapest recertification the cause permits. (DERIVED: this is the delta-discipline of
+§12.4 refined by cause, and it is what keeps recertification economically bounded — the estate does not
+re-run a full education every time a certification lapses; it re-assesses when only evidence aged,
+re-practices when only skill eroded, and re-teaches only when the capability itself changed. Matching
+recertification depth to decay cause is the difference between a maintainable roster and one whose
+upkeep costs more than the original teaching.)
+
 FINAL LAW — PART XII. A certification held forever reports "competent" forever, whether or not the
 competence survived — so A1 issues none without an expiry, and membership is a decaying state, not a
 title. It authors no decay proof — D2, E1, and FD-04 own those — but it owns the consequence:
@@ -1270,6 +1395,40 @@ A1 found itself compressing a finished insight into a deposit, it would be doing
 name, the exact vocabulary-collision absorption the CPCSC audit exists to prevent.) The test is
 directional: if the operation compresses toward the expert, it is FD's; if it expands toward the
 novice, it is A1's. A1 stays strictly on the expansion side of that line.
+
+13.7 The worked distillate-to-curriculum transform on a real deposit class. Consider the estate's
+Bash-bridge doctrine — a dense body of distilled knowledge about why Bash on Windows hangs, compressed
+into rules a competent operator applies without re-deriving. (EXPERIMENTAL trace of the §13.3
+transform.) As an FD distillate it is a conclusion: "on Windows hosts, pivot Bash to PowerShell for
+git/python/verbose output." A competent operator needs no more. But the transform to a curriculum
+re-expands it: the distillate's conclusion becomes a MASTERY competence node (correctly choosing the
+execution path under pressure); the assumed prerequisites become FOUNDATION nodes (recognizing a
+Windows host, knowing which token classes trigger the hang); the distillate's implicit failure — the
+MSYS2 freeze — becomes a failure simulation (Part VIII) replaying a documented hang safely; and the
+distillate's worked fix becomes a synthetic case (Part VII) the learner practices. (DERIVED: the same
+distilled paragraph that an expert reads as one rule becomes, for a naive learner, a multi-node
+curriculum with practice and failure drills — because the expert's one-line rule silently contains the
+recognition, the prerequisite knowledge, and the failure experience a novice does not yet have. The
+transform's output is larger than its input by exactly the scaffolding the expert had internalized and
+omitted.) This is A1's authored contribution made concrete: FD compressed the doctrine toward the
+expert; A1 re-expanded it into a path a novice can walk, and the added scaffolding is the lesson.
+
+13.8 The bidirectional boundary with FD, and the deposit A1 must not mint. Part XIII §13.5 raised a
+teachability deposit — distilled knowledge of how a competence is best taught — as a candidate FD
+class, and this subsection fixes the boundary precisely so the candidate never becomes an absorption.
+A1 PRODUCES the raw pedagogical evidence (which curricula produced competent learners fastest, which
+failure simulations built recognition most reliably); it does NOT distill that evidence into a reusable
+pattern, because distillation is FD's object regardless of the material's subject. (NORMATIVE: if A1
+found itself compressing its own pedagogical evidence into a reusable teaching pattern, it would be
+running FD's mechanism under A1's name — the exact directional test of §13.6, failed. The material
+being pedagogical does not make its distillation A1's; the operation, not the subject, assigns the
+owner.) The clean loop, restated as a contract: A1 emits raw teaching-outcome evidence to FD's intake;
+IF the Owner enrolls a teachability deposit class, FD distills it; A1 then CONSUMES the resulting
+pattern as a curriculum-design input. (DERIVED: A1 is FD's producer of raw material and consumer of
+finished deposits, on both ends of FD's pipeline but never performing FD's compression step — the same
+way a farmer supplies grain to a mill and buys back flour without ever grinding, and calling the
+farmer a miller because the grain was his would be the vocabulary-collision error the whole corpus
+guards against.)
 
 FINAL LAW — PART XIII. Teaching is the inverse of distillation — distillation compresses a finished
 insight toward the expert, teaching re-expands it into a path a novice can walk — so A1 consumes FD's
@@ -1343,6 +1502,40 @@ Part XII §12.2 treats as a decay trigger. (DERIVED: a model instance inherits n
 earns every competence, crediting across only on re-confirmed criterion-identical nodes — the most
 conservative transfer, because the substrate changed most.)
 
+14.7 The transfer graph as an estate-scale asset, and the navigation it enables. The transfer edges of
+§14.4 accumulate into a graph over the estate's curricula — which competences are shared, which
+capabilities cluster into competence families — and that graph is itself valuable beyond crediting.
+(DERIVED: a dense cluster of criterion-identical nodes across several capabilities reveals a
+COMPETENCE FAMILY the estate did not know it had, and a party certified on one member is a cheap
+transfer away from the others — information that shortens future education and reveals where a single
+well-taught competence has the widest leverage.) A1 publishes the transfer graph to GK's knowledge
+graph (Part XIX §19.4), where it becomes navigable alongside the estate's other coordinate edges — so a
+session asking "who is cheapest to educate on capability B" can read the transfer graph for parties
+already certified on B's competence-family siblings. (DERIVED: this is where an education system starts
+returning estate-scale leverage rather than per-learner value — the transfer graph is a map of the
+estate's competence topology, and a map no single system held before A1 drew it, assembled for free as
+a byproduct of crediting learners honestly.) The graph also surfaces its own anti-pattern: a capability
+whose curriculum shares NO criterion-identical node with any other is either genuinely novel or
+mis-specified, and A1 flags the isolate for review rather than assuming novelty — the same
+discovered-not-curated discipline the registry itself obeys.
+
+14.8 Why transfer never runs in the model-provider direction without full re-proof. Part XIV §14.6
+named the model-instance learner as the most conservative transfer case; this subsection states the
+hard rule behind it, because it is a security property, not a mere caution. A new model version or
+provider inherits NO competence by default — every competence its predecessor held is re-proven, and
+transfer credits only nodes whose criteria the estate has RE-CONFIRMED the new instance holds. (NORMATIVE:
+a model version change is the largest possible substrate drift — the reasoning substrate itself changed
+— so assuming inherited competence is assuming the one thing most likely to have silently changed. The
+§14.3 over-crediting risk is at its maximum here, because two model versions "sharing" a competence by
+name is exactly the kind of nominal similarity that hides a subtle behavioral difference on the edge
+cases the estate depends on.) The consequence is operationally strict: a new provider admitted by F1
+(Part XVI §16.5) starts every non-negotiable competence at UNPROVEN and earns each on held-out cases,
+crediting across from its predecessor only where the estate has directly re-observed identity. (DERIVED:
+this is why provider-independence is real only after onboarding and never by assumption — the
+conservative-transfer rule is what stops a new provider from inheriting a fallback's certification it
+was never proven to deserve, which would make the fallback a false comfort exactly when it is relied
+on.)
+
 FINAL LAW — PART XIV. Heredity moves a capability's properties down a lineage — that is D1's genome —
 and teaching moves a learner's competence across a skill graph, which is A1's. A1 never copies a
 certification from one capability to another; it shortens the new curriculum by crediting only the
@@ -1413,6 +1606,39 @@ to apply a competence wrongly in domains where its assumptions do not hold.) The
 are the same mechanism seen from two sides; the assumption-surfacing node is what separates them, and
 it is why A1 never treats cross-domain transfer as a mere crediting exercise (Part XIV) but always as a
 curriculum with its own irreducible assessed nodes.
+
+15.7 A worked assumption-carry failure, so the surfacing node is not abstract. Consider a competence
+learned natively on Python code review — "a function with no return on one branch is a bug" — carried
+to a domain of shell scripts, where a function without an explicit return is ordinary and correct.
+(EXPERIMENTAL trace.) The native competence embeds the assumption "every path should return a value,"
+true in the Python domain it was learned in and false in the shell domain. A learner that carried the
+competence without surfacing the assumption would flag correct shell functions as bugs — a competence
+failing invisibly, because the assumption was never visible enough to question. (DERIVED: the
+assumption-surfacing node (§15.4) is precisely what would have caught this — required to NAME the
+native assumption "every path returns," the learner would then re-validate it in the shell domain,
+discover it false, and adjust; without that node, the assumption travels silently and the competence
+misfires.) The trace generalizes the estate's own documented cases — a path-separator assumption
+carried across OSes, a single-ontology assumption carried into a federation — and shows why
+cross-domain education is a curriculum with irreducible assessed nodes (§15.5) rather than a mere
+transfer credit: the assumption-surfacing and re-validation are competences in their own right, and a
+learner cannot be certified cross-domain without evidencing them on the target domain.
+
+15.8 The relationship between cross-domain education and A2's law extraction. Cross-domain education
+surfaces a competence's native assumptions and re-validates them; when an assumption re-validated
+across many domains turns out to hold everywhere, it is a candidate for a GENERAL LAW — which is A2's
+object, not A1's. (Boundary, and the A1→A2 seam of Part XXIII §23.7 seen from this side: A1 surfaces
+and tests assumptions in the course of teaching; when a surfaced assumption proves domain-invariant
+across enough cross-domain transfers, A1 hands that observation to A2 as raw evidence for a candidate
+law, and A2 — the legislature — decides whether it rises to a proposed law. A1 does not propose the
+law; it supplies the cross-domain evidence a law-extractor mines.) (DERIVED: this is a productive loop
+that keeps both objects distinct — A1's cross-domain teaching is one of the richest sources of
+evidence about which assumptions are domain-specific and which are universal, exactly the raw material
+A2 needs, and A1 generates it as a byproduct of teaching without ever performing A2's proposing step.)
+The loop also protects against a false generalization: an assumption that A1's cross-domain re-validation
+finds FALSE in even one domain is evidence AGAINST a candidate law, and A1 supplies the disconfirming
+case as readily as the confirming ones — because a law-extractor fed only confirmations would
+manufacture false universals, and A1's honest reporting of the domain where the assumption failed is
+what keeps A2's induction sound.
 
 FINAL LAW — PART XV. A competence carries its native domain's assumptions invisibly, because where it
 was learned they were always true — so cross-domain education's first and load-bearing act is to make
