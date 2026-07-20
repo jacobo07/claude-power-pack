@@ -1724,6 +1724,40 @@ pipeline is therefore not a one-time admission gate but a standing relationship:
 the estate routes to is, at every moment, either inside a valid certification window on the battery or
 dropped to supervised, exactly as the roster-honesty rule (Part XII §12.6) requires.
 
+16.8 The shadow practicum in detail, because it is the model-instance learner's unique advantage. Part
+XVI §16.4 named shadow practicum as the BOUNDED-equivalent stage; this subsection develops why it is
+the safest real practice any learner class can achieve and what it uniquely evidences. (DEFINED: in
+shadow practicum, the onboarding instance handles the SAME real inputs an incumbent certified instance
+handles, in parallel, and its outputs are compared against the incumbent's and against the eventual
+real outcome — but only the incumbent's outputs are acted on. The instance does real work at zero real
+consequence, because a second, trusted instance's output is what the estate actually uses.) No other
+learner class can achieve this: a capability operator or an agent role cannot run a perfect parallel
+shadow of production, but a model instance can, because a model is substitutable at the inference
+boundary — the same prompt goes to both, and the comparison is exact. (DERIVED: shadow practicum
+resolves the synthetic-versus-real tension (Part VII §7.5) more cleanly for model instances than for
+any other learner — it is REAL input, REAL competence measurement, and ZERO consequence simultaneously,
+the combination the practicum normally cannot fully achieve.) What it evidences is precisely
+divergence: where the onboarding instance's output differs from both the incumbent's and the real
+outcome, that divergence is a located competence gap; where it agrees across a representative run, that
+agreement is the graduating evidence for real routing. The instance graduates to GRADUATED ROUTING when
+its shadow divergence on the non-negotiable competences falls to zero and stays there.
+
+16.9 Onboarding as a standing relationship, not an admission gate — the operational consequence. Part
+XVI §16.7 stated that a version change re-triggers the pipeline; this subsection draws the operational
+consequence, because it changes what "an onboarded model" means. (NORMATIVE: at every moment, every
+model instance the estate routes to is either inside a valid certification window on the non-negotiable
+battery or has dropped to supervised — there is no permanent "onboarded" status, only a current,
+decaying certification, exactly as Part XII §12.6's roster-honesty rule requires.) The consequence is
+that model onboarding is not an event in a provider's past but a live property of its present: a
+provider certified six months ago on a version since superseded is, correctly, UNPROVEN on the current
+version until re-onboarded, and the router treats it accordingly. (DERIVED: this is what makes the
+estate's provider posture honest rather than aspirational — "we support provider X" is only ever true
+of a specific version inside a valid window, and a silent version bump that skipped re-onboarding
+would leave the estate routing real work to an instance whose competence it has not currently proven,
+the model-instance form of the diploma-mill-by-neglect failure. The standing relationship is the
+mechanism that prevents a stale provider certification from silently outliving the version it was
+issued against.)
+
 FINAL LAW — PART XVI. A capable model is not a proven one — the estate's competences are specific and
 partly idiosyncratic, and a model fluent at none of them in particular is UNPROVEN however capable it
 is in general. The onboarding pipeline proves each non-negotiable on held-out cases, then shadow-
@@ -1801,6 +1835,40 @@ decision, not an incomplete education.) The ladder's purpose is not to promote e
 to assign every party the rung its evidence supports, and for some parties on some capabilities that
 rung is BOUNDED, permanently and correctly.
 
+17.8 The demotion path, worked, because a ladder that only ascends is not bidirectional in practice. It
+is easy to state that the ladder descends (Part XVII §17.4) and hard to make demotion actually fire, so
+this subsection traces it. (EXPERIMENTAL trace.) A FULL member on a destructive-command capability
+fails a production action — it took an irreversible step the estate had to recover. Three things happen
+in order: the failure is an observed NOT-EVIDENCED event on the specific competence node that failed
+(the compensation-path node, say), which demotes the member to the highest rung whose evidence excludes
+that node — BOUNDED, so its irreversible actions are reviewed again; the failure is handed to IAS-D2 as
+an incident (Part VIII §8.6); and the failed node is flagged for re-practice before the member can
+re-certify FULL. (DERIVED: demotion is not a punishment applied by a judge — it is the mechanical
+consequence of new contrary evidence entering the evidence_ledger, recomputed through the same pure
+certification function of Part XI §11.8. The member did not "lose trust"; its certification recomputed
+against evidence that now includes a failure, and the recomputation yields a lower rung.) This is why
+demotion is first-class and reliable: it requires no special demotion machinery, only that the pure
+certification function reads the failure the way it reads any evidence, and the lower rung falls out
+automatically. A ladder whose descent depended on someone remembering to demote would accumulate FULL
+members past their competence; a ladder whose rung is a pure function of current evidence descends the
+instant the evidence turns.
+
+17.9 The trust tier's granularity is the router's expressiveness, and coarsening it is a silent loss.
+Part XVII §17.3 published a four-rung tier to the router; this subsection argues why the granularity
+itself is load-bearing and must not be coarsened for convenience. (NORMATIVE: a router given only
+trusted/untrusted must collapse SUPERVISED, BOUNDED, and FULL into one bucket — and whichever way it
+collapses, it errs: treating BOUNDED as trusted over-routes unsupervised work to a learner whose
+irreversible actions should be reviewed, and treating BOUNDED as untrusted under-uses a learner ready
+for scoped autonomous work. The four rungs exist because the estate's actual trust decisions have four
+levels, and a coarser interface forces the router to discard information A1 evidenced.) (DERIVED: this
+is the same lesson the estate learned about verdicts collapsing to binaries — a three-way assessment
+verdict (Part X §10.5), a seven-state lifecycle (IAS-C1 §15), a ten-status epistemic lattice (DAIF-01):
+each keeps a distinction a binary would erase, and each erasure is a silent loss of exactly the
+information that makes the downstream decision correct. A1's four-rung tier is the minimum granularity
+that lets the router route each kind of work to the party proven ready for that kind — and it is a
+floor, not a ceiling, because a capability whose risk surface demands finer gradations may carry
+sub-rungs, but never fewer than four.)
+
 FINAL LAW — PART XVII. Trust is a ladder, never a switch — UNPROVEN, SUPERVISED, BOUNDED, FULL — each
 rung granting only the autonomy its evidence supports, because a switch concentrates all the risk at one
 un-evidenced moment and "it is ready" was that switch. The rung is published to the router as a graded
@@ -1868,6 +1936,37 @@ registered (Part XIX) and their competence nodes are auditable against the capab
 (Part V §5.2), so a curriculum that omits a required competence is detectable independent of the
 educator's intent. Incentive-alignment plus structural-auditability is the two-layer defense; neither
 alone suffices.
+
+18.7 The educator-certification recursion, terminated honestly. Part XVIII §18.3 stated an educator must
+itself be certified to educate, which raises the regress: who certifies the first educator? A1
+terminates the recursion the same way ACIS terminates its ladder — at a human-anchored point, not by
+self-certification. (DEFINED: the FIRST educator on any capability is anchored to an already-trusted
+party — the Owner, or a founding session the Owner trusts — whose competence to educate is asserted by
+that anchor, not derived from a prior A1 certification. Every subsequent educator is certified by the
+pipeline, and the chain of educator certifications is auditable back to the human anchor.) The
+alternative — letting an educator certify itself into teaching authority — is exactly the self-modifying
+capture risk dfp_05 names, where the first thing a self-certifying authority learns is to lower its own
+bar. (DERIVED: the recursion is not a flaw to hide but a structure to make explicit and terminate
+correctly — an infinite regress of "who certified the certifier" is resolved not by pretending it does
+not exist but by grounding it at a declared, trusted, human anchor, exactly as the estate's E-level
+ladders ground at a human rather than certifying themselves. A1's educator chain is falsifiable: an
+educator whose certification chain does NOT trace to a trusted anchor is not a valid educator, and its
+curricula and grades carry no more authority than the unproven party that issued them.)
+
+18.8 The educator's dual accountability — to the learner and to the estate — and the tension between
+them. An educator serves two parties whose interests can diverge: the learner (who wants to be
+certified) and the estate (which wants only competent learners certified). (CONTESTED, and A1 resolves
+it structurally rather than trusting educator virtue.) An educator aligned only to the learner becomes
+a diploma mill; an educator aligned only to the estate becomes needlessly harsh, wasting teaching
+capital failing competent learners. (DERIVED: the production-competence countermetric (§18.4) is what
+aligns the two interests — an educator measured on its graduates' real performance wants its learners
+to pass AND to be genuinely competent, because a passed-but-incompetent learner costs the educator when
+it fails in production, and a failed-but-competent learner is a wasted opportunity the educator's
+metric also penalizes. The countermetric makes the educator's interest identical to the estate's: certify
+exactly the competent, no more and no fewer.) This is why A1 does not rely on the educator being
+well-intentioned — it constructs an incentive under which the well-intentioned and the self-interested
+educator behave identically, which is the only robust design, since an education system that works only
+with virtuous educators does not work.
 
 FINAL LAW — PART XVIII. Teaching is a competence, so the educator is a role — authored, certified,
 and accountable — kept strictly separate from the learner it teaches and the assessor that grades,
@@ -1939,6 +2038,38 @@ off-the-books education whose certifications the estate cannot audit — precise
 unaudited certification of Part I §1.2 that A1 exists to end, re-created inside A1 by a skipped
 registration.) The gate is what prevents A1 from growing its own shadow of unauditable teaching
 alongside its audited pipeline.
+
+19.7 The three discovery scans, and what each fails loudly on. The derived registry (§19.2) is built by
+three scans, each of which produces a loud, named failure rather than a silent gap. The CURRICULUM scan
+enumerates every curriculum artifact on disk and asserts each resolves to a registry entry — an
+unenrolled curriculum fails by name. The CERTIFICATION scan enumerates every certification and asserts
+each points to a registered curriculum version that still exists — a certification against a vanished
+version fails by name. The EDUCATOR scan enumerates every educator named in a certification and asserts
+each is itself registered and certified with a chain to a trusted anchor (§18.7) — an unanchored
+educator fails by name. (DEFINED, three scans, three loud failures.) The design principle is that every
+way the registry could be incomplete is a scan that fails with a specific name, never a count and never
+a silence. (DERIVED: this is the direct application of the coverage-by-construction lesson — a threshold
+or a ratio could be satisfied by shrinking a denominator, but a NAMED failure set can only be cleared by
+enrolling, deleting, or explicitly declaring the named thing, which forces the number down for the right
+reason. A1's registry health is a set of names, exactly as the estate's liveness ledger is, and for the
+same reason: only names resist the enrollment defect.) A registry that reported "98% enrolled" would
+hide the 2% that matters; a registry that reports "these three curricula are unenrolled" cannot.
+
+19.8 Provenance as the substrate for post-failure diagnosis, worked. Part XIX §19.3 stated provenance
+lets a certified learner's production failure be traced; this subsection works the trace to show it is a
+real mechanism, not a promise. (EXPERIMENTAL trace.) A FULL-certified party fails in production on
+capability C. The diagnosis walks the provenance chain: the certification names its curriculum version
+and evidence_ledger; the ledger shows the failed competence node WAS EVIDENCED at certification, so it
+is not a curriculum-omission (the node existed and was taught); the node's evidence date is checked
+against the decay clock, and it is found stale — the competence decayed and the decay trigger did not
+fire, because the capability's substrate-drift signal was not wired to this curriculum's provenance
+link. (DERIVED: the trace localizes the failure precisely — not a bad learner, not a missing lesson,
+but a missing decay-trigger wire, which is an infrastructure gap the estate fixes once rather than a
+learner it re-educates. Without provenance the same production failure would be an unattributable
+mystery, and the estate would guess — re-teach the learner, tighten the curriculum, blame the
+provider — none of which addresses the actual cause.) Provenance converts a production failure from a
+mystery into a walk down a chain that terminates at the exact link that failed, which is the difference
+between fixing a cause and treating a symptom.
 
 FINAL LAW — PART XIX. A registry curated by hand cannot fail you if it never enrolled you — so A1's is
 discovered from the filesystem, and a curriculum on disk with no registry entry fails the gate by name,
@@ -2014,6 +2145,37 @@ beyond with real operators to educate (Part V §5.6) — A1 does not educate spe
 party the router never consults is a signal to question whether the capability itself is an orphan, a
 question A1 surfaces to IAS-C1's portfolio rather than answering itself.
 
+20.8 The interlock principle: no anti-pattern is defeated by a single mechanism. The recurring feature
+of Part XX §20.2 through §20.7 is that each anti-pattern is prevented by TWO OR MORE overlapping
+mechanisms, never one — teaching-to-the-test needs held-out cases AND the educator countermetric,
+credential inflation needs precise-scope credentials AND criterion-identity crediting, the diploma mill
+needs the practicum AND the conjunctive gate AND decay. (DEFINED: this is a design principle, not an
+accident — a single mechanism defending against an anti-pattern is a single point of failure, and an
+adversary or a drift that defeats it re-opens the whole failure. A1 requires each anti-pattern to be
+defeated only where two mechanisms overlap, so that defeating one still leaves the other holding.)
+(DERIVED: the interlock is why the mechanisms cannot be dropped piecemeal for convenience — removing
+held-out cases "because they are expensive to manufacture" does not merely weaken one defense, it
+un-defends teaching-to-the-test down to the educator countermetric alone, which an educator gaming its
+own production metric could also defeat. The mechanisms are load-bearing in combination, and the
+combination is the design.) This generalizes the estate's own defense-in-depth doctrine — the
+three-layer read-cap-plus-recovery-plus-closing-text net, the rotate-and-scrub secret response — to
+education: a real defense is an interlock, and a lone guard is a guard that will eventually be walked
+past.
+
+20.9 The meta-anti-pattern: an education system that certifies itself exempt from its own catalogue. The
+subtlest anti-pattern is not in the list because it is about the list itself — an education system that
+applies its failure catalogue to its learners but exempts its own operation from it. (CONTESTED-honest,
+and the reason Part XXIV turns the whole discipline reflexively on A1.) An A1 that ran a diploma mill of
+CURRICULA — authoring syllabi to inflate its own count of capabilities-covered without evidencing that
+each teaches real competence — would be committing its own §20.4 failure at the meta-level, and no
+learner-facing guard would catch it. (DERIVED: this is why A1's own health is measured by the same
+discovered-not-curated coverage discipline it imposes on its registry (Part XXIV §24.5), and why A1's
+completion is gated on observed evidence rather than self-report (Part XXV §25.5) — an education system
+that exempted itself from its own standards would be the "physician heal thyself" failure, and the only
+defense is to hold A1 to the exact catalogue it holds its learners to. The catalogue is not a list A1
+applies to others; it is a mirror A1 must also stand in front of, which is the whole content of Part
+XXIV.)
+
 FINAL LAW — PART XX. Every education anti-pattern is a local optimum — it flatters a metric (pass rate,
 roster breadth, certification count, curriculum stability, teaching activity) while corroding the one
 reality that matters, production competence. Teaching-to-the-test, credential inflation, the diploma
@@ -2084,6 +2246,37 @@ FD deposits — a curriculum, once authored, is cheap to hold and valuable to re
 optimistic case for A1's own place in the portfolio: its costs are front-loaded and its returns
 compound, which is precisely the profile C1's valuation is built to recognize — and A1 supplies C1 the
 inputs to recognize it, without ever making the portfolio judgment itself.
+
+21.7 The make-versus-buy question education raises, and why A1 only supplies the inputs. Every education
+investment implicitly poses a make-versus-buy question to the portfolio: is it cheaper to EDUCATE a
+party to competence on a capability, or to route the work only to already-competent parties and accept
+the bottleneck? (DEFINED, and the boundary is sharp: this is a PORTFOLIO question — it weighs education
+cost against a routing constraint against the value of broader competence — and IAS-C1 owns it. A1 does
+not answer it; A1 supplies the education-cost side of the ledger so C1 can.) (DERIVED: the temptation is
+for A1 to reach for the answer — to declare a capability "worth educating on" — but that declaration
+ranks education against alternative uses of capital, which is precisely C1's portfolio object. A1
+stopping at "here is what educating costs and here is the failure it prevents" and handing both to C1 is
+the same discipline every §21 subsection observes: A1 measures its own object exhaustively and refuses
+the adjacent object entirely.) The make-versus-buy framing also clarifies when education is obviously
+right and needs no portfolio deliberation: a NON-NEGOTIABLE competence (a Hard-Rule recognition, Part
+XVI §16.3) is never a buy decision — the estate cannot "route around" a party's inability to recognize
+a secret, because every party touches that competence — so its education is mandatory, and A1 flags
+non-negotiable competences as portfolio-exempt inputs rather than optional investments C1 weighs.
+
+21.8 The compounding return, quantified as an asset profile rather than asserted. Part XXI §21.6 called
+education a compounding, front-loaded, capital-light asset; this subsection states the profile precisely
+so C1's valuation can read it, without A1 performing the valuation. (DEFINED, the asset profile A1
+reports: front-loaded COST (curriculum authoring is a one-time expense; delivery cost falls per
+additional learner), compounding RETURN (each competent operator yields repeated competent work; each
+transfer edge (Part XIV) multiplies one investment across a competence family; each teachability
+distillate (Part XIII §13.5) lowers the next authoring cost), and a MAINTENANCE tail (recertification,
+scaled to decay-and-risk, Part XII §12.7).) (DERIVED: this is exactly the asset shape IAS-C1's taxonomy
+already reserves for FD deposits — capital-light, high-optionality, front-loaded — so A1 hands C1 a
+profile C1's valuation machinery is already built to price, rather than inventing a new valuation
+category. A1's job ends at characterizing the profile honestly, including its maintenance tail, which
+an over-optimistic account would omit; the front-loaded cost and the maintenance tail are as much part
+of the honest profile as the compounding return, and A1 reports all three because a portfolio fed only
+the upside would over-invest.) The profile is the input; the price is C1's.
 
 FINAL LAW — PART XXI. Education is expensive and its true cost is the difference between teaching and
 the production failure that teaching prevents — the prevented-harm term, not the spend in isolation. A1
@@ -2159,6 +2352,38 @@ assessors, estate-controlled decay signals, criterion-identity) rather than on p
 certification artifact itself. The certification cannot be attacked; only its evidence can, and the
 evidence is where the guards are.
 
+22.8 The insider adversary: an already-certified party attacking the pipeline. The attacks of §22.3
+through §22.6 assumed an adversary seeking certification; a distinct and more dangerous case is an
+already-certified party — a FULL member, perhaps an educator — acting against the estate. (DEFINED: an
+insider adversary already holds trust, so its attack surface is the pipeline's authority rather than its
+assessment. An adversarial EDUCATOR could author curricula that omit a competence, teaching learners to
+be subtly incompetent in a way that serves the adversary; an adversarial FULL member could act
+correctly under review and fail deliberately only when unsupervised.) A1's defenses against the insider
+are structural and independent of the insider's trust: the educator's curricula are auditable against
+the capability's actual contract (Part XVIII §18.6), so a curriculum that omits a required competence is
+detectable regardless of the educator's standing; the production-competence countermetric (§18.4)
+surfaces an educator whose graduates underperform; and a FULL member that fails when unsupervised
+generates the same NOT-EVIDENCED demotion evidence (Part XVII §17.8) as any other failure, dropping it
+off FULL. (DERIVED: the insider is why A1's guards live on EVIDENCE and STRUCTURE rather than on trust —
+a defense that assumed a certified party was safe would be defeated the moment a certified party turned,
+so A1 audits curricula against contracts and members against production regardless of certification,
+which is the only design that survives an adversary who already passed. The certification is never a
+grant of exemption from further scrutiny; it is a current reading that contrary evidence overturns.)
+
+22.9 The bounded scope of A1's adversarial claim, stated honestly. A1 defends its own pipeline; it does
+NOT claim to defend the estate against a general adversary, and overclaiming here would be its own
+credential-inflation failure applied to the dataset. (CONTESTED-honest.) The general adversarial threat
+model — an attacker with intent against any estate mechanism — is the Tier-B7 pathogen class, IAS-D2's
+object once it lands, and A1's adversarial Part is scoped strictly to the education-specific attack
+surface: gaming an assessment, colluding to certify, laundering a credential, evading decay, and the
+insider against the pipeline. (DERIVED: A1 hands any novel adversarial pattern it discovers to D2's
+pathogen class (§22.2) precisely because A1 is not the estate's general immune system — it is a school
+with its own security, and a school that claimed to defend the whole city would be asserting a
+competence it does not hold. The honest boundary is that A1 makes its own certification pipeline hard to
+attack and reports what it learns to the system whose object is the general defense; the estate's
+adversarial resilience is D2-plus-B7's, and A1's contribution is a hardened schoolhouse plus an incident
+feed, not a claim to own the walls.)
+
 FINAL LAW — PART XXII. An anti-pattern is a mistake and an adversary is a will, and a certification —
 being a trust grant — is worth attacking. A1 defends the schoolhouse, not the estate: held-out cases
 defeat preparation, the educator countermetric defeats collusion, criterion-identity crediting defeats
@@ -2227,6 +2452,38 @@ A2's adopted laws flow into A1's curricula — and A1 does not write back to A2,
 A2's object and teaching them is A1's. The two datasets were authored together precisely so this seam
 is clean from the start rather than retrofitted.
 
+23.8 The single-write discipline as an architectural safeguard, not merely a description. Part XXIII
+opened by observing A1 has one write (the certification trust tier) and many reads; this subsection
+argues the single-write is a deliberate safeguard the estate should hold A1 to, because a system's
+blast radius is its write surface. (DEFINED: A1 mutates exactly one field the rest of the estate
+consumes — the learner's trust tier — and everything else it does is internal to its own pipeline
+(curricula, evidence ledgers, assessments) or a read of another system's output. This makes A1's
+maximum possible impact on the estate precisely bounded: the worst A1 can do to the estate is publish a
+wrong trust tier, which the router then acts on.) (DERIVED: a system that wrote to many estate surfaces
+would have a blast radius spanning all of them, and a bug or a compromise would propagate widely; A1's
+single write means a defect is contained to one field with one consumer, auditable in one place. This
+is the same least-authority discipline the estate applies to its most dangerous surfaces — a narrow,
+named write is safer than a broad one — relocated to a dataset's architecture.) The discipline also
+sharpens the certification's design imperative: because the trust tier is the WHOLE interface between
+what A1 proves and what the estate does, every property the router needs — the stage, the scope, the
+expiry, the evidence basis — must be legible in that one field, which is why Part XI §11.1 loaded the
+certification with all of them. A single write must carry everything, precisely because it is single.
+
+23.9 The seams A1 deliberately does NOT build, and why the restraint is the point. An integration Part
+is as much about the wires A1 refuses as the ones it makes. A1 does not write to IAS-C1's portfolio (it
+supplies inputs; C1 allocates); it does not write to IAS-D2's antibody record (it supplies incidents;
+D2 immunizes); it does not write to A2 (it teaches A2's adopted laws; it does not propose them); it does
+not write to F1's membership (it proves competence; F1 admits). (NORMATIVE: every one of these is a seam
+where A1 stops at handing an input to the owner rather than performing the owner's act, and the
+restraint is the anti-inflation contract made operational — the moment A1 wrote an allocation, an
+antibody, a law, or a membership, it would be performing a sibling's object under A1's name.) (DERIVED:
+the discipline that makes A1 a good estate citizen is not what it does but what it declines to do — it
+reads widely and writes narrowly, and every read that could have tempted a write is a boundary A1 held.
+An education system that started allocating capital because it computed education cost, or proposing
+laws because it surfaced cross-domain invariants, would be the vocabulary-collision absorption the whole
+CPCSC audit exists to prevent, committed from the inside by a system that knew better. A1's restraint at
+each seam is the audit's discipline kept after the audit ended.)
+
 FINAL LAW — PART XXIII. A1 has one write to the estate — the certification trust tier the router
 consumes — and many reads: D2's incidents and decay signals, FD's distillates, DFP's frozen corpus,
 C1's lifecycle timing, F1's constitutional admission, A2's adopted laws. Every seam keeps both objects
@@ -2294,6 +2551,39 @@ liveness of the specified system is a separate, later gate, and A1 does not clai
 run merely because they are specified. To claim otherwise would be the Scaffold Illusion A1's own Part
 I names — a DONE claim without observed evidence — committed by A1 about itself.
 
+24.7 The invariants are not equally load-bearing, and the ordering matters under pressure. The five
+invariants of §24.3 are all binding, but they fail with different consequences, and A1 states the
+ordering so that under resource pressure the right ones are defended last. (DEFINED, ordered by cost of
+violation: invariant I (no certification without observed assessment) is the keystone — its violation
+certifies pure guesses and collapses A1 entirely into the Part I implicit judgment it replaces;
+invariant III (educator does not grade its own graduate) is next — its violation corrupts the evidence
+at its source; invariant IV (ladder not switch) and II (no permanent certification) protect the roster's
+ongoing honesty; invariant V (teaching-to-the-test is a failure) protects the meaning of the assessment.)
+(DERIVED: the ordering is not a licence to drop the lower invariants — all five are binding — but a
+statement of which failure is most catastrophic, so that an A1 under pressure to cut corners knows that
+cutting invariant I is death while cutting invariant V is a serious wound. This is the estate's own
+practice of ranking its Hard Rules by severity relocated to A1's self-audit — a CRITICAL invariant and
+a HIGH invariant are both binding, but naming which is which is what lets a triage under pressure be
+correct rather than arbitrary.) The keystone status of invariant I is why so many mechanisms — held-out
+assessment, the practicum, the pure certification function — all ultimately serve it: they are the
+machinery that makes "observed assessment" real rather than nominal, and every one of them exists
+because invariant I is the one whose violation ends A1.
+
+24.8 The honest self-report of what this audit of A1 could and could not check. Turning the discipline
+on A1 (§24.1) requires also being honest about the limits of that self-turning. (CONTESTED-honest.)
+This dataset can specify A1's failure modes and invariants and make them checkable; it CANNOT observe
+A1 running, because A1 as sealed is a specification, not a running system (§24.6). So the reflexive
+audit here proves that A1's DESIGN names its failures and holds itself to its invariants — it does not
+prove that a built A1 will uphold them, which is a later, empirical gate. (DERIVED: this is the same
+truth-proof-versus-transfer-proof honesty the estate learned — a specification proven coherent is not a
+system proven to work, and claiming the latter from the former would be the exact overreach A1's own
+Part I names as the Scaffold Illusion. The reflexive audit's honest scope is: the design is complete,
+internally consistent, and self-applying; the liveness of the built system is unproven and belongs to a
+build downstream of this seal.) A1 states this limit rather than hiding it, because an education system
+that claimed its own mechanisms were proven to work merely because they were well-specified would be
+certifying itself on a proxy — violating, about itself, the very first invariant it holds its learners
+to.
+
 FINAL LAW — PART XXIV. An education system that cannot state its own failures and invariants is the
 unproven self-certifying authority it forbids in others — so A1 turns its discipline on itself: eight
 named failure modes with the honest bound that the set is only what is known at sealing, five invariants
@@ -2360,6 +2650,37 @@ be trusted" is always backed by an observation and always carries an expiry. It 
 nothing, immunizes nothing, and legislates nothing — it educates, and it holds itself to the exact
 standard it holds its learners: educated means taught, evidenced, certified, and maintained, and a
 credential is only ever as sound as the evidence still inside its window.
+
+25.7 What A1 leaves for the build, stated so the seal is honest about its own scope. This dataset seals
+a complete specification; it does not seal a running education system, and the completion contract
+(§25.5) is met by specification-completeness, not by liveness. (DEFINED: the build downstream of this
+seal must instantiate the learner record and its store; wire the certification trust tier to a live
+router surface (the reachability gate of §24.4); derive the curriculum registry from that store (§19.2);
+and connect the decay triggers to D2, E1, and FD-04's telemetry (§12.3). Until those are built and
+observed, A1's mechanisms are specified and unproven-in-operation, exactly as A1's own invariant I would
+require A1 to say about any competence not yet evidenced.) (DERIVED: naming the build explicitly is
+itself an application of A1's discipline — an education system that blurred the line between "specified"
+and "running" would be teaching the estate to accept a DONE claim without observed evidence, which is
+the Scaffold Illusion its own Part I opens against. The seal is honest precisely because it draws this
+line: the specification is done and checkable; the system is a build, and its liveness is a separate
+gate A1 does not pretend to have passed.) The single most important build step is the reachability
+wire — an A1 whose certification tier no live surface reads would be the orphan-learner failure applied
+to A1 itself, a specified education system that certifies to no effect, and the build is not complete
+until a live router consumes the tier A1 produces.
+
+25.8 The dataset's place in the CPCSC corpus, and the seam it was authored to keep clean. A1 is the
+first of two Tier-A datasets, and it was authored alongside A2 (Theory Generator) precisely so their
+seam — A1 teaches the laws A2 proposes (Part XXIII §23.7) — is clean from the first commit rather than
+retrofitted. (DEFINED: A1's object is competence acquisition and maintenance; A2's is law proposal from
+evidence; the two meet where an adopted law becomes teaching material. A1 was written to hand A2 its
+cross-domain assumption evidence (Part XV §15.8) and to consume A2's adopted laws as curriculum inputs,
+and to do neither system's other work.) (DERIVED: authoring the two Tier-A datasets as a pair is what
+lets each stay strictly within its object — a later-retrofitted A2 would have risked A1 having already
+absorbed the law-teaching-and-proposing boundary into one blurred mechanism, exactly the vocabulary
+collision the audit that authorized both exists to prevent. The two were kept distinct at authoring so
+they never have to be disentangled later.) A1 thus closes as it opened — as the education object no
+estate system owned, cited against every sibling, distinct from its Tier-A partner, and honest about
+being a specification that a build must bring to life.
 
 FINAL LAW — PART XXV. Educated means taught AND evidenced AND certified AND maintained — drop any one
 and the word collapses into a lecture attended, a test passed by accident, a diploma decaying toward
