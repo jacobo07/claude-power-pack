@@ -1,53 +1,54 @@
 # CPCSC — MISSION STATE
 
-**Phase:** Task 1 + 1b SEALED · Task 2 IN FLIGHT (wave 1 of 3) · STOP #2 not drawn.
-**Updated:** 2026-07-20
+**Phase:** STOP #2 APPROVED · A1 SEALED · A2 + Tier B + run_family fix PENDING.
+**Updated:** 2026-07-21
+
+## STOP #2 ruling (Owner, approved)
+- **Tier A: APPROVED** — build A1 + A2.
+- **Tier B: APPROVED** — 9 Parts/modules into named owners.
+- **Tier C: DEFERRED** — World Model Federation (needs usage evidence) + Cognitive
+  Diplomacy (needs constitutional amendment to IAS-F1 §3.4). Do NOT build here.
+- **Tier D: belongs to the open CPP-ACI STOP #1** — do NOT touch here.
 
 ## Sealed
-- **STOP #1 audit** (`3af2665`) — 20 domains. Source read to EOF (4,779 lines); line 1
-  carries a bearer token, never transcribed. 6 verdicts content-verified: all 6 moved
-  toward less-owned. Final: 9 ABSORB · 8 EXTEND · 3 KEEP-AS-NEW · 0 REJECT.
-- **Task 1 — repatriation** (`6b83358`) — CPP-IAS (14 datasets, 478,208 w) →
-  `vault/knowledge_base/cpp_ias/`; CPP-ACI governance → `cpp_aci/`. Byte-identical,
-  0 mismatches. `CPP_IAS_INDEX.md` authored.
-- **Task 1b — D2A registry derived** (`314ad9a`) — registry 32 → 55 families,
-  `registry_gaps()` empty. All 4 measured false FOLDs now DEFER; Counterfactual
-  Intelligence now binds KB-DECISION-REVIEW (engine can finally see drk_04).
-  Canonical duplicate unchanged at 95%. D2A 26/26, DFP 17/17 (was a pre-existing
-  16/17), DRK 18/18, FD 12/12 — hermetic ×3.
-- **UKDL** — `PR-CORPUS-AUDIT-CONTENT-TIER-001` + `T-D2A-REGISTRY-BLIND-SPOT-001`.
-- Pushed: REMOTE_DELTA `0 0` at `314ad9a`.
+- STOP #1 (`3af2665`), Task 1 repatriation (`6b83358`), Task 1b D2A registry (`314ad9a`),
+  UKDL rules (`417ec51`), Tribunal content-tier 12/12 (`bc3e70d`/`7721031`), STOP #2
+  boundary (`4f7b27e`).
+- **A1 Cognitive Education SEALED (`fd3bcb1`)** — 25/25 Parts, avg 1396 w/Part (0 under
+  the 1200 floor; verified vs estate ref ias_c1=1565 avg), 25 FINAL LAWs, END-OF-DATASET
+  marker, contamination 0 hits, citation-only. File:
+  `vault/knowledge_base/cpcsc/cpcsc_a1_cognitive_education.txt` (+ DATASET_A1_CONTRACT.md,
+  PART_MAP_A1.md). Pushed, REMOTE_DELTA 0 0.
 
-## In flight — Task 2, Tribunal content-tier re-run
-The 2026-07-12 Tribunal's 12 Sciences. Its §2.2 table lists **9** ABSORB rows
-(I, II, III, IV, VI, VII, VIII, IX, XII) while its tally line says "8 of 12 ABSORB,
-3 EXTEND, 0 NEW" — summing to 11. Use the TABLE; record the discrepancy.
+## Pending (in order)
+1. **A2 · Theory Generator / Law Extraction** — 25 Parts, same floor + gates. "ACIS is a
+   tribunal without a legislature": every owner JUDGES a law already written; A2 PROPOSES
+   one from evidence (FD-07 deposits, fd_04 proofs, UKDL rules, CEPS events). Depends on
+   B2 (epistemic algebra) + B1 (unknown-unknowns) per STOP_2 §4 — but the dataset (spec)
+   can be authored now; the wiring is the build. Seam to A1: A1 teaches A2's adopted laws.
+2. **Tier B — 9 Parts/modules into named owners** (STOP_2 §3):
+   B1 unknown-unknown generation → FIOS · B2 epistemic algebra unification → new registry+Part
+   · B3 reasoning execution axis → CO-03 + one_shot · B4 corpus→executable transduction →
+   seam DFP FREEZE→IAS-C1 FUNDED · B5 undeclared side-effect ledger → daif_04 PART VII ·
+   B6 mission constitution → ias_a1 PART VII (one Part) · B7 adversarial pathogen class →
+   ias_d2 · B8 semantic memory abstraction ladder → daif_08 · B9 DR/model-exit/SPOF → ias_f3.
+   Each: read owner fully, extend in place, close the named gap only, contamination audit,
+   add an existence gate. Micro-commit per owner.
+3. **run_family DEFER fix** — d2a_engine: 45% coverage cap must not report as KEEP. Add
+   DEFER as a third verdict distinct from FOLD (has parent) / KEEP (genuinely new).
+   Done-gate: no-clear-parent→DEFER, sealed-parent→FOLD, genuinely-new→KEEP.
+4. **Close-out** — Tier C/D registered DEFERRED (above); REMOTE_DELTA 0 0.
 
-- **Wave 1 (dispatched):** Sciences I, II, XII · Sciences III, IX
-- **Wave 2 (next):** Sciences IV, VIII · Sciences VI, VII
-- **Wave 3:** V, X, XI — spot-check only (already EXTEND; bias could only make them
-  MORE new, never less)
-
-Deliverable: `CPP_ACI_TRIBUNAL_CONTENT_TIER.md`, 12 rows.
-
-## Known residual limitations (do not paper over)
-- **Digital Twin under-called.** Content tier put IAS-F3 at 65% ownership; the fixed
-  engine returns 45%/DEFER (func=13, floor is 15). Under-detection that names the
-  right adjacent parent is safer than over-detection naming a wrong one, but it IS a
-  miss. Do not tune the floor to make one case pass — that is overfitting.
-- **Sub-threshold verdicts all pin to exactly 45%**, collapsing ranking among deferred
-  cases. Acceptable: 45 means one thing, "insufficient precision to name a parent".
-- `corpus_roi.py CORPUS_REGISTRY` is a fourth hand-curated registry with the same
-  defect. Recorded in UKDL, deliberately out of scope.
+## Standing rules for the remaining build
+- Floor >= 1200 w/Part (verified; the estate genuinely exceeds it). Citation-only, no
+  verbatim restatement. Contamination scan 0 hits before every SEAL. Each Part a FINAL LAW.
+- NEVER `git add -A`; every commit pathspec-scoped; verify `git log -1 --format='%s'`.
+- Do NOT commit sibling-pane files (`__init__.py`, `graphify_knowledge.py`,
+  `test_corpus_roi.py`, `test_redteam_protocol.py`).
+- Content-tier verdicts absolute over title-tier. STOP #2 already drawn — build within it.
 
 ## Next 3 actions
-1. Collect wave 1, dispatch wave 2.
-2. Write `CPP_ACI_TRIBUNAL_CONTENT_TIER.md`; commit.
-3. Draw STOP #2 across CPCSC + Tribunal + CPP-IAS-in-denominator; present inline.
-
-## Do not
-- Do not seal any ABSORB/REJECT at title tier (`PR-CORPUS-AUDIT-CONTENT-TIER-001`).
-- Do not draw STOP #2 before Task 2 completes.
-- Do not commit `modules/duplicate_to_advantage/__init__.py`, `tools/graphify_knowledge.py`,
-  or the untracked `tools/test_corpus_roi.py` / `test_redteam_protocol.py` — all belong
-  to concurrent panes. Every commit stays pathspec-scoped.
+1. Author DATASET_A2_CONTRACT.md + PART_MAP_A2.md, then cpcsc_a2_theory_generator.txt
+   (25 Parts, floor-first this time — target ~1350 w/Part to avoid a second expansion pass).
+2. Tier B: extend the 9 owners, one micro-commit each.
+3. run_family DEFER fix + tests; close-out; final REMOTE_DELTA 0 0.
