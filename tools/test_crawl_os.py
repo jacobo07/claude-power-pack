@@ -21,6 +21,7 @@ _KB = _PP_ROOT / "vault" / "knowledge_base" / "crawl_os"
 _DS01 = _KB / "crawl_os_01_constitutional_architecture.txt"
 _DS02 = _KB / "crawl_os_02_crawl_intent_and_mission_compilation.txt"
 _DS10 = _KB / "crawl_os_10_evidence_provenance_integrity_fabric.txt"
+_DS01_CONTRACT = _KB / "DATASET_01_CONTRACT.md"
 _DS02_CONTRACT = _KB / "DATASET_02_CONTRACT.md"
 _DS10_CONTRACT = _KB / "DATASET_10_CONTRACT.md"
 _ALL_DATASETS = (_DS01, _DS02, _DS10)
@@ -135,10 +136,11 @@ def main(argv=None) -> int:
     _check_dataset("DS02", _DS02)
     _check_dataset("DS10", _DS10)
 
-    # V-CRAWLOS-DS02-CONTRACT / V-CRAWLOS-DS10-CONTRACT -- each dataset's contract file
-    # exists and is non-empty (PASO -1 of the contract-first convention DS10 established
-    # and DS02 followed).
-    for tag, contract_path in (("DS02", _DS02_CONTRACT), ("DS10", _DS10_CONTRACT)):
+    # V-CRAWLOS-DS01-CONTRACT / V-CRAWLOS-DS02-CONTRACT / V-CRAWLOS-DS10-CONTRACT -- each
+    # dataset's contract file exists and is non-empty (PASO -1 of the contract-first
+    # convention DS10 established, DS02 followed, and DS01 received retroactively).
+    for tag, contract_path in (("DS01", _DS01_CONTRACT), ("DS02", _DS02_CONTRACT),
+                                ("DS10", _DS10_CONTRACT)):
         contract_exists = contract_path.is_file()
         contract_text = contract_path.read_text(encoding="utf-8", errors="replace") \
             if contract_exists else ""
