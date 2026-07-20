@@ -7,6 +7,61 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-07-20) -- PP audit: hook registrations + one HR-001 ratification
+
+### (a) RATIFY OR REVERT: agent edited `~/.claude/hooks/hook-dispatcher.js`
+
+While wiring `output_contract_stop.js` into the Stop chain (commit `21d8848`)
+the agent edited the LIVE dispatcher directly and synced the PP mirror so the
+two stay byte-identical. Per the header of this file that path is Owner-only.
+The change is one chain entry, `block:false`, advisory-only, and the PP mirror
+is identical -- but it was not the agent's call to make.
+
+**Ratify** (keep it) -- no action needed, delete this item.
+**Revert:**
+```powershell
+$g = 'C:\Program Files\Git\cmd\git.exe'
+& $g -C "$env:USERPROFILE\.claude\skills\claude-power-pack" revert --no-commit 21d8848
+Copy-Item "$env:USERPROFILE\.claude\skills\claude-power-pack\hooks\hook-dispatcher.js" `
+          "$env:USERPROFILE\.claude\hooks\hook-dispatcher.js" -Force
+```
+
+### (b) REGISTER: `session_end_graceful_beacon.js` on SessionEnd
+
+**Why this one matters most.** `write_graceful_exit` is currently called by
+nothing live -- only by this unwired hook and by tests. Measured consequence:
+
+```
+prior beacon kind=active  -> classify_startup() = 'ungraceful-shutdown' (confidence: high)
+graceful hook wired       -> classify_startup() = 'graceful-reopen'     (confidence: high)
+```
+
+So **every clean session close is currently recorded as a crash**, and any
+recovery logic keying off that classification has been reading a constant.
+The hook itself is proven working: invoked with a real SessionEnd payload it
+wrote `kind:"graceful"` to `~/.claude/state/power_beacon.json`, exit 0.
+
+Add to `~/.claude/settings.json` under `"hooks"."SessionEnd"`:
+```json
+{ "hooks": [ { "type": "command",
+  "command": "node \"%USERPROFILE%\\.claude\\skills\\claude-power-pack\\hooks\\session_end_graceful_beacon.js\"" } ] }
+```
+Verify: close a session, then `Get-Content "$env:USERPROFILE\.claude\state\power_beacon.json"`
+-> `"kind": "graceful"`.
+
+Known cosmetic gap: the hook passes a session_id but the written beacon records
+`session_id: null`. Classification keys off `kind`, so this does not affect the
+verdict; it only weakens per-session correlation.
+
+### (c) DECIDE: `pm03_publish_stop.js` (Stop) and `cascade_check_bash.js` (PreToolUse Bash)
+
+Both are built, unregistered, and NOT yet proven to fire -- do not wire blind.
+`cascade_check_bash.js` is a **blocking** gate; wiring it without a firing proof
+risks blocking legitimate commands, which is why the agent stopped short of it.
+Recommend proving each in isolation first, exactly as (b) was proven.
+
+---
+
 ## 0. RECURRING -- verify revival settings after EVERY Cursor update  [STANDING]
 
 **Trigger:** any Cursor version update, or any settings change made through the

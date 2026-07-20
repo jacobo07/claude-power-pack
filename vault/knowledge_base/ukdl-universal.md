@@ -4677,3 +4677,70 @@ exist. Sibling of PR-COVERAGE-BY-CONSTRUCTION-001 (discover the audit set, do no
 curate it) and of the Liveness Standard (shipping is not wiring).
 
 Gate: `python tools/test_pp_activation.py` -- 7/7, hermetic x3.
+
+---
+
+## T-LIVENESS-DENOMINATOR-EXCLUDES-HOOKS-001 (2026-07-20, PP global audit)
+
+`modules/liveness/reachability.py` is the PP instrument for "built but not
+wired". Its denominator is `modules/**/*.py` (`_all_modules`, "the full
+denominator"); `hooks/*.js` appear only in `_SEED_GLOBS` / `_LIVE_SEED_GLOBS` --
+as SOURCES of reachability, never as SUBJECTS of it.
+
+Consequence: a hook that exists and is registered nowhere is not scored ORPHAN.
+It is absent from the denominator, and absence reads as health. A global audit
+found six such hooks, none of which the gate had ever flagged -- while the gate
+simultaneously reported 155 named orphan modules, i.e. it looked maximally
+honest in the exact run where it was blind.
+
+This is PR-COVERAGE-BY-CONSTRUCTION-001 turned on the auditor itself: the tool
+that exists to catch unwired things had an unwired CLASS outside its own
+denominator. An instrument's blind spot is invisible precisely because the
+instrument is the thing you would use to find it.
+
+Rule: any reachability/liveness gate must enumerate EVERY executable class the
+repo ships (`.py` modules, `.js` hooks, `.ps1` scripts, commands, agents), not
+just the one its author happened to start with. When a gate reports a large
+orphan set, ask what is NOT in its denominator before trusting the number.
+
+## T-SILENT-GATE-INPUT-MISMATCH-001 (2026-07-20)
+
+`hooks/output_contract_stop.js` was built, documented in `CLAUDE.md` as
+enforcing HR-OUTPUT-001, and scanned `JSON.stringify(payload)` for slop markers.
+The Stop payload carries `transcript_path` -- a PATH -- and never the turn's
+prose, so the scan matched nothing the harness sends. Proven: realistic payload
+-> silent; synthetic payload with the marker inline -> fires.
+
+Wiring it as-shipped would have installed a gate that returns clean forever. A
+never-firing gate is strictly WORSE than an unregistered one: the unregistered
+one is visibly absent, the silent one manufactures evidence of health.
+
+Rule: a gate is not done when it is registered. It is done when it has been
+observed to FIRE on a realistic input AND stay silent on a clean one. Both
+directions are required -- a gate that always fires and a gate that never fires
+are the same defect wearing different signs. Sibling of "zero cannot fall".
+
+## PR-PP-DONE-GATE-WIRING-001 (2026-07-20)
+
+For any new hook, module or system in PP, the done-gate is all four, not three:
+
+1. code exists and its tests pass;
+2. it is registered in `settings.json`, a dispatcher chain, or the correct
+   consumer -- and the registration is VERIFIED by resolving the path from the
+   registrant's location (a relative path valid in the repo can be invalid at
+   the deployed location, and vice versa);
+3. a test observes the system FIRE on a realistic payload, and stay SILENT on a
+   clean one;
+4. it appears in the denominator of the audit that is supposed to catch it.
+
+Missing any one: NOT DONE. Item 3 is the one that was always skipped, and item
+4 is the one nobody knew to check.
+
+Corollary -- THE REGISTRAR IS THE ANTIPATTERN. PP's recurring failure is not
+forgotten registration; it is registration modelled as a SEPARATE MANUAL STEP.
+`register_global_hooks.py` and `settings_merger.py` are tools someone must
+choose to run, and `session_end_graceful_beacon.js` carries its own Owner-side
+registration instructions in its header comment -- written by an author who knew
+exactly what was needed, and it still never happened. Code that ships with
+"run the registrar later" is complete-looking and inert. A step that depends on
+memory is not a step, it is a wish.

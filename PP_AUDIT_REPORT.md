@@ -47,6 +47,20 @@ names**, but they appear in neither live `settings.json` nor either dispatcher:
 | `hooks/session_end_graceful_beacon.js` | no | **no** |
 | `hooks/_oneshot_solitary_empty_shell_cleanup.js` | no | **no** (and drifted vs live copy) |
 
+> **FASE 1 correction.** Reading each header before wiring demoted two of the
+> six. `ram-guard-stop.js` declares itself *"SUPERSEDED / UNREGISTERED BY
+> DESIGN"* (superseded by `modules/zero-crash/hooks/ram-watchdog.js`) — wiring
+> it would be wrong. `_oneshot_solitary_empty_shell_cleanup.js` is a one-shot
+> deployed via `install-global.ps1`, never a chain entry; its drift is a stale
+> deployment, not an unwired hook. **Genuine candidates: 3, not 6.** Both
+> demotions came from reading, not from any gate.
+>
+> Status after FASE 1: `output_contract_stop.js` **wired + proven** (5/5).
+> `session_end_graceful_beacon.js` **proven, registration queued** (needs a
+> `settings.json` SessionEnd entry — HR-001 forbids agent self-registration).
+> `pm03_publish_stop.js` and `cascade_check_bash.js` deliberately **not wired**:
+> unproven, and the latter is a *blocking* gate. See `vault/OWNER_QUEUE.md`.
+
 `output_contract_stop.js` is the one that matters most. **Correction to my
 first statement of this finding**: I wrote that wiring it restores
 HR-OUTPUT-001/002/003. That was overstated. The hook is *advisory only* and
@@ -75,6 +89,25 @@ this same class of silent-gate defect. Wire-then-verify is not optional here.
 committed copy is not what is executing), plus
 `_oneshot_solitary_empty_shell_cleanup.js` (unregistered).
 
+## The structural finding (added FASE 1) — the gate cannot see hooks
+
+`modules/liveness/reachability.py` enumerates `modules/**/*.py` as its
+denominator. `hooks/*.js` appear only in `_SEED_GLOBS` / `_LIVE_SEED_GLOBS` —
+as **sources** of reachability, never as **subjects** of it.
+
+So an unregistered hook is not scored ORPHAN. It is **absent from the
+denominator, and absence reads as health**. All six hooks above sat undetected
+in the same run where the gate confidently reported 155 named orphan modules —
+it looked maximally honest exactly where it was blind.
+
+This is PR-COVERAGE-BY-CONSTRUCTION-001 turned on the auditor itself: the tool
+built to catch unwired things had an unwired *class* outside its own
+denominator. That blind spot is invisible by construction, because the
+instrument is what you would use to find it.
+
+**This, not the individual hooks, is the highest-value output of the audit.**
+Sealed as `T-LIVENESS-DENOMINATOR-EXCLUDES-HOOKS-001`.
+
 ## B. MODULES — pre-measured, not a new finding
 
 `modules/liveness/reachability.py` already scores this and exits 1:
@@ -87,7 +120,21 @@ This matches the standing debt already named in CLAUDE.md. **No new audit tool
 should be built** — the instrument exists and is authoritative. The correct
 FASE 1 action is to reduce the named set, not to re-measure it.
 
-## C. TOOLS — 272 .py, test posture is misleading
+## C. TOOLS — test posture (RESOLVED in FASE 1, commit df5bb93)
+
+`pytest tools/` died with `INTERNALERROR` (exit 3): four V-gate scripts called
+`sys.exit()` at module level, killing the collector. Fixed by guarding those
+exits under `__main__` **and** exposing a `test_gate()` assertion — without the
+assertion pytest would have executed each gate as an import side effect and
+reported green regardless of outcome, the same silent-success defect as the
+hook above. Six further tests errored at setup on fixtures (`tmp`, `sample`)
+that were never defined, so they had **never executed under pytest**; fixtures
+added, guarded so standalone `main()` still works.
+
+**38 → 156 tests collected, 156 passing.** PP now has one command that runs its
+tool suite. Original finding retained below.
+
+### Original finding (superseded)
 
 - 89 `tools/test_*.py` + 22 `tools/verify_*.py`.
 - **`pytest tools/` does not work**: collection dies with `INTERNALERROR`,
