@@ -1,0 +1,506 @@
+CPCSC-A1 — COGNITIVE EDUCATION: THE INSTITUTIONAL TEACHING OF CAPABILITY
+Claude Power Pack Cognitive Sovereignty Civilization — Tier A, new dataset 1 of 2.
+Depth contract: PART I..PART XXV, 1200-1500 words per Part, a FINAL LAW closing every Part.
+Epistemic marking on every load-bearing claim: DEFINED / OBSERVED / DERIVED / HYPOTHESIZED /
+NORMATIVE / EXPERIMENTAL / CONTESTED / UNRESOLVED.
+
+Authorized: CPCSC STOP #2 (commit 4f7b27e), Tier A. Origin: the CPP-ACI Tribunal content-tier
+re-run found that of 32 proposed domains only two survived as genuine, 0%-owned datasets. This
+is the first. Its founding evidence is an ABSENCE, verified — a targeted search across
+vault/knowledge_base/, modules/, agents/, and commands/ for the education vocabulary
+(curriculum, apprenticeship, certification-of-a-learner, synthetic experience, graduation)
+returned only vocabulary collisions: human onboarding, SaaS proficiency scores, corpus
+certification. No estate system holds the transition of a participant from incompetence to
+certified competence. (OBSERVED, boundary search 2026-07-20.)
+
+Absorbs (Non-Duplication test, CPCSC boundary): nothing. A1 folds no prior candidate, because
+no prior candidate reached for this object — the STOP #1 and Tribunal audits both confirm the
+white-space. This is the rare Article II case where the distinct-object test passes trivially:
+there is no incumbent to distinguish from, only siblings to defer to.
+
+Parents deferred to (never absorbed, cited by boundary): IAS-A1 capability router (consumes A1's
+certification state, does not produce it); IAS-C1 capability portfolio (receives education cost as
+one capital input, never ranks it here); IAS-D2 immune system (supplies the decay signal A1 turns
+into a recertification trigger, never proves non-recurrence here); FD family (distills a finished
+insight into a deposit — A1 consumes the deposit as teaching material, never distills); DFP
+(certifies that a governing CORPUS is frozen — A1 certifies a LEARNER); ACIS (levels a THEOREM on
+the E0-E7 ladder — A1 assesses a LEARNER's competence); A2 Theory Generator (writes the laws A1
+teaches). Each is a different subject wearing a word A1 also uses; the boundary is drawn per Part.
+
+Distinct institutional object (Non-Duplication Ledger, Article II): the standing pipeline by which
+any participant in the estate — a capability, an agent role, a newly admitted model instance — is
+taken from not-yet-trustworthy to certified member and held there against decay, through curriculum,
+apprenticeship, synthetic experience, failure simulation, supervised practicum, proxy-resistant
+assessment, certification, recertification, and a graduation ladder from supervised through bounded
+to full autonomy. Where the router asks "may I send work to this capability," A1 answers the
+question the router presumes already answered: "has this capability been taught, and proven, to do
+the work — and is that proof still current." The object is competence-acquisition-and-maintenance
+for a participant, owned by no system that builds, values, routes, or immunizes that participant.
+
+===============================================================================================
+PART I — THE FOUNDING GAP: EDUCATION AS AN INSTITUTIONAL OBJECT NO SYSTEM OWNS
+===============================================================================================
+
+1.1 The gap, stated precisely against the estate as it stands. The Claude Power Pack estate, as
+OBSERVED against the Non-Duplication Ledger, the Strengthening Matrix, and the repatriated CPP-IAS
+corpus on 2026-07-20, contains more than seventy systems and twenty-plus sealed dataset domains.
+Every one of them presumes a competent operator. The IAS-A1 capability router (PART VII) routes a
+mission to a capability on the assumption that the capability, once selected, will perform — it
+scores fit, not readiness-to-be-trusted. IAS-C1 (PART XV) governs a capability's economic lifecycle
+from PROPOSED through RETIRED, but its FUNDED gate assumes the capability already works when funded;
+it prices competence, it does not create it. IAS-D2's antibody record (PART IX) proves that a
+specific failure will not recur, but only after some already-competent hand wrote the fix. No system
+in the estate holds the object between "a capability exists" and "a capability may be trusted": the
+teaching of it, the evidencing of its competence, and the maintenance of that competence over time.
+(OBSERVED: the three named systems each stop at the boundary of this object from a different side —
+routing, valuation, immunization — and none crosses into it.)
+
+1.2 Why the gap has stayed invisible. The estate has been built by a small number of highly
+competent sessions, and competence held by the builder is invisible to the built system. When the
+Owner or a frontier session brings a new capability online, the education happens inside that
+session's head — the operator reads the dataset, forms a model of how the capability behaves,
+tests it by hand, and pronounces it ready. That pronouncement is a certification; it is simply an
+UNDOCUMENTED one, produced by an implicit process that leaves no artifact, no evidence trail, and
+no decay clock. (DERIVED: the reason no system owns education is that education has never failed
+loudly enough to demand one — a competent operator silently absorbs the teaching cost every time.)
+The gap becomes visible only at scale: when the estate must admit a model instance the Owner has
+not personally vetted, or route work to a capability no current session personally taught, the
+implicit certification has no substrate to stand on. The pronouncement "it is ready" then rests on
+nobody's observed evidence.
+
+1.3 The asymmetry that makes this the dangerous kind of gap. A missing valuation wastes capital; a
+missing immunization lets a bug recur; both are recoverable and both announce themselves. A missing
+EDUCATION system fails silently and in the worst direction: an uneducated capability is routed
+unsupervised, acts on a competence nobody evidenced, and its first failure is discovered in
+production rather than in a practicum. (HYPOTHESIZED, but grounded in the estate's own doctrine:
+this is the Reality Contract failure — DONE claimed without observed evidence — relocated from
+code to participants. A capability certified by an implicit session judgment is the Scaffold
+Illusion wearing a graduation gown.) The cost of the missing system is therefore not the teaching
+that does not happen; it is the untaught capability that is trusted anyway.
+
+1.4 What A1 is, in one sentence, and what it is deliberately not. A1 is the estate's education
+system: the standing, evidenced, repeatable pipeline that converts a participant from
+not-yet-trustworthy to certified member and recertifies it against decay. (DEFINED.) It is not a
+capability builder — the arrow from a frozen corpus to a running capability is the Tribunal's
+Science IV / Tier-B4 gap, and A1 begins its work only once that capability exists. It is not a law
+writer — proposing the laws a curriculum teaches is A2's object. It is not a valuer, a router, or
+an immunizer. A1's single object is competence: acquiring it, evidencing it, and maintaining it,
+for a participant the rest of the estate will then build upon, value, route, and protect.
+
+1.5 The three participants A1 educates, named now and formalized in Part III. A capability (a named
+unit of estate function — a skill, a module, an agent role) is educated when a curriculum teaches an
+operator, or the capability's own governing session, the competence to wield it correctly. An agent
+role (a dispatched subagent type) is educated when it graduates from producing plausible output to
+producing verified output under the estate's gates. A model instance (a newly admitted provider or
+version) is educated when it is onboarded through the pipeline of Part XVI and proven to hold the
+estate's non-negotiable competences before any real work is routed to it. (DEFINED, three learner
+classes.) All three share one shape: an entry state of unproven competence, a curriculum, a body of
+practice, an assessment, and a certification that is provisional and decaying rather than permanent.
+
+1.6 The evidence standard A1 inherits and does not rebuild. The estate already owns a hard rule
+about evidence: a claim of competence, like any claim, is void if it rests on a proxy rather than an
+observation. SQI's evidence physics (cited, not restated) draws the line between a reviewer who
+reads what was produced and an auditor who asks whether the same reality reproduces the same result.
+A1 adopts that line wholesale for its own object: a certification asserted from curriculum-completion
+(a proxy) and not from observed behaviour (the reality) is void by construction. (NORMATIVE,
+inherited.) This is why A1 is an education system and not a training-log: it does not record that
+teaching occurred; it evidences that competence resulted.
+
+1.7 The founding law. An estate that trusts a capability it never evidenced teaching has not made a
+decision — it has made a guess and called it a certification. The purpose of A1 is to convert every
+such guess into an evidenced, decaying, recertifiable credential, so that the sentence "this
+participant may be trusted" is always backed by an observation and always carries an expiry.
+
+FINAL LAW — PART I. The estate's most expensive silent assumption is that its participants are
+already competent. Every system presumes it; no system evidences it. Education is the object that
+holds the transition from a participant existing to a participant being trustworthy — and until a
+system owns that transition explicitly, "it is ready" is the Scaffold Illusion in a graduation gown:
+a DONE claim with no observed evidence, relocated from code onto the agents the estate runs on.
+
+===============================================================================================
+PART II — WHY "EDUCATION" AND NOT ONBOARDING, CERTIFICATION, OR DISTILLATION
+===============================================================================================
+
+2.1 The boundary discipline this Part enforces. A1 uses four words the estate already uses for other
+objects: onboarding, certification, distillation, and training. Under the CPCSC audit's own governing
+rule — PR-CORPUS-AUDIT-CONTENT-TIER-001, that no ownership may be claimed or ceded on vocabulary
+matching — A1 must name, for each collision, the sibling that owns the word in its other sense and
+the specific mechanism that separates A1's object from the sibling's. (NORMATIVE: this Part is the
+Article II test applied four times, pre-emptively, so that no reader mistakes a shared word for a
+shared subject.)
+
+2.2 Onboarding — the human-and-session sense versus the participant sense. "Onboarding" in the
+estate today means a session's SessionStart bootstrap, a project's first-time setup marker, or a
+human operator reading a README. (OBSERVED: the token-optimizer-bootstrap and the .bootstrapped
+marker are the estate's onboarding artifacts; both configure an ENVIRONMENT for an already-competent
+operator.) A1's model onboarding (Part XVI) is a different object: it does not configure an
+environment, it proves a PARTICIPANT. The distinction is exact — environment onboarding asks "is the
+context ready for this operator," participant education asks "is this operator ready for the estate."
+The first arranges the room; the second qualifies the person entering it. A1 owns only the second.
+
+2.3 Certification — the corpus sense (DFP) versus the learner sense. DFP certifies that a governing
+corpus exists, is complete, and is frozen before a build proceeds; its CERTIFICATION and FREEZE
+stages (cited from DFP-02's lifecycle) are gates on a body of KNOWLEDGE. A1 certifies a LEARNER — a
+participant's proven competence to act. The subjects are orthogonal: a corpus can be certified frozen
+while every operator who would use it remains uneducated, and a learner can be certified competent on
+a corpus that is itself still evolving. (DERIVED: DFP's object is the artifact's readiness; A1's
+object is the actor's readiness; neither implies the other.) Where DFP asks "is the knowledge
+settled," A1 asks "is the actor taught." A1 consumes DFP's frozen corpus as ONE input to a curriculum
+— you cannot teach reliably from an unfrozen corpus — but the certification A1 issues is of the
+student, never of the syllabus.
+
+2.4 Distillation — FD's finished-insight sense versus A1's teachability sense. FD-03 routes a
+finished insight to its correct home and form; FD-07 runs the closure loop from question to
+writeback. Both take, as input, an insight someone has ALREADY HAD, and place or compound it. (OBSERVED,
+from FD-03's own opening: its subject is a destination-and-form router for an insight that exists.)
+A1's object is upstream and different: not the distillation of an answer, but the distillation of
+TEACHABILITY — turning a capability's behaviour into a curriculum a naive participant can learn from.
+A distilled insight is a deposit; a curriculum is a path. (DERIVED: FD asks "where does this finished
+knowledge belong;" A1 asks "how is this competence acquired by someone who does not yet have it.") A1
+is one of FD's consumers — a distillate is excellent raw material for a lesson — but consuming a
+deposit to build a lesson is not the same act as producing the deposit, and A1 never claims FD's.
+
+2.5 Training — the immune sense (D2) and the sandbox sense (G1) versus the pedagogic sense. The estate
+uses "training" loosely across IAS-D2's immunization (incident → preventive protection) and IAS-G1's
+mutation sandbox (a safe place to try a change). A1's failure simulation (Part VIII) and synthetic
+experience (Part VII) LIVE ON those siblings' substrates and must not reimplement them: A1 does not
+build a sandbox, it USES G1's; A1 does not author an antibody, it USES D2's incident record as a
+source of realistic failure scenarios to teach from. (NORMATIVE boundary: A1's contribution over D2
+and G1 is pedagogic sequencing — deciding WHICH failure a learner meets, in WHICH order, at WHICH
+stage of a curriculum — not the manufacture of the failure or the sandbox it runs in.) The
+mechanism A1 adds is the curriculum's ordering discipline; the substrate it runs that discipline on
+belongs to D2 and G1, cited and reused.
+
+2.6 The one-sentence separators, collected. Onboarding arranges the room; A1 qualifies the actor
+entering it. DFP certifies the syllabus; A1 certifies the student. FD produces the deposit; A1
+teaches from it. D2 and G1 manufacture the failure and the sandbox; A1 sequences which failure the
+learner meets and when. (DEFINED: four collisions, four distinct objects, zero absorption.) Each
+sibling keeps its word in its own sense; A1 keeps the word only in the pedagogic sense none of them
+holds.
+
+2.7 Why this Part exists before any mechanism is specified. The Tribunal's central finding this
+session was that an audit which reads titles instead of bodies mis-assigns ownership in one
+direction, and that the correction runs both ways only when the reader learns each owner's actual
+vocabulary before judging. A1 is being authored immediately after that finding; to author it without
+first drawing these four boundaries would be to reproduce, inside a new dataset, the exact
+title-tier error the dataset exists downstream of. (DERIVED: the discipline that corrected the
+Tribunal is the same discipline that must govern A1's self-definition.) A capability that cannot say
+precisely what it is NOT has not earned the right to say what it is.
+
+FINAL LAW — PART II. A shared word is not a shared subject. A1 borrows onboarding, certification,
+distillation, and training from four siblings, and owns none of their objects: it qualifies the
+actor, not the room; certifies the student, not the syllabus; teaches from the deposit, does not
+mint it; sequences the failure, does not manufacture it. An education system that cannot name the
+four things it is not would be the vocabulary-collision error it was built to end.
+
+===============================================================================================
+PART III — THE LEARNER OBJECT: WHAT IS BEING EDUCATED AND THE STATE IT CARRIES
+===============================================================================================
+
+3.1 Why the learner must be a first-class object before any curriculum is designed. A curriculum
+without a defined learner is a lesson addressed to no one; it cannot be assessed, because assessment
+requires a subject whose state changes from before to after. (DEFINED: the learner is the object
+A1's whole pipeline mutates — entry state unproven, exit state certified — and every later Part
+reads or writes some field of it.) Part I named three learner classes informally; this Part
+formalizes them into one shared record so that curriculum, assessment, certification, and decay all
+operate on a single, inspectable object rather than on three incompatible ad-hoc notions.
+
+3.2 The three learner classes, unified by shape. A CAPABILITY learner is a named unit of estate
+function — a skill, a module, an agent role's competence — whose "education" is the qualification of
+whoever or whatever wields it to wield it correctly. An AGENT-ROLE learner is a dispatched subagent
+type whose education is the graduation from producing plausible output to producing output that
+survives the estate's verification gates. A MODEL-INSTANCE learner is a newly admitted provider or
+version whose education is the Part XVI onboarding proof that it holds the estate's non-negotiable
+competences. (DEFINED, three classes.) They differ in substrate but share one shape: an entry state
+of unproven competence, an assigned curriculum, a body of accumulated practice-evidence, an
+assessment result, and a certification that is provisional and decaying. A1 owns the shape; the
+substrate-specific details are parameters of the shape, not separate systems.
+
+3.3 The Learner Record — the fields A1 defines and owns. A learner record carries: a learner_id and
+class; a target_competence (the named thing being taught, drawn from the curriculum of Part V); a
+current_stage on the graduation ladder (Part XVII: UNPROVEN → SUPERVISED → BOUNDED → FULL); an
+evidence_ledger of observed practice results (never proxy-completion — Part X); a certification with
+an issued-at, an evidence basis, and an expiry (Part XII); and a provenance pointer to the curriculum
+version the learner was taught against. (DEFINED.) Every field is either an observation with its
+basis attached or an explicit unknown — the estate's manifest-first evidence discipline, cited from
+SQI-01's Reality Scanner rule and applied to the learner rather than to a repository. A learner
+record with a certification field but an empty evidence_ledger is malformed by construction, and
+Part X's assessment gate refuses to write the former without the latter.
+
+3.4 The entry state and why it is UNPROVEN, not UNTRUSTED. A1 draws a deliberate distinction: a new
+learner is UNPROVEN — competence has not yet been evidenced either way — not UNTRUSTED, which would
+assert evidence of incompetence. (DERIVED: the distinction matters because UNPROVEN is the correct
+prior for a capability that may in fact already be competent but has simply never been assessed,
+while UNTRUSTED would license the estate to withhold routing on no evidence at all.) The whole
+purpose of the pipeline is to move a learner off UNPROVEN in one direction or the other, on
+observed evidence. This mirrors, and cites, SQI-01's symmetry rule: the premise-disproof engine
+disproves assertions of presence AND of absence alike, and A1 inherits that symmetry — it will not
+certify competence it has not observed, and it will not brand incompetence it has not observed.
+
+3.5 State transitions are evidenced, never timed. A learner never advances a stage because a
+duration elapsed; it advances because an assessment (Part X) produced observed evidence meeting the
+gate for the next stage. (NORMATIVE, and a direct inheritance of IAS-C1 §15's lifecycle rule that a
+transition requires evidence, not the passage of time. A1 does not rebuild that rule; it applies the
+same discipline to a learner that C1 applies to a capital position.) The symmetric consequence — a
+learner may sit at SUPERVISED indefinitely if its practicum never yields graduating evidence — is
+not a bug; it is the STALLED-EXPERIMENTAL pattern C1 §15.8 already names, relocated to education. A
+stalled learner is flagged for an educator's explicit judgment, not auto-graduated to clear the
+queue.
+
+3.6 The learner is not the capability, and this is the subtlest boundary in the dataset. A capability
+learner's record is ABOUT a capability but is not the capability's own state. IAS-C1 holds the
+capability's capital position; IAS-A1 holds its routing fitness; DFP holds its governing corpus's
+freeze state. A1's learner record holds one thing none of those do: the evidenced competence of the
+party that wields it. (DERIVED: this is why A1 does not duplicate C1, A1-router, or DFP — it points
+AT the same capability but records a field about the OPERATOR's proven skill, orthogonal to the
+capability's value, routability, or corpus-freeze.) When the router asks "may I send unsupervised
+work here," it is reading A1's current_stage field — a field no other system produces.
+
+3.7 Multiplicity: one capability, many learners. Because the learner is the wielder and not the
+capability, a single capability can have many concurrent learner records — one per operator, agent
+role, or model instance being qualified on it. (OBSERVED-analogous: the estate already tolerates
+one capability serving many missions; A1 tolerates one capability being learned by many parties.) A
+model instance freshly admitted may be UNPROVEN on a capability that a long-running session is FULL
+on. The router reads the learner record matching the party it would route to, not a global
+capability-level flag. This multiplicity is what makes A1 an education system and not a capability
+attribute: competence is a property of the pairing (party, capability), not of the capability alone.
+
+FINAL LAW — PART III. The learner is the wielder, not the wielded. A1's record points at a
+capability the way a driving licence points at a car — it certifies the party, on evidence, with an
+expiry, and it is orthogonal to the car's value, its roadworthiness, and its manual. Every other
+estate system holds a field about the capability; A1 holds the one field about the party proven to
+operate it, and that field advances on observed evidence or not at all.
+
+===============================================================================================
+PART IV — THE CURRICULUM AS A FIRST-CLASS ARTIFACT
+===============================================================================================
+
+4.1 A curriculum is an artifact, not a suggestion. The central design decision of A1 is that a
+curriculum is a versioned, provenanced, inspectable object with the same standing as a dataset or a
+module — not an informal list of "things to read." (DEFINED.) The reason is the same reason the
+estate versions everything else: a certification is only as trustworthy as the curriculum it was
+issued against, and a curriculum that cannot be pinned to a version cannot be audited when a
+certified learner later fails. If the syllabus is mutable and unversioned, "certified" means
+"certified against something we can no longer reconstruct" — the audit-cannot-witness-a-loss defect
+this session sealed, relocated to education.
+
+4.2 The curriculum as an ordered competence graph. A curriculum is DEFINED as a directed graph whose
+nodes are competences and whose edges are prerequisites: competence B may be taught only after
+competence A is evidenced. (DERIVED from the estate's own dependency discipline — the same shape as a
+build's dependency graph or GK's coordinate edges, reused as a pedagogic ordering rather than a
+build ordering.) The graph makes two things checkable that a flat reading list cannot: whether a
+prerequisite is missing (a competence with no teaching path to it) and whether the ordering is sound
+(no learner is assessed on B before A is in its evidence_ledger). A1's contribution here is the
+ORDERING discipline — deciding which competence is taught before which — the exact pedagogic value
+Part II §2.5 reserved to A1 over D2 and G1.
+
+4.3 Nodes: the atomic competence. A competence node carries a name, an observable success criterion
+(what behaviour evidences it — never "read the doc," always "produced X and it passed gate Y"), the
+assessment method that will test it (Part X), and its prerequisites. (DEFINED.) The success criterion
+is manifest-first: it is an observation with a basis, or it is not a competence node at all. A node
+whose criterion is "understands the system" is malformed — understanding is not observable; "correctly
+routed three synthetic missions through the system, each verified" is. This is the SQI evidence line
+applied at the granularity of a single lesson.
+
+4.4 Edges: prerequisites and the anti-cycle rule. An edge A→B asserts A is prerequisite to B. The
+graph must be acyclic — a curriculum with a competence cycle (A requires B requires A) is
+unteachable, because no valid starting node exists. (NORMATIVE: acyclicity is a load-bearing
+invariant, checked when a curriculum is registered in Part XIX, not discovered mid-teaching.) The
+optimizer discipline A1 borrows here is cited from DAIF-02's pass pipeline: each curriculum
+transformation (adding a node, reordering) is a named pass with a declared input and output and a
+fidelity check — a curriculum edit that drops a prerequisite without evidence is "a deletion with a
+good story," in DAIF-02's own phrase, and A1 refuses it for the same reason.
+
+4.5 Versioning and the pinned certification. Every certification pins the curriculum VERSION it was
+issued against (Part III §3.3's provenance pointer). When a curriculum changes — a new competence is
+added because the underlying system grew, or a criterion is tightened — existing certifications do
+not silently inherit the new requirements; they are marked for recertification against the new
+version (Part XII). (DERIVED: this is the only correct behaviour under the pinned-reference rule —
+a certification re-derived from the current curriculum could not witness the fact that the learner
+was never taught the added competence. The reference must be pinned at the moment of certification,
+not recomputed from the present.) This single rule prevents the most insidious education failure: a
+curriculum quietly growing while old graduates keep their credentials, so the roster reports
+"all certified" against a syllabus none of them actually completed.
+
+4.6 The curriculum is not the corpus it teaches from. A curriculum REFERENCES source material — a
+frozen DFP corpus, an FD distillate, a dataset — but is not that material. (Boundary, Article II:
+the corpus is DFP's object; the distillate is FD's; the curriculum is A1's ORDERING of competences
+over them.) Two curricula can teach from the same corpus in different orders for different learner
+classes — a model instance's onboarding curriculum and a capability operator's curriculum may draw
+on the same dataset yet sequence it differently. The curriculum owns the path; the sources own the
+content. A1 authors and versions the path only, citing its sources by reference.
+
+4.7 Why a first-class curriculum is what makes recertification possible. Part XII's decay mechanism
+is only expressible because the curriculum is a pinned artifact: recertification is DEFINED as
+re-evidencing the same competence graph, or its updated version, after a decay trigger. Without a
+versioned graph there is nothing to re-evidence against — decay could be detected but not remediated,
+because "teach it again" would have no definition of what "it" is. (DERIVED: the artifact-nature of
+the curriculum is the precondition for every maintenance operation A1 performs; a suggestion cannot
+be recertified against, only a version can.)
+
+FINAL LAW — PART IV. A certification is only as trustworthy as the versioned curriculum it was
+issued against. Make the curriculum an informal reading list and "certified" decays into "certified
+against something we can no longer reconstruct" — a credential that cannot witness its own basis.
+A1 makes the curriculum a first-class, acyclic, versioned, provenanced artifact for the same reason
+the estate versions everything load-bearing: an audit that cannot pin the syllabus cannot defend the
+diploma.
+
+===============================================================================================
+PART V — CAPABILITY CURRICULA: DESIGNING THE LEARNING PATH FOR A NAMED CAPABILITY
+===============================================================================================
+
+5.1 From the abstract curriculum to the concrete capability curriculum. Part IV defined the
+curriculum as a first-class artifact in general; this Part specifies the most common instance — the
+curriculum for a single named capability, the path that takes a learner from UNPROVEN to certified
+on one skill, module, or agent role. (DEFINED.) A capability curriculum is authored once per
+capability-worth-teaching and versioned as that capability grows; it is the unit an educator (Part
+XVIII) actually delivers and the unit against which a certification (Part XI) is pinned.
+
+5.2 Deriving the competence graph from the capability's own contract. A capability curriculum is not
+invented; it is DERIVED from the capability's existing governing artifacts. A module has a contract
+(inputs, outputs, invariants, failure taxonomy); an agent role has a system prompt and a tool set; a
+dataset-backed capability has a completion contract. The curriculum's competence nodes are the
+observable behaviours those artifacts already demand — one node per invariant the operator must
+uphold, one per failure mode the operator must avoid, one per success criterion the capability's own
+contract states. (DERIVED: this is why A1 requires no unbuilt input — the raw material of a
+capability curriculum is the capability's already-existing contract, read by citation.) A capability
+whose contract names five invariants and four failure modes yields a curriculum with at least nine
+assessable competence nodes before any pedagogic elaboration.
+
+5.3 The three strata of a capability curriculum. Every capability curriculum has three strata,
+ordered by the prerequisite edges of Part IV. FOUNDATION: the competences required to use the
+capability at all without harm — its invariants, its non-negotiable safety gates, the failure modes
+whose cost is irreversible. FLUENCY: the competences of correct ordinary use — the happy path, the
+common edge cases, the standard verification. MASTERY: the competences of correct use under
+adversity — the rare failure modes, the recovery paths, the judgment calls the contract cannot fully
+specify. (DEFINED, three strata.) The graduation ladder of Part XVII maps onto these strata:
+SUPERVISED practice covers FOUNDATION, BOUNDED autonomy covers FLUENCY, and FULL membership requires
+MASTERY. A learner is never routed unsupervised on a capability whose FOUNDATION stratum is
+un-evidenced, because the FOUNDATION competences are exactly the ones whose failure is irreversible.
+
+5.4 The irreversibility-first ordering rule. Within the FOUNDATION stratum, competence nodes are
+ordered so that the most irreversible failure mode is taught and evidenced FIRST. (NORMATIVE, and
+cited from the estate's own cascade-prevention doctrine — an irreversible effect must have its
+compensation path declared before the action may run, per daif_04 §7.7. A1 relocates that rule to
+teaching: the learner must evidence competence at avoiding the irreversible failure before being
+permitted any practice that could trigger it.) A curriculum that teaches the convenient competences
+first and defers the dangerous ones has inverted its own risk ordering; A1's registration gate (Part
+XIX) checks that FOUNDATION nodes are topologically ordered by irreversibility, not by convenience.
+
+5.5 Sizing a curriculum: enough to evidence competence, no more. A capability curriculum is sized to
+its capability's actual risk surface, not to a fixed length. A narrow, low-risk capability (a
+formatting helper) may need a three-node curriculum; a high-risk capability (a deploy pathway, a
+destructive-command surface) needs a curriculum that evidences every irreversible failure mode
+separately. (DERIVED: sizing by risk surface rather than by uniform length is the same discipline
+IAS-C1 applies to valuation depth and D2A applies to family sizing — the object's own complexity
+sets the treatment's depth, not a template.) An over-sized curriculum wastes teaching capital (Part
+XXI); an under-sized one certifies competence it never evidenced. Both are failures; the risk
+surface is the arbiter.
+
+5.6 The curriculum's relationship to the capability's lifecycle. A capability moves through IAS-C1's
+lifecycle (PROPOSED → FUNDED → TESTING → SETTLED → MATURE → DECLINING → RETIRED). Its curriculum is
+authored when the capability reaches TESTING — early enough that the first operators are educated,
+late enough that the capability's contract has stabilized. (DERIVED boundary: A1 does not author a
+curriculum for a PROPOSED capability that may never be built — that would be teaching a syllabus for
+a course that does not exist, the education analogue of the Scaffold Illusion.) When a capability
+enters DECLINING, its curriculum is frozen (no new learners enrolled) but existing certifications
+are honoured until they decay; when it RETIRES, the curriculum is archived with the capability's
+genome, not deleted — a retired capability's teaching may be inherited by a successor, per Part XIV.
+
+5.7 A worked capability curriculum, made concrete. Consider a synthetic capability, a
+Destructive-Command surface. FOUNDATION (taught and evidenced first, irreversibility-ordered): the
+learner must evidence, on synthetic inputs, that it refuses an un-backed destructive command, that
+it distinguishes a system path from a scratch path, and that it declares a compensation path before
+any irreversible action — three nodes, each with an observable criterion, each assessed by a
+practicum on manufactured cases (Part IX). FLUENCY: correct handling of the ordinary backed-command
+case, the dry-run path, the confirmation prompt. MASTERY: the recovery path when a backup is stale,
+the judgment call when a path is ambiguous. (EXPERIMENTAL: this trace is illustrative; a real
+Destructive-Command curriculum would draw its exact nodes from that surface's actual contract and
+IAS-D2's incident record for its failure scenarios.) The learner certified FULL on this curriculum is
+one the router may send unsupervised destructive work — and no learner reaches FULL without evidencing
+every FOUNDATION node, because those are the ones whose failure cannot be undone.
+
+FINAL LAW — PART V. A capability curriculum is derived from the capability's own contract and ordered
+by irreversibility, not by convenience — the failure that cannot be undone is taught and evidenced
+first, or the curriculum has inverted the only ordering that matters. Its depth is set by the
+capability's real risk surface, never by a template: enough nodes to evidence competence at every
+irreversible failure mode, and not one lesson more than the risk requires.
+
+===============================================================================================
+PART VI — THE APPRENTICESHIP MODEL: LEARNING UNDER A MASTER SYSTEM
+===============================================================================================
+
+6.1 Why apprenticeship, and what it is over and above a curriculum. A curriculum defines WHAT
+competences a learner must acquire; apprenticeship defines a HOW — learning by supervised
+participation alongside a system or session already certified FULL on the target capability.
+(DEFINED.) Apprenticeship is A1's answer to the competences a curriculum's success criteria can name
+but cannot fully specify: the judgment calls, the pattern-recognition, the "when to break the
+happy path" that the MASTERY stratum (Part V §5.3) requires and that no written criterion exhausts.
+A learner acquires FOUNDATION and FLUENCY from curriculum and practicum; it acquires MASTERY largely
+from apprenticeship.
+
+6.2 The master/apprentice pairing as a bounded, dissolving structure. An apprenticeship pairs one
+learner with one master — a session, agent, or operator already certified FULL — for the duration of
+a set of MASTERY competences, and then dissolves. (DEFINED, and here A1 runs on a sibling's substrate
+rather than building its own: the pairing is exactly the dynamic-ensemble pattern IAS-A1 PART VII
+owns — a runtime structure that "DISSOLVES once the mission completes, leaving no standing artifact
+in the ensemble beyond the route trace… builds and discards by design.") A1 does not build ensemble
+machinery; it CONFIGURES an IAS-A1 ensemble as a teaching pairing — master and apprentice as two
+roles in a dissolving structure — and reads the route trace as apprenticeship evidence. The
+contribution A1 adds over the raw ensemble is the pedagogic contract of §6.3, not the assembly.
+
+6.3 The apprenticeship contract. A master/apprentice pairing carries an explicit contract: the
+MASTERY competences in scope; the degree of apprentice participation (observe → assist → lead-under-
+review); the master's obligation to make its reasoning inspectable rather than only its output; and
+the evidence that will be recorded (the apprentice's own attempts, graded, not the master's work).
+(NORMATIVE.) The third clause is load-bearing and easy to omit: an apprenticeship in which the
+master silently does the work while the apprentice watches produces no apprentice evidence — it is
+observation, not apprenticeship. A1 requires that the apprentice progressively LEADS, under review,
+so that the evidence_ledger accumulates the apprentice's graded attempts, not a transcript of the
+master's competence.
+
+6.4 The escalating-participation ladder within an apprenticeship. Participation escalates in three
+steps, each gated by evidence. OBSERVE: the apprentice watches the master handle real cases with
+reasoning exposed, and is assessed on predicting the master's next action correctly. ASSIST: the
+apprentice handles sub-parts under the master's direct review, and is assessed on those sub-parts.
+LEAD-UNDER-REVIEW: the apprentice handles whole cases with the master reviewing before any
+irreversible commit, and is assessed on the whole case. (DEFINED.) The apprentice graduates the
+apprenticeship only from LEAD-UNDER-REVIEW with a run of clean reviews — the master's veto never
+having been needed on an irreversible step. This ladder-within-a-ladder feeds the graduation ladder
+of Part XVII: an apprenticeship's LEAD-UNDER-REVIEW evidence is precisely what promotes a learner
+from BOUNDED toward FULL on the MASTERY stratum.
+
+6.5 The master's conflict of interest, and why the master does not certify. A master teaches; a
+master does NOT issue the apprentice's certification. (NORMATIVE, and cited from IAS-C1 §14.5's
+countermetric rule that a position's yield may not be computed from its own self-reported activity —
+A1 relocates the rule: an educator's success may not be evidenced by the educator's own grade of its
+own graduate.) The apprentice's certification is issued by Part XI's assessment against the pinned
+curriculum, on evidence a party other than the master can inspect. The master's role ends at
+producing the apprentice's graded attempts; the certification is a separate, independent act. This
+separation is the anti-diploma-mill invariant of Part XX applied at the pairing level — a master
+permitted to certify its own apprentices would, over time, certify to the standard that flatters the
+master, not the standard the curriculum sets.
+
+6.6 Apprenticeship across the three learner classes. For a CAPABILITY learner, the master is a
+session or operator certified FULL on the capability. For an AGENT-ROLE learner, the master is a
+higher-tier agent or the main-thread orchestrator, and the route trace of the subagent's dispatched
+attempts is the evidence. For a MODEL-INSTANCE learner (Part XVI), the master is an already-certified
+model instance whose outputs on the same inputs form a reference the apprentice's outputs are
+compared against — the apprenticeship IS the onboarding comparison. (DERIVED: the single
+master/apprentice shape covers all three classes because the learner object of Part III is uniform;
+only the substrate of the pairing changes.)
+
+6.7 When apprenticeship is inappropriate, stated honestly. Apprenticeship is expensive — it occupies
+a FULL-certified master for the pairing's duration, and master attention is scarce cognitive capital
+(Part XXI). For a low-risk capability whose MASTERY stratum is thin, curriculum and practicum suffice
+and apprenticeship is over-investment. (CONTESTED-honest: A1 does not mandate apprenticeship for
+every learner; it mandates it only where MASTERY competences exist that no written criterion
+exhausts and whose failure is costly. The arbiter is, again, the risk surface — apprenticeship is
+the treatment for irreducible-judgment competences, not the default treatment for all of them.)
+
+FINAL LAW — PART VI. Apprenticeship teaches the competence a criterion can name but not fully
+specify — judgment — by supervised, escalating, dissolving participation on a master's substrate the
+estate already owns. Its one inviolable rule: the apprentice must progressively LEAD and be graded on
+its own attempts, and the master who teaches may never certify what it taught. An apprenticeship
+that records the master's competence instead of the apprentice's, or lets the teacher grade its own
+pupil, has produced a transcript and called it a diploma.
