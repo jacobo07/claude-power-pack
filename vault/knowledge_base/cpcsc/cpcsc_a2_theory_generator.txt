@@ -1402,3 +1402,382 @@ is a false universal and the qualifier is part of what the rule is. A boundary t
 too narrow wastes generality; A2 draws it at exactly the evidence's extent. It is the interface at which
 laws compose into theories, it decays and shifts as the estate changes, and it is where A2 resists its own
 pull toward an impressive universal in favor of the honest fence the evidence supports.
+
+===============================================================================================
+PART XV — THE THEORY FALSIFICATION ENGINE: KILLING A2'S OWN PROPOSAL
+===============================================================================================
+
+15.1 A2 falsifies its own candidates, and the boundary with ACIS. A2 has a falsification engine that
+kills its OWN candidates before adoption — but this is distinct from ACIS's falsification, and the
+distinction is the JUDGE-PROPOSE boundary at the falsification layer. (DEFINED, Article II: ACIS falsifies
+an ADOPTED theorem on the ladder — a law the estate already obeys; A2 falsifies a CANDIDATE before
+adoption — a law the estate has not yet enacted. A2 kills its own drafts; ACIS retires the estate's
+statutes.) A2 that falsified adopted theorems would be doing ACIS's work; ACIS that killed pre-adoption
+candidates would be doing A2's. Each falsifies at its own point in a law's life.
+
+15.2 Why A2 must be able to kill its own proposals. A legislature that could only propose and never
+retract would accumulate zombie candidates — laws its own later evidence refuted but which sat in the
+registry as if still viable. (NORMATIVE: A2's falsification engine is what keeps the Hypothesis Registry
+honest — a candidate whose evidence has been undercut, or whose experiment (Part IX) refuted it, or which
+a later counterexample broke, is moved to REFUTED, not left as PROPOSED.) (DERIVED: this is the registry's
+self-cleaning mechanism (Part V §5.6) — the refutation flow that a healthy registry must show, driven by
+A2 actively killing candidates its own evidence turned against, rather than letting them linger. An A2
+that never killed its own proposals would be the p-hacking legislature, proposing and never retracting.)
+
+15.3 The falsification triggers. A candidate is falsified by three triggers: a new counterexample surfaces
+in accruing evidence; a designed experiment (Part IX) produces the falsifying outcome; or the candidate's
+evidence base is undercut (a deposit it relied on is itself refuted). (DEFINED, three triggers.) (DERIVED:
+all three are the candidate's falsifier (Part VIII) actually firing — the falsifier named the condition
+that would refute the law, and these triggers are that condition occurring. The falsification engine is
+where the falsifier-first discipline pays off: because every candidate carries a concrete falsifier, A2
+knows exactly what observation kills it, and the engine watches for that observation.)
+
+15.4 Falsification is evidence-driven, never preference-driven. A2 kills a candidate only on evidence
+that meets its falsifier — never because the candidate became inconvenient or a newer candidate is
+preferred. (NORMATIVE: falsification is triggered by the falsifying observation, not by A2's preference
+among candidates, because preference-driven falsification would let A2 kill sound laws to favor exciting
+ones — the paradigm-thrash failure driven from the falsification side.) (DERIVED: the same evidence
+discipline that governs proposal governs retraction — a candidate lives or dies by its evidence, and A2's
+falsification engine has no path to kill a candidate its falsifier has not fired on. Falsification, like
+adoption, is evidence-bound and never a matter of A2's disposition.)
+
+15.5 A falsified candidate's death is recorded, not erased. When A2 falsifies a candidate, the registry
+entry moves to REFUTED with the falsifying evidence recorded — it is not deleted. (DEFINED: a REFUTED
+candidate remains in the registry as a documented dead end, the same RETIRED-is-not-deletion discipline
+IAS-C1 applies to positions and A1 applies to learner records.) (DERIVED: the recorded death serves two
+purposes — it prevents A2 re-proposing the same refuted candidate (the estate's own evidence already
+killed it), and it is itself knowledge, a documented "this general rule does NOT hold, and here is the
+counterexample that shows it." A refuted law is negative knowledge, and negative knowledge is exactly the
+"do not re-investigate this" the estate's writeback discipline values.)
+
+15.6 Self-falsification is A2's integrity, symmetric to falsifier-first. Falsifier-first (Part VIII)
+requires A2 to name how a candidate could be wrong at proposal; the falsification engine acts on that
+naming when the evidence arrives. (DERIVED: the two are the same discipline across time — at proposal, A2
+states the refutation condition; through the candidate's life, A2 watches for it and kills the candidate
+when it fires. An A2 that stated falsifiers but never acted on them would be performing honesty at
+proposal and abandoning it after — the falsification engine is what makes the falsifier a live commitment,
+not a one-time formality.) A2's willingness to kill its own well-liked candidates on evidence is the
+integrity that the falsifier-first discipline only promises.
+
+15.7 Falsification feeds back into theory revision. When a candidate that grounds a theory (Part VII) is
+falsified, the theory built on it must be revised or itself proposed for retirement. (DERIVED: a theory's
+soundness depends on its laws, so falsifying a component law propagates upward — the theory generator
+re-examines whether the theory survives the loss of that law, and if the law was the theory's root (Part
+VII §7.3), the whole theory may fall. This is the compositional fragility a theory carries — it explains
+more but is refuted by the failure of any load-bearing component — and A2's falsification engine
+propagates a component's death through the theories that relied on it.)
+
+15.8 The engine does not falsify adopted laws — it flags them for ACIS. If A2's continuing evidence turns
+against a law that has ALREADY been adopted (graduated to UKDL), A2 does not falsify it — that adopted
+law is ACIS's to retire — but A2 flags it, handing the disconfirming evidence to the judgment layer.
+(NORMATIVE, the boundary: A2 kills its own candidates; for an adopted law A2's later evidence undercuts,
+A2 surfaces the evidence to ACIS/the Owner, who decide retirement.) (DERIVED: this keeps the JUDGE-PROPOSE
+boundary intact even when A2 is the one who notices an adopted law failing — A2 provides the evidence, the
+judgment layer acts. A2 unilaterally retracting an adopted law would be reaching across the boundary into
+the court's retirement authority, so it flags rather than falsifies once a law has crossed into adoption.)
+
+15.9 Why the falsification engine completes A2's honesty. A generator that could only propose would be an
+advocate; a generator that also kills its own proposals on evidence is a scientist. (DERIVED: the
+falsification engine is what makes A2 a legislature that legislates honestly rather than a machine that
+advocates for its own output — it proposes candidates AND retracts them when the evidence turns, and the
+willingness to do the second is what makes the first trustworthy. Between falsifier-first, counterexample
+search, and self-falsification, A2's whole relationship to its own candidates is adversarial-toward-itself
+by construction, which is the only stance under which a generator's proposals can be trusted.)
+
+15.10 Falsification is cheap for A2 and expensive for the estate, which is why A2 does it first. Killing a
+candidate before adoption costs A2 a registry transition; killing an adopted law costs the estate the
+unwinding of everything built on it — retraining, re-deciding, re-tooling. (DERIVED: this asymmetry is
+why A2's own falsification engine is so valuable — every candidate A2 kills pre-adoption is an adopted-law
+retraction the estate never has to pay for, the same prevented-cost logic A1 applies to a non-graduating
+learner caught before production. A2's willingness to kill its own candidates cheaply, before they bind
+anything, is what spares the estate the far greater cost of retracting a law it already obeyed. The
+cheapest place to kill a false law is before it was ever enacted, and A2's falsification engine works at
+exactly that point.)
+
+FINAL LAW — PART XV. A2 kills its own candidates before adoption — distinct from ACIS, which retires the
+estate's adopted statutes; A2 falsifies its drafts, the court falsifies its laws. Falsification is
+evidence-driven and never preference-driven, recorded as negative knowledge and never erased, and it
+propagates through the theories a dead law grounded. It is the live commitment behind falsifier-first —
+an A2 that stated refutation conditions but never acted on them performs honesty and abandons it — and it
+is what makes A2 a scientist toward its own output rather than an advocate for it.
+
+===============================================================================================
+PART XVI — PARADIGM REPLACEMENT: PROPOSING A SUCCESSOR FRAMEWORK
+===============================================================================================
+
+16.1 The highest-order generative act. Paradigm replacement is A2's highest-order act: proposing a
+successor FRAMEWORK — a new theory that reorganizes how the estate understands a whole domain — to replace
+an incumbent one. (DEFINED: where the theory generator (Part VII) composes laws into a theory, paradigm
+replacement proposes that a NEW theory should supersede an EXISTING adopted one, because the new framework
+explains the evidence better, more simply, or covers cases the old one cannot.) It is the most powerful
+and most dangerous thing A2 does, because a paradigm reorganizes a whole family of the estate's
+understanding, and getting it wrong propagates widely.
+
+16.2 The boundary with ACIS's paradigm retirement. ACIS owns paradigm RETIREMENT — "a designed operation
+rather than an embarrassment to be avoided," preserving genealogy (cited). (Boundary, Article II: ACIS
+retires an incumbent paradigm; A2 proposes the successor. The generative act — drafting the replacement
+framework from evidence — is A2's; the judgmental act — deciding to retire the old and adopt the new — is
+ACIS's/the Owner's.) (DERIVED: this is exactly the Science XII white-space — the estate had paradigm
+retirement and lacked paradigm PROPOSAL. A2 proposes the successor; ACIS adjudicates the replacement and
+retires the incumbent, preserving its genealogy. A2 drafts the new paradigm; the court decides whether it
+replaces the old.)
+
+16.3 Paradigm replacement preserves genealogy. A2's proposed successor does not erase the incumbent — it
+preserves the old paradigm's genealogy, recording what it explained, why it is being superseded, and what
+of it the successor retains. (NORMATIVE, inheriting ACIS's genealogy-preservation: a paradigm replaced is
+not deleted but superseded-with-record, so the estate retains why it once believed the old framework and
+what evidence changed.) (DERIVED: this is the negative-knowledge discipline at the paradigm level — a
+retired paradigm is knowledge ("the estate once understood X this way, and here is why it changed"), and
+erasing it would lose the reason for the change. A2 proposes the successor WITH the genealogy of what it
+replaces, so the replacement is a documented evolution, not an amnesiac substitution.)
+
+16.4 The bar for proposing a replacement is high. A2 proposes a paradigm replacement only when the
+successor clears a high bar — it must explain the incumbent's evidence AND cover cases the incumbent
+cannot AND carry its own falsifier. (NORMATIVE: a replacement proposed on a whim, or because the successor
+is merely newer, is the paradigm-thrash failure — replacing frameworks faster than evidence warrants. A2
+requires the successor to dominate the incumbent on evidence, not merely differ from it.) (DERIVED: the
+high bar is A2's guard against its own novelty incentive at the most dangerous level — a generator
+rewarded for exciting new frameworks would thrash paradigms, so A2 requires a replacement to be strictly
+better-evidenced than the incumbent, not just new. Paradigm replacement is where the anti-novelty-for-its-
+own-sake discipline (Part X §10.7) matters most.)
+
+16.5 Paradigm-thrash is the signature failure to avoid. Paradigm-thrash — replacing frameworks faster
+than evidence warrants — is destabilizing: each replacement invalidates understanding built on the old
+paradigm, and thrashing means the estate never settles on a stable framework long enough to build on it.
+(OBSERVED, the failure Part XX names.) (DERIVED: A2's defenses are the high replacement bar (§16.4) and
+the propose-never-apply invariant — because A2 only PROPOSES a replacement and the Owner decides, a
+thrash-prone generator cannot itself destabilize the estate; the worst it can do is propose too many
+replacements, which the Owner declines. The invariant contains even A2's most destabilizing possible
+behavior to a proposal the judgment layer can refuse.)
+
+16.6 The successor carries the incumbent's un-explained residue as its motivation. A2 proposes a
+replacement precisely when the incumbent paradigm has an accumulating RESIDUE — cases it cannot explain,
+anomalies it cannot absorb — and the successor's motivation is explaining that residue. (DEFINED: the
+residue is the evidence the incumbent paradigm fails on, and a replacement is warranted when the residue
+grows large enough that a new framework explaining it dominates the old.) (DERIVED: this is the
+evidence-driven trigger for paradigm replacement, symmetric to the recurrence trigger for law induction —
+a law is induced from a recurrence the adopted rules do not govern; a paradigm replacement is proposed
+from a residue the incumbent paradigm does not explain. Both are driven by what the current framework
+leaves unaccounted, which is A2's honest signal that a new proposal is warranted.)
+
+16.7 Paradigm replacement and the unknown-unknown surface. The deepest paradigm replacements often come
+from the unknown-unknown space (Part X) — an incumbent paradigm's residue may be exactly the unmapped
+assumptions it never represented, surfaced by B1 or by A1's cross-domain failures. (DERIVED: a paradigm's
+blind spot — the assumptions it took for granted — is where its residue accumulates, and mapping that
+blind spot (B1's object) is what reveals the residue that motivates a successor. This is why paradigm
+replacement, like unknown-space law induction, is B1-dependent for its richest instances, and A2 names
+the dependency here too — the most transformative paradigm replacements need the unmapped surface B1
+provides.)
+
+16.8 The successor is proposed as a theory, subject to every theory discipline. A proposed successor
+paradigm IS a theory (Part VII) — it carries a compositional falsifier, its laws carry boundaries, it is
+proposed at honest confidence, and it never self-adopts. (NORMATIVE: paradigm replacement is not a special
+category exempt from A2's disciplines; it is a theory proposal with the highest stakes, and every theory
+discipline applies with extra force — the compositional falsifier especially, because a paradigm's
+explanatory structure is exactly what a replacement claims to improve.) (DERIVED: treating a paradigm
+replacement as a theory subject to all theory disciplines is what keeps A2's most powerful act
+disciplined — there is no A2 mode that escapes falsifier-first, counterexample search, boundary
+extraction, and propose-never-apply, and paradigm replacement is bound by all of them precisely because
+it is the most dangerous.)
+
+16.9 Why paradigm replacement is the legislature's ultimate expression. To propose not just a new law but
+a new framework for understanding a domain is the fullest form of legislation from evidence. (DERIVED: a
+legislature that could only propose laws within an existing framework would be bounded by that framework's
+assumptions; a legislature that can propose the framework itself can reach the laws the old framework made
+unthinkable. Paradigm replacement is where A2 most fully earns the name legislature — it drafts not only
+the estate's rules but the frameworks within which its rules make sense — and it is bound by every
+discipline in the dataset precisely because that reach is what most needs disciplining.)
+
+FINAL LAW — PART XVI. Paradigm replacement is A2's highest-order act — proposing a successor framework
+that reorganizes a domain — and its highest-stakes: a wrong paradigm propagates a wrong understanding
+across everything it grounds. A2 proposes the successor; ACIS retires the incumbent and preserves its
+genealogy, the Science XII white-space made concrete. The bar is high — the successor must dominate the
+incumbent on evidence, not merely be newer — because replacing frameworks faster than evidence warrants is
+paradigm-thrash, and only the propose-never-apply invariant contains even that to a proposal the Owner can
+refuse.
+
+===============================================================================================
+PART XVII — THE HANDOFF TO JUDGMENT: HOW A CANDIDATE LEAVES A2
+===============================================================================================
+
+17.1 The handoff is the boundary made operational. Everything A2 does terminates at handing a candidate
+to judgment — ACIS and the Owner — and the handoff is where the JUDGE-PROPOSE boundary becomes a concrete
+transfer. (DEFINED: A2 hands a candidate law, complete with its four parts and its confidence, to the
+judgment layer; the judgment layer adjudicates and, if it adopts, the candidate graduates to UKDL. The
+handoff is A2's terminal act — after it, the candidate is the court's and the Owner's, not A2's.) The
+clean handoff is what keeps A2 a legislature and not a self-adopting one — A2's work ends where judgment
+begins.
+
+17.2 What A2 hands over. The handoff package is the complete candidate: the rule statement, the falsifier,
+the evidence trail with provenance, the boundary, the confidence, the novelty assessment, and the record
+of the counterexample search and any experiments. (DEFINED: everything the judge needs to adjudicate,
+handed over together, so the judgment is made on full information.) (DERIVED: a handoff that omitted the
+evidence trail or the counterexample record would force the judge to re-derive them or judge blind — A2
+hands the complete provenance precisely so the court can audit the candidate's basis rather than trust
+A2's summary. The completeness of the handoff is what makes the judgment auditable.)
+
+17.3 A2 hands a level-less candidate; ACIS assigns the level. The candidate arrives with NO ACIS level —
+assigning the E0-E7 level is the court's act (Part III §3.7). (NORMATIVE: A2 hands a proposal; ACIS levels
+it. A candidate that arrived pre-leveled would be A2 usurping the judgment, and A2's handoff is
+deliberately level-less to keep the leveling where it belongs.) (DERIVED: this is the precise mechanical
+expression of the JUDGE-PROPOSE boundary — the one field A2 must not write is the level, because the level
+IS the judgment, and A2's handoff format has no level field for A2 to fill. The boundary is enforced by
+the handoff's shape.)
+
+17.4 The judgment layer decides; A2 does not appeal. Once handed over, the candidate is judged — adopted,
+rejected, or returned for more evidence — and A2 does not appeal or override the judgment. (NORMATIVE: A2
+proposes; the judgment layer disposes; A2 accepts the disposition. An A2 that re-proposed a rejected
+candidate unchanged, or lobbied against a rejection, would be reaching past its boundary.) (DERIVED: A2
+CAN re-propose a rejected candidate if NEW evidence changes its basis — that is a new proposal on new
+evidence, not an appeal — but it does not re-litigate the same candidate on the same evidence the court
+already rejected. The distinction preserves the boundary: A2 legislates from evidence, and new evidence
+warrants a new proposal, but the judgment on a given candidate-and-evidence is the court's final word.)
+
+17.5 The handoff carries the honest confidence, not an advocate's inflation. A2 hands the candidate at
+its true confidence, including low — it does not inflate confidence at the handoff to improve adoption
+odds. (NORMATIVE: A2 is a legislature, not a lobbyist — its handoff is an honest presentation of the
+evidence, and inflating confidence to win adoption would corrupt the judgment the confidence informs.)
+(DERIVED: the whole value of A2's confidence to the judge depends on its honesty — a judge who knew A2
+inflated confidence at handoff could not use it, so A2's discipline of honest confidence (Part XI §11.6)
+is what makes the handoff informative. A2 presents; it does not advocate.)
+
+17.6 The handoff to the Owner versus to ACIS. Some candidates are handed to ACIS for laddered judgment;
+others, especially high-stakes paradigm replacements or laws touching governance, are handed directly to
+the Owner. (DEFINED: routine candidate laws go to ACIS's judgment; laws that would change how the estate
+governs itself, or paradigm replacements, go to the Owner, because their adoption is a governance decision
+beyond ACIS's laddered admissibility check.) (DERIVED: the routing respects the stakes — ACIS judges
+admissibility, the Owner judges governance, and A2 routes a candidate to the judgment layer appropriate to
+what adopting it would change. A2 does not make the judgment either way; it routes to the right judge.)
+
+17.7 The orphan candidate is a handoff that never happened. A candidate induced and registered but never
+handed to judgment is the orphan of Part V §5.8 — and the handoff is exactly what an orphan candidate is
+missing. (DERIVED: the registry's orphan-surfacing obligation is really an obligation to ensure candidates
+reach the handoff — an induced law that never leaves A2 for judgment delivered no value, because a
+proposal never judged is inert. The handoff is where A2's work becomes potentially-adopted law, and a
+candidate that never reaches it is A2's effort spent for nothing.) The orphan-surfacing mechanism exists
+to make sure the handoff happens.
+
+17.8 The handoff completes A2's contribution to a law's life. A law's life runs induction (A2) → judgment
+(ACIS/Owner) → adoption (UKDL) → teaching (A1), and the handoff is the seam between A2's part and the
+rest. (DERIVED: A2 owns the first segment — evidence to candidate — and the handoff is where it passes the
+candidate to the segments it does not own. The clean handoff is what lets A2 do its part completely and
+then stop, handing a well-formed candidate to the judgment that A2 deliberately does not perform. A2's
+excellence is in the induction and the honest handoff, not in reaching past it.)
+
+17.9 Why the handoff is where A2's discipline is proven. Every A2 discipline — the four-part candidate,
+the honest confidence, the level-lessness, the acceptance of judgment — is tested at the handoff, because
+the handoff is where A2's output meets the boundary it must respect. (DERIVED: an A2 that cut corners
+would show it at the handoff — an incomplete package, an inflated confidence, a pre-assigned level, a
+re-litigated rejection — and an A2 that respected its boundaries hands a complete, honest, level-less
+candidate and accepts the judgment. The handoff is the proof of A2's discipline because it is where A2
+gives up control, and giving up control cleanly is exactly what the propose-never-apply invariant
+requires.)
+
+17.10 The handoff is auditable in both directions. Because the handoff package is complete and the
+judgment's disposition is recorded on the candidate's registry entry, the whole transfer is auditable from
+both sides — a later audit can check that A2 handed a well-formed candidate, and that the judgment layer's
+disposition matched the evidence handed to it. (DERIVED: two-directional auditability is what makes the
+handoff a trustworthy boundary rather than a black box — neither A2 can claim it handed a candidate it did
+not, nor can a disposition be attributed to A2 that the evidence did not warrant. The recorded handoff is
+the provenance seam between the legislature's work and the court's, and preserving it is what lets a
+production failure by an adopted law be traced back through adoption to the induction that proposed it —
+the same end-to-end provenance chain A1's Part XIX §19.8 walks, here spanning the A2→judgment→adoption
+boundary.)
+
+FINAL LAW — PART XVII. A2's terminal act is handing a candidate to judgment — complete package, honest
+confidence, and no ACIS level, because the level is the judgment and A2's handoff has no field for it. A2
+proposes and accepts the disposition; it re-proposes only on new evidence, never re-litigates the same
+candidate the court rejected. The handoff is where A2 gives up control cleanly, which is exactly what
+being a legislature and not a self-adopting one requires — A2's excellence is the induction and the honest
+handoff, never reaching past it.
+
+===============================================================================================
+PART XVIII — THE HANDOFF TO EDUCATION: AN ADOPTED LAW BECOMES CURRICULUM
+===============================================================================================
+
+18.1 The A2→A1 seam. When a candidate is adopted, it becomes not only a UKDL statute but teaching material
+for A1 — the second handoff in a law's life, from the legislature to the school. (DEFINED: an adopted law
+is a competence the estate's participants must hold — knowing the law, recognizing when it applies, acting
+on it — and A1 turns the adopted law into a curriculum that teaches that competence. The A2→A1 seam is
+one-way: A2's adopted laws flow into A1's curricula; A1 does not write back to A2.) This is the seam the
+two Tier-A datasets were authored together to keep clean.
+
+18.2 Why an adopted law needs teaching, not just storage. A law stored in UKDL binds the estate, but a
+law no participant is taught is a rule obeyed only by whoever remembers to check the statute book.
+(DERIVED: adoption makes a law binding; education makes it OPERATIVE — a participant who has been taught
+the law recognizes its trigger and acts on it without consulting UKDL, which is the difference between a
+law on the books and a law in practice. The A2→A1 seam is what turns an adopted law from a stored
+obligation into a held competence, closing the gap between a rule existing and a rule being followed.)
+
+18.3 What travels across the seam. The adopted law travels with its full A2 provenance — the evidence it
+was induced from, the failure it generalizes, the boundary it holds within. (DERIVED: A1's curriculum for
+the law is richer for the provenance — its failure simulations (A1 Part VIII) draw on the incidents the
+law was induced from, its boundary teaching (A1 Part XV) uses the law's boundary, and the evidence trail
+lets A1 teach WHY the law holds, not merely THAT it does. A law taught with its founding evidence is
+learned as understanding; a law taught as a bare stricture is learned as arbitrary. The seam carries the
+reason, not just the rule.)
+
+18.4 The seam is one-way, and why. A2's adopted laws flow to A1; A1 does not propose laws back to A2. But
+A1's cross-domain assumption evidence DOES flow to A2 (Part IV §4.2, Part XIV §14.3) — as EVIDENCE, not as
+laws. (DEFINED, the two flows kept distinct: adopted-laws A2→A1 (teaching material), assumption-evidence
+A1→A2 (induction input). A1 never proposes a law — that is A2's object; A2 never teaches — that is A1's.)
+(DERIVED: keeping the two flows distinct is the anti-absorption discipline — the seam carries laws one way
+and evidence the other, and neither system performs the other's act. A1 teaching A2's laws is A1's object;
+A2 inducing from A1's evidence is A2's object; and the two flows never blur into A1 proposing or A2
+teaching.)
+
+18.5 Authoring the two datasets together kept the seam clean. A1 and A2 were authored as a pair precisely
+so this seam is clean from the first commit, not retrofitted. (DERIVED: had A2 been authored later, A1
+might have already absorbed the law-teaching-and-proposing boundary into one blurred mechanism — teaching
+a law and proposing it are adjacent enough that a single dataset built without the other might have
+conflated them. Authoring both together, with the seam specified from each side (A1 Part XXIII §23.7 and
+here), is what kept induction and education as two distinct objects joined at a clean, one-way handoff.)
+
+18.6 The seam completes the law's lifecycle. Induction (A2) → judgment (ACIS/Owner) → adoption (UKDL) →
+education (A1): the A2→A1 seam is the last handoff, from the law being enacted to the law being taught.
+(DERIVED: A2 begins a law's life by inducing it from evidence; A1 completes the law's reach by teaching it
+to the participants who must hold it. The two Tier-A datasets are the bookends of a law's life — one
+drafts it, one operationalizes it in the estate's participants — and the seam between them is where the
+legislature's output becomes the school's input.)
+
+18.7 The seam and the estate's compounding knowledge. A law induced, adopted, and taught closes a loop
+that compounds: the taught law shapes participant behaviour, which produces new evidence (fewer of the
+failures the law prevents, or new edge cases), which feeds back into A2's substrate for further induction.
+(DERIVED: the A2→A1 seam is part of a larger cycle — A2 induces a law, A1 teaches it, participants act on
+it, their action produces evidence, A2 induces over the new evidence. Education is not the end of a law's
+life but a turn in a cycle that generates the evidence for the next law, and the seam is one edge of that
+compounding loop.)
+
+18.8 The seam respects A1's autonomy over HOW to teach. A2 hands A1 the adopted law and its provenance; it
+does NOT dictate the curriculum. (Boundary: what to teach (the law) is fixed by adoption; HOW to teach it
+(the curriculum design) is A1's object entirely. A2 provides the material; A1 authors the pedagogy.)
+(DERIVED: A2 that specified A1's curriculum would be reaching across the seam into A1's object, the mirror
+of A1 proposing a law. The seam carries the law and its evidence; it does not carry teaching instructions,
+because the pedagogy is A1's competence and A2 has no more standing to design a curriculum than A1 has to
+induce a law.)
+
+18.9 Why the two handoffs define A2's boundaries completely. A2 has exactly two handoffs — to judgment
+(Part XVII) and to education (this Part) — and together they define where A2's object ends on both sides.
+(DERIVED: upstream, A2 takes evidence from the estate's ledgers; downstream, it hands candidates to
+judgment and adopted laws to education. The two handoffs are the complete outward boundary of A2's object —
+everything between them (induction, falsification, theory composition) is A2's, and everything past them
+(judgment, adoption, teaching) is a sibling's. A2 is defined as precisely as its two handoffs draw it.)
+
+18.10 A law that cannot be taught is a signal about the law, not only about teaching. Occasionally A1 will
+find an adopted law it cannot turn into a teachable competence — its trigger is unobservable, its boundary
+is incoherent, its action is unspecifiable. (CONTESTED-honest: when that happens, the un-teachability is
+evidence about the LAW, and A1 surfaces it back to A2 as evidence, not as a proposal.) (DERIVED: a law
+that resists being taught often resists because it was mis-induced — a boundary too vague to teach is a
+boundary too vague to have been well-extracted, and A1's teaching attempt is an unexpected test of A2's
+induction quality. The one-way seam carries laws to A1 and evidence back to A2, and A1's discovery that a
+law is unteachable is exactly the kind of evidence that flows back — not A1 proposing a fix, but A1
+reporting that the law, as adopted, failed a test A2's own induction should have caught. Education is thus
+a downstream check on legislation, and the seam carries that check back as evidence for A2 to re-induce
+on.)
+
+FINAL LAW — PART XVIII. An adopted law flows to A1 as teaching material — the second handoff in a law's
+life, from the legislature to the school — carrying its full provenance so the law is taught as
+understanding, not as an arbitrary stricture. The seam is one-way: A2's laws flow to A1, A1's cross-domain
+evidence flows to A2, and neither performs the other's act. Authored together, the two Tier-A datasets are
+the bookends of a law's life — one drafts it, one operationalizes it in the participants who must hold it —
+joined at a clean handoff that carries the rule and its reason, never the pedagogy.
