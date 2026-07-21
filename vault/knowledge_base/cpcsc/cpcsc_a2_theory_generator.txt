@@ -2173,3 +2173,288 @@ inflation, and the unknown-unknown surface partially defeats suppression, A2's h
 backstop is propose-never-apply — a compromised A2 can manufacture a proposal but never enact one, so an
 attacker must defeat both the legislature's evidence discipline and the court's independent judgment. A2
 secures its own drafting and feeds the general immune system; it never claims to defend the estate alone.
+
+===============================================================================================
+PART XXIII — INTEGRATION: WHERE A2 WIRES TO THE ESTATE
+===============================================================================================
+
+23.1 The purpose of an integration Part. A2 has drawn a boundary against a sibling in nearly every Part;
+this Part collects them into one account of how A2 connects to the estate. (DEFINED: every connection is a
+CONSUMER (reads A2's candidates), a SOURCE (A2 reads its output as evidence), a SEAM (a handoff), or a
+DEPENDENCY (A2's build needs it). Naming each keeps A2's writes — confined to its own registry — distinct
+from its many reads.)
+
+23.2 The evidence sources — five families A2 reads. FD (deposits), fd_04/UKDL (proofs and the adopted
+corpus, mined for meta-rules), CEPS (events), IAS-D2 (incidents), and A1 (cross-domain assumption
+evidence) are A2's SOURCES — their outputs are A2's induction inputs, read read-only. (DERIVED: A2 writes
+to none of them; it consumes their records to legislate, the same consumer relation A1 has to FD and D2.
+The five sources are the estate's memory, and A2 is its reader.)
+
+23.3 ACIS — the judgment consumer and the sharpest boundary. ACIS is A2's primary CONSUMER-via-handoff:
+A2 hands a level-less candidate with its falsifier; ACIS levels and adjudicates it. (Boundary, restated
+because it is the dataset's spine: A2 drafts, ACIS judges; A2 proposes a candidate, ACIS assigns a level;
+neither performs the other's act.) (DERIVED: the JUDGE-PROPOSE boundary is A2's most important integration
+seam — it is where the propose-never-apply invariant becomes an operational handoff, and where A2's whole
+discipline is tested (Part XVII §17.9). A2 hands over and accepts the judgment; ACIS judges what A2 drafts.)
+
+23.4 UKDL — the graduation consumer. UKDL is where an adopted candidate GRADUATES: on adoption, A2's
+registry entry becomes ADOPTED-ELSEWHERE and points to the UKDL rule. (Boundary: UKDL stores adopted
+statutes; A2 stores candidates; a candidate crosses from A2 to UKDL at adoption, by pointer not copy.)
+(DERIVED: A2 never writes an adopted rule to UKDL itself — the adoption act, an authorized governance
+step, effects the graduation — so even the A2→UKDL transition respects propose-never-apply: A2 proposes,
+adoption graduates, and A2's write is confined to marking its own entry ADOPTED-ELSEWHERE.)
+
+23.5 A1 — the education seam. A1 is A2's downstream SEAM: adopted laws flow to A1 as curriculum material,
+and A1's cross-domain evidence flows back to A2 as induction input. (Boundary, Part XVIII: laws down,
+evidence up, one-way each; A1 teaches A2's laws, A2 induces from A1's evidence, neither performs the
+other's act.) (DERIVED: the A1↔A2 relationship is the richest in the dataset — the two Tier-A datasets are
+the bookends of a law's life, joined at a clean handoff, and authored together to keep the seam clean from
+the first commit.)
+
+23.6 DRK, CEPS, and the object-rule appliers. DRK routes decisions under adopted rules; CEPS records the
+events adopted laws govern. (Boundary: A2 induces the general rule; DRK applies it to a decision; CEPS
+records the events. A2 supplies DRK better-grounded rules to route under and reads CEPS events as evidence,
+writing to neither.) (DERIVED: these are the downstream appliers of A2's adopted laws — A2 legislates, DRK
+and the estate apply, CEPS records the results — and A2's read of CEPS's records closes a loop, since the
+events an adopted law governs become evidence for the next induction.)
+
+23.7 IAS-C1 — the economic consumer. C1 receives the cost of theory generation and each candidate's
+prospective value as capital inputs; C1 owns the valuation. (Boundary, Part XXI: A2 supplies cost and
+value inputs; C1 allocates; A2 never ranks legislation against other spend.) (DERIVED: the same
+input-not-decision restraint A1 shows — A2 characterizes the cost and the compounding-return profile of its
+legislation and hands both to C1, making not one portfolio judgment of its own.)
+
+23.8 B1 and B2 — the dependencies, foregrounded. B2 (epistemic algebra unification) is the algebra A2
+induces over; B1 (unknown-unknown surface) is the unmapped space A2's richest laws concern. (DEFINED,
+honest DEPENDENCIES: A2's known-space induction needs B2; its transformative unknown-space induction needs
+B1. The DATASET is complete; the BUILD has an ordering — B2, then A2-known-space, then B1, then
+A2-unknown-space.) (DERIVED: naming the two Tier-B dependencies as prominently as the sibling seams is A2's
+honesty about its own build — the sealed spec is not a running legislature, and the difference is B2's
+algebra and B1's surface, which A2 states rather than letting a reader assume completeness.)
+
+23.9 Why the two handoffs and the dependencies define A2 completely. A2's outward boundary is drawn by two
+handoffs (judgment, education), five evidence sources, three downstream appliers, one economic consumer,
+and two dependencies — and everything between them is A2's object. (DERIVED: induction, falsification,
+theory composition, paradigm proposal are A2's; judgment, adoption, application, teaching, valuation are
+siblings'; and the two Tier-B dependencies are what the build needs. A2 is defined as precisely as its
+connections draw it, and every one is a read, a handoff, or a dependency — never a write to a sibling's
+object, which is the anti-inflation contract made into an integration map.)
+
+23.10 The full lifecycle of a law, traced across every wire. To make the integration concrete, follow one
+law across every system it touches. (EXPERIMENTAL trace.) A2's engine induces a candidate from a
+recurrence spanning CEPS events, FD deposits, and Hard Rules (SOURCES); it attaches a falsifier, extracts
+a boundary from disconfirming cases, records a counterexample search, and registers the candidate in the
+Hypothesis Registry. A2 hands the level-less candidate to ACIS (SEAM to judgment); ACIS levels and, with
+the Owner, adopts it. On adoption the candidate graduates to UKDL by pointer (CONSUMER), and A2's registry
+entry becomes ADOPTED-ELSEWHERE. The adopted law flows to A1 as curriculum material with its full
+provenance (SEAM to education); A1 teaches it, and participants act on it. DRK routes decisions under it;
+CEPS records the events it now governs (downstream APPLIERS) — and those events flow back into A2's
+substrate as new evidence, closing the loop. Throughout, A2 hands C1 the induction and experiment cost
+(economic CONSUMER). (DERIVED: the trace shows A2 writing to exactly one place — its own registry — and
+touching every other system as a read, a handoff, or a cost input, never a write to a sibling's object.
+The single write and the many reads are the integration map's whole content, and the loop — from CEPS
+events through induction, judgment, adoption, education, application, back to CEPS events — is how a law
+A2 induced eventually produces the evidence for A2's next induction. The estate's legislation compounds:
+each adopted law changes behaviour, which produces evidence, which A2 legislates from again.)
+
+FINAL LAW — PART XXIII. A2 reads five evidence families, hands candidates to ACIS's judgment and adopted
+laws to A1's education, graduates to UKDL by pointer, supplies DRK better rules and C1 the cost — and writes
+to none of them, its writes confined to its own registry. Its sharpest seam is the handoff to judgment,
+where propose-never-apply becomes operational; its richest is the A1 education seam, laws down and evidence
+up. And its two dependencies, B1 and B2, are foregrounded honestly: the sealed spec is complete, the running
+legislature needs the algebra and the surface, and A2 says so rather than letting the seal be mistaken for a
+system.
+
+===============================================================================================
+PART XXIV — THE FAILURE TAXONOMY AND INVARIANTS OF A2 ITSELF
+===============================================================================================
+
+24.1 Turning A2's disciplines on A2. Every preceding Part specified how A2 legislates soundly; this Part
+turns the same discipline on A2, enumerating how A2 itself fails and the invariants that must hold for its
+legislation to be trusted. (DEFINED: a legislature that cannot state its own failures and invariants is the
+unaccountable authority it must not be — so A2 subjects itself to the standard it imposes, the reflexive
+completion of the dataset.)
+
+24.2 The seven failure modes, consolidated. From the anti-patterns (Part XX) and adversarial cases (Part
+XXII): (1) THE FALSE UNIVERSAL — a law induced from a biased sample; (2) P-HACKING — mining until a pattern
+appears; (3) THE UNFALSIFIABLE LAW — a candidate no evidence could refute; (4) PARADIGM-THRASH — replacing
+frameworks faster than evidence warrants; (5) THE SELF-ADOPTED LAW — enacting without judgment; (6) THE
+EVIDENCE-PLANTED LAW — an adversary's manufactured pattern; (7) THE ORPHAN CANDIDATE — induced, never
+judged. (DEFINED, and the honest bound: this is the set KNOWN at sealing, and a novel failure a running A2
+discovers is a new incident for the taxonomy, handed to D2, never assumed impossible because unlisted.)
+
+24.3 The five invariants, consolidated. (I) NO CANDIDATE WITHOUT A CONCRETE FALSIFIER — the unfalsifiable
+law closed at the object level (Part VIII). (II) PROPOSE-NEVER-APPLY — A2 induces and never adopts, enforced
+by construction (Part XII). (III) INDUCTION OVER EVIDENCE, NEVER INTUITION — every candidate names its
+evidence trail (Part IV). (IV) COUNTEREXAMPLE-SEEKING, NOT CONFIRMATION-SEEKING — a candidate is stress-
+tested against its breaking case before proposal (Part XIII). (V) BOUNDARY-CONDITIONED — every candidate
+states where it holds and where it does not (Part XIV). (NORMATIVE: these five are load-bearing — the
+violation of any collapses A2 into an unaccountable or captured legislature — and they are stated here as one
+checklist so an audit of A2 has a single place to verify them.)
+
+24.4 The invariants are not equally load-bearing. Invariant II (propose-never-apply) is the keystone — its
+violation is the capture risk, and it is the condition under which every other capability of A2 is safe
+(Part XII §12.9). (DERIVED: invariant I (falsifier) and IV (counterexample search) protect soundness;
+invariant III (evidence) protects accountability; invariant V (boundary) protects against the false
+universal; but invariant II protects against the estate's deepest governance danger, a self-adopting
+legislature. All five bind; naming which is the keystone is what lets a triage under pressure be correct —
+cutting invariant II is death, cutting the others is a serious wound.)
+
+24.5 The reflexive test: is A2 itself reachable and consumed? A2's own most dangerous failure is the orphan
+applied to itself — a legislature whose candidates no judgment consults is inducing to no effect. (NORMATIVE,
+the LIVENESS standard applied to A2: shipping A2 is not wiring it, and a candidate store no judgment surface
+reads is an A2 that legislates and changes nothing.) (DERIVED: A2's done-gate includes a reachability check —
+its candidates must be consumed by a live judgment surface (ACIS/Owner) — because a legislature whose output
+nothing judges has legislated the way the estate's orphan modules passed their tests: correctly, and to no
+effect. The handoff to judgment (Part XVII) is exactly this wire, and A2 unwired at that seam is inert.)
+
+24.6 The self-application of coverage-by-construction. A2's registry and its evidence substrate are both
+DISCOVERED, not curated (Parts V, XIX, IV §4.9), so A2 cannot fall to the enrollment defect it was authored
+in the wake of. (NORMATIVE: an audit of A2's own coverage — which candidates exist, which evidence families
+it reads — must itself be discovered from what exists, never curated from what an author remembers, or it
+measures A2's memory not A2's reality, PR-COVERAGE-BY-CONSTRUCTION-001 at the meta-level.) (DERIVED: A2 holds
+itself to the same discovered-not-curated standard it imposes on its inputs and its registry — the whole
+lineage's discipline, applied reflexively.)
+
+24.7 The meta-invariant: A2's own operating rules are subject to A2's disciplines. The Part XX §20.9
+meta-anti-pattern — a legislature exempting its own rules from its disciplines — is closed by a
+meta-invariant: A2's own operating rules (how it induces, computes confidence, falsifies) are themselves
+candidate laws subject to evidence and revision, not axioms above A2's own law. (NORMATIVE: A2 is not above
+its own legislation — its induction rules are hypotheses about how to legislate well, revisable on evidence
+that they legislate poorly.) (DERIVED: an A2 whose own rules were unrevisable axioms would be a legislature
+above its own law, and the meta-invariant is what keeps A2 accountable to itself — the same self-application
+that makes the reflexive audit honest rather than a formality.)
+
+24.8 The honest residual, foregrounded a final time. A2's spec is complete; A2's build depends on B2 (the
+algebra it induces over) and B1 (the unmapped surface its richest laws concern), and its whole operation is a
+build downstream of this seal, not a running system. (CONTESTED-honest: this is the truth-proof-versus-
+transfer-proof honesty the estate learned — a specification proven coherent is not a system proven to work,
+and claiming the latter would be the Scaffold Illusion A2's own Part I opens against. The reflexive audit
+proves A2's DESIGN names its failures and holds its invariants; it does not prove a built A2 upholds them,
+which is a later empirical gate.)
+
+24.9 Why the reflexive Part is the dataset's integrity. A2 legislates about the estate; if it exempted
+itself from the accountability it demands of every law, it would be the unaccountable authority its whole
+design forbids. (DERIVED: turning the seven failures and five invariants on A2 itself — plus the
+reachability check, the coverage-by-construction, the meta-invariant, and the honest residual — is what
+makes A2 an accountable legislature rather than a machine that judges everything but itself. A2 stands in the
+mirror of its own Part XX, and the willingness to do so is the integrity that its evidence-grounded
+legislation ultimately rests on.)
+
+24.10 The honest self-report of what this reflexive audit could and could not check. Turning the discipline
+on A2 (§24.1) requires being honest about the limits of that self-turning. (CONTESTED-honest.) This dataset
+can specify A2's failure modes and invariants and make them checkable; it CANNOT observe A2 running,
+because A2 as sealed is a specification, not a running legislature (§24.8). So the reflexive audit proves
+A2's DESIGN names its failures and holds its invariants — it does not prove a built A2 upholds them, which
+is a later empirical gate. (DERIVED: this is the truth-proof-versus-transfer-proof honesty the estate
+learned — a specification proven coherent is not a system proven to work, and claiming the latter from the
+former would be the Scaffold Illusion A2's own Part I opens against. The reflexive audit's honest scope is:
+the design is complete, internally consistent, and self-applying; the liveness of the built legislature is
+unproven and belongs to a build downstream of this seal. A2 states this rather than certifying itself on a
+proxy — which would violate, about itself, the very evidence discipline it holds its candidate laws to.)
+
+FINAL LAW — PART XXIV. A2 turns its discipline on itself: seven named failure modes with the honest bound
+that the set is only what is known at sealing, five invariants whose violation collapses A2 into an
+unaccountable or captured legislature, with propose-never-apply the keystone under which all the others are
+safe. It holds itself to the reachability check (a legislature nothing judges is inert), to
+coverage-by-construction (its registry and substrate discovered not curated), and to a meta-invariant that
+its own operating rules are revisable law, not axioms above it. And it is honest that it is a specification: a
+built A2 needs B1 and B2, and A2 will not claim it runs because it is well-designed.
+
+===============================================================================================
+PART XXV — THE COMPLETION CONTRACT: WHAT "A PROPOSED LAW" MEANS
+===============================================================================================
+
+25.1 The dataset's closing object. Twenty-four Parts specified how A2 legislates; this final Part states
+what the whole system is FOR — the precise meaning of "a proposed law" that A2 exists to produce. (DEFINED:
+a PROPOSED LAW, in A2's sense, is a general rule about the estate, INDUCED from its evidence, carrying a
+concrete falsifier and a boundary, stress-tested against its own counterexample, offered for judgment, and
+never self-adopted. Not a guess. Not an intuition. An evidence-grounded, falsifiable, bounded, counterexample-
+tested proposal — all of that, or it is something less than a proposed law, and A2 names which.)
+
+25.2 The four conditions, and why none can be dropped. INDUCED-FROM-EVIDENCE without a FALSIFIER is a
+pattern that cannot be tested — a slogan. FALSIFIABLE without a BOUNDARY is a false universal claiming to
+hold everywhere. BOUNDED without COUNTEREXAMPLE-TESTING is a pattern that survived only because A2 stopped
+looking. And any of these SELF-ADOPTED is the capture the estate's deepest doctrine forbids. (DERIVED: the
+four conditions map to the dataset's Part-clusters — the evidence substrate and engine INDUCE, falsifier-
+first and the experiment designer make FALSIFIABLE, boundary extraction and counterexample search make
+BOUNDED-AND-TESTED, propose-never-apply keeps it UNADOPTED — and dropping any collapses "proposed law" into
+one of A2's named failures.)
+
+25.3 The transformation A2 performs on the estate. Before A2, the estate's laws came from a human's
+intuition — a session noticing a pattern and drafting a rule, with no evidence trail and no exhaustive
+sweep. After A2, the estate's candidate laws also come from an evidence-grounded induction over its whole
+accumulated memory — the good rules latent in evidence that no session noticed, surfaced and offered for
+judgment. (DERIVED: this is the entire value of the dataset — A2 shifts WHERE candidate laws come from,
+from intuition to evidence, while leaving WHO decides which bind with the Owner. The estate does not become
+better-governed because A2 exists; it becomes able to legislate from its own evidence rather than only from
+what a session happened to notice, and to do so accountably, with every proposal carrying its receipts.)
+
+25.4 The boundary held to the end. A2 proposed laws; it never judged one (ACIS), never adopted one (the
+Owner), never routed a decision (DRK), never stored a statute (UKDL), never recorded an event (CEPS), never
+distilled an insight (FD), never taught a law (A1). (NORMATIVE, the anti-inflation contract honored across
+25 Parts: A2's object is induction — turning evidence into a candidate law — and its sharpest boundary,
+JUDGE-versus-PROPOSE, was drawn wherever it recurred, because collapsing it would not merely duplicate ACIS
+but create a self-adopting legislature. Every place A2 touched a sibling it cited the sibling and named its
+own distinct act, because the audit A2 descends from proved a shared word is not a shared subject.)
+
+25.5 The completion gate, made checkable. A2 is complete when: 25 Parts are sealed, each ≥1,200 words, each
+a FINAL LAW; the contamination scan returns zero hits against the excluded foreign-corpus token set (the
+anti-contamination absolute); every sibling is cited, never restated; the dataset ends in an END-OF-DATASET
+marker; and the whole is consistent with the sealed
+corpus, contradicting no owner's thesis and honestly recording B1/B2 as build dependencies. (NORMATIVE: this
+is the same evidenced-done discipline A2 imposes on its candidates, imposed on A2 — not "done because
+written" but done because these conditions are OBSERVED to hold, the Reality Contract applied to A2's own
+sealing.)
+
+25.6 A2 and A1 as the two Tier-A bookends. A2 is the second and final CPCSC Tier-A dataset, and with A1 it
+forms the two bookends of a law's life: A2 drafts a law from evidence, A1 teaches the adopted law to the
+participants who must hold it. (DERIVED: authored together, the two never blur — A2 induces and never
+teaches, A1 teaches and never induces, joined at the one-way seam that carries laws down and evidence up.
+Of 32 domains the two specs proposed, these two survived content-tier verification as genuine 0%-owned
+white-space, and they were built as a pair precisely so their shared boundary was clean from the first
+commit rather than disentangled later.)
+
+25.7 What A2 leaves for the build, stated honestly. This dataset seals a complete specification, not a
+running legislature. (DEFINED: the build must wire B2's unified evidence algebra (A2 induces over it), B1's
+unknown-unknown surface (A2's richest laws concern it), the discovered evidence substrate and registry, the
+handoff to ACIS/Owner judgment, and the A2→A1 education seam — and until those are built and observed, A2's
+mechanisms are specified and unproven-in-operation, exactly as A2's own invariant I would require A2 to say.)
+(DERIVED: the single most important build step is the reachability wire to a live judgment surface — an A2
+whose candidates nothing judges is the orphan failure applied to itself, and the build is not complete until
+a live judgment consumes the candidates A2 induces.)
+
+25.8 The dataset's place in the corpus. A2 closes the CPCSC Tier-A stream authorized at STOP #2, and with it
+the two datasets that survived the audit. (DERIVED: the audit that authorized A2 distilled two specs
+proposing ~32 domains down to two datasets, nine Tier-B extensions, and two deferred Owner decisions — and A2
+is one of the two, the legislature to A1's school. It closes as it opened: as the generative half of
+meta-science the estate lacked, cited against every judge, distinct from its Tier-A partner, and honest about
+being a specification a build must bring to life.)
+
+25.9 The final law of the dataset. An estate that can judge a law but not write one waits on a human's
+intuition while the rules its own evidence supports go unwritten. A2 is the object that ends the wait: it
+induces candidate laws from the estate's memory, tests each against its own counterexample, fences it with a
+boundary, offers it for judgment, and never adopts it — so that the estate's statute book grows from what its
+evidence supports and not only from what a session noticed, while the authority over what binds stays with
+the Owner. It judges nothing, adopts nothing, routes nothing, stores nothing, records nothing, teaches
+nothing — it legislates, from evidence, and holds itself to the exact standard it holds its laws: a proposal
+is only ever as sound as the evidence behind it, the falsifier it survives, and the boundary it honestly
+draws.
+
+FINAL LAW — PART XXV. A proposed law means induced-from-evidence AND falsifiable AND bounded AND
+counterexample-tested AND unadopted — drop any one and it collapses into a slogan, a false universal, a
+p-hacked pattern, or the capture of a self-adopting legislature. A2 shifts where the estate's candidate laws
+come from — from a session's intuition to an evidence-grounded sweep of its whole memory — while leaving who
+decides which bind with the Owner. It is done not because it is written but because its completion is
+observed, the Reality Contract applied to the legislature that induces the estate's laws from its own
+evidence and never enacts them itself.
+
+===============================================================================================
+END-OF-DATASET — CPCSC-A2 THEORY GENERATOR AND LAW EXTRACTION
+25 Parts sealed. Object: the estate's legislature — inducing candidate laws from accumulated evidence, each
+carrying a falsifier and a boundary, stress-tested against its own counterexample, offered for judgment, and
+never self-adopted. "ACIS is a tribunal without a legislature": A2 drafts the law the court judges. Owns no
+sibling's object; cites each by boundary; JUDGE-versus-PROPOSE drawn wherever it recurs. Build depends on B2
+(evidence algebra) + B1 (unknown-unknown surface), stated honestly. Authorized CPCSC STOP #2 (4f7b27e).
+With A1, the two Tier-A bookends of a law's life. Consistent with DAIF / CPP-IAS / FD / CO / ACIS / DRK / UKDL.
+===============================================================================================
