@@ -1,6 +1,9 @@
 IAS-D2 — INSTITUTIONAL IMMUNE SYSTEM AND FAILURE-MUTATION INTELLIGENCE
 Claude Power Pack Institutional Advantage Systems — Family D (System Ecology & Immunology)
-Depth contract: PART I..PART XXIV, 1300-1500 words per Part, a FINAL LAW closing every Part.
+Depth contract: PART I..PART XXV, 1300-1500 words per Part, a FINAL LAW closing every Part.
+(Part XXV — Class Seven, the Adversarial Pathogen — is a Tier-B extension exercising the
+seventh-class amendment path Part II §2.8 / Part XXII §22.2 / Part XXIV §24.3 specify; the six
+original classes and the closing appendices are left sealed and describe the original core.)
 Epistemic marking on every load-bearing claim: DEFINED / OBSERVED / DERIVED / HYPOTHESIZED /
 NORMATIVE / EXPERIMENTAL / CONTESTED / UNRESOLVED.
 Parents strengthened (never rebuilt): cascade_prevention (per-session mutation guard), osa/CEPS
@@ -2577,6 +2580,147 @@ FINAL LAW — PART XXIV. An institutional immune system is judged not by the pat
 named, but by whether the mechanism that named them can honestly recognize the ones it has not — and this
 dataset closes having built that mechanism, named its own remaining seams to its nearest siblings
 explicitly, and not having claimed the naming, or the federation, is finished.
+
+===============================================================================================
+PART XXV — CLASS SEVEN: THE ADVERSARIAL PATHOGEN
+===============================================================================================
+
+25.1 Why a twenty-fifth Part, and why it is the amendment Part II anticipated. Part II sealed a
+closed six-member pathogen taxonomy but marked its own closure CONTESTED (§2.8): "new incident
+types may surface a seventh class the estate has not yet suffered," resolved not by forcing a
+misclassification but through the amendment path Part XXII §22.2 specifies. Part XXIV §24.3 names
+"a seventh-plus taxonomy class" first among the legitimate future extensions of this dataset, and
+the Decision Log's D2 records the "explicit seventh-class amendment path" as a deliberate design
+choice rather than an oversight. This Part exercises exactly that sanctioned path. The six original
+classes are left sealed and unedited; Class Seven is added here, and it is a full Part rather than a
+seventh entry beside §2.2-§2.7 because it differs from all six on an axis the six silently share —
+and naming that axis is the whole justification for a new class rather than a stretched old one.
+(NORMATIVE, DERIVED from §2.8's CONTESTED closure, §22.2's amendment path, and §24.3's named
+extension.)
+
+25.2 The axis the six share and Class Seven breaks: no adversary. Every one of the six original
+classes is SELF-INFLICTED. False-done is the estate's own unbacked claim; proxy-evidence its own
+inference; ineffective-rule its own governance; contaminated-prompt its own reused artifact;
+parasitic-complexity its own overhead; stale-knowledge its own cached fact. Not one has an
+adversary — each arises from the estate acting upon itself, accidentally, and drifting as its own
+code and notes drift. The whole immune model inherits that assumption: the fingerprint (Part III)
+is deliberately mutation-TOLERANT against INCIDENTAL drift (Part V, "same cause, changed surface"),
+because a self-inflicted pathogen does not try to change its surface. Class Seven, the ADVERSARIAL
+pathogen, is DEFINED as a pathogen introduced by an actor whose intent is hostile to the estate and
+whose defining property is that it ADAPTS AGAINST THE IMMUNE RESPONSE ITSELF — an adversary who
+observes the deployed defense and reshapes the pathogen to evade it. That single property breaks
+the no-adversary assumption the other six license, and every mechanism built on that assumption
+inherits the break. (DEFINED.)
+
+25.3 The definition, and the boundary against Class Four. Class Seven is not merely "a contaminated
+prompt that came from outside." Class Four (§2.5) already covers an artifact carrying an injected
+instruction that propagates by literal copying — but a Class-Four pathogen is PASSIVE: it carries
+its defect verbatim and does not adapt, and its mutation is the incidental drift of the six. Class
+Seven is ACTIVE, and the distinguishing test is precise: is there an adversary who, upon the estate
+deploying a defense, MODIFIES the pathogen specifically to defeat that defense? A prompt-injection
+payload sitting inert in fetched data is a Class-Four contaminated prompt; the same payload becomes
+a Class-Seven adversarial pathogen the moment its surface is observed to be reshaped against the
+estate's filters. The class is individuated by the ADAPTATION-AGAINST-DEFENSE relationship, not by
+the arrival surface — injection, a poisoned dependency, a hostile contribution are all merely how
+it arrives; intent plus observed adaptation is what makes it Class Seven. Drawing the boundary on
+the relationship rather than the surface is what keeps Class Seven from either swallowing Class Four
+or being swallowed by it. (DEFINED, NORMATIVE boundary.)
+
+25.4 Why Part V's mutation model cannot absorb it by recalibration. Part V's failure-mutation
+detection is built for "same cause, changed surface" where the change is INCIDENTAL — a project
+refactors and the pathogen's surface drifts without anyone trying to hide it, so a mutation-tolerant
+fingerprint within a distance threshold τ (§5.4) still matches. An adversarial pathogen's mutation
+is DELIBERATE and DEFENSE-DIRECTED: the adversary reads or infers the fingerprint the estate matches
+on and constructs the next variant to fall just OUTSIDE it. Against incidental drift, a fixed τ
+converges — the surface stops drifting once the refactor settles. Against a deliberate adversary, τ
+does not converge, because every variant is engineered to sit just past the previous one's match
+radius, so a threshold tuned on the estate's self-inflicted history systematically UNDER-detects
+Class Seven, and tightening τ to compensate raises the autoimmune rate (Part X) against the six
+benign classes. This is not a tuning error correctable within Part V's model; it is a category
+error, and it is the concrete reason Class Seven must be its own class rather than a hard case of
+the existing mutation machinery. (DERIVED.)
+
+25.5 The distinct immune requirement: adversarial confirmation, not structural presence. Part XXI
+§21.2 and Part XXIV §24.6 already named the estate's honest open gap — structural-presence-only
+confirmation cannot distinguish a genuine antibody from a gamed one, and closing it "requires an
+ADVERSARIAL confirmation test — attempting to actually trigger the pathogen's original mechanism and
+confirming the gate substantively intercepts it." For the six self-inflicted classes that adversarial
+confirmation is a desirable upgrade the dataset defers as future work. For Class Seven it is
+MANDATORY and part of the class definition, because an adversarial pathogen is defined precisely by
+its ability to satisfy a structural check while defeating its substance — satisfying-the-check-while-
+defeating-the-substance is exactly what an adaptive adversary optimizes for. A Class-Seven antibody
+is therefore UNCONFIRMED until an independently-triggered, safe, bounded re-exercise of the
+pathogen's mechanism against the live defense OBSERVES substantive interception; confirmed by
+structural presence alone, it is by the class's own definition presumed defeated. (NORMATIVE,
+DERIVED — promoting §21.2's named-future-refinement from optional to definitional for this class.)
+
+25.6 Containment under an adversary who exploits the containment ladder. Part XI's containment
+ladder and Part XXI's adversarial cases already show an adversary weaponizing the immune system's
+own timing (§21.3, the confirm-window race) and rate limits (§21.6, the denial-of-attention flood).
+For the six self-inflicted classes those are edge cases; for Class Seven they are the EXPECTED
+operating condition, because an adversary who adapts against detection adapts against containment
+too. The corrective §21.3 already sealed — the 48-hour window's non-confirmation default MUST
+escalate, never lift — is, for Class Seven, promoted from a correction into an INVARIANT: any
+ambiguity in a Class-Seven containment decision defaults to the most conservative outcome, continued
+quarantine and Owner escalation, never an implicit clear. The reasoning is that the one variable an
+adversary reliably controls is the estate's own uncertainty, so a default-to-lift on ambiguity hands
+the adversary the win by construction. Default-to-contain on ambiguity is the Class-Seven containment
+law, and it is the direct application of §21.3's fix as a standing rule rather than a case-specific
+patch. (NORMATIVE, DERIVED.)
+
+25.7 Attribution by observed adaptation, never by naming the attacker. A self-inflicted pathogen's
+origin is a real evidence artifact (§3.4: a hard-rule STOP entry, a block log). A Class-Seven
+pathogen's origin includes an adversary, and the tempting error is to attribute the adversary — to
+record who did it and why. Class Seven explicitly does NOT require identifying the attacker or
+proving intent, because attribution of identity is usually impossible and attribution of motive is
+unreliable, and a class that demanded either would be inert in exactly the cases that matter most.
+What Class Seven requires recorded is the ADAPTATION EVIDENCE: the observed fact that a pathogen's
+surface changed against a deployed defense — variant A was intercepted, and variant B, of materially
+the same mechanism but a defense-evading surface, appeared after the defense was deployed.
+Adaptation-against-defense is an OBSERVABLE property of the pathogen's own history; the adversary's
+identity and motive are not, and the class is built strictly on the observable, exactly as §3.4
+builds a fingerprint's origin on a reconstructible artifact and never on a bare claim. (NORMATIVE,
+DERIVED, mirroring §3.4's extraction discipline.)
+
+25.8 The failure shape this class exists to prevent: the LEARNED BLIND SPOT. The specific harm Class
+Seven closes is the immune system TEACHING ITS OWN ADVERSARY. Every defense the estate deploys and
+describes is, to an adaptive adversary, a specification of what to evade — so an immune system that
+publishes its fingerprints and confirmation checks in full operational detail is, against Class
+Seven, training the next variant to fall past exactly those defenses, and the more diligently it
+immunizes, the more precisely the adversary is shaped around its protection. This is the adversarial
+dual of stale-knowledge (§2.7): stale-knowledge is the estate trusting an old fact of its own; the
+learned blind spot is the adversary exploiting the estate's own published defense against it. The
+structural defenses are the two already stated — adversarial confirmation (§25.5), so a defeated
+defense is detected rather than trusted, and default-to-contain (§25.6), so an ambiguous outcome
+fails CLOSED with the pathogen presumed live. Failing closed is the whole point: the immune system's
+uncertainty about a Class-Seven pathogen must cost the adversary, not the estate. (DERIVED,
+NORMATIVE.)
+
+25.9 The boundary: Class Seven recognizes and contains, it never counter-attacks. Held to the exact
+boundary Part XXIV §24.3-§24.4 hold for the whole dataset: recognizing an adversarial pathogen
+authorizes DETECTION, CONTAINMENT, adversarial CONFIRMATION, and immunization of exposed projects —
+it authorizes no action whatever against any actor or system outside the ensemble boundary, which
+§24.3 names as a structural limit unamendable without amending the Constitution itself. The immune
+system's entire response to Class Seven is to fail closed, escalate to Owner, and immunize the
+exposed — never to retaliate against, probe, or act upon an external party, and this Part specifies
+no technique for doing so and licenses none. A class that permitted counter-action would cross the
+precise line §24.3 seals as permanent; Class Seven widens only what the estate can RECOGNIZE, and
+widens nothing about what the estate may DO to anyone outside itself. The seventh class is a sharper
+set of eyes, never a weapon, and the distinction is load-bearing rather than rhetorical: the whole
+value of naming the adversary is to see the pathogen more honestly, not to license the estate to
+become an adversary in turn. (NORMATIVE, DEFINED — the boundary that keeps this appended class a
+recognition object rather than an escalation into offence.)
+
+FINAL LAW — PART XXV. The six original classes are pathogens the estate inflicts upon itself, and
+their whole immune model quietly assumes there is no one on the other side trying to win; Class Seven
+is the pathogen that has an adversary, defined not by where it arrives but by the one property the
+six lack — it adapts against the defense itself — so its fingerprint threshold never converges, its
+antibody is UNCONFIRMED until a safe adversarial re-exercise observes substantive interception, its
+containment defaults to contain-and-escalate on any ambiguity so that the estate's uncertainty costs
+the adversary rather than the estate, and its attribution rests on the observable fact of adaptation
+and never on naming an attacker; and the class recognizes and contains and immunizes and fails
+closed, but it never counter-attacks beyond the ensemble boundary, because an immune system that
+answers an adversary by becoming one has not defended the estate, only enlisted it.
 
 ===============================================================================================
 DECISION LOG
