@@ -59,8 +59,8 @@ or **consumer** of CRAIF's contracts, never re-implemented inside CRAIF.
 |---|---|---|---|---|
 | **CRAIF-00** | Constitution & Canonical Ontology | ontology, L0-L4 ladder, negative fixtures, OIII metric, non-duplication contract, self-failure-modes | 16/16 | **`COMPLETE`** — 20,618 words, mean 1,289 w/Part |
 | **CRAIF-01** | Transactional Repair Runtime & Authority Composition | R1 + R2: the repair transaction state machine, authority-in-use, sandbox/canary/rollback, failure modes, integration contracts | 20/20 | **`COMPLETE`** — 21,501 words, mean 1,075 w/Part (two honest expansion passes; a third was declined per CRAIF-00 XVI.6's own anti-padding law — see note below) |
-| **CRAIF-02** | Activation Integrity & Simulation Science | R3 (+R4 metrics): activation-chain ontology, simulation harness, negative fixtures, integration boundary | 17 | `NOT_STARTED` |
-| | **Total** | | **53** | |
+| **CRAIF-02** | Activation Integrity & Simulation Science | R3 (+R4 metrics): activation-chain ontology, simulation harness, negative fixtures, integration boundary | 17/17 | **`COMPLETE`** — 19,236 words, mean 1,126 w/Part (one expansion pass) |
+| | **Total** | | **53/53** | |
 
 **Depth contract** (inherited from SQI `CANONICAL_ONTOLOGY.md` / DAIF, verified at content-tier
 this session): one `.txt` per dataset · `PART I` … `PART N` · numbered subsections (`X.Y`) ·
@@ -165,6 +165,13 @@ states a Part lengthened without new mechanism has not cleared the floor honestl
 of word count, and the marginal content available for a third pass was assessed as
 repetition risk rather than genuine additional mechanism. CRAIF-01's practical achieved
 floor is therefore documented as ~1,000-1,200 w/Part, not silently claimed as 1,200+.
+CRAIF-02 applied the lesson learned from both prior datasets — writing a denser first draft
+(11-12 subsections per Part instead of 8-9) — and still landed short at a 967 w/Part first-
+draft mean; one expansion pass (a single genuine new subsection per Part: a worked example,
+edge case, or explicit cross-reference, never restated summary) brought it to 1,126 w/Part,
+17/17 Parts present, in one pass rather than CRAIF-01's two. The family's practical honest
+floor across all three datasets is therefore ~1,000-1,300 w/Part, not the nominal 1,200-2,500
+ceiling stated at founding.
 
 ## Build order
 
