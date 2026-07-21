@@ -37,7 +37,8 @@ _FRAG = [
 BANNED = [a + b for a, b in _FRAG]
 
 ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-         "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX"]
+         "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
+         "XXI", "XXII", "XXIII", "XXIV", "XXV"]
 
 # At least one of these named parents must appear — DAIF composes, never re-narrates in a vacuum.
 PARENTS = ["D2A", "SQI", "DRK", "FD", "ACIS", "CO-", "GK", "PM", "one_shot",
