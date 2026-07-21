@@ -57,7 +57,7 @@ or **consumer** of CRAIF's contracts, never re-implemented inside CRAIF.
 
 | ID | Dataset | Owns | Parts | Status |
 |---|---|---|---|---|
-| **CRAIF-00** | Constitution & Canonical Ontology | ontology, L0-L4 ladder, negative fixtures, OIII metric, non-duplication contract, self-failure-modes | 16 | `NOT_STARTED` |
+| **CRAIF-00** | Constitution & Canonical Ontology | ontology, L0-L4 ladder, negative fixtures, OIII metric, non-duplication contract, self-failure-modes | 16/16 | **`COMPLETE`** — 20,618 words, mean 1,289 w/Part |
 | **CRAIF-01** | Transactional Repair Runtime & Authority Composition | R1 + R2: the repair transaction state machine, authority-in-use, sandbox/canary/rollback, failure modes, integration contracts | 20 | `NOT_STARTED` |
 | **CRAIF-02** | Activation Integrity & Simulation Science | R3 (+R4 metrics): activation-chain ontology, simulation harness, negative fixtures, integration boundary | 17 | `NOT_STARTED` |
 | | **Total** | | **53** | |
