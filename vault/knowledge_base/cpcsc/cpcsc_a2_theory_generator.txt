@@ -1781,3 +1781,395 @@ understanding, not as an arbitrary stricture. The seam is one-way: A2's laws flo
 evidence flows to A2, and neither performs the other's act. Authored together, the two Tier-A datasets are
 the bookends of a law's life — one drafts it, one operationalizes it in the participants who must hold it —
 joined at a clean handoff that carries the rule and its reason, never the pedagogy.
+
+===============================================================================================
+PART XIX — REGISTRY AND PROVENANCE OF CANDIDATE LAWS
+===============================================================================================
+
+19.1 The registry is discovered, and the provenance is complete. Part V established the Hypothesis
+Registry; this Part specifies its provenance discipline, because a legislature's registry that could not
+trace a candidate's origin would be a book of laws with no record of why any was proposed. (DEFINED: every
+candidate carries complete provenance — the recurrence that induced it, the evidence trail, the
+counterexample search, the experiments run, the confidence history, and the judgment disposition. The
+provenance is the candidate's whole biography, from the evidence that suggested it to its adoption or
+death.) The registry is discovered from disk (Part V §5.3); the provenance is complete per candidate.
+
+19.2 Why provenance is a legislature's core obligation. A law is a claim on the estate's behaviour, and a
+claim with no traceable basis is one the estate cannot audit when it later fails. (NORMATIVE: when an
+adopted law A2 proposed later causes a problem, the provenance chain answers whether the induction was
+sound and the evidence misleading, or the induction was flawed — a distinction that determines whether the
+fix is more evidence or a better engine.) (DERIVED: provenance is what makes A2's legislation accountable —
+a hand-drafted law from intuition has no provenance beyond "a session thought so," while an A2 candidate
+carries the full evidence chain, which is precisely A2's advantage over intuition-drafting. The provenance
+is not overhead; it is the auditability that distinguishes evidence-grounded legislation from a machine's
+guess.)
+
+19.3 The provenance chain spans the whole law lifecycle. A candidate's provenance does not end at
+proposal — it extends through judgment (the disposition), adoption (the UKDL rule it became), and
+education (the A1 curriculum it seeded). (DEFINED: the provenance is a chain across every system a law
+touches, and A2's registry holds A2's segment of it, linked to the segments the other systems hold.)
+(DERIVED: this is the end-to-end provenance the estate values — a production failure by a taught law can
+be walked back through the curriculum (A1), the adoption (UKDL), the judgment (ACIS), to the induction
+(A2), and each segment's provenance names what that stage contributed. A2's registry provenance is one
+link in a chain that spans the law's whole life, and its completeness is what makes the whole chain
+walkable.)
+
+19.4 Provenance closes the p-hacking audit. Because a candidate's provenance records the FULL evidence
+considered — including the counterexamples found and how the boundary was drawn — a later audit can check
+whether the candidate was induced honestly or cherry-picked. (NORMATIVE, the anti-p-hacking property made
+auditable: a candidate that cited only confirming evidence, with no record of a counterexample search,
+fails the provenance audit. The provenance is what lets the estate verify A2 searched for the breaking
+case rather than merely asserting it.) (DERIVED: without complete provenance, "A2 induced this honestly"
+is an unverifiable claim; with it, the honesty is checkable — the recorded counterexample search, the
+evidence breadth across families, the boundary drawn from disconfirming cases are all inspectable, and a
+dishonest induction leaves a provenance that shows it.)
+
+19.5 The registry does not curate; it discovers. Like A1's curriculum registry, the Hypothesis Registry
+is derived from the candidate artifacts on disk, and a candidate with no registry entry fails the
+completeness gate by name. (NORMATIVE, PR-COVERAGE-BY-CONSTRUCTION-001: a candidate induced but absent
+from the registry is an orphan invisible to judgment — never handed over, never adopted, never counted.)
+(DERIVED: the discovery discipline is what stops A2 losing induced candidates silently — an induced law
+nothing can find is an induced law that never happened, and only a discovered registry resists the
+enrollment gap. A2 holds itself to the same discovered-not-curated standard as every estate registry
+authored after the audit.)
+
+19.6 Provenance and negative knowledge. The registry's REFUTED candidates (Part XV §5.5) are provenance
+of what does NOT hold — documented dead ends the estate need not re-investigate. (DEFINED: a refuted
+candidate's provenance records the general rule that was proposed and the counterexample that killed it,
+which is negative knowledge — "this generalization fails, and here is why.") (DERIVED: negative knowledge
+is exactly the "do not re-investigate this" the estate's writeback discipline values, and the registry's
+refuted candidates are a store of it — preventing A2 from re-proposing a killed candidate and telling a
+future session that this particular generalization was tried and failed. The refuted provenance is as
+valuable as the adopted, because a documented dead end saves the cost of re-walking it.)
+
+19.7 Provenance integrates into the estate's knowledge graph. A2 publishes its candidates and their
+provenance to GK's knowledge graph (as A1 publishes its curricula), so the estate's law-provenance is
+navigable alongside its other coordinates. (Boundary: GK owns the graph; A2 publishes candidate nodes and
+provenance edges into it, not a competing index.) (DERIVED: publishing to GK makes A2's legislation
+discoverable — a session can navigate from a law to the evidence it was induced from, to the theory it
+grounds, to the curriculum that teaches it, because A2's provenance is edges in the estate's shared graph.
+The provenance is not locked in A2's registry; it is contributed to the estate's navigable knowledge,
+where it joins the provenance A1, DRK, and the others contribute.)
+
+19.8 A worked provenance walk, so it is concrete. Suppose an adopted law A2 proposed later proves too
+broad — it binds the estate where it should not. (EXPERIMENTAL trace.) The provenance walk: the UKDL rule
+links to A2's candidate; the candidate's boundary shows it was drawn at extent E; the counterexample
+record shows the disconfirming cases A2 considered stopped at E; and the evidence trail shows the
+instances beyond E were never in the substrate A2 induced from — a substrate gap, not an induction error.
+(DERIVED: the walk localizes the failure to a missing evidence family, fixed by wiring that family into
+A2's substrate, not by distrusting A2's induction. Without the provenance, the over-broad law would be an
+unattributable failure; with it, the cause is an incomplete substrate, named precisely. This is the same
+diagnostic power A1's provenance gives, applied to a law's over-breadth.)
+
+19.9 Provenance is what makes A2 auditable as a legislature. A hand-drafting session leaves no provenance;
+A2 leaves complete provenance, and that is the difference between a legislature whose laws can be audited
+and one whose laws must be trusted. (DERIVED: the estate can ask of any A2 candidate "why was this
+proposed, on what evidence, tested how, and disposed how" and get a complete answer — which it cannot ask
+of an intuition-drafted Hard Rule beyond "a session noticed." A2's provenance is its accountability, and
+accountability is what makes evidence-grounded legislation trustworthy in a way intuition-drafting, however
+skilled, cannot be. The provenance is the receipts for every law A2 proposes.)
+
+FINAL LAW — PART XIX. Every candidate carries complete provenance — the recurrence that induced it, the
+evidence, the counterexample search, the experiments, the disposition — because a law is a claim on the
+estate's behaviour and a claim with no traceable basis cannot be audited when it fails. The registry is
+discovered not curated, its refuted candidates are stored negative knowledge, and its provenance is a link
+in a chain spanning induction to judgment to adoption to teaching. Provenance is A2's accountability: the
+estate can ask why any law was proposed and get a complete answer, which is the difference between
+legislation that can be audited and legislation that must be trusted.
+
+===============================================================================================
+PART XX — THE ANTI-PATTERNS OF THEORY GENERATION
+===============================================================================================
+
+20.1 Why the failure catalogue is a Part. A legislature's failures are seductive because each produces
+something that LOOKS like good legislation — a confident law, a broad universal, an exciting new paradigm —
+while corroding the soundness that makes a law worth adopting. (DEFINED: this Part names the failure modes
+A2 drifts toward, each with the appearance it produces and the soundness it corrodes, so an auditor or the
+engine can recognize the drift before a false law reaches adoption.) Each has a direct analogue in human
+science's own failures, and each is defended by a mechanism specified in an earlier Part.
+
+20.2 The false universal. A law induced from a biased sample, claimed to hold more broadly than the
+evidence supports. (OBSERVED-analogue: over-generalization from a non-representative sample.) The
+appearance is a broad, powerful law; the corroded reality is a law the estate obeys where it does not
+hold. A2's defenses are boundary extraction (Part XIV — the boundary drawn at the evidence's extent) and
+counterexample search (Part XIII — the disconfirming case that would reveal the over-breadth). The false
+universal is defeated where those two overlap: a law whose boundary was drawn from disconfirming cases
+cannot claim more than the evidence supports.
+
+20.3 P-hacking the ledgers. Mining the evidence until a pattern appears, then proposing it as if the
+mining had not shaped it. (OBSERVED-analogue: the estate's named p-hacking failure.) The appearance is a
+well-evidenced law; the corroded reality is a pattern that survived only because A2 stopped looking. A2's
+defenses are the counterexample search (Part XIII — mandatory disconfirmation-seeking) and complete
+provenance (Part XIX — the recorded search that makes cherry-picking auditable). P-hacking is defeated by
+requiring and recording the counterexample search alongside the pattern-mining.
+
+20.4 The unfalsifiable law. A candidate that no evidence could refute — it explains everything and
+predicts nothing. (OBSERVED-analogue: the unfalsifiable theory.) The appearance is a law that always
+holds; the corroded reality is a law that says nothing, because a claim consistent with every observation
+constrains none. A2's defense is falsifier-first (Part VIII — no candidate without a concrete refutation
+condition, enforced at the engine), which closes the failure by construction: an unfalsifiable candidate
+is malformed and never proposed.
+
+20.5 Paradigm-thrash. Replacing frameworks faster than evidence warrants, so the estate never settles on a
+stable paradigm long enough to build on it. (OBSERVED-analogue: theory-change driven by novelty rather
+than evidence.) The appearance is an innovative, always-improving understanding; the corroded reality is
+instability that invalidates everything built on each superseded framework. A2's defenses are the high
+replacement bar (Part XVI §16.4 — a successor must dominate the incumbent on evidence) and propose-never-
+apply (the Owner declines excessive replacements). Paradigm-thrash is contained because A2 only proposes
+replacements and the judgment layer paces adoption.
+
+20.6 The self-adopted law. A candidate A2 enacted itself, bypassing judgment. (OBSERVED-analogue: the
+self-modifying-governance capture.) The appearance is efficiency — why wait for judgment on an obvious
+law; the corroded reality is the capture spiral, a legislature enacting laws that weaken the checks on its
+own drafting. A2's defense is propose-never-apply enforced by construction (Part XII — no adoption path in
+A2), which closes the failure absolutely: A2 cannot self-adopt because the capability is absent, not
+merely forbidden.
+
+20.7 The evidence-planted law and the orphan candidate. Two further failures: the EVIDENCE-PLANTED law (an
+adversary seeds the ledgers so A2 induces a law serving the adversary, Part XXII), and the ORPHAN
+CANDIDATE (a law induced, registered, and never handed to judgment, Part V §5.8). (DEFINED.) The first is
+defended by cross-family corroboration (Part IV §4.4 — a planted pattern in one ledger lacks the
+cross-family breadth of a genuine law) and provenance audit; the second by the registry's orphan-surfacing
+obligation. Both are failures where A2's output is technically produced but its value is lost — to an
+adversary's manipulation or to a bottleneck's neglect.
+
+20.8 The interlock principle, restated for A2. As in A1, no A2 anti-pattern is defeated by a single
+mechanism — each is closed where two or more overlap. (DEFINED: the false universal needs boundary
+extraction AND counterexample search; p-hacking needs counterexample search AND provenance; the
+self-adopted law needs propose-never-apply AND the missing adoption path.) (DERIVED: the interlock is the
+design — a lone guard is a single point of failure, and A2 requires each failure mode to be defeated by
+overlapping mechanisms so that defeating one still leaves another holding. Dropping any single mechanism
+for convenience un-defends a failure mode down to a guard that a drift or an adversary could defeat, which
+is why the mechanisms are load-bearing in combination.)
+
+20.9 The meta-anti-pattern: a legislature that exempts its own laws from its disciplines. The subtlest
+failure is A2 applying its disciplines to candidate laws while exempting its OWN operating rules from them
+— inducing laws about the estate while its own induction rules go untested. (CONTESTED-honest, and the
+reason Part XXIV turns the discipline reflexively on A2.) (DERIVED: an A2 whose own rules — how it induces,
+what confidence it assigns, when it falsifies — were not themselves subject to evidence and revision would
+be a legislature above its own law, and the only defense is to hold A2's own mechanisms to the same
+evidence discipline A2 imposes, which is what the reflexive Part XXIV does. The catalogue is a mirror A2
+must stand in front of, not only a list it applies to its candidates.)
+
+20.10 The confirmation-cascade, and why it is the most insidious. A distinct and subtle failure is the
+CONFIRMATION-CASCADE: A2 induces a candidate law, then — because the candidate now exists — begins reading
+subsequent evidence through its lens, finding confirmations everywhere and overlooking disconfirmations,
+so the candidate's confidence rises not because the evidence supports it but because A2 has started to
+expect it. (DEFINED: this is confirmation bias operating over time, where an early candidate biases the
+interpretation of later evidence toward itself.) The appearance is a steadily-strengthening law; the
+corroded reality is a self-fulfilling induction that confirms what it already proposed. (DERIVED: A2's
+defense is that confidence is a projection over the ACTUAL evidence trail (Part XI §11.2), recomputed
+including disconfirmations, and that the counterexample search (Part XIII) is mandatory and recorded for
+every candidate REGARDLESS of its age — so a maturing candidate is re-subjected to counterexample search
+as new evidence arrives, not grandfathered on its early confidence. The cascade is defeated by never
+letting a candidate's existence excuse it from the disconfirmation-seeking every candidate faces, which is
+why the counterexample search is a standing obligation over a candidate's whole life, not a one-time gate
+at proposal. A law A2 has believed longer is not thereby a law A2 tests less.)
+
+FINAL LAW — PART XX. Every theory-generation anti-pattern produces something that looks like good
+legislation — a confident law, a broad universal, an exciting paradigm — while corroding the soundness
+that makes a law worth adopting. The false universal, p-hacking, the unfalsifiable law, paradigm-thrash,
+the self-adopted law, the planted and orphan candidates: A2 defeats each not with one guard but with
+interlocking mechanisms — boundary extraction, counterexample search, falsifier-first, the high
+replacement bar, propose-never-apply, cross-family corroboration — because each failure is closed only
+where two or more overlap, and dropping any one re-opens the door.
+
+===============================================================================================
+PART XXI — THE ECONOMICS OF THEORY GENERATION
+===============================================================================================
+
+21.1 Induction is cheap; judgment is scarce; and this asymmetry shapes A2. A2 can induce candidates far
+faster than the Owner can judge them — induction is a machine sweep over evidence, judgment is human
+attention. (OBSERVED: this asymmetry is the central economic fact about A2, and it is the opposite of most
+estate systems, where the doing is dear and the deciding cheap.) (DERIVED: because induction is cheap and
+judgment scarce, A2's economic discipline is not to induce LESS but to PRIORITIZE what it hands to
+judgment, so the Owner's scarce attention goes to the candidates most worth judging. The bottleneck is
+judgment, and A2's economics are about feeding that bottleneck the best candidates, not about rationing its
+own cheap induction.)
+
+21.2 The boundary with IAS-C1. A2 computes the cost of theory generation and hands it to IAS-C1 as one
+capital input; C1 owns the valuation. (Boundary, Article II: C1's object is portfolio allocation across
+all holdings; A2's is the induction whose cost is one line item. A2 measures what generating and testing
+laws costs; C1 decides whether that cost is worth it against every other estate investment.) (DERIVED: A2
+never ranks theory generation against other estate spend — that is C1's portfolio object — and A2
+performing it would be the absorption error. A2 supplies the cost; C1 supplies the verdict, the same
+input-not-decision restraint A1 shows.)
+
+21.3 The cost of NOT legislating, made visible. A2's true value is not the induction cost but the value of
+the laws that would otherwise stay unwritten — the good rules latent in evidence that no session noticed
+(Part I §1.3). (DERIVED: the cost of not legislating is invisible, because an un-induced law leaves no
+error — but it is real, the benefit of a rule the estate never adopted because no one drafted it. A2 makes
+this partly visible by attaching to each candidate the class of failure it would prevent or the capability
+it would improve, so C1 can weigh induction cost against a law's prospective value rather than against
+nothing. Legislation measured only by its cost looks like pure expense; measured against the unwritten laws
+it surfaces, it is an investment.)
+
+21.4 Prioritizing the judgment queue. A2 orders the candidates it hands to judgment by a combination of
+confidence, novelty, and prospective value, so the Owner judges the best first. (DEFINED: the highest
+priority is high-confidence, high-value candidates; speculative high-novelty candidates are queued for
+experiments before judgment; low-confidence low-value candidates may not be handed at all.) (DERIVED: the
+prioritization is A2's answer to the judgment bottleneck — since the Owner cannot judge everything, A2
+ensures the scarce judgment goes where it matters most, which is the economic discipline the induction-
+cheap/judgment-scarce asymmetry demands. A2 does not decide which laws bind; it decides which to PRESENT
+first, and even that ordering is a recommendation the Owner can override.)
+
+21.5 The compounding return of a legislature. A law induced once governs indefinitely; a theory composed
+once explains a whole domain; a meta-rule extracted from the adopted corpus improves how the estate
+reasons about its own rules. (HYPOTHESIZED, but structurally sound: A2's outputs are capital-light,
+high-optionality assets in the same sense FD deposits are — a candidate law, once induced, is cheap to
+hold and valuable if adopted, and its value compounds as it governs more cases over time.) (DERIVED: this
+is the honest optimistic case for A2's place in the portfolio — front-loaded induction cost, compounding
+legislative return — which is exactly the profile C1's valuation recognizes, and A2 supplies the inputs
+for C1 to recognize it without making the valuation itself.)
+
+21.6 The experiment budget is a distinct cost. Beyond induction, A2's experiment designer (Part IX)
+proposes experiments that consume real estate resources, and their cost is a separate line A2 hands to
+governance. (DEFINED: an experiment's cost — sandbox, compute, attention — is weighed against the value of
+testing the specific law, a governance judgment A2 informs but does not make.) (DERIVED: the experiment
+budget is where A2's economics touch real resource consumption most directly, and A2's discipline is to
+cost each proposed experiment honestly so governance can decide which laws are worth actively testing
+versus leaving to passive evidence accumulation. A high-value law with thin evidence justifies an
+experiment; a low-value one does not, and A2 supplies the cost for that judgment.)
+
+21.7 Cheap falsification is a positive economic contribution. A2 killing its own candidate pre-adoption
+(Part XV §15.10) is not a cost but a saving — it spares the estate the far greater cost of retracting an
+adopted law. (DERIVED: the economics of falsification are strongly positive — a cheap registry transition
+prevents an expensive estate-wide unwinding — and A2's willingness to falsify its own candidates is one of
+its largest economic contributions, measured in the adopted-law retractions the estate never has to pay
+for. A2 that falsified less to appear more productive would be trading a cheap saving for an expensive
+future cost.)
+
+21.8 The economics argue for A2 as a known-space legislature first. Because A2's known-space induction and
+meta-rule extraction run over the existing substrate with only B2 (Part X §10.10), and their compounding
+return is real, the economics favor building A2's known-space half first and extending to the unknown space
+when B1 lands. (DERIVED: the incremental-delivery economics — ship the known-space legislature, collect its
+compounding return, then invest in B1 for the unknown-space extension — is the same staged-investment
+discipline the estate applies to any large build, and A2's economics support it: the known-space half pays
+its own way and funds the unknown-space extension, rather than requiring the full dependency set before any
+return.)
+
+21.9 A2's cost is dominated by judgment, not computation. The scarce resource A2 consumes is not compute —
+induction is cheap — but the Owner's judgment attention, which every proposed candidate draws on. (DERIVED:
+this reframes A2's economics entirely — the binding cost is human judgment, so A2's efficiency is measured
+in judgment-attention-per-adopted-law, not compute-per-candidate. An A2 that induced cheaply but flooded
+judgment with low-value candidates would be economically wasteful despite its cheap computation, which is
+why prioritization (§21.4) and honest confidence (§21.5) are A2's core economic disciplines: they conserve
+the scarce resource, judgment, not the cheap one, computation.)
+
+21.10 The cost of a wrong adopted law dwarfs the cost of inducing it. The economic case for A2's rigor is
+that the cost of a false law reaching adoption — the estate obeying a wrong rule, building on it, teaching
+it, and eventually unwinding it — vastly exceeds the cost of the counterexample search and experiments
+that would have caught it pre-adoption. (DERIVED: this asymmetry justifies A2's expensive disciplines —
+counterexample search, boundary extraction, honest confidence — as economically rational, not merely
+virtuous: each is cheap relative to the adopted-law retraction it prevents. An A2 that skimped on rigor to
+induce faster would be trading a small saving in induction cost for a large expected cost in false
+adoptions, which is exactly the false economy the estate's doctrine warns against. Rigor is A2's economic
+discipline, not a tax on it.)
+
+FINAL LAW — PART XXI. A2's economics are governed by one asymmetry: induction is cheap and judgment is
+scarce, so its discipline is not to induce less but to prioritize what it hands to the Owner's scarce
+attention. It computes the cost of legislating and hands it to IAS-C1, never ranking it against other spend;
+it makes visible the invisible cost of the good laws that stay unwritten; and its cheap self-falsification
+is a positive contribution, sparing the estate expensive adopted-law retractions. The binding cost is human
+judgment, not computation, and conserving it — through prioritization and honest confidence — is A2's true
+economic work.
+
+===============================================================================================
+PART XXII — ADVERSARIAL CASES: GAMING THE LEGISLATURE
+===============================================================================================
+
+22.1 The threat model. A2 induces laws from evidence and offers them for adoption, so an adversary attacks
+A2 by corrupting the evidence it induces from or the process by which it proposes — aiming to get a law
+that serves the adversary adopted, or to suppress a law that would constrain it. (DEFINED: A2's attack
+surface is its evidence substrate and its induction process, and the threat is a manufactured law — a rule
+the adversary wants the estate to obey, dressed as an evidence-grounded candidate.) A law is a binding
+claim on the estate's behaviour, so a manufactured law is a powerful attack, and the legislature is worth
+attacking.
+
+22.2 The boundary with the Tier-B7 pathogen class. As with A1, A2's adversarial defense is scoped to its
+own attack surface; the general adversarial threat model is IAS-D2's object once Tier-B7 lands. (Boundary:
+A2 defends its legislation process; D2-plus-B7 defends the estate generally. A2 hands any novel adversarial
+pattern it discovers to D2's pathogen class as an incident.) (DERIVED: A2 does not claim to defend the
+estate against a general adversary — it hardens its own induction and proposal process and reports what it
+learns. The legislature secures its own drafting; the general defense is D2's.)
+
+22.3 The evidence-planted law. The primary attack: an adversary seeds the estate's ledgers with fabricated
+evidence so A2 induces a law the adversary wants — planting many CEPS events or deposits that support a
+false pattern. (DEFINED.) A2's structural defense is cross-family corroboration (Part IV §4.4): a genuine
+law shows recurrence across MULTIPLE evidence families, and a planted pattern typically lives in the one
+ledger the adversary could seed. (DERIVED: an adversary who can plant CEPS events may not also be able to
+plant matching FD deposits, DAIF proofs, and Hard Rules, so A2's requirement of cross-family breadth for
+high confidence is exactly the defense — a single-family pattern earns low confidence and an experiment
+(Part IX) rather than a confident proposal, and the experiment, run on real estate behaviour, would refute
+the planted law.)
+
+22.4 The suppressed law. The inverse attack: an adversary suppresses the evidence for a law that would
+constrain it, so A2 never induces the rule that would stop the adversary. (DEFINED: suppression is harder
+to detect than planting, because it is an absence — a law that should exist but does not.) (DERIVED: A2's
+partial defense is the unknown-unknown surface (Part X) and B1 — a systematically absent class of evidence
+is itself a signal, and mapping what the estate does NOT record can surface the gap an adversary's
+suppression created. But A2 is honest that suppression is its hardest adversarial case, because A2 induces
+from what the evidence contains, and evidence an adversary successfully kept out of the ledgers is evidence
+A2 cannot induce from — the same fundamental bound as Part IV §4.8, now weaponized.)
+
+22.5 The confidence-inflation attack. An adversary who cannot plant enough evidence might attack A2's
+confidence computation — gaming the metrics (instance count, cross-family breadth) so a weakly-evidenced
+law reads as high-confidence. (DEFINED.) A2's defense is that confidence is a projection over the actual
+evidence trail (Part XI §11.2), auditable via provenance — a confidence that does not match the recorded
+evidence fails the provenance audit. (DERIVED: because confidence is derived, not asserted, an inflated
+confidence would be inconsistent with the evidence it is supposedly computed from, and the provenance audit
+(Part XIX §19.4) surfaces the inconsistency. The read-only-projection design is an adversarial defense — a
+derived value cannot be gamed independently of the inputs it derives from.)
+
+22.6 The self-adoption attack is closed by construction. The most dangerous adversarial goal — getting A2
+to enact a law directly, bypassing judgment — is closed absolutely by propose-never-apply enforced by
+construction (Part XII §12.3). (NORMATIVE: A2 has no adoption path, so even a fully compromised A2 cannot
+enact a law — it can only propose one, which the judgment layer then scrutinizes. The adversary's best case
+against a compromised A2 is a manufactured PROPOSAL, which still faces judgment.) (DERIVED: this is why
+enforcement-by-construction matters most against an adversary — a policy could be subverted by a compromise,
+but a missing adoption path cannot be traversed regardless of compromise, so the estate's ultimate defense
+against a captured legislature is that the legislature structurally cannot enact, only propose.)
+
+22.7 The judgment layer is the backstop. Every A2 adversarial defense has a backstop: the judgment layer
+(ACIS/Owner) scrutinizes every candidate before adoption, so even an attack that defeats A2's own defenses
+faces a second, independent gate. (DERIVED: the propose-never-apply invariant is what makes the judgment
+backstop possible — because A2 cannot self-adopt, a manufactured law that survives A2's defenses still must
+survive judgment, and the two independent gates (A2's induction discipline and the court's judgment) are
+far harder to defeat together than either alone. The separation of drafting from judging is not only an
+anti-capture firewall but an adversarial defense-in-depth: an attacker must defeat both the legislature and
+the court.)
+
+22.8 The insider adversary. A compromised A2 process, or an adversary with access to A2's induction, could
+try to propose manufactured laws directly. (DEFINED: an insider bypasses the evidence-planting step by
+corrupting the induction itself.) (DERIVED: the defenses are provenance (a manufactured candidate's
+provenance would not trace to genuine cross-family evidence) and the judgment backstop (the court judges
+the candidate regardless of how it was produced). Because A2's candidates are auditable via provenance and
+judged independently, an insider-manufactured law faces the same evidence-and-judgment scrutiny as any
+other — A2's guards live on the evidence and the process, not on trusting the induction to be uncompromised.)
+
+22.9 The bounded scope of A2's adversarial claim. A2 hardens its own legislation process; it does not claim
+to defend the estate generally, and overclaiming would be its own credential-inflation. (CONTESTED-honest:
+A2's adversarial Part is scoped to the legislature's attack surface — planted evidence, suppressed evidence,
+inflated confidence, self-adoption, the insider — and A2 hands novel patterns to D2's pathogen class.)
+(DERIVED: A2 makes its own drafting hard to attack and reports what it learns; the estate's general
+adversarial resilience is D2-plus-B7's. A legislature that claimed to secure the whole estate would be
+asserting a competence it does not hold, and A2's honest boundary is that it secures its own process and
+feeds the general immune system, never that it owns the estate's defense.)
+
+22.10 Novel adversarial patterns A2 meets become D2's incidents, closing the loop. When A2's defenses
+surface a new attack — a planting technique that nearly defeated cross-family corroboration, a suppression
+that the unknown-unknown surface caught — that pattern is handed to IAS-D2's pathogen class as an incident,
+exactly as A1 hands D2 the novel failures its learners surface. (DERIVED: A2 is a failure-discovery
+instrument for adversarial patterns against legislation, the same way a naive learner is for self-inflicted
+failures, and the estate's general immune system grows from what A2's own defense discovers. The loop keeps
+each object distinct — A2 hardens its drafting and reports the pattern; D2 owns the general defense and
+turns the pattern into an antibody — and neither absorbs the other, the same productive boundary A1 draws
+with D2.)
+
+FINAL LAW — PART XXII. A2 is attacked by corrupting the evidence it legislates from — planting a false
+pattern, suppressing a constraining one, inflating a weak candidate's confidence — and its defenses are
+structural: cross-family corroboration defeats the single-ledger plant, derived confidence defeats
+inflation, and the unknown-unknown surface partially defeats suppression, A2's hardest case. The ultimate
+backstop is propose-never-apply — a compromised A2 can manufacture a proposal but never enact one, so an
+attacker must defeat both the legislature's evidence discipline and the court's independent judgment. A2
+secures its own drafting and feeds the general immune system; it never claims to defend the estate alone.
