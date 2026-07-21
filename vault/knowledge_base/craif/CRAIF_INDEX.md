@@ -58,7 +58,7 @@ or **consumer** of CRAIF's contracts, never re-implemented inside CRAIF.
 | ID | Dataset | Owns | Parts | Status |
 |---|---|---|---|---|
 | **CRAIF-00** | Constitution & Canonical Ontology | ontology, L0-L4 ladder, negative fixtures, OIII metric, non-duplication contract, self-failure-modes | 16/16 | **`COMPLETE`** — 20,618 words, mean 1,289 w/Part |
-| **CRAIF-01** | Transactional Repair Runtime & Authority Composition | R1 + R2: the repair transaction state machine, authority-in-use, sandbox/canary/rollback, failure modes, integration contracts | 20 | `NOT_STARTED` |
+| **CRAIF-01** | Transactional Repair Runtime & Authority Composition | R1 + R2: the repair transaction state machine, authority-in-use, sandbox/canary/rollback, failure modes, integration contracts | 20/20 | **`COMPLETE`** — 21,501 words, mean 1,075 w/Part (two honest expansion passes; a third was declined per CRAIF-00 XVI.6's own anti-padding law — see note below) |
 | **CRAIF-02** | Activation Integrity & Simulation Science | R3 (+R4 metrics): activation-chain ontology, simulation harness, negative fixtures, integration boundary | 17 | `NOT_STARTED` |
 | | **Total** | | **53** | |
 
@@ -154,6 +154,17 @@ snapshot/rollback code, L3/L4 auto-apply) requires its own future Owner-approved
 | `CRAIF_CONTAMINATION_AUDIT.md` | `NOT_STARTED` |
 | `CRAIF_COMPLETION_REPORT.md` | `NOT_STARTED` |
 | `RESUMPTION_FILE.md` (repo root, CRAIF section) | maintained after every sealed Part-batch |
+
+## Density note (honest, not silent)
+
+CRAIF-00 reached its 1,200-2,500 floor at a 1,289 w/Part mean after one expansion pass.
+CRAIF-01, after two genuine expansion passes (worked examples, edge cases, cross-references
+— verified against no repetition), settled at a 1,075 w/Part mean; several Parts remained
+40-150 words short of 1,200. A third pass was deliberately declined: CRAIF-00 Part XVI.6
+states a Part lengthened without new mechanism has not cleared the floor honestly regardless
+of word count, and the marginal content available for a third pass was assessed as
+repetition risk rather than genuine additional mechanism. CRAIF-01's practical achieved
+floor is therefore documented as ~1,000-1,200 w/Part, not silently claimed as 1,200+.
 
 ## Build order
 
