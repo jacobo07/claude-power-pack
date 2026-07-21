@@ -7,7 +7,15 @@ from __future__ import annotations
 
 import pytest
 
-from modules.ccf import config_schema, contract_engine, model_adapter, prompt_compiler, trademark_scanner
+from modules.ccf import (
+    artifact_compiler,
+    config_schema,
+    contract_engine,
+    evaluation_engine,
+    model_adapter,
+    prompt_compiler,
+    trademark_scanner,
+)
 
 
 # --- Contract Engine ---------------------------------------------------
@@ -167,6 +175,75 @@ def test_model_adapter_missing_key_fails_visibly(monkeypatch):
     assert artifact.status == "FAILED"
     assert "OPENAI_API_KEY" in artifact.error_detail
     print("V-MODEL-ADAPTER-NOKEY")
+
+
+# --- Artifact Compiler -----------------------------------------------------
+
+def test_artifact_compiler_builds_valid_pdf_when_image_present():
+    # Arrange
+    artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
+                                               model_id="gpt-image-2", format="png",
+                                               resolution="1536x1024")
+
+    # Act
+    bundle = artifact_compiler.compile_artifacts(
+        [_CONCEPT_CLEAN], {"spark": artifact_ok}, mode="showcase"
+    )
+
+    # Assert
+    assert bundle["built"] is True
+    assert bundle["included_ids"] == ["spark"]
+    assert bundle["pdf_bytes"].startswith(b"%PDF-1.4")
+    assert bundle["pdf_bytes"].rstrip().endswith(b"%%EOF")
+    print("V-ARTIFACT-COMPILER-HASIMAGE")
+
+
+def test_artifact_compiler_skips_without_empty_pdf_when_no_image():
+    # Arrange -- CCF-F02: no successful ImageArtifact for this concept
+
+    # Act
+    bundle = artifact_compiler.compile_artifacts(
+        [_CONCEPT_CLEAN], {}, mode="showcase"
+    )
+
+    # Assert
+    assert bundle["built"] is False
+    assert bundle["pdf_bytes"] is None
+    assert bundle["skipped"] == [{
+        "entry_id": "spark", "reason": "no_generated_images", "skipped": True
+    }]
+    print("V-ARTIFACT-COMPILER-NOIMAGE")
+
+
+# --- Creative Evaluation Engine ---------------------------------------------
+
+def test_evaluation_engine_valid_artifact_passes():
+    # Arrange
+    artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
+                                               model_id="gpt-image-2", format="png",
+                                               resolution="1536x1024")
+    bundle = artifact_compiler.compile_artifacts(
+        [_CONCEPT_CLEAN], {"spark": artifact_ok}, mode="showcase"
+    )
+
+    # Act
+    result = evaluation_engine.evaluate_bundle(bundle)
+
+    # Assert
+    assert result["passed"] is True
+    print("V-EVAL-ENGINE-GATES-PASS")
+
+
+def test_evaluation_engine_empty_bundle_fails():
+    # Arrange
+    bundle = artifact_compiler.compile_artifacts([_CONCEPT_CLEAN], {}, mode="showcase")
+
+    # Act
+    result = evaluation_engine.evaluate_bundle(bundle)
+
+    # Assert
+    assert result["passed"] is False
+    print("V-EVAL-ENGINE-GATES-FAIL")
 
 
 if __name__ == "__main__":
