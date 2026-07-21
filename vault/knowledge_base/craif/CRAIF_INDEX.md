@@ -149,7 +149,7 @@ snapshot/rollback code, L3/L4 auto-apply) requires its own future Owner-approved
 | Artifact | Status |
 |---|---|
 | `CRAIF_INDEX.md` (this file) | `IN_PROGRESS` |
-| D2A reinforcement proposals (8 packages) | `NOT_STARTED` |
+| `CRAIF_D2A_REINFORCEMENT_PACKAGES.md` (8 packages) | **`COMPLETE`** |
 | `CRAIF_ADVERSARIAL_REVIEW.md` | `NOT_STARTED` |
 | `CRAIF_CONTAMINATION_AUDIT.md` | `NOT_STARTED` |
 | `CRAIF_COMPLETION_REPORT.md` | `NOT_STARTED` |
