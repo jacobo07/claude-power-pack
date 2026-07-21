@@ -1,0 +1,627 @@
+CPCSC-A2 — THEORY GENERATOR AND LAW EXTRACTION: THE ESTATE'S LEGISLATURE
+Claude Power Pack Cognitive Sovereignty Civilization — Tier A, new dataset 2 of 2.
+Depth contract: PART I..PART XXV, 1200-1500 words per Part, a FINAL LAW closing every Part.
+Epistemic marking on every load-bearing claim: DEFINED / OBSERVED / DERIVED / HYPOTHESIZED /
+NORMATIVE / EXPERIMENTAL / CONTESTED / UNRESOLVED.
+
+Authorized: CPCSC STOP #2 (commit 4f7b27e), Tier A. Origin: the CPP-ACI Tribunal content-tier re-run
+of Science XII (Autopoietic / Meta-Science) found a specific, verified white-space — the estate owns
+falsification, paradigm retirement, and self-modifying doctrine, but a grep for
+"theory generat|law extract|hypothesis generat" returned ONE hit corpus-wide, the proposal describing
+itself. Every owner JUDGES a law a human or a frontier session already wrote; nothing PROPOSES one.
+(OBSERVED, Tribunal content-tier, Science XII.) A2 is the second of the two datasets that survived the
+audit as genuine 0%-owned white-space, and it is the generative half of meta-science.
+
+Absorbs (Non-Duplication test, CPCSC boundary): nothing. Like A1, A2 folds no prior candidate — the
+audit confirmed the white-space, and there is no incumbent generator to distinguish from, only judges
+to defer to. The distinct-object test passes trivially against absence and is drawn sharply against
+the four siblings that judge, route, store, and record.
+
+Parents deferred to (never absorbed, cited by boundary): ACIS (levels and falsifies a THEOREM that
+exists on the E0-E7 ladder — A2 drafts a candidate law that did not exist; ACIS adjudicates, A2
+legislates); DRK (routes a decision under a rule — A2 induces the rule, DRK applies it); UKDL (stores
+the adopted statute — A2 owns the CANDIDATE store, and an adopted candidate graduates OUT of A2 into
+UKDL); CEPS (records the events a law governs — A2 reads events as evidence, writes none); FD (distills
+a finished insight into a deposit — A2 induces a general rule from many deposits, a different operation
+on a different object); A1 (educates on an adopted law — the one-way A2->A1 seam); DFP-05 and the
+No-Autopromotion Invariant (the propose-never-apply law A2 obeys absolutely).
+
+Distinct institutional object (Non-Duplication Ledger, Article II): the induction of a candidate law —
+a proposed general rule the estate did not have, carrying a concrete falsifier and an evidence trail —
+from the estate's accumulated evidence (FD-07 deposits, fd_04 proofs, UKDL rules, CEPS events, and the
+cross-domain assumption evidence A1 surfaces), offered for judgment and adoption but never
+self-adopted. Where ACIS answers "is this theorem admissible," A2 answers the question the court
+presumes already answered: "what law does the estate's own evidence support that no one has yet
+written down." The object is legislation from evidence, owned by no system that judges, routes,
+stores, or records the laws it is handed.
+
+===============================================================================================
+PART I — THE FOUNDING GAP: A TRIBUNAL WITHOUT A LEGISLATURE
+===============================================================================================
+
+1.1 The gap, stated precisely against the estate as it stands. The Claude Power Pack estate, as
+OBSERVED against the repatriated corpus on 2026-07-21, is exceptionally well-equipped to JUDGE a law
+and entirely unequipped to WRITE one. SQI and ACIS form a court with rules of standing and an E0-E7
+admissibility ladder; DRK routes a decision under whatever rule governs it; UKDL is the statute book
+where an adopted rule is stored; CEPS is the docket recording the events a law governs. (OBSERVED: four
+distinct systems, each acting on a law that already exists.) What no system holds is the drafting: the
+induction, from the estate's accumulated evidence, of a general rule the estate did not previously
+have. The Tribunal's grep made the absence exact — one corpus-wide hit for the generation vocabulary,
+and that hit was the proposal naming itself. The estate is a courthouse with no legislature.
+
+1.2 Why the gap has stayed invisible. Candidate laws have always been written — the estate has 156+
+Hard Rules, a UKDL full of adopted rules, a doctrine that grows every session. But every one of them
+was drafted by the Owner or a frontier session, by hand, from intuition sharpened by a bug or a
+pattern noticed. (OBSERVED: the Bug->Hard-Rule protocol is a human noticing a recurrence and writing a
+stop.) That drafting is a real cognitive act, and like the education gap of A1's Part I, it has stayed
+invisible because a competent author absorbed its cost silently every time. The gap becomes visible
+only at scale: when the estate's evidence ledgers hold thousands of deposits, proofs, rules, and
+events, the laws they collectively support outrun what any hand-drafting session can notice, and the
+un-induced laws — the general rules the evidence supports but no one has articulated — accumulate as
+latent, unwritten legislation.
+
+1.3 The asymmetry that makes this the interesting kind of gap. A missing judge lets a bad law stand; a
+missing legislature lets a good law go unwritten. The first failure is loud — a bad law causes visible
+harm. The second is silent — the estate simply never benefits from a rule its own evidence would have
+supported, and no one can point to the absence because you cannot see a law that was never proposed.
+(DERIVED: this is the generative twin of the enrollment defect — an un-induced law is invisible for
+the same reason an unenrolled registry entry is: absence leaves no error, only a benefit never
+collected.) A2's value is therefore not correcting bad laws — ACIS does that — but surfacing the good
+laws latent in evidence that would otherwise stay unwritten, which is a value the estate cannot measure
+by what breaks, only by what it was missing.
+
+1.4 What A2 is, in one sentence, and what it is deliberately not. A2 is the estate's legislature: the
+system that induces candidate laws from accumulated evidence, attaches a falsifier and a boundary to
+each, and offers them for judgment and adoption — never adopting them itself. (DEFINED.) It is not a
+judge — leveling and falsifying an adopted theorem is ACIS's object. It is not a router, a store, or a
+recorder. And it is emphatically not an adopter: the propose-never-apply invariant (Part XII) binds A2
+absolutely, because a legislature that enacted its own bills without a separate adoption act would be
+the self-modifying capture risk the estate's doctrine names as its deepest governance danger.
+
+1.5 The three evidence sources A2 legislates from, named now and formalized in Part IV. A2 induces
+candidate laws from the estate's own accumulated evidence: FD-07 distillation deposits (what the estate
+has learned), fd_04 portability proofs and the UKDL rule corpus (what it has already adopted, mined for
+the meta-rules beneath them), and CEPS event history plus IAS-D2 incidents (what has happened,
+repeatedly). (DEFINED, three evidence families.) The generative act reads across these for a RECURRENCE
+that no adopted rule yet governs — a pattern in the evidence that, generalized, is a candidate law. A2
+adds to intuition-drafting exactly what intuition cannot scale to: an exhaustive, evidence-grounded
+sweep for the laws latent in a corpus too large for any session to hold at once.
+
+1.6 The standard A2 inherits and does not rebuild. A candidate law, like any claim, is void if it
+cannot be refuted. A2 inherits ACIS's falsifier standard wholesale (cited, not restated): a falsifier
+names a measurement, a signal, and a window, and "the law is false if reasoning doesn't compress" is
+not a falsifier. (NORMATIVE, inherited.) A2 attaches this falsifier at the moment of PROPOSAL — a
+candidate law with no concrete refutation condition is not proposed at all — where ACIS enforces the
+same standard at the moment of JUDGMENT. The two systems apply one standard at two different points in
+a law's life, which is exactly why they are distinct rather than redundant: the falsifier at proposal
+is A2's gate on what may be offered; the falsifier at judgment is ACIS's gate on what may be adopted.
+
+1.7 The founding law. An estate that can judge a law but not write one waits for its legislation to
+arrive from a human's intuition, and the general rules its own evidence supports but no session has
+noticed stay unwritten forever. The purpose of A2 is to induce those rules from evidence and offer them
+for judgment, so that the estate's statute book grows from what its evidence supports and not only from
+what a session happened to notice.
+
+1.8 A latent law traced through real evidence, so the gap is concrete. Consider the estate's own
+accumulated evidence about Windows execution: dozens of CEPS events and NEVER_AGAIN entries recording a
+Bash-bridge hang, a spread of Hard Rules each stopping one instance (git-via-Bash, python-via-Bash,
+tail-pipe-via-Bash), and FD deposits on the MSYS2 transport. (OBSERVED: the evidence is abundant and
+distributed across three ledgers.) Each Hard Rule is a law about ONE trigger; no adopted rule states
+the GENERAL law the evidence collectively supports — "on a Windows host, any Bash invocation of an
+external toolchain risks the transport hang, so the default execution path for external tools is
+PowerShell." That general rule is latent in the evidence, supported by every instance, and was written
+only piecemeal, one trigger at a time, as each instance surfaced. (DERIVED: A2's induction over the
+CEPS-plus-HardRule-plus-FD evidence would surface the general law from the recurrence — not a new
+observation, but the generalization the scattered instances already support — and offer it for
+judgment, where today it exists only as a pattern a human eventually noticed rule-by-rule.) The trace
+makes the gap concrete: the estate had all the evidence for the general law and no mechanism to induce
+it, so the law arrived slowly, in fragments, from intuition, instead of at once from its own evidence.
+
+FINAL LAW — PART I. The estate is a courthouse without a legislature — it can level, falsify, route,
+store, and record a law, and it cannot draft one, so its legislation waits on a human's intuition while
+the rules its own evidence supports go unwritten. A2 is the object that induces candidate laws from
+evidence and offers them for judgment, never adopting them itself — because a good law unwritten is a
+silent loss no error announces, and a legislature that enacted its own bills would be the capture the
+estate's deepest doctrine forbids.
+
+===============================================================================================
+PART II — WHY "GENERATION" AND NOT JUDGMENT, ROUTING, STORAGE, OR RECORDING
+===============================================================================================
+
+2.1 The boundary discipline this Part enforces. A2 acts on the same object — a law — that four estate
+systems already act on, and under the CPCSC audit's governing rule (PR-CORPUS-AUDIT-CONTENT-TIER-001,
+no ownership claimed or ceded on vocabulary matching), A2 must name, for each, the sibling that owns
+the law in its other relation and the specific act that separates A2's generation from the sibling's.
+(NORMATIVE: this Part is the Article II test applied four times, pre-emptively — and the sharpest
+boundary in the dataset, JUDGE-versus-PROPOSE, is drawn here and restated wherever a law's lifecycle
+recurs, because it is the one a careless reader will collapse.)
+
+2.2 Judgment — ACIS's relation to a law versus A2's. ACIS takes a law that EXISTS and asks whether it
+is admissible: it levels the theorem on the E0-E7 ladder and enforces the falsifier gate — "a theorem
+without a concrete, observable refutation condition is not a weak theorem, it is not a theorem at all"
+(cited from acis_00). (OBSERVED: ACIS's input is a written theorem; its act is adjudication.) A2's
+input is EVIDENCE and its act is drafting — it produces the theorem ACIS will later judge. The
+distinction is exact and directional: A2 runs BEFORE ACIS in a law's life, turning evidence into a
+candidate; ACIS runs after, turning a candidate into an adopted or rejected law. (DERIVED: a legislature
+and a court are not redundant because both handle laws — one drafts, one adjudicates, and the estate
+had the court and lacked the legislature.) A2 that leveled its own candidate on the ladder would be
+doing ACIS's work; ACIS that induced a law from evidence would be doing A2's. Neither does the other's.
+
+2.3 Routing — DRK's relation versus A2's. DRK takes a rule that governs a decision and routes the
+decision under it: it owns decision burden, the typed evidence record, and the application of a general
+rule to a specific case. (OBSERVED, from DRK-00/03: "Level is an ACIS concept; burden is a DRK
+concept.") A2 induces the general rule; DRK applies it. The subjects are orthogonal — A2's object is
+the general rule itself (does the evidence support this law across cases), DRK's is a single decision
+under an existing rule (given this rule, what does this case require). (DERIVED: A2 works at the
+granularity of a law; DRK at the granularity of a decision — the same law/instance distinction that
+separates a statute from a court case.) A2 supplies DRK with better-grounded general rules to route
+under; it never routes a decision itself.
+
+2.4 Storage — UKDL's relation versus A2's, and the graduation seam. UKDL is the statute book: the store
+of ADOPTED rules the estate obeys. A2 owns a different store — the Hypothesis Registry (Part V), the
+store of CANDIDATE laws not yet judged. (Boundary, Article II: UKDL holds law that IS; A2 holds law
+that is PROPOSED.) The seam between them is a graduation: when a candidate A2 induced is judged and
+adopted, it graduates OUT of A2's registry and INTO UKDL, and A2's registry marks it ADOPTED-elsewhere
+rather than retaining a competing copy. (DERIVED: two stores, two states of a law's life — candidate
+and adopted — and the boundary is the adoption act that moves a rule from one to the other. A2 that
+kept adopted rules would be shadowing UKDL; UKDL that held un-adopted candidates would be storing
+statutes that were never enacted.) The registries are complementary halves of a law's lifecycle, joined
+at adoption.
+
+2.5 Recording — CEPS's relation versus A2's. CEPS records the events the estate's laws govern — the
+error events, the cascades, the incidents — as a docket of what happened. (OBSERVED: CEPS's object is
+the event log.) A2 READS that log as one of its richest evidence sources (a recurrence in CEPS events
+is exactly the pattern a candidate law might generalize) and WRITES nothing to it. (Boundary: CEPS
+owns the record of events; A2 owns the induction of a law FROM events. The event log is CEPS's output
+and A2's input, the same consumer relation A2 has to FD deposits and DAIF proofs.) A2 that wrote events
+would be doing CEPS's work; A2 only reads events to legislate from them.
+
+2.6 The general test for a future collision, and the asymmetric danger. For any word A2 shares with a
+sibling, ask what act each system performs on the law — draft, adjudicate, route, store, record — not
+what the word connotes. (DEFINED test, the same content-tier discipline that corrected the Tribunal.)
+The asymmetry that makes the discipline non-optional is specific to a legislature: a false absorption
+in which A2 claimed judgment, routing, storage, or recording would not merely duplicate a sibling — it
+would let a self-adopting legislature emerge, the capture risk of Part XII, because a system that both
+drafts AND judges its own drafts has removed the separation that keeps legislation honest. (DERIVED:
+for A2 the boundary is not only an anti-duplication discipline but a safety property — the separation
+of drafting from judging is what the propose-never-apply invariant depends on, and collapsing the
+JUDGE-PROPOSE boundary would collapse the invariant with it.)
+
+2.7 The one-sentence separators, collected. ACIS adjudicates a law that exists; A2 drafts one that did
+not. DRK routes a decision under a rule; A2 induces the rule. UKDL stores an adopted statute; A2 holds
+a candidate. CEPS records the events a law governs; A2 legislates from them. (DEFINED: four relations
+to a law, four distinct objects, zero absorption.) Each sibling keeps its relation to the law; A2 holds
+the one relation none of them does — authorship from evidence.
+
+2.8 Why this Part precedes any mechanism. A2 is authored immediately after the audit that proved a
+title-tier reading mis-assigns ownership, and drafting-versus-judging is precisely the kind of boundary
+a title-tier reading collapses — "meta-science" sounds like one thing, and ACIS's falsification plus
+A2's generation are two. (DERIVED: to specify A2's mechanisms before drawing this boundary would risk
+building, inside a new dataset, the collapse the audit exists to prevent — and here the collapse is not
+merely a duplication but a safety hazard, since a legislature that absorbed the judge's role is a
+self-adopting one.) A capability that cannot say precisely what it is not has not earned the right to
+say what it is — and for a legislature, the thing it most is not is a judge of its own bills.
+
+2.9 The seam with FD, drawn because a distillate looks like a law. The most seductive collision is not
+with the four judges but with FD, because a distilled insight and a candidate law can look alike — both
+are compressed general statements. (CONTESTED, resolved by object.) FD-03 takes a FINISHED insight
+someone already had and routes it to its home and form; its input is a conclusion, and its act is
+placement. A2's input is EVIDENCE — many deposits, proofs, events — and its act is INDUCTION: it does
+not place a conclusion, it generalizes a rule from a corpus of instances none of which is itself the
+rule. (DERIVED: a distillate is one insight compressed; a candidate law is a generalization over many,
+carrying a falsifier and a boundary the distillate need not have. FD asks "where does this finished
+insight belong"; A2 asks "what general rule do these many pieces of evidence collectively support that
+no one has stated." The operations differ even where the outputs resemble each other — one compresses
+a known conclusion, the other induces an unknown one.) A2 is one of FD's largest CONSUMERS — the
+deposits are premier evidence for induction — but consuming deposits to induce a law is not the act of
+producing a deposit, and a candidate law is not a deposit: it is a proposal about the estate's general
+structure, offered for judgment, which no FD deposit ever is.
+
+FINAL LAW — PART II. A2 shares the word "law" with four siblings and owns none of their relations to
+it: ACIS adjudicates, DRK routes, UKDL stores, CEPS records — A2 alone drafts, from evidence. The
+boundary is not only anti-duplication but a safety property, because the one relation a legislature
+must never absorb is the judge's: a system that drafts and adjudicates its own drafts has removed the
+separation the propose-never-apply invariant stands on, and a legislature that enacts its own bills is
+the capture the estate's deepest doctrine was written to forbid.
+
+===============================================================================================
+PART III — WHAT A CANDIDATE LAW IS: THE PROPOSED-RULE OBJECT
+===============================================================================================
+
+3.1 The candidate law as a first-class object. The central object A2 produces is the CANDIDATE LAW,
+and like A1's learner or curriculum it must be first-class — versioned, provenanced, inspectable — not
+an informal assertion. (DEFINED: a candidate law is a proposed general rule about the estate's own
+structure or behaviour, carrying four mandatory parts — the rule statement, a concrete falsifier, an
+evidence trail, and a boundary condition — offered for judgment and never self-adopted.) A candidate
+missing any of the four is malformed and is not proposed: a rule with no falsifier is a slogan (Part
+VIII), with no evidence is an intuition (invariant 3), with no boundary is a false universal (Part
+XIV). The four-part structure is what makes a candidate JUDGEABLE — ACIS cannot adjudicate a rule it
+cannot try to refute, so A2's output is shaped from the start to be admissible input to the court.
+
+3.2 The rule statement, and the granularity of a law. The rule statement is a general claim over a
+class of instances — "for all X of kind K, property P holds" — not a statement about a single case.
+(DEFINED: a law's granularity is the general rule; a single decision under it is DRK's granularity, a
+single event is CEPS's.) The generality is what distinguishes a candidate law from an observation: "this
+Bash call hung" is an observation (a CEPS event); "Bash calls of external toolchains on Windows hosts
+hang" is a candidate law. (DERIVED: A2's induction is precisely the move from the instance to the
+class — from many observations to the general rule they collectively support — and the rule statement
+names the class and the property, so that its falsifier can be a test over the class rather than a
+check of one case.)
+
+3.3 The falsifier, attached at proposal. Every candidate carries a falsifier meeting ACIS's standard —
+a named measurement, a signal, and a window — stating the concrete condition under which the law would
+be shown false. (DEFINED, inherited from acis_00's standard, cited.) A2 attaches the falsifier at
+proposal because a rule whose refutation condition cannot be stated is not a law A2 is willing to
+offer: the discipline of naming how the rule could be broken is what separates an inducible law from a
+pattern that merely happens to hold in the sample. (DERIVED: the falsifier is also A2's own guard
+against the false universal — forcing the author to name the breaking condition surfaces, at proposal
+time, whether the rule is genuinely general or an artifact of a biased evidence sample.)
+
+3.4 The evidence trail. Every candidate names the evidence it was induced from — the specific deposits,
+proofs, events, and incidents whose recurrence the rule generalizes. (DEFINED, invariant 3: induction
+over evidence, never over intuition.) The trail serves three purposes: it lets ACIS and the Owner
+inspect the basis before adopting; it lets a later audit check whether the evidence was
+representative or cherry-picked (the anti-p-hacking check, Part XIII); and it is the substrate for
+recomputing the candidate's confidence as new evidence arrives. (DERIVED: a candidate law with no
+evidence trail is exactly the intuition-drafted law A2 exists to supplement — traceless, unauditable,
+and indistinguishable from a guess; the trail is what makes A2's legislation evidence-grounded rather
+than merely a machine's intuition substituted for a human's.)
+
+3.5 The boundary condition. Every candidate states where it holds and where it does not — the domain of
+its validity. (DEFINED, invariant 5.) A law claimed to hold everywhere is almost always a false
+universal (Part XIV, XX); a well-formed candidate names its boundary explicitly — "on Windows hosts"
+bounds the Bash law, and a candidate that omitted the qualifier would falsely claim the hang occurs on
+Linux too. (DERIVED: the boundary is induced alongside the rule, from the same evidence — the cases
+where the pattern held and, critically, the cases where it did not, which the boundary must exclude.
+A candidate law is a rule PLUS the fence around where it applies, and the fence is as load-bearing as
+the rule.)
+
+3.6 The candidate's status field, and its lifecycle. A candidate carries a status through its life in
+A2: PROPOSED (drafted, falsifier attached, awaiting judgment), UNDER-JUDGMENT (handed to ACIS/Owner),
+ADOPTED-ELSEWHERE (accepted and graduated to UKDL, Part II §2.4), REFUTED (killed by A2's own
+counterexample search, Part XV, or by ACIS), or WITHDRAWN (the author retracted it). (DEFINED, five
+states.) The status is a field with a real transition producer at every edge — a candidate never sits
+in a status nothing can move it out of, because a status field with no transition producer is
+decoration and a registry that carried one would lie about its own state. (DERIVED: this is the
+estate's own lesson about a status field nobody can transition, applied at authoring — every A2 status
+has a named event that produces the next.)
+
+3.7 What a candidate law is NOT — the boundary with an ACIS theorem. A candidate law and an ACIS
+theorem are the same content at two points in its life, and confusing them collapses the JUDGE-PROPOSE
+boundary. (Boundary, Article II: an ACIS theorem is a law ON the ladder, carrying a level; a candidate
+law is a law BEFORE the ladder, carrying a proposal. A2 produces the pre-ladder object; ACIS assigns it
+a level.) A candidate has no ACIS level — assigning one is the court's act, and a candidate that
+arrived pre-leveled would be A2 usurping the judgment. (DERIVED: the clean handoff, Part XVII — A2
+hands a level-less candidate with its falsifier; ACIS assigns the level; the candidate becomes a
+theorem. A2 never writes a level, and ACIS never writes a candidate.)
+
+3.8 The candidate as a read-only-derivable proposal. A candidate law is, like A1's certification, best
+held as a projection over its evidence trail rather than a free-floating assertion — recomputable from
+the evidence it cites, so its confidence tracks the evidence and never drifts from it. (DERIVED: a
+candidate whose confidence was a stored number could drift from its evidence; a candidate whose
+confidence is derived from its trail recomputes as evidence accrues or is refuted, and a candidate
+whose evidence has been undercut falls in confidence automatically. The pattern is deliberately the
+same read-only-projection shape ACIS gives its ladder and A1 gives its certification — a projection
+that invents nothing and recomputes from its inputs, so all the integrity work lives on the evidence.)
+
+3.9 Why the four-part structure is the whole discipline. The candidate law's four mandatory parts —
+rule, falsifier, evidence, boundary — are not bureaucratic fields; each closes one of A2's named
+failure modes at the object level. (NORMATIVE: no rule without a falsifier closes the unfalsifiable-law
+failure; no rule without evidence closes the intuition-substituted-for-evidence failure; no rule
+without a boundary closes the false-universal failure; the status field with real transitions closes
+the orphan-candidate failure.) A candidate that carries all four is a proposal the court can actually
+judge; a candidate missing any is a defect A2 refuses to propose. The object's shape IS the discipline
+— A2's quality is enforced not by an after-the-fact review but by what a well-formed candidate is
+required to contain.
+
+FINAL LAW — PART III. A candidate law is a first-class object with four mandatory parts — a general
+rule, a concrete falsifier, an evidence trail, and a boundary — and missing any one it is not a law but
+a slogan, a guess, or a false universal A2 refuses to propose. It carries no ACIS level, because
+leveling is the court's act and a pre-leveled candidate would usurp the judgment; it is a projection
+over its evidence, recomputing as the evidence moves. The object's four-part shape is the whole
+discipline: A2's rigor is what a well-formed candidate is required to contain, not a review applied
+after.
+
+===============================================================================================
+PART IV — THE EVIDENCE SUBSTRATE: WHAT A2 LEGISLATES FROM
+===============================================================================================
+
+4.1 Induction requires a substrate, and A2's is the estate's own memory. A2 does not legislate from the
+world at large; it legislates from the estate's accumulated record of itself — the deposits, proofs,
+rules, events, and incidents the estate has already produced. (DEFINED: the evidence substrate is the
+union of the estate's evidence ledgers, read as one corpus over which a candidate law can be induced.)
+This scoping is deliberate: A2's laws are about the ESTATE — how it behaves, what fails, what holds —
+and the only admissible evidence for a law about the estate is the estate's own record, not an external
+prior. A2 induces the estate's self-knowledge from the estate's self-record.
+
+4.2 The five evidence families, named. A2 reads five families. FD-07 DEPOSITS — what the estate has
+learned and distilled. FD_04 PROOFS and the UKDL RULE CORPUS — what it has adopted, mined for the
+meta-rules beneath the object-rules. CEPS EVENTS — what has happened, with recurrence. IAS-D2 INCIDENTS
+and the HARD RULES — what has broken and been stopped. A1 CROSS-DOMAIN ASSUMPTION EVIDENCE — which
+assumptions held across domains and which failed (the A1->A2 loop, Part XIV). (DEFINED, five families.)
+Each is a system's OUTPUT, read by A2 as INPUT — A2 writes to none of them, consuming their records to
+legislate, the same consumer relation A1 has to FD and D2.
+
+4.3 The one-algebra requirement, and the B2 dependency. The five families speak different evidence
+vocabularies — DRK-00's ten typed evidence records, DAIF-01's ten-status lattice, ACIS levels, CEPS
+event types, FD deposit classes — and A2 cannot induce over incommensurable vocabularies. (OBSERVED:
+these overlap without a mapping, which is exactly the Tier-B2 gap — epistemic algebra unification.)
+A2's induction requires ONE algebra over which evidence of any family is comparable, and B2 supplies
+it. (DERIVED, and stated as an honest dependency: the DATASET specifies A2's induction assuming a
+unified evidence algebra; the BUILD needs B2 wired first, or A2 induces over evidence it cannot
+commensurate. This is recorded here and in Part XXIV's residual, not hidden — A2's spec is complete,
+but its build has B2 as a precondition, and claiming A2 runs before B2 exists would be the Scaffold
+Illusion.)
+
+4.4 Recurrence as the raw signal of a candidate law. The raw signal A2 mines is RECURRENCE — a pattern
+that appears across many pieces of evidence, in more than one family, that no adopted rule yet governs.
+(DEFINED: a recurrence spanning families is stronger evidence for a general law than one confined to a
+single family — a pattern in CEPS events AND FD deposits AND Hard Rules is more likely a genuine
+general rule than a pattern in one ledger, which might be an artifact of that ledger's collection
+bias.) A2 ranks candidate recurrences by cross-family breadth and instance count, the same hit-density
+discipline the Tribunal used to find true owners, applied to finding true laws. (DERIVED: breadth
+across families is A2's primary defense against the single-ledger false universal — a law induced from
+one biased ledger is exactly the p-hacking failure of Part XX, and cross-family corroboration is the
+structural guard against it.)
+
+4.5 The evidence must be READ-ONLY and provenance-preserving. A2 reads the ledgers without mutating
+them, and it preserves, in each candidate's evidence trail (Part III §3.4), the exact provenance of
+every piece it induced from. (NORMATIVE: A2's read-only relation to the ledgers is a boundary — the
+ledgers are their owners' objects, and A2 writing to CEPS or UKDL would be doing a sibling's work — and
+the provenance preservation is what makes a candidate auditable. A candidate that cited "the evidence"
+without naming the specific deposits and events could not be checked for cherry-picking.) The
+combination — read-only plus provenance-preserving — is what lets A2 legislate from the estate's memory
+without corrupting it and without producing unauditable laws.
+
+4.6 Redaction of evidence before it enters a candidate. Evidence drawn from real ledgers may contain
+credential material — a CEPS event's captured command, an incident's transcript — and A2 routes every
+piece through the estate's redaction bus before it enters a candidate's evidence trail. (NORMATIVE,
+HR-SECRET-006 cited: a candidate law is a proposal that will be read by ACIS, the Owner, and eventually
+A1's curricula, so a credential surviving into its evidence trail would be a leak with a wide blast
+radius.) The redaction is a precondition of the evidence entering the trail, not a post-hoc scrub — the
+same discipline A1 applies to synthetic cases, applied to a candidate's citations.
+
+4.7 The substrate grows, and A2's induction is continuous. The evidence ledgers grow every session, so
+the set of inducible laws grows with them, and A2's induction is not a one-time sweep but a standing
+process re-run as evidence accrues. (DERIVED: a recurrence that was too thin to support a candidate law
+last month may cross the threshold this month as more instances land, so A2 re-induces continuously,
+and a candidate's confidence (Part XI) recomputes as its evidence trail grows or is refuted. The
+substrate is a living corpus, and A2 legislates from it continuously, not once.) This continuity is why
+the Hypothesis Registry (Part V) is a standing store rather than a batch output — candidates
+accumulate, strengthen, weaken, and graduate over time as the evidence beneath them moves.
+
+4.8 The honest limit: A2 can only induce what the evidence contains. A2 legislates from the estate's
+record, so a law the record does not support — a rule about a situation the estate has never
+encountered — A2 cannot induce. (CONTESTED-honest: this is A2's fundamental epistemic bound, and it is
+why B1's unknown-unknown surface (Part X) is a dependency — the richest genuinely-new laws concern the
+unmapped space the current evidence does NOT cover, and A2 needs B1 to point at that space.) A2 induces
+the laws latent in what the estate has recorded; the laws about what it has never recorded require
+first mapping the unrepresented surface, which is B1's object. A2 is honest that its reach is bounded by
+its substrate, and names the dependency that would extend it rather than claiming a reach it does not
+have.
+
+4.9 The evidence substrate is discovered, not curated. The set of ledgers A2 induces over is enumerated
+by discovery — a scan of the estate's evidence surfaces — not by a hand-maintained list of "sources A2
+reads." (NORMATIVE, PR-COVERAGE-BY-CONSTRUCTION-001 applied to A2's inputs: a hand-curated source list
+cannot fail A2 for the ledger it forgot to include, and a ledger absent from A2's denominator is a body
+of evidence A2 silently never legislates from — the enrollment defect relocated to the legislature's
+inputs.) A2 that read only a curated five-source list would miss a sixth evidence surface the moment
+one was added, and no error would announce the omission — only a class of inducible laws never
+proposed. (DERIVED: the discovery discipline is the same one A1's registry and the D2A family registry
+obey, and for the same reason — the completeness of A2's legislation is bounded by the completeness of
+its evidence enumeration, and only a discovered enumeration resists the silent gap. A new evidence
+ledger the estate adds must appear in A2's substrate by discovery, or A2's laws are induced over a
+denominator that quietly excludes it.)
+
+FINAL LAW — PART IV. A2 legislates from the estate's own memory — deposits, proofs, rules, events,
+incidents, and A1's cross-domain evidence — read read-only, provenance-preserved, and redacted, over
+the single evidence algebra B2 must supply. Its raw signal is recurrence across families, because a
+pattern spanning ledgers is a law and a pattern in one ledger is often that ledger's bias. A2 can
+induce only what the evidence contains, and it names that bound honestly: the genuinely-new laws about
+the unmapped surface need B1, and a legislature that claimed to induce what its record never held would
+be substituting a machine's intuition for the evidence it exists to legislate from.
+
+===============================================================================================
+PART V — THE HYPOTHESIS REGISTRY: THE STORE OF CANDIDATE LAWS
+===============================================================================================
+
+5.1 The registry as A2's standing store. A2's candidate laws live in the HYPOTHESIS REGISTRY — the
+first-class, standing store of every candidate A2 has induced, with its status, evidence trail, and
+confidence. (DEFINED: the registry is to A2 what the statute book UKDL is to the adopted corpus — but
+holding law that is PROPOSED, not law that IS.) It is standing rather than a batch output because
+induction is continuous (Part IV §4.7): candidates accumulate, strengthen as evidence corroborates
+them, weaken as counterexamples surface, graduate when adopted, and die when refuted, and the registry
+holds that whole living population.
+
+5.2 What a registry entry contains. Each entry is a candidate law (Part III's four-part object) plus
+its lifecycle metadata: current status (Part III §3.6), confidence (Part XI), the induction date, the
+evidence trail with provenance, and — once handed to judgment — the judgment outcome. (DEFINED.) The
+entry is the complete auditable record of a candidate's life, from the recurrence that induced it to
+its adoption, refutation, or withdrawal. An entry with a status but no evidence trail is malformed (the
+intuition-drafted candidate), and the registry's write gate refuses it, the same shape as A1's
+malformed-learner-record catalogue.
+
+5.3 The registry is discovered, not curated. Like every other estate registry authored after the audit,
+the Hypothesis Registry is DERIVED from the candidate-law artifacts on disk, not hand-maintained.
+(NORMATIVE, PR-COVERAGE-BY-CONSTRUCTION-001: a candidate law induced but absent from the registry is
+invisible to every downstream consumer — it will never be handed to judgment, never graduate, never be
+counted — the orphan-candidate failure caused by an enrollment gap.) A candidate artifact on disk with
+no registry entry fails the registry-completeness gate by name, never a count. (DERIVED: the discovery
+discipline is what stops A2 growing a shadow of un-enrolled candidates that were induced and then
+silently lost — an induced law nothing can find is an induced law that never happened.)
+
+5.4 The candidate versus the adopted, and the graduation. The registry holds candidates; UKDL holds
+adopted rules; a candidate graduates from the first to the second at adoption (Part II §2.4). (DEFINED:
+on adoption, the registry entry transitions to ADOPTED-ELSEWHERE and points to the UKDL rule it became,
+rather than retaining a competing copy.) This is the load-bearing boundary that keeps A2 from shadowing
+UKDL: the registry never holds an adopted rule as if it were still a candidate, and UKDL never holds a
+candidate as if it were adopted. (DERIVED: the pointer-not-copy design means there is exactly one
+authoritative record of an adopted rule — UKDL's — and the registry retains only a historical note of
+its origin, so a reader is never confused about which store owns a rule at which stage.)
+
+5.5 Deduplication against the estate's existing rules. Before a candidate is registered, A2 checks it
+against the adopted corpus (UKDL, Hard Rules) and against the existing registry, so it does not propose
+a law the estate already holds. (NORMATIVE: a candidate that duplicates an adopted rule is not a new
+law — it is a rediscovery, and proposing it wastes judgment attention. A2 checks the candidate's rule
+statement against existing rules by subject, not by vocabulary, the content-tier discipline applied to
+its own output.) (DERIVED: this is A2's application of the D2A duplicate-to-advantage logic to laws — a
+candidate that overlaps an existing rule is either a duplicate to fold or a genuine refinement to
+propose as an amendment, and A2 distinguishes them by whether the candidate says something the existing
+rule does not.)
+
+5.6 The registry's status distribution as a health signal. Reading the distribution of candidates
+across statuses is itself a signal about A2's health, the same way IAS-C1 reads its position lifecycle
+distribution. (DEFINED: a healthy registry shows a steady flow of PROPOSED candidates, a reasonable
+adoption rate, and an occasional REFUTED — a registry with NO refutations is suspicious, because it
+suggests A2's counterexample search (Part XIII) is not actually trying to break its own candidates.)
+(DERIVED: a registry that only ever proposed and adopted, never refuting, would be a p-hacking
+legislature — inducing laws that confirm and never testing them to destruction, exactly the failure
+Part XX names. The refutation flow is evidence that A2 is stress-testing its own output, not merely
+generating confirmations.)
+
+5.7 The registry does not rank laws by importance. A2's registry stores candidates and their evidence;
+it does NOT rank which laws matter most to adopt — that ranking weighs a law's value against the
+estate's priorities, which is a portfolio/governance judgment, not A2's. (Boundary, Article II: A2
+owns the induction and the candidate store; the PRIORITIZATION of which candidates the Owner should
+judge first is a governance decision A2 supplies inputs to — a candidate's confidence and evidence
+breadth — without making.) (DERIVED: A2 that ranked laws by importance would be legislating AND setting
+the legislative agenda, and the agenda is the Owner's; A2 hands a well-evidenced candidate set and lets
+governance choose what to judge, the same restraint A1 shows in handing C1 cost without making the
+allocation.)
+
+5.8 The orphan candidate, and the registry's obligation to surface it. A candidate that is induced,
+registered, and then never handed to judgment is an ORPHAN — the generative twin of A1's orphan learner
+— and the registry surfaces long-PROPOSED candidates rather than letting them accumulate silently.
+(NORMATIVE: an induced law that is never judged is teaching capital spent for nothing — the induction
+cost was paid and no adoption decision was ever made. The registry flags candidates that have sat
+PROPOSED beyond a window for the Owner's attention.) (DERIVED: the orphan candidate is a real failure
+mode because induction is cheap and judgment is scarce — A2 can induce faster than the Owner can judge,
+so without the surfacing obligation the registry would fill with un-judged candidates, and A2's value
+would leak away as induced-but-never-adopted laws.)
+
+5.9 The registry as the substrate for theory composition. Individual candidate laws are the registry's
+entries, but the registry is also the substrate from which A2 composes THEORIES (Part VII) — structures
+of related laws that together explain more than any one alone. (DERIVED: a cluster of candidate laws
+about one estate subject, held together in the registry, is the raw material for a theory, and the
+registry's cross-references between related candidates are what let A2 see the cluster. The registry is
+therefore not only a store of individual candidates but the graph over which theory composition
+operates — the same way A1's transfer graph emerges from its certifications.)
+
+5.10 The registry's provenance closes the loop to A1. Each registry entry, once its candidate is
+adopted, retains the provenance chain from the recurrence that induced it through the judgment that
+adopted it — and that chain is exactly what A1 reads when it turns the adopted law into curriculum
+(Part XVIII). (DERIVED: a law A1 teaches is more teachable when its origin — the evidence it was
+induced from, the failure it generalizes — travels with it, because A1's failure simulations (its own
+Part VIII) draw on precisely that origin evidence. The registry's provenance is therefore not only A2's
+audit substrate but A1's teaching input, and preserving it is what makes the A2→A1 seam carry not just
+the law but the reason for it — a rule taught with its founding evidence is learned as understanding,
+not as an arbitrary stricture.)
+
+FINAL LAW — PART V. The Hypothesis Registry is A2's standing store of candidate laws — proposed, not
+adopted — discovered from disk not curated, so no induced law is silently lost. It holds candidates;
+UKDL holds adopted rules; a candidate graduates by pointer, never by copy, so exactly one store owns a
+rule at each stage. Its refutation flow is the evidence that A2 tests its own output rather than only
+confirming it, and its orphan-surfacing obligation is what stops A2's value leaking away as laws induced
+but never judged.
+
+===============================================================================================
+PART VI — THE LAW EXTRACTION ENGINE: INDUCING A CANDIDATE FROM RECURRING EVIDENCE
+===============================================================================================
+
+6.1 The engine's single job. The Law Extraction Engine is the mechanism that turns a recurrence in the
+evidence substrate into a candidate law's four-part object. (DEFINED: given a recurrence — a pattern
+across evidence that no adopted rule governs — the engine induces the general rule it supports, attaches
+a falsifier, assembles the evidence trail, and extracts the boundary condition, producing a registrable
+candidate.) It is the core generative act of the whole dataset: everything before it prepares the
+substrate, everything after it judges or handles the output, and the engine is where evidence becomes a
+proposed law.
+
+6.2 From recurrence to rule statement — the induction step. The engine's first step is generalization:
+from many instances sharing a pattern, state the general rule the instances collectively support.
+(DEFINED: the induction moves from "these N observations share property P under condition C" to the
+candidate rule "under condition C, property P holds." The condition C becomes the boundary (Part III
+§3.5); the property P becomes the rule's claim.) (DERIVED: the quality of the induction is bounded by
+the representativeness of the instances — an induction over a biased sample produces a false universal,
+which is why the engine's next steps are counterexample search and boundary extraction, not immediate
+proposal. The rule statement is a hypothesis the engine then tries to break.)
+
+6.3 The falsifier-extraction step. Having stated a candidate rule, the engine extracts its falsifier —
+the concrete condition that would show the rule false. (DEFINED: for "under condition C, property P
+holds," the falsifier is "an instance of condition C where P does NOT hold," specified as a measurement,
+a signal, and a window per ACIS's standard.) (DERIVED: the engine cannot propose a rule whose falsifier
+it cannot state — a rule where "P fails under C" is unobservable is unfalsifiable, and the engine
+discards it rather than registering a slogan. The falsifier-extraction step is where the unfalsifiable
+candidate dies before it is ever proposed, which is why Part VIII's falsifier-first discipline is
+enforced in the engine, not merely stated as a policy.)
+
+6.4 The evidence-assembly step. The engine assembles the candidate's evidence trail — the specific
+instances the induction generalized from, with provenance, redacted. (DEFINED, Part IV §4.5-4.6 applied
+in the engine.) (DERIVED: the trail must be the ACTUAL instances the induction used, not a
+post-hoc-selected supporting set — an engine that induced from a broad sample but cited only the
+confirming instances would be building the p-hacking failure into its own output. The trail is the
+honest record of what the rule was induced from, including the breadth across families that is A2's
+corroboration signal.)
+
+6.5 The boundary-extraction step. The engine extracts the boundary from the same evidence — the cases
+where the pattern held and, critically, the nearest cases where it did NOT. (DEFINED: the boundary is
+the fence between the two — the condition C that separates instances where P held from instances where
+it failed.) (DERIVED: boundary extraction requires the engine to have looked at DISconfirming cases, not
+only confirming ones — the boundary is defined by where the pattern stops, and a candidate with no
+boundary is one whose engine never looked past its confirmations. This is why boundary extraction and
+counterexample search (Part XIII) are the same discipline seen twice: both require the engine to seek
+the case the rule does not cover.)
+
+6.6 The meta-rule extraction — inducing over the adopted corpus. A special and powerful mode of the
+engine induces not over events but over the estate's ADOPTED RULES — mining the Hard Rules and UKDL for
+the meta-rule beneath many object-rules. (DEFINED: many Hard Rules about specific Windows execution
+failures support one meta-rule about the class; many secret-firewall rules support one meta-rule about
+credential egress. The engine induces the meta-rule the object-rules collectively instantiate.)
+(DERIVED: this is A2's highest-value mode — the estate's adopted corpus is its most refined evidence,
+and the meta-rules latent in it are laws about the estate's own laws, which no object-rule states and
+which only an induction over the corpus can surface. It is also where A2 most clearly complements the
+hand-drafting that produced the object-rules one at a time.)
+
+6.7 The engine proposes; it never adopts. The engine's output is a REGISTERED CANDIDATE — PROPOSED
+status, awaiting judgment — never an adopted rule. (NORMATIVE, invariant 2, propose-never-apply,
+enforced at the engine's output: the engine writes to the Hypothesis Registry, never to UKDL or the
+Hard Rules.) (DERIVED: the engine's terminal act is registration, and the boundary between registration
+and adoption is the propose-never-apply invariant made mechanical — the engine has no code path that
+adopts, only one that proposes, so even a compromised or drifting engine cannot enact a law, it can only
+offer one for judgment. The invariant is enforced by the absence of an adoption path in the engine, not
+by a policy the engine is trusted to follow.)
+
+6.8 The engine's honesty about induction strength. The engine attaches to each candidate a confidence
+(Part XI) reflecting how strongly the evidence supports the rule — instance count, cross-family breadth,
+and the absence of counterexamples — and it is honest about weak inductions rather than proposing them
+at false confidence. (DERIVED: an engine that proposed every recurrence at high confidence would flood
+the registry with weak candidates and waste judgment; an engine honest about induction strength lets the
+Owner judge the well-supported first. Confidence is a projection over the evidence trail, recomputed as
+evidence moves, never a stored assertion.)
+
+6.9 The engine is bounded by the substrate and the algebra. The engine can induce only over the evidence
+the substrate contains (Part IV §4.8) and only across the algebra B2 supplies (Part IV §4.3) — its reach
+is exactly the reach of its inputs. (CONTESTED-honest: the engine is specified completely here, but its
+BUILD needs the unified algebra and the discovered substrate, and an engine run over un-unified evidence
+would produce candidates induced across incommensurable vocabularies — worse than no candidate. A2's
+spec names this bound; A2's build must satisfy it.) (DERIVED: the engine is the dataset's core mechanism
+and also the one most dependent on B1 and B2 — which is why the honest residual of Part XXIV foregrounds
+them, and why claiming A2 induces well before B2 unifies its evidence would be the exact overreach the
+whole corpus is disciplined against.)
+
+6.10 The engine as a read-only projection, like every load-bearing mechanism in the corpus. The engine
+writes exactly one thing — a registered candidate — and computes everything else as a projection over
+its inputs: the rule from the recurrence, the confidence from the evidence trail, the boundary from the
+disconfirming cases. (DERIVED: this is the same read-only-projection discipline ACIS gives its ladder,
+A1 its certification, and A2 its candidate object — a mechanism that invents nothing and derives
+everything from inputs, so all the integrity work concentrates on the inputs where it can be audited.
+The engine's single write, its lack of an adoption path, and its projection-not-assertion design are
+three expressions of one principle: A2's most powerful mechanism is also its most constrained, because
+a legislature's drafting engine is exactly the component that must never be able to enact.)
+
+FINAL LAW — PART VI. The Law Extraction Engine turns a recurrence into a candidate's four parts —
+generalizing the rule, extracting its falsifier, assembling its honest evidence trail, fencing its
+boundary — and its highest mode induces the meta-rules latent in the estate's own adopted corpus, the
+laws about its laws no object-rule states. It proposes and never adopts, because it has no adoption path
+at all, only registration — the propose-never-apply invariant enforced by construction. Its reach is
+exactly its inputs' reach, bounded by the substrate it reads and the one algebra B2 must supply, and A2
+names that bound rather than claiming an induction its inputs cannot yet support.
