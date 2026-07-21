@@ -354,6 +354,40 @@ def main(argv=None) -> int:
     except Exception as e:  # noqa: BLE001
         _fail("V-D2A-FAMILY-FAILOPEN", f"raised {type(e).__name__} (must never raise)")
 
+    # V-D2A-FAMILY-DEFER-NOT-KEEP -- a candidate the plausibility floor CAPS (a parent's
+    # vocabulary matched but precision too low to justify: pre-floor coverage >= 50, capped
+    # to 45) is reported as DEFER, never as KEEP "genuinely new". This is the STOP #2
+    # section-5 defect made a gate: World Model Federation (a measured false FOLD) lands at
+    # sem=17/func=4, capped to 45 -- it must NOT be counted as a new build, while the truly
+    # novel sibling still is. The empirical proof the fix works on the exact defect input.
+    _fam_defer_case = [
+        Proposal("competing world models registry model assumption ledger model scope "
+                 "authority model contradiction engine model ensemble reasoner model "
+                 "falsification laboratory model replacement protocol model uncertainty "
+                 "surface plural beliefs held simultaneously adjudicated",
+                 "World Model Federation"),
+        Proposal("holographic tactile feedback surface for underwater sonar imaging",
+                 "Sonar Haptics 3"),
+    ]
+    fam_defer = run_family(_fam_defer_case)
+    defer_names = {it.name for it in fam_defer.defer}
+    keep_names = {it.name for it in fam_defer.keep if it.disposition == "KEEP"}
+    wmf_v = run(Proposal(_fam_defer_case[0].description, "WMF"))
+    if ("World Model Federation" in defer_names
+            and "World Model Federation" not in keep_names
+            and "Sonar Haptics 3" in keep_names
+            and wmf_v.dupe.deferred
+            and all(it.disposition == "DEFER" for it in fam_defer.defer)
+            and fam_defer.recommended_count == 1):
+        _ok("V-D2A-FAMILY-DEFER-NOT-KEEP",
+            f"defer={defer_names} keep={keep_names} "
+            f"recommended={fam_defer.recommended_count}/{fam_defer.proposed_count} "
+            "(45%-capped candidate is DEFER, not counted as 'genuinely new')")
+    else:
+        _fail("V-D2A-FAMILY-DEFER-NOT-KEEP",
+              f"defer={defer_names} keep={keep_names} "
+              f"deferred={wmf_v.dupe.deferred} rec={fam_defer.recommended_count}")
+
     # ---- D2A gate (SCS C85 addendum) -- wiring gates over the real CLI path ----
     gate_ok = _NODE is not None and _GATE.is_file()
     if not gate_ok:

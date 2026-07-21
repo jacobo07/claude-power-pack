@@ -328,7 +328,8 @@ def main(argv=None) -> int:
         except Exception as e:  # noqa: BLE001
             base[script] = (99, False)
     if all(rc == 0 and hit for rc, hit in base.values()):
-        _ok("V-BASELINE", "DRK 18/18 + D2A 22/22 still green after the amendment")
+        _ok("V-BASELINE", "DRK + D2A suites still green after the amendment "
+            "(VERDICT=PASS asserted, not a pinned count)")
     else:
         _fail("V-BASELINE", f"{base}")
 

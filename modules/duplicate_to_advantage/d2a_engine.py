@@ -451,6 +451,12 @@ class DupeVerdict:
     architectural: int
     is_duplicate: bool
     secondary_parents: list = field(default_factory=list)
+    # True when the plausibility floor CAPPED coverage: a parent's vocabulary matched
+    # (high semantic recall) but precision was too low to justify naming it. This is
+    # "could not confidently name a parent" -- DISTINCT from genuinely-new (no parent lit
+    # up at all). run_family reads it as a DEFER verdict, never as KEEP. Closes the
+    # STOP #2 section-5 defect: a 45%-capped candidate was reported as "genuinely new".
+    deferred: bool = False
 
 
 @dataclass
@@ -552,11 +558,22 @@ def detect_duplicate(prop: Proposal) -> DupeVerdict:
     # World Model Federation -> PM-02 at 89%). Precision is the discriminator: a parent
     # touching almost none of the proposal's own substance is not its owner. Below the
     # floor the verdict DEFERS rather than claiming a parent it cannot justify.
-    if not ((func >= 15) or (sem >= 50 and func >= 8)):
+    plausible = (func >= 15) or (sem >= 50 and func >= 8)
+    # DEFER (not KEEP): the floor is about to CAP a candidate that otherwise scored as a
+    # duplicate (pre-floor coverage >= 50) because a parent's vocabulary matched but its
+    # precision is too low to justify naming it -- the exact false-FOLD signature
+    # (Reasoning Compiler -> SQI-02, World Model Federation -> PM-02). "Could not
+    # confidently name a parent" is DISTINCT from genuinely-new (no parent scored >= 50 in
+    # the first place). Measured empirically at sem=17/func=4, pre-floor coverage >= 50 --
+    # sem>=50 was the wrong discriminator and let these land as "genuinely new" (the STOP
+    # #2 section-5 defect this closes). The test at pre-floor coverage catches them.
+    deferred = (not plausible) and (coverage >= 50)
+    if not plausible:
         coverage = min(coverage, 45)                  # under the >=50 duplicate line
     secondary = [f"{r[1]} ({r[2]})" for r in lit[1:3] if r[5] > 0]
     return DupeVerdict(best_id, best_name, coverage, sem, func, arch,
-                       is_duplicate=coverage >= 50, secondary_parents=secondary)
+                       is_duplicate=coverage >= 50, secondary_parents=secondary,
+                       deferred=deferred)
 
 
 # ---------------------------------------------------------------------------
@@ -837,7 +854,7 @@ _SIBLING_OVERLAP_THRESHOLD = 0.35  # Jaccard on token sets -> MERGE candidate pa
 @dataclass
 class FamilyItemVerdict:
     name: str
-    disposition: str               # "KEEP" | "FOLD" | "MERGE"
+    disposition: str               # "KEEP" | "FOLD" | "MERGE" | "DEFER"
     reason: str
     verdict: D2AVerdict
     merge_with: list = field(default_factory=list)   # sibling names, if disposition==MERGE
@@ -846,9 +863,13 @@ class FamilyItemVerdict:
 @dataclass
 class FamilySizingReport:
     proposed_count: int
-    keep: list = field(default_factory=list)     # list[FamilyItemVerdict]
+    keep: list = field(default_factory=list)     # list[FamilyItemVerdict] -- genuinely new
     fold: list = field(default_factory=list)
     merge_groups: list = field(default_factory=list)  # list[list[str]]
+    # DEFER: could not confidently name a parent (plausibility floor capped it) -- NOT a
+    # recommendation to build and NOT a fold; needs human judgment. Kept distinct from KEEP
+    # so the 45%-capped candidate is never reported as "genuinely new" (STOP #2 sec-5).
+    defer: list = field(default_factory=list)    # list[FamilyItemVerdict]
     recommended_count: int = 0
 
 
@@ -893,8 +914,10 @@ def run_family(items: list) -> FamilySizingReport:
     report = FamilySizingReport(proposed_count=n)
     for i, (p, v) in enumerate(verdicts):
         if v is None:
-            report.keep.append(FamilyItemVerdict(
-                p.name, "KEEP", "DEFER (fail-open): could not evaluate", v))
+            # Fail-open: the pipeline could not evaluate this item -> DEFER, not KEEP.
+            # A candidate we could not score is not "genuinely new"; it is unclassified.
+            report.defer.append(FamilyItemVerdict(
+                p.name, "DEFER", "could not evaluate (fail-open) -- needs review", v))
             continue
         if i in merged_into and groups[merged_into[i]]:
             gid = merged_into[i]
@@ -909,10 +932,22 @@ def run_family(items: list) -> FamilySizingReport:
                 p.name, "FOLD",
                 f"{v.dupe.coverage_pct}% owned by {v.dupe.parent_id} "
                 f"({v.dupe.parent_name}) -- extend that parent, do not create", v))
+        elif v.dupe.deferred:
+            # The plausibility floor capped coverage: a parent's vocabulary matched but its
+            # precision was too low to justify. This is "could not confidently name a
+            # parent" -- DEFER, never KEEP. Reporting it as "genuinely new" was the STOP #2
+            # section-5 defect (a 45%-capped candidate mislabeled as no-parent). It is
+            # neither a build recommendation (unclear) nor a fold (no justified parent).
+            report.defer.append(FamilyItemVerdict(
+                p.name, "DEFER",
+                f"coverage={v.dupe.coverage_pct}% (capped by plausibility floor; "
+                f"sem={v.dupe.semantic} func={v.dupe.functional} vs "
+                f"{v.dupe.parent_id or '-'}) -- could not confidently name a parent, "
+                "needs review", v))
         else:
             report.keep.append(FamilyItemVerdict(
                 p.name, "KEEP",
-                f"coverage={v.dupe.coverage_pct}% (< 50%, no sealed parent) -- "
+                f"coverage={v.dupe.coverage_pct}% (< 50%, no parent lit up) -- "
                 "genuinely new", v))
     # dedupe merge_groups (each pair may have been recorded from both sides)
     seen = set()
@@ -944,6 +979,11 @@ def render_family(r: FamilySizingReport) -> str:
         L.append(f"KEEP ({len(kept)}) -- genuinely new, no sealed parent, no sibling "
                  "overlap:")
         for it in kept:
+            L.append(f"  - {it.name}: {it.reason}")
+    if r.defer:
+        L.append(f"DEFER ({len(r.defer)}) -- could not confidently name a parent; NOT a "
+                 "build recommendation, needs review:")
+        for it in r.defer:
             L.append(f"  - {it.name}: {it.reason}")
     return "\n".join(L)
 
@@ -1028,6 +1068,7 @@ def main(argv=None) -> int:
                 "merge_groups": rep.merge_groups,
                 "keep": [{"name": it.name, "reason": it.reason}
                         for it in rep.keep if it.disposition == "KEEP"],
+                "defer": [{"name": it.name, "reason": it.reason} for it in rep.defer],
             }, ensure_ascii=False, indent=2))
         else:
             print(render_family(rep))
