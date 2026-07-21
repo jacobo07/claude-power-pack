@@ -14,6 +14,7 @@ from modules.ccf import (
     evaluation_engine,
     model_adapter,
     prompt_compiler,
+    release_manager,
     trademark_scanner,
 )
 
@@ -244,6 +245,65 @@ def test_evaluation_engine_empty_bundle_fails():
     # Assert
     assert result["passed"] is False
     print("V-EVAL-ENGINE-GATES-FAIL")
+
+
+# --- Release Manager ---------------------------------------------------
+
+def test_release_manager_blocks_without_human_selection():
+    # Arrange
+    artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
+                                               model_id="gpt-image-2", format="png",
+                                               resolution="1536x1024")
+    bundle = artifact_compiler.compile_artifacts(
+        [_CONCEPT_CLEAN], {"spark": artifact_ok}, mode="brandkit"
+    )
+    evaluation = evaluation_engine.evaluate_bundle(bundle)
+    prompt_record = prompt_compiler.compile_prompt(_CONCEPT_CLEAN, _SPEC, _GLOBALS)
+    scan = trademark_scanner.scan("spark", _CONCEPT_CLEAN["icon"],
+                                   prompt_record["avoid_list"]["semantic"])
+
+    # Act
+    result = release_manager.release(
+        prompt_records={"spark": prompt_record},
+        scan_verdicts={"spark": scan},
+        artifact_bundle=bundle,
+        evaluation_result=evaluation,
+        selection=None,
+    )
+
+    # Assert
+    assert result["status"] == "BLOCKED"
+    assert "selection" in result["reason"]
+    print("V-RELEASE-MANAGER-BLOCKED")
+
+
+def test_release_manager_seals_when_all_gates_pass():
+    # Arrange
+    artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
+                                               model_id="gpt-image-2", format="png",
+                                               resolution="1536x1024")
+    bundle = artifact_compiler.compile_artifacts(
+        [_CONCEPT_CLEAN], {"spark": artifact_ok}, mode="brandkit"
+    )
+    evaluation = evaluation_engine.evaluate_bundle(bundle)
+    prompt_record = prompt_compiler.compile_prompt(_CONCEPT_CLEAN, _SPEC, _GLOBALS)
+    scan = trademark_scanner.scan("spark", _CONCEPT_CLEAN["icon"],
+                                   prompt_record["avoid_list"]["semantic"])
+    selection = {"concept_id": "spark", "by": "owner", "timestamp": "2026-07-21T00:00:00Z"}
+
+    # Act
+    result = release_manager.release(
+        prompt_records={"spark": prompt_record},
+        scan_verdicts={"spark": scan},
+        artifact_bundle=bundle,
+        evaluation_result=evaluation,
+        selection=selection,
+    )
+
+    # Assert
+    assert result["status"] == "SEALED"
+    assert result["package"]["selected_concept_id"] == "spark"
+    print("V-RELEASE-MANAGER-SEALED")
 
 
 if __name__ == "__main__":
