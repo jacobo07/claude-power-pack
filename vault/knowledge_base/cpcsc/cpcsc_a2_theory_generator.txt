@@ -625,3 +625,395 @@ laws about its laws no object-rule states. It proposes and never adopts, because
 at all, only registration — the propose-never-apply invariant enforced by construction. Its reach is
 exactly its inputs' reach, bounded by the substrate it reads and the one algebra B2 must supply, and A2
 names that bound rather than claiming an induction its inputs cannot yet support.
+
+===============================================================================================
+PART VII — THE THEORY GENERATOR: COMPOSING LAWS INTO AN EXPLANATORY STRUCTURE
+===============================================================================================
+
+7.1 From individual laws to a theory. The Law Extraction Engine (Part VI) produces individual candidate
+laws; the Theory Generator composes related laws into a THEORY — a structure of laws that together
+explain more than any one alone. (DEFINED: a theory is a set of candidate laws plus the explanatory
+relationships among them — one law explaining why another holds, several laws sharing a common cause, a
+hierarchy from specific rules to the general principle beneath them.) A theory is the estate's account
+of WHY a family of its behaviours holds, not merely THAT each holds — the difference between a list of
+Windows-execution rules and the theory of why the MSYS2 bridge fails that explains them all.
+
+7.2 The composition operation. The generator composes by finding explanatory relationships among
+registry candidates: subsumption (law A is a special case of law B), common-cause (laws A and B both
+follow from principle C), and sequence (law A's condition produces law B's condition). (DEFINED, three
+relationship types.) (DERIVED: composition is a graph operation over the Hypothesis Registry (Part V
+§5.9) — the candidates are nodes, the explanatory relationships are edges, and a theory is a connected
+subgraph with an explanatory structure. The generator does not induce new object-laws in composition;
+it induces the STRUCTURE relating laws already induced, which is a second-order induction over the
+first-order candidates.)
+
+7.3 The explanatory principle at a theory's root. A well-formed theory has a root — the most general
+principle from which the others follow — and that root is itself a candidate law, subject to the same
+four-part discipline (rule, falsifier, evidence, boundary). (DEFINED: the theory of Windows-execution
+failure has, at its root, the principle "the MSYS2 transport corrupts external-toolchain invocations
+under condition X," and the specific rules (git-via-Bash hangs, python-via-Bash hangs) follow from it.)
+(DERIVED: the root principle is more valuable and more dangerous than any specific rule — more valuable
+because it explains many, more dangerous because if false it invalidates the whole theory — which is
+why the root carries the strictest falsifier and the broadest evidence requirement. A theory is only as
+sound as its root, and A2 holds the root to the highest evidentiary bar in the composition.)
+
+7.4 The theory as a compression of the estate's self-knowledge. A theory compresses many object-laws
+into one explanatory structure, and that compression is itself a form of the estate understanding
+itself better. (DERIVED: before the theory, the estate held N separate rules; after, it holds one
+principle and the derivations — fewer independent things to know, more understanding of how they
+relate. This is not FD's distillation — FD compresses a finished insight for storage; A2's theory
+composition induces the explanatory structure that was never stated, producing understanding the
+individual laws did not contain. The theory is genuinely new knowledge: the WHY that the collection of
+WHATs never articulated.) The compression is A2's highest-order product — a theory is worth more than
+the sum of its laws because it explains them.
+
+7.5 Theory composition is still proposal, never adoption. A composed theory, like an individual
+candidate, is PROPOSED — offered for judgment, never self-adopted. (NORMATIVE, invariant 2: the
+generator writes a theory to the registry as a structured candidate, and its adoption is a separate
+governance act, just as an individual law's is.) (DERIVED: a self-adopting theory generator would be
+even more dangerous than a self-adopting law engine, because a theory reshapes how the estate
+understands a whole family of its behaviours — adopting a wrong theory would propagate a wrong
+explanation across every rule it claims to ground. The propose-never-apply invariant is therefore most
+critical exactly where A2 is most powerful, at the theory level, and the generator has no adoption path
+for a theory any more than the engine has for a law.)
+
+7.6 The theory's falsifier is compositional. A theory's falsifier is not merely the conjunction of its
+laws' falsifiers — it includes the falsifier of its explanatory STRUCTURE: the condition under which
+the laws are all true but the claimed explanatory relationship among them is false. (DEFINED: two laws
+can both hold while the claim that one explains the other is wrong — correlation without the claimed
+causation — and the theory's falsifier must name how that structural error would show. A theory falsely
+claiming a common cause is refuted by finding the cause absent where the effects are present.)
+(DERIVED: this is why theory composition is harder than law induction and carries a distinct failure
+mode, paradigm-thrash (Part XVI, XX) — a theory can be wrong in a way none of its laws are, by claiming
+a false structure over true laws, and the compositional falsifier is what tests the structure itself,
+not just its parts.)
+
+7.7 The boundary with ACIS's meta-science. ACIS owns the JUDGMENT of a theory — leveling it, enforcing
+its falsifier, retiring it — and the estate's meta-science includes paradigm retirement as "a designed
+operation rather than an embarrassment." (Boundary, Article II: ACIS adjudicates and retires a theory;
+A2 composes and proposes one. The generative act — building the explanatory structure from evidence —
+is A2's; the judgmental act — deciding whether the structure is admissible and when to retire it — is
+ACIS's.) (DERIVED: this is the JUDGE-PROPOSE boundary at the theory level, and it is the exact
+white-space Science XII named — the estate had paradigm RETIREMENT (ACIS) and lacked paradigm
+PROPOSAL (A2). A2 proposes the paradigm; ACIS retires the old one and adjudicates the new; neither does
+the other's act.)
+
+7.8 Theories organize the registry and guide induction. A composed theory feeds back into A2's own
+process: it organizes the registry (candidates cluster under the theories that explain them) and it
+guides further induction (a theory predicts laws not yet induced — if the root principle holds, certain
+specific rules should too, and A2 can look for their evidence). (DERIVED: a theory is not only an output
+but a hypothesis-generator — it predicts where new laws should be found, directing the engine's
+attention to the evidence that would confirm or refute the predicted rules. This is how A2 becomes more
+than a pattern-miner: a theory lets it predict laws from structure and then seek their evidence, which
+is the difference between induction and genuine theorizing.)
+
+7.9 The honest limit: theory composition is the most evidence-hungry mode. Composing a sound theory
+requires enough evidence to establish not only the laws but their relationships, and the estate's record
+may support the laws while under-supporting the structure. (CONTESTED-honest: A2 proposes a theory at a
+confidence reflecting the evidence for its STRUCTURE, which is often weaker than the evidence for its
+individual laws, and it is honest about a theory whose laws are well-supported but whose explanatory
+claim is thin. A speculative theory is proposed as speculative, or not proposed at all.) (DERIVED: the
+theory generator is A2's highest-value and highest-risk mode, and its discipline is to be most cautious
+exactly where it is most powerful — a confidently-proposed wrong theory is the paradigm-thrash failure,
+and honesty about structural evidence strength is the guard against it.)
+
+FINAL LAW — PART VII. The Theory Generator composes individual laws into an explanatory structure — the
+WHY the collection of WHATs never stated — rooted in a most-general principle held to the strictest
+evidentiary bar, because a theory is only as sound as its root and worth more than the sum of its laws.
+Its falsifier is compositional: a theory can be wrong by claiming a false structure over true laws, and
+that structural error is what must be testable. It proposes and never adopts, most critically here where
+a wrong theory would propagate a wrong explanation across every rule it grounds — the propose-never-apply
+invariant is strongest exactly where A2 is.
+
+===============================================================================================
+PART VIII — FALSIFIER-FIRST DISCIPLINE: NO CANDIDATE WITHOUT A REFUTATION CONDITION
+===============================================================================================
+
+8.1 The discipline stated. A2's central quality gate is that no candidate law is proposed without a
+concrete falsifier — a named measurement, a signal, and a window under which the law would be shown
+false. (DEFINED, invariant 1, inherited from ACIS's standard and enforced in the Law Extraction Engine,
+Part VI §6.3.) The falsifier is attached at PROPOSAL, before the candidate enters the registry, so that
+an unfalsifiable pattern never becomes a candidate at all — the discipline is a gate on what may be
+proposed, not a review of what was.
+
+8.2 Why the falsifier comes first, not last. A2 attaches the falsifier before assembling evidence or
+computing confidence, because the falsifier determines whether the candidate is a LAW at all. (NORMATIVE:
+"a theorem without a concrete, observable refutation condition is not a weak theorem, it is not a
+theorem at all" — acis_00, cited. A pattern with no statable refutation condition is not a law with low
+confidence; it is not a law, and no amount of confirming evidence makes it one.) (DERIVED: putting the
+falsifier first means the engine discards the unfalsifiable candidate before spending effort on its
+evidence trail — the cheapest point to kill a slogan is before it is dressed as a law, and the
+falsifier-first order is what makes the discipline efficient as well as sound.)
+
+8.3 The difference between a falsifier and a slogan, made operational. ACIS's own example is the
+standard: "the law is false if reasoning doesn't compress" is NOT a falsifier — it names no measurement,
+no signal, no window. (DEFINED, cited.) A2 operationalizes the distinction: a falsifier must name WHAT
+would be measured (a specific observable), WHAT value of it refutes the law (the signal), and OVER WHAT
+scope the measurement applies (the window). (DERIVED: "the Bash-hang law is false if, on a Windows host,
+an external-toolchain Bash invocation completes normally across 30 consecutive trials" is a falsifier —
+observable (completion), signal (normal across 30), window (Windows host, external toolchain). The
+three-part requirement is what separates a testable law from a rhetorical one, and A2 enforces all
+three.)
+
+8.4 The falsifier as the boundary between A2 and ACIS, seen precisely. A2 attaches the falsifier; ACIS
+enforces it. (Boundary, Article II: the SAME falsifier standard is applied at two moments — A2's gate on
+proposal, ACIS's gate on adoption. A2 will not propose a law it cannot state a falsifier for; ACIS will
+not adopt a law whose falsifier does not survive scrutiny.) (DERIVED: this is why the two systems apply
+one standard without redundancy — the falsifier at proposal filters what reaches the court, the
+falsifier at judgment filters what leaves it adopted, and a candidate can pass A2's gate (a statable
+falsifier) yet fail ACIS's (the falsifier, tested, reveals the law false). The two gates are sequential
+filters on one standard, not two copies of one filter.)
+
+8.5 Falsifier-first prevents the unfalsifiable-law failure at its source. The unfalsifiable law (Part
+XX) is a candidate that cannot be refuted by any evidence — it "explains" everything and predicts
+nothing. (NORMATIVE: because the falsifier is attached first and is a gate, the unfalsifiable candidate
+never enters the registry — it is killed at the engine's falsifier-extraction step. The failure mode is
+closed by construction, not by a later audit that might miss it.) (DERIVED: this is the object-level
+enforcement of Part III §3.9 — the candidate's mandatory falsifier part is what makes "no unfalsifiable
+law" a structural property rather than an aspiration, since a candidate literally cannot be well-formed
+without one.)
+
+8.6 The falsifier must be CHEAP enough to actually run. A falsifier that names a measurement no one can
+afford to make is technically a falsifier but practically useless — the law can never actually be
+tested. (CONTESTED-honest: A2 prefers falsifiers whose measurement the estate can realistically perform,
+and flags a candidate whose only falsifier is prohibitively expensive as weakly-testable.) (DERIVED: a
+law testable only in principle is barely better than an unfalsifiable one, because the estate will never
+run the test — so A2's falsifier-extraction seeks the cheapest sufficient refutation condition, the one
+the estate could actually check, the same practicality discipline A1 applies to its assessment cases. A
+falsifier the estate can run is a law the estate can actually maintain.)
+
+8.7 Falsifier and boundary are jointly extracted. The falsifier and the boundary condition (Part III
+§3.5) are extracted together, because they are two views of the same thing — the boundary names where
+the law claims to hold, and the falsifier names the observation that would show it fails within that
+boundary. (DERIVED: a law's boundary and its falsifier are dual — the boundary excludes the cases where
+the law does not apply, and the falsifier tests the cases where it should. Extracting them jointly means
+A2 never proposes a law whose falsifier tests outside its own boundary, which would be an incoherent
+candidate testable only where it never claimed to hold.)
+
+8.8 The falsifier as A2's honesty instrument. The requirement to state a falsifier is A2's primary
+defense against its own confirmation bias — forcing the engine to name how the law could be WRONG,
+before proposing it, surfaces at proposal time whether the induction is genuine or a pattern the engine
+wanted to find. (DERIVED: an engine that only sought confirmations would propose false universals; the
+falsifier-first discipline forces it to name the disconfirmation it should look for, which is the
+counterexample search of Part XIII made mandatory at the object level. The falsifier is where A2's
+intellectual honesty is enforced by structure rather than trusted to disposition.)
+
+8.9 Falsifier-first is inherited, not invented, and A2 says so. A2 did not invent the falsifier
+standard — it is ACIS's, and before ACIS it is Popper's, and A2 inherits it wholesale rather than
+claiming it. (NORMATIVE, boundary honesty: A2's contribution is applying the standard at the PROPOSAL
+point — attaching a falsifier to an induced candidate — not authoring the standard itself. A2 that
+claimed to have originated falsifiability would be inflating its own novelty, the credential-inflation
+failure applied to a dataset's self-account.) (DERIVED: naming the inheritance is itself the corpus's
+discipline — A2 cites ACIS's standard, applies it at its own distinct point in a law's life, and claims
+only the application, which is the same citation-not-restatement rule every Part of both datasets obeys.)
+
+8.10 Falsifier-first is what makes A2 safe to run at scale. Because every candidate must carry a runnable
+refutation condition before it is proposed, A2 can induce aggressively — flooding the registry with
+candidates costs nothing dangerous, since each is falsifiable and none is adopted without judgment.
+(DERIVED: the discipline is what lets A2 be a prolific legislature rather than a cautious one — the
+volume of proposals is bounded by the Owner's judgment capacity, not by any risk in proposing, because a
+falsifiable candidate offered for judgment can do no harm until adopted. The falsifier-first gate plus
+propose-never-apply together mean A2's generative volume is safe by construction, however much it
+induces.)
+
+FINAL LAW — PART VIII. No candidate law is proposed without a concrete falsifier — a named measurement,
+a signal, and a window — because a rule with no statable refutation condition is not a weak law but no
+law at all, and A2 kills the slogan at the engine before it is ever dressed as a candidate. The
+falsifier is inherited from ACIS's standard and applied at A2's distinct point, proposal, where ACIS
+applies it at judgment: two sequential filters on one standard. It is A2's honesty instrument — forcing
+the engine to name how its law could be wrong is what keeps induction from being confirmation the engine
+merely wanted to find.
+
+===============================================================================================
+PART IX — THE INSTITUTIONAL EXPERIMENT DESIGNER: DESIGNING THE TEST
+===============================================================================================
+
+9.1 From falsifier to experiment. A candidate's falsifier states the condition that would refute it; the
+Institutional Experiment Designer turns that condition into a concrete, runnable EXPERIMENT — the actual
+procedure the estate would perform to test the law. (DEFINED: a falsifier is a specification of what
+would refute a law; an experiment is the procedure that produces that observation. The designer bridges
+"the law is false if X" to "here is how the estate would observe X.") This is what makes A2's laws not
+merely falsifiable in principle but testable in practice — a legislature that proposed only untested
+laws would be proposing hypotheses; A2 designs the test that would confirm or refute each.
+
+9.2 The experiment operates on the estate, not the world. An institutional experiment tests a law ABOUT
+the estate by manipulating the estate and observing the result — running an external-toolchain Bash call
+on a Windows host and observing whether it hangs, to test the Bash-hang law. (DEFINED: the experiment's
+subject is the estate's own behaviour, and its manipulations are estate operations. This is why it is an
+INSTITUTIONAL experiment — it experiments on the institution to learn the institution's laws.) (DERIVED:
+the scoping matters — A2's laws are about the estate, so their experiments must be run on the estate, and
+the designer's job is to specify an estate-manipulation whose outcome discriminates the law from its
+negation.)
+
+9.3 The experiment must be safe, and reuses the estate's sandboxes. An experiment that tests a law about
+a destructive or irreversible behaviour must itself be safe — it runs in a sandbox (IAS-G1's, the same
+substrate A1 uses for synthetic experience), never on production. (NORMATIVE: testing the law "destructive
+command without backup loses data" must not itself lose real data — the experiment runs against synthetic
+state, exactly as A1's failure simulations do. A2 reuses G1's sandbox and builds no isolation machinery.)
+(DERIVED: this is a boundary — the sandbox is G1's object, and A2 configures it as an experiment
+environment, the same reuse-not-rebuild relation A1 has to G1. A2's contribution is the experiment
+DESIGN, not the sandbox it runs in.)
+
+9.4 The experiment as the bridge from candidate to evidence. An experiment's result is new evidence —
+it either corroborates the candidate (the predicted outcome occurred) or refutes it (the falsifying
+outcome occurred), and either way it updates the candidate's confidence and evidence trail. (DEFINED:
+the experiment is how A2 goes beyond PASSIVE induction over existing evidence to ACTIVE generation of new
+evidence targeted at a specific candidate.) (DERIVED: this is the difference between mining and
+experimenting — mining finds laws latent in existing evidence; experimenting produces new evidence to
+test a specific law. The designer is what lets A2 do the second, and it is most valuable exactly where
+the existing evidence is thin — a candidate the record barely supports can be tested by an experiment
+designed to produce the missing evidence.)
+
+9.5 The designer proposes experiments; it does not run them autonomously. Like every A2 mechanism, the
+designer PROPOSES an experiment — it does not execute estate manipulations autonomously. (NORMATIVE,
+propose-never-apply extended to experiments: an experiment manipulates the estate, and autonomous
+estate-manipulation by A2 would breach the same invariant that forbids autonomous adoption. The designer
+specifies the experiment; running it is a separate, authorized act.) (DERIVED: an A2 that ran its own
+experiments on the estate without authorization would be acting on the estate, not merely proposing to —
+and an experiment on a destructive-behaviour law, run autonomously, could cause the very harm it tests
+for. The designer's output is a runnable specification the Owner or an authorized process executes, never
+an execution A2 performs itself.)
+
+9.6 The experiment reuses the estate's evidence gates as its instruments. An experiment's observation is
+made by the estate's existing verification gates — the tests, the reality probes, the CEPS event log —
+read as impartial instruments, exactly as A1's assessment reuses them. (DERIVED: A2 does not build a new
+observation apparatus; it specifies which existing gate observes the experiment's outcome, because the
+estate's gates are already impartial instruments hardened for their own purposes. An experiment testing
+the Bash-hang law observes via the same completion/timeout signals the estate already records, which are
+impartial because they were not built to flatter any law.) This is the same reach-for-an-existing-gate
+discipline that keeps A1's assessment cheap and impartial, applied to A2's experiments.
+
+9.7 The cost of an experiment, handed to governance. An experiment consumes estate resources — a sandbox,
+compute, attention — and A2 attaches an estimated cost to each proposed experiment, so the Owner can
+decide whether testing a given law is worth it. (Boundary: the PRIORITIZATION of which experiments to run
+weighs test cost against a law's value, which is a governance judgment; A2 supplies the cost and the
+candidate's confidence, and governance chooses. A2 does not run experiments on its own budget.) (DERIVED:
+this is the same input-not-decision restraint A2 shows on law prioritization (Part V §5.7) — A2 designs
+and costs the experiment; the estate decides whether to spend on it, most readily for a high-value law
+whose existing evidence is thin.)
+
+9.8 The experiment closes the loop back to induction. An experiment's result feeds back into the evidence
+substrate as new evidence, which A2 then induces over — a refuted candidate is killed (Part XV), a
+corroborated one strengthens, and either result may shift a theory built on the law. (DERIVED: the
+designer completes A2's cycle from passive miner to active theorizer — induce a candidate from existing
+evidence, design an experiment to test it, run it (with authorization), fold the result back into the
+substrate, re-induce. This is the scientific method instantiated as an estate mechanism, with the
+critical constraint that A2 proposes each step and an authorized process executes the manipulations.)
+
+9.9 The honest limit: many institutional laws are hard to experiment on. Some laws about the estate
+concern rare or slow phenomena — a law about long-session degradation, or about cross-session knowledge
+decay — whose experiments would take a long time or a rare condition to run. (CONTESTED-honest: A2 is
+honest that not every law is cheaply testable, and for a law whose experiment is impractical it relies on
+passive evidence accumulation instead, flagging the candidate as observation-dependent rather than
+experiment-testable.) (DERIVED: the designer is powerful for laws about fast, repeatable phenomena and
+weak for laws about slow, rare ones — and A2 says which a given candidate is, rather than pretending every
+law can be put to a quick experiment. The honest bound is that A2's active-evidence generation reaches
+only as far as its experiments are practical to run.)
+
+FINAL LAW — PART IX. The Institutional Experiment Designer turns a falsifier into a runnable test —
+bridging "the law is false if X" to "here is how the estate would observe X" — and it is what makes A2 an
+experimenter and not only a miner, producing new evidence targeted at a candidate the record barely
+supports. It experiments on the estate to learn the estate's laws, safely in G1's sandbox, observed by the
+estate's own impartial gates. And it proposes the experiment, never runs it — because an experiment
+manipulates the estate, and autonomous manipulation is the same breach as autonomous adoption.
+
+===============================================================================================
+PART X — NOVELTY AND THE UNKNOWN-UNKNOWN SURFACE
+===============================================================================================
+
+10.1 The two kinds of law A2 can induce. A2 induces laws of two kinds. KNOWN-SPACE laws generalize a
+recurrence in what the estate has already recorded — the Bash-hang law, induced from many logged
+instances. UNKNOWN-SPACE laws concern the unmapped surface — the assumptions no artifact ever wrote down,
+the situations the estate has never encountered. (DEFINED, two kinds.) The first, A2 induces from its
+substrate; the second, it cannot induce without first being pointed at the unmapped space, which is B1's
+object. Novelty — the genuinely new law — lives disproportionately in the second kind, because the estate
+has already hand-drafted most of the laws its recorded evidence obviously supports.
+
+10.2 Why the richest laws are in the unknown space. The estate's competent sessions have already noticed
+and hand-drafted the laws that its recorded evidence makes obvious — the Hard Rules exist. What remains
+un-induced is disproportionately the non-obvious: the meta-rules beneath many object-rules (Part VI §6.6),
+and the laws about the unmapped surface the evidence does NOT yet cover. (DERIVED: A2's marginal value
+over hand-drafting is highest exactly where hand-drafting is weakest — the non-obvious generalization and
+the unrepresented space. A2 that only induced the obvious known-space laws would mostly rediscover what
+sessions already drafted; its genuine novelty is in the meta-rules and the unknown space.)
+
+10.3 The B1 dependency, stated honestly. The unknown-unknown surface — "the assumption everyone shared,
+which stopped being true, and which no artifact ever wrote down because it was too obvious to state"
+(cited from daif_21, the estate's own account of the class) — is Tier-B1's object, carried by FIOS as a
+🟡 EXTEND, not built. (OBSERVED, from A1's Part I §1 and the Tribunal.) A2 needs B1 to point at the
+unmapped surface, because A2 cannot induce a law about a space its evidence does not represent. (DERIVED,
+honest dependency: the DATASET specifies how A2 would legislate over the unknown space once B1 maps it;
+the BUILD needs B1. A2's known-space induction works without B1; its unknown-space induction — its
+richest mode — depends on B1, and claiming A2 covers the unknown space before B1 exists would be the
+overreach the corpus forbids.)
+
+10.4 Novelty as a first-class property of a candidate. A2 attaches a NOVELTY assessment to each candidate
+— whether it generalizes known evidence (lower novelty, still valuable), states a meta-rule beneath
+existing rules (higher novelty), or concerns the unmapped surface (highest novelty, B1-dependent).
+(DEFINED: novelty is orthogonal to confidence — a well-evidenced known-space law is high-confidence,
+low-novelty; a thin unknown-space candidate is low-confidence, high-novelty. Both are worth proposing,
+and the Owner judges them differently.) (DERIVED: separating novelty from confidence lets governance
+weigh them — a high-novelty, low-confidence candidate is a speculative but valuable proposal worth an
+experiment; a low-novelty, high-confidence one is a safe codification. Collapsing the two would lose
+exactly the distinction that guides which candidates deserve testing versus adoption.)
+
+10.5 The unknown-unknown is where A2 and A1's cross-domain loop meet. A1's cross-domain education surfaces
+assumptions that held natively and failed in a foreign domain (A1 Part XV §15.8) — and an assumption that
+failed where it was silently assumed is a signal about the unmapped surface. (DERIVED: A1's cross-domain
+failures are one of A2's richest sources of unknown-space evidence, because a native assumption that broke
+in a new domain is exactly "the assumption no one wrote down because it was too obvious" — surfaced by
+A1's teaching. The A1→A2 evidence loop (Part IV §4.2) is therefore not only about known laws but a primary
+feed for the unknown-space induction, and it partially substitutes for B1 where A1's cross-domain teaching
+has already surfaced an unwritten assumption.)
+
+10.6 The distinction from SQI-01's reality scanning. SQI-01 detects DIVERGENCE in what is already
+represented — believed-versus-observed state for things the estate has modeled. (Boundary, Article II:
+SQI-01's object is drift in the represented; the unknown-unknown is the UNrepresented, which SQI-01
+itself concedes it is silent against — "against this class, structural comparison is silent and will
+remain silent," cited.) (DERIVED: A2's unknown-space induction is not SQI-01's reality scanning — SQI-01
+finds where the map disagrees with the territory; A2, via B1, seeks the territory the map never drew.
+Neither owns the other's object: SQI-01 checks represented reality, A2 legislates about the unrepresented,
+and the unknown-unknown is precisely the gap SQI-01 names as beyond its own reach.)
+
+10.7 Novelty must not become novelty-for-its-own-sake. A generator rewarded for novelty would drift
+toward proposing exotic laws over sound ones — the paradigm-thrash failure (Part XX) driven by a novelty
+incentive. (CONTESTED, resolved by the evidence discipline: A2 proposes a high-novelty candidate only
+with an honest confidence reflecting its (often thin) evidence, and never inflates a speculative law's
+confidence because it is exciting.) (DERIVED: novelty is a property A2 reports, not a target it maximizes
+— the target is sound laws the evidence supports, and novelty is one dimension governance weighs. An A2
+that chased novelty would flood the registry with exotic, poorly-evidenced candidates, which is why
+novelty and confidence are kept separate and confidence is never sacrificed to novelty.)
+
+10.8 The unknown space is where a legislature earns its keep. The deepest justification for A2 is that a
+legislature which only codified the obvious would barely beat hand-drafting — its value is inducing the
+laws no session noticed, and those cluster in the meta-rules and the unmapped surface. (DERIVED: this is
+why the B1 dependency is worth stating as prominently as the B2 one — A2's known-space induction is
+useful, but its transformative value is the unknown-space legislation B1 enables, and an A2 built without
+B1 is a useful codifier of the obvious rather than the discoverer of the non-obvious it was proposed to
+be. A2 names this so the build is not mistaken for complete when only the known-space half runs.)
+
+10.9 The honest residual, foregrounded. A2's spec is complete; A2's transformative value — the
+unknown-space induction — depends on B1, and its whole induction depends on B2's algebra. (CONTESTED-
+honest, and repeated deliberately: the two Tier-B dependencies are not incidental to A2, they are the
+difference between A2-that-codifies-the-obvious and A2-that-discovers-the-non-obvious. The dataset
+specifies the full system; the build has an ordering — B2 then B1 then A2's richest modes — and A2 states
+it rather than letting a reader assume the sealed spec means a running legislature.) (DERIVED: naming the
+residual here, in the novelty Part, is deliberate — novelty is exactly what B1 unlocks, so the Part about
+A2's highest value is the honest place to foreground the dependency that value rests on.)
+
+10.10 The known-space half is a real, shippable first increment. Because the unknown-space induction
+depends on B1, a reader might conclude A2 is not worth building until B1 lands — and that conclusion is
+wrong. (NORMATIVE: A2's known-space induction and its meta-rule mode (Part VI §6.6) run over the existing
+substrate with only B2's algebra, and the meta-rules latent in the estate's own adopted corpus are
+already high-value laws no object-rule states. A2 is worth building as a known-space legislature first,
+and extended to the unknown space when B1 is ready.) (DERIVED: this is the honest build sequencing — B2
+then A2-known-space then B1 then A2-unknown-space — and it means A2 delivers value in increments rather
+than waiting on its full dependency set, the same incremental-delivery discipline the estate applies to
+any large build.)
+
+FINAL LAW — PART X. A2 induces two kinds of law — the known-space generalization of recorded evidence and
+the unknown-space law about the unmapped surface — and its genuine novelty lives disproportionately in the
+second, because sessions have already hand-drafted the obvious. The unknown space is B1's object, and A2
+names the dependency honestly: its known-space induction runs without B1, its transformative value does
+not. Novelty is reported, never chased — a legislature that pursued exotic laws over sound ones is
+paradigm-thrash — and A2's confidence is never sacrificed to how new a law feels.
