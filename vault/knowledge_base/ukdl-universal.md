@@ -4863,3 +4863,46 @@ This is the same law as THE REGISTRAR IS THE ANTIPATTERN (above), applied to a
 data structure rather than a build step: a registry that depends on someone
 remembering to enroll a family is not a registry, it is a wish. Enforced by
 `V-D2A-REGISTRY-COMPLETE`.
+
+## CRAIF Founding Session — UKDL Extraction (2026-07-21)
+
+**`T-CRAIF-MECHANISM-TIER-ESTIMATE-HELD-001`** — The STOP #1 ownership audit estimated
+~75-80% of the original AISHF proposal was already owned by sealed corpus, obtained by
+reading real mechanism (liveness code, SQI/DRK/CPP-IAS/DAIF datasets) rather than titles,
+per `T-OWNERSHIP-AUDIT-ABSORPTION-BIAS-001`. The Owner mandated a full Reality Scan
+re-verification before Phase 0 architecture rather than accepting the figure as dogma.
+*Observed:* the re-verification held — the estimate needed no correction. Worth recording
+because most sealed lessons in this vault record a founding estimate being wrong; this is
+the rarer case of mechanism-tier reading getting it right the first time, which is itself
+evidence the discipline works, not evidence the re-verification step was unnecessary.
+
+**`PR-CRAIF-DENSITY-FLOOR-CONVERGENCE-001`** — Across three consecutive dataset builds
+(CRAIF-00, 01, 02) in one family, first-draft density undershot the stated 1,200-2,500
+word/Part floor every time, even after CRAIF-02 deliberately front-loaded more
+subsections per Part (11-12 instead of 8-9) specifically to avoid the shortfall CRAIF-00
+and CRAIF-01 both hit. *Observed:* CRAIF-02's first draft still landed at 967 words/Part
+mean, below CRAIF-01's own 1,075 achieved floor. One genuine expansion pass (a real worked
+example, edge case, or cross-reference per Part — never restated summary) converged all
+three datasets into a practical ~1,000-1,300 w/Part band. Structural lesson: front-loading
+subsection count does not substitute for a dedicated expansion pass; budget for one from
+the start rather than treating it as a recovery step.
+
+**`T-CRAIF-ADVERSARIAL-REVIEW-FOUND-REAL-GAPS-001`** — A dedicated Phase 3 adversarial
+review, run against a 53-Part corpus that already named 24 failure modes across its own
+constitutional and runtime Parts, surfaced 3 additional genuine gaps no prior Part named:
+authority-ladder gaming by sequential splitting (many small L3-eligible changes achieving
+what one large change could not), corpus poisoning via open case-authorship, and
+harness-reality divergence ("teaching to the test"). *Observed:* thoroughness at authoring
+time did not substitute for a dedicated adversarial pass — confirms the family's own Phase
+3 gate is not theater even against a corpus that already self-catalogues its own failure
+modes extensively.
+
+**`PR-D2A-WRITEBACK-ASYMMETRY-EXPECTED-001`** — Of 8 D2A reinforcement packages proposed
+for CRAIF's non-duplication boundary, 5 (Liveness, SQI, DRK, DAIF, JIT) already had their
+full mechanism specified inside the new corpus's own Parts, needing only a thin writeback
+note to the real owner; 3 (Assurance/ACIS, UKDL, and DAIF's own case-study instance) had no
+CRAIF-internal Part satisfying them at all and were pure writeback proposals. *Observed:*
+this asymmetry is the normal, expected shape of Duplicate-to-Advantage work, not a sign of
+incomplete drafting — some reinforcement is "we already built this correctly, tell the
+owner"; some is "we found something the owner's own corpus should absorb, and we built
+nothing internal because it isn't ours to build."

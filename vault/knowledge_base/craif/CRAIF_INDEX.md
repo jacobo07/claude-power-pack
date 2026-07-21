@@ -148,12 +148,20 @@ snapshot/rollback code, L3/L4 auto-apply) requires its own future Owner-approved
 
 | Artifact | Status |
 |---|---|
-| `CRAIF_INDEX.md` (this file) | `IN_PROGRESS` |
+| `CRAIF_INDEX.md` (this file) | **`COMPLETE`** |
 | `CRAIF_D2A_REINFORCEMENT_PACKAGES.md` (8 packages) | **`COMPLETE`** |
-| `CRAIF_ADVERSARIAL_REVIEW.md` | `NOT_STARTED` |
-| `CRAIF_CONTAMINATION_AUDIT.md` | `NOT_STARTED` |
-| `CRAIF_COMPLETION_REPORT.md` | `NOT_STARTED` |
-| `RESUMPTION_FILE.md` (repo root, CRAIF section) | maintained after every sealed Part-batch |
+| `CRAIF_ADVERSARIAL_REVIEW.md` (24 compiled + 5 new findings) | **`COMPLETE`** |
+| `CRAIF_CONTAMINATION_AUDIT.md` | **`COMPLETE`** — PASS, 0 hits |
+| `CRAIF_COMPLETION_REPORT.md` | **`COMPLETE`** |
+| UKDL writeback (`ukdl-universal.md`, 4 entries) | **`COMPLETE`** |
+| `RESUMPTION_FILE.md` (repo root, CRAIF section) | not needed — family sealed in one session |
+
+## Family status: SEALED (dataset-authoring phase)
+
+All 53 Parts across 3 datasets, 8 D2A packages, adversarial review, contamination audit,
+completion report, and UKDL writeback are complete. Executable runtime remains explicitly
+deferred to a future, separately Owner-approved implementation phase. Full synthesis:
+`CRAIF_COMPLETION_REPORT.md`.
 
 ## Density note (honest, not silent)
 
