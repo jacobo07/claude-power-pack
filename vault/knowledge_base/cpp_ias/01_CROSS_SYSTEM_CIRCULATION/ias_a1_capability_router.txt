@@ -1,7 +1,10 @@
 IAS-A1 — INSTITUTIONAL CAPABILITY ROUTER AND MISSION COMPOSER
 Claude Power Pack Institutional Advantage Systems — Family A: Cross-System Circulation
 
-Depth contract: PART I..PART XXII, 1300-1500 words per Part, a FINAL LAW closing every Part.
+Depth contract: PART I..PART XXIII, 1300-1500 words per Part, a FINAL LAW closing every Part.
+(Part XXIII — the Mission Constitution — is a Tier-B governed-evolution extension appended after
+the original twenty-two-Part seal via Part XX §20.4-§20.5; the closing appendices below audit the
+original core and retain their "twenty-two Parts" phrasing by design.)
 Epistemic marking on every load-bearing claim: DEFINED / OBSERVED / DERIVED / HYPOTHESIZED /
 NORMATIVE / EXPERIMENTAL / CONTESTED / UNRESOLVED.
 
@@ -2546,6 +2549,154 @@ on naming them precisely enough — dead capabilities, flapping ties, cascading 
 brains, imperial reach, ungoverned self-tuning — that each has a specific, legible defense, and an
 ensemble that can name its own router's failure modes this exactly is already more governable
 than one that has never asked the question.
+
+===============================================================================================
+PART XXIII — THE MISSION CONSTITUTION: THE PER-MISSION NORMATIVE ENVELOPE
+===============================================================================================
+
+23.1 Why a twenty-third Part after the closing synthesis, and why it is a Part rather than a
+patch. The original twenty-two-Part core (sealed above; the DECISION LOG, FUSION SCORE, and D2A
+DECISION RECORD that follow describe THAT core and are deliberately left intact) specified which
+systems act on a mission, in what sequence, with what preserved handoff state. It did not specify
+the NORMATIVE FRAME under which that sequence runs — which standing rules bind the mission, which
+may be set aside, by whose authority, and for how long. This Part is appended by the estate's own
+governed-evolution mechanism (Part XX §20.4-§20.5: a specification gap, once evidenced, is closed
+by an attributed amendment, never by silent self-tuning), because the gap it closes is structural,
+not cosmetic: a route with correct sequencing and no governing frame is a mission that runs with
+undefined rules, which is precisely the ungoverned condition Article II admits a new object to
+prevent. The header block's depth contract has been extended to Part XXIII accordingly; the
+FUSION SCORE and D2A DECISION RECORD below retain their original "twenty-two Parts" phrasing
+because they audit the original core as it sealed, and this Part's own status as a later,
+attributed addition is exactly the fact that phrasing should preserve rather than overwrite.
+(NORMATIVE, DERIVED from Part XX's evolution discipline applied to this dataset's own
+later-discovered gap.)
+
+23.2 The object defined. A MISSION CONSTITUTION is DEFINED as the per-mission normative envelope:
+a four-element record, created when a mission is decomposed and destroyed when its temporary
+structure dissolves, holding (a) the BINDING SET — the standing rules that govern this mission by
+default; (b) the WAIVER SET — the specific bindings set aside for this mission alone, each with its
+authorization; (c) the AMENDMENT AUTHORITY — who may change the envelope while the mission runs,
+and in which direction; and (d) the EXPIRY CONDITION — the exact event at which the envelope and
+every waiver in it cease to have force. The constitution is not itself a rule and holds no rule
+text; it is a SELECTION over rules that already exist elsewhere in the estate, scoped to one
+mission and legible in that mission's own provenance. Every term it uses — SYSTEM, AUTHORITY,
+DECISION CLASS — is the one already resolved against IAS-F1 in Part II, with no new primitive
+introduced, because a normative envelope that coined its own vocabulary would be unverifiable
+against the standing governance it merely selects from. (DEFINED.)
+
+23.3 The binding set: default-bind, not default-permit. The binding set is populated during
+decomposition, extending Part V §5.2's implicit-constraint surfacing: every standing governance
+rule whose trigger the mission's extracted intents and objects match is placed in the binding set
+by default. The discipline is DEFAULT-BIND — a rule applicable to the mission binds unless it is
+explicitly and authorizedly waived; the absence of a waiver is never read as permission. This
+inverts the dangerous default: a mission does not have to enumerate the rules it obeys, only the
+ones it has been authorized to set aside. A binding set that silently dropped an applicable rule
+because no actor thought to add it would reproduce, at the mission level, exactly the
+coverage-by-omission failure the estate's own liveness discipline was built to reject — an
+applicable rule absent from the set reads as satisfied when it was merely never enrolled, and
+absence masquerades as compliance. Default-bind closes that gap by construction: enrollment is
+automatic from the decomposition, and only removal requires a decision. (NORMATIVE, DERIVED.)
+
+23.4 The waiver set: a binding leaves only by an authenticated, scoped, expiring authorization. A
+rule exits the binding set into the waiver set only through an explicit authorization that records
+four things: which binding is waived, who authorized it, the exact authorizing act (the estate's
+standing rules already express this as a literal Owner phrase that authorizes bypass for one turn —
+the constitution generalizes that pattern from one turn to one mission), and the scope, which is
+always and only THIS mission. A waiver is never inferred, never inherited from a prior mission, and
+never granted by the router itself: IAS-A1 RECORDS waivers, it does not author them, exactly as
+Part XI holds that the router dispatches under an authority it does not itself originate. An
+unauthenticated or unscoped waiver is not a weak waiver to be tolerated; it is a malformed
+constitution, and a malformed constitution blocks dispatch by the same discipline Part VI §6.8
+rejects a compose plan whose precondition traces to nothing. (NORMATIVE, DERIVED from Part XI's
+authority discipline and the estate's one-turn-exception pattern.)
+
+23.5 The amendment authority: monotonic tightening for every actor but the Owner. Missions are not
+static; a gating discovery mid-route (Part VII's bounded re-composition) can reveal that a rule not
+initially applicable now binds. The constitution therefore permits mid-mission amendment, but
+asymmetrically: the Owner may amend in either direction — add a binding OR authorize a new waiver —
+while every non-Owner actor, a FINAL-authority node or the router itself, may only TIGHTEN by
+adding a binding, never loosen by adding a waiver. Loosening is Owner-only, always and without
+exception. This monotonic-tightening rule for non-Owner amendments is the direct analogue of Part
+XI §11.3's split authority: the power to constrain a mission further is safe to distribute, because
+its worst outcome is an over-cautious mission that halts and asks; the power to set a constraint
+aside is not safe to distribute, because its worst outcome is a rule silently removed by an actor
+the estate never authorized to remove it. The asymmetry is the whole safety of the mechanism.
+(DERIVED from Part XI §11.3's risk-matched authority split.)
+
+23.6 Expiry at dissolution: a waiver must never outlive its mission. The constitution's lifetime is
+exactly the mission's. When the temporary, mission-scoped structure of Part VII dissolves at
+mission completion, the constitution and every waiver it holds expire ATOMICALLY — not eventually,
+not on a timer, but at the same event that dissolves the workflow. No waiver, and no binding-set
+modification, survives into any subsequent mission; carryover is forbidden by construction, not by
+convention. This is the one-turn-only discipline of the estate's standing exceptions raised to
+mission granularity: an authorization to set a rule aside is spent the instant the mission it was
+granted for ends, and a fresh mission that needs the same waiver must obtain a fresh authorization
+rather than discover an old one still in force. The expiry is tied to an event the dataset already
+governs (Part VII's dissolution, Part XX's mission lifecycle), so the constitution adds a rule to
+that event rather than a new clock the estate would separately have to keep wound. (NORMATIVE,
+DERIVED.)
+
+23.7 The two seams: built at decomposition, destroyed at synthesis. The constitution is not a
+free-standing artifact; it is bracketed by two mechanisms already specified. It is BUILT during
+Part V decomposition, as the constraint-extraction step's structured output — the implicit
+constraints §5.2 surfaces are exactly the constitution's initial binding set, so no new extraction
+pass is introduced. It is DESTROYED at Part VII synthesis dissolution, the same event §7 uses to
+tear down the mission's temporary structure. Placing construction and destruction at these two
+existing seams means the constitution introduces no new lifecycle event the dataset must separately
+govern; it rides the mission lifecycle Part XX already defines, inheriting its birth and its death
+rather than inventing its own. This integration-by-reuse is deliberate: a normative envelope with
+its own independent lifecycle would be a second thing to keep synchronized with the mission, and a
+second thing to keep synchronized is a second thing to drift. (DERIVED, integration-by-reuse.)
+
+23.8 The seam to provenance: an expired waiver is still forever inspectable. Expiry at dissolution
+(§23.6) governs a waiver's FORCE, never its RECORD. Every element of the constitution — every
+binding, every waiver with its full authorization, every mid-mission amendment and its authorizing
+actor — is written into the mission's Part XIII provenance record as an append-only, attributable
+entry. A mission that shipped under a waiver must remain inspectable long after that waiver expired:
+the question "under what authority did this mission set aside that rule" must be answerable for the
+life of the estate, not the life of the mission. Force is mission-scoped; accountability is
+permanent. This is the precise distinction Part XIII's append-only discipline exists to hold,
+applied here to the normative frame rather than to the routing decision — the same single record,
+now carrying the mission's constitution alongside its route, read by the same independently
+interested siblings without a second log to reconcile. (DERIVED from Part XIII §13.2's
+provenance-record schema.)
+
+23.9 The failure shape this Part exists to prevent: the LEAKED WAIVER. The single most dangerous
+constitution failure is a waiver that outlives its mission — carried into a sibling mission,
+persisted in a cache, or left in a binding set that a subsequent mission inherits rather than
+rebuilds. A leaked waiver is worse than a wrong route: a wrong route fails visibly at a gate, while
+a leaked waiver silently removes a rule's force from a mission that was never authorized to set it
+aside, and does so without any actor having decided to. Expiry-at-dissolution (§23.6) and
+default-bind (§23.3) are the two structural defenses: because every mission rebuilds its binding
+set from its own decomposition and destroys its own waivers at its own dissolution, there is no
+persistent surface for a waiver to leak across. The defense is architectural, not vigilant — a
+leaked waiver requires an actual violation of the dissolution invariant, a corrupted carryover
+that Part XII's provisional-staging and provenance discipline would surface, not merely an
+oversight that good intentions failed to catch. Naming this failure is this Part's own reason to
+exist, in the same idiom Part XIX names the failures of the routing core. (DERIVED, NORMATIVE.)
+
+23.10 The boundary: the constitution selects rules, it neither writes nor judges them. Held to the
+same discipline Part IV holds the routing boundary against the resource routers: the mission
+constitution does not CREATE governance rules — rule text lives in the estate's standing governance
+archive, and authoring a new rule is that layer's object, never the router's. It does not JUDGE
+compliance — whether a bound rule was actually satisfied is the gating capability's own verdict
+(Part III §3.4), and the constitution only establishes WHICH rules are in force to be judged
+against. Its object is exactly and only the per-mission SELECTION: bind, waive, amend, expire, over
+a set of rules that already exist and are judged elsewhere. The instant the constitution reaches
+into authoring a rule it duplicates the governance archive's object, and the instant it reaches
+into ruling a rule satisfied it duplicates a gating capability's object — either reach fails the
+Article II boundary test its own admission depended on, exactly as a route that named a model tier
+or a knowledge node would collapse IAS-A1's routing boundary in Part IV. The schema is again the
+enforcement: a constitution record has fields for selection, authorization, and expiry, and no
+field for rule text or a compliance verdict. (NORMATIVE, DEFINED — the boundary that keeps this
+appended Part a distinct object rather than a scope-creep into its two nearest neighbors.)
+
+FINAL LAW — PART XXIII. A route decides which systems act and in what order; a mission constitution
+decides under what rules they act, which of those rules this mission was authorized to set aside,
+and — the invariant on which the whole envelope's safety rests — that every such authorization
+expires the instant the mission does, its force spent but its record kept forever, so that no rule
+is ever set aside by a mission that never asked for the waiver, and no waiver ever outlives the one
+mission that earned it.
 
 ===============================================================================================
 DECISION LOG
