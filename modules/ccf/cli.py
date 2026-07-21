@@ -17,6 +17,7 @@ from modules.ccf import (
     config_schema,
     contract_engine,
     evaluation_engine,
+    knowledge_feed,
     model_adapter,
     prompt_compiler,
     release_manager,
@@ -164,8 +165,23 @@ def cmd_generate(args) -> int:
         prompts[concept["id"]] = record
         verdict = trademark_scanner.scan(concept["id"], concept["icon"], record["avoid_list"]["semantic"])
         scan_report[concept["id"]] = verdict
+        if verdict["verdict"] in ("WARN", "BLOCK"):
+            knowledge_feed.log_trademark_risk(
+                concept_id=concept["id"],
+                concept_description=concept["icon"],
+                detected_by="scanner",
+                nearest_known_mark=verdict.get("nearest_known_mark"),
+                verdict_at_time=verdict["verdict"],
+                corpus_version=verdict["corpus_version"],
+                project=args.project,
+            )
         if verdict["verdict"] == "BLOCK":
             any_block = True
+            knowledge_feed.log_creative_failure(
+                failure_id="CCF-F01", component="trademark_scanner",
+                concept_id=concept["id"], evidence=verdict["justification"],
+                project=args.project,
+            )
 
         if args.dry_run:
             print(f"[dry-run] {concept['id']}: {record['prompt']}")
@@ -173,9 +189,20 @@ def cmd_generate(args) -> int:
 
         artifact = adapter.generate(record["prompt"], {})
         artifact_records[concept["id"]] = _artifact_to_record(artifact)
+        knowledge_feed.log_provider_benchmark(
+            provider=artifact.provider, model_id=artifact.model_id,
+            resolution=artifact.resolution, quality="high",
+            cost=artifact.cost, latency_ms=artifact.latency_ms,
+            verdict=artifact.status, project=args.project,
+        )
         if artifact.status != "OK":
             any_provider_error = True
             print(f"warning: generation failed for {concept['id']}: {artifact.error_detail}")
+            knowledge_feed.log_creative_failure(
+                failure_id="CCF-F03", component="model_adapter",
+                concept_id=concept["id"], evidence=artifact.error_detail or "",
+                project=args.project,
+            )
 
     if args.dry_run:
         # dry-run never persists state -- it only previews prompts, per
