@@ -9,6 +9,7 @@ import pytest
 
 from modules.ccf import (
     artifact_compiler,
+    cli,
     config_schema,
     contract_engine,
     evaluation_engine,
@@ -304,6 +305,33 @@ def test_release_manager_seals_when_all_gates_pass():
     assert result["status"] == "SEALED"
     assert result["package"]["selected_concept_id"] == "spark"
     print("V-RELEASE-MANAGER-SEALED")
+
+
+# --- CLI --------------------------------------------------------------
+
+def test_cli_help_lists_all_subcommands(capsys):
+    # Arrange / Act
+    with pytest.raises(SystemExit) as exc_info:
+        cli.main(["--help"])
+
+    # Assert
+    assert exc_info.value.code == 0
+    out = capsys.readouterr().out
+    for name in ("init", "compile", "generate", "select", "package", "audit", "diff", "rollback"):
+        assert name in out
+    print("V-CLI-HELP")
+
+
+def test_cli_init_dry_run_does_not_fail(tmp_path):
+    # Arrange
+    project = str(tmp_path / "proj")
+
+    # Act
+    exit_code = cli.main(["init", project, "--dry-run"])
+
+    # Assert
+    assert exit_code == 0
+    print("V-CLI-INIT-DRYRUN")
 
 
 if __name__ == "__main__":
