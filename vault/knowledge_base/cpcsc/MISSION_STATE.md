@@ -1,6 +1,6 @@
 # CPCSC — MISSION STATE
 
-**Phase:** STOP #2 APPROVED · A1 SEALED · A2 + Tier B + run_family fix PENDING.
+**Phase:** STOP #2 APPROVED · A1 SEALED · A2 SEALED · run_family FIXED · **Tier B PENDING (only remaining work).**
 **Updated:** 2026-07-21
 
 ## STOP #2 ruling (Owner, approved)
@@ -19,25 +19,37 @@
   marker, contamination 0 hits, citation-only. File:
   `vault/knowledge_base/cpcsc/cpcsc_a1_cognitive_education.txt` (+ DATASET_A1_CONTRACT.md,
   PART_MAP_A1.md). Pushed, REMOTE_DELTA 0 0.
+- **A2 Theory Generator / Law Extraction SEALED (`065d2bf`)** — 25/25 Parts, avg 1287
+  w/Part (0 under floor), 25 FINAL LAWs, END-OF-DATASET marker, contamination 0 hits,
+  citation-only. Object: the estate's legislature — induce candidate laws from evidence,
+  PROPOSE-NEVER-APPLY (enforced by construction). Honest B1/B2 build dependency recorded
+  in-dataset. File: `cpcsc_a2_theory_generator.txt` (+ DATASET_A2_CONTRACT.md,
+  PART_MAP_A2.md). Pushed, REMOTE_DELTA 0 0.
+- **run_family DEFER fix SEALED (`ccb025b`)** — the STOP #2 §5 defect: a 45%-capped
+  candidate (parent vocabulary matched, precision too low) was reported as KEEP "genuinely
+  new". Added `DupeVerdict.deferred` (set when pre-floor coverage >= 50 but not plausible)
+  + a third DEFER verdict in run_family (not counted in recommended_count). Gate
+  V-D2A-FAMILY-DEFER-NOT-KEEP proves World Model Federation now DEFERs not KEEPs
+  (recommended 2→1). D2A 27/27, DFP 17/17, hermetic ×2. Pushed, REMOTE_DELTA 0 0.
 
-## Pending (in order)
-1. **A2 · Theory Generator / Law Extraction** — 25 Parts, same floor + gates. "ACIS is a
-   tribunal without a legislature": every owner JUDGES a law already written; A2 PROPOSES
-   one from evidence (FD-07 deposits, fd_04 proofs, UKDL rules, CEPS events). Depends on
-   B2 (epistemic algebra) + B1 (unknown-unknowns) per STOP_2 §4 — but the dataset (spec)
-   can be authored now; the wiring is the build. Seam to A1: A1 teaches A2's adopted laws.
-2. **Tier B — 9 Parts/modules into named owners** (STOP_2 §3):
-   B1 unknown-unknown generation → FIOS · B2 epistemic algebra unification → new registry+Part
-   · B3 reasoning execution axis → CO-03 + one_shot · B4 corpus→executable transduction →
-   seam DFP FREEZE→IAS-C1 FUNDED · B5 undeclared side-effect ledger → daif_04 PART VII ·
-   B6 mission constitution → ias_a1 PART VII (one Part) · B7 adversarial pathogen class →
-   ias_d2 · B8 semantic memory abstraction ladder → daif_08 · B9 DR/model-exit/SPOF → ias_f3.
-   Each: read owner fully, extend in place, close the named gap only, contamination audit,
-   add an existence gate. Micro-commit per owner.
-3. **run_family DEFER fix** — d2a_engine: 45% coverage cap must not report as KEEP. Add
-   DEFER as a third verdict distinct from FOLD (has parent) / KEEP (genuinely new).
-   Done-gate: no-clear-parent→DEFER, sealed-parent→FOLD, genuinely-new→KEEP.
-4. **Close-out** — Tier C/D registered DEFERRED (above); REMOTE_DELTA 0 0.
+## Pending — Tier B ONLY (all else done)
+**Tier B — 9 Parts/modules into named owners** (STOP_2 §3). Each: read the owner dataset
+fully, write the extension IN PLACE (a new Part in the owner's file, or a module for the
+non-dataset ones), close ONLY the named gap (don't widen scope), contamination audit,
+add an existence gate to the owner's test suite, micro-commit per owner.
+- **B1** unknown-unknown generation → **FIOS** (carries it as 🟡 EXTEND, not built) — module/Part
+- **B2** epistemic algebra unification → **new registry + Part** (join DRK-00 / DAIF-01 / ACIS)
+- **B3** reasoning execution axis → **CO-03 + one_shot** — wiring
+- **B4** corpus→executable transduction → seam **DFP FREEZE → IAS-C1 FUNDED** — module
+- **B5** undeclared side-effect ledger → **daif_04 PART VII** — Part + module
+- **B6** mission constitution → **ias_a1 PART VII** — one Part
+- **B7** adversarial pathogen class → **ias_d2** (taxonomy closed at 6 self-inflicted) — Part
+- **B8** semantic memory abstraction ladder → **daif_08** — Part
+- **B9** DR simulator · model-exit simulator · SPOF/maturity/debt register → **ias_f3** — Parts
+
+Note B1/B2 are also A2's build dependencies — building them advances both A2's liveness and
+the Tier-B ledger. Dataset-Part extensions (B5/B6/B7/B8/B9) obey the >=1200 w/Part floor;
+the wiring/module ones (B1/B3/B4) obey the module contract + a V-gate.
 
 ## Standing rules for the remaining build
 - Floor >= 1200 w/Part (verified; the estate genuinely exceeds it). Citation-only, no
@@ -47,8 +59,15 @@
   `test_corpus_roi.py`, `test_redteam_protocol.py`).
 - Content-tier verdicts absolute over title-tier. STOP #2 already drawn — build within it.
 
-## Next 3 actions
-1. Author DATASET_A2_CONTRACT.md + PART_MAP_A2.md, then cpcsc_a2_theory_generator.txt
-   (25 Parts, floor-first this time — target ~1350 w/Part to avoid a second expansion pass).
-2. Tier B: extend the 9 owners, one micro-commit each.
-3. run_family DEFER fix + tests; close-out; final REMOTE_DELTA 0 0.
+## Next 3 actions (Tier B)
+1. Start with **B6 (ias_a1 PART VII, one Part)** and **B5 (daif_04 PART VII)** — smallest,
+   clearest gaps; read each owner fully first, extend in place, floor >=1200, add a gate.
+2. Then B7 (ias_d2), B8 (daif_08), B9 (ias_f3) — dataset-Part extensions, same discipline.
+3. Then B1/B2/B3/B4 — the module/wiring ones (B1/B2 double as A2's build dependencies);
+   module contract + V-gate each. Micro-commit per owner; final REMOTE_DELTA 0 0.
+
+## Floor-first authoring lesson (confirmed A1 + A2)
+A1 first-pass landed ~950 w/Part (under floor) → full expansion pass. A2 written
+floor-first at ~9 subsections/Part landed ~1200-1420 first-pass (a few needed a small
+nudge). For Tier-B dataset Parts: 9+ dense subsections per Part, measure per-Part before
+sealing, nudge any under 1200. The estate reference is ias_c1 = 1565 avg/Part.
