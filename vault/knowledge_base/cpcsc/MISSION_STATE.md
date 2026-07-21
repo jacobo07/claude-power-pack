@@ -1,7 +1,16 @@
 # CPCSC — MISSION STATE
 
-**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B in progress (5/9 sealed: B5-B9 dataset-Parts done; B1-B4 module/wiring remain).**
+**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B in progress (6/9 sealed: B5-B9 + B1 done; B2/B3/B4 module/wiring remain).**
 **Updated:** 2026-07-21
+
+> B1 SEALED (`b494a84`): FIOS II-1 Unknown-Unknown Hunter — `modules/frontier_intelligence/unknown_unknown_generator.py`
+> (structural absence vs a discovered peer cohort; distinct from question_harvester's recorded gaps). Gate
+> `tools/test_unknown_unknown_generator.py` 8/8 ×3. FIOS_INDEX II-1 promoted 🟡→🟢. Also an A2 build dep.
+> **Next: B2** (epistemic algebra unification → new registry + Part joining DRK-00/DAIF-01/ACIS; also A2 dep),
+> then B3 (CO-03 + one_shot reasoning-axis wiring), B4 (DFP FREEZE → IAS-C1 FUNDED transduction module).
+> Pattern for B1-style module work: read owner + closest-neighbor module to draw the distinct-object boundary,
+> build deterministic + fail-open composing existing surfaces, V-gate hermetic ×3, register in the owner's
+> doctrine index (avoid the orphan/scaffold trap), pathspec commit.
 
 ## STOP #2 ruling (Owner, approved)
 - **Tier A: APPROVED** — A1 + A2 (both SEALED).
