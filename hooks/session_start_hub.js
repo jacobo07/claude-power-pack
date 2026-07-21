@@ -292,7 +292,7 @@ function hookRecoveryEpoch() {
     if (!fs.existsSync(RECOVERY_EPOCH_GATE_PY)) return null;
     const out = require('child_process').execFileSync(
       PYTHON_EXE, [RECOVERY_EPOCH_GATE_PY],
-      { encoding: 'utf8', timeout: RECOVERY_GATE_TIMEOUT_MS,
+      { encoding: 'utf8', timeout: RECOVERY_GATE_TIMEOUT_MS, windowsHide: true,
         env: Object.assign({}, process.env, { PYTHONIOENCODING: 'utf-8' }) });
     const line = (out || '').trim();
     if (line) note('recovery epoch: ' + line.slice(0, 120));

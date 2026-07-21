@@ -67,7 +67,7 @@ function pickPython() {
     'python', 'python3',
   ];
   for (const c of cands) {
-    try { execFileSync(c, ['--version'], { stdio: 'ignore' }); return c; } catch (_) { /* next */ }
+    try { execFileSync(c, ['--version'], { stdio: 'ignore', windowsHide: true }); return c; } catch (_) { /* next */ }
   }
   return 'python';
 }

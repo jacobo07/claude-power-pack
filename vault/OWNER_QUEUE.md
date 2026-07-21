@@ -170,7 +170,7 @@ surfaces within a day instead of on the next incident.
 Register-ScheduledTask -TaskName 'PP-LivenessCheck' -Force `
   -Trigger (New-ScheduledTaskTrigger -Daily -At 9am) `
   -Action (New-ScheduledTaskAction `
-    -Execute 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe' `
+    -Execute 'C:\Users\User\AppData\Local\Programs\Python\Python312\pythonw.exe' `
     -Argument 'C:\Users\User\.claude\skills\claude-power-pack\modules\liveness\liveness_ledger.py --report')
 ```
 **Verify:** `Get-ScheduledTask -TaskName PP-LivenessCheck` -> State Ready; after it

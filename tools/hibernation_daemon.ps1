@@ -8,7 +8,7 @@
 
   Register (DRY):
     $a = New-ScheduledTaskAction -Execute powershell.exe -Argument (
-      '-NoProfile -ExecutionPolicy Bypass -File ' +
+      '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ' +
       '"%USERPROFILE%\.claude\skills\claude-power-pack\tools\hibernation_daemon.ps1" -Mode dry')
     Register-ScheduledTask PP-Hibernation -Action $a -Trigger (
       New-ScheduledTaskTrigger -Once -At (Get-Date) `
