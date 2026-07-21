@@ -30,6 +30,12 @@ TARGETS = [
      "PART XXIII — THE MISSION CONSTITUTION", "FINAL LAW — PART XXIII.", 23),
     ("ias_d2", "04_SYSTEM_ECOLOGY_IMMUNOLOGY/ias_d2_immune_system.txt",
      "PART XXV — CLASS SEVEN", "FINAL LAW — PART XXV.", 25),
+    ("ias_f3-p25", "06_FORESIGHT_ARCHITECTURE/ias_f3_digital_twin.txt",
+     "PART XXV — DISASTER-RECOVERY SIMULATION", "FINAL LAW — PART XXV.", 27),
+    ("ias_f3-p26", "06_FORESIGHT_ARCHITECTURE/ias_f3_digital_twin.txt",
+     "PART XXVI — MODEL-EXIT SIMULATION", "FINAL LAW — PART XXVI.", 27),
+    ("ias_f3-p27", "06_FORESIGHT_ARCHITECTURE/ias_f3_digital_twin.txt",
+     "PART XXVII — THE SPOF, MATURITY, AND DEBT REGISTER", "FINAL LAW — PART XXVII.", 27),
 ]
 
 # distinctive commercial literals — fragment-assembled so THIS file spells none of them out

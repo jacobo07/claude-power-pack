@@ -3,7 +3,11 @@ Claude Power Pack Institutional Advantage Systems — Tier 6 Foresight Architect
 
 Dataset id: IAS-F3
 Dataset name: Institutional Digital Twin & Simulation
-Depth contract: PART I..PART XXIV, 1,300-1,500 real words per Part, a FINAL LAW closing every Part.
+Depth contract: PART I..PART XXVII, 1,300-1,500 real words per Part, a FINAL LAW closing every Part.
+(Parts XXV-XXVII — Disaster-Recovery Simulation, Model-Exit Simulation, and the SPOF/Maturity/Debt
+Register — are a Tier-B governed extension appended after the original twenty-four-Part core along
+the evolution path Part XXI sanctions; the original Parts XXIII-XXIV are the core's own closing
+appendices and are left sealed.)
 Epistemic marking on every load-bearing claim: DEFINED / OBSERVED / DERIVED / HYPOTHESIZED /
 NORMATIVE / EXPERIMENTAL / CONTESTED / UNRESOLVED, per CONSTITUTION Article V.
 Parents strengthened (never rebuilt, per CONSTITUTION Article III): arch-decision (architecture
@@ -2686,6 +2690,314 @@ build honestly against, and its final honest qualification — that the sovereig
 the very empirical evidence this dataset's own evaluation doctrine (Part XVII) requires before any claim
 graduates from DERIVED to OBSERVED — is the dataset practicing, on its own closing claim, the exact
 epistemic discipline it demands of every twin forecast it specifies.
+
+===============================================================================================
+PART XXV — DISASTER-RECOVERY SIMULATION: REHEARSING THE RETURN
+===============================================================================================
+
+25.1 Why a twenty-fifth Part, and the gap Part VII leaves open. The original twenty-four-Part core
+(sealed above; its Parts XXIII-XXIV are the dataset's own closing appendices and are left intact)
+specified system-EXTINCTION simulation in Part VII: a system is removed and the twin observes the
+federation-wide blast radius of its loss. That answers "what breaks if this system dies." It does
+not answer the question every real operator asks the instant after a failure: can the estate bring
+the lost function BACK, by what path, and how long does the federation run degraded while it does.
+This Part, appended as a Tier-B governed extension along the evolution path Part XXI already sanctions,
+adds disaster-recovery simulation — the rehearsal not of the failure but of the RETURN. Extinction
+measures the wound; disaster recovery measures whether, and how fast, the estate heals. The two are
+complements, not duplicates, and the estate has simulated only the first. (NORMATIVE, DERIVED from
+Part VII's own boundary.)
+
+25.2 The object defined. DISASTER-RECOVERY SIMULATION is DEFINED as running the twin forward from a
+failure state — a system down, an artifact corrupted, a store lost — along the estate's ACTUAL
+declared recovery path, and observing whether that path reaches a healthy federation state and how
+long the federation remains degraded en route. It produces two measures the extinction sim never
+computes: RECOVERABILITY, a boolean over the simulated trajectory — does a real recovery path exist
+and terminate in a healthy state, or does it dead-end — and RECOVERY LATENCY, the simulated
+federation-level time-to-heal, the estate's own analogue of a recovery-time objective. Both are
+observed from the simulated trajectory against the twin's dynamics model, never asserted, in keeping
+with Part XVII's evaluation doctrine. (DEFINED.)
+
+25.3 The declared recovery path is an input the sim requires, not one it invents. A DR simulation is
+only as truthful as the recovery path it rehearses, and the discipline is that the path is DECLARED
+per critical system — its backup location, its restore procedure, its failover target — and read by
+the sim, never improvised by it. This mirrors Part X's twin-fidelity discipline: a simulation over an
+invented recovery path is a simulation over a fiction, and a fiction that returns a reassuring
+recovery-latency number is worse than no number, because it manufactures confidence in a return that
+was never real. A system whose owner has declared no recovery path is not therefore exempt from the
+sim; its absence is itself the sim's most important finding — §25.6. (NORMATIVE, DERIVED from Part X.)
+
+25.4 Why disaster recovery is distinct from risk propagation and from extinction. Part IV propagates a
+failure FORWARD through the dependency graph to compute blast radius; Part VII removes a system
+permanently and measures the federation it leaves behind. Neither models a RETURN, because both are
+built on the assumption that the loss stands and the only question is its consequence. DR simulation
+inverts the assumption: the loss is transient by design, and the whole object of interest is the
+trajectory BACK. This is not a special case of propagation run in reverse — a recovery path is not
+the failure path reversed, it is a different path entirely (a restore is not an un-corruption, a
+failover is not an un-failure), with its own dependencies, its own budget, and its own points of
+failure that the forward propagation never touched. Modelling the return therefore requires its own
+simulation, which is why it is a Part and not a parameter of Part IV. (DERIVED.)
+
+25.5 The failure shape this Part exists to prevent: the UNTESTED BACKUP. The specific harm is a
+recovery path assumed to work and never rehearsed until the real failure forces its first and only
+run. A backup that was never restored from, a failover target never failed over to, a restore
+procedure written once and drifted out of correspondence with the system it restores — each reads as
+protection on paper and delivers none in the event, and the estate discovers the gap at exactly the
+moment it can least absorb one. DR simulation is the rehearsal that surfaces the untested backup
+BEFORE reality does, converting a recovery path from an assumption into an observed trajectory with a
+recoverability verdict and a latency band attached. An estate that has simulated its failures but not
+its recoveries has confirmed only that it can fall down. (DERIVED, NORMATIVE.)
+
+25.6 The undiscovered single point of failure, and the seam to the register. A critical system for
+which the DR simulation finds NO recoverable path — no declared backup, no failover, a restore that
+dead-ends — is not a low-risk system because nothing has happened to it yet; it is an UNDISCOVERED
+SINGLE POINT OF FAILURE, a system whose loss would be both catastrophic (Part VII's blast radius) and
+unrecoverable (this Part's recoverability verdict). That conjunction is the single most valuable
+finding the foresight layer can produce, and it must not evaporate with the simulation that found it:
+it is written to the standing register of Part XXVII, where SPOFs, maturities, and debts accumulate
+across time rather than being rediscovered by each outage. The DR sim is thus a primary producer for
+that register, and the register is where its findings become durable. (DERIVED, forward-referenced to
+Part XXVII.)
+
+25.7 The boundary: the sim rehearses recovery, it neither performs nor authors it. Held to the same
+subtraction discipline every Part of this dataset observes: DR simulation does not PERFORM a recovery —
+executing a real restore or failover is the live runtime's act, never the twin's, exactly as Part I
+holds the twin decides nothing and executes nothing. It does not AUTHOR the recovery procedure — that
+is the critical system's own owner's responsibility, declared as the sim's input. And it does not
+own the register its findings feed (Part XXVII). Its object is exactly and only the rehearsal: run the
+declared recovery path forward against the twin, observe recoverability and latency, and surface the
+unrecoverable case. The instant the sim began to author recovery procedures or execute them, it would
+duplicate a neighbour's object and cross the twin's founding boundary. (NORMATIVE, DEFINED.)
+
+25.8 Consistency with the twin's honesty doctrine. Every DR result carries the same overconfidence
+gate Part XI mandates for every twin forecast: a recovery-latency band computed from a dynamics model
+that has never been calibrated against a real recovery is marked HYPOTHESIZED, never OBSERVED, and a
+recoverability verdict of "recoverable" from an untested path is the twin's hypothesis about the
+return, not proof of it — precisely the discipline Part XXIV's own closing law practices on itself.
+The DR sim's honest output is therefore not "the estate will recover in N hours" but "on the declared
+path, against the current dynamics model, recovery is simulated to reach a healthy state within a band
+whose width is the model's own uncertainty" — and where that band is unbounded because no recovery has
+ever been observed, the sim says so rather than inventing a comforting point estimate. The difference between a recovery
+latency measured against a real past recovery and one extrapolated from a dynamics model that has never
+witnessed a recovery is the difference between a rehearsal that informs the estate and a figure that
+only reassures it, and the disaster-recovery sim is required to label which of the two it is producing
+on every run rather than letting the reassuring reading pass for the informed one. (NORMATIVE.)
+
+FINAL LAW — PART XXV. Part VII simulates a system's death and measures the federation it leaves
+behind, but an estate that has rehearsed only its failures has confirmed only that it can fall down;
+disaster-recovery simulation rehearses the RETURN — running the declared recovery path forward against
+the twin to observe recoverability and the federation's time-to-heal — and its sharpest finding is the
+critical system with no recoverable path at all, an undiscovered single point of failure that is both
+catastrophic to lose and impossible to restore, written not into a simulation's transient output but
+into the standing register that remembers it, because a recovery path assumed and never rehearsed is
+an untested backup, and an untested backup is discovered by the outage at the one moment the estate
+can least afford the discovery.
+
+===============================================================================================
+PART XXVI — MODEL-EXIT SIMULATION: THE SUBSTRATE IS NOT A SYSTEM
+===============================================================================================
+
+26.1 The gap: every prior simulation varies a system, none varies the ground. Part VII removes an
+internal system; Parts II-IX vary missions, architectures, capital, governance, and demand — every one
+of them treats the estate's own SYSTEMS as the variables and holds one thing fixed without ever naming
+it: the reasoning MODEL the entire estate runs on. The model is not one of the seventy-plus systems the
+twin mirrors; it is the substrate beneath all of them, and its constancy has been an unstated
+assumption of every simulation this dataset specified. This Part removes that assumption. Model-exit
+simulation rehearses the estate MIGRATING OFF its current model — a deprecation, a forced swap, a
+deliberate move to a successor — and observes what a substrate change does to a federation that has
+never modelled its own substrate as a variable. (NORMATIVE, DERIVED.)
+
+26.2 Why the substrate is categorically different from a system. A system's loss is LOCAL: the
+extinction sim removes one node and propagates the blast radius outward through its dependents, and
+most systems are dependents of only some others. A substrate change is CORRELATED and TOTAL: it does
+not touch one node and spread, it touches every system that reasons at once, because every system
+reasons on the same substrate. The extinction sim and the risk-propagation sim are both built on
+locality — a failure originates somewhere and spreads to its neighbourhood — and neither can model a
+perturbation that originates everywhere simultaneously. That is the formal reason model-exit needs its
+own simulation rather than being the extinction sim pointed at "the model": the extinction sim's whole
+mechanism is blast-radius-from-an-origin, and a substrate change has no origin to spread from, only a
+universal simultaneity the locality model cannot express. (DERIVED.)
+
+26.3 The object defined, and the model-dependence profile it requires. MODEL-EXIT SIMULATION is
+DEFINED as running the twin forward under a substrate swap and observing which capabilities survive
+portably, which degrade, and which break outright. Its required input is a MODEL-DEPENDENCE profile
+per capability, on a three-rung scale: PORTABLE (behaviour independent of the specific model),
+TUNED (behaviour calibrated to the model's quirks — prompts, formatting, quality thresholds — but
+recoverable by re-tuning), and LOCKED (behaviour that depends on the specific model in a way no
+re-tuning recovers without a redesign). The sim runs the swap forward and returns the migration's
+critical path — the ordered set of re-tunings and redesigns a move requires — and its irreducibly
+LOCKED residue, the capabilities that cannot move at all without being rebuilt. (DEFINED.)
+
+26.4 The failure shape this Part exists to prevent: SILENT SUBSTRATE LOCK-IN. The specific harm is
+model-dependence accreting, capability by capability, that no one measures until the model must change
+and the estate discovers it cannot move. Each individual tuning to the current model is locally
+reasonable — a prompt shaped to its strengths, a threshold set to its quality, a workflow built around
+its context window — and the cumulative effect across hundreds of capabilities is a federation welded
+to a substrate it never chose to depend on and cannot afford to leave. This is the exact dual, at the
+institutional scale, of the estate's own portability discipline for a single artifact: the estate
+already knows that a result proven only against one model is not proven portable, and model-exit
+simulation raises that discipline from the artifact to the whole federation, making the accreted
+lock-in visible as a measured LOCKED residue before the forced move rather than after it. (DERIVED,
+NORMATIVE.)
+
+26.5 Why locality-free correlation is the mechanism's hardest and most necessary feature. Because a
+substrate change perturbs every reasoning system at once, its federation-wide consequence is not the
+sum of independent per-system effects — a set of individually-tolerable degradations can compound into
+an intolerable whole when they strike simultaneously and interact, which is precisely the emergent-
+property reasoning Part VIII's Monte-Carlo subengine was built for and which a per-system analysis
+cannot capture. Model-exit therefore composes Part VIII's uncertainty machinery rather than a naive
+per-capability tally: it samples the joint degradation across the correlated swap and bands the
+federation-level outcome by computed uncertainty, so that the estate learns not "these forty
+capabilities each degrade a little" but "the joint degradation of these forty, striking together,
+crosses the federation's viability threshold with this probability." The correlation is what makes the
+finding non-obvious and the simulation worth running. (DERIVED.)
+
+26.6 The seam to the register, and the boundary. A capability the model-exit sim finds LOCKED is an
+institutional debt — a mortgage on the substrate that must be paid to ever move — and, like the DR
+sim's undiscovered SPOF, it must not evaporate with the simulation that found it: it is written to the
+debt column of Part XXVII's standing register, where the estate's accumulated substrate lock-in is
+tracked over time rather than rediscovered at the forced migration. The boundary is the twin's
+permanent one: model-exit simulation rehearses the migration, it does not PERFORM it and it does not
+CHOOSE the target model — model selection is CO-03's and the Owner's object, and executing a migration
+is the live estate's act. The sim's object is exactly the rehearsal: run the swap forward, measure the
+portable, tuned, and locked partition, and surface the locked residue as debt. (DERIVED, NORMATIVE.)
+
+26.7 Consistency with the honesty doctrine, and the model the sim runs against. A model-exit forecast
+inherits Part XI's overconfidence gate in a sharpened form, because the twin's dynamics model was
+itself calibrated on the CURRENT substrate, and a dynamics model calibrated on the very substrate whose
+removal it simulates is at its least trustworthy exactly where it matters most. The sim states this
+limit rather than hiding it: its portability partition is OBSERVED where a capability's behaviour has
+actually been exercised across more than one model, and HYPOTHESIZED where the three-rung profile
+rests on a single-model observation extrapolated — and the honest default for an unexercised
+capability is not PORTABLE but UNKNOWN, because assuming portability the estate has never demonstrated
+is the optimistic error that produces the silent lock-in this Part exists to prevent. (NORMATIVE.)
+
+26.8 Why this is foresight the estate uniquely needs. Of all the substrate assumptions an institution
+built on a reasoning model makes, its dependence on that specific model is at once the most total and
+the least examined, because the substrate is invisible precisely by being everywhere — no single
+system's design review ever surfaces it, since it is not any one system's property but the shared
+ground of all of them. Model-exit simulation is the only mechanism in the estate positioned to see a
+federation-wide property that no per-system review can see, which is the same justification Part I
+gave for the twin's existence at all, now applied to the one variable the twin itself had held fixed.
+An estate that can simulate the extinction of any of its systems but not the change of its own
+substrate has modelled every failure except the one it is least prepared for. That the estate has never had to change its
+substrate is not evidence that it safely could; it is only evidence that the question has never been
+forced, and a foresight layer that reads the absence of a substrate crisis as proof of substrate
+independence has recorded the mere non-occurrence of a disaster as though it were a defence against one.
+(DERIVED, NORMATIVE.)
+
+FINAL LAW — PART XXVI. Every simulation before this one varied one of the estate's systems and held
+silently fixed the reasoning substrate beneath all of them, but the model is not a system to be
+removed from an origin and propagated outward — it is the ground every system stands on, and its change
+is correlated and total, striking every reasoning capability at once in a way the locality-bound
+extinction and propagation sims cannot express; model-exit simulation removes that last fixed
+assumption, partitions every capability into portable, tuned, and locked against a substrate swap,
+composes the Monte-Carlo subengine to band the joint degradation the correlation produces, and writes
+its locked residue into the standing register as the institutional debt it is — so that the accreted
+substrate lock-in the estate builds one reasonable tuning at a time becomes visible as a measured
+mortgage before the forced migration, and not, as every unexamined dependence is, at the one moment the
+estate has no choice but to pay it.
+
+===============================================================================================
+PART XXVII — THE SPOF, MATURITY, AND DEBT REGISTER: THE STANDING READ-SIDE OF FORESIGHT
+===============================================================================================
+
+27.1 The gap: the simulations produce findings and nothing holds them. Parts II through IX, and the
+disaster-recovery and model-exit sims just added, are all DYNAMIC — run on demand, they produce a
+finding and terminate. Their findings are the most valuable outputs the foresight layer has: this
+system is a single point of failure, this recovery path is untested, this capability is locked to the
+substrate, this system is immature. And the estate records them NOWHERE STANDING. A finding that lives
+only in a simulation's transient output teaches the estate nothing across time, because the next
+outage rediscovers the SPOF the extinction sim already found, and the forced migration rediscovers the
+lock-in the model-exit sim already measured. This Part closes that gap with the standing read-side
+artifact the whole foresight layer feeds: a register of single points of failure, system maturities,
+and institutional debts. (NORMATIVE, DERIVED.)
+
+27.2 The object defined, in three columns. The REGISTER is DEFINED as a standing, versioned record
+with three columns, each populated by the simulations rather than by hand. The SPOF column holds every
+system the extinction sim shows is catastrophic to lose AND the disaster-recovery sim shows is
+unrecoverable — the conjunction of Part VII's blast radius and Part XXV's recoverability verdict, which
+is the precise definition of a single point of failure and one no single simulation states alone. The
+MATURITY column holds each system's maturity level as the twin observes it, so that an immature system
+load-bearing in a critical path is visible before it fails rather than after. The DEBT column holds the
+accumulated institutional debts the sims surface — an untested recovery path, a substrate-locked
+capability, a system whose maturity has regressed. Each entry carries its originating simulation, its
+timestamp, and its evidence, so the register is auditable back to the run that produced it. (DEFINED.)
+
+27.3 The register is discovered from the simulations, never hand-curated. The single most important
+property of the register is how it is populated, and the discipline is absolute: every entry is
+DISCOVERED from a simulation's output, never enrolled by hand. The estate has already paid, elsewhere,
+the exact price of the opposite: a hand-curated audit set measures the memory of whoever curated it,
+not reality, because a component nobody remembered to enrol cannot fail the audit — it is simply absent
+from the denominator, and absence reads as health. A SPOF register populated by hand would omit exactly
+the single point of failure nobody thought of, which is the only one that matters. The register is
+therefore a projection of the simulation layer's findings, regenerated as the sims run, and a system
+that has never been simulated appears in the register not as "healthy" but as UNASSESSED — a distinct,
+visible state, because unmeasured is not the same as safe. (NORMATIVE, DERIVED.)
+
+27.4 The register gates on absolutes, never on a ratio. A register exists to be acted on, and the
+discipline of its thresholds is that it gates on named absolutes, never on a ratio. "Ninety percent of
+critical systems are recoverable" is a number a shrinking denominator flatters — retire two assessed
+systems and the ratio improves while the estate is no safer — so the register's actionable signal is
+never a percentage but a NAMED SET: these specific systems are unrecoverable SPOFs, these specific
+capabilities are substrate-locked, this specific system's maturity regressed since the last run. A
+threshold satisfied by shrinking what it measures is satisfied for the wrong reason, and the register
+holds names precisely so the number can only fall by fixing a named thing, never by dropping it from
+the count. (NORMATIVE, DERIVED.)
+
+27.5 The failure shape this Part exists to prevent: the FORGOTTEN FINDING. The specific harm is a
+finding the foresight layer already produced, unrecorded, and rediscovered only by the real event it
+predicted. The extinction sim found the SPOF last quarter; no register held it; the outage found it
+again this quarter, at full cost, as though the simulation had never run. This is the coverage-by-
+construction lesson applied to the foresight layer's own outputs: a simulation whose findings are not
+made durable is a simulation the estate pays to run and then pays again to learn from reality, and the
+register is what converts a transient forecast into institutional memory. A foresight layer without a
+standing register is condemned to rediscover its own conclusions on the schedule reality chooses rather
+than the one it chose. (DERIVED, NORMATIVE.)
+
+27.6 The seam to owner_queue, and why the register surfaces rather than remediates. The register's
+entries are findings, not fixes, and the most consequential of them — an unrecoverable SPOF, a
+critical-path immature system, a substrate lock-in past a named threshold — are surfaced to
+owner_queue as the estate's standing decision channel, exactly as every other unresolvable finding in
+the federation terminates there. The register does not itself remediate: it does not build the missing
+recovery path, mature the immature system, or pay down the debt, because remediation is the owning
+system's and the Owner's act, not the foresight layer's. What the register guarantees is that no
+finding the simulations produced is lost between its discovery and the decision to act on it — the
+gap the forgotten finding falls through today. (NORMATIVE, DERIVED.)
+
+27.7 The boundary: the register records and surfaces, it neither simulates nor remediates. Held to the
+subtraction discipline of the whole dataset. The register does not SIMULATE — the simulations produce
+the findings, and a register that re-derived a finding rather than reading it from the run that
+produced it would duplicate the sim's object. It does not REMEDIATE — that is owner_queue's and the
+Owner's territory. It does not JUDGE a system's fitness in isolation — that is IAS-D1's ecology object,
+which the register reads rather than replaces. Its object is exactly and only the standing projection:
+hold the simulations' findings on single points of failure, maturity, and debt as a discovered,
+name-keyed, absolute-gated record, and surface the actionable ones. That residue is a genuine object
+because before it the foresight layer had powerful dynamic simulations and no memory of what they
+found. (NORMATIVE, DEFINED.)
+
+27.8 Consistency, and why the read-side completes the foresight layer. The three Parts of this
+extension form one closure. Disaster-recovery simulation and model-exit simulation are the two blind
+spots on the dynamic side — the return the estate never rehearsed and the substrate it never varied —
+and the register is the standing side that keeps what all the simulations find, so that foresight
+accumulates rather than resets. Together they complete a foresight layer that could previously look
+forward powerfully but could neither rehearse its own recovery, question its own substrate, nor
+remember its own conclusions. The register practices, on the foresight layer's outputs, the exact
+durability the estate demands of every other kind of knowledge: a finding worth producing is a finding
+worth keeping, name-addressable and auditable, until the decision it implies has been made. A finding
+held in the register is not thereby acted upon, and the register claims no such thing; what it
+guarantees is only that the finding survives from the simulation that produced it to the moment a
+decision on it becomes possible — which is precisely the single link the forgotten finding severs, and
+the entire reason a standing read-side earns the maintenance it costs. (NORMATIVE, DERIVED.)
+
+FINAL LAW — PART XXVII. The foresight layer's simulations produce its most valuable outputs — this
+system is an unrecoverable single point of failure, this capability is welded to the substrate, this
+critical system is immature — and until this Part the estate held them nowhere, condemning each to be
+rediscovered by the very event it predicted; the standing register keeps them in three columns
+discovered from the simulations and never curated by hand, so that the one point of failure nobody
+remembered cannot be the one absent from the denominator, gated on named absolutes a shrinking count
+can never flatter, surfaced to owner_queue rather than silently remediated, and held until the decision
+is made — because a foresight layer that cannot remember what it foresaw is not foresight, it is a
+prophecy the estate pays to hear and then forgets in time to be surprised.
 
 ===============================================================================================
 END OF DATASET — IAS-F3 INSTITUTIONAL DIGITAL TWIN & SIMULATION
