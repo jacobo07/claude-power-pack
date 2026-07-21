@@ -1017,3 +1017,388 @@ second, because sessions have already hand-drafted the obvious. The unknown spac
 names the dependency honestly: its known-space induction runs without B1, its transformative value does
 not. Novelty is reported, never chased — a legislature that pursued exotic laws over sound ones is
 paradigm-thrash — and A2's confidence is never sacrificed to how new a law feels.
+
+===============================================================================================
+PART XI — CONFIDENCE WITHOUT ADOPTION
+===============================================================================================
+
+11.1 Confidence is a property of a candidate, decoupled from adoption. Every candidate carries a
+CONFIDENCE — how strongly the evidence supports the rule — and confidence is strictly decoupled from
+adoption: a high-confidence candidate is not thereby adopted, and adoption is not thereby a confidence
+claim. (DEFINED: confidence is A2's assessment of evidential support; adoption is the Owner's decision to
+make the rule binding. The two are different judgments by different parties about different questions —
+"how well does the evidence support this" versus "should the estate obey this.") This decoupling is
+load-bearing: collapsing it would let a high-confidence candidate self-adopt, which is precisely the
+propose-never-apply breach Part XII forbids.
+
+11.2 Confidence is a projection over the evidence trail. A candidate's confidence is computed from its
+evidence — instance count, cross-family breadth, the presence or absence of counterexamples, experiment
+results — not stored as a free number. (DEFINED, the read-only-projection shape again: confidence
+recomputes as the evidence trail moves, so it always reflects the current evidence and never drifts from
+it.) (DERIVED: a candidate whose confidence was a stored assertion could remain "high" after its evidence
+was undercut; a candidate whose confidence is derived falls automatically when a counterexample lands or
+an experiment refutes it. Confidence-as-projection is what makes A2's confidence honest over time rather
+than a snapshot that ages into a lie.)
+
+11.3 Confidence is inherited from ACIS's decoupling of confidence and level. A2 adopts ACIS's own rule
+that confidence is "subjective, and decoupled from level... confidence is not evidence; the ladder
+ignores it for promotion" (cited from acis_00). (NORMATIVE: A2 extends the same decoupling — A2's
+confidence informs the Owner's judgment but does not itself promote a candidate to adoption, exactly as
+ACIS's confidence does not promote a theorem up the ladder. Confidence is an input to judgment, never a
+substitute for it.) (DERIVED: this is why A2 can report confidence freely without endangering the
+propose-never-apply invariant — because confidence, however high, is decoupled from adoption by
+construction, the same way ACIS keeps it decoupled from level. A2 that let confidence drive adoption
+would be re-coupling what the estate's doctrine deliberately separates.)
+
+11.4 Why confidence must never trigger adoption. The most dangerous possible A2 design would let a
+sufficiently-high-confidence candidate auto-adopt — "if the evidence is overwhelming, why wait for
+judgment." (NORMATIVE, and A2 forbids it absolutely: no confidence threshold triggers adoption, because
+adoption is a governance act reserved to the Owner, and a confidence-triggered adoption is a self-adopting
+legislature by another name.) (DERIVED: the temptation is real — a candidate at overwhelming confidence
+FEELS like it should just be adopted — but the whole point of the separation is that even overwhelming
+evidence does not authorize a legislature to enact its own bill. The confidence-triggers-adoption design
+is the capture risk dressed as efficiency, and A2's refusal of any adoption threshold is what keeps the
+separation absolute.)
+
+11.5 Confidence and novelty are orthogonal dimensions the Owner weighs. A candidate carries both
+confidence (Part XI) and novelty (Part X §10.4), and they are independent — the four quadrants
+(high/low confidence × high/low novelty) each warrant different handling. (DEFINED: high-confidence
+high-novelty is a valuable discovery worth adopting; high-confidence low-novelty is a safe codification;
+low-confidence high-novelty is a speculative proposal worth an experiment; low-confidence low-novelty is
+usually not worth proposing.) (DERIVED: keeping the two dimensions separate is what lets governance make
+a nuanced decision — an A2 that collapsed them into one "score" would lose exactly the distinction
+between "well-evidenced" and "surprising," which are different reasons to care about a law and call for
+different actions.)
+
+11.6 Confidence must be honest about weak evidence, not optimistic. A2 reports a candidate's confidence
+at the level its evidence actually supports, including LOW where the evidence is thin — it does not round
+up a speculative candidate to make it look adoptable. (NORMATIVE: an A2 optimistic about weak evidence
+would flood judgment with candidates that look stronger than they are, wasting the Owner's scarce
+judgment attention on laws the evidence does not really support.) (DERIVED: honest low confidence is
+what makes A2's high-confidence candidates trustworthy — if A2 inflated weak candidates, the Owner could
+not trust any confidence, so the discipline of honest low confidence is what preserves the meaning of
+high confidence. This is the same calibration honesty A1 demands of its assessment, applied to A2's
+confidence.)
+
+11.7 Confidence decays, like every claim in the estate. A candidate's confidence is not permanent — as
+its supporting evidence ages, or as the estate changes such that old instances are less relevant,
+confidence decays, the same way A1's certifications and the estate's other evidence-based claims decay.
+(DERIVED: a candidate proposed at high confidence years ago, whose evidence is now stale and whose domain
+has shifted, should not still read as high-confidence — its confidence recomputes downward as its
+evidence ages, per the projection design. A candidate whose confidence never decayed would be the
+permanent-credential failure relocated to laws, and A2 inherits the estate's decay discipline to prevent
+it.)
+
+11.8 Confidence is A2's input to the judgment handoff. When a candidate is handed to ACIS/the Owner for
+judgment (Part XVII), its confidence and evidence trail travel with it as the primary inputs to the
+adoption decision — but the decision remains the judge's. (DERIVED: A2's confidence is the legislature's
+honest assessment of how well-evidenced its own bill is, handed to the body that decides whether to enact
+it. The judge may adopt a lower-confidence candidate it deems important, or decline a high-confidence one
+it deems unwise — confidence informs but never binds the judgment, which is the decoupling made
+operational at the handoff.)
+
+11.9 The whole Part is one guard around the invariant. Every subsection here protects the same thing —
+the propose-never-apply invariant (Part XII) — by ensuring confidence, however computed, however high,
+never becomes adoption. (NORMATIVE: confidence is decoupled from adoption, no threshold triggers adoption,
+confidence informs but never binds the judge — three statements of one guard.) (DERIVED: A2 reports
+confidence richly precisely because the decoupling makes rich confidence-reporting safe — a legislature
+can be fully transparent about how strongly it believes its own bills exactly because that belief has no
+power to enact them. Confidence without adoption is what lets A2 be both honest and safe.)
+
+11.10 Confidence is reported per-candidate and never aggregated into a single A2 "score." A2 does not
+collapse its many candidates' confidences into one number describing A2's own quality, because such an
+aggregate would be gameable and misleading — a legislature is judged by whether its adopted laws hold,
+not by the average confidence of everything it proposed. (NORMATIVE: A2's effectiveness, like an
+educator's (A1 Part XVIII), is measured on the downstream reality of its ADOPTED laws — do the laws the
+Owner adopted on A2's proposals actually hold — never on A2's self-reported confidence in its own output.)
+(DERIVED: an A2 measured on its own average confidence would be incentivized to inflate confidence or to
+propose only safe, high-confidence codifications; an A2 measured on whether its adopted laws hold is
+aligned with the estate's actual interest — sound legislation — the same countermetric discipline that
+aligns the educator, applied to the legislature.)
+
+FINAL LAW — PART XI. A2 reports how strongly the evidence supports each candidate, and that confidence —
+however overwhelming — never adopts it, because adoption is the Owner's act and a confidence threshold
+that enacted would be a self-adopting legislature by another name. Confidence is a projection over the
+evidence, decoupled from adoption exactly as ACIS decouples it from level, honest about weak evidence so
+that strong confidence stays meaningful, and decaying as its evidence ages. A2 can be fully transparent
+about its beliefs precisely because its beliefs have no power to enact.
+
+===============================================================================================
+PART XII — THE PROPOSE-NEVER-APPLY INVARIANT
+===============================================================================================
+
+12.1 The invariant, stated as the dataset's spine. A2 proposes candidate laws; it never adopts or applies
+one. (DEFINED, invariant 2, and the load-bearing safety property of the entire dataset: adoption is a
+separate act by the Owner or a governance process, and A2 has no code path that enacts a law it induced.)
+Every mechanism in A2 — the engine, the theory generator, the experiment designer — terminates at a
+PROPOSAL, and none has an adoption path. The invariant is what makes A2 safe to build and run: a
+legislature that could enact its own bills is the estate's deepest governance danger, and A2 is
+constructed so it structurally cannot.
+
+12.2 Why a self-adopting legislature is the capture risk. dfp_05 names the mechanism: "the first thing a
+self-modifying governance system learns to modify is the mechanism by which it could be found wrong"
+(cited). (NORMATIVE: a legislature that both drafts AND enacts its own laws could, over time, enact laws
+that weaken the checks on its own drafting — the capture spiral. The separation of proposing from
+adopting is the structural firewall against it, and A2's propose-never-apply is that firewall made
+absolute.) (DERIVED: this is why the JUDGE-PROPOSE boundary (Part II) is a safety property and not merely
+anti-duplication — a legislature that absorbed the judge would be a self-adopting one, and the whole
+danger dfp_05 names would materialize. Keeping A2 unable to adopt is keeping the estate's governance
+un-capturable by its own law-generator.)
+
+12.3 The invariant is enforced by construction, not by policy. A2 does not "follow a policy" of not
+adopting — it has no adoption path at all. (DEFINED: the engine writes to the Hypothesis Registry; the
+registry has a graduation transition to UKDL that is triggered ONLY by an external adoption act, never by
+A2 itself. There is no function in A2 that writes an adopted rule.) (DERIVED: enforcement-by-construction
+is stronger than enforcement-by-policy because a policy can be violated by a bug or a drift, while a
+missing code path cannot be traversed. A2 cannot adopt a law for the same reason a read-only file cannot
+be written — the capability is absent, not merely forbidden, which is the only enforcement robust against
+a compromised or drifting A2.)
+
+12.4 The No-Autopromotion Invariant, inherited and extended. The estate already holds a No-Autopromotion
+Invariant — no capability promotes itself. (OBSERVED, estate doctrine.) A2 inherits it and extends it to
+laws: no law A2 induced promotes itself to adopted. (DERIVED: A2's propose-never-apply is the
+No-Autopromotion Invariant applied to the legislature — the same principle that stops a capability
+self-promoting stops a law self-adopting, because both are a system granting itself authority it should
+receive only from the Owner. A2 does not invent the invariant; it applies the estate's existing one to
+its own object, and names the inheritance rather than claiming it.)
+
+12.5 Propose-never-apply extends to experiments and theories. The invariant covers not only law adoption
+but experiment execution (Part IX §9.5) and theory adoption (Part VII §7.5) — A2 proposes an experiment
+but does not run it, proposes a theory but does not enact it. (NORMATIVE: any A2 act that would CHANGE
+the estate — adopting a law, running an estate-manipulating experiment, enacting a theory — is reserved
+to an authorized external act. A2's writes are confined to its own registry.) (DERIVED: the invariant is
+really one principle — A2 changes nothing about the estate except its own candidate store — applied to
+every surface where A2 might otherwise act. The uniform rule is what makes A2's safety total rather than
+patchy: there is no A2 surface that mutates the estate, only surfaces that propose mutations for
+authorized parties to perform.)
+
+12.6 The invariant is what lets A2 be prolific. Because A2 cannot enact, it can propose freely — the
+volume of A2's induction is bounded only by the Owner's judgment capacity, not by any risk, since an
+un-adopted proposal is inert. (DERIVED: the propose-never-apply invariant and the falsifier-first
+discipline (Part VIII §8.10) together make A2's generative volume safe by construction — a prolific
+legislature is dangerous only if it can enact, and A2 cannot, so it can induce as many falsifiable
+candidates as the evidence supports without any of them binding the estate until judged. Safety-by-
+construction is what unlocks generative volume.)
+
+12.7 The invariant preserves the human's authority over the estate's laws. Adoption reserved to the Owner
+means the estate's binding laws are always the ones a human chose to enact, informed by A2's proposals but
+never dictated by them. (NORMATIVE: A2 shifts WHERE candidate laws come from — from a human's intuition to
+the estate's evidence — but not WHO decides which bind. The Owner's authority over the estate's law is
+preserved absolutely; A2 makes the Owner a better-informed legislator, not a bypassed one.) (DERIVED:
+this is the deepest justification for the invariant — the estate's laws govern the estate, and the
+authority over what governs must remain with the Owner, not migrate to a machine that induces well. A2
+augments the legislator; it does not replace the legislature's authority.)
+
+12.8 The invariant's honest tension with autonomy, acknowledged. There is a real tension: A2 can induce
+laws faster than the Owner can judge them, so a strict propose-never-apply could bottleneck on human
+judgment. (CONTESTED-honest: A2 does not resolve this by relaxing the invariant — the invariant is
+absolute — but by prioritizing its proposals (confidence + evidence breadth) so the Owner's scarce
+judgment goes to the best candidates first, and by surfacing orphan candidates (Part V §5.8) rather than
+letting the bottleneck hide them.) (DERIVED: the tension is real and A2 names it rather than resolving it
+by the forbidden shortcut of auto-adoption — the answer to "A2 out-produces judgment" is better
+prioritization of what to judge, never a relaxation of who judges. The bottleneck is a feature: human
+judgment over the estate's laws is exactly what must not be bypassed.)
+
+12.9 Why this invariant is A2's most important sentence. If a single property of A2 had to survive, it is
+this one — propose-never-apply — because every other capability of A2 is safe only under it. (NORMATIVE:
+a powerful law-generator without the invariant is the capture risk; the same generator with the invariant
+is a safe augmentation of the Owner's legislative authority. The invariant is not one feature among many;
+it is the condition under which all the others are safe to have.) (DERIVED: this is why the invariant is
+restated in nearly every Part — the candidate object refuses adoption, the engine has no adoption path,
+confidence never triggers adoption, experiments are proposed not run — because a safety property that
+matters this much cannot be stated once and trusted; it must be built into every surface, and named at
+each, so no future extension of A2 can quietly add the adoption path the whole dataset was designed to
+exclude.)
+
+FINAL LAW — PART XII. A2 proposes and never adopts — enforced by construction, not policy: there is no
+adoption path in A2 to traverse, the way a read-only file cannot be written. A self-adopting legislature
+is the capture dfp_05 names, where a system learns first to modify how it could be found wrong, so the
+separation of proposing from adopting is the estate's firewall and A2's is absolute. The invariant is
+what lets A2 be prolific and safe at once, and what keeps the authority over the estate's binding laws
+with the Owner — A2 makes the legislator better-informed, never bypassed.
+
+===============================================================================================
+PART XIII — COUNTEREXAMPLE SEARCH: SEEKING THE CASE THAT BREAKS THE LAW
+===============================================================================================
+
+13.1 The discipline stated. Before proposing a candidate, A2 actively seeks the case that would REFUTE
+it — a counterexample search, not a confirmation search. (DEFINED: for a candidate rule "under condition
+C, property P holds," A2 searches the evidence for an instance of C where P does NOT hold, and it does so
+BEFORE proposing, so a candidate reaches the registry already stress-tested against the evidence that
+would break it.) This is the operational form of intellectual honesty — a legislature that only sought
+confirmations would propose false universals, and the counterexample search is what forces A2 to try to
+break its own laws before offering them.
+
+13.2 Why confirmation is cheap and counterexample is dear. Confirming evidence for almost any pattern is
+easy to find — the human and machine tendency is to notice instances that fit and overlook those that do
+not. (OBSERVED, the estate's own p-hacking failure and the confirmation bias it guards against.) A
+counterexample search inverts the default: it spends effort specifically looking for the disconfirming
+case, which is exactly the case the confirmation-seeking engine would miss. (DERIVED: the search is dear
+precisely because it goes against the grain — finding the instance that breaks a satisfying pattern is
+cognitively and computationally the opposite of finding instances that confirm it, and A2's discipline is
+to pay that cost before proposing, because a false universal that survives to adoption is far more
+expensive than the search that would have caught it.)
+
+13.3 The search operates over the same substrate as induction. The counterexample search mines the same
+five evidence families (Part IV §4.2) A2 induced from — but asking the opposite question: not "where does
+this pattern hold" but "where, in all the evidence, does condition C occur WITHOUT property P." (DEFINED:
+a found counterexample either refutes the candidate outright or reveals a boundary — condition C holds P
+except under sub-condition C', which becomes part of the boundary, Part XIV.) (DERIVED: this is why
+counterexample search and boundary extraction are two faces of one operation — a counterexample that
+refutes the whole law kills the candidate; a counterexample that holds only in a sub-region fences the
+boundary. The search's output is either a dead candidate or a sharpened one, never an unchanged one.)
+
+13.4 The search and the experiment designer are complementary. Counterexample search looks for the
+breaking case in EXISTING evidence; the experiment designer (Part IX) produces NEW evidence to test the
+law. (DERIVED: for a well-recorded phenomenon, counterexample search over existing evidence may suffice;
+for a thinly-recorded one, the experiment designer produces the disconfirming test the existing evidence
+cannot. Together they are A2's two ways of trying to break a candidate — mine the record for the
+counterexample, or design the experiment that would produce it — and a candidate that survives both is
+one A2 tried hard to refute and could not, which is exactly the candidate worth proposing.)
+
+13.5 The anti-p-hacking property. P-hacking is mining evidence until a pattern appears, then proposing
+it as if the mining had not shaped it. (OBSERVED, the estate's named failure.) The counterexample search
+is A2's structural defense: because A2 must actively seek the disconfirming case before proposing, a
+pattern that only survives because A2 stopped looking as soon as it found confirmations cannot pass — the
+search would surface the counterexamples the confirmation-mining ignored. (DERIVED: p-hacking is defeated
+not by forbidding mining but by requiring the disconfirmation search alongside it — A2 mines for patterns
+AND mines for their counterexamples, and only a pattern that survives the second mining is proposed. The
+symmetry of the two searches is what makes the induction honest.)
+
+13.6 The search must be recorded, not just performed. A2 records, in the candidate's evidence trail, that
+the counterexample search was performed and what it found — the counterexamples that were considered and
+either refuted the candidate or defined its boundary. (NORMATIVE: a candidate that claimed to be
+stress-tested but recorded no search is unauditable — the search's honesty depends on its being
+inspectable, so a later audit can check that A2 actually looked for the breaking case rather than
+asserting it did.) (DERIVED: recording the search is what makes the anti-p-hacking property auditable —
+without a record, "we searched for counterexamples" is an unverifiable claim, and A2's discipline is to
+make the search a documented part of the candidate's provenance, not an asserted virtue.)
+
+13.7 A found counterexample is valuable, not a failure. When the search finds a counterexample that kills
+a candidate, that is A2 working, not A2 failing. (CONTESTED-honest: a killed candidate saved the estate
+from adopting a false law, which is more valuable than the candidate would have been — the counterexample
+is a positive output.) (DERIVED: an A2 that treated killed candidates as failures would be incentivized
+to search less hard, which is the p-hacking incentive; an A2 that values a found counterexample as a
+saved false-adoption searches honestly. This is the same framing A1 gives a non-graduating learner — the
+mechanism catching a problem before production is the mechanism succeeding, and A2's counterexample that
+kills a false universal before adoption is the search succeeding.)
+
+13.8 The search bounds A2's confidence honestly. The counterexample search directly informs a candidate's
+confidence — a candidate that survived a hard search with no counterexample earns higher confidence than
+one whose search was cursory or which had near-misses. (DERIVED: confidence (Part XI) is partly a function
+of how hard A2 tried and failed to break the candidate — a law that resisted a determined counterexample
+search is better-evidenced than one that merely accumulated confirmations. The search is therefore not
+only a gate (kill the false ones) but a calibrator (the survivors' confidence reflects the search's
+rigor), and an honest confidence requires an honest search behind it.)
+
+13.9 Why counterexample search is A2's scientific conscience. The willingness to seek the evidence that
+would prove oneself wrong is the core of scientific honesty, and the counterexample search is where A2
+enforces it structurally rather than trusting it. (DERIVED: A2 cannot be trusted to WANT to break its own
+satisfying patterns — no generator can — so the discipline is built in as a required, recorded step, the
+same way falsifier-first builds in the requirement to state how the law could be wrong. Between them,
+falsifier-first (name the refutation condition) and counterexample search (actively seek it), A2's
+intellectual honesty is a matter of construction, not disposition — which is the only way it survives an
+engine that would rather be right.)
+
+FINAL LAW — PART XIII. A2 seeks the case that breaks its own law before proposing it — a counterexample
+search, not a confirmation search — because confirming evidence is cheap and the disconfirming case is
+exactly the one a satisfied engine overlooks. The search defeats p-hacking by construction: a pattern
+that survived only because A2 stopped looking cannot pass a mining that specifically hunts its
+counterexamples. A found counterexample is the search succeeding, not failing, and the willingness to
+seek one's own refutation — built in, recorded, auditable — is A2's scientific conscience, enforced by
+structure because no generator can be trusted to want it.
+
+===============================================================================================
+PART XIV — BOUNDARY-CONDITION EXTRACTION: WHERE THE LAW HOLDS AND WHERE IT DOES NOT
+===============================================================================================
+
+14.1 Every law has a boundary, and stating it is mandatory. A candidate law without a boundary claims to
+hold everywhere, and a law claimed to hold everywhere is almost always a false universal (Part XX).
+(DEFINED, invariant 5: every candidate states its boundary — the domain of conditions under which it
+holds — and a candidate with no boundary is malformed and not proposed.) The boundary is as load-bearing
+as the rule: "Bash calls hang" is a false universal; "Bash calls of external toolchains on Windows hosts
+hang" is a bounded, true law. The qualifier is not a caveat appended to the rule — it is part of what the
+rule IS.
+
+14.2 The boundary is extracted from the disconfirming evidence. A2 extracts the boundary from the cases
+where the pattern did NOT hold — the counterexamples (Part XIII) that did not kill the candidate but
+fenced it. (DEFINED: the boundary is the condition separating instances where property P held from
+instances where it failed; it is found by examining the near-misses, not by asserting a scope.) (DERIVED:
+this is why boundary extraction requires the counterexample search — a boundary asserted without looking
+at where the pattern fails is a guess, and a boundary extracted from the actual failing cases is
+evidence-grounded. The boundary is the fence the disconfirming evidence draws, and A2 draws it from that
+evidence rather than from intuition about where the law "should" apply.)
+
+14.3 The boundary and the A1 cross-domain loop. A1's cross-domain education (A1 Part XV) surfaces exactly
+the boundary information A2 needs — a competence's native assumption that held in one domain and failed in
+another is evidence of where a law's boundary lies. (DERIVED: when A1 discovers that "every path returns a
+value" held for Python and failed for shell, that is boundary evidence for any law involving return-value
+assumptions — the boundary is "languages with mandatory returns." The A1→A2 loop (Part IV §4.2) feeds A2
+boundary evidence A2 could not get from its own ledgers, because A1's cross-domain teaching actively probes
+where assumptions break, which is precisely where boundaries lie.) A1 surfaces the assumption failure; A2
+extracts the boundary it implies.
+
+14.4 A boundary too narrow and a boundary too wide are both failures. A boundary drawn too WIDE claims the
+law holds where it does not (a false universal in miniature); a boundary too NARROW claims the law holds
+only in a sub-region when it actually holds more broadly (an under-general law). (DEFINED, two boundary
+errors.) (DERIVED: A2 extracts the boundary at exactly the extent the evidence supports — no wider (which
+the counterexamples would refute) and no narrower (which would waste the law's generality). The evidence
+sets the boundary, and both over-claiming and under-claiming the scope are errors the extraction must
+avoid — the boundary is a claim about extent, and like any claim it must match its evidence.)
+
+14.5 The boundary is what makes a law composable into a theory. A theory (Part VII) composes laws, and
+composition requires knowing each law's boundary — a theory that combined laws without respecting their
+boundaries would claim explanatory reach beyond where its component laws hold. (DERIVED: the boundary is
+the interface at which laws compose — a theory's explanatory structure is valid only within the
+intersection of its laws' boundaries, and knowing each boundary is what lets A2 compose a theory whose
+reach is honestly bounded. A composition that ignored boundaries would be a theory over-claiming its
+scope, the paradigm-thrash failure at the composition level.)
+
+14.6 The boundary decays and shifts as the estate changes. A law's boundary is not permanent — as the
+estate changes, a boundary can shift (a law that held on one platform may extend to a new one, or cease
+to hold on an old one). (DERIVED: the boundary, like the rule and the confidence, is a projection over
+current evidence, and it recomputes as evidence accrues — a candidate whose boundary was "Windows hosts"
+might extend if new evidence shows the pattern on another host, or contract if the estate's tooling
+changes. A2's boundary is a living claim, and a boundary asserted once and never revisited would be the
+stale-law failure relocated to the law's scope.)
+
+14.7 An unbounded candidate is the false universal caught at the object level. Because the boundary is a
+mandatory part of a well-formed candidate (Part III §3.5), an unbounded candidate literally cannot be
+proposed — the false-universal failure is closed by construction, the same way falsifier-first closes the
+unfalsifiable-law failure. (NORMATIVE: A2 does not rely on an audit to catch false universals; it makes a
+boundary mandatory so an unbounded universal is malformed at the object level and never reaches the
+registry.) (DERIVED: this is the object-shape-as-discipline principle again — A2's quality is enforced by
+what a well-formed candidate must contain, and a boundary is one of the four mandatory parts precisely
+because its absence is a named failure mode.)
+
+14.8 The boundary is a claim the falsifier must respect. A candidate's falsifier tests the law WITHIN its
+boundary, never outside it — a falsifier that tested the law where it never claimed to hold would be
+incoherent. (DERIVED, the falsifier-boundary duality of Part VIII §8.7: the boundary says where the law
+applies, the falsifier says what would refute it there, and the two must be consistent. A2 extracts them
+jointly so a candidate never carries a falsifier testing outside its boundary — the boundary and the
+falsifier are two views of the law's extent, and a coherent candidate keeps them aligned.)
+
+14.9 The boundary is where A2's honesty about generality lives. The temptation in any generalization is
+to over-claim its scope — a broad law feels more valuable than a narrow one. (CONTESTED, resolved by the
+evidence: A2 draws the boundary at the evidence's extent, resisting the pull toward a grander universal,
+because an over-broad law is a false universal and a false universal that reaches adoption is a law the
+estate will obey where it does not hold.) (DERIVED: the boundary is where A2 resists its own incentive
+toward grandeur — the same way falsifier-first resists confirmation bias — and draws the honest fence the
+evidence supports rather than the impressive universal it might prefer. A2's generality is exactly what
+its evidence licenses, no more.)
+
+14.10 The boundary is what a law's adopter and teacher both need. When a candidate is adopted (Part XVII)
+and later taught (Part XVIII, the A2→A1 seam), its boundary travels with it — the adopter needs to know
+where the law binds, and A1 needs to teach where it applies and where it does not. (DERIVED: a law taught
+without its boundary would produce the assumption-carry failure A1's cross-domain education (A1 Part XV)
+exists to prevent — a learner taught "Bash calls hang" without "on Windows hosts" would wrongly avoid Bash
+on Linux. The boundary is therefore not only A2's honesty about generality but a mandatory input to
+teaching the law correctly, and preserving it through adoption and into the curriculum is what keeps the
+taught law as bounded as the induced one.)
+
+FINAL LAW — PART XIV. Every candidate law states its boundary — the fence between where it holds and where
+it fails — extracted from the disconfirming cases, not asserted, because a law claimed to hold everywhere
+is a false universal and the qualifier is part of what the rule is. A boundary too wide over-claims and
+too narrow wastes generality; A2 draws it at exactly the evidence's extent. It is the interface at which
+laws compose into theories, it decays and shifts as the estate changes, and it is where A2 resists its own
+pull toward an impressive universal in favor of the honest fence the evidence supports.
