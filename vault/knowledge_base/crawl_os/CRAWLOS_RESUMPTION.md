@@ -227,20 +227,59 @@ memory" doctrine from the source document (`Downloads/Dataset CrawlOS 1.txt`).
   separate re-index step. Pushed to origin 2026-07-20: commit `455a58e`, REMOTE_DELTA 0 0
   confirmed.
 
+- **Dataset 03 (Adaptive Acquisition Strategy Routing) SEALED 2026-07-21: 25 of 25 Parts.**
+  File: `vault/knowledge_base/crawl_os/crawl_os_03_adaptive_acquisition_strategy_routing.txt`.
+  Dataset contract at `vault/knowledge_base/crawl_os/DATASET_03_CONTRACT.md`, created before
+  Part I per PASO -1. Word counts: I 1844, II 1419, III 1799, IV 1681, V 1383, VI 1552,
+  VII 1236, VIII 1242, IX 1204, X 1482, XI 1511, XII 1231, XIII 1355, XIV 1459, XV 1220,
+  XVI 1283, XVII 1253, XVIII 1323, XIX 1312, XX 1298, XXI 1205, XXII 1259, XXIII 1291,
+  XXIV 1210, XXV 1288 -- total ~34,340 words, zero Parts under floor (min 1204, after
+  several Parts strengthened from an initial under-floor draft with genuinely new
+  subsections during batch drafting, never padding). Every Part closes with its own PART N
+  FINAL LAW. This dataset elaborates Dataset #01's Part V §5.4 Acquisition Strategy Router
+  charter operationally -- the attempt-cheapest-first seven-rung decision procedure, the
+  observed-reason discipline gating every escalation (three exhaustive categories: explicit
+  failure, content-insufficiency, structural-incapacity), site memory (target- and
+  site-class-level, provenance-tagged, staleness-triggered), the bidirectional de-escalation
+  mechanism, the fixed-constraint consumption of Dataset #16's composite authorization
+  verdict, the one-time handoff consumption of Dataset #02's compiled Mission Contract, the
+  uniform adapter interface mapping rung selections to discover/map/fetch/render/interact/
+  extract/normalize/validate/persist/replay, rung-specific diagnostics for each of the seven
+  rungs, frontier consumption from the (not-yet-built) Resource Discovery Engine, multi-
+  mission scheduling and demand-aware pacing, the CO-01 acquisition-cost-vs-estate-economics
+  boundary, routing-table governance and drift detection against the future
+  `strategy_router.py`, Loop One anomalous-cost supervision, cross-mission routing
+  consistency (denial persistence blindness as the mirror failure to authorization
+  laundering), a twelve-class failure taxonomy, and its own amendment triggers -- plus three
+  explicit forward-compatibility composition boundaries with the not-yet-built Datasets #04
+  (HTTP Fetch), #05 (Browser Interaction), and #06 (Frontier Engineering), each stating
+  honestly that the boundary is written against Dataset #01's charter alone pending the
+  future dataset's own sealing. Contamination audit: **zero hits** -- the second Crawl OS
+  dataset, after Dataset #16, to reach a genuine zero; every worked example (a documentation
+  page, a government filing, a news publication, a product page, a dashboard, a regulatory
+  portal, a competitor pricing API) was checked against the forbidden-domain pattern before
+  being written, and the closing audit sentence itself was re-checked before acceptance,
+  applying the identical self-referential-audit discipline Dataset #16 established.
+  `tools/test_crawl_os.py` extended to cover DS03 (22 gates total: 5 datasets x
+  EXISTS/PARTS/FINAL-LAWS + 5 contract gates + NO-STUBS + NO-CONTAMINATION), hermetic 22/22
+  across 3 runs; DS03's own contamination baseline is 0. Graphify re-indexed
+  (1084 nodes) and `--query --name "crawl_os_03"` confirmed returning the dataset as a real
+  `dataset` node.
+
 ## 4. Next actions (imperative — highest value first)
 
-1. Dataset 3 (Adaptive Acquisition Strategy Routing), per the dependency-based build order
+1. Dataset 4 (HTTP Fetch and Transport Intelligence), per the dependency-based build order
    (`wiggly-sparking-dolphin.md`) -- the next acquisition engine now that Authorization
-   (position 4) is sealed and can actually bound it. Dataset 16's own Part XX already
-   forward-cites the Acquisition Strategy Router's own composition boundary in full detail
-   (rung selection vs. authorization, the composite-verdict handoff, the authorization-
-   laundering-through-routing failure) -- read that Part before drafting 03's own contract,
-   since 03's eventual design should stay compatible with what 16 already promised to hand
-   it, mirroring how 16 itself was built compatible with what 02 had already promised.
+   (position 4) and Adaptive Acquisition Strategy Routing (position 5) are both sealed.
+   Dataset 3's own Part XVII already forward-cites Dataset #04's own composition boundary in
+   full detail (rung-selection-vs-execution, the transport-retry-vs-rung-escalation
+   distinction, the identical Evidence Object shape every rung produces) -- read that Part
+   before drafting 04's own contract, mirroring how Dataset 3 itself was built compatible
+   with what Dataset 16 and Dataset 02 had already promised.
 2. Consider extending `tools/test_crawl_os.py` with a citation-audit check (grep for
    verbatim schema field-list phrases duplicated across datasets) as a permanent
    regression guard for the restatement failure Dataset #10's own Part XXV §25.4 checked
-   manually — genuinely pending, not blocking, since the current 18-gate suite already
+   manually — genuinely pending, not blocking, since the current 22-gate suite already
    covers structure/floor/final-law/stub/contamination/contract-existence hermetically.
 
 ## 5. Start instruction
