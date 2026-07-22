@@ -32,7 +32,14 @@ which uses the system ANSI codepage, NOT UTF-8. Keep this file 7-bit ASCII.
   run     -> a single cycle (invoked by Task Scheduler)
 
 .PARAMETER IntervalMinutes
-  Refresh cadence (default 15).
+  Refresh cadence (default 2 -- lowered from 15 on 2026-07-22 after live
+  evidence: any pane that opens and crashes within the write-cycle window has
+  NO task written yet, so it silently fails to revive on reopen. This is
+  distinct from the Scope 1-3 window-level fix (allowAutomaticTasks +
+  progressive reconciliation orchestrator) -- that fixes WHICH WINDOWS come
+  back; this fixes whether a freshly-opened PANE inside a window that DOES
+  come back has a resume task at all. Matches snapshot_window_topology.ps1's
+  own 2-minute cadence so both writers share one cadence assumption.
 
 .EXAMPLE
   powershell -File tools\snapshot_auto_writer.ps1 -Action start
@@ -46,7 +53,7 @@ which uses the system ANSI codepage, NOT UTF-8. Keep this file 7-bit ASCII.
 param(
     [ValidateSet("start","stop","status","run")]
     [string]$Action = "status",
-    [int]$IntervalMinutes = 15
+    [int]$IntervalMinutes = 2
 )
 
 $TaskName = "pp-snapshot-writer"
