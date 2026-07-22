@@ -67,7 +67,7 @@ _SEED_GLOBS = ("hooks/*.js", "commands/*.md", "agents/*.md", "SKILL.md", "CLAUDE
 # importing them on every Edit. Fail-open: an absent live root simply yields no
 # extra seeds (a CI checkout has no ~/.claude and must still scan).
 _LIVE_SEED_GLOBS = ("hooks/*.js", "commands/*.md", "agents/*.md",
-                    "settings.json", "settings.local.json")
+                    "settings.json", "settings.local.json", "CLAUDE.md")
 
 
 def live_root() -> Path:
@@ -371,6 +371,17 @@ def scan(repo_root: Path | None = None, registry: dict | None = None) -> list[di
     # frontier only ever grows from units already proven reachable.
     while frontier:
         current = frontier.pop()
+        # Package-init closure: importing modules.pkg.sub.mod always executes
+        # pkg/__init__.py and pkg/sub/__init__.py first -- Python's import system
+        # guarantees it regardless of whether anything explicitly imports the
+        # package itself. Without this, every package __init__ read as a false
+        # ORPHAN unless something happened to import the bare package too.
+        parts = current.split("/")
+        for depth in range(1, len(parts)):
+            init_unit = "/".join(parts[:depth] + ["__init__"])
+            if init_unit in known and init_unit not in via:
+                via[init_unit] = f"package-init of {current}"
+                frontier.append(init_unit)
         text = _read(_unit_path(root, current))
         if text is None:
             continue

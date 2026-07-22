@@ -7,6 +7,101 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-07-22) -- CGF Workstream B: 15 PLANNED clusters registered (62 modules)
+
+Liveness orphan disposition pass (`vault/audits/liveness_report.md`, 175->21 real
+orphans). These 62 modules are built-per-spec but deliberately not yet composed
+into a live authority -- `class: PLANNED` in `reachability_registry.json`, each
+row below is its OWNER_QUEUE activation. None are urgent (no bug is caused by
+the gap); this is the backlog the gap represents, made visible instead of silent.
+
+### PLANNED: craif Phase 2 wiring  [PENDING]
+**System:** `modules/craif/*`
+**Why:** CRAIF Phase 1 (Failure Completeness axis) built; not yet composed into
+a live consumer. Owner decides the Phase 2 integration point.
+
+### PLANNED: cognitive_os CO-0x composition  [PENDING]
+**System:** `modules/cognitive_os/{context,economics,gc,governor,guarantee_ledger,hibernate_runner,loop_budget,memory,rehydration}`
+**Why:** 9 CO-00-series modules built per spec; `process_governor.py` (LIVE) does
+not import any of them (verified by grep). Composing them is a real architecture
+decision, not a 1-line wire.
+
+### PLANNED: contract_fabric wiring  [PENDING]
+**System:** `modules/contract_fabric/*`
+**Why:** DAIF-04 Part XXI runtime; part of the DAIF corpus (SPEC, not a running
+system per `project_daif_corpus_scs_c95.md`).
+
+### PLANNED: DAIF corpus operationalization  [PENDING]
+**System:** `modules/daif/*`
+**Why:** confirmed SPEC-not-running-system. Next step per memory is "a proving
+vertical" -- this is that same open item, now also visible in the liveness ledger.
+
+### PLANNED: Dataset First Protocol authority wiring  [PENDING]
+**System:** `modules/dataset_first/*`
+**Why:** DFP's own docstring: "an advisor wired into an authority, never an
+authority itself." Built complete; the authority (spec_gate or decision_review)
+has not yet been chosen to consume it.
+
+### PLANNED: DRK-01 decision_review adapter verification  [PENDING]
+**System:** `modules/decision_review/*`
+**Why:** `decision_kernel.py`'s own docstring: "the thin live adapters that call
+those modules are wired separately once their signatures are verified." Self-
+declared pending in the source, not forgotten.
+
+### PLANNED: done_gate consumer decision  [PENDING]
+**System:** `modules/done_gate/*`
+**Why:** Artifact Done-Gate (P2) built complete; `output_contracts/validator.py`
+(LIVE, Stop-chain) currently covers the same Reality Contract concern. Owner
+decides: retire done_gate as superseded, or wire it for a narrower artifact-shape
+guarantee validator.py doesn't cover.
+
+### PLANNED: fable_distillation fd_00/fd_04_contrast/ukdl_queue wiring  [PENDING]
+**System:** `modules/fable_distillation/{fd_00_gate,fd_04_contrast,ukdl_queue}`
+**Why:** `fd_00_gate.py` is tested (12/12x3 per `project_fd_execution_activation.md`)
+but grep confirms zero live import anywhere -- that memory's "activation" claim
+is stale and has been corrected (see meta-analysis). Needs real Stop-chain wiring.
+
+### PLANNED: frontier_intelligence discovery module wiring  [PENDING]
+**System:** `modules/frontier_intelligence/{corpus_roi,session_compiler,unknown_unknown_generator}`
+**Why:** B1 Dataset ROI Ledger + Future/Opportunity Discovery modules built per
+spec; no live consumer yet.
+
+### PLANNED: hard_rules/residual consumer wiring  [PENDING]
+**System:** `modules/hard_rules/residual.py`
+**Why:** sealed doctrine compiler, extensively cited in CLAUDE.md prose, but grep
+confirms zero code import anywhere. Designed to run when a Hard Rule fires;
+that integration into `hook-dispatcher.js`'s block path has not happened.
+
+### PLANNED: monitoring/alert wiring into monitor.py  [PENDING]
+**System:** `modules/monitoring/alert.py`
+**Why:** self-describes its consumer as "the monitor engine" (`monitor.py`, LIVE)
+but `monitor.py` does not yet import it.
+
+### PLANNED: parallel_mesh pm_01/02/04/05 wiring  [PENDING]
+**System:** `modules/parallel_mesh/{pm_01_brain,pm_02_intent,pm_04_auction,pm_05_prefetch}`
+**Why:** same Parallel Mesh spec as `pm_03_bus` (LIVE, `cdio/bus_bridge`); the
+other 4 numbered modules not yet wired.
+
+### PLANNED: pp_agents signal-to-agent wrapper backlog  [PENDING]
+**System:** `modules/pp_agents/signals/{backlog,cost,errors,health,lessons,quality,sdd_tier,setup_scan}`
+**Why:** 5 sibling signals (cascade/code_quality/error_recurrence/premise_risk/
+spec_compliance) are LIVE because each has a matching `agents/pp-*.md` file that
+imports it. These 8 have no matching agent file yet -- build the wrapper agent,
+or fold the signal into an existing agent's own logic.
+
+### PLANNED: refcheck command/hook wiring  [PENDING]
+**System:** `modules/refcheck/*`
+**Why:** Reference Integrity Linter (P4), built and measured (136+ instances
+found per its own docstring); no command/hook currently wires it into a check
+surface. Candidate: a `/refcheck` command or a Stop-chain check.
+
+### PLANNED: cascade_prevention/pre_mortem exposure  [PENDING]
+**System:** `modules/cascade_prevention/pre_mortem.py`
+**Why:** built extension to the now-LIVE cascade gate (Workstream A, commit
+`8d1f12f`); `cascade_prevention/__init__.py`'s public API does not yet export it.
+
+---
+
 ## NEW (2026-07-20) -- PP audit: hook registrations + one HR-001 ratification
 
 ### (a) RATIFY OR REVERT: agent edited `~/.claude/hooks/hook-dispatcher.js`

@@ -1,153 +1,527 @@
 {
   "known_orphans": [
-    "akos_knowledge/__init__",
-    "arch-decision/__init__",
     "arch-decision/test_closed_loop",
     "arch-decision/test_v_block",
-    "auto-testing/__init__",
-    "auto-testing/detectors",
-    "auto-testing/generators/_common",
-    "auto-testing/generators/java_gen",
-    "auto-testing/generators/node_gen",
-    "auto-testing/generators/python_gen",
-    "auto-testing/llm_bridge",
-    "backup/__init__",
-    "backup/retention",
-    "backup/runners/__init__",
-    "backup/runners/docker_volume_tar",
-    "backup/runners/pg_dump",
-    "backup/runners/rsync_dir",
     "backup/test_v_block",
-    "backup/verify_restore",
-    "cascade_prevention/__init__",
-    "cascade_prevention/blocker",
-    "cascade_prevention/pre_mortem",
-    "cascade_prevention/surfaces",
-    "code-review/__init__",
-    "cognitive_os/context",
-    "cognitive_os/economics",
-    "cognitive_os/gc",
-    "cognitive_os/governor",
-    "cognitive_os/guarantee_ledger",
-    "cognitive_os/hibernate_runner",
-    "cognitive_os/loop_budget",
-    "cognitive_os/memory",
-    "cognitive_os/rehydration",
-    "cost_collapse/__init__",
-    "daif/__init__",
-    "daif/constraint_extractor",
-    "daif/obligation_extractor",
-    "daif/resume_reader",
-    "daif/session_continuity_compiler",
-    "dataset_first/__init__",
-    "dataset_first/calibrator",
-    "dataset_first/classifier",
-    "dataset_first/knowledge_sufficiency",
-    "dataset_first/manifest",
-    "dataset_first/necessity_record",
-    "decision_review/__init__",
-    "decision_review/accountability",
-    "decision_review/decision_kernel",
-    "decision_review/decision_record",
-    "decision_review/proactive_scanner",
-    "decision_review/providers",
-    "deployment/__init__",
-    "deployment/detectors",
-    "deployment/runners/__init__",
-    "deployment/runners/gh_workflow",
-    "deployment/runners/git_push",
-    "deployment/runners/scp_systemd",
+    "ccf/__init__",
+    "ccf/artifact_compiler",
+    "ccf/cli",
+    "ccf/config_schema",
+    "ccf/contract_engine",
+    "ccf/evaluation_engine",
+    "ccf/knowledge_feed",
+    "ccf/model_adapter",
+    "ccf/prompt_compiler",
+    "ccf/release_manager",
+    "ccf/test_ccf",
+    "ccf/trademark_scanner",
     "deployment/test_v_block",
-    "done_gate/__init__",
-    "done_gate/artifact_done_gate",
-    "duplicate_to_advantage/__init__",
-    "duplicate_to_advantage/d2a_engine",
-    "error_prevention/__init__",
-    "fable_distillation/__init__",
-    "fable_distillation/fd_00_gate",
-    "frontier_intelligence/__init__",
-    "frontier_intelligence/evolution_engine",
-    "frontier_intelligence/question_harvester",
-    "frontier_intelligence/session_compiler",
-    "graphify/__init__",
-    "hard_rules/__init__",
-    "monitoring/alert",
-    "output_contracts/__init__",
-    "parallel_mesh/pm_01_brain",
-    "parallel_mesh/pm_02_intent",
-    "parallel_mesh/pm_04_auction",
-    "parallel_mesh/pm_05_prefetch",
-    "pp_agents/__init__",
-    "pp_agents/signals/backlog",
-    "pp_agents/signals/cost",
-    "pp_agents/signals/errors",
-    "pp_agents/signals/health",
-    "pp_agents/signals/lessons",
-    "pp_agents/signals/quality",
-    "pp_agents/signals/sdd_tier",
-    "pp_agents/signals/setup_scan",
-    "recall_roi/__init__",
-    "refcheck/__init__",
-    "refcheck/linter",
-    "rollback/runners/__init__",
-    "rollback/runners/restore_docker_volume",
-    "rollback/runners/restore_pg_dump",
-    "rollback/runners/restore_rsync_dir",
-    "rollback/source_selector",
-    "rule_compiler/__init__",
-    "rule_compiler/compiler",
-    "rule_compiler/digest",
-    "rule_compiler/parser",
-    "rule_compiler/schema",
-    "sdd_os/__init__",
     "session_resilience/integration",
     "session_resilience/multi_window",
     "session_resilience/resume_identity",
     "session_resilience/snapshot_versioning",
-    "session_resilience/ui_state",
-    "setup_os/__init__",
-    "skill_router/__init__",
-    "sleepless_qa/__init__",
-    "sleepless_qa/__main__",
-    "sleepless_qa/cli",
-    "sleepless_qa/dumpers/__init__",
-    "sleepless_qa/dumpers/base",
-    "sleepless_qa/dumpers/cli",
-    "sleepless_qa/dumpers/minecraft",
-    "sleepless_qa/dumpers/python_daemon",
-    "sleepless_qa/dumpers/web",
-    "sleepless_qa/healer/__init__",
-    "sleepless_qa/healer/dispatcher_bridge",
-    "sleepless_qa/healer/lock",
-    "sleepless_qa/healer/orchestrator",
-    "sleepless_qa/healer/pattern_cache",
-    "sleepless_qa/healer/run_log",
-    "sleepless_qa/heartbeat",
-    "sleepless_qa/verdict/__init__",
-    "sleepless_qa/verdict/contract",
-    "sleepless_qa/verdict/engine",
-    "sleepless_qa/verdict/log_pattern",
-    "sleepless_qa/verdict/schema",
-    "sleepless_qa/verdict/visual",
-    "sqi/__init__",
-    "sqi/baseline_guardian",
-    "sqi/environment_qualifier",
-    "sqi/reconcile",
-    "sqi/repo_reality_scanner",
-    "sqi/weakening_baseline",
-    "sqi/weakening_detectors",
-    "sweep_enforcer/__init__",
-    "sweep_enforcer/rule_sweep",
-    "uqf/__init__",
-    "uqf/gates",
-    "wrapper/__init__",
-    "wrapper/auto_resumer",
-    "wrapper/cost_gate",
-    "wrapper/prelaunch",
-    "wrapper/repo_coordinator",
-    "wrapper/session_namer",
-    "wrapper/turn_counter",
-    "wrapper/verify_before_emit"
+    "session_resilience/ui_state"
   ],
-  "modules": {}
+  "modules": {
+    "auto-testing/detectors": {
+      "class": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    "auto-testing/generators/_common": {
+      "class": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    "auto-testing/generators/java_gen": {
+      "class": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    "auto-testing/generators/node_gen": {
+      "class": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    "auto-testing/generators/python_gen": {
+      "class": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    "auto-testing/llm_bridge": {
+      "class": "LIBRARY",
+      "note": "sibling of auto_test.py (LIVE, hooks/auto-test-gate.js); imported via sys.path-hack bare import (dash in 'auto-testing' forbids normal package import) -- verified by grep of auto_test.py"
+    },
+    "backup/retention": {
+      "class": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    "backup/runners/__init__": {
+      "class": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    "backup/runners/docker_volume_tar": {
+      "class": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    "backup/runners/pg_dump": {
+      "class": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    "backup/runners/rsync_dir": {
+      "class": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    "backup/verify_restore": {
+      "class": "LIBRARY",
+      "note": "sibling of backup.py (LIVE, commands/backup.md); imported via sys.path-hack bare import -- verified by grep of backup.py"
+    },
+    "cascade_prevention/pre_mortem": {
+      "class": "PLANNED",
+      "note": "cascade_prevention/__init__.py's public API (blocker/engine/surfaces/types) does not export pre_mortem -- built extension to the now-LIVE cascade gate (Workstream A), not yet exposed"
+    },
+    "cognitive_os/context": {
+      "class": "PLANNED",
+      "note": "CO-00 series module, built per spec; not yet composed into the live process_governor.py -- verified process_governor.py does not import it"
+    },
+    "cognitive_os/economics": {
+      "class": "PLANNED",
+      "note": "CO-01/CO-02 series -- see cognitive_os/context note"
+    },
+    "cognitive_os/gc": {
+      "class": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    "cognitive_os/governor": {
+      "class": "PLANNED",
+      "note": "CO-02 Economics Governor, built per spec; not yet composed into process_governor.py -- see cognitive_os/context note"
+    },
+    "cognitive_os/guarantee_ledger": {
+      "class": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    "cognitive_os/hibernate_runner": {
+      "class": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    "cognitive_os/loop_budget": {
+      "class": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    "cognitive_os/memory": {
+      "class": "PLANNED",
+      "note": "CO-04 series -- see cognitive_os/context note"
+    },
+    "cognitive_os/rehydration": {
+      "class": "PLANNED",
+      "note": "CO-0x series -- see cognitive_os/context note"
+    },
+    "contract_fabric/__init__": {
+      "class": "PLANNED",
+      "note": "DAIF-04 Part XXI runtime -- part of the DAIF corpus, which memory/project_daif_corpus_scs_c95.md records as 'SPEC, not a running system'"
+    },
+    "contract_fabric/side_effect_ledger": {
+      "class": "PLANNED",
+      "note": "DAIF-04 Part XXI runtime -- see contract_fabric/__init__ note"
+    },
+    "craif/__init__": {
+      "class": "PLANNED",
+      "note": "CRAIF Phase 1 (Failure Completeness axis, per OWNERSHIP_OVERLAP_AUDIT.md Group F) -- built early-stage, integration deliberately deferred"
+    },
+    "craif/authority": {
+      "class": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    "craif/candidate": {
+      "class": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    "craif/intake": {
+      "class": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    "craif/ledger": {
+      "class": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    "craif/objects": {
+      "class": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    "craif/runtime": {
+      "class": "PLANNED",
+      "note": "CRAIF Phase 1 -- see craif/__init__ note"
+    },
+    "daif/__init__": {
+      "class": "PLANNED",
+      "note": "DAIF corpus executable half -- confirmed SPEC-not-running-system (memory/project_daif_corpus_scs_c95.md); no live consumer"
+    },
+    "daif/constraint_extractor": {
+      "class": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    "daif/decision_extractor": {
+      "class": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    "daif/obligation_extractor": {
+      "class": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    "daif/resume_reader": {
+      "class": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    "daif/session_continuity_compiler": {
+      "class": "PLANNED",
+      "note": "DAIF-08 Part XI, self-declares gaps in its own docstring (no decision extractor yet) -- see daif/__init__ note"
+    },
+    "daif/two_arm_trial": {
+      "class": "PLANNED",
+      "note": "DAIF corpus -- see daif/__init__ note"
+    },
+    "dataset_first/__init__": {
+      "class": "PLANNED",
+      "note": "Dataset First Protocol, self-declared 'an advisor wired into an authority, never an authority itself' in its own docstring -- built complete, not yet composed into spec_gate/decision_review"
+    },
+    "dataset_first/calibrator": {
+      "class": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    "dataset_first/classifier": {
+      "class": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    "dataset_first/knowledge_sufficiency": {
+      "class": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    "dataset_first/manifest": {
+      "class": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    "dataset_first/necessity_record": {
+      "class": "PLANNED",
+      "note": "DFP -- see dataset_first/__init__ note"
+    },
+    "decision_review/__init__": {
+      "class": "PLANNED",
+      "note": "DRK-01 nine-stage review sieve; decision_kernel.py's own docstring states 'the thin live adapters that call those modules are wired separately once their signatures are verified' -- self-declared pending, not forgotten"
+    },
+    "decision_review/accountability": {
+      "class": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    "decision_review/decision_kernel": {
+      "class": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note (self-declared pending wiring)"
+    },
+    "decision_review/decision_record": {
+      "class": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    "decision_review/proactive_scanner": {
+      "class": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    "decision_review/providers": {
+      "class": "PLANNED",
+      "note": "DRK-01 -- see decision_review/__init__ note"
+    },
+    "deployment/detectors": {
+      "class": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    "deployment/runners/__init__": {
+      "class": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    "deployment/runners/gh_workflow": {
+      "class": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    "deployment/runners/git_push": {
+      "class": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    "deployment/runners/scp_systemd": {
+      "class": "LIBRARY",
+      "note": "sibling of deploy.py (LIVE, commands/deploy.md); imported via sys.path-hack bare import -- verified by grep of deploy.py"
+    },
+    "done_gate/__init__": {
+      "class": "PLANNED",
+      "note": "Artifact Done-Gate (P2), built complete per its own docstring; no command/hook currently invokes it -- output_contracts/validator.py (LIVE, Stop-chain) currently covers the same Reality Contract concern"
+    },
+    "done_gate/artifact_done_gate": {
+      "class": "PLANNED",
+      "note": "Artifact Done-Gate (P2) -- see done_gate/__init__ note"
+    },
+    "fable_distillation/fd_00_gate": {
+      "class": "PLANNED",
+      "note": "FD-00 Admission Gate, built and tested (12/12x3 per memory/project_fd_execution_activation.md) but grep confirms NO current import from any live FD/co_12_telemetry surface -- the memory's 'activation' claim is stale and should be corrected"
+    },
+    "fable_distillation/fd_04_contrast": {
+      "class": "PLANNED",
+      "note": "FD-04 validation companion to fd_04_prover (LIVE); not itself imported by any live surface"
+    },
+    "fable_distillation/ukdl_queue": {
+      "class": "PLANNED",
+      "note": "FD flywheel queue-writer, built; not yet wired into fd_07_flywheel.py's live path"
+    },
+    "frontier_intelligence/corpus_roi": {
+      "class": "PLANNED",
+      "note": "B1 Dataset ROI Ledger, built per vault/plans/d2a-replacement-2026-07-17.md macrofamily B; not yet wired into any live consumer"
+    },
+    "frontier_intelligence/session_compiler": {
+      "class": "PLANNED",
+      "note": "built per FIOS spec; not yet wired into a live consumer"
+    },
+    "frontier_intelligence/unknown_unknown_generator": {
+      "class": "PLANNED",
+      "note": "Future/Opportunity Discovery module (OWNERSHIP_OVERLAP_AUDIT.md Group I); built, not yet wired"
+    },
+    "hard_rules/residual": {
+      "class": "PLANNED",
+      "note": "sealed doctrine compiler (PR-PROHIBITIONS-DO-NOT-CONFLICT-001), extensively cited in CLAUDE.md prose but grep confirms zero code import anywhere in modules/hard_rules -- designed to run when a Hard Rule fires; that integration into hook-dispatcher.js's block path has not happened"
+    },
+    "monitoring/alert": {
+      "class": "PLANNED",
+      "note": "alert emitter, self-describes its consumer as 'the monitor engine' (monitor.py, LIVE) but monitor.py does not yet import it -- built, wiring pending"
+    },
+    "parallel_mesh/pm_01_brain": {
+      "class": "PLANNED",
+      "note": "PM-01 Repo Shared Brain, part of the same Parallel Mesh spec as pm_03_bus (LIVE); pm_01/02/04/05 not yet wired"
+    },
+    "parallel_mesh/pm_02_intent": {
+      "class": "PLANNED",
+      "note": "Parallel Mesh spec -- see parallel_mesh/pm_01_brain note"
+    },
+    "parallel_mesh/pm_04_auction": {
+      "class": "PLANNED",
+      "note": "Parallel Mesh spec -- see parallel_mesh/pm_01_brain note"
+    },
+    "parallel_mesh/pm_05_prefetch": {
+      "class": "PLANNED",
+      "note": "Parallel Mesh spec -- see parallel_mesh/pm_01_brain note"
+    },
+    "pp_agents/signals/backlog": {
+      "class": "PLANNED",
+      "note": "signal module built (docstring: 'Wires modules.backlog_autopilot into the live proactive-dispatch path'); no pp-backlog agent .md exists yet to import it, unlike the 5 sibling signals that ARE live via their own agents/pp-*.md file"
+    },
+    "pp_agents/signals/cost": {
+      "class": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    "pp_agents/signals/errors": {
+      "class": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    "pp_agents/signals/health": {
+      "class": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    "pp_agents/signals/lessons": {
+      "class": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    "pp_agents/signals/quality": {
+      "class": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    "pp_agents/signals/sdd_tier": {
+      "class": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    "pp_agents/signals/setup_scan": {
+      "class": "PLANNED",
+      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+    },
+    "refcheck/__init__": {
+      "class": "PLANNED",
+      "note": "Reference Integrity Linter (P4), built and measured (136+ instances found per its own docstring); no command/hook currently wires it into a check surface"
+    },
+    "refcheck/linter": {
+      "class": "PLANNED",
+      "note": "Reference Integrity Linter (P4) -- see refcheck/__init__ note"
+    },
+    "rollback/runners/__init__": {
+      "class": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    "rollback/runners/restore_docker_volume": {
+      "class": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    "rollback/runners/restore_pg_dump": {
+      "class": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    "rollback/runners/restore_rsync_dir": {
+      "class": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    "rollback/source_selector": {
+      "class": "LIBRARY",
+      "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
+    },
+    "sleepless_qa/__init__": {
+      "class": "LIBRARY",
+      "note": "standalone Owner-invoked CLI verification pipeline (README.md, Ley 25 enforcement); no harness surface currently invokes it automatically -- entrypoint is manual `python -m modules.sleepless_qa.cli`"
+    },
+    "sleepless_qa/__main__": {
+      "class": "LIBRARY",
+      "note": "CLI entrypoint of the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/cli": {
+      "class": "LIBRARY",
+      "note": "CLI entrypoint of the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/dumpers/__init__": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/dumpers/base": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/dumpers/cli": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/dumpers/minecraft": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/dumpers/python_daemon": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/dumpers/web": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/healer/__init__": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/healer/dispatcher_bridge": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/healer/lock": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/healer/orchestrator": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/healer/pattern_cache": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/healer/run_log": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/heartbeat": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/verdict/__init__": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/verdict/contract": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/verdict/engine": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/verdict/log_pattern": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/verdict/schema": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sleepless_qa/verdict/visual": {
+      "class": "LIBRARY",
+      "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
+    },
+    "sqi/__init__": {
+      "class": "SCHEDULED",
+      "note": "driven by tools/run_sqi.py (imports modules.sqi.*), invoked periodically outside the harness -- corroborated by the liveness ledger's separate 'sqi-runner' audits surface (dated sqi_report_*.md)"
+    },
+    "sqi/baseline_guardian": {
+      "class": "SCHEDULED",
+      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
+    },
+    "sqi/environment_qualifier": {
+      "class": "SCHEDULED",
+      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
+    },
+    "sqi/reconcile": {
+      "class": "SCHEDULED",
+      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
+    },
+    "sqi/redteam_protocol": {
+      "class": "SCHEDULED",
+      "note": "part of the sqi package driven by tools/run_sqi.py -- see sqi/__init__ note"
+    },
+    "sqi/repo_reality_scanner": {
+      "class": "SCHEDULED",
+      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
+    },
+    "sqi/weakening_baseline": {
+      "class": "SCHEDULED",
+      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
+    },
+    "sqi/weakening_detectors": {
+      "class": "SCHEDULED",
+      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
+    },
+    "sweep_enforcer/__init__": {
+      "class": "LIBRARY",
+      "note": "manual sweep tool invoked by an agent/Owner performing a specific prevention-rule sweep (P3); self-contained, no standing harness consumer required"
+    },
+    "sweep_enforcer/rule_sweep": {
+      "class": "LIBRARY",
+      "note": "manual sweep tool invoked by an agent/Owner performing a specific prevention-rule sweep (P3); self-contained, no standing harness consumer required"
+    },
+    "uqf/gates": {
+      "class": "LIBRARY",
+      "note": "decorator/assert utility library (uqf_gate, assert_uqf) for opt-in use by test files and other modules -- no default consumer required by design"
+    },
+    "wrapper/__init__": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper modules (W1-W5), consumed by tools/kclaude.ps1 (W6) per its own docstring -- a .ps1 consumer is outside the scanner's current text-surface coverage (.js/.md/CLAUDE.md/settings.json only); tracked separately as the 'kclaude' surface in the liveness ledger"
+    },
+    "wrapper/auto_resumer": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "wrapper/cost_gate": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "wrapper/prelaunch": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "wrapper/repo_coordinator": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "wrapper/session_namer": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "wrapper/turn_counter": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    },
+    "wrapper/verify_before_emit": {
+      "class": "LIBRARY",
+      "note": "kclaude wrapper module, consumed by tools/kclaude.ps1 -- see wrapper/__init__ note"
+    }
+  }
 }
