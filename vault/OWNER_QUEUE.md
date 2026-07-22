@@ -102,6 +102,40 @@ surface. Candidate: a `/refcheck` command or a Stop-chain check.
 
 ---
 
+## NEW (2026-07-22) -- CGF Workstream D: register `prompt_minimalism_gate.js` on Task  [PENDING]
+
+**System:** `hooks/prompt_minimalism_gate.js` (mirrored to `~/.claude/hooks/` already).
+**Why:** the CGF Phase -1 audit confirmed this is the one genuinely-new mechanism
+in the whole proposal -- neither `prompt_pattern_optimizer.py` (CLAUDE.md token
+waste) nor `prompt_defense_baseline.py` (security defenses) checks whether an
+outgoing sub-agent prompt hands over literal implementation instead of a
+contract. Built, unit-validated (`tools/test_prompt_minimalism.py`,
+`PROMPT_MINIMALISM_PASS=5/5 false_positive_rate=0.00` against real/representative
+cases including this session's own CGF prompt as a should-NOT-trip contract
+example), but NOT proven to fire in the live harness yet -- do not wire blind,
+same discipline as item (c) below.
+
+Add to `~/.claude/settings.json` under `"hooks"."PreToolUse"`, alongside the
+existing `subagent-bash-avoidance-advisor.js` / `agent-solo-guard.js` entries
+on the same `"Task"` matcher:
+```json
+{
+  "matcher": "Task",
+  "hooks": [
+    { "type": "command",
+      "command": "\"/c/Program Files/nodejs/node.exe\" \"C:/Users/User/.claude/hooks/prompt_minimalism_gate.js\"",
+      "timeout": 5,
+      "statusMessage": "Prompt Minimalism advisory (CGF Workstream D, 2026-07-22)" }
+  ]
+}
+```
+**Verify:** dispatch an Agent with a prompt containing a fenced code block that
+defines a function (not framed as "existing code") -- `additionalContext`
+should carry the PROMPT MINIMALISM advisory; a normal contract-style prompt
+(paths, constraints, done-gate, no code fence) should produce no output.
+
+---
+
 ## NEW (2026-07-20) -- PP audit: hook registrations + one HR-001 ratification
 
 ### (a) RATIFY OR REVERT: agent edited `~/.claude/hooks/hook-dispatcher.js`
