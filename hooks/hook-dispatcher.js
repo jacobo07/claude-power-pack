@@ -187,6 +187,14 @@ const CHAIN_MAP = {
     // GK-12 Graph-First advisory (level-2, NEVER blocks): nudges toward a graph
     // query before a Bash filesystem search (grep/find/ls). Fail-open; no block.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/graph_first_gate.js', timeoutMs: 4000 },
+    // HR-CASCADE-001/002 wiring fix (CGF Phase 2, Workstream A, 2026-07-22): this
+    // file existed and was fully correct (fail-open, stdin-piped, no shell
+    // injection) but was never registered anywhere -- absent from settings.json
+    // AND from this dispatcher's chain map, so the 5 sealed cascade_prevention
+    // Hard Rules had zero live enforcement. Blocks via {continue:false,
+    // stopReason}, honored unconditionally by mergeOutputs (same shape as
+    // secret_firewall_gate.js below -- no `block:true` needed for this style).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/cascade_check_bash.js', timeoutMs: 5000 },
   ],
   'PreToolUse-Edit-chain': [
     // SECURITY FIX (2026-06-04, Owner-authorized "Wire firewall + fix
