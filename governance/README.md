@@ -14,6 +14,7 @@ rule cites the real incident that produced it — no generic advice.
 | `REPO_SECURITY_GOVERNANCE.md` | Repository security | the first commit of any project |
 | `SESSION_CONTINUITY_GOVERNANCE.md` | Multi-session work | starting any multi-day task |
 | `KNOWN_FALSE_POSITIVES.md` | Hook noise | investigating any hook/gate signal |
+| `KNOWLEDGE_CAPTURE_GOVERNANCE.md` | Knowledge capture ownership (FD/compound-learnings/AKOS) | before touching any of the three, or re-auditing them as "duplicative" |
 
 ## How to use in a new project
 1. Clone or reference `claude-power-pack`; point the new project's `CLAUDE.md` at this
