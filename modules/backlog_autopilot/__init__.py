@@ -3,7 +3,7 @@
 Recommends the highest-ROI actionable item from a backlog. Filters
 done + blocked items; scores remaining by priority + impact + effort.
 
-Public API: what_now, BacklogItem, WhatNowResult,
+Public API: what_now, what_now_tracked, BacklogItem, WhatNowResult,
 PRIORITY_BONUS_WEIGHT, IMPACT_SCORE, EFFORT_SCORE, PRIORITY_MAX.
 """
 from .engine import (
@@ -15,6 +15,7 @@ from .engine import (
     WhatNowResult,
     what_now,
 )
+from .tracked import what_now_tracked
 
 __all__ = [
     "BacklogItem",
@@ -24,4 +25,5 @@ __all__ = [
     "PRIORITY_MAX",
     "WhatNowResult",
     "what_now",
+    "what_now_tracked",
 ]

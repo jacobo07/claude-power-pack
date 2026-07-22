@@ -1,6 +1,6 @@
 # Liveness Ledger -- post-ship verdict (D1)
 
-Generated 2026-07-22T16:53:01.292437+00:00 | 316 components | 165 LIVE, 151 non-LIVE (130 silent, 0 drifted, 21 orphaned, 0 unknown).
+Generated 2026-07-22T17:06:30.156638+00:00 | 319 components | 168 LIVE, 151 non-LIVE (130 silent, 0 drifted, 21 orphaned, 0 unknown).
 
 Verdict class: LIVE = recent end-to-end evidence; WIRED-BUT-SILENT = wired but no recent evidence (idle / broken producer / producer-without-consumer); DRIFTED = repo vs ~/.claude/hooks hash mismatch; ORPHANED = live artifact with no repo source.
 
@@ -27,9 +27,9 @@ Verdict class: LIVE = recent end-to-end evidence; WIRED-BUT-SILENT = wired but n
 | `module:session_resilience/resume_identity` | reachability | **ORPHANED** | no live surface reaches this module |
 | `module:session_resilience/snapshot_versioning` | reachability | **ORPHANED** | no live surface reaches this module |
 | `module:session_resilience/ui_state` | reachability | **ORPHANED** | no live surface reaches this module |
-| `dfp-necessity-ledger` | decision-registry | **WIRED-BUT-SILENT** | newest necessity_ledger.jsonl 244.2h ago (> 36h -- quiet) |
-| `drk-proactive` | audits | **WIRED-BUT-SILENT** | newest drk_proactive_2026-07-11.md 260.8h ago (> 36h -- quiet) |
-| `kclaude-preflight` | kclaude | **WIRED-BUT-SILENT** | newest SESSION_ZERO_2026-07-11T112609Z.md 269.4h ago (> 36h -- quiet) |
+| `dfp-necessity-ledger` | decision-registry | **WIRED-BUT-SILENT** | newest necessity_ledger.jsonl 244.4h ago (> 36h -- quiet) |
+| `drk-proactive` | audits | **WIRED-BUT-SILENT** | newest drk_proactive_2026-07-11.md 261.0h ago (> 36h -- quiet) |
+| `kclaude-preflight` | kclaude | **WIRED-BUT-SILENT** | newest SESSION_ZERO_2026-07-11T112609Z.md 269.7h ago (> 36h -- quiet) |
 | `module:auto-testing/detectors` | reachability | **WIRED-BUT-SILENT** | unreachable; declared LIBRARY |
 | `module:auto-testing/generators/_common` | reachability | **WIRED-BUT-SILENT** | unreachable; declared LIBRARY |
 | `module:auto-testing/generators/java_gen` | reachability | **WIRED-BUT-SILENT** | unreachable; declared LIBRARY |
@@ -156,10 +156,10 @@ Verdict class: LIVE = recent end-to-end evidence; WIRED-BUT-SILENT = wired but n
 | `module:wrapper/turn_counter` | reachability | **WIRED-BUT-SILENT** | unreachable; declared LIBRARY |
 | `module:wrapper/verify_before_emit` | reachability | **WIRED-BUT-SILENT** | unreachable; declared LIBRARY |
 | `pm-03-bus` | pm-bus | **WIRED-BUT-SILENT** | 13 producer file(s); consumer is the SessionStart hub read but emits no 'pm03_consume' signal -- consumption unmeasured |
-| `sqi-runner` | audits | **WIRED-BUT-SILENT** | newest sqi_report_2026-07-12.md 239.9h ago (> 36h -- quiet) |
-| `drk-kernel` | decision-registry | **LIVE** | records.jsonl 22.1h ago (<= 36h) |
-| `fd-07-flywheel` | stop-chain | **LIVE** | 918 signals, freshest 0.2h ago (<= 36h) |
-| `fios-token-irr` | stop-chain | **LIVE** | 871 signals, freshest 0.2h ago (<= 36h) |
+| `sqi-runner` | audits | **WIRED-BUT-SILENT** | newest sqi_report_2026-07-12.md 240.1h ago (> 36h -- quiet) |
+| `drk-kernel` | decision-registry | **LIVE** | records.jsonl 22.4h ago (<= 36h) |
+| `fd-07-flywheel` | stop-chain | **LIVE** | 922 signals, freshest 0.1h ago (<= 36h) |
+| `fios-token-irr` | stop-chain | **LIVE** | 875 signals, freshest 0.1h ago (<= 36h) |
 | `hook-dispatcher` | hooks-dir | **LIVE** | in sync (sha256 778f8d08f08a) |
 | `module:ads/__init__` | reachability | **LIVE** | reached from package-init of ads/doc_updater |
 | `module:ads/detector` | reachability | **LIVE** | reached from tools/ads_backfill.py |
@@ -176,14 +176,15 @@ Verdict class: LIVE = recent end-to-end evidence; WIRED-BUT-SILENT = wired but n
 | `module:auto-testing/vault_io` | reachability | **LIVE** | reached from commands/auto-test.md |
 | `module:backlog_autopilot/__init__` | reachability | **LIVE** | reached from commands/what-now.md |
 | `module:backlog_autopilot/engine` | reachability | **LIVE** | reached from CLAUDE.md |
+| `module:backlog_autopilot/tracked` | reachability | **LIVE** | reached from commands/what-now.md |
 | `module:backup/__init__` | reachability | **LIVE** | reached from package-init of backup/backup |
 | `module:backup/backup` | reachability | **LIVE** | reached from commands/backup.md |
-| `module:cascade_prevention/__init__` | reachability | **LIVE** | reached from package-init of cascade_prevention/dangerous_cmds |
+| `module:cascade_prevention/__init__` | reachability | **LIVE** | reached from package-init of cascade_prevention/engine |
 | `module:cascade_prevention/blocker` | reachability | **LIVE** | reached from modules/cascade_prevention/__init__ |
 | `module:cascade_prevention/dangerous_cmds` | reachability | **LIVE** | reached from hooks/cascade_check_bash.js |
 | `module:cascade_prevention/engine` | reachability | **LIVE** | reached from hooks/cascade_check_bash.js |
 | `module:cascade_prevention/surfaces` | reachability | **LIVE** | reached from modules/cascade_prevention/__init__ |
-| `module:cascade_prevention/types` | reachability | **LIVE** | reached from modules/cascade_prevention/__init__ |
+| `module:cascade_prevention/types` | reachability | **LIVE** | reached from modules/cascade_prevention/engine |
 | `module:cdio/__init__` | reachability | **LIVE** | reached from live:cdio-core.md |
 | `module:cdio/bus_bridge` | reachability | **LIVE** | reached from live:cdio-core.md |
 | `module:cdio/scorer` | reachability | **LIVE** | reached from live:cdio-reviewer.md |
@@ -239,10 +240,12 @@ Verdict class: LIVE = recent end-to-end evidence; WIRED-BUT-SILENT = wired but n
 | `module:graphify/global_store` | reachability | **LIVE** | reached from modules/graphify/indexer |
 | `module:graphify/indexer` | reachability | **LIVE** | reached from hooks/graph_first_gate.js |
 | `module:graphify/session_writeback` | reachability | **LIVE** | reached from hooks/hook-dispatcher.js |
-| `module:hard_rules/__init__` | reachability | **LIVE** | reached from package-init of hard_rules/writer |
+| `module:hard_rules/__init__` | reachability | **LIVE** | reached from package-init of hard_rules/extractor |
 | `module:hard_rules/extractor` | reachability | **LIVE** | reached from tools/bug_to_hardrule.py |
 | `module:hard_rules/writer` | reachability | **LIVE** | reached from tools/bug_to_hardrule.py |
-| `module:liveness/__init__` | reachability | **LIVE** | reached from package-init of liveness/reachability |
+| `module:ias_c2/__init__` | reachability | **LIVE** | reached from modules/backlog_autopilot/tracked |
+| `module:ias_c2/opportunity_cost` | reachability | **LIVE** | reached from commands/what-now.md |
+| `module:liveness/__init__` | reachability | **LIVE** | reached from package-init of liveness/liveness_ledger |
 | `module:liveness/liveness_ledger` | reachability | **LIVE** | reached from commands/liveness.md |
 | `module:liveness/reachability` | reachability | **LIVE** | reached from commands/liveness.md |
 | `module:monitoring/__init__` | reachability | **LIVE** | reached from commands/revenue-ready.md |
@@ -252,7 +255,7 @@ Verdict class: LIVE = recent end-to-end evidence; WIRED-BUT-SILENT = wired but n
 | `module:one_shot/compiler` | reachability | **LIVE** | reached from commands/one-shot-compile.md |
 | `module:one_shot/escalation` | reachability | **LIVE** | reached from CLAUDE.md |
 | `module:one_shot/lock` | reachability | **LIVE** | reached from CLAUDE.md |
-| `module:osa/__init__` | reachability | **LIVE** | reached from package-init of osa/dispatcher |
+| `module:osa/__init__` | reachability | **LIVE** | reached from package-init of osa/throttle |
 | `module:osa/dispatcher` | reachability | **LIVE** | reached from live:omni-singularity.md |
 | `module:osa/gpu_eyes` | reachability | **LIVE** | reached from live:omni-singularity.md |
 | `module:osa/never_again` | reachability | **LIVE** | reached from live:omni-singularity.md |
@@ -282,7 +285,7 @@ Verdict class: LIVE = recent end-to-end evidence; WIRED-BUT-SILENT = wired but n
 | `module:rule_compiler/compiler` | reachability | **LIVE** | reached from tools/hardrule_compile.py |
 | `module:rule_compiler/digest` | reachability | **LIVE** | reached from tools/hardrule_compile.py |
 | `module:rule_compiler/parser` | reachability | **LIVE** | reached from modules/rule_compiler/compiler |
-| `module:rule_compiler/schema` | reachability | **LIVE** | reached from modules/rule_compiler/digest |
+| `module:rule_compiler/schema` | reachability | **LIVE** | reached from modules/rule_compiler/__init__ |
 | `module:sdd_os/__init__` | reachability | **LIVE** | reached from package-init of sdd_os/prd_generator |
 | `module:sdd_os/prd_generator` | reachability | **LIVE** | reached from commands/prd-generate.md |
 | `module:secret_firewall/__init__` | reachability | **LIVE** | reached from CLAUDE.md |

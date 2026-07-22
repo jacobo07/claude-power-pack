@@ -28,7 +28,7 @@ Algorithm (v1, BL-BACKLOG-001):
 Or programmatically:
 
 ```python
-from modules.backlog_autopilot import BacklogItem, what_now
+from modules.backlog_autopilot import BacklogItem, what_now_tracked
 
 items = [
     BacklogItem("FIX-1", "Fix login bug", 0, "S", "Critical"),
@@ -36,10 +36,18 @@ items = [
     BacklogItem("BLK-3", "Blocked task",  0, "S", "Critical",
                 blockers=("waiting-on-vendor",)),
 ]
-result = what_now(items)
+result = what_now_tracked(items)   # what_now() + IAS-C2 opportunity-cost recording
 print(result.recommended.id)   # -> FIX-1
 print(result.reasoning)
 ```
+
+`what_now_tracked` (modules/backlog_autopilot/tracked.py) is the recommended
+entrypoint: identical recommendation to `what_now`, plus a real IAS-C2
+Opportunity Cost Ledger entry (`vault/ias/c2_opportunity_cost_ledger.jsonl`)
+naming the highest-ranked item NOT picked this time. `python -m
+modules.ias_c2.opportunity_cost --report` prints the per-domain pattern this
+produces over time (Part VI of the sealed IAS-C2 corpus). Use bare `what_now`
+only when you deliberately want no ledger side effect.
 
 ## Why this exists
 
