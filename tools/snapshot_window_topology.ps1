@@ -68,8 +68,13 @@ if ($Action -eq "status") {
 # else: Action -eq "run" falls through to the capture logic below.
 
 Add-Type -Namespace PPWin -Name Native -MemberDefinition @'
-[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+[DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
+[DllImport("user32.dll")] public static extern int GetWindowTextLength(IntPtr hWnd);
+[DllImport("user32.dll", CharSet=CharSet.Auto)] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
 [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 '@ -ErrorAction SilentlyContinue
 
 function Get-RepoLookup {
@@ -109,29 +114,57 @@ function Resolve-RepoFromTitle {
     return [pscustomobject]@{ repoName = $name; repoPath = $null; kind = 'unmapped' }
 }
 
-$repoLookup = Get-RepoLookup -Path $PaneMapPath
+function Get-CursorTopLevelWindows {
+    # EnumWindows + GetWindowThreadProcessId, NOT Get-Process.MainWindowTitle.
+    # Empirically verified 2026-07-22 (live crash recovery, this same session):
+    # MainWindowTitle returns exactly ONE window per process even when Cursor
+    # owns 6 top-level windows under one PID -- silently hiding 5 of 6. A
+    # topology producer that under-counts windows is worse than none: it reads
+    # as "restored" when it is not.
+    $cursorPids = @(Get-Process -Name 'cursor' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id)
+    if (-not $cursorPids -or $cursorPids.Count -eq 0) { return @() }
+    $fg = [PPWin.Native]::GetForegroundWindow()
+    $fgPid = 0
+    if ($fg -ne [IntPtr]::Zero) { $tmp = 0; [void][PPWin.Native]::GetWindowThreadProcessId($fg, [ref]$tmp); $fgPid = $tmp }
 
-$fgWindow = [PPWin.Native]::GetForegroundWindow()
-$fgPid = 0
-if ($fgWindow -ne [IntPtr]::Zero) {
-    $fgProcId = 0
-    [void][PPWin.Native]::GetWindowThreadProcessId($fgWindow, [ref]$fgProcId)
-    $fgPid = $fgProcId
+    $found = New-Object System.Collections.Generic.List[object]
+    $seenTitles = New-Object System.Collections.Generic.HashSet[string]
+    $cb = {
+        param($hWnd, $lParam)
+        if ([PPWin.Native]::IsWindowVisible($hWnd)) {
+            $len = [PPWin.Native]::GetWindowTextLength($hWnd)
+            if ($len -gt 0) {
+                $sb = New-Object System.Text.StringBuilder ($len + 1)
+                [void][PPWin.Native]::GetWindowText($hWnd, $sb, $sb.Capacity)
+                $title = $sb.ToString()
+                $procId = 0
+                [void][PPWin.Native]::GetWindowThreadProcessId($hWnd, [ref]$procId)
+                if (($cursorPids -contains $procId) -and $seenTitles.Add($title)) {
+                    $found.Add([pscustomobject]@{ pid = $procId; title = $title; hwnd = $hWnd })
+                }
+            }
+        }
+        return $true
+    }
+    [void][PPWin.Native]::EnumWindows($cb, [IntPtr]::Zero)
+    return @($found | ForEach-Object {
+        [pscustomobject]@{ pid = $_.pid; title = $_.title; focused = ($_.hwnd -eq $fg) }
+    })
 }
 
-$windows = Get-Process -Name 'cursor' -ErrorAction SilentlyContinue |
-    Where-Object { $_.MainWindowTitle -ne '' -and $_.MainWindowHandle -ne [IntPtr]::Zero } |
-    ForEach-Object {
-        $resolved = Resolve-RepoFromTitle -Title $_.MainWindowTitle -Lookup $repoLookup
-        [pscustomobject]@{
-            pid        = $_.Id
-            title      = $_.MainWindowTitle
-            repoName   = $resolved.repoName
-            repoPath   = $resolved.repoPath
-            kind       = $resolved.kind
-            focused    = ($_.Id -eq $fgPid)
-        }
+$repoLookup = Get-RepoLookup -Path $PaneMapPath
+$rawWindows = Get-CursorTopLevelWindows
+$windows = @($rawWindows | ForEach-Object {
+    $resolved = Resolve-RepoFromTitle -Title $_.title -Lookup $repoLookup
+    [pscustomobject]@{
+        pid      = $_.pid
+        title    = $_.title
+        repoName = $resolved.repoName
+        repoPath = $resolved.repoPath
+        kind     = $resolved.kind
+        focused  = $_.focused
     }
+})
 
 $snapshot = [pscustomobject]@{
     capturedAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss.fffffffZ')
