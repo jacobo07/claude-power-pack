@@ -73,6 +73,73 @@ _LIVE_SEED_GLOBS = ("hooks/*.js", "commands/*.md", "agents/*.md",
 def live_root() -> Path:
     return Path.home() / ".claude"
 
+
+# `hooks/*.js` by directory+extension alone is over-broad: a file merely sitting in
+# hooks/ is not necessarily invoked by anything. The ONLY thing settings.json actually
+# registers is hook-dispatcher.js; that file's own EVENT_MAP/CHAIN_MAP is the real
+# registration ledger. Sealed 2026-07-22: hooks/cascade_check_bash.js was registered in
+# NEITHER settings.json nor the dispatcher's chain map, yet every prior scan called it
+# LIVE purely because it is a .js file living in hooks/. A hooks/*.js file counts as a
+# live seed only if it IS the dispatcher itself (settings.json's real entrypoint) or its
+# path is named inside the dispatcher's own registries.
+_DISPATCHER_NAME = "hook-dispatcher.js"
+# Broad by design: ANY quoted string ending .js, relative or absolute. Narrowing to
+# `./`/`../`-prefixed refs (the dispatcher's own idiom) missed settings.json's direct
+# registrations, which use absolute paths ("C:/Users/User/.claude/skills/.../foo.js")
+# -- session_start_hub.js (SessionStart event) is registered THIS way, not through
+# the dispatcher at all. Only the basename is ever extracted, so a broader match
+# carries negligible false-whitelist risk. The optional leading/trailing `\\?`:
+# settings.json's "command" value is itself a JSON string whose embedded path is
+# quoted a SECOND time with escaped quotes (`\"C:/...foo.js\"`) -- the delimiter
+# immediately touching ".js" is a backslash there, not a bare quote, so a plain
+# ['"] boundary silently matched zero settings.json-registered hooks.
+_HOOK_REF_RE = re.compile(r"""\\?['"]([^'"\\]+?\.js)\\?['"]""")
+
+
+def _registered_hooks(root: Path) -> set[str]:
+    """Basenames of every .js file named by a REAL registration surface: the
+    dispatcher's own EVENT_MAP/CHAIN_MAP, plus settings.json / settings.local.json
+    directly (some events, e.g. SessionStart, bypass the dispatcher and register a
+    script straight from settings.json -- session_start_hub.js is a confirmed case).
+
+    Filename, not resolved absolute path: a `./foo.js` reference is relative to
+    wherever the dispatcher ACTUALLY runs from (~/.claude/hooks), so resolving it
+    against the repo's hooks/ dir (a different directory entirely) never matches --
+    that mismatch silently un-fixed the bug this function exists to fix, demoting
+    genuinely-registered files (learning-sentinel.js, zero-issue-gate.js, ...) to
+    false orphans the moment this ran. Basename matching sidesteps the repo-vs-
+    live-install path split this whole module already has to account for (see the
+    live_root() comment above). Collision risk is negligible: hooks/ is flat
+    (_SEED_GLOBS globs one level, not recursive) and every hook file in this repo
+    has a distinct, purpose-specific name.
+
+    Fail-open to empty per surface: an absent/unreadable file contributes no names
+    rather than raising, matching this module's fail-open contract throughout.
+    """
+    names: set[str] = set()
+    lr = live_root()
+
+    dispatcher = None
+    for candidate in (lr / "hooks" / _DISPATCHER_NAME, root / "hooks" / _DISPATCHER_NAME):
+        if candidate.is_file():
+            dispatcher = candidate
+            break
+    if dispatcher is not None:
+        text = _read(dispatcher)
+        if text is not None:
+            for ref in _HOOK_REF_RE.findall(text):
+                names.add(ref.replace("\\", "/").rsplit("/", 1)[-1])
+
+    for settings_name in ("settings.json", "settings.local.json"):
+        settings_path = lr / settings_name
+        if settings_path.is_file():
+            text = _read(settings_path)
+            if text is not None:
+                for ref in _HOOK_REF_RE.findall(text):
+                    names.add(ref.replace("\\", "/").rsplit("/", 1)[-1])
+
+    return names
+
 # `modules.pkg.mod`, `modules/pkg/mod`, `modules\pkg\mod` -- at ARBITRARY depth. An
 # earlier version captured exactly two segments, so a reference to
 # `modules.uqf.principles.false_positives_catalog` collapsed to `uqf/__init__` and every
@@ -92,6 +159,17 @@ _TOOL_RE = re.compile(r"tools[./\\]([A-Za-z0-9_\-]+)\.py")
 # vocabulary, not the code.
 _TOOL_SEG_RE = re.compile(
     r"""['"]tools['"]\s*,\s*['"]([A-Za-z0-9_\-]+)\.py['"]""")
+# The SAME segmented-path.join idiom recurs for `modules/<pkg>/.../<file>.py` (e.g.
+# d2a_gate.js: path.join(PP_ROOT, 'modules', 'duplicate_to_advantage', 'd2a_engine.py')
+# -- 3+ segments, not the 2-segment tools/ case above). Sealed 2026-07-22: this exact
+# gap read modules/duplicate_to_advantage/d2a_engine as ORPHAN while it was being
+# invoked as a subprocess on every UserPromptSubmit. Captures the run of quoted
+# segments between the literal 'modules' and the final '<file>.py' as ONE blob (not
+# per-repetition -- Python re keeps only the last iteration of a repeated group), then
+# _refs_in_text splits that blob back into segments and joins them into a unit path.
+_MODULE_SEG_RE = re.compile(
+    r"""['"]modules['"]((?:\s*,\s*['"][A-Za-z0-9_\-]+['"])+)\s*,\s*['"]([A-Za-z0-9_\-]+)\.py['"]""")
+_QUOTED_SEG_RE = re.compile(r"""['"]([A-Za-z0-9_\-]+)['"]""")
 # A plugin loader -- `import_module(f"modules.uqf.principles.{name}")` -- is a genuine
 # live reference whose target is only known at runtime. Text-matching cannot name the
 # module, but it CAN name the package being loaded, so every module directly under that
@@ -142,13 +220,24 @@ def module_inventory(repo_root: Path | None = None) -> list[str]:
 
 def live_seeds(repo_root: Path | None = None) -> list[Path]:
     root = Path(repo_root or _repo_root())
+    registered: set[str] | None = None  # lazy -- only paid for if a hooks/*.js glob fires
+
+    def _filter_hooks(found: list[Path]) -> list[Path]:
+        nonlocal registered
+        if registered is None:
+            registered = _registered_hooks(root)
+        return [p for p in found
+                if p.name == _DISPATCHER_NAME or p.name in registered]
+
     seeds: list[Path] = []
     for pattern in _SEED_GLOBS:
-        seeds.extend(sorted(root.glob(pattern)))
+        found = sorted(root.glob(pattern))
+        seeds.extend(_filter_hooks(found) if pattern == "hooks/*.js" else found)
     lr = live_root()
     if lr.is_dir():
         for pattern in _LIVE_SEED_GLOBS:
-            seeds.extend(sorted(lr.glob(pattern)))
+            found = sorted(lr.glob(pattern))
+            seeds.extend(_filter_hooks(found) if pattern == "hooks/*.js" else found)
     return [p for p in seeds if p.is_file()]
 
 
@@ -169,6 +258,20 @@ def _refs_in_text(text: str, known: set[str], *, pkg: str | None = None) -> set[
         if unit in known:                       # modules.pkg.sub.mod
             hits.add(unit)
         elif f"{unit}/__init__" in known:       # modules.pkg.sub  (package import)
+            hits.add(f"{unit}/__init__")
+
+    # Segmented path.join construction: path.join(ROOT, 'modules', 'pkg', ..., 'f.py').
+    # _PATH_RE above only matches a CONTIGUOUS literal like "modules/pkg/f.py"; a JS
+    # hook that builds the path across separate string arguments never produces that
+    # contiguous form, so it was invisible here even though the reference is real.
+    for seg_blob, fname in _MODULE_SEG_RE.findall(text):
+        segs = _QUOTED_SEG_RE.findall(seg_blob)
+        if not segs:
+            continue
+        unit = "/".join(segs + [fname])
+        if unit in known:
+            hits.add(unit)
+        elif f"{unit}/__init__" in known:
             hits.add(f"{unit}/__init__")
 
     for base, blob in _FROM_RE.findall(text):
