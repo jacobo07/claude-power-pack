@@ -69,7 +69,10 @@ param(
     [int]$LargeRepoDelayMs = 1200,
     [switch]$TierOrder,         # open repos by TIER_ORDER priority instead of pane_map recency
     [int]$WaveSize = 5,         # panes launched per wave inside a repo (-AutoRun); 0 = no stagger
-    [int]$WaveIntervalS = 8     # seconds between waves (-AutoRun); 0 = no stagger
+    [int]$WaveIntervalS = 8,    # seconds between waves (-AutoRun); 0 = no stagger
+    [string[]]$OnlyRepoCwds = @()   # restrict to these repo cwds only (reconciliation: reopen
+                                     # ONLY what's confirmed missing, never a repo already open --
+                                     # see vault/specs/cursor-window-session-restoration.md Scope 3)
 )
 
 # -TierOrder priority. Lower tier opens first. A repo not listed here lands in
@@ -215,6 +218,13 @@ foreach ($p in $panes) {
     if (-not $cwd) { continue }
     if (-not $repoPanes.Contains($cwd)) { $repoPanes[$cwd] = @(); $repoOrder += $cwd }
     $repoPanes[$cwd] += $p
+}
+if ($OnlyRepoCwds -and $OnlyRepoCwds.Count -gt 0) {
+    $wanted = @($OnlyRepoCwds | ForEach-Object { $_.TrimEnd('\').ToLower() })
+    $before = $repoOrder.Count
+    $repoOrder = @($repoOrder | Where-Object { $wanted -contains $_.TrimEnd('\').ToLower() })
+    Write-Host ("OnlyRepoCwds: restricted {0} -> {1} repo(s)." -f $before, $repoOrder.Count)
+    if ($repoOrder.Count -eq 0) { Write-Host '[INFO] No matching repos in OnlyRepoCwds.'; exit 0 }
 }
 if ($TierOrder) {
     # Stable partition by tier: PowerShell's Sort-Object is stable, so repos
