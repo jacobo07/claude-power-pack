@@ -1,0 +1,23 @@
+{
+  "_comment": "Thresholds for hooks/claude_md_linter_stop.js. Edit here, never in the hook. Chars, not lines -- Claude Code's warning counts characters.",
+  "hard": 40000,
+  "margin": 38000,
+  "section_max": 900,
+  "max_suggestions": 3,
+  "_hard": "Claude Code performance warning. ALERT.",
+  "_margin": "Compaction target with headroom for future additions. WARN.",
+  "_section_max": "PR-CLAUDE-MD-INDEX-FIRST-001: a section above this with no vault pointer is named as a move candidate.",
+  "protected": [
+    "Windows Bash Bridge Reliability",
+    "Parallel Subagent Limit on Windows",
+    "HARD RULES",
+    "Environment Awareness",
+    "Critical Rules",
+    "Reality Contract",
+    "Token Efficiency",
+    "PP Activation Criteria",
+    "SDD-OS"
+  ],
+  "_protected": "Never suggested for externalization. Bash-Bridge and Anti-Waiting are sealed by reference_claude_md_40k_char_warning.md; the rest are unconditional triggers that must fire without the agent choosing to read anything. A pointer is followed only if the agent decides to follow it -- move a trigger and the rule silently stops existing.",
+  "destination": "~/.claude/knowledge_vault/claude-doctrine/"
+}
