@@ -1,6 +1,6 @@
 # CPCSC — MISSION STATE
 
-**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B in progress (7/9 sealed: B5-B9 + B1 + B2 done; B3/B4 module/wiring remain).**
+**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B in progress (8/9 sealed: B5-B9 + B1 + B2 + B3 done; B4 module remains).**
 **Updated:** 2026-07-26
 
 > B1 SEALED (`b494a84`): FIOS II-1 Unknown-Unknown Hunter — `modules/frontier_intelligence/unknown_unknown_generator.py`
@@ -15,7 +15,19 @@
 > the "Part XII checker" DAIF-01 names but never builds). Gate `tools/test_epistemic_algebra.py` 12/12 ×3.
 > DRK_INDEX updated (Executable table, V-gates addendum, Build ledger, Honest residuals — `evidence_burden_met`
 > deliberately not rewired to consume it yet, deferred until a second real consumer exists). Also an A2 dep.
-> **Next: B3** (CO-03 + one_shot reasoning-axis wiring), then B4 (DFP FREEZE → IAS-C1 FUNDED transduction module).
+> B3 SEALED: reasoning-execution axis (CO-03 x one_shot) — `modules/one_shot/reasoning_route.py`.
+> CO-03 (`cost_collapse.router.route`) keyword-derives a route class/model/budget from a description;
+> `compiler.compile_contract` freezes an Owner-declared size into a budget with zero check against CO-03's
+> independent derivation, and `escalation.recommend_action` names a model by bare string ("escalate-to-opus")
+> untied to a real model ID. New module: `recommend_route(contract)` — CO-03's route for the contract's own
+> description, checked for coherence against the declared budget (HR-COST-002's 2x threshold, reused verbatim);
+> `model_for_action(action)` — resolves "escalate-to-opus" to CO-03's real `MODEL_MACRO`, every other action
+> (including the HR-ONESHOT-003 Owner-decision STOP) to None. Wired into `compile_contract(cwd=...)` as an
+> opt-in stderr advisory (same discipline as the existing Spec Gate check); silent for the live JIT caller
+> (`jit_skill_loader.py`, no cwd passed) — zero behavior change on the hot path. Gate
+> `tools/test_reasoning_route.py` 9/9 ×3. Registered in `commands/one-shot-compile.md` (no dedicated family
+> INDEX exists for one_shot/CO-03, unlike FIOS/DRK — this doc is that surface's doctrine home).
+> **Next: B4** (DFP FREEZE → IAS-C1 FUNDED transduction module) — the last Tier-B item.
 > Pattern for B1-style module work: read owner + closest-neighbor module to draw the distinct-object boundary,
 > build deterministic + fail-open composing existing surfaces, V-gate hermetic ×3, register in the owner's
 > doctrine index (avoid the orphan/scaffold trap), pathspec commit.
@@ -42,12 +54,12 @@
 - Gates: `test_ias.py` (A1+D2+F3×3 = 20/20), `test_daif.py` (48/48; daif_04 21 Parts, daif_08 21 Parts),
   `test_side_effect_ledger.py` (8/8). All hermetic ×2. Every push REMOTE_DELTA 0 0.
 
-## Pending — Tier B (2 remaining, ALL module/wiring — a distinct phase from the dataset-Parts)
+## Pending — Tier B (1 remaining, module/wiring — a distinct phase from the dataset-Parts)
 Each: read the owner/target fully, build the module or wire the seam, close ONLY the named gap,
 add a V-gate (module contract), micro-commit per owner. No dataset-Part floor here (these are code).
 - ~~**B1** unknown-unknown generation → **FIOS**~~ — SEALED `b494a84`
 - ~~**B2** epistemic algebra unification → **DRK-00 x DAIF-01 x ACIS**~~ — SEALED (this session)
-- **B3** reasoning execution axis → **CO-03 + one_shot** — wiring
+- ~~**B3** reasoning execution axis → **CO-03 + one_shot**~~ — SEALED (this session)
 - **B4** corpus→executable transduction → seam **DFP FREEZE → IAS-C1 FUNDED** — module
 
 ## Standing rules / traps hit this session (carry forward)
@@ -67,10 +79,12 @@ add a V-gate (module contract), micro-commit per owner. No dataset-Part floor he
   `tools/graphify_knowledge.py`, `tools/test_corpus_roi.py`, `tools/test_redteam_protocol.py`).
 - Windows: PowerShell over Bash; git `C:\Program Files\Git\cmd\git.exe`; python312 absolute.
 
-## Next 3 actions (Tier B module/wiring phase)
+## Next 3 actions (Tier B module/wiring phase — B4 is the last item)
 1. ~~**B1 (FIOS)**~~ — SEALED `b494a84`.
 2. ~~**B2 (epistemic algebra)**~~ — SEALED, `modules/decision_review/epistemic_algebra.py`, this session.
-3. **B3 (CO-03 + one_shot wiring)**, **B4 (DFP→IAS-C1 transduction module)** — wiring/module + V-gate each.
+3. ~~**B3 (CO-03 + one_shot wiring)**~~ — SEALED, `modules/one_shot/reasoning_route.py`, this session.
+4. **B4 (DFP FREEZE → IAS-C1 FUNDED transduction module)** — wiring/module + V-gate. Tier B closes here;
+   next is Tier B close-out (MISSION_STATE final tally, Tier C/D restated as deferred, REMOTE_DELTA 0 0).
 
 ## Floor-first authoring lesson (confirmed A1+A2+B5-B9)
 9+ dense subsections/Part clears 1200 first-pass; 8 subsections lands ~1180 body — nudge to >=1200 excl

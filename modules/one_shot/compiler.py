@@ -97,7 +97,7 @@ def compile_contract(
                 print(f"[SPEC GATE] {gate.message}", file=_sys.stderr)
         except Exception:
             pass  # advisory only; never break contract compilation
-    return OneShotContract(
+    contract = OneShotContract(
         task_id=_task_id(),
         description=description,
         size=size,
@@ -107,6 +107,20 @@ def compile_contract(
         done_gate=_derive_done_gate(description, size),
         created_at=_now_iso(),
     )
+    # B3 (CO-03 x one_shot, the reasoning-execution axis): opt-in via cwd,
+    # same discipline as the Spec Gate above -- pure for existing callers
+    # that pass no cwd. Advisory only; never blocks or alters the contract.
+    if cwd is not None:
+        try:
+            import sys as _sys
+
+            from modules.one_shot.reasoning_route import recommend_route
+            rec = recommend_route(contract)
+            if rec is not None and not rec.agrees_with_declared_size:
+                print(f"[REASONING ROUTE] {rec.note}", file=_sys.stderr)
+        except Exception:
+            pass  # advisory only; never break contract compilation
+    return contract
 
 
 def render_contract(c: OneShotContract) -> str:
