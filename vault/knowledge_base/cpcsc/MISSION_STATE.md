@@ -1,6 +1,6 @@
 # CPCSC — MISSION STATE
 
-**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B in progress (8/9 sealed: B5-B9 + B1 + B2 + B3 done; B4 module remains).**
+**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B COMPLETE (9/9 sealed: B5-B9 + B1 + B2 + B3 + B4). Tier C/D remain DEFERRED (Owner ruling, unchanged).**
 **Updated:** 2026-07-26
 
 > B1 SEALED (`b494a84`): FIOS II-1 Unknown-Unknown Hunter — `modules/frontier_intelligence/unknown_unknown_generator.py`
@@ -27,14 +27,30 @@
 > (`jit_skill_loader.py`, no cwd passed) — zero behavior change on the hot path. Gate
 > `tools/test_reasoning_route.py` 9/9 ×3. Registered in `commands/one-shot-compile.md` (no dedicated family
 > INDEX exists for one_shot/CO-03, unlike FIOS/DRK — this doc is that surface's doctrine home).
-> **Next: B4** (DFP FREEZE → IAS-C1 FUNDED transduction module) — the last Tier-B item.
-> Pattern for B1-style module work: read owner + closest-neighbor module to draw the distinct-object boundary,
-> build deterministic + fail-open composing existing surfaces, V-gate hermetic ×3, register in the owner's
-> doctrine index (avoid the orphan/scaffold trap), pathspec commit.
+> B4 SEALED (Tier B's last item): the seam DFP FREEZE → IAS-C1 FUNDED — `modules/dataset_first/transduction.py`.
+> `manifest.py`'s real eight-stage lifecycle ends at FROZEN; IAS-C1 (Capability Portfolio, cpp_ias) names DFP
+> as an explicit parent of its own "Investment Thesis" concept but has no executable and nothing converted a
+> FROZEN event into the PROPOSED-track input IAS-C1's own doctrine names (Part XV 15.2: "a D2A-5 birth score
+> and an owner_queue entry"). `transduce(manifest, acis_level=None)` produces that candidate — never FUNDED;
+> board ratification stays IAS-C1's own gate (15.3), never a module's. DFP-02 VIII.3's orthogonality caveat
+> ("certification and epistemic level are orthogonal axes") rides every candidate verbatim; an optional ACIS
+> level composes B2's `epistemic_algebra.acis_rank` rather than a fresh scale. `file_candidate()` files
+> idempotently into the real `owner_queue`, mirroring `decision_review/proactive_scanner.py`'s adapter
+> pattern. Gate `tools/test_transduction.py` 9/9 ×3; DFP baseline re-verified 17/17, no regression. LIBRARY
+> status (Liveness Standard): reachable by import + test + DFP_INDEX registration, not yet wired to an
+> automatic FREEZE-time trigger (none exists in the estate yet) — deferred per the same reuse-over-
+> speculation discipline B2/B3 already applied. IAS-C1 itself stays doctrine-only, untouched.
+>
+> **TIER B CLOSES HERE (9/9).** Pattern used across all four module/wiring items (B1-B4): read owner +
+> closest-neighbor to draw the distinct-object boundary, build deterministic + fail-open composing existing
+> surfaces (never forking), V-gate hermetic ×3, register in the owner's doctrine index, name the honest
+> residual (the deferred integration each left un-wired on purpose), pathspec commit, verify REMOTE_DELTA 0 0.
+> Tier C (World Model Federation, Cognitive Diplomacy) and Tier D (open CPP-ACI STOP #1) remain DEFERRED per
+> the original Owner ruling below — untouched this session, as instructed.
 
 ## STOP #2 ruling (Owner, approved)
 - **Tier A: APPROVED** — A1 + A2 (both SEALED).
-- **Tier B: APPROVED** — 9 Parts/modules into named owners (5 sealed, 4 remaining, all module/wiring).
+- **Tier B: COMPLETE** — 9 Parts/modules into named owners, all 9 SEALED (B5-B9 dataset-Parts + B1-B4 module/wiring).
 - **Tier C: DEFERRED** — World Model Federation (needs usage evidence) + Cognitive
   Diplomacy (needs constitutional amendment to IAS-F1 §3.4). Do NOT build here.
 - **Tier D: belongs to the open CPP-ACI STOP #1** — do NOT touch here.
@@ -53,14 +69,22 @@
   Register (foresight blind spots: recovery, substrate-exit, standing read-side). Bodies 1255/1247/1247.
 - Gates: `test_ias.py` (A1+D2+F3×3 = 20/20), `test_daif.py` (48/48; daif_04 21 Parts, daif_08 21 Parts),
   `test_side_effect_ledger.py` (8/8). All hermetic ×2. Every push REMOTE_DELTA 0 0.
+- **B1 (`b494a84`)** — FIOS II-1 Unknown-Unknown Hunter, `unknown_unknown_generator.py` (UUG 8/8).
+- **B2 (`c7c55d2`)** — epistemic-algebra join, `decision_review/epistemic_algebra.py` (EA 12/12).
+- **B3 (`4eeb001`)** — reasoning-execution axis, `one_shot/reasoning_route.py` (RR 9/9).
+- **B4** — DFP FREEZE → IAS-C1 FUNDED seam, `dataset_first/transduction.py` (DT 9/9). Commit pending below.
 
-## Pending — Tier B (1 remaining, module/wiring — a distinct phase from the dataset-Parts)
-Each: read the owner/target fully, build the module or wire the seam, close ONLY the named gap,
-add a V-gate (module contract), micro-commit per owner. No dataset-Part floor here (these are code).
+## Pending — Tier B: NONE. All 4 module/wiring items SEALED this session.
 - ~~**B1** unknown-unknown generation → **FIOS**~~ — SEALED `b494a84`
-- ~~**B2** epistemic algebra unification → **DRK-00 x DAIF-01 x ACIS**~~ — SEALED (this session)
-- ~~**B3** reasoning execution axis → **CO-03 + one_shot**~~ — SEALED (this session)
-- **B4** corpus→executable transduction → seam **DFP FREEZE → IAS-C1 FUNDED** — module
+- ~~**B2** epistemic algebra unification → **DRK-00 x DAIF-01 x ACIS**~~ — SEALED `c7c55d2`
+- ~~**B3** reasoning execution axis → **CO-03 + one_shot**~~ — SEALED `4eeb001`
+- ~~**B4** corpus→executable transduction → seam **DFP FREEZE → IAS-C1 FUNDED**~~ — SEALED (commit below)
+
+## Next (post-Tier-B)
+Tier B is closed. Tier C (World Model Federation, Cognitive Diplomacy) and Tier D (open CPP-ACI
+STOP #1) remain DEFERRED per the Owner's original STOP #2 ruling — no standing next action inside
+CPCSC without new Owner direction. Sibling open item outside Tier B: `run_family` DEFER verdict
+fix in `d2a_engine.py` (tracked separately, not part of the Tier B punch list).
 
 ## Standing rules / traps hit this session (carry forward)
 - ias_* datasets: `FINAL LAW — PART N.`; DAIF datasets: `PART N FINAL LAW.`. Append new Parts before
@@ -79,12 +103,12 @@ add a V-gate (module contract), micro-commit per owner. No dataset-Part floor he
   `tools/graphify_knowledge.py`, `tools/test_corpus_roi.py`, `tools/test_redteam_protocol.py`).
 - Windows: PowerShell over Bash; git `C:\Program Files\Git\cmd\git.exe`; python312 absolute.
 
-## Next 3 actions (Tier B module/wiring phase — B4 is the last item)
+## Tier B module/wiring phase — CLOSED
 1. ~~**B1 (FIOS)**~~ — SEALED `b494a84`.
-2. ~~**B2 (epistemic algebra)**~~ — SEALED, `modules/decision_review/epistemic_algebra.py`, this session.
-3. ~~**B3 (CO-03 + one_shot wiring)**~~ — SEALED, `modules/one_shot/reasoning_route.py`, this session.
-4. **B4 (DFP FREEZE → IAS-C1 FUNDED transduction module)** — wiring/module + V-gate. Tier B closes here;
-   next is Tier B close-out (MISSION_STATE final tally, Tier C/D restated as deferred, REMOTE_DELTA 0 0).
+2. ~~**B2 (epistemic algebra)**~~ — SEALED `c7c55d2`.
+3. ~~**B3 (CO-03 + one_shot wiring)**~~ — SEALED `4eeb001`.
+4. ~~**B4 (DFP FREEZE → IAS-C1 FUNDED transduction module)**~~ — SEALED, commit below. See "Next
+   (post-Tier-B)" above for standing state.
 
 ## Floor-first authoring lesson (confirmed A1+A2+B5-B9)
 9+ dense subsections/Part clears 1200 first-pass; 8 subsections lands ~1180 body — nudge to >=1200 excl

@@ -1,5 +1,18 @@
 # DFP — Dataset First Protocol — Master Index
 
+> **2026-07-26 CPCSC Tier-B B4 (Tier B closes here):** `modules/dataset_first/transduction.py`
+> — the seam DFP FREEZE → IAS-C1 FUNDED. `manifest.py`'s real eight-stage lifecycle ends at
+> FROZEN; `cpp_ias`'s IAS-C1 (Capability Portfolio) names DFP as an explicit parent of its own
+> "Investment Thesis" concept but has no executable and nothing converts a FROZEN event into
+> the PROPOSED-track input IAS-C1's own doctrine names ("a D2A-5 birth score and an owner_queue
+> entry", Part XV 15.2). `transduce()` produces that candidate; it never grants FUNDED — board
+> ratification stays IAS-C1's own gate (Part XV 15.3), never a module's. DFP-02 VIII.3's
+> orthogonality caveat ("certification and epistemic level are orthogonal axes") rides every
+> candidate verbatim; an optional ACIS level composes B2's `epistemic_algebra.acis_rank` rather
+> than re-deriving a scale. Gate `tools/test_transduction.py` 9/9 ×3. LIBRARY status (Liveness
+> Standard): reachable by direct import + test suite + this doctrine entry, not yet wired to an
+> automatic FREEZE-time trigger — see Honest residuals below.
+>
 > **The Knowledge-Necessity axis of Claude Power Pack.** Founded 2026-07-12.
 > Where **DRK** governs whether a *decision* is sound, **ACIS** the *epistemic status* of a
 > claim, **SQI** whether the executable reality is *verified*, **D2A** what happens when the
@@ -195,6 +208,7 @@ whether the knowledge-first discipline paid for itself.
 | `modules/dataset_first/calibrator.py` | records → `ProtocolCalibrationRecord`; moves the thresholds; can emit `retirement_signal` |
 | `modules/decision_review/` | **extended**: the eleventh verdict + a DFP provider adapter (fail-open, budgeted) |
 | `modules/duplicate_to_advantage/d2a_engine.py` | **extended**: `FAMILY_REGISTRY` gains the post-C85 sealed families (DRK · ACIS · SQI · spec_gate · hard_rules · D2A) so it can detect duplicates against them at all |
+| `modules/dataset_first/transduction.py` | **B4, 2026-07-26.** `transduce(manifest, acis_level=None)` — a FROZEN manifest → a PROPOSED-track `FundingCandidate` for IAS-C1 (never FUNDED; board ratification stays IAS-C1's gate); `file_candidate()` — idempotent `owner_queue` filing, mirroring `decision_review/proactive_scanner.py`'s adapter pattern. Composes `decision_review.epistemic_algebra` for the optional ACIS level; never assigns one. |
 
 ---
 
@@ -213,6 +227,24 @@ whether the knowledge-first discipline paid for itself.
 `V-DFP-D2A-REGISTRY` (D2A now detects DRK/ACIS/spec_gate as parents) ·
 `V-DFP-DRK-AMENDMENT` (the eleventh verdict is reachable and recorded) ·
 `V-BASELINE` (DRK 18/18, D2A 22/22, ACIS 48/48, strategic-gaps 21/21 still green).
+
+**B4 addendum** — `tools/test_transduction.py`, hermetic x3, 9/9: `V-DT-FROZEN-REQUIRED` ·
+`V-DT-TRANSDUCE-SHAPE` · `V-DT-EPISTEMIC-CAVEAT-ALWAYS` (DFP-02 VIII.3's orthogonality caveat
+rides every candidate) · `V-DT-ACIS-UNASSESSED-DEFAULT` · `V-DT-ACIS-LEVEL-COMPOSED` ·
+`V-DT-NO-CERTIFICATION-DENIED` · `V-DT-FAIL-OPEN` · `V-DT-FILE-CANDIDATE-OWNER-QUEUE`
+(idempotent real `owner_queue` filing) · `V-DT-DETERMINISTIC`.
+
+## Honest residuals (B4)
+
+`transduce()`/`file_candidate()` are LIBRARY functions (Liveness Standard): reachable by direct
+import, proven by `test_transduction.py`, and registered here, but **not** wired to an automatic
+trigger that calls `transduce()` the moment a `KnowledgeInfrastructureManifest` advances to
+FROZEN — no such trigger exists yet anywhere in the estate (`manifest.advance()` has no
+post-transition hook). The deferred next integration is that hook, once a second real FREEZE
+event exists to justify it — the same reuse-over-speculation discipline B2 and B3 already
+applied to their own deferred integrations. IAS-C1 itself remains doctrine-only, unbuilt, and
+untouched by this change: `transduce()` produces the candidate IAS-C1's own Part XV names,
+nothing in IAS-C1's text is added to or re-narrated.
 
 ---
 
