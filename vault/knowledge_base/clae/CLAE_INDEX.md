@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 15
+parts_sealed: 16
 ---
 
 # CLAE — Master Index
@@ -38,7 +38,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | XIII | The Instrument Taxonomy | Seven kinds and their native levels; selection by required level; perturbation under envelope; chain coverage as intersection; three-valued output | XII | **SEALED** |
 | XIV | Autonomous Toolsmith Behaviour | The seeing-blocker trigger; the visible-detour asymmetry; four conditions; shrink-dont-stack; register or delete; book to instrument debt | XIII | **SEALED** |
 | XV | Incident-to-Probe Conversion | The incident as a free known-answer case with a short expiry; probe versus fix versus test; fix-or-delete-never-mute; the probe as an agent memory of failure | XIII, XIV | **SEALED** |
-| XVI | The Human Oracle Boundary | The declared set of properties the stack structurally cannot verify about itself | II, XII | pending |
+| XVI | The Human Oracle Boundary | The self-verification limit; four marks of an oracle question; both-direction failure and why boundaries drift narrow; standing and constituency | II, XII | **SEALED** |
 | XVII | Oracle Routing | When to ask, which artifact to present, how an answer becomes durable evidence | XVI | pending |
 | XVIII | Deviation Governance | Constraint-bounded substitution: prove the constraint, preserve intent, measure the loss | IX | pending |
 | XIX | Evidence-Gated Autonomy | Gate structure that replaces per-step approval without becoming unbounded | XII, XVIII | pending |
