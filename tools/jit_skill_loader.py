@@ -43,6 +43,19 @@ from pathlib import Path
 
 HOME = Path(os.path.expanduser("~"))
 PP_ROOT = HOME / ".claude" / "skills" / "claude-power-pack"
+
+# PP_ROOT must be importable BEFORE any `from modules...` in this file.
+# The hook's cwd is the user's arbitrary project and Python only adds
+# this script's own directory (tools/), so `modules` was unresolvable in
+# production: every injector that imports it -- pp_agents (the whole
+# proactive agent layer), skill_router, akos, sdd_os -- failed with
+# ModuleNotFoundError, was swallowed by its fail-open handler, and went
+# silent. Discovered 2026-07-26 from this file's own error log while
+# investigating why SDD-OS never activated; the answer was that its
+# dispatcher never imported. Sealed T-JIT-MODULES-UNIMPORTABLE-001.
+if str(PP_ROOT) not in sys.path:
+    sys.path.insert(0, str(PP_ROOT))
+
 UPSTREAM = PP_ROOT / "vendor" / "apollo" / "upstream"
 STATE_DIR = HOME / ".claude" / "state"
 LOG = HOME / ".claude" / "logs" / "jit-skill-loader.log"
@@ -1246,6 +1259,42 @@ def _pp_proactive_inject(fn):
     return _wrapper
 
 
+def _sdd_os_activation_inject(fn):
+    """SDD-OS activation (BL-SDD-ACT-001) -- classify the tier and resolve
+    the task's spec on every prompt, in every repo.
+
+    Deliberately NOT routed through _pp_proactive_inject: that path caps
+    at three advisories per turn and ranked SDD-OS tenth of thirteen, so
+    the governance directive lost coin-flips against cost tips and never
+    fired outside tests (zero production throttle records, 2026-07-26).
+    A rule that only speaks when nothing else does is not a rule.
+
+    Prepends rather than appends -- the classification frames every other
+    injected block, so it has to arrive before them. Fail-open absolute.
+    """
+    import functools as _ft
+
+    @_ft.wraps(fn)
+    def _wrapper(data):
+        result = fn(data)
+        try:
+            data = data or {}
+            prompt = str(data.get("prompt") or "")
+            if not prompt or not isinstance(result, dict):
+                return result
+            from modules.sdd_os.activation import build_directive
+            block = build_directive(prompt, data.get("cwd") or os.getcwd())
+            if not block:
+                return result
+            ac = result.get("additionalContext") or ""
+            result["additionalContext"] = (
+                f"{block}\n\n{ac}" if ac else block)
+        except Exception as _exc:
+            _log(f"sdd-os activation ERROR {type(_exc).__name__}: {_exc}")
+        return result
+    return _wrapper
+
+
 # --- One-Shot Compiler Axis (BL-ONESHOT-001 wiring) ---
 # When a prompt looks like an L/XL build task, compile a fidelity
 # contract inline and inject it as priority context so the agent works
@@ -1545,6 +1594,7 @@ def _akos_knowledge_inject(fn):
 
 @_tis_log_call
 @_tco_inject_routing
+@_sdd_os_activation_inject
 @_pp_proactive_inject
 @_akos_knowledge_inject
 @_skill_router_inject
