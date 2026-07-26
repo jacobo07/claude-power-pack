@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 7
+parts_sealed: 8
 ---
 
 # CLAE — Master Index
@@ -30,7 +30,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | V | Reference Acquisition, Versioning and Provenance | The perishability principle; pin generations; three decays; residual change decomposition; custody as tamper-evidence | IV | **SEALED** |
 | VI | Delta Extraction | The observability precondition; the five-level extraction ladder; paired observation; projection and structure traps; the noise floor | IV, V | **SEALED** |
 | VII | Delta Impact Ranking | Impact versus severity; the four factors; dominance-then-frontier ordering; fixability bias and the counting trap; starvation | VI | **SEALED** |
-| VIII | The Top-K Correction Cycle | Cycle structure, k selection, re-measurement, termination and non-termination | VII | pending |
+| VIII | The Top-K Correction Cycle | k from attribution not capacity; whole-dimension re-measurement; the four outcomes; distance opened; first cycle validates the loop | VII | **SEALED** |
 | IX | Quality Distance Accounting | The residual ledger; carrying distance through a passing gate; trend and debt | II, VIII | pending |
 | X | Anti-Underbuild Floors | Minima that catch a real-but-shallow implementation the slop detector cannot see | IX | pending |
 | XI | Floor Derivation Versus Floor Imposition | Why imported quantitative floors fail; deriving minima from the domain | X | pending |
