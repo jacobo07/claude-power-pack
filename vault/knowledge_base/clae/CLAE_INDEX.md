@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 14
+parts_sealed: 15
 ---
 
 # CLAE — Master Index
@@ -37,7 +37,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | XII | Observability-Capable Phase Zero | The six ordered capabilities; the thin-vertical rule; the envelope not determinism; partial Phase Zero as a declared measurement-debt register | VI | **SEALED** |
 | XIII | The Instrument Taxonomy | Seven kinds and their native levels; selection by required level; perturbation under envelope; chain coverage as intersection; three-valued output | XII | **SEALED** |
 | XIV | Autonomous Toolsmith Behaviour | The seeing-blocker trigger; the visible-detour asymmetry; four conditions; shrink-dont-stack; register or delete; book to instrument debt | XIII | **SEALED** |
-| XV | Incident-to-Probe Conversion | Every significant failure leaves a durable, re-runnable probe | XIII, XIV | pending |
+| XV | Incident-to-Probe Conversion | The incident as a free known-answer case with a short expiry; probe versus fix versus test; fix-or-delete-never-mute; the probe as an agent memory of failure | XIII, XIV | **SEALED** |
 | XVI | The Human Oracle Boundary | The declared set of properties the stack structurally cannot verify about itself | II, XII | pending |
 | XVII | Oracle Routing | When to ask, which artifact to present, how an answer becomes durable evidence | XVI | pending |
 | XVIII | Deviation Governance | Constraint-bounded substitution: prove the constraint, preserve intent, measure the loss | IX | pending |
