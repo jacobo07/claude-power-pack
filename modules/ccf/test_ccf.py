@@ -22,7 +22,7 @@ from modules.ccf import (
 
 # --- Contract Engine ---------------------------------------------------
 
-def test_contract_engine_valid_brief_produces_full_spec():
+def test_contract_engine_valid_brief_produces_full_spec() -> None:
     # Arrange
     brief = (
         "Brand: Aperture Coffee\n"
@@ -45,7 +45,7 @@ def test_contract_engine_valid_brief_produces_full_spec():
     print("V-CONTRACT-ENGINE-VALID")
 
 
-def test_contract_engine_incomplete_brief_blocks_with_exact_questions():
+def test_contract_engine_incomplete_brief_blocks_with_exact_questions() -> None:
     # Arrange
     brief = "Brand: Aperture Coffee\nWe want something warm and modern."
 
@@ -74,7 +74,7 @@ def _valid_config():
     }
 
 
-def test_config_schema_valid_config_passes():
+def test_config_schema_valid_config_passes() -> None:
     # Arrange / Act
     ok, errors = config_schema.validate_config(_valid_config())
 
@@ -84,7 +84,7 @@ def test_config_schema_valid_config_passes():
     print("V-CONFIG-SCHEMA-VALID")
 
 
-def test_config_schema_invalid_config_fails_descriptively():
+def test_config_schema_invalid_config_fails_descriptively() -> None:
     # Arrange
     bad = {
         "schema_version": "1.0",
@@ -120,7 +120,7 @@ _CONCEPT_COLLISION = {
 }
 
 
-def test_prompt_compiler_determinism():
+def test_prompt_compiler_determinism() -> None:
     # Arrange / Act
     first = prompt_compiler.compile_prompt(_CONCEPT_CLEAN, _SPEC, _GLOBALS)
     second = prompt_compiler.compile_prompt(_CONCEPT_CLEAN, _SPEC, _GLOBALS)
@@ -134,7 +134,7 @@ def test_prompt_compiler_determinism():
 
 # --- Trademark Collision Scanner ------------------------------------------
 
-def test_trademark_scanner_airbnb_belo_case_never_passes():
+def test_trademark_scanner_airbnb_belo_case_never_passes() -> None:
     # Arrange -- CCF-F01, the founding failure this component exists to catch
     record = prompt_compiler.compile_prompt(_CONCEPT_COLLISION, _SPEC, _GLOBALS)
 
@@ -149,7 +149,7 @@ def test_trademark_scanner_airbnb_belo_case_never_passes():
     print("V-TRADEMARK-SCANNER-F01")
 
 
-def test_trademark_scanner_clean_concept_passes():
+def test_trademark_scanner_clean_concept_passes() -> None:
     # Arrange
     record = prompt_compiler.compile_prompt(_CONCEPT_CLEAN, _SPEC, _GLOBALS)
 
@@ -165,7 +165,7 @@ def test_trademark_scanner_clean_concept_passes():
 
 # --- Model Adapter Layer ---------------------------------------------------
 
-def test_model_adapter_missing_key_fails_visibly(monkeypatch):
+def test_model_adapter_missing_key_fails_visibly(monkeypatch) -> None:
     # Arrange
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     adapter = model_adapter.GPTImage2Adapter(api_key=None)
@@ -181,7 +181,7 @@ def test_model_adapter_missing_key_fails_visibly(monkeypatch):
 
 # --- Artifact Compiler -----------------------------------------------------
 
-def test_artifact_compiler_builds_valid_pdf_when_image_present():
+def test_artifact_compiler_builds_valid_pdf_when_image_present() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
@@ -200,7 +200,7 @@ def test_artifact_compiler_builds_valid_pdf_when_image_present():
     print("V-ARTIFACT-COMPILER-HASIMAGE")
 
 
-def test_artifact_compiler_skips_without_empty_pdf_when_no_image():
+def test_artifact_compiler_skips_without_empty_pdf_when_no_image() -> None:
     # Arrange -- CCF-F02: no successful ImageArtifact for this concept
 
     # Act
@@ -219,7 +219,7 @@ def test_artifact_compiler_skips_without_empty_pdf_when_no_image():
 
 # --- Creative Evaluation Engine ---------------------------------------------
 
-def test_evaluation_engine_valid_artifact_passes():
+def test_evaluation_engine_valid_artifact_passes() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
@@ -236,7 +236,7 @@ def test_evaluation_engine_valid_artifact_passes():
     print("V-EVAL-ENGINE-GATES-PASS")
 
 
-def test_evaluation_engine_empty_bundle_fails():
+def test_evaluation_engine_empty_bundle_fails() -> None:
     # Arrange
     bundle = artifact_compiler.compile_artifacts([_CONCEPT_CLEAN], {}, mode="showcase")
 
@@ -250,7 +250,7 @@ def test_evaluation_engine_empty_bundle_fails():
 
 # --- Release Manager ---------------------------------------------------
 
-def test_release_manager_blocks_without_human_selection():
+def test_release_manager_blocks_without_human_selection() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
@@ -278,7 +278,7 @@ def test_release_manager_blocks_without_human_selection():
     print("V-RELEASE-MANAGER-BLOCKED")
 
 
-def test_release_manager_seals_when_all_gates_pass():
+def test_release_manager_seals_when_all_gates_pass() -> None:
     # Arrange
     artifact_ok = model_adapter.ImageArtifact(status="OK", provider="openai",
                                                model_id="gpt-image-2", format="png",
@@ -309,7 +309,7 @@ def test_release_manager_seals_when_all_gates_pass():
 
 # --- CLI --------------------------------------------------------------
 
-def test_cli_help_lists_all_subcommands(capsys):
+def test_cli_help_lists_all_subcommands(capsys) -> None:
     # Arrange / Act
     with pytest.raises(SystemExit) as exc_info:
         cli.main(["--help"])
@@ -322,7 +322,7 @@ def test_cli_help_lists_all_subcommands(capsys):
     print("V-CLI-HELP")
 
 
-def test_cli_init_dry_run_does_not_fail(tmp_path):
+def test_cli_init_dry_run_does_not_fail(tmp_path) -> None:
     # Arrange
     project = str(tmp_path / "proj")
 
