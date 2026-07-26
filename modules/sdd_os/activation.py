@@ -11,12 +11,26 @@ chokepoint that already reaches every repo, and it is deliberately NOT
 part of the capped advisory queue -- a governance directive that loses a
 coin-flip against a cost tip is not a governance directive.
 
-Consent model for generation: the directive is always instruction-only
-until a repo has been scaffolded (`ARCHITECTURE.md` present). Adoption is
-the consent signal. A hook that starts writing spec files into repos
-nobody opted in would be correctly perceived as the tool littering, and a
-tool perceived that way gets switched off -- which is how SDD-OS became
-inert the first time.
+This module NEVER writes to disk. Generation is an explicit act
+(`/cpp-sdd-os spec "<task>"`, or `pre_exec_gate.enforce()` called directly).
+
+That was learned the hard way, same day it shipped. The first version tied
+auto-generation to "has this repo been scaffolded", treating adoption as
+consent. Within hours it had written
+`vault/specs/t3-preflight-git-fetch-origin-git-log-oneline-5-cat.md` -- a
+spec skeleton named after a PREFLIGHT SHELL BLOCK in the prompt. Worse,
+`jit_skill_loader._active_spec()` selects the most-recently-modified spec,
+so that empty skeleton immediately became the injected "ACTIVE PROJECT
+SPEC", displacing the real one on every subsequent turn.
+
+Three lessons, all now enforced by the single rule "the hook does not
+write": (1) a prompt is not a task statement -- it carries preflight
+blocks, pasted logs and command output, and a slug derived from it is
+noise; (2) a generated artifact that immediately becomes an authoritative
+input is a feedback loop, and an EMPTY one is a false source of truth
+(T-SDD-OS-SPEC-DRIFT-001); (3) scaffolding a repo is consent to be
+GOVERNED, never consent to be WRITTEN TO on every prompt.
+Sealed T-SDD-OS-HOOK-GENERATED-ITS-OWN-INPUT-001.
 
 Fail-open absolute: any error yields silence, never a blocked prompt.
 """
@@ -68,9 +82,12 @@ def _is_meta_prompt(prompt: str) -> bool:
 
 
 def build_directive(prompt: str,
-                    cwd: str | Path | None = None,
-                    auto_generate: bool | None = None) -> str | None:
+                    cwd: str | Path | None = None) -> str | None:
     """Compose the SDD-OS directive for this prompt, or None for silence.
+
+    READ-ONLY. Calls `evaluate()`, never `enforce()`: this runs on every
+    prompt in every repo, and a per-prompt writer is how the module
+    generated its own injected input (see module docstring).
 
     Silence conditions (each deliberate):
       - prompt too short to be a task statement
@@ -88,18 +105,13 @@ def build_directive(prompt: str,
         root = Path(cwd) if cwd else Path.cwd()
 
         from modules.pp_agents.proactive_core import is_throttled, mark_fired
-        from modules.sdd_os.pre_exec_gate import evaluate, enforce
-        from modules.sdd_os.scaffold import is_scaffolded
+        from modules.sdd_os.pre_exec_gate import evaluate
 
         key = _task_key(prompt, str(root))
         if is_throttled(key, "sdd-os", COOLDOWN_MINUTES):
             return None
 
-        if auto_generate is None:
-            auto_generate = is_scaffolded(root)
-
-        decision = (enforce(prompt, root, auto_generate=True)
-                    if auto_generate else evaluate(prompt, root))
+        decision = evaluate(prompt, root)
 
         # A bound spec is the success case: say so once, briefly, so the
         # agent reads it -- then stop talking.

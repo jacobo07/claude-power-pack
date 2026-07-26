@@ -323,6 +323,53 @@ def v_activation_live() -> None:
               "preserves prior context, fail-open on non-dict")
 
 
+# --- V-SDDOS-HOOK-READONLY ----------------------------------------------
+
+def v_hook_readonly() -> None:
+    """The prompt-path must never write, even in a scaffolded repo.
+
+    Regression guard for the defect that shipped and spread the same day:
+    generation was tied to "is this repo scaffolded", so the hook wrote a
+    spec skeleton per long prompt. `_active_spec()` picks the newest spec,
+    so an EMPTY skeleton became the injected "ACTIVE PROJECT SPEC". Three
+    junk files landed across three repos before it was caught.
+    """
+    gate = "V-SDDOS-HOOK-READONLY"
+    from modules.sdd_os.activation import build_directive
+    from modules.sdd_os.pre_exec_gate import enforce, evaluate
+    from modules.sdd_os.scaffold import scaffold
+
+    task = ("create a new billing integration module with persistence and "
+            "auth for the payments service")
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        scaffold(root)                      # the condition that enabled writes
+        before = {p for p in root.rglob("*") if p.is_file()}
+
+        directive = build_directive(task, root)
+        after = {p for p in root.rglob("*") if p.is_file()}
+
+        leaked = after - before
+        if leaked:
+            _fail(gate, f"prompt path wrote {[p.name for p in leaked]}")
+            return
+        if not directive or "SDD-OS" not in directive:
+            _fail(gate, "read-only, but the directive stopped firing")
+            return
+        if evaluate(task, root).action == "proceed":
+            _fail(gate, "evaluate() saw a spec that was never written")
+            return
+
+        # Read-only must not mean the generator is dead.
+        d = enforce(task, root, auto_generate=True)
+        if not d.spec_written:
+            _fail(gate, "explicit generation no longer writes")
+            return
+
+    _ok(gate, "0 files written by the prompt path in a scaffolded repo; "
+              "explicit generation still works")
+
+
 # --- V-SDDOS-GLOBAL-REGISTERED ------------------------------------------
 
 REQUIRED_GLOBAL_CLAUSES = (
@@ -369,7 +416,7 @@ def main() -> int:
     print("SDD-OS activation done-gate (BL-SDD-ACT-001)\n")
     for fn in (v_claude_md, v_global_registered, v_tier_classification,
                v_spec_before_code, v_spec_update, v_scaffold,
-               v_active_repos, v_activation_live):
+               v_active_repos, v_activation_live, v_hook_readonly):
         try:
             fn()
         except Exception as exc:  # a crashing gate is a failing gate
