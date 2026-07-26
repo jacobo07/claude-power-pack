@@ -1,0 +1,25 @@
+# SDD-OS rollout manifest -- BL-SDD-ACT-001 (2026-07-26)
+#
+# Repos that receive the SDD-OS substrate (ARCHITECTURE.md, ROADMAP.md,
+# spec dir). Scaffolding is non-destructive and idempotent: existing
+# documentation is never overwritten, so re-running is always safe.
+#
+# Every path below was verified to exist on 2026-07-26 by direct scan.
+#
+# Deliberately EXCLUDED: the 20 TUA-X-* worktrees. They are git worktrees
+# of the TUA-X repo, so a tracked ARCHITECTURE.md written into each would
+# collide on merge and produce 20 near-identical specs. The main TUA-X
+# checkout carries the spec for all of them.
+#
+# CommonWealth Ops is NOT listed: no directory by that name exists under
+# Desktop\Cursor Projects. Owner input needed for its real path -- it is
+# absent rather than silently assumed.
+
+C:\Users\User\Desktop\Cursor Projects\TUA-X
+C:\Users\User\Desktop\Cursor Projects\InfinityOps
+C:\Users\User\Desktop\Cursor Projects\Minecraft Projects\KobiiCraft Workspace\KobiiCraft Core Files
+C:\Users\User\Desktop\Cursor Projects\Wii Projects\KobiiSports Resort\CursorProjects
+C:\Users\User\Desktop\Cursor Projects\CostaLuz Lawyers
+C:\Users\User\Desktop\Cursor Projects\AKOS
+C:\Users\User\Desktop\Cursor Projects\GEO-audit
+C:\Users\User\.claude\skills\claude-power-pack
