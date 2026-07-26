@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 1
+parts_sealed: 2
 ---
 
 # CLAE — Master Index
@@ -24,7 +24,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | Part | Title | Responsibility | Depends on | Status |
 |---|---|---|---|---|
 | I | The Internal-Bar Trap | Why a stack that authors its own criteria cannot see its own ceiling; the Phase 0 evidence that PP has this defect | — | **SEALED** |
-| II | Quality as Distance, Not Compliance | First principles: replacing the pass/fail predicate with a measured residual | I | pending |
+| II | Quality as Distance, Not Compliance | First principles: replacing the pass/fail predicate with a measured residual; the three-stage ladder and the retention thesis | I | **SEALED** |
 | III | Ontology and Glossary | Reference · bar · delta · distance · floor · residual · oracle · probe · instrument · horizon · deviation | I, II | pending |
 | IV | The Reference Object | What qualifies as canonical external reference; why an internally-authored bar disqualifies | III | pending |
 | V | Reference Acquisition, Versioning and Provenance | Obtaining, pinning and dating a reference; staleness and drift of the bar itself | IV | pending |

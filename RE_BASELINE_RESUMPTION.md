@@ -19,7 +19,11 @@ owned by this stack.
 - STOP #1: **resolved**. Owner approved 3 NEW families + 5 EXTEND passes over the literal
   A–J ten-family specification.
 - Charter: **SEALED** at `vault/knowledge_base/COMPENDIUM_CHARTER.md`.
-- Parts sealed: see the coherence anchor below.
+- Parts sealed: CLAE I, II. Next unsealed: CLAE III (Ontology and Glossary).
+  Authoritative count is the coherence anchor below, never this line.
+- Superseded text on record: Part II §6 corrects Part I and `CLAE_CHARTER.md`, which both
+  described the design-review scorer as a distance instrument. It is a stage-two graded
+  criterion instrument. Do not restore the earlier phrasing anywhere in this family.
 
 **Coherence anchor.** `CLAE_INDEX.md` must list exactly as many Part rows marked SEALED as
 there are `PART_*.md` files in `vault/knowledge_base/clae/`. If those two counts disagree,
