@@ -104,8 +104,12 @@ def cmd_init(args) -> int:
     _save_json(paths["config"], config_schema.default_config())
 
     if args.brief:
-        with open(args.brief, "r", encoding="utf-8") as handle:
-            brief_text = handle.read()
+        try:
+            with open(args.brief, "r", encoding="utf-8") as handle:
+                brief_text = handle.read()
+        except OSError as exc:
+            print(f"error: cannot read brief file {args.brief!r}: {exc}")
+            return EXIT_VALIDATION_ERROR
         spec, questions = contract_engine.compile_spec(brief_text)
         if questions:
             _save_json(paths["spec"], {})
@@ -121,7 +125,15 @@ def cmd_init(args) -> int:
 
 def cmd_compile(args) -> int:
     paths = _paths(args.project)
-    brief_text = sys.stdin.read() if args.brief == "-" else open(args.brief, encoding="utf-8").read()
+    try:
+        if args.brief == "-":
+            brief_text = sys.stdin.read()
+        else:
+            with open(args.brief, encoding="utf-8") as handle:
+                brief_text = handle.read()
+    except OSError as exc:
+        print(f"error: cannot read brief file {args.brief!r}: {exc}")
+        return EXIT_VALIDATION_ERROR
     answers = _load_json(args.answers) if args.answers else None
 
     spec, questions = contract_engine.compile_spec(brief_text, extra_answers=answers)
