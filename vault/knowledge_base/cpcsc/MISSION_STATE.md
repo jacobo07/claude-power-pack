@@ -1,6 +1,10 @@
 # CPCSC — MISSION STATE
 
-**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B COMPLETE (9/9 sealed: B5-B9 + B1 + B2 + B3 + B4). Tier C/D remain DEFERRED (Owner ruling, unchanged).**
+**Phase:** MISSION CLOSE-OUT. Tier A: COMPLETE (A1+A2, 50 Parts). Tier B: COMPLETE (9/9: B5-B9 + B1-B4).
+Tier C: DEFERRED (World Model Federation, Cognitive Diplomacy — Owner ruling). Tier D: DEFERRED (open
+CPP-ACI STOP #1). run_family DEFER verdict: FIXED (`ccb025b`, pre-session; re-verified 27/27 ×3 this
+close-out — no drift). CLAUDE.md trim: APPLIED (39672 chars, FIREWALL OK — margin 39750, hard 40000;
+landed via a concurrent pane during this close-out, re-verified via `tools/trim_claude_md.py --check`).
 **Updated:** 2026-07-26
 
 > B1 SEALED (`b494a84`): FIOS II-1 Unknown-Unknown Hunter — `modules/frontier_intelligence/unknown_unknown_generator.py`
@@ -83,8 +87,23 @@
 ## Next (post-Tier-B)
 Tier B is closed. Tier C (World Model Federation, Cognitive Diplomacy) and Tier D (open CPP-ACI
 STOP #1) remain DEFERRED per the Owner's original STOP #2 ruling — no standing next action inside
-CPCSC without new Owner direction. Sibling open item outside Tier B: `run_family` DEFER verdict
-fix in `d2a_engine.py` (tracked separately, not part of the Tier B punch list).
+CPCSC without new Owner direction.
+
+## Mission close-out (2026-07-26)
+The two sibling open items outside the Tier B punch list are both resolved:
+- **`run_family` DEFER verdict** (`d2a_engine.py:935-946`) — was already fixed pre-session
+  (`ccb025b`): the plausibility-floor-capped case files as `DEFER` with its own
+  `V-D2A-FAMILY-DEFER-NOT-KEEP` gate, never conflated with `KEEP`. Re-verified 27/27 ×3
+  hermetic this close-out; no regression, no further change needed.
+- **`~/.claude/CLAUDE.md` char-count firewall** — was 40580 chars (warning ACTIVE) at close-out
+  start; `tools/trim_claude_md.py --dry-run` found zero matches (its regex rules target dated
+  parentheticals/deep-links the file's current HR-block format doesn't use) — the automated path
+  was exhausted. Landed via a concurrent pane during this same close-out; re-verified
+  `--check` → `FIREWALL OK: 39672 chars` (under both the 39750 margin and the 40000 hard limit).
+  No repo commit — CLAUDE.md is agent-owned global config outside this repo.
+
+MISSION CLOSED: Tier A + Tier B sealed, both sibling items resolved, Tier C/D deferred per Owner
+ruling. No standing action inside CPCSC without new Owner direction.
 
 ## Standing rules / traps hit this session (carry forward)
 - ias_* datasets: `FINAL LAW — PART N.`; DAIF datasets: `PART N FINAL LAW.`. Append new Parts before
