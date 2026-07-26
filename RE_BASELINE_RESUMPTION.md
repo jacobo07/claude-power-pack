@@ -19,7 +19,7 @@ owned by this stack.
 - STOP #1: **resolved**. Owner approved 3 NEW families + 5 EXTEND passes over the literal
   A–J ten-family specification.
 - Charter: **SEALED** at `vault/knowledge_base/COMPENDIUM_CHARTER.md`.
-- Parts sealed: CLAE I-XVI. Next unsealed: CLAE XVII (Oracle Routing).
+- Parts sealed: CLAE I-XVII (oracle arc complete). Next unsealed: CLAE XVIII (Deviation Governance).
   Authoritative count is the coherence anchor below, never this line.
 - Superseded text on record: Part II §6 corrects Part I and `CLAE_CHARTER.md`, which both
   described the design-review scorer as a distance instrument. It is a stage-two graded
