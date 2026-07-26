@@ -1,5 +1,16 @@
 # Decision Review Kernel — Master Index (DRK)
 
+> **2026-07-26 CPCSC Tier-B B2:** `modules/decision_review/epistemic_algebra.py` — the
+> epistemic-algebra join (DRK-00 x DAIF-01 x ACIS). ACIS derives a single claim's E0-E7
+> level; DAIF-01 Part VIII types a Confidence lattice onto that ladder but is deliberately
+> inert (no pipeline); DRK-03's evidence-burden rule ("a single E3+ item lifts the ceiling")
+> had its only executable form hard-bound inside `decision_kernel.py::evidence_burden_met`.
+> Nothing shared held the arithmetic — a canonical rank across both live representations
+> ("E0".."E7" string, plain int), the join/meet combinators, and DAIF-01 8.4's cardinal rule
+> ("an inference may never be typed as a fact") as an executable check. Gate
+> `tools/test_epistemic_algebra.py` 12/12 x3 hermetic. Composes, forks nothing; DRK's own
+> `evidence_burden_met` is untouched by this change (see Honest residuals).
+>
 > Where **CO-00…12** governs a session's *cost*, **ACIS** the *epistemic status* of a claim,
 > **D2A** what happens when the stack is asked to build something that *already exists*, **FIOS**
 > the *execution* of a frontier session, and **SDD-OS** the *specification* a build obeys — the
@@ -85,6 +96,7 @@ SDD-OS Parte V (enumeration) + ACIS + D2A + CO + FIOS + one_shot + owner_queue +
 | `modules/decision_review/decision_record.py` | canonical `DecisionObject` / `DecisionRecord` + append-only Registry writer (fail-open) |
 | `modules/decision_review/decision_kernel.py` | `review_decision(obj) → Verdict` — composes arch_check · one_shot.compiler · spec_gate.classify_tier · d2a_engine · acis.epistemic_ladder · cost_collapse.route · owner_queue; computes reversibility-tier + DCS + DBR; **blocks only when Tipo-C irreversible AND ACIS < E3**; recommends otherwise; fail-open (pathological → DEFER) |
 | `modules/decision_review/accountability.py` | records the decision's prediction, scores it against the realized outcome; separates reasoning-error from execution-error/luck/context-change; feeds CO-12 |
+| `modules/decision_review/epistemic_algebra.py` | **B2, 2026-07-26.** `acis_rank`/`acis_meets` — one canonical ACIS ordinal over both live representations; `acis_max`/`acis_min` — the join/meet combinators (DRK-03's strongest-support rule, generalized, plus its dual weakest-link floor); `fact_grade_permitted` — DAIF-01 Part VIII 8.4's cardinal rule executable, the "Part XII checker" DAIF-01 names but never builds. Decision-agnostic: no `DecisionObject` dependency, reusable by any of the three owners. Fail-open ABSOLUTE, never inflates. |
 
 ## Verdict ontology (composes SDD-OS approval pipeline + explicit set)
 
@@ -117,6 +129,14 @@ always-reject / always-platform each caught by a scenario) · `V-DRK-DEPTH` (≥
 re-explained) · `V-DRK-FAILOPEN` (pathological input → DEFER) · `V-DRK-BASELINE` (ACIS/D2A/FIOS/FD/CO
 suites still green).
 
+**B2 addendum** — `tools/test_epistemic_algebra.py`, hermetic x3, 12/12: `V-EA-RANK-STRING` ·
+`V-EA-RANK-INT` (int and "E0".."E7" string agree) · `V-EA-RANK-UNRECOGNIZED` (never a guess) ·
+`V-EA-MEETS` · `V-EA-MAX-JOIN` · `V-EA-MIN-MEET` · `V-EA-EMPTY-FLOORS` ·
+`V-EA-FACT-GRADE-PERMITTED` · `V-EA-FACT-GRADE-DENIED-BELOW-FLOOR` ·
+`V-EA-FACT-GRADE-DENIED-NON-FACT-STATUS` (assumption laundering blocked — a status label
+alone can never buy fact-grade, no matter how high the level) · `V-EA-FAIL-OPEN` ·
+`V-EA-DETERMINISTIC`.
+
 ## Build ledger (updated after every sealed unit — coherence anchor)
 
 | Unit | Status | Words / evidence |
@@ -141,6 +161,7 @@ suites still green).
 | D1 Liveness ledger | ✅ LIVE | `drk-kernel` + `drk-proactive` rows added; both probe **LIVE** (earned: a real Decision Record + a real audit report exist) |
 | UKDL (4 rules) | ✅ sealed | PR-DECISION-AUTHORITY-LIMITS-001 · T-DECISION-AUTHORITY-CAPTURE-001 · T-DRK-PROACTIVE-NOISE-001 · T-DRK-PRECEDENT-LENGTH-BIAS-001 |
 | `DEC-0001` | ✅ recorded | the wiring decision, reviewed by the kernel itself: APPROVE-WITH-CONDITIONS · Tipo-B · L3 · DCS 92 |
+| `epistemic_algebra.py` | ✅ **built (B2)** | rank/meets/max/min + `fact_grade_permitted`; decision-agnostic, no fork of `evidence_burden_met`; `test_epistemic_algebra.py` 12/12 x3 |
 
 ## The self-review that found the bug
 
@@ -153,6 +174,17 @@ made every substantial decision "collide with a Hard Rule". That is the always-r
 (`V-DRK-NO-LENGTH-BIAS`), sealed (`T-DRK-PRECEDENT-LENGTH-BIAS-001`). The corrected review returns
 APPROVE-WITH-CONDITIONS with the precedent cited as a WARNING — surfaced, not vetoing. **A decision
 authority that cannot survive its own review is not an authority.**
+
+## Honest residuals (B2)
+
+`decision_kernel.py::evidence_burden_met` is **not** rewired to call `epistemic_algebra`
+in this commit — it is DRK's own live, tested, sealed burden check on `DecisionObject`, and
+touching it was out of B2's named gap. The deferred next integration is a follow-on refactor:
+`evidence_burden_met`'s `any(... >= ACIS_E3 ...)` line is a special case of `acis_meets`, and
+`providers.py::evidence_levels_for`'s regex parse (`E([0-7])`) is a special case of
+`acis_rank`. Neither is touched here; both are candidates once a second real consumer of
+`epistemic_algebra` exists (a DAIF-02/04/07 build), so the refactor is justified by reuse
+rather than done speculatively against a single caller.
 
 ## The fundamental property
 

@@ -1,13 +1,21 @@
 # CPCSC — MISSION STATE
 
-**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B in progress (6/9 sealed: B5-B9 + B1 done; B2/B3/B4 module/wiring remain).**
-**Updated:** 2026-07-21
+**Phase:** STOP #2 APPROVED · A1+A2 SEALED · run_family FIXED · **Tier B in progress (7/9 sealed: B5-B9 + B1 + B2 done; B3/B4 module/wiring remain).**
+**Updated:** 2026-07-26
 
 > B1 SEALED (`b494a84`): FIOS II-1 Unknown-Unknown Hunter — `modules/frontier_intelligence/unknown_unknown_generator.py`
 > (structural absence vs a discovered peer cohort; distinct from question_harvester's recorded gaps). Gate
 > `tools/test_unknown_unknown_generator.py` 8/8 ×3. FIOS_INDEX II-1 promoted 🟡→🟢. Also an A2 build dep.
-> **Next: B2** (epistemic algebra unification → new registry + Part joining DRK-00/DAIF-01/ACIS; also A2 dep),
-> then B3 (CO-03 + one_shot reasoning-axis wiring), B4 (DFP FREEZE → IAS-C1 FUNDED transduction module).
+> B2 SEALED: epistemic-algebra join (DRK-00 x DAIF-01 x ACIS) — `modules/decision_review/epistemic_algebra.py`.
+> ACIS derives per-claim E0-E7; DAIF-01 Part VIII types Confidence onto that ladder but is deliberately inert;
+> DRK-03's evidence-burden rule had its only executable form hard-bound inside
+> `decision_kernel.py::evidence_burden_met`. New module supplies the shared, decision-agnostic arithmetic:
+> `acis_rank`/`acis_meets` (one ordinal over both live representations), `acis_max`/`acis_min` (DRK-03's
+> strongest-support join + its meet dual), `fact_grade_permitted` (DAIF-01 8.4's cardinal rule executable —
+> the "Part XII checker" DAIF-01 names but never builds). Gate `tools/test_epistemic_algebra.py` 12/12 ×3.
+> DRK_INDEX updated (Executable table, V-gates addendum, Build ledger, Honest residuals — `evidence_burden_met`
+> deliberately not rewired to consume it yet, deferred until a second real consumer exists). Also an A2 dep.
+> **Next: B3** (CO-03 + one_shot reasoning-axis wiring), then B4 (DFP FREEZE → IAS-C1 FUNDED transduction module).
 > Pattern for B1-style module work: read owner + closest-neighbor module to draw the distinct-object boundary,
 > build deterministic + fail-open composing existing surfaces, V-gate hermetic ×3, register in the owner's
 > doctrine index (avoid the orphan/scaffold trap), pathspec commit.
@@ -34,11 +42,11 @@
 - Gates: `test_ias.py` (A1+D2+F3×3 = 20/20), `test_daif.py` (48/48; daif_04 21 Parts, daif_08 21 Parts),
   `test_side_effect_ledger.py` (8/8). All hermetic ×2. Every push REMOTE_DELTA 0 0.
 
-## Pending — Tier B (4 remaining, ALL module/wiring — a distinct phase from the dataset-Parts)
+## Pending — Tier B (2 remaining, ALL module/wiring — a distinct phase from the dataset-Parts)
 Each: read the owner/target fully, build the module or wire the seam, close ONLY the named gap,
 add a V-gate (module contract), micro-commit per owner. No dataset-Part floor here (these are code).
-- **B1** unknown-unknown generation → **FIOS** — module/Part (also A2 build dep)
-- **B2** epistemic algebra unification → **new registry + Part** (join DRK-00/DAIF-01/ACIS; A2 build dep)
+- ~~**B1** unknown-unknown generation → **FIOS**~~ — SEALED `b494a84`
+- ~~**B2** epistemic algebra unification → **DRK-00 x DAIF-01 x ACIS**~~ — SEALED (this session)
 - **B3** reasoning execution axis → **CO-03 + one_shot** — wiring
 - **B4** corpus→executable transduction → seam **DFP FREEZE → IAS-C1 FUNDED** — module
 
@@ -60,10 +68,8 @@ add a V-gate (module contract), micro-commit per owner. No dataset-Part floor he
 - Windows: PowerShell over Bash; git `C:\Program Files\Git\cmd\git.exe`; python312 absolute.
 
 ## Next 3 actions (Tier B module/wiring phase)
-1. **B1 (FIOS)** — read the FIOS module/dataset; build unknown-unknown generation as a module (+ Part
-   if the owner is a dataset); V-gate. B1 also unblocks A2's liveness (A2 build dep).
-2. **B2 (new registry + Part)** — the epistemic-algebra join over DRK-00/DAIF-01/ACIS; isolated FTS/registry
-   + a Part; V-gate. Also an A2 build dep.
+1. ~~**B1 (FIOS)**~~ — SEALED `b494a84`.
+2. ~~**B2 (epistemic algebra)**~~ — SEALED, `modules/decision_review/epistemic_algebra.py`, this session.
 3. **B3 (CO-03 + one_shot wiring)**, **B4 (DFP→IAS-C1 transduction module)** — wiring/module + V-gate each.
 
 ## Floor-first authoring lesson (confirmed A1+A2+B5-B9)
