@@ -100,12 +100,34 @@ first time.
 
 ---
 
-## Owner registration step (required — HR-001)
+## Owner registration step — DONE 2026-07-26
 
-Under HR-001 the agent may not write `~/.claude/CLAUDE.md` (agent-owned global
-config) in auto-mode. The PP-internal half above is shipped and live via the hook
-chain. For durability across compaction and for repos where hooks are disabled,
-paste this block into `~/.claude/CLAUDE.md`:
+**Status: registered.** The Owner explicitly authorized the write, lifting HR-001
+for that single operation. `~/.claude/CLAUDE.md` now carries the block; verified by
+`V-SDDOS-GLOBAL-REGISTERED` (exactly one `## SDD-OS` section, all six required
+clauses present). Backup at `~/.claude/CLAUDE.md.bak.20260726_130720`; the
+pre-existing content was byte-identical after the append.
+
+Two facts worth carrying forward:
+
+1. **The registered block is density-matched, not the verbatim text below.**
+   `CLAUDE.md` was at 39,306 chars against Claude Code's 40,000-char performance
+   warning — 694 chars of headroom for a 1,646-char block — and
+   `tools/trim_claude_md.py --dry-run` reclaimed **0** (it had already been run,
+   so that headroom was spent). The block was compressed to ~970 chars keeping
+   every normative clause: the core law, all four tier triggers, the escalation
+   list, the `covers` rule, and the pointer here. Compression stopped there
+   deliberately — the next thing to cut was the trigger list, and a tier ladder
+   without triggers is a judgment call again, which is precisely
+   `T-SDD-OS-IMPLICIT-ACTIVATION-001`. The file sits at 40,275 (275 over a soft
+   warning); the durable fix is relocating an unrelated section to the vault
+   behind a pointer, which needs its own Owner decision.
+2. **The verbatim block below stays authoritative.** It is what the hook chain
+   injects and what a fresh host should register.
+
+Under HR-001 the agent may not otherwise write `~/.claude/CLAUDE.md` (agent-owned
+global config) in auto-mode; a future re-registration needs the same explicit
+authorization. On a new host, paste this block into `~/.claude/CLAUDE.md`:
 
 ```markdown
 ## SDD-OS — Spec-Driven Development OS (MANDATORY, every repo)

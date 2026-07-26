@@ -323,10 +323,53 @@ def v_activation_live() -> None:
               "preserves prior context, fail-open on non-dict")
 
 
+# --- V-SDDOS-GLOBAL-REGISTERED ------------------------------------------
+
+REQUIRED_GLOBAL_CLAUSES = (
+    "SDD-OS",
+    "Spec First. Execution Second. Validation Always.",
+    "T2", "T3", "covers:", "prohibited",
+)
+
+
+def v_global_registered() -> None:
+    """The activation rules are on the standing global instruction surface.
+
+    Host-coupled by nature: this asserts a fact about ~/.claude/CLAUDE.md,
+    which is Owner-owned config. It was a STATUS line until the Owner
+    authorized the write on 2026-07-26 (lifting HR-001 for that operation);
+    gating on it earlier would have been a gate passing on work nobody had
+    done. On a fresh host, register the block from
+    governance/SDD_OS_GOVERNANCE.md to clear it.
+    """
+    gate = "V-SDDOS-GLOBAL-REGISTERED"
+    global_md = Path.home() / ".claude" / "CLAUDE.md"
+    if not global_md.is_file():
+        _fail(gate, f"{global_md} not found")
+        return
+    text = global_md.read_text(encoding="utf-8", errors="replace")
+
+    missing = [c for c in REQUIRED_GLOBAL_CLAUSES if c not in text]
+    if missing:
+        _fail(gate, f"global CLAUDE.md lacks {missing} -- register the block "
+                    f"from governance/SDD_OS_GOVERNANCE.md")
+        return
+
+    heads = text.count("## SDD-OS")
+    if heads != 1:
+        _fail(gate, f"expected exactly 1 SDD-OS section, found {heads}")
+        return
+
+    _ok(gate, f"registered in ~/.claude/CLAUDE.md, 1 section, "
+              f"{len(REQUIRED_GLOBAL_CLAUSES)} clauses present "
+              f"({len(text)} chars total)")
+
+
 def main() -> int:
     print("SDD-OS activation done-gate (BL-SDD-ACT-001)\n")
-    for fn in (v_claude_md, v_tier_classification, v_spec_before_code,
-               v_spec_update, v_scaffold, v_active_repos, v_activation_live):
+    for fn in (v_claude_md, v_global_registered, v_tier_classification,
+               v_spec_before_code, v_spec_update, v_scaffold,
+               v_active_repos, v_activation_live):
         try:
             fn()
         except Exception as exc:  # a crashing gate is a failing gate
