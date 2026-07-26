@@ -16,7 +16,16 @@ Spec-Driven Development OS. Core law: **Spec First. Execution Second. Validation
 | [sdd_os_03_specification_compiler_executable_engineer.md](sdd_os_03_specification_compiler_executable_engineer.md) | III | 936 | 9115 |
 | [sdd_os_04_requirements_truth_system_rts_anti_halluci.md](sdd_os_04_requirements_truth_system_rts_anti_halluci.md) | IV | 842 | 8450 |
 | [sdd_os_05_decision_os_engineering_governance_layer.md](sdd_os_05_decision_os_engineering_governance_layer.md) | V | 769 | 7454 |
-| **total** | | | **48210** |
+| [sdd_os_06_decision_accountability_attribution.md](sdd_os_06_decision_accountability_attribution.md) | VI | 152 | 12916 |
+| **total** | | | **61126** |
+
+PARTE VI (Decision Accountability & Attribution) was added to the family on
+2026-07-11, after the M4 ingestion that produced PARTEs I-V, and this index was
+not updated with it. The omission held until 2026-07-26, when it surfaced as a
+red `V-SDD-VAULT-EXISTS` gate. It is the exact drift this OS exists to prevent
+(T-SDD-OS-SPEC-DRIFT-001): the index stopped describing the corpus, so the index
+lied. PARTE VI is not a source-ingested part -- it was authored directly, so it
+carries no line range in the source dataset.
 
 ## Downstream wiring
 

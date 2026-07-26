@@ -35,7 +35,12 @@ from modules.spec_gate import check_spec_gate, classify_tier
 
 # Named constants -- this file carries no magic literals.
 COMMAND_MD_MIN_BYTES = 200
-EXPECTED_VAULT_FILES = 6       # 5 PARTE files + MASTER
+# 6 PARTE files + MASTER. Was 6 (PARTEs I-V + MASTER) until 2026-07-26:
+# PARTE VI (Decision Accountability & Attribution) joined the family on
+# 2026-07-11 and neither this constant nor the MASTER index was updated,
+# so this gate had been red ever since. Corrected against the corpus, not
+# the other way round -- the file is legitimate and non-trivial (12.9 KB).
+EXPECTED_VAULT_FILES = 7
 EXPECTED_PRD_COMMANDS = 4      # prd-tier0..3
 TIER_FLOORS = {0: 60, 1: 70, 2: 80, 3: 90}
 SLOP_TODO = chr(84) + chr(79) + chr(68) + chr(79)
