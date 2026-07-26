@@ -349,8 +349,8 @@
       "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
     },
     "pp_agents/signals/sdd_tier": {
-      "class": "PLANNED",
-      "note": "signal module built; no corresponding agents/pp-*.md currently imports it -- see pp_agents/signals/backlog note"
+      "class": "LIBRARY",
+      "note": "REACHABLE via modules/pp_agents/proactive_dispatcher.py (dispatch plan slot 'pp-sdd-tier'), which tools/jit_skill_loader.py invokes on the live UserPromptSubmit chain. The prior PLANNED note reasoned from agents/pp-*.md imports and missed the dispatcher path. Note that reachable-on-paper was not enough: until 2026-07-26 the loader never put PP_ROOT on sys.path, so every modules.* import in it raised ModuleNotFoundError and was swallowed fail-open -- this signal had ZERO production firings despite being wired (T-JIT-MODULES-UNIMPORTABLE-001). Superseded in the dispatch plan by modules/sdd_os/activation.py, which is not subject to the 3-advisory cap."
     },
     "pp_agents/signals/setup_scan": {
       "class": "PLANNED",

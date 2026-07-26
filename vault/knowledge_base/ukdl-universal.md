@@ -4906,3 +4906,61 @@ this asymmetry is the normal, expected shape of Duplicate-to-Advantage work, not
 incomplete drafting — some reinforcement is "we already built this correctly, tell the
 owner"; some is "we found something the owner's own corpus should absorb, and we built
 nothing internal because it isn't ours to build."
+
+## SDD-OS activation (SCS 2026-07-26, BL-SDD-ACT-001)
+
+**`T-SDD-OS-IMPLICIT-ACTIVATION-001`** -- A governance system that depends on the
+agent's judgment to activate is not a system; it is a suggestion. SDD-OS was sealed
+2026-06-07 with a working tier classifier, per-tier PRD templates and per-tier OQS
+floors, and it never once activated in the Owner's projects. *Observed:* across 91
+scanned project directories, ZERO carried any SDD-OS instruction, spec scaffold or
+tier classification, and `~/.claude/CLAUDE.md` -- the only document loaded in every
+repo -- contained zero occurrences of `SDD`, `Tier`, `classify_tier` or
+`spec-driven`. "When it seems necessary" is not a criterion; it is the mechanism by
+which a complete system stays inert. Activation criteria must be written as explicit,
+verifiable rules on the standing instruction surface, not inferred per session.
+
+**`PR-SDD-OS-SPEC-BEFORE-EXECUTION-001`** -- For any Tier 2+ task in any repo: the
+spec precedes the implementation. The minimum for Tier 1 is objective, scope,
+acceptance criteria and regression risk; Tier 2 adds PRD + Architecture Spec +
+rollback; Tier 3 adds governance, cross-repo applicability, migration and kill
+switches. Without these verified, "done" cannot be evaluated. The spec is not
+overhead -- it is the contract that makes an evidence-backed DONE possible. Enforce
+proportionally: a gate that demands a full PRD to fix a typo gets switched off, and a
+switched-off gate governs nothing.
+
+**`T-SDD-OS-SPEC-DRIFT-001`** -- A spec that is not updated when the code changes is
+worse than no spec: it becomes a false source of truth that future agents and
+developers use to make wrong decisions. The update loop belongs in the done-gate of
+every change, not in a separate task deferred indefinitely. *Observed the same day, in
+this vault:* SDD-OS PARTE VI joined the family on 2026-07-11 and neither the MASTER
+index nor `test_sdd_os.py::EXPECTED_VAULT_FILES` was updated, leaving that sealed gate
+red for 15 days while the index described a 5-part corpus that had 6 parts. The
+doctrine caught its own corpus.
+
+**`T-SDD-OS-GATE-SATISFIED-BY-UNRELATED-ARTIFACT-001`** -- A gate whose predicate is
+satisfiable by something other than the thing it must prove does not gate. The spec
+gate globbed `vault/plans/*.md` and asked "does this repo contain a spec-shaped
+file?" when the question was "does THIS TASK have a spec?". *Observed:* TUA-X (50 plan
+files) and KobiiCraft Core Files (131) passed the gate permanently, for every future
+task, on documents describing unrelated work -- so the gate was weakest precisely in
+the repos with the most history and the highest stakes. Fix: a spec must DECLARE its
+coverage (`covers:` front matter) and bind by conjunctive token match; an undeclared
+spec binds to nothing. Same family as `zero cannot fall` and `never gate on a ratio`.
+
+**`T-JIT-MODULES-UNIMPORTABLE-001`** -- Fail-open error handling around an import turns
+a total outage into silence. `tools/jit_skill_loader.py` never inserted `PP_ROOT` into
+`sys.path`; because the hook's cwd is the user's arbitrary project and Python only adds
+the script's own `tools/` directory, every `from modules...` inside it raised
+ModuleNotFoundError. *Observed:* the loader's own log showed `pp proactive inject`,
+`skill-router inject`, `akos inject` and `sdd-os activation` ALL failing on every single
+prompt -- the entire proactive agent layer (13 signals), the skill router and AKOS
+knowledge injection were dead in production while every unit test passed, because tests
+run with the repo root on `sys.path` and the hook does not. This is the true root cause
+of SDD-OS's zero production firings: the signal did not lose a ranking contest, its
+dispatcher never imported. *Rules:* (1) a hook that imports repo modules must put the
+repo root on `sys.path` explicitly, never rely on cwd; (2) exercise a hook through its
+REAL entry point (JSON on stdin as the dispatcher invokes it), never only by importing
+it -- an import test and a production invocation have different `sys.path`; (3) when a
+fail-open handler swallows an exception, its log is the only witness -- read the log
+before concluding a feature "just does not fire".
