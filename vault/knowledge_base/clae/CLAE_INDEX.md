@@ -1,0 +1,74 @@
+---
+title: CLAE — Master Index
+family: clae
+date: 2026-07-26
+parts_total: 26
+parts_sealed: 1
+---
+
+# CLAE — Master Index
+
+**Coherence anchor:** `parts_sealed` above must equal the count of `PART_*.md` files in
+this directory. On disagreement, reconcile from the filesystem — never from this table.
+
+## Reading routes
+
+- **Agent about to declare work done** → XX, IX, XVI, XXV.
+- **Agent starting a long autonomous mission** → XII, XIX, XVII, XVIII.
+- **Engineer implementing `modules/clae/`** → III, IV, VI, VII, IX, XIII, XXIII.
+- **Reviewer auditing this family** → I, II, XXI, XXII, XXIV, XXVI.
+- **First-time reader** → I → II → III, then any route above.
+
+## Parts
+
+| Part | Title | Responsibility | Depends on | Status |
+|---|---|---|---|---|
+| I | The Internal-Bar Trap | Why a stack that authors its own criteria cannot see its own ceiling; the Phase 0 evidence that PP has this defect | — | **SEALED** |
+| II | Quality as Distance, Not Compliance | First principles: replacing the pass/fail predicate with a measured residual | I | pending |
+| III | Ontology and Glossary | Reference · bar · delta · distance · floor · residual · oracle · probe · instrument · horizon · deviation | I, II | pending |
+| IV | The Reference Object | What qualifies as canonical external reference; why an internally-authored bar disqualifies | III | pending |
+| V | Reference Acquisition, Versioning and Provenance | Obtaining, pinning and dating a reference; staleness and drift of the bar itself | IV | pending |
+| VI | Delta Extraction | Making difference observable; the observability precondition; domains where extraction fails | IV, V | pending |
+| VII | Delta Impact Ranking | Ordering by consequence rather than by discovery order; the ranking failure modes | VI | pending |
+| VIII | The Top-K Correction Cycle | Cycle structure, k selection, re-measurement, termination and non-termination | VII | pending |
+| IX | Quality Distance Accounting | The residual ledger; carrying distance through a passing gate; trend and debt | II, VIII | pending |
+| X | Anti-Underbuild Floors | Minima that catch a real-but-shallow implementation the slop detector cannot see | IX | pending |
+| XI | Floor Derivation Versus Floor Imposition | Why imported quantitative floors fail; deriving minima from the domain | X | pending |
+| XII | Observability-Capable Phase Zero | Proving boot, observe, measure, reproduce, compare, fail-legibly before the first feature | VI | pending |
+| XIII | The Instrument Taxonomy | Probe · capture · diff · sample · trace · profile · harness; selection criteria | XII | pending |
+| XIV | Autonomous Toolsmith Behaviour | When an agent must build its own instrument before continuing; cost and abuse boundaries | XIII | pending |
+| XV | Incident-to-Probe Conversion | Every significant failure leaves a durable, re-runnable probe | XIII, XIV | pending |
+| XVI | The Human Oracle Boundary | The declared set of properties the stack structurally cannot verify about itself | II, XII | pending |
+| XVII | Oracle Routing | When to ask, which artifact to present, how an answer becomes durable evidence | XVI | pending |
+| XVIII | Deviation Governance | Constraint-bounded substitution: prove the constraint, preserve intent, measure the loss | IX | pending |
+| XIX | Evidence-Gated Autonomy | Gate structure that replaces per-step approval without becoming unbounded | XII, XVIII | pending |
+| XX | Phase Closure Semantics | What closure means; residual visibility as a closure obligation | IX, XIX | pending |
+| XXI | Failure Modes and Failure Lineages | How closed loops fail: blindness, bar inflation, metric theater, myopia, replanning amnesia | all prior | pending |
+| XXII | Traps Registry | Named traps with trigger, symptom, detection and escape | XXI | pending |
+| XXIII | Hard Rules and Process Rules Registry | Full UKDL-shaped rule records with origin, enforcement layer, eval and retirement condition | XXI, XXII | pending |
+| XXIV | Evals and Benchmarks | Per-eval objective, setup, pass and fail criteria, adversarial variants, false-positive risk | XXIII | pending |
+| XXV | Production Reality Gates | Autonomous Mission Gate · Phase Closure Gate · Residual Visibility Gate | XXIII, XXIV | pending |
+| XXVI | Integration Map and Institutional Writeback | Resolution against every named canonical owner; what CLAE feeds and consumes | all prior | pending |
+
+## Registries (populated as Parts seal)
+
+| Artifact | Status |
+|---|---|
+| `CLAE_SYSTEMS_CATALOG.md` | pending |
+| `CLAE_HARD_RULES.md` | pending (source: Part XXIII) |
+| `CLAE_PROCESS_RULES.md` | pending (source: Part XXIII) |
+| `CLAE_TRAPS.md` | pending (source: Part XXII) |
+| `CLAE_EVALS.md` | pending (source: Part XXIV) |
+| `CLAE_PRODUCTION_GATES.md` | pending (source: Part XXV) |
+| `CLAE_ONTOLOGY.md` | pending (source: Part III) |
+| `CLAE_INTEGRATION_MAP.md` | pending (source: Part XXVI) |
+| `CLAE_EVIDENCE_INDEX.md` | pending |
+| `CLAE_OPEN_QUESTIONS.md` | pending |
+| `CLAE_VERSION_LEDGER.md` | pending |
+| `CLAE_COMPLETION_REPORT.md` | pending |
+
+## Construction rule
+
+One Part per commit, pathspec-scoped. After sealing a Part: flip its status row here,
+increment `parts_sealed`, and update `RE_BASELINE_RESUMPTION.md` block 2 — in that order,
+before beginning the next Part.

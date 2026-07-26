@@ -34,6 +34,17 @@
 - Response: Read the file once to reset the counter, then re-apply the edit. Do not chase
   a phantom content mismatch.
 
+## FP-05 — contamination gate flags the document that forbids the contamination
+- What it really is: a contamination gate greps for a banned vocabulary. A charter, plan or
+  resumption file that DECLARES the ban necessarily contains the banned words in its
+  prohibition clause. Same blunt-literal-matcher class as FP-03, one layer up.
+- Symptom: `V-CONTAM-*` reports hits, and every hit resolves to a line of the form
+  "no <banned vocabulary>" / "zero <banned vocabulary>" inside a governance artifact.
+- Response: re-scope the gate to the DATASET artifacts (the deliverable corpus), excluding
+  planning and governance files, then re-run. Contamination is a property of the corpus,
+  not of the document that governs the corpus. Never reword a prohibition to appease a
+  grep — a ban you cannot state is a ban you cannot enforce.
+
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
