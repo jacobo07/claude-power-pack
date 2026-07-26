@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 12
+parts_sealed: 13
 ---
 
 # CLAE — Master Index
@@ -35,7 +35,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | X | Anti-Underbuild Floors | The six shapes of real-but-shallow work; the five floor properties; the declared escape; retirement at creation; promotion and demotion | IX | **SEALED** |
 | XI | Floor Derivation Versus Floor Imposition | The four mismatches; the three thresholds as risk posture; qualitative floors travel and numeric ones do not; the sensitivity test | X | **SEALED** |
 | XII | Observability-Capable Phase Zero | The six ordered capabilities; the thin-vertical rule; the envelope not determinism; partial Phase Zero as a declared measurement-debt register | VI | **SEALED** |
-| XIII | The Instrument Taxonomy | Probe · capture · diff · sample · trace · profile · harness; selection criteria | XII | pending |
+| XIII | The Instrument Taxonomy | Seven kinds and their native levels; selection by required level; perturbation under envelope; chain coverage as intersection; three-valued output | XII | **SEALED** |
 | XIV | Autonomous Toolsmith Behaviour | When an agent must build its own instrument before continuing; cost and abuse boundaries | XIII | pending |
 | XV | Incident-to-Probe Conversion | Every significant failure leaves a durable, re-runnable probe | XIII, XIV | pending |
 | XVI | The Human Oracle Boundary | The declared set of properties the stack structurally cannot verify about itself | II, XII | pending |
