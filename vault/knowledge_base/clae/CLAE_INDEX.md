@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 17
+parts_sealed: 18
 ---
 
 # CLAE — Master Index
@@ -40,7 +40,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | XV | Incident-to-Probe Conversion | The incident as a free known-answer case with a short expiry; probe versus fix versus test; fix-or-delete-never-mute; the probe as an agent memory of failure | XIII, XIV | **SEALED** |
 | XVI | The Human Oracle Boundary | The self-verification limit; four marks of an oracle question; both-direction failure and why boundaries drift narrow; standing and constituency | II, XII | **SEALED** |
 | XVII | Oracle Routing | The answerable window; the six presentation items; the criterion-over-verdict ladder; an answer is evidence about what was shown; the re-ask ledger | XVI | **SEALED** |
-| XVIII | Deviation Governance | Constraint-bounded substitution: prove the constraint, preserve intent, measure the loss | IX | pending |
+| XVIII | Deviation Governance | The four-part contract; zero deviation rate as a broken record; intent preservation does not compose; the zero-loss test; density as a design signal | IX | **SEALED** |
 | XIX | Evidence-Gated Autonomy | Gate structure that replaces per-step approval without becoming unbounded | XII, XVIII | pending |
 | XX | Phase Closure Semantics | What closure means; residual visibility as a closure obligation | IX, XIX | pending |
 | XXI | Failure Modes and Failure Lineages | How closed loops fail: blindness, bar inflation, metric theater, myopia, replanning amnesia | all prior | pending |
