@@ -4,16 +4,7 @@
 # spec dir). Scaffolding is non-destructive and idempotent: existing
 # documentation is never overwritten, so re-running is always safe.
 #
-# Every path below was verified to exist on 2026-07-26 by direct scan.
-#
-# Deliberately EXCLUDED: the 20 TUA-X-* worktrees. They are git worktrees
-# of the TUA-X repo, so a tracked ARCHITECTURE.md written into each would
-# collide on merge and produce 20 near-identical specs. The main TUA-X
-# checkout carries the spec for all of them.
-#
-# CommonWealth Ops is NOT listed: no directory by that name exists under
-# Desktop\Cursor Projects. Owner input needed for its real path -- it is
-# absent rather than silently assumed.
+# Every path below was verified to exist by direct filesystem scan.
 
 C:\Users\User\Desktop\Cursor Projects\TUA-X
 C:\Users\User\Desktop\Cursor Projects\InfinityOps
@@ -23,3 +14,54 @@ C:\Users\User\Desktop\Cursor Projects\CostaLuz Lawyers
 C:\Users\User\Desktop\Cursor Projects\AKOS
 C:\Users\User\Desktop\Cursor Projects\GEO-audit
 C:\Users\User\.claude\skills\claude-power-pack
+C:\Users\User\Desktop\Cursor Projects\TUA-X\CW_UGC_SYSTEM
+
+# --- CANDIDATE, pending Owner confirmation ------------------------------
+# CW_UGC_SYSTEM (last entry above) is included as the CommonWealth
+# candidate. No directory named "CommonWealth Ops" exists anywhere under
+# Desktop\Cursor Projects (searched to depth 2, 2026-07-26). CW_UGC_SYSTEM
+# qualifies for the substrate on its own merits regardless of the naming
+# question: it is an independent git repo (own .git, pyproject.toml, its
+# own CLAUDE.md, 94 source files) nested inside TUA-X, and it carries its
+# own Claude project id (C--Users-User-Desktop-Cursor-Projects-TUA-X-CW-
+# UGC-SYSTEM), i.e. it has been used as an active working directory.
+# If "CommonWealth Ops" means something else, say so and this line moves.
+
+# --- EXCLUDED: dataset vaults, not code repos ---------------------------
+# Three CommonWealth-named directories exist under Repos-GitHub, and all
+# three are knowledge vaults with zero source files, no .git and only .md
+# content. Per the Cursor-Projects-is-active-dev / Repos-GitHub-is-vaults
+# split, an inferred Architecture Spec in a dataset vault would describe
+# nothing and would be exactly the false source of truth SDD-OS exists to
+# prevent (T-SDD-OS-SPEC-DRIFT-001):
+#   ...\knowledge_vault\base-knowledge-vault\commonwealth-ops-risk-shield-datasets           (0 src, 69 md)
+#   ...\knowledge_vault\base-knowledge-vault\commonwealth-collective-intelligence-flywheel   (0 src, 51 md)
+#   ...\knowledge_vault\base-knowledge-vault\commonwealth-scientific-advertising-intelligence-system (0 src, 17 md)
+#   C:\Users\User\Downloads\Datasets CommonWealth Unfair Advantage Engine  (0 src, 0 md)
+
+# --- EXCLUDED_WORKTREES (Owner-acknowledged 2026-07-26) -----------------
+# The 20 TUA-X-* directories are git worktrees of the TUA-X repo:
+#   TUA-X-cbin-recommend, TUA-X-cbin-status, TUA-X-cross-angle,
+#   TUA-X-ece-wt, TUA-X-fe17, TUA-X-fgr-emergent, TUA-X-formula-variety,
+#   TUA-X-gs-crossangle, TUA-X-landing-intel, TUA-X-msr, TUA-X-msr-market,
+#   TUA-X-niche-bench, TUA-X-offercap, TUA-X-ooa-fbr, TUA-X-qa,
+#   TUA-X-redesign, TUA-X-spend-analytics, TUA-X-ucce-genome,
+#   TUA-X-waitlist-gate, TUA-X-waitlist-source, TUA-X-wpr-lvs
+#
+# REASON: ARCHITECTURE.md is a tracked file. Writing a per-worktree copy
+# means 20 near-identical files on 20 branches that collide on every merge
+# back to main. The main TUA-X checkout carries the spec for all of them,
+# and a worktree is a branch of the same codebase -- one architecture, not
+# twenty.
+#
+# IF the Owner later wants per-worktree specs, this needs a different
+# strategy, NOT simply adding the paths here. Two viable options, neither
+# implemented without an explicit decision:
+#   (A) Untracked: add ARCHITECTURE.md to each worktree's .git/info/exclude
+#       (per-worktree, not the shared .gitignore) so the file is local-only.
+#       Cost: the spec is not shared, backed up, or reviewable.
+#   (B) Non-conflicting path: write to vault/specs/<worktree-name>.md with
+#       a `covers:` declaration naming that worktree's feature. Merges
+#       cleanly because each filename is unique, and the covers-binding
+#       makes each spec bind only to its own worktree's task.
+# (B) is the better fit for the covers model and is the recommendation.
