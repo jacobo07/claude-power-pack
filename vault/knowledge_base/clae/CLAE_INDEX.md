@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 5
+parts_sealed: 6
 ---
 
 # CLAE — Master Index
@@ -28,7 +28,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | III | Ontology and Glossary | Reference · bar · delta · distance · floor · residual · oracle · probe · instrument · horizon · deviation; the ten-pair confusion matrix | I, II | **SEALED** |
 | IV | The Reference Object | The five qualification conditions; reference classes; the regression-versus-ceiling direction label; manufacturing externality by discovery | III | **SEALED** |
 | V | Reference Acquisition, Versioning and Provenance | The perishability principle; pin generations; three decays; residual change decomposition; custody as tamper-evidence | IV | **SEALED** |
-| VI | Delta Extraction | Making difference observable; the observability precondition; domains where extraction fails | IV, V | pending |
+| VI | Delta Extraction | The observability precondition; the five-level extraction ladder; paired observation; projection and structure traps; the noise floor | IV, V | **SEALED** |
 | VII | Delta Impact Ranking | Ordering by consequence rather than by discovery order; the ranking failure modes | VI | pending |
 | VIII | The Top-K Correction Cycle | Cycle structure, k selection, re-measurement, termination and non-termination | VII | pending |
 | IX | Quality Distance Accounting | The residual ledger; carrying distance through a passing gate; trend and debt | II, VIII | pending |
