@@ -5,6 +5,15 @@ Power Pack execution doctrine inline. Hard rules below are sealed bug stops. See
 ## Mode Selection (router -> PR-MODE-SELECTION-001)
 Before a structured prompt: **EXECUTION MODE by default** (clear path, extends existing systems); **ULTRA-PLAN only** for a genuine architectural decision or a new-from-scratch system. ULTRA-PLAN costs ~3-5x the output. Full rule + evidence: `vault/knowledge_base/ukdl-universal.md` (PR-MODE-SELECTION-001 + T-PARALLEL-PANES-BURN-001).
 
+## CCF Activation Criteria (added 2026-07-26)
+Invoke `cpp creative` (Creative Compilation Framework, `modules/ccf/`) when ANY of these hold, objectively evaluable, no "when appropriate" judgment call:
+- Owner names a new brand, logo, or identity that needs visual work.
+- Owner asks for a visual asset (icon, wordmark, brand mark) to be designed.
+- Owner asks for variants, a palette, or typography for a brand/product.
+- A project's scope includes producing a brand package / brand kit.
+Activate: `python -m modules.ccf.cli init <project> --brief <brief.txt>`, then `generate`/`select`/`package`.
+Produces: `config.json` + `spec.json`, a trademark-collision-scanned prompt per concept, and (on `package`) a sealed brand-kit PDF. Every WARN/BLOCK verdict and provider failure is fed into `vault/knowledge_base/ccf/` — do not hand-write entries there; only the CLI's real call path should ever produce them (T-CCF-BUILT-NOT-ACTIVATED-001).
+
 ## Project Governance & Knowledge (added 2026-07-11)
 Normative rules that every project using Claude Power Pack obeys from its first commit live
 in `governance/` (one domain per file, imperative, each rule cites a real incident):
