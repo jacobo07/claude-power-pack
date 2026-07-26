@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 24
+parts_sealed: 25
 ---
 
 # CLAE — Master Index
@@ -47,7 +47,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | XXII | Traps Registry | 99 distinct traps measured and consolidated; symptom-keyed index; escape-from-inside; prevention-only entries; reference set versus operational register | XXI | **SEALED** |
 | XXIII | Hard Rules and Process Rules Registry | 118 process rules, 0 hard rules; the five-layer enforcement ladder; prefer the lowest layer; deductive rules are hypotheses | XXI, XXII | **SEALED** |
 | XXIV | Evals and Benchmarks | An eval is an instrument; the negative control; adversarial variants; false-positive risk as a liability; benchmark the family, do not eval it | XXIII | **SEALED** |
-| XXV | Production Reality Gates | Autonomous Mission Gate · Phase Closure Gate · Residual Visibility Gate | XXIII, XXIV | pending |
+| XXV | Production Reality Gates | Nineteen gates consolidated to four lifecycle gate points; label evidence and block floors; label propagation; gate decay | XXIII, XXIV | **SEALED** |
 | XXVI | Integration Map and Institutional Writeback | Resolution against every named canonical owner; what CLAE feeds and consumes | all prior | pending |
 
 ## Registries (populated as Parts seal)
