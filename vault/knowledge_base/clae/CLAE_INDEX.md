@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 9
+parts_sealed: 10
 ---
 
 # CLAE — Master Index
@@ -32,7 +32,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | VII | Delta Impact Ranking | Impact versus severity; the four factors; dominance-then-frontier ordering; fixability bias and the counting trap; starvation | VI | **SEALED** |
 | VIII | The Top-K Correction Cycle | k from attribution not capacity; whole-dimension re-measurement; the four outcomes; distance opened; first cycle validates the loop | VII | **SEALED** |
 | IX | Quality Distance Accounting | Residual identity; joint publication; the three debts (quality, measurement, instrument); aggregation classes; unverified as a disposition | II, VIII | **SEALED** |
-| X | Anti-Underbuild Floors | Minima that catch a real-but-shallow implementation the slop detector cannot see | IX | pending |
+| X | Anti-Underbuild Floors | The six shapes of real-but-shallow work; the five floor properties; the declared escape; retirement at creation; promotion and demotion | IX | **SEALED** |
 | XI | Floor Derivation Versus Floor Imposition | Why imported quantitative floors fail; deriving minima from the domain | X | pending |
 | XII | Observability-Capable Phase Zero | Proving boot, observe, measure, reproduce, compare, fail-legibly before the first feature | VI | pending |
 | XIII | The Instrument Taxonomy | Probe · capture · diff · sample · trace · profile · harness; selection criteria | XII | pending |
