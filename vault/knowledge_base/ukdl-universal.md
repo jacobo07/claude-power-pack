@@ -4964,3 +4964,56 @@ REAL entry point (JSON on stdin as the dispatcher invokes it), never only by imp
 it -- an import test and a production invocation have different `sys.path`; (3) when a
 fail-open handler swallows an exception, its log is the only witness -- read the log
 before concluding a feature "just does not fire".
+
+## CLAUDE.md auto-compaction (SCS 2026-07-26, BL-CLAUDEMD-COMPACT)
+
+**`T-CLAUDE-MD-GROWTH-WITHOUT-RETIREMENT-001`** -- CLAUDE.md grows with every new
+system added and nothing is ever retired automatically, so it accumulates until it
+crosses Claude Code's 40,000-char performance limit. The correct fix is not recurring
+manual trimming -- it is that CLAUDE.md becomes an index of pointers while the
+normative content lives in the vault, where it can grow without competing for the
+context budget. *Observed:* the file hit 40,275 with `trim_claude_md.py` reclaiming
+ZERO (it harvests provenance prose, already taken 2026-07-04), and TWICE DURING the
+compaction session other panes appended to it (+289, then +277 chars). Growth is not
+a periodic cleanup task; it is continuous pressure that needs a standing policy.
+
+**`PR-CLAUDE-MD-INDEX-FIRST-001`** -- Every new normative block over 500 chars added
+to CLAUDE.md must have its canonical file in the vault. CLAUDE.md carries only the
+pointer, the activation triggers, and a one-line description; the full content lives
+in the vault. Enforced by `hooks/claude_md_linter_stop.js`, which names the largest
+unprotected sections carrying no vault pointer.
+
+**`PR-CLAUDE-MD-TRIGGER-STAYS-EXPLANATION-MOVES-001`** -- The split criterion for
+externalizing a section is NOT its size. A pointer is followed only if the agent
+chooses to follow it, so anything that must fire WITHOUT the agent deciding to read
+anything is unconditional and stays: the recognition condition, the imperative, the
+pointer. What moves is rationale, incident origin, worked examples and detail tables
+-- what only matters once you are already in the situation and the trigger named the
+file. *Externalize a trigger and the rule does not become less prominent; it silently
+stops existing* -- `T-SDD-OS-IMPLICIT-ACTIVATION-001` reappearing in a new file.
+Corollary: the two largest sections (Bash-Bridge + Anti-Waiting, 44% of the file)
+are the most tempting target and are permanently protected, which is why the earlier
+seal `never relocate Bash-Bridge/Anti-Waiting rules` exists.
+
+**`T-DEAD-ADVICE-WORSE-THAN-NO-ADVICE-001`** -- A gate that measures correctly and
+then prescribes an exhausted remedy is worse than a gate that says nothing, because
+its output looks like a remedy and stops the reader from looking further. *Observed:*
+`claude_md_linter_stop.js` was live in the Stop chain, counted chars correctly, fired
+at the right threshold, and told the agent to run `trim_claude_md.py` -- which by then
+reclaimed 0 on every invocation. The gate was healthy by every self-check it had; its
+ADVICE was dead. *Rule:* when a gate names a remedy, the remedy needs its own liveness
+check -- assert the recommended action can still change the measured quantity, not
+merely that the recommendation is emitted.
+
+**`T-SDD-OS-HOOK-GENERATED-ITS-OWN-INPUT-001`** -- A per-prompt hook that WRITES an
+artifact which a sibling injector then READS as authoritative is a feedback loop, and
+when the artifact is an empty skeleton it is also a false source of truth. *Observed:*
+SDD-OS tied spec auto-generation to "is this repo scaffolded", treating adoption as
+consent to write. Within hours it had produced three spec skeletons across three
+repos -- one named after a PREFLIGHT SHELL BLOCK in the prompt -- and because
+`jit_skill_loader._active_spec()` selects the most-recently-modified spec, each empty
+skeleton immediately became the injected "ACTIVE PROJECT SPEC", displacing the real
+one. *Rules:* (1) a prompt is not a task statement -- it carries preflight blocks,
+pasted logs and command output, so a slug derived from it is noise; (2) the prompt
+path is READ-ONLY, generation is an explicit act; (3) scaffolding a repo is consent
+to be GOVERNED, never consent to be WRITTEN TO on every prompt.
