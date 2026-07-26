@@ -99,14 +99,26 @@ def cmd_show(ids: list[str]) -> int:
 
 def cmd_class(name: str) -> int:
     from modules.rule_compiler.compiler import rules_in_class
-    from modules.rule_compiler.digest import TRIGGER_CLASSES, UNCLASSIFIED
+    from modules.rule_compiler.digest import (
+        ROUTER_CONTRACTED,
+        TRIGGER_CLASSES,
+        UNCLASSIFIED,
+    )
     known = [c[0] for c in TRIGGER_CLASSES] + [UNCLASSIFIED]
-    if name.upper() not in known:
+    cls = name.upper()
+    if cls not in known:
         print(f"[FAIL] unknown class '{name}'. Known: "
               f"{', '.join(known)}", file=sys.stderr)
         return 2
-    rules = rules_in_class(name)
-    print(f"=== {name.upper()} -- {len(rules)} BINDING rule(s). "
+    rules = rules_in_class(cls)
+    if not rules and cls in ROUTER_CONTRACTED:
+        print(f"=== {cls} -- COVERAGE DEFECT: 0 binding rules ===")
+        print("The global router fires on this trigger and finds nothing "
+              "to enforce. An empty contracted class is an unenforced "
+              "trigger point, not a clean pass -- do not read it as "
+              "compliance.", file=sys.stderr)
+        return 3
+    print(f"=== {cls} -- {len(rules)} BINDING rule(s). "
           f"Comply before acting. ===")
     for r in rules:
         print("\n" + "-" * 68)

@@ -1,6 +1,6 @@
 # HARD-RULE REJECTION REPORT (compiled artifact)
 
-Compiled 2026-07-20T13:31:22Z.
+Compiled 2026-07-26T18:32:20Z.
 
 **13 of 161 rules failed the schema gate.** A rejected rule is not deleted -- it is denied entry to the ACTIVE set. It cannot fire, and it is listed here so it can be repaired or retired.
 

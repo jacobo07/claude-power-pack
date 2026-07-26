@@ -7,6 +7,65 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-07-26) -- KSF Phase 0 audit: three pre-existing defects
+
+Surfaced by the Knowledge Sovereignty Fabric Phase -1/Phase 0 corpus audit
+(`vault/plans/ksf-compendium-2026-07-26.md`). None was caused by that mission.
+Owner disposition at STOP #1: repair (a) now, defer (b) and (c) to backlog.
+
+### (a) PLUGIN-INSTALL trigger class carries zero rules  [PENDING -- mechanism REPAIRED, corpus gap remains]
+
+**System:** `modules/rule_compiler/digest.py` + `tools/hardrule_compile.py`
+**Status:** the *silent* half is fixed this session. `build_digest` used to drop
+any empty class, so a trigger class the global `~/.claude/CLAUDE.md` router
+contracts on vanished from the digest entirely -- the agent could not tell "no
+rules" from "no such class", and `--class PLUGIN-INSTALL` answered `0 rules.
+Comply before acting.` at **exit 0**, which reads exactly like a clean pass.
+Now: contracted-but-empty classes stay in the digest with an explicit `0`, are
+named under `## CONTRACTED BUT UNENFORCED`, and the CLI returns **exit 3**.
+Verified: digest 2154 -> 2409 B (cap 4096), `ENFORCEMENT_PASS=19/19`, exit 0.
+
+**What remains is an Owner call, not a wiring task.** Zero of 148 binding rules
+classify into PLUGIN-INSTALL. The router still fires on plugin installs and finds
+nothing to enforce -- the hole is now *visible* rather than closed. Two options:
+
+- **Author the rules.** The estate has real plugin-install incidents to draw on
+  (Adventure ABI breakage across Paper/Citizens versions, the EssentialsX
+  empty-YAML-list NPE cascade, hot-swap without a backup). Each would need a
+  TRIGGER/ACTION/EVIDENCE body that survives the schema gate.
+- **Retire the trigger.** If plugin installs are no longer a governed surface on
+  this host, remove the fourth trigger from the global router and drop
+  `PLUGIN-INSTALL` from `ROUTER_CONTRACTED` -- a contracted trigger with no
+  corpus is governance theater either way.
+
+**Do not** close this by deleting the coverage-defect row. That is the defect.
+
+### (b) CPP-IAS non-duplication verdicts rest on a short denominator  [PENDING -- backlog]
+
+**System:** `vault/knowledge_base/cpp_ias/13_REGISTRIES/SYSTEM_REGISTRY.md`
+**Why:** it maps the estate as "18 domains, ~524k words" and omits `d2a_fabric`
+(DAIF, 292,276 words -- the single largest family) and `crawl_os` (117,114 w).
+Every ABSORB/REFERENCE verdict citing that registry was decided against a
+denominator missing ~416k words of its nearest neighbours, so IAS-vs-DAIF overlap
+has never actually been tested. Already recorded inside `CPP_IAS_INDEX.md` as the
+fifth measured instance of `T-D2A-REGISTRY-BLIND-SPOT-001`; carried here so it is
+visible outside the family that owns it. Fix = rebuild the registry from a
+discovered set (`PR-COVERAGE-BY-CONSTRUCTION-001`), never a curated one, then
+re-run the affected verdicts at content tier.
+
+### (c) DAIF marked SEALED with four done-gate artifacts NOT_STARTED  [PENDING -- backlog]
+
+**System:** `vault/knowledge_base/d2a_fabric/DAIF_INDEX.md`
+**Why:** the manifest reads `8/8 SEALED · 160/160 Parts · 292,276 words`, while
+its own governance table lists `DAIF_CONTAMINATION_AUDIT.md`,
+`DAIF_COVERAGE_MATRIX.md`, `DAIF_COMPOUNDING_MAP.md` and `tools/test_daif.py`
+as `NOT_STARTED`. A SEALED claim whose done-gate artifacts do not exist is the
+Scaffold Illusion at corpus scale (Mistake #16, HR-CONTEXT-001). Either produce
+the four artifacts, or demote the family's state to `CONTENT_COMPLETE` until
+they exist. The word counts are not in question; the *verdict* is.
+
+---
+
 ## NEW (2026-07-22) -- CGF Workstream B: 15 PLANNED clusters registered (62 modules)
 
 Liveness orphan disposition pass (`vault/audits/liveness_report.md`, 175->21 real

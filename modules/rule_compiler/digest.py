@@ -103,6 +103,25 @@ TRIGGER_CLASSES: list[tuple[str, str, tuple[str, ...]]] = [
       "validation", "quality")),
 ]
 
+# The four classes the global ~/.claude/CLAUDE.md router contracts on.
+# A contracted class matching zero rules is a COVERAGE DEFECT, not an
+# absence: the router fires at that trigger point and finds nothing to
+# enforce. So it stays visible in the digest with an explicit 0 and
+# answers non-zero at the CLI. Silence at a contracted trigger reads
+# exactly like compliance, and a class that is never listed can never
+# be missed.
+ROUTER_CONTRACTED: frozenset[str] = frozenset({
+    "PROD-WRITE", "DEPLOY", "DONE-CLAIM", "PLUGIN-INSTALL",
+})
+
+_DEFINED_CLASSES = {name for name, _d, _k in TRIGGER_CLASSES}
+_UNDEFINED_CONTRACTED = ROUTER_CONTRACTED - _DEFINED_CLASSES
+if _UNDEFINED_CONTRACTED:
+    raise RuntimeError(
+        "router-contracted trigger class absent from TRIGGER_CLASSES: "
+        + ", ".join(sorted(_UNDEFINED_CONTRACTED))
+        + " -- a rename dropped a class the global router still fires on.")
+
 UNCLASSIFIED = "UNCLASSIFIED"
 UNCLASSIFIED_DESC = ("matched no trigger keyword -- read on any "
                      "high-stakes action")
@@ -156,12 +175,30 @@ def build_digest(valid: list[Rule], rejected: list[Rule],
         "|---|---:|---|",
     ]
     covered: set[str] = set()
+    unenforced: list[str] = []
     for cls in order:
         rules = buckets.get(cls)
         if not rules:
+            # An empty class the router never fires on is genuinely
+            # nothing to say. An empty CONTRACTED class is a hole in the
+            # kill switch, and dropping its row is what let that hole sit
+            # unnoticed: the agent reads the table, sees no such trigger,
+            # and cannot tell "no rules" from "no such class".
+            if cls in ROUTER_CONTRACTED:
+                unenforced.append(cls)
+                lines.append(f"| **{cls}** | 0 | {descs[cls]} |")
             continue
         covered.update(r.rule_id for r in rules)
         lines.append(f"| **{cls}** | {len(rules)} | {descs[cls]} |")
+
+    if unenforced:
+        lines += [
+            "",
+            "## CONTRACTED BUT UNENFORCED (coverage defect -- the router "
+            "fires on these trigger points and finds zero rules; an empty "
+            "result there is not a pass)",
+            " ".join(unenforced),
+        ]
 
     unreachable = sorted({r.rule_id for r in valid} - covered)
     if unreachable:
