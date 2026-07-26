@@ -3,18 +3,7 @@
     "arch-decision/test_closed_loop",
     "arch-decision/test_v_block",
     "backup/test_v_block",
-    "ccf/__init__",
-    "ccf/artifact_compiler",
-    "ccf/cli",
-    "ccf/config_schema",
-    "ccf/contract_engine",
-    "ccf/evaluation_engine",
-    "ccf/knowledge_feed",
-    "ccf/model_adapter",
-    "ccf/prompt_compiler",
-    "ccf/release_manager",
     "ccf/test_ccf",
-    "ccf/trademark_scanner",
     "deployment/test_v_block",
     "session_resilience/integration",
     "session_resilience/multi_window",
@@ -74,6 +63,42 @@
     "cascade_prevention/pre_mortem": {
       "class": "PLANNED",
       "note": "cascade_prevention/__init__.py's public API (blocker/engine/surfaces/types) does not export pre_mortem -- built extension to the now-LIVE cascade gate (Workstream A), not yet exposed"
+    },
+    "ccf/artifact_compiler": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/config_schema": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/contract_engine": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/evaluation_engine": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/knowledge_feed": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/model_adapter": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/prompt_compiler": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/release_manager": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
+    },
+    "ccf/trademark_scanner": {
+      "class": "LIBRARY",
+      "note": "imported directly by ccf/cli.py (REACHABLE via CLAUDE.md's CCF Activation Criteria, `python -m modules.ccf.cli`) in a multi-line `from modules.ccf import (...)` block that reachability.py's import regex does not trace across newlines -- verified by reading cli.py's own import statement, not a wiring gap"
     },
     "cognitive_os/context": {
       "class": "PLANNED",
