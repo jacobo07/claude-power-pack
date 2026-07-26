@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 26
-parts_sealed: 19
+parts_sealed: 20
 ---
 
 # CLAE — Master Index
@@ -42,7 +42,7 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | XVII | Oracle Routing | The answerable window; the six presentation items; the criterion-over-verdict ladder; an answer is evidence about what was shown; the re-ask ledger | XVI | **SEALED** |
 | XVIII | Deviation Governance | The four-part contract; zero deviation rate as a broken record; intent preservation does not compose; the zero-loss test; density as a design signal | IX | **SEALED** |
 | XIX | Evidence-Gated Autonomy | The inversion: approve the contract not the steps; four entry conditions; declared halts; scope as the real boundary; the accounting determines the behaviour | XII, XVIII | **SEALED** |
-| XX | Phase Closure Semantics | What closure means; residual visibility as a closure obligation | IX, XIX | pending |
+| XX | Phase Closure Semantics | Closure as an accounting act; the five verdicts; producer closes accounting and constituency accepts; closure does not compose | IX, XIX | **SEALED** |
 | XXI | Failure Modes and Failure Lineages | How closed loops fail: blindness, bar inflation, metric theater, myopia, replanning amnesia | all prior | pending |
 | XXII | Traps Registry | Named traps with trigger, symptom, detection and escape | XXI | pending |
 | XXIII | Hard Rules and Process Rules Registry | Full UKDL-shaped rule records with origin, enforcement layer, eval and retirement condition | XXI, XXII | pending |
