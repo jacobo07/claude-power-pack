@@ -82,9 +82,26 @@ SKIP_DIRS = {
 # (name, regex over prompt+package deps, [modules], priority).
 # Lower priority = filled first under the 40 KB breaker.
 TRIGGERS = [
+    # Vocabulary-specificity fix 2026-07-27. The trigger used to include bare
+    # \bmutation\b, \bresolver\b and \bsubscription\b -- ordinary engineering
+    # English, not GraphQL. Replayed over 2,513 real prompts: 85 fired the
+    # trigger and 76 of those matched only on a generic word (resolver 40,
+    # mutation 25, subscription 11), against 14 that named graphql itself. The
+    # measured cost was ~7.6 KB of Apollo context force-injected per false
+    # firing, at `full` depth, in a repo with no GraphQL outside a fixture that
+    # SKIP_DIRS already excludes -- e.g. "InitConfig resolver (Code node)".
+    # Sibling of the 2026-06-08 RAM regression above: that fix closed the
+    # FS-walk path, this one closes the prompt-vocabulary path.
+    #
+    # Generic words are kept ONLY in genuine GraphQL syntax (`type Mutation`,
+    # `Subscription {`, `mutation AddUser(`). A real GraphQL project that says
+    # none of these still triggers through the .graphql/.gql FS-walk fallback
+    # below, which is why dropping the loose words cannot blind the loader.
     ("graphql_ops",
-     re.compile(r"\.graphql\b|\.gql\b|\bgraphql\b|\bmutation\b|\bresolver\b"
-                r"|\bsubscription\b|\bquery\s+\w+\s*[({]", re.I),
+     re.compile(r"\.graphql\b|\.gql\b|\bgraphql\b|\bgql`|\btypeDefs\b"
+                r"|\btype\s+(?:Query|Mutation|Subscription)\b"
+                r"|\b(?:Query|Mutation|Subscription)\s*\{"
+                r"|\b(?:query|mutation|subscription)\s+\w+\s*[({]", re.I),
      ["graphql-operations", "graphql-schema"], 0),
     ("apollo_client",
      re.compile(r"@apollo/client|useQuery|useMutation|useLazyQuery"
