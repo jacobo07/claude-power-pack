@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -96,6 +97,21 @@ _DISPATCHER_NAME = "hook-dispatcher.js"
 _HOOK_REF_RE = re.compile(r"""\\?['"]([^'"\\]+?\.js)\\?['"]""")
 
 
+def _is_installed_root(root: Path) -> bool:
+    """Is this scan looking at the INSTALLED repo, the one ~/.claude actually loads?
+
+    Everything about the live install -- its hooks, its settings.json, its registered
+    dispatcher -- is evidence about THAT repo and no other. Merging it into a scan of
+    a different root reports one repo's surfaces as another's: ~110 live files leaked
+    into every synthetic-repo scan, which is why three of this module's own V-gates
+    quietly began failing after the hook-registration filter landed. Sealed 2026-07-27.
+    """
+    try:
+        return root.resolve() == _PP_ROOT.resolve()
+    except OSError:
+        return False
+
+
 def _registered_hooks(root: Path) -> set[str]:
     """Basenames of every .js file named by a REAL registration surface: the
     dispatcher's own EVENT_MAP/CHAIN_MAP, plus settings.json / settings.local.json
@@ -117,26 +133,27 @@ def _registered_hooks(root: Path) -> set[str]:
     rather than raising, matching this module's fail-open contract throughout.
     """
     names: set[str] = set()
+    installed = _is_installed_root(root)
     lr = live_root()
 
-    dispatcher = None
-    for candidate in (lr / "hooks" / _DISPATCHER_NAME, root / "hooks" / _DISPATCHER_NAME):
-        if candidate.is_file():
-            dispatcher = candidate
-            break
+    candidates = [root / "hooks" / _DISPATCHER_NAME]
+    if installed:
+        candidates.insert(0, lr / "hooks" / _DISPATCHER_NAME)
+    dispatcher = next((c for c in candidates if c.is_file()), None)
     if dispatcher is not None:
         text = _read(dispatcher)
         if text is not None:
             for ref in _HOOK_REF_RE.findall(text):
                 names.add(ref.replace("\\", "/").rsplit("/", 1)[-1])
 
-    for settings_name in ("settings.json", "settings.local.json"):
-        settings_path = lr / settings_name
-        if settings_path.is_file():
-            text = _read(settings_path)
-            if text is not None:
-                for ref in _HOOK_REF_RE.findall(text):
-                    names.add(ref.replace("\\", "/").rsplit("/", 1)[-1])
+    if installed:
+        for settings_name in ("settings.json", "settings.local.json"):
+            settings_path = lr / settings_name
+            if settings_path.is_file():
+                text = _read(settings_path)
+                if text is not None:
+                    for ref in _HOOK_REF_RE.findall(text):
+                        names.add(ref.replace("\\", "/").rsplit("/", 1)[-1])
 
     return names
 
@@ -234,7 +251,9 @@ def live_seeds(repo_root: Path | None = None) -> list[Path]:
         found = sorted(root.glob(pattern))
         seeds.extend(_filter_hooks(found) if pattern == "hooks/*.js" else found)
     lr = live_root()
-    if lr.is_dir():
+    # Only when THIS root is the repo the live install actually loads -- see
+    # _is_installed_root. In production the two coincide and nothing changes.
+    if _is_installed_root(root) and lr.is_dir():
         for pattern in _LIVE_SEED_GLOBS:
             found = sorted(lr.glob(pattern))
             seeds.extend(_filter_hooks(found) if pattern == "hooks/*.js" else found)
@@ -315,6 +334,98 @@ def _unit_path(repo_root: Path, unit: str) -> Path:
     return repo_root / "modules" / f"{unit}.py"
 
 
+# The Windows Task Scheduler is a live invocation surface this scanner could not see.
+# Twelve registered tasks run PP scripts, ten of them Ready and firing on a timer with
+# rc=0, and not one is a hook, a command or an agent -- so every module they reach read
+# as ORPHAN. The SCHEDULED exemption class existed precisely because someone knew this,
+# and its workaround was hand-declaration: the same curated-denominator defect this
+# module was written to end, reproduced inside the instrument itself. Sealed 2026-07-27,
+# on cognitive_os/hibernate_runner -- invoked every five minutes by task PP-Hibernation
+# through hibernation_daemon.ps1 -> tools/run_hibernation.py, with 341 KB of daemon log
+# to prove it, and classified PLANNED.
+#
+# Read through `schtasks /query /xml`, never the CSV or LIST forms: those emit LOCALIZED
+# headers and state words, so any parse of them is host-language-dependent. XML element
+# names are invariant.
+_TASK_SPLIT = "<Task "
+_TASK_DISABLED = "<Enabled>false</Enabled>"
+_TASK_CMD_RE = re.compile(r"<(?:Command|Arguments)>([^<]*)</(?:Command|Arguments)>")
+# A drive-anchored path ending in a script extension. Quotes are not required: inside
+# <Arguments> they arrive XML-escaped (&quot;), so a quote-delimited pattern matches
+# nothing. Non-greedy, so the shortest path ending in an extension wins and a match
+# cannot run past its own filename into the next argument.
+_TASK_SCRIPT_RE = re.compile(r"[A-Za-z]:[\\/][^\"'<>|]+?\.(?:py|ps1|js|cmd|bat)")
+_XML_MEMO: list = []   # single slot: [] = never queried, [x] = queried (x may be None)
+
+
+def _schtasks_xml(*, timeout: float = 20.0) -> str | None:
+    """Every registered task as one XML blob, memoized per process.
+
+    Fail-open in every direction -- no Windows, no schtasks on PATH, a timeout, a
+    non-zero rc, or an undecodable stream all yield None, exactly as an absent
+    live_root() yields no extra seeds. A CI checkout has no Task Scheduler and must
+    still scan. schtasks emits UTF-16 on most hosts, so the encoding is probed rather
+    than assumed.
+    """
+    if _XML_MEMO:
+        return _XML_MEMO[0]
+    text: str | None = None
+    try:
+        proc = subprocess.run(["schtasks", "/query", "/xml", "ONE"],
+                              capture_output=True, timeout=timeout, check=False)
+    except (OSError, subprocess.SubprocessError):
+        proc = None
+    if proc is not None and proc.returncode == 0 and proc.stdout:
+        for enc in ("utf-16", "utf-8-sig", "utf-8"):
+            try:
+                candidate = proc.stdout.decode(enc)
+            except (UnicodeDecodeError, LookupError):
+                continue
+            if _TASK_SPLIT in candidate:
+                text = candidate
+                break
+    _XML_MEMO.append(text)
+    return text
+
+
+def scheduled_task_seeds(repo_root: Path | None = None,
+                         *, xml: str | None = None) -> list[Path]:
+    """Scripts invoked by an ENABLED scheduled task -- a live surface in its own right.
+
+    Conservative by construction, per this module's third design constraint. A task
+    whose XML carries ANY `<Enabled>false</Enabled>` is skipped without distinguishing
+    the task-level flag from a trigger-level one, and only paths inside the repo or the
+    live install are seeded. Under-reporting costs one registry line; over-reporting
+    hides a corpse, which is the failure this whole module exists to end.
+
+    `xml` is injectable so the behaviour is testable on a host with no such task.
+    """
+    root = Path(repo_root or _repo_root())
+    blob = xml if xml is not None else _schtasks_xml()
+    if not blob:
+        return []
+    roots = [root, live_root()]
+    out: list[Path] = []
+    seen: set[str] = set()
+    for chunk in blob.split(_TASK_SPLIT)[1:]:
+        if _TASK_DISABLED in chunk:
+            continue
+        for field in _TASK_CMD_RE.findall(chunk):
+            for raw in _TASK_SCRIPT_RE.findall(field):
+                path = Path(raw.strip())
+                try:
+                    inside = any(path.is_relative_to(r) for r in roots)
+                except (OSError, ValueError):
+                    inside = False
+                if not inside or not path.is_file():
+                    continue
+                key = str(path).lower()
+                if key not in seen:
+                    seen.add(key)
+                    out.append(path)
+    return sorted(out)
+
+
 def load_registry(repo_root: Path | None = None) -> dict:
     """Exemptions + the standing orphan debt. Fail-open to empty."""
     raw = _read(Path(repo_root or _repo_root()) / REGISTRY_REL)
@@ -354,6 +465,13 @@ def scan(repo_root: Path | None = None, registry: dict | None = None) -> list[di
         t = _read(p)
         if t is not None:
             seed_texts.append((_label(p), t))
+    # Before _tool_seeds, deliberately: a task's entry point is usually a .ps1 that
+    # names a tool, and the tool is what carries the module imports. Seeding the task
+    # after tool discovery would trace the shell script and stop there.
+    for p in scheduled_task_seeds(root):
+        t = _read(p)
+        if t is not None:
+            seed_texts.append(("task:" + p.name, t))
     for p in _tool_seeds([t for _, t in seed_texts], root):
         t = _read(p)
         if t is not None:

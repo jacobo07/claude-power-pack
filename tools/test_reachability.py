@@ -40,6 +40,14 @@ def _mk_repo(td: Path) -> Path:
     (td / "modules" / "dead").mkdir(parents=True)
     (td / "modules" / "plug" / "kids").mkdir(parents=True)
 
+    # A .js file merely SITTING in hooks/ invokes nothing; only what the dispatcher's
+    # own registries name is live. Model that, or the synthetic repo tests a surface
+    # production does not have (hooks/cascade_check_bash.js was the real corpse that
+    # sealed the filter).
+    (td / "hooks" / R._DISPATCHER_NAME).write_text(
+        'const CHAIN_MAP = { start: ["./hub.js", "./plug.js"] };\n', encoding="utf-8"
+    )
+
     # A live surface that reaches `wired.entry` -- via a Python import embedded in JS,
     # exactly as session_start_hub.js does.
     (td / "hooks" / "hub.js").write_text(
@@ -65,7 +73,35 @@ def _mk_repo(td: Path) -> Path:
     (td / "hooks" / "plug.js").write_text(
         '"from modules.plug.kids import loader"\n', encoding="utf-8"
     )
+
+    # A scheduled-task chain: task -> .ps1 -> tool -> module. Reached by NO hook,
+    # command or agent, which is exactly how cognitive_os/hibernate_runner ran every
+    # five minutes in production while being reported dead.
+    (td / "tools").mkdir(parents=True, exist_ok=True)
+    (td / "modules" / "sched").mkdir(parents=True)
+    (td / "modules" / "sched" / "__init__.py").write_text("", encoding="utf-8")
+    (td / "modules" / "sched" / "runner.py").write_text("", encoding="utf-8")
+    (td / "tools" / "task_entry.py").write_text(
+        "from modules.sched import runner\n", encoding="utf-8"
+    )
+    (td / "tools" / "daemon.ps1").write_text(
+        "$runner = Join-Path $pp 'tools\\task_entry.py'\n", encoding="utf-8"
+    )
     return td
+
+
+def _task_xml(script: Path, *, enabled: bool) -> str:
+    """A minimal `schtasks /query /xml` blob naming one script."""
+    flag = "true" if enabled else "false"
+    return (
+        "<?xml version='1.0'?>\n<!-- \\SYNTH-Task -->\n"
+        '<Task version="1.2">\n'
+        f"  <Settings><Enabled>{flag}</Enabled></Settings>\n"
+        "  <Actions>\n    <Exec>\n"
+        "      <Command>powershell.exe</Command>\n"
+        f"      <Arguments>-NoProfile -File &quot;{script}&quot;</Arguments>\n"
+        "    </Exec>\n  </Actions>\n</Task>\n"
+    )
 
 
 def main() -> int:
@@ -118,6 +154,55 @@ def main() -> int:
             _ok("V-REACH-EXEMPTION", "valid class exempts; malformed class does NOT")
         else:
             _fail("V-REACH-EXEMPTION", "exemption handling is not honest")
+
+        # --- the scheduled-task surface (sealed 2026-07-27) ---------------------
+        daemon = repo / "tools" / "daemon.ps1"
+
+        # V-REACH-TASK-XML: an ENABLED task's script is a seed; a DISABLED one is not.
+        # Both poles, because a producer that cannot refuse would make every task-named
+        # script permanently live and hide exactly the corpses this module hunts.
+        on = R.scheduled_task_seeds(repo, xml=_task_xml(daemon, enabled=True))
+        off = R.scheduled_task_seeds(repo, xml=_task_xml(daemon, enabled=False))
+        if daemon.is_absolute() and daemon.drive:
+            if [p.name for p in on] == ["daemon.ps1"] and off == []:
+                _ok("V-REACH-TASK-XML", "enabled task seeds daemon.ps1; disabled seeds nothing")
+            else:
+                _fail("V-REACH-TASK-XML", f"enabled={[p.name for p in on]} disabled={off}")
+        else:
+            # Task Scheduler is a Windows surface; a drive-less path proves nothing here.
+            if on == [] and off == []:
+                _ok("V-REACH-TASK-XML", "non-Windows host: producer correctly yields nothing")
+            else:
+                _fail("V-REACH-TASK-XML", "non-Windows host produced task seeds")
+
+        # V-REACH-TASK-FAILOPEN: an empty or unavailable query is silence, never a crash.
+        if R.scheduled_task_seeds(repo, xml="") == []:
+            _ok("V-REACH-TASK-FAILOPEN", "empty schtasks output yields no seeds")
+        else:
+            _fail("V-REACH-TASK-FAILOPEN", "empty query did not fail open")
+
+        # V-REACH-TASK-CHAIN: the full path task -> .ps1 -> tool -> module. The .ps1 must
+        # be seeded BEFORE tool discovery, or the trace stops at the shell script.
+        real_producer = R.scheduled_task_seeds
+        R.scheduled_task_seeds = lambda repo_root=None, **kw: [daemon]
+        try:
+            chained = {r["unit"]: r for r in
+                       R.scan(repo, registry={"modules": {}, "known_orphans": []})}
+        finally:
+            R.scheduled_task_seeds = real_producer
+        row = chained.get("sched/runner")
+        if row and row["status"] == R.REACHABLE:
+            _ok("V-REACH-TASK-CHAIN", f"sched/runner REACHABLE via {row['via']}")
+        else:
+            _fail("V-REACH-TASK-CHAIN",
+                  f"task-driven module -> {row['status'] if row else 'missing'}")
+
+        # V-REACH-TASK-NEGATIVE: without the task, that same module is a corpse. This is
+        # what proves the flip above was caused by the task and not by something else.
+        if rows.get("sched/runner", {}).get("status") == R.ORPHAN:
+            _ok("V-REACH-TASK-NEGATIVE", "sched/runner ORPHAN when no task names it")
+        else:
+            _fail("V-REACH-TASK-NEGATIVE", "module was reachable without the task")
 
     # V-REACH-SELF: the real repo scans, and the arbiter this mission was built to
     # resurrect is visible in the denominator (whatever its status today).

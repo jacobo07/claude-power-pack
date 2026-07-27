@@ -8,7 +8,6 @@
     "session_resilience/integration",
     "session_resilience/multi_window",
     "session_resilience/resume_identity",
-    "session_resilience/snapshot_versioning",
     "session_resilience/ui_state"
   ],
   "modules": {
@@ -117,10 +116,6 @@
       "note": "CO-02 Economics Governor, built per spec; not yet composed into process_governor.py -- see cognitive_os/context note"
     },
     "cognitive_os/guarantee_ledger": {
-      "class": "PLANNED",
-      "note": "CO-0x series -- see cognitive_os/context note"
-    },
-    "cognitive_os/hibernate_runner": {
       "class": "PLANNED",
       "note": "CO-0x series -- see cognitive_os/context note"
     },
@@ -472,37 +467,9 @@
       "class": "LIBRARY",
       "note": "internal to the standalone sleepless_qa pipeline -- see sleepless_qa/__init__ note"
     },
-    "sqi/__init__": {
-      "class": "SCHEDULED",
-      "note": "driven by tools/run_sqi.py (imports modules.sqi.*), invoked periodically outside the harness -- corroborated by the liveness ledger's separate 'sqi-runner' audits surface (dated sqi_report_*.md)"
-    },
-    "sqi/baseline_guardian": {
-      "class": "SCHEDULED",
-      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
-    },
-    "sqi/environment_qualifier": {
-      "class": "SCHEDULED",
-      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
-    },
-    "sqi/reconcile": {
-      "class": "SCHEDULED",
-      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
-    },
     "sqi/redteam_protocol": {
       "class": "SCHEDULED",
       "note": "part of the sqi package driven by tools/run_sqi.py -- see sqi/__init__ note"
-    },
-    "sqi/repo_reality_scanner": {
-      "class": "SCHEDULED",
-      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
-    },
-    "sqi/weakening_baseline": {
-      "class": "SCHEDULED",
-      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
-    },
-    "sqi/weakening_detectors": {
-      "class": "SCHEDULED",
-      "note": "imported by tools/run_sqi.py -- see sqi/__init__ note"
     },
     "sweep_enforcer/__init__": {
       "class": "LIBRARY",
