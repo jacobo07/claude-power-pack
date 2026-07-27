@@ -19,8 +19,19 @@ owned by this stack.
 - STOP #1: **resolved**. Owner approved 3 NEW families + 5 EXTEND passes over the literal
   A–J ten-family specification.
 - Charter: **SEALED** at `vault/knowledge_base/COMPENDIUM_CHARTER.md`.
-- Parts sealed: CLAE I-XXVI — FAMILY COMPLETE (26/26). Closure verdict: complete with residual, accounting-only, acceptance line empty (Part XXVI section 5). Next: CRPF family, or the four-item adoption subset in Part XXVI section 9b.
+- Parts sealed: CLAE I-XXVI — FAMILY COMPLETE (26/26). Closure verdict: complete with residual, accounting-only, acceptance line empty (Part XXVI section 5).
   Authoritative count is the coherence anchor below, never this line.
+- CRPF: **STOP #1 OPEN — no Part authored, awaiting Owner ruling.** Audit at
+  `vault/plans/crpf-2026-07-27.md` (commit `feb05c2`). PASO -1 found the "3 NEW + 5 EXTEND"
+  criterion was never written down, and that CLAE was admitted by a measured zero-hit sweep
+  while CRPF's G6 was admitted by asserted absence over a hand-recalled three-entry owner list.
+  A discovered denominator finds all seven chartered CRPF mechanisms owned by `cognitive_os`
+  (CO-00..CO-12, 12 datasets + 11 modules), DAIF-08 Context Runtime (20 Parts) and Parallel
+  Mesh PM-04/05 — none of which Phase 0 enumerated. The real G6 is wiring: 13 residency
+  modules are WIRED-BUT-SILENT / declared PLANNED. Three options are on the table
+  (A repair-wiring · B a 4-6 Part reconciliation residue family · C build as chartered).
+- IGEF: admitted by the same asserted-absence standard. Run the same PASO -1 before it starts.
+  Whether its gaps survive a discovered denominator is UNKNOWN — not audited.
 - Superseded text on record: Part II §6 corrects Part I and `CLAE_CHARTER.md`, which both
   described the design-review scorer as a distance instrument. It is a stage-two graded
   criterion instrument. Do not restore the earlier phrasing anywhere in this family.
