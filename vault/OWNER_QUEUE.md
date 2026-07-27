@@ -105,10 +105,18 @@ the gap); this is the backlog the gap represents, made visible instead of silent
 a live consumer. Owner decides the Phase 2 integration point.
 
 ### PLANNED: cognitive_os CO-0x composition  [PENDING]
-**System:** `modules/cognitive_os/{context,economics,gc,governor,guarantee_ledger,hibernate_runner,loop_budget,memory,rehydration}`
-**Why:** 9 CO-00-series modules built per spec; `process_governor.py` (LIVE) does
+**System:** `modules/cognitive_os/{context,economics,gc,governor,guarantee_ledger,loop_budget,memory,rehydration}`
+**Why:** 8 CO-00-series modules built per spec; `process_governor.py` (LIVE) does
 not import any of them (verified by grep). Composing them is a real architecture
-decision, not a 1-line wire.
+decision, not a 1-line wire. **Dependency-ordered** — `context`→`governor`,
+`economics`→`guarantee_ledger`, `memory`→`gc`: wiring a dependent alone yields a
+consumer with no producer. Per-module intended consumer, blocker and evidence:
+`vault/plans/crpf-option-a-wiring-2026-07-27.md`.
+**Amended 2026-07-27:** `hibernate_runner` removed from this row — it was never
+silent. Task **PP-Hibernation** invokes it every five minutes via
+`hibernation_daemon.ps1` → `tools/run_hibernation.py` (341 KB of daemon log,
+rc=0). It read as ORPHAN because `reachability.py` could not see the Task
+Scheduler at all; fixed in `a91328c`, and it is now REACHABLE by discovery.
 
 ### PLANNED: contract_fabric wiring  [PENDING]
 **System:** `modules/contract_fabric/*`
@@ -165,6 +173,11 @@ but `monitor.py` does not yet import it.
 **System:** `modules/parallel_mesh/{pm_01_brain,pm_02_intent,pm_04_auction,pm_05_prefetch}`
 **Why:** same Parallel Mesh spec as `pm_03_bus` (LIVE, `cdio/bus_bridge`); the
 other 4 numbered modules not yet wired.
+**Amended 2026-07-27:** `pm_03_bus` is live only because `cdio/bus_bridge` reuses
+it **as a store** — nothing runs the mesh itself, so its liveness is not evidence
+that the mesh is running. PM-05 prefetch additionally needs PM-04's pressure mode
+and PM-02's intent declaration, neither of which has a producer; it cannot be
+wired first. Evidence: `vault/plans/crpf-option-a-wiring-2026-07-27.md`.
 
 ### PLANNED: pp_agents signal-to-agent wrapper backlog  [PENDING]
 **System:** `modules/pp_agents/signals/{backlog,cost,errors,health,lessons,quality,sdd_tier,setup_scan}`
