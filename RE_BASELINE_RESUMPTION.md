@@ -21,7 +21,22 @@ owned by this stack.
 - Charter: **SEALED** at `vault/knowledge_base/COMPENDIUM_CHARTER.md`.
 - Parts sealed: CLAE I-XXVI — FAMILY COMPLETE (26/26). Closure verdict: complete with residual, accounting-only, acceptance line empty (Part XXVI section 5).
   Authoritative count is the coherence anchor below, never this line.
-- CRPF: **STOP #1 OPEN — no Part authored, awaiting Owner ruling.** Audit at
+- CRPF: **CLOSED — struck as a family by Owner ruling (A then B'), 2026-07-27.** No CRPF
+  Part exists and none will. Option A (repair wiring) and Option B' (CO-13 + CO-14) are
+  both COMPLETE. Evidence: `vault/plans/crpf-option-a-wiring-2026-07-27.md`; datasets at
+  `vault/knowledge_base/cognitive_os/cognitive_os_{13,14}_*.md`. Commits `a91328c`
+  (scheduled-task discovery, 171→180 REACHABLE), `5f88210` (13-module disposition),
+  `7bff31c` (JIT trigger, 85→22 firings), `3c41824` (CO-13 + CO-14).
+- **IGEF: `PENDING_AUDIT` — do not start.** Run PASO −1 first: a real zero-hit vocabulary
+  sweep over a denominator DISCOVERED from `modules/` and `vault/knowledge_base/`, not
+  recalled — cognitive_os, DAIF and Parallel Mesh included. G7–G9 were admitted by the
+  same asserted-absence standard that CRPF failed. Whether they survive is UNKNOWN.
+- Superseded audit text (kept so it cannot drift back): STOP #1 recorded three residency
+  authorities as uncoordinated, and recorded that no surface writes CO-06's heat fields.
+  Both were wrong. DAIF-08 and PM-05 both declare CO-04 their owner (CO-14 §I.1), and the
+  observations are written continuously by `jit_skill_loader` under other names (CO-13 §I.1).
+
+- CRPF (historical): **STOP #1** — audit at
   `vault/plans/crpf-2026-07-27.md` (commit `feb05c2`). PASO -1 found the "3 NEW + 5 EXTEND"
   criterion was never written down, and that CLAE was admitted by a measured zero-hit sweep
   while CRPF's G6 was admitted by asserted absence over a hand-recalled three-entry owner list.
