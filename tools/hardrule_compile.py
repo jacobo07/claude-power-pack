@@ -100,6 +100,7 @@ def cmd_show(ids: list[str]) -> int:
 def cmd_class(name: str) -> int:
     from modules.rule_compiler.compiler import rules_in_class
     from modules.rule_compiler.digest import (
+        RETIRED_CLASSES,
         ROUTER_CONTRACTED,
         TRIGGER_CLASSES,
         UNCLASSIFIED,
@@ -111,6 +112,15 @@ def cmd_class(name: str) -> int:
               f"{', '.join(known)}", file=sys.stderr)
         return 2
     rules = rules_in_class(cls)
+    if cls in RETIRED_CLASSES:
+        print(f"=== {cls} -- RETIRED_NO_CORPUS ===")
+        print(RETIRED_CLASSES[cls])
+        if not rules:
+            return 0
+        print(f"\n[REOPEN] {len(rules)} rule(s) now classify here -- the "
+              "reopen condition is met. Restore this class to "
+              "ROUTER_CONTRACTED; the rules below are NOT yet contracted.",
+              file=sys.stderr)
     if not rules and cls in ROUTER_CONTRACTED:
         print(f"=== {cls} -- COVERAGE DEFECT: 0 binding rules ===")
         print("The global router fires on this trigger and finds nothing "

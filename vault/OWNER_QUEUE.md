@@ -13,7 +13,7 @@ Surfaced by the Knowledge Sovereignty Fabric Phase -1/Phase 0 corpus audit
 (`vault/plans/ksf-compendium-2026-07-26.md`). None was caused by that mission.
 Owner disposition at STOP #1: repair (a) now, defer (b) and (c) to backlog.
 
-### (a) PLUGIN-INSTALL trigger class carries zero rules  [PENDING -- mechanism REPAIRED, corpus gap remains]
+### (a) PLUGIN-INSTALL trigger class carries zero rules  [RESOLVED 2026-07-27 -- RETIRED, no corpus; reopen with evidence]
 
 **System:** `modules/rule_compiler/digest.py` + `tools/hardrule_compile.py`
 **Status:** the *silent* half is fixed this session. `build_digest` used to drop
@@ -25,20 +25,45 @@ Now: contracted-but-empty classes stay in the digest with an explicit `0`, are
 named under `## CONTRACTED BUT UNENFORCED`, and the CLI returns **exit 3**.
 Verified: digest 2154 -> 2409 B (cap 4096), `ENFORCEMENT_PASS=19/19`, exit 0.
 
-**What remains is an Owner call, not a wiring task.** Zero of 148 binding rules
-classify into PLUGIN-INSTALL. The router still fires on plugin installs and finds
-nothing to enforce -- the hole is now *visible* rather than closed. Two options:
+**RESOLVED 2026-07-27 -- Owner decision: RETIRE the trigger.** A contracted
+trigger with zero corpus rules cannot be governance; it is governance theater.
+Reopened only when concrete evidence exists to control.
 
-- **Author the rules.** The estate has real plugin-install incidents to draw on
-  (Adventure ABI breakage across Paper/Citizens versions, the EssentialsX
-  empty-YAML-list NPE cascade, hot-swap without a backup). Each would need a
-  TRIGGER/ACTION/EVIDENCE body that survives the schema gate.
-- **Retire the trigger.** If plugin installs are no longer a governed surface on
-  this host, remove the fourth trigger from the global router and drop
-  `PLUGIN-INSTALL` from `ROUTER_CONTRACTED` -- a contracted trigger with no
-  corpus is governance theater either way.
+Shipped (PP side, commit below): `PLUGIN-INSTALL` moved out of
+`ROUTER_CONTRACTED` into a new `RETIRED_CLASSES` registry in
+`modules/rule_compiler/digest.py`. The class stays **defined**, deliberately --
+deleting it would repeat the silent drop this whole item is about, and no reader
+could then tell a deliberate retirement from an accidental rename. Effects:
+digest now carries `## RETIRED TRIGGERS` with the reason instead of a coverage
+defect; `--class PLUGIN-INSTALL` prints `RETIRED_NO_CORPUS` + the reopen
+condition at **exit 0**; if a future rule ever classifies there, the digest
+raises `## REOPEN CONDITION MET` and the CLI says those rules are not yet
+contracted. Import-time guards reject a class that is both contracted and
+retired, or retired but undefined.
 
-**Do not** close this by deleting the coverage-defect row. That is the defect.
+Verified: `CONTRACTED BUT UNENFORCED` occurrences in the digest = **0**;
+digest 2,409 -> 2,653 B (cap 4,096); `--compile` exit 0; `--check` exit 0;
+`--class DEPLOY` exit 0 unchanged; `ENFORCEMENT_PASS=19/19` exit 0.
+
+**Reopen condition (documented, not implied).** A real plugin-install incident
+that yields at least one schema-valid rule (observable TRIGGER, imperative
+ACTION, that incident as EVIDENCE). Then move `PLUGIN-INSTALL` back into
+`ROUTER_CONTRACTED` and restore the router's fourth trigger.
+
+**Residual Owner-side step (HR-001 -- the agent may not edit `~/.claude/CLAUDE.md`).**
+The global router still lists a fourth trigger the compiler no longer contracts.
+Until this line is removed the router and the corpus disagree. In the
+`## HARD RULES — ROUTER` block, delete trigger 4:
+
+```
+4. Installing or updating a plugin (any JAR write to `/plugins/`)
+```
+
+and change "Triggers (any one fires the read)" to read three. **Verify:**
+`python ~/.claude/skills/claude-power-pack/tools/hardrule_compile.py --class PLUGIN-INSTALL`
+-> `RETIRED_NO_CORPUS`, exit 0; the digest's class table lists three contracted
+classes plus the domain classes, and the `## RETIRED TRIGGERS` section explains
+the fourth.
 
 ### (b) CPP-IAS non-duplication verdicts rest on a short denominator  [PENDING -- backlog]
 
