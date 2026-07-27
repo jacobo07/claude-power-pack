@@ -174,6 +174,46 @@ opportunities, per lever/cohort) that ties to CO-01 WU/MTok, plus the **Telemetr
 Contract** (no saving claim without a `(metric, source, value)` triple; else it is a hypothesis).
 Metrics name their data source and read *unknown* when the instrument is pending — never a faked 0/100.
 
+---
+
+## Residency extension — CO-13 + CO-14 (2026-07-27)
+
+Origin: the RE Baseline compendium proposed **CRPF**, a 22-Part "Cognitive Residency &
+Pressure Fabric", as a new family. The overlap audit (`vault/plans/crpf-2026-07-27.md`)
+found all seven of its chartered mechanisms already owned — by this family, by DAIF-08 and
+by PM-04/05 — because the founding gap analysis had enumerated its owners from memory and
+never listed `cognitive_os` at all. The Owner struck CRPF and ruled the genuine residue
+ships here, as two datasets. **Neither adds a mechanism**; both are corrections.
+
+| ID | Dataset | Verdict | Parent / reuse | Status |
+|---|---|---|---|---|
+| CO-13 | [Observed Residency](cognitive_os_13_observed_residency.md) | **GAP-REAL** (measurement, not design) | CO-04/05/06 mechanisms + CO-12 statement contract + `jit_skill_loader` telemetry | ✅ written — 2,036 words |
+| CO-14 | [Residency Jurisdiction & Dependent Register](cognitive_os_14_residency_jurisdiction.md) | **GAP-REAL** (owner-side back-reference) | CO-00/03/04/05/06 as owners; DAIF-08 + PM-05 as declared dependents; CO-10 rung | ✅ written — 1,739 words |
+
+**CO-13 in one line:** the family's first *measured* dataset — 1,720 residency observations
+over 383 sessions — which found the depth ladder running inverted (880 `full` loads against
+4 `discovery`), an admission gate firing on ordinary English (76 of 85 GraphQL-trigger
+firings matched only `resolver`/`mutation`/`subscription`; narrowed in `7bff31c`, 85→22
+firings, zero newly fired), and **zero of 25 knowledge-base families ever loaded** — which
+answered the dataset-tiering hypothesis in the negative and stopped a build.
+
+**CO-14 in one line:** the founding premise ("three uncoordinated residency authorities")
+is **refuted** — DAIF-08 states outright that *"CO-04 owns residency"* and PM-05 names
+CO-04/CO-05 as parents. Jurisdiction was already declared; only the owner-side record was
+missing, so CO-14 is a seven-row Dependent Register plus the rule that a dependency
+declared only by the dependent is a courtesy, not a contract. A unification would have
+created the second authority its own premise objected to.
+
+Both are honest about their weakest point: CO-13's figures are one installation on one
+date and must be re-run rather than cited, and CO-14's register is hand-built — the very
+substitution this estate has got wrong seven times — with its regeneration producer named
+and deliberately not built.
+
+**Gates:** V-NOCODE 0 fences · V-CONTAM 0 hits · depth within the family's Owner-ruled
+range. Wiring evidence for the residency modules: `vault/plans/crpf-option-a-wiring-2026-07-27.md`.
+
+---
+
 **CO-12 V-gates (`tools/test_co12_readiness_telemetry.py`, hermetic ×3):** V-REALITY-SCAN (declares
 COVERED set + real parents), V-CORRECT-IDS (never claims CO-09/CO-10), V-TELEMETRY-REAL (every metric
 names a concrete data source), V-PARENT-REFS, V-NO-CODE (0 code fences), V-CONTRACT (Telemetry-Before-
