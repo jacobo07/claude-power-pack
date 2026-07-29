@@ -7,6 +7,50 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-07-29) -- 4 session_resilience orphans + an empty modules/daemon/
+
+Surfaced by the E1-E5 boundary audit (`vault/plans/e-passes-audit-2026-07-29.md`).
+Both are **documented debt, not an emergency** -- recorded here rather than repaired,
+because each needs an Owner decision the agent should not make unilaterally.
+
+### (a) Four session_resilience modules are ORPHAN  [PENDING -- Owner disposition]
+
+`session_resilience/integration` · `multi_window` · `resume_identity` · `ui_state`.
+
+Measured by `python modules/liveness/reachability.py` (2026-07-29): unreachable AND
+undeclared, so they are counted as gate offenders rather than exempt. Their siblings
+in the same package ARE live -- `acceptance`, `epoch`, `power_beacon` and `reentry` are
+reached through `tools/recovery_epoch_gate.py`, wired at `hooks/session_start_hub.js:85`.
+So this is not a dead package; it is four modules left behind when the rest was wired.
+
+**Proposed owner:** the same surface that already reaches their siblings --
+`tools/recovery_epoch_gate.py` for anything startup-scoped, `tools/recovery_verdict.py`
+(`/recovery-verdict`) for the manual path.
+
+**Recommended action, per module, in the Liveness Standard's own three options:**
+WIRE if the restore path genuinely needs it (`multi_window` and `ui_state` describe
+Cursor window/tab topology, which the pinned-reference restore does consume);
+DECLARE `LIBRARY` if a live sibling imports it; DELETE if it was superseded by
+`epoch.py`. Silence is not an exemption and a count is not a disposition -- the debt
+falls only when these four are named, one verdict each.
+
+### (b) `modules/daemon/` holds zero .py files  [PENDING -- Owner ruling]
+
+Measured: the directory exists and contains no Python module. `SKILLBANK.md` lists
+`daemon` as a module ("Background daemon orchestration for long-running agents"), and
+the sealed `COMPENDIUM_CHARTER.md` names `daemon` as one of E5's three target families.
+
+A charter cannot extend a family with no code. This is why the E1-E5 audit could not
+score E5 against its own stated target and had to score it against
+`session_resilience/acceptance.py` instead.
+
+**Recommended action:** either delete the empty directory and the `SKILLBANK.md` row,
+or state what `daemon` is meant to become. Leaving it is the cheapest option and the
+worst one -- an empty directory carrying a SKILLBANK entry reads as a shipped module in
+every inventory that walks names rather than contents.
+
+---
+
 ## NEW (2026-07-29) -- CRAIF seam 8 declares an Owner nothing can verify
 
 **System:** `vault/knowledge_base/craif/CRAIF_D2A_REINFORCEMENT_PACKAGES.md`, package

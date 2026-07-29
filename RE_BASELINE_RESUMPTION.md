@@ -83,11 +83,12 @@ the index is lying — reconcile from the filesystem, never from the index.
 
 ## 3. Active decisions
 
-- **Construction order (revised 2026-07-29).** `CLAE → E1…E5 → integration → review →
-  seal`. CLAE is COMPLETE (26/26). CRPF and IGEF are STRUCK — they are no longer stages,
-  and the earlier `CLAE → CRPF → IGEF → E1…E5` order is superseded. CLAE remains first in
-  the record because it supplied the external-bar discipline everything else is scored
-  against; nothing now precedes E1.
+- **Construction order: CLOSED, 2026-07-29.** There is no remaining order, because there
+  is no remaining construction. CLAE is COMPLETE (26/26); CRPF, IGEF and E1…E5 are all
+  STRUCK on audit. Owner ruling: A then B then C, D discarded. CLAE stands first and last
+  in the record because it supplied the external-bar discipline everything else was scored
+  against — and it is the only family whose admission was a measured zero-hit sweep rather
+  than an assertion, which is the entire finding of this compendium.
 - **Standing obligation before any E-pass is built: audit its boundary against a
   DISCOVERED denominator, never the charter's curated non-owner list.** Owner ruling
   2026-07-29. Both families that skipped this were struck on audit — CRPF's boundary
@@ -107,20 +108,23 @@ the index is lying — reconcile from the filesystem, never from the index.
   rather than protecting it. Commit with `-- <pathspec>` scoping every time; never
   `git add -A`. Re-check `rev-list --left-right --count origin/main...HEAD` before pushing.
 
-## 4. Next three actions
+## 4. Next actions
 
-**Blocked on an Owner ruling. Build no E-pass before it.** The audit closed with four
-options: **A** wire the orphan · **B** one adapter-conformance checker · **C** strike
-E1…E5 and close the compendium at CLAE 26/26 · **D** build as chartered (recorded, not
-recommended — ~24 Parts over fifteen owned mechanisms and two false premises).
+**None. This file's job is done.** The compendium is CLOSED — full accounting in
+`vault/knowledge_base/COMPENDIUM_CLOSURE_REPORT.md`. Owner ruling A→B→C executed
+2026-07-29: **A** `epistemic_algebra` wired into its two contract-named consumers
+(`37ad01c`), **B** CRAIF adapter-conformance checker plus `/craif-conformance`
+(`59d1888`, `a334135`), **C** this closure.
 
-1. Await the Owner's choice among A–D. If it is C, the RE Baseline compendium closes with
-   CLAE as its only surviving family and this file's job ends.
-2. If A: wire `decision_review/epistemic_algebra`, which is ORPHAN while already holding
-   the confidence arithmetic E3 proposed to build. Then dispose of the other ORPHANs the
-   audit named — `session_resilience/{integration,multi_window,resume_identity,ui_state}` —
-   and `modules/daemon/`, which holds zero `.py` files while E5 names it a target family.
-3. Whatever is built, update block 2 after every sealed unit — never only at the end.
+Do not resume construction from this file. If a future session wants an E-pass, the
+audit that struck them is `vault/plans/e-passes-audit-2026-07-29.md` and it must be
+refuted with evidence first — not re-litigated from the charter, which was written
+before the sweep.
+
+Open, Owner-side only, all documented in `vault/OWNER_QUEUE.md` with a proposed owner
+and a recommended action: the 4 mirror pairs · CRAIF seam 8's unverifiable Owner
+(gate is at 7/8, exit 1, deliberately not silenced) · four `session_resilience`
+ORPHANs · an empty `modules/daemon/`.
 
 ## 5. Start instruction
 
