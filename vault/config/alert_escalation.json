@@ -1,0 +1,8 @@
+{
+  "_comment": "Escalation policy for repeat detector alerts. Edit here, never in the detector. Read by modules/alert_escalation; overridable per-run with PP_ALERT_ESCALATION_THRESHOLD / PP_ALERT_RE_ESCALATE_DAYS.",
+  "escalate_after": 3,
+  "re_escalate_after_days": 7,
+  "_escalate_after": "Unresolved occurrences of the SAME finding before it is promoted to URGENT. Floor 2 -- a threshold of 1 escalates every first sighting, which is not a policy. Origin: 333 mirror-drift handoffs over 67 days, none escalated (vault/plans/igef-2026-07-29.md).",
+  "_re_escalate_after_days": "Once promoted, routine notices are suppressed and the finding lives as one standing row in vault/handoffs/ESCALATED.md. This is how long that row may stand before the detector re-states it, so an ignored escalation cannot go silent forever.",
+  "_resolution": "A row leaves ESCALATED.md when the detector observes the condition no longer holds and calls note_resolved(). Counting restarts from that epoch, so a finding that is fixed and later recurs is a new sequence, not a continuation."
+}
