@@ -7,6 +7,27 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-07-29) -- CRAIF seam 8 declares an Owner nothing can verify
+
+**System:** `vault/knowledge_base/craif/CRAIF_D2A_REINFORCEMENT_PACKAGES.md`, package
+8 (JIT-and-Activation-Simulation).
+**Found by:** `modules/craif/adapter_conformance.py` on its first live run.
+
+Seams 1-7 name their Owner as a backtick-quoted repo path, so the checker can confirm
+the target still exists. Seam 8's Owner is prose -- *"the JIT skill loader (latent-card
++ full-body mechanism) and the SKILL.md"* -- which names no path, so nothing in that
+seam is machine-checkable. Left unflagged it would have scored CONFORMING on the
+strength of having no verifiable content at all.
+
+**Resolution (Owner-side by CRAIF's own rule, not agent-side):** the file's header
+states a package is a proposal artifact and that changes go through the owner's
+amendment process; the agent does not edit it to make its own gate pass, which would
+be the checker grading itself. The concrete fix is one line -- name the real path,
+which is `tools/jit_skill_loader.py` (verified present this session). Until then
+`adapter_conformance.py` exits 1 with 7/8, which is the honest state.
+
+---
+
 ## NEW (2026-07-29) -- 4 mirror pairs that repo <- global cannot resolve
 
 Option C surfaced 7 drifted pairs; 3 were adopted and 1 back-ported in commit

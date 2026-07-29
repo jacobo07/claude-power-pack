@@ -109,9 +109,17 @@ Small, and none of it is a Part-set.
   none held the arithmetic. Building E3's propagation Part would make that four sites.
   This is CRPF's G6 shape exactly — a wiring gap wearing a capability gap's clothes.
 - **R2 — adapter conformance has no checker.** `CRAIF_D2A_REINFORCEMENT_PACKAGES.md`
-  names nine distinct missing adapter/contract seams (liveness has no Repair Intent, SQI's
+  names distinct missing adapter/contract seams (liveness has no Repair Intent, SQI's
   replay is scoped to repository-state claims, DAIF-21's drift detection has no standing
-  consumer, and six more). The catalogue is honest; nothing verifies conformance against it.
+  consumer, and more). The catalogue is honest; nothing verifies conformance against it.
+
+  **Correction (2026-07-29, same session).** This row first said **nine** seams. It is
+  **eight**. The nine came from counting grep lines containing "adapter", one of which is
+  a Target-field mention rather than a seam heading. Measured by parsing the document's
+  own `## N.` headings: 8 packages, each declaring all 8 schema fields. This is the same
+  error shape as the CLAE 26-vs-29 near-miss earlier in the session — counting a proxy
+  for the thing instead of the thing — and it is exactly why `adapter_conformance.py`
+  discovers the package set from the headings rather than trusting a number in prose.
 - **R3 — four `session_resilience` modules are ORPHAN**: `integration`, `multi_window`,
   `resume_identity`, `ui_state`. E2's and E5's target family carries unreachable code while
   the charter proposed appending Parts to it.
