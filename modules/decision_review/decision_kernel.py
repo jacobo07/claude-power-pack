@@ -33,9 +33,12 @@ from .decision_record import (
     Verdict,
     Registry,
 )
+from .epistemic_algebra import acis_max, acis_rank
 
 # --- ACIS evidence-level threshold that satisfies a high burden ---
-ACIS_E3 = 3
+# Derived through the shared algebra rather than re-declared as a literal, so
+# the kernel and DAIF-01's fact-grade floor cannot drift apart (B2 join).
+ACIS_E3 = acis_rank("E3")
 
 # --- marker vocabularies (deterministic classifiers) ---
 # Tipo-C: practically irreversible surfaces.
@@ -94,8 +97,16 @@ def compute_blast_radius(obj: DecisionObject) -> dict:
 
 
 def _max_evidence_level(obj: DecisionObject) -> int:
+    """DRK-03's strongest-support rule, computed by the shared join operator.
+
+    `acis_max` IS "a single E3+ item lifts the ceiling; all-E2 support caps
+    it" -- the same rule this function used to inline as a bare `max()`.
+    Routing it through the algebra keeps one arithmetic over the ladder
+    instead of four, and inherits its fail-open floor: an unrecognized level
+    ranks 0 and can never lift the ceiling.
+    """
     levels = [e.acis_level for e in obj.evidence if e.acis_level is not None]
-    return max(levels) if levels else 0
+    return acis_rank(acis_max(*levels)) if levels else 0
 
 
 def compute_dcs(obj: DecisionObject) -> int:

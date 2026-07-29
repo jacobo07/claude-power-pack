@@ -27,6 +27,8 @@ import sys
 import time
 from pathlib import Path
 
+from .epistemic_algebra import ACIS_LEVELS, acis_rank
+
 PP_ROOT = Path(__file__).resolve().parents[2]
 
 # Per-adapter wall-clock budgets (seconds). A provider that overruns is dropped,
@@ -203,9 +205,16 @@ def evidence_levels_for(evidence: list, *, repo: str = "claude-power-pack",
             level = epistemic_level(fp, repo, state_dir=state_dir)
         except Exception:  # noqa: BLE001 -- fail-open per item
             continue
-        m = re.fullmatch(r"E([0-7])", str(level or ""))
-        if m:
-            out[i] = int(m.group(1))
+        # Ordinal via the shared algebra, not a fourth ad hoc parse of the
+        # same scale (B2's founding complaint). The ACIS_LEVELS membership
+        # test is load-bearing and must stay: `acis_rank` fails open to 0,
+        # so it cannot distinguish a genuine E0 from an unparseable token,
+        # and writing 0 for the latter would be the DRK inventing epistemic
+        # status for evidence the ladder never spoke to -- exactly what this
+        # adapter's SEMANTIC LIMIT note above forbids.
+        token = str(level or "").strip().upper()
+        if token in ACIS_LEVELS:
+            out[i] = acis_rank(token)
     return out
 
 

@@ -235,6 +235,10 @@
       "class": "PLANNED",
       "note": "DRK-01 -- see decision_review/__init__ note"
     },
+    "decision_review/epistemic_algebra": {
+      "class": "LIBRARY",
+      "note": "shared ACIS arithmetic (CPCSC Tier-B B2). Pure composition over the E0-E7 ladder -- assigns no level and issues no verdict, so it is a library by construction, never an entrypoint. Imported by its two contract-named siblings decision_kernel (acis_max/acis_rank for the DRK-03 strongest-support join and the E3 floor) and providers (acis_rank + ACIS_LEVELS, replacing a fourth ad hoc regex parse of the same scale). Those siblings are themselves PLANNED, so this cannot be REACHABLE until the DRK stack is wired; LIBRARY is the honest class, and it became TRUE only when the sibling importers landed -- before that this module had zero importers and the claim would have been false."
+    },
     "decision_review/proactive_scanner": {
       "class": "PLANNED",
       "note": "DRK-01 -- see decision_review/__init__ note"
