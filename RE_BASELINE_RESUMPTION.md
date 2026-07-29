@@ -92,8 +92,10 @@ the index is lying — reconcile from the filesystem, never from the index.
   DISCOVERED denominator, never the charter's curated non-owner list.** Owner ruling
   2026-07-29. Both families that skipped this were struck on audit — CRPF's boundary
   omitted `cognitive_os`, IGEF's gaps did not survive a 1,364-file / 152-family sweep.
-  Base rate is 2 for 2. An E-pass whose target family already owns the mechanism is an
-  EXTEND of nothing. This audit has NOT been run for E1…E5; it is the next action.
+  An E-pass whose target family already owns the mechanism is an EXTEND of nothing.
+  **This audit has now been RUN for E1…E5** — `vault/plans/e-passes-audit-2026-07-29.md`,
+  commit `b4e6239`. 1,371 files / 154 families swept; **15 of 17 mechanisms owned, 0 of 5
+  passes justifies its Part allocation.** Base rate across the compendium is now 5 for 5.
 - `rule_compiler` owns rule placement — unchanged, and now unconditional: no successor
   system may contain a second placement compiler.
 - `graphify` owns the semantic IR. E3 extends it; it never stands up a second graph.
@@ -107,20 +109,27 @@ the index is lying — reconcile from the filesystem, never from the index.
 
 ## 4. Next three actions
 
-1. Run the E1…E5 boundary audit (block 3's standing obligation) against a discovered
-   denominator of `modules/` + `vault/knowledge_base/`. For each pass, state whether its
-   target family already owns the mechanism the pass claims to add. Write it to
-   `vault/plans/e-passes-audit-<ISO>.md`. Present findings before building any pass.
-2. Commit the audit alone, pathspec-scoped, then verify `git log -1 --format=%s` matches
-   the message file's first line, and push.
-3. On the Owner's ruling, build the surviving passes in charter order (E1 → E5), updating
-   this file's block 2 after every sealed unit — never only at the end.
+**Blocked on an Owner ruling. Build no E-pass before it.** The audit closed with four
+options: **A** wire the orphan · **B** one adapter-conformance checker · **C** strike
+E1…E5 and close the compendium at CLAE 26/26 · **D** build as chartered (recorded, not
+recommended — ~24 Parts over fifteen owned mechanisms and two false premises).
+
+1. Await the Owner's choice among A–D. If it is C, the RE Baseline compendium closes with
+   CLAE as its only surviving family and this file's job ends.
+2. If A: wire `decision_review/epistemic_algebra`, which is ORPHAN while already holding
+   the confidence arithmetic E3 proposed to build. Then dispose of the other ORPHANs the
+   audit named — `session_resilience/{integration,multi_window,resume_identity,ui_state}` —
+   and `modules/daemon/`, which holds zero `.py` files while E5 names it a target family.
+3. Whatever is built, update block 2 after every sealed unit — never only at the end.
 
 ## 5. Start instruction
 
 Read this file, then `vault/knowledge_base/COMPENDIUM_CHARTER.md` (noting that its CRPF
-and IGEF sections are superseded by block 2 — the charter itself was deliberately not
-amended while concurrent panes were reading it). Then execute block 4 from action 1.
+and IGEF sections, and its whole E1–E5 table, are superseded by block 2 — the charter was
+deliberately not amended while concurrent panes were reading it). Then execute block 4.
+
+The charter allocates ~90–110 Parts across three families and five passes. Measured, one
+family survived. Do not read the charter's Part counts as remaining work.
 
 Do not look for an unsealed CLAE Part: there is none, and no CRPF or IGEF Part exists or
 will. If this file and the charter disagree, this file's block 2 wins — reconcile from the
