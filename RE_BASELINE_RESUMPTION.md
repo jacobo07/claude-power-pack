@@ -43,8 +43,15 @@ owned by this stack.
   - **M1b** `9df175b` — rule effect harness: a rule bound to a runnable probe and a
     baseline. `--coverage` reports 147 compiled rules, 147 with no effect claim. 6/6 ×3.
   - `ef0533a` — `mirror_discovery` declared LIBRARY; gate offenders 4 → 2.
-  **Open, Owner-side:** 7 drifted mirror pairs remain unresolved (Option C). §2 sync
-  direction is repo ← global, so the repo side may be updated; nothing was synced here.
+  **Open, Owner-side (updated 2026-07-29):** Option C surfaced 7 drifted pairs;
+  `0908673` adopted 3 and back-ported 1, leaving **4** that a copy cannot resolve —
+  recorded in `vault/OWNER_QUEUE.md` (commit `e2ab31b`). Three are stale deploys needing
+  an Owner-side `cp` (HR-001 forbids the agent writing `~/.claude/hooks`); the fourth,
+  `apex-completion-standard.md`, is a genuine union-merge doctrine decision — 6 sealed
+  sections exist only in the repo and 7 only in the global, so a copy in either direction
+  deletes sealed doctrine. That pair stays DRIFT **by construction**, which is the honest
+  state, not a defect to silence. §2 sync direction (repo ← global) is safe only while the
+  global is a superset; for these four it is not.
 - Superseded audit text (kept so it cannot drift back): STOP #1 recorded three residency
   authorities as uncoordinated, and recorded that no surface writes CO-06's heat fields.
   Both were wrong. DAIF-08 and PM-05 both declare CO-04 their owner (CO-14 §I.1), and the
@@ -76,26 +83,45 @@ the index is lying — reconcile from the filesystem, never from the index.
 
 ## 3. Active decisions
 
-- Construction order is dependency-derived and fixed: CLAE → CRPF → IGEF → E1…E5 →
-  integration → review → seal. CLAE is first because it supplies the external-bar
-  discipline everything else is scored against.
-- `rule_compiler` owns rule placement. IGEF must not contain a placement compiler.
+- **Construction order (revised 2026-07-29).** `CLAE → E1…E5 → integration → review →
+  seal`. CLAE is COMPLETE (26/26). CRPF and IGEF are STRUCK — they are no longer stages,
+  and the earlier `CLAE → CRPF → IGEF → E1…E5` order is superseded. CLAE remains first in
+  the record because it supplied the external-bar discipline everything else is scored
+  against; nothing now precedes E1.
+- **Standing obligation before any E-pass is built: audit its boundary against a
+  DISCOVERED denominator, never the charter's curated non-owner list.** Owner ruling
+  2026-07-29. Both families that skipped this were struck on audit — CRPF's boundary
+  omitted `cognitive_os`, IGEF's gaps did not survive a 1,364-file / 152-family sweep.
+  Base rate is 2 for 2. An E-pass whose target family already owns the mechanism is an
+  EXTEND of nothing. This audit has NOT been run for E1…E5; it is the next action.
+- `rule_compiler` owns rule placement — unchanged, and now unconditional: no successor
+  system may contain a second placement compiler.
 - `graphify` owns the semantic IR. E3 extends it; it never stands up a second graph.
 - `fable_distillation` owns succession. E1 adds execution trials; it never forks FD.
 - Zero executable code in dataset artifacts. Zero CommonWealth Ops vocabulary.
-- Push is withheld: `main` is ahead of origin with unrelated work from concurrent panes.
-  Commit with `-- <pathspec>` scoping every time; never `git add -A`.
+- **Push posture (corrected 2026-07-29): push after each green commit.** The earlier
+  "push is withheld — `main` is ahead of origin with unrelated concurrent-pane work" no
+  longer holds; `REMOTE_DELTA` is `0 0`. Withholding now hides work from the other panes
+  rather than protecting it. Commit with `-- <pathspec>` scoping every time; never
+  `git add -A`. Re-check `rev-list --left-right --count origin/main...HEAD` before pushing.
 
 ## 4. Next three actions
 
-1. Write the next unsealed CLAE Part named in `CLAE_INDEX.md`, at the depth floor defined
-   in the charter, one Part per file.
-2. Commit it alone, pathspec-scoped, then verify `git log -1 --format=%s` matches the
-   message file's first line.
-3. Update this file's block 2 and the `CLAE_INDEX.md` status row for that Part before
-   starting the next one.
+1. Run the E1…E5 boundary audit (block 3's standing obligation) against a discovered
+   denominator of `modules/` + `vault/knowledge_base/`. For each pass, state whether its
+   target family already owns the mechanism the pass claims to add. Write it to
+   `vault/plans/e-passes-audit-<ISO>.md`. Present findings before building any pass.
+2. Commit the audit alone, pathspec-scoped, then verify `git log -1 --format=%s` matches
+   the message file's first line, and push.
+3. On the Owner's ruling, build the surviving passes in charter order (E1 → E5), updating
+   this file's block 2 after every sealed unit — never only at the end.
 
 ## 5. Start instruction
 
-Read this file, then the charter, then `vault/knowledge_base/clae/CLAE_INDEX.md`.
-Execute block 4 against the first Part whose status is not SEALED.
+Read this file, then `vault/knowledge_base/COMPENDIUM_CHARTER.md` (noting that its CRPF
+and IGEF sections are superseded by block 2 — the charter itself was deliberately not
+amended while concurrent panes were reading it). Then execute block 4 from action 1.
+
+Do not look for an unsealed CLAE Part: there is none, and no CRPF or IGEF Part exists or
+will. If this file and the charter disagree, this file's block 2 wins — reconcile from the
+filesystem, never from either narrative.
