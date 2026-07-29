@@ -7,6 +7,89 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-07-29) -- 4 mirror pairs that repo <- global cannot resolve
+
+Option C surfaced 7 drifted pairs; 3 were adopted and 1 back-ported in commit
+`0908673`. These 4 remain, and each would **lose content** if synced by copy.
+Recorded here rather than resolved, per the Mirror Parity Law sec. 2 rationale:
+repo <- global is safe because it "adopts parallel work verbatim, it never
+clobbers" -- which holds only while the global is a superset. For these it is not.
+
+### (a) Three hooks: the deployed copy is a stale deploy  [PENDING -- Owner cp]
+
+**Systems:** `hooks/_oneshot_solitary_empty_shell_cleanup.js`,
+`hooks/lazarus-stub-recover.js`, `hooks/session-file-guard.js`
+
+The repo side of each is a **strict superset** of the live copy: identical
+content plus the 3-line banner that declares the repo canonical
+(`// CANONICAL SOURCE -- Power Pack repo. Deployed to ~/.claude/hooks/ via
+install-global.ps1 ... never edit the deployed copy directly.`). Copying
+global -> repo would delete that banner and gain nothing.
+
+**Why the live copies lack it, measured:** the banner entered the repo
+**2026-05-22** (commit `bf42961`). The live files for the first two are dated
+**2026-05-21** -- they predate it. `tools/install_global_core.py:391` states
+outright that *"The installer therefore never touches the hooks dir"*; it
+prints `cp` lines for the Owner to run. Nobody ran them after `bf42961`, so the
+deploys have been stale for 68 days. Nothing strips the banner; this is not by
+design.
+
+`session-file-guard.js` is the split-brain case: its live copy is dated
+**2026-05-23**, *after* the banner commit, yet lacks the banner and carried
+BL-SESSION-SAFETY-002 (the `.recovered-` / `.stub-corrupt-` marker fix) that
+never returned to the repo -- i.e. the live file was hand-edited from a
+pre-banner base, which the banner itself forbids. That fix is **already
+back-ported** in `0908673`, verified by set containment: all 218 global lines
+are present in the repo plus the 3 banner lines. So redeploying now loses
+nothing in either direction.
+
+**Resolution (Owner-side -- HR-001 forbids the agent writing `~/.claude/hooks`):**
+```powershell
+$pp = "$env:USERPROFILE\.claude\skills\claude-power-pack\hooks"
+foreach ($h in '_oneshot_solitary_empty_shell_cleanup.js',
+                'lazarus-stub-recover.js', 'session-file-guard.js') {
+  Copy-Item "$pp\$h" "$env:USERPROFILE\.claude\hooks\$h" -Force
+}
+```
+**Verify:** `python tools/verify_global_mirrors.py` -> these three report `[OK]`.
+Do this only after reading the back-ported `session-file-guard.js`, since the
+copy replaces a live file that is currently in the Stop/PreToolUse chain.
+
+### (b) apex-completion-standard.md: two streams sealed into one file  [PENDING -- doctrine decision]
+
+**Pair:** `~/.claude/knowledge_vault/core/apex-completion-standard.md` <->
+`knowledge_vault/core/apex-completion-standard.md`
+
+Not a drift. **6 sealed sections exist only in the repo and 7 only in the
+global**; neither side is a superset, and a copy in either direction deletes
+sealed doctrine. Measured 3,011 repo lines vs 3,002 global, 270 arriving and
+279 departing.
+
+| Only in the repo | Only in the global |
+|---|---|
+| Integration-Wiring Axis (v17, SCS C26) | Database Migration Doctrine (2026-06-03) |
+| MCP-Plugin-Resilience Axis v12 (BL-PLAYWRIGHT-001) | 2026-05-29 Reference Comparator Axis |
+| PP Dataset Baseline Axis (v15, BL-DATASET-BUILD) | 2026-05-29 Verdict Router Axis |
+| Recovery-Completeness Axis (v18, SCS C27) | 2026-05-29 Vision Loop Axis |
+| Security-First Axis (v16, BL-SECRET-001) | 2026-05-29 NL->DNA Axis |
+| Slash-Recovery Pattern Axis v13 | 2026-05-30 Parity Proof Axis |
+| | 2026-05-30 Performance + Cinematic Path Axis |
+
+The repo-only set is PP governance; the global-only set is the KobiMapEngine /
+KobiiCraft parity stream. Two parallel streams have been sealing axes into
+their own copy of the same file for two months, and each was invisible to the
+other -- the pair reported DRIFT the whole time while the drift detector was
+pointed at a different file entirely (see `vault/plans/igef-2026-07-29.md`).
+
+**Resolution: a union merge, which is a doctrine decision, not a copy.** It
+needs an Owner ruling on axis numbering (both streams number axes independently
+-- v12/v13/v15/v16/v17/v18 on one side, dated sections on the other), section
+ordering, and whether the KobiMapEngine axes belong in the PP apex standard at
+all or in a project-scoped file. Until then the pair stays DRIFT **by
+construction**, and that is the honest state -- not a defect to be silenced.
+
+---
+
 ## NEW (2026-07-26) -- KSF Phase 0 audit: three pre-existing defects
 
 Surfaced by the Knowledge Sovereignty Fabric Phase -1/Phase 0 corpus audit
