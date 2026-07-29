@@ -55,7 +55,23 @@ foreach ($h in '_oneshot_solitary_empty_shell_cleanup.js',
 Do this only after reading the back-ported `session-file-guard.js`, since the
 copy replaces a live file that is currently in the Stop/PreToolUse chain.
 
-### (b) apex-completion-standard.md: two streams sealed into one file  [PENDING -- doctrine decision]
+**Exact pair paths** (re-measured 2026-07-29; `verify_global_mirrors.py` exit 5,
+these three plus (b) are the only `[DRIFT]` rows out of 28 discovered pairs):
+
+| # | canonical (repo, superset) | deployed (global, stale) |
+|---|---|---|
+| 1 | `C:\Users\User\.claude\skills\claude-power-pack\hooks\_oneshot_solitary_empty_shell_cleanup.js` | `C:\Users\User\.claude\hooks\_oneshot_solitary_empty_shell_cleanup.js` |
+| 2 | `C:\Users\User\.claude\skills\claude-power-pack\hooks\lazarus-stub-recover.js` | `C:\Users\User\.claude\hooks\lazarus-stub-recover.js` |
+| 3 | `C:\Users\User\.claude\skills\claude-power-pack\hooks\session-file-guard.js` | `C:\Users\User\.claude\hooks\session-file-guard.js` |
+
+**Direction note.** These are the one case where the Mirror Parity Law sec. 2
+default (repo <- global) is the *wrong* way round. The repo side is the strict
+superset for all three, so the resolving copy is **repo -> global**. Applying the
+default direction here would delete the canonical banner from the repo and
+re-open BL-SESSION-SAFETY-002. The agent does not perform it either way: HR-001
+forbids writing `~/.claude/hooks`.
+
+### (b) apex-completion-standard.md: two streams sealed into one file  [UNION_MERGE_PENDING -- Owner doctrine decision, do not touch]
 
 **Pair:** `~/.claude/knowledge_vault/core/apex-completion-standard.md` <->
 `knowledge_vault/core/apex-completion-standard.md`
