@@ -1,0 +1,17 @@
+{
+  "_comment": "Effect claims: a rule bound to a probe that produces a number, and the baseline that number is judged against. Read by modules/rule_compiler/effect_harness.py. A claim nobody can run is UNMEASURED -- a verdict, not a blank.",
+  "_contract": "probe is an argv list run without a shell from the repo root; pattern must capture the metric in group 1; direction is 'down' (lower is better) or 'up'. Baselines are measured numbers with a named source, never estimates.",
+  "effects": [
+    {
+      "rule_id": "HR-ALERT-ESCALATION-001",
+      "claim": "Promoting a repeat finding to URGENT once and suppressing its routine notices reduces the number of files a reader must triage, without losing the finding.",
+      "probe": ["python", "tools/test_alert_escalation.py"],
+      "pattern": "(\\d+) files would have been written instead of \\d+",
+      "metric": "handoff files a reader must triage",
+      "baseline": 333,
+      "direction": "down",
+      "note": "baseline is the real corpus: 333 mirror-drift handoffs written between 2026-05-23 and 2026-07-29, all naming one pair, none escalated. The probe replays that corpus at its real cadence through the shipped policy.",
+      "source": "vault/plans/igef-2026-07-29.md + V-ESC-REPLAY-333"
+    }
+  ]
+}

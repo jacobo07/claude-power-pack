@@ -20,11 +20,22 @@ from .compiler import (
     write_artifacts,
 )
 from .digest import DIGEST_MAX_BYTES, TRIGGER_CLASSES, classify
+from .effect_harness import (
+    EFFECTS_PATH,
+    EffectClaim,
+    Measurement,
+    coverage,
+    load_claims,
+    measure,
+    measure_all,
+)
 from .schema import REASON_HELP, Form, Reason, Rule, validate
 
 __all__ = [
     "CompileResult", "compile_rules", "write_artifacts", "show",
     "DIGEST_PATH", "DB_PATH", "REJECTIONS_PATH", "DIGEST_MAX_BYTES",
     "TRIGGER_CLASSES", "classify",
+    "EFFECTS_PATH", "EffectClaim", "Measurement", "coverage", "load_claims",
+    "measure", "measure_all",
     "Rule", "Form", "Reason", "REASON_HELP", "validate",
 ]
