@@ -69,8 +69,10 @@ SLOP_RULES: list[tuple[re.Pattern, str, str]] = [
      "JOBS", "Never ship a control wired to an empty handler — a dead button is a lie."),
     (re.compile(r'href\s*=\s*["\']#["\']'), "JOBS",
      "Never ship href=\"#\" as a real navigation target — it goes nowhere."),
-    (re.compile(r"\bTODO\b"), "WOZ",
-     "Never ship a TODO in delivered code — finish it this turn or do not scaffold it."),
+    # TODO marker handled context-aware in scan() below (Trap 312):
+    # bare word-boundary collides with the Spanish word TODO/todo
+    # (= all/everything). FIXME/HACK/XXX/PLACEHOLDER stay bare: no
+    # Spanish collision.
     (re.compile(r"\bFIXME\b"), "WOZ",
      "Never ship a FIXME — a known defect left in place is an unshipped defect."),
     (re.compile(r"\b(?:HACK|XXX)\b"), "WOZ",
@@ -87,6 +89,11 @@ SLOP_RULES: list[tuple[re.Pattern, str, str]] = [
      "Never ship an empty catch block — a swallowed error is an unhandled error."),
 ]
 
+
+# --- context-aware TODO marker (Trap 312): code marker vs Spanish word ---
+_TODO_PROHIBITION = "Never ship a TODO in delivered code -- finish it this turn or do not scaffold it."
+TODO_CODE_RE = re.compile(r"(?:#|//|/\*|<!--|;)\s*TODO\b|\bTODO\s*[:(]")
+TODO_PROSE_RE = re.compile(r"(?<![A-Za-z])TODO\s*[:(]")
 
 def _norm(path: str) -> str:
     return path.replace("\\", "/")
@@ -171,6 +178,11 @@ def scan(path: str, logical: str | None = None) -> list[tuple[int, str, str, str
         return []
     file_lens = _lens_for(classify)
     hits: list[tuple[int, str, str, str]] = []
+    _ext = os.path.splitext(classify)[1].lower()
+    _todo_re = TODO_CODE_RE if _ext in CODE_EXTS else TODO_PROSE_RE
+    for _m in _todo_re.finditer(text):
+        _lineno = text.count(chr(10), 0, _m.start()) + 1
+        hits.append((_lineno, file_lens, "TODO", _TODO_PROHIBITION))
     for rule, lens, prohibition in SLOP_RULES:
         # A WOZ-only code token in a UI file (or vice-versa) still counts —
         # but the verdict is attributed to the file's owning lens.
