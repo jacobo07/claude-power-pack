@@ -2,14 +2,35 @@
 """verify_global_mirrors.py - BL-0064 enforcement (dynamic, branch-flip-immune).
 
 SHA-256 compares the version-controlled PP mirrors against the global
-~/.claude/{commands,agents,knowledge_vault}/ canonical files.
+~/.claude/{hooks,commands,agents,knowledge_vault}/ canonical files.
+
+Pair source (rewritten 2026-07-29)
+----------------------------------
+Pairs are DISCOVERED by `modules.mirror_discovery`, not listed here. The
+previous implementation carried nine literal tuples and the Mirror Parity Law
+told the next author to append a tenth by hand; measured consequence on this
+host: 5 of 10 name-matched hooks tracked, 2 of 13 commands, and
+`knowledge_vault/core/skill-completion-standard.md` never enrolled at all.
+A hand-enrolled denominator cannot fail you if it never enrolled the file
+(`PR-COVERAGE-BY-CONSTRUCTION-001`). Only two things remain declared, because
+neither is observable: name aliases, and prefixes other tools install into the
+shared live tree.
+
+Files present on one side only are reported as INVENTORY, never as drift --
+the repo deliberately ships commands that are not installed and the live tree
+carries knowledge the repo does not mirror. `--strict` promotes them to
+failures for a caller that wants full symmetry.
 
 Phantom-drift root cause (sealed 2026-05-16): the prior implementation read
 the PP side from the *working tree*, which concurrent Cursor panes flip
-between branches unpredictably -> false DRIFT, Exit 5. This rewrite NEVER
-reads the working tree for the PP side. It reads the committed blob via
-`git -C <repo> show <ref>:<relpath>` against a deterministic named ref, so
-the result is invariant to whatever branch a concurrent pane checked out.
+between branches unpredictably -> false DRIFT, Exit 5. This NEVER reads the
+working tree for the PP side. It reads the committed blob against a
+deterministic named ref, so the result is invariant to whatever branch a
+concurrent pane checked out.
+
+Blobs are fetched with a single `git cat-file --batch` per ref rather than one
+`git show` per pair: discovery raised the pair count from 9 to 27 and the
+mirror-parity row in `tools/verify_spp.py` runs under a 15 s budget.
 
 Resolution chains
 -----------------
@@ -18,17 +39,14 @@ Repo path (Q4a):  --repo-path  ->  $POWERPACK_REPO  ->
   hardcoded host fallback (C:/Users/User/.claude/skills/claude-power-pack).
 
 Canonical ref (Q1a intent honored, false literal corrected):
-  --ref  ->  $POWERPACK_MIRROR_REF  ->  the sealing branch
-  (feat/rtk-compressor-fusion)  ->  main  ->  the first refname-sorted
-  local head that actually tracks the path. The chosen ref is reported
-  per-pair. kdos/v1.2-sync is an ancestor that tracks none of these files,
-  so it is intentionally NOT a default (audit gap #1).
+  --ref  ->  $POWERPACK_MIRROR_REF  ->  the sealing branch  ->  main  ->
+  the first refname-sorted local head that actually tracks the path.
 
 Autocrlf parity (Q3a): only `knowledge_vault/**` carries `-text` in
 .gitattributes; the commands/ and agents/ pairs do NOT. Under
 core.autocrlf=true the committed blob is LF while the global filesystem
 copy is CRLF. Both sides are therefore LF-normalized before hashing -
-load-bearing for 3 of 4 pairs, not mere defense-in-depth.
+load-bearing for most pairs, not mere defense-in-depth.
 
 Exit codes: 0 = all pairs OK (or legitimately SKIPped). 5 = real DRIFT or
 a genuine MISSING (global file absent, or PP path tracked on no ref).
@@ -40,7 +58,7 @@ import hashlib
 import os
 import subprocess
 import sys
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 HARDCODED_REPO = r"C:\Users\User\.claude\skills\claude-power-pack"
 
@@ -51,41 +69,14 @@ SEALING_REF = "main"  # post-merge 2026-05-23: feat/rtk-compressor-fusion
                        # was merged into main; main is now the production
                        # branch per the Production Branch Standard.
 
-PAIRS = [
-    (r"C:\Users\User\.claude\commands\ultra.md",
-     r"C:\Users\User\.claude\skills\claude-power-pack\commands\ultra.md"),
-    (r"C:\Users\User\.claude\agents\oneshot-architect-auditor.md",
-     r"C:\Users\User\.claude\skills\claude-power-pack\agents"
-     r"\oneshot-architect-auditor.md"),
-    (r"C:\Users\User\.claude\commands\cpp-resume-sovereign.md",
-     r"C:\Users\User\.claude\skills\claude-power-pack\commands"
-     r"\resume-sovereign.md"),
-    (r"C:\Users\User\.claude\knowledge_vault\core\apex-completion-standard.md",
-     r"C:\Users\User\.claude\skills\claude-power-pack\knowledge_vault"
-     r"\core\apex-completion-standard.md"),
-    # Globalization 2026-05-19: runtime hooks the installer ships to a new
-    # user's ~/.claude/hooks/. PP repo IS the canonical; the verifier asserts
-    # the live host has not drifted from the shipped canonical (or vice versa).
-    (r"C:\Users\User\.claude\hooks\learning-sentinel.js",
-     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
-     r"\learning-sentinel.js"),
-    (r"C:\Users\User\.claude\hooks\hook-dispatcher.js",
-     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
-     r"\hook-dispatcher.js"),
-    (r"C:\Users\User\.claude\hooks\lazarus-livesnap.js",
-     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
-     r"\lazarus-livesnap.js"),
-    # NOTE 2026-05-23: resume-hide-live.js (BL-0013 .jsonl-rename
-    # cloaking) was decommissioned by mark-live-session.js. Removed
-    # from PAIRS so this verifier stops asking for a file that no
-    # longer exists on either side.
-    (r"C:\Users\User\.claude\hooks\zero-issue-gate.js",
-     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
-     r"\zero-issue-gate.js"),
-    (r"C:\Users\User\.claude\hooks\jobs-woz-gatekeeper.js",
-     r"C:\Users\User\.claude\skills\claude-power-pack\hooks"
-     r"\jobs-woz-gatekeeper.js"),
-]
+GIT_TIMEOUT = 15
+BATCH_TIMEOUT = 60
+
+_THIS_DIR = Path(__file__).resolve().parent
+if str(_THIS_DIR.parent) not in sys.path:
+    sys.path.insert(0, str(_THIS_DIR.parent))
+
+from modules.mirror_discovery import discover  # noqa: E402
 
 
 def _norm_sha(data: bytes) -> str:
@@ -127,7 +118,7 @@ def resolve_repo(cli_repo: str | None) -> str:
     try:
         top = subprocess.run(
             [_git_exe(), "-C", script_dir, "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, timeout=GIT_TIMEOUT,
         )
         if top.returncode == 0:
             cand = top.stdout.strip()
@@ -144,23 +135,12 @@ def repo_rel_posix(pp_abspath: str, repo_root: str) -> str:
     return PurePosixPath(*rel.replace("\\", "/").split("/")).as_posix()
 
 
-def _ref_tracks(repo: str, ref: str, rel_posix: str) -> bool:
-    try:
-        r = subprocess.run(
-            [_git_exe(), "-C", repo, "cat-file", "-e", f"{ref}:{rel_posix}"],
-            capture_output=True, timeout=15,
-        )
-        return r.returncode == 0
-    except (OSError, subprocess.SubprocessError):
-        return False
-
-
 def _sorted_heads(repo: str) -> list[str]:
     try:
         r = subprocess.run(
             [_git_exe(), "-C", repo, "for-each-ref", "--sort=refname",
              "--format=%(refname:short)", "refs/heads"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True, text=True, timeout=GIT_TIMEOUT,
         )
         if r.returncode == 0:
             return [x for x in r.stdout.splitlines() if x.strip()]
@@ -169,41 +149,67 @@ def _sorted_heads(repo: str) -> list[str]:
     return []
 
 
-def resolve_ref(repo: str, rel_posix: str, cli_ref: str | None) -> str | None:
-    """Deterministic, working-tree-independent. None => tracked on no ref."""
-    candidates: list[str] = []
-    if cli_ref:
-        candidates.append(cli_ref)
-    env_ref = os.environ.get("POWERPACK_MIRROR_REF")
-    if env_ref:
-        candidates.append(env_ref)
-    candidates.append(SEALING_REF)
-    candidates.append("main")
-    candidates.extend(_sorted_heads(repo))
-    seen: set[str] = set()
-    for ref in candidates:
-        if ref in seen:
-            continue
-        seen.add(ref)
-        if _ref_tracks(repo, ref, rel_posix):
-            return ref
-    return None
+def ref_candidates(repo: str, cli_ref: str | None) -> list[str]:
+    out: list[str] = []
+    for ref in ([cli_ref] if cli_ref else []) + \
+            ([os.environ.get("POWERPACK_MIRROR_REF")]
+             if os.environ.get("POWERPACK_MIRROR_REF") else []) + \
+            [SEALING_REF, "main"] + _sorted_heads(repo):
+        if ref and ref not in out:
+            out.append(ref)
+    return out
 
 
-def git_show_blob(repo: str, ref: str, rel_posix: str):
-    """Return (bytes, None) or (None, reason). returncode-checked (gap #2)."""
+def tracked_at(repo: str, ref: str) -> set:
+    """Every path tracked at `ref`, in one subprocess. Replaces a per-path
+    `cat-file -e`, which cost one process per pair per candidate ref."""
     try:
         r = subprocess.run(
-            [_git_exe(), "-C", repo, "show", f"{ref}:{rel_posix}"],
-            capture_output=True, timeout=20,
+            [_git_exe(), "-C", repo, "ls-tree", "-r", "--name-only", ref],
+            capture_output=True, text=True, timeout=GIT_TIMEOUT,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    if r.returncode != 0:
+        return set()
+    return {line.strip() for line in r.stdout.splitlines() if line.strip()}
+
+
+def batch_blobs(repo: str, ref: str, rels: list) -> dict:
+    """{rel: (bytes|None, reason|None)} for all rels at `ref`, one process."""
+    if not rels:
+        return {}
+    payload = "".join(f"{ref}:{r}\n" for r in rels).encode("utf-8")
+    try:
+        proc = subprocess.run(
+            [_git_exe(), "-C", repo, "cat-file", "--batch"],
+            input=payload, capture_output=True, timeout=BATCH_TIMEOUT,
         )
     except (OSError, subprocess.SubprocessError) as e:
-        return None, f"git-show-error:{e}"
-    if r.returncode != 0:
-        return None, f"git-show-rc{r.returncode}"
-    if not r.stdout:
-        return None, "git-show-empty"
-    return r.stdout, None
+        return {r: (None, f"git-batch-error:{e}") for r in rels}
+    if proc.returncode != 0:
+        return {r: (None, f"git-batch-rc{proc.returncode}") for r in rels}
+
+    out, pos, result = proc.stdout, 0, {}
+    for rel in rels:
+        nl = out.find(b"\n", pos)
+        if nl == -1:
+            result[rel] = (None, "git-batch-truncated")
+            continue
+        header = out[pos:nl].split()
+        pos = nl + 1
+        if header and header[-1] in (b"missing", b"ambiguous"):
+            result[rel] = (None, f"git-batch-{header[-1].decode()}")
+            continue
+        try:
+            size = int(header[2])
+        except (IndexError, ValueError):
+            result[rel] = (None, "git-batch-badheader")
+            continue
+        blob = out[pos:pos + size]
+        pos += size + 1  # object payload is followed by a newline
+        result[rel] = (blob, None) if blob else (None, "git-batch-empty")
+    return result
 
 
 def _read_global(path: str):
@@ -213,39 +219,77 @@ def _read_global(path: str):
         return fh.read()
 
 
-def check_pairs(repo: str, cli_ref: str | None) -> int:
-    fails: list[str] = []
-    for global_path, pp_abspath in PAIRS:
-        base = os.path.basename(global_path)
-        rel_posix = repo_rel_posix(pp_abspath, repo)
-
-        g_bytes = _read_global(global_path)
-        if g_bytes is None:
-            print(f"  [MISSING] {base}: global file absent ({global_path})")
-            fails.append(f"global-absent:{base}")
+def _plan(repo: str, cli_ref: str | None, pairs: list):
+    """Assign each pair a ref that tracks it. Returns (by_ref, untracked)."""
+    candidates = ref_candidates(repo, cli_ref)
+    rels = {str(p.repo): repo_rel_posix(str(p.repo), repo) for p in pairs}
+    remaining = list(pairs)
+    by_ref: dict = {}
+    for ref in candidates:
+        if not remaining:
+            break
+        tracked = tracked_at(repo, ref)
+        if not tracked:
             continue
+        hit = [p for p in remaining if rels[str(p.repo)] in tracked]
+        if hit:
+            by_ref.setdefault(ref, []).extend(hit)
+            remaining = [p for p in remaining if p not in hit]
+    return by_ref, remaining, rels
 
-        ref = resolve_ref(repo, rel_posix, cli_ref)
-        if ref is None:
-            print(f"  [MISSING] {base}: PP path tracked on no ref "
-                  f"({rel_posix})")
-            fails.append(f"pp-untracked:{base}")
-            continue
 
-        blob, reason = git_show_blob(repo, ref, rel_posix)
-        if blob is None:
-            print(f"  [MISSING] {base}: {reason} @ {ref}:{rel_posix}")
-            fails.append(f"{reason}:{base}")
-            continue
+def check_pairs(repo: str, cli_ref: str | None, strict: bool = False,
+                inventory: bool = False) -> int:
+    d = discover(Path(repo))
+    counts = d.domain_counts()
+    print(f"discovered {len(d.pairs)} mirror pair(s) across "
+          f"{len(counts)} domain(s); {d.unpaired_total} file(s) present on one "
+          f"side only; {len(d.excluded)} foreign file(s) excluded")
+    for dom, c in counts.items():
+        print(f"  - {dom}: paired={c['PAIRED']} live-only={c['LIVE_ONLY']} "
+              f"repo-only={c['REPO_ONLY']}")
 
-        gh, ph = _norm_sha(g_bytes), _norm_sha(blob)
-        if gh == ph:
-            print(f"  [OK] {base}: global={gh[:12]} "
-                  f"pp={ph[:12]} (ref={ref})")
-        else:
-            print(f"  [DRIFT] {base}: global={gh[:12]} "
-                  f"pp={ph[:12]} (ref={ref})")
-            fails.append(f"drift:{base}")
+    fails: list = []
+    by_ref, untracked, rels = _plan(repo, cli_ref, d.pairs)
+
+    for pair in untracked:
+        print(f"  [MISSING] {pair.label}: PP path tracked on no ref "
+              f"({rels[str(pair.repo)]})")
+        fails.append(f"pp-untracked:{pair.live.name}")
+
+    for ref, group in by_ref.items():
+        blobs = batch_blobs(repo, ref, [rels[str(p.repo)] for p in group])
+        for pair in group:
+            rel = rels[str(pair.repo)]
+            g_bytes = _read_global(str(pair.live))
+            if g_bytes is None:
+                print(f"  [MISSING] {pair.label}: global file absent "
+                      f"({pair.live})")
+                fails.append(f"global-absent:{pair.live.name}")
+                continue
+            blob, reason = blobs.get(rel, (None, "git-batch-absent"))
+            if blob is None:
+                print(f"  [MISSING] {pair.label}: {reason} @ {ref}:{rel}")
+                fails.append(f"{reason}:{pair.live.name}")
+                continue
+            gh, ph = _norm_sha(g_bytes), _norm_sha(blob)
+            if gh == ph:
+                print(f"  [OK] {pair.label}: global={gh[:12]} "
+                      f"pp={ph[:12]} (ref={ref})")
+            else:
+                print(f"  [DRIFT] {pair.label}: global={gh[:12]} "
+                      f"pp={ph[:12]} (ref={ref})")
+                fails.append(f"drift:{pair.live.name}")
+
+    if inventory or strict:
+        print("\n--- inventory: present on one side only ---")
+        for domain, rel in d.live_only:
+            print(f"  [LIVE-ONLY] {domain}/{rel}")
+        for domain, rel in d.repo_only:
+            print(f"  [REPO-ONLY] {domain}/{rel}")
+    if strict:
+        fails += [f"live-only:{domain}/{rel}" for domain, rel in d.live_only]
+        fails += [f"repo-only:{domain}/{rel}" for domain, rel in d.repo_only]
 
     if fails:
         print("VERIFY_GLOBAL_MIRRORS FAIL:", " | ".join(fails))
@@ -259,39 +303,34 @@ def self_test(repo: str, cli_ref: str | None) -> int:
     never a pass and never a drift. Fails only if two PRESENT refs disagree.
     """
     print("--- self-test: cross-ref normalized-SHA invariance ---")
-    primary = []
-    if cli_ref:
-        primary.append(cli_ref)
-    primary += [SEALING_REF, "main", "HEAD"]
-    seen: set[str] = set()
-    refs = []
-    for r in primary:
-        if r not in seen:
-            seen.add(r)
+    d = discover(Path(repo))
+    refs: list[str] = []
+    for r in ([cli_ref] if cli_ref else []) + [SEALING_REF, "main", "HEAD"]:
+        if r and r not in refs:
             refs.append(r)
 
-    failures: list[str] = []
-    for _global_path, pp_abspath in PAIRS:
-        base = os.path.basename(pp_abspath)
-        rel_posix = repo_rel_posix(pp_abspath, repo)
-        digests: dict[str, str] = {}
+    rels = {str(p.repo): repo_rel_posix(str(p.repo), repo) for p in d.pairs}
+    per_ref = {ref: batch_blobs(repo, ref, list(rels.values())) for ref in refs}
+
+    failures: list = []
+    for pair in d.pairs:
+        rel = rels[str(pair.repo)]
+        digests: dict = {}
         for ref in refs:
-            if not _ref_tracks(repo, ref, rel_posix):
-                print(f"  [SKIP] {base} @ {ref}: not tracked on this ref")
-                continue
-            blob, reason = git_show_blob(repo, ref, rel_posix)
+            blob, reason = per_ref[ref].get(rel, (None, "absent"))
             if blob is None:
-                print(f"  [SKIP] {base} @ {ref}: {reason}")
+                print(f"  [SKIP] {pair.repo.name} @ {ref}: {reason}")
                 continue
             digests[ref] = _norm_sha(blob)
         present = set(digests.values())
         if len(present) <= 1:
             shown = next(iter(present))[:12] if present else "n/a"
-            print(f"  [INVARIANT] {base}: {len(digests)} present ref(s) "
-                  f"agree sha={shown}")
+            print(f"  [INVARIANT] {pair.repo.name}: {len(digests)} present "
+                  f"ref(s) agree sha={shown}")
         else:
-            print(f"  [VIOLATION] {base}: present refs disagree {digests}")
-            failures.append(base)
+            print(f"  [VIOLATION] {pair.repo.name}: present refs disagree "
+                  f"{digests}")
+            failures.append(pair.repo.name)
 
     if failures:
         print("SELF_TEST FAIL:", " | ".join(failures))
@@ -308,6 +347,10 @@ def main() -> int:
                     help="explicit canonical ref (highest precedence)")
     ap.add_argument("--self-test", action="store_true",
                     help="assert cross-ref normalized-SHA invariance")
+    ap.add_argument("--inventory", action="store_true",
+                    help="list files present on one side only")
+    ap.add_argument("--strict", action="store_true",
+                    help="treat one-sided files as failures, not inventory")
     a = ap.parse_args()
     repo = resolve_repo(a.repo_path)
     if not os.path.isdir(os.path.join(repo, ".git")) and not os.path.isfile(
@@ -319,7 +362,7 @@ def main() -> int:
     print(f"repo={repo}")
     if a.self_test:
         return self_test(repo, a.ref)
-    return check_pairs(repo, a.ref)
+    return check_pairs(repo, a.ref, strict=a.strict, inventory=a.inventory)
 
 
 if __name__ == "__main__":

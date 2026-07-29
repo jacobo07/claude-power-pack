@@ -13,8 +13,28 @@ A **mirror pair** is one authoritative file under the non-git
 actually loads at runtime; the repo copy exists so that startup-relevant
 config and doctrine are reviewable, diffable, and recoverable in git.
 
-Tracked pairs are declared in `tools/verify_global_mirrors.py :: PAIRS`.
-As of this sealing the tracked set is:
+**Amended 2026-07-29 — tracked pairs are DISCOVERED, not declared.**
+`modules/mirror_discovery` scans `~/.claude/{hooks,commands,agents,knowledge_vault}`
+and their repo siblings and pairs by identity of the domain-relative path.
+
+The original sealing declared four tuples in `tools/verify_global_mirrors.py ::
+PAIRS`, and §6 told the next author to append a fifth by hand. Five more were
+appended over the following months and then nobody appended again. Measured
+2026-07-29: the list held 9 pairs while the two trees contained **28** — 5 of
+10 name-matched hooks, 2 of 13 commands, 1 of 2 agents, and
+`knowledge_vault/core/skill-completion-standard.md` was never enrolled at all.
+Of the 7 pairs actually drifted at that moment the declared list could see
+only 2. A denominator enrolled by hand cannot fail you if it never enrolled
+the file (`PR-COVERAGE-BY-CONSTRUCTION-001`).
+
+Two things stay declared, because neither is observable from either tree:
+
+| Declared | Where | Why it cannot be derived |
+|---|---|---|
+| Name aliases | `mirror_discovery.ALIASES` | Nothing records that `~/.claude/commands/cpp-resume-sovereign.md` and `commands/resume-sovereign.md` are one document. |
+| Foreign prefixes | `mirror_discovery.FOREIGN_PREFIXES` | Files another tool installs into the shared live tree are present, unpaired, and not this repo's to mirror. |
+
+The set at the original sealing, kept as history:
 
 | Authoritative (global) | Repo mirror |
 |---|---|
@@ -22,6 +42,20 @@ As of this sealing the tracked set is:
 | `~/.claude/agents/oneshot-architect-auditor.md` | `agents/oneshot-architect-auditor.md` |
 | `~/.claude/commands/cpp-resume-sovereign.md` | `commands/resume-sovereign.md` |
 | `~/.claude/knowledge_vault/core/apex-completion-standard.md` | `knowledge_vault/core/apex-completion-standard.md` |
+
+All four are still tracked; `tools/test_mirror_discovery.py ::
+V-MIRROR-COVERS-LEGACY` asserts the producer rediscovers every pair the
+deleted list declared, so the change cannot have traded one blind spot for
+another.
+
+## 1b. A file present on one side only is inventory, not drift
+
+The repo deliberately ships commands that are not installed, and the live tree
+carries knowledge the repo does not mirror; on this host that is 302 files.
+They are reported by `--inventory` and counted in the run header, and they do
+**not** affect the exit code. `--strict` promotes them to failures for a
+caller that wants full symmetry. Treating them as failures by default would
+rebuild the very noise `modules/alert_escalation` exists to remove.
 
 ## 2. Sync direction (invariant)
 
@@ -63,21 +97,30 @@ carries untracked drift.
 python tools/verify_global_mirrors.py   # must print VERIFY_GLOBAL_MIRRORS OK, exit 0
 ```
 
-Exit 0 across **all** pairs in `PAIRS` is the gate — not a subset. Exit 5
-(real DRIFT or genuine MISSING) means the stream is not done. This gate
-is the baseline for every future feature: any new feature that
-introduces a mirrored file starts from this standard, not from zero.
+Exit 0 across **all discovered** pairs is the gate — not a subset, and no
+longer whatever a list remembered. Exit 5 (real DRIFT or genuine MISSING)
+means the stream is not done. This gate is the baseline for every future
+feature: any new feature that introduces a mirrored file starts from this
+standard, not from zero.
 
 ## 6. Adding a new pair
 
-1. Add the `(global_abspath, pp_abspath)` tuple to
-   `verify_global_mirrors.py :: PAIRS`.
-2. If the repo side lives under `knowledge_vault/**` it is already
+Nothing to add. Put the repo mirror at the same domain-relative path as the
+global file and commit it; the producer tracks it on the next run. Then:
+
+1. If the repo side lives under `knowledge_vault/**` it is already
    `-text`; otherwise rely on the verifier's LF-normalization (do not
    add ad-hoc `.gitattributes` rules without checking §3).
-3. Commit the repo mirror so the blob exists on the sealing ref.
-4. Run the verifier — the new pair must report `[OK]` before the
+2. Commit the repo mirror so the blob exists on the sealing ref — §4 still
+   holds, the verifier reads the committed blob and not the working tree.
+3. Run the verifier — the new pair must report `[OK]` before the
    introducing feature can be called done.
+
+Only two cases still require an edit, and both are decisions rather than
+observations: a pair whose two sides carry **different names** goes in
+`mirror_discovery.ALIASES`, and a file installed by **another tool** goes in
+`mirror_discovery.FOREIGN_PREFIXES`. If you find yourself wanting to add a
+tuple for any other reason, the paths disagree and the fix is to align them.
 
 ## 7. Concurrency reality (load-bearing, not advisory)
 
