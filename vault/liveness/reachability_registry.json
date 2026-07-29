@@ -299,6 +299,14 @@
       "class": "PLANNED",
       "note": "sealed doctrine compiler (PR-PROHIBITIONS-DO-NOT-CONFLICT-001), extensively cited in CLAUDE.md prose but grep confirms zero code import anywhere in modules/hard_rules -- designed to run when a Hard Rule fires; that integration into hook-dispatcher.js's block path has not happened"
     },
+    "mirror_discovery/__init__": {
+      "class": "LIBRARY",
+      "note": "consumed by tools/verify_global_mirrors.py, the Mirror Parity Law done-gate (vault/standards/mirror-parity-law.md sec. 5), which tools/verify_spp.py runs as row 1 of the S++ surface -- verified by grep of both files. Not seed-reachable: the scanner seeds from hooks, commands, agents and scheduled tasks, and no hook or command names a verification tool that other tools invoke."
+    },
+    "mirror_discovery/discovery": {
+      "class": "LIBRARY",
+      "note": "consumed by tools/verify_global_mirrors.py, the Mirror Parity Law done-gate (vault/standards/mirror-parity-law.md sec. 5), which tools/verify_spp.py runs as row 1 of the S++ surface -- verified by grep of both files. Not seed-reachable: the scanner seeds from hooks, commands, agents and scheduled tasks, and no hook or command names a verification tool that other tools invoke."
+    },
     "monitoring/alert": {
       "class": "PLANNED",
       "note": "alert emitter, self-describes its consumer as 'the monitor engine' (monitor.py, LIVE) but monitor.py does not yet import it -- built, wiring pending"
