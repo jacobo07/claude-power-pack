@@ -27,10 +27,24 @@ owned by this stack.
   `vault/knowledge_base/cognitive_os/cognitive_os_{13,14}_*.md`. Commits `a91328c`
   (scheduled-task discovery, 171→180 REACHABLE), `5f88210` (13-module disposition),
   `7bff31c` (JIT trigger, 85→22 firings), `3c41824` (CO-13 + CO-14).
-- **IGEF: `PENDING_AUDIT` — do not start.** Run PASO −1 first: a real zero-hit vocabulary
-  sweep over a denominator DISCOVERED from `modules/` and `vault/knowledge_base/`, not
-  recalled — cognitive_os, DAIF and Parallel Mesh included. G7–G9 were admitted by the
-  same asserted-absence standard that CRPF failed. Whether they survive is UNKNOWN.
+- **IGEF: CLOSED — struck as a family by Owner ruling (A then B), 2026-07-29.** No IGEF
+  Part exists and none will. PASO −1 (`vault/plans/igef-2026-07-29.md`, commit `124c25b`)
+  swept a discovered denominator of 1,364 files / 152 families: 0 of 4 mechanisms justify
+  a family, and two founding premises were refuted (the `Rule` dataclass has no retirement
+  field, so G9's complaint was vacuous; M4's live predicate is already risk-weighted).
+  Owner chose repair-with-evidence over construction. All three shipped:
+  - **A** `0087c1c` — alert escalation on unresolved repeat. Also fixed the defect the
+    audit did not see: `MIRROR_PAIRS` compared two *different documents*, so all 333
+    handoffs were a permanent false positive and escalation alone would have promoted
+    garbage to URGENT. 13/13 ×3; replay says 333 files become 11.
+  - **B** `a8e7662` — discovery producer replaces the literal pair list; 9 → 28 pairs,
+    2 → 7 real drifts visible. `mirror-parity-law.md` §1/§5/§6 amended, since the law
+    itself made hand-enrollment the official procedure. 11/11 ×3.
+  - **M1b** `9df175b` — rule effect harness: a rule bound to a runnable probe and a
+    baseline. `--coverage` reports 147 compiled rules, 147 with no effect claim. 6/6 ×3.
+  - `ef0533a` — `mirror_discovery` declared LIBRARY; gate offenders 4 → 2.
+  **Open, Owner-side:** 7 drifted mirror pairs remain unresolved (Option C). §2 sync
+  direction is repo ← global, so the repo side may be updated; nothing was synced here.
 - Superseded audit text (kept so it cannot drift back): STOP #1 recorded three residency
   authorities as uncoordinated, and recorded that no surface writes CO-06's heat fields.
   Both were wrong. DAIF-08 and PM-05 both declare CO-04 their owner (CO-14 §I.1), and the
@@ -45,8 +59,13 @@ owned by this stack.
   Mesh PM-04/05 — none of which Phase 0 enumerated. The real G6 is wiring: 13 residency
   modules are WIRED-BUT-SILENT / declared PLANNED. Three options are on the table
   (A repair-wiring · B a 4-6 Part reconciliation residue family · C build as chartered).
-- IGEF: admitted by the same asserted-absence standard. Run the same PASO -1 before it starts.
-  Whether its gaps survive a discovered denominator is UNKNOWN — not audited.
+- IGEF (historical): admitted by the same asserted-absence standard as CRPF's G6. Audited
+  2026-07-29; the answer was that its gaps did not survive a discovered denominator.
+  Superseded text kept so it cannot drift back: the audit characterised the mirror-drift
+  delta as a real drift that had grown to 2,083 lines. It had grown, but it was the size
+  gap between two unrelated documents tracking the global file's growth — not a mirror
+  falling behind. The finding (333 alerts, 67 days, no escalation) stands and is stronger;
+  the characterisation of the delta was wrong.
 - Superseded text on record: Part II §6 corrects Part I and `CLAE_CHARTER.md`, which both
   described the design-review scorer as a distance instrument. It is a stage-two graded
   criterion instrument. Do not restore the earlier phrasing anywhere in this family.
