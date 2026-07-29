@@ -93,12 +93,20 @@ if (!command) process.exit(0);
 // Chaining operators (PowerShell + bash): ; && || newline | (pipe — splits
 // into independent commands). We include `|` because piped chunks are also
 // separate process invocations from the verb-target binding perspective.
+// SEALED 2026-05-23 (BL-SESSION-SAFETY-002): aligned with contract §3
+// 12-marker table. Previous 10-entry array omitted `.stub-corrupt-` (the
+// vaccine backup from lazarus-stub-recover.js BL-2026-05-21) and `.recovered-`
+// (the generic recovered-flow prefix), so legitimate vaccine flows were
+// silently blocked by the guard — the contract authorized them but the guard
+// refused them. Drift closed.
 const ALLOWLIST_MARKERS = [
   "_empty_shells",
   "_preserved",
   ".jsonl.live",
+  ".recovered-",
   ".shell.",
   ".bak.stub-",
+  ".stub-corrupt-",
   ".stub-collision-",
   ".bak-",
   ".preserved-",

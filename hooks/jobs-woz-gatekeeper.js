@@ -144,8 +144,19 @@ function pass() { process.exit(0); }
     const m = out.match(/VERDICT: VETO\s+\[([^\]]+)\][\s\S]*?THE ONE THING\s*\n\s*(.+)/);
     const who = m ? m[1] : 'STEVE JOBS / WOZNIAK';
     const why = m ? m[2].trim() : 'Slop detected in delivered surface.';
-    emitDeny(`${who} VETO — ${path.basename(realPath)}: ${why} `
-      + `Iterate (Promptsss/Prompts pa iterar/Universal/iteracion-avanzada-visual.txt) `
+    // Surface the analyzer's WHY block (file:line + the literal token it matched). Without
+    // it the operator only gets the PRINCIPLE, never the LOCATION -- so a false positive is
+    // indistinguishable from a real defect. R194b: a Spanish client email was blocked four
+    // times because the veto said "never ship a scaffold marker" while the actual match was
+    // an ordinary Spanish word in an ALL-CAPS heading, and the line number was discarded
+    // here. Verdict semantics are unchanged; this only makes the denial legible.
+    const wm = out.match(/\nWHY\s*\n([\s\S]*?)\n\s*(?:CUT LIST|THE ONE THING)/);
+    const where = wm
+      ? wm[1].split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3).join(' | ')
+      : '';
+    emitDeny(`${who} VETO — ${path.basename(realPath)}: ${why}`
+      + (where ? ` MATCHED: ${where}` : '')
+      + ` Iterate (Promptsss/Prompts pa iterar/Universal/iteracion-avanzada-visual.txt) `
       + `until VERDICT: SHIP. Recorded in global_vetoes.md.`);
   }
   pass();
