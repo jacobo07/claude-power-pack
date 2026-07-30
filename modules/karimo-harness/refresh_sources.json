@@ -21,5 +21,15 @@
       "last_reviewed": null
     }
   ],
-  "manual_entries": []
+  "manual_entries": [
+    {
+      "name": "Text Bevel Effect — Power Pack",
+      "system": "Power Pack",
+      "category": "Text Bevel Effect",
+      "tags": "branding text bevel gradient background-clip title differentiation hero qualifier",
+      "use_case": "differentiate two words in one hero title/wordmark that carry distinct roles or identities (base product name + variant/qualifier); hero titles and logotypes only, never body text or functional UI",
+      "pattern_snippet": "background-clip:text over a vertical gradient across two tokens of the same hue (--color-X dark top/bottom, --color-X-light at 50%); base color is the dark token, light only shows at center; encapsulate in a reusable component, verify WCAG AA contrast in light and dark mode before shipping",
+      "source_url": "vault/knowledge_base/visual-patterns/text-bevel-effect.md"
+    }
+  ]
 }
