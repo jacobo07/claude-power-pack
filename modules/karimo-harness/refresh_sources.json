@@ -30,6 +30,132 @@
       "use_case": "differentiate two words in one hero title/wordmark that carry distinct roles or identities (base product name + variant/qualifier); hero titles and logotypes only, never body text or functional UI",
       "pattern_snippet": "background-clip:text over a vertical gradient across two tokens of the same hue (--color-X dark top/bottom, --color-X-light at 50%); base color is the dark token, light only shows at center; encapsulate in a reusable component, verify WCAG AA contrast in light and dark mode before shipping",
       "source_url": "vault/knowledge_base/visual-patterns/text-bevel-effect.md"
+    },
+    {
+      "name": "Gradient Text — Power Pack",
+      "system": "Power Pack",
+      "category": "Gradient Text",
+      "tags": "branding text gradient background-clip parent pattern hero wordmark",
+      "use_case": "parent pattern for any text fill needing two or more brand tones in one block, before applying a specific variant (bevel, metallic, stroke); never body text or a variable/unpredictable background",
+      "pattern_snippet": "background-clip:text + color:transparent over a linear-gradient background; verify contrast at the lightest point of the gradient, not the average",
+      "source_url": "vault/knowledge_base/visual-patterns/gradient-text.md"
+    },
+    {
+      "name": "Metallic/Chrome Text — Power Pack",
+      "system": "Power Pack",
+      "category": "Metallic/Chrome Text",
+      "tags": "branding text metallic chrome gold silver copper gradient wordmark premium",
+      "use_case": "single-word premium wordmark wanting a physical-material feel (gold/silver/copper); never multi-word or minimalist-tech brands",
+      "pattern_snippet": "4-6 stop gradient alternating light (specular highlight) and dark (metal shadow) zones over background-clip:text, one named stop set per metal variant",
+      "source_url": "vault/knowledge_base/visual-patterns/metallic-chrome-text.md"
+    },
+    {
+      "name": "Gradient Stroke Text — Power Pack",
+      "system": "Power Pack",
+      "category": "Gradient Stroke Text",
+      "tags": "branding text stroke outline gradient hollow title variable-background",
+      "use_case": "large titles over a variable background (photo/video/animated gradient) where a solid text fill would compete visually; never small sizes or body text",
+      "pattern_snippet": "-webkit-text-stroke for the outline combined with background-clip:text so the stroke itself carries the gradient; treat as progressive enhancement, no unprefixed standard equivalent exists",
+      "source_url": "vault/knowledge_base/visual-patterns/gradient-stroke-text.md"
+    },
+    {
+      "name": "Glow/Neon Text — Power Pack",
+      "system": "Power Pack",
+      "category": "Glow/Neon Text",
+      "tags": "branding text glow neon text-shadow pulse tech gaming",
+      "use_case": "tech/gaming/nightlife brand identity or punctual hover/active states; never functional UI (buttons, labels, inputs) or corporate-serious brands",
+      "pattern_snippet": "multiple stacked text-shadow layers of increasing radius, same hue, optionally pulsed via @keyframes; respect prefers-reduced-motion if animated",
+      "source_url": "vault/knowledge_base/visual-patterns/glow-neon-text.md"
+    },
+    {
+      "name": "Image/Video-Filled Text — Power Pack",
+      "system": "Power Pack",
+      "category": "Image/Video-Filled Text",
+      "tags": "branding text mask image video fill hero clip-path",
+      "use_case": "single-brand hero headline where the product photo/video is the content and the text is the frame revealing it; never dynamic/i18n text or contexts requiring guaranteed legibility",
+      "pattern_snippet": "background-clip:text with an image background, or mask-image/SVG mask to clip a <video> to the text shape; structurally high WCAG risk since contrast depends on asset content, not a controlled token",
+      "source_url": "vault/knowledge_base/visual-patterns/image-video-filled-text.md"
+    },
+    {
+      "name": "Holographic/Iridescent Foil Text — Power Pack",
+      "system": "Power Pack",
+      "category": "Holographic/Iridescent Foil Text",
+      "tags": "branding text holographic iridescent foil animated gradient premium collectible",
+      "use_case": "premium/collectible brand positioning (limited drop, collectible gaming) where the foil-card effect is expected; never sustained-reading contexts or minimalist/corporate brands",
+      "pattern_snippet": "animated multicolor gradient over background-clip:text, background-position shifted in a loop; verify contrast at the WORST frame of the animation cycle, respect prefers-reduced-motion by freezing on a valid frame",
+      "source_url": "vault/knowledge_base/visual-patterns/holographic-iridescent-foil-text.md"
+    },
+    {
+      "name": "Duotone Image Overlay — Power Pack",
+      "system": "Power Pack",
+      "category": "Duotone Image Overlay",
+      "tags": "branding image duotone photography overlay two-tone filter",
+      "use_case": "consistent brand photography treatment across editorial/product images (the Spotify pattern); never when the real product color is itself information (fashion/cosmetics e-commerce)",
+      "pattern_snippet": "SVG feColorMatrix/feComponentTransfer mapping image shadows to a dark brand token and highlights to a light brand token, replacing the full tonal range with two colors",
+      "source_url": "vault/knowledge_base/visual-patterns/duotone-image-overlay.md"
+    },
+    {
+      "name": "Variable Font Weight/Width Animation — Power Pack",
+      "system": "Power Pack",
+      "category": "Variable Font Weight/Width Animation",
+      "tags": "branding typography kinetic variable-font animation wordmark motion",
+      "use_case": "brand wanting a kinetic wordmark that breathes/reacts on hover, scroll, or load; requires a real variable font file with the needed axes — verify before committing; never extended reading text",
+      "pattern_snippet": "animate font-variation-settings (wght/wdth axes) via CSS transition or scroll-link; respect prefers-reduced-motion for continuous or large-amplitude animation",
+      "source_url": "vault/knowledge_base/visual-patterns/variable-font-animation.md"
+    },
+    {
+      "name": "Scroll-Driven Reveal — Power Pack",
+      "system": "Power Pack",
+      "category": "Scroll-Driven Reveal",
+      "tags": "branding motion scroll animation-timeline view zero-js reveal",
+      "use_case": "reveal a logo/brand section/hero block as it enters viewport without scroll-listener JS; Safari has no support at all — mandatory static fallback",
+      "pattern_snippet": "animation-timeline: view() + animation-range (e.g. entry 0% entry 40%); use scroll() instead for whole-container progress (parallax/progress bars)",
+      "source_url": "vault/knowledge_base/visual-patterns/scroll-driven-reveal.md"
+    },
+    {
+      "name": "Animated Grainy Texture — Power Pack",
+      "system": "Power Pack",
+      "category": "Animated Grainy Texture",
+      "tags": "branding surface noise grain texture animated mix-blend-mode background",
+      "use_case": "hero section background that feels too flat/digital as a solid gradient; never behind reading text or as multiple simultaneous instances (repaint cost)",
+      "pattern_snippet": "SVG feTurbulence (Perlin noise) or an abused CSS gradient, overlaid via mix-blend-mode:overlay, with background-position animated in a loop",
+      "source_url": "vault/knowledge_base/visual-patterns/animated-grainy-texture.md"
+    },
+    {
+      "name": "OKLCH + color-mix() Dynamic Brand Tinting — Power Pack",
+      "system": "Power Pack",
+      "category": "OKLCH + color-mix() Dynamic Brand Tinting",
+      "tags": "branding color tokens oklch color-mix dynamic theming hover states design-system",
+      "use_case": "any brand token system hardcoding separate hover/active/tint colors instead of deriving them from one base token; never for colors already certified exact by external guidelines (e.g. logo Pantone)",
+      "pattern_snippet": "define one brand token in OKLCH, derive hover/active/tint/focus states via color-mix(in oklch, ...) against white/black/another token instead of storing a token per state",
+      "source_url": "vault/knowledge_base/visual-patterns/oklch-color-mix-tokens.md"
+    },
+    {
+      "name": "Adaptive SVG Favicon — Power Pack",
+      "system": "Power Pack",
+      "category": "Adaptive SVG Favicon",
+      "tags": "branding favicon adaptive dark-mode light-mode svg prefers-color-scheme",
+      "use_case": "any public-facing brand needing tab legibility in both OS light and dark themes; skip for internal dev tools/CLIs/dashboards where the friction isn't worth it",
+      "pattern_snippet": "SVG favicon with an embedded <style>+@media (prefers-color-scheme: dark) block; Safari does not support the auto-switch, requires a fixed ICO/PNG fallback",
+      "source_url": "vault/knowledge_base/visual-patterns/adaptive-svg-favicon.md"
+    },
+    {
+      "name": "Glassmorphism Brand Card — Power Pack",
+      "system": "Power Pack",
+      "category": "Glassmorphism Brand Card",
+      "tags": "branding surface glassmorphism backdrop-filter blur card texture",
+      "use_case": "brand cards/panels placed over a gradient or image background where the blur has content behind it to act on; never over a flat/solid background or as many large stacked panels (performance)",
+      "pattern_snippet": "backdrop-filter:blur(8-20px) over a translucent rgba() panel with a 1px near-transparent hairline border; requires -webkit-backdrop-filter for Safari, verify text contrast against the worst-case content behind the panel",
+      "source_url": "vault/knowledge_base/visual-patterns/glassmorphism-brand-card.md"
+    },
+    {
+      "name": "Grainy Gradient Background — Power Pack",
+      "system": "Power Pack",
+      "category": "Grainy Gradient Background",
+      "tags": "branding surface noise grain texture static gradient background",
+      "use_case": "replace a flat brand gradient with a subtly textured one without photography, at lower performance cost than the animated variant; never on small surfaces (buttons/badges) or mixed with an animated version in the same view",
+      "pattern_snippet": "solid brand gradient (linear/radial) plus a static SVG feTurbulence noise layer blended via mix-blend-mode, no animation",
+      "source_url": "vault/knowledge_base/visual-patterns/grainy-gradient-background.md"
     }
   ]
 }
