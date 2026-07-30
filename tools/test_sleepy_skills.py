@@ -119,6 +119,26 @@ def main() -> int:
               f"fe_card={'[sleepy-skill]' in fe_ac} "
               f"be_card={'[sleepy-skill]' in be_ac}")
 
+    # V-NOVELTY-CARD-LIVE (GAP-1 fix, gap-discovery-2026-07-30.md): the
+    # check_novelty_gate() function had zero live callers; verify the
+    # UserPromptSubmit path now surfaces it end-to-end through run().
+    novelty_ac = j.run({
+        "prompt": "design a new institutional knowledge fabric and "
+                   "governance layer for cross-repo decision making",
+        "cwd": tmp, "session_id": f"vg-novelty-{sfx}",
+    }).get("additionalContext", "")
+    ordinary_ac = j.run({
+        "prompt": "fix the off-by-one bug in the pagination helper",
+        "cwd": tmp, "session_id": f"vg-novelty-neg-{sfx}",
+    }).get("additionalContext", "")
+    if ("[novelty-gate]" in novelty_ac
+            and "[novelty-gate]" not in ordinary_ac):
+        _ok("V-NOVELTY-CARD-LIVE", "fires on platform prompt; silent on ordinary")
+    else:
+        _fail("V-NOVELTY-CARD-LIVE",
+              f"hit={'[novelty-gate]' in novelty_ac} "
+              f"false_positive={'[novelty-gate]' in ordinary_ac}")
+
     # V-BASELINE-INTACT (loader still fail-open / unchanged on neutral input)
     neutral = j.run({"prompt": "hola", "cwd": tmp,
                      "session_id": f"vg-n-{sfx}"})

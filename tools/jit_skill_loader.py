@@ -1436,6 +1436,35 @@ def _skillrouter_mark(sid: str, names: list, prior: set) -> None:
         pass
 
 
+# --- Novelty proof gate wiring (GAP-1, gap-discovery-2026-07-30.md) -----
+# HR-NOVELTY-001 / modules.spec_gate.gate.check_novelty_gate existed as a
+# pure function with zero live callers -- the fix built to stop the
+# 6-audit mega-corpus-proposal pattern only fired if the agent remembered
+# to check it manually. This mirrors the AKOS axis's own once-per-session
+# TTL-file pattern rather than the skill-router's name-keyed dedupe, to
+# avoid a state-file race with the unrelated fresh_skills mark below.
+def _novelty_gate_recent(sid: str) -> bool:
+    """True iff the novelty-proof card was already injected this session
+    within the TTL. Fail-open: any error -> False (allow injection)."""
+    p = STATE_DIR / f"jit-novelty-{sid}.json"
+    try:
+        st = json.loads(p.read_text(encoding="utf-8"))
+        return (time.time() - float(st.get("ts", 0))) < DEDUPE_TTL_SEC
+    except Exception:
+        return False
+
+
+def _novelty_gate_mark(sid: str) -> None:
+    try:
+        STATE_DIR.mkdir(parents=True, exist_ok=True)
+        p = STATE_DIR / f"jit-novelty-{sid}.json"
+        tmp = p.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps({"ts": time.time()}), encoding="utf-8")
+        os.replace(tmp, p)
+    except Exception:
+        pass
+
+
 def _skill_router_inject(fn):
     """Append a pointer card for intent-matched general skills.
     Advisory; never blocks. Fail-open. Sealed BL-SLEEPY-SKILLS-001."""
@@ -1453,6 +1482,19 @@ def _skill_router_inject(fn):
             prompt = str(data_d.get("prompt") or "")
             if len(prompt) < 12:
                 return result
+            if isinstance(result, dict):
+                sid_novelty = _sid(data_d)
+                if not _novelty_gate_recent(sid_novelty):
+                    from modules.spec_gate.gate import check_novelty_gate
+                    n = check_novelty_gate(prompt)
+                    if n.applies:
+                        ac0 = result.get("additionalContext") or ""
+                        if ac0 and not ac0.endswith("\n"):
+                            ac0 += "\n"
+                        result["additionalContext"] = (
+                            ac0 + "\n[novelty-gate] HR-NOVELTY-001: "
+                            + n.message)
+                        _novelty_gate_mark(sid_novelty)
             from modules.skill_router.intent_classifier import classify_intent
             from modules.skill_router.skill_index import build_index
             # Cached single-file read; walks frontmatter heads only on a
