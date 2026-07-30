@@ -292,11 +292,29 @@ system per `project_daif_corpus_scs_c95.md`).
 **Why:** confirmed SPEC-not-running-system. Next step per memory is "a proving
 vertical" -- this is that same open item, now also visible in the liveness ledger.
 
-### PLANNED: Dataset First Protocol authority wiring  [PENDING]
-**System:** `modules/dataset_first/*`
-**Why:** DFP's own docstring: "an advisor wired into an authority, never an
-authority itself." Built complete; the authority (spec_gate or decision_review)
-has not yet been chosen to consume it.
+### Dataset First Protocol authority wiring  [FIXED 2026-07-30]
+**System:** `modules/dataset_first/knowledge_sufficiency.py` +
+`modules/spec_gate/gate.py`
+**Was:** DFP's own docstring: "an advisor wired into an authority, never an
+authority itself." Built complete; no owner consumed it for a live block.
+**Found while closing (ukr-runtime-2026-07-30.md item 1):** DFP was in fact
+already wired into `decision_review/decision_kernel.py` (`_resolve_knowledge_live`
+maps `DATASET_FIRST_MANDATORY` -> `Verdict.BUILD_KNOWLEDGE_FIRST`, amendment
+2026-07-12) -- but nothing calls `review_decision(..., live=True)` for a real
+new-mission decision. CRAIF's only live caller (`craif/authority.py
+consult_drk`) explicitly passes `knowledge=None, live=False` by design (a
+different, narrower question: informational evidence for wiring an orphan
+module, not "should we build this"). So the DFP-DRK chain was real but
+unreachable from any live entry point -- the true gap.
+**Fix:** `spec_gate.check_spec_gate()` (already consumed live by
+`one_shot/compiler.py`, `pp_agents/signals/sdd_tier.py`,
+`pp_agents/signals/spec_compliance.py`) now calls DFP's `evaluate()` for every
+L/XL task, before the spec-file lookup. `DATASET_FIRST_MANDATORY` ->
+`gate_passed=False, action="knowledge_first_required"` -- a real BLOCKED
+verdict reachable from 3 existing live callers, not a new call site.
+**Verified:** `V-KNOWLEDGE-GATE-BLOCKS` / `V-KNOWLEDGE-GATE-SILENT`
+(`tools/test_spec_driven.py`, 15/15); no regression in DFP (17/17), SDD-OS
+(10/10), governance_propagation (7/7).
 
 ### PLANNED: DRK-01 decision_review adapter verification  [PENDING]
 **System:** `modules/decision_review/*`
@@ -317,10 +335,37 @@ guarantee validator.py doesn't cover.
 but grep confirms zero live import anywhere -- that memory's "activation" claim
 is stale and has been corrected (see meta-analysis). Needs real Stop-chain wiring.
 
-### PLANNED: frontier_intelligence discovery module wiring  [PENDING]
-**System:** `modules/frontier_intelligence/{corpus_roi,session_compiler,unknown_unknown_generator}`
-**Why:** B1 Dataset ROI Ledger + Future/Opportunity Discovery modules built per
-spec; no live consumer yet.
+### PLANNED: frontier_intelligence session_compiler + unknown_unknown_generator wiring  [PENDING]
+**System:** `modules/frontier_intelligence/{session_compiler,unknown_unknown_generator}`
+**Why:** Future/Opportunity Discovery modules built per spec; no live consumer
+yet. (`corpus_roi` split out below -- resolved 2026-07-30.)
+
+### corpus_roi.py consumer question  [DEFERRED 2026-07-30]
+**System:** `modules/frontier_intelligence/corpus_roi.py`
+**Investigated (ukr-runtime-2026-07-30.md item 2):** `corpus_roi.py`'s own
+docstring names its intended destination explicitly: "Feed the corpus ROI to
+CO-12 (the single instrument) as one producer signal... mirrors
+`token_irr.record_irr` exactly" -- i.e. `record_corpus_roi()` ->
+`modules.cognitive_os.co_12_telemetry.record_signal()`, read back by
+`readiness_report()`.
+**Why deferred, not wired:** `readiness_report()` hardcodes each instrument as
+its own dict key (`loop_boundedness`, `opus_avoided`, `cdio`, `fd_distillation`,
+`recall_roi`, `dedup_hit`) -- there is no generic "surface every recorded
+signal kind" path, so `corpus_roi` would need an explicit reader function
+added, same shape as `fd_metrics()`. But verified first (grep across
+`agents/*.md` and `commands/*.md` for `readiness_report`/`co_12_telemetry`,
+zero real matches beyond substring false-positives on the word "readiness"):
+**`readiness_report()` itself has no live caller anywhere** -- no hook, no
+agent, no command invokes it or the CO-12 CLI's `--report` flag outside its
+own tests. Wiring `corpus_roi` into it would connect one unreached function to
+another, which is wiring in name only -- it would not reach a real decision
+point, only a different symptom of the same absence.
+**Reopen condition:** the moment `readiness_report()` (or a successor CO-12
+surface) gets ANY real live invocation point (a hook, an agent, a scheduled
+task, a command), add `corpus_roi.rank_all(probe_liveness=False)` as its own
+`readiness_report()` key at that time -- the code change is small
+(~10 lines, same shape as `fd_metrics()`); the missing piece is a live
+surface for CO-12's report as a whole, not this one producer.
 
 ### PLANNED: hard_rules/residual consumer wiring  [PENDING]
 **System:** `modules/hard_rules/residual.py`

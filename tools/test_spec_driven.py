@@ -130,6 +130,33 @@ def main() -> int:
     _check("V-NOVELTY-TRIGGER-MISS", not n.applies,
            "ordinary task not flagged", "false positive on ordinary task")
 
+    # V-KNOWLEDGE-GATE-BLOCKS (ukr-runtime-2026-07-30.md item 1 -- candidate C):
+    # a mission with insufficient governing knowledge produces BLOCKED (gate_
+    # passed=False), not PASS, even before any spec-file lookup. Canonical
+    # DATASET_FIRST_MANDATORY trigger reused verbatim from
+    # tools/test_dataset_first_protocol.py's own worked example.
+    g = check_spec_gate(
+        "design the permanent constitutional governance authority and ontology "
+        "for a novel distributed consensus architecture with no precedent: "
+        "define the taxonomy of kinds, the protocol of state transitions, the "
+        "invariant semantics, the benchmark thresholds and the evaluator that "
+        "verifies every claim; this is a sealed universal standard that will "
+        "outlive every contributor, is irreversible in production, and "
+        "requires first principles theory because no prior science or model "
+        "of the domain exists and it is unproven",
+        task_size="L")
+    _check("V-KNOWLEDGE-GATE-BLOCKS",
+           (not g.gate_passed) and g.action == "knowledge_first_required",
+           f"action={g.action}", f"gate_passed={g.gate_passed} action={g.action}")
+
+    # V-KNOWLEDGE-GATE-SILENT: an ordinary L task with sufficient governing
+    # knowledge is unaffected -- falls through to the normal spec-existence path.
+    g = check_spec_gate("add a token bucket rate limiter to the outbound api "
+                         "client", task_size="L")
+    _check("V-KNOWLEDGE-GATE-SILENT", g.action != "knowledge_first_required",
+           f"action={g.action} (normal spec-gate path)",
+           "false positive: trivial task blocked as knowledge-insufficient")
+
     total = _passes + _fails
     print(f"SPEC_DRIVEN_PASS={_passes}/{total}  threshold={total}/{total}")
     return 0 if _fails == 0 else 1

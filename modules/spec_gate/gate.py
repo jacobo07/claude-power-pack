@@ -55,6 +55,40 @@ def _find_spec(cwd: Path) -> Path | None:
         return candidates[0]
 
 
+def _check_knowledge_sufficiency(task_description: str) -> SpecGateResult | None:
+    """DFP wiring (ukr-runtime-2026-07-30.md item 1 -- candidate C). dataset_first
+    self-describes as "an advisor wired into an authority, never an authority
+    itself" (INV-5); this makes spec_gate that authority on the L/XL axis, the
+    same role it already plays for plain spec-existence. Returns None (no
+    block) unless DFP's verdict is DATASET_FIRST_MANDATORY. Fail-open: DFP is
+    optional infrastructure, never a hard dependency of the spec gate."""
+    try:
+        from modules.dataset_first.knowledge_sufficiency import (
+            DATASET_FIRST_MANDATORY, evaluate)
+    except Exception:
+        return None
+    try:
+        v = evaluate(task_description)
+    except Exception:
+        return None
+    if v.verdict != DATASET_FIRST_MANDATORY:
+        return None
+    missing = ", ".join(v.missing) if v.missing else "unspecified"
+    capacity = v.dimensions.get("institutional_capacity", "?")
+    return SpecGateResult(
+        has_spec=False, spec_path=None, gate_passed=False,
+        action="knowledge_first_required",
+        message=(
+            f"Knowledge Sufficiency Engine (DFP) verdict: "
+            f"DATASET_FIRST_MANDATORY (score={v.score}, missing={missing}, "
+            f"institutional_capacity={capacity}/10, ACIS ceiling=E"
+            f"{v.acis_ceiling}). The governing science/ontology/protocol this "
+            "build needs does not yet exist. This is not a spec-writing gap -- "
+            "writing a spec against knowledge that doesn't exist yet just "
+            "documents the guess. Establish the missing knowledge kind(s) "
+            "first."))
+
+
 def check_spec_gate(task_description: str,
                     cwd: Path | str | None = None,
                     task_size: str = "M") -> SpecGateResult:
@@ -64,6 +98,10 @@ def check_spec_gate(task_description: str,
             has_spec=True, spec_path=None, gate_passed=True,
             action="proceed",
             message=f"{task_size} task -- spec gate not required.")
+
+    kv = _check_knowledge_sufficiency(task_description)
+    if kv is not None:
+        return kv
 
     root = Path(cwd) if cwd else Path.cwd()
     spec = _find_spec(root)
