@@ -52,7 +52,7 @@ def main() -> int:
     from modules.error_prevention.premise_verifier import verify_premises
     from modules.skill_router.intent_classifier import classify_intent
     from modules.skill_router.skill_index import build_index
-    from modules.spec_gate.gate import check_spec_gate
+    from modules.spec_gate.gate import check_novelty_gate, check_spec_gate
 
     skills = build_index(force=True)
 
@@ -119,6 +119,16 @@ def main() -> int:
         capture_output=True, text=True, timeout=60)
     _check("V-BASELINE-INTACT", cp.returncode == 0,
            "sleepy frontend suite intact", "sleepy suite regressed")
+
+    n = check_novelty_gate("build a new Institutional Knowledge Fabric "
+                            "and governance platform")
+    _check("V-NOVELTY-TRIGGER-HIT", n.applies and len(n.questions) == 13,
+           f"matched={n.matched!r}, {len(n.questions)} questions",
+           f"applies={n.applies}, questions={len(n.questions)}")
+
+    n = check_novelty_gate("fix a typo in the readme")
+    _check("V-NOVELTY-TRIGGER-MISS", not n.applies,
+           "ordinary task not flagged", "false positive on ordinary task")
 
     total = _passes + _fails
     print(f"SPEC_DRIVEN_PASS={_passes}/{total}  threshold={total}/{total}")

@@ -183,3 +183,80 @@ def classify_tier(description: str) -> TierResult:
     return TierResult(
         tier=tier, size=TIER_TO_SIZE[tier],
         requires_spec=tier >= 2, requires_prd=tier >= 2, reason=reason)
+
+
+# --- Novelty proof gate (PR-NOVELTY-PROOF-REQUIRED-001) -----------------
+# Sealed 2026-07-30 after the IIG Compendium audit: 0 of 30 proposed
+# "mega-system" candidates (institutional fabric/OS/platform/kernel/
+# compendium) survived a mechanism-level check against a discovered
+# denominator -- the sixth consecutive proposal of this shape (AISHF,
+# RE Baseline's 3 NEW families -> 1, KSF's 22 -> 4-deferred, the UKR
+# Compendium's 8-step escalation -> 0, this IIG pass -> 0) to measure as
+# majority-or-fully owned. Each time, the check was run manually by Owner
+# ruling at real audit cost. This gate exists to catch the next one at the
+# spec stage instead. See vault/plans/iig-compendium-2026-07-30.md.
+
+NOVELTY_PROOF_QUESTIONS: tuple[str, ...] = (
+    "What concrete problem has no owner today?",
+    "What new outcome would this produce?",
+    "What real consumer needs it?",
+    "Why is extending an existing owner insufficient?",
+    "What new primitive does it require?",
+    "What decisions would it make that nobody makes today?",
+    "What evidence would it produce?",
+    "What failure class does it prevent?",
+    "What interfaces would it have with existing owners?",
+    "How would its value be measured?",
+    "What complexity would it introduce?",
+    "What condition would justify retiring it?",
+    "Why is this not a rhetorical layer over systems that already exist?",
+)
+
+# Keywords signaling a proposal to mint a new named institutional
+# mega-system, as opposed to a normal feature/module/extension.
+_NOVELTY_TRIGGER: tuple[str, ...] = (
+    "fabric", "compendium", "institutional operating system", "kernel",
+    "civilization", "governance layer", "intelligence platform",
+    "operating system", "meta-system", "mega-system", "new dataset family",
+    "universal runtime", "constitutional layer",
+)
+
+
+@dataclass
+class NoveltyGateResult:
+    applies: bool
+    matched: str | None
+    questions: tuple[str, ...]
+    message: str
+
+
+def check_novelty_gate(task_description: str) -> NoveltyGateResult:
+    """PR-NOVELTY-PROOF-REQUIRED-001: before admitting a new institutional
+    fabric/OS/platform/kernel/compendium, require the 13-question novelty
+    proof, mechanism-checked against a DISCOVERED denominator (grep the
+    real repo), never against the proposal's own curated owner list.
+
+    Advisory: returns the questions for the agent/Owner to answer with
+    evidence. Does not itself decide the verdict -- a name without a
+    verified owner gap is not proof; only cited file:line non-ownership is.
+    """
+    text = (task_description or "").lower()
+    hit = _kw_hit(_NOVELTY_TRIGGER, text)
+    if not hit:
+        return NoveltyGateResult(
+            applies=False, matched=None, questions=(),
+            message="No new-mega-system signal detected -- gate not required.")
+
+    return NoveltyGateResult(
+        applies=True, matched=hit, questions=NOVELTY_PROOF_QUESTIONS,
+        message=(
+            f"Novelty-system signal detected ({hit!r}). Before treating this "
+            "as a new dataset family, answer all 13 questions above with "
+            "cited file:line evidence from a DISCOVERED sweep of this repo "
+            "(grep for the mechanism, not the name) -- never from the "
+            "proposal's own list of what it assumes doesn't exist. Base "
+            "rate on this repo across 6 independent audits: 0-1 of every "
+            "22-30 proposed candidates survive. Missing evidence on any "
+            "question -> not a new dataset; classify instead as "
+            "EXTEND_EXISTING_OWNER, NEW_MODULE, NEW_VIEW, NEW_POLICY_PACK, "
+            "NEW_SCANNER_OR_GATE, or REJECT."))

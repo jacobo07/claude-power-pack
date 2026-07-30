@@ -98,4 +98,10 @@ STOP: Run tools/test_session_revival.py and require REVIVAL_PASS at full count B
 EVIDENCE: [incident] An allowAutomaticTasks reset cost a full diagnosis cycle before the reset itself was found; the gate now pins allowAutomaticTasks, persistentSessionReviveProcess, enablePersistentSessions and restoreWindows as a tripwire.
 SEVERITY: HIGH | RECURRENCE: 1x
 <!-- digest:revival-verify-after-cursor-update-001 -->
+### HR-NOVELTY-001 -- Require the 13-question novelty proof before admitting a new institutional mega-system
+TRIGGER: A proposal to build a new "fabric", "compendium", institutional operating system, kernel, civilization, governance layer, or intelligence platform (`modules/spec_gate/gate.py::check_novelty_gate`).
+STOP: Refuse GENUINELY_NEW_DATASET status until all 13 questions (problem owner gap, new outcome, real consumer, extension insufficiency, new primitive, new decisions, new evidence, failure class prevented, interfaces with existing owners, value measurement, complexity introduced, retirement condition, why-not-rhetorical-layer) are answered with cited file:line evidence from a DISCOVERED sweep of the repo -- never from the proposal's own curated list of what it assumes doesn't exist. Missing evidence on any question -> classify as EXTEND_EXISTING_OWNER, NEW_MODULE, NEW_VIEW, NEW_POLICY_PACK, NEW_SCANNER_OR_GATE, or REJECT instead. EXCEPCION: Owner phrase "novelty proof waived -- HR-NOVELTY-001 OK" for ONE turn.
+EVIDENCE: [iig-compendium-2026-07-30] 6 consecutive mega-corpus proposals for this repo (AISHF, RE Baseline's 3 NEW families -> 1 (CLAE), KSF's 22 -> 4-deferred, the UKR Compendium's 8-step escalation -> 0, this IIG pass's 30 candidates A-AD -> 0) measured as majority-or-fully owned once checked against a discovered denominator instead of the proposal's own list. `vault/plans/iig-compendium-2026-07-30.md`.
+SEVERITY: HIGH | RECURRENCE: 6x
+<!-- digest:novelty-proof-required-001 -->
 <!-- PP-HARD-RULES-END -->
