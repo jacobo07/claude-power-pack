@@ -235,6 +235,35 @@ _CURATED_REGISTRY = {
                               "atmosphere", "hospitality", "player", "treatment",
                               "warmth", "belonging", "emotional", "humiliation",
                               "cooperation", "nostalgia")},
+    # Five real, sealed, LIVE owners the registry was blind to before this entry -- none
+    # lives under vault/knowledge_base/, so _discover_families() could never surface them
+    # no matter how complete that sweep got. Found running the CPP-UKR Runtime Residue
+    # family sizing (2026-07-30): 5 of 18 candidates (B, E, H, M, N) scored KEEP purely
+    # because their real owner had no registry row, not because no owner exists --
+    # verified directly (KSF/AKOS/liveness/secret_firewall/rule_compiler all confirmed
+    # on disk, zero vault/knowledge_base/<name>/ presence). Same failure shape as the
+    # C96 DEEP-RESEARCH/AUTORESEARCH and 2026-07-20 CavEX additions above. Keywords drawn
+    # from each family's own stated responsibilities -- not reverse-engineered to make a
+    # particular UKR candidate light up.
+    "KSF": {"name": "Knowledge Sovereignty Fabric (authority, precedence, conflicts)",
+            "kw": ("authority", "precedence", "precedent", "applicability",
+                   "applicable", "conflict", "conflicts", "promotion", "promote",
+                   "sovereignty", "sovereign", "jurisdiction")},
+    "AKOS": {"name": "AKOS (intelligent acquisition, cleanup, semantic reconstruction, "
+                     "distillation)",
+             "kw": ("acquisition", "acquire", "cleanup", "reconstruction",
+                    "reconstruct", "distillation", "distill", "brief", "briefs")},
+    "LIVENESS": {"name": "Liveness Ledger (reachability.py, consumer tracing)",
+                 "kw": ("reachability", "reachable", "unreachable", "orphan",
+                        "orphans", "liveness", "consumer", "consumers", "wiring",
+                        "wired", "unwired")},
+    "SECRET-FIREWALL": {"name": "Secret Firewall (URB redaction, credential boundary)",
+                        "kw": ("secret", "secrets", "credential", "credentials",
+                               "redact", "redaction", "firewall", "leak", "rotation",
+                               "rotate")},
+    "RULE-COMPILER": {"name": "Rule Compiler (digest, admission, enforcement)",
+                      "kw": ("compile", "compiler", "digest", "enforcement",
+                             "enforce", "admission", "admit")},
 }
 
 # ---------------------------------------------------------------------------

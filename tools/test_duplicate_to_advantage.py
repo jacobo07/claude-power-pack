@@ -210,7 +210,29 @@ def main(argv=None) -> int:
                 # family it cannot see is a family it cannot protect -- but it does widen
                 # the gate's "real sealed family" contract from PP-internal to cross-repo.
                 # Flagged here rather than blurred silently.
-                "CAVEX-GOV", "CRAWLOS", "KOBII-IDENTITY"}
+                "CAVEX-GOV", "CRAWLOS", "KOBII-IDENTITY",
+                # Added auditing the CPP-UKR Runtime Residue family sizing
+                # (2026-07-30, vault/plans/ukr-runtime-2026-07-30.md). D2A's raw
+                # 18-candidate run scored 5 candidates (B, E, H, M, N) as KEEP
+                # purely because their real owner had no vault/knowledge_base/
+                # presence -- verified directly this session (Glob returned no
+                # matches for ksf*/akos*/*liveness*/*secret* under
+                # vault/knowledge_base/):
+                #   KSF             -- Knowledge Sovereignty Fabric (authority/
+                #                      precedence), named as an owner in the
+                #                      UKR prompt's own text.
+                #   AKOS            -- knowledge/AKOS_KNOWLEDGE_BRIEF.md, its
+                #                      domain-matched injector observed firing
+                #                      live this session.
+                #   LIVENESS        -- modules/liveness/reachability.py,
+                #                      vault/liveness/reachability_registry.json
+                #                      (both verified on disk this session).
+                #   SECRET-FIREWALL -- vault/secret_firewall/, HR-SECRET-001..007
+                #                      sealed in this repo's own CLAUDE.md.
+                #   RULE-COMPILER   -- modules/rule_compiler/ (digest.py,
+                #                      hardrule_compile.py, effect_harness.py,
+                #                      all verified on disk prior session).
+                "KSF", "AKOS", "LIVENESS", "SECRET-FIREWALL", "RULE-COMPILER"}
     doctrine = _DOCTRINE.read_text(encoding="utf-8", errors="replace") if \
         _DOCTRINE.is_file() else ""
     n_datasets = len([p for p in _KB.glob("*.md")
