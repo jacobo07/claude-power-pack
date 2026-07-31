@@ -1,7 +1,7 @@
 ---
 title: corpus_roi wiring + Emergence Runtime audit — ULTRA-PLAN
 date: 2026-07-31
-status: IN PROGRESS (Sprint A done, Sprint B audit done, Sprint C pending)
+status: EXECUTED (all 3 sprints)
 originating_prompt: PLAN MODE, "Dos gaps con evidencia directa: corpus_roi wiring + audit de Emergence Runtime"
 ---
 
@@ -40,9 +40,12 @@ consumer infrastructure or a parallel detection system.
 - **Sprint B** — novelty audit performed inline during planning (not a
   separate round-trip). Verdict `EXTEND_EXISTING_OWNER`, evidence table in
   `vault/audits/EMERGENCE_NOVELTY_AUDIT.md`.
-- **Sprint C** — pending. Plan: `escalate_transversal_patterns()` added to
-  `tools/dataset_enricher.py`, wired into the `--all` path, hermetic test x3.
-  This section will be updated with the commit hash once shipped.
+- **Sprint C** — `escalate_transversal_patterns()` added to
+  `tools/dataset_enricher.py` (`write_cross_project_patterns()` now returns
+  its computed `transversal`/`cat_to_projects` instead of discarding them),
+  wired into `main()`'s `--build` path, hermetic test x3 (6/6 gates including
+  a real Entry->categorize()->transversal->OWNER_QUEUE end-to-end proof:
+  `tools/test_dataset_enricher_escalation.py`). Commit `cf4f163`.
 
 Full plan text (context, per-sprint rationale, verification plan, files
 touched): see `~/.claude/plans/snoopy-leaping-fog.md` or the approved-plan
