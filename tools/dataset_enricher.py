@@ -453,6 +453,42 @@ def write_cross_project_patterns(entries, stats, out_dir):
             fh.write("---\n\n")
     print("  WROTE " + out_path + " (" + str(os.path.getsize(out_path))
           + " bytes, " + str(len(transversal)) + " transversal patterns)")
+    return transversal, cat_to_projects
+
+
+def escalate_transversal_patterns(transversal, cat_to_projects, *,
+                                   min_projects=3, state_dir=None):
+    """Feed the already-computed transversal list to OWNER_QUEUE -- the
+    consumer write_cross_project_patterns() never had. CROSS-PROJECT-
+    PATTERNS.md is a real cross-repo detector (scans PP_VAULT + every
+    CURSOR_PROJECTS repo) with zero readers anywhere in the codebase; this
+    closes that gap the same way corpus_roi.escalate_negative_roi() closes
+    its own orphan-producer gap. min_projects=3 (stricter than the report's
+    own >=2 detection floor) so OWNER_QUEUE isn't flooded by two-project
+    coincidences -- a judgment call, not a settled threshold. No new
+    pattern-matching logic: reuses the transversal list as computed above.
+    Fail-open per pattern; returns the row ids actually appended."""
+    ids = []
+    for cat, n_proj, n_entries in transversal:
+        try:
+            if n_proj < min_projects:
+                continue
+            from modules.owner_queue.owner_queue import append
+            projs = sorted(cat_to_projects[cat])
+            rid = append(
+                action=("Cross-project pattern '" + cat + "' recurs in "
+                        + str(n_proj) + " projects (" + ", ".join(projs)
+                        + ", " + str(n_entries)
+                        + " entries) -- consider shared infrastructure"),
+                command="python tools/dataset_enricher.py --build",
+                component="cross-project-pattern:" + cat,
+                source="dataset_enricher",
+                state_dir=state_dir,
+            )
+            ids.append(rid)
+        except Exception:  # noqa: BLE001 -- fail-open, one bad pattern never blocks the rest
+            continue
+    return ids
 
 
 def write_index(entries, stats, out_dir):
@@ -566,7 +602,10 @@ def main():
     print("=== writing 4 enriched datasets ===")
     write_errors_catalog(entries, stats, args.out)
     write_lessons_compendium(entries, stats, args.out)
-    write_cross_project_patterns(entries, stats, args.out)
+    transversal, cat_to_projects = write_cross_project_patterns(entries, stats, args.out)
+    esc_ids = escalate_transversal_patterns(transversal, cat_to_projects)
+    print("  escalated " + str(len(esc_ids)) + " cross-project pattern(s) to OWNER_QUEUE"
+          if esc_ids else "  escalate: no pattern crossed the min_projects threshold")
     write_index(entries, stats, args.out)
     print("=== ENRICHMENT COMPLETE ===")
     return 0
