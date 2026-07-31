@@ -340,8 +340,16 @@ is stale and has been corrected (see meta-analysis). Needs real Stop-chain wirin
 **Why:** Future/Opportunity Discovery modules built per spec; no live consumer
 yet. (`corpus_roi` split out below -- resolved 2026-07-30.)
 
-### corpus_roi.py consumer question  [DEFERRED 2026-07-30]
+### corpus_roi.py consumer question  [RESOLVED 2026-07-31]
 **System:** `modules/frontier_intelligence/corpus_roi.py`
+**Resolution:** the CO-12/`readiness_report()` path below stays closed (its
+reopen condition never fired). Wired to the one INDEPENDENTLY-confirmed-live
+surface instead: `escalate_negative_roi()` feeds
+`modules.owner_queue.owner_queue.append()` directly -- zero-citation corpora
+above a word floor get an OWNER_QUEUE row, surfaced by the SessionStart hub's
+`sessionstart_digest()`. `--record` (the CO-12 feed below) stays as a second,
+non-blocking signal path; `--escalate` is the new live one. Hermetic test x3,
+6/6 gates: `tools/test_frontier_intelligence_corpus_roi_escalation.py`.
 **Investigated (ukr-runtime-2026-07-30.md item 2):** `corpus_roi.py`'s own
 docstring names its intended destination explicitly: "Feed the corpus ROI to
 CO-12 (the single instrument) as one producer signal... mirrors
