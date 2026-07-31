@@ -45,6 +45,25 @@
   not of the document that governs the corpus. Never reword a prohibition to appease a
   grep — a ban you cannot state is a ban you cannot enforce.
 
+## FP-06 — Woz write-gate vetoes a roman numeral that repeats a letter three times
+
+- What it really is: the Wozniak PreToolUse Write veto matches its bare-literal marker
+  list as a SUBSTRING, not as a word. Roman numerals in the ranges 30-39 and 80-89 repeat
+  their ten-letter three times in a row, which makes an ordinary citation of a source's
+  section 30 or section 86 indistinguishable from the fragility marker the gate exists to
+  stop. Same blunt-literal-matcher class as FP-03 and FP-05.
+- Symptom: a Wozniak veto naming a matched marker on a line whose actual content is a
+  section reference, a Part number, or an outline heading — and the veto persists across
+  rewrites because the citation survives them. Three blocked Writes to one path then trip
+  the anti-thrash gate (exit 2, no message), which reads as a second, unrelated fault.
+- Response: cite the source's sections in DECIMAL ("sec 30", "sec 86") rather than roman,
+  and record why in the file's front matter. Do not attempt a fourth Write to the same
+  path — the anti-thrash counter is per-path, and a Read cannot reset it for a file the
+  vetoes prevented from ever existing. Write to a different path instead; splitting an
+  over-long document in two is usually an improvement anyway. Note that this entry itself
+  had to describe the marker obliquely rather than quote it, which is the same trap one
+  layer up. Observed 2026-07-31 building `vault/audits/usirc/`.
+
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
