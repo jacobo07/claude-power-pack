@@ -1,7 +1,9 @@
 ---
 title: USIRC — Universal System Intelligence & Reconstruction Civilization — Phase −1 Audit
 date: 2026-07-31
-status: STOP #1 — presented inline, awaiting Owner decision before any construction
+status: STOP #1 RESOLVED — Owner selected Option B (build the residue as one module),
+  2026-07-31. Built and green the same session: modules/osr/, 30/30 V-OSR-* gates
+  hermetic across 3 runs, all 5 modules REACHABLE, 0 new liveness gate offenders.
 source: "Downloads/Dataset Claude Power Pack Universal System Intelligence &
   Reconstruction Civilization 1.txt" — 6,395 lines / 85,908 bytes, read to EOF
 denominator: discovered this session — 1,350 files swept, 75 modules, 26 dataset

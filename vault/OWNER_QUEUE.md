@@ -7,6 +7,54 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-07-31) -- OSR: one rule to place, one adapter to schedule, one offender found
+
+Surfaced by the USIRC ownership audit (`vault/audits/usirc/`) and the Option-B build
+that followed it. All three need an Owner decision the agent must not make alone.
+
+### (a) OSR-L1 needs placement through `rule_compiler`  [PENDING -- Owner ruling]
+
+The law: **reaching a terminal state does not witness the ordering of the prerequisite
+contracts that should have produced it.** The general form is already owned (Reality
+Contract, Mistake #16, Mistake #17, CLAE Part XXV); the *ordering* claim is not stated
+anywhere, and it is now executable at `modules/osr/ordering.py` with six gates green.
+
+The agent deliberately did **not** place it. `rule_compiler` owns rule admission and
+placement, unconditionally -- "no successor system may contain a second placement
+compiler" -- and `modules/osr/` is bound by its own boundary contract to route rather
+than promote. Text and evidence: `vault/osr/OSR_L1_LAW.md`.
+
+**Recommended action:** run it through the normal admission path and let the compiler
+decide global-versus-local placement. Its natural home is beside HR-OUTPUT-002, since
+both refuse a completion claim that was never observed.
+
+### (b) The running-application evidence adapter belongs to `crawl_os` DS05  [PENDING -- scheduling]
+
+The audit's B7 gap -- DOM, accessibility tree, HAR, storage and input timeline from a
+*running* app -- is already chartered as **crawl_os Dataset 05 (Browser Interaction)**
+and named in DS03's forward-compatibility boundaries as not yet built. OSR consumes
+Evidence Objects and must not grow a second acquisition path.
+
+**Recommended action:** none from OSR. When crawl_os reaches DS05 on its own build
+order (its named next action is DS04), OSR-1 becomes populatable from live sessions
+rather than hand-authored inventories. Until then OSR-2 and OSR-3 work from artifacts
+the Owner supplies directly, which is the honest current state.
+
+### (c) `dataset_first/transduction` is an undeclared liveness offender  [PENDING -- not OSR's]
+
+Measured this session: `python modules/liveness/reachability.py` reports **328 modules,
+196 REACHABLE, 132 ORPHAN, gate offenders: 1**. The single offender is
+`dataset_first/transduction` -- unreachable AND absent from
+`vault/liveness/reachability_registry.json`, so it is scored rather than exempt. The
+other nine ORPHANs in the report are all declared.
+
+This is **not** OSR's debt and was not introduced by this build: all five `osr/*`
+modules are REACHABLE with a named `via` (`commands/osr.md`, `tools/osr_audit.py`).
+Recorded rather than repaired, because `transduction.py` belongs to `dataset_first`
+and the WIRE/DECLARE/DELETE verdict is that owner's to make.
+
+---
+
 ## NEW (2026-07-29) -- 4 session_resilience orphans + an empty modules/daemon/
 
 Surfaced by the E1-E5 boundary audit (`vault/plans/e-passes-audit-2026-07-29.md`).
