@@ -31,7 +31,8 @@ param(
     [string]$OutPath      = "$env:USERPROFILE\.claude\state\window_topology.json",
     [string]$LastOpenPath = "$env:USERPROFILE\.claude\state\window_topology_last_open.json",
     [string]$QueuePath    = "$env:USERPROFILE\.claude\state\window_topology_reconcile_queue.json",
-    [string]$ReconcileLog = "$env:USERPROFILE\.claude\state\window_topology_reconcile.log"
+    [string]$ReconcileLog = "$env:USERPROFILE\.claude\state\window_topology_reconcile.log",
+    [string]$BootMarkerPath = "$env:USERPROFILE\.claude\state\window_topology_boot_marker.json"
 )
 
 # Owner decision 2026-07-22 (post-crash, explicit approval in this session,
@@ -196,7 +197,34 @@ $currentRepoPaths = @($windows | Where-Object { $_.repoPath } | Select-Object -E
 # real close-event signal, and forcing it back would be its own phantom-
 # window bug. Documented limitation, not a silent gap.
 $queueIsEmpty = -not (Test-Path $QueuePath) -or (@(Get-Content $QueuePath -Raw -ErrorAction SilentlyContinue | ConvertFrom-Json -ErrorAction SilentlyContinue) | Where-Object { $_ }).Count -eq 0
-if ($prevWindowCount -eq 0 -and $currentCount -gt 0 -and $queueIsEmpty -and (Test-Path $LastOpenPath)) {
+
+# ---- Boot-aware cold start. The prevWindowCount -eq 0 gate can only sample a
+# literal 0 if this writer RAN while Cursor was closed and Windows was still up.
+# On a real power cycle the writer does not run at all, so $OutPath still holds
+# the pre-shutdown count and prev is never 0 -- the 0 -> N transition is
+# unobservable across a reboot, and reconciliation could never fire in exactly
+# the case it was built for ("enciendo el portatil y no vuelven las ventanas").
+# First run after a new boot is therefore treated as a cold start too.
+# Fail-open: if the boot time cannot be read, this stays $false and behaviour is
+# byte-identical to before -- a missed reopen, never a phantom one.
+$isFirstRunSinceBoot = $false
+try {
+    $bootTime = (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).LastBootUpTime.ToUniversalTime().ToString('o')
+    $markedBoot = $null
+    if (Test-Path $BootMarkerPath) {
+        try { $markedBoot = (Get-Content $BootMarkerPath -Raw | ConvertFrom-Json).bootTime } catch { $markedBoot = $null }
+    }
+    if ($markedBoot -ne $bootTime) {
+        $isFirstRunSinceBoot = $true
+        [pscustomobject]@{ bootTime = $bootTime; seenAt = (Get-Date).ToUniversalTime().ToString('o') } |
+            ConvertTo-Json | Set-Content -Path $BootMarkerPath -Encoding utf8
+        Write-ReconcileLog "[BOOT] first writer run since boot $bootTime -- cold-start reconciliation armed."
+    }
+} catch {
+    Write-ReconcileLog "[WARN] boot-time probe failed, cold-start stays prev-based: $($_.Exception.Message)"
+}
+
+if (($prevWindowCount -eq 0 -or $isFirstRunSinceBoot) -and $currentCount -gt 0 -and $queueIsEmpty -and (Test-Path $LastOpenPath)) {
     try {
         $lastOpen = Get-Content $LastOpenPath -Raw | ConvertFrom-Json
         $lastOpenRepoPaths = @($lastOpen.windows | Where-Object { $_.repoPath } | Select-Object -ExpandProperty repoPath -Unique)
@@ -214,7 +242,16 @@ if ($prevWindowCount -eq 0 -and $currentCount -gt 0 -and $queueIsEmpty -and (Tes
 # once (Owner decision: progressive, not big-bang).
 if (Test-Path $QueuePath) {
     try {
-        $queue = @(Get-Content $QueuePath -Raw | ConvertFrom-Json)
+        # PS 5.1 quirk: `... | ConvertFrom-Json` hands a JSON array downstream as
+        # ONE object, so @(...) yields a 1-element list holding the whole array.
+        # $queue[0] then returns EVERY path, the "one repo per cycle" contract
+        # degrades to "all repos in one malformed -OnlyRepoCwds argument", and the
+        # queue drains in a single pass. An explicit foreach enumerates an array
+        # as its elements and a lone string as itself -- correct for both, and for
+        # the 1-element case where ConvertTo-Json emitted a bare scalar.
+        $parsed = ConvertFrom-Json -InputObject (Get-Content $QueuePath -Raw)
+        $queue = @()
+        foreach ($item in $parsed) { if ($item) { $queue += [string]$item } }
         if ($queue.Count -gt 0) {
             $next = $queue[0]
             $rest = @($queue | Select-Object -Skip 1)
