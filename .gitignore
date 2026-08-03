@@ -110,5 +110,11 @@ vault/sessions/continuity_*.json
 vault/trials/
 # Agent persistent auto-memory (regenerated/appended every session)
 memory/
+# Session Delta Gate artifacts: one per session, written by
+# modules/session_delta/ for compound-learnings' gather path. Local evidence
+# consumed by learning-sentinel.js and /cpp-compound, then superseded -- the
+# durable output is whatever /cpp-compound materialises into ~/.claude/rules/,
+# not the deltas themselves.
+.claude/cache/learnings/
 # Stray redirect artifact
 claude-power-pack...

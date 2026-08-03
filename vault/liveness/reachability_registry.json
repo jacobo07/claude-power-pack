@@ -391,6 +391,14 @@
       "class": "LIBRARY",
       "note": "sibling of rollback.py (LIVE, commands/rollback.md); imported via sys.path-hack bare import -- verified by grep of rollback.py"
     },
+    "session_delta/__init__": {
+      "class": "PLANNED",
+      "note": "Session Delta Gate. Registered in the CANONICAL hooks/hook-dispatcher.js Stop-chain (via hooks/session_delta_stop.js) but reachability reads the LIVE ~/.claude/hooks/hook-dispatcher.js, which has not been re-copied yet -- HR-001 forbids the agent writing that path. OWNER_QUEUE row: 'Copy hook-dispatcher.js canonical -> live to activate the Session Delta Gate'. Flips REACHABLE on that copy; proven working by live Stop payload 2026-08-03 (exit 0, artifact written)."
+    },
+    "session_delta/delta": {
+      "class": "PLANNED",
+      "note": "Session Delta Gate. Registered in the CANONICAL hooks/hook-dispatcher.js Stop-chain (via hooks/session_delta_stop.js) but reachability reads the LIVE ~/.claude/hooks/hook-dispatcher.js, which has not been re-copied yet -- HR-001 forbids the agent writing that path. OWNER_QUEUE row: 'Copy hook-dispatcher.js canonical -> live to activate the Session Delta Gate'. Flips REACHABLE on that copy; proven working by live Stop payload 2026-08-03 (exit 0, artifact written)."
+    },
     "sleepless_qa/__init__": {
       "class": "LIBRARY",
       "note": "standalone Owner-invoked CLI verification pipeline (README.md, Ley 25 enforcement); no harness surface currently invokes it automatically -- entrypoint is manual `python -m modules.sleepless_qa.cli`"

@@ -57,16 +57,51 @@ This is not a fourth system — it is compound-learnings' own existing
 gather step, extended to see FD's own promotion queue, closing the loop the
 CGF audit predicted without adding a new moving part.
 
-## Known gap, not fixed here (Owner decision, not urgent)
+## The known gap, closed 2026-08-03 — the producer is named
 
-`compound-learnings/SKILL.md`'s documented PRIMARY input path,
-`<cwd>/.claude/cache/learnings/*.md`, has no producer anywhere in this
-estate — every real run has always used the `memory/sessions/session_*.md`
-fallback. This is not blocking (the fallback works and is exercised), so it
-is named here rather than force-fixed: either (a) something should write
-per-session distilled learning files to that path, or (b) the primary-path
-reference should be removed from the skill doc as aspirational-but-unbuilt.
-Left for the Owner; not in scope for this consolidation pass.
+The 2026-07-22 pass recorded this as "not fixed here, Owner decision, not
+urgent": `compound-learnings/SKILL.md`'s documented PRIMARY input path,
+`<cwd>/.claude/cache/learnings/*.md`, had **no producer anywhere in this
+estate**, and the pass assumed the `memory/sessions/session_*.md` fallback
+was carrying it.
+
+**Measured 2026-08-03: the fallback was not carrying it either.** This repo
+holds **zero** `memory/sessions/session_*.md` files, although
+`~/.claude/CLAUDE.md` § Session Logging mandates one per session — a rule with
+no mechanism. So `learning-sentinel.js::gatherLearningFiles()` returns `[]` on
+every Stop and `handleSessionEndOrStop` exits at `if (files.length === 0)
+return;`. `LEARNINGS_PENDING.md` was never written, `/cpp-compound` was never
+auto-invoked, and the L3 background proposal extractor never spawned. The
+whole three-stage consumer chain was live and **starved**, which is why the
+2026-07-22 audit could see three healthy systems and still find nothing
+compounding.
+
+The producer is now `modules/session_delta/` (the **Session Delta Gate**),
+dispatched from `hooks/session_delta_stop.js` on the Stop-chain. It writes one
+markdown file per session at
+`<cwd>/.claude/cache/learnings/<date>_<sid>.md`, in the exact schema
+`HEADER_PROBE_RE` matches, and escalates the one actionable finding (a module
+shipped unreachable and undeclared) to `owner_queue.append()`.
+
+It is a PRODUCER, not a fourth system — the ruling below stands unchanged.
+
+### Boundary: session_delta vs fable_distillation
+
+FD's ownership of "per-repo session-delta capture" is unchanged. The two do not
+overlap on any of the seven axes this document uses to decide duplication:
+
+| | **fable_distillation (FD-07)** | **session_delta** |
+|---|---|---|
+| Input | PM-03 findings bus | `git status -uall` + liveness + owner_queue |
+| Trigger | Stop, gated on `PP_FRONTIER_SESSION` | Stop, **every** session, throttled to one recompute per 5 min |
+| Output | `deposits_<repo>.jsonl` (append-only ledger) | one markdown file per session, overwritten in place |
+| Consumer | FD's own dedup floor + `/cpp-compound` gather (via `ukdl_candidates`) | `learning-sentinel.js` → `/cpp-compound` |
+| Dedup | Jaccard against the deposit floor | none needed — one file per session id |
+| Authority | writes the ledger | writes nothing but the artifact; escalation goes through `owner_queue` |
+| Empty case | no-op | **no-op, and writes no file** — an artifact every session would break the sentinel's `count > threshold` |
+
+Anything that would need a *second* producer for this path is a change to this
+one, not a new module.
 
 ## Ruling: no fourth system
 

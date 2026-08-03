@@ -158,6 +158,15 @@ const CHAIN_MAP = {
     // bare session's Stop is a silent no-op. Fail-open, ALWAYS exit 0, never blocks
     // Stop. Live only after Copy-Item canonical->live (T-HOOK-DISPATCHER-DRIFT-001).
     { exe: PY_EXE, script: '../skills/claude-power-pack/modules/frontier_intelligence/token_irr.py', timeoutMs: 8000 },
+    // Session Delta Gate (2026-08-03): writes <cwd>/.claude/cache/learnings/ --
+    // the input path learning-sentinel.js reads FIRST and that nothing in the
+    // estate wrote, which is why LEARNINGS_PENDING.md had never been produced
+    // and /cpp-compound was never auto-invoked. LAST in the chain deliberately:
+    // it reads the working tree, so it must observe what earlier Stop children
+    // (ads_sync docs, session_writeback) already wrote this turn. Detached +
+    // unref inside the hook, so it returns in ~130 ms; fail-open, block:false.
+    // Live only after Copy-Item canonical->live (T-HOOK-DISPATCHER-DRIFT-001).
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_delta_stop.js', timeoutMs: 8000 },
   ],
   // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
   // Root cause: settings.json registered 7 standalone PreToolUse hooks on

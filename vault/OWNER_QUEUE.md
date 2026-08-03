@@ -7,6 +7,50 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-08-03) -- activate the Session Delta Gate (one Copy-Item)  [PENDING]
+
+**System:** `hooks/hook-dispatcher.js`
+**Unblocks:** `modules/session_delta/*` (declared `PLANNED` in
+`vault/liveness/reachability_registry.json` until this lands)
+
+The Session Delta Gate writes `<cwd>/.claude/cache/learnings/<date>_<sid>.md` --
+the input path `hooks/learning-sentinel.js` reads FIRST and that nothing in this
+estate wrote. Measured 2026-08-03: that path had no producer AND this repo holds
+zero `memory/sessions/session_*.md` (the documented fallback), so the sentinel
+returned `[]` on every Stop, `LEARNINGS_PENDING.md` was never written, and
+`/cpp-compound` was never auto-invoked. A live three-stage consumer chain,
+starved since it shipped.
+
+**Proven before wiring** (same discipline as the graceful-beacon item below):
+invoked with a real Stop payload, `hooks/session_delta_stop.js` returned exit 0
+in **134 ms** and the detached child wrote a schema-valid artifact.
+`tools/test_session_delta.py` -> `SESSION_DELTA_PASS=10/10`, hermetic x3.
+
+The canonical `hooks/hook-dispatcher.js` already carries the Stop-chain entry
+(last in the chain, so it observes what `ads_sync` and `session_writeback` wrote
+this turn). The LIVE copy does not -- HR-001 forbids the agent writing
+`~/.claude/hooks`.
+
+```powershell
+Copy-Item "$env:USERPROFILE\.claude\skills\claude-power-pack\hooks\hook-dispatcher.js" `
+          "$env:USERPROFILE\.claude\hooks\hook-dispatcher.js" -Force
+Copy-Item "$env:USERPROFILE\.claude\skills\claude-power-pack\hooks\session_delta_stop.js" `
+          "$env:USERPROFILE\.claude\hooks\session_delta_stop.js" -Force
+```
+
+**Verify:** after one session close,
+`Get-ChildItem "$env:USERPROFILE\.claude\skills\claude-power-pack\.claude\cache\learnings"`
+lists a `<date>_<sid>.md`; and
+`python modules/liveness/reachability.py` reports `session_delta/delta` as
+REACHABLE (its two `PLANNED` rows can then be deleted from the registry).
+
+**Read before copying:** the dispatcher is in the live Stop/PreToolUse chain.
+The diff is one `CHAIN_MAP['Stop-chain']` entry plus its comment; `block:false`,
+`timeoutMs: 8000`, and the hook is detached + fail-open, so it cannot stall or
+break turn end.
+
+---
+
 ## NEW (2026-07-31) -- OSR: one rule to place, one adapter to schedule, one offender found
 
 Surfaced by the USIRC ownership audit (`vault/audits/usirc/`) and the Option-B build
