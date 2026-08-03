@@ -5118,3 +5118,43 @@ Evolution in the same state: `evolution_engine.py`'s only non-test consumer is
   `tools/kclaude.ps1:260` had been invoking it all along.
 
 **Origin:** `vault/plans/gap-reverification-2026-08-03.md`, commit `9988c99`.
+
+### T-GIT-PORCELAIN-DIR-COLLAPSE-001 -- `git status --porcelain` hides every file in a NEW directory  #CROSS-PROJECT
+
+**Trap:** `git status --porcelain` reports an untracked DIRECTORY as a single
+row ending in `/` -- `?? modules/newpkg/` -- not as one row per file. Any tool
+that parses that output and filters by extension (`.py`, `.ts`, `.java`) sees
+nothing inside a brand-new package. The failure is silent and inverted: the
+tool works perfectly for edits to EXISTING files and fails only for
+first-time-created ones, which is usually the case the tool was built for.
+
+*Observed 2026-08-03:* the Session Delta Gate derives module units from touched
+paths to ask "did anything ship unreachable this session". Its very first live
+run against a temp repo emitted ``- Landed `tools/` `` -- a directory, not a
+file -- and by construction it could never have flagged its OWN new package.
+Caught by the live-payload proof, not by the V-gates, which had seeded files
+into repos that already tracked their parent directory.
+
+**Fix:** `git status --porcelain -uall` (or `--untracked-files=all`). Expands
+every untracked directory to its individual files. There is no reason to prefer
+plain `--porcelain` in a tool that classifies paths.
+
+**Avoidance:**
+
+- Any consumer of `git status` porcelain output that filters on file extension
+  or path depth must pass `-uall`. Grep for `--porcelain` without it.
+- Test the NEW-DIRECTORY case explicitly. A fixture that writes into an already
+  tracked directory does not exercise this at all --
+  `V-SDELTA-NEW-PACKAGE-SEEN` creates a whole new package on purpose.
+- General form: a CLI's default output shape is a UI decision, not an API
+  contract. Read what it actually printed before parsing it. This is the
+  premise-verification rule (`HR-PREMISE-001`) applied to a command's OUTPUT
+  rather than to a function's signature -- "does the API return what we
+  expected" is the same question one layer out.
+
+**Cross-project:** applies to every repo with a tool that reads `git status`
+porcelain -- doc generators, change classifiers, pre-commit scopers, session
+reporters. Tagged `#CROSS-PROJECT` so PP propagation picks it up.
+
+**Origin:** commit `c6ecb86`; regression pinned by
+`tools/test_session_delta.py::gate_new_package_is_seen`.
