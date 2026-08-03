@@ -5017,3 +5017,104 @@ one. *Rules:* (1) a prompt is not a task statement -- it carries preflight block
 pasted logs and command output, so a slug derived from it is noise; (2) the prompt
 path is READ-ONLY, generation is an explicit act; (3) scaffolding a repo is consent
 to be GOVERNED, never consent to be WRITTEN TO on every prompt.
+
+- **UKDL-OSA-2026-07-29T17:13:01Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+### T-CONSUMER-CHAIN-STARVED-001 -- a fully live chain can produce nothing, forever
+
+**Trap:** a consumer chain whose every stage is reachable, tested and correct
+reads as HEALTHY in every audit that scores reachability, while producing
+nothing, because its INPUT has no writer. Liveness measures whether a surface
+CAN be reached; it does not measure whether anything ever arrives.
+
+*Observed 2026-08-03:* `learning-sentinel.js` (Stop + SessionEnd + SessionStart)
+-> `LEARNINGS_PENDING.md` -> SessionStart auto-invoke -> `/cpp-compound` -> L3
+detached proposal extractor. Three live stages, a documented 8-step pipeline, a
+runaway guard, a degrade counter, a lock protocol. It had emitted zero artifacts
+since it shipped. `gatherLearningFiles()` reads
+`<cwd>/.claude/cache/learnings/*.md` first -- no writer anywhere in the estate --
+and `memory/sessions/session_*.md` second -- zero files in this repo, though
+`~/.claude/CLAUDE.md` mandates one per session. So the sentinel returned `[]`
+every time and exited at `if (files.length === 0) return;`. The 2026-07-22
+knowledge-capture audit inspected all three capture systems, found them healthy
+and non-duplicative, and recorded the missing producer as "not urgent" -- it had
+no instrument that could distinguish a working chain from a starved one.
+
+**Avoidance:**
+
+- For any chain, ask the THROUGHPUT question separately from the reachability
+  question: how many artifacts has it produced, and when was the last one?
+  A count of zero over a long window is a defect regardless of `via` evidence.
+- A documented PRIMARY input path with no writer is a defect the moment it is
+  documented, not when someone notices. Grep for the writer before trusting the
+  fallback -- here the fallback was empty too, and the audit assumed it wasn't.
+- Read `[[feedback_write_without_read_incomplete_system]]` and
+  `[[feedback_orphan_field_dead_recovery_path]]`: this is the same shape from
+  the other end. A WRITER with no READER is documentation; a READER with no
+  WRITER is theatre. Both pass unit tests.
+
+**Origin:** Session Delta Gate build, commit `c6ecb86`. Fixed by shipping the
+producer (`modules/session_delta/`), not by rebuilding the chain.
+
+### PR-SESSION-DELTA-001 -- a session must produce a verifiable change proposal (Process Rule)
+
+**Rule:** every institutional session closes by emitting at least one
+machine-checkable statement of what should change -- or an explicit, measured
+zero. A session that generates no evidence of institutional improvement only
+consumed resources, and "I'll remember to write it up" is the discipline that
+produced zero `memory/sessions/*.md` files against a standing mandate.
+
+**Mechanism, not exhortation:** `modules/session_delta/` on the Stop-chain.
+It answers five questions from producers that already existed -- surfaces
+touched (`git status -uall`), outputs without a consumer
+(`liveness.reachability.scan`), rules measurable at all
+(`rule_compiler.effect_harness.coverage`), gaps left open
+(`owner_queue.pending`), and the proposal itself (`owner_queue.append`).
+
+**Anti-ceremony clauses, all load-bearing:**
+
+- An EMPTY delta writes no file. A gate that emits every session destroys the
+  `count > threshold` semantics of the consumer it feeds, and becomes the
+  339-identical-handoff noise `alert_escalation` exists to stop.
+- The Takeaway names a verdict OWED (WIRE / DECLARE / DELETE), never a
+  narration of the session.
+- Only one condition escalates to a human surface: a module shipped unreachable
+  and undeclared. Everything else stays in the artifact. A gate that escalates
+  everything trains the reader to ignore it.
+- Where no signal exists, say so. There is no rule-FIRING log in this estate, so
+  the artifact reports UNMEASURED coverage and names the absence rather than
+  inventing a proxy that reads like an answer.
+
+**Origin:** commit `c6ecb86`, closing `T-CONSUMER-CHAIN-STARVED-001`.
+
+### T-FEEDBACK-RUNTIME-WIRING-001 -- the missing piece is the wiring, not the system
+
+**Trap:** a capability that "does not exist" usually exists, unwired. Proposing
+a new system for it buys a second implementation of something already correct,
+plus the duplication the first one now has to be reconciled against.
+
+*Observed:* the Feedback Runtime -- "did adopting this rule improve anything?"
+-- was carried as a candidate for a new institutional system. It is fully
+implemented at `modules/rule_compiler/effect_harness.py`
+(IMPROVED / NO_CHANGE / REGRESSED / UNMEASURED, exit 1 only on REGRESSED),
+exported from the package `__init__`, and exercised by
+`tools/test_rule_effects.py`. Live callers in `hooks/`, `commands/`, `agents/`:
+**zero**. Import is not invocation. The same sweep found Architectural
+Evolution in the same state: `evolution_engine.py`'s only non-test consumer is
+`d2a_engine.py` importing its TOKENIZER, not its proposal path.
+
+**Avoidance:**
+
+- Before proposing a system, grep for a live CALLER of the mechanism, not for
+  the mechanism. `corpus_roi.py`, `check_novelty_gate`, `hard_rules/residual.py`,
+  `session_compiler.py` and `effect_harness.py` were all correct code with no
+  invocation point; four of the five were proposed as gaps at some stage.
+- The A-J sweep (2026-08-03) landed 8 ALREADY_OWNED, 2 WIRING_GAP, 0
+  GENUINELY_NEW -- the eighth consecutive proposal set to score majority-owned
+  once measured against a discovered denominator. Treat that base rate as the
+  prior, per `HR-NOVELTY-001`.
+- Corollary: an OWNER_QUEUE row asserting "no live consumer yet" is itself a
+  claim with an expiry date. `session_compiler`'s row said exactly that while
+  `tools/kclaude.ps1:260` had been invoking it all along.
+
+**Origin:** `vault/plans/gap-reverification-2026-08-03.md`, commit `9988c99`.
