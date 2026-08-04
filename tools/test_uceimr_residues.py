@@ -36,6 +36,8 @@ from modules.capability_runtime.corpus_adapter import (  # noqa: E402
 )
 from modules.capability_runtime import retirement as R  # noqa: E402
 from modules.backlog_autopilot import stop1_queue as SQ  # noqa: E402
+from modules.decision_review import outcome_recorder as OR  # noqa: E402
+from modules.decision_review.decision_record import Registry  # noqa: E402
 
 _passes, _fails = 0, 0
 
@@ -799,6 +801,160 @@ def t_g3_novelty_covers_its_own_class() -> None:
         _fail(gate, f"missed={missed} false_positives={false_pos}")
 
 
+_DEC_TS = "2026-07-11T20:15:00Z"
+
+
+def _decision_row(preds, *, risks=None, ts=_DEC_TS, did="DEC-0001") -> dict:
+    return {
+        "id": did, "ts": ts, "tier": "L3", "verdict": "APPROVE-WITH-CONDITIONS",
+        "blocked": False, "cited_sources": [], "guards_fired": [],
+        "conditions": [], "realized_consequences": [], "prediction_error": None,
+        "attribution": None, "superseded_by": None,
+        "decision": {
+            "id": did, "statement": "s", "problem": "p", "options": ["a", "b"],
+            "chosen": "a", "rationale": "r",
+            "accepted_risks": list(risks or []), "discarded_alternatives": [],
+            "dependencies": [], "evidence": [], "is_build_decision": False,
+            "predicted_consequences": preds, "confidence": 70,
+        },
+    }
+
+
+def t_g4_producer_closes_the_orphan() -> None:
+    """G4. accountability.py has scored, attributed and calibrated since it
+    shipped; nothing ever called it with a real record. Measured 2026-08-04:
+    prediction_error and attribution empty in 1 of 1 registry records."""
+    gate = "V-UCEIMR-G4-PRODUCER-CLOSES-ORPHAN"
+    preds = [{"claim": "scan surfaces findings",
+              "observable": "count of urgency>=medium rows in "
+                            "vault/audits/drk_proactive_*.md",
+              "horizon": "1mo"}]
+    with tempfile.TemporaryDirectory() as td:
+        reg = Registry(Path(td) / "records.jsonl")
+        row = _decision_row(preds)
+        after = OR.record_outcome(row, datetime(2026, 8, 20, tzinfo=timezone.utc),
+                                  registry=reg, write=True)
+        rows = reg.load()
+    ok = (after.status == OR.RECORDED and after.written and len(rows) == 1
+          and rows[0].get("prediction_error") and rows[0].get("attribution"))
+    if ok:
+        a = rows[0]["attribution"]
+        _ok(gate, f"outcome appended with prediction_error and attribution "
+                  f"populated (dominant={a['dominant']}, residual="
+                  f"{a['reasoning_residual']}) -- the consumer now has a producer")
+    else:
+        _fail(gate, f"status={after.status} written={after.written} "
+                    f"rows={len(rows)}")
+
+
+def t_g4_refuses_before_horizon() -> None:
+    """G4. Scoring a prediction before its horizon manufactures a miss out of a
+    result that has not happened yet."""
+    gate = "V-UCEIMR-G4-HORIZON-REFUSED"
+    preds = [{"claim": "c", "observable": "count of urgency>=medium rows in "
+                                          "vault/audits/drk_proactive_*.md",
+              "horizon": "3mo"}]
+    with tempfile.TemporaryDirectory() as td:
+        reg = Registry(Path(td) / "records.jsonl")
+        early = OR.record_outcome(_decision_row(preds),
+                                  datetime(2026, 8, 4, tzinfo=timezone.utc),
+                                  registry=reg, write=True)
+        late = OR.record_outcome(_decision_row(preds),
+                                 datetime(2026, 11, 1, tzinfo=timezone.utc),
+                                 registry=reg, write=True)
+        rows = reg.load()
+    if (early.status == OR.PENDING and not early.written
+            and late.status == OR.RECORDED and len(rows) == 1):
+        _ok(gate, "a 3mo horizon is PENDING at +24d and scored at +113d; the "
+                  "pending pass wrote nothing")
+    else:
+        _fail(gate, f"early={early.status}/{early.written} late={late.status} "
+                    f"rows={len(rows)}")
+
+
+def t_g4_observable_is_read_not_invented() -> None:
+    """G4. Invariant VI.7.3. An observable no resolver claims must be absent
+    from `realized`, so the scorer reports it unobservable instead of scoring a
+    value nobody measured."""
+    gate = "V-UCEIMR-G4-READ-NOT-INVENTED"
+    preds = [{"claim": "real", "observable": "count of urgency>=medium rows in "
+                                             "vault/audits/drk_proactive_*.md",
+              "horizon": "1mo"},
+             {"claim": "fictional", "observable": "quarterly revenue in EUR",
+              "horizon": "1mo"}]
+    row = _decision_row(preds)
+    resolved = OR.resolve_observables(row)
+    with tempfile.TemporaryDirectory() as td:
+        rep = OR.record_outcome(row, datetime(2026, 8, 20, tzinfo=timezone.utc),
+                                registry=Registry(Path(td) / "r.jsonl"),
+                                write=True)
+    invented = [o for o in resolved if "revenue" in o]
+    if (not invented and len(resolved) == 1 and rep.summary
+            and rep.summary["unobservable"] == 1 and rep.summary["scorable"] == 1):
+        _ok(gate, "the readable observable is scored, the unreadable one is "
+                  "reported unobservable -- no value invented for it")
+    else:
+        _fail(gate, f"resolved={resolved} invented={invented} "
+                    f"summary={rep.summary}")
+
+
+def t_g4_append_only() -> None:
+    """G4. DRK-05: the registry is append-only, so an outcome is a new line
+    carrying the same decision id -- never a rewrite. Without a latest-wins
+    view that append reads as a second, contradictory decision."""
+    gate = "V-UCEIMR-G4-APPEND-ONLY"
+    preds = [{"claim": "c", "observable": "count of urgency>=medium rows in "
+                                          "vault/audits/drk_proactive_*.md",
+              "horizon": "1mo"}]
+    with tempfile.TemporaryDirectory() as td:
+        reg = Registry(Path(td) / "records.jsonl")
+        original = _decision_row(preds)
+        reg.append(OR._rebuild(original))
+        before = reg.load()
+        reps = OR.scan(datetime(2026, 8, 20, tzinfo=timezone.utc),
+                       registry=reg, write=True)
+        rows = reg.load()
+        current = OR.latest_by_id(rows)
+        again = OR.scan(datetime(2026, 8, 21, tzinfo=timezone.utc),
+                        registry=reg, write=True)
+    ok = (len(before) == 1 and len(rows) == 2
+          and before[0].get("attribution") is None
+          and rows[0].get("attribution") is None      # original line untouched
+          and len(current) == 1 and current["DEC-0001"].get("attribution")
+          and reps and reps[0].status == OR.RECORDED
+          and again and again[0].status == OR.ALREADY)
+    if ok:
+        _ok(gate, "2 lines, 1 decision: the original is byte-preserved, "
+                  "latest_by_id resolves the attributed view, and a second pass "
+                  "reports ALREADY_RECORDED instead of double-scoring")
+    else:
+        _fail(gate, f"before={len(before)} rows={len(rows)} "
+                    f"current={len(current)} second_pass="
+                    f"{[r.status for r in again]}")
+
+
+def t_g4_failopen() -> None:
+    gate = "V-UCEIMR-G4-FAILOPEN"
+    try:
+        empty = OR.scan(datetime(2026, 8, 20, tzinfo=timezone.utc),
+                        registry=Registry("Z:/nope/records.jsonl"))
+        no_ts = OR.record_outcome(_decision_row([{"claim": "c",
+                                                  "observable": "x",
+                                                  "horizon": "1mo"}], ts="junk"),
+                                  datetime(2026, 8, 20, tzinfo=timezone.utc))
+        bad_h = OR.parse_horizon("whenever")
+        nothing = OR.resolve_observables({}, root="Z:/nope")
+        if (empty == [] and no_ts.status == OR.PENDING and bad_h is None
+                and nothing == {}):
+            _ok(gate, "absent registry -> []; unparsable ts and unknown horizon "
+                      "-> PENDING (never 'overdue'); absent root -> {}")
+        else:
+            _fail(gate, f"empty={empty} no_ts={no_ts.status} bad_h={bad_h} "
+                        f"nothing={nothing}")
+    except Exception as e:  # noqa: BLE001
+        _fail(gate, f"raised {type(e).__name__}: {e}")
+
+
 def main() -> int:
     for t in (t_r1_extracts_capability_claims, t_r1_lineage_traceable,
               t_r1_overlap_audited, t_r1_defer_is_not_novelty,
@@ -821,6 +977,9 @@ def main() -> int:
               t_g3_rules_fire_on_their_own_incident,
               t_g3_crashed_detector_is_not_a_rule_failure,
               t_g3_novelty_covers_its_own_class,
+              t_g4_producer_closes_the_orphan, t_g4_refuses_before_horizon,
+              t_g4_observable_is_read_not_invented, t_g4_append_only,
+              t_g4_failopen,
               t_r2_failopen):
         try:
             t()

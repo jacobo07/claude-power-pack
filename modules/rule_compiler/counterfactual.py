@@ -162,7 +162,36 @@ def judge(claim: CounterfactualClaim, out: str, code: int | None) -> tuple:
     )
 
 
+_DETECTOR_MODULE = "modules.rule_compiler.detectors"
+
+
+def unknown_detector(probe: list) -> str:
+    """A probe naming a detector this repo does not ship, or "".
+
+    Registry probes are argv STRINGS, so a typo'd detector name would otherwise
+    surface only as an opaque subprocess failure at replay time -- and be
+    invisible to static reachability, which is how `detectors` read as an orphan
+    while three claims were routing through it.
+    """
+    argv = list(probe or [])
+    if _DETECTOR_MODULE not in argv:
+        return ""
+    try:
+        from .detectors import DETECTORS
+    except ImportError as e:
+        return f"detector module unavailable: {e}"
+    tail = argv[argv.index(_DETECTOR_MODULE) + 1:]
+    name = next((a for a in tail if not a.startswith("-")), "")
+    if name in DETECTORS:
+        return ""
+    return (f"probe names detector {name!r}, which this repo does not ship "
+            f"(known: {', '.join(sorted(DETECTORS))})")
+
+
 def measure(claim: CounterfactualClaim, cwd: Path = PP_ROOT) -> Counterfactual:
+    bad = unknown_detector(claim.probe)
+    if bad:
+        return Counterfactual(claim, UNMEASURABLE, "", bad)
     out, code, reason = run_probe(claim, cwd)
     if reason:
         return Counterfactual(claim, UNMEASURABLE, "", reason)
