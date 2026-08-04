@@ -241,6 +241,41 @@ STOP #1; `--resolve <plan> --status RESOLVED --reason "…"` to write the transi
 gate is advisory on purpose: refusing to open a STOP #1 would block the audit work that
 produces the estate's best evidence. What it refuses is opening one *in silence*.
 
+## T-PLAUSIBLE-BUT-WRONG-001 — a mechanism that returns a plausible number without being able to demonstrate it is the true one is a broken observer
+
+**Trap.** The dangerous failure is not the crash. It is the mechanism that keeps
+answering, in the right units, with a number in the right range, that nobody can tell
+apart from the correct one. Seven instances in two sessions, all shipped, all documented,
+several with green suites:
+
+| Observed | Reported | True |
+|---|---|---|
+| `gate()` unpacked as `(ok, rows, offs)`, real order `(ok, offs, rows)` — two call sites | 339 unreachable modules | 1 |
+| `ExpansionCandidate` built without two no-default fields → `TypeError` → absolute fail-open | `applies=False` at the default threshold | option D could never be offered |
+| Spec probe over a 29-record corpus | retire a live guard | a zero over a tiny corpus is evidence of a small corpus |
+| Audit filter accepting `OWNED/NOVEL/DUPLICATE` | 0 retirements available | `GENUINELY_NEW_DATASET` matched nothing — the verdict that would retire it |
+| STOP #1 count by substring over opening bytes | 15 open | 12 |
+| Rule-effect coverage over a corpus 94% of which governs other estates | 1 of 149, a ratio that could never rise | 2 of 9 measurable, debt 7 |
+| Counterfactual probe missing one constructor arg | `WOULD_NOT_BLOCK` — the rule fails to cover its own origin | the detector never ran |
+
+**Rule.** Every mechanism that emits a number must be verified against a case whose
+answer is known independently, BEFORE it is called green. A unit test that asserts the
+mechanism agrees with itself measures nothing. Three failure shapes to check by name:
+
+1. **Positional unpacking of a multi-value return.** Wrong order still yields values of
+   the right type. Assert against a known fixture, or return a named structure.
+2. **Fail-open that returns the negative verdict's shape.** A crash must have its own
+   status — `UNMEASURABLE`, not `WOULD_NOT_BLOCK`; `ERROR`, not `applies=False`. See
+   `T-D2A-FAILOPEN-MASKS-A-CRASH-001`; this is its general form.
+3. **A denominator nobody discovered.** A count over the wrong population is wrong in
+   units nobody questions. Partition it and name each part —
+   `PR-COVERAGE-BY-CONSTRUCTION-001`, and never gate on the ratio.
+
+**How to apply.** When a mechanism first reports a number, ask what value it would print
+if it were completely broken. If that value is plausible, the acceptance gate must
+distinguish the two before the mechanism ships. Five of these seven surfaced only by
+running the mechanism against a case with a known answer; none surfaced by review.
+
 ---
 
 ## PR-SQI-SIGNAL-MUST-GATE-001 — a metric without a guardian is documentation
@@ -5247,3 +5282,7 @@ reporters. Tagged `#CROSS-PROJECT` so PP propagation picks it up.
 
 **Origin:** commit `c6ecb86`; regression pinned by
 `tools/test_session_delta.py::gate_new_package_is_seen`.
+
+- **UKDL-OSA-2026-08-04T21:23:30Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+- **UKDL-OSA-2026-08-04T21:24:58Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
