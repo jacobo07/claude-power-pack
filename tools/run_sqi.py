@@ -37,6 +37,7 @@ from modules.sqi.repo_reality_scanner import scan_repo
 from modules.sqi.environment_qualifier import qualify, QUALIFIED, PARTIALLY_QUALIFIED
 from modules.sqi.reconcile import reconcile
 from modules.sqi import baseline_guardian as guardian
+from modules.sqi import ratchet as sqi_ratchet
 from modules.sqi import weakening_baseline as weakness
 from modules.sqi import weakening_detectors as WEAK
 
@@ -448,6 +449,22 @@ def main(argv: list[str]) -> int:
             summary="guardian crashed", error=traceback.format_exc(limit=3),
         )
 
+    # Layer 4b -- the ratchet (Ley XV). The guardian is asymmetric: a decrease fails, an increase
+    # requires nothing. So nothing decides that a bar has STOPPED DISCRIMINATING and that a harder
+    # one is owed -- the estate could only ever be stopped from getting worse. This layer records
+    # the observation the guardian does not keep (it holds a point, and saturation is a property of
+    # a series) and reports whether the bar is spent. PROPOSE-ONLY: it never edits a baseline and
+    # never fails the build, because a gate that raises its own bar is a gate grading itself.
+    try:
+        snap = guardian.snapshot(rep, env.env_hash)
+        sqi_ratchet.record(snap, verdict.verdict, repo=target)
+        ratchet_verdict = sqi_ratchet.evaluate(snap, repo=target)
+    except Exception:  # noqa: BLE001 -- fail-open; a crashed ratchet proposes nothing
+        ratchet_verdict = sqi_ratchet.RatchetVerdict(
+            verdict=sqi_ratchet.UNMEASURABLE, summary="ratchet crashed",
+            error=traceback.format_exc(limit=3),
+        )
+
     # Layer 5 -- the weakening detectors. The guardian gates COUNTS, which is every failure that
     # lowers a number: a deletion, a skip, a relocation. Weakening lowers NOTHING (§15.1) -- a
     # removed assertion, a mock that replaced a real collaborator, a tautological rewrite -- and
@@ -501,6 +518,7 @@ def main(argv: list[str]) -> int:
                 "environment": env.to_dict(),
                 "reconciliation": rep.to_dict(),
                 "guardian": verdict.to_dict(),
+                "ratchet": ratchet_verdict.to_dict(),
                 "weakening": weak.to_dict(),
                 "mutation_probe": mutation.to_dict() if mutation else {
                     "status": "NOT_RUN",
@@ -571,9 +589,14 @@ def main(argv: list[str]) -> int:
         f"authoritative_reach={rep.authoritative_reach_state} "
         f"self_reach={rep.self_reach['reached']} "
         f"guardian={verdict.verdict} "
+        f"ratchet={ratchet_verdict.verdict} "
         f"weakening={weak.verdict}"
     )
     print(f"SQI_GUARDIAN: {verdict.summary}")
+    print(f"SQI_RATCHET: {ratchet_verdict.summary}")
+    for _c in ratchet_verdict.candidates:
+        print(f"  [ESCALATE] {_c.axis}: {_c.observed} -> {_c.proposed}  "
+              f"({_c.instrument})")
     print(f"SQI_WEAKENING: {weak.summary}")
 
     if not quiet and weak.weakenings:

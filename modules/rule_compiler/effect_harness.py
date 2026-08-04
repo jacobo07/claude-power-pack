@@ -193,18 +193,31 @@ def main(argv: list | None = None) -> int:
               f"{size - len(cov['unmeasured'])} carry one")
         return 0
 
+    rc = 0
     results = measure_all()
     if not results:
         print("no effect claims registered "
               f"({EFFECTS_PATH.relative_to(PP_ROOT)})")
-        return 0
-    print(f"measuring {len(results)} effect claim(s)")
-    for m in results:
-        print(m.render())
-    counts = {v: sum(1 for m in results if m.verdict == v)
-              for v in (IMPROVED, NO_CHANGE, REGRESSED, UNMEASURED)}
-    print("RULE_EFFECTS " + "  ".join(f"{k}={v}" for k, v in counts.items()))
-    return 1 if counts[REGRESSED] else 0
+    else:
+        print(f"measuring {len(results)} effect claim(s)")
+        for m in results:
+            print(m.render())
+        counts = {v: sum(1 for m in results if m.verdict == v)
+                  for v in (IMPROVED, NO_CHANGE, REGRESSED, UNMEASURED)}
+        print("RULE_EFFECTS " + "  ".join(f"{k}={v}" for k, v in counts.items()))
+        if counts[REGRESSED]:
+            rc = 1
+
+    # The backward half of the same question. This harness asks whether adopting a
+    # rule moved a metric; it cannot ask whether the rule would have caught the
+    # incident it was written for. Both halves belong to one report -- a second
+    # entry point would let the cheaper half be the one anybody runs.
+    try:
+        from . import counterfactual as _cf
+        rc = max(rc, _cf.main([]))
+    except Exception as e:  # fail-open: the forward verdict still stands
+        print(f"counterfactual replay unavailable: {e}")
+    return rc
 
 
 if __name__ == "__main__":

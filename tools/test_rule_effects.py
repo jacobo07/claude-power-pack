@@ -173,9 +173,41 @@ def gate_coverage_is_honest() -> None:
               f"unknown={len(unknown)} does not reconcile")
 
 
+def gate_counterfactual_is_wired() -> None:
+    """The backward half must run from THIS command, not a second entry point.
+
+    A rule's own origin incident is the cheapest evidence that the rule fires,
+    and it was never replayed -- 'this would have prevented that' has always been
+    an assertion by the party who wrote the rule."""
+    from modules.rule_compiler import counterfactual as cfm
+
+    d = Path(tempfile.mkdtemp(prefix="cf-"))
+    try:
+        det = d / "d.py"
+        det.write_text("import sys\nsys.exit(2 if 'BOOM' in sys.stdin.read() else 0)\n",
+                       encoding="utf-8")
+        reg = d / "cf.json"
+        reg.write_text(json.dumps({"counterfactuals": [
+            {"rule_id": "A", "incident_id": "I1", "incident_input": "BOOM here",
+             "probe": [sys.executable, str(det)], "fires_on_exit": 2},
+            {"rule_id": "B", "incident_id": "I2", "incident_input": "quiet",
+             "probe": [sys.executable, str(det)], "fires_on_exit": 2},
+        ]}), encoding="utf-8")
+        got = {r.claim.rule_id: r.verdict for r in cfm.measure_all(reg)}
+        if got == {"A": cfm.WOULD_BLOCK, "B": cfm.WOULD_NOT_BLOCK}:
+            _ok("V-EFFECT-COUNTERFACTUAL-WIRED",
+                "effect_harness.main reaches the counterfactual replay; a rule that "
+                "does not fire on its own incident returns WOULD_NOT_BLOCK")
+        else:
+            _fail("V-EFFECT-COUNTERFACTUAL-WIRED", f"got {got}")
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def main() -> int:
     print("Rule Effect Harness Gates (M1b -- did a rule change improve anything)")
     print("")
+    gate_counterfactual_is_wired()
     gate_real_claim()
     gate_improved_and_regressed()
     gate_unmeasured()

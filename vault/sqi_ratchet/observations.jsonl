@@ -1,0 +1,1 @@
+{"v": 1, "recorded": "2026-08-04T16:24:31.519064+00:00", "commit": "0650e0e1a2b08e9dbd9a9eba50af219ed132e5aa", "environment_key": "b5ec3ed51c2f23b1", "verdict": "BASELINE_REGRESSION", "executed_total": 86, "authored_count": 143, "test_file_reach": 0.02097902097902098, "root_count": 1}
