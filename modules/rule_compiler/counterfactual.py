@@ -121,10 +121,23 @@ def run_probe(claim: CounterfactualClaim, cwd: Path) -> tuple:
     return (proc.stdout or "") + (proc.stderr or ""), proc.returncode, None
 
 
+DETECTOR_ERROR_RE = re.compile(r"^\s*DETECTOR_ERROR\b", re.M)
+
+
 def judge(claim: CounterfactualClaim, out: str, code: int | None) -> tuple:
     """(verdict, evidence, reason). A claim declaring neither a pattern nor an
     exit code cannot be judged -- and saying so is the honest output, because a
     default of 'fired' would let every unspecified claim read as a success."""
+    # A detector that crashed produced no opinion about the incident. Judging it
+    # by pattern would render the crash as WOULD_NOT_BLOCK -- accusing a working
+    # rule of not covering its own origin, in the exact voice of a real finding.
+    # Measured 2026-08-04: a probe missing one constructor argument libelled
+    # HR-STALLED-SESSION-ADVISORY-001 that way, and the report was indistinguishable
+    # from the genuine article. A crash is absence of evidence.
+    if DETECTOR_ERROR_RE.search(out):
+        first = next((ln.strip() for ln in out.splitlines()
+                      if ln.strip().startswith("DETECTOR_ERROR")), "DETECTOR_ERROR")
+        return UNMEASURABLE, "", first[:200]
     if claim.fires_pattern:
         try:
             m = re.search(claim.fires_pattern, out)

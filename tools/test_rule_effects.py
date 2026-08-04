@@ -156,20 +156,24 @@ def gate_coverage_is_honest() -> None:
     if cov["corpus_size"] is None:
         _fail("V-EFFECT-COVERAGE", "compiler unavailable; corpus size unknown")
         return
-    claimed = set(cov["claimed"])
+    # Coverage has two producers -- an effect claim (did a metric move?) and a
+    # counterfactual replay (would it have fired on its own incident?). The
+    # invariant is over their union: scoping it to effect claims alone would let
+    # a replayed rule count as covered while failing the arithmetic.
+    measured = set(cov["measured"])
     unknown = set(cov["unknown_rule_ids"])
     size, unmeasured = cov["corpus_size"], len(cov["unmeasured"])
-    # Every claimed id is either counted against the corpus or named as absent
+    # Every measured id is either counted against the corpus or named as absent
     # from it. Otherwise the report can show more coverage than it has.
-    reconciles = (size - unmeasured) == len(claimed - unknown)
+    reconciles = (size - unmeasured) == len(measured - unknown)
     if reconciles:
         _ok("V-EFFECT-COVERAGE",
-            f"{size} compiled rules, {unmeasured} with no effect claim, "
+            f"{size} compiled rules, {unmeasured} with no measured claim, "
             f"{len(unknown)} claim(s) named as not-in-corpus -- the arithmetic "
             f"closes instead of overstating")
     else:
         _fail("V-EFFECT-COVERAGE",
-              f"size={size} unmeasured={unmeasured} claimed={len(claimed)} "
+              f"size={size} unmeasured={unmeasured} measured={len(measured)} "
               f"unknown={len(unknown)} does not reconcile")
 
 

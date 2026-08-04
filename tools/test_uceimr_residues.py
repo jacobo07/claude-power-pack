@@ -695,6 +695,110 @@ def t_r2_failopen() -> None:
         _fail(gate, f"raised {type(e).__name__}: {e}")
 
 
+def t_g3_scope_separates_unmeasurable_from_unmeasured() -> None:
+    """G3. The whole finding. Coverage read "1 of 149" because 140 global rules
+    governing other estates sat in the denominator beside 9 local ones. A rule
+    nobody CAN measure here and a rule nobody HAS measured are different facts;
+    only the second is debt."""
+    gate = "V-UCEIMR-G3-SCOPE"
+    from modules.rule_compiler.effect_harness import coverage
+    cov = coverage()
+    size, ins, oos = cov["corpus_size"], cov["in_scope"], cov["out_of_scope"]
+    if size is None or ins is None:
+        _fail(gate, "compiler unavailable -- scope could not be measured")
+        return
+    partitions = len(ins) + len(oos) == size and not (set(ins) & set(oos))
+    if partitions and len(oos) > 0 and len(ins) > 0:
+        _ok(gate, f"{size} rules partition into {len(ins)} measurable here and "
+                  f"{len(oos)} out of scope; the two are disjoint and exhaust "
+                  "the corpus")
+    else:
+        _fail(gate, f"size={size} in={len(ins)} out={len(oos)} "
+                    f"overlap={sorted(set(ins) & set(oos))[:4]}")
+
+
+def t_g3_coverage_rose_for_the_right_reason() -> None:
+    """G3. Coverage must rise by MEASURING rules, never by shrinking the
+    denominator -- `feedback_never_gate_on_a_ratio`. So the gate asserts an
+    absolute count of measured rules, and that each names a real corpus rule."""
+    gate = "V-UCEIMR-G3-COVERAGE-RISES"
+    from modules.rule_compiler.effect_harness import coverage
+    cov = coverage()
+    ins, measured = set(cov["in_scope"] or []), set(cov["measured"])
+    measured_in_scope = sorted(measured & ins)
+    if len(measured_in_scope) >= 2:
+        _ok(gate, f"{len(measured_in_scope)} in-scope rule(s) carry a measured "
+                  f"claim (was 0): {measured_in_scope}; debt is a named set of "
+                  f"{len(cov['unmeasured_in_scope'])}")
+    else:
+        _fail(gate, f"measured in scope: {measured_in_scope} (need >= 2)")
+
+
+def t_g3_rules_fire_on_their_own_incident() -> None:
+    """G3. The claim that matters: not that a rule is registered, but that its
+    real detector, run against its real origin, actually fires."""
+    gate = "V-UCEIMR-G3-REPLAY-FIRES"
+    from modules.rule_compiler import counterfactual as CF
+    results = CF.measure_all()
+    if not results:
+        _fail(gate, "no counterfactual claims registered")
+        return
+    bad = [r for r in results if r.verdict != CF.WOULD_BLOCK]
+    if not bad:
+        _ok(gate, f"{len(results)} incident(s) replayed; every rule fired on the "
+                  "incident that produced it")
+    else:
+        _fail(gate, "; ".join(f"{r.claim.rule_id} vs {r.claim.incident_id} -> "
+                              f"{r.verdict} ({r.reason})" for r in bad))
+
+
+def t_g3_crashed_detector_is_not_a_rule_failure() -> None:
+    """G3. Measured 2026-08-04: a probe missing one constructor argument was
+    judged WOULD_NOT_BLOCK -- accusing a working rule of not covering its own
+    origin, in the exact voice of a genuine finding. A crash is absence of
+    evidence, never evidence of failure."""
+    gate = "V-UCEIMR-G3-CRASH-IS-NOT-A-VERDICT"
+    from modules.rule_compiler import counterfactual as CF
+    claim = CF.CounterfactualClaim(
+        rule_id="HR-FAKE", incident_id="synthetic", incident_input="x",
+        probe=["python", "-c", "pass"], fires_pattern="^FIRED")
+    crashed = CF.judge(claim, "DETECTOR_ERROR: TypeError: boom\n", 0)
+    genuine = CF.judge(claim, "SILENT: no signal\n", 0)
+    if crashed[0] == CF.UNMEASURABLE and genuine[0] == CF.WOULD_NOT_BLOCK:
+        _ok(gate, "a crashed detector reports UNMEASURABLE; only a detector "
+                  "that ran and stayed silent reports WOULD_NOT_BLOCK")
+    else:
+        _fail(gate, f"crashed={crashed[0]} genuine={genuine[0]}")
+
+
+def t_g3_novelty_covers_its_own_class() -> None:
+    """G3. HR-NOVELTY-001 fired on the IIG *compendium* and stayed silent on
+    UCEIMR -- the seventh proposal of the class it governs -- because its title
+    splits the two words of 'universal runtime'. A keyword gate is bounded by
+    its vocabulary; the shape all seven shared is an enumerated dataset catalog."""
+    gate = "V-UCEIMR-G3-NOVELTY-VOCABULARY"
+    from modules.spec_gate.gate import check_novelty_gate as g
+    fires = {
+        "UCEIMR": "UCEIMR -- Universal Capability Evolution & Institutional "
+                  "Mining Runtime corpus, 15 datasets.",
+        "KSF": "Knowledge Substrate Fabric: 22 new dataset families.",
+        "IIG": "Admit the IIG Compendium as an institutional compendium.",
+    }
+    silent = {
+        "ordinary": "Add a retry to the uploader and fix the flaky test.",
+        "reading": "Read the corpus of 148 hard rules and report coverage.",
+        "rows": "Load 12 rows from the datasets directory into the cache.",
+    }
+    missed = [k for k, v in fires.items() if not g(v).applies]
+    false_pos = [k for k, v in silent.items() if g(v).applies]
+    if not missed and not false_pos:
+        _ok(gate, f"{len(fires)}/{len(fires)} mega-corpus proposals detected "
+                  f"(incl. UCEIMR, previously missed), 0/{len(silent)} false "
+                  "positives on ordinary work")
+    else:
+        _fail(gate, f"missed={missed} false_positives={false_pos}")
+
+
 def main() -> int:
     for t in (t_r1_extracts_capability_claims, t_r1_lineage_traceable,
               t_r1_overlap_audited, t_r1_defer_is_not_novelty,
@@ -712,6 +816,11 @@ def main() -> int:
               t_g1_counts_front_matter_only, t_g1_undated_is_not_age_zero,
               t_g1_resolve_is_the_producer, t_g1_gate_reports_real_queue,
               t_g1_failopen,
+              t_g3_scope_separates_unmeasurable_from_unmeasured,
+              t_g3_coverage_rose_for_the_right_reason,
+              t_g3_rules_fire_on_their_own_incident,
+              t_g3_crashed_detector_is_not_a_rule_failure,
+              t_g3_novelty_covers_its_own_class,
               t_r2_failopen):
         try:
             t()

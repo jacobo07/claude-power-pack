@@ -148,29 +148,65 @@ def measure_all(path: Path | None = None, cwd: Path = PP_ROOT) -> list:
     return [measure(c, cwd) for c in load_claims(path)]
 
 
+def _counterfactual_ids() -> set:
+    """Rules replayed against their own incident. Measured coverage is the union
+    of both halves; counting only this file would understate it."""
+    try:
+        from .counterfactual import load_claims as _cf_claims
+        return {c.rule_id for c in _cf_claims()}
+    except Exception:
+        return set()
+
+
 def coverage(path: Path | None = None) -> dict:
-    """Which rules carry an effect claim and which carry none.
+    """Which rules carry a measured claim, which carry none, and -- the
+    distinction without which the first two are meaningless -- which ones this
+    repo could never measure at all.
+
+    Measured 2026-08-04: 140 of 149 compiled rules come from
+    `global:core/HARD-RULES.md` and govern OTHER estates (payment secrets,
+    landing pages, i18n mirrors, storefronts). No probe for them exists here or
+    can. Reporting them beside the 9 local ones produced "1 of 149" -- a ratio
+    that could never rise, in which a rule nobody CAN measure was indistinguishable
+    from a rule nobody HAS measured. The second is debt; the first is not.
 
     The corpus count is best-effort: if the compiler cannot run, the claimed
     count still stands on its own and `corpus` reports None rather than 0,
     because 0 would read as "no rules exist"."""
     claimed = {c.rule_id for c in load_claims(path)}
-    corpus = None
+    replayed = _counterfactual_ids()
+    measured = claimed | replayed
+    corpus = scope = None
     try:
         from .compiler import compile_rules
-        corpus = {r.rule_id for r in compile_rules().valid}
+        valid = compile_rules().valid
+        corpus = {r.rule_id for r in valid}
+        # Scope is DISCOVERED from each rule's own source, never curated:
+        # a rule sourced from this repo's archive is one this repo can probe.
+        scope = {r.rule_id for r in valid if r.source.startswith("pp:")}
     except Exception:
-        corpus = None
-    return {
+        corpus = scope = None
+    out = {
         "claimed": sorted(claimed),
+        "replayed": sorted(replayed),
+        "measured": sorted(measured),
         "corpus_size": None if corpus is None else len(corpus),
-        "unmeasured": None if corpus is None else sorted(corpus - claimed),
+        "unmeasured": None if corpus is None else sorted(corpus - measured),
         # A claim naming a rule the corpus does not contain must be visible.
         # Without this the report shows "1 claimed" beside "147 unmeasured of
         # 147" and the two cannot both be true -- a ledger that quietly
-        # overstates its own coverage.
-        "unknown_rule_ids": None if corpus is None else sorted(claimed - corpus),
+        # overstates its own coverage. Computed over BOTH producers: scoped to
+        # effect claims alone, a counterfactual naming an unsealed rule would
+        # count as coverage while staying invisible in the reconciliation.
+        "unknown_rule_ids": None if corpus is None else sorted(measured - corpus),
     }
+    if corpus is None or scope is None:
+        out["in_scope"] = out["out_of_scope"] = out["unmeasured_in_scope"] = None
+        return out
+    out["in_scope"] = sorted(scope)
+    out["out_of_scope"] = sorted(corpus - scope)
+    out["unmeasured_in_scope"] = sorted(scope - measured)
+    return out
 
 
 def main(argv: list | None = None) -> int:
@@ -185,12 +221,25 @@ def main(argv: list | None = None) -> int:
             print("corpus size: UNKNOWN (compiler unavailable) -- the claimed "
                   "set above is still exact")
             return 0
+        for rid in cov["replayed"]:
+            print(f"  [REPLAYED] {rid}: replayed against its own incident")
         for rid in cov["unknown_rule_ids"]:
             print(f"  [NOT-IN-CORPUS] {rid}: measured, but no compiled rule "
                   f"carries this id -- the effect is real, the rule is not sealed")
-        print(f"corpus: {size} valid rule(s); "
-              f"{len(cov['unmeasured'])} carry no effect claim; "
-              f"{size - len(cov['unmeasured'])} carry one")
+        in_scope, oos = cov["in_scope"], cov["out_of_scope"]
+        unmeasured_in = cov["unmeasured_in_scope"]
+        print(f"corpus: {size} valid rule(s)")
+        print(f"  out of scope here: {len(oos)} rule(s) sourced from the global "
+              f"archive, governing estates whose surfaces are not in this repo -- "
+              f"UNMEASURABLE HERE, not unmeasured")
+        print(f"  measurable here:   {len(in_scope)} rule(s); "
+              f"{len(in_scope) - len(unmeasured_in)} carry a measured claim, "
+              f"{len(unmeasured_in)} do not")
+        for rid in unmeasured_in:
+            print(f"    [DEBT] {rid}")
+        print(f"RULE_EFFECT_COVERAGE measured={len(cov['measured'])} "
+              f"in_scope={len(in_scope)} out_of_scope={len(oos)} "
+              f"debt={len(unmeasured_in)}")
         return 0
 
     rc = 0

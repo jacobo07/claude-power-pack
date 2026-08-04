@@ -259,6 +259,22 @@ _NOVELTY_TRIGGER: tuple[str, ...] = (
     "universal runtime", "constitutional layer",
 )
 
+# A keyword list is bounded by its own vocabulary: an idiom nobody thought to
+# add reads as zero, and zero never trips a gate. Measured 2026-08-04 by
+# replaying this rule against its own incident class -- it fired on the IIG
+# *compendium* and stayed silent on UCEIMR ("Universal Capability Evolution &
+# Institutional Mining Runtime, 15 datasets"), the seventh proposal of exactly
+# the class it was sealed to catch, purely because that title splits the two
+# words of "universal runtime".
+#
+# The shape, not the noun, is what all seven incidents shared: an enumerated
+# catalog of datasets. Counting them is vocabulary-independent.
+_NOVELTY_SHAPE = re.compile(
+    r"\b\d{1,3}\s+(?:new\s+|proposed\s+)?"
+    r"(?:datasets?|dataset\s+famil(?:y|ies)|corpora|meta-systems?)\b",
+    re.I,
+)
+
 
 @dataclass
 class NoveltyGateResult:
@@ -280,6 +296,9 @@ def check_novelty_gate(task_description: str) -> NoveltyGateResult:
     """
     text = (task_description or "").lower()
     hit = _kw_hit(_NOVELTY_TRIGGER, text)
+    if not hit:
+        shape = _NOVELTY_SHAPE.search(text)
+        hit = f"enumerated catalog: {shape.group(0).strip()!r}" if shape else None
     if not hit:
         return NoveltyGateResult(
             applies=False, matched=None, questions=(),
