@@ -154,6 +154,87 @@ stamp, and a rubber stamp launders a bad surface with the authority of a green c
 
 ---
 
+## PR-D2A-EXPANSION-001 — high overlap is discovery space, not a reason to shrink
+
+**Rule.** When a family-sizing audit measures more than `expansion_threshold_pct`
+(default 50 %) of a proposed corpus as already owned, the STOP #1 menu MUST offer the
+expansion options (C hybrid, D expansion) alongside A/B/E, filling the vacated slots with
+adjacent capabilities **harvested from the folded items' own scored portfolios** — never
+brainstormed. Below the threshold, C and D must be absent: both are expansion-dependent,
+and offering C without expansion machinery rebuilds the hollow choice this rule removes.
+
+Slots come only from space **demonstrably vacated**: `proposed − recommended − deferred`.
+DEFER is subtracted because a deferred item is UNKNOWN ownership, not owned; counting it
+would over-claim the room. Shortfalls are reported, never padded.
+
+**Origin.** CPP-APIR came back ≈80 % owned across 25 datasets and the four options offered
+were all variants of "build the residue or archive". Nothing proposed non-duplicating work
+for the ~20 vacated slots. Sealed with `compute_expansion()` / `build_stop1_menu()` and
+five acceptance gates (2026-08-04).
+
+**How to apply.** Overlap is a measurement of where the estate already stands, which is
+also a map of what is adjacent to it. Treat the freed slots as the audit's most valuable
+output, not as an embarrassment to be minimised.
+
+---
+
+## T-D2A-RESIDUE-ONLY-001 — offering only "build the residue" discards the audit's value
+
+**Trap.** After a high-overlap audit, presenting only "build the genuine residue" or
+"archive" silently converts a discovery result into a subtraction. The Owner never sees
+the option that the measurement actually earned: N genuinely-new adjacent capabilities,
+each anchored to a measured parent.
+
+**Detection.** A STOP #1 emission whose options are all subsets of the original proposal.
+If no option ADDS anything the proposal did not contain, the expansion path was skipped.
+
+**Origin.** Twelve consecutive corpus audits (AISHF → SEIP) each measured majority-owned
+and each closed on residue-or-archive.
+
+---
+
+## T-D2A-FAILOPEN-MASKS-A-CRASH-001 — an absolute fail-open makes a broken feature look correct
+
+**Trap.** A fail-open handler that returns the same shape as a legitimate negative verdict
+makes a crashing code path indistinguishable from a working one that declined. The feature
+tests green, ships, is documented, and can never do its job.
+
+**Origin (measured 2026-08-04).** `compute_expansion()` constructed `ExpansionCandidate`
+without `reinforces_id` / `connects_to`, both declared without defaults. Every harvested
+candidate raised `TypeError`; the absolute fail-open swallowed it into
+`ExpansionPlan(applies=False)` carrying the DEFAULT threshold — identical to "overlap
+below threshold". D2A was 27/27 green and structurally incapable of ever offering option
+D. It was found only by writing the five acceptance gates the approved spec had required
+and nobody had written.
+
+**How to apply.** (1) A fail-open must MARK its output — the recovering plan carries a
+`fail-open` note, and gates assert its absence before accepting a negative verdict.
+(2) Assert the reason, never just the outcome: "withheld" passes only when the stated
+cause (no slots, or below threshold) is also true. (3) A filter gate must run against a
+NON-EMPTY set — `all([])` is True, so a filter asserted over zero survivors passes for the
+wrong reason.
+
+---
+
+## PR-STOP1-PORTFOLIO-001 — a STOP #1 queue with no transition producer is a portfolio defect
+
+**Rule.** Before opening a new STOP #1, count the open ones. Fifteen plan files in
+`vault/plans/` currently carry `status: STOP #1` — thirteen dated, the oldest nine days
+old — and no mechanism transitions any of them. Opening the next one is not a scheduling
+inconvenience; it is `feedback_status_field_nobody_can_transition` at portfolio tier: a
+status field whose value only ever moves in one direction.
+
+**Origin.** APIR flagged two simultaneous STOP #1s as "a governance defect regardless of
+the APIR outcome" (2026-08-03); EFAIF flagged the third and SEIP the fourth on 2026-08-04;
+UCEIMR would have been the fifth. A discovered sweep then measured **15**, not 5 — the
+count everyone was tracking by memory was three times too low, which is
+`feedback_hand_curated_audit_measures_memory` again.
+
+**How to apply.** Resolve or explicitly archive open STOP #1s before opening another, and
+derive the count from disk (`status:` front matter), never from recollection.
+
+---
+
 ## PR-SQI-SIGNAL-MUST-GATE-001 — a metric without a guardian is documentation
 
 **Rule.** By SQI-02 §8.4, a signal that is emitted and never read is functionally identical to
