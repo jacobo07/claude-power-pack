@@ -89,10 +89,55 @@ A derivative is cut from a parent, never copied. `derivatives.derive()` refuses
 a rename-only delta (HR-APA-016) and refuses to weaken an inherited boundary
 without a named approver (HR-APA-017).
 
+## Mining a corpus into capability proposals (UCEIMR R1)
+
+The seeder above is **introspective** — it writes contracts for capabilities
+this repo already has. This is the other writer: it turns already-acquired
+external evidence into proposals.
+
+```bash
+python modules/capability_runtime/corpus_adapter.py --mine --corpus-dir <dir>
+python modules/capability_runtime/corpus_adapter.py --mine --save --json
+python modules/capability_runtime/corpus_adapter.py --approve <id> --owner <path>
+```
+
+It acquires nothing (HR-UCEIMR-02 — CrawlOS/AKOS/autoresearch acquire; this
+reads what they wrote). Every claim is routed through `d2a.run()` before it is
+shown, so the boundary above holds: the adapter surfaces, **d2a still decides
+ownership**. Three dispositions: `CANDIDATE`, `DEFER` (d2a capped coverage
+without confidently naming a parent — unknown ownership, never novelty) and
+`OWNED`.
+
+Propose-only is structural, not a convention: a proposal carries no owner, so
+`CapabilityContract.validate()` (HR-APA-018) makes it impossible to activate
+one by accident. `--approve` demands an Owner-supplied owner and refuses both
+`OWNED` and `DEFER`.
+
+Measured on this repo 2026-08-04: `akos=55 + research=83` units → **0**
+proposals. AKOS persists a ~220-char lead per unit and `vault/research/` holds
+the estate's own notes; `enricher.py` fetches transcripts at runtime and never
+writes them down. Nothing on disk is authored corpus at mining granularity —
+which is why `--corpus-dir` exists.
+
+## Retirement conditions (UCEIMR R2)
+
+`retirement_condition` was defined on every contract and read by nothing.
+
+```bash
+python modules/capability_runtime/retirement.py --record
+python modules/capability_runtime/retirement.py --strict   # exit 1 on a retirement
+```
+
+A condition with a deterministic probe is measured against real repo state; one
+without a probe is reported `UNEVALUABLE` and is **never** counted as `ACTIVE`.
+`never --` is `NEVER`; an empty condition is `NO_CONDITION`. Retirement is
+proposed, never executed — nothing is deleted or deactivated.
+
 ## Verify
 
 ```bash
 python tools/test_capability_runtime.py     # 29 V-gates, exit 0 = healthy
+python tools/test_uceimr_residues.py        # 20 V-gates for R1 + R2
 ```
 
 ## Boundaries

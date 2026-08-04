@@ -22,6 +22,16 @@ from modules.capability_runtime.derivatives import (
     Derivative, compute_delta, derive, is_stale, lineage, load_derivatives,
     save_derivative,
 )
+from modules.capability_runtime.corpus_adapter import (
+    CapabilityProposal, EvidenceUnit, approve, evidence_from_corpus,
+    load_proposals, mine, save_proposal,
+)
+from modules.capability_runtime.retirement import (
+    RetirementVerdict, evaluate_contract, record_evaluation, stale,
+)
+from modules.capability_runtime.retirement import (
+    evaluate_all as evaluate_retirement,
+)
 
 __all__ = [
     "CapabilityContract", "ContractError", "Cost", "FailureRisk", "Maturity",
@@ -30,4 +40,8 @@ __all__ = [
     "evaluate_all",
     "Derivative", "compute_delta", "derive", "is_stale", "lineage",
     "load_derivatives", "save_derivative",
+    "CapabilityProposal", "EvidenceUnit", "approve", "evidence_from_corpus",
+    "load_proposals", "mine", "save_proposal",
+    "RetirementVerdict", "evaluate_contract", "evaluate_retirement",
+    "record_evaluation", "stale",
 ]
