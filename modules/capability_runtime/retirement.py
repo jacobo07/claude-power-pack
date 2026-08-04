@@ -52,6 +52,10 @@ ACTIVE = "ACTIVE"
 NEVER = "NEVER"
 UNEVALUABLE = "UNEVALUABLE"
 NO_CONDITION = "NO_CONDITION"
+# Distinct from UNEVALUABLE on purpose: UNEVALUABLE is a probe DEBT this repo
+# can pay, EXTERNAL is a condition no repository probe could ever settle.
+# Collapsing the two would leave the debt count unable to fall honestly.
+EXTERNAL = "EXTERNAL"
 
 _NEVER_RE = re.compile(r"^\s*never\b", re.I)
 _FM_KEY = re.compile(r"^([a-z_]+):\s*(.+?)\s*$", re.I)
@@ -115,8 +119,20 @@ def _audit_frontmatter(root: Path) -> list:
                 fm.setdefault(m.group(1).lower(), m.group(2))
         if "verdict" not in fm:
             continue
+        # Only verdicts that MEASURE OWNERSHIP count. Other plans carry a
+        # `verdict:` key too (a sprint outcome, a wiring result); letting those
+        # into the window would let an unrelated document silently "reset" the
+        # majority-owned streak this condition is about.
+        vtext = fm.get("verdict", "")
+        # The vocabulary must cover BOTH poles of the measurement, or the
+        # filter itself becomes the zero that cannot fall: "MAJORITY_OWNED"
+        # would be counted while "GENUINELY_NEW_DATASET" -- the verdict that
+        # would actually retire this capability -- silently would not.
+        if not any(tok in vtext.upper() for tok in
+                   ("OWNED", "NOVEL", "DUPLICATE", "GENUINELY", "NEW_DATASET")):
+            continue
         out.append({"file": p.name, "date": fm.get("date", ""),
-                    "verdict": fm.get("verdict", "")})
+                    "verdict": vtext})
     out.sort(key=lambda r: (r["date"], r["file"]), reverse=True)
     return out
 
@@ -161,13 +177,145 @@ def probe_liveness_reachability(root: Path):
     return True, "liveness gate reports zero offenders -- registration is by construction"
 
 
-# id -> (probe, human description). A contract absent here is UNEVALUABLE,
-# which is a visible debt, not a silent pass.
+def _jsonl_records(path: Path, limit: int = 5000) -> list:
+    """Bounded JSONL read. Fail-open -> []."""
+    out = []
+    try:
+        if not path.is_file() or path.stat().st_size > 8_000_000:
+            return out
+        for i, line in enumerate(path.read_text(encoding="utf-8-sig",
+                                                errors="replace").splitlines()):
+            if i >= limit:
+                break
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(rec, dict):
+                out.append(rec)
+    except OSError:
+        return out
+    return out
+
+
+_SPEC_OMISSION = ("spec omission", "without a spec", "sin spec", "no spec",
+                  "spec_gate", "spec gate", "missing spec", "spec first")
+# A zero must be earned against a corpus large enough for the absence to mean
+# something. Below this, the probe returns UNEVALUABLE rather than retiring.
+_MIN_INCIDENT_SAMPLE = 200
+
+
+def probe_spec_depth_selection(root: Path):
+    """"spec omission stops appearing in the incident record"
+
+    Retires only when the incident record is NON-EMPTY and carries no
+    spec-omission entry. An empty or unreadable record proves nothing and
+    returns UNEVALUABLE -- absence of evidence is not evidence of absence,
+    and a silent zero must never retire a guard.
+    """
+    recs = (_jsonl_records(root / "vault" / "osa" / "never_again_log.jsonl")
+            + _jsonl_records(root / "vault" / "ceps" / "events.jsonl"))
+    if not recs:
+        return None, "incident record empty or unreadable -- cannot conclude"
+    if len(recs) < _MIN_INCIDENT_SAMPLE:
+        # A zero over a tiny denominator is not evidence of extinction, it is
+        # evidence of a small corpus -- and a gate bounded by its own
+        # vocabulary reads an unfamiliar idiom as 0 (feedback_zero_cannot_fall).
+        # Refuse to retire a live guard on that.
+        return None, (f"only {len(recs)} incident record(s); "
+                      f"{_MIN_INCIDENT_SAMPLE} required before a zero can "
+                      "retire a guard")
+    hits = [r for r in recs
+            if any(tok in json.dumps(r, ensure_ascii=False).lower()
+                   for tok in _SPEC_OMISSION)]
+    if hits:
+        return False, (f"{len(hits)} spec-omission entr(ies) still in an "
+                       f"incident record of {len(recs)}")
+    return True, f"0 spec-omission entries across {len(recs)} incident records"
+
+
+def probe_cascade_prevention(root: Path):
+    """"the recorded chain set goes two years without a new member"."""
+    recs = _jsonl_records(root / "vault" / "ceps" / "events.jsonl")
+    if not recs:
+        return None, "CEPS event log empty or unreadable -- cannot conclude"
+    stamps = []
+    for r in recs:
+        for key in ("ts", "timestamp", "time", "created_at", "date"):
+            val = r.get(key)
+            if not val:
+                continue
+            try:
+                stamps.append(datetime.fromisoformat(
+                    str(val).replace("Z", "+00:00")))
+            except ValueError:
+                continue
+            break
+    if not stamps:
+        return None, f"{len(recs)} CEPS events carry no parsable timestamp"
+    newest = max(stamps)
+    if newest.tzinfo is None:
+        newest = newest.replace(tzinfo=timezone.utc)
+    age_days = (_now() - newest).days
+    if age_days >= 730:
+        return True, f"newest recorded chain member is {age_days} days old"
+    return False, (f"chain set gained a member {age_days} days ago "
+                   f"({len(recs)} events) -- two years not elapsed")
+
+
+def probe_architecture_reconstruction(root: Path):
+    """"the repo carries a maintained architecture contract verified in CI"."""
+    ci = root / ".github" / "workflows"
+    try:
+        flows = sorted(ci.glob("*.y*ml")) if ci.is_dir() else []
+    except OSError:
+        flows = []
+    if not flows:
+        return False, ("no CI workflow directory -- nothing verifies an "
+                       "architecture contract")
+    named = []
+    for f in flows[:40]:
+        try:
+            body = f.read_text(encoding="utf-8-sig", errors="replace")[:20000]
+        except OSError:
+            continue
+        if any(tok in body.lower()
+               for tok in ("architecture", "arch_contract", "contract_fabric")):
+            named.append(f.name)
+    if named:
+        return True, f"CI verifies an architecture contract ({', '.join(named[:3])})"
+    return False, (f"{len(flows)} CI workflow(s), none referencing an "
+                   "architecture contract")
+
+
+# Conditions that depend on facts OUTSIDE this repository. These are not a
+# probe debt -- no probe can exist here, and filing them under UNEVALUABLE
+# would conflate "we owe a measurement" with "this repo cannot measure it",
+# so the debt count could never fall for the right reason. Retiring one needs
+# an Owner attestation, not a scanner.
+EXTERNAL_CONDITIONS = {
+    "cost_routing": ("model pricing is a market fact; no repository signal "
+                     "can observe convergence"),
+    "premise_verification": ("editor/toolchain symbol verification is a "
+                             "property of the toolchain, not of this repo"),
+}
+
+# id -> (probe, human description). A contract absent from BOTH this registry
+# and EXTERNAL_CONDITIONS is UNEVALUABLE: a visible debt, never a silent pass.
 PROBES = {
     "duplicate_detection": (probe_duplicate_detection,
                             "3 most recent corpus audits vs majority-owned"),
     "liveness_reachability": (probe_liveness_reachability,
                               "liveness gate offender count"),
+    "spec_depth_selection": (probe_spec_depth_selection,
+                             "spec-omission entries in the incident record"),
+    "cascade_prevention": (probe_cascade_prevention,
+                           "age of the newest recorded chain member"),
+    "architecture_reconstruction": (probe_architecture_reconstruction,
+                                    "CI verification of an architecture contract"),
 }
 
 
@@ -189,6 +337,12 @@ def evaluate_contract(c, root=None) -> RetirementVerdict:
         return RetirementVerdict(cid, NEVER, cond,
                                  "declared permanent by contract",
                                  evaluated_at=stamp)
+    if cid in EXTERNAL_CONDITIONS:
+        return RetirementVerdict(
+            cid, EXTERNAL, cond,
+            f"depends on facts outside this repo: {EXTERNAL_CONDITIONS[cid]}. "
+            "Retiring it needs an Owner attestation, not a scanner",
+            evaluated_at=stamp)
     entry = PROBES.get(cid)
     if entry is None:
         return RetirementVerdict(
@@ -214,7 +368,8 @@ def evaluate_all(contracts=None, contracts_dir=None, root=None) -> list:
         cs = contracts if contracts is not None else load_contracts(contracts_dir)
     except Exception:  # noqa: BLE001
         return []
-    order = {RETIRED: 0, UNEVALUABLE: 1, NO_CONDITION: 2, ACTIVE: 3, NEVER: 4}
+    order = {RETIRED: 0, UNEVALUABLE: 1, NO_CONDITION: 2, ACTIVE: 3,
+             EXTERNAL: 4, NEVER: 5}
     out = [evaluate_contract(c, root) for c in cs]
     return sorted(out, key=lambda v: (order.get(v.status, 5), v.contract_id))
 

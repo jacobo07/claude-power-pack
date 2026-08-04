@@ -512,6 +512,73 @@ def t_r2_no_auto_delete() -> None:
         _fail(gate, f"contract files changed: {set(before) ^ set(after)}")
 
 
+def t_g2_external_is_not_probe_debt() -> None:
+    """G2. A condition no repository probe could ever settle must not sit in
+    the same bucket as one this repo simply owes a probe for -- otherwise the
+    debt count cannot fall for the right reason."""
+    gate = "V-UCEIMR-G2-EXTERNAL"
+    vs = {v.contract_id: v for v in R.evaluate_all()}
+    ext = [k for k, v in vs.items() if v.status == R.EXTERNAL]
+    uneval = [k for k, v in vs.items() if v.status == R.UNEVALUABLE]
+    if "cost_routing" in ext and "cost_routing" not in uneval:
+        _ok(gate, f"EXTERNAL={sorted(ext)} (market/toolchain facts) kept "
+                  f"distinct from UNEVALUABLE={sorted(uneval)} (probe debt)")
+    else:
+        _fail(gate, f"external={ext} uneval={uneval}")
+
+
+def t_g2_zero_needs_a_denominator() -> None:
+    """G2. A zero over a tiny corpus is evidence of a small corpus, not of
+    extinction. The probe must refuse to retire a live guard on it."""
+    gate = "V-UCEIMR-G2-SAMPLE-GUARD"
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        d = root / "vault" / "osa"
+        d.mkdir(parents=True, exist_ok=True)
+        log = d / "never_again_log.jsonl"
+
+        log.write_text("".join(
+            '{"note": "unrelated incident"}\n' for _ in range(10)),
+            encoding="utf-8")
+        small = R.probe_spec_depth_selection(root)
+
+        log.write_text("".join(
+            '{"note": "unrelated incident"}\n'
+            for _ in range(R._MIN_INCIDENT_SAMPLE + 5)), encoding="utf-8")
+        big_clean = R.probe_spec_depth_selection(root)
+
+        log.write_text("".join(
+            ('{"note": "shipped without a spec"}\n' if i == 0
+             else '{"note": "unrelated incident"}\n')
+            for i in range(R._MIN_INCIDENT_SAMPLE + 5)), encoding="utf-8")
+        big_dirty = R.probe_spec_depth_selection(root)
+
+    if (small[0] is None and big_clean[0] is True and big_dirty[0] is False):
+        _ok(gate, f"10 records -> UNEVALUABLE ({small[1][:44]}…); "
+                  f"{R._MIN_INCIDENT_SAMPLE + 5} clean -> retire; "
+                  "same corpus with 1 spec-omission entry -> stays ACTIVE")
+    else:
+        _fail(gate, f"small={small[0]} big_clean={big_clean[0]} "
+                    f"big_dirty={big_dirty[0]}")
+
+
+def t_g2_probe_coverage() -> None:
+    gate = "V-UCEIMR-G2-COVERAGE"
+    contracts = load_contracts()
+    ids = {c.id for c in contracts}
+    covered = set(R.PROBES) | set(R.EXTERNAL_CONDITIONS)
+    vs = {v.contract_id: v for v in R.evaluate_all()}
+    never = {k for k, v in vs.items() if v.status == R.NEVER}
+    # Every contract is either probed, external, or declared permanent.
+    unaccounted = ids - covered - never
+    if not unaccounted:
+        _ok(gate, f"{len(ids)} contract(s): {len(R.PROBES)} probed, "
+                  f"{len(R.EXTERNAL_CONDITIONS)} external, {len(never)} "
+                  "permanent, 0 unaccounted")
+    else:
+        _fail(gate, f"unaccounted: {sorted(unaccounted)}")
+
+
 def t_r2_failopen() -> None:
     gate = "V-UCEIMR-R2-FAILOPEN"
     try:
@@ -541,7 +608,8 @@ def main() -> int:
               t_r2_evaluates_real, t_r2_retires_on_evidence,
               t_r2_does_not_retire_prematurely, t_r2_unevaluable_is_not_active,
               t_r2_never_and_missing, t_r2_stale_probe, t_r2_no_auto_delete,
-              t_r2_failopen):
+              t_g2_external_is_not_probe_debt, t_g2_zero_needs_a_denominator,
+              t_g2_probe_coverage, t_r2_failopen):
         try:
             t()
         except Exception as e:  # noqa: BLE001
