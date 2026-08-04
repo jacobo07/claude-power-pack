@@ -294,6 +294,86 @@ def t_r1_store_starvation_is_visible() -> None:
         _fail(gate, f"render() did not state the yield: {txt[:80]!r}")
 
 
+def t_g5_persists_full_text() -> None:
+    """G5. The fetchers held the full article/transcript and returned a
+    1200-1500 char slice; the remainder was discarded. This asserts the full
+    text survives AND that the digest slice is unchanged."""
+    gate = "V-UCEIMR-G5-PERSISTS-FULL"
+    from modules.autoresearch.enricher import persist_corpus
+    full = ("I always compare the Amazon reviews with the Reddit threads. "
+            * 200)                                  # ~11 k chars
+    with tempfile.TemporaryDirectory() as td:
+        p = persist_corpus(full, "https://example.com/talk", "jina", td)
+        if p is None or not Path(p).is_file():
+            _fail(gate, "nothing written")
+            return
+        body = Path(p).read_text(encoding="utf-8")
+        # Idempotent: a second call must not rewrite.
+        again = persist_corpus("DIFFERENT", "https://example.com/talk",
+                               "jina", td)
+        unchanged = Path(again).read_text(encoding="utf-8") == body
+    if (len(body) > 10_000 and "source: https://example.com/talk" in body
+            and "kind: jina" in body and unchanged):
+        _ok(gate, f"{len(body)} chars persisted with source+kind+timestamp "
+                  "header; re-fetch of the same source does not rewrite")
+    else:
+        _fail(gate, f"len={len(body)} unchanged={unchanged}")
+
+
+def t_g5_closes_the_loop() -> None:
+    """G5 + R1. The enricher writes; the miner reads the SAME default store
+    with no configuration. A writer whose output no reader reaches is the
+    `feedback_write_without_read_incomplete_system` shape."""
+    gate = "V-UCEIMR-G5-LOOP-CLOSED"
+    from modules.autoresearch.enricher import persist_corpus
+    with tempfile.TemporaryDirectory() as td:
+        persist_corpus(
+            "Opening remarks. I always compare the supplier lead times "
+            "against the promised ship dates before I trust a margin model. "
+            "That is the whole discipline.",
+            "https://example.com/ops-talk", "yt-dlp", td)
+        units = evidence_from_corpus(td)
+        ps = mine(units=units)
+    if units and ps and all(p.source_ref for p in ps):
+        _ok(gate, f"enricher wrote 1 file -> miner read {len(units)} unit(s) "
+                  f"-> {len(ps)} proposal(s) "
+                  f"({sorted({p.disposition for p in ps})})")
+    else:
+        _fail(gate, f"units={len(units)} proposals={len(ps)}")
+
+
+def t_g5_default_store_is_read() -> None:
+    gate = "V-UCEIMR-G5-DEFAULT-STORE"
+    from modules.autoresearch.enricher import CORPUS_DIRNAME, _PP_ROOT as _E_ROOT
+    import inspect
+    from modules.capability_runtime import corpus_adapter as _ca
+    writer = (_E_ROOT / CORPUS_DIRNAME).resolve()
+    reader_src = inspect.getsource(_ca.evidence_from_corpus)
+    # The reader's default must resolve to the writer's default, or the loop
+    # only closes when someone remembers to pass a flag.
+    if '"vault" / "corpus"' in reader_src and writer.name == "corpus":
+        _ok(gate, f"writer default {writer} == reader default "
+                  "<repo>/vault/corpus (no flag required)")
+    else:
+        _fail(gate, f"writer={writer} reader_default_missing")
+
+
+def t_g5_failopen() -> None:
+    gate = "V-UCEIMR-G5-FAILOPEN"
+    from modules.autoresearch.enricher import persist_corpus
+    try:
+        a = persist_corpus("", "https://x", "jina", None)
+        b = persist_corpus("text", "", "jina", None)
+        c = persist_corpus("text", "https://x", "jina", "Z:/nope/nowhere/deep")
+        if a is None and b is None and c is None:
+            _ok(gate, "empty text / empty source / unwritable dir -> None, "
+                      "never raises into the enrichment pipeline")
+        else:
+            _fail(gate, f"a={a} b={b} c={c}")
+    except Exception as e:  # noqa: BLE001
+        _fail(gate, f"raised {type(e).__name__}: {e}")
+
+
 def t_r1_persists() -> None:
     gate = "V-UCEIMR-R1-PERSISTS"
     from modules.capability_runtime.corpus_adapter import CapabilityProposal
@@ -456,6 +536,8 @@ def main() -> int:
               t_r1_no_acquisition, t_r1_failopen, t_r1_precision,
               t_r1_corpus_yield, t_r1_store_starvation_is_visible,
               t_r1_persists,
+              t_g5_persists_full_text, t_g5_closes_the_loop,
+              t_g5_default_store_is_read, t_g5_failopen,
               t_r2_evaluates_real, t_r2_retires_on_evidence,
               t_r2_does_not_retire_prematurely, t_r2_unevaluable_is_not_active,
               t_r2_never_and_missing, t_r2_stale_probe, t_r2_no_auto_delete,

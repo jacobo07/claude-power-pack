@@ -217,7 +217,7 @@ def evidence_from_research(research_dir=None) -> list:
     return out
 
 
-def evidence_from_corpus(corpus_dir) -> list:
+def evidence_from_corpus(corpus_dir=None) -> list:
     """Authored external text (transcripts, articles, threads) at FULL length.
 
     Measured 2026-08-04: the two stores above yield zero capability claims.
@@ -235,7 +235,11 @@ def evidence_from_corpus(corpus_dir) -> list:
     """
     out: list = []
     try:
-        base = Path(corpus_dir)
+        # Defaults to the store `autoresearch/enricher.py::persist_corpus`
+        # writes (UCEIMR G5), so the loop closes without configuration: the
+        # enricher keeps the full text it already fetched, and the miner finds
+        # it here.
+        base = Path(corpus_dir) if corpus_dir else _PP_ROOT / "vault" / "corpus"
         paths = sorted([q for pat in ("*.txt", "*.md", "*.vtt")
                         for q in base.glob(pat)])[:_MAX_FILES]
     except (OSError, TypeError):
@@ -250,10 +254,12 @@ def evidence_from_corpus(corpus_dir) -> list:
 
 
 def load_evidence(brief_path=None, research_dir=None, corpus_dir=None) -> list:
-    units = evidence_from_akos(brief_path) + evidence_from_research(research_dir)
-    if corpus_dir:
-        units += evidence_from_corpus(corpus_dir)
-    return units
+    """All three stores. The corpus store is included BY DEFAULT -- it is the
+    only one carrying authored external text, so requiring a flag to read it
+    would leave the miner starved by default."""
+    return (evidence_from_akos(brief_path)
+            + evidence_from_research(research_dir)
+            + evidence_from_corpus(corpus_dir))
 
 
 # ---------------------------------------------------------------------------
