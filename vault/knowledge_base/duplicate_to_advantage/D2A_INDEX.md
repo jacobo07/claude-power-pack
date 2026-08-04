@@ -112,6 +112,25 @@ session budget" --name "Token Budget Planner"`.
   or eval would suffice is a contract violation; every new dataset must beat *a new Part, a
   new UKDL rule, a new eval, and not-building.*
 
+## Family Sizing Mode (added C96, Crawl OS STOP #1 audit)
+
+A single-proposal `run()` only catches duplication against the sealed parents in
+`FAMILY_REGISTRY`. A proposed FAMILY of N datasets/systems can also duplicate each
+other — two candidates that are the same idea twice never show up in a one-at-a-time
+pass. `run_family(list[Proposal])` (CLI: `d2a_engine.py --family-file <path.json>`) runs
+D2A-1 across every item AND a pairwise Jaccard pass over the same `_tokens()` vocabulary
+to catch sibling overlap within the list itself. Output: FOLD (owned by a sealed parent,
+coverage >= 50%) / MERGE (Jaccard >= 0.35 with a sibling, collapse the pair) / KEEP
+(genuinely new). Gates: `V-D2A-FAMILY-DETECTS-FOLD`, `V-D2A-FAMILY-DETECTS-MERGE`,
+`V-D2A-FAMILY-FAILOPEN` in `tools/test_duplicate_to_advantage.py`.
+
+**Standing rule (Owner directive, C96):** offer Family Sizing by default whenever a
+proposal names 3 or more candidate datasets/systems at once, not only on request. The
+mechanical FOLD/MERGE verdict is a bag-of-words signal, not a semantic one — sanity-check
+each FOLD against the matched parent's actual index before accepting it; a generic word
+shared between domains (e.g. "evidence", "confidence", "extract") produces false
+positives that a one-line manual cross-check catches cheaply.
+
 ## The fundamental property
 
 > **No duplication ends in rejection.** A detected duplicate is a coordinate: it marks the

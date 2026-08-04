@@ -24,10 +24,25 @@ from .d2a_engine import (
     ANTI_INFLATION_RULES,
     GAP_DIMENSIONS,
     PORTFOLIO_DIMENSIONS,
+    FamilyItemVerdict,
+    FamilySizingReport,
+    run_family,
+    render_family,
+    ExpansionCandidate,
+    ExpansionPlan,
+    Stop1Menu,
+    load_config,
+    compute_expansion,
+    build_stop1_menu,
+    render_stop1_menu,
 )
 
 __all__ = [
     "Proposal", "DupeVerdict", "GapMap", "Candidate", "BuildContract",
     "D2AVerdict", "run", "OPERATIONS", "ANTI_INFLATION_RULES",
     "GAP_DIMENSIONS", "PORTFOLIO_DIMENSIONS",
+    "FamilyItemVerdict", "FamilySizingReport", "run_family", "render_family",
+    # STOP #1 expansion option (PR-D2A-EXPANSION-001)
+    "ExpansionCandidate", "ExpansionPlan", "Stop1Menu", "load_config",
+    "compute_expansion", "build_stop1_menu", "render_stop1_menu",
 ]

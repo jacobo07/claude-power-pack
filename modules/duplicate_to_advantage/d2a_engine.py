@@ -992,7 +992,11 @@ def run_family(items: list) -> FamilySizingReport:
     return report
 
 
-def render_family(r: FamilySizingReport) -> str:
+def render_family(r: FamilySizingReport, cfg: dict | None = None,
+                  menu: "Stop1Menu | None" = None) -> str:
+    """`menu` lets a caller that already built one (e.g. the CLI, which may have run it
+    with --repo-evidence) pass it in rather than have it silently recomputed with
+    different settings."""
     L = [f"FAMILY SIZING: {r.proposed_count} proposed -> "
          f"{r.recommended_count} recommended"]
     if r.fold:
@@ -1014,6 +1018,330 @@ def render_family(r: FamilySizingReport) -> str:
                  "build recommendation, needs review:")
         for it in r.defer:
             L.append(f"  - {it.name}: {it.reason}")
+    L.append("")
+    L.append(render_stop1_menu(menu if menu is not None else build_stop1_menu(r, cfg)))
+    return "\n".join(L)
+
+
+# ---------------------------------------------------------------------------
+# STOP #1 Expansion Option (PR-D2A-EXPANSION-001, sealed 2026-08-03)
+#
+# A family sizing that measures N% of a proposal as already owned used to leave the
+# Owner exactly two shapes: build the residue, or archive. The space the overlap freed
+# was never converted into anything. Measured instance: CPP-APIR came back ~80% owned
+# across 25 proposed datasets and the four options offered were execution-first,
+# execution-first-plus-doctrine, defer, and accept-the-duplication. None proposed new
+# NON-duplicating capability for the ~20 vacated slots (T-D2A-RESIDUE-ONLY-001).
+#
+# The candidates for that expansion are NOT brainstormed -- they already exist. Every
+# FOLDed/MERGEd item produced a full D2AVerdict whose `portfolio` holds >=6 scored
+# candidates (vertical DEEPEN/HARDEN/AUTOMATE/DETERMINIZE + horizontal CONNECT), each
+# already carrying 16 numeric dimensions, a ratio and an anti-inflation ledger, each
+# derived from a real measured parent. Option D harvests those portfolios, dedupes,
+# filters and ranks them. No new discovery system is introduced; this is the D2A root
+# law ("ninguna duplicidad termina en rechazo") applied to a whole family at once
+# instead of one proposal at a time.
+# ---------------------------------------------------------------------------
+_CONFIG_PATH = _PP_ROOT / "vault" / "config" / "d2a.json"
+
+_DEFAULT_CONFIG = {
+    "expansion_threshold_pct": 50,      # overlap ABOVE which expansion is offered
+    "expansion_candidate_multiplier": 2,  # harvest size relative to free slots
+}
+
+_CONFIG_BOUNDS = {
+    "expansion_threshold_pct": (0, 100),
+    "expansion_candidate_multiplier": (1, 10),
+}
+
+
+def load_config(path=None) -> dict:
+    """Read vault/config/d2a.json. Fail-open per KEY, never per file: a malformed or
+    out-of-range value falls back to its default while the rest of the file still
+    applies. A missing/unreadable file yields the defaults -- never a raise, so the
+    threshold is configurable from the start but can never break the engine."""
+    cfg = dict(_DEFAULT_CONFIG)
+    try:
+        p = Path(path) if path else _CONFIG_PATH
+        # utf-8-sig: a config hand-edited on Windows may carry a BOM, and plain
+        # 'utf-8' does NOT strip it -> the first key would parse as '﻿_doc'.
+        raw = json.loads(p.read_text(encoding="utf-8-sig"))
+    except Exception:  # noqa: BLE001 -- fail-open to defaults
+        return cfg
+    if not isinstance(raw, dict):
+        return cfg
+    for key, default in _DEFAULT_CONFIG.items():
+        val = raw.get(key)
+        if isinstance(val, bool) or not isinstance(val, (int, float)):
+            continue
+        lo, hi = _CONFIG_BOUNDS[key]
+        if lo <= val <= hi:
+            cfg[key] = type(default)(val)
+    return cfg
+
+
+@dataclass
+class ExpansionCandidate:
+    name: str
+    operation: str
+    axis: str                      # "vertical" | "horizontal"
+    reinforces: str                # the parent family whose fold freed this slot
+    reinforces_id: str             # that parent's bare id (the self-duplication allow-list)
+    connects_to: str               # horizontal only: the OTHER family, also allowed
+    origin_item: str               # the proposed item that folded into that parent
+    improves: str
+    measured_by: str
+    ratio: float
+    evidence: str                  # the measured fold that anchors this candidate
+    novelty_disposition: str       # "NOT_TRIGGERED" | "NEEDS_NOVELTY_PROOF"
+    novelty_questions: list = field(default_factory=list)
+    self_coverage_pct: int = 0     # what the candidate itself scores against the estate
+    self_parent: str = ""
+
+
+@dataclass
+class ExpansionPlan:
+    applies: bool
+    overlap_pct: int
+    threshold_pct: int
+    expansion_slots: int           # N -- the space the overlap freed
+    candidates: list = field(default_factory=list)
+    n_requested: int = 0
+    n_survived: int = 0
+    harvested: int = 0
+    rejected_self_duplicate: int = 0
+    evidence_notes: list = field(default_factory=list)
+    note: str = ""
+
+
+@dataclass
+class Stop1Menu:
+    options: list                  # list[(letter, title, body)]
+    expansion: ExpansionPlan | None = None
+
+
+def _harvest_sources(r: FamilySizingReport) -> list:
+    """The items whose duplication freed the space: FOLDs plus MERGE collapses.
+    KEEPs are the residue itself (they occupy their own slot) and DEFERs are unknown,
+    so neither contributes a slot to fill."""
+    out = list(r.fold)
+    out.extend(x for x in r.keep if x.disposition == "MERGE")
+    return out
+
+
+def _novelty(text: str):
+    """HR-NOVELTY-001's 13-question gate, applied to one expansion candidate.
+
+    check_novelty_gate() is keyword-TRIGGERED and issues no verdict: it returns the 13
+    questions plus `applies`. So `applies=False` is NOT a pass and is never treated as
+    one -- it only means the candidate is not a named institutional mega-system. The
+    real non-duplication filter is the self-coverage check below. When the gate DOES
+    fire, the candidate ships marked NEEDS_NOVELTY_PROOF with all 13 questions attached
+    and is never auto-admitted.
+    """
+    try:
+        from modules.spec_gate.gate import check_novelty_gate
+        res = check_novelty_gate(text)
+        if getattr(res, "applies", False):
+            return "NEEDS_NOVELTY_PROOF", list(getattr(res, "questions", ()) or ())
+    except Exception:  # noqa: BLE001 -- fail-open
+        return "UNCHECKED", []
+    return "NOT_TRIGGERED", []
+
+
+def _repo_evidence_notes() -> list:
+    """Deterministic repository signals that corroborate the expansion space. Reuses
+    existing owners only (registry_gaps + the Liveness Ledger); builds no scanner."""
+    notes = []
+    try:
+        gaps = registry_gaps()
+        if gaps:
+            notes.append(f"registry_gaps(): {len(gaps)} knowledge_base family/families "
+                         f"with no registry row ({', '.join(gaps[:5])})")
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        from modules.liveness.reachability import gate as _liveness_gate
+        # gate() -> (passed, OFFENDERS, rows). Unpacking rows into `offs` made
+        # this note report the entire unit inventory (339) as unreachable when
+        # the true offender count is 1 -- an inflated evidence line shown to
+        # the Owner at STOP #1.
+        _ok, offs, _rows = _liveness_gate()
+        if offs:
+            names = [str(o.get("module") or o.get("name") or o.get("unit") or "?")
+                     for o in offs[:5]]
+            notes.append(f"liveness: {len(offs)} unreachable/undeclared module(s) "
+                         f"({', '.join(names)})")
+    except Exception:  # noqa: BLE001
+        pass
+    return notes
+
+
+def compute_expansion(r: FamilySizingReport, cfg: dict | None = None,
+                      with_repo_evidence: bool = False) -> ExpansionPlan:
+    """Measure the space a family's overlap freed, and fill it with ranked, non-
+    duplicating adjacent capabilities harvested from the folded items' own portfolios.
+
+    Fail-open ABSOLUTE, like every other D2A surface: any error yields a
+    non-applying plan, never a raise.
+    """
+    try:
+        cfg = cfg or load_config()
+        threshold = int(cfg.get("expansion_threshold_pct",
+                                _DEFAULT_CONFIG["expansion_threshold_pct"]))
+        mult = int(cfg.get("expansion_candidate_multiplier",
+                           _DEFAULT_CONFIG["expansion_candidate_multiplier"]))
+        proposed = int(r.proposed_count or 0)
+        if proposed <= 0:
+            return ExpansionPlan(False, 0, threshold, 0, note="empty family")
+
+        # DEFER is subtracted because a deferred candidate is UNKNOWN, not owned --
+        # counting it as freed space would over-claim the expansion room. What remains
+        # is exactly folded + merged-away: slots demonstrably vacated by duplication.
+        slots = max(0, proposed - int(r.recommended_count or 0) - len(r.defer))
+        overlap = int(round(100.0 * slots / proposed))
+
+        if slots <= 0 or overlap <= threshold:
+            return ExpansionPlan(
+                False, overlap, threshold, slots,
+                note=f"overlap {overlap}% <= threshold {threshold}% -- "
+                     "expansion not offered")
+
+        # --- harvest: the folded items' already-scored adjacent candidates ---------
+        seen = set()
+        pool = []
+        for item in _harvest_sources(r):
+            v = getattr(item, "verdict", None)
+            if v is None or not getattr(v, "portfolio", None):
+                continue
+            parent = v.dupe.parent_id or "-"
+            for c in v.portfolio:
+                key = (c.operation, parent,
+                       " ".join(sorted(set(_tokens(c.name)))))
+                if key in seen:
+                    continue
+                seen.add(key)
+                pool.append((item, v, c, parent))
+        harvested = len(pool)
+        pool.sort(key=lambda t: (-t[2].ratio, t[2].name))
+        pool = pool[:max(slots, slots * max(1, mult))]
+
+        # --- filter: a candidate must not itself re-own a THIRD family -------------
+        out, rejected = [], 0
+        for item, v, c, parent in pool:
+            allowed = {parent}
+            if c.connects_to:
+                allowed.add(c.connects_to)
+            text = f"{c.name} {c.improves}"
+            dv = detect_duplicate(Proposal(text))
+            # Reinforcing its own parent (or the family it explicitly connects to) is
+            # the entire point. Scoring >=50% against anything ELSE means this
+            # "expansion" would re-own a third family -> drop it, never pad with it.
+            if dv.parent_id and dv.coverage_pct >= 50 and dv.parent_id not in allowed:
+                rejected += 1
+                continue
+            disp, questions = _novelty(text)
+            out.append(ExpansionCandidate(
+                name=c.name, operation=c.operation, axis=c.axis,
+                reinforces=(f"{parent} ({v.dupe.parent_name})" if parent != "-"
+                            else "-"),
+                # Both are declared WITHOUT defaults on the dataclass; omitting
+                # them raised TypeError on every harvested candidate, and the
+                # absolute fail-open swallowed it into "expansion not
+                # applicable". Option D could never be offered -- the exact
+                # condition the five acceptance gates existed to catch, and
+                # they were never written.
+                reinforces_id=parent if parent != "-" else "",
+                connects_to=getattr(c, "connects_to", "") or "",
+                origin_item=item.name, improves=c.improves,
+                measured_by=c.measured_by, ratio=c.ratio,
+                evidence=(f"'{item.name}' measured {v.dupe.coverage_pct}% owned by "
+                          f"{parent} -- this dimension left unmapped by that parent"),
+                novelty_disposition=disp, novelty_questions=questions,
+                self_coverage_pct=dv.coverage_pct, self_parent=dv.parent_id or "-"))
+            if len(out) >= slots:
+                break
+
+        # No padding: a shortfall is REPORTED, never filled with filler (the estate's
+        # own no-silent-caps rule -- a truncated set that reads as complete is a lie).
+        note = ""
+        if len(out) < slots:
+            note = (f"SHORTFALL: {len(out)} of {slots} slot(s) filled -- not padded. "
+                    f"{harvested} candidate(s) harvested, {rejected} rejected as "
+                    "self-duplicating.")
+        return ExpansionPlan(
+            True, overlap, threshold, slots, out, slots, len(out), harvested, rejected,
+            _repo_evidence_notes() if with_repo_evidence else [], note)
+    except Exception as e:  # noqa: BLE001 -- fail-open ABSOLUTE
+        return ExpansionPlan(False, 0, _DEFAULT_CONFIG["expansion_threshold_pct"], 0,
+                             note=f"DEFER (fail-open): {type(e).__name__}")
+
+
+def build_stop1_menu(r: FamilySizingReport, cfg: dict | None = None,
+                     with_repo_evidence: bool = False) -> Stop1Menu:
+    """The decision menu the Owner is shown at STOP #1.
+
+    C and D appear ONLY above the overlap threshold. Both are expansion-dependent (C is
+    "residue + expansion"), so offering C without the expansion machinery would rebuild
+    the very hollow choice this option exists to remove; and at low overlap there is no
+    freed space to fill, so listing them would just be menu noise.
+    """
+    cfg = cfg or load_config()
+    plan = compute_expansion(r, cfg, with_repo_evidence)
+    genuine = int(r.recommended_count or 0)
+    opts = [
+        ("A", "Execution-first",
+         f"Build only the genuine residue ({genuine} item(s)). Everything folded "
+         "extends its existing parent; nothing new is created."),
+        ("B", "Archive",
+         "Build nothing. Record the verdict and the non-duplication ledger, close "
+         "the proposal."),
+    ]
+    if plan.applies:
+        opts.append((
+            "C", "Hybrid",
+            f"Build the residue ({genuine}) AND fill the {plan.expansion_slots} slot(s) "
+            f"the overlap freed, returning to the originally proposed "
+            f"{r.proposed_count} with zero duplication."))
+        opts.append((
+            "D", "Expansion",
+            f"Fill the freed space only: {plan.n_survived} of {plan.expansion_slots} "
+            "requested adjacent capability/capabilities, each anchored to a measured "
+            "fold, each filtered against re-owning a third family."))
+    opts.append(("E", "Pause",
+                 "Owner reviews the audit before choosing. Nothing is written."))
+    return Stop1Menu(options=opts, expansion=plan)
+
+
+def render_stop1_menu(menu: Stop1Menu) -> str:
+    p = menu.expansion
+    L = []
+    if p is not None and p.applies:
+        L.append(f"STOP #1 OPTIONS (overlap {p.overlap_pct}% > threshold "
+                 f"{p.threshold_pct}% -- expansion offered):")
+    elif p is not None:
+        L.append(f"STOP #1 OPTIONS (overlap {p.overlap_pct}% <= threshold "
+                 f"{p.threshold_pct}% -- expansion not offered):")
+    else:
+        L.append("STOP #1 OPTIONS:")
+    for letter, title, body in menu.options:
+        L.append(f"  {letter}. {title} -- {body}")
+    if p is not None and p.applies:
+        L.append(f"EXPANSION CANDIDATES (N={p.expansion_slots} freed; "
+                 f"{p.harvested} harvested, {p.rejected_self_duplicate} rejected "
+                 f"self-duplicating, {p.n_survived} survived):")
+        for c in p.candidates:
+            L.append(f"  [{c.ratio:>5}] {c.operation:<11} {c.name}")
+            L.append(f"          reinforces: {c.reinforces}")
+            L.append(f"          evidence  : {c.evidence}")
+            L.append(f"          novelty   : {c.novelty_disposition}"
+                     + (f" ({len(c.novelty_questions)} questions to answer with cited "
+                        "file:line evidence before admission)"
+                        if c.novelty_questions else ""))
+        for n in p.evidence_notes:
+            L.append(f"  repo-evidence: {n}")
+        if p.note:
+            L.append(f"  {p.note}")
     return "\n".join(L)
 
 
@@ -1075,6 +1403,10 @@ def main(argv=None) -> int:
     ap.add_argument("--stdin", action="store_true",
                     help="read the proposal text from stdin (hook/gate entry point)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--repo-evidence", action="store_true",
+                    help="corroborate the expansion space with deterministic repo "
+                         "signals (registry_gaps + the Liveness Ledger). Off by "
+                         "default so the family path stays hermetic.")
     ap.add_argument("--family-file", default="",
                     help="path to a JSON list of {name, description} -- size a whole "
                          "proposed family at once instead of one proposal")
@@ -1089,6 +1421,7 @@ def main(argv=None) -> int:
         items = [Proposal(it.get("description", ""), it.get("name", ""))
                  for it in raw if isinstance(it, dict)]
         rep = run_family(items)
+        menu = build_stop1_menu(rep, with_repo_evidence=args.repo_evidence)
         if args.json:
             print(json.dumps({
                 "proposed_count": rep.proposed_count,
@@ -1098,9 +1431,12 @@ def main(argv=None) -> int:
                 "keep": [{"name": it.name, "reason": it.reason}
                         for it in rep.keep if it.disposition == "KEEP"],
                 "defer": [{"name": it.name, "reason": it.reason} for it in rep.defer],
+                "stop1_menu": [{"option": o, "title": t, "body": b}
+                               for o, t, b in menu.options],
+                "expansion": asdict(menu.expansion) if menu.expansion else None,
             }, ensure_ascii=False, indent=2))
         else:
-            print(render_family(rep))
+            print(render_family(rep, menu=menu))
         return 0
     if args.stdin:
         try:

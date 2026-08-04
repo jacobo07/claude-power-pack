@@ -536,6 +536,139 @@ def main(argv=None) -> int:
     else:
         _fail("V-D2A-BASELINE", f"FD rc={fd_rc}; FIOS rc={fi_rc}")
 
+    # ---------------------------------------------------------------------
+    # D2A+ expansion at STOP #1 (PR-D2A-EXPANSION-001). The five gates named
+    # in vault/plans/d2a-expansion-2026-08-03.md sec.5 -- the feature shipped
+    # code, config and doctrine, and its own acceptance criteria were never
+    # written. Built is not verified.
+    # ---------------------------------------------------------------------
+    # NOTE: `run_family` is deliberately NOT imported here. A function-local
+    # import makes the name local to ALL of main(), so importing it would
+    # break the earlier fam_fold call with UnboundLocalError -- the same trap
+    # this file already documents for `json` below.
+    from modules.duplicate_to_advantage.d2a_engine import (
+        build_stop1_menu, compute_expansion)
+
+    # A family engineered to FOLD: each item restates a sealed parent, so the
+    # overlap is real and the freed slots are demonstrably vacated.
+    _dupe_family = [
+        Proposal(name="Duplicate Detection Fabric",
+                 description=_CANON.description),
+        Proposal(name="Duplicate Ownership Auditor",
+                 description=_CANON.description + " overlap ownership audit"),
+        Proposal(name="Sonar Haptics",
+                 description="haptic feedback for underwater sonar contact "
+                             "rendering on a diver wrist unit"),
+    ]
+    _rep = run_family(_dupe_family)
+    _plan = compute_expansion(_rep)
+    _menu = build_stop1_menu(_rep)
+    _letters = [o[0] for o in _menu.options]
+
+    if _plan.applies and _plan.expansion_slots > 0:
+        if ("D" in _letters and _plan.n_requested == _plan.expansion_slots
+                and _plan.n_survived >= 1):
+            _ok("V-D2A-EXPANSION-OFFERED",
+                f"overlap {_plan.overlap_pct}% > {_plan.threshold_pct}% -> option D "
+                f"present, requested={_plan.n_requested} survived={_plan.n_survived}")
+        else:
+            _fail("V-D2A-EXPANSION-OFFERED",
+                  f"letters={_letters} requested={_plan.n_requested} "
+                  f"slots={_plan.expansion_slots} survived={_plan.n_survived}")
+    else:
+        # Withheld is correct only for a STATED reason: no slot was vacated,
+        # or the vacated fraction did not clear the threshold. Anything else is
+        # the absolute fail-open masking a crash -- which is exactly how the
+        # missing reinforces_id/connects_to arguments stayed hidden.
+        _reason_ok = (_plan.expansion_slots == 0
+                      or _plan.overlap_pct <= _plan.threshold_pct)
+        if ("D" not in _letters and _reason_ok
+                and "fail-open" not in (_plan.note or "")):
+            _ok("V-D2A-EXPANSION-OFFERED",
+                f"overlap {_plan.overlap_pct}% <= threshold "
+                f"{_plan.threshold_pct}% (slots={_plan.expansion_slots}, "
+                f"defer={len(_rep.defer)}) -> option D correctly withheld, "
+                "and not via fail-open")
+        else:
+            _fail("V-D2A-EXPANSION-OFFERED",
+                  f"slots={_plan.expansion_slots} but letters={_letters}")
+
+    # V-D2A-EXPANSION-SILENT -- at or below threshold, D never appears.
+    _lo = compute_expansion(_rep, {"expansion_threshold_pct": 100,
+                                   "expansion_candidate_multiplier": 2})
+    _lo_menu = build_stop1_menu(_rep, {"expansion_threshold_pct": 100,
+                                       "expansion_candidate_multiplier": 2})
+    if not _lo.applies and "D" not in [o[0] for o in _lo_menu.options] \
+            and "C" not in [o[0] for o in _lo_menu.options]:
+        _ok("V-D2A-EXPANSION-SILENT",
+            "threshold 100% -> expansion withheld; both C and D absent "
+            "(C is expansion-dependent too)")
+    else:
+        _fail("V-D2A-EXPANSION-SILENT",
+              f"applies={_lo.applies} letters={[o[0] for o in _lo_menu.options]}")
+
+    # V-D2A-EXPANSION-CONFIG -- the threshold is config, not a literal.
+    _c0 = compute_expansion(_rep, {"expansion_threshold_pct": 0,
+                                   "expansion_candidate_multiplier": 2})
+    _c100 = compute_expansion(_rep, {"expansion_threshold_pct": 100,
+                                     "expansion_candidate_multiplier": 2})
+    # The threshold must be READ from config (not a literal) and must actually
+    # change the verdict when slots exist. A fail-open plan reports the default
+    # threshold, so a mismatch here also catches a masked crash.
+    _thresholds_honoured = (_c0.threshold_pct == 0 and _c100.threshold_pct == 100)
+    _verdict_moves = (_c0.applies != _c100.applies if _c0.expansion_slots > 0
+                      else _c0.applies is False and _c100.applies is False)
+    if _thresholds_honoured and _verdict_moves:
+        _ok("V-D2A-EXPANSION-CONFIG",
+            f"same family, threshold 0% -> applies={_c0.applies}; 100% -> "
+            f"applies={_c100.applies} (threshold read from config, not hardcoded)")
+    else:
+        _fail("V-D2A-EXPANSION-CONFIG",
+              f"t0={_c0.threshold_pct}/{_c0.applies} "
+              f"t100={_c100.threshold_pct}/{_c100.applies}")
+
+    # The two filter gates below run against `_c0` -- the threshold-0 plan that
+    # actually HARVESTS -- not against `_plan`, which withholds and therefore
+    # carries an empty candidate list. A filter asserted over zero items passes
+    # for the wrong reason (`all([])` is True), and this repo has already been
+    # bitten by exactly that.
+    _cands = _c0.candidates
+
+    # V-D2A-EXPANSION-NO-SELF-DUPLICATE -- no survivor re-owns a THIRD family.
+    _foreign = [c for c in _cands
+                if c.self_coverage_pct >= 50
+                and c.self_parent not in (c.reinforces_id, c.connects_to)]
+    if _cands and not _foreign:
+        _ok("V-D2A-EXPANSION-NO-SELF-DUPLICATE",
+            f"{len(_cands)} survivor(s), 0 re-owning a foreign parent "
+            f"({_c0.rejected_self_duplicate} rejected during filtering)")
+    elif not _cands:
+        _fail("V-D2A-EXPANSION-NO-SELF-DUPLICATE",
+              "no candidates harvested -- the filter is untested "
+              f"(harvested={_c0.harvested}, note={_c0.note!r})")
+    else:
+        _fail("V-D2A-EXPANSION-NO-SELF-DUPLICATE",
+              f"{len(_foreign)} survivor(s) re-own a foreign parent: "
+              f"{[(c.name, c.self_parent) for c in _foreign][:3]}")
+
+    # V-D2A-EXPANSION-NOVELTY-CHECKED -- every candidate carries a disposition,
+    # and a triggered one ships all 13 questions.
+    _missing = [c.name for c in _cands if not c.novelty_disposition]
+    _short = [c.name for c in _cands
+              if c.novelty_disposition == "NEEDS_NOVELTY_PROOF"
+              and len(c.novelty_questions) != 13]
+    if _cands and not _missing and not _short:
+        _ok("V-D2A-EXPANSION-NOVELTY-CHECKED",
+            f"{len(_cands)} candidate(s) all carry a novelty disposition "
+            f"({sorted({c.novelty_disposition for c in _cands})}); every "
+            "NEEDS_NOVELTY_PROOF carries 13 questions")
+    elif not _cands:
+        _fail("V-D2A-EXPANSION-NOVELTY-CHECKED",
+              "no candidates harvested -- the novelty check is untested")
+    else:
+        _fail("V-D2A-EXPANSION-NOVELTY-CHECKED",
+              f"missing={_missing[:3]} wrong_question_count={_short[:3]}")
+
     total = _passes + _fails
     if as_json:
         # NOTE: no local `import json` here -- a function-local import would make

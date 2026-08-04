@@ -1,0 +1,9 @@
+{
+  "_doc": "D2A Engine configuration (PR-D2A-EXPANSION-001). Read by modules/duplicate_to_advantage/d2a_engine.py::load_config(). Fail-open: a missing, unreadable or malformed file falls back to the defaults baked into _DEFAULT_CONFIG, and an out-of-range value is ignored key-by-key rather than aborting the load.",
+
+  "expansion_threshold_pct": 50,
+  "_expansion_threshold_pct_doc": "Item-based overlap percentage ABOVE which the STOP #1 menu offers the expansion options (C Hybrid and D Expansion). Strictly greater-than: at exactly this value the menu stays A/B/E. Range 0-100.",
+
+  "expansion_candidate_multiplier": 2,
+  "_expansion_candidate_multiplier_doc": "Harvest size relative to the number of free slots, BEFORE the self-duplication and novelty filters run. 2 means twice as many candidates are harvested as there are slots to fill, so the filters have surplus to cut from. Range 1-10."
+}
