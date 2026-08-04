@@ -218,20 +218,28 @@ wrong reason.
 
 ## PR-STOP1-PORTFOLIO-001 — a STOP #1 queue with no transition producer is a portfolio defect
 
-**Rule.** Before opening a new STOP #1, count the open ones. Fifteen plan files in
-`vault/plans/` currently carry `status: STOP #1` — thirteen dated, the oldest nine days
-old — and no mechanism transitions any of them. Opening the next one is not a scheduling
-inconvenience; it is `feedback_status_field_nobody_can_transition` at portfolio tier: a
-status field whose value only ever moves in one direction.
+**Rule.** Before opening a new STOP #1, count the open ones with
+`modules/backlog_autopilot/stop1_queue.py`. Measured 2026-08-04: **12 open** — 13 plan
+files carry `STOP #1` in their front-matter `status`, one of which (`usirc-corpus`) is
+already `RESOLVED`. The oldest is nine days old, and until this rule shipped nothing ever
+wrote the far side of that transition: `feedback_status_field_nobody_can_transition` at
+portfolio tier, a status field whose value only ever moved one way.
 
 **Origin.** APIR flagged two simultaneous STOP #1s as "a governance defect regardless of
 the APIR outcome" (2026-08-03); EFAIF flagged the third and SEIP the fourth on 2026-08-04;
-UCEIMR would have been the fifth. A discovered sweep then measured **15**, not 5 — the
-count everyone was tracking by memory was three times too low, which is
-`feedback_hand_curated_audit_measures_memory` again.
+UCEIMR would have been the fifth. The remembered count was 5; the real one is 12.
 
-**How to apply.** Resolve or explicitly archive open STOP #1s before opening another, and
-derive the count from disk (`status:` front matter), never from recollection.
+**Counting is itself the trap.** The first sweep for this rule reported **15**, because it
+regex-matched `status:` anywhere in a file's opening bytes and caught body prose — 47 plan
+files *mention* "STOP #1" without being one. A queue measured by substring is not a queue.
+Parse the front matter, and treat a terminal status (`RESOLVED` / `ARCHIVED` /
+`SUPERSEDED`) as leaving the queue. An undated entry is reported `undated`, never as
+age 0 — a missing date must not read as "brand new".
+
+**How to apply.** `python modules/backlog_autopilot/stop1_queue.py` before opening another
+STOP #1; `--resolve <plan> --status RESOLVED --reason "…"` to write the transition. The
+gate is advisory on purpose: refusing to open a STOP #1 would block the audit work that
+produces the estate's best evidence. What it refuses is opening one *in silence*.
 
 ---
 

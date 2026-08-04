@@ -35,6 +35,7 @@ from modules.capability_runtime.corpus_adapter import (  # noqa: E402
     render, save_proposal,
 )
 from modules.capability_runtime import retirement as R  # noqa: E402
+from modules.backlog_autopilot import stop1_queue as SQ  # noqa: E402
 
 _passes, _fails = 0, 0
 
@@ -579,6 +580,104 @@ def t_g2_probe_coverage() -> None:
         _fail(gate, f"unaccounted: {sorted(unaccounted)}")
 
 
+def _plan_fm(root: Path, name: str, status: str, date: str = "2026-08-01",
+             body: str = "body text\n") -> Path:
+    d = root / "vault" / "plans"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / name
+    p.write_text(f"---\ntitle: {name}\ndate: {date}\nstatus: {status}\n---\n\n{body}",
+                 encoding="utf-8")
+    return p
+
+
+def t_g1_counts_front_matter_only() -> None:
+    """G1. The first sweep for this rule reported 15 because it substring-
+    matched `status:` anywhere in the head and caught body prose. A queue
+    measured by substring is not a queue."""
+    gate = "V-UCEIMR-G1-FRONT-MATTER-ONLY"
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _plan_fm(root, "open.md", "STOP #1 — BLOCKING")
+        _plan_fm(root, "decided.md", "STOP #1 RESOLVED — Owner chose B")
+        _plan_fm(root, "mentions.md", "COMPLETE",
+                 body="We discussed the STOP #1 protocol at length here.\n")
+        (root / "vault" / "plans" / "nofm.md").write_text(
+            "no front matter\nstatus: STOP #1\n", encoding="utf-8")
+        rep = SQ.scan(root / "vault" / "plans")
+    names = {Path(e.path).name for e in rep.entries}
+    if names == {"open.md"} and rep.scanned == 3:
+        _ok(gate, "1 open of 3 front-matter plans: a body mention, a "
+                  "front-matter-less file and a RESOLVED entry are all excluded")
+    else:
+        _fail(gate, f"entries={sorted(names)} scanned={rep.scanned}")
+
+
+def t_g1_undated_is_not_age_zero() -> None:
+    gate = "V-UCEIMR-G1-UNDATED"
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        _plan_fm(root, "nodate.md", "STOP #1 — BLOCKING", date="not-a-date")
+        rep = SQ.scan(root / "vault" / "plans")
+    e = rep.entries[0] if rep.entries else None
+    if e and e.undated and e.age_days < 0 and rep.undated == 1:
+        _ok(gate, "an unparsable date reports `undated`, never age 0 -- a "
+                  "missing date must not read as 'brand new'")
+    else:
+        _fail(gate, f"entry={e}")
+
+
+def t_g1_resolve_is_the_producer() -> None:
+    """G1. The whole point: something must be able to write the far side of
+    the transition, and only with an Owner-supplied reason."""
+    gate = "V-UCEIMR-G1-TRANSITION-PRODUCER"
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        p = _plan_fm(root, "open.md", "STOP #1 — BLOCKING",
+                     body="Evidence paragraph that must survive.\n")
+        refusals = []
+        for kwargs in ({"status": "DONE", "reason": "x"},
+                       {"status": SQ.RESOLVED, "reason": "   "}):
+            try:
+                SQ.resolve(p, **kwargs)
+            except ValueError:
+                refusals.append(kwargs["status"])
+        before = SQ.scan(root / "vault" / "plans").open_count
+        SQ.resolve(p, SQ.RESOLVED, "Owner selected option A")
+        after = SQ.scan(root / "vault" / "plans").open_count
+        text = p.read_text(encoding="utf-8")
+    if (refusals == ["DONE", SQ.RESOLVED] and before == 1 and after == 0
+            and "Evidence paragraph that must survive." in text
+            and "was: STOP #1" in text):
+        _ok(gate, "non-terminal status and empty reason refused; a reasoned "
+                  "resolve moves 1 -> 0 open, preserves the body, and records "
+                  "the prior status")
+    else:
+        _fail(gate, f"refusals={refusals} before={before} after={after}")
+
+
+def t_g1_gate_reports_real_queue() -> None:
+    gate = "V-UCEIMR-G1-REAL-QUEUE"
+    ok, rep, msg = SQ.gate()
+    if rep.scanned > 0 and isinstance(ok, bool) and str(rep.open_count) in msg:
+        _ok(gate, f"live repo: {rep.open_count} open of {rep.scanned} "
+                  f"front-matter plan(s), ok={ok}")
+    else:
+        _fail(gate, f"scanned={rep.scanned} msg={msg!r}")
+
+
+def t_g1_failopen() -> None:
+    gate = "V-UCEIMR-G1-FAILOPEN"
+    try:
+        rep = SQ.scan("Z:/nope/does/not/exist")
+        ok, _r, _m = SQ.gate("Z:/nope/does/not/exist")
+        if rep.open_count == 0 and rep.scanned == 0 and ok:
+            _ok(gate, "absent plans dir -> empty report, gate passes, no raise")
+        else:
+            _fail(gate, f"open={rep.open_count} scanned={rep.scanned} ok={ok}")
+    except Exception as e:  # noqa: BLE001
+        _fail(gate, f"raised {type(e).__name__}: {e}")
+
+
 def t_r2_failopen() -> None:
     gate = "V-UCEIMR-R2-FAILOPEN"
     try:
@@ -609,7 +708,11 @@ def main() -> int:
               t_r2_does_not_retire_prematurely, t_r2_unevaluable_is_not_active,
               t_r2_never_and_missing, t_r2_stale_probe, t_r2_no_auto_delete,
               t_g2_external_is_not_probe_debt, t_g2_zero_needs_a_denominator,
-              t_g2_probe_coverage, t_r2_failopen):
+              t_g2_probe_coverage,
+              t_g1_counts_front_matter_only, t_g1_undated_is_not_age_zero,
+              t_g1_resolve_is_the_producer, t_g1_gate_reports_real_queue,
+              t_g1_failopen,
+              t_r2_failopen):
         try:
             t()
         except Exception as e:  # noqa: BLE001
