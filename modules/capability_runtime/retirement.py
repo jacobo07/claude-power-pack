@@ -149,7 +149,10 @@ def probe_liveness_reachability(root: Path):
     """
     try:
         from modules.liveness.reachability import gate as liveness_gate
-        _ok, _rows, offenders = liveness_gate()
+        # gate() -> (passed, OFFENDERS, rows). Order matters: unpacking rows
+        # into offenders reports the whole unit inventory as unreachable (339
+        # instead of 1) and the condition could then never be met.
+        _ok, offenders, _rows = liveness_gate()
     except Exception as e:  # noqa: BLE001
         return None, f"liveness gate unavailable ({type(e).__name__})"
     n = len(offenders or [])
