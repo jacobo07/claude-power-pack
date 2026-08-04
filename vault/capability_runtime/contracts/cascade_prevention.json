@@ -1,0 +1,61 @@
+{
+  "id": "cascade_prevention",
+  "name": "Cascade Error Prevention",
+  "owner": "modules/cascade_prevention/engine.py",
+  "sovereign_question": "Is this command the first link of a chain that has ended badly before?",
+  "scope": [
+    "dangerous command interception",
+    "cascade chains"
+  ],
+  "non_scope": [
+    "code review",
+    "test execution"
+  ],
+  "triggers": [
+    "deploy",
+    "delete",
+    "remove",
+    "reset",
+    "force",
+    "drop",
+    "migrate",
+    "restart"
+  ],
+  "anti_triggers": [
+    "read",
+    "list",
+    "show"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source"
+  ],
+  "inputs": [
+    "the pending command",
+    "the recorded event history"
+  ],
+  "outputs": [
+    "block or allow with the matched chain"
+  ],
+  "consumers": [
+    "hooks/cascade_check_bash.js",
+    "Owner"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "critical",
+  "maturity": "proven",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "the recorded chain set goes two years without a new member",
+  "parent": "",
+  "version": "1.0.0"
+}

@@ -1,0 +1,68 @@
+{
+  "id": "premise_verification",
+  "name": "Premise Verification",
+  "owner": "modules/error_prevention/premise_verifier.py",
+  "sovereign_question": "Do the files, functions and signatures this plan names actually exist in this repo?",
+  "scope": [
+    "premise checking",
+    "api existence"
+  ],
+  "non_scope": [
+    "code review",
+    "test authoring"
+  ],
+  "triggers": [
+    "plan",
+    "signature",
+    "api",
+    "refactor",
+    "integrate",
+    "call",
+    "import"
+  ],
+  "anti_triggers": [
+    "typo",
+    "rename a string",
+    "comment"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source"
+  ],
+  "inputs": [
+    "a plan naming files or symbols"
+  ],
+  "outputs": [
+    "per-premise verdict",
+    "the real public API on a miss"
+  ],
+  "consumers": [
+    "Claude Code",
+    "modules/one_shot",
+    "modules/spec_gate"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "high",
+  "maturity": "proven",
+  "portable": true,
+  "compatible_runtimes": [
+    "python",
+    "node",
+    "beam",
+    "go",
+    "rust",
+    "jvm"
+  ],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "the toolchain verifies symbol existence at edit time for every supported language",
+  "parent": "",
+  "version": "1.0.0"
+}

@@ -1,0 +1,65 @@
+{
+  "id": "spec_depth_selection",
+  "name": "Adaptive Spec Depth",
+  "owner": "modules/sdd_os",
+  "sovereign_question": "How much specification does THIS task actually need before the first edit?",
+  "scope": [
+    "spec tiering",
+    "spec gate"
+  ],
+  "non_scope": [
+    "writing the implementation",
+    "reviewing the result"
+  ],
+  "triggers": [
+    "feature",
+    "endpoint",
+    "migration",
+    "integration",
+    "agent",
+    "workflow",
+    "module",
+    "auth",
+    "billing"
+  ],
+  "anti_triggers": [
+    "typo",
+    "label",
+    "comment",
+    "rename"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source"
+  ],
+  "inputs": [
+    "the task description",
+    "the repo profile"
+  ],
+  "outputs": [
+    "tier T0-T3",
+    "the minimum sufficient spec set"
+  ],
+  "consumers": [
+    "Claude Code",
+    "modules/one_shot",
+    "Owner"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "medium",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "high",
+  "maturity": "proven",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "spec omission stops appearing in the incident record",
+  "parent": "",
+  "version": "1.0.0"
+}

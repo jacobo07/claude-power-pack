@@ -1,0 +1,62 @@
+{
+  "id": "architecture_reconstruction",
+  "name": "Architecture Reconstruction",
+  "owner": "modules/graphify",
+  "sovereign_question": "What is the real structure here, as opposed to the structure the names suggest?",
+  "scope": [
+    "architecture reconstruction",
+    "dependency mapping"
+  ],
+  "non_scope": [
+    "deciding what to build",
+    "specifying the change"
+  ],
+  "triggers": [
+    "architecture",
+    "legacy",
+    "reverse engineer",
+    "cross-cutting",
+    "unclear",
+    "lifecycle",
+    "ownership",
+    "undocumented"
+  ],
+  "anti_triggers": [
+    "single file",
+    "typo"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source"
+  ],
+  "inputs": [
+    "the repo tree",
+    "the coordinate graph"
+  ],
+  "outputs": [
+    "contract graph",
+    "uncertainty map"
+  ],
+  "consumers": [
+    "Claude Code",
+    "modules/sdd_os",
+    "Owner"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "high",
+  "context_cost": "high",
+  "operational_cost": "medium",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "critical",
+  "maturity": "developing",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "the repo carries a maintained architecture contract that is verified in CI",
+  "parent": "",
+  "version": "1.0.0"
+}

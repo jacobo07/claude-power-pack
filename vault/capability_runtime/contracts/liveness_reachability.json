@@ -1,0 +1,61 @@
+{
+  "id": "liveness_reachability",
+  "name": "Liveness and Reachability",
+  "owner": "modules/liveness/reachability.py",
+  "sovereign_question": "Is this shipped thing reachable from a live surface, or does it merely exist?",
+  "scope": [
+    "reachability",
+    "orphan detection"
+  ],
+  "non_scope": [
+    "judging value",
+    "judging correctness"
+  ],
+  "triggers": [
+    "done",
+    "ship",
+    "complete",
+    "module",
+    "wire",
+    "integrate",
+    "register"
+  ],
+  "anti_triggers": [
+    "draft",
+    "sketch"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source"
+  ],
+  "inputs": [
+    "the module tree",
+    "the live dispatch table"
+  ],
+  "outputs": [
+    "per-module reachability verdict",
+    "named standing debt"
+  ],
+  "consumers": [
+    "commands/liveness.md",
+    "Owner",
+    "done_gate"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "high",
+  "maturity": "proven",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "every module is registered at creation time by construction",
+  "parent": "",
+  "version": "1.0.0"
+}

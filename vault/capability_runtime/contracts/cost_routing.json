@@ -1,0 +1,58 @@
+{
+  "id": "cost_routing",
+  "name": "Model Cost Routing",
+  "owner": "modules/cost_collapse/router.py",
+  "sovereign_question": "What is the cheapest model that can still do this task correctly?",
+  "scope": [
+    "model selection",
+    "cost routing"
+  ],
+  "non_scope": [
+    "capability applicability",
+    "skill loading"
+  ],
+  "triggers": [
+    "format",
+    "lint",
+    "rename",
+    "search",
+    "summarize",
+    "test",
+    "document",
+    "commit"
+  ],
+  "anti_triggers": [
+    "architecture",
+    "security audit"
+  ],
+  "prerequisites": [],
+  "required_evidence": [],
+  "inputs": [
+    "the task description"
+  ],
+  "outputs": [
+    "route class",
+    "recommended model"
+  ],
+  "consumers": [
+    "Claude Code",
+    "modules/cognitive_os"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "medium",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "proven",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "model pricing converges so routing saves nothing",
+  "parent": "",
+  "version": "1.0.0"
+}

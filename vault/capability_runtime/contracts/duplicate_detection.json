@@ -1,0 +1,61 @@
+{
+  "id": "duplicate_detection",
+  "name": "Duplicate-to-Advantage Detection",
+  "owner": "modules/duplicate_to_advantage/d2a_engine.py",
+  "sovereign_question": "Does an owner already hold the territory this proposal claims?",
+  "scope": [
+    "overlap audit",
+    "duplicate ownership"
+  ],
+  "non_scope": [
+    "building the proposed system"
+  ],
+  "triggers": [
+    "new system",
+    "new module",
+    "new dataset",
+    "fabric",
+    "framework",
+    "propose",
+    "build",
+    "corpus"
+  ],
+  "anti_triggers": [
+    "bug fix",
+    "typo"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source"
+  ],
+  "inputs": [
+    "a proposal",
+    "the discovered module and family inventory"
+  ],
+  "outputs": [
+    "overlap verdict",
+    "best adjacent capability"
+  ],
+  "consumers": [
+    "hooks/d2a_gate.js",
+    "modules/spec_gate",
+    "Owner"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "medium",
+  "context_cost": "medium",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "critical",
+  "maturity": "mature",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "proposals stop measuring majority-owned across three consecutive audits",
+  "parent": "",
+  "version": "1.0.0"
+}

@@ -179,15 +179,27 @@ def evaluate(c: CapabilityContract, ctx: MissionContext) -> Applicability:
                "maturity_fit": round(maturity_fit, 3),
                "penalty": round(penalty, 3)}
 
+    # HR-APA-005 / HR-APA-014: mission relevance is NECESSARY, not merely
+    # weighted. The five benefit factors are constant per contract except
+    # relevance -- so without this, a capability whose standing risk is high
+    # outscores the threshold on EVERY mission and the stack becomes "activate
+    # everything for safety", the exact posture minimum-sufficient activation
+    # exists to refuse. A capability no trigger reached stays dormant however
+    # high its stake; a genuinely standing guard belongs on an always-on hook,
+    # not in a per-mission stack.
+    if not trig:
+        return Applicability(
+            c.id, Verdict.NOT_APPLICABLE, round(score, 3),
+            f"no trigger matched -- dormant by default (score={score:.2f} "
+            "is standing risk, not mission relevance)", c.escalates, factors)
+
     high_stakes = FAILURE_SCALE[FailureRisk(c.failure_risk_if_omitted)] >= 3
     if score >= MANDATORY_SCORE and high_stakes:
         v, why = Verdict.MANDATORY, "high omission risk with a strong match"
     elif score >= RECOMMENDED_SCORE:
         v, why = Verdict.RECOMMENDED, "net benefit exceeds activation cost"
-    elif trig:
-        v, why = Verdict.AVAILABLE_ON_TRIGGER, "trigger matched, benefit marginal"
     else:
-        v, why = Verdict.NOT_APPLICABLE, "no trigger matched and no standing risk"
+        v, why = Verdict.AVAILABLE_ON_TRIGGER, "trigger matched, benefit marginal"
 
     return Applicability(c.id, v, round(score, 3),
                          f"{why} (score={score:.2f})", c.escalates, factors)

@@ -1,0 +1,62 @@
+{
+  "id": "output_quality_gate",
+  "name": "Output Quality and Done Gate",
+  "owner": "modules/done_gate",
+  "sovereign_question": "Has this been observed to work, or only asserted to work?",
+  "scope": [
+    "done gating",
+    "output scoring"
+  ],
+  "non_scope": [
+    "writing the fix",
+    "choosing the approach"
+  ],
+  "triggers": [
+    "done",
+    "complete",
+    "ready",
+    "ship",
+    "fixed",
+    "works"
+  ],
+  "anti_triggers": [
+    "draft",
+    "in progress",
+    "exploring"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source",
+    "tests"
+  ],
+  "inputs": [
+    "the deliverable",
+    "observed test output"
+  ],
+  "outputs": [
+    "quality score",
+    "pass or block with the failing check"
+  ],
+  "consumers": [
+    "Claude Code",
+    "Owner",
+    "hooks/output_contract_stop.js"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "critical",
+  "maturity": "proven",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "never -- the Reality Contract depends on it",
+  "parent": "",
+  "version": "1.0.0"
+}
