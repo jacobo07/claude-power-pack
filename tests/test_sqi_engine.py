@@ -199,8 +199,29 @@ def test_reconcile_finds_orphans_in_this_repository(report):
     # The founding finding, reproduced from the disk rather than from a fixture.
     assert report.authored_count > 90
     assert report.orphaned_count > 0
-    assert report.orphaned_ratio is not None and report.orphaned_ratio > 0.9
-    assert report.test_file_reach is not None and report.test_file_reach < 0.10
+
+    # Held as ABSOLUTES, not as a floor on the ratio. reconcile.py:117-119 states
+    # the doctrine this once violated: "The orphan count is an ABSOLUTE, because a
+    # ratio can be improved by growing the denominator and an absolute cannot."
+    # Asserting `orphaned_ratio > 0.9` and `test_file_reach < 0.10` demanded the
+    # repository STAY broken -- wiring an orphaned test file failed the suite, so
+    # the finding was pinned as a floor no amount of real repair could clear.
+    # Observed 2026-08-05: 111 orphaned of 144 authored (0.771), 33 reached
+    # (0.229). The founding >0.9 is stale by roughly nineteen files that have
+    # since been reached. The loss is still enormous and still the point.
+    assert report.orphaned_count > 50
+
+    # What must hold permanently is the MECHANISM: the ratios are derived from the
+    # absolutes and the partition is exhaustive. That cannot be satisfied by the
+    # repository decaying, and it falls the moment the arithmetic stops closing.
+    if report.orphaned_ratio is not None:
+        assert report.orphaned_ratio == pytest.approx(
+            report.orphaned_count / report.authored_count)
+    if report.test_file_reach is not None:
+        assert report.test_file_reach == pytest.approx(
+            len(report.reached_files) / report.authored_count)
+        assert len(report.reached_files) + report.orphaned_count == (
+            report.authored_count)
 
 
 def test_reconcile_reports_authoritative_reach_as_unknown_not_zero(report):
