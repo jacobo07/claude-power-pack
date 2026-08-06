@@ -146,17 +146,26 @@ def compile_residual(fired: list, universe=MOVES) -> dict:
                       "its unblock phrase, and close with the Owner's single next move."}
 
 
-def gate_new_rule(rule: FiredRule) -> dict:
+def gate_new_rule(rule: FiredRule, corpus: list | None = None) -> dict:
     """The ONLY check rule-addition needs: does this rule forbid the residual?
 
     Local, one rule at a time -- no global re-ranking, which is what keeps rules
     addable by the bug that caused them.
+
+    When a `corpus` is supplied the verdict also carries a minimality reading. That
+    reading NEVER changes `admitted`: admission is a constitutional question (may this
+    rule exist?) and minimality is an economic one (does it earn its place?). Folding
+    the second into the first would let a redundant-but-legitimate rule be refused by a
+    gate that was never given that authority.
     """
     if RESIDUAL in (rule.forbids or []):
         return {"admitted": False,
                 "reason": "a rule may not forbid the residual move -- it is the one "
                           "move guaranteed legal under every join"}
-    return {"admitted": True}
+    out = {"admitted": True}
+    if corpus is not None:
+        out["minimality"] = minimality(rule, corpus)
+    return out
 
 
 def classify_empty_class(class_name: str, rules: list, rejects: list) -> dict:
@@ -197,6 +206,105 @@ def audit_corpus() -> dict:
             "mandates": counts[MANDATE], "unknowns": counts[UNKNOWN][:10]}
 
 
+# --------------------------------------------------------------------------- #
+# Minimality -- does a rule shrink the legal move set, or only lengthen the corpus?
+# --------------------------------------------------------------------------- #
+# A governance corpus grows monotonically: every incident may add a rule, and nothing
+# ever asks whether the new rule forbids anything the corpus did not already forbid.
+# The join machinery above answers that exactly -- a rule is CONSTRAINING when it
+# removes a move that survived the corpus join, and REDUNDANT when it does not.
+#
+# REDUNDANT is deliberately NOT a rejection. Two incidents can warrant two rules that
+# forbid the same move for different triggers, and the estate's rules are born from
+# incidents rather than from design. This reports; the Owner decides. Making it a
+# veto would create the second quality authority Sprint 1 was told not to build.
+CONSTRAINING = "CONSTRAINING"
+REDUNDANT = "REDUNDANT"
+UNMEASURABLE = "UNMEASURABLE"
+
+
+def _declared_forbids(rule, universe=MOVES) -> list:
+    """The move classes a rule explicitly declares. Prose is NOT parsed into moves.
+
+    Inferring a forbidden object from wording is the exact guess `compile_residual`
+    returns UNDECIDABLE rather than make -- so an undeclared rule is unmeasurable here
+    too, never silently treated as forbidding nothing. A rule that forbids nothing is
+    redundant by definition, and that answer would be an artifact of the vocabulary
+    rather than a fact about the corpus.
+    """
+    raw = getattr(rule, "forbids", None) or []
+    return [m for m in raw if m in universe]
+
+
+def minimality(candidate: FiredRule, corpus: list, universe=MOVES) -> dict:
+    """Does `candidate` remove a move the rest of the corpus leaves legal?"""
+    cand = _declared_forbids(candidate, universe)
+    if not cand:
+        return {"verdict": UNMEASURABLE, "rule_id": candidate.rule_id,
+                "adds": [], "already_forbidden_by": {},
+                "reason": "the candidate declares no `forbids`, so whether it "
+                          "constrains anything cannot be measured -- declare the move "
+                          "classes it removes"}
+
+    others = [r for r in corpus if getattr(r, "rule_id", None) != candidate.rule_id]
+    covered = {}
+    for r in others:
+        for m in _declared_forbids(r, universe):
+            covered.setdefault(m, []).append(getattr(r, "rule_id", "?"))
+
+    adds = [m for m in cand if m not in covered]
+    if adds:
+        return {"verdict": CONSTRAINING, "rule_id": candidate.rule_id,
+                "adds": sorted(adds),
+                "already_forbidden_by": {m: covered[m] for m in cand if m in covered},
+                "reason": f"removes {sorted(adds)} from the legal set; the corpus did "
+                          f"not already forbid {'it' if len(adds) == 1 else 'them'}"}
+    return {"verdict": REDUNDANT, "rule_id": candidate.rule_id, "adds": [],
+            "already_forbidden_by": {m: covered[m] for m in cand},
+            "reason": "every move this rule forbids is already forbidden by the "
+                      "corpus. It may still be worth keeping -- a second incident is "
+                      "a reason for a second rule -- but it does not shrink the legal "
+                      "set, so it cannot be justified on minimality grounds."}
+
+
+def audit_minimality(universe=MOVES) -> dict:
+    """Corpus-wide minimality. Absolute counts only, never a ratio.
+
+    A ratio is satisfied by shrinking its denominator (`feedback_never_gate_on_a_ratio`),
+    and a coverage percentage here would improve simply by deleting rules.
+    """
+    from modules.rule_compiler.parser import load_corpus
+    rules = list(load_corpus())
+    declared = [r for r in rules if _declared_forbids(r, universe)]
+    undeclared = [getattr(r, "rule_id", "?") for r in rules
+                  if not _declared_forbids(r, universe)]
+
+    if not declared:
+        return {"verdict": UNMEASURABLE, "total": len(rules),
+                "declared": 0, "undeclared": len(undeclared),
+                "redundant": [], "constraining": [],
+                "reason": f"{len(rules)} compiled rules and NONE declares `forbids`. "
+                          "Minimality is unmeasurable over this corpus -- not "
+                          "satisfied, not violated. The join in `compile_residual` "
+                          "runs on declared move classes, so an undeclared corpus "
+                          "cannot be asked whether any rule constrains anything."}
+
+    redundant, constraining = [], []
+    for r in declared:
+        fr = FiredRule(rule_id=getattr(r, "rule_id", "?"),
+                       forbids=_declared_forbids(r, universe))
+        verdict = minimality(fr, declared, universe)["verdict"]
+        (redundant if verdict == REDUNDANT else constraining).append(fr.rule_id)
+
+    return {"verdict": REDUNDANT if redundant else CONSTRAINING,
+            "total": len(rules), "declared": len(declared),
+            "undeclared": len(undeclared),
+            "redundant": redundant, "constraining": constraining,
+            "reason": f"{len(declared)} rule(s) declare a forbidden object; "
+                      f"{len(redundant)} forbid nothing the rest of the corpus does "
+                      f"not already forbid. {len(undeclared)} rule(s) are unmeasurable."}
+
+
 def load_cases(path: str) -> list:
     raw = Path(path).read_text(encoding="utf-8-sig", errors="replace")
     return json.loads(raw.lstrip("﻿"))
@@ -215,10 +323,18 @@ def main(argv=None) -> int:
     ap.add_argument("--cases", default=str(_PP_ROOT / "vault" / "hard_rules" /
                                            "conflict_cases.json"))
     ap.add_argument("--audit-corpus", action="store_true")
+    ap.add_argument("--audit-minimality", action="store_true",
+                    help="does any rule shrink the legal move set, or only the corpus?")
     args = ap.parse_args(argv)
 
     if args.audit_corpus:
         print(json.dumps(audit_corpus(), ensure_ascii=False, indent=2))
+        return 0
+    if args.audit_minimality:
+        # Exit 0 on UNMEASURABLE: an unmeasurable corpus is a gap in what the rules
+        # declare, not a governance failure, and failing the build for it would
+        # pressure the next author to declare a forbidden object they cannot justify.
+        print(json.dumps(audit_minimality(), ensure_ascii=False, indent=2))
         return 0
     rows = [run_case(c) for c in load_cases(args.cases)]
     print(json.dumps(rows, ensure_ascii=False, indent=2))
