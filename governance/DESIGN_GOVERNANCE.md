@@ -120,5 +120,53 @@ visually; VQ-8 exists so that cannot recur.
 - **VQ-8 verdict:** a SPA visual done-gate that relies on `curl` alone FAILS VQ-8. Design
   source of record: `vault/docs/RENDER_SERVICE_DESIGN_2026-07-17.md` (KobiiCraft Core).
 
+## Section 8 — Third-Party Components (CDICF, mechanical)
+A component that came from outside this repo is a legal and operational liability before it
+is a visual one. Three clauses, each backed by an exit code rather than a habit. Owner:
+`modules/cdicf/` (manifest → emit → install → select).
+
+### 8.1 Reuse-first — ask before you build, and accept "build nothing"
+Before writing a new component, run the selector against the catalogue:
+`node modules/cdicf/selector.js --intent "<what you need>" --candidates <dir>`.
+- Exit `0` RECOMMEND · `21` REQUIRE_APPROVAL · `20` ABSTAIN. **Non-zero is not a failure**;
+  it means *not an unattended install*.
+- An ABSTAIN carries a `remedy_code` you branch on — `REMEDY_BUILD_NOT_ADOPT` is the
+  engine telling you this is a genuine gap, and building is then the correct answer.
+  `REMEDY_FIX_UX_FIRST`, `REMEDY_BUDGET`, `REMEDY_ACCESSIBILITY` and `REMEDY_CHECK_LICENSE`
+  each mean something different; do not treat them as one "no".
+- Adopting a component you did not evaluate is not reuse-first, it is reuse-blind. The
+  ranking explains every position in impact order — read it, then decide.
+
+### 8.2 Provenance is mandatory — no anonymous code on a surface
+No third-party component enters a visual surface without a Component Manifest
+(`modules/cdicf/component_manifest.schema.json`), and provenance travels **with** the
+artifact into the registry entry, never in a side document that drifts.
+- `copyright_holder`, `commit_sha`, `license_tier` and `license_fingerprint` are required.
+  A `VERIFIED` confidence claim on an unpinned artifact is refused (INV-04) — there is no
+  artifact for the claim to be about.
+- A redistribution-prohibited component is refused at **two** independent points: the
+  emitter refuses to emit it (exit 5) and the installer refuses to land it (exit 5). The
+  posture is *derived* from the licence tier, never read from a field a hand-edited manifest
+  controls. An entry can reach a project by a path that never went through the emitter.
+- Restricted components are reachable only as **code-free upstream pointers**
+  (`--reference-only`, D-011): the consumer installs from the upstream, and no byte of the
+  component travels through CPP. Renaming external code to obscure its origin is prohibited
+  outright, in the internal and the public path alike.
+- Installing is transactional. A killed install recovers to its prior bytes; a successful
+  one is reversible; declared dependencies are resolved before any write, because a
+  checksum-valid component whose dependencies are absent is the Scaffold Illusion with a
+  *passing* verification step (`T-DECLARED-BUT-UNRESOLVED-DEPENDENCY-001`).
+
+### 8.3 A tour is a last resort, never a patch over a broken interface
+An onboarding overlay laid over an unresolved usability problem conceals the problem and
+adds a component. The selector refuses it: declare the surface's open findings in
+`unresolved_ux_findings` and a guidance intent returns `REMEDY_NOT_A_COMPONENT` /
+`REMEDY_FIX_UX_FIRST` instead of a ranking.
+- Resolve the findings, then re-ask. A tour is worth installing over an interface that
+  already works, and worth nothing over one that does not.
+- This is the same doctrine as Section 3: identity and comprehensibility live in the
+  information system, and no amount of added surface fixes a fault underneath it.
+
 ## Applies to
-Any pull request or deploy that adds or restyles a user-facing visual surface.
+Any pull request or deploy that adds or restyles a user-facing visual surface, and any
+adoption of a third-party component into one (Section 8).
