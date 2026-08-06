@@ -241,6 +241,53 @@ STOP #1; `--resolve <plan> --status RESOLVED --reason "…"` to write the transi
 gate is advisory on purpose: refusing to open a STOP #1 would block the audit work that
 produces the estate's best evidence. What it refuses is opening one *in silence*.
 
+## T-SYS-EXIT-IN-MODULE-SCOPE-001 — a module that exits at import time disarms every runner that collects it
+
+**Trap.** A file whose body runs at module scope and ends in `sys.exit()` corrupts any
+test runner that imports it during collection. pytest's default `python_files` includes
+`*_test.py`, so nine scratch milestone scripts under `_logs/` were imported by bare
+`pytest`; the assertion-rewriting importer executed each body, `SystemExit` propagated,
+and the entire run aborted with `INTERNALERROR` before a single test ran.
+
+**Why it stayed invisible.** The damage is silent by construction. The estate's guardian
+had been reporting `BASELINE_REGRESSION` since 2026-07-12 and nobody saw it, because
+nothing ran the guardian on a gate. Test File Reach fell 2.97% → 2.1% while the authored
+surface grew 101 → 143: the numbers moved in the direction that looks like *neglect*, not
+like *breakage*, so they invited no investigation. 340 authored tests were never executed
+by the canonical invocation for three weeks.
+
+**Detection.** `grep -rn "sys.exit" --include="*_test.py"` — and more generally, any
+top-level statement in a file matching the runner's discovery glob. A scratch script is
+not made safe by living in a log directory; discovery globs do not respect intent.
+
+**Prevention.** Never call `sys.exit()` outside an explicitly marked entry point
+(`if __name__ == "__main__":`). Where scratch scripts must keep a runner-matching name,
+exclude their tree with `collect_ignore_glob` — never by narrowing `testpaths` onto the
+directories that currently pass, which buys a green number by shrinking the denominator.
+
+## T-CANON-INVOCATION-SILENT-FAIL-001 — zero tests run is indistinguishable from zero tests authored
+
+**Trap.** A suite that aborts during collection reports 0 tests run. Downstream, that is
+arithmetically identical to a project with 0 tests authored, and every coverage figure
+derived from it is a masked division by zero wearing a plausible value. The denominator
+looks fine precisely because the numerator never arrived.
+
+**Why this compounds.** SQI treats the zero-argument default — bare `pytest` — as the
+authoritative oracle whenever no CI job exists, and this repository has no
+`.github/workflows`. So the one invocation that had been disarmed was the one invocation
+that counted. The surviving reading came from a *documentation*-sourced `pytest tests/`,
+which the ontology explicitly ranks as never authoritative. The estate was measuring
+itself with the instrument it had already declared untrustworthy.
+
+**Gate.** Treat pytest exit code 3 (`INTERNALERROR`) and any non-empty
+`collection_errors` as `COLLECTION_FAILURE`, and refuse to report coverage at all. A
+collection failure must never be folded into a coverage percentage — it is a statement
+that the measurement did not happen, not a low measurement. Sister of
+`T-PLAUSIBLE-BUT-WRONG-001`: here the plausible number is zero.
+
+**Sealed 2026-08-06** after the repair took reach 2.1% → 23.1%, executed cases 86 → 426
+across 2 roots, with the authored denominator unchanged at 143 → 143.
+
 ## T-PLAUSIBLE-BUT-WRONG-001 — a mechanism that returns a plausible number without being able to demonstrate it is the true one is a broken observer
 
 **Trap.** The dangerous failure is not the crash. It is the mechanism that keeps
@@ -5378,3 +5425,5 @@ proxy, or summariser. Tagged `#CROSS-PROJECT`.
 
 **Origin:** decision D-008 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`;
 superseded value retained in `vendor/NOTICE.md` as evidence rather than erased.
+
+- **UKDL-OSA-2026-08-06T14:13:13Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
