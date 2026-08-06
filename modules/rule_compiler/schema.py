@@ -61,6 +61,63 @@ class Form(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class Binding(str, Enum):
+    """WHERE a rule binds -- the consequence, not the seriousness.
+
+    `severity` says how bad the incident was. It does not say whether the
+    rule stops a build, stops a deploy, or merely advises, so a
+    documentation-grade rule and a deploy blocker are indistinguishable in
+    the compiled DB and the digest cannot route by consequence.
+
+    UNDECLARED and UNRECOGNIZED are states, never levels, and neither is a
+    rejection reason. 149 rules bind today and declare nothing; making the
+    field required would inert the whole corpus -- the disarmed kill switch
+    this package exists because of. Absence is reported, never enforced.
+
+    They are also kept apart on purpose. Folding an unknown value into
+    UNDECLARED would let a typo read as "nobody has declared this yet",
+    which is the shape where an unrecognised idiom scores zero and zero
+    never falls.
+    """
+    ADVISORY = "ADVISORY"
+    WARN = "WARN"
+    REQUIRE_EVIDENCE = "REQUIRE_EVIDENCE"
+    BLOCK_BUILD = "BLOCK_BUILD"
+    BLOCK_DEPLOY = "BLOCK_DEPLOY"
+    BLOCK_RUNTIME_ACTION = "BLOCK_RUNTIME_ACTION"
+    REQUIRE_HUMAN_AUTHORIZATION = "REQUIRE_HUMAN_AUTHORIZATION"
+    EMERGENCY_STOP = "EMERGENCY_STOP"
+    UNDECLARED = "UNDECLARED"
+    UNRECOGNIZED = "UNRECOGNIZED"
+
+
+#: The declarable ladder, weakest consequence first. UNDECLARED and
+#: UNRECOGNIZED are deliberately absent -- they are not levels.
+BINDING_LADDER: tuple[Binding, ...] = (
+    Binding.ADVISORY,
+    Binding.WARN,
+    Binding.REQUIRE_EVIDENCE,
+    Binding.BLOCK_BUILD,
+    Binding.BLOCK_DEPLOY,
+    Binding.BLOCK_RUNTIME_ACTION,
+    Binding.REQUIRE_HUMAN_AUTHORIZATION,
+    Binding.EMERGENCY_STOP,
+)
+_LADDER_BY_NAME = {b.value: b for b in BINDING_LADDER}
+
+
+def read_binding(raw: str) -> Binding:
+    """Text -> Binding. Absent is UNDECLARED; present-but-unknown is
+    UNRECOGNIZED. The corpus writes `BLOCK-DEPLOY`, `block deploy` and
+    `**BLOCK_DEPLOY**`, so separators and emphasis are normalised -- but
+    only those. Anything still unmatched is surfaced, not guessed."""
+    text = (raw or "").strip().strip("*_`").strip()
+    if not text:
+        return Binding.UNDECLARED
+    key = re.sub(r"[\s\-]+", "_", text).upper()
+    return _LADDER_BY_NAME.get(key, Binding.UNRECOGNIZED)
+
+
 class Reason(str, Enum):
     """Every rejection names one of these. No unexplained rejects."""
     NO_ENFORCEABLE_FORM = "no_enforceable_form"
@@ -118,12 +175,18 @@ class Rule:
     evidence: str = ""
     exception: str = ""
     severity: str = ""
+    enforcement: str = ""
     body: str = ""
     rejections: list[Reason] = field(default_factory=list)
 
     @property
     def valid(self) -> bool:
         return not self.rejections
+
+    @property
+    def binding(self) -> Binding:
+        """Where this rule binds. Never participates in `valid`."""
+        return read_binding(self.enforcement)
 
     def as_dict(self) -> dict:
         return {
@@ -136,6 +199,8 @@ class Rule:
             "evidence": self.evidence,
             "exception": self.exception,
             "severity": self.severity,
+            "enforcement": self.enforcement,
+            "binding": self.binding.value,
             "valid": self.valid,
             "rejections": [r.value for r in self.rejections],
         }
@@ -222,3 +287,33 @@ def find_boilerplate_stops(rules: list[Rule]) -> frozenset[str]:
         if s:
             seen[s] = seen.get(s, 0) + 1
     return frozenset(s for s, n in seen.items() if n >= 2)
+
+
+def binding_coverage(rules: list[Rule]) -> dict:
+    """Which rules declare where they bind, and which do not.
+
+    Counts and NAMED ids only -- never a percentage. A ratio of declared
+    rules is satisfied by deleting undeclared ones, so it can improve
+    while the corpus gets worse; a named list can only shorten because a
+    rule actually declared.
+
+    `unrecognized` is reported apart from `undeclared` because they are
+    different defects with different fixes: one is a rule nobody has
+    classified, the other is a rule someone classified wrongly, and only
+    the second is already someone's mistake to correct.
+    """
+    by_binding: dict[str, list[str]] = {}
+    for r in rules:
+        by_binding.setdefault(r.binding.value, []).append(r.rule_id)
+    for ids in by_binding.values():
+        ids.sort()
+    return {
+        "total": len(rules),
+        "declared": sorted(
+            rid for b, ids in by_binding.items()
+            if b in _LADDER_BY_NAME for rid in ids
+        ),
+        "undeclared": by_binding.get(Binding.UNDECLARED.value, []),
+        "unrecognized": by_binding.get(Binding.UNRECOGNIZED.value, []),
+        "by_binding": {b: len(ids) for b, ids in sorted(by_binding.items())},
+    }

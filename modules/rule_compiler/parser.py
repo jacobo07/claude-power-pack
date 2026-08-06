@@ -43,14 +43,32 @@ _FIELD_ALIASES: dict[str, str] = {
     "EXCEPCIÓN": "exception",
     "EXCEPTION": "exception",
     "SEVERITY": "severity",
+    # Where the rule binds, as opposed to how bad the incident was.
+    # Four spellings because the two archives and the Spanish-language
+    # rules each reach for a different word; normalising here keeps the
+    # gate judging one shape, exactly as the accent aliases above do.
+    "ENFORCEMENT": "enforcement",
+    "ENFORCEMENT_LEVEL": "enforcement",
+    "BINDING": "enforcement",
+    "NIVEL": "enforcement",
 }
 # The corpus writes fields as 'TRIGGER:', '**ACCION**:', '- ORIGEN:' and
 # -- the one that bit -- 'ACCION (STOP):' with a parenthetical qualifier
 # between the name and the colon. Without the optional (...) group, every
 # ACCION line silently fails to match and its body is swallowed into the
 # preceding TRIGGER, making ~75 well-formed rules look like stop_missing.
+#
+# Alternation is ordered LONGEST FIRST. Python's `|` is first-match, not
+# longest-match, so a short alias that prefixes a longer one wins and
+# eats it: with ENFORCEMENT before ENFORCEMENT_LEVEL, the line
+# `ENFORCEMENT_LEVEL: BLOCK_DEPLOY` matches ENFORCEMENT, then the `_` is
+# swallowed by the emphasis class, then `LEVEL` is not a colon -- so the
+# line fails entirely and its text is absorbed into the preceding field.
+# That is the same silent-swallow defect the `(...)` qualifier group
+# above was added to fix, and it is invisible without this ordering.
 _FIELD_RE = re.compile(
-    r"^[-*_`\s]*(" + "|".join(_FIELD_ALIASES) + r")"
+    r"^[-*_`\s]*(" + "|".join(sorted(_FIELD_ALIASES, key=len, reverse=True))
+    + r")"
     r"\s*(?:\([^)]*\))?[*_`\s]*:\s*(.*)$",
     re.I,
 )
@@ -103,6 +121,7 @@ def parse_archive(path: Path, source: str) -> list[Rule]:
             evidence=fields.get("evidence", ""),
             exception=fields.get("exception", ""),
             severity=fields.get("severity", ""),
+            enforcement=fields.get("enforcement", ""),
             body=raw,
         ))
     return rules

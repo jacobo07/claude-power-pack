@@ -8,6 +8,9 @@
               the digest points at)
   --list      list every valid rule id + title
   --rejects   print the rejection report to stdout
+  --binding   which rules declare WHERE they bind (advisory / block-build
+              / block-deploy / ...) and which declare nothing -- the
+              named drill-down the digest's binding section points at
 
 Sealed by the AKOS macro audit (2026-07-12).
 """
@@ -166,6 +169,42 @@ def cmd_rejects() -> int:
     return 0
 
 
+def cmd_binding() -> int:
+    """Exit 1 on an UNRECOGNISED level, 0 otherwise.
+
+    Undeclared rules do NOT fail: 149 of 149 declare nothing today, so
+    failing on absence would make the command red forever and it would
+    stop being read -- the fate of every alarm that is always on. An
+    unrecognised level is different: someone tried to declare and got it
+    wrong, and that is a repair with a known owner.
+    """
+    from modules.rule_compiler.schema import BINDING_LADDER, binding_coverage
+    res = compile_rules()
+    cov = binding_coverage(res.valid)
+    print(f"corpus       : {cov['total']} binding rules")
+    print(f"  declared   : {len(cov['declared'])}")
+    print(f"  undeclared : {len(cov['undeclared'])}")
+    print(f"  unrecognised: {len(cov['unrecognized'])}")
+    print("\nladder (weakest consequence first): "
+          + " < ".join(b.value for b in BINDING_LADDER))
+    if cov["by_binding"]:
+        print("\ndistribution:")
+        for level, n in cov["by_binding"].items():
+            print(f"  {level:<28} {n}")
+    if cov["unrecognized"]:
+        print("\nUNRECOGNISED -- declared a level this compiler does not "
+              "know; a typo'd consequence is not a consequence:")
+        for rid in cov["unrecognized"]:
+            print(f"  {rid}")
+    if cov["undeclared"]:
+        print(f"\nNOT DECLARED ({len(cov['undeclared'])}) -- treat as "
+              "blocking until each declares. An undeclared consequence is "
+              "not a mild one:")
+        for rid in cov["undeclared"]:
+            print(f"  {rid}")
+    return 1 if cov["unrecognized"] else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         description="Compile hard rules into a validated DB + a "
@@ -177,7 +216,10 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--class", dest="klass", metavar="CLASS")
     g.add_argument("--list", action="store_true")
     g.add_argument("--rejects", action="store_true")
+    g.add_argument("--binding", action="store_true")
     a = p.parse_args(argv)
+    if a.binding:
+        return cmd_binding()
     if a.compile:
         return cmd_compile()
     if a.klass:

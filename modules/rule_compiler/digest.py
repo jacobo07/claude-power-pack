@@ -22,7 +22,7 @@ away.
 """
 from __future__ import annotations
 
-from .schema import Rule
+from .schema import Rule, binding_coverage
 
 DIGEST_MAX_BYTES = 4096
 
@@ -261,6 +261,35 @@ def build_digest(valid: list[Rule], rejected: list[Rule],
             "to ROUTER_CONTRACTED)",
             " ".join(reopened),
         ]
+
+    # Binding point. A rule says how bad the incident was (`severity`) but
+    # not what it does to the agent, so the router cannot tell an advisory
+    # apart from a deploy blocker. The distribution is bounded (<=10 keys)
+    # and goes inline; the named ids do not, for the same measured reason
+    # the table enumerates classes instead of rule ids.
+    cov = binding_coverage(valid)
+    if cov["unrecognized"]:
+        lines += [
+            "",
+            "## BINDING POINT UNRECOGNISED (a rule declares a level this "
+            "compiler does not know -- a typo'd consequence is not a "
+            "consequence; repair these before trusting the routing)",
+            " ".join(cov["unrecognized"]),
+        ]
+    if cov["undeclared"]:
+        lines += [
+            "",
+            f"## BINDING POINT NOT DECLARED ({len(cov['undeclared'])} of "
+            f"{cov['total']} binding rules) -- these do not say whether they "
+            "advise, block a build, block a deploy or stop the runtime. "
+            "Treat every one as blocking until it declares: an undeclared "
+            "consequence is not a mild one.",
+            f"    {cli_hint} --binding",
+        ]
+    if cov["declared"]:
+        dist = "  ".join(f"{b}={n}" for b, n in cov["by_binding"].items()
+                         if b not in ("UNDECLARED", "UNRECOGNIZED"))
+        lines += ["", f"Declared binding points: {dist}"]
 
     unreachable = sorted({r.rule_id for r in valid} - covered)
     if unreachable:
