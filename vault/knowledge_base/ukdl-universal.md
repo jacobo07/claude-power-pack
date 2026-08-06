@@ -5286,3 +5286,95 @@ reporters. Tagged `#CROSS-PROJECT` so PP propagation picks it up.
 - **UKDL-OSA-2026-08-04T21:23:30Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
 
 - **UKDL-OSA-2026-08-04T21:24:58Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+- **UKDL-OSA-2026-08-05T22:14:12Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
+
+---
+
+### T-LICENSE-FILENAME-CASE-SENSITIVITY-001 (2026-08-06, CDICF A1)
+
+**Trap:** `fs.existsSync('LICENSE')` returns true for a file named `license` on
+Windows, because NTFS is case-insensitive. A fixed-name probe therefore looks
+correct on the developer's machine and returns `UNKNOWN` on Linux, where the
+same repository is plainly licensed. The failure appears only in CI or on a
+contributor's box, on code that was tested and passed.
+
+Three of the five CDICF upstreams do not name the file `LICENSE`:
+`react-bits` uses `LICENSE.md` (plain `LICENSE` returns HTTP 404),
+`tailark/blocks` uses `LICENCE.md` (British spelling), and `driver.js` uses
+lowercase `license` with no extension, on branch `master` rather than `main`.
+
+**General form:** any probe for a conventionally-named file must ENUMERATE the
+directory and match case-insensitively by pattern, never test a fixed list of
+exact names. Sort the matches before hashing — otherwise an artifact's digest
+depends on the order the filesystem happened to return entries in, and the same
+content fingerprints differently on two machines.
+
+**Cross-project:** applies to every repo that looks for `LICENSE`, `README`,
+`CHANGELOG`, `Dockerfile`, `Makefile`, or a dotfile by exact name. Tagged
+`#CROSS-PROJECT`.
+
+**Origin:** commit `e5aff74`; `findLicenseFiles` in `lib/license_gate.js`,
+regression pinned by `tests/license_gate_restrictions.test.js`
+`V-LICENSE-FILE-01..05`. Confirmed on real input 2026-08-06: both `LICENCE.md`
+and lowercase `license` were located at their pinned commits.
+
+---
+
+### T-LICENSE-BADGE-VS-TEXT-001 (2026-08-06, CDICF Paso 1)
+
+**Trap:** a licence badge on a README, or a hosting platform's licence field,
+carries the licence NAME and nothing else. It does not carry the copyright
+holder. An attribution notice cannot be written from it, and a row marked
+resolved on badge evidence is not resolved.
+
+`tailark/blocks` displayed an MIT badge for weeks of this audit while the holder
+— `Irung` — existed only in the body of `LICENCE.md`. Worse, a badge cannot show
+an appended clause: `react-bits` is honestly described as MIT by its own package
+metadata, and its `LICENSE.md` withdraws the right to redistribute.
+
+**General form:** legal facts come from the licence FILE BODY at a pinned
+commit. Metadata, badges, and package-manager fields are hints that tell you
+which file to open. Record the confidence level and the artefact actually read;
+`OBSERVED` from a badge and `VERIFIED` from the text are different claims and
+must not share a column value.
+
+**Cross-project:** applies to every dependency audit, SBOM generation, vendor
+ledger, and `NOTICE` file in the estate. Tagged `#CROSS-PROJECT`.
+
+**Origin:** commit `1748670`; `vendor/NOTICE.md` gained a `Confidence` field
+distinguishing the two. Two rows sat blocked on this for a full session rather
+than being filled from the badge.
+
+---
+
+### T-FINGERPRINT-FROM-RENDERED-MARKDOWN-001 (2026-08-06, CDICF D-008)
+
+**Trap:** hashing text that reached you through a markdown conversion produces a
+digest that looks authoritative and does not match the repository bytes. The
+conversion can reflow whitespace — `assistant-ui`'s licence arrived with its
+line wrapping collapsed — and whitespace is inside the hash. The resulting value
+fires a false positive on the FIRST legitimate drift check, on a file that never
+changed, which is worse than having no fingerprint at all: it trains the reader
+to dismiss the alarm.
+
+**Proved, not theorised.** The `react-bits` fingerprint published in `998d52c`
+from relayed text was `f4cfa839…`. The value measured from the raw blob at the
+pinned commit is `cde2d145…`. Running `license_gate.js --expect f4cfa839…`
+against the real licence exits 4 with LICENSE DRIFT on a licence that is
+byte-identical to the one it was derived from.
+
+**General form:** when a fetch cannot guarantee byte-identical content, record
+the absence explicitly (`PENDING_CLONE`) rather than a computed value. Then fix
+the transport instead of the number — here, requesting the raw blob at the
+pinned commit and writing it to disk unmodified removed the conversion from the
+path entirely and made every fingerprint measurable in one pass. An honest gap
+is cheap to close later; a plausible wrong value is not, because nobody knows to
+go back for it.
+
+**Cross-project:** applies to checksum verification, SRI hashes, lockfile
+digests, and any integrity check whose input was fetched through a renderer,
+proxy, or summariser. Tagged `#CROSS-PROJECT`.
+
+**Origin:** decision D-008 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`;
+superseded value retained in `vendor/NOTICE.md` as evidence rather than erased.

@@ -10,8 +10,9 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | **A1** Hardened license gate + NOTICE schema | HARDEN | **SEALED** | `998d52c` + `e5aff74` (filename discovery by pattern); 31/31 tests; real react-bits input → `SOURCE_AVAILABLE_RESTRICTED` / `prohibited`, exit 5 |
 | **A1b** Legal debt closed — holders, canonicality, commit pins | HARDEN | **SEALED** | `1748670`; all 5 commits pinned; Tailark holder = Irung; driver.js confirmed a rename redirect |
 | **A2** Component Manifest schema + validator | NEW | **SEALED** | `modules/cdicf/`; 21/21 tests; CLI verified both directions; 6 invariants enforced, INV-02 blocks forking a prohibited component |
+| **A1c** License fingerprints measured from pinned commits | HARDEN | **SEALED** | All 5 measured from raw blobs; D-008 proved — the superseded react-bits value fires a false `--expect` drift on an unchanged licence |
 | **A2b** Mirror Ledger emitted from the gate rather than hand-written | NEW | NOT STARTED | — |
-| **A3** Registry producer + redistribution guard | NEW | NOT STARTED | — |
+| **A3** Registry producer + redistribution guard | NEW | **SEALED** | `modules/cdicf/registry_emitter.js`; 16/16 tests; PROHIBITED refused at exit 5 with zero bytes written; posture derived from the tier, never read from the manifest |
 | **A4** Selection + Abstention engine | NEW | NOT STARTED | — |
 | **A5** Evaluation corpus (~40 scenarios) | NEW | NOT STARTED | — |
 | E1 `DESIGN.md.template` +9 decisions | EXTEND | NOT STARTED | — |
@@ -21,10 +22,14 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | E5 `modules/cdio` +component-scope checks | EXTEND | NOT STARTED | — |
 | E6 `DESIGN_GOVERNANCE.md` +3 clauses | EXTEND | NOT STARTED | — |
 
-**Progress: 3 of 13 sealed.** Absolute count, deliberately — a percentage would improve
-by deleting a row. The denominator grew from 11 to 13 because A1b (legal debt) and A2b
-(ledger emitted rather than typed) were split out once the work was real. A denominator
-that only ever shrinks is the ratio failure wearing a different hat.
+**Progress: 5 of 14 sealed.** Absolute count, deliberately — a percentage would improve
+by deleting a row. The denominator has grown twice (11 → 13 → 14) as A1b, A1c and A2b
+were split out once the work turned out to be real. A denominator that only ever shrinks
+is the ratio failure wearing a different hat.
+
+**Open for Owner ratification:** `--reference-only` (decision D-011). The A3 brief's two
+rules collide on React Bits, which is both PROHIBITED and `gateway_upstream`. The strict
+rule ships as the default; the opt-in pointer path is implemented but unratified.
 
 ## The 25 proposed datasets — disposition
 

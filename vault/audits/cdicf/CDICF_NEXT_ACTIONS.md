@@ -38,16 +38,31 @@ is on `master`).
 `modules/cdicf/` is absent from its 343 modules rather than passing. Its reachability is
 asserted by its tests and nothing else until the scanner discovers JS subjects.
 
-## A3 — Registry producer (NEW)
+## A3 — Registry producer — SEALED 2026-08-06 (partial: rollback outstanding)
+
+`modules/cdicf/registry_emitter.js`, 16 tests.
+
+| # | Action | State |
+|---|---|---|
+| 6 | shadcn-format registry entry + install manifest per component | **DONE** — `registry-item.json` + `install-manifest.json`, checksummed, artifacts sorted so the digest is filesystem-independent |
+| 7 | Commit-pinned deterministic install **+ rollback + interrupted-install recovery** | **PARTIAL** — pinning and determinism done (`pinned`, `deterministic`, per-artifact sha256, roll-up checksum). **Rollback and interrupted-install recovery are NOT implemented.** No installer exists yet to interrupt; this moves to A3b |
+| 8 | **Redistribution guard** — refuse any prohibited component | **DONE** — refused at exit 5 with zero bytes written (`V-EMIT-01`, `V-EMIT-02`). Posture is *derived* from `license_tier` via the gate, never read from the manifest field, so a hand-edited manifest cannot walk past it (`V-EMIT-03`) |
+
+Action 8 was the load-bearing one: INV-02 is no longer a schema opinion, it is a system
+boundary. The registry is the distribution channel, so refusing here is refusing to
+redistribute.
+
+**Open for ratification (D-011):** `--reference-only`. The brief's two rules collide on
+React Bits — it is both PROHIBITED and `gateway_upstream` by construction. Strict refusal
+is the default; the code-free pointer path is implemented, gated, warned, and unratified.
+Deleting it costs one commit and puts the Motion Gateway namespace formally out of scope.
+
+## A3b — Installer, rollback, recovery (NEW, carved out of action 7)
 
 | # | Action | Done when |
 |---|---|---|
-| 6 | `registry.json` emitter with namespaces (Primitives, Marketing, AI Interfaces, Onboarding, Motion Gateway, Compositions, Pages) | A generated registry installs one real component into a scratch project |
-| 7 | Commit-pinned deterministic install + rollback + interrupted-install recovery | Install is killed mid-write and the project is left in its prior state |
-| 8 | **Redistribution guard**: the emitter refuses any component whose manifest says `redistribution: prohibited` | A React Bits component is attempted and refused, with the refusal explained |
-
-Action 8 is the load-bearing one. It is the mechanism that makes the Owner's
-"don't redistribute React Bits publicly" decision structural rather than remembered.
+| 9 | Transactional installer consuming `install-manifest.json` | An install killed mid-write leaves the project in its prior state |
+| 10 | Checksum verification on install | A tampered artifact is refused, naming the file |
 
 ## A4 — Selection + Abstention (NEW)
 

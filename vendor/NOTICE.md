@@ -113,15 +113,35 @@ Recorded at **audit time, before any clone**. Nothing below is bundled yet.
 **Commits are pinned** (2026-08-06, GitHub API, authoritative). **Copyright holders and
 canonicality are resolved** — every row is now VERIFIED from license *text*, never a badge.
 
-**Fingerprints are deliberately withheld as `PENDING_CLONE`, with one labelled
-exception.** The license bodies reaching this session pass through a markdown conversion
-that can reflow whitespace. A sha256 of reflowed text would look authoritative, would not
-match the repository bytes, and would fire `--expect` on the first real drift check —
-manufacturing exactly the confident-but-wrong verdict this gate was hardened to stop.
-A fingerprint is therefore measured at clone time against the pinned commit, or not at
-all. The react-bits value is retained because it was already published in commit
-`998d52c`; it keeps its "as fetched" label and is not to be used for drift until
-re-measured.
+**Fingerprints are MEASURED** (2026-08-06), from the raw blob at each pinned commit —
+`raw.githubusercontent.com/<owner>/<repo>/<sha>/<file>` written to disk byte-for-byte,
+then classified by `lib/license_gate.js`. No markdown conversion in the path.
+
+| upstream | license file | bytes | raw sha256 | gate fingerprint (`--expect`) |
+|---|---|---|---|---|
+| react-bits | `LICENSE.md` | 1303 | `f4c33af6739191537738662d223b68d77bc226f4b57ea883e16481d8cc5c73c9` | `cde2d145e0235d7cc66c282f1f5d9eff8be370ec703dcc8a7f8607d4f0f62ccd` |
+| shadcn/ui | `LICENSE.md` | 1063 | `1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f` | `d461b2321115447a9910c4af8c4de1dbd4b8bec257ccc1f6aadd2de93e6fe3fb` |
+| assistant-ui | `LICENSE` | 1073 | `71fd4b7b76d27a09af2e8b2bedf14e51f4c229e32b59654d327cc24dc63e60d7` | `c71d6724ed14744c7c01faaaea64a7a2ea4449135f288dce74bb16f3670fac94` |
+| tailark/blocks | `LICENCE.md` | 1061 | `9ceb2565db4149b699df9fb53b16963f59675f5308de1143679639b2c561410c` | `72935f2dc7e2e4225174bd0b72b835035a6ec9322eb478e00e58cdedf8ef4096` |
+| driver.js | `license` | 1067 | `ec3ce3a08736fefd6a03a6d5b52b0705e6919fe06de9d7bd3fb63dcfb492d76d` | `949e98418714faf32c280709683b60aedd97f76dd199721a8f62a450f9efc2dc` |
+
+Two columns because they answer different questions: **raw sha256** is the file's own
+digest, portable to any tool; **gate fingerprint** is what `license_gate.js --expect`
+compares against and is computed over `<filename>\n<body>\n`, so it moves if the file is
+renamed as well as if it is edited.
+
+> **D-008 was right, and is now proved.** The react-bits fingerprint published in commit
+> `998d52c` was `f4cfa83966e6492054d3156cf70d3cf000b8f0a4d868517818963ec2ad1e9991`,
+> computed from license text relayed through a markdown conversion. The true value at the
+> pinned commit is `cde2d145…`. They do not match. Had that value been trusted, the first
+> genuine `--expect` drift check would have fired on a license that had not changed.
+> The superseded value is recorded here rather than quietly overwritten, because a ledger
+> that hides its own corrections is not a ledger.
+
+All five classifications were re-derived from the real blobs: react-bits
+`SOURCE_AVAILABLE_RESTRICTED`/`prohibited`, the other four `PERMISSIVE`/`allowed`.
+`LICENCE.md` and lowercase `license` were both located by `findLicenseFiles` — real-input
+confirmation of the fix in `e5aff74`.
 
 ### react-bits — MIT + Commons Clause Restriction v1.0
 
@@ -134,9 +154,11 @@ re-measured.
 - **Redistribution:** **prohibited**
 - **Integration mode:** gateway
 - **License file:** `LICENSE.md` — plain `LICENSE` returns HTTP 404 on `main`
-- **Fingerprint:** `f4cfa83966e6492054d3156cf70d3cf000b8f0a4d868517818963ec2ad1e9991`
-  (sha256 of the license text **as fetched 2026-08-06**, not of a cloned working tree;
-  re-measure against the pinned commit before relying on it for drift detection)
+- **Fingerprint:** MEASURED 2026-08-06 — `cde2d145e0235d7cc66c282f1f5d9eff8be370ec703dcc8a7f8607d4f0f62ccd`
+  (raw blob at the pinned commit; see the fingerprint table above).
+  **SUPERSEDES** `f4cfa83966e6492054d3156cf70d3cf000b8f0a4d868517818963ec2ad1e9991`,
+  published in `998d52c` from markdown-relayed text. That value was wrong; it is kept
+  visible here as the evidence for D-008 rather than erased.
 - **Confidence:** VERIFIED — full text read; GitHub badge string "MIT + Commons Clause"
 - **Exit plan:**  Gateway only, so removal is deleting the adapter and the metadata rows;
   no CPP artifact embeds its code, so no consumer is broken by removal.
@@ -157,7 +179,7 @@ re-measured.
 - **Redistribution:** allowed
 - **Integration mode:** fork
 - **License file:** `LICENSE.md`
-- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Fingerprint:** MEASURED 2026-08-06 — see the fingerprint table in the section preamble.
 - **Confidence:** VERIFIED — full license text read; holder taken from the text
 - **Exit plan:**  Registry protocol is a format, not a runtime dependency; a fork can be
   frozen in place without upstream availability.
@@ -175,7 +197,7 @@ re-measured.
 - **Redistribution:** allowed
 - **Integration mode:** fork
 - **License file:** `LICENSE`
-- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Fingerprint:** MEASURED 2026-08-06 — see the fingerprint table in the section preamble.
 - **Confidence:** VERIFIED — full license text read; holder taken from the text
 - **Exit plan:**  Runtime/adapter boundary is the upstream's own extension point; a
   replacement runtime can be substituted without touching component code.
@@ -194,7 +216,7 @@ re-measured.
 - **Integration mode:** fork
 - **License file:** `LICENCE.md` — **British spelling.** `LICENSE` and `LICENSE.md` both
   return HTTP 404 on `main`; only `LICENCE.md` exists. A probe for `LICENSE*` finds nothing.
-- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Fingerprint:** MEASURED 2026-08-06 — see the fingerprint table in the section preamble.
 - **Confidence:** **VERIFIED (resolved 2026-08-06)** — full license text read from
   `LICENCE.md`. The earlier OBSERVED status came from a badge; the badge does not carry a
   holder, which is why it could not settle this row.
@@ -218,7 +240,7 @@ re-measured.
 - **License file:** **`license`** — lowercase, no extension. On a case-sensitive
   filesystem an exact-name probe for `LICENSE` misses it entirely; this upstream is what
   exposed that defect in `license_gate.js` (fixed 2026-08-06, `findLicenseFiles`).
-- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Fingerprint:** MEASURED 2026-08-06 — see the fingerprint table in the section preamble.
 - **Confidence:** **VERIFIED (resolved 2026-08-06)** — canonicality settled by GitHub API.
   `api.github.com/repos/nilbuild/driver.js` and `api.github.com/repos/kamranahmedse/driver.js`
   return the **identical object**: `full_name: nilbuild/driver.js`, `fork: false`, no

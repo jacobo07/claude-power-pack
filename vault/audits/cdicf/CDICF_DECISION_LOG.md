@@ -124,6 +124,58 @@ are pinned instead; they come from the API and are authoritative.
 
 **Overturned by:** a clone. That is the whole point.
 
+**RESOLVED + PROVED 2026-08-06 (same day).** The obstacle was the *transport*, not the
+network. Requesting the raw blob at the pinned commit
+(`raw.githubusercontent.com/<owner>/<repo>/<sha>/<file>`) and writing it to disk unmodified
+removes the markdown conversion from the path entirely; all five fingerprints were then
+measured in one pass. The decision was also vindicated concretely: the react-bits value
+published in `998d52c` (`f4cfa839…`) does **not** match the measured value
+(`cde2d145…`), and `--expect f4cfa839…` exits 4 with LICENSE DRIFT against a licence that
+never changed. Recording the gap rather than a plausible number is what made that
+correctable. Sealed as `T-FINGERPRINT-FROM-RENDERED-MARKDOWN-001`.
+
+---
+
+## D-011 — `--reference-only` exists, and is NOT yet ratified
+**Date:** 2026-08-06 · **Decided by:** agent · **STATUS: awaiting Owner**
+
+**The conflict.** The A3 brief says both *"if PROHIBITED: refuse, exit 5, no output"* and
+*"if integration_mode is gateway_upstream: emit an entry pointing at the upstream"*.
+React Bits is **both** — INV-02 forces exactly that pairing. Read strictly, A3 can never
+emit anything for it, and the sealed CPP Motion Gateway namespace (D-002: "index,
+recommend, install-from-upstream") is unbuildable, because every component in it is
+prohibited by construction.
+
+**Decision:** the strict rule is the DEFAULT and is what ships. `--reference-only` is an
+explicit opt-in that emits an `upstream-pointer`: a name, a provenance block and an
+install command, with **no `files` key at all** and no byte of component code. It is
+gated to `integration_mode` ∈ {`gateway_upstream`, `metadata_only`}, warns on stderr, and
+is covered by `V-EMIT-06` (asserts the emitted artifact contains no source).
+
+**Why this is not a loophole:** redistribution is the movement of the code. A pointer
+moves a URL. If the Owner disagrees, deleting the flag costs one commit and the Motion
+Gateway namespace is then formally out of scope — which is a legitimate answer, and
+cheaper to choose now than after A4 depends on it.
+
+**Overturned by:** Owner ratification either way. Until then, treat the default as the
+only sanctioned behaviour.
+
+---
+
+## D-012 — Contradictory inputs are refused, not reconciled
+**Date:** 2026-08-06 · **Decided by:** agent (bug found by its own test)
+
+**Evidence:** the first A3 draft computed `pointer = referenceOnly || MODE_IS_POINTER`.
+Passing `--reference-only` to a `fork_canonical` component therefore emitted a pointer —
+the caller would believe they had shipped a fork and would have shipped a URL. `V-EMIT-07`
+caught it.
+
+**Decision:** a fork mode and `--reference-only` contradict; the emitter refuses with
+`MODE_MISMATCH` (exit 7) rather than silently honouring one. A tool that discards half of
+a contradictory instruction is untrustworthy in a way that is very hard to notice.
+
+**Overturned by:** nothing foreseeable.
+
 ---
 
 ## D-009 — This module is invisible to the Liveness gate, and that is recorded, not claimed as a pass
