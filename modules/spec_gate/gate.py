@@ -317,3 +317,107 @@ def check_novelty_gate(task_description: str) -> NoveltyGateResult:
             "question -> not a new dataset; classify instead as "
             "EXTEND_EXISTING_OWNER, NEW_MODULE, NEW_VIEW, NEW_POLICY_PACK, "
             "NEW_SCANNER_OR_GATE, or REJECT."))
+
+
+# --- Problem-reframing gate (EFAIF residue R2) --------------------------
+# The EFAIF audit (vault/plans/efaif-corpus-2026-08-04.md) rejected all 26
+# proposed datasets and left two residues. R2: the `lateral-thinking` skill
+# already owns the frames and owns them well, but nothing FIRES it. Its own
+# description activates it on Owner phrasing -- "I'm stuck", "no idea",
+# "atascado". A task that arrives already committed to a solution never
+# produces those words, which is exactly the case where reframing pays. The
+# frames exist and are never reached on the path that needs them.
+#
+# This gate is the missing trigger, not a second copy of the frames. It fires
+# on one measurable shape: a description that commits to building a specific
+# artifact while stating no problem the artifact would solve. That shape has
+# no falsifiable objective -- there is nothing to check the solution against,
+# so solution-fixation cannot be caught downstream either.
+#
+# Vocabulary limit, stated rather than hidden (feedback_zero_cannot_fall):
+# the solution arm is a keyword list and is bounded by its own vocabulary --
+# an idiom nobody added reads as no-signal. The problem arm is built the
+# other way round: it looks for the PRESENCE of any problem marker and treats
+# absence as the trigger. So an unrecognized way of phrasing a solution fails
+# toward silence (no false alarm), while an unrecognized way of phrasing a
+# problem is the only false-alarm path. That asymmetry is deliberate: this
+# gate is advisory, and a spurious prompt to think costs one paragraph,
+# whereas a missed reframe costs a corpus.
+
+REFRAMING_FRAMES: tuple[str, ...] = (
+    "Reframing -- is the stated request the actual objective, or a symptom?",
+    "Inversion -- what if the opposite requirement were true?",
+    "Cross-domain analogy -- who already solved this shape elsewhere?",
+    "Constraint removal -- which constraint here is assumed, not real?",
+    "First principles -- what remains true independent of the current design?",
+)
+
+# Commitment to producing a named artifact.
+_SOLUTION_SIGNAL: tuple[str, ...] = (
+    "build", "create", "implement", "add", "write", "make", "ship",
+    "scaffold", "generate", "set up", "wire", "introduce", "design",
+    "construir", "construye", "crear", "crea", "implementar", "implementa",
+    "escribir", "generar",
+)
+# Any marker that a problem, symptom, cause or objective was stated.
+_PROBLEM_SIGNAL: tuple[str, ...] = (
+    "because", "since", "currently", "today", "fails", "failing", "broken",
+    "breaks", "bug", "error", "regression", "slow", "duplicate", "missing",
+    "cannot", "doesn't", "does not", "never", "gap", "risk", "problem",
+    "issue", "incident", "root cause", "symptom", "so that", "in order to",
+    "porque", "actualmente", "falla", "roto", "no funciona", "problema",
+    "causa", "riesgo",
+)
+
+
+@dataclass
+class ReframingGateResult:
+    applies: bool
+    matched: str | None
+    frames: tuple[str, ...]
+    message: str
+
+
+def check_reframing_gate(task_description: str,
+                         min_tier: int = 2) -> ReframingGateResult:
+    """Fire the reframing frames before a plan commits to a solution.
+
+    Applies only at tier >= min_tier (default 2, the tier at which SDD-OS
+    already requires a spec). Reframing a typo is theater, and a gate that
+    fires on everything is ignored on everything.
+    """
+    text = (task_description or "").lower()
+    if not text.strip():
+        return ReframingGateResult(
+            applies=False, matched=None, frames=(),
+            message="Empty description -- reframing gate not applicable.")
+
+    tier = classify_tier(task_description).tier
+    if tier < min_tier:
+        return ReframingGateResult(
+            applies=False, matched=None, frames=(),
+            message=(f"Tier {tier} < {min_tier} -- reframing gate not "
+                     "required for localized work."))
+
+    solution = _kw_hit(_SOLUTION_SIGNAL, text)
+    if not solution:
+        return ReframingGateResult(
+            applies=False, matched=None, frames=(),
+            message="No solution-commitment signal -- gate not required.")
+
+    problem = _kw_hit(_PROBLEM_SIGNAL, text)
+    if problem:
+        return ReframingGateResult(
+            applies=False, matched=None, frames=(),
+            message=(f"Problem stated ({problem!r}) alongside the proposed "
+                     "solution -- the objective is checkable; gate satisfied."))
+
+    return ReframingGateResult(
+        applies=True, matched=solution, frames=REFRAMING_FRAMES,
+        message=(
+            f"Solution committed ({solution!r}) with no problem stated. This "
+            "plan names what to build and never names what breaks without it, "
+            "so there is no objective to check the build against and no way "
+            "to catch solution-fixation later. Answer the frames above before "
+            "the plan is approved -- or state the problem explicitly and the "
+            "gate clears. Advisory: it does not block."))
