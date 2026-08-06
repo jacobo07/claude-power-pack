@@ -115,7 +115,33 @@ def _detect_bash(ctx: dict) -> list[CascadeHit]:
 
 
 def _detect_session(ctx: dict) -> list[CascadeHit]:
-    return []
+    """The one detector that looks BACKWARD (SEIP-EXT-D3).
+
+    Was a stub returning []. That silence was indistinguishable from "no cascade
+    predicted", which is why nobody noticed the surface had no predictive path at all.
+
+    It is still silent on the live store -- but now for a stated and measurable reason:
+    `predictive.substrate_quality()` reports why, rather than the absence being an
+    accident of an unimplemented function. Advisory only (C3): a prediction is not a
+    present violation and must never block.
+    """
+    category = ctx.get("last_error_category")
+    if not category:
+        return []
+    from .predictive import PREDICTED, predict
+
+    p = predict(str(category), ctx.get("events"))
+    if p["verdict"] != PREDICTED:
+        return []
+    return [CascadeHit(
+        cascade_type=CascadeType.PREDICTED_SUCCESSOR,
+        severity=CascadeSeverity.C3,
+        surface="session",
+        reason=p["reason"],
+        prior=p["prior"],
+        predicts=p["predicts"],
+        basis=p["basis"],
+    )]
 
 
 SURFACE_DETECTORS: dict[str, Callable[[dict], list[CascadeHit]]] = {
