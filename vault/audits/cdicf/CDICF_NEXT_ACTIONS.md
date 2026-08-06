@@ -3,26 +3,40 @@
 Ordered. Each is one sitting. Do not reorder without recording why in
 `CDICF_DECISION_LOG.md`.
 
-## Immediate
+## Immediate — CLOSED 2026-08-06
 
-| # | Action | Done when |
+| # | Action | State |
 |---|---|---|
-| 1 | **Resolve Tailark's copyright holder** (inspect `LICENCE.md` body, not the badge) | A `Copyright (c) <year> <holder>` string is quoted in the NOTICE row and Confidence flips OBSERVED → VERIFIED |
-| 2 | **Resolve `nilbuild/driver.js` canonicality** — is it the canonical repo or a rename-redirect of `kamranahmedse/driver.js`? | The NOTICE row names one canonical path with evidence |
-| 3 | **Pin all 5 upstream commits**, run `node lib/license_gate.js <clone> --json` against each working tree, fill `Snapshot` + `Fingerprint` | Zero NOT PINNED / NOT MEASURED strings remain in the CDICF section of `vendor/NOTICE.md` |
+| 1 | Resolve Tailark's copyright holder | **DONE** — MIT © 2025 **Irung**, read from `LICENCE.md`. Confidence OBSERVED → VERIFIED |
+| 2 | Resolve `nilbuild/driver.js` canonicality | **DONE** — rename redirect, not a fork. Both API paths return one identical object (`fork: false`, no parent, 2018-03-11, 26,544 stars). Canonical: `nilbuild/driver.js` |
+| 3 | Pin all 5 upstream commits + fingerprints | **PARTIAL** — all 5 commits pinned from the API. Fingerprints deliberately `PENDING_CLONE` (decision D-008): fetched license text can be whitespace-reflowed, so a hash of it would not match repository bytes and would false-positive on `--expect` |
 
-Actions 1–3 are the *only* remaining legal debt. Everything downstream inherits it.
+Remaining legal debt: **fingerprints only**, and only at clone time. Holders and
+canonicality are settled; attribution rows can now be written.
 
-## A2 — Component Manifest (NEW)
+## A2 — Component Manifest — SEALED 2026-08-06
 
-| # | Action | Done when |
+Shipped in `modules/cdicf/` (schema, dependency-free validator + CLI, two examples,
+README) with 21 tests. Six invariants enforced; INV-02 refuses to record a
+redistribution-prohibited component as a fork — the structural form of the React Bits
+decision.
+
+| # | Remaining | Done when |
 |---|---|---|
-| 4 | Write `vault/schemas/component_manifest.json` — typed fields for provenance, commit, license, redistribution, capabilities, states, a11y, RSC/client boundary, bundle cost, motion intensity, maturity, known failures, alternatives, adoption/rejection history | Schema validates a hand-written manifest for one real component |
 | 5 | Emit Upstream Mirror Ledger rows from `license_gate.js --json` rather than by hand | A ledger row is produced by the tool, not typed |
 
-**Trap:** new files under `lib/` are **gitignored** in this repo. `lib/license_gate.js`
-committed only because it was already tracked. Put new executables under `modules/` or
-`tools/`, or `git add -f` deliberately and record the choice.
+**Trap (confirmed in practice):** new files under `lib/` are **gitignored**.
+`lib/license_gate.js` commits only because it was already tracked; `git add lib/...`
+prints "The following paths are ignored". A2 therefore lives in `modules/cdicf/`.
+
+**Trap (confirmed in practice):** three of five upstreams do not name their license file
+`LICENSE` — `LICENSE.md`, `LICENCE.md` (British), and lowercase `license`. Fixed in
+`findLicenseFiles`; assume nothing about the filename or the default branch (`driver.js`
+is on `master`).
+
+**Gap (D-009):** `modules/liveness/reachability.py` enumerates Python packages only, so
+`modules/cdicf/` is absent from its 343 modules rather than passing. Its reachability is
+asserted by its tests and nothing else until the scanner discovers JS subjects.
 
 ## A3 — Registry producer (NEW)
 

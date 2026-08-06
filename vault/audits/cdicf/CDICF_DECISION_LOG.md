@@ -109,10 +109,61 @@ overwrites another pane's handoff.
 
 ---
 
+## D-008 — Fingerprints are withheld, not estimated
+**Date:** 2026-08-06 · **Decided by:** agent
+
+**Evidence:** license bodies reaching this session pass through a markdown conversion
+that can reflow whitespace. `assistant-ui`'s text arrived with its line wrapping
+collapsed. A sha256 of reflowed text is not the repository's hash.
+
+**Decision:** record `PENDING_CLONE` and measure at clone time against the pinned commit.
+A fingerprint computed from a lossy transform would look authoritative, would not match
+the repository bytes, and would fire `--expect` on the first genuine drift check —
+manufacturing exactly the confident-but-wrong verdict A1 was built to stop. Commit SHAs
+are pinned instead; they come from the API and are authoritative.
+
+**Overturned by:** a clone. That is the whole point.
+
+---
+
+## D-009 — This module is invisible to the Liveness gate, and that is recorded, not claimed as a pass
+**Date:** 2026-08-06 · **Decided by:** agent
+
+**Evidence:** `modules/liveness/reachability.py:230` gates subject enumeration on
+`(pkg / "__init__.py").is_file()` — it enumerates **Python packages**, and reads `.js`
+only as reference text when resolving who calls a Python module. `modules/cdicf/` does
+not appear among the ledger's 343 modules. The gate exits 1 on 9 pre-existing orphans,
+none of them mine.
+
+**Decision:** do not report "liveness passes". A JS module absent from the denominator is
+`PR-COVERAGE-BY-CONSTRUCTION-001` — absence read as health, the estate's own named
+failure. `modules/cdicf/` reachability is asserted by `tests/component_manifest.test.js`
+(21 cases) and by nothing else, and the README says so.
+
+**Overturned by:** teaching `reachability.py` to discover JS subjects. That is a change to
+a governance gate and deserves its own decision, not a side effect of this one.
+
+---
+
+## D-010 — Paso 1 and Paso 2 merged into one commit
+**Date:** 2026-08-06 · **Decided by:** agent (deviation from the requested two commits)
+
+**Evidence:** both steps edit the same five rows of one table in `vendor/NOTICE.md`.
+Splitting would require staging partial hunks of a single table.
+
+**Decision:** one commit (`1748670`) covering both, with the message naming both. The
+gate fix Paso 1 exposed was committed separately (`e5aff74`) because it is code, not ledger.
+
+**Overturned by:** nothing; recorded so the deviation from the requested commit plan is
+visible rather than silent.
+
+---
+
 ## Open questions (not yet decisions)
 
-| # | Question | Blocks |
-|---|---|---|
-| Q1 | Tailark's copyright holder — unresolved | Its NOTICE attribution row |
-| Q2 | Is `nilbuild/driver.js` canonical or a rename-redirect? | Its NOTICE provenance row |
-| Q3 | Does the React Bits boundary warrant human legal review before a public registry ships? | Public release only |
+| # | Question | Blocks | State |
+|---|---|---|---|
+| Q1 | Tailark's copyright holder | Its NOTICE attribution row | **RESOLVED 2026-08-06** — MIT, © 2025 Irung, read from `LICENCE.md` |
+| Q2 | Is `nilbuild/driver.js` canonical or a rename-redirect? | Its NOTICE provenance row | **RESOLVED 2026-08-06** — rename redirect. Both API paths return one identical object (`fork: false`, no parent, same 2018-03-11 creation, 26,544 stars) |
+| Q3 | Does the React Bits boundary warrant human legal review before a public registry ships? | Public release only | OPEN |
+| Q4 | Should `reachability.py` discover non-Python subjects? | The Liveness gate's honesty about JS/TS modules | OPEN (see D-009) |
