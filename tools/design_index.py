@@ -326,6 +326,345 @@ def cmd_search(query: str, limit: int, as_json: bool) -> int:
         con.close()
 
 
+# ===========================================================================
+# CDICF component sidecar (E2)
+#
+# Isolation is enforced, not merely intended: the sidecar lives in its OWN
+# SQLite FILE and `_assert_isolated` refuses to build into any database that
+# already holds `turns*` or `design_tools*`. Pointing --db at the shared vault
+# is an exit code, not a convention someone has to remember.
+#
+# Only the five searchable manifest fields exist as columns. Provenance
+# (licence, fingerprint, holder) is absent from the schema entirely rather
+# than merely unindexed -- a field that is not stored cannot leak into a text
+# match. Licence posture is a hard filter, decided by the gate, never ranked.
+# ===========================================================================
+
+CDICF_DB_NAME = "CDICF-COMPONENT-INDEX.db"
+_FOREIGN_OBJECTS = ("turns", "turns_fts", "design_tools", "design_tools_fts")
+
+# Distinct machine states. An empty result set has three different causes and
+# one of them (a stale or unbuilt index) means "cannot answer", not "no fit".
+# Collapsing them is how a missing component reads as a genuine gap.
+CDICF_EXIT = {"OK": 0, "NO_INDEX": 30, "INDEX_EMPTY": 31, "NO_MATCH": 32,
+              "STALE": 33}
+
+_CDICF_DDL = """
+CREATE TABLE IF NOT EXISTS cdicf_components (
+    manifest_id     TEXT NOT NULL UNIQUE,
+    manifest_path   TEXT NOT NULL,
+    name            TEXT NOT NULL,
+    surface         TEXT NOT NULL,
+    component_type  TEXT NOT NULL,
+    known_failures  TEXT NOT NULL,
+    alternatives    TEXT NOT NULL,
+    lifecycle_state TEXT NOT NULL,
+    installed       INTEGER NOT NULL DEFAULT 0
+);
+CREATE VIRTUAL TABLE IF NOT EXISTS cdicf_components_fts USING fts5(
+    name, surface, component_type, known_failures, alternatives,
+    content='cdicf_components', content_rowid='rowid',
+    tokenize='unicode61');
+CREATE TABLE IF NOT EXISTS cdicf_index_meta (k TEXT PRIMARY KEY, v TEXT);
+CREATE TRIGGER IF NOT EXISTS cdicf_components_ai
+AFTER INSERT ON cdicf_components BEGIN
+  INSERT INTO cdicf_components_fts(rowid, name, surface, component_type,
+    known_failures, alternatives)
+  VALUES (new.rowid, new.name, new.surface, new.component_type,
+    new.known_failures, new.alternatives);
+END;
+CREATE TRIGGER IF NOT EXISTS cdicf_components_ad
+AFTER DELETE ON cdicf_components BEGIN
+  INSERT INTO cdicf_components_fts(cdicf_components_fts, rowid, name, surface,
+    component_type, known_failures, alternatives)
+  VALUES ('delete', old.rowid, old.name, old.surface, old.component_type,
+    old.known_failures, old.alternatives);
+END;
+CREATE TRIGGER IF NOT EXISTS cdicf_components_au
+AFTER UPDATE ON cdicf_components BEGIN
+  INSERT INTO cdicf_components_fts(cdicf_components_fts, rowid, name, surface,
+    component_type, known_failures, alternatives)
+  VALUES ('delete', old.rowid, old.name, old.surface, old.component_type,
+    old.known_failures, old.alternatives);
+  INSERT INTO cdicf_components_fts(rowid, name, surface, component_type,
+    known_failures, alternatives)
+  VALUES (new.rowid, new.name, new.surface, new.component_type,
+    new.known_failures, new.alternatives);
+END;
+"""
+
+
+def cdicf_db_path(override: str | None = None) -> str:
+    """Own file, never the vault DB. --db > env > sibling of the vault DB."""
+    if override:
+        return override
+    env = os.environ.get("CDICF_INDEX_DB")
+    if env:
+        return env
+    return os.path.join(os.path.dirname(_db_path()), CDICF_DB_NAME)
+
+
+def _cdicf_connect(db: str | None = None) -> sqlite3.Connection:
+    path = cdicf_db_path(db)
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    con = sqlite3.connect(path)
+    con.execute("PRAGMA journal_mode=WAL")
+    con.execute("PRAGMA busy_timeout=5000")
+    return con
+
+
+def _assert_isolated(con: sqlite3.Connection) -> None:
+    """Refuse to share a database with another domain's index."""
+    names = {r[0] for r in con.execute(
+        "SELECT name FROM sqlite_master WHERE type IN ('table','view')")}
+    clash = sorted(names & set(_FOREIGN_OBJECTS))
+    if clash:
+        raise RuntimeError(
+            "cdicf sidecar refuses to share a database with: "
+            + ", ".join(clash)
+            + " -- cross-domain contamination invalidates both indices")
+
+
+def _has_index(con: sqlite3.Connection) -> bool:
+    return con.execute(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' "
+        "AND name='cdicf_components'").fetchone()[0] > 0
+
+
+def _manifest_files(src_dir: str) -> list[str]:
+    return [os.path.join(src_dir, f) for f in sorted(os.listdir(src_dir))
+            if f.endswith(".json")]
+
+
+def _set_digest(src_dir: str) -> str:
+    """Content digest of the manifest set. An in-place edit must read stale."""
+    h = __import__("hashlib").sha256()
+    for p in _manifest_files(src_dir):
+        h.update(os.path.basename(p).encode("utf-8"))
+        with open(p, "rb") as fh:
+            h.update(fh.read())
+    return h.hexdigest()
+
+
+def _manifest_rows(src_dir: str) -> list[tuple]:
+    rows: list[tuple] = []
+    for p in _manifest_files(src_dir):
+        try:
+            with open(p, "r", encoding="utf-8-sig") as fh:
+                m = json.load(fh)
+        except (OSError, ValueError) as e:
+            print(f"components: skipped {os.path.basename(p)}: {e}",
+                  file=sys.stderr)
+            continue
+        ident = m.get("identity") or {}
+        cap = m.get("capability") or {}
+        qual = m.get("quality") or {}
+        sel = m.get("selection") or {}
+        life = m.get("lifecycle") or {}
+        mid = ident.get("id")
+        if not mid:
+            print(f"components: skipped {os.path.basename(p)}: no identity.id",
+                  file=sys.stderr)
+            continue
+        rows.append((
+            mid, os.path.abspath(p), ident.get("name", ""),
+            cap.get("surface", ""), cap.get("component_type", ""),
+            " ; ".join(qual.get("known_failures") or []),
+            " ".join(sel.get("alternatives") or []),
+            life.get("state", "unknown"),
+        ))
+    return rows
+
+
+def cmd_components_build(src_dir: str, db: str | None = None) -> int:
+    if not os.path.isdir(src_dir):
+        print(f"components: not a directory: {src_dir}", file=sys.stderr)
+        return 3
+    con = _cdicf_connect(db)
+    try:
+        _assert_isolated(con)
+        con.executescript(_CDICF_DDL)
+        rows = _manifest_rows(src_dir)
+        con.execute("DELETE FROM cdicf_components")
+        con.executemany(
+            "INSERT INTO cdicf_components(manifest_id,manifest_path,name,"
+            "surface,component_type,known_failures,alternatives,"
+            "lifecycle_state) VALUES (?,?,?,?,?,?,?,?)", rows)
+        for k, v in (("source_dir", os.path.abspath(src_dir)),
+                     ("set_digest", _set_digest(src_dir)),
+                     ("manifest_count", str(len(rows))),
+                     ("built_at", time.strftime("%Y-%m-%dT%H:%M:%S"))):
+            con.execute("INSERT OR REPLACE INTO cdicf_index_meta(k,v) "
+                        "VALUES (?,?)", (k, v))
+        con.commit()
+        n = con.execute("SELECT count(*) FROM cdicf_components").fetchone()[0]
+        f = con.execute(
+            "SELECT count(*) FROM cdicf_components_fts").fetchone()[0]
+        print(f"cdicf component index: {n} rows / {f} fts "
+              f"(db={cdicf_db_path(db)})")
+        return 0 if n == f else 1
+    except RuntimeError as e:
+        print(f"components: {e}", file=sys.stderr)
+        return 3
+    finally:
+        con.close()
+
+
+def _meta(con: sqlite3.Connection, k: str) -> str | None:
+    r = con.execute("SELECT v FROM cdicf_index_meta WHERE k=?", (k,)).fetchone()
+    return r[0] if r else None
+
+
+def _staleness(con: sqlite3.Connection) -> tuple[str, str | None]:
+    """('fresh'|'stale'|'unknown', source_dir). Unknown is never 'fresh'."""
+    src = _meta(con, "source_dir")
+    if not src or not os.path.isdir(src):
+        return "unknown", src
+    try:
+        return ("fresh" if _set_digest(src) == _meta(con, "set_digest")
+                else "stale"), src
+    except OSError:
+        return "unknown", src
+
+
+def cmd_components_search(query: str, limit: int, as_json: bool,
+                          db: str | None = None, include_retired: bool = False,
+                          strict_fresh: bool = False) -> int:
+    con = _cdicf_connect(db)
+    try:
+        if not _has_index(con):
+            out = {"status": "NO_INDEX", "candidates": [], "remedy":
+                   "python tools/design_index.py --components-build <dir>"}
+            _emit_components(out, as_json)
+            return CDICF_EXIT["NO_INDEX"]
+        total = con.execute(
+            "SELECT count(*) FROM cdicf_components").fetchone()[0]
+        fresh, src = _staleness(con)
+        if total == 0:
+            _emit_components({"status": "INDEX_EMPTY", "candidates": [],
+                              "source_dir": src, "remedy":
+                              "the indexed directory held no valid manifests"},
+                             as_json)
+            return CDICF_EXIT["INDEX_EMPTY"]
+        terms = [t for t in __import__("re").split(r"\W+", query) if t]
+        fts_q = " OR ".join(f'"{t}"' for t in terms) or f'"{query}"'
+        where = "cdicf_components_fts MATCH ?"
+        params: list = [fts_q]
+        if not include_retired:
+            where += " AND c.lifecycle_state != 'retired'"
+        params.append(limit)
+        t0 = time.perf_counter()
+        rows = con.execute(
+            "SELECT c.manifest_id, c.manifest_path, c.name, c.surface, "
+            "c.component_type, c.lifecycle_state, c.installed, "
+            "bm25(cdicf_components_fts) AS rank "
+            "FROM cdicf_components_fts "
+            "JOIN cdicf_components c ON c.rowid = cdicf_components_fts.rowid "
+            f"WHERE {where} ORDER BY rank LIMIT ?", params).fetchall()
+        ms = (time.perf_counter() - t0) * 1000.0
+        out = {
+            "status": "OK" if rows else "NO_MATCH",
+            "query": query, "latency_ms": round(ms, 2),
+            "indexed": total, "freshness": fresh, "source_dir": src,
+            "count": len(rows),
+            # Paths, so the selector can be pointed at exactly this set.
+            "candidates": [r[1] for r in rows],
+            "results": [{"id": r[0], "path": r[1], "name": r[2],
+                         "surface": r[3], "component_type": r[4],
+                         "lifecycle_state": r[5], "installed": bool(r[6]),
+                         "bm25": round(r[7], 3)} for r in rows],
+        }
+        if not rows:
+            out["remedy"] = ("no indexed component matched; this is a "
+                             "candidate-generation miss, not a verdict that "
+                             "nothing fits")
+        if fresh != "fresh":
+            print(f"NOTICE: component index freshness={fresh} -- a component "
+                  f"absent from a stale index cannot be recommended",
+                  file=sys.stderr)
+        _emit_components(out, as_json)
+        if fresh == "stale" and strict_fresh:
+            return CDICF_EXIT["STALE"]
+        return CDICF_EXIT["OK"] if rows else CDICF_EXIT["NO_MATCH"]
+    finally:
+        con.close()
+
+
+def _emit_components(out: dict, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+        return
+    print(f"# cdicf components '{out.get('query', '')}' -> {out['status']} "
+          f"({out.get('count', 0)} hits)")
+    if out.get("freshness") and out["freshness"] != "fresh":
+        print(f"  freshness: {out['freshness']}")
+    for i, r in enumerate(out.get("results", []), 1):
+        mark = "installed" if r["installed"] else "available"
+        print(f"{i}. {r['id']}  [{r['component_type']}/{r['surface']}] {mark}")
+        print(f"   {r['path']}")
+    if out.get("remedy"):
+        print(f"  remedy: {out['remedy']}")
+
+
+def cmd_components_sync(project_dir: str, db: str | None = None) -> int:
+    """Reflect a project's install state. Read from installed.json, the
+    installer's state of record -- never inferred from the presence of files."""
+    rec = os.path.join(project_dir, ".cdicf", "installed.json")
+    con = _cdicf_connect(db)
+    try:
+        if not _has_index(con):
+            print("components: no index to sync", file=sys.stderr)
+            return CDICF_EXIT["NO_INDEX"]
+        ids: list[str] = []
+        if os.path.isfile(rec):
+            try:
+                with open(rec, "r", encoding="utf-8-sig") as fh:
+                    ids = list((json.load(fh).get("components") or {}).keys())
+            except (OSError, ValueError) as e:
+                print(f"components: unreadable {rec}: {e}", file=sys.stderr)
+                return 3
+        con.execute("UPDATE cdicf_components SET installed=0")
+        marked = 0
+        for cid in ids:
+            marked += con.execute(
+                "UPDATE cdicf_components SET installed=1 WHERE manifest_id=?",
+                (cid,)).rowcount
+        con.commit()
+        unknown = sorted(set(ids)) if not marked and ids else []
+        print(f"components sync: {marked} installed, "
+              f"{len(ids) - marked} recorded but not indexed")
+        for u in unknown:
+            print(f"  not in index: {u}", file=sys.stderr)
+        return 0
+    finally:
+        con.close()
+
+
+def cmd_components_status(db: str | None = None, as_json: bool = False) -> int:
+    con = _cdicf_connect(db)
+    try:
+        if not _has_index(con):
+            _emit_components({"status": "NO_INDEX", "candidates": []}, as_json)
+            return CDICF_EXIT["NO_INDEX"]
+        fresh, src = _staleness(con)
+        total = con.execute(
+            "SELECT count(*) FROM cdicf_components").fetchone()[0]
+        inst = con.execute("SELECT count(*) FROM cdicf_components "
+                           "WHERE installed=1").fetchone()[0]
+        out = {"status": "OK", "db": cdicf_db_path(db), "indexed": total,
+               "installed": inst, "freshness": fresh, "source_dir": src,
+               "built_at": _meta(con, "built_at"), "count": 0,
+               "candidates": [], "results": []}
+        if as_json:
+            print(json.dumps(out, ensure_ascii=False, indent=2))
+        else:
+            print(f"cdicf index: {total} indexed, {inst} installed, "
+                  f"freshness={fresh}\n  db={out['db']}\n  src={src}")
+        return 0 if total else CDICF_EXIT["INDEX_EMPTY"]
+    finally:
+        con.close()
+
+
 def main(argv=None) -> int:
     try:  # Windows console is cp1252; emit UTF-8 regardless.
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -338,6 +677,18 @@ def main(argv=None) -> int:
     ap.add_argument("--search", dest="search")
     ap.add_argument("--limit", type=int, default=8)
     ap.add_argument("--json", action="store_true")
+    # CDICF component sidecar (E2) — separate file, separate namespace.
+    ap.add_argument("--components-build", dest="components_build",
+                    metavar="MANIFEST_DIR")
+    ap.add_argument("--components-search", dest="components_search",
+                    metavar="QUERY")
+    ap.add_argument("--components-sync", dest="components_sync",
+                    metavar="PROJECT_DIR")
+    ap.add_argument("--components-status", action="store_true")
+    ap.add_argument("--db", dest="db", help="sidecar DB path override")
+    ap.add_argument("--include-retired", action="store_true")
+    ap.add_argument("--strict-fresh", action="store_true",
+                    help="exit 33 when the index is stale")
     a = ap.parse_args(argv)
     if a.build_dataset:
         return cmd_build_dataset()
@@ -347,6 +698,15 @@ def main(argv=None) -> int:
         return cmd_refresh()
     if a.search:
         return cmd_search(a.search, a.limit, a.json)
+    if a.components_build:
+        return cmd_components_build(a.components_build, a.db)
+    if a.components_search:
+        return cmd_components_search(a.components_search, a.limit, a.json,
+                                     a.db, a.include_retired, a.strict_fresh)
+    if a.components_sync:
+        return cmd_components_sync(a.components_sync, a.db)
+    if a.components_status:
+        return cmd_components_status(a.db, a.json)
     ap.print_help()
     return 0
 

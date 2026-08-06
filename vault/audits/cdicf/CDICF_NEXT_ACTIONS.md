@@ -133,21 +133,61 @@ run yet.
 
 Hermetic: 42/42 identical across three consecutive runs.
 
-## Extensions — 2 of 6 done
+## Extensions — 3 of 6 done
 
 | # | Extension | State |
 |---|---|---|
 | **E1** | `DESIGN.md.template` +9 decisions | **SEALED** `e9d5170` — a Component Provenance section whose nine decisions **are** the selector's `--context` object, so a decision recorded there changes what the engine refuses. Verified against the real gate, not assumed: `V-DESIGN-TEMPLATE-CLEAN` still APPROVE score=100 family=F3 |
 | **E6** | `DESIGN_GOVERNANCE.md` +3 clauses | **SEALED** `63ccfff` — Section 8: reuse-first, provenance-mandatory, tour-as-last-resort, each backed by an exit code rather than a habit |
-| E2 | `design_index.py` +3 FTS tables | NOT STARTED — must be an **isolated FTS5 sidecar** (own table + triggers, never `turns_fts`) per the Apex completeness mandate |
+| **E2** | `design_index.py` + component FTS5 sidecar | **SEALED** — own **database file**, own tables and triggers; 15 gates in `tools/test_cdicf_index.py`, hermetic 3× |
 | E3 | `graphify` +component node/edge types | NOT STARTED |
 | E4 | `capability_runtime` +4 activation modes | NOT STARTED |
 | E5 | `modules/cdio` +component-scope checks | NOT STARTED |
 
 E1 and E6 were taken first because they are the two that make the spine *reachable*: until
 a project's governance tells someone to run the selector, four working executables are a
-capability nobody's process invokes. E2–E5 are code changes to four subsystems this work
-has not yet read, and each deserves its own sitting rather than a shallow pass.
+capability nobody's process invokes.
+
+### E2 — the isolation decision, and why it went further than the brief
+
+The pre-existing `design_tools` index lives **inside** the shared
+`SOVEREIGN-HISTORY-VAULT.db` alongside `turns` / `turns_fts`, isolated only by table
+naming. Shared substrate, so the sidecar takes its own file: `CDICF-COMPONENT-INDEX.db`,
+resolved by `--db` > `CDICF_INDEX_DB` > a sibling of the vault DB.
+
+Naming alone would have satisfied the constraint and left it a convention. Instead
+`_assert_isolated` reads `sqlite_master` and **refuses to build** into any database
+holding `turns*` or `design_tools*` (`V-CDICF-IDX-04`, exit 3). Pointing `--db` at the
+shared vault is now an exit code rather than a mistake review has to catch.
+
+Two design decisions carry more weight than the search itself:
+
+- **Provenance is absent from the schema, not merely unindexed.** There is no
+  licence, fingerprint or holder column to leak into a text match — searching a real
+  `copyright_holder` returns `NO_MATCH` (`V-CDICF-IDX-03`). Licence posture is a hard
+  filter decided by the gate; it must never be a rankable term.
+- **An empty result has three exit codes, never one.** `NO_INDEX` (30), `INDEX_EMPTY`
+  (31) and `NO_MATCH` (32) are distinct, and freshness is reported separately
+  (`--strict-fresh` → 33). A stale index answering "nothing" is answering *cannot say*,
+  and collapsing that into "no component fits" is how a component that exists reads as
+  a genuine gap.
+
+**Wiring, because an unreachable index is an orphan module.** `selector.js` gained
+`--candidates-from <file.json>`, consuming the sidecar's `candidates` array. The decision
+now carries `candidate_source`: a narrowed set is labelled `mode: "search"` with the
+caveat that a component absent from the index could not be considered — an abstention
+over a narrowed set is partly a statement about the query. An **empty** narrowed list is
+refused at exit 3 rather than forwarded (`V-CDICF-IDX-14`): passing it through would let
+a search miss become a verdict about the catalogue and produce "build it".
+
+Install state is read from the installer's `installed.json`, never inferred from files on
+disk, and clears again on retirement (`V-CDICF-IDX-08`/`09`) — a one-way flag would read
+as installed forever after the first install. The indexed set itself is **discovered** by
+walking the manifest directory, so it cannot drift the way an incrementally-maintained
+record does.
+
+The directory path is unchanged and still labelled `mode: "directory"`
+(`V-CDICF-IDX-15`), so `DESIGN_GOVERNANCE.md` §8.1 remains accurate as written.
 
 ## Standing gates
 

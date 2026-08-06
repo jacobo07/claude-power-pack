@@ -578,9 +578,30 @@ function loadCandidates(dir) {
     .map(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
 }
 
+/*
+ * A narrowed candidate set from the FTS sidecar (E2). Accepts the sidecar's
+ * --json output or a bare array of paths.
+ *
+ * An empty list is refused rather than passed through. Zero narrowed
+ * candidates means the search missed; forwarding it would make the selector
+ * report a field of poor fits and recommend building — a verdict about the
+ * catalogue derived from a fact about the query.
+ */
+function loadCandidateList(file) {
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const paths = Array.isArray(raw) ? raw : (raw && raw.candidates);
+  if (!Array.isArray(paths) || paths.length === 0) {
+    throw new Error(
+      `${file} names no candidates — a search miss is not a field of poor fits`);
+  }
+  return paths.map(p => JSON.parse(fs.readFileSync(p, 'utf8')));
+}
+
 const USAGE =
   'selector.js — recommend a component, or decline to.\n\n' +
   'Usage: node modules/cdicf/selector.js --intent "<text>" --candidates <dir> [options]\n\n' +
+  '  --candidates <dir>          every manifest in a directory\n' +
+  '  --candidates-from <f.json>  a set narrowed by the FTS sidecar (E2)\n' +
   '  --context <file.json>  project context (stack, required_wcag, budgets, concerns)\n' +
   '  --type <t>             require a component_type\n' +
   '  --surface <s>          require a surface\n' +
@@ -604,14 +625,19 @@ function main(argv) {
 
   const intentText = flagArg('--intent');
   const candDir = flagArg('--candidates');
-  if (!intentText || !candDir) {
-    process.stderr.write('selector.js: --intent and --candidates are required\n');
+  const candList = flagArg('--candidates-from');
+  if (!intentText || (!candDir && !candList)) {
+    process.stderr.write('selector.js: --intent and one of --candidates / --candidates-from are required\n');
+    process.exit(2);
+  }
+  if (candDir && candList) {
+    process.stderr.write('selector.js: --candidates and --candidates-from are mutually exclusive\n');
     process.exit(2);
   }
 
   let candidates, ctx = {};
   try {
-    candidates = loadCandidates(candDir);
+    candidates = candList ? loadCandidateList(candList) : loadCandidates(candDir);
     const ctxFile = flagArg('--context');
     if (ctxFile) ctx = JSON.parse(fs.readFileSync(ctxFile, 'utf8'));
   } catch (e) {
@@ -623,6 +649,14 @@ function main(argv) {
     { text: intentText, component_type: flagArg('--type'), surface: flagArg('--surface') },
     candidates, ctx);
 
+  // Where the candidate set came from bounds what any verdict can mean. A
+  // narrowed set makes an abstention a statement about the search as much as
+  // about the catalogue, and that has to travel with the decision.
+  res.candidate_source = candList
+    ? { mode: 'search', from: candList, count: candidates.length,
+        caveat: 'narrowed by an index search; a component absent from the index could not be considered' }
+    : { mode: 'directory', from: candDir, count: candidates.length };
+
   if (args.includes('--json')) {
     process.stdout.write(JSON.stringify(res, null, 2) + '\n');
   } else if (res.decision === 'ABSTAIN') {
@@ -630,6 +664,7 @@ function main(argv) {
       `ABSTAIN  [${res.abstention.code}]\n` +
       `  reason   ${res.abstention.reason}\n` +
       `  remedy   ${res.abstention.remedy}\n` +
+      (res.candidate_source.caveat ? `  caveat   ${res.candidate_source.caveat}\n` : '') +
       `  rejected ${res.rejected.length}\n`);
   } else {
     process.stdout.write(
