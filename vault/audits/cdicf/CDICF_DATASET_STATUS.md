@@ -18,13 +18,14 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | **A5** Adversarial evaluation corpus | NEW | **SEALED** | `tests/a5_adversarial.test.js`; 41 scenarios + a meta-gate; **6 failed on first run → 4 defects fixed** (D-016); hermetic across 3 runs |
 | E1 `DESIGN.md.template` +9 decisions | EXTEND | **SEALED** | `e9d5170`; Component Provenance section — the nine decisions **are** the selector's context object. `V-DESIGN-TEMPLATE-CLEAN` still APPROVE score=100 family=F3 |
 | E2 `design_index.py` + component FTS5 sidecar | EXTEND | **SEALED** | own DB file `CDICF-COMPONENT-INDEX.db`; builds **refuse** a database holding `turns*`/`design_tools*` (exit 3); provenance absent from the schema, not merely unindexed; empty results split into `NO_INDEX`/`INDEX_EMPTY`/`NO_MATCH`; `selector.js --candidates-from` consumes it. 15/15, hermetic 3× |
-| E3 `graphify` +component node/edge types | EXTEND | NOT STARTED | — |
-| E4 `capability_runtime` +4 activation modes | EXTEND | NOT STARTED | — |
-| E5 `modules/cdio` +component-scope checks | EXTEND | NOT STARTED | — |
+| E3 graphify integration | EXTEND | **SEALED** | **not as proposed** — the named owner (`indexer.py`) does not define `NODE_TYPES` (`tools/graphify_knowledge.py:57` does), and the July CDIO reality-scan already had the Owner approve *riding the existing types*. One `_GOV_ID` token; ontology pinned frozen by `V-CDICF-GRAPH-07`. 8/8, hermetic 3× |
+| E4 `capability_runtime` +4 activation modes | EXTEND | **DEFERRED** | **false premise** — no activation-mode concept exists in the module; the phrase appears only in CDICF's own plan. Honest reinterpretation (capability contracts) is blocked on an Owner decision: HR-APA-009 requires a declared kill switch for the installer's write surface |
+| E5 `modules/cdio` +component-scope checks | EXTEND | **DEFERRED** | not size (4 files / 376 lines) but blast radius — `scorer.py` feeds the `DESIGN_GOVERNANCE` §5 deploy gate (≥80 APPROVE), so a new check silently re-scores existing surfaces. Needs a measured before/after first |
 | E6 `DESIGN_GOVERNANCE.md` +3 clauses | EXTEND | **SEALED** | `63ccfff`; Section 8 — reuse-first, provenance-mandatory, tour-as-last-resort, each backed by an exit code |
 
-**Progress: 11 of 15 sealed.** Absolute count, deliberately — a percentage would improve
-by deleting a row. The denominator has grown three times (11 → 13 → 14 → 15) as A1b, A1c,
+**Progress: 12 of 15 sealed, 2 deferred with cause.** Absolute count, deliberately — a
+percentage would improve by deleting a row. Both deferrals name what unblocks them; a
+deferral without a resumption condition is an abandonment with better manners. The denominator has grown three times (11 → 13 → 14 → 15) as A1b, A1c,
 A2b and A3b were split out once the work turned out to be real. A denominator that only
 ever shrinks is the ratio failure wearing a different hat.
 

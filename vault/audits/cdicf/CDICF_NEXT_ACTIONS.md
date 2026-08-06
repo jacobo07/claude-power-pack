@@ -133,16 +133,78 @@ run yet.
 
 Hermetic: 42/42 identical across three consecutive runs.
 
-## Extensions — 3 of 6 done
+## Extensions — 4 of 6 done
 
 | # | Extension | State |
 |---|---|---|
 | **E1** | `DESIGN.md.template` +9 decisions | **SEALED** `e9d5170` — a Component Provenance section whose nine decisions **are** the selector's `--context` object, so a decision recorded there changes what the engine refuses. Verified against the real gate, not assumed: `V-DESIGN-TEMPLATE-CLEAN` still APPROVE score=100 family=F3 |
 | **E6** | `DESIGN_GOVERNANCE.md` +3 clauses | **SEALED** `63ccfff` — Section 8: reuse-first, provenance-mandatory, tour-as-last-resort, each backed by an exit code rather than a habit |
-| **E2** | `design_index.py` + component FTS5 sidecar | **SEALED** — own **database file**, own tables and triggers; 15 gates in `tools/test_cdicf_index.py`, hermetic 3× |
-| E3 | `graphify` +component node/edge types | NOT STARTED |
-| E4 | `capability_runtime` +4 activation modes | NOT STARTED |
-| E5 | `modules/cdio` +component-scope checks | NOT STARTED |
+| **E2** | `design_index.py` + component FTS5 sidecar | **SEALED** `a8d9947` — own **database file**, own tables and triggers; 15 gates in `tools/test_cdicf_index.py`, hermetic 3× |
+| **E3** | graphify integration | **SEALED** — **not** as proposed. One `_GOV_ID` token, ontology untouched, 8 gates in `tools/test_cdicf_graph.py` |
+| E4 | `capability_runtime` +4 activation modes | **DEFERRED — false premise.** See below |
+| E5 | `modules/cdio` +component-scope checks | **DEFERRED — governance blast radius.** See below |
+
+### E3 — the proposal was wrong twice, and the record said so
+
+Two premises failed verification before a line was written:
+
+- **The named owner does not own it.** `modules/graphify/indexer.py` is CLI plus repo
+  discovery. `NODE_TYPES` is defined in `tools/graphify_knowledge.py:57`.
+- **The extension itself was already decided against.** In July an identical proposal
+  for CDIO was reality-scanned and the Owner approved **riding the existing types**,
+  because editing the ontology re-indexes 722 coordinates for every repo
+  (`vault/plans/cdio-build-2026-07-05.md` decision 1; `scs_c78_cdio_active.md`).
+
+CDICF follows that precedent instead of re-litigating it. The entire change is one token
+— `CDICF[-_]` added to `_GOV_ID` in `global_store.py`, mirroring `CDIO-\d` exactly.
+
+Two things are asserted that a naive suite would not have:
+
+- **Blast radius is measured.** 106 files mention the word; the token requires the
+  *identifier* form, so prose does not promote (`V-CDICF-GRAPH-04`). A signal gate that
+  says yes to everything is not a gate.
+- **The ontology is pinned frozen** (`V-CDICF-GRAPH-07`). A later session that adds a
+  `component` node type fails this gate. Without it, someone could pass every CDICF test
+  while quietly taking the blast radius the Owner declined. The frozen count is measured
+  from source, not assumed — the first draft guessed 12 against a real 10 and failed
+  correctly.
+
+CDICF's A5 traps were **already** promotable under the pre-existing `T-[A-Z]` token, and
+`V-CDICF-GRAPH-03` says so, so this change is not credited with coverage that predates it.
+
+### E4 — deferred, because "4 activation modes" does not exist
+
+`modules/capability_runtime/` has no activation-mode concept. It has `triggers` /
+`anti_triggers`, the `Cost` / `Risk` / `Maturity` / `FailureRisk` enums, and four
+executable HR-APA rules. The phrase "4 activation modes" appears **only** in CDICF's own
+planning documents (`vault/plans/cdicf-corpus-2026-08-06.md:65` and the two ledger rows
+derived from it) — nowhere in the owner module. It is a spec-side invention with no
+counterpart in the code (HR-PREMISE-001).
+
+The honest reinterpretation is real work, not a rename: register CDICF's four executables
+as **capability contracts**. That requires satisfying HR-APA-006 (≥1 trigger AND ≥1
+consumer), HR-APA-007 (outputs require consumers), HR-APA-009 (write surfaces require
+rollback **and** a kill switch) and HR-APA-018 (a named owner) for each. The installer is
+a write surface, so it needs a declared kill switch — and what it means to kill CDICF
+installation mid-estate is an Owner decision, not one to infer. **Blocked on that answer,
+not on effort.**
+
+### E5 — deferred, because it moves a threshold other repos gate on
+
+`modules/cdio/` is 4 Python files / 376 lines in `scorer.py` (the ledger's "12 files" was
+also wrong). The subsystem is readable in one sitting, so this is not a size problem.
+
+It is a blast-radius problem. `scorer.py` computes the Design Quality Score, and
+`DESIGN_GOVERNANCE.md` §5 gates deploys on it: **≥80 and zero critical ⇒ APPROVE**,
+60–79 ⇒ REVISE, <60 ⇒ BLOCK, with pane-gated repos at ≥85. Adding a component-scope
+check changes score *composition*, so a surface that scored 82 yesterday can score 78
+today without anyone touching it. That is a governance change wearing a code change's
+clothes, and it needs to ship with a measured before/after on real reviews plus a
+decision on whether the new check can be CRITICAL (which would make it BLOCK-tier).
+
+Constraint for whoever takes it: **do not add a check without re-measuring existing
+scored surfaces.** A criterion that silently re-scores history is indistinguishable from
+a regression.
 
 E1 and E6 were taken first because they are the two that make the spine *reachable*: until
 a project's governance tells someone to run the selector, four working executables are a

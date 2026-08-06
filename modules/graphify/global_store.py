@@ -147,7 +147,10 @@ def _promote(glob_nodes: dict, node: dict, rid: str, repo_path: str) -> None:
 
 
 # A governance identity token — the mark of a genuinely cross-repo artifact.
-_GOV_ID = re.compile(r"\b(CDIO-\d|CO-\d|PM-\d|GK-\d|HR-[A-Z0-9]|BL-\d|SCS ?C\d|T-[A-Z])", re.IGNORECASE)
+# CDICF[-_] requires the identifier form (CDICF_DECISION_LOG, V-CDICF-IDX-01),
+# not prose. 106 files mention the word; the docs that carry its decisions are
+# the transportable asset. Its sealed traps already promote under T-[A-Z].
+_GOV_ID = re.compile(r"\b(CDIO-\d|CDICF[-_]|CO-\d|PM-\d|GK-\d|HR-[A-Z0-9]|BL-\d|SCS ?C\d|T-[A-Z])", re.IGNORECASE)
 
 
 def _is_promotable(nd: dict) -> bool:
