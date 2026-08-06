@@ -28,11 +28,21 @@ REPO_ROOT = HERE.parent.parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from detectors import detect_deploy_target  # noqa: E402
-from healthcheck import check_tcp, check_http, run_healthcheck  # noqa: E402
-from runners import gh_workflow as gh_workflow_mod  # noqa: E402
-from runners import scp_systemd as scp_mod  # noqa: E402
-from runners.git_push import run_git_push  # noqa: E402
+# Imported by package path, not by flat name. `detectors` also exists in
+# modules/auto-testing/ and `runners` in modules/rollback/ and modules/backup/;
+# in a single pytest process the first importer wins the global sys.modules slot
+# whatever this file put on sys.path, so `detect_deploy_target` was being looked
+# up in auto-testing's detectors. REPO_ROOT keeps the standalone run working.
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from modules.deployment.detectors import detect_deploy_target  # noqa: E402
+from modules.deployment.healthcheck import (  # noqa: E402
+    check_http, check_tcp, run_healthcheck,
+)
+from modules.deployment.runners import gh_workflow as gh_workflow_mod  # noqa: E402
+from modules.deployment.runners import scp_systemd as scp_mod  # noqa: E402
+from modules.deployment.runners.git_push import run_git_push  # noqa: E402
 
 
 RESULTS: list[dict] = []

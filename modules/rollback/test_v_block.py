@@ -34,9 +34,20 @@ DEPLOYMENT_DIR = THIS_DIR.parent / "deployment"
 if str(DEPLOYMENT_DIR) not in sys.path:
     sys.path.append(str(DEPLOYMENT_DIR))
 
-import rollback as rb_mod  # noqa: E402
-from rollback import rollback, validate_config  # noqa: E402
-from source_selector import list_verified, select_source  # noqa: E402
+# Imported by package path, not by flat name. `rollback` and `runners` each
+# name more than one thing in this repo, and in a single pytest process the
+# first importer wins the global sys.modules slot regardless of what this file
+# put on sys.path -- which is why this V-block passed standalone and could not
+# be collected at all in a full run. REPO_ROOT above keeps the standalone
+# invocation working.
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+import modules.rollback.rollback as rb_mod  # noqa: E402
+from modules.rollback.rollback import rollback, validate_config  # noqa: E402
+from modules.rollback.source_selector import (  # noqa: E402
+    list_verified, select_source,
+)
 
 
 RESULTS: list[tuple[str, bool, str]] = []
