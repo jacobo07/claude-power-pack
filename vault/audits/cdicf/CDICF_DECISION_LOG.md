@@ -317,6 +317,61 @@ evidence that it does not hallucinate connections.
 
 ---
 
+## D-016 — Four defects the implementation-side suite could not see
+**Date:** 2026-08-06 · **Decided by:** agent (A5 adversarial corpus)
+
+**The measurement that justifies A5.** 117 tests written alongside the engines were green.
+A corpus of 41 scenarios derived from the **brief's stated requirements** rather than from
+the code failed **6 of them on first run**, exposing four distinct defects. A suite written
+from the implementation cannot surprise its author; this one did, and that is the only
+evidence that the derivation was genuinely from the specification side.
+
+**Defect 1 — abstention remedies were prose only** (`A5-SEL-02/03/05`). Every abstention
+carried a human sentence and no machine-readable identity, so an automated caller had to
+regex English to tell a licence block from a budget block. A caller that parses prose to
+decide what to do next eventually parses it wrong. **Fix:** `remedy_code` on every
+abstention — `REMEDY_CHECK_LICENSE`, `REMEDY_BUDGET`, `REMEDY_ACCESSIBILITY`,
+`REMEDY_FIX_UX_FIRST`, and the rest. The sentence stays; a code is not an explanation. On
+a tied field the code is `REMEDY_MULTIPLE` with `tied_remedy_codes`, because crowning one
+remedy over a tie is `T-DOMINANT-OF-A-TIE-001` again in a new place.
+
+**Defect 2 — upstream health was not a factor at all** (`A5-SEL-08`). The A4 brief listed
+it among the soft-scoring dimensions and I omitted it. A dimension absent from a scorer can
+never lower anything: an abandoned upstream is exactly as mature, as small and as
+accessible as the day it was abandoned, so it scored identically to a maintained one
+forever. **Fix:** `upstream_health` derived from `lifecycle.last_verified_date`, full
+through six months and decaying to zero at twenty-four, weight 0.08 with the others
+rebalanced to keep the sum at 1.00. `now` is injectable so a score is reproducible.
+
+**Defect 3 — declared dependencies were ignored** (`A5-INS-07`). A registry entry may
+declare npm packages and other registry components; the installer never read either array.
+An entry declaring `@radix-ui/react-slot` installed cleanly into a project without it —
+present, checksum-valid, postcondition-verified, recorded as installed, and broken on first
+render. **That is the Scaffold Illusion with a passing verification step**, which is worse
+than the ordinary kind because every gate says yes. **Fix:** resolution before any write —
+npm against the target's `package.json`, registry deps against `installed.json` — refusing
+with `UNRESOLVED_DEPENDENCIES` (exit 11) and naming both lists.
+
+**Defect 4 — `minLength: 1` admits whitespace** (`A5-LEG-04`). The schema required
+`copyright_holder` with `minLength: 1` and a description reading *"An empty holder is never
+valid — an MIT notice cannot be written without a name."* A holder of `"   "` satisfied the
+constraint and produced precisely the nameless notice the field exists to prevent. The
+description was right and the constraint did not implement it. **Fix:** `"pattern": "\\S"`.
+
+**A fifth thing, self-inflicted:** the `upstream_health` fix introduced a wall-clock
+dependency, which is how a suite rots into a flake nobody edited. Measured rather than
+assumed — the recommendation holds at 0.83 against a 0.45 floor in 2030, and the abstention
+stays an abstention — then pinned as `A5-BND-08`, which asserts no decision flips between
+today and +4 years. The corpus grew to 41 for that reason and the count is asserted exactly,
+since a corpus allowed to shrink silently is the ratio failure in another costume.
+
+**Overturned by:** an independent instrument — a different agent, or a real consuming
+project — finding a class none of the 41 cover. That is the honest limit here: these
+scenarios were still written by the engines' author, and deriving them from the spec
+narrows that bias without eliminating it.
+
+---
+
 ## Open questions (not yet decisions)
 
 | # | Question | Blocks | State |

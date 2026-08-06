@@ -33,7 +33,7 @@
         "integration_mode":       { "type": "string", "enum": ["fork_canonical", "fork_specialized", "adapter", "gateway_upstream", "passthrough", "metadata_only"] },
         "license_fingerprint":    { "type": "string", "oneOf": [{ "pattern": "^[0-9a-f]{64}$" }, { "const": "PENDING_CLONE" }] },
         "notice_required":        { "type": "boolean" },
-        "copyright_holder":       { "type": "string", "minLength": 1, "description": "Exactly as the license text states it. An empty holder is never valid -- an MIT notice cannot be written without a name." },
+        "copyright_holder":       { "type": "string", "minLength": 1, "pattern": "\\S", "description": "Exactly as the license text states it. An empty holder is never valid -- an MIT notice cannot be written without a name. minLength alone was insufficient: whitespace has length, so '   ' satisfied it and produced exactly the nameless notice this field exists to prevent (A5-LEG-04). The pattern requires one non-whitespace character." },
         "fetch_date":             { "type": "string", "format": "date" },
         "confidence":             { "type": "string", "enum": ["VERIFIED", "OBSERVED", "INFERRED", "UNKNOWN"] }
       }

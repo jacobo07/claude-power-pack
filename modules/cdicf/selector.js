@@ -71,14 +71,39 @@ const MIN_SCORE = 0.45;
 const APPROVAL_MARGIN = 0.05;
 
 const WEIGHTS = {
-  relevance:      0.34,
-  identity_fit:   0.20,
-  maturity:       0.12,
-  accessibility:  0.12,
-  bundle:         0.10,
-  stack_fit:      0.06,
-  reuse:          0.06,
+  relevance:       0.32,
+  identity_fit:    0.18,
+  maturity:        0.11,
+  accessibility:   0.11,
+  bundle:          0.09,
+  upstream_health: 0.08,
+  stack_fit:       0.06,
+  reuse:           0.05,
 };
+
+/* Freshness decay. Full health through six months, linear to zero at
+ * twenty-four. `now` is injectable so a score is reproducible rather than
+ * drifting with the wall clock — a test whose expected value changes by
+ * sitting still is not a test. */
+const HEALTH_FRESH_MONTHS = 6;
+const HEALTH_DEAD_MONTHS = 24;
+
+function monthsSince(dateStr, nowStr) {
+  const then = Date.parse(`${dateStr}T00:00:00Z`);
+  const now = nowStr ? Date.parse(`${nowStr}T00:00:00Z`) : Date.now();
+  if (!Number.isFinite(then) || !Number.isFinite(now)) return null;
+  return Math.max(0, (now - then) / (1000 * 60 * 60 * 24 * 30.44));
+}
+
+function upstreamHealth(m, ctx) {
+  const months = monthsSince(m.lifecycle.last_verified_date, ctx.now);
+  // An unmeasurable freshness is not freshness. Same discipline as an
+  // `unassessed` WCAG level: unknown must not quietly score as healthy.
+  if (months === null) return 0;
+  if (months <= HEALTH_FRESH_MONTHS) return 1;
+  const span = HEALTH_DEAD_MONTHS - HEALTH_FRESH_MONTHS;
+  return Math.max(0, 1 - (months - HEALTH_FRESH_MONTHS) / span);
+}
 const FAILURE_PENALTY = 0.05;        // per known failure
 const FAILURE_PENALTY_MAX = 0.20;
 const RELEVANT_FAILURE_MULTIPLIER = 2;
@@ -273,6 +298,11 @@ function scoreOf(m, ctx, relevance, intentTerms) {
     : (m.quality.bundle_cost_kb === 0 ? 1 : 1 / (1 + m.quality.bundle_cost_kb / 25));
   factors.stack_fit = ((m.capability.ssr_support ? 0.5 : 0) + (m.capability.rsc_support ? 0.5 : 0));
   factors.reuse = REUSE[m.selection.reuse_recommendation] ?? 0;
+  // An abandoned upstream is a liability the other factors cannot see: a dead
+  // dependency is as mature, as small and as accessible as it was the day it
+  // was abandoned, so without this term it scores identically to a maintained
+  // one forever.
+  factors.upstream_health = upstreamHealth(m, ctx);
 
   const contributions = Object.entries(WEIGHTS)
     .map(([name, w]) => ({ factor: name, weight: w, value: factors[name], contribution: w * factors[name] }));
@@ -295,8 +325,52 @@ function scoreOf(m, ctx, relevance, intentTerms) {
  * Decision
  * ------------------------------------------------------------------------- */
 
+/*
+ * Every abstention carries a machine-readable `remedy_code` alongside the human
+ * sentence.
+ *
+ * Prose alone forces an automated caller to regex the remedy text to tell a
+ * licence block from a budget block — and a caller that has to parse English to
+ * decide what to do next will eventually parse it wrong. The sentence stays,
+ * because a code is not an explanation.
+ */
+const REMEDY_CODE_BY_ABSTENTION = {
+  NO_CANDIDATES:              'REMEDY_SUPPLY_CANDIDATES',
+  NO_RECOGNISED_INTENT_TERMS: 'REMEDY_REPHRASE_INTENT',
+  BELOW_THRESHOLD:            'REMEDY_BUILD_NOT_ADOPT',
+  REMEDY_NOT_A_COMPONENT:     'REMEDY_FIX_UX_FIRST',
+};
+
+const REMEDY_CODE_BY_FILTER = {
+  LICENCE_PROHIBITED:     'REMEDY_CHECK_LICENSE',
+  LICENCE_UNKNOWN:        'REMEDY_CHECK_LICENSE',
+  ATTRIBUTION_IMPOSSIBLE: 'REMEDY_ATTRIBUTION',
+  BUDGET_EXCEEDED:        'REMEDY_BUDGET',
+  ACCESSIBILITY_FLOOR:    'REMEDY_ACCESSIBILITY',
+  STACK_INCOMPATIBLE:     'REMEDY_STACK',
+  MOTION_BUDGET:          'REMEDY_MOTION_BUDGET',
+  LIFECYCLE:              'REMEDY_BUILD_NOT_ADOPT',
+  REUSE_FORBIDDEN:        'REMEDY_BUILD_NOT_ADOPT',
+  NO_INTENT_MATCH:        'REMEDY_BUILD_NOT_ADOPT',
+  MANIFEST_INVALID:       'REMEDY_FIX_MANIFEST',
+};
+
 function abstain(code, reason, remedy, extra) {
-  return Object.assign({ decision: 'ABSTAIN', abstention: { code, reason, remedy }, ranked: [] }, extra || {});
+  const e = extra || {};
+  let remedy_code = REMEDY_CODE_BY_ABSTENTION[code] || 'REMEDY_UNSPECIFIED';
+  if (code === 'ALL_FILTERED') {
+    // No single cause means no single remedy. Crowning one here would hand the
+    // caller a code that is right for part of the field and wrong for the rest.
+    remedy_code = e.dominant_filter
+      ? (REMEDY_CODE_BY_FILTER[e.dominant_filter] || 'REMEDY_UNSPECIFIED')
+      : 'REMEDY_MULTIPLE';
+  }
+  const abstention = { code, reason, remedy, remedy_code };
+  if (remedy_code === 'REMEDY_MULTIPLE' && Array.isArray(e.tied_filters)) {
+    abstention.tied_remedy_codes = [...new Set(
+      e.tied_filters.map(f => REMEDY_CODE_BY_FILTER[f] || 'REMEDY_UNSPECIFIED'))];
+  }
+  return Object.assign({ decision: 'ABSTAIN', abstention, ranked: [] }, e);
 }
 
 /*

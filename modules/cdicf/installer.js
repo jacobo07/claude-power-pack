@@ -92,8 +92,48 @@ const REFUSAL = {
   DIRTY_STATE:               { exit: 8 },
   NOT_INSTALLED:             { exit: 9 },
   PATH_ESCAPE:               { exit: 10 },
+  UNRESOLVED_DEPENDENCIES:   { exit: 11 },
   IO_ERROR:                  { exit: 3 },
 };
+
+/*
+ * A registry entry may declare npm packages and other registry components it
+ * needs. Installing its files while those are absent produces a component that
+ * is present, checksum-valid, recorded as installed — and broken on first
+ * render. That is the Scaffold Illusion with a passing verification step, so
+ * the dependencies are resolved before anything is written.
+ *
+ * Resolution is deliberately literal: an npm dependency counts as resolved when
+ * the target's package.json declares it, and a registry dependency when
+ * installed.json already names it. No network, no version solving. This
+ * reports a fact about the project rather than guessing at one.
+ */
+function unresolvedDependencies(entry, target, paths) {
+  const npm = Array.isArray(entry.dependencies) ? entry.dependencies : [];
+  const registry = Array.isArray(entry.registryDependencies) ? entry.registryDependencies : [];
+  if (!npm.length && !registry.length) return null;
+
+  const declared = new Set();
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(target, 'package.json'), 'utf8'));
+    for (const field of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
+      for (const name of Object.keys(pkg[field] || {})) declared.add(name);
+    }
+  } catch (_) {
+    // No package.json, or an unreadable one. Nothing is declared, so nothing
+    // is resolved — which is the honest reading, not an error.
+  }
+
+  const installed = new Set(Object.keys(readInstalled(paths).components || {}));
+  // Strip a trailing version specifier without eating a scope: the `@` in
+  // `@radix-ui/react-slot` is followed by a letter, a version's `@` is not.
+  const bare = (d) => String(d).replace(/@[\^~>=<0-9][^@]*$/, '');
+
+  const missingNpm = npm.filter(d => !declared.has(bare(d)));
+  const missingRegistry = registry.filter(d => !installed.has(d));
+  if (!missingNpm.length && !missingRegistry.length) return null;
+  return { npm: missingNpm, registry: missingRegistry };
+}
 
 function sha256(buf) {
   return crypto.createHash('sha256').update(buf).digest('hex');
@@ -174,7 +214,7 @@ function rmrf(p) {
  * be executable — an install that can still fail on validation after the first
  * rename is an install that needs recovery for a preventable reason.
  */
-function planInstall(entry, im, target) {
+function planInstall(entry, im, target, opts) {
   if (!entry || typeof entry !== 'object') return refuse('INPUT_INVALID', 'registry entry is not an object');
   if (!im || typeof im !== 'object') return refuse('INPUT_INVALID', 'install manifest is not an object');
 
@@ -205,6 +245,15 @@ function planInstall(entry, im, target) {
       `license_tier ${im.provenance.license_tier} derives redistribution 'prohibited'; ` +
       'installing local artifacts would redistribute it',
       { artifact_class: meta.artifact_class, files: entryFiles.length });
+  }
+
+  const missingDeps = opts && opts.allowUnresolvedDeps
+    ? null
+    : unresolvedDependencies(entry, path.resolve(target), txPaths(path.resolve(target)));
+  if (missingDeps) {
+    return refuse('UNRESOLVED_DEPENDENCIES',
+      'the entry declares dependencies this project does not have; installing would leave it broken on first render',
+      Object.assign(missingDeps, { hint: 'install the missing packages/components first, or pass --allow-unresolved-deps deliberately' }));
   }
 
   if (pointer) {
@@ -546,7 +595,7 @@ function install(entry, im, target, opts) {
     }
   }
 
-  const planned = planInstall(entry, im, target);
+  const planned = planInstall(entry, im, target, o);
   if (!planned.ok) return planned;
   const plan = planned.plan;
   if (recovered) plan.recovered_before_install = recovered;

@@ -106,11 +106,32 @@ a self-matching relevance signal, and a "dominant cause" reported over a tie. Se
 The engine **never installs**. `V-SEL-22` asserts it both behaviourally (no filesystem
 writes) and structurally (no import path to the installer).
 
-## A5 — Evaluation corpus (NEW)
+## A5 — Adversarial evaluation corpus — SEALED 2026-08-06
 
-| # | Action | Done when |
+`tests/a5_adversarial.test.js`, 41 scenarios across LEGAL · SELECTION · INSTALL · REGISTRY ·
+BOUNDARY · TRAP, plus a meta-scenario asserting the corpus's own size and category spread.
+
+| # | Action | State |
 |---|---|---|
-| 11 | ~40 adversarial scenarios as executable cases | The suite runs and at least one case fails honestly before being fixed |
+| 11 | ~40 adversarial scenarios as executable cases | **DONE** — 41 scenarios, each carrying `what_it_tests` (the property) and `why_it_could_fail` (the mechanism), both printed on failure. **Six failed on first run**, exposing four distinct defects, all fixed in the same commit (D-016) |
+
+Each scenario is declarative and executed by a loop, so it passes or fails binarily with
+its own metadata as the evidence. Most run through the **CLI** rather than the exported
+functions: argv parsing, exit codes and wiring are part of the contract, and a suite that
+only calls exports can pass while the real entry point is broken.
+
+**What the corpus actually bought.** 117 tests written alongside the engines were green.
+41 scenarios derived from the *brief's stated requirements* rather than from the code found
+four defects those 117 could not see — a prose-only remedy, an omitted scoring dimension,
+an unresolved-dependency install that passed every gate, and a `minLength` constraint that
+admitted whitespace. That is the argument for A5, measured rather than asserted.
+
+**The honest limit:** these scenarios were still written by the engines' author. Deriving
+them from the specification narrows that bias; it does not eliminate it. A genuinely
+independent instrument is a different agent or a real consuming project, and neither has
+run yet.
+
+Hermetic: 42/42 identical across three consecutive runs.
 
 ## Extensions (after the NEW spine runs)
 

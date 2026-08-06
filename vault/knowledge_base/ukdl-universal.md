@@ -5524,4 +5524,115 @@ asserting more than the underlying numbers support.
 **Origin:** decision D-015 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`, found
 by real-input verification after a fully green synthetic suite.
 
+---
+
+### T-MINLENGTH-COUNTS-WHITESPACE-001 (2026-08-06, CDICF A5)
+
+**Trap:** expressing "this must have a real value" as a length constraint.
+Whitespace has length, so `minLength: 1` / `NOT NULL` / `required` / `len(x) > 0`
+all accept `"   "` and produce exactly the empty artifact the constraint was
+written to prevent.
+
+**Observed:** a manifest field carried `minLength: 1` and the description *"An
+empty holder is never valid — an MIT notice cannot be written without a name."*
+A holder of three spaces passed validation and would have produced a nameless
+legal notice. The description was correct; the constraint did not implement it.
+
+**General form:** when a field must carry meaning rather than merely bytes,
+constrain the content (`pattern: "\\S"`, a trimmed-length check, a format
+validator), not the length. Then read every field description in the schema as a
+specification and ask whether the constraint beside it actually enforces the
+sentence — a description that promises more than its constraint delivers is a
+lie with a citation. Applies to form validation, config schemas, DB
+constraints, CLI argument parsing, and required API fields.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+**Origin:** defect 4 of D-016, `vault/audits/cdicf/CDICF_DECISION_LOG.md`.
+
+---
+
+### T-OMITTED-FACTOR-CANNOT-PENALIZE-001 (2026-08-06, CDICF A5)
+
+**Trap:** a quality dimension left out of a scorer cannot ever lower a score.
+The omission is invisible in every test, because nothing that measures the score
+can observe a term that is not in it — only a case that *should* have been
+penalised and was not will reveal it, and such a case has to be authored
+deliberately.
+
+**Observed:** the CDICF selector scored maturity, bundle size, accessibility,
+stack fit and reuse posture — but not upstream health, which the spec listed. An
+abandoned upstream is exactly as mature, as small and as accessible as the day
+it was abandoned, so it ranked identically to a maintained one forever. Twenty-
+three tests of the scorer passed without noticing.
+
+**General form:** audit a scorer against the list of dimensions it was
+*specified* to weigh, not against its own factor table — the table is the thing
+under test and cannot testify for itself. For each specified dimension, write a
+case where two items differ *only* in that dimension and assert the ordering.
+A dimension with no such case is not scored, whatever the design doc says.
+Applies to ranking, risk scoring, prioritisation, health checks, and any
+weighted decision.
+
+**Watch the fix, too:** adding a time-derived factor makes outcomes depend on
+the wall clock, which is how a green suite rots into a flake nobody edited. Make
+`now` injectable and assert that no decision flips across a multi-year horizon.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+**Origin:** defect 2 of D-016, `vault/audits/cdicf/CDICF_DECISION_LOG.md`.
+
+---
+
+### T-DECLARED-BUT-UNRESOLVED-DEPENDENCY-001 (2026-08-06, CDICF A5)
+
+**Trap:** an installer that carries dependency metadata without ever resolving
+it. The install completes, the checksums verify, the postconditions pass and the
+state of record says success — while the component is broken on first render.
+This is the Scaffold Illusion with a **passing verification step**, and it is
+worse than the ordinary kind precisely because every gate says yes.
+
+**Observed:** CDICF registry entries carry `dependencies` and
+`registryDependencies`. The installer read neither. An entry declaring
+`@radix-ui/react-slot` installed cleanly into a project that did not have it,
+and every check the system owned reported green.
+
+**General form:** metadata that is transported but never evaluated is
+decoration. For every declared relationship an artifact carries, either resolve
+it before acting or refuse and name what is missing — and prefer refusing, since
+a partial install is harder to diagnose than a blocked one. Resolution should be
+literal and local (does the manifest declare it, is it already installed) rather
+than inferred; report a fact about the project, do not guess at one. Applies to
+package installers, plugin loaders, migration runners, IaC modules, and any
+artifact with a `requires:` field.
+
+**Sibling:** `feedback_orphan_field_dead_recovery_path` — a field consumed by
+nobody. This is its inverse: a field *produced* by everybody and consumed by
+nobody.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+**Origin:** defect 3 of D-016, `vault/audits/cdicf/CDICF_DECISION_LOG.md`.
+
+---
+
+### T-PROSE-ONLY-REMEDY-001 (2026-08-06, CDICF A5)
+
+**Trap:** an outcome that tells a human what to do but gives a program nothing to
+branch on. The caller ends up matching on English — `if (/budget/.test(msg))` —
+which breaks the first time the wording is improved, and breaks silently.
+
+**Observed:** every CDICF abstention carried a reason code and a remedy
+*sentence*. Distinguishing "blocked by licence" from "blocked by budget"
+required parsing prose, even though the engine knew exactly which filter had
+emptied the field.
+
+**General form:** pair every human-readable explanation with a stable
+machine-readable identity, and never let the identity replace the sentence — a
+code is not an explanation and prose is not an interface. Where the cause is
+genuinely ambiguous, emit an explicit `MULTIPLE` identity with the full set
+rather than picking one (see `T-DOMINANT-OF-A-TIE-001`). Applies to error
+taxonomies, API error bodies, validation results, CI failure reporting, and
+any decision an automation consumes.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+**Origin:** defect 1 of D-016, `vault/audits/cdicf/CDICF_DECISION_LOG.md`.
+
 - **UKDL-OSA-2026-08-06T14:13:13Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
