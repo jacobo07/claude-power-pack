@@ -46,12 +46,35 @@ if str(DEPLOYMENT_DIR) not in sys.path:
 
 BACKUP_DIR = THIS_DIR.parent / "backup"
 
-from source_selector import select_source  # noqa: E402
-from runners.restore_docker_volume import run_restore_docker_volume  # noqa: E402
-from runners.restore_pg_dump import run_restore_pg_dump  # noqa: E402
-from runners.restore_rsync_dir import run_restore_rsync_dir  # noqa: E402
+# Dual-mode imports. The flat forms below are correct when this file is run as
+# a script (sys.path[0] is this directory), and WRONG inside a single process
+# that has already imported another module's siblings: `runners` names three
+# different packages in this repo (deployment/, rollback/, backup/) and the
+# first importer wins the global sys.modules slot for all of them. Under pytest
+# that was backup's, so `runners.restore_docker_volume` did not exist and this
+# module could not be collected at all.
+#
+# The package form is tried first because it is unambiguous; the flat form
+# remains as the script-mode path, where a relative import has no parent.
+try:  # imported as modules.rollback.rollback
+    from .runners.restore_docker_volume import run_restore_docker_volume
+    from .runners.restore_pg_dump import run_restore_pg_dump
+    from .runners.restore_rsync_dir import run_restore_rsync_dir
+    from .source_selector import select_source
+except ImportError:  # python modules/rollback/rollback.py
+    from runners.restore_docker_volume import run_restore_docker_volume  # noqa: E402
+    from runners.restore_pg_dump import run_restore_pg_dump  # noqa: E402
+    from runners.restore_rsync_dir import run_restore_rsync_dir  # noqa: E402
+    from source_selector import select_source  # noqa: E402
 
-from healthcheck import run_healthcheck  # noqa: E402
+# healthcheck is DEPLOYMENT's, not this module's -- hence DEPLOYMENT_DIR on
+# sys.path above. It is unique in the repo, so no collision arises; the package
+# form is still preferred so the borrow is visible rather than implied by a
+# sys.path append fifteen lines earlier.
+try:
+    from modules.deployment.healthcheck import run_healthcheck
+except ImportError:
+    from healthcheck import run_healthcheck  # noqa: E402
 
 EXIT_PASS = 0
 EXIT_FAIL = 2
@@ -542,7 +565,13 @@ def rollback(stdin_payload: dict[str, Any]) -> dict[str, Any]:
     except Exception:
         pass
 
-        return {
+    # This return was indented one level deeper, INSIDE the except above, so the
+    # function returned its result only when the OSA hook raised -- and returned
+    # None whenever the hook worked. It read as correct for as long as
+    # `modules.osa.dispatcher` was unimportable, which it always was: nothing put
+    # the repository root on sys.path, so the import failed, the except ran, and
+    # the return fired by accident. The success path had never once executed.
+    return {
         "verdict": verdict,
         "exit_code": exit_code,
         "mode": config.get("mode"),
