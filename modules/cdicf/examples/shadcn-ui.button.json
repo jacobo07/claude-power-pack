@@ -1,0 +1,55 @@
+{
+  "identity": {
+    "id": "primitives/button",
+    "name": "Button",
+    "version": "unversioned",
+    "commit_sha": "9846e22ce52c723554742860a0dbd3e5cf19b573",
+    "upstream_repo": "https://github.com/shadcn-ui/ui",
+    "upstream_namespace": "shadcn/ui",
+    "local_namespace": "cpp/primitives"
+  },
+  "provenance": {
+    "license_tier": "PERMISSIVE",
+    "redistribution_posture": "allowed",
+    "integration_mode": "fork_canonical",
+    "license_fingerprint": "PENDING_CLONE",
+    "notice_required": true,
+    "copyright_holder": "shadcn",
+    "fetch_date": "2026-08-06",
+    "confidence": "OBSERVED"
+  },
+  "capability": {
+    "component_type": "primitive",
+    "surface": "product",
+    "accessibility_level": "full",
+    "ssr_support": true,
+    "rsc_support": false,
+    "client_boundary": "client",
+    "motion_budget": "low"
+  },
+  "quality": {
+    "maturity": "mature",
+    "known_failures": [
+      "asChild composition forwards props to the child, so a child that swallows onClick silently disables the button",
+      "Variant classes are merged by order, so a caller passing className can out-specify the variant without warning"
+    ],
+    "bundle_cost_kb": 2.1,
+    "wcag_level": "AA",
+    "reduced_motion_compliant": true
+  },
+  "lifecycle": {
+    "state": "active",
+    "added_date": "2026-08-06",
+    "last_verified_date": "2026-08-06",
+    "retirement_condition": "Retire if the CPP registry adopts a different primitive substrate (Base UI or React Aria) as canonical, or if the upstream abandons the copy-in distribution model this fork depends on."
+  },
+  "selection": {
+    "identity_fit_score": 20,
+    "reuse_recommendation": "prefer",
+    "abstention_conditions": [
+      "The project already has a working button primitive — reuse-first outranks canonical",
+      "The surface needs a server component with no interactivity, where a plain element is correct"
+    ],
+    "alternatives": ["primitives/link", "primitives/icon-button"]
+  }
+}

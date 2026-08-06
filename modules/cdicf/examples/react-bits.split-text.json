@@ -1,0 +1,57 @@
+{
+  "identity": {
+    "id": "motion-gateway/split-text",
+    "name": "Split Text",
+    "version": "unversioned",
+    "commit_sha": "1320d40a8318ac7d4fe6690c7206ceda8cdd59bd",
+    "upstream_repo": "https://github.com/DavidHDev/react-bits",
+    "upstream_namespace": "react-bits/TextAnimations",
+    "local_namespace": "cpp/motion-gateway"
+  },
+  "provenance": {
+    "license_tier": "SOURCE_AVAILABLE_RESTRICTED",
+    "redistribution_posture": "prohibited",
+    "integration_mode": "gateway_upstream",
+    "license_fingerprint": "f4cfa83966e6492054d3156cf70d3cf000b8f0a4d868517818963ec2ad1e9991",
+    "notice_required": true,
+    "copyright_holder": "David Haz",
+    "fetch_date": "2026-08-06",
+    "confidence": "VERIFIED"
+  },
+  "capability": {
+    "component_type": "effect",
+    "surface": "motion",
+    "accessibility_level": "partial",
+    "ssr_support": false,
+    "rsc_support": false,
+    "client_boundary": "client",
+    "motion_budget": "high"
+  },
+  "quality": {
+    "maturity": "stable",
+    "known_failures": [
+      "Character-level splitting replaces the text node, so screen readers may announce fragments rather than the phrase unless an aria-label carries the full string",
+      "Animating many characters concurrently is a main-thread cost that surfaces as INP on low-end mobile"
+    ],
+    "bundle_cost_kb": 0,
+    "wcag_level": "unassessed",
+    "reduced_motion_compliant": true
+  },
+  "lifecycle": {
+    "state": "active",
+    "added_date": "2026-08-06",
+    "last_verified_date": "2026-08-06",
+    "retirement_condition": "Retire if the upstream license changes in a way that removes gateway installation as a lawful path, or if a CPP-owned equivalent reaches equal maturity under an unrestricted license."
+  },
+  "selection": {
+    "identity_fit_score": 35,
+    "reuse_recommendation": "discouraged",
+    "abstention_conditions": [
+      "The project's DESIGN.md declares no motion budget, or the budget is already spent",
+      "The surface is a product or operational view rather than an expressive hero",
+      "The animation would compete with the primary interaction rather than establish hierarchy",
+      "The consuming project distributes its own component library, because the restriction propagates downstream"
+    ],
+    "alternatives": ["motion-gateway/blur-text", "primitives/typography"]
+  }
+}

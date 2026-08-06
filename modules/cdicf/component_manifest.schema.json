@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://claude-power-pack/cdicf/component_manifest.schema.json",
+  "title": "CDICF Component Manifest",
+  "description": "Canonical knowledge unit for one component, primitive, block, page, composition, hook, theme, adapter or effect in the CDICF. A collection of code becomes intelligence-selectable infrastructure only once every member carries one of these. Enum values in provenance.license_tier and provenance.redistribution_posture are the vocabulary of lib/license_gate.js and must not diverge from it -- validate_manifest.js imports the gate and fails if they do.",
+  "type": "object",
+  "required": ["identity", "provenance", "capability", "quality", "lifecycle", "selection"],
+  "additionalProperties": false,
+
+  "properties": {
+    "identity": {
+      "type": "object",
+      "required": ["id", "name", "version", "commit_sha", "upstream_repo", "upstream_namespace", "local_namespace"],
+      "additionalProperties": false,
+      "properties": {
+        "id":                 { "type": "string", "pattern": "^[a-z0-9]+(?:[-.][a-z0-9]+)*/[a-z0-9]+(?:[-.][a-z0-9]+)*$", "description": "Stable key, '<namespace>/<component>'. Never reused after retirement." },
+        "name":               { "type": "string", "minLength": 1 },
+        "version":            { "type": "string", "minLength": 1, "description": "Upstream version, or 'unversioned' when the upstream ships none." },
+        "commit_sha":         { "type": "string", "oneOf": [{ "pattern": "^[0-9a-f]{40}$" }, { "const": "PENDING_CLONE" }], "description": "40-hex pin, or PENDING_CLONE. Never a branch name -- a branch is not a pin." },
+        "upstream_repo":      { "type": "string", "format": "uri" },
+        "upstream_namespace": { "type": "string", "minLength": 1 },
+        "local_namespace":    { "type": "string", "enum": ["cpp/primitives", "cpp/marketing", "cpp/ai-interfaces", "cpp/onboarding", "cpp/motion-gateway", "cpp/compositions", "cpp/pages"] }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": ["license_tier", "redistribution_posture", "integration_mode", "license_fingerprint", "notice_required", "copyright_holder", "fetch_date", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "license_tier":           { "type": "string", "enum": ["PERMISSIVE", "WEAK_COPYLEFT", "STRONG_COPYLEFT", "SOURCE_AVAILABLE_RESTRICTED", "PROPRIETARY", "UNKNOWN"] },
+        "redistribution_posture": { "type": "string", "enum": ["allowed", "conditional", "prohibited", "unknown"] },
+        "integration_mode":       { "type": "string", "enum": ["fork_canonical", "fork_specialized", "adapter", "gateway_upstream", "passthrough", "metadata_only"] },
+        "license_fingerprint":    { "type": "string", "oneOf": [{ "pattern": "^[0-9a-f]{64}$" }, { "const": "PENDING_CLONE" }] },
+        "notice_required":        { "type": "boolean" },
+        "copyright_holder":       { "type": "string", "minLength": 1, "description": "Exactly as the license text states it. An empty holder is never valid -- an MIT notice cannot be written without a name." },
+        "fetch_date":             { "type": "string", "format": "date" },
+        "confidence":             { "type": "string", "enum": ["VERIFIED", "OBSERVED", "INFERRED", "UNKNOWN"] }
+      }
+    },
+
+    "capability": {
+      "type": "object",
+      "required": ["component_type", "surface", "accessibility_level", "ssr_support", "rsc_support", "client_boundary", "motion_budget"],
+      "additionalProperties": false,
+      "properties": {
+        "component_type":      { "type": "string", "enum": ["primitive", "block", "page", "composition", "hook", "theme", "adapter", "effect"] },
+        "surface":             { "type": "string", "enum": ["marketing", "product", "ai_interface", "onboarding", "motion"] },
+        "accessibility_level": { "type": "string", "enum": ["full", "partial", "none", "unassessed"] },
+        "ssr_support":         { "type": "boolean" },
+        "rsc_support":         { "type": "boolean" },
+        "client_boundary":     { "type": "string", "enum": ["server", "client", "mixed"] },
+        "motion_budget":       { "type": "string", "enum": ["none", "low", "medium", "high"], "description": "Cost this component draws from the project's DESIGN.md motion budget." }
+      }
+    },
+
+    "quality": {
+      "type": "object",
+      "required": ["maturity", "known_failures", "bundle_cost_kb", "wcag_level", "reduced_motion_compliant"],
+      "additionalProperties": false,
+      "properties": {
+        "maturity":                 { "type": "string", "enum": ["experimental", "beta", "stable", "mature"] },
+        "known_failures":           { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Empty array means none recorded -- NOT that none exist. Absence of evidence is recorded as unassessed elsewhere, never as a pass." },
+        "bundle_cost_kb":           { "type": "number", "minimum": 0 },
+        "wcag_level":               { "type": "string", "enum": ["A", "AA", "AAA", "fail", "unassessed"] },
+        "reduced_motion_compliant": { "type": "boolean" }
+      }
+    },
+
+    "lifecycle": {
+      "type": "object",
+      "required": ["state", "added_date", "last_verified_date", "retirement_condition"],
+      "additionalProperties": false,
+      "properties": {
+        "state":                { "type": "string", "enum": ["active", "deprecated", "retired", "quarantined"] },
+        "added_date":           { "type": "string", "format": "date" },
+        "last_verified_date":   { "type": "string", "format": "date" },
+        "retirement_condition": { "type": "string", "minLength": 1, "description": "What would end this component's life. A capability admitted with no retirement condition can never be removed on evidence, only on opinion." }
+      }
+    },
+
+    "selection": {
+      "type": "object",
+      "required": ["identity_fit_score", "reuse_recommendation", "abstention_conditions", "alternatives"],
+      "additionalProperties": false,
+      "properties": {
+        "identity_fit_score":    { "type": "number", "minimum": 0, "maximum": 100, "description": "How well this survives the DESIGN_GOVERNANCE logo-swap test. Low means generic." },
+        "reuse_recommendation":  { "type": "string", "enum": ["prefer", "acceptable", "discouraged", "forbidden"] },
+        "abstention_conditions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "description": "Contexts in which the selector must decline to use this component. Abstention is a valid outcome." },
+        "alternatives":          { "type": "array", "items": { "type": "string" }, "description": "Manifest ids of substitutes, for the substitution graph." }
+      }
+    }
+  },
+
+  "cdicfInvariants": [
+    {
+      "id": "INV-01",
+      "rule": "provenance.redistribution_posture MUST equal the posture lib/license_gate.js derives from provenance.license_tier.",
+      "why": "The two vocabularies are one vocabulary. A manifest that says PERMISSIVE/prohibited or SOURCE_AVAILABLE_RESTRICTED/allowed is internally inconsistent and would be trusted by an installer."
+    },
+    {
+      "id": "INV-02",
+      "rule": "redistribution_posture 'prohibited' REQUIRES integration_mode in {gateway_upstream, metadata_only}.",
+      "why": "This is the structural form of the react-bits decision. A prohibited component recorded as fork_canonical is a license violation waiting for an emitter to act on it. Enforced here so the rule survives everyone forgetting it."
+    },
+    {
+      "id": "INV-03",
+      "rule": "redistribution_posture 'prohibited' REQUIRES notice_required true.",
+      "why": "Provenance may never be stripped from restricted code."
+    },
+    {
+      "id": "INV-04",
+      "rule": "confidence 'VERIFIED' REQUIRES commit_sha and license_fingerprint to both be pinned (neither PENDING_CLONE).",
+      "why": "VERIFIED is a claim about a specific artifact. Unpinned, there is no artifact the claim is about."
+    },
+    {
+      "id": "INV-05",
+      "rule": "reuse_recommendation 'prefer' FORBIDS wcag_level in {fail, unassessed}.",
+      "why": "Recommending a component whose accessibility was never measured launders an unknown into a recommendation."
+    },
+    {
+      "id": "INV-06",
+      "rule": "capability.motion_budget 'high' REQUIRES quality.reduced_motion_compliant true.",
+      "why": "High motion without a reduced-motion path is an accessibility failure, not a style choice."
+    }
+  ]
+}
