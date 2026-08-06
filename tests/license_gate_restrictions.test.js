@@ -21,7 +21,8 @@ const os = require('node:os');
 const path = require('node:path');
 
 const {
-  classify, tierFor, detectRestrictions, REDISTRIBUTION_BY_TIER, OBLIGATIONS,
+  classify, tierFor, detectRestrictions, findLicenseFiles,
+  REDISTRIBUTION_BY_TIER, OBLIGATIONS,
 } = require('../lib/license_gate');
 
 const MIT_BODY =
@@ -201,6 +202,52 @@ test('V-LICENSE-RESTRICT-11 — every tier maps to a redistribution posture and 
     assert.ok(REDISTRIBUTION_BY_TIER[t], `no redistribution posture for tier ${t}`);
     assert.ok(OBLIGATIONS[t], `no obligation text for tier ${t}`);
   }
+});
+
+/* ---------------- V-LICENSE-FILE-* — filename discovery ----------------- */
+
+test('V-LICENSE-FILE-01 — lowercase `license` is found (nilbuild/driver.js shape)', () => {
+  // driver.js ships `license` — lowercase, no extension, on branch master.
+  // The old exact-name probe matched it on Windows only by filesystem accident.
+  const dir = writeFileIn(mkdtemp(), 'license', MIT_BODY);
+  const v = classify(dir);
+  assert.deepEqual(v.files_inspected, ['license']);
+  assert.equal(v.canonical, 'MIT');
+  assert.equal(v.tier, 'PERMISSIVE');
+});
+
+test('V-LICENSE-FILE-02 — British `LICENCE.md` is found (tailark/blocks shape)', () => {
+  const dir = writeFileIn(mkdtemp(), 'LICENCE.md', MIT_BODY);
+  const v = classify(dir);
+  assert.deepEqual(v.files_inspected, ['LICENCE.md']);
+  assert.equal(v.tier, 'PERMISSIVE');
+});
+
+test('V-LICENSE-FILE-03 — discovery order is deterministic, so the fingerprint is', () => {
+  const dir = mkdtemp();
+  writeFileIn(dir, 'LICENCE.md', MIT_BODY);
+  writeFileIn(dir, 'COPYING', MIT_BODY);
+  const first = classify(dir);
+  const second = classify(dir);
+  assert.deepEqual(first.files_inspected, second.files_inspected);
+  assert.equal(first.fingerprint, second.fingerprint);
+  // Sorted, not filesystem-order.
+  assert.deepEqual(first.files_inspected, ['COPYING', 'LICENCE.md']);
+});
+
+test('V-LICENSE-FILE-04 — near-miss filenames are not treated as licenses', () => {
+  const dir = mkdtemp();
+  writeFileIn(dir, 'licenses.md', MIT_BODY);        // plural
+  writeFileIn(dir, 'LICENSE-checker.js', MIT_BODY); // tooling
+  writeFileIn(dir, 'license.json', MIT_BODY);       // wrong extension
+  const v = classify(dir);
+  assert.deepEqual(v.files_inspected, []);
+  assert.equal(v.tier, 'UNKNOWN');
+  assert.equal(v.fingerprint, null);
+});
+
+test('V-LICENSE-FILE-05 — findLicenseFiles is null-safe on a missing directory', () => {
+  assert.deepEqual(findLicenseFiles(path.join(os.tmpdir(), 'no-such-dir-xyzzy-42')), []);
 });
 
 test('V-LICENSE-RESTRICT-12 — detectRestrictions is pure and null-safe', () => {
