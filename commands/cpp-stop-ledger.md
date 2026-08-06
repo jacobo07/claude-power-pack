@@ -57,6 +57,28 @@ filename is not found — `e-passes-audit` was struck 2026-07-29, but the closur
 records it as `E1-E5`, so it reads OPEN here. The producer over-reports outstanding
 work and never under-reports it.
 
+## Two producers, one boundary
+
+`modules/backlog_autopilot/stop1_queue.py` is the other half, built independently the
+same day. Keep both — they answer different questions:
+
+| | this command | `stop1_queue` |
+|---|---|---|
+| role | **derived read model** — infers from evidence | **Owner-authored writer** — `resolve()` records a terminal status |
+| writes | never | one front-matter key |
+| answers | what does the evidence say became of this? | what has the Owner decided? |
+
+A read model may not write and a writer may not infer. Their counts disagreed (22 vs
+15); the 2026-08-06 reconciliation found **four causes, not one bug**: 9 from the
+witness test vs. self-reported `status:` (by design), 2 from this module counting a
+`STOP #2` under a STOP #1 heading (fixed — the checkpoint is now labelled), 1 from
+`stop1_queue`'s literal `"STOP #1"` marker missing a hyphenated `STOP-1` (reported, not
+patched — that module belongs to another pane), and 1 genuine source ambiguity where a
+status asserts a closure and a wait in the same line.
+
+Neither number was right. Two independent instruments disagreeing is what makes the
+error findable at all.
+
 ## When to run it
 
 Before opening a new STOP #1, and before quoting a count of open ones. Three separate

@@ -95,6 +95,24 @@ def main() -> int:
         else:
             _fail("V-STOP-CLOSED-BEATS-OPEN", f"got {_disp(rows, 'gamma-2026-01-03.md')}")
 
+    # --- STOP #1 and STOP #2 are different checkpoints -------------------------------------
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td)
+        _plan(d, "one-2026-02-01.md", "STOP #1 -- BLOCKING, awaiting Owner selection")
+        _plan(d, "two-2026-02-02.md", "STOP #2 -- BLOCKING, presented inline, "
+                                      "no dataset written")
+        _plan(d, "hyph-2026-02-03.md", "STOP-1 (awaiting Owner approval)")
+        rows = sl.build(d, [d])
+        got = {r.plan: r.stop_kind for r in rows}
+        want = {"one-2026-02-01.md": "STOP #1", "two-2026-02-02.md": "STOP #2",
+                "hyph-2026-02-03.md": "STOP #1"}
+        if got == want:
+            _ok("V-STOP-KIND-DISTINGUISHED",
+                "STOP #2 is labelled as itself rather than folded under STOP #1, and "
+                "the hyphenated `STOP-1` is still recognised as checkpoint 1")
+        else:
+            _fail("V-STOP-KIND-DISTINGUISHED", f"got {got} want {want}")
+
     # --- a plan may not witness itself ----------------------------------------------------
     with tempfile.TemporaryDirectory() as td:
         d = Path(td)

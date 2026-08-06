@@ -42,6 +42,38 @@ The denominator is DISCOVERED from `vault/plans/*.md`, never enumerated by hand
     python -m modules.owner_queue.stop_ledger --write    # regenerate the markdown
 
 Fail-open: no function raises. An unreadable plan is UNKNOWN, never silently dropped.
+
+RELATIONSHIP TO `backlog_autopilot/stop1_queue.py`
+--------------------------------------------------
+Two producers exist. They were built hours apart by two panes from the same sealed
+pattern, and they are COMPLEMENTARY rather than redundant -- but only once the boundary
+is stated, because their counts disagree:
+
+    this module        DERIVED READ MODEL. Discovers every STOP-bearing plan, seeks a
+                       witness in other artifacts, never writes. Answers "what does the
+                       evidence say became of this?"
+    stop1_queue        OWNER-AUTHORED WRITER. `resolve()` records a terminal status on
+                       the plan itself. Answers "what has the Owner decided?"
+
+A read model may not write and a writer may not infer. Neither is the other's
+replacement, and the disagreement between them is diagnostic rather than a bug --
+reconciled 2026-08-06 to four distinct causes:
+
+  * 9 plans this module calls CONTRADICTED/RESOLVED are OPEN there. BY DESIGN: the
+    writer reads a plan's own `status:`; this module additionally seeks a witness.
+  * 2 plans (`efaif-expansion`, `uceimr-expansion`) carry `status: STOP #2`. THIS
+    MODULE'S DEFECT, fixed below: the token regex matched any STOP and reported them
+    under a STOP #1 heading. STOP #2 is a real blocking checkpoint and is still
+    tracked -- but it is now LABELLED, not silently merged.
+  * 1 plan (`re-baseline-compendium`) carries `status: STOP-1` with a hyphen. The
+    writer's literal `"STOP #1"` marker misses it, so a genuinely open STOP is
+    invisible there. Reported, not patched: that module belongs to another pane.
+  * 1 plan (`ccfl-pdpf-corpus`) reads `STOP #1 CLOSED ... Awaiting Owner selection`.
+    Both readings are defensible; the text asserts a closure and a wait in one line.
+    Genuine source ambiguity, resolvable only by the Owner.
+
+Neither 22 nor 15 was the right number. They mismeasured in opposite directions for
+different reasons, which is exactly what two independent instruments are for.
 """
 from __future__ import annotations
 
@@ -77,7 +109,11 @@ _WITNESS = re.compile(
     r"\bSTRUCK\b|\bstruck\b|\bshelved\b|\brefused\b|\bdiscarded\b|\bratified\b|"
     r"\bshipped instead\b|\bCLOSED\b|\bRESOLVED\b|\bDO-NOT-BUILD\b|\bwas never built\b",
 )
-_STOP_TOKEN = re.compile(r"STOP[\s#-]*1|STOP_1|STOP\b", re.I)
+_STOP_TOKEN = re.compile(r"STOP[\s#_-]*(\d+)|STOP\b", re.I)
+# STOP #1 and STOP #2 are different checkpoints. Reporting a STOP #2 plan under a
+# "STOP #1" heading is the kind of quiet merge that makes a count unfalsifiable, so the
+# matched ordinal is carried through to the output instead of being discarded.
+_STOP_UNNUMBERED = "STOP"
 
 _MAX_BYTES = 600_000
 # Family tokens shorter than this match too much prose to be evidence of anything.
@@ -91,9 +127,20 @@ class Row:
     status_text: str
     disposition: str
     witnesses: list = field(default_factory=list)
+    # "STOP #1", "STOP #2", or bare "STOP". Carried so a reader can tell which
+    # checkpoint is outstanding rather than inferring it from the ledger's title.
+    stop_kind: str = _STOP_UNNUMBERED
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+
+def _stop_kind(status: str) -> str:
+    """Which STOP this status declares. Returns '' when it declares none."""
+    m = _STOP_TOKEN.search(status or "")
+    if not m:
+        return ""
+    return f"STOP #{m.group(1)}" if m.group(1) else _STOP_UNNUMBERED
 
 
 def _read(p: Path) -> str:
@@ -136,9 +183,10 @@ def discover(plans_dir: Path | None = None) -> list:
         if not text:
             continue
         status = _status_of(text)
-        if not status or not _STOP_TOKEN.search(status):
+        kind = _stop_kind(status)
+        if not status or not kind:
             continue
-        out.append((p, status, _family_of(p.stem)))
+        out.append((p, status, _family_of(p.stem), kind))
     return out
 
 
@@ -184,28 +232,34 @@ def build(plans_dir: Path | None = None, search_roots: list | None = None) -> li
         d, PP_ROOT / "vault" / "knowledge_base", PP_ROOT / "vault" / "audits"
     ]
     rows = []
-    for path, status, family in discover(d):
+    for path, status, family, kind in discover(d):
         if not status:
-            rows.append(Row(path.name, family, "", UNKNOWN))
+            rows.append(Row(path.name, family, "", UNKNOWN, stop_kind=kind))
             continue
         # Closed-shape is tested first: a status may match both, and its own stated
         # resolution outranks the generic open-shaped words around it.
         if _CLOSED_SHAPE.search(status):
-            rows.append(Row(path.name, family, status, RESOLVED))
+            rows.append(Row(path.name, family, status, RESOLVED, stop_kind=kind))
             continue
         if _OPEN_SHAPE.search(status):
             w = _witnesses_for(family, path, roots)
-            rows.append(Row(path.name, family, status, CONTRADICTED if w else OPEN, w))
+            rows.append(Row(path.name, family, status,
+                            CONTRADICTED if w else OPEN, w, stop_kind=kind))
             continue
-        rows.append(Row(path.name, family, status, UNKNOWN))
+        rows.append(Row(path.name, family, status, UNKNOWN, stop_kind=kind))
     return rows
 
 
 def render(rows: list) -> str:
     counts = {k: sum(1 for r in rows if r.disposition == k)
               for k in (OPEN, CONTRADICTED, RESOLVED, UNKNOWN)}
+    kinds: dict = {}
+    for r in rows:
+        kinds[r.stop_kind or _STOP_UNNUMBERED] = \
+            kinds.get(r.stop_kind or _STOP_UNNUMBERED, 0) + 1
+    kind_line = " · ".join(f"{k} {v}" for k, v in sorted(kinds.items()))
     out = [
-        "# STOP #1 Disposition Ledger",
+        "# STOP Disposition Ledger",
         "",
         "**Derived — do not hand-edit.** Regenerate with "
         "`python -m modules.owner_queue.stop_ledger --write`.",
@@ -218,14 +272,18 @@ def render(rows: list) -> str:
         f"OPEN {counts[OPEN]} · CONTRADICTED {counts[CONTRADICTED]} · "
         f"RESOLVED {counts[RESOLVED]} · UNKNOWN {counts[UNKNOWN]}",
         "",
-        "| plan | family | disposition | status as written | witness |",
-        "|---|---|---|---|---|",
+        f"By checkpoint: {kind_line}. A STOP #2 is a different question from a "
+        "STOP #1 and is counted separately rather than folded into it.",
+        "",
+        "| plan | checkpoint | family | disposition | status as written | witness |",
+        "|---|---|---|---|---|---|",
     ]
     order = {OPEN: 0, CONTRADICTED: 1, UNKNOWN: 2, RESOLVED: 3}
     for r in sorted(rows, key=lambda x: (order.get(x.disposition, 9), x.plan)):
         w = r.witnesses[0].replace("|", "\\|")[:110] if r.witnesses else "-"
         st = r.status_text.replace("|", "\\|")[:70] or "-"
-        out.append(f"| `{r.plan}` | {r.family} | **{r.disposition}** | {st} | {w} |")
+        out.append(f"| `{r.plan}` | {r.stop_kind} | {r.family} | "
+                   f"**{r.disposition}** | {st} | {w} |")
     out += [
         "",
         "## Reading",
@@ -256,6 +314,31 @@ def render(rows: list) -> str:
         "`E1-E5`, so no line carries the token `e-passes` and the plan reads OPEN here. "
         "Misses fall toward OPEN, which is the safe direction — this producer "
         "over-reports outstanding work, never under-reports it.",
+        "",
+        "## Two producers, one boundary",
+        "",
+        "`modules/backlog_autopilot/stop1_queue.py` is the other half. It is the "
+        "**Owner-authored writer**: `resolve()` records a terminal status on the plan "
+        "itself. This module is the **derived read model**: it infers from evidence and "
+        "never writes. A read model may not write and a writer may not infer, so "
+        "neither replaces the other.",
+        "",
+        "Their counts disagreed (22 here, 15 there) and the reconciliation of "
+        "2026-08-06 found four distinct causes — not one bug:",
+        "",
+        "| cause | count | whose |",
+        "|---|---|---|",
+        "| witness test vs. self-reported `status:` | 9 | by design, both correct |",
+        "| `STOP #2` counted under a STOP #1 heading | 2 | **this module's defect**, "
+        "fixed — the checkpoint is now labelled |",
+        "| `status: STOP-1` (hyphen) missed by a literal `STOP #1` marker | 1 | "
+        "`stop1_queue` — reported, not patched; it belongs to another pane |",
+        "| `STOP #1 CLOSED … Awaiting Owner selection` | 1 | genuine source ambiguity; "
+        "the line asserts a closure and a wait at once |",
+        "",
+        "Neither number was right. They mismeasured in opposite directions for "
+        "different reasons, which is what two independent instruments are for — and is "
+        "why the disagreement was worth reconciling rather than averaging.",
         "",
     ]
     return "\n".join(out)
