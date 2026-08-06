@@ -37,11 +37,24 @@ rises only because collection now REACHES more of the surface that was always au
 Note: SQI's authored-file scan is independent of pytest collection, so the ignores below
 do not lower `authored_count`. The denominator is untouched by construction.
 
-Five files under `modules/*/test_v_block.py` still ERROR on a missing `runners` package.
-They are deliberately NOT ignored. They are real collection errors on real orphans
-(already ORPHAN in the liveness ledger), pytest records them in `collection_errors`, and
-SQI folds that into its silent-loss figure. Hiding them here would be the same handover
-this file refuses. They are queued for repair, not suppressed.
+REPAIRED 2026-08-06. Those files no longer ERROR. They were never one fault: two were an
+"import file mismatch" between identically-named V-blocks in hyphenated directories that
+cannot form a dotted module name (fixed by `--import-mode=importlib` in pytest.ini), and
+the rest were flat sibling names meaning different things in one process -- `detectors`
+in deployment/ and auto-testing/, `runners` in deployment/, rollback/ AND backup/ -- where
+the first importer wins the global sys.modules slot whatever a later file prepends to
+sys.path (fixed at each source by importing via package path).
+
+They were kept visible here rather than ignored, and that is why they were repairable: the
+errors stayed in `collection_errors`, SQI kept folding them into silent loss, and the
+queue could be worked. Suppressing them would have made this file's own contract a lie
+and left the faults permanent. The repair queue is now empty; the restraint is not.
+
+Note the repair did NOT raise reach: those five files carry a main() driver rather than
+test_* functions, so they still contribute 0 collected tests. Collection went 4 errors ->
+0 with the count unchanged at 340. Making pytest actually RUN their cases is a separate
+change, and one that WOULD move reach -- honestly, by reaching authored surface that has
+always been there.
 """
 
 collect_ignore_glob = [
