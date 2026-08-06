@@ -163,6 +163,49 @@ Component tokens reference primitives via `{path.to.token}` — never hardcode a
 the component level. State variants suffix the component name (`-hover`, `-active`,
 `-disabled`).
 
+## Component Provenance
+
+Nine decisions about code this project did not write. They are not commentary: together
+they **are** the context object the CDICF selector consumes
+(`node modules/cdicf/selector.js --context <this, as JSON>`), so a decision recorded here
+changes what the engine will recommend, filter, or refuse. A decision left unrecorded is
+not a neutral default — it is a filter that never runs.
+
+1. **Adoption posture — `fork_canonical`.** Components are copied in and owned, not
+   wrapped. A fork we maintain beats an adapter over an upstream whose API we do not
+   control. Reuse-first still applies: ask the selector before building
+   (`DESIGN_GOVERNANCE.md` §8.1).
+2. **Licence floor — `PERMISSIVE` only.** `WEAK_COPYLEFT` requires a decision per
+   component; `SOURCE_AVAILABLE_RESTRICTED` and `PROPRIETARY` are reachable **only** as
+   code-free upstream pointers, never vendored.
+3. **Attribution — `can_attribute: true`.** This project ships a NOTICE surface and can
+   carry a required notice. A project that cannot must say so, because it makes every
+   notice-requiring component inadmissible and the engine should refuse them up front
+   rather than at legal review.
+4. **Redistribution intent — this project does not ship its own component library.** If it
+   did, every restriction would propagate to its consumers, and the admissible set would
+   narrow accordingly. State this before adopting, not after publishing.
+5. **Bundle budget — 40 kB per surface.** Absolute, not a share of the total: a percentage
+   budget is satisfied by the bundle growing. When nothing fits, the answer is nothing —
+   the selector abstains with `REMEDY_BUDGET` rather than picking the least-bad overspend.
+6. **Accessibility floor — WCAG AA.** A hard filter, not a scored preference. `unassessed`
+   is **not** a pass: an unmeasured level treated as neutral is how an unknown quietly
+   becomes a yes.
+7. **Rendering model — SSR yes, RSC no.** This is a hard compatibility filter. A
+   client-only component in an SSR project does not rank low; it is removed, because it
+   breaks at render rather than merely disappointing.
+8. **Motion budget — `low`.** Ceiling, not a target (see Motion above). A component whose
+   own motion budget exceeds this is filtered, and `reduced_motion_compliant` is required
+   at every level above `none`.
+9. **Onboarding posture — guidance is a last resort.** Open usability findings are recorded
+   in `unresolved_ux_findings`, and while any stand, a tour request returns
+   `REMEDY_FIX_UX_FIRST` instead of a component. A walkthrough over a broken interface
+   conceals the problem and adds a dependency.
+
+Every third-party component additionally carries a Component Manifest with a pinned commit
+and licence fingerprint (`DESIGN_GOVERNANCE.md` §8.2). Provenance travels with the artifact;
+a side document drifts.
+
 ## Do's and Don'ts
 
 - Do declare `aesthetic_family` before writing a single token.
@@ -171,3 +214,6 @@ the component level. State variants suffix the component name (`-hover`, `-activ
 - Do maintain WCAG AA contrast for all text — the floor is not tradeable.
 - Don't use more than two font families in a single viewport.
 - Don't inherit a font from a framework and call it a choice.
+- Do run the selector before building a component that might already exist.
+- Don't adopt a component whose licence, holder, or commit you cannot name.
+- Don't rename external code to obscure where it came from.
