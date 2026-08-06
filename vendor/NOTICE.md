@@ -108,15 +108,26 @@ derived under the old terms.
 
 ## CDICF upstreams — legal verdicts recorded 2026-08-06
 
-Recorded at **audit time, before any clone**. Nothing below is bundled yet. Each row is
-provisional until its commit is pinned and `license_gate.js --json` is run against the
-working tree; the `Snapshot` and `Fingerprint` fields say so explicitly rather than
-carrying an invented value.
+Recorded at **audit time, before any clone**. Nothing below is bundled yet.
+
+**Commits are pinned** (2026-08-06, GitHub API, authoritative). **Copyright holders and
+canonicality are resolved** — every row is now VERIFIED from license *text*, never a badge.
+
+**Fingerprints are deliberately withheld as `PENDING_CLONE`, with one labelled
+exception.** The license bodies reaching this session pass through a markdown conversion
+that can reflow whitespace. A sha256 of reflowed text would look authoritative, would not
+match the repository bytes, and would fire `--expect` on the first real drift check —
+manufacturing exactly the confident-but-wrong verdict this gate was hardened to stop.
+A fingerprint is therefore measured at clone time against the pinned commit, or not at
+all. The react-bits value is retained because it was already published in commit
+`998d52c`; it keeps its "as fetched" label and is not to be used for drift until
+re-measured.
 
 ### react-bits — MIT + Commons Clause Restriction v1.0
 
 - **Source:**    https://github.com/DavidHDev/react-bits
-- **Snapshot:**  NOT PINNED — no clone performed. Pin a commit before first use.
+- **Snapshot:**  `1320d40a8318ac7d4fe6690c7206ceda8cdd59bd` (branch `main`, committed
+  2026-08-04T17:41:18Z; pinned 2026-08-06). No clone performed yet.
 - **Adapter:**   planned — CPP Motion Gateway (install-from-upstream, zero copied files)
 - **Added:**     2026-08-06
 - **Gate verdict:** SOURCE_AVAILABLE_RESTRICTED
@@ -138,32 +149,34 @@ carrying an invented value.
 ### shadcn/ui — MIT
 
 - **Source:**    https://github.com/shadcn-ui/ui
-- **Snapshot:**  NOT PINNED — no clone performed.
+- **Snapshot:**  `9846e22ce52c723554742860a0dbd3e5cf19b573` (branch `main`, committed
+  2026-08-06T11:36:01Z; pinned 2026-08-06). No clone performed yet.
 - **Adapter:**   planned — CPP Primitives namespace (registry protocol + primitives)
 - **Added:**     2026-08-06
 - **Gate verdict:** PERMISSIVE
 - **Redistribution:** allowed
 - **Integration mode:** fork
 - **License file:** `LICENSE.md`
-- **Fingerprint:** NOT MEASURED — gate not yet run against a working tree.
-- **Confidence:** VERIFIED — full text read
+- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Confidence:** VERIFIED — full license text read; holder taken from the text
 - **Exit plan:**  Registry protocol is a format, not a runtime dependency; a fork can be
   frozen in place without upstream availability.
-- **Obligation summary:** Copyright (c) 2023 shadcn. Preserve copyright + license text on
-  redistribution. No appended clause.
+- **Obligation summary:** Copyright (c) 2023 **shadcn**. Preserve copyright + license text
+  on redistribution. No appended clause.
 
 ### assistant-ui — MIT
 
 - **Source:**    https://github.com/assistant-ui/assistant-ui
-- **Snapshot:**  NOT PINNED — no clone performed.
+- **Snapshot:**  `bd4c0ad3d41a65d0a2caea921f82c6502011615a` (branch `main`, committed
+  2026-08-06T12:33:03Z; pinned 2026-08-06). No clone performed yet.
 - **Adapter:**   planned — CPP AI Interfaces namespace
 - **Added:**     2026-08-06
 - **Gate verdict:** PERMISSIVE
 - **Redistribution:** allowed
 - **Integration mode:** fork
 - **License file:** `LICENSE`
-- **Fingerprint:** NOT MEASURED — gate not yet run against a working tree.
-- **Confidence:** VERIFIED — full text read
+- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Confidence:** VERIFIED — full license text read; holder taken from the text
 - **Exit plan:**  Runtime/adapter boundary is the upstream's own extension point; a
   replacement runtime can be substituted without touching component code.
 - **Obligation summary:** Copyright (c) 2025 **AgentbaseAI Inc.** — the holder is the
@@ -172,37 +185,49 @@ carrying an invented value.
 ### tailark/blocks — MIT
 
 - **Source:**    https://github.com/tailark/blocks
-- **Snapshot:**  NOT PINNED — no clone performed.
+- **Snapshot:**  `8139698115c1341bfd2e3e286c04bb4d8146f472` (branch `main`, committed
+  2026-07-29T11:14:59Z; pinned 2026-08-06). No clone performed yet.
 - **Adapter:**   planned — CPP Marketing namespace
 - **Added:**     2026-08-06
 - **Gate verdict:** PERMISSIVE
 - **Redistribution:** allowed
 - **Integration mode:** fork
-- **License file:** `LICENCE.md` — British spelling; a probe for `LICENSE*` only will miss it
-- **Fingerprint:** NOT MEASURED — gate not yet run against a working tree.
-- **Confidence:** **OBSERVED — copyright holder NOT resolved.** BLOCKING for this row:
-  an attribution notice cannot be written without a named holder.
+- **License file:** `LICENCE.md` — **British spelling.** `LICENSE` and `LICENSE.md` both
+  return HTTP 404 on `main`; only `LICENCE.md` exists. A probe for `LICENSE*` finds nothing.
+- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Confidence:** **VERIFIED (resolved 2026-08-06)** — full license text read from
+  `LICENCE.md`. The earlier OBSERVED status came from a badge; the badge does not carry a
+  holder, which is why it could not settle this row.
 - **Exit plan:**  Blocks are copied source under a shadcn registry; once installed they
   carry no runtime dependency on the upstream.
-- **Obligation summary:** MIT, no appended clause detected. Distributed via shadcn
-  registry (`@tailark-oss` namespace, Base UI and Radix variants). **Resolve the holder
-  before first attribution.**
+- **Obligation summary:** Copyright (c) 2025 **Irung**. Preserve copyright + license text
+  on redistribution. No appended clause. Distributed via shadcn registry
+  (`@tailark-oss` namespace, Base UI and Radix variants).
 
 ### driver.js — MIT
 
 - **Source:**    https://github.com/nilbuild/driver.js
-- **Snapshot:**  NOT PINNED — no clone performed.
+- **Snapshot:**  `010fb13fe062d103bcdd2711be910d50a8383b61` (branch **`master`**, committed
+  2026-07-18T16:01:04Z; pinned 2026-08-06). Note the default branch is `master`, not
+  `main`. No clone performed yet.
 - **Adapter:**   planned — CPP Onboarding namespace
 - **Added:**     2026-08-06
 - **Gate verdict:** PERMISSIVE
 - **Redistribution:** allowed
 - **Integration mode:** fork
-- **License file:** `LICENSE`
-- **Fingerprint:** NOT MEASURED — gate not yet run against a working tree.
-- **Confidence:** **OBSERVED** — reported canonical (not a fork) with holder Kamran Ahmed.
-  Historically this project lived at `kamranahmedse/driver.js`; a GitHub rename redirects
-  transparently, so "canonical" is not yet distinguishable from "redirect". Confirm the
-  canonical path at pin time.
+- **License file:** **`license`** — lowercase, no extension. On a case-sensitive
+  filesystem an exact-name probe for `LICENSE` misses it entirely; this upstream is what
+  exposed that defect in `license_gate.js` (fixed 2026-08-06, `findLicenseFiles`).
+- **Fingerprint:** PENDING_CLONE — measure at the pinned commit (see section preamble).
+- **Confidence:** **VERIFIED (resolved 2026-08-06)** — canonicality settled by GitHub API.
+  `api.github.com/repos/nilbuild/driver.js` and `api.github.com/repos/kamranahmedse/driver.js`
+  return the **identical object**: `full_name: nilbuild/driver.js`, `fork: false`, no
+  `parent`, no `source`, `created_at: 2018-03-11T19:52:13Z`, 26,544 stars. That is a
+  transparent **rename redirect**, not a fork — one repository, one holder, no divergent
+  copyright. Canonical path is `nilbuild/driver.js`; `kamranahmedse/driver.js` is a legacy
+  alias that resolves to it.
 - **Exit plan:**  Dependency-free TypeScript; the tour layer is optional by governance
   ("a tour must not compensate for bad UX"), so removal degrades nothing structural.
-- **Obligation summary:** MIT, no appended clause detected. Preserve copyright notice.
+- **Obligation summary:** Copyright (c) **Kamran Ahmed** — the license states no year.
+  Reproduce the notice verbatim including the absent year; do not supply one. No appended
+  clause.
