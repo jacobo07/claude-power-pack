@@ -5635,4 +5635,95 @@ any decision an automation consumes.
 **Cross-project:** tagged `#CROSS-PROJECT`.
 **Origin:** defect 1 of D-016, `vault/audits/cdicf/CDICF_DECISION_LOG.md`.
 
+### T-SUITE-AUTHOR-BIAS-001 (2026-08-06, CDICF A5)
+
+**Trap:** treating a suite written by the code's own author as evidence of
+correctness. It is evidence of *self-consistency*. The same misreading of the
+requirement produces both the implementation and the test that blesses it, so
+the blind spot is duplicated rather than caught, and a green suite reads as
+proof.
+
+**Observed, as a measurement rather than a claim:** 117 CDICF tests written
+alongside the engines were green. 41 scenarios derived from the **Owner's
+stated requirements** instead of from the code failed 6 on first run, exposing
+four distinct defects — an omitted scoring dimension, a dependency check that
+never ran, a prose-only remedy, and a `minLength` that admitted whitespace.
+Same code, same day; only the authorship of the *questions* changed. A4 had
+already rehearsed it in miniature: 23 of 23 synthetic tests passed before real
+input found two more defects.
+
+**General form:** derive at least one test surface from the specification, the
+ticket, or the contract — never from a reading of the implementation. Where
+possible have a different agent or person write it. Its value is highest
+exactly where confidence is highest, because that is where the author has
+stopped looking. Two corollaries with teeth: test through the **real entry
+point** (a suite that only calls exported functions passes while argv parsing
+and wiring are broken), and assert the corpus's **own size exactly**, since a
+scenario set allowed to shrink silently is `T-NEVER-GATE-ON-A-RATIO` wearing a
+different hat.
+
+**The limit, stated so it is not overclaimed:** spec-derived scenarios written
+by the implementation's author narrow this bias, they do not eliminate it.
+Only a genuinely independent instrument — another agent, or a real consuming
+project — closes it.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to every test suite, review
+checklist, and self-audit.
+**Origin:** D-016, CDICF A5 (`tests/a5_adversarial.test.js`).
+
+### T-EXTENSION-ALREADY-DECIDED-AGAINST-001 (2026-08-07, CDICF E3)
+
+**Trap:** executing a proposed extension without first searching the estate for
+a prior ruling on that same extension. A plan states an intent; it does not
+know whether the intent was already weighed and refused. Re-deciding in silence
+is how an Owner-approved constraint gets reversed by someone who never learned
+it existed.
+
+**Observed:** CDICF E3 was specified as "graphify +component node/edge types".
+The vault held the answer twice — `vault/plans/cdio-build-2026-07-05.md`
+decision 1 and `scs_c78_cdio_active.md` both record that an identical proposal
+for CDIO was reality-scanned and the Owner approved **riding the existing
+types**, because editing `NODE_TYPES`/`EDGE_TYPES` re-indexes 722 coordinates
+for every repo. The correct integration was one governance token. Building it
+as written would have quietly taken a blast radius that had already been
+declined.
+
+**General form:** before extending a shared subsystem, grep the decision record
+for that subsystem's name — not just its code. When a prior decision is found,
+follow it or reopen it explicitly with the same sign-off the original had;
+never route around it by implementing the refused version under a new project's
+banner. Then **pin the constraint mechanically**: CDICF's suite asserts
+`NODE_TYPES` is unchanged, so a future session that adds a node type fails a
+test instead of passing one. A decision that lives only in prose is a decision
+waiting to be re-made.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Companion to `HR-PREMISE-001` — that
+rule verifies a plan's *APIs* exist; this one verifies its *intent* has not
+already been ruled on.
+**Origin:** CDICF E3, `tools/test_cdicf_graph.py` `V-CDICF-GRAPH-07`.
+
+### T-SPEC-INVENTED-VOCABULARY-001 (2026-08-07, CDICF E4)
+
+**Trap:** a work item naming a concept that exists only inside the planning
+document. It reads as a concrete extension because it is phrased with a count
+and an owner module, and it survives review because everyone assumes someone
+checked. Implementing it means inventing the concept in the owner and calling
+it an integration.
+
+**Observed:** CDICF E4 was "capability_runtime +4 activation modes". Grepping
+the estate, "activation mode" appeared **only** in CDICF's own plan and in the
+two ledger rows derived from it — nowhere in `modules/capability_runtime/`,
+which has `triggers`/`anti_triggers` and the `Cost`/`Risk`/`Maturity`/
+`FailureRisk` enums. The count was equally invented: the same ledger claimed
+12 files for a 6-file module and 12 for a 4-file one.
+
+**General form:** grep the owner module for a work item's key noun before
+scheduling it. If the noun appears only in the planning artifact, the item is
+unbuildable as written — say so and re-derive the item from the owner's real
+vocabulary, rather than bending the owner to fit the plan. A count in a plan
+(files, modes, tables) is a **hypothesis**; verify it against the directory.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+**Origin:** CDICF E4 deferral, `vault/audits/cdicf/CDICF_NEXT_ACTIONS.md`.
+
 - **UKDL-OSA-2026-08-06T14:13:13Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
