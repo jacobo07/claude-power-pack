@@ -56,8 +56,10 @@
  * stderr. Without it the CPP Motion Gateway namespace cannot exist at all,
  * since every component in it is prohibited by construction — so the flag is
  * the lawful path the sealed architecture requires, not a loophole in it.
- * Flagged 2026-08-06 for Owner ratification; until ratified, treat the default
- * as the only sanctioned behaviour.
+ *
+ * RATIFIED by the Owner 2026-08-06 (decision D-011): redistribution is the
+ * movement of the code, and a URL is not code. The Motion Gateway namespace is
+ * in scope, with `--reference-only` as its emission mode.
  */
 
 'use strict';
@@ -339,9 +341,9 @@ function main(argv) {
 
   if (referenceOnly) {
     process.stderr.write(
-      'registry_emitter.js: WARNING — --reference-only emitted an upstream pointer for a ' +
-      'redistribution-restricted component. No component code was written. This path is ' +
-      'pending Owner ratification (see ARTIFACT CLASSES in this file).\n'
+      'registry_emitter.js: NOTICE — --reference-only emitted an upstream pointer for a ' +
+      'redistribution-restricted component. No component code was written; the consumer ' +
+      'installs from the upstream registry (D-011).\n'
     );
   }
 

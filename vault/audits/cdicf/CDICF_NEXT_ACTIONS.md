@@ -45,31 +45,49 @@ asserted by its tests and nothing else until the scanner discovers JS subjects.
 | # | Action | State |
 |---|---|---|
 | 6 | shadcn-format registry entry + install manifest per component | **DONE** — `registry-item.json` + `install-manifest.json`, checksummed, artifacts sorted so the digest is filesystem-independent |
-| 7 | Commit-pinned deterministic install **+ rollback + interrupted-install recovery** | **PARTIAL** — pinning and determinism done (`pinned`, `deterministic`, per-artifact sha256, roll-up checksum). **Rollback and interrupted-install recovery are NOT implemented.** No installer exists yet to interrupt; this moves to A3b |
+| 7 | Commit-pinned deterministic install **+ rollback + interrupted-install recovery** | **DONE** — pinning and determinism at A3; rollback and interrupted-install recovery delivered by A3b (`modules/cdicf/installer.js`, 24 tests). Action 7 is closed |
 | 8 | **Redistribution guard** — refuse any prohibited component | **DONE** — refused at exit 5 with zero bytes written (`V-EMIT-01`, `V-EMIT-02`). Posture is *derived* from `license_tier` via the gate, never read from the manifest field, so a hand-edited manifest cannot walk past it (`V-EMIT-03`) |
 
 Action 8 was the load-bearing one: INV-02 is no longer a schema opinion, it is a system
 boundary. The registry is the distribution channel, so refusing here is refusing to
 redistribute.
 
-**Open for ratification (D-011):** `--reference-only`. The brief's two rules collide on
-React Bits — it is both PROHIBITED and `gateway_upstream` by construction. Strict refusal
-is the default; the code-free pointer path is implemented, gated, warned, and unratified.
-Deleting it costs one commit and puts the Motion Gateway namespace formally out of scope.
+**RATIFIED (D-011), 2026-08-06:** `--reference-only` stands. Owner's ruling —
+redistribution is the movement of code, and a URL is not code. The Motion Gateway
+namespace is in scope with the pointer path as its emission mode.
 
-## A3b — Installer, rollback, recovery (NEW, carved out of action 7)
+## A3b — Installer, rollback, recovery — SEALED 2026-08-06
 
-| # | Action | Done when |
+`modules/cdicf/installer.js`, 24 tests. Action 7 closed.
+
+| # | Action | State |
 |---|---|---|
-| 9 | Transactional installer consuming `install-manifest.json` | An install killed mid-write leaves the project in its prior state |
-| 10 | Checksum verification on install | A tampered artifact is refused, naming the file |
+| 9 | Transactional installer consuming `install-manifest.json` | **DONE** — journalled; `V-INST-03`/`V-INST-04` kill a real process (`exit 137`) inside the rename sweep and recover the exact pre-state |
+| 10 | Checksum verification on install | **DONE** — content is hashed against the install manifest before any write (`V-INST-15`), the roll-up is recomputed rather than trusted, and postconditions are read back from disk (`V-INST-19`) |
 
-## A4 — Selection + Abstention (NEW)
+Beyond the brief, because each was a gap the work exposed rather than a feature added:
+`verify` (post-install drift, `V-INST-20`) · path-traversal containment (`V-INST-16`) ·
+the journal as mutex, refusing a live transaction (`V-INST-21`) · recovery that **declines**
+to delete a file edited after the interruption (`V-INST-07`).
+
+**Not claimed:** filesystem-level multi-file atomicity, which no portable filesystem
+offers. What is guaranteed is stated precisely in `modules/cdicf/README.md` — nothing
+committed partially, every partial state detectable and reversible, the window bounded to
+the rename sweep. Between an abrupt kill and the next invocation a partial tree does exist
+on disk. That is recovery, not prevention, and it is named as such.
+
+## A4 — Selection + Abstention (NEXT)
 
 | # | Action | Done when |
 |---|---|---|
 | 9 | Hard filters → soft scoring → explanation → abstention | The engine returns "no suitable component, build nothing" on a case where that is correct |
 | 10 | Prior-adoption enters as a **tiebreak only**, never a scored term | A popularity-only candidate loses to a better-fitting unused one |
+
+Two constraints inherited from this estate's own scars, to be honoured at design time:
+a score whose factors are per-item constants ranks nothing (`feedback_constant_factors_rank_nothing`),
+and a composite score mapped onto a hard verdict kills whole classes
+(`feedback_provider_score_to_hard_verdict`). Abstention must be an explicit output, never
+an empty array.
 
 ## A5 — Evaluation corpus (NEW)
 

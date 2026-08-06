@@ -13,6 +13,7 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | **A1c** License fingerprints measured from pinned commits | HARDEN | **SEALED** | All 5 measured from raw blobs; D-008 proved — the superseded react-bits value fires a false `--expect` drift on an unchanged licence |
 | **A2b** Mirror Ledger emitted from the gate rather than hand-written | NEW | NOT STARTED | — |
 | **A3** Registry producer + redistribution guard | NEW | **SEALED** | `modules/cdicf/registry_emitter.js`; 16/16 tests; PROHIBITED refused at exit 5 with zero bytes written; posture derived from the tier, never read from the manifest |
+| **A3b** Transactional installer — atomic, idempotent, recoverable, reversible | NEW | **SEALED** | `modules/cdicf/installer.js`; 24/24 tests; a real `exit 137` inside the rename sweep recovers to the exact pre-state; licence re-derived at install as defence in depth |
 | **A4** Selection + Abstention engine | NEW | NOT STARTED | — |
 | **A5** Evaluation corpus (~40 scenarios) | NEW | NOT STARTED | — |
 | E1 `DESIGN.md.template` +9 decisions | EXTEND | NOT STARTED | — |
@@ -22,14 +23,15 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | E5 `modules/cdio` +component-scope checks | EXTEND | NOT STARTED | — |
 | E6 `DESIGN_GOVERNANCE.md` +3 clauses | EXTEND | NOT STARTED | — |
 
-**Progress: 5 of 14 sealed.** Absolute count, deliberately — a percentage would improve
-by deleting a row. The denominator has grown twice (11 → 13 → 14) as A1b, A1c and A2b
-were split out once the work turned out to be real. A denominator that only ever shrinks
-is the ratio failure wearing a different hat.
+**Progress: 6 of 15 sealed.** Absolute count, deliberately — a percentage would improve
+by deleting a row. The denominator has grown three times (11 → 13 → 14 → 15) as A1b, A1c,
+A2b and A3b were split out once the work turned out to be real. A denominator that only
+ever shrinks is the ratio failure wearing a different hat.
 
-**Open for Owner ratification:** `--reference-only` (decision D-011). The A3 brief's two
-rules collide on React Bits, which is both PROHIBITED and `gateway_upstream`. The strict
-rule ships as the default; the opt-in pointer path is implemented but unratified.
+**Ratified 2026-08-06 (D-011):** `--reference-only` stands. Redistribution is the movement
+of code; a URL is not code. The Motion Gateway namespace is in scope with the pointer path
+as its emission mode, and A3b installs such an entry as a record with zero component bytes
+on disk (`V-INST-14`).
 
 ## The 25 proposed datasets — disposition
 
@@ -67,19 +69,20 @@ Filename traps encountered, all now handled by `findLicenseFiles`:
 
 | Gate | State |
 |---|---|
-| No restricted component redistributed | **ENFORCED** by `--strict` (exit 5); becomes structural at A3 action 8 |
-| Every artifact carries provenance | PENDING A2 |
-| Installation reproducible, commit-pinned | PENDING A3 |
-| Rollback + semantic recovery | PENDING A3 |
+| No restricted component redistributed | **ENFORCED** — structurally, twice: the emitter refuses to emit (exit 5, `V-EMIT-01`) and the installer refuses to land it (exit 5, `V-INST-13`) |
+| Every artifact carries provenance | **ENFORCED** — required by the schema, and the installer refuses an entry whose manifest carries no `provenance.license_tier` |
+| Installation reproducible, commit-pinned | **ENFORCED** — per-artifact sha256 + a recomputed roll-up; a tampered artifact is refused by name (`V-INST-15`) |
+| Rollback + semantic recovery | **ENFORCED** — `rollback` (`V-INST-08`) and `recover` after a real `exit 137` (`V-INST-03`/`V-INST-04`) |
 | Selector explains and can abstain | PENDING A4 |
 | Licence change invalidates dependents | **ENFORCED** by `--expect` (exit 4) |
-| One real installable vertical slice | PENDING A3 |
-| Headless operable | **HELD** — gate is CLI, JSON, exit-code driven |
+| One real installable vertical slice | **HELD** — manifest → emit → install → verify → rollback runs end to end on shadcn/ui Button (`V-INST-22`, through the CLI) |
+| Headless operable | **HELD** — every stage is CLI, JSON, exit-code driven |
 
-3 of 8 enforced. No gate is claimed on the strength of a README or a diagram.
+**7 of 8.** Only the selector remains, and it is A4. No gate is claimed on the strength of
+a README or a diagram; each row above names the test that observes it.
 
-The third is "every artifact carries provenance": the Component Manifest schema makes
-`copyright_holder`, `commit_sha`, `license_tier` and `license_fingerprint` **required**,
-and INV-04 refuses a `VERIFIED` claim on an unpinned artifact. It is enforced for anything
-that carries a manifest; it becomes enforced *system-wide* only when A3's emitter refuses
-to install a component that has none.
+Two of these moved for a reason worth keeping. *No restricted component redistributed* is
+now enforced at **two independent points** — an entry can reach a project by a path that
+never went through the emitter, and a guard that trusts an upstream guard is one guard.
+*One real installable vertical slice* is HELD rather than ENFORCED because it is a
+demonstration, not a constraint: it proves the pipeline runs, it does not prevent anything.

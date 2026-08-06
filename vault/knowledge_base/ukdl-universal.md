@@ -5426,4 +5426,41 @@ proxy, or summariser. Tagged `#CROSS-PROJECT`.
 **Origin:** decision D-008 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`;
 superseded value retained in `vendor/NOTICE.md` as evidence rather than erased.
 
+---
+
+### T-PLAN-COMPUTED-BEFORE-STATE-REPAIR-001 (2026-08-06, CDICF A3b)
+
+**Trap:** a plan computed against the current state, then a repair step that
+changes that state, then the plan applied. The plan is now describing a world
+that no longer exists, and the failure surfaces wherever the plan first touches
+a changed path — never at the ordering mistake that caused it.
+
+**Observed:** the CDICF installer planned an install (recording each path's prior
+sha256 so it could back the file up and put it back), then auto-recovered an
+interrupted earlier transaction, then applied. Recovery deleted a file the plan
+had recorded as existing, so the backup step died with
+`ENOENT ... copyfile`. The error pointed at the copy. The bug was two statements
+earlier.
+
+**General form:** any repair, migration, cleanup, or rollback that mutates state
+must run BEFORE anything reads that state to build a plan. Where the two cannot
+be ordered, re-validate the premise at the point of use and abort with *that*
+diagnosis — "X changed between planning and applying" — rather than letting a
+downstream error stand in for it. Ordering is the fix; re-validation is what
+makes the residual race legible.
+
+**Relation to a known sibling:** `feedback_reference_derived_from_post_state`
+records a reference pinned too LATE, after the judged state had already moved.
+This is the same invariant from the other side: pinned too EARLY, before the
+state had finished moving. One rule covers both — pin the reference at the
+boundary where the state stops changing, and prove where that boundary is.
+
+**Cross-project:** applies to DB migrations that plan from a pre-repair schema,
+deploy scripts that enumerate files before a cleanup task, package managers that
+resolve before pruning, and any `plan → repair → apply` sequence. Tagged
+`#CROSS-PROJECT`.
+
+**Origin:** decision D-013 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`, caught
+by `V-INST-06` rather than in production.
+
 - **UKDL-OSA-2026-08-06T14:13:13Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token

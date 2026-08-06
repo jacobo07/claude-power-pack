@@ -136,8 +136,20 @@ correctable. Sealed as `T-FINGERPRINT-FROM-RENDERED-MARKDOWN-001`.
 
 ---
 
-## D-011 — `--reference-only` exists, and is NOT yet ratified
-**Date:** 2026-08-06 · **Decided by:** agent · **STATUS: awaiting Owner**
+## D-011 — `--reference-only` is the lawful emission mode for the Motion Gateway
+**Date:** 2026-08-06 · **Decided by:** agent, **RATIFIED by Owner 2026-08-06**
+
+**Owner's ruling, verbatim in substance:** *redistribution is the movement of code; a URL
+is not code.* The Motion Gateway namespace is in scope, with `--reference-only` as its
+emission mode for React Bits. The flag is no longer provisional: the stderr line is a
+NOTICE rather than a pending-ratification warning, and A3b installs a pointer entry as a
+record with zero component bytes on disk (`V-INST-14`).
+
+The original reasoning is preserved below because the conflict it resolves is real and
+will recur the next time an upstream pairs a permissive grant with a redistribution
+withdrawal.
+
+---
 
 **The conflict.** The A3 brief says both *"if PROHIBITED: refuse, exit 5, no output"* and
 *"if integration_mode is gateway_upstream: emit an entry pointing at the upstream"*.
@@ -208,6 +220,38 @@ gate fix Paso 1 exposed was committed separately (`e5aff74`) because it is code,
 
 **Overturned by:** nothing; recorded so the deviation from the requested commit plan is
 visible rather than silent.
+
+---
+
+## D-013 — State repair runs before planning, never after
+**Date:** 2026-08-06 · **Decided by:** agent (bug found by its own test)
+
+**Evidence:** `V-INST-06` — install onto a project holding an interrupted transaction —
+failed with `ENOENT ... copyfile`. The first A3b draft computed the plan, then recovered
+the interrupted transaction, then applied. The plan is a **snapshot of the target's
+bytes**: it records the prior sha256 of every path so it can back them up and put them
+back. Recovery changes exactly those bytes. So the plan described a file that recovery had
+just deleted, and the failure surfaced at the backup step — pointing at the copy, not at
+the stale premise that caused it.
+
+**Decision:** in `install()`, recovery precedes `planInstall()`. A second guard was added
+at the backup step: the on-disk sha is re-read and compared to the planned `prior_sha`, and
+a mismatch aborts with *"changed between planning and applying"* rather than with whatever
+downstream error the staleness happens to produce. Ordering is the fix; the guard is what
+makes the residual race legible instead of mysterious.
+
+**Why this generalises:** the plan is a *reference derived from a pre-state*, and a repair
+step that mutates that state invalidates every reference taken before it. This is
+`feedback_reference_derived_from_post_state` seen from the other side — there a reference
+was taken too late, here it was taken too early. The invariant is the same: pin the
+reference at the boundary where the state stops moving. Sealed as
+`T-PLAN-COMPUTED-BEFORE-STATE-REPAIR-001`.
+
+**Overturned by:** nothing foreseeable.
+
+**Dry-run note:** a dry run writes nothing, so it cannot recover, so its plan is read off
+whatever tree is actually there. It therefore reports `dirty: true` rather than presenting
+those actions as a forecast of what an install would do.
 
 ---
 
