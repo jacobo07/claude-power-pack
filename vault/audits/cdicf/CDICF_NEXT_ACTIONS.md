@@ -133,12 +133,21 @@ run yet.
 
 Hermetic: 42/42 identical across three consecutive runs.
 
-## Extensions (after the NEW spine runs)
+## Extensions — 2 of 6 done
 
-`DESIGN.md.template` (+9 decisions) · `design_index.py` (+3 FTS tables) · `graphify`
-(+component node/edge types) · `capability_runtime` (+4 activation modes) ·
-`modules/cdio` (+component-scope checks) · `DESIGN_GOVERNANCE.md` (+reuse-first,
-+provenance-mandatory, +tour-as-last-resort).
+| # | Extension | State |
+|---|---|---|
+| **E1** | `DESIGN.md.template` +9 decisions | **SEALED** `e9d5170` — a Component Provenance section whose nine decisions **are** the selector's `--context` object, so a decision recorded there changes what the engine refuses. Verified against the real gate, not assumed: `V-DESIGN-TEMPLATE-CLEAN` still APPROVE score=100 family=F3 |
+| **E6** | `DESIGN_GOVERNANCE.md` +3 clauses | **SEALED** `63ccfff` — Section 8: reuse-first, provenance-mandatory, tour-as-last-resort, each backed by an exit code rather than a habit |
+| E2 | `design_index.py` +3 FTS tables | NOT STARTED — must be an **isolated FTS5 sidecar** (own table + triggers, never `turns_fts`) per the Apex completeness mandate |
+| E3 | `graphify` +component node/edge types | NOT STARTED |
+| E4 | `capability_runtime` +4 activation modes | NOT STARTED |
+| E5 | `modules/cdio` +component-scope checks | NOT STARTED |
+
+E1 and E6 were taken first because they are the two that make the spine *reachable*: until
+a project's governance tells someone to run the selector, four working executables are a
+capability nobody's process invokes. E2–E5 are code changes to four subsystems this work
+has not yet read, and each deserves its own sitting rather than a shallow pass.
 
 ## Standing gates
 

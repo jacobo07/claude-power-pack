@@ -16,14 +16,14 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | **A3b** Transactional installer — atomic, idempotent, recoverable, reversible | NEW | **SEALED** | `modules/cdicf/installer.js`; 24/24 tests; a real `exit 137` inside the rename sweep recovers to the exact pre-state; licence re-derived at install as defence in depth |
 | **A4** Selection + Abstention engine | NEW | **SEALED** | `modules/cdicf/selector.js`; 25/25 tests; relevance is a hard filter not a weighted term; six abstention codes each with a remedy; never installs (asserted structurally) |
 | **A5** Adversarial evaluation corpus | NEW | **SEALED** | `tests/a5_adversarial.test.js`; 41 scenarios + a meta-gate; **6 failed on first run → 4 defects fixed** (D-016); hermetic across 3 runs |
-| E1 `DESIGN.md.template` +9 decisions | EXTEND | NOT STARTED | — |
+| E1 `DESIGN.md.template` +9 decisions | EXTEND | **SEALED** | `e9d5170`; Component Provenance section — the nine decisions **are** the selector's context object. `V-DESIGN-TEMPLATE-CLEAN` still APPROVE score=100 family=F3 |
 | E2 `design_index.py` +3 FTS tables | EXTEND | NOT STARTED | — |
 | E3 `graphify` +component node/edge types | EXTEND | NOT STARTED | — |
 | E4 `capability_runtime` +4 activation modes | EXTEND | NOT STARTED | — |
 | E5 `modules/cdio` +component-scope checks | EXTEND | NOT STARTED | — |
-| E6 `DESIGN_GOVERNANCE.md` +3 clauses | EXTEND | NOT STARTED | — |
+| E6 `DESIGN_GOVERNANCE.md` +3 clauses | EXTEND | **SEALED** | `63ccfff`; Section 8 — reuse-first, provenance-mandatory, tour-as-last-resort, each backed by an exit code |
 
-**Progress: 8 of 15 sealed.** Absolute count, deliberately — a percentage would improve
+**Progress: 10 of 15 sealed.** Absolute count, deliberately — a percentage would improve
 by deleting a row. The denominator has grown three times (11 → 13 → 14 → 15) as A1b, A1c,
 A2b and A3b were split out once the work turned out to be real. A denominator that only
 ever shrinks is the ratio failure wearing a different hat.
