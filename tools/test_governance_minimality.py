@@ -128,5 +128,16 @@ def main() -> int:
     return 0 if _fails == 0 else 1
 
 
+def test_all_gates() -> None:
+    """pytest entry point.
+
+    Without this the file matches pytest's `test_*.py` discovery glob, is collected,
+    yields zero cases, and so joins SQI's authored denominator while contributing
+    nothing to its numerator -- the INERT-IN-ROOT class the report flags. A V-gate the
+    canonical invocation cannot execute is decoration under the Liveness Standard.
+    """
+    assert main() == 0
+
+
 if __name__ == "__main__":
     raise SystemExit(main())

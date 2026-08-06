@@ -169,5 +169,14 @@ def main() -> int:
     return 0 if _fails == 0 else 1
 
 
+def test_all_gates() -> None:
+    """pytest entry point -- see test_governance_minimality for the rationale.
+
+    An authored V-gate that the canonical invocation cannot execute inflates the
+    denominator and protects nothing.
+    """
+    assert main() == 0
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
