@@ -5463,4 +5463,65 @@ resolve before pruning, and any `plan → repair → apply` sequence. Tagged
 **Origin:** decision D-013 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`, caught
 by `V-INST-06` rather than in production.
 
+---
+
+### T-SELF-MATCHING-RELEVANCE-SIGNAL-001 (2026-08-06, CDICF A4)
+
+**Trap:** measuring how relevant something is to a query, using terms the query
+must contain in order to have retrieved that thing at all. The signal is
+guaranteed to fire, so it is a constant wearing the costume of a signal — and
+constants rank nothing.
+
+**Observed:** the CDICF selector scored a component's known failures as
+"relevant to this intent" when the failure text shared a token with the intent.
+But an intent that selects the shadcn Button contains the word *button*, and the
+failure sentence describes a button, so **every** query capable of selecting that
+component marked its failures relevant and raised a spurious approval
+requirement. Twenty-three synthetic tests passed on this; pointing the CLI at the
+real catalogue exposed it in one run.
+
+**General form:** when scoring an item against a query, exclude the terms that
+are properties of the item's own identity — its name, id, type, namespace. Score
+against what the caller *additionally* said, or against concerns they declared
+separately. Applies to search relevance, recommendation explanations, alert
+de-duplication, log-similarity clustering, and any "is this finding related to
+what you asked" heuristic.
+
+**Companion discipline:** state the matcher's limit in a test. Lexical matching
+does not connect "clicks" to `onClick`, and the CDICF suite asserts that
+near-miss deliberately — a matcher whose boundary is undocumented gets trusted
+past it. Tagged `#CROSS-PROJECT`.
+
+**Origin:** decision D-015 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`; sibling
+of `feedback_constant_factors_rank_nothing`.
+
+---
+
+### T-DOMINANT-OF-A-TIE-001 (2026-08-06, CDICF A4)
+
+**Trap:** reporting "the most common cause was X" from a tally where every entry
+is tied. Sorting a count map and taking the head always yields a head, so the
+report is confidently specific about something the data does not say — and any
+remedy attached to that head is right for one case and wrong for the rest.
+
+**Observed:** the CDICF selector abstains when every candidate is filtered, and
+names the dominant filter because *"no candidate matched"* is not actionable
+while *"every candidate failed the accessibility floor"* is. On a two-component
+catalogue one candidate was removed by licence and one by intent mismatch. The
+output read *"the most common was LICENCE_PROHIBITED (1)"* and offered only the
+licence remedy — advice that could not help with the other half of the field.
+
+**General form:** before reporting a mode, a top cause, a primary owner or a
+leading contributor, check whether the top value is unique. If it is not, say so
+and report the full tied set. Naming one is worse than naming none, because the
+reader acts on the name. Applies to error-cluster triage, root-cause summaries,
+"top offender" dashboards, blame attribution, and any `sort()[0]` over counts.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Sibling of
+`feedback_never_gate_on_a_ratio` — both are cases of a summary statistic
+asserting more than the underlying numbers support.
+
+**Origin:** decision D-015 in `vault/audits/cdicf/CDICF_DECISION_LOG.md`, found
+by real-input verification after a fully green synthetic suite.
+
 - **UKDL-OSA-2026-08-06T14:13:13Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token

@@ -14,7 +14,7 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | **A2b** Mirror Ledger emitted from the gate rather than hand-written | NEW | NOT STARTED | — |
 | **A3** Registry producer + redistribution guard | NEW | **SEALED** | `modules/cdicf/registry_emitter.js`; 16/16 tests; PROHIBITED refused at exit 5 with zero bytes written; posture derived from the tier, never read from the manifest |
 | **A3b** Transactional installer — atomic, idempotent, recoverable, reversible | NEW | **SEALED** | `modules/cdicf/installer.js`; 24/24 tests; a real `exit 137` inside the rename sweep recovers to the exact pre-state; licence re-derived at install as defence in depth |
-| **A4** Selection + Abstention engine | NEW | NOT STARTED | — |
+| **A4** Selection + Abstention engine | NEW | **SEALED** | `modules/cdicf/selector.js`; 25/25 tests; relevance is a hard filter not a weighted term; six abstention codes each with a remedy; never installs (asserted structurally) |
 | **A5** Evaluation corpus (~40 scenarios) | NEW | NOT STARTED | — |
 | E1 `DESIGN.md.template` +9 decisions | EXTEND | NOT STARTED | — |
 | E2 `design_index.py` +3 FTS tables | EXTEND | NOT STARTED | — |
@@ -23,10 +23,15 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | E5 `modules/cdio` +component-scope checks | EXTEND | NOT STARTED | — |
 | E6 `DESIGN_GOVERNANCE.md` +3 clauses | EXTEND | NOT STARTED | — |
 
-**Progress: 6 of 15 sealed.** Absolute count, deliberately — a percentage would improve
+**Progress: 7 of 15 sealed.** Absolute count, deliberately — a percentage would improve
 by deleting a row. The denominator has grown three times (11 → 13 → 14 → 15) as A1b, A1c,
 A2b and A3b were split out once the work turned out to be real. A denominator that only
 ever shrinks is the ratio failure wearing a different hat.
+
+**The executable spine is complete.** manifest → emit → install → select runs end to end
+on the real catalogue, with 117 tests behind it. What remains is A5 (an adversarial
+evaluation corpus), A2b (ledger rows emitted rather than typed), and the six extensions
+into PP's existing surfaces.
 
 **Ratified 2026-08-06 (D-011):** `--reference-only` stands. Redistribution is the movement
 of code; a URL is not code. The Motion Gateway namespace is in scope with the pointer path
@@ -73,13 +78,19 @@ Filename traps encountered, all now handled by `findLicenseFiles`:
 | Every artifact carries provenance | **ENFORCED** — required by the schema, and the installer refuses an entry whose manifest carries no `provenance.license_tier` |
 | Installation reproducible, commit-pinned | **ENFORCED** — per-artifact sha256 + a recomputed roll-up; a tampered artifact is refused by name (`V-INST-15`) |
 | Rollback + semantic recovery | **ENFORCED** — `rollback` (`V-INST-08`) and `recover` after a real `exit 137` (`V-INST-03`/`V-INST-04`) |
-| Selector explains and can abstain | PENDING A4 |
+| Selector explains and can abstain | **ENFORCED** — every ranked position explains itself in impact order (`V-SEL-13`), and abstention is an explicit code + remedy, never an empty array (`V-SEL-03`) |
 | Licence change invalidates dependents | **ENFORCED** by `--expect` (exit 4) |
 | One real installable vertical slice | **HELD** — manifest → emit → install → verify → rollback runs end to end on shadcn/ui Button (`V-INST-22`, through the CLI) |
 | Headless operable | **HELD** — every stage is CLI, JSON, exit-code driven |
 
-**7 of 8.** Only the selector remains, and it is A4. No gate is claimed on the strength of
-a README or a diagram; each row above names the test that observes it.
+**8 of 8.** No gate is claimed on the strength of a README or a diagram; each row above
+names the test that observes it.
+
+That the last one closed is worth stating carefully: these are the gates this build set
+for itself, and clearing them is not the same as the fabric being finished. A5 exists
+precisely because a suite written by the same hand that wrote the code is the weakest kind
+of evidence — and A4's own experience is the argument, since 23 of 23 of its tests passed
+before real input found two defects.
 
 Two of these moved for a reason worth keeping. *No restricted component redistributed* is
 now enforced at **two independent points** — an entry can reach a project by a path that

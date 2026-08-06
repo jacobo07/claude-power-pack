@@ -255,6 +255,68 @@ those actions as a forecast of what an install would do.
 
 ---
 
+## D-014 — Relevance is a hard filter, not a weighted term
+**Date:** 2026-08-06 · **Decided by:** agent
+
+**Evidence:** this estate's own scar, `feedback_constant_factors_rank_nothing` — five of
+six factors were per-item constants, so relevance 0.0 still cleared a MANDATORY gate and
+8 of 9 candidates activated. Maturity, bundle size, accessibility and reuse posture are
+properties of a *component*; they do not change with what was asked for. A weighted sum
+of them ranks the catalogue identically for every query.
+
+**Decision:** relevance to the intent is a **hard filter first** (zero relevance removes a
+candidate outright) and a weighted term second, at the highest weight. A flawless
+component that has nothing to do with the request is FILTERED, not ranked low — otherwise
+it wins on polish for a query it does not answer (`V-SEL-12`).
+
+**Corollary — the vocabulary is DISCOVERED, not curated.** Matching against a hand-written
+keyword list makes an unfamiliar phrasing score zero against everything, and zero never
+falls (`feedback_zero_cannot_fall`), so "the question was not understood" is
+indistinguishable from "nothing fits". The vocabulary is built from the candidate set
+itself, and an intent sharing no term with it returns `NO_RECOGNISED_INTENT_TERMS` — a
+distinct outcome from `ALL_FILTERED`, because the remedies are opposite: one says build
+nothing, the other says ask again in different words (`V-SEL-11`).
+
+**Overturned by:** nothing foreseeable. The asymmetry is the lesson.
+
+---
+
+## D-015 — Two defects found by running A4 on the real catalogue, not on its fixtures
+**Date:** 2026-08-06 · **Decided by:** agent
+
+23 of 23 synthetic tests passed on the first run. Both defects below survived that suite
+and were found by pointing the CLI at the two real manifests — which is the whole argument
+for real-input verification as a separate phase rather than a formality.
+
+**Defect 1 — a self-matching relevance signal.** Known failures were scored "relevant"
+when their text shared a token with the intent. But the intent that *selects* a component
+necessarily contains that component's own name, so any failure sentence mentioning the
+component by name flagged as relevant for every query that could have chosen it. Observed:
+intent *"accessible button primitive"* marked a shadcn Button failure relevant purely
+because the sentence contains the word "button", raising a spurious REQUIRE_APPROVAL.
+**Fix:** the candidate's own identity terms are excluded from the concern set; declared
+`concerns` never are, because those are deliberate. Sealed as
+`T-SELF-MATCHING-RELEVANCE-SIGNAL-001`.
+
+**Defect 2 — a dominant cause reported over a tie.** When every candidate is filtered, the
+abstention names the filter that emptied the field, because "no candidate matched" is not
+actionable and "every candidate failed the accessibility floor" is. On the real catalogue
+one candidate was removed by licence and one by intent mismatch — a 1-1 tie — and the
+output announced *"the most common was LICENCE_PROHIBITED (1)"* with only the licence
+remedy attached. That remedy is right for one candidate and wrong for the other. **Fix:**
+a tie reports `dominant_filter: null`, lists `tied_filters`, and concatenates every
+applicable remedy. Sealed as `T-DOMINANT-OF-A-TIE-001`.
+
+**Kept honest:** `V-SEL-24` also asserts the *limit* of the fix — matching is lexical, so a
+concern phrased "clicks must always fire" does not connect to a failure written about
+`onClick`. That near-miss is asserted in the suite rather than papered over, because a
+matcher whose boundary is undocumented gets trusted past it.
+
+**Overturned by:** replacing lexical matching with a semantic one, which would need its own
+evidence that it does not hallucinate connections.
+
+---
+
 ## Open questions (not yet decisions)
 
 | # | Question | Blocks | State |

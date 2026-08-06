@@ -76,18 +76,35 @@ committed partially, every partial state detectable and reversible, the window b
 the rename sweep. Between an abrupt kill and the next invocation a partial tree does exist
 on disk. That is recovery, not prevention, and it is named as such.
 
-## A4 — Selection + Abstention (NEXT)
+## A4 — Selection + Abstention — SEALED 2026-08-06
 
-| # | Action | Done when |
+`modules/cdicf/selector.js`, 25 tests.
+
+| # | Action | State |
 |---|---|---|
-| 9 | Hard filters → soft scoring → explanation → abstention | The engine returns "no suitable component, build nothing" on a case where that is correct |
-| 10 | Prior-adoption enters as a **tiebreak only**, never a scored term | A popularity-only candidate loses to a better-fitting unused one |
+| 9 | Hard filters → soft scoring → explanation → abstention | **DONE** — six abstention codes, each with a reason and a remedy. `V-SEL-17` returns "build it" on a field of poor fits; `V-SEL-09` refuses a tour over unresolved UX findings as the wrong remedy entirely |
+| 10 | Prior-adoption enters as a **tiebreak only**, never a scored term | **DONE** — `V-SEL-16`: an already-used component loses to a better fit, and no contribution row names it |
 
-Two constraints inherited from this estate's own scars, to be honoured at design time:
-a score whose factors are per-item constants ranks nothing (`feedback_constant_factors_rank_nothing`),
-and a composite score mapped onto a hard verdict kills whole classes
-(`feedback_provider_score_to_hard_verdict`). Abstention must be an explicit output, never
-an empty array.
+Both inherited constraints were honoured structurally rather than by intention:
+
+- *A score whose factors are per-item constants ranks nothing.* Relevance is a **hard
+  filter first** and a weighted term second (D-014, `V-SEL-12`) — zero relevance removes a
+  candidate rather than costing it points it can win back on maturity.
+- *A composite score mapped onto a hard verdict kills whole classes.* Hard filters are
+  independent predicates evaluated **before any score exists**; the composite only ever
+  decides ranking and the absolute `MIN_SCORE` floor. No conjunct is derived from a score.
+- Thresholds are absolute, never ratios or percentiles (`V-SEL-17`) — a percentile always
+  crowns someone no matter how bad the field is.
+- The matching vocabulary is **discovered from the candidate set**, so an unrecognised
+  intent returns `NO_RECOGNISED_INTENT_TERMS` rather than looking like "nothing fits"
+  (`V-SEL-11`). Zero cannot fall, so the two must not share an output.
+
+**Found by real-input verification, after 23/23 synthetic tests passed first run** (D-015):
+a self-matching relevance signal, and a "dominant cause" reported over a tie. Sealed as
+`T-SELF-MATCHING-RELEVANCE-SIGNAL-001` and `T-DOMINANT-OF-A-TIE-001`.
+
+The engine **never installs**. `V-SEL-22` asserts it both behaviourally (no filesystem
+writes) and structurally (no import path to the installer).
 
 ## A5 — Evaluation corpus (NEW)
 

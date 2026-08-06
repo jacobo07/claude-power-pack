@@ -67,6 +67,41 @@ keywords this schema uses — `type`, `required`, `properties`, `additionalPrope
 `format: date`. Pointed at an arbitrary schema it would silently under-validate, which is
 why it is scoped to this one. Stated here rather than discovered later.
 
+## The selector (A4)
+
+```
+node modules/cdicf/selector.js --intent "<text>" --candidates <dir> [--context <ctx.json>]
+```
+
+Exit: `0` RECOMMEND · `20` ABSTAIN · `21` REQUIRE_APPROVAL · `2` argv · `3` io. Non-zero
+here does not mean the run failed — it means *not an unattended install*, which is the only
+thing a calling script needs to branch on.
+
+**Abstention is the point.** A selector that always returns a winner is a ranker. Five
+codes, each with a remedy: `NO_CANDIDATES` · `NO_RECOGNISED_INTENT_TERMS` · `ALL_FILTERED`
+(naming the filter that emptied the field, or every tied filter when none dominates) ·
+`BELOW_THRESHOLD` · `REMEDY_NOT_A_COMPONENT`. An empty array is not an abstention; it is a
+silence that reads as "nothing matched" when the truth may be "nothing should be installed
+here".
+
+**Relevance is a hard filter, not a weighted term.** Maturity, bundle size and accessibility
+are properties of a *component* and do not vary with the question, so a weighted sum of them
+ranks the catalogue identically for every query. Zero relevance therefore *removes* a
+candidate rather than costing it points it can win back on polish.
+
+**The vocabulary is discovered from the candidate set.** Matching against a hand-written
+keyword list makes an unfamiliar phrasing score zero against everything — and zero never
+falls, so "the question was not understood" becomes indistinguishable from "nothing fits".
+Those are separate outputs here, because their remedies are opposite.
+
+**Hard filters run before any score exists.** No conjunct is derived from a composite; the
+score only ever decides ranking and the absolute `MIN_SCORE` floor. Thresholds are absolute,
+never percentiles — a percentile always crowns someone no matter how bad the field is.
+
+**It never installs.** `V-SEL-22` asserts that behaviourally (no filesystem writes) and
+structurally (no import path to the installer). Recommendation and action stay apart so a
+high-uncertainty call reaches a human first.
+
 ## Known gap — this module is invisible to the Liveness gate
 
 `modules/liveness/reachability.py` enumerates **Python packages** (it gates on
