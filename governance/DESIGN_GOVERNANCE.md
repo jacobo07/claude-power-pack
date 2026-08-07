@@ -156,6 +156,18 @@ artifact into the registry entry, never in a side document that drifts.
   one is reversible; declared dependencies are resolved before any write, because a
   checksum-valid component whose dependencies are absent is the Scaffold Illusion with a
   *passing* verification step (`T-DECLARED-BUT-UNRESOLVED-DEPENDENCY-001`).
+- An install can be **stopped in flight**: `installer.js kill-switch arm --target <proj>`
+  fences a project (exit 12). It stops what is running, records
+  `ABORTED_BY_KILL_SWITCH`, and **preserves the journal** for post-mortem; it is not a
+  retro-active uninstall, and it does not auto-disarm. Use it when a rollout must halt
+  now and the reason is not yet understood.
+- Dependency resolution is checked **again at review time**, not only at install. The
+  install-time guard cannot see a dependency removed from `package.json` a week later, so
+  `modules.cdio.scorer.review_gate(verdicts, target=<proj>)` runs it as a hard filter
+  BEFORE the score. An unresolved dependency does not lower the number — the review never
+  reaches a number. The ≥80 threshold in Section 5 is unchanged by this and was measured
+  so, because a criterion that silently re-scores existing surfaces is a regression, not a
+  gate.
 
 ### 8.3 A tour is a last resort, never a patch over a broken interface
 An onboarding overlay laid over an unresolved usability problem conceals the problem and

@@ -19,20 +19,24 @@ Single status surface for the 25 proposed datasets and the Option-A work items.
 | E1 `DESIGN.md.template` +9 decisions | EXTEND | **SEALED** | `e9d5170`; Component Provenance section — the nine decisions **are** the selector's context object. `V-DESIGN-TEMPLATE-CLEAN` still APPROVE score=100 family=F3 |
 | E2 `design_index.py` + component FTS5 sidecar | EXTEND | **SEALED** | own DB file `CDICF-COMPONENT-INDEX.db`; builds **refuse** a database holding `turns*`/`design_tools*` (exit 3); provenance absent from the schema, not merely unindexed; empty results split into `NO_INDEX`/`INDEX_EMPTY`/`NO_MATCH`; `selector.js --candidates-from` consumes it. 15/15, hermetic 3× |
 | E3 graphify integration | EXTEND | **SEALED** | **not as proposed** — the named owner (`indexer.py`) does not define `NODE_TYPES` (`tools/graphify_knowledge.py:57` does), and the July CDIO reality-scan already had the Owner approve *riding the existing types*. One `_GOV_ID` token; ontology pinned frozen by `V-CDICF-GRAPH-07`. 8/8, hermetic 3× |
-| E4 `capability_runtime` +4 activation modes | EXTEND | **DEFERRED** | **false premise** — no activation-mode concept exists in the module; the phrase appears only in CDICF's own plan. Honest reinterpretation (capability contracts) is blocked on an Owner decision: HR-APA-009 requires a declared kill switch for the installer's write surface |
-| E5 `modules/cdio` +component-scope checks | EXTEND | **DEFERRED** | not size (4 files / 376 lines) but blast radius — `scorer.py` feeds the `DESIGN_GOVERNANCE` §5 deploy gate (≥80 APPROVE), so a new check silently re-scores existing surfaces. Needs a measured before/after first |
+| E4 installer kill switch (HR-APA-009) | EXTEND | **SEALED** | `7c9ec1d`; the phrase "4 activation modes" was still a spec-side invention — what it stood in for was buildable. Sentinel file **plus** signals, because Node never emits SIGTERM on Windows and a signal-only switch would be inert on the primary host. Journal **preserved** (an abort stops; `recover` repairs and archives), `ABORTED_BY_KILL_SWITCH` recorded as an audit row never as an install, earlier installs untouched, no auto-disarm. Contract validates and HR-APA-009 was **observed refusing**. 10/10 |
+| E5 `modules/cdio` dependency-scope filter | EXTEND | **SEALED** | `ddd6334`; CRITICAL **before** the score rather than as a Verdict — a `critical` Verdict deducts 25 and would have caused the exact 82→78 drift this row was deferred over. `score_review` untouched; before/after captured **prior to the first edit** and byte-identical; §5 still 80. Catches what the installer cannot: a dependency removed *after* a valid install. 10/10 |
 | E6 `DESIGN_GOVERNANCE.md` +3 clauses | EXTEND | **SEALED** | `63ccfff`; Section 8 — reuse-first, provenance-mandatory, tour-as-last-resort, each backed by an exit code |
 
-**Progress: 12 of 15 sealed, 2 deferred with cause.** Absolute count, deliberately — a
-percentage would improve by deleting a row. Both deferrals name what unblocks them; a
-deferral without a resumption condition is an abandonment with better manners. The denominator has grown three times (11 → 13 → 14 → 15) as A1b, A1c,
-A2b and A3b were split out once the work turned out to be real. A denominator that only
-ever shrinks is the ratio failure wearing a different hat.
+**Progress: 14 of 15 sealed.** Absolute count, deliberately — a percentage would improve
+by deleting a row. The one row still open is **A2b** (Mirror Ledger rows emitted from the
+gate rather than typed); it is the only item never started, and it is small. Both former
+deferrals were unblocked by an Owner decision rather than by effort, which is why each
+named its blocking question instead of a date — a deferral without a resumption condition
+is an abandonment with better manners. The denominator has grown three times
+(11 → 13 → 14 → 15) as A1b, A1c, A2b and A3b were split out once the work turned out to be
+real. A denominator that only ever shrinks is the ratio failure wearing a different hat.
 
 **The executable spine is complete and adversarially tested.** manifest → emit → install →
-select runs end to end on the real catalogue, with **174 gates** behind it — 159 JS
-(`node --test "tests/**/*.test.js"`) plus 15 Python for the E2 sidecar
-(`python tools/test_cdicf_index.py`). A5 found four defects the other 117 could not see
+select runs end to end on the real catalogue, with **218 gates** behind it — 169 JS
+(`node --test "tests/**/*.test.js"`) plus 49 Python across five suites: the E2 sidecar
+(15), the E3 graph token (8), the E5 dependency scope (10), CDIO (8) and the design gate
+(8). A5 found four defects the other 117 could not see
 (D-016). What remains is A2b (ledger rows emitted rather than typed) and E3–E5.
 
 **Ratified 2026-08-06 (D-011):** `--reference-only` stands. Redistribution is the movement

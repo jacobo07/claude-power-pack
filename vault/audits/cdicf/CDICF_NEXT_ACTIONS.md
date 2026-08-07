@@ -133,7 +133,7 @@ run yet.
 
 Hermetic: 42/42 identical across three consecutive runs.
 
-## Extensions — 4 of 6 done
+## Extensions — 6 of 6 done
 
 | # | Extension | State |
 |---|---|---|
@@ -141,8 +141,8 @@ Hermetic: 42/42 identical across three consecutive runs.
 | **E6** | `DESIGN_GOVERNANCE.md` +3 clauses | **SEALED** `63ccfff` — Section 8: reuse-first, provenance-mandatory, tour-as-last-resort, each backed by an exit code rather than a habit |
 | **E2** | `design_index.py` + component FTS5 sidecar | **SEALED** `a8d9947` — own **database file**, own tables and triggers; 15 gates in `tools/test_cdicf_index.py`, hermetic 3× |
 | **E3** | graphify integration | **SEALED** — **not** as proposed. One `_GOV_ID` token, ontology untouched, 8 gates in `tools/test_cdicf_graph.py` |
-| E4 | `capability_runtime` +4 activation modes | **DEFERRED — false premise.** See below |
-| E5 | `modules/cdio` +component-scope checks | **DEFERRED — governance blast radius.** See below |
+| **E4** | installer kill switch (HR-APA-009) | **SEALED** `7c9ec1d` — sentinel + signal, journal **preserved**, `ABORTED_BY_KILL_SWITCH` recorded; 10 gates in `tests/killswitch.test.js` |
+| **E5** | `modules/cdio` dependency-scope hard filter | **SEALED** `ddd6334` — CRITICAL **before** the score, `score_review` untouched, §5 gate measured unchanged; 10 gates in `tools/test_cdicf_scope.py` |
 
 ### E3 — the proposal was wrong twice, and the record said so
 
@@ -172,37 +172,79 @@ Two things are asserted that a naive suite would not have:
 CDICF's A5 traps were **already** promotable under the pre-existing `T-[A-Z]` token, and
 `V-CDICF-GRAPH-03` says so, so this change is not credited with coverage that predates it.
 
-### E4 — deferred, because "4 activation modes" does not exist
+### E4 — the kill switch, unblocked by an Owner decision
 
-`modules/capability_runtime/` has no activation-mode concept. It has `triggers` /
-`anti_triggers`, the `Cost` / `Risk` / `Maturity` / `FailureRisk` enums, and four
-executable HR-APA rules. The phrase "4 activation modes" appears **only** in CDICF's own
-planning documents (`vault/plans/cdicf-corpus-2026-08-06.md:65` and the two ledger rows
-derived from it) — nowhere in the owner module. It is a spec-side invention with no
-counterpart in the code (HR-PREMISE-001).
+The premise was still false — `modules/capability_runtime/` has no activation-mode
+concept, and "4 activation modes" appears only in CDICF's own plan. What was buildable
+was the thing that phrase was standing in for: **the kill switch HR-APA-009 demands of any
+write surface**, plus the contract that declares it
+(`vault/capability_runtime/contracts/cdicf-installer.json`).
 
-The honest reinterpretation is real work, not a rename: register CDICF's four executables
-as **capability contracts**. That requires satisfying HR-APA-006 (≥1 trigger AND ≥1
-consumer), HR-APA-007 (outputs require consumers), HR-APA-009 (write surfaces require
-rollback **and** a kill switch) and HR-APA-018 (a named owner) for each. The installer is
-a write surface, so it needs a declared kill switch — and what it means to kill CDICF
-installation mid-estate is an Owner decision, not one to infer. **Blocked on that answer,
-not on effort.**
+**The mechanism was chosen from the estate, then corrected by a fact about the host.**
+PP's convention for a long-running process is a SIGTERM/SIGINT handler with graceful
+shutdown. That alone would have been *inert here*: Node never **emits** SIGTERM on
+Windows, so a signal-only switch is a switch that cannot fire — the disarmed-kill-switch
+shape already on this estate's record. The portable arm is therefore a sentinel file
+(`<target>/.cdicf/KILL_SWITCH`), cross-process and inspectable, with signals honoured
+where the platform delivers them and listeners removed on every exit path.
 
-### E5 — deferred, because it moves a threshold other repos gate on
+Semantics, per the Owner's ruling:
 
-`modules/cdio/` is 4 Python files / 376 lines in `scorer.py` (the ledger's "12 files" was
-also wrong). The subsystem is readable in one sitting, so this is not a size problem.
+- Armed **before** start → refuse at exit 12 **without creating a journal**; refusing
+  after the lock would leave a dirty-state marker for a transaction that touched nothing.
+  Checked in `install()` as well as `applyPlan`, so an idempotent no-op and a dry run
+  cannot report success into a project someone has explicitly fenced off.
+- Mid-transaction → stop at the next seam. There is now a seam per **write**
+  (`staging-file`, `backup-file`), because "stop before the next write" is only true if a
+  checkpoint exists before each one.
+- In the rename sweep → the in-flight `renameSync` completes (one atomic syscall) and the
+  sweep stops before the next. `V-KILL-05` asserts exactly one rename landed.
+- **The journal is preserved**, which is why the abort is handled *before* the generic
+  catch: `recover` deletes the journal, and the journal is the post-mortem. An abort
+  stops; `recover` repairs — and now archives to `.cdicf/aborted/<txid>.json`, so the
+  evidence outlives the repair (`V-KILL-06`).
+- `ABORTED_BY_KILL_SWITCH` lands in `installed.json` as an `aborted` audit row, never in
+  `components`. The component was not installed, and a record claiming otherwise is worse
+  than none (`V-KILL-04`).
+- Earlier committed installs are untouched (`V-KILL-07`). It stops what is in flight; it
+  is not a retro-active uninstall.
+- It does **not** auto-disarm, and every refusal names the disarm command (`V-KILL-02`) —
+  a switch that resets after one trip is a pause button, and one nobody can turn off is an
+  outage.
 
-It is a blast-radius problem. `scorer.py` computes the Design Quality Score, and
-`DESIGN_GOVERNANCE.md` §5 gates deploys on it: **≥80 and zero critical ⇒ APPROVE**,
-60–79 ⇒ REVISE, <60 ⇒ BLOCK, with pane-gated repos at ≥85. Adding a component-scope
-check changes score *composition*, so a surface that scored 82 yesterday can score 78
-today without anyone touching it. That is a governance change wearing a code change's
-clothes, and it needs to ship with a measured before/after on real reviews plus a
-decision on whether the new check can be CRITICAL (which would make it BLOCK-tier).
+HR-APA-009 was **observed refusing** an empty `kill_switch` and an empty `rollback`, not
+assumed to pass.
 
-Constraint for whoever takes it: **do not add a check without re-measuring existing
+### E5 — the dependency-scope filter, and why it is not a Verdict
+
+The blast-radius concern was real, and the Owner's ruling resolved it: a missing dependency
+is CRITICAL because it is observable in production on first render; a low score is a
+judgment and is not.
+
+That forced the design. A `critical` **Verdict** subtracts 25 inside `score_review`, so
+emitting one would have changed score *composition* — the exact 82→78 drift this row was
+deferred over. So the check is **not a Verdict**. It is a hard filter evaluated before any
+score exists (`review_gate`), and `score_review` is untouched. CRITICAL does not lower the
+number; it means the review never reaches one, and `GateResult.score` is `None` rather
+than a deduction (`V-CDICF-SCOPE-06`).
+
+**Measured, not asserted.** A snapshot of every real `DESIGN.md` plus an 11-case verdict
+matrix spanning the boundaries was captured *before the first edit* and re-measured after:
+byte-identical. `APPROVE_MIN` is still 80, and `review_gate` with no target equals
+`score_review` exactly.
+
+What it buys beyond the installer: the installer resolves dependencies at **install** time
+(exit 11) and structurally cannot see a dependency removed a week later. `V-CDICF-SCOPE-05`
+exercises exactly that against a real emitter+installer install. Two guards, two moments,
+not redundant. Three states, never two — a record predating dependency tracking is
+`unassessed`: reported, not blocking, because blocking would inert the gate on day one and
+passing silently would launder an unknown into a yes.
+
+Historical note, kept because it was the deferral's own reasoning: `modules/cdio/` is 4
+Python files, not the 12 the ledger claimed, and `scorer.py` is 376 lines.
+
+Constraint that still stands for whoever adds the next check: **do not add a check without
+re-measuring existing
 scored surfaces.** A criterion that silently re-scores history is indistinguishable from
 a regression.
 
