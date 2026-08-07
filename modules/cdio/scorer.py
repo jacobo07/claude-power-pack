@@ -24,7 +24,9 @@ Verdict (CDIO-05 sec.5 / PR-CDIO-REVIEW-GATE-001):
 """
 from __future__ import annotations
 
+import json
 import os
+import re
 from dataclasses import dataclass, field, asdict
 
 # --- CDIO-05 fixed constants (the contract; mirrored in CDIO-05 dataset) ----
@@ -446,3 +448,205 @@ def check_design_md_exists(path, *, criterion: str = "design-md-present") -> Ver
         observed=f"no DESIGN.md at {p or '(no path given)'}",
         recommendation="create DESIGN.md from modules/design-md/DESIGN.md.template and "
                        "declare an aesthetic_family before building the surface")
+
+
+# --------------------------------------------------------------------------- #
+# CDICF component-scope hard filter (E5)
+#
+# This does NOT emit a Verdict, and that is the whole design. A `critical`
+# Verdict subtracts 25 from the score, so routing this through score_review
+# would change score COMPOSITION: a surface that scored 82 yesterday could
+# score 78 today with nobody touching it, and a criterion that silently
+# re-scores history is indistinguishable from a regression.
+#
+# So it is a HARD FILTER evaluated BEFORE any score exists. An unresolved
+# dependency does not lower the number -- it means the review never reaches the
+# number. The §5 gate stays at >=80 and score_review stays byte-for-byte the
+# function it was.
+#
+# The distinction that decides severity: a missing dependency is observable in
+# production on first render, so it is CRITICAL. A low score is a judgment
+# about quality, so it is not.
+# --------------------------------------------------------------------------- #
+
+CDICF_STATE_DIR = ".cdicf"
+NPM_DEP_FIELDS = ("dependencies", "devDependencies", "peerDependencies",
+                  "optionalDependencies")
+
+DEP_RESOLVED = "resolved"
+DEP_UNRESOLVED = "unresolved"
+DEP_UNASSESSED = "unassessed"     # recorded before deps were tracked; NOT a pass
+
+# A version specifier's `@` is followed by a digit or range char; a scope's `@`
+# is followed by a letter. Stripping naively would eat @radix-ui/react-slot.
+_VERSION_SPEC = re.compile(r"@[\^~>=<0-9][^@]*$")
+
+
+@dataclass
+class HardFilter:
+    """A pre-score gate. `passed` False with severity critical stops the review
+    before the score is computed."""
+    criterion: str
+    passed: bool
+    observed: str
+    severity: str = ""
+    state: str = DEP_RESOLVED
+    recommendation: str = ""
+    detail: dict = field(default_factory=dict)
+
+    def to_json(self) -> dict:
+        return asdict(self)
+
+
+@dataclass
+class GateResult:
+    """The review outcome. `score_result` is None when a hard filter blocked --
+    the review did not reach the score, which is different from scoring badly.
+    """
+    verdict: str                       # APPROVE | REVISE | BLOCK
+    reason: str
+    hard_filters: list = field(default_factory=list)
+    score_result: object = None
+
+    @property
+    def score(self):
+        return None if self.score_result is None else self.score_result.score
+
+    @property
+    def reached_score(self) -> bool:
+        return self.score_result is not None
+
+    @property
+    def is_done(self) -> bool:
+        return self.score_result is not None and self.score_result.is_done
+
+    def to_json(self) -> dict:
+        return {
+            "verdict": self.verdict, "reason": self.reason,
+            "score": self.score, "reached_score": self.reached_score,
+            "is_done": self.is_done,
+            "hard_filters": self.hard_filters,
+            "score_result": (self.score_result.to_json()
+                             if self.score_result is not None else None),
+        }
+
+
+def _bare_npm(name: str) -> str:
+    return _VERSION_SPEC.sub("", str(name))
+
+
+def _declared_npm(target: str) -> set:
+    """Package names the project declares. An unreadable package.json declares
+    nothing, which is the honest reading rather than an error."""
+    declared: set = set()
+    try:
+        with open(os.path.join(target, "package.json"), encoding="utf-8-sig") as fh:
+            pkg = json.load(fh)
+    except (OSError, ValueError):
+        return declared
+    for f in NPM_DEP_FIELDS:
+        for name in (pkg.get(f) or {}):
+            declared.add(name)
+    return declared
+
+
+def check_component_dependencies(
+        target, *, criterion: str = "component-dependency-scope") -> HardFilter:
+    """Do the CDICF components installed in `target` still have their declared
+    dependencies present?
+
+    Resolution is the installer's, deliberately literal and identical: an npm
+    dependency resolves when package.json declares it, a registry dependency
+    when installed.json already names it. No network, no version solving.
+
+    Three outcomes, never two. A component whose record predates dependency
+    tracking is `unassessed` -- reported, but it does not block, because
+    treating every legacy record as a failure would inert the gate on day one
+    and treating it as a pass would launder an unknown into a yes.
+    """
+    state_file = os.path.join(str(target), CDICF_STATE_DIR, "installed.json")
+    try:
+        with open(state_file, encoding="utf-8-sig") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return HardFilter(
+            criterion=criterion, passed=True, state=DEP_RESOLVED,
+            observed="no CDICF install record in this project; no third-party "
+                     "component scope to check")
+
+    components = data.get("components") or {}
+    if not components:
+        return HardFilter(criterion=criterion, passed=True, state=DEP_RESOLVED,
+                          observed="0 CDICF components installed")
+
+    declared = _declared_npm(str(target))
+    installed_ids = set(components)
+    unresolved: dict = {}
+    unassessed: list = []
+
+    for cid in sorted(components):
+        deps = components[cid].get("dependencies")
+        if not isinstance(deps, dict):
+            unassessed.append(cid)
+            continue
+        missing_npm = [d for d in (deps.get("npm") or [])
+                       if _bare_npm(d) not in declared]
+        missing_reg = [d for d in (deps.get("registry") or [])
+                       if d not in installed_ids]
+        if missing_npm or missing_reg:
+            unresolved[cid] = {"npm": missing_npm, "registry": missing_reg}
+
+    if unresolved:
+        names = ", ".join(
+            f"{cid} needs " + ", ".join(v["npm"] + v["registry"])
+            for cid, v in unresolved.items())
+        return HardFilter(
+            criterion=criterion, passed=False, severity="critical",
+            state=DEP_UNRESOLVED,
+            observed=f"{len(unresolved)} of {len(components)} installed "
+                     f"component(s) have unresolved dependencies: {names}",
+            recommendation="install the missing packages, or roll the component "
+                           "back with `installer.js rollback`. A component that "
+                           "is checksum-valid and recorded as installed still "
+                           "breaks on first render when its dependencies are "
+                           "absent",
+            detail={"unresolved": unresolved, "unassessed": unassessed})
+
+    return HardFilter(
+        criterion=criterion, passed=True,
+        state=DEP_UNASSESSED if unassessed else DEP_RESOLVED,
+        observed=(f"{len(components) - len(unassessed)} component(s) resolved"
+                  + (f"; {len(unassessed)} predate dependency tracking and are "
+                     f"unassessed: {', '.join(unassessed)}" if unassessed else "")),
+        recommendation=("re-install the unassessed components so their declared "
+                        "dependencies enter the install record" if unassessed else ""),
+        detail={"unresolved": {}, "unassessed": unassessed})
+
+
+def review_gate(verdicts, *, target=None) -> GateResult:
+    """Hard filters first, score second.
+
+    With no `target` this is exactly `score_review` in a wrapper: same score,
+    same verdict, same reason. That equality is the guarantee that adding this
+    gate did not move the §5 threshold for any surface that has no third-party
+    components.
+    """
+    filters = []
+    if target is not None:
+        filters.append(check_component_dependencies(target))
+
+    blocking = [f for f in filters
+                if not f.passed and f.severity == "critical"]
+    if blocking:
+        return GateResult(
+            verdict="BLOCK",
+            reason="; ".join(f"{f.criterion}: {f.observed}" for f in blocking)
+                   + " -- blocked before the score; an unresolved dependency is "
+                     "observable in production, not a quality judgment",
+            hard_filters=[f.to_json() for f in filters],
+            score_result=None)
+
+    sr = score_review(verdicts)
+    return GateResult(verdict=sr.verdict, reason=sr.reason,
+                      hard_filters=[f.to_json() for f in filters],
+                      score_result=sr)

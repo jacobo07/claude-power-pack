@@ -115,9 +115,22 @@ const REFUSAL = {
  * installed.json already names it. No network, no version solving. This
  * reports a fact about the project rather than guessing at one.
  */
+/*
+ * What the entry SAYS it needs, recorded into the install record so the state
+ * of record is self-describing. Without it, a reviewer asking "do this
+ * component's dependencies still resolve?" has to re-fetch the registry entry,
+ * and a dependency removed from package.json AFTER a valid install is
+ * invisible — the install-time check cannot see the future.
+ */
+function declaredDependencies(entry) {
+  return {
+    npm: Array.isArray(entry.dependencies) ? entry.dependencies.slice() : [],
+    registry: Array.isArray(entry.registryDependencies) ? entry.registryDependencies.slice() : [],
+  };
+}
+
 function unresolvedDependencies(entry, target, paths) {
-  const npm = Array.isArray(entry.dependencies) ? entry.dependencies : [];
-  const registry = Array.isArray(entry.registryDependencies) ? entry.registryDependencies : [];
+  const { npm, registry } = declaredDependencies(entry);
   if (!npm.length && !registry.length) return null;
 
   const declared = new Set();
@@ -395,6 +408,7 @@ function planInstall(entry, im, target, opts) {
         txid: newTxid(), component: im.component, registry_item: im.registry_item,
         mode: 'upstream-reference', target, files: [],
         checksum: im.checksum, provenance: im.provenance,
+        dependencies: declaredDependencies(entry),
         upstream_install: meta.upstream_install || null,
       },
     };
@@ -469,7 +483,9 @@ function planInstall(entry, im, target, opts) {
     plan: {
       txid: newTxid(), component: im.component, registry_item: im.registry_item,
       mode: 'local-artifacts', target: resolvedTarget, files,
-      checksum: recomputed, provenance: im.provenance, upstream_install: null,
+      checksum: recomputed, provenance: im.provenance,
+      dependencies: declaredDependencies(entry),
+      upstream_install: null,
     },
   };
 }
@@ -708,6 +724,7 @@ function applyPlan(plan, opts) {
       checksum: plan.checksum,
       installed_at: new Date().toISOString(),
       provenance: plan.provenance,
+      dependencies: plan.dependencies || { npm: [], registry: [] },
       upstream_install: plan.upstream_install,
       files: plan.files.map(f => ({ path: f.rel, artRel: f.artRel, sha256: f.sha256, prior_sha: f.prior_sha })),
       backup_dir: plan.files.some(f => f.prior_sha !== null) ? path.relative(plan.target, backupRoot) : null,
