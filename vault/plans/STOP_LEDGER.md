@@ -4,14 +4,15 @@
 
 The plan files are sealed records of what was believed when, and are never rewritten to match a later verdict. This ledger carries the transition their `status:` field has no producer for.
 
-**23 STOP-bearing plans** — OPEN 8 · CONTRADICTED 11 · RESOLVED 4 · UNKNOWN 0
+**24 STOP-bearing plans** — OPEN 9 · CONTRADICTED 11 · RESOLVED 4 · UNKNOWN 0
 
-By checkpoint: STOP 1 · STOP #1 19 · STOP #2 3. A STOP #2 is a different question from a STOP #1 and is counted separately rather than folded into it.
+By checkpoint: STOP 1 · STOP #1 20 · STOP #2 3. A STOP #2 is a different question from a STOP #1 and is counted separately rather than folded into it.
 
 | plan | checkpoint | family | disposition | status as written | witness |
 |---|---|---|---|---|---|
 | `claude-md-compaction-2026-07-26.md` | STOP #1 | claude-md-compaction | **OPEN** | STOP #1 delivered inline; awaiting Owner approval before execution | - |
 | `efaif-expansion-2026-08-06.md` | STOP #2 | efaif-expansion | **OPEN** | STOP #2 — BLOCKING, presented inline, no dataset written | - |
+| `egcc-expansion-2026-08-07.md` | STOP #1 | egcc-expansion | **OPEN** | STOP #1 — BLOCKING, presented inline, no dataset and no module written | - |
 | `gap-discovery-2026-07-30.md` | STOP #1 | gap-discovery | **OPEN** | STOP #1 — presented inline, awaiting Owner approval before any constru | - |
 | `iig-compendium-2026-07-30.md` | STOP #1 | iig | **OPEN** | STOP #1 — presented inline, awaiting Owner approval before any constru | - |
 | `re-baseline-compendium-2026-07-26.md` | STOP #1 | re-baseline | **OPEN** | STOP-1 (Phase 0 complete; awaiting Owner approval of the revised archi | - |

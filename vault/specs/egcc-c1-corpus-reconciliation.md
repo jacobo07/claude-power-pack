@@ -10,6 +10,18 @@ denominator: EGCC_EXPANSION_DENOMINATOR.md
 
 # Spec — C1
 
+## Disposition of the STOP it closes
+
+`vault/plans/egcc-expansion-2026-08-07.md` — **STOP #1 RESOLVED 2026-08-07.**
+The Owner selected "Solo C1"; C1 is built and shipped. C2 (the `severity`
+capture defect), C3 (a rule's retirement condition) and C4 (the liveness
+scanner's four blind packages) were presented and **not** selected, so they
+remain unbuilt and unclaimed.
+
+The plan file itself is left exactly as written. A plan is a sealed record of
+what was believed when, and rewriting it to match a later verdict destroys the
+only evidence of what the decision looked like before it was made.
+
 ## Problem, measured
 
 `parser.load_corpus()` reads exactly two files. The rules this estate actually
