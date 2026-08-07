@@ -11,7 +11,10 @@ Seven binary sub-checks:
   H5 dispatcher         pp-cascade-guard registered in dispatcher
   H6 agent-file         ~/.claude/agents/pp-cascade-guard.md present
   H7 archive-or-claude  CLAUDE.md OR vault/hard_rules/HARD_RULES.md
-                        has the sentinel block
+                        has the sentinel MARKERS, and reports which. It
+                        cannot assert the two blocks AGREE -- they both
+                        carry markers while sharing 9 of 42 ids. For that,
+                        run `hardrule_compile.py --reconcile`.
 
 Exit 0 iff all 7 pass. Prints HARDRULES_PROBE=N/7 line for verify_spp.
 """
@@ -110,20 +113,32 @@ def main() -> int:
     archive = PP / "vault" / "hard_rules" / "HARD_RULES.md"
     sentinel_start = "<!-- PP-HARD-RULES-START -->"
     sentinel_end = "<!-- PP-HARD-RULES-END -->"
-    has_block = False
-    for path in (claude_md, archive):
+    # Both files are inspected. The original `break` stopped at CLAUDE.md, so
+    # the archive was never opened once the mirror matched -- and the archive is
+    # the only one parser.load_corpus() reads.
+    #
+    # This check asserts MARKER PRESENCE, and that is all it can assert. Both
+    # files do carry the markers while their blocks share 9 of 42 rule ids, so a
+    # conjunction here would pass too. Block AGREEMENT is a different property
+    # and belongs to `hardrule_compile.py --reconcile`, which can name the
+    # divergent ids. Pass semantics are deliberately unchanged: turning a live
+    # gate into a hard conjunction it cannot satisfy is how a kill switch ends
+    # up disarmed.
+    carriers = []
+    for label, path in (("claude", claude_md), ("archive", archive)):
         if not path.is_file():
             continue
         body = path.read_text(encoding="utf-8-sig")
         if sentinel_start in body and sentinel_end in body:
-            has_block = True
-            break
-    if has_block:
+            carriers.append(label)
+    if carriers:
+        where = "+".join(carriers) if len(carriers) > 1 else f"{carriers[0]}-only"
+        note = "" if len(carriers) > 1 else "  (agreement unverified here)"
         checks.append(("archive-or-claude", True,
-                       "sentinel block present"))
+                       f"sentinel block present: {where}{note}"))
     else:
         checks.append(("archive-or-claude", False,
-                       "sentinel block not found"))
+                       "sentinel block not found in either file"))
 
     passes_n = sum(1 for _, ok, _ in checks if ok)
     total = len(checks)

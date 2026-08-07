@@ -4,7 +4,7 @@
 
 The plan files are sealed records of what was believed when, and are never rewritten to match a later verdict. This ledger carries the transition their `status:` field has no producer for.
 
-**23 STOP-bearing plans** — OPEN 9 · CONTRADICTED 10 · RESOLVED 4 · UNKNOWN 0
+**23 STOP-bearing plans** — OPEN 8 · CONTRADICTED 11 · RESOLVED 4 · UNKNOWN 0
 
 By checkpoint: STOP 1 · STOP #1 19 · STOP #2 3. A STOP #2 is a different question from a STOP #1 and is counted separately rather than folded into it.
 
@@ -12,7 +12,6 @@ By checkpoint: STOP 1 · STOP #1 19 · STOP #2 3. A STOP #2 is a different quest
 |---|---|---|---|---|---|
 | `claude-md-compaction-2026-07-26.md` | STOP #1 | claude-md-compaction | **OPEN** | STOP #1 delivered inline; awaiting Owner approval before execution | - |
 | `efaif-expansion-2026-08-06.md` | STOP #2 | efaif-expansion | **OPEN** | STOP #2 — BLOCKING, presented inline, no dataset written | - |
-| `egcc-corpus-2026-08-06.md` | STOP #1 | egcc | **OPEN** | STOP #1 — BLOCKING, presented inline, no dataset written | - |
 | `gap-discovery-2026-07-30.md` | STOP #1 | gap-discovery | **OPEN** | STOP #1 — presented inline, awaiting Owner approval before any constru | - |
 | `iig-compendium-2026-07-30.md` | STOP #1 | iig | **OPEN** | STOP #1 — presented inline, awaiting Owner approval before any constru | - |
 | `re-baseline-compendium-2026-07-26.md` | STOP #1 | re-baseline | **OPEN** | STOP-1 (Phase 0 complete; awaiting Owner approval of the revised archi | - |
@@ -22,9 +21,10 @@ By checkpoint: STOP 1 · STOP #1 19 · STOP #2 3. A STOP #2 is a different quest
 | `apir-corpus-2026-08-03.md` | STOP #1 | apir | **CONTRADICTED** | STOP #1 — BLOCKING, awaiting Owner selection of A / B / C / D | vault/plans/seip-corpus-2026-08-04.md: \| 10 \| CPP-APIR \| ≈80 % owned \| corpus refused; `capability_runtime |
 | `cdicf-corpus-2026-08-06.md` | STOP #1 | cdicf | **CONTRADICTED** | STOP #1 — blocking. No dataset or module content is written until the  | vault/audits/cdicf/CDICF_DATASET_STATUS.md: \| **A3** Registry producer + redistribution guard \| NEW \| **SEA |
 | `crpf-2026-07-27.md` | STOP #1 | crpf | **CONTRADICTED** | STOP #1 (verdicts delivered inline to the Owner; no Part authored) | vault/plans/crpf-overlap-audit-2026-07-27.md: Charter impact: CRPF is struck as a NEW family; construction ord |
-| `crpf-overlap-audit-2026-07-27.md` | STOP #2 | crpf-overlap | **CONTRADICTED** | STOP_2_PENDING_OWNER — no CRPF architecture designed, per instruction | vault/plans/STOP_LEDGER.md: \| `crpf-2026-07-27.md` \| crpf \| **CONTRADICTED** \| STOP #1 (verdicts delivered |
-| `e-passes-audit-2026-07-29.md` | STOP | e-passes | **CONTRADICTED** | STOP — verdicts delivered inline. No E-pass Part authored. No E-pass a | vault/plans/STOP_LEDGER.md: \| `igef-2026-07-29.md` \| igef \| **CONTRADICTED** \| STOP #1 — verdicts delivere |
+| `crpf-overlap-audit-2026-07-27.md` | STOP #2 | crpf-overlap | **CONTRADICTED** | STOP_2_PENDING_OWNER — no CRPF architecture designed, per instruction | vault/plans/STOP_LEDGER.md: \| `crpf-2026-07-27.md` \| STOP #1 \| crpf \| **CONTRADICTED** \| STOP #1 (verdict |
+| `e-passes-audit-2026-07-29.md` | STOP | e-passes | **CONTRADICTED** | STOP — verdicts delivered inline. No E-pass Part authored. No E-pass a | vault/plans/STOP_LEDGER.md: \| `igef-2026-07-29.md` \| STOP #1 \| igef \| **CONTRADICTED** \| STOP #1 — verdic |
 | `efaif-corpus-2026-08-04.md` | STOP #1 | efaif | **CONTRADICTED** | STOP #1 — BLOCKING, presented inline, no dataset written | vault/plans/efaif-expansion-2026-08-06.md: \| EFAIF STOP #1 open \| reads **CONTRADICTED** — a documented fals |
+| `egcc-corpus-2026-08-06.md` | STOP #1 | egcc | **CONTRADICTED** | STOP #1 — BLOCKING, presented inline, no dataset written | vault/plans/STOP_LEDGER.md: \| `uceimr-corpus-2026-08-04.md` \| STOP #1 \| uceimr \| **CONTRADICTED** \| STOP  |
 | `igef-2026-07-29.md` | STOP #1 | igef | **CONTRADICTED** | STOP #1 — verdicts delivered inline. No IGEF Part authored. No IGEF ar | vault/plans/e-passes-audit-2026-07-29.md: precedent: CRPF struck (vault/plans/crpf-2026-07-27.md) · IGEF struc |
 | `seip-corpus-2026-08-04.md` | STOP #1 | seip | **CONTRADICTED** | STOP #1 — BLOCKING, presented inline, no dataset written | vault/plans/efaif-expansion-2026-08-06.md: \| EFAIF STOP #1 open \| reads **CONTRADICTED** — a documented fals |
 | `uceimr-corpus-2026-08-04.md` | STOP #1 | uceimr | **CONTRADICTED** | STOP #1 — BLOCKING, presented inline, no dataset written | vault/plans/egcc-corpus-2026-08-06.md: \| F1 \| Governance Benchmarks \| **DO-NOT-BUILD** \| SQI: 4 sealed dat |

@@ -1,10 +1,10 @@
 {
-  "compiled_at": "2026-07-27T15:47:38Z",
-  "digest_bytes": 2653,
+  "compiled_at": "2026-08-07T14:04:23Z",
+  "digest_bytes": 2970,
   "digest_max_bytes": 4096,
   "counts": {
-    "total": 161,
-    "valid": 148,
+    "total": 162,
+    "valid": 149,
     "rejected": 13,
     "omitted_from_digest": 0
   },
@@ -19,6 +19,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -32,6 +34,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -45,6 +49,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -58,6 +64,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -71,6 +79,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -84,6 +94,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -97,6 +109,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -110,6 +124,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -123,6 +139,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -136,6 +154,8 @@
       "evidence": "2026-06-04 -- `/about` shipped \"Jacobo López, a Spanish lawyer\" (a\nhallucination) to production; remediation grep found it across 9 surfaces. Full\ninventory: project `vault/governance/personal-data-audit.md`. Owner-only\nconfirmation file: `vault/governance/owner-confirmed-facts.md`. Detect at the\nsmoke harness: the rendered `/about` (+ `/es/sobre`) must carry ZERO\nprofession/biographical claim not in the confirmed-facts file (UT-PII).",
       "exception": "the Owner types an explicit in-session confirmation of the specific\ndatum (e.g. \"yes, you can state <fact>\") OR the datum already exists in\n`owner-confirmed-facts.md`. \"Autonomous mode\" does NOT cover inventing PII.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -149,6 +169,8 @@
       "evidence": "2026-06-04 -- /blog/2026-w23-fitness-intelligence shipped off-niche ads\nunder niche=fitness. Root cause niche=scrape-parameter. Full RCA: project\n`vault/knowledge_base/SL-58-sprint39-niche-classifier.md`; doctrine\n`vault/governance/PROJECT_DOCTRINE.md` §HARD-RULES. Detect at the smoke harness:\nthe audit `scripts/audit_intelligence_posts.py` over every published\n`*-intelligence.mdx` -> 0 contaminated. Data-quality purity is a PRODUCT\nrequirement, not a nice-to-have: a niche post with < 90% on-niche ads is worse\nthan NO post -- it damages the system's credibility before the operator. The\ndata_quality_gate is the final guardian before any publication (UT-DATA-QUALITY).",
       "exception": "Owner types \"publish raw scrape niche for <reason>\" in-session\n(authorizes ONE turn; never for live customer-facing intelligence posts).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -162,6 +184,8 @@
       "evidence": "2026-06-05 -- Sprint 42 wired the last cable (approved draft -> live\nShopify product). Identity sub-bug found + fixed at seal: `ShopifyCredential`\nis email-keyed while `supervised_actions` are brand-keyed; the Sprint 41 badge\nqueried by brand and so reported \"not connected\" for a connected store, which\nwould have hidden the publish button. Project:\n`vault/knowledge_base/SL-63-sprint42-publish-store-live.md`. Detect at the smoke\nharness: `POST /api/v1/sge/publish-store` unauth -> 401 (gated), `GET` -> 405\n(mounted), never 404 (smoke [100]/[101]).\n\n**Amendment 2026-06-10 (Owner Decision D06) -- gradual publish with operator config.**\nThe 3 technical gates above are PERMANENT and unchanged. Gate 1 (an approved action)\nMAY be satisfied by an operator's STANDING consent -- `user_preferences.auto_approve_publish`\n-- but ONLY for a publish Karma classifies as SAFE; a decision that is not clearly safe\nALWAYS asks the operator, even with auto-approve on. Auto-approve is an explicit opt-in\nby the operator (default = ask every time), never a system default and never inferred.\nThis makes publish gradual (Owner choice B over \"never autonomous\"), without weakening\ngates 2-3 or the idempotency. Affects: publish pipeline (`generate_store_real`),\n`supervised_actions`, `user_preferences`, `engines/karma/emit.py`. Decision doc\n`vault/decisions/owner-decisions-2026-06-10.md` D06. Pairs with HR-KARMA-AUTONOMY\n(standing-consent is bounded, never unbounded).",
       "exception": "none. \"Autonomous mode\" does NOT authorize publishing without the 3\ngates -- the gates ARE the authorization.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -175,6 +199,8 @@
       "evidence": "2026-06-05 -- Sprint 46b added vault niche priors so fitness reads MEDIUM\nfrom day 1 instead of UNKNOWN. Owner decision 1 sealed \"priors en tabla separada,\nel moat queda puro/vacio\". Implementation: ``niche_benchmark_priors`` (table) +\n``niche_priors_repo.get_prior`` (table -> YAML fallback) + ``fwe_router``\n``_resolve_confidence`` (moat-first, prior-fallback, source-labelled). Detect:\n``test_sprint46b_collective_intelligence.py`` asserts source=vault_prior on an\nempty moat and source=moat after one real outcome; the moat model has no operator\ncolumn. Project: ``vault/knowledge_base/SL-68-sprint46b-collective-intelligence.md``.",
       "exception": "none. \"Autonomous mode\" does not authorize seeding the moat from\npriors -- the separation IS the integrity guarantee.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -188,6 +214,8 @@
       "evidence": "2026-06-06 -- Sprint 47 built the unified validation panel + the\npre-market gate. WDE was found to be per-CANDIDATE (TEST/WATCH/REJECT), not\nper-niche, so niche saturation/competition derive from ad_performance_signals\ncounts (the table has no advertiser column; \"competitors\" = distinct active ads,\nnever invented). Detect:\n``tests/api/test_sprint47_validation_intelligence.py`` shows each blocking check\nblocks and no-demand -> organic-only. Project:\n``vault/knowledge_base/SL-69-sprint47-validation-intelligence.md``.",
       "exception": "none. \"Autonomous mode\" does not authorize bypassing the gate -- the\ngate IS the capital-protection guarantee.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -201,6 +229,8 @@
       "evidence": "2026-06-06 -- Sprint 48 audited every LLM call (5 sites), found the\ngeneration adapters hardcoded Sonnet with no routing and the MIE cache was an\nephemeral in-process dict. Fix = durable ``llm_response_cache`` + task->model\nrouter + a guard test that the batch path stays async. Detect:\n``tests/api/test_sprint48_cost_optimization.py`` (route concept->cheap,\nkill_scale->full; cache miss-then-hit; cie ingest dispatches apply_async).\nProject: ``vault/knowledge_base/SL-70-sprint48-cost-optimization.md``.",
       "exception": "the interactive chats (coo / assistant) make one bounded LLM call per\nturn by design (Haiku + Anthropic prompt-cache + turn cap) -- that is the single\nallowed call, not a fan-out.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -214,6 +244,8 @@
       "evidence": "2026-06-07 -- Fase-0 found ``api_credentials`` had no tenant column and\n``find_latest_by_platform`` returned the GLOBALLY-latest row, so a 2nd operator's\ntest would fire on the Owner's account. Fix = ``api_credentials.tenant_id`` +\ntenant-scoped repo + the per-operator launcher/spend-puller/kill. Detect:\n``test_api_credential_tenant_isolation`` + ``test_sprint49_b2_executor`` (operator\ntoken + ``act_<their id>`` reach the mock). Project: SL-71.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -227,6 +259,8 @@
       "evidence": "2026-06-07 -- the per-band caps + guard already existed (Sprint 44b) but\nnothing read the OPERATOR's band at execution time. Fix = wire ``authorize_spend``\ninto the launcher with the tenant's band. Detect:\n``test_sprint49_b4_iron_vault`` (validation band blocks over-daily budget +\naccumulation). Project: SL-71.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -240,6 +274,8 @@
       "evidence": "2026-06-07 -- Sprint 50 built the conversion feed (Shopify orders since\n``launched_at``) that the auto-kill needs. The honest framing is mandatory\nbecause the number drives real spend decisions. Detect:\n``test_sprint50_b1_conversion`` (compute_metrics None discipline) +\n``test_sprint50_b1_refresh`` (no-store -> conversions None). Project: SL-72.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -253,6 +289,8 @@
       "evidence": "2026-06-07 -- Fase-0 found ``niche_intelligence_moat`` was aggregate-only\nand incompatible with slices. Fix = additive ``causal_performance_memory`` +\n``causal_memory_repo.record_slice`` + record_outcome fold + niche-confidence\ntop_causal_hook. Detect: ``test_causal_memory_repo`` (record_outcome folds CPM;\ntop hook by ego_score). Project: SL-76.",
       "exception": "an outcome with no slice context (legacy / manual self-report missing\nthe dims) folds into the niche aggregate ONLY -- that is allowed (backward compat),\nnot a violation. The rule forbids DISCARDING a slice that IS present, not requiring\none that is absent.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -266,6 +304,8 @@
       "evidence": "2026-06-07 -- A2 made the objective explicit per mode + added\nclaim_risk_by_category to hooks_library.yaml. Detect:\n``test_ego`` (high blocked in ads; medium blocked in organic not ads; same input\n-> distinct score per mode). Project: SL-76.",
       "exception": "none for collapsing the two into one. Owner may re-tune a specific\nweight in-session with an explicit instruction + version bump.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -279,6 +319,8 @@
       "evidence": "2026-06-07 -- the \"Tienda de Shopify Autonoma\" doc flagged the missing\nauditor as the most critical autonomy gap. Detect: smoke [138]-[141]\n(/store/audit + /store/audit/fix mounted + gated); ``test_store_auditor`` +\n``test_store_audit_router`` (verdict logic + 8 dims + no-capital NOGO). Project:\nSL-78. Pairs with UT-AUDIT-NOGO-REASON + HR-PUBLISH.",
       "exception": "none. \"Autonomous mode\" does not authorize hiding the audit -- the\nvisibility IS the guarantee. (Distinct from HR-PUBLISH, which gates the\nirreversible Shopify action; HR-AUDIT-BEFORE-PUBLISH governs the pre-publish\njudgement that informs it.)",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -292,6 +334,8 @@
       "evidence": "2026-06-08 -- SGE v2 turned the skeleton generator into a professional\nstore builder. Detect: smoke [142] (/sge/generate-onboarding mounted + gated);\ntest_sge_v2_store_builder (quality score >= floor, ensure_quality iteration,\nhonest image WARN). Project: SL-79. Pairs with UT-COPY-AWARENESS-MAPPED +\nHR-AUDIT-BEFORE-PUBLISH.",
       "exception": "none. The honest \"image pending\" WARN (D3, no image pipeline yet) is\nkept as a WARN, never faked to a PASS to clear the floor.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -305,6 +349,8 @@
       "evidence": "2026-06-08 -- the system could build a professional store but could not\nsay WHAT to sell. Detect: smoke [143] (research products mounted + gated);\ntest_product_research (ranking, gap, no-invention) + test_research_router (READY\ncandidates + GAP). Project: SL-80. Pairs with UT-PRODUCT-FIT-SCORE.",
       "exception": "none. Autonomous mode does not authorize inventing a winner.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -318,6 +364,8 @@
       "evidence": "2026-06-08 -- Alvaro (pilot operator 2) has an existing store to reform\n(vault clients alvaro-backlog FASE 3). Detect: smoke [144]+[145] (reform mounted\n+ gated + POST-only); test_research_router (reform 400 without Shopify, classify\nkeeps vs reforms, never deletes). Project: SL-80. Pairs with HR-PUBLISH +\nHR-PRODUCT-EVIDENCE.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -331,6 +379,8 @@
       "evidence": "2026-06-08 -- the public surface was open before launch. Detect: smoke\n[148] (bare /pricing bounces to /waitlist) + the token-bearing /pricing content\nchecks (seeded smoke invitation) + test_waitlist_router (invite/resolve\ntransitions). Project: SL-81. Pairs with UT-INVITATION-IDEMPOTENT.",
       "exception": "an authenticated account (active session) always sees the plans.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -344,6 +394,8 @@
       "evidence": "2026-06-08 -- the weekly intelligence generator emitted\n`fast_answer: \"In fitness, this week's top 5 ad signals concentrated in 1\nplatforms. The full ranking is below.\"` -- generic, ungrammatical (\"1 platforms\"),\nzero actionable signal. Part A rewrote `write_post` to build the fast_answer from\na real platform Counter + dominant hook. Detect: the audit asserts no published\n`*-intelligence.mdx` carries the \"concentrated in\" filler. Project: SL-84. Pairs\nwith UT-NO-MARKDOWN-LEAKS.",
       "exception": "none. \"Autonomous mode\" does not authorize shipping generic AEO filler.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -357,6 +409,8 @@
       "evidence": "2026-06-08 -- SL-85 built Karma on the existing 6-tier AutonomyTier +\nsupervised_actions substrate (no new autonomy model). Detect:\ntuax_core/tests/engines/karma/test_emit (capital ceiling blocks ACT below tier;\nrunner not executed) + test_preferences (OBSERVE default, 3-confirm ladder,\n2-dismiss demote). Pairs with HR-KARMA-IDENTITY + UT-KARMA-SPECIFIC-MESSAGES.",
       "exception": "the operator manually sets a level in /app/configuracion -- that is the\noperator's own informed choice, not an assignment by the system.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -370,6 +424,8 @@
       "evidence": "2026-06-08 -- SL-85 shipped 5 event types from distinct sources (kill,\nresearch, audit, capital, token) under one Karma surface; the backlog adds 10 more,\nall one entity. Detect: lib/karma.EVENT_LABELS carry operator names, never the\nengine module names. Pairs with HR-KARMA-AUTONOMY.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -383,6 +439,8 @@
       "evidence": "2026-06-08 -- SL-86 shipped the Revenue Scale Calculator (a deterministic,\ngate-checkable projector) and observed that the existing gate-checked generators\n(SGE quality_gate ensure_quality, blog no-markdown-leak, Andromeda batch) already\nembody this loop; codifying it makes future gate-checked features inherit the\niterate-to-green discipline by default instead of one-shotting. Pairs with the\n2-CONSECUTIVE-FAILURES LAW (a loop converges or STOPS, it never thrashes).",
       "exception": "NEVER auto-iterate an economic decision (kill / scale / spend) or any\nirreversible action -- those keep their human or earned-autonomy gate (HR-KARMA-\nAUTONOMY, HR-FWE-CAPITAL). The loop is for content/quality generation only.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -396,6 +454,8 @@
       "evidence": "SL-81 gated `/` to a redirect, leaving the indexed root with zero\nmarketing HTML + no crawl path; Part B (commit 034d4e0) restored a public\nlanding. Verified live 2026-06-09: `/` -> 200 with hero, `/pricing` -> 307 to\n/waitlist. Project origin: vault/governance/PROJECT_DOCTRINE.md; RCA\nSL-83-sprint-landing-v2.md. Pairs with HR-WAITLIST-GATE + PR-ROUTING-VERIFY.",
       "exception": "Owner phrase \"re-gate the root for <reason>\" authorizes one bypass turn.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -409,6 +469,8 @@
       "evidence": "2026-06-12 -- Owner observed the live landing was generic (blue gradient,\nno operator/investor split, no product demo in the hero) vs the InfinityOps\nreference. Detect: smoke [281]-[284] (investor route 200 + nav investor link +\nnav operator link + hero console preview label & \"Vista previa\" badge). Project:\nSL-107. Pairs with HR-LANDING-INDEXABLE + HR-DEMO-NO-FAKE-DATA + HR-WAITLIST-GATE.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -422,6 +484,8 @@
       "evidence": "2026-06-12 -- Owner observed the Pricing link led to an orphaned page\nwith no navigation/coherent styling. Fix: portable NavV2 on /pricing +\n/es/precios. Detect: smoke [285]-[286] (both pricing mirrors carry the landing\nnav through the gate). Project: SL-108. Pairs with HR-LANDING-NAV-COMPLETE +\nHR-LANDING-INDEXABLE.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -435,6 +499,8 @@
       "evidence": "2026-06-13 -- i18n toggle build. RCA: an initial I2 retargeted the\nEN-canonical `/` ProofStrip discovery links to /es/* and broke 2 SEO smoke checks\n(sprint33 discovery + blog_proof); caught by post-deploy smoke (286/288), fixed\nforward by keeping `/` EN. The real ES landing (/es) already linked to /es/*.\nDetect: smoke [287]-[288] (toggle present on a mirrored page; /es links /es/*).\nProject: SL-109. Pairs with HR-LANDING-INDEXABLE + HR-LANDING-LINK-INTEGRITY.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -448,6 +514,8 @@
       "evidence": "2026-06-13 -- /es/legal mirror build. /legal shipped Spanish at the EN\nroot; making it EN-canonical + creating /es/legal (Spanish) was the honest fix.\nRCA: a pre-existing smoke (landing_v2_legal_clause, substring \"ingenier\") asserted\nthe Spanish clause ON /legal; the EN translation regressed it post-deploy (297/299).\nCaught by HR-2, fixed forward by moving the assertion to /es/legal smoke [296] and\nasserting \"reverse engineer\" on EN /legal -> 299/299. Detect: smoke [296]-[299].\nProject: SL-113. Pairs with HR-I18N-TOGGLE-HONEST + HR-LANDING-INDEXABLE.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -461,6 +529,8 @@
       "evidence": "2026-06-13 -- operator dashboard byte-level calco. The v2 reference HTML\nwas a static mockup with hardcoded demo figures; the calco shell + dash were\nwired to the real my-executions + approvals endpoints with \"—\" fallbacks, and a\nsmoke ([300]) greps the components to forbid the mockup literals. Detect: smoke\n[300] (no mockup figures + real endpoints) + [191] (calco karma feed wiring).\nProject: SL-114. Pairs with HR-DEMO-DATA-LABELED + HR-ATTRIBUTION-HONEST.",
       "exception": "an explicitly-labeled DEMO surface (e.g. the /es/inversor \"Ejemplo de\nfuncionamiento\" Command Center) may show illustrative data IFF it is marked as\nsuch (pairs HR-DEMO-DATA-LABELED / HR-DEMO-NO-FAKE-DATA). A QA fixture used only\nto pixel-diff a template is not production and is exempt.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -474,6 +544,8 @@
       "evidence": "2026-06-09 -- SL-88 built profit_maturity + refund_reserve + false_profit_gate\nand wired the gate into the CAE scale pipeline + the scale calculator. Detect at the\nsmoke harness: [173] young->UNVERIFIED + aged+reserve->REINVESTABLE; [174] immature\nprofit blocks scaling with a time-bounded message; [175] reinvestable is net not\ngross. Project: ``vault/knowledge_base/SL-88-sprint-profit-maturity-savings.md``.\nPairs with HR-SAVINGS-LEDGER + HR-VALIDATION-GATE.",
       "exception": "NEVER auto-iterate the scale/withdraw decision (HR-SELF-PROMPTING-LOOP\nexcludes economic/irreversible actions). The gate informs; the operator/earned\nautonomy decides.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -487,6 +559,8 @@
       "evidence": "2026-06-09 -- SL-88 built cost_objects + savings_ledger (table + repo + GET\n/api/v1/karma/savings) and wired 3 discrete sources (kill_executor unspent budget,\npre_market_gate KILL, pre_market_gate NEEDS_REWORK). Detect at the smoke harness:\n[176] savings_ledger registered in cw_init_db._CW_TABLES; [177] GET /karma/savings\nmounted + gated (401). Project: ``vault/knowledge_base/SL-88-sprint-profit-maturity-savings.md``.\nPairs with HR-PROFIT-MATURITY + HR-KARMA-IDENTITY.",
       "exception": "none. \"Autonomous mode\" does not authorize recording a saving on a poll\nor fabricating a non-zero figure -- the discrete-moment rule IS the integrity guarantee.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -500,6 +574,8 @@
       "evidence": "2026-06-09 -- SL-89 added the resolver + ``require_capability`` (gating\n/research/products, /karma/events, /store/reform, /creatives/suggest,\n/creatives/batch) + the hourly reconcile backstop. Detect at the smoke harness:\n[178] canceled sub -> EXPIRED; [179] expired entitlement does not cover a capability\n(would 402). Project: ``vault/knowledge_base/SL-89-sprint-entitlement-capital-gap.md``.",
       "exception": "none. \"Autonomous mode\" does not authorize serving an expired operator\n-- the 402 IS the revenue guarantee.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -513,6 +589,8 @@
       "evidence": "2026-06-09 -- SL-89 built ``engines/first_win/capital_gap`` + GET\n/fwe/capital-gap. Detect: [181] 0-capital documented niche -> 50 NEEDS_CAPITAL;\nundocumented -> UNKNOWN with no figure. Project: SL-89. Pairs with\nHR-NO-CAPITAL-BOTTLENECK.",
       "exception": "none. \"Autonomous mode\" does not authorize inventing a capital figure.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -526,6 +604,8 @@
       "evidence": "2026-06-09 -- SL-89 shipped the Capital Gap Calculator as pure information\n(B1 engine + B2/B3 CapitalGapCard: 4 states, never blocks, a non-blocking\ncome-back-later affordance). The subsidy/credit-lending path is deferred to a\nNaif-aligned backlog track. Project: SL-89. Pairs with HR-CAPITAL-GAP-HONEST.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -539,6 +619,8 @@
       "evidence": "2026-06-10 -- SL-90 shipped scale_executor with a built-in maturity gate +\nflipped the CAE gate default-on. Project: SL-90. Pairs with HR-SCALE-IRON-VAULT +\nHR-PROFIT-MATURITY.",
       "exception": "a deliberate caller may pass enforce_profit_maturity=False to the CAE\npipeline for a NON-autonomous, operator-driven path (never the autonomous scale).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -552,6 +634,8 @@
       "evidence": "2026-06-10 -- SL-90 authorize_scale clamps every proposal to the band cap;\nthe L0-L6 ladder is informational above first_scale. Project: SL-90. Pairs with\nHR-FWE-CAPITAL + HR-SCALE-VERIFIED-PROFIT.\n\n### UT-SCALE-EXECUTOR-MIRROR -- the scale_executor follows the SAME structure as the kill_executor; kill and scale are symmetric opposites of one economic-decision system, so a structural divergence between them is a bug, not a feature\nSealed 2026-06-10 (SL-90, TUA-X, P1 #4). The system that kills losers and the\nsystem that scales winners are two halves of one autonomy loop. Built as mirrors,\nthey share the same correctness proofs: pure decision -> authority/guard -> act on\nthe operator's own token (HR-6) -> surface through Karma.\n\nRECOGNISE: a scale path that invents its own decision shape, its own credential\nhandling, or its own Karma seam instead of mirroring the kill path. auto_scale\nmirrors auto_kill (pure ScaleRuntimeState -> ScaleDecision); scale_executor mirrors\nkill_executor (load FWP -> decision -> operator-token action -> emit -> persist);\nboth run from the same ad_spend_pull tick (kill pass, then scale pass).\n\nDetect: test_auto_scale + test_scale_executor (decision symmetry, OBSERVE event,\nACT live budget, Iron Vault clamp) + smoke scale_decision_fires [183]. Project:\nSL-90. Pairs with HR-SCALE-VERIFIED-PROFIT + HR-SCALE-IRON-VAULT.",
       "exception": "none -- the cap is raised only by an Owner-confirmed edit to capital_caps.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -565,6 +649,8 @@
       "evidence": "2026-06-10 -- SL-91 mounted OperatorCommandCenter atop /app (4 zones) +\na labeled demo at /es/inversor for the Naif demo. Project: SL-91. Pairs with\nUT-DASH-NOT-ZERO + HR-DEMO-DATA-LABELED.",
       "exception": "deep-dive detail screens remain (the zones link to them); the rule\ngoverns the SUMMARY surface, not the existence of detail.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -578,6 +664,8 @@
       "evidence": "2026-06-10 -- SL-91 CommandCenterDemo renders fixtures behind a prominent\n'Ejemplo de funcionamiento -- datos ilustrativos, no resultados reales' badge.\nProject: SL-91. Pairs with HR-COMMAND-CENTER + the Reality Contract.\n\n### UT-DASH-NOT-ZERO -- numeric money/perf fields for a day-1 / no-activity operator show '--' (dash), never '0'; '0' implies the operator operated and earned nothing, '--' implies no data yet -- distinct states with distinct weight\nSealed 2026-06-10 (SL-91, TUA-X). The system communicates with precision: a\nbrand-new operator who sees '0 revenue' reads failure; one who sees '--' reads\n'not started yet'. The two are different truths and must render differently.\n\nRECOGNISE: a dashboard numeric (revenue, spend, ROAS, profit) that coalesces a\nmissing value to 0. The aggregator returns None for an unmeasured money/perf field\nand the UI renders None as '--'; a real measured 0 may show 0, but absence never\ndoes. Counts (active ads) may show a real 0 / 'Sin ads activos' -- the rule governs\nmoney/perf magnitudes, not counts.\n\nDetect: test_command_center (_pulse_metrics None-not-0) + smoke\ncommand_center_pulse_day1 [190] + OperatorCommandCenter eur()/roas() '--' helpers.\nProject: SL-91. Pairs with HR-COMMAND-CENTER + HR-ATTRIBUTION-HONEST.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -591,6 +679,8 @@
       "evidence": "2026-06-10 -- SL-92 engines/economics/economic_reconciliation.py (3 detectors:\nad_no_spend / revenue_no_economics / scale_no_confirm) + economics.reconcile beat (4h).\nProject: SL-92. Pairs with UT-RECONCILIATION-SAVES + HR-ATTRIBUTION-HONEST.\n\n### UT-RECONCILIATION-SAVES -- a reconciler that detects + resolves a loop which avoids a real cost MUST record a SavingsEvent; reconciliation is demonstrable economic value, not just technical correctness\nSealed 2026-06-10 (SL-92, TUA-X). If the reconciler only corrected state silently, its\nvalue could neither be measured nor shown to the operator. When closing a loop avoids a\nreal cost, it books the avoided cost into the Savings Ledger so the operator sees what\nthe integrity layer protected.\n\nRECOGNISE: a reconciler/guard that resolves an avoidable cost but writes nothing to the\nSavings Ledger. The honest amount is the real capital-at-risk (e.g. the daily budget of\nan ad brought back under monitoring), confidence LOW for an avoided-RISK estimate --\nnever inflated; loop types with no honest euro to claim book nothing (no fabrication).\nIdempotent on ref_id so a re-sweep never double-counts.\n\nDetect: test_economic_reconciliation (sink books source='reconciliation' + idempotent)\n+ smoke reconciliation_savings_booked [197]. Project: SL-92. Pairs with\nHR-ECONOMIC-RECONCILIATION + HR-SAVINGS-LEDGER.",
       "exception": "none -- a loop with no reconciliation signal is incomplete by definition.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -604,6 +694,8 @@
       "evidence": "2026-06-10 -- SL-93 usage_events + UsageEventRepository + meter/meter_in_own_txn\n+ usage_limits (per-plan caps -> Karma alerts + HTTP 429 with reset date). Project:\nSL-93. Pairs with HR-MODEL-ROUTING-VALUE + HR-ATTRIBUTION-HONEST.",
       "exception": "none -- an unmetered costly resource is incomplete by definition.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -617,6 +709,8 @@
       "evidence": "2026-06-10 -- SL-93 extended engines/llm_routing/router.py (cheap/standard/premium\nby task x capital) + meter_llm_call (route + record model + cost). Project: SL-93. Pairs\nwith HR-USAGE-METERING.",
       "exception": "a non-routable provider default (e.g. the openai path) keeps its own default;\nthe rule governs the routable (claude) tier choice.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -630,6 +724,8 @@
       "evidence": "2026-06-10 -- SL-94 engines/first_win/stress_test.py (cpa_spike / roas_drop /\nrefund_spike, deterministic) + POST /fwe/stress-test. Project: SL-94. Pairs with\nHR-SCALE-IRON-VAULT + HR-PROFIT-MATURITY.",
       "exception": "none -- a stress test that diverges from the live rules is a defect, not a feature.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -643,6 +739,8 @@
       "evidence": "2026-06-10 -- SL-94 engines/admin/system_health.py + GET /api/v1/admin/system-health\n(owner-gated) + /app/admin owner dashboard (4 widgets). Project: SL-94. Pairs with\nUT-DASH-NOT-ZERO + HR-DEMO-DATA-LABELED.",
       "exception": "a clearly-labelled demo on a PUBLIC page is a DIFFERENT surface governed by\nHR-DEMO-DATA-LABELED (/es/inversor); it never applies inside /app/admin.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -656,6 +754,8 @@
       "evidence": "2026-06-10 -- Owner answered Q#3: cap = 3 consecutive scales OR +150% of\noriginal budget in any 7-day window -> Karma asks ONE confirmation -> counter\nresets. Affects engines/first_win/scale_executor.py, api/autonomy_router.py,\nengines/karma/emit.py + karma_events. Decision doc:\nvault/decisions/owner-decisions-2026-06-10.md D07. Pairs with HR-SCALE-VERIFIED-PROFIT\n+ HR-SCALE-IRON-VAULT + HR-KARMA-AUTONOMY.",
       "exception": "none. \"Autonomous mode\" / a permissive AutonomyTier does NOT remove the\nmomentum brake -- the single confirmation IS the brake.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -669,6 +769,8 @@
       "evidence": "2026-06-10 -- Owner answered Q#8 with option A (mature profit, late but\nhonest; never gross-before-reserve). Affects api/pricing_router.py,\nengines/aio/profit_maturity.py, engines/aio/refund_reserve.py, billing/settlement.\nDecision doc D08. Pairs with HR-PROFIT-MATURITY + HR-SAVINGS-LEDGER.",
       "exception": "none. The operator may never be charged 20% of a number that profit\nmaturity has not yet certified as net.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -682,6 +784,8 @@
       "evidence": "2026-06-10 SL-99 -- revenue_share.calculate_revenue_share computed 20% of net\nwithout gating on maturity or subtracting the reserve; settle_period adds the gate.\nAffects api/pricing_router.py, engines/pricing/revenue_share_settlement.py,\nengines/aio/profit_maturity.py, engines/aio/refund_reserve.py. Decision doc D08. Pairs\nwith HR-PROFIT-BILLING-BASIS + HR-PROFIT-MATURITY.",
       "exception": "none. A period with zero VERIFIED profit bills zero -- never an estimate-based\nor gross-based charge.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -695,6 +799,8 @@
       "evidence": "2026-06-10 -- Owner answered Q#23 with option B (kill active ads on expiry;\ncapital not spent without an active plan). Affects engines/entitlement drift\ndetector, engines/first_win/kill_executor.py, api/billing_webhook_handlers.py,\nengines/karma/emit.py. Decision doc D12. Pairs with HR-ENTITLEMENT-GATE +\nHR-OPERATOR-EXECUTION.",
       "exception": "an Owner-grant / explicit Owner allowlist entry keeps the operator\nmanaged; \"autonomous mode\" does not authorize keeping a lapsed payer's ads running.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -708,6 +814,8 @@
       "evidence": "2026-06-10 -- Owner answered Q#18 (contribution mandatory, condition of use)\n+ Q#21 (only anonymous ratios; never absolute revenue or identity). Affects\nengines/first_win/collective_intelligence.py, db/models/niche_intelligence_moat.py,\ncausal_performance_memory, TOS, privacy policy. Decision doc D10 + D14. Pairs with\nHR-CAUSAL-MEMORY + HR-VAULT-PRIOR + UT-NO-FABRICATED-FEED.",
       "exception": "none. No surface may surface another operator's identity or absolute\nrevenue, and no feature may make contribution identifying.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -721,6 +829,8 @@
       "evidence": "2026-06-10 -- Owner answered Q#7 with the hybrid model (per-niche base +\nglobal ceiling + 3-niche meta-analysis). Realises D01's promotion-endpoint mandate.\nAffects api/autonomy_router.py, engines/karma/preferences.py, karma_preferences\n(add niche), POST /autonomy/evaluate-advance. Decision doc D16 + D01. Pairs with\nHR-KARMA-AUTONOMY + HR-IRON-VAULT-PER-OPERATOR.",
       "exception": "the operator manually setting a level in /configuracion is their own\ninformed choice (HR-KARMA-AUTONOMY), still bounded by the global ceiling.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -734,6 +844,8 @@
       "evidence": "2026-06-10 -- Owner answered Q#29: tú, warm-but-direct, no florituras, no\nempty encouragement, affirmative on effort, honest on numbers. Affects\nengines/karma/messages.py, lib/karma EVENT_LABELS, all karma_message + push.\nDecision doc D18. Pairs with HR-KARMA-IDENTITY + UT-KARMA-SPECIFIC-MESSAGES.",
       "exception": "none.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -747,6 +859,8 @@
       "evidence": "2026-06-10 -- Owner answered Q#14: autonomous SGE generation + hard quality\ngate BEFORE presenting; all options already passed; operator chooses by gut feeling.\nAffects engines/sge/quality_gate.py, Guided Start UX, engines/sge store generation,\nengines/research/product_research. Decision doc D04. Pairs with HR-STORE-QUALITY-GATE\n+ HR-AUDIT-BEFORE-PUBLISH + HR-PRODUCT-EVIDENCE.",
       "exception": "the honest \"image pending\" WARN (no image pipeline yet) stays a WARN, never\nfaked to clear the floor (mirror HR-STORE-QUALITY-GATE).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -760,6 +874,8 @@
       "evidence": "2026-06-10 SL-99 -- GuidedStartStep1 rendered {fit_score}/100 and Steps234\nrendered store_score/100, so the operator chose by the higher number, not affinity.\nAffects api/research_router.py, frontend GuidedStartStep1/Steps234, engines/sge/quality_gate.\nDecision doc D04. Pairs with HR-ONBOARDING-QUALITY-FIRST + HR-STORE-QUALITY-GATE.",
       "exception": "none for the operator-facing chooser. Owner/admin/diagnostic surfaces may show\nthe number (they are not the operator choosing by gut feeling).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -773,6 +889,8 @@
       "evidence": "2026-06-08 -- the SL-89 entitlement reconciler revoked the sub + alerted the\nOwner but left the operator's ads running (their money kept being spent). D12 added\nthe shared revocation primitive and wired BOTH the webhook handler and the\nreconciler. Detect: tuax_core/tests/entitlement/test_revocation (ads killed + scoped\nto the operator + the operator notice carries the real count) + the Owner alert\nn_ads_killed propagation. Pairs with HR-KARMA-AUTONOMY + HR-ATTRIBUTION-HONEST (the\nad count is real or the event is not built).",
       "exception": "none. A transient Stripe FETCH error in the reconciler still must NOT\nrevoke (that is HR's existing safety: only an explicit denied status revokes) -- but\nonce a revoke is decided, the kill is mandatory.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -786,6 +904,8 @@
       "evidence": "2026-06-10 -- SL-95 Build 4b raised the niche-confidence gate from n_tests>0\nto n_tests>=5. Project: SL-95. Pairs with HR-COLLECTIVE-DATA + HR-VAULT-PRIOR.",
       "exception": "none -- the threshold is a privacy floor, not a tunable.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -799,6 +919,8 @@
       "evidence": "2026-06-11 -- SL-101 B4 forked the SGE orchestrator on arte_pinturas. Project: SL-101. Pairs with the D05 spec + HR-STORE-QUALITY-GATE.",
       "exception": "none -- the artist-as-brand invariant is permanent for arte_pinturas.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -812,6 +934,8 @@
       "evidence": "2026-06-11 — D05 B5 wired the artist entry into Guided Start. Project: D05. Pairs with HR-ARTIST-IDENTITY (the SGE degrade-to-store-name path it relies on).",
       "exception": "none — the no-blocking invariant is permanent for the artist on-ramp.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -825,6 +949,8 @@
       "evidence": "2026-06-12 -- SL-103 closed the D05 residual where artwork_published emitted the artist's profile but the piece title fell back to 'Obra original' (per-piece data was not threaded to the publish). Project: SL-103. Pairs with HR-ARTIST-IDENTITY (artist-as-brand) and HR-ARTIST-ONBOARDING-NOBLOCKING (the title field never blocks).",
       "exception": "none -- the title-honesty invariant is permanent for arte_pinturas.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -838,6 +964,8 @@
       "evidence": "2026-06-12 -- B4 added the `taste` content dimension to quality_gate.py. The before/after metric (fitness/supplements/arte = 80/80/70) proved 0 regressions; a broken hero already FAILs D2/D4, so the FAIL precondition and the was-passing precondition are mutually exclusive (no-regression correct-by-construction). Pairs with HR-STORE-QUALITY-GATE.",
       "exception": "none -- the determinism + floor-holds invariant is permanent.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -851,6 +979,8 @@
       "evidence": "2026-06-12 -- B2 distilled the copywriting + marketing-psychology skills into vault data. marketing-psychology recommends 'show customer counts / scarcity', which collides head-on with the SGE Reality Contract (awareness_copy refuses fabricated counts); this rule is the permanent gate. Pairs with HR-TASTE-DETERMINISTIC.",
       "exception": "none -- the grounding + no-fabrication invariant is permanent.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -864,6 +994,8 @@
       "evidence": "2026-06-12 -- B3 wired copy_frameworks.yaml into awareness_copy (vault-sourced hero with a built-in fallback) and threaded design_principles.yaml into the section engine as theme-settings metadata. The before/after metric proved the wire fabricates nothing (fitness/supplements 80->90 from the em-dash fix, arte 70->70 unchanged because art forbids a numeric guarantee). Pairs with HR-MARKETING-COPY-GROUNDED + HR-TASTE-DETERMINISTIC + the Reality Contract.",
       "exception": "none -- the no-fabrication invariant is permanent for every generated store.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -877,6 +1009,8 @@
       "evidence": "2026-06-13 -- Build A. arte_pinturas WARNed on trust_contrast (the check mandated social_proof present, ignoring that the always-generated authenticity certificate IS the art trust signal) and faq_depth (the art FAQ answers were 12-14 words). The honest fix recognised the certificate (niche-aware via the draft's is_unique flag) and ENRICHED the FAQ answers to real >=25-word objection handling -- the threshold was never lowered (the prompt's '25->20' was rejected because the answers were below 20 too). Metric: arte taste WARN->PASS, 75->80; fitness/supplements byte-unchanged; 0 regressions. Pairs with HR-TASTE-DETERMINISTIC + HR-NO-FABRICATED-COPY.",
       "exception": "none -- the 'calibrate the measurement, never lower the bar; scope by a niche-derived signal' invariant is permanent.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -890,6 +1024,8 @@
       "evidence": "2026-06-17 -- Build B. The plan's mechanism-first/identity angles needed {mechanism}/{avatar} fields the SGE has no source for; shipping them would emit an unfilled brace (a broken hero) or require inventing the data. Owner chose within-archetype phrasings: 2 extra same-angle phrasings per hook in copy_frameworks.yaml, selected by stable_hash; the field-eligibility filter guarantees no unfilled brace. Metric: 4851 pass (7 fails pre-existing ECE pollution, proven baseline-identical); id-less path byte-identical to B3; deterministic + variety proven. Pairs with HR-NO-FABRICATED-COPY + HR-MARKETING-COPY-GROUNDED + HR-TASTE-DETERMINISTIC + UT-COPY-AWARENESS-MAPPED.",
       "exception": "none -- the 'patterns-not-claims, skip-on-absent-field, deterministic, angle-preserving' invariant is permanent.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -903,6 +1039,8 @@
       "evidence": "2026-06-17 -- cross-angle follow-up to Build B (the sprint Build B explicitly deferred). The anchor revealed the mechanism/avatar fields exist NOWHERE in the operator capture flow; Owner approved adding two OPTIONAL free-text fields (unique_mechanism + ideal_customer) at store-build time, threaded zero-DDL through GenerateOnboardingIn -> _derive_candidate_and_concept -> the generic approved.payload -> publish re-derive (the approval payload is a passthrough dict, so no server construction site changed; approvals_router untouched). Engine: awareness_copy reads the two fields into {mechanism}/{avatar} only when non-empty + appends hero.cross_angle to the phrasing pool; the existing _fields_fillable filter does all the gating. Metric: 13 formula-variety tests (7 Build B + 6 cross-angle) + 4 smoke [314]-[317] green; SGE suite + d06 publish green; the 6-7 sprint46b/47 ece_compressed fails proven baseline-identical (stash diff). Frontend input deferred (API + engine ready; dormant until the operator supplies data -- absent => B3 byte-identical). Pairs with HR-FORMULA-VARIETY-NO-FABRICATION + HR-NO-FABRICATED-COPY + UT-COPY-AWARENESS-MAPPED.",
       "exception": "none -- the 'real-data-gated angle, skip-on-absent-field, deterministic, no-drift, never-fabricate' invariant is permanent.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -916,6 +1054,8 @@
       "evidence": "2026-06-18 -- the frontend leg that activates the dormant cross-angle API+engine (HR-CROSS-ANGLE-REAL-DATA). Two optional text inputs (maxLength 120) added to Guided Start Step 3 (GuidedStartSteps234.tsx), threaded to BOTH the draft POST (generateStoreDraft) and the approval payload (recordApproval, mirroring the _artworkContext no-drift idiom) via applied-value tracking. A live debounced preview shows the real pattern with the operator's words. Jobs-veto on the literal hero-input attribute forced the example to render as a persistent muted line (better UX than a vanishing hint). Metric: tsc 0, eslint-neutral (2 pre-existing Step-4 errors proven baseline-identical), 4 source-assertion smoke checks [322]-[325] green. Frontend-only, Zero-DDL. Pairs with HR-CROSS-ANGLE-REAL-DATA + HR-NO-FABRICATED-COPY + D17/D18 (Karma voice: motivational, honest, sin florituras).\n\n---",
       "exception": "none -- the 'genuinely optional, never guilt the blank operator, omit-when-empty, no-drift' invariant is permanent.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -929,6 +1069,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -942,6 +1084,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -955,6 +1099,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -968,6 +1114,8 @@
       "evidence": "2026-06-20 -- SL-blog-ai-angle (Sprint 36). 15 AI-angle posts (9 EN + 6 ES)\nfrom SerpAPI Google Trends research (ai ecommerce 45.8 rising, ai online business 48.9\nrising, what-is-ai-dropshipping breakout; chatgpt the ES/MX gateway at 70.9/67.9).\nBuilt on a fresh worktree off kobicraft/main 7360e97, FF-push 7360e97..a579830,\npost-receive cw_migrate Exited (Zero-DDL). tsc 0 / next build 0 / 15/15 prerendered to\nHTML / present on /blog/operators and /es/blog/operadores / live sampled 200. Sealed by\nSL-blog-ai-angle.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -981,6 +1129,8 @@
       "evidence": "2026-06-21 -- SL-blog-clusters (Sprint 37). 15 gap-cluster posts (6 EN + 9 ES) from\nSerpAPI Google Trends (4 clusters: comparison shopify 80 / dropshipping 66; niche\nproductos-para-mascotas 41 / fitness / supplements; LATAM trabajar-desde-casa 55 / ingresos\npasivos; meta-ads-vs-google 61 rising / facebook-ads 51 rising). Worktree off kobicraft/main\nb960276, FF-push b960276..16157cc, cw_migrate Exited (Zero-DDL). tsc 0 / next build 0 / 15/15\nprerendered / on /blog/operators + /es/blog/operadores / live sampled 200. Sealed by SL-blog-clusters.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -994,6 +1144,8 @@
       "evidence": "2026-06-21 -- SL-seo-auto-indexing (Sprint 38). Diagnosis corrected the premise: the\nblog sitemaps already include all 177 posts dynamically and are GSC-submitted (134 URLs\ndiscovered); the gap is INDEXATION not discovery. Build A sharpened sitemap crawl signals\n(operator posts priority 0.8, recent <30d weekly, lastmod stays real per UT-14); Build B\nre-submits the 6 sitemaps best-effort via the router's GSC sitemaps.submit (verified 6/6);\nBuild C scripts/check_indexing.py reports HTTP accessibility (177/177 -> 200) + real\ncoverage_state via GSC URL Inspection (newest posts read \"URL is unknown to Google\" -- crawl\npending, the honest reason they are not indexed yet). Worktree off kobicraft/main 5ab849b,\nFF-push 5ab849b..49d9d82, cw_migrate Exited (Zero-DDL). tsc 0 / next build 0. Sealed by\nSL-seo-auto-indexing.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1007,6 +1159,8 @@
       "evidence": "2026-06-21 -- SL-blog-elevated-copy (Sprint 39). Three deliverables with two approval\npauses: COPY_STANDARD.md (elevated mechanism-first angle) + WAITLIST_ROADMAP.md (milestone-gated\non a MEASURED GSC baseline -- 15 impressions / 0 clicks / 6 URLs over 28d, blog is pre-traffic;\nrefused fabricated monthly targets, the prompt's explicit STOP) + 20 posts (10 EN + 10 ES) on\nthe uncovered NUMERIC-LEVER seam: auto-kill thresholds, ROAS breakeven, CPM blue/red-ocean\nbands, CTR winning/kill (1.7%/1.3%), 2.5x margin floor, 10% hit-rate, AOV floor, prior\ncalibration, the evaluation window, subscription LTV (supplements CAC EUR 150-200). Self-audit\n180/0 (parser-mimic + banned-construct grep; 54 soft flags all factual honesty statements).\nWorktree off kobicraft/main 87e5b19, rebased onto c3d1105 (SL-144 sibling, ZERO conflict, no\nblog-render-file overlap), FF-push c3d1105..0a6e94a, cw_migrate Exited (Zero-DDL). tsc 0 /\nnext build 0 / 20/20 static HTML artifacts / live sampled 200. Sealed by SL-blog-elevated-copy.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1020,6 +1174,8 @@
       "evidence": "2026-06-21 -- SL-blog-schema-attribution (Sprint 40). Anchor corrected the premise: the\nblog ALREADY emitted Article + FAQPage (postStructuredData) + BreadcrumbList (page.tsx) -- so\n\"no schema\" was false; the real gap was Article enrichment. Build B+C enriched the Article node\n(publisher Organization + logo, mainEntityOfPage, inLanguage, author url -- Google's Article\nguidance) and added the empty-FAQPage guard (FAQPage only when real faq entries exist). Build A\n(GAP-1, source attribution): the blog CTA + inline `/#waitlist` body links now carry\n`/?ref=<slug>#waitlist` (query BEFORE the hash so the homepage sees it in location.search) for\nper-post attribution -- FRONTEND only, Zero-DDL; the BACKEND half (a `source` column on the\nGDPR-audited waitlist_entries -- blocked because `WaitlistJoinIn` is extra=\"forbid\", so a\nfrontend-only send would 422 every signup) is documented in vault/seo/WAITLIST_SOURCE_PROPOSAL.md\nfor a backend pane under PR-1 (Owner chose this scope at the plan-inline pause). Worktree off\nkobicraft/main e8648d2, rebased onto 6a26409 (sibling, ZERO overlap on my 4 files), FF-push\n6a26409..9e699a7, cw_migrate Exited (Zero-DDL). tsc 0 / next build 0 / rendered-HTML + LIVE\nverified (publisher/mainEntityOfPage/inLanguage/FAQPage + ref href present, no bare /#waitlist).\nvitest smoke provided (frontend/__tests__/blogSchema.test.ts) but unrunnable on this host (npm\nbroken; vitest not installed) -- empirical proof is the built + live HTML. Sealed by\nSL-blog-schema-attribution.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1033,6 +1189,8 @@
       "evidence": "2026-06-22 -- SL-blog-internal-linking-fallback (Sprint 41). The internal-linking\nfeature (RelatedPosts component + cluster tags + cluster breadcrumbs) was ALREADY shipped by a\nsibling pane (e92558f, live on prod) -- the prompt's premise to \"build it\" was moot. The real\nresidual gap: 126/212 posts hand-tagged, 86 (40%) UNTAGGED -> no internal linking. Contribution\n= a `deriveCluster()` + `effectiveCluster()` fallback in blog.ts that RelatedPosts uses when a\npost has no tag, reusing the sibling's component unchanged (zero duplication), byte-identical\nfor the 126 tagged posts. Coverage 59% -> 88% (187/212); 61 of 86 untagged posts now linked, 25\nleft conservatively unlinked (no confident keyword match -- honest, no false grouping). Owner\napproved the \"derive in code\" mechanism at the plan-inline pause. Worktree off prod (chased\ne8648d2->...->4144c4d->f3d022f as siblings pushed every few minutes; VPS SSH timed out mid-anchor\n-> built locally off last-known prod, deployed when network recovered), FF-push to 98d1c28\n(rebuilt live); a sibling pushed 74a0ca3 immediately after -- my commit verified ANCESTOR of it\n(survived) and deriveCluster confirmed in prod blog.ts. cw_migrate Exited (Zero-DDL). tsc 0 /\nnext build 0 / rendered + LIVE verified (untagged \"10-fitness-ad-hooks\" -> \"More in Meta Ads\";\ntagged -> \"More in Unit economics\"). Sealed by SL-blog-internal-linking-fallback.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1046,6 +1204,8 @@
       "evidence": "** an \"absent\" design\nrule must be verified against the canonical/prod branch, never against whichever branch is\nchecked out. A stale branch lies. In the founding incident a grep on `sprint35` (110 commits\nbehind `main`) reported \"HR-BUTTON-BEVEL does not exist\" — when the rule was in fact sealed,\nwritten into `globals.css` comments, and live on prod `main`, implemented with a themeable\n`--cw-accent` token strictly better than the hardcoded value the stale branch was about to\nship. The wrong-branch diagnosis nearly pushed a regression (themeable token -> hardcoded\nhex) plus 110 unrelated commits over live sibling work. Before claiming a rule is \"never\nwritten\" or \"not propagated\": fetch and compare against the prod branch first.\n\n2026-06-07 -- a session declared \"the Hormozi pricing/LTV/retention\nframeworks do not exist in CW Ops\" when in fact 12 modules\n(`engines/akos/heuristics/hormozi_*.py`, 278 passing tests) already implemented\nthem -- they were BUILT-BUT-ORPHANED (0 operator-facing imports), not absent. The\nextraction doc (`cw-ops-knowledge-extraction-2026-06-05.md` §7), created 2 days\nearlier, documented these exact gaps. Reading it first would have changed the gap\nclass from \"construct (2+ sprints)\" to \"wire (1-2h)\". The audit\n`vault/audits/knowledge-integration-audit-2026-06-07.md` reconciled it. Detect:\nthe gap analysis must cite a grep proving BUILT/ORPHANED/ABSENT, never assert\nabsence from memory.\n\n### PR-DATASET-COMPLETE-READ -- any dataset > 500 lines MUST be read in full (chunked to EOF) before its content is \"understood\" or an integration is designed\nSealed 2026-06-09 (Cost-Reduction dataset integration, TUA-X). Extends PR-12\n(DATASET-FIRST): PR-12 prevents IGNORING a dataset; this rule prevents reading it\nHALFWAY. The most specific, highest-value systems in a long dataset cluster in the\nADVANCED / FINAL sections; skimming the first N lines and assuming \"the rest is more\nof the same\" leaves exactly those systems out of the integration -- the same gap\nclass PR-12 was created to prevent, one layer down.\n\n2026-06-09 -- the Cost-Reduction & Profit-Optimization dataset (15,020 lines\nreal; the prompt premise claimed 23,874 lines AND an underscore-mangled path that\ndid not exist on disk) had to be read end-to-end before a gap analysis could\nhonestly classify P0/P1/P2. SESSION ANCHOR (PR-9) is the substrate; PR-12 adds the\naudit/extraction docs to the anchor; PR-DATASET-COMPLETE-READ adds: when the source\nIS a long dataset, a partial read is a premise-trust violation -- verify the real\nline count first, then read every line. Consequence of skipping: integration gaps\nwhere the most valuable advanced systems silently fall outside the build.\n\n### PR-ROUTING-VERIFY -- any locale-variant route ([lang]) must resolve to the intended component in EVERY locale before deploy; a route correct in EN but wrong in ES is not done\nSealed 2026-06-08 (Sprint ES-Landing, follow-on to SL-81, TUA-X). Long-lived\nbilingual surfaces drift per-locale: an EN root that serves a landing while the\nES root redirects somewhere else ships unnoticed because only EN is eyeballed.\n\n2026-06-08 -- `app/es/page.tsx` was `redirect(\"/es/inversor\")`, bouncing\nSpanish visitors into the gated investor viewer while EN `/` served a landing\n(and `/es` was a priority-1.0 sitemap root returning a 302 to a locked page).\nThe locale asymmetry was invisible because only EN was checked. Fix: `/es` now\nrenders the Spanish landing (mirror of the post-gate `/waitlist` front door).\nDetect: smoke `es_landing_root_serves_landing` (GET /es -> 200, no redirect,\nhero substring \"Operada por IA\"). Pairs with HR-WAITLIST-GATE (SL-81).\n\n### PR-DECISIONS-ANCHOR -- read the project's vault/decisions/DECISIONS-ACTIVE.md before any build; an Owner decision always overrides a conflicting build assumption\nSealed 2026-06-10 (TUA-X). A drift-reduction Q-and-A produced 18 binding Owner\ndecisions, recorded in the project at vault/decisions/owner-decisions-2026-06-10.md.\nWith multiple build panes sharing a repo, an assumption baked before those decisions\nsilently re-introduces drift; this anchor closes that gap.\n\nPROTOCOL: every pane, in its SESSION ANCHOR (PR-9), reads the project's\nvault/decisions/DECISIONS-ACTIVE.md -- a one-page compact of the decisions in force.\nWhere a build assumption conflicts with a listed decision, the build is wrong, not the\ndecision: the Owner decision is the source of truth. New decisions append to a dated\nowner-decisions-<ISO>.md and reflect into DECISIONS-ACTIVE.md; this PR is the router,\nnot the registry. Cross-project: any repo that runs a decisions-seal session mirrors\nthis anchor with its own vault/decisions/DECISIONS-ACTIVE.md.\n\n---\n\n## §UKDL-TRAPS (Recognized patterns — apply before next attempt)\n\n### UT-1 (cross-ref U-14) — PostgreSQL CHECK constraints with booleans require explicit cast\n`is_aspirational = true` is a PG type-error; use `(is_aspirational::text = 'true')`\nor `is_aspirational IS TRUE`. SQLAlchemy CHECK constraints in `__table_args__`\nmust be ANSI-portable so the SQLite test tier doesn't crash.\n\n### UT-2 (cross-ref U-13b) — Windows: NEVER run `python`/`pytest`/`pip`/`uv` directly via Bash\nThe MSYS2 transport drops stdout silently on verbose Python output. Use the\nPowerShell tool with the absolute Python path:\n`& 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe' -m pytest ...`\nCross-repo doctrine. Sealed 2026-05-28.\n\n### UT-3 — `starlette` version pin required: `<0.39` with `fastapi 0.115`\nNewer starlette changed TestClient cookie semantics (per-request `cookies=` is\ndeprecated; pin to client instance). Bumping starlette without bumping fastapi\nbreaks ~30+ existing test files cross-project. Verify with `pip show starlette`.\n\n### UT-9 — Next.js 16 colocated `opengraph-image.tsx` + `generateStaticParams` + `generateImageMetadata` collide\nSprint 12 M7 (TUA-X) shipped `app/blog/[slug]/opengraph-image.tsx` for per-post OG images. First push failed `npm run build` with `Cannot find module for page: /es/blog/[slug]/opengraph-image` (ENOENT) during the \"Collecting page data\" pass.\n\nRoot cause: the colocated OG file had BOTH `generateStaticParams` AND `generateImageMetadata` exports while the parent `[slug]/page.tsx` already provided `generateStaticParams`. Next 16 fails page-data resolution when child-route static params duplicate the parent's, and `generateImageMetadata` returning a per-id entry compounds the conflict.\n\nFix: in the colocated `opengraph-image.tsx`, remove `generateStaticParams` AND `generateImageMetadata`. Keep only:\n- `export const size = { width: 1200, height: 630 }`\n- `export const contentType = \"image/png\"`\n- `export default async function Image({ params }: { params: Promise<Params> }) { ... }`\n\nThe parent route's `generateStaticParams` propagates `params` automatically. Each blog slug still gets its own per-post OG image; Next bakes one per slug at build time.\n\n### UT-10 — Next.js 16 `metadataBase` defaults to `http://localhost:3000` on prod when not set\nSprint 13 T5 (TUA-X) discovered every page's `og:image` URL on the live deploy was `http://localhost:3000/<path>/opengraph-image?<hash>` — pointing at localhost instead of the production host. WhatsApp / Slack / Twitter share-previews failed silently because the image URL was unreachable.\n\nRoot cause: `frontend/app/layout.tsx` had no `metadataBase` field on its `Metadata` export. Per Next 16 docs, omitted `metadataBase` defaults to `http://localhost:3000` even in production builds, and resolution of relative URLs in any nested route's metadata uses that base.\n\nFix: in the root layout, set `metadataBase: new URL(SITE_URL)` where `SITE_URL` is the single source of truth (Sprint 10 M1: `frontend/lib/seo/site-metadata.ts`). One line. Everything downstream resolves correctly.\n\nDetect this at the smoke harness: grep the rendered HTML for `<meta property=\"og:image\" content=\"http://localhost:3000`. Catch should be added to smoke as Sprint 13 T6 deliverable.\n\n### UT-15 — Signed CDN URLs from third-party libraries embed an expiry; never store and reuse > 1 hour\nSprint 17 T3 / Sprint 16 video probe (TUA-X / kobiispy) — the TikTok Ad Library detail page's `<video>` element exposes a real CDN URL of the shape `https://library.tiktok.com/api/v1/cdn/<id>/video/<b64>/<uuid>?...&signature=<base64>&l=<YYYYMMDDHHMMSS>&...`. The `l=` parameter encodes the signature expiry timestamp, typically ~9 hours past probe time. Storing the URL in a DB / queue / cache and reusing it days later returns 403 / 404 with no clear error.\n\nRoot cause: TikTok's CDN signs URLs to prevent hot-linking. Same pattern applies to Meta CDN, YouTube watch URLs, Twitter media, and most \"public-but-signed\" media endpoints across the modern social web.\n\nFix shape: any ASR / vision / download pipeline that consumes a media URL from a third-party library MUST re-probe the LIVE listing or detail page to obtain a FRESH signed URL immediately before download. The probe-and-download workflow lives in the SAME process invocation; never split across two scheduled jobs. The kobiispy transcriber pattern: `probe_fresh_video_src(context, ad_id)` → `download_video(src, dest)` → cleanup. Both calls happen inside one Playwright session.\n\nDetect this generally: any code that takes a media URL as an argument from an upstream cache / DB / message queue is suspicious. Audit the chain: how old can the URL be at the point it's fetched? If > 1 hour, the design is broken even when it appears to work.\n\n### UT-14 — Sitemap `lastModified: new Date()` claims every page changed today; downranks freshness signal\nSprint 16 T1 (TUA-X) — `frontend/app/sitemap.ts` + `frontend/app/es/sitemap.ts` (created in Sprint 15 T1) emitted `lastModified: new Date()` for every URL. Effect: every Googlebot crawl saw \"every marketing page changed today\" → false freshness signal → wasted crawl budget → freshness/quality signal degraded over time. Worse for the per-section stories sitemaps where the fallback `a.published_at ? new Date(a.published_at) : new Date()` masked missing publish dates as \"today\".\n\nRoot cause: convenience default. `new Date()` is the most ergonomic choice in TypeScript and the Next 16 docs use it as the placeholder example. The fix requires explicit thought about content cadence per route.\n\nFix shape: keep a static `ROUTE_LAST_UPDATED: Record<string, string>` map of ISO dates, derived from `git log -1 --format=%aI -- <page.tsx>` at audit time. Update the map by hand when a route's content meaningfully changes. For dynamic listings (blog, stories), read the underlying content date (MDX frontmatter `last_updated` field, archetype `published_at`) and fall back to a CONSERVATIVE historical date — never `new Date()`. The per-blog sitemap pattern (`posts[0]?.frontmatter.last_updated ?? new Date()`) is fine ONLY because the fallback is unreachable when posts exist; if posts are empty, the sitemap is still wrong, but at least it's empty too.\n\nDetect at smoke harness: scan `/sitemap.xml` body for `<lastmod>` entries NOT matching today's ISO date. If 100% of entries are today's date → regression (the smoke check fails). Per-section sitemaps need their own date-diversity check OR a content-driven check (e.g. fitness intelligence post must have last_updated matching its MDX `last_updated:` field). TUA-X smoke check #46 covers `/sitemap.xml`; per-section diversity is a Sprint 17 hardening candidate.\n\nApex 36 codifies the discipline at sprint level: any route-touching commit also bumps `ROUTE_LAST_UPDATED` for that route, same commit.\n\n### UT-12 — Next 16 root `/sitemap.xml` 404 when `app/sitemap.ts` does not exist\nSprint 15 T1 (TUA-X) — `/sitemap.xml` and `/es/sitemap.xml` returned 404 for 4 months even though 4 per-section sitemaps (`/blog/sitemap.xml`, `/es/blog/sitemap.xml`, `/stories/sitemap.xml`, `/es/historias/sitemap.xml`) were 200. Google's first crawl by convention hits `/sitemap.xml`; the silent 404 was a coverage error that never surfaced in the smoke harness because no check covered the canonical path.\n\nRoot cause: Next 16's App Router emits `/sitemap.xml` ONLY when `frontend/app/sitemap.ts` exists. The per-section `app/<section>/sitemap.ts` files do NOT backfill the root path. The framework treats each `sitemap.ts` as a separate metadata route at the location of the file.\n\nFix shape: create `frontend/app/sitemap.ts` returning a `MetadataRoute.Sitemap` over the public routes, with `alternates.languages` populated for each hreflang pair. For bilingual sites, mirror at `frontend/app/<locale>/sitemap.ts` with the locale-native slugs and same alternates map.\n\nDetect at smoke harness: probe `/sitemap.xml` + every locale-root sitemap path for status 200 AND `<loc>` substring present. The TUA-X smoke harness adds these as checks #43/#44 (root EN/ES sitemap) and #45 (robots.txt references both root sitemaps). Without the smoke check, the 404 is invisible because the per-section sitemaps mask it.\n\nAlso update `app/robots.ts`'s `sitemap` array to list the new root entries at the TOP of the list so crawlers find the bilingual canonical surface before the per-section deep dives.\n\n### UT-13 — Public ad-library detail pages may be metadata-only; probe before designing an adapter rewrite\nSprint 15 T2 (TUA-X) — investigating \"can per-ad-detail click-through capture hook_text for TikTok Ad Library?\" three Playwright probes revealed: (a) the listing DOM DOES expose real `/ads/detail/?ad_id=<numeric>` URLs (contrary to a 5-day-old adapter docstring claim about \"synthesised ad_id\"), BUT (b) the detail page itself is metadata-only (Ad ID + dates + targeting summary + geo breakdown + advertiser info). The creative text lives in the VIDEO content, which headless Chromium renders as \"Audio/video is not supported / Please TryRefresh\" with NO transcript or alt text.\n\nThe Sprint 14 narrative (\"DOM doesn't expose creative text\") was technically right but described the wrong wall. The actual wall is the MEDIA boundary: video creative is uncapturable from the public surface without (a) video transcription, (b) frame OCR, or (c) authenticated advertiser-account Ads Manager access. None of those are cheap.\n\nRule: BEFORE designing or scheduling an adapter rewrite that promises to populate a NULL field via deeper navigation, run a one-shot Playwright probe (read-only, ≤90s) that navigates ONE real detail page and dumps `inner_text(\"body\")`. If the field is not in the body — even after the deeper navigation — the rewrite cannot fulfil its premise. Lesson is structural: a one-day probe saves a one-week wasted rewrite. The TUA-X probe at `tuax_core/tools/probes/tiktok_detail_probe.py` is the reference pattern.\n\nDetect generally: any UKDL entry that promises \"this Sprint will populate X via Y rewrite\" should have a probe artefact already in `vault/knowledge_base/` confirming Y produces X for at least one real input. If it doesn't, demote the work item to \"research\" until the probe lands.\n\n### UT-11 — Ranker that proxies one signal scores every NULL-bearing row at zero (platform bias)\nSprint 14 T3 (TUA-X) — the `ad_signal_ingester` used `trending_score = float(len(hook_text)) if hook_text else 0.0` as a content-richness proxy. Meta Ad Library returns hook_text on every row; TikTok Ad Library's search-results DOM does not expose creative text at all (Session 28 adapter docstring confirms — only advertiser + dates + view-range bucket). Every TikTok row → score 0 → never surfaced in top-N → structural Meta bias.\n\nRoot cause: a single-proxy ranker silently encodes whichever platform happens to populate that proxy. The bias is not at the data layer (the rows are honest), nor at the ranking SQL (it's a clean ORDER BY DESC). It's at the ingester's proxy choice.\n\nFix shape: `compute_trending_score(hook_text, estimated_views) = max(len_score, log10(views+1)*50)`. Hybrid of content-richness (hook length) and reach lower-bound (view-range bucket). Take the max, not the sum — no double-counting. Both proxies are documented in the post itself as \"content-richness\" and \"reach lower-bound\" so they don't masquerade as CTR/ROAS (Apex 9).\n\nTest pattern: every new adapter that can NULL the primary content proxy must accompany a reach-bucket fallback in the ingester PLUS a unit test of the shape `transform({platform: X, hook_text: None, estimated_views: K}) → score > 0`. See `tuax_core/tests/engines/test_ad_signal_ingester.py::test_transform_tiktok_bucket_lifts_score_above_zero`.\n\nDetect this generally: if a ranker has any clause of the shape `proxy_value if X else 0`, ask \"what other proxy is available when X is falsey?\" — if there is one, the formula is biased.\n\n### UT-4 — Next.js 16 + bun: `package-lock.json` NOT regenerated on `bun install`\nThe VPS docker build uses npm and needs `package-lock.json` present. If\n`bun install` was run locally and the lock wasn't regenerated, the build fails\nwith \"package-lock.json out of sync\". Fix: `npm install --package-lock-only`\nbefore commit.\n\n### UT-5 (cross-ref U-16) — Vault hook race: `vault-heartbeat.js` runs `merger.py` concurrently with agent writes\nStop-event hook fires while the agent is still mid-Edit/Write. Shell `>>` and\neven `python -c \"open(...,'a').write(...)\"` race against the merger's\n`open(..., 'w')`. Only durable fix: atomic write via `os.replace(tmp, target)`.\n\n### UT-6 — `cw_ref` cookie: first-touch attribution, NEVER overwrite\nThe proxy reads `req.cookies.get('cw_ref')?.value`; if present, `return` early.\nVisiting a second `?ref=XYZ12345` URL with an existing cookie must NOT update\nthe cookie. PowerShell `Invoke-WebRequest`'s manual `Headers @{'Cookie'=...}`\nsilently drops the cookie; use Python `httpx` with `cookies={...}` for\nverification. Sealed by Sprint 9 #58 verification (2026-05-30).\n\n### UT-7 — UnitOfWork has no `commit()` method\n`async with UnitOfWork() as uow: …; await uow.commit()` raises AttributeError.\nThe UoW auto-commits on clean `__aexit__`. Explicit commit calls are silent\nruntime bombs that only fire when an auth-gated endpoint is actually hit. Always\ngrep `await uow\\.commit\\(\\)` after new router work — should be zero matches.\nSealed by SL-14 (Sprint 7) + Sprint 9 #59 (13 occurrences defused).\n\n### UT-8 — `inserted_at` vs `created_at` schema drift\nRaw-SQL migrations sometimes use `inserted_at`; the ORM models often inherit\n`TimestampMixin` which provides `created_at` + `updated_at`. Constructors that\npass `inserted_at=...` will TypeError. Always check whether the model inherits\n`TimestampMixin` (use `created_at`) or owns its own `inserted_at` column\n(e.g. `ReferralPayout` does). Audit pattern:\n`grep -rn 'inserted_at\\s*=' tuax_core/{api,workers,engines}/`.\n\n### UT-16 — Public ad-library listing DOM may expose real numeric ad_ids via anchor hrefs even when the adapter docstring claims it doesn't\nSprint 18 T1 (TUA-X / kobiispy) — the TikTok Ad Library listing DOM was claimed by the kobiispy adapter docstring (Session 28, 2026-05-25) to NOT expose the underlying ad_id, justifying a synthesised `tt-ads-dom-<hash>` ID. Sprint 16 v2 probe (read-only, 90s) inspected `page.content()` and found 12 `/ads/detail/?ad_id=<numeric>` anchor hrefs per scrape — one per card. The probe disproved the docstring claim but didn't update the code; Sprint 17's Whisper transcriber landed against synthesised IDs and silently degraded to 0 transcriptions on the existing 28 NULL TikTok rows because synth IDs don't resolve to live detail pages.\n\nRoot cause: a probe that disproves an architectural claim updates the MENTAL MODEL, not the CODE. Until someone edits the adapter, the claim still ships. The structural rule: any probe that falsifies an in-source claim MUST schedule a code-fix task in the same sprint OR explicitly mark the discovery as \"verified-but-not-yet-applied\" with an owner. UT-13 codified the probe-first discipline at planning time; UT-16 closes the loop at action time.\n\nFix shape: extract real ad_ids from listing HTML via regex (`/ads/detail/\\?ad_id=(\\d+)`), deduplicate preserving document order, pair with text-parsed cards positionally. Fallback to synth IDs ONLY when anchor count is short relative to card count — and surface the fallback in stats so DOM drift is visible (Apex 38 floor at >50% synth).\n\nDetect this generally: any DOM-scraping adapter whose docstring or comment claims \"the DOM does NOT expose X\" should be re-probed every quarter at minimum. Public surfaces (ad libraries, marketplace listings, search results) evolve, and the prior claim's expiration is invisible until the downstream consumer breaks.\n\n### UT-17 — Whisper transcribes platform UI voice as if it were creative; honest markers + ingester demotion prevent rank inflation\nSprint 18 T2 (TUA-X / kobiispy) — Whisper applied to TikTok ad videos cleanly transcribes the platform's own voice-over (\"You've reached the cap of a thousand videos. Click to see more.\" in EN/FR/ES/PT). The transcripts pass the quality gate (>10 chars, alpha ratio >50%) and land in `scraped_ads.hook_text` as if they were advertiser creative. The TUA-X ingester's `compute_trending_score` then rewards them via the content-richness proxy `len(hook_text)`, inflating the rank.\n\nEmpirically: Sprint 17 batch yielded 5 system-voice transcripts out of 15 audio captures (33% contamination rate). That's a load pattern, not an edge.\n\nRoot cause: Whisper is content-agnostic. The audio source contains BOTH advertiser creative AND platform UI prompts; the transcriber emits whatever's loudest. Without language-specific pattern detection, every transcript is treated as creative.\n\nFix shape (two-sided): (1) transcriber emits `SYSTEM_VOICE_MARKER = '[system_voice]'` instead of the contaminated text when `is_system_voice(text)` matches any of EN/FR/ES/PT patterns. (2) ingester's `_CONTENT_EMPTY_MARKERS = frozenset({'[audio_unclear]', '[system_voice]'})` zeroes the content-richness contribution; only the reach proxy (`log10(views+1)*50`) applies. Marker literal is pinned by unit test at both sides — a rename surfaces in pytest, not at production trending_score time.\n\nDetect this generally: any ASR / OCR / TTS pipeline applied to a platform-mediated media surface (TikTok, YouTube, Instagram Reels, Snap, X, Twitch) MUST account for the platform's voice contaminations. The patterns are platform-specific but the rule is universal: an in-process detector with explicit known-bad fixture coverage, fed by empirical observation of the first N runs. The cost of NOT having the gate is small per row but cumulative across the ranking — bias toward the platform's voice creates a tighter feedback loop than expected.\n\n### UT-18 -- Content / multi-file sprint done-gate counts files on disk, never the brief's number\nSealed 2026-06-03 (Sprint 37 B8, TUA-X). A content brief says \"N posts x 2\nlanguages = 2N\" and lists N slugs; counting against the brief's number ships\nwhat was listed, not what was promised (EP-2). The done-gate uses `find ... |\nwc -l` (or `Glob` + length) -- the empirical count is the evidence; the brief's\nnumber is only the objective. If they differ: produce the missing artifacts or\ndocument the gap honestly. A sprint that documents cases it never produced is\ntheater (Reality Contract).\n\n### UT-19 -- `Grep` with path=DIR + a comma-brace glob of relative file paths can match ZERO files and report \"No matches\" (false negative)\nSealed 2026-06-03 (Sprint 37 B8, TUA-X). On this host a `Grep` call with\n`path=<dir>` and `glob={a/b.ts,c/d.tsx}` (brace list of relative paths) silently\nmatched zero files and returned \"No matches found\" -- a FALSE NEGATIVE that read\nas \"clean\". Caught only by re-running with a token known to be present, which\nALSO returned 0 files (-> the glob, not the content, was the problem). Pivot:\nscope greps by explicit per-file `path` (no glob), and confirm any \"0\" with a\nknown-present token before trusting it. Twin trap: a backgrounded `next build`\nvia `*>` reported EXIT=0 but captured none of next's own output (next writes to\nthe console handle) -- exit 0 with no output is NOT proof it ran; verify via a\nfresh `.next/BUILD_ID` mtime + grep the prerendered HTML. Both are EP-1 /\nMistake #16 instances. See project `vault/governance/claude-code-error-patterns.md`.\n\n### UT-SCRAPE-QUALITY -- an output classifier cannot compensate for degraded input signal; fix at the origin (query) AND ingest (pre-filter), not only at publish\nSealed 2026-06-04 (TUA-X/KobiiSpy Sprint 40). The CW Ops intelligence pipeline\npublished off-niche ads (VTC/mosquito-net/police under niche=fitness). Sprint 39\nadded a publish-time classifier; the backfill then revealed the SOURCE was only\n36% on-niche fitness / 46% skincare -- KobiiSpy's Meta scrape used\n`country=ALL` + `search_type=keyword_unordered` and `persist_ads(ads, niche=niche)`\n(blind tag = the search term on every result). Lesson: a filter at the OUTPUT\nmasks the symptom; intelligence-product quality is BOUNDED by upstream scrape\nquality. The correct fix is two-layer: (A) tighten the ORIGIN query (target the\nproduct's real markets -- `country=ALL` -> curated set kills the India/SE-Asia\nmarketplace flood) AND (B) a content PRE-FILTER at ingest that promotes only\nads whose verified niche matches the scrape niche (the persisted tier is clean\nby construction). Pipeline health = raw-scrape on-niche ratio (best-effort;\nad-library keyword search caps how clean raw scrape can be) + persisted-tier\npurity >= 90% (guaranteed by the pre-filter). Cross-repo caveat: the scraper\nlives in a SEPARATE repo/Docker stack -- `git fetch` + verify the diagnosis\nagainst the DEPLOYED code before editing, the local clone may be stale. Project:\n`vault/knowledge_base/SL-61-sprint40-kobiispy-scrape-quality.md`.\n\n### UT-WIN-BUILD -- Windows local build/typecheck tooling is unreliable; never gate a deploy on it, and never close a turn empty after it fails\nSealed 2026-06-04 (TUA-X, Sprint 39 anti-hallucination PII closure). Three\nconsecutive Windows-only tooling failures burned turns and produced a\ndead-screen yield. All three were ENVIRONMENT, not code:\n1. `next build` (Next 16 Turbopack) COMPILES fine (\"✓ Compiled successfully in\n   25.4s\") then the separate \"Running TypeScript\" worker dies natively with\n   exit 3221226505 = 0xC0000409 (STATUS_STACK_BUFFER_OVERRUN). A successful\n   COMPILE proves the JSX/modules are valid; the crash is the Windows TS\n   worker, and the Linux build (VPS post-receive / CI) does NOT hit it.\n2. `npx tsc` (and `npx <anything>`) fails with `npm error Class extends value\n   undefined is not a constructor or null` -- the corepack/npx shim is broken\n   on this host (already documented for pnpm; it covers tsc/eslint too).\n3. `node node_modules/typescript/bin/tsc` loaded a PE binary (\"This program\n   cannot be run in DOS mode\") -- `bin/tsc` is a shim, NOT the JS entry.\n\nRULES (every repo, Windows host `$env:OS == \"Windows_NT\"`):\n- NEVER gate a deploy on a local Windows `next build`. The authoritative build\n  is the Linux deploy (post-receive / CI). The gate = green Turbopack COMPILE\n  locally (if it even gets that far) + the Linux build + the LIVE smoke. Do not\n  block the push on the Windows TS-worker crash.\n- NEVER invoke `npx`/corepack on this host. Run the real JS entry directly:\n  `node node_modules/typescript/lib/tsc.js --noEmit -p tsconfig.json`\n  (lib/tsc.js is the entry; bin/tsc is a shim that misbehaves here).\n- 2-failures law: on the SECOND env-failure of a build/typecheck tool, STOP and\n  pivot to the Linux/deploy gate. Never a third shape of the same intent.\n\nEMPTY-CLOSER BAN (the actual dead-screen this session): after the tool errors,\nthe turn yielded \"No response requested.\" / a bare continue -- a ZERO-CONTENT\npassive close. That IS the frozen-screen the Owner reports cross-repo. HARD: a\nturn NEVER ends empty or passive after a tool failure. It ends with (1) the\nfailure named + its class, (2) the pivot taken, (3) the next concrete action.\nThis reinforces global CLAUDE.md Anti-Waiting rule (G)/(H): a sentinel, a tool\nerror, or a `<task-notification>` must be followed by assistant text + a\nconcrete next step in the SAME turn -- never a silent or content-free yield.\nReference: project `vault/governance/personal-data-audit.md` (Sprint 39).\n\n### UT-20 — A migration that ALTERs a table holding real data follows a fixed order: backup -> migrate -> backfill -> quality-gate -> merge\nSealed 2026-06-04 (Sprint 39 niche-classifier deploy verification, TUA-X). Any\nmigration that ALTERs a table containing real production data follows the\nmandatory order: (1) pg_dump backup verified (PR-1); (2) apply the migration\n(``ADD COLUMN IF NOT EXISTS`` is forward-compatible -- safe to apply BEFORE the\ncode that reads the column deploys, because the running old image ignores the new\ncolumn); (3) backfill the new column (re-run the ingester / data job); (4) run the\ndata-quality gate; (5) ONLY THEN merge the code that reads the column. Skipping the\nquality gate before the merge ships code that reads a column whose data was never\nvalidated -- a contaminated column looks \"populated\" but publishes garbage. The\ngate is NOT optional. Empirical: the W23 fitness ``data_quality_gate`` correctly\nEXIT 1 at purity 0.42 (<0.90) because the scraped \"fitness\" niche was ~58%\noff-niche; the gate BLOCKING generation IS the system working, not a failure. A\nre-run of the deterministic classifier cannot raise purity -- only a cleaner scrape\ncan. ORIGEN: HR-NICHE-01 deploy (migration 057 ``057_niche_verification.sql`` +\n``niche_verified`` backfill on ``cw-postgres`` / ``tuax_mie``); identity_guard 17->0\nHR-PII closure shipped same day (cfb2c90).\n\n### UT-SHOPIFY-PUBLISH -- a real Shopify create is an external side effect; persist the store_url in the SAME transaction and reconcile via idempotency, never log the token\nSealed 2026-06-05 (Sprint 42, TUA-X). `generate_store_real` creates a REAL\nproduct on the operator's Shopify store with real money implications. Two\nstructural rules the publish flow must honour:\n\n(1) HR-6 token discipline: the decrypted access token is used only to build the\n    adapter and is dropped immediately (`token = \"REDACTED\"`); it never enters a\n    log, a response, or an exception. Logs carry only the non-reversible\n    `token_fingerprint`. A dedicated test asserts the canary value is absent\n    from every captured log record (`test_hr6_publish_value_never_logged`).\n\n(2) Create/persist atomicity + reconciliation: the Shopify create is an\n    EXTERNAL side effect that has already happened by the time the DB write\n    runs. If the process dies between `create_in_shopify` and `persist_in_db`,\n    the operator has a live product with no `store_live` record. The flow runs\n    create + persist inside ONE `UnitOfWork`, and -- crucially -- the create\n    carries a deterministic idempotency key (`publish:<approved_draft_id>`), so\n    a retry re-calls `create_product` with the SAME key, Shopify returns the\n    SAME product (no duplicate), and the persist then lands. Idempotency is the\n    reconciliation mechanism: never assume the DB write and the external create\n    are atomic; make the external call replay-safe so a retry heals the gap.\n\n2026-06-05 -- Sprint 42 publish-store. The single-session core\n`_publish_approved_store(session, ...)` is the reference: gate-read -> Shopify\ncreate (idempotent) -> persist `store_live` -> return `store_url`, all on one\nsession. Project: `vault/knowledge_base/SL-63-sprint42-publish-store-live.md`.\n\n\n### UT-NEW-OPERATOR -- a new operator's registration must NEVER require manual Owner intervention; the done-gate is the full 9-step run as a stranger\nSealed 2026-06-05 (Sprint 43, TUA-X). The registration flow for a NEW operator\n(not the Owner) must be fully self-serve: pay -> welcome email -> sign in ->\nown dashboard -> connect Shopify -> Guided Start, with nothing failing and\nnothing showing another tenant's data. If the Owner has to do anything manual\nfor the operator to get in, the flow is broken.",
       "exception": "** none for the prod-branch verification step (h) — it is cheap and always\navailable. The pixel-validation step (g) may be deferred to post-deploy only when the change\nis token-derived from already-validated values AND the Owner accepted post-deploy visual\nconfirmation in the same session.\n\n## §PROCESS-RULES (Recoverable but costly — mandatory protocol)\n\n### PR-1 — Before any DB migration: pg_dump backup verified before applying\nThe dump file is the rollback substrate. Verified = restored against a scratch\nDB in the same session before declaring the backup good. Per-environment:\nprod gets a real verified dump; staging gets best-effort.\n\n### PR-2 — Before updating any framework dependency (FastAPI / Next.js / SQLAlchemy / Pydantic): full test suite green on the new version\nPin-bumps that pass `pip install` but break runtime behavior (starlette\nTestClient cookie semantics, Pydantic v1→v2 field defaults, Next.js 15→16\nproxy.ts rename) are common. The test suite is the canary; running it BEFORE\nlanding the commit is the contract.\n\n### PR-3 — Before merging to `main` from any working branch: smoke + pytest + ruff + (mypy where applicable) all green\nThe order matters: smoke first (cheapest, catches deploy regressions),\npytest (catches behavioral regressions), ruff/mypy (catches style/type\ndrift). Skipping any one of the three is a PR-3 violation.\n\n### PR-4 — Stripe / Anthropic / Resend env vars to VPS: via SSH stdin Python only, NEVER via CLI args\nThe `ps aux` on a multi-user VPS reveals process args to any user. Even a\n\"momentary\" CLI-arg containing a secret is grounds for key rotation. The\ncanonical pattern: base64-encode a Python script + pipe values via stdin,\nNEVER `ssh user@host 'export VAR=sk_live_… && do_thing'`.\nSealed by SL-16 — Sprint 7 M9a.\n\n### PR-5 — Local temp files containing secrets: `Path.unlink()` immediately post-use, verified via `exists()` check\nPattern: `tmp = Path(...); tmp.write_text(json.dumps({...secrets...}))` then\n`tmp.unlink(); assert not tmp.exists(), \"PR-5 violation: temp file still present\"`.\nThe verification is mandatory — `unlink()` can silently no-op if the file\ndescriptor is open elsewhere.\n\n### PR-7 — Before any DELETE in production of > 10 rows: pg_dump verified backup + Owner sample preview + explicit consent\nSealed 2026-05-31 (Sprint 19, TUA-X). HR-1 is the kill-switch covering ANY destructive production DB change; PR-7 codifies the procedural recipe for the common DELETE-many-rows case so the gate is mechanical, not improvised.\n\n**The three-step contract:**\n1. **Backup the affected table to disk** with a timestamped filename, captured BEFORE the DELETE statement is composed. `docker exec <pg-container> pg_dump -U <role> -d <db> -t <table> --data-only --inserts > /tmp/pre-<sprint>-<table>-<ISO8601>.sql`. Verify the dump is non-empty and parses cleanly: `wc -l <file>` returns > the table's row count (each INSERT is one line) AND `sha256sum <file>` is recorded in the sprint trace.\n2. **Present the Owner with three artifacts** before requesting consent:\n   - The exact SQL `WHERE` clause for the DELETE.\n   - The COUNT(*) of rows that match (proves blast radius).\n   - A `LIMIT 10` sample (proves the WHERE clause selects the right rows).\n3. **Wait for explicit unambiguous consent** in the same session — \"yes delete <name>\" or equivalent. Per HR-1: implicit consent from \"autonomous mode\" does NOT cover this; \"approved last week\" does NOT cover this; the consent string must be in the current session log.\n\n**Multi-table coupling rule:** if the DELETE target is reachable from another table through an ETL / ingester chain (e.g., kobiispy `scraped_ads` → TUA-X `ad_performance_signals`), the backup + DELETE must cover BOTH or the next ETL run re-inserts what was just deleted. Document the chain in the consent prompt so the Owner sees what's actually being touched.\n\n**Honest-skip path:** if the Owner declines or doesn't respond inside the session, the DELETE is deferred. The agent proceeds with the rest of the sprint UNCHANGED — never partial. The sprint trace records \"Owner declined, deferred\" so future Sprints can pick up the cleanup with fresh consent.\n\n**Failure mode this rule prevents:** silent over-DELETE (the WHERE clause matched more than expected), under-DELETE (orphan rows in coupled tables), unrecoverable DELETE (no backup to restore from), or pseudo-consent (agent assumed consent from generic \"autonomous mode\" language). Sprint 19 cleanup of 28 `tt-ads-dom-%` synth-ad_id rows from both `tuax_mie.ad_performance_signals` and `kobiispy.scraped_ads` is the reference implementation.\n\n### PR-8 -- Before any pattern refactor (rename / replace / re-plumb): exhaustive grep, real count defines blast radius\nSealed 2026-06-03 (Sprint 37 B8, TUA-X). The brief DEFINES the scope (\"change X\nin 2 files\"); the agent must MEASURE it. Run an exhaustive grep with NO\n`--include` narrowing, excluding only build dirs (`node_modules`, `__pycache__`,\n`.next`). The real match count is the blast radius. If real count > 3x the\nbrief's estimate -> STOP and report to the Owner before editing. Confirm every\n\"0 results\" by re-grepping a token KNOWN to be present (a false-zero search is\nworse than a positive hit). Sealed after the Sprint 37 pricing change: the brief\nsaid \"2 pages\", reality was ~56 files. EP-1. See also UT-19.\n\n### PR-9 -- Session anchor before the first tool call in any project past 10 sprints\nSealed 2026-06-03 (Sprint 37 B8, TUA-X). Long-lived projects accumulate stale\nhashes / IDs / rule-numbers across sessions (EP-4 / EP-5). Before the first\nsubstantive tool call: `git log -1` (real HEAD), newest `vault/knowledge_base/SL-*`\n(last sealed state), last `Apex ` line in MEMORY.md, and the live HARD-RULES tail\n(real max HR/PR/UT). If the anchor's HEAD != the HEAD assumed from the prior\nsession summary -> surface the discrepancy BEFORE writing code. The prior summary\nis a hint; the repo is the truth. Full ritual: project `vault/governance/SESSION_PREFLIGHT.md`.\nEmpirical: the Sprint 37 brief quoted \"UT-62..65 / PR-14/15\" while the live file\nwas at UT-17 / PR-7 -- the new entries appended at the real next slots instead.\n\n### PR-10 -- Every ORM table the cw surface uses at runtime MUST be registered in `scripts/cw_init_db.py` `_CW_TABLES`\nSealed 2026-06-03 (Sprint 35 Bloque 0, TUA-X). The cw_postgres bootstrap creates\nONLY the tables listed in `_CW_TABLES` -- the alembic chain assumes legacy raw-SQL\ntables that don't exist on a fresh cw_postgres, so it is bypassed for the cw\nsurface. The local SQLite test tier runs `create_all` over the FULL ORM metadata,\nso a missing `_CW_TABLES` entry is INVISIBLE locally and 500s every endpoint that\ntouches the table on prod. Before shipping any router that reads/writes a NEW\nmodel: add `(\"<table>\", Model.__table__)` to `_CW_TABLES` in CREATE-dependency\norder (FK parents first; order-free if no FK). Verify in the cw_migrate log:\n`[cw_init_db] <table>: ok`. This is the SAME class as the \"PR-14 lesson\"\nreferenced verbatim in cw_init_db.py comments -- but PR-14 never existed in the\nlive registry (EP-4 phantom ID); PR-10 is the real slot. Sealed after\n`operator_tenant` (+ same sprint `operator_profile`, `shopify_credential`) were\nabsent from `_CW_TABLES` and would have 500'd every re-plumbed operator endpoint\non cw_postgres (the re-plumb made previously DB-free endpoints open a UoW). Pairs\nwith PR-11.\n\n### PR-11 -- The `deploy/post-receive` hook MUST name `cw_migrate` in the `docker compose up --build` set so the bootstrap rebuilds with the pushed code before cw_api boots\nSealed 2026-06-03 (Sprint 35 Bloque 0, TUA-X). `cw_api depends_on cw_migrate`\nwith `condition: service_completed_successfully` orders the START, but\n`depends_on` does NOT force a rebuild. If the hook runs\n`up -d --build cw_api cw_frontend` (omitting cw_migrate), compose reuses\ncw_migrate's STALE image -> the one-shot runs OLD `cw_init_db.py` that doesn't\nknow the new table -> the table is never created -> cw_api 500s even though the\nnew code is on disk. Fix: `up -d --build cw_migrate cw_api cw_frontend` (migrate\nnamed FIRST). Window-free + idempotent (`checkfirst=True`). PR-10 puts the table\nin the bootstrap; PR-11 guarantees the bootstrap that runs is built from the\npushed code. Same dormant-deploy class as the X.156 (docker), X.157 (landing),\nand Sprint 6.1 (nginx) hook fixes -- code on disk that never reaches the runtime.\n\n### PR-12 -- DATASET-FIRST: read recent vault extraction / audit docs BEFORE declaring any knowledge or functionality \"absent\" or \"to build from scratch\"\nSealed 2026-06-07 (Sprint Knowledge-Integration, TUA-X). Before diagnosing that a\ncapability, framework, or piece of knowledge does NOT exist in the system, the\nagent MUST read the recent project knowledge artifacts:\n`vault/knowledge_base/cw-ops-knowledge-extraction-*.md` and `vault/audits/*.md`\ndated within the last ~14 days. These documents already enumerate documented gaps\nAND (often) the exact code that implements them.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1059,6 +1219,8 @@
       "evidence": "Sprint 45 -- the Meta/TikTok ad-launch + spend-pull engines read ONE\nSYSTEM credential set (``Settings().meta_ads_*`` / ``tiktok_ads_*``) over a single\n``brand_id=\"default\"``; no path fed a per-operator vault token into the launcher.\nStoring an operator's ad token would have been a scaffold EXCEPT the live verify\nendpoint (Meta ``/me/adaccounts``, TikTok ``/advertiser/info/``) is a genuine\nconsumer. Per-operator autonomous execution was deferred to Sprint 46 with honest\n\"stored and verified -- ready for activation\" copy, never \"we're running your ads\".\n\n### UT-INTEGRATION-STATUS -- every external operator integration exposes a status that distinguishes \"configured\" from \"verified\"\nSealed 2026-06-05 (Sprint 45, TUA-X). ``configured`` = the credential exists in\nthe vault. ``verified`` = the credential was tested against the REAL external API\nand worked. A system that assumes a stored key is valid without verifying it fails\nsilently when the operator tries to execute. The decrypt-only \"test\" (does the\nciphertext decrypt) is NOT verification.\n\nSprint 45 -- the ``api_credentials`` vault ``/test`` only proved\ndecryptability; nothing called the real API. The verify endpoints close that gap.\nSmoke [105]-[108] guard that the status + verify endpoints are mounted +\noperator-gated (401, never 404).\n\n\n### UT-ENV-ALLOWLIST-DRIFT -- a secret present in .env but absent from a container's explicit `environment:` allowlist reads as EMPTY in-process; \"not configured\"/503 with the secret present is a passthrough gap, not a missing secret\nSealed 2026-06-05 (Sprint 46 ops, TUA-X). When a docker-compose service declares\nan explicit ``environment:`` block and NO ``env_file:``, ONLY the vars listed in\nthat block reach the process. Adding a var to ``.env`` is INVISIBLE to the\ncontainer until it is ALSO added to the ``environment:`` allowlist. The symptom is\nan endpoint reporting \"not configured\" / returning 503 even though\n``grep VAR .env`` shows the value is present -- the file has it, the process does\nnot.\n\n2026-06-05 -- Shopify ``/connect`` 503'd in prod and ``/shopify/status``\nwas ``{configured:false}``. ``SHOPIFY_API_KEY`` + ``SHOPIFY_API_SECRET`` were both\nalready in ``working/.env`` but ABSENT from cw_api's ``environment:`` allowlist\n(no ``env_file:``), so ``shopify_oauth.is_configured()`` read empty. The brief\nassumed \"the secret is not in .env, re-provision via the shopify CLI\" -- BOTH\npremises false. Fix: wire the two vars (plus ``STRIPE_PRICE_ID_FWE``) into the\ncw_api ``environment:`` block + redeploy; zero CLI, zero browser auth. Detect at\nthe smoke harness: ``/api/v1/shopify/status`` -> ``{\"configured\":true}`` (smoke\n[109], asserts configured:true specifically, not just the substring). Project:\n``vault/knowledge_base/SL-66-sprint46-ops-stripe-shopify-config.md``.\n\n\n### UT-PRICING-PARITY -- a new pricing tier needs THREE legs deployed together; (1)+(2) without (3) charges money without granting the right access\nSealed 2026-06-05 (Sprint 46, TUA-X). Every new pricing tier (or checkout plan)\nis incomplete by definition until all three legs ship in ONE cutover:\n  (1) BACKEND: the Stripe ``price_id`` exists in prod ``.env`` AND the checkout\n      endpoint selects it from the plan the visitor chose;\n  (2) FRONTEND: a plan card on ``/pricing`` (and every locale mirror) with a\n      REAL wired CTA that POSTs the plan -- not copy, not a dead button;\n  (3) WEBHOOK: ``checkout.session.completed`` reads ``metadata.plan`` and\n      provisions the CORRECT tier/profile + records the correct subscription\n      (plan_name / amount / price_id).\nA tier with only (1) is an orphan backend. A tier with (1)+(2) but NOT (3) is the\nworst failure: it CHARGES MONEY and then provisions the wrong access level (the\ncheaper buyer recorded as the dearer plan, or vice-versa) -- silent, and only\ndiscovered when a real customer is mis-served.\n\n2026-06-05 -- the €12 First Win Engine price (leg 1) had existed since\nSprint 44, but the deployed ``/pricing`` had NO FWE card (leg 2) and the webhook\nIGNORED ``metadata.plan`` -- the checkout wrote it, nothing read it -- so every\nbuyer was recorded as the €49 Operator with no ``first_win_profile`` (leg 3).\nA €12 buyer would have paid €12 and been provisioned as a €49 operator. All three\nlegs shipped together in Sprint 46. Detect at the smoke harness: ``/pricing`` +\n``/es/precios`` carry both ``data-testid=checkout-submit-{fwe,operator}`` CTAs\n(smoke [110]/[111]); the webhook plan-branch is unit-tested\n(``test_webhook_persistence.py`` Sprint 46 block). Project:\n``vault/knowledge_base/SL-67-sprint46-fwe-frontend-tier.md``.\n\n\n### UT-NO-FABRICATED-FEED -- the collective moat is fed ONLY from real verified or operator-declared outcomes; a dormant auto-feed must be structurally unable to write fabricated data\nSealed 2026-06-05 (Sprint 46b, TUA-X). The First Win moat compounds across every\noperator -- so a single fabricated/simulated row poisons the intelligence for\nALL future operators, permanently. The feed must therefore be incapable of\nwriting anything but real data, not merely \"careful not to\".\n\n2026-06-05 -- Sprint 46b wired the test-capture feed\n(``test_results_repo``). Per-operator ad execution does not exist yet, so the\nauto-feed is DORMANT: ``attempt_auto_capture`` returns ``no_verified_ad_apis`` /\n``linkage_pending`` and writes nothing -- proven by\n``test_v_no_fabricated_feed_without_apis`` + ``test_v_auto_feed_dormant_even_with_apis``.\nThe moat grows today only from an explicit operator close\n(``POST /api/v1/fwe/test/{id}/close``). Project:\n``vault/knowledge_base/SL-68-sprint46b-collective-intelligence.md``.\n\n\n### UT-ANDROMEDA -- a creative batch of 3+ variants must carry >=2 distinct hook_types, or Meta Andromeda collapses them under one entity-ID and yields no independent learning\nSealed 2026-06-06 (Sprint 47, TUA-X). Meta's 2026 Andromeda retrieval groups\nnear-duplicate variants (same persona / message / hook archetype / format) under\na single entity-ID. A batch where every card shares one hook_type therefore\nreturns one signal, not N -- the test spends N budgets to learn once.\n\n2026-06-06 -- Sprint 47 found ``_suggest_awareness_mapped`` assigning the\nawareness spec's single hook_type to EVERY card (the exact Andromeda collapse).\nFixed with ``get_hooks_tagged`` + ``_diverse_select``. Detect:\n``test_v_andromeda_two_distinct_hook_types`` asserts >=2 distinct angles per\nbatch. Project: ``vault/knowledge_base/SL-69-sprint47-validation-intelligence.md``.\n\n\n### UT-CACHE-HIT -- the LLM cache must expose a traceable hit_count + measurable hit_rate; a cache without metrics cannot prove it is saving money, and over-specific keys silently never hit\nSealed 2026-06-06 (Sprint 48, TUA-X). A cache that no one can measure is faith,\nnot engineering. ``GET /api/v1/admin/llm-cache-stats`` (owner-gated) returns\nhit_rate + total_calls + estimated_cost_saved so the saving is observed, not\nasserted.\n\n2026-06-06 -- Sprint 48 replaced the MIE normalizer's ephemeral dict\n(reset every deploy, unmeasurable) with the durable ``llm_response_cache`` +\n``cache_stats``. Detect: ``test_v_cache_miss_then_hit_increments_count`` asserts\nhit_count + hit_rate. Project: SL-70.\n\n\n### UT-TEMPLATE-FIRST -- the creative engine consults the vault hook library (and its win_rate ranking) BEFORE any LLM call; an LLM call for a documented niche means the YAML is incomplete, not that the LLM is needed\nSealed 2026-06-06 (Sprint 48, TUA-X). The cheapest LLM call is the one not made.\nThe operator creative path is deterministic (vault templates, ``llm_called=False``)\nand now ordered by historical win_rate -- a documented niche should never need an\nLLM round-trip.\n\n2026-06-06 -- Sprint 48 added ``template_performance`` + win_rate ranking\nin the suggester (empty ledger -> vault order, graceful). Detect:\n``test_v_rank_tagged_prefers_winner`` + ``test_v_feed_from_test_results_is_dormant``.\nProject: SL-70.\n\n\n### UT-KILL-VERIFIED -- the automatic kill must be test-verifiable; a kill that cannot be confirmed as PAUSED in a mock is not implemented\nSealed 2026-06-07 (Sprint 49, TUA-X). ``fwe_kill_check`` returns a pure DECISION;\nthe kill is real only when an ACTION pauses the live ad. It is tempting to ship\nthe decision and call the kill \"done\" -- but a decision that never reaches the\nplatform leaves money burning.\n\n2026-06-07 -- Sprint 49 B6. Detect:\n``test_v_kill_cpa_2x_pauses_and_marks_killed``. Project: SL-71.\n\n\n### UT-KILL-CPA-REAL -- a CPA/ROAS kill fires ONLY on verified conversion data; an unverifiable read falls back to spend-only kills, never a fabricated zero\nSealed 2026-06-07 (Sprint 50, TUA-X). The conversion-driven kills (CPA > 2x\ntarget, ROAS < 1.9x after a fair run) depend on real spend + real conversions.\nIf conversions can't be read (no connected store, Shopify outage), the engine\nmust NOT invent a zero -- a zero would trip the NO_CONVERSION kill on a healthy\nad whose store simply wasn't readable that tick.\n\n2026-06-07 -- Sprint 50 B2 wired the kill loop onto the new conversion\nfeed. Detect: ``test_v_no_conversion_suppressed_when_unverified`` +\n``test_v_roas_kill_skipped_without_data``. Project: SL-72.",
       "exception": "Owner phrase \"ship the shell, consumer lands next sprint\" authorises a\nstored-but-not-yet-consumed credential for ONE turn, and only with honest UI copy.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1072,6 +1234,8 @@
       "evidence": "2026-06-07 -- UGC integration BLOQUE A/C. Detect:\n``test_brief_body_requires_operator_id``. Project: SL-73. Mirrors the UGC-v6-side\nHR-UGC-MULTITENANT in ``ugc_mega_system_v6`` vault ukdl.",
       "exception": "none. There is no operator-less render.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1085,6 +1249,8 @@
       "evidence": "2026-06-07 -- UGC integration BLOQUE C. Detect: the submit task persists\na ``generating`` row and returns; the sweeper owns the transition. Project: SL-73.\n\n### UT-REALISM-GATE -- the visual_flywheel realism threshold (7.0/10) is a product floor, not a tunable to \"pass more\"\nSealed 2026-06-07 (UGC integration, TUA-X). The authoritative pass/fail is the\n``realism_passed`` flag UGC-v6 returns (its visual_flywheel encodes 7.0 + per-\nmetric floors). TUA-X reacts to ready/failed_realism; it NEVER re-judges realism\nor lowers the bar to surface more videos.\n\n2026-06-07 -- UGC integration BLOQUE B/C. Detect:\n``test_sweeper_failed_realism_no_action`` (failed render -> no operator action).\nProject: SL-73. Mirrors the UGC-v6-side UT-REALISM-THRESHOLD.\n\n### UT-PROVIDER-ON-SEAM -- a real-vs-simulated external provider is chosen at the seam, never branched in the caller\nSealed 2026-06-07 (UGC integration, TUA-X). The render provider (real\nUGCRenderProvider vs MockRenderProvider) is injected at the RenderProvider seam\nby credential presence; the business code (worker, sweeper, router) is identical\nin both modes. If a caller has to ask \"am I in prod or simulation?\" the seam is\nmis-designed -- the branch belongs at provider construction, nowhere else.\n\nSL-73 BLOQUE C ``_build_provider`` / ``with_transport``. Cross-ref the\nSprint-50 MetaAdsAdapter near-miss (real adapter chosen only on\n``TUAX_EXECUTION_MODE=live``).\n\n### UT-SIMULATION-SAFE -- any integration with a real-cost external service ships a MockProvider that is the DEFAULT when credentials are absent\nSealed 2026-06-07 (UGC integration, TUA-X). Video / ads / payments: without real\ncreds the system degrades SILENTLY to simulation (``sim://`` asset, no network,\nno spend) with the simulated state VISIBLE to the Owner -- it never crashes and\nnever emits wrong data (a ``sim://`` asset is non-https, so the real publisher\nskips it and the moat is never fed a fabricated outcome).\n\nSL-73 -- no UGC-v6 ``.env`` / vault key yet, so prod runs in simulation,\nsafe-by-construction.\n\n### PR-DEPLOY-PERMISSION -- the agent SSHes to the production VPS only with explicit per-session Owner authorization; a prior session's permission does NOT carry\nSealed 2026-06-07 (UGC integration, TUA-X). The harness auto-mode classifier\ncorrectly DENIED an SSH ``pg_dump`` to prod ``cw_postgres`` when the session\nprompt had not explicitly authorized that target; the SAME backup succeeded once\nthe Owner's prompt explicitly authorized the deploy. The denial is a security\nfeature, not a bug.\n\nSL-73 -- deploy blocked one session (denied), executed the next under\nexplicit authorization (backup 121469B, push ec2b6d8..4b6ed7c, smoke 129/129).",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1098,6 +1264,8 @@
       "evidence": "Sprint OAUTH-AGENT B1/B2/B3 -- replaced the Meta/TikTok paste fields with\n``/api/v1/{meta,tiktok}/connect``. Detect: IntegrationsWidgets has zero token\ninputs (vitest), connect endpoints mounted+gated (smoke [130]/[131]).\n\n### UT-TOKEN-VALIDATION -- a token is persisted only AFTER a real platform call proves it works; a failed validation stores nothing\nSealed 2026-06-07 (OAuth-agent sprint, TUA-X). The OAuth callback exchanges the\ncode, then makes a REAL authenticated call (Meta ``/me/adaccounts``; TikTok\ntoken-exchange success) BEFORE writing the credential. If validation fails the\ntoken is NOT stored and the operator sees ``?meta=invalid``. A token that passes\nthe vault but fails when used later is a false positive = critical bug.\n\nSprint OAUTH-AGENT B1/B2. Detect: ``test_meta_tiktok_oauth``\n``invalid_token_not_persisted`` (validation raises -> credential NOT written).\n\n### PR-OAUTH-APP-REGISTRATION -- OAuth app creation + secret are dashboard-only (no Meta/TikTok CLI); present exact Owner steps and STOP, never invent a CLI\nSealed 2026-06-07 (OAuth-agent sprint, TUA-X). Unlike Stripe (``stripe`` CLI) and\nShopify (``shopify`` CLI), Meta and TikTok provide NO official CLI to create an\napp or read an App Secret -- app registration is strictly the\ndevelopers.facebook.com / ads.tiktok.com web dashboard (secret shown behind\nre-auth). A plan that assumes \"a meta-cli registers the app\" is built on a false\npremise (``dasmeta/meta-cli`` is an unrelated cloud-DevOps tool).\n\nSprint OAUTH-AGENT B0 -- the inline prompt's \"use meta-cli / PR-CLI-META\"\nwas unachievable; corrected to dashboard-only registration + env injection.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1111,6 +1279,8 @@
       "evidence": "Sprint OAUTH-AGENT Part A. Detect: ``test_admin_keys_router``\n``TestWizardValidation.test_wizard_invalid_key_422_not_persisted`` +\n``test_api_key_validators``. Sibling of UT-TOKEN-VALIDATION (OAuth tokens).\n### UT-BATCH-ANDROMEDA -- a creative batch must verify (and surface) 4-level Andromeda diversity before return\nSealed 2026-06-07 (Sprint Causal Memory Part B / BL-KI-08, TUA-X). A GOATed Ads\nbatch that varies only the hook collapses to one Meta entity-ID and burns in\n48-72h. The batch producer MUST diversify + verify all four Andromeda levels\n(hook archetype + persona + meat_format + awareness) and SURFACE the verdict, not\nsilently emit a homogeneous batch.\n\n2026-06-07 -- BL-KI-08 shipped the batch producer (was DEFERRED until the\ncode existed). Detect: ``test_batch_producer`` (>=2 personas/formats/archetypes;\nego-ordered; high-claim excluded + counted; band caps). Project: SL-77 Part B.\n\n\n### UT-HERENCIA-TRANSPARENTE -- when a CPM ego_score is resolved via inheritance, the output MUST carry inheritance_path + penalty_applied\nSealed 2026-06-07 (Sprint Causal Memory A3, TUA-X). When a context_slice has too\nfew decisions (< 5), the system inherits from broader slices with a penalty. SILENT\ninheritance is unauditable: the operator/agent cannot tell a thin-but-direct signal\nfrom a heavily-borrowed one, so the confidence reads as more real than it is.\n\n2026-06-07 -- A3 added the hierarchy (thin-direct -15%, drop-platform -25%,\ndrop-hook -35%). Detect: ``test_causal_inheritance`` (penalty + path per level;\nnever crosses mode). Project: SL-76.\n\n\n### UT-AUDIT-NOGO-REASON -- a NOGO/FIX verdict ALWAYS carries the specific reason + the action that resolves it; a bare \"NOGO\" is worse than no auditor\nSealed 2026-06-07 (Sprint Ecommerce Auditor, TUA-X). The Store Auditor scores a\nstore across 8 dimensions and returns GO/FIX/NOGO/KILL. A verdict the operator\ncannot act on is theatre: \"NOGO\" with no reason tells them nothing and erodes\ntrust in the system more than having no auditor at all.\n\n2026-06-07 -- the auditor was built so a generated store is judged\n\"will it sell?\" before launch. Detect: ``test_store_auditor`` (every NOGO has\nreasons; every fix has an action) + ``test_store_audit_router`` (no-capital ->\nNOGO with a capital reason). Project: SL-78. Pairs with HR-AUDIT-BEFORE-PUBLISH.\n\n\n---\n\n### UT-COPY-AWARENESS-MAPPED -- an SGE store hero is never generic (\"Welcome to our store\"); it always uses the hook archetype the niche's buyer-awareness level demands (vault awareness_pyramid), defaulting to problem_aware for an undocumented niche\nSealed 2026-06-08 (Sprint SGE v2, TUA-X). The legacy mock copy opened every store\nwith \"The solution you've been looking for\" regardless of niche -- a generic hero\nthat converts nobody.\n\nRECOGNISE: a generated store whose headline does not map to the niche's awareness\nlevel. fitness (problem_aware) must open PAIN_DRIVEN (\"Tired of ...?\"), supplements\n(unaware) CURIOSITY_DRIVEN, skincare (solution_aware) PROMISE_DRIVEN.\nawareness_copy.build_awareness_copy selects hook_type from loader.get_niche_awareness\n-> awareness_pyramid.hook_type; an undocumented niche falls back to problem_aware\n(the most common ecommerce entry level), never a non-mapped hero. Deterministic, no\nLLM (HR-LLM-COST safe). No fabricated social proof: the trust line points at the\nguarantee + verified reviews, never an invented customer count.\n\nDetect: test_sge_v2_store_builder (hook archetype per niche + unknown->problem_aware\n+ no 'welcome'). Project: SL-79. Pairs with HR-STORE-QUALITY-GATE.\n\n### UT-PRODUCT-FIT-SCORE -- a product candidate fit_score is computed ONLY over dimensions that have real data; a dimension without data is UNKNOWN and excluded, never a fabricated number\nSealed 2026-06-08 (Sprint Product Research Engine, TUA-X). A fit_score that fills\na missing dimension with a guess is an invented number that misleads capital\nallocation.\n\nRECOGNISE: a fit_score that counts a dimension with no data. research_products\nscores demand (vault tier + KobiiSpy boost), margin (vault tier + benchmark),\ncompetition (live saturation else vault note) and trend (KobiiSpy only). Without\na live KobiiSpy signal the trend dimension is UNKNOWN (score None, known False)\nand is EXCLUDED from the mean -- the score is the mean of the KNOWN dimensions\nonly, never padded to a fixed denominator.\n\nDetect: test_product_research (trend UNKNOWN excluded when market is absent; mean\nover the known dims). Project: SL-80. Pairs with HR-PRODUCT-EVIDENCE.\n\n### UT-INVITATION-IDEMPOTENT -- POST /waitlist/join with an already-registered email returns a friendly identical-shape response, never a 500/constraint error and never leaking prior membership\nSealed 2026-06-08 (Sprint Waitlist-Gate, TUA-X). A visitor who signs up twice\nmust not see a database constraint error, and the response must not reveal\nwhether the email was already on the list (membership privacy).\n\nRECOGNISE: a join handler that lets a unique-constraint violation surface as a\n500, or that branches its response shape on \"already exists\" (leaking that the\nemail was known). The repo handles the duplicate silently (idempotent upsert /\ncatch-and-return) and the endpoint returns the same success shape either way.\n\nDetect: test_waitlist_router (duplicate join returns friendly success, no 500);\ntest_waitlist_repo (idempotent join transition). Project: SL-81. Pairs with\nHR-WAITLIST-GATE.",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1124,6 +1294,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1137,6 +1309,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1150,6 +1324,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1163,6 +1339,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1176,6 +1354,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1189,6 +1369,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1202,6 +1384,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1215,6 +1399,8 @@
       "evidence": "2026-06-21 SL-143 -- the whole system is live but the pitch needed ONE screen aggregating what the system knows (4 endpoints + 1 doc were scattered). The report folds them into one owner aggregate. Multi-pane collision: a sibling also claimed SL-143 + smoke [376]-[379] (CMSS action deep-links) -- renumbered mine to [380]-[383], both sets kept. Pairs with HR-CEE-DERIVED-NOT-MEASURED, HR-NBGAE-ONE-ACTION, HR-CBIN-MILESTONE-HONEST, HR-LVS-UNKNOWN-IS-HONEST, HR-D14.\n\n2026-06-08 -- `.cw-mark` lacked flex-shrink; the sibling `.cw-rail-toggle`\n(which HAD flex-shrink:0) stayed square while the mark deformed. Fix: one CSS\nline (`flex-shrink:0; flex-grow:0; min-width:26px`). Project: ES-Landing\nfollow-on to SL-81. Pairs with HR-VISUAL (global).\n\n### UT-NO-MARKDOWN-LEAKS -- a rendered MDX/markdown post must never leak literal control syntax (a `**N.` multi-line bold span, a duplicated `## Fast answer` body heading); the generator TEMPLATE is the fix, regeneration is the remediation\nSealed 2026-06-08 (Sprint Landing/Blog Part A, TUA-X). The weekly intelligence\ngenerator's old body template wrapped each ranked hook in `**{i}. {hook}**` with\nthe hook's embedded newlines preserved, so a multi-paragraph hook became a bold\nspan broken across blank lines -- markdown does not render `**` across a blank\nline, so the literal `**1.` leaked onto the page. It also emitted a `## Fast\nanswer` heading in the BODY while the same text already rendered from the\n`fast_answer` frontmatter field -> a visible duplicate.\n\nRECOGNISE: a generator that (a) interpolates ad/user text containing `\\n` inside a\n`**...**` span without collapsing newlines, or (b) repeats a frontmatter-driven\nsection as a literal body heading. The fixed template renders the ranking as a\nsemantic ordered list (`{i}. **{hook}** - {platform}, ...` joined by single\nnewlines -> a real `<ol>`, AEO-extractable) and drops the body `## Fast answer`.\n\nNOTE (DEFERRED smoke): the smoke check for this trap (grep `**[0-9]` across every\npublished post -> 0 matches) ships in the smoke file in DEFERRED mode until the\nlegacy backcatalog is regenerated with the fixed generator. Re-activate it\nautomatically once all backcatalog `*-intelligence.mdx` posts pass the visible\n`**N.` check (0 leaks). A leak surviving regeneration because the source markdown\nis malformed at origin is documented as a known exception with its reason, never\nsilently passed.\n\nDetect: post-regeneration grep `**[0-9]` over `frontend/content/blog/**` -> 0; the\nduplicated `## Fast answer` body heading absent from every generated post.\nProject: SL-84. Pairs with HR-AEO-FAST-ANSWER.",
       "exception": "none -- inflating the compound_intelligence_score past what the immutable formula yields, hiding its breakdown, emitting a fabricated euro figure or a projection without empirical base, or exposing the report to a non-owner is forbidden. An honest 3.0/10 that climbs with real learning protects Naif's decision; a flattering number sells him a promise.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1228,6 +1414,8 @@
       "evidence": "2026-06-08 -- `WaitlistGateForm.tsx` `<option style={{color:\"#0F1419\"}}>`\nwith no background -> invisible on Chrome Windows over `#070D1A`. Fix: add\n`backgroundColor:\"#FFFFFF\"` to the option (white popup, dark text, legible on\nChrome Win+mac, Firefox, Safari). Pairs with UT-SELECT-NATIVE-CROSS-OS and\nHR-VISUAL (global).\n\n### UT-SELECT-NATIVE-CROSS-OS (a.k.a. TRAP-SELECT-NATIVE) -- native <select>/<option> rendering varies by OS and browser; a select legible on macOS can be invisible on Chrome Windows, so a native select is never \"done\" until verified on the dev's NON-dev OS\nSealed 2026-06-08 (CW Ops /waitlist, TUA-X). The native `<select>` option popup\nis drawn by the OS/browser, not fully by the page CSS: Chrome on macOS uses a\nsystem-white popup background, Chrome on Windows inherits the `<select>`'s own\nbackground, and Firefox/Safari differ again. An `<option>` that relies on an\nimplicit (inherited) background is therefore legible on one OS and invisible on\nanother -- the most dangerous kind of bug because it passes the developer's own\nscreen and only breaks for the user.\n\nRECOGNISE: a native `<select>`/`<option>` whose options omit an explicit\n`background-color`, especially on a dark-theme form. If the project has ANY\nWindows users (every Owner project does), verifying the dropdown only on the\ndev OS is insufficient.\n\nDetect: for every native select on a dark surface, both the select and each\noption declare explicit `color` + `background-color`; the dropdown is opened in\nChrome on Windows (or the OS the developer is NOT on) before \"done\" is claimed.\nProject: CW Ops /waitlist. Pairs with HR-SELECT-CONTRAST.\n\n### UT-KARMA-SPECIFIC-MESSAGES -- every karma_message embeds the real data of its event; if the data needed to build a concrete message is absent, the event is NOT created\nSealed 2026-06-08 (SL-85, TUA-X). A generic \"se pauso un anuncio\" gives the operator\nnothing and reads as machine noise. The message MUST carry the concrete numbers of\nthe real event: \"Pare el ad de fitness. CPA EUR18 superaba tu objetivo de EUR9.\nProtegi EUR47.\". engines/karma/messages.build_message returns None when a required\nfield is missing, and engines/karma/emit.emit_karma_event SKIPS the event -- Karma\nstays silent until the data arrives, it never fabricates. Same discipline as\nHR-AEO-FAST-ANSWER (no generic filler) and HR-ATTRIBUTION-HONEST (None never rendered\nas 0). Detect: tuax_core/tests/engines/karma/test_messages (missing data -> None for\nall 7 event types) + test_emit (insufficient data -> no event). Pairs with\nHR-KARMA-AUTONOMY + HR-KARMA-IDENTITY.\n\n### UT-DESIGN-SYSTEM-CONSISTENCY -- landing design tokens are additive + scoped (`--cw-*` under `.cw-marketing-canvas`); they NEVER regress the authenticated `/app` dashboard\nSealed 2026-06-09 (Part B Landing v2, TUA-X; mirrored to global from project\nPROJECT_DOCTRINE.md). The landing and the dashboard share one stylesheet\n(globals.css). Part B added a blue-deep token set (`--cw-blue-900..--cw-blue-400`,\n`--cw-grad-from/to`, `--cw-ink`, `--cw-ink-soft`, `--cw-beige`, `--cw-card`,\n`--cw-hairline`, `--cw-gold`) to `:root`, consumed ONLY under the\n`.cw-marketing-canvas` scope. A landing built from ad-hoc hex drifts per page;\nthe operator `/app` has its OWN dark system and must not regress.\n\nRECOGNISE: a marketing style hardcoding a hex instead of a `--cw-*` token, OR a\n`--cw-*` token / `.cw-marketing-canvas` rule leaking into `/app` and restyling\nthe dashboard (whose vars are `--background`, `--accent-*`, `.cw-shell`/`.cw-page`).\nSmooth-scroll is scoped via `html:has(.cw-marketing-canvas)`, never global.\n\nDetect: the `--cw-*` tokens defined once in `:root`; `/app` styles do not depend\non them; no marketing page regresses to raw hex for a tokenized value. Project\norigin: vault/governance/PROJECT_DOCTRINE.md (Part B B1). Pairs with\nHR-LANDING-INDEXABLE.\n\n### UT-SGE-LOOP-BOUNDED -- the SGE self-improving loop runs at most _MAX_ITERS (3) auto-fix passes; on exhausting them below floor it escalates + stops, never loops\nSealed 2026-06-09 (SL-87, TUA-X). An auto-iterate loop with no limit is an\ninfinite loop waiting to happen. After ``_MAX_ITERS`` the operator must learn\nwhether the system hit a REAL limit (images / niche without data) versus simply\nneeding more iterations -- the two are different and the operator deserves the\ntruthful one.\n\nRECOGNISE: a quality/score loop with no max-iteration guard, or one that hides a\nsub-floor stop as \"in progress\". ``ensure_quality`` caps at ``_MAX_ITERS=3`` and\non a sub-floor stop records a ``bounded_stop`` entry naming the blocking\ndimensions + ``escalation_pending`` (the deferred Karma ``store_audit_fail`` seam).\n\nDetect: ``test_loop_is_bounded_and_escalation_seam_records_reason`` (<= _MAX_ITERS\npasses; terminal escalation entry with the real blocker). Project: SL-87. Pairs\nwith HR-SELF-PROMPTING-LOOP + UT-LOOP-TRAZABLE.\n\n### UT-LOOP-TRAZABLE -- every auto-iterating loop emits a generation_log (n_iterations, score per iteration, fixes applied); a loop with no trace cannot be audited or improved\nSealed 2026-06-09 (SL-87, TUA-X). A loop that improves an output without a trace\nis a black box: you cannot tell whether it worked, why it stopped, or how to make\nit better. The log is part of the output's quality contract, not optional.\n\nRECOGNISE: an auto-improve loop that returns only a final result with no per-pass\nrecord. ``ensure_quality`` attaches ``generation_log`` to the returned draft: an\ninitial entry, one per auto-fix pass (score + fixes_applied), and a terminal\n``bounded_stop`` entry when applicable. The log rides on the draft so it is\nvisible wherever the draft is (the operator Guided-Start \"how your store improved\"\nview, deferred to the karma-scale frontend wave).\n\nDetect: ``test_generation_log_is_traceable`` (initial + auto_fix entries, each\nwith iteration/score/fixes_applied) + smoke ``sge_self_loop_traceable`` [171].\nProject: SL-87. Pairs with HR-SELF-PROMPTING-LOOP + UT-SGE-LOOP-BOUNDED.",
       "exception": "Owner types \"deploy ese select sin contraste explicita\" -- authorises\nbypass for ONE turn only.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1241,6 +1429,8 @@
       "evidence": "2026-06-10 -- SL-96 built D07 on a new ``scale_momentum_tracker`` table + a gate\nin ``scale_executor``. Detect: ``tests/first_win/test_scale_momentum`` (V-D07-CONSECUTIVE\n/ RATIO / STREAK / RESET / WINDOW / CANCEL-24H). Project:\n``vault/knowledge_base/SL-96-sprint-momentum-niche-autonomy.md``.",
       "exception": "none for the pause itself -- that is the point. The only way past it is the\noperator manually confirming the pending ``scale_momentum_check``.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1254,6 +1444,8 @@
       "evidence": "2026-06-10 -- SL-96 built D16 on a new ``karma_niche_autonomy`` table + a daily\nmeta-analysis. Detect: ``tests/karma/test_niche_autonomy`` (V-D16-ZERO / RECOMMEND / ACT\n/ CEILING / META) + ``tests/api/test_autonomy_niche``. Project: SL-96.",
       "exception": "none -- a new niche starting at OBSERVE is invariant.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1267,6 +1459,8 @@
       "evidence": "2026-06-10 -- SL-97 C1 audit confirmed the moat write persists no\ntenant/absolute-revenue/product_name/store_name; C4a shipped the glass box. Detect: smoke\n[220] + the C1 anonymity test (V-D14-ANON). Project:\n``vault/knowledge_base/SL-97-sprint-contribution-engine.md``.",
       "exception": "none -- the glass box is permanent and read-only.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1280,6 +1474,8 @@
       "evidence": "2026-06-10 -- SL-97 C2 built the ``moat_niche_contributors`` sidecar + the gate in\n``niche_confidence``. Detect: smoke [216]/[217] + ``tests/api/test_contribution_engine``\n(V-D14-GATE / THRESHOLD / BUMP). Project: SL-97.",
       "exception": "none -- below the threshold the read always falls back to the prior.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1293,6 +1489,8 @@
       "evidence": "2026-06-11 SL-100 -- the monthly sync preserved the prior verified figure on a silent\nfailure (UT-58) but nothing detected a sync that went STALE, so an operator could see unreal\nprofit and the 20% billing (HR-BILLING-MATURITY) could run on a stale net. ``detect_revenue_\nuncaptured`` + ``run_revenue_assurance`` close the gap. Affects\n``engines/economics/economic_reconciliation.py``,\n``workers/tasks/economic_reconciliation.py``. Detect: smoke [239] +\n``tests/engines/economics/test_revenue_assurance.py``. Pairs with HR-BILLING-MATURITY +\nHR-PROFIT-MATURITY. Project: SL-100.",
       "exception": "none. A store with no active credential, or one synced within the window, raises\nno alert -- the absence of a gap is honest, never suppressed.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1306,6 +1504,8 @@
       "evidence": "2026-06-11 SL-101 (shipped by the currency pane; the revenue-ledger pane's parallel\npref-based variant was abandoned in its favour) -- pricing_router subtracted ad spend (USD) from\nShopify gross (EUR) without conversion, silently mixing currencies and mis-sizing the 20%. The\n``currency_mismatch`` gate (any real USD spend vs EUR gross -> €0 this period) closes it.\nAffects api/pricing_router.py, db/models/user_preference.py. Detect: smoke [245] +\ntests/api/test_d08_currency.py. Pairs with HR-BILLING-MATURITY + HR-BILLING-GRANULARITY.",
       "exception": "none. No invented FX rate is ever used to bridge a mismatch; the only paths are \"zero\nUSD spend -> settle normally\" or \"real USD spend vs EUR gross -> flag and wait for a real\nconversion\".",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1319,6 +1519,8 @@
       "evidence": "2026-06-11 SL-101 -- the revenue sync stored only a monthly total, so the 20% base was a\nperiod proxy. ``revenue_order_ledger`` + the billing preference give an order-level base that\nsharpens automatically as the ledger fills. Affects db/models/revenue_order_ledger.py,\ndb/repositories/revenue_order_ledger_repo.py, integrations/shopify_revenue.py,\nworkers/tasks/sync_shopify_revenue.py, api/pricing_router.py. Detect: smoke [246]-[248] +\ntests/billing/test_revenue_order_ledger.py. Pairs with HR-BILLING-MATURITY + HR-CURRENCY-HONEST.",
       "exception": "the monthly/live read is used ONLY as the fallback when the ledger has no rows for the\nperiod -- never chosen over a populated ledger.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1332,6 +1534,8 @@
       "evidence": "2026-06-11 SL-102 -- HR-CURRENCY-HONEST correctly halted the 20% for USD-spend/EUR-gross\noperators, but that left them un-billable. The honest unlock is an Owner-controlled monthly ECB\nconstant, not a live rate a billing fee should never rest on. Affects db/models/fx_rate.py,\ndb/repositories/fx_rate_repo.py, engines/pricing/fx.py, api/admin_billing_settings_router.py,\napi/pricing_router.py, scripts/cw_init_db.py. Runbook: vault/governance/ecb-fx-rate-runbook.md.\nDetect: smoke [249]-[251] + tests/billing/test_fx_rate.py. Pairs with HR-CURRENCY-HONEST +\nHR-BILLING-MATURITY + HR-BILLING-GRANULARITY.",
       "exception": "a live/automated FX source is permitted ONLY behind an explicit Owner confirmation step\nthat writes the confirmed value into ``fx_rate`` -- the billing path still reads the Owner-set row,\nnever the API directly.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1345,6 +1549,8 @@
       "evidence": "2026-06-12 SL-103 -- audit before real operators: a wrong-month rate would silently bill\nthe 20% on a net normalised at the wrong exchange rate (months differ by points). The lookup keys\non ``valid_month=period`` so a month-M rate is invisible to a month-(M-1) billing. Affects\napi/pricing_router.py, db/repositories/fx_rate_repo.py. Detect: smoke [260] +\ntests/billing/test_fx_rate.py::test_billing_rate_from_wrong_month_never_used. Pairs with\nHR-FX-RATE-OWNER-CONTROLLED + HR-CURRENCY-HONEST.",
       "exception": "none. A rate is per-month or it is not used. (A future explicit Owner-confirmed\n\"carry-forward last month's rate\" would have to write a real row for the new month, not borrow.)",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1358,6 +1564,8 @@
       "evidence": "2026-06-12 SL-104 -- the Owner could see every operator's 20% state but the operator saw\nNOTHING (no fee, no base, no pending). The revenue-share endpoint was already operator-accessible +\ntenant-isolated; the gap was purely the operator-facing view. Affects api/pricing_router.py\n(revenue_share endpoint), frontend/app/app/configuracion (RevenueShareSection), frontend/lib/\nrevenueShare.ts. Detect: smoke [264]-[265] + tests/billing/test_fx_rate.py::\ntest_revenue_share_operator_sees_only_own_data. Pairs with HR-CURRENCY-HONEST + HR-BILLING-MATURITY.",
       "exception": "aggregate/cross-operator billing views are OWNER-only (require_owner) -- an operator sees\nonly their own. The Owner console (HR-FX-RATE-OWNER-CONTROLLED surfaces) is the separate owner lane.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1371,6 +1579,8 @@
       "evidence": "2026-06-12 SL-105 -- SL-104 gave the operator their 20% revenue-share view but left the plan\nstate (active/expired + next-payment) invisible because current_period_end lived in an owner-only\n``SubscriptionAdminOut``. The data was already webhook-persisted on the Subscription row; the gap was\npurely the operator-facing endpoint + view. Affects api/pricing_router.py (my_subscription endpoint),\nengines/entitlement/resolver.py (reused), frontend/app/app/configuracion (SubscriptionSection),\nfrontend/lib/subscription.ts. Detect: smoke [266]-[269] + tests/billing/test_subscription_view.py +\nfrontend __tests__/SubscriptionSection.test.tsx. Pairs with HR-BILLING-TRANSPARENCY + the D12\nentitlement drift (subscription expiry -> kill ads).",
       "exception": "a field the local mirror does not persist (e.g. cancel_at_period_end) is OMITTED, never\nsurfaced as a constant stand-in value -- a fabricated ``false`` would be a lie the moment a sub is\nscheduled to cancel at period end.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1384,6 +1594,8 @@
       "evidence": "2026-06-12 SL-106 -- the shadow-run already composed 4 real engines (WDE / SGE-dry / CIE /\nkill-scale) + 2 honest simulations (seeded scan, PAL campaign), but nothing LABELLED which was\nwhich, so a viewer (the investor demo) could not tell real from simulated. Build B added the\ndata_source label and this invariant. Affects api/loop_console_router.py, components/molecules/\nSovereignLoopConsole.tsx. Detect: smoke [279]-[280] + tests/api/test_loop_console_router.py::\ntest_run_shadow_steps_label_real_vs_simulation. The dry_run=True (SGE) + sim_scenario (PAL) are the\ntwo load-bearing guards. Pairs with HR-PUBLISH (publish needs 3 gates) + the D12 entitlement kill.",
       "exception": "writing the run's OWN result rows (LoopRun, demo-tagged ad_spend telemetry, internal\ntickets) is allowed -- those are how the shadow result is persisted and displayed, not real-world\nside effects on the operator's store or ad accounts.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1397,6 +1609,8 @@
       "evidence": "2026-06-16 SL-116 -- ECE v1 (PKM + compression_decisions + L0-L3 ladder + learning density)\nwired into confirm_launch_test. Substrate: engines/ece/{prior_knowledge_map,compression_engine,\nlearning_density}.py + compression_decision_repo + the experiment_compressed Karma event. Verified on\nprod HEAD 8ec04e1: 25/25 pytest + live smoke 305/305; STOP-1 latency 2.66ms (< 200ms). Pairs with\nHR-VALIDATION-GATE (the gate runs first) + HR-ECE-BLOCK-IS-VALUE.",
       "exception": "none for skipping the PKM. \"Autonomous mode\" does not authorize spending without it -- the\nPKM IS the precondition. Fail-open covers only an internal ECE error, never a deliberate skip.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1410,6 +1624,8 @@
       "evidence": "2026-06-16 SL-116 -- the experiment_compressed event (engines/karma/messages._experiment_compressed)\n+ the reason_codes on compression_decisions. Verified: test_ece_karma_and_latency (message carries the\nreason + euros; skips without a reason). Pairs with HR-KARMA-IDENTITY + HR-KARMA-TONE + HR-ECE-PRIOR-MANDATORY.",
       "exception": "none. A BLOCK without a specific reason equals not having blocked anything.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1423,6 +1639,8 @@
       "evidence": "2026-06-16 SL-117 -- BL-KI-08 (false prompt premise: a batch_producer already existed shipping RAW\ntemplates; this module FILLS them). Verified: test_creative_batch (no '{' or '[' in any hook_text; a thin\nproduct omits the templates it cannot fill). Pairs with HR-NO-FABRICATED-COPY + HR-EGO-PESOS.",
       "exception": "none. A batch with a literal field token in the delivered copy is broken; reduce the volume,\nnever the honesty.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1436,6 +1654,8 @@
       "evidence": "2026-06-16 SL-117 -- BL-KI-08, built on the SL-116 ECE. Verified: test_creative_batch (a hook\narchetype the moat already knows wins at HIGH confidence is removed as LOW_LEARNING before the menu, while\nnovel archetypes survive). Pairs with HR-ECE-PRIOR-MANDATORY + HR-ECE-BLOCK-IS-VALUE.",
       "exception": "none. Presenting the raw unfiltered cross-product is presenting noise.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1449,6 +1669,8 @@
       "evidence": "2026-06-16 SL-118 -- the creative-batch endpoint (filtered_out + pkm_is_guessing in the response) +\nthe TestsSugeridos surface. Pairs with HR-BATCH-ECE-FILTERED + HR-BATCH-NO-PLACEHOLDER.",
       "exception": "none. A surface that hides the filtering presents curated output as if it were the whole truth.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1462,6 +1684,8 @@
       "evidence": "2026-06-16 SL-119 -- \"Proponer este test\" linked to a bare /app/inicio-guiado/paso-1 with no hook\ncarried, forcing the operator to re-pick what the ECE had already recommended. Fixed with a sessionStorage\nconsume-once carry into the Guided Start creatives step (paso-4). Pairs with HR-TESTS-SUGERIDOS-TRANSPARENCY +\nHR-BATCH-ECE-FILTERED.",
       "exception": "none. A \"propose\" button that drops the operator into an empty flow is a dead-end disguised as an action.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1475,6 +1699,8 @@
       "evidence": "2026-06-17 SL-120 -- the ECE evaluated experiments PRE-spend from static memory but no result fed back POST-spend, so the same hook in the same niche was re-proposed with no memory of last time. Closed with experiment_outcomes_compressed + outcome_recorder + kill/scale hooks + PKM consumption. Pairs with HR-D14 (collective glass box) + HR-ECE-PRIOR-MANDATORY + HR-ECE-BLOCK-IS-VALUE.",
       "exception": "none. A learning loop that can block a kill, or that exposes one operator's identity to another, is a net negative -- it must degrade silently-but-logged, never escalate.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1488,6 +1714,8 @@
       "evidence": "2026-06-17 SL-121 -- market_signals/ad_performance_signals stored hook_type=\"unclassified\" for every ad, starving the PKM/WPR/OGD/CRE of the type signal. Closed with a deterministic resolver wired at ingest + recorder + ECE proposal. Pairs with HR-TASTE-DETERMINISTIC + HR-NICHE-01 (the niche classifier's same honest-unclassified doctrine).",
       "exception": "none. A forced classification that is wrong is strictly worse than UNCLASSIFIED because it poisons shared learning.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1501,6 +1729,8 @@
       "evidence": "2026-06-17 SL-121 -- once hook_type was classified (HR-HOOK-TYPE-DETERMINISTIC), the ECE could finally see same-type concentration. Pairs with HR-ECE-BLOCK-IS-VALUE + HR-ECE-LEARNING-LOOP.",
       "exception": "the Owner may raise/lower _DIVERSIFICATION_CAP per the niche's maturity; the gate itself (diversity = learning) is doctrine.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1514,6 +1744,8 @@
       "evidence": "2026-06-17 SL-122 -- with hook_type classified (SL-121) + the Learning Loop feeding outcomes (SL-120), the system could finally extract specific patterns (\"IDENTITY in fitness at ROAS 2.8x with 5 confirmations\") and promote the replicated ones to the PKM's HIGH tier. Pairs with HR-D14 (anonymity), HR-VAULT-PRIOR (no invented priors), HR-ECE-LEARNING-LOOP.",
       "exception": "the Owner may raise the independence threshold for a higher bar; lowering it below 3 distinct operators is forbidden (it re-admits unreplicated noise as HIGH).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1527,6 +1759,8 @@
       "evidence": "2026-06-17 SL-123 -- the SL-120 Learning Loop records operational kill-modes (cpa_above_target, roas_below_floor, ...), a DIFFERENT taxonomy from the strategic FP-1..FP-10 business corpus, so most empirical failures surface as EMERGENT -- which is precisely the FGR's value. Pairs with HR-WPR-CONFIDENCE-HONEST (the symmetric winner registry), HR-D14, HR-VAULT-PRIOR.",
       "exception": "the Owner may raise the act-on threshold; treating a 2-independent EMERGENT pattern as noise (ignoring it because it is absent from the corpus) is forbidden.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1540,6 +1774,8 @@
       "evidence": "2026-06-17 SL-123 -- the FGR was built as the WPR's mirror (same extract -> tier -> PKM -> endpoint shape). Pairs with HR-WPR-CONFIDENCE-HONEST, HR-FGR-EMERGENT-DETECTION.",
       "exception": "none -- the symmetry is doctrine.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1553,6 +1789,8 @@
       "evidence": "2026-06-17 SL-125 -- with the WPR (SL-122) + FGR (SL-123) both live, the HGR could JOIN static + performance + winning + losing into one Hook Genome per archetype. Pairs with HR-WPR-CONFIDENCE-HONEST, HR-FGR-EMERGENT-DETECTION, HR-VAULT-PRIOR.",
       "exception": "none -- a fabricated fitness number poisons the operator's read of which hooks are proven vs unknown.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1566,6 +1804,8 @@
       "evidence": "2026-06-17 SL-126 -- with the HGR (SL-125) scoring hooks in isolation, the CDR rose a level: a hook that wins alone can still fail wrapped in the wrong meat_format/awareness, so the CDR captures which COMBINATIONS win together. Substrate already present (meat_format + awareness_level columns on experiment_outcomes_compressed since SL-120) -> pure JOIN, Scenario A (Zero-DDL). Pairs with HR-WPR-CONFIDENCE-HONEST, HR-FGR-EMERGENT-DETECTION, HR-HOOK-GENOME-HONEST, HR-D14, HR-VAULT-PRIOR.",
       "exception": "the Owner may raise the noise floor or the independence threshold for a higher bar; registering a trio whose co_occurrence_score is at/below the floor (equal win/lose concentration) as DNA is forbidden -- that re-admits noise as signal.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1579,6 +1819,8 @@
       "evidence": "2026-06-17 SL-129 -- the CDR (SL-126) captured creative DNA; the ODR rose a level to offer DNA (price band + guarantee + shipping + bundle + urgency). The anchor found the offer structure is persisted NOWHERE joinable to outcomes (offer_builder generates it transiently; FirstWinProfile/OperatorProfile carry no offer fields), so the ODR is an offer-capture FOUNDATION (Owner-approved): the anonymized snapshot rides learning_extracted via a recorder seam + executor wiring, and the registry derives DNA forward. Pairs with HR-CDR-CO-OCCURRENCE-HONEST, HR-D14, HR-VAULT-PRIOR, HR-ODR-ADVISORY-NOT-BLOCK.",
       "exception": "none -- exposing an exact price cross-operator is forbidden without exception. The Owner may narrow the bands further but never widen them to reveal a price.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1592,6 +1834,8 @@
       "evidence": "2026-06-17 SL-129 -- the operator own offer is not captured at launch (the substrate gap the foundation addresses forward), so the advisory presents the niche winning offer DNA as a recommendation, not an operator-specific diff. Pairs with HR-ODR-PRICE-PRIVACY, HR-VALIDATION-GATE, HR-ECE-BLOCK-IS-VALUE.",
       "exception": "none -- the ODR advisory must never become a launch gate. (Distinct from the ECE pre-spend BLOCK and the pre-market validation gate, which ARE blocks by separate sealed design.)",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1605,6 +1849,8 @@
       "evidence": "2026-06-18 SL-132 -- the GCE's 5 substrate submotors (ECE/WPR/FGR/CBLR/KC) were all live and derived-live; the LVS rose a level to MEASURE the chain's velocity. The anchor found the prompt's premise (a persisted upgrade_history / asset created_at to subtract for promotion velocity, and a batch extraction step with latency) does NOT exist in the codebase -- the architecture is derived-live, so two of the three dimensions are unmeasurable by construction. Rather than fabricate them, the LVS reports them as structural None and delivers the one real dimension. Pairs with HR-WPR-CONFIDENCE-HONEST, HR-VAULT-PRIOR, HR-D14, HR-KC-COMPOUND-HONEST, HR-GCE-FLYWHEEL-CLOSED.",
       "exception": "none -- fabricating a velocity number to avoid showing UNKNOWN, or presenting a structurally-None dimension as a real latency, is forbidden. A dashboard that lies is worse than one that honestly says \"not yet\". (A future audit table could light up extraction/promotion; until it exists, they stay structural None.)",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1618,6 +1864,8 @@
       "evidence": "2026-06-18 SL-132 -- the LVS was the only remaining GCE submotor (GCE_LIVE_STATUS 5/6). With it live the loop is closed and instrumented. The anchor found a prior session had already built most of the calculator + endpoint + tests (uncommitted in the worktree); this seal extends rather than duplicates (the STOP-if-partial path). Pairs with HR-LVS-UNKNOWN-IS-HONEST, HR-KC-COMPOUND-HONEST, HR-CBIN-COMPLETE.",
       "exception": "none -- claiming the GCE compounds without the LVS instrument in place, or declaring 6/6 while a submotor is only partially wired, is forbidden. The proof is the measured datapoint, not the architecture diagram.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1631,6 +1879,8 @@
       "evidence": "2026-06-18 SL-133 -- the GCE was complete (6/6) and could learn/compress/compose, but when a winner generated verified profit nothing decided what to DO with it (kill_scale_router is binary, capital_banding only permits/blocks). The PRR (RAE gap P0) closes that loop. The anchor found the integration-anchor's v1 plan called for a new rae_reinvestment_decision table, but the Owner's prompt mandated Zero-DDL -> resolved derived-live + audit-via-KarmaEvent.payload (the established GCE/CBIN pattern). Pairs with HR-PRR-FAIL-OPEN, HR-MIGRATION-NO-AUTOESCALE, HR-D14, HR-VAULT-PRIOR, HR-GCE-FLYWHEEL-CLOSED.",
       "exception": "none -- showing a reinvestable-profit number the system cannot verify, presenting PRODUCTION as evaluable without the CEE, or defaulting to scale because it is the easy option, is forbidden. A fabricated projection could make the operator scale past what their capital can sustain.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1644,6 +1894,8 @@
       "evidence": "2026-06-18 SL-133 -- the PRR is portfolio-level guidance bolted onto the money path; the kill/scale executors already commit capital under their own gates, and the PRR must add decision value without ever becoming a new failure mode for capital. Pairs with HR-PRR-NO-FABRICATED-PROJECTION, HR-ODR-ADVISORY-NOT-BLOCK, HR-KARMA-AUTONOMY.",
       "exception": "none -- wiring the PRR so that a proposal failure blocks the revenue sync, or so that an ACT auto-executes a reinvestment in v1, is forbidden.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1657,6 +1909,8 @@
       "evidence": "2026-06-18 SL-136 -- with the GCE 6/6 and the PRR (RAE gap P0) live, the RAE's next pure-reader submotor was needed: without a burn-rate observer the operator could run out of capital before the ECE/kill_executor detects the experiment is a loser (the kill looks at accumulated CPA, after the fact). NAMING NOTE: the RAE corpus's \"SRE\" is the Scale Readiness Engine (a pre-scale checklist); THIS is the Spend Rate Engine the Owner's prompt specified (a burn-rate monitor) -- distinct submotor, same acronym, the Owner spec governs (PR-DECISIONS). Pairs with HR-PRR-FAIL-OPEN, HR-ODR-ADVISORY-NOT-BLOCK, HR-MSR-SHIFT-HONEST, HR-KARMA-AUTONOMY.",
       "exception": "none -- wiring the SRE to pause, cancel or auto-kill an experiment, or to move the operator's capital without their last approval, is forbidden. A SRE that acts violates the system's core philosophy: the operator's capital always requires their own last word to move. The kill belongs to the kill_executor's sealed CPA thresholds; the SRE is the early warning, not the trigger.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1670,6 +1924,8 @@
       "evidence": "2026-06-18 SL-138 -- with the PRR (capital routing) and SRE (burn alert) live, the RAE lacked a STRATEGIC reader: an operator with healthy ROAS can still have revenue capped by no capital to scale, a saturating niche, a low winner rate, or one-dimensional hooks, and nothing told them which to fix first. The RBD is the diagnosis layer; like the PRR/SRE it is a pure reader that never moves capital. Pairs with HR-SRE-OBSERVE-NOT-ACT, HR-PRR-FAIL-OPEN, HR-PRR-NO-FABRICATED-PROJECTION, HR-MSR-SHIFT-HONEST.",
       "exception": "none -- wiring the RBD to act on its diagnosis (pause/scale/kill/spend), fabricating estimated_revenue_unlock_eur, or emitting a diagnosis for an operator the system cannot honestly diagnose (INSUFFICIENT_DATA) is forbidden. A diagnosis without data is fabrication; a wrong diagnosis is worse than none -- it sends the operator to fix the wrong problem while the real bottleneck bleeds revenue.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1683,6 +1939,8 @@
       "evidence": "2026-06-19 SL-139 -- the RAE's three readers (PRR/SRE/RBD) each spoke separately; without synthesis the operator carries the integration burden and may optimize a sub-metric (scale a winner) while the real problem (a critical burn) bleeds them out. The NBGAE is the synthesizer that makes the RAE actionable as ONE voice. CAPE remains blocked by the CEE; NBGAE v1 ships without the conversion dimension (cape_gap=True, honest), valuable now and upgradeable when the CEE lands. Pairs with HR-RBD-DIAGNOSIS-HONEST, HR-SRE-OBSERVE-NOT-ACT, HR-PRR-FAIL-OPEN, HR-PRR-NO-FABRICATED-PROJECTION.",
       "exception": "none -- wiring the NBGAE to produce more than one action, to act on its recommendation (spend/scale/pause/kill), to let a HIGH opportunity mask an URGENT signal, to emit a Karma event for INSUFFICIENT_DATA or when nothing changed, or to link a CTA to a nonexistent route is forbidden. The operator's capital always requires their own last word to move.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1696,6 +1954,8 @@
       "evidence": "2026-06-20 SL-140 -- CAPE was the last RAE engine, blocked by a non-existent CEE. The CEE v1 unblocks it by deriving the conversion dimension from clicks+conversions that already exist (no Shopify-traffic integration), honestly labelled DERIVED/ESTIMATED so CAPE inherits the estimate's confidence ceiling. The full CEE (direct landing-page traffic) and a higher-confidence CAPE remain future work; v1 is honest about being an estimate. Pairs with HR-NBGAE-ONE-ACTION, HR-RBD-DIAGNOSIS-HONEST, HR-MSR-SHIFT-HONEST, HR-PRR-NO-FABRICATED-PROJECTION.",
       "exception": "none -- presenting a DERIVED CVR as a measured one, labelling the CEE estimate HIGH, using the CPA/AOV (=ROAS) formula as a conversion rate, CAPE projecting beyond what the cycles support, or fabricating a per-dimension contribution / efficiency score is forbidden. A projection built on a mislabelled conversion metric misleads the operator about where their real advantage is.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1709,6 +1969,8 @@
       "evidence": "2026-06-18 SL-135 -- with GAP-1 (per-operator source_market) and the MME (SL-134, one-migration) live, the MEE rose a level to the PORTFOLIO: which markets to expand into, ranked by portability + capital readiness. The anchor found the work already built (uncommitted in the tuax-mme worktree); a sibling pane committed it to main (d13be77) during the finish-and-ship approval. Two of the five dimensions are structurally ESTIMATED (no per-market regulation / market-segmented corpus exists) -- rather than fabricate them, the WPA labels them and lets the weakest-link confidence carry the honesty. Pairs with HR-MARKET-AXIS-DEFAULT-EUROPE, HR-MSR-SHIFT-HONEST, HR-WPR-CONFIDENCE-HONEST, HR-VAULT-PRIOR, HR-D14.",
       "exception": "none -- softening a blocking linguistic verdict, presenting an ESTIMATED score as a measured one, or declaring PORTABLE below the empirical bar to make a recommendation more appealing is forbidden. An honest LOW_PORTABILITY protects the operator's capital; a fabricated PORTABLE spends it on a market the data never supported.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1722,6 +1984,8 @@
       "evidence": "2026-06-21 Sprint Waitlist-Nurture -- the waitlist captured emails and sent the welcome (\"estás en la lista\") on join, but had no nurture sequence: the silence post-signup kills waitlist->operator conversion. The anchor found Build A (welcome on join) + the admin view already live (5th sprint running with pre-existing core); the genuinely-new work was the EMAIL 2/EMAIL 3 milestone broadcast, built fully-wired (no dead button -- Reality Contract) behind the Owner's manual confirm trigger. Pairs with HR-DEMO-NO-FAKE-DATA, HR-WAITLIST-GATE, HR-6, the prompt-defense baseline (untrusted public name is HTML-escaped).",
       "exception": "none -- promising a seat/timeline/revenue, or sending a 'results' email with a fabricated or absent figure, is forbidden. An honest \"aún no hay plaza, te avisaremos\" protects the relationship; a fabricated \"tu plaza está lista en 48h\" destroys it the moment it is not true.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1735,6 +1999,8 @@
       "evidence": "2026-06-21, Pane 6 waitlist. El prompt asumio GAP \"no existe link de\n  baja real\" -> el anchor probo que YA estaba 100% vivo y conforme (footer en\n  los 3 emails via _unsubscribe_footer, GET /api/v1/waitlist/unsubscribe/{token}\n  idempotente -> 302 /unsubscribed, pagina de confirmacion real). Se SELLA la\n  doctrina para que ningun email futuro pueda shippear sin el mecanismo, y para\n  fijar que el token de baja es una credencial (nunca un campo de un response).",
       "exception": "\"owner: enviar sin footer de baja, asumo el riesgo legal\" (literal,\n  por un solo envio; jamas el default).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1748,6 +2014,8 @@
       "evidence": "2026-06-21 SL-144 -- the gap was the first-cycle: a new operator had no screen telling them the path to their first test, and SYSTEM_HEALTH.md was a one-time static snapshot. G2 caught HIGH-1 (the email-vs-brand tenant-key mismatch made READY unreachable for the exact target persona) -- fixed by resolving the brand in the router and matching either key, with a regression test crossing the resolve_operator_brand seam. Pairs with HR-INVESTOR-METRICS-HONEST, HR-NBGAE-ONE-ACTION, HR-D14, HR-4.",
       "exception": "none -- marking a step completed without a real DB verification, keying a step on a signal with no creation site, querying a brand-keyed table by email alone, or an action_link to a non-existent route is forbidden. A false \"ready\" costs the operator a failed first test and their trust.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1761,6 +2029,8 @@
       "evidence": "2026-06-21, batch 4 (15 posts persona-specific). Cuatro gaps de 0\n  cobertura confirmados por grep antes de escribir: el-que-fallo, el-profesional,\n  LATAM-por-pais, Meta-avanzado. Se SELLA para que ningun post persona-specific\n  caiga en la motivacion vacante — el modo de fallo natural cuando el lector trae\n  una herida (fallo previo) o un miedo (arriesgar el sueldo): la tentacion de\n  consolar en vez de explicar. El mecanismo es el respeto; la motivacion sin\n  mecanismo es la falta de respeto.",
       "exception": "\"owner: motiva sin mecanismo en este post\" (literal, un solo post;\n  jamas el default).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1774,6 +2044,8 @@
       "evidence": "2026-06-21 SL-145 -- after SL-144 got the operator to READY and launched, a new gap opened: Alvaro opens the system on day 3, sees a CPA with no idea if it is good or bad, and the natural move (pause it) is the one move that destroys the cycle. AdExecution is email-keyed in the real launch flow (fwe_router passes _tenant=email), so the RAE engines and this evaluator key on email; the SL-144 brand-seam both-keys query is kept defensively. Pairs with HR-LAUNCH-CHECKLIST-REAL, HR-NBGAE-ONE-ACTION, HR-SRE-OBSERVE-NOT-ACT, HR-RBD-DIAGNOSIS-HONEST, UT-KARMA-SPECIFIC-MESSAGES, HR-4.",
       "exception": "none -- showing a raw metric without its phase context, omitting the \"what NOT to do\" guidance, fabricating a per-niche euro threshold, or emitting the day-7 milestone more than once per first cycle is forbidden. A first-cycle number without context teaches the operator to panic-kill.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1787,6 +2059,8 @@
       "evidence": "2026-06-22, sprint de internal-linking + AEO. El prompt pidio \"anadir un\n  bloque Respuesta rapida a 15 posts\"; el anchor probo que el bloque YA existe\n  site-wide (el aside de `fast_answer`) y que los 15 posts de mayor potencial AEO\n  YA lideran con un numero con fuente (vault priors, Triple Whale 2025). Se SELLA\n  para fijar que el bloque AEO es un EXTRACTO de lo ya probado, jamas una fuente\n  de cifras nuevas, y que no se duplica un bloque ya presente. Complementa\n  HR-COPY-PRECISION-OVER-ENTHUSIASM y el COPY_STANDARD.",
       "exception": "\"owner: cita esta cifra sin fuente en el post, la respaldo yo\"\n  (literal, un solo post; jamas el default).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1800,6 +2074,8 @@
       "evidence": "2026-06-22 SL-145b -- after SL-145 taught Alvaro to wait until day 7, the gap was the day AFTER the result: the operator who does not know what to do after the first KILL never launches cycle 2, and no cycle 2 means no data and the CIS never rises. Two premises corrected at plan time: (1) the CIS is already derived-live -- nothing to recalculate; (2) a single operator's WINNER does NOT raise data_sufficiency (needs 2 independent operators), so claiming a rise would be dishonest. Pairs with HR-FIRST-CYCLE-PATIENCE, HR-INVESTOR-METRICS-HONEST, HR-NBGAE-ONE-ACTION, HR-LAUNCH-CHECKLIST-REAL, HR-4.",
       "exception": "none -- softening a real failure, fabricating a euro/CPA/ROAS, claiming a single-operator CIS rise, or a next-step button that commits capital without the Guided Start / campanas gate is forbidden. A debrief that flatters the operator costs them their next cycle's capital and trust.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1813,6 +2089,8 @@
       "evidence": "2026-06-22 SL revenue-history -- the prompt asked for a \"per-cycle P&L\" assuming the system \"knows\" gross/ad_spend/fee/net and a flat 20% fee. The anchor proved (1) the single-period D08 P&L already exists LIVE (SL-104 A, /app/configuracion Payments: gross/ad_spend/fee with a 3-month history); (2) the fee is NOT 20%x(gross-ads) but 20% over MATURED profit minus the refund reserve (D08), EUR0 while a month is in the refund window or currency-mismatched; (3) billing is per calendar MONTH, not per ad-test \"cycle\". Built only the genuine gaps -- a multi-period history endpoint + lifetime totals + a /app/capital panel + a once-per-matured-period fee_receipt -- reusing the live settlement (zero fee-logic duplication) and mirroring D08 exactly. Pairs with HR-BILLING-MATURITY, HR-CURRENCY-HONEST, HR-INVESTOR-METRICS-HONEST, HR-CYCLE-DEBRIEF-HONEST.",
       "exception": "none -- a fabricated revenue/fee/net figure, a fee shown as a naive 20%x(gross-ads) instead of the D08 settled value, a EUR0 where the truth is \"unknown\", or a per-cycle P&L the billing model does not produce is forbidden. An operator who cannot audit their own accounts cannot trust the system that manages their capital.\nEXCEPCION literal del Owner: \"owner: muestra esta cifra de P&L sin fuente DB\" (un solo turno; jamas el default).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1826,6 +2104,8 @@
       "evidence": "2026-06-23, i18n-inversion stale-check sprint. The i18n topology inverted (/ = ES canonical, /en/* = EN) and deployed (589d289 / cbe09ef), but 16 smoke checks still asserted the pre-inversion topology (/ = EN, /es/* = ES) -> 16 false fails carried across 2+ sprints, eroding the smoke's signal (a chronically-red suite trains the team to ignore it). Each of the 16 was live-verified against prod before updating (EN routes -> /en/*, ES /es/* -> root slugs, /sitemap.xml ES-canonical, /legal = ES with toggle -> /en/legal, the LandingV2 reworded hero/CTA, moved inversor/precios source paths); 0 deleted; 453/453 green. Pairs with HR-MIGRATION-LIVE-SMOKE-IS-TRUTH, HR-REDIRECT-PERMANENTE, HR-I18N-ONE-LANDING-PER-LOCALE.",
       "exception": "none -- and the inverse is equally binding: if the live behavior is WRONG (a sitemap genuinely 404s where it should serve, a link genuinely broken), the failing check found a REAL bug -> fix the bug, do NOT update the check to accept the breakage. The line is: update the check when reality is correct-but-changed; fix the code when reality is wrong.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1839,6 +2119,8 @@
       "evidence": "[never_again] Classifier blocks ~/.claude/settings.json + commands/ in auto-mode",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1852,6 +2134,8 @@
       "evidence": "[kickbacks] a session hung ~10h undetected caused the Kickbacks suspension (2026-07-04); loop-boundedness added to the governor as a VISIBILITY net, never an autonomous kill. Sealed SCS C75; UKDL T-UNBOUNDED-SESSION-001.",
       "exception": "",
       "severity": "HIGH | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1865,6 +2149,8 @@
       "evidence": "[rca 2026-07-06] Cursor crash -> pane_map 8 days stale (no scheduled task registered, only the Cursor extension regenerated it). Regen showed 30 \"LIVE\"; internal-timestamp forensics proved only 1 genuinely live (this session) + 35 files sharing one mtime spike ~11 min old while their real last turn was 14h-7d old. Fix: build_pane_map.ps1 Get-LastInternalAgeMin + PP-PaneMapUpdate task. UKDL T-PANE-MAP-STALENESS-ROOT-CAUSE-001 + T-PANE-MAP-FALSE-LIVE-MTIME-001. Sealed SCS C79.",
       "exception": "",
       "severity": "HIGH | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1878,6 +2164,8 @@
       "evidence": "[rca] A 120-minute idle ceiling was measured against the live host before shipping and would have dropped three genuinely-open panes idle 2, 6 and 8 days -- the Owner contract is that a pane lives as long as Cursor does. A same-moment cross-check of the two liveness implementations returned 14 sids vs 12; the two extras were exited processes admitted by OpenProcess alone.",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1891,6 +2179,8 @@
       "evidence": "[measured] 23 folderOpen tasks existed against 5 beacons; the session the Owner was typing in had no beacon of its own and a beacon-only gate dropped it in dry-run -- shipping it would have reproduced the reported bug. V-BEACON-NEW-SESSION pins writer/reader parity.",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1904,6 +2194,8 @@
       "evidence": "[rca] A session confirmed clean_exit five days earlier kept relaunching its own terminal tab on every folder open; the scheduled writer restored the task minutes after each manual deletion, which is why several prior fix attempts appeared to fail at random.",
       "exception": "",
       "severity": "HIGH | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1917,6 +2209,8 @@
       "evidence": "[owner report] The reported symptom was verbatim \"revivia el historial correcto pero me mandaba a escribir a una sesion nueva y vacia\"; the inert restoreTerminals key made terminal restore look disabled while it was fully active, misdirecting three prior fix attempts.",
       "exception": "",
       "severity": "HIGH | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1930,6 +2224,23 @@
       "evidence": "[incident] An allowAutomaticTasks reset cost a full diagnosis cycle before the reset itself was found; the gate now pins allowAutomaticTasks, persistentSessionReviveProcess, enablePersistentSessions and restoreWindows as a tripwire.",
       "exception": "",
       "severity": "HIGH | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
+      "valid": true,
+      "rejections": []
+    },
+    {
+      "rule_id": "HR-NOVELTY-001",
+      "title": "Require the 13-question novelty proof before admitting a new institutional mega-system",
+      "form": "FIELDED",
+      "source": "pp:vault/hard_rules/HARD_RULES.md",
+      "trigger": "A proposal to build a new \"fabric\", \"compendium\", institutional operating system, kernel, civilization, governance layer, or intelligence platform (`modules/spec_gate/gate.py::check_novelty_gate`).",
+      "stop": "Refuse GENUINELY_NEW_DATASET status until all 13 questions (problem owner gap, new outcome, real consumer, extension insufficiency, new primitive, new decisions, new evidence, failure class prevented, interfaces with existing owners, value measurement, complexity introduced, retirement condition, why-not-rhetorical-layer) are answered with cited file:line evidence from a DISCOVERED sweep of the repo -- never from the proposal's own curated list of what it assumes doesn't exist. Missing evidence on any question -> classify as EXTEND_EXISTING_OWNER, NEW_MODULE, NEW_VIEW, NEW_POLICY_PACK, NEW_SCANNER_OR_GATE, or REJECT instead. EXCEPCION: Owner phrase \"novelty proof waived -- HR-NOVELTY-001 OK\" for ONE turn.",
+      "evidence": "[iig-compendium-2026-07-30] 6 consecutive mega-corpus proposals for this repo (AISHF, RE Baseline's 3 NEW families -> 1 (CLAE), KSF's 22 -> 4-deferred, the UKR Compendium's 8-step escalation -> 0, this IIG pass's 30 candidates A-AD -> 0) measured as majority-or-fully owned once checked against a discovered denominator instead of the proposal's own list. `vault/plans/iig-compendium-2026-07-30.md`.",
+      "exception": "",
+      "severity": "HIGH | RECURRENCE: 6x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": true,
       "rejections": []
     },
@@ -1943,6 +2254,8 @@
       "evidence": "",
       "exception": "",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "no_enforceable_form"
@@ -1958,6 +2271,8 @@
       "evidence": "2026-06-21 -- the FGR detected emergent patterns (SL-123) but no notification reached the Owner; the event was modelled on the CBIN milestone (SL-142, EVENT_CBIN_PATTERN_PROMOTED): system-sentinel tenant + log-based once-per-pattern dedup. Detect: test_fgr_emergent_event (V-FGR-EMERGENT-ONCE / -LOW / -KNOWN / -PER-PATTERN / -SEAM) + smoke [388]-[389]. Pairs with HR-FGR-EMERGENT-DETECTION, HR-CBIN-MILESTONE-HONEST, HR-D14, D14, D18.",
       "exception": "the Owner may raise the act-on threshold (HIGH-only) or widen it to LOW; the dedup-once and owner-only and anonymized invariants are doctrine.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "stop_missing"
@@ -1973,6 +2288,8 @@
       "evidence": "2026-06-21 -- the 6 CBIN registries were each queryable but the operator had to synthesize \"what to do next\" by hand; the PKM already did this fold internally for the ECE's pre-spend gate, so the synthesis was exposed directly to the operator. Detect: test_cbin_recommendation (V-RECO-FGR-EXCLUDE / -INSUFFICIENT / -NO-HIGH-WITHOUT-3OPS / -HIGH-3OPS / -ORDER / -MEDIUM-SIGNALS / -WIRING) + test_cbin_recommend_endpoint (V-RECO-EP-*) + smoke [394]-[397]. Pairs with HR-WPR-CONFIDENCE-HONEST, HR-FGR-EMERGENT-DETECTION, HR-CDR-CO-OCCURRENCE-HONEST, HR-D14.",
       "exception": "the Owner may tune the confidence floor at which the Guided Start banner appears (MEDIUM+ default); the recommend-only, no-HIGH-without-3-operators, FGR-exclusion, honest-INSUFFICIENT and anonymized invariants are doctrine.",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "stop_missing"
@@ -1988,6 +2305,8 @@
       "evidence": "** TUA-X blog audit 2026-06-22 found 155/214 served titles >60 chars (avg 68.7, max 120; only 44 in the 50–60 band) emitted verbatim as `<title>` — systemic SERP-truncation/CTR loss across the long tail. Trimmed all 155 to 40–60 (161 in band, 0 over 60, 0 under 40), front keyword preserved, Zero-DDL, live 4b5d649.",
       "exception": "** Owner says literally \"title length exempt this turn\".",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_missing"
@@ -2003,6 +2322,8 @@
       "evidence": "** TUA-X blog 2026-06-25 (SL-blog-noindex-weekly-digests). 20 weekly-intelligence digests (2026-w22..w26 fitness/skincare, EN+ES) were dated thin content overlapping the evergreen meta-ads pillars. The prompt assumed `noindex:true` would auto-drop them from the sitemap \"like the templates\" — but templates use `published:false` (which 404s); noindex was NOT wired for blog posts. Wired BlogFrontmatter.noindex + listIndexablePosts() for grid/sitemap, kept listBlogPosts for routing (200), robots noindex in both [slug] routes. Live f4e8788: sitemaps EN 104->94 / ES 112->102, digests 200+noindex, indexable posts intact. Zero-DDL, tsc 0.",
       "exception": "** Owner says literally \"index the digests this turn\".",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_missing"
@@ -2018,6 +2339,8 @@
       "evidence": "** TUA-X landing GEO/trust sprint 2026-06-25 (SL-landing-geo-trust, branch sprint/landing-geo-trust off main 7036769, FF-ready). Anchor caught FOUR prompt premises false: (a) prod was not 4f283ad; (b) the landing→blog bridge already existed (ProofStrip latest-3) → refined to curated data posts, not rebuilt; (c) blog posts ALREADY had full Article+FAQPage schema (postStructuredData, @type:\"Article\" not \"BlogPosting\") → Build C reduced to the genuinely-absent knowsAbout/slogan/parentOrganization + opt-in citation, honoring \"STOP si Build C duplica schema existente\"; (d) the suggested 2×CPA/7-day kill mechanism was fabricated vs the real volume-dependent two-threshold rule. Also caught: a sibling (fix/cw-landing-honesto-bridge-es, unmerged, stale STEPS-array) owns the hero/step-03 copy → Build A confined to step-01 + ProofStrip (zero collision). Activated a dead vitest (blogSchema.test.ts → .tsx; config include was .tsx-only since Sprint 40). **DEDUP OUTCOME (2026-06-26, prod 88ad051):** before deploy, re-anchoring found TWO MORE panes had already shipped ~75% of this sprint to main — seo/blog-hreflang-reciprocal (d451e38) shipped the ComoFunciona claims + the identical ProofStrip curation; seo/geo-trust-schema merged Org knowsAbout + Article citation (more completely: 15 mdx + BlogPostView). Owner chose HowTo-only; dropped Build A/B/C; shipped ONLY the genuinely-new HowTo node (live fe96bca, +97/0-del, smoke 14/14). A first HowTo commit nearly regressed prod — a worktree file-sync daemon + advancing main made a pathspec commit DELETE the sibling's live knowsAbout; caught by `git diff kobicraft/main HEAD` showing `-knowsAbout` and fixed by re-cherry-picking the additive Build D and verifying 0 deletions in the COMMITTED OBJECT before push. Net lesson: in an N-pane repo, re-anchor every sub-build against current main + sibling branches immediately before deploy, ship only the proven-unique delta, and verify the committed-object diff (not worktree/index) is additive.",
       "exception": "** Owner says literally \"make the claim aspirational this turn\".",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_missing"
@@ -2033,6 +2356,8 @@
       "evidence": "** TUA-X qa-system-vps-playwright sprint 2026-07-10 (SL-115). Built `scripts/qa/` (unified runner + VPS-only visual regression) to replace the manual HR-VISUAL eyeball on the operator dashboard calco. Two engineering traps surfaced and are folded into the harness: (1) a golden baseline must be a re-render of the SAME document, not preview-vs-reference-mockup — two different documents diverge ~6% on imperceptible dark-mode text-edge AA (Linux FreeType) while visually identical, which would make a 1% threshold unusable; same-document renders sit at 0.0000%. (2) the fixture must be render-normalized (fixed font kills the `fonts.googleapis.com` load race; frozen CSS animations stop a pulse ring screenshotting a random frame) — applied to the fixture only, prod CSS untouched. Proven end-to-end on the VPS: clean 0.0000% PASS (x2 deterministic), injected drift 55.56% FAIL, restored 0.0000% PASS. Pairs with HR-2 (green smoke before deploy) and HR-VISUAL-01/02 (pixel-exact calco).",
       "exception": "** Owner says literally \"run playwright local this turn\" (or sets `QA_FORCE_VPS=1` on a host they KNOW is an approved render box).",
       "severity": "",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_missing"
@@ -2048,6 +2373,8 @@
       "evidence": "[never_again] TEST CRITICAL bug for auto-propose pipeline ZZZ",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_is_smoke_fixture",
@@ -2064,6 +2391,8 @@
       "evidence": "[ukdl] UKDL S+++ 2026-05-26",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_is_heading_scrape"
@@ -2079,6 +2408,8 @@
       "evidence": "[ukdl] OSA Absorption + TCO Context Fix UKDL (2026-05-28)",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_is_heading_scrape"
@@ -2094,6 +2425,8 @@
       "evidence": "[session_lessons] 2026-05-24 -- Deployment Skill iteration log",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "stop_is_table_fragment"
@@ -2109,6 +2442,8 @@
       "evidence": "[session_lessons] L6: A1/A2 sync direction propagates corruption byte-perfectly",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "stop_is_boilerplate"
@@ -2124,6 +2459,8 @@
       "evidence": "[session_lessons] NEVER_AGAIN — 2026-05-29T20:06:43Z — claude-power-pack — HIGH",
       "exception": "",
       "severity": "CRITICAL | RECURRENCE: 1x",
+      "enforcement": "",
+      "binding": "UNDECLARED",
       "valid": false,
       "rejections": [
         "trigger_is_heading_scrape",

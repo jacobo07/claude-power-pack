@@ -11,6 +11,10 @@
   --binding   which rules declare WHERE they bind (advisory / block-build
               / block-deploy / ...) and which declare nothing -- the
               named drill-down the digest's binding section points at
+  --reconcile which rules this estate ENFORCES but never compiles, and how
+              CLAUDE.md's block differs from the archive's. Exits 1 only on
+              a rule that fires from a hook and is absent from the corpus.
+              Add --singletons to list one-file ids.
 
 Sealed by the AKOS macro audit (2026-07-12).
 """
@@ -205,6 +209,22 @@ def cmd_binding() -> int:
     return 1 if cov["unrecognized"] else 0
 
 
+def cmd_reconcile(show_singletons: bool = False) -> int:
+    """Exit 1 only on a rule that FIRES from a hook and never compiles.
+
+    That set is small, actionable and safety-relevant. Prose divergence is
+    reported and does not fail, for the same reason cmd_binding tolerates
+    UNDECLARED: an alarm that is always on stops being read.
+    """
+    from modules.rule_compiler.parser import load_corpus
+    from modules.rule_compiler.reconcile import PP_ROOT, reconcile, render
+
+    compiled = {r.rule_id for r in load_corpus()}
+    res = reconcile(PP_ROOT, compiled)
+    print(render(res, show_singletons=show_singletons))
+    return 1 if res["enforced_not_compiled"] else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
         description="Compile hard rules into a validated DB + a "
@@ -217,7 +237,14 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--list", action="store_true")
     g.add_argument("--rejects", action="store_true")
     g.add_argument("--binding", action="store_true")
+    g.add_argument("--reconcile", action="store_true")
+    # A modifier, NOT a member of the mutually-exclusive group: putting it in
+    # `g` would make `--reconcile --singletons` an argparse error.
+    p.add_argument("--singletons", action="store_true",
+                   help="with --reconcile: list one-file ids")
     a = p.parse_args(argv)
+    if a.reconcile or a.singletons:
+        return cmd_reconcile(show_singletons=a.singletons)
     if a.binding:
         return cmd_binding()
     if a.compile:
