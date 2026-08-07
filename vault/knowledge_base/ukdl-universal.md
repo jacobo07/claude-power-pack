@@ -5725,5 +5725,69 @@ vocabulary, rather than bending the owner to fit the plan. A count in a plan
 
 **Cross-project:** tagged `#CROSS-PROJECT`.
 **Origin:** CDICF E4 deferral, `vault/audits/cdicf/CDICF_NEXT_ACTIONS.md`.
+**Confirmed by its own resolution (2026-08-07):** E4 shipped once the item was
+re-derived from the owner's real vocabulary — the kill switch HR-APA-009
+actually demands — rather than by inventing "activation modes" to match the
+plan. Re-derivation is the fix; bending the owner to fit the plan is not.
+
+### T-CONVENTION-INERT-ON-THE-HOST-THAT-RUNS-IT-001 (2026-08-07, CDICF E4)
+
+**Trap:** adopting an estate's stated convention for a mechanism without
+checking that the convention *fires on the platform the code actually runs on*.
+The result passes review — it matches the documented pattern and every other
+module — and is inert in production. A safeguard that cannot trigger is worse
+than none, because it is counted as present.
+
+**Observed:** PP's convention for stopping a long-running process is a
+SIGTERM/SIGINT handler with graceful shutdown, used by four modules. The CDICF
+installer's kill switch was to follow it. But Node **never emits SIGTERM on
+Windows** — it can be listened for and is not delivered — and Windows is this
+estate's primary host. A signal-only kill switch would have satisfied
+HR-APA-009 on paper, passed a test that called the handler directly, and never
+once fired for real. The estate had already shipped one disarmed kill switch,
+so this was the second occurrence of the same shape.
+
+**General form:** for any mechanism whose value is that it *fires*
+— kill switches, signal handlers, timeouts, file locks, watchdogs — verify the
+delivery path on the target platform before adopting the convention, and pick
+a portable arm when they diverge (here: a sentinel file, cross-process and
+inspectable, with signals layered on where the platform delivers them). Then
+test the mechanism END TO END rather than by invoking its handler: a test that
+calls the callback proves the callback works, never that anything calls it.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Companion to the disarmed-kill-switch
+precedent in `enforcement_scs_c92.md`.
+**Origin:** CDICF E4, `tests/killswitch.test.js`.
+
+### T-CRITICAL-AS-DEDUCTION-RESCORES-HISTORY-001 (2026-08-07, CDICF E5)
+
+**Trap:** adding a new finding type to a **weighted** scorer that a gate already
+thresholds on. The new criterion looks additive, but every existing subject is
+silently re-scored: a surface that scored 82 yesterday scores 78 today with
+nobody touching it, and work that was APPROVE becomes REVISE for reasons no
+diff explains. A criterion that re-scores history is a regression wearing a
+feature's clothes.
+
+**Observed:** the CDIO scorer subtracts 25 for a `critical` verdict, and
+`DESIGN_GOVERNANCE` §5 gates deploys at ≥80. Emitting CDICF's new
+dependency-scope failure as a `critical` verdict would have moved the score of
+every surface reviewed. The work was deferred on exactly this until the Owner
+ruled on severity, then built as a **hard filter evaluated before any score
+exists**: an unresolved dependency does not lower the number, it means the
+review never reaches a number, and the score is `None` rather than a deduction.
+
+**General form:** when a new check must be blocking, ask whether it belongs
+*in* the score or *before* it. A check about a fact (it will break at runtime)
+belongs before; a check about a judgment (this is low quality) belongs in.
+Putting a fact into a weighted score both weakens it — 25 points is survivable
+— and corrupts the scale for everyone else. Then **measure**: snapshot the
+existing subjects BEFORE the first edit and re-measure after; byte-identical is
+the only acceptable result for a change claiming to be composition-preserving.
+Deriving the "before" after the change is the reference-from-post-state defect
+(`feedback_reference_derived_from_post_state`).
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to any scoring gate — code
+review, quality scores, risk ratings, lint budgets.
+**Origin:** CDICF E5, `tools/test_cdicf_scope.py` `V-CDICF-SCOPE-01/06`.
 
 - **UKDL-OSA-2026-08-06T14:13:13Z** [CRITICAL] hr-gate-smoke: ZZZ-SMOKE-CRITICAL probe for auto-propose gate ZZZ -- recognizer: Sees ZZZ-SMOKE-CRITICAL token
