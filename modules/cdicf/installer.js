@@ -82,12 +82,19 @@ const { rollupChecksum } = require('./registry_emitter');
 const TX_DIR = '.cdicf';
 const INSTALLED_SCHEMA = 'cdicf/installed/1';
 const JOURNAL_SCHEMA = 'cdicf/journal/1';
+// The kill switch's portable arm. A file, not only a signal: Node never emits
+// SIGTERM on Windows, so a signal-only switch would be inert on this estate's
+// primary host — a kill switch that cannot fire is the disarmed-kill-switch
+// failure, not a kill switch. The file is also cross-process and inspectable.
+const KILL_SENTINEL = 'KILL_SWITCH';
+const ABORTED_STATE = 'aborted-by-kill-switch';
 
 const REFUSAL = {
   INPUT_INVALID:             { exit: 4 },
   REDISTRIBUTION_PROHIBITED: { exit: 5 },
   CHECKSUM_MISMATCH:         { exit: 6 },
   ARTIFACT_SET_MISMATCH:     { exit: 6 },
+  KILL_SWITCH_ACTIVATED:     { exit: 12 },
   POSTCONDITION_FAILED:      { exit: 7 },
   DIRTY_STATE:               { exit: 8 },
   NOT_INSTALLED:             { exit: 9 },
@@ -202,6 +209,128 @@ function shaOnDisk(abs) {
 
 function rmrf(p) {
   try { fs.rmSync(p, { recursive: true, force: true }); } catch (_) { /* best effort */ }
+}
+
+/* ------------------------------------------------------------------------- *
+ * Kill switch
+ *
+ * Stops the transaction IN PROGRESS. It is not a rollback and not a retro-active
+ * uninstall: installs committed in earlier sessions are untouched, by decision.
+ *
+ * What it leaves behind is the same thing an abrupt kill leaves behind — a
+ * journal describing how to get back — except it is written deliberately, with
+ * the phase it stopped at and the last durable state recorded. So the tree is
+ * returned to its pre-state by the ordinary recovery path, and the abort is
+ * still legible afterwards. The journal is NOT deleted here; recovery archives
+ * it to .cdicf/aborted/<txid>.json instead of discarding it, so the post-mortem
+ * survives the repair.
+ *
+ * Arming is deliberately not auto-disarming. A switch that resets itself after
+ * one trip is a pause button. Every refusal names the exact disarm command,
+ * because a kill switch nobody can turn off is an outage.
+ * ------------------------------------------------------------------------- */
+
+let _signalTripped = false;
+
+function armSignalKillSwitch() {
+  const onSignal = () => { _signalTripped = true; };
+  const signals = ['SIGTERM', 'SIGINT'];
+  for (const s of signals) {
+    try { process.on(s, onSignal); } catch (_) { /* not supported here */ }
+  }
+  return () => {
+    for (const s of signals) {
+      try { process.removeListener(s, onSignal); } catch (_) { /* ignore */ }
+    }
+  };
+}
+
+function killSentinelPath(target) {
+  return path.join(txPaths(target).root, KILL_SENTINEL);
+}
+
+/*
+ * Returns the activation channel, or null. Three arms, checked cheapest first:
+ * an injected predicate (tests and embedders), a received signal, the sentinel
+ * file. The file is last because it costs a stat at every seam.
+ */
+function killSwitchProbe(target, opts) {
+  const o = opts || {};
+  const sentinel = killSentinelPath(target);
+  return () => {
+    if (typeof o.killSwitch === 'function') {
+      try { if (o.killSwitch()) return 'programmatic'; } catch (_) { /* a throwing probe is not a trip */ }
+    }
+    if (_signalTripped) return 'signal';
+    if (fs.existsSync(sentinel)) return 'sentinel';
+    return null;
+  };
+}
+
+function armKillSwitch(target) {
+  const p = killSentinelPath(target);
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  writeDurable(p, JSON.stringify({
+    armed_at: new Date().toISOString(), armed_by_pid: process.pid,
+    note: 'CDICF installer kill switch. Remove this file, or run `installer.js kill-switch disarm --target <proj>`, to allow installs again.',
+  }, null, 2) + '\n');
+  return { ok: true, status: 'armed', sentinel: p };
+}
+
+function disarmKillSwitch(target) {
+  const p = killSentinelPath(target);
+  const was = fs.existsSync(p);
+  fs.rmSync(p, { force: true });
+  _signalTripped = false;
+  return { ok: true, status: was ? 'disarmed' : 'already-disarmed', sentinel: p };
+}
+
+function killSwitchStatus(target) {
+  const p = killSentinelPath(target);
+  const armed = fs.existsSync(p);
+  return {
+    ok: true, status: armed ? 'armed' : 'disarmed', sentinel: p,
+    signal_tripped: _signalTripped,
+    detail: armed ? readJsonOr(p, null) : null,
+  };
+}
+
+/*
+ * The only writer of the ABORTED record. Two durable writes and nothing else:
+ * the journal (preserved, state changed) and installed.json (an audit row).
+ * The component is deliberately NOT added to `components` — it was not
+ * installed, and a state of record that says otherwise is worse than no record.
+ */
+function abortByKillSwitch(plan, paths, journal, err) {
+  const at = new Date().toISOString();
+  const lastValid = journal.state;
+
+  journal.aborted = {
+    by: 'kill-switch', via: err._killSwitch, at,
+    at_phase: err._atPhase || null, last_valid_state: lastValid,
+  };
+  journal.state = ABORTED_STATE;
+  writeDurable(paths.journal, JSON.stringify(journal, null, 2) + '\n');
+
+  const installed = readInstalled(paths);
+  if (!Array.isArray(installed.aborted)) installed.aborted = [];
+  installed.aborted.push({
+    status: 'ABORTED_BY_KILL_SWITCH',
+    component: plan.component, txid: plan.txid, via: err._killSwitch, at,
+    at_phase: err._atPhase || null, last_valid_state: lastValid,
+    journal: path.relative(plan.target, paths.journal).replace(/\\/g, '/'),
+  });
+  writeDurable(paths.installed, JSON.stringify(installed, null, 2) + '\n');
+
+  return refuse('KILL_SWITCH_ACTIVATED',
+    `kill switch (${err._killSwitch}) stopped the transaction before ${err._atPhase || 'the next write'}`,
+    {
+      txid: plan.txid, component: plan.component, at,
+      at_phase: err._atPhase || null, last_valid_state: lastValid,
+      journal_preserved: paths.journal,
+      next: 'the tree is reverted by `installer.js recover --target <proj>`; ' +
+            'the switch stays armed until `installer.js kill-switch disarm --target <proj>`',
+    });
 }
 
 /* ------------------------------------------------------------------------- *
@@ -404,9 +533,27 @@ function recover(target, opts) {
 
   rmrf(path.join(paths.staging, j.txid));
   rmrf(path.join(paths.backups, j.txid));
+
+  // A kill-switch abort is required to stay inspectable, and repairing the tree
+  // must not cost the evidence. Archive rather than discard, so the journal
+  // outlives the recovery that consumes it.
+  let archived = null;
+  if (j.aborted) {
+    archived = path.join(paths.root, 'aborted', `${j.txid}.json`);
+    try {
+      writeDurable(archived, JSON.stringify(j, null, 2) + '\n');
+    } catch (_) {
+      archived = null;   // an unarchivable journal must not block the repair
+    }
+  }
   fs.rmSync(paths.journal, { force: true });
 
-  return { ok: true, recovered: true, txid: j.txid, state: j.state, restored, removed, skipped };
+  return {
+    ok: true, recovered: true, txid: j.txid, state: j.state,
+    restored, removed, skipped,
+    aborted: j.aborted || null,
+    archived_journal: archived,
+  };
 }
 
 /* ------------------------------------------------------------------------- *
@@ -425,7 +572,22 @@ function readInstalled(paths) {
  */
 function applyPlan(plan, opts) {
   const o = opts || {};
-  const phase = typeof o.onPhase === 'function' ? o.onPhase : () => {};
+  const userPhase = typeof o.onPhase === 'function' ? o.onPhase : () => {};
+  const tripped = killSwitchProbe(plan.target, o);
+  // Every seam is a checkpoint. `renaming` fires immediately BEFORE each
+  // renameSync, which is the requested granularity: renameSync is a single
+  // atomic syscall, so a rename already issued completes and the sweep stops
+  // before the next one. Checking after the write instead would trade the
+  // guarantee for nothing.
+  const phase = (name, info) => {
+    const via = tripped();
+    if (via) {
+      throw Object.assign(
+        new Error(`kill switch (${via}) tripped before ${name}`),
+        { _killSwitch: via, _atPhase: name });
+    }
+    userPhase(name, info);
+  };
   const paths = txPaths(plan.target);
   const stageRoot = path.join(paths.staging, plan.txid);
   const backupRoot = path.join(paths.backups, plan.txid);
@@ -441,6 +603,19 @@ function applyPlan(plan, opts) {
     writeDurable(paths.journal, JSON.stringify(journal, null, 2) + '\n');
   };
 
+  // Refuse before the lock, not after. An already-armed switch means this
+  // transaction must not begin, and creating a journal first would leave a
+  // dirty-state marker for a transaction that never touched anything.
+  const preArmed = tripped();
+  if (preArmed) {
+    return refuse('KILL_SWITCH_ACTIVATED',
+      `kill switch (${preArmed}) is armed; refusing to begin a transaction`,
+      {
+        component: plan.component, at_phase: 'before-start',
+        next: 'run `installer.js kill-switch disarm --target <proj>` to allow installs again',
+      });
+  }
+
   // Acquire the journal exclusively. Creation IS the lock.
   fs.mkdirSync(paths.root, { recursive: true });
   try {
@@ -451,6 +626,11 @@ function applyPlan(plan, opts) {
     }
     return refuse('IO_ERROR', e.message);
   }
+
+  // Signals are listened for only while a transaction is open, and the
+  // listeners are removed on every exit path. A library that permanently
+  // rewires SIGINT for its host process has overstepped.
+  const disarmSignals = armSignalKillSwitch();
 
   try {
     putJournal('planning');
@@ -470,6 +650,9 @@ function applyPlan(plan, opts) {
           { _stale: true });
       }
       if (f.prior_sha === null) continue;
+      // A seam per write, not per loop: "stop before the next write" is only
+      // true if there is a checkpoint before each one.
+      phase('backup-file', { path: f.rel });
       const dst = path.join(backupRoot, f.artRel);
       fs.mkdirSync(path.dirname(dst), { recursive: true });
       fs.copyFileSync(f.abs, dst);
@@ -483,6 +666,7 @@ function applyPlan(plan, opts) {
     // Stage all content and hash-verify it here, so the commit phase is renames
     // only — that is what bounds the partial-state window.
     for (const f of plan.files) {
+      phase('staging-file', { path: f.rel });
       const dst = path.join(stageRoot, f.artRel);
       fs.mkdirSync(path.dirname(dst), { recursive: true });
       writeDurable(dst, Buffer.from(f.content, 'utf8'));
@@ -550,8 +734,17 @@ function applyPlan(plan, opts) {
       checksum: plan.checksum,
     };
   } catch (e) {
-    // Any failure inside the transaction reverts through the same recovery path
-    // an abrupt kill would use. One revert implementation, one set of bugs.
+    // The kill switch is handled BEFORE the generic revert, and the order is
+    // load-bearing: `recover` deletes the journal, which is exactly the
+    // post-mortem artifact an abort is required to preserve. An abort stops;
+    // it does not repair. `recover` does the repair, on demand, and archives
+    // the journal rather than discarding it.
+    if (e._killSwitch) {
+      disarmSignals();
+      return abortByKillSwitch(plan, paths, journal, e);
+    }
+    // Any other failure reverts through the same recovery path an abrupt kill
+    // would use. One revert implementation, one set of bugs.
     const rec = recover(plan.target, { force: true });
     if (e._postcondition) {
       return refuse('POSTCONDITION_FAILED', 'installed files did not verify; the transaction was rolled back',
@@ -559,6 +752,8 @@ function applyPlan(plan, opts) {
     }
     return refuse('IO_ERROR', `${e.message}; the transaction was rolled back`,
       { recovery: rec.ok ? { restored: rec.restored, removed: rec.removed, skipped: rec.skipped } : rec.refusal });
+  } finally {
+    disarmSignals();
   }
 }
 
@@ -575,6 +770,21 @@ function install(entry, im, target, opts) {
   }
 
   const paths = txPaths(path.resolve(target));
+
+  // An armed switch refuses the whole command, not only the write phase. The
+  // check inside applyPlan guards direct callers; this one guards the paths
+  // that return before ever reaching it — an idempotent no-op and a dry run
+  // would otherwise report success into a project someone has explicitly
+  // fenced off.
+  const armedVia = killSwitchProbe(path.resolve(target), o)();
+  if (armedVia) {
+    return refuse('KILL_SWITCH_ACTIVATED',
+      `kill switch (${armedVia}) is armed for this project; refusing to install`,
+      {
+        at_phase: 'before-start',
+        next: 'run `installer.js kill-switch disarm --target <proj>` to allow installs again',
+      });
+  }
 
   // Recovery comes BEFORE planning, and the order is load-bearing.
   //
@@ -747,10 +957,12 @@ const USAGE =
   '  node modules/cdicf/installer.js install  --from <emitDir> --target <proj> [--dry-run] [--json]\n' +
   '  node modules/cdicf/installer.js rollback --component <id>  --target <proj> [--json]\n' +
   '  node modules/cdicf/installer.js recover  --target <proj> [--json]\n' +
-  '  node modules/cdicf/installer.js verify   --target <proj> [--component <id>] [--json]\n\n' +
+  '  node modules/cdicf/installer.js verify   --target <proj> [--component <id>] [--json]\n' +
+  '  node modules/cdicf/installer.js kill-switch <arm|disarm|status> --target <proj> [--json]\n\n' +
   'Exit: 0 ok, 2 argv, 3 io, 4 input invalid, 5 REDISTRIBUTION PROHIBITED,\n' +
   '      6 checksum mismatch, 7 postcondition failed, 8 dirty/concurrent,\n' +
-  '      9 not installed, 10 path escape\n';
+  '      9 not installed, 10 path escape, 11 unresolved dependencies,\n' +
+  '      12 KILL SWITCH — the transaction was stopped, the journal is preserved\n';
 
 function main(argv) {
   const args = argv.slice(2);
@@ -836,6 +1048,27 @@ function main(argv) {
       : 'CLEAN  no interrupted transaction\n');
   }
 
+  if (cmd === 'kill-switch') {
+    const action = args[1];
+    const t = path.resolve(target);
+    if (action === 'arm') {
+      const res = armKillSwitch(t);
+      return done(res, `ARMED  kill switch\n  sentinel   ${res.sentinel}\n` +
+        '  installs into this project now refuse with exit 12 until disarmed\n');
+    }
+    if (action === 'disarm') {
+      const res = disarmKillSwitch(t);
+      return done(res, `${res.status.toUpperCase()}  ${res.sentinel}\n`);
+    }
+    if (action === 'status') {
+      const res = killSwitchStatus(t);
+      return done(res, `${res.status.toUpperCase()}  ${res.sentinel}\n` +
+        (res.detail ? `  armed at   ${res.detail.armed_at}\n` : ''));
+    }
+    process.stderr.write("installer.js: kill-switch needs one of arm|disarm|status\n");
+    process.exit(2);
+  }
+
   if (cmd === 'verify') {
     const res = verify(path.resolve(target), flagArg('--component'));
     if (res.refusal) fail(res);
@@ -855,4 +1088,6 @@ if (require.main === module) main(process.argv);
 module.exports = {
   install, rollback, recover, verify, planInstall, applyPlan,
   txPaths, readInstalled, REFUSAL, TX_DIR,
+  armKillSwitch, disarmKillSwitch, killSwitchStatus, killSentinelPath,
+  KILL_SENTINEL, ABORTED_STATE,
 };

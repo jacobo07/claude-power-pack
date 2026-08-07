@@ -1,0 +1,81 @@
+{
+  "id": "cdicf-installer",
+  "name": "CDICF transactional component installer",
+  "owner": "CDICF (modules/cdicf/installer.js)",
+  "sovereign_question": "Can this component land in this project, completely, reversibly, and lawfully — and can the operation be stopped mid-flight without leaving a tree nobody can explain?",
+
+  "scope": [
+    "install a CPP Design Registry entry into a target project as a journalled transaction",
+    "verify installed artifacts against the checksums recorded at install time",
+    "roll back a committed install to its prior bytes",
+    "recover an interrupted or aborted transaction to the pre-transaction state"
+  ],
+  "non_scope": [
+    "choosing WHICH component to install — that is the selector, and this engine never selects",
+    "emitting registry entries — that is the emitter",
+    "retro-active uninstallation of installs committed in earlier sessions when the kill switch trips",
+    "any network fetch: every byte installed comes from the emitter output passed in"
+  ],
+
+  "triggers": [
+    "a component has been selected and approved for adoption into a project",
+    "an interrupted transaction is detected (a journal exists in <target>/.cdicf)",
+    "a drift check is requested against installed artifacts",
+    "an adopted component must be reverted"
+  ],
+  "anti_triggers": [
+    "the redistribution posture derived from the licence tier is 'prohibited' and the entry carries code — refused at exit 5",
+    "the kill switch is armed for the target project — refused at exit 12 before a journal is created",
+    "a declared dependency is unresolved in the target — refused at exit 11 before any write"
+  ],
+  "prerequisites": [
+    "emitter output (registry-item.json + install-manifest.json) for the component",
+    "a target directory that exists"
+  ],
+  "required_evidence": [
+    "per-artifact sha256 matching the install manifest",
+    "a recomputed roll-up checksum, never the manifest's own value taken on trust",
+    "postconditions read back from disk after the rename sweep"
+  ],
+
+  "inputs": ["registry-item.json", "install-manifest.json", "target project directory"],
+  "outputs": [
+    "installed artifacts in the target tree",
+    "<target>/.cdicf/installed.json — the state of record",
+    "<target>/.cdicf/journal.json — present only while a transaction is open or aborted",
+    "<target>/.cdicf/aborted/<txid>.json — archived post-mortem of a kill-switch abort"
+  ],
+  "consumers": [
+    "the consuming project's build, which compiles the installed artifacts",
+    "modules/cdicf/selector.js — reads installed.json for the prior-adoption tiebreak",
+    "tools/design_index.py --components-sync — reads installed.json to mark index install state",
+    "modules/cdio scorer dependency-scope hard filter — reads installed.json to resolve registry dependencies"
+  ],
+  "dependencies": ["lib/license_gate.js", "modules/cdicf/registry_emitter.js"],
+
+  "permissions": ["write inside the target project directory only"],
+  "write_surfaces": [
+    "<target>/<component files>",
+    "<target>/.cdicf/installed.json",
+    "<target>/.cdicf/journal.json"
+  ],
+  "risk_class": "local",
+
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "high",
+
+  "maturity": "proven",
+  "portable": true,
+  "compatible_runtimes": ["node>=18"],
+
+  "rollback": "`node modules/cdicf/installer.js rollback --component <id> --target <proj>` reverts a committed install to its prior bytes, and is itself journalled so an interrupted rollback is recoverable. A file modified since install is reported as skipped rather than overwritten — recovery that over-reaches is a worse failure than recovery that stops and says so.",
+
+  "kill_switch": "`node modules/cdicf/installer.js kill-switch arm --target <proj>` writes <target>/.cdicf/KILL_SWITCH. Armed, an install refuses at exit 12 BEFORE creating a journal; a transaction already running stops at its next phase seam — inside the rename sweep the in-flight renameSync completes (it is one atomic syscall) and the sweep stops before the next. The abort records ABORTED_BY_KILL_SWITCH with a timestamp, the phase, and the last durable journal state into installed.json, and PRESERVES the journal for post-mortem rather than deleting it. It does not roll back: the tree is returned to its pre-state by `installer.js recover`, which archives the journal to .cdicf/aborted/<txid>.json instead of discarding it. Installs committed in earlier sessions are untouched, by decision. A file rather than only a signal, because Node never emits SIGTERM on Windows and a signal-only switch would be inert on this estate's primary host; SIGTERM/SIGINT are additionally honoured where the platform delivers them, and the listeners are removed on every exit path. It does NOT auto-disarm — disarm with `kill-switch disarm --target <proj>`, named in every refusal, because a switch nobody can turn off is an outage.",
+
+  "retirement_condition": "Retire when a project's package manager can install CPP registry components transactionally with equivalent provenance and recovery guarantees, making a CDICF-specific installer redundant.",
+
+  "version": "1.1.0"
+}
