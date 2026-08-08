@@ -34,7 +34,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -164,7 +166,7 @@ def default_registry() -> list[dict]:
                       "glob": "vault/audits/sqi_report_*.md",
                       "root": "repo"},
         },
-    ] + _discovered_registry()
+    ] + _discovered_registry() + _discovered_ledgers()
 
 
 def _discovered_registry(repo_root: Path | None = None) -> list[dict]:
@@ -182,6 +184,144 @@ def _discovered_registry(repo_root: Path | None = None) -> list[dict]:
         return reachability.discovered_rows(repo_root)
     except Exception:  # noqa: BLE001 -- fail-open
         return []
+
+
+# --------------------------------------------------------------------------- #
+# Discovered ledgers. The rows above enrol every MODULE by construction; the
+# append-only ledgers were left as hand-written probes, so only two of the five
+# cumulative ledgers on this estate were watched. The three others were not
+# scored UNKNOWN -- they were absent from the denominator, which is the defect
+# named in _discovered_registry's own docstring.
+#
+# The separation a naive sweep gets wrong: vault/ holds ~954 .jsonl files, and
+# counting thin ones returns 328, because per-session telemetry
+# (jit_usage_<uuid>, rtk_<uuid>, budget-<ts>) holds one or two rows BY DESIGN.
+# Both gates below are measured off disk rather than listed.
+# --------------------------------------------------------------------------- #
+
+# A directory holding more than this many .jsonl files is a per-event store,
+# not a home for cumulative ledgers. Measured separation on this estate: the
+# largest ledger home (vault/audits) holds ~5; the smallest per-event store
+# (vault/research) holds 52. Any value in 7..51 separates them; 8 sits near the
+# low end so a GROWING ledger home reports as a store rather than quietly
+# keeping members it should no longer vouch for.
+MAX_JSONL_IN_LEDGER_DIR = 8
+
+# Files whose stems collapse to one shape this many times are a per-session
+# series. One file is a ledger; two may be coincidence; three of one shape is a
+# series. Same recurrence instrument used by find_boilerplate_stops and
+# drift_registry, inverted: here recurrence disqualifies.
+MIN_FAMILY_FOR_SERIES = 3
+
+_MASK_RE = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"  # uuid
+    r"|\d{4}-\d{2}-\d{2}T?[\dZ:-]*"                                   # timestamp
+    r"|[0-9a-f]{12,}"                                                 # long hex
+    r"|\d{3,}",                                                       # long digits
+    re.I,
+)
+
+
+def _stem_family(stem: str) -> str:
+    """The shape of a filename with its per-session identity masked out."""
+    return _MASK_RE.sub("#", stem)
+
+
+def discover_ledgers(repo_root: Path | None = None) -> tuple[list[str], dict]:
+    """Cumulative ledgers under vault/, and what was excluded and why.
+
+    Returns (ledger_paths_repo_relative, exclusions). Exclusions are returned
+    rather than dropped: a sweep that silently narrows its subject set reads as
+    'covered everything' when it did not.
+    """
+    root = Path(repo_root) if repo_root else _repo_root()
+    vault = root / "vault"
+    excluded = {"store_dirs": {}, "series": {}}
+    kept: list[str] = []
+    if not vault.is_dir():
+        return kept, excluded
+
+    by_dir: dict[Path, list[Path]] = {}
+    for p in vault.rglob("*.jsonl"):
+        if not p.is_file():
+            continue
+        by_dir.setdefault(p.parent, []).append(p)
+
+    for d, files in sorted(by_dir.items()):
+        rel_dir = str(d.relative_to(root)).replace("\\", "/")
+        if len(files) > MAX_JSONL_IN_LEDGER_DIR:
+            excluded["store_dirs"][rel_dir] = len(files)
+            continue
+        fam = Counter(_stem_family(p.stem) for p in files)
+        for p in sorted(files):
+            shape = _stem_family(p.stem)
+            if fam[shape] >= MIN_FAMILY_FOR_SERIES:
+                excluded["series"].setdefault(f"{rel_dir}/{shape}", 0)
+                excluded["series"][f"{rel_dir}/{shape}"] += 1
+                continue
+            kept.append(str(p.relative_to(root)).replace("\\", "/"))
+    return sorted(kept), excluded
+
+
+def _discovered_ledgers(repo_root: Path | None = None) -> list[dict]:
+    """One registry row per discovered cumulative ledger. Fail-open to []."""
+    try:
+        paths, _ = discover_ledgers(repo_root)
+    except Exception:  # noqa: BLE001 -- fail-open, as the module does elsewhere
+        return []
+    rows = []
+    for rel in paths:
+        rows.append({
+            "id": "ledger:" + rel.removeprefix("vault/").removesuffix(".jsonl"),
+            "surface": "ledger",
+            "desc": f"cumulative ledger {rel} -- enrolled because it EXISTS",
+            "probe": {"type": "ledger-rows", "path": rel},
+        })
+    return rows
+
+
+# A cumulative ledger records EVENTS, not turns. The audit's default 36h window
+# is calibrated for hooks and signals that fire every session, and applying it
+# here made all 21 discovered ledgers read WIRED-BUT-SILENT on the first run --
+# a verdict that never varies carries no information, which is the same
+# constant-factor defect that makes a score rank nothing. 30 days is one
+# monthly cadence: a ledger with nothing appended in a month has a writer that
+# has stopped, and that IS worth saying.
+LEDGER_MAX_AGE_H = 24.0 * 30
+
+
+def _probe_ledger_rows(spec: dict, *, repo_root: Path, now: datetime,
+                       max_age_h: float) -> tuple[str, str]:
+    """Rows AND freshness. file-mtime is the wrong probe for a ledger: it asks
+    only when the file was touched, so a one-row ledger written today reads
+    LIVE. An empty ledger and an absent one are also different answers, and
+    collapsing them would hide which of the two was found.
+
+    A row count of one is REPORTED, never failed. A rare-event ledger honestly
+    holds one row, and telling that apart from starvation means opening the
+    writer -- which this probe does not do and does not claim to.
+
+    `max_age_h` is accepted and deliberately NOT used unless a row asks for it:
+    the caller's session-cadence window is the wrong scale here. A row may
+    override per-ledger via `spec["max_age_h"]`, which is also how the tests
+    exercise the stale branch without waiting a month.
+    """
+    max_age_h = float(spec.get("max_age_h") or LEDGER_MAX_AGE_H)
+    p = repo_root / spec.get("path", "")
+    if not p.is_file():
+        return ORPHANED, f"declared ledger {spec.get('path')} does not exist"
+    try:
+        rows = sum(1 for line in p.open(encoding="utf-8", errors="replace") if line.strip())
+        mt = datetime.fromtimestamp(p.stat().st_mtime, tz=timezone.utc)
+    except OSError as exc:
+        return UNKNOWN, f"unreadable (fail-open): {exc}"
+    if rows == 0:
+        return SILENT, "0 rows -- the file exists and nothing has ever been appended"
+    age = (now - mt).total_seconds() / 3600.0
+    if age <= max_age_h:
+        return LIVE, f"{rows} row(s), last written {age:.1f}h ago (<= {max_age_h:.0f}h)"
+    return SILENT, (f"{rows} row(s) but last written {age:.1f}h ago "
+                    f"(> {max_age_h:.0f}h -- writer has gone quiet)")
 
 
 # --------------------------------------------------------------------------- #
@@ -323,6 +463,8 @@ def audit(registry=None, *, repo_root=None, hooks_live_dir=None, mesh_dir=None,
                 verdict, ev = _probe_pm_bus(spec, mesh_dir=mesh_dir, signals=signals, now=now, max_age_h=max_age_h)
             elif ptype == "file-mtime":
                 verdict, ev = _probe_file_mtime(spec, repo_root=repo_root, now=now, max_age_h=max_age_h)
+            elif ptype == "ledger-rows":
+                verdict, ev = _probe_ledger_rows(spec, repo_root=repo_root, now=now, max_age_h=max_age_h)
             else:
                 verdict, ev = UNKNOWN, f"unknown probe type '{ptype}'"
         except Exception as e:  # noqa: BLE001 -- fail-open per row

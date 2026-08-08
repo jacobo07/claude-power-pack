@@ -5879,3 +5879,43 @@ because it does not have a name until it is measured.
 
 **Origin:** EGCC Expansion, 2026-08-07. `EGCC_EXPANSION_DENOMINATOR.md`,
 `vault/plans/egcc-expansion-2026-08-07.md`.
+
+---
+
+### UKDL TRAP T-BORROWED-THRESHOLD-CONSTANT-VERDICT-001 -- A threshold inherited from another cadence makes the verdict constant
+
+**Trap:** reusing an existing probe's threshold for a new subject whose natural
+rhythm is different. The code is correct, the gate runs, and every subject gets
+the same answer -- which carries no information at all.
+
+**Observed:** ledger discovery enrolled 21 cumulative ledgers into the liveness
+audit and reused the audit's `max_age_h`, a 36-hour window calibrated for hooks
+and signals that fire every session. All 21 came back `WIRED-BUT-SILENT` on the
+first run. Nothing was broken; a ledger records EVENTS, not turns, so on a
+per-session clock every ledger is always late. Re-scaled to a monthly cadence
+(30 days, stated as `LEDGER_MAX_AGE_H` beside the reason) the same 21 split
+12 LIVE / 9 SILENT, and the nine name real writers that have stopped.
+
+**Why it hides:** a uniformly negative gate looks vigilant. It reads as "the
+estate has a lot of silent ledgers" rather than "this threshold cannot
+discriminate", and the first reading is flattering enough to survive review.
+
+**Detector, and it is cheap:** after wiring any new gate, look at the
+DISTRIBUTION of its verdicts before believing any single one. All-pass and
+all-fail are the same defect: a verdict that never varies is not a measurement.
+Sister of `constant factors rank nothing` (a score whose factors are per-item
+constants ranks nothing) and of `zero cannot fall` -- three faces of an
+instrument whose output cannot move.
+
+**Repair rule:** a threshold belongs to the SUBJECT's cadence, not to the file
+it was copied from. State it as a named constant next to the reason it has that
+value, and let a row override it -- which is also how the stale branch gets
+tested without waiting a month.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to alert windows, cache TTLs,
+staleness checks, SLA timers, retry budgets, health-check intervals -- anywhere a
+constant is reused across subjects with different natural rhythms.
+
+**Origin:** ledger discovery, 2026-08-08. `modules/liveness/liveness_ledger.py`
+`LEDGER_MAX_AGE_H`; `tools/test_ledger_discovery.py` `V-LD-ROWS-IN-EVIDENCE`.
+Spec: `vault/specs/ledger-discovery.md`.
