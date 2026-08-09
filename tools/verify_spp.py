@@ -245,6 +245,9 @@ def main() -> int:
         ("claude-md-router",
          [PY, str(PP / "tools" / "test_claude_md_router.py")],
          60),
+        ("memory-router-freshness",
+         [PY, str(PP / "tools" / "test_router_freshness_gate.py")],
+         60),
     ]
 
     if args.row:
