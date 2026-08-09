@@ -4666,6 +4666,114 @@ on the strength of a liveness beacon.
 `Write-PaneSidBeacon $paneSid`, and `$paneSid` is parsed out of `--resume`. A
 session created FRESH has no id at launch -- Claude Code mints it afterwards --
 so the guard `if (-not $sid) { return }` fires and no beacon is ever written. The
+
+### HR-MEMORY-IS-ROUTER-001 -- MEMORY.md indexes knowledge, it never stores it
+
+**TRIGGER:** about to write a fact, a rule, or an explanation directly into a
+MEMORY.md bullet instead of into a vault file the bullet points at.
+
+**ACCION:** STOP. Write the knowledge to its canonical vault location first, then
+add a one-line pointer. A bullet that carries the knowledge itself is a store
+entry wearing an index entry's clothes, and it is invisible to every consumer
+that reads the vault rather than the router.
+
+**Measured on 2026-08-09:** the audit that produced this rule expected to find
+inline knowledge and found none -- 109 of 109 entries were already pointers. The
+rule is sealed anyway, because the property held by habit and nothing enforced
+it. `V-ROUTER-PURITY` now does.
+
+**Origin:** memory audit, 2026-08-09. `tools/router_freshness_gate.py`.
+
+### PR-SESSION-WRITEBACK-001 -- a session that seals knowledge updates the router
+
+**RULE:** when a session seals a rule, records a decision, or writes a vault
+artifact a later session must find, it adds the pointer in the SAME session. A
+session that only writes the vault has done half the work: the artifact exists
+and nothing indexes it.
+
+**What made this necessary:** between 2026-08-04 and 2026-08-08 the UKDL corpus
+gained 23 identifiers absent from its own 08-04 baseline. The router indexed
+none of them. Nothing was broken -- every hook that touches MEMORY.md only lints
+its line count, so router growth depended on the agent remembering.
+
+**Detector:** `tools/router_freshness_gate.py`, wired into `verify_spp` as row
+`memory-router-freshness`.
+
+**Origin:** memory audit, 2026-08-09.
+
+### T-ROUTER-BRIDGE-UNRESOLVED-001 -- a pointer can be valid, resolve nowhere, and read as coverage
+
+**WHAT HAPPENED:** seven MEMORY.md entries pointed into the vault with
+`../../skills/...`, counted from the project directory rather than from
+`memory/`, so every one resolved to `projects/skills/...` -- a path that does not
+exist. All seven destination files existed. The index looked complete and
+delivered nothing, and those seven were the only bridge the router had into the
+vault: it reached 0 of roughly 441 vault artifacts while appearing to reach them.
+
+**Why it hides:** the target exists, so any check that asks "is this file
+present" passes. The failing step is resolution, not existence, and nobody looks
+at resolution while the destination is sitting right there on disk.
+
+**Detector:** resolve every pointer from the ROUTER's own directory and assert
+the resolved path exists. `V-ROUTER-LINKS`.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to any relative reference
+written by a process whose working directory differs from the file's location --
+markdown indexes, config includes, symlink farms, import maps.
+
+**Origin:** memory audit, 2026-08-09.
+
+### T-CATCH-ALL-POINTER-MAKES-A-GATE-VACUOUS-001 -- one index entry that covers everything makes reachability unfalsifiable
+
+**WHAT HAPPENED:** the repair for the stale router was a durable pointer to the
+UKDL corpus, and that corpus holds every sealed id. The obvious gate -- "is rule
+X reachable from the router" -- would then resolve through that single pointer
+for every id that exists or will ever exist. It could never fail. The gate built
+to prevent the defect would have certified it.
+
+**Why it hides:** it reads as complete coverage. Every id resolves, the gate is
+green, and greenness is exactly what a catch-all guarantees regardless of whether
+anything was actually indexed.
+
+**Repair rule:** gate the CONTAINER, not the member. Discover the set of stores
+off disk and assert each store is reachable; a new file accumulating sealed rules
+is then unreachable until the router names it. Membership questions answered
+through a catch-all are not measurements.
+
+**Detector, and it is cheap:** ask what the gate would say if the thing it guards
+were completely absent. If the answer is still PASS, the gate is vacuous. Sister
+of `zero cannot fall`, `never gate on a ratio`, and `constant factors rank
+nothing` -- four faces of an instrument whose output cannot move.
+
+**Confirmed non-vacuous:** on its first run the store-level gate found a second
+corpus the manual audit had missed -- `knowledge_vault/core/HARD-RULES.md`, 156
+sealed ids, unreachable from the router.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+
+**Origin:** memory audit, 2026-08-09. `tools/router_freshness_gate.py`
+`V-ROUTER-STORES`; `tools/test_router_freshness_gate.py` `V-RFG-STORE-UNREACHABLE`.
+
+### T-KNOWLEDGE-STRANDED-IN-PLANS-001 -- staging-area strandedness is real, and the cheap instrument overstates it by 5x
+
+**WHAT HAPPENED:** a filename match said 119 of 125 files in `vault/plans/` were
+unreferenced, which invited the conclusion that 119 pieces of knowledge were
+lost. Differencing the sealed ids in each plan against the canonical corpora
+instead: 52 plans name only ids that are ALREADY in a corpus, 14 hold no
+structural knowledge at all, 37 record decisions with no sealed id, and 23 carry
+ids absent from both corpora. The real promotion set is 23, not 119.
+
+**Why it hides:** the cheap instrument answers a different question than the one
+being asked. "Is this filename mentioned anywhere" bounds the reachable set; it
+never measured whether the CONTENT was promoted, and a plan whose knowledge was
+promoted under another name scores identically to one whose knowledge was lost.
+
+**Repair rule:** `vault/plans/` is staging, and knowledge left there past a
+session is genuinely unreachable -- but measure strandedness by differencing
+content against the destination corpus, never by matching names. Report the
+instrument's question alongside its number.
+
+**Origin:** memory audit, 2026-08-09. `vault/audits/f6_plans_content_report.md`.
 coverage hole is not random: it is exactly the set of NEW sessions, which is
 exactly the set the Owner most wants back after a day's work. Measured: 23
 `folderOpen` tasks against 5 beacons, and the session being typed in had none.

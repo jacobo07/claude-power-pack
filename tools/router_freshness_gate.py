@@ -83,19 +83,35 @@ def parse_router(router: Path) -> tuple[list[dict], list[str]]:
     return entries, inline
 
 
+def _candidate_files(repo_root: Path):
+    """Yield every markdown file that could hold sealed rules.
+
+    Top-level repo files are included explicitly: CLAUDE.md holds 34 sealed ids and
+    would otherwise sit outside the walk, which would make SEARCH_ROOTS a curated
+    denominator at the directory level -- the same defect one layer up. A full
+    unpruned rglob of the repo was measured at over 120s, too slow for a gate, so
+    the walk stays bounded and the boundary is stated rather than assumed.
+    """
+    yield from repo_root.glob("*.md")
+    for root in [repo_root / d for d in SEARCH_ROOTS] + [KNOWLEDGE_VAULT]:
+        if root.is_dir():
+            yield from root.rglob("*.md")
+
+
 def discover_stores(repo_root: Path = REPO_ROOT) -> list[dict]:
     """Walk disk for files dense enough in sealed ids to count as a rule store."""
-    roots = [repo_root / d for d in SEARCH_ROOTS] + [KNOWLEDGE_VAULT]
     stores: list[dict] = []
-    for root in roots:
-        if not root.is_dir():
+    seen: set[Path] = set()
+    for f in _candidate_files(repo_root):
+        if ".git" in f.parts:
             continue
-        for f in root.rglob("*.md"):
-            if ".git" in f.parts:
-                continue
-            ids = set(RULE_ID.findall(_read(f)))
-            if len(ids) >= DENSITY_STORE_MIN:
-                stores.append({"path": f.resolve(), "ids": len(ids)})
+        resolved = f.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        ids = set(RULE_ID.findall(_read(f)))
+        if len(ids) >= DENSITY_STORE_MIN:
+            stores.append({"path": resolved, "ids": len(ids)})
     stores.sort(key=lambda s: -s["ids"])
     return stores
 

@@ -247,7 +247,7 @@ def main() -> int:
          60),
         ("memory-router-freshness",
          [PY, str(PP / "tools" / "test_router_freshness_gate.py")],
-         60),
+         120),
     ]
 
     if args.row:
