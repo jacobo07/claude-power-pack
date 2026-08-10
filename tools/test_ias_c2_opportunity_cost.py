@@ -93,6 +93,67 @@ def main() -> int:
                and tracked_result.score == untracked_result.score,
                f"tracked={tracked_result} untracked={untracked_result}")
 
+    # --- failure modes, read from the module rather than invented ----------------
+    with tempfile.TemporaryDirectory() as tmp:
+        repo_root = Path(tmp)
+        solo = BacklogItem("FIX-1", "Fix login bug", 0, "S", "Critical")
+
+        # rank_and_forgo returns None when `chosen` was the only candidate: with no
+        # live alternative there is no cost, and inventing one would fabricate the
+        # very number Part V exists to keep honest.
+        _check("V-IAS-C2-08-no-alternative-is-none",
+               rank_and_forgo([solo], solo, _score) is None,
+               f"got {rank_and_forgo([solo], solo, _score)}")
+
+        # A None foregone must write NOTHING. If this guard broke, every decision
+        # with no alternative would append a record naming a cost nobody paid.
+        before = len(oc._read_ledger(repo_root))
+        none_rec = record_opportunity_cost(solo, None, repo_root=repo_root)
+        after = len(oc._read_ledger(repo_root))
+        _check("V-IAS-C2-09-none-foregone-writes-nothing",
+               none_rec is None and after == before == 0,
+               f"rec={none_rec} rows {before}->{after}")
+
+        # Settlement fires once. A CONFIRMED row re-settled on a later pick of the
+        # same item would inflate the confirmed count without a second decision.
+        other = BacklogItem("FEAT-2", "Add 2FA", 1, "L", "High")
+        record_opportunity_cost(solo, other, repo_root=repo_root)
+        first = oc.settle_if_later_chosen(other, repo_root=repo_root)
+        second = oc.settle_if_later_chosen(other, repo_root=repo_root)
+        _check("V-IAS-C2-10-settlement-is-not-repeatable",
+               first == 1 and second == 0
+               and oc.domain_aggregate(repo_root)["FEAT"]["CONFIRMED"] == 1,
+               f"first={first} second={second} agg={oc.domain_aggregate(repo_root)}")
+
+        # A corrupt line must not take the reader down with it. The ledger is
+        # append-only from several callers, so a torn write is reachable.
+        oc.ledger_path(repo_root).open("a", encoding="utf-8").write("{not json\n")
+        rows = oc._read_ledger(repo_root)
+        _check("V-IAS-C2-11-corrupt-line-is-skipped",
+               len(rows) == 1 and rows[0]["foregone_id"] == "FEAT-2",
+               f"got {rows}")
+
+        # Settling against an item nobody ever forwent settles nothing.
+        _check("V-IAS-C2-12-unknown-item-settles-nothing",
+               oc.settle_if_later_chosen(
+                   BacklogItem("NOPE-9", "never seen", 9, "S", "Low"),
+                   repo_root=repo_root) == 0,
+               "settled a record for an item that was never foregone")
+
+        # D-003, pinned rather than papered over: an impact string outside the
+        # ordinal vocabulary collapses to LOW, the LEAST urgent category, so an
+        # unrecognised value is indistinguishable from a genuinely Low one. The
+        # rule_compiler keeps exactly this distinction (UNRECOGNIZED vs UNDECLARED)
+        # because collapsing them lets a defect read as a benign value. Asserting
+        # current behaviour keeps the gap visible; changing it edits a persisted
+        # ordinal vocabulary, which is an Owner call, not a test-time fix.
+        odd = BacklogItem("SEC-4", "rotate keys", 4, "M", "Blocker")
+        odd_rec = record_opportunity_cost(solo, odd, repo_root=repo_root)
+        _check("V-IAS-C2-13-unrecognised-impact-collapses-to-low",
+               odd_rec.foregone_magnitude == "LOW",
+               f"got {odd_rec.foregone_magnitude} -- if this changed, D-003 was "
+               "addressed and OWNER_QUEUE must be updated")
+
     total = _passes + _fails
     print(f"IAS_C2_PASS={_passes}/{total}")
     return 0 if _fails == 0 else 1
