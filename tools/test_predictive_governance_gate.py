@@ -119,6 +119,57 @@ def main() -> int:
         else:
             _fail("V-PGG-G1-PRESENCE-IS-NOT-FAILURE", "a presence check was read as a failure assertion")
 
+    # D-002: the most rigorous suites here assert through an inverted guard --
+    # the condition describes the WRONG outcome and the body reports the gate.
+    with Repo() as r:
+        r.suite("test_guard.py",
+                'def t():\n'
+                '    v = verify(missing_contract)\n'
+                '    if v.status is not Status.EMPTY or v.passed:\n'
+                '        _fail("V-X-REJECTS-EMPTY", "accepted an empty artifact")\n'
+                '        return\n'
+                '    _ok("V-X-REJECTS-EMPTY", "empty artifact rejected")\n')
+        if pg.g1_vacuity(r.root) == []:
+            _ok("V-PGG-G1-GUARD-IDIOM", "an inverted guard reporting _fail is a failure assertion")
+        else:
+            _fail("V-PGG-G1-GUARD-IDIOM", "guard-clause failure assertion still flagged")
+
+    # Polarity is load-bearing. Reading only "the body names a V-gate" negates the
+    # SUCCESS condition of the `if COND: _ok(...)` shape, which would turn every
+    # happy-path check into a claimed failure assertion and make G1 a rubber stamp.
+    with Repo() as r:
+        r.suite("test_polarity.py",
+                'def t():\n'
+                '    if row["status"] == "REACHABLE":\n'
+                '        _ok("V-X-REACHES", "reachable")\n'
+                '    else:\n'
+                '        _fail("V-X-REACHES", "unreachable")\n')
+        if pg.g1_vacuity(r.root) == ["test_polarity.py"]:
+            _ok("V-PGG-G1-GUARD-POLARITY", "a success guard is not negated into a failure assertion")
+        else:
+            _fail("V-PGG-G1-GUARD-POLARITY", "negated a success condition -- G1 is a rubber stamp")
+
+    # LIMIT, stated because omitting it would let the offender count read as a
+    # vacuity measure. G1 asks whether an expectation of a NEGATIVE appears. It
+    # cannot separate "a bad input was fed in and rejected" from "no problems were
+    # found on the happy path" -- both spell as a negation. The suite below is a
+    # completeness check over a clean fixture and it passes G1. That was already
+    # true of `assert not missing` before any of this; the reading is now uniform
+    # across idioms, which is a different property from being sound.
+    with Repo() as r:
+        r.suite("test_limit.py",
+                'def t():\n'
+                '    missing = [k for k in REQUIRED if k not in produced]\n'
+                '    if missing:\n'
+                '        _fail("V-X-COMPLETE", f"absent: {missing}")\n'
+                '        return\n'
+                '    _ok("V-X-COMPLETE", "all keys produced")\n')
+        if pg.g1_vacuity(r.root) == []:
+            _ok("V-PGG-G1-LIMIT",
+                "a happy-path completeness check passes G1 -- documented blind spot, not a defect")
+        else:
+            _fail("V-PGG-G1-LIMIT", "the stated limit no longer holds; re-derive the claim G1 makes")
+
     # ---------------------------------------------------------------- G2
     SILENCER = "import sys\nif not HAVE_DEP:\n    sys.exit(0)\n\ndef test_a():\n    assert x == 1\n"
 

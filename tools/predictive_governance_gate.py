@@ -147,16 +147,87 @@ def _expects_failure(expr: ast.AST) -> bool:
     return False
 
 
+# --- G1, third reading: the guard clause, where the assertion is the NEGATION
+# of the branch condition.
+#
+#     if v.status is not Status.NEVER_OBSERVED_TO_WORK or v.passed:
+#         _fail("V-DONE-GATE-REJECTS-PROXY", ...)
+#         return
+#     _ok(...)
+#
+# The suite asserts `status is NEVER_OBSERVED_TO_WORK and not v.passed` -- a
+# failure expectation, spelled inverted and carried in the control flow. Neither
+# the regex nor the helper reading can see it, and this is the idiom the most
+# rigorous suites in the estate use: the file above holds five such gates and was
+# still reported as never asserting a failure.
+#
+# The fix is not another vocabulary. It inverts the guard and applies the SAME
+# criterion agreed above, so the bar does not move: `if status is not PASS:
+# _fail(...)` negates to `status is PASS` and correctly stays an offender,
+# because it asserts only the happy path.
+_OP_INVERSE = {ast.Is: ast.IsNot, ast.IsNot: ast.Is, ast.In: ast.NotIn,
+               ast.NotIn: ast.In, ast.Eq: ast.NotEq, ast.NotEq: ast.Eq}
+
+
+def _negate(expr: ast.AST) -> ast.AST:
+    """`not expr`, pushed down one level so the existing criterion applies."""
+    if isinstance(expr, ast.UnaryOp) and isinstance(expr.op, ast.Not):
+        return expr.operand
+    if isinstance(expr, ast.BoolOp):
+        flipped = ast.Or() if isinstance(expr.op, ast.And) else ast.And()
+        return ast.BoolOp(op=flipped, values=[_negate(v) for v in expr.values])
+    if isinstance(expr, ast.Compare) and len(expr.ops) == 1:
+        inverse = _OP_INVERSE.get(type(expr.ops[0]))
+        if inverse is not None:
+            return ast.Compare(left=expr.left, ops=[inverse()],
+                               comparators=expr.comparators)
+    return ast.UnaryOp(op=ast.Not(), operand=expr)
+
+
+def _reports_failure(stmts: list[ast.stmt]) -> bool | None:
+    """Which reporter a branch body calls: True=_fail, False=_ok, None=neither.
+
+    The polarity is load-bearing and cannot be skipped. Both shapes exist here:
+
+        if COND: _fail(...); return   -> the suite asserts `not COND`
+        if COND: _ok(...) else: ...   -> the suite asserts `COND`
+
+    Reading only "the body names a V-gate" negates the SUCCESS condition of the
+    second shape, which turns `if status == REACHABLE: _ok(...)` into a claimed
+    failure assertion and makes G1 a rubber stamp.
+    """
+    reporters = set()
+    for stmt in stmts:
+        for inner in ast.walk(stmt):
+            if not _gate_call_args(inner):
+                continue
+            fn = getattr(inner.func, "attr", None) or getattr(inner.func, "id", "") or ""
+            reporters.add("fail" in fn.lower())
+    if not reporters:
+        return None
+    return True in reporters
+
+
 def asserts_a_failure(src: str) -> bool:
-    """True when the suite expects a failing outcome, in text OR helper form."""
+    """True when the suite expects a failing outcome, in ANY of the three idioms."""
     if FAILURE_ASSERT.search(executable_text(src)):
         return True
     try:
         tree = ast.parse(src)
     except SyntaxError:
         return False
-    return any(any(_expects_failure(a) for a in _gate_call_args(node))
-               for node in ast.walk(tree))
+    for node in ast.walk(tree):
+        if any(_expects_failure(a) for a in _gate_call_args(node)):
+            return True
+        if not isinstance(node, ast.If):
+            continue
+        polarity = _reports_failure(node.body)
+        if polarity is None:
+            continue
+        asserted = _negate(node.test) if polarity else node.test
+        if _expects_failure(asserted):
+            return True
+    return False
 
 
 def g1_vacuity(repo: Path) -> list[str]:
