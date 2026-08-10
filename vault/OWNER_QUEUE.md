@@ -760,3 +760,63 @@ Register-ScheduledTask -TaskName 'PP-LivenessCheck' -Force `
 **Verify:** `Get-ScheduledTask -TaskName PP-LivenessCheck` -> State Ready; after it
 runs, `vault/audits/liveness_report.md` mtime is same-day. Remove the `[PENDING]`
 tag above once registered (the engine flips the row done on re-ingest).
+
+## NEW (2026-08-10) -- G1 burndown: the 58 was not a debt list [DECISION NEEDED]
+
+The burndown was commissioned to burn 58 happy-path-only suites. Measured, the 58
+was a count of which IDIOM a suite used, not whether it asserts a failure.
+
+| step | G1 | what changed |
+|---|---|---|
+| commissioned | 58 | -- |
+| D-001 `7c4e417` | 56 | helper form `_check("V-X", not bad, ...)` was invisible |
+| D-002 `37569c0` | 14 | inverted guard `if wrong: _fail(...)` was invisible |
+
+Forty-four suites moved with **no test code changed**. `test_enforcement_systems.py`
+holds five gates that feed a missing, a zero-byte and a fixture-scale artifact and
+require each defect status; it was reported as never asserting a failure.
+
+**The remaining 14 are not a clean debt list either.** `test_fd04_acceleration.py`
+asserts `verdict == A.STALLED` on a stale ledger -- a textbook failure-mode gate --
+and is still flagged, because `A.STALLED` is a module attribute rather than a string
+G1 can read. That is the third false-positive shape found by reading; each one needs
+a new vocabulary, which is the defect itself.
+
+**Decisive evidence.** `test_ias_c2_opportunity_cost.py` (`69064da`) gained six
+assertions that feed bad input and require the rejection, every one traced to a
+branch in the module. G1 did not move, because they are spelled `is None` and
+`== 0`. G1 can be satisfied by spelling and cannot be satisfied by rigor.
+
+**Built instead:** `tools/mutation_probe.py` (`39be05e`) -- break the module, run
+the suite, see whether it goes red. On `opportunity_cost.py` it found two gaps that
+reading the module had missed, and the measured kill count rose 4 -> 6 of 8 sampled.
+
+### Decisions
+
+1. **Retire G1, or keep it as a cheap pre-filter?** It has three known
+   false-positive shapes and cannot be fixed by widening. Recommendation: keep the
+   14 as carried debt, stop treating the count as a quality measure, and move the
+   ratchet to the mutation probe.
+2. **D-003 -- ordinal vocabulary in `modules/ias_c2/opportunity_cost.py`.** An
+   impact outside `Critical/High/Medium/Low` collapses to `LOW`, the least urgent
+   category, so an unrecognised value is indistinguishable from a genuinely Low
+   one. `rule_compiler` keeps exactly this distinction (UNRECOGNIZED vs
+   UNDECLARED). Fixing it edits a persisted ordinal vocabulary and its consumers --
+   Owner call. Current behaviour is pinned by `V-IAS-C2-13`.
+3. **Mutation sweep scope.** The probe runs per (suite, module) pair and costs one
+   suite run per mutant. Which set should run in `verify_spp`, and how often?
+
+### Carried, not done
+
+- **G1 carried debt: 14 named suites** in `vault/governance/predictive_gates_baseline.json`.
+  Three are TIER-1 by churn x blast: `test_fd04_acceleration.py` (a proven false
+  positive), `test_session_revival.py`, `test_scope_a_activation.py`.
+- **G3 carried debt: 9 named suites**, untouched this cycle.
+- **28 suites remain UNMEASURED for priority.** Their subject is reached through
+  `subprocess`/`importlib`, invisible to a static import parser, so all 28 scored
+  churn 0 / blast 0. Ranking them last would repeat the defect the effort exists to
+  remove. **INSTRUMENT NEEDED:** a subprocess-aware subject resolver. Until it
+  exists these are unranked, not low-risk.
+- **`test_ias_c2_opportunity_cost.py` writes to the real `vault/ias` ledger** via
+  `what_now_tracked`, acknowledged in its own comment. A suite with a global write
+  is not hermetic; it showed up as a dirty working tree during this session.

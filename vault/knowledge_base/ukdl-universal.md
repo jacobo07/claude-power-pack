@@ -6158,3 +6158,89 @@ active and an inactive outcome under one name.
 `expansion_threshold_pct: 90` (30/33, exit 1) before the split was accepted.
 Sister trap: `T-D2A-FAILOPEN-MASKS-A-CRASH-001`, which is the same blindness one
 layer down — there the negative shape came from a crash, here from the fixture.
+
+---
+
+## T-FAILURE-ASSERTION-NOT-ARTIFICIAL-001 — an assertion written to satisfy a detector is compliance, not coverage
+
+**Trap.** A gate reports N suites as never asserting a failure, and the obvious
+repair is to add an assertion to each until N reaches zero. The assertion satisfies
+the detector's pattern without corresponding to anything the module can actually do
+wrong, so the count falls and not one defect becomes catchable. Worse, the number
+now certifies the opposite of the truth.
+
+**Repair rule.** An added failure assertion must trace to a BRANCH in the subject:
+an input the module rejects, a state it refuses, a precondition it guards. Read the
+module, not the suite. If the module cannot fail on any reasonable input, that is
+the finding — report it and move on; do not manufacture a failure for it to have.
+And when a suite is already rigorous and the detector still flags it, the defect is
+in the detector. Never edit a correct suite to please a wrong instrument.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to any debt burndown driven by
+a static count — lint offenders, coverage floors, type-annotation gaps.
+
+**Origin:** G1 burndown, 2026-08-10. `tools/test_egcc_residue.py` carried 13
+negative-direction checks and was on the offender list; adding a 14th to clear it
+would have been pure theatre.
+
+---
+
+## T-GATE-MEASURES-SPELLING-NOT-PROPERTY-001 — a static detector counts idioms, and its number is a census of style
+
+**Trap.** A gate defines a property semantically ("this suite asserts a failing
+outcome") and detects it syntactically (a regex, an AST shape). The estate writes
+that property in several idioms, the detector knows one, and the resulting count
+reads as a debt list while actually enumerating which suites happened to use the
+unrecognised spelling. Every widening looks like progress and is really the same
+error with a longer vocabulary.
+
+**The diagnostic that settles it.** Add real coverage and watch the number. If a
+suite gains assertions that feed bad input and require the rejection — each traced
+to a branch in the module — and the gate does not move, the gate does not measure
+the property. That is not an argument, it is an experiment, and it is cheap.
+
+**Repair rule.** Bound the widening: apply the SAME criterion across idioms rather
+than inventing a new vocabulary per shape, and verify by READING the newly-cleared
+cases, never by trusting the delta. Then stop, state the limit in a gate, and move
+the ratchet to an instrument that observes behaviour instead of text. For "does
+this suite catch a defect", that instrument is mutation: break the module, run the
+suite, require red. Polarity is load-bearing in any control-flow reading — negating
+the SUCCESS branch of `if COND: _ok(...)` turns every happy-path check into a
+claimed failure assertion and makes the gate a rubber stamp.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to any linter, quality gate, or
+audit that infers intent from syntax.
+
+**Origin:** G1 burndown, 2026-08-10. 58 -> 56 (`7c4e417`) -> 14 (`37569c0`) with
+zero test code changed; `tools/test_enforcement_systems.py`, holding five
+defect-status gates, was on the list throughout. Settled by
+`tools/test_ias_c2_opportunity_cost.py` (`69064da`): six real failure-mode
+assertions, no movement. Successor instrument `tools/mutation_probe.py`
+(`39be05e`). Sisters: `zero cannot fall`, `constant factors rank nothing`,
+`T-DUAL-BRANCH-GATE-001`.
+
+---
+
+## PR-G1-BURNDOWN-STRATEGY-001 — measure the instrument before burning the list it produced
+
+**Rule.** Before working through a list of offenders a gate produced, spend the
+first unit of work on the gate. Take the two or three highest-value entries, read
+them, and decide whether each is a real offender. A list whose head is a false
+positive is not a work queue; burning it manufactures busywork and retires the
+count as if it meant something.
+
+**Prioritise on measured axes** — change frequency times blast radius — and keep a
+separate UNMEASURED bucket for subjects the instrument cannot see. Ranking an
+unmeasurable subject LAST turns instrument blindness into a low-risk verdict, which
+is the same "absence reads as health" defect the audit exists to remove
+(`PR-COVERAGE-BY-CONSTRUCTION-001`).
+
+**Report the count's meaning, never the count alone.** "58 -> 14" is a true
+sentence and a false claim: 44 of those moved because the reading changed. State
+what a number would have to mean before offering it as progress.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+
+**Origin:** G1 burndown, 2026-08-10. The commissioned premise — 58 happy-path-only
+suites — did not survive contact with the first three entries.
+`vault/plans/g1-burndown-2026-08-10.md`.

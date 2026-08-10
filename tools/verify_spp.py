@@ -254,6 +254,10 @@ def main() -> int:
         ("predictive-governance-debt",
          [PY, str(PP / "tools" / "predictive_governance_gate.py")],
          120),
+        # Six sweeps, each spawning suite subprocesses -- the slowest row here.
+        ("mutation-probe",
+         [PY, str(PP / "tools" / "test_mutation_probe.py")],
+         300),
     ]
 
     if args.row:
