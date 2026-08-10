@@ -133,6 +133,22 @@ def main() -> int:
                len(rows) == 1 and rows[0]["foregone_id"] == "FEAT-2",
                f"got {rows}")
 
+        # Found by tools/mutation_probe.py, not by reading: mutating the empty-ledger
+        # early return from 0 to 1 survived, so nothing observed it. Settling before
+        # any decision was recorded must report zero settlements, or the first call
+        # of a fresh install invents one.
+        _check("V-IAS-C2-14-settle-on-empty-ledger",
+               oc.settle_if_later_chosen(solo, repo_root=Path(tmp) / "unwritten") == 0,
+               "settled a record against a ledger that does not exist")
+
+        # Same source: the PROJECTED bucket's initial count was unobserved, so an
+        # aggregate could open at 1 and overstate every domain by one.
+        fresh = Path(tmp) / "fresh"
+        record_opportunity_cost(solo, other, repo_root=fresh)
+        _check("V-IAS-C2-15-aggregate-counts-from-zero",
+               oc.domain_aggregate(fresh) == {"FEAT": {"PROJECTED": 1, "CONFIRMED": 0}},
+               f"got {oc.domain_aggregate(fresh)}")
+
         # Settling against an item nobody ever forwent settles nothing.
         _check("V-IAS-C2-12-unknown-item-settles-nothing",
                oc.settle_if_later_chosen(
