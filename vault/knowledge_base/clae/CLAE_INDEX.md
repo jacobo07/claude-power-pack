@@ -3,7 +3,7 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 30
-parts_sealed: 27
+parts_sealed: 28
 state: UNSEALED — extension to 30 Parts authorized by G2, in progress
 unsealed_on: 2026-08-10
 ---
@@ -40,7 +40,7 @@ empty* — stands until a constituency accepts it, and the producer may not.
 | Part | Subject (fixed by `TOPOLOGY_ADR.md` §4) | Status |
 |---|---|---|
 | 27 | The Completion Prosecutor — three authorities, independence, anchoring, deadlock, false acquittal, the certificate and the verdict alias table — `PART_27_the_completion_prosecutor.md` | **SEALED** |
-| 28 | Freeze and adversarial multipass — the challenge state machine; the passes and their selection; negative proof | AUTHORIZED |
+| 28 | Freeze and adversarial multipass — the freeze, the closure pack, **nine** passes and their selection, negative proof as route enumeration — `PART_28_freeze_and_adversarial_multipass.md` | **SEALED** |
 | 29 | Cognitive precursors and the same-session repair loop | AUTHORIZED |
 | 30 | Root-cause elevation, sibling campaigns, failure-to-immunity | AUTHORIZED |
 
