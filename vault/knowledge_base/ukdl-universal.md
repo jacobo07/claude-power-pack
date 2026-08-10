@@ -4794,6 +4794,18 @@ offenders are carried by NAME in `vault/governance/predictive_gates_baseline.jso
 so the debt can only fall by repairing a suite, never by deleting one. A NEW
 offender fails the gate.
 
+**Documented limit, measured 2026-08-10.** G1's resolution is the FILE. One
+failing assertion anywhere clears the whole suite, so a single unfalsifiable gate
+inside an otherwise rigorous file is invisible to it.
+`tools/test_duplicate_to_advantage.py` is absent from the baseline — G1 scores it
+clean — and it nonetheless carried `V-D2A-EXPANSION-OFFERED`, whose two `_ok`
+branches made the option-D path unobservable for the life of the gate. G1 detects
+a suite that never stresses anything; it cannot detect a suite that stresses
+everything except the one claim in question. That per-gate case is
+`T-DUAL-BRANCH-GATE-001`, and it is still enforced by reading, not by a detector.
+Stated here for the same reason G3 states its own blind spot: a limit nobody
+wrote down gets read as coverage.
+
 **Cross-project:** tagged `#CROSS-PROJECT`.
 
 ### HR-ZERO-TESTS-IS-UNVERIFIED-001 -- nothing ran and everything passed must not share a name
