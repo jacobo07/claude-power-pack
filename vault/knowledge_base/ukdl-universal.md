@@ -6095,3 +6095,54 @@ constant is reused across subjects with different natural rhythms.
 **Origin:** ledger discovery, 2026-08-08. `modules/liveness/liveness_ledger.py`
 `LEDGER_MAX_AGE_H`; `tools/test_ledger_discovery.py` `V-LD-ROWS-IN-EVIDENCE`.
 Spec: `vault/specs/ledger-discovery.md`.
+
+---
+
+## T-DUAL-BRANCH-GATE-001 — a gate that passes on both branches measures whichever case it was handed
+
+**Trap.** A single gate written as `if <feature active>: _ok(...) else: _ok(...)`
+looks rigorous — it reasons about both the positive and the negative outcome and
+even justifies the negative one. It cannot fail on the axis it was written for.
+Which branch runs is decided by the fixture, not by the code under test, so the
+suite reports the feature green while the branch that carries the feature's whole
+purpose may never execute once.
+
+**Observed.** `V-D2A-EXPANSION-OFFERED` had an `_ok` for "option D offered" and an
+`_ok` for "option D correctly withheld". The only family in the suite vacated 1 of
+3 slots (33 %), under the default 50 % threshold, so every run for the life of the
+gate resolved through the withheld branch. `PR-D2A-EXPANSION-001`'s positive path —
+the STOP #1 menu actually offering C and D with harvested candidates — was never
+observed while the suite reported 32/32 PASS. The two downstream filter gates
+inherited the hole: they asserted over a plan built at a FORCED threshold of 0,
+because the only available family withheld and therefore carried no candidates.
+
+**Why it hides.** The negative branch is usually written second, as diligence, and
+its evidence string is honest and specific ("withheld for a stated reason, not via
+fail-open"). It reads in the log as a real assertion about the feature. Nothing in
+the output distinguishes "the offered path works" from "the offered path was never
+reached", because both print PASS under the same gate name.
+
+**Detector, and it is cheap.** Grep each gate for more than one `_ok(` under the
+same gate name. Then read the evidence string the suite actually printed on the
+last run and ask which branch produced it. A gate whose printed evidence has only
+ever described the negative case has not tested the feature. Sister of `zero cannot
+fall`, `constant factors rank nothing`, and `a verdict that never varies is not a
+measurement` — four faces of an instrument whose output cannot move.
+
+**Repair rule.** One gate, one branch, one claim. Split it: the positive gate
+asserts the feature ACTIVE on a fixture engineered to reach it at the DEFAULT
+configuration, and failure to activate is a FAIL with no escape branch; the
+negative case becomes its own separately-named gate. Then falsify the positive gate
+before believing it — perturb the config so it MUST fail, observe the FAIL, and
+restore. A fixture forced past a threshold proves the plumbing, never the default
+behaviour the Owner will actually meet.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to any acceptance gate,
+feature-flag test, capability probe, or health check that reasons about both an
+active and an inactive outcome under one name.
+
+**Origin:** D2A option-D audit, 2026-08-10. `tools/test_duplicate_to_advantage.py`
+`V-D2A-EXPANSION-OFFERED` / `V-D2A-EXPANSION-BELOW-THRESHOLD`; falsified at
+`expansion_threshold_pct: 90` (30/33, exit 1) before the split was accepted.
+Sister trap: `T-D2A-FAILOPEN-MASKS-A-CRASH-001`, which is the same blindness one
+layer down — there the negative shape came from a crash, here from the fixture.
