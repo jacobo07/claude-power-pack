@@ -830,6 +830,28 @@ to the pair so the choice is informed. **Decision:** accept the split, or accept
 A 74KB engine whose suite catches one injected defect in four is the headline.
 The ratchet stops these falling; raising them is separate work.
 
+### Two findings surfaced by this session's verification -- OPEN, not mine
+
+**`tools/test_uceimr_residues.py` is RED and pytest cannot see it.** Standalone it
+reports `UCEIMR_PASS=41/42 VERDICT=FAIL`, on
+`V-UCEIMR-G2-COVERAGE: unaccounted: ['cdicf-installer']` -- a capability contract
+at `vault/capability_runtime/contracts/cdicf-installer.json` that no registry
+accounts for. Unrelated to anything changed here: the gate covers contracts, not
+ias_c2 or backlog_autopilot.
+
+The second half is the worse half. The full `pytest` run reports **345 passed**
+while this suite is red, because the file has no pytest entry point. Forty-two
+authored gates sit outside the canonical invocation, so a green run is green
+about a smaller estate than it appears to cover -- the shape
+`test_fd04_acceleration.py` and the mutation suites guard against with an explicit
+`test_all_gates()`. Worth a DISCOVERED sweep for other suites in the same state,
+since the ones missing are exactly the ones nobody will remember to list.
+
+**`vault/ias/c2_opportunity_cost_ledger.jsonl` was enrolled on fixture rows.** The
+ledger-discovery spec counts it as a live cumulative ledger; every row in it was
+test output (fixed at source, `6c867eb`). A discovered registry is only as honest
+as the rows it counts.
+
 ### D-003 sibling instance -- OPEN
 
 `modules/backlog_autopilot/engine.py:45` scores an unrecognised impact as `0` via
