@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import itertools
 import json
-import os
 import re
 import shutil
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 _PP_ROOT = Path(__file__).resolve().parents[1]
@@ -75,9 +75,29 @@ def _part_word_counts(md_path: Path) -> list:
 
 _GATE = _PP_ROOT / "hooks" / "d2a_gate.js"
 _NODE = shutil.which("node")
-# Every gate call gets a unique session id: the gate throttles per (session, prompt),
-# so a shared id would silence the second assertion and make the suite non-hermetic.
+# Every gate call gets a session id unique across RUNS, not merely within one.
+#
+# d2a_gate.js throttles on (sanitised session_id, sha1(prompt)[:12]) for 15 minutes,
+# and the marker lives in a GLOBAL directory (~/.claude/state/d2a) that outlives the
+# process. A pid is not enough for two compounding reasons:
+#   1. Windows recycles pids, and the suite's own prompt literals are constant, so the
+#      whole key reduces to the pid.
+#   2. The gate's sanitiser strips every non-alphanumeric character, INCLUDING the '_'
+#      that separated pid from counter -- so `vgate1044_7`, `vgate104_47` and
+#      `vgate10447_<n>` all collapse to the same marker. The collision surface is far
+#      wider than pid reuse alone.
+# A collision silences the gate, the advisory never appears, and the assertion fails
+# with "live registered but advisory absent" -- observed once as a 32/33 flake that
+# then hid for six consecutive runs. A uuid4 never recycles and is already
+# alphanumeric, so the sanitiser cannot fold two of them together.
+_RUN_TOKEN = uuid.uuid4().hex
 _SID = itertools.count()
+
+
+def _sid(prefix: str) -> str:
+    """A throttle-proof session id. `_RUN_TOKEN` is fixed-length, so prefix, token and
+    counter stay unambiguous after the gate strips the separators."""
+    return f"{prefix}{_RUN_TOKEN}x{next(_SID)}"
 
 
 def _run_gate_raw(raw_stdin: str, cwd: str | None = None) -> tuple:
@@ -94,8 +114,7 @@ def _run_gate_raw(raw_stdin: str, cwd: str | None = None) -> tuple:
 
 
 def _run_gate(prompt: str, cwd: str | None = None) -> tuple:
-    payload = json.dumps({"prompt": prompt,
-                          "session_id": f"t{os.getpid()}_{next(_SID)}"})
+    payload = json.dumps({"prompt": prompt, "session_id": _sid("t")})
     return _run_gate_raw(payload, cwd=cwd)
 
 
@@ -505,7 +524,7 @@ def main(argv=None) -> int:
         payload = json.dumps({
             "prompt": "quiero crear un router de modelos que elija entre haiku sonnet "
                       "y opus segun el coste",
-            "session_id": f"vgate{os.getpid()}_{next(_SID)}",
+            "session_id": _sid("vgate"),
             "cwd": str(Path.home()),
         })
         try:
