@@ -1,0 +1,50 @@
+{
+ "_doc": "Kill-count floors per (suite::module). Tier is assigned by measured suite runtime -- see tools/mutation_ratchet.py. min_kill/module_hash/measured_at are written by --baseline and must never be hand-edited: a floor typed from memory measures memory.",
+ "pairs": {
+  "tools/test_egcc_residue.py::modules/rule_compiler/schema.py": {
+   "tier": "push",
+   "min_kill": 3,
+   "sampled": 6,
+   "module_hash": "f2dc1e74b28522ed",
+   "measured_at": "2026-08-10T17:55:22Z"
+  },
+  "tools/test_egcc_residue.py::modules/rule_compiler/parser.py": {
+   "tier": "weekly",
+   "_why_weekly": "each rule_compiler pair costs about 22s (test_egcc_residue.py runs 3.2s x 7 runs). Both on push measured 95.7s for the tier; schema.py is the core surface and stays, parser.py moves here.",
+   "min_kill": 3,
+   "sampled": 6,
+   "module_hash": "1163dadd7a223af2",
+   "measured_at": "2026-08-10T18:00:50Z"
+  },
+  "tools/test_capability_runtime.py::modules/capability_runtime/contract.py": {
+   "tier": "push",
+   "min_kill": 2,
+   "sampled": 6,
+   "module_hash": "fcaf3e7ecbee0fb5",
+   "measured_at": "2026-08-10T17:55:22Z"
+  },
+  "tools/test_capability_runtime.py::modules/capability_runtime/applicability.py": {
+   "tier": "push",
+   "min_kill": 2,
+   "sampled": 6,
+   "module_hash": "de0ef2d008dc6ebf",
+   "measured_at": "2026-08-10T17:55:22Z"
+  },
+  "tools/test_duplicate_to_advantage.py::modules/duplicate_to_advantage/d2a_engine.py": {
+   "tier": "weekly",
+   "max": 4,
+   "_why_weekly": "the suite runs 35.2s, so a 4-mutant sweep costs about 3 minutes -- roughly ten times the whole push tier. Move to \"push\" if that cost is acceptable.",
+   "min_kill": 1,
+   "sampled": 4,
+   "module_hash": "2dfa3268c5965dfa",
+   "measured_at": "2026-08-10T18:00:50Z"
+  },
+  "tools/test_ias_c2_opportunity_cost.py::modules/ias_c2/opportunity_cost.py": {
+   "tier": "weekly",
+   "min_kill": 3,
+   "sampled": 6,
+   "module_hash": "2da982a6e1789c2f",
+   "measured_at": "2026-08-10T18:00:50Z"
+  }
+ }
+}

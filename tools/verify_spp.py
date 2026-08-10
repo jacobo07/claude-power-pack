@@ -258,6 +258,16 @@ def main() -> int:
         ("mutation-probe",
          [PY, str(PP / "tools" / "test_mutation_probe.py")],
          300),
+        # Judgement only; the probe is stubbed, so this costs milliseconds.
+        ("mutation-ratchet-gates",
+         [PY, str(PP / "tools" / "test_mutation_ratchet.py")],
+         120),
+        # The push tier itself: measured 38.0s over 3 pairs. The weekly tier
+        # (d2a_engine, rule_compiler/parser, ias_c2) is deliberately NOT here --
+        # d2a alone costs about 3 minutes, ten times this whole row.
+        ("mutation-ratchet",
+         [PY, str(PP / "tools" / "mutation_ratchet.py"), "--tier", "push"],
+         300),
     ]
 
     if args.row:
