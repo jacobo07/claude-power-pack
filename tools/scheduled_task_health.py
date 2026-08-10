@@ -113,7 +113,7 @@ def classify_task(info: dict, *, now_epoch: float | None = None) -> TaskVerdict:
 # a statement-form if; interval parse guarded.
 _PS_SCAN = r"""
 Get-ScheduledTask | Where-Object {
-  $_.TaskName -match 'claude|pp-|kobii|vault|hibernat|reap|compact|sleepy|orphan|miner|snapshot|normalize|kickback|watchdog'
+  $_.TaskName -match 'claude|pp-|kobii|vault|hibernat|reap|compact|sleepy|orphan|miner|snapshot|normalize|watchdog'
 } | ForEach-Object {
   $task = $_
   $i = $task | Get-ScheduledTaskInfo
