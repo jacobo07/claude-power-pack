@@ -1,0 +1,199 @@
+"""V-gates for G1/G2/G3.
+
+Each gate is exercised against a state constructed to FAIL it, not only against a
+clean one. A gate proven only on the happy path is exactly what G1 rejects, so a
+suite that skipped those cases would fail its own subject.
+
+`V-PGG-G3-LIMIT` is deliberately an assertion that G3 does NOT catch something.
+The limit is part of the contract; hiding it would make G3 claim more than it
+measures.
+"""
+from __future__ import annotations
+
+import shutil
+import sys
+import tempfile
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import tools.predictive_governance_gate as pg  # noqa: E402
+
+PASSES: list[str] = []
+FAILS: list[str] = []
+
+
+def _ok(name: str, evidence: str) -> None:
+    PASSES.append(name)
+    print(f"  PASS  {name}  {evidence}")
+
+
+def _fail(name: str, diagnostic: str) -> None:
+    FAILS.append(name)
+    print(f"  FAIL  {name}  {diagnostic}")
+
+
+class Repo:
+    """A throwaway repo holding only the suites a case needs."""
+
+    def __enter__(self) -> "Repo":
+        self.root = Path(tempfile.mkdtemp(prefix="pgg_"))
+        (self.root / "tools").mkdir(parents=True)
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def suite(self, name: str, body: str) -> None:
+        (self.root / "tools" / name).write_text(body, encoding="utf-8")
+
+    def file(self, rel: str, body: str) -> None:
+        p = self.root / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(body, encoding="utf-8")
+
+
+HAPPY_ONLY = "def test_a():\n    assert compute() == 7\n"
+ASSERTS_FAILURE = "def test_a():\n    assert run() == 1\n    assert compute() == 7\n"
+NO_LITERAL = "def test_a():\n    assert result == expected\n    assert run() == 1\n"
+
+
+def main() -> int:
+    print("== V-PGG gates ==")
+
+    # ---------------------------------------------------------------- G1
+    with Repo() as r:
+        r.suite("test_happy.py", HAPPY_ONLY)
+        if pg.g1_vacuity(r.root) == ["test_happy.py"]:
+            _ok("V-PGG-G1-VACUOUS", "happy-path-only suite detected")
+        else:
+            _fail("V-PGG-G1-VACUOUS", "vacuous suite not detected")
+
+    with Repo() as r:
+        r.suite("test_real.py", ASSERTS_FAILURE)
+        if pg.g1_vacuity(r.root) == []:
+            _ok("V-PGG-G1-CLEAN", "suite asserting a failure is accepted")
+        else:
+            _fail("V-PGG-G1-CLEAN", "suite with a failure assertion wrongly flagged")
+
+    # A comment claiming a failure case is not a failure case.
+    with Repo() as r:
+        r.suite("test_comment.py", "# asserts FAIL when broken\ndef test_a():\n    assert compute() == 7\n")
+        if pg.g1_vacuity(r.root) == ["test_comment.py"]:
+            _ok("V-PGG-G1-COMMENT", "a comment does not count as an assertion")
+        else:
+            _fail("V-PGG-G1-COMMENT", "comment text counted as a failure assertion")
+
+    # ---------------------------------------------------------------- G2
+    SILENCER = "import sys\nif not HAVE_DEP:\n    sys.exit(0)\n\ndef test_a():\n    assert x == 1\n"
+
+    with Repo() as r:
+        r.suite("test_silenced.py", SILENCER)
+        if pg.g2_module_scope_exit(r.root) == ["tools/test_silenced.py"]:
+            _ok("V-PGG-G2-MODULE-EXIT", "module-scope conditional exit detected")
+        else:
+            _fail("V-PGG-G2-MODULE-EXIT", "the 340-test silencer shape was not detected")
+
+    # A file the runner is configured to skip is not a live risk. Reporting it
+    # would be a plausible, wrong finding -- and on the real repo it was exactly
+    # nine of them, all already excluded by conftest.
+    with Repo() as r:
+        r.file("_logs/scratch_test.py", SILENCER)
+        r.file("conftest.py", 'collect_ignore_glob = [\n    "_logs/*",\n]\n')
+        if pg.g2_module_scope_exit(r.root) == []:
+            _ok("V-PGG-G2-HONOURS-IGNORE", "collect_ignore_glob excludes it from the surface")
+        else:
+            _fail("V-PGG-G2-HONOURS-IGNORE", "reported a file the runner never imports")
+
+    # Removing that exclusion must bring the risk back, or the config is unmonitored.
+    with Repo() as r:
+        r.file("_logs/scratch_test.py", SILENCER)
+        r.file("conftest.py", "collect_ignore_glob = []\n")
+        if pg.g2_module_scope_exit(r.root) == ["_logs/scratch_test.py"]:
+            _ok("V-PGG-G2-IGNORE-IS-LOAD-BEARING", "dropping the exclusion re-arms the gate")
+        else:
+            _fail("V-PGG-G2-IGNORE-IS-LOAD-BEARING", "gate stayed silent without the exclusion")
+
+    # The origin incident was NOT in tools/. It was nine scratch scripts under
+    # _logs/ matching *_test.py, which bare pytest still collects. A G2 that
+    # globbed only tools/ could not have caught the incident it was built from.
+    with Repo() as r:
+        r.file("_logs/milestone_9_test.py", SILENCER)
+        if pg.g2_module_scope_exit(r.root) == ["_logs/milestone_9_test.py"]:
+            _ok("V-PGG-G2-COVERS-ORIGIN", "_logs/*_test.py collection surface is scanned")
+        else:
+            _fail("V-PGG-G2-COVERS-ORIGIN", "G2 cannot catch its own founding incident")
+
+    with Repo() as r:
+        r.suite("test_guarded.py", "import sys\n\ndef main():\n    return 0\n\nif __name__ == '__main__':\n    sys.exit(main())\n")
+        if pg.g2_module_scope_exit(r.root) == []:
+            _ok("V-PGG-G2-MAIN-GUARD", "__main__ guard is not an offender")
+        else:
+            _fail("V-PGG-G2-MAIN-GUARD", "legitimate __main__ exit wrongly flagged")
+
+    cases = [
+        ("V-PGG-G2-NO-TESTS", pg.classify_run(5, ""), "UNVERIFIED"),
+        ("V-PGG-G2-INTERNAL", pg.classify_run(1, "INTERNALERROR> ..."), "COLLECTION_FAILURE"),
+        ("V-PGG-G2-ZERO-TALLY", pg.classify_run(0, "SUITE_PASS=0/0"), "UNVERIFIED"),
+        ("V-PGG-G2-REAL-PASS", pg.classify_run(0, "SUITE_PASS=8/8"), "PASS"),
+        ("V-PGG-G2-REAL-FAIL", pg.classify_run(1, "2 failed, 3 passed"), "FAIL"),
+    ]
+    for name, got, want in cases:
+        if got == want:
+            _ok(name, f"{want}")
+        else:
+            _fail(name, f"got {got}, want {want}")
+
+    # ---------------------------------------------------------------- G3
+    with Repo() as r:
+        r.suite("test_noliteral.py", NO_LITERAL)
+        if pg.g3_oracle(r.root) == ["test_noliteral.py"]:
+            _ok("V-PGG-G3-NO-LITERAL", "suite with no literal assertion detected")
+        else:
+            _fail("V-PGG-G3-NO-LITERAL", "missing-literal suite not detected")
+
+    with Repo() as r:
+        r.suite("test_literal.py", ASSERTS_FAILURE)
+        if pg.g3_oracle(r.root) == []:
+            _ok("V-PGG-G3-LITERAL", "literal-compared assertion is accepted")
+        else:
+            _fail("V-PGG-G3-LITERAL", "suite with a literal wrongly flagged")
+
+    # An exit-code comparison is not the number the mechanism emits. If it counted,
+    # every suite would pass and G3 would be vacuous.
+    with Repo() as r:
+        r.suite("test_rconly.py", "def test_a():\n    rc = run()\n    assert rc == 0\n    assert not broken\n")
+        if pg.g3_oracle(r.root) == ["test_rconly.py"]:
+            _ok("V-PGG-G3-EXITCODE-EXCLUDED", "exit-code check does not satisfy the oracle")
+        else:
+            _fail("V-PGG-G3-EXITCODE-EXCLUDED", "exit-code comparison wrongly counted as an oracle")
+
+    # THE LIMIT. A wrong literal still passes. Asserted so the blind spot is part
+    # of the contract rather than a surprise discovered later in production.
+    with Repo() as r:
+        r.suite("test_wrong.py", "def test_a():\n    assert count_items() == 99999\n    assert run() == 1\n")
+        if pg.g3_oracle(r.root) == []:
+            _ok("V-PGG-G3-LIMIT", "a WRONG literal passes G3 -- documented blind spot, not a defect")
+        else:
+            _fail("V-PGG-G3-LIMIT", "G3 unexpectedly judged literal correctness")
+
+    # ---------------------------------------------------------- baseline logic
+    current = {"G1": ["a.py", "b.py"], "G2": [], "G3": []}
+    base = {"G1": ["a.py"], "G2": [], "G3": []}
+    if pg.new_offenders(current, base)["G1"] == ["b.py"]:
+        _ok("V-PGG-BASELINE-NEW", "a new offender is isolated from carried debt")
+    else:
+        _fail("V-PGG-BASELINE-NEW", "new-offender isolation is wrong")
+
+    if pg.new_offenders(base, base)["G1"] == []:
+        _ok("V-PGG-BASELINE-CARRIED", "carried debt does not fail the gate")
+    else:
+        _fail("V-PGG-BASELINE-CARRIED", "carried debt wrongly failed the gate")
+
+    total = len(PASSES) + len(FAILS)
+    print(f"PREDICTIVE_GATES_TESTS={len(PASSES)}/{total}  threshold={total}/{total}")
+    return 0 if not FAILS else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

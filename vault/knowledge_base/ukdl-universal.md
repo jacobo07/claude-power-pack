@@ -4774,6 +4774,74 @@ content against the destination corpus, never by matching names. Report the
 instrument's question alongside its number.
 
 **Origin:** memory audit, 2026-08-09. `vault/audits/f6_plans_content_report.md`.
+
+### HR-GATE-MUST-BE-FALSIFIABLE-001 -- a gate whose suite never asserts a failure has not been tested
+
+**TRIGGER:** sealing a new gate, check, validator or scorer.
+
+**ACCION:** STOP unless its suite constructs at least one state that FAILS. A suite
+that only exercises the happy path certifies the gate as correct without ever
+having put it under stress, and it does so in green -- which is why this defect
+survives review while louder ones do not.
+
+**Measured 2026-08-10:** 58 of 126 suites in this estate assert no failing outcome
+anywhere. Enforcement here has always covered what crashes; it did not cover what
+merely agrees with itself.
+
+**Detector:** `tools/predictive_governance_gate.py` G1, `verify_spp` rows
+`predictive-governance-gates` and `predictive-governance-debt`. Pre-existing
+offenders are carried by NAME in `vault/governance/predictive_gates_baseline.json`
+so the debt can only fall by repairing a suite, never by deleting one. A NEW
+offender fails the gate.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+
+### HR-ZERO-TESTS-IS-UNVERIFIED-001 -- nothing ran and everything passed must not share a name
+
+**TRIGGER:** reading a suite's exit status to decide whether something is proven.
+
+**ACCION:** classify before believing. `N/N` where N is 0 is UNVERIFIED. A
+collection abort is COLLECTION_FAILURE. Neither is PASS, and neither is a test
+failure. An instrument that collapses "nothing ran" into "everything passed"
+cannot say which of the two it found, and the difference is the entire question.
+
+**ORIGEN:** nine scratch scripts matching `*_test.py` exited at import, pytest
+aborted with `INTERNALERROR` before a single test ran, and 340 authored tests went
+unexecuted by the canonical invocation for three weeks while the numbers drifted in
+the direction that looks like neglect rather than breakage.
+
+**Detector:** `tools/predictive_governance_gate.py` `classify_run` plus the
+module-scope exit scan, which reads `conftest.py` `collect_ignore_glob` so it
+judges what the runner actually imports. That also makes the exclusion
+load-bearing: delete it and the gate re-arms (`V-PGG-G2-IGNORE-IS-LOAD-BEARING`).
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+
+### T-ORACLE-RECOMPUTED-FROM-MECHANISM-001 -- comparing a mechanism to itself measures nothing
+
+**Trap.** `assert result == mechanism(same_input)` looks like verification and is
+not. The oracle and the system under test are the same code, so the assertion holds
+just as firmly when the mechanism is wrong. A useful oracle asserts against a value
+known independently: a literal, a golden output, or a value produced by a different
+mechanism.
+
+**Why it hides:** it passes, in the right units, in the right range. This is the
+general form of `T-PLAUSIBLE-BUT-WRONG-001`, whose seven instances all shipped with
+suites that agreed with themselves.
+
+**Detector, and its limit stated:** `tools/predictive_governance_gate.py` G3 flags a
+suite with no literal-compared assertion, excluding exit-code checks -- counting
+those would let every suite pass and make G3 vacuous, the defect
+`HR-GATE-MUST-BE-FALSIFIABLE-001` exists to catch. **G3 cannot tell whether the
+literal is correct.** A suite asserting `count == 5` where the true answer is 4
+passes. `V-PGG-G3-LIMIT` asserts that blind spot on purpose, so the gate's reach is
+part of its contract rather than a discovery someone makes later in production.
+Necessary, not sufficient.
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+
+**Origin:** predictive governance build, 2026-08-10.
+`vault/plans/predictive-governance-2026-08-10.md`.
 coverage hole is not random: it is exactly the set of NEW sessions, which is
 exactly the set the Owner most wants back after a day's work. Measured: 23
 `folderOpen` tasks against 5 beacons, and the session being typed in had none.

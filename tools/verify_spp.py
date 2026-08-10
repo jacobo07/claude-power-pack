@@ -248,6 +248,12 @@ def main() -> int:
         ("memory-router-freshness",
          [PY, str(PP / "tools" / "test_router_freshness_gate.py")],
          120),
+        ("predictive-governance-gates",
+         [PY, str(PP / "tools" / "test_predictive_governance_gate.py")],
+         120),
+        ("predictive-governance-debt",
+         [PY, str(PP / "tools" / "predictive_governance_gate.py")],
+         120),
     ]
 
     if args.row:

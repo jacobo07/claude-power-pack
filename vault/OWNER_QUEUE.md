@@ -7,6 +7,40 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## NEW (2026-08-10) -- 67 suites carried as predictive-governance debt  [PENDING]
+
+**System:** `tools/predictive_governance_gate.py`
+**Report:** `vault/audits/predictive_gates_offenders.md`
+**Baseline:** `vault/governance/predictive_gates_baseline.json`
+
+Nothing here blocks a build. These are PRE-EXISTING and carried by NAME, so the
+debt can only fall by fixing a suite, never by deleting one or moving a
+threshold. A NEW offender fails the gate today.
+
+| gate | carried | what the suite is missing |
+|---|---|---|
+| G1 vacuity | 58 of 126 | no assertion anywhere expects a failing outcome |
+| G2 module-scope exit | 0 | clean; the nine `_logs/*_test.py` scripts remain excluded by `conftest.py` |
+| G3 oracle | 9 of 126 | no assertion against a numeric literal |
+
+**The G1 number is the one to look at.** 46% of this estate's suites verify only
+that the happy path works. Each one certifies its subject without ever having put
+it under stress, which is how seven plausible-but-wrong mechanisms shipped green
+and had to be found by hand.
+
+**Nothing is required of you to keep the gate working.** The ask is a decision on
+pace: whether to burn the 58 down deliberately, or to let the ratchet hold the
+line while new work pays as it goes. Suggested order is the report's G1 list,
+starting with suites guarding a gate that emits a number.
+
+**Caveat on G2's zero.** It is a real measurement, not an empty gate:
+`V-PGG-G2-COVERS-ORIGIN` proves the detector fires on the exact `_logs/*_test.py`
+shape from the origin incident, and `V-PGG-G2-IGNORE-IS-LOAD-BEARING` proves that
+removing the `conftest.py` exclusion re-arms it. If that exclusion is ever
+deleted, this row stops being zero.
+
+---
+
 ## NEW (2026-08-03) -- activate the Session Delta Gate (one Copy-Item)  [PENDING]
 
 **System:** `hooks/hook-dispatcher.js`
