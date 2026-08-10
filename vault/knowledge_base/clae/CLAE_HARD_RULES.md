@@ -18,9 +18,9 @@ date: 2026-08-10
 
 | Quantity | Count |
 |---|---|
-| Hard rules seeded across all 26 Parts | **0** |
+| Hard rules seeded across all 30 Parts | **0** |
 
-Measured by the same extraction that produced the 141 process rules: zero seeds match the hard-rule form in any Part. Part XXIII §1 states the same number and gives the reason:
+Measured by the same extraction that produced the 174 process rules: zero seeds match the hard-rule form in any Part. Part XXIII §1 states the same number and gives the reason:
 
 > **Zero hard rules is deliberate.** Part I §6 and Part II §11 placed prohibitions and invariants explicitly out of scope. *"A family about how to measure and report should not be issuing prohibitions."*
 

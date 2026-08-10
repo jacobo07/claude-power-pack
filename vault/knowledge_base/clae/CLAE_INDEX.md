@@ -103,16 +103,20 @@ seeded it; no extract carries information absent from its source.
 |---|---|---|---|
 | `CLAE_SYSTEMS_CATALOG.md` | this index · charter | 26 mechanisms | **POPULATED** |
 | `CLAE_HARD_RULES.md` | Part XXIII | 0 — empty by construction | **POPULATED** |
-| `CLAE_PROCESS_RULES.md` | Parts II–XXV | 141 | **POPULATED** |
-| `CLAE_TRAPS.md` | Parts II–XXI · XXII | 99 distinct | **POPULATED** |
-| `CLAE_EVALS.md` | Parts I–XXV · XXIV | 129 | **POPULATED** |
-| `CLAE_PRODUCTION_GATES.md` | Parts I–XXIV · XXV | 23 seeds · 4 gate points | **POPULATED** |
+| `CLAE_PROCESS_RULES.md` | Parts II–30 | 174 | **POPULATED** |
+| `CLAE_TRAPS.md` | Parts II–30 · XXII | 127 distinct | **POPULATED** |
+| `CLAE_EVALS.md` | Parts I–30 · XXIV | 155 | **POPULATED** |
+| `CLAE_PRODUCTION_GATES.md` | Parts I–30 · XXV | 27 seeds · 4 gate points | **POPULATED** |
 | `CLAE_ONTOLOGY.md` | Part III | 19 terms | **POPULATED** |
 | `CLAE_INTEGRATION_MAP.md` | Part XXVI | 17 owners | **POPULATED** |
-| `CLAE_EVIDENCE_INDEX.md` | all Parts | 23 of 26 Parts | **POPULATED** |
-| `CLAE_OPEN_QUESTIONS.md` | all Parts | 73 | **POPULATED** |
-| `CLAE_VERSION_LEDGER.md` | frontmatter · filesystem | 26 Parts | **POPULATED** |
-| `CLAE_COMPLETION_REPORT.md` | this build | — | pending |
+| `CLAE_EVIDENCE_INDEX.md` | all Parts | 24 of 30 Parts | **POPULATED** |
+| `CLAE_OPEN_QUESTIONS.md` | all Parts | 85 | **POPULATED** |
+| `CLAE_VERSION_LEDGER.md` | frontmatter · filesystem | 30 Parts | **POPULATED** |
+| `CLAE_COMPLETION_REPORT.md` | this build | verdict + observed counts | **POPULATED** |
+
+The extracts are regenerated from the Parts, so they are current only as of their last
+regeneration, and **nothing detects divergence between a Part and its extract** — recorded in
+`CLAE_COMPLETION_REPORT.md` §8 as the residual this family's own Part XXIII §4 would close first.
 
 **Three counts in the extracts differ from the counts the Parts assert about themselves.**
 Each is a scope-label gap, not an arithmetic error, and each is recorded in the extract

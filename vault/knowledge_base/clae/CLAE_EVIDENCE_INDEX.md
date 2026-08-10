@@ -36,9 +36,9 @@ The charter requires an *evidence index complete* for completion. This file reco
 | XIV | §11 | instruments built in response to blockers in this stack |
 | XV | §11 | incident conversion in this stack |
 | XVI | §10 | oracle surfaces in this stack |
-| XVII | §6 | — |
+| XVII | §10 | routing in this compendium's own construction |
 | XVIII | §10 | deviation surfaces in this stack |
-| XIX | §4 | — |
+| XIX | §8 | — |
 | XX | §11 | closure surfaces in this stack |
 | XXI | — | **no evidence section** |
 | XXII | §9 | the registry pattern in this stack |
@@ -46,8 +46,14 @@ The charter requires an *evidence index complete* for completion. This file reco
 | XXIV | §9 | a negative control, run |
 | XXV | §9 | gate surfaces in this stack |
 | XXVI | — | **no evidence section** |
+| 27 | §12 | this family is the instance |
+| 28 | — | **no evidence section** |
+| 29 | — | **no evidence section** |
+| 30 | — | **no evidence section** |
 
-**23 of 26 Parts carry an evidence section.** The 3 without one are III, XXI, XXVI. Part III is the ontology and Part XXVI is the integration map, so neither makes a first-order empirical claim about the stack. Part XXI reasons over the evidence the prior twenty Parts established rather than adding its own — which is consistent with its `depends_on: all prior`, and is the one absence a reader should check rather than assume.
+**24 of 30 Parts carry an evidence section.** The 6 without one are III, XXI, XXVI, 28, 29, 30. Part III is the ontology and Part XXVI is the integration map, so neither makes a first-order empirical claim about the stack. Part XXI reasons over the evidence the prior twenty Parts established rather than adding its own — which is consistent with its `depends_on: all prior`.
+
+**Parts 28, 29 and 30 have no evidence section, and that is a deviation from the prevailing Part shape rather than a reasoned exemption.** Twenty-three of the twenty-six sealed Parts carry one. The extension's Parts label their claims individually — the epistemic-label counts below are comparable to their siblings' — but they do not gather the evidence into a section a reader can go to. Part 27 does. Recorded here rather than repaired, because retro-fitting a section to match a template is the ritual compliance Part X §6 names; the honest form is to say the shape differs and let a reader weigh it.
 
 ## 2. Epistemic label distribution
 
@@ -85,7 +91,11 @@ The charter requires an *evidence index complete* for completion. This file reco
 | XXIV | 0 | 2 | 1 | 2 | 0 | 1 |
 | XXV | 0 | 1 | 1 | 1 | 0 | 2 |
 | XXVI | 0 | 0 | 0 | 0 | 0 | 0 |
-| **total** | **3** | **36** | **27** | **30** | **0** | **46** |
+| 27 | 0 | 5 | 5 | 1 | 0 | 2 |
+| 28 | 0 | 2 | 4 | 1 | 0 | 2 |
+| 29 | 3 | 9 | 5 | 3 | 2 | 4 |
+| 30 | 0 | 2 | 3 | 1 | 0 | 2 |
+| **total** | **6** | **54** | **44** | **36** | **2** | **56** |
 
 Counts are label *occurrences* in the Part text, not distinct claims: a Part discussing what INFERRED means increments the same counter as one labelling a claim. The column that matters for the charter is the ratio, and Part XXIII §6 states it in prose for the rule set — *"largely deductive"* — which this table supports and does not quantify per claim.
 

@@ -44,8 +44,12 @@ date: 2026-08-10
 | XXIV | `PART_XXIV_evals_and_benchmarks.md` | SEALED | 2026-07-26 | [XXIII] | [XXV, XXVI] | 336 |
 | XXV | `PART_XXV_production_reality_gates.md` | SEALED | 2026-07-26 | [XXIII, XXIV] | [XXVI] | 334 |
 | XXVI | `PART_XXVI_integration_map_and_writeback.md` | SEALED | 2026-07-26 | [I, II, III, IV, V, VI, VII, VIII, IX, X, XI, XII, XIII, XIV, XV, XVI, XVII, XVIII, XIX, XX, XXI, XXII, XXIII, XXIV, XXV] | — | 289 |
+| 27 | `PART_27_the_completion_prosecutor.md` | SEALED | 2026-08-10 | [I, XIII, XVI, XVII, XIX, XX, XXIV] | [28, 29, 30] | 478 |
+| 28 | `PART_28_freeze_and_adversarial_multipass.md` | SEALED | 2026-08-10 | [VI, XIII, XV, XIX, XXII, XXV, 27] | [29, 30] | 467 |
+| 29 | `PART_29_cognitive_precursors_and_the_repair_loop.md` | SEALED | 2026-08-10 | [I, IX, XIII, XV, XVIII, XIX, XXIV, 27, 28] | [30] | 521 |
+| 30 | `PART_30_root_cause_elevation_and_immunity.md` | SEALED | 2026-08-10 | [X, XI, XV, XXI, XXII, XXIII, XXV, 27, 28, 29] | [] | 474 |
 
-**Coherence anchor:** `parts_sealed` in `CLAE_INDEX.md` must equal the count of `PART_*.md` files. Measured: **26** files, all `SEALED`.
+**Coherence anchor:** `parts_sealed` in `CLAE_INDEX.md` must equal the count of `PART_*.md` files. Measured: **30** files, all `SEALED`.
 
 ## 2. Registry extracts
 

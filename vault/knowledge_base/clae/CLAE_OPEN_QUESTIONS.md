@@ -20,9 +20,9 @@ Part XXVI §9a selects the open questions that matter; this file carries all of 
 
 | Quantity | Count |
 |---|---|
-| Open questions across the family | **73** |
-| Labelled UNKNOWN | 46 |
-| Labelled HYPOTHESIS | 27 |
+| Open questions across the family | **85** |
+| Labelled UNKNOWN | 54 |
+| Labelled HYPOTHESIS | 31 |
 | Carrying no label | 0 |
 
 ## 2. The entries
@@ -102,6 +102,18 @@ Part XXVI §9a selects the open questions that matter; this file carries all of 
 | XXV | 1 | Can label propagation be implemented without a common record format across surfaces? §6 requires labels to travel between systems that currently share no schema, and the propagation may be the expensive part rather than the labelling. — UNKNOWN, and the principal obstacle to this Part. | UNKNOWN |
 | XXV | 2 | Do four gate points cover the lifecycle, or is there a fifth at input rather than output? Every gate here fires on something produced; a system consuming external artifacts may need one on intake. — HYPOTHESIS: yes, and it was not seeded because this family measured production. | HYPOTHESIS |
 | XXV | 3 | How many labels can a claim carry before it is ignored? §6 assumes labels are read; a claim carrying six qualifications may be treated exactly as one carrying none. — UNKNOWN. | UNKNOWN |
+| 27 | 1 | Can a prosecutor and an executor implemented as the same model with different prompts satisfy §4's four conditions? Conditions 1, 2 and 4 appear satisfiable by construction; condition 3 — not sharing the plan's blind spot — is the doubtful one, and it is the condition that determines whether the coverage intersection actually grows. — HYPOTHESIS, and the question that decides whether this Part is cheap or expensive to adopt. | HYPOTHESIS |
+| 27 | 2 | What is the correct validity window for a negative control? Too long and a prosecutor decays undetected between runs; too short and the control dominates the cost. Part V's horizon machinery applies but the period is unmeasured. — UNKNOWN. | UNKNOWN |
+| 27 | 3 | Does an arbiter need its own negative control? It is a third instrument making a decision, so Part XIII says yes; but its output is a judgment over two evidence sets rather than an observation, and this family has not established what a known-answer case looks like for a judgment. — UNKNOWN. | UNKNOWN |
+| 28 | 1 | How much anchoring does withholding the summary actually remove? The source asserts the reduction and this Part builds a procedure on it, but no measurement exists — and the two-run probe in §15 is cheap. Until it runs, the ordering is a well-motivated hypothesis. — HYPOTHESIS, and the load-bearing one in this Part. | HYPOTHESIS |
+| 28 | 2 | Is the route space of a withdrawal ever fully enumerable? Eight routes were found for one estate withdrawal; whether that set is complete or merely the routes someone thought of is unknown, and an unreachability proof over an incomplete route space is a bounded claim presented as an absolute one. — UNKNOWN. | UNKNOWN |
+| 28 | 3 | Does the §8 selection rule survive delivery pressure? A selection rule that is itself selected by the party under pressure is not a constraint. The unconditional three are the hedge; whether three is the right number is unmeasured. — UNKNOWN. | UNKNOWN |
+| 29 | 1 | Can precursor 9 be measured without a reliable exhaustion signal? The behavioural profile in §15 is measurable retrospectively, which detects the collapse after the closure it degraded. A prospective signal would need the session to know its own remaining capacity, and whether that is available at the right granularity is unresolved. — UNKNOWN, and the most consequential gap in this Part. | UNKNOWN |
+| 29 | 2 | Is the ten-precursor set complete? It was assembled from observed behaviour in one estate plus this stack's own rule surfaces, which is two sources and neither is a systematic enumeration. The honest expectation is that it is a well-evidenced sample. — HYPOTHESIS. | HYPOTHESIS |
+| 29 | 3 | Does classification into three classes survive contact with findings that span two? A finding may be self-repairable in its mechanism and owner-required in its consequence. §10 routes by who may act, which resolves the ambiguity in principle; whether it resolves it in practice is untested. — UNKNOWN. | UNKNOWN |
+| 30 | 1 | Is the six-level ladder's Level 5 distinguishable from Level 4 in practice? An absent authorized composition (4) and an absent detector for compositions (5) are adjacent, and the repairs differ — a declaration versus an instrument. Whether practitioners route consistently between them is untested. — UNKNOWN. | UNKNOWN |
+| 30 | 2 | What is the correct recurrence window for the §15 probe? A family recurring after two years may indicate a retired protection rather than an unelevated cause, and the two have opposite repairs. Part V's horizon machinery applies but the period is unmeasured. — UNKNOWN. | UNKNOWN |
+| 30 | 3 | Does running a new detector against the pre-repair state generalise beyond artifact-shaped defects? For a cognitive-cause row — the compiler's last — the pre-repair "state" is a session transcript, and whether a precursor detector can be validated against one is unresolved. — HYPOTHESIS, and the row most likely to be adopted without its proof. | HYPOTHESIS |
 
 ## 3. Reading
 

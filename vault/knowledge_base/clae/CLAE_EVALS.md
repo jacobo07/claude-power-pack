@@ -21,13 +21,13 @@ date: 2026-08-10
 | Scope | Measured | Part XXIV asserts |
 |---|---|---|
 | Parts I–XXIII | **119** | *"roughly one hundred and ten"* (§1) |
-| Parts I–XXV (family total) | **129** | — |
+| Parts I–XXV (family total) | **155** | — |
 
 Part XXIV hedges its number (*roughly*), and the measured figure sits above the hedge. §8 then reasons from a firm *"One hundred and ten evals is a programme, not a check"*. The argument is unaffected by the correction — 119 is more of a programme than 110 — but the operative count is 119.
 
 ## 2. The set worth running first
 
-Part XXIV §8 selects five by cost against what they reveal. This is the operating subset; the remaining 124 are the programme.
+Part XXIV §8 selects five by cost against what they reveal. This is the operating subset; the remaining 150 are the programme.
 
 1. **Arity probe** — can each instrument report could-not-observe? Expected to fail nearly everywhere and it invalidates every clean result beneath it.
 2. **Count-versus-distance plot** — the fingerprint of fixability bias, two lines and no machinery.
@@ -172,6 +172,32 @@ Part XXIV §8: **Continuous** (cheap, per-cycle, automatable) · **Periodic** (m
 | 127 | Gate-arity probe | XXV | Confirm each gate point emits could-not-run. |
 | 128 | Gate negative control | XXV | Present each gate point with a deliberately failing artifact and confirm it fires — the same discipline Part XXIV §9 applied to this build's own gate. |
 | 129 | Threshold-drift probe | XXV | For blocking gates, examine whether their thresholds have moved downward. Downward drift is the negotiated-block signature. |
+| 130 | Negative-control acquittal probe | 27 | Submit a known-defective closure pack. A prosecutor that approves it has been shown to be decorative, and every prior approval is void. |
+| 131 | Anchor-citation census | 27 | Over a period, what fraction of objections cite one of the three anchors? The uncited fraction predicts the role's disablement. |
+| 132 | Summary-dependence probe | 27 | Withhold the executor's summary and re-run the challenge. A materially different objection set means the prosecutor was auditing the narrative. |
+| 133 | Arity probe | 27 | Deny the prosecutor runtime access and observe the output. If it reports no-objections rather than could-not-assess, it is two-valued. |
+| 134 | State-skip probe | 27 | Walk closure traces and count transitions into `DONE_VERIFIED` whose predecessor was not `CLOSURE_CANDIDATE`. |
+| 135 | Alias-collision probe | 27 | Read certificates and check that each verdict maps to exactly one Part XX verdict, and that `Reduced` closures are not being recorded as `PARTIAL_VERIFIED`. |
+| 136 | Freeze-integrity probe | 28 | Hash the artifact at `CHANGE_FROZEN` and again at verdict. Any difference means the review's subject changed underneath it. |
+| 137 | Anchoring probe | 28 | Run the challenge twice, once with the summary and once without, and compare the finding sets. A large difference measures the anchoring the source asserts without measuring. |
+| 138 | Vacuous-negative census | 28 | Classify every negative test as route-enumerated or non-observation. The second class is the estate's false confidence, counted. |
+| 139 | Route-space probe | 28 | For one withdrawal, independently enumerate the routes and compare against the closure's list. The delta is the negative pass's real coverage. |
+| 140 | Rename probe | 28 | Rename a governed mechanism and re-run Pass F. If it is no longer found, the review is name-keyed. |
+| 141 | Selection-audit probe | 28 | Over a period, count closures where an unconditional pass was recorded not-run. Each is a gate that did not fire. |
+| 142 | Hedge-to-assertion probe | 29 | Grep session records for hedged verbs and check whether the corresponding claim carries a non-`VERIFIED` state in the ledger. Mismatches are precursor 1. |
+| 143 | Ledger-completeness probe | 29 | Sample material claims from a closure and check how many appear in the ledger. The unlisted fraction is the ledger's real coverage. |
+| 144 | Circular-oracle probe | 29 | For each test, ask what it would take for it to fail. Tests with no answer share the implementation's assumption. |
+| 145 | Re-freeze probe | 29 | For each in-session repair, compare the artifact hash at repair time and at the restarted review. A difference means the review ran against a moving artifact. |
+| 146 | Exhaustion-profile probe | 29 | Split each session into quarters and count negative tests, log reads and sibling searches per quarter. A monotone decline is precursor 9, measured. |
+| 147 | Owner-gate necessity probe | 29 | Classify past owner gates as agent-decidable or not. The agent-decidable fraction is the oracle dilution rate. |
+| 148 | Stop-condition audit | 29 | For closed reviews, check that condition 7 was evaluated rather than assumed. |
+| 149 | Elevation-level audit | 30 | For closed incidents, compare the level treated against the level the ten questions indicate. Systematic under-elevation is the recurrence engine. |
+| 150 | Recurrence probe | 30 | Count incidents whose family matches an earlier closed incident. A non-zero rate measures under-elevation directly, without opinion. |
+| 151 | Sibling-coverage probe | 30 | For one confirmed defect, independently run the family search and compare against the campaign's disposition. The delta is the campaign's real coverage. |
+| 152 | Detector-firing census | 30 | For every installed protection, has it fired once, including on the incident that motivated it? Never-fired protections are the estate's decorative surface, counted. |
+| 153 | Orphan census | 30 | Sample fixes, rules and tests and check their required links. The unlinked fraction is the set that can never be retired. |
+| 154 | Promotion-path audit | 30 | For promoted rules, was the path immediate or candidate, and does the recorded derivation support it? Immediate promotions with no parent law are unbounded rules. |
+| 155 | Question-10 probe | 30 | For each closed immunization, ask whether its operation depends on recall. A `yes` rate above zero measures how much of the estate's protection is doctrine. |
 
 ## 4. Completeness and measurement debt
 
@@ -181,4 +207,4 @@ Part XXIV §8: **Continuous** (cheap, per-cycle, automatable) · **Periodic** (m
 | Setup · Pass/fail criteria | ❌ none | no seed states them separately, which is the specific requirement of §3.3 |
 | Adversarial variant · False-positive risk · Cost and tier · Negative control · Output arity | ❌ none | no seed carries them |
 
-> **Measurement debt: 0 of 129 eval seeds satisfy the eight-field record schema.** The gap that matters most is the negative control, because Part XXIV §5 makes it the difference between an eval and a decoration. Part XXIV §9 ran exactly one negative control — against this build's own gate — and that remains the only eval in the family with a demonstrated ability to fail.
+> **Measurement debt: 0 of 155 eval seeds satisfy the eight-field record schema.** The gap that matters most is the negative control, because Part XXIV §5 makes it the difference between an eval and a decoration. Part XXIV §9 ran exactly one negative control — against this build's own gate — and that remains the only eval in the family with a demonstrated ability to fail.

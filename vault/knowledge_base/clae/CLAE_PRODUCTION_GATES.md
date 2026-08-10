@@ -20,7 +20,9 @@ date: 2026-08-10
 
 | Quantity | Measured |
 |---|---|
-| Gate seeds in the corpus | **23** (22 named + 1 stated as prose, Part I §13) |
+| Gate seeds, Parts I–XXVI | **23** (22 named + 1 stated as prose, Part I §13) |
+| Gate seeds, Parts 27–30 (the G2 extension) | 4 |
+| **Family total** | **27** |
 | Checks enumerated by Part XXV §4's four gate points | **20** |
 | Part XXV §1 and §4 assert | **nineteen** |
 
@@ -65,6 +67,19 @@ Part XXV §5 assigns the failure action: **G2 blocks** (its subject is admissibi
 | Rule Registry Gate | XXIII | G4 | A rule set may be described as governance only when every entry carries its enforcement layer, derivation kind, retirement condition and eval reference, and the operating subset is named separately from the reference set. Sets failing this are described as doctrine — a legitimate artifact, correctly labelled — so that a reader knows whether a given entry will stop them or merely inform them. |
 | Eval Integrity Gate | XXIV | G4 | An eval result may be cited as evidence only when the eval carries a negative control demonstrated within the re-validation interval, an adversarial variant that is not cheaper than compliance, a declared false-positive risk below the muting threshold, and three-valued output. Results from evals lacking a negative control are recorded as unverified — they may be correct, and nothing has shown they |
 
+### 3.1 Gates seeded by the G2 extension
+
+Part XXV sealed before Parts 27–30 existed, so these appear in no gate point. That is chronology, not a gap — and it is the difference between these rows and §4's. Assigning them to points, or opening a fifth, is an amendment to a sealed Part and is not made here.
+
+| Gate | Part | Seed statement |
+|---|---|---|
+| Completion Authority Gate | 27 | A closure may be described as *accepted* only when the granting party is neither the producer nor the challenger, the prosecutor's coverage statement is attached, the prosecutor has a negative control with a recorded rejection inside its validity window, every sustained objection is resolved by the arbiter rather than by the objected-to party, and the certificate carries a not-evaluated row. Closu |
+| Multipass Integrity Gate | 28 | A multipass result is admissible as evidence only when the artifact was frozen before the pack was assembled and unchanged at verdict, each of the nine passes carries a disposition, the three unconditional passes are ran or explicitly not-applicable, every unreachability claim carries a route enumeration, and Pass I reports could-not-assess rather than clean where no runtime was reachable. Results |
+| Session Integrity Gate | 29 | A session's evidence may support a closure claim only when preflight was performed for each modified capability, every material claim appears in the ledger with an epistemic state, no critical claim remains inferred or hypothetical without an explicit unknown record, every sustained finding carries a classification and a disposition, each in-session repair was followed by a re-freeze, and the revi |
+| Immunity Gate | 30 | A closure may be described as *immunized* only when the ten institutional-cause questions are answered and recorded, the treated level matches the level the evidence indicates, the sibling campaign carries a per-family disposition, each installed protection has been run against the pre-repair state and shown capable of failing, every fix, rule and test carries its links, and question 10 is answere |
+
+Each names its own trigger in its Part: the Completion Authority Gate at the granting of closure, the Multipass Integrity Gate at the admission of review evidence, the Session Integrity Gate at the admission of session evidence, and the Immunity Gate at the claim that a defect was immunized rather than repaired.
+
 ## 4. Seeded gates absent from the consolidation
 
 Part XXV §4 states: *"The consolidation loses nothing — every seeded gate survives as a check within a point."* Checked against the seeds, **3 do not appear by name** in any of the four points:
@@ -84,6 +99,6 @@ Each orphan has an adjacent-Part neighbour covering a similar subject, so silent
 | Trigger point | ✅ for the 20 consolidated | via the gate point; the orphans have none |
 | Failure action | ✅ by point | G2 blocks; G1/G3/G4 label (§5) |
 | Inputs consumed | ◐ partial | named at point granularity, not per gate |
-| Verdict values · Bypass route · Owner | ❌ none | no seed carries them; **Owner is unassigned for all 23** |
+| Verdict values · Bypass route · Owner | ❌ none | no seed carries them; **Owner is unassigned for all 27** |
 
 > Part XXV §3 field 3 requires verdict values *"including could-not-run"*. Part XXVI §5 records that this build's own gate cannot report could-not-observe — so the one gate the family actually ran fails the arity requirement the family wrote. That is stated in three Parts and is not resolved here.
