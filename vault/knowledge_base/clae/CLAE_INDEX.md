@@ -3,8 +3,8 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 30
-parts_sealed: 29
-state: UNSEALED — extension to 30 Parts authorized by G2, in progress
+parts_sealed: 30
+state: EXTENSION COMPLETE — 30 of 30 sealed; acceptance line remains empty
 unsealed_on: 2026-08-10
 ---
 
@@ -42,7 +42,7 @@ empty* — stands until a constituency accepts it, and the producer may not.
 | 27 | The Completion Prosecutor — three authorities, independence, anchoring, deadlock, false acquittal, the certificate and the verdict alias table — `PART_27_the_completion_prosecutor.md` | **SEALED** |
 | 28 | Freeze and adversarial multipass — the freeze, the closure pack, **nine** passes and their selection, negative proof as route enumeration — `PART_28_freeze_and_adversarial_multipass.md` | **SEALED** |
 | 29 | Cognitive precursors and the same-session repair loop — preflight, the evidence ledger, ten precursors, three-way classification, review budget and stop condition — `PART_29_cognitive_precursors_and_the_repair_loop.md` | **SEALED** |
-| 30 | Root-cause elevation, sibling campaigns, failure-to-immunity | AUTHORIZED |
+| 30 | Root-cause elevation, sibling campaigns, failure-to-immunity — the **six**-level ladder, the ten-question cause test, family-keyed sibling search, the cause-to-protection compiler, no orphan closure, promotion by derivation — `PART_30_root_cause_elevation_and_immunity.md` | **SEALED** |
 
 `AUTHORIZED` means the subject is ratified and the Part is not written. A row flips to
 `SEALED` only when its file exists and `parts_sealed` is incremented, per the construction
