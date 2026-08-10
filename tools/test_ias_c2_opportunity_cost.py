@@ -36,7 +36,15 @@ def _check(gate_id: str, cond: bool, detail: str = "") -> None:
         print(f"FAIL {gate_id}: {detail}")
 
 
+def _production_rows() -> int:
+    """Rows in the REAL ledger. Captured either side of the run so a write that
+    escapes the temp vault is caught by this suite rather than by a dirty
+    working tree three commits later."""
+    return len(oc._read_ledger(None))
+
+
 def main() -> int:
+    production_before = _production_rows()
     with tempfile.TemporaryDirectory() as tmp:
         repo_root = Path(tmp)
 
@@ -82,13 +90,13 @@ def main() -> int:
         _check("V-IAS-C2-06-domain-aggregate",
                agg.get(dom, {}).get("CONFIRMED") == 1, f"agg={agg}")
 
-        # V-IAS-C2-07: real end-to-end wiring -- what_now_tracked (imported lazily
-        # so its own ledger writes go to the REAL vault/ias path) still returns
-        # the identical recommendation what_now() would, proving zero regression
-        # to the existing pure function's contract.
+        # V-IAS-C2-07: real end-to-end wiring -- what_now_tracked still returns the
+        # identical recommendation what_now() would, proving zero regression to the
+        # existing pure function's contract. Its ledger write is directed at the
+        # temp vault; it used to land in the real one on every run.
         from modules.backlog_autopilot import what_now_tracked
         untracked_result = what_now(items)
-        tracked_result = what_now_tracked(items)
+        tracked_result = what_now_tracked(items, repo_root=repo_root)
         _check("V-IAS-C2-07-zero-regression-on-recommendation",
                tracked_result.recommended is not None
                and tracked_result.recommended.id == untracked_result.recommended.id
@@ -202,6 +210,14 @@ def main() -> int:
                states[Magnitude.UNRECOGNISED.value] == ["SEC-4"]
                and states[Magnitude.UNDECLARED.value] == ["OPS-5"],
                f"got {states}")
+
+    # Isolation is a property of the RUN, so it is checked after the temp vault is
+    # gone. Every write above must have landed in it.
+    after = _production_rows()
+    _check("V-IAS-C2-20-no-production-write",
+           after == production_before,
+           f"the real vault/ias ledger went {production_before} -> {after} rows; "
+           "a write escaped the temp vault")
 
     total = _passes + _fails
     print(f"IAS_C2_PASS={_passes}/{total}")
