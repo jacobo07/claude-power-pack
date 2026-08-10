@@ -6244,3 +6244,51 @@ what a number would have to mean before offering it as progress.
 **Origin:** G1 burndown, 2026-08-10. The commissioned premise — 58 happy-path-only
 suites — did not survive contact with the first three entries.
 `vault/plans/g1-burndown-2026-08-10.md`.
+
+---
+
+## T-SILENT-VOCABULARY-COLLAPSE-001 — an unrecognised value folded into the least-urgent default is a plausible number nobody can falsify
+
+**Trap.** A field carries a small vocabulary — an impact level, a severity, a
+status, a tier — and the code reads it with a defaulting lookup:
+`_MAGNITUDE.get(item.impact, "LOW")`, `IMPACT_SCORE.get(item.impact, 0)`,
+`CONFIG.get(key, "Medium")`. A value outside the vocabulary then becomes the
+least-urgent member. The caller receives a well-formed answer that does not
+reflect reality, and — this is the part that bites — the record it leaves is
+indistinguishable from a legitimately low one, so nothing downstream can ever
+discover that the input was wrong. The defect is not the wrong value; it is that
+the wrongness is unrecoverable.
+
+Defaulting to the LOWEST member is the worst choice available, because it is the
+one nobody investigates. It is the same asymmetry as a flattering metric winning
+by default.
+
+**Repair rule.** A persisted vocabulary is exhaustive or it fails explicitly.
+Concretely, and in this order:
+
+1. Give the field a real vocabulary — an enum with a named ladder — if it has
+   only a docstring comment today.
+2. Keep the ladder free of states. Absent and present-but-unknown are two
+   different facts and get two names (`UNDECLARED` / `UNRECOGNISED`); folding one
+   into the other lets a typo read as "nobody has said yet".
+3. Neither state may join the ladder, or a comparison over the vocabulary
+   silently ranks an unknown against real values.
+4. Recording a state is only half the repair. Something must READ it back —
+   named ids, never a ratio, since a ratio is satisfied by adding well-formed
+   records instead of fixing the source.
+
+**Reference implementation:** `modules/rule_compiler/schema.py` (`Binding`,
+`BINDING_LADDER`, `read_binding`) had this right first, including the reasoning
+for keeping the two states apart. Copy it rather than re-deriving it.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to every `.get(x, default)`
+over a closed vocabulary, every `except: return DEFAULT`, and every enum parsed
+from text or config.
+
+**Origin:** D-003, `modules/ias_c2/opportunity_cost.py`, 2026-08-10. An impact of
+"Blocker" was recorded as LOW. Fixed in `bb53d6b`; gates V-IAS-C2-13 / 16 / 17 /
+18 / 19. Sibling instance still open at the producer:
+`modules/backlog_autopilot/engine.py` scores an unrecognised impact as 0 in the
+function that decides which work gets picked, and `BacklogItem.impact` is a bare
+`str` whose four values live only in a comment. Sisters: `zero cannot fall`,
+`T-PLAUSIBLE-BUT-WRONG-001`, `T-GATE-MEASURES-SPELLING-NOT-PROPERTY-001`.

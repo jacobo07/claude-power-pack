@@ -791,20 +791,53 @@ branch in the module. G1 did not move, because they are spelled `is None` and
 the suite, see whether it goes red. On `opportunity_cost.py` it found two gaps that
 reading the module had missed, and the measured kill count rose 4 -> 6 of 8 sampled.
 
-### Decisions
+### Decisions -- ANSWERED 2026-08-10, all three executed
 
-1. **Retire G1, or keep it as a cheap pre-filter?** It has three known
-   false-positive shapes and cannot be fixed by widening. Recommendation: keep the
-   14 as carried debt, stop treating the count as a quality measure, and move the
-   ratchet to the mutation probe.
-2. **D-003 -- ordinal vocabulary in `modules/ias_c2/opportunity_cost.py`.** An
-   impact outside `Critical/High/Medium/Low` collapses to `LOW`, the least urgent
-   category, so an unrecognised value is indistinguishable from a genuinely Low
-   one. `rule_compiler` keeps exactly this distinction (UNRECOGNIZED vs
-   UNDECLARED). Fixing it edits a persisted ordinal vocabulary and its consumers --
-   Owner call. Current behaviour is pinned by `V-IAS-C2-13`.
-3. **Mutation sweep scope.** The probe runs per (suite, module) pair and costs one
-   suite run per mutant. Which set should run in `verify_spp`, and how often?
+1. **G1 kept as a cheap pre-filter**, ratchet moved to the mutation probe. Done:
+   `tools/mutation_ratchet.py` + `vault/governance/mutation_ratchet.json` (`0052eca`).
+2. **D-003 fixed** (`bb53d6b`): `Magnitude` vocabulary with `UNRECOGNISED_IMPACT`
+   and `UNDECLARED_IMPACT` as states off the ladder, built on the `rule_compiler`
+   `Binding` pattern. Sealed as `T-SILENT-VOCABULARY-COLLAPSE-001`.
+3. **Mutation sweep scoped by measurement** -- see the tier note below.
+
+### NEW -- one scope correction, on measurement
+
+The instruction was rule_compiler + capability_runtime + d2a_engine **on every
+push**. d2a is not viable there: `test_duplicate_to_advantage.py` runs 35.2s, so
+even a 4-mutant sweep costs ~3 minutes, and the whole weekly baseline took 365s.
+Both rule_compiler pairs on push measured 95.7s.
+
+| tier | pairs | measured |
+|---|---|---|
+| push | rule_compiler/schema, capability_runtime/contract + applicability | **38.0s** |
+| weekly | d2a_engine, rule_compiler/parser, ias_c2/opportunity_cost | 365s |
+
+Moving d2a back to push is a one-word edit in the config, and the cost sits next
+to the pair so the choice is informed. **Decision:** accept the split, or accept
+~4 min per push?
+
+### Measured floors -- low, and recorded as found
+
+| pair | kills |
+|---|---|
+| `d2a_engine.py` | **1 of 4** |
+| `capability_runtime/contract.py` | 2 of 6 |
+| `capability_runtime/applicability.py` | 2 of 6 |
+| `rule_compiler/schema.py` | 3 of 6 |
+| `rule_compiler/parser.py` | 3 of 6 |
+| `ias_c2/opportunity_cost.py` | 3 of 6 |
+
+A 74KB engine whose suite catches one injected defect in four is the headline.
+The ratchet stops these falling; raising them is separate work.
+
+### D-003 sibling instance -- OPEN
+
+`modules/backlog_autopilot/engine.py:45` scores an unrecognised impact as `0` via
+`IMPACT_SCORE.get(item.impact, 0)` -- the same silent collapse, in the ranking
+function that decides which work gets picked. `BacklogItem.impact` is a bare
+`str` whose four values live only in a comment. Fixing it changes `what_now()`
+rankings estate-wide (and `HR-BACKLOG-001..003` depend on them), so it is raised
+rather than folded into the ias_c2 commit. **Decision:** fix now, or schedule?
 
 ### Carried, not done
 
@@ -817,6 +850,12 @@ reading the module had missed, and the measured kill count rose 4 -> 6 of 8 samp
   churn 0 / blast 0. Ranking them last would repeat the defect the effort exists to
   remove. **INSTRUMENT NEEDED:** a subprocess-aware subject resolver. Until it
   exists these are unranked, not low-risk.
-- **`test_ias_c2_opportunity_cost.py` writes to the real `vault/ias` ledger** via
-  `what_now_tracked`, acknowledged in its own comment. A suite with a global write
-  is not hermetic; it showed up as a dirty working tree during this session.
+- ~~**`test_ias_c2_opportunity_cost.py` writes to the real `vault/ias` ledger.**~~
+  FIXED `6c867eb`. `what_now_tracked(backlog, *, repo_root=None)` now threads the
+  root through. Measured before the fix: 34 rows, every one a `FIX-1`/`FEAT-2`
+  fixture including the single committed row -- **the ledger had never held a real
+  decision**, and `liveness_ledger` counts it as a live cumulative ledger.
+  `V-IAS-C2-20` compares the production row count either side of the run, so an
+  escaped write now fails the suite instead of surfacing as a dirty tree later.
+  Worth a second look: the ledger-discovery spec enrolled this ledger on a row
+  count that was entirely test output.
