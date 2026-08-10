@@ -19,8 +19,18 @@ owned by this stack.
 - STOP #1: **resolved**. Owner approved 3 NEW families + 5 EXTEND passes over the literal
   A–J ten-family specification.
 - Charter: **SEALED** at `vault/knowledge_base/COMPENDIUM_CHARTER.md`.
-- Parts sealed: CLAE I-XXVI — FAMILY COMPLETE (26/26). Closure verdict: complete with residual, accounting-only, acceptance line empty (Part XXVI section 5).
+- Parts sealed: CLAE I-XXVI (26 sealed). **UNSEALED 2026-08-10 for a ratified extension to
+  30 Parts** — gate G2 of `TOPOLOGY_ADR.md` §8 (KobiiCraft Estate Governance repo), G2-a and
+  G2-b both ratified by the Owner. Closure verdict from Part XXVI §5 is unchanged and still
+  governs: complete with residual, accounting-only, acceptance line empty.
   Authoritative count is the coherence anchor below, never this line.
+- **The twelve registry extracts Part XXVI §5 left open are now eleven-twelfths produced**
+  — commit `c5b0d1f`, ordering mandated by G2-b (registries before extension). Only
+  `CLAE_COMPLETION_REPORT.md` remains, and it closes the extension rather than preceding it.
+  Three counts in the extracts differ from what the sealed Parts assert about themselves;
+  all three are scope-label gaps, recorded in the extracts and **not** corrected in the
+  Parts. Part XXV's "the consolidation loses nothing" does not hold by name for two seeded
+  gates (Residual Ledger, Oracle Routing) — recorded unresolved, not decided.
 - CRPF: **CLOSED — struck as a family by Owner ruling (A then B'), 2026-07-27.** No CRPF
   Part exists and none will. Option A (repair wiring) and Option B' (CO-13 + CO-14) are
   both COMPLETE. Evidence: `vault/plans/crpf-option-a-wiring-2026-07-27.md`; datasets at
@@ -110,7 +120,33 @@ the index is lying — reconcile from the filesystem, never from the index.
 
 ## 4. Next actions
 
-**None. This file's job is done.** The compendium is CLOSED — full accounting in
+**Write CLAE Parts 27–30, one Part per commit, then the Completion Report.** This is the
+only open construction in the compendium, and it exists because gate G2 was ratified on
+2026-08-10 — not because the closure below was reversed.
+
+| Part | Subject | Source (Answer 3, `Downloads/Dataset KobiiCraft Server Estate Governance 1.txt`) |
+|---|---|---|
+| 27 | The Completion Prosecutor — three authorities, closure state machine, certificate | §1 L3933 · §2 L4007 · §17 L5326 |
+| 28 | Freeze and adversarial multipass — challenge machine, passes, negative proof | §7 L4424 · §8 L4487 |
+| 29 | Cognitive precursors and the same-session repair loop | §3 L4035 · §4 L4120 · §5 L4226 · §10 L4765 · §20 L5704 |
+| 30 | Root-cause elevation, sibling campaigns, failure-to-immunity | §§11–16 L4849…L5325 |
+
+Not in scope: §6 (owned by KDE-02) · §9 and §19 (owned by CLAE XVII/XXV) · §18 (KDE-01 XII)
+· §21 (CLAE XXIII). Parts 27–30 use **CLAE's five closure verdicts**, not the source's
+alternative five, which become a presentation alias table. `HR-PD-01…15` are absorbed into
+Part XXIII's registry with CLAE identifiers, never as a competing namespace.
+
+Numbering: Parts 27–30 are Arabic, for the reason recorded in `CLAE_INDEX.md`.
+
+After each Part: flip its index row to SEALED, increment `parts_sealed`, update this block —
+in that order, before starting the next. The acceptance line stays empty; the producer of
+these Parts may not sign it, which is the doctrine Part 27 exists to state.
+
+**Superseded, kept so it cannot drift back.** The text below described the compendium as
+closed with no construction remaining. That was true on 2026-07-29 and is false as of
+2026-08-10 for CLAE only. CRPF, IGEF and E1–E5 remain struck; nothing here reopens them.
+
+The compendium was CLOSED — full accounting in
 `vault/knowledge_base/COMPENDIUM_CLOSURE_REPORT.md`. Owner ruling A→B→C executed
 2026-07-29: **A** `epistemic_algebra` wired into its two contract-named consumers
 (`37ad01c`), **B** CRAIF adapter-conformance checker plus `/craif-conformance`
@@ -135,6 +171,7 @@ deliberately not amended while concurrent panes were reading it). Then execute b
 The charter allocates ~90–110 Parts across three families and five passes. Measured, one
 family survived. Do not read the charter's Part counts as remaining work.
 
-Do not look for an unsealed CLAE Part: there is none, and no CRPF or IGEF Part exists or
-will. If this file and the charter disagree, this file's block 2 wins — reconcile from the
-filesystem, never from either narrative.
+**CLAE is unsealed** for Parts 27–30 under the G2 ratification of 2026-08-10; the unseal
+record is in `CLAE_INDEX.md`. No CRPF or IGEF Part exists or will. If this file and the
+charter disagree, this file's block 2 wins — reconcile from the filesystem, never from
+either narrative.

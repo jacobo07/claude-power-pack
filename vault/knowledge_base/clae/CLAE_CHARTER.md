@@ -2,9 +2,15 @@
 title: CLAE — Closed-Loop Autonomous Engineering Laboratory · Dataset Charter
 family: clae
 date: 2026-07-26
-status: SEALED
-parts: 26
+status: UNSEALED — extension to 30 Parts authorized by gate G2, 2026-08-10
+parts: 30
+parts_sealed: 26
 gaps_closed: [G1, G2, G3, G4, G5]
+gap_namespace_note: >-
+  `gaps_closed` names CLAE's own corpus gaps. It is NOT the ratification-gate
+  namespace of `TOPOLOGY_ADR.md` §8, which also runs G1–G5 and whose G2 is the
+  gate that authorized this extension. Two unrelated ladders share five labels;
+  read the owning document before resolving a reference to any of them.
 primary_pillars: [R-009 LAAS, R-001 FounderOS]
 parent: vault/knowledge_base/COMPENDIUM_CHARTER.md
 ---
@@ -95,6 +101,21 @@ domain, it is registered in Open Questions rather than asserted as a rule.
 
 ## Completion definition
 
-All 26 Parts sealed and above the depth floor · all registries populated · integration map
+All 30 Parts sealed and above the depth floor · all registries populated · integration map
 resolved against the named canonical owners · contamination gate zero · evidence index
 complete · Dataset Completion Report written with observed counts.
+
+**Amended 2026-08-10** from 26 to 30 Parts, under the G2 ratification recorded in
+`CLAE_INDEX.md`. Nothing else in the definition changed.
+
+Two properties of this definition are worth stating, because the unseal exposed both:
+
+1. **It contains its own report.** "Dataset Completion Report written" cannot be satisfied
+   before the work it reports on exists, so the definition is unsatisfiable at any moment
+   *prior* to closure — including the moment an unseal is required to re-run it. Re-running
+   it therefore means checking every criterion that is independent of the pending work, and
+   recording the report as deferred rather than failed.
+2. **Its depth floor is qualitative.** `COMPENDIUM_CHARTER.md` defines the floor as a
+   rejection-criteria list plus a fifteen-dimension score, not a line count. A numeric floor
+   imported from a sibling compendium would be exactly the imported-floor failure Part XI
+   describes.

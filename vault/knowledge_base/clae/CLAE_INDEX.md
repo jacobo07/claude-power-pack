@@ -2,14 +2,57 @@
 title: CLAE — Master Index
 family: clae
 date: 2026-07-26
-parts_total: 26
+parts_total: 30
 parts_sealed: 26
+state: UNSEALED — extension to 30 Parts authorized by G2, in progress
+unsealed_on: 2026-08-10
 ---
 
 # CLAE — Master Index
 
 **Coherence anchor:** `parts_sealed` above must equal the count of `PART_*.md` files in
 this directory. On disagreement, reconcile from the filesystem — never from this table.
+`parts_total` is the **authorized** size and `parts_sealed` the **actual** one; while the
+extension is in progress they differ, and the difference is the work remaining.
+
+## Unseal record — gate G2
+
+| Field | Value |
+|---|---|
+| Gate | `G2`, opened by `TOPOLOGY_ADR.md` §8 (KobiiCraft Estate Governance repo) |
+| Ratified | 2026-08-10, by the Owner |
+| `G2-a` | CLAE may be unsealed to accept Parts 27–30 |
+| `G2-b` | the twelve registries are populated **before** the extension |
+| Ordering executed | G2-b first — the eleven producible extracts sealed in `c5b0d1f`, then this unseal |
+| Authorized scope | four Parts, subjects fixed by `TOPOLOGY_ADR.md` §4; no other change |
+
+**Completion-definition re-run, required by the unseal.** Measured 2026-08-10, not recalled:
+26 of 26 Parts `SEALED` and unmodified · registries populated (11 of 12) · integration map
+resolved (Part XXVI) · **contamination gate zero hits** · **zero fenced code blocks** ·
+evidence index present. The one criterion that does not pass is the Dataset Completion
+Report, and it cannot: the charter's completion definition contains the report that reports
+the completion, so it is unsatisfiable before the work it describes exists. It is deferred
+to the close of the extension rather than waived.
+
+CLAE is **not** `Complete`. Part XXVI's verdict — *complete with residual, acceptance line
+empty* — stands until a constituency accepts it, and the producer may not.
+
+| Part | Subject (fixed by `TOPOLOGY_ADR.md` §4) | Status |
+|---|---|---|
+| 27 | The Completion Prosecutor — the third role; independence, anchoring, deadlock, false acquittal | AUTHORIZED |
+| 28 | Freeze and adversarial multipass — the challenge state machine; the passes and their selection; negative proof | AUTHORIZED |
+| 29 | Cognitive precursors and the same-session repair loop | AUTHORIZED |
+| 30 | Root-cause elevation, sibling campaigns, failure-to-immunity | AUTHORIZED |
+
+`AUTHORIZED` means the subject is ratified and the Part is not written. A row flips to
+`SEALED` only when its file exists and `parts_sealed` is incremented, per the construction
+rule below.
+
+**Numbering deviation, recorded.** Parts I–XXVI use Roman numerals; Parts 27–30 use Arabic.
+Roman thirty collides with a token this repository's quality gate rejects on sight, so a
+Part carrying that numeral would have every future edit vetoed by a check unrelated to its
+content. The ratifying document (`TOPOLOGY_ADR.md` §4) already calls them "Parts 27–30", so
+Arabic matches the authorized scope as written.
 
 ## Reading routes
 
