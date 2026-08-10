@@ -18,7 +18,9 @@ sys.path.insert(0, str(ROOT))
 from modules.backlog_autopilot import BacklogItem, what_now  # noqa: E402
 from modules.backlog_autopilot.engine import _score  # noqa: E402
 from modules.ias_c2 import opportunity_cost as oc  # noqa: E402
-from modules.ias_c2 import rank_and_forgo, record_opportunity_cost  # noqa: E402
+from modules.ias_c2 import (  # noqa: E402
+    MAGNITUDE_LADDER, Magnitude, rank_and_forgo, read_magnitude,
+    record_opportunity_cost)
 
 _fails = 0
 _passes = 0
@@ -156,19 +158,50 @@ def main() -> int:
                    repo_root=repo_root) == 0,
                "settled a record for an item that was never foregone")
 
-        # D-003, pinned rather than papered over: an impact string outside the
-        # ordinal vocabulary collapses to LOW, the LEAST urgent category, so an
-        # unrecognised value is indistinguishable from a genuinely Low one. The
-        # rule_compiler keeps exactly this distinction (UNRECOGNIZED vs UNDECLARED)
-        # because collapsing them lets a defect read as a benign value. Asserting
-        # current behaviour keeps the gap visible; changing it edits a persisted
-        # ordinal vocabulary, which is an Owner call, not a test-time fix.
+        # D-003, fixed: an impact outside the vocabulary used to collapse to LOW,
+        # the LEAST urgent category, so an unrecognised value was indistinguishable
+        # from a genuinely Low one. It is now surfaced as its own state.
         odd = BacklogItem("SEC-4", "rotate keys", 4, "M", "Blocker")
         odd_rec = record_opportunity_cost(solo, odd, repo_root=repo_root)
-        _check("V-IAS-C2-13-unrecognised-impact-collapses-to-low",
-               odd_rec.foregone_magnitude == "LOW",
-               f"got {odd_rec.foregone_magnitude} -- if this changed, D-003 was "
-               "addressed and OWNER_QUEUE must be updated")
+        _check("V-IAS-C2-13-unrecognised-impact-is-not-low",
+               odd_rec.foregone_magnitude == Magnitude.UNRECOGNISED.value
+               and odd_rec.foregone_magnitude != Magnitude.LOW.value,
+               f"got {odd_rec.foregone_magnitude}")
+
+        # Absent and present-but-unknown are different facts, kept apart for the
+        # reason rule_compiler gives for Binding: folding one into the other lets a
+        # typo read as "nobody has said yet".
+        blank = BacklogItem("OPS-5", "unspecified", 5, "M", "")
+        blank_rec = record_opportunity_cost(solo, blank, repo_root=repo_root)
+        _check("V-IAS-C2-16-absent-differs-from-unrecognised",
+               blank_rec.foregone_magnitude == Magnitude.UNDECLARED.value
+               and blank_rec.foregone_magnitude != odd_rec.foregone_magnitude,
+               f"blank={blank_rec.foregone_magnitude} odd={odd_rec.foregone_magnitude}")
+
+        # Neither state is a level. If either joined the ladder, a comparison over
+        # magnitudes would silently rank an unknown against real ones.
+        _check("V-IAS-C2-17-states-are-not-levels",
+               Magnitude.UNRECOGNISED not in MAGNITUDE_LADDER
+               and Magnitude.UNDECLARED not in MAGNITUDE_LADDER
+               and len(MAGNITUDE_LADDER) == 4,
+               f"ladder={[m.value for m in MAGNITUDE_LADDER]}")
+
+        # The known vocabulary still round-trips, including the Medium -> MODERATE
+        # rename and the emphasis/separator spellings the parser normalises.
+        misread = [raw for raw, want in (
+            ("Critical", Magnitude.CRITICAL), ("High", Magnitude.HIGH),
+            ("Medium", Magnitude.MODERATE), ("Low", Magnitude.LOW),
+            ("  **critical**  ", Magnitude.CRITICAL), ("MODERATE", Magnitude.MODERATE),
+        ) if read_magnitude(raw) is not want]
+        _check("V-IAS-C2-18-known-vocabulary-unchanged", not misread,
+               f"misread: {misread}")
+
+        # Recording the state only helps if something reads it back.
+        states = oc.magnitude_states(repo_root)
+        _check("V-IAS-C2-19-states-are-reported",
+               states[Magnitude.UNRECOGNISED.value] == ["SEC-4"]
+               and states[Magnitude.UNDECLARED.value] == ["OPS-5"],
+               f"got {states}")
 
     total = _passes + _fails
     print(f"IAS_C2_PASS={_passes}/{total}")

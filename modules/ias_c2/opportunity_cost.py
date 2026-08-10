@@ -25,14 +25,62 @@ the real category rather than inventing a parallel one.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
 from typing import Callable, Optional
 
 _PP_ROOT = Path(__file__).resolve().parents[2]
 
-_MAGNITUDE = {"Critical": "CRITICAL", "High": "HIGH", "Medium": "MODERATE", "Low": "LOW"}
+
+class Magnitude(str, Enum):
+    """The ordinal magnitude of a foregone alternative (Part IV §4.3).
+
+    UNDECLARED and UNRECOGNISED are STATES, never levels, and neither is on the
+    ladder. They are kept apart on purpose, following the same reasoning
+    `modules/rule_compiler/schema.py` gives for Binding: folding an unknown value
+    into the absent one lets a typo read as "nobody has said yet".
+
+    Before D-003 this vocabulary was an unguarded dict lookup defaulting to LOW.
+    An impact of "Blocker" was therefore recorded as the LEAST urgent category,
+    indistinguishable from a genuinely Low one -- a plausible value that does not
+    reflect reality, which is worse than an absent one because nothing downstream
+    can tell it was ever wrong.
+    """
+    LOW = "LOW"
+    MODERATE = "MODERATE"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+    UNDECLARED = "UNDECLARED_IMPACT"        # no impact was given at all
+    UNRECOGNISED = "UNRECOGNISED_IMPACT"    # a value was given, outside the vocabulary
+
+
+#: Weakest first. The two states above are deliberately absent -- they are not levels.
+MAGNITUDE_LADDER: tuple[Magnitude, ...] = (
+    Magnitude.LOW, Magnitude.MODERATE, Magnitude.HIGH, Magnitude.CRITICAL,
+)
+
+#: The source vocabulary is BacklogItem.impact ("Critical" | "High" | "Medium" |
+#: "Low"); MODERATE is this module's name for Medium. Both spellings resolve, so a
+#: record round-trips through the ledger unchanged.
+_MAGNITUDE_BY_NAME = {
+    "CRITICAL": Magnitude.CRITICAL, "HIGH": Magnitude.HIGH,
+    "MEDIUM": Magnitude.MODERATE, "MODERATE": Magnitude.MODERATE,
+    "LOW": Magnitude.LOW,
+}
+
+
+def read_magnitude(raw) -> Magnitude:
+    """Impact text -> Magnitude. Absent is UNDECLARED; present-but-unknown is
+    UNRECOGNISED. Separators and emphasis are normalised -- but only those.
+    Anything still unmatched is surfaced, never guessed into the ladder."""
+    text = (raw or "").strip().strip("*_`").strip() if isinstance(raw, str) else ""
+    if not text:
+        return Magnitude.UNDECLARED
+    key = re.sub(r"[\s\-]+", "_", text).upper()
+    return _MAGNITUDE_BY_NAME.get(key, Magnitude.UNRECOGNISED)
 
 
 def ledger_path(repo_root: Path | None = None) -> Path:
@@ -45,7 +93,7 @@ class OpportunityCostRecord:
     chosen_domain: str
     foregone_id: str
     foregone_domain: str
-    foregone_magnitude: str          # ordinal: LOW | MODERATE | HIGH | CRITICAL
+    foregone_magnitude: str          # a Magnitude value: a ladder level, or a state
     decided_at: str                  # ISO-8601 UTC
     lifecycle: str = "PROJECTED"     # PROJECTED | CONFIRMED (Part V §5.4, simplified)
     settled_at: Optional[str] = None
@@ -83,7 +131,7 @@ def record_opportunity_cost(chosen, foregone, *, repo_root: Path | None = None,
         chosen_domain=_domain_of(chosen),
         foregone_id=foregone.id,
         foregone_domain=_domain_of(foregone),
-        foregone_magnitude=_MAGNITUDE.get(foregone.impact, "LOW"),
+        foregone_magnitude=read_magnitude(getattr(foregone, "impact", None)).value,
         decided_at=(now or datetime.now(timezone.utc)).isoformat(),
     )
     try:
@@ -154,6 +202,22 @@ def domain_aggregate(repo_root: Path | None = None) -> dict[str, dict[str, int]]
     return agg
 
 
+def magnitude_states(repo_root: Path | None = None) -> dict[str, list[str]]:
+    """Records whose magnitude is a STATE rather than a ladder level, by named id.
+
+    Recording UNRECOGNISED instead of collapsing to LOW only helps if something
+    reads it back. Named id lists, never a ratio: a ratio is satisfied by adding
+    well-formed records, a name has to be fixed at its source.
+    """
+    out: dict[str, list[str]] = {Magnitude.UNDECLARED.value: [],
+                                 Magnitude.UNRECOGNISED.value: []}
+    for row in _read_ledger(repo_root):
+        m = row.get("foregone_magnitude", "")
+        if m in out:
+            out[m].append(row.get("foregone_id", "?"))
+    return out
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description="IAS-C2 Opportunity Cost Ledger")
@@ -166,6 +230,9 @@ def main(argv=None) -> int:
         for domain, counts in sorted(agg.items()):
             print(f"  {domain}: PROJECTED={counts.get('PROJECTED', 0)} "
                   f"CONFIRMED={counts.get('CONFIRMED', 0)}")
+        for state, ids in magnitude_states().items():
+            if ids:
+                print(f"  {state}: {len(ids)} record(s) -- {', '.join(sorted(set(ids)))}")
     return 0
 
 

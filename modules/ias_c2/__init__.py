@@ -13,19 +13,27 @@ list -- the same real data `what_now()` already scores, reused rather than
 re-derived, per Part V §5.3's ranking requirement.
 """
 from .opportunity_cost import (
+    MAGNITUDE_LADDER,
+    Magnitude,
     OpportunityCostRecord,
     domain_aggregate,
     ledger_path,
+    magnitude_states,
     rank_and_forgo,
+    read_magnitude,
     record_opportunity_cost,
     settle_if_later_chosen,
 )
 
 __all__ = [
+    "MAGNITUDE_LADDER",
+    "Magnitude",
     "OpportunityCostRecord",
     "domain_aggregate",
     "ledger_path",
+    "magnitude_states",
     "rank_and_forgo",
+    "read_magnitude",
     "record_opportunity_cost",
     "settle_if_later_chosen",
 ]
