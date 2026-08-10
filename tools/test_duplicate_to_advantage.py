@@ -549,8 +549,9 @@ def main(argv=None) -> int:
     from modules.duplicate_to_advantage.d2a_engine import (
         build_stop1_menu, compute_expansion)
 
-    # A family engineered to FOLD: each item restates a sealed parent, so the
-    # overlap is real and the freed slots are demonstrably vacated.
+    # A family whose duplication is real but SMALL: two of its three items
+    # collapse into one merge group, so exactly one slot is vacated (33%) --
+    # under the default 50% threshold.
     _dupe_family = [
         Proposal(name="Duplicate Detection Fabric",
                  description=_CANON.description),
@@ -565,53 +566,95 @@ def main(argv=None) -> int:
     _menu = build_stop1_menu(_rep)
     _letters = [o[0] for o in _menu.options]
 
-    if _plan.applies and _plan.expansion_slots > 0:
-        if ("D" in _letters and _plan.n_requested == _plan.expansion_slots
-                and _plan.n_survived >= 1):
-            _ok("V-D2A-EXPANSION-OFFERED",
-                f"overlap {_plan.overlap_pct}% > {_plan.threshold_pct}% -> option D "
-                f"present, requested={_plan.n_requested} survived={_plan.n_survived}")
-        else:
-            _fail("V-D2A-EXPANSION-OFFERED",
-                  f"letters={_letters} requested={_plan.n_requested} "
-                  f"slots={_plan.expansion_slots} survived={_plan.n_survived}")
+    # V-D2A-EXPANSION-BELOW-THRESHOLD -- under the threshold D never appears,
+    # and it is withheld for a STATED reason: no slot was vacated, or the
+    # vacated fraction did not clear the threshold. Anything else is the
+    # absolute fail-open masking a crash -- exactly how the missing
+    # reinforces_id / connects_to arguments stayed hidden.
+    _reason_ok = (_plan.expansion_slots == 0
+                  or _plan.overlap_pct <= _plan.threshold_pct)
+    if ("D" not in _letters and not _plan.applies and _reason_ok
+            and "fail-open" not in (_plan.note or "")):
+        _ok("V-D2A-EXPANSION-BELOW-THRESHOLD",
+            f"overlap {_plan.overlap_pct}% <= threshold {_plan.threshold_pct}% "
+            f"(slots={_plan.expansion_slots}, defer={len(_rep.defer)}) -> "
+            "option D correctly withheld, and not via fail-open")
     else:
-        # Withheld is correct only for a STATED reason: no slot was vacated,
-        # or the vacated fraction did not clear the threshold. Anything else is
-        # the absolute fail-open masking a crash -- which is exactly how the
-        # missing reinforces_id/connects_to arguments stayed hidden.
-        _reason_ok = (_plan.expansion_slots == 0
-                      or _plan.overlap_pct <= _plan.threshold_pct)
-        if ("D" not in _letters and _reason_ok
-                and "fail-open" not in (_plan.note or "")):
-            _ok("V-D2A-EXPANSION-OFFERED",
-                f"overlap {_plan.overlap_pct}% <= threshold "
-                f"{_plan.threshold_pct}% (slots={_plan.expansion_slots}, "
-                f"defer={len(_rep.defer)}) -> option D correctly withheld, "
-                "and not via fail-open")
-        else:
-            _fail("V-D2A-EXPANSION-OFFERED",
-                  f"slots={_plan.expansion_slots} but letters={_letters}")
+        _fail("V-D2A-EXPANSION-BELOW-THRESHOLD",
+              f"applies={_plan.applies} slots={_plan.expansion_slots} "
+              f"letters={_letters} note={_plan.note!r}")
 
-    # V-D2A-EXPANSION-SILENT -- at or below threshold, D never appears.
-    _lo = compute_expansion(_rep, {"expansion_threshold_pct": 100,
-                                   "expansion_candidate_multiplier": 2})
-    _lo_menu = build_stop1_menu(_rep, {"expansion_threshold_pct": 100,
-                                       "expansion_candidate_multiplier": 2})
+    # A family engineered to CLEAR the threshold: three items each restate a
+    # DIFFERENT sealed parent (FD-05 budget capital, GK-04 typed edges,
+    # SECRET-FIREWALL redaction), so each folds on its own instead of merging
+    # into its siblings, and one genuinely-new item survives as the residue.
+    # 3 of 4 slots vacated = 75% > 50%.
+    #
+    # This family exists because the family above can only ever observe option D
+    # ABSENT. Asserting "offered" and "withheld" through ONE gate with two _ok
+    # branches let the suite report the option-D path green while never once
+    # observing option D present: a gate satisfied by its negative branch is
+    # bounded by whichever case it happens to be handed, and the positive path
+    # -- the whole point of PR-D2A-EXPANSION-001 -- went unmeasured.
+    _expand_family = [
+        Proposal(name="Token Budget Planner Clone",
+                 description=_CANON.description),
+        Proposal(name="Graph Coordinate Navigator",
+                 description="navigate the knowledge graph by coordinate, register "
+                             "typed edges with provenance and confidence between "
+                             "nodes"),
+        Proposal(name="Secret Redaction Boundary",
+                 description="detect credential leaks, redact secrets before any "
+                             "emission, enforce a rotation boundary on the firewall"),
+        Proposal(name="Sonar Haptics", description=_NOVEL.description),
+    ]
+    _xrep = run_family(_expand_family)
+    _xplan = compute_expansion(_xrep)
+    _xletters = [o[0] for o in build_stop1_menu(_xrep).options]
+
+    # V-D2A-EXPANSION-OFFERED -- above the threshold option D is PRESENT and
+    # carries real candidates. There is deliberately no withheld branch here:
+    # withholding on this family IS the failure.
+    if (_xplan.applies and "D" in _xletters and "C" in _xletters
+            and _xplan.overlap_pct > _xplan.threshold_pct
+            and _xplan.n_requested == _xplan.expansion_slots
+            and _xplan.n_survived >= 1
+            and len(_xplan.candidates) == _xplan.n_survived):
+        _ok("V-D2A-EXPANSION-OFFERED",
+            f"overlap {_xplan.overlap_pct}% > threshold {_xplan.threshold_pct}% -> "
+            f"options C+D present; requested={_xplan.n_requested} "
+            f"survived={_xplan.n_survived} harvested={_xplan.harvested} "
+            f"(observed at the DEFAULT config, not a forced threshold)")
+    else:
+        _fail("V-D2A-EXPANSION-OFFERED",
+              f"applies={_xplan.applies} letters={_xletters} "
+              f"overlap={_xplan.overlap_pct}/{_xplan.threshold_pct} "
+              f"requested={_xplan.n_requested} slots={_xplan.expansion_slots} "
+              f"survived={_xplan.n_survived} cands={len(_xplan.candidates)} "
+              f"note={_xplan.note!r}")
+
+    # V-D2A-EXPANSION-SILENT -- config suppression, asserted on the family that
+    # DOES offer at the default. Suppressing a family that was never going to
+    # offer proves nothing about the threshold.
+    _lo = compute_expansion(_xrep, {"expansion_threshold_pct": 100,
+                                    "expansion_candidate_multiplier": 2})
+    _lo_menu = build_stop1_menu(_xrep, {"expansion_threshold_pct": 100,
+                                        "expansion_candidate_multiplier": 2})
     if not _lo.applies and "D" not in [o[0] for o in _lo_menu.options] \
             and "C" not in [o[0] for o in _lo_menu.options]:
         _ok("V-D2A-EXPANSION-SILENT",
-            "threshold 100% -> expansion withheld; both C and D absent "
-            "(C is expansion-dependent too)")
+            f"same family that offers D at 50% -> threshold 100% withholds it; "
+            f"both C and D absent (C is expansion-dependent too); "
+            f"slots={_lo.expansion_slots} still measured")
     else:
         _fail("V-D2A-EXPANSION-SILENT",
               f"applies={_lo.applies} letters={[o[0] for o in _lo_menu.options]}")
 
     # V-D2A-EXPANSION-CONFIG -- the threshold is config, not a literal.
-    _c0 = compute_expansion(_rep, {"expansion_threshold_pct": 0,
-                                   "expansion_candidate_multiplier": 2})
-    _c100 = compute_expansion(_rep, {"expansion_threshold_pct": 100,
-                                     "expansion_candidate_multiplier": 2})
+    _c0 = compute_expansion(_xrep, {"expansion_threshold_pct": 0,
+                                    "expansion_candidate_multiplier": 2})
+    _c100 = compute_expansion(_xrep, {"expansion_threshold_pct": 100,
+                                      "expansion_candidate_multiplier": 2})
     # The threshold must be READ from config (not a literal) and must actually
     # change the verdict when slots exist. A fail-open plan reports the default
     # threshold, so a mismatch here also catches a masked crash.
@@ -627,12 +670,14 @@ def main(argv=None) -> int:
               f"t0={_c0.threshold_pct}/{_c0.applies} "
               f"t100={_c100.threshold_pct}/{_c100.applies}")
 
-    # The two filter gates below run against `_c0` -- the threshold-0 plan that
-    # actually HARVESTS -- not against `_plan`, which withholds and therefore
-    # carries an empty candidate list. A filter asserted over zero items passes
-    # for the wrong reason (`all([])` is True), and this repo has already been
-    # bitten by exactly that.
-    _cands = _c0.candidates
+    # The two filter gates below run against `_xplan` -- the plan produced at
+    # the DEFAULT config by a family that genuinely clears the threshold. They
+    # previously ran against a threshold-0 plan, because the only family in this
+    # suite withheld and therefore carried an empty candidate list; a filter
+    # asserted over zero items passes for the wrong reason (`all([])` is True),
+    # and this repo has already been bitten by exactly that. Both the empty-set
+    # escape and the forced-threshold workaround are now gone.
+    _cands = _xplan.candidates
 
     # V-D2A-EXPANSION-NO-SELF-DUPLICATE -- no survivor re-owns a THIRD family.
     _foreign = [c for c in _cands
@@ -641,11 +686,11 @@ def main(argv=None) -> int:
     if _cands and not _foreign:
         _ok("V-D2A-EXPANSION-NO-SELF-DUPLICATE",
             f"{len(_cands)} survivor(s), 0 re-owning a foreign parent "
-            f"({_c0.rejected_self_duplicate} rejected during filtering)")
+            f"({_xplan.rejected_self_duplicate} rejected during filtering)")
     elif not _cands:
         _fail("V-D2A-EXPANSION-NO-SELF-DUPLICATE",
               "no candidates harvested -- the filter is untested "
-              f"(harvested={_c0.harvested}, note={_c0.note!r})")
+              f"(harvested={_xplan.harvested}, note={_xplan.note!r})")
     else:
         _fail("V-D2A-EXPANSION-NO-SELF-DUPLICATE",
               f"{len(_foreign)} survivor(s) re-own a foreign parent: "
