@@ -50,22 +50,32 @@ this directory. On disagreement, reconcile from the filesystem — never from th
 | XXV | Production Reality Gates | Nineteen gates consolidated to four lifecycle gate points; label evidence and block floors; label propagation; gate decay | XXIII, XXIV | **SEALED** |
 | XXVI | Integration Map and Institutional Writeback | Resolution against every canonical owner; twelve writeback findings; the family closed under its own rules as complete-with-residual, acceptance line empty | all prior | **SEALED** |
 
-## Registries (populated as Parts seal)
+## Registries
 
-| Artifact | Status |
-|---|---|
-| `CLAE_SYSTEMS_CATALOG.md` | pending |
-| `CLAE_HARD_RULES.md` | pending (source: Part XXIII) |
-| `CLAE_PROCESS_RULES.md` | pending (source: Part XXIII) |
-| `CLAE_TRAPS.md` | pending (source: Part XXII) |
-| `CLAE_EVALS.md` | pending (source: Part XXIV) |
-| `CLAE_PRODUCTION_GATES.md` | pending (source: Part XXV) |
-| `CLAE_ONTOLOGY.md` | pending (source: Part III) |
-| `CLAE_INTEGRATION_MAP.md` | pending (source: Part XXVI) |
-| `CLAE_EVIDENCE_INDEX.md` | pending |
-| `CLAE_OPEN_QUESTIONS.md` | pending |
-| `CLAE_VERSION_LEDGER.md` | pending |
-| `CLAE_COMPLETION_REPORT.md` | pending |
+Per Part XXVI §5 these are **extracts for retrieval convenience** — the schemas,
+consolidations and measured counts live in the Parts. Every entry cites the Part that
+seeded it; no extract carries information absent from its source.
+
+| Artifact | Source | Entries | Status |
+|---|---|---|---|
+| `CLAE_SYSTEMS_CATALOG.md` | this index · charter | 26 mechanisms | **POPULATED** |
+| `CLAE_HARD_RULES.md` | Part XXIII | 0 — empty by construction | **POPULATED** |
+| `CLAE_PROCESS_RULES.md` | Parts II–XXV | 141 | **POPULATED** |
+| `CLAE_TRAPS.md` | Parts II–XXI · XXII | 99 distinct | **POPULATED** |
+| `CLAE_EVALS.md` | Parts I–XXV · XXIV | 129 | **POPULATED** |
+| `CLAE_PRODUCTION_GATES.md` | Parts I–XXIV · XXV | 23 seeds · 4 gate points | **POPULATED** |
+| `CLAE_ONTOLOGY.md` | Part III | 19 terms | **POPULATED** |
+| `CLAE_INTEGRATION_MAP.md` | Part XXVI | 17 owners | **POPULATED** |
+| `CLAE_EVIDENCE_INDEX.md` | all Parts | 23 of 26 Parts | **POPULATED** |
+| `CLAE_OPEN_QUESTIONS.md` | all Parts | 73 | **POPULATED** |
+| `CLAE_VERSION_LEDGER.md` | frontmatter · filesystem | 26 Parts | **POPULATED** |
+| `CLAE_COMPLETION_REPORT.md` | this build | — | pending |
+
+**Three counts in the extracts differ from the counts the Parts assert about themselves.**
+Each is a scope-label gap, not an arithmetic error, and each is recorded in the extract
+rather than corrected in the sealed Part: process rules (`CLAE_PROCESS_RULES.md` §1),
+production gates (`CLAE_PRODUCTION_GATES.md` §1), evals (`CLAE_EVALS.md` §1). The trap
+count agrees with Part XXII exactly.
 
 ## Construction rule
 
