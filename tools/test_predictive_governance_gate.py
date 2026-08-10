@@ -84,6 +84,41 @@ def main() -> int:
         else:
             _fail("V-PGG-G1-COMMENT", "comment text counted as a failure assertion")
 
+    # D-001: the estate asserts through `_check("V-X", cond, ok, bad)`, which a
+    # text scan cannot see through. Two suites constructing a broken input and
+    # requiring the rejection were reported as never asserting one.
+    HELPER_FAILURE = (
+        'def t():\n'
+        '    broken = build(trigger="")\n'
+        '    _check("V-X-REJECTS", not broken.valid, "rejects", "accepted junk")\n'
+    )
+    with Repo() as r:
+        r.suite("test_helper.py", HELPER_FAILURE)
+        if pg.g1_vacuity(r.root) == []:
+            _ok("V-PGG-G1-HELPER-IDIOM", "negation inside a V-gate call is a failure assertion")
+        else:
+            _fail("V-PGG-G1-HELPER-IDIOM", "helper-form failure assertion still flagged")
+
+    # The widening must not degrade into "names a V-gate, therefore passes".
+    with Repo() as r:
+        r.suite("test_helper_happy.py",
+                'def t():\n    _check("V-X-WORKS", out == expected, "ok", "bad")\n')
+        if pg.g1_vacuity(r.root) == ["test_helper_happy.py"]:
+            _ok("V-PGG-G1-HELPER-NOT-RUBBER-STAMP", "a V-gate name alone does not clear G1")
+        else:
+            _fail("V-PGG-G1-HELPER-NOT-RUBBER-STAMP", "carrying a V- literal became a free pass")
+
+    # `is not None` is excluded on evidence: all six occurrences in this repo are
+    # presence checks on a happy path, so counting them would clear suites that
+    # assert no failure at all.
+    with Repo() as r:
+        r.suite("test_presence.py",
+                'def t():\n    _check("V-X-FOUND", s is not None and s.name == "a", "ok", "bad")\n')
+        if pg.g1_vacuity(r.root) == ["test_presence.py"]:
+            _ok("V-PGG-G1-PRESENCE-IS-NOT-FAILURE", "`is not None` stays a happy-path check")
+        else:
+            _fail("V-PGG-G1-PRESENCE-IS-NOT-FAILURE", "a presence check was read as a failure assertion")
+
     # ---------------------------------------------------------------- G2
     SILENCER = "import sys\nif not HAVE_DEP:\n    sys.exit(0)\n\ndef test_a():\n    assert x == 1\n"
 

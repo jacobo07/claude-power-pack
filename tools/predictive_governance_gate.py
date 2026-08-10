@@ -63,6 +63,22 @@ FAILURE_ASSERT = re.compile(
     re.I,
 )
 
+# --- G1, second reading: the same expectation, spelled through a helper.
+# Most suites in this estate do not write `assert not x`. They hand the
+# condition to a helper whose first argument is the V-gate name --
+# `_check("V-X-Y", not bad, ok, diagnostic)`. A text scan cannot see through the
+# call, so suites that DO construct a broken input and require the rejection
+# were reported as never asserting one. A detector blind to the idiom its own
+# estate writes in reports zero, and zero never falls.
+#
+# The bar is unchanged, only the spelling: exactly the constructs the regex
+# already honours in bare-assert form. `is not None` is deliberately excluded --
+# all six occurrences in this repo are presence checks on a happy path, so
+# counting them would clear suites that assert no failure at all.
+GATE_NAME_PREFIX = "V-"
+FAILURE_LITERALS = {"FAIL", "BLOCK", "BLOCKED", "REJECT", "REJECTED", "VACUOUS",
+                    "UNVERIFIED", "DENY", "DENIED", "COLLECTION_FAILURE", "ERROR"}
+
 # --- G3: a comparison against a numeric literal, excluding exit-code checks.
 # An exit code is not the number the mechanism emits, so counting it would let
 # every suite pass and make G3 vacuous -- the defect G1 exists to catch.
@@ -101,13 +117,51 @@ def _read(p: Path) -> str:
 
 
 # ---------------------------------------------------------------- G1 vacuity
+def _gate_call_args(node: ast.AST) -> list[ast.AST]:
+    """Arguments of a call carrying a `V-...` literal, i.e. a V-gate assertion."""
+    if not isinstance(node, ast.Call):
+        return []
+    args = list(node.args) + [k.value for k in node.keywords]
+    named = any(isinstance(a, ast.Constant) and isinstance(a.value, str)
+                and a.value.startswith(GATE_NAME_PREFIX) for a in args)
+    return args if named else []
+
+
+def _expects_failure(expr: ast.AST) -> bool:
+    for n in ast.walk(expr):
+        if isinstance(n, ast.UnaryOp) and isinstance(n.op, ast.Not):
+            return True
+        if not isinstance(n, ast.Compare):
+            continue
+        if any(isinstance(op, ast.NotIn) for op in n.ops):
+            return True
+        for op, cmp_to in zip(n.ops, n.comparators):
+            if not isinstance(cmp_to, ast.Constant):
+                continue
+            if cmp_to.value is False:
+                return True
+            if isinstance(op, ast.NotEq) and cmp_to.value == 0:
+                return True
+            if isinstance(cmp_to.value, str) and cmp_to.value.upper() in FAILURE_LITERALS:
+                return True
+    return False
+
+
+def asserts_a_failure(src: str) -> bool:
+    """True when the suite expects a failing outcome, in text OR helper form."""
+    if FAILURE_ASSERT.search(executable_text(src)):
+        return True
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return False
+    return any(any(_expects_failure(a) for a in _gate_call_args(node))
+               for node in ast.walk(tree))
+
+
 def g1_vacuity(repo: Path) -> list[str]:
     """Suites containing no assertion that expects a failing outcome."""
-    out = []
-    for s in suites(repo):
-        if not FAILURE_ASSERT.search(executable_text(_read(s))):
-            out.append(s.name)
-    return sorted(out)
+    return sorted(s.name for s in suites(repo) if not asserts_a_failure(_read(s)))
 
 
 # --------------------------------------------------- G2 executed-count, static
