@@ -155,20 +155,66 @@ function Get-LastInternalAgeMin($jsonl, $nowUtc) {
 # One Get-Process sweep up front keeps this O(1) rather than O(panes).
 # Fail-open by construction: on any error $liveSids stays empty and every pane falls
 # back to pure content-age classification (the pre-2026-07-19 behavior).
+# PRESENCE IS NOT IDENTITY (T-BEACON-PID-REUSE-001, 2026-08-11). The old test was
+# `$alivePids.ContainsKey($wpid)`, i.e. "some process holds this pid". Windows
+# recycles pids and 275 beacon files accumulate against ~20 real panes, so five
+# beacons were resolving to conhost, svchost, StartMenuExperienceHost, LenovoVantage
+# -- and one to a real claude.exe that had merely inherited a pid from a 2026-07-18
+# session. That is the overcount the Owner measured (Jacobo: 3 reported, 2 real).
+# Test-BeaconOwnsPid adds the ordering check beacon.py already applies when WRITING.
+. (Join-Path $PSScriptRoot 'lib\beacon_identity.ps1')
+
 $liveSids = @{}
+$alivePids = @{}
 try {
-  $alivePids = @{}
-  foreach ($pr in (Get-Process -EA SilentlyContinue)) { $alivePids[$pr.Id] = $true }
+  foreach ($pr in (Get-Process -EA SilentlyContinue)) {
+    $st = [datetime]::MinValue
+    try { $st = $pr.StartTime } catch { }   # access denied on some system processes
+    $alivePids[$pr.Id] = $st
+  }
   foreach ($b in (Get-ChildItem (Join-Path $env:TEMP 'kclaude-pane-*.sid') -EA SilentlyContinue)) {
     $wpid = 0
     if (-not [int]::TryParse(($b.BaseName -replace '^kclaude-pane-', ''), [ref]$wpid)) { continue }
     if (-not $alivePids.ContainsKey($wpid)) { continue }
     try {
       $bj = Get-Content -LiteralPath $b.FullName -Raw -EA Stop | ConvertFrom-Json
-      if ($bj -and $bj.sid) { $liveSids[[string]$bj.sid] = $true }
+      if (-not ($bj -and $bj.sid)) { continue }
+      if (-not (Test-BeaconOwnsPid $alivePids[$wpid] ([string]$bj.ts))) { continue }
+      $liveSids[[string]$bj.sid] = $true
     } catch { }
   }
 } catch { $liveSids = @{} }
+
+# --- LIVE TERMINAL REGISTRY -- what is ACTUALLY open, one file per Cursor window.
+# Beacons can only see a pane that WROTE one, so a terminal opened by any other
+# route is uncountable from disk (measured 2026-08-11: CursorProjects 6 open, 4
+# counted). vscode.window.terminals is the authoritative list and is reachable only
+# from inside the extension (extension/src/terminal_registry.js), which now records
+# it on onDidOpenTerminal / onDidCloseTerminal.
+# ADDS ONLY: these sids widen the live set, they never shrink it, so a window whose
+# extension is disabled degrades to beacon-only liveness instead of losing panes.
+# Fail-open: unreadable directory or file -> empty maps, previous behaviour exactly.
+$termRegistrySids = @{}
+$termOpenByCwd = @{}
+try {
+  $termDir = Join-Path $StateDir 'terminals'
+  if (Test-Path $termDir) {
+    foreach ($tf in (Get-ChildItem $termDir -Filter *.json -File -EA SilentlyContinue)) {
+      $tj = $null
+      try { $tj = Get-Content -LiteralPath $tf.FullName -Raw -EA Stop | ConvertFrom-Json } catch { continue }
+      if (-not $tj -or -not $tj.cwd) { continue }
+      # deactivate() removes the file on a clean window close; a CRASH skips that, so
+      # the writing extension host must still be alive before any row is trusted.
+      # Without this a dead window pins its terminals live forever -- the same
+      # latching defect that retired $inSnap (T-REVIVAL-SELF-REINFORCING-LOOP-001).
+      if ($tj.hostPid -and -not $alivePids.ContainsKey([int]$tj.hostPid)) { continue }
+      $termOpenByCwd[[string]$tj.cwd] = @($tj.terminals).Count
+      foreach ($t in @($tj.terminals)) {
+        if ($t.sidPrefix) { $termRegistrySids[([string]$t.sidPrefix).ToLower()] = $true }
+      }
+    }
+  }
+} catch { $termRegistrySids = @{}; $termOpenByCwd = @{} }
 
 # 1. active repos = snapshot cwds UNION cwds discovered from recent disk transcripts
 $snapPath = Join-Path $StateDir "session_snapshot.json"
@@ -215,7 +261,8 @@ foreach ($cwd in $activeCwds.Keys) {
   foreach ($f in $files) {
     $sid = $f.BaseName
     if ($seen.ContainsKey($sid)) { continue }
-    $isLivePane = $liveSids.ContainsKey($sid)
+    $isLivePane = $liveSids.ContainsKey($sid) -or
+                  ($sid.Length -ge 8 -and $termRegistrySids.ContainsKey($sid.Substring(0, 8).ToLower()))
     $ageH = ($nowUtc - $f.LastWriteTime.ToUniversalTime()).TotalHours
     $inSnap = $snapSids.ContainsKey($sid)
     # collection gate: keep transcripts touched within RecentDays OR still
@@ -255,7 +302,8 @@ foreach ($cwd in $activeCwds.Keys) {
     # FAIL-OPEN: if the beacon sweep yields nothing (e.g. %TEMP% cleared), $liveSids
     # is empty and every pane is classified by age exactly as before -- degraded,
     # never blocked.
-    $isLivePane = $liveSids.ContainsKey($sid)
+    $isLivePane = $liveSids.ContainsKey($sid) -or
+                  ($sid.Length -ge 8 -and $termRegistrySids.ContainsKey($sid.Substring(0, 8).ToLower()))
     $tier =
       if ($isLivePane -or $internalAgeMin -le $LiveMinutes) { 'OPEN-NOW' }
       elseif ($internalAgeMin -le $ActiveMinutes) { 'ACTIVE' }
@@ -307,6 +355,17 @@ $mainItems = @($mainItems | Sort-Object `
   @{ Expression = { Get-TabRank $_.sessionId }; Ascending = $true }, `
   @{ Expression = { [datetime]$_.lastActivity }; Descending = $true })
 
+# MEASURED terminal count per repo, kept DISTINCT from the derived pane tiers.
+# Collapsing the two would make the remaining gap unobservable: a repo with 6 open
+# terminals of which only 4 resolve to a session must READ as 6-open/4-resolved, not
+# as 4-open. Absence of a probe is not health (PR-COVERAGE-BY-CONSTRUCTION-001).
+# Empty until each window has reloaded the extension -- an empty map is honestly
+# absent, never a silent zero.
+$terminalsOpen = [ordered]@{}
+foreach ($k in ($termOpenByCwd.Keys | Sort-Object)) {
+  $terminalsOpen[(Split-Path $k -Leaf)] = $termOpenByCwd[$k]
+}
+
 $byTier = [ordered]@{
   openNow = (@($mainItems | Where-Object { $_.tier -eq 'OPEN-NOW' })).Count
   active  = (@($mainItems | Where-Object { $_.tier -eq 'ACTIVE' })).Count
@@ -320,7 +379,7 @@ $counts = [ordered]@{
   repos     = (@($mainItems | ForEach-Object { $_.repo }) | Sort-Object -Unique).Count
   byTier    = $byTier
 }
-$payload = [ordered]@{ generatedAt = $nowUtc.ToString('o'); source = "transcripts-on-disk (active repos = snapshot UNION disk-discovered cwds); 4-tier by internal-ts"; liveMinutes = $LiveMinutes; activeMinutes = $ActiveMinutes; recentDays = $RecentDays; counts = $counts; panes = $mainItems }
+$payload = [ordered]@{ generatedAt = $nowUtc.ToString('o'); source = "transcripts-on-disk (active repos = snapshot UNION disk-discovered cwds); 4-tier by internal-ts"; liveMinutes = $LiveMinutes; activeMinutes = $ActiveMinutes; recentDays = $RecentDays; counts = $counts; terminalsOpen = $terminalsOpen; panes = $mainItems }
 
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText((Join-Path $StateDir "pane_map.json"), ($payload | ConvertTo-Json -Depth 6), $utf8)
