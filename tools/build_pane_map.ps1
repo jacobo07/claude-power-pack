@@ -201,18 +201,32 @@ foreach ($cwd in $activeCwds.Keys) {
   $pd = Join-Path $ProjBase $enc
   if (-not (Test-Path $pd)) { continue }
   $repo = Split-Path $cwd -Leaf
+  # A LIVE BEACON OUTRANKS EVERY COLLECTION GATE (T-COLLECTION-GATE-DROPS-LIVE-
+  # PANE-001, 2026-08-11). The tier logic below already honours the Owner contract
+  # "a pane that was OPEN when Cursor closed must come back", but it never ran for
+  # these panes: the mtime filter here and the isSub filter further down dropped
+  # them BEFORE classification, so the beacon escape hatch was unreachable.
+  # Measured on 2026-08-11: of 15 panes with a live-PID beacon, 7 were discarded
+  # here -- 5 by mtime (open tabs idle 19.8-25 days) and 2 by isSub -- leaving 6
+  # of 8 repos with zero revival tasks. Both gates now exempt a live pane.
   $files = Get-ChildItem $pd -Filter *.jsonl -File -EA SilentlyContinue |
-    Where-Object { ($nowUtc - $_.LastWriteTime.ToUniversalTime()).TotalHours -le $RecentMin / 60 }
+    Where-Object { $liveSids.ContainsKey($_.BaseName) -or
+                   ($nowUtc - $_.LastWriteTime.ToUniversalTime()).TotalHours -le $RecentMin / 60 }
   foreach ($f in $files) {
     $sid = $f.BaseName
     if ($seen.ContainsKey($sid)) { continue }
+    $isLivePane = $liveSids.ContainsKey($sid)
     $ageH = ($nowUtc - $f.LastWriteTime.ToUniversalTime()).TotalHours
     $inSnap = $snapSids.ContainsKey($sid)
     # collection gate: keep transcripts touched within RecentDays OR still
-    # registered in the snapshot (idle-but-open tabs).
-    if ($ageH -gt ($RecentDays * 24) -and -not $inSnap) { continue }
+    # registered in the snapshot (idle-but-open tabs) OR proven open by a beacon.
+    if ($ageH -gt ($RecentDays * 24) -and -not $inSnap -and -not $isLivePane) { continue }
     $meta = Get-SessionMeta $f.FullName
-    if ($meta.isSub) { continue }                          # not a tab
+    # isSub matches SUB_PREFIXES as a SUBSTRING of the first user message, so a real
+    # tab whose first message happened to be a `!` local command is misread as a
+    # shell-out (measured: sid 2ad805db, live beacon, dropped). A live beacon is a
+    # process fact and overrides that heuristic; without a beacon it still applies.
+    if ($meta.isSub -and -not $isLivePane) { continue }     # not a tab
     $seen[$sid] = $true
     $status = if ($ageH -gt $OldHours) { "OLD" } else { "RESUMABLE" }
     # Tier from INTERNAL-timestamp age (content), NOT file mtime -- a batch
