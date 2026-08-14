@@ -279,6 +279,17 @@ def main() -> int:
         ("capture-liveness",
          [PY, str(PP / "tools" / "capture_liveness.py")],
          60),
+        # The V-gates of the intent-fidelity layer itself.
+        ("intent-gates",
+         [PY, str(PP / "tools" / "test_intent_verified.py")],
+         120),
+        # And the standing join: every spec's declared criteria resolved
+        # against what the repo can actually observe, plus the named ratchet.
+        # Static tier only -- the observe tier runs per task, so this row's
+        # cost does not grow with the spec corpus.
+        ("intent-fidelity",
+         [PY, str(PP / "tools" / "intent_verify.py")],
+         120),
     ]
 
     if args.row:

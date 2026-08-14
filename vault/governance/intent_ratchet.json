@@ -1,0 +1,320 @@
+{
+ "version": 1,
+ "updated": "2026-08-14T18:31:35Z",
+ "specs": {
+  "vault\\plans\\activate-inert-2026-07-03.md": {
+   "criteria": [
+    "V-SCS-NO-COLLISION"
+   ],
+   "unjoined": [
+    "V-SCS-NO-COLLISION"
+   ]
+  },
+  "vault\\plans\\cognitive-leak-taxonomy-2026-07-03.md": {
+   "criteria": [
+    "V-EXTENDS-NOT-DUPLICATES",
+    "V-NO-REGRESSION"
+   ],
+   "unjoined": [
+    "V-EXTENDS-NOT-DUPLICATES",
+    "V-NO-REGRESSION"
+   ]
+  },
+  "vault\\plans\\d2a-expansion-2026-08-03.md": {
+   "criteria": [
+    "V-D2A-EXPANSION-CONFIG",
+    "V-D2A-EXPANSION-NO-SELF-DUPLICATE",
+    "V-D2A-EXPANSION-NOVELTY-CHECKED",
+    "V-D2A-EXPANSION-OFFERED",
+    "V-D2A-EXPANSION-SILENT"
+   ],
+   "unjoined": [
+    "V-D2A-EXPANSION-CONFIG",
+    "V-D2A-EXPANSION-NO-SELF-DUPLICATE",
+    "V-D2A-EXPANSION-NOVELTY-CHECKED",
+    "V-D2A-EXPANSION-OFFERED",
+    "V-D2A-EXPANSION-SILENT"
+   ]
+  },
+  "vault\\plans\\graphify-kernel-datasets-2026-07-03.md": {
+   "criteria": [
+    "V-BASELINE",
+    "V-COORDINATE-SPINE",
+    "V-DEPTH",
+    "V-GLOBAL-SCOPE",
+    "V-GRAPH-CORE",
+    "V-HONEST-GUARANTEES",
+    "V-NO-CODE",
+    "V-OBSERVATORY",
+    "V-PARENT-REFS",
+    "V-REALITY-SCAN",
+    "V-ROUTE-COMPILER",
+    "V-WRITEBACK"
+   ],
+   "unjoined": [
+    "V-BASELINE",
+    "V-COORDINATE-SPINE",
+    "V-DEPTH",
+    "V-GLOBAL-SCOPE",
+    "V-GRAPH-CORE",
+    "V-HONEST-GUARANTEES",
+    "V-NO-CODE",
+    "V-OBSERVATORY",
+    "V-PARENT-REFS",
+    "V-REALITY-SCAN",
+    "V-ROUTE-COMPILER",
+    "V-WRITEBACK"
+   ]
+  },
+  "vault\\plans\\intent-verified-done-2026-08-14.md": {
+   "criteria": [
+    "V-IV-ABSENT-IS-NOT-PASS",
+    "V-IV-ABSOLUTE-NOT-RATIO",
+    "V-IV-ADVISORY-MARK",
+    "V-IV-BLOCKED-ON-CRITICAL-FAIL",
+    "V-IV-CRITERIA-FROM-TABLE",
+    "V-IV-CRITICAL-DEFAULT",
+    "V-IV-EVIDENCE-INCOMPLETE-DISTINCT",
+    "V-IV-FAIL-BEATS-PASS",
+    "V-IV-ID-FIRST-LAYOUT",
+    "V-IV-NO-CRITERIA-IS-NOT-DONE",
+    "V-IV-NO-RATIO-EMITTED",
+    "V-IV-NOT-CAPTURED-DOES-NOT-BLOCK",
+    "V-IV-ONLY-VERIFIERS-RUN",
+    "V-IV-PARTIAL-ON-ADVISORY",
+    "V-IV-PROSE-NOT-INVENTED",
+    "V-IV-RATCHET-REPAIR-ALLOWED",
+    "V-IV-RATCHET-UNJOINED-BACK",
+    "V-IV-RATCHET-WITHDRAWN",
+    "V-IV-TARGETS-FROM-SOURCE",
+    "V-IV-UNVERIFIABLE-VS-UNJOINED"
+   ],
+   "unjoined": []
+  },
+  "vault\\plans\\rollback-skill-2026-05-25.md": {
+   "criteria": [
+    "V-DEEP",
+    "V-NO-AUTO",
+    "V-ROLLBACK-SUGGEST"
+   ],
+   "unjoined": [
+    "V-NO-AUTO",
+    "V-ROLLBACK-SUGGEST"
+   ]
+  },
+  "vault\\plans\\sdd-os-activation-2026-07-26.md": {
+   "criteria": [
+    "V-SDDOS-ACTIVE-REPOS",
+    "V-SDDOS-CLAUDE-MD",
+    "V-SDDOS-SCAFFOLD",
+    "V-SDDOS-SPEC-BEFORE-CODE",
+    "V-SDDOS-SPEC-UPDATE",
+    "V-SDDOS-TIER-CLASSIFICATION"
+   ],
+   "unjoined": [
+    "V-SDDOS-ACTIVE-REPOS",
+    "V-SDDOS-CLAUDE-MD",
+    "V-SDDOS-SCAFFOLD",
+    "V-SDDOS-SPEC-BEFORE-CODE",
+    "V-SDDOS-SPEC-UPDATE",
+    "V-SDDOS-TIER-CLASSIFICATION"
+   ]
+  },
+  "vault\\plans\\sqi-baseline-guardian-2026-07-12.md": {
+   "criteria": [
+    "V-GUARDIAN-BLOCKS-DELETION-ATTACK",
+    "V-GUARDIAN-DETECTS-REGRESSION",
+    "V-GUARDIAN-ENV-MISMATCH",
+    "V-GUARDIAN-FAILOPEN-CORRUPT",
+    "V-GUARDIAN-FIRST-RUN",
+    "V-GUARDIAN-IN-PIPELINE",
+    "V-GUARDIAN-PASSES-STABLE",
+    "V-GUARDIAN-SELF-REACH",
+    "V-GUARDIAN-UPDATES-BASELINE"
+   ],
+   "unjoined": [
+    "V-GUARDIAN-BLOCKS-DELETION-ATTACK",
+    "V-GUARDIAN-DETECTS-REGRESSION",
+    "V-GUARDIAN-ENV-MISMATCH",
+    "V-GUARDIAN-FAILOPEN-CORRUPT",
+    "V-GUARDIAN-FIRST-RUN",
+    "V-GUARDIAN-IN-PIPELINE",
+    "V-GUARDIAN-PASSES-STABLE",
+    "V-GUARDIAN-SELF-REACH",
+    "V-GUARDIAN-UPDATES-BASELINE"
+   ]
+  },
+  "vault\\specs\\arch-decision-skill.md": {
+   "criteria": [
+    "V-CLEAR",
+    "V-COLLISION",
+    "V-COLLISION-2",
+    "V-TIMING",
+    "V-WARNING",
+    "V-WARNING-2"
+   ],
+   "unjoined": [
+    "V-CLEAR",
+    "V-COLLISION",
+    "V-COLLISION-2",
+    "V-TIMING",
+    "V-WARNING",
+    "V-WARNING-2"
+   ]
+  },
+  "vault\\specs\\backup-skill.md": {
+   "criteria": [
+    "V-BACKUP-FIRST",
+    "V-DEEP"
+   ],
+   "unjoined": [
+    "V-BACKUP-FIRST"
+   ]
+  },
+  "vault\\specs\\capture-layer-liveness.md": {
+   "criteria": [
+    "V-CAPTURE-01",
+    "V-CAPTURE-02",
+    "V-CAPTURE-03",
+    "V-CAPTURE-04",
+    "V-CAPTURE-05"
+   ],
+   "unjoined": []
+  },
+  "vault\\specs\\code-review-skill.md": {
+   "criteria": [
+    "V-BLOCK-EVAL",
+    "V-BLOCK-SECRET",
+    "V-CLOSED-LOOP",
+    "V-PASS",
+    "V-SKIP-MVN",
+    "V-TIMING",
+    "V-WARN-DOCTRINE-1",
+    "V-WARN-DOCTRINE-2",
+    "V-WARN-LENGTH"
+   ],
+   "unjoined": [
+    "V-BLOCK-EVAL",
+    "V-CLOSED-LOOP",
+    "V-PASS",
+    "V-SKIP-MVN",
+    "V-TIMING",
+    "V-WARN-DOCTRINE-1",
+    "V-WARN-DOCTRINE-2"
+   ]
+  },
+  "vault\\specs\\deployment-skill.md": {
+   "criteria": [
+    "V-DEEP"
+   ],
+   "unjoined": []
+  },
+  "vault\\specs\\egcc-c1-corpus-reconciliation.md": {
+   "criteria": [
+    "V-C1-BIDIRECTIONAL",
+    "V-C1-DISCOVERED",
+    "V-C1-EXIT-DISCIPLINE",
+    "V-C1-H7-UNCHANGED",
+    "V-C1-HERMETIC",
+    "V-C1-HOOK-CLASS",
+    "V-C1-LIVE-CORPUS",
+    "V-C1-NO-RATIO",
+    "V-C1-RECURRENCE",
+    "V-C1-ZERO-DISTINCT"
+   ],
+   "unjoined": [
+    "V-C1-BIDIRECTIONAL",
+    "V-C1-DISCOVERED",
+    "V-C1-EXIT-DISCIPLINE",
+    "V-C1-H7-UNCHANGED",
+    "V-C1-HERMETIC",
+    "V-C1-HOOK-CLASS",
+    "V-C1-LIVE-CORPUS",
+    "V-C1-NO-RATIO",
+    "V-C1-RECURRENCE",
+    "V-C1-ZERO-DISTINCT"
+   ]
+  },
+  "vault\\specs\\egcc-residue-rc1-rc2.md": {
+   "criteria": [
+    "V-RC1-CORPUS-UNBROKEN",
+    "V-RC1-COVERAGE-ABSOLUTE",
+    "V-RC1-DIGEST-BUDGET",
+    "V-RC1-LADDER",
+    "V-RC1-PARSE",
+    "V-RC1-UNDECLARED-NOT-REJECTION",
+    "V-RC1-UNRECOGNIZED-DISTINCT"
+   ],
+   "unjoined": [
+    "V-RC1-CORPUS-UNBROKEN",
+    "V-RC1-COVERAGE-ABSOLUTE",
+    "V-RC1-DIGEST-BUDGET",
+    "V-RC1-LADDER",
+    "V-RC1-PARSE",
+    "V-RC1-UNDECLARED-NOT-REJECTION",
+    "V-RC1-UNRECOGNIZED-DISTINCT"
+   ]
+  },
+  "vault\\specs\\ledger-discovery.md": {
+   "criteria": [
+    "V-LD-DISCOVERED",
+    "V-LD-EMPTY-VS-MISSING",
+    "V-LD-EXISTING-UNCHANGED",
+    "V-LD-FAIL-OPEN",
+    "V-LD-HERMETIC",
+    "V-LD-LEDGER-KEPT",
+    "V-LD-LIVE-FINDS-THE-THREE",
+    "V-LD-NO-RATIO",
+    "V-LD-ROWS-IN-EVIDENCE",
+    "V-LD-SERIES-EXCLUDED",
+    "V-LD-STORE-EXCLUDED"
+   ],
+   "unjoined": [
+    "V-LD-DISCOVERED",
+    "V-LD-EMPTY-VS-MISSING",
+    "V-LD-EXISTING-UNCHANGED",
+    "V-LD-FAIL-OPEN",
+    "V-LD-HERMETIC",
+    "V-LD-LEDGER-KEPT",
+    "V-LD-LIVE-FINDS-THE-THREE",
+    "V-LD-NO-RATIO",
+    "V-LD-ROWS-IN-EVIDENCE",
+    "V-LD-SERIES-EXCLUDED",
+    "V-LD-STORE-EXCLUDED"
+   ]
+  },
+  "vault\\specs\\live-terminal-registry.md": {
+   "criteria": [
+    "V-BEACON-PID-CTIME",
+    "V-BEACON-PID-IDENTITY",
+    "V-TERMINALS-OPEN-REPORTED",
+    "V-TERMREG-ADDS-ONLY",
+    "V-TERMREG-DEAD-HOST-IGNORED",
+    "V-TERMREG-FAIL-OPEN",
+    "V-TERMREG-PER-WINDOW",
+    "V-TERMREG-WRITTEN"
+   ],
+   "unjoined": [
+    "V-BEACON-PID-CTIME",
+    "V-BEACON-PID-IDENTITY",
+    "V-TERMINALS-OPEN-REPORTED",
+    "V-TERMREG-ADDS-ONLY",
+    "V-TERMREG-DEAD-HOST-IGNORED",
+    "V-TERMREG-FAIL-OPEN",
+    "V-TERMREG-PER-WINDOW",
+    "V-TERMREG-WRITTEN"
+   ]
+  },
+  "vault\\specs\\rollback-skill.md": {
+   "criteria": [
+    "V-DEEP",
+    "V-NO-AUTO",
+    "V-ROLLBACK-SUGGEST"
+   ],
+   "unjoined": [
+    "V-NO-AUTO",
+    "V-ROLLBACK-SUGGEST"
+   ]
+  }
+ }
+}
