@@ -165,6 +165,54 @@ def detect_dead_knowledge(*, repo_root: Path, now=None, td=None) -> list:
 
 
 # --------------------------------------------------------------------------- #
+# Detector 2b -- uncited corpora (composes B1 corpus_roi).
+# --------------------------------------------------------------------------- #
+# Sibling of detector 2, NOT a duplicate of it, and the distinction is the whole
+# reason this exists: recall-ROI asks whether a KB item was ever INJECTED into a
+# session (usage telemetry, time-windowed); corpus_roi asks whether any other
+# corpus, module or tool CITES this corpus's own ids (structural reuse, on disk).
+# A corpus can be cited everywhere and never recalled, or recalled constantly and
+# cited by nothing. Answering one does not answer the other.
+#
+# Below this size a corpus is too small for zero citations to mean anything --
+# the same floor corpus_roi.escalate_negative_roi() uses for its own escalation.
+UNCITED_MIN_WORDS = 500
+
+
+def detect_uncited_corpora(*, repo_root: Path, now=None) -> list:
+    """Sealed corpora of substantial size that nothing else references.
+
+    `probe_liveness=False` on purpose: liveness is detector 1's question and is
+    already answered there, and probing it here would re-run the D1 audit once
+    per registered corpus for a fact this finding does not use.
+    """
+    try:
+        from modules.frontier_intelligence.corpus_roi import rank_all
+        reports = rank_all(repo_root=repo_root, probe_liveness=False)
+    except Exception:  # noqa: BLE001 -- fail-open: detector skipped, scan continues
+        return []
+    out = []
+    for r in reports:
+        if not r.measured or r.citation_count != 0:
+            continue
+        if r.word_count < UNCITED_MIN_WORDS:
+            continue
+        out.append(ProactiveSuggestion(
+            type="opportunity",
+            description=(f"corpus '{r.corpus_id}' holds {r.word_count:,} words "
+                         f"and is cited by nothing outside itself"),
+            repo=repo_root.name,
+            path=f"vault/knowledge_base/{r.corpus_id}",
+            verdict_hint="CONSOLIDATE",
+            urgency=LOW,
+            evidence=(f"B1 corpus-ROI: {r.citation_count} cross-corpus "
+                      f"citation(s) across modules/, tools/ and every other "
+                      f"corpus; {r.word_count:,} words on disk"),
+            detector="corpus_roi"))
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # Detector 3 -- aged Owner residuals (composes D4 OWNER_QUEUE).
 # --------------------------------------------------------------------------- #
 def detect_owner_residuals(*, repo_root: Path, now=None, state_dir=None) -> list:
@@ -322,6 +370,7 @@ def scan_repo(repo_root=None, *, now=None, state_dir=None, td=None,
         detectors[:0] = [
             lambda: detect_orphans(repo_root=root, now=now, state_dir=state_dir),
             lambda: detect_dead_knowledge(repo_root=root, now=now, td=td),
+            lambda: detect_uncited_corpora(repo_root=root, now=now),
         ]
 
     for detector in detectors:

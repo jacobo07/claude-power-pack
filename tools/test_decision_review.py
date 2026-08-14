@@ -561,6 +561,76 @@ def test_liveness_entry():
         _fail("V-DRK-LIVENESS-ENTRY", f"registered={have} probed={probed}")
 
 
+def test_uncited_corpora() -> None:
+    """Detector 2b. Every real corpus is heavily cited, so the live scan finds
+    nothing -- which is a valid result and also an unfalsifiable one. A negative
+    control proves the detector can still fire (CLAE Part 27 sec.9: a prosecutor
+    that has never sustained an objection is indistinguishable from a broken
+    one)."""
+    import tempfile
+    from modules.decision_review.proactive_scanner import (
+        UNCITED_MIN_WORDS, detect_uncited_corpora)
+
+    with tempfile.TemporaryDirectory() as td:
+        root = Path(td)
+        kb = root / "vault" / "knowledge_base"
+        # An uncited corpus: real size, and its id appears nowhere else.
+        (kb / "lonely").mkdir(parents=True)
+        (kb / "lonely" / "part1.md").write_text(
+            "ZZQX " * (UNCITED_MIN_WORDS + 50), encoding="utf-8")
+        # A cited one of the same size, to prove the detector discriminates.
+        (kb / "popular").mkdir(parents=True)
+        (kb / "popular" / "part1.md").write_text(
+            "WWQX " * (UNCITED_MIN_WORDS + 50), encoding="utf-8")
+        (kb / "other").mkdir(parents=True)
+        (kb / "other" / "refs.md").write_text("see POPCITE for details",
+                                              encoding="utf-8")
+        registry = {
+            "lonely": {"dir": "lonely", "patterns": [r"\bLONECITE\b"],
+                       "liveness_id": None},
+            "popular": {"dir": "popular", "patterns": [r"\bPOPCITE\b"],
+                        "liveness_id": None},
+        }
+        import modules.decision_review.proactive_scanner as PS
+        from modules.frontier_intelligence import corpus_roi as CR
+        real = CR.CORPUS_REGISTRY
+        try:
+            CR.CORPUS_REGISTRY = registry
+            rows = PS.detect_uncited_corpora(repo_root=root)
+        finally:
+            CR.CORPUS_REGISTRY = real
+
+    ids = sorted(r.path.rsplit("/", 1)[-1] for r in rows)
+    if ids == ["lonely"]:
+        _ok("V-DRK-UNCITED-FIRES",
+            "negative control: the uncited corpus is reported and the cited "
+            "one of identical size is not")
+    else:
+        _fail("V-DRK-UNCITED-FIRES", f"reported {ids}, expected ['lonely']")
+
+    if rows and rows[0].is_publishable() and "0 cross-corpus" in rows[0].evidence:
+        _ok("V-DRK-UNCITED-EVIDENCE",
+            f"grounded row: {rows[0].evidence[:60]}...")
+    else:
+        _fail("V-DRK-UNCITED-EVIDENCE", "row is ungrounded or missing")
+
+    # The live repo: zero findings, and that must be because every corpus is
+    # cited -- not because the detector silently failed.
+    live = detect_uncited_corpora(repo_root=PP_ROOT)
+    from modules.frontier_intelligence.corpus_roi import rank_all
+    measured = [r for r in rank_all(repo_root=PP_ROOT, probe_liveness=False)
+                if r.measured]
+    if not live and len(measured) >= 5 and all(r.citation_count > 0
+                                               for r in measured):
+        _ok("V-DRK-UNCITED-CLEAN-IS-REAL",
+            f"{len(measured)} corpora measured, min citations="
+            f"{min(r.citation_count for r in measured)} -- zero findings is a "
+            "real clean scan, not a dead detector")
+    else:
+        _fail("V-DRK-UNCITED-CLEAN-IS-REAL",
+              f"live rows={len(live)} measured={len(measured)}")
+
+
 def main() -> int:
     print("== DRK done-gate: tools/test_decision_review.py ==")
     for t in (test_reversibility, test_scope_l0, test_record_canonical,
@@ -569,7 +639,7 @@ def main() -> int:
               test_fase5_scenarios, test_dcs,
               test_providers_live, test_failopen_provider, test_no_length_bias,
               test_scanner_runs, test_scanner_evidence, test_queue_integration,
-              test_liveness_entry):
+              test_uncited_corpora, test_liveness_entry):
         t()
     total = _passes + _fails
     print(f"\nDRK_PASS={_passes}/{total}  threshold={total}/{total}")

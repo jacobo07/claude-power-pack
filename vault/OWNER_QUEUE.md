@@ -7,6 +7,78 @@ the Owner executes. Newest-relevant first.
 
 ---
 
+## RESOLVED (2026-08-14) -- the two UKR wiring residues, both FIXED
+
+Eight consecutive audits produced 0/18 surviving dataset candidates. The residue
+was never a missing corpus; it was two owners whose verdicts nothing consumed.
+Both are now wired, and both were measured before being wired rather than after.
+
+### (C) `dataset_first` authority -- FIXED
+
+**Was:** the module self-describes as "an advisor wired into an authority, never
+an authority itself" (INV-5), and the authority did not exist on the planning
+path. `spec_gate._check_knowledge_sufficiency()` computed the right verdict, but
+its only callers are `one_shot/compiler.py` (prints to stderr, never blocks, and
+only when a `cwd` is passed -- the JIT injector passes none) and
+`dataset_first/classifier.py` (calls it with an EMPTY description and reads only
+`.has_spec`). The live planning path is
+`UserPromptSubmit -> jit_skill_loader._sdd_os_activation_inject ->
+sdd_os.activation.build_directive -> sdd_os.pre_exec_gate.evaluate`, and that
+chain never asked. A mission whose governing science does not exist was told to
+**write the spec** -- which records the guess in the authoritative place, the
+exact outcome spec_gate's own message calls wrong.
+
+**Now:** `pre_exec_gate.evaluate()` consults the engine at Tier 2+ when no spec
+is bound, and returns `action="knowledge_first_required"` (spec_gate's string,
+not a new one) with the named missing kinds. `enforce()` does not generate a spec
+for it. Fail-open absolute.
+
+**Measured before wiring** (the DRK lesson -- a provider whose hard verdict is
+unreachable makes the wiring theatre): `DATASET_FIRST_MANDATORY` fires on a
+knowledge-first, production-critical mission at score 78 with 3 named missing
+kinds, and stays silent on typo / bugfix / feature / this task. A knowledge-first
+mission that is NOT production-critical resolves to `HYBRID` (68) -- correct, per
+DFP-00 IV.7, a tie resolves to the cheaper class.
+
+**Gates:** `V-SDD-KNOWLEDGE-BLOCKS`, `-NOT-WRITE-SPEC`, `-QUIET-ON-ORDINARY`,
+`-FAIL-OPEN` in `tools/test_sdd_os.py` (standing `verify_spp` row `sdd-os`).
+
+### (O) `corpus_roi.py` consumer -- FIXED
+
+**Was:** the file shipped both its consumers (`record_corpus_roi` -> CO-12,
+`escalate_negative_roi` -> OWNER_QUEUE) and had no caller. `main()` only acts
+behind `--record` / `--escalate`, and nothing invoked it. Its only references in
+the estate were its own two tests and one comment in `dataset_enricher.py`.
+
+**Checked first whether the gap was already covered:** the DRK proactive
+scanner's `detect_dead_knowledge` composes D3 recall-ROI, which measures whether
+a KB item was ever INJECTED into a session (usage telemetry, time-windowed).
+`corpus_roi` measures whether any other corpus, module or tool CITES this
+corpus's ids (structural reuse, on disk). A corpus can be cited everywhere and
+never recalled. Different evidence, so the gap is real.
+
+**Now:** `detect_uncited_corpora` (detector 2b) composes `corpus_roi.rank_all()`
+inside `proactive_scanner.scan_repo`, PP-only, `probe_liveness=False`. Its output
+reaches `vault/audits/drk_proactive_<date>.md` on the existing daily cadence
+(`tools/register_drk_scan.ps1`, task `PP-DRKScan`). Urgency is LOW, matching its
+recall-ROI sibling -- rule 2 forbids a manufactured `high`, and only `high` is
+appended to this queue.
+
+**Live result: zero findings, and that is real** -- all 8 registered corpora are
+cited, minimum 191 citations (`daif` 264 / 303k words is the thinnest at
+0.871/1k). Because a detector that fires on nothing is unfalsifiable, the gate
+includes a negative control: a synthetic uncited corpus IS reported while a cited
+corpus of identical size is not.
+
+**Gates:** `V-DRK-UNCITED-FIRES`, `-EVIDENCE`, `-CLEAN-IS-REAL` in
+`tools/test_decision_review.py` (21/21).
+
+**Open, unchanged:** `tools/test_decision_review.py` is not a `verify_spp` row,
+so those three gates are UNJOINED debt in the intent-fidelity ledger. Pre-existing
+for that whole file; not opened by this change.
+
+---
+
 ## NEW (2026-08-10) -- 67 suites carried as predictive-governance debt  [PENDING]
 
 **System:** `tools/predictive_governance_gate.py`
