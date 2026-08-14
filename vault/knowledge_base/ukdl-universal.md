@@ -6292,3 +6292,88 @@ from text or config.
 function that decides which work gets picked, and `BacklogItem.impact` is a bare
 `str` whose four values live only in a comment. Sisters: `zero cannot fall`,
 `T-PLAUSIBLE-BUT-WRONG-001`, `T-GATE-MEASURES-SPELLING-NOT-PROPERTY-001`.
+
+
+
+
+
+
+
+## HR-INTENT-FIDELITY-IS-DONE-CRITERION-001 — done is fidelity to the intent, not absence of known bugs
+
+**TRIGGER:** about to declare a unit of work done, shipped or ready when its
+tests are green.
+
+**ACCION:** STOP unless the output has been checked against the intent that
+STARTED the work. A mechanism that runs correctly and implements the wrong thing
+is not done — it is incorrectly done, and every internal test agrees with it,
+because a test written from the implementation cannot disagree with the
+implementation. The intent must exist as a persisted artifact BEFORE the work
+begins, or there is nothing to verify against at the end. In this repo the
+artifact is `vault/specs/*.md`, bound by `covers:` front matter, stating its
+criteria as V-gate ids; the check is `python tools/intent_verify.py --task "..."`
+(or `--spec <path> --observe`).
+
+**EXCEPCION:** Owner phrase "intent verification waived -- HR-INTENT-001 OK",
+one turn only.
+
+**ORIGEN:** measured 2026-08-14 across a discovered denominator of 58 executable
+gate surfaces — every `verify_spp` row, every `modules/*/gate*.py`, every
+registered blocking hook. 38 FUNCTIONAL_ONLY, 8 COVERAGE_ONLY, 3 NOVELTY_ONLY.
+Zero compared an output to its declared intent. The five that touched an intent
+artifact (`spec_gate`, `sdd_os/pre_exec_gate`, and three tests of that
+machinery) all read it at task START. `vault/audits/DONE_GATE_AUDIT.md`.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Sisters: `T-PLAUSIBLE-BUT-WRONG-001`,
+`write-without-read = incomplete system`.
+
+## T-FUNCTIONAL-DONE-WITHOUT-INTENT-VERIFICATION-001 — green tests prove the mechanism, never the choice of mechanism
+
+Tests in green without intent verification are evidence that the mechanism
+works. They are not evidence that the correct mechanism was built. The two
+claims feel identical from inside the work and diverge completely from outside
+it, which is why the second one needs an EXTERNAL oracle: the criteria stated
+before the first line was written.
+
+**The failure is not that intent is unrecorded.** That was the first framing and
+it was wrong. The criteria were recorded, in the specs, as V-gate ids — and a
+V-gate id is already a falsifiable predicate. Nothing performed the LOOKUP.
+Measured on this repo the same day: of 64 criteria declared across 13 specs,
+9 were reachable from the standing gate, 41 were emitted by a test no standing
+gate runs, and 12 named no executable file at all. The 41 were green once, by
+hand, on the day they were written, and nothing re-checked one since. A
+regression in any of them was invisible to all 58 gates.
+
+**A missing consumer is the general shape.** A producer with no reader is
+documentation. `sdd_os/pre_exec_gate.py` writes `## 7. Acceptance criteria /
+AC-001:` into every Tier 2+ spec it generates, and grepping `AC-\d` across the
+repo finds producers and no consumer.
+
+**Two traps this repair had to survive, both hit in the same session:**
+
+1. **The verifier's own parser decided the answer.** A verdict-first-only line
+   parser reported 9 criteria as never emitted against a suite that emits them
+   id-first in a table. Nine false ABSENT verdicts on a passing suite. An
+   unrecognised layout must never read as unobserved — cover both layouts, and
+   test the parser against the REAL output of a real suite, not a fixture you
+   wrote to match your own regex. Sister: `zero cannot fall`.
+2. **Owner selection measured the choice, not the criterion.** A criterion can
+   have several emitters (`V-TIMING` has seven). Fixing on the alphabetically
+   first and reporting ABSENT when it stays quiet measures which file was
+   picked. Consult every runnable owner before concluding absence.
+
+**Safety constraint discovered while building it:** an emitter is any file
+naming the id, and some of them mutate the repo — `tools/normalize_paths.py`
+names a V-id and rewrites paths when run without `--check`. A gate that executes
+arbitrary repo files to collect evidence is a worse defect than the one it
+measures. Only `test_*` / `verify_*` files are ever run.
+
+**First live finding.** `vault/specs/code-review-skill.md` declares `V-SKIP-MVN`;
+`modules/code-review/test_v_block.py` observes it FAILING (expected
+`pass+skip-tool`, actual `pass`). Eight sibling criteria pass. Invisible until
+now because that test is not a `verify_spp` row.
+
+**Origen:** `vault/plans/intent-verified-done-2026-08-14.md`,
+`vault/audits/DONE_GATE_AUDIT.md`, `modules/intent_verified/`, gates
+`V-IV-*` (20/20). Sisters: `HR-INTENT-FIDELITY-IS-DONE-CRITERION-001`,
+`T-SILENT-VOCABULARY-COLLAPSE-001`, `feedback_never_gate_on_a_ratio`.
