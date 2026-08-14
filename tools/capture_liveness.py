@@ -55,6 +55,9 @@ PRODUCERS = [
         "fires": PP_ROOT / "vault" / "ceps" / "fires.jsonl",
         "sink": PP_ROOT / "vault" / "ceps" / "events.jsonl",
         "rejections": PP_ROOT / "vault" / "ceps" / "rejections.jsonl",
+        # Only losses this producer caused; the ledger is shared with the
+        # test suites, which reject invalid input by design.
+        "rejection_origin": "hook",
         "note": "PostToolUse failure capture on Bash/PowerShell + harness sentinel",
     },
     {
@@ -100,8 +103,14 @@ def _parse_ts(raw: str) -> datetime | None:
     return parsed
 
 
-def count_since(path: Path, cutoff: datetime) -> int:
-    """Rows in a .jsonl whose `ts` is at or after cutoff."""
+def count_since(path: Path, cutoff: datetime, origin: str | None = None) -> int:
+    """Rows in a .jsonl whose `ts` is at or after cutoff.
+
+    `origin` restricts the count to rows a given caller produced. The
+    rejection ledger is shared: test_ceps_edge_cases feeds invalid input on
+    purpose, and counting those as production loss would fail this gate on a
+    healthy repo until nobody read it.
+    """
     if not path or not path.is_file():
         return 0
     total = 0
@@ -110,9 +119,12 @@ def count_since(path: Path, cutoff: datetime) -> int:
         if not line:
             continue
         try:
-            ts = _parse_ts(json.loads(line).get("ts", ""))
+            row = json.loads(line)
         except ValueError:
             continue
+        if origin is not None and row.get("origin") != origin:
+            continue
+        ts = _parse_ts(row.get("ts", ""))
         if ts and ts >= cutoff:
             total += 1
     return total
@@ -168,7 +180,8 @@ def evaluate(window_days: int) -> dict:
         fires = count_since(spec.get("fires"), cutoff)
         records = count_since(spec.get("sink"), cutoff) if str(
             spec.get("sink", "")).endswith(".jsonl") else None
-        rejected = count_since(spec.get("rejections"), cutoff)
+        rejected = count_since(spec.get("rejections"), cutoff,
+                               origin=spec.get("rejection_origin"))
 
         row = {
             "producer": spec["name"],

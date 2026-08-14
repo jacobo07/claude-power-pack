@@ -172,6 +172,55 @@ Regression: `test_ceps_edge_cases` 6/6, `test_ceps_closed_loop` 10/10,
 `test_ceps_full_cycle` PASS — the signature change broke no existing suite.
 `verify_spp --row capture-gates` and `--row capture-liveness` both STRICT PASS.
 
+## What live verification found that the test suite could not
+
+Driving the hook with a hand-written payload proved the hook works. It did
+not prove the harness ever calls it. Three limits only a real in-session
+failure exposed:
+
+### D6 — PostToolUse does not fire when the tool exits non-zero
+
+A real `python /nonexistent/x.py` (exit 2) produced **no hook invocation at
+all** — verified by a temporary raw-stdin dump that was never created. The
+same command shape with `exit 0` and error text on stdout fired normally and
+recorded (`fires=1`, corpus 9→10).
+
+**Consequence:** this producer can only see failure *text emitted by commands
+that succeed* — a test run that prints failures and returns 0, a traceback in
+an otherwise-successful script. Commands that genuinely fail are invisible to
+it. This is a harness property, not something the hook can work around.
+
+### D7 — `from_stop_hook` is an orphan
+
+`tools/ceps.py` already ships `from_stop_hook(last_turns)`, the designed
+capture for exactly what D6 misses. Nothing in `~/.claude/hooks`,
+`settings.json`, any command or any agent calls it. It has never run.
+Wiring it means editing `CHAIN_MAP` inside
+`~/.claude/hooks/hook-dispatcher.js` — Owner-side under HR-001.
+
+### D8 — D2 is half-delivered, and the missing half is Owner-side
+
+The hook now accepts PowerShell and the harness sentinel, but
+`settings.json` registers it with `"matcher": "Bash"`, so the harness never
+invokes it for anything else. **The code change is inert until the matcher
+widens.** Exact Owner-side edit, the PostToolUse entry whose command ends in
+`bug-hunter-ceps-bridge.js`:
+
+    "matcher": "Bash"   ->   "matcher": "Bash|PowerShell|Read|Edit|Write"
+
+Per HR-001 the PP-internal half ships and the registration step is
+documented rather than performed. Until it lands, V-CAPTURE-02 and
+V-CAPTURE-06 prove the hook *would* handle those surfaces, not that it does.
+
+## Correction — the gate's own false positive
+
+First live run of `capture_liveness.py` failed on 2 rejections that
+`test_ceps_edge_cases` produces **on purpose**, counting a healthy repo as
+capture loss. The ledger is shared; the gate was not distinguishing callers.
+Fixed by tagging each rejection with `origin` (`CEPS_ORIGIN`, set by
+`ceps_capture.py`) and scoring only this producer's own losses. A gate that
+cries wolf is worse than no gate, and this one nearly shipped as one.
+
 ## Follow-up, not done here
 
 - The sealed rule belongs in `vault/knowledge_base/ukdl-universal.md`, which

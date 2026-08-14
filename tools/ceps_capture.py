@@ -15,8 +15,14 @@ exit:   0 recorded, 3 rejected, 4 malformed input. Never raises -- a hook
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
+
+# Tags every rejection this path produces, so capture_liveness.py can tell a
+# real production capture loss from a test suite feeding invalid input on
+# purpose. Set before the import: tools.ceps reads it at rejection time.
+os.environ.setdefault("CEPS_ORIGIN", "hook")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 

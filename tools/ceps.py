@@ -115,6 +115,11 @@ def _record_rejection(reason: str, **fields) -> None:
     record_error() and does not produce an event lands here, so
     capture_liveness.py can prove the divergence between what the
     producers fired and what the corpus stored.
+
+    `origin` separates a production capture loss from a test suite
+    deliberately feeding invalid input. Without it the liveness gate
+    counts test_ceps_edge_cases' intentional rejections as real loss and
+    fails on a healthy repo -- a gate that cries wolf stops being read.
     """
     _log(f"record_error: {reason}")
     try:
@@ -122,6 +127,7 @@ def _record_rejection(reason: str, **fields) -> None:
         entry = {
             "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "reason": reason,
+            "origin": os.environ.get("CEPS_ORIGIN", "direct"),
         }
         entry.update({k: v for k, v in fields.items() if v is not None})
         with open(REJECTIONS_PATH, "a", encoding="utf-8",
