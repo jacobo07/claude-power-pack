@@ -56,6 +56,12 @@ _SLUG_RX = re.compile(r"[^a-z0-9]+")
 _MAX_SLUG_LEN = 48
 
 
+# A fourth action, and the only one that refuses rather than instructs. The
+# string is spec_gate's, not a new one -- that gate reached the same verdict
+# first and nothing consumed it.
+KNOWLEDGE_FIRST = "knowledge_first_required"
+
+
 @dataclass
 class GateDecision:
     tier: int
@@ -63,9 +69,40 @@ class GateDecision:
     requires_written_spec: bool
     binding: SpecBinding
     action: str            # "proceed" | "inline_mini_spec" | "write_spec"
-    directive: str
+    directive: str         #   | "knowledge_first_required"
     spec_path: Path | None = None
     spec_written: bool = False
+    knowledge_verdict: str = ""       # DFP class, when it was consulted
+    missing_knowledge: tuple = ()     # named kinds, never "this feels big"
+
+    @property
+    def blocked(self) -> bool:
+        """The gate refuses. Distinct from `write_spec`, which instructs."""
+        return self.action == KNOWLEDGE_FIRST
+
+
+def _knowledge_gap(task_description: str):
+    """Ask DFP whether the science that would GOVERN this build exists yet.
+
+    Returns the verdict only when the answer is no; None means proceed. DFP
+    self-describes as "an advisor wired into an authority, never an authority
+    itself" (INV-5) -- this gate is that authority on the planning axis, the
+    same role spec_gate already plays for plain spec existence.
+
+    Fail-open ABSOLUTE: a missing or broken DFP is silence, never a block.
+    """
+    try:
+        from modules.dataset_first.knowledge_sufficiency import (
+            DATASET_FIRST_MANDATORY, evaluate)
+        v = evaluate(task_description)
+        # Inside the guard on purpose: a malformed verdict object must also
+        # degrade to silence, or "fail-open ABSOLUTE" is only true for the
+        # failures that happen to occur before this line.
+        if v.verdict != DATASET_FIRST_MANDATORY or not v.missing:
+            return None
+        return v
+    except Exception:  # noqa: BLE001 -- advisor absent is not a failure
+        return None
 
 
 def slugify(text: str, max_len: int = _MAX_SLUG_LEN) -> str:
@@ -307,6 +344,31 @@ def evaluate(task_description: str,
             action="inline_mini_spec",
             directive=_mini_spec_block(task_description, tier, reason))
 
+    # Before demanding a spec, ask whether a spec is even the right artifact.
+    # Writing one against knowledge that does not exist yet does not capture
+    # the intent -- it documents the guess, in the authoritative place, where
+    # it is then read as settled. This is the one case where the correct next
+    # step is neither "proceed" nor "write the spec".
+    gap = _knowledge_gap(task_description)
+    if gap is not None:
+        return GateDecision(
+            tier=tier, tier_label=TIER_LABEL[tier],
+            requires_written_spec=True, binding=binding,
+            action=KNOWLEDGE_FIRST,
+            knowledge_verdict=gap.verdict,
+            missing_knowledge=tuple(gap.missing),
+            directive=(
+                f"SDD-OS Tier {tier} ({TIER_LABEL[tier]}) -- BLOCKED by the "
+                f"Knowledge Sufficiency Engine: {gap.verdict} "
+                f"(score={gap.score}, capacity="
+                f"{gap.dimensions.get('institutional_capacity')}/10, "
+                f"ACIS ceiling=E{gap.acis_ceiling}).\n"
+                f"Missing knowledge kinds: {', '.join(gap.missing)}.\n"
+                "The governing science/ontology/protocol this build needs does "
+                "not exist yet. This is not a spec-writing gap: a spec written "
+                "now would record the guess as if it were settled. Establish "
+                "the missing kind(s) first, then re-run the gate."))
+
     target = spec_path_for(task_description, root, tier)
     return GateDecision(
         tier=tier, tier_label=TIER_LABEL[tier],
@@ -376,6 +438,7 @@ def enforce(task_description: str,
 __all__ = [
     "TIER_LABEL",
     "SPEC_DIR_PREFERENCE",
+    "KNOWLEDGE_FIRST",
     "GateDecision",
     "slugify",
     "resolve_spec_dir",

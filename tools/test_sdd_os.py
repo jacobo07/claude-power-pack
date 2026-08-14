@@ -150,6 +150,74 @@ def main() -> int:
          f"global OQS threshold {OQS_DONE_THRESHOLD}; good done={done_g}, "
          f"bad done={done_b}")
 
+    # --- BLOCK 7: knowledge-first block on the planning gate ---
+    # DFP self-describes as "an advisor wired into an authority, never an
+    # authority itself". This is the authority. Before these gates, a mission
+    # whose governing science does not exist was told to write a spec -- which
+    # records the guess in the authoritative place.
+    print("\n[BLOCK 7] Knowledge sufficiency blocks planning")
+    import tempfile as _tf
+    from pathlib import Path as _P
+
+    from modules.sdd_os.pre_exec_gate import KNOWLEDGE_FIRST
+    from modules.sdd_os.pre_exec_gate import evaluate as _gate_eval
+
+    # Knowledge-first AND production-critical. Both halves are required: a
+    # knowledge-first mission that is low-stakes resolves to HYBRID on purpose
+    # (DFP-00 IV.7 -- a tie resolves to the cheaper class).
+    MISSION = (
+        "define the governance authority and ontology for how agents decide "
+        "which sealed policy may be overridden; no precedent exists, this is "
+        "novel and unproven, it becomes a permanent standard in every repo, "
+        "and getting it wrong is irreversible in production. this is "
+        "production critical, a security boundary, and data loss or "
+        "corruption during an outage is blocking")
+    ORDINARY = [
+        ("typo", "fix the typo in the README heading"),
+        ("bugfix", "fix a bug where the parser drops the last line of the file"),
+        ("feature", "add a new endpoint to the api with a database schema "
+                    "migration for billing"),
+    ]
+
+    with _tf.TemporaryDirectory() as _td:
+        _root = _P(_td)
+        d = _gate_eval(MISSION, _root)
+        gate("V-SDD-KNOWLEDGE-BLOCKS",
+             d.action == KNOWLEDGE_FIRST and d.blocked,
+             f"action={d.action} verdict={d.knowledge_verdict} "
+             f"missing={list(d.missing_knowledge)}")
+        # The block must NOT be the spec-writing instruction wearing a new name.
+        gate("V-SDD-KNOWLEDGE-NOT-WRITE-SPEC",
+             d.action != "write_spec" and d.action != "proceed"
+             and bool(d.missing_knowledge),
+             "a named missing kind is required; 'this feels big' is not a "
+             "signal (INV-1)")
+        others = {lbl: _gate_eval(t, _root).action for lbl, t in ORDINARY}
+        gate("V-SDD-KNOWLEDGE-QUIET-ON-ORDINARY",
+             all(a != KNOWLEDGE_FIRST for a in others.values()),
+             f"{others} -- a gate that fires on a typo gets disabled")
+        # Fail-open absolute (DFP INV-5): a broken advisor is silence. The
+        # ADVISOR is what breaks in reality, so that is what is broken here --
+        # patching the gate's own helper would test a scenario that cannot
+        # happen and prove nothing about the contract.
+        import modules.dataset_first.knowledge_sufficiency as _KS
+
+        def _boom(*_a, **_k):
+            raise RuntimeError("advisor down")
+
+        _real = _KS.evaluate
+        try:
+            _KS.evaluate = _boom
+            try:
+                _fo = _gate_eval(MISSION, _root).action
+            except Exception:
+                _fo = "RAISED"
+        finally:
+            _KS.evaluate = _real
+        gate("V-SDD-KNOWLEDGE-FAIL-OPEN",
+             _fo == "write_spec",
+             f"advisor raising -> action={_fo} (never a block, never a raise)")
+
     # --- Summary ---
     print("\n" + "=" * 72)
     passes = sum(1 for _, ok, _ in results if ok)
