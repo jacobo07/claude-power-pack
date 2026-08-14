@@ -268,6 +268,17 @@ def main() -> int:
         ("mutation-ratchet",
          [PY, str(PP / "tools" / "mutation_ratchet.py"), "--tier", "push"],
          300),
+        # The capture layer records what it observes. Hermetic by restore,
+        # so it can run on every push without touching the corpus.
+        ("capture-gates",
+         [PY, str(PP / "tools" / "test_capture_liveness.py")],
+         180),
+        # And the live divergence check: fires vs records over 7 days. The
+        # 2026-05..08 outage was invisible to every other row here because
+        # each component passed while the corpus stayed empty.
+        ("capture-liveness",
+         [PY, str(PP / "tools" / "capture_liveness.py")],
+         60),
     ]
 
     if args.row:

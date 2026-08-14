@@ -40,6 +40,10 @@ DB_PATH = PP_ROOT / "vault" / "ceps" / "patterns.db"
 LESSONS_PATH = PP_ROOT / "vault" / "knowledge_base" / "session_lessons.md"
 UKDL_PATH = PP_ROOT / "vault" / "knowledge_base" / "ukdl-universal.md"
 LOG = HOME / ".claude" / "logs" / "ceps.log"
+# D1: durable rejection ledger. A fail-open path that leaves no trace is a
+# silent outage -- 60 `invalid scope=session` rejections sat in LOG for 80
+# days because no gate read it. capture_liveness.py reads this file.
+REJECTIONS_PATH = PP_ROOT / "vault" / "ceps" / "rejections.jsonl"
 
 VALID_CATEGORIES = (
     "regression", "security", "drift", "scaffold", "incomplete-shell",
@@ -104,6 +108,30 @@ def _log(msg: str) -> None:
         pass
 
 
+def _record_rejection(reason: str, **fields) -> None:
+    """Append a rejected record_error() call to the rejection ledger.
+
+    Fail-open must not mean fail-silent. Every call that reaches
+    record_error() and does not produce an event lands here, so
+    capture_liveness.py can prove the divergence between what the
+    producers fired and what the corpus stored.
+    """
+    _log(f"record_error: {reason}")
+    try:
+        REJECTIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        entry = {
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "reason": reason,
+        }
+        entry.update({k: v for k, v in fields.items() if v is not None})
+        with open(REJECTIONS_PATH, "a", encoding="utf-8",
+                  newline="\n") as fh:
+            fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        # The ledger is a diagnostic; it must never break the user path.
+        pass
+
+
 def _atomic_write(path: Path, text: str) -> None:
     """tempfile + os.replace, same parent dir."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -141,12 +169,31 @@ def _atomic_append(path: Path, text: str) -> None:
 _WS_RX = re.compile(r"\s+")
 _NONWORD_RX = re.compile(r"[^\w\s]+", re.UNICODE)
 
+# D3: variable tokens masked BEFORE punctuation is stripped. Two sightings
+# of one mechanism differ only in path, line number, pid or timestamp; if
+# those survive into the hash every occurrence gets a unique signature,
+# `occurrences` never exceeds 1, and recurrence-gated promotion (>=2
+# projects) and the cascade map (>=2 co-occurrences) can never fire.
+_MASKS = (
+    (re.compile(r"\d{4}-\d{2}-\d{2}[t ]\d{2}:\d{2}:\d{2}\S*"), " TS "),
+    (re.compile(r"[a-z]:[\\/][^\s'\"]+", re.IGNORECASE), " PATH "),
+    (re.compile(r"(?<![\w.])/(?:[\w.\-]+/)+[\w.\-]+"), " PATH "),
+    (re.compile(r"\bline\s+\d+", re.IGNORECASE), " line N "),
+    (re.compile(r"0x[0-9a-f]+", re.IGNORECASE), " HEX "),
+    (re.compile(r"\b(?:pid|port|exit code)\s*[:=]?\s*\d+", re.IGNORECASE),
+     " NUM "),
+    (re.compile(r"\b\d{3,}\b"), " NUM "),
+)
+
 
 def _normalize_root_cause(text: str) -> str:
-    """Lowercase, strip punctuation, collapse whitespace. Stable across
-    minor wording variations so the same underlying mechanism yields
-    the same signature."""
+    """Mask variable tokens, lowercase, strip punctuation, collapse
+    whitespace. Stable across minor wording variations AND across the
+    paths / line numbers / ids that differ between two sightings of the
+    same underlying mechanism, so both yield one signature."""
     t = text.lower()
+    for rx, repl in _MASKS:
+        t = rx.sub(repl, t)
     t = _NONWORD_RX.sub(" ", t)
     t = _WS_RX.sub(" ", t).strip()
     return t
@@ -287,22 +334,23 @@ def record_error(
     backward-compatible.
     """
     try:
+        ctx = {"category": category, "subsystem": subsystem}
         if category not in VALID_CATEGORIES:
-            _log(f"record_error: invalid category={category}")
+            _record_rejection(f"invalid category={category}", **ctx)
             return None
         if confidence not in VALID_CONFIDENCE:
-            _log(f"record_error: invalid confidence={confidence}")
+            _record_rejection(f"invalid confidence={confidence}", **ctx)
             return None
         if scope not in ("project", "global"):
-            _log(f"record_error: invalid scope={scope}")
+            _record_rejection(f"invalid scope={scope}", **ctx)
             return None
         if confidence_score is not None and not (
             0.0 <= confidence_score <= 1.0
         ):
-            _log(f"record_error: confidence_score out of range")
+            _record_rejection("confidence_score out of range", **ctx)
             return None
         if not root_cause or len(root_cause) > 600:
-            _log("record_error: root_cause empty or too long")
+            _record_rejection("root_cause empty or too long", **ctx)
             return None
         sig = pattern_signature(root_cause)
         rule = RULE_TEMPLATES[category].format(
@@ -348,7 +396,10 @@ def record_error(
         distribute(event)
         return event
     except Exception as exc:
-        _log(f"record_error ERROR {type(exc).__name__}: {exc}")
+        _record_rejection(
+            f"internal {type(exc).__name__}: {exc}",
+            category=category, subsystem=subsystem,
+        )
         return None
 
 
