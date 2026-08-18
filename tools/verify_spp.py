@@ -308,6 +308,20 @@ def main() -> int:
         ("rule-effects",
          [PY, "-m", "modules.rule_compiler.effect_harness"],
          180),
+        # UPAC residue R1. Nothing owned transitive surface, pin discipline,
+        # replacement cost or an internalization threshold. --gate exits 1 only
+        # on DO_NOT_USE (an unpinned constraint with no lockfile: the resolved
+        # version is whatever the registry serves at install time). Everything
+        # weaker is REVIEW, never USE, because CVE history and upstream health
+        # are UNREACHABLE_HERE and absence of evidence is not a pass.
+        ("dependency-sovereignty",
+         [PY, "-m", "modules.dependency_sovereignty.sovereignty", "--gate"],
+         180),
+        # And its own V-gates -- the scanner has to be proven to find something,
+        # not merely to run.
+        ("dependency-sovereignty-gates",
+         [PY, str(PP / "tools" / "test_dependency_sovereignty.py")],
+         180),
     ]
 
     if args.row:
