@@ -322,6 +322,17 @@ def main() -> int:
         ("dependency-sovereignty-gates",
          [PY, str(PP / "tools" / "test_dependency_sovereignty.py")],
          180),
+        # UPAC residue R2. The structural half of "what stops being valid first":
+        # transitive dependent closure over the real import graph. Reports the
+        # mutually-dependent core, because a ranking over a cycle is a false
+        # hierarchy. Ships with an UNSEALED baseline, so it reports and never
+        # fails until someone deliberately seals the load-bearing set.
+        ("architecture-horizon",
+         [PY, "-m", "modules.architecture_horizon.horizon", "--gate"],
+         120),
+        ("architecture-horizon-gates",
+         [PY, str(PP / "tools" / "test_architecture_horizon.py")],
+         120),
     ]
 
     if args.row:
