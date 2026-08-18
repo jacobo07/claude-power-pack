@@ -197,6 +197,101 @@ Honest limits of this measurement:
 
 ---
 
+## Calibration pass — 2026-08-18, after the WS5 runs
+
+Run 2 left one number unexplained: **14 of 19 sources classified `UNKNOWN`**. A
+count is not actionable — nobody could say which hosts those were, or which rule
+came closest to firing — so the only available move would have been to guess at
+thresholds. A threshold moved by guess is how a gate that refuses too much
+becomes a gate that launders marketing.
+
+### The instrument had to be built first
+
+`landscape_verdict()` computes a per-URL `detail` — family, quality, and the
+signals behind the verdict — and `deep_research.py` **never read it**. Only
+aggregate counts were persisted. The same defect class the learning gates were
+built to avoid (`discarded_learnings.jsonl` exists precisely so gates can be
+tuned) was present in Engine 2's own verdicts.
+
+Fixed: per-source classifications now persist to run metadata and to the raw
+trace as `type: "source"` rows, accumulating across runs.
+`modules/deep-research/classify_sources.py` is the instrument — it fetches URLs,
+runs the real classifier, and prints what each page scored on every channel plus
+how close it came on the ones it missed. It changes nothing and always exits 0.
+
+### First measurement (14 URLs from run 2)
+
+`A_MEASURED×2 · B_ACADEMIC×2 · D_VENDOR×1 · UNKNOWN×9` — and of the 9 UNKNOWN,
+**7 scored on at least one channel, 2 matched nothing**. So the shortfall was
+mostly missing rules, not mis-set thresholds. Four defects, each named by a page:
+
+| Observed | Defect |
+|---|---|
+| `link.springer.com` → `B_ACADEMIC/HIGH` on **286 chars**; `skool.com` scored 6 quantities on **841 chars** | The classifier graded provenance on paywall stubs and JS shells. |
+| `singlegrain.com` resolved `A_MEASURED/HIGH` **and** `D_VENDOR/LOW` | Same agency graded as independent source and as marketing, decided by which URL the SERP returned first. |
+| `su.pressbooks.pub`, `courses.lumenlearning.com` → `UNKNOWN` while `textbooks.whatcom.edu` passed | Same kind of document; only one sat on a domain the host list knew. |
+| **`blog.theseoengine.com` → `A_MEASURED/HIGH`** | The vendor blog from the original conversation — the single thin source this whole upgrade exists because of — was promoted from LOW to HIGH. |
+
+### Fixes, and the one that failed
+
+- **`MIN_BODY_CHARS = 1200`.** Below it, no family. A consent wall is not a
+  document, and grading its provenance grades the wall.
+- **`propagate_vendor_hosts()`.** A host that sells on any page fetched in a run
+  is vendor-hosted on all of them. Quality is capped, family is kept: a
+  self-report stays evidence, it stops being *independent* evidence.
+- **OER host list** — pressbooks, lumenlearning, openstax, libretexts, oercommons.
+- **Vendor scan over the full body** rather than the 6 KB topical sample.
+  **This one did not work**, and the failure was the most useful result of the
+  pass. Re-measured: `vend=0`. Hypothesis — trafilatura strips nav and footer,
+  so the conversion copy never reaches the classifier — was tested directly
+  against the live page and **refuted**: the raw HTML contains zero conversion
+  phrases too. The page genuinely has no sales copy on it.
+
+### The limit, stated rather than papered over
+
+**The detector recognises selling, not sellers.** A company blog that publishes
+a measured-looking article with no call to action is, by every signal available
+to a text classifier, indistinguishable from an independent practitioner report.
+No threshold fixes that, and no amount of extra text scanned fixes it either.
+The tempting heuristic — treat a `blog.*` subdomain as vendor — was rejected: it
+has no supporting evidence and would false-positive on every independent blog.
+
+What closed the hole is a rule that survives the detector being blind:
+
+> **`MIN_DOCS_FOR_HIGH = 2`** — one load-bearing document cannot make a
+> landscape HIGH, whatever family it belongs to.
+
+This is the landscape-level form of the rule Engine 3 already applies to
+`VERIFIED`, where one source is never corroboration. `blog.theseoengine.com`
+still classifies `A_MEASURED` and always will. It can no longer confer HIGH on
+its own.
+
+### Second measurement, same 14 URLs
+
+`A_MEASURED×2 · B_ACADEMIC×3 · D_VENDOR×1 · FETCH_FAILED×1 · UNKNOWN×7`
+
+- `skool.com` and `link.springer.com` → `UNKNOWN`, reason recorded verbatim:
+  *"thin extraction (286 chars, minimum 1200)"*.
+- `singlegrain.com` article: `HIGH` → `MEDIUM`, with *"host sells on another
+  page fetched this run"* on the record.
+- pressbooks and lumenlearning → `B_ACADEMIC`.
+- UNKNOWN fell 9 → 7; of those, 4 score on a channel and 3 match nothing.
+
+Gates: `ENGINES_PASS=48/48`, `QUALITY_PASS=14/14`. Six new V-gates, each
+fixtured on a page shape observed in the run rather than invented.
+
+### Still open
+
+- **7 UNKNOWN of 13 classifiable.** Recall stays the weak side by design —
+  refusal-correctness is calibrated first — and the system says so per question
+  (`UNCLASSIFIED/LOW`, learnings capped at `DERIVED`) rather than guessing.
+- `simonandschuster.biz` returns 403 to the agent's user-agent.
+- No live run yet on the corrected classifier; the measurement above is the
+  instrument over run 2's URLs, not a fresh end-to-end run.
+- `depth > 1` has never been exercised live. Both WS5 runs were depth 1.
+
+---
+
 ## Delta vs the original conversation output
 
 | Dimension | Original | Upgraded |

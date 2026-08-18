@@ -300,7 +300,27 @@ _ACADEMIC_HOSTS = (
     "scholar.google.com", "dl.acm.org", "mdpi.com", "frontiersin.org",
     "cambridge.org", "oup.com", "academic.oup.com", "sagepub.com",
     "nber.org", "osf.io", "dialnet.unirioja.es", "scielo.org",
+    # Open-textbook / OER platforms. Added 2026-08-18 after the classifier
+    # measurement: su.pressbooks.pub and courses.lumenlearning.com both scored
+    # UNKNOWN while textbooks.whatcom.edu passed on its .edu suffix alone. The
+    # three are the same KIND of document; only one happened to sit on a domain
+    # the list already knew. A missing host rule, not a mis-set threshold.
+    "pressbooks.pub", "pressbooks.com", "lumenlearning.com", "openstax.org",
+    "oercommons.org", "open.umn.edu", "libretexts.org", "manifoldapp.org",
 )
+
+# A page shorter than this is a paywall notice, a consent wall, or a JS shell —
+# not a document. Grading its provenance is grading the stub. Measured
+# 2026-08-18: link.springer.com yielded 286 chars and still scored
+# B_ACADEMIC/HIGH, and skool.com yielded 841 chars carrying six quantities. Both
+# would have entered a landscape as load-bearing evidence on the strength of
+# text nobody could read.
+MIN_BODY_CHARS = 1200
+
+# A HIGH landscape needs at least this many load-bearing documents. One is not
+# corroboration — see the note in landscape_verdict for the measurement that
+# forced this.
+MIN_DOCS_FOR_HIGH = 2
 
 _PRACTITIONER_HOSTS = (
     "rfc-editor.org", "ietf.org", "datatracker.ietf.org", "w3.org",
@@ -442,6 +462,20 @@ def classify_source(url: str, title: str = "", snippet: str = "",
 
     signals: list[str] = []
 
+    # Nothing below can be trusted on a stub. A consent wall, a paywall notice
+    # and a JS shell all extract to a few hundred characters that happen to
+    # contain a date and a price — enough to score, never enough to mean
+    # anything. Refusing to classify is the honest verdict; UNCLASSIFIED then
+    # caps whatever is built on it.
+    if len((body or "").strip()) < MIN_BODY_CHARS:
+        return {
+            "url": url, "host": host, "family": FAMILY_UNKNOWN,
+            "quality": QUALITY_LOW, "vendor_host": False,
+            "signals": [f"thin extraction ({len((body or '').strip())} chars, "
+                        f"minimum {MIN_BODY_CHARS}) — not enough document to "
+                        f"classify"],
+        }
+
     academic_host = (any(h in host for h in _ACADEMIC_HOSTS)
                      or host.endswith((".edu", ".ac.uk")))
     academic_text = _hits(text, _ACADEMIC_TEXT_SIGNALS)
@@ -449,7 +483,13 @@ def classify_source(url: str, title: str = "", snippet: str = "",
     practitioner_text = _hits(text, _PRACTITIONER_TEXT_SIGNALS)
     measurement_text = _hits(text, _MEASUREMENT_SIGNALS)
     measurables = _count_measurables(text)
-    vendor_text = _hits(text, _VENDOR_TEXT_SIGNALS)
+    # Vendor detection reads the WHOLE body, not the 6 KB sample. The sample
+    # exists to decide what a page is ABOUT; this decides who it BELONGS TO, and
+    # for that the footer is evidence rather than noise. Measured 2026-08-18: a
+    # marketing blog scored A_MEASURED/HIGH because its conversion copy sat past
+    # the 6 KB mark — the system promoted the exact vendor source it was built
+    # to distrust from LOW to HIGH.
+    vendor_text = _hits(f"{head}\n{body or ''}", _VENDOR_TEXT_SIGNALS)
     vendor_path = any(p in path for p in _VENDOR_PATH_SIGNALS)
     vendor_host = bool(vendor_text or vendor_path)
 
@@ -501,6 +541,48 @@ def classify_source(url: str, title: str = "", snippet: str = "",
     }
 
 
+def propagate_vendor_hosts(classes: list[dict[str, Any]]
+                           ) -> list[dict[str, Any]]:
+    """Once a host is recognised as a seller, every page on it is vendor-hosted.
+
+    Whether a domain sells something is a fact about the DOMAIN, not about which
+    of its pages happened to be fetched. Measured 2026-08-18: one agency
+    resolved to A_MEASURED/HIGH on its article and D_VENDOR/LOW on its services
+    page in the same run — the same company graded as an independent source and
+    as marketing, decided by which URL the SERP returned first.
+
+    Only quality is downgraded, never family: the article still reported real
+    measurements, and deleting that would be as wrong as trusting it fully. A
+    self-report stays evidence; it stops being INDEPENDENT evidence.
+
+    Mutates nothing — returns updated copies.
+    """
+    classes = [c for c in (classes or []) if isinstance(c, dict)]
+    selling_hosts = {
+        str(c.get("host") or "") for c in classes if c.get("vendor_host")
+    } - {""}
+    if not selling_hosts:
+        return classes
+
+    out: list[dict[str, Any]] = []
+    for c in classes:
+        if c.get("vendor_host") or str(c.get("host") or "") not in selling_hosts:
+            out.append(c)
+            continue
+        updated = dict(c)
+        updated["vendor_host"] = True
+        updated["signals"] = list(c.get("signals") or []) + [
+            f"host {c.get('host')} sells on another page fetched this run"
+        ]
+        if updated.get("quality") == QUALITY_HIGH:
+            updated["quality"] = QUALITY_MEDIUM
+            updated["signals"].append(
+                "vendor-hosted self-report — capped to MEDIUM"
+            )
+        out.append(updated)
+    return out
+
+
 def landscape_verdict(classes: list[dict[str, Any]]) -> dict[str, Any]:
     """Judge the source landscape behind ONE query's extraction.
 
@@ -538,6 +620,23 @@ def landscape_verdict(classes: list[dict[str, Any]]) -> dict[str, Any]:
         quality = QUALITY_MEDIUM
     else:
         quality = QUALITY_LOW
+
+    # HIGH requires corroboration, not just a strong family. Measured
+    # 2026-08-18: a marketing blog published a measured-looking article with no
+    # conversion copy anywhere in its page — not in the extracted text, not in
+    # the raw HTML — and resolved to A_MEASURED/HIGH. The vendor detector
+    # recognises SELLING; it cannot recognise a SELLER who is not selling on
+    # this page, and no amount of extra text fixes that.
+    #
+    # So the fix is not a better detector, it is a rule that survives the
+    # detector being blind: one document's numbers cannot make a landscape HIGH
+    # on their own. This is the landscape-level form of the rule Engine 3
+    # already applies to VERIFIED, where one source is never corroboration.
+    load_bearing_docs = sum(
+        1 for c in classes if str(c.get("family")) in LOAD_BEARING_FAMILIES
+    )
+    if quality == QUALITY_HIGH and load_bearing_docs < MIN_DOCS_FOR_HIGH:
+        quality = QUALITY_MEDIUM
 
     # A HIGH landscape built purely on vendor-hosted self-reports is not HIGH.
     if quality == QUALITY_HIGH:

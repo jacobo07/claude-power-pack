@@ -36,6 +36,7 @@ from research_engines import (  # noqa: E402
     FAMILY_ACADEMIC,
     FAMILY_MEASURED,
     FAMILY_PRACTITIONER,
+    FAMILY_UNKNOWN,
     FAMILY_VENDOR,
     MIN_AXES_COVERED,
     QUALITY_HIGH,
@@ -59,6 +60,7 @@ from research_engines import (  # noqa: E402
     normalize_epistemic,
     parse_contradictions,
     parse_learning_records,
+    propagate_vendor_hosts,
     rank_sources_for_extraction,
 )
 
@@ -155,49 +157,62 @@ def gate_decomposition() -> None:
 # V-LANDSCAPE-* — ENGINE 2
 # =========================================================================
 
+# Neutral length. Every fixture body must clear MIN_BODY_CHARS, because a real
+# page does — and a classifier that only ever sees two-sentence fixtures is
+# tested on a shape it never meets. This filler is checked against all four
+# signal vocabularies: it carries no marker and no quantity, so it adds length
+# and nothing else.
+_FILLER = "The subject is discussed at length in the paragraphs that follow. " * 30
+
+
+def _page(url: str, title: str, snippet: str, body: str) -> dict:
+    return {"url": url, "title": title, "snippet": snippet,
+            "body": body + " " + _FILLER}
+
+
 # THE BUG, verbatim in shape: the single vendor blog that founded the original
 # saturation learning. A conversion surface with no measurement of its own.
-VENDOR_PAGE = {
-    "url": "https://theseoengine.example/blog/topic-cluster-saturation",
-    "title": "Topic Cluster Saturation: The Complete Guide",
-    "snippet": "Learn how our platform detects saturation. Book a demo today.",
-    "body": "Our platform helps agencies scale content. Book a demo to see "
-            "how our software finds saturated clusters. Free trial available. "
-            "Talk to sales about pricing plans.",
-}
+VENDOR_PAGE = _page(
+    "https://theseoengine.example/blog/topic-cluster-saturation",
+    "Topic Cluster Saturation: The Complete Guide",
+    "Learn how our platform detects saturation. Book a demo today.",
+    "Our platform helps agencies scale content. Book a demo to see how our "
+    "software finds saturated clusters. Free trial available. Talk to sales "
+    "about pricing plans.",
+)
 
-ACADEMIC_PAGE = {
-    "url": "https://link.springer.com/article/10.1007/s11031-006-9048-3",
-    "title": "Diminishing returns in topical content expansion",
-    "snippet": "Abstract. We hypothesise that marginal returns decline.",
-    "body": "Abstract. Methodology. We analysed 412 sites over 18 months. "
-            "The result was statistically significant (p < 0.01).",
-}
+ACADEMIC_PAGE = _page(
+    "https://link.springer.com/article/10.1007/s11031-006-9048-3",
+    "Diminishing returns in topical content expansion",
+    "Abstract. We hypothesise that marginal returns decline.",
+    "Abstract. Methodology. We analysed 412 sites over 18 months. The result "
+    "was statistically significant (p < 0.01).",
+)
 
-PRACTITIONER_PAGE = {
-    "url": "https://news.ycombinator.com/item?id=12345",
-    "title": "What actually happened when we doubled our content output",
-    "snippet": "Discussion of tradeoffs at scale.",
-    "body": "In production we saw latency and throughput tradeoffs. Our "
-            "architecture changed after we deployed the new pipeline.",
-}
+PRACTITIONER_PAGE = _page(
+    "https://news.ycombinator.com/item?id=12345",
+    "What actually happened when we doubled our content output",
+    "Discussion of tradeoffs at scale.",
+    "In production we saw latency and throughput tradeoffs. Our architecture "
+    "changed after we deployed the new pipeline.",
+)
 
-MEASURED_PAGE = {
-    "url": "https://someco.example/engineering/content-postmortem",
-    "title": "Post-mortem: why our traffic fell 34% after publishing more",
-    "snippet": "We ran a 6 month test across 240 pages.",
-    "body": "We ran an A/B test over 6 months across 240 pages. Our data "
-            "shows a 34% decline in sessions and a 12% drop in impressions. "
-            "Post-mortem: root cause was internal cannibalisation.",
-}
+MEASURED_PAGE = _page(
+    "https://someco.example/engineering/content-postmortem",
+    "Post-mortem: why our traffic fell 34% after publishing more",
+    "We ran a 6 month test across 240 pages.",
+    "We ran an A/B test over 6 months across 240 pages. Our data shows a 34% "
+    "decline in sessions and a 12% drop in impressions. Post-mortem: root "
+    "cause was internal cannibalisation.",
+)
 
-VENDOR_WITH_DATA = {
-    "url": "https://vendor.example/blog/our-study",
-    "title": "We studied 500 sites",
-    "snippet": "Book a demo.",
-    "body": "We ran a study of 500 sites over 12 months. Our data shows a 22% "
-            "lift. Free trial available, talk to sales about pricing plans.",
-}
+VENDOR_WITH_DATA = _page(
+    "https://vendor.example/blog/our-study",
+    "We studied 500 sites",
+    "Book a demo.",
+    "We ran a study of 500 sites over 12 months. Our data shows a 22% lift. "
+    "Free trial available, talk to sales about pricing plans.",
+)
 
 
 def gate_landscape() -> None:
@@ -271,13 +286,13 @@ def gate_landscape() -> None:
     # 12 UNKNOWN because the classifier's vocabulary was software-only, read
     # UNKNOWN as vendor, and refused all three questions -> 0 learnings. An
     # unrecognised page is unidentified, NOT marketing.
-    unclassifiable = classify_source(
-        url="https://example.org/some-article",
-        title="An article about content strategy",
-        snippet="General discussion.",
-        body="This page discusses the subject at length without measurement "
-             "language, academic markers, or a sales pitch.",
-    )
+    unclassifiable = classify_source(**_page(
+        "https://example.org/some-article",
+        "An article about content strategy",
+        "General discussion.",
+        "This page discusses the subject without measurement language, "
+        "academic markers, or a sales pitch.",
+    ))
     unk = landscape_verdict([unclassifiable, unclassifiable])
     if unk["verdict"] == COVERAGE_UNCLASSIFIED:
         _ok("V-LANDSCAPE-UNKNOWN-IS-NOT-VENDOR",
@@ -294,13 +309,13 @@ def gate_landscape() -> None:
 
     # Broadening the practitioner vocabulary must not launder marketing into a
     # load-bearing family. First-hand phrasing on a selling page stays family D.
-    laundering = classify_source(
-        url="https://vendor.example/blog/lessons",
-        title="Lessons learned from our clients",
-        snippet="In our experience, what worked was our platform.",
-        body="In our experience, lessons learned show what worked. Book a demo, "
-             "free trial available, talk to sales about pricing plans.",
-    )
+    laundering = classify_source(**_page(
+        "https://vendor.example/blog/lessons",
+        "Lessons learned from our clients",
+        "In our experience, what worked was our platform.",
+        "In our experience, lessons learned show what worked. Book a demo, "
+        "free trial available, talk to sales about pricing plans.",
+    ))
     if laundering["family"] == FAMILY_VENDOR:
         _ok("V-LANDSCAPE-NO-LAUNDERING",
             "first-hand phrasing on a conversion surface stays family D")
@@ -309,18 +324,140 @@ def gate_landscape() -> None:
 
     # And the broadening must actually WORK on a non-software domain, which is
     # the whole point of the fix.
-    non_software = classify_source(
-        url="https://someeditor.example/notes/publishing",
-        title="What we learned running an editorial calendar for six years",
-        snippet="In our experience, output alone stopped helping.",
-        body="Over the years we found that adding more posts stopped helping. "
-             "In practice, lessons learned pushed us to consolidate.",
-    )
+    non_software = classify_source(**_page(
+        "https://someeditor.example/notes/publishing",
+        "What we learned running an editorial calendar for six years",
+        "In our experience, output alone stopped helping.",
+        "Over the years we found that adding more posts stopped helping. "
+        "In practice, lessons learned pushed us to consolidate.",
+    ))
     if non_software["family"] == FAMILY_PRACTITIONER:
         _ok("V-LANDSCAPE-DOMAIN-AGNOSTIC",
             "first-hand reporting outside software now resolves to family C")
     else:
         _fail("V-LANDSCAPE-DOMAIN-AGNOSTIC", f"got {non_software['family']}")
+
+    # --- Fixes derived from the 2026-08-18 classifier measurement -----------
+    # Each fixture below is a real page shape observed in that run, not an
+    # invented one. The measurement is in AUTORESEARCH_UPGRADE_LOG.md.
+
+    # A paywall stub scored B_ACADEMIC/HIGH on 286 characters. Grading the
+    # provenance of a consent wall is grading the wall.
+    stub = classify_source(
+        url="https://link.springer.com/article/10.1007/s11031-006-9048-3",
+        title="Diminishing returns", snippet="Abstract.",
+        body="Access this article. Log in. Institutional subscription. 2006.",
+    )
+    if stub["family"] == FAMILY_UNKNOWN and "thin extraction" in stub["signals"][0]:
+        _ok("V-LANDSCAPE-THIN-CONTENT",
+            "a stub cannot carry a family even on an academic host")
+    else:
+        _fail("V-LANDSCAPE-THIN-CONTENT",
+              f"got {stub['family']}/{stub['quality']}")
+
+    # THE INVERSION. A marketing blog whose conversion copy sits past the 6 KB
+    # sample scored A_MEASURED/HIGH — the system promoted the very vendor source
+    # it was built to distrust.
+    long_body = (
+        "We ran the numbers across our client base. A post with zero "
+        "impressions in 72 hours has an 84% chance of staying under 50 monthly "
+        "sessions; posts with one impression peak 3.2x faster, and we saw a 40% "
+        "reduction in dead posts over 6 months across 240 pages. "
+        + ("Filler paragraph about content strategy. " * 200)
+        + "Book a demo with our agency. Free trial available. Talk to sales "
+          "about pricing plans."
+    )
+    late_seller = classify_source(
+        url="https://blog.theseoengine.example/topic-cluster-saturation",
+        title="Topic cluster saturation", snippet="What we found.",
+        body=long_body,
+    )
+    if late_seller["family"] == FAMILY_MEASURED and \
+            late_seller["quality"] == QUALITY_MEDIUM:
+        _ok("V-LANDSCAPE-LATE-CONVERSION-COPY",
+            "conversion copy past the 6 KB sample still caps quality "
+            "(the 2026-08-18 inversion)")
+    else:
+        _fail("V-LANDSCAPE-LATE-CONVERSION-COPY",
+              f"got {late_seller['family']}/{late_seller['quality']}")
+
+    # One agency graded as an independent source on its article and as
+    # marketing on its services page, in the same run.
+    agency_article = classify_source(
+        url="https://singlegrain.example/blog/what-we-measured",
+        title="What we measured", snippet="Our data.",
+        body="We ran a study over 12 months. Our data shows a 22% lift across "
+             "500 sites and 3 verticals. " + ("Analysis prose. " * 120),
+    )
+    agency_sales = classify_source(
+        url="https://singlegrain.example/pricing",
+        title="Pricing", snippet="Plans.",
+        body="Talk to sales about pricing plans. Book a demo. "
+             + ("Our services scale with you. " * 120),
+    )
+    before = agency_article["quality"]
+    propagated = propagate_vendor_hosts([agency_article, agency_sales])
+    after = propagated[0]["quality"]
+    if before == QUALITY_HIGH and after == QUALITY_MEDIUM and \
+            propagated[0]["family"] == FAMILY_MEASURED:
+        _ok("V-LANDSCAPE-HOST-MEMORY",
+            "a host that sells on one page is vendor-hosted on all of them — "
+            "quality capped, family kept")
+    else:
+        _fail("V-LANDSCAPE-HOST-MEMORY", f"{before} -> {after}, "
+              f"family {propagated[0]['family']}")
+
+    if propagate_vendor_hosts([agency_article]) == [agency_article]:
+        _ok("V-LANDSCAPE-HOST-MEMORY-NOOP",
+            "no seller in the set leaves every classification untouched")
+    else:
+        _fail("V-LANDSCAPE-HOST-MEMORY-NOOP", "propagation fired with no seller")
+
+    # THE LIMIT, made harmless. A marketing blog with no conversion copy
+    # anywhere on the page is indistinguishable from an independent report by
+    # every signal the classifier can see — verified 2026-08-18 against the live
+    # page, in both the extracted text and the raw HTML. It still resolves to
+    # A_MEASURED, and it always will. What it can no longer do is make a
+    # landscape HIGH by itself.
+    undetectable_seller = classify_source(**_page(
+        "https://blog.theseoengine.example/measurement-framework",
+        "The measurement framework",
+        "What separates growing blogs from expensive journals.",
+        "We ran the numbers across 240 pages over 6 months. Our data shows an "
+        "84% chance of staying under 50 monthly sessions, a 3.2x faster peak "
+        "and a 40% reduction in dead posts.",
+    ))
+    solo = landscape_verdict([undetectable_seller])
+    if undetectable_seller["family"] == FAMILY_MEASURED and \
+            solo["quality"] == QUALITY_MEDIUM:
+        _ok("V-LANDSCAPE-SOLO-DOC-NOT-HIGH",
+            "one load-bearing document cannot confer HIGH — the rule that "
+            "survives the vendor detector being blind")
+    else:
+        _fail("V-LANDSCAPE-SOLO-DOC-NOT-HIGH",
+              f"family {undetectable_seller['family']}, "
+              f"landscape quality {solo['quality']}")
+
+    corroborated = landscape_verdict([undetectable_seller, a])
+    if corroborated["quality"] == QUALITY_HIGH:
+        _ok("V-LANDSCAPE-CORROBORATED-IS-HIGH",
+            "a second independent document restores HIGH — the cap is about "
+            "corroboration, not about distrusting measurement")
+    else:
+        _fail("V-LANDSCAPE-CORROBORATED-IS-HIGH",
+              f"got {corroborated['quality']}")
+
+    oer = classify_source(
+        url="https://su.pressbooks.pub/mediaandculture/chapter/magazines/",
+        title="Magazines", snippet="History of publishing.",
+        body="This chapter covers the history of magazine publishing. "
+             + ("Textbook prose about circulation and advertising. " * 100),
+    )
+    if oer["family"] == FAMILY_ACADEMIC:
+        _ok("V-LANDSCAPE-OER-HOSTS",
+            "open-textbook platforms resolve academic like any .edu")
+    else:
+        _fail("V-LANDSCAPE-OER-HOSTS", f"got {oer['family']}")
 
     ranked = rank_sources_for_extraction([v, a, m, p])
     if [r["family"] for r in ranked] == [FAMILY_MEASURED, FAMILY_ACADEMIC,

@@ -966,6 +966,7 @@ from research_engines import (  # noqa: E402
     normalize_axis,
     parse_contradictions,
     parse_learning_records,
+    propagate_vendor_hosts,
     rank_sources_for_extraction,
 )
 
@@ -1485,6 +1486,7 @@ def deep_research(
             "decomposition_shortfalls": [],  # E1 — narrow decompositions
             "families_seen": {},            # E2 — source families fetched
             "coverage_by_query": [],        # E2 — landscape verdict per query
+            "source_classifications": [],   # E2 — per-URL verdict + its signals
             "vendor_only_queries": 0,       # E2 — questions refused outright
             "discarded_landscape": 0,       # E2 — learnings the landscape killed
             "records": [],                  # E3 — surviving structured records
@@ -1565,6 +1567,11 @@ def deep_research(
             # Load-bearing families are read FIRST: extraction budgets are
             # finite, and feeding the vendor page ahead of the paper means the
             # truncation eats the paper.
+            # Host-level vendor memory runs BEFORE the verdict: a domain that
+            # sells on one fetched page sells on all of them, and the landscape
+            # must be judged on that, not on which URL the SERP happened to
+            # return first.
+            fetched = propagate_vendor_hosts(fetched)
             fetched = rank_sources_for_extraction(fetched)
             markdowns = [c["markdown"] for c in fetched]
             new_urls = [c["url"] for c in fetched]
@@ -1578,6 +1585,21 @@ def deep_research(
                 "families": coverage["families"],
                 "source_count": coverage["source_count"],
             })
+            # The per-source verdict AND the signals behind it. Without this the
+            # classifier cannot be calibrated: a run reports "UNKNOWN×14" and
+            # nobody can say which hosts those were or which rule missed them,
+            # so the only available move is to guess at thresholds. Same reason
+            # discarded_learnings.jsonl exists — a gate that decides silently is
+            # indistinguishable from a gate that is wrong.
+            for d in coverage["detail"]:
+                _state["source_classifications"].append({
+                    "query": q["query"],
+                    "axis": q.get("axis", ""),
+                    "url": d["url"],
+                    "family": d["family"],
+                    "quality": d["quality"],
+                    "signals": d["signals"],
+                })
             if coverage["verdict"] == COVERAGE_VENDOR_ONLY and markdowns:
                 # Not a warning — a refusal. Every source behind this question
                 # is a conversion surface, so anything extracted here would be
@@ -1721,6 +1743,8 @@ def deep_research(
                         _state["decomposition_shortfalls"],
                     "families_seen": _state["families_seen"],
                     "coverage_by_query": _state["coverage_by_query"],
+                    "source_classifications":
+                        _state["source_classifications"],
                     "vendor_only_queries": _state["vendor_only_queries"],
                     "discarded_landscape": _state["discarded_landscape"],
                     "epistemic_capped": _state["epistemic_capped"],
@@ -1933,6 +1957,13 @@ def write_research_artifacts(
             f.write(_json.dumps(
                 {"type": "learning", "ts": meta.get("started_at"),
                  "learning": ln}, ensure_ascii=False) + "\n")
+        # One row per classified source. This is the calibration corpus for
+        # Engine 2: it accumulates across runs, so the UNKNOWN population can be
+        # measured over real traffic instead of argued about from one report.
+        for s in meta.get("source_classifications", []):
+            f.write(_json.dumps(
+                {"type": "source", "ts": meta.get("started_at"), **s},
+                ensure_ascii=False) + "\n")
 
     # Index row — small JSON shape suitable for SessionStart auto-discovery.
     index_row = {
