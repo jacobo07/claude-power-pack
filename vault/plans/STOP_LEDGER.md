@@ -4,9 +4,9 @@
 
 The plan files are sealed records of what was believed when, and are never rewritten to match a later verdict. This ledger carries the transition their `status:` field has no producer for.
 
-**24 STOP-bearing plans** — OPEN 9 · CONTRADICTED 11 · RESOLVED 4 · UNKNOWN 0
+**28 STOP-bearing plans** — OPEN 13 · CONTRADICTED 11 · RESOLVED 4 · UNKNOWN 0
 
-By checkpoint: STOP 1 · STOP #1 20 · STOP #2 3. A STOP #2 is a different question from a STOP #1 and is counted separately rather than folded into it.
+By checkpoint: STOP 1 · STOP #1 24 · STOP #2 3. A STOP #2 is a different question from a STOP #1 and is counted separately rather than folded into it.
 
 | plan | checkpoint | family | disposition | status as written | witness |
 |---|---|---|---|---|---|
@@ -15,10 +15,14 @@ By checkpoint: STOP 1 · STOP #1 20 · STOP #2 3. A STOP #2 is a different quest
 | `egcc-expansion-2026-08-07.md` | STOP #1 | egcc-expansion | **OPEN** | STOP #1 — BLOCKING, presented inline, no dataset and no module written | - |
 | `gap-discovery-2026-07-30.md` | STOP #1 | gap-discovery | **OPEN** | STOP #1 — presented inline, awaiting Owner approval before any constru | - |
 | `iig-compendium-2026-07-30.md` | STOP #1 | iig | **OPEN** | STOP #1 — presented inline, awaiting Owner approval before any constru | - |
+| `intent-verified-done-2026-08-14.md` | STOP #1 | intent-verified-done | **OPEN** | PLAN — STOP #1, awaiting Owner decision | - |
+| `memory-audit-2026-08-09.md` | STOP #1 | memory | **OPEN** | STOP #1 — awaiting Owner decision | - |
+| `predictive-governance-2026-08-10.md` | STOP #1 | predictive-governance | **OPEN** | STOP #1 — awaiting Owner decision | - |
 | `re-baseline-compendium-2026-07-26.md` | STOP #1 | re-baseline | **OPEN** | STOP-1 (Phase 0 complete; awaiting Owner approval of the revised archi | - |
 | `sdd-os-activation-2026-07-26.md` | STOP #1 | sdd-os-activation | **OPEN** | STOP #1 delivered inline; awaiting Owner approval before any execution | - |
 | `seip-sprint2-2026-08-06.md` | STOP #1 | seip-sprint2 | **OPEN** | STOP #1 -- BLOCKING, presented inline, awaiting Owner selection | - |
 | `uceimr-expansion-2026-08-04.md` | STOP #2 | uceimr-expansion | **OPEN** | STOP #2 — BLOCKING, presented inline, no dataset written | - |
+| `upac-corpus-2026-08-18.md` | STOP #1 | upac | **OPEN** | STOP #1 — BLOCKING, presented inline, no dataset Part and no module wr | - |
 | `apir-corpus-2026-08-03.md` | STOP #1 | apir | **CONTRADICTED** | STOP #1 — BLOCKING, awaiting Owner selection of A / B / C / D | vault/plans/seip-corpus-2026-08-04.md: \| 10 \| CPP-APIR \| ≈80 % owned \| corpus refused; `capability_runtime |
 | `cdicf-corpus-2026-08-06.md` | STOP #1 | cdicf | **CONTRADICTED** | STOP #1 — blocking. No dataset or module content is written until the  | vault/audits/cdicf/CDICF_DATASET_STATUS.md: \| **A3** Registry producer + redistribution guard \| NEW \| **SEA |
 | `crpf-2026-07-27.md` | STOP #1 | crpf | **CONTRADICTED** | STOP #1 (verdicts delivered inline to the Owner; no Part authored) | vault/plans/crpf-overlap-audit-2026-07-27.md: Charter impact: CRPF is struck as a NEW family; construction ord |
