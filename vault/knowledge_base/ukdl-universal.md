@@ -207,6 +207,77 @@ below threshold". D2A was 27/27 green and structurally incapable of ever offerin
 D. It was found only by writing the five acceptance gates the approved spec had required
 and nobody had written.
 
+---
+
+## T-D2A-GATE-LENGTH-EXEMPTS-ITS-TARGET-001 — a size cap that SKIPS exempts the very class the gate exists for
+
+**Trap.** An input-size guard written as "refuse anything larger" silently exempts the
+largest inputs. When the largest inputs ARE the gate's reason to exist, the guard inverts
+the gate: it is most silent exactly where it is most needed, and it tests green because
+every test input is small.
+
+**Detection.** Read the size guard and ask which real inputs exceed it. If the answer names
+the gate's highest-value case, the guard is a defect. Corroborating signal: the gate has
+never fired in production on the class it was built for.
+
+**Origin (measured 2026-08-18).** `hooks/d2a_gate.js` carried `MAX_LEN = 8000` and returned
+`false` above it. Every multi-system corpus brief runs tens of KB, so all fifteen
+mega-corpus proposals this estate had measured majority-owned were structurally exempt from
+the duplicate gate meant to catch them. Verified on a real 26,034-byte 25-system brief:
+silent.
+
+**How to apply.** Separate what a gate may LOOK at from what its expensive downstream
+receives. The cost concern is almost always a property of the downstream, so truncate
+before the engine and never skip at the door.
+
+---
+
+## T-DEFER-RENDERED-AS-NOVEL-001 — UNKNOWN and NEW are opposite conditions and must never render alike
+
+**Trap.** A detector with three internal outcomes (owned / undetermined / novel) exposed
+through a two-branch consumer collapses UNDETERMINED into whichever branch is cheaper —
+usually silence. Silence then reads as "nothing found", so absence of a verdict is consumed
+as a favourable verdict. This is the same defect as an averaged score hiding the dimension
+in crisis, and the same one the six-state epistemic model exists to prevent.
+
+**Detection.** Any consumer written as `if (!x.is_duplicate) return {}` over a verdict type
+that also carries a `deferred` / `unknown` / `unevaluable` field. Grep the producer for
+states the consumer does not branch on.
+
+**Origin (measured 2026-08-18).** `DupeVerdict.deferred` was added so `run_family` would
+file a plausibility-capped candidate as DEFER rather than KEEP — the producer was correct.
+`d2a_gate.js` still branched only on `is_duplicate`, so a brief measuring coverage 45 %,
+`deferred=True`, `is_duplicate=False` produced exactly the same silence as a genuinely novel
+proposal. A 25-system brief later measured 22-of-25 already owned had passed the gate as
+"novel".
+
+**How to apply.** Give the third state its own emission. An honest "UNDETERMINED — here is
+the instrument that resolves it" is worth more than a confident wrong answer and infinitely
+more than silence. Scope it by cost: emit where a false negative is expensive, stay quiet
+where re-asking is cheap.
+
+---
+
+## PR-DISCOVERED-REGISTRY-EVERY-SUBSTRATE-001 — discovery must cover every substrate that can own a capability
+
+**Rule.** When a registry a gate depends on is converted from hand-curated to
+filesystem-discovered, the discovery MUST enumerate every substrate in which a capability
+can live — not only the substrate that happened to be audited when the defect was found.
+A partially-discovered registry is still a curated one; the curation just moved from the
+row list to the root list.
+
+**Origin (measured 2026-08-18).** `T-D2A-REGISTRY-BLIND-SPOT-001` was sealed 2026-07-20 and
+fixed by deriving `FAMILY_REGISTRY` from `vault/knowledge_base/`. `_KB_ROOT` is the doctrine
+substrate only, so 81 module directories and 402 `.py` files — where "does this already
+exist?" is actually answered — kept no row of any kind. The same false-NEW class recurred
+one level up: `SRIF` and `PIEE` were reported "genuinely new" while `sleepless_qa` and
+`cost_collapse`/`token_irr`/`recall_roi` owned them. Closed by `_discover_modules()` +
+`module_registry_gaps()` + `V-D2A-MODULE-REGISTRY` (registry 58 → 131 rows).
+
+**How to apply.** After fixing a discovery gap, enumerate the substrates the fix does NOT
+walk and state why each is out of scope. A root list nobody re-derives is the next blind
+spot. Sibling of `PR-COVERAGE-BY-CONSTRUCTION-001`.
+
 **How to apply.** (1) A fail-open must MARK its output — the recovering plan carries a
 `fail-open` note, and gates assert its absence before accepting a negative verdict.
 (2) Assert the reason, never just the outcome: "withheld" passes only when the stated
@@ -6377,3 +6448,29 @@ now because that test is not a `verify_spp` row.
 `vault/audits/DONE_GATE_AUDIT.md`, `modules/intent_verified/`, gates
 `V-IV-*` (20/20). Sisters: `HR-INTENT-FIDELITY-IS-DONE-CRITERION-001`,
 `T-SILENT-VOCABULARY-COLLAPSE-001`, `feedback_never_gate_on_a_ratio`.
+
+- [tooling/bash:hooks] `ceps_94c9ded2192f6a52` -- Tool failure in bash:hooks: SyntaxError: (unicode. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:echo] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:echo: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:python] `ceps_3a8b7d39d45f3c5d` -- Tool failure in bash:python: Error 403: Forbidden. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:python] `ceps_3a8b7d39d45f3c5d` -- Tool failure in bash:python: Error 403: Forbidden. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_09eb97f435f53137` -- Tool failure in bash:cd: Exception/Error class name : 15. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_db07972defb0397a` -- Tool failure in bash:cd: Error 404: Not Found. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cd] `ceps_5ee413c0d90a1085` -- Before touching bash:cd, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5ee413c0d90a1085` -- Before touching bash:cd, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5ee413c0d90a1085` -- Before touching bash:cd, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5ee413c0d90a1085` -- Before touching bash:cd, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5ee413c0d90a1085` -- Before touching bash:cd, verify the regression scenario (AssertionError) is still covered by a passing test.
