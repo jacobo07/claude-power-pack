@@ -40,7 +40,20 @@ const ENGINE = path.join(PP_ROOT, 'modules', 'duplicate_to_advantage', 'd2a_engi
 const STATE_DIR = path.join(os.homedir(), '.claude', 'state', 'd2a');
 const THROTTLE_MS = 15 * 60 * 1000;
 const MIN_LEN = 12;          // shorter than this carries no proposal substance
-const MAX_LEN = 8000;        // never feed a giant paste to the engine
+// MAX_LEN was 8000 and it SKIPPED anything longer. That silently exempted the
+// single class of proposal D2A exists for: the multi-system corpus brief, which
+// runs tens of KB. Fifteen consecutive mega-corpus proposals landed
+// majority-owned in this estate and this gate could not have fired on one of
+// them. Measured 2026-08-18 on a 26,034-byte 25-system brief: silent.
+// The original concern was real but is a property of what the ENGINE receives,
+// not of what the gate is allowed to look at -- so consider long prompts and
+// truncate before the engine instead of skipping them.
+const MAX_LEN = 400000;         // consider up to this
+const ENGINE_INPUT_CAP = 8000;  // ...but never feed more than this to the engine
+// Above this length a brief inevitably contains negative-guard vocabulary as
+// SUBJECT MATTER ("extend", "rollback", "test", "reference" appear in any
+// serious architecture document), so NOT_CREATION stops being an intent signal.
+const MEGA_LEN = 4000;
 
 // A creation VERB. Deliberately narrow: the act of bringing a new thing into
 // existence, in English or Spanish.
@@ -56,6 +69,13 @@ const ARCH_NOUN = /\b(system|dataset|datasets|engine|module|framework|family|pip
 // ALREADY exists -> D2A has nothing to say. Checked before the positives.
 // (T-D2A-GATE-KEYWORD-SCOPE-001: false positives are the expensive failure.)
 const NOT_CREATION = /\b(extend|extiende|extender|modify|modifica|update|actualiza|fix|arregla|repair|refactor|rename|wire|wiring|activa|activate|enable|test|tests|debug|document|read|query|consulta|use|usa|run|ejecuta|delete|remove|elimina|revert|rollback|migrate|port)\b/i;
+
+// Global twins of the positive patterns, used only to measure how SUSTAINED the
+// creation signal is in a long brief. Separate constants because a /g regex
+// carries lastIndex state, and sharing one with the .test() calls above would
+// make those calls order-dependent.
+const CREATE_VERB_G = new RegExp(CREATE_VERB.source, 'gi');
+const ARCH_NOUN_G = new RegExp(ARCH_NOUN.source, 'gi');
 
 function readStdin() {
   try { return fs.readFileSync(0, 'utf8'); } catch (_) { return ''; }
@@ -77,11 +97,25 @@ function pickPython() {
  * Requires (creation verb) AND (architecture noun) AND NOT (an act on an
  * existing thing). Conjunctive by design — see the scope trap.
  */
+function countMatches(re, s) {
+  return (String(s).match(re) || []).length;
+}
+
 function isCreationProposal(prompt) {
   const p = String(prompt || '');
   if (p.length < MIN_LEN || p.length > MAX_LEN) return false;
-  if (NOT_CREATION.test(p)) return false;
-  return CREATE_VERB.test(p) && ARCH_NOUN.test(p);
+  if (!CREATE_VERB.test(p) || !ARCH_NOUN.test(p)) return false;
+
+  // Short prompt: NOT_CREATION is a reliable intent signal — one occurrence
+  // means the Owner is acting on something that already exists. Unchanged
+  // behaviour, and what V-D2A-GATE-KEYWORD-SCOPE pins.
+  if (p.length <= MEGA_LEN) return !NOT_CREATION.test(p);
+
+  // Long brief: require the creation signal to be SUSTAINED rather than
+  // incidental, so a long bug report or postmortem (which also names systems)
+  // still stays silent. A genuine multi-system proposal names its architecture
+  // nouns repeatedly; a report about one broken thing does not.
+  return countMatches(ARCH_NOUN_G, p) >= 6 && countMatches(CREATE_VERB_G, p) >= 3;
 }
 
 // Per-(session, proposal) throttle. A miss returns false = "advise now".
@@ -110,7 +144,10 @@ function askEngine(prompt) {
   try {
     if (!fs.existsSync(ENGINE)) return null;
     const out = execFileSync(pickPython(), [ENGINE, '--stdin', '--json'], {
-      input: prompt,
+      // Truncate here rather than refusing the prompt upstream: the engine is
+      // bag-of-words over the proposal's vocabulary, so the head of a brief
+      // carries its subject matter, and a giant paste never reaches python.
+      input: String(prompt).slice(0, ENGINE_INPUT_CAP),
       encoding: 'utf8',
       timeout: 8000,
       maxBuffer: 4 << 20,
@@ -150,6 +187,35 @@ function buildAdvisory(v) {
 }
 
 /**
+ * The UNKNOWN advisory. Fired when the engine could not confidently name a
+ * parent on a LARGE multi-system brief. It deliberately asserts nothing about
+ * ownership — it says ownership is undetermined and names the instrument that
+ * can determine it, because the single-proposal path scores a whole family as
+ * one bag of words and cannot resolve a 25-system brief by construction.
+ */
+function buildDeferAdvisory(v) {
+  const d = v.dupe || {};
+  const parent = d.parent_id ? `${d.parent_id} (${d.parent_name})` : 'an existing system';
+  return `D2A ownership advisory (SCS C85, level-2 — never blocks):\n`
+    + `VERDICT: UNDETERMINED, not novel. Coverage capped at ${d.coverage_pct != null ? d.coverage_pct : '?'}% `
+    + `by the plausibility floor against ${parent} `
+    + `[sem=${d.semantic} func=${d.functional} arch=${d.architectural}].\n`
+    + `A capped verdict means a parent's vocabulary matched but precision was too low to name it. `
+    + `It is NOT evidence that this proposal is new — treat it as UNKNOWN.\n`
+    + `WHY THIS FIRED: the prompt is a multi-system proposal, and the single-proposal path scores `
+    + `an entire family as one bag of words, so it cannot resolve ownership per system.\n`
+    + `REQUIRED NEXT ACTION before building anything:\n`
+    + `  1. Decompose the brief into one {name, description} per proposed system.\n`
+    + `  2. python modules/duplicate_to_advantage/d2a_engine.py --family-file <f>.json --repo-evidence\n`
+    + `  3. Check vault/audits/apir/NON_DUPLICATION_LEDGER.md — a DO-NOT-BUILD row reopens only on `
+    + `measured evidence, never on a new name.\n`
+    + `  4. HR-NOVELTY-001 requires the 13-question proof against a DISCOVERED sweep before any new `
+    + `institutional system is admitted.\n`
+    + `Base rate: fifteen consecutive mega-corpus proposals in this estate measured majority- or `
+    + `fully-owned once measured. That is the correct prior, not an accusation.`;
+}
+
+/**
  * run(input) — hook body. `input` is the parsed UserPromptSubmit JSON
  * ({ prompt, session_id, cwd, ... }). ALWAYS returns an object; NEVER throws.
  */
@@ -164,7 +230,32 @@ function run(input) {
 
     const v = askEngine(prompt);
     if (!v || !v.dupe) return {};                     // engine failed -> fail-open silence
-    if (!v.dupe.is_duplicate) return {};              // genuinely new -> silence, Claude continues
+
+    // THREE outcomes, not two. `deferred` is the plausibility floor saying "a
+    // parent's vocabulary matched but precision was too low to name it" — that
+    // is UNKNOWN, and UNKNOWN is the opposite of novel. Collapsing it into the
+    // `!is_duplicate` silence made a majority-owned brief indistinguishable
+    // from a genuinely-new one, which is the favourable-reading-of-absence this
+    // estate forbids everywhere else. Measured 2026-08-18 on a 25-system brief:
+    // coverage 45%, deferred, is_duplicate=False -> gate silent -> the corpus
+    // read as novel until a manual audit found 22 of 25 already owned.
+    //
+    // Scoped to long briefs on purpose: on a short proposal DEFER is cheap to
+    // re-ask and an advisory would be noise, but on a multi-system brief the
+    // false-NEW authorizes an entire family build. False positives are the
+    // expensive failure (T-D2A-GATE-KEYWORD-SCOPE-001) — so this fires only
+    // where a false negative is more expensive still.
+    if (!v.dupe.is_duplicate) {
+      if (v.dupe.deferred && String(prompt).length > MEGA_LEN) {
+        return {
+          hookSpecificOutput: {
+            hookEventName: 'UserPromptSubmit',
+            additionalContext: buildDeferAdvisory(v),
+          },
+        };
+      }
+      return {};                                      // genuinely new -> silence
+    }
     if (!v.contract || !v.recommended) return {};     // no alternative to offer -> silence
 
     return {
@@ -178,7 +269,7 @@ function run(input) {
   }
 }
 
-module.exports = { run, isCreationProposal, buildAdvisory };
+module.exports = { run, isCreationProposal, buildAdvisory, buildDeferAdvisory };
 
 // --- Standalone CLI (shell-free CHAIN_MAP child) --------------------------
 if (require.main === module) {

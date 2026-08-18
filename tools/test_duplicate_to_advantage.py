@@ -511,6 +511,49 @@ def main(argv=None) -> int:
         else:
             _fail("V-D2A-SILENCE-ON-NOVEL", f"rc={rc} stdout={out[:120]!r}")
 
+        # V-D2A-GATE-MEGA-PROPOSAL: a long multi-system brief is SEEN and answered.
+        #
+        # Two structural blind spots made this class of proposal -- the only class
+        # D2A exists for -- permanently silent, measured 2026-08-18 on a 26,034-byte
+        # 25-system brief:
+        #   1. MAX_LEN 8000 SKIPPED anything longer, so the brief never reached the
+        #      engine at all.
+        #   2. NOT_CREATION disqualified the whole prompt on one incidental token,
+        #      and "extend"/"rollback"/"test"/"reference" are unavoidable SUBJECT
+        #      MATTER in any serious architecture document.
+        # A third made it silent even once seen: a plausibility-capped verdict
+        # (deferred) was collapsed into the `!is_duplicate` silence, so UNDETERMINED
+        # and GENUINELY-NEW -- opposite conditions -- rendered identically.
+        mega = (
+            "Build the complete corpus of 25 sibling systems and their constitution. "
+            "Each system is a dataset family with its own architecture, registry and "
+            "engine. The corpus must define ownership, authority, rollback, migration, "
+            "supersession and retirement for every capability, extend existing owners "
+            "where they exist, reference prior art, and test every claim against "
+            "production reality. Design the intent compiler, the architecture synthesis "
+            "engine, the verification engine, the debugging system, the knowledge graph, "
+            "the capability promotion engine and the governance layer. "
+        ) * 12   # ~4k -> comfortably over MEGA_LEN, and full of negative-guard tokens
+        rc, out = _run_gate(mega)
+        ctx_m = ""
+        try:
+            hso_m = (json.loads(out) or {}).get("hookSpecificOutput", {})
+            ctx_m = hso_m.get("additionalContext", "")
+        except Exception:  # noqa: BLE001
+            ctx_m = ""
+        # Either answer is correct -- a named duplicate parent, or an honest
+        # UNDETERMINED. Silence is the one outcome that is not.
+        if rc == 0 and ctx_m.strip() and ("DUPE VERDICT" in ctx_m
+                                          or "UNDETERMINED" in ctx_m):
+            kind = "UNDETERMINED" if "UNDETERMINED" in ctx_m else "DUPE VERDICT"
+            _ok("V-D2A-GATE-MEGA-PROPOSAL",
+                f"{len(mega)}B multi-system brief carrying negative-guard vocabulary "
+                f"-> answered ({kind}, {len(ctx_m)}B), rc={rc}; never silent")
+        else:
+            _fail("V-D2A-GATE-MEGA-PROPOSAL",
+                  f"len={len(mega)} rc={rc} ctx_len={len(ctx_m)} -- a mega-corpus "
+                  "proposal went unanswered")
+
         # V-D2A-GATE-KEYWORD-SCOPE: use/extend/fix/read are NEVER intercepted
         # (T-D2A-GATE-KEYWORD-SCOPE-001: false positives are the expensive failure).
         negatives = [
