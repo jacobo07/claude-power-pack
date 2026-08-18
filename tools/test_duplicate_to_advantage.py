@@ -265,14 +265,30 @@ def main(argv=None) -> int:
     # would re-impose the very hand-enrollment the derivation exists to remove -- the
     # gate would have to be edited by hand every time a family is added, which is how
     # the registry went blind to 68% of the estate in the first place.
-    from modules.duplicate_to_advantage.d2a_engine import _KB_ROOT
+    # Two substrates prove themselves the same way (2026-08-18): KB- rows against
+    # vault/knowledge_base/, MOD- rows against modules/. The second was added when
+    # T-D2A-REGISTRY-BLIND-SPOT-001 was found to recur one level up -- the 07-20 fix
+    # discovered doctrine families and left the 81 executable modules unregistered,
+    # which produced false-NEW verdicts on proposals whose owner is a module.
+    from modules.duplicate_to_advantage.d2a_engine import _KB_ROOT, _MOD_ROOT
     curated_ids = {k for k, v in FAMILY_REGISTRY.items() if not v.get("derived")}
     derived_ids = {k for k, v in FAMILY_REGISTRY.items() if v.get("derived")}
-    unreal_derived = sorted(
-        fid for fid in derived_ids
-        if not any(d.is_dir() and "KB-" + d.name.upper().replace("_", "-") == fid
-                   for d in (_KB_ROOT.iterdir() if _KB_ROOT.is_dir() else []))
-    )
+
+    def _resolves(fid):
+        if fid.startswith("KB-"):
+            root, prefix = _KB_ROOT, "KB-"
+        elif fid.startswith("MOD-"):
+            root, prefix = _MOD_ROOT, "MOD-"
+        else:
+            return False
+        if not root.is_dir():
+            return False
+        return any(
+            d.is_dir()
+            and prefix + d.name.upper().replace("_", "-").replace(" ", "-") == fid
+            for d in root.iterdir())
+
+    unreal_derived = sorted(fid for fid in derived_ids if not _resolves(fid))
     registry_ok = (curated_ids <= real_ids) and not unreal_derived
     if registry_ok and declares and n_datasets == 1:
         _ok("V-D2A-NO-DUPLICATE",
@@ -295,6 +311,35 @@ def main(argv=None) -> int:
             f"all {n_kb} knowledge_base families resolve to a registry entry")
     else:
         _fail("V-D2A-REGISTRY-COMPLETE", f"unregistered families: {gaps}")
+
+    # V-D2A-MODULE-REGISTRY -- the executable substrate's half of the same law.
+    #
+    # Standing debt is a NAMED SET, never a count: a threshold is satisfied by
+    # deleting a module and a ratio by adding a registered one, so only names force
+    # the number down for the right reason. The baseline below is every module that
+    # derives too little vocabulary to discriminate -- all but two carry no .py at
+    # all. A NEW module landing unregistered is a real regression and fails here;
+    # one of these gaining a Python surface and registering also fails, which is the
+    # correct direction to be told about.
+    from modules.duplicate_to_advantage.d2a_engine import module_registry_gaps
+    mod_baseline = {
+        # zero .py -- doc/config-only directories, nothing to derive from
+        "agent-governance", "bug-hunter", "cdicf", "daemon", "design-md",
+        "governance-overlay", "harness", "omniram-sentinel", "oracle", "rtk-core",
+        # single .py whose name repeats the directory -- under the 3-token floor
+        "dispatcher", "memory-engine",
+    }
+    mod_gaps = set(module_registry_gaps())
+    n_mod = len([d for d in (_MOD_ROOT.iterdir() if _MOD_ROOT.is_dir() else [])
+                 if d.is_dir() and not d.name.startswith((".", "__"))])
+    if mod_gaps == mod_baseline:
+        _ok("V-D2A-MODULE-REGISTRY",
+            f"{n_mod - len(mod_gaps)}/{n_mod} modules resolve to a registry entry; "
+            f"{len(mod_gaps)} named-baseline gaps unchanged")
+    else:
+        _fail("V-D2A-MODULE-REGISTRY",
+              f"new unregistered: {sorted(mod_gaps - mod_baseline)}; "
+              f"newly registered: {sorted(mod_baseline - mod_gaps)}")
 
     # V-D2A-DEPTH -- each doctrine Part > 2500 real words.
     counts = _part_word_counts(_DOCTRINE)

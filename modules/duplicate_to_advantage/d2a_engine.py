@@ -367,8 +367,103 @@ def _prune_common_tokens(reg):
             fam["kw"] = pruned
 
 
+# ---------------------------------------------------------------------------
+# Filesystem-derived MODULES (T-D2A-REGISTRY-BLIND-SPOT-001, second instance,
+# sealed 2026-08-18).
+#
+# The 2026-07-20 fix above discovered knowledge_base families and closed the
+# doctrine half of the blind spot. It left the EXECUTABLE half invisible:
+# _KB_ROOT is vault/knowledge_base, so 81 module directories and 402 .py files
+# -- where "does this already exist?" is actually answered -- had no registry
+# row of any kind.
+#
+# Measured on the UPAC 25-system family (vault/audits/upac/): three proposals
+# were reported KEEP "genuinely new" whose owners are modules --
+#   SRIF -> sleepless_qa (Universal Empirical Verification Pipeline)
+#   MEE  -> rollback + backup + deployment
+#   PIEE -> cost_collapse + token_irr + recall_roi + ias_c2
+# A false KEEP authorizes building what already exists, which is the exact
+# failure D2A was sealed to prevent, and it was reachable through the half of
+# the estate the first fix did not walk.
+#
+# Same law, same remedy: a registry a gate depends on must be DISCOVERED from
+# the filesystem, never curated -- and "the filesystem" means every substrate
+# that can own a capability, not only the one that was audited first.
+# ---------------------------------------------------------------------------
+_MOD_ROOT = _PP_ROOT / "modules"
+
+# The module's own docstring first line is its most accurate self-description
+# (`"""Cascade Prevention -- BL-CASCADE-001."""`), far better than a directory
+# name alone. Only __init__.py, only the first line, and only the head of the
+# file are read, so the cost stays comparable to the filename-only pass above.
+_DOC_HEAD_BYTES = 2048
+
+
+def _module_doc_tokens(mdir):
+    """First docstring line of a module's __init__.py, tokenized. Never raises."""
+    init = mdir / "__init__.py"
+    try:
+        if not init.is_file():
+            return []
+        head = init.read_text(encoding="utf-8", errors="replace")[:_DOC_HEAD_BYTES]
+    except Exception:  # noqa: BLE001 -- fail-open, a module without a docstring
+        return []       # simply contributes no doc tokens
+    m = re.search(r'"""(.+?)(?:"""|\n)', head, re.S)
+    return _tokens(m.group(1)) if m else []
+
+
+def _derive_module_kw(mdir):
+    """Derive a module's keyword set from its directory, docstring and .py stems.
+
+    Weighting mirrors _derive_kw: the identity of the unit weighs most, its own
+    stated purpose next, its file names last.
+    """
+    counts = {}
+    for tok in _tokens(mdir.name.replace("_", " ").replace("-", " ")):
+        counts[tok] = counts.get(tok, 0) + 3
+    for tok in _module_doc_tokens(mdir):
+        counts[tok] = counts.get(tok, 0) + 2
+    for p in sorted(mdir.rglob("*.py")):
+        if not p.is_file() or p.stem == "__init__":
+            continue
+        stem = re.sub(r"\b[vV]?\d+\b", " ", p.stem.replace("_", " ").replace("-", " "))
+        for tok in _tokens(stem):
+            counts[tok] = counts.get(tok, 0) + 1
+    ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    return [t for t, _ in ordered[:_DERIVED_KW_CAP]]
+
+
+def _module_fid(name):
+    return "MOD-" + name.upper().replace("_", "-")
+
+
+def _discover_modules():
+    out = {}
+    try:
+        if not _MOD_ROOT.is_dir():
+            return out                                  # fail-open: registry as-is
+        dirs = sorted(d for d in _MOD_ROOT.iterdir() if d.is_dir())
+    except Exception:  # noqa: BLE001
+        return out
+    for d in dirs:
+        if d.name.startswith((".", "__")):
+            continue
+        try:
+            kw = _derive_module_kw(d)
+        except Exception:  # noqa: BLE001
+            continue
+        if len(kw) < 3:                                 # too thin to discriminate
+            continue
+        out[_module_fid(d.name)] = {
+            "name": f"{d.name} (module, filesystem-derived)",
+            "kw": tuple(kw), "derived": True}
+    return out
+
+
 FAMILY_REGISTRY = dict(_CURATED_REGISTRY)
 for _fid, _fam in _discover_families().items():
+    FAMILY_REGISTRY.setdefault(_fid, _fam)
+for _fid, _fam in _discover_modules().items():
     FAMILY_REGISTRY.setdefault(_fid, _fam)
 _prune_common_tokens(FAMILY_REGISTRY)
 
@@ -393,6 +488,23 @@ def registry_gaps():
         if "KB-" + name.upper().replace("_", "-") not in FAMILY_REGISTRY:
             gaps.append(name)
     return gaps
+
+
+def module_registry_gaps():
+    """Module directories with no registry entry. Empty is the passing state.
+
+    Sibling of registry_gaps() for the executable substrate. A module listed here
+    cannot be named as a parent by detect_duplicate(), so any proposal that
+    duplicates it reads as genuinely new. Asserted by V-D2A-MODULE-REGISTRY.
+    """
+    try:
+        if not _MOD_ROOT.is_dir():
+            return []
+        dirs = sorted(d.name for d in _MOD_ROOT.iterdir() if d.is_dir()
+                      if not d.name.startswith((".", "__")))
+    except Exception:  # noqa: BLE001
+        return []
+    return [n for n in dirs if _module_fid(n) not in FAMILY_REGISTRY]
 
 
 # D2A-2: the 14 capability dimensions mapped around a parent (task's D2A-2 spec, extended
