@@ -290,6 +290,24 @@ def main() -> int:
         ("intent-fidelity",
          [PY, str(PP / "tools" / "intent_verify.py")],
          120),
+        # Did adopting a rule actually improve anything, and would it have caught
+        # the incident it was written for? `compile_rules` decides only whether a
+        # rule is ADMISSIBLE; without this row a rule's value rests on the argument
+        # that produced it, and a corpus that can only grow is one that will
+        # eventually be ignored.
+        #
+        # Built 2026-07-29, exported at modules/rule_compiler/__init__.py, and
+        # invoked by nothing but its own test until now -- import is not invocation
+        # (vault/plans/gap-reverification-2026-08-03.md, candidate B). Three of the
+        # twelve Compounding Test questions (a wrong rule can be refuted; learning
+        # from outcomes; the Constitution improves) had no producer because of it.
+        #
+        # Run as -m: the harness uses relative imports and cannot run as a file
+        # path. Exit 1 only on REGRESSED -- a rule whose own probe says it made
+        # things worse is the one result that should stop a session. Measured 7.7s.
+        ("rule-effects",
+         [PY, "-m", "modules.rule_compiler.effect_harness"],
+         180),
     ]
 
     if args.row:
