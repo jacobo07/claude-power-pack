@@ -333,6 +333,16 @@ def main() -> int:
         ("architecture-horizon-gates",
          [PY, str(PP / "tools" / "test_architecture_horizon.py")],
          120),
+        # UPAC residue R3. The INWARD complement of the row above: what an
+        # engineer must assemble to change a unit. Disjoint from modules/uqf by
+        # construction (uqf owns file-local defects) and from architecture_horizon
+        # by direction; both boundaries are asserted mechanically in its gates.
+        ("cognitive-load",
+         [PY, "-m", "modules.cognitive_load.load"],
+         120),
+        ("cognitive-load-gates",
+         [PY, str(PP / "tools" / "test_cognitive_load.py")],
+         120),
     ]
 
     if args.row:
