@@ -13,15 +13,67 @@ algorithm (n8n source workflow is reference material only — see
 
 The agent runs **detached** so the Owner never blocks waiting:
 
-1. Generate `breadth` SERP queries from the prompt (via Claude with the
-   verbatim n8n prompt).
-2. For each query: web_search (DuckDuckGo → Brave → Apify cascade) → top
-   5 organic results → fetch each page → HTML→markdown (trafilatura →
-   readability → bs4 → regex cascade) → extract up to 3 learnings + 3
-   follow-up questions per query.
-3. If `depth > 1`: recurse on each follow-up cluster with halved breadth.
-4. At top level: synthesise all learnings into a 3+ page markdown
-   report with cited sources and Run metadata footer.
+1. **Engine 1 — decomposition.** Split the prompt into sub-questions tagged
+   by the axis each attacks (evidence / mechanism / boundary /
+   counterexample / transferability). Gated: the accepted set must span
+   ≥3 distinct axes, else one corrective re-ask. Every question also
+   passes the natural-question gate (no keyword soup).
+2. For each question: web_search (DuckDuckGo → Brave → Apify cascade) →
+   top 5 organic → fetch each page → HTML→markdown (trafilatura →
+   readability → bs4 → regex cascade).
+3. **Engine 2 — landscape coverage.** Classify every page that actually
+   parsed into a source family; compute the verdict for the question.
+   Load-bearing families are re-ordered to be read first, so the
+   extraction budget is not eaten by the vendor page.
+4. **Engine 3 — capability + reality extraction.** Up to 3 learnings, each
+   carrying the capability it confers, an epistemic level and an evidence
+   sentence. Deterministic caps then demote anything the evidence does not
+   support.
+5. If `depth > 1`: recurse on each follow-up cluster with halved breadth.
+6. **Engine 4 — contradiction detection.** Runs once over the full corpus,
+   before synthesis. Conflicts are reported unresolved, never settled
+   silently.
+7. At top level: synthesise into a 3+ page markdown report, carrying the
+   `[EPISTEMIC][QUALITY]` tags into the prose, plus cited sources, the
+   contradictions section, and the Run metadata footer.
+
+## The four engines (v0.3.0, 2026-08-18)
+
+### Engine 2 — source families
+
+| Family | What it is | Quality |
+|---|---|---|
+| **A — measured** | case studies, post-mortems, A/B results with real numbers | HIGH (MEDIUM if vendor-hosted: self-reported ≠ independent) |
+| **B — academic** | papers, theses, preprints | HIGH |
+| **C — practitioner** | first-hand operational reporting, RFCs, standards, engineer writing | MEDIUM |
+| **D — vendor** | conversion surfaces — pricing, demos, agency content | LOW — corroborates, never founds |
+
+Landscape verdicts per question:
+
+- `COVERED` — ≥2 load-bearing families. Full epistemic range available.
+- `THIN` — exactly 1 load-bearing family.
+- `UNCLASSIFIED` — no page resolved to a known family. Extraction proceeds,
+  capped at `DERIVED`: failing to classify a page is the classifier's
+  shortcoming, not the page's.
+- `VENDOR_ONLY` — **refusal.** Every source was positively recognised as
+  marketing. Extraction is skipped entirely; nothing is persisted.
+
+### Engine 3 — epistemic levels
+
+`OBSERVED` > `VERIFIED` > `DERIVED` > `HYPOTHESIS` > `REJECTED`.
+
+The extractor proposes; deterministic gates dispose. Every cap only ever
+degrades — an unknown label, a malformed field, or an unreadable value costs
+confidence and can never buy it:
+
+- `OBSERVED` without a quantity a regex can find → `DERIVED`
+- `VERIFIED` on fewer than 2 supporting sources → demoted
+- claimed `supporting_sources` is capped at the number of documents fetched
+- `UNCLASSIFIED` landscape → capped at `DERIVED`
+- `VENDOR_ONLY` landscape → `REJECTED`, dropped, logged
+
+Stored learnings lead with their labels:
+`[VERIFIED][HIGH] <insight> — Capacidad: <decision it changes> — Evidencia: <why>`
 
 ## Args
 

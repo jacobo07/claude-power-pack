@@ -43,7 +43,7 @@ import time
 from pathlib import Path
 from typing import Any, TypedDict
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 
 # --- Paths ----------------------------------------------------------------
@@ -112,11 +112,19 @@ class SerpHit(TypedDict):
 class SerpQuery(TypedDict):
     query: str
     researchGoal: str
+    # Which face of the problem this question attacks (Engine 1). "" when the
+    # decomposer returned an axis outside the canonical set — an unrecognised
+    # label is never bucketed into a real axis, because that would inflate the
+    # measured coverage with a question nobody classified.
+    axis: str
 
 
 class ExtractedLearnings(TypedDict):
     learnings: list[str]
     followUpQuestions: list[str]
+    # Engine 3: the structured form behind each formatted learning string —
+    # capability, evidence, claimed vs final epistemic level, source quality.
+    records: list[dict[str, Any]]
 
 
 # --- Slug / timestamp helpers --------------------------------------------
@@ -919,14 +927,46 @@ from research_quality import (  # noqa: E402
     KEEP_LEVELS,
     RELEVANCE_SCHEMA,
     RELEVANCE_UNRATED,
-    build_learnings_prompt,
     build_query_correction_prompt,
     build_relevance_prompt,
-    build_serp_query_prompt,
     find_code_in_learning,
     is_natural_question,
     log_discarded,
     parse_relevance_ratings,
+)
+
+# --- The four engines (v0.3.0, 2026-08-18) -------------------------------
+#
+# v0.2.0 gated QUALITY (is this a question, is this prose, can an operator act
+# on it). It had no opinion about COVERAGE — which faces of the problem were
+# searched, what kind of document the answer came from, or how much of the claim
+# the evidence actually supports. The observed consequence: a learning founded
+# on one vendor blog was persisted unlabelled, so an operator could not tell it
+# from a measured result. research_engines.py owns the four engines that close
+# that gap; research_quality.py keeps owning the per-string quality gates, which
+# still run underneath them.
+
+from research_engines import (  # noqa: E402
+    COVERAGE_VENDOR_ONLY,
+    CONTRADICTION_SCHEMA,
+    DECOMPOSITION_SCHEMA,
+    EPI_REJECTED,
+    LEARNING_RECORD_SCHEMA,
+    axes_covered,
+    build_capability_learnings_prompt,
+    build_contradiction_prompt,
+    build_decomposition_correction_prompt,
+    build_decomposition_prompt,
+    classify_source,
+    decomposition_is_sufficient,
+    epistemic_distribution,
+    format_contradiction_section,
+    format_labeled_learning,
+    landscape_verdict,
+    normalize_axis,
+    parse_contradictions,
+    parse_learning_records,
+    rank_sources_for_extraction,
 )
 
 # Every learning a gate throws away is appended here, with the reason. A gate
@@ -935,42 +975,28 @@ from research_quality import (  # noqa: E402
 DISCARD_LOG_PATH = RESEARCH_DIR / "discarded_learnings.jsonl"
 
 
-# --- Paso 1.5 — generate_serp_queries ------------------------------------
-
-_SERP_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "queries": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string"},
-                    "researchGoal": {"type": "string"},
-                },
-                "required": ["query", "researchGoal"],
-            },
-        }
-    },
-    "required": ["queries"],
-}
+# --- Paso 1.5 / Engine 1 — decompose, then ask ---------------------------
 
 
 def _ask_for_queries(user_msg: str, breadth: int
                       ) -> tuple[list[SerpQuery], list[tuple[str, str]]]:
     """One LLM round-trip. Returns (accepted, rejected).
 
-    `rejected` is [(query, why)] for queries the natural-question gate
+    `rejected` is [(query, why)] for questions the natural-question gate
     refused — they are keyword piles, not questions, and searching them
     returns worse sources than a real question would.
+
+    Engine 1 adds the `axis` field: which face of the problem the question
+    attacks. An unrecognised axis is recorded as "" rather than defaulted, so
+    coverage is measured on questions somebody actually classified.
     """
-    result = call_llm(_shared_system(), user_msg, _SERP_SCHEMA)
+    result = call_llm(_shared_system(), user_msg, DECOMPOSITION_SCHEMA)
     if not isinstance(result, dict):
         raise LayerError("generate_serp_queries", "non-dict response")
 
     accepted: list[SerpQuery] = []
     rejected: list[tuple[str, str]] = []
-    for q in (result.get("queries") or [])[:breadth]:
+    for q in (result.get("questions") or [])[:breadth]:
         if not isinstance(q, dict):
             continue
         query = (q.get("query") or "").strip()
@@ -979,7 +1005,11 @@ def _ask_for_queries(user_msg: str, breadth: int
             continue
         ok, why = is_natural_question(query)
         if ok:
-            accepted.append({"query": query, "researchGoal": goal})
+            accepted.append({
+                "query": query,
+                "researchGoal": goal,
+                "axis": normalize_axis(q.get("axis")) or "",
+            })
         else:
             rejected.append((query, why))
     return accepted, rejected
@@ -989,21 +1019,28 @@ def generate_serp_queries(prompt: str, breadth: int,
                            learnings: list[str] | None = None,
                            _state: dict[str, Any] | None = None,
                            ) -> list[SerpQuery]:
-    """Generate up to `breadth` NATURAL-LANGUAGE research questions.
+    """ENGINE 1 — decompose the topic, then emit the search questions.
 
-    A search query is a question a human would type into Google or ask an
-    expert — not a concatenation of the topic's technical vocabulary. The
-    vocabulary is what the research is supposed to DISCOVER; seeding the
-    query with it just retrieves documents that already agree with our
-    guess. Every returned query passes is_natural_question().
+    Searching a high-level topic directly retrieves the most popular framing of
+    it, which is usually whoever sells the solution. Decomposing first forces
+    the run to attack faces of the problem that popularity does not surface:
+    where the thing fails, what refutes it, whether it transfers.
 
-    On a total rejection (zero usable questions) we re-ask ONCE with the
-    rejection reasons attached. There is no second retry: a repeat failure
-    is a model/prompt mismatch, not a transient miss, and Anti-Antipattern
-    Regla 12 forbids a third identical attempt.
+    Two gates, each bounded to ONE corrective re-ask (Anti-Antipattern Regla 12
+    forbids a third identical attempt):
+
+      * every question must pass is_natural_question() — a keyword pile
+        retrieves documents that already agree with our guess;
+      * the accepted set must span >= MIN_AXES_COVERED distinct axes — fewer
+        than that is a rephrasing, not a decomposition.
+
+    Both gates FAIL OPEN on the retry: if the corrective ask does not fix the
+    coverage, the run proceeds with what it has and records the shortfall in the
+    metadata. Losing the whole run because the decomposer was one axis short
+    would be worse research than a narrow run the Owner can see is narrow.
     """
     learnings = learnings or []
-    user_msg = build_serp_query_prompt(prompt, breadth, learnings)
+    user_msg = build_decomposition_prompt(prompt, breadth, learnings)
 
     accepted, rejected = _ask_for_queries(user_msg, breadth)
 
@@ -1015,104 +1052,151 @@ def generate_serp_queries(prompt: str, breadth: int,
         accepted = retry_accepted
         rejected = rejected + retry_rejected
 
-    if _state is not None and rejected:
-        _state.setdefault("queries_rejected", []).extend(
-            {"query": q, "reason": why} for q, why in rejected
-        )
-        for q, why in rejected:
-            _state["errors"].append(
-                f"query rejected (not a question): {q[:60]!r} — {why}"
+    axes_ok, axes_reason = decomposition_is_sufficient(accepted)
+    if accepted and not axes_ok:
+        correction = build_decomposition_correction_prompt(accepted, breadth)
+        try:
+            widened, widened_rejected = _ask_for_queries(
+                f"{user_msg}\n\n{correction}", breadth
             )
+        except (LayerError, NoLLMAvailable) as e:
+            widened, widened_rejected = [], []
+            if _state is not None:
+                _state["errors"].append(f"axis-widening re-ask failed: {e}")
+        # Keep the wider set only if it IS wider. A retry that came back
+        # narrower must not overwrite the questions we already had.
+        if len(axes_covered(widened)) > len(axes_covered(accepted)):
+            accepted = widened
+        rejected = rejected + widened_rejected
+        axes_ok, axes_reason = decomposition_is_sufficient(accepted)
+
+    if _state is not None:
+        _state.setdefault("axes_covered", set()).update(axes_covered(accepted))
+        if not axes_ok and accepted:
+            _state.setdefault("decomposition_shortfalls", []).append(axes_reason)
+            _state["errors"].append(f"decomposition narrow: {axes_reason}")
+        if rejected:
+            _state.setdefault("queries_rejected", []).extend(
+                {"query": q, "reason": why} for q, why in rejected
+            )
+            for q, why in rejected:
+                _state["errors"].append(
+                    f"query rejected (not a question): {q[:60]!r} — {why}"
+                )
     return accepted
 
 
-# --- Paso 1.6 — extract_learnings ----------------------------------------
-
-_LEARNINGS_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "learnings": {
-            "type": "array",
-            "items": {"type": "string"},
-            "description": "List of learnings, max of 3.",
-        },
-        "followUpQuestions": {
-            "type": "array",
-            "items": {"type": "string"},
-            "description": "Follow-up questions to research the topic "
-                           "further, max of 3.",
-        },
-    },
-    "required": ["learnings", "followUpQuestions"],
-}
+# --- Paso 1.6 / Engine 3 — capability + reality extraction ---------------
 
 
 def extract_learnings(query: str,
                        markdowns: list[str],
+                       coverage: dict[str, Any] | None = None,
                        _state: dict[str, Any] | None = None,
                        ) -> ExtractedLearnings:
-    """Extract up to 3 prose learnings + 3 follow-up questions from SERP
-    content. Truncates each markdown to MARKDOWN_MAX_CHARS (25,000).
+    """ENGINE 3 — extract CAPABILITIES with an epistemic level, not prose facts.
 
-    The reader of a learning is a founder/operator, never a data engineer.
-    A learning that carries code — a CLI invocation, a YAML fragment, a
-    field name — is a defect of THIS system, not of the source content: the
-    source is allowed to be technical, the learning is not.
+    Each learning comes back as a record: the capability it confers (which
+    decision it changes), the insight, the evidence sentence behind it, and a
+    claimed epistemic level. Three layers then act on that claim, in order:
 
-    The prompt asks for prose; find_code_in_learning() then GUARANTEES it.
-    That second layer is not redundancy — a prompt is a request, a gate is a
-    contract, and only the gate survives an LLM that ignores the request.
-    Every drop is logged with its reason to DISCARD_LOG_PATH.
+      1. cap_epistemic() — deterministic. OBSERVED without a quantity becomes
+         DERIVED; VERIFIED without corroboration is demoted; a VENDOR_ONLY
+         landscape rejects the claim outright. The extractor cannot certify its
+         own confidence, which is the whole point: the previous version let it,
+         and a single vendor blog produced an unlabelled claim nobody could
+         weigh.
+      2. find_code_in_learning() — deterministic, inherited from v0.2.0. The
+         reader is a founder/operator; a learning carrying a CLI invocation is a
+         defect of THIS system, not of the source.
+      3. the relevance gate, applied by the caller after this returns.
+
+    `coverage` is Engine 2's landscape verdict for the sources behind this
+    query. Passing None means "assume covered" — used only by callers that
+    have already vetted the landscape themselves.
+
+    Every drop is logged with its reason to DISCARD_LOG_PATH. A gate that
+    discards silently is indistinguishable from a bug.
     """
     if not markdowns:
-        return {"learnings": [], "followUpQuestions": []}
+        return {"learnings": [], "followUpQuestions": [], "records": []}
 
     contents_block = "\n".join(
         f"<content>\n{md[:MARKDOWN_MAX_CHARS]}\n</content>"
         for md in markdowns
     )
 
-    user_msg = build_learnings_prompt(query, contents_block)
-    result = call_llm(_shared_system(), user_msg, _LEARNINGS_SCHEMA)
+    user_msg = build_capability_learnings_prompt(query, contents_block)
+    result = call_llm(_shared_system(), user_msg, LEARNING_RECORD_SCHEMA)
     if not isinstance(result, dict):
         raise LayerError("extract_learnings", "non-dict response")
 
-    raw = [
-        s.strip() for s in (result.get("learnings") or [])
-        if isinstance(s, str) and s.strip()
-    ]
+    records = parse_learning_records(result, coverage)
 
     kept: list[str] = []
+    kept_records: list[dict[str, Any]] = []
     dropped: list[dict[str, Any]] = []
-    for learning in raw:
-        code_reason = find_code_in_learning(learning)
+
+    for rec in records:
+        # Layer 1 outcome: the landscape refused to carry this claim at all.
+        if rec["epistemic"] == EPI_REJECTED:
+            dropped.append({
+                "ts": iso_now(),
+                "gate": "landscape",
+                "query": query,
+                "reason": rec["cap_reason"],
+                "learning": rec["learning"],
+            })
+            continue
+
+        # Layer 2: code never reaches an operator's knowledge base.
+        code_reason = find_code_in_learning(
+            f"{rec['learning']} {rec['capability']}"
+        )
         if code_reason:
             dropped.append({
                 "ts": iso_now(),
                 "gate": "code",
                 "query": query,
                 "reason": code_reason,
-                "learning": learning,
+                "learning": rec["learning"],
             })
-        else:
-            kept.append(learning)
+            continue
+
+        kept_records.append(rec)
+        kept.append(format_labeled_learning(rec))
 
     if dropped:
         log_discarded(dropped, DISCARD_LOG_PATH)
         if _state is not None:
-            _state["discarded_code"] = (
-                _state.get("discarded_code", 0) + len(dropped)
-            )
             for d in dropped:
+                key = ("discarded_landscape" if d["gate"] == "landscape"
+                       else "discarded_code")
+                _state[key] = _state.get(key, 0) + 1
                 _state["errors"].append(
-                    f"learning dropped (code gate): {d['reason']}"
+                    f"learning dropped ({d['gate']} gate): {d['reason']}"
+                )
+
+    if _state is not None:
+        for rec in kept_records:
+            if rec["capped"]:
+                _state["epistemic_capped"] = (
+                    _state.get("epistemic_capped", 0) + 1
+                )
+                _state["errors"].append(
+                    f"epistemic demoted {rec['epistemic_claimed']} -> "
+                    f"{rec['epistemic']}: {rec['cap_reason']}"
                 )
 
     follow_ups = [
         s.strip() for s in (result.get("followUpQuestions") or [])
         if isinstance(s, str) and s.strip()
     ][:3]
-    return {"learnings": kept[:3], "followUpQuestions": follow_ups}
+    return {
+        "learnings": kept[:3],
+        "followUpQuestions": follow_ups,
+        "records": kept_records[:3],
+    }
 
 
 # --- Relevance gate (v0.2.0) ---------------------------------------------
@@ -1196,12 +1280,16 @@ def filter_by_relevance(learnings: list[str],
 
 # --- Paso 1.7 — generate_report ------------------------------------------
 
-def generate_report(prompt: str, learnings: list[str],
-                     urls: list[str]) -> str:
+def generate_report(prompt: str, learnings: list[str], urls: list[str],
+                     contradictions: list[dict[str, Any]] | None = None) -> str:
     """Single LLM call that synthesizes all collected learnings into a
-    multi-page markdown report. Verbatim prompt from spec §3.5. Caller
-    appends ## Sources + ## Run metadata footer; this function returns
-    only the LLM-generated body.
+    multi-page markdown report. Caller appends ## Sources + ## Run metadata;
+    this function returns the LLM body plus the contradictions section.
+
+    Every learning arrives pre-labelled `[EPISTEMIC][QUALITY]` by Engine 3, and
+    the synthesis is instructed to CARRY those labels rather than smooth them
+    away. A report that reads uniformly confident, built from evidence that was
+    not uniformly strong, is the exact failure this version exists to end.
     """
     if not learnings:
         return (
@@ -1209,22 +1297,31 @@ def generate_report(prompt: str, learnings: list[str],
             f"Prompt: {prompt}\n\n"
             "The research run completed without extracting any learnings. "
             "This can happen when SERP results were empty across all "
-            "queries, or page-fetch failed for every result. Re-run with "
-            "different keywords or check vault/cache_hints/CEILING.md for "
-            "the layer-by-layer failure log."
+            "queries, page-fetch failed for every result, or every source "
+            "landscape was vendor-only and the coverage gate refused to build "
+            "claims on it. Re-run with different keywords or check "
+            "vault/cache_hints/CEILING.md for the layer-by-layer failure log."
         )
 
     learnings_block = "\n".join(
         f"<learning>{ln}</learning>" for ln in learnings
     )
     user_msg = (
-        f"You are are an expert and insightful researcher.\n"
+        f"You are an expert and insightful researcher.\n"
         f"* Given the following prompt from the user, write a final "
         f"report on the topic using the learnings from research.\n"
-        f"* Make it as as detailed as possible, aim for 3 or more pages, "
+        f"* Make it as detailed as possible, aim for 3 or more pages, "
         f"include ALL the learnings from research.\n"
         f"* Format the report in markdown. Use headings, lists and tables "
-        f"only and where appropriate.\n\n"
+        f"only and where appropriate.\n"
+        f"* EVERY learning arrives tagged [EPISTEMIC][SOURCE-QUALITY]. CARRY "
+        f"those tags into the report next to the claim they belong to. Never "
+        f"present a [HYPOTHESIS] or a [DERIVED] claim in the same voice as an "
+        f"[OBSERVED] one, and never drop a tag to make a paragraph read "
+        f"smoother. A reader must be able to tell, without leaving the "
+        f"sentence, how much to bet on it.\n"
+        f"* Where the evidence is thin, SAY it is thin. An honest gap is a "
+        f"finding; a confident sentence covering a gap is a defect.\n\n"
         f"<prompt>{prompt}</prompt>\n\n"
         f"Here are all the learnings from previous research:\n\n"
         f"<learnings>\n{learnings_block}\n</learnings>"
@@ -1235,7 +1332,11 @@ def generate_report(prompt: str, learnings: list[str],
                        timeout=LLM_TIMEOUT_S * 2)
     if not isinstance(result, str):
         raise LayerError("generate_report", "non-string response")
-    return result.strip()
+    # The contradictions section is appended deterministically, never left to
+    # the synthesis LLM. Asking a model to summarise conflicts is asking it to
+    # resolve them; this section must survive the summary intact.
+    return (result.strip() + "\n\n"
+            + format_contradiction_section(contradictions or []))
 
 
 # --- Paso 1.8 — recursive deep_research driver ---------------------------
@@ -1273,6 +1374,43 @@ def _write_ceiling(reason: str, prompt: str,
     with target.open("a", encoding="utf-8") as f:
         f.write(payload)
     return target
+
+
+def _detect_contradictions(learnings: list[str],
+                            _state: dict[str, Any]) -> None:
+    """ENGINE 4 — find where the corpus disagrees with itself. Mutates _state.
+
+    Two sources that conflict are a FINDING. The previous pipeline resolved
+    conflicts by whichever learning happened to be extracted last, which is
+    coin-flipping with extra steps: the operator never learned the field was
+    contested, so they bet on a disputed claim at the confidence of a settled
+    one.
+
+    Fail behaviour is asymmetric, matching filter_by_relevance: the detector
+    needs an LLM and can therefore be unavailable. When it is, the verdict is
+    recorded as `unavailable` and the report says so. We never pass an unchecked
+    corpus off as conflict-free — a silent absence reads identically whether the
+    engine found nothing or never ran, and removing that ambiguity is the entire
+    purpose of the engine.
+    """
+    if len(learnings) < 2:
+        _state["contradiction_verdict"] = "skipped-too-few-learnings"
+        return
+    try:
+        result = call_llm(_shared_system(),
+                           build_contradiction_prompt(learnings),
+                           CONTRADICTION_SCHEMA)
+    except (LayerError, NoLLMAvailable) as e:
+        _state["contradiction_verdict"] = "unavailable"
+        _state["errors"].append(f"contradiction detection unavailable: {e}")
+        return
+    if not isinstance(result, dict):
+        _state["contradiction_verdict"] = "unavailable"
+        _state["errors"].append("contradiction detection: non-dict response")
+        return
+    _state["contradictions"] = parse_contradictions(result, len(learnings))
+    _state["contradiction_verdict"] = "checked"
+    _state["layers_fired"]["llm"].add("claude.exe")
 
 
 def deep_research(
@@ -1340,6 +1478,19 @@ def deep_research(
             "queries_rejected": [],
             "discarded_code": 0,
             "discarded_relevance": 0,
+            # Engine accounting (v0.3.0). All four engines report into the
+            # shared state so a recursive level's coverage is visible in the
+            # top-level footer, not lost at the depth it happened.
+            "axes_covered": set(),          # E1 — faces of the problem searched
+            "decomposition_shortfalls": [],  # E1 — narrow decompositions
+            "families_seen": {},            # E2 — source families fetched
+            "coverage_by_query": [],        # E2 — landscape verdict per query
+            "vendor_only_queries": 0,       # E2 — questions refused outright
+            "discarded_landscape": 0,       # E2 — learnings the landscape killed
+            "records": [],                  # E3 — surviving structured records
+            "epistemic_capped": 0,          # E3 — labels the gates demoted
+            "contradictions": [],           # E4 — unresolved conflicts found
+            "contradiction_verdict": "not-run",
             "relevance_verdict": "rated",
         }
 
@@ -1381,8 +1532,11 @@ def deep_research(
 
             # Top 5 organic — match the n8n source workflow exactly.
             top5 = hits[:5]
-            markdowns: list[str] = []
-            new_urls: list[str] = []
+            # ENGINE 2 — classify every page that actually parsed, so the
+            # landscape verdict is computed over what we READ, not over what
+            # the SERP promised. A page that 403'd contributes no evidence and
+            # must not count toward coverage.
+            fetched: list[dict[str, Any]] = []
             for h in top5:
                 if time.time() > _state["deadline"]:
                     break
@@ -1397,9 +1551,46 @@ def deep_research(
                     page["html"], base_url=page.get("final_url", h["url"])
                 )
                 _state["layers_fired"]["markdown"].add(md_layer)
-                if md:
-                    markdowns.append(md)
-                    new_urls.append(page.get("final_url", h["url"]))
+                if not md:
+                    continue
+                final_url = page.get("final_url", h["url"])
+                cls = classify_source(final_url, h.get("title", ""),
+                                       h.get("snippet", ""), md)
+                cls["markdown"] = md
+                fetched.append(cls)
+                _state["families_seen"][cls["family"]] = (
+                    _state["families_seen"].get(cls["family"], 0) + 1
+                )
+
+            # Load-bearing families are read FIRST: extraction budgets are
+            # finite, and feeding the vendor page ahead of the paper means the
+            # truncation eats the paper.
+            fetched = rank_sources_for_extraction(fetched)
+            markdowns = [c["markdown"] for c in fetched]
+            new_urls = [c["url"] for c in fetched]
+
+            coverage = landscape_verdict(fetched)
+            _state["coverage_by_query"].append({
+                "query": q["query"],
+                "axis": q.get("axis", ""),
+                "verdict": coverage["verdict"],
+                "quality": coverage["quality"],
+                "families": coverage["families"],
+                "source_count": coverage["source_count"],
+            })
+            if coverage["verdict"] == COVERAGE_VENDOR_ONLY and markdowns:
+                # Not a warning — a refusal. Every source behind this question
+                # is a conversion surface, so anything extracted here would be
+                # somebody's marketing repeated back as a finding. Extraction is
+                # skipped entirely: an LLM call that can only produce rejected
+                # records is budget spent to learn nothing.
+                _state["vendor_only_queries"] += 1
+                _state["errors"].append(
+                    f"landscape VENDOR_ONLY for '{q['query'][:40]}' — "
+                    f"{coverage['source_count']} source(s), families "
+                    f"{', '.join(coverage['families'])}; extraction skipped"
+                )
+                continue
 
             if not markdowns:
                 _state["errors"].append(
@@ -1409,6 +1600,7 @@ def deep_research(
 
             try:
                 extracted = extract_learnings(q["query"], markdowns,
+                                               coverage=coverage,
                                                _state=_state)
             except (LayerError, NoLLMAvailable) as e:
                 _state["errors"].append(f"extract_learnings: {e}")
@@ -1422,6 +1614,16 @@ def deep_research(
                 extracted["learnings"],
                 operator_context=_state.get("operator_context"),
                 _state=_state,
+            )
+
+            # Keep the structured records aligned with the strings that
+            # survived. The report footer reports the confidence profile of the
+            # CORPUS, so a record whose string the relevance gate dropped must
+            # not be counted as if it had been persisted.
+            survived = set(relevant)
+            _state["records"].extend(
+                r for r in extracted["records"]
+                if format_labeled_learning(r) in survived
             )
 
             learnings.extend(relevant)
@@ -1452,11 +1654,18 @@ def deep_research(
                 urls = sub_result["urls"]
 
         if is_top_level:
+            # ENGINE 4 — run BEFORE synthesis, so the report writer sees the
+            # conflicts instead of resolving them by whichever learning it read
+            # last. Detection needs the whole corpus, so this is the only place
+            # it can run: a recursive level has seen a fraction of it.
+            _detect_contradictions(learnings, _state)
+
             # Generate the final report. If learnings is empty,
             # generate_report() returns the INSUFFICIENT DATA template
             # honestly rather than fabricating content.
             try:
-                report_md = generate_report(prompt, learnings, urls)
+                report_md = generate_report(prompt, learnings, urls,
+                                             _state["contradictions"])
                 _state["layers_fired"]["llm"].add("claude.exe")
             except (LayerError, NoLLMAvailable) as e:
                 _state["errors"].append(f"generate_report: {e}")
@@ -1502,6 +1711,23 @@ def deep_research(
                     "discarded_relevance": _state["discarded_relevance"],
                     "relevance_verdict": _state["relevance_verdict"],
                     "discard_log": str(DISCARD_LOG_PATH),
+                    # Engine layer (v0.3.0). These are the numbers that say how
+                    # much to trust the report as a whole: which faces of the
+                    # problem were searched, what kind of documents answered,
+                    # how many labels the gates had to demote, and where the
+                    # corpus disagrees with itself.
+                    "axes_covered": sorted(_state["axes_covered"]),
+                    "decomposition_shortfalls":
+                        _state["decomposition_shortfalls"],
+                    "families_seen": _state["families_seen"],
+                    "coverage_by_query": _state["coverage_by_query"],
+                    "vendor_only_queries": _state["vendor_only_queries"],
+                    "discarded_landscape": _state["discarded_landscape"],
+                    "epistemic_capped": _state["epistemic_capped"],
+                    "epistemic_distribution":
+                        epistemic_distribution(_state["records"]),
+                    "contradictions": _state["contradictions"],
+                    "contradiction_verdict": _state["contradiction_verdict"],
                 },
             }
 
@@ -1633,6 +1859,43 @@ def write_research_artifacts(
           f"as not operator-actionable "
           f"(relevance: {meta.get('relevance_verdict', '?')})\n"
     )
+    # Engine footer (v0.3.0). The point of this block is that a reader can see
+    # WHY the report is as confident as it is without reading the report: which
+    # faces of the problem were searched, what kind of documents answered, how
+    # many labels the gates had to demote. A run that covered one axis with one
+    # vendor family should look thin here, and it does.
+    axes = meta.get("axes_covered") or []
+    families = meta.get("families_seen") or {}
+    dist = meta.get("epistemic_distribution") or {}
+    meta_md += (
+        f"- **E1 decomposition:** {len(axes)}/5 axes searched"
+        f"{' (' + ', '.join(axes) + ')' if axes else ''}"
+        f"{'  — SHORTFALL: ' + '; '.join(meta['decomposition_shortfalls']) if meta.get('decomposition_shortfalls') else ''}\n"
+        f"- **E2 landscape:** "
+        + (", ".join(f"{k}×{v}" for k, v in sorted(families.items()))
+           or "no sources classified")
+        + f" · {meta.get('vendor_only_queries', 0)} question(s) refused as "
+          f"vendor-only · {meta.get('discarded_landscape', 0)} learning(s) "
+          f"killed by the coverage gate\n"
+        f"- **E3 reality:** "
+        + (", ".join(f"{k} {v}" for k, v in dist.items() if v)
+           or "no learnings persisted")
+        + f" · {meta.get('epistemic_capped', 0)} label(s) demoted by the "
+          f"evidence gates\n"
+        f"- **E4 contradictions:** {len(meta.get('contradictions') or [])} "
+        f"unresolved conflict(s) "
+        f"(detector: {meta.get('contradiction_verdict', '?')})\n"
+    )
+    if meta.get("coverage_by_query"):
+        meta_md += "\n<details>\n<summary>Source landscape per question</summary>\n\n"
+        for c in meta["coverage_by_query"]:
+            meta_md += (
+                f"- `{c['verdict']}` / {c['quality']} "
+                f"[{c.get('axis') or 'UNCLASSIFIED'}] — {c['source_count']} "
+                f"source(s), families {', '.join(c['families']) or 'none'} — "
+                f"_{c['query'][:90]}_\n"
+            )
+        meta_md += "\n</details>\n"
     if meta.get("discard_log"):
         meta_md += f"- **Discard log:** `{meta['discard_log']}`\n"
     if meta.get("errors"):
@@ -1687,6 +1950,17 @@ def write_research_artifacts(
             if str(report_path).startswith(str(PP_REPO))
             else str(report_path),
         "urls_sample": deduped_urls[:20],  # sample for dedup-on-rerun
+        # Engine summary. The index is what SessionStart auto-discovery reads,
+        # so the confidence profile has to be legible WITHOUT opening the
+        # report — otherwise a thin run and a strong run look identical in the
+        # one place a future session actually looks.
+        "axes_covered": meta.get("axes_covered", []),
+        "families_seen": meta.get("families_seen", {}),
+        "vendor_only_queries": meta.get("vendor_only_queries", 0),
+        "epistemic_distribution": meta.get("epistemic_distribution", {}),
+        "epistemic_capped": meta.get("epistemic_capped", 0),
+        "contradictions": len(meta.get("contradictions") or []),
+        "contradiction_verdict": meta.get("contradiction_verdict", "?"),
     }
     _append_index(index_row)
 

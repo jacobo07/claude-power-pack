@@ -54,6 +54,14 @@ __version__ = "1.0.0"
 # PART 1 — QUERY GENERATION: natural-language questions, not keyword soup
 # =========================================================================
 
+# SUPERSEDED by research_engines.DECOMPOSITION_PROMPT (v0.3.0, 2026-08-18).
+# deep_research no longer calls build_serp_query_prompt: asking for good
+# questions was necessary but not sufficient, because a set of good questions
+# can still attack one face of a problem. Engine 1 asks for the same quality AND
+# tags each question with the axis it attacks, then gates on axis spread.
+# Kept live because test_research_quality.py is the regression suite for the
+# keyword-soup defect, and is_natural_question() — which Engine 1 still runs on
+# every question — is calibrated against these fixtures.
 SERP_QUERY_PROMPT = """\
 Given the following research topic, generate the search questions a founder \
 or operator would actually type into Google, or ask a domain expert over \
@@ -211,6 +219,15 @@ def build_query_correction_prompt(rejected: list[tuple[str, str]],
 # PART 2 — LEARNINGS: prose insights, never code
 # =========================================================================
 
+# SUPERSEDED by research_engines.CAPABILITY_LEARNINGS_PROMPT (v0.3.0).
+# This prompt asked for "what a founder or operator should LEARN" and returned
+# unlabelled prose: a measured result and a vendor's assertion arrived in the
+# same shape, so the reader had to bet the same amount on both. Engine 3 asks
+# for the CAPABILITY plus an epistemic level and an evidence sentence, and caps
+# the level with checks the extractor cannot argue with.
+# Kept live for the same reason as SERP_QUERY_PROMPT above: find_code_in_
+# learning() still runs on every learning and is calibrated against the fixtures
+# in test_research_quality.py.
 LEARNINGS_PROMPT = """\
 Given the following contents from a search for <query>{query}</query>, \
 extract what a founder or operator should LEARN from them.
