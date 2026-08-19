@@ -60,6 +60,9 @@ SDD-OS Parte V (enumeration) + ACIS + D2A + CO + FIOS + one_shot + owner_queue +
     ├── SYNTHESIS (the input to the review — EXTEND pass, UPAC 2026-08-19)
     │   └── DRK-08  Architecture Synthesis & the Unproposed Alternative   force table w/ change rates · 4 boundary generators + corroboration · state-ownership table · option-set contract · straw-alternative detection
     │
+    ├── SEQUENCING (the order decisions land in — EXTEND pass, UPAC 2026-08-19)
+    │   └── DRK-09  Evolution Sequencing & the Work Graph                 4 typed edges · the ready-set filter (ranker unchanged) · critical path · invalidates-as-retirement-trigger · external-blocker routing
+    │
     ├── THE KERNEL
     │   └── DRK-01  Review Kernel & Verdict Engine        review pipeline · composition contracts · adversarial pass · authority block-gate
     │
@@ -91,6 +94,7 @@ SDD-OS Parte V (enumeration) + ACIS + D2A + CO + FIOS + one_shot + owner_queue +
 | **SDD-OS VI** | prediction accountability · attribution model |
 | **DRK-07** | governance & escalation (cross-ref one_shot/owner_queue) · self-evolution (cross-ref FIOS evolution_engine) · authority limits |
 | **DRK-08** | architecture synthesis · force capture with change rates · boundary derivation + corroboration · state-ownership table · option-set contract · straw-alternative detection |
+| **DRK-09** | evolution sequencing · the work graph's four typed edges · ready-set filter · critical path · invalidates-driven retirement · external-blocker routing |
 | **Reference (DO_NOT_BUILD)** | falsification/evidence → ACIS · capability placement → D2A · runtime compiler → FIOS · precedent-collision → arch-decision · unknown-unknown → FIOS II-1/FD-02 |
 
 **DRK-08 and the `arch-decision` reference row do not collide.** The row forbids rebuilding
@@ -162,6 +166,7 @@ alone can never buy fact-grade, no matter how high the level) · `V-EA-FAIL-OPEN
 | SDD-OS Parte VI Accountability | ✅ written | ~2500w · two-ledger · 4-source attribution · calibration (I author) |
 | DRK-07 Governance/Evolution | ✅ written | ~2600w · block-narrow constitution · 3-bias · propose-never-apply (I author) |
 | DRK-08 Architecture Synthesis | ✅ written | 3408w · 0 code fences · 0 contamination · force table w/ change rates · 4 generators + corroboration rule · state-ownership contract · option-set contract · 8 failure modes · 7 detection signatures — **EXTEND pass**, UPAC 2026-08-19 (map system 02 / UASE), Owner option D |
+| DRK-09 Evolution Sequencing | ✅ written | 2671w · 0 code fences · 0 contamination · 4 typed edges · ready-set filter · critical path · invalidates-as-transition-producer · 10 failure modes — **EXTEND pass**, UPAC 2026-08-19 (map system 24 / ASEG); honours the standing candidate-E verdict, ranker untouched |
 | decision_record.py | ✅ built | canonical objects + append-only fail-open Registry |
 | decision_kernel.py | ✅ built | 9-stage sieve · reversibility/DBR/DCS · verdict precedence · block-gate · `live=True` resolves real providers |
 | accountability.py | ✅ built | prediction scoring · 4-source attribution · 3-bias calibration |
