@@ -63,8 +63,21 @@ Cognitive OS (CO-00..CO-10)  +  Parallel Mesh (PM-01..PM-05)     ← PARENT SUBS
     │   └── GK-11  Librarian Swarm · Route Governor · Compression        (EXTEND GK-05/06 + Explore pattern)
     │
     └── GOVERNANCE
-        └── GK-12  Graph-First Enforcement & Honest Guarantee Ledger     (EXTEND CO-10)
+        ├── GK-12  Graph-First Enforcement & Honest Guarantee Ledger     (EXTEND CO-10)
+        └── GK-13  Change Impact & Compatibility Compilation             (COMPOSE architecture_horizon + GK-04/07 + refcheck + drift_registry)
 ```
+
+**Scope extension recorded.** The Owner-approved scope of 2026-07-03 was **13 datasets** (GK-00…12).
+GK-13 makes fourteen, authorized by a different gate: STOP #1 of
+`vault/audits/upac/SYSTEM_OWNERSHIP_OVERLAP_MAP.md`, Owner option **D** (extend passes only), system
+11 (CICC), verdict `EXISTS_PARTIALLY → EXTEND_EXISTING_OWNER` with resolution COMPOSE. The prior
+scope is not silently superseded — it is extended by one, on a named gate, and GK-13 creates no new
+family and no new scanner.
+
+**Why it is not GK-07.** GK-07 is retrospective: a node moved, so routes through it are stale. GK-13
+is prospective: a change has not been made, and the question is who it would break. The two are
+opposite in time over the same edges, and the replacing class of change produces GK-07's *most
+favourable* verdict — the node is fresh, because it was just updated.
 
 ## Dependency graph (consumer → provider)
 
@@ -100,6 +113,7 @@ Cognitive OS (CO-00..CO-10)  +  Parallel Mesh (PM-01..PM-05)     ← PARENT SUBS
 | GK-10 | Cross-Repo Propagation & Merge | **NEW** | deferred PM-06 (vault + CEPS + cross_signal_bus) |
 | GK-11 | Librarian Swarm + Route Governor | **NEW (agent family)** | GK-05/06 + Explore pattern |
 | GK-12 | Graph-First Enforcement & Guarantee Ledger | **EXTEND** | CO-10 |
+| GK-13 | Change Impact & Compatibility Compilation | **COMPOSE** | architecture_horizon dependents + GK-04 typed edges + GK-07 verdicts + refcheck + drift_registry + one_shot/lock |
 
 **COVERED — consumed as substrate, never rebuilt:** Context Economy · Reasoning Elimination · Context
 ROI / Trust / Provenance / Waste / Inflation / Dedup = CO-01/03/04/05. Repo Shared Brain = PM-01
