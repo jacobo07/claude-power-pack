@@ -95,3 +95,66 @@ Owner decision; the `/client/me` endpoint is its own spec-gated task), C1/C2
 repos is its own session and needs Owner input on what is intentional).
 
 **Not touched:** R216, per the brief.
+
+---
+
+## RE-VERIFICATION — 2026-08-19
+
+The same five items (E1, E2, B4, B5, B2) were re-issued as a fresh brief. All five
+were already closed on 2026-08-03. **No work was manufactured to make them look
+executed**; each done-gate was instead re-measured against current disk and remote
+state, because a log entry is a claim and the gate is the measurement.
+
+| # | Gate | Re-measured 2026-08-19 | Verdict |
+|---|---|---|---|
+| **E1** | file exists and is send-ready | `E1_mensaje_maria.md`, 150 lines, `Status: SEND-READY`, verbatim message present, zero unfilled fields | **HOLDS** |
+| **E2** | A2 an open item in GEO-audit | `docs/operator-actions/OPEN_ITEMS.md`, 4,070 B, committed `47dcf42`, A2 present with all fields | **HOLDS** |
+| **B4** | KobiiSpy `REMOTE_DELTA = 0 0` | `origin/main` ↔ `HEAD` = `0 0`, tracked tree clean, HEAD `d6bc185` | **HOLDS (origin)** |
+| **B5** | Jacobo `REMOTE_DELTA = 0 0` | branch `hermes-phase-a` ↔ `origin/hermes-phase-a` = `0 0`, tracked tree clean | **HOLDS** |
+| **B2** | time gate applied, clean tree | all four `prefers-color-scheme: dark` blocks gated by `:where([data-khrs-night-window])`; `prefers-contrast: more` correctly ungated; tree clean, delta `0 0` | **HOLDS** |
+
+### Three traps this re-issue walked into, recorded so the next one does not
+
+**1 · The brief's globals.css line numbers are stale.** It named lines
+129/194/204/279. The gated blocks are actually at **143 / 208 / 218 / 297** — the
+numbers in the *audit document*, not in the *file*, and the file moved ~14 lines
+when the gate was applied. Editing at the named lines would have hit unrelated
+CSS. This is the same failure the B2 correction above already records from the
+other direction: the document is the prompt, the code is the snapshot, and the
+code wins.
+
+**2 · Jacobo measured against the wrong branch reads as 199 commits unpushed.**
+`HEAD...origin/main` returns `199 0`, which looks alarming and is meaningless:
+the work lives on `hermes-phase-a`, `main` is an older unrelated line, and the
+correct measurement is against the branch's own upstream — `0 0`. The brief said
+"push origin main", and executing that literally on 2026-08-03 would have pushed
+the wrong branch; the log records that it was corrected then. A `REMOTE_DELTA`
+gate must name the upstream it measures, or it measures a different repository's
+history.
+
+**3 · `REMOTE_DELTA = 0 0` is under-specified when a repo has two remotes.**
+See the finding below.
+
+### New finding — KobiiSpy's second remote is 4 commits behind
+
+KobiiSpy has **two** remotes, and B4's gate only ever checked one:
+
+| remote | url | state |
+|---|---|---|
+| `origin` | `github.com/jacobo07/kobiispy.git` | in sync — `0 0` |
+| `kobiiclaw` | `kobicraft@204.168.166.63:/home/kobicraft/kobiispy.git` | **4 behind**, 0 ahead |
+
+The VPS mirror sits at `df1a040 feat(scrape-quality): Meta country targeting`,
+a strict ancestor of local `d6bc185` — a clean fast-forward, not a divergence.
+
+**Deliberately not pushed.** That remote is a bare repo on the live KobiiClaw
+VPS, which is a deploy substrate: a push there is a DEPLOY-class action, and it
+is outside B4's stated scope (`git push origin main`). Publishing four commits to
+a live server on the strength of a gate that never mentioned that remote would be
+exactly the silent scope widening this backlog exists to prevent. It is an Owner
+decision, and it is now named rather than invisible.
+
+**Standing correction to the gate itself:** `REMOTE_DELTA = 0 0` should read
+*"0 0 against every configured remote, or the unchecked remotes named"*. A
+single-remote reading of a two-remote repo is an absence of evidence rendered as
+a pass.
