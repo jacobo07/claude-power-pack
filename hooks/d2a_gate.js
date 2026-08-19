@@ -77,6 +77,23 @@ const NOT_CREATION = /\b(extend|extiende|extender|modify|modifica|update|actuali
 const CREATE_VERB_G = new RegExp(CREATE_VERB.source, 'gi');
 const ARCH_NOUN_G = new RegExp(ARCH_NOUN.source, 'gi');
 
+/**
+ * isMultiSystemBrief(prompt) — is this a FAMILY, not a single proposal?
+ *
+ * Deliberately weaker than isCreationProposal()'s mega branch: it counts architecture
+ * nouns but NOT creation verbs. By the time this is consulted the prompt has already
+ * passed that gate, so re-testing the verb would apply a second, stricter filter to an
+ * already-filtered input — and the question here is different anyway. "Is the Owner
+ * creating something?" is answered upstream; this asks "does the brief name enough
+ * distinct systems that one bag-of-words verdict cannot resolve it?"
+ *
+ * Adds no new tunable: MEGA_LEN and the >= 6 noun count are the existing constants.
+ */
+function isMultiSystemBrief(prompt) {
+  const p = String(prompt || '');
+  return p.length > MEGA_LEN && countMatches(ARCH_NOUN_G, p) >= 6;
+}
+
 function readStdin() {
   try { return fs.readFileSync(0, 'utf8'); } catch (_) { return ''; }
 }
@@ -204,15 +221,42 @@ function buildDeferAdvisory(v) {
     + `It is NOT evidence that this proposal is new — treat it as UNKNOWN.\n`
     + `WHY THIS FIRED: the prompt is a multi-system proposal, and the single-proposal path scores `
     + `an entire family as one bag of words, so it cannot resolve ownership per system.\n`
-    + `REQUIRED NEXT ACTION before building anything:\n`
-    + `  1. Decompose the brief into one {name, description} per proposed system.\n`
-    + `  2. python modules/duplicate_to_advantage/d2a_engine.py --family-file <f>.json --repo-evidence\n`
-    + `  3. Check vault/audits/apir/NON_DUPLICATION_LEDGER.md — a DO-NOT-BUILD row reopens only on `
-    + `measured evidence, never on a new name.\n`
-    + `  4. HR-NOVELTY-001 requires the 13-question proof against a DISCOVERED sweep before any new `
-    + `institutional system is admitted.\n`
+    + buildFamilyDirective()
     + `Base rate: fifteen consecutive mega-corpus proposals in this estate measured majority- or `
     + `fully-owned once measured. That is the correct prior, not an accusation.`;
+}
+
+/**
+ * The DECOMPOSITION REQUEST — the joint between this gate and the family path.
+ *
+ * The expansion machinery (d2a_engine.py compute_expansion / build_stop1_menu) is
+ * reachable ONLY from render_family() and the --family-file CLI. This hook calls
+ * --stdin, the single-proposal path, which never enters render_family(). Two working
+ * halves with no joint: the gate could say "a duplicate is here" and nothing turned
+ * that into sibling proposals (vault/specs/d2a-family-wiring.md sec 1).
+ *
+ * The hook deliberately does NOT run the family path itself. Decomposing free prose
+ * into {name, description} records is a judgement operation, not a keyword one, and a
+ * UserPromptSubmit frame is the wrong place to spawn a long analysis. So this asks the
+ * AGENT to decompose in-turn and names the one command that does the rest. That keeps
+ * the honest enforcement level at 2 (detect / request), never claiming the level-3 it
+ * does not have.
+ */
+function buildFamilyDirective() {
+  return `DECOMPOSITION REQUEST (do this before building anything):\n`
+    + `  1. Decompose the brief into one {name, description} record per PROPOSED SYSTEM. `
+    + `Use the brief's own words. Merging two proposed systems into one record hides a `
+    + `duplicate; splitting one into two manufactures a family nobody proposed.\n`
+    + `  2. Run /d2a-family with that list. It writes the JSON to the scratchpad and runs:\n`
+    + `     python modules/duplicate_to_advantage/d2a_engine.py --family-file <f>.json --repo-evidence\n`
+    + `     That is the ONLY path that reaches per-system FOLD/MERGE/KEEP/DEFER and the STOP #1 `
+    + `menu — including option D, which proposes genuinely-new adjacent systems for the slots the `
+    + `overlap frees. This single-proposal path cannot produce either.\n`
+    + `  3. Read DEFER as UNKNOWN, never as new.\n`
+    + `  4. Check vault/audits/apir/NON_DUPLICATION_LEDGER.md — a DO-NOT-BUILD row reopens only on `
+    + `measured evidence, never on a new name.\n`
+    + `  5. HR-NOVELTY-001 requires the 13-question proof against a DISCOVERED sweep before any new `
+    + `institutional system is admitted.\n`;
 }
 
 /**
@@ -258,10 +302,24 @@ function run(input) {
     }
     if (!v.contract || !v.recommended) return {};     // no alternative to offer -> silence
 
+    // A CONFIRMED duplicate on a multi-system brief is under-resolved in exactly the
+    // way the deferred branch already warns about: one named parent, for a prompt that
+    // proposed many systems. The single recommended alternative is real, but it answers
+    // one question out of N. Route to the family path too, so the other N-1 get scored
+    // and the expansion menu (option D) becomes available for the freed slots.
+    // Scoped to multi-system briefs: on an ordinary single proposal the contract IS the
+    // whole answer, and appending a family directive there would be noise
+    // (T-D2A-GATE-KEYWORD-SCOPE-001 — false positives are the expensive failure).
+    const advisory = isMultiSystemBrief(prompt)
+      ? buildAdvisory(v) + `\n\nTHIS BRIEF PROPOSES MULTIPLE SYSTEMS. The verdict above `
+        + `names ONE parent for the whole prompt; it does not resolve the rest.\n`
+        + buildFamilyDirective()
+      : buildAdvisory(v);
+
     return {
       hookSpecificOutput: {
         hookEventName: 'UserPromptSubmit',
-        additionalContext: buildAdvisory(v),
+        additionalContext: advisory,
       },
     };
   } catch (_) {
@@ -269,7 +327,8 @@ function run(input) {
   }
 }
 
-module.exports = { run, isCreationProposal, buildAdvisory, buildDeferAdvisory };
+module.exports = { run, isCreationProposal, isMultiSystemBrief, buildAdvisory,
+                   buildDeferAdvisory, buildFamilyDirective };
 
 // --- Standalone CLI (shell-free CHAIN_MAP child) --------------------------
 if (require.main === module) {

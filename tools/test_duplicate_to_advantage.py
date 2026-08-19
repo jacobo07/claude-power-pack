@@ -554,6 +554,86 @@ def main(argv=None) -> int:
                   f"len={len(mega)} rc={rc} ctx_len={len(ctx_m)} -- a mega-corpus "
                   "proposal went unanswered")
 
+        # ---- Family wiring (vault/specs/d2a-family-wiring.md) ------------------
+        # The expansion machinery was reachable ONLY from render_family() and the
+        # --family-file CLI, while the sole automatic surface (this hook) calls
+        # --stdin. Two working halves, no joint. These four gates assert the joint.
+
+        # V-D2A-FAMILY-COMMAND: the live surface exists. Reachability seeds from
+        # commands/*.md -- without this file build_stop1_menu() is live code behind
+        # a CLI nothing invokes.
+        _cmd = _PP_ROOT / "commands" / "d2a-family.md"
+        _cmd_src = _cmd.read_text(encoding="utf-8", errors="replace") if _cmd.is_file() else ""
+        if "--family-file" in _cmd_src and "d2a_engine.py" in _cmd_src:
+            _ok("V-D2A-FAMILY-COMMAND",
+                f"commands/d2a-family.md present ({len(_cmd_src)}B) and names the "
+                "--family-file invocation")
+        else:
+            _fail("V-D2A-FAMILY-COMMAND",
+                  f"exists={_cmd.is_file()} names_flag={'--family-file' in _cmd_src}")
+
+        # V-D2A-FAMILY-REACHABLE: the command's instruction must match the engine's
+        # REAL flag. Asserted against d2a_engine.py source so the instruction cannot
+        # rot into a flag that no longer exists -- a dead instruction is worse than
+        # none, because it reads as a working route.
+        _eng_src = (_PP_ROOT / "modules" / "duplicate_to_advantage"
+                    / "d2a_engine.py").read_text(encoding="utf-8", errors="replace")
+        _flag_real = '"--family-file"' in _eng_src
+        _menu_on_family = "build_stop1_menu" in _eng_src and "args.family_file" in _eng_src
+        if _flag_real and _menu_on_family:
+            _ok("V-D2A-FAMILY-REACHABLE",
+                "--family-file is a real engine flag and the family path builds the "
+                "STOP #1 menu; the command's instruction resolves")
+        else:
+            _fail("V-D2A-FAMILY-REACHABLE",
+                  f"flag_real={_flag_real} menu_on_family={_menu_on_family}")
+
+        # V-D2A-ADVISORY-DECOMPOSITION: the UNDETERMINED advisory must carry the
+        # structured request AND name the command -- prose steps were what left the
+        # agent to improvise the next action.
+        _mega2 = (
+            "Build the complete corpus of 25 sibling systems and their constitution. "
+            "Each system is a dataset family with its own architecture, registry and "
+            "engine. Design the intent compiler, the architecture synthesis engine, "
+            "the verification engine, the debugging system, the knowledge graph, the "
+            "capability promotion engine and the governance layer. "
+        ) * 12
+        _rc, _o = _run_gate(_mega2)
+        try:
+            _ctx = (json.loads(_o) or {}).get(
+                "hookSpecificOutput", {}).get("additionalContext", "")
+        except Exception:  # noqa: BLE001
+            _ctx = ""
+        if "DECOMPOSITION REQUEST" in _ctx and "/d2a-family" in _ctx:
+            _ok("V-D2A-ADVISORY-DECOMPOSITION",
+                f"multi-system brief -> advisory carries the structured request and "
+                f"names /d2a-family ({len(_ctx)}B)")
+        else:
+            _fail("V-D2A-ADVISORY-DECOMPOSITION",
+                  f"rc={_rc} has_req={'DECOMPOSITION REQUEST' in _ctx} "
+                  f"has_cmd={'/d2a-family' in _ctx} ctx={len(_ctx)}B")
+
+        # V-D2A-DUPLICATE-ROUTES-FAMILY: scope. A multi-system brief routes to the
+        # family path; an ORDINARY single proposal must NOT -- there the contract is
+        # the whole answer and a family directive would be noise.
+        _short_rc, _short_o = _run_gate(
+            "build a new system to plan and allocate the frontier token budget, "
+            "pricing cost as capital")
+        try:
+            _short_ctx = (json.loads(_short_o) or {}).get(
+                "hookSpecificOutput", {}).get("additionalContext", "")
+        except Exception:  # noqa: BLE001
+            _short_ctx = ""
+        _long_routes = "/d2a-family" in _ctx
+        _short_quiet = "/d2a-family" not in _short_ctx
+        if _long_routes and _short_quiet:
+            _ok("V-D2A-DUPLICATE-ROUTES-FAMILY",
+                "multi-system brief routes to the family path; single proposal does "
+                f"not (short advisory {len(_short_ctx)}B, no directive)")
+        else:
+            _fail("V-D2A-DUPLICATE-ROUTES-FAMILY",
+                  f"long_routes={_long_routes} short_quiet={_short_quiet}")
+
         # V-D2A-GATE-KEYWORD-SCOPE: use/extend/fix/read are NEVER intercepted
         # (T-D2A-GATE-KEYWORD-SCOPE-001: false positives are the expensive failure).
         negatives = [
