@@ -3,8 +3,8 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 33
-parts_sealed: 31
-state: SECOND EXTENSION IN PROGRESS — 31 of 33 sealed under gate UPAC-D; acceptance line remains empty
+parts_sealed: 32
+state: SECOND EXTENSION IN PROGRESS — 32 of 33 sealed under gate UPAC-D; acceptance line remains empty
 unsealed_on: 2026-08-10
 unsealed_again_on: 2026-08-19
 ---
@@ -69,6 +69,7 @@ neighbour's territory — Part 31 §9.1 is the sharpest, separating the input-sp
 | Part | Subject (fixed by `UPAC-D`) | Status |
 |---|---|---|
 | 31 | Failure-family synthesis and the sibling input space — point/extent/class, four sibling generators, the depth-one bound and declared budget, discrimination ranking, three-valued outcomes, the extent record, ascension by width **and** spread — `PART_31_failure_family_synthesis.md` | **SEALED** |
+| 32 | Hypothesis trees, discrimination and the residual set — the single-hypothesis trap, the admissibility contract and the merge rule, the tree over **experiments**, even-split ranking and why the leading hypothesis is usually the wrong first test, three terminations, the residual set as a stated bet — `PART_32_hypothesis_trees_and_discrimination.md` | **SEALED** |
 
 `AUTHORIZED` means the subject is ratified and the Part is not written. A row flips to
 `SEALED` only when its file exists and `parts_sealed` is incremented, per the construction
