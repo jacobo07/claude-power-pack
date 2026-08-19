@@ -3,8 +3,8 @@ title: CLAE — Master Index
 family: clae
 date: 2026-07-26
 parts_total: 33
-parts_sealed: 32
-state: SECOND EXTENSION IN PROGRESS — 32 of 33 sealed under gate UPAC-D; acceptance line remains empty
+parts_sealed: 33
+state: SECOND EXTENSION COMPLETE — 33 of 33 sealed under gate UPAC-D; acceptance line remains empty
 unsealed_on: 2026-08-10
 unsealed_again_on: 2026-08-19
 ---
@@ -70,6 +70,15 @@ neighbour's territory — Part 31 §9.1 is the sharpest, separating the input-sp
 |---|---|---|
 | 31 | Failure-family synthesis and the sibling input space — point/extent/class, four sibling generators, the depth-one bound and declared budget, discrimination ranking, three-valued outcomes, the extent record, ascension by width **and** spread — `PART_31_failure_family_synthesis.md` | **SEALED** |
 | 32 | Hypothesis trees, discrimination and the residual set — the single-hypothesis trap, the admissibility contract and the merge rule, the tree over **experiments**, even-split ranking and why the leading hypothesis is usually the wrong first test, three terminations, the residual set as a stated bet — `PART_32_hypothesis_trees_and_discrimination.md` | **SEALED** |
+| 33 | Deterministic replay, effect virtualization and replay fidelity — three sources of divergence, the effect boundary and its three properties, the capture contract, the **F0–F3 fidelity ladder** and the declaration rule, divergence semantics with the fail-closed rule, fidelity bought per named failure class — `PART_33_deterministic_replay_and_effect_virtualization.md` | **SEALED** |
+
+**Narrowing recorded.** The map's system 09 (PDTR) named environment fingerprinting alongside
+deterministic replay. The fingerprint — environment hash, field-level drift ledger, qualification
+gate — is **already owned** by the environment-qualification discipline, so Part 33 consumes it as
+F3's ambient record and builds none of it. What was genuinely unowned is the effect boundary, the
+capture contract, the fidelity ladder and divergence semantics. The map's own verdict was MERGE
+rather than a new family, on the grounds that a PDTR family would be a second reconstruction engine;
+§9 holds that line against the external-system reconstruction owner by name.
 
 `AUTHORIZED` means the subject is ratified and the Part is not written. A row flips to
 `SEALED` only when its file exists and `parts_sealed` is incremented, per the construction
