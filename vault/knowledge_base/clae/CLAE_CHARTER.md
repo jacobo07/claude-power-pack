@@ -2,9 +2,9 @@
 title: CLAE — Closed-Loop Autonomous Engineering Laboratory · Dataset Charter
 family: clae
 date: 2026-07-26
-status: UNSEALED — extension to 30 Parts authorized by gate G2, 2026-08-10
-parts: 30
-parts_sealed: 26
+status: UNSEALED — 30 Parts by gate G2 (2026-08-10); 31–33 by gate UPAC-D (2026-08-19)
+parts: 33
+parts_sealed: 31
 gaps_closed: [G1, G2, G3, G4, G5]
 gap_namespace_note: >-
   `gaps_closed` names CLAE's own corpus gaps. It is NOT the ratification-gate

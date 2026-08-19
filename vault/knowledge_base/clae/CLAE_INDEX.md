@@ -2,10 +2,11 @@
 title: CLAE — Master Index
 family: clae
 date: 2026-07-26
-parts_total: 30
-parts_sealed: 30
-state: EXTENSION COMPLETE — 30 of 30 sealed; acceptance line remains empty
+parts_total: 33
+parts_sealed: 31
+state: SECOND EXTENSION IN PROGRESS — 31 of 33 sealed under gate UPAC-D; acceptance line remains empty
 unsealed_on: 2026-08-10
+unsealed_again_on: 2026-08-19
 ---
 
 # CLAE — Master Index
@@ -43,6 +44,31 @@ empty* — stands until a constituency accepts it, and the producer may not.
 | 28 | Freeze and adversarial multipass — the freeze, the closure pack, **nine** passes and their selection, negative proof as route enumeration — `PART_28_freeze_and_adversarial_multipass.md` | **SEALED** |
 | 29 | Cognitive precursors and the same-session repair loop — preflight, the evidence ledger, ten precursors, three-way classification, review budget and stop condition — `PART_29_cognitive_precursors_and_the_repair_loop.md` | **SEALED** |
 | 30 | Root-cause elevation, sibling campaigns, failure-to-immunity — the **six**-level ladder, the ten-question cause test, family-keyed sibling search, the cause-to-protection compiler, no orphan closure, promotion by derivation — `PART_30_root_cause_elevation_and_immunity.md` | **SEALED** |
+
+## Second unseal record — UPAC-D
+
+A second extension, authorized by a different gate in a different namespace. It is named for its
+origin rather than given a letter, because `G1`–`G5` are already two colliding ladders in this family
+(the charter's own `gaps_closed` and `TOPOLOGY_ADR.md` §8) and a third would be unreadable.
+
+| Field | Value |
+|---|---|
+| Gate | **UPAC-D** — STOP #1 of `vault/audits/upac/SYSTEM_OWNERSHIP_OVERLAP_MAP.md` |
+| Ratified | 2026-08-19, by the Owner, selecting option **D** ("extend passes only") |
+| Scope | Parts **31–33**, subjects fixed by the map's systems 07 (USTSE), 08 (CDRI), 09 (PDTR) |
+| Constraint carried | Parts appended to an existing family; **no new family is created** |
+| Precedent | `COMPENDIUM_CHARTER.md` "The five EXTEND passes" — the pattern's first execution |
+
+**Why these three subjects land here.** The map routed all three to owners CLAE already holds:
+USTSE to the incident-conversion and lineage machinery (XV, XXI, X §7), CDRI to root-cause elevation
+(29, 30), PDTR to observability-capable Phase Zero (XII §5's determinism envelope). Each was probed
+against the family before authoring, and each Part states the boundary that keeps it out of its
+neighbour's territory — Part 31 §9.1 is the sharpest, separating the input-space search from Part 30
+§5's artifact-space campaign, which is the overlap this extension came closest to committing.
+
+| Part | Subject (fixed by `UPAC-D`) | Status |
+|---|---|---|
+| 31 | Failure-family synthesis and the sibling input space — point/extent/class, four sibling generators, the depth-one bound and declared budget, discrimination ranking, three-valued outcomes, the extent record, ascension by width **and** spread — `PART_31_failure_family_synthesis.md` | **SEALED** |
 
 `AUTHORIZED` means the subject is ratified and the Part is not written. A row flips to
 `SEALED` only when its file exists and `parts_sealed` is incremented, per the construction
