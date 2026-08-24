@@ -29,12 +29,25 @@
 const fs = require('fs');
 const path = require('path');
 
+/*
+ * fs.readFileSync with a leading UTF-8 BOM removed from text reads. Same signature,
+ * so call sites keep their arguments; binary reads return a Buffer untouched.
+ * `JSON.parse` rejects U+FEFF as "Unexpected token", which reads as a corrupt
+ * manifest rather than an encoding artefact — and on Windows the BOM is the default.
+ * A manifest that cannot be read is a candidate that silently never competes.
+ */
+function _rf(p, enc) {
+  const data = fs.readFileSync(p, enc);
+  return typeof data === 'string' && data.charCodeAt(0) === 0xFEFF
+    ? data.slice(1) : data;
+}
+
 const { REDISTRIBUTION_BY_TIER } = require('../../lib/license_gate');
 
 const SCHEMA_PATH = path.join(__dirname, 'component_manifest.schema.json');
 
 function loadSchema() {
-  return JSON.parse(fs.readFileSync(SCHEMA_PATH, 'utf8'));
+  return JSON.parse(_rf(SCHEMA_PATH, 'utf8'));
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -201,7 +214,7 @@ function validate(manifest, schema) {
 function validateFile(file, schema) {
   let parsed;
   try {
-    parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+    parsed = JSON.parse(_rf(file, 'utf8'));
   } catch (e) {
     return { valid: false, errors: [{ path: '', rule: 'parse', message: e.message }] };
   }

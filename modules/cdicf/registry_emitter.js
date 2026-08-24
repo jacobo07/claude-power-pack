@@ -68,6 +68,19 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+/*
+ * fs.readFileSync with a leading UTF-8 BOM removed from text reads. Same signature,
+ * so call sites keep their arguments; binary reads return a Buffer untouched.
+ * `JSON.parse` rejects U+FEFF as "Unexpected token", and on Windows the BOM is the
+ * default, so the emitter refused valid manifests for a reason that named the wrong
+ * thing. The Python half of this subsystem already reads `utf-8-sig`.
+ */
+function _rf(p, enc) {
+  const data = fs.readFileSync(p, enc);
+  return typeof data === 'string' && data.charCodeAt(0) === 0xFEFF
+    ? data.slice(1) : data;
+}
+
 const { REDISTRIBUTION_BY_TIER } = require('../../lib/license_gate');
 const { validate, loadSchema } = require('./validate_manifest');
 
@@ -282,7 +295,7 @@ function emit(manifest, opts) {
 function emitFile(file, opts) {
   let parsed;
   try {
-    parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+    parsed = JSON.parse(_rf(file, 'utf8'));
   } catch (e) {
     return refuse('MANIFEST_INVALID', `cannot read manifest: ${e.message}`);
   }

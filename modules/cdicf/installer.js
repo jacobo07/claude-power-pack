@@ -76,6 +76,26 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+/*
+ * fs.readFileSync with a leading UTF-8 BOM removed from text reads.
+ *
+ * Same signature as the function it replaces, so call sites keep their arguments.
+ * Binary reads (no encoding) come back as a Buffer and pass through untouched.
+ *
+ * Why it exists: `JSON.parse` rejects U+FEFF with "Unexpected token", and on Windows
+ * the BOM is the DEFAULT — PowerShell's `>` and `Out-File -Encoding utf8` both emit
+ * one. A BOM'd `package.json` therefore threw inside `_declaredNpm`'s catch, left the
+ * declared set empty, and reported EVERY dependency of a perfectly valid project as
+ * unresolved. The Python half of that identical check — `modules/cdio/scorer.py`
+ * `_declared_npm`, `encoding="utf-8-sig"` — resolved them, so the two halves of one
+ * dependency check returned opposite answers on the same file.
+ */
+function _rf(p, enc) {
+  const data = fs.readFileSync(p, enc);
+  return typeof data === 'string' && data.charCodeAt(0) === 0xFEFF
+    ? data.slice(1) : data;
+}
+
 const { REDISTRIBUTION_BY_TIER } = require('../../lib/license_gate');
 const { rollupChecksum } = require('./registry_emitter');
 
@@ -135,7 +155,7 @@ function unresolvedDependencies(entry, target, paths) {
 
   const declared = new Set();
   try {
-    const pkg = JSON.parse(fs.readFileSync(path.join(target, 'package.json'), 'utf8'));
+    const pkg = JSON.parse(_rf(path.join(target, 'package.json'), 'utf8'));
     for (const field of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
       for (const name of Object.keys(pkg[field] || {})) declared.add(name);
     }
@@ -196,7 +216,7 @@ function writeDurable(file, data) {
 
 function readJsonOr(file, fallback) {
   try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+    return JSON.parse(_rf(file, 'utf8'));
   } catch (_) {
     return fallback;
   }
@@ -1024,8 +1044,8 @@ function main(argv) {
     if (!from) { process.stderr.write('installer.js: --from <emitDir> is required\n'); process.exit(2); }
     let entry, im;
     try {
-      entry = JSON.parse(fs.readFileSync(path.join(from, 'registry-item.json'), 'utf8'));
-      im = JSON.parse(fs.readFileSync(path.join(from, 'install-manifest.json'), 'utf8'));
+      entry = JSON.parse(_rf(path.join(from, 'registry-item.json'), 'utf8'));
+      im = JSON.parse(_rf(path.join(from, 'install-manifest.json'), 'utf8'));
     } catch (e) {
       process.stderr.write(`installer.js: cannot read emitter output from ${from}: ${e.message}\n`);
       process.exit(3);
