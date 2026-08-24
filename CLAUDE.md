@@ -14,6 +14,25 @@ Invoke `cpp creative` (Creative Compilation Framework, `modules/ccf/`) when ANY 
 Activate: `python -m modules.ccf.cli init <project> --brief <brief.txt>`, then `generate`/`select`/`package`.
 Produces: `config.json` + `spec.json`, a trademark-collision-scanned prompt per concept, and (on `package`) a sealed brand-kit PDF. Every WARN/BLOCK verdict and provider failure is fed into `vault/knowledge_base/ccf/` — do not hand-write entries there; only the CLI's real call path should ever produce them (T-CCF-BUILT-NOT-ACTIVATED-001).
 
+## Experience Contract — baseline for any interactive surface (CDIO-07, added 2026-08-24)
+A surface is judged at rest by CDIO-01..06. How it BEHAVES — on touch, and while it waits —
+is declared, not settled by whoever writes the last component. Baseline, inherited by every
+new build with an interactive surface:
+- **Declare before building.** `experience:` in DESIGN.md front-matter, reached via
+  `modules/design-md/prompts/experience-picker.md`. Mirrors the family rule
+  (`PR-EXPERIENCE-DECLARE-BEFORE-BUILD-001`).
+- **Absence is never a failure.** No contract ⇒ `unassessed`, reported, score untouched.
+  Retrofitting is optional; declaring before building is the rule.
+- **`expressiveness: none` is a passing contract.** Never flag a deliberately still
+  interface, and never recommend RAISING a ceiling — that moves at the picker, by a human
+  (`T-EXPRESSION-ONLY-RATCHET-001`).
+- **Floors are not arbitrable.** Reduced-motion equivalence, motion-as-sole-channel and
+  blocking animation are CRITICAL (`HR-EXPERIENCE-FLOOR-001`).
+- **Three separate answers.** Score/verdict = quality; `is_done` = quality AND conformance;
+  product evidence = out of scope. A breach withholds done and never moves the number.
+- Gate: `python tools/test_experience_contract.py` (V-EXP-*). Context for CDICF:
+  `python tools/design_gate.py --emit-context ./DESIGN.md --out ctx.json` — never hand-written.
+
 ## Project Governance & Knowledge (added 2026-07-11)
 Normative rules that every project using Claude Power Pack obeys from its first commit live
 in `governance/` (one domain per file, imperative, each rule cites a real incident):

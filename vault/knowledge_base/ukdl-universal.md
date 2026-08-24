@@ -6449,6 +6449,113 @@ now because that test is not a `verify_spp` row.
 `V-IV-*` (20/20). Sisters: `HR-INTENT-FIDELITY-IS-DONE-CRITERION-001`,
 `T-SILENT-VOCABULARY-COLLAPSE-001`, `feedback_never_gate_on_a_ratio`.
 
+## HR-EXPERIENCE-FLOOR-001 — no posture, family or character buys a behavioural floor
+
+**TRIGGER:** about to ship, approve, or justify motion, a transition, a celebration
+or a character where the reduced-motion equivalent is absent, where motion is the
+only channel carrying essential information, or where an animation holds input.
+
+**ACCIÓN:** STOP. These are accessibility floors, CRITICAL by CDIO-00 §4, and they
+are not arbitrable against expressiveness, brand character or a declared aesthetic
+family (CDIO-06 §3 rule 5, restated CDIO-07 §5). `equivalent` means the information
+and the state change still ARRIVE by a non-motion channel — a shortened animation is
+not an equivalent. Mechanical: `check_reduced_motion`, `check_motion_sole_channel`,
+`check_blocking_animation` in `modules/cdio/scorer.py`.
+
+**EXCEPCIÓN:** none. A floor has no posture that lifts it.
+**ORIGEN:** CDIO-07 build 2026-08-24; the thresholds existed in CDIO-02 §7 prose and
+in zero executable lines, so the rule was a preference for as long as it existed.
+
+## T-EXPRESSION-ONLY-RATCHET-001 — an axis that can only demand MORE cannot refuse
+
+**TRAP:** a quality axis whose checks all fire on absence — no animation, no
+feedback, no celebration — reads as rigorous and is structurally a ratchet. It can
+recommend adding forever and can never say "this is too much", so every review
+moves the product one direction and the ceiling is decided by whoever reviews last.
+The failure is invisible because each individual finding is defensible.
+
+**FIX:** every axis must be OBSERVED refusing in both directions before it is
+believed. Concretely: `check_progress_cue` fails an absent cue past the threshold
+AND a cue that flashes below the 200 ms perception floor; `expressiveness: none` is
+a complete PASSING contract; raising a declared ceiling is a product decision at the
+picker and is never a review finding. Pin it with a test that fails on over-delivery
+(`V-EXP-BIDIRECTIONAL`), not only on absence.
+
+**Generaliza:** any budget, quota or standard expressed as a minimum with no maximum.
+**ORIGEN:** CDIO-07 build 2026-08-24. Sisters: `feedback_zero_cannot_fall`,
+`feedback_never_gate_on_a_ratio`.
+
+## T-CONTRACT-WITHOUT-TEETH-001 — a check that reports but cannot withhold never ran
+
+**TRAP:** a compliance check is deliberately kept off the score to avoid re-scoring
+history — correct — and is then wired so that its failure changes nothing at all. It
+appears in the output, it is `passed: False`, and the surface still returns
+`is_done: True`. The check is indistinguishable from a check that does not exist,
+and it is worse than absent because its presence reads as coverage.
+
+**FIX:** separating a concern from the SCORE is not the same as separating it from
+the DECISION. Give it a distinct lever: score untouched, verdict untouched, and the
+done-claim withheld. If a failing check cannot name one thing it stops, it is
+documentation.
+
+**DETECTOR:** for every check, ask what observable outcome differs between its pass
+and its fail. No answer means no check.
+**ORIGEN:** CDIO-07 build 2026-08-24 — found by reading the suite's own output: four
+recorded contract breaches with `is_done=True`. Sisters:
+`T-CRITICAL-AS-DEDUCTION-RESCORES-HISTORY-001`, `feedback_producer_fires_sink_empty`.
+
+## PR-EXPERIENCE-DECLARE-BEFORE-BUILD-001 — declare behaviour before the first component
+
+**PROCESS RULE:** declare the experience contract (`experience:` in DESIGN.md,
+CDIO-07) before the first interactive component, in the same way the aesthetic family
+is declared before the first token. Reach it with the picker
+(`modules/design-md/prompts/experience-picker.md`), whose second and third questions
+may only NARROW the ceiling the first one set.
+
+**WHY:** undeclared behaviour is not neutral — it is settled by whoever writes the
+last component, and the product acquires a feel nobody chose. Declared late, the
+contract is written to match whatever shipped, which is not a contract.
+
+**NOT A GATE ON EXISTING WORK:** an absent contract is `unassessed`, reported and
+never failed. Retrofitting is optional; declaring before building is the rule.
+**ORIGEN:** CDIO-07 build 2026-08-24, mirroring `PR-DESIGN-FAMILY-BEFORE-BUILD-001`.
+
+## T-BOM-BREAKS-CROSS-LANGUAGE-HANDOFF-001 — the producer must own its encoding #CROSS-PROJECT
+
+**TRAP:** a Python (or any) producer writes JSON that a Node (or any) consumer reads,
+and the documented hand-off is a shell redirect. On Windows, PowerShell's `>` and
+`Out-File -Encoding utf8` both prepend a UTF-8 BOM, and `JSON.parse` rejects U+FEFF
+with `Unexpected token '﻿'`. The message names the DOCUMENT, so the operator debugs
+the document, which is fine. The BOM is the default on the platform, so this is the
+common path, not an edge case.
+
+**FIX, both ends:**
+1. the PRODUCER writes the file itself (`--out`, UTF-8 no BOM) so the round trip does
+   not depend on which shell the operator used;
+2. the CONSUMER strips a leading U+FEFF before parsing — Python's `utf-8-sig`, or a
+   three-line `readJson` in JS.
+A consumer that trusts its producer's encoding is one guard.
+
+**ORIGEN:** CDIO-07 build 2026-08-24 — `tools/design_gate.py --emit-context` into
+`modules/cdicf/selector.js --context`; all four JSON readers in that file were
+affected, not only the one on the new path. Sisters:
+`feedback_powershell_bom_to_native_exe`, `feedback_python_utf8_bom`.
+
+## PR-DECLARE-ONCE-POINT-ALWAYS-001 — a second copy of a decision is a drift surface
+
+**PROCESS RULE:** when a value is declared in a machine-read location, prose that
+discusses it must POINT at it, never restate it. Write why the value is what it is;
+never write the value again.
+
+**WHY:** two copies of one decision is one decision plus a drift surface, and the
+drift is silent until a consumer acts on the stale half. The `DESIGN.md` template
+carried the motion budget twice — once in the provenance decisions and once in the
+Motion prose — while the machine read a third, hand-written copy in a context file.
+
+**APPLIES TO:** front-matter vs prose, a spec vs its implementation constant, a
+governance doc vs the gate that enforces it, a manifest vs a registry entry.
+**ORIGEN:** CDIO-07 build 2026-08-24. Sister: `feedback_hook_dispatcher_split_brain_mirror`.
+
 - [tooling/bash:hooks] `ceps_94c9ded2192f6a52` -- Tool failure in bash:hooks: SyntaxError: (unicode. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [env/bash:echo] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:echo: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
@@ -6474,3 +6581,75 @@ now because that test is not a `verify_spp` row.
 - [regression/bash:cd] `ceps_5ee413c0d90a1085` -- Before touching bash:cd, verify the regression scenario (AssertionError) is still covered by a passing test.
 
 - [regression/bash:cd] `ceps_5ee413c0d90a1085` -- Before touching bash:cd, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:cat] `ceps_5ee413c0d90a1085` -- Before touching bash:cat, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [regression/bash:cat] `ceps_5d28a90f4498a814` -- Before touching bash:cat, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:cd] `ceps_fcda57209e1aef67` -- Tool failure in bash:cd: Exception Connecting: ReadTimeoutException : null. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_122972c7a1add6dc` -- Tool failure in bash:cd: SyntaxError: expected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_c17a90e50ecc9ed4` -- Tool failure in bash:cd: loadError: null,. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_32c81db73ae32ae0` -- Tool failure in bash:cd: Exception as e:  # noqa: BLE001 -- fail-open. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_4aa9e29d52a05973` -- Tool failure in bash:cd: Exception:  # noqa: BLE001 -- fail-open per item, never abo.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:cd] `ceps_904434f799a130f1` -- Environment mismatch on bash:cd: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:cd] `ceps_800b4bb5043e7306` -- Tool failure in bash:cd: Error: | Successfully | Failed to. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:rtk.exe] `ceps_d284f9fa8e8a94c8` -- Tool failure in bash:rtk.exe: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_8f7ae0509c9ca7ce` -- Tool failure in bash:cd: Exception::InitConsole. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:cd] `ceps_d284f9fa8e8a94c8` -- Tool failure in bash:cd: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_c773f25b4c2973b3` -- Tool failure in bash:cd: Error ? err.message : String(err. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:cd] `ceps_904434f799a130f1` -- Environment mismatch on bash:cd: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:cd] `ceps_d47d40fe40071e32` -- Tool failure in bash:cd: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:cd] `ceps_728f230524c30931` -- Tool failure in bash:cd: Error: Only in-game players can use setspawn."        OBSER.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_b17cedbdb942b7fd` -- Tool failure in bash:cd: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_b17cedbdb942b7fd` -- Tool failure in bash:cd: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_2c99a3eb2ccb049c` -- Tool failure in bash:cd: Error ? error.message : String(error. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:rtk.exe] `ceps_d47d40fe40071e32` -- Tool failure in bash:rtk.exe: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:rtk.exe] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:rtk.exe: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:cd] `ceps_16d74d45b5e8629e` -- Tool failure in bash:cd: Error: sidebar width 520. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_16d74d45b5e8629e` -- Tool failure in bash:cd: Error: sidebar width 520. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_2352f86b364472c9` -- Tool failure in bash:cd: Error('splitActiveTerminalPane: no active terminal tab. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_6c7f4f9339c2bf50` -- Tool failure in bash:cd: Error('waitForActivePanePtyId: active pane has no PTY bindi.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_cbcb41ec76fcf266` -- Tool failure in bash:cd: FATAL: not. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_955c0c92387de7eb` -- Tool failure in bash:cd: Exception as exc:  # noqa: BLE001 - se cuenta y se sigue. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_b18a393e073ee9c0` -- Tool failure in bash:cd: FATAL: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_d47d40fe40071e32` -- Tool failure in bash:cd: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:sed] `ceps_c773f25b4c2973b3` -- Tool failure in bash:sed: Error ? err.message : String(err. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:sed] `ceps_5d28a90f4498a814` -- Before touching bash:sed, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:cd] `ceps_af9d60cbac62779d` -- Tool failure in bash:cd: Error(`salida ilegible del analizador: ${err.slice(-200. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
