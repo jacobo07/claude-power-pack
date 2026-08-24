@@ -571,11 +571,30 @@ function explainOne(s, i, all, adopted) {
  * CLI
  * ------------------------------------------------------------------------- */
 
+/*
+ * Read a JSON file, tolerating a UTF-8 BOM.
+ *
+ * `JSON.parse` rejects a leading U+FEFF with "Unexpected token", which reads as a
+ * corrupt document rather than as an encoding artefact — so the operator debugs the
+ * wrong thing. On Windows the BOM is the default, not the exception: PowerShell's
+ * `>` and `Out-File -Encoding utf8` both emit one, so a context or manifest produced
+ * by the documented shell redirect crashed this tool before it could filter anything.
+ *
+ * Inlined rather than shared: the primitive is three lines, and this module is
+ * deliberately dependency-free (see README). The Python half of the same subsystem
+ * already reads with `utf-8-sig` for exactly this reason (`modules/cdio/scorer.py`,
+ * `tools/design_gate.py`); this is the JS half catching up, not a new convention.
+ */
+function readJson(file) {
+  const raw = fs.readFileSync(file, 'utf8');
+  return JSON.parse(raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw);
+}
+
 function loadCandidates(dir) {
   return fs.readdirSync(dir)
     .filter(f => f.endsWith('.json'))
     .sort()
-    .map(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+    .map(f => readJson(path.join(dir, f)));
 }
 
 /*
@@ -588,13 +607,13 @@ function loadCandidates(dir) {
  * catalogue derived from a fact about the query.
  */
 function loadCandidateList(file) {
-  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const raw = readJson(file);
   const paths = Array.isArray(raw) ? raw : (raw && raw.candidates);
   if (!Array.isArray(paths) || paths.length === 0) {
     throw new Error(
       `${file} names no candidates — a search miss is not a field of poor fits`);
   }
-  return paths.map(p => JSON.parse(fs.readFileSync(p, 'utf8')));
+  return paths.map(p => readJson(p));
 }
 
 const USAGE =
@@ -639,7 +658,7 @@ function main(argv) {
   try {
     candidates = candList ? loadCandidateList(candList) : loadCandidates(candDir);
     const ctxFile = flagArg('--context');
-    if (ctxFile) ctx = JSON.parse(fs.readFileSync(ctxFile, 'utf8'));
+    if (ctxFile) ctx = readJson(ctxFile);
   } catch (e) {
     process.stderr.write(`selector.js: ${e.message}\n`);
     process.exit(3);
