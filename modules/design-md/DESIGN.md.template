@@ -9,6 +9,27 @@ description: One-line summary of the visual identity (e.g. Heritage editorial, t
 # This template ships F3 as a starting point, not as a default to leave unexamined:
 # if F3 is not your product's family, change it before you change anything else.
 aesthetic_family: F3   # Warm Editorial — serif body, terracotta on cream, humanized prosumer
+# OPTIONAL. The experience contract (CDIO-07). Declares how the surface BEHAVES —
+# what it does when touched and while it waits — as opposed to how it looks.
+# Omit the whole block and the gate reports `unassessed`, never a failure: a
+# property nobody measured is not a property that failed. Declare it and it becomes
+# refusable in BOTH directions — under-delivery (no feedback) and over-delivery
+# (motion beyond budget, a celebration the policy excludes) fail the same check.
+# `expressiveness: none` is a complete, passing contract; abstention is the point.
+# Reach these values with the three-question picker (prompts/experience-picker.md).
+experience:
+  expressiveness: restrained      # none | restrained | moderate | high — the ceiling
+  motion_budget: low              # none | low | medium | high — per-component ceiling
+  reduced_motion: equivalent      # equivalent | absent — `absent` with a high ceiling is refused
+  feedback_latency_ms: 100        # acknowledge a user action within this
+  progress_threshold_ms: 1000     # past this, an operation must show progress
+  waiting: skeleton               # skeleton | spinner | progress | optimistic | none
+  progress_language: staged       # numeric | staged | indeterminate | none
+  success_posture: confirm        # silent | confirm | acknowledge | celebrate
+  error_posture: explain_and_recover  # terse | explain | explain_and_recover
+  celebration_policy: never       # never | milestones_only | first_success | unrestricted
+  character_policy: voice_only    # none | voice_only | illustrated | persistent_character
+  trust_posture: standard         # standard | elevated | critical
 colors:
   primary: "#191817"       # clay — headlines, core text
   secondary: "#6b665f"     # warm slate — borders, captions, metadata
@@ -150,12 +171,37 @@ Architectural softness — `md` (8px) for buttons, inputs, cards. `lg` (12px) fo
 panels. `full` reserved for avatars and pill badges only. Sharp corners are forbidden
 on interactive surfaces.
 
-## Motion
+## Motion & Experience
+
+The numbers live in the `experience:` block above; this section says why they are
+those numbers. Restating a value here would create a second source that drifts, so
+nothing below repeats one.
 
 Motion clarifies flow; it does not decorate. One well-orchestrated entrance with
 staggered reveals beats scattered micro-interactions. Hover, focus, and active states
 must all feel designed — an interactive element with no considered focus state is an
 accessibility failure, not a styling omission. No animated status indicators.
+
+The declared ceiling is `restrained` because this is a reading surface: the user came
+for the content, and every animation competes with it. That ceiling is enforced in
+both directions. A control that does not acknowledge a click inside the declared
+latency fails; so does a component whose motion exceeds the declared budget, and so
+does a celebration on an event `celebration_policy` excludes. An axis that could only
+ever ask for more animation would be a preference wearing a gate's clothes (CDIO-07 §4).
+
+`reduced_motion: equivalent` means the information and the state change still arrive
+by a non-motion channel — a cross-fade replacing a slide is conformance; a shortened
+animation is not. This is an accessibility floor and it is not arbitrable against
+character (CDIO-06 §3 rule 5, restated in CDIO-07 §5).
+
+Two collisions worth naming before they are discovered as a BLOCK: a celebration on an
+operation that is queued rather than settled asserts a state the system has not
+reached, which is a trust defect and not a delight; and numeric progress synthesised
+from nothing is worse than declaring it indeterminate.
+
+If this product is a console, an admin table, or a compliance surface, the correct
+contract is `expressiveness: none` — a complete, passing declaration, not an
+unfinished one.
 
 ## Components
 
@@ -194,9 +240,14 @@ not a neutral default — it is a filter that never runs.
 7. **Rendering model — SSR yes, RSC no.** This is a hard compatibility filter. A
    client-only component in an SSR project does not rank low; it is removed, because it
    breaks at render rather than merely disappointing.
-8. **Motion budget — `low`.** Ceiling, not a target (see Motion above). A component whose
-   own motion budget exceeds this is filtered, and `reduced_motion_compliant` is required
-   at every level above `none`.
+8. **Motion budget — declared once, in `experience.motion_budget`.** Ceiling, not a
+   target. A component whose own motion budget exceeds it is filtered, and
+   `reduced_motion_compliant` is required at every level above `none`. The value is not
+   repeated here: this decision and the experience contract are the same decision, and
+   two copies of one decision is one decision plus a drift surface. Emit the context the
+   selector reads with `python tools/design_gate.py --emit-context ./DESIGN.md` rather
+   than hand-writing it — a context object typed by hand is a filter that silently
+   disagrees with the document it claims to represent.
 9. **Onboarding posture — guidance is a last resort.** Open usability findings are recorded
    in `unresolved_ux_findings`, and while any stand, a tour request returns
    `REMEDY_FIX_UX_FIRST` instead of a component. A walkthrough over a broken interface
