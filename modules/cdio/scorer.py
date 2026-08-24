@@ -451,6 +451,166 @@ def check_design_md_exists(path, *, criterion: str = "design-md-present") -> Ver
 
 
 # --------------------------------------------------------------------------- #
+# CDIO-07 experience floors -- the BEHAVIOURAL axis, enforced mechanically.
+#
+# CDIO-02 sec.3 already mandates an acknowledgement "within a fraction of a
+# second" and a progress cue past "about one second"; CDIO-02 sec.7 already makes
+# un-reducible animation a finding; CDIO-03 sec.7 already calls a >1s load with no
+# skeleton a finding. Every one of those lived in prose and in ZERO executable
+# lines, which is the same condition CDIO-06 fixed for visual slop: the PP could
+# not FAIL a surface for behaviour, so the rules were preferences, not gates.
+#
+# These are floors, so a failure is CRITICAL by CDIO-00 sec.4 -- not because this
+# axis is important, but because an accessibility floor is a floor wherever it is
+# measured. The non-floor half of the axis (budgets, postures, policies) is NOT
+# here: it rides the hard-filter path below and never touches the score.
+#
+# The checks refuse in BOTH directions. `check_progress_cue` fails an absent cue
+# past the threshold AND a cue that flashes below the perception floor, because an
+# axis that could only ever ask for more feedback would be a preference with a
+# schema (CDIO-07 sec.4).
+# --------------------------------------------------------------------------- #
+
+FEEDBACK_ACK_MAX_MS = 100      # CDIO-02 sec.3 acknowledgement ceiling
+PROGRESS_CUE_MAX_MS = 1000     # CDIO-02 sec.3 / CDIO-03 sec.7 progress threshold
+PROGRESS_CUE_FLASH_MS = 200    # below this a cue is a flicker, not information
+
+MOTION_BUDGET_RANK = {"none": 0, "low": 1, "medium": 2, "high": 3}
+
+
+def check_feedback_ack(ack_ms, *, ceiling: float = FEEDBACK_ACK_MAX_MS,
+                       costly: bool = False,
+                       criterion: str = "feedback-acknowledgement") -> Verdict:
+    """Did the action acknowledge itself before the user could doubt it?
+
+    `ack_ms` is None when the action produced no visible response at all -- the
+    'silent action' anti-pattern (CDIO-02 sec.5). Severity follows CDIO-02 sec.8
+    verbatim: minor, and major when the action is costly enough that the silence
+    induces a double-submit.
+    """
+    severity = "major" if costly else "minor"
+    if ack_ms is None:
+        return Verdict(
+            criterion=criterion, dimension="experience", status="fail",
+            severity=severity, observed="action produced no visible response",
+            recommendation="acknowledge on interaction (pressed state, disabled-while-"
+                           f"pending, inline status) within {ceiling:g}ms")
+    if ack_ms <= ceiling:
+        return Verdict(criterion=criterion, dimension="experience", status="pass",
+                       observed=f"{ack_ms:g}ms <= {ceiling:g}ms")
+    return Verdict(
+        criterion=criterion, dimension="experience", status="fail", severity=severity,
+        observed=f"{ack_ms:g}ms > {ceiling:g}ms",
+        recommendation="acknowledge on interaction rather than on response; the "
+                       "acknowledgement must not wait for the work to finish")
+
+
+def check_progress_cue(duration_ms, has_cue: bool, *,
+                       threshold: float = PROGRESS_CUE_MAX_MS,
+                       flash_floor: float = PROGRESS_CUE_FLASH_MS,
+                       criterion: str = "progress-cue") -> Verdict:
+    """A cue is required past the threshold and forbidden below the flash floor.
+
+    Both halves are real defects. Past the threshold with no cue, the user cannot
+    distinguish loading from frozen (CDIO-03 sec.7). Below the flash floor a cue
+    appears and vanishes faster than it can be read, which costs a repaint and
+    delivers nothing -- the over-delivery half this axis exists to be able to refuse.
+    """
+    if duration_ms is None:
+        return Verdict(criterion=criterion, dimension="experience", status="fail",
+                       severity="minor", observed="operation duration not measured",
+                       recommendation="measure the operation before judging its cue")
+    if duration_ms > threshold and not has_cue:
+        return Verdict(
+            criterion=criterion, dimension="experience", status="fail", severity="major",
+            observed=f"{duration_ms:g}ms > {threshold:g}ms with no progress cue",
+            recommendation="show the declared waiting treatment past the threshold; "
+                           "without it the user cannot tell loading from frozen")
+    if duration_ms < flash_floor and has_cue:
+        return Verdict(
+            criterion=criterion, dimension="experience", status="fail", severity="minor",
+            observed=f"cue shown for an operation of {duration_ms:g}ms "
+                     f"(< {flash_floor:g}ms perception floor)",
+            recommendation="delay the cue until the threshold; a cue that flashes is a "
+                           "repaint the user reads as a glitch, not as information")
+    return Verdict(
+        criterion=criterion, dimension="experience", status="pass",
+        observed=f"{duration_ms:g}ms with cue={has_cue} (threshold {threshold:g}ms, "
+                 f"flash floor {flash_floor:g}ms)")
+
+
+def check_reduced_motion(motion_present: bool, reduced_equivalent: bool, *,
+                         criterion: str = "reduced-motion-equivalence") -> Verdict:
+    """Motion with no reduced equivalent is an accessibility-floor failure.
+
+    `equivalent` means the information and the state change still ARRIVE by a
+    non-motion channel -- a cross-fade replacing a slide is conformance, a shortened
+    animation is not (CDIO-07 sec.5). A surface that stops conveying state for users
+    who request reduced motion is not an expressive surface; it is a surface that
+    stops working for a class of users, and no posture buys an exemption.
+    """
+    if not motion_present:
+        return Verdict(criterion=criterion, dimension="experience", status="pass",
+                       observed="no motion on this surface; nothing to reduce")
+    if reduced_equivalent:
+        return Verdict(criterion=criterion, dimension="experience", status="pass",
+                       observed="motion present with a declared reduced-motion equivalent")
+    return Verdict(
+        criterion=criterion, dimension="experience", status="fail", severity="critical",
+        observed="motion present with no reduced-motion equivalent",
+        recommendation="deliver the same information and state change without motion "
+                       "under prefers-reduced-motion; shortening the animation is not "
+                       "an equivalent")
+
+
+def check_motion_sole_channel(essential_info_channels, *,
+                              criterion: str = "motion-not-sole-channel") -> Verdict:
+    """Essential information must survive the removal of motion.
+
+    `essential_info_channels` names the channels carrying information the user needs
+    to complete the task. An EMPTY collection means nothing essential is conveyed
+    here, which passes -- this check judges how essential information travels, not
+    whether it exists.
+    """
+    channels = {str(c).strip().lower() for c in (essential_info_channels or [])
+                if str(c).strip()}
+    if not channels:
+        return Verdict(criterion=criterion, dimension="experience", status="pass",
+                       observed="no essential information carried on this element")
+    if channels == {"motion"}:
+        return Verdict(
+            criterion=criterion, dimension="experience", status="fail",
+            severity="critical", observed="motion is the only channel carrying "
+                                          "essential information",
+            recommendation="add a persistent non-motion channel (text, icon, state "
+                           "change); motion is a reinforcement, never the carrier")
+    return Verdict(criterion=criterion, dimension="experience", status="pass",
+                   observed=f"channels: {sorted(channels)}")
+
+
+def check_blocking_animation(blocks_input_ms, *,
+                             criterion: str = "non-blocking-animation") -> Verdict:
+    """An animation that holds input hostage is a dead interface for its duration.
+
+    Not a matter of taste or of budget: while input is blocked the user's action is
+    discarded, which is indistinguishable from a broken control and is why the
+    prohibition sits with the floors rather than with the postures.
+    """
+    if blocks_input_ms is None:
+        return Verdict(criterion=criterion, dimension="experience", status="fail",
+                       severity="minor", observed="input blocking not measured",
+                       recommendation="measure whether the animation holds input")
+    if blocks_input_ms <= 0:
+        return Verdict(criterion=criterion, dimension="experience", status="pass",
+                       observed="animation does not block input")
+    return Verdict(
+        criterion=criterion, dimension="experience", status="fail", severity="critical",
+        observed=f"animation blocks input for {blocks_input_ms:g}ms",
+        recommendation="run the animation without gating interaction; an action taken "
+                       "during it must be accepted, not discarded")
+
+
+# --------------------------------------------------------------------------- #
 # CDICF component-scope hard filter (E5)
 #
 # This does NOT emit a Verdict, and that is the whole design. A `critical`
@@ -518,7 +678,22 @@ class GateResult:
 
     @property
     def is_done(self) -> bool:
-        return self.score_result is not None and self.score_result.is_done
+        """APPROVE on quality AND conformance to every declared contract.
+
+        The verdict stays APPROVE when quality is APPROVE -- that is an honest
+        statement about the score and it must not be laundered. But a surface that
+        shipped behaviour its own contract excludes is not DONE, and without this the
+        contract filter would be a finding nobody could act on: reported, visible,
+        and unable to stop anything.
+
+        Separation is preserved exactly. A breach never moves the number and never
+        changes the verdict; it withholds the done-claim. With no filters this is
+        byte-identical to the previous definition, so nothing that predates the
+        filters changed.
+        """
+        if self.score_result is None or not self.score_result.is_done:
+            return False
+        return all(f.get("passed", True) for f in self.hard_filters)
 
     def to_json(self) -> dict:
         return {
@@ -623,17 +798,123 @@ def check_component_dependencies(
         detail={"unresolved": {}, "unassessed": unassessed})
 
 
-def review_gate(verdicts, *, target=None) -> GateResult:
+# --------------------------------------------------------------------------- #
+# CDIO-07 experience-contract compliance -- a hard filter, NEVER a score term.
+#
+# Routing this through score_review would change score COMPOSITION: a surface
+# that scored 82 before this axis existed could score 74 after, with nobody
+# touching it. The same argument that keeps the CDICF dependency check off the
+# score keeps this off it (see the E5 note above), and it is why sec.17 of the
+# brief that produced this axis insisted the two stay separate.
+#
+# Three states, never two. `unassessed` is what a project that declared no
+# contract gets: reported, never blocking. Treating an unmeasured property as a
+# failure inerts the gate on day one; treating it as a pass launders an unknown
+# into a yes. It is neither.
+#
+# Severity is derived from WHAT was breached, not from how much. Only a floor
+# breach is critical and therefore blocking; a budget or policy over-run is
+# reported with severity "" so review_gate surfaces it without refusing the
+# surface. A gate that BLOCKs on every deviation is a gate somebody turns off.
+# --------------------------------------------------------------------------- #
+
+EXP_CONFORMING = "conforming"
+EXP_BREACHED = "breached"
+EXP_UNASSESSED = "unassessed"
+
+
+def check_experience_contract(declared, observed, *,
+                              criterion: str = "experience-contract") -> HardFilter:
+    """Compare observed behaviour against the DESIGN.md experience contract.
+
+    `declared` is the parsed `experience:` block (tools/design_gate.py parses it);
+    `observed` is what the reviewer measured on the rendered surface. Either being
+    absent yields `unassessed` -- a project that promised nothing has nothing to
+    break, and a surface nobody measured has not been shown to conform.
+    """
+    if not declared:
+        return HardFilter(
+            criterion=criterion, passed=True, state=EXP_UNASSESSED,
+            observed="no CDIO-07 contract declared in DESIGN.md; behaviour is "
+                     "unassessed, not approved",
+            recommendation="declare an `experience:` block to make behaviour "
+                           "refusable in both directions (CDIO-07 sec.1)")
+    if not observed:
+        return HardFilter(
+            criterion=criterion, passed=True, state=EXP_UNASSESSED,
+            observed=f"contract declared ({len(declared)} field(s)) but no observed "
+                     "behaviour supplied; conformance unmeasured",
+            recommendation="measure the rendered surface (VQ-8 render path) and pass "
+                           "the observations; a declaration verifies nothing on its own",
+            detail={"declared": dict(declared)})
+
+    breaches, floor_breach = [], False
+
+    if observed.get("motion_present") and declared.get("reduced_motion") == "equivalent" \
+            and observed.get("reduced_motion_equivalent") is False:
+        floor_breach = True
+        breaches.append(
+            "declared reduced_motion=equivalent but the rendered surface provides no "
+            "equivalent -- accessibility floor, not a budget question")
+
+    dec_rank = MOTION_BUDGET_RANK.get(declared.get("motion_budget"))
+    obs_rank = MOTION_BUDGET_RANK.get(observed.get("motion_budget"))
+    if dec_rank is not None and obs_rank is not None and obs_rank > dec_rank:
+        breaches.append(
+            f"motion_budget declared {declared.get('motion_budget')}, observed "
+            f"{observed.get('motion_budget')} -- over-delivery against the declared "
+            "ceiling")
+
+    celebrated = [str(e) for e in (observed.get("celebrated_events") or []) if str(e)]
+    if declared.get("celebration_policy") == "never" and celebrated:
+        breaches.append(
+            f"celebration_policy=never, observed celebration on: {celebrated}")
+
+    if declared.get("character_policy") == "none" and observed.get("character_present"):
+        breaches.append("character_policy=none, observed a character present")
+
+    dec_success = declared.get("success_posture")
+    obs_success = observed.get("success_posture")
+    if dec_success and obs_success and dec_success != obs_success:
+        breaches.append(
+            f"success_posture declared {dec_success}, observed {obs_success}")
+
+    if not breaches:
+        return HardFilter(
+            criterion=criterion, passed=True, state=EXP_CONFORMING,
+            observed=f"observed behaviour conforms to the declared contract "
+                     f"({len(declared)} field(s) declared)",
+            detail={"declared": dict(declared), "observed": dict(observed)})
+
+    return HardFilter(
+        criterion=criterion, passed=False,
+        severity="critical" if floor_breach else "",
+        state=EXP_BREACHED,
+        observed=f"{len(breaches)} contract breach(es): " + "; ".join(breaches),
+        recommendation=("restore the floor before shipping -- no posture buys a "
+                        "reduced-motion exemption" if floor_breach else
+                        "bring the surface back inside its declared contract, or "
+                        "change the contract deliberately at the picker; a contract "
+                        "amended to match whatever shipped is not a contract"),
+        detail={"declared": dict(declared), "observed": dict(observed),
+                "breaches": breaches})
+
+
+def review_gate(verdicts, *, target=None, declared_experience=None,
+                observed_experience=None) -> GateResult:
     """Hard filters first, score second.
 
-    With no `target` this is exactly `score_review` in a wrapper: same score,
-    same verdict, same reason. That equality is the guarantee that adding this
-    gate did not move the §5 threshold for any surface that has no third-party
-    components.
+    With no `target` and no experience arguments this is exactly `score_review` in
+    a wrapper: same score, same verdict, same reason. That equality is the
+    guarantee that adding these gates did not move the §5 threshold for any
+    surface that has no third-party components and no declared contract.
     """
     filters = []
     if target is not None:
         filters.append(check_component_dependencies(target))
+    if declared_experience is not None or observed_experience is not None:
+        filters.append(check_experience_contract(declared_experience,
+                                                 observed_experience))
 
     blocking = [f for f in filters
                 if not f.passed and f.severity == "critical"]
@@ -647,6 +928,18 @@ def review_gate(verdicts, *, target=None) -> GateResult:
             score_result=None)
 
     sr = score_review(verdicts)
-    return GateResult(verdict=sr.verdict, reason=sr.reason,
+    # A non-blocking filter failure must still be VISIBLE in the verdict line. Left
+    # only in `hard_filters`, a contract breach would be a finding nobody reads,
+    # which is indistinguishable from a check that never ran. The reason is extended
+    # ONLY when such a filter exists, so a call with no filters returns the
+    # byte-identical reason score_review produced.
+    noted = [f for f in filters if not f.passed and f.severity != "critical"]
+    reason = sr.reason
+    if noted:
+        reason += "; " + "; ".join(
+            f"{f.criterion} NOT CONFORMING ({f.observed})" for f in noted) \
+            + " -- reported, not scored: contract compliance is a separate axis from " \
+              "quality and never moves the number"
+    return GateResult(verdict=sr.verdict, reason=reason,
                       hard_filters=[f.to_json() for f in filters],
                       score_result=sr)
