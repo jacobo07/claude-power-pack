@@ -9,6 +9,16 @@ description: One-line summary of the visual identity (e.g. Heritage editorial, t
 # This template ships F3 as a starting point, not as a default to leave unexamined:
 # if F3 is not your product's family, change it before you change anything else.
 aesthetic_family: F3   # Warm Editorial — serif body, terracotta on cream, humanized prosumer
+# Consumed by the CDICF selector via `design_gate.py --emit-context`. These are the
+# Component Provenance decisions below, in the form the machine reads. Declared here
+# and DISCUSSED there — never restated, because two copies of one decision is one
+# decision plus a drift surface (PR-DECLARE-ONCE-POINT-ALWAYS-001).
+required_wcag: AA          # A | AA | AAA — the floor a component must clear
+bundle_budget_kb: 40       # absolute per-surface ceiling; nothing fits ⇒ install nothing
+# Open usability findings. While any stand, a guidance/tour request is refused with
+# REMEDY_FIX_UX_FIRST instead of a component. Empty here means none are open — which
+# is a claim, so keep it true.
+unresolved_ux_findings:
 # OPTIONAL. The experience contract (CDIO-07). Declares how the surface BEHAVES —
 # what it does when touched and while it waits — as opposed to how it looks.
 # Omit the whole block and the gate reports `unassessed`, never a failure: a
@@ -231,12 +241,13 @@ not a neutral default — it is a filter that never runs.
 4. **Redistribution intent — this project does not ship its own component library.** If it
    did, every restriction would propagate to its consumers, and the admissible set would
    narrow accordingly. State this before adopting, not after publishing.
-5. **Bundle budget — 40 kB per surface.** Absolute, not a share of the total: a percentage
-   budget is satisfied by the bundle growing. When nothing fits, the answer is nothing —
-   the selector abstains with `REMEDY_BUDGET` rather than picking the least-bad overspend.
-6. **Accessibility floor — WCAG AA.** A hard filter, not a scored preference. `unassessed`
-   is **not** a pass: an unmeasured level treated as neutral is how an unknown quietly
-   becomes a yes.
+5. **Bundle budget — declared in `bundle_budget_kb`.** Absolute, not a share of the total:
+   a percentage budget is satisfied by the bundle growing. When nothing fits, the answer is
+   nothing — the selector abstains with `REMEDY_BUDGET` rather than picking the least-bad
+   overspend.
+6. **Accessibility floor — declared in `required_wcag`.** A hard filter, not a scored
+   preference. `unassessed` is **not** a pass: an unmeasured level treated as neutral is
+   how an unknown quietly becomes a yes.
 7. **Rendering model — SSR yes, RSC no.** This is a hard compatibility filter. A
    client-only component in an SSR project does not rank low; it is removed, because it
    breaks at render rather than merely disappointing.

@@ -693,7 +693,11 @@ class GateResult:
         """
         if self.score_result is None or not self.score_result.is_done:
             return False
-        return all(f.get("passed", True) for f in self.hard_filters)
+        # Default False, not True. `review_gate` always sets `passed`, so this is
+        # unreachable today -- but a GateResult rehydrated from JSON with the key
+        # missing would otherwise launder an unrecorded filter into a done-claim.
+        # A done-gate defaults closed; costing nothing to close it is the reason to.
+        return all(f.get("passed", False) for f in self.hard_filters)
 
     def to_json(self) -> dict:
         return {
@@ -850,12 +854,24 @@ def check_experience_contract(declared, observed, *,
 
     breaches, floor_breach = [], False
 
-    if observed.get("motion_present") and declared.get("reduced_motion") == "equivalent" \
+    # The floor is NOT conditioned on what the contract declared. Gating this on
+    # `declared.reduced_motion == "equivalent"` meant a project could buy the
+    # exemption CDIO-07 sec.5 says no posture buys, simply by declaring `absent` --
+    # or by omitting the field. Worse than silence: the filter then reported
+    # CONFORMING, which a reviewer reads as "behaviour checked". Motion shipped
+    # without an equivalent is a floor breach whatever the document says.
+    if observed.get("motion_present") \
             and observed.get("reduced_motion_equivalent") is False:
         floor_breach = True
+        declared_rm = declared.get("reduced_motion")
         breaches.append(
-            "declared reduced_motion=equivalent but the rendered surface provides no "
-            "equivalent -- accessibility floor, not a budget question")
+            "motion is present and the rendered surface provides no reduced-motion "
+            "equivalent -- accessibility floor, not a budget question"
+            + (f" (the contract declares reduced_motion={declared_rm}, which is "
+               "itself refused at declaration time)"
+               if declared_rm != "equivalent" else
+               " (the contract declares reduced_motion=equivalent; the surface does "
+               "not honour it)"))
 
     dec_rank = MOTION_BUDGET_RANK.get(declared.get("motion_budget"))
     obs_rank = MOTION_BUDGET_RANK.get(observed.get("motion_budget"))

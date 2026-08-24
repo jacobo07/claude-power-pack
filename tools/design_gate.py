@@ -30,12 +30,14 @@ FAIL-OPEN, ABSOLUTELY (design constraint): a gate that cannot read its artifact
 returns SKIP and exit 0. A broken gate must never block real work -- it must only
 ever be the reason a genuinely-slop surface is stopped, never the reason a good one
 is. Every unreadable / missing / unparseable input is a SKIP with a stated reason,
-never a BLOCK.
+never a BLOCK. This extends to writing: an unwritable --out path is reported and
+returns 0, because a tool whose contract is fail-open cannot make its own output
+path a blocking condition.
 
 Usage:
     python tools/design_gate.py <path/to/DESIGN.md>
     python tools/design_gate.py <path/to/DESIGN.md> --json
-    python tools/design_gate.py <path/to/DESIGN.md> --emit-context > ctx.json
+    python tools/design_gate.py <path/to/DESIGN.md> --emit-context --out ctx.json
 
 Exit codes:
     0  APPROVE (score >= 80, zero critical) or SKIP (gate could not evaluate)
@@ -72,11 +74,15 @@ GROUND_RE = re.compile(r"^\s*(?:neutral|background|bg):\s*\"?(#[0-9a-fA-F]{3,8})
 # --- CDIO-07 experience contract -------------------------------------------- #
 # The block is an indented mapping under `experience:`. Parsed with the same
 # deliberate tolerance as everything else here: the point is to extract declared
-# values, not to validate YAML. A malformed block yields fewer fields, and a field
-# that did not parse is reported as undeclared rather than assumed.
+# values, not to validate YAML. But tolerance stops at SILENCE -- a field that did
+# not parse is reported as undeclared, and a block that yields nothing at all is
+# treated as no block rather than as an empty-but-valid contract.
 EXPERIENCE_BLOCK_RE = re.compile(
     r"^experience:[ \t]*\r?\n((?:[ \t]+\S.*\r?\n?|[ \t]*\r?\n)*)", re.MULTILINE)
-EXPERIENCE_FIELD_RE = re.compile(r"^[ \t]+([a-z_]+):[ \t]*(.+?)[ \t]*$", re.MULTILINE)
+# Captures the indent so nested sub-keys can be rejected rather than hoisted into the
+# contract. Without the indent group, `notes:\n    reduced_motion: ...` two levels
+# down silently overwrote the real top-level `reduced_motion` on a last-wins match.
+EXPERIENCE_FIELD_RE = re.compile(r"^([ \t]+)([a-z_]+):[ \t]*(.+?)[ \t]*$", re.MULTILINE)
 
 # Ordered ceilings. `motion_budget` may never outrank `expressiveness`: a budget
 # above the declared ceiling is a ceiling that does not cap anything.
@@ -106,6 +112,10 @@ REDUCED_MOTION_REQUIRED_AT = EXPRESSIVENESS_RANK["moderate"]
 # derivation named, because a defaulted value that looks declared is how an
 # assumption becomes a fact nobody checked.
 WCAG_FLOOR = "AA"
+# The consumer's vocabulary, mirrored from `modules/cdicf/selector.js` WCAG_RANK.
+# Case-sensitive there, so a lowercase `aa` is not a different requirement -- it is
+# the same requirement spelled in a way the consumer cannot look up.
+WCAG_VOCABULARY = {"fail", "unassessed", "A", "AA", "AAA"}
 
 # Context fields the selector reads that a DESIGN.md may declare directly at the top
 # level of its front-matter. Undeclared ones are OMITTED, never guessed: the selector
@@ -140,16 +150,26 @@ def _front_matter(text: str) -> str:
 def parse_experience(fm: str):
     """Extract the CDIO-07 `experience:` contract from front-matter.
 
-    Returns None when no block is declared -- which is the `unassessed` state, not an
-    empty contract. The two are different: a project that declared nothing has made
-    no promise to break, and collapsing it into an empty contract would manufacture
-    violations out of silence.
+    Returns None when no block is declared OR when a declared block yields no usable
+    field. Both are `unassessed` -- a project that promised nothing has nothing to
+    break, and an `experience:` header over comments or an unparseable body is a
+    contract that was started, not one that was made. Returning an empty dict there
+    would let `{}` read as "declared and internally coherent", which is an unknown
+    laundered into a yes.
+
+    Only fields at the block's FIRST indent level are contract fields. A key nested
+    deeper belongs to some other structure, and hoisting it silently overwrote real
+    declarations on a last-wins match.
     """
     block = EXPERIENCE_BLOCK_RE.search(fm)
     if not block:
         return None
-    exp = {}
-    for key, raw in EXPERIENCE_FIELD_RE.findall(block.group(1)):
+    exp, base_indent = {}, None
+    for indent, key, raw in EXPERIENCE_FIELD_RE.findall(block.group(1)):
+        if base_indent is None:
+            base_indent = indent
+        if indent != base_indent:
+            continue                      # nested under another key, not a contract field
         value = raw.split("#", 1)[0].strip().strip("\"'")
         if not value:
             continue
@@ -160,7 +180,7 @@ def parse_experience(fm: str):
                 exp[key] = value          # kept verbatim; flagged by the coherence check
         else:
             exp[key] = value
-    return exp
+    return exp or None
 
 
 def check_experience_coherence(exp, *, criterion: str = "experience-contract-coherent"):
@@ -194,12 +214,24 @@ def check_experience_coherence(exp, *, criterion: str = "experience-contract-coh
     expr_rank = EXPRESSIVENESS_RANK.get(expr)
     motion_rank = MOTION_RANK.get(motion)
 
-    if expr_rank is not None and expr_rank >= REDUCED_MOTION_REQUIRED_AT \
-            and reduced == "absent":
+    # The floor is about MOTION EXISTING, not about which field happens to say so.
+    # Keying this on `expressiveness` alone let `motion_budget: high` with
+    # `reduced_motion: absent` pass as coherent whenever expressiveness was simply
+    # omitted -- and the block is optional, so omission is ordinary. Either field
+    # declaring motion arms the requirement.
+    declares_motion = (expr_rank is not None and expr_rank >= REDUCED_MOTION_REQUIRED_AT) \
+        or (motion_rank is not None and motion_rank > MOTION_RANK["none"])
+    if reduced == "absent" and declares_motion:
         floor_breach = True
         problems.append(
-            f"expressiveness={expr} with reduced_motion=absent -- the contract cannot "
-            "be honoured without breaching the accessibility floor")
+            f"reduced_motion=absent with motion declared (expressiveness={expr}, "
+            f"motion_budget={motion}) -- the contract cannot be honoured without "
+            "breaching the accessibility floor")
+    elif reduced == "absent" and expr is None and motion is None:
+        problems.append(
+            "reduced_motion=absent declared with no expressiveness and no "
+            "motion_budget -- the field constrains nothing and will permit motion "
+            "added later without re-opening this decision")
 
     if expr_rank is not None and motion_rank is not None and motion_rank > expr_rank:
         problems.append(
@@ -303,6 +335,19 @@ def parse_design_md(path: str) -> dict:
             "experience": parse_experience(fm), "declared_context": declared}
 
 
+def _normalised_wcag(value):
+    """Return the value in the consumer's spelling, or None if it is not in its
+    vocabulary. Case is not a difference in requirement -- `aa` and `AA` are the same
+    demand -- but `WCAG_RANK` in selector.js is a case-sensitive lookup, so the
+    lowercase spelling resolves to undefined and REMOVES EVERY CANDIDATE. Normalising
+    a spelling is honest; inventing a level is not, so anything else returns None."""
+    raw = str(value or "").strip()
+    for known in WCAG_VOCABULARY:
+        if raw.lower() == known.lower():
+            return known
+    return None
+
+
 def emit_context(design_md_path: str) -> dict:
     """Derive the CDICF selector's project context from a DESIGN.md.
 
@@ -313,25 +358,50 @@ def emit_context(design_md_path: str) -> dict:
     is OMITTED rather than invented. The selector treats a missing field as
     unconstrained, so omission costs a filter; a guess costs correctness, and a filter
     running on fiction is worse than a filter not running.
+
+    That last sentence is why every value is checked against the CONSUMER's vocabulary
+    before it is emitted. A value outside it does not merely fail to help: in
+    `selector.js` an unknown `motion_budget` makes the MOTION_BUDGET filter unable to
+    fire for any component, and an unknown `required_wcag` removes the entire
+    candidate field. Passing a declared-but-unusable value through would produce
+    exactly the fiction this docstring promises to avoid, so it is REJECTED and named.
     """
     parsed = parse_design_md(design_md_path)
     exp = parsed["experience"]
     declared = parsed["declared_context"]
 
-    ctx, derivation = {}, {}
+    ctx, derivation, rejected = {}, {}, {}
 
-    if exp and exp.get("motion_budget"):
-        ctx["motion_budget"] = exp["motion_budget"]
-        derivation["motion_budget"] = "declared: experience.motion_budget"
+    motion = (exp or {}).get("motion_budget")
+    if motion is not None:
+        if motion in MOTION_RANK:
+            ctx["motion_budget"] = motion
+            derivation["motion_budget"] = "declared: experience.motion_budget"
+        else:
+            rejected["motion_budget"] = (
+                f"declared {motion!r}, which is not one of "
+                f"{sorted(MOTION_RANK)}; emitting it would leave the consumer's "
+                "MOTION_BUDGET filter unable to fire for any component")
 
     if "required_wcag" in declared:
-        ctx["required_wcag"] = declared["required_wcag"]
-        derivation["required_wcag"] = "declared: required_wcag"
-    else:
+        level = _normalised_wcag(declared["required_wcag"])
+        if level:
+            ctx["required_wcag"] = level
+            derivation["required_wcag"] = (
+                "declared: required_wcag"
+                + ("" if level == declared["required_wcag"]
+                   else f" (normalised from {declared['required_wcag']!r}; the "
+                        "consumer's lookup is case-sensitive)"))
+        else:
+            rejected["required_wcag"] = (
+                f"declared {declared['required_wcag']!r}, which is not one of "
+                f"{sorted(WCAG_VOCABULARY)}; emitting it would remove every candidate")
+    if "required_wcag" not in ctx:
         ctx["required_wcag"] = WCAG_FLOOR
         derivation["required_wcag"] = (
-            f"defaulted to the CDIO-00 sec.4 floor ({WCAG_FLOOR}); not declared in "
-            "this document")
+            f"defaulted to the CDIO-00 sec.4 floor ({WCAG_FLOOR}); "
+            + ("rejected value replaced" if "required_wcag" in rejected
+               else "not declared in this document"))
 
     if "bundle_budget_kb" in declared:
         ctx["bundle_budget_kb"] = declared["bundle_budget_kb"]
@@ -342,13 +412,16 @@ def emit_context(design_md_path: str) -> dict:
         derivation["unresolved_ux_findings"] = "declared: unresolved_ux_findings"
 
     omitted = sorted({"motion_budget", "bundle_budget_kb", "unresolved_ux_findings"}
-                     - set(ctx))
+                     - set(ctx) - set(rejected))
     ctx["_derivation"] = {
         "source": design_md_path,
         "fields": derivation,
         "omitted": omitted,
+        "rejected": rejected,
         "note": "omitted fields are undeclared, not unconstrained-by-choice; the "
-                "selector will not filter on them",
+                "selector will not filter on them. Rejected fields WERE declared but "
+                "are outside the consumer's vocabulary, which is a defect in the "
+                "document, not an absence",
     }
     return ctx
 
@@ -433,24 +506,31 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     if args.emit_context:
+        # The whole path is fail-open, WRITING INCLUDED. An unwritable --out is an
+        # operator's path mistake; raising would exit 1, which this tool's own exit
+        # table means REVISE, so a CI wrapper reading the code could not tell a bad
+        # output directory from a failing design.
         try:
-            ctx = emit_context(args.design_md)
-        except (SkipGate, OSError) as exc:
+            payload = emit_context(args.design_md)
+        except (SkipGate, OSError, ValueError) as exc:
             payload = {"_derivation": {"source": args.design_md,
                                        "error": f"cannot read: {exc}"}}
-        else:
-            payload = ctx
         text = json.dumps(payload, indent=2, ensure_ascii=False)
         if args.out:
-            # newline="" + no BOM: the consumer is `selector.js --context`, and the
-            # producer owning its own encoding is the only way the round trip does not
-            # depend on which shell the operator happened to use.
-            with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
-                fh.write(text + "\n")
+            try:
+                # newline="" + no BOM: the consumer is `selector.js --context`, and the
+                # producer owning its own encoding is the only way the round trip does
+                # not depend on which shell the operator happened to use.
+                with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(text + "\n")
+            except OSError as exc:
+                print(f"context NOT written to {args.out}: {exc}")
+                print(text)
+                return 0
             print(f"context written: {args.out}")
         else:
             print(text)
-        return 0                          # fail-open: never block on an unreadable file
+        return 0
 
     try:
         out = design_gate(args.design_md)

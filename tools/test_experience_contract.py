@@ -45,7 +45,13 @@ from tools.design_gate import (  # noqa: E402
     check_experience_coherence,
     design_gate,
     emit_context,
+    main as gate_main,
     parse_design_md,
+)
+
+REPO_TEMPLATE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "modules", "design-md", "DESIGN.md.template",
 )
 
 PASSES = 0
@@ -399,6 +405,191 @@ def gate_conforming_filter() -> None:
               f"{partial.passed}")
 
 
+# --------------------------------------------------------------------------- #
+# Regression gates from the independent review of this axis (2026-08-24).
+# Each one reproduces a defect that shipped green under the original 11 gates,
+# because every one of those gates exercised the spelling the author had in mind.
+# --------------------------------------------------------------------------- #
+
+def gate_floor_keyed_on_motion() -> None:
+    """The floor must arm on MOTION being declared, not on one field's spelling.
+
+    `expressiveness` is optional and the block is optional, so omitting it is
+    ordinary. Keying the floor clause on it alone let the dataset's own canonical
+    incoherence -- high motion with no reduced-motion equivalent -- pass as
+    "internally coherent" whenever the sibling field happened to be absent.
+    """
+    cases = {
+        "motion-only": {"motion_budget": "high", "reduced_motion": "absent"},
+        "low-motion": {"expressiveness": "restrained", "motion_budget": "low",
+                       "reduced_motion": "absent"},
+        "expressiveness-only": {"expressiveness": "high", "reduced_motion": "absent"},
+    }
+    wrong = {}
+    for name, exp in cases.items():
+        v = check_experience_coherence(exp)
+        if v is None or v.status != "fail" or v.severity != "critical":
+            wrong[name] = (v and v.status, v and v.severity)
+
+    # And the converse: no motion declared anywhere must NOT be a floor breach.
+    still = check_experience_coherence(
+        {"expressiveness": "none", "motion_budget": "none",
+         "reduced_motion": "absent"})
+    if wrong or still is None or still.status != "pass":
+        _fail("V-EXP-FLOOR-KEYED-ON-MOTION",
+              f"not-critical: {wrong}; still-surface={still and still.status}")
+    else:
+        _ok("V-EXP-FLOOR-KEYED-ON-MOTION",
+            "3 spellings of declared motion + absent equivalent all CRITICAL; a "
+            "declared-still surface with no motion is not a breach")
+
+
+def gate_empty_block_not_declared(tmp: str) -> None:
+    """A block that yields no field is `unassessed`, not an empty-but-valid contract.
+
+    An author opening the block and leaving the values for the picker produced
+    "0 field(s) declared, internally coherent" and `experience: declared` -- an
+    unknown laundered into an affirmative pass, and the two halves of the axis
+    disagreeing about the same document.
+    """
+    body = ("---\nname: StubProject\naesthetic_family: F1\nexperience:\n"
+            "  # fill this in with the picker before shipping\n"
+            "colors:\n  accent: \"#5e6ad2\"\n  neutral: \"#ffffff\"\n"
+            "typography:\n  body-md:\n    fontFamily: Inter\n---\nStub.\n")
+    path = _write(tmp, "STUB.md", body)
+    parsed = parse_design_md(path)
+    out = design_gate(path)
+    criteria = {f["criterion"] for f in out.get("passed", [])}
+    if parsed["experience"] is None and out["experience_state"] == "unassessed" \
+            and "experience-contract-coherent" not in criteria:
+        _ok("V-EXP-EMPTY-BLOCK-NOT-DECLARED",
+            "an experience block yielding zero fields reads as unassessed, and no "
+            "coherence verdict is manufactured for it")
+    else:
+        _fail("V-EXP-EMPTY-BLOCK-NOT-DECLARED",
+              f"exp={parsed['experience']} state={out.get('experience_state')} "
+              f"coherence_present={'experience-contract-coherent' in criteria}")
+
+
+def gate_nested_key_not_hoisted(tmp: str) -> None:
+    """A key nested below the contract's own indent is not a contract field.
+
+    The field regex matched any indent, so a `reduced_motion` two levels down under
+    a `notes:` key overwrote the real top-level declaration on a last-wins match --
+    a silent wrong parse of the contract itself.
+    """
+    body = ("---\nname: NestedProject\naesthetic_family: F1\nexperience:\n"
+            "  expressiveness: high\n  reduced_motion: equivalent\n"
+            "  notes:\n    reduced_motion: absent means no equivalent\n"
+            "colors:\n  accent: \"#5e6ad2\"\n  neutral: \"#ffffff\"\n"
+            "typography:\n  body-md:\n    fontFamily: Inter\n---\nNested.\n")
+    path = _write(tmp, "NESTED.md", body)
+    exp = parse_design_md(path)["experience"]
+    if exp and exp.get("reduced_motion") == "equivalent" \
+            and exp.get("expressiveness") == "high":
+        _ok("V-EXP-NESTED-KEY-NOT-HOISTED",
+            "the top-level declaration survives a same-named key nested beneath "
+            "another field")
+    else:
+        _fail("V-EXP-NESTED-KEY-NOT-HOISTED", f"parsed {exp}")
+
+
+def gate_context_rejects_unknown(tmp: str) -> None:
+    """A declared-but-unusable value is REJECTED and named, never passed through.
+
+    In the consumer, an unknown `motion_budget` makes the MOTION_BUDGET filter unable
+    to fire for any component, and an unknown `required_wcag` removes the entire
+    candidate field. Emitting either produces exactly the fiction the emitter's
+    docstring promises to avoid. Case, by contrast, is not a different requirement --
+    it is normalised, and the normalisation is stated.
+    """
+    body = ("---\nname: BadVocabProject\naesthetic_family: F1\n"
+            "required_wcag: aa\nexperience:\n  motion_budget: minimal\n"
+            "colors:\n  accent: \"#5e6ad2\"\n  neutral: \"#ffffff\"\n"
+            "typography:\n  body-md:\n    fontFamily: Inter\n---\nBad vocab.\n")
+    path = _write(tmp, "BADVOCAB.md", body)
+    ctx = emit_context(path)
+    rejected = ctx["_derivation"]["rejected"]
+    if "motion_budget" not in ctx and "motion_budget" in rejected \
+            and ctx.get("required_wcag") == "AA" \
+            and "normalised" in ctx["_derivation"]["fields"]["required_wcag"]:
+        _ok("V-EXP-CONTEXT-REJECTS-UNKNOWN",
+            "an out-of-vocabulary motion_budget is rejected and named; a lowercase "
+            "WCAG level is normalised to the consumer's spelling, not rejected")
+    else:
+        _fail("V-EXP-CONTEXT-REJECTS-UNKNOWN",
+              f"motion_in_ctx={'motion_budget' in ctx} rejected={list(rejected)} "
+              f"wcag={ctx.get('required_wcag')}")
+
+
+def gate_template_context_complete() -> None:
+    """The workflow the template mandates must not be weaker than the hand-written
+    context it replaces. Every provenance decision the selector can filter on is
+    declared in front-matter, so nothing the document decided is silently omitted."""
+    ctx = emit_context(REPO_TEMPLATE)
+    d = ctx["_derivation"]
+    have = {"motion_budget", "required_wcag", "bundle_budget_kb",
+            "unresolved_ux_findings"} <= set(ctx)
+    if have and d["omitted"] == [] and d["rejected"] == {}:
+        _ok("V-EXP-TEMPLATE-CONTEXT-COMPLETE",
+            f"the repo template emits every filterable decision "
+            f"(bundle={ctx['bundle_budget_kb']}kB, wcag={ctx['required_wcag']}, "
+            f"motion={ctx['motion_budget']}), nothing omitted")
+    else:
+        _fail("V-EXP-TEMPLATE-CONTEXT-COMPLETE",
+              f"keys={sorted(k for k in ctx if k != '_derivation')} "
+              f"omitted={d['omitted']} rejected={list(d['rejected'])}")
+
+
+def gate_floor_not_declarable_away() -> None:
+    """No declaration buys the reduced-motion exemption.
+
+    The floor branch was gated on the CONTRACT saying `equivalent`, so declaring
+    `absent` -- or omitting the field -- made the filter report CONFORMING for a
+    surface shipping motion with no equivalent. Worse than silence: it asserted
+    conformance, which a reviewer reads as "behaviour checked".
+    """
+    observed = {"motion_present": True, "reduced_motion_equivalent": False,
+                "motion_budget": "low"}
+    declared_absent = {"expressiveness": "restrained", "motion_budget": "low",
+                       "reduced_motion": "absent"}
+    declared_silent = {"expressiveness": "restrained", "motion_budget": "low"}
+
+    a = check_experience_contract(declared_absent, observed)
+    b = check_experience_contract(declared_silent, observed)
+    gated = review_gate([Verdict("contrast-body", "visual", "pass", observed="7:1")],
+                        declared_experience=declared_absent,
+                        observed_experience=observed)
+    if a.passed is False and a.severity == "critical" and a.state == EXP_BREACHED \
+            and b.passed is False and b.severity == "critical" \
+            and gated.verdict == "BLOCK" and gated.is_done is False:
+        _ok("V-EXP-FLOOR-NOT-DECLARABLE-AWAY",
+            "declaring reduced_motion=absent, and omitting it entirely, both still "
+            "breach the floor and BLOCK -- the exemption cannot be bought")
+    else:
+        _fail("V-EXP-FLOOR-NOT-DECLARABLE-AWAY",
+              f"absent={a.passed}/{a.severity} silent={b.passed}/{b.severity} "
+              f"verdict={gated.verdict} is_done={gated.is_done}")
+
+
+def gate_emit_fail_open(tmp: str) -> None:
+    """Fail-open covers WRITING too. An unwritable --out is an operator path mistake;
+    raising would exit 1, which this tool's own exit table means REVISE, so a CI
+    wrapper could not tell a bad output directory from a failing design."""
+    bad = os.path.join(tmp, "no-such-dir", "ctx.json")
+    try:
+        code = gate_main([REPO_TEMPLATE, "--emit-context", "--out", bad])
+    except Exception as exc:                       # noqa: BLE001 -- that IS the defect
+        _fail("V-EXP-EMIT-FAIL-OPEN", f"raised instead of failing open: {exc!r}")
+        return
+    if code == 0 and not os.path.exists(bad):
+        _ok("V-EXP-EMIT-FAIL-OPEN",
+            "an unwritable --out path returns 0 with the context still printed, "
+            "never a traceback and never a REVISE exit code")
+    else:
+        _fail("V-EXP-EMIT-FAIL-OPEN", f"exit={code} wrote={os.path.exists(bad)}")
+
+
 def main() -> int:
     print("V-EXP gates (CDIO-07 experience contract)")
     gate_floors_refuse()
@@ -409,10 +600,17 @@ def main() -> int:
         gate_unassessed(tmp)
         gate_incoherent_refused(tmp)
         gate_context_derived(tmp)
+        gate_empty_block_not_declared(tmp)
+        gate_nested_key_not_hoisted(tmp)
+        gate_context_rejects_unknown(tmp)
+        gate_emit_fail_open(tmp)
     gate_breach_not_scored()
     gate_floor_breach_blocks()
     gate_score_equality()
     gate_conforming_filter()
+    gate_floor_keyed_on_motion()
+    gate_template_context_complete()
+    gate_floor_not_declarable_away()
     total = PASSES + FAILS
     print(f"\nEXPERIENCE_PASS={PASSES}/{total}  threshold={total}/{total}")
     return 0 if FAILS == 0 else 1
