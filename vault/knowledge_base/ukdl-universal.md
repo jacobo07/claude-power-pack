@@ -6556,6 +6556,58 @@ Motion prose — while the machine read a third, hand-written copy in a context 
 governance doc vs the gate that enforces it, a manifest vs a registry entry.
 **ORIGEN:** CDIO-07 build 2026-08-24. Sister: `feedback_hook_dispatcher_split_brain_mirror`.
 
+## HR-FLOOR-NOT-CONDITIONED-ON-DECLARATION-001 — a floor gated on a declaration is a default
+
+**TRIGGER:** writing a check for a non-negotiable minimum (accessibility, security,
+data retention, rate limit, audit) whose condition reads a value the subject itself
+declared.
+
+**ACCIÓN:** STOP. If the branch is `if declared_X == "required" and observed_X is
+missing`, then declaring `not required` — or omitting the field — buys the exemption,
+and the floor was never a floor. It was a default with a strict-sounding name. A floor
+condition may read only OBSERVED state. What the subject declared may change the
+message, never whether the check fires.
+
+**Worse than silence:** such a check usually reports CONFORMING on the exempted path,
+and a reviewer reads that as "checked". A gate that stays quiet is a gap; a gate that
+affirms is a false negative wearing evidence.
+
+**DETECTOR:** for every floor check, ask what the subject would have to write in its
+own config to make the check stop firing. Any answer other than "nothing" is the bug.
+
+**EXCEPCIÓN:** none. Scope may be declared (does this surface have motion at all);
+the floor over that scope may not.
+**ORIGEN:** CDIO-07 review 2026-08-24 — `check_experience_contract` gated its
+reduced-motion floor on the contract declaring `equivalent`, so `absent` (or an
+omitted field) bought the exemption CDIO-07 §5 says no posture buys, and the filter
+returned `conforming`. Sisters: `HR-EXPERIENCE-FLOOR-001`, `feedback_zero_cannot_fall`.
+
+## T-TESTS-EXERCISE-THE-AUTHORS-SPELLING-001 — a green suite measures the author's imagination
+
+**TRAP:** the author of a parser/validator writes its tests. Every fixture is the input
+shape the author had in mind, so the suite proves the code handles what the author
+already thought of, and is silent on every other spelling of the same intent. It is
+green, it is honest, and it is not coverage. The stronger the suite looks, the more
+confidently the gap ships.
+
+**Evidence, one session:** an 11-gate suite passed 11/11 while SEVEN reproducible
+defects sat in the code it covered — a floor keyed on one of two fields that can
+declare the same fact, an empty parse laundered into a pass, a nested key hoisted over
+a real declaration, and out-of-vocabulary values emitted to a consumer that would
+choke on them. Each gate exercised the canonical spelling; none exercised a sibling.
+
+**FIX:** for anything that PARSES or VALIDATES, coverage is measured in input SHAPES,
+not in branches. Before believing a suite, enumerate deliberately: the field omitted,
+the sibling field used instead, the value nested one level deeper, the wrong case, the
+empty body, the value outside the vocabulary. Cheapest reliable instrument is an
+INDEPENDENT reviewer running a falsification harness against the claimed invariants —
+independent because the blind spot and the fixture set have the same author.
+
+**Generaliza:** any test suite written by the implementer for input-handling code.
+**ORIGEN:** CDIO-07 review 2026-08-24. Sisters:
+`feedback_founding_finding_is_a_hypothesis`, `feedback_hand_curated_audit_measures_memory`,
+`PR-COVERAGE-BY-CONSTRUCTION-001`.
+
 - [tooling/bash:hooks] `ceps_94c9ded2192f6a52` -- Tool failure in bash:hooks: SyntaxError: (unicode. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [env/bash:echo] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:echo: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
