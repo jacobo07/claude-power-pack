@@ -6,7 +6,7 @@ to a fresh temp dir and never touches the real ~/.claude/state. Run it 3x -- the
 result is identical each time (no global writes, no order dependence).
 
   V-AGENT-FILES-COMPLETE  3 agent files exist with required frontmatter, no slop
-  V-DATASETS-DEPTH        6 datasets, each > 2000 words of real prose
+  V-DATASETS-DEPTH        8 datasets, each > 2000 words of real prose
   V-GRAPH-NODES           CDIO datasets are promotable to the global graph layer
   V-BUS-PUBLISHES         a review's findings publish to + read back from PM-03
   V-TELEMETRY-WIRED       a review records to CO-12 and surfaces in the report
@@ -35,10 +35,11 @@ DATASETS = os.path.join(ROOT, "vault", "knowledge_base", "cdio")
 AGENTS = os.path.join(ROOT, "vault", "agents")
 
 # CDIO-00..05 (the evaluative axis) + CDIO-06 (the generative axis: aesthetic
-# families, added 2026-07-12). An EQUALITY gate on purpose: a dataset silently
+# families, added 2026-07-12) + CDIO-07 (the behavioural axis: experience
+# contract, added 2026-08-24). An EQUALITY gate on purpose: a dataset silently
 # vanishing must fail just as loudly as an unregistered one appearing. Raise this
 # only alongside a real sealed dataset -- never to make a red suite go green.
-EXPECTED_DATASETS = 7
+EXPECTED_DATASETS = 8
 
 # Fragment-assembled so the literals never appear verbatim in this file.
 _SLOP = ["TO" + "DO", "FIX" + "ME", "HA" + "CK", "PLACE" + "HOLDER", "XX" + "X",
