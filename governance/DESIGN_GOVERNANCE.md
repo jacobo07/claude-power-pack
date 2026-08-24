@@ -179,6 +179,75 @@ adds a component. The selector refuses it: declare the surface's open findings i
 - This is the same doctrine as Section 3: identity and comprehensibility live in the
   information system, and no amount of added surface fixes a fault underneath it.
 
+## Section 9 — Experience Contract (CDIO-07, behavioural)
+A surface is judged at rest by Sections 1–7. This section governs what it does when
+touched and while it waits. Owner: `vault/knowledge_base/cdio/CDIO-07-experience-contract.md`;
+declared in `DESIGN.md` front-matter under `experience:`; parsed by `tools/design_gate.py`;
+enforced by `modules/cdio/scorer.py`.
+
+**The contract is OPTIONAL and its absence is never a failure.** A project that declares
+nothing is `unassessed` — reported, never blocked, and its Design Quality Score is
+byte-identical to what it was before this axis existed. An unmeasured property treated as
+a failure inerts a gate on day one; treated as a pass it launders an unknown into a yes.
+It is neither.
+
+### 9.1 Refusal runs in BOTH directions
+A declared contract is breached by doing too much as readily as by doing too little. A
+component whose motion exceeds `motion_budget`, a celebration on an event
+`celebration_policy` excludes, a character on a surface declaring `character_policy: none`,
+and a progress cue that flashes below the 200 ms perception floor are each breaches — as
+is a silent action or a missing progress cue. **An axis that could only ever ask for more
+animation is a preference with a schema, not a gate.**
+- `expressiveness: none` is a COMPLETE, PASSING contract. Never record "lacks
+  micro-interactions" against a surface that declared stillness; there is no criterion it
+  fails.
+- Never recommend RAISING expressiveness. The ceiling moves at the picker
+  (`modules/design-md/prompts/experience-picker.md`), by a human, or not at all.
+
+### 9.2 The floors are not arbitrable (scored, CRITICAL)
+Mechanical, via the scorer: `check_reduced_motion` (motion with no non-motion equivalent),
+`check_motion_sole_channel` (motion as the only carrier of essential information),
+`check_blocking_animation` (animation holding input hostage). `check_feedback_ack` and
+`check_progress_cue` carry CDIO-02 §8's minor/major assignment.
+- `equivalent` means the information and the state change still ARRIVE without motion. A
+  shortened animation is not an equivalent.
+- No posture, family, or brand character buys a floor exemption (CDIO-06 §3 rule 5).
+
+### 9.3 Three axes, three separate answers
+Never collapse them; the whole design of this section is their separation.
+- **Score / verdict** — quality only. A contract breach NEVER moves the number and never
+  changes APPROVE/REVISE/BLOCK. A criterion that silently re-scores surfaces reviewed last
+  month is a regression wearing a gate's clothes.
+- **`is_done`** — quality AND conformance. A surface that cleared ≥ 80 while breaching its
+  own contract is **not done**. `GateResult.is_done` enforces this.
+- **Product evidence** — whether the behaviour achieved its purpose. Out of scope here;
+  CDIO-07 §9 defines the fields a future outcome loop attaches to, and claims nothing more.
+
+### 9.4 An incoherent contract is refused before a surface is built
+`design_gate.py` refuses a contract that cannot be conformed to: a high expressiveness
+ceiling with `reduced_motion: absent` (CRITICAL — the floor is unreachable), a
+`motion_budget` outranking `expressiveness`, a celebration policy above `never` with
+`trust_posture: critical`, `success_posture: celebrate` against `celebration_policy: never`,
+`waiting: optimistic` with `error_posture: terse`, and thresholds in inverted order. An
+unrecognised enum value is itself a finding: a value outside the vocabulary silently
+disables the check that reads it, and a check nobody can fail is not a check.
+
+### 9.5 The contract is the selector's context — emit it, never hand-write it
+`python tools/design_gate.py --emit-context ./DESIGN.md --out ctx.json` derives the CDICF
+project context (§8.1) from the document. Every field names its derivation, and an
+undeclared field is OMITTED rather than guessed — the selector treats a missing field as
+unconstrained, so omission costs a filter while a guess costs correctness. Use `--out`
+rather than a shell redirect: PowerShell's `>` prepends a BOM.
+- A hand-written context is a filter that silently disagrees with the document it claims to
+  represent, which is worse than no filter at all.
+
+### 9.6 What this section cannot see
+`design_gate.py` reads a DECLARATION, never a render. Timing, motion and perceived
+responsiveness are properties of a running surface, and only VQ-8 (Section 7) observes
+those. A coherent contract is a necessary condition for a done visual surface and never a
+sufficient one — the same honesty boundary CDIO-06 §7 states for the token gate.
+
 ## Applies to
-Any pull request or deploy that adds or restyles a user-facing visual surface, and any
-adoption of a third-party component into one (Section 8).
+Any pull request or deploy that adds or restyles a user-facing visual surface, any
+adoption of a third-party component into one (Section 8), and any change to how a surface
+behaves on interaction or while it waits (Section 9).

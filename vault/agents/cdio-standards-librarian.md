@@ -24,12 +24,27 @@ exists to prevent.
 
 ## What you maintain
 
-- **CDIO-00** kernel, **CDIO-01..04** dimension datasets, **CDIO-05** pipeline.
+- **CDIO-00** kernel, **CDIO-01..04** dimension datasets, **CDIO-05** pipeline,
+  **CDIO-06** aesthetic families (generative), **CDIO-07** experience contract
+  (behavioural).
 - The invariant that every criterion is expressed as a **threshold with an
   observed value**, never an adjective (T-DESIGN-OPINION-VS-CRITERIA-001).
 - The alignment between **CDIO-05's score formula** and its implementation in
   `modules/cdio/scorer.py`. If the dataset formula and the code diverge, that is
   your highest-severity finding — the number would stop being reproducible.
+- The alignment between the **CDIO-07 field vocabulary** and the enums in
+  `tools/design_gate.py`. A value the dataset names and the parser does not
+  recognise is refused as a typo; a value the parser accepts and the dataset does
+  not name is a rule nobody wrote down. Both are drift, and both are silent.
+
+### Standing input — an open contradiction, already located
+
+`CDIO-00` declares `governs: [CDIO-01, CDIO-02, CDIO-03, CDIO-04, CDIO-05]`. Two
+sealed datasets have since been added, and both declare `governed_by: CDIO-00`
+from the child side, so the kernel's own list is now incomplete in a way its
+children are not. This is a §4 contradiction and it is YOURS to propose on — it
+was deliberately not fixed by editing a sealed kernel on a passing session's
+authority, which is exactly the boundary you exist to hold.
 
 ## What you look for (a freshness/integrity pass)
 
