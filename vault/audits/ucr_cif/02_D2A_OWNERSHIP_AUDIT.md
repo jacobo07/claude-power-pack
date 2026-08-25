@@ -176,6 +176,61 @@ advantage map had already scored its mechanisms as EXTEND. **The source is not a
 sixty sovereign fabrics. It is asking for shared primitives with many analysis modes over
 them** — which is what the D2A verdicts above would produce.
 
+## 5. Phase 3b COMPLETE — the final nine, and a measurement flaw caught first
+
+### 5.1 The flaw: the mission's own artifacts contaminated its own denominator
+
+The first run of this sweep returned `SOURCE_INVENTORY_FULL.json` as the **top hit for 7 of
+10 probes**. That file is *this mission's own inventory*, committed an hour earlier, and it
+quotes the source corpus's vocabulary verbatim. The sweep was measuring my own output and
+would have reported it as estate ownership — `HIC-OAR` would have scored 96 hits instead of
+its true 0.
+
+**Measuring your own artifact is not evidence.** The sweep now excludes every path matching
+`ucr_cif` / `ucr-cif` before the corpus is built. Recorded in `03_MISSION_TRAPS.md`.
+
+This is a general hazard for any audit that writes into the tree it audits, and it grows
+with each commit: the longer a corpus mission runs, the more its own output pollutes its
+own denominator.
+
+### 5.2 Results, self-contamination removed
+
+| # | System | Hits | Files | Verdict |
+|---|---|---:|---:|---|
+| 2 | **HIC-OAR (whole)** | **0** | **0** | **TRUE ZERO at capability level** |
+| 4 | **Constitutive Baseline Ratchet** | 4 | 4 | near-zero, 1 hit/file — dispersed mentions, no owner |
+| 3 | **UDFLL** | 4 | 2 | near-zero (`deep-research` 2, `sqi_02` 2) |
+| 7 | **Meta-Failure Genome** | 5 | 5 | near-zero, 1 hit/file — no owner |
+| 1 | **UCR-CIF umbrella** | 8 | 2 | near-zero; 7 of 8 in `pp_dataset_18_order_of_magnitude_compounding_os` — adjacent, not the same object |
+| 6 | Knowledge Compiler / Linker | 56 | 39 | **EXTEND** → `daif_01_type_system_v1` (10) |
+| 5 | Capability Authority Registry | 60 | 21 | **PARTIAL** — top hit `vault/audits/upac/SYSTEM_OWNERSHIP_OVERLAP_MAP.md` (23) is an *audit artifact*, not a runtime registry |
+| 9 | Long-Horizon Campaign | 240 | 110 | **OWNED/EXTEND** → `daif_07` (18) · `modules/cognitive_os/rehydration.py` (11) · hibernation plan + `test_hibernation.py` |
+| 8 | Institutional SLOs & Chaos Mutation | 572 | 129 | **OWNED** → `ias_e2_cognitive_reliability` (100) · `tools/oracle_chaos.py` (21) |
+| 10 | Resident Institutional Kernel | 4,393 | 483 | **DISPERSED** — `hooks/` (100) and `tools/` (384) carry the mechanism; no owning module |
+
+`HIC-OAR` returning a **true zero** across ten distinct functional probes — `work class`,
+`one-shot rate`, `supervision depth`, `autonomy pack`, `certified one-shot`,
+`avoidable human`, `intervention ledger`, `autonomy maturity`, `human burden` — is the
+strongest novelty signal in the entire audit. It is also consistent: the engine independently
+kept `Human Intervention Ledger` as one of only four KEEPs.
+
+### 5.3 Final tally — 28 spine systems
+
+| Verdict | Count | Systems |
+|---|---:|---|
+| **CREATE candidate** (capability-level near-zero, two independent instruments) | **6** | HIC-OAR (+ its Ledger) · Certified Primitives & Golden Paths · Constitutive Baseline Ratchet · UDFLL · Meta-Failure Genome · RCFC |
+| **EXTEND** | 8 | UBC · IFC · UFIA-EBF · SEEIP · KIFS/USIFB · Knowledge Compiler/Linker · Proof-Carrying Capabilities · Autonomous Convergence Contract |
+| **REFERENCE / OWNED** | 10 | Crawl OS · URCE · CIR · Epistemic Types · Universalization/Portable Packs · Institutional State Runtime · TTPE/TTIA · Institutional SLOs & Chaos · Long-Horizon Campaign · UCR-CIF umbrella (adjacent to `pp_dataset_18`) |
+| **UNRESOLVED** | 4 | Constitutional Microkernel (33 %) · Capability Authority Registry (audit-only owner) · Resident Institutional Kernel (dispersed) · Mission Baseline Capsule / Project Genome (UBC residual) |
+
+**CREATE rate: 6 of 28 = 21 %** — inside this estate's measured historical band
+(CPP-IAS 9 %, DAIF 36 %, RE Baseline 25 %) and arrived at by measurement rather than by
+matching the band.
+
+**HR-NOVELTY-001 still applies.** None of the six is admitted until the 13-question proof
+is answered against a discovered sweep. This audit sizes the candidate set; it does not
+approve it.
+
 ## 6. What this audit does not claim
 
 - It does **not** claim the 24 DEFER systems are owned. They are unresolved.

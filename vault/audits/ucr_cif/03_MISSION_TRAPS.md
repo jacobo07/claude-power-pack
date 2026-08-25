@@ -150,6 +150,47 @@ floor cannot be mistaken for a score.
 
 ---
 
+---
+
+## T-SELF-CONTAMINATED-DENOMINATOR-001 — the audit's own output polluted the corpus it audits
+
+**Observed.** The Phase 3b capability sweep returned
+`vault/knowledge_base/ucr_cif/SOURCE_INVENTORY_FULL.json` as the **top hit for 7 of its 10
+probes**. That file is this mission's own inventory, committed roughly an hour earlier, and
+it quotes the source corpus's vocabulary verbatim — 1,394 records of it.
+
+**Magnitude.** `HIC-OAR` scored **96 hits** in the contaminated run and **0** once the
+mission's own paths were excluded. The contaminated run would have reported the single
+strongest novelty signal in the audit as "already owned by the estate."
+
+**Mechanism.** The audit writes into the tree it audits. Every artifact it commits enters
+its own denominator, carrying the exact vocabulary the sweep searches for. The effect is
+**self-reinforcing and grows monotonically**: the longer a corpus mission runs, the more of
+its own output pollutes its next measurement, and the direction of the error is always
+toward "this already exists" — the conclusion that ends the mission early.
+
+**Why it nearly passed.** The hit counts looked *plausible*. A system scoring 96 across 4
+files reads like dispersed partial ownership, which is a verdict this audit had legitimately
+issued elsewhere. Nothing about the number said "you are reading yourself"; only the
+**filenames** did.
+
+**Fix applied.** The corpus builder excludes every path matching `ucr_cif` / `ucr-cif`
+before a single document is loaded — exclusion at construction, not subtraction afterwards,
+so no probe can ever see the mission's own text.
+
+**Generalizes to.** Any measurement whose output lands inside its own input set: repo audits
+that write reports into the repo, coverage tools that scan their own output directory,
+knowledge-graph indexers that index their own index, dedupe engines whose ledger lives in
+the searched tree. **Establish the denominator's boundary before the first measurement, and
+re-check it after every write into the tree.** Corollary: *inspect the top hit's path, not
+just its count* — the count was unremarkable, the path was diagnostic.
+
+**Disposition.** UKDL trap candidate, high applicability. Sibling of
+`PR-COVERAGE-BY-CONSTRUCTION-001` (denominator must be discovered) — this is its inverse:
+the denominator must also be **bounded**, or it silently absorbs the thing being measured.
+
+---
+
 ## Standing obligation
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and
