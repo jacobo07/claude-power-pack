@@ -146,9 +146,14 @@ def dispatch(context: dict) -> list[str]:
          lambda: lessons.evaluate(
              bool(context.get("session_had_errors", False)),
              int(context.get("errors_fixed", 0)), project)),
+        # category/subsystem are the STRUCTURED key the CEPS recorder writes.
+        # Passing only the raw text could never match: the map is keyed on
+        # "category:subsystem", a composite no error message contains verbatim.
         ("pp-cascade-guard",
          lambda: cascade.evaluate(
-             context.get("current_error", ""), project)),
+             context.get("current_error", ""), project,
+             context.get("error_category", ""),
+             context.get("error_subsystem", ""))),
         ("pp-backlog-autopilot", lambda: backlog.evaluate(project)),
         # Governance Propagation (BL-GOV-PROP-001): sdd_tier takes the spec slot
         # (tier-aware; supersedes the binary spec_compliance gate); setup_scan

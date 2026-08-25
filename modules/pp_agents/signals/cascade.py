@@ -96,33 +96,66 @@ def _build_cascade_map() -> dict[str, list[str]]:
 
 
 def evaluate(current_error: str = "",
-             project: str = "global") -> ProactiveSignal | None:
-    """Fire when the current error matches a known cascade source."""
-    if not current_error:
-        return None
+             project: str = "global",
+             category: str = "",
+             subsystem: str = "") -> ProactiveSignal | None:
+    """Fire when the current error matches a known cascade source.
+
+    Two match paths, because the producer and the consumer spoke different
+    languages. `_build_cascade_map` keys on `f"{category}:{subsystem}"` -- a composite
+    the CEPS recorder assembles from two STRUCTURED fields -- while the live dispatcher
+    passes raw error TEXT. A composite like "regression:bash:cat" never appears verbatim
+    inside an error message, so the substring path could only ever match a caller that
+    already knew the key. Measured 2026-08-25: the store's own newest error text returned
+    None while the synthetic key fired.
+
+    Structured input is therefore matched on the key itself. The text path is kept
+    unchanged so no existing caller regresses.
+    """
     cascade_map = _build_cascade_map()
     if not cascade_map:
         return None
-    haystack = current_error.lower()
-    for src_key, followers in cascade_map.items():
-        if src_key.lower() in haystack:
-            followers_str = ", ".join(followers[:3])
-            return ProactiveSignal(
-                agent_name="pp-cascade-guard",
-                trigger="cascade_pattern_detected",
-                value=0.85,
-                advisory=(
-                    f"'{src_key}' has historically preceded: "
-                    f"{followers_str}.\n"
-                    f"Woz: did you fix the root or only the leaf?"
-                ),
-                gate="woz",
-                actionable=(
-                    "Verify these components before continuing: "
-                    + ", ".join(followers[:3])
-                ),
-            )
-    return None
+
+    src_key = ""
+    if category:
+        want = _error_key({"category": category, "subsystem": subsystem})
+        if want in cascade_map:
+            src_key = want
+        else:
+            # The live subsystem can be finer-grained than what was recorded. Fall back
+            # to the category, but ONLY when it identifies a single source: co-occurrence
+            # was learned at subsystem granularity, and picking one of several keys that
+            # merely share a category would invent a specificity the data never had.
+            same_cat = [k for k in cascade_map
+                        if k.split(":", 1)[0] == category]
+            if len(same_cat) == 1:
+                src_key = same_cat[0]
+    if not src_key and current_error:
+        haystack = current_error.lower()
+        for k in cascade_map:
+            if k.lower() in haystack:
+                src_key = k
+                break
+    if not src_key:
+        return None
+
+    followers = cascade_map[src_key]
+    followers_str = ", ".join(followers[:3])
+    return ProactiveSignal(
+        agent_name="pp-cascade-guard",
+        trigger="cascade_pattern_detected",
+        value=0.85,
+        advisory=(
+            f"'{src_key}' has historically preceded: "
+            f"{followers_str}.\n"
+            f"Woz: did you fix the root or only the leaf?"
+        ),
+        gate="woz",
+        actionable=(
+            "Verify these components before continuing: "
+            + ", ".join(followers[:3])
+        ),
+    )
 
 
 __all__ = [

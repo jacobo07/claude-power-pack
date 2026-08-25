@@ -39,6 +39,7 @@ import re
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 HOME = Path(os.path.expanduser("~"))
@@ -1239,10 +1240,18 @@ def _pp_proactive_inject(fn):
                 "cwd": cwd_raw,
                 "last_written_code": "",
                 "last_written_file": "",
+                # current_error + its structured key feed pp-cascade-guard,
+                # pp-error-analyst and pp-premise-guardian. Hardcoded "" until
+                # 2026-08-25, which returned None at each signal's first line.
+                # Same starvation the two fields above were fixed for; the fix had
+                # been applied to one consumer and not to the class.
                 "current_error": "",
+                "error_category": "",
+                "error_subsystem": "",
                 "session_had_errors": False,
                 "errors_fixed": 0,
             }
+            ctx_in.update(_recent_error_context())
             try:
                 import tis as _tis
                 sid = _tis.get_session_id()
@@ -1434,6 +1443,59 @@ def _skillrouter_mark(sid: str, names: list, prior: set) -> None:
         os.replace(tmp, p)
     except Exception:
         pass
+
+
+# --- Proactive-signal input wiring (frontier-28 Phase 5) ----------------
+# ctx_in hardcoded current_error="" on every prompt, so six wired signal
+# invocations -- pp-error-analyst, pp-cascade-guard, pp-premise-guardian among
+# them -- received a constant empty string and returned None at their first line.
+# Dispatched on every prompt since they were built, and structurally unable to
+# speak. The `prompt`/`cwd` fields two lines above were populated for exactly this
+# reason (BL-SPEC-DEPT-001) and the remaining fields were left behind.
+CEPS_EVENTS_PATH = Path.home() / ".claude" / "skills" / "claude-power-pack" \
+    / "vault" / "ceps" / "events.jsonl"
+RECENT_ERROR_MAX_AGE_S = 1800          # 30 min: an error older than the current
+                                       # working session is not "current", and an
+                                       # unbounded lookup would advise on the same
+                                       # stale incident forever.
+_TAIL_BYTES = 65_536
+
+
+def _recent_error_context(now: datetime | None = None) -> dict:
+    """Newest CEPS error within the recency window, as dispatcher context.
+
+    Returns {} when there is no recent error, when the store is absent, or on ANY
+    parse failure -- the caller's behaviour before this existed. A proactive advisory
+    must never be the reason a prompt fails.
+    """
+    try:
+        if not CEPS_EVENTS_PATH.is_file():
+            return {}
+        size = CEPS_EVENTS_PATH.stat().st_size
+        with open(CEPS_EVENTS_PATH, "rb") as fh:
+            if size > _TAIL_BYTES:
+                fh.seek(size - _TAIL_BYTES)
+                fh.readline()               # discard the partial first line
+            lines = fh.read().decode("utf-8", "replace").splitlines()
+        for raw in reversed(lines):
+            raw = raw.strip()
+            if not raw:
+                continue
+            ev = json.loads(raw)
+            ts = str(ev.get("ts") or "")
+            when = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").replace(
+                tzinfo=timezone.utc)
+            ref = now or datetime.now(timezone.utc)
+            if (ref - when).total_seconds() > RECENT_ERROR_MAX_AGE_S:
+                return {}                   # newest is stale -> nothing is current
+            return {
+                "current_error": str(ev.get("root_cause") or ""),
+                "error_category": str(ev.get("category") or ""),
+                "error_subsystem": str(ev.get("subsystem") or ""),
+            }
+    except Exception:  # noqa: BLE001 -- fail-open by contract
+        return {}
+    return {}
 
 
 # --- Novelty proof gate wiring (GAP-1, gap-discovery-2026-07-30.md) -----
