@@ -112,6 +112,13 @@ def evaluate(current_error: str = "",
     Structured input is therefore matched on the key itself. The text path is kept
     unchanged so no existing caller regresses.
     """
+    # Cheapest possible exit FIRST. The original returned on an empty current_error
+    # before touching the store; moving the map build above that early return made every
+    # dispatch parse events.jsonl even with nothing to match, and the benchmark caught it
+    # at proactive_dispatch_ms 123 vs a 30 ms target. Building an index you cannot query
+    # is pure cost -- widening an input contract must not widen the no-input path.
+    if not (category or current_error):
+        return None
     cascade_map = _build_cascade_map()
     if not cascade_map:
         return None
