@@ -218,6 +218,17 @@ def main() -> int:
          [PY, str(PP / "modules" / "error_prevention" /
                   "premise_verifier.py"), "--self-test"],
          15),
+        # frontier-28: three gates that must run in the umbrella, not by memory.
+        # Shipping a suite nobody invokes is the exact defect two of them describe.
+        ("d2a-provenance",
+         [PY, str(PP / "tools" / "test_d2a_provenance.py")],
+         30),
+        ("dispatch-liveness",
+         [PY, str(PP / "tools" / "test_dispatch_liveness.py")],
+         45),
+        ("cascade-wiring",
+         [PY, str(PP / "tools" / "test_cascade_input_wiring.py")],
+         30),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
