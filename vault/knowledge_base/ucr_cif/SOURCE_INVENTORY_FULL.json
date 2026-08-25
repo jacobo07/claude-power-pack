@@ -3744,6 +3744,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Bug Fix Is Not Failure Closure",
+  "ALIASES": "NONE",
+  "LINES": "16949-16963",
+  "KIND": "gate",
+  "DEFINITION": "The rule that a fixed line does not close the institutional incident; closure requires answering what caused it, what family it represents, what other places are exposed, how recurrence is detected and prevented, what future work will learn, what baseline must change, and how we'll know the learning is actually used.",
+  "RESPONSIBILITY": "The eight-question closure checklist beyond a code fix.",
+  "PARENT": "Failure Distillation Ladder",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a code-level bug fix -> produces the eight required closure answers",
+  "LAW": "",
+  "canonical_key": "bug fix is not failure closure",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Bug Immunity Protocol (Execution Protocol)",
   "ALIASES": "NONE",
   "LINES": "8544-8583",
@@ -3872,6 +3894,28 @@
   "canonical_key": "bug severity levels l1 l5",
   "ranges": [
    "52500_75350"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Bug-to-Invariant Compiler",
+  "ALIASES": "NONE",
+  "LINES": "17416-17432",
+  "KIND": "compiler",
+  "DEFINITION": "The requirement that every important failure attempt to produce a reusable invariant (e.g. a backup published before fsync becomes \"durability claims require stable storage before publication\") \u2014 the invariant is far more reusable than the specific fix.",
+  "RESPONSIBILITY": "Extraction of a reusable invariant from a specific bug.",
+  "PARENT": "Pre-Incident Immunity",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a specific bug fix -> produces a reusable general invariant",
+  "LAW": "",
+  "canonical_key": "bug to invariant compiler",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -4713,6 +4757,50 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Capital Allocation State Machine",
+  "ALIASES": "Opportunity Queue With Explanations / Capital Allocation States",
+  "LINES": "15819-15873",
+  "KIND": "gate",
+  "DEFINITION": "An eleven-state lifecycle for every opportunity \u2014 Observed, Investigating, Experimenting, Proven, Funded, Implementing, Canary, Promoted, Saturated, Deferred, Rejected \u2014 each opportunity carrying a leverage thesis, evidence, consumers, confidence, and lifecycle state (never an opaque ranking); a Saturated capability healthily exits the active investment frontier and can be Reactivated by new evidence.",
+  "RESPONSIBILITY": "The eleven-state opportunity lifecycle and its required explanatory metadata.",
+  "PARENT": "IFC Structured Output Contract",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes an opportunity's evidence and progress -> produces its current lifecycle state",
+  "LAW": "",
+  "canonical_key": "capital allocation state machine",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Causal Abstraction (Failure Genome Example)",
+  "ALIASES": "NONE",
+  "LINES": "17018-17045",
+  "KIND": "protocol",
+  "DEFINITION": "An illustration of proper generalization: a Git ENOENT caused by inherited PATH differences should not distill to \"look for Git in Program Files\" but to \"external tool discovery must not assume interactive-shell environment equivalence,\" protecting Git, Python, Java, FFmpeg, Docker, compilers, package managers, and other external CLIs at once.",
+  "RESPONSIBILITY": "The worked example demonstrating correct causal-level (not tool-level) generalization.",
+  "PARENT": "Failure Genome",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a tool-specific failure -> produces a cross-tool causal principle",
+  "LAW": "",
+  "canonical_key": "causal abstraction failure genome example",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Causal Blast Radius / Prevention Ascension Funnel",
   "ALIASES": "NONE",
   "LINES": "39899-39962",
@@ -5307,6 +5395,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Claude Power Pack Universal Failure Immunity, Anticipation & Error-Derived Baseline Flywheel",
+  "ALIASES": "UFIA-EBF",
+  "LINES": "16572-16607",
+  "KIND": "system",
+  "DEFINITION": "A system extending UCR-CIF, HIC-OAR, IFC, UKDL, Knowledge Vault, Production Reality Gate, Completion Standard Ratchet, and Kernel vMAX-NULL-ERROR, whose mission is that every failure increases the probability that an entire future failure family is prevented before occurrence, or failing that, makes that family cheaper, earlier, and more deterministic to detect and resolve \u2014 the institutional cost of repeating a known failure class must approach zero, and every new failure must expand CPP's predictive failure envelope.",
+  "RESPONSIBILITY": "The universal pipeline converting any failure into predictive, transferable institutional immunity.",
+  "PARENT": "Failure Immunity Ratchet",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "EVERY FAILURE MUST INCREASE THE PROBABILITY THAT AN ENTIRE FAMILY OF FUTURE FAILURES IS PREVENTED BEFORE OCCURRENCE; EVERY FAILURE MUST MAKE ITS FUTURE FAMILY CHEAPER, EARLIER AND MORE DETERMINISTIC TO DETECT AND RESOLVE; THE INSTITUTIONAL COST OF REPEATING A KNOWN FAILURE CLASS MUST APPROACH ZERO; EVERY NEW FAILURE SHOULD EXPAND CLAUDE POWER PACK'S PREDICTIVE FAILURE ENVELOPE.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes any session failure -> produces expanded predictive coverage over an entire causal failure family",
+  "LAW": "",
+  "canonical_key": "claude power pack universal failure immunity anticipation error derived baseline flywheel",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Clean Install + Upgrade + Rollback Triad",
   "ALIASES": "NONE",
   "LINES": "29512-29528",
@@ -5659,6 +5769,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Complexity Interest and Simplicity Dividend",
+  "ALIASES": "Architectural Entropy / Consolidation Frontier / Authority Density",
+  "LINES": "14896-14958",
+  "KIND": "metric",
+  "DEFINITION": "Treating complexity as debt accruing future interest (an improvement adding complexity must discount that future cost), valuing consolidation for its Simplicity Dividend (reducing costs of hundreds of future changes even without adding visible capability), measuring Architectural Entropy (divergence, duplication, exceptions, inconsistent contracts, overlapping authorities) as compression opportunity, and favoring Authority Density (one clear authority or small conditional set per problem class, since ten parallel solutions raise decision burden).",
+  "RESPONSIBILITY": "The complexity-as-debt framing and its associated compression metrics.",
+  "PARENT": "Portfolio Reserves",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes the institution's architectural state -> produces compression opportunities and their discounted future-cost savings",
+  "LAW": "",
+  "canonical_key": "complexity interest and simplicity dividend",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "COMPONENT VALIDITY CAN DEPEND ON COMPOSITION ROLE",
   "ALIASES": "NONE",
   "LINES": "32274-32289",
@@ -5854,6 +5986,28 @@
   "canonical_key": "compositional baselines",
   "ranges": [
    "r1_slice1"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Compositional Failure Synthesis",
+  "ALIASES": "Failure Recombination / Failure Combination Miner / Emergent Failure Detection",
+  "LINES": "17316-17386",
+  "KIND": "capability",
+  "DEFINITION": "Deliberate combination of Failure Genomes (e.g. partial persistence + process crash + retry -> duplicate execution) to anticipate a fourth failure from three separate learnings, prioritizing causally-compatible, high-severity, architecture-relevant combinations (not indiscriminate combinatorial explosion) \u2014 failure classes, like capabilities, can emerge from composition (e.g. state caching + hot reload + external mutation -> stale-reality failures) and can be derived without anyone experiencing them first.",
+  "RESPONSIBILITY": "Combinatorial synthesis of new failure hypotheses from existing failure genomes.",
+  "PARENT": "Failure-Derived Adversarial Generation",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes multiple existing Failure Genomes -> produces derived, unexperienced compound-failure hypotheses",
+  "LAW": "",
+  "canonical_key": "compositional failure synthesis",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -7002,6 +7156,50 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Controller Failure as Institutional Incident",
+  "ALIASES": "Controller Failure Classes / IFC UKDL",
+  "LINES": "16111-16146",
+  "KIND": "gate",
+  "DEFINITION": "The rule that IFC repeatedly misallocating capital is itself an Allocation System Incident requiring root-causing (classes include overestimated reuse, underestimated integration cost, ignored bottleneck, poor causal graph, weak uncertainty calibration, over-optimization of a short-term metric), with the Controller's own mistakes ascending to allocation hard rules, process rules, or traps in IFC's own UKDL.",
+  "RESPONSIBILITY": "Root-cause treatment of IFC's own misallocations as first-class institutional incidents.",
+  "PARENT": "Institutional Engineering Digital Twin",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a repeated misallocation -> produces a root-caused incident and, when applicable, an IFC-specific UKDL rule",
+  "LAW": "",
+  "canonical_key": "controller failure as institutional incident",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Controller Self-Benchmarking",
+  "ALIASES": "Controller Benchmarks / Allocation Backtesting / Controller Challenger / Controller Regression Vault / IFC Mastering Its Own Job",
+  "LINES": "15495-15562",
+  "KIND": "gate",
+  "DEFINITION": "The requirement that IFC itself be examined: given historical states, what would it have prioritized, compared against realized outcomes (backtesting, not to fake historical certainty but to check whether the ranking logic would have caught obvious high-leverage opportunities); a new allocation model may compete against the current IFC (never replaced by intuition); successful allocation patterns move to a regression vault as the frontier rises; and IFC's own competence ascends through basic leverage ranking, causal attribution, portfolio optimization, meta-allocation, and emergent opportunity discovery.",
+  "RESPONSIBILITY": "The self-examination, backtesting, and challenger-competition mechanisms applied to IFC itself.",
+  "PARENT": "Engineering Investment Dataset",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes IFC's own historical allocation decisions -> produces a benchmarked, challenger-tested, ascending Controller",
+  "LAW": "",
+  "canonical_key": "controller self benchmarking",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Convergence Engineering / Stable Convergence",
   "ALIASES": "NONE",
   "LINES": "49898-49926",
@@ -7174,6 +7372,28 @@
   "canonical_key": "counterfactual capability mining",
   "ranges": [
    "r1_slice3"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Coupled Investment and Real Options",
+  "ALIASES": "Coupled Improvement Packages / Complementarity / Sequencing Value / Path Dependence / Reversibility Value / Real Options Engineering",
+  "LINES": "15153-15224",
+  "KIND": "protocol",
+  "DEFINITION": "Recognition that some capabilities only improve as a coupled package (A+B+C together), that improvements can be complementary (multiplying each other's value), that sequencing matters (A-before-B may have huge value while B-before-A has little), that engineering institutions are path-dependent (avoid closing valuable options unnecessarily), and that under high uncertainty, reversible architecture and small reversible prototypes buy the right (not obligation) to later build a large platform \u2014 better capital allocation than committing early.",
+  "RESPONSIBILITY": "Package-, sequence-, and reversibility-aware investment evaluation.",
+  "PARENT": "Critical Capability Paths",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a set of interdependent candidate improvements -> produces a sequenced, reversibility-aware coupled investment plan",
+  "LAW": "",
+  "canonical_key": "coupled investment and real options",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -7372,6 +7592,28 @@
   "canonical_key": "crawl os",
   "ranges": [
    "52500_75350"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Critical Capability Paths",
+  "ALIASES": "Institutional Dependency Criticality / Critical Path Improvement / Unused Headroom / Capability Headroom Map",
+  "LINES": "15115-15150",
+  "KIND": "graph",
+  "DEFINITION": "Identification of critical capability paths where a weak central dependency limits everything downstream, prioritizing improvements on those paths where marginal uplift actually propagates, and mapping capability headroom (current level, possible level, limiting dependency) to avoid investing where a downstream capability cannot yet benefit due to another binding limiter.",
+  "RESPONSIBILITY": "Identification of true critical dependency paths and unrealizable headroom.",
+  "PARENT": "Institutional Ascension Ladder",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes the dependency graph -> produces critical paths and a headroom map preventing wasted investment",
+  "LAW": "",
+  "canonical_key": "critical capability paths",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -7970,6 +8212,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Defense-in-Depth Ascension",
+  "ALIASES": "Cheapest Prevention Layer",
+  "LINES": "17462-17499",
+  "KIND": "law",
+  "DEFINITION": "The rule that a high-severity failure family should not depend on a single protection layer (prevention, early detection, runtime guard, recovery, regression, so losing one layer doesn't destroy immunity), while also favoring the cheapest structural prevention layer (API design, type system, static validator, test, build gate, over runtime assertion) rather than converting everything into recurring runtime overhead.",
+  "RESPONSIBILITY": "The multi-layer protection requirement and the cheapest-effective-layer preference.",
+  "PARENT": "Invariant-to-Enforcement Ascension",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a high-severity failure family -> produces multiple redundant protection layers at the structurally cheapest point",
+  "LAW": "",
+  "canonical_key": "defense in depth ascension",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Defensive Compounding Rate (DCR)",
   "ALIASES": "DCR",
   "LINES": "18780",
@@ -8186,6 +8450,28 @@
   "canonical_key": "diagnostic representation need not look like production",
   "ranges": [
    "r2_slice4"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Diff-Aware Failure Prediction",
+  "ALIASES": "Change-Risk Compiler",
+  "LINES": "17210-17246",
+  "KIND": "compiler",
+  "DEFINITION": "A dynamic update to the Predictive Failure Pack during execution: if the diff introduces a subprocess, async boundary, persistence, cache, retry, external command, or mutable global state, new relevant failure families activate; the current diff plus architecture plus failure genomes compiles into a change-specific risk model guiding test and adversarial-scenario selection.",
+  "RESPONSIBILITY": "The live, diff-triggered risk-model recompilation during execution.",
+  "PARENT": "Predictive Failure Pack",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes an in-progress diff -> produces an updated change-specific failure risk model",
+  "LAW": "",
+  "canonical_key": "diff aware failure prediction",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -8586,6 +8872,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Dual-ROI Project Selection",
+  "ALIASES": "Production as R&D Portfolio",
+  "LINES": "14285-14306",
+  "KIND": "protocol",
+  "DEFINITION": "The practice of recommending production missions that simultaneously deliver product value and attack an institutional bottleneck, improving roadmap selection by seeking double ROI.",
+  "RESPONSIBILITY": "Selection of missions carrying both product and institutional-capability value.",
+  "PARENT": "Value Durability and Option Value",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes candidate production missions -> produces selection favoring dual product-plus-capability value",
+  "LAW": "",
+  "canonical_key": "dual roi project selection",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Duplicate Capability Gate",
   "ALIASES": "duplicated painter -> duplicated lower-maturity capability",
   "LINES": "21980",
@@ -8736,6 +9044,50 @@
   "canonical_key": "dynamic frontier allocation",
   "ranges": [
    "r1_slice4"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Dynamic Frontier Recomputation",
+  "ALIASES": "Frontier Discovery from Bottleneck Removal / Frontier Queue Is Dynamic / Frontier Recomputation / Priority Invalidation / Evidence-Driven Reprioritization",
+  "LINES": "15387-15433",
+  "KIND": "loop",
+  "DEFINITION": "The rule that every improvement must produce a next-constraint analysis rather than waiting for the next crisis, that the frontier queue is never a fixed backlog (each system improvement changes what's most valuable next), that major promotions trigger portfolio recomputation (a former P1 may become irrelevant), and that old priorities never automatically survive new evidence \u2014 reprioritization must happen without ego, sunk cost, or \"it was already on the roadmap.\"",
+  "RESPONSIBILITY": "The continuous, evidence-driven re-derivation of institutional priority.",
+  "PARENT": "Multiplier Nodes and Multi-Loop Amplification",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "OLD PRIORITIES DO NOT SURVIVE NEW EVIDENCE AUTOMATICALLY.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a completed improvement -> produces immediate recomputation of the next-highest-priority frontier",
+  "LAW": "",
+  "canonical_key": "dynamic frontier recomputation",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Dynamic Portfolio Allocation (IFC)",
+  "ALIASES": "Exploration Budget (IFC) / Exploitation Budget (IFC) / Portfolio Diversification",
+  "LINES": "14338-14386",
+  "KIND": "protocol",
+  "DEFINITION": "The rule that portfolio proportions shift by institutional state (early systems favor foundational infrastructure, mature systems favor frontier/compression/meta, incident periods favor defense), never allocating 100% to exploitation (risking local maxima) or constantly chasing novelty (never consolidating discoveries into infrastructure), with high-uncertainty domains justifying parallel diversified bets.",
+  "RESPONSIBILITY": "State-dependent rebalancing of the R&D portfolio categories.",
+  "PARENT": "IFC R&D Portfolio Categories",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes the institution's current maturity state -> produces a rebalanced portfolio allocation",
+  "LAW": "",
+  "canonical_key": "dynamic portfolio allocation ifc",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -8985,6 +9337,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Engineering Bets Framework",
+  "ALIASES": "Kill Criteria / Continue Criteria / Scale-Up Gate",
+  "LINES": "14388-14439",
+  "KIND": "protocol",
+  "DEFINITION": "A framework treating each major improvement candidate as an Engineering Bet with a thesis, expected payoff, evidence, cost, risk, and falsification criteria \u2014 defining in advance what evidence would stop it (kill criteria) or justify more investment (continue criteria), and requiring a small experiment to pass before widening to canary, broader adoption, and finally baseline (never promoted from intuition).",
+  "RESPONSIBILITY": "The bet structure and staged scale-up gate for major improvement investments.",
+  "PARENT": "Dynamic Portfolio Allocation (IFC)",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a candidate major improvement -> produces a staged, falsifiable investment with defined stop/continue criteria",
+  "LAW": "",
+  "canonical_key": "engineering bets framework",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Engineering Capability Vector / Engineering Capability Frontier",
   "ALIASES": "NONE",
   "LINES": "50334-50379",
@@ -9026,6 +9400,28 @@
   "ranges": [
    "52500_75350",
    "r1_slice3"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Engineering Investment Dataset",
+  "ALIASES": "Institutional Memory of Bets / Meta-Pattern Mining / Institutional Strategy Learning / Prioritization Baseline",
+  "LINES": "15435-15493",
+  "KIND": "registry",
+  "DEFINITION": "A retained record of what investments were made, why, what was expected, and what happened, forming a capital-allocation dataset over time from which meta-patterns emerge (e.g. \"evaluator improvements tend to produce high leverage\"; \"new agents without new metrology tend to produce little\"), teaching CPP how to build better engineering institutions, not just better software \u2014 the allocation method itself has a promotable baseline.",
+  "RESPONSIBILITY": "The historical bet-outcome dataset feeding institutional strategy learning.",
+  "PARENT": "Dynamic Frontier Recomputation",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes every past investment decision and its outcome -> produces meta-patterns improving future investment strategy",
+  "LAW": "",
+  "canonical_key": "engineering investment dataset",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -10526,6 +10922,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Failure-Derived Adversarial Generation",
+  "ALIASES": "Counterfactual Failure Mining / Neighborhood Adversaries",
+  "LINES": "17266-17314",
+  "KIND": "subsystem",
+  "DEFINITION": "Generation of variant adversarial cases from each Failure Genome (e.g. dependency missing -> wrong version, spaced path, permission denied, environment changed post-startup, dependency disappearing mid-session), plus counterfactual mining (what small change would have made this failure worse/harder-to-detect/more-expensive) and neighborhood testing around the failure boundary rather than only the exact reproducer, reducing regression overfitting.",
+  "RESPONSIBILITY": "Systematic generation of adversarial variants and neighborhood tests from a single failure.",
+  "PARENT": "Test Selection from Failure Memory",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a single Failure Genome -> produces a family of adversarial test variants",
+  "LAW": "",
+  "canonical_key": "failure derived adversarial generation",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Failure-Derived API Design",
   "ALIASES": "NONE",
   "LINES": "18713",
@@ -10632,6 +11050,50 @@
   "canonical_key": "failure discovery cost",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Failure Distillation Ladder",
+  "ALIASES": "L0-L9",
+  "LINES": "16901-16945",
+  "KIND": "protocol",
+  "DEFINITION": "The ten-rung ladder every material failure should climb: L0 Fact, L1 Reproducer, L2 Root Cause, L3 Violated Invariant, L4 Failure Family, L5 Generalization, L6 Detector, L7 Preventer, L8 Baseline, L9 Predictive Model (what conditions announce rising risk).",
+  "RESPONSIBILITY": "The ten-stage distillation trajectory for any material failure.",
+  "PARENT": "UKDL Must Change Execution",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a material failure fact -> produces its full climb to a predictive model",
+  "LAW": "",
+  "canonical_key": "failure distillation ladder",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Failure Distillation Pipeline",
+  "ALIASES": "Error Telemetry vs Error Knowledge / Failure Triage Gate",
+  "LINES": "16705-16780",
+  "KIND": "protocol",
+  "DEFINITION": "A pipeline preventing raw failure noise from contaminating the institution: Raw Failure Event -> Material Failure -> Failure Class -> Institutional Failure Knowledge -> Universal Failure Knowledge -> Baseline Immunity, with a separate triage classifying scope as Incidental, Local, Recurring, Archetype, Stack, Cross-Stack, Universal, or Constitutional \u2014 not everything ascends, but every material failure receives a classification.",
+  "RESPONSIBILITY": "The staged evidence-sufficiency pipeline and applicability-scope triage for failures.",
+  "PARENT": "Session Failure Stream",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a captured failure -> produces its evidence-tier and applicability-scope classification",
+  "LAW": "",
+  "canonical_key": "failure distillation pipeline",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -10808,6 +11270,28 @@
   "canonical_key": "failure generation grammar",
   "ranges": [
    "35000_52500"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Failure Genome",
+  "ALIASES": "NONE",
+  "LINES": "16966-17016",
+  "KIND": "artifact",
+  "DEFINITION": "A structured causal record per failure family: preconditions, trigger, hidden assumption, broken invariant, propagation, observability, escape mechanism (why gates missed it), detection opportunity, prevention opportunity, and recovery \u2014 enabling transfer between apparently unrelated software.",
+  "RESPONSIBILITY": "The ten-field causal genome representation of a failure family.",
+  "PARENT": "Bug Fix Is Not Failure Closure",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a failure family -> produces its ten-field causal genome",
+  "LAW": "",
+  "canonical_key": "failure genome",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -11094,6 +11578,28 @@
   "canonical_key": "failure leverage score",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Failure Mechanism as Fundamental Unit",
+  "ALIASES": "NONE",
+  "LINES": "16611-16653",
+  "KIND": "law",
+  "DEFINITION": "The rule that an individual bug is only a manifestation; the important institutional unit is the failure mechanism \u2014 e.g. \"button doesn't work\" is a symptom of \"UI control -> no registered command -> no backend route -> fake visual completion,\" generalized as \"user-reachable control must have a verified causal path to its claimed effect,\" protecting buttons, menu items, CLI commands, RPC calls, background actions, webhooks, and automations alike.",
+  "RESPONSIBILITY": "The mechanism-not-symptom framing for what a bug institutionally represents.",
+  "PARENT": "Claude Power Pack Universal Failure Immunity, Anticipation & Error-Derived Baseline Flywheel",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "USER-REACHABLE CONTROL MUST HAVE A VERIFIED CAUSAL PATH TO ITS CLAIMED EFFECT.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a symptomatic bug -> produces its generalized causal-mechanism principle",
+  "LAW": "",
+  "canonical_key": "failure mechanism as fundamental unit",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -12748,6 +13254,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Generalization Search and Exposure Graph",
+  "ALIASES": "Analogous Exposure Scan",
+  "LINES": "17047-17109",
+  "KIND": "subsystem",
+  "DEFINITION": "After root cause, asking where else the same causal mechanism can exist (same abstraction, boundary, lifecycle, state model, trust assumption, or integration topology, not just identical text), building a Failure Exposure Graph (nodes: modules/interfaces/subsystems/projects/primitives/workflows; edges: shares causal exposure) and proactively scanning it for other exposed locations before closing an incident \u2014 proactive bug hunting derived from real evidence.",
+  "RESPONSIBILITY": "The systematic scan for other locations sharing a failure's causal exposure.",
+  "PARENT": "Causal Abstraction (Failure Genome Example)",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a root-caused failure's causal mechanism -> produces a list of other exposed locations found before they fail",
+  "LAW": "",
+  "canonical_key": "generalization search and exposure graph",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Generalized reproducer construction",
   "ALIASES": "NONE",
   "LINES": "31080-31113",
@@ -13383,6 +13911,28 @@
   "canonical_key": "historical failure replay",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Historical Replay Economics",
+  "ALIASES": "Counterfactual Simulation (IFC) / Shadow Deployment / Institutional A/B (IFC)",
+  "LINES": "14539-14595",
+  "KIND": "protocol",
+  "DEFINITION": "Estimating what would have changed had improvement X existed across the last N missions (bugs avoided, interventions removed, search avoided, time saved, false Dones prevented) using historical Construction Memory; testing new planners/evaluators/retrieval as shadow deployments compared against the current system before becoming authority; and running institutional A/B tests of baseline vs. candidate on a representative mission portfolio measuring correctness, TTPE, OSR, FDR, human burden, compute, and complexity.",
+  "RESPONSIBILITY": "Historical and shadow-deployment-based validation feeding capital allocation.",
+  "PARENT": "Metrology as Infrastructure",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes historical Construction Memory + a candidate change -> produces an estimated counterfactual benefit before real rollout",
+  "LAW": "",
+  "canonical_key": "historical replay economics",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -14202,6 +14752,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "IFC Allocation Ceremony Budget",
+  "ALIASES": "IFC No Debe Autooptimizarse Sin L\u00edmites / Fast Path (IFC) / Deep Allocation Path",
+  "LINES": "14752-14806",
+  "KIND": "gate",
+  "DEFINITION": "A self-limiting rule preventing recursive bureaucracy in IFC itself via ROI gates, complexity limits, Production Reality, and historical validation; if deciding what to do costs more than doing it, the Controller is broken \u2014 obvious high-ROI small improvements get a cheap fast-path execution, while high-cost/high-blast-radius investments get deep analysis (counterfactuals, dependencies, VOI, alternatives, canary, rollback).",
+  "RESPONSIBILITY": "The proportional-ceremony gate scaling IFC's own decision cost to the investment's stakes.",
+  "PARENT": "Meta-Allocation",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a candidate investment's cost/blast-radius -> produces a proportionally cheap or deep allocation-decision process",
+  "LAW": "",
+  "canonical_key": "ifc allocation ceremony budget",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "IFC Allocation Problem",
   "ALIASES": "EL PROBLEMA QUE RESUELVE",
   "LINES": "13252-13294",
@@ -14246,6 +14818,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "IFC Causal Attribution",
+  "ALIASES": "Credit Assignment / Contribution Graph",
+  "LINES": "14597-14634",
+  "KIND": "subsystem",
+  "DEFINITION": "The requirement to determine which specific improvement contributed to an observed performance gain \u2014 distinguishing model, prompt, primitive, cached knowledge, or easier-task effects rather than attributing everything to CPP \u2014 maintained as a contribution graph (Improvement X -> changed metric Y -> affected mission Z) so the allocator itself can learn.",
+  "RESPONSIBILITY": "Causal attribution of observed improvements to their true sources.",
+  "PARENT": "Historical Replay Economics",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes an observed performance change -> produces attribution to its true causal source(s)",
+  "LAW": "",
+  "canonical_key": "ifc causal attribution",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "IFC Causal Edge Types",
   "ALIASES": "NONE",
   "LINES": "13396-13430",
@@ -14264,6 +14858,72 @@
   "canonical_key": "ifc causal edge types",
   "ranges": [
    "r1_slice7"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Causal Graph Learning",
+  "ALIASES": "Cross-System Evidence Fusion / Institutional Causal Discovery / Causal Intervention / Graph Learns From Interventions / Structural Model Revision",
+  "LINES": "16017-16063",
+  "KIND": "capability",
+  "DEFINITION": "The evolution of IFC from correlation ranking to causal understanding: opportunities backed by multiple independent evidence types get special attention; improving X and observing whether the expected downstream change actually occurs (and updating the graph if not) treats every engineering change as an experiment on the causal graph, revising dependency assumptions when predicted propagation fails.",
+  "RESPONSIBILITY": "The experiment-driven causal graph revision mechanism.",
+  "PARENT": "IFC Causal Attribution",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes an engineering change's observed vs. predicted downstream effect -> produces an updated causal graph",
+  "LAW": "",
+  "canonical_key": "ifc causal graph learning",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Final Law",
+  "ALIASES": "NONE",
+  "LINES": "16542-16562",
+  "KIND": "law",
+  "DEFINITION": "The closing IFC law: do not merely make Claude Power Pack better; learn which improvements make it better fastest; then improve the system that identifies those improvements; then use that resulting capability to choose even higher-leverage improvements; repeat under reality, evidence, risk, simplicity, and production-quality constraints \u2014 turning CPP's technical growth from accumulation of improvements into recursively improving engineering capital allocation.",
+  "RESPONSIBILITY": "The final recursive-allocation law closing the IFC design.",
+  "PARENT": "IFC North Star",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "DO NOT MERELY MAKE CLAUDE POWER PACK BETTER. LEARN WHICH IMPROVEMENTS MAKE CLAUDE POWER PACK BETTER THE FASTEST. THEN IMPROVE THE SYSTEM THAT IDENTIFIES THOSE IMPROVEMENTS. THEN USE THE RESULTING CAPABILITY TO CHOOSE EVEN HIGHER-LEVERAGE IMPROVEMENTS. REPEAT UNDER REALITY, EVIDENCE, RISK, SIMPLICITY AND PRODUCTION-QUALITY CONSTRAINTS.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "NONE",
+  "LAW": "",
+  "canonical_key": "ifc final law",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Frequency-Weighted Prioritization",
+  "ALIASES": "Problem Family Economics / Institutional Pareto 80/20 / Failure Cost Weighting",
+  "LINES": "14002-14047",
+  "KIND": "law",
+  "DEFINITION": "The rule that improvement priority must weigh frequency (ten projects sharing a repository-discovery issue justifies a universal primitive; a rare one-off may not) and continuously search for the small improvement set explaining most failures/interventions/wasted search/duplication/TTPE, weighting failure cost by severity, recurrence, detection latency, recovery cost, and blast radius rather than treating all failures equally.",
+  "RESPONSIBILITY": "Frequency- and severity-weighted prioritization of institutional improvements.",
+  "PARENT": "Opportunity Discovery (IFC)",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes candidate opportunities' frequency/severity data -> produces a weighted priority ranking",
+  "LAW": "",
+  "canonical_key": "ifc frequency weighted prioritization",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -14290,6 +14950,50 @@
   "merged_aliases": []
  },
  {
+  "NAME": "IFC-HIC-OAR Integration",
+  "ALIASES": "Human Attention as Capital / Human Bottleneck Map / Autonomy Leverage (IFC) / One-Shot Leverage / False-Done Reduction Value",
+  "LINES": "14050-14114",
+  "KIND": "protocol",
+  "DEFINITION": "The direct integration of HIC-OAR into IFC: treating human attention as a scarce capital asset (a fix saving 20 minutes across 1000 future missions can have enormous leverage), mapping where the user still acts as database/tester/debugger/orchestrator/planner/approval-bottleneck, favoring improvements that most reduce human engineering burden without reducing correctness, valuing improvements that raise OSR across many work classes, and giving heavy weight to evaluator improvements that eliminate False Done even without immediate time savings.",
+  "RESPONSIBILITY": "The leverage-scoring bridge between IFC's capital allocation and HIC-OAR's human-burden metrics.",
+  "PARENT": "Claude Power Pack Institutional Flywheel Controller",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes HIC-OAR's human-burden signals -> produces IFC leverage scoring that accounts for human attention as capital",
+  "LAW": "",
+  "canonical_key": "ifc hic oar integration",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Human Governance Interface",
+  "ALIASES": "Human Governance (IFC) / Owner Capital Allocation Role / Strategy to Engineering Allocation Compiler / Dynamic Objective Weights / Constitutional Constraints Are Stable",
+  "LINES": "16166-16228",
+  "KIND": "protocol",
+  "DEFINITION": "The rule that major institutional reallocations may still require Owner approval, but IFC must have already done all the technical cognition, presenting decision, evidence, trade-offs, and recommendation (never an incomplete investigation); the Owner ideally focuses on strategic goals, risk appetite, and value judgments (e.g. \"prioritize reliability and autonomy\") which IFC compiles into a concrete leverage portfolio, with objective weights changing as strategy changes while safety/correctness floors remain constitutionally stable.",
+  "RESPONSIBILITY": "The Owner-facing interface translating strategic intent into engineering allocation, and the stable/changeable split.",
+  "PARENT": "Traceable Leverage Scoring",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes Owner strategic priorities -> produces a compiled, evidence-complete engineering allocation portfolio",
+  "LAW": "",
+  "canonical_key": "ifc human governance interface",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "IFC Inside the Compiler",
   "ALIASES": "NONE",
   "LINES": "24463",
@@ -14308,6 +15012,28 @@
   "canonical_key": "ifc inside the compiler",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Master Loop",
+  "ALIASES": "El Loop Maestro (IFC)",
+  "LINES": "16254-16345",
+  "KIND": "loop",
+  "DEFINITION": "The full IFC cycle: observe entire institution -> build current state graph -> identify bottlenecks -> discover improvement opportunities -> estimate direct+transitive+compositional+meta+autonomy leverage+option value -> adjust for cost+risk+uncertainty+complexity -> identify cheapest falsification -> experiment -> observe real effect -> update causal graph -> promote/reject/iterate -> recompute bottleneck -> select next investment -> repeat.",
+  "RESPONSIBILITY": "The canonical IFC per-cycle operating sequence.",
+  "PARENT": "Institutional Flywheel Controller Constitution",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes the institutional state -> produces a validated next investment selection",
+  "LAW": "",
+  "canonical_key": "ifc master loop",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -14356,6 +15082,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "IFC North Star",
+  "ALIASES": "Compounding-Adjusted Time to Production Excellence",
+  "LINES": "16502-16539",
+  "KIND": "metric",
+  "DEFINITION": "The proposed IFC North Star, replacing a bare Leverage Score: Compounding-Adjusted Time to Production Excellence, observed jointly with Task Difficulty, Production Reality Correctness, One-Shot Rate, Capability Coverage, and Reusable Intelligence all rising while Human Intervention, Search Waste, Decision Surface, False Done, Failure Recurrence, Engineering Effort per Mastered Problem Class, and Institutional Complexity per Unit Capability all fall.",
+  "RESPONSIBILITY": "The composite North Star metric set for IFC.",
+  "PARENT": "Institutional Improvement Strategy Intelligence",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes CPP's ongoing operation -> produces the composite North Star trend",
+  "LAW": "",
+  "canonical_key": "ifc north star",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "IFC Pareto Frontier",
   "ALIASES": "NONE",
   "LINES": "13904-13921",
@@ -14374,6 +15122,116 @@
   "canonical_key": "ifc pareto frontier",
   "ranges": [
    "r1_slice7"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Priority Classes",
+  "ALIASES": "URGENT PROTECTION / FOUNDATIONAL BOTTLENECK / META-LEVERAGE / AUTONOMY DIVIDEND / COMPOSITION UNLOCK / FRONTIER INVESTMENT / COMPRESSION",
+  "LINES": "14809-14842",
+  "KIND": "protocol",
+  "DEFINITION": "Seven qualitative priority classes replacing simple P0/P1/P2: Urgent Protection (high current risk), Foundational Bottleneck (blocks many systems), Meta-Leverage (improves the improvement system), Autonomy Dividend (removes large human burden), Composition Unlock (enables a new capability cluster), Frontier Investment (expands the envelope), Compression (reduces systemic complexity).",
+  "RESPONSIBILITY": "The seven-category qualitative priority taxonomy for IFC opportunities.",
+  "PARENT": "IFC Allocation Ceremony Budget",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a candidate opportunity -> produces a priority-class assignment",
+  "LAW": "",
+  "canonical_key": "ifc priority classes",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC R&D Portfolio Categories",
+  "ALIASES": "EXPLOIT / EXPLORE / DEFEND / COMPRESS / META / FRONTIER",
+  "LINES": "14308-14336",
+  "KIND": "protocol",
+  "DEFINITION": "The six allocation buckets IFC distributes effort across: Exploit (improve known high-value capabilities), Explore (alternative paradigms), Defend (eliminate critical failure classes), Compress (eliminate complexity/duplication), Meta (improve the improvement machinery), Frontier (expand the capability envelope).",
+  "RESPONSIBILITY": "The six-category R&D allocation taxonomy for IFC.",
+  "PARENT": "Claude Power Pack Institutional Flywheel Controller",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes available engineering effort -> produces an allocation across the six categories",
+  "LAW": "",
+  "canonical_key": "ifc r d portfolio categories",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Recursive Loop",
+  "ALIASES": "El Loop Recursivo",
+  "LINES": "16348-16393",
+  "KIND": "loop",
+  "DEFINITION": "The loop above the master loop: IFC predicts the best investment, investment happens, realized leverage is measured, prediction error is calculated, the allocation model improves, future investment selection improves, higher-value improvements happen sooner, the institution accelerates faster, more evidence becomes available, and IFC improves again \u2014 the flywheel learns where to push itself.",
+  "RESPONSIBILITY": "The self-referential loop by which IFC's own prediction accuracy compounds.",
+  "PARENT": "IFC Master Loop",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "THE FLYWHEEL LEARNS WHERE TO PUSH ITSELF.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes IFC's own prediction accuracy history -> produces a progressively self-improving allocation model",
+  "LAW": "",
+  "canonical_key": "ifc recursive loop",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Structured Output Contract",
+  "ALIASES": "NONE",
+  "LINES": "15769-15816",
+  "KIND": "protocol",
+  "DEFINITION": "The required shape of IFC's output, never a bare \"Top 10 ideas\": Current Binding Constraint, Highest-Leverage Investment, Why (causal path), Expected Downstream Effect, Meta-Leverage, Cost/Risk/Uncertainty, Cheapest Falsification, Promotion Criteria, Kill Criteria, and Next Frontier.",
+  "RESPONSIBILITY": "The mandatory ten-field structure of every IFC recommendation.",
+  "PARENT": "Institutional Flywheel Health Dashboard",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes an allocation decision -> produces a fully structured, ten-field recommendation",
+  "LAW": "",
+  "canonical_key": "ifc structured output contract",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "IFC Time Horizon Balancing",
+  "ALIASES": "Avoid Short-Termism / Avoid Infrastructure Romanticism / Proof Before Platform",
+  "LINES": "15875-15917",
+  "KIND": "law",
+  "DEFINITION": "The requirement that the Controller understand mixed time horizons (short-term return, medium-term infrastructure return, long-term option value) in its portfolio, avoiding both short-termism (not all high ROI appears immediately) and infrastructure romanticism (never build grand platforms on \"someday useful\" reasoning) \u2014 the correct path is local patterns -> repeated patterns -> primitive -> platform, never skipped.",
+  "RESPONSIBILITY": "The balanced-horizon portfolio requirement and the mandatory proof-before-platform sequence.",
+  "PARENT": "Capital Allocation State Machine",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes candidate investments across time horizons -> produces a balanced portfolio avoiding both extremes",
+  "LAW": "",
+  "canonical_key": "ifc time horizon balancing",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -14994,6 +15852,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Institutional Acceleration Rate",
+  "ALIASES": "IAR / Acceleration Quality / Compounding Quality / Realized Compounding Test",
+  "LINES": "15603-15669",
+  "KIND": "metric",
+  "DEFINITION": "A central metric asking not just how much CPP improves but whether the rate of improvement is itself rising, required to be reliable/evidence-based/maintainable/complexity-adjusted (not raw growth); distinguishing Nominal Growth (more rules/agents/systems) from Realized Compounding, tested by whether future missions are actually better, faster, less human-dependent, more reliable, and harder-problem-capable \u2014 if not, the compounding claim is false.",
+  "RESPONSIBILITY": "The rate-of-improvement metric and its nominal-vs-realized compounding distinction.",
+  "PARENT": "Recursive Capital Allocation Loop",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes CPP's growth over time -> produces a verdict on whether real compounding (not just nominal growth) is occurring",
+  "LAW": "",
+  "canonical_key": "institutional acceleration rate",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Institutional ACID Semantics",
   "ALIASES": "NONE",
   "LINES": "72925-72961",
@@ -15012,6 +15892,28 @@
   "canonical_key": "institutional acid semantics",
   "ranges": [
    "52500_75350"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Institutional Ascension Ladder",
+  "ALIASES": "Doc-to-Automation Ascension / Policy-to-Default Ascension / Default-to-Primitive Ascension / Primitive-to-Platform Ascension",
+  "LINES": "15032-15077",
+  "KIND": "protocol",
+  "DEFINITION": "The four-stage ascension IFC actively watches for: recurring manually-applied knowledge becomes a validator/hook/compiler/primitive; a mature rule becomes a default requiring less policing; a repetitively-implemented default gets materialized as a primitive; and several primitives used together continually become a candidate platform capability \u2014 detecting when knowledge is ready to move up an abstraction layer is a central part of IFC's job.",
+  "RESPONSIBILITY": "The four-stage knowledge-to-infrastructure ascension ladder IFC monitors.",
+  "PARENT": "Leverage Realization and Stranded Capability",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes recurring manual knowledge/rules/defaults/primitives -> produces their ascension to the next abstraction layer",
+  "LAW": "",
+  "canonical_key": "institutional ascension ladder",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -15281,6 +16183,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Institutional Engineering Digital Twin",
+  "ALIASES": "Simulation Before Expensive Action / Reality Always Wins / Self-Correcting Digital Twin",
+  "LINES": "16065-16109",
+  "KIND": "capability",
+  "DEFINITION": "A long-term approximation IFC develops \u2014 not a full replica but a model sufficient to predict where an investment will help \u2014 used to simulate likely effects before high-cost changes as an aid to experiment design (never as truth), with production results always overriding simulated predictions, and prediction errors updating the twin's edges, priors, and leverage estimates.",
+  "RESPONSIBILITY": "The predictive simulation model of the engineering institution and its reality-subordinate status.",
+  "PARENT": "IFC Causal Graph Learning",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a high-cost candidate change -> produces a simulated effect estimate, superseded by real production results",
+  "LAW": "",
+  "canonical_key": "institutional engineering digital twin",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Institutional Engineering State Graph",
   "ALIASES": "NONE",
   "LINES": "13332-13361",
@@ -15436,6 +16360,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Institutional Flywheel Controller Constitution",
+  "ALIASES": "NONE",
+  "LINES": "16230-16250",
+  "KIND": "law",
+  "DEFINITION": "The ten constitutional laws of IFC: evaluate effort by expected marginal institutional return when positive-ROI to do so; direct feature value must not obscure transitive/compositional/meta-leverage; target the strongest binding constraint, not the loudest symptom; a capability's value includes all downstream consumers; evaluation/learning/context/research/debugging/allocation improvements get explicit meta-leverage weight; marginal return (not historical importance) drives capital flow; new evidence must be allowed to invalidate old priorities; high-uncertainty high-impact investments buy information before irreversible commitment; compounding is measured by future behavioral improvement, not artifact count; the Controller itself must learn from expected-vs-realized leverage gaps.",
+  "RESPONSIBILITY": "The ten constitutional laws governing IFC's own operation.",
+  "PARENT": "IFC Human Governance Interface",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "EVERY UNIT OF ENGINEERING EFFORT MUST BE EVALUATED BY ITS EXPECTED MARGINAL INSTITUTIONAL RETURN WHEN SUCH EVALUATION HAS POSITIVE ROI; DIRECT FEATURE VALUE MUST NOT OBSCURE TRANSITIVE, COMPOSITIONAL OR META-LEVERAGE; THE NEXT IMPROVEMENT SHOULD TARGET THE STRONGEST BINDING CONSTRAINT, NOT THE LOUDEST SYMPTOM; AN IMPORTANT CAPABILITY'S VALUE INCLUDES ITS EFFECT ON ALL APPLICABLE DOWNSTREAM CONSUMERS; IMPROVEMENTS TO EVALUATION, LEARNING, CONTEXT, RESEARCH, DEBUGGING AND ALLOCATION ITSELF RECEIVE EXPLICIT META-LEVERAGE CONSIDERATION; MARGINAL RETURN, NOT HISTORICAL IMPORTANCE, DETERMINES WHERE ADDITIONAL IMPROVEMENT CAPITAL SHOULD FLOW; NEW EVIDENCE MUST BE ALLOWED TO INVALIDATE OLD PRIORITIES; HIGH-UNCERTAINTY, HIGH-IMPACT INVESTMENTS SHOULD BUY INFORMATION BEFORE BUYING IRREVERSIBLE COMMITMENT; COMPOUNDING MUST BE MEASURED BY FUTURE BEHAVIORAL IMPROVEMENT, NOT BY INSTITUTIONAL ARTIFACT COUNT; THE CONTROLLER ITSELF MUST LEARN FROM THE DIFFERENCE BETWEEN EXPECTED AND REALIZED LEVERAGE.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "NONE",
+  "LAW": "",
+  "canonical_key": "institutional flywheel controller constitution",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Institutional Flywheel Controller (IFC)",
   "ALIASES": "IFC",
   "LINES": "18068",
@@ -15454,6 +16400,28 @@
   "canonical_key": "institutional flywheel controller ifc",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Institutional Flywheel Health Dashboard",
+  "ALIASES": "Health-to-Action Compiler / No Dashboard Without Control Loop",
+  "LINES": "15720-15767",
+  "KIND": "metric",
+  "DEFINITION": "A conceptual dashboard (Baseline Height, Baseline Coverage, TTPE, OSR, FDR, HIB, Leverage Realization, Capability Reuse, Composition Yield, Search Waste, Decision Surface, Failure Recurrence, Allocation Regret, Learning Velocity, Learning Acceleration, Institutional Complexity) required not to be a vanity dashboard: every metric must be able to change a decision (metric deteriorates -> causal analysis -> candidate improvement -> IFC portfolio); a metric that cannot change action is not part of the control system.",
+  "RESPONSIBILITY": "The full institutional health metric set and its mandatory action-triggering property.",
+  "PARENT": "Institutional Productivity Frontier",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "A METRIC THAT CANNOT CHANGE ACTION IS NOT PART OF THE CONTROL SYSTEM.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes ongoing institutional metrics -> produces triggered causal analysis and portfolio changes on deterioration",
+  "LAW": "",
+  "canonical_key": "institutional flywheel health dashboard",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -15520,6 +16488,28 @@
   "canonical_key": "institutional immunity audit",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Institutional Improvement Strategy Intelligence",
+  "ALIASES": "La Evoluci\u00f3n Posterior",
+  "LINES": "16474-16500",
+  "KIND": "capability",
+  "DEFINITION": "A superior IFC state beyond selecting known best improvements: detecting improvements nobody has proposed, predicting which could create new capability families, designing cheap experiments to validate them, discovering positive feedback loops, reallocating effort toward them, measuring realized compound effect, and improving its own capital-allocation model \u2014 CPP begins learning which types of engineering investments most reliably improve the whole institution.",
+  "RESPONSIBILITY": "The frontier IFC capability of proposing, not just ranking, improvements.",
+  "PARENT": "UCR-CIF plus HIC-OAR plus IFC Convergence",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "WHICH TYPES OF ENGINEERING INVESTMENTS MOST RELIABLY MAKE THE WHOLE ENGINEERING INSTITUTION BETTER.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes the institution's unexplored opportunity space -> produces proactively discovered, validated new improvement families",
+  "LAW": "",
+  "canonical_key": "institutional improvement strategy intelligence",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -15608,6 +16598,28 @@
   "canonical_key": "institutional knowledge latency",
   "ranges": [
    "52500_75350"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Institutional Learning Velocity Metrics",
+  "ALIASES": "TTPE Elasticity / Experience-Curve Improvements / Curve Shape / Learning Velocity / Learning Acceleration / Compounding Coefficient",
+  "LINES": "14117-14206",
+  "KIND": "metric",
+  "DEFINITION": "A family of metrics measuring not just current performance but the rate of learning: TTPE Elasticity (how much TTPE falls per unit of improvement to X), whether each new exposure to a problem class gets cheaper, Institutional Learning Velocity (capability gain per exposure), Learning Acceleration (is velocity itself improving \u2014 ties to the meta-ratchet), and a Compounding Coefficient estimating what fraction of a mission's value propagates to future work via reuse/transfer/composition/meta-learning/autonomy/search-reduction.",
+  "RESPONSIBILITY": "The rate-of-learning metric family distinguishing systems that start better from systems that learn faster.",
+  "PARENT": "Claude Power Pack Institutional Flywheel Controller",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes repeated exposures to a problem class -> produces learning-rate metrics distinguishing fast- from slow-learning systems",
+  "LAW": "",
+  "canonical_key": "institutional learning velocity metrics",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -15784,6 +16796,28 @@
   "canonical_key": "institutional pretraining post training analogy",
   "ranges": [
    "35000_52500"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Institutional Productivity Frontier",
+  "ALIASES": "Quality-Adjusted Engineering Productivity / Harder-Work Index / True Acceleration Condition",
+  "LINES": "15672-15717",
+  "KIND": "metric",
+  "DEFINITION": "A frontier relating human attention + compute + time to Production Excellence, which the institution seeks to push outward; measuring production-grade capability per resource unit (not raw velocity) and tracking conceptual task difficulty so that TTPE reductions from easier tasks don't falsely count as acceleration \u2014 the strongest evidence of true acceleration is the institution solving harder problem classes while requiring less marginal effort for already-mastered ones.",
+  "RESPONSIBILITY": "The resource-to-capability productivity frontier and its difficulty-adjusted measurement.",
+  "PARENT": "Institutional Acceleration Rate",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "THE INSTITUTION SOLVES HARDER CLASSES OF PROBLEMS WHILE REQUIRING LESS MARGINAL HUMAN AND ENGINEERING EFFORT FOR CLASSES ALREADY MASTERED.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes resource inputs and task-difficulty-adjusted output -> produces a productivity-frontier position",
+  "LAW": "",
+  "canonical_key": "institutional productivity frontier",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -16422,6 +17456,28 @@
   "canonical_key": "invariant synthesis",
   "ranges": [
    "35000_52500"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Invariant-to-Enforcement Ascension",
+  "ALIASES": "NONE",
+  "LINES": "17434-17460",
+  "KIND": "protocol",
+  "DEFINITION": "The maturation path of an invariant from prose rule to test to validator to static check to runtime guard to primitive when technically applicable \u2014 mature knowledge is not \"remember to do it\" but making the wrong thing difficult or impossible.",
+  "RESPONSIBILITY": "The prose-to-mechanically-enforced ascension path for invariants.",
+  "PARENT": "Bug-to-Invariant Compiler",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "MAKE THE WRONG THING DIFFICULT OR IMPOSSIBLE.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a proven invariant -> produces its ascension into mechanical enforcement",
+  "LAW": "",
+  "canonical_key": "invariant to enforcement ascension",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -17152,6 +18208,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Knowledge Vault and UKDL Functional Split",
+  "ALIASES": "KNOWLEDGE VAULT = LONG-FORM EVIDENCE MEMORY / UKDL = COMPRESSED EXECUTABLE DOCTRINE",
+  "LINES": "16818-16879",
+  "KIND": "law",
+  "DEFINITION": "The critical distinction that the Knowledge Vault holds long-form evidence memory (context, incidents, experiments, causal analysis, regressions, counterexamples, alternative hypotheses, historical evolution) while UKDL holds compressed, operational, executable doctrine across Hard Rules/Process Rules/Traps, each entry additionally declaring trigger conditions, applicability, rationale pointer, severity, confidence, detector, prevention surface, relevant failure family, and supersession state \u2014 turning UKDL from a \"best practices manual\" into failure-derived execution priors.",
+  "RESPONSIBILITY": "The distinct roles and required fields of the Knowledge Vault versus UKDL.",
+  "PARENT": "Universal Failure Record",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a distilled failure learning -> produces both a deep Knowledge Vault entry and a compressed executable UKDL entry",
+  "LAW": "",
+  "canonical_key": "knowledge vault and ukdl functional split",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Knowledge Vault as Causal Dataset",
   "ALIASES": "A DATASET OF HOW SOFTWARE ACTUALLY FAILS UNDER CLAUDE POWER PACK",
   "LINES": "19544",
@@ -17328,6 +18406,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Latent Failure Discovery",
+  "ALIASES": "Failure Projection Engine / FPE",
+  "LINES": "17113-17158",
+  "KIND": "subsystem",
+  "DEFINITION": "A subsystem taking a Failure Genome as input and, by asking which systems share the same preconditions, trigger variants, amplifying lifecycle states, or cross-component compositions, producing evidence-based failure hypotheses for latent (not-yet-occurred) failures \u2014 a single production bug can eliminate several future incidents before their first manifestation.",
+  "RESPONSIBILITY": "Generation of evidence-based hypotheses for not-yet-occurred failures from an existing genome.",
+  "PARENT": "Generalization Search and Exposure Graph",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a Failure Genome -> produces evidence-based hypotheses for latent, unmanifested failures",
+  "LAW": "",
+  "canonical_key": "latent failure discovery",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Learning Efficiency Baseline",
   "ALIASES": "NONE",
   "LINES": "4965-4986",
@@ -17460,6 +18560,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Leverage Realization and Stranded Capability",
+  "ALIASES": "Capability Liquidity (IFC) / Adoption Probability / Leverage Realization Rate / Stranded Capability Detection / Last-Mile Institutionalization / Knowledge-to-Runtime Gap",
+  "LINES": "14960-15030",
+  "KIND": "gate",
+  "DEFINITION": "The recognition that expected leverage doesn't count until consumers actually use a capability; IFC must favor improvements making capabilities more discoverable/consumable/composable/portable, consider realistic adoption probability (a brilliant but hard-to-integrate capability has low realized leverage), detect high-potential-zero-consumer \"stranded\" capabilities needing integration/documentation/authority-registration/better-interface rather than more development, and recognize when important doctrine exists but execution never changed (the last 10% gap that makes something consumable).",
+  "RESPONSIBILITY": "Detection and remediation of the gap between a capability's existence and its actual realized usage.",
+  "PARENT": "Complexity Interest and Simplicity Dividend",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a high-potential, low-adoption capability -> produces the specific last-mile fix needed for realized leverage",
+  "LAW": "",
+  "canonical_key": "leverage realization and stranded capability",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Leverage Vector",
   "ALIASES": "NONE",
   "LINES": "13434-13488",
@@ -17526,26 +18648,29 @@
   "merged_aliases": []
  },
  {
-  "NAME": "Live Failure Ingestion",
-  "ALIASES": "Session Failure Stream",
-  "LINES": "24369",
-  "KIND": "protocol",
-  "DEFINITION": "Every bug found mid-session enters a stream immediately evaluated by UFIA-EBF as known-family, new-manifestation, novel-genome, known-trap, or baseline-escape.",
-  "RESPONSIBILITY": "NONE",
-  "PARENT": "Universal Baseline Compiler",
+  "NAME": "Session Failure Stream",
+  "ALIASES": "Session-Wide Failure Observation",
+  "LINES": "16657-16703",
+  "KIND": "registry",
+  "DEFINITION": "A comprehensive capture stream for every relevant failure occurring anywhere in a session \u2014 not just user-reported bugs but failing/flaky tests, build errors, runtime exceptions, integration/CLI/frontend/backend/persistence failures, race conditions, dependency/configuration/packaging/deployment failures, environment incompatibilities, corrupted data, retry/recovery failures, observability blind spots, false-positive tests, false Done, manual intervention, architecture contradictions, documentation/runtime divergence, performance cliffs, security failures, tooling/agent/orchestration failures \u2014 an incidentally-discovered error remains valid evidence.",
+  "RESPONSIBILITY": "The exhaustive, session-wide failure capture surface.",
+  "PARENT": "Failure Mechanism as Fundamental Unit",
   "PRODUCES": "",
   "CONSUMES": "",
   "LAWS": "NONE",
-  "SUBSTANCE": "MEDIUM",
+  "SUBSTANCE": "HIGH",
   "DEF": "",
   "OWNS": "",
-  "IO": "NONE",
+  "IO": "consumes any failure occurring anywhere during a session -> produces a captured entry in the session failure stream",
   "LAW": "",
   "canonical_key": "live failure ingestion",
   "ranges": [
-   "17500_26250"
+   "17500_26250",
+   "r1_slice9"
   ],
-  "merged_aliases": []
+  "merged_aliases": [
+   "Session Failure Stream"
+  ]
  },
  {
   "NAME": "Live Human Intervention Ingestion",
@@ -18208,6 +19333,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Meta-Allocation",
+  "ALIASES": "Second-Order Capital Allocation",
+  "LINES": "14724-14750",
+  "KIND": "law",
+  "DEFINITION": "The recognition that IFC can choose not only which capability to improve but which part of its own allocator to improve (e.g. if leverage predictions fail due to poor dependency modeling, improving the dependency model may have the highest ROI) \u2014 the question of which improvement to the improvement-allocation system itself would most improve future allocation.",
+  "RESPONSIBILITY": "Second-order allocation of effort toward improving the allocator itself.",
+  "PARENT": "Self-Improving Capital Allocation",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "WHICH IMPROVEMENT TO THE IMPROVEMENT-ALLOCATION SYSTEM WOULD MOST IMPROVE FUTURE ALLOCATION?",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes IFC's own prediction errors -> produces investment in improving IFC's own allocation mechanism",
+  "LAW": "",
+  "canonical_key": "meta allocation",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Meta-Analysis Al Cierre",
   "ALIASES": "NONE",
   "LINES": "9763-9800",
@@ -18534,6 +19681,28 @@
   "canonical_key": "metrics have semantic contracts",
   "ranges": [
    "r2_slice3"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Metrology as Infrastructure",
+  "ALIASES": "Metrology Leverage / Evidence Debt / Uncertainty Map / Confidence-Calibrated Allocation",
+  "LINES": "14481-14536",
+  "KIND": "law",
+  "DEFINITION": "The recognition that if X cannot be measured, capital cannot be well-allocated on X, so evaluator improvements can be foundational and carry meta-leverage over every future decision depending on that metric; a major capability operating on weak evidence accrues Evidence Debt (possibly more important than feature debt); an Uncertainty Map tracks what the institution knows/believes/doesn't know, flagging high-leverage-high-uncertainty areas for research rather than full rollout when evidence is minimal.",
+  "RESPONSIBILITY": "The measurement-quality precondition for sound capital allocation, plus the Evidence Debt and Uncertainty Map concepts.",
+  "PARENT": "VOI-Driven Experimentation (IFC)",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a capability's measurement quality -> produces an evidence-debt flag and calibrated (not overconfident) allocation",
+  "LAW": "",
+  "canonical_key": "metrology as infrastructure",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -18930,6 +20099,28 @@
   "canonical_key": "multilayer excellence compounding",
   "ranges": [
    "r1_slice1"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Multiplier Nodes and Multi-Loop Amplification",
+  "ALIASES": "Observability Leverage / Loop Interference / Systemic Pareto",
+  "LINES": "15311-15385",
+  "KIND": "metric",
+  "DEFINITION": "Identification of Multiplier Nodes \u2014 capabilities like repository understanding, causal provenance, evaluation, observability, and context compiling that improve multiple flywheels simultaneously (Quality, Autonomy, Failure, Knowledge), whose leverage can far exceed their direct effect, while accounting for Loop Interference (e.g. more aggressive autonomy harming reliability) so no single flywheel is optimized at another's expense (Systemic Pareto).",
+  "RESPONSIBILITY": "Detection of cross-flywheel multiplier capabilities and their interference effects.",
+  "PARENT": "Production Reality Leverage",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a candidate improvement's effect across multiple flywheels -> produces a multi-loop-amplification-adjusted leverage estimate",
+  "LAW": "",
+  "canonical_key": "multiplier nodes and multi loop amplification",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -20364,6 +21555,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Opportunity Mining Signals",
+  "ALIASES": "Demand-Side Signal / Latent Demand / Workaround Mining / Escalation Mining / Incident Mining / Search Mining / Decision Mining / Code Duplication Mining / Manual Process Mining / Multi-Signal Opportunity Confidence",
+  "LINES": "15919-16000",
+  "KIND": "subsystem",
+  "DEFINITION": "A set of named mining signals converting repeated real-world friction into opportunity candidates: repeated workaround -> missing capability candidate; repeated human escalation -> missing autonomy capability; repeated failures -> missing reliability capability; repeated research -> missing knowledge authority; repeated architecture choice -> potential default/decision engine; repeated implementation -> primitive candidate; repeated manual sequence -> workflow/harness candidate; with confidence rising when multiple signal types converge on the same gap.",
+  "RESPONSIBILITY": "The nine named friction-to-opportunity mining signals and their multi-signal confidence boosting.",
+  "PARENT": "IFC Time Horizon Balancing",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes repeated real-world friction of various kinds -> produces confidence-weighted opportunity candidates",
+  "LAW": "",
+  "canonical_key": "opportunity mining signals",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Optimization knowledge maturation to certified primitives",
   "ALIASES": "NONE",
   "LINES": "32606-32624",
@@ -21288,6 +22501,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Portfolio Reserves",
+  "ALIASES": "Baseline vs Frontier Allocation / Reliability Reserve / Compression Reserve",
+  "LINES": "14845-14894",
+  "KIND": "protocol",
+  "DEFINITION": "The requirement to balance floor-maintaining and ceiling-raising investment (frontier-only investment degrades baseline; baseline-only investment stops innovation), reserving a fraction of the portfolio for reliability/testing/observability/recovery even when not visibly urgent, and another fraction for eliminating duplicate systems, stale knowledge, and dead abstractions, since compound knowledge without compression becomes compound complexity.",
+  "RESPONSIBILITY": "The mandatory floor/ceiling and reliability/compression reserve allocations.",
+  "PARENT": "IFC Priority Classes",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes the full portfolio -> produces guaranteed minimum reserves for reliability and compression work",
+  "LAW": "",
+  "canonical_key": "portfolio reserves",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Positive Loop Miner",
   "ALIASES": "NONE",
   "LINES": "6466-6480",
@@ -21350,6 +22585,28 @@
   "canonical_key": "pre authorized action envelopes",
   "ranges": [
    "r1_slice6"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Pre-Incident Immunity",
+  "ALIASES": "NONE",
+  "LINES": "17388-17414",
+  "KIND": "law",
+  "DEFINITION": "The fundamental leap from failure->immunity to failure A -> generalized causal knowledge -> predicts failure B -> B prevented -> no incident required \u2014 the institution begins learning beyond the bugs it has actually experienced.",
+  "RESPONSIBILITY": "The reactive-to-predictive shift in institutional failure learning.",
+  "PARENT": "Compositional Failure Synthesis",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a generalized causal failure mechanism -> produces prevention of an undiscovered related failure before it ever occurs",
+  "LAW": "",
+  "canonical_key": "pre incident immunity",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -21483,6 +22740,28 @@
   "canonical_key": "predictive bug budget",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Predictive Failure Pack",
+  "ALIASES": "Failure-Derived Pre-Flight",
+  "LINES": "17160-17208",
+  "KIND": "artifact",
+  "DEFINITION": "A pack the Baseline Compiler generates before any new mission, based on language, runtime, architecture, touched modules, statefulness, concurrency, external tools, persistence, integrations, network, UI, lifecycle, and historical failure genomes, telling the planner which failure families are especially plausible here \u2014 consulted before modifying a stateful subsystem (state-loss, partial-write, stale-state, restart, rollback genomes) so historical failures actively shape future planning.",
+  "RESPONSIBILITY": "The pre-mission plausible-failure-family briefing compiled from historical genomes.",
+  "PARENT": "Latent Failure Discovery",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a new mission's technical context -> produces a ranked set of plausible failure families for that mission",
+  "LAW": "",
+  "canonical_key": "predictive failure pack",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -21967,6 +23246,28 @@
   "canonical_key": "production reality gates k o extension",
   "ranges": [
    "52500_75350"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Production Reality Leverage",
+  "ALIASES": "Reality Gap Map",
+  "LINES": "15287-15309",
+  "KIND": "metric",
+  "DEFINITION": "The recognition that strengthening the Production Reality Gate benefits every future capability depending on real integration, giving it huge fanout; a Reality Gap Map tracks where test-success and Production-Reality-success diverge most, prioritizing repeated gaps.",
+  "RESPONSIBILITY": "Fanout-weighted valuation of Production Reality Gate improvements plus the reality-gap map.",
+  "PARENT": "Production Reality Gate (Execution Protocol)",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes test-vs-reality divergence data -> produces prioritized Production Reality improvements",
+  "LAW": "",
+  "canonical_key": "production reality leverage",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -22717,6 +24018,28 @@
   "canonical_key": "recursive baseline law",
   "ranges": [
    "r1_slice4"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Recursive Capital Allocation Loop",
+  "ALIASES": "NONE",
+  "LINES": "15565-15600",
+  "KIND": "loop",
+  "DEFINITION": "The final closed loop: the engineering system generates opportunities, IFC estimates leverage, selects an investment, engineering improves, the institution produces more evidence, IFC learns its prediction error, the allocation model improves, and the next investment is chosen better.",
+  "RESPONSIBILITY": "The canonical closed self-improving allocation loop.",
+  "PARENT": "Controller Self-Benchmarking",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes generated opportunities -> produces a progressively better-informed next investment choice",
+  "LAW": "",
+  "canonical_key": "recursive capital allocation loop",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -24482,6 +25805,28 @@
   "canonical_key": "self immunizing claude power pack",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Self-Improving Capital Allocation",
+  "ALIASES": "Controller Learns Its Own Allocation Function / Allocation Regret / Forecast Calibration / Leverage Prediction Model",
+  "LINES": "14637-14722",
+  "KIND": "loop",
+  "DEFINITION": "The central IFC principle: compare expected value against realized value over sufficient history to improve the leverage model itself, measuring Allocation Regret (retrospectively, what would have produced far more value than the chosen investment), correcting systematic over/under-valuation biases (e.g. consistently overvaluing agent work, undervaluing testing infrastructure), and learning which characteristics predict high reuse/autonomy uplift/failure reduction/compounding \u2014 forming the loop predict leverage -> invest -> observe realized impact -> calculate error -> improve prediction -> allocate better next time.",
+  "RESPONSIBILITY": "The self-correcting leverage-prediction model at the core of IFC.",
+  "PARENT": "IFC Causal Attribution",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes realized-vs-expected outcomes of past investments -> produces an improved future leverage-prediction model",
+  "LAW": "",
+  "canonical_key": "self improving capital allocation",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
@@ -26290,6 +27635,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Test Selection from Failure Memory",
+  "ALIASES": "NONE",
+  "LINES": "17250-17264",
+  "KIND": "gate",
+  "DEFINITION": "The rule that verification should not always run an identical suite; known relevant failure families should select regression, integration, property, adversarial, and lifecycle tests \u2014 failure memory guides verification.",
+  "RESPONSIBILITY": "Failure-memory-driven, non-uniform test selection.",
+  "PARENT": "Diff-Aware Failure Prediction",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes the change-specific risk model -> produces a targeted, non-generic test selection",
+  "LAW": "",
+  "canonical_key": "test selection from failure memory",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Test sophistication in one domain cannot compensate for zero coverage in another",
   "ALIASES": "NONE",
   "LINES": "33077-33089",
@@ -26689,6 +28056,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Traceable Leverage Scoring",
+  "ALIASES": "No Global Number Without Traceability / Score as Decision Support Not Truth",
+  "LINES": "16148-16164",
+  "KIND": "law",
+  "DEFINITION": "The rule that any IFC leverage score must be explainable by its supporting evidence and causal paths \u2014 opaque scores create false authority; every ranking must be accompanied by rationale, never presented as ground truth.",
+  "RESPONSIBILITY": "The mandatory explainability of every leverage score.",
+  "PARENT": "Controller Failure as Institutional Incident",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a leverage score -> produces its supporting evidence and causal-path explanation",
+  "LAW": "",
+  "canonical_key": "traceable leverage scoring",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Transitive Fanout",
   "ALIASES": "NONE",
   "LINES": "13671-13687",
@@ -27019,6 +28408,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "UCR-CIF plus HIC-OAR plus IFC Convergence",
+  "ALIASES": "Closed Institutional Capital Allocation Flywheel",
+  "LINES": "16396-16471",
+  "KIND": "system",
+  "DEFINITION": "The unification of the three systems: UCR-CIF converts every construction into institutional capital, HIC-OAR converts every avoidable human intervention into an autonomy capability, and IFC decides which of all these opportunities deserves engineering first \u2014 forming the pipeline construction produces evidence -> UCR-CIF extracts capabilities -> HIC-OAR extracts human-dependency gaps -> failure systems extract immunity gaps -> knowledge systems extract knowledge gaps -> IFC observes all gaps together -> selects highest-leverage improvement -> strengthens multiple systems -> future constructions improve -> future interventions fall -> more advanced failures become visible -> new opportunities appear -> IFC reallocates.",
+  "RESPONSIBILITY": "The unified closed-loop convergence of the three major CPP flywheels.",
+  "PARENT": "Claude Power Pack Institutional Flywheel Controller",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes construction, intervention, failure, and knowledge gaps together -> produces a single coherent reallocation cycle",
+  "LAW": "",
+  "canonical_key": "ucr cif plus hic oar plus ifc convergence",
+  "ranges": [
+   "r1_slice9"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "UCR-CIF Relation to Autoresearch",
   "ALIASES": "NONE",
   "LINES": "4490-4517",
@@ -27323,6 +28734,28 @@
   "canonical_key": "ukdl effectiveness",
   "ranges": [
    "17500_26250"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "UKDL Must Change Execution",
+  "ALIASES": "NONE",
+  "LINES": "16882-16898",
+  "KIND": "law",
+  "DEFINITION": "The rule that a UKDL entry is not institutionalized merely by existing \u2014 it must change planning, implementation, verification, test selection, architectural review, or Production Reality gates; knowledge without a future execution consumer is incomplete institutionalization.",
+  "RESPONSIBILITY": "The execution-consumption requirement for UKDL entries.",
+  "PARENT": "Knowledge Vault and UKDL Functional Split",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "UKDL KNOWLEDGE WITHOUT A FUTURE EXECUTION CONSUMER IS INCOMPLETE INSTITUTIONALIZATION.",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a UKDL entry -> produces verification that it actually changes some future execution path",
+  "LAW": "",
+  "canonical_key": "ukdl must change execution",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -27940,6 +29373,28 @@
   "canonical_key": "universal external reality acquisition evolution layer",
   "ranges": [
    "35000_52500"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "Universal Failure Record",
+  "ALIASES": "NONE",
+  "LINES": "16783-16816",
+  "KIND": "artifact",
+  "DEFINITION": "The required structured record for every institutionally relevant failure: observable symptom, affected artifact, context, environment, trigger, expected/actual behavior, reproduction evidence, causal chain, root cause, violated invariant, detection gap, why tests/architecture missed it, blast radius, related failure classes, remediation, regression, prevention opportunities, applicability, confidence, source commits, Production Reality evidence, and transfer candidates \u2014 causal structure, not narrative prose.",
+  "RESPONSIBILITY": "The mandatory structured schema for a failure record.",
+  "PARENT": "Failure Distillation Pipeline",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "HIGH",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a material failure -> produces a fully structured causal record",
+  "LAW": "",
+  "canonical_key": "universal failure record",
+  "ranges": [
+   "r1_slice9"
   ],
   "merged_aliases": []
  },
@@ -28604,6 +30059,28 @@
   "merged_aliases": []
  },
  {
+  "NAME": "Value Durability and Option Value",
+  "ALIASES": "Institutional Half-Life of Value / Durability of Leverage / Option Value (IFC) / Unlock Graph (IFC) / Path-to-Unlock Analysis / Prerequisite Investment / Frontier Value / Maximum-Information Frontier",
+  "LINES": "14208-14283",
+  "KIND": "metric",
+  "DEFINITION": "A cluster of considerations weighing an improvement's durability (a foundational primitive useful for years may outvalue a one-week high-impact fix), its strategic option value (enabling not-yet-existing autonomous workflows/products), unlock chains justifying prerequisite investment even with small direct ROI, identifying the shortest sensible capability path to a moonshot, and preferring frontier missions chosen for how much they reveal rather than immediate product value.",
+  "RESPONSIBILITY": "Durability- and optionality-weighted evaluation of candidate improvements.",
+  "PARENT": "Claude Power Pack Institutional Flywheel Controller",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a candidate improvement's durability/unlock potential -> produces a value estimate beyond immediate direct ROI",
+  "LAW": "",
+  "canonical_key": "value durability and option value",
+  "ranges": [
+   "r1_slice8"
+  ],
+  "merged_aliases": []
+ },
+ {
   "NAME": "Value of Information",
   "ALIASES": "VOI",
   "LINES": "5788-5797",
@@ -28754,6 +30231,28 @@
   "canonical_key": "visual ux regression baseline",
   "ranges": [
    "r2_slice3"
+  ],
+  "merged_aliases": []
+ },
+ {
+  "NAME": "VOI-Driven Experimentation (IFC)",
+  "ALIASES": "Value of Information (IFC) / VOI Prioritization / Experiment Selection / Information Bottleneck",
+  "LINES": "14441-14479",
+  "KIND": "metric",
+  "DEFINITION": "The rule that the best next action is often to reduce uncertainty rather than implement (IMPLEMENT OR LEARN FIRST?), choosing experiments maximizing expected uncertainty reduction per cost (e.g. a 30-minute experiment avoiding a week of wrong architecture), and detecting when a decision is blocked by lack of evidence rather than lack of capability.",
+  "RESPONSIBILITY": "The learn-vs-implement decision and experiment-selection criterion.",
+  "PARENT": "Engineering Bets Framework",
+  "PRODUCES": "",
+  "CONSUMES": "",
+  "LAWS": "NONE",
+  "SUBSTANCE": "MEDIUM",
+  "DEF": "",
+  "OWNS": "",
+  "IO": "consumes a blocked or uncertain decision -> produces a prioritized uncertainty-reducing experiment",
+  "LAW": "",
+  "canonical_key": "voi driven experimentation ifc",
+  "ranges": [
+   "r1_slice8"
   ],
   "merged_aliases": []
  },
