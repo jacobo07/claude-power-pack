@@ -117,6 +117,54 @@ V-gate suites: a suite that executes zero gates exits non-zero.
 
 ---
 
+## T-REACHABLE-BUT-NEVER-DISPATCHED-001 — a liveness instrument reports LIVE for code that cannot fire
+
+**Observed.** `vault/audits/liveness_report.md:209` classes
+`module:cascade_prevention/predictive` as **LIVE**, reason *"reached from
+modules/cascade_prevention/engine"*. The import edge is real: `engine.py:131` imports
+`predict` inside `_detect_session`, which is registered at `SURFACE_DETECTORS["session"]`
+and dispatched by `detect()`.
+
+It never executes. A repo-wide sweep for `detect('<surface>')` finds exactly one automatic
+caller — `hooks/cascade_check_bash.js:28`, `detect('bash', ...)`. `session` and `context`
+appear **only in test files**, `deploy` only in a manual health-report tool, and `edit`,
+`commit`, `task` have no callers at all. Six of seven registered detectors never fire in
+production.
+
+**Mechanism.** Import-graph reachability and invocation are different properties, and every
+static instrument sees only the first. A dispatch table makes them look identical: the
+handler is registered, the module is imported, the edge exists — and the key is never
+supplied. The gap is invisible precisely because the wiring is correct.
+
+**Why it matters beyond this module.** The liveness instrument was built after 156 modules
+were found that nothing reached, and it does answer that question. But "nothing imports
+this" and "nothing calls this" are not the same failure, and only the first is measured.
+The second is strictly harder to see and strictly more common, because an import edge is
+created by any refactor while a call path requires a caller with the right arguments.
+
+**Also observed on the same module:** `predictive` is *starved* as well as undispatched —
+it reports the live event store holds 9 events in 9 distinct categories, so it could not
+emit a real `PREDICTED` verdict even if something called it. Two independent reasons for
+permanent silence, and the module is honest about the second while nothing detects the
+first. Sibling of the estate's sealed `feedback_producer_fires_sink_empty`.
+
+**Fix.** None applied yet — this is a Phase 3 input, not a Phase 1 defect. The rule it
+forces is already binding on this audit: **`ENFORCED` requires a caller on an automatic
+surface that supplies arguments reaching the capability.** Registration in a dispatch table
+is not invocation, and an import edge is not a call.
+
+**Generalizes to.** Any dispatch-table, plugin-registry, event-handler or strategy-map
+architecture, and to every static reachability audit run over one. **Measure the keys that
+are actually emitted, not the handlers that are registered** — the denominator is the set
+of dispatched surfaces, and a handler for a surface nobody emits is dead code wearing a
+live edge.
+
+**Disposition.** UKDL trap candidate, high applicability. Distinct from
+`feedback_orphan_module_wiring` (imports but nobody calls it): here something *does* call
+it, through a path no production input reaches.
+
+---
+
 ## Standing obligation
 
 Appended in-session, evaluated for UKDL promotion at Phase 6, never auto-promoted and
