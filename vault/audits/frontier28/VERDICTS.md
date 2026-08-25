@@ -166,12 +166,37 @@ problem wearing fourteen names**, and it is the mission's actual subject.
 - **FLSA, CCV, CHF deferred** — each would be built against an unobserved failure, an
   owner that self-declares non-running, or data feeds that do not exist.
 
-## Phase 5 order
+## Phase 5 order and status
 
-Leverage first, and the first item is provable today:
+1. **MERGE FPO + AFP** — **DONE** (`44a8f7f`), and **PRODUCTION_PROVEN** (`39c2e00`):
+   observed firing on a real prompt within the hour. A regression I introduced here — the
+   no-input fast path — was caught by the `benchmarks-ok` gate and fixed in `064d29b`.
+2. **EXTEND liveness with dispatch-awareness** — **DONE** (`904dd21`, wired `9a3dd22`).
+   `modules/liveness/dispatch.py`; 5 of 7 `SURFACE_DETECTORS` keys never supplied. Now
+   reported per-session through the Stop delta, not only inside a test row.
+3. **CONNECT KRR's producer** — **DONE** (`9a3dd22`). `audit_cache.py --refresh` plus
+   `session_delta.refresh_audit_cache`; 3016 ms → 92 ms after persisting the stem map.
+4. **Remaining, in order:** EIAA (read `origins` back to discount echoes) · DEC (cache a
+   verdict as a default so a repeat decision stops being a decision) · SREE (skip, do not
+   annotate) · HEC (compress the ask, not the frequency) · ADW · EED · BPCC · CLAO ·
+   CCV — then the two gated CREATEs (**IRBE**, **CSO**) once each passes the
+   `HR-NOVELTY-001` 13-question proof against a discovered sweep.
 
-1. **MERGE FPO + AFP** — the only item where a real capability starts working immediately.
-2. **EXTEND `reachability.py`** with dispatch-awareness — makes failure mode 1 detectable
-   rather than hand-found.
-3. **CONNECT KRR's producer** — an enforced consumer reading a hand-refreshed map.
-4. Remaining EXTENDs by evidence, then the two gated CREATEs after their novelty proofs.
+### Umbrella state, recorded rather than waved off
+
+The full `verify_spp` run exits 1 on 7 rows. Each was checked against my changed-file set,
+which contains **zero** files under `hooks/` or any global path:
+
+| Row | Cause | Mine? |
+|---|---|---|
+| `benchmarks-ok` | `proactive_dispatch_ms` 103 > 30 — cold lazy-import of ~14 signal modules (94.5 ms cold / 69.2 ms warm; `cascade.evaluate` = 0.003 ms). Was 43 ms at S0, already 91 ms in the 2026-06-03 audit. | **the 123→103 part was** — fixed in `064d29b`; the residue is not |
+| `hooks-registration` | marker-set mismatch including `output_contract_stop`, which a **concurrent pane** has modified and not committed | no |
+| `mirror-parity` | canonical↔live drift in 5 files (`hook-dispatcher.js`, `lazarus-stub-recover.js`, …) | no |
+| `dataset-build` | **passes standalone**; fails only under parallel execution | no |
+| `drift-report` | `PAIRS is empty/missing` (config) | no |
+| `paths+secrets` | pre-existing 129-entry allowlist across 50 files | no |
+| `restart-and-lag` | environment/timing gate | no |
+
+`mirror-parity` is the ERDR finding made concrete: the comparator works, nothing invokes it
+automatically, so drift accumulates until someone runs it by hand. None of these are
+dismissed — they are attributed, and the ones that are mine are fixed.
