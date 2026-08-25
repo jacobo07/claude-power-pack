@@ -45,6 +45,15 @@ _PP_ROOT = Path(__file__).resolve().parents[2]
 if str(_PP_ROOT) not in sys.path:
     sys.path.insert(0, str(_PP_ROOT))
 
+try:
+    from modules.duplicate_to_advantage import provenance as _provenance
+except Exception:  # noqa: BLE001 -- fail-open, matches the module-wide contract
+    class _provenance:                       # type: ignore[no-redef]
+        """No boundary available: every family stays a parent, as before this module."""
+        @staticmethod
+        def is_sealed_family(*_a, **_k):
+            return True
+
 # Reuse the evolution_engine tokenizer (do not re-implement) -- fail-open to a local copy
 # if the import surface ever moves, so the engine never dies on a parent refactor.
 try:  # pragma: no cover - import shim
@@ -329,9 +338,22 @@ def _discover_families():
         dirs = sorted(d for d in _KB_ROOT.iterdir() if d.is_dir())
     except Exception:  # noqa: BLE001
         return out
+    try:
+        _kb_rel = _KB_ROOT.relative_to(_PP_ROOT).as_posix()
+    except ValueError:
+        _kb_rel = ""
     for d in dirs:
         if d.name in _CURATED_DIR_ALIASES:
             continue
+        # A directory becomes a parent by being SEALED, not by existing. An audit still
+        # in flight writes here too, and an uncommitted family scored against the next
+        # proposal is the auditor's own output acting as the authority over its
+        # successor. See provenance.py for the measured case (KB-UCR-CIF, 2026-08-25).
+        try:
+            if not _provenance.is_sealed_family(d, _PP_ROOT, _kb_rel):
+                continue
+        except Exception:  # noqa: BLE001
+            pass                                        # fail-open: keep prior behaviour
         try:
             kw = _derive_kw(d)
         except Exception:  # noqa: BLE001
