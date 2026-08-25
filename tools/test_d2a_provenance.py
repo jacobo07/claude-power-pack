@@ -78,9 +78,16 @@ def _git_ok():
 
 def main():
     if not _git_ok():
-        print("SKIP: no git available; the boundary is fail-open by contract.")
-        print("D2A_PROVENANCE_PASS=0/0  threshold=0/0")
-        return 0
+        # Exit NON-ZERO on an empty run. A skip that prints 0/0 against threshold 0/0 is
+        # indistinguishable from a pass in every log a human or an umbrella gate reads --
+        # and a ratio gate is always satisfied by an empty denominator. The boundary
+        # itself stays fail-open in production; the SUITE refuses to report success for
+        # assertions it never executed.
+        print("FAIL: git unavailable, so zero gates executed. A suite that asserts "
+              "nothing does not pass. Boundary remains fail-open in production; this is "
+              "an environment defect to fix, not a condition to tolerate.")
+        print("D2A_PROVENANCE_PASS=0/0  threshold=6/6")
+        return 1
 
     # V-D2A-PROV-SEALED -- long-standing institutional capital stays a parent.
     r = _with_cutoff(None, lambda: prov.family_provenance(PP / KB / "crawl_os", PP, KB))
