@@ -59,6 +59,35 @@ existing instrument.
 correct and its pairs are real; AFP's dispatch path is correct and already automatic.
 One working capability exists across two files; it has never been assembled.
 
+## Production evidence — the merge fired on a real prompt
+
+Observed 2026-08-25, roughly an hour after the fix landed. The `UserPromptSubmit`
+advisory on the Owner's next turn carried:
+
+> `[Woz] [pp-cascade-guard] 'regression:bash:cd' has historically preceded: tooling:bash:cd.`
+
+The whole chain, verified against live state rather than inferred: a real CEPS event
+`regression:bash:cd` was recorded at `14:50:20Z` (store grew 69 → 72) → the 30-minute
+window admitted it → `_recent_error_context()` returned the structured key →
+`cascade.evaluate()` matched on `category:subsystem` → the dispatcher put it in
+`additionalContext`. At commit time the honest claim was "capability installed,
+compounding effect not yet proven" (§78). It is now proven: **AFP/FPO moves from
+`ENFORCED` to `PRODUCTION_PROVEN`**, on an observed fire, not an assertion.
+
+**And the counterweight, which matters more than the win.** The event's recorded
+`root_cause` is **`"0 failed"`** — a *test-success* line, classified as a `regression`.
+The prediction mechanism is correct and the key match is sound, because matching uses
+`category:subsystem` and never the text. But the producer feeding it is recording benign
+output as errors, so some fraction of these advisories will be built on non-events.
+
+Turning the signal on has therefore made a **second, older defect visible for the first
+time**: while every consumer returned `None`, nothing could reveal that the store's
+contents were unreliable. Data quality was untestable precisely because nothing read the
+data. This is a new finding of this mission, not a regression introduced by it, and it
+belongs to whoever owns `hooks/bug-hunter-ceps-bridge.js` — recorded here, not silently
+carried, and it does not alter the rung, which rests on the mechanism firing correctly on
+a genuinely recorded event.
+
 ## The 28
 
 | # | Hypothesis | Rung | Verdict | Owner / action |
