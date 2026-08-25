@@ -115,6 +115,37 @@ Relevant precedent: **CPP-APIR itself measured 25 proposed datasets at ~80 % own
 Owner chose the capability layer over the corpus. `capability_runtime` is what that ruling
 produced. This is the sixth consecutive majority-owned corpus proposal in this estate.
 
+### 3.2 Phase 3b — six more resolved from the capability sweep
+
+Probing the **function under any name**, with the source's acronym excluded from the query.
+Top owning files, not just hit counts, so a parent can actually be named:
+
+| Source system | Resolved owner | Evidence (top files by hit) |
+|---|---|---|
+| **Universalization Compiler / Portable Packs** | `fable_distillation` | `fd_04_intelligence_decay_and_transfer_proof_detector` (144) · `fd_07_fable_learning_flywheel` (50). FD-04 already separates *truth-proof* from *transfer-proof* and runs a real contrast harness — precisely the source's causal-abstraction-then-transfer-validation pipeline. **OWNED.** |
+| **Institutional State Runtime / event log** | `craif` + `setup_os` | `craif_01_repair_runtime_v1` (278) · `setup_os_02_setup_transaction_registry_rollback` (86) · `setup_os_01` (80) · `modules/rollback` (75). Transaction registry and rollback are built objects, not proposals. **OWNED.** |
+| **TTPE / TTIA latency metrics** | `cpp_ias` IAS-E1 | `ias_e1_observability_fabric` (75) · `crawl_os_10_evidence_provenance_integrity_fabric` (45). **OWNED.** |
+| **Autonomous Convergence Contract** | `d2a_fabric` DAIF-04 | `daif_04_contract_fabric_v1` (57) · `ias_e1` (28) · `pp_dataset_13_resource_governor_os` (23). The contract object exists; the *convergence-loop semantics* may be a thin delta. **MOSTLY OWNED.** |
+| **KIFS / USIFB integrity + foresight** | `cpp_ias` (dispersed) | `ias_f3_digital_twin` (56) · `ias_c2_demand_forecasting` (36) · `ias_g1_architecture_intelligence` (30) · `crawl_os_10` (33). Spread across three IAS datasets rather than one owner. **EXTEND, not CREATE.** |
+| **Proof-Carrying Capabilities** | `craif` + `sqi` + `daif` | `craif_00_constitution` (50) · `sqi_00_constitution` (42) · `dataset_first/dfp_02` (27) · `daif_04` (25) · `daif_01` (24). Certificate / expiry / revalidation are already constitutional in three families. **EXTEND.** |
+
+**Resolved to date: 16 of 28** — 9 in §2, 6 here, plus UBC in §3.1.
+
+Still unresolved, requiring dedicated sweeps: `UCR-CIF` (the umbrella itself) · `HIC-OAR`
+as a whole, distinct from its Ledger · `UDFLL` · `Constitutive Baseline Ratchet` ·
+`Capability Authority Registry` · `Knowledge Compiler / Linker` · `Meta-Failure Genome` ·
+`Institutional SLOs & Chaos Mutation` · `Long-Horizon Campaign Infrastructure`.
+
+**A third state, distinct from owned and absent.** `Resident Institutional Kernel` returns
+5,789 hits, but its top files are `vault/.arch-index/index.json` (127), `ukdl-universal.md`
+(75), `knowledge_vault/core/apex-completion-standard.md` (45) and `apex_baseline_doctrine.md`
+(43) — **dispersed across documents with no owning module.** Dispersion-without-an-owner is
+neither ownership nor absence, and it is the state most easily misread as a gap: the
+vocabulary is everywhere, so a keyword probe says "owned", while nothing executes it, so a
+reachability probe says "absent". Held UNRESOLVED pending a check against `hooks/` and
+`modules/daemon/` — the latter is already recorded in `OWNER_QUEUE.md` as holding zero `.py`
+files.
+
 ## 4. Source inventory scale (Phase 1, partial)
 
 | Range | Concepts | Status |
