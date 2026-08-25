@@ -199,6 +199,177 @@ Consequences to carry into Phase 3:
 
 Recorded as `T-REACHABLE-BUT-NEVER-DISPATCHED-001` in the mission trap file.
 
+**Scale, measured, and stated at exactly the strength the evidence supports.**
+`liveness_report.md` carries **242 LIVE verdicts, 228 of them (94%) import-edge verdicts**
+whose reason begins "reached from". This does **not** show 228 modules never run. It shows
+that 94% of the estate's positive liveness verdicts rest on a measurement that cannot
+distinguish *executes* from *merely imported*. The `predictive` case proves the two can
+diverge; how often they diverge is **UNKNOWN**, and unknown is the honest value — a number
+would need the dispatch-surface analysis that does not exist. Owed to the instrument:
+import reachability is a genuine *necessary* condition and `modules/liveness/` was built
+for the "nothing reaches this" problem. The defect is in the reading, not the tool.
+
+### The instrument this finding seems to demand already exists, one layer down
+
+The obvious response to "reachability is not invocation" is to build something that
+measures dispatched surfaces. Applying the mission's own rule to the mission's own idea
+first: `modules/liveness/reachability.py:78-85` already contains the reasoning, sealed
+2026-07-22.
+
+> *"`hooks/*.js` by directory+extension alone is over-broad: a file merely sitting in
+> hooks/ is not necessarily invoked by anything... Sealed 2026-07-22:
+> hooks/cascade_check_bash.js was registered in NEITHER settings.json nor the dispatcher's
+> chain map, yet every prior scan called it LIVE purely because it is a .js file living in
+> hooks/."*
+
+That is the same insight — presence in a location is not invocation — discovered
+independently, hardened, and **bounded to the hook layer**. It was never carried down into
+a module's *internal* dispatch table, where registration in a dict is likewise not
+invocation. The file that hardened the reasoning is the same file whose report marks
+`predictive` LIVE, because at the module layer it falls back to import edges.
+
+**Verdict implication: EXTEND `modules/liveness/reachability.py`, not CREATE.** No new
+owner, no new registry — carry an existing, sealed, correct idea one layer down to where
+it was never applied. Recorded here so Phase 3 inherits the resolution rather than
+re-deriving it, and so the CREATE that felt obvious is refused on evidence.
+
+**Second-order note.** The estate also *knows* about its unwired surface and says so:
+`vault/liveness/reachability_registry.json` declares 131 components, of which **62 are
+self-declared `PLANNED`** (built, not wired) and 68 `LIBRARY`. That is honest, visible,
+queued debt. The population this finding exposes is the opposite kind — components marked
+**LIVE** that never dispatch. Visible debt has an owner and a queue; invisible debt reads
+as health. That distinction, not the raw count, is what Phase 3 should act on.
+
+## Placed: hypotheses 15-21
+
+| # | Hypothesis | Rung | Owner | Engine said |
+|---|---|---|---|---|
+| 15 | DEC — decision erasure | **PARTIALLY_MATERIALIZED** | `modules/decision_review/decision_kernel.py` | DEFER, 45% |
+| 16 | SREE — search extinction | **PARTIALLY_MATERIALIZED** | `modules/deep-research/deep_research.py` | "genuinely new", 27% |
+| 17 | EED — entropy deflation | **DOCUMENTED** | NONE | "genuinely new", 28% |
+| 18 | ACD — convergence detection | **ENFORCED** | `hooks/d2a_gate.js` + `d2a_engine.py` | "genuinely new", 25% |
+| 19 | CLAO — capability adoption | **PRODUCTION_PROVEN** ± | `modules/liveness/reachability.py` | "genuinely new", 37% |
+| 20 | CCV — compositional contracts | **PARTIALLY_MATERIALIZED** | `modules/contract_fabric/side_effect_ledger.py` | "genuinely new", 36% |
+| 21 | ADW — assumption watchtower | **PARTIALLY_MATERIALIZED** | `modules/architecture_horizon/horizon.py` | "genuinely new", 16% |
+
+### Evidence, briefly
+
+- **DEC.** `decision_kernel.py:291-431` implements a real nine-stage sieve and writes an
+  append-only `DecisionRecord`; `accountability.py:79-134` scores predictions against
+  reality. But the **erasure** semantic is absent: precedent-collision flags a repeat
+  decision and still routes it through all nine stages every time. Nothing caches a
+  verdict as an auto-applied default. Recording a decision is not erasing it. The module
+  also self-declares `PLANNED` in `reachability_registry.json:222-232`.
+- **SREE.** `deep_research.py:1808-1821` matches new URLs against prior runs of the same
+  prompt — and then **still fetches every one**, annotating overlap after the fact.
+  Nothing is skipped, so no redundancy is actually extinguished.
+- **EED.** `d2a_engine.py:23-25` ranks *new proposals* by compound value over complexity —
+  per-proposal, forward-looking. Nothing measures complexity per unit capability across
+  the estate, tracks owner count, or reports whether growth is reducing entropy.
+  `code_reviewer.py`'s "complexity" is per-function cyclomatic, a different thing.
+- **ACD.** `hooks/d2a_gate.js` fires on every prompt via `hook-dispatcher.js:267` and
+  surfaces a duplicate verdict *before* building starts. **Corroborated by direct
+  observation:** it fired on this mission's own opening prompt and named `KB-UCR-CIF` —
+  which is how the contamination in §Phase 1 was found at all. Flagged as
+  mission-observed rather than a durable log, so the rung stays `ENFORCED`.
+- **CLAO — and the tension worth stating.** `reachability.py:46-56` computes
+  REACHABLE / ORPHAN / UNKNOWN across hooks, commands, agents and settings, and
+  `liveness_report.md` is a real dated artefact ("392 components, 242 LIVE, 150 non-LIVE")
+  with concrete verdicts including `hook-dispatcher` itself flagged DRIFTED. That is a
+  genuine `PRODUCTION_PROVEN` bar for the **orphan-detection** half.
+  It coexists with the finding above: the same instrument **cannot** see a capability that
+  is imported, registered, and never dispatched. Both hold. The rung reflects what it
+  does; the blind spot belongs in MISSING, not in a downgrade. ± marks that split.
+- **CCV.** `side_effect_ledger.py:78-95` reconciles one provider's declared vs observed
+  effects; `capability_runtime/contract.py:9-17` validates a single capability's own
+  contract. Neither checks **two capabilities composed** — A's output against B's expected
+  input — which is the entire hypothesis. The closer of the two self-declares `PLANNED`
+  and belongs to a corpus recorded as "SPEC, not a running system".
+- **ADW.** `horizon.py:273-284` computes the transitive dependent closure of the real
+  import graph — a working link from a unit to its consumers. `premise_verifier.py:109`
+  checks premises exist before acting. Both are point-in-time and manually invoked;
+  nothing watches for a previously-true assumption becoming false.
+
+## Placed: hypotheses 22-28
+
+| # | Hypothesis | Rung | Owner | Engine said |
+|---|---|---|---|---|
+| 22 | CHF — compatibility horizon | **PARTIALLY_MATERIALIZED** | `modules/dependency_sovereignty/sovereignty.py` | "genuinely new", 32% |
+| 23 | KRR — knowledge revalidation | **ENFORCED** ▲ | `tools/audit_cache.py` + `~/.claude/hooks/gatekeeper-semantic.js` | "genuinely new", 38% |
+| 24 | ERDR — external drift | **MATERIALIZED** | `tools/verify_global_mirrors.py`, `modules/mirror_discovery/` | "genuinely new", 45% |
+| 25 | HEC — escalation compiler | **PARTIALLY_MATERIALIZED** | `modules/alert_escalation/policy.py` | **FOLD**, 80% owned by one_shot |
+| 26 | AFP — autonomy failure predictor | **ENFORCED**, starved | `modules/pp_agents/signals/cascade.py` | "genuinely new", 15% |
+| 27 | IRRL — independent replication | **PRODUCTION_PROVEN** | `modules/fable_distillation/fd_04_contrast.py` | "genuinely new", 41% |
+| 28 | ICRA — compounding reality | **PRODUCTION_PROVEN** | `modules/sqi/weakening_detectors.py` | "genuinely new", 45% |
+
+### Evidence, briefly
+
+- **CHF.** `sovereignty.py:279-282` flags an unpinned dependency with no lockfile as
+  `DO_NOT_USE` — real future-drift risk. But nothing reads upstream version, changelog or
+  EOL data, so no actual horizon is forecast; `decision_kernel.py:46-48` only regex-matches
+  the words "breaking change"/"deprecat" in decision text.
+- **KRR ▲ — upgraded on evidence the subagent could not see.** The agent reported
+  MATERIALIZED with no automatic caller, having correctly found no `gatekeeper-semantic.js`
+  *in this repo*. It exists **globally**: `~/.claude/hooks/gatekeeper-semantic.js:108`
+  recomputes a file's SHA-256 on PreToolUse Read and compares it against
+  `_audit_cache/source_map.json`, surfacing staleness automatically. So the **consumer is
+  enforced**; the **producer is not** — line 15 states the cache is written by
+  `python tools/audit_cache.py --build`, by hand. Targeted revalidation fires on every
+  Read against a map refreshed only when someone remembers.
+  **Second finding, arguably larger:** that hook is **live-only, with no canonical copy in
+  the PP repo**. The repo-scoped liveness scan therefore cannot see one of the estate's
+  genuinely enforced surfaces — the same blind-spot family again, now inverted: not a dead
+  thing reported live, but a live thing invisible to the instrument.
+- **ERDR.** `verify_global_mirrors.py:275-281` SHA-256-compares the live `~/.claude/` tree
+  against the git-committed blob and reports real `[DRIFT]` / `[MISSING]`;
+  `mirror_discovery/discovery.py:130-160` supplies PAIRED / LIVE_ONLY / REPO_ONLY sets.
+  Reachable only through `verify_spp.py`, itself invoked from human-typed commands.
+- **HEC — and a refutation of the engine's one confident verdict.** The engine's sole FOLD
+  claimed one_shot owns 80% of HEC. Read directly, `one_shot/escalation.py:9-14` is a
+  three-line fail-count ladder (2 fails → Opus, 3 → STOP). It decides *when* to involve a
+  human and contains no question-framing logic whatsoever. The engine's only non-"new"
+  verdict in 28 is also wrong. What does exist —
+  `alert_escalation/policy.py:48-50`, ENFORCED via
+  `hooks/background-verifier.js` → `background_verifier_run.py:85` — collapses repeated
+  findings into one standing row. That reduces notification **frequency**, not the size of
+  the decision put to a human. The documented "high-leverage question compiler"
+  (`fd_02`) has no module; only fd_00, fd_04 and fd_07 exist as code.
+- **AFP.** Genuinely wired: `pp_agents/signals/cascade.py:98-124` builds a co-occurrence
+  map and returns a proactive advisory *before* the successor error, dispatched
+  automatically through `jit_skill_loader.py:1260` from three hooks. **But starved by the
+  same store that starves FPO** — 9 events, 2 distinct timestamps, every category
+  occurring exactly once, which the companion module states makes its guard "permanently
+  unsatisfiable on this store". Wired, functional, and almost certainly returning `None`
+  in practice.
+- **IRRL.** `vault/fd04/FRONTIER_RESIDUAL_MAP.md:11-19` records three deposited claims
+  re-posed cold to `claude -p` on a *different model*, in a fresh subprocess, hooks
+  disabled, outside the repo — `REPRODUCED 6/6` — and the outcome changed real routing:
+  "All three capability classes above are retired from frontier billing. They route to
+  Sonnet." A genuinely independent evidence path, not a re-read of the same artefact.
+- **ICRA.** `weakening_detectors.py:1` targets exactly the failure ICRA names — "the file
+  is present, the case is collected, the case passes, and the protection is gone."
+  `vault/audits/sqi_report_2026-08-06.md:8-23` is a real dated run: 149 files, 3,277
+  assertions, "11 verifying NOTHING", offenders named. Manual invocation.
+
+## Final distribution — 27 pre-existing hypotheses
+
+`SCIF` is excluded: its ENFORCED rung was earned by code this mission committed today.
+
+| Rung | Count | Hypotheses |
+|---|---:|---|
+| `DOCUMENTED` (genuinely absent) | **5** | NMIE · IRBE · FLSA · CSO · EED |
+| `PARTIALLY_MATERIALIZED` | **9** | EIAA · BSC · BPCC · DEC · SREE · CCV · ADW · CHF · HEC |
+| `MATERIALIZED` | **5** | FPO · CCCE · CIG · IBRS · ERDR |
+| `ENFORCED` | **4** | TND · ACD · AFP · KRR |
+| `PRODUCTION_PROVEN` | **4** | OECL · CLAO · IRRL · ICRA |
+
+**Five of twenty-seven are genuinely absent.** The engine called twenty-one of
+twenty-eight "genuinely new," and its single non-new verdict is the one refuted above.
+
+**Fourteen of twenty-seven — over half — are real code that no automatic surface invokes.**
+That is the estate's actual deficit, and it is not a shortage of capability. Adding a
+twenty-ninth system would not touch it.
+
 ## A prediction of mine, falsified
 
 The approved plan named **IRBE, CSO and OECL** as the strongest CREATE candidates.

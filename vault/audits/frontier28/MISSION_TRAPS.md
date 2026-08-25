@@ -136,6 +136,23 @@ static instrument sees only the first. A dispatch table makes them look identica
 handler is registered, the module is imported, the edge exists — and the key is never
 supplied. The gap is invisible precisely because the wiring is correct.
 
+**How far it reaches, measured.** `liveness_report.md` carries **242 LIVE verdicts, and
+228 of them (94%) are import-edge verdicts** — the reason string begins "reached from".
+
+State the consequence exactly, because the inflated version of this claim is the same
+error the trap is about. This does **not** show that 228 modules never run. It shows that
+**94% of the estate's positive liveness verdicts rest on a measurement that cannot
+distinguish "executes" from "merely imported."** The `predictive` case proves the two can
+diverge; how often they diverge is **UNKNOWN**, and unknown is the honest value. A count
+would require the dispatch-surface analysis that does not exist yet.
+
+Fairness to the instrument, stated because it is owed: import reachability is a genuine
+*necessary* condition and `modules/liveness/` was built for the "nothing reaches this"
+problem after 156 unreached modules were found. It is not wrong at its job. The defect is
+in the **reading** — a necessary-condition verdict labelled `LIVE` is consumed as a
+sufficient one. (The 22 "package-init" rows are a separate, benign case: they concern
+`__init__.py` files, for which "reached" is genuinely all the row asserts.)
+
 **Why it matters beyond this module.** The liveness instrument was built after 156 modules
 were found that nothing reached, and it does answer that question. But "nothing imports
 this" and "nothing calls this" are not the same failure, and only the first is measured.
