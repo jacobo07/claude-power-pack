@@ -276,24 +276,17 @@ def build_cache(project: Path) -> dict:
                 continue
 
             rel = str(filepath.relative_to(project)).replace("\\", "/")
-            files[rel] = {
-                "sha256": hash_file(filepath),
-                "size_bytes": filepath.stat().st_size,
-                "loc": count_lines(filepath),
-                "last_modified": datetime.fromtimestamp(
-                    filepath.stat().st_mtime, tz=timezone.utc
-                ).isoformat(),
-                "summary": extract_summary(filepath),
-                "neural_summary": extract_neural_summary(filepath),
-                "semantic_dna": extract_semantic_dna(filepath, project),
-                "depends_on": extract_depends_on(filepath, project, stem_map),
-            }
+            files[rel] = _entry_for(filepath, project, stem_map)
 
     cache = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "schema_version": "2.0",
         "project": str(project),
         "file_count": len(files),
+        # Persisted so a targeted refresh does not have to rebuild it. Deriving the stem
+        # map walks the entire project (2.4 s here), which made refreshing ONE file cost
+        # 3 s -- as expensive as the full build it exists to avoid.
+        "stem_map": stem_map,
         "files": files,
     }
 
@@ -434,6 +427,82 @@ def show_summary(project: Path, filepath: str) -> None:
             print(f"  - {d}")
 
 
+def _entry_for(filepath: Path, project: Path, stem_map: dict) -> dict:
+    """One cache entry. Extracted from build_cache so a refresh can reuse it verbatim
+    rather than growing a second, drifting copy of the same field set."""
+    return {
+        "sha256": hash_file(filepath),
+        "size_bytes": filepath.stat().st_size,
+        "loc": count_lines(filepath),
+        "last_modified": datetime.fromtimestamp(
+            filepath.stat().st_mtime, tz=timezone.utc
+        ).isoformat(),
+        "summary": extract_summary(filepath),
+        "neural_summary": extract_neural_summary(filepath),
+        "semantic_dna": extract_semantic_dna(filepath, project),
+        "depends_on": extract_depends_on(filepath, project, stem_map),
+    }
+
+
+def refresh_paths(project: Path, rels) -> dict:
+    """Rebuild cache entries for `rels` only, leaving every other entry untouched.
+
+    The consumer of this cache -- the PreToolUse gate that compares a file's live SHA-256
+    against `source_map.json` -- fires automatically on every Read. The PRODUCER was
+    `--build`, run by hand, so the map drifted from the tree the moment anyone edited
+    without remembering to rebuild, and the gate silently compared against stale entries.
+
+    Refreshing only the changed set is what makes automation affordable: a full rebuild
+    walks the whole tree on every turn, while the caller already knows exactly which paths
+    moved. Dropped entries are removed; a path that no longer exists cannot be revalidated.
+
+    Returns {"updated": n, "removed": n, "missing_cache": bool}.
+    """
+    cache_path = project / CACHE_DIR / CACHE_FILE
+    if not cache_path.is_file():
+        return {"updated": 0, "removed": 0, "missing_cache": True}
+    try:
+        cache = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"updated": 0, "removed": 0, "missing_cache": True}
+
+    files = cache.get("files") or {}
+    # Reuse the persisted map; rebuilding it costs more than everything else combined.
+    # A cache written before this field existed falls back to the slow path once, and the
+    # next --build persists it. A file ADDED since the last full build is absent from the
+    # map, so its dependents resolve imperfectly until then -- stated because it is a real
+    # limit of refreshing rather than rebuilding, not a bug to discover later.
+    stem_map = cache.get("stem_map") or build_stem_map(project)
+    updated = removed = 0
+    for rel in sorted(set(rels)):
+        rel = str(rel).replace("\\", "/")
+        fp = project / rel
+        if not fp.is_file():
+            if files.pop(rel, None) is not None:
+                removed += 1
+            continue
+        if should_skip(Path(rel)):
+            continue
+        try:
+            files[rel] = _entry_for(fp, project, stem_map)
+            updated += 1
+        except OSError:
+            continue
+
+    if not (updated or removed):
+        return {"updated": 0, "removed": 0, "missing_cache": False}
+
+    cache["files"] = files
+    cache["stem_map"] = stem_map        # persist it if the fallback had to build it
+    cache["file_count"] = len(files)
+    cache["generated_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        cache_path.write_text(json.dumps(cache, indent=2), encoding="utf-8")
+    except OSError:
+        return {"updated": 0, "removed": 0, "missing_cache": False}
+    return {"updated": updated, "removed": removed, "missing_cache": False}
+
+
 def main():
     parser = argparse.ArgumentParser(description="Audit Cache \u2014 hash-based source file skip")
     parser.add_argument("--project", type=Path, required=True, help="Project root path")
@@ -442,6 +511,10 @@ def main():
     parser.add_argument("--summary", type=str, help="Show cached summary for a file")
     parser.add_argument("--rebuild-neural", action="store_true",
                         help="Re-extract neural_summary + semantic_dna + depends_on only (skip rehashing)")
+    parser.add_argument("--refresh", nargs="+", metavar="REL",
+                        help="Refresh only these repo-relative paths (targeted "
+                             "revalidation; the automatic producer for the PreToolUse "
+                             "staleness gate, which fires on every Read)")
     args = parser.parse_args()
 
     project = args.project.resolve()
@@ -449,7 +522,13 @@ def main():
         print(f"ERROR: Project not found: {project}")
         sys.exit(1)
 
-    if args.build:
+    if args.refresh:
+        r = refresh_paths(project, args.refresh)
+        if r["missing_cache"]:
+            print("No audit cache found. Run --build first.", file=sys.stderr)
+            sys.exit(1)
+        print(f"Audit cache refreshed: {r['updated']} updated, {r['removed']} removed")
+    elif args.build:
         cache = build_cache(project)
         print(f"Audit cache built: {cache['file_count']} files indexed at {project / CACHE_DIR / CACHE_FILE}")
     elif args.rebuild_neural:

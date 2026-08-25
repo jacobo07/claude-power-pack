@@ -90,6 +90,8 @@ class SessionDelta:
     modified: list = field(default_factory=list)    # paths changed this session
     truncated: int = 0                              # paths dropped by MAX_PATHS
     orphans: list = field(default_factory=list)     # touched modules, ORPHAN + undeclared
+    dispatch_gaps: list = field(default_factory=list)  # registered keys nothing dispatches
+    cache_refreshed: int = 0                        # audit-cache entries revalidated
     rules_claimed: int = 0
     rules_unmeasured: int = 0
     open_gaps: list = field(default_factory=list)   # pending OWNER_QUEUE rows
@@ -201,6 +203,64 @@ def orphan_units(repo: Path, units) -> list:
     return sorted(out)
 
 
+def dispatch_gaps_for(repo: Path, units) -> list:
+    """Dispatch keys registered by a touched module that no live caller supplies.
+
+    Sister of `orphan_units`. That one answers "does anything reach this module?"; this
+    answers "does anything actually call into it?" -- and the two diverge. A module can be
+    import-reachable from a live parent, be marked LIVE, and never execute, because the
+    parent dispatches on a key nobody passes (`cascade_prevention/predictive`, 2026-08-25).
+    Applied to this session's own output for the same reason orphan_units is.
+    """
+    if not units:
+        return []
+    try:
+        from modules.liveness import dispatch as dp
+    except ImportError:
+        return []
+    try:
+        rows = dp.scan(repo)
+    except Exception:  # noqa: BLE001 -- fail-open
+        return []
+    out = []
+    for row in rows:
+        if row.get("status") != dp.NEVER_SUPPLIED:
+            continue
+        mod = str(row.get("module", ""))
+        unit = mod[len("modules/"):-len(".py")] if mod.startswith("modules/") else ""
+        if unit in units:
+            out.append(f"{unit}:{row.get('table')}[{row.get('key')!r}]")
+    return sorted(out)
+
+
+def refresh_audit_cache(repo: Path, touched) -> int:
+    """Revalidate the audit-cache entries for the paths this session changed.
+
+    The CONSUMER of that cache is automatic: a PreToolUse gate recomputes a file's
+    SHA-256 on every Read and compares it against `_audit_cache/source_map.json`. The
+    PRODUCER was `audit_cache.py --build`, run by hand, so the map drifted from the tree
+    the moment anyone edited without remembering to rebuild -- an enforced reader against
+    a map nobody refreshed.
+
+    Targeted by construction: the delta already knows exactly which paths moved, which is
+    what makes this affordable (~90 ms, against ~3 s when the stem map had to be rebuilt).
+    No cache present -> no-op, so a repo that never opted in is unaffected.
+    """
+    if not touched:
+        return 0
+    try:
+        tools_dir = str(Path(__file__).resolve().parents[2] / "tools")
+        if tools_dir not in sys.path:
+            sys.path.insert(0, tools_dir)
+        import audit_cache
+    except ImportError:
+        return 0
+    try:
+        return int(audit_cache.refresh_paths(repo, touched).get("updated", 0))
+    except Exception:  # noqa: BLE001 -- fail-open; a Stop hook must never raise
+        return 0
+
+
 def rule_coverage() -> tuple[int, int]:
     """(claimed, unmeasured) from the effect harness. No probes are executed."""
     try:
@@ -236,7 +296,9 @@ def collect(repo, sid: str = "", *, state_dir=None, now=None) -> SessionDelta:
         if units:
             d.scanned_modules = True
             d.orphans = orphan_units(repo_path, units)
+            d.dispatch_gaps = dispatch_gaps_for(repo_path, units)
             d.rules_claimed, d.rules_unmeasured = rule_coverage()
+        d.cache_refreshed = refresh_audit_cache(repo_path, d.touched)
         d.open_gaps = open_gaps(state_dir)
     except Exception:  # noqa: BLE001 -- fail-open
         return d
@@ -326,6 +388,14 @@ def render(d: SessionDelta) -> str:
                 f"- `modules/{unit}` landed unreachable from any live surface and is "
                 f"absent from `vault/liveness/reachability_registry.json` -- it fails "
                 f"the Liveness Standard gate. Verdict owed: WIRE, DECLARE, or DELETE."
+            )
+    if d.dispatch_gaps:
+        failed = True
+        for gap in d.dispatch_gaps:
+            lines.append(
+                f"- `{gap}` is registered in a dispatch table that no live caller ever "
+                f"supplies. Import-reachable, so a reachability scan reads it as LIVE, "
+                f"and it never executes. Verdict owed: DISPATCH it, or remove the entry."
             )
     if d.open_gaps:
         failed = True
