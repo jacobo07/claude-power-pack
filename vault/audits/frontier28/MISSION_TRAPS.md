@@ -182,6 +182,90 @@ it, through a path no production input reaches.
 
 ---
 
+## T-HALF-FIX-RECURRED-SAME-DAY-001 — I rebuilt the half-fix hours after sealing the rule against it
+
+**Observed.** `T-HALF-FIX-PASSES-ITS-OWN-CASE-001` was sealed this morning: *re-run the
+original case against a proposed fix before believing it.* This afternoon, building the
+dispatch-key scanner, version one matched a key as **any quoted literal** and accepted
+**any bare name** as a callable. It produced ten `NEVER_SUPPLIED` rows — every one a false
+positive, mostly enum tables like `_KIND_TIER['skill-card'] -> WARM` — and **missed
+`SURFACE_DETECTORS` entirely**, because `'session'` appears in quotes across hundreds of
+unrelated lines.
+
+It failed on the single case it was written for, and its output looked *productive*: ten
+findings is a more convincing result than five.
+
+**Why the rule did not prevent it.** Knowing a rule and applying it are different acts.
+The rule fires at a moment — "before believing this fix" — that feels like completion, and
+completion is exactly when scrutiny relaxes. Both this and the morning's instance were
+caught by deliberately re-running the founding case, not by recalling the principle.
+
+**What made it catchable.** The founding case is *nameable*: `SURFACE_DETECTORS['session']`.
+A fix whose original case cannot be named as a concrete input has no way to be tested
+against it, and that — not forgetfulness — is what makes this class recur.
+
+**Disposition.** Not a fourth restatement of the rule. The operational form that survives:
+**a fix ships with its founding case as a test fixture**, so the check is structural rather
+than remembered. Applied here — `test_dispatch_liveness.py` carries a hermetic fixture plus
+a live assertion, and the live one deliberately asserts *structure*, not the bug's current
+status, so wiring `detect('session')` tomorrow does not turn the suite red.
+
+---
+
+## T-MEASURED-THE-FLATTERING-CASE-001 — I published a 22 ms cost that was really 115 ms
+
+**Observed.** Commit `ca8e885` reported the provenance boundary adding **22.2 ms** to
+`_discover_families()`. That measurement ran in a warm process where `tracked_paths()` had
+already cached its `git ls-files` result. The hook this cost lands on runs a **cold process
+on every prompt**. Measured cold, best-of-3: **~115 ms**, dominated by that one git call.
+
+Not wrong arithmetic — the wrong *scenario*. The number was real and answered a question
+nobody was asking.
+
+**Mechanism.** A cache makes the second measurement cheap and the first one representative.
+Measuring in a REPL, a test, or a loop naturally measures the second. The production case
+is almost always the cold one, and it is the harder one to stage, so the convenient
+measurement and the flattering measurement are the same measurement.
+
+**Also of note:** the error ran in the direction that made my own change look better. No
+intent required — the cheap path and the favourable path simply coincided, which is what
+makes this class hard to self-catch.
+
+**Generalizes to.** Any performance claim about code behind a cache, a memo, a connection
+pool, or a warm import. **State the process state a number was measured in, or the number
+means nothing** — and prefer the cold path, because that is the one users pay for.
+
+**Disposition.** UKDL process-rule candidate. Corrected in `904dd21` rather than left
+standing; the original commit message keeps its claim, and the correction cites it.
+
+---
+
+## T-MY-OWN-GATES-SHIPPED-UNWIRED-001 — two suites written today had no automatic caller
+
+**Observed.** `test_d2a_provenance.py` (Phase 1) and `test_dispatch_liveness.py` (Phase 5)
+were both written, passed, committed — and invoked by nothing. Neither appeared in
+`verify_spp.py`. They would have run exactly as often as someone remembered them.
+
+**The sting.** One of them exists specifically to detect capabilities that are registered
+and never invoked. It was, itself, registered nowhere and invoked by nothing. The mission's
+central finding — *fourteen of twenty-seven capabilities are real code no automatic surface
+calls* — reproduced inside the mission's own output, within hours of naming it.
+
+**Mechanism.** "Written, passing, committed" reads as done. Wiring is a separate act with
+no failing signal to prompt it: an unwired gate is indistinguishable from a wired one until
+something breaks that it would have caught.
+
+**Fix applied.** Three rows added to `verify_spp.py`: `d2a-provenance`,
+`dispatch-liveness`, `cascade-wiring`. All three verified STRICT PASS as umbrella rows,
+not merely as standalone scripts.
+
+**Disposition.** Reinforces the Liveness Standard already sealed in `CLAUDE.md` — *shipping
+a module is not the same as wiring it*. The addition worth keeping is that **the rule binds
+hardest on work that implements the rule**, because that is where the appearance of
+compliance is strongest.
+
+---
+
 ## Standing obligation
 
 Appended in-session, evaluated for UKDL promotion at Phase 6, never auto-promoted and
