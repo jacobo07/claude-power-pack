@@ -19,9 +19,11 @@ from pathlib import Path
 PP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PP))
 
-from tools.normalize_paths import _unsafe_rewrite  # noqa: E402
+from tools.normalize_paths import (  # noqa: E402
+    _unsafe_rewrite, doctrine_safe_sub,
+)
 
-EXPECTED_GATES = 7
+EXPECTED_GATES = 13
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -98,6 +100,57 @@ def main() -> int:
     else:
         _fail("V-PATHEXEMPT-TILDE-IN-PATH-NOT-A-TOKEN",
               f"a tilde inside a path suppressed a rewrite ({why})")
+
+    # --- the exemption must not swallow a CO-LOCATED leak ----------------
+    # An adversarial pass built this: the interpreter path must stay
+    # absolute, the key path must not, and they share a line. Exempting
+    # the line carried the key through AND counted it as allowed.
+    mixed = (r"`C:\Users\User\AppData\Local\Programs\Python\Python312"
+             r"\python.exe` deploy.py --key C:\Users\User\.ssh\id_rsa")
+    out = doctrine_safe_sub(mixed)
+    kept_doctrine = r"Python312\python.exe" in out
+    fixed_leak = r"~\.ssh\id_rsa" in out
+    if kept_doctrine and fixed_leak:
+        _ok("V-PATHEXEMPT-SPAN-GRANULAR",
+            "interpreter path kept, co-located .ssh leak rewritten")
+    else:
+        _fail("V-PATHEXEMPT-SPAN-GRANULAR",
+              f"kept_doctrine={kept_doctrine} fixed_leak={fixed_leak}: "
+              f"{out}")
+    if _unsafe_rewrite(mixed, out) is None:
+        _ok("V-PATHEXEMPT-MIXED-IS-A-FINDING",
+            "a line with a real leak beside doctrine is still reported")
+    else:
+        _fail("V-PATHEXEMPT-MIXED-IS-A-FINDING",
+              "a line carrying a real leak was marked exempt")
+
+    # --- the tilde token must be a TOKEN, not any squiggle ---------------
+    # Each of these exempted a genuine leak before the pattern was
+    # narrowed. A gate that keeps a username out of the repo fails by
+    # being too permissive, so all three are pinned.
+    for gate, text in (
+        ("V-PATHEXEMPT-STRIKETHROUGH",
+         r"~~old path~~ the log lives at C:\Users\User\AppData\Local\pp.log"),
+        ("V-PATHEXEMPT-APPROXIMATION",
+         r"takes ~ 300 ms; artifacts under C:\Users\User\Downloads\x"),
+        ("V-PATHEXEMPT-TILDE-SLASH",
+         r"see ~/notes and also C:\Users\User\.claude\state"),
+    ):
+        after = text.replace(r"C:\Users\User", "~").replace(
+            "C:/Users/User", "~")
+        if _unsafe_rewrite(text, after) is None:
+            _ok(gate, "not treated as a token; the leak is still rewritten")
+        else:
+            _fail(gate, "a squiggle exempted a real home-path leak")
+
+    # BOOKEND: a genuinely quoted tilde token still earns the exemption.
+    quoted = (r"a home directory (`~`, `/home/user`, `C:\Users\user`)")
+    if _unsafe_rewrite(quoted, quoted.replace(r"C:\Users\user", "~")):
+        _ok("V-PATHEXEMPT-QUOTED-TILDE-STILL-EXEMPT",
+            "`~` as a delimited token still protects the enumeration")
+    else:
+        _fail("V-PATHEXEMPT-QUOTED-TILDE-STILL-EXEMPT",
+              "narrowed too far -- the three-item list would collapse again")
 
     # --- the mechanism is actually reached on the real tree --------------
     # A rule nobody's corpus triggers is indistinguishable from an unwired

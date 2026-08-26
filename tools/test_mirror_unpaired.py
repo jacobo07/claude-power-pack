@@ -27,7 +27,7 @@ from tools.mirror_unpaired_audit import (  # noqa: E402
 )
 from modules.mirror_discovery.discovery import resolve_live_root  # noqa: E402
 
-EXPECTED_GATES = 9
+EXPECTED_GATES = 12
 _passes: list[str] = []
 _fails: list[str] = []
 LIVE = Path("C:/Users/User/.claude")
@@ -123,13 +123,74 @@ def main() -> int:
     # The dispatcher divergence set IS the wired-canonical-only set. It is
     # allowed to be non-empty (the Owner owns ~/.claude/hooks), but it must
     # be COMPUTED, not remembered.
+    # Asserting the KEYS EXIST proved nothing: audit() builds that dict
+    # literally, so the gate passed even when both extractions returned
+    # empty -- precisely the state in which the SREE class is invisible.
+    # Assert the comparison had INPUTS.
     div = res.get("divergence") or {}
-    if "repo_only" in div and "live_only" in div:
+    n_repo, n_live = div.get("repo_registers"), div.get("live_registers")
+    if n_repo and n_live:
         _ok("V-UNPAIRED-DIVERGENCE-COMPUTED",
+            f"compared {n_repo} vs {n_live} registrations; "
             f"repo-only={div['repo_only']} live-only={div['live_only']}")
     else:
         _fail("V-UNPAIRED-DIVERGENCE-COMPUTED",
-              "no divergence computed; the SREE class would be invisible")
+              f"a dispatcher yielded no registrations "
+              f"(repo={n_repo}, live={n_live}) -- the comparison is empty "
+              "and a wired-canonical-only hook would not show")
+
+    # THE FAILING CLASS, ACTUALLY WIRED. This lived only in the CLI's
+    # main(), which no gate invokes, so the suite would have returned 0
+    # with fifty broken registrations in the tree while the umbrella row
+    # claimed it "fails only on a registration pointing at a file that
+    # does not exist".
+    broken = [r for r in res["rows"] if r["status"] == BROKEN_REGISTRATION]
+    if not broken:
+        _ok("V-UNPAIRED-NO-BROKEN-REGISTRATION",
+            "no registration points at a missing file")
+    else:
+        _fail("V-UNPAIRED-NO-BROKEN-REGISTRATION",
+              f"{len(broken)} wired-and-dead: "
+              + ", ".join(f"{r['rel']} ({r['evidence']})" for r in broken))
+
+    # settings.json holds JSON-ESCAPED Windows paths. `_norm` swapped
+    # backslashes without collapsing runs, so `C:\\Users\\...` became
+    # `c://users//...` and matched nothing -- every backslash-spelled
+    # registration read as unregistered, and BROKEN_REGISTRATION could
+    # not fire at all. Latent only because this settings.json happens to
+    # use forward slashes.
+    escaped = r'"command": "node C:\\Users\\User\\.claude\\hooks\\widget.js"'
+    _check("V-UNPAIRED-BACKSLASH-SPELLING",
+           classify_hook("widget.js", "repo", escaped, {}, LIVE,
+                         installed)[0],
+           BROKEN_REGISTRATION,
+           "a JSON-escaped Windows path is still a registration")
+
+    # The dispatcher extractor took any quoted `.js`, so a commented-out
+    # entry or a log string naming a script reported an unregistered hook
+    # as LIVE -- the inverse of the bug this tool exists to find.
+    import tempfile  # noqa: PLC0415
+    from tools.mirror_unpaired_audit import dispatcher_targets  # noqa: PLC0415,E402
+    with tempfile.TemporaryDirectory() as td:
+        fake = Path(td) / "hook-dispatcher.js"
+        fake.write_text(
+            "const HOOKS = [\n"
+            "  './real-hook.js',\n"
+            "  // './commented-out.js',\n"
+            "  { exe: NODE, script: './scoped.js' },\n"
+            "];\n"
+            "log('failed to load plugin-x.js');\n"
+            "const NAME = 'ghost-hook.js';\n",
+            encoding="utf-8")
+        got = set(dispatcher_targets(fake))
+        want = {"real-hook.js", "scoped.js"}
+        if got == want:
+            _ok("V-UNPAIRED-EXTRACTOR-NARROW",
+                f"extracted exactly {sorted(want)}")
+        else:
+            _fail("V-UNPAIRED-EXTRACTOR-NARROW",
+                  f"extracted {sorted(got)}, expected {sorted(want)} -- "
+                  "prose and comments are not registrations")
 
     ran = len(_passes) + len(_fails)
     print(f"\nUNPAIRED_PASS={len(_passes)}/{ran}  "

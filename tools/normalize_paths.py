@@ -452,18 +452,64 @@ def _read(p: Path) -> str | None:
 # different (or absent) interpreter on this host, which is the documented
 # cause of a long line of bridge failures. A gate that flags the fix is a
 # gate arguing with the constitution.
+# Stored slash-normalised; the comparison normalises the line to match,
+# so one entry covers both spellings.
 DOCTRINE_LITERALS = (
-    r"appdata\local\programs\python\python312\python.exe",
     "appdata/local/programs/python/python312/python.exe",
 )
 
 
+def _is_doctrine_match(line: str, match) -> bool:
+    """Is this home-path match the PREFIX of a doctrine-mandated path?
+
+    PATH_RE matches the home prefix (`C:\\Users\\User`); the literal
+    doctrine mandates is the tail that FOLLOWS it. Tying the two together
+    by lookahead is what makes the exemption work at all -- testing the
+    literal's own character span exempted nothing, because that span never
+    contains the match it was meant to protect. Both slash spellings are
+    covered by normalising the tail rather than by storing two literals.
+    """
+    tail = line[match.end():].lower().replace("\\", "/").lstrip("/")
+    return any(tail.startswith(lit) for lit in DOCTRINE_LITERALS)
+
+
+def doctrine_safe_sub(line: str) -> str:
+    """Rewrite every home-path match EXCEPT the doctrine-mandated ones.
+
+    The first version exempted the whole LINE when a doctrine literal
+    appeared anywhere on it, so a genuine leak sharing that line was
+    silently carried through AND counted as allowed:
+
+        `...\\Python312\\python.exe` deploy.py --key C:\\Users\\User\\.ssh\\id
+
+    The interpreter path must stay absolute; the key path must not. An
+    exemption has to be as narrow as the reason for it, and the reason
+    here attaches to a path, not to a line.
+    """
+    return PATH_RE.sub(
+        lambda m: m.group(0) if _is_doctrine_match(line, m) else "~", line)
+
+
+# A tilde that the line is USING as a token -- backticked or quoted. The
+# first version accepted any bare `~` not followed by a word character,
+# which matched markdown strikethrough (`~~old~~`) and an approximation
+# (`takes ~ 300 ms`), and exempted a real leak on either. For a gate whose
+# purpose is keeping a username out of the repo, a loose exemption is the
+# failure mode, so this is deliberately narrow: a tilde being referred to
+# as a symbol is delimited, and an unquoted squiggle is not evidence.
+_TILDE_TOKEN = re.compile(r"[`'\"]~[`'\"]")
+
+
 def _unsafe_rewrite(before: str, after: str) -> str | None:
-    """Why this doc rewrite must not be applied, or None if it is safe."""
-    low = before.lower()
-    for lit in DOCTRINE_LITERALS:
-        if lit in low:
-            return "doctrine-mandated absolute path"
+    """Why this doc rewrite must not be applied, or None if it is safe.
+
+    A doctrine literal only makes the line unsafe when the WHOLE line is
+    doctrine -- otherwise the line is rewritten partially by
+    doctrine_safe_sub and reported as an ordinary finding.
+    """
+    matches = list(PATH_RE.finditer(before))
+    if matches and all(_is_doctrine_match(before, m) for m in matches):
+        return "doctrine-mandated absolute path"
 
     # A rewrite that makes two previously-distinct tokens identical has
     # destroyed the distinction the line was drawing. The instance:
@@ -472,8 +518,7 @@ def _unsafe_rewrite(before: str, after: str) -> str | None:
     # becomes (`~`, `/home/user`, `~`) -- the Windows example is gone and
     # the sentence now names the same thing twice. General rule, not a
     # special case: never collapse X into a token the line already uses.
-    if re.search(r"(?<![\w~])~(?![\w/\\])", before) and \
-            after.count("~") > before.count("~"):
+    if _TILDE_TOKEN.search(before) and after.count("~") > before.count("~"):
         return "would duplicate a token already present"
     return None
 
@@ -502,7 +547,9 @@ def _normalize_for(text: str, file: Path) -> tuple[str, list[tuple[int, str, str
             continue
         kind = "doc" if _line_is_doc(line, ext) else "code"
         if kind == "doc":
-            new = PATH_RE.sub("~", line)
+            # Span-aware: a doctrine literal on the line protects ITSELF,
+            # not everything beside it.
+            new = doctrine_safe_sub(line)
             unsafe = _unsafe_rewrite(line, new)
             if unsafe:
                 # Reported, never rewritten, and NOT counted as a defect:

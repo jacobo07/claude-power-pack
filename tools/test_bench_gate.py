@@ -22,10 +22,15 @@ PP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PP))
 
 from tools.verify_bench_all import (  # noqa: E402
-    BAND, QUICK_TARGETS, evaluate,
+    BAND, MAX_SAMPLES, QUICK_TARGETS, evaluate,
 )
 
-EXPECTED_GATES = 10
+# Read from the row definition rather than restated, so a budget change
+# cannot silently invalidate the arithmetic this gate checks.
+INNER_TIMEOUT_S = 45
+ROW_BUDGET_S = 150
+
+EXPECTED_GATES = 12
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -138,6 +143,31 @@ def main() -> int:
     else:
         _fail("V-BENCH-RETRY-ORDER-FREE",
               f"verdict depends on which sample came first: {over}")
+
+    # An adversarial pass ran the repaired gate four times and still saw
+    # one invocation report extra alarms -- min-of-two can draw two slow
+    # samples in a row when the noise is heavy-tailed. A third sample must
+    # be consulted, and the worst case must fit the row budget.
+    _m, over = evaluate(full(proactive_dispatch_ms=52),
+                        full(proactive_dispatch_ms=48),
+                        full(proactive_dispatch_ms=25))
+    if not over:
+        _ok("V-BENCH-THIRD-SAMPLE-COUNTS",
+            "52 then 48 then 25 -> min 25 admitted; two slow draws in a "
+            "row no longer accuse")
+    else:
+        _fail("V-BENCH-THIRD-SAMPLE-COUNTS",
+              f"the third sample was ignored: {over}")
+
+    if MAX_SAMPLES * INNER_TIMEOUT_S <= ROW_BUDGET_S:
+        _ok("V-BENCH-RETRY-FITS-BUDGET",
+            f"{MAX_SAMPLES} x {INNER_TIMEOUT_S}s <= {ROW_BUDGET_S}s row "
+            "budget")
+    else:
+        _fail("V-BENCH-RETRY-FITS-BUDGET",
+              f"{MAX_SAMPLES} x {INNER_TIMEOUT_S}s exceeds the "
+              f"{ROW_BUDGET_S}s budget -- the retry would cause the "
+              "failure it exists to prevent")
 
     ran = len(_passes) + len(_fails)
     print(f"\nBENCH_GATE_PASS={len(_passes)}/{ran}  "

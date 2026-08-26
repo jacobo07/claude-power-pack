@@ -304,7 +304,12 @@ def main() -> int:
          30),
         ("benchmarks-ok",
          [PY, str(PP / "tools" / "verify_bench_all.py")],
-         60),  # 9s measured incl. the confirm-on-failure second sample
+         # 9s typical, but the confirm-on-failure retry makes the WORST
+         # case two inner 55s timeouts. The retry only fires when the host
+         # is already slow -- exactly when a 60s budget would kill the row
+         # and render it as a failure it never reached. Budget the worst
+         # case, not the happy-path measurement.
+         150),
         # The gate above judges performance; this one judges THAT gate.
         # It compared against the raw target while printing "over 1.5x
         # target", so it manufactured 5 false alarms and buried the one

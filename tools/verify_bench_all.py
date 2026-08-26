@@ -46,6 +46,10 @@ PP = Path(__file__).resolve().parents[1]
 # report can print the number it actually compared against.
 BAND = 1.5
 
+# Samples taken before a failure is REPORTED. Only the first is paid on a
+# healthy run; the others fire solely when something already looks over.
+MAX_SAMPLES = 3
+
 QUICK_TARGETS = {
     "tco_gate_ms": 270,
     "tis_report_ms": 225,
@@ -66,7 +70,10 @@ def sample() -> tuple[dict | None, str]:
              "--quick", "--json"],
             capture_output=True,
             text=True,
-            timeout=55,
+            # 45, not 55: MAX_SAMPLES of these must fit inside the row's
+            # 150s budget, or the retry that exists to prevent a false
+            # failure becomes the cause of one.
+            timeout=45,
             cwd=str(PP),
         )
     except subprocess.TimeoutExpired:
@@ -99,13 +106,14 @@ def _value(results: dict, name: str) -> float | None:
     return float(v) if isinstance(v, (int, float)) else None
 
 
-def evaluate(first: dict,
-             second: dict | None = None) -> tuple[list[str], dict]:
-    """Judge one or two samples. Pure -- no subprocesses, no clock.
+def evaluate(first: dict, *rest: dict) -> tuple[list[str], dict]:
+    """Judge one or more samples. Pure -- no subprocesses, no clock.
 
     Returns (missing, over). `over` maps benchmark -> the value held
     against it, which is the MIN across supplied samples.
     """
+    second = rest[0] if rest else None
+    extra = rest[1:]
     # Absent is not OK. bench_all emits `<name>_error` instead of a value
     # when a probe breaks, so a missing name means that benchmark FAILED
     # to run -- surfacing it is the whole point.
@@ -118,10 +126,12 @@ def evaluate(first: dict,
 
     confirmed = {}
     for n, v1 in over.items():
-        v2 = _value(second, n)
-        # min() because spawn noise is additive: the smaller sample is
-        # the closer estimate of the real cost.
-        best = v1 if v2 is None else min(v1, v2)
+        # min() because spawn noise is additive: the smallest sample is
+        # the closest estimate of the real cost.
+        vals = [v1] + [v for v in
+                       (_value(s, n) for s in (second,) + extra)
+                       if v is not None]
+        best = min(vals)
         if best > QUICK_TARGETS[n] * BAND:
             confirmed[n] = best
     return missing, confirmed
@@ -135,13 +145,22 @@ def main() -> int:
 
     missing, over = evaluate(first)
 
-    # Confirm before accusing. Only paid when something already looks bad.
-    retried = False
-    if over:
-        second, _err2 = sample()
-        if second is not None:
-            retried = True
-            missing, over = evaluate(first, second)
+    # Confirm before accusing. Only paid when something already looks bad,
+    # so a healthy run still costs exactly one sample.
+    #
+    # TWO was not enough. Measured over four consecutive invocations on
+    # this host, one still reported extra alarms -- including
+    # `proactive_dispatch_ms 52>45`, whose median is 25. The noise is
+    # heavy-tailed, so a single retry can draw two slow samples in a row.
+    # A third cuts that sharply and is never reached on a healthy run.
+    samples = [first]
+    while over and len(samples) < MAX_SAMPLES:
+        nxt, _err = sample()
+        if nxt is None:
+            break
+        samples.append(nxt)
+        missing, over = evaluate(*samples)
+    retried = len(samples) > 1
 
     checked = len(QUICK_TARGETS) - len(missing)
     if not over and not missing:
@@ -157,7 +176,8 @@ def main() -> int:
             f"{n}: {v:.0f}>{QUICK_TARGETS[n] * BAND:.0f}"
             f" ({BAND}x{QUICK_TARGETS[n]})"
             for n, v in sorted(over.items()))
-        how = "confirmed by a 2nd sample" if retried else "single sample"
+        how = (f"min of {len(samples)} samples" if retried
+               else "single sample")
         parts.append(f"{len(over)}/{checked} over {BAND}x target "
                      f"[{how}]: {detail}")
     print("BENCHMARKS_OK: " + " | ".join(parts))

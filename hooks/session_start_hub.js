@@ -405,8 +405,13 @@ function enqueue(label, cmd, args, env, logPath) {
 function flushSpawns() {
   if (!PENDING_SPAWNS.length) return;
   try {
-    const specPath = path.join(os.tmpdir(),
-                               'pp-hub-launch-' + process.pid + '.json');
+    // pid alone is not unique: Windows reuses them, and several panes open
+    // at once. Two hubs colliding on this filename would cross-read or
+    // clobber each other's handoff and silently lose a whole queue.
+    const specPath = path.join(
+      os.tmpdir(),
+      'pp-hub-launch-' + process.pid + '-' + Date.now().toString(36)
+        + '-' + Math.random().toString(36).slice(2, 8) + '.json');
     fs.writeFileSync(specPath, JSON.stringify(PENDING_SPAWNS), 'utf8');
     const child = spawn(NODE_EXE, [DETACHED_LAUNCHER_JS, specPath], {
       detached: true,

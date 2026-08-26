@@ -29,7 +29,7 @@ from pathlib import Path
 PP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PP))
 
-EXPECTED_GATES = 8
+EXPECTED_GATES = 9
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -122,6 +122,36 @@ def main() -> int:
             _fail("V-SESSIONSTART-OPEN-EPOCH-SPEAKS",
                   f"an open epoch went silent: {out!r}")
 
+    # The bookend above proves an open epoch still SPEAKS, but it takes the
+    # HELD branch, which returns without ever touching recovery_verdict --
+    # so nothing yet proved the import still happens when it is needed. A
+    # fast path that never loads the module would satisfy gate 1 by being
+    # broken. This fixture pins a reference that EXISTS, which is the only
+    # path that reaches the import.
+    with tempfile.TemporaryDirectory() as td:
+        state = Path(td)
+        from modules.session_resilience import epoch  # noqa: PLC0415
+        ref_name = "pane_map_20260101_1200.json"
+        hist = state / epoch.HISTORY_DIRNAME
+        hist.mkdir(parents=True)
+        (hist / ref_name).write_text(json.dumps({"panes": []}),
+                                     encoding="utf-8")
+        (state / "pane_map.json").write_text(json.dumps({"panes": []}),
+                                             encoding="utf-8")
+        (state / epoch.EPOCH_FILENAME).write_text(json.dumps({
+            "status": epoch.OPEN,
+            "interrupted_at": "2026-08-26T00:00:00+00:00",
+            "reference_file": ref_name,
+        }), encoding="utf-8")
+        loaded, _out = _banner_loads_verdict(state)
+        if loaded is True:
+            _ok("V-SESSIONSTART-DEEP-PATH-LOADS-VERDICT",
+                "a resolvable reference still imports recovery_verdict")
+        else:
+            _fail("V-SESSIONSTART-DEEP-PATH-LOADS-VERDICT",
+                  "the module is never loaded on ANY path -- the fast path "
+                  "passes by being broken, not by being fast")
+
     # --- 2. the hub's launcher -------------------------------------------
     launcher = PP / "hooks" / "detached_launcher.js"
     if launcher.is_file():
@@ -161,8 +191,20 @@ def main() -> int:
         }]
         spec_path = Path(td) / "spec.json"
         spec_path.write_text(json.dumps(spec), encoding="utf-8")
-        subprocess.run(["node", str(launcher), str(spec_path)],
-                       capture_output=True, timeout=60, cwd=str(PP))
+        # `node` off PATH must be a gate FAILURE, not a traceback that
+        # aborts the suite and takes the remaining gates with it. This ran
+        # unconditionally even when launcher.is_file() was already False.
+        try:
+            subprocess.run(["node", str(launcher), str(spec_path)],
+                           capture_output=True, timeout=60, cwd=str(PP))
+        except (FileNotFoundError, OSError, subprocess.SubprocessError) as exc:
+            _fail("V-SESSIONSTART-LAUNCHER-SPAWNS",
+                  f"could not run node: {type(exc).__name__}: {exc}")
+            _fail("V-SESSIONSTART-SPEC-CONSUMED", "launcher never ran")
+            ran = len(_passes) + len(_fails)
+            print(f"\nSESSIONSTART_PASS={len(_passes)}/{ran}  "
+                  f"threshold={EXPECTED_GATES}/{EXPECTED_GATES}")
+            return 1
         # The child is detached; give it a bounded chance to land rather
         # than a fixed sleep that is either flaky or slow.
         landed = False

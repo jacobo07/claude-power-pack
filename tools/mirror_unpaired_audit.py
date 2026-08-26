@@ -67,17 +67,33 @@ def _read(p: Path) -> str:
 
 
 def _norm(s: str) -> str:
-    return s.replace("\\", "/").lower()
+    """Path comparison form: forward slashes, collapsed, lowercased.
+
+    The collapse is load-bearing, not tidiness. settings.json holds
+    JSON-ESCAPED Windows paths, so `C:\\\\Users\\\\User\\\\.claude\\\\hooks\\\\x.js`
+    read as raw text becomes `c://users//user//.claude//hooks//x.js` once
+    backslashes are swapped -- doubled separators that never match a probe
+    built from a real Path. Every registration spelled with backslashes
+    therefore read as UNREGISTERED, and the one class that fails this
+    audit, BROKEN_REGISTRATION, could not fire. It survived only because
+    the current settings.json happens to use forward slashes; an audit
+    that depends on a spelling is not an audit.
+    """
+    return re.sub(r"/{2,}", "/", s.replace("\\", "/")).lower()
 
 
-def live_dispatcher(live_root: Path, settings_text: str) -> Path | None:
+def live_dispatcher(live_root: Path, settings_text: str,
+                    repo_root: Path | None = None) -> Path | None:
     """Which hook-dispatcher copy does Claude Code actually execute?
 
     Decided from settings.json, never assumed: the answer determines how
     every relative './x.js' registration resolves, and both copies exist.
     """
     live_disp = live_root / "hooks" / "hook-dispatcher.js"
-    repo_disp = PP / "hooks" / "hook-dispatcher.js"
+    # repo_root, not PP. Half-applying the fix is how the same trap
+    # survives in the same file: --repo-root X must decide about X.
+    repo_disp = (Path(repo_root) if repo_root else PP) / "hooks" \
+        / "hook-dispatcher.js"
     st = _norm(settings_text)
     if _norm(str(repo_disp)) in st:
         return repo_disp
@@ -98,8 +114,19 @@ def dispatcher_targets(disp: Path | None) -> dict:
     out: dict = {}
     if disp is None or not disp.is_file():
         return out
-    text = _read(disp)
-    for m in re.finditer(r"""['"]([^'"]*?[\w./\\-]+\.js)['"]""", text):
+    # Comment lines are not registrations. A retired entry left commented
+    # out, or a log string naming a script, would otherwise be extracted
+    # and report an unregistered hook as live -- the exact inverse of the
+    # bug this tool was built to find.
+    lines = [ln for ln in _read(disp).splitlines()
+             if not re.match(r"\s*(?://|\*|/\*)", ln)]
+    text = "\n".join(lines)
+    # Registrations are PATH-shaped: `'./x.js'`, `'../a/b.js'`, or absolute.
+    # Requiring the prefix rejects a bare `'ghost-hook.js'` mentioned in
+    # prose and any quoted sentence that merely contains a filename.
+    for m in re.finditer(
+            r"""['"](\.{1,2}/[^'"\s]*?\.js|[A-Za-z]:[\\/][^'"\s]*?\.js)['"]""",
+            text):
         ref = m.group(1)
         if not ref.strip():
             continue
@@ -164,7 +191,7 @@ def classify_hook(rel: str, side: str, settings_text: str,
 def audit(repo_root: Path, live_root: Path) -> dict:
     d = discover(repo_root, live_root)
     settings_text = _read(live_root / "settings.json")
-    disp = live_dispatcher(live_root, settings_text)
+    disp = live_dispatcher(live_root, settings_text, repo_root)
     targets = dispatcher_targets(disp)
 
     rows = []
@@ -189,7 +216,7 @@ def audit(repo_root: Path, live_root: Path) -> dict:
     # two copies legitimately spell the same target differently (one
     # relative, one absolute) -- the question is WHICH hooks are wired,
     # not how the string was written.
-    repo_disp = PP / "hooks" / "hook-dispatcher.js"
+    repo_disp = Path(repo_root) / "hooks" / "hook-dispatcher.js"
     live_disp = live_root / "hooks" / "hook-dispatcher.js"
     repo_side = dispatcher_targets(repo_disp)
     live_side = dispatcher_targets(live_disp)
@@ -208,6 +235,12 @@ def audit(repo_root: Path, live_root: Path) -> dict:
         "divergence": {
             "repo_copy": str(repo_disp),
             "live_copy": str(live_disp),
+            # Counts, so a gate can tell "no divergence" from "no inputs".
+            # An empty comparison yields an empty diff, which reads as
+            # agreement and is exactly the state in which a
+            # wired-canonical-only hook is invisible.
+            "repo_registers": len(repo_side),
+            "live_registers": len(live_side),
             "repo_only": sorted(set(repo_side) - set(live_side)),
             "live_only": sorted(set(live_side) - set(repo_side)),
         },
