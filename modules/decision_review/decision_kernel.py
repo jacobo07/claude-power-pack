@@ -309,6 +309,40 @@ def review_decision(obj: DecisionObject, *, precedent: dict | None = None,
     answer contributes nothing rather than a wrong answer.
     """
     reg = registry if registry is not None else Registry()
+
+    # DEC. A decision whose statement AND evidence are unchanged has already
+    # been answered; re-running nine stages to reach the same verdict is
+    # reasoning spent on a settled question. The registry held the answer
+    # and nothing ever read it back -- next_id() even guaranteed a
+    # resubmitted identical decision got a FRESH id, so the system could not
+    # notice it was repeating itself.
+    #
+    # Injection still wins: an explicitly-passed precedent is never
+    # overridden, so a fixture can pin any branch. Fail-open -- any doubt
+    # returns None and the decision is reasoned normally.
+    _recur = None
+    try:
+        from modules.decision_review.recurrence import (
+            fingerprint as _fp, find_precedent as _find)
+        _recur = _fp(obj)
+        if precedent is None:
+            hit = _find(obj, reg)
+            if hit is not None:
+                return DecisionRecord(
+                    obj=obj, ts=ts, tier=ReviewTier(hit["tier"])
+                    if hit.get("tier") else ReviewTier.L0,
+                    verdict=Verdict(hit["verdict"]),
+                    cited_sources=[{
+                        "type": "precedent",
+                        "claim": f"identical decision {hit['id']} decided "
+                                 f"{hit['verdict']} {hit['age_days']}d ago",
+                        "source": f"decision_registry:{hit['id']}",
+                    }],
+                    guards_fired=["DEC-PRECEDENT-REUSED"],
+                )
+    except Exception:  # noqa: BLE001 -- a cache must never break a decision
+        _recur = _recur or None
+
     try:
         if live:
             resolved = _resolve_live(obj)
@@ -434,8 +468,17 @@ def review_decision(obj: DecisionObject, *, precedent: dict | None = None,
 def _finish(obj, reg, ts, tier, verdict, cited, guards, conditions,
             *, blocked) -> DecisionRecord:
     obj.verdict = verdict
+    # Stamped at write time, so precedent has something to match on. A
+    # fingerprint computed only at read time would never find the records
+    # written before it existed, and the cache would start empty forever.
+    try:
+        from modules.decision_review.recurrence import fingerprint as _fp
+        fp = _fp(obj)
+    except Exception:  # noqa: BLE001
+        fp = None
     rec = DecisionRecord(obj=obj, ts=ts, tier=tier, verdict=verdict,
                          cited_sources=cited, guards_fired=guards,
-                         conditions=conditions, blocked=blocked)
+                         conditions=conditions, blocked=blocked,
+                         fingerprint=fp)
     reg.append(rec)
     return rec

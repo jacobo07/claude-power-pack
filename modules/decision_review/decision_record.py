@@ -214,11 +214,16 @@ class DecisionRecord:
     prediction_error: dict | None = None
     attribution: dict | None = None          # reasoning/execution/luck/context
     superseded_by: str | None = None
+    # Digest of the decision's INPUTS (statement + options + chosen +
+    # evidence). Without it on the record, a later identical decision has
+    # nothing to match against and the registry stays write-only.
+    fingerprint: str | None = None
 
     def to_dict(self) -> dict:
         return {
             "id": self.obj.id if self.obj is not None else None,
             "ts": self.ts,
+            "fingerprint": self.fingerprint,
             "tier": self.tier.value if self.tier else None,
             "verdict": self.verdict.value if self.verdict else None,
             "blocked": self.blocked,
