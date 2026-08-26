@@ -26,6 +26,10 @@ EVENTS_PATH = PP_ROOT / "vault" / "ceps" / "events.jsonl"
 CASCADE_WINDOW_SECONDS = 300
 MIN_COOCCURRENCE = 2
 
+# Admission verdicts that disqualify an event from prediction. Written by
+# tools/ceps_backfill_audit.py; absent means unjudged, which is kept.
+_EXCLUDED_ADMISSION = frozenset({"invalid", "identity_suspect"})
+
 
 def _load_events() -> list[dict]:
     if not EVENTS_PATH.is_file():
@@ -66,12 +70,22 @@ def _build_cascade_map() -> dict[str, list[str]]:
     at the next 10 events within CASCADE_WINDOW_SECONDS and counts
     each distinct (key_a, key_b) co-occurrence. Followers with count
     >= MIN_COOCCURRENCE are returned per source key.
+
+    Events carrying an admission verdict of `invalid` or
+    `identity_suspect` are excluded (tools/ceps_backfill_audit.py). A
+    prediction is only as good as the identity of its key, and 51 of the
+    first 75 stored events keyed on `bash:cd` -- a navigation prefix
+    shared by unrelated commands, which fuses their histories into one
+    meaningless bucket. Unjudged events (no verdict field) are KEPT:
+    absent is not invalid.
     """
     events = _load_events()
     if not events:
         return {}
     indexed: list[tuple[datetime, str]] = []
     for e in events:
+        if e.get("admission_status") in _EXCLUDED_ADMISSION:
+            continue
         key = _error_key(e)
         ts = _parse_ts(str(e.get("ts", "")))
         if key and ts is not None:

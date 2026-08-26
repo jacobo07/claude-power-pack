@@ -73,8 +73,21 @@ def _parse_ts(raw) -> datetime | None:
         return None
 
 
+# Admission verdicts that disqualify an event from inference. Written by
+# tools/ceps_backfill_audit.py. Mirrored in pp_agents/signals/cascade.py:
+# the store has TWO readers, and filtering one of them left the other
+# inferring from the same corrupt rows (found 2026-08-26 when the filtered
+# reader reported 0 pairs while this one still reported 3).
+_EXCLUDED_ADMISSION = frozenset({"invalid", "identity_suspect"})
+
+
 def load_events(path: Path | None = None) -> list:
-    """Every well-formed event, oldest first. Malformed lines are skipped, not fatal."""
+    """Every well-formed, admissible event, oldest first.
+
+    Malformed lines are skipped, not fatal. Events judged `invalid` or
+    `identity_suspect` are excluded; an event with no verdict is KEPT,
+    because unjudged is not the same as rejected.
+    """
     p = Path(path) if path else EVENTS_PATH
     out = []
     try:
@@ -88,6 +101,8 @@ def load_events(path: Path | None = None) -> list:
         try:
             row = json.loads(line)
         except ValueError:
+            continue
+        if row.get("admission_status") in _EXCLUDED_ADMISSION:
             continue
         ts = _parse_ts(row.get("ts"))
         cat = row.get("category")
