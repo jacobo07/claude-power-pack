@@ -229,6 +229,17 @@ def main() -> int:
         ("cascade-wiring",
          [PY, str(PP / "tools" / "test_cascade_input_wiring.py")],
          30),
+        # Semantic admission for the event store. Shape validation cannot
+        # tell a failure from a success, and 52 of the first 75 events were
+        # not failures at all.
+        ("ceps-admission",
+         [PY, str(PP / "tools" / "test_ceps_admission.py")],
+         60),
+        # Every stored event must carry a current admission verdict, so a
+        # rule change cannot leave history silently unjudged.
+        ("ceps-backfill",
+         [PY, str(PP / "tools" / "ceps_backfill_audit.py"), "--check"],
+         30),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
