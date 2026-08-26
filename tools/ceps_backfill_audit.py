@@ -72,19 +72,27 @@ def judge(event: dict) -> tuple[str, str]:
     return ("valid", "")
 
 
-def load() -> list[dict]:
-    rows = []
+def load() -> list[dict | str]:
+    """Every line, in order. A line that will not parse is kept AS TEXT.
+
+    An earlier version dropped unparseable lines and then rebuilt the whole
+    file from what survived, which deleted them permanently and silently --
+    a torn write, a stray CRLF or a mid-file BOM would have been erased by
+    the tool whose docstring promises it never purges. Preserving the raw
+    line costs nothing and keeps the promise literally true.
+    """
+    out: list[dict | str] = []
     if not EVENTS.exists():
-        return rows
+        return out
     for line in EVENTS.read_text(encoding="utf-8-sig").splitlines():
-        line = line.strip()
-        if not line:
+        stripped = line.strip()
+        if not stripped:
             continue
         try:
-            rows.append(json.loads(line))
+            out.append(json.loads(stripped))
         except Exception:  # noqa: BLE001
-            continue
-    return rows
+            out.append(stripped)   # unreadable, not unwanted
+    return out
 
 
 def main() -> int:
@@ -93,10 +101,13 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
 
-    rows = load()
-    if not rows:
+    items = load()
+    if not items:
         print("CEPS_BACKFILL: no events -- nothing to classify")
         return 0
+
+    rows = [e for e in items if isinstance(e, dict)]
+    unreadable = [e for e in items if not isinstance(e, dict)]
 
     verdicts = collections.Counter()
     changed = 0
@@ -113,6 +124,9 @@ def main() -> int:
     print(f"CEPS_BACKFILL: {len(rows)} events")
     for k in ("valid", "identity_suspect", "invalid"):
         print(f"  {k:18s} {verdicts[k]}")
+    if unreadable:
+        print(f"  {'unreadable':18s} {len(unreadable)}  "
+              "(preserved verbatim, not judged, NOT dropped)")
     for e in rows:
         if e["admission_status"] != "valid":
             print(f"    {e.get('ts')} | {e.get('category')} | "
@@ -120,9 +134,32 @@ def main() -> int:
                   f"{str(e.get('root_cause'))[:44]}")
 
     if args.apply:
-        body = "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in rows)
-        EVENTS.write_text(body, encoding="utf-8", newline="\n")
-        print(f"APPLIED: {changed} verdicts written (rev {ADMISSION_REV})")
+        # Read-modify-write against a log another process APPENDS to. The
+        # producer opens it in "a" mode with no lock, so an event captured
+        # between load() and this write would be erased by the rewrite.
+        # Cheapest correct answer: notice and refuse. Losing an event is
+        # worse than deferring a re-judgement that is idempotent anyway.
+        if len(load()) != len(items):
+            print("APPLY SKIPPED: the event log grew while this ran "
+                  "(a producer appended). Nothing written; re-run.")
+            return 0
+
+        body = "".join(
+            (json.dumps(e, ensure_ascii=False) if isinstance(e, dict) else e)
+            + "\n" for e in items)
+        # Atomic. A truncating write of 55KB that is interrupted -- by the
+        # 30s budget this runs under as an umbrella row, or by anything else
+        # -- would leave the event log half-written. This repo already knows
+        # the pattern; the first version of this tool simply did not use it.
+        tmp = EVENTS.with_suffix(".jsonl.tmp")
+        try:
+            tmp.write_text(body, encoding="utf-8", newline="\n")
+            tmp.replace(EVENTS)
+        except OSError as exc:
+            print(f"APPLY FAILED (event log untouched): {exc}")
+            return 2
+        print(f"APPLIED: {changed} verdicts written (rev {ADMISSION_REV}); "
+              f"{len(unreadable)} unreadable line(s) preserved")
         return 0
 
     if args.check and changed:

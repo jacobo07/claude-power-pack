@@ -36,7 +36,7 @@ sys.path.insert(0, str(PP))
 BRIDGE = PP / "hooks" / "bug-hunter-ceps-bridge.js"
 
 # Declared gate count. Enforced in main(), not merely printed.
-EXPECTED_GATES = 16
+EXPECTED_GATES = 19
 
 _passes = 0
 _fails = 0
@@ -312,10 +312,61 @@ def _bridge_gates() -> None:
             f"{len(sig_cases)} signal shapes resolved, absent -> unknown")
 
 
+def _backfill_gates() -> None:
+    """The classifier must not be able to destroy what it cannot read.
+
+    Found by an adversarial pass, not by me: `load()` dropped unparseable
+    lines and `--apply` rebuilt the whole file from the survivors, so a torn
+    write or a stray BOM would be deleted permanently by the tool whose
+    docstring promises it never purges.
+    """
+    import importlib  # noqa: PLC0415
+
+    bf = importlib.import_module("tools.ceps_backfill_audit")
+
+    tmp = Path(tempfile.mkdtemp(prefix="bf_"))
+    saved = bf.EVENTS
+    try:
+        bf.EVENTS = tmp / "events.jsonl"
+        good = json.dumps({"id": "a", "ts": "2026-08-26T10:00:00Z",
+                           "category": "tooling", "subsystem": "bash:pytest",
+                           "root_cause": "Traceback (most recent call last)"})
+        torn = '{"id": "b", "ts": "2026-08-2'          # a half-written line
+        bf.EVENTS.write_text(good + "\n" + torn + "\n",
+                             encoding="utf-8", newline="\n")
+
+        items = bf.load()
+        if len(items) == 2 and any(isinstance(i, str) for i in items):
+            _ok("V-CEPS-BACKFILL-KEEPS-UNREADABLE",
+                "an unparseable line is loaded as text, not skipped")
+        else:
+            _fail("V-CEPS-BACKFILL-KEEPS-UNREADABLE", f"loaded {items!r}")
+
+        sys.argv = ["ceps_backfill_audit.py", "--apply"]
+        bf.main()
+        body = bf.EVENTS.read_text(encoding="utf-8")
+        if torn in body:
+            _ok("V-CEPS-BACKFILL-NEVER-PURGES",
+                "the torn line survives a full --apply rewrite verbatim")
+        else:
+            _fail("V-CEPS-BACKFILL-NEVER-PURGES",
+                  "an unreadable line was destroyed by the rewrite")
+
+        if "admission_status" in body:
+            _ok("V-CEPS-BACKFILL-STILL-JUDGES",
+                "readable events are still judged alongside preserved text")
+        else:
+            _fail("V-CEPS-BACKFILL-STILL-JUDGES", "no verdict written")
+    finally:
+        bf.EVENTS = saved
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def main() -> int:
     print("V-CEPS-ADMIT -- semantic admission for the CEPS event store")
     _admission_gates()
     _bridge_gates()
+    _backfill_gates()
     total = _passes + _fails
     print(f"CEPS_ADMISSION_PASS={_passes}/{total}  "
           f"threshold={EXPECTED_GATES}/{EXPECTED_GATES}")

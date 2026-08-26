@@ -284,6 +284,12 @@ def main() -> int:
         ("search-reuse",
          [PY, str(PP / "tools" / "test_search_reuse.py")],
          60),
+        # Entropy is a direction. Shipped orphaned in 05b4569 -- the exact
+        # defect the same session sealed a rule about, caught by an
+        # adversarial pass rather than by me.
+        ("eed-delta",
+         [PY, str(PP / "tools" / "test_eed_delta.py")],
+         45),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
@@ -520,16 +526,27 @@ def main() -> int:
     # sealed rules were inert by starvation. This is the producer: the one
     # thing that already knows whether the tree is green says so, durably,
     # and the cascade gate reads it on the next commit or deploy.
-    try:
-        from modules.cascade_prevention.verification_state import (
-            record_verification)
-        record_verification(
-            "verify_spp", rc == 0,
-            f"{len(results) - len(failed_strict)}/{len(results)} rows"
-            + (f"; strict fail {[r['name'] for r in failed_strict]}"
-               if failed_strict else ""))
-    except Exception as exc:  # noqa: BLE001 -- reporting must never fail a run
-        print(f"  (verification provenance not recorded: {exc})")
+    #
+    # ONLY A FULL RUN VOUCHES FOR THE TREE. With --row the suite executes one
+    # gate, and recording that as "verify_spp passed" would let a ten-second
+    # row write a green that satisfies HR-CASCADE-001's deploy check for an
+    # hour. A partial run is not a smaller pass, it is a different claim, and
+    # `was_verified()` cannot tell 1/61 from 61/61 by design -- so the
+    # distinction has to be made here, at the only place that knows.
+    if args.row:
+        print(f"  (single row {args.row!r}: verification provenance NOT "
+              "recorded -- only a full run vouches for the tree)")
+    else:
+        try:
+            from modules.cascade_prevention.verification_state import (
+                record_verification)
+            record_verification(
+                "verify_spp", rc == 0,
+                f"{len(results) - len(failed_strict)}/{len(results)} rows"
+                + (f"; strict fail {[r['name'] for r in failed_strict]}"
+                   if failed_strict else ""))
+        except Exception as exc:  # noqa: BLE001 -- must never fail a run
+            print(f"  (verification provenance not recorded: {exc})")
     return rc
 
 
