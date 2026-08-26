@@ -515,3 +515,77 @@ withdrawn on measurement.
    and `research-intent-detector.js` is 95 days stale in the copy that does.
 3. `normalize_paths` — 144 legitimate doc rewrites, now trustworthy enough to apply in one
    pass. Plus the doctrine/security tension on the 18 exempt lines.
+
+### Addendum — the adversarial round, and the finding that reframed the mission
+
+#### The producer I repaired has never seen git, pytest or npm
+
+Following the BOM incident to its cause found a detector on the wrong tool surface.
+Sweeping the config instead of checking the one name I already knew found **five**:
+
+| event | hook |
+|---|---|
+| PostToolUse | **`bug-hunter-ceps-bridge.js`** — the CEPS producer |
+| PostToolUse | `bug-hunter-learning.js` |
+| PostToolUse | `osa_deploy_detector.js` |
+| PostToolUse | `tty-restore.js` |
+| PreToolUse | `hook-dispatcher.js` (Bash-chain) |
+
+All carry the matcher `Bash`. Doctrine on this host MANDATES PowerShell for python,
+pytest, git, npm, pnpm, node, mix and gh. Measured across the whole 79-event store:
+**70 (88.6%) are `bash:*`, ZERO come from a PowerShell surface, and the store has never
+recorded a single failure from git, pytest, npm, pnpm, node, mix or gh.**
+
+This reframes the first half of the mission. I repaired that producer's classification —
+"0 failed" matched as a regression, a navigation prefix taken as the failing tool, no
+check whether the tool had failed at all; 51 of 75 events were greps filed as failures.
+All true, all fixed. What I never asked was WHY the corpus looked like greps and cats: it
+looks like that because Bash is what remains once doctrine routes every real build, test
+and VCS command through PowerShell. **The distribution was evidence about the matcher, not
+about this estate.** Repairing precision on an instrument blind to most of its subject
+makes a narrow instrument more accurate and no less narrow — and reads as progress.
+
+Sealed as `T-CORPUS-DESCRIBES-ITS-INSTRUMENT-001`. The gate now DISCOVERS the gaps rather
+than checking one remembered name.
+
+#### The adversarial pass found eleven defects in the day's work
+
+Two defeated the mechanisms they belonged to. `_norm` swapped backslashes without
+collapsing runs, so JSON-escaped Windows paths normalised to doubled separators and
+`BROKEN_REGISTRATION` — "the only class that fails this audit" — could not fire; and that
+class was never wired into the gate at all, only into a CLI path no row invokes. Both
+fixed, both now pinned.
+
+Also fixed: a line-granular doctrine exemption that swallowed a co-located `.ssh` leak; a
+tilde guard loose enough that markdown strikethrough exempted a real leak; a divergence
+gate that passed when both extractions were empty; a half-applied `repo_root` fix in the
+same file that sealed the rule about it; an extractor that read commented-out entries as
+live registrations; a retry that doubled the worst case while the budget stayed put.
+
+**And an overclaim of mine.** `d73802b` said the false alarms were gone. Four consecutive
+invocations showed one still reporting extras — including `proactive_dispatch_ms 52>45`,
+twice the median I had quoted as the refutation. Min-of-two reduces the rate and does not
+eliminate it. Fixed at the cause (min of 3); five consecutive runs now report identically:
+`1/8 — session_hub_ms 573-624 > 450`. The withdrawal of `proactive_dispatch_ms` stands;
+the claim that the instrument was FIXED was one sample-size early.
+
+Gates in the four affected suites: **34 → 46**.
+
+#### Umbrella, measured
+
+**STRICT FAIL 8**: `mirror-parity`, `drift-report`, `paths+secrets`, `hooks-registration`,
+`correctness-traps`, `benchmarks-ok`, `predictive-governance-debt`, `capture-gates`.
+
+Two are worth naming precisely:
+
+- **`capture-gates` is NOT a regression.** `ceps.py` hardcodes
+  `PP_ROOT = ~/.claude/skills/claude-power-pack`, so running the umbrella from a worktree
+  makes the test watch one store while the module writes another. Third instance today of
+  `T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001`, and the reason the row is red is WHERE I ran
+  it, not WHAT I changed.
+- **`predictive-governance-debt` names two of today's files** (`test_mirror_unpaired.py`,
+  `test_path_exemptions.py`) as new G1/G3 offenders. Genuinely mine and **NOT fixed** —
+  carried as named debt rather than silently absorbed.
+
+`restart-and-lag` now passes 17/17 and `dataset-build` finishes in 15s; both were listed
+as failing in the previous session's report.
