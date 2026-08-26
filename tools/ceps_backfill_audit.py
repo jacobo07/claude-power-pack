@@ -72,6 +72,46 @@ def judge(event: dict) -> tuple[str, str]:
     return ("valid", "")
 
 
+def _prune_index(bad_ids: list[str]) -> int:
+    """Drop judged-bad events from the FTS5 sidecar.
+
+    The JSONL is not the only reader-facing copy. `ceps.propagate()` queries
+    `ceps_patterns_fts` and returns its prevention rules as live advisories,
+    so filtering the two cascade readers left the corrupt events reaching a
+    THIRD consumer by a path nobody had looked at. A verdict honoured in one
+    representation and ignored in another is not a verdict.
+
+    Fail-open: the JSONL classification is the record of truth, and a
+    missing or locked sidecar must never fail the audit.
+    """
+    if not bad_ids:
+        return 0
+    try:
+        import sqlite3  # noqa: PLC0415
+
+        from tools.ceps import DB_PATH  # noqa: PLC0415
+        if not Path(DB_PATH).exists():
+            return 0
+        conn = sqlite3.connect(str(DB_PATH))
+        try:
+            total = 0
+            for i in range(0, len(bad_ids), 400):
+                chunk = bad_ids[i:i + 400]
+                marks = ",".join("?" * len(chunk))
+                cur = conn.execute(
+                    f"DELETE FROM ceps_patterns_fts WHERE id IN ({marks})",
+                    chunk)
+                if cur.rowcount and cur.rowcount > 0:
+                    total += cur.rowcount
+            conn.commit()
+            return total
+        finally:
+            conn.close()
+    except Exception as exc:  # noqa: BLE001
+        print(f"  (FTS prune skipped: {type(exc).__name__}: {exc})")
+        return 0
+
+
 def load() -> list[dict | str]:
     """Every line, in order. A line that will not parse is kept AS TEXT.
 
@@ -158,8 +198,12 @@ def main() -> int:
         except OSError as exc:
             print(f"APPLY FAILED (event log untouched): {exc}")
             return 2
+        pruned = _prune_index([e["id"] for e in rows
+                               if e["admission_status"] != "valid"
+                               and e.get("id")])
         print(f"APPLIED: {changed} verdicts written (rev {ADMISSION_REV}); "
-              f"{len(unreadable)} unreadable line(s) preserved")
+              f"{len(unreadable)} unreadable line(s) preserved; "
+              f"{pruned} FTS row(s) pruned")
         return 0
 
     if args.check and changed:

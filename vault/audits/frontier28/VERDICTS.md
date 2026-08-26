@@ -303,3 +303,69 @@ REE | PARTIAL | **EXTEND** | `deep-research` annotates overlap; nothing is skipp
 | 26 | AFP | ENFORCED | **MERGE** → with 6 | interface mismatch |
 | 27 | IRRL | PROVEN | **OWNED** | `fd_04_contrast.py` + `FRONTIER_RESIDUAL_MAP.md` |
 | 28 | ICRA | PROVEN | **OWNED** | `sqi/weakening_detectors.py` |
+
+### Post-review corrections — 2026-08-26, after the adversarial pass
+
+An independent review run with the sole objective of falsifying this session's
+claims found three real defects and forced two maturity claims down. Both are
+recorded here because a claim I had to retract is worth more than one I got right.
+
+**A data-loss path in code shipped this session.** `ceps_backfill_audit.load()`
+dropped unparseable lines and `--apply` rebuilt the whole log from the survivors,
+so a torn write would have been deleted permanently — by the tool whose docstring
+promises it never purges. Also non-atomic (a truncating 55KB write under a 30s
+budget) and unguarded against the producer appending mid-run. All three fixed in
+`d5bd18d`; three gates pin them.
+
+**A forgeable green.** `verify_spp --row <one>` recorded a full-tree verification,
+so a ten-second row could vouch for the estate and satisfy HR-CASCADE-001's deploy
+gate for an hour. A partial run now records nothing and says so.
+
+**An orphan I shipped.** `test_eed_delta.py` landed with no umbrella row — the exact
+defect this session sealed a rule about, three commits after sealing it. Wired.
+
+**And a THIRD consumer of the corrupt events that I had missed.** `ceps.propagate()`
+queries the FTS5 sidecar and returns its prevention rules as live advisories. I had
+filtered the two cascade readers and left this one untouched, so judged-bad events
+kept reaching a live surface by a path nobody had looked at. Pruning on `--apply`
+took the index from **97 rows to 19** — the advisory surface had been serving rules
+derived overwhelmingly from events that were never failures. A verdict honoured in
+one representation and ignored in another is not a verdict.
+
+#### Two maturity claims corrected downward
+
+| Capability | Claimed | Actual | Why |
+|---|---|---|---|
+| HR-CASCADE-001/003 supply | live | **WIRED, not exercised** | The producer only fires on a full umbrella pass; none had completed when the claim was written, so `was_verified()` returned None and both surfaces were correctly silent — and therefore inert. |
+| **SREE** | live | **CANONICAL ONLY, NOT RUNNING** | `hook-dispatcher.js:123` registers `'./research-intent-detector.js'` — a RELATIVE path resolving to `~/.claude/hooks/`, whose copy is 95 days old. It registers the CEPS bridge (`:267`) and cascade gate (`:197`) by PP path, so those edits ARE live. Same repo, same session, two different answers, decided by one character of path. |
+
+The SREE correction is this repo's own documented split-brain — canonical versus
+live — landing on my own work, in the same session that repaired the comparator
+which detects it. The comparator is what caught it.
+
+#### Umbrella, before and after the timeout repair
+
+| Row | Before | After |
+|---|---|---|
+| `dataset-build` | rc=124, unmeasured | **rc=0, 94.4s — passes** |
+| `auto-reset` | rc=124, unmeasured | **rc=0, 58.7s — passes** |
+| `claude-md-router` | rc=124, unmeasured | **rc=0, 50.4s — passes** |
+| `paths+secrets` | rc=124, unmeasured | rc=1, 11.9s — **its real failure, now visible** |
+
+STRICT FAIL fell 10 → 7. Three rows were never failing; they were never finishing.
+The fourth was failing for a real reason that an unmeasured verdict had been hiding,
+which is what raising a budget is supposed to expose rather than paper over.
+
+Remaining 7, each attributed: `mirror-parity` and `drift-report` (real drift, Owner
+decision, listed above) · `paths+secrets` (pre-existing 129-entry allowlist across 50
+files) · `hooks-registration` (marker set includes a concurrent pane's uncommitted
+`output_contract_stop`) · `restart-and-lag` (environment/timing) · `correctness-traps`
+(RED BY DESIGN until the Owner widens one matcher) · `benchmarks-ok` (4/8 over target;
+`tco_gate_ms` 357>270 — pre-existing drift, not this session's).
+
+#### Third Owner action
+
+`hook-dispatcher.js:123` resolves `./research-intent-detector.js` against
+`~/.claude/hooks/`, which this repo cannot write. Either copy PP's canonical hook
+across, or change that entry to the `../skills/claude-power-pack/hooks/...` form the
+two sibling entries already use. Until then the SREE skip exists and does not run.
