@@ -35,10 +35,13 @@ Exit codes:
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import os
 import sys
 from pathlib import Path
+
+_PP_ROOT = Path(__file__).resolve().parent.parent
+if str(_PP_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PP_ROOT))
 
 
 def _norm_sha(data: bytes) -> str:
@@ -48,26 +51,36 @@ def _norm_sha(data: bytes) -> str:
 
 
 def _load_pairs() -> list[tuple[str, str]] | None:
-    """Import ``PAIRS`` from the sibling verify_global_mirrors.py."""
-    here = Path(__file__).resolve().parent
-    spec_path = here / "verify_global_mirrors.py"
-    if not spec_path.exists():
-        sys.stderr.write(f"drift_report: missing {spec_path}\n")
-        return None
-    spec = importlib.util.spec_from_file_location(
-        "verify_global_mirrors", str(spec_path))
-    if spec is None or spec.loader is None:
-        sys.stderr.write("drift_report: spec_from_file_location failed\n")
-        return None
-    mod = importlib.util.module_from_spec(spec)
+    """The DISCOVERED mirror inventory, as (live, repo) path pairs.
+
+    This used to import a hand-curated ``PAIRS`` constant from
+    verify_global_mirrors.py. That constant no longer exists: the mirror
+    layer was migrated to `mirror_discovery.discover()`, which finds pairs
+    from what is actually on disk -- the repo's own coverage-by-
+    construction rule, that an inventory enrolled by hand measures memory
+    rather than reality.
+
+    The producer was upgraded and this consumer was not, so `getattr(mod,
+    "PAIRS")` returned None and drift_report exited 2 -- a configuration
+    error -- on every run since. The comparator worked the whole time; the
+    thing that called it could not get an inventory to compare.
+    """
     try:
-        spec.loader.exec_module(mod)
-    except Exception as e:
-        sys.stderr.write(f"drift_report: cannot load PAIRS: {e}\n")
+        from modules.mirror_discovery.discovery import discover
+    except Exception as e:  # noqa: BLE001
+        sys.stderr.write(f"drift_report: cannot import discover: {e}\n")
         return None
-    pairs = getattr(mod, "PAIRS", None)
-    if not isinstance(pairs, list) or not pairs:
-        sys.stderr.write("drift_report: PAIRS is empty/missing\n")
+    try:
+        d = discover(_PP_ROOT)
+    except Exception as e:  # noqa: BLE001
+        sys.stderr.write(f"drift_report: discovery failed: {e}\n")
+        return None
+    pairs = [(str(p.live), str(p.repo)) for p in getattr(d, "pairs", [])]
+    if not pairs:
+        # Genuinely empty is not the same as broken, and the previous
+        # message conflated them for months.
+        sys.stderr.write(
+            "drift_report: discovery found no mirror pairs on disk\n")
         return None
     return pairs
 

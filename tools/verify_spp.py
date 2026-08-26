@@ -257,6 +257,11 @@ def main() -> int:
         ("correctness-traps",
          [PY, str(PP / "tools" / "test_correctness_traps.py")],
          45),
+        # The drift comparator must be able to GET an inventory. It could
+        # not, for months, and the failure read as a config gap.
+        ("drift-consumer",
+         [PY, str(PP / "tools" / "test_drift_consumer.py")],
+         180),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
