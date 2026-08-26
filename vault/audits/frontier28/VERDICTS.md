@@ -1,113 +1,94 @@
----
-title: Frontier-28 — D2A verdicts for the 28 hypotheses
-date: 2026-08-25
-status: PHASE 3 COMPLETE — all 28 classified
-cutoff: bc81ca76cd8ef9ea78982c99016a03e979a91570
-mandate: brief §10 (verdict set) · §13 (cross-hypothesis dedupe) · §21 (owner minimisation) · §58 (no metric gaming)
+
 ---
 
-# Verdicts
+## Continuation session — 2026-08-26
 
-## Correction first: two claims of mine were wrong
+Nine workstreams. The order was recompiled from the dependency graph rather than taken
+from the previous list: producer semantics and evidence independence are the substrate
+every downstream verdict rests on, so they went first. Two of the brief's own premises
+were disproved by reading the code, and two of my own claims from the previous session
+were retracted by measurement.
 
-**1. "Both predictors are starved."** Committed in `3a3e78c`. It is false.
-The claim traced to a module comment measured **2026-08-06** reporting 9 events. Measured
-today, `vault/ceps/events.jsonl` holds **69 events across 9 distinct categories and 10
-days**, four categories repeating, most recent written *today*. Both subagents read the
-self-report; neither read the store. `predictive.substrate_quality()` now returns
-**`SUBSTRATE_OK`** with three learned pairs: `regression→tooling`, `tooling→env`,
-`tooling→regression`.
+### Corrections to claims I made yesterday
 
-**A module's statement about its own data is a measurement with a timestamp, not a fact.**
-It ages exactly like any other cached value, and it ages invisibly because it reads as
-documentation.
-
-**2. EED is not `DOCUMENTED`.** `modules/cognitive_load/load.py` measures the cost of
-assembling enough context to change a unit — public-symbol surface, dependency width,
-declared entry points. That is a real complexity metric with an executable surface.
-Corrected to `PARTIALLY_MATERIALIZED`; the missing part is any *trend* over time or
-complexity-per-unit-**capability**, which is what the hypothesis actually asks for.
-
-## The sharpest finding: two broken halves of one capability
-
-FPO and AFP are the same capability — predict a failure from precursor signatures in
-`vault/ceps/events.jsonl` — implemented twice, and neither delivers, for **different and
-individually invisible reasons**.
-
-| | FPO (`cascade_prevention/predictive.py`) | AFP (`pp_agents/signals/cascade.py`) |
+| Claim | Reality | Evidence |
 |---|---|---|
-| Dispatched automatically? | **No** — registered at `SURFACE_DETECTORS["session"]`, no caller supplies that key | **Yes** — every prompt, via `jit_skill_loader` from three hooks |
-| Substrate | `SUBSTRATE_OK`, 3 learned pairs | same store |
-| Fires on real input? | would — never asked | **No** |
+| "AFP/FPO is PRODUCTION_PROVEN" | The **mechanism** is. The **capability** is not: it fired on `regression:bash:cd`, and `bash:cd` is a navigation prefix that fused 15 unrelated commands into one bucket. Every key in the learned map was corrupt; the map is now empty and correctly silent. | `1f3a3a1` |
+| "dataset-build passes standalone, fails only in parallel" | `verify_spp` **has no parallelism** — rows run sequentially through one `subprocess.run` loop. The row takes 176.8s against a 60s budget and can never pass. | `2aebbaa` |
+| "mirror-parity fails on canonical↔live drift" | It was failing on a **crash**: bare `git` via subprocess, `FileNotFoundError`, before a single check ran. It was not measuring drift; it was not measuring anything. | `563a565` |
+| "drift-report fails on empty PAIRS config" | `PAIRS` does not exist. The producer migrated to discovery; the consumer still read the retired constant and exited 2 for months. | `dd2b6ad` |
 
-AFP's failure is at the **interface**. `_build_cascade_map()` keys on
-`f"{category}:{subsystem}"` — learned keys are `regression:bash:cat`, `tooling:bash:cd`,
-`regression:bash:cd`. `evaluate()` then tests `src_key.lower() in haystack`, where the
-dispatcher passes **raw error message text** (`proactive_dispatcher.py:127`). Proven both
-ways: the store's own most recent error text
-(`"[Tool result missing due to internal error]"`) returns `None`; the synthetic composite
-key fires. A composite assembled from two structured CEPS fields will never appear
-verbatim inside an error string.
+### The producer defect was three defects, and the store was majority-corrupt
 
-So the estate holds a predictor with a healthy substrate that nothing calls, and a
-predictor that is called constantly and cannot match. Three distinct silent-failure modes
-across two modules — **never dispatched**, **type-mismatched at the boundary**, and the
-one I wrongly assumed, **starved** — and only the third would have been visible to any
-existing instrument.
+| | Defect | Scale |
+|---|---|---|
+| P1 | `\b\d+ failed\b` matched **"0 failed"** — a pytest SUCCESS line filed as a regression | 1 event |
+| P2 | text a tool PRINTED was not distinguished from a failure it SUFFERED | **51 of 75** |
+| P3 | `subsystemOf` took a chained command's leading token, so `cd X && pytest` bucketed as `cd` | 15 of 19 regressions |
 
-**Verdict: MERGE.** Not a new system, not even new logic. FPO's substrate analysis is
-correct and its pairs are real; AFP's dispatch path is correct and already automatic.
-One working capability exists across two files; it has never been assembled.
+P2 at scale was greps and file reads of Python and JS: root causes like
+`except Exception as e:  # noqa: BLE001`. Reading this repo's own source recorded failures.
 
-## Production evidence — the merge fired on a real prompt
+Backfill classified all 75 without purging: **24 valid, 51 identity_suspect, 1 invalid**.
+Both readers honour the verdict — filtering one left `cascade_prevention/predictive` still
+inferring from the same rows, caught only because the filtered reader reported 0 pairs
+while that one still reported 3.
 
-Observed 2026-08-25, roughly an hour after the fix landed. The `UserPromptSubmit`
-advisory on the Owner's next turn carried:
+### Capability dispositions
 
-> `[Woz] [pp-cascade-guard] 'regression:bash:cd' has historically preceded: tooling:bash:cd.`
+| Cap | Verdict | Evidence |
+|---|---|---|
+| **EIAA** | **DONE** `95f7c0c` | `ancestry()` counts ancestors, not addresses. Live: **79 addresses → 28 independent roots**; 27 of 28 multi-origin nodes carry byte-identical content. |
+| **DEC** | **DONE** `ac1fa4c` | Input-fingerprint + precedent reuse. Identical decision → verdict from precedent, nine stages skipped; moved evidence still re-reasoned. |
+| **SREE** | **DONE** `9909076` | `research_discovery` was an audited ORPHAN; now consulted BEFORE the spawn. A fresh run is reused, a 30-day-old one expires into a real search. |
+| **EED** | **DONE** (this commit) | `eed_delta.py`. This mission: owners 84→85, context cost **+1.2%** — and the one new owner is a **concurrent pane's**, not mine. My 12 commits added 2 files to existing owners. |
+| **CLAO** | **DONE** `904dd21` + `9a3dd22` + `d48a501` | Dispatch-awareness reports per-session; 2 of 5 never-supplied keys now supplied from a live surface. |
+| **ADW** | **DEFERRED-WITH-OWNER** | `architecture_horizon` links consumers; nothing watches for drift. Not built: it would be built against an unobserved failure, and this session found four real ones with evidence. Reopen when an assumption actually goes stale in the record. |
+| **HEC** | **DEFERRED-WITH-OWNER** | `alert_escalation`. Subordinate to HIC-OAR by prior verdict; no measured escalation in this session to compress. |
+| **BPCC** | **DEFERRED-WITH-OWNER** | `rollback/` owns revocation; the canary half is absent. No high-fanout propagation occurred here to canary. |
+| **CCV** | **DEFER** (unchanged) | Closest owner self-declares SPEC, not a running system. |
+| **IRBE** | **NOT ENTERED** | `HR-NOVELTY-001` unsatisfied — the 13-question proof against a discovered sweep was not run, so implementation is forbidden. |
+| **CSO** | **NOT ENTERED** | Same gate. The open question remains whether it is a new system or an evaluation head of the existing context compiler. |
 
-The whole chain, verified against live state rather than inferred: a real CEPS event
-`regression:bash:cd` was recorded at `14:50:20Z` (store grew 69 → 72) → the 30-minute
-window admitted it → `_recent_error_context()` returned the structured key →
-`cascade.evaluate()` matched on `category:subsystem` → the dispatcher put it in
-`additionalContext`. At commit time the honest claim was "capability installed,
-compounding effect not yet proven" (§78). It is now proven: **AFP/FPO moves from
-`ENFORCED` to `PRODUCTION_PROVEN`**, on an observed fire, not an assertion.
+Four deferrals are deliberate. Building against an unobserved failure is how this estate
+accumulated fifteen consecutive majority-owned proposals; the four findings below were
+observed, and they were worth more than four speculative capabilities.
 
-**And the counterweight, which matters more than the win.** The event's recorded
-`root_cause` is **`"0 failed"`** — a *test-success* line, classified as a `regression`.
-The prediction mechanism is correct and the key match is sound, because matching uses
-`category:subsystem` and never the text. But the producer feeding it is recording benign
-output as errors, so some fraction of these advisories will be built on non-events.
+### The deepest finding: two sealed Hard Rules were starving
 
-Turning the signal on has therefore made a **second, older defect visible for the first
-time**: while every consumer returned `None`, nothing could reveal that the store's
-contents were unreliable. Data quality was untestable precisely because nothing read the
-data. This is a new finding of this mission, not a regression introduced by it, and it
-belongs to whoever owns `hooks/bug-hunter-ceps-bridge.js` — recorded here, not silently
-carried, and it does not alter the rung, which rests on the mechanism firing correctly on
-a genuinely recorded event.
+HR-CASCADE-001 (refuse a deploy without passing tests) and HR-CASCADE-003 (pause a commit
+without verification) both read `ctx["verified"]`. **Nothing in the estate had ever written
+it** — zero producers across `modules/`, `tools/`, `vault/`. Both defaulted to True at
+every call site and could not fire under any circumstances. They read as enforcement and
+were inert. `d48a501` ships the producer and supplies both surfaces; the gate proves they
+fire when fed and stay silent when verified.
 
-## The 28
+### Owner actions, named because this repo cannot take them
 
-| # | Hypothesis | Rung | Verdict | Owner / action |
-|---|---|---|---|---|
-| 1 | SCIF | ENFORCED ⚠ | **DONE (this mission)** | `duplicate_to_advantage/provenance.py`, shipped `ca8e885` |
-| 2 | EIAA | PARTIAL | **EXTEND** | `graphify/global_store.py` — read `origins` back to discount echoes |
-| 3 | OECL | PROVEN | **OWNED** | `daif/two_arm_trial.py`; scope narrow (tokens only), stated |
-| 4 | BSC | PARTIAL | **CONNECT** | 4 modules already declare their blind spots — generate a view, do not add a registry |
-| 5 | NMIE | DOCUMENTED | **EXTEND** | CEPS producer exists and is dispatcher-registered; add near-miss capture, do not build an archive |
-| 6 | FPO | MATERIALIZED | **MERGE** → with 26 | dispatch it |
-| 7 | IRBE | DOCUMENTED | **CREATE** (gated) | genuinely absent; `HR-NOVELTY-001` proof required |
-| 8 | CCCE | MATERIALIZED | **OWNED** | `mutation_ratchet.py` + `run_sqi.py` |
-| 9 | CIG | MATERIALIZED | **OWNED** | `decision_review/decision_kernel.py` |
-| 10 | IBRS | MATERIALIZED | **OWNED** | `decision_kernel` + `architecture_horizon` |
-| 11 | BPCC | PARTIAL | **EXTEND** | `rollback/` owns revocation; canary half absent |
-| 12 | FLSA | DOCUMENTED | **DEFER** | no observed instance of the failure it prevents |
-| 13 | CSO | DOCUMENTED | **CREATE** (gated) | confirmed absent; `cognitive_os` does eviction, not sufficiency |
-| 14 | TND | ENFORCED | **OWNED** | `spec_gate.check_novelty_gate` via `jit_skill_loader` |
-| 15 | DEC | PARTIAL | **EXTEND** | `decision_review` records decisions; erasure semantic missing |
-| 16 | SREE | PARTIAL | **EXTEND** | `deep-research` annotates overlap; nothing is skipped |
+1. **`~/.claude/settings.json`** — the entry whose command ends `--event=PreToolUse-Bash-chain`
+   has `"matcher": "Bash"`. The whole chain, HR-CASCADE-002 included, therefore never sees
+   PowerShell, on a host whose own doctrine mandates PowerShell for python/git/npm.
+   Change to `"Bash|PowerShell"`, the shape two sibling matchers in that file already use.
+   `verify_spp` row `correctness-traps` is RED BY DESIGN until this lands and flips green
+   by itself afterwards.
+2. **Five drifted mirror files**, now with direction and age: `hook-dispatcher.js` (repo
+   +11.8d), `session-file-guard.js` (repo +67d), `lazarus-stub-recover.js` (+1.9d),
+   `_oneshot_solitary_empty_shell_cleanup.js` (+1.8d), `apex-completion-standard.md`
+   (loose +57d). Not remediated deliberately: `~/.claude/hooks` is write-denied here, and
+   mtime is not content lineage — adopting a 57-day-newer loose file could discard
+   deliberate PP edits.
+3. **343 files exist on one side only** (hooks 37/28, commands 10/59, agents 31/10,
+   knowledge_vault 168/0). Only 28 pairs are compared at all. Unpaired is not equal, and
+   that number is not yet dispositioned.
+
+### Concurrency
+
+A concurrent pane checked out `feature/knowledge-acquisition` from `main` mid-session and
+committed three times; my commits landed on top of theirs in the shared worktree. Nothing
+of theirs was reset, rebased, or force-pushed. My work was additionally cherry-picked onto
+`frontier28/producer-semantics` from `main` via a throwaway worktree and pushed, so it is
+durable without publishing another pane's unfinished branch.
+REE | PARTIAL | **EXTEND** | `deep-research` annotates overlap; nothing is skipped |
 | 17 | EED | PARTIAL ▲ | **EXTEND** | `cognitive_load/load.py` — add trend, not a new meter |
 | 18 | ACD | ENFORCED | **OWNED** | `hooks/d2a_gate.js` |
 | 19 | CLAO | PROVEN ± | **EXTEND** | `liveness/reachability.py` — dispatch-awareness (see below) |

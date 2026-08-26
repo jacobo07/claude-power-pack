@@ -6888,3 +6888,232 @@ independent because the blind spot and the fixture set have the same author.
 - [env/bash:rtk.exe] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:rtk.exe: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
 
 - [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:rtk.exe] `ceps_5d28a90f4498a814` -- Before touching bash:rtk.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+---
+
+## T-DEAD-CONSUMER-HIDES-BAD-PRODUCER-001 — a consumer nobody reads cannot report that its input is garbage
+
+**Trap.** A pipeline is judged by whether its consumer behaves correctly. When the
+consumer is dead, inactive, or merely silent, nothing in the system is positioned to
+notice that the PRODUCER has been writing nonsense — and the longer the consumer stays
+quiet, the more corrupt history accumulates behind it, uncontested.
+
+Measured 2026-08-26 on the CEPS event store. The cascade predictor had returned `None`
+for months and read as a well-behaved predictor with nothing to say. Repairing it made
+it speak, and what it said exposed the producer:
+
+| Producer defect | Share of the store |
+|---|---|
+| text the tool PRINTED classified as a failure the tool SUFFERED (greps and file reads of Python/JS) | **51 of 75 events** |
+| recurrence key taken from a chained command's leading token, so `cd X && pytest` bucketed as `cd` | 15 of 19 regressions |
+| a digit-plus-failed pattern matching a ZERO count — a SUCCESS line filed as a regression | 1 |
+
+The whole learned cascade map was built from those keys. Every prediction the system
+could make was noise, and the pipeline had been declared PRODUCTION_PROVEN on a real
+end-to-end fire the day before — the mechanism genuinely worked, on garbage.
+
+**Rule.** Producer correctness and consumer correctness are separate contracts, and a
+correct consumer cannot launder incorrect source semantics. Never certify a pipeline
+from consumer behaviour alone. When a consumer is repaired or first activated, treat its
+first outputs as an AUDIT OF THE PRODUCER, not as a result.
+
+**How to apply.** For any store with a quiet consumer, ask what fraction of its records
+would survive a semantic check applied at admission, and answer with a number. Silence
+downstream is not evidence upstream. Where the store is append-only, classify history
+rather than purging it — a store that edits its own past cannot audit anything, including
+the repair. Judge at admission thereafter, so nothing is ever born unjudged.
+
+---
+
+## T-QUOTED-IS-NOT-EXPERIENCED-001 — matching error text is not detecting an error
+
+**Trap.** A detector that pattern-matches tool output will match the same text whether
+the tool SUFFERED the failure or merely PRINTED it. An exception-handler line in a source
+file, an error string inside a config, a harness sentinel quoted in a hook's own source —
+all indistinguishable from the real thing to a matcher that reads only text.
+
+The failure is silent and self-reinforcing: reading the codebase generates fake failure
+events, which raise the apparent recurrence of failures that never happened.
+
+**Rule.** A failure detector needs a signal that the tool actually failed — an exit
+status, an error field, a non-zero return. Where that signal is genuinely unavailable,
+degrade to `unknown` and let `unknown` mean unknown. **Unknown must never behave as
+false, and it must never behave as true.**
+
+**How to apply.** Three discriminators, in order of strength: (1) an explicit success
+signal beats any text; (2) if the COMMAND contains the matched string, the caller asked
+for it; (3) a command whose whole job is printing file content is quoting, so
+source-shaped signatures from it are content — while its OWN failures (permission denied,
+not found) still count. Instrument which arm fired, so "does this environment expose a
+failure signal at all?" becomes a countable fact rather than an assumption.
+
+---
+
+## PR-MEASURE-BOTH-COSTS-001 — incrementality is an end-to-end cost property, not a local loop property
+
+**Process rule.** An operation that accepts a subset is not incremental until its FIXED
+cost has been measured. Shrinking the variable term while a global term remains attached
+produces something that looks incremental, is described as incremental, and costs what
+the full rebuild costs.
+
+Two instances one day apart. A per-family history walk cost 741ms × 26 = 19s where one
+batched call sufficed. A "targeted" cache refresh took 3016ms for ONE file because it
+rebuilt a project-wide map — nearly the full rebuild it existed to avoid.
+
+**Rule.** For every operation labelled targeted, scoped, partial, incremental or delta:
+measure the variable work AND the fixed work, and label the operation by the OBSERVED
+cost, never by the intended algorithm shape.
+
+**How to apply.** Time the operation at n=1 and at n=many. If the two are close, the
+cost is fixed and the label is wrong. `modules/uqf/anti_patterns.detect_false_incrementality`
+flags the structural shape; the timing is what settles it.
+
+---
+
+## T-WIDENING-WIDENS-THE-EMPTY-PATH-001 — a guard covers the parameter it was written for, not the ones added later
+
+**Trap.** Widening an input contract moves work above the early-return guard that used
+to make the common case free. The guard still exists and still reads correctly; it has
+silently stopped covering the case that actually runs.
+
+Measured: a signal evaluator returned on an empty error before touching its event store.
+Accepting an additional structured key moved the store parse above that return, so every
+dispatch paid for it with nothing to match — 30ms to 123ms on a path that runs on every
+prompt. Caught by a benchmark, not by review, and not by the guard.
+
+**Rule.** When adding a parameter, re-check every early return for whether it still
+covers the ABSENT-input case. A fast path is a contract; widening an interface must not
+widen it.
+
+**How to apply.** Assert the no-input path's cost explicitly, not just its correctness.
+`detect_widened_fast_path` flags corpus-scale work above an absence guard that tests only
+the function's own parameters — deliberately narrow, because a flag check placed after
+setup exits early without being a fast path, and treating it as one was the detector's
+only false positive.
+
+---
+
+## T-UNMEASURED-RENDERED-AS-FAILED-001 — a gate that did not finish has told you nothing
+
+**Trap.** A timeout rendered identically to a failure. "The gate found a defect" and "the
+gate never ran" are opposite pieces of information, and printing them the same way sends
+the reader looking for a defect that was never reported.
+
+An umbrella row timed out on every run because it needed 176.8s and was given 60. It was
+read as a failing gate, then as a flaky gate, then — in writing — as evidence of a
+concurrency bug in a runner that has **no concurrency at all**. Three wrong conclusions,
+all downstream of one conflated symbol.
+
+**Rule.** Distinguish UNMEASURED from FAILED wherever a verdict is rendered. A row that
+did not finish is not a verdict, and must never be attributed a cause.
+
+**How to apply.** Budgets come from MEASURED solo runtime plus headroom, recorded next to
+the number. Surface rows finishing above ~75% of budget BEFORE they flip: a gate whose
+verdict changes with ambient machine load is not measuring the code it points at. And when
+a slow row is fixed, expect a real failure to appear underneath — one row here had been
+hiding a genuine non-zero exit behind an unmeasured verdict.
+
+---
+
+## PR-KNOWLEDGE-MUST-REACH-THE-COMMAND-001 — a trap that only lives in prose will be re-issued by whoever read the prose
+
+**Process rule.** Documented knowledge that does not change execution is not
+institutionalised. Prose must be RECALLED at the instant a command is composed, and recall
+is exactly what degrades under context pressure — so re-documenting a recurring trap
+predictably fails to prevent its next recurrence.
+
+Origin: a UTF-8 BOM was written into a commit subject by reaching for a PowerShell
+encoding flag whose 5.1 behaviour is documented in the global config, in the vault, AND in
+a memory file. All three had been read in the same session.
+
+**Rule.** When a KNOWN trap recurs, the finding is not the trap. It is the absence of a
+mechanical guard. Do not append another note; add a pattern to a registry that something
+already consults, and keep it in a SEPARATE severity from destructive blocks — collapsing
+"will probably do the wrong thing" into "will destroy something" erodes what the block
+means.
+
+**How to apply.** Ask why the knowledge did not fire: never retrieved, never activated,
+routed to the wrong surface, compressed out of context, or never mechanical to begin with.
+The last is the common answer. Before shipping the guard, verify the emission path really
+reaches the caller — a hook that emits into a channel nothing merges is another trap in
+prose.
+
+---
+
+## T-CONSUMER-ORPHANED-BY-ITS-PRODUCER-001 — improving a producer can silently kill its consumer
+
+**Trap.** A producer is correctly upgraded; a consumer still reads the retired symbol and
+degrades to a configuration error. The failure names the consumer, so the repair looks
+like configuration and the real cause — a contract change nobody propagated — stays hidden.
+
+A mirror verifier migrated from a hand-curated pair constant to a discovered inventory,
+which was the RIGHT change and follows this repo's own coverage-by-construction rule. Its
+drift reporter kept reading the retired constant, got `None`, and exited with a
+configuration error for months. The comparator worked the entire time. Nothing could hand
+it anything to compare.
+
+Sister of `T-DEAD-CONSUMER-HIDES-BAD-PRODUCER-001`, inverted: there a dead consumer hid a
+bad producer; here a good producer starved a live consumer.
+
+**Rule.** When retiring an exported symbol, enumerate its readers before deleting it. When
+a tool reports a configuration error, verify the configuration EXISTS before treating the
+message as the diagnosis.
+
+**How to apply.** Distinguish "empty" from "broken" in the failure message — conflating
+them is what made this survive for months. Assert the retired dependency's absence on the
+AST, not the source text: a first version of that gate grepped and failed on its own
+docstring, which names the retired call while explaining why it is gone.
+
+---
+
+## T-RULE-STARVED-OF-ITS-INPUT-001 — a policy whose discriminating input has no producer is not enforcement
+
+**Trap.** A rule is sealed, implemented, and reachable, and still cannot fire, because the
+field it branches on is never written. It reads as enforcement in every audit that checks
+for existence, and it has never once acted.
+
+Two sealed cascade rules — refuse a deploy without passing tests, pause a commit without
+verification — both branch on a `verified` field. A sweep for a tests-passed signal across
+`modules/`, `tools/` and `vault/` found **zero producers**. The field defaulted to True at
+every call site. Two CRITICAL/HIGH rules, structurally inert.
+
+Distinct from an undispatched surface, and worse: wiring the surface alone would have
+produced two rules that RUN and still cannot fire — and would have been called live.
+
+**Rule.** For every rule that branches on a state field, name the producer of that field.
+No producer means the rule is inert regardless of its severity, its seal, or its tests.
+
+**How to apply.** Ship the producer with the rule, and make the field three-valued —
+True / False / NOT MEASURED — with unknown never firing. A blocking rule that treats "I
+have no record" as "the check failed" refuses work on the strength of its own ignorance,
+which is how a guard gets disabled by the people it obstructs. Expiry degrades to unknown,
+not to false: an aged-out pass has stopped vouching, and calling that a failure invents a
+result nobody observed.
+
+---
+
+## PR-COUNT-ANCESTORS-NOT-ADDRESSES-001 — repetition is not independence
+
+**Process rule.** Evidence counted by where it appears inflates confidence exactly where
+the evidence is weakest. A claim copied into four repositories has one ancestor and four
+addresses; a system that counts addresses will report the copy as corroboration.
+
+Measured on a 524-node cross-repo knowledge graph whose query surface printed the distinct
+repositories as a cross-repo proof: of 28 multi-origin nodes, **27 carry byte-identical
+content at every origin**, and 13 sit at an identical relative path. One node claimed six
+repositories and is one file, copied. Another claimed four under THREE different filenames
+— identical text — which is why a filename heuristic alone would have called them
+independent.
+
+**Rule.** Confidence must scale with independent ancestry, never with mention count. Keep
+both numbers and make the gap visible at the surface that makes the claim, so a reader
+cannot mistake one for the other.
+
+**How to apply.** Prefer signals the system already records over a new provenance store:
+identical content across origins (no preserved alternates) is one text copied; the same
+concept under the same filename in several places is a copy, not convergent authorship.
+Collapsing understates corroboration when wrong — the safe direction, in an estate whose
+measured failure mode is overstating it. And never prune the lineage: the discount is a
+READ, because an inference about provenance must not destroy the provenance.
