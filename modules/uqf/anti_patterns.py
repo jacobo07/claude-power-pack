@@ -255,6 +255,182 @@ def detect_hardcoded_paths(code: str) -> list[AntiPatternHit]:
     return hits
 
 
+# Calls whose cost scales with the whole corpus rather than with the
+# arguments handed in. Deliberately narrow: a name that merely sounds
+# expensive is not evidence, and a detector that fires on `get_x()` teaches
+# reviewers to ignore it.
+#
+# `read_text` and `run` were tried here and removed: reading ONE file or
+# spawning ONE process is per-target cost, and including them produced 15
+# hits that were not this defect. A detector that cries wolf teaches
+# reviewers to skip it, which is worse than not shipping it.
+_GLOBAL_COST = re.compile(
+    r"^(?:.*\.)?(?:rglob|walk|iterdir|listdir|glob|"
+    r"build_\w*map|_build_\w*map|load_all|scan_all|index_all|\w+_all)$")
+
+# Detectors and tests legitimately carry the vocabulary they detect; the
+# incrementality detector matched its OWN name on the first run.
+_ANALYTICAL = re.compile(r"^(?:detect_|test_|_?probe_|main$)")
+
+# A parameter naming a SUBSET of the work. If one of these is present the
+# function is claiming to be incremental.
+_SUBSET_PARAMS = frozenset({
+    "paths", "files", "items", "subset", "ids", "changed", "touched",
+    "rels", "targets", "keys", "names", "only",
+})
+
+# `delta` was tried here and removed: a function named compute_delta scans
+# in order to FIND the delta -- scanning is its job, not a broken promise.
+_INCREMENTAL_NAME = re.compile(
+    r"(?:refresh|incremental|partial|targeted|scoped)", re.I)
+
+
+def _is_absence_test(node: ast.AST) -> bool:
+    """`not x`, `x is None`, or a boolean combination of those.
+
+    A fast-path guard tests for ABSENT input. `if args.dry_run: return`
+    also exits early but is a deliberate flag check placed after setup, and
+    treating it as a fast path made cmd_migrate() the detector's only hit
+    on its first run -- a false positive that would have taught reviewers
+    to ignore the whole check.
+    """
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        return True
+    if isinstance(node, ast.Compare):
+        return any(isinstance(c, ast.Constant) and c.value is None
+                   for c in node.comparators)
+    if isinstance(node, ast.BoolOp):
+        return all(_is_absence_test(v) for v in node.values)
+    return False
+
+
+def _guard_returns(stmt: ast.stmt) -> bool:
+    """An `if ...: return/raise` with no else -- an early-exit guard."""
+    if not isinstance(stmt, ast.If) or stmt.orelse:
+        return False
+    return any(isinstance(s, (ast.Return, ast.Raise)) for s in stmt.body)
+
+
+def _names_in(node: ast.AST) -> set[str]:
+    return {n.id for n in ast.walk(node) if isinstance(n, ast.Name)}
+
+
+def _calls_in(node: ast.AST) -> list[ast.Call]:
+    return [n for n in ast.walk(node) if isinstance(n, ast.Call)]
+
+
+def _call_name(call: ast.Call) -> str:
+    f = call.func
+    if isinstance(f, ast.Name):
+        return f.id
+    if isinstance(f, ast.Attribute):
+        return f.attr
+    return ""
+
+
+def detect_widened_fast_path(code: str) -> list[AntiPatternHit]:
+    """Corpus-scale work placed BEFORE an input-absence guard.
+
+    Origin: `cascade.evaluate()` returned on an empty error before touching
+    the event store. Widening its input contract to accept a structured key
+    moved the store parse above that guard, so EVERY dispatch paid for it
+    even with nothing to match -- 30 ms to 123 ms on the path that runs on
+    every prompt. The guard still existed and still read correctly; it had
+    simply stopped covering the common case.
+
+    Flags a function that HAS an early-exit guard testing only its own
+    parameters, where an expensive call precedes that guard. The guard is
+    the proof the author intended a fast path; the ordering is the defect.
+    """
+    tree = _safe_parse(code)
+    if tree is None:
+        return []
+    hits = []
+    for fn in ast.walk(tree):
+        if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        params = {a.arg for a in fn.args.args + fn.args.kwonlyargs}
+        if not params:
+            continue
+        for i, stmt in enumerate(fn.body):
+            if not _guard_returns(stmt):
+                continue
+            # Only an INPUT-absence guard counts: its condition must rest
+            # solely on parameters, not on state the function computed.
+            cond = _names_in(stmt.test)
+            if not cond or not cond.issubset(params):
+                continue
+            if not _is_absence_test(stmt.test):
+                continue
+            for earlier in fn.body[:i]:
+                for call in _calls_in(earlier):
+                    name = _call_name(call)
+                    if name and _GLOBAL_COST.match(name):
+                        hits.append(AntiPatternHit(
+                            detector="detect_widened_fast_path",
+                            line=getattr(call, "lineno", fn.lineno),
+                            snippet=f"{name}(...) before guard in {fn.name}()",
+                            fix=(
+                                f"Move `{name}(...)` BELOW the "
+                                f"`if ...: return` guard in {fn.name}(). The "
+                                "guard proves a fast path was intended; work "
+                                "above it is paid on every no-input call. "
+                                "Widening an input contract must not widen "
+                                "the no-input path."
+                            ),
+                        ))
+                        break
+            break
+    return hits
+
+
+def detect_false_incrementality(code: str) -> list[AntiPatternHit]:
+    """A function that takes a subset and then does global-scale work.
+
+    Origin: `audit_cache.refresh_paths()` accepted the exact files to
+    refresh and then called `build_stem_map()`, which walks the entire
+    project. Refreshing ONE file cost 3016 ms -- nearly the full rebuild it
+    existed to avoid. The loop was incremental; the operation was not.
+
+    INCREMENTALITY IS AN END-TO-END COST PROPERTY, NOT A LOCAL LOOP ONE.
+    """
+    tree = _safe_parse(code)
+    if tree is None:
+        return []
+    hits = []
+    for fn in ast.walk(tree):
+        if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if _ANALYTICAL.match(fn.name):
+            continue
+        params = {a.arg for a in fn.args.args + fn.args.kwonlyargs}
+        claims = bool(params & _SUBSET_PARAMS) or bool(
+            _INCREMENTAL_NAME.search(fn.name))
+        if not claims:
+            continue
+        for call in _calls_in(fn):
+            name = _call_name(call)
+            if not name or not _GLOBAL_COST.match(name):
+                continue
+            # A call parameterised BY the subset is the incremental case.
+            if _names_in(call) & (params & _SUBSET_PARAMS):
+                continue
+            hits.append(AntiPatternHit(
+                detector="detect_false_incrementality",
+                line=getattr(call, "lineno", fn.lineno),
+                snippet=f"{name}(...) in {fn.name}()",
+                fix=(
+                    f"{fn.name}() presents itself as incremental but calls "
+                    f"`{name}(...)`, whose cost is the whole corpus and does "
+                    "not shrink with the subset. Measure the fixed cost, not "
+                    "the loop: persist or cache the global part, or pass the "
+                    "subset into it."
+                ),
+            ))
+            break
+    return hits
+
+
 REGISTRY = (
     detect_bare_except,
     detect_silent_pass_in_except,
@@ -263,6 +439,8 @@ REGISTRY = (
     detect_mutable_defaults,
     detect_god_function,
     detect_hardcoded_paths,
+    detect_widened_fast_path,
+    detect_false_incrementality,
 )
 
 

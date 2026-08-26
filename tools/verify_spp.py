@@ -244,6 +244,11 @@ def main() -> int:
         ("evidence-independence",
          [PY, str(PP / "tools" / "test_evidence_independence.py")],
          45),
+        # Fast-path and incrementality cost contracts, asserted against
+        # reconstructions of the two bugs that motivated them.
+        ("cost-contracts",
+         [PY, str(PP / "tools" / "test_cost_contracts.py")],
+         90),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
