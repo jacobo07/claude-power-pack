@@ -262,6 +262,10 @@ def main() -> int:
         ("drift-consumer",
          [PY, str(PP / "tools" / "test_drift_consumer.py")],
          180),
+        # The `verified` input HR-CASCADE-001/003 read and nothing wrote.
+        ("verification-provenance",
+         [PY, str(PP / "tools" / "test_verification_provenance.py")],
+         45),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
@@ -471,6 +475,22 @@ def main() -> int:
                  if advisory_failing else ""))
         rc = 0
     print("=" * 72)
+
+    # Verification provenance. HR-CASCADE-001 and HR-CASCADE-003 read a
+    # `verified` input that no code in this estate has ever written, so both
+    # sealed rules were inert by starvation. This is the producer: the one
+    # thing that already knows whether the tree is green says so, durably,
+    # and the cascade gate reads it on the next commit or deploy.
+    try:
+        from modules.cascade_prevention.verification_state import (
+            record_verification)
+        record_verification(
+            "verify_spp", rc == 0,
+            f"{len(results) - len(failed_strict)}/{len(results)} rows"
+            + (f"; strict fail {[r['name'] for r in failed_strict]}"
+               if failed_strict else ""))
+    except Exception as exc:  # noqa: BLE001 -- reporting must never fail a run
+        print(f"  (verification provenance not recorded: {exc})")
     return rc
 
 

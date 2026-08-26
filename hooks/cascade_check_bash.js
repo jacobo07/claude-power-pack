@@ -25,15 +25,38 @@ sys.path.insert(0, os.environ['PP_ROOT'])
 from modules.cascade_prevention.engine import detect
 from modules.cascade_prevention.dangerous_cmds import (
     is_dangerous, reasons, trap_warnings)
+from modules.cascade_prevention.verification_state import was_verified
+import re as _re
 cmd = sys.stdin.read()
 hits = detect('bash', {'command': cmd})
+
+# HR-CASCADE-001 / HR-CASCADE-003 were implemented and unreachable: their
+# surfaces were never dispatched and their 'verified' input had no producer
+# anywhere in the estate. Both are supplied here, from the one hook that
+# already sees every command.
+#
+# THREE-VALUED. was_verified() returns None when nothing was ever recorded,
+# and a None NEVER fires either rule. A guard that treated "no record" as
+# "tests failed" would block on its own ignorance.
+_verified = was_verified()
+if _verified is not None:
+    if _re.search(r'\\bgit\\s+commit\\b', cmd):
+        hits += detect('commit', {'is_commit': True, 'verified': _verified})
+    if _re.search(r'\\b(deploy|kubectl\\s+apply|helm\\s+install|fly\\s+deploy)\\b',
+                  cmd):
+        hits += detect('deploy', {'is_deploy': True, 'tests_passed': _verified,
+                                  'verified': _verified})
+
 blockers = [h for h in hits if h.should_block]
+warns = [h for h in hits if h.should_warn and not h.should_block]
 danger = is_dangerous(cmd)
 print(json.dumps({
     'block': bool(blockers) or danger,
     'cascade_blockers': len(blockers),
     'dangerous': danger,
-    'reasons': reasons(cmd)[:4],
+    'reasons': (reasons(cmd) + [h.reason for h in blockers])[:4],
+    'warnings': [h.reason for h in warns][:3],
+    'verified': _verified,
     'traps': trap_warnings(cmd)[:3],
 }))
 `;
@@ -121,16 +144,25 @@ function emit(obj) {
   // somewhere in this repo and each one has still been re-issued by an
   // agent that had read it -- documented knowledge that does not reach the
   // moment of use is not institutionalised. A pattern reaches it.
+  const notes = [];
   if (Array.isArray(info.traps) && info.traps.length) {
-    const body = info.traps
-      .map((t) => `- ${t.trap}\n  -> ${t.fix}`)
-      .join('\n');
+    notes.push('[Woz] [correctness-trap] this command matches a known trap:\n'
+      + info.traps.map((t) => `- ${t.trap}\n  -> ${t.fix}`).join('\n'));
+  }
+  // C3 cascade warnings, e.g. HR-CASCADE-003's commit-without-verification.
+  // These warn rather than block by design, so without an emission path they
+  // would be computed and thrown away -- which is how the surface came to be
+  // implemented and silent in the first place.
+  if (Array.isArray(info.warnings) && info.warnings.length) {
+    notes.push('[Woz] [cascade] '
+      + info.warnings.map((w) => `- ${w}`).join('\n'));
+  }
+  if (notes.length) {
     return emit({
       continue: true,
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
-        additionalContext:
-          `[Woz] [correctness-trap] this command matches a known trap:\n${body}`,
+        additionalContext: notes.join('\n'),
       },
     });
   }
