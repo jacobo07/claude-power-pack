@@ -47,7 +47,20 @@ def _fail(g: str, d: str) -> None:
 def main() -> int:
     print("V-TRAP -- correctness traps reach the command that trips them")
 
-    # The exact shape that put a BOM in commit 9e69d11's subject line.
+    # The exact shape that put a BOM in commit 9e69d11's subject line --
+    # and then again in 86139cf, four days later, in the very commit whose
+    # message recorded me reintroducing a different documented trap.
+    #
+    # RECURRENCE 2, and the sharpest evidence in this file for why the
+    # coverage gap below is not cosmetic. At the moment 86139cf was
+    # composed, this registry ALREADY held the pattern and ALREADY named
+    # the correct fix. It matched the command that was about to run. It
+    # never executed, because the chain carrying it is registered on the
+    # matcher `Bash` and the command went through the PowerShell tool --
+    # the tool this host's doctrine REQUIRES for git and python.
+    #
+    # Knowledge in executable form is still not protection if it is
+    # attached to a surface where the command is never composed.
     hit = trap_warnings("Set-Content -Path x.txt -Value $b -Encoding utf8")
     if hit and "BOM" in hit[0]["trap"]:
         _ok("V-TRAP-BOM-CAUGHT", hit[0]["fix"][:58])

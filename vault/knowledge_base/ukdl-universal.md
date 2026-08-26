@@ -7047,6 +7047,32 @@ prose.
 
 ---
 
+**Sharpest instance (2026-08-26), and it refines the rule.** A UTF-8 BOM landed in a
+commit subject for the second time in four days -- in the very commit whose message
+recorded reintroducing a different documented trap. At the moment that command was
+composed, the correctness registry ALREADY held the pattern, ALREADY matched the exact
+command, and ALREADY named the correct fix
+(`[System.IO.File]::WriteAllText` with `UTF8Encoding($false)`).
+
+It never ran. The chain carrying it is registered on the matcher `Bash`, and the command
+went through the PowerShell tool -- the tool this host's doctrine REQUIRES for git and
+python. Two sibling hooks in the same settings file already use `Bash|PowerShell`, so the
+form was available and proven; the chain simply had not been widened.
+
+So the failure was not a knowledge gap, and not even a knowledge-execution gap in the
+usual sense. The knowledge had been compiled into a detector, wired into a live chain,
+and pointed at a surface where the command is never composed.
+
+**Refinement.** Executable knowledge is necessary and not sufficient. A rule protects only
+the surfaces its trigger actually covers, and the surface that matters is the one where
+the command is COMPOSED -- which on a host whose doctrine mandates one shell is
+predictable in advance. When adding a detector, enumerate the tool surfaces that can
+produce the pattern and verify the trigger covers every one of them; a detector attached
+to a subset is not partially protective, it is inert for everything outside it. The
+generalisation is [[T-RULE-STARVED-OF-ITS-INPUT-001]] moved one layer out: there a rule
+had no producer for its input, here a rule has no path to its input.
+
+
 ## T-CONSUMER-ORPHANED-BY-ITS-PRODUCER-001 — improving a producer can silently kill its consumer
 
 **Trap.** A producer is correctly upgraded; a consumer still reads the retired symbol and
