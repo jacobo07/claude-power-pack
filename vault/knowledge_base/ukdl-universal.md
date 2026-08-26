@@ -6871,15 +6871,10 @@ independent because the blind spot and the fixture set have the same author.
 
 - [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
 
-- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
 
-- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
 
-- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
 
-- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
 
-- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
 
 - [tooling/bash:sed] `ceps_81d26e962b4e3fa0` -- Tool failure in bash:sed: Exception as e:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
@@ -6887,7 +6882,6 @@ independent because the blind spot and the fixture set have the same author.
 
 - [env/bash:rtk.exe] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:rtk.exe: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
 
-- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
 
 - [regression/bash:rtk.exe] `ceps_5d28a90f4498a814` -- Before touching bash:rtk.exe, verify the regression scenario (FAILED) is still covered by a passing test.
 
@@ -7117,3 +7111,7 @@ concept under the same filename in several places is a copy, not convergent auth
 Collapsing understates corroboration when wrong — the safe direction, in an estate whose
 measured failure mode is overstating it. And never prune the lineage: the discount is a
 READ, because an inference about provenance must not destroy the provenance.
+
+
+
+

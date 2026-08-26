@@ -36,7 +36,7 @@ sys.path.insert(0, str(PP))
 BRIDGE = PP / "hooks" / "bug-hunter-ceps-bridge.js"
 
 # Declared gate count. Enforced in main(), not merely printed.
-EXPECTED_GATES = 19
+EXPECTED_GATES = 20
 
 _passes = 0
 _fails = 0
@@ -93,11 +93,21 @@ def _admission_gates() -> None:
     # End-to-end through record_error, against a redirected store, so the
     # gate is proven on the real write path and not only on the predicate.
     tmp = Path(tempfile.mkdtemp(prefix="ceps_admit_"))
-    old_events, old_rej, old_db = ceps.EVENTS_PATH, ceps.REJECTIONS_PATH, ceps.DB_PATH
+    # EVERY write target, not just the obvious three. record_error() also
+    # calls distribute(), which appends to the LIVE UKDL corpus and to
+    # session_lessons. Redirecting only the store let the bookend below --
+    # a deliberate REAL failure, recorded to prove the gate does not eat
+    # them -- append ten synthetic entries into the knowledge base, once per
+    # run of this suite. A test that writes to a global path is not hermetic
+    # however carefully it cleans up the parts it remembered.
+    old = (ceps.EVENTS_PATH, ceps.REJECTIONS_PATH, ceps.DB_PATH,
+           ceps.LESSONS_PATH, ceps.UKDL_PATH)
     try:
         ceps.EVENTS_PATH = tmp / "events.jsonl"
         ceps.REJECTIONS_PATH = tmp / "rejections.jsonl"
         ceps.DB_PATH = tmp / "ceps.db"
+        ceps.LESSONS_PATH = tmp / "session_lessons.md"
+        ceps.UKDL_PATH = tmp / "ukdl-universal.md"
 
         got = ceps.record_error("regression", "bash:pytest", "0 failed")
         if got is not None:
@@ -122,9 +132,24 @@ def _admission_gates() -> None:
         else:
             _ok("V-CEPS-ADMIT-RECORD-BOOKEND",
                 f"real failure persisted as {kept['id']}")
+
+        # Hermeticity, asserted rather than assumed. If a future write
+        # target is added to distribute() and not redirected here, this
+        # fails instead of quietly editing the knowledge base again.
+        live_ukdl = Path(old[4])
+        live_lessons = Path(old[3])
+        leaked = [p.name for p in (live_ukdl, live_lessons)
+                  if p.exists() and kept and kept["id"] in
+                  p.read_text(encoding="utf-8-sig", errors="replace")]
+        if leaked:
+            _fail("V-CEPS-ADMIT-HERMETIC",
+                  f"this suite wrote into the LIVE {leaked}")
+        else:
+            _ok("V-CEPS-ADMIT-HERMETIC",
+                "no synthetic event reached the live corpora")
     finally:
-        ceps.EVENTS_PATH, ceps.REJECTIONS_PATH, ceps.DB_PATH = (
-            old_events, old_rej, old_db)
+        (ceps.EVENTS_PATH, ceps.REJECTIONS_PATH, ceps.DB_PATH,
+         ceps.LESSONS_PATH, ceps.UKDL_PATH) = old
         shutil.rmtree(tmp, ignore_errors=True)
 
 
