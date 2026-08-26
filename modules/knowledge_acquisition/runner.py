@@ -59,11 +59,15 @@ class AcquisitionRunner:
         *,
         pacing_s: float = DEFAULT_PACING_S,
         worker: str = "runner",
+        lock=None,
     ) -> None:
         self.store = store
         self.adapter = adapter
         self.pacing_s = pacing_s
         self.worker = worker
+        #: Optional ProfileLock. Refreshed each iteration so a live run is not
+        #: mistaken for an abandoned one, and so a crash releases it by lapse.
+        self.lock = lock
         self._current_family: str | None = None
 
     def run(
@@ -118,6 +122,8 @@ class AcquisitionRunner:
 
             report.attempted += 1
             label = f"[{job.corpus_id}] {job.external_id}"
+            if self.lock is not None:
+                self.lock.refresh()
 
             try:
                 self._prepare_conversation(job)

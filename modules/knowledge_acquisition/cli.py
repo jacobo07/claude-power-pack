@@ -264,23 +264,54 @@ def cmd_run(args) -> int:
     print(f"pacing    : {args.pacing}s between prompts")
     print(f"headed    : {args.headed}\n")
 
+    # A dry run touches neither the browser nor the ledger, so it needs no lock.
+    if args.dry_run:
+        try:
+            runner = AcquisitionRunner(store, None, pacing_s=args.pacing)
+            report = runner.run(
+                limit=args.limit, corpus_id=args.corpus, family=args.family,
+                max_attempts=args.max_attempts, dry_run=True,
+            )
+            print(f"\n{report.line()}")
+            _print_status(store)
+            return 0
+        finally:
+            store.close()
+
+    from .runlock import LockBusy, ProfileLock
+
+    lock = ProfileLock(sess.profile_dir)
+    if args.steal_lock:
+        prev = lock.force_release()
+        if prev:
+            print(f"  cleared lock held by pid {prev.get('pid')} "
+                  f"(last heartbeat {prev.get('heartbeat')})")
+    try:
+        lock.acquire()
+    except LockBusy as exc:
+        print(f"REFUSED: {exc}")
+        print("  If that run is dead -- it was killed, or the machine "
+              "rebooted -- re-run with --steal-lock.")
+        store.close()
+        return 3
+
     adapter = EvaAdapter(sess, headless=not args.headed)
     try:
-        if not args.dry_run:
-            adapter.launch()
-        runner = AcquisitionRunner(store, adapter, pacing_s=args.pacing)
+        adapter.launch()
+        runner = AcquisitionRunner(store, adapter, pacing_s=args.pacing, lock=lock)
         report = runner.run(
             limit=args.limit,
             corpus_id=args.corpus,
             family=args.family,
             max_attempts=args.max_attempts,
-            dry_run=args.dry_run,
+            dry_run=False,
         )
         print(f"\n{report.line()}")
         _print_status(store)
         return 0 if report.needs_human == 0 else 2
     finally:
         adapter.teardown()
+        lock.release()
         store.close()
 
 
@@ -344,6 +375,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="watch the run in a visible window")
     p.add_argument("--dry-run", action="store_true",
                    help="show what would be asked; sends nothing")
+    p.add_argument("--steal-lock", action="store_true",
+                   help="clear a profile lock left by a run that was killed")
     p.set_defaults(func=cmd_run)
 
     return ap
