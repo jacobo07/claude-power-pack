@@ -196,6 +196,94 @@ def cmd_verify(args) -> int:
     return 0
 
 
+def _session(cfg: dict, name: str | None):
+    from .session import BrowserSession
+
+    key = name or cfg.get("default_interface")
+    iface = cfg.get("interfaces", {}).get(key)
+    if not iface:
+        raise SystemExit(f"unknown interface {key!r}; check corpora.json")
+    root = Path(cfg["vault_root"]).expanduser() / "session" / key
+    return BrowserSession(root, iface["base_url"]), iface
+
+
+def cmd_session_bootstrap(args) -> int:
+    cfg = _load_config()
+    sess, iface = _session(cfg, args.interface)
+    print(f"Opening {iface['label']} at {iface['base_url']}")
+    print("A real Chromium window will open.")
+    print("  1. Log in normally.")
+    print("  2. Land on the EVA chat screen.")
+    print("  3. CLOSE the window. That is the completion signal.")
+    print("\nNothing here reads, stores, or logs your credentials. The login")
+    print("persists in a git-ignored browser profile.\n")
+
+    r = sess.bootstrap(timeout_seconds=args.timeout)
+    print(f"profile state : {r.state.value}")
+    print(f"last url      : {r.url}")
+    print(f"last title    : {r.title}")
+    print(f"note          : {r.reason}")
+    return 0
+
+
+def cmd_session_probe(args) -> int:
+    cfg = _load_config()
+    sess, iface = _session(cfg, args.interface)
+    print(f"probing {iface['label']} (headless={not args.headed})")
+    r = sess.probe(headless=not args.headed)
+    print(f"  state    : {r.state.value}")
+    print(f"  url      : {r.url}")
+    print(f"  title    : {r.title}")
+    print(f"  reason   : {r.reason}")
+    if r.snapshot_path:
+        print(f"  snapshot : {r.snapshot_path}")
+    return 0 if r.state.value == "READY" else 2
+
+
+def cmd_session_status(args) -> int:
+    cfg = _load_config()
+    sess, iface = _session(cfg, args.interface)
+    print(f"interface : {iface['label']}")
+    print(f"base_url  : {iface['base_url']}")
+    print(f"profile   : {sess.profile_dir}")
+    print(f"state     : {sess.state().value}")
+    return 0
+
+
+def cmd_run(args) -> int:
+    """The acquisition loop against a real interface."""
+    from .eva_adapter import EvaAdapter
+    from .runner import AcquisitionRunner
+
+    cfg = _load_config()
+    sess, iface = _session(cfg, args.interface)
+    store = _open(cfg)
+
+    print(f"interface : {iface['label']}")
+    print(f"limit     : {args.limit if args.limit else 'until drained'}")
+    print(f"pacing    : {args.pacing}s between prompts")
+    print(f"headed    : {args.headed}\n")
+
+    adapter = EvaAdapter(sess, headless=not args.headed)
+    try:
+        if not args.dry_run:
+            adapter.launch()
+        runner = AcquisitionRunner(store, adapter, pacing_s=args.pacing)
+        report = runner.run(
+            limit=args.limit,
+            corpus_id=args.corpus,
+            family=args.family,
+            max_attempts=args.max_attempts,
+            dry_run=args.dry_run,
+        )
+        print(f"\n{report.line()}")
+        _print_status(store)
+        return 0 if report.needs_human == 0 else 2
+    finally:
+        adapter.teardown()
+        store.close()
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="knowledge_acquisition")
     sub = ap.add_subparsers(dest="command", required=True)
@@ -226,6 +314,37 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("verify", help="re-hash every raw artifact")
     p.set_defaults(func=cmd_verify)
+
+    p = sub.add_parser("session-bootstrap",
+                       help="open a real window so the Owner can log in")
+    p.add_argument("--interface")
+    p.add_argument("--timeout", type=int, default=540)
+    p.set_defaults(func=cmd_session_bootstrap)
+
+    p = sub.add_parser("session-probe",
+                       help="check the session is still authenticated")
+    p.add_argument("--interface")
+    p.add_argument("--headed", action="store_true",
+                   help="watch the probe in a visible window")
+    p.set_defaults(func=cmd_session_probe)
+
+    p = sub.add_parser("session-status", help="show session state")
+    p.add_argument("--interface")
+    p.set_defaults(func=cmd_session_status)
+
+    p = sub.add_parser("run", help="acquire answers for pending prompts")
+    p.add_argument("--limit", type=int, help="stop after N prompts")
+    p.add_argument("--corpus", help="restrict to one corpus_id")
+    p.add_argument("--family", help="restrict to one family")
+    p.add_argument("--interface")
+    p.add_argument("--pacing", type=float, default=6.0,
+                   help="seconds between prompts")
+    p.add_argument("--max-attempts", type=int, default=3)
+    p.add_argument("--headed", action="store_true",
+                   help="watch the run in a visible window")
+    p.add_argument("--dry-run", action="store_true",
+                   help="show what would be asked; sends nothing")
+    p.set_defaults(func=cmd_run)
 
     return ap
 

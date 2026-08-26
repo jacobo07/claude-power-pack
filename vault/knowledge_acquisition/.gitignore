@@ -1,0 +1,11 @@
+# Runtime state for modules/knowledge_acquisition. Never committed.
+#
+#   kacq.db*   the prompt registry and job ledger
+#   raw/       immutable captured prompts and responses (the acquired corpus)
+#   session/   live browser profile for a private paid account -- cookies
+#
+# The acquired knowledge is data, not source: it is reproduced by `ingest`
+# plus `run`, and the session must never leave this machine. Only this file
+# is tracked, so the directory's purpose stays visible in the repo.
+*
+!.gitignore

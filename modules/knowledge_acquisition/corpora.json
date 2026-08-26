@@ -1,6 +1,14 @@
 {
   "_comment": "Acquisition policy. Priority is configuration, not code: lower runs first. Edit this file to reorder families; never hardcode an order in the scheduler.",
   "vault_root": "~/.claude/skills/claude-power-pack/vault/knowledge_acquisition",
+  "interfaces": {
+    "eva": {
+      "label": "EVA - Consultoria.io",
+      "base_url": "https://programas.consultoria.io/eva",
+      "_note": "Private paid account. Session lives in a git-ignored Chromium profile under vault_root/session/<interface>. No credential is ever stored here."
+    }
+  },
+  "default_interface": "eva",
   "corpora": [
     {
       "corpus_id": "SF30",
