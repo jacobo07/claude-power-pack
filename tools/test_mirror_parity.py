@@ -19,6 +19,7 @@ captured stdout/stderr for forensics). No network, no mutation.
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 
@@ -33,11 +34,34 @@ def _run(args: list[str]) -> subprocess.CompletedProcess:
     )
 
 
+def _git_exe() -> str:
+    """Resolve git without trusting PATH.
+
+    `git` is NOT on this host's non-interactive PATH, so a bare invocation
+    raised FileNotFoundError before main() ran a single gate -- an umbrella
+    row that read as a mirror-parity failure was actually this. The repo
+    documents the PATH gap for shells; the same trap reaches subprocess.
+    """
+    found = shutil.which("git")
+    if found:
+        return found
+    for cand in (r"C:\Program Files\Git\cmd\git.exe",
+                 r"C:\Program Files (x86)\Git\cmd\git.exe"):
+        if os.path.isfile(cand):
+            return cand
+    return "git"
+
+
 def _branch() -> str:
-    r = subprocess.run(
-        ["git", "-C", HERE, "rev-parse", "--abbrev-ref", "HEAD"],
-        capture_output=True, text=True, timeout=15,
-    )
+    try:
+        r = subprocess.run(
+            [_git_exe(), "-C", HERE, "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True, timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError):
+        # The branch label is context for the report, never a gate. It must
+        # not be able to abort the suite before a single check runs.
+        return "?"
     return r.stdout.strip() if r.returncode == 0 else "?"
 
 
