@@ -6989,6 +6989,17 @@ only false positive.
 
 ---
 
+**Second instance (2026-08-26), different mechanism, same shape.**
+`recovery_epoch_gate.banner()` imported its verdict module as the FIRST
+statement of the function, two lines above the early return that handles
+the case its own docstring calls the common path. Measured 181 ms with the
+import against 109 ms without; the silent path went 192 -> 154 ms once it
+moved below the check. The first instance was a widened parameter pulling
+work forward; this one is an import that was simply never below the guard.
+Both charge the common case for the rare one, so look for the family at
+every early return, not only where a signature changed.
+
+
 ## T-UNMEASURED-RENDERED-AS-FAILED-001 — a gate that did not finish has told you nothing
 
 **Trap.** A timeout rendered identically to a failure. "The gate found a defect" and "the
@@ -7115,3 +7126,159 @@ READ, because an inference about provenance must not destroy the provenance.
 
 
 
+
+
+## T-BAND-DECLARED-NOT-APPLIED-001 — a gate can name a threshold it did not use
+
+BENCHMARKS_OK promised a 1.5x allowance in its docstring, explained WHY it existed
+(documented spawn variance on this host), and printed "over 1.5x target" on every failure.
+The comparison was `value > target`. The band was never applied.
+
+So the gate was stricter than its own contract AND its report named a number it had not
+measured against. `tis_report_ms: 268>225` was published as a failure while sitting well
+inside the 337 band the same line claimed to be using. Three back-to-back runs put the
+real spreads at 79%, 103%, 418% and 109% of the minimum.
+
+The damage is not the false alarms. It is that FIVE of them stood beside ONE genuine
+2.4x-over regression, indistinguishable, in the same list. A gate that cries wolf five
+times cannot make anyone believe the sixth, and the real one had been sitting there for
+six weeks.
+
+**Rule.** A gate's report must name the threshold its comparison actually used. Derive the
+printed number from the same expression that decided the verdict, never from a parallel
+literal in the message. Two spellings of a threshold are two things that can drift, and
+the one that drifts is the one nobody re-derives.
+
+**How to apply.** Name the allowance as a constant, compare against `target * BAND`, and
+format the message from `target * BAND`. When the docstring, the message and the code
+disagree, the code is the outlier and the OTHER TWO are the specification -- two
+independent statements of intent outrank one line. Sister of
+[[T-UNMEASURED-RENDERED-AS-FAILED-001]]: there a gate reported a verdict it had not
+reached, here it reports a comparison it did not make.
+
+
+## T-DETACHED-STILL-COSTS-CREATION-001 — detaching removes the child's run time, not its creation cost
+
+session_start_hub folded four SessionStart cold starts into one, then spawned twelve
+detached children of its own. Its comments stated the premise plainly: a detached child
+"never adds to the hub's wall time". Detaching removes the WAIT. The parent still pays
+CreateProcess, synchronously, once per child.
+
+Ablation on the real hub -- spawn neutered, nothing else changed -- put it at 775 ms with
+the spawns and 290 ms without. Eleven children cost 485 ms of the parent's own wall time.
+The run-to-run spread told the same story more sharply: 160 ms with them, 6 ms without.
+Essentially all of the observed variance entered through process creation, which is why it
+landed on every benchmark in the suite at once.
+
+**Rule.** Fire-and-forget removes the child's execution from the parent's critical path.
+It does not remove the child's creation. On any host where process creation is expensive
+-- Windows with a scanner in the path being the worst case -- N detached children cost the
+parent N creations before it can emit its first byte.
+
+**How to apply.** Collect the specs and hand them to ONE launcher that fans out off the
+critical path. This is the same fold applied one level down, and a component that already
+folded its parents is the likeliest place to find its children unfolded. Measure it by
+ablation, never by a profiler span: the span tells you where time was attributed, not what
+removing the call would return. Keep the fallback -- losing the children is far worse than
+paying for them. Sister of [[PR-MEASURE-BOTH-COSTS-001]].
+
+
+## PR-CONFIRM-A-FAILURE-BEFORE-REPORTING-IT-001 — one sample against a threshold is a coin flip on a noisy host
+
+The same benchmark measured 194 ms and 1008 ms in consecutive runs on an idle machine.
+Another moved 726 to 1465. Against a single sample, a threshold anywhere in that range
+decides by luck, and a gate that fails at random gets read as a gate that fails.
+
+**Rule.** Where the measured spread approaches the threshold, a failure must reproduce
+before it is reported. Take a second sample and hold the MINIMUM against the budget: when
+the noise source is additive -- scheduler, scanner, cold cache, contention -- the smaller
+sample is the closer estimate of the real cost, and the larger one is the noise.
+
+**How to apply.** Pay it only on the red path. The green path takes one sample and stops,
+so the confirm costs nothing until something already looks broken; measured here at 9 s
+against a 60 s budget. Assert BEHAVIOUR in gates and keep timing in benchmarks -- a wall
+clock assertion on a host like this is a flaky gate, and a flaky gate is worse than none.
+Order must not matter: verify that the same two samples give the same verdict whichever
+arrives first, or the retry has become a way of shopping for a pass.
+
+
+## PR-UNSAFE-REMEDIATION-BLOCKS-THE-SAFE-ONES-001 — a fix that is wrong one time in six cannot be applied at all
+
+A path normaliser reported 163 doc-level findings and had done so for months. 26 of its
+proposed rewrites would have damaged the file or contradicted standing doctrine: 18
+rewrote an interpreter path the constitution REQUIRES to be absolute, and 8 collapsed a
+list of three home-directory spellings into one naming the same thing twice.
+
+Because the remediation was wrong one time in six, nobody could run it. Because nobody
+could run it, the 137 CORRECT rewrites never landed either. The unsafe minority held the
+safe majority hostage, and the backlog was read the whole time as 163 things to fix.
+
+**Rule.** Correctness of a remediation gates its adoption, and a remediation nobody adopts
+protects nothing. A partly-wrong auto-fix is worse than no auto-fix: it converts a
+tractable backlog into a permanent one and teaches the reader to ignore the number.
+
+**How to apply.** Separate CANNOT-BE-FIXED from NOT-YET-FIXED in the output, with the
+reason on each exempt line. Count only the second toward the verdict, or the gate stays
+red forever on entries that must never change. Then check what the exemption costs: every
+exemption needs a bookend proving an ordinary case is still caught, because a rule that
+quietly widened turns a noisy gate into a silent one, which is strictly worse.
+
+
+## T-NORMALIZER-COLLAPSES-A-DISTINCTION-001 — never rewrite X into a token the line already uses
+
+A document listed three spellings of a home directory so a reader could recognise any of
+them. The normaliser rewrote the third into the first, leaving a sentence that names the
+same thing twice and no longer mentions the case it was written to cover. The rewrite was
+locally correct on the token and destroyed the meaning of the line.
+
+**Rule.** A transformation that makes two previously-distinct tokens identical has
+destroyed the distinction the text was drawing. Detect it structurally -- the output
+contains more instances of the target token than the input, and the input already used it
+as a standalone token -- and refuse.
+
+**How to apply.** Applies to any normaliser, formatter, codemod or refactor that maps many
+forms onto one canonical form: import rewriters, path canonicalisers, identifier renamers,
+currency and unit normalisers. The enumeration of variants is exactly the passage the
+canonicaliser must not touch, and it is exactly the passage that mentions every variant.
+Documentation about a canonical form is the highest-risk input to the tool that enforces
+it.
+
+
+## T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001 — a tool that hardcodes its install path tells the truth from one directory
+
+A reachability audit decided whether a hook was live by matching the literal installed path
+against the registrations. Correct in the installed tree. Wrong in every worktree, clone
+and CI checkout, where 18 live hooks reported as dormant -- silently, with no error and a
+plausible number.
+
+**Rule.** Identity must be a parameter, never a literal. An audit whose verdict depends on
+where the process happens to be running is measuring its own location.
+
+**How to apply.** Take the root as an argument, default it from the module's own position,
+and RUN THE SUITE FROM SOMEWHERE ELSE -- a worktree is enough. Fixtures naming the
+installed path while the process lives elsewhere make a re-hardcoded version fail
+immediately. Where the answer legitimately differs by checkout, SAY WHICH TREE WAS JUDGED
+in the report: a column of verdicts about a non-running checkout is otherwise read as a
+finding about production.
+
+
+## PR-A-COUNT-IS-NOT-A-DISPOSITION-001 — reporting N unhandled items reads as accounted-for
+
+A mirror comparator compared 28 pairs and printed "345 file(s) present on one side only".
+The sentence is true, the tool is working, and parity spoke for 7.5% of the surface while
+the report looked complete. The one instance that mattered -- an edit that never reached
+production because a relative path resolved into the other tree -- was found by reading,
+not by the estate.
+
+**Rule.** A number attached to unexamined items is not coverage. Every item a checker
+discovers must carry a verdict, and UNKNOWN is a verdict that must be printed as unknown.
+Absence of a verdict must never render as health.
+
+**How to apply.** Classify from evidence, and assert TOTALITY: rows out must equal items
+discovered, so nothing can be dropped between discovery and disposition. Where a class
+cannot be decided, emit it as undecided WITH its count and pin that count in a gate, so a
+domain cannot quietly acquire a verdict before the evidence for it arrives. Exercise the
+failing class against a synthetic case when the tree currently has none -- a branch that
+never runs proves nothing about the tree it claims to watch. Extends
+[[PR-COVERAGE-BY-CONSTRUCTION-001]]: discovery fixes WHO is measured, this fixes whether
+each of them got an answer.
