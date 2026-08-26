@@ -130,6 +130,114 @@ signal-0 probe is not portable, and a wrong guess puts two writers on one
 resource. Correct default plus a documented escape hatch beats a clever check
 that is right most of the time.
 
+## Single-Source Interrogation (SPEC-KACQ-005, sealed 2026-08-26)
+
+Distilled from classifying 38 answers from one authenticated expert system.
+Every rule below is about interrogating A source, not about that source.
+
+### HR-DERIVED-NEVER-ENDANGERS-RAW-001 -- judgment runs last and guarded
+
+TRIGGER: any pipeline that derives a verdict, score or label from a captured
+artifact.
+ACCION: derived work runs AFTER the artifact and its row are durable, and is
+wrapped so its failure is recorded, not propagated. A classifier defect may
+leave data unjudged; it must never leave data uncaptured. An unavailable judge
+records UNRATED -- never a silent pass, never a retroactive edit of raw.
+ORIGEN: the assessment layer sits at step 5 of a 5-step loop for exactly this
+reason; steps 1-4 had already been proven by real process kills.
+
+### HR-ROW-IDENTITY-IS-NOT-ARTIFACT-ADDRESS-001
+
+TRIGGER: content-addressed storage where a row records that an actor received
+that content.
+ACCION: the artifact is keyed by its bytes; the ROW is keyed by (recipient,
+bytes). Never the same key. Collapsing them means a repeated payload to a
+second recipient collides on the primary key, is dropped by INSERT OR IGNORE,
+and leaves that recipient marked complete with nothing retrievable.
+ORIGEN: an identical canned refusal to two prompts silently lost the second
+capture while the job still transitioned to COMPLETE. Found by writing the
+test, not by reading the code.
+
+### PR-SOURCE-BOUNDARY-IS-FREE-EVIDENCE-001
+
+With one source there is no corroboration available -- but the source's own
+declared limits are evidence nobody pays for. A quantified claim about a
+population the same source said it cannot observe is not weakly sourced, it is
+unsourced by its own admission, and that is detectable without a second source.
+Record what a source says it cannot do; hold it to that.
+
+### PR-DECLARED-GAP-VS-HONEST-HEDGE-001
+
+"I do not have that data" is a capability fact and routes the question
+elsewhere. "There is no single number, it depends" is good epistemic manners
+and routes nowhere. Conflating them files honest answers as capability gaps and
+spends the scarcest resource -- human expert time -- on questions the source
+could still answer.
+
+### PR-QUESTION-CONDITIONED-GRADING-001
+
+Never grade every answer on one scale. Derive what evidence would satisfy the
+QUESTION, then judge the answer against that. The identical text is an
+excellent methodology answer and a failed case-data answer. A single quality
+score cannot express the difference and will systematically mis-rank both.
+
+### PR-GAP-AND-CONTENT-ARE-ORTHOGONAL-001
+
+Whether a source can satisfy a question is a fact about the QUESTION. Whether
+the answer it produced is worth processing is a fact about the ANSWER. Model
+them separately. Merged into one verdict, "the source cannot answer this"
+suppresses extraction of answers that refuse and teach in the same breath --
+measured at 9 of 30, including the most honest content in the corpus.
+
+### PR-POSITIVE-CONTROL-BEATS-A-GROWING-BLACKLIST-001
+
+When a detector over-fires, do not enumerate what to exclude -- name the
+positive evidence it should have required. A blacklist grows forever and each
+entry is a guess; one required conjunct ends the class. Corollary of the same
+rule that says absence of a disqualifying marker is not presence of the thing.
+
+### T-STORED-VERDICT-DEPENDS-ON-RUN-ORDER-001
+
+A judgment computed against accumulating state is not reproducible from the
+raw data: the same code over the same artifacts produces different verdicts
+depending on when each was processed. Decide explicitly which semantics a
+STORED verdict carries. Live processing may legitimately learn in order;
+anything replayable must be rebuilt deterministically from raw first.
+
+### T-VERSIONED-ROWS-DOUBLE-COUNT-001
+
+Keeping every version of a derived judgment is right -- overwriting destroys
+the evidence of a regression. But any aggregate over that table must be scoped
+to ONE version. Unscoped, it reports 60 judgments for 30 items, which is not a
+distribution, it is a double count that reads as growth.
+
+### T-ALTER-APPENDS-THE-COLUMN-AT-THE-END-001
+
+ADD COLUMN puts the column last regardless of where it appears in the CREATE
+statement, so a positional INSERT writes correct values into wrong columns on
+migrated databases while working perfectly on fresh ones. Name the columns in
+every INSERT against a table that has ever been altered.
+
+### T-ENUMERATED-VERBS-IN-AN-INFLECTED-LANGUAGE-001
+
+A list of literal word forms is the wrong shape for a language that inflects.
+Listing "utilizarias" and not "usarias" missed 5 of 30 inputs on morphology
+alone. Match the ending as a class; the inflection IS the signal.
+
+### T-A-WRONG-LOOKING-DEFAULT-MAY-BE-PAIRED-001
+
+Before changing a default that points somewhere nothing exists, look for the
+installer that creates it. A path that is broken on one host can be exactly
+correct on the host its setup script targets, and "fixing" it breaks the
+working deployment to repair the broken one. Guard the override instead.
+
+### T-ACCEPTANCE-ROW-BUNDLING-TWO-VARIABLES-001
+
+An acceptance criterion that asserts two conditions at once cannot tell you
+which failed, and will be "corrected" toward whichever reading makes it pass.
+Isolate the variable: assert the mechanism under test against a controlled
+state, and assert the interaction separately.
+
 ## DAIF Two-Arm Behavioral Trial (SCS C97, sealed 2026-07-13)
 
 **`PR-DAIF-TWO-ARM-MANDATORY-001`** — Clauses 3 and 4 of the Session Continuity Compiler's done-gate
@@ -7115,3 +7223,15 @@ READ, because an inference about provenance must not destroy the provenance.
 
 
 
+
+- [env/bash:timeout] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:timeout: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:timeout] `ceps_e8b0187c201a6129` -- Tool failure in bash:timeout: Exception as e:  # any render failure returns ok=false, nev.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:sed] `ceps_6ed49659e758181c` -- Before touching bash:sed, verify the regression scenario (0008 failed) is still covered by a passing test.
+
+- [tooling/bash:python3] `ceps_c110fa03ed009086` -- Tool failure in bash:python3: Error with Permissions-Policy header: Unrecognized feature:.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:echo] `ceps_d47d40fe40071e32` -- Tool failure in bash:echo: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:sed] `ceps_5d28a90f4498a814` -- Before touching bash:sed, verify the regression scenario (FAILED) is still covered by a passing test.

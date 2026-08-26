@@ -438,15 +438,22 @@ def cmd_quality(args) -> int:
     try:
         _print_quality(store, interface)
         if args.disposition:
+            # Scoped to one classifier version, like the summary above it.
+            # Without this, a prompt appears once per version ever run and the
+            # listing reads as three separate findings about the same answer.
+            version = store.latest_classifier_version()
             rows = store.con.execute(
-                "SELECT p.external_id, a.epistemic, a.followups, a.flags "
+                "SELECT p.external_id, a.epistemic, a.route_to_expert, "
+                "       a.followups "
                 "FROM assessment a JOIN prompt p ON p.prompt_id=a.prompt_id "
-                "WHERE a.disposition=? ORDER BY p.ordinal LIMIT ?",
-                (args.disposition, args.limit),
+                "WHERE a.disposition=? AND a.classifier_version=? "
+                "ORDER BY p.ordinal LIMIT ?",
+                (args.disposition, version, args.limit),
             ).fetchall()
-            print(f"\n-- {args.disposition} --")
+            print(f"\n-- {args.disposition} ({version}) --")
             for r in rows:
-                print(f"  {r['external_id']:>10} {r['epistemic']}")
+                route = " ->expert" if r["route_to_expert"] else ""
+                print(f"  {r['external_id']:>10} {r['epistemic']}{route}")
                 for f in json.loads(r["followups"]):
                     print(f"      follow-up: {f[:110]}")
     finally:

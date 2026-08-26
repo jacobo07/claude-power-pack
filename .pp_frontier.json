@@ -1,0 +1,24 @@
+{
+  "objective": "Turn the production-verified EVA acquisition runner into a quality-aware expert-intelligence capability: classify epistemic value at ingestion time, learn what a source has declared it cannot know, stop spending prompts on questions it cannot answer, and deposit the single-source-interrogation pattern into the Power Pack baseline.",
+  "constraints": [
+    "Reuse the deep-research epistemic engine; never fork cap_epistemic or the epistemic ladder",
+    "Derived judgment runs after raw is durable and can never cost a capture",
+    "A stored verdict must be reproducible from raw alone",
+    "EVA is a source, never a source of truth; nothing here auto-promotes a vendor answer",
+    "No access control is bypassed; a login wall pauses durably and asks for a human"
+  ],
+  "unknowns": [
+    "Whether the 2,170 remaining prompts contain enough non-case-data questions to be worth the run, given 14 of 38 assessed already route to a human expert",
+    "Whether the boundary ledger saturates -- how many distinct capability limits this source actually has",
+    "Whether cohort-claim density stays near the observed 21% across families outside 00B/00C/00D",
+    "Whether account-level memory (SF30-024 referenced advice never given in this run) degrades independence measurably over a multi-hour run"
+  ],
+  "candidate_questions": [
+    "Does a source's declared boundary predict its answer quality on later questions in the same scope?",
+    "What is the marginal information gain per prompt once a family's boundaries are known?",
+    "Can expert-routing volume be estimated from the corpus before spending a single prompt?",
+    "Is the single-source coverage substitution (UNCLASSIFIED baseline, VENDOR_ONLY on boundary crossing) portable to other authenticated expert systems?"
+  ],
+  "repo": "C:/Users/User/.claude/skills/claude-power-pack",
+  "horizon_months": 12
+}

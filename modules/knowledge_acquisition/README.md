@@ -37,6 +37,41 @@ python -m modules.knowledge_acquisition.cli <command>
 | `session-bootstrap` | Open a real window so the Owner can log in. |
 | `session-probe` | Check the session is still authenticated. |
 | `session-status` | Show session state. |
+| `assess-backfill` | Judge answers already captured. Reads raw, never writes it. |
+| `quality` | What the source can answer, and what it has declared it cannot. |
+
+## What the assessment layer decides
+
+Spec: [`SPEC-PHASE5.md`](./SPEC-PHASE5.md) (SPEC-KACQ-005). Every answer is
+judged as it lands, against the question that asked for it.
+
+Two outputs, deliberately separate. **Epistemic level** is how much to bet on
+the answer, produced by the deep-research engine's `cap_epistemic` called
+unmodified. **Disposition** is what the pipeline should do with it. They vary
+independently: nearly everything from one unverifiable vendor source lands at
+DERIVED, which is honest and uninformative on its own -- the actionable
+variance is in the disposition.
+
+A third output is orthogonal to both. `route_to_expert` marks a question this
+source has *declared* it cannot satisfy, so re-asking it is spend with a known
+outcome. It is independent of whether the answer was worth keeping: a reply
+that refuses on case data while teaching the conditions is extractable AND
+routed away.
+
+The **boundary ledger** is what makes that possible. When the source says "no
+tenemos acceso a los datos financieros de otros clientes", that is recorded. A
+later quantified claim about that same cohort is then unsourced by the source's
+own admission, and is rejected rather than merely doubted. Honest hedges ("no
+hay un numero magico, depende del producto") are recorded separately and route
+nothing -- they say something about the question, not about the source.
+
+Measured on this corpus (38 answers, `kacq-assess/1.3.0`): 30 extractable,
+8 carrying unsourced cohort statistics, 14 questions routed to a human expert,
+26 context-bound.
+
+Assessment is derived data. It runs after the response row is durable, it is
+versioned by classifier version and never overwritten, and its failure is
+recorded as unrated. No classifier defect can cost a captured answer.
 
 ## First run
 
