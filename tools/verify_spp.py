@@ -240,6 +240,10 @@ def main() -> int:
         ("ceps-backfill",
          [PY, str(PP / "tools" / "ceps_backfill_audit.py"), "--check"],
          30),
+        # Corroboration must count ancestors, not addresses.
+        ("evidence-independence",
+         [PY, str(PP / "tools" / "test_evidence_independence.py")],
+         45),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),

@@ -119,9 +119,18 @@ def main():
     if args.query:
         res = gs.query_global(node_type=args.type, edge_type=args.edge,
                               name=args.name, cross_repo_only=args.cross_repo_only)
-        # Aggregate origin repos for a cross-repo proof.
+        # Aggregate origin repos. `repos_represented` counts ADDRESSES and
+        # was read as a cross-repo proof; `independent_roots` counts
+        # ANCESTORS. On the live store the first is roughly three times the
+        # second, because a claim copied into four repos was being counted
+        # four times. Both are printed so the gap is visible at the surface
+        # that made the claim, not buried in the store.
         repos_hit = sorted({s for r in res for s in ([r["scope"]] if r["scope"] != "global" else r["origins"])})
+        roots = sum(r.get("independent_roots", 1) for r in res)
+        echoed = [r["node_id"] for r in res if r.get("echoes")]
         print(json.dumps({"count": len(res), "repos_represented": repos_hit,
+                          "independent_roots": roots,
+                          "echoed_nodes": echoed[:20],
                           "results": res[:40]}, indent=2))
         return 0
 

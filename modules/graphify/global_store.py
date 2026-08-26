@@ -119,6 +119,51 @@ def load_repo_cache(rid: str) -> dict:
         return {}
 
 
+def ancestry(entry: dict) -> dict:
+    """How many INDEPENDENT roots support this claim -- not how many places
+    repeat it.
+
+    `origins` records where a claim was found, and the query layer reported
+    the distinct repos as a cross-repo proof. Repetition is not
+    independence: a claim copied into four repos has one ancestor and four
+    addresses, and counting addresses inflates confidence exactly where the
+    evidence is weakest.
+
+    Measured on the live store (2026-08-26): of 28 multi-origin nodes, 27
+    carry byte-identical content at every origin and 13 sit at an identical
+    relative path. `hard_rule/ukdl-universal` claimed six repos; it is one
+    file, `vault/knowledge_base/ukdl-universal.md`, copied. `hard_rule/
+    HR-001` claimed four under three different filenames, all identical
+    text -- so a filename heuristic alone would have called them independent.
+
+    Two signals, both already recorded, neither invented for this:
+
+      identical_content   the promoter preserves any DIFFERING summary in
+                          `alt_summaries`. No alternates across several
+                          origins means one text, copied.
+      identical_filename  the same concept under the same filename in
+                          several repos is a copy, not convergent authorship.
+
+    Collapsing understates corroboration when it is wrong. That is the safe
+    direction here: this estate's measured failure mode is overstating it.
+    ORIGINS ARE NEVER MODIFIED -- this reads, it does not prune.
+    """
+    origins = entry.get("origins", []) or []
+    n = len(origins)
+    if n <= 1:
+        return {"origins": n, "independent_roots": n, "echoes": []}
+
+    if not entry.get("alt_summaries"):
+        return {"origins": n, "independent_roots": 1,
+                "echoes": ["identical_content"]}
+
+    bases = [str(o.get("file", "")).replace("\\", "/").rsplit("/", 1)[-1].lower()
+             for o in origins]
+    roots = len({b for b in bases if b}) or 1
+    echoes = ["identical_filename"] if roots < n else []
+    return {"origins": n, "independent_roots": roots, "echoes": echoes}
+
+
 def _promote(glob_nodes: dict, node: dict, rid: str, repo_path: str) -> None:
     """Merge a promotable node into the global layer by canonical id, unioning
     origins with provenance (GK-10 union-with-provenance — never clobber)."""
@@ -232,10 +277,16 @@ def query_global(node_type: str = None, edge_type: str = None,
             continue
         if edge_type and not any(e.get("type") == edge_type for e in entry.get("edges", [])):
             continue
+        anc = ancestry(entry)
         results.append({"scope": "global", "node_id": nid,
                         "node_type": entry.get("node_type"),
                         "name": entry.get("name"),
                         "origins": [o["repo_id"] for o in entry.get("origins", [])],
+                        # Both numbers travel together. A caller that wants
+                        # the address count can still have it; a caller that
+                        # wants CORROBORATION now has to see the difference.
+                        "independent_roots": anc["independent_roots"],
+                        "echoes": anc["echoes"],
                         "summary": entry.get("summary", "")})
 
     if not cross_repo_only:
@@ -251,6 +302,7 @@ def query_global(node_type: str = None, edge_type: str = None,
                 results.append({"scope": rid, "node_id": nd.get("node_id"),
                                 "node_type": nd.get("node_type"),
                                 "name": nd.get("name"), "origins": [rid],
+                                "independent_roots": 1, "echoes": [],
                                 "summary": nd.get("summary", "")})
     return results
 
