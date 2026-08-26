@@ -18,7 +18,9 @@ does not pass (T-TEST-SKIPPED-ITSELF-GREEN-001).
 from __future__ import annotations
 
 import json
+import shutil
 import sys
+import tempfile
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -57,12 +59,59 @@ def _ctx(**kw):
     return base
 
 
+def _fixture_store(tmp: Path) -> Path:
+    """A store with a KNOWN cascade, so the gates assert wiring, not data.
+
+    This suite originally derived its expectations from the live store and
+    therefore passed only while that store happened to contain a learnable
+    pair. On 2026-08-26 the admission backfill excluded 52 corrupt events,
+    the live map emptied, and the suite reported zero gates -- proving it
+    had been asserting the wiring THROUGH data it did not control. The
+    designed fixture removes that coupling: two co-occurrences make
+    `tooling:alpha -> regression:beta` learnable, and `tooling` maps to two
+    subsystems so the ambiguity branch is always exercised.
+    """
+    rows = []
+    t = 0
+    for cycle in range(2):
+        # `tooling` appears at TWO subsystems that both become source keys,
+        # so the ambiguity branch is genuinely exercised. The trailing
+        # `env:delta` exists to give gamma a follower; without it gamma is
+        # never a source and `tooling` resolves unambiguously.
+        for cat, sub in (("tooling", "alpha"), ("regression", "beta"),
+                         ("tooling", "gamma"), ("env", "delta")):
+            rows.append({
+                "id": f"fx_{cycle}_{t}",
+                "ts": f"2026-01-0{cycle + 1}T00:00:{t:02d}Z",
+                "category": cat, "subsystem": sub,
+                "root_cause": f"synthetic {cat} in {sub}",
+                "admission_status": "valid",
+            })
+            t += 1
+        t = 0
+    p = tmp / "events.jsonl"
+    p.write_text("".join(json.dumps(r) + "\n" for r in rows),
+                 encoding="utf-8", newline="\n")
+    return p
+
+
 def main():
+    tmp = Path(tempfile.mkdtemp(prefix="cascade_wiring_"))
+    saved_events_path = cascade.EVENTS_PATH
+    cascade.EVENTS_PATH = _fixture_store(tmp)
+    try:
+        return _gates()
+    finally:
+        cascade.EVENTS_PATH = saved_events_path
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _gates():
     cmap = cascade._build_cascade_map()
     if not cmap:
-        print("FAIL: cascade map is empty, so zero gates executed. A suite that "
-              "asserts nothing does not pass. The CEPS store has no co-occurring "
-              "pairs at threshold -- an environment/data condition to investigate.")
+        print("FAIL: the FIXTURE store produced no cascade map. That is a "
+              "defect in _build_cascade_map or in the fixture, not a data "
+              "condition -- the fixture is designed to be learnable.")
         print("CASCADE_WIRING_PASS=0/0  threshold=6/6")
         return 1
 
@@ -97,8 +146,10 @@ def main():
             _fail("V-CASCADE-AMBIGUOUS-CATEGORY-SILENT",
                   f"{ambiguous[0]!r} picked one of {cats[ambiguous[0]]} keys")
     else:
-        _ok("V-CASCADE-AMBIGUOUS-CATEGORY-SILENT",
-            "no ambiguous category in the current store; branch not exercised")
+        _fail("V-CASCADE-AMBIGUOUS-CATEGORY-SILENT",
+              "the fixture produced no ambiguous category, so this branch "
+              "never ran -- a gate that passes without executing is not a "
+              "gate; fix the fixture, not the verdict")
 
     # V-CASCADE-LEGACY-TEXT-UNCHANGED -- the pre-existing text path must not regress.
     empty_none = cascade.evaluate("") is None
