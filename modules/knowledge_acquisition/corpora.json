@@ -1,0 +1,22 @@
+{
+  "_comment": "Acquisition policy. Priority is configuration, not code: lower runs first. Edit this file to reorder families; never hardcode an order in the scheduler.",
+  "vault_root": "~/.claude/skills/claude-power-pack/vault/knowledge_acquisition",
+  "corpora": [
+    {
+      "corpus_id": "SF30",
+      "label": "Six-Figure First-30-Day Launch Reverse Engineering",
+      "path": "~/Downloads/EVA_PRE_200_Six_Figure_First_30_Day_Launch_Reverse_Engineering.md",
+      "expected_count": 200,
+      "priority": 10,
+      "conversation_mode": "SECTION"
+    },
+    {
+      "corpus_id": "CWOPS2000",
+      "label": "2000 prompts frontier - CommonWealth Ops Autonomous Brand #001",
+      "path": "~/Downloads/EVA_2000_Prompts_CommonWealth_Ops_Brand_001.md",
+      "expected_count": 2000,
+      "priority": 100,
+      "conversation_mode": "SECTION"
+    }
+  ]
+}

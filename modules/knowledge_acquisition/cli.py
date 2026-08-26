@@ -1,0 +1,239 @@
+"""Control surface for durable knowledge acquisition.
+
+Every command here is wired to the real runtime. There is no command that
+reports a status it did not read from persisted state.
+
+  ingest    load corpora declared in corpora.json into the registry
+  status    counts by state, by corpus, vault size, current work
+  next      show what would be claimed next, without claiming it
+  search    full-text search over prompts
+  history   the full audit trail for one prompt
+  recover   expire dead leases and requeue eligible failures
+  verify    re-hash every raw artifact and report corruption
+
+Run:  python -m modules.knowledge_acquisition.cli <command>
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from .corpus_parser import CorpusParseError, parse_corpus
+from .models import ConversationMode
+from .raw_vault import RawVault
+from .store import Store
+
+_CONFIG = Path(__file__).parent / "corpora.json"
+
+
+def _load_config(path: Path = _CONFIG) -> dict:
+    if not path.exists():
+        raise SystemExit(f"config not found: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _open(cfg: dict) -> Store:
+    root = Path(cfg["vault_root"]).expanduser()
+    return Store(root / "kacq.db", RawVault(root / "raw"))
+
+
+# --------------------------------------------------------------------------
+
+
+def cmd_ingest(args) -> int:
+    cfg = _load_config()
+    store = _open(cfg)
+    rc = 0
+    try:
+        for entry in cfg["corpora"]:
+            if args.corpus and entry["corpus_id"] != args.corpus:
+                continue
+            path = Path(entry["path"]).expanduser()
+            print(f"\n[{entry['corpus_id']}] {entry['label']}")
+            print(f"  source: {path}")
+            try:
+                result = parse_corpus(
+                    path, entry["corpus_id"], entry["expected_count"]
+                )
+            except CorpusParseError as exc:
+                print(f"  REFUSED: {exc}")
+                rc = 1
+                continue
+
+            stats = store.ingest_corpus(
+                result,
+                priority=entry.get("priority", 100),
+                conversation_mode=ConversationMode(
+                    entry.get("conversation_mode", "ISOLATED")
+                ),
+                source=f"corpus:{entry['corpus_id']}",
+            )
+            print(f"  parsed {len(result.prompts)} prompts "
+                  f"({len(result.answered)} already answered, "
+                  f"{len(result.rejected_markers)} markers rejected)")
+            print(f"  inserted={stats['inserted']} "
+                  f"already_present={stats['already_present']} "
+                  f"imported_answers={stats['imported_answers']}")
+        _print_status(store)
+    finally:
+        store.close()
+    return rc
+
+
+def _print_status(store: Store) -> None:
+    s = store.stats()
+    print("\n-- registry --")
+    print(f"  prompts   {s['prompts']:>6}")
+    print(f"  responses {s['responses']:>6}")
+    print(f"  events    {s['events']:>6}")
+    print("  by state:")
+    for state, n in s["by_state"].items():
+        print(f"    {state:<12} {n:>6}")
+    print("  by corpus:")
+    for cid, n in s["by_corpus"].items():
+        print(f"    {cid:<12} {n:>6}")
+    v = store.vault.stats()
+    print("  raw vault:")
+    for kind, d in v.items():
+        print(f"    {kind:<12} {d['count']:>6} files  {d['bytes'] / 1024:>10.1f} KB")
+
+    pending = s["by_state"].get("PENDING", 0)
+    done = s["by_state"].get("COMPLETE", 0)
+    total = s["prompts"] or 1
+    print(f"\n  progress: {done}/{total} complete ({100 * done / total:.1f}%), "
+          f"{pending} pending")
+
+
+def cmd_status(args) -> int:
+    store = _open(_load_config())
+    try:
+        _print_status(store)
+    finally:
+        store.close()
+    return 0
+
+
+def cmd_next(args) -> int:
+    """Show what would be claimed next. Read-only: claims nothing."""
+    store = _open(_load_config())
+    try:
+        row = store.con.execute(
+            "SELECT p.external_id, p.corpus_id, p.family, p.ordinal, p.raw_prompt "
+            "FROM job j JOIN prompt p ON p.prompt_id=j.prompt_id "
+            "WHERE j.state='PENDING' ORDER BY p.priority ASC, p.ordinal ASC LIMIT ?",
+            (args.limit,),
+        ).fetchall()
+        if not row:
+            print("no pending prompts")
+            return 0
+        for r in row:
+            print(f"[{r['corpus_id']}] {r['external_id']:>10} ord={r['ordinal']:<5} "
+                  f"{r['family'][:38]:<40} {r['raw_prompt'][:70]}")
+    finally:
+        store.close()
+    return 0
+
+
+def cmd_search(args) -> int:
+    store = _open(_load_config())
+    try:
+        hits = store.search_prompts(args.query, limit=args.limit)
+        if not hits:
+            print("no matches")
+            return 0
+        for h in hits:
+            print(f"[{h['state']:<9}] {h['external_id']:>10}  {h['raw_prompt'][:90]}")
+    finally:
+        store.close()
+    return 0
+
+
+def cmd_history(args) -> int:
+    store = _open(_load_config())
+    try:
+        rows = store.history(args.prompt_id)
+        if not rows:
+            print("no events for that prompt id")
+            return 1
+        for e in rows:
+            frm = e["from_state"] or "-"
+            print(f"{e['at']}  {frm:>12} -> {e['to_state']:<12} "
+                  f"{e['reason']} [{e['actor']}]")
+    finally:
+        store.close()
+    return 0
+
+
+def cmd_recover(args) -> int:
+    store = _open(_load_config())
+    try:
+        expired = store.recover_expired_leases()
+        requeued = store.requeue_failed(max_attempts=args.max_attempts)
+        print(f"expired leases returned to PENDING: {expired}")
+        print(f"failed jobs requeued after backoff : {requeued}")
+        _print_status(store)
+    finally:
+        store.close()
+    return 0
+
+
+def cmd_verify(args) -> int:
+    store = _open(_load_config())
+    try:
+        checked, corrupt = store.vault.verify_all()
+        print(f"artifacts checked: {checked}")
+        if corrupt:
+            print(f"CORRUPT ({len(corrupt)}):")
+            for c in corrupt:
+                print(f"  {c}")
+            return 1
+        print("all artifacts hash to their own name")
+    finally:
+        store.close()
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(prog="knowledge_acquisition")
+    sub = ap.add_subparsers(dest="command", required=True)
+
+    p = sub.add_parser("ingest", help="load corpora into the registry")
+    p.add_argument("--corpus", help="only this corpus_id")
+    p.set_defaults(func=cmd_ingest)
+
+    p = sub.add_parser("status", help="counts by state and corpus")
+    p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("next", help="show what would be claimed next")
+    p.add_argument("--limit", type=int, default=10)
+    p.set_defaults(func=cmd_next)
+
+    p = sub.add_parser("search", help="full-text search over prompts")
+    p.add_argument("query")
+    p.add_argument("--limit", type=int, default=20)
+    p.set_defaults(func=cmd_search)
+
+    p = sub.add_parser("history", help="audit trail for one prompt")
+    p.add_argument("prompt_id")
+    p.set_defaults(func=cmd_history)
+
+    p = sub.add_parser("recover", help="expire dead leases, requeue failures")
+    p.add_argument("--max-attempts", type=int, default=3)
+    p.set_defaults(func=cmd_recover)
+
+    p = sub.add_parser("verify", help="re-hash every raw artifact")
+    p.set_defaults(func=cmd_verify)
+
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
