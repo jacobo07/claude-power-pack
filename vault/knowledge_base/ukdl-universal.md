@@ -1,4 +1,83 @@
 
+## Durable External Knowledge Acquisition (SPEC-KACQ-001, sealed 2026-08-26)
+
+Distilled while building `modules/knowledge_acquisition`. Every rule below was
+paid for by a real failure in that session, not anticipated in advance.
+
+### Hard Rules
+
+**`HR-ACQ-RAW-BEFORE-RECORD-001`** -- When acquiring from a source that will not
+reproduce its output on demand (a paid expert interface, a human interview, a
+live market snapshot, a model that is not seeded), the RAW artifact is persisted
+BEFORE the record that describes it, atomically and content-addressed. Ordering
+is the durability contract: if the process dies between the two writes the
+answer is still on disk and the retry's write is a no-op that finds the same
+digest. The inverse ordering loses the artifact permanently on every crash.
+ORIGEN: `deep_research.fetch_page()` pulls raw HTML and `html_to_markdown()`
+derives text, and neither is persisted -- only the final synthesis. Merely
+wasteful for a repeatable web search; unrecoverable for a 30-70 hour
+acquisition against a paid account.
+
+**`HR-ACQ-NO-AUTOPROMOTION-001`** -- An answer from an external expert or vendor
+interface enters as source-derived CANDIDATE knowledge and stops at a validation
+queue. It is never written directly into institutional truth, however
+authoritative the source sounds. The estate already owns the gates for this
+(`fable_distillation/epistemic_ladder.py` No-Autopromotion Invariant,
+`dataset_first/manifest.py` 8-stage) -- an acquisition pipeline that bypasses
+them has not saved work, it has laundered provenance.
+
+### Process Rules
+
+**`PR-PARSE-DECLARE-CARDINALITY-001`** -- Any parse of a corpus whose size is
+known in advance declares that size to the parser, and the parser REFUSES to
+return a result that does not match it. Not a warning, not a log line -- a
+raised exception. A parser that silently returns fewer items than the source
+contains produces a registry that looks complete and is wrong, and nothing
+downstream can detect it. ORIGEN: a letters-only character class matched zero of
+200 `SF30-NNN` ids; the count assertion caught it on the first run. Without the
+assertion an entire 200-prompt family would have ingested as zero prompts and
+been reported as success.
+
+**`PR-OWNERSHIP-EVIDENCE-BEATS-SCORE-001`** -- In an ownership or duplicate
+audit, a direct `file:line` reading of an implementation OVERRIDES a similarity
+score in both directions -- it can convict a "genuinely new" proposal and
+acquit a "duplicate" one. A bag-of-words scorer called claim-extraction
+"genuinely new" while `research_engines.py:712-736` demonstrably owned it, and
+called frontier-question-generation new while `unknown_unknown_generator.py`
+owned the generating half. Corollary: a DEFER / low-confidence verdict means
+UNKNOWN, never NEW.
+
+### Traps
+
+**`T-UNPERFORMED-TRANSITION-001`** -- A state machine whose transition table
+permits `X -> Y`, where no code path ever performs `X -> Y`, has declared a
+capability that does not exist. The table reads as documentation of a working
+feature and passes any review that only reads the table. ORIGEN: `FAILED ->
+PENDING` was legal, but the claim query selected only `PENDING`, so a failed job
+was never re-offered and "bounded retry" was fiction. Detection: for every legal
+transition, name the function that performs it; a transition with no performer
+is either dead or a missing feature. Generalizes beyond state machines to any
+declared-but-unenforced rule -- the same session found stopping criteria for
+recursive question generation living as advisory markdown rather than computed
+code.
+
+**`T-ZERO-MATCH-READS-AS-EMPTY-INPUT-001`** -- A regex that matches nothing is
+indistinguishable from an empty source: both yield zero results, and the natural
+reading is "the input had none" rather than "my pattern is broken". This is why
+`[A-Z]{2,8}` silently consumed `SF30-001` -- the class excludes digits, so the
+prefix could never match, and the failure surfaced as a plausible empty parse.
+Immunization is `PR-PARSE-DECLARE-CARDINALITY-001`: only an expected-count
+assertion distinguishes the two cases.
+
+**`T-AMBIGUOUS-MARKER-INSIDE-CONTENT-001`** -- When a structural marker uses a
+shape that also occurs inside the content it delimits (a bare `N.` prompt marker
+versus a numbered list inside a prose answer), a naive scan over-segments and
+mis-assigns every boundary after the first collision -- silently. Measured: 2,011
+markers detected for 2,000 real prompts. Two defences, both required: a
+structural discriminator (column-zero position plus a strictly monotonic ordinal
+walk), and the cardinality assertion. The discriminator is a heuristic and
+heuristics drift; the assertion is what makes the drift loud.
+
 ## DAIF Two-Arm Behavioral Trial (SCS C97, sealed 2026-07-13)
 
 **`PR-DAIF-TWO-ARM-MANDATORY-001`** — Clauses 3 and 4 of the Session Continuity Compiler's done-gate
@@ -6705,3 +6784,45 @@ independent because the blind spot and the fixture set have the same author.
 - [regression/bash:sed] `ceps_5d28a90f4498a814` -- Before touching bash:sed, verify the regression scenario (FAILED) is still covered by a passing test.
 
 - [tooling/bash:cd] `ceps_af9d60cbac62779d` -- Tool failure in bash:cd: Error(`salida ilegible del analizador: ${err.slice(-200. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_4a101d5a06aa39ff` -- Tool failure in bash:cd: Exception as exc:                     # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:rtk.exe] `ceps_d284f9fa8e8a94c8` -- Tool failure in bash:rtk.exe: Error exacto: [mensaje completo. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:rtk.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:rtk.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:ace] `ceps_462d38b4fe6ccce5` -- Tool failure in bash:ace: Error('tab size out of range: ' + n. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_bd31f4acff62bb26` -- Tool failure in bash:cd: Exception:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_6effab3f128f3763` -- Tool failure in bash:cd: Exception:  # noqa: BLE001 -- fail-open: the advisory never.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:cd] `ceps_13190360ca7ff5a4` -- Tool failure in bash:cd: Exception as e:  # noqa: BLE001 -- fail-open on read, but s.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [integration/bash:rtk.exe] `ceps_42168ff94099d7df` -- Cross-module call in bash:rtk.exe broke: [Tool result missing due to internal error]. Run an integration smoke test that exercises the boundary.
+
+- [tooling/bash:cd] `ceps_1af43592917e6ac3` -- Tool failure in bash:cd: Exception as exc:  # noqa: BLE001 -- never break measurement. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cd] `ceps_7c9466405ba2298c` -- Tool failure in bash:cd: Exception:  # noqa: BLE001 -- fail-open ABSOLUTE. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cd] `ceps_eb50c564da4e4300` -- Before touching bash:cd, verify the regression scenario (0 failed) is still covered by a passing test.
+
+- [integration/bash:rtk.exe] `ceps_42168ff94099d7df` -- Cross-module call in bash:rtk.exe broke: [Tool result missing due to internal error]. Run an integration smoke test that exercises the boundary.
+
+- [tooling/bash:cd] `ceps_3da4cc58bf18fa09` -- Tool failure in bash:cd: Exception:  # noqa: BLE001 -- fail-open. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:cd] `ceps_5d28a90f4498a814` -- Before touching bash:cd, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
