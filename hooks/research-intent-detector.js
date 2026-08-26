@@ -272,8 +272,66 @@ function main() {
     process.exit(0);
   }
 
+  // SREE. Before spending a research run, ask whether one already answered
+  // this. `research_discovery.discover_for_cwd` computes exactly that --
+  // prior research relevant to this directory, with an age -- and was an
+  // audited ORPHAN with zero callers, so every repeat prompt spawned a full
+  // run while the module that would have prevented it sat unreachable.
+  //
+  // Its 24h window is the anti-fossilisation control: reuse is bounded by
+  // freshness, so a stale answer expires into a real search instead of
+  // hardening into a fact.
+  const prior = priorResearch();
+  if (prior) {
+    logAutoSpawn({
+      ts: new Date().toISOString(),
+      status: 'skipped-prior-research',
+      prompt_head: String(prompt).slice(0, 120),
+      report_path: prior.report_path || '',
+      age_hours: prior.age_hours,
+    });
+    process.stdout.write(JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'Stop',
+        additionalContext:
+          `[Woz] [deep-research] a prior run already covers this, ${prior.age_hours}h `
+          + `old -- not spawning a new one.\n  ${prior.report_path}\n`
+          + '  Re-run explicitly with /cpp-deep-research if it is stale.',
+      },
+    }));
+    process.exit(0);
+  }
+
   spawnDetached(prompt);
   process.exit(0);
+}
+
+/** Prior research for this cwd, or null. Fail-open in every direction:
+ *  a discovery that errors, times out, or answers ambiguously must never
+ *  suppress a real run -- skipping a needed search is the expensive
+ *  mistake, not repeating one. */
+function priorResearch() {
+  try {
+    const py = findPython();
+    if (!py) return null;
+    const r = child_process.spawnSync(py, [
+      '-c',
+      'import json,sys;'
+      + 'sys.path.insert(0, r"' + PP_REPO + '");'
+      + 'sys.path.insert(0, r"'
+      + path.join(PP_REPO, 'modules', 'deep-research') + '");'
+      + 'from research_discovery import discover_for_cwd;'
+      + 'h = discover_for_cwd();'
+      + 'print(json.dumps(h) if h else "")',
+    ], { encoding: 'utf8', timeout: 5000, windowsHide: true });
+    if (r.status !== 0 || !r.stdout) return null;
+    const body = r.stdout.trim().split('\n').pop();
+    if (!body) return null;
+    const hit = JSON.parse(body);
+    return (hit && hit.report_path) ? hit : null;
+  } catch (_e) {
+    return null;
+  }
 }
 
 try { main(); }

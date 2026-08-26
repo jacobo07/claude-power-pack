@@ -276,6 +276,14 @@ def main() -> int:
         ("verification-provenance",
          [PY, str(PP / "tools" / "test_verification_provenance.py")],
          45),
+        # A settled decision stops being a decision.
+        ("decision-recurrence",
+         [PY, str(PP / "tools" / "test_decision_recurrence.py")],
+         60),
+        # A redundant search is skipped, and reuse expires.
+        ("search-reuse",
+         [PY, str(PP / "tools" / "test_search_reuse.py")],
+         60),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
