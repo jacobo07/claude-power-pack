@@ -319,6 +319,13 @@ def main() -> int:
         ("session-start-cost",
          [PY, str(PP / "tools" / "test_session_start_cost.py")],
          90),
+        # mirror-parity compares 28 pairs and reports the other 345 files
+        # as a bare count, which reads as accounted-for. This dispositions
+        # them, and fails only on a registration pointing at a file that
+        # does not exist -- wired and dead.
+        ("mirror-unpaired",
+         [PY, str(PP / "tools" / "test_mirror_unpaired.py")],
+         45),
         ("ram-optimization",
          [PY, str(PP / "tools" / "test_ram_optimization.py")],
          30),
