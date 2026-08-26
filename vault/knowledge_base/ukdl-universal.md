@@ -7308,3 +7308,41 @@ failing class against a synthetic case when the tree currently has none -- a bra
 never runs proves nothing about the tree it claims to watch. Extends
 [[PR-COVERAGE-BY-CONSTRUCTION-001]]: discovery fixes WHO is measured, this fixes whether
 each of them got an answer.
+
+
+## T-CORPUS-DESCRIBES-ITS-INSTRUMENT-001 — a distribution can be a fact about the producer, not about the system
+
+The CEPS event store held 79 events. 70 of them (88.6%) carried a `bash:` subsystem, and a
+majority of those were greps and file reads that had been misclassified as failures. That
+looked like a producer bug, and it was one. It was also concealing a second, larger fact.
+
+The producer is registered as a PostToolUse hook with the matcher `Bash`. This host's
+doctrine MANDATES the PowerShell tool for python, pytest, git, npm, pnpm, node, mix and
+gh. So the producer cannot see the command traffic that dominates the estate. Measured
+across the entire store:
+
+    events on a PowerShell surface .................. 0
+    failures captured from git / pytest / npm /
+    node / gh / mix / pnpm, in the store's history .. 0
+
+The corpus was not a sample of what fails here. It was a sample of what runs through the
+one tool the doctrine reserves for reading files -- which is exactly why it looked like a
+pile of greps and cats. The composition that appeared to be evidence about the estate was
+evidence about the matcher.
+
+**Rule.** Before drawing any conclusion from an event corpus, establish the producer's
+COVERAGE. A distribution over a store answers "what did the instrument see", and only
+equals "what happened" when the instrument sees everything. Skew in a corpus is a claim
+about the instrument until coverage is proven otherwise.
+
+**How to apply.** Enumerate the surfaces that can generate the event and check the trigger
+covers each -- for a hook, that is its matcher against every tool name that can produce the
+pattern. Then apply the cheap falsifier: name the categories that MUST appear if coverage
+were complete, and look for them. Zero events from the busiest tools in the estate is not
+a quiet system; it is an unplugged one, and it is the same absence-reads-as-health failure
+as an audit whose subjects are enrolled by hand
+([[PR-COVERAGE-BY-CONSTRUCTION-001]]). Sister of
+[[T-RULE-STARVED-OF-ITS-INPUT-001]]: there a rule had no producer for its input, here a
+producer has no path to its subject. And note the compounding shape -- repairing this
+producer's CLASSIFICATION while it remained blind to most traffic would have made a
+narrow instrument more precise and no less narrow, which reads as progress and is not.

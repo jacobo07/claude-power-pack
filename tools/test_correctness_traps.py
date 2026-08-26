@@ -27,7 +27,7 @@ from modules.cascade_prevention.dangerous_cmds import (  # noqa: E402
 HOOK = PP / "hooks" / "cascade_check_bash.js"
 SETTINGS = Path.home() / ".claude" / "settings.json"
 
-EXPECTED_GATES = 7
+EXPECTED_GATES = 8
 _passes = 0
 _fails = 0
 
@@ -142,6 +142,53 @@ def main() -> int:
               'change it to "Bash|PowerShell" in ~/.claude/settings.json -- '
               "the shape two sibling matchers in that file already use. This "
               "repo cannot edit Owner-owned config.")
+
+    # THE SAME GAP, DISCOVERED RATHER THAN NAMED. The check above knows one
+    # registration by name, so it can only ever find the one instance
+    # someone remembered. Sweeping every shell-facing registration in the
+    # config found FIVE, and the most consequential is not the chain at all:
+    # `bug-hunter-ceps-bridge.js`, the CEPS producer, is registered
+    # PostToolUse on `Bash`. Measured over the whole event store: 70 of 79
+    # events are `bash:*`, ZERO come from a PowerShell surface, and the
+    # store has never recorded a single failure from git, pytest, npm, node,
+    # gh, mix or pnpm -- every one of which this host's doctrine requires be
+    # run through PowerShell. The corpus describes the matcher, not the
+    # estate. See T-CORPUS-DESCRIBES-ITS-INSTRUMENT-001.
+    try:
+        cfg = json.loads(SETTINGS.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError) as exc:
+        cfg = None
+        print(f"  (settings.json unreadable: {exc})")
+
+    if cfg is None:
+        _fail("V-TRAP-SHELL-SURFACES-COVERED",
+              "settings.json unreadable -- coverage UNKNOWN, which is not "
+              "the same as covered")
+    else:
+        gaps = []
+        for event, entries in (cfg.get("hooks") or {}).items():
+            for m in entries:
+                mt = str(m.get("matcher") or "")
+                # Only registrations that CLAIM the shell surface: a
+                # matcher naming Bash is asserting it inspects commands.
+                if not re.fullmatch(r"[\w|]*Bash[\w|]*", mt):
+                    continue
+                if "PowerShell" in mt:
+                    continue
+                for h in m.get("hooks", []):
+                    name = (h.get("command", "").replace("\\", "/")
+                            .rstrip('"').split("/")[-1])
+                    gaps.append(f"{event}/{name}")
+        if not gaps:
+            _ok("V-TRAP-SHELL-SURFACES-COVERED",
+                "every Bash-matched registration also matches PowerShell")
+        else:
+            _fail("V-TRAP-SHELL-SURFACES-COVERED",
+                  f"{len(gaps)} shell-facing registration(s) blind to "
+                  f"PowerShell: {', '.join(sorted(gaps))}. OWNER ACTION: "
+                  'widen each matcher to "Bash|PowerShell". The CEPS '
+                  "producer among them is why the event store has zero "
+                  "git/pytest/npm failures in its entire history.")
 
     total = _passes + _fails
     print(f"CORRECTNESS_TRAPS_PASS={_passes}/{total}  "
