@@ -317,6 +317,38 @@ def _project_id_hash(project_root: Optional[str] = None) -> str:
     ).hexdigest()[:12]
 
 
+# Generation of the semantic admission rules. Bump when a rule changes so
+# the history audit can tell "judged by the current rules" from "judged by
+# an older generation and due for re-judgement".
+ADMISSION_REV = 1
+
+_VACUOUS_CLAIM = re.compile(
+    r"""^\W*(?:
+          (?<!\d)0+\s*(?:failed|failures?|errors?|warnings?)
+        | no\s+(?:failed|failures?|errors?|warnings?)
+        | (?:failures?|errors?)\s*[:=]\s*0+
+        )\W*$""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def is_vacuous_failure_claim(root_cause: str) -> bool:
+    """True when the WHOLE root_cause asserts that nothing failed.
+
+    Shape validation cannot tell a failure from a success: `record_error`
+    checked that `category` was spelled correctly and that `root_cause`
+    was non-empty, so a producer that matched `\\d+ failed` against a
+    pytest summary filed "0 failed" as a regression, and a consumer that
+    keyed on category never noticed (2026-08-25).
+
+    Deliberately anchored to the entire string. "reported 0 failed but
+    exit code was 1" is a real finding that happens to contain a zero, and
+    a gate that swallowed it would trade one silent corruption for
+    another. Only a claim carrying no evidence beyond the zero is refused.
+    """
+    return bool(_VACUOUS_CLAIM.match((root_cause or "").strip()))
+
+
 def record_error(
     category: str,
     subsystem: str,
@@ -358,6 +390,10 @@ def record_error(
         if not root_cause or len(root_cause) > 600:
             _record_rejection("root_cause empty or too long", **ctx)
             return None
+        if is_vacuous_failure_claim(root_cause):
+            _record_rejection(
+                f"vacuous failure claim: {_short(root_cause, 60)}", **ctx)
+            return None
         sig = pattern_signature(root_cause)
         rule = RULE_TEMPLATES[category].format(
             subsystem=subsystem or "unknown",
@@ -376,6 +412,13 @@ def record_error(
             "root_cause": root_cause.strip(),
             "pattern_signature": sig,
             "prevention_rule": rule,
+            # Judged at admission, so no event is ever born unjudged and the
+            # history audit has only legacy rows to catch up on. The backfill
+            # re-judges from original fields and overrules this if a later
+            # rule generation disagrees.
+            "admission_status": "valid",
+            "admission_note": "",
+            "admission_rev": ADMISSION_REV,
             "affected_modules": affected_modules or [],
             "evidence_path": evidence_path,
             "confidence": confidence,
