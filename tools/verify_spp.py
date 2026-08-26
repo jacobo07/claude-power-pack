@@ -312,6 +312,13 @@ def main() -> int:
         ("bench-gate",
          [PY, str(PP / "tools" / "test_bench_gate.py")],
          30),
+        # SessionStart must not pay for what it does not use. Asserts what
+        # is LOADED and what is SPAWNED, never wall time -- a timing gate
+        # on this host is a coin flip (measured spreads of 79-418%).
+        # Spawns 3 fresh interpreters + node, so the budget is generous.
+        ("session-start-cost",
+         [PY, str(PP / "tools" / "test_session_start_cost.py")],
+         90),
         ("ram-optimization",
          [PY, str(PP / "tools" / "test_ram_optimization.py")],
          30),

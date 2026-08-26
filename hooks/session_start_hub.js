@@ -303,7 +303,71 @@ function hookRecoveryEpoch() {
   }
 }
 
-function detachedSpawn(label, cmd, args, env) {
+// ---------------------------------------------------------------------------
+// Deferred spawning (T-DETACH-SPAWN-COST-001)
+//
+//   Detaching a child removes its RUN time from this process. It does not
+//   remove CreateProcess, which this process pays synchronously, once per
+//   child. The comments below used to assert a detached spawn "never adds
+//   to the hub's wall time"; an ablation measured otherwise -- eleven
+//   children cost 485 ms of the hub's own 775 ms, and carried essentially
+//   all of its run-to-run variance (6 ms spread without them, 160 ms with).
+//
+//   So the hub now COLLECTS specs and hands the whole list to ONE detached
+//   launcher, paying one CreateProcess instead of twelve. This is the same
+//   fold the hub already applied to its parents (T-NODE-COLD-001), applied
+//   one level down to its children.
+//
+//   Existence checks stay HERE: SKIP semantics are unchanged and cost
+//   nothing measurable (fs.existsSync on a warm path). Only the spawn moves.
+// ---------------------------------------------------------------------------
+const DETACHED_LAUNCHER_JS = path.join(PP_PATH, 'hooks',
+                                       'detached_launcher.js');
+const PENDING_SPAWNS = [];
+// Fail-open: with no launcher on disk the hub spawns inline exactly as it
+// did before. Losing twelve fire-and-forget hooks would be far worse than
+// paying 485 ms for them.
+let deferSpawns = fs.existsSync(DETACHED_LAUNCHER_JS);
+
+// Only the keys that DIFFER from our own env. The callers build their env
+// as Object.assign({}, process.env, {...}), so shipping it whole would put
+// the entire environment into the spec twelve times over.
+function envDelta(env) {
+  if (!env || env === process.env) return null;
+  const delta = {};
+  for (const k of Object.keys(env)) {
+    if (env[k] !== process.env[k]) delta[k] = env[k];
+  }
+  return Object.keys(delta).length ? delta : null;
+}
+
+function spawnNow(spec) {
+  const opts = {
+    detached: true,
+    stdio: 'ignore',
+    env: spec.envDelta
+      ? Object.assign({}, process.env, spec.envDelta)
+      : process.env,
+    cwd: spec.cwd || PP_PATH,
+    windowsHide: true,
+  };
+  let fd = null;
+  if (spec.log) {
+    fs.mkdirSync(path.dirname(spec.log), { recursive: true });
+    fd = fs.openSync(spec.log, 'w');
+    opts.stdio = ['ignore', fd, fd];
+  }
+  const child = spawn(spec.cmd, spec.args, opts);
+  child.unref();
+  if (fd !== null) {
+    try { fs.closeSync(fd); } catch (_e) { /* child holds its own dup */ }
+  }
+  note('SPAWNED ' + spec.label + ' pid=' + (child.pid || '?'));
+}
+
+// Shared by detachedSpawn and detachedSpawnLogged: the existence gate is
+// identical for both, and duplicating it is how the two drift apart.
+function enqueue(label, cmd, args, env, logPath) {
   try {
     if (isAbsolutePathString(cmd) && !fs.existsSync(cmd)) {
       note('SKIP ' + label + ' (missing ' + cmd + ')');
@@ -317,18 +381,59 @@ function detachedSpawn(label, cmd, args, env) {
       note('SKIP ' + label + ' (missing target ' + targetArg + ')');
       return;
     }
-    const child = spawn(cmd, args, {
+    const spec = {
+      label: label,
+      cmd: cmd,
+      args: args,
+      envDelta: envDelta(env),
+      cwd: PP_PATH,
+      log: logPath || null,
+    };
+    if (deferSpawns) {
+      PENDING_SPAWNS.push(spec);
+      return;
+    }
+    spawnNow(spec);
+  } catch (err) {
+    note(label + ' spawn failed', err);
+  }
+}
+
+// Hand the collected specs to one detached launcher. Any failure here falls
+// back to spawning every pending child inline, so the worst case is the old
+// cost -- never a lost hook.
+function flushSpawns() {
+  if (!PENDING_SPAWNS.length) return;
+  try {
+    const specPath = path.join(os.tmpdir(),
+                               'pp-hub-launch-' + process.pid + '.json');
+    fs.writeFileSync(specPath, JSON.stringify(PENDING_SPAWNS), 'utf8');
+    const child = spawn(NODE_EXE, [DETACHED_LAUNCHER_JS, specPath], {
       detached: true,
       stdio: 'ignore',
-      env: env || process.env,
+      env: process.env,
       cwd: PP_PATH,
       windowsHide: true,
     });
     child.unref();
-    note('SPAWNED ' + label + ' pid=' + (child.pid || '?'));
+    note('LAUNCHER pid=' + (child.pid || '?')
+         + ' children=' + PENDING_SPAWNS.length);
   } catch (err) {
-    note(label + ' spawn failed', err);
+    note('launcher failed; spawning ' + PENDING_SPAWNS.length
+         + ' children inline', err);
+    for (const spec of PENDING_SPAWNS) {
+      try {
+        spawnNow(spec);
+      } catch (inner) {
+        note(spec.label + ' inline fallback failed', inner);
+      }
+    }
   }
+  PENDING_SPAWNS.length = 0;
+}
+
+function detachedSpawn(label, cmd, args, env) {
+  enqueue(label, cmd, args, env, null);
 }
 
 function hookJitWarm(cwd) {
@@ -372,35 +477,7 @@ const DRIFT_REPORT_PY = path.join(PP_PATH, 'tools', 'drift_report.py');
 const HEALTH_DIR = path.join(PP_PATH, 'vault', 'health');
 
 function detachedSpawnLogged(label, cmd, args, logPath) {
-  try {
-    if (isAbsolutePathString(cmd) && !fs.existsSync(cmd)) {
-      note('SKIP ' + label + ' (missing ' + cmd + ')');
-      return;
-    }
-    const targetArg = args.find(isAbsolutePathString);
-    if (targetArg && !fs.existsSync(targetArg)) {
-      note('SKIP ' + label + ' (missing target ' + targetArg + ')');
-      return;
-    }
-    fs.mkdirSync(path.dirname(logPath), { recursive: true });
-    const out = fs.openSync(logPath, 'w');
-    const child = spawn(cmd, args, {
-      detached: true,
-      stdio: ['ignore', out, out],
-      env: process.env,
-      cwd: PP_PATH,
-      windowsHide: true,
-    });
-    child.unref();
-    try {
-      fs.closeSync(out);
-    } catch (closeErr) {
-      void closeErr;
-    }
-    note('SPAWNED ' + label + ' pid=' + (child.pid || '?') + ' -> ' + logPath);
-  } catch (err) {
-    note(label + ' spawn failed', err);
-  }
+  enqueue(label, cmd, args, null, logPath);
 }
 
 function hookCompoundAudit() {
@@ -867,8 +944,21 @@ function main() {
     hookMarkLiveSession(cwd, sessionId);
     hookZeroCommandBootstrap(cwd, sessionId);
     hookFirstTimeProject(cwd, sessionId);
+
+    // Every hook above only ENQUEUED. One CreateProcess now covers all of
+    // them; the launcher fans them out off this process's critical path.
+    flushSpawns();
   } catch (err) {
     note('hub main caught', err);
+    // A throw between the first enqueue and the flush would strand the
+    // whole queue: the hooks would be silently skipped rather than merely
+    // slow. Flush on the way out too -- it is idempotent (the queue is
+    // emptied) and fail-open.
+    try {
+      flushSpawns();
+    } catch (flushErr) {
+      note('flush after error also failed', flushErr);
+    }
   }
 
   const elapsedMs = Date.now() - t0;

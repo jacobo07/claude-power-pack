@@ -57,14 +57,24 @@ def _read_pane_map(state_dir: Path) -> dict:
 
 def banner(state_dir: Path) -> str:
     """The Owner-facing line, or '' when there is nothing to report."""
+    # The cheap question first. Silence is the common path (see module
+    # docstring), and the only thing needed to reach it is one small JSON
+    # read. `tools.recovery_verdict` costs ~72 ms to import on this host --
+    # measured, 181 ms vs 109 ms for the epoch import alone -- and it was
+    # being paid on EVERY session start, including the overwhelming
+    # majority that had nothing to report and returned two lines later.
+    #
+    # Same family as the widened fast path this repo already sealed: work
+    # placed ahead of an early return charges the common case for the rare
+    # one. Nothing about the verdict changes; only when it is loaded.
+    ep = epoch.read_epoch(state_dir)
+    if not ep or ep.get("status") != epoch.OPEN:
+        return ""
+
     import tools.recovery_verdict as rv
 
     rv.STATE_DIR = state_dir
     rv.HISTORY_DIR = state_dir / epoch.HISTORY_DIRNAME
-
-    ep = epoch.read_epoch(state_dir)
-    if not ep or ep.get("status") != epoch.OPEN:
-        return ""
 
     ref = epoch.reference_path(state_dir, ep)
     if ref is None:
