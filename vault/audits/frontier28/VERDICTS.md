@@ -369,3 +369,149 @@ files) · `hooks-registration` (marker set includes a concurrent pane's uncommit
 `~/.claude/hooks/`, which this repo cannot write. Either copy PP's canonical hook
 across, or change that entry to the `../skills/claude-power-pack/hooks/...` form the
 two sibling entries already use. Until then the SREE skip exists and does not run.
+
+---
+
+## Session 2026-08-26 (continued) — the instrument was lying in both directions
+
+This session resumed from a report I had already written. That report contained two
+claims which are now WITHDRAWN, and the mechanism that produced both of them was a
+benchmark gate comparing against a threshold different from the one it printed.
+
+### What I retracted
+
+| Claim in the previous report | Measured now | Status |
+|---|---|---|
+| `benchmarks-ok`: 4/8 over target; `tco_gate_ms 357>270` is pre-existing drift | `tco_gate_ms` median **223** against a target of 270, and a 405 band | **WITHDRAWN** — a variance artifact |
+| `proactive_dispatch_ms` still over its 30 ms target | median **25 ms** | **WITHDRAWN** — Finding B's fast path is genuinely recovered |
+
+Neither was a reasoning error on top of good data. Both were read off an instrument that
+could not be trusted, which is why §66 puts repairing the instrument before drawing any
+conclusion from it. I did not do that in the previous session; I reported its numbers.
+
+### The metrology defect
+
+`verify_bench_all.py` promised a 1.5x band in its docstring, explained why it existed
+(documented spawn variance on this host), and printed `over 1.5x target` on failure. The
+comparison was `value > target`. The band had never been applied.
+
+Three back-to-back runs on an idle host:
+
+| benchmark | target | 1.5x | min | med | max | spread |
+|---|---|---|---|---|---|---|
+| `tco_gate_ms` | 270 | 405 | 209 | 223 | 373 | 79% |
+| `tis_report_ms` | 225 | 338 | 179 | 220 | 364 | 103% |
+| `osa_dispatcher_ms` | 300 | 450 | 194 | 353 | 1008 | 418% |
+| `anti_patterns_ms` | 120 | 180 | 100 | 127 | 210 | 109% |
+| `session_hub_ms` | 300 | 450 | **734** | **1301** | 1359 | 85% |
+
+Five false alarms standing beside one genuine 2.4x-over regression, indistinguishable.
+The real one had been there since 2026-07-14. **A gate that cries wolf five times cannot
+make anyone believe the sixth.** Repaired: band applied, failures confirmed by a second
+sample with the MIN held against the budget, and a missing benchmark now FAILS instead of
+shrinking the denominator. Result: `1/8 over 1.5x target [confirmed by a 2nd sample]`.
+
+### The regression it had been hiding
+
+`session_hub_ms` is the SessionStart hub — it runs at every session start. Ablation on the
+real hub, `spawn` neutered and nothing else changed:
+
+| | median | spread |
+|---|---|---|
+| with 11 detached spawns | 775 ms | 160 ms |
+| spawns removed | 290 ms | **6 ms** |
+
+The hub's own comments asserted that a detached child "never adds to the hub's wall time".
+Detaching removes the child's RUN time; the parent still pays CreateProcess, once per
+child. **Eleven children cost 485 ms of the parent's own wall time, and carried
+essentially all of its variance** — which is why every benchmark in the suite is noisy at
+once. The hub had folded four SessionStart cold starts into one and never applied the same
+fold to its own children. Now one launcher: median 903 → 681, spread 739 → 257, verified
+`launched 11/11`.
+
+**Still red, and left red.** 645–681 against a 450 band. The residual is a synchronous
+Python subprocess the hub must wait on (100 ms of interpreter floor before the gate does
+anything), and that is a deliberate trade — the recovery banner is what tells the Owner a
+workspace did not come back whole. The 300 ms target was set 2026-06-01; the synchronous
+call landed 2026-07-14 and the budget was never re-derived. I did NOT re-derive it to buy
+green. Components measured and named; the row stays attributed.
+
+### The 92.5% nobody was speaking about
+
+`verify_global_mirrors` compares 28 pairs and prints "345 file(s) present on one side
+only". Parity therefore spoke for 7.5% of the surface while the report read as complete.
+Classified from evidence (`tools/mirror_unpaired_audit.py`), against the installed tree:
+
+| class | n | meaning |
+|---|---|---|
+| `UNVERSIONED_LIVE` | 30 | running in production, no repo copy |
+| `LIVE_FROM_REPO` | 18 | correctly live from the repo, no mirror needed |
+| `CANONICAL_DORMANT` | 10 | in the repo, nothing registers them |
+| `LIVE_DORMANT` | 7 | present live, nothing registers them |
+| `UNCLASSIFIED` | 279 | commands/agents/vault — printed as unknown, never as fine |
+| `BROKEN_REGISTRATION` | **0** | exercised against a synthetic case, since reality supplies none |
+
+**The dispatcher question, settled by machine.** `settings.json` registers the LIVE copy,
+which `drift_report` puts 35 days behind the repo copy. Comparing what each REGISTERS
+yields exactly one divergence: `session_delta_stop.js`, wired canonically and absent from
+the copy that runs. That is the SREE class found by construction rather than by reading —
+and it independently reproduces an OWNER_QUEUE note a human wrote on 2026-08-03. One
+divergence is also a sharper claim than "the dispatcher is drifted": the registration sets
+agree, only the bodies differ.
+
+### A backlog that could not be worked
+
+`normalize_paths --check` reported 163 doc findings. **26 of its proposed rewrites would
+have damaged the file or contradicted doctrine** — 18 rewrote the interpreter path
+CLAUDE.md requires to be absolute, 8 collapsed a three-item list of home-directory
+spellings into one naming the same thing twice. Because the remediation was wrong one time
+in six nobody could run it, so the 137 correct rewrites never landed either. The unsafe
+minority held the safe majority hostage for months.
+
+Exemptions computed, narrow, each bookended by a case that must still be rewritten. 163 →
+144, 20 exempt, every one read individually. The 144 are NOT applied: they are real, but
+that is 144 edits across 76 files on a branch a second pane is working in, and whether
+repo docs carry `~` is the Owner's call.
+
+**Owner decision surfaced rather than silently resolved:** those 18 lines DO disclose the
+home path, and doctrine mandates the literal that discloses it. Two rules in tension.
+`$env:LOCALAPPDATA\...` would satisfy both but changes CLAUDE.md, which this repo does not
+own.
+
+### The rule that caught the next tool within the hour
+
+`T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001` was sealed because the unpaired audit hardcoded
+its install path and reported 18 live hooks as dormant from any worktree. The very next
+tool run — the router freshness gate — printed `V-ROUTER-LINKS FAIL router absent` from
+the worktree: a clean failure, a plausible message, about a directory that had never
+existed. Same defect, in the gate that verifies the corpus the rule lives in. Neither
+could have found the other from the installed tree, because that is the one place the
+defect does not bite. Fixed without a subprocess (a linked worktree's `.git` is a file
+naming its main), with both branches self-checked on every run.
+
+### Knowledge-to-behaviour, my own
+
+I used `2>&1` on a native executable in a PowerShell call — a trap documented explicitly in
+the CLAUDE.md I operate under — and it produced the `NativeCommandError` the rule exists to
+prevent. Second instance this mission of the Finding D class (§6). Recording it because a
+report that only lists the machine's failures and none of mine is not an honest report. It
+cost one retry and no damage, but the mechanism is identical to the BOM incident: the
+knowledge was present, retrievable, and did not reach the moment of composition.
+
+### Verdict summary
+
+**6 commits**, all pushed. **41 new gates** across 4 suites plus 2 in-gate self-checks, all
+green. **7 UKDL rules** (4 traps, 3 process rules, **0 Hard Rules**) plus one EXTENSION to
+the existing fast-path rule rather than an eighth clone. Two of my own prior claims
+withdrawn on measurement.
+
+### Owner actions, updated
+
+1. `~/.claude/settings.json` — widen the `PreToolUse-Bash-chain` matcher `"Bash"` →
+   `"Bash|PowerShell"`. Unchanged from the previous session; still the one-line change that
+   turns `correctness-traps` green.
+2. `hook-dispatcher.js` — reconcile canonical vs live. Now with a NAMED consequence rather
+   than a general warning: `session_delta_stop.js` is wired in the copy that does not run,
+   and `research-intent-detector.js` is 95 days stale in the copy that does.
+3. `normalize_paths` — 144 legitimate doc rewrites, now trustworthy enough to apply in one
+   pass. Plus the doctrine/security tension on the 18 exempt lines.
