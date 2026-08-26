@@ -219,11 +219,36 @@ def _assess(prompt, answer, ledger=None, family=""):
     )
 
 
-def test_a_declared_gap_becomes_source_limited_not_low_value():
+def test_a_refusal_that_teaches_stays_extractable_and_routes_the_question():
+    """The gap is about the QUESTION; extractability is about the ANSWER.
+
+    SF30-022 declares a capability boundary AND teaches the conditions that
+    would beat it. Filing the whole thing as SOURCE_LIMITED told the pipeline
+    to skip the teaching -- 9 of 30 answers, including the most honest content
+    in the corpus.
+    """
     a = _assess("¿Cuál ha sido el launch con menor capital que conoces?", REFUSAL)
-    assert a.disposition is Disposition.SOURCE_LIMITED
     assert a.shape is AnswerShape.REFUSAL_WITH_GUIDANCE
-    assert a.disposition is not Disposition.LOW_VALUE
+    assert a.route_to_expert is True
+    assert a.disposition is Disposition.EXTRACTABLE
+    assert any(f.code == "ROUTE_TO_EXPERT" for f in a.flags)
+
+
+def test_a_bare_refusal_with_nothing_else_is_source_limited():
+    bare = "No tenemos acceso a los datos de otros clientes para esos casos."
+    a = _assess("¿Qué capital tenían los casos de 100k?", bare)
+    assert a.disposition is Disposition.SOURCE_LIMITED
+    assert a.route_to_expert is True
+
+
+def test_routing_is_independent_of_whether_the_answer_was_good():
+    """A question the source cannot satisfy is worth routing away even when
+    the answer it produced was worth keeping. Re-asking is spend with a known
+    outcome."""
+    a = _assess("¿Cuál ha sido el launch con menor capital que conoces?", REFUSAL)
+    b = _assess("¿Qué métrica utilizarías como objetivo?", REFUSAL)
+    assert a.route_to_expert is True     # case-data question
+    assert b.route_to_expert is False    # advisory question, same answer
 
 
 def test_crossing_a_declared_boundary_is_rejected_not_merely_weak():

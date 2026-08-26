@@ -307,12 +307,151 @@ def cmd_run(args) -> int:
             dry_run=False,
         )
         print(f"\n{report.line()}")
+        print(report.quality_line())
         _print_status(store)
         return 0 if report.needs_human == 0 else 2
     finally:
         adapter.teardown()
         lock.release()
         store.close()
+
+
+def _rebuild_ledger(store: Store, interface: str) -> list:
+    """Every boundary the live source has ever declared, rebuilt from raw.
+
+    Backfill does NOT reuse the persisted ledger, and does not accumulate in
+    corpus order either. Both were tried; both make a stored verdict depend on
+    when it happened to be computed. The first backfill judged early answers
+    against an empty ledger and the second judged them against a full one --
+    same code, same raw, different verdicts.
+
+    A stored judgment has to be reproducible from raw alone, so it is made
+    against everything the source has ever said it cannot do. Position in the
+    corpus is not evidence: once the source has admitted it cannot see the
+    cohort, that is true of the answer on page one as well.
+
+    Live acquisition is the opposite case and keeps the accumulating ledger --
+    there, the system genuinely does not know yet.
+    """
+    from .boundary import detect_boundaries
+
+    ledger: list = []
+    seen: set[str] = set()
+    rows = store.con.execute(
+        "SELECT r.raw_digest FROM response r JOIN prompt p "
+        "ON p.prompt_id = r.prompt_id WHERE r.source = ? ORDER BY p.ordinal",
+        (interface,),
+    ).fetchall()
+    for r in rows:
+        for b in detect_boundaries(store.vault.get(r["raw_digest"], "response")):
+            if b.boundary_id not in seen:
+                seen.add(b.boundary_id)
+                ledger.append(b)
+    return ledger
+
+
+def cmd_assess_backfill(args) -> int:
+    """Judge answers already on disk. Reads raw; never writes it."""
+    from dataclasses import replace
+
+    from .classifier import assess
+    from .expectation import CLASSIFIER_VERSION
+
+    cfg = _load_config()
+    store = _open(cfg)
+    interface = args.interface or cfg.get("default_interface") or "eva"
+    try:
+        rows = store.unassessed_responses(CLASSIFIER_VERSION)
+        if not rows:
+            print(f"nothing to assess at {CLASSIFIER_VERSION}")
+            _print_quality(store, interface)
+            return 0
+
+        print(f"assessing {len(rows)} response(s) at {CLASSIFIER_VERSION}")
+        ledger = _rebuild_ledger(store, interface)
+        print(f"  ledger rebuilt from raw: {len(ledger)} declaration(s)")
+        seen = {b.boundary_id for b in ledger}
+        written = 0
+
+        for r in rows:
+            answer = store.vault.get(r["raw_digest"], "response")
+            a = assess(
+                prompt_id=r["prompt_id"], response_id=r["response_id"],
+                prompt_text=r["raw_prompt"], answer_text=answer,
+                family=r["family"], known_boundaries=ledger,
+            )
+
+            # A boundary is a fact about what the LIVE source said. Answers
+            # imported from the corpus document were never captured by this
+            # system -- their provenance is a file, not a session -- so they
+            # are judged but are not allowed to teach the ledger.
+            live = r["source"] == interface
+            if not live:
+                a = replace(a, boundaries=())
+
+            if store.record_assessment(a, interface=interface):
+                written += 1
+            for b in a.boundaries:
+                if b.boundary_id not in seen:
+                    seen.add(b.boundary_id)
+                    ledger.append(b)
+
+            if args.verbose:
+                print(f"  {r['external_id']:>10} {a.expected.value:<11} "
+                      f"{a.epistemic:<10} {a.disposition.value}")
+
+        print(f"\nassessed {written} response(s)")
+        _print_quality(store, interface)
+    finally:
+        store.close()
+    return 0
+
+
+def _print_quality(store: Store, interface: str) -> None:
+    s = store.assessment_stats(interface)
+    print("\n-- assessment --")
+    print(f"  classifier    {s['classifier_version']}")
+    print(f"  assessed      {s['assessed']:>6}")
+    print(f"  context-bound {s['context_bound']:>6}")
+    print(f"  route to expert {s['route_to_expert']:>4}   "
+          f"(questions this source has declared it cannot satisfy)")
+    for label, key in (("by disposition", "by_disposition"),
+                       ("by epistemic", "by_epistemic"),
+                       ("by question type", "by_expected")):
+        if not s[key]:
+            continue
+        print(f"  {label}:")
+        for k, n in sorted(s[key].items(), key=lambda kv: -kv[1]):
+            print(f"    {k:<20} {n:>6}")
+    if s["boundaries"]:
+        print(f"\n  what '{interface}' has said it cannot do:")
+        for b in s["boundaries"]:
+            scope = " ".join(b["scope_text"].split())[:96]
+            mark = "cohort" if b["cohort_scoped"] else "narrow"
+            print(f"    [{b['kind']:<11} {mark} x{b['times_seen']}] {scope}")
+
+
+def cmd_quality(args) -> int:
+    cfg = _load_config()
+    store = _open(cfg)
+    interface = args.interface or cfg.get("default_interface") or "eva"
+    try:
+        _print_quality(store, interface)
+        if args.disposition:
+            rows = store.con.execute(
+                "SELECT p.external_id, a.epistemic, a.followups, a.flags "
+                "FROM assessment a JOIN prompt p ON p.prompt_id=a.prompt_id "
+                "WHERE a.disposition=? ORDER BY p.ordinal LIMIT ?",
+                (args.disposition, args.limit),
+            ).fetchall()
+            print(f"\n-- {args.disposition} --")
+            for r in rows:
+                print(f"  {r['external_id']:>10} {r['epistemic']}")
+                for f in json.loads(r["followups"]):
+                    print(f"      follow-up: {f[:110]}")
+    finally:
+        store.close()
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -378,6 +517,21 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--steal-lock", action="store_true",
                    help="clear a profile lock left by a run that was killed")
     p.set_defaults(func=cmd_run)
+
+    p = sub.add_parser("assess-backfill",
+                       help="judge answers already captured; reads raw, never writes it")
+    p.add_argument("--interface")
+    p.add_argument("--verbose", action="store_true",
+                   help="one line per answer as it is judged")
+    p.set_defaults(func=cmd_assess_backfill)
+
+    p = sub.add_parser("quality",
+                       help="what the source can answer, and what it has declared it cannot")
+    p.add_argument("--interface")
+    p.add_argument("--disposition",
+                   help="list the prompts with this disposition and their follow-ups")
+    p.add_argument("--limit", type=int, default=25)
+    p.set_defaults(func=cmd_quality)
 
     return ap
 

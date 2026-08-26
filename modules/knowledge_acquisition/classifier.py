@@ -126,6 +126,13 @@ class Assessment:
     epistemic: str
     epistemic_reason: str
     disposition: Disposition
+    #: The gap is a fact about the QUESTION; the disposition is a fact about
+    #: the ANSWER. Conflating them cost real content: SF30-022 declares a
+    #: capability boundary AND teaches the conditions that would beat it, and
+    #: filing it as SOURCE_LIMITED told the pipeline to skip the teaching.
+    #: A question this source has declared it cannot satisfy routes to a human
+    #: expert whether or not the answer it produced was worth extracting.
+    route_to_expert: bool
     context_bound: bool
     context_markers: tuple[str, ...] = field(default=())
     boundaries: tuple[BoundaryDeclaration, ...] = field(default=())
@@ -181,10 +188,14 @@ def _decide(
             f"{len(claims)} quantified claim(s) about a population the source "
             f"declared it cannot see"
         )
-    if governing is not None and expectation.needs_first_hand_access:
+    if (governing is not None and expectation.needs_first_hand_access
+            and len(answer) < MIN_SUBSTANTIVE_CHARS):
+        # A bare refusal with nothing else in it. When the same refusal also
+        # teaches -- the common case here -- the answer stays extractable and
+        # only the QUESTION is routed away, via route_to_expert.
         return Disposition.SOURCE_LIMITED, (
-            "the question needs first-hand case evidence and the source "
-            "declared it does not have it"
+            "the question needs first-hand case evidence, the source declared "
+            "it does not have it, and the answer carries nothing else"
         )
     if claims:
         return Disposition.DEEPEN, (
@@ -197,7 +208,10 @@ def _decide(
             f"{len(answer)} chars -- below the substantive floor "
             f"({MIN_SUBSTANTIVE_CHARS})"
         )
-    if expectation.needs_first_hand_access:
+    if expectation.needs_first_hand_access and governing is None:
+        # Only worth a narrower re-ask while the source has NOT said it lacks
+        # the data. Once it has, another phrasing is spend with a known
+        # outcome, and route_to_expert carries the question elsewhere instead.
         return Disposition.DEEPEN, (
             "case evidence was asked for and not delivered, but the source "
             "never said it lacks it -- a narrower question may still land"
@@ -270,7 +284,21 @@ def assess(
         claimed, answer_text, why, 1, coverage
     )
 
+    # Orthogonal to the disposition on purpose: this question is one the source
+    # has already declared it cannot satisfy, so re-asking it is spend with a
+    # known answer. Routing it away is worth doing even when the answer that
+    # came back was worth keeping.
+    route_to_expert = (
+        governing is not None and expectation.needs_first_hand_access
+    )
+
     flags: list[Flag] = [Flag("DISPOSITION", why)]
+    if route_to_expert:
+        flags.append(Flag(
+            "ROUTE_TO_EXPERT",
+            "needs first-hand case evidence the source has declared it does "
+            "not have; ask a human, do not re-ask this source",
+        ))
     if governing is not None:
         flags.append(Flag("GOVERNING_BOUNDARY", governing.scope_text[:200]))
     for c in claims:
@@ -299,6 +327,7 @@ def assess(
         epistemic=epistemic,
         epistemic_reason=cap_reason,
         disposition=disposition,
+        route_to_expert=route_to_expert,
         context_bound=context_bound,
         context_markers=markers,
         boundaries=tuple(declared),

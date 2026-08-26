@@ -1,4 +1,4 @@
-"""The acquisition loop: claim -> ask -> persist -> transition.
+"""The acquisition loop: claim -> ask -> persist -> transition -> assess.
 
 Crash safety comes from ordering, not from cleanup. Each iteration:
 
@@ -6,11 +6,18 @@ Crash safety comes from ordering, not from cleanup. Each iteration:
   2. adapter.ask()         the only slow, failure-prone step
   3. record_response()     RAW lands on disk BEFORE the database row
   4. transition()          RUNNING -> COMPLETE / FAILED / NEEDS_HUMAN
+  5. assess()              derived judgment, strictly last and fully guarded
 
 A kill at any point leaves a RUNNING job with an unrenewed lease, which
 `recover_expired_leases()` returns to PENDING. A kill between 3 and 4 leaves
 the answer safely on disk; the retry re-captures it, the content hash matches,
 and the row is not duplicated. Verified by real process kills, not simulation.
+
+Step 5 is deliberately after step 4 and wrapped: an assessment is derived data
+and must never be able to cost a capture that was already paid for. If the
+classifier raises, the answer stays COMPLETE and simply has no assessment --
+which `assess-backfill` will pick up later. The failure is printed, never
+swallowed.
 
 Pacing is deliberately conservative and sequential. This is someone's paid
 account, not a load target: one prompt at a time, with a delay between them,
@@ -23,6 +30,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
+from .classifier import Disposition, assess
 from .eva_adapter import ADAPTER_VERSION, AdapterError, EvaAdapter
 from .models import ConversationMode, IntegrityVerdict, JobState
 from .store import Store
@@ -32,6 +40,11 @@ DEFAULT_PACING_S = 6.0
 #: Consecutive failures before the whole run stops. A repeated failure is a
 #: broken assumption, and burning 2,178 prompts against it helps nobody.
 CONSECUTIVE_FAILURE_LIMIT = 3
+#: Consecutive substanceless answers before stopping. The eight measured live
+#: answers averaged ~2,560 chars and the shortest was 1,221; a run of five in a
+#: row below the substantive floor means the session, the page or the source
+#: changed, and continuing would spend hours collecting nothing.
+CONSECUTIVE_LOW_VALUE_LIMIT = 5
 
 
 @dataclass
@@ -44,11 +57,19 @@ class RunReport:
     stopped_reason: str = ""
     elapsed_s: float = 0.0
     per_prompt: list[dict] = field(default_factory=list)
+    by_disposition: dict = field(default_factory=dict)
+    boundaries_learned: int = 0
 
     def line(self) -> str:
         return (f"attempted={self.attempted} completed={self.completed} "
                 f"failed={self.failed} needs_human={self.needs_human} "
                 f"({self.elapsed_s:.0f}s) -- {self.stopped_reason}")
+
+    def quality_line(self) -> str:
+        if not self.by_disposition:
+            return "  no answers assessed this run"
+        parts = " ".join(f"{k}={v}" for k, v in sorted(self.by_disposition.items()))
+        return f"  dispositions: {parts}  boundaries_learned={self.boundaries_learned}"
 
 
 class AcquisitionRunner:
@@ -60,6 +81,8 @@ class AcquisitionRunner:
         pacing_s: float = DEFAULT_PACING_S,
         worker: str = "runner",
         lock=None,
+        interface: str = "eva",
+        assess_answers: bool = True,
     ) -> None:
         self.store = store
         self.adapter = adapter
@@ -68,7 +91,73 @@ class AcquisitionRunner:
         #: Optional ProfileLock. Refreshed each iteration so a live run is not
         #: mistaken for an abandoned one, and so a crash releases it by lapse.
         self.lock = lock
+        self.interface = interface
+        self.assess_answers = assess_answers
         self._current_family: str | None = None
+        self._ledger: list = []
+        self._ledger_ids: set[str] = set()
+
+    # -- assessment ----------------------------------------------------------
+
+    def _load_ledger(self) -> None:
+        """Everything the source has already told us it cannot do."""
+        self._ledger = []
+        self._ledger_ids = set()
+        if not self.assess_answers:
+            return
+        try:
+            for b in self.store.known_boundaries(self.interface):
+                self._remember(b)
+        except Exception as exc:  # noqa: BLE001
+            # A ledger we cannot read costs precision, never a capture: the run
+            # proceeds and every claim is judged against an empty history.
+            print(f"  boundary ledger unavailable ({exc}); "
+                  f"judging without prior boundaries")
+
+    def _remember(self, boundary) -> bool:
+        if boundary.boundary_id in self._ledger_ids:
+            return False
+        self._ledger_ids.add(boundary.boundary_id)
+        self._ledger.append(boundary)
+        return True
+
+    def _assess_answer(self, job, captured, response_id: str, report: RunReport) -> str:
+        """Judge one answer. Derived, guarded, and never load-bearing.
+
+        Only OK captures are judged. An answer the integrity gate would not
+        vouch for must not be allowed to write a boundary into the ledger --
+        a truncated refusal would record a capability limit the source never
+        actually stated.
+        """
+        if not self.assess_answers or captured.verdict is not IntegrityVerdict.OK:
+            return ""
+        try:
+            a = assess(
+                prompt_id=job.prompt_id,
+                response_id=response_id,
+                prompt_text=job.raw_prompt,
+                answer_text=captured.text,
+                family=job.family,
+                known_boundaries=self._ledger,
+            )
+            self.store.record_assessment(a, interface=self.interface)
+            for b in a.boundaries:
+                if self._remember(b):
+                    report.boundaries_learned += 1
+            key = a.disposition.value
+            report.by_disposition[key] = report.by_disposition.get(key, 0) + 1
+            return key
+        except Exception as exc:  # noqa: BLE001 -- see module docstring, step 5
+            # Broad on purpose: no classifier defect may cost an answer that was
+            # already captured and paid for. Recorded as unrated and printed, so
+            # a judgment layer that is down is visible rather than assumed to
+            # have passed.
+            print(f"    assessment unavailable ({type(exc).__name__}: {exc})")
+            key = Disposition.UNRATED.value
+            report.by_disposition[key] = report.by_disposition.get(key, 0) + 1
+            return key
+
+    # -- the loop ------------------------------------------------------------
 
     def run(
         self,
@@ -109,7 +198,13 @@ class AcquisitionRunner:
             report.elapsed_s = time.time() - t0
             return report
 
+        self._load_ledger()
+        if self._ledger:
+            print(f"  boundary ledger: {len(self._ledger)} declaration(s) "
+                  f"already known for '{self.interface}'")
+
         consecutive_failures = 0
+        consecutive_low_value = 0
 
         while limit is None or report.attempted < limit:
             job = self.store.claim_next(
@@ -156,7 +251,7 @@ class AcquisitionRunner:
             consecutive_failures = 0
 
             # Raw first, always.
-            digest = self.store.record_response(
+            response_id = self.store.record_response(
                 job.prompt_id, captured.text,
                 source="eva", source_version=ADAPTER_VERSION,
                 verdict=captured.verdict, reason=captured.reason,
@@ -181,14 +276,29 @@ class AcquisitionRunner:
                 report.failed += 1
                 status = captured.verdict.value
 
+            disposition = self._assess_answer(job, captured, response_id, report)
+
             print(f"  {label} {status} {len(captured.text)}ch "
                   f"{captured.elapsed_s}s paired={captured.paired} "
-                  f"raw={digest[:12]}")
+                  f"{disposition or '-'}")
             report.per_prompt.append({
                 "external_id": job.external_id, "status": status,
                 "chars": len(captured.text), "elapsed_s": captured.elapsed_s,
-                "paired": captured.paired, "digest": digest,
+                "paired": captured.paired, "response_id": response_id,
+                "disposition": disposition,
             })
+
+            if disposition == Disposition.LOW_VALUE.value:
+                consecutive_low_value += 1
+                if consecutive_low_value >= CONSECUTIVE_LOW_VALUE_LIMIT:
+                    report.stopped_reason = (
+                        f"{consecutive_low_value} consecutive substanceless "
+                        f"answers -- the source or the session changed; stopping "
+                        f"rather than spending hours collecting nothing"
+                    )
+                    break
+            else:
+                consecutive_low_value = 0
 
             time.sleep(self.pacing_s)
         else:
@@ -198,7 +308,13 @@ class AcquisitionRunner:
         return report
 
     def _prepare_conversation(self, job) -> None:
-        """Honour the conversation model, so context bleed is a decision."""
+        """Honour the conversation model, so context bleed is a decision.
+
+        Note the honest limit, measured 2026-08-26: SF30-024 referred to advice
+        never given in this run, so the account carries memory across sessions
+        that no client-side action can clear. ISOLATED reduces bleed within a
+        run; it cannot deliver isolation, and the classifier flags what leaks.
+        """
         mode = ConversationMode(job.conversation_mode)
         if mode is ConversationMode.ISOLATED:
             self.adapter.new_conversation()
@@ -217,4 +333,9 @@ class AcquisitionRunner:
         ))
 
 
-__all__ = ["AcquisitionRunner", "RunReport", "DEFAULT_PACING_S"]
+__all__ = [
+    "AcquisitionRunner",
+    "RunReport",
+    "DEFAULT_PACING_S",
+    "CONSECUTIVE_LOW_VALUE_LIMIT",
+]

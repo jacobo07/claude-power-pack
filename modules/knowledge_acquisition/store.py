@@ -526,6 +526,7 @@ class Store:
         epistemic          TEXT NOT NULL,
         epistemic_reason   TEXT NOT NULL DEFAULT '',
         disposition        TEXT NOT NULL,
+        route_to_expert    INTEGER NOT NULL DEFAULT 0,
         context_bound      INTEGER NOT NULL DEFAULT 0,
         context_markers    TEXT NOT NULL DEFAULT '[]',
         flags              TEXT NOT NULL DEFAULT '[]',
@@ -555,6 +556,18 @@ class Store:
         if getattr(self, "_assess_ready", False):
             return
         self.con.executescript(self._ASSESSMENT_SCHEMA)
+        # CREATE TABLE IF NOT EXISTS is a no-op on a table that predates a new
+        # column, so a database written by an earlier build needs it added
+        # explicitly. Additive ALTER rather than a rebuild: the older rows are
+        # the record of what previous classifier versions concluded, and
+        # dropping them to simplify a migration would destroy exactly the
+        # history the version column exists to preserve.
+        cols = {r[1] for r in self.con.execute("PRAGMA table_info(assessment)")}
+        if cols and "route_to_expert" not in cols:
+            self.con.execute(
+                "ALTER TABLE assessment "
+                "ADD COLUMN route_to_expert INTEGER NOT NULL DEFAULT 0"
+            )
         self._assess_ready = True
 
     def record_assessment(self, assessment, *, interface: str = "eva") -> bool:
@@ -576,14 +589,25 @@ class Store:
         now = utc_now()
 
         with self._tx() as con:
+            # Named columns, not positional. An ALTER appends its column at the
+            # end of the table regardless of where it sits in the CREATE, so a
+            # positional INSERT writes the right values into the wrong columns
+            # on any database that was migrated rather than created fresh.
             cur = con.execute(
-                "INSERT OR IGNORE INTO assessment VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT OR IGNORE INTO assessment "
+                "(assessment_id, response_id, prompt_id, classifier_version, "
+                " expected, shape, coverage, epistemic, epistemic_reason, "
+                " disposition, route_to_expert, context_bound, context_markers, "
+                " flags, followups, assessed_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     assessment_id, assessment.response_id, assessment.prompt_id,
                     assessment.classifier_version, assessment.expected.value,
                     assessment.shape.value, assessment.coverage,
                     assessment.epistemic, assessment.epistemic_reason,
-                    assessment.disposition.value, int(assessment.context_bound),
+                    assessment.disposition.value,
+                    int(assessment.route_to_expert),
+                    int(assessment.context_bound),
                     json.dumps(list(assessment.context_markers), ensure_ascii=False),
                     json.dumps([{"code": f.code, "evidence": f.evidence}
                                 for f in assessment.flags], ensure_ascii=False),
@@ -646,24 +670,47 @@ class Store:
             (classifier_version,),
         ).fetchall()
 
-    def assessment_stats(self, interface: str = "eva") -> dict:
-        """Distribution an operator can act on, not a dashboard."""
+    def latest_classifier_version(self) -> str | None:
         self._ensure_assessment_schema()
+        row = self.con.execute(
+            "SELECT classifier_version FROM assessment "
+            "ORDER BY assessed_at DESC LIMIT 1").fetchone()
+        return row[0] if row else None
 
-        def group(sql: str) -> dict:
-            return {r[0]: r[1] for r in self.con.execute(sql)}
+    def assessment_stats(self, interface: str = "eva",
+                         classifier_version: str | None = None) -> dict:
+        """Distribution an operator can act on, not a dashboard.
+
+        Scoped to ONE classifier version, defaulting to the most recent. Older
+        versions are kept -- overwriting them would destroy the evidence of a
+        regression -- but summing across versions reports 60 judgments for 30
+        answers, which is not a distribution, it is a double count.
+        """
+        self._ensure_assessment_schema()
+        version = classifier_version or self.latest_classifier_version()
+        clause = "WHERE classifier_version = ?"
+        args = (version,)
+
+        def group(column: str) -> dict:
+            return {
+                r[0]: r[1] for r in self.con.execute(
+                    f"SELECT {column}, COUNT(*) FROM assessment {clause} "
+                    f"GROUP BY {column}", args)
+            }
 
         return {
+            "classifier_version": version,
             "assessed": self.con.execute(
-                "SELECT COUNT(*) FROM assessment").fetchone()[0],
-            "by_disposition": group(
-                "SELECT disposition, COUNT(*) FROM assessment GROUP BY disposition"),
-            "by_epistemic": group(
-                "SELECT epistemic, COUNT(*) FROM assessment GROUP BY epistemic"),
-            "by_expected": group(
-                "SELECT expected, COUNT(*) FROM assessment GROUP BY expected"),
+                f"SELECT COUNT(*) FROM assessment {clause}", args).fetchone()[0],
+            "by_disposition": group("disposition"),
+            "by_epistemic": group("epistemic"),
+            "by_expected": group("expected"),
+            "route_to_expert": self.con.execute(
+                f"SELECT COUNT(*) FROM assessment {clause} AND route_to_expert=1",
+                args).fetchone()[0],
             "context_bound": self.con.execute(
-                "SELECT COUNT(*) FROM assessment WHERE context_bound=1").fetchone()[0],
+                f"SELECT COUNT(*) FROM assessment {clause} AND context_bound=1",
+                args).fetchone()[0],
             "boundaries": [
                 dict(r) for r in self.con.execute(
                     "SELECT kind, cohort_scoped, times_seen, scope_text "

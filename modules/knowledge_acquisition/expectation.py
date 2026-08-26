@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 #: Bump when derivation changes in a way that alters a stored assessment.
-CLASSIFIER_VERSION = "kacq-assess/1.0.0"
+CLASSIFIER_VERSION = "kacq-assess/1.3.0"
 
 
 def fold(text: str) -> str:
@@ -56,10 +56,16 @@ class EvidenceKind(str, Enum):
 # expert routing -- getting this set wrong is expensive in both directions.
 _COHORT_MARKERS = (
     "los casos", "en casos", "casos de", "casos reales", "algun caso",
+    "mejores casos", "los mejores", "casos que", "de los casos",
     "que conoces", "que has visto", "has visto", "tenian los", "tenia el",
     "estaba disponible", "ejemplos reales", "otros clientes", "vuestros clientes",
     "de tus clientes", "cual ha sido", "cuales han sido", "que marcas",
     "que empresas", "quien ha", "alguna marca",
+    # Observation verbs: the question asks what was SEEN, which only first-hand
+    # access can supply. SF30-014 ("que MER ... se observaron en los mejores
+    # casos") resolved to OPEN without these.
+    "se observaron", "se observo", "que observas", "observas entre",
+    "habeis visto", "habeis observado",
 )
 
 # Asking for a magnitude. Distinct from cohort: "what ROAS should I target" wants
@@ -103,6 +109,31 @@ _KIND_MARKERS: tuple[tuple[EvidenceKind, tuple[str, ...]], ...] = (
 )
 
 
+# The Spanish 2nd-person conditional ("usarias", "exigirias", "normalizarias")
+# asks the source for its own judgment. The first cut of this module enumerated
+# individual verbs and missed five of thirty prompts on morphology alone --
+# "utilizarias" was listed, "usarias" was not. A verb list is the wrong shape
+# for an inflected language; the ending IS the signal.
+#
+# Person matters. The 2nd-person ending means "what would YOU do" and marks an
+# advisory question; the 3rd person ("que relacion distinguiria X de Y") does
+# not, which is why this anchors on the final s.
+#
+# Unaccented by necessity, not style: the haystack is folded before matching,
+# so an accented character class here would be a branch nothing can reach.
+_CONDITIONAL_RX = re.compile(r"\b\w+[aei]rias\b")
+
+# Typicality. "que margen SUELE permitir" asks for the usual value -- a
+# benchmark request carrying no number word at all.
+_TYPICALITY_MARKERS = ("suele", "suelen", "normalmente", "habitualmente",
+                       "por lo general", "de media")
+
+# Which advisory kind a conditional resolves to, decided by the interrogative
+# it travels with: "como normalizarias" is a method, "que criterios usarias" is
+# a choice.
+_HOW_MARKERS = ("como ", "de que forma", "de que manera")
+
+
 @dataclass(frozen=True)
 class Expectation:
     """What would satisfy this question, and what it would take to satisfy it."""
@@ -135,6 +166,7 @@ def derive_expectation(prompt_text: str, family: str = "") -> Expectation:
 
     cohort = [m for m in _COHORT_MARKERS if m in text]
     quantity = [m for m in _QUANTITY_MARKERS if m in text]
+    quantity += [m for m in _TYPICALITY_MARKERS if m in text]
     hits.extend(cohort)
     hits.extend(quantity)
 
@@ -158,6 +190,21 @@ def derive_expectation(prompt_text: str, family: str = "") -> Expectation:
                 wants_cohort_evidence=False,
                 markers=tuple(found + quantity),
             )
+
+    # Morphology before vocabulary: an inflected verb the tables never listed
+    # still marks an advisory question, and which KIND it is depends on the
+    # interrogative it travels with.
+    conditional = _CONDITIONAL_RX.search(text)
+    if conditional:
+        kind = (EvidenceKind.METHODOLOGY
+                if any(m in text for m in _HOW_MARKERS)
+                else EvidenceKind.DECISION)
+        return Expectation(
+            kind=kind,
+            wants_quantity=bool(quantity),
+            wants_cohort_evidence=False,
+            markers=tuple([conditional.group(0)] + quantity),
+        )
 
     if quantity:
         return Expectation(

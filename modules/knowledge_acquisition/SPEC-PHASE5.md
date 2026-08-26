@@ -151,14 +151,28 @@ Stated against answers already measured, so the gate cannot be tuned to pass.
 
 | Case | Required outcome |
 |---|---|
-| SF30-022 (refuses + teaches) | NOT low-value; ACCESS boundary recorded; source-limited |
+| SF30-022 (refuses + teaches) | NOT low-value; ACCESS boundary recorded; question routed to an expert AND the answer still extractable |
 | SF30-024 (cohort statistics) | NOT high-confidence; boundary-crossing flagged; REJECTED epistemic |
 | SF30-021 (both in one answer) | boundary recorded AND crossing flagged from the same text |
 | SF30-020 (wrong subject) | context-bound, with the substitution preserved |
-| SF30-025 (honest hedge) | VARIABILITY only; **against an empty ledger** it must NOT be SOURCE_LIMITED |
-| SF30-025 against the filled ledger | SOURCE_LIMITED — a real prior ACCESS declaration governs a new case-data question |
+| SF30-025 (honest hedge) | VARIABILITY only; **against an empty ledger** neither routed nor a declared gap |
+| SF30-025 against the filled ledger | routed to an expert — a real prior ACCESS declaration governs a new case-data question |
 | SF30-018/019 | separate on measurable-datum presence |
 | All 8 | context_bound = true |
+
+Two rows were amended against measurement during implementation, and the
+amendments are the finding, not bookkeeping:
+
+1. The original SF30-025 row said "not routed to a human", which conflated two
+   things. What must be true is that a VARIABILITY hedge does not BY ITSELF
+   create a gap; routing driven by a real prior ACCESS declaration is the
+   ledger working. The row now isolates that variable by asserting against an
+   empty ledger.
+2. The original SF30-022 row said "source-limited", which suppressed
+   extraction of an answer that teaches while refusing. Nine of thirty answers
+   landed there, including the most honest content in the corpus. The gap is a
+   fact about the QUESTION and extractability is a fact about the ANSWER;
+   `route_to_expert` now carries the first and `disposition` the second.
 
 ## 6. Non-goals
 
