@@ -78,6 +78,58 @@ structural discriminator (column-zero position plus a strictly monotonic ordinal
 walk), and the cardinality assertion. The discriminator is a heuristic and
 heuristics drift; the assertion is what makes the drift loud.
 
+### Traps -- browser acquisition (added after phases 2-4)
+
+**`T-STABILITY-BEFORE-EXISTENCE-001`** -- "The output stopped changing" is not a
+completion signal until the output EXISTS. Measured on a real generation: the
+page text sat UNCHANGED for three seconds before the answer began streaming,
+because what was on screen was chrome plus the echoed request. Any detector
+with a two- or three-poll stability threshold fires inside that window, returns
+non-empty text, and reports success while capturing nothing of the answer. Any
+completion gate over a streaming producer must be two-phase: first wait for the
+output NODE to appear, then wait for that node to settle. Applies to streamed
+LLM responses, progress-reporting builds, and log tailing alike.
+
+**`T-ABSENCE-OF-MARKERS-IS-NOT-EVIDENCE-001`** -- A negative check over an empty
+subject always passes. A session probe searched page text for login and
+challenge markers, found none on a page that had rendered nothing at all, and
+reported an authenticated READY session. Every negative check needs a paired
+positive assertion that the subject was actually present and inspectable -- here,
+that the composer element exists. Same family as
+`T-ZERO-MATCH-READS-AS-EMPTY-INPUT-001`: zero findings mean "nothing to find"
+and "nothing was looked at", and only a positive control separates them.
+
+**`T-CROSS-ORIGIN-IFRAME-INVISIBLE-TO-JS-001`** -- In-page JavaScript cannot
+traverse into a cross-origin iframe, and neither can a page-level
+`query_selector_all`. Both return zero elements, which reads as "this page has
+no controls" rather than "you used a tool that cannot see them". A driver
+framework's frame API crosses the boundary; a DOM walk never will. Before
+concluding an interface is empty or unrendered, compare the element count
+against a screenshot -- a rendered screenshot next to a zero-element query is
+the signature of this trap, and it was exactly the observation that solved it.
+
+**`T-DETACHED-CHILD-SURVIVES-SCRIPT-ABORT-001`** -- Aborting a script does not
+kill the processes it spawned. A PowerShell `$ErrorActionPreference='Stop'`
+terminated the driving script while its `Start-Process` child kept running,
+kept mutating shared state, and was still holding a resource when the retry
+launched -- silently invalidating the very test that spawned it, which then
+reported a clean pass. Any script that spawns a long-lived child must kill it
+in a `finally`, and any adversarial test must verify the subject was actually
+in the state under test at the moment of the fault, rather than assuming its
+own timing held.
+
+### Process Rule -- leases
+
+**`PR-LEASE-NEEDS-AN-OPERATOR-OVERRIDE-001`** -- A lease-based lock recovers a
+crashed holder only after the TTL, and a process killed mid-work leaves a FRESH
+heartbeat -- so the wait is the full TTL, every time, at the worst moment. For
+any lease long enough to cover the real work (here 900s, sized above a 600s
+generation budget), ship an explicit operator override alongside it. Prefer the
+explicit override to inferring liveness from a PID: PIDs are recycled, a
+signal-0 probe is not portable, and a wrong guess puts two writers on one
+resource. Correct default plus a documented escape hatch beats a clever check
+that is right most of the time.
+
 ## DAIF Two-Arm Behavioral Trial (SCS C97, sealed 2026-07-13)
 
 **`PR-DAIF-TWO-ARM-MANDATORY-001`** — Clauses 3 and 4 of the Session Continuity Compiler's done-gate
@@ -6824,5 +6876,15 @@ independent because the blind spot and the fixture set have the same author.
 - [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
 
 - [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
+
+- [tooling/bash:sed] `ceps_81d26e962b4e3fa0` -- Tool failure in bash:sed: Exception as e:  # noqa: BLE001. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:rtk.exe] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:rtk.exe: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:rtk.exe] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:rtk.exe: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
 
 - [regression/bash:pytest] `ceps_cfe92dd0fab0552c` -- Before touching bash:pytest, verify the regression scenario (3 failed) is still covered by a passing test.
