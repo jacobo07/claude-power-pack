@@ -53,11 +53,28 @@ class WebDumper(Dumper):
         action_json = self._out_dir / "action.json"
         action_json.write_text(action.model_dump_json(), encoding="utf-8")
 
+        # Only override the browser path when that directory actually holds an
+        # install. The default is correct on the VPS -- vps/install.sh puts
+        # chromium in exactly this cache -- but on a host where Playwright was
+        # installed normally the directory does not exist, and pointing the
+        # variable at it hides a working browser and fails with "executable
+        # doesn't exist". Falling through leaves Playwright's own default
+        # resolution intact, so the VPS keeps its pairing and every other host
+        # starts working.
         cache_dir = os.path.expanduser(
             self.config.get("playwright_cache_dir", "~/.cache/sleepless-qa-playwright")
         )
         env = os.environ.copy()
-        env["PLAYWRIGHT_BROWSERS_PATH"] = cache_dir
+        if os.path.isdir(cache_dir):
+            env["PLAYWRIGHT_BROWSERS_PATH"] = cache_dir
+        elif self.config.get("playwright_cache_dir"):
+            # Explicitly configured but absent: that is a misconfiguration the
+            # operator needs to see, not something to silently route around.
+            raise DumperError(
+                f"playwright_cache_dir is set to {cache_dir!r} but that "
+                f"directory does not exist; remove the setting to use the "
+                f"default install, or run playwright install into it"
+            )
 
         cmd = [
             sys.executable,
