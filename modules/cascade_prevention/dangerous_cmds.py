@@ -40,6 +40,63 @@ DANGEROUS_PATTERNS: list[tuple[re.Pattern, str]] = [
 ]
 
 
+# Commands that are not destructive but are RELIABLY WRONG on this host.
+# Each one is documented in CLAUDE.md or the vault and each one has still
+# been re-issued by an agent that had read the documentation -- which makes
+# them a knowledge-execution failure, not a knowledge gap. Prose has to be
+# recalled at the moment of writing a command; a pattern does not.
+#
+# Advisory, never a block: the command may be exactly what the author
+# wants, and a correctness note that blocks would be indistinguishable from
+# the destructive registry above.
+CORRECTNESS_TRAPS: list[tuple[re.Pattern, str, str]] = [
+    (re.compile(r"\b(?:Set-Content|Out-File|Add-Content)\b[^|\n]*"
+                r"-Encoding\s+utf8\b(?!NoBOM)", re.IGNORECASE),
+     "PowerShell 5.1 writes a UTF-8 BOM with -Encoding utf8",
+     "[System.IO.File]::WriteAllText($p, $s, "
+     "(New-Object System.Text.UTF8Encoding($false)))"),
+
+    (re.compile(r"@['\"][\s\S]*?['\"]@\s*\|\s*[&\s]*\S*\bssh\b",
+                re.IGNORECASE),
+     "a here-string piped to ssh prepends a BOM to the remote stdin, so the "
+     "remote shell loses the first command",
+     "write the script to a temp file UTF-8-no-BOM with LF endings and run "
+     "cmd /c \"ssh ... bash -s < $tmp\""),
+
+    (re.compile(r"(?<![\w./\\-])git\s+(?:status|commit|log|push|add|diff|"
+                r"checkout|rev-parse|fetch)\b"),
+     "bare `git` is not on this host's non-interactive PowerShell PATH, so "
+     "it silently falls back to Bash and can hang the MSYS2 bridge",
+     "& 'C:\\Program Files\\Git\\cmd\\git.exe' <args>"),
+
+    (re.compile(r"\bgit\s+commit\b[^\n]*-m\s*(['\"])[\s\S]*?\n"),
+     "a multi-line `git commit -m` is re-parsed by the shell and breaks the "
+     "pathspec (HR-003)",
+     "write the body to a file and use `git commit -F <file>`"),
+
+    # Observed 2026-08-26 in this session: `python x.py | Select-Object
+    # -First 5` reported CHECK_EXIT=-1 for a script that exited 0.
+    (re.compile(r"&?\s*\S*\b(?:python|pytest|node|npm|git)\S*\b[^|\n]*\|\s*"
+                r"Select-Object\s+-First\b", re.IGNORECASE),
+     "Select-Object -First stops the pipeline, killing the native process "
+     "early and making $LASTEXITCODE meaningless",
+     "redirect to a file, read it, and measure the exit code separately"),
+]
+
+
+def trap_warnings(command: str) -> list[dict]:
+    """Non-blocking correctness notes for `command`. Empty -> nothing known.
+
+    Separate from `reasons()` on purpose: these describe a command that
+    will probably do the wrong thing, not one that will destroy something,
+    and collapsing the two severities would erode the block's meaning.
+    """
+    if not command:
+        return []
+    return [{"trap": what, "fix": fix}
+            for pat, what, fix in CORRECTNESS_TRAPS if pat.search(command)]
+
+
 def is_dangerous(command: str) -> bool:
     """Return True iff `command` matches any DANGEROUS_PATTERNS entry."""
     if not command:

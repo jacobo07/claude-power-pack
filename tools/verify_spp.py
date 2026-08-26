@@ -249,6 +249,14 @@ def main() -> int:
         ("cost-contracts",
          [PY, str(PP / "tools" / "test_cost_contracts.py")],
          90),
+        # RED BY DESIGN until the Owner widens one matcher in
+        # ~/.claude/settings.json to "Bash|PowerShell". The defect is real
+        # -- the whole PreToolUse Bash chain never sees PowerShell -- and a
+        # real defect belongs in the umbrella, not in a TODO. Flips green by
+        # itself when the matcher changes.
+        ("correctness-traps",
+         [PY, str(PP / "tools" / "test_correctness_traps.py")],
+         45),
         ("spec-department",
          [PY, str(PP / "tools" / "test_spec_department.py")],
          60),
