@@ -58,6 +58,23 @@ def content_hash(raw: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def response_row_id(prompt_id: str, content_digest: str) -> str:
+    """Identity of a RESPONSE ROW: which prompt got which bytes.
+
+    Not the same thing as the artifact's address, and conflating the two lost
+    data. The vault is content-addressed on purpose -- two prompts handed the
+    identical answer should store one file. But the ROW is a different fact:
+    "prompt P received these bytes". Keying the row on content alone meant a
+    canned reply reaching a second prompt hit the primary key, was silently
+    dropped by INSERT OR IGNORE, and left that prompt COMPLETE with no
+    retrievable answer -- a lost capture that reads as a success.
+
+    Caught by test_two_prompts_given_the_identical_answer_both_keep_it, which
+    is the brief's "repeated answer from previous prompt" adversarial case.
+    """
+    return hashlib.sha256(f"{prompt_id}|{content_digest}".encode("utf-8")).hexdigest()
+
+
 # --------------------------------------------------------------------------
 # State machine
 # --------------------------------------------------------------------------

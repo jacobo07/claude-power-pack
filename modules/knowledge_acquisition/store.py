@@ -18,6 +18,7 @@ are a derived index; the raw vault remains the source of truth.
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ from .models import (
     IntegrityVerdict,
     JobState,
     assert_transition,
+    response_row_id,
     utc_now,
 )
 from .raw_vault import RawVault
@@ -266,10 +268,11 @@ class Store:
             source_version="inline-import",
             extra={"external_id": parsed.external_id, "origin": "already-in-source-document"},
         )
+        row_id = response_row_id(parsed.prompt_id, art.digest)
         con.execute(
             "INSERT OR IGNORE INTO response VALUES (?,?,?,?,?,?,?,?,?,?)",
             (
-                art.digest, parsed.prompt_id, art.digest, len(parsed.inline_answer),
+                row_id, parsed.prompt_id, art.digest, len(parsed.inline_answer),
                 source, "inline-import", EXTRACTOR_VERSION,
                 IntegrityVerdict.UNVERIFIED.value,
                 "imported from source document; not captured by this system",
@@ -278,7 +281,7 @@ class Store:
         )
         con.execute(
             "INSERT INTO kacq_response_fts (response_id, prompt_id, body) VALUES (?,?,?)",
-            (art.digest, parsed.prompt_id, parsed.inline_answer),
+            (row_id, parsed.prompt_id, parsed.inline_answer),
         )
 
     # -- state machine ------------------------------------------------------
@@ -481,26 +484,193 @@ class Store:
             source_version=source_version,
         )
         now = utc_now()
+        row_id = response_row_id(prompt_id, art.digest)
         with self._tx() as con:
             con.execute(
                 "INSERT OR IGNORE INTO response VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (
-                    art.digest, prompt_id, art.digest, len(raw_response), source,
+                    row_id, prompt_id, art.digest, len(raw_response), source,
                     source_version, EXTRACTOR_VERSION, verdict.value, reason, now,
                 ),
             )
             con.execute(
                 "INSERT INTO kacq_response_fts (response_id, prompt_id, body) "
                 "VALUES (?,?,?)",
-                (art.digest, prompt_id, raw_response),
+                (row_id, prompt_id, raw_response),
             )
-        return art.digest
+        return row_id
 
     def responses_for(self, prompt_id: str) -> list[sqlite3.Row]:
         return self.con.execute(
             "SELECT * FROM response WHERE prompt_id=? ORDER BY captured_at",
             (prompt_id,),
         ).fetchall()
+
+    # -- assessment (SPEC-KACQ-005) ------------------------------------------
+    #
+    # Derived, versioned, and strictly downstream of raw. Nothing here can
+    # rewrite a captured answer, change a job state, or fail a capture: the
+    # runner calls it after the response row is already durable, and guards the
+    # call. An assessment that cannot be produced is an absent assessment, not
+    # a lost answer.
+
+    _ASSESSMENT_SCHEMA = """
+    CREATE TABLE IF NOT EXISTS assessment (
+        assessment_id      TEXT PRIMARY KEY,
+        response_id        TEXT NOT NULL,
+        prompt_id          TEXT NOT NULL,
+        classifier_version TEXT NOT NULL,
+        expected           TEXT NOT NULL,
+        shape              TEXT NOT NULL,
+        coverage           TEXT NOT NULL,
+        epistemic          TEXT NOT NULL,
+        epistemic_reason   TEXT NOT NULL DEFAULT '',
+        disposition        TEXT NOT NULL,
+        context_bound      INTEGER NOT NULL DEFAULT 0,
+        context_markers    TEXT NOT NULL DEFAULT '[]',
+        flags              TEXT NOT NULL DEFAULT '[]',
+        followups          TEXT NOT NULL DEFAULT '[]',
+        assessed_at        TEXT NOT NULL,
+        UNIQUE (response_id, classifier_version)
+    );
+
+    CREATE TABLE IF NOT EXISTS source_boundary (
+        interface           TEXT NOT NULL,
+        boundary_id         TEXT NOT NULL,
+        kind                TEXT NOT NULL,
+        scope_text          TEXT NOT NULL,
+        cohort_scoped       INTEGER NOT NULL DEFAULT 0,
+        first_seen_prompt   TEXT NOT NULL,
+        first_seen_at       TEXT NOT NULL,
+        times_seen          INTEGER NOT NULL DEFAULT 1,
+        PRIMARY KEY (interface, boundary_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS ix_assess_disp   ON assessment(disposition);
+    CREATE INDEX IF NOT EXISTS ix_assess_resp   ON assessment(response_id);
+    CREATE INDEX IF NOT EXISTS ix_boundary_iface ON source_boundary(interface);
+    """
+
+    def _ensure_assessment_schema(self) -> None:
+        if getattr(self, "_assess_ready", False):
+            return
+        self.con.executescript(self._ASSESSMENT_SCHEMA)
+        self._assess_ready = True
+
+    def record_assessment(self, assessment, *, interface: str = "eva") -> bool:
+        """Persist one assessment and any boundaries it declared.
+
+        Idempotent per (response_id, classifier_version): re-running the same
+        classifier is a no-op, and running a NEW version adds a row beside the
+        old one rather than overwriting it. A stored judgment is evidence of
+        what this code believed at that version; silently replacing it would
+        destroy the only record of a classifier regression.
+
+        Returns True when a new assessment row was written.
+        """
+        self._ensure_assessment_schema()
+        import hashlib
+
+        basis = f"{assessment.response_id}|{assessment.classifier_version}"
+        assessment_id = hashlib.sha256(basis.encode("utf-8")).hexdigest()
+        now = utc_now()
+
+        with self._tx() as con:
+            cur = con.execute(
+                "INSERT OR IGNORE INTO assessment VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    assessment_id, assessment.response_id, assessment.prompt_id,
+                    assessment.classifier_version, assessment.expected.value,
+                    assessment.shape.value, assessment.coverage,
+                    assessment.epistemic, assessment.epistemic_reason,
+                    assessment.disposition.value, int(assessment.context_bound),
+                    json.dumps(list(assessment.context_markers), ensure_ascii=False),
+                    json.dumps([{"code": f.code, "evidence": f.evidence}
+                                for f in assessment.flags], ensure_ascii=False),
+                    json.dumps(list(assessment.followups), ensure_ascii=False),
+                    now,
+                ),
+            )
+            written = cur.rowcount > 0
+
+            for b in assessment.boundaries:
+                con.execute(
+                    "INSERT INTO source_boundary "
+                    "(interface, boundary_id, kind, scope_text, cohort_scoped, "
+                    " first_seen_prompt, first_seen_at, times_seen) "
+                    "VALUES (?,?,?,?,?,?,?,1) "
+                    "ON CONFLICT(interface, boundary_id) DO UPDATE SET "
+                    "times_seen = times_seen + 1",
+                    (interface, b.boundary_id, b.kind.value, b.scope_text,
+                     int(b.cohort_scoped), assessment.prompt_id, now),
+                )
+        return written
+
+    def known_boundaries(self, interface: str = "eva") -> list:
+        """The interface's accumulated ledger, as boundary.BoundaryDeclaration.
+
+        This is what makes the system learn in order: a cohort statistic seen
+        before any boundary was declared is only worth a follow-up; the same
+        statistic assessed after the source admits it cannot see the cohort is
+        unsourced by the source's own admission.
+        """
+        self._ensure_assessment_schema()
+        from .boundary import BoundaryDeclaration, BoundaryKind
+
+        rows = self.con.execute(
+            "SELECT kind, scope_text, cohort_scoped FROM source_boundary "
+            "WHERE interface=? ORDER BY cohort_scoped DESC, first_seen_at",
+            (interface,),
+        ).fetchall()
+        return [
+            BoundaryDeclaration(
+                kind=BoundaryKind(r["kind"]),
+                marker="",
+                scope_text=r["scope_text"],
+                cohort_scoped=bool(r["cohort_scoped"]),
+            )
+            for r in rows
+        ]
+
+    def unassessed_responses(self, classifier_version: str) -> list[sqlite3.Row]:
+        """Responses with no assessment at this classifier version."""
+        self._ensure_assessment_schema()
+        return self.con.execute(
+            "SELECT r.response_id, r.prompt_id, r.raw_digest, r.source, "
+            "       p.raw_prompt, p.family, p.external_id, p.ordinal "
+            "FROM response r JOIN prompt p ON p.prompt_id = r.prompt_id "
+            "WHERE NOT EXISTS (SELECT 1 FROM assessment a "
+            "                  WHERE a.response_id = r.response_id "
+            "                    AND a.classifier_version = ?) "
+            "ORDER BY p.ordinal",
+            (classifier_version,),
+        ).fetchall()
+
+    def assessment_stats(self, interface: str = "eva") -> dict:
+        """Distribution an operator can act on, not a dashboard."""
+        self._ensure_assessment_schema()
+
+        def group(sql: str) -> dict:
+            return {r[0]: r[1] for r in self.con.execute(sql)}
+
+        return {
+            "assessed": self.con.execute(
+                "SELECT COUNT(*) FROM assessment").fetchone()[0],
+            "by_disposition": group(
+                "SELECT disposition, COUNT(*) FROM assessment GROUP BY disposition"),
+            "by_epistemic": group(
+                "SELECT epistemic, COUNT(*) FROM assessment GROUP BY epistemic"),
+            "by_expected": group(
+                "SELECT expected, COUNT(*) FROM assessment GROUP BY expected"),
+            "context_bound": self.con.execute(
+                "SELECT COUNT(*) FROM assessment WHERE context_bound=1").fetchone()[0],
+            "boundaries": [
+                dict(r) for r in self.con.execute(
+                    "SELECT kind, cohort_scoped, times_seen, scope_text "
+                    "FROM source_boundary WHERE interface=? "
+                    "ORDER BY times_seen DESC", (interface,))
+            ],
+        }
 
     # -- observability ------------------------------------------------------
 
