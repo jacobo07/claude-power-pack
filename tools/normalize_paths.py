@@ -446,6 +446,38 @@ def _read(p: Path) -> str | None:
         return None
 
 
+# Literals whose ABSOLUTE form is required by standing doctrine, so
+# "normalising" them would break the very rule they encode. The Windows
+# interpreter path is mandated by CLAUDE.md: a bare `python` resolves to a
+# different (or absent) interpreter on this host, which is the documented
+# cause of a long line of bridge failures. A gate that flags the fix is a
+# gate arguing with the constitution.
+DOCTRINE_LITERALS = (
+    r"appdata\local\programs\python\python312\python.exe",
+    "appdata/local/programs/python/python312/python.exe",
+)
+
+
+def _unsafe_rewrite(before: str, after: str) -> str | None:
+    """Why this doc rewrite must not be applied, or None if it is safe."""
+    low = before.lower()
+    for lit in DOCTRINE_LITERALS:
+        if lit in low:
+            return "doctrine-mandated absolute path"
+
+    # A rewrite that makes two previously-distinct tokens identical has
+    # destroyed the distinction the line was drawing. The instance:
+    # a doc listing home-directory spellings as
+    #   (`~`, `/home/user`, `C:\Users\user`)
+    # becomes (`~`, `/home/user`, `~`) -- the Windows example is gone and
+    # the sentence now names the same thing twice. General rule, not a
+    # special case: never collapse X into a token the line already uses.
+    if re.search(r"(?<![\w~])~(?![\w/\\])", before) and \
+            after.count("~") > before.count("~"):
+        return "would duplicate a token already present"
+    return None
+
+
 def _normalize_for(text: str, file: Path) -> tuple[str, list[tuple[int, str, str, str]]]:
     """Rewrite path-leaks to portable equivalents (doc-line only).
 
@@ -471,6 +503,19 @@ def _normalize_for(text: str, file: Path) -> tuple[str, list[tuple[int, str, str
         kind = "doc" if _line_is_doc(line, ext) else "code"
         if kind == "doc":
             new = PATH_RE.sub("~", line)
+            unsafe = _unsafe_rewrite(line, new)
+            if unsafe:
+                # Reported, never rewritten, and NOT counted as a defect:
+                # applying it would damage the file or contradict standing
+                # doctrine. Measured 2026-08-26: 26 of 163 doc findings
+                # (16%) were in this class, which is why the backlog sat
+                # unapplied -- a remediation that is wrong one time in six
+                # cannot be run, so the 137 correct ones never got fixed
+                # either. An unsafe fix suppresses the safe ones.
+                changes.append((lineno, line.rstrip(), line.rstrip(),
+                                f"doc-exempt:{unsafe}"))
+                out_lines.append(line)
+                continue
             changes.append((lineno, line.rstrip(), new.rstrip(), kind))
             out_lines.append(new)
         else:
@@ -569,13 +614,25 @@ def main() -> int:
                         allowed_doc_files.add(f)
                         allowed_doc_hits += 1
                         tag = "ALLOW-D"
+                    elif kind.startswith("doc-exempt:"):
+                        # Reported so the line stays visible, but NOT a
+                        # defect: rewriting it would corrupt the file or
+                        # contradict doctrine. Counting it would keep the
+                        # backlog permanently red for entries that must
+                        # never be fixed.
+                        allowed_doc_files.add(f)
+                        allowed_doc_hits += 1
+                        tag = "EXEMPT "
                     else:
                         doc_files_with_hits.add(f)
                         total_doc_hits += 1
                         tag = "DOC   "
                     print(f"{tag} {rel}:{lineno}")
                     print(f"  -  {before}")
-                    if kind == "doc" and not is_whitelisted and not doc_path_allowed:
+                    if kind.startswith("doc-exempt:"):
+                        print(f"  ~  NOT rewritten: "
+                              f"{kind.split(':', 1)[1]}")
+                    elif kind == "doc" and not is_whitelisted and not doc_path_allowed:
                         print(f"  +  {after}")
                     elif kind == "doc" and doc_path_allowed:
                         print(f"  ~  allowlisted (narrative documents the audit pattern)")

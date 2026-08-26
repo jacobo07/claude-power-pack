@@ -326,6 +326,13 @@ def main() -> int:
         ("mirror-unpaired",
          [PY, str(PP / "tools" / "test_mirror_unpaired.py")],
          45),
+        # The path normaliser proposed 26 rewrites that would corrupt the
+        # file or contradict doctrine. These pin the exemptions NARROW --
+        # each one bookended by a plain leak that must still be rewritten,
+        # because a silent gate is worse than a noisy one.
+        ("path-exemptions",
+         [PY, str(PP / "tools" / "test_path_exemptions.py")],
+         30),
         ("ram-optimization",
          [PY, str(PP / "tools" / "test_ram_optimization.py")],
          30),

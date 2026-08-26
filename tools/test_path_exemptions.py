@@ -1,0 +1,130 @@
+"""V-PATHEXEMPT-* -- a remediation that is wrong must not be proposed.
+
+normalize_paths reported 163 doc-level path leaks. 26 of the proposed
+rewrites would have damaged the file or contradicted standing doctrine,
+which is why the backlog sat unapplied for months: a fix that is wrong one
+time in six cannot be run, so the 137 correct ones never got applied
+either. An unsafe remediation suppresses the safe ones.
+
+The exemption must be NARROW. A rule that quietly swallows real leaks
+would turn a noisy gate into a silent one, which is strictly worse, so
+every exemption here is paired with a bookend proving a plain leak still
+gets rewritten.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+PP = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PP))
+
+from tools.normalize_paths import _unsafe_rewrite  # noqa: E402
+
+EXPECTED_GATES = 7
+_passes: list[str] = []
+_fails: list[str] = []
+
+
+def _ok(g, e):
+    _passes.append(g)
+    print(f"  PASS {g}: {e}")
+
+
+def _fail(g, d):
+    _fails.append(g)
+    print(f"  FAIL {g}: {d}")
+
+
+def main() -> int:
+    # --- doctrine: the interpreter path must stay absolute ---------------
+    doc = (r"Run python via "
+           r"`C:\Users\User\AppData\Local\Programs\Python\Python312"
+           r"\python.exe`")
+    after = doc.replace(r"C:\Users\User", "~")
+    why = _unsafe_rewrite(doc, after)
+    if why and "doctrine" in why:
+        _ok("V-PATHEXEMPT-DOCTRINE", why)
+    else:
+        _fail("V-PATHEXEMPT-DOCTRINE",
+              f"the mandated interpreter path would be rewritten ({why})")
+
+    # Forward-slash spelling of the same literal.
+    doc2 = ("use C:/Users/User/AppData/Local/Programs/Python/Python312"
+            "/python.exe here")
+    if _unsafe_rewrite(doc2, doc2.replace("C:/Users/User", "~")):
+        _ok("V-PATHEXEMPT-DOCTRINE-SLASH", "posix spelling also exempt")
+    else:
+        _fail("V-PATHEXEMPT-DOCTRINE-SLASH",
+              "only the backslash spelling is protected")
+
+    # --- token duplication: the rewrite would destroy a distinction ------
+    enum = r"a home directory (`~`, `/home/user`, `C:\Users\user`)"
+    why = _unsafe_rewrite(enum, enum.replace(r"C:\Users\user", "~"))
+    if why and "duplicate" in why:
+        _ok("V-PATHEXEMPT-DUPLICATE-TOKEN", why)
+    else:
+        _fail("V-PATHEXEMPT-DUPLICATE-TOKEN",
+              f"a 3-item list would collapse to 2 ({why})")
+
+    # --- BOOKENDS: real leaks must still be rewritten --------------------
+    # This is what keeps the exemption honest. If these start returning a
+    # reason, the gate has stopped protecting anything.
+    plain = r"Repo: `C:\Users\User\.claude\skills\claude-power-pack`."
+    if _unsafe_rewrite(plain, plain.replace(r"C:\Users\User", "~")) is None:
+        _ok("V-PATHEXEMPT-PLAIN-STILL-FIXED",
+            "an ordinary home-path leak is still proposed for rewrite")
+    else:
+        _fail("V-PATHEXEMPT-PLAIN-STILL-FIXED",
+              "the exemption swallowed a real leak -- a silent gate is "
+              "worse than a noisy one")
+
+    # A python.exe that is NOT the doctrine path earns no exemption.
+    other = r"see `C:\Users\User\scripts\python.exe` for the helper"
+    if _unsafe_rewrite(other, other.replace(r"C:\Users\User", "~")) is None:
+        _ok("V-PATHEXEMPT-NARROW",
+            "only the mandated interpreter path is exempt, not any exe")
+    else:
+        _fail("V-PATHEXEMPT-NARROW",
+              "the doctrine exemption is matching too broadly")
+
+    # A `~` inside a PATH is not a standalone token and must not exempt.
+    tilde_in_path = r"`~/.ssh/id` and `C:\Users\User\.claude\state`"
+    why = _unsafe_rewrite(
+        tilde_in_path, tilde_in_path.replace(r"C:\Users\User", "~"))
+    if why is None:
+        _ok("V-PATHEXEMPT-TILDE-IN-PATH-NOT-A-TOKEN",
+            "`~/.ssh/id` does not license skipping a real leak")
+    else:
+        _fail("V-PATHEXEMPT-TILDE-IN-PATH-NOT-A-TOKEN",
+              f"a tilde inside a path suppressed a rewrite ({why})")
+
+    # --- the mechanism is actually reached on the real tree --------------
+    # A rule nobody's corpus triggers is indistinguishable from an unwired
+    # one, and this repo has been bitten by exactly that.
+    from tools.normalize_paths import _normalize_for  # noqa: PLC0415
+    target = PP / "commands" / "customclaw.md"
+    exempted = 0
+    if target.is_file():
+        _t, changes = _normalize_for(
+            target.read_text(encoding="utf-8", errors="replace"), target)
+        exempted = sum(1 for c in changes
+                       if str(c[3]).startswith("doc-exempt:"))
+    if exempted:
+        _ok("V-PATHEXEMPT-REACHED",
+            f"{exempted} exemption(s) fire on a real repo file")
+    else:
+        _fail("V-PATHEXEMPT-REACHED",
+              "no exemption fires anywhere -- the rule is unreachable")
+
+    ran = len(_passes) + len(_fails)
+    print(f"\nPATHEXEMPT_PASS={len(_passes)}/{ran}  "
+          f"threshold={EXPECTED_GATES}/{EXPECTED_GATES}")
+    if ran != EXPECTED_GATES:
+        print(f"GATE COUNT MISMATCH: {ran} ran, {EXPECTED_GATES} expected")
+        return 1
+    return 1 if _fails else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
