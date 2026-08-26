@@ -98,13 +98,18 @@ def _row(name: str, argv: list[str], cwd: Path = PP,
         if len(summary) > 80:
             summary = summary[:77] + "..."
         return {"name": name, "rc": rc, "elapsed": elapsed,
-                "missing": False, "summary": summary,
+                "missing": False, "summary": summary, "budget": budget,
                 "stdout": cp.stdout, "stderr": cp.stderr}
     except subprocess.TimeoutExpired:
+        # A row that did not FINISH has not told you anything about the
+        # thing it measures. Reporting that as a failure conflates "the
+        # gate found a defect" with "the gate never ran", and this repo
+        # spent a day believing dataset-build was flaky under parallelism
+        # when it simply needs 177s and was given 60.
         return {"name": name, "rc": 124,
                 "elapsed": time.monotonic() - t0,
-                "missing": False,
-                "summary": f"timeout >{budget}s"}
+                "missing": False, "timed_out": True,
+                "summary": f"DID NOT FINISH in {budget}s -- not a verdict"}
     except FileNotFoundError as e:
         return {"name": name, "rc": 127, "elapsed": 0.0,
                 "missing": True, "summary": str(e)}
@@ -143,7 +148,8 @@ def main() -> int:
          15),
         ("paths+secrets",
          [PY, str(PP / "tools" / "normalize_paths.py"), "--check"],
-         30),
+         90),  # 13.6s solo yet exceeded 30s under load: 2.2x variance, so
+               # its REAL failure was masked by an unmeasured verdict
         ("rtk-fusion",
          [PY, str(PP / "tools" / "verify_rtk_fusion.py")],
          30),
@@ -202,9 +208,13 @@ def main() -> int:
         ("restart-and-lag",
          [PY, str(PP / "tools" / "test_restart_and_lag.py")],
          90),
+        # Budgets below are MEASURED solo runtimes plus headroom, not
+        # guesses. dataset-build takes 176.8s and was given 60, so it timed
+        # out on every umbrella run and read as a failing gate; auto-reset
+        # takes 66.9s against 60. Both were unmeasurable by construction.
         ("dataset-build",
          [PY, str(PP / "tools" / "test_dataset_build.py")],
-         60),
+         360),
         ("integration-wiring",
          [PY, str(PP / "tools" / "verify_integration_wiring.py")],
          60),
@@ -286,13 +296,15 @@ def main() -> int:
          30),
         ("auto-reset",
          [PY, str(PP / "tools" / "test_auto_reset.py")],
-         60),
+         180),  # measured 66.9s solo
         ("claude-md-size",
          [PY, str(PP / "tools" / "verify_claude_md_size.py")],
          10),
         ("claude-md-router",
          [PY, str(PP / "tools" / "test_claude_md_router.py")],
-         60),
+         180),  # measured 52.7s solo -- 87% of the old 60s budget, so it
+                # flipped with ambient machine load, not with the code it
+                # was supposed to be judging
         ("memory-router-freshness",
          [PY, str(PP / "tools" / "test_router_freshness_gate.py")],
          120),
@@ -458,6 +470,25 @@ def main() -> int:
     total_elapsed = time.monotonic() - t_total
     print("=" * 72)
     print(f"  total elapsed: {total_elapsed:.2f}s")
+
+    # Separated from failures on purpose: a timeout is an unmeasured row.
+    timed_out = [r for r in results if r.get("timed_out")]
+    if timed_out:
+        print(f"  UNMEASURED: {len(timed_out)} row(s) did not finish — "
+              f"{[r['name'] for r in timed_out]}")
+        print("    (a row that did not finish is not a verdict; raise its "
+              "budget or make it faster, do not read it as a defect)")
+
+    # Rows finishing within 25% of their budget are one busy machine away
+    # from becoming unmeasured. Surfaced BEFORE they flip, because a gate
+    # that changes verdict with ambient load is not measuring the code.
+    marginal = [r for r in results
+                if not r.get("timed_out") and r.get("budget")
+                and r["elapsed"] > 0.75 * r["budget"]]
+    if marginal:
+        print("  MARGINAL BUDGET: "
+              + ", ".join(f"{r['name']} {r['elapsed']:.0f}s/{r['budget']}s"
+                          for r in marginal))
 
     failed_strict = [r for r in results
                      if r["rc"] != 0 and r["name"] not in ADVISORY_ROWS]
