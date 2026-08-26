@@ -304,7 +304,14 @@ def main() -> int:
          30),
         ("benchmarks-ok",
          [PY, str(PP / "tools" / "verify_bench_all.py")],
-         60),
+         60),  # 9s measured incl. the confirm-on-failure second sample
+        # The gate above judges performance; this one judges THAT gate.
+        # It compared against the raw target while printing "over 1.5x
+        # target", so it manufactured 5 false alarms and buried the one
+        # real regression among them. Pure -- no subprocess, no clock.
+        ("bench-gate",
+         [PY, str(PP / "tools" / "test_bench_gate.py")],
+         30),
         ("ram-optimization",
          [PY, str(PP / "tools" / "test_ram_optimization.py")],
          30),
