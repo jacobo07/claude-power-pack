@@ -7410,6 +7410,92 @@ Collapsing understates corroboration when wrong — the safe direction, in an es
 measured failure mode is overstating it. And never prune the lineage: the discount is a
 READ, because an inference about provenance must not destroy the provenance.
 
+## HR-COMPLIANCE-CLAIM-IS-MEASURED-BEFORE-IT-IS-REPAIRED-001
+
+**Hard rule.** TRIGGER: a brief, an audit, or the Owner states that a compliance
+line in `CLAUDE.md` is unmet, and the session is about to install the remedy.
+ACCION: STOP. Run the doctrine's own verifier FIRST and record its number. Only
+a failing measurement authorises the install. EXCEPCION: no verifier exists for
+that line — then say so explicitly, and the first deliverable is the verifier.
+
+ORIGEN (2026-08-27): a three-gap remediation brief opened with "RTK proxy must
+be active — measured: not installed", evidenced by a `No hook installed` notice
+on every Bash call, and prescribed `rtk init -g` as the fix. The proxy was in
+fact live — registered in the dispatcher's Bash chain, in both the live and the
+canonical copy — and `tools/verify_rtk_fusion.py` measured **80.3 % reduction,
+PASS**, against a 77 % floor, on the first run. That notice is the vendor
+binary's self-check for **its own** init signature, which PP does not use
+because that signature registers a bare name and `~/.claude/bin` is not on the
+hook PATH. Executing the brief would have been a **regression**: it replaces a
+working absolute-path rewriter with one that cannot resolve on this host.
+
+Two of the same brief's three gaps dissolved the same way. Recurring-error
+capture was reported as never reaching a repo; its project key is
+`sha256(cwd)[:12]`, and reversing the hashes resolved three events to exactly
+that repo. The knowledge graph was reported at "530 coordinates, zero for
+CursorProjects"; 530 was the *promoted global* layer and the store held 60
+repos. **One of three survived contact with a measurement** — and only the
+survivor was worth an hour.
+
+The asymmetry is what makes this a hard rule: a symptom is cheap to observe and
+expensive to act on. Repairing a system that already works costs more than the
+original defect, because it retires a tested path in favour of an untested one
+while the report reads as progress.
+
+## PR-A-SKIP-NOTHING-REVISITS-IS-AN-OUTAGE-001
+
+**Process rule.** A component that declines work under load must name the
+mechanism that comes back for it, and that mechanism must be reachable from the
+skip. A deferral whose refresher never runs is not a deferral; it is a silent
+outage wearing the word "temporary", and it is worse than a hard failure because
+it reports itself as handled.
+
+Measured (2026-08-27): the knowledge-graph Stop hook capped a Stop-time index at
+4000 markdown files and emitted `verdict: "deferred"` with the hint *"refresh
+via `indexer --all`"*. `--all` discovers from a live-session registry inside a
+7-day recency window, and nothing scheduled `--all` at all — so a large repo not
+opened inside that window was never revisited. **1335 of 2140** writeback
+attempts carried that verdict. Two repos sat at zero nodes: one for 46 days, one
+since it was created. Every component passed its own tests throughout.
+
+**How to apply.** Three properties, in this order. (1) The skip is RECORDED
+where the refresher will look — the debt set must be DISCOVERED from that
+record, never curated, or it measures memory rather than reality. (2) The
+refresher is reachable from the skip's own record, not from a separate registry
+that may not contain the skipped subject — that is the exact failure above.
+(3) The debt set is a NAMED SET with a gate that fails while it is non-empty;
+never a count and never a ratio, since a threshold falls by deleting a subject
+and a ratio by growing its denominator. Corollary: a gate reading only the
+journal will cry wolf over a subject repaired out-of-band, so cross-check the
+sink as well. Sister of `PR-COVERAGE-BY-CONSTRUCTION-001` and
+`feedback_producer_fires_sink_empty`.
+
+## PR-PP-ONBOARDING-BY-PROJECT-TYPE-001
+
+**Process rule.** A project does not activate every Power Pack capability. The
+onboarding step determines the project's TYPE and activates only the
+capabilities with clear positive ROI for that type. Forcing irrelevant
+capabilities buys overhead with no return and spends the scarcer resource —
+trust that a Power Pack signal in this repo means something.
+
+Evidence that by-type is the correct design, not a concession: KobiiSports
+Resort deliberately forked the pattern (`.ksr_vault/` + DNA-RAG-01 + N-Laws)
+rather than adopting the standard vault, and roughly 75 of 86 modules have no
+footprint there. Both facts are correct for a Wii homebrew project. A coverage
+audit scoring that repo against the full module set would report a healthy fork
+as 87 % non-compliant.
+
+**How to apply.** Universal tier — capabilities whose value does not depend on
+the stack: spec gate, done-gate intent verification, recurring-error capture.
+By-type tier — code repos get the rule compiler and mutation probe; frontend
+repos get the design gates; agent/IA repos get capability runtime and liveness.
+Record the activated set in a marker distinct from any hook's idempotency latch.
+Writing the capability record into a latch turns that hook into a permanent
+silent skip in every repo the record touches, converting an onboarding step into
+an onboarding *block*. Observed 2026-08-27: `.pp-onboarded` is
+`zero-command-bootstrap.js`'s latch, so a capability payload written there would
+have disabled the very hook the same brief asked to activate.
+
 
 
 
@@ -7451,3 +7537,7 @@ READ, because an inference about provenance must not destroy the provenance.
 - [env/bash:Program] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:Program: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
 
 - [tooling/bash:timeout] `ceps_d47d40fe40071e32` -- Tool failure in bash:timeout: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python.exe] `ceps_d1d6c04167c2c83e` -- Tool failure in bash:python.exe: Exception as e:  # fail-open absolute. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:sed] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:sed: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.

@@ -64,6 +64,29 @@
   had to describe the marker obliquely rather than quote it, which is the same trap one
   layer up. Observed 2026-07-31 building `vault/audits/usirc/`.
 
+## FP-07 — `rtk` prints "No hook installed — run `rtk init -g`" on every Bash call
+
+- What it really is: the vendor binary's self-check, looking for **its own** init
+  signature (`"command": "rtk hook claude"`) in `settings.json`. PP deliberately does not
+  use that signature. `rtk init -g` registers the bare name `rtk`, and `~/.claude/bin` is
+  NOT on the hook-execution PATH on this host, so the vendor wiring cannot resolve the
+  binary. PP ships a Node port — `modules/rtk-core/rtk-rewrite.js`, registered in the
+  dispatcher's `PreToolUse-Bash-chain` — that resolves it by absolute path instead. The
+  warning is emitted by a proxy that is working.
+- Symptom: `[rtk] /!\ No hook installed — run 'rtk init -g' for automatic token savings`
+  prefixed to the output of every Bash command, in every repo. Reads as a global
+  compliance failure against the "RTK proxy must be active" line in the global
+  `CLAUDE.md`.
+- Response: confirm with `python tools/verify_rtk_fusion.py` — it exercises the real hook
+  path and reports the measured reduction (PASS floor 77 %; measured 80.3 % on
+  2026-08-27). If it passes, the proxy is live and the line is noise. **Do NOT run
+  `rtk init -g`**: it would replace a working absolute-path rewriter with a bare-name one
+  that cannot resolve on this host, and would append `@RTK.md` to a `CLAUDE.md` already
+  near its character ceiling. Corroborating evidence that it is live: RTK compresses
+  `grep` output into its `N matches in M files` form and emits its own
+  `Failed to resolve 'rg' via PATH` notice while doing so. Observed 2026-08-27; the
+  warning had been read as gap G1 of a three-gap remediation brief.
+
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
