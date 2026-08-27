@@ -74,8 +74,14 @@ def writeback(cwd, quiet: bool = True) -> dict:
 
         md = _md_count_capped(rp, MAX_MD_FILES)
         if md > MAX_MD_FILES:
+            # The hint must name a refresher that actually comes back for this
+            # repo. It used to say `indexer --all`, which discovers from
+            # terminal_slots.json inside a 7-day window and was never
+            # scheduled -- so "deferred" was terminal, not temporary.
+            # `--deferred` reads THIS log, so every skip here is recoverable.
             return {"verdict": "deferred", "reason": f"{md}+ md files > {MAX_MD_FILES} cap",
-                    "repo": str(rp), "hint": "refresh via 'indexer --all'"}
+                    "repo": str(rp),
+                    "hint": "refresh via 'indexer --deferred --repair'"}
 
         res = gs.index_repo(rp, quiet=quiet)
         return {"verdict": "indexed" if res.get("ok") else "error",

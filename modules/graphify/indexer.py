@@ -94,6 +94,72 @@ def active_repos(slots_path: Path = _SLOTS, since_days: int = 7,
     return [orig for _, orig in kept]
 
 
+def deferred_repos(log_path=None) -> list:
+    """Repos the GK-08 Stop hook skipped for size and never came back to.
+
+    session_writeback caps a Stop-time index at MAX_MD_FILES and emits
+    verdict="deferred" with hint "refresh via 'indexer --all'". That hint named
+    a refresher that did not exist: --all discovers from terminal_slots.json
+    with a 7-day recency window, so a big repo not opened inside the window is
+    never revisited, and nothing scheduled --all at all. "deferred" was a
+    terminal state wearing the word "temporary" -- KobiiSports Resort's
+    CursorProjects sat at 0 nodes for a month while every component passed.
+
+    The debt set is DISCOVERED from the append-only log, never curated: a
+    hand-kept list of deferred repos measures memory, not reality. A repo is
+    debt only when its LATEST verdict is deferred AND the store holds no
+    later successful index (a --repo run repairs the store without writing
+    the log, so the log alone would keep reporting a repo already fixed).
+    """
+    path = Path(log_path) if log_path else gs.state_dir() / "writeback.log"
+    if not path.exists():
+        return []
+    latest: dict = {}
+    try:
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except (json.JSONDecodeError, ValueError):
+                continue
+            repo = row.get("repo")
+            if repo:
+                latest[str(repo)] = row  # append-only: last write wins
+    except OSError:
+        return []
+
+    store = {}
+    try:
+        store = json.loads(
+            (gs.state_dir() / "graphify_global.json").read_text(encoding="utf-8")
+        ).get("repos", {})
+    except (OSError, json.JSONDecodeError, ValueError):
+        store = {}
+
+    out = []
+    for repo, row in latest.items():
+        if row.get("verdict") != "deferred":
+            continue
+        if _EPHEMERAL.search(repo.replace("\\", "/")):
+            continue
+        try:
+            if not Path(repo).is_dir():
+                continue
+        except OSError:
+            continue
+        deferred_at = str(row.get("at", ""))
+        rec = store.get(gs.repo_id(repo), {})
+        # Repaired out-of-band: the store was written after this deferral.
+        if str(rec.get("indexed_at", "")) > deferred_at and rec.get("node_count"):
+            continue
+        out.append({"repo": repo, "reason": row.get("reason", ""),
+                    "deferred_at": deferred_at,
+                    "nodes_in_store": rec.get("node_count", 0)})
+    return sorted(out, key=lambda r: r["repo"].lower())
+
+
 def main():
     ap = argparse.ArgumentParser(description="GK-10 global cross-repo indexer")
     ap.add_argument("--all", action="store_true", help="index every active repo")
@@ -105,7 +171,29 @@ def main():
     ap.add_argument("--cross-repo-only", action="store_true")
     ap.add_argument("--summary", action="store_true")
     ap.add_argument("--list", action="store_true", help="list discovered active repos")
+    ap.add_argument("--deferred", action="store_true",
+                    help="name the repos the Stop hook deferred and never refreshed "
+                         "(exit 1 when the debt set is non-empty)")
+    ap.add_argument("--repair", action="store_true",
+                    help="with --deferred: full-index every deferred repo (uncapped; "
+                         "minutes per repo -- never run this from a hook)")
     args = ap.parse_args()
+
+    if args.deferred:
+        debt = deferred_repos()
+        if not args.repair:
+            print(json.dumps({"deferred": debt, "count": len(debt)}, indent=2))
+            return 1 if debt else 0
+        results = [gs.index_repo(d["repo"]) for d in debt]
+        ok = [r for r in results if r.get("ok")]
+        print(json.dumps({
+            "repaired": len(ok), "attempted": len(results),
+            "repos": [{"repo": r.get("repo"), "nodes": r.get("nodes"),
+                       "promoted": r.get("promoted"), "error": r.get("error")}
+                      for r in results],
+            "remaining": len(deferred_repos()),
+        }, indent=2))
+        return 0 if len(ok) == len(results) else 1
 
     if args.list:
         repos = active_repos()
