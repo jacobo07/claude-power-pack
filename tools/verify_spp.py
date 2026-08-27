@@ -239,6 +239,13 @@ def main() -> int:
         ("cascade-wiring",
          [PY, str(PP / "tools" / "test_cascade_input_wiring.py")],
          30),
+        # A knowledge-graph skip must stay recoverable. The Stop hook defers a
+        # repo over its size cap; until 2026-08-27 the refresher it named did
+        # not exist, so 1335 of 2140 writebacks deferred into nothing and two
+        # repos sat at zero nodes -- one for 46 days.
+        ("graphify-deferred",
+         [PY, str(PP / "tools" / "test_graphify_deferred.py")],
+         30),
         # Semantic admission for the event store. Shape validation cannot
         # tell a failure from a success, and 52 of the first 75 events were
         # not failures at all.
