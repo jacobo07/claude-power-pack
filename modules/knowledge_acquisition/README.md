@@ -100,8 +100,18 @@ reason to stop asking, and it is not the one that looks like it.
 
 Measured on this corpus (2,147 pending, `kacq-route/1.0.0`): **1,738
 EVA_HIGH_VALUE, 409 MULTI_SOURCE, nothing diverted away.** Routing saved zero
-queries. What it bought is on the other side -- six evidence requests unlock
-409 questions, the largest unlocking **396 across 40 families with one dataset**.
+queries. What it bought is on the other side: **one artifact unlocks all 409
+questions, across 48 families** -- case outcomes segmented six ways.
+
+That "one" read as "six" until the pack was run against the live corpus.
+Requests were keyed on `(boundary, lens, route_class)`, so a single declared
+limit rendered as six near-identical asks -- four of which were the *same*
+question seen through four templates. The lens decides how a question was
+asked; it never changes what artifact would answer it, so it belongs inside a
+request as a breakdown, never as a key that splits one. The pack still reports
+the distribution (396 REAL_CASES, 9 FREEFORM, 1 each for the rest) because
+knowing which templates are blocked is useful -- it is just not six separate
+things to go and fetch.
 
 Verdicts are versioned, never overwritten, and rebuildable from prompt text
 plus the boundary ledger. A routing defect can misrank a prompt; it cannot

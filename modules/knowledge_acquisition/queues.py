@@ -36,11 +36,14 @@ class EvidenceRequest:
 
     boundary_id: str
     boundary_text: str
-    lens: Lens
     route_class: RouteClass
     prompts: int
     families: tuple[str, ...]
     sample_topics: tuple[str, ...]
+    #: (lens, prompts) pairs, descending. The lens is HOW the question was
+    #: asked, never WHAT artifact answers it -- so it is a breakdown inside a
+    #: request, never a key that splits one artifact into several.
+    lenses: tuple[tuple[str, int], ...] = ()
 
     @property
     def leverage(self) -> int:
@@ -51,9 +54,13 @@ class EvidenceRequest:
 def build_evidence_requests(rows, boundaries) -> list[EvidenceRequest]:
     """Collapse diverted verdicts into the few artifacts they actually need.
 
-    Grouped by (boundary, lens): two questions that collide with the same
-    declared limit through the same template are missing the same thing, and
-    asking for it twice wastes the scarcest resource in the loop.
+    Grouped by (boundary, route_class) -- NOT by lens. Two questions that
+    collide with the same declared limit are missing the same artifact even
+    when they were asked through different templates: the lens decides how you
+    ask, never what would answer it. Keying on lens as well used to split ONE
+    dataset into six near-identical "requests" (four of which were the same
+    single question seen through four templates), which is precisely the
+    399x-human-cost failure this module's docstring exists to forbid.
     """
     text_of = {b.boundary_id: b.scope_text for b in boundaries}
     buckets: dict[tuple, list] = collections.defaultdict(list)
@@ -61,20 +68,21 @@ def build_evidence_requests(rows, boundaries) -> list[EvidenceRequest]:
         route_class = RouteClass(r["route_class"])
         if not route_class.diverts:
             continue
-        buckets[(r["boundary_id"], r["lens"], r["route_class"])].append(r)
+        buckets[(r["boundary_id"], r["route_class"])].append(r)
 
     requests = []
-    for (boundary_id, lens, route_class), group in buckets.items():
+    for (boundary_id, route_class), group in buckets.items():
         families = sorted({g["family"] for g in group})
         topics = sorted({g["topic"] for g in group if g["topic"]})
+        per_lens = collections.Counter(g["lens"] for g in group)
         requests.append(EvidenceRequest(
             boundary_id=boundary_id,
             boundary_text=text_of.get(boundary_id, "(boundary not in ledger)"),
-            lens=Lens(lens),
             route_class=RouteClass(route_class),
             prompts=len(group),
             families=tuple(families),
             sample_topics=tuple(topics[:6]),
+            lenses=tuple(sorted(per_lens.items(), key=lambda kv: -kv[1])),
         ))
     return sorted(requests, key=lambda r: -r.leverage)
 
@@ -93,16 +101,21 @@ def render_evidence_pack(requests: list[EvidenceRequest]) -> str:
            ""]
     for i, req in enumerate(requests, 1):
         out += [
-            f"## {i}. {req.lens.value} -- unlocks {req.leverage} questions",
+            f"## {i}. Evidence artifact {req.boundary_id[:8]} -- "
+            f"unlocks {req.leverage} questions",
             "",
             f"- **Route**: `{req.route_class.value}`",
+            f"- **Boundary**: `{req.boundary_id}`",
             f"- **The source's own words**: \"{req.boundary_text.strip()}\"",
             f"- **Spans**: {len(req.families)} families, "
             f"{req.prompts} pending questions",
         ]
-        if req.lens is Lens.REAL_CASES:
+        if any(lens == Lens.REAL_CASES.value for lens, _ in req.lenses):
             out.append(f"- **What would answer all of them**: case outcomes "
                        f"segmented by {_CASE_AXES}. One dataset, cut six ways.")
+        if req.lenses:
+            out += ["", "Asked through:", ""]
+            out += [f"  - {lens}: {n}" for lens, n in req.lenses]
         out += ["", "Families:", ""]
         out += [f"  - {f}" for f in req.families[:12]]
         if len(req.families) > 12:
