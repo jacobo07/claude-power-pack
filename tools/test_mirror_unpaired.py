@@ -27,7 +27,7 @@ from tools.mirror_unpaired_audit import (  # noqa: E402
 )
 from modules.mirror_discovery.discovery import resolve_live_root  # noqa: E402
 
-EXPECTED_GATES = 12
+EXPECTED_GATES = 14
 _passes: list[str] = []
 _fails: list[str] = []
 LIVE = Path("C:/Users/User/.claude")
@@ -191,6 +191,36 @@ def main() -> int:
             _fail("V-UNPAIRED-EXTRACTOR-NARROW",
                   f"extracted {sorted(got)}, expected {sorted(want)} -- "
                   "prose and comments are not registrations")
+
+    # --- divergence is a verdict, not a footnote -------------------------
+    # It was printed inside a passing audit, which is the shape that let a
+    # producer fire 63 times into an empty sink for 80 days.
+    import subprocess
+    proc = subprocess.run(
+        [sys.executable, str(PP / "tools" / "mirror_unpaired_audit.py")],
+        capture_output=True, text=True, timeout=120)
+    diverged = "WIRED-CANONICAL-ONLY" in proc.stdout or \
+               "WIRED-LIVE-ONLY" in proc.stdout
+    if diverged and proc.returncode == 1:
+        _ok("V-UNPAIRED-DIVERGENCE-FAILS",
+            "a hook wired canonically and absent from the running copy "
+            "fails the audit instead of being narrated in its tail")
+    elif not diverged and proc.returncode == 0:
+        _ok("V-UNPAIRED-DIVERGENCE-FAILS",
+            "canonical and live agree; the audit passes -- the bookend that "
+            "proves this gate can say YES")
+    else:
+        _fail("V-UNPAIRED-DIVERGENCE-FAILS",
+              f"diverged={diverged} but exit={proc.returncode}")
+
+    if "Owner: copy hooks/hook-dispatcher.js" in proc.stdout or not diverged:
+        _ok("V-UNPAIRED-DIVERGENCE-ACTIONABLE",
+            "the failure names the exact Owner action, since this repo "
+            "cannot write ~/.claude/hooks itself")
+    else:
+        _fail("V-UNPAIRED-DIVERGENCE-ACTIONABLE",
+              "a failure the reader cannot act on is a failure they learn "
+              "to skip")
 
     ran = len(_passes) + len(_fails)
     print(f"\nUNPAIRED_PASS={len(_passes)}/{ran}  "

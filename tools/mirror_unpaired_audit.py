@@ -263,8 +263,11 @@ def main(argv=None) -> int:
 
     if a.json:
         print(json.dumps(res, indent=2))
-        return 1 if any(r["status"] == BROKEN_REGISTRATION
-                        for r in res["rows"]) else 0
+        d = res["divergence"]
+        return 1 if (any(r["status"] == BROKEN_REGISTRATION
+                         for r in res["rows"])
+                     or (d["repo_registers"] and d["live_registers"]
+                         and (d["repo_only"] or d["live_only"]))) else 0
 
     counts: dict = {}
     for r in res["rows"]:
@@ -331,7 +334,22 @@ def main(argv=None) -> int:
         print(f"\nMIRROR_UNPAIRED FAIL: {len(broken)} registration(s) point "
               f"at a file that does not exist -- wired and dead")
         return 1
-    print("\nMIRROR_UNPAIRED OK: no registration points at a missing file")
+    # A divergence printed inside a passing audit is the shape that let a
+    # producer fire 63 times into an empty sink for 80 days: reported, and
+    # read by nobody. A hook wired canonically and absent from the copy that
+    # RUNS is a live capability loss, so it fails. Guarded on both sides
+    # having inputs -- an empty comparison yields an empty diff, which reads
+    # as agreement and is exactly the state that hides the defect.
+    if div["repo_registers"] and div["live_registers"] and (
+            div["repo_only"] or div["live_only"]):
+        names = ", ".join(sorted(div["repo_only"]) + sorted(div["live_only"]))
+        print(f"\nMIRROR_UNPAIRED FAIL: canonical and live dispatchers "
+              f"register different sets ({names}). Edits to those hooks do "
+              f"not reach production. Owner: copy hooks/hook-dispatcher.js "
+              f"to ~/.claude/hooks/ (this repo cannot write there).")
+        return 1
+    print("\nMIRROR_UNPAIRED OK: no registration points at a missing file, "
+          "and the canonical dispatcher matches the one that runs")
     return 0
 
 
