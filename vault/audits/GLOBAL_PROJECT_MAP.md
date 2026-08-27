@@ -168,17 +168,22 @@ Both are Owner calls, and both are cheap once decided:
 - **(b) Wire it gated by type** — add a manifest/type predicate before the stub,
   so only repos where Spec Kit pays land it. Keeps `.pp-onboarded` as its latch;
   Phase 4's capability record moves to a distinct `.pp-capabilities` marker.
-- **(c) Declare and leave** — enter all four in
-  `vault/liveness/reachability_registry.json` as `PLANNED` + `OWNER_QUEUE` so the
-  debt is named and stops being silent, and wire nothing this session.
+- **(c) Declare and leave** — **not currently available.** Checked rather than
+  assumed: every one of the registry's 131 keys is a path under `modules/`
+  (`auto-testing/detectors`, …) and **zero** name a file in `hooks/`, because
+  `reachability.py` never scores one. An entry for a bootstrap hook would be a
+  key no gate reads — a status nothing can transition, which reads as tracked
+  while enforcing nothing, and is worse than the silence it replaces. This
+  option only opens *after* the denominator fix below.
 
 **(b) is the recommendation** — it is the only option that satisfies both phases
 of the brief instead of trading one against the other.
 
 Independent of that choice, `reachability.py` should take `hooks/*.js` as
 subjects and not only seeds; otherwise the next unwired hook is invisible the
-same way. Tracked, not done here — changing a gate's denominator is its own
-scoped change with its own evidence.
+same way, and option (c) stays shut. Tracked, not done here — changing a gate's
+denominator is its own scoped change with its own evidence, and it is the
+prerequisite for (c) rather than an optional companion to it.
 
 ## 5. Standing debt, by name
 
