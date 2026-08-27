@@ -9,11 +9,19 @@ that gap; this applies the one correction it justifies.
 WHAT IT IS NOT
 --------------
 It is not a bulk widen. Evaluated 2026-08-27, of the five `Bash`-matched
-registrations on this host exactly ONE should change:
+registrations on this host, TWO should change and three should not:
 
   bug-hunter-ceps-bridge.js  WIDEN  -- declares Bash AND PowerShell since the
                                        2026-08-14 repair; 75.5% of command
                                        traffic here is PowerShell
+  PreToolUse-Bash-chain      WIDEN  -- carries cascade_check_bash.js, the sole
+                                       live enforcement of HR-CASCADE-001..005.
+                                       It accepts both surfaces in code and is
+                                       inert on PowerShell purely because of
+                                       this matcher, so HR-CASCADE-002 -- whose
+                                       flagship pattern is `Remove-Item -Recurse -Force`
+                                       -- cannot fire on the only surface where
+                                       that command is ever written
   bug-hunter-learning.js     NO-OP  -- its code hard-rejects non-Bash
                                        (`tool_name !== 'Bash'`), so widening
                                        the matcher changes nothing
@@ -21,14 +29,19 @@ registrations on this host exactly ONE should change:
   tty-restore.js             KEEP   -- narrow ON PURPOSE: DECSET 1004 focus
                                        reporting leaks from the Bash bridge,
                                        not from the PowerShell tool
-  PreToolUse-Bash-chain      KEEP   -- carries windows-bash-bridge-guard.js,
-                                       which BLOCKS git/mix/gh/npm via Bash to
-                                       force them onto PowerShell. Widening it
-                                       would block the surface it redirects to
 
-That last row is why the candidate set is bounded rather than derived from
-"every narrow matcher": a blanket widen would have broken the doctrine this
-host runs on.
+CORRECTION, same day. An earlier revision of this file said the chain must be
+KEPT because it carries windows-bash-bridge-guard.js, which blocks git/npm via
+Bash to force them onto PowerShell -- so widening it would block the surface
+the doctrine redirects to. That is wrong twice over: the guard self-rejects
+non-Bash at its first line, so widening is harmless to it; and the chain's
+LAST entry is the cascade guard, which the earlier reading missed because the
+chain definition ran past the lines that were read. The disposition rule held;
+the evidence behind one row did not. Read the whole chain before judging it.
+
+The two self-rejecting entries are why the candidate set is bounded rather
+than derived from "every narrow matcher": widening those would assert in
+settings.json a coverage their own code declines to honour.
 
 SAFETY CONTRACT (every guard must hold or the entry is left untouched)
   1. The hook must be in CANDIDATES -- an explicit, reviewed allow-list.
@@ -67,7 +80,7 @@ from tools.capture_liveness import (  # noqa: E402
 SETTINGS = Path(os.path.expanduser("~/.claude/settings.json"))
 
 # Guard 1. Reviewed, bounded, and deliberately not "everything narrow".
-CANDIDATES = {"bug-hunter-ceps-bridge.js"}
+CANDIDATES = {"bug-hunter-ceps-bridge.js", "PreToolUse-Bash-chain"}
 
 
 def self_rejects(source: Path | None, surface: str) -> bool:

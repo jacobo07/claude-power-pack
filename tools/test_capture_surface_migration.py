@@ -1,14 +1,23 @@
-"""V-SURFACE-* -- the migration must widen one registration, not five.
+"""V-SURFACE-* -- widen the registrations the CODE is ready for, not all five.
 
-The obvious reading of "five hooks carry a Bash matcher on a PowerShell
-host" is that five matchers are wrong. Measured against the hooks' own
-code, exactly one should change, and one of the other four must NOT:
-`PreToolUse-Bash-chain` carries windows-bash-bridge-guard.js, which blocks
-git/mix/gh/npm via Bash precisely to force them onto PowerShell. Widening
-that entry would block the surface the doctrine redirects to.
+Five hooks carry a `Bash` matcher on a host whose doctrine routes python,
+pytest, git, npm, node, mix and gh through PowerShell. The tempting fix is
+to widen five matchers. Measured against the code behind each one, TWO
+should change and three should not: two hooks reject non-Bash in their own
+source, so a wider matcher would advertise a coverage the code declines to
+honour, and one is narrow on purpose.
 
-These gates pin every disposition against the real installed hooks, so a
-later bulk widen cannot pass review by looking tidy.
+An earlier revision of this file asserted the opposite for the chain --
+that widening `PreToolUse-Bash-chain` would BLOCK the surface the doctrine
+redirects to, because it carries windows-bash-bridge-guard.js. Wrong twice:
+that guard self-rejects non-Bash at its first line, and the chain's LAST
+entry is cascade_check_bash.js, the sole live enforcement of
+HR-CASCADE-001..005, which accepts both surfaces in code. The reading that
+produced the error stopped before the end of the chain definition. The
+disposition RULE was sound; the evidence behind one row was not.
+
+These gates pin every disposition against the real installed hooks, so
+neither a bulk widen nor a confident half-read can pass review.
 """
 from __future__ import annotations
 
@@ -112,18 +121,28 @@ def main() -> int:
     else:
         _fail("V-SURFACE-KEEP-TTY", "an intentionally narrow hook was enrolled")
 
-    guard = HOOKS / "windows-bash-bridge-guard.js"
-    if "hook-dispatcher.js" not in ms.CANDIDATES and guard.is_file():
-        _ok("V-SURFACE-KEEP-BASH-CHAIN",
-            "PreToolUse-Bash-chain stays narrow: it carries the guard that "
-            "blocks git/npm via Bash to force them onto PowerShell")
+    # CORRECTED. This gate used to assert the chain must stay narrow,
+    # because it carries the guard that blocks git/npm via Bash. That guard
+    # self-rejects non-Bash at its first line, so widening cannot affect it
+    # -- and the chain's LAST entry is cascade_check_bash.js, the only live
+    # enforcement of HR-CASCADE-001..005, which accepts both surfaces in
+    # code and is inert on PowerShell solely because of this matcher.
+    cascade = PP / "hooks" / "cascade_check_bash.js"
+    accepts_both = cascade.is_file() and "'PowerShell'" in cascade.read_text(
+        encoding="utf-8", errors="replace")
+    if "PreToolUse-Bash-chain" in ms.CANDIDATES and accepts_both:
+        _ok("V-SURFACE-WIDEN-BASH-CHAIN",
+            "the chain is enrolled: cascade_check_bash.js accepts both "
+            "surfaces in code, so HR-CASCADE-002 is matcher-blind, not "
+            "code-blind")
     else:
-        _fail("V-SURFACE-KEEP-BASH-CHAIN",
-              "the chain that redirects TO PowerShell is enrolled for "
-              "widening, or its guard has moved")
+        _fail("V-SURFACE-WIDEN-BASH-CHAIN",
+              f"chain enrolled={'PreToolUse-Bash-chain' in ms.CANDIDATES}, "
+              f"cascade guard accepts PowerShell={accepts_both} -- if the "
+              "guard stopped accepting it, widening no longer suffices")
 
     # --- guard 1 is a real bound, not decoration -------------------------
-    if len(ms.CANDIDATES) == 1:
+    if len(ms.CANDIDATES) == 2:
         _ok("V-SURFACE-CANDIDATES-BOUNDED",
             f"allow-list holds exactly {sorted(ms.CANDIDATES)}")
     else:

@@ -87,6 +87,22 @@ PRODUCERS = [
         "note": "PostToolUse failure capture on Bash/PowerShell + harness sentinel",
     },
     {
+        # Not a producer of events -- a producer of BLOCKS. It is the sole
+        # live enforcement of HR-CASCADE-001..005, it accepts Bash AND
+        # PowerShell in its own code, and it is reachable only through the
+        # PreToolUse chain whose matcher is `Bash`. So HR-CASCADE-002,
+        # whose flagship pattern is `Remove-Item -Recurse -Force`, cannot fire on
+        # the only surface where that command is ever written.
+        # Enrolled here because coverage is measured for producers, and a
+        # guard is a producer whose output is a refusal.
+        "name": "cascade-check-bash",
+        "trigger": AUTOMATIC,
+        "hook_marker": "PreToolUse-Bash-chain",
+        "hook_source": PP_ROOT / "hooks" / "cascade_check_bash.js",
+        "sink": None,
+        "note": "HR-CASCADE-001..005 enforcement; blocks rather than records",
+    },
+    {
         "name": "mistake-ingest",
         "trigger": MANUAL,
         "hook_marker": "mistake-ingest.js",
@@ -195,8 +211,15 @@ def registered_markers() -> set[str]:
 # A hook's capture surface, as the hook's own source declares it. Parsed
 # rather than tabulated: widening the set in JS must not leave this gate
 # asserting yesterday's contract (PR-COVERAGE-BY-CONSTRUCTION-001).
-_DECLARED_RE = re.compile(
-    r"COMMAND_TOOLS\s*=\s*new\s+Set\(\s*\[(?P<body>[^\]]*)\]")
+# Two spellings are in use here: a named Set, and an inline array tested
+# with .includes(tool_name). Recognising only the first would read a hook
+# that plainly declares both surfaces as UNVERIFIABLE -- and a gate that
+# cannot see a declaration reports the wrong reason for the right failure.
+_DECLARED_RES = (
+    re.compile(r"COMMAND_TOOLS\s*=\s*new\s+Set\(\s*\[(?P<body>[^\]]*)\]"),
+    re.compile(r"\[(?P<body>[^\]]*)\]\s*\.includes\(\s*"
+               r"(?:\w+\.)?tool_name"),
+)
 # Matchers admitting every tool: absent, empty, or the star wildcard.
 _UNIVERSAL = {"", "*"}
 
@@ -209,11 +232,15 @@ def declared_surfaces(path: Path | None) -> set[str] | None:
         text = Path(path).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
-    found = _DECLARED_RE.search(text)
-    if not found:
-        return None
-    return set(re.findall(r"['\"]([A-Za-z]\w*)['\"]",
-                          found.group("body"))) or None
+    for pattern in _DECLARED_RES:
+        found = pattern.search(text)
+        if not found:
+            continue
+        names = set(re.findall(r"['\"]([A-Za-z]\w*)['\"]",
+                               found.group("body")))
+        if names:
+            return names
+    return None
 
 
 def registration_surfaces(marker: str) -> set[str] | None:

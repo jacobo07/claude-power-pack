@@ -7419,14 +7419,26 @@ behind each one, exactly ONE should change and one of the others must not:
 | registration | disposition | why |
 |---|---|---|
 | the CEPS bridge | WIDEN | declares both surfaces; registration never caught up |
+| the PreToolUse Bash chain | WIDEN | its last entry is the cascade guard, the sole live enforcement of five sealed destructive-command Hard Rules. It accepts both surfaces in code and is inert on PowerShell purely because of the matcher, so the rule whose flagship pattern is `Remove-Item -Recurse -Force` cannot fire on the only surface where that command is written |
 | two learning hooks | NO-OP | their own code hard-rejects non-Bash, so a wider matcher buys nothing and would put a false coverage claim in settings.json |
 | a TTY restorer | KEEP | narrow on purpose -- the escape-sequence leak is an artefact of the Bash bridge |
-| the PreToolUse Bash chain | KEEP | it carries the guard that BLOCKS git/npm via Bash in order to force them onto PowerShell. Widening it would block the surface the doctrine redirects TO |
 
 **Rule.** A family of narrow triggers must be dispositioned one entry at a time against
 the code behind it. "They are all narrow" is an observation about spelling, not a shared
 diagnosis, and a uniform correction applied to a non-uniform family will break whichever
 member was narrow deliberately.
+
+**Correction, same day, and it is the more useful half of this rule.** The chain row above
+first read KEEP, with the reasoning that it carries the guard which blocks git/npm via Bash
+to force them onto PowerShell -- so widening it would block the surface the doctrine
+redirects to. Wrong twice. That guard self-rejects non-Bash at its first line, so widening
+cannot affect it; and the chain's LAST entry is the cascade guard, which the analysis
+missed because the chain definition ran past the lines that had been read. A per-entry
+disposition is only as good as the READ behind it, and a confident wrong disposition is
+more expensive than a bulk one because it comes with a rationale that discourages
+re-checking. Read every member of a chain to its closing bracket before judging the chain,
+and treat "widening this would be harmful" as a claim needing the same evidence as
+"widening this is required".
 
 **How to apply.** For each member establish intended subject, current surface, missing
 surface, what the code does when the new surface arrives, and the blast radius of the

@@ -44,6 +44,33 @@ def _fail(g: str, d: str) -> None:
     print(f"  FAIL {g}: {d}")
 
 
+_SELF_REJECT = re.compile(
+    r"tool_?[Nn]ame[^\n]{0,40}?!==?\s*['\"](?P<only>\w+)['\"]")
+
+
+def _code_refuses(command: str, surface: str = "PowerShell") -> bool:
+    """Does the hook this command runs reject `surface` in its own source?
+
+    Three of the five Bash-matched registrations here answer yes, which is
+    why "widen the matcher" is not a uniform fix: for those, a wider
+    matcher would advertise a coverage the code declines to provide.
+    Unreadable source answers False -- an unknown must not be reported as
+    a stronger claim than it is.
+    """
+    scripts = [tok.strip('"\'') for tok in command.split()
+               if tok.strip('"\'').lower().endswith(".js")]
+    if not scripts:
+        return False
+    path = Path(scripts[-1])
+    if not path.is_file():
+        return False
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    return any(m.group("only") != surface for m in _SELF_REJECT.finditer(text))
+
+
 def main() -> int:
     print("V-TRAP -- correctness traps reach the command that trips them")
 
@@ -137,11 +164,16 @@ def main() -> int:
             f"matcher {matcher!r} routes PowerShell into the chain")
     else:
         _fail("V-TRAP-CHAIN-MATCHER-COVERS-POWERSHELL",
-              f"matcher is {matcher!r}: the whole PreToolUse Bash chain, "
-              "HR-CASCADE-002 included, never sees PowerShell. OWNER ACTION: "
-              'change it to "Bash|PowerShell" in ~/.claude/settings.json -- '
-              "the shape two sibling matchers in that file already use. This "
-              "repo cannot edit Owner-owned config.")
+              f"matcher is {matcher!r}: the PreToolUse Bash chain never sees "
+              "PowerShell, which is 75.5% of command traffic on this host "
+              "(11126 of 14744, measured 2026-08-27 over 98 transcripts). "
+              "HR-CASCADE-002 IS among the guards going blind: the chain's "
+              "last entry is cascade_check_bash.js, the sole live "
+              "enforcement of HR-CASCADE-001..005, and it accepts both "
+              "surfaces in its own code. It is matcher-blind, not "
+              "code-blind, so widening this one matcher restores it. "
+              "OWNER ACTION: python tools/migrate_capture_surface.py "
+              "--apply. See PR-WIDEN-PER-REGISTRATION-001.")
 
     # THE SAME GAP, DISCOVERED RATHER THAN NAMED. The check above knows one
     # registration by name, so it can only ever find the one instance
@@ -176,19 +208,33 @@ def main() -> int:
                 if "PowerShell" in mt:
                     continue
                 for h in m.get("hooks", []):
-                    name = (h.get("command", "").replace("\\", "/")
-                            .rstrip('"').split("/")[-1])
-                    gaps.append(f"{event}/{name}")
+                    cmd = h.get("command", "").replace("\\", "/")
+                    name = cmd.rstrip('"').split("/")[-1]
+                    # CORRECTED 2026-08-27. This gate used to end with
+                    # "widen each matcher". Measured against the code behind
+                    # each one, that advice is right for ONE of the five:
+                    # the rest reject the surface in their own source with
+                    # `tool_name !== 'Bash'`, so a wider matcher would put a
+                    # coverage claim in settings.json that the code refuses.
+                    # Naming a gap is not the same as naming its fix.
+                    gaps.append(f"{event}/{name}"
+                                + ("" if not _code_refuses(cmd)
+                                   else " [code also self-rejects]"))
         if not gaps:
             _ok("V-TRAP-SHELL-SURFACES-COVERED",
                 "every Bash-matched registration also matches PowerShell")
         else:
+            matcher_only = [g for g in gaps if "self-rejects" not in g]
             _fail("V-TRAP-SHELL-SURFACES-COVERED",
                   f"{len(gaps)} shell-facing registration(s) blind to "
-                  f"PowerShell: {', '.join(sorted(gaps))}. OWNER ACTION: "
-                  'widen each matcher to "Bash|PowerShell". The CEPS '
-                  "producer among them is why the event store has zero "
-                  "git/pytest/npm failures in its entire history.")
+                  f"PowerShell: {', '.join(sorted(gaps))}. Of these, "
+                  f"{len(matcher_only)} would be fixed by widening the "
+                  "matcher alone; the rest need a code change first, and "
+                  "widening those would assert a coverage the hook refuses "
+                  "to honour. OWNER ACTION: "
+                  "python tools/migrate_capture_surface.py --apply, which "
+                  "widens only the registrations whose code accepts the "
+                  "surface. See PR-WIDEN-PER-REGISTRATION-001.")
 
     total = _passes + _fails
     print(f"CORRECTNESS_TRAPS_PASS={_passes}/{total}  "
