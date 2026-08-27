@@ -102,21 +102,33 @@ window · `markers` = onboarding markers present on disk.
 | 0d | GEO-audit | 8,312 | 15 | `CLAUDE.md` `.claude` |
 | 0d | Jacobo | 69 | 4 | `.pp-onboarded` `CLAUDE.md` `.claude` |
 | 0d | KobiiCraft Core Files | 1,845 | 30 | `.powerpack` `CLAUDE.md` `.claude` |
-| 1d | FIFA 11 Mod | — | 0 | `CLAUDE.md` `.claude` |
-| 1d | KobiiHub | — | 0 | — |
+| 1d | FIFA 11 Mod | **32** | 0 | `CLAUDE.md` `.claude` |
+| 1d | KobiiHub | **9** | 0 | — |
 | 2d | Orca X | 75 | 8 | `.pp-onboarded` `CLAUDE.md` |
 | 2d | KobiiSports Resort/CursorProjects | **17,415** | 3 | `CLAUDE.md` `.claude` |
-| 12d | CavEX | — | 0 | — |
-| 12d | kobicraft-web | — | 0 | — |
-| 14d | kobicraft-auth | — | 0 | — |
-| 16d | TUA-X | 29,536 | 0 | `.pp-onboarded` `CLAUDE.md` `.claude` |
-| 16d | TUA-X-bdci | — | 0 | `CLAUDE.md` `.claude` |
-| 23d | InfinityOps-gscfix | — | 0 | `CLAUDE.md` `.claude` |
+| 12d | CavEX | **238** | 0 | — |
+| 12d | kobicraft-web | **50** | 0 | — |
+| 14d | kobicraft-auth | **6** | 0 | — |
+| 16d | TUA-X | 29,536 (stale) | 0 | `.pp-onboarded` `CLAUDE.md` `.claude` |
+| 16d | TUA-X-bdci | **2,368** | 0 | `CLAUDE.md` `.claude` |
+| 23d | InfinityOps-gscfix | **524** | 0 | `CLAUDE.md` `.claude` |
 
-**Seven ACTIVE repos hold no graph coordinates at all** — FIFA 11 Mod, KobiiHub,
-CavEX, kobicraft-web, kobicraft-auth, TUA-X-bdci, InfinityOps-gscfix. These are
-a *different* class from the deferred ones: not skipped for size, simply never
-visited by a session that reached Stop. They are the standing G2 remainder.
+Seven ACTIVE repos held **no** graph coordinates at all — a *different* class
+from the deferred ones: not skipped for size, simply never visited by a session
+that reached Stop. All seven were indexed on 2026-08-27 (bold above), 7/7, in
+119 s total; the two that cost real time were TUA-X-bdci (2,189 md → 2,368
+nodes, 73 s) and InfinityOps-gscfix (1,522 md → 524 nodes, 35 s). CavEX
+promoted 69 nodes to the cross-repo layer and kobicraft-web 25, so the cheapest
+repos here were not the least valuable ones.
+
+**Verified after the pass: of 16 ACTIVE repos, zero are absent from the store
+and zero sit at zero nodes.** Store 60 → 71 repos; promoted global nodes
+530 → 803.
+
+The `ceps=0` column is unchanged and is not a gap — see §1. TUA-X is the one
+remaining entry with *stale* rather than absent coordinates; a live pane there
+re-defers it at every Stop, so it returns to the debt set until an out-of-band
+index lands. Staleness coming back is the gate working, not leaking.
 
 ## 4. Onboarding — the mechanism exists and reaches nothing
 
@@ -191,8 +203,18 @@ Never a count and never a ratio — a threshold falls by deleting a subject, a
 ratio by growing its denominator. Only names move the number for the right
 reason.
 
-1. `FIFA 11 Mod`, `KobiiHub`, `CavEX`, `kobicraft-web`, `kobicraft-auth`,
-   `TUA-X-bdci`, `InfinityOps-gscfix` — ACTIVE, zero graph coordinates.
+1. ~~`FIFA 11 Mod`, `KobiiHub`, `CavEX`, `kobicraft-web`, `kobicraft-auth`,
+   `TUA-X-bdci`, `InfinityOps-gscfix` — ACTIVE, zero graph coordinates.~~
+   **CLOSED 2026-08-27**, 7/7 indexed; verified by re-deriving the ACTIVE set
+   and re-querying the store, not by trusting the indexer's own return values.
+   Replaced by: **`Cursor Projects/TUA-X` — stale, not absent** (29,536 nodes
+   from 2026-07-03). Two backgrounded repair attempts were killed by the
+   harness before completing; per the two-consecutive-failures law the third
+   attempt used a different layer (a detached `Start-Process`, PID confirmed
+   alive) rather than a third retry of the same shape. Its outcome is
+   unverified at the time of writing — `python modules/graphify/indexer.py
+   --deferred` is the authority, and it will keep naming TUA-X until an index
+   actually lands. The gate self-reports; this line does not have to.
 2. `zero-command-bootstrap.js`, `first-time-project.js`,
    `token-optimizer-bootstrap.js`, `auto-vault-bootstrap.js` — exist,
    unreachable, undeclared. Blocked on the §4 decision.
