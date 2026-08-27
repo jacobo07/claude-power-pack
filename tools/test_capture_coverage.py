@@ -24,7 +24,7 @@ sys.path.insert(0, str(PP))
 
 import tools.capture_liveness as cl  # noqa: E402
 
-EXPECTED_GATES = 14
+EXPECTED_GATES = 16
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -184,6 +184,32 @@ def main() -> int:
         _fail("V-COVERAGE-LIVE-MEASURED",
               f"live coverage is {live['state']} -- the installed hook's "
               "surface declaration could not be read at all")
+
+    # --- the address half: a store must belong to its own checkout -------
+    # These two hardcoded the installed path, so a copy running from a git
+    # worktree wrote into the installed corpus while the test beside it
+    # snapshotted and restored a file nobody had written -- and passed its
+    # own byte-identical-restore gate while doing it.
+    import tools.ceps as ceps
+    if ceps.PP_ROOT == PP:
+        _ok("V-COVERAGE-STORE-ADDRESS",
+            f"tools.ceps writes under the checkout it was imported from "
+            f"({PP.name}); a worktree run cannot touch the installed corpus")
+    else:
+        _fail("V-COVERAGE-STORE-ADDRESS",
+              f"tools.ceps writes to {ceps.PP_ROOT} while this test lives in "
+              f"{PP} -- the test would restore a file the module never wrote")
+
+    bridge_text = (PP / "hooks" / "bug-hunter-ceps-bridge.js").read_text(
+        encoding="utf-8", errors="replace")
+    if "__dirname" in bridge_text and "skills\\\\claude-power-pack'" not in bridge_text:
+        _ok("V-COVERAGE-HOOK-ADDRESS",
+            "the bridge resolves its root from __dirname, not a literal "
+            "installed path")
+    else:
+        _fail("V-COVERAGE-HOOK-ADDRESS",
+              "the bridge carries a hardcoded root -- a worktree copy would "
+              "write to the installed store")
 
     ran = len(_passes) + len(_fails)
     print(f"\nCOVERAGE_PASS={len(_passes)}/{ran}  "

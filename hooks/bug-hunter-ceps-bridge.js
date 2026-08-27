@@ -31,7 +31,15 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
-const PP_PATH = 'C:\\Users\\User\\.claude\\skills\\claude-power-pack';
+// Resolved from this file's own location, not hardcoded. The literal
+// installed path meant a copy of this hook running from a git worktree
+// still wrote to the INSTALLED corpus. test_capture_liveness drives the
+// hook next to it and then restores the store next to it -- so its
+// byte-identical-restore gate passed while the events it injected stayed
+// in production forever. Two PowerShell and two Read rows in the live
+// corpus arrived exactly that way. An address that ignores where the code
+// actually is turns a hermetic test into a silent writer.
+const PP_PATH = path.resolve(__dirname, '..');
 const CAPTURE_TOOL = path.join(PP_PATH, 'tools', 'ceps_capture.py');
 const FIRES_PATH = path.join(PP_PATH, 'vault', 'ceps', 'fires.jsonl');
 
