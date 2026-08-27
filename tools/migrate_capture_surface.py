@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Idempotent settings.json migration: widen a NARROW capture registration.
+
+A producer can be registered, firing and recording while blind to most of
+its subject, because the entry carrying its name matches fewer tool
+surfaces than the hook's own code handles. `capture_liveness.py` measures
+that gap; this applies the one correction it justifies.
+
+WHAT IT IS NOT
+--------------
+It is not a bulk widen. Evaluated 2026-08-27, of the five `Bash`-matched
+registrations on this host exactly ONE should change:
+
+  bug-hunter-ceps-bridge.js  WIDEN  -- declares Bash AND PowerShell since the
+                                       2026-08-14 repair; 75.5% of command
+                                       traffic here is PowerShell
+  bug-hunter-learning.js     NO-OP  -- its code hard-rejects non-Bash
+                                       (`tool_name !== 'Bash'`), so widening
+                                       the matcher changes nothing
+  osa_deploy_detector.js     NO-OP  -- same self-rejection
+  tty-restore.js             KEEP   -- narrow ON PURPOSE: DECSET 1004 focus
+                                       reporting leaks from the Bash bridge,
+                                       not from the PowerShell tool
+  PreToolUse-Bash-chain      KEEP   -- carries windows-bash-bridge-guard.js,
+                                       which BLOCKS git/mix/gh/npm via Bash to
+                                       force them onto PowerShell. Widening it
+                                       would block the surface it redirects to
+
+That last row is why the candidate set is bounded rather than derived from
+"every narrow matcher": a blanket widen would have broken the doctrine this
+host runs on.
+
+SAFETY CONTRACT (every guard must hold or the entry is left untouched)
+  1. The hook must be in CANDIDATES -- an explicit, reviewed allow-list.
+  2. `capture_liveness.coverage_of` must independently report NARROW. The
+     evidence comes from the measuring owner, never restated here, so the
+     two cannot drift apart.
+  3. The hook's source must not hard-reject the surface being added. A
+     `tool_name !== 'X'` guard means widening the matcher buys nothing and
+     would leave settings.json claiming a coverage the code refuses.
+  4. Only the matcher string changes. No entry is added, removed or
+     reordered, and no other event is touched.
+
+IDEMPOTENT: a second run finds nothing NARROW -> no backup, no write.
+Default is DRY-RUN. Pass --apply to write (backup taken and verified first).
+
+    python tools/migrate_capture_surface.py           # dry-run
+    python tools/migrate_capture_surface.py --apply   # apply
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from tools.capture_liveness import (  # noqa: E402
+    PRODUCERS, coverage_of, declared_surfaces,
+)
+
+SETTINGS = Path(os.path.expanduser("~/.claude/settings.json"))
+
+# Guard 1. Reviewed, bounded, and deliberately not "everything narrow".
+CANDIDATES = {"bug-hunter-ceps-bridge.js"}
+
+
+def self_rejects(source: Path | None, surface: str) -> bool:
+    """Does the hook's own code refuse this tool surface outright?
+
+    Matches the `tool_name !== 'Bash'` shape three hooks on this host use.
+    A hook that rejects everything but Bash cannot be helped by a wider
+    matcher, and widening one would put a false coverage claim in
+    settings.json -- the exact confusion this whole layer exists to end.
+    """
+    if not source or not Path(source).is_file():
+        return False
+    try:
+        text = Path(source).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    for match in re.finditer(
+            r"tool_?[Nn]ame[^\n]{0,40}?!==?\s*['\"](?P<only>\w+)['\"]", text):
+        if match.group("only") != surface:
+            return True
+    return False
+
+
+def plan() -> list[dict]:
+    """Entries this migration would change, with the evidence for each."""
+    actions = []
+    for spec in PRODUCERS:
+        marker = spec.get("hook_marker")
+        if not marker or marker not in CANDIDATES:
+            continue
+        cover = coverage_of(spec)
+        if cover["state"] != "NARROW":          # guard 2
+            continue
+        declared = declared_surfaces(spec.get("hook_source")) or set()
+        blocked = [s for s in cover["uncovered"]
+                   if self_rejects(spec.get("hook_source"), s)]   # guard 3
+        addable = [s for s in cover["uncovered"] if s not in blocked]
+        if not addable:
+            continue
+        actions.append({
+            "marker": marker,
+            "add": addable,
+            "declared": sorted(declared),
+            "matched": cover["matched"],
+            "refused_by_code": blocked,
+        })
+    return actions
+
+
+def apply(actions: list[dict]) -> tuple[int, str]:
+    """Rewrite the matcher of each planned entry. Returns (changed, backup)."""
+    raw = SETTINGS.read_text(encoding="utf-8-sig")
+    blob = json.loads(raw)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    backup = str(SETTINGS) + f".bak-capture-surface-{stamp}"
+    shutil.copy2(SETTINGS, backup)
+    if Path(backup).read_text(encoding="utf-8-sig") != raw:
+        raise RuntimeError("backup verification failed -- refusing to write")
+
+    changed = 0
+    for action in actions:
+        for entries in (blob.get("hooks") or {}).values():
+            for entry in entries or []:
+                joined = " ".join(
+                    str(h.get("command", "")) for h in entry.get("hooks") or [])
+                if action["marker"] not in joined.replace("\\", "/"):
+                    continue
+                current = str(entry.get("matcher") or "")
+                parts = [p.strip() for p in current.split("|") if p.strip()]
+                for surface in action["add"]:
+                    if surface not in parts:
+                        parts.append(surface)
+                        changed += 1
+                entry["matcher"] = "|".join(parts)
+
+    SETTINGS.write_text(
+        json.dumps(blob, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return changed, backup
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--apply", action="store_true",
+                    help="write the change (default is dry-run)")
+    args = ap.parse_args()
+
+    actions = plan()
+    if not actions:
+        print("CAPTURE_SURFACE: nothing NARROW and addable -- no change "
+              "(idempotent: this is also what a second run prints)")
+        return 0
+
+    for action in actions:
+        print(f"{action['marker']}")
+        print(f"  declares : {'|'.join(action['declared'])}")
+        print(f"  matches  : {'|'.join(action['matched']) or '(nothing)'}")
+        print(f"  ADD      : {'|'.join(action['add'])}")
+        if action["refused_by_code"]:
+            print(f"  skipped  : {'|'.join(action['refused_by_code'])} "
+                  "(the hook's own code rejects it)")
+
+    if not args.apply:
+        print("\nDRY-RUN. Re-run with --apply to write "
+              f"(a verified backup of {SETTINGS} is taken first).")
+        return 0
+
+    changed, backup = apply(actions)
+    print(f"\nAPPLIED: {changed} surface(s) added. Backup: {backup}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

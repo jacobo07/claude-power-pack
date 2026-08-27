@@ -24,7 +24,7 @@ sys.path.insert(0, str(PP))
 
 import tools.capture_liveness as cl  # noqa: E402
 
-EXPECTED_GATES = 13
+EXPECTED_GATES = 14
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -161,6 +161,16 @@ def main() -> int:
             "a producer claiming no surface contract is not judged on one")
     else:
         _fail("V-COVERAGE-NO-CONTRACT-SILENT", "a contract was invented")
+
+    cl.SETTINGS = Path(_settings("Bash", "node unrelated.js"))
+    gone = cl.coverage_of(_spec(both))
+    if gone["state"] == "UNREGISTERED":
+        _ok("V-COVERAGE-UNREGISTERED-DISTINCT",
+            "absent from settings.json reads as UNREGISTERED, not NARROW -- "
+            "widening an entry that does not exist fixes nothing")
+    else:
+        _fail("V-COVERAGE-UNREGISTERED-DISTINCT",
+              f"an unregistered hook reported {gone['state']}")
 
     # --- the live finding, pinned ----------------------------------------
     cl.SETTINGS = original

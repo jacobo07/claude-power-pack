@@ -260,6 +260,14 @@ def coverage_of(spec: dict) -> dict:
     if matched is None:          # a universal registration covers everything
         return {"state": "COVERED", "declared": sorted(declared),
                 "matched": ["*"], "uncovered": []}
+    if not matched:
+        # Absent from settings.json entirely. `declared - set()` would read
+        # as NARROW and invite a migration to widen an entry that does not
+        # exist; the cause is different and so is the fix, which the
+        # `wired is False` arm below already reports. A verdict must not
+        # borrow another verdict's name.
+        return {"state": "UNREGISTERED", "declared": sorted(declared),
+                "matched": [], "uncovered": sorted(declared)}
     uncovered = sorted(declared - matched)
     return {
         "state": "NARROW" if uncovered else "COVERED",

@@ -387,6 +387,12 @@ def main() -> int:
         ("capture-coverage",
          [PY, str(PP / "tools" / "test_capture_coverage.py")],
          60),
+        # One registration should widen, not five: the Bash-chain carries the
+        # guard that blocks git/npm via Bash to force them onto PowerShell,
+        # so widening it would block the surface doctrine redirects to.
+        ("capture-surface",
+         [PY, str(PP / "tools" / "test_capture_surface_migration.py")],
+         60),
         # And the live divergence check: fires vs records over 7 days. The
         # 2026-05..08 outage was invisible to every other row here because
         # each component passed while the corpus stayed empty.
