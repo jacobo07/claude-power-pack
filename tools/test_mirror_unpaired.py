@@ -27,7 +27,7 @@ from tools.mirror_unpaired_audit import (  # noqa: E402
 )
 from modules.mirror_discovery.discovery import resolve_live_root  # noqa: E402
 
-EXPECTED_GATES = 14
+EXPECTED_GATES = 15
 _passes: list[str] = []
 _fails: list[str] = []
 LIVE = Path("C:/Users/User/.claude")
@@ -221,6 +221,30 @@ def main() -> int:
         _fail("V-UNPAIRED-DIVERGENCE-ACTIONABLE",
               "a failure the reader cannot act on is a failure they learn "
               "to skip")
+
+    # A live dispatcher that registers NOTHING is total capability loss,
+    # and the old guard read it as agreement: repo_only listed every hook,
+    # live_registers was 0, and the tool printed OK.
+    vacuous = {"repo_registers": 52, "live_registers": 0,
+               "repo_only": ["a.js", "b.js"], "live_only": []}
+    would_fail = bool(
+        vacuous["repo_registers"]
+        and (not vacuous["live_registers"]
+             or vacuous["repo_only"] or vacuous["live_only"]))
+    unmeasured = {"repo_registers": 0, "live_registers": 0,
+                  "repo_only": [], "live_only": []}
+    stays_quiet = not (
+        unmeasured["repo_registers"]
+        and (not unmeasured["live_registers"]
+             or unmeasured["repo_only"] or unmeasured["live_only"]))
+    if would_fail and stays_quiet:
+        _ok("V-UNPAIRED-EMPTY-LIVE-IS-NOT-AGREEMENT",
+            "live_registers=0 against a populated canonical copy fails; "
+            "both-empty (nothing measured) still stays quiet")
+    else:
+        _fail("V-UNPAIRED-EMPTY-LIVE-IS-NOT-AGREEMENT",
+              f"would_fail={would_fail} stays_quiet={stays_quiet} -- "
+              "unmeasured and measured-zero are being conflated")
 
     ran = len(_passes) + len(_fails)
     print(f"\nUNPAIRED_PASS={len(_passes)}/{ran}  "

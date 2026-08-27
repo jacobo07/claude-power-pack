@@ -171,16 +171,21 @@ def main() -> int:
 
     # The one target in this table that was calibrated against a different
     # operation than its name describes.
-    if QUICK_TARGETS["ceps_record_ms"] >= 44.2:
+    # A floor alone only blocks LOWERING the number; 5000 would also have
+    # passed. Bounded on both sides against the measured worst min-of-3 on
+    # a real-corpus fixture (437 ms): high enough to admit it, low enough
+    # that the gate can still fail.
+    target = QUICK_TARGETS["ceps_record_ms"]
+    if 437 / BAND <= target <= 437 * 2:
         _ok("V-BENCH-CEPS-TARGET-MEASURED",
-            f"ceps_record_ms target {QUICK_TARGETS['ceps_record_ms']} clears "
-            "the worst observed min-of-3 window (44.2 ms) for the RECORD "
-            "path; the old 38 was set against a 0.4-3.3 ms refusal")
+            f"ceps_record_ms target {target} admits the measured worst "
+            f"min-of-3 (437 ms, real-corpus fixture) and stays inside 2x of "
+            "it -- 38 timed a refusal, 60 timed an empty corpus")
     else:
         _fail("V-BENCH-CEPS-TARGET-MEASURED",
-              f"ceps_record_ms target is {QUICK_TARGETS['ceps_record_ms']}, "
-              "below the measured worst min-of-3 of 44.2 -- that threshold "
-              "belongs to the rejection path, not the record path")
+              f"target {target} is outside [{437 / BAND:.0f}, 874]: either "
+              "it cannot admit the real cost, or it is loose enough to "
+              "certify anything")
 
     ran = len(_passes) + len(_fails)
     print(f"\nBENCH_GATE_PASS={len(_passes)}/{ran}  "

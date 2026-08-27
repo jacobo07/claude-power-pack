@@ -15,6 +15,8 @@ working one.
 from __future__ import annotations
 
 import json
+import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -24,7 +26,8 @@ sys.path.insert(0, str(PP))
 
 import tools.capture_liveness as cl  # noqa: E402
 
-EXPECTED_GATES = 16
+EXPECTED_GATES = 22
+_TEMPS: list[str] = []
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -47,7 +50,22 @@ def _settings(matcher, command: str) -> str:
         "w", suffix=".json", delete=False, encoding="utf-8")
     json.dump(blob, handle)
     handle.close()
+    _TEMPS.append(handle.name)
     return handle.name
+
+
+def _multi(entries: list) -> Path:
+    """settings.json with entries as (event, matcher, command) triples."""
+    hooks: dict = {}
+    for event, matcher, command in entries:
+        hooks.setdefault(event, []).append(
+            {"matcher": matcher, "hooks": [{"command": command}]})
+    handle = tempfile.NamedTemporaryFile(
+        "w", suffix=".json", delete=False, encoding="utf-8")
+    json.dump({"hooks": hooks}, handle)
+    handle.close()
+    _TEMPS.append(handle.name)
+    return Path(handle.name)
 
 
 def _hook_src(surfaces: str) -> str:
@@ -57,6 +75,7 @@ def _hook_src(surfaces: str) -> str:
     handle.write("'use strict';\nconst COMMAND_TOOLS = new Set([%s]);\n"
                  % surfaces)
     handle.close()
+    _TEMPS.append(handle.name)
     return handle.name
 
 
@@ -176,14 +195,25 @@ def main() -> int:
     cl.SETTINGS = original
     live = cl.coverage_of(
         next(p for p in cl.PRODUCERS if p["name"] == "bug-hunter-ceps-bridge"))
-    if live["state"] in ("NARROW", "COVERED"):
+    # This gate used to accept NARROW *or* COVERED, which is every outcome
+    # it can name -- it could not fail for the defect it is about. It now
+    # asserts the measurement is internally COHERENT, which can.
+    declared, matched = set(live["declared"] or []), set(live["matched"] or [])
+    coherent = (
+        (live["state"] == "NARROW"
+         and live["uncovered"] and declared > matched)
+        or (live["state"] == "COVERED"
+            and not live["uncovered"]
+            and (matched == {"*"} or declared <= matched)))
+    if coherent:
         _ok("V-COVERAGE-LIVE-MEASURED",
-            f"live bridge coverage is {live['state']}: declares "
-            f"{live['declared']}, matches {live['matched']}")
+            f"live bridge coverage is {live['state']} and self-consistent: "
+            f"declares {live['declared']}, matches {live['matched']}, "
+            f"uncovered {live['uncovered']}")
     else:
         _fail("V-COVERAGE-LIVE-MEASURED",
-              f"live coverage is {live['state']} -- the installed hook's "
-              "surface declaration could not be read at all")
+              f"incoherent: state={live['state']} declared={live['declared']} "
+              f"matched={live['matched']} uncovered={live['uncovered']}")
 
     # --- the address half: a store must belong to its own checkout -------
     # These two hardcoded the installed path, so a copy running from a git
@@ -191,26 +221,122 @@ def main() -> int:
     # snapshotted and restored a file nobody had written -- and passed its
     # own byte-identical-restore gate while doing it.
     import tools.ceps as ceps
-    if ceps.PP_ROOT == PP:
+    # `ceps.PP_ROOT == PP` was true by construction -- both are parents[1]
+    # of a file in the same tools/ dir, so it asserted arithmetic. What
+    # matters is that the SOURCE no longer derives the store from $HOME and
+    # that every write path lands under this checkout.
+    ceps_src = (PP / "tools" / "ceps.py").read_text(
+        encoding="utf-8", errors="replace")
+    home_rooted = re.search(
+        r"PP_ROOT\s*=\s*HOME\s*/|PP_ROOT\s*=\s*Path\.home\(\)", ceps_src)
+    writes = [ceps.EVENTS_PATH, ceps.DB_PATH, ceps.REJECTIONS_PATH,
+              ceps.DRAFTS_DIR, ceps.LESSONS_PATH, ceps.UKDL_PATH]
+    stray = [w for w in writes if PP not in Path(w).resolve().parents]
+    if not home_rooted and not stray:
         _ok("V-COVERAGE-STORE-ADDRESS",
-            f"tools.ceps writes under the checkout it was imported from "
-            f"({PP.name}); a worktree run cannot touch the installed corpus")
+            f"no $HOME-rooted store in ceps.py and all {len(writes)} write "
+            f"paths resolve under {PP.name}")
     else:
         _fail("V-COVERAGE-STORE-ADDRESS",
-              f"tools.ceps writes to {ceps.PP_ROOT} while this test lives in "
-              f"{PP} -- the test would restore a file the module never wrote")
+              f"home_rooted={bool(home_rooted)} stray={[str(x) for x in stray]}"
+              " -- a worktree run would write the installed corpus")
 
     bridge_text = (PP / "hooks" / "bug-hunter-ceps-bridge.js").read_text(
         encoding="utf-8", errors="replace")
-    if "__dirname" in bridge_text and "skills\\\\claude-power-pack'" not in bridge_text:
+    # A substring pin on one backslash spelling would pass a forward-slash
+    # hardcoded path. Assert the ASSIGNMENT instead: PP_PATH must not be a
+    # drive-letter literal, in either spelling.
+    hardcoded = re.search(r"PP_PATH\s*=\s*['\"][A-Za-z]:", bridge_text)
+    if "__dirname" in bridge_text and not hardcoded:
         _ok("V-COVERAGE-HOOK-ADDRESS",
-            "the bridge resolves its root from __dirname, not a literal "
-            "installed path")
+            "the bridge derives PP_PATH from __dirname; no absolute-path "
+            "assignment in either slash spelling")
     else:
         _fail("V-COVERAGE-HOOK-ADDRESS",
-              "the bridge carries a hardcoded root -- a worktree copy would "
-              "write to the installed store")
+              f"hardcoded={bool(hardcoded)} -- a worktree copy would write "
+              "to the installed store")
 
+    # --- HIGH-1: coverage is per EVENT ----------------------------------
+    # Stop/SessionStart/UserPromptSubmit entries carry no matcher at all.
+    # Unioned across events, one of those made the PostToolUse surface read
+    # COVERED while it was Bash-only -- the exact false-healthy verdict
+    # this file exists to abolish, restored silently.
+    cl.SETTINGS = _multi([
+        ("PostToolUse", "Bash", "node probe.js"),
+        ("Stop", None, "node probe.js"),
+    ])
+    scoped = cl.coverage_of(dict(_spec(both), event="PostToolUse"))
+    if scoped["state"] == "NARROW" and scoped["uncovered"] == ["PowerShell"]:
+        _ok("V-COVERAGE-EVENT-SCOPED",
+            "a matcher-less Stop entry does not make the PostToolUse "
+            "surface read as covered")
+    else:
+        _fail("V-COVERAGE-EVENT-SCOPED",
+              f"cross-event leak: {scoped} -- one event's universality "
+              "masked another's narrowness")
+
+    if cl.registration_surfaces("probe.js", "Stop") is None:
+        _ok("V-COVERAGE-EVENT-SCOPED-BOOKEND",
+            "the matcher-less Stop entry is still universal in ITS event")
+    else:
+        _fail("V-COVERAGE-EVENT-SCOPED-BOOKEND",
+              "event scoping broke the universal case it must preserve")
+
+    # --- MEDIUM-3: a historical declaration in a comment ----------------
+    commented = tempfile.NamedTemporaryFile(
+        "w", suffix=".js", delete=False, encoding="utf-8")
+    commented.write(
+        "// historical: COMMAND_TOOLS = new Set(['Bash']) before the repair\n"
+        "const COMMAND_TOOLS = new Set(['Bash', 'PowerShell']);\n")
+    commented.close()
+    if cl.declared_surfaces(Path(commented.name)) == {"Bash", "PowerShell"}:
+        _ok("V-COVERAGE-COMMENT-IGNORED",
+            "a pre-repair declaration quoted in a comment does not narrow "
+            "the declared set")
+    else:
+        _fail("V-COVERAGE-COMMENT-IGNORED",
+              f"read {cl.declared_surfaces(Path(commented.name))} -- a "
+              "narrower declared set makes `declared - matched` empty and "
+              "reports COVERED")
+
+    spread = _hook_src("...BASE, 'Bash'")
+    if cl.declared_surfaces(Path(spread)) is None:
+        _ok("V-COVERAGE-NONLITERAL-UNVERIFIABLE",
+            "a spread declaration is UNVERIFIABLE, not the literal fragment")
+    else:
+        _fail("V-COVERAGE-NONLITERAL-UNVERIFIABLE",
+              f"read {cl.declared_surfaces(Path(spread))} from a spread")
+
+    # --- LOW-9: matchers are regexes ------------------------------------
+    cl.SETTINGS = Path(_settings(".*", "node probe.js"))
+    if cl.registration_surfaces("probe.js") is None:
+        _ok("V-COVERAGE-REGEX-UNIVERSAL",
+            "'.*' reads as universal, not as a tool literally named '.*'")
+    else:
+        _fail("V-COVERAGE-REGEX-UNIVERSAL",
+              "a regex wildcard read as NARROW; the migration would append "
+              "|PowerShell to a pattern that already matched everything")
+
+    # --- MEDIUM-5: one foreign row must not satisfy the outage check ----
+    sink = tempfile.NamedTemporaryFile(
+        "w", suffix=".jsonl", delete=False, encoding="utf-8")
+    sink.write(json.dumps({"ts": "2999-01-01T00:00:00Z", "origin": "direct"})
+               + "\n")
+    sink.close()
+    cutoff = cl._now() - cl.timedelta(days=7)
+    if cl.count_since(Path(sink.name), cutoff, origin="hook") == 0:
+        _ok("V-COVERAGE-RECORDS-ORIGIN-FILTERED",
+            "a row written by another caller does not count as this "
+            "producer's record; fires-without-records can still trip")
+    else:
+        _fail("V-COVERAGE-RECORDS-ORIGIN-FILTERED",
+              "one foreign row satisfies the 63-fires/0-records check")
+
+    for leftover in _TEMPS + [commented.name, sink.name]:
+        try:
+            os.unlink(leftover)
+        except OSError:
+            pass
     ran = len(_passes) + len(_fails)
     print(f"\nCOVERAGE_PASS={len(_passes)}/{ran}  "
           f"threshold={EXPECTED_GATES}/{EXPECTED_GATES}")

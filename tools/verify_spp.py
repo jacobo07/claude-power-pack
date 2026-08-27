@@ -384,6 +384,14 @@ def main() -> int:
         # wired, firing and recording -- and blind to 75.5% of the command
         # traffic on this host, because the entry carrying its name matched
         # Bash while the hook declares Bash and PowerShell.
+        # The AUDIT, not only its unit tests. verify_spp ran
+        # test_mirror_unpaired.py, whose gate asserts "exit 1 GIVEN a
+        # divergence" -- so the suite was green while session_delta_stop.js
+        # was wired canonically and did not run in production. A test that
+        # the detector works is not a run of the detector.
+        ("mirror-divergence",
+         [PY, str(PP / "tools" / "mirror_unpaired_audit.py")],
+         90),
         ("capture-coverage",
          [PY, str(PP / "tools" / "test_capture_coverage.py")],
          60),

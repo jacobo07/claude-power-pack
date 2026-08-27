@@ -56,16 +56,29 @@ QUICK_TARGETS = {
     "osa_dispatcher_ms": 300,
     "proactive_dispatch_ms": 30,
     "anti_patterns_ms": 120,
-    # 38 was never a threshold for this operation. The probe called
-    # record_error with category 'bench_all', which is not in
-    # VALID_CATEGORIES, so it returned at the first guard: all 22 historical
-    # ledger samples (0.4-3.3 ms) timed a REFUSAL, and 38 gave that refusal a
-    # 12-95x margin it could never exceed. Repaired 2026-08-27; the record
-    # path measured in isolation, n=9, all recorded: min 29.0, p50 39.5,
-    # p90 65.0, max 73.3, worst min-of-3 window 44.2. 60 (band 90) clears
-    # that worst window by ~2x and still catches a genuine doubling. This is
-    # the FIRST threshold this operation has had, not a relaxed one.
-    "ceps_record_ms": 60,
+    # Twice wrong before this number was earned, and both errors were the
+    # same shape -- a measurement of something adjacent to the operation.
+    #
+    # 38 timed a REFUSAL: the probe passed category 'bench_all', not in
+    # VALID_CATEGORIES, so record_error returned at its first guard. All 22
+    # historical ledger samples sit at 0.4-3.3 ms against that 38, a margin
+    # it could never exceed.
+    #
+    # 60 timed the real operation on an EMPTY corpus. distribute() appends
+    # to the UKDL and lessons files with a whole-file read-modify-write, so
+    # a probe pointed at empty temp targets measured ~7% of the cost.
+    #
+    # Now seeded from a copy of the live corpus, which is the only fixture
+    # that reproduces it (worst min-of-3 at 619 KB: empty 33 ms, one long
+    # line 74, realistic line count 87, real files 437 -- the cost is
+    # content-dependent, not merely size-dependent). n=7 on the real
+    # corpus: min 392, p50 412, max 479, worst min-of-3 437.
+    #
+    # 400 (band 600) admits that worst window with headroom and still
+    # catches a doubling. It will RISE as the corpus grows, and that is the
+    # point: the append is O(corpus), it runs inside the bridge's 5 s
+    # execFileSync budget, and growth is the failure this probe is for.
+    "ceps_record_ms": 400,
     "session_hub_ms": 300,
     "never_again_ms": 30,
 }

@@ -331,10 +331,28 @@ def bench_ceps_record():
     # capture_liveness reads. A valid category measures the real path; an
     # isolated store keeps a benchmark from writing into the corpus other
     # gates learn from.
+    # SEEDED FROM THE REAL CORPUS, and that is the whole point.
+    # record_error -> distribute() appends to LESSONS_PATH and UKDL_PATH,
+    # and _atomic_append is a read-modify-write of the ENTIRE file. Aimed
+    # at empty temp files the probe measured the right operation on the
+    # wrong input -- 33 ms against 437 ms, about 7% of the cost, with the
+    # threshold certifying the rest.
+    #
+    # Synthetic seeding does not fix it either. Measured 2026-08-27 at the
+    # same 619 KB, worst min-of-3: empty 33 ms, one long line 74 ms,
+    # realistic line count 87 ms, a COPY of the real files 437 ms. Neither
+    # byte count nor line count reproduces the cost, so it is
+    # content-dependent and only the corpus itself is a valid fixture.
+    #
+    # Consequence, stated: this metric now moves with the corpus, which
+    # GROWS every session. That is not drift to be engineered away -- the
+    # append is O(corpus) and runs inside the bridge's 5 s execFileSync
+    # budget, so corpus growth IS the risk this probe exists to see.
     script = (
         f"import sys, json, time, tempfile, pathlib;"
         f"sys.path.insert(0, r'{PP_PATH}');"
         "import tools.ceps as ceps;"
+        "real_ukdl, real_lessons = ceps.UKDL_PATH, ceps.LESSONS_PATH;"
         "tmp = pathlib.Path(tempfile.mkdtemp(prefix='ceps-bench-'));"
         "ceps.EVENTS_PATH = tmp / 'events.jsonl';"
         "ceps.DB_PATH = tmp / 'patterns.db';"
@@ -343,10 +361,16 @@ def bench_ceps_record():
         "ceps.LESSONS_PATH = tmp / 'session_lessons.md';"
         "ceps.UKDL_PATH = tmp / 'ukdl.md';"
         "ceps.LOG = tmp / 'ceps.log';"
+        "import shutil;"
+        "shutil.copyfile(real_ukdl, ceps.UKDL_PATH) "
+        "if real_ukdl.is_file() else None;"
+        "shutil.copyfile(real_lessons, ceps.LESSONS_PATH) "
+        "if real_lessons.is_file() else None;"
         "t0 = time.perf_counter();"
         "ev = ceps.record_error('tooling', 'bench', "
         "'ModuleNotFoundError: No module named benchprobe');"
         "dt = round((time.perf_counter()-t0)*1000, 1);"
+        "shutil.rmtree(tmp, ignore_errors=True);"
         "print(json.dumps({'inner_ms': dt, 'recorded': bool(ev)}))"
     )
     rc, so, se = _run([PY, "-c", script], timeout=15)

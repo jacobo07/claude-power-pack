@@ -120,9 +120,17 @@ const NAV_PREFIXES = new Set([
 ]);
 
 function leadingExe(segment) {
-  const first = String(segment || '')
-    .replace(/^[\s&$(]+/, '')
-    .split(/\s+/)[0] || '';
+  const raw = String(segment || '').replace(/^[\s&$(]+/, '');
+  // Take a QUOTED path whole before falling back to whitespace splitting.
+  // Splitting first turned "C:/Program Files/Git/cmd/git.exe" into
+  // `C:/Program`, whose basename is `Program` -- not in READ_TOOLS, so the
+  // quotation filter failed and a git diff that merely PRINTED an error
+  // string was recorded as a failure, bucketed under `bash:Program`. Every
+  // doctrine-mandated absolute path on this host is quoted and contains a
+  // space, so this defeated both the filter and the recurrence key, the
+  // same way the leading `cd` did before it.
+  const quoted = raw.match(/^["']([^"']+)["']/);
+  const first = quoted ? quoted[1] : (raw.split(/\s+/)[0] || '');
   return path.basename(first.replace(/['"]/g, '')).slice(0, 24);
 }
 

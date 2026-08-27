@@ -73,6 +73,7 @@ PRODUCERS = [
         "name": "bug-hunter-ceps-bridge",
         "trigger": AUTOMATIC,
         "hook_marker": "bug-hunter-ceps-bridge.js",
+        "event": "PostToolUse",
         # The INSTALLED file, which is what settings.json invokes -- not a
         # worktree-relative sibling. A coverage claim about the running
         # system must be read from the running system
@@ -98,6 +99,7 @@ PRODUCERS = [
         "name": "cascade-check-bash",
         "trigger": AUTOMATIC,
         "hook_marker": "PreToolUse-Bash-chain",
+        "event": "PreToolUse",
         "hook_source": PP_ROOT / "hooks" / "cascade_check_bash.js",
         "sink": None,
         "note": "HR-CASCADE-001..005 enforcement; blocks rather than records",
@@ -145,6 +147,18 @@ def _parse_ts(raw: str) -> datetime | None:
     return parsed
 
 
+def _accepted(origin: str) -> tuple:
+    """Origins that count as `origin`, including pre-field rows.
+
+    Events only began carrying `origin` on 2026-08-27; rows written before
+    that carry none. Excluding them outright would drop the corpus this
+    gate reasons over, so an absent origin is admitted as legacy -- stated
+    rather than silent, because it is the one hole a test-written row could
+    still slip through if it predates the field.
+    """
+    return (origin, None)
+
+
 def count_since(path: Path, cutoff: datetime, origin: str | None = None) -> int:
     """Rows in a .jsonl whose `ts` is at or after cutoff.
 
@@ -164,7 +178,7 @@ def count_since(path: Path, cutoff: datetime, origin: str | None = None) -> int:
             row = json.loads(line)
         except ValueError:
             continue
-        if origin is not None and row.get("origin") != origin:
+        if origin is not None and row.get("origin") not in _accepted(origin):
             continue
         ts = _parse_ts(row.get("ts", ""))
         if ts and ts >= cutoff:
@@ -220,8 +234,26 @@ _DECLARED_RES = (
     re.compile(r"\[(?P<body>[^\]]*)\]\s*\.includes\(\s*"
                r"(?:\w+\.)?tool_name"),
 )
-# Matchers admitting every tool: absent, empty, or the star wildcard.
-_UNIVERSAL = {"", "*"}
+# Comments are stripped before matching. These hooks carry long historical
+# headers, and quoting a PRE-REPAIR declaration in one of them is idiomatic
+# here -- a first-match-wins search over raw text would then read the
+# narrower historical set as current and report COVERED. A narrower
+# declared set is the dangerous direction: it makes `declared - matched`
+# empty.
+_COMMENT_RES = (
+    re.compile(r"/\*.*?\*/", re.S),
+    re.compile(r"(?m)^\s*//.*$"),
+)
+# A body that is not a plain literal list -- a spread, a concat, a bare
+# identifier -- cannot be read as the complete set. Answering with the
+# literal fragment would UNDERSTATE it.
+_NON_LITERAL = re.compile(r"\.\.\.|\bconcat\b|(?<![\w'\"])[A-Za-z_]\w*"
+                          r"(?![\w'\"]*\s*['\"])")
+# Matchers admitting every tool: absent, empty, or a wildcard. Matchers
+# are regex-ish, so `.*` and `.+` are universal too -- reading them as the
+# literal tool name ".*" would report NARROW and drive the migration to
+# append `|PowerShell` to a pattern that already matched everything.
+_UNIVERSAL = {"", "*", ".*", ".+", "*.*"}
 
 
 def declared_surfaces(path: Path | None) -> set[str] | None:
@@ -232,29 +264,49 @@ def declared_surfaces(path: Path | None) -> set[str] | None:
         text = Path(path).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return None
+    for stripper in _COMMENT_RES:
+        text = stripper.sub("", text)
+    found: list[set[str]] = []
     for pattern in _DECLARED_RES:
-        found = pattern.search(text)
-        if not found:
-            continue
-        names = set(re.findall(r"['\"]([A-Za-z]\w*)['\"]",
-                               found.group("body")))
-        if names:
-            return names
-    return None
+        for match in pattern.finditer(text):
+            body = match.group("body")
+            names = set(re.findall(r"['\"]([A-Za-z]\w*)['\"]", body))
+            quoted = re.sub(r"['\"][^'\"]*['\"]", "", body)
+            if not names or _NON_LITERAL.search(quoted):
+                continue
+            found.append(names)
+    if not found:
+        return None
+    if any(f != found[0] for f in found):
+        # Two different declarations in one file. Which is live is a
+        # judgement, and a coverage gate must not make one.
+        return None
+    return found[0]
 
 
-def registration_surfaces(marker: str) -> set[str] | None:
+def registration_surfaces(marker: str,
+                         event: str | None = None) -> set[str] | None:
     """Tool names the LIVE registrations carrying `marker` actually match.
 
-    None means some registration is universal -- it covers everything. An
-    empty set means the marker appears in no registration at all.
+    Scoped to ONE event. Unioning across events is unsound: Stop,
+    SessionStart, SessionEnd and UserPromptSubmit entries carry no
+    `matcher` key at all, so a producer additionally wired to any of them
+    -- routine on this host -- would answer "universal" and its
+    PostToolUse capture surface could stay Bash-only forever while the
+    gate reported COVERED. That is the false-healthy verdict this whole
+    file exists to abolish, and it would have been restored silently.
+
+    None means a registration under THIS event is universal. An empty set
+    means the marker appears under this event nowhere.
     """
     try:
         blob = json.loads(SETTINGS.read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         return set()
+    hooks = blob.get("hooks") or {}
+    scoped = {event: hooks.get(event) or []} if event else hooks
     surfaces: set[str] = set()
-    for entries in (blob.get("hooks") or {}).values():
+    for entries in scoped.values():
         for entry in entries or []:
             joined = " ".join(
                 str(h.get("command", "")) for h in entry.get("hooks") or [])
@@ -283,7 +335,7 @@ def coverage_of(spec: dict) -> dict:
     if not declared:
         return {"state": "UNVERIFIABLE", "declared": None,
                 "matched": None, "uncovered": []}
-    matched = registration_surfaces(marker)
+    matched = registration_surfaces(marker, spec.get("event"))
     if matched is None:          # a universal registration covers everything
         return {"state": "COVERED", "declared": sorted(declared),
                 "matched": ["*"], "uncovered": []}
@@ -317,7 +369,13 @@ def evaluate(window_days: int) -> dict:
         cover = coverage_of(spec)
 
         fires = count_since(spec.get("fires"), cutoff)
-        records = count_since(spec.get("sink"), cutoff) if str(
+        # Filtered by origin, like rejections already were. Unfiltered,
+        # ONE row from a test suite or a manual `/ceps record` in the same
+        # window makes `records >= 1`, and the fires-without-records check
+        # -- the one born from the 63-fires/0-records outage -- never
+        # trips again.
+        records = count_since(spec.get("sink"), cutoff,
+                              origin=spec.get("rejection_origin")) if str(
             spec.get("sink", "")).endswith(".jsonl") else None
         rejected = count_since(spec.get("rejections"), cutoff,
                                origin=spec.get("rejection_origin"))
@@ -356,12 +414,16 @@ def evaluate(window_days: int) -> dict:
                     f"unknown coverage is not evidence of coverage")
 
             if wired is False:
-                row["verdict"] = "UNWIRED"
+                row["verdict"] = ("UNWIRED+NARROW"
+                                  if row["verdict"] == "NARROW-REGISTRATION"
+                                  else "UNWIRED")
                 failures.append(
                     f"{spec['name']}: AUTOMATIC producer is absent from "
                     f"{SETTINGS} -- it cannot fire at all")
             elif fires > 0 and (records or 0) == 0:
-                row["verdict"] = "FIRES-WITHOUT-RECORDS"
+                row["verdict"] = ("NARROW+FIRES-WITHOUT-RECORDS"
+                                  if row["verdict"] == "NARROW-REGISTRATION"
+                                  else "FIRES-WITHOUT-RECORDS")
                 failures.append(
                     f"{spec['name']}: {fires} fire(s) in {window_days}d "
                     f"produced 0 record(s) in {spec['sink'].name} "

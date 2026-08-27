@@ -22,6 +22,7 @@ neither a bulk widen nor a confident half-read can pass review.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -32,7 +33,8 @@ sys.path.insert(0, str(PP))
 import tools.capture_liveness as cl  # noqa: E402
 import tools.migrate_capture_surface as ms  # noqa: E402
 
-EXPECTED_GATES = 10
+EXPECTED_GATES = 15
+_TEMPS: list[str] = []
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -58,7 +60,21 @@ def _settings(matcher: str, command: str) -> Path:
         "w", suffix=".json", delete=False, encoding="utf-8")
     json.dump(blob, handle)
     handle.close()
+    _TEMPS.append(handle.name)
     return Path(handle.name)
+
+
+def _multi_entry(event: str, matcher, command: str) -> str:
+    """One entry under `event`, with `matcher` possibly absent entirely."""
+    entry: dict = {"hooks": [{"command": command}]}
+    if matcher is not None:
+        entry["matcher"] = matcher
+    handle = tempfile.NamedTemporaryFile(
+        "w", suffix=".json", delete=False, encoding="utf-8")
+    json.dump({"hooks": {event: [entry]}}, handle)
+    handle.close()
+    _TEMPS.append(handle.name)
+    return handle.name
 
 
 def main() -> int:
@@ -158,7 +174,81 @@ def main() -> int:
     else:
         _fail("V-SURFACE-NONCANDIDATE-IGNORED", "the allow-list did not bound")
 
+    # --- MEDIUM-4: the canonical two-surface guard is not a rejection ---
+    both_guard = tempfile.NamedTemporaryFile(
+        "w", suffix=".js", delete=False, encoding="utf-8")
+    both_guard.write("if (tool_name !== 'Bash' && tool_name !== 'PowerShell')"
+                     " process.exit(0);\n")
+    both_guard.close()
+    _TEMPS.append(both_guard.name)
+    if not ms.self_rejects(Path(both_guard.name), "PowerShell"):
+        _ok("V-SURFACE-SELFREJECT-SET-NOT-FIRST",
+            "`!== 'Bash' && !== 'PowerShell'` accepts PowerShell -- the "
+            "guard reads the SET of named tools, not the first that differs")
+    else:
+        _fail("V-SURFACE-SELFREJECT-SET-NOT-FIRST",
+              "the canonical two-surface guard read as a rejection of the "
+              "surface it accepts; the migration would refuse a valid widen")
+
+    commented_guard = tempfile.NamedTemporaryFile(
+        "w", suffix=".js", delete=False, encoding="utf-8")
+    commented_guard.write("// legacy: if (tool_name !== 'Grep') return;\n"
+                          "const COMMAND_TOOLS = new Set(['Bash']);\n")
+    commented_guard.close()
+    _TEMPS.append(commented_guard.name)
+    if not ms.self_rejects(Path(commented_guard.name), "PowerShell"):
+        _ok("V-SURFACE-SELFREJECT-IGNORES-COMMENTS",
+            "a rejection quoted in a comment is not a rejection")
+    else:
+        _fail("V-SURFACE-SELFREJECT-IGNORES-COMMENTS",
+              "commented-out code counted as a live guard")
+
+    # --- MEDIUM-7: apply() had zero gates and wrote the Owner's config --
+    target = _settings("Bash", bridge_cmd)
+    cl.SETTINGS = target
+    real = Path.home() / ".claude" / "settings.json"
+    real_before = real.read_bytes() if real.is_file() else b""
+    changed, backup = ms.apply(ms.plan())
+    _TEMPS.append(backup)
+    after = json.loads(target.read_text(encoding="utf-8-sig"))
+    matcher = after["hooks"]["PostToolUse"][0]["matcher"]
+    if changed == 1 and matcher == "Bash|PowerShell":
+        _ok("V-SURFACE-APPLY-WIDENS",
+            f"apply() rewrote exactly {changed} matcher -> {matcher!r}")
+    else:
+        _fail("V-SURFACE-APPLY-WIDENS",
+              f"changed={changed} matcher={matcher!r}")
+
+    if real.is_file() and real.read_bytes() == real_before:
+        _ok("V-SURFACE-APPLY-ISOLATED",
+            "apply() honoured the patched SETTINGS and left the Owner's "
+            "live settings.json byte-identical")
+    else:
+        _fail("V-SURFACE-APPLY-ISOLATED",
+              "apply() wrote the real settings.json -- plan() and apply() "
+              "read different path sources")
+
+    # An entry with no matcher is already universal; giving it one narrows.
+    nomatch = Path(_multi_entry("PostToolUse", None, bridge_cmd))
+    cl.SETTINGS = nomatch
+    ms.apply([{"marker": "bug-hunter-ceps-bridge.js", "add": ["PowerShell"],
+               "declared": [], "matched": [], "refused_by_code": [],
+               "entries": []}])
+    blob = json.loads(nomatch.read_text(encoding="utf-8-sig"))
+    if "matcher" not in blob["hooks"]["PostToolUse"][0]:
+        _ok("V-SURFACE-APPLY-KEEPS-UNIVERSAL",
+            "a matcher-less entry is left alone; adding one would NARROW it")
+    else:
+        _fail("V-SURFACE-APPLY-KEEPS-UNIVERSAL",
+              f"injected matcher {blob['hooks']['PostToolUse'][0]['matcher']!r}"
+              " into an entry that already matched everything")
+
     cl.SETTINGS = original
+    for leftover in _TEMPS:
+        try:
+            os.unlink(leftover)
+        except OSError:
+            pass
     ran = len(_passes) + len(_fails)
     print(f"\nSURFACE_PASS={len(_passes)}/{ran}  "
           f"threshold={EXPECTED_GATES}/{EXPECTED_GATES}")

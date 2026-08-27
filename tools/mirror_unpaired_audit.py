@@ -266,8 +266,9 @@ def main(argv=None) -> int:
         d = res["divergence"]
         return 1 if (any(r["status"] == BROKEN_REGISTRATION
                          for r in res["rows"])
-                     or (d["repo_registers"] and d["live_registers"]
-                         and (d["repo_only"] or d["live_only"]))) else 0
+                     or (d["repo_registers"]
+                         and (not d["live_registers"]
+                              or d["repo_only"] or d["live_only"]))) else 0
 
     counts: dict = {}
     for r in res["rows"]:
@@ -340,7 +341,18 @@ def main(argv=None) -> int:
     # RUNS is a live capability loss, so it fails. Guarded on both sides
     # having inputs -- an empty comparison yields an empty diff, which reads
     # as agreement and is exactly the state that hides the defect.
-    if div["repo_registers"] and div["live_registers"] and (
+    # `live_registers == 0` is NOT agreement. If the live dispatcher is
+    # missing, renamed, or stops parsing, every hook reads
+    # WIRED-CANONICAL-ONLY and the old guard turned total capability loss
+    # into exit 0 -- contradicted by this tool's own output twenty lines
+    # above. Unmeasured is not measured-zero.
+    if div["repo_registers"] and not div["live_registers"]:
+        print("\nMIRROR_UNPAIRED FAIL: the live dispatcher registers NOTHING "
+              f"while the canonical copy registers {div['repo_registers']}. "
+              "Either it is absent, renamed, or no longer parses -- every "
+              "hook it should route is dead. This is not agreement.")
+        return 1
+    if div["repo_registers"] and (
             div["repo_only"] or div["live_only"]):
         names = ", ".join(sorted(div["repo_only"]) + sorted(div["live_only"]))
         print(f"\nMIRROR_UNPAIRED FAIL: canonical and live dispatchers "

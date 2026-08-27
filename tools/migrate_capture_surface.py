@@ -73,11 +73,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import tools.capture_liveness as cl  # noqa: E402
 from tools.capture_liveness import (  # noqa: E402
     PRODUCERS, coverage_of, declared_surfaces,
 )
 
-SETTINGS = Path(os.path.expanduser("~/.claude/settings.json"))
+# Imported, never re-derived. plan() reads capture_liveness.SETTINGS and
+# apply() used to read a private copy, so a test patching one wrote the
+# other -- and the one that writes is the Owner's live config.
+from tools.capture_liveness import SETTINGS  # noqa: E402
 
 # Guard 1. Reviewed, bounded, and deliberately not "everything narrow".
 CANDIDATES = {"bug-hunter-ceps-bridge.js", "PreToolUse-Bash-chain"}
@@ -97,11 +101,39 @@ def self_rejects(source: Path | None, surface: str) -> bool:
         text = Path(source).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return False
-    for match in re.finditer(
-            r"tool_?[Nn]ame[^\n]{0,40}?!==?\s*['\"](?P<only>\w+)['\"]", text):
-        if match.group("only") != surface:
-            return True
-    return False
+    for stripper in (re.compile(r"/\*.*?\*/", re.S),
+                     re.compile(r"(?m)^\s*//.*$")):
+        text = stripper.sub("", text)
+    # The SET of tools named across every `!==` comparison, not the first
+    # one that differs. `tool_name !== 'Bash' && tool_name !== 'PowerShell'`
+    # is the canonical "handles exactly these two" guard, and reading its
+    # first clause alone reported the hook as rejecting the very surface it
+    # accepts.
+    named = {m.group("only") for m in re.finditer(
+        r"tool_?[Nn]ame[^\n]{0,40}?!==?\s*['\"](?P<only>\w+)['\"]", text)}
+    return bool(named) and surface not in named
+
+
+def _entries_for(marker: str, event: str | None) -> list[str]:
+    """Which settings.json entries carry this marker, named for the preview.
+
+    apply() rewrites EVERY entry carrying the marker; the dry-run used to
+    show one line per marker and say nothing about how many that was.
+    """
+    try:
+        blob = json.loads(cl.SETTINGS.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return []
+    hooks = blob.get("hooks") or {}
+    scoped = {event: hooks.get(event) or []} if event else hooks
+    out = []
+    for ev, entries in scoped.items():
+        for entry in entries or []:
+            joined = " ".join(
+                str(h.get("command", "")) for h in entry.get("hooks") or [])
+            if marker in joined.replace("\\", "/"):
+                out.append(f"{ev}/matcher={entry.get('matcher')!r}")
+    return out
 
 
 def plan() -> list[dict]:
@@ -118,25 +150,29 @@ def plan() -> list[dict]:
         blocked = [s for s in cover["uncovered"]
                    if self_rejects(spec.get("hook_source"), s)]   # guard 3
         addable = [s for s in cover["uncovered"] if s not in blocked]
-        if not addable:
-            continue
+        # A blocked-only entry is still REPORTED. Dropping it made main()
+        # print "nothing NARROW and addable", which is the same sentence a
+        # fully-migrated tree prints -- so an operator could not tell a
+        # finished migration from one the code refuses to allow, while
+        # capture_liveness stayed red.
         actions.append({
             "marker": marker,
             "add": addable,
             "declared": sorted(declared),
             "matched": cover["matched"],
             "refused_by_code": blocked,
+            "entries": _entries_for(marker, spec.get("event")),
         })
     return actions
 
 
 def apply(actions: list[dict]) -> tuple[int, str]:
     """Rewrite the matcher of each planned entry. Returns (changed, backup)."""
-    raw = SETTINGS.read_text(encoding="utf-8-sig")
+    raw = cl.SETTINGS.read_text(encoding="utf-8-sig")
     blob = json.loads(raw)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    backup = str(SETTINGS) + f".bak-capture-surface-{stamp}"
-    shutil.copy2(SETTINGS, backup)
+    backup = str(cl.SETTINGS) + f".bak-capture-surface-{stamp}"
+    shutil.copy2(cl.SETTINGS, backup)
     if Path(backup).read_text(encoding="utf-8-sig") != raw:
         raise RuntimeError("backup verification failed -- refusing to write")
 
@@ -148,6 +184,10 @@ def apply(actions: list[dict]) -> tuple[int, str]:
                     str(h.get("command", "")) for h in entry.get("hooks") or [])
                 if action["marker"] not in joined.replace("\\", "/"):
                     continue
+                if "matcher" not in entry:
+                    # An entry with no matcher is universal already; giving
+                    # it one would NARROW it.
+                    continue
                 current = str(entry.get("matcher") or "")
                 parts = [p.strip() for p in current.split("|") if p.strip()]
                 for surface in action["add"]:
@@ -156,8 +196,20 @@ def apply(actions: list[dict]) -> tuple[int, str]:
                         changed += 1
                 entry["matcher"] = "|".join(parts)
 
-    SETTINGS.write_text(
+    cl.SETTINGS.write_text(
         json.dumps(blob, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    # The backup check proved the COPY succeeded, not that what we wrote is
+    # loadable. Re-read it; restore and raise if it is not.
+    try:
+        reparsed = json.loads(cl.SETTINGS.read_text(encoding="utf-8-sig"))
+    except ValueError as exc:
+        shutil.copy2(backup, cl.SETTINGS)
+        raise RuntimeError(
+            f"post-write parse failed ({exc}); {cl.SETTINGS} restored "
+            f"from {backup}") from exc
+    if set(reparsed.get("hooks") or {}) != set(blob.get("hooks") or {}):
+        shutil.copy2(backup, cl.SETTINGS)
+        raise RuntimeError("post-write event set differs; restored")
     return changed, backup
 
 
@@ -177,14 +229,25 @@ def main() -> int:
         print(f"{action['marker']}")
         print(f"  declares : {'|'.join(action['declared'])}")
         print(f"  matches  : {'|'.join(action['matched']) or '(nothing)'}")
-        print(f"  ADD      : {'|'.join(action['add'])}")
+        print(f"  entries  : {len(action['entries'])} -> "
+              f"{', '.join(action['entries']) or '(none)'}")
+        if action["add"]:
+            print(f"  ADD      : {'|'.join(action['add'])}")
         if action["refused_by_code"]:
-            print(f"  skipped  : {'|'.join(action['refused_by_code'])} "
-                  "(the hook's own code rejects it)")
+            print(f"  BLOCKED by guard 3: "
+                  f"{'|'.join(action['refused_by_code'])} -- the hook's own "
+                  "code rejects this surface, so widening the matcher would "
+                  "assert a coverage it will not honour. Fix the code first.")
+
+    if not any(a["add"] for a in actions):
+        print("\nNo addable surface. This is NOT the post-migration state: "
+              "the gaps above are blocked by guard 3, and capture_liveness "
+              "stays NARROW until the hooks accept the surface.")
+        return 0
 
     if not args.apply:
         print("\nDRY-RUN. Re-run with --apply to write "
-              f"(a verified backup of {SETTINGS} is taken first).")
+              f"(a verified backup of {cl.SETTINGS} is taken first).")
         return 0
 
     changed, backup = apply(actions)
