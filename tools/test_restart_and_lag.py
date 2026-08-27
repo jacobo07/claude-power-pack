@@ -92,7 +92,7 @@ def _run_hook(stdin_payload: dict) -> tuple[int, str]:
     proc = subprocess.run(
         ["node", str(PP_ROOT / "hooks" / "restart_resume.js")],
         input=json.dumps(stdin_payload),
-        capture_output=True, text=True, timeout=15,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15,
     )
     return proc.returncode, proc.stdout
 
@@ -255,7 +255,7 @@ def gate_optimizer_dryrun():
         return
     proc = subprocess.run(
         [PY, str(p), "--dry-run"],
-        capture_output=True, text=True, timeout=SUBPROC_TIMEOUT_S,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=SUBPROC_TIMEOUT_S,
     )
     if proc.returncode != 0:
         preview = proc.stdout[:STDOUT_PREVIEW_CHARS]
@@ -289,7 +289,7 @@ def gate_measure_runs():
         return
     proc = subprocess.run(
         [PY, str(p), "--json"],
-        capture_output=True, text=True, timeout=60,
+        capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60,
     )
     try:
         payload = json.loads(proc.stdout)
@@ -322,7 +322,7 @@ def gate_hub_fast():
         proc = subprocess.run(
             ["node", str(HUB_PATH)],
             input="{}",
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=SUBPROC_TIMEOUT_S,
         )
     except subprocess.SubprocessError as exc:
@@ -347,7 +347,7 @@ def gate_hub_log():
         subprocess.run(
             ["node", str(HUB_PATH)],
             input="{}",
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=SUBPROC_TIMEOUT_S,
         )
     except subprocess.SubprocessError as exc:
@@ -379,7 +379,7 @@ def gate_hub_resume():
         proc = subprocess.run(
             ["node", str(HUB_PATH)],
             input=json.dumps({"cwd": cwd}),
-            capture_output=True, text=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=SUBPROC_TIMEOUT_S,
         )
         try:
