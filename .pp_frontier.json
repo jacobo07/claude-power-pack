@@ -1,23 +1,44 @@
 {
-  "objective": "Turn the production-verified EVA acquisition runner into a quality-aware expert-intelligence capability: classify epistemic value at ingestion time, learn what a source has declared it cannot know, stop spending prompts on questions it cannot answer, and deposit the single-source-interrogation pattern into the Power Pack baseline.",
+  "objective": "Turn the production-verified EVA acquisition runner into a quality-aware expert-intelligence capability: classify epistemic value at ingestion time, learn what a source has declared it cannot know, route each question to where it can actually be answered, and deposit the single-source-interrogation pattern into the Power Pack baseline.",
   "constraints": [
     "Reuse the deep-research epistemic engine; never fork cap_epistemic or the epistemic ladder",
     "Derived judgment runs after raw is durable and can never cost a capture",
     "A stored verdict must be reproducible from raw alone",
     "EVA is a source, never a source of truth; nothing here auto-promotes a vendor answer",
-    "No access control is bypassed; a login wall pauses durably and asks for a human"
+    "No access control is bypassed; a login wall pauses durably and asks for a human",
+    "A lens with fewer than three observed answers may RANK a prompt but may never DIVERT it away from the source (HR-ACTION-VERDICT-NEEDS-CLASS-LOCAL-EVIDENCE-001)"
+  ],
+  "answered_this_arc": [
+    {
+      "question": "Whether the remaining prompts contain enough non-case-data questions to be worth the run, given 14 of 38 assessed already route to a human expert",
+      "answer": "YES, and the framing was wrong. Routing 2,147 pending: 1,738 EVA_HIGH_VALUE, 409 MULTI_SOURCE, 0 diverted. The case-data lens -- the one expected to be dead weight -- returned 4/4 extractable at 7,225 chars average, the richest in the corpus. Expert-routing and answer-richness are independent, and only one of them is a reason to stop asking.",
+      "method": "15-prompt calibration probe, 3 topics x 5 templates (the corpus's own crossing used as a free controlled experiment)"
+    },
+    {
+      "question": "Can expert-routing volume be estimated from the corpus before spending a single prompt?",
+      "answer": "YES -- the estimate was correct (4/4 REAL_CASES routed to an expert, exactly as predicted). But the ACTION derived from it (stop asking that lens) was wrong. A correct prediction does not validate the action attached to it; the action carries its own premise and needs its own measurement (T-RIGHT-PREDICTION-WRONG-ACTION-001)."
+    },
+    {
+      "question": "Whether cohort-claim density stays near the observed 21% across families outside 00B/00C/00D",
+      "answer": "NO. The 37% measured on the early slice was a fact about that slice, not the corpus -- earliest items are the ones written first and are systematically unlike the rest. Real remainder reads 19.1%, and concentrated in a single template rather than spread (T-RATE-EXTRAPOLATED-FROM-THE-UNREPRESENTATIVE-SLICE-001)."
+    },
+    {
+      "question": "Is the pending corpus N independent items?",
+      "answer": "NO -- it is a generator. 1,995 prompts resolve to 399 topics x 5 templates with zero unmatched rows, collapsing the routing decision space from ~2,000 judgments to 5. Cost to discover: one prefix/suffix clustering query."
+    }
   ],
   "unknowns": [
-    "Whether the 2,170 remaining prompts contain enough non-case-data questions to be worth the run, given 14 of 38 assessed already route to a human expert",
     "Whether the boundary ledger saturates -- how many distinct capability limits this source actually has",
-    "Whether cohort-claim density stays near the observed 21% across families outside 00B/00C/00D",
-    "Whether account-level memory (SF30-024 referenced advice never given in this run) degrades independence measurably over a multi-hour run"
+    "Whether account-level memory (SF30-024 referenced advice never given in this run) degrades independence measurably over a multi-hour run",
+    "Whether the 6 emitted evidence requests can actually be satisfied -- above all the single dataset that would unlock 396 questions across 40 families",
+    "Whether the 399x5 generator structure holds for prompts appended after this snapshot, or whether the template set drifts",
+    "What the marginal information gain per prompt becomes once a family's boundaries are already known"
   ],
   "candidate_questions": [
     "Does a source's declared boundary predict its answer quality on later questions in the same scope?",
-    "What is the marginal information gain per prompt once a family's boundaries are known?",
-    "Can expert-routing volume be estimated from the corpus before spending a single prompt?",
-    "Is the single-source coverage substitution (UNCLASSIFIED baseline, VENDOR_ONLY on boundary crossing) portable to other authenticated expert systems?"
+    "Is the single-source coverage substitution (UNCLASSIFIED baseline, VENDOR_ONLY on boundary crossing) portable to other authenticated expert systems?",
+    "When a corpus is generated, is the generator's slot dimension always the right routing variable -- or only when the crossing is complete?",
+    "What is the general cheapest-refutation size for a routing decision over N items: does a 15-observation probe scale, or is it a property of a 5-template space?"
   ],
   "repo": "C:/Users/User/.claude/skills/claude-power-pack",
   "horizon_months": 12

@@ -39,6 +39,11 @@ python -m modules.knowledge_acquisition.cli <command>
 | `session-status` | Show session state. |
 | `assess-backfill` | Judge answers already captured. Reads raw, never writes it. |
 | `quality` | What the source can answer, and what it has declared it cannot. |
+| `route` | Decide where each pending question belongs. `--write DIR` materialises the queue and the evidence-request pack. |
+
+`run` also takes `--prompt-id ID` (repeatable) to ask an explicit set rather
+than a slab of the queue -- what a calibration probe needs, since measuring one
+variable means choosing the rows.
 
 ## What the assessment layer decides
 
@@ -72,6 +77,38 @@ Measured on this corpus (38 answers, `kacq-assess/1.3.0`): 30 extractable,
 Assessment is derived data. It runs after the response row is durable, it is
 versioned by classifier version and never overwritten, and its failure is
 recorded as unrated. No classifier defect can cost a captured answer.
+
+## What the routing layer decides
+
+Spec: [`SPEC-KACQ-006`](./SPEC-KACQ-006.md). Assessment judges an answer after
+the query is spent; routing decides whether to spend it.
+
+The pending corpus turned out to be generated -- 1,995 prompts are **399 topics
+x 5 templates**, with every topic asked through all five lenses and zero
+unmatched rows. That makes the *lens*, not the subject, the routing variable,
+and it hands over a controlled experiment for free: hold the topic, vary the
+lens.
+
+The central rule is a restraint. A lens with fewer than three observed answers
+**cannot** divert a prompt away from the source; it can only rank it. That
+mattered: before the calibration probe every lens had zero observations, and
+the obvious inference -- divert the 399 case-data questions, the source has
+declared it cannot see the cohort -- was wrong. Measured, that lens returns
+4/4 extractable answers averaging 7,225 characters, the richest in the corpus.
+It is simultaneously 4/4 routed-to-expert. Both are true; only one of them is a
+reason to stop asking, and it is not the one that looks like it.
+
+Measured on this corpus (2,147 pending, `kacq-route/1.0.0`): **1,738
+EVA_HIGH_VALUE, 409 MULTI_SOURCE, nothing diverted away.** Routing saved zero
+queries. What it bought is on the other side -- six evidence requests unlock
+409 questions, the largest unlocking **396 across 40 families with one dataset**.
+
+Verdicts are versioned, never overwritten, and rebuildable from prompt text
+plus the boundary ledger. A routing defect can misrank a prompt; it cannot
+remove one from acquisition.
+
+The two artifacts land under `vault/knowledge_acquisition/queues/` and are
+runtime state -- regenerate with `route --write`, do not commit them.
 
 ## First run
 

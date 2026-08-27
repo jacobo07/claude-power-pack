@@ -238,6 +238,96 @@ which failed, and will be "corrected" toward whichever reading makes it pass.
 Isolate the variable: assert the mechanism under test against a controlled
 state, and assert the interaction separately.
 
+### HR-MECHANICAL-FIX-IS-WIRED-OR-DECLARED-LIVE-001 -- a parked remedy is no remedy
+
+TRIGGER: an analysis concludes that the durable fix for a recurring failure is
+MECHANICAL -- a hook, a gate, a type, a schema, a constraint -- and the session
+is about to record it rather than install it.
+ACCION: STOP. Either wire it in the SAME session it is identified, or state
+explicitly, in the same artifact, that the failure REMAINS LIVE and unguarded.
+A remedy written as a note carries the same enforcement as no remedy, while
+reading like a solved problem -- which is strictly worse, because it retires the
+alarm without retiring the fault.
+EXCEPCION: the Owner declines the installation, recorded verbatim.
+ORIGEN: a cross-repo dead-screen was root-caused correctly, its exact Stop-hook
+remedy was specified in full, and the note closed with "offer to wire it; not
+yet installed". Fifty-four days later the identical failure hung a session. The
+document describing the fix was open in context at the time.
+
+### PR-PROSE-IS-ADVISORY-TO-AN-ACTOR-ALREADY-FAILING-001
+
+A rule that lives only in prose is enforced by the same judgment that is
+currently making the mistake. That judgment is, by construction, the component
+that has failed. Behavioural doctrine is worth writing, but it is a
+best-effort layer; the load-bearing layer is the one that executes whether or
+not the actor remembered -- a gate, a hook, a type that will not compile, a
+schema that will not validate. When a failure recurs despite being documented,
+the correct reading is not "document it harder"; it is "the rule was never in
+the control flow". Escalate the layer, do not amplify the text.
+
+### HR-ACTION-VERDICT-NEEDS-CLASS-LOCAL-EVIDENCE-001 -- measure the class you act on
+
+TRIGGER: a derived verdict is about to change what work gets done -- skip a
+task, divert it to another executor, drop it from a queue.
+ACCION: STOP unless the evidence licensing that verdict was measured on the
+SAME class the verdict applies to. Evidence from a sibling class ranks; it does
+not divert. A class with no observations gets the fail-open verdict, which is
+always "do the work". Forming a verdict and acting on it are two permissions,
+and the second one costs more.
+EXCEPCION: none. Ranking without evidence is always allowed; diverting without
+evidence never is.
+ORIGEN: a corpus of 2,162 questions was about to be routed using a classifier
+calibrated on 38 answers drawn entirely from a different 1.7% of it. The class
+that would have been diverted turned out to produce the longest and most
+useful answers in the corpus -- 4/4 extractable at 7,225 characters average.
+The 15-prompt probe that measured it cost six minutes.
+
+### PR-RECOVER-THE-GENERATOR-BEFORE-JUDGING-THE-ITEMS-001
+
+Before treating a large corpus as N independent items, test whether it is a
+product of a small generator. Match the longest stable prefix and suffix and
+count clusters: if a handful of skeletons cover most of the rows, the corpus is
+templates x slots and the decision space collapses from N to the number of
+templates. Here 1,995 items resolved to 399 topics x 5 templates with zero
+remainder, which turned two thousand judgments into five. The test costs one
+query and is worth running on any corpus nobody hand-wrote.
+
+### PR-A-CROSSED-CORPUS-IS-A-FREE-CONTROLLED-EXPERIMENT-001
+
+When a generated corpus crosses every subject with every template, it already
+contains the experiment you would otherwise have to design: hold the subject
+constant, vary the template, and the template's effect is isolated with no
+confounds and no extra items. Look for the crossing before building a sampling
+scheme. Three subjects x five templates measured a five-way effect in fifteen
+observations.
+
+### PR-CHEAPEST-REFUTATION-BEFORE-THE-LONGEST-RUN-001
+
+Before committing to a long or expensive run, find the smallest observation
+that could refute the plan and buy that first. The question is not "what would
+confirm this" but "what is the cheapest thing that could show this is wrong".
+A 15-item probe answered an 11-hour question, and answered it in the negative.
+A confirmation-shaped pilot would have cost the same and taught nothing.
+
+### T-RATE-EXTRAPOLATED-FROM-THE-UNREPRESENTATIVE-SLICE-001
+
+A rate measured on the first slice of a corpus is a fact about that slice.
+Corpora are rarely shuffled: the earliest items are often the ones someone
+wrote first, which makes them systematically different from the rest. Before
+projecting a measured rate onto the remainder, check whether the measured
+subset was sampled or merely encountered. A 37% rate measured on the most
+boundary-prone families read as 19.1% across the real remainder, and even that
+was concentrated in a single template rather than spread.
+
+### T-RIGHT-PREDICTION-WRONG-ACTION-001
+
+Verifying that a prediction was correct does not verify the action derived from
+it. "This class needs evidence the source lacks" was exactly right, 4/4. The
+action attached to it -- stop asking the source -- was wrong, because the same
+answers were also worth keeping. When a prediction licenses an action, the
+action carries its own premise, and that premise needs its own measurement. Two
+true facts about one item can still recommend opposite handling.
+
 ## DAIF Two-Arm Behavioral Trial (SCS C97, sealed 2026-07-13)
 
 **`PR-DAIF-TWO-ARM-MANDATORY-001`** — Clauses 3 and 4 of the Session Continuity Compiler's done-gate
@@ -5788,6 +5878,106 @@ Evolution in the same state: `evolution_engine.py`'s only non-test consumer is
 
 **Origin:** `vault/plans/gap-reverification-2026-08-03.md`, commit `9988c99`.
 
+### T-GIT-IGNORED-DIR-SWALLOWS-A-COMMIT-001 -- `add` and `commit` both SUCCEED on zero files  #CROSS-PROJECT
+
+**Trap:** a `.gitignore` pattern that matches a DIRECTORY name removes every file
+under it from git's view entirely. `git add <dir>` returns **exit 0**.
+`git commit -F msg -- <dir>` returns **exit 0 and creates a commit**.
+`git status` is clean. **Zero of the files are in the commit.** Not one command
+in the chain emits a warning, a diagnostic, or a nonzero exit.
+
+This is the sibling of `T-GIT-PORCELAIN-DIR-COLLAPSE-001`, one step worse, and
+that entry's fix does not cover it: `-uall` expands *untracked* directories.
+An **ignored** directory is not untracked -- it is absent. It collapses to
+**zero** rows, not one.
+
+*Observed 2026-08-27 (InfinityOps ISAF Wave 1):* a `.gitignore` line
+`*credential*`, written for secret material, matched a dataset directory whose
+NAME contained that word. 21 written files never entered version control. The
+normal workflow -- exit codes plus `git status` -- had no signal at any point.
+It was caught by an unrelated channel: the commit subject still named the
+PREVIOUS dataset, which prompted a file count. **No check found it; a text
+inconsistency did.**
+
+**Why the first repair also failed:** a file-level negation
+(`!path/**/*.md`) is inert while the parent directory is excluded, because git
+never descends into an excluded directory to evaluate it. **Re-include the
+DIRECTORY first** (`!path/*/`), then its contents. Ordering is load-bearing;
+write the reason inline in the `.gitignore` so no one reorders it.
+
+**Fix / detection:**
+
+- Before committing generated artifacts, compare **files on disk** against
+  **files git can see**: `git status --porcelain -uall <dir>` counted against a
+  recursive file count. Equal or it did not work.
+- `git status --ignored --porcelain <dir>` names the swallowed paths directly.
+- After every commit, verify the subject: `git log -1 --format='%s'`. A stale
+  subject is the cheapest tripwire for "this commit is not what I think".
+
+**Known gap in the existing owner:** `modules/session_delta/delta.py:141`
+correctly passes `--porcelain -uall` (it was hardened for the sibling trap), but
+`-uall` does **not** list ignored files. A directory swallowed by `.gitignore`
+appears in neither `created` nor `modified`, so the Session Delta Gate stays
+silent -- it would NOT have caught this incident. Closing it means an
+`--ignored` probe over the session's touched paths in that same function.
+Recorded as debt, not applied: the module backs a Stop hook that runs in every
+project on the host, so the blast radius is not bounded from an unrelated
+session.
+
+**Cross-project:** applies to every repo that generates artifacts into paths a
+broad ignore pattern can match -- datasets, build output, fixtures, anything
+whose directory name carries a word someone once blanket-ignored. Tagged
+`#CROSS-PROJECT`.
+
+**Origin:** InfinityOps commits `35f86742` (the fix, with the ordering rationale
+inline) and `_isaf/ISAF_AUDIT_LOG.md` § DEFECTOS DE EJECUCION, `DEF-01`.
+
+### PR-VERIFY-POSTCONDITION-AT-THE-AUTHORITY-001 -- a command's exit code proves it ran, not that the state changed  #CROSS-PROJECT
+
+**Rule:** after producing or modifying an artifact whose durable home is some
+authority -- version control, a database, a deployed config, a package index,
+a registry -- verify the postcondition **at that authority**, not at the tool
+that was supposed to write it. Exit 0 means the command executed. It does not
+mean the artifact arrived.
+
+**Why it is a Process Rule and not a Hard Rule:** it is a repeatable method
+that reliably catches a whole family, not an invariant whose violation is
+irreversible damage. Skipping it costs rework, not data.
+
+*Two independent instances in one session (2026-08-27, ISAF Wave 1):*
+
+1. `git add` + `git commit` both exit 0 having written **zero of 21 files**
+   (`T-GIT-IGNORED-DIR-SWALLOWS-A-COMMIT-001`).
+2. A duplicate-authority sweep over nine manifests reported **"no collisions"**
+   while reading a key that three of the nine did not have. Zero objects
+   inspected, clean verdict emitted. **A gate that returns PASS because it is
+   not looking is worse than no gate:** it manufactures a conformance claim
+   with no evidence behind it.
+
+The two look unrelated and share one shape: **a success signal validated the
+wrong layer.** The command ran; the write did not land. The sweep ran; the
+comparison had no inputs.
+
+**How to apply:**
+
+- State the postcondition as a **count or an identity** before acting -- "20
+  files tracked under this path", "9 of 9 manifests declare objects" -- then
+  measure it after. A boolean postcondition ("it worked") cannot fail visibly.
+- When a validator reports zero findings, **first prove it had inputs.** Print
+  the per-target count. A clean run and an empty run print the same verdict and
+  mean opposite things -- the same confusion `T-DEFER-RENDERED-AS-NOVEL-001`
+  names for UNKNOWN vs NEW, one layer down.
+- Prefer a check that reads the authority (`git ls-files`, a `SELECT`, the
+  deployed endpoint) over one that reads the tool's report.
+
+**Analogous authorities, same failure:** UI built but route not wired; migration
+file written but never applied; config written where the process does not read;
+fixture created but the suite never loads it; artifact generated but excluded
+from the corpus index; policy written but no evaluator consumes it.
+
+**Origin:** `_isaf/ISAF_AUDIT_LOG.md` § DEFECTOS DE EJECUCION (`DEF-01`,
+`DEF-02`) and decision `D-017`.
+
 ### T-GIT-PORCELAIN-DIR-COLLAPSE-001 -- `git status --porcelain` hides every file in a NEW directory  #CROSS-PROJECT
 
 **Trap:** `git status --porcelain` reports an untracked DIRECTORY as a single
@@ -7235,3 +7425,29 @@ READ, because an inference about provenance must not destroy the provenance.
 - [tooling/bash:echo] `ceps_d47d40fe40071e32` -- Tool failure in bash:echo: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [regression/bash:sed] `ceps_5d28a90f4498a814` -- Before touching bash:sed, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:rtk.exe] `ceps_ee7a7239f962e78d` -- Before touching bash:rtk.exe, verify the regression scenario (23 failed) is still covered by a passing test.
+
+- [tooling/bash:Program] `ceps_d47d40fe40071e32` -- Tool failure in bash:Program: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python] `ceps_d47d40fe40071e32` -- Tool failure in bash:python: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [integration/harness:read] `ceps_42168ff94099d7df` -- Cross-module call in harness:read broke: [Tool result missing due to internal error]. Run an integration smoke test that exercises the boundary.
+
+- [tooling/bash:python] `ceps_d47d40fe40071e32` -- Tool failure in bash:python: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [integration/harness:read] `ceps_42168ff94099d7df` -- Cross-module call in harness:read broke: [Tool result missing due to internal error]. Run an integration smoke test that exercises the boundary.
+
+- [tooling/bash:python] `ceps_d47d40fe40071e32` -- Tool failure in bash:python: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:python.exe] `ceps_5ee413c0d90a1085` -- Before touching powershell:python.exe, verify the regression scenario (AssertionError) is still covered by a passing test.
+
+- [integration/harness:read] `ceps_42168ff94099d7df` -- Cross-module call in harness:read broke: [Tool result missing due to internal error]. Run an integration smoke test that exercises the boundary.
+
+- [env/bash:Program] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:Program: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:timeout] `ceps_d47d40fe40071e32` -- Tool failure in bash:timeout: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
