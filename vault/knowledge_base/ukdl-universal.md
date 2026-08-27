@@ -7346,3 +7346,142 @@ as an audit whose subjects are enrolled by hand
 producer has no path to its subject. And note the compounding shape -- repairing this
 producer's CLASSIFICATION while it remained blind to most traffic would have made a
 narrow instrument more precise and no less narrow, which reads as progress and is not.
+
+**Extension, 2026-08-27 -- the denominator, measured.** The blindness above was stated
+from the store's own shape. It has since been measured against a source the producer does
+not control: 98 session transcripts, 789 MB, the window the fire log covers. PowerShell
+accounts for 11126 of 14744 command-tool invocations, 75.5%; the producer's matcher admits
+the remaining 24.5%. Two `powershell:` rows DO exist in the corpus and both were injected
+by a test suite writing through a mis-addressed hook
+([[T-HERMETIC-RESTORE-WRONG-ADDRESS-001]]) -- so the original claim "zero events from a
+PowerShell surface" was true of organic traffic and false of the file, and the evidence
+cited for it had been contaminated by the instrument under audit. Bound the denominator
+from outside the instrument, and check whether your own tooling wrote the rows you are
+reasoning from.
+
+### T-REGISTRATION-PRESENCE-NOT-COVERAGE-001
+
+A capture-liveness gate existed specifically to catch dead producers, built from three
+rules each learned from a real outage. It asked whether the producer's hook name appears
+in the live settings.json. It does. The producer was wired, had fired 84 times, recorded
+84 events and lost none -- and was blind to three quarters of its subject.
+
+The entry carrying that name matched `Bash`. The hook's own source declares `Bash` AND
+`PowerShell`, and this host's doctrine routes python, pytest, git, npm, node, mix and gh
+through PowerShell. Measured over 98 session transcripts, 789 MB, an evidence source the
+instrument does not control:
+
+    PowerShell  11126      Bash  3618      command-tool invocations 14744
+    PowerShell share of command traffic ......... 75.5%
+    observed by the producer .................... 24.5%
+
+**Rule.** Registration PRESENCE is not registration COVERAGE. A producer is wired only
+when the surfaces it is REGISTERED for include the surfaces it DECLARES it handles.
+Anything less is a live capability loss that every presence check will call healthy.
+
+**How to apply.** For each automatic producer, compare declared surfaces against matched
+surfaces and fail on the shortfall. Discover the declared set by parsing the producer's
+own source, never by listing it in the checking table -- a table records what someone
+remembered ([[PR-COVERAGE-BY-CONSTRUCTION-001]]). A declaration that cannot be read is
+UNVERIFIABLE and must fail: unknown coverage is not evidence of coverage. Distinguish
+UNREGISTERED from NARROW -- `declared - {}` reads as NARROW and invites a migration to
+widen an entry that does not exist. Detector: `tools/capture_liveness.py` rule 4,
+`tools/test_capture_coverage.py`. Sister of
+[[T-CORPUS-DESCRIBES-ITS-INSTRUMENT-001]], which is what this looks like downstream.
+
+### PR-PRECISION-BEFORE-COVERAGE-001
+
+The same producer had its classifier repaired the day before: 51 of 75 stored events were
+greps and file reads filed as tooling failures, and the fix was real. What the repair
+never asked was whether the instrument could see its subject at all. It could see 24.5%
+of it.
+
+**Rule.** Bound an instrument's COVERAGE before improving its PRECISION. Precision work
+on a blind instrument produces a narrow instrument that is more accurate and no less
+narrow -- and every artefact of that work reads as progress: cleaner corpus, better
+classification, passing gates, a rising quality number.
+
+**How to apply.** Before accepting a precision task on any sensor, answer two questions in
+writing: what is the eligible denominator, and what fraction of it can this instrument
+observe? Get the denominator from a source the instrument does not produce -- transcripts,
+invocation logs, process launches -- because a corpus cannot be its own evidence of
+representativeness. If coverage is unknown, that is the task; the precision work is
+downstream of it and will otherwise raise confidence without raising truth. Corollary for
+review: a proposal to improve a detector's accuracy should be asked what it observes
+before it is asked how well.
+
+### PR-WIDEN-PER-REGISTRATION-001
+
+Five hook registrations carried the matcher `Bash` on a host whose doctrine mandates
+PowerShell. The obvious correction is to widen five matchers. Measured against the code
+behind each one, exactly ONE should change and one of the others must not:
+
+| registration | disposition | why |
+|---|---|---|
+| the CEPS bridge | WIDEN | declares both surfaces; registration never caught up |
+| two learning hooks | NO-OP | their own code hard-rejects non-Bash, so a wider matcher buys nothing and would put a false coverage claim in settings.json |
+| a TTY restorer | KEEP | narrow on purpose -- the escape-sequence leak is an artefact of the Bash bridge |
+| the PreToolUse Bash chain | KEEP | it carries the guard that BLOCKS git/npm via Bash in order to force them onto PowerShell. Widening it would block the surface the doctrine redirects TO |
+
+**Rule.** A family of narrow triggers must be dispositioned one entry at a time against
+the code behind it. "They are all narrow" is an observation about spelling, not a shared
+diagnosis, and a uniform correction applied to a non-uniform family will break whichever
+member was narrow deliberately.
+
+**How to apply.** For each member establish intended subject, current surface, missing
+surface, what the code does when the new surface arrives, and the blast radius of the
+addition. Bound the change with an explicit allow-list, take the NARROW verdict from the
+measuring owner rather than restating it, and refuse to widen any trigger whose own code
+rejects the surface being added. Sister of [[T-REGISTRATION-PRESENCE-NOT-COVERAGE-001]]:
+that rule finds the gap, this one governs what may be done about it.
+
+### T-PROBE-MEASURES-THE-REFUSAL-001
+
+A benchmark named `ceps_record_ms` called `record_error` with a category outside
+`VALID_CATEGORIES`. The call returned at the first guard, so the probe timed how fast the
+system says no. All 22 historical samples sit in 0.4-3.3 ms against a target of 38 -- a
+12-95x margin that could never be exceeded. The operation the benchmark names was measured
+for the first time on 2026-08-27: min 29.0, p50 39.5, p90 65.0 ms, roughly ten times the
+refusal.
+
+Two things were void, not one. The METRIC never measured its operation, and the THRESHOLD
+inherited that invalidity -- 38 was a real number honestly derived from a measurement of
+the wrong thing. The probe also left 41 rejections in the ledger a sibling gate reads to
+detect real capture loss, so it was seeding the corpus used to find corpus damage.
+
+**Rule.** A probe must assert that the operation it names actually HAPPENED before
+reporting a duration. A rejected call still returns, still takes time, and still produces
+a plausible number.
+
+**How to apply.** Have the probe check the operation's success value and report the defect
+instead of a number when it is falsy -- a benchmark whose label and measurement disagree
+is worse than a missing benchmark. When such a probe is repaired, treat its threshold as
+unset rather than inherited, re-derive it from the real path, and state that the pre-fix
+series is not comparable: the step change at the repair is the repair, not a regression.
+Route probe writes to an isolated store so a benchmark never feeds the corpus other gates
+learn from. Detector: `tools/test_bench_gate.py` V-BENCH-CEPS-TARGET-MEASURED.
+
+### T-HERMETIC-RESTORE-WRONG-ADDRESS-001
+
+A test drove the real capture hook, snapshotted the event store beside itself, and
+asserted byte-identical restore at the end. Both the hook and the module it calls
+hardcoded the INSTALLED root, so when the test ran from a git worktree it restored a file
+nobody had written while the rows it injected stayed in the live corpus permanently. Its
+own hermeticity gate printed "corpus restored byte-identical" and passed.
+
+The cost was not tidiness. The contaminated rows were later cited as evidence in an
+analysis of the very producer the test exercises.
+
+**Rule.** Snapshot-and-restore hermeticity is void unless the subject writes to the root
+the test restores. A restore gate over the wrong file is not a weak proof of cleanliness;
+it is a confident proof about an unrelated file.
+
+**How to apply.** Assert address coherence directly -- the module's resolved root must
+equal the checkout under test -- and let state roots derive from the code's own location
+(`parents[N]`, `__dirname`) rather than from `$HOME`. Readers that deliberately audit the
+INSTALLED system are the exception and should say so in a comment. Before trusting any
+"restored clean" claim, hash the production artefact across the run. Third instance of
+[[T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001]] and the most expensive: the other two made a
+gate report the wrong answer, this one made a gate report the right answer about the wrong
+file. Detector: `tools/test_capture_coverage.py` V-COVERAGE-STORE-ADDRESS /
+V-COVERAGE-HOOK-ADDRESS.
