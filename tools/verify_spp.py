@@ -380,6 +380,13 @@ def main() -> int:
         ("capture-gates",
          [PY, str(PP / "tools" / "test_capture_liveness.py")],
          180),
+        # Registration PRESENCE is not registration COVERAGE. The bridge was
+        # wired, firing and recording -- and blind to 75.5% of the command
+        # traffic on this host, because the entry carrying its name matched
+        # Bash while the hook declares Bash and PowerShell.
+        ("capture-coverage",
+         [PY, str(PP / "tools" / "test_capture_coverage.py")],
+         60),
         # And the live divergence check: fires vs records over 7 days. The
         # 2026-05..08 outage was invisible to every other row here because
         # each component passed while the corpus stayed empty.
