@@ -326,12 +326,18 @@ class Store:
         lease_seconds: int = DEFAULT_LEASE_SECONDS,
         corpus_id: str | None = None,
         family: str | None = None,
+        prompt_ids: list[str] | None = None,
         max_attempts: int = 3,
     ) -> ClaimedJob | None:
         """Atomically take the highest-priority PENDING job. None when drained.
 
         Claim and state change happen in one transaction, so two workers can
         never hold the same prompt.
+
+        `prompt_ids` restricts the claim to an explicit set. Corpus and family
+        select a contiguous slab of the queue, which is the wrong shape for a
+        calibration probe: measuring one variable means choosing the rows, not
+        a range that happens to contain them.
         """
         where = ["j.state = 'PENDING'", "j.attempt_count < ?"]
         params: list = [max_attempts]
@@ -341,6 +347,9 @@ class Store:
         if family:
             where.append("p.family = ?")
             params.append(family)
+        if prompt_ids:
+            where.append(f"p.prompt_id IN ({','.join('?' * len(prompt_ids))})")
+            params.extend(prompt_ids)
 
         sql = (
             "SELECT p.prompt_id, p.external_id, p.corpus_id, p.family, p.ordinal, "
@@ -718,6 +727,108 @@ class Store:
                     "ORDER BY times_seen DESC", (interface,))
             ],
         }
+
+    # -- routing (SPEC-KACQ-006) ---------------------------------------------
+
+    _ROUTE_SCHEMA = """
+    CREATE TABLE IF NOT EXISTS route (
+        prompt_id       TEXT NOT NULL,
+        router_version  TEXT NOT NULL,
+        lens            TEXT NOT NULL,
+        topic           TEXT NOT NULL DEFAULT '',
+        route_class     TEXT NOT NULL,
+        evidence_kind   TEXT NOT NULL DEFAULT '',
+        reason          TEXT NOT NULL DEFAULT '',
+        boundary_id     TEXT NOT NULL DEFAULT '',
+        evidence_backed INTEGER NOT NULL DEFAULT 0,
+        routed_at       TEXT NOT NULL,
+        UNIQUE(prompt_id, router_version)
+    );
+    CREATE INDEX IF NOT EXISTS idx_route_class ON route(router_version, route_class);
+    CREATE INDEX IF NOT EXISTS idx_route_topic ON route(topic);
+    """
+
+    def _ensure_route_schema(self) -> None:
+        self.con.executescript(self._ROUTE_SCHEMA)
+
+    def lens_evidence(self, classifier_version: str | None = None) -> dict:
+        """What each lens has actually been observed to do.
+
+        Derived from stored assessments joined back to their prompts, so it is
+        recomputed from evidence every time rather than cached. A lens with no
+        assessed answers simply does not appear, and the router treats a
+        missing lens as unmeasured -- which is the honest reading.
+        """
+        from .routing import Lens, LensEvidence
+
+        self._ensure_assessment_schema()
+        version = classifier_version or self.latest_classifier_version()
+        if version is None:
+            return {}
+
+        from .routing import derive_lens
+
+        tally: dict = {}
+        for row in self.con.execute(
+            "SELECT p.raw_prompt, a.disposition, a.route_to_expert "
+            "FROM assessment a "
+            "JOIN response r ON r.response_id = a.response_id "
+            "JOIN prompt p ON p.prompt_id = r.prompt_id "
+            "WHERE a.classifier_version = ?", (version,)
+        ):
+            lens, _topic = derive_lens(row["raw_prompt"])
+            n, ext, div = tally.get(lens, (0, 0, 0))
+            tally[lens] = (
+                n + 1,
+                ext + (1 if row["disposition"] == "EXTRACTABLE" else 0),
+                div + (1 if row["route_to_expert"] else 0),
+            )
+        return {
+            lens: LensEvidence(lens, answers=n, extractable=e, diverted=d)
+            for lens, (n, e, d) in tally.items()
+        }
+
+    def record_route(self, verdict, *, now: str | None = None) -> bool:
+        """Persist one routing verdict. Never overwrites another version.
+
+        Same discipline as assessment: a verdict is keyed by (prompt, router
+        version), so re-running the router is a no-op and a version bump
+        produces a new row beside the old one instead of destroying the
+        evidence of what the previous router thought.
+        """
+        self._ensure_route_schema()
+        stamp = now or datetime.now(timezone.utc).isoformat()
+        with self._tx() as con:
+            cur = con.execute(
+                "INSERT OR IGNORE INTO route "
+                "(prompt_id, router_version, lens, topic, route_class, "
+                " evidence_kind, reason, boundary_id, evidence_backed, routed_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (verdict.prompt_id, verdict.router_version, verdict.lens.value,
+                 verdict.topic, verdict.route.value, verdict.evidence_kind,
+                 verdict.reason, verdict.boundary_id,
+                 1 if verdict.evidence_backed else 0, stamp),
+            )
+            return cur.rowcount > 0
+
+    def latest_router_version(self) -> str | None:
+        self._ensure_route_schema()
+        row = self.con.execute(
+            "SELECT router_version FROM route ORDER BY routed_at DESC LIMIT 1"
+        ).fetchone()
+        return row[0] if row else None
+
+    def route_rows(self, router_version: str | None = None) -> list:
+        self._ensure_route_schema()
+        version = router_version or self.latest_router_version()
+        if version is None:
+            return []
+        return self.con.execute(
+            "SELECT r.*, p.corpus_id, p.family, p.external_id, p.raw_prompt "
+            "FROM route r JOIN prompt p ON p.prompt_id = r.prompt_id "
+            "WHERE r.router_version = ? "
+            "ORDER BY p.priority ASC, p.ordinal ASC", (version,)
+        ).fetchall()
 
     # -- observability ------------------------------------------------------
 

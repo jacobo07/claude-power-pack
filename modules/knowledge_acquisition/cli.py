@@ -270,6 +270,7 @@ def cmd_run(args) -> int:
             runner = AcquisitionRunner(store, None, pacing_s=args.pacing)
             report = runner.run(
                 limit=args.limit, corpus_id=args.corpus, family=args.family,
+                prompt_ids=args.prompt_id,
                 max_attempts=args.max_attempts, dry_run=True,
             )
             print(f"\n{report.line()}")
@@ -303,6 +304,7 @@ def cmd_run(args) -> int:
             limit=args.limit,
             corpus_id=args.corpus,
             family=args.family,
+            prompt_ids=args.prompt_id,
             max_attempts=args.max_attempts,
             dry_run=False,
         )
@@ -461,6 +463,76 @@ def cmd_quality(args) -> int:
     return 0
 
 
+def cmd_route(args) -> int:
+    """Decide where every pending question belongs, before spending on it.
+
+    Pure with respect to acquisition: reads prompts, the boundary ledger and
+    measured lens evidence, writes routing verdicts. It never claims a job,
+    never touches raw, and never removes a prompt from the queue.
+    """
+    from pathlib import Path
+
+    from .queues import build_evidence_requests, render_evidence_pack, render_queue
+    from .routing import ROUTER_VERSION, route
+
+    cfg = _load_config()
+    store = _open(cfg)
+    interface = args.interface or cfg.get("default_interface") or "eva"
+    try:
+        boundaries = store.known_boundaries(interface)
+        evidence = store.lens_evidence()
+
+        print(f"router    : {ROUTER_VERSION}")
+        print(f"boundaries: {len(boundaries)} declared by '{interface}'")
+        print("lens evidence (from assessed answers):")
+        if not evidence:
+            print("  none -- every lens is unmeasured, so nothing can divert")
+        for lens, ev in sorted(evidence.items(), key=lambda kv: -kv[1].answers):
+            flag = "measured" if ev.measured else "BELOW FLOOR"
+            print(f"  {lens.value:<20} n={ev.answers:<4} "
+                  f"extractable={ev.extractable:<4} diverted={ev.diverted:<4} "
+                  f"{flag}")
+
+        pending = store.con.execute(
+            "SELECT p.prompt_id, p.raw_prompt, p.family FROM job j "
+            "JOIN prompt p ON p.prompt_id=j.prompt_id WHERE j.state='PENDING'"
+        ).fetchall()
+
+        written = 0
+        for row in pending:
+            verdict = route(
+                row["prompt_id"], row["raw_prompt"], family=row["family"],
+                boundaries=boundaries, evidence=evidence,
+            )
+            if store.record_route(verdict):
+                written += 1
+        print(f"\nrouted    : {len(pending)} pending, {written} new verdicts "
+              f"({len(pending) - written} already recorded at this version)")
+
+        rows = store.route_rows()
+        print()
+        print(render_queue(rows))
+
+        requests = build_evidence_requests(rows, boundaries)
+        if requests:
+            total = sum(r.leverage for r in requests)
+            print(f"evidence requests: {len(requests)} artifact(s) would "
+                  f"unlock {total} questions")
+
+        if args.write:
+            out = Path(args.write)
+            out.mkdir(parents=True, exist_ok=True)
+            (out / "ACQUISITION_QUEUE.md").write_text(
+                render_queue(rows), encoding="utf-8")
+            (out / "EVIDENCE_REQUESTS.md").write_text(
+                render_evidence_pack(requests), encoding="utf-8")
+            print(f"\nwrote {out / 'ACQUISITION_QUEUE.md'}")
+            print(f"wrote {out / 'EVIDENCE_REQUESTS.md'}")
+    finally:
+        store.close()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="knowledge_acquisition")
     sub = ap.add_subparsers(dest="command", required=True)
@@ -513,6 +585,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, help="stop after N prompts")
     p.add_argument("--corpus", help="restrict to one corpus_id")
     p.add_argument("--family", help="restrict to one family")
+    p.add_argument("--prompt-id", action="append", metavar="ID",
+                   help="ask only these prompts; repeatable. For calibration "
+                        "probes, where the rows are chosen rather than ranged")
     p.add_argument("--interface")
     p.add_argument("--pacing", type=float, default=6.0,
                    help="seconds between prompts")
@@ -539,6 +614,12 @@ def build_parser() -> argparse.ArgumentParser:
                    help="list the prompts with this disposition and their follow-ups")
     p.add_argument("--limit", type=int, default=25)
     p.set_defaults(func=cmd_quality)
+
+    p = sub.add_parser("route", help="decide where each pending question belongs")
+    p.add_argument("--interface")
+    p.add_argument("--write", metavar="DIR",
+                   help="materialise the queue and evidence-request artifacts")
+    p.set_defaults(func=cmd_route)
 
     return ap
 

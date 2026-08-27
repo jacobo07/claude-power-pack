@@ -165,6 +165,7 @@ class AcquisitionRunner:
         limit: int | None = None,
         corpus_id: str | None = None,
         family: str | None = None,
+        prompt_ids: list[str] | None = None,
         max_attempts: int = 3,
         lease_seconds: int = 900,
         dry_run: bool = False,
@@ -187,8 +188,11 @@ class AcquisitionRunner:
                 "WHERE j.state='PENDING' "
                 + ("AND p.corpus_id=? " if corpus_id else "")
                 + ("AND p.family=? " if family else "")
+                + (f"AND p.prompt_id IN ({','.join('?' * len(prompt_ids))}) "
+                   if prompt_ids else "")
                 + "ORDER BY p.priority ASC, p.ordinal ASC LIMIT ?",
-                [v for v in (corpus_id, family) if v] + [limit or 20],
+                [v for v in (corpus_id, family) if v] + list(prompt_ids or [])
+                + [limit or 20],
             ).fetchall()
             for r in rows:
                 report.attempted += 1
@@ -209,7 +213,8 @@ class AcquisitionRunner:
         while limit is None or report.attempted < limit:
             job = self.store.claim_next(
                 self.worker, lease_seconds=lease_seconds,
-                corpus_id=corpus_id, family=family, max_attempts=max_attempts,
+                corpus_id=corpus_id, family=family, prompt_ids=prompt_ids,
+                max_attempts=max_attempts,
             )
             if job is None:
                 report.stopped_reason = "no pending prompts"
