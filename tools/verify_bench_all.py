@@ -56,7 +56,16 @@ QUICK_TARGETS = {
     "osa_dispatcher_ms": 300,
     "proactive_dispatch_ms": 30,
     "anti_patterns_ms": 120,
-    "ceps_record_ms": 38,
+    # 38 was never a threshold for this operation. The probe called
+    # record_error with category 'bench_all', which is not in
+    # VALID_CATEGORIES, so it returned at the first guard: all 22 historical
+    # ledger samples (0.4-3.3 ms) timed a REFUSAL, and 38 gave that refusal a
+    # 12-95x margin it could never exceed. Repaired 2026-08-27; the record
+    # path measured in isolation, n=9, all recorded: min 29.0, p50 39.5,
+    # p90 65.0, max 73.3, worst min-of-3 window 44.2. 60 (band 90) clears
+    # that worst window by ~2x and still catches a genuine doubling. This is
+    # the FIRST threshold this operation has had, not a relaxed one.
+    "ceps_record_ms": 60,
     "session_hub_ms": 300,
     "never_again_ms": 30,
 }

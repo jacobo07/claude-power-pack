@@ -30,7 +30,7 @@ from tools.verify_bench_all import (  # noqa: E402
 INNER_TIMEOUT_S = 45
 ROW_BUDGET_S = 150
 
-EXPECTED_GATES = 12
+EXPECTED_GATES = 13
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -168,6 +168,19 @@ def main() -> int:
               f"{MAX_SAMPLES} x {INNER_TIMEOUT_S}s exceeds the "
               f"{ROW_BUDGET_S}s budget -- the retry would cause the "
               "failure it exists to prevent")
+
+    # The one target in this table that was calibrated against a different
+    # operation than its name describes.
+    if QUICK_TARGETS["ceps_record_ms"] >= 44.2:
+        _ok("V-BENCH-CEPS-TARGET-MEASURED",
+            f"ceps_record_ms target {QUICK_TARGETS['ceps_record_ms']} clears "
+            "the worst observed min-of-3 window (44.2 ms) for the RECORD "
+            "path; the old 38 was set against a 0.4-3.3 ms refusal")
+    else:
+        _fail("V-BENCH-CEPS-TARGET-MEASURED",
+              f"ceps_record_ms target is {QUICK_TARGETS['ceps_record_ms']}, "
+              "below the measured worst min-of-3 of 44.2 -- that threshold "
+              "belongs to the rejection path, not the record path")
 
     ran = len(_passes) + len(_fails)
     print(f"\nBENCH_GATE_PASS={len(_passes)}/{ran}  "

@@ -324,20 +324,43 @@ def bench_anti_patterns():
 
 
 def bench_ceps_record():
+    # `record_error('bench_all', ...)` measured the REJECTION path for 41
+    # runs: 'bench_all' is not in VALID_CATEGORIES, so the call returned at
+    # the first guard and this probe timed a refusal while its name promised
+    # a write -- and left 41 phantom losses in the rejection ledger that
+    # capture_liveness reads. A valid category measures the real path; an
+    # isolated store keeps a benchmark from writing into the corpus other
+    # gates learn from.
     script = (
-        f"import sys, json, time;"
+        f"import sys, json, time, tempfile, pathlib;"
         f"sys.path.insert(0, r'{PP_PATH}');"
-        "from tools.ceps import record_error;"
+        "import tools.ceps as ceps;"
+        "tmp = pathlib.Path(tempfile.mkdtemp(prefix='ceps-bench-'));"
+        "ceps.EVENTS_PATH = tmp / 'events.jsonl';"
+        "ceps.DB_PATH = tmp / 'patterns.db';"
+        "ceps.REJECTIONS_PATH = tmp / 'rejections.jsonl';"
+        "ceps.DRAFTS_DIR = tmp / 'drafts';"
+        "ceps.LESSONS_PATH = tmp / 'session_lessons.md';"
+        "ceps.UKDL_PATH = tmp / 'ukdl.md';"
+        "ceps.LOG = tmp / 'ceps.log';"
         "t0 = time.perf_counter();"
-        "record_error('bench_all', 'bench', 'perf', True);"
-        "print(json.dumps({"
-        "'inner_ms': round((time.perf_counter()-t0)*1000, 1)}))"
+        "ev = ceps.record_error('tooling', 'bench', "
+        "'ModuleNotFoundError: No module named benchprobe');"
+        "dt = round((time.perf_counter()-t0)*1000, 1);"
+        "print(json.dumps({'inner_ms': dt, 'recorded': bool(ev)}))"
     )
     rc, so, se = _run([PY, "-c", script], timeout=15)
     if rc != 0:
         return {"ceps_record_error": (se or f"rc={rc}").strip()[:120]}
     try:
         payload = json.loads(so.strip().splitlines()[-1])
+        if not payload.get("recorded"):
+            # A number here would be a timing of the refusal. Report the
+            # defect instead: a benchmark whose label and measurement
+            # disagree is worse than a missing benchmark.
+            return {"ceps_record_error":
+                    "probe REJECTED -- timed the rejection path, not the "
+                    "record path"}
         return {"ceps_record_ms": payload["inner_ms"]}
     except Exception as exc:  # noqa: BLE001
         return {"ceps_record_error": f"parse: {exc}"}
