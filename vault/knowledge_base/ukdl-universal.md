@@ -7465,9 +7465,23 @@ detect real capture loss, so it was seeding the corpus used to find corpus damag
 reporting a duration. A rejected call still returns, still takes time, and still produces
 a plausible number.
 
+**Second instance, same day, and it cost more than the first.** The repaired probe
+redirected every write path to an isolated temp store -- correct for hygiene, and it made
+the probe measure the right operation on the WRONG INPUT. The operation appends to two
+corpus files with a whole-file read-modify-write, so aiming them at empty temp targets
+timed about 7% of the real cost, and the new threshold certified the rest. Synthetic
+seeding did not rescue it either. At an identical 619 KB, worst min-of-3: **empty 33 ms,
+one long line 74 ms, realistic line count 87 ms, a COPY of the real files 437 ms.** Neither
+byte count nor line count reproduces a content-dependent cost. **When an operation's cost
+depends on an artifact, the artifact is the fixture; a synthetic stand-in that matches its
+SIZE can still understate it fivefold.** Accept that the metric then moves with the
+artifact -- if the artifact grows in production, that growth is the risk the probe exists
+to see, not drift to be engineered away.
+
 **How to apply.** Have the probe check the operation's success value and report the defect
 instead of a number when it is falsy -- a benchmark whose label and measurement disagree
-is worse than a missing benchmark. When such a probe is repaired, treat its threshold as
+is worse than a missing benchmark. Bound a re-derived threshold on BOTH sides: a floor
+alone blocks only lowering it, and a value a hundred times too high passes every time. When such a probe is repaired, treat its threshold as
 unset rather than inherited, re-derive it from the real path, and state that the pre-fix
 series is not comparable: the step change at the repair is the repair, not a regression.
 Route probe writes to an isolated store so a benchmark never feeds the corpus other gates
@@ -7497,3 +7511,55 @@ INSTALLED system are the exception and should say so in a comment. Before trusti
 gate report the wrong answer, this one made a gate report the right answer about the wrong
 file. Detector: `tools/test_capture_coverage.py` V-COVERAGE-STORE-ADDRESS /
 V-COVERAGE-HOOK-ADDRESS.
+
+### T-FIX-RESTORES-THE-DEFECT-BY-ANOTHER-ROUTE-001
+
+A gate was built to end one specific false-healthy verdict: a producer that is registered,
+firing and recording while blind to most of its subject. Hours later an adversarial pass
+found that the gate reported COVERED for exactly that condition, by a route the fix had
+not considered.
+
+Coverage was computed by scanning every hook event for the producer's name and unioning
+what those registrations matched. Several event types -- Stop, SessionStart, SessionEnd,
+UserPromptSubmit -- carry no matcher at all, because they have no matcher semantics. So
+the instant the producer was also wired to one of them, a routine act, the union answered
+"universal" and the narrow capture surface read as covered. The defect the gate existed to
+catch, reachable through the gate itself.
+
+**Rule.** A fix is not finished when it closes the path the incident took. Ask what OTHER
+input reaches the same wrong verdict, and prefer a formulation with no such path to a
+formulation that patches the known one. A predicate that aggregates across scopes will
+eventually be satisfied by the wrong scope.
+
+**How to apply.** When a check answers a question about ONE context, scope its evidence to
+that context; never let a second context's permissiveness vote. Write the regression test
+as a MIXED fixture -- the narrow thing plus the permissive thing together -- because a
+single-context fixture cannot express the failure. Confirm the test can fail by running
+the pre-fix formulation against it and observing the wrong answer, not by reasoning that
+it would. Sister of [[T-REGISTRATION-PRESENCE-NOT-COVERAGE-001]], whose fix this defect
+lived inside.
+
+### T-GATE-THAT-DEFENDS-A-CONCLUSION-001
+
+A disposition was recorded -- one registration must stay narrow, because widening it would
+block the surface the doctrine redirects to -- and a gate was written to pin it. The gate
+asserted that a name was absent from an allow-list in a sibling file, and that a file
+existed. It examined no property of the thing it dispositioned. It passed.
+
+The disposition was false. The hook in question refuses the surface at its own first line,
+so widening could not affect it; and the entry that mattered sat further down a definition
+than the reading had gone. The gate did not catch any of that, because it was never
+looking at the subject: it was restating the conclusion in the grammar of a test.
+
+**Rule.** A gate must assert a property OF THE SUBJECT, discoverable from the subject.
+Asserting a literal that a sibling file also contains tests that two files agree, which is
+tautology wearing evidence's clothes -- and it is how a wrong conclusion acquires a green
+check beside it.
+
+**How to apply.** For each gate ask: what source did this READ, and what would have to
+change there for it to fail? If the answer is "a constant I also wrote, in a file I also
+wrote", it is vacuous. Prefer reading the artifact under judgement -- the hook's source,
+the running config, the actual output. A gate defending a conclusion is more dangerous
+than no gate, because the next reader stops checking. Sister of [[T-ZERO-CANNOT-FALL-001]]
+and of the bookend discipline: every "rejects X" needs an "admits Y", and every assertion
+needs a source that can disagree with it.
