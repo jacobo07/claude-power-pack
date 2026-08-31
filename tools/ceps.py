@@ -668,6 +668,138 @@ def from_stop_hook(last_turns: list) -> list:
 # CLI entry point (for slash-command + ad-hoc invocation)
 # ---------------------------------------------------------------------------
 
+# --- Cross-project baseline (spec vault/specs/cross-project-baseline.md) ----
+#
+# promote_to_global() above has been a pure predicate since it landed: it
+# returns a bool and its only caller in the tree is tools/test_uqf.py. So no
+# pattern has EVER been promoted, and nothing in any other project could
+# surface what one project learned. What follows is the missing WRITER.
+#
+# It is deliberately stricter than the bare >=2-projects predicate. Measured on
+# the live corpus 2026-08-31: 8 signatures clear >=2 projects, but only 4 are
+# real. `FAILED` (a bare word scraped from output), `Error ? err.message :
+# String(err` (JavaScript source) and `Error exacto: [mensaje completo` (a
+# Spanish doc template) all clear it -- and two of those carry
+# admission_status="valid", so the admission layer alone does not stop them.
+# Promoting those would inject boilerplate about `bash:cd` into every project
+# forever, which is worse than the silence it replaces.
+PROMOTED_PATH = PP_ROOT / "vault" / "ceps" / "promoted.jsonl"
+
+# POSITIVE CONTROL, not a growing blacklist (PR-POSITIVE-CONTROL-BEATS-A-
+# GROWING-BLACKLIST-001): a root_cause is portable only if it IS a recognisable
+# error identity. The Error|Exception branch requires a COMPOUND identifier --
+# `AssertionError` matches, the bare prose word `Error` does not, which is the
+# single change that stopped the doc-template and source-code fragments.
+_PORTABLE_IDENTITY = re.compile(r"""(
+      \b[A-Za-z_][A-Za-z0-9_]*(?:Error|Exception)\b
+    | Traceback\ \(most\ recent\ call\ last\)
+    | \bPermission\ denied\b
+    | \bNo\ such\ file\ or\ directory\b
+    | \bcommand\ not\ found\b
+    | \[Tool\ result\ missing\ due\ to\ internal\ error\]
+    | \b(?:ENOENT|EACCES|EPERM|ECONNREFUSED|ETIMEDOUT|EADDRINUSE)\b
+    | \bsegmentation\ fault\b
+    | \bexit\ (?:code|status)\ \d+
+    | \bHTTP\ [45]\d\d\b
+    | \btimed?\ ?out\b
+)""", re.IGNORECASE | re.VERBOSE)
+
+
+def is_portable_identity(root_cause: str) -> bool:
+    """True when a root_cause names an error, rather than quoting something."""
+    text = str(root_cause or "")
+    if is_vacuous_failure_claim(text):
+        return False
+    return bool(_PORTABLE_IDENTITY.search(text))
+
+
+def _admitted_events(events: list) -> list:
+    """Events fit to argue portability: semantically admitted AND naming an
+    error. Both are required -- 51 of 101 live events are identity_suspect
+    (the subsystem is a navigation prefix like `bash:cd`, not the failing
+    tool), and separately, some `valid` events quote source code."""
+    return [e for e in events
+            if e.get("admission_status") == "valid"
+            and is_portable_identity(e.get("root_cause"))]
+
+
+def compute_promotions(events: list) -> list:
+    """Group by pattern_signature and return the promotable records.
+
+    Portability is counted over ADMITTED events only. A pattern that reaches
+    seven projects on suspect evidence has not been shown to travel -- it has
+    been shown to be logged a lot (recurrence is not portability).
+    """
+    groups: dict = {}
+    for e in events:
+        sig = e.get("pattern_signature")
+        if sig:
+            groups.setdefault(sig, []).append(e)
+
+    out = []
+    for sig, evs in sorted(groups.items()):
+        admitted = _admitted_events(evs)
+        project_ids = [e.get("project_id", "") for e in admitted
+                       if e.get("project_id")]
+        if not promote_to_global(sig, project_ids):
+            continue
+        newest = max(admitted, key=lambda e: str(e.get("ts", "")))
+        out.append({
+            "pattern_signature": sig,
+            "root_cause": newest.get("root_cause"),
+            "prevention_rule": newest.get("prevention_rule"),
+            "category": newest.get("category"),
+            "subsystems": sorted({e.get("subsystem") for e in admitted
+                                  if e.get("subsystem")}),
+            "project_ids": sorted(set(project_ids)),
+            "project_count": len(set(project_ids)),
+            "admitted": len(admitted),
+            "observed": len(evs),
+            "promoted_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        })
+    return out
+
+
+def promote_patterns(events_path: Optional[Path] = None,
+                     out_path: Optional[Path] = None) -> dict:
+    """Write the promotable set to the global baseline. Idempotent by
+    signature: a re-run refreshes a record in place rather than appending a
+    duplicate, so the file stays a SET and the injector cannot show the same
+    rule twice."""
+    src = Path(events_path) if events_path else EVENTS_PATH
+    dst = Path(out_path) if out_path else PROMOTED_PATH
+
+    events = []
+    try:
+        for line in src.read_text(encoding="utf-8",
+                                  errors="replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                events.append(json.loads(line))
+            except (json.JSONDecodeError, ValueError):
+                continue  # one bad line must not blind the whole pass
+    except OSError as exc:
+        return {"ok": False, "error": f"unreadable events: {exc}",
+                "promoted": 0}
+
+    records = compute_promotions(events)
+    try:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        body = "".join(json.dumps(r, ensure_ascii=False) + "\n"
+                       for r in records)
+        tmp = dst.with_suffix(dst.suffix + ".tmp")
+        tmp.write_text(body, encoding="utf-8")
+        os.replace(tmp, dst)
+    except OSError as exc:
+        return {"ok": False, "error": f"unwritable baseline: {exc}",
+                "promoted": 0}
+
+    return {"ok": True, "promoted": len(records), "path": str(dst),
+            "signatures": [r["pattern_signature"] for r in records]}
+
+
 def _main(argv: list) -> int:
     if not argv:
         print("usage: ceps.py record <category> <subsystem> <root_cause...>",
@@ -675,7 +807,12 @@ def _main(argv: list) -> int:
         print("       ceps.py propagate <prompt>", file=sys.stderr)
         print("       ceps.py from-verify <path-to-verify-stdout>",
               file=sys.stderr)
+        print("       ceps.py promote", file=sys.stderr)
         return 2
+    if argv[0] == "promote":
+        res = promote_patterns()
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
     cmd, rest = argv[0], argv[1:]
     if cmd == "record":
         ev = from_slash_command(rest)

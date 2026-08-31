@@ -98,6 +98,14 @@ const PY_EXE = process.env.CLAUDE_PY_EXE || (function () {
 
 const CHAIN_MAP = {
   'Stop-chain': [
+    // FIRST in the chain and cheap: kills the three dead-screen closer classes
+    // (empty / passive-wait / intent-narration) before any heavy gate runs.
+    // Fail-open ABSOLUTE, never blocks the same session twice consecutively.
+    // Back-ported from LIVE 2026-08-31: it was wired into ~/.claude/hooks only,
+    // so canonical was NOT a superset and a canonical->live copy would have
+    // silently deleted the anti-dead-screen guard (T-HOOK-DISPATCHER-DRIFT-001
+    // cuts both ways — the mirror is only safe once canonical contains both).
+    { exe: NODE_EXE, script: './closer-guard.js', timeoutMs: 5000, block: true },
     { exe: NODE_EXE, script: './zero-issue-gate.js', timeoutMs: 70000, block: true },
     { exe: NODE_EXE, script: './kobiiclaw-autoresearch.js', timeoutMs: 30000 },
     { exe: NODE_EXE, script: './trace-flusher.js', timeoutMs: 15000 },
@@ -141,6 +149,12 @@ const CHAIN_MAP = {
     // indexer --all). Fail-open, ALWAYS exit 0, never blocks Stop; closes the
     // WRITE->READ loop the GK-12 Graph-First gate reads from.
     { exe: PY_EXE, script: '../skills/claude-power-pack/modules/graphify/session_writeback.py', timeoutMs: 8000 },
+    // Cross-project baseline (spec vault/specs/cross-project-baseline.md,
+    // Owner option B 2026-08-31). Refreshes vault/ceps/promoted.jsonl from the
+    // events THIS session wrote, so the next session in ANY project starts
+    // with a current baseline. Reads ~68 KB, writes 4 records; safe to run
+    // always, which is what "SIEMPRE" requires. Fail-open, never blocks Stop.
+    { exe: PY_EXE, script: '../skills/claude-power-pack/tools/ceps_promote_stop.py', timeoutMs: 8000 },
     // FD-07 Fable Learning Flywheel (SCS C82 EXECUTION-mode): at a FRONTIER
     // session's close (kclaude exports PP_FRONTIER_SESSION=1) read this session's
     // captured deltas from the PM-03 bus, classify/triage/writeback each

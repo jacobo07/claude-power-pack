@@ -115,6 +115,95 @@ function buildAdvisory(entry, globalCount, cwd) {
     + `would index it so future navigation resolves without exploration.`;
 }
 
+// --- Cross-project baseline injection --------------------------------------
+//
+// Until 2026-08-31 this hook read the promoted store and emitted `globalCount`
+// -- a NUMBER. So what one project learned reached another project as a digit.
+// The CEPS promoter (tools/ceps.py promote) now writes a real baseline; this
+// reads it back, which is the half that closes the loop.
+//
+// Relevance is NECESSARY, never weighted (PR from feedback_constant_factors_
+// rank_nothing: five of six scoring factors were per-item constants, so
+// relevance 0.0 still cleared MANDATORY and 8 of 9 items activated). A pattern
+// that does not match the command at hand emits NOTHING.
+const PROMOTED_FILE = path.join(
+  os.homedir(), '.claude', 'skills', 'claude-power-pack',
+  'vault', 'ceps', 'promoted.jsonl'
+);
+const BASELINE_TOP_N = 3;
+
+// A CEPS `subsystem` is `<transport>:<first token of the command>`, so half the
+// live corpus is keyed on a NAVIGATION prefix (`bash:cd`) rather than on the
+// failing tool -- the admission layer flags exactly this as identity_suspect.
+// Matching on those keys would fire on every `cd`. Excluding them here is the
+// producer's identity bug corrected on the read side, where it is cheap.
+const NAV_TOKEN = new Set([
+  'cd', 'ls', 'dir', 'echo', 'cat', 'type', 'pwd', 'set', 'export', 'env',
+  'time', 'timeout', 'sudo', 'true', 'false', 'then', 'fi', 'do', 'done',
+  'program', 'for', 'while', 'if', 'source', 'exec', 'nohup',
+]);
+
+function normToken(tok) {
+  const base = String(tok || '').replace(/\\/g, '/').split('/').pop();
+  return base.replace(/\.(exe|cmd|bat|ps1)$/i, '').toLowerCase();
+}
+
+// Programs the current command actually invokes: every token that is not a
+// navigation word, a flag, or a path argument.
+function programTokens(cmd) {
+  const out = new Set();
+  for (const seg of String(cmd || '').split(/[;|&]+|\s&&\s/)) {
+    for (const raw of seg.trim().split(/\s+/)) {
+      if (!raw || raw.startsWith('-')) continue;
+      if (/^[A-Za-z_][\w.]*=/.test(raw)) continue; // VAR=value prefix
+      const t = normToken(raw);
+      if (!t || NAV_TOKEN.has(t)) continue;
+      out.add(t);
+      break; // first real program of this segment is the one that runs
+    }
+  }
+  return out;
+}
+
+function loadPromoted() {
+  try {
+    if (!fs.existsSync(PROMOTED_FILE)) return [];
+    return fs.readFileSync(PROMOTED_FILE, 'utf8')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => { try { return JSON.parse(l); } catch (_) { return null; } })
+      .filter(Boolean);
+  } catch (_) {
+    return []; // unreadable baseline -> silence, never an exception in a hook
+  }
+}
+
+// A record is relevant iff a program in the current command appears among the
+// record's own subsystems, once navigation prefixes are dropped from both.
+function relevantPromotions(records, programs) {
+  if (!programs || programs.size === 0) return [];
+  const hits = [];
+  for (const rec of records) {
+    const keys = (rec.subsystems || [])
+      .map(s => normToken(String(s).split(':').pop()))
+      .filter(k => k && !NAV_TOKEN.has(k));
+    if (keys.some(k => programs.has(k))) hits.push(rec);
+  }
+  // Most-travelled first: a pattern proven across more projects earns the slot.
+  hits.sort((a, b) => (b.project_count || 0) - (a.project_count || 0));
+  return hits.slice(0, BASELINE_TOP_N);
+}
+
+function buildBaselineAdvisory(records) {
+  const lines = records.map(r =>
+    `  - ${r.root_cause} (seen in ${r.project_count} projects) — `
+    + `${r.prevention_rule || 'no rule recorded'}`);
+  return `Cross-project baseline (advisory — never blocks): this estate has hit `
+    + `the following in OTHER projects while running the same tooling. `
+    + `Learned once, applied everywhere:\n${lines.join('\n')}`;
+}
+
 /**
  * run(input) — the hook body. `input` is the parsed PreToolUse JSON
  * ({ tool_name, tool_input, cwd, session_id, ... }). Returns the JSON object
@@ -127,6 +216,22 @@ function run(input) {
     const toolInput = data.tool_input || data.toolInput || {};
     const cwd = data.cwd || data.workingDirectory || process.cwd();
     const sessionId = data.session_id || data.sessionId || '';
+
+    // Baseline injection runs on ANY shell command, not just exploration: a
+    // ModuleNotFoundError does not wait for you to grep. Checked first so an
+    // ordinary `python x.py` -- never an exploration op -- still gets it.
+    if (toolName === 'Bash' || toolName === 'PowerShell') {
+      const programs = programTokens(toolInput && toolInput.command);
+      const hits = relevantPromotions(loadPromoted(), programs);
+      if (hits.length && !throttled(sessionId, 'xpb:' + [...programs].sort().join(','))) {
+        return {
+          hookSpecificOutput: {
+            hookEventName: 'PreToolUse',
+            additionalContext: buildBaselineAdvisory(hits),
+          },
+        };
+      }
+    }
 
     if (!isExploration(toolName, toolInput)) return {};
 
@@ -158,7 +263,10 @@ function run(input) {
   }
 }
 
-module.exports = { run, isExploration, repoEntryFor, buildAdvisory };
+module.exports = {
+  run, isExploration, repoEntryFor, buildAdvisory,
+  programTokens, relevantPromotions, loadPromoted, buildBaselineAdvisory,
+};
 
 // --- Standalone CLI (shell-free CHAIN_MAP child) --------------------------
 if (require.main === module) {

@@ -2,7 +2,8 @@
 title: Cross-project baseline — promote and inject what one project learns
 date: 2026-08-31
 tier: T2
-status: PROPOSED — awaiting Owner decision on §5
+status: BUILT — Owner chose (B) "b" (2026-08-31). See §8 for what B turned out
+        to mean once measured, and §9 for the doctrine this retires.
 covers: [cross_project_baseline, ceps_promotion, promote_to_global, compound_learnings,
          learning_sentinel, global_rules, graph_first_gate, baseline_injection,
          portfolio_learnings, flywheel_read_side]
@@ -157,3 +158,95 @@ Three ways to resolve, and they are genuinely different products:
 - **No retroactive rewrite** of the 101 existing events. Promotion reads them;
   it does not edit them.
 - **No auto-materialisation** unless the Owner picks (B) in §5.
+
+## 8. What building B changed about B
+
+Two measurements taken during the build moved the design. Both are recorded
+because the spec above is now partly wrong, and a spec that quietly rewrites its
+own founding numbers is worth less than one that shows them moving.
+
+### 8.1 §1.1's "8 qualifying patterns" was true and useless
+
+The bare ≥2-projects predicate admits **8** signatures. Only **4** survive
+contact with their own content:
+
+| rejected | what it actually is |
+|---|---|
+| `FAILED` | a bare word scraped from tool output |
+| `Error ? err.message : String(err` | **JavaScript source code** |
+| `Error exacto: [mensaje completo` | a Spanish **documentation template** |
+| `[Tool result missing due to internal error]` | real, but only **1 project** once suspect evidence is dropped |
+
+Two of those carry `admission_status: "valid"`, so the existing admission layer
+does **not** stop them — it catches the *identity* defect (`subsystem` is a
+navigation prefix like `bash:cd`, 51 of 101 events) but not the *content* one.
+Promoting them would have injected boilerplate about `bash:cd` into every
+project forever: strictly worse than the silence measured in §1.
+
+`is_portable_identity()` is the added control, positive rather than a blacklist
+(`PR-POSITIVE-CONTROL-BEATS-A-GROWING-BLACKLIST-001`). The decisive detail: the
+`Error|Exception` branch requires a **compound** identifier, so `AssertionError`
+matches and the bare prose word `Error` does not. That one change is what
+stopped the doc template and the source fragment.
+
+**The promoted set is 4, not 8, and all 4 are real:** `Traceback (most recent
+call last)` (3 projects), `Permission denied` (2), `AssertionError` (2),
+`ModuleNotFoundError` (2).
+
+### 8.2 §3.3 was looking for a scheduler; the producer was the problem
+
+`last_run_global` is not merely `null` — grep says it is **initialised to null
+in `learning-sentinel.js` and written by nothing, anywhere**. A field with no
+transition producer is decoration, and `compound_audit.py` had been reporting
+`last_run_global=never` with 107-day stale cursors as a *passing* advisory.
+
+The actual missing producer already existed. `hooks/session_delta_stop.js`
+writes `<cwd>/.claude/cache/learnings/` — *the input path
+`learning-sentinel.js` reads FIRST and that nothing in the estate wrote, which
+is why `LEARNINGS_PENDING.md` had never been produced and `/cpp-compound` was
+never auto-invoked.* Its own comment ends: **"Live only after Copy-Item
+canonical→live."** Written, correct, never made live.
+
+So B's third leg is not a scheduler. It is a mirror sync — done, with a caveat
+that had teeth: the drift ran **both ways**. LIVE carried `closer-guard.js` (the
+anti-dead-screen Stop guard) that CANONICAL lacked, so a blind canonical→live
+copy would have **deleted** it. Canonical was back-ported first so it became a
+strict superset (verified: zero deletions in the diff), then copied.
+`T-HOOK-DISPATCHER-DRIFT-001` cuts both ways; the mirror is only safe once
+canonical contains both sides.
+
+## 9. Doctrine retired, explicitly
+
+Option B requires this, and it is done here rather than as a quiet exception:
+
+**`compound-learnings` is no longer sleepy for the promotion leg.**
+`tools/ceps_promote_stop.py` runs on **every** Stop, in **every** project,
+unconditionally — the Owner's "SIEMPRE". Cost is one 68 KB read and one atomic
+4-record write; cheap enough that always-on needs no defence.
+
+What is **not** retired: the `/cpp-compound` synthesis that writes
+`~/.claude/rules/`. Turning recurring signals into a durable rule is a judgment
+operation, not a scriptable one — automating it means scheduling a headless
+agent session, a different product with a different cost, not a hook.
+`session_delta_stop.js` going live now feeds it the input it never had, so the
+skill will finally have something to compound; whether it should also *run*
+unattended is a separate decision that has not been made.
+
+## 10. Evidence
+
+- `tools/test_cross_project_baseline.py` — **8/8**, wired as the
+  `cross-project-baseline` row of `verify_spp`. `V-XPB-REJECTS-NON-IDENTITY`
+  asserts the three real corpus offenders verbatim, so this cannot silently
+  regress into noise.
+- `vault/ceps/promoted.jsonl` — 4 records, written by the real path.
+- **Fired in production during the build.** A `sed` command in this session
+  drew: *"Cross-project baseline (advisory — never blocks): … Permission denied
+  (seen in 2 projects)"*. That is the read side firing for the first time in
+  this estate's history — `fires.jsonl` held 89 records and **not one** was a
+  prevention.
+- Live dispatcher: `node --check` OK, all three Stop entries present, backup at
+  `hook-dispatcher.js.bak-xpb-20260831164239`.
+
+**Not yet true:** hooks load once at session start, so the new Stop entries
+(`ceps_promote_stop`, `session_delta_stop`) do not fire until a `/restart`.
+The injector is already live because it is referenced by path, not copied.

@@ -246,6 +246,13 @@ def main() -> int:
         ("graphify-deferred",
          [PY, str(PP / "tools" / "test_graphify_deferred.py")],
          30),
+        # What one project learns must reach the others, and must not carry
+        # noise when it does. The bare >=2-projects predicate admits a bare
+        # `FAILED`, JavaScript source and a doc template -- injecting those
+        # into every project forever is worse than the silence they replace.
+        ("cross-project-baseline",
+         [PY, str(PP / "tools" / "test_cross_project_baseline.py")],
+         60),
         # Semantic admission for the event store. Shape validation cannot
         # tell a failure from a success, and 52 of the first 75 events were
         # not failures at all.
