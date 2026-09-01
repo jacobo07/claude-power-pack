@@ -253,6 +253,12 @@ def main() -> int:
         ("cross-project-baseline",
          [PY, str(PP / "tools" / "test_cross_project_baseline.py")],
          60),
+        # Two features that act on EVERY project without being asked, so both
+        # are only safe if their selection is right. A wrong selector here is
+        # not a bug in one repo, it is a wrong action in all of them.
+        ("unattended-onboarding",
+         [PY, str(PP / "tools" / "test_unattended_onboarding.py")],
+         60),
         # Semantic admission for the event store. Shape validation cannot
         # tell a failure from a success, and 52 of the first 75 events were
         # not failures at all.

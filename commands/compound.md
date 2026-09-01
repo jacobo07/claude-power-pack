@@ -24,9 +24,52 @@ Sibling of `/cpp-distill` and `/cpp-customclaw`. Drives the 8-step pipeline defi
 /cpp-compound --dry-run          # propose without writing artifacts (no cursor advance, no marker delete)
 /cpp-compound --since=YYYY-MM-DD # override cursor with explicit date
 /cpp-compound --threshold=N      # one-shot threshold override (does not persist)
+/cpp-compound --unattended       # no human present — see the policy below
 ```
 
 If the running session has no `LEARNINGS_PENDING.md` and the user did not pass an override, AskUserQuestion: **"No pending-marker found. Run anyway against current corpus?"** with options "Yes, force-run", "No, abort".
+
+---
+
+## `--unattended` policy (Owner 2026-09-01: "/cpp-compound debe correr desatendido")
+
+Driver: `tools/compound_unattended.py`, on a timer. It invokes this command
+through `claude -p` with `--permission-mode acceptEdits` and a tool set
+narrowed to `Read,Write,Edit,Glob,Grep` — an unattended run gets **less**
+latitude than a watched one, not more.
+
+**AskUserQuestion is unavailable. Never ask; decide or stop.** Every branch
+that would have prompted resolves as follows:
+
+| Situation | Attended | `--unattended` |
+|---|---|---|
+| No `LEARNINGS_PENDING.md` | ask "force-run?" | **STOP.** Exit clean, touch nothing. The absence of a marker is the sentinel saying there is nothing to do; a forced run against an unchanged corpus re-proposes what a human already declined |
+| Per-artifact `Scope:global\|project` toggle | ask per artifact | **`global`** (the documented default). Global scope is the whole point — a rule confined to the project that learned it is the state this was built to end |
+| Artifact at signal **≥ 4** | propose, then create | **create** |
+| Artifact at signal **2–3** | propose, then create | **queue** to `vault/compound/queue.jsonl`, do not write. A borderline rule reaching every project unreviewed is the failure mode; a queued one costs a later glance |
+| Signal **1** | skip | skip (unchanged) |
+| Any ambiguity the table does not cover | ask | **STOP and queue.** Silence is the safe default; a wrong global rule is read by every project, forever |
+
+**Hard caps per unattended run:** at most **3 created artifacts**. On the
+fourth, queue the rest and stop — a bad pass must not be able to flood
+`~/.claude/rules/`.
+
+**Provenance is mandatory.** Every artifact created unattended carries, in its
+front matter:
+
+```yaml
+origin: unattended-compound
+run_at: <ISO8601>
+source_project: <cwd>
+signal_count: <N>
+```
+
+Without it an unattended write is anonymous, and anonymous global writes cannot
+be audited or reverted — which is the objection to running unattended at all,
+answered rather than accepted.
+
+Steps 7 (cursor advance under mkdir-mutex) and 8 (delete marker) run normally;
+they are what stops the next timer from reprocessing the same corpus.
 
 ---
 
