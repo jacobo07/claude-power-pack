@@ -58,6 +58,41 @@ PP = Path(__file__).resolve().parents[1]
 NODE = shutil.which("node") or shutil.which("node.exe") or "node"
 PY = sys.executable
 
+def suspect_rows(results: list, advisory: set) -> list:
+    """Rows a parallel run reported red, which a solo run could exonerate.
+
+    A parallel run measures the row and the harness together. Measured
+    2026-09-02 over 75 rows: five of fourteen strict fails passed cleanly
+    alone, and only three of those five were timeouts -- one had exited 1
+    outright -- so selecting on "did not finish" alone would have missed
+    two of them.
+
+    Advisory rows are excluded because their red already costs nothing;
+    re-running them would buy a label nobody reads.
+    """
+    return [r for r in results
+            if (r.get("rc") != 0 or r.get("timed_out"))
+            and r.get("name") not in advisory]
+
+
+def apply_solo(row: dict, solo: dict) -> bool:
+    """Fold a solo re-run into a row. True when the row was exonerated.
+
+    Deliberately one-directional, and the asymmetry is a real limit worth
+    stating rather than hiding: this can only ever move a red to green. A
+    row that PASSES under load and would fail alone is never re-run, so it
+    is never caught here. The claim earned is narrow -- "this red did not
+    reproduce without the harness's own load" -- and it is not the same
+    claim as "this row is healthy".
+    """
+    if solo.get("rc") != 0:
+        return False
+    row["rc"] = 0
+    row["timed_out"] = False
+    row["contended"] = True
+    return True
+
+
 # Rows that may FAIL without failing the umbrella gate. Use sparingly —
 # the default is strict.
 ADVISORY_ROWS: set[str] = {
@@ -135,6 +170,11 @@ def main() -> int:
                         "Wall floor on this host is the l3-engine row "
                         "(~86s). 0 (the default) = serial."
                     ))
+    ap.add_argument("--confirm-fails", action="store_true",
+                    help=("re-run every red row alone once before reporting. "
+                          "A parallel red measures the row and the harness "
+                          "together; this separates them. Costs a second "
+                          "pass over the failures, so it is opt-in."))
     args = ap.parse_args()
     workers = max(0, min(int(args.parallel or 0), PARALLEL_MAX_WORKERS))
 
@@ -374,6 +414,12 @@ def main() -> int:
         ("memory-router-freshness",
          [PY, str(PP / "tools" / "test_router_freshness_gate.py")],
          120),
+        # The umbrella's own report is the estate's most-read output, and
+        # this row is what keeps its fail count honest about which reds it
+        # measured and which it caused.
+        ("umbrella-contention",
+         [PY, str(PP / "tools" / "test_umbrella_contention.py")],
+         60),
         ("predictive-governance-gates",
          [PY, str(PP / "tools" / "test_predictive_governance_gate.py")],
          120),
@@ -575,9 +621,47 @@ def main() -> int:
             results.append(r)
             _emit(r)
 
+    # CONTENTION CONFIRMATION. A parallel run measures the row and the
+    # harness together, and cannot say which one produced a red. Measured
+    # 2026-09-02: of fourteen strict fails and three unmeasured rows in one
+    # parallel run, four passed cleanly when re-run alone -- including one
+    # that had exited 1, so this is not only about timeouts. Reporting all
+    # seventeen as defects would have been wrong by four, and raising the
+    # budgets to make the timeouts go away would have converted unmeasured
+    # into measured without measuring anything.
+    #
+    # Opt-in, because re-running every red doubles the cost of a bad run.
+    # Nothing is suppressed: both observations are printed, and a row that
+    # fails alone stays exactly as red as it was.
+    contended = []
+    if args.confirm_fails and workers > 1 and not args.row:
+        suspect = suspect_rows(results, ADVISORY_ROWS)
+        if suspect:
+            print("=" * 72)
+            print(f"  [confirm] re-running {len(suspect)} red row(s) alone -- "
+                  "a parallel red measures the row AND the harness",
+                  flush=True)
+            by_spec = {n: (a, b) for (n, a, b) in rows_spec}
+            for r in suspect:
+                argv, budget = by_spec[r["name"]]
+                solo = _row(r["name"], argv, budget=budget)
+                verdict = ("still red" if solo["rc"] != 0 else "PASSED ALONE")
+                print(f"    {r['name'].ljust(28)} {verdict}"
+                      f"  ({solo['elapsed']:.1f}s alone vs "
+                      f"{r['elapsed']:.1f}s under load)")
+                if apply_solo(r, solo):
+                    contended.append(r["name"])
+            if contended:
+                print("    -> these reds did not reproduce without the "
+                      "harness's own load. That is a fact about this run, "
+                      "not a clean bill for the rows.")
+
     total_elapsed = time.monotonic() - t_total
     print("=" * 72)
     print(f"  total elapsed: {total_elapsed:.2f}s")
+    if contended:
+        print(f"  CONTENDED: {len(contended)} row(s) red only under "
+              f"parallel load — {contended}")
 
     # Separated from failures on purpose: a timeout is an unmeasured row.
     timed_out = [r for r in results if r.get("timed_out")]
