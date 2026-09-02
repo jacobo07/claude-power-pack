@@ -6819,6 +6819,45 @@ what a number would have to mean before offering it as progress.
 suites — did not survive contact with the first three entries.
 `vault/plans/g1-burndown-2026-08-10.md`.
 
+### ADDENDUM — the same rule one step earlier: validate a gate against known-good BEFORE authoring it
+
+The parent rule governs *burning* a list a gate produced. This addendum governs
+*writing the gate at all*, and it is cheaper because nothing has been built yet.
+
+**Rule.** Before shipping a new gate, run its logic against a corpus already known
+to be good and **require green**. If it comes back red there are two hypotheses —
+the corpus is defective, or the instrument is — and **on a corpus that already
+passed review, the instrument is the more likely of the two.** Resolve which before
+writing a line of the gate, and never before writing a repair.
+
+**Measured, not asserted.** ISAF `D-023`, 2026-09-02: four proposed checks went red
+against a frozen, reviewed 10-dataset foundation. **Three were the instrument.**
+
+| Proposed check | Said | Reality |
+|---|---|---|
+| every owned source atom appears in a Part | 17 absences | Parts cite **ranges** (`190`…`196`); intermediates never appear literally |
+| owner cell parses clean in the ledger | 1 dataset discrepant | one row carries its owner **in bold with an annotation** — 309 of 310 parsed |
+| every ID in an "origin atoms" footer is an ownership claim | **147** offenders | the footer means *derives from*, not *owns*; citing another owner's atom there is correct |
+| manifest ownership key agrees with the ledger | 39 problems | **real** — five manifests claimed atoms belonging to others |
+
+The third is the one that matters: acting on it would have **destroyed correct
+provenance across a frozen foundation**. It survived only because the sweep ran
+before the repair, not after.
+
+**The tell.** A gate that flags a large, round number of lines in reviewed work is
+reporting its own aperture, not a defect rate. Ask what the flagged lines have in
+common **before** asking how to fix them — here all 147 shared one thing: they were
+the correct usage of a phrase the instrument read in the wrong sense.
+
+**Corollary on substring coverage.** Confirming that a topic is covered by testing
+for a substring is not evidence. The same session's adversarial checklist returned
+*covered* for "key removal before dependency closure" because the word stem
+appeared — in prose about something else. The gap was real and became a failure
+mode. **Coverage is confirmed by reading the claim, never by matching a fragment
+of it.**
+
+**Cross-project:** tagged `#CROSS-PROJECT`.
+
 ---
 
 ## T-SILENT-VOCABULARY-COLLAPSE-001 — an unrecognised value folded into the least-urgent default is a plausible number nobody can falsify
@@ -7655,3 +7694,21 @@ have disabled the very hook the same brief asked to activate.
 - [regression/bash:rtk.exe] `ceps_911bd3d498cd2bf8` -- Before touching bash:rtk.exe, verify the regression scenario (12 failed) is still covered by a passing test.
 
 - [regression/bash:echo] `ceps_5d28a90f4498a814` -- Before touching bash:echo, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:rtk.exe] `ceps_5d28a90f4498a814` -- Before touching bash:rtk.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:sed] `ceps_5d28a90f4498a814` -- Before touching bash:sed, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:rtk.exe] `ceps_c773f25b4c2973b3` -- Tool failure in bash:rtk.exe: Error ? err.message : String(err. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:cmd] `ceps_904434f799a130f1` -- Environment mismatch on bash:cmd: command not found. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:powershell.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:powershell.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [env/bash:powershell.exe] `ceps_5a66d208aabd03a9` -- Environment mismatch on bash:powershell.exe: no se reconoce como nombre. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:python] `ceps_7ec2ebf54666134f` -- Tool failure in bash:python: SyntaxError: unterminated. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python] `ceps_d47d40fe40071e32` -- Tool failure in bash:python: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
