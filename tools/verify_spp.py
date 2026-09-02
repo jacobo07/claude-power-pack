@@ -426,6 +426,15 @@ def main() -> int:
         ("effective-state",
          [PY, str(PP / "tools" / "test_effective_state.py")],
          90),
+        # The detector above reports SHADOWED. This row proves the report is
+        # CONSEQUENTIAL: is_done was a weighted score, so a deliverable
+        # could lose the delivery check and still clear 70 on the rest.
+        # Replayed against a claim a prior session really made, the score
+        # model returns OQS 100 and Done while the executing bytes are a
+        # different version. A weight cannot express a precondition.
+        ("effective-precondition",
+         [PY, str(PP / "tools" / "test_effective_precondition.py")],
+         90),
         # One registration should widen, not five: the Bash-chain carries the
         # guard that blocks git/npm via Bash to force them onto PowerShell,
         # so widening it would block the surface doctrine redirects to.

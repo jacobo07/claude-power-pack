@@ -4,8 +4,10 @@ OQS (Output Quality Score) scorer + per-output-type contracts.
 Threshold: OQS >= 70 -> done. Public API: is_done, score,
 OQS_DONE_THRESHOLD, list_contracts, get_contract.
 """
+from . import preconditions
 from .validator import (
     OQS_DONE_THRESHOLD,
+    certify,
     TIER_OQS_FLOOR,
     get_contract,
     is_done,
@@ -17,6 +19,8 @@ from .validator import (
 
 __all__ = [
     "OQS_DONE_THRESHOLD",
+    "certify",
+    "preconditions",
     "TIER_OQS_FLOOR",
     "get_contract",
     "is_done",
