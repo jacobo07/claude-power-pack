@@ -1,51 +1,61 @@
-# RESUMPTION — observation surface closure
+# RESUMPTION — effective state
 
 **Repo** `~/.claude/skills/claude-power-pack` · **branch** `frontier28/session-2026-08-26`
-· **worktree** an isolated one; the main checkout is on another pane's branch and must not
-be switched.
+· **worktree** isolated. The main checkout is on another pane's branch
+(`feature/knowledge-acquisition`, 41 commits, dirty) and must not be switched, reset or
+merged into.
 
-**Thesis.** An instrument can be accurate and blind. The CEPS producer was registered,
-firing, recording and losing nothing while observing about a quarter of its subject,
-because the entry carrying its name matched `Bash` on a host whose doctrine routes python,
-pytest, git, npm, node, mix and gh through PowerShell.
+**Thesis.** The install location is a git working tree. `~/.claude/skills/claude-power-pack`
+is at once the repo and the directory 11 live hook registrations execute from, so the bytes
+that run are whichever branch a pane last checked out. Committed and pushed is not
+installed.
 
 ## State
 
-Sealed: coverage is measured, not assumed (`capture_liveness.py` rule 4 — declared
-surfaces vs matched surfaces, declared discovered from the hook's own source). The
-migration that would close the gap is written, dry-run clean, and refuses any registration
-whose code rejects the surface. The benchmark that timed a refusal now times the record
-path against a real-corpus fixture. Two roots that were `$HOME`-hardcoded now derive from
-their own location, which ended a test that wrote production and proved it had not.
-Dispatcher divergence fails instead of being narrated. An adversarial pass found 14
-defects in the above; all fixed.
+Measured, not assumed: of the 27 files this branch's 45 commits changed, **0 were identical
+to the running tree**, 16 differed, 11 were absent. Two fixes sealed 2026-08-27 are not the
+bytes executing. Three branches sit unmerged at 45 / 41 / 3 commits ahead of a `main` last
+moved 2026-08-25.
 
-Coherence anchor: `python tools/capture_liveness.py` exits 1 naming **PowerShell
-unobserved** for two producers. That is the gap, still open, visible by design.
+`mirror_unpaired_audit.py` now carries the version dimension (EFFECTIVE / SHADOWED /
+ABSENT_RUNNING / LOCAL_EDIT / NOT_HERE), typed by direction so a checkout that is merely
+behind is never reported as a delivery failure. 14 gates, both previously-unreachable
+branches driven by real fixtures. It runs in the umbrella under `mirror-divergence`
+(the audit) and `effective-state` (the unit row).
 
-## Owner actions — the only things blocking closure
+Coherence anchor: `python tools/mirror_unpaired_audit.py --quiet` exits 1 and names
+**5 SHADOWED** registrations. `python tools/capture_liveness.py` exits 1 and names
+**PowerShell unobserved**. Both gaps are real and visible by design.
 
-1. `python tools/migrate_capture_surface.py --apply` — widens two registrations
-   (`bug-hunter-ceps-bridge.js`, `PreToolUse-Bash-chain`). Backup-first, idempotent,
-   reversible. Refused by the auto-mode classifier (HR-001), correctly.
-   The second one restores HR-CASCADE-001..005 on PowerShell, where
-   `Remove-Item -Recurse -Force` is actually written.
-2. Copy `hooks/hook-dispatcher.js` to `~/.claude/hooks/` — `session_delta_stop.js` and
-   `closer-guard.js` diverge between the canonical copy and the one that runs.
-3. 144 path rewrites plus 18 doctrine/security lines, unchanged from the prior session.
+## The single Owner decision
+
+Everything else collapsed into it. Three actions were forwarded from the prior session;
+re-measured, **two were defective**:
+
+- *Copy `hook-dispatcher.js` to `~/.claude/hooks/`* — **OBSOLETE and was harmful.**
+  Installed and live both register 54 scripts; only this worktree (53) is behind.
+  Executing it would have deleted `closer-guard.js` from production. Do not do it.
+- *Run `migrate_capture_surface.py --apply`* — **unexecutable as written.** That file
+  exists only on this branch, so the Owner cannot run it from the installed tree. Still
+  correct in substance: two registrations declare `Bash|PowerShell` and match `Bash`.
+- *Path debt* — recounted: 143 doc leaks, 38 code leaks (was 144 / 18). Standing, not
+  blocking.
+
+So the decision is: **integrate this branch** (merge to `main`, or check it out once the
+concurrent pane is done). Until then nothing here runs, including the migration tool.
+HR-001 keeps `settings.json` and `~/.claude/hooks/` Owner-sovereign permanently — that is
+governance working, not a task to keep forwarding.
 
 ## Next three actions
 
-1. After action 1, re-run `capture_liveness.py`; it must flip to COVERED, and
-   `test_correctness_traps.py` must go 8/8 on its own.
-2. Then watch the corpus: real traffic through the new surface should broaden the
-   subsystem distribution beyond `bash:*`. Until it does, coverage is configured, not
-   proven.
-3. Re-derive `ceps_record_ms` when the corpus has grown materially — the append is
-   O(corpus) and the probe now moves with it, deliberately.
+1. After integration, run `tools/mirror_unpaired_audit.py`; SHADOWED must fall to 0.
+2. Then `migrate_capture_surface.py --apply`, then `capture_liveness.py` must flip to
+   COVERED.
+3. Then watch the corpus broaden past `bash:*`. It is 103 of 118 today while Bash is 27.6%
+   of command traffic. Until it moves, coverage is configured, not proven.
 
 ## Start instruction
 
-Read `vault/plans/observation-coverage-2026-08-27.md`, then run
-`python tools/capture_liveness.py --window-days 30`. Its output is the current truth.
-Do not trust any coverage claim in prose over that command.
+Run `python tools/mirror_unpaired_audit.py --quiet` and `python tools/capture_liveness.py`.
+Their output is the current truth. Do not trust any prose claim of doneness over them, and
+re-measure any forwarded action before executing it — two of the last three were wrong.
