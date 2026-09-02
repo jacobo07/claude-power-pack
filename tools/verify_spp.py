@@ -148,8 +148,27 @@ def main() -> int:
          15),
         ("paths+secrets",
          [PY, str(PP / "tools" / "normalize_paths.py"), "--check"],
-         90),  # 13.6s solo yet exceeded 30s under load: 2.2x variance, so
-               # its REAL failure was masked by an unmeasured verdict
+         600),  # Raised 30 -> 90 once already, on the same reasoning and
+                # from a 13.6s figure that no longer reproduces. Timed solo
+                # three times on 2026-09-02: 151s, 221s, 391s -- identical
+                # deterministic output every run (2196 files scanned, 38
+                # code leaks), so the WORK is constant and only wall time
+                # moves, by 2.6x.
+                #
+                # Two separable facts. The FLOOR of the work already
+                # exceeded the budget, so this row could never finish and
+                # never produced a verdict -- its 38 code-path leaks have
+                # gated nothing, and a gate that cannot practically fire
+                # reads from outside exactly like a gate that passes. That
+                # is a budget below the minimum possible runtime, and
+                # correcting it is not absorption.
+                #
+                # The 2.6x spread on top of it is UNEXPLAINED and this
+                # number does not certify it. 600 is a hang bound, not a
+                # performance target: it exists to catch a wedge, and the
+                # question of why a fixed 2196-file scan varies by 2.6x
+                # stays open and unowned. Do not quote this as a budget
+                # anyone met.
         ("rtk-fusion",
          [PY, str(PP / "tools" / "verify_rtk_fusion.py")],
          30),

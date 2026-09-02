@@ -7563,3 +7563,88 @@ the running config, the actual output. A gate defending a conclusion is more dan
 than no gate, because the next reader stops checking. Sister of [[T-ZERO-CANNOT-FALL-001]]
 and of the bookend discipline: every "rejects X" needs an "admits Y", and every assertion
 needs a source that can disagree with it.
+
+### T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001
+
+Two sessions produced 45 commits across 27 files, every one committed and pushed, and a
+final report that read "all pushed" as delivered. Measured against the bytes that actually
+execute: 0 identical, 16 different, 11 absent. Six days of work, no production effect, and
+nothing in the estate said so.
+
+The cause is structural rather than careless. `~/.claude/skills/claude-power-pack` is at
+once the repository and the directory eleven live hook registrations execute out of. Its
+"installed copy" is therefore a git working tree, and the version that runs is whichever
+branch a pane last checked out -- in this case another pane's, carrying none of the work.
+Three branches sat unmerged at 45, 41 and 3 commits ahead of a `main` that had not moved in
+eight days. Exactly one was effective, by accident of checkout rather than by integration.
+
+Concurrency safety made it worse, not better. Working in an isolated worktree is the
+correct response to a concurrent pane, and it is also what guaranteed the work could not
+reach production. The safety mechanism and the delivery mechanism were in direct conflict
+and nobody had to choose, because nothing measured the second one.
+
+**Rule.** Where the deployment substrate is a checkout rather than an artifact, `git push`
+is not a delivery step, and a completion claim resting on it is unsupported. The question
+"is my change live" is answered by comparing the bytes at the executing path, never by the
+commit log.
+
+**How to apply.** Before claiming a change to hooks, gates or anything a harness invokes by
+path, compare the file at the REGISTERED path against your committed version, and say which
+tree you compared. `tools/mirror_unpaired_audit.py` reports this as EFFECTIVE / SHADOWED /
+ABSENT_RUNNING / LOCAL_EDIT. Type the direction: a checkout that is behind owes production
+nothing, and conflating that with a checkout that is ahead produces a red everyone learns to
+ignore. Sister of [[T-HOOK-MIRROR-001]], which covers the repo-to-live-mirror leg of the
+same journey; this is the leg where both paths are the same file and only the branch differs.
+
+### T-IMMUNITY-BOUGHT-BY-REMOVING-THE-APERTURE-001
+
+The estate's parity instrument used to read the repository side from the working tree.
+Concurrent panes flip branches, so it reported DRIFT for states that were not defects, and
+it was rebuilt to read the committed blob against a deterministic named ref. The docstring
+records the result with justified satisfaction: invariant to whatever branch a concurrent
+pane checked out.
+
+That is a correct fix for a real false positive. It is also the reason the instrument could
+not see a true positive of the opposite sign for six days. Branch-flip immunity and
+branch-flip blindness are the same property viewed from either side of the defect, and the
+rebuild bought one without ever naming the other.
+
+**Rule.** Suppressing a false positive by removing an input removes every verdict that
+input carried, including the true ones. An instrument hardened against a noisy signal must
+record what it can no longer answer, or its silence will later be read as health.
+
+**How to apply.** When a fix takes the form "stop reading X", write down the question that
+now has no instrument, and route it somewhere. The question here -- which version of a
+registered file is executing -- had a natural owner that already enrolled the files and
+already resolved which copy was live, and was one predicate short of answering it. Prefer
+giving the orphaned question to an adjacent owner over re-introducing the noise. Sister of
+[[T-SQI-NARROW-VOCABULARY-BLINDS-THE-GATE-001]] and of the aperture corollary: check what a
+check is scoped to before reading its verdict as coverage.
+
+### PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001
+
+A session closed by handing the Owner three actions it could not perform itself. One read:
+copy `hooks/hook-dispatcher.js` to `~/.claude/hooks/`, because two hooks were wired
+canonically and did not run.
+
+Re-measured six days later, the installed tree and the live tree registered an identical 54
+scripts -- zero divergence. The only difference was against the SESSION'S OWN worktree,
+which registered 53 and was simply behind. Performing the forwarded action would have
+overwritten the running dispatcher with an older copy and deleted `closer-guard.js` from
+production: the hook that mechanically enforces the anti-passive-closer doctrine, and one
+of the few that blocks rather than advises.
+
+The instruction was not stale in the harmless sense. Its DIRECTION was wrong, and it was
+wrong for the same reason the session could not see its own delivery gap -- it compared its
+worktree against production and read "I have something you lack" as "you are behind".
+
+**Rule.** A forwarded owner action is a measurement with a timestamp, not a standing
+instruction. Re-derive it before execution, and re-derive its direction specifically: which
+side is ahead is exactly the part that a stale comparison inverts, and the cost of executing
+an inverted action is a silent capability deletion.
+
+**How to apply.** Carry the EVIDENCE with a forwarded action, never just the verb -- what
+was compared, against what, at what time. On re-entry, run the comparison again before
+acting; if the finding has dissolved, retire the action loudly rather than passing it on
+another session. An action that survives three handoffs unexamined is a rumour with a
+ticket number.
