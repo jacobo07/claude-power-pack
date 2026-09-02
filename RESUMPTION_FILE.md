@@ -46,23 +46,28 @@ Coherence anchors:
 `tools/mirror_unpaired_audit.py --quiet` → 2 STRANDED / 2 AHEAD_OF_HERE / 1 FOREIGN_EDIT ·
 `tools/test_correctness_traps.py` → 9/11, the two reds naming the matcher.
 
-## The one Owner action
+## The Owner action — DONE 2026-09-02, do not forward it again
 
-```
-python "C:\Users\User\Apps\pp-main\tools\migrate_capture_surface.py" --apply
-```
+`migrate_capture_surface.py --apply` ran. Backup at
+`~/.claude/settings.json.bak-capture-surface-20260902T214621Z`. Verified independently, not
+from the tool's own success line: matchers `Bash|PowerShell` 2 → 4 and `Bash` 5 → 3;
+`capture_liveness.py` NARROW → **COVERED, exit 0**; `test_correctness_traps.py` 9/11 → 10/11
+with `V-TRAP-CHAIN-MATCHER-COVERS-POWERSHELL` green. A second run prints "nothing NARROW and
+addable" — idempotent.
 
-Widens two registrations whose code already accepts PowerShell; takes a verified backup
-first. It buys **prevention**, not observation — the same matcher keeps `cascade_check_bash`
-blind, and that hook is the sole live enforcement of HR-CASCADE-001..005. HR-001 makes
-`settings.json` permanently Owner-sovereign; that is governance working, not a task to keep
-forwarding.
+**Routing is delivered; it is not yet exercised.** Hooks load at session start, so the
+process running now still holds the pre-change registration set. The first PowerShell record
+from `cascade_check_bash` will appear in a session started after this one. Until one does,
+the honest claim is DELIVERED, PENDING ACTIVATION — not "prevention proven".
 
-It was forwarded twice before while **absent from the tree the Owner would run it in**. The
-absolute path above is why `C:\Users\User\Apps\pp-main` exists. Remove it with
-`git -C ~/.claude/skills/claude-power-pack worktree remove C:/Users/User/Apps/pp-main` if it
-is ever unwanted; the audit will then name another checkout that holds the tool, or say none
-does.
+Three shell-facing registrations remain blind, and **the migration is the wrong tool for
+them**: `bug-hunter-learning.js`, `osa_deploy_detector.js` and `tty-restore.js` reject the
+surface in their own source, so widening their matchers would assert a coverage the code
+refuses. That is a code change, and nobody has asked for it.
+
+`C:\Users\User\Apps\pp-main` is a detached checkout of `main`, created because the command
+above was absent from the installed tree. Remove with
+`git -C ~/.claude/skills/claude-power-pack worktree remove C:/Users/User/Apps/pp-main`.
 
 Do **not** copy `hook-dispatcher.js` to `~/.claude/hooks/` — measured obsolete, and it would
 delete `closer-guard.js` from production.
@@ -73,8 +78,10 @@ delete `closer-guard.js` from production.
    names, not the count, decide what is safe.
 2. The two STRANDED files reach production when the install's branch takes `main` — that is
    the other pane's merge to make, not a file to write. Nothing here is owed a mutation.
-3. After the Owner action lands, `capture_liveness.py` must flip to COVERED and
-   `test_correctness_traps.py` to 11/11; then watch the corpus broaden past `bash:*`.
+3. Watch the capture corpus broaden past `bash:*` — 103 of 118 were Bash-tagged while Bash is
+   27.6% of command traffic. A PowerShell-tagged record is the first evidence the widened
+   route is EXERCISED rather than merely configured, and it cannot appear before a session
+   starts after 2026-09-02T21:46Z.
 
 ## Start instruction
 

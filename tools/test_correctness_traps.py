@@ -271,15 +271,28 @@ def main() -> int:
                 "every Bash-matched registration also matches PowerShell")
         else:
             matcher_only = [g for g in gaps if "self-rejects" not in g]
+            # The remediation is named only while it still applies. Once
+            # the Owner widened the two matcher-only registrations on
+            # 2026-09-02, every remaining gap was a hook that rejects the
+            # surface in its OWN source -- and the migration tool declines
+            # to touch those, correctly. Reprinting its command here would
+            # forward a resolved action whose effect on what is left is
+            # exactly zero, which is the failure this suite exists to stop
+            # one layer down.
+            fix = ("OWNER ACTION: " + _MIGRATE["text"]
+                   + ", which widens only the registrations whose code "
+                   "accepts the surface"
+                   if matcher_only else
+                   "NO MATCHER CHANGE REMAINS: every gap left rejects the "
+                   "surface in its own source, so the next move is a code "
+                   "change in those hooks, and widening their matchers "
+                   "first would assert a coverage they refuse to honour")
             _fail("V-TRAP-SHELL-SURFACES-COVERED",
                   f"{len(gaps)} shell-facing registration(s) blind to "
                   f"PowerShell: {', '.join(sorted(gaps))}. Of these, "
                   f"{len(matcher_only)} would be fixed by widening the "
-                  "matcher alone; the rest need a code change first, and "
-                  "widening those would assert a coverage the hook refuses "
-                  "to honour. OWNER ACTION: " + _MIGRATE["text"]
-                  + ", which widens only the registrations whose code "
-                  "accepts the surface. See PR-WIDEN-PER-REGISTRATION-001.")
+                  f"matcher alone. {fix}. "
+                  "See PR-WIDEN-PER-REGISTRATION-001.")
 
     # An instruction is an artifact, and this one was shadowed: forwarded
     # across three sessions while absent from the tree its reader would run

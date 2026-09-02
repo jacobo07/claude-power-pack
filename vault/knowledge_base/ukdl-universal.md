@@ -7657,6 +7657,20 @@ acting; if the finding has dissolved, retire the action loudly rather than passi
 another session. An action that survives three handoffs unexamined is a rumour with a
 ticket number.
 
+**Extension, 2026-09-02 -- the other end of the same edge.** The Owner performed one of these
+actions during the session that recommended it: two registrations widened, capture coverage
+NARROW to COVERED, the chain gate green. The message that had asked for it went on printing
+the same command afterwards, for the three registrations that remained -- and the tool
+explicitly declines to touch those, because their code rejects the surface in its own source.
+The instruction had become a recommendation with an effect of exactly zero, still rendered at
+full confidence.
+
+So re-measurement is owed at BOTH ends. Before executing, because the finding may have
+dissolved; and inside whatever emits the action, because the fix may have already landed and
+the remainder may need a different one. Gate the sentence on the condition it repairs, not on
+the presence of the problem: "some gaps remain" and "this command closes them" are different
+predicates, and code that conflates them will keep asking for work already done.
+
 ### PR-PROMPT-INDEPENDENT-INHERITANCE-OBSERVED-001
 
 Most claimed compounding is a session reading its own notes. The test that separates
