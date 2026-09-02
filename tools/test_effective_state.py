@@ -35,7 +35,7 @@ sys.path.insert(0, str(PP))
 
 import tools.mirror_unpaired_audit as mu  # noqa: E402
 
-EXPECTED_GATES = 21
+EXPECTED_GATES = 22
 _passes: list[str] = []
 _fails: list[str] = []
 _TMP: list[str] = []
@@ -329,6 +329,33 @@ def main() -> int:
             _fail("V-EFFECTIVE-UNDELIVERED-IS-MINE-ONLY",
                   f"undelivered counts {owed} for "
                   f"{[r.get('status') for r in rows]}, wanted [0, 0, 1]")
+
+    # FAULT INJECTION. A dead blob reader answers None for every lookup,
+    # which is byte-identical to "this path did not exist at that
+    # revision". Read through .get() alone, the classifier walked to
+    # FOREIGN_EDIT with mine_moved False -- excluded from undelivered, and
+    # green. A broken instrument must not be able to produce the
+    # reassuring answer, so this drives the failure rather than trusting
+    # that it cannot happen.
+    stranded_fx = _lineage_fixture(b"mine\n", None, None)
+    if stranded_fx is None:
+        _fail("V-EFFECTIVE-DEAD-BLOB-READER-BLOCKS", "git unavailable")
+    else:
+        real = mu._batch_blobs
+        try:
+            mu._batch_blobs = lambda *_a, **_k: {}
+            row = (mu.effective_state(stranded_fx["repo"],
+                                      stranded_fx["settings"])["rows"]
+                   or [{}])[0]
+        finally:
+            mu._batch_blobs = real
+        if row.get("status") == mu.SHADOWED and len(mu.undelivered([row])) == 1:
+            _ok("V-EFFECTIVE-DEAD-BLOB-READER-BLOCKS",
+                "no blob evidence -> SHADOWED and still charged as "
+                "undelivered, not the FOREIGN_EDIT that would have passed")
+        else:
+            _fail("V-EFFECTIVE-DEAD-BLOB-READER-BLOCKS",
+                  f"status={row.get('status')} mine_moved={row.get('mine_moved')}")
 
     # The remediation for newer running bytes must never read as "deliver".
     rem = mu.remediation(mu.AHEAD_OF_HERE, same_checkout=False)

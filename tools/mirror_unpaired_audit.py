@@ -582,9 +582,21 @@ def effective_state(repo_root: Path, settings_text: str,
                 # Merely edited here: the running tree already holds this
                 # checkout's COMMITTED bytes, so nothing is owed to it.
                 status = LOCAL_EDIT
-            elif not lin:
+            elif not lin or not all(
+                    k in blobs for k in ("HEAD:" + g,
+                                         lin["theirs"] + ":" + g,
+                                         lin["base"] + ":" + g)):
                 # Direction unknowable. Not resolved to anything softer --
                 # an unmeasured difference is not a measured agreement.
+                #
+                # The membership test is the load-bearing half. A failed
+                # batch returns an EMPTY dict, and .get() answers None for
+                # every lookup, which is indistinguishable from "this path
+                # did not exist at that revision". Read through .get()
+                # alone, a dead git would have classified every divergence
+                # FOREIGN_EDIT with mine_moved False -- reported, excluded
+                # from undelivered, and green. A broken instrument must not
+                # be able to produce the reassuring answer.
                 status = SHADOWED
             else:
                 theirs = blobs.get(lin["theirs"] + ":" + g)
