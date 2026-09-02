@@ -7648,3 +7648,39 @@ was compared, against what, at what time. On re-entry, run the comparison again 
 acting; if the finding has dissolved, retire the action loudly rather than passing it on
 another session. An action that survives three handoffs unexamined is a rumour with a
 ticket number.
+
+### PR-PROMPT-INDEPENDENT-INHERITANCE-OBSERVED-001
+
+Most claimed compounding is a session reading its own notes. The test that separates
+institutional memory from prompt memory is whether a prior asset changes behaviour when
+nothing in the current context restated what it does. That test was passed here by
+accident, which is the only way it can be passed honestly.
+
+A turn ended on the sentence "I'll read the umbrella result when it lands and attribute
+every red" -- a described next action with no tool call behind it. `closer-guard.js`,
+installed 2026-08-27, classified it INTENT_NARRATION and blocked the turn. The governing
+prompt for this session never named the hook, never described its rule, and never mentioned
+passive closers; the doctrine reached the decision point through installed machinery rather
+than through context. That is C5 evidence on the compounding ladder -- cross-session reuse
+with a measurable behaviour change -- and it is worth more than the same claim made about
+an asset the prompt had just re-explained.
+
+Two details make it stronger. The hook fired against the agent that had spent the session
+auditing hooks, which is the only population that cannot claim the catch was luck. And it
+fired in the same turn in which a forwarded Owner action -- copy the repo's dispatcher over
+the live one -- was measured to DELETE this exact hook from production, because the repo
+copy registered 53 scripts and the live copy 54. The mechanism that proved cross-session
+compounding was one obedient Owner action away from being removed by the session that
+forwarded it.
+
+**Rule.** Record positive compounding with the same rigour as failure, and record it only
+when the prompt did not supply the knowledge. An asset whose operational content appears in
+the current context proves retrieval, not inheritance. Also: an enforcement mechanism that
+demonstrably changes behaviour is load-bearing production capability, and any action that
+would remove one needs the same evidence burden as an action that would add one.
+
+**How to apply.** When a hook, gate or baseline changes what you did, check whether the
+current prompt described its behaviour. If it did, log it as retrieval. If it did not, log
+it as inheritance and name the asset, the date it was installed, and the decision it
+changed. Sister of [[PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001]] -- the same measurement
+that retires a stale action is what protects a live one.
