@@ -27,7 +27,7 @@ from modules.cascade_prevention.dangerous_cmds import (  # noqa: E402
 HOOK = PP / "hooks" / "cascade_check_bash.js"
 SETTINGS = Path.home() / ".claude" / "settings.json"
 
-EXPECTED_GATES = 8
+EXPECTED_GATES = 10
 _passes = 0
 _fails = 0
 
@@ -118,6 +118,46 @@ def main() -> int:
             "Select-Object -First on a native exe warns about $LASTEXITCODE")
     else:
         _fail("V-TRAP-TRUNCATING-PIPE", "not caught")
+
+    # --- recurrence four, replayed from this session's own transcript ---
+    # Verbatim commands this session issued AFTER writing that a known trap
+    # recurring is an institutionalisation failure. Prose has to be recalled
+    # at the moment of writing a command; a pattern does not.
+    replay = [
+        "& $g -C $wt push origin 'frontier28/session-2026-08-26:main' 2>&1",
+        "& $py 'tools\\normalize_paths.py' --check 2>&1 | Select-Object -Last 10",
+        "& 'C:\\Program Files\\Git\\cmd\\git.exe' status 2>&1",
+    ]
+    caught = [c for c in replay
+              if any("NativeCommandError" in w["trap"]
+                     for w in trap_warnings(c))]
+    if len(caught) == len(replay):
+        _ok("V-TRAP-NATIVE-STDERR-CAUGHT",
+            f"all {len(replay)} verbatim commands from this session are now "
+            "flagged; the rule was prose-only through four recurrences")
+    else:
+        _fail("V-TRAP-NATIVE-STDERR-CAUGHT",
+              f"only {len(caught)}/{len(replay)} replayed commands caught")
+
+    # Negative controls. A note on a surface this busy earns its place by
+    # what it stays silent about; 2>&1 is ordinary and CORRECT in Bash, and
+    # this registry is checked against Bash commands too.
+    silent = [
+        "Get-ChildItem -Path . 2>&1",
+        "ls -la 2>&1 | grep foo",
+        "& $py 'tools\\x.py' 2>$null",
+        "& $g -C $wt log -1 --format='%h'",
+    ]
+    noisy = [c for c in silent
+             if any("NativeCommandError" in w["trap"]
+                    for w in trap_warnings(c))]
+    if not noisy:
+        _ok("V-TRAP-NATIVE-STDERR-BOOKEND",
+            "a cmdlet redirect, a Bash redirect, 2>$null and a plain native "
+            "call all stay silent -- the pattern is native-exe AND 2>&1, "
+            "never the redirect alone")
+    else:
+        _fail("V-TRAP-NATIVE-STDERR-BOOKEND", f"false positives on: {noisy}")
 
     # Severities stay separate. A correctness note must never read as a
     # destructive block, or the block stops meaning anything.
