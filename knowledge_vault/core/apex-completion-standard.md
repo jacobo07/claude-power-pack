@@ -3009,3 +3009,93 @@ Cross-ref: `memory/feedback_write_without_read_incomplete_system.md`,
 `memory/feedback_orphan_field_dead_recovery_path.md`,
 `memory/feedback_lazarus_validate_transcript_before_resume.md`,
 `tools/restore_panes.ps1`.
+
+---
+
+# Evidence-Bearing Feature Axis (sealed 2026-09-02)
+
+## Why this is an axis and not a lint
+
+Every other gate in this file can be satisfied late. This one cannot. A
+feature that fails to capture a fact **at the moment the fact exists**
+has not incurred debt — the fact is gone, and no later effort recreates
+it. That asymmetry, not importance, is what makes it a completion gate:
+the cost of being wrong is unbounded and the cost of being right is
+usually one column.
+
+## Applicability test
+
+Ask: **will anyone later reason about what was true in the past?**
+
+Applicable when correctness, security, financial, legal, audit,
+incident-response or operational reasoning will depend on historical
+facts — anything with an audit trail, an approval, a permission change,
+a money movement, a state machine whose history matters, or a "who did
+what when" question in its future.
+
+**Not applicable** to features whose reasoning is entirely about present
+state: a renderer, a pure transform, a cache, a formatter, a read-only
+view. Non-applicability is a valid outcome and must be **stated**, not
+assumed (see Enforcement).
+
+## The eight declarations
+
+An applicable feature declares, before its first write to production:
+
+1. **What facts** are captured.
+2. **When** — the capture point, which must be the moment of occurrence.
+3. **Provenance** — who or what asserted the fact.
+4. **Integrity level** — what the record resists, **naming the actor it
+   does not resist**. A privileged operator usually belongs in that half.
+5. **Retention** — what expires, what survives, and who owns the
+   duration. Inventing a duration is worse than declaring it unknown.
+6. **Correction semantics** — how a wrong record is corrected without
+   erasing what was believed before.
+7. **Observation completeness** — the window the record can speak about,
+   and what it is blind to by construction.
+8. **Threat boundary** — the actors the above holds against.
+
+Declarations 4 and 8 are the ones normally skipped, and they are the two
+that make the other six checkable rather than decorative.
+
+## The three separations
+
+Most failures here are not missing fields but merged concepts:
+
+- **Integrity is not completeness.** A perfect record of what arrived
+  says nothing about what was never emitted. A record cannot audit its
+  own completeness; the emitting surface guarantees it or nobody does.
+- **Detection is not prevention.** *Tamper-evident* and *immutable* are
+  different guarantees against different actors. See
+  `[[T-GUARANTEE-WITHOUT-AN-ADVERSARY-001]]`.
+- **Current state is not historical evidence.** A relationship that
+  exists now is not proof it existed then. Deriving a past answer from
+  present state produces a guess shaped like a query, and it is
+  indistinguishable from a real answer to whoever reads it.
+
+## Enforcement
+
+Per the no-silent-lowering law, an applicable feature ends in exactly
+one of: **satisfied** (all eight declared) · **explicitly
+non-applicable** (with the reason recorded) · **approved exception**
+(Owner) · **blocked**. *Forgotten* is not a state, and silence reads as
+non-applicable, which is why non-applicability must be written.
+
+## Scope and honesty about maturity
+
+Scope: **software-wide, applicability-gated.** Do NOT import ISAF's
+governance vocabulary (tiers, policy objects, scope graphs) into
+unrelated software — the eight declarations are the transferable part;
+the mechanism is domain-specific.
+
+Maturity: **one instance of evidence.** Derived while building
+InfinityOps ISAF `GOV-001` (2026-09-02), where all eight had to be
+derived from scratch and three of them — capture point, threat boundary,
+observation window — were found only by applying the irrecoverability
+test field by field. Promoted on the strength of the *irrecoverability*
+argument rather than on frequency: a rule whose violation cannot be
+repaired later earns a default earlier than one whose violation can.
+A second instance should either confirm the eight or shrink them.
+
+Cross-ref: `[[T-GUARANTEE-WITHOUT-AN-ADVERSARY-001]]`,
+`[[PR-ACIS-FALSIFIABILITY-001]]`.
