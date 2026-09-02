@@ -7749,3 +7749,78 @@ authority -- here the content was mine to fix and the route was not, so the hone
 was DETECTED, NOT YET REACHABLE rather than a fix claimed for half a repair. And do not add
 another prose entry for a rule that already exists in prose: the medium that failed is not
 the medium to repeat it in. Sister of [[T-REGISTRATION-PRESENCE-NOT-COVERAGE-001]].
+
+### T-DRIFT-VERDICT-WITHOUT-DIRECTION-001
+
+Five registered hooks were reported as running bytes that differ from this checkout's. The
+verdict was SHADOWED for all five, and the remedy it implied was one thing: make the running
+tree match mine.
+
+Measured against the merge base of the two worktrees, the five were three different
+situations. Two were this checkout's committed work that never arrived. Two were the OTHER
+lineage's NEWER commits, already executing, on files this branch had not touched since the
+base -- the running tree was ahead, not behind. One was that tree's uncommitted edit. Acting
+on the single verdict would have overwritten twenty-two commits of somebody else's work in
+order to deliver two files that needed no delivery.
+
+**Rule.** A drift verdict computed against one side's HEAD reports that two things differ.
+It does not report WHICH IS BEHIND, and a comparison that cannot answer that will eventually
+recommend destroying the newer copy.
+
+**How to apply.** Where both sides are commits in one object store, the merge base settles it
+for free: mine-moved and theirs-moved are two independent booleans, and their four
+combinations are four different remedies with four different owners. Where the running side
+is not a commit -- a copied file, a foreign tree -- direction is genuinely unknowable, and
+the honest verdict is the blocking one, never the reassuring one. Sister of
+[[T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001]].
+
+### PR-CHARGE-A-GATE-ONLY-FOR-WHAT-ITS-OWNER-CAN-ACT-ON-001
+
+Once direction was visible, the temptation was to fail the delivery gate on every row that
+was not effective. Two of the classes describe a running tree that is AHEAD of this checkout,
+or that carries somebody else's uncommitted work on a file this branch never touched. Both
+are true observations. Neither is undelivered work of the checkout being judged, and neither
+has any action its owner can take.
+
+**Rule.** Report every state; charge the gate only for the states its owner can resolve. A
+red that persists no matter what its reader does is not a standard, it is a permanent
+condition, and permanent conditions get switched off rather than satisfied.
+
+**How to apply.** Separate the observation set from the failing set explicitly, in code, with
+the reason written down -- not by quietly omitting rows, which reads as a coverage gap later.
+Keep anything unmeasured in the failing set: "we could not tell" is not "not your problem".
+
+### T-EMPTY-READER-INDISTINGUISHABLE-FROM-ABSENT-VALUE-001
+
+A batch reader returned committed bytes for several revisions in one call, and answered None
+for a path absent at that revision. On failure it returned an empty dict. Read through
+`.get()`, those two are the same answer -- so a dead reader made every divergent file look
+like the one class the gate does not charge, and the gate went green because its evidence
+source had died.
+
+**Rule.** When a lookup's "value is absent" and "the source failed" collapse to the same
+sentinel, the failure mode of the source becomes a passing verdict. Distinguish them by
+MEMBERSHIP, or by a status the reader returns alongside the data.
+
+**How to apply.** Prove it by substituting a dead reader in a test and asserting the verdict
+does NOT become the passing one. An argument that the reader cannot fail is not the same
+evidence, and it is wrong more often than the reader is.
+
+### PR-AN-INSTRUCTION-IS-AN-ARTIFACT-AND-CAN-BE-SHADOWED-001
+
+One Owner action was forwarded across three sessions: run this repository tool with this
+flag. Measured, the tool was absent from the checkout the Owner would run it in -- committed
+on a branch that tree had not taken. The instruction had never been followable from the only
+place its reader stood, and nothing said so, because a relative command reads as reachable
+from wherever you happen to be standing.
+
+**Rule.** A handoff instruction is subject to the same delivery question as the code it talks
+about. Before forwarding one, resolve the path it names against the tree its reader will
+actually be in.
+
+**How to apply.** Print a path that exists at the moment the line is printed, and say which
+tree it came from. Prefer a durable checkout over a session-scoped one: an instruction whose
+validity expires with the session that wrote it is this same defect one rung up. Reporting
+the gap is the whole remedy -- a tool being out of reach is never a reason to copy files into
+a working tree you do not own. Sister of
+[[PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001]].
