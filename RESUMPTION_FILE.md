@@ -1,64 +1,62 @@
-# RESUMPTION — effective state
+# RESUMPTION — effective state, and the barrier that consumes it
 
 **Repo** `~/.claude/skills/claude-power-pack` · **branch** `frontier28/session-2026-08-26`
-· **worktree** isolated. The main checkout is on another pane's branch
-(`feature/knowledge-acquisition`, 41 commits, dirty) and must not be switched, reset or
-merged into.
+· **worktree** isolated. The installed tree is on `feature/knowledge-acquisition` with
+**217 dirty files** and unpushed commits — another pane, heavily active. Do not switch,
+reset, merge into, or check out over it.
 
-**Thesis.** The install location is a git working tree. `~/.claude/skills/claude-power-pack`
-is at once the repo and the directory 11 live hook registrations execute from, so the bytes
-that run are whichever branch a pane last checked out. Committed and pushed is not
-installed.
+**Thesis.** The install location is a git working tree, so the bytes that run are whichever
+branch a pane last checked out. Committed, pushed, and even merged to `main` is not
+delivered.
 
 ## State
 
-Measured, not assumed: of the 27 files this branch's 45 commits changed, **0 were identical
-to the running tree**, 16 differed, 11 were absent. Two fixes sealed 2026-08-27 are not the
-bytes executing. Three branches sit unmerged at 45 / 41 / 3 commits ahead of a `main` last
-moved 2026-08-25.
+`origin/main` carries this branch. **SHADOWED is still 5** — re-measured after the merge.
+Integration and delivery are two events.
 
-`mirror_unpaired_audit.py` now carries the version dimension (EFFECTIVE / SHADOWED /
-ABSENT_RUNNING / LOCAL_EDIT / NOT_HERE), typed by direction so a checkout that is merely
-behind is never reported as a delivery failure. 14 gates, both previously-unreachable
-branches driven by real fixtures. It runs in the umbrella under `mirror-divergence`
-(the audit) and `effective-state` (the unit row).
+What now exists beyond the detector: `is_done` was a weighted score at threshold 70, so
+delivery could fail and the deliverable still pass on the other checks. Replayed against a
+claim a prior session really made, the score model returned **OQS 100 and Done**. Contracts
+now carry **preconditions that veto beside the score**; `code` and `deploy` declare one,
+`docs` and `test` deliberately do not. Applicability is by declared claim scope — `source`,
+`repository` and `integration` pass over a shadowed artifact; only `runtime` and `production`
+owe proof. `is_done` and `is_done_for_tier` inherit it without any caller being edited.
 
-Coherence anchor: `python tools/mirror_unpaired_audit.py --quiet` exits 1 and names
-**5 SHADOWED** registrations. `python tools/capture_liveness.py` exits 1 and names
-**PowerShell unobserved**. Both gaps are real and visible by design.
+The 4×-recurring PowerShell trap has **two** broken edges, both measured: the pattern was
+absent from `CORRECTNESS_TRAPS` (fixed), and that registry's only consumer,
+`cascade_check_bash.js`, is registered with matcher `Bash` while the trap occurs on
+PowerShell (not fixed — Owner-sovereign). Verdict: **DETECTED, NOT YET REACHABLE.**
 
-## The single Owner decision
+`predictive-governance-debt` is **PASS** (was red across sessions) — fixed with real
+oracles, not a baseline reset. 13+9 carried offenders are older suites, untouched.
 
-Everything else collapsed into it. Three actions were forwarded from the prior session;
-re-measured, **two were defective**:
+Coherence anchors, all exit 1 by design:
+`tools/mirror_unpaired_audit.py --quiet` → 5 SHADOWED ·
+`tools/capture_liveness.py` → PowerShell unobserved ·
+`tools/test_correctness_traps.py` → 8/10, the two reds naming the matcher.
 
-- *Copy `hook-dispatcher.js` to `~/.claude/hooks/`* — **OBSOLETE and was harmful.**
-  Installed and live both register 54 scripts; only this worktree (53) is behind.
-  Executing it would have deleted `closer-guard.js` from production. Do not do it.
-- *Run `migrate_capture_surface.py --apply`* — **unexecutable as written.** That file
-  exists only on this branch, so the Owner cannot run it from the installed tree. Still
-  correct in substance: two registrations declare `Bash|PowerShell` and match `Bash`.
-- *Path debt* — recounted: 143 doc leaks, 38 code leaks (was 144 / 18). Standing, not
-  blocking.
+## The one Owner action
 
-**DONE 2026-09-02:** `origin/main` fast-forwarded `9e69d11 -> ee5cb07`, 49 commits, zero of
-main's commits lost, no merge commit, `feature/knowledge-acquisition` untouched. The work is
-INTEGRATED and still NOT EFFECTIVE -- re-measured after the push, SHADOWED stayed at 5,
-because the installed tree is still checked out on the other pane's branch. Integration and
-delivery are two events; do not let the first be reported as the second.
-HR-001 keeps `settings.json` and `~/.claude/hooks/` Owner-sovereign permanently — that is
-governance working, not a task to keep forwarding.
+`python tools/migrate_capture_surface.py --apply` — widens two registrations whose code
+already accepts PowerShell. It buys **prevention**, not just observation: it is the same
+matcher that keeps `cascade_check_bash` blind. HR-001 makes `settings.json` Owner-sovereign
+permanently; that is governance working, not a task to keep forwarding. The tool exists only
+on this branch, so it needs the installed tree on `main` first.
+
+Do **not** copy `hook-dispatcher.js` to `~/.claude/hooks/` — measured obsolete, and it would
+delete `closer-guard.js` from production.
 
 ## Next three actions
 
-1. After integration, run `tools/mirror_unpaired_audit.py`; SHADOWED must fall to 0.
-2. Then `migrate_capture_surface.py --apply`, then `capture_liveness.py` must flip to
-   COVERED.
-3. Then watch the corpus broaden past `bash:*`. It is 103 of 118 today while Bash is 27.6%
-   of command traffic. Until it moves, coverage is configured, not proven.
+1. When the concurrent pane is idle, put the installed tree on `main`; then
+   `mirror_unpaired_audit.py` SHADOWED must fall to 0.
+2. Then `migrate_capture_surface.py --apply`; `capture_liveness.py` must flip to COVERED and
+   `test_correctness_traps.py` to 10/10.
+3. Then watch the corpus broaden past `bash:*` — 103 of 118 today while Bash is 27.6% of
+   command traffic.
 
 ## Start instruction
 
-Run `python tools/mirror_unpaired_audit.py --quiet` and `python tools/capture_liveness.py`.
-Their output is the current truth. Do not trust any prose claim of doneness over them, and
-re-measure any forwarded action before executing it — two of the last three were wrong.
+Run the three anchor commands above; their output is the current truth. Re-measure any
+forwarded Owner action before executing it — two of the last three were wrong, one harmful.
+And state a completion claim's SCOPE: `certify()` will tell you if you have overclaimed.
