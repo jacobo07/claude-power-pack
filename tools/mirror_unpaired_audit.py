@@ -37,6 +37,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -188,6 +189,155 @@ def classify_hook(rel: str, side: str, settings_text: str,
     return LIVE_DORMANT, "no registration found"
 
 
+EFFECTIVE = "EFFECTIVE"
+SHADOWED = "SHADOWED"
+ABSENT_RUNNING = "ABSENT_RUNNING"
+NOT_HERE = "NOT_HERE"
+LOCAL_EDIT = "LOCAL_EDIT"
+
+# A PP checkout path as settings.json spells it. Both separator styles and
+# the JSON-escaped doubling are accepted, because this file holds all three
+# on this host and a probe that knows one spelling is a probe that reports
+# UNREGISTERED for the other two.
+_CHECKOUT_RE = re.compile(
+    r"([A-Za-z]:(?:\\\\|[\\/])(?:[^\"'\s]*?)claude-power-pack)"
+    r"(?:\\\\|[\\/])", re.I)
+
+
+def registered_repo_root(settings_text: str) -> Path | None:
+    """Which PP checkout does settings.json actually execute from?
+
+    None when zero appear (nothing registered) or when two distinct roots
+    appear (ambiguous). Refusing to pick is the point: an arbitrary choice
+    would make every verdict below describe a tree nobody runs, and it
+    would do so silently.
+    """
+    seen: dict = {}
+    for m in _CHECKOUT_RE.finditer(settings_text):
+        raw = m.group(1).replace("\\\\", "\\")
+        seen[_norm(raw)] = raw
+    if len(seen) != 1:
+        return None
+    return Path(next(iter(seen.values())))
+
+
+def registered_executables(settings_text: str, reg_root: Path,
+                           targets: dict | None = None) -> dict:
+    """rel-path -> absolute path, for every file settings.json (or the live
+    dispatcher) will EXECUTE out of the registered checkout."""
+    out: dict = {}
+    norm_root = _norm(str(reg_root))
+    for m in re.finditer(
+            r"""([A-Za-z]:(?:\\\\|[\\/])[^\"'\s]*?\.(?:js|py|ps1|cjs|mjs))""",
+            settings_text):
+        raw = m.group(1).replace("\\\\", "\\")
+        n = _norm(raw)
+        if n.startswith(norm_root + "/"):
+            out[n[len(norm_root) + 1:]] = Path(raw)
+    for resolved in (targets or {}).values():
+        n = _norm(str(resolved))
+        if n.startswith(norm_root + "/"):
+            out.setdefault(n[len(norm_root) + 1:], Path(resolved))
+    return out
+
+
+def _content(path: Path) -> bytes | None:
+    """Bytes with line endings normalised.
+
+    Raw bytes would report SHADOWED for a file whose only difference is
+    CRLF, which this repo produces on every checkout. A gate that fires on
+    line endings is noise, and noise is how a real red gets ignored.
+    """
+    try:
+        return path.read_bytes().replace(b"\r\n", b"\n")
+    except OSError:
+        return None
+
+
+def _head_blob(repo_root: Path, rel: str) -> bytes | None:
+    """This checkout's COMMITTED bytes for one path, newline-normalised.
+
+    Without it, SHADOWED conflates two opposite situations: a file this
+    checkout has committed and the running tree lacks (delivery failure),
+    and a file this checkout has merely edited in the working tree
+    (nothing committed, nothing owed). Reporting both as one red is how a
+    real red gets ignored.
+    """
+    git = os.environ.get("GIT_EXE") or "git"
+    for exe in (git, r"C:\Program Files\Git\cmd\git.exe"):
+        try:
+            out = subprocess.run(
+                [exe, "-C", str(repo_root), "show",
+                 "HEAD:" + rel.replace("\\", "/")],
+                capture_output=True, timeout=20)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if out.returncode == 0:
+            return out.stdout.replace(b"\r\n", b"\n")
+        return None
+    return None
+
+
+def effective_state(repo_root: Path, settings_text: str,
+                    targets: dict | None = None) -> dict:
+    """Does the code THIS checkout holds reach the tree that executes?
+
+    `mirror_unpaired_audit` already answers "is this hook registered, and
+    is the file there" and classes the answer LIVE_FROM_REPO. It has never
+    asked WHICH VERSION is there, because for a hook installed by mirroring
+    the question does not arise -- the mirror comparator owns it. For the
+    eleven registrations that execute straight out of the PP repo, the
+    installed copy IS a git working tree, so the version that runs is
+    whatever branch a pane last checked out, and no instrument in the
+    estate could name it.
+
+    Measured 2026-09-02: of 27 files carried by 45 commits on a pushed
+    branch, 0 were identical to the running tree, 16 differed and 11 were
+    absent. Two fixes sealed six days earlier were not the bytes executing,
+    and the live corpus still carried rows produced by the unfixed code.
+
+    `verify_global_mirrors` cannot see this by construction. It was
+    rebuilt to read the committed blob on a named ref precisely so that a
+    concurrent pane flipping branches could not produce false DRIFT -- a
+    correct fix for a real false positive, which also removed the only
+    aperture through which this true positive was visible.
+    """
+    reg_root = registered_repo_root(settings_text)
+    if reg_root is None:
+        return {"resolved": False, "registered_root": None, "rows": [],
+                "counts": {}, "reason": "settings.json names zero or "
+                                        "several PP checkouts"}
+
+    rows = []
+    for rel, running_path in sorted(
+            registered_executables(settings_text, reg_root, targets).items()):
+        here = _content(Path(repo_root) / rel)
+        there = _content(running_path)
+        if here is None:
+            status = NOT_HERE
+        elif there is None:
+            status = ABSENT_RUNNING
+        elif here == there:
+            status = EFFECTIVE
+        else:
+            # Committed-here-and-not-running is a delivery failure. Merely
+            # edited-here is not: if the running tree already holds this
+            # checkout's COMMITTED bytes, the difference is uncommitted
+            # local work and nothing is owed to production.
+            status = (LOCAL_EDIT
+                      if _head_blob(Path(repo_root), rel) == there
+                      else SHADOWED)
+        rows.append({"rel": rel, "status": status,
+                     "running": str(running_path)})
+
+    counts: dict = {}
+    for r in rows:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    return {"resolved": True, "registered_root": str(reg_root),
+            "same_checkout": _norm(str(reg_root)) == _norm(str(repo_root)),
+            "rows": rows, "counts": counts}
+
+
 def audit(repo_root: Path, live_root: Path) -> dict:
     d = discover(repo_root, live_root)
     settings_text = _read(live_root / "settings.json")
@@ -245,6 +395,8 @@ def audit(repo_root: Path, live_root: Path) -> dict:
             "live_only": sorted(set(live_side) - set(repo_side)),
         },
         "rows": rows,
+        "effective": effective_state(
+            Path(repo_root), settings_text, targets),
     }
 
 
@@ -329,6 +481,24 @@ def main(argv=None) -> int:
         print("      -> Owner action: reconcile hook-dispatcher.js "
               "(this repo cannot write ~/.claude/hooks).")
 
+    eff = res["effective"]
+    if not eff["resolved"]:
+        print("\n  effective state: UNRESOLVED -- " + eff["reason"] + ".")
+        print("      Not a pass. Nothing here claims these hooks are live.")
+    else:
+        c = eff["counts"]
+        shadowed = [r for r in eff["rows"]
+                    if r["status"] in (SHADOWED, ABSENT_RUNNING)]
+        print("\n  effective state (" + str(len(eff["rows"]))
+              + " registration(s) executing from "
+              + eff["registered_root"] + "):")
+        for status in (SHADOWED, ABSENT_RUNNING, LOCAL_EDIT,
+                       EFFECTIVE, NOT_HERE):
+            if c.get(status):
+                print("      " + status.ljust(16) + str(c[status]))
+        for r in shadowed[:12]:
+            print("      -> " + r["status"] + "  " + r["rel"])
+
     broken = [r for r in res["rows"]
               if r["status"] == BROKEN_REGISTRATION]
     if broken:
@@ -359,6 +529,16 @@ def main(argv=None) -> int:
               f"register different sets ({names}). Edits to those hooks do "
               f"not reach production. Owner: copy hooks/hook-dispatcher.js "
               f"to ~/.claude/hooks/ (this repo cannot write there).")
+        return 1
+    if eff["resolved"] and (eff["counts"].get(SHADOWED)
+                            or eff["counts"].get(ABSENT_RUNNING)):
+        n = (eff["counts"].get(SHADOWED, 0)
+             + eff["counts"].get(ABSENT_RUNNING, 0))
+        print("\nMIRROR_UNPAIRED FAIL: " + str(n) + " registration(s) hold "
+              "different bytes here than in the tree that executes ("
+              + eff["registered_root"] + "). Work committed in THIS "
+              "checkout does not run. Committed and pushed is not "
+              "installed when the install location is a working tree.")
         return 1
     print("\nMIRROR_UNPAIRED OK: no registration points at a missing file, "
           "and the canonical dispatcher matches the one that runs")

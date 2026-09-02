@@ -395,6 +395,18 @@ def main() -> int:
         ("capture-coverage",
          [PY, str(PP / "tools" / "test_capture_coverage.py")],
          60),
+        # mirror-parity is branch-flip-immune BY DESIGN -- it reads the
+        # committed blob on a named ref so a concurrent pane switching
+        # branches cannot fake DRIFT. That fix removed the only aperture
+        # onto the opposite failure: eleven registrations execute straight
+        # out of the PP working tree, so the bytes that run are whatever
+        # branch was last checked out there. Measured 2026-09-02, 45
+        # commits on a pushed branch put 0 of 27 files into the running
+        # tree. Committed and pushed is not installed when the install
+        # location is a working tree.
+        ("effective-state",
+         [PY, str(PP / "tools" / "test_effective_state.py")],
+         90),
         # One registration should widen, not five: the Bash-chain carries the
         # guard that blocks git/npm via Bash to force them onto PowerShell,
         # so widening it would block the surface doctrine redirects to.
