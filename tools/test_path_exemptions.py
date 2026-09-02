@@ -23,7 +23,7 @@ from tools.normalize_paths import (  # noqa: E402
     _unsafe_rewrite, doctrine_safe_sub,
 )
 
-EXPECTED_GATES = 13
+EXPECTED_GATES = 15
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -39,6 +39,42 @@ def _fail(g, d):
 
 
 def main() -> int:
+    # --- the partial rewrite, pinned by COUNT ----------------------------
+    # doctrine_safe_sub exists because exempting the whole LINE carried a
+    # genuine leak through AND counted it as allowed. That behaviour is a
+    # NUMBER -- one of two matches rewritten -- and nothing here pinned it,
+    # so a regression to whole-line exemption (zero rewritten) or to blanket
+    # rewriting (two) would have left every gate green.
+    mixed = (r"`C:\Users\User\AppData\Local\Programs\Python\Python312"
+             r"\python.exe` deploy.py --key C:\Users\User\.ssh\id_rsa")
+    out = doctrine_safe_sub(mixed)
+    remaining = out.count(r"C:\Users\User")
+    if remaining == 1:
+        _ok("V-PATHEXEMPT-PARTIAL-COUNT",
+            "exactly 1 of 2 home paths survives: the interpreter stays "
+            "absolute, the key path is rewritten. 0 would mean blanket "
+            "rewriting, 2 whole-line exemption -- the bug this file records")
+    else:
+        _fail("V-PATHEXEMPT-PARTIAL-COUNT",
+              f"{remaining} home path(s) survived, wanted exactly 1 -- "
+              f"got {out!r}")
+
+    # --- and the exemption does not swallow a plain leak ------------------
+    # Spelled as an explicit negative so the expectation that something is
+    # NOT exempt is executable text, not an inference from an else branch.
+    plain = r"see C:\Users\User\Desktop\notes.md for details"
+    exempted = _unsafe_rewrite(plain, plain.replace(r"C:\Users\User", "~")) \
+        is not None
+    if exempted is False:
+        _ok("V-PATHEXEMPT-PLAIN-LEAK-NOT-EXEMPT",
+            "an ordinary home path carries no exemption; a rule that "
+            "quietly swallowed real leaks would turn a noisy gate silent, "
+            "which is strictly worse")
+    else:
+        _fail("V-PATHEXEMPT-PLAIN-LEAK-NOT-EXEMPT",
+              "a plain leak was reported unsafe to rewrite, so the "
+              "exemption is wider than its reason")
+
     # --- doctrine: the interpreter path must stay absolute ---------------
     doc = (r"Run python via "
            r"`C:\Users\User\AppData\Local\Programs\Python\Python312"

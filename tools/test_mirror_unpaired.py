@@ -15,6 +15,7 @@ a class that is broken.
 """
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -26,8 +27,10 @@ from tools.mirror_unpaired_audit import (  # noqa: E402
     UNCLASSIFIED, UNVERSIONED_LIVE, audit, classify_hook,
 )
 from modules.mirror_discovery.discovery import resolve_live_root  # noqa: E402
+from tools.mirror_unpaired_audit import (  # noqa: E402
+    dispatcher_targets as _dispatcher_targets)
 
-EXPECTED_GATES = 15
+EXPECTED_GATES = 16
 _passes: list[str] = []
 _fails: list[str] = []
 LIVE = Path("C:/Users/User/.claude")
@@ -50,7 +53,48 @@ def _check(gate, got, want, note):
         _fail(gate, f"got {got}, expected {want} ({note})")
 
 
+def _register_count_fixture() -> "Path":
+    import tempfile
+    fh = tempfile.NamedTemporaryFile("w", suffix=".js", delete=False,
+                                     encoding="utf-8")
+    fh.write(
+        "const chain = [\n"
+        "  { script: './alpha.js' },\n"
+        "  { script: '../skills/claude-power-pack/hooks/beta.js' },\n"
+        "  { script: 'C:/Users/User/.claude/hooks/gamma.js' },\n"
+        "  // { script: './retired.js' },  <- a comment is not a registration\n"
+        "  // log('ghost-hook.js mentioned in prose')\n"
+        "];\n")
+    fh.close()
+    return Path(fh.name)
+
+
 def main() -> int:
+    # --- how many scripts does a dispatcher register? --------------------
+    # The whole audit rests on this count: too low and a wired hook reads as
+    # unregistered, too high and a retired entry or a filename quoted in
+    # prose is reported live -- the exact inverse of the bug this tool was
+    # built to find. Nothing pinned the NUMBER, so both directions were free
+    # to drift while every other gate stayed green.
+    fixture = _register_count_fixture()
+    try:
+        registered = len(_dispatcher_targets(fixture))
+    finally:
+        try:
+            os.unlink(fixture)
+        except OSError:
+            pass
+    if registered == 3:
+        _ok("V-UNPAIRED-REGISTER-COUNT",
+            "3 of 5 script-shaped strings are registrations: relative, "
+            "parent-relative and absolute count; the commented entry and "
+            "the filename in prose do not")
+    else:
+        _fail("V-UNPAIRED-REGISTER-COUNT",
+              f"counted {registered}, expected exactly 3 -- 4 or 5 means a "
+              "comment or a quoted filename is being read as a live "
+              "registration, 2 or fewer means a real one is missed")
+
     # A hook that lives only in the repo, registered by its REPO path: this
     # is the CORRECT arrangement, not a defect. session_start_hub.js is a
     # real instance -- no mirror copy, and live.
