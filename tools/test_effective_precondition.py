@@ -30,7 +30,7 @@ from modules.output_contracts import certify, get_contract  # noqa: E402
 from modules.output_contracts import preconditions as pre  # noqa: E402
 from modules.output_contracts import is_done, is_done_for_tier  # noqa: E402
 
-EXPECTED_GATES = 17
+EXPECTED_GATES = 23
 _passes: list[str] = []
 _fails: list[str] = []
 
@@ -65,6 +65,53 @@ def main() -> int:
     shadow = _res({"hooks/x.js": "SHADOWED"})
     live = _res({"hooks/x.js": "EFFECTIVE"})
     gone = _res({"hooks/x.js": "ABSENT_RUNNING"})
+
+    # --- direction: the verdict was right, the advice was backwards -----
+    # Every one of these still blocks a runtime claim -- the claimed bytes
+    # are not the executing ones under any of them. What must differ is
+    # what the message tells the reader to DO, because for two of the four
+    # the previous single sentence pointed at overwriting newer committed
+    # work belonging to somebody else.
+    for status, want, forbid in (
+        ("STRANDED", "has not reached the running tree", "overwrite"),
+        ("AHEAD_OF_HERE", "integrate here", "has not reached"),
+        ("DIVERGED", "is a decision", "has not reached"),
+        ("FOREIGN_EDIT", "uncommitted work", "has not reached"),
+    ):
+        v = certify("code", _ctx("runtime"), _res({"hooks/x.js": status}))
+        msg = v["preconditions"][0]["message"]
+        if not v["done"] and want in msg and forbid not in msg:
+            _ok("V-PRECOND-DIRECTION-" + status.replace("_", "-"),
+                f"blocks, and says {want!r} rather than {forbid!r}")
+        else:
+            _fail("V-PRECOND-DIRECTION-" + status.replace("_", "-"),
+                  f"done={v['done']} msg={msg!r}")
+
+    # A status this module has never heard of must not pass by falling off
+    # the end of a list. The detector is free to grow verdicts; learning
+    # about them late has to cost a false red, never a false green.
+    v = certify("code", _ctx("runtime"), _res({"hooks/x.js": "BRAND_NEW"}))
+    if not v["done"] and "unrecognised" in v["preconditions"][0]["message"]:
+        _ok("V-PRECOND-UNKNOWN-STATUS-FAILS-CLOSED",
+            "an unmapped effective-state verdict blocks and names itself")
+    else:
+        _fail("V-PRECOND-UNKNOWN-STATUS-FAILS-CLOSED",
+              f"done={v['done']} msg={v['preconditions'][0]['message']!r}")
+
+    # What runs is this checkout's last COMMIT. If the claimed file has
+    # uncommitted changes, the claim is about bytes nobody executes -- and
+    # the honest verdict is that it cannot be confirmed, not that delivery
+    # failed.
+    v = certify("code", _ctx("runtime"), _res({"hooks/x.js": "LOCAL_EDIT"}))
+    p = v["preconditions"][0]
+    if not v["done"] and p["verdict"] == pre.UNVERIFIED:
+        _ok("V-PRECOND-LOCAL-EDIT-UNVERIFIED",
+            "an uncommitted working copy yields UNVERIFIED and blocks; it "
+            "used to pass, because the audit's 'nothing owed to production' "
+            "answered a different question than the claim did")
+    else:
+        _fail("V-PRECOND-LOCAL-EDIT-UNVERIFIED",
+              f"done={v['done']} verdict={p['verdict']}")
 
     # --- the core claim: score cannot buy out delivery -----------------
     v = certify("code", _ctx("runtime"), shadow)

@@ -58,6 +58,44 @@ RUNTIME_SCOPES = frozenset({"runtime", "production"})
 # delivery proof and the veto would be disabled within a week.
 DEFAULT_SCOPE = "repository"
 
+# Every effective-state verdict meaning "the bytes you claim are live are
+# not the bytes that run". All of them veto a runtime claim -- the claim is
+# false under each -- but WHAT TO DO differs so sharply that reporting one
+# sentence for all of them is how a gate teaches the wrong repair. Measured
+# 2026-09-02: two artifacts were undelivered work of this checkout, two
+# were another lineage's NEWER commits already running, and one was that
+# tree's uncommitted edit. The single message this file used to emit --
+# "committed is not installed" -- was true for the first pair, backwards
+# for the second, and the action it implied would have overwritten
+# twenty-two commits of somebody else's work to deliver two files that
+# needed no delivery.
+_REMEDY = {
+    "STRANDED": ("this checkout's committed work has not reached the "
+                 "running tree; delivering needs that tree's owner"),
+    "AHEAD_OF_HERE": ("the running tree holds NEWER committed bytes from "
+                      "another lineage and this checkout has not changed "
+                      "the file; integrate here -- do not overwrite"),
+    "DIVERGED": ("both lineages changed this file since the merge base; "
+                 "which one governs production is a decision, not a "
+                 "measurement"),
+    "FOREIGN_EDIT": ("the running tree carries uncommitted work for this "
+                     "path; it is legitimate state until its owner says "
+                     "otherwise"),
+    "SHADOWED": ("the bytes differ and the direction could not be "
+                 "established; unmeasured is not delivered"),
+    "ABSENT_RUNNING": "no file exists at the registered path in the running tree",
+}
+NOT_EFFECTIVE = frozenset(_REMEDY)
+
+
+def _status_of(state) -> str:
+    """Accept a bare status or a detector row. The detector returns rows
+    carrying a remediation class; injected test resolvers return the status
+    alone, and neither should have to know about the other."""
+    if isinstance(state, dict):
+        return str(state.get("status") or "")
+    return str(state or "")
+
 
 def claim_scope(ctx: dict) -> str:
     scope = str(ctx.get("claim_scope") or DEFAULT_SCOPE).strip().lower()
@@ -96,15 +134,27 @@ def _effective_state(ctx: dict, resolver: Callable | None) -> tuple[str, str]:
             " -- unmeasured is not measured-equal")
 
     missing = [a for a in artifacts if a not in states]
-    shadowed = sorted(a for a, s in states.items() if s == "SHADOWED")
-    absent = sorted(a for a, s in states.items() if s == "ABSENT_RUNNING")
+    # Anything not positively EFFECTIVE blocks, so a status this module has
+    # never heard of cannot pass by falling off the end of a list. The
+    # detector may grow new verdicts; this file learning about them late
+    # must cost a false red, never a false green.
+    bad = sorted((a, _status_of(s)) for a, s in states.items()
+                 if _status_of(s) != "EFFECTIVE")
 
-    if shadowed or absent:
-        detail = ", ".join(shadowed + absent)
+    unconfirmable = [(a, st) for a, st in bad if st == "LOCAL_EDIT"]
+    if len(unconfirmable) == len(bad) and bad:
+        return UNVERIFIED, (
+            "the working copy of " + ", ".join(a for a, _ in unconfirmable)
+            + " differs from the bytes that run, and the difference is "
+            "uncommitted here -- what executes is this checkout's last "
+            "COMMIT, so a claim about the current file cannot be confirmed")
+    if bad:
+        detail = "; ".join(
+            f"{a} [{st}: {_REMEDY.get(st, 'unrecognised effective state')}]"
+            for a, st in bad if st != "LOCAL_EDIT")
         return VETO, (
-            f"{len(shadowed) + len(absent)} artifact(s) claimed live are not "
-            f"the executing bytes: {detail}. Committed, and possibly merged, "
-            "is not installed when the install location is a working tree.")
+            f"{len(bad)} artifact(s) claimed live are not the executing "
+            f"bytes: {detail}")
     if missing:
         return UNVERIFIED, (
             "the detector returned no verdict for: " + ", ".join(sorted(missing))

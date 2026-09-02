@@ -35,7 +35,7 @@ sys.path.insert(0, str(PP))
 
 import tools.mirror_unpaired_audit as mu  # noqa: E402
 
-EXPECTED_GATES = 14
+EXPECTED_GATES = 21
 _passes: list[str] = []
 _fails: list[str] = []
 _TMP: list[str] = []
@@ -81,6 +81,64 @@ def _pair(here: bytes | None, there: bytes | None) -> dict:
     # main() reads <live-root>/settings.json. Omitting it made the audit
     # resolve nothing, so the exit-path gate below was asserting exit 0
     # against an UNRESOLVED run and calling that a verdict.
+    settings = _settings_for(run)
+    (run.parent / "settings.json").write_text(settings, encoding="utf-8")
+    return {"repo": repo, "run": run, "live_root": run.parent,
+            "settings": settings}
+
+
+def _git_exe() -> str | None:
+    for exe in ("git", r"C:\Program Files\Git\cmd\git.exe"):
+        try:
+            if subprocess.run([exe, "--version"], capture_output=True,
+                              timeout=20).returncode == 0:
+                return exe
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return None
+
+
+def _lineage_fixture(mine: bytes | None, theirs: bytes | None,
+                     disk: bytes | None) -> dict | None:
+    """Two worktrees of ONE repository, each advanced independently.
+
+    `mine` / `theirs`: new committed content for that side, or None to
+    leave it at the shared base commit. `disk`: an uncommitted overwrite in
+    the running tree. Returns None when git is unavailable, so the caller
+    reports the gate unproven rather than passing on a skipped check.
+    """
+    git = _git_exe()
+    if git is None:
+        return None
+    base = _tmpdir()
+    repo = base / "repo" / "claude-power-pack"
+    run = base / "run" / "claude-power-pack"
+    (repo / "hooks").mkdir(parents=True)
+    env = dict(os.environ, GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@e",
+               GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@e",
+               GIT_CONFIG_NOSYSTEM="1", HOME=str(base))
+
+    def g(root: Path, *cmd: str):
+        return subprocess.run([git, "-C", str(root), *cmd], env=env,
+                              capture_output=True, timeout=60)
+
+    (repo / "hooks" / "x.js").write_bytes(b"base\n")
+    for cmd in (("init", "-q", "-b", "trunk"), ("add", "-A"),
+                ("commit", "-qm", "base")):
+        if g(repo, *cmd).returncode != 0:
+            return None
+    run.parent.mkdir(parents=True, exist_ok=True)
+    if g(repo, "worktree", "add", "-q", "-b", "other",
+         str(run), "trunk").returncode != 0:
+        return None
+    if theirs is not None:
+        (run / "hooks" / "x.js").write_bytes(theirs)
+        g(run, "add", "-A"), g(run, "commit", "-qm", "theirs")
+    if mine is not None:
+        (repo / "hooks" / "x.js").write_bytes(mine)
+        g(repo, "add", "-A"), g(repo, "commit", "-qm", "mine")
+    if disk is not None:
+        (run / "hooks" / "x.js").write_bytes(disk)
     settings = _settings_for(run)
     (run.parent / "settings.json").write_text(settings, encoding="utf-8")
     return {"repo": repo, "run": run, "live_root": run.parent,
@@ -229,11 +287,75 @@ def main() -> int:
         _fail("V-EFFECTIVE-PASSES-CLEAN",
               f"exit {rc_ok} on a clean fixture -- the gate cannot pass")
 
+    # --- DIRECTION, on two real worktrees of one repository ------------
+    # The whole point is that SHADOWED cannot tell "my work never arrived"
+    # from "their newer work is already here", so nothing short of two
+    # lineages sharing an object store exercises it. A mocked blob lookup
+    # would agree with whatever the classifier believed.
+    for name, mine, theirs, disk, want in (
+        ("STRANDED", b"mine\n", None, None, mu.STRANDED),
+        ("AHEAD-OF-HERE", None, b"theirs\n", None, mu.AHEAD_OF_HERE),
+        ("DIVERGED", b"mine\n", b"theirs\n", None, mu.DIVERGED),
+        ("FOREIGN-EDIT", b"mine\n", None, b"scratch\n", mu.FOREIGN_EDIT),
+    ):
+        f = _lineage_fixture(mine, theirs, disk)
+        if f is None:
+            _fail("V-EFFECTIVE-" + name, "git unavailable; direction unproven")
+            continue
+        got = (mu.effective_state(f["repo"], f["settings"])
+               .get("rows") or [{}])[0].get("status")
+        if got == want:
+            _ok("V-EFFECTIVE-" + name, f"-> {got}")
+        else:
+            _fail("V-EFFECTIVE-" + name, f"got {got}, wanted {want}")
+
+    # A red the owner cannot act on gets the gate switched off, so the two
+    # classes where THIS checkout has nothing to deliver must not be
+    # counted as its undelivered work -- while still being reported.
+    ahead = _lineage_fixture(None, b"theirs\n", None)
+    foreign = _lineage_fixture(None, None, b"scratch\n")
+    stranded = _lineage_fixture(b"mine\n", None, None)
+    if None in (ahead, foreign, stranded):
+        _fail("V-EFFECTIVE-UNDELIVERED-IS-MINE-ONLY", "git unavailable")
+    else:
+        rows = [(mu.effective_state(f["repo"], f["settings"])["rows"] or [{}])[0]
+                for f in (ahead, foreign, stranded)]
+        owed = [len(mu.undelivered([r])) for r in rows]
+        if owed == [0, 0, 1]:
+            _ok("V-EFFECTIVE-UNDELIVERED-IS-MINE-ONLY",
+                "AHEAD_OF_HERE and an untouched FOREIGN_EDIT are reported "
+                "and not charged to this checkout; STRANDED is")
+        else:
+            _fail("V-EFFECTIVE-UNDELIVERED-IS-MINE-ONLY",
+                  f"undelivered counts {owed} for "
+                  f"{[r.get('status') for r in rows]}, wanted [0, 0, 1]")
+
+    # The remediation for newer running bytes must never read as "deliver".
+    rem = mu.remediation(mu.AHEAD_OF_HERE, same_checkout=False)
+    if rem["class"] == mu.INTEGRATE_HERE and rem["owner"] == "this checkout":
+        _ok("V-EFFECTIVE-AHEAD-NEVER-OVERWRITES",
+            "newer running bytes route to integrate-here, owned by this "
+            "checkout -- the action that would have destroyed 22 commits "
+            "is not reachable from the classifier's own advice")
+    else:
+        _fail("V-EFFECTIVE-AHEAD-NEVER-OVERWRITES", str(rem))
+
+    # Direction unknowable must stay blocking. Coercing it to anything
+    # softer is how an unmeasured difference reads as an agreement.
+    unknown = _status(b"new\n", b"old\n")      # neither side is a git tree
+    if unknown == mu.SHADOWED and len(mu.undelivered(
+            [{"status": unknown, "mine_moved": None}])) == 1:
+        _ok("V-EFFECTIVE-UNKNOWN-DIRECTION-BLOCKS",
+            "no shared object store -> SHADOWED, still counted undelivered")
+    else:
+        _fail("V-EFFECTIVE-UNKNOWN-DIRECTION-BLOCKS", str(unknown))
+
     # --- live coherence: real settings, statuses from the known set ----
     live = mu.resolve_live_root(None)
     res = mu.effective_state(PP, mu._read(live / "settings.json"))
     known = {mu.EFFECTIVE, mu.SHADOWED, mu.ABSENT_RUNNING, mu.NOT_HERE,
-             mu.LOCAL_EDIT}
+             mu.LOCAL_EDIT, mu.STRANDED, mu.AHEAD_OF_HERE, mu.DIVERGED,
+             mu.FOREIGN_EDIT}
     bad = [r for r in res.get("rows", []) if r["status"] not in known]
     if res["resolved"] and res["rows"] and not bad:
         c = res["counts"]

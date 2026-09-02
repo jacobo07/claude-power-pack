@@ -40,6 +40,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Iterable
 
 PP = Path(__file__).resolve().parents[1]
 if str(PP) not in sys.path:
@@ -195,6 +196,36 @@ ABSENT_RUNNING = "ABSENT_RUNNING"
 NOT_HERE = "NOT_HERE"
 LOCAL_EDIT = "LOCAL_EDIT"
 
+# Direction. SHADOWED says the running bytes are not this checkout's; it
+# does not say WHICH SIDE IS BEHIND, and that omission is not cosmetic.
+# Measured 2026-09-02: of five SHADOWED registrations, two were this
+# checkout's work never delivered, two were the OTHER pane's newer commits
+# already running, and one was their uncommitted edit. The audit called all
+# five the same thing, and the action it implied -- put the running tree on
+# my branch -- would have overwritten twenty-two commits to "fix" two files
+# that were already correct. A verdict that cannot distinguish "my work has
+# not arrived" from "their newer work is here" will eventually recommend
+# destroying the second to deliver the first.
+STRANDED = "STRANDED"              # mine moved, theirs did not: undelivered
+AHEAD_OF_HERE = "AHEAD_OF_HERE"    # theirs moved, mine did not: I am behind
+DIVERGED = "DIVERGED"              # both moved: authority unresolved
+FOREIGN_EDIT = "FOREIGN_EDIT"      # running tree has uncommitted work
+
+# Every status that means "the claimed bytes are not the bytes that run".
+# SHADOWED stays in the set as the direction-unknown fallback.
+NOT_EFFECTIVE = (STRANDED, AHEAD_OF_HERE, DIVERGED, FOREIGN_EDIT,
+                 SHADOWED, ABSENT_RUNNING)
+
+# Remediation classes. Naming the class is the whole deliverable for four
+# of the five: refusing to mutate, and saying which of several reasons, is
+# the correct output of a delivery decision -- not a lesser one.
+NO_CHANGE_REQUIRED = "NO_CHANGE_REQUIRED"
+SAFE_AUTO = "SAFE_AUTO"
+OWNER_APPROVAL = "OWNER_APPROVAL"
+CONCURRENT_OWNER = "CONCURRENT_OWNER"
+UNKNOWN_AUTHORITY = "UNKNOWN_AUTHORITY"
+INTEGRATE_HERE = "INTEGRATE_HERE"
+
 # A PP checkout path as settings.json spells it. Both separator styles and
 # the JSON-escaped doubling are accepted, because this file holds all three
 # on this host and a probe that knows one spelling is a probe that reports
@@ -263,19 +294,149 @@ def _head_blob(repo_root: Path, rel: str) -> bytes | None:
     (nothing committed, nothing owed). Reporting both as one red is how a
     real red gets ignored.
     """
-    git = os.environ.get("GIT_EXE") or "git"
-    for exe in (git, r"C:\Program Files\Git\cmd\git.exe"):
+    return _batch_blobs(repo_root, ["HEAD:" + rel]).get("HEAD:" + rel)
+
+
+def _git(repo_root: Path, args: list, stdin: bytes | None = None):
+    """One git invocation, absolute-path fallback, bytes in and out.
+
+    `git` is not on this host's non-interactive PATH, so the bare name
+    fails and the caller silently loses every lineage verdict -- which
+    would read as "direction unknown" rather than as a broken probe.
+    """
+    exes = [os.environ.get("GIT_EXE") or "git",
+            r"C:\Program Files\Git\cmd\git.exe"]
+    for exe in exes:
         try:
-            out = subprocess.run(
-                [exe, "-C", str(repo_root), "show",
-                 "HEAD:" + rel.replace("\\", "/")],
-                capture_output=True, timeout=20)
+            return subprocess.run([exe, "-C", str(repo_root)] + args,
+                                  input=stdin, capture_output=True, timeout=30)
         except (OSError, subprocess.SubprocessError):
             continue
-        if out.returncode == 0:
-            return out.stdout.replace(b"\r\n", b"\n")
-        return None
     return None
+
+
+def _batch_blobs(repo_root: Path, specs: list) -> dict:
+    """`<rev>:<path>` -> committed bytes, newline-normalised, in ONE process.
+
+    Direction needs three blobs per divergent file (mine, theirs, and the
+    merge base) on top of the one this module already fetched. Per-blob
+    `git show` would have quadrupled a subprocess count that is already the
+    dominant cost of this audit on Windows, so the batch form is not a
+    micro-optimisation -- it is what keeps the added evidence affordable
+    enough to gather every run instead of behind a flag nobody sets.
+    """
+    specs = [s for s in specs if s]
+    if not specs:
+        return {}
+    out = _git(repo_root, ["cat-file", "--batch"],
+               stdin=("\n".join(specs) + "\n").encode())
+    if out is None or out.returncode != 0:
+        return {}
+    buf, pos, result = out.stdout, 0, {}
+    for spec in specs:
+        nl = buf.find(b"\n", pos)
+        if nl < 0:
+            break
+        header = buf[pos:nl]
+        pos = nl + 1
+        parts = header.split(b" ")
+        if len(parts) != 3 or not parts[2].isdigit():
+            result[spec] = None            # "<spec> missing"
+            continue
+        size = int(parts[2])
+        result[spec] = buf[pos:pos + size].replace(b"\r\n", b"\n")
+        pos += size + 1                    # trailing newline git appends
+    return result
+
+
+def _lineage(repo_root: Path, running_root: Path) -> dict | None:
+    """The running tree's HEAD and its merge base with ours, or None.
+
+    None means direction is genuinely unknowable -- the running tree is not
+    a working tree of this repository, or git could not answer. It is NOT
+    the same as "no difference", and the caller must not read it that way:
+    the fallback status stays SHADOWED, which blocks, rather than being
+    resolved to anything reassuring.
+    """
+    theirs = _git(running_root, ["rev-parse", "HEAD"])
+    if theirs is None or theirs.returncode != 0:
+        return None
+    their_head = theirs.stdout.decode("utf-8", "replace").strip()
+    # Same object database? A different repository can hold a same-named
+    # branch; only a shared object store makes the merge base meaningful.
+    if (_git(repo_root, ["cat-file", "-e", their_head + "^{commit}"]) or
+            subprocess.CompletedProcess([], 1)).returncode != 0:
+        return None
+    mine = _git(repo_root, ["rev-parse", "HEAD"])
+    if mine is None or mine.returncode != 0:
+        return None
+    my_head = mine.stdout.decode("utf-8", "replace").strip()
+    base = _git(repo_root, ["merge-base", my_head, their_head])
+    if base is None or base.returncode != 0:
+        return None
+    return {"mine": my_head, "theirs": their_head,
+            "base": base.stdout.decode("utf-8", "replace").strip()}
+
+
+def remediation(status: str, same_checkout: bool) -> dict:
+    """Which class of action this row admits, and who may take it.
+
+    Policy, deliberately separate from the detector above and from any
+    mutation: what IS effective, whether we MAY change it, and performing
+    the change are three questions, and a component that answers all three
+    is free to agree with itself. Nothing here writes.
+    """
+    if status in (EFFECTIVE, LOCAL_EDIT, NOT_HERE):
+        return {"class": NO_CHANGE_REQUIRED, "owner": "none",
+                "action": "nothing is owed to the running tree"}
+    if status == AHEAD_OF_HERE:
+        return {"class": INTEGRATE_HERE, "owner": "this checkout",
+                "action": ("the running tree holds newer COMMITTED bytes "
+                           "from another lineage and this checkout has not "
+                           "touched the file since the merge base; integrate "
+                           "here. Writing this checkout's version would be a "
+                           "regression, not a delivery")}
+    if status == FOREIGN_EDIT:
+        return {"class": CONCURRENT_OWNER, "owner": "the running worktree",
+                "action": ("uncommitted work is present in the running tree "
+                           "for this path; it is legitimate state until its "
+                           "owner says otherwise")}
+    if status == DIVERGED:
+        return {"class": UNKNOWN_AUTHORITY, "owner": "Owner",
+                "action": ("both lineages changed this file since the merge "
+                           "base; which should govern production is a "
+                           "decision, not a measurement")}
+    if status in (STRANDED, ABSENT_RUNNING, SHADOWED):
+        if same_checkout:
+            return {"class": SAFE_AUTO, "owner": "this checkout",
+                    "action": ("the running tree IS this checkout; no "
+                               "concurrent owner exists")}
+        return {"class": OWNER_APPROVAL, "owner": "Owner",
+                "action": ("delivering would modify a working tree this "
+                           "session does not own; it needs that owner, not "
+                           "a stronger gate here")}
+    return {"class": UNKNOWN_AUTHORITY, "owner": "Owner",
+            "action": "unrecognised state"}
+
+
+def undelivered(rows: Iterable) -> list:
+    """Rows where work belonging to THIS checkout is not what executes.
+
+    Narrower than "not effective" on purpose. AHEAD_OF_HERE is excluded
+    because this checkout has nothing to deliver there -- the running tree
+    is simply newer -- and FOREIGN_EDIT counts only when this checkout also
+    moved the file, i.e. when our change is genuinely waiting behind
+    someone else's uncommitted work. Everything whose direction could not
+    be established stays in: unmeasured is not delivered.
+    """
+    out = []
+    for r in rows:
+        st = r.get("status")
+        if st in (STRANDED, DIVERGED, SHADOWED, ABSENT_RUNNING):
+            out.append(r)
+        elif st == FOREIGN_EDIT and r.get("mine_moved") is not False:
+            out.append(r)
+    return out
 
 
 def effective_state(repo_root: Path, settings_text: str,
@@ -308,11 +469,42 @@ def effective_state(repo_root: Path, settings_text: str,
                 "counts": {}, "reason": "settings.json names zero or "
                                         "several PP checkouts"}
 
+    repo_root = Path(repo_root)
+    same_checkout = _norm(str(reg_root)) == _norm(str(repo_root))
+    execs = sorted(registered_executables(
+        settings_text, reg_root, targets).items())
+
+    # Read both sides first, so the git work below is asked only about the
+    # files that actually differ. On this host that is five of thirty-one:
+    # paying lineage cost for the twenty-six that already agree would be
+    # the whole-estate scan a per-claim gate cannot afford.
+    pairs = [(rel, running_path, _content(repo_root / rel),
+              _content(running_path)) for rel, running_path in execs]
+    differing = [rel for rel, _p, here, there in pairs
+                 if here is not None and there is not None and here != there]
+
+    lin = _lineage(repo_root, reg_root) if differing else None
+    blobs: dict = {}
+    if differing:
+        specs = []
+        for rel in differing:
+            g = rel.replace("\\", "/")
+            specs.append("HEAD:" + g)
+            if lin:
+                specs += [lin["theirs"] + ":" + g, lin["base"] + ":" + g]
+        blobs = _batch_blobs(repo_root, specs)
+
     rows = []
-    for rel, running_path in sorted(
-            registered_executables(settings_text, reg_root, targets).items()):
-        here = _content(Path(repo_root) / rel)
-        there = _content(running_path)
+    for rel, running_path, here, there in pairs:
+        # Did THIS checkout change the file since the merge base? Kept
+        # beside the status because the two answer different questions,
+        # and the gate below needs the second: a running tree carrying
+        # another pane's uncommitted edit to a file this branch never
+        # touched is a true observation and not a delivery failure of
+        # ours. Conflating them makes the gate permanently red for a
+        # condition its owner cannot act on, and a gate like that gets
+        # switched off rather than satisfied.
+        mine_moved = None
         if here is None:
             status = NOT_HERE
         elif there is None:
@@ -320,21 +512,37 @@ def effective_state(repo_root: Path, settings_text: str,
         elif here == there:
             status = EFFECTIVE
         else:
-            # Committed-here-and-not-running is a delivery failure. Merely
-            # edited-here is not: if the running tree already holds this
-            # checkout's COMMITTED bytes, the difference is uncommitted
-            # local work and nothing is owed to production.
-            status = (LOCAL_EDIT
-                      if _head_blob(Path(repo_root), rel) == there
-                      else SHADOWED)
-        rows.append({"rel": rel, "status": status,
-                     "running": str(running_path)})
+            g = rel.replace("\\", "/")
+            mine = blobs.get("HEAD:" + g)
+            if mine is not None and mine == there:
+                # Merely edited here: the running tree already holds this
+                # checkout's COMMITTED bytes, so nothing is owed to it.
+                status = LOCAL_EDIT
+            elif not lin:
+                # Direction unknowable. Not resolved to anything softer --
+                # an unmeasured difference is not a measured agreement.
+                status = SHADOWED
+            else:
+                theirs = blobs.get(lin["theirs"] + ":" + g)
+                base = blobs.get(lin["base"] + ":" + g)
+                mine_moved = mine != base
+                if theirs != there:
+                    status = FOREIGN_EDIT
+                elif mine_moved and theirs == base:
+                    status = STRANDED
+                elif theirs != base and not mine_moved:
+                    status = AHEAD_OF_HERE
+                else:
+                    status = DIVERGED
+        rows.append({"rel": rel, "status": status, "mine_moved": mine_moved,
+                     "running": str(running_path),
+                     "remediation": remediation(status, same_checkout)})
 
     counts: dict = {}
     for r in rows:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     return {"resolved": True, "registered_root": str(reg_root),
-            "same_checkout": _norm(str(reg_root)) == _norm(str(repo_root)),
+            "same_checkout": same_checkout, "lineage": lin,
             "rows": rows, "counts": counts}
 
 
@@ -487,17 +695,27 @@ def main(argv=None) -> int:
         print("      Not a pass. Nothing here claims these hooks are live.")
     else:
         c = eff["counts"]
-        shadowed = [r for r in eff["rows"]
-                    if r["status"] in (SHADOWED, ABSENT_RUNNING)]
+        shadowed = [r for r in eff["rows"] if r["status"] in NOT_EFFECTIVE]
         print("\n  effective state (" + str(len(eff["rows"]))
               + " registration(s) executing from "
               + eff["registered_root"] + "):")
-        for status in (SHADOWED, ABSENT_RUNNING, LOCAL_EDIT,
+        for status in (STRANDED, DIVERGED, FOREIGN_EDIT, AHEAD_OF_HERE,
+                       SHADOWED, ABSENT_RUNNING, LOCAL_EDIT,
                        EFFECTIVE, NOT_HERE):
             if c.get(status):
                 print("      " + status.ljust(16) + str(c[status]))
+        # The class and its owner, not just the count. A bare list of
+        # not-effective paths reads as one problem with one fix, and the
+        # fix it suggests -- make the running tree match mine -- is wrong
+        # for three of the four classes.
         for r in shadowed[:12]:
-            print("      -> " + r["status"] + "  " + r["rel"])
+            rem = r.get("remediation") or {}
+            print("      -> " + r["status"].ljust(14) + r["rel"]
+                  + "  [" + str(rem.get("class")) + " / "
+                  + str(rem.get("owner")) + "]")
+        if any(r["status"] == AHEAD_OF_HERE for r in shadowed):
+            print("      note: AHEAD_OF_HERE means the RUNNING tree is "
+                  "newer. Delivering over it would destroy committed work.")
 
     broken = [r for r in res["rows"]
               if r["status"] == BROKEN_REGISTRATION]
@@ -530,16 +748,19 @@ def main(argv=None) -> int:
               f"not reach production. Owner: copy hooks/hook-dispatcher.js "
               f"to ~/.claude/hooks/ (this repo cannot write there).")
         return 1
-    if eff["resolved"] and (eff["counts"].get(SHADOWED)
-                            or eff["counts"].get(ABSENT_RUNNING)):
-        n = (eff["counts"].get(SHADOWED, 0)
-             + eff["counts"].get(ABSENT_RUNNING, 0))
-        print("\nMIRROR_UNPAIRED FAIL: " + str(n) + " registration(s) hold "
-              "different bytes here than in the tree that executes ("
-              + eff["registered_root"] + "). Work committed in THIS "
-              "checkout does not run. Committed and pushed is not "
-              "installed when the install location is a working tree.")
-        return 1
+    if eff["resolved"]:
+        owed = undelivered(eff["rows"])
+        if owed:
+            print("\nMIRROR_UNPAIRED FAIL: " + str(len(owed))
+                  + " registration(s) carry work committed in THIS checkout "
+                  "that is not what executes in " + eff["registered_root"]
+                  + ". Committed and pushed is not installed when the "
+                  "install location is a working tree.")
+            for r in owed:
+                rem = r.get("remediation") or {}
+                print("      " + r["status"].ljust(14) + r["rel"]
+                      + "  -> " + str(rem.get("action")))
+            return 1
     print("\nMIRROR_UNPAIRED OK: no registration points at a missing file, "
           "and the canonical dispatcher matches the one that runs")
     return 0
