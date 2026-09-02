@@ -41,8 +41,11 @@ re-measured, **two were defective**:
 - *Path debt* — recounted: 143 doc leaks, 38 code leaks (was 144 / 18). Standing, not
   blocking.
 
-So the decision is: **integrate this branch** (merge to `main`, or check it out once the
-concurrent pane is done). Until then nothing here runs, including the migration tool.
+**DONE 2026-09-02:** `origin/main` fast-forwarded `9e69d11 -> ee5cb07`, 49 commits, zero of
+main's commits lost, no merge commit, `feature/knowledge-acquisition` untouched. The work is
+INTEGRATED and still NOT EFFECTIVE -- re-measured after the push, SHADOWED stayed at 5,
+because the installed tree is still checked out on the other pane's branch. Integration and
+delivery are two events; do not let the first be reported as the second.
 HR-001 keeps `settings.json` and `~/.claude/hooks/` Owner-sovereign permanently — that is
 governance working, not a task to keep forwarding.
 
