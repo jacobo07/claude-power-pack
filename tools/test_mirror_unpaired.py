@@ -54,6 +54,8 @@ def _check(gate, got, want, note):
 
 
 def _register_count_fixture() -> "Path":
+    """Absolute entry reuses the module LIVE root rather than
+    re-spelling a host path the scanner counts as a leak."""
     import tempfile
     fh = tempfile.NamedTemporaryFile("w", suffix=".js", delete=False,
                                      encoding="utf-8")
@@ -61,7 +63,7 @@ def _register_count_fixture() -> "Path":
         "const chain = [\n"
         "  { script: './alpha.js' },\n"
         "  { script: '../skills/claude-power-pack/hooks/beta.js' },\n"
-        "  { script: 'C:/Users/User/.claude/hooks/gamma.js' },\n"
+        "  { script: '" + LIVE.as_posix() + "/hooks/gamma.js' },\n"
         "  // { script: './retired.js' },  <- a comment is not a registration\n"
         "  // log('ghost-hook.js mentioned in prose')\n"
         "];\n")
