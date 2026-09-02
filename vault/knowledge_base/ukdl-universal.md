@@ -5123,6 +5123,80 @@ markdown indexes, config includes, symlink farms, import maps.
 
 **Origin:** memory audit, 2026-08-09.
 
+### T-REFERENT-EXISTS-BUT-IS-THE-WRONG-ONE-001 -- a pointer can resolve perfectly and still name the wrong thing  #CROSS-PROJECT
+
+**WHAT HAPPENED:** three sealed datasets of a 66-dataset corpus attributed
+"secret reference resolution" to `ISAF-VLT-002` across 27 references. That
+subject belongs to `ISAF-VLT-003`; `VLT-002` is the cryptographic-contracts
+dataset. Two independent authorities written earlier -- the dataset registry and
+the frozen kernel -- agreed on the correct owner, and the two datasets sealed
+before the error were consistent with them. The three that disagreed were all
+written in one session by one author: **one observation replicated three times,
+not three observations.**
+
+**Why it hides:** the reference-integrity check verified that `ISAF-VLT-002`
+resolves to a registered dataset. It does. This is the sibling of
+`T-ROUTER-BRIDGE-UNRESOLVED-001` with the failure inverted -- there the pointer
+resolved *nowhere*; here it resolves to a **real, registered, wrong** target, so
+that trap's detector ("assert the resolved path exists") **passes on this defect**.
+Existence checks are structurally blind to misdirection.
+
+**How it propagates, which is the expensive part:** the wrong owner was copied
+into the continuation anchor, and from there into the next session's brief, which
+opened by naming the wrong dataset as its objective. A stale date corrects itself
+on reading; **a wrong owner directs the next session's work.**
+
+**Detector:** check the citation against the target's *registered purpose*, not
+its existence. Mechanically: flag a line that names a boundary subject and cites
+some dataset in an ownership position without citing that subject's registered
+owner. Two aperture rules learned the hard way -- the more specific subject must
+win and stop evaluation (a corpus can split "scope graph" between the ontology
+that defines its classes and the dataset that owns the populated instance), and
+mentioning a subject is not attributing it, so require an ownership position (a
+table row, a heading, "es de" / "recae en" / "owner") or the check drowns in
+false positives.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies wherever a name resolves
+against a registry -- import maps, service discovery, DI containers, foreign keys,
+ticket cross-links, doc ownership tables. Anywhere `exists(target)` is the whole
+check.
+
+**Origin:** ISAF Wave 2 entry, D-018, 2026-09-01.
+
+### PR-PRESENT-IS-CORRECT-IS-NOT-COMPLETE-001 -- verifying what is there never verifies what is missing  #CROSS-PROJECT
+
+**WHAT HAPPENED:** a source proposed a URI whose four scope segments were checked
+against the ontology and matched exactly -- a real verification that produced a
+real, correct result. Two sealed upstream requirements demanded two *further*
+segments (material class, cryptographic domain) that the URI simply did not carry.
+Nobody noticed for a full wave, because every check asked "is what is here
+right?" and none asked "is everything that must be here, here?"
+
+**The rule:** those are two questions with two instruments. Correctness is
+answered by inspecting the artifact. **Completeness can only be answered against
+the list of requirements its upstream owners impose, and that list is not in the
+artifact** -- so it is unreachable by any amount of staring at the thing itself.
+
+**Why it hides:** a completeness gap has nothing to contradict. A wrong value
+collides with a right one and someone notices; an absent value collides with
+nothing and reads as "not applicable here."
+
+**Process:** when accepting any artifact that has upstream owners, enumerate the
+owners' requirements FIRST and check the artifact against that list -- never the
+reverse. Silence about a requirement is a finding, not a pass.
+
+**Related:** `T-SQI-NARROW-VOCABULARY-BLINDS-THE-GATE-001` (zero cannot fall) and
+`HR-ZERO-TESTS-IS-UNVERIFIED-001` (nothing ran and everything passed must not
+share a name) cover the *coverage* half of this family; this entry covers the
+*requirement-set* half. `T-REFERENT-EXISTS-BUT-IS-THE-WRONG-ONE-001` is the
+misdirection half.
+
+**Cross-project:** tagged `#CROSS-PROJECT`. Applies to schema review, API contract
+review, security control assessment, migration checklists, acceptance criteria --
+anywhere review reads the deliverable instead of the requirement list.
+
+**Origin:** ISAF Wave 2, D-020, 2026-09-01.
+
 ### T-CATCH-ALL-POINTER-MAKES-A-GATE-VACUOUS-001 -- one index entry that covers everything makes reachability unfalsifiable
 
 **WHAT HAPPENED:** the repair for the stale router was a durable pointer to the
@@ -7541,3 +7615,43 @@ have disabled the very hook the same brief asked to activate.
 - [tooling/bash:python.exe] `ceps_d1d6c04167c2c83e` -- Tool failure in bash:python.exe: Exception as e:  # fail-open absolute. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [env/bash:sed] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:sed: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:echo] `ceps_7538d49b12a0a94a` -- Tool failure in bash:echo: onDaemonError: (error:. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [env/bash:rtk.exe] `ceps_b77f13ea8d89b1be` -- Environment mismatch on bash:rtk.exe: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:rtk.exe] `ceps_843d7f8ef76a4245` -- Tool failure in bash:rtk.exe: Error ? e.message : String(e. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python] `ceps_9d7a204873a62708` -- Tool failure in bash:python: Error('Page.evaluate: ReferenceError: time is not defined\n.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python3] `ceps_d47d40fe40071e32` -- Tool failure in bash:python3: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:rtk.exe] `ceps_b17cedbdb942b7fd` -- Tool failure in bash:rtk.exe: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:rtk.exe] `ceps_b17cedbdb942b7fd` -- Tool failure in bash:rtk.exe: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:rtk.exe] `ceps_b17cedbdb942b7fd` -- Tool failure in bash:rtk.exe: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:rtk.exe] `ceps_91bd58c83335b24d` -- Before touching bash:rtk.exe, verify the regression scenario (1 failed) is still covered by a passing test.
+
+- [tooling/bash:rtk.exe] `ceps_5d7b5d0c6dddf7aa` -- Tool failure in bash:rtk.exe: Error: expect(locator).toBeVisible() failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:cat] `ceps_885cc618c7a47324` -- Tool failure in bash:cat: Error: no se ha encontrado o cargado la clase principal D2P.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:rtk.exe] `ceps_5d28a90f4498a814` -- Before touching bash:rtk.exe, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [env/bash:cat] `ceps_8a8f7e7df7ae6c02` -- Environment mismatch on bash:cat: ModuleNotFoundError. Probe the env (uname/whoami/version) before assuming the runtime.
+
+- [tooling/bash:cd] `ceps_3da4cc58bf18fa09` -- Tool failure in bash:cd: Exception:  # noqa: BLE001 -- fail-open. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/bash:python] `ceps_d47d40fe40071e32` -- Tool failure in bash:python: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:python] `ceps_5d28a90f4498a814` -- Before touching bash:python, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/bash:echo] `ceps_5d28a90f4498a814` -- Before touching bash:echo, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/bash:head] `ceps_b18a393e073ee9c0` -- Tool failure in bash:head: fatal: no. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/bash:rtk.exe] `ceps_911bd3d498cd2bf8` -- Before touching bash:rtk.exe, verify the regression scenario (12 failed) is still covered by a passing test.
+
+- [regression/bash:echo] `ceps_5d28a90f4498a814` -- Before touching bash:echo, verify the regression scenario (FAILED) is still covered by a passing test.
