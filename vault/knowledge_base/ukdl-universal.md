@@ -7588,6 +7588,14 @@ is not a delivery step, and a completion claim resting on it is unsupported. The
 "is my change live" is answered by comparing the bytes at the executing path, never by the
 commit log.
 
+**The detector was not enough, and that was predictable.** A day later the gap was still
+open and the same claim could still be made, because a report that prints SHADOWED and
+leaves Done unchanged has no preventive power at all. The barrier came from asking what
+actually arbitrates completion here: `is_done` is a WEIGHTED SCORE at threshold 70, so
+delivery could fail and the deliverable still pass on the strength of the other checks.
+Replayed against the real claim, OQS 100 and Done. A detector becomes consequential only
+where the decision is made, and that place is rarely the place that noticed.
+
 **How to apply.** Before claiming a change to hooks, gates or anything a harness invokes by
 path, compare the file at the REGISTERED path against your committed version, and say which
 tree you compared. `tools/mirror_unpaired_audit.py` reports this as EFFECTIVE / SHADOWED /
@@ -7684,3 +7692,60 @@ current prompt described its behaviour. If it did, log it as retrieval. If it di
 it as inheritance and name the asset, the date it was installed, and the decision it
 changed. Sister of [[PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001]] -- the same measurement
 that retires a stale action is what protects a live one.
+
+### PR-SCORE-CANNOT-EXPRESS-A-PRECONDITION-001
+
+A done-gate scored deliverables out of 100 and passed them at 70: file present, syntax
+clean, tests green, no slop. Every one of those questions is about the artifact in the
+repository. None is about the artifact that runs. Replayed against a claim a session
+really made -- a hook fix is shipped -- the model returned 100 and Done while the executing
+bytes were a different version and had been for six days.
+
+Adding delivery as one more weighted check would not have helped. At any weight the
+deliverable could lose it and still clear the threshold on the strength of the others, which
+is exactly right for quality and exactly wrong for delivery: a change that does not govern
+behaviour is not seventy percent delivered. Weights model TRADE-OFFS. Some conditions are
+not tradeable, and expressing one as a weight silently converts it into something the rest
+of the score can buy out.
+
+**Rule.** When a gate must express "this cannot be traded away", it needs a precondition
+that vetoes beside the score, not a heavier weight inside it. The tell that you have the
+wrong primitive is reaching for a large number to make a check unignorable.
+
+**How to apply.** Keep the score answering "how good", and let preconditions answer "is this
+the thing at all". Make the veto's applicability an explicit property of the CLAIM rather
+than a global switch -- a delivery gate that fires on documentation gets called noise and
+switched off, and then it protects nothing. Invert the scorer's fail-open while you are
+there: a scorer meeting an unknown check should not fabricate a failure, but a done-gate
+meeting an unknown precondition has been handed a requirement by a newer contract than
+itself, and answering "fine" is how a version-skewed gate certifies what it cannot see.
+Sister of [[T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001]], which supplies
+the evidence this veto consumes.
+
+### PR-ENFORCEMENT-FAILS-AT-TWO-INDEPENDENT-EDGES-001
+
+A trap documented in the global config, sealed in the vault, and cited in prior sessions was
+re-issued four times in one day -- by the session auditing why known rules recur. The
+tempting diagnosis is that prose does not work, and the tempting fix is to write it again
+somewhere stronger.
+
+Tracing it end to end gave a different answer, in two parts, and either one alone would have
+produced the same silence. First, a registry of exactly this kind of trap already existed
+and was the correct owner -- five entries, each a command that is not destructive but is
+reliably wrong on this host, each documented and each re-issued anyway. This trap was simply
+not in it: a CONTENT gap. Second, that registry has one consumer, and the consumer is
+registered on a tool surface where the trap cannot occur: a ROUTING gap. Adding the pattern
+without widening the route leaves it undetectable. Widening the route without the pattern
+leaves it unknown.
+
+**Rule.** When a known rule fails to enforce, ask both questions separately: does the
+mechanism KNOW the rule, and can the mechanism SEE the event? Fixing whichever one you
+noticed first and declaring the failure closed is how a trap reaches its fifth recurrence.
+
+**How to apply.** Name the consumer, then name the surface the consumer is registered on,
+then compare that surface against where the event actually occurs. Report the two edges
+separately in the finding, because they usually have different owners and different
+authority -- here the content was mine to fix and the route was not, so the honest verdict
+was DETECTED, NOT YET REACHABLE rather than a fix claimed for half a repair. And do not add
+another prose entry for a rule that already exists in prose: the medium that failed is not
+the medium to repeat it in. Sister of [[T-REGISTRATION-PRESENCE-NOT-COVERAGE-001]].
