@@ -27,9 +27,15 @@ from modules.cascade_prevention.dangerous_cmds import (  # noqa: E402
 HOOK = PP / "hooks" / "cascade_check_bash.js"
 SETTINGS = Path.home() / ".claude" / "settings.json"
 
-EXPECTED_GATES = 10
+EXPECTED_GATES = 11
 _passes = 0
 _fails = 0
+
+# Resolved once: the remediation line below has to name a path that exists
+# where its reader stands, not a relative one that reads as reachable from
+# wherever they happen to be.
+import tools.mirror_unpaired_audit as _mu  # noqa: E402
+_MIGRATE = _mu.owner_command("tools/migrate_capture_surface.py", "--apply")
 
 
 def _ok(g: str, e: str) -> None:
@@ -212,8 +218,8 @@ def main() -> int:
               "enforcement of HR-CASCADE-001..005, and it accepts both "
               "surfaces in its own code. It is matcher-blind, not "
               "code-blind, so widening this one matcher restores it. "
-              "OWNER ACTION: python tools/migrate_capture_surface.py "
-              "--apply. See PR-WIDEN-PER-REGISTRATION-001.")
+              "OWNER ACTION: " + _MIGRATE["text"]
+              + ". See PR-WIDEN-PER-REGISTRATION-001.")
 
     # THE SAME GAP, DISCOVERED RATHER THAN NAMED. The check above knows one
     # registration by name, so it can only ever find the one instance
@@ -271,10 +277,24 @@ def main() -> int:
                   f"{len(matcher_only)} would be fixed by widening the "
                   "matcher alone; the rest need a code change first, and "
                   "widening those would assert a coverage the hook refuses "
-                  "to honour. OWNER ACTION: "
-                  "python tools/migrate_capture_surface.py --apply, which "
-                  "widens only the registrations whose code accepts the "
-                  "surface. See PR-WIDEN-PER-REGISTRATION-001.")
+                  "to honour. OWNER ACTION: " + _MIGRATE["text"]
+                  + ", which widens only the registrations whose code "
+                  "accepts the surface. See PR-WIDEN-PER-REGISTRATION-001.")
+
+    # An instruction is an artifact, and this one was shadowed: forwarded
+    # across three sessions while absent from the tree its reader would run
+    # it in. A red here is repairable by printing a path that exists, which
+    # is the point -- the advice has to be executable where it is read.
+    if _MIGRATE["reachable"]:
+        _ok("V-TRAP-OWNER-ACTION-EXECUTABLE",
+            "the remediation command names a file that exists"
+            + ("" if _MIGRATE["registered"] else
+               " -- though NOT in the registered checkout, so the line "
+               "carries the absolute path of one where it does"))
+    else:
+        _fail("V-TRAP-OWNER-ACTION-EXECUTABLE",
+              "the remediation this suite prints names a tool no visible "
+              "checkout holds; following it as written is impossible")
 
     total = _passes + _fails
     print(f"CORRECTNESS_TRAPS_PASS={_passes}/{total}  "

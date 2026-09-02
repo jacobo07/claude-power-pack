@@ -39,6 +39,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Iterable
 
@@ -437,6 +438,69 @@ def undelivered(rows: Iterable) -> list:
         elif st == FOREIGN_EDIT and r.get("mine_moved") is not False:
             out.append(r)
     return out
+
+
+def owner_command(rel: str, args: str = "") -> dict:
+    """An Owner instruction that names a path existing when it is printed.
+
+    An instruction is an artifact and can be shadowed like any other. This
+    estate forwarded `python tools/migrate_capture_surface.py --apply`
+    across three sessions; on 2026-09-02 the tool was measured absent from
+    the registered checkout, because it is committed on a branch that tree
+    has not taken. The instruction had been unrunnable from the only place
+    its reader would run it, and nothing said so -- a relative command
+    reads as reachable from wherever you happen to be standing.
+
+    Returns the command plus WHERE it resolves, so a caller can print an
+    executable line instead of a plausible one. Never mutates anything: a
+    tool being out of reach is a fact to state, not to fix by copying
+    files into somebody else's working tree.
+    """
+    suffix = (" " + args).rstrip()
+    try:
+        settings = _read(resolve_live_root(None) / "settings.json")
+        reg = registered_repo_root(settings)
+    except Exception:                                   # no live config here
+        reg = None
+    if reg is not None and (reg / rel).exists():
+        return {"text": f"python {rel}{suffix}   (from {reg})",
+                "reachable": True, "where": str(reg), "registered": True}
+    # Ask git which checkouts of this repository exist rather than guessing
+    # two. A temp worktree satisfies "a path that exists" only until the
+    # session that made it is collected, and an instruction whose validity
+    # expires with the session that wrote it is the same defect one rung up.
+    for cand in _durable_first(_worktrees(PP)):
+        if (cand / rel).exists():
+            why = (f"absent from the registered checkout ({reg}) -- that "
+                   "tree is on a branch without this file"
+                   if reg is not None else "no registered checkout resolved")
+            return {"text": (f'python "{cand / rel}"{suffix}   '
+                             f"(NOT runnable from the registered checkout: "
+                             f"{why})"),
+                    "reachable": True, "where": str(cand), "registered": False}
+    return {"text": f"python {rel}{suffix}   (NOT PRESENT in any checkout "
+                    "this audit can see -- the instruction cannot be "
+                    "followed as written)",
+            "reachable": False, "where": None, "registered": False}
+
+
+def _worktrees(root: Path) -> list:
+    out = _git(root, ["worktree", "list", "--porcelain"])
+    if out is None or out.returncode != 0:
+        return [Path(root)]
+    paths = [Path(ln.split(" ", 1)[1].strip()) for ln
+             in out.stdout.decode("utf-8", "replace").splitlines()
+             if ln.startswith("worktree ")]
+    return paths or [Path(root)]
+
+
+def _durable_first(paths: Iterable) -> list:
+    """Checkouts under a temp directory sort last: they are real answers,
+    and they are the ones that stop being true without anyone editing
+    anything."""
+    tmp = _norm(tempfile.gettempdir())
+    return sorted(paths, key=lambda p: (_norm(str(p)).startswith(tmp),
+                                        _norm(str(p))))
 
 
 def effective_state(repo_root: Path, settings_text: str,
