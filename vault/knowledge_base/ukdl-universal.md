@@ -7356,6 +7356,48 @@ failure signal at all?" becomes a countable fact rather than an assumption.
 
 ---
 
+## T-GUARANTEE-WITHOUT-AN-ADVERSARY-001 — a security property with no named actor reads as verified and cannot be falsified
+
+**Trap.** Words like *immutable*, *tamper-proof*, *isolated*, *sandboxed*, *encrypted at rest*
+name a property without naming who is being resisted. Each is true against somebody and false
+against somebody else, and the sentence does not say which. The failure is not that the claim
+is wrong — it is that the claim **stops the reader from asking**. An unqualified guarantee reads
+like a settled technical fact, so nobody audits it, and it propagates into documents, decks and
+incident plans that inherit a guarantee nobody ever held.
+
+It compounds with a second, quieter failure: two words for two *different* strengths get used as
+synonyms. *Tamper-evident* means detection; *immutable* means prevention. A document containing
+both, far apart, has two incompatible promises and no contradiction visible at either site.
+
+**Rule.** A property is written with the actor it resists **and** the actor it does not, in the
+same unit of text. If the second half cannot be written, the claim is not yet a claim. Prefer a
+graded vocabulary (tiers) over a boolean flag, because the boolean is what silently merges
+prevention with detection. This is the security-domain instance of
+`[[PR-ACIS-FALSIFIABILITY-001]]`: an unnamed adversary is an absent falsifier, with the added
+harm that it *looks* discharged.
+
+**How to apply.** (1) On writing: for each guarantee, complete "…against X, but not against Y."
+Y is the load-bearing half — an actor with legitimate privileged access usually belongs there,
+and naming them is what makes the claim usable in an incident. (2) On reviewing: search the
+*expansion* as well as the word, and check whether two different strengths are being used
+interchangeably. (3) **On gating: do not.** A substring sweep for the word is the wrong
+instrument — measured over a reviewed 12-dataset corpus it marked 50 lines, 17 of them across 8
+frozen datasets, with **zero true positives**: ownership rows ceding the topic to another owner,
+the same word in an unrelated sense, requirement statements saying what must be achieved, and
+meta-discussion of the word itself. A gate on that aperture would deliver `PASS` over zero real
+observations, which is the very defect it was meant to prevent. The measurable slice is the word
+*in ownership position*, and that belongs to whatever referent-correctness check already exists —
+extend it, do not build a second one.
+
+**ORIGEN:** InfinityOps ISAF `GOV-001`, 2026-09-02 (`D-024`). The source dataset promised
+`tamper-evident audit trail` at line 885 and `Audit: immutable` at line 1948 — detection and
+prevention, 1063 lines apart, in a document read end-to-end more than once without the conflict
+being seen. Resolved by provenance, not by picking a word: the source had described two tiers and
+named each without noticing. Cross-ref: `[[PR-ACIS-FALSIFIABILITY-001]]`,
+`[[T-UNMEASURED-RENDERED-AS-FAILED-001]]`.
+
+---
+
 ## PR-MEASURE-BOTH-COSTS-001 — incrementality is an end-to-end cost property, not a local loop property
 
 **Process rule.** An operation that accepts a subset is not incremental until its FIXED
