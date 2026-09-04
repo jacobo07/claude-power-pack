@@ -939,6 +939,27 @@ def _main(argv: list) -> int:
             return 1
         print(json.dumps(got, indent=2, ensure_ascii=False))
         return 0
+    if argv[0] == "from-stop":
+        # The Stop hook has already filtered the transcript down to genuine
+        # Owner turns and written them to a JSON file. A file, not argv:
+        # correction text is arbitrary user prose and must never be parsed by
+        # a shell on the way here.
+        if len(argv) < 2:
+            print("from-stop requires a turns-json path", file=sys.stderr)
+            return 2
+        try:
+            turns = json.loads(Path(argv[1]).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"from-stop: unreadable turns file ({exc})", file=sys.stderr)
+            return 1
+        if not isinstance(turns, list):
+            print("from-stop: turns file must hold a JSON list", file=sys.stderr)
+            return 1
+        made = from_stop_hook(turns)
+        print(json.dumps({"drafts": len(made),
+                          "ids": [d.get("draft_id") for d in made]},
+                         ensure_ascii=False))
+        return 0
     if argv[0] == "promote":
         res = promote_patterns()
         print(json.dumps(res, indent=2, ensure_ascii=False))
