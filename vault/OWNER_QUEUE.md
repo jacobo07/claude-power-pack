@@ -933,6 +933,38 @@ function that decides which work gets picked. `BacklogItem.impact` is a bare
 rankings estate-wide (and `HR-BACKLOG-001..003` depend on them), so it is raised
 rather than folded into the ias_c2 commit. **Decision:** fix now, or schedule?
 
+### Owner-side registration — Owner-correction capture (2026-09-04, HR-001)
+
+`hooks/ceps_correction_stop.js` shipped with its gate (8/8) and was verified
+live end-to-end, but the agent may not write `~/.claude/hooks`. Two steps:
+
+1. Add it to `hooks/hook-dispatcher.js` `CHAIN_MAP['Stop-chain']`, alongside
+   `session_delta_stop.js`.
+2. Copy canonical → live. **Check the direction first**: LIVE has carried files
+   CANONICAL lacked before (`closer-guard.js`), and a blind copy deleted them.
+   `T-HOOK-DISPATCHER-DRIFT-001` cuts both ways.
+
+Until this lands, `from_stop_hook` still has no caller and `/ceps drafts` is
+permanently empty — an honest degraded state, not a broken one. Detail:
+`vault/specs/unhealed-knowledge-paths.md` §6.
+
+### 13 OPEN STOP #1s — the estate's actual bottleneck (2026-09-04)
+
+Surfaced, not acted on. `vault/plans/STOP_LEDGER.md` carries **28 STOP-bearing
+plans: 13 OPEN, 11 CONTRADICTED, 4 RESOLVED.** The OPEN set includes the
+UCR-CIF A/B/C coverage ruling that blocks its Phase 6, plus `upac`,
+`predictive-governance`, `intent-verified-done`, `seip-sprint2`,
+`egcc-expansion`, `efaif-expansion`, `uceimr-expansion`.
+
+A reality scan for a large memory-lifecycle brief on 2026-09-04 found the
+capability already owned (19 DO-NOT-BUILD rows in the APIR ledger; `UKR`,
+`KSF` and `ICAF` measured at **0** and deliberately shelved). What bounds this
+repo is not missing systems but **undelivered authority decisions**. One of
+these entries — `memory-audit-2026-08-09.md` — was measured this session as
+already half-shipped and is now witnessed in the plan itself.
+
+**Decision requested:** adjudicate the 13 in one pass, or nominate a subset.
+
 ### Carried, not done
 
 - **G1 carried debt: 14 named suites** in `vault/governance/predictive_gates_baseline.json`.

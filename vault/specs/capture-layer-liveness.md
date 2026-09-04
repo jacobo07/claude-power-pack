@@ -212,6 +212,28 @@ Per HR-001 the PP-internal half ships and the registration step is
 documented rather than performed. Until it lands, V-CAPTURE-02 and
 V-CAPTURE-06 prove the hook *would* handle those surfaces, not that it does.
 
+### D8 — CLOSED 2026-09-04, by a migration rather than the predicted edit
+
+The matcher never widened. The hook MOVED: it is now dispatched from
+`hooks/hook-dispatcher.js:302` inside the PostToolUse chain, and that chain's
+`settings.json` entry (lines 218-226) carries **no `matcher` key at all**, so
+it fires for every tool. The predicted one-line edit was overtaken.
+
+Observed live while auditing this on 2026-09-04: a failing **PowerShell**
+command recorded `ceps_5d28a90f4498a814`, subsystem `powershell:Get-ChildItem`.
+That is V-CAPTURE-02 satisfied on the real path, not the harness.
+
+Recorded because the entry above would otherwise keep an operator hunting for
+a `"matcher": "Bash"` string that is no longer there. A remediation note whose
+target has moved reads as outstanding work forever.
+
+### Correction — the `memory/sessions/` count above is stale
+
+The known-gap section states this repo holds **zero** `memory/sessions/session_*.md`.
+It holds at least one: `session_2026-05-21_1505.md`. The reasoning that
+followed from the count (the sentinel was input-starved, and `session_delta`
+is the producer that fixed it) still stands; the number does not.
+
 ## Correction — the gate's own false positive
 
 First live run of `capture_liveness.py` failed on 2 rejections that

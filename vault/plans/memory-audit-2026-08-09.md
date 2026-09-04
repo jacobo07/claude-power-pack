@@ -125,6 +125,26 @@ MEMORY.md, and fail when a sealed rule is unreachable. Same construction covers
 link integrity, so F1 and F2 both become non-silent. This applies
 PR-COVERAGE-BY-CONSTRUCTION-001 to the router itself.
 
+# Disposition — measured 2026-09-04, by a later session
+
+This plan still reads `status: STOP #1 — awaiting Owner decision`, and
+`vault/plans/STOP_LEDGER.md` therefore lists it OPEN. **R1 and R4 shipped.**
+
+- **R1 — done.** `MEMORY.md` carries the corrected `../../../skills/...` depth
+  prefix on its vault pointers; they resolve.
+- **R4 — done.** `tools/router_freshness_gate.py` exists and is registered in
+  `verify_spp` as the `memory-router-freshness` row, and MEMORY.md links it.
+
+The plan is not rewritten to match — a plan is a sealed record of what was
+believed when. This block is the witness the `status:` field has no producer
+for, which is exactly the transition `STOP_LEDGER` documents as missing. The
+ledger reads OPEN here through its known **family-token drift** false negative:
+no artifact carried the token `memory-audit`, so nothing witnessed the outcome.
+This block carries it.
+
+F5 (2 orphan memory files) and F6 (119 unreferenced plans, and its own
+instrument caveat) were **not** re-measured and remain open.
+
 # Rules to seal on completion
 
 - HR-MEMORY-IS-ROUTER-001 — MEMORY.md indexes, it does not store.
