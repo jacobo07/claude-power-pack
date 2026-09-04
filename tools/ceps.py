@@ -800,6 +800,104 @@ def promote_patterns(events_path: Optional[Path] = None,
             "signatures": [r["pattern_signature"] for r in records]}
 
 
+# Resolved-draft directories are derived from DRAFTS_DIR at CALL time, never
+# bound at import. The suites here redirect ceps.DRAFTS_DIR into a tmpdir to
+# stay hermetic; a module-level constant would keep pointing at the real vault
+# and a "hermetic" test would quietly write into it.
+def _confirmed_dir() -> Path:
+    return DRAFTS_DIR / "confirmed"
+
+
+def _dismissed_dir() -> Path:
+    return DRAFTS_DIR / "dismissed"
+
+
+def list_drafts() -> list:
+    """Correction drafts awaiting an Owner verdict.
+
+    from_stop_hook() writes LOW-confidence drafts rather than events, because
+    an Owner saying "no, that's wrong" is a signal about the agent, not yet a
+    diagnosed defect. The draft is deliberately not an event until a human
+    says what it was. This is the read side of that pair; without it the
+    drafts were unreachable and the producer had nothing to write to.
+    """
+    try:
+        if not DRAFTS_DIR.is_dir():
+            return []
+    except OSError:
+        return []
+    out = []
+    for path in sorted(DRAFTS_DIR.glob("*.json")):
+        try:
+            out.append(json.loads(path.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError, ValueError):
+            continue  # a corrupt draft must not blind the reader to the rest
+    return out
+
+
+def _move_draft(draft_id: str, dest_dir: Path, **stamp) -> Optional[dict]:
+    """Move one draft out of the pending set, stamping how it was resolved."""
+    src = DRAFTS_DIR / f"{draft_id}.json"
+    if not src.exists():
+        return None
+    try:
+        draft = json.loads(src.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+    draft.update(stamp)
+    draft["needs_confirmation"] = False
+    try:
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        _atomic_write(dest_dir / f"{draft_id}.json",
+                      json.dumps(draft, indent=2, ensure_ascii=False) + "\n")
+        src.unlink()
+    except OSError as exc:
+        _log(f"_move_draft ERROR {type(exc).__name__}: {exc}")
+        return None
+    return draft
+
+
+def confirm_draft(draft_id: str, category: str = "spec-violation",
+                  subsystem: str = "owner-correction") -> Optional[dict]:
+    """Promote a correction draft into a real CEPS event.
+
+    The Owner supplies the category, because only they know what the
+    correction was ABOUT; the draft only knows that one happened.
+    """
+    src = DRAFTS_DIR / f"{draft_id}.json"
+    if not src.exists():
+        return None
+    try:
+        draft = json.loads(src.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+    event = record_error(
+        category=category,
+        subsystem=subsystem,
+        root_cause=str(draft.get("snippet", ""))[:600],
+        confidence="high",           # a human confirmed it; that IS the evidence
+        evidence_path=str(src),
+    )
+    if not event:
+        return None                  # rejection already went to the ledger
+    # The event's identity field is `id` (see record_error's return). Reading a
+    # plausible-but-absent `event_id` stamps None and silently loses the link
+    # from the draft to the event it became -- caught by the gate below only
+    # because the gate asserted on the identity, not on truthiness.
+    _move_draft(draft_id, _confirmed_dir(), confirmed_event_id=event.get("id"))
+    return event
+
+
+def dismiss_draft(draft_id: str, reason: str = "") -> Optional[dict]:
+    """Retire a draft the Owner judges to be noise.
+
+    A pending set with no terminal transition is the trap this estate already
+    sealed once: a status field nobody can move is decoration, and the queue
+    grows forever while reading as healthy. Dismissal is that transition.
+    """
+    return _move_draft(draft_id, _dismissed_dir(), dismissed_reason=str(reason))
+
+
 def _main(argv: list) -> int:
     if not argv:
         print("usage: ceps.py record <category> <subsystem> <root_cause...>",
@@ -808,7 +906,39 @@ def _main(argv: list) -> int:
         print("       ceps.py from-verify <path-to-verify-stdout>",
               file=sys.stderr)
         print("       ceps.py promote", file=sys.stderr)
+        print("       ceps.py drafts", file=sys.stderr)
+        print("       ceps.py confirm <draft-id> [category] [subsystem]",
+              file=sys.stderr)
+        print("       ceps.py dismiss <draft-id> [reason...]", file=sys.stderr)
         return 2
+    if argv[0] == "drafts":
+        pending = list_drafts()
+        print(json.dumps({"pending": pending, "count": len(pending)},
+                         indent=2, ensure_ascii=False))
+        return 0
+    if argv[0] == "confirm":
+        if len(argv) < 2:
+            print("confirm requires a draft-id", file=sys.stderr)
+            return 2
+        ev = confirm_draft(*argv[1:4])
+        if not ev:
+            print(f"confirm failed for {argv[1]} "
+                  f"(unknown draft, or rejected -- see vault/ceps/rejections.jsonl)",
+                  file=sys.stderr)
+            return 1
+        print(json.dumps(ev, indent=2, ensure_ascii=False))
+        return 0
+    if argv[0] == "dismiss":
+        if len(argv) < 2:
+            print("dismiss requires a draft-id", file=sys.stderr)
+            return 2
+        got = dismiss_draft(argv[1], " ".join(argv[2:]))
+        if not got:
+            print(f"dismiss failed for {argv[1]} (unknown draft)",
+                  file=sys.stderr)
+            return 1
+        print(json.dumps(got, indent=2, ensure_ascii=False))
+        return 0
     if argv[0] == "promote":
         res = promote_patterns()
         print(json.dumps(res, indent=2, ensure_ascii=False))

@@ -265,6 +265,14 @@ def main() -> int:
         ("ceps-admission",
          [PY, str(PP / "tools" / "test_ceps_admission.py")],
          60),
+        # The Owner-correction loop, end to end. from_stop_hook() had no
+        # caller and its documented reader (/ceps-confirm) did not exist, so
+        # the drafts directory had never been created -- a caller-less writer
+        # feeding a reader-less sink, which no liveness gate could see because
+        # there were no fires to compare records against.
+        ("ceps-corrections",
+         [PY, str(PP / "tools" / "test_ceps_corrections.py")],
+         45),
         # Every stored event must carry a current admission verdict, so a
         # rule change cannot leave history silently unjudged.
         ("ceps-backfill",
