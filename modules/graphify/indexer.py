@@ -29,6 +29,12 @@ import global_store as gs  # noqa: E402
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _SLOTS = _REPO_ROOT / "vault" / "terminal_slots.json"
 
+# Writeback verdicts that leave a repo's graph BEHIND its durable sources.
+# Both are repairable from source, so neither may be terminal. Kept as a named
+# set rather than an inline literal so a future verdict has one place to be
+# classified, instead of silently defaulting to "not debt" the way "error" did.
+_UNHEALED = ("deferred", "error")
+
 # Ephemeral / non-project paths in terminal_slots (temp dirs + transient
 # git worktrees the churn creates — not durable repos worth a global graph).
 _EPHEMERAL = re.compile(
@@ -95,7 +101,13 @@ def active_repos(slots_path: Path = _SLOTS, since_days: int = 7,
 
 
 def deferred_repos(log_path=None) -> list:
-    """Repos the GK-08 Stop hook skipped for size and never came back to.
+    """Repos whose graph trails their sources and that nothing came back to.
+
+    Two verdicts qualify (`_UNHEALED`): "deferred", skipped for size, and
+    "error", where the writeback actually raised. Only the first was collected
+    for as long as this function existed, and the second is the worse one: a
+    deferral at least advertised itself as temporary, while an exception was
+    silent and no path in the estate healed it.
 
     session_writeback caps a Stop-time index at MAX_MD_FILES and emits
     verdict="deferred" with hint "refresh via 'indexer --all'". That hint named
@@ -140,7 +152,17 @@ def deferred_repos(log_path=None) -> list:
 
     out = []
     for repo, row in latest.items():
-        if row.get("verdict") != "deferred":
+        # "error" is unhealed debt too, and it is the worse of the two.
+        # 442f3bf made "deferred" recoverable and left "error" terminal: a
+        # writeback that actually raised was filtered out of the debt set right
+        # here, so --repair never reached it and no other path did either. A
+        # size-deferral was at least advertised as temporary; an exception was
+        # silent. That made a hook fault the one permanent knowledge-loss path
+        # in the capture layer, which is exactly the dependency a Stop hook is
+        # not allowed to carry. Both verdicts now describe a repo whose graph
+        # is behind its durable sources, which is the only thing --repair needs
+        # to know.
+        if row.get("verdict") not in _UNHEALED:
             continue
         if _EPHEMERAL.search(repo.replace("\\", "/")):
             continue
@@ -155,6 +177,7 @@ def deferred_repos(log_path=None) -> list:
         if str(rec.get("indexed_at", "")) > deferred_at and rec.get("node_count"):
             continue
         out.append({"repo": repo, "reason": row.get("reason", ""),
+                    "verdict": str(row.get("verdict", "")),
                     "deferred_at": deferred_at,
                     "nodes_in_store": rec.get("node_count", 0)})
     return sorted(out, key=lambda r: r["repo"].lower())
@@ -172,7 +195,9 @@ def main():
     ap.add_argument("--summary", action="store_true")
     ap.add_argument("--list", action="store_true", help="list discovered active repos")
     ap.add_argument("--deferred", action="store_true",
-                    help="name the repos the Stop hook deferred and never refreshed "
+                    help="name the repos whose graph trails their sources -- the "
+                         "Stop hook either deferred them for size or raised on "
+                         "them -- and that were never refreshed "
                          "(exit 1 when the debt set is non-empty)")
     ap.add_argument("--repair", action="store_true",
                     help="with --deferred: full-index every deferred repo (uncapped; "

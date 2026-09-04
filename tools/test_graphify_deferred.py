@@ -91,6 +91,53 @@ def main() -> int:
             _fail("V-GRAPHIFY-DEFERRED-DISCOVERS",
                   f"expected only {stuck!s}, got {names}")
 
+        # ---- V-GRAPHIFY-UNHEALED-ERROR -----------------------------------
+        # The gap this gate exists for: session_writeback emits verdict="error"
+        # when the index actually RAISED, and deferred_repos() collected only
+        # "deferred", so an errored repo was filtered out of the debt set and
+        # --repair could never reach it. Nothing else healed it either, which
+        # made a hook fault the one permanent knowledge-loss path in the
+        # capture layer. This assertion fails against the pre-fix code.
+        _write_log(log, [
+            {"verdict": "indexed", "repo": str(stuck), "at": "2026-08-01T00:00:00Z"},
+            {"verdict": "error", "repo": str(stuck), "at": "2026-08-20T00:00:00Z",
+             "reason": "MemoryError during build_nodes"},
+            {"verdict": "indexed", "repo": str(fixed), "at": "2026-08-20T00:00:00Z"},
+        ])
+        debt = indexer.deferred_repos(log)
+        if [d["repo"] for d in debt] == [str(stuck)]:
+            _ok("V-GRAPHIFY-UNHEALED-ERROR",
+                "a raised writeback is debt, not a terminal state")
+        else:
+            _fail("V-GRAPHIFY-UNHEALED-ERROR",
+                  f"an errored repo was not collected as debt: "
+                  f"{[d['repo'] for d in debt]}")
+
+        # ---- V-GRAPHIFY-UNHEALED-VERDICT-NAMED ---------------------------
+        # --repair treats both alike, but an operator must be able to tell a
+        # size deferral from a crash: they have different causes and only one
+        # of them is expected. An unlabelled debt row hides that difference.
+        if debt and debt[0].get("verdict") == "error":
+            _ok("V-GRAPHIFY-UNHEALED-VERDICT-NAMED",
+                "debt row carries its originating verdict")
+        else:
+            _fail("V-GRAPHIFY-UNHEALED-VERDICT-NAMED",
+                  f"debt row lost its verdict: {debt[:1]}")
+
+        # ---- V-GRAPHIFY-UNHEALED-NEGATIVE-CONTROL ------------------------
+        # The widening must not swallow every verdict. A successful index is
+        # never debt -- without this, "collect everything" would pass the two
+        # gates above while destroying the gate's meaning.
+        _write_log(log, [
+            {"verdict": "indexed", "repo": str(stuck), "at": "2026-08-20T00:00:00Z"},
+        ])
+        if indexer.deferred_repos(log) == []:
+            _ok("V-GRAPHIFY-UNHEALED-NEGATIVE-CONTROL",
+                "a healthy verdict stays out of the debt set")
+        else:
+            _fail("V-GRAPHIFY-UNHEALED-NEGATIVE-CONTROL",
+                  "the widened filter swallowed a successful index")
+
         # ---- V-GRAPHIFY-DEFERRED-LATEST-WINS -----------------------------
         # A deferral FOLLOWED by a successful index is not debt: the log is
         # append-only, so only the last verdict per repo may speak.
