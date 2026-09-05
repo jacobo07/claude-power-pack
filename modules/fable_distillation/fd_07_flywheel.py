@@ -95,14 +95,34 @@ def _state_dir(state_dir=None) -> Path:
         Path.home() / ".claude" / "state" / "fable_distillation")
 
 
+def _key(repo: str) -> str:
+    """The repository's canonical ledger key.
+
+    Was the slug of whatever directory the session happened to be sitting in, so
+    a `cd` into a subdirectory gave one repository a second identity with its own
+    empty ledger -- and the reporter then truthfully answered zero for a key that
+    nothing had ever been written under.
+
+    Byte-identical to the old encoding for a repository ROOT, so no ledger on
+    disk is renamed and nothing is migrated. Anything that is not an existing
+    absolute path is returned unchanged.
+    """
+    try:
+        from modules.repo_identity import repo_key
+        return repo_key(repo)
+    except Exception:
+        # Fail open to the historical encoding. A flywheel that stopped
+        # depositing because an identity helper would not import would lose
+        # findings in silence, which is worse than filing them the old way.
+        return re.sub(r"[^a-zA-Z0-9]", "-", repo or "")
+
+
 def _deposits_path(repo: str, state_dir=None) -> Path:
-    enc = re.sub(r"[^a-zA-Z0-9]", "-", repo or "")
-    return _state_dir(state_dir) / f"deposits_{enc}.jsonl"
+    return _state_dir(state_dir) / f"deposits_{_key(repo)}.jsonl"
 
 
 def _ukdl_candidates_path(repo: str, state_dir=None) -> Path:
-    enc = re.sub(r"[^a-zA-Z0-9]", "-", repo or "")
-    return _state_dir(state_dir) / f"ukdl_candidates_{enc}.jsonl"
+    return _state_dir(state_dir) / f"ukdl_candidates_{_key(repo)}.jsonl"
 
 
 # --------------------------------------------------------------------------- #

@@ -198,11 +198,29 @@ def fdi_advisory(repo: str, *, state_dir=None) -> str | None:
     try:
         if _is_pp_repo(repo):
             return None
-        dep_path = _fd_state_dir(state_dir) / f"deposits_{_slug(repo)}.jsonl"
-        n = len(_read_deposits(dep_path)) if dep_path.is_file() else 0
+
+        # Counted across the repository's canonical ledger AND any historical
+        # keys, rather than under the slug of whatever directory this session
+        # happens to be in.
+        #
+        # Every advisory this function ever printed was truthful about the key it
+        # was asked about. The defect was the question: a session that had moved
+        # into a subdirectory asked about a key nothing had ever been written
+        # under, and was correctly told zero. See INC-025 -- and note that the
+        # earlier diagnosis, that two components derived the key differently, was
+        # falsified by reading them.
+        subject = repo
+        try:
+            from modules.repo_identity import canonical_repo, ledger_paths
+            paths = ledger_paths(_fd_state_dir(state_dir), "deposits", repo)
+            subject = canonical_repo(repo)
+        except Exception:
+            paths = [_fd_state_dir(state_dir) / f"deposits_{_slug(repo)}.jsonl"]
+
+        n = sum(len(_read_deposits(p)) for p in paths if p.is_file())
         if n > 0:
             return None
-        name = Path(repo).name or repo
+        name = Path(subject).name or subject
         return (f"FD flywheel: 0 portable deposits in {name} (FDI 0). This frontier "
                 f"spend left no reusable asset -- declare PP_SESSION_OBJECTIVE (or a "
                 f".pp_frontier.json) so the session mines a delta worth keeping.")
