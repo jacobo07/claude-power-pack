@@ -14,6 +14,16 @@ Invoke `cpp creative` (Creative Compilation Framework, `modules/ccf/`) when ANY 
 Activate: `python -m modules.ccf.cli init <project> --brief <brief.txt>`, then `generate`/`select`/`package`.
 Produces: `config.json` + `spec.json`, a trademark-collision-scanned prompt per concept, and (on `package`) a sealed brand-kit PDF. Every WARN/BLOCK verdict and provider failure is fed into `vault/knowledge_base/ccf/` — do not hand-write entries there; only the CLI's real call path should ever produce them (T-CCF-BUILT-NOT-ACTIVATED-001).
 
+## Motion Promo Activation Criteria (added 2026-09-05)
+Invoke the `motion-promo` skill (`skills/motion-promo/`, mirrored live at `~/.claude/skills/motion-promo/`) when ANY of these hold, objectively evaluable, no "when appropriate" judgment call:
+- Owner asks for a promo, launch film, product video, teaser, trailer, sizzle, or animated ad.
+- Owner hands over a script or a product URL and asks for a video from it.
+- A project's scope includes a motion piece for a landing page, store listing, or social post.
+Do NOT wait to be named — the Owner is told never to name the skill (source guide, "Just talk").
+Activate: `scripts/new_film.py` (beat sheet -> html) -> `scripts/contact_sheet.py` (composition check) -> `scripts/render_film.py` (H.264). Never hand-write the engine and never paste it into a reply; `new_film.py` swaps only the FILM block.
+Two things the Owner must supply and the skill cannot infer: **duration** and **aspect ratio**. Everything else is the skill's job, including the beat sheet.
+DONE for a motion-promo build = `python tools/test_motion_promo.py` exit 0 (11 V-MOTION-* gates), AND the contact sheet was looked at before committing to a full render. Toolchain is pip-vendored (playwright Chromium + imageio-ffmpeg libx264) — no system ffmpeg; preflight with `scripts/check_toolchain.py`.
+
 ## Experience Contract — baseline for any interactive surface (CDIO-07, added 2026-08-24)
 A surface is judged at rest by CDIO-01..06. How it BEHAVES — on touch, and while it waits —
 is declared, not settled by whoever writes the last component. Baseline, inherited by every

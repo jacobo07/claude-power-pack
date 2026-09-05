@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motion Promo</title>
+<style>
+  html,body{margin:0;padding:0;background:#000;color:#e8e8ef;
+    font:13px/1.4 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;overflow:hidden}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  canvas#film{display:block;max-width:100vw;max-height:100vh;background:#000}
+  /* Capture mode: exact 1:1 pixels, no chrome, no scaling. */
+  body.capture{overflow:hidden}
+  body.capture #stage{position:static;display:block}
+  body.capture canvas#film{max-width:none;max-height:none}
+  body.capture #ui{display:none}
+  #ui{position:fixed;left:0;right:0;bottom:0;padding:10px 14px 12px;
+    background:linear-gradient(to top,rgba(0,0,0,.92),rgba(0,0,0,0));
+    display:flex;flex-direction:column;gap:8px;user-select:none}
+  #track{position:relative;height:22px;cursor:pointer}
+  #rail{position:absolute;top:9px;left:0;right:0;height:4px;border-radius:2px;background:#1e1e26}
+  #fill{position:absolute;top:9px;left:0;height:4px;border-radius:2px;background:#7cf;pointer-events:none}
+  #head{position:absolute;top:4px;width:2px;height:14px;background:#fff;pointer-events:none;
+    box-shadow:0 0 8px #fff}
+  .mark{position:absolute;top:6px;width:1px;height:10px;background:#4a4a58;pointer-events:none}
+  #bar{display:flex;align-items:center;gap:12px;font-variant-numeric:tabular-nums}
+  #bar button{background:#15151c;color:#e8e8ef;border:1px solid #2a2a34;border-radius:6px;
+    padding:5px 11px;cursor:pointer;font:inherit}
+  #bar button:hover{background:#1e1e28}
+  #bar .sp{flex:1}
+  #bar .dim{color:#7a7a88}
+  #beatname{color:#9fdcff}
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="film"></canvas></div>
+
+<div id="ui">
+  <div id="track"><div id="rail"></div><div id="fill"></div><div id="head"></div></div>
+  <div id="bar">
+    <button id="play">Play</button>
+    <span class="dim">frame</span><span id="fnum">0</span><span class="dim">/</span><span id="ftot">0</span>
+    <span class="dim">·</span><span id="tsec">0.00s</span>
+    <span class="dim">·</span><span id="beatname">—</span>
+    <span class="sp"></span>
+    <span class="dim">← → step · shift+← → 10 · space play</span>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   FILM  —  everything you would want to change lives in this one block.
+   Plain English. Edit it, save, reload. Nothing below needs touching.
+   ═══════════════════════════════════════════════════════════════════════
+
+   aspect   "9:16" (1080x1920)  |  "1:1" (1080x1080)  |  "16:9" (1920x1080)
+   brand    hero  = your main colour. The whole neon spectrum is built
+                   around it, cool at the open, warm at the close.
+            accent= the closing warm note. Leave null to derive it.
+   beats    4-7 of them. Each is one idea, on screen, big.
+            shot  = which of the ten looks (see shot list at the bottom)
+            dur   = seconds this beat is on screen
+            text  = the words. Keep to five words where you can.
+*/
+const FILM = {
+  title:  "Meridian",
+  aspect: "9:16",
+  fps:    30,
+  brand:  { hero: "#00D4FF", accent: null },
+
+  beats: [
+    { shot:"grid-sweep",   dur:2.6, text:"Meetings nobody hates",  sub:"MERIDIAN" },
+    { shot:"type-line",    dur:3.2, text:"Reads every calendar" },
+    { shot:"number-slam",  dur:2.8, value:"40%", text:"fewer meetings" },
+    { shot:"glass-tiles",  dur:3.0, text:"Works where you work",
+      items:[{glyph:"clock"},{glyph:"check"},{glyph:"bolt"},{glyph:"lock"}] },
+    { shot:"ring-pulse",   dur:2.4, text:"Free under ten people" },
+    { shot:"logo-lockup",  dur:3.0, text:"MERIDIAN", sub:"meridian.app" }
+  ]
+};
+/* ═══════════════════════ END FILM ═══════════════════════════════════ */
+</script>
+
+<script>
+"use strict";
+/* ─────────────────────────────────────────────────────────────────────
+   Motion Promo engine.
+   Deterministic by construction: every pixel is a pure function of the
+   frame index. No accumulated state, no unseeded randomness, no rAF
+   drift — which is what lets a headless browser capture it frame-exact
+   and lets you scrub it by hand and see the same picture.
+   ───────────────────────────────────────────────────────────────────── */
+
+/* ---------- colour: OKLCH <-> sRGB (Ottosson) ---------------------- */
+function oklchToRgb(L, C, Hdeg){
+  const h = Hdeg * Math.PI / 180;
+  const a = C * Math.cos(h), b = C * Math.sin(h);
+  const l_ = L + 0.3963377774*a + 0.2158037573*b;
+  const m_ = L - 0.1055613458*a - 0.0638541728*b;
+  const s_ = L - 0.0894841775*a - 1.2914855480*b;
+  const l = l_*l_*l_, m = m_*m_*m_, s = s_*s_*s_;
+  const R =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
+  const G = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
+  const B = -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
+  const enc = x => {
+    const v = x <= 0.0031308 ? 12.92*x : 1.055*Math.pow(Math.max(x,0), 1/2.4) - 0.055;
+    return Math.round(Math.min(1, Math.max(0, v)) * 255);
+  };
+  return [enc(R), enc(G), enc(B)];
+}
+function rgbToOklch(r, g, b){
+  const dec = x => { x /= 255; return x <= 0.04045 ? x/12.92 : Math.pow((x+0.055)/1.055, 2.4); };
+  const R = dec(r), G = dec(g), B = dec(b);
+  const l = Math.cbrt(0.4122214708*R + 0.5363325363*G + 0.0514459929*B);
+  const m = Math.cbrt(0.2119034982*R + 0.6806995451*G + 0.1073969566*B);
+  const s = Math.cbrt(0.0883024619*R + 0.2817188376*G + 0.6299787005*B);
+  const L = 0.2104542553*l + 0.7936177850*m - 0.0040720468*s;
+  const A = 1.9779984951*l - 2.4285922050*m + 0.4505937099*s;
+  const Bb= 0.0259040371*l + 0.7827717662*m - 0.8086757660*s;
+  return { L, C: Math.hypot(A, Bb), H: (Math.atan2(Bb, A)*180/Math.PI + 360) % 360 };
+}
+function hexToRgb(hex){
+  const s = String(hex||"").replace("#","").trim();
+  const f = s.length === 3 ? s.split("").map(c => c+c).join("") : s.slice(0,6).padEnd(6,"0");
+  return [parseInt(f.slice(0,2),16), parseInt(f.slice(2,4),16), parseInt(f.slice(4,6),16)];
+}
+/* The house spectrum, in measured OKLCH hue degrees:
+     195 cyan · 264 blue · 290 violet · 323 purple-magenta · 349 magenta
+   The film travels this band from cool to warm. Your brand colour is not
+   pasted on top of it — it IS a point on the band, and the band rotates
+   so that your colour lands on it. A cyan brand opens the film; a violet
+   brand owns the middle; a magenta brand closes it. */
+const BAND_LO = 195, BAND_HI = 350, BAND_SPAN = BAND_HI - BAND_LO;
+function makePalette(heroHex, accentHex){
+  const H0 = rgbToOklch(...hexToRgb(heroHex || "#00D4FF")).H;
+  let lo;
+  if (H0 >= BAND_LO && H0 <= BAND_HI) lo = BAND_LO;          // already on the band
+  else if (H0 > 120 && H0 < BAND_LO)  lo = H0;               // green side: brand opens
+  else lo = (H0 < 120 ? H0 + 360 : H0) - BAND_SPAN;          // warm side: brand closes
+  const arc = p => lo + BAND_SPAN * clamp01(p);
+  const accentH = accentHex ? rgbToOklch(...hexToRgb(accentHex)).H : arc(1);
+  return {
+    heroH: H0,
+    accentH,
+    hueAt: arc,
+    css(H, L, C, a){
+      const [r,g,b] = oklchToRgb(L, C, H);
+      return a === undefined ? `rgb(${r},${g},${b})` : `rgba(${r},${g},${b},${a})`;
+    }
+  };
+}
+
+/* ---------- easing ------------------------------------------------- */
+const E = {
+  linear:  t => t,
+  outQuad: t => 1 - (1-t)*(1-t),
+  outCubic:t => 1 - Math.pow(1-t, 3),
+  outQuint:t => 1 - Math.pow(1-t, 5),
+  outExpo: t => t >= 1 ? 1 : 1 - Math.pow(2, -10*t),
+  outBack: t => { const c = 1.70158; return 1 + (c+1)*Math.pow(t-1,3) + c*Math.pow(t-1,2); },
+  inOutCubic: t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2
+};
+const clamp01 = t => t < 0 ? 0 : t > 1 ? 1 : t;
+const lerp = (a,b,t) => a + (b-a)*t;
+/* window(t, from, to) -> 0..1 progress across a sub-interval */
+const win = (t, from, to) => clamp01((t - from) / Math.max(1e-6, to - from));
+
+/* ---------- deterministic RNG (mulberry32) ------------------------- */
+function rngFrom(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s){
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+/* ---------- stage -------------------------------------------------- */
+const SIZES = { "9:16":[1080,1920], "1:1":[1080,1080], "16:9":[1920,1080] };
+const [W, H] = SIZES[FILM.aspect] || SIZES["9:16"];
+const FPS = FILM.fps || 30;
+const DUR = FILM.beats.reduce((s,b) => s + (b.dur || 0), 0);
+const FRAMES = Math.max(1, Math.round(DUR * FPS));
+const PAL = makePalette(FILM.brand && FILM.brand.hero, FILM.brand && FILM.brand.accent);
+const FONT = 'ui-sans-serif,-apple-system,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif';
+
+const main = document.getElementById("film");
+main.width = W; main.height = H;
+const mctx = main.getContext("2d", { alpha:false });
+
+function offscreen(w, h){
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  return c;
+}
+const scene  = offscreen(W, H);
+const sctx   = scene.getContext("2d");
+const BLOOM_DIV = 4;
+const bloomA = offscreen(Math.ceil(W/BLOOM_DIV), Math.ceil(H/BLOOM_DIV));
+const bactx  = bloomA.getContext("2d");
+
+/* grain tile — built once, deterministic, panned per frame */
+const GRAIN = (function(){
+  const n = 128, c = offscreen(n, n), x = c.getContext("2d");
+  const img = x.createImageData(n, n), r = rngFrom(0x51A17E);
+  for (let i = 0; i < n*n; i++){
+    const v = 118 + Math.floor(r() * 74);
+    img.data[i*4] = v; img.data[i*4+1] = v; img.data[i*4+2] = v; img.data[i*4+3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  return c;
+})();
+
+/* ---------- unit system -------------------------------------------
+   u = 1% of the short edge. Every size below is written in u, so the
+   same beat composes correctly at 9:16, 1:1 and 16:9 without edits.  */
+const U = Math.min(W, H) / 100;
+const S = { w:W, h:H, cx:W/2, cy:H/2, u:U, safe: W * 0.84 };
+
+/* ---------- text helpers ------------------------------------------ */
+function setFont(ctx, weight, px, tracking){
+  ctx.font = `${weight} ${px}px ${FONT}`;
+  if ("letterSpacing" in ctx) ctx.letterSpacing = `${tracking || 0}px`;
+}
+/* Break into lines of at most `maxWords`, then shrink to fit `maxW`. */
+function layout(ctx, text, weight, startPx, maxW, maxWords, tracking){
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  for (let i = 0; i < words.length; i += maxWords) lines.push(words.slice(i, i+maxWords).join(" "));
+  let px = startPx;
+  for (let guard = 0; guard < 40; guard++){
+    setFont(ctx, weight, px, tracking);
+    const widest = lines.reduce((m,l) => Math.max(m, ctx.measureText(l).width), 0);
+    if (widest <= maxW || px <= 10) break;
+    px *= Math.max(0.86, maxW / widest);
+  }
+  setFont(ctx, weight, px, tracking);
+  return { lines, px };
+}
+/* Draw text as light: a wide soft halo, then the crisp glyphs. */
+function glowText(ctx, str, x, y, hue, opts){
+  const o = opts || {};
+  const a = o.alpha === undefined ? 1 : o.alpha;
+  const spread = o.spread === undefined ? 1 : o.spread;
+  ctx.save();
+  ctx.textAlign = o.align || "center";
+  ctx.textBaseline = o.baseline || "middle";
+  ctx.globalCompositeOperation = "lighter";
+  /* wide halo — the light coming off the letters */
+  ctx.shadowColor = PAL.css(hue, 0.72, 0.20, 1);
+  ctx.shadowBlur = 26 * U * 0.34 * spread;
+  ctx.fillStyle = PAL.css(hue, 0.58, 0.17, 0.40 * a);
+  ctx.fillText(str, x, y);
+  /* tight halo — the neon-tube edge */
+  ctx.shadowBlur = 8 * U * 0.34 * spread;
+  ctx.fillStyle = PAL.css(hue, 0.66, 0.18, 0.30 * a);
+  ctx.fillText(str, x, y);
+  /* core — NO blur. Glyphs stay crisp however hot the halo runs.
+     Blurring this layer is what turns a wordmark into a white splat. */
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = "rgba(0,0,0,0)";
+  ctx.fillStyle = o.core || `rgba(255,255,255,${0.92*a})`;
+  ctx.fillText(str, x, y);
+  ctx.restore();
+}
+/* A hairline that draws itself in. */
+function rule(ctx, cx, y, halfW, hue, p, alpha){
+  const w = halfW * E.outExpo(clamp01(p));
+  if (w <= 0.5) return;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createLinearGradient(cx-w, 0, cx+w, 0);
+  g.addColorStop(0,   PAL.css(hue, 0.70, 0.18, 0));
+  g.addColorStop(0.5, PAL.css(hue, 0.86, 0.19, alpha === undefined ? 0.9 : alpha));
+  g.addColorStop(1,   PAL.css(hue, 0.70, 0.18, 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(cx-w, y, w*2, Math.max(1, U*0.16));
+  ctx.restore();
+}
+/* Additive radial wash — the "light behind the object". */
+function wash(ctx, x, y, r, hue, alpha, L, C){
+  if (r <= 0 || alpha <= 0) return;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0,    PAL.css(hue, L === undefined ? 0.80 : L, C === undefined ? 0.19 : C, alpha));
+  g.addColorStop(0.45, PAL.css(hue, 0.66, 0.18, alpha*0.34));
+  g.addColorStop(1,    PAL.css(hue, 0.55, 0.16, 0));
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+/* Dark matte glass: almost black, edge-lit only. */
+function glassPanel(ctx, x, y, w, h, r, hue, edge){
+  ctx.save();
+  const p = new Path2D();
+  const rr = Math.min(r, w/2, h/2);
+  p.moveTo(x+rr, y);
+  p.arcTo(x+w, y,   x+w, y+h, rr);
+  p.arcTo(x+w, y+h, x,   y+h, rr);
+  p.arcTo(x,   y+h, x,   y,   rr);
+  p.arcTo(x,   y,   x+w, y,   rr);
+  p.closePath();
+  const fill = ctx.createLinearGradient(x, y, x, y+h);
+  fill.addColorStop(0, "rgba(255,255,255,0.055)");
+  fill.addColorStop(1, "rgba(255,255,255,0.012)");
+  ctx.fillStyle = fill; ctx.fill(p);
+  ctx.lineWidth = Math.max(1, U*0.13);
+  ctx.strokeStyle = PAL.css(hue, 0.80, 0.17, 0.30 + 0.55*(edge||0));
+  ctx.stroke(p);
+  ctx.restore();
+  return p;
+}
+/* Small stroked glyphs for the glass tiles. */
+function glyph(ctx, name, x, y, s, color, lw){
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  ctx.translate(x, y);
+  ctx.beginPath();
+  switch(name){
+    case "clock":
+      ctx.arc(0,0,s,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,-s*0.55); ctx.lineTo(0,0); ctx.lineTo(s*0.42,s*0.16); ctx.stroke();
+      break;
+    case "check":
+      ctx.moveTo(-s*0.72,0); ctx.lineTo(-s*0.18,s*0.56); ctx.lineTo(s*0.76,-s*0.62); ctx.stroke();
+      break;
+    case "bolt":
+      ctx.moveTo(s*0.22,-s); ctx.lineTo(-s*0.48,s*0.12); ctx.lineTo(s*0.04,s*0.12);
+      ctx.lineTo(-s*0.20,s); ctx.lineTo(s*0.52,-s*0.16); ctx.lineTo(0,-s*0.16); ctx.closePath(); ctx.stroke();
+      break;
+    case "lock":
+      ctx.rect(-s*0.66,-s*0.10,s*1.32,s*0.92); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,-s*0.14,s*0.42,Math.PI,0); ctx.stroke();
+      break;
+    case "spark":
+      for (let i=0;i<4;i++){ const a=i*Math.PI/4;
+        ctx.moveTo(-Math.cos(a)*s,-Math.sin(a)*s); ctx.lineTo(Math.cos(a)*s,Math.sin(a)*s); }
+      ctx.stroke();
+      break;
+    case "arrow":
+      ctx.moveTo(-s*0.8,0); ctx.lineTo(s*0.8,0); ctx.moveTo(s*0.22,-s*0.52);
+      ctx.lineTo(s*0.8,0); ctx.lineTo(s*0.22,s*0.52); ctx.stroke();
+      break;
+    case "grid":
+      ctx.rect(-s*0.85,-s*0.85,s*0.7,s*0.7); ctx.rect(s*0.15,-s*0.85,s*0.7,s*0.7);
+      ctx.rect(-s*0.85,s*0.15,s*0.7,s*0.7);  ctx.rect(s*0.15,s*0.15,s*0.7,s*0.7); ctx.stroke();
+      break;
+    case "globe":
+      ctx.arc(0,0,s,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0,0,s*0.44,s,0,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-s,0); ctx.lineTo(s,0); ctx.stroke();
+      break;
+    default:
+      ctx.arc(0,0,s*0.8,0,Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ═══════════════ SHOTS ═══════════════════════════════════════════════
+   Every shot is a pure function of (ctx, beat, p, hue, rng, dur).
+   p is 0..1 through the beat. One idea per shot, big and centred.      */
+const SHOTS = {};
+
+SHOTS["title"] = (ctx, b, p, hue, rng) => {
+  const inP = E.outExpo(win(p, 0, 0.30));
+  wash(ctx, S.cx, S.cy, S.u*62, hue, 0.30*inP);
+  const L = layout(ctx, b.text, 800, S.u*11.5, S.safe, 3, -S.u*0.06);
+  const lh = L.px * 1.14;
+  const top = S.cy - (L.lines.length-1)*lh/2 - (b.sub ? S.u*3 : 0);
+  L.lines.forEach((ln, i) => {
+    const q = E.outExpo(win(p, 0.04 + i*0.07, 0.34 + i*0.07));
+    glowText(ctx, ln, S.cx, top + i*lh + (1-q)*S.u*3.2, hue, { alpha:q });
+  });
+  rule(ctx, S.cx, top + L.lines.length*lh + S.u*1.2, S.safe*0.24, hue, win(p, 0.24, 0.62), 0.8);
+  if (b.sub){
+    const q = E.outCubic(win(p, 0.34, 0.66));
+    setFont(ctx, 500, S.u*3.1, S.u*0.5);
+    glowText(ctx, String(b.sub).toUpperCase(), S.cx,
+      top + L.lines.length*lh + S.u*5.4, hue, { alpha:0.72*q, spread:0.5 });
+  }
+};
+
+SHOTS["type-line"] = (ctx, b, p, hue) => {
+  const CPS = 26;                       // characters per second
+  const COOL = 0.20;                    // seconds a fresh character stays white
+  const txt = String(b.text || "");
+  const L = layout(ctx, txt, 700, S.u*9.6, S.safe, 4, 0);
+  const lh = L.px * 1.20;
+  const top = S.cy - (L.lines.length-1)*lh/2;
+  const tSec = p * b.dur;
+  const shown = tSec * CPS;
+  wash(ctx, S.cx, S.cy, S.u*52, hue, 0.20);
+
+  let consumed = 0;
+  ctx.save();
+  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  L.lines.forEach((ln, li) => {
+    setFont(ctx, 700, L.px, 0);
+    const wTot = ctx.measureText(ln).width;
+    let x = S.cx - wTot/2;
+    const y = top + li*lh;
+    for (let i = 0; i < ln.length; i++){
+      const idx = consumed + i;
+      if (idx > shown) break;
+      const age = (shown - idx) / CPS;               // seconds since typed
+      const heat = 1 - clamp01(age / COOL);          // 1 = just typed
+      const ch = ln[i];
+      const cw = ctx.measureText(ch).width;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      /* halo — swells while the character is hot, then settles */
+      ctx.shadowColor = PAL.css(hue, 0.78, 0.20, 1);
+      ctx.shadowBlur = (7 + 26*heat) * U * 0.34;
+      ctx.fillStyle = PAL.css(hue, 0.60, 0.17, 0.52);
+      ctx.fillText(ch, x, y);
+      /* core — unblurred, so the line stays readable at any glow level */
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = "rgba(0,0,0,0)";
+      ctx.fillStyle = PAL.css(hue, lerp(0.74, 0.99, heat), lerp(0.15, 0.02, heat), 1);
+      ctx.fillText(ch, x, y);
+      ctx.restore();
+      x += cw;
+    }
+    consumed += ln.length;
+  });
+  ctx.restore();
+
+  /* caret */
+  const caretOn = (Math.floor(tSec * 2.4) % 2) === 0 || shown < consumed;
+  if (caretOn && shown < consumed + 2){
+    const li = Math.min(L.lines.length-1, Math.max(0, L.lines.findIndex((ln, i) => {
+      const before = L.lines.slice(0, i).reduce((s,l)=>s+l.length, 0);
+      return shown <= before + ln.length;
+    })));
+    const line = L.lines[li] || "";
+    const before = L.lines.slice(0, li).reduce((s,l)=>s+l.length, 0);
+    setFont(ctx, 700, L.px, 0);
+    const full = ctx.measureText(line).width;
+    const upto = ctx.measureText(line.slice(0, Math.max(0, Math.floor(shown - before)))).width;
+    const x = S.cx - full/2 + upto;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = PAL.css(hue, 0.97, 0.04, 0.9);
+    ctx.shadowColor = PAL.css(hue, 0.80, 0.19, 1); ctx.shadowBlur = 14*U*0.34;
+    ctx.fillRect(x, top + li*lh - L.px*0.46, Math.max(2, U*0.24), L.px*0.92);
+    ctx.restore();
+  }
+};
+
+SHOTS["number-slam"] = (ctx, b, p, hue) => {
+  const hit = win(p, 0.02, 0.30);
+  const s = lerp(1.34, 1.0, E.outBack(hit));
+  const swell = Math.pow(1 - clamp01((p - 0.06) / 0.34), 2);
+  wash(ctx, S.cx, S.cy, S.u*(46 + 34*swell), hue, 0.26 + 0.46*swell);
+
+  /* the ring the number knocks out of the frame */
+  const rp = win(p, 0.06, 0.72);
+  if (rp > 0 && rp < 1){
+    const r = E.outQuint(rp) * S.u*74;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineWidth = Math.max(1, S.u*1.5*(1-rp));
+    ctx.strokeStyle = PAL.css(hue, 0.84, 0.18, 0.62*(1-rp));
+    ctx.beginPath(); ctx.arc(S.cx, S.cy, r, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.translate(S.cx, S.cy - S.u*2.5);
+  ctx.scale(s, s);
+  const v = String(b.value === undefined ? b.text : b.value);
+  const Lv = layout(ctx, v, 900, S.u*26, S.safe*0.94, 3, -S.u*0.5);
+  glowText(ctx, Lv.lines[0] || v, 0, 0, hue, { alpha: E.outQuad(win(p,0,0.14)), spread: 1 + swell*1.6 });
+  ctx.restore();
+
+  if (b.value !== undefined && b.text){
+    const q = E.outCubic(win(p, 0.22, 0.52));
+    const Ls = layout(ctx, b.text, 500, S.u*4.6, S.safe*0.8, 5, S.u*0.16);
+    glowText(ctx, Ls.lines.join(" "), S.cx, S.cy + S.u*13, hue,
+      { alpha: 0.85*q, spread: 0.5, core:`rgba(255,255,255,${0.8*q})` });
+  }
+};
+
+SHOTS["ring-pulse"] = (ctx, b, p, hue) => {
+  const RINGS = 3;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (let i = 0; i < RINGS; i++){
+    const rp = win(p, 0.02 + i*0.17, 0.72 + i*0.17);
+    if (rp <= 0 || rp >= 1) continue;
+    /* 56u keeps a whole ring inside a 9:16 frame at its widest; past
+       that the rings only ever read as stray arcs across the corners. */
+    const r = E.outQuint(rp) * S.u*56;
+    ctx.lineWidth = Math.max(1, S.u*1.7*(1-rp)*(1-rp));
+    ctx.strokeStyle = PAL.css(hue + i*7, 0.86, 0.19, 0.72*(1-rp));
+    ctx.beginPath(); ctx.arc(S.cx, S.cy, r, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
+  wash(ctx, S.cx, S.cy, S.u*40, hue, 0.34);
+  const q = E.outExpo(win(p, 0.10, 0.44));
+  const L = layout(ctx, b.text, 800, S.u*9.8, S.safe*0.82, 3, -S.u*0.05);
+  const lh = L.px*1.16;
+  L.lines.forEach((ln,i) =>
+    glowText(ctx, ln, S.cx, S.cy - (L.lines.length-1)*lh/2 + i*lh, hue, { alpha:q }));
+};
+
+SHOTS["glass-tiles"] = (ctx, b, p, hue) => {
+  const items = (b.items && b.items.length) ? b.items : [{glyph:"grid"},{glyph:"clock"},{glyph:"bolt"},{glyph:"check"}];
+  const n = items.length;
+  const cols = n <= 2 ? n : (n <= 4 ? 2 : 3);
+  const rows = Math.ceil(n / cols);
+  const tile = Math.min(S.safe / cols, S.u*26) * 0.86;
+  const gap = tile * 0.20;
+  const gw = cols*tile + (cols-1)*gap;
+  const gh = rows*tile + (rows-1)*gap;
+  const x0 = S.cx - gw/2;
+  const y0 = S.cy - gh/2 + (b.text ? S.u*3.5 : 0);
+
+  items.forEach((it, i) => {
+    const cx = x0 + (i % cols)*(tile+gap);
+    const cy = y0 + Math.floor(i / cols)*(tile+gap);
+    const a = win(p, 0.10 + i*0.10, 0.42 + i*0.10);
+    const e = E.outExpo(a);
+    if (e <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = e;
+    ctx.translate(cx + tile/2, cy + tile/2 + (1-e)*S.u*2.4);
+    glassPanel(ctx, -tile/2, -tile/2, tile, tile, tile*0.19, hue, e);
+    ctx.restore();
+    wash(ctx, cx+tile/2, cy+tile/2, tile*0.85, hue, 0.20*e, 0.74, 0.18);
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.shadowColor = PAL.css(hue, 0.80, 0.19, 1); ctx.shadowBlur = 12*U*0.34*e;
+    glyph(ctx, it.glyph, cx+tile/2, cy+tile/2, tile*0.20,
+      PAL.css(hue, lerp(0.72,0.97,e), lerp(0.17,0.05,e), 0.95*e), Math.max(1.5, S.u*0.34));
+    ctx.restore();
+  });
+
+  if (b.text){
+    const q = E.outCubic(win(p, 0.02, 0.30));
+    const L = layout(ctx, b.text, 700, S.u*7.2, S.safe*0.9, 4, -S.u*0.03);
+    glowText(ctx, L.lines.join("  "), S.cx, y0 - S.u*9.5, hue, { alpha:q, spread:0.7 });
+  }
+};
+
+SHOTS["shockwave"] = (ctx, b, p, hue) => {
+  const R = S.u*95;
+  /* Two waves, the second trailing. One wave alone leaves the middle of
+     the beat empty — it has already crossed the frame by halfway. */
+  [[0.02, 0.72, 1.0], [0.22, 0.98, 0.45]].forEach(([from, to, strength]) => {
+    const wv = win(p, from, to);
+    if (wv <= 0 || wv >= 1) return;
+    const r = E.outQuint(wv) * R;
+    const th = S.u*4.2 * (1 - wv) + S.u*0.6;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const g = ctx.createRadialGradient(S.cx, S.cy, Math.max(0, r-th), S.cx, S.cy, r+th);
+    g.addColorStop(0,   PAL.css(hue, 0.70, 0.18, 0));
+    g.addColorStop(0.5, PAL.css(hue, 0.92, 0.18, 0.85*(1-wv)*strength));
+    g.addColorStop(1,   PAL.css(hue, 0.70, 0.18, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(S.cx, S.cy, r+th, 0, Math.PI*2);
+    ctx.arc(S.cx, S.cy, Math.max(0, r-th), 0, Math.PI*2, true);
+    ctx.fill();
+    ctx.restore();
+  });
+  wash(ctx, S.cx, S.cy, S.u*36, hue, 0.30*(1 - 0.4*p));
+  const q = E.outExpo(win(p, 0.0, 0.22));
+  const L = layout(ctx, b.text, 850, S.u*10.5, S.safe*0.86, 3, -S.u*0.06);
+  const lh = L.px*1.14;
+  L.lines.forEach((ln,i) =>
+    glowText(ctx, ln, S.cx, S.cy - (L.lines.length-1)*lh/2 + i*lh, hue, { alpha:q, spread:1+0.6*(1-p) }));
+};
+
+SHOTS["orbit"] = (ctx, b, p, hue, rng) => {
+  const R = S.u*30;
+  const N = 7;
+  const oy = S.cy - S.u*7;                  // sit the system above centre
+  /* Dark matte glass sphere. The highlight stays under 5% — any brighter
+     and it stops reading as black glass and starts reading as a grey ball. */
+  ctx.save();
+  const sg = ctx.createRadialGradient(S.cx - R*0.4, oy - R*0.45, R*0.05, S.cx, oy, R);
+  sg.addColorStop(0,   "rgba(255,255,255,0.045)");
+  sg.addColorStop(0.6, "rgba(255,255,255,0.010)");
+  sg.addColorStop(1,   "rgba(0,0,0,1)");
+  ctx.fillStyle = sg;
+  ctx.beginPath(); ctx.arc(S.cx, oy, R, 0, Math.PI*2); ctx.fill();
+  ctx.lineWidth = Math.max(1, S.u*0.18);
+  ctx.strokeStyle = PAL.css(hue, 0.78, 0.17, 0.26);
+  ctx.stroke();
+  ctx.restore();
+
+  const spin = p * Math.PI * 1.15;
+  for (let i = 0; i < N; i++){
+    const base = (i / N) * Math.PI*2 + rng()*0.5;
+    const a = base + spin;
+    const tilt = 0.42;
+    const x = S.cx + Math.cos(a) * R*1.62;
+    const y = oy + Math.sin(a) * R*1.62*tilt;
+    const depth = (Math.sin(a) + 1) / 2;              // 0 behind, 1 in front
+    const alpha = E.outQuad(win(p, 0.02 + i*0.05, 0.32 + i*0.05)) * lerp(0.30, 1, depth);
+    wash(ctx, x, y, S.u*(3.2 + 2.6*depth), hue + i*4, alpha*0.9, 0.92, 0.14);
+  }
+  if (b.text){
+    const q = E.outCubic(win(p, 0.30, 0.62));
+    const L = layout(ctx, b.text, 700, S.u*7.4, S.safe*0.86, 4, -S.u*0.03);
+    glowText(ctx, L.lines.join(" "), S.cx, oy + R*1.95, hue, { alpha:q, spread:0.7 });
+  }
+};
+
+SHOTS["bar-rise"] = (ctx, b, p, hue) => {
+  const vals = (b.items && b.items.length)
+    ? b.items.map(it => (typeof it === "number" ? it : (it.value || 0.5)))
+    : [0.34, 0.52, 0.7, 0.88, 1.0];
+  const n = vals.length;
+  const bw = Math.min(S.safe/(n*1.9), S.u*7.5);
+  const gap = bw*0.85;
+  const gw = n*bw + (n-1)*gap;
+  const x0 = S.cx - gw/2;
+  const baseY = S.cy + S.u*22;
+  const maxH = S.u*40;
+
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  vals.forEach((v, i) => {
+    const q = E.outExpo(win(p, 0.06 + i*0.07, 0.46 + i*0.07));
+    const h = maxH * v * q;
+    if (h <= 0.5) return;
+    const x = x0 + i*(bw+gap);
+    const g = ctx.createLinearGradient(0, baseY, 0, baseY-h);
+    g.addColorStop(0, PAL.css(hue + i*5, 0.55, 0.16, 0.10));
+    g.addColorStop(1, PAL.css(hue + i*5, 0.86, 0.19, 0.80));
+    ctx.fillStyle = g;
+    ctx.fillRect(x, baseY-h, bw, h);
+    ctx.shadowColor = PAL.css(hue + i*5, 0.86, 0.19, 1);
+    ctx.shadowBlur = 18*U*0.34;
+    ctx.fillStyle = PAL.css(hue + i*5, 0.97, 0.06, 0.95);
+    ctx.fillRect(x, baseY-h - Math.max(1.5, S.u*0.3), bw, Math.max(2, S.u*0.44));
+    ctx.shadowBlur = 0;
+  });
+  ctx.restore();
+  rule(ctx, S.cx, baseY, gw*0.62, hue, win(p, 0, 0.34), 0.42);
+  if (b.text){
+    const q = E.outCubic(win(p, 0.0, 0.28));
+    const L = layout(ctx, b.text, 750, S.u*7.6, S.safe*0.88, 4, -S.u*0.04);
+    glowText(ctx, L.lines.join(" "), S.cx, baseY - maxH - S.u*10, hue, { alpha:q, spread:0.8 });
+  }
+};
+
+SHOTS["grid-sweep"] = (ctx, b, p, hue) => {
+  const hz = S.cy + S.u*14;                 // horizon
+  const depth = S.h - hz;
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  /* Horizon glow. It has to fall off on BOTH sides of the line — a
+     gradient that stops dead at the horizon reads as a lit rectangle
+     with a hard top edge, not as light. */
+  const hg = ctx.createLinearGradient(0, hz - S.u*20, 0, hz + S.u*10);
+  hg.addColorStop(0,    PAL.css(hue, 0.70, 0.18, 0));
+  hg.addColorStop(0.66, PAL.css(hue, 0.88, 0.19, 0.44));
+  hg.addColorStop(0.70, PAL.css(hue, 0.94, 0.17, 0.52));
+  hg.addColorStop(1,    PAL.css(hue, 0.70, 0.18, 0));
+  ctx.fillStyle = hg;
+  ctx.fillRect(0, hz - S.u*20, S.w, S.u*30);
+
+  const drift = p * 0.85;
+  ctx.lineWidth = Math.max(1, S.u*0.14);
+  /* Receding horizontals. Alpha peaks a little past the horizon and
+     fades again toward the bottom edge, so the floor recedes into black
+     instead of ending at the frame. */
+  for (let i = 0; i < 16; i++){
+    const k = ((i + drift) % 16) / 16;
+    const y = hz + depth * Math.pow(k, 2.4);
+    const a = 0.46 * Math.pow(k, 0.45) * Math.pow(1 - k, 0.55);
+    ctx.strokeStyle = PAL.css(hue, 0.78, 0.18, a);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(S.w, y); ctx.stroke();
+  }
+  /* converging verticals, fading with distance from the vanishing point */
+  for (let i = -9; i <= 9; i++){
+    const g2 = ctx.createLinearGradient(0, hz, 0, S.h);
+    g2.addColorStop(0,    PAL.css(hue, 0.80, 0.18, 0.34));
+    g2.addColorStop(0.55, PAL.css(hue, 0.76, 0.18, 0.20));
+    g2.addColorStop(1,    PAL.css(hue, 0.72, 0.18, 0));
+    ctx.strokeStyle = g2;
+    ctx.beginPath();
+    ctx.moveTo(S.cx + i*S.u*2.4, hz);
+    ctx.lineTo(S.cx + i*S.u*30, S.h);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  const q = E.outExpo(win(p, 0.06, 0.42));
+  const L = layout(ctx, b.text, 850, S.u*11, S.safe*0.9, 3, -S.u*0.06);
+  const lh = L.px*1.12;
+  const top = hz - S.u*22 - (L.lines.length-1)*lh/2;
+  L.lines.forEach((ln,i) =>
+    glowText(ctx, ln, S.cx, top + i*lh + (1-q)*S.u*2, hue, { alpha:q }));
+  if (b.sub){
+    const q2 = E.outCubic(win(p, 0.3, 0.66));
+    setFont(ctx, 500, S.u*3.0, S.u*0.62);
+    glowText(ctx, String(b.sub).toUpperCase(), S.cx, top - S.u*7, hue,
+      { alpha:0.66*q2, spread:0.4 });
+  }
+};
+
+SHOTS["logo-lockup"] = (ctx, b, p, hue) => {
+  const breathe = 0.5 + 0.5*Math.sin(p * Math.PI * 1.6);
+  wash(ctx, S.cx, S.cy, S.u*(50 + 12*breathe), hue, 0.22 + 0.16*breathe);
+  const q = E.outExpo(win(p, 0.02, 0.34));
+  const L = layout(ctx, b.text, 900, S.u*12, S.safe*0.92, 3, S.u*0.5);
+  glowText(ctx, L.lines[0] || b.text, S.cx, S.cy - S.u*1.5, hue,
+    { alpha:q, spread:1 + 0.5*breathe });
+  rule(ctx, S.cx, S.cy + S.u*6.5, S.safe*0.20, hue, win(p, 0.22, 0.60), 0.75);
+  if (b.sub){
+    const q2 = E.outCubic(win(p, 0.34, 0.68));
+    setFont(ctx, 500, S.u*3.5, S.u*0.4);
+    glowText(ctx, b.sub, S.cx, S.cy + S.u*11.5, hue, { alpha:0.86*q2, spread:0.5 });
+  }
+};
+
+/* ═══════════════ TIMELINE ═══════════════════════════════════════════ */
+const TIMELINE = (function(){
+  let acc = 0;
+  return FILM.beats.map((b, i) => {
+    const start = acc; acc += b.dur;
+    return { i, b, start, end: acc, seed: hashStr((b.shot||"") + "#" + i) ^ 0x9E3779B9 };
+  });
+})();
+function beatAt(t){
+  for (let i = 0; i < TIMELINE.length; i++){
+    if (t < TIMELINE[i].end || i === TIMELINE.length-1) return TIMELINE[i];
+  }
+  return TIMELINE[0];
+}
+
+/* ═══════════════ FRAME ══════════════════════════════════════════════ */
+function renderAt(t){
+  const T = beatAt(t);
+  const dur = Math.max(1e-6, T.end - T.start);
+  const p = clamp01((t - T.start) / dur);
+  const hue = PAL.hueAt(DUR <= 0 ? 0 : clamp01(t / DUR));
+  const rng = rngFrom(T.seed);
+
+  /* --- scene ---------------------------------------------------- */
+  sctx.setTransform(1,0,0,1,0,0);
+  sctx.globalCompositeOperation = "source-over";
+  sctx.globalAlpha = 1;
+  sctx.fillStyle = "#000";
+  sctx.fillRect(0, 0, W, H);
+
+  /* camera push-in: 1.00 -> 1.055 across the beat, eased out */
+  const push = 1 + 0.055 * E.outCubic(p);
+  sctx.save();
+  sctx.translate(S.cx, S.cy);
+  sctx.scale(push, push);
+  sctx.translate(-S.cx, -S.cy);
+
+  const draw = SHOTS[T.b.shot] || SHOTS["title"];
+  const beat = Object.assign({}, T.b, { dur });
+  draw(sctx, beat, p, hue, rng);
+  sctx.restore();
+
+  /* --- bloom: square the scene to isolate highlights, blur, add -- */
+  const bw = bloomA.width, bh = bloomA.height;
+  bactx.setTransform(1,0,0,1,0,0);
+  bactx.globalCompositeOperation = "source-over";
+  bactx.globalAlpha = 1;
+  bactx.filter = "none";
+  bactx.clearRect(0, 0, bw, bh);
+  bactx.drawImage(scene, 0, 0, bw, bh);
+  bactx.globalCompositeOperation = "multiply";   /* value^2 -> highlights survive */
+  bactx.drawImage(scene, 0, 0, bw, bh);
+  bactx.globalCompositeOperation = "source-over";
+
+  mctx.setTransform(1,0,0,1,0,0);
+  mctx.globalCompositeOperation = "source-over";
+  mctx.globalAlpha = 1;
+  mctx.filter = "none";
+  mctx.fillStyle = "#000";
+  mctx.fillRect(0, 0, W, H);
+  mctx.drawImage(scene, 0, 0);
+
+  /* Two octaves: a tight one for the tube glow, a wide one for the room
+     light. Kept deliberately under half strength — bloom this stage adds
+     on top of an already-glowing scene, and pushing it past ~0.6 starts
+     eating the crisp glyph edges the shots worked to keep. */
+  mctx.save();
+  mctx.globalCompositeOperation = "lighter";
+  mctx.filter = `blur(${Math.max(2, U*0.9)}px)`;
+  mctx.globalAlpha = 0.52;
+  mctx.drawImage(bloomA, 0, 0, W, H);
+  mctx.filter = `blur(${Math.max(6, U*2.8)}px)`;
+  mctx.globalAlpha = 0.34;
+  mctx.drawImage(bloomA, 0, 0, W, H);
+  mctx.restore();
+  mctx.filter = "none";
+
+  /* --- grain: deterministic pan, keyed to the frame index --------- */
+  const fi = Math.round(t * FPS);
+  const gr = rngFrom(fi * 2654435761 >>> 0);
+  const ox = -Math.floor(gr()*128), oy = -Math.floor(gr()*128);
+  mctx.save();
+  mctx.globalCompositeOperation = "overlay";
+  mctx.globalAlpha = 0.055;
+  const pat = mctx.createPattern(GRAIN, "repeat");
+  if (pat){
+    mctx.translate(ox, oy);
+    mctx.fillStyle = pat;
+    mctx.fillRect(0, 0, W + 128, H + 128);
+  }
+  mctx.restore();
+
+  /* --- edge falloff: keeps the frame reading as pure black -------- */
+  mctx.save();
+  mctx.globalCompositeOperation = "source-over";
+  const vg = mctx.createRadialGradient(S.cx, S.cy, Math.min(W,H)*0.30,
+                                       S.cx, S.cy, Math.max(W,H)*0.76);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,0.72)");
+  mctx.fillStyle = vg;
+  mctx.fillRect(0, 0, W, H);
+  mctx.restore();
+
+  return T;
+}
+
+/* ═══════════════ CAPTURE API ════════════════════════════════════════
+   The renderer drives exactly these three things.                     */
+window.__meta = { w:W, h:H, fps:FPS, frames:FRAMES, duration:DUR,
+                  title:FILM.title, aspect:FILM.aspect,
+                  beats:TIMELINE.map(t => ({ shot:t.b.shot, start:t.start, end:t.end })) };
+window.__renderFrame = function(i){
+  const t = Math.min(DUR - 1e-6, Math.max(0, i / FPS));
+  renderAt(t);
+  return true;
+};
+window.__ready = true;
+
+/* ═══════════════ PLAYER ═════════════════════════════════════════════ */
+const capture = new URLSearchParams(location.search).has("capture");
+if (capture){
+  document.body.classList.add("capture");
+  main.style.width = W + "px";
+  main.style.height = H + "px";
+}
+
+const elPlay = document.getElementById("play");
+const elTrack= document.getElementById("track");
+const elFill = document.getElementById("fill");
+const elHead = document.getElementById("head");
+const elFnum = document.getElementById("fnum");
+const elFtot = document.getElementById("ftot");
+const elTsec = document.getElementById("tsec");
+const elBeat = document.getElementById("beatname");
+elFtot.textContent = FRAMES;
+
+let frame = 0, playing = false, rafId = 0, t0 = 0, f0 = 0;
+
+function paint(){
+  /* renderAt returns the beat it drew. __renderFrame is the capture API
+     and answers a plain boolean, so the player calls renderAt directly —
+     reading .b off that boolean threw on every single painted frame. */
+  const t = Math.min(DUR - 1e-6, Math.max(0, frame / FPS));
+  const T = renderAt(t);
+  const k = FRAMES <= 1 ? 0 : frame / (FRAMES - 1);
+  elFill.style.width = (k*100) + "%";
+  elHead.style.left = "calc(" + (k*100) + "% - 1px)";
+  elFnum.textContent = frame;
+  elTsec.textContent = (frame/FPS).toFixed(2) + "s";
+  elBeat.textContent = (T.i+1) + "/" + TIMELINE.length + "  " + T.b.shot;
+  elFill.style.background = PAL.css(PAL.hueAt(k), 0.82, 0.18, 1);
+}
+function step(n){ playing = false; elPlay.textContent = "Play";
+  frame = Math.min(FRAMES-1, Math.max(0, frame + n)); paint(); }
+
+function loop(now){
+  if (!playing) return;
+  const f = f0 + Math.round((now - t0) / 1000 * FPS);
+  frame = f % FRAMES;
+  paint();
+  rafId = requestAnimationFrame(loop);
+}
+elPlay.addEventListener("click", () => {
+  playing = !playing;
+  elPlay.textContent = playing ? "Pause" : "Play";
+  if (playing){ t0 = performance.now(); f0 = frame; rafId = requestAnimationFrame(loop); }
+  else cancelAnimationFrame(rafId);
+});
+function seekFromEvent(ev){
+  const r = elTrack.getBoundingClientRect();
+  const k = clamp01((ev.clientX - r.left) / Math.max(1, r.width));
+  playing = false; elPlay.textContent = "Play";
+  frame = Math.round(k * (FRAMES-1)); paint();
+}
+let dragging = false;
+elTrack.addEventListener("pointerdown", e => { dragging = true; elTrack.setPointerCapture(e.pointerId); seekFromEvent(e); });
+elTrack.addEventListener("pointermove", e => { if (dragging) seekFromEvent(e); });
+elTrack.addEventListener("pointerup",   e => { dragging = false; });
+window.addEventListener("keydown", e => {
+  if (e.code === "Space"){ e.preventDefault(); elPlay.click(); }
+  else if (e.code === "ArrowRight") step(e.shiftKey ? 10 : 1);
+  else if (e.code === "ArrowLeft")  step(e.shiftKey ? -10 : -1);
+  else if (e.code === "Home") { playing = false; frame = 0; paint(); }
+});
+/* beat markers on the scrubber */
+TIMELINE.slice(1).forEach(T => {
+  const d = document.createElement("div");
+  d.className = "mark";
+  d.style.left = (T.start / DUR * 100) + "%";
+  elTrack.appendChild(d);
+});
+
+paint();
+if (!capture){ elPlay.click(); }
+
+/* ─────────────────────────────────────────────────────────────────────
+   SHOTS available:  title · type-line · number-slam · ring-pulse ·
+   glass-tiles · shockwave · orbit · bar-rise · grid-sweep · logo-lockup
+   ───────────────────────────────────────────────────────────────────── */
+</script>
+</body>
+</html>
