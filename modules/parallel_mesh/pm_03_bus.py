@@ -71,11 +71,33 @@ class Finding:
     sid: str = ""                    # publishing pane
     anchor: dict = field(default_factory=lambda: {"type": "none"})
     ts: str = ""
+    # The frontier/SESSION_ZERO question fingerprint that PAID FOR this finding.
+    #
+    # WIRING GAP CLOSED 2026-09-04. `fd_07_flywheel.Deposit` has carried a
+    # `question_ref` field -- documented as "per-question ROI" -- since it was
+    # written, and `run_flywheel()` reads it off each incoming finding. But NO
+    # PRODUCER COULD EVER SET IT: stage_finding() did not accept it, this record had
+    # no slot for it, publish() did not take it, and publish_session_findings()
+    # forwarded only topic/claim/evidence/sid/anchor. So the only way to populate it
+    # was to hand run_flywheel() a findings list directly -- the path its own
+    # docstring calls hermetic testing.
+    #
+    # Net effect: per-question ROI was unreachable through the path that actually
+    # runs at Stop. Capability built, documented, and unwired end-to-end -- so
+    # "which question paid for which work" could never be answered from real data.
+    # Optional and defaulted, so every existing caller and every already-written
+    # bus line keeps working unchanged.
+    question_ref: str = ""
 
     @property
     def identity(self) -> str:
         """Dedup key: normalized topic + claim. Two findings with the same
-        conclusion about the same topic are one finding, not near-duplicates."""
+        conclusion about the same topic are one finding, not near-duplicates.
+
+        Deliberately EXCLUDES question_ref: the same conclusion reached under two
+        different questions is still one conclusion. Including it would let a
+        re-asked question mint a duplicate deposit and silently inflate FDI.
+        """
         raw = f"{_norm(self.topic)}|{_norm(self.claim)}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
@@ -89,7 +111,8 @@ class Finding:
             claim=str(d.get("claim", "")), evidence=str(d.get("evidence", "")),
             sid=str(d.get("sid", "")),
             anchor=d.get("anchor") or {"type": "none"},
-            ts=str(d.get("ts", "")))
+            ts=str(d.get("ts", "")),
+            question_ref=str(d.get("question_ref", "")))
 
 
 def is_fresh(f: Finding, *, hash_fn=file_hash) -> bool:
@@ -132,13 +155,19 @@ class FindingsBus:
 
     def publish(self, repo: str, topic: str, claim: str, *, evidence: str = "",
                 sid: str = "", anchor=None, now: datetime | None = None,
-                dedup: bool = True) -> Finding:
+                dedup: bool = True, question_ref: str = "") -> Finding:
         """Append a finding. With dedup (default), an identical existing finding
         (same identity) is returned WITHOUT a second append -- the bus is not a
-        log. Best-effort I/O: an append error still returns the Finding object."""
+        log. Best-effort I/O: an append error still returns the Finding object.
+
+        `question_ref` (optional) is the frontier question that paid for this
+        finding. It rides through to fd_07's Deposit so per-question ROI can be
+        computed from real sessions instead of only from hermetic test input.
+        """
         now = now or datetime.now(timezone.utc)
         f = Finding(repo=repo, topic=topic, claim=claim, evidence=evidence,
-                    sid=sid, anchor=anchor or {"type": "none"}, ts=now.isoformat())
+                    sid=sid, anchor=anchor or {"type": "none"}, ts=now.isoformat(),
+                    question_ref=question_ref)
         if dedup:
             for existing in self.load(repo):
                 if existing.identity == f.identity:
@@ -253,7 +282,8 @@ def publish_session_findings(repo: str, findings, *, sid: str = "",
                 continue
             bus.publish(repo, topic, claim, evidence=(d.get("evidence") or ""),
                         sid=sid or (d.get("sid") or ""),
-                        anchor=d.get("anchor"), now=now)
+                        anchor=d.get("anchor"), now=now,
+                        question_ref=(d.get("question_ref") or ""))
             n += 1
         return n
     except Exception:  # noqa: BLE001 -- fail-open
@@ -269,10 +299,18 @@ def _staging_path(repo: str, sid: str, state_dir=None) -> Path:
 
 
 def stage_finding(repo: str, sid: str, topic: str, claim: str, *,
-                  evidence: str = "", state_dir=None) -> bool:
+                  evidence: str = "", question_ref: str = "",
+                  state_dir=None) -> bool:
     """Producer side: append ONE reusable conclusion to this session's staging file
     the moment it is reached. Drained to the bus at Stop by drain_staging_findings.
-    Fail-open -> False (a staging write must never break the agent's work)."""
+    Fail-open -> False (a staging write must never break the agent's work).
+
+    `question_ref` (optional) names the frontier/SESSION_ZERO question that paid for
+    this conclusion. THIS IS THE HOP THAT WAS MISSING: fd_07's Deposit has always
+    had a question_ref field, but no producer could populate it, so per-question ROI
+    was answerable only from hermetic test input and never from a real session.
+    Omitted -> "" and the finding deposits exactly as it always did.
+    """
     try:
         if not topic or not claim:
             return False
@@ -280,7 +318,9 @@ def stage_finding(repo: str, sid: str, topic: str, claim: str, *,
         p.parent.mkdir(parents=True, exist_ok=True)
         with p.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps({"topic": topic, "claim": claim,
-                                 "evidence": evidence}, ensure_ascii=False) + "\n")
+                                 "evidence": evidence,
+                                 "question_ref": question_ref},
+                                ensure_ascii=False) + "\n")
         return True
     except OSError:
         return False
