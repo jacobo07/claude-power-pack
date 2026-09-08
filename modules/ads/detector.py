@@ -133,6 +133,38 @@ def _is_git_repo(git_exe: str, repo: Path) -> bool:
     return bool(out) and out.strip() == "true"
 
 
+def repo_root(path: str | Path, git_exe: str | None = None) -> Path:
+    """Ascend from `path` to the top level of the work tree containing it.
+
+    WHY THIS EXISTS
+    ---------------
+    ADS runs from the Stop payload's `cwd` -- wherever the agent's shell was
+    last left, frequently a subdirectory. Every guard in this module passed
+    anyway, because none of them could fail: `_is_git_repo` asks
+    `--is-inside-work-tree`, which answers "am I somewhere under a work
+    tree", never "am I at its root". For any path inside the repo that
+    question has exactly one possible answer, so it carried no information.
+
+    Meanwhile `git status --porcelain` reports paths relative to the ROOT
+    regardless of the directory it is run from. Joining root-relative paths
+    onto a subdirectory base is precisely what wrote documentation about one
+    plugin's files inside a different plugin's tree.
+
+    So this asks the question whose answer actually differs between the two
+    cases. Falling back to `path` unchanged when git cannot answer is safe:
+    the caller already treats a non-repo as a no-op, so the fallback cannot
+    widen the blast radius beyond today's behaviour.
+    """
+    p = Path(path).resolve()
+    out = _git(git_exe or resolve_git(), p, "rev-parse", "--show-toplevel")
+    if out and out.strip():
+        try:
+            return Path(out.strip()).resolve()
+        except (OSError, ValueError):
+            return p
+    return p
+
+
 # --- working-tree parsing ------------------------------------------------
 
 @dataclass

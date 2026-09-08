@@ -64,12 +64,28 @@ def _read_cwd_from_stdin() -> str | None:
 
 def sync(repo: str | Path) -> dict:
     """Run detection + generation for one repo. Returns a summary dict."""
-    from modules.ads.detector import ChangeType, detect_changes
+    from modules.ads.detector import ChangeType, detect_changes, repo_root
     from modules.ads.doc_generator import write_docs
     from modules.ads.doc_updater import update_docs
 
-    repo = Path(repo).resolve()
+    # The value handed to us is the shell's working directory, not the repo.
+    # Normalising it to the work-tree root is ONE line that closes TWO
+    # defects, and the second is the worse of the pair:
+    #
+    #   1. docs were written under whatever subdirectory the last command
+    #      left the shell in, because `git status` reports paths relative to
+    #      the ROOT while the base being joined onto was the subdirectory;
+    #
+    #   2. the kill switch was looked up under that same wrong base, so a
+    #      repo that had legitimately opted out kept generating docs the
+    #      moment any turn ended below its root. An opt-out that silently
+    #      stops applying is worse than the misfiling it failed to prevent:
+    #      the misfiling is visible, and this is not.
+    invocado_desde = Path(repo).resolve()
+    repo = repo_root(invocado_desde)
     summary = {"repo": str(repo), "created": [], "updated": [], "skipped": []}
+    if repo != invocado_desde:
+        summary["invoked_from"] = str(invocado_desde)
 
     if (repo / KILL_SWITCH).exists():
         summary["disabled"] = True
