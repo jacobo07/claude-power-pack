@@ -1,0 +1,17 @@
+# The canonical constitution is sealed under a SHA-256 over its exact bytes.
+#
+# This repository runs with core.autocrlf=true, which rewrites line endings on
+# checkout. Applied to a hash-sealed artifact that silently changes its bytes
+# between commit and working tree, so a fresh clone would fail the integrity
+# gate and the gate would report SUBJECT_INVALID -- accusing a corpus that
+# nobody touched, and sending a reader to investigate the wrong thing.
+#
+# -text disables all end-of-line conversion for these paths. The bytes that
+# were sealed are the bytes that come back, on every platform.
+#
+# Do not "tidy" this by removing the attribute: the seal is only meaningful if
+# the byte stream is stable, and the failure it prevents appears on someone
+# else's machine rather than on the machine that removes it.
+
+constitution.raw.md -text
+seal.json           -text

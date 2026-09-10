@@ -174,7 +174,11 @@ def seal(corpus_path: Path = CORPUS_PATH, seal_path: Path = SEAL_PATH) -> Verdic
         ),
     }
     seal_path.parent.mkdir(parents=True, exist_ok=True)
-    seal_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    # newline="\n" explicitly: Path.write_text uses text mode, which on Windows
+    # translates \n to \r\n. A generated artifact that differs by platform reads
+    # as permanently modified in git and generates phantom dirt forever.
+    with seal_path.open("w", encoding="utf-8", newline="\n") as fh:
+        fh.write(json.dumps(payload, indent=2) + "\n")
     return Verdict(VALID, [f"sealed {payload['bytes']} bytes -> {payload['sha256']}"])
 
 
