@@ -39,6 +39,12 @@ Never invent unverified data · Never assume file/class/endpoint exists · Never
 ### Zero-Issue Delivery (Kill-Switch)
 "done"/"complete"/"ready"/"fixed" require: compile + tests + E2E verified. "Should work" is NOT evidence.
 
+### LAW II — Architectural Truth (universal, always)
+Reaching the target ≠ reaching it through a valid state. Every cheap visible signal is a PROXY, never sufficient: return-success ≠ side effect committed · file loaded ≠ consumed correctly · screen appeared ≠ state initialized · HTTP 200 ≠ happened exactly once · row exists ≠ valid domain transition · test passed ≠ intended path exercised · exit 0 ≠ external effect durable. Claiming a proxy without its corroborant caps the work at EXECUTED. Grader: `modules/done_gate/architectural_truth.py`.
+
+### LAW IX — DONE is graded, not binary
+Claim strength may never exceed evidence strength. 13 rungs: IDEA→SPECIFIED→IMPLEMENTED→WIRED→REACHABLE→ACTIVATABLE→EXECUTED→VERIFIED→INTEGRATION-VERIFIED→ADVERSARIALLY-VERIFIED→PRODUCTION-LIKE-VERIFIED→PRODUCTION-REALITY-VERIFIED→REGRESSION-PROVEN. Evidence never collected ≠ evidence collected-and-negative: uncollected yields UNDETERMINED, never a pass. Grader: `modules/done_gate/strength_ladder.py`. Depth + corpus: `/cpp-usea`, sealed at `vault/constitution/usea/`.
+
 ## PART B — INTENT ROUTING
 
 3+ independent tasks in one prompt → REJECT, propose micro-prompts.
