@@ -84,6 +84,22 @@ def main() -> int:
           f"uncollected evidence -> {a.outcome} ({len(a.unknown)} unknown)")
     check("V-LADDER-UNKNOWN-NOT-FAIL", a.outcome != OVERSTATED,
           "an unchecked claim is not reported as an overstated one")
+    # Found by mutation probe: `r not in evidence` -> `r in evidence` survived,
+    # because the assertion above only required the list to be non-empty.
+    # Inverted, it names the evidence you DID collect as the evidence you are
+    # missing -- same outcome, wrong fields, which is worse than a wrong verdict
+    # because it sends you to re-check things already checked.
+    check("V-LADDER-UNKNOWN-NAMES",
+          "has_caller" in a.unknown and "spec_exists" not in a.unknown,
+          "unknown list names the ABSENT evidence, not the present evidence")
+
+    # Found by mutation probe: LADDER[0] -> LADDER[1] survived on the
+    # failure path. A ladder that broke must report the WEAKEST rung; reporting
+    # one rung up is a fail-open in the exact place fail-closed matters most.
+    bad = assess("NOT-A-REAL-STATE", FULL)
+    check("V-LADDER-FAIL-WEAKEST",
+          bad.outcome == LADDER_FAILED and bad.highest_supported == LADDER[0],
+          f"a failed ladder reports the weakest rung ({bad.highest_supported})")
 
     # --- Empty evidence cannot yield a strong rung ---------------------------
     best, _ = highest_supported({})

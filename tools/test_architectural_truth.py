@@ -124,6 +124,21 @@ def main() -> int:
     check("V-LAW2-SEVEN", len(CANONICAL_PAIRS) == 7,
           f"section 8 states 7 pairs, registry has {len(CANONICAL_PAIRS)}")
 
+    # --- The canonical registry must be immutable ---------------------------
+    # Found by mutation probe: frozen=True survived, meaning nothing pinned it.
+    # This is not cosmetic. A mutable Pair lets any caller rewrite what LAW II
+    # means at runtime -- the corroborant for http_200 could be quietly set to
+    # something already true, and every later verdict would be VALID for the
+    # wrong reason with no drift visible anywhere.
+    frozen = False
+    try:
+        object.__setattr__  # noqa: B018 - presence check only
+        CANONICAL_PAIRS[0].proxy = "rewritten"  # type: ignore[misc]
+    except Exception:
+        frozen = True
+    check("V-LAW2-IMMUTABLE", frozen,
+          "canonical pairs reject mutation (LAW II cannot be redefined at runtime)")
+
     print(f"LAW2_PASS={PASSES}/{PASSES + FAILS}  threshold={PASSES + FAILS}/{PASSES + FAILS}")
     return 0 if FAILS == 0 else 1
 

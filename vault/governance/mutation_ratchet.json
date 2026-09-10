@@ -6,7 +6,7 @@
    "min_kill": 3,
    "sampled": 6,
    "module_hash": "f2dc1e74b28522ed",
-   "measured_at": "2026-08-10T17:55:22Z"
+   "measured_at": "2026-09-10T22:45:37Z"
   },
   "tools/test_egcc_residue.py::modules/rule_compiler/parser.py": {
    "tier": "weekly",
@@ -16,19 +16,35 @@
    "module_hash": "1163dadd7a223af2",
    "measured_at": "2026-08-10T18:00:50Z"
   },
+  "tools/test_architectural_truth.py::modules/done_gate/architectural_truth.py": {
+   "tier": "push",
+   "_why": "LAW II grader. Enrolled after its first probe returned PARTIAL (5/6, frozen=True survived): the suite reported 14/14 while nothing pinned the canonical pairs as immutable.",
+   "min_kill": 6,
+   "sampled": 6,
+   "module_hash": "4f56970aaec77da0",
+   "measured_at": "2026-09-10T22:45:37Z"
+  },
+  "tools/test_done_strength_ladder.py::modules/done_gate/strength_ladder.py": {
+   "tier": "push",
+   "_why": "LAW IX grader. Enrolled after its first probe returned PARTIAL (4/6): the suite reported 13/13 while the unknown-list assertion only checked non-emptiness and the fail-closed rung was unpinned.",
+   "min_kill": 6,
+   "sampled": 6,
+   "module_hash": "63cfc9b55c101974",
+   "measured_at": "2026-09-10T22:45:37Z"
+  },
   "tools/test_capability_runtime.py::modules/capability_runtime/contract.py": {
    "tier": "push",
    "min_kill": 2,
    "sampled": 6,
    "module_hash": "fcaf3e7ecbee0fb5",
-   "measured_at": "2026-08-10T17:55:22Z"
+   "measured_at": "2026-09-10T22:45:37Z"
   },
   "tools/test_capability_runtime.py::modules/capability_runtime/applicability.py": {
    "tier": "push",
    "min_kill": 2,
    "sampled": 6,
    "module_hash": "de0ef2d008dc6ebf",
-   "measured_at": "2026-08-10T17:55:22Z"
+   "measured_at": "2026-09-10T22:45:37Z"
   },
   "tools/test_duplicate_to_advantage.py::modules/duplicate_to_advantage/d2a_engine.py": {
    "tier": "weekly",
