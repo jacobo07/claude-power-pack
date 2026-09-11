@@ -123,6 +123,25 @@ def evaluate(c: CapabilityContract, ctx: MissionContext) -> Applicability:
         return Applicability(c.id, Verdict.NOT_APPLICABLE, 0.0,
                              f"anti-trigger matched: {', '.join(anti)}")
 
+    # --- gate 1.5: relevance precedes every capability gate.
+    # A capability the mission never reached for is DORMANT, not BLOCKED. The
+    # four blocking verdicts all mean "this capability is wanted here and
+    # cannot run"; returning one for a capability nobody wanted reports an
+    # inability to judge where the truth is simple irrelevance, and fills the
+    # blocked list with noise that hides the one entry an operator must act on.
+    # Measured by the cross-domain benchmark: a one-line CLI typo reported the
+    # transactional component installer as BLOCKED_BY_MISSING_EVIDENCE.
+    # This is not the score deciding a gate -- no trigger matched is a
+    # deterministic fact about the mission text, evaluated before any scoring,
+    # and a capability with no trigger match never activated under the old
+    # ordering either. Only the verdict's honesty changes.
+    trig = _hits(text, c.triggers)
+    if not trig:
+        return Applicability(
+            c.id, Verdict.NOT_APPLICABLE, 0.0,
+            "no trigger matched -- dormant by default (standing risk is not "
+            "mission relevance)", c.escalates)
+
     # --- gate 2: HR-APA-018. Only enforced when the caller supplies the set.
     if ctx.resolved_owners and c.owner.strip().lower() not in _norm(ctx.resolved_owners):
         return Applicability(c.id, Verdict.BLOCKED_BY_UNRESOLVED_OWNER, 0.0,
@@ -156,7 +175,6 @@ def evaluate(c: CapabilityContract, ctx: MissionContext) -> Applicability:
     # Compatibility is deliberately NOT a factor: gate 5 already rejects an
     # incompatible runtime, so any survivor scores 1.0 on it. A constant term
     # is not a factor, and a factor that cannot vary is decoration.
-    trig = _hits(text, c.triggers)
     relevance = _ratio(len(trig), len(c.triggers or []), empty=0.0)
     # counterfactual term: what breaks if this capability is NOT activated.
     risk_reduction = FAILURE_SCALE[FailureRisk(c.failure_risk_if_omitted)] / 4.0
@@ -181,18 +199,14 @@ def evaluate(c: CapabilityContract, ctx: MissionContext) -> Applicability:
 
     # HR-APA-005 / HR-APA-014: mission relevance is NECESSARY, not merely
     # weighted. The five benefit factors are constant per contract except
-    # relevance -- so without this, a capability whose standing risk is high
+    # relevance -- so without it, a capability whose standing risk is high
     # outscores the threshold on EVERY mission and the stack becomes "activate
     # everything for safety", the exact posture minimum-sufficient activation
     # exists to refuse. A capability no trigger reached stays dormant however
     # high its stake; a genuinely standing guard belongs on an always-on hook,
-    # not in a per-mission stack.
-    if not trig:
-        return Applicability(
-            c.id, Verdict.NOT_APPLICABLE, round(score, 3),
-            f"no trigger matched -- dormant by default (score={score:.2f} "
-            "is standing risk, not mission relevance)", c.escalates, factors)
-
+    # not in a per-mission stack. ENFORCED AT GATE 1.5, above: anything
+    # reaching this line already matched at least one trigger, so relevance is
+    # a live factor here rather than a veto.
     high_stakes = FAILURE_SCALE[FailureRisk(c.failure_risk_if_omitted)] >= 3
     if score >= MANDATORY_SCORE and high_stakes:
         v, why = Verdict.MANDATORY, "high omission risk with a strong match"

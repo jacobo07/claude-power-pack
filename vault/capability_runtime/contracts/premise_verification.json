@@ -58,7 +58,9 @@
     "beam",
     "go",
     "rust",
-    "jvm"
+    "jvm",
+    "c",
+    "bash"
   ],
   "rollback": "",
   "kill_switch": "",

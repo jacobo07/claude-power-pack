@@ -18,21 +18,29 @@
   ],
 
   "triggers": [
-    "a component has been selected and approved for adoption into a project",
-    "an interrupted transaction is detected (a journal exists in <target>/.cdicf)",
-    "a drift check is requested against installed artifacts",
-    "an adopted component must be reverted"
+    "install",
+    "adopt",
+    "adoption",
+    "drift check",
+    "rollback",
+    "revert",
+    "uninstall"
   ],
   "anti_triggers": [
-    "the redistribution posture derived from the licence tier is 'prohibited' and the entry carries code — refused at exit 5",
-    "the kill switch is armed for the target project — refused at exit 12 before a journal is created",
-    "a declared dependency is unresolved in the target — refused at exit 11 before any write"
+    "emitter",
+    "selector"
   ],
   "prerequisites": [
-    "emitter output (registry-item.json + install-manifest.json) for the component",
-    "a target directory that exists"
+    "emitter_output",
+    "target_directory"
   ],
   "required_evidence": [
+    "install_manifest",
+    "registry_item"
+  ],
+
+  "_matcher_note": "triggers, anti_triggers, prerequisites and required_evidence are matched by the applicability engine as word-boundary phrases against the mission text and as set membership against caller-supplied tokens. They were previously written as full English sentences, which no caller could ever supply and no mission text could ever contain, so this contract was BLOCKED_BY_MISSING_EVIDENCE on every mission and had never once been recommended. The sentences were not deleted: the refusal conditions are runtime exits and live in kill_switch and non_scope, and the verification obligations are preserved verbatim below.",
+  "verification_obligations": [
     "per-artifact sha256 matching the install manifest",
     "a recomputed roll-up checksum, never the manifest's own value taken on trust",
     "postconditions read back from disk after the rename sweep"
@@ -69,7 +77,8 @@
 
   "maturity": "proven",
   "portable": true,
-  "compatible_runtimes": ["node>=18"],
+  "compatible_runtimes": ["node"],
+  "minimum_runtime_version": "node>=18",
 
   "rollback": "`node modules/cdicf/installer.js rollback --component <id> --target <proj>` reverts a committed install to its prior bytes, and is itself journalled so an interrupted rollback is recoverable. A file modified since install is reported as skipped rather than overwritten — recovery that over-reaches is a worse failure than recovery that stops and says so.",
 
