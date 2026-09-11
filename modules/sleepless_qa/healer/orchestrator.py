@@ -282,6 +282,16 @@ def run(
         )
         terminated = terminated or "orchestrator_crash"
 
+    # A stop reason nobody can read is not a stop reason. The empty string
+    # reaches the run log and verdict json as an absent field, and the verdict
+    # that accompanies it is UNCERTAIN -- which reads as ambiguity about the
+    # SUBJECT when the truth is that no attempt was ever made against it. A
+    # non-positive budget skips the loop body entirely and used to return
+    # exactly that. The second branch is fail-closed cover: a future exit path
+    # that forgets to record itself is named here instead of going quiet.
+    if not terminated:
+        terminated = "not_attempted" if attempts == 0 else "loop_exited_unrecorded"
+
     # Final bookkeeping
     if last_verdict is None:
         last_verdict = Verdict(
