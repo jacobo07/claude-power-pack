@@ -8510,6 +8510,88 @@ an already-console process inherits the console and flashes nothing.
 `tools/fix_conhost_hook_leak.py`. SCOPE: before diagnosing an agent, read what
 the host runs around it.
 
+**`PR-PROJECT-THE-LADDER-NEVER-COLLAPSE-IT-001`** -- When a typed outcome has to
+cross into a narrower type, PROJECT it and keep the lossless read reachable;
+never let the projection become the only record. WHY IT LOOKS CORRECT: the
+narrow type is what the consumer takes, the conversion is one expression, and
+the result is still fail-closed, so nothing downstream misbehaves -- it just
+says something false about WHY. ORIGEN: `verify_spp` returned exit 3
+(INCONCLUSIVE) and the provenance store recorded `passed=False`, which its own
+summary renders as "last run failed" -- a run that measured nothing about the
+code, described as a judgement against the code, by the store built to keep
+those apart. The reader had been three-valued since the day it was written and
+argued the case in its docstring; the writer took a bool. DETECTION: for every
+store, compare the CARDINALITY of what the reader can return against what the
+writer can express. A reader with more states than its writer is the defect, and
+the extra states are reachable only by absence or expiry -- never by an event.
+PREVENTION: the record carries the outcome; the bool becomes an explicit
+projection beside a lossless `last_outcome()`. SCOPE: every boundary where a
+verdict ladder meets an older consumer -- exit codes, status enums, HTTP codes,
+CI result fields.
+
+**`T-THE-REFUSAL-THAT-RECORDS-NOTHING-001`** -- An early `return` on a refusal
+path leaves the PREVIOUS result standing, and a time-windowed store keeps
+vouching with it. WHY IT LOOKS CORRECT: refusing to act is the safe branch, and
+writing nothing feels like the conservative thing to do. ORIGEN: the host
+preflight refused an 84-row sweep and returned before the provenance block, so a
+green recorded an hour earlier kept authorising deploys through
+HR-CASCADE-001 -- on a host that could no longer even start the sweep. Worse
+than the INCONCLUSIVE case above, because silence preserves a stale POSITIVE.
+DETECTION: for every early return in a producer, ask what the store says
+afterwards; if the answer is "whatever it said before", that is the bug.
+PREVENTION: a refusal is a fact about this run and must overwrite the fact that
+is no longer current. SCOPE: any guard that aborts before its function's
+bookkeeping.
+
+**`T-SEED-NOT-SUBJECT-001`** -- A sweep that enumerates a class as ENTRY POINTS
+can never judge that class as SUBJECTS, and returns one answer about it forever.
+WHY IT LOOKS CORRECT: the class appears in the sweep's own globs, so it is
+visibly "covered", and the sweep is genuinely doing useful work with it. ORIGEN:
+`modules/liveness/reachability.py` globs `agents/*.md` as a SEED -- it asks what
+each agent reaches, and therefore cannot ask whether anything can reach the
+agent. Measured: 12 agent definitions in the repo, 2 dispatchable, and the
+liveness standard that exists precisely to name orphans had been silent for
+months because agents were on the wrong side of its question. DETECTION: for
+each class a sweep touches, ask whether it is the subject or the frame. A class
+that only ever appears on the left of the reachability relation has never been
+judged. PREVENTION: give the class a subject-side check with its own states, and
+require a DECLARATION for the dormant ones -- the 10 here each declared their
+dormancy in an HTML comment no gate could read. SCOPE: reachability sweeps, call
+graphs, coverage tools, dependency audits.
+
+**`PR-PROVE-THE-ESTATE-NOT-ONLY-THE-FIXER-001`** -- A synthetic drill on a repair
+function is correct and insufficient; pair it with a check whose subject is the
+live estate. WHY IT LOOKS CORRECT: keeping the drill hermetic is RIGHT -- a drill
+pinned to the real broken artifact has an interest in it staying broken and goes
+green the day it is fixed. So the reasoning that produces the gap is sound, which
+is why the gap survives review. ORIGEN: conhost hook wrappers were removed from
+`~/.claude/settings.json` at 21:37 and were back by 22:27, reinstated by their
+installer on launch; the whole suite stayed green through the re-infection
+because every subject in it was a fixture. DETECTION: name the SUBJECT of each
+gate out loud. If every subject is a fixture, nothing is watching production.
+PREVENTION: two checks, two subjects -- the hermetic drill for the fixer, a
+read-only surveillance check for the estate, the second ADVISORY when its repair
+is out of the repo's reach, and with its own third outcome for "could not look".
+`tools/check_live_hook_wrappers.py`. SCOPE: every one-shot repair of something an
+external process can re-apply.
+
+**`T-CONCEPTUAL-ROLE-IS-NOT-A-REQUIRED-AGENT-001`** -- A constitution naming N
+specialist roles is not evidence that N agents are needed, and building them to
+match the headings creates duplicate owners. WHY IT LOOKS CORRECT: the roles are
+real, each is genuinely a distinct competence, and one file per role looks like
+faithful implementation. ORIGEN: an audit of the eight USEA roles against
+measured owners returned ZERO new persistent agents -- two roles are DYNAMIC
+competences (Principal Architect, Implementation) where a standing agent would be
+a SECOND writer of architectural truth, three reuse dispatchable agents, three
+reuse non-agent systems. DETECTION: for each role ask what persistent IDENTITY
+buys that per-task composition does not, and whether the role writes canonical
+state. A role that writes canonical architecture must NOT be an agent, because
+two writers of one truth is the defect the role exists to prevent. PREVENTION:
+verdict ladder ordered by cost -- REUSE, EXTEND, CONNECT, DYNAMIC, and only then
+NEW; every cited owner checked against the filesystem so the table cannot outlive
+its subjects. `tools/usea_ownership_audit.py`. SCOPE: any framework proposing a
+cast of agents, personas, or services per conceptual responsibility.
+
 ### Candidates REJECTED from this corpus (recorded to prevent re-derivation)
 
 - **"Run bounded convergence on every task"** -- REJECTED. Measured once, live:
@@ -8548,3 +8630,19 @@ the host runs around it.
 - [regression/powershell:Select-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-Object, verify the regression scenario (FAILED) is still covered by a passing test.
 
 - [tooling/powershell:+8341,] `ceps_e9b81137efd16933` -- Tool failure in powershell:+8341,: Exception': 4. Confirm the tool actu. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:env:PYTHONIOENCODING=utf] `ceps_5d28a90f4498a814` -- Before touching powershell:env:PYTHONIOENCODING=utf, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:Get-Content] `ceps_45dd4d1051c71931` -- Tool failure in powershell:Get-Content: TypeError: app.getAppPath. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_89e30e207dba5f14` -- Tool failure in powershell:Get-Content: AssertionError: expected. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_d535dce2e1bf9dc7` -- Tool failure in powershell:powershell: Error: terminal_liveness_unavailable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:powershell] `ceps_b17cedbdb942b7fd` -- Tool failure in powershell:powershell: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Get-Content] `ceps_b17cedbdb942b7fd` -- Tool failure in powershell:Get-Content: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Measure-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Measure-Object, verify the regression scenario (FAILED) is still covered by a passing test.
