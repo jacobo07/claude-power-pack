@@ -648,6 +648,13 @@ def main() -> int:
         ("usea-convergence",
          [PY, str(PP / "tools" / "test_convergence_bounds.py")],
          60),
+        # The ownership audit was itself unwired -- an audit of who owns what,
+        # that nothing ran. It fails when a cited owner is not on disk, and now
+        # also when an agent defined here is neither dispatchable nor declared
+        # dormant, which is the seed/subject gap the liveness sweep cannot see.
+        ("usea-ownership",
+         [PY, str(PP / "tools" / "usea_ownership_audit.py")],
+         45),
         ("completion-authority",
          [PY, str(PP / "tools" / "test_completion_authority.py")],
          30),
