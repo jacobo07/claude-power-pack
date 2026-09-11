@@ -159,6 +159,32 @@ def main() -> int:
           "same-file contention escalates to the hunk-granular owner; pathspec "
           "alone does not cover two writers inside one file")
 
+    # --- and the two protections are ALTERNATIVES, not layers -------------
+    # This is the correction to guidance written earlier the same day. A
+    # pathspec commit does NOT commit the index: `git commit -- <path>` takes
+    # the WORKING TREE content of the named paths, discarding whatever was
+    # staged for them. So running the hunk guard and then committing with a
+    # pathspec silently throws the guard's careful index away and re-absorbs the
+    # other writer. Measured in production: the guard subtracted five foreign
+    # lines from the index and a pathspec commit put all five back.
+    #
+    # Correct composition:
+    #   guard used      -> commit from the INDEX, no pathspec
+    #   guard not used  -> commit with a pathspec, file granularity
+    repo = make_repo()
+    try:
+        (repo / "mine.txt").write_text("STAGED VERSION\n", encoding="utf-8")
+        git(repo, "add", "mine.txt")
+        (repo / "mine.txt").write_text("WORKTREE VERSION\n", encoding="utf-8")
+        commit_via_wrapper(repo, "pathspec beats index", ["mine.txt"])
+        blob = git(repo, "show", "HEAD:mine.txt").stdout
+        check("V-SCOPE-PATHSPEC-TAKES-WORKTREE-NOT-INDEX",
+              "WORKTREE VERSION" in blob,
+              "a pathspec commit takes the working tree and discards the staged "
+              "version, so it OVERRIDES a curated index rather than adding to it")
+    finally:
+        shutil.rmtree(repo, ignore_errors=True)
+
     print(f"COMMIT_SCOPE_PASS={PASSES}/{PASSES + FAILS}  "
           f"threshold={PASSES + FAILS}/{PASSES + FAILS}")
     return 0 if FAILS == 0 else 1

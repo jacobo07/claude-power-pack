@@ -203,8 +203,27 @@ def _diff_blobs(repo: Path, old: bytes, new: bytes, rel: str) -> str:
     return "\n".join(fixed) + "\n"
 
 
-def stage(repo: Path, paths: list[Path]) -> list[dict]:
-    """Stage only the delta that postdates each file's snapshot."""
+def stage(repo: Path, paths: list[Path], expect: Path | None = None) -> list[dict]:
+    """Stage only the delta that postdates each file's snapshot.
+
+    `expect` closes the snapshot's blind spot. A writer who appends DURING the
+    window between snapshot and stage is indistinguishable from you by
+    construction -- nothing recorded the boundary -- so their lines are counted
+    as yours and committed under your message. Measured 2026-09-11 on the UKDL
+    corpus: five lines from a capture writer were correctly subtracted, and two
+    more that arrived while the commit message was being written were not,
+    because they postdated the baseline exactly as your own edits did.
+
+    Pass the exact content you intended to add and every line staged as yours is
+    checked against it. Lines you cannot account for are NAMED rather than
+    silently carried, which turns an unobservable limit into a reported one.
+    """
+    expected_lines: set[str] | None = None
+    if expect is not None and expect.exists():
+        expected_lines = {
+            ln.rstrip("\r\n")
+            for ln in expect.read_text(encoding="utf-8", errors="replace").splitlines()
+        }
     results = []
     head_now = git(repo, "rev-parse", "HEAD").strip()
     for p in paths:
@@ -229,14 +248,33 @@ def stage(repo: Path, paths: list[Path]) -> list[dict]:
                             "detail": "file is byte-identical to its snapshot"})
             continue
 
+        # The window the snapshot cannot see. Computed here, before either exit,
+        # because it is orthogonal to whether any delta PREDATED the snapshot:
+        # a writer appending during your window produces the same silent
+        # absorption on a file that was perfectly clean when you snapshotted it.
+        unaccounted: list[str] = []
+        if expected_lines is not None:
+            unaccounted = sorted(
+                ln for ln in _added_lines(mine)
+                if ln.strip() and ln not in expected_lines
+            )
+        window_note = ""
+        if expected_lines is not None:
+            window_note = (
+                f"; {len(unaccounted)} staged line(s) NOT in the declared "
+                f"content -- written during your window"
+                if unaccounted else
+                "; every staged line matches the declared content")
+
         head_content = _head_blob(repo, rel)
         foreign = _diff_blobs(repo, head_content or b"", base, rel) if head_content is not None else ""
 
         git(repo, "add", "--", rel)
         if not foreign.strip():
             results.append({"path": rel, "outcome": STAGED_CLEAN,
-                            "detail": "no delta predated the snapshot",
-                            "foreign_lines": 0})
+                            "detail": "no delta predated the snapshot" + window_note,
+                            "foreign_lines": 0,
+                            "unaccounted": unaccounted})
             continue
 
         with tempfile.TemporaryDirectory() as td:
@@ -290,9 +328,10 @@ def stage(repo: Path, paths: list[Path]) -> list[dict]:
         results.append({
             "path": rel, "outcome": FOREIGN_PRESERVED,
             "detail": f"{len(foreign_added)} foreign added line(s) subtracted "
-                      f"from the index and left in the working tree",
+                      f"from the index and left in the working tree" + window_note,
             "foreign_lines": len(foreign_added),
             "mine_lines": len(mine_added),
+            "unaccounted": unaccounted,
         })
     return results
 
@@ -425,6 +464,40 @@ def _self_test() -> int:
            "a refused file is removed from the index rather than left "
            "half-staged for the next commit to pick up")
 
+        # --- the window the snapshot cannot see ---------------------------
+        # A writer who appends AFTER your snapshot is indistinguishable from
+        # you, so their lines get staged as yours. Measured in production on
+        # the UKDL corpus: two capture-writer lines that arrived while the
+        # commit message was being written were carried under my message.
+        # Declaring the content you meant to add is the only thing that can
+        # separate them, because it is the only record of the boundary.
+        window = repo / "window.md"
+        window.write_text("base line\n", encoding="utf-8", newline="\n")
+        git(repo, "add", "--", "window.md")
+        git(repo, "commit", "--quiet", "-m", "window base")
+        snapshot(repo, [window])
+        declared = "MY-SECTION-one\nMY-SECTION-two\n"
+        window.write_text("base line\n" + declared + "THEIRS-DURING-WINDOW\n",
+                          encoding="utf-8", newline="\n")
+        decl_file = repo / "_declared.txt"
+        decl_file.write_text(declared, encoding="utf-8", newline="\n")
+
+        rw = stage(repo, [window], expect=decl_file)[0]
+        ok("V-HUNK-WINDOW-WRITER-NAMED",
+           rw.get("unaccounted") == ["THEIRS-DURING-WINDOW"],
+           f"a line written during the snapshot window is NAMED rather than "
+           f"silently staged as mine: {rw.get('unaccounted')}")
+        ok("V-HUNK-DECLARED-LINES-NOT-ACCUSED",
+           all(not ln.startswith("MY-SECTION")
+               for ln in (rw.get("unaccounted") or [])),
+           "declared content is never reported as somebody else's")
+        git(repo, "reset", "--quiet", "HEAD", "--", "window.md", check=False)
+        rw2 = stage(repo, [window])[0]
+        ok("V-HUNK-NO-DECLARATION-NO-ACCUSATION",
+           rw2.get("unaccounted") == [],
+           "with nothing declared the guard reports no window finding rather "
+           "than guessing at one")
+
         ok("V-HUNK-DISTINCT-EXITS",
            len({EXIT[NO_BASE], EXIT[VERIFY_MISMATCH], EXIT[GUARD_FAILED],
                 EXIT[NOTHING_TO_STAGE], EXIT[STAGED_CLEAN]}) == 5,
@@ -454,6 +527,10 @@ def main(argv=None) -> int:
     ap.add_argument("verb", choices=["snapshot", "stage", "self-test"])
     ap.add_argument("paths", nargs="*")
     ap.add_argument("--repo", default=None)
+    ap.add_argument("--expect", default=None,
+                    help="file holding the exact content you intended to add; "
+                         "staged lines absent from it are NAMED as written "
+                         "during the snapshot-to-stage window")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
 
@@ -475,7 +552,8 @@ def main(argv=None) -> int:
                     print(f"  snapshot {rel}  {m['base_bytes']}B  "
                           f"head={m['head'][:8]}")
             return 0
-        results = stage(repo, paths)
+        results = stage(repo, paths,
+                        expect=Path(args.expect).resolve() if args.expect else None)
     except GuardError as exc:
         print(f"{GUARD_FAILED}: {exc}", file=sys.stderr)
         return EXIT[GUARD_FAILED]
