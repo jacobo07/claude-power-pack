@@ -71,6 +71,14 @@ ADVISORY_ROWS: set[str] = {
     # parent/child contention pattern documented earlier is real but
     # is no longer a license to advisory-tag; the row must pass
     # under realistic umbrella conditions or be repaired upstream.
+    #
+    # live-hook-wrappers: the SUBJECT is the Owner's ~/.claude/settings.json,
+    # which HR-001 forbids this repo from writing. A row whose only repair is
+    # out of reach must not block a sweep -- a gate that is red on arrival and
+    # blocks gets disabled within a week, which costs more than it saves. This
+    # is the narrow case the Owner-correction above still allows: not a FAIL
+    # being reclassified, but a finding about the HOST rather than the tree.
+    "live-hook-wrappers",
 }
 
 ROW_BUDGET_S = 60   # individual row cap; the L3 row needs the bulk of this
@@ -680,6 +688,15 @@ def main() -> int:
         ("conhost-leak",
          [PY, str(PP / "tools" / "test_conhost_hook_leak.py")],
          30),
+        # Its sibling, and a different question. conhost-leak proves repair()
+        # works on fixtures; this one asks whether the Owner's registry is
+        # infected right now. The wrappers were removed at 21:37 on 2026-09-11
+        # and were back by 22:27, and the suite stayed green throughout --
+        # because every subject in it was synthetic. ADVISORY: the repair is
+        # Owner-side by HR-001.
+        ("live-hook-wrappers",
+         [PY, str(PP / "tools" / "check_live_hook_wrappers.py")],
+         20),
         # This one DOES drive the umbrella through a real subprocess, and is a
         # row anyway -- the child is forced into the refusal branch by an
         # inflated --peak-mb, so it returns before dispatching a single row.
