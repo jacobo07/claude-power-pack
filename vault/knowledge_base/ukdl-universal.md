@@ -8333,3 +8333,133 @@ happening somewhere else in the same run, or the absence is unproven.
   recoverable, against continuous compounding between the two writers. The
   defence is sized to the damage: doctrine, bracketing, and one hunk-scoped
   staging tool.
+
+## Proxies for Inheritance, Guards That Measure Themselves, and Owners That Cannot Comply (USEA Phase IV, sealed 2026-09-11)
+
+Distilled while measuring whether the constitution changes engineering outcomes,
+driving the convergence loop through a real dispatcher, and crossing a real
+session boundary for the first time. Every entry was paid for by a failure
+observed this phase. Three candidates that felt universal were kept out, with
+reasons, so nobody re-derives them.
+
+One measurement frames the rest. Across the four rule corpora this estate
+maintains -- 821 rule ids in 960 KB -- **92 name an executable owner, 11.2%**.
+The two CLAE corpora name none at all. That is the denominator for every
+"we already documented that" in this repository.
+
+### Hard Rules
+
+**`HR-ALWAYS-READ-IS-SCOPED-TO-ITS-LOADER-001`** -- A document declared ALWAYS
+READ by a component is always-read only for sessions that load that component.
+The declaration is a PROXY; the corroborant is an uninstructed session citing
+the content. Never report the proxy as inheritance. ORIGEN: three phases treated
+`SKILL.md` declaring `parts/core.md` always-read as proof that every session
+carries LAW II and LAW IX. A `claude -p` in a scratch directory -- a separate OS
+process, no parent transcript, leakage audited first -- cited NEITHER, while
+reproducing a rule from the genuinely always-on layer (`~/.claude/rules/`)
+verbatim, including its argument. Four doctrine markers present with the stack
+on and absent under `--safe-mode`, same model, same question: the layer
+transfers, the skill's part does not, because a skill must be invoked.
+DETECTION: ask the question in a process that was told nothing, and score for
+the law's NAME, never its substance -- a competent answer reaches LAW II's
+conclusion unaided and that is not the law travelling. PREVENTION:
+`tools/test_fresh_session_inheritance.py`, which pins the claim rather than the
+gap: no document may assert universal session inheritance without naming
+invocation as the path. SCOPE: universal -- any layered agent configuration with
+an always-on tier and an on-demand tier.
+
+**`HR-RESOLVE-TOOLS-BY-PATH-NOT-NAME-001`** -- A module must resolve an external
+executable through one owner, never by bare name in an argv, and an unresolvable
+tool must return a distinct UNREADABLE outcome rather than the value a
+successful call returns. ORIGEN: `subprocess.run(["git", ...])` in six files on
+a host whose PATH carries the GitHub CLI without Git. Every one caught the
+`FileNotFoundError` and answered with something shaped like a measurement: a
+heal loop that repaired its target, committed the fix and re-verified green
+reported `heal_commits=[]`; the gate certifying programmatic budget conformance
+reported its own probe as unmeasurable; a pre-compact recovery checkpoint
+recorded `dirty_files=[]`, a CLEAN tree, which is the single answer that
+licenses discarding work. WHY PROSE DID NOT PREVENT IT: the gap was documented
+twice, in `vault/lessons/powershell-git-path-gap.md` and the global execution
+doctrine, as advice to SHELL callers -- and nothing carried it into module code.
+PREVENTION: `modules/execution_env` resolves; `tools/test_git_invocation.py`
+sweeps structurally and ratchets. SCOPE: any tool invoked from code whose
+absence is catchable -- git, docker, ffmpeg, a language runtime.
+
+### Process Rules
+
+**`PR-GUARD-AFTER-THE-ACT-MEASURES-THE-ACT-001`** -- A precondition guard
+evaluated AFTER the step that can violate it measures its own side effects.
+Read the precondition before the run touches anything and DIFF two readings;
+the guard's subject is the world as it was, not as the run left it. ORIGEN: a
+convergence loop refused to heal with `terminated_because='dirty_worktree'`
+after 0.6 seconds, having dispatched nothing. The dirt was `?? __pycache__/`,
+written by the verification step importing the module it was verifying. On any
+Python target -- this repository's own primary language -- the heal branch was
+unreachable, and the stop reason accused the operator of uncommitted work.
+COROLLARY: classify the dirt. Untracked additions are what running an action
+produces; a TRACKED file changing mid-run is a concurrent writer and must still
+stop the loop. SCOPE: any gate whose subject can be perturbed by the work it
+gates -- build artefacts, lock files, caches, log rotation, temp state.
+
+**`PR-ORACLE-BOTH-POLES-BEFORE-SPENDING-001`** -- Before spending any expensive
+trial, prove the grader PASSES a known-good subject and FAILS the exact trap the
+trial exists to catch. A grader that cannot fail scores a broken arm green; one
+that cannot pass scores a working arm red; either way the run is confident
+noise and the money is gone. ORIGEN: the outcome experiment's control pass
+caught two bugs in the instrument before any of eight paid sessions ran -- a
+reference implementation that died under its own contention on Windows, and an
+expected answer computed wrongly. Both would have produced a clean-looking
+result. SCOPE: benchmarks, evaluations, A/B trials, any grader whose subject
+costs real money or real time to produce.
+
+### Traps
+
+**`T-AUDIT-DENOMINATOR-EXCLUDES-HALF-THE-ESTATE-001`** -- An audit that
+enumerates one directory reports on the other BY SILENCE, and silence reads as
+health. WHY IT LOOKS CORRECT: the totals are real, the rows are real, and a
+reader has no way to see the boundary of what was counted. ORIGEN: the
+reachability ledger -- the instrument built specifically to stop an undeclared
+component falling out of a denominator -- enumerated packages under `modules/`
+and called that "the full denominator" in its own docstring. `tools/` holds the
+verification runner, the benchmarks, the commit wrapper and the hunk guard.
+Phase III's only NEW owner shipped with no caller outside its own test, and the
+gate reported a clean 384-module ledger the entire time. DETECTION: read what
+the enumeration WALKS, not what it reports. PREVENTION: the rendered report now
+states its aperture above the table; extending it needs the ratchet treatment,
+not a bolt-on that turns a 20-offender gate red and gets it switched off.
+
+**`T-DOCTRINE-WITH-AN-OWNER-THAT-CANNOT-COMPLY-001`** -- A rule can have a
+documented executable owner that is STRUCTURALLY UNABLE to obey it, and every
+audit that asks "is there an owner" answers yes. ORIGEN: the pathspec rule is
+stated in three places and one wrapper is prescribed for it estate-wide;
+`tools/git_commit_safe.ps1` had no pathspec parameter at all, so a caller
+following the instruction exactly still committed the whole index. A second
+defect explained the silence: the wrapper's own header gives dot-sourcing as its
+first usage line, and a Mandatory parameter at script scope makes dot-sourcing
+die with MissingMandatoryParameter -- sealed 2026-05-26, prescribed everywhere,
+reachable only through its undocumented second entry point, with zero callers in
+the repository. DETECTION: check the owner's INTERFACE against the rule's
+obligation, and run the owner's own documented first usage line.
+
+### Candidates REJECTED from this corpus (recorded to prevent re-derivation)
+
+- **"Run bounded convergence on every task"** -- REJECTED. Measured once, live:
+  one heal dispatch, two verification attempts, 158 seconds, one real defect
+  repaired. That is positive ROI where a deterministic verification ALREADY
+  FAILED, and it is evidence about nothing else. The loop enters its heal branch
+  only on a FAIL verdict, so restraint is structural rather than advisory, and
+  promoting it to universal would be exactly the ceremony this programme spent
+  two phases learning to avoid. Classified CONDITIONALLY POSITIVE-ROI.
+- **"Move LAW II and LAW IX into the always-on layer"** -- NOT a rule, and
+  recorded here so it is not mistaken for one. It is a single Owner-side edit
+  under `~/.claude/`, which HR-001 reserves to the Owner. The repository half --
+  a detector that reports the gap and flips to OK on its own once the laws move
+  -- is shipped. Writing the global half would be the violation.
+- **"Fail a heal when the working tree has untracked files"** -- REJECTED as the
+  bug wearing the costume of a fix. Untracked files are what running a
+  verification produces; the defect was the MOMENT of measurement, not the
+  tolerance.
+
+- [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:my] `ceps_2c101bee55b52700` -- Tool failure in powershell:my: fatal: Unable.. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
