@@ -254,6 +254,36 @@ EXIT_MEASURED_FAILURE = 1      # rows ran, rows failed. A verdict about the code
 EXIT_INCONCLUSIVE = 3          # rows did not finish, or the tree moved under us.
 EXIT_PREFLIGHT_REFUSED = 4     # the host cannot carry the sweep. Nothing ran.
 
+# The exit code is what a shell sees; it is not what the estate remembers. The
+# provenance store is three-valued and its writer took a bool, so an
+# INCONCLUSIVE sweep was recorded as "the tests failed" and a REFUSED one was
+# recorded as nothing at all -- leaving a stale green vouching for a tree the
+# host could no longer measure. The ladder is carried across this boundary
+# intact, in the store's own vocabulary.
+_OUTCOME_FOR_EXIT = {
+    EXIT_OK: "PASS",
+    EXIT_MEASURED_FAILURE: "FAIL",
+    EXIT_INCONCLUSIVE: "INCONCLUSIVE",
+    EXIT_PREFLIGHT_REFUSED: "BLOCKED",
+}
+
+
+def _record_outcome(rc: int, detail: str) -> None:
+    """Carry this run's typed outcome into verification provenance.
+
+    Fail-open, always: HR-CASCADE-001 and HR-CASCADE-003 read this store, and a
+    verifier that died trying to say what it found would be worse than one that
+    stayed quiet. Never let bookkeeping fail a run.
+    """
+    outcome = _OUTCOME_FOR_EXIT.get(rc, "INCONCLUSIVE")
+    try:
+        from modules.cascade_prevention.verification_state import (
+            record_verification)
+        record_verification("verify_spp", rc == EXIT_OK, detail,
+                            outcome=outcome)
+    except Exception as exc:  # noqa: BLE001 -- must never fail a run
+        print(f"  (verification provenance not recorded: {exc})")
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
@@ -643,6 +673,14 @@ def main() -> int:
         ("conhost-leak",
          [PY, str(PP / "tools" / "test_conhost_hook_leak.py")],
          30),
+        # This one DOES drive the umbrella through a real subprocess, and is a
+        # row anyway -- the child is forced into the refusal branch by an
+        # inflated --peak-mb, so it returns before dispatching a single row.
+        # Bounded at depth one by construction, not by convention: a child that
+        # refuses cannot reach the code that would spawn a grandchild.
+        ("outcome-propagation",
+         [PY, str(PP / "tools" / "test_outcome_propagation.py")],
+         240),
         # Only the CONTROLS half is a regression gate. It proves every outcome
         # oracle still discriminates -- reference implementation passes, naive
         # one fails -- and spends no model call doing it. The arms are a paid
@@ -703,6 +741,13 @@ def main() -> int:
         print("    * lower the load:    verify_spp.py --parallel 1")
         print("    * override (records BLOCKED): --ignore-preflight")
         print("=" * 72)
+        # RECORD THE REFUSAL. This return used to leave the store untouched,
+        # which is the worst of the four outcomes to be silent about: the
+        # previous entry keeps vouching for the tree for up to an hour, so a
+        # sweep the host could not even start reads downstream as a green that
+        # merely has not expired yet. A refusal is a fact about this run and it
+        # overwrites the fact that is no longer current.
+        _record_outcome(EXIT_PREFLIGHT_REFUSED, f"refused: {env['blocker']}")
         return EXIT_PREFLIGHT_REFUSED
     if env["capacity"] is None:
         print("    NOTE     : capacity is MARGINAL or unmeasured. A row that dies")
@@ -912,16 +957,12 @@ def main() -> int:
         print(f"  (single row {args.row!r}: verification provenance NOT "
               "recorded -- only a full run vouches for the tree)")
     else:
-        try:
-            from modules.cascade_prevention.verification_state import (
-                record_verification)
-            record_verification(
-                "verify_spp", rc == 0,
-                f"{len(results) - len(failed_strict)}/{len(results)} rows"
-                + (f"; strict fail {[r['name'] for r in failed_strict]}"
-                   if failed_strict else ""))
-        except Exception as exc:  # noqa: BLE001 -- must never fail a run
-            print(f"  (verification provenance not recorded: {exc})")
+        _record_outcome(
+            rc,
+            f"{measured - len(failed_strict)}/{len(results)} rows measured"
+            + (f"; strict fail {[r['name'] for r in failed_strict]}"
+               if failed_strict else "")
+            + (f"; {len(unmeasured)} unmeasured" if unmeasured else ""))
     return rc
 
 
