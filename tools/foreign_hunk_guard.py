@@ -177,8 +177,14 @@ def _diff_blobs(repo: Path, old: bytes, new: bytes, rel: str) -> str:
         a.write_bytes(old)
         b.write_bytes(new)
         proc = subprocess.run(
+            # Zero context, deliberately. A context-bearing foreign patch
+            # cannot be reverse-applied once your lines sit next to it: the
+            # other writer's append ends at end-of-file, and by commit time it
+            # no longer does. With -U0 there is no surrounding text to
+            # mismatch, while the lines being removed must still match
+            # exactly -- which is the check that has to survive, and does.
             [git_exe(), "-C", str(repo), "diff", "--no-index", "--no-color",
-             "--src-prefix=a/", "--dst-prefix=b/", str(a), str(b)],
+             "-U0", "--src-prefix=a/", "--dst-prefix=b/", str(a), str(b)],
             capture_output=True, check=False,
         )
         raw = proc.stdout.decode("utf-8", "replace")
@@ -238,6 +244,11 @@ def stage(repo: Path, paths: list[Path]) -> list[dict]:
             with open(patch, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(foreign)
             proc = subprocess.run(
+                # --unidiff-zero is required BY the -U0 patch above, not a
+                # relaxation of safety: git refuses zero-context hunks without
+                # it. Strictness lives in the removal, which still has to find
+                # the other writer's exact lines in the index -- so a line both
+                # writers edited fails here rather than being subtracted wrong.
                 [git_exe(), "-C", str(repo), "apply", "--cached", "--reverse",
                  "--unidiff-zero", str(patch)],
                 capture_output=True, check=False,
@@ -384,10 +395,54 @@ def _self_test() -> int:
         ok("V-HUNK-NOOP", r4["outcome"] == NOTHING_TO_STAGE,
            f"unchanged file -> {r4['outcome']} (distinct from a refusal)")
 
+        # --- the refusal that matters most, driven ------------------------
+        # Found by mutation probe: a `check=False` on the index reset inside
+        # the VERIFY_MISMATCH branch survived, which meant nothing had ever
+        # entered that branch. It is the guard's most important refusal -- the
+        # honest "I cannot tell your lines from theirs" -- and it was carrying
+        # the same green as the paths that were exercised.
+        #
+        # Interleaving is what defeats separation: the other writer CHANGES a
+        # line and then you change the same line, so the foreign patch's
+        # context no longer matches the index and no subtraction is safe.
+        # Appending, the case above, is separable; editing in place is not.
+        tangled = repo / "tangled.md"
+        tangled.write_text("alpha\nbeta\ngamma\n", encoding="utf-8", newline="\n")
+        git(repo, "add", "--", "tangled.md")
+        git(repo, "commit", "--quiet", "-m", "tangled base")
+        tangled.write_text("alpha\nbeta-THEIRS\ngamma\n",
+                           encoding="utf-8", newline="\n")
+        snapshot(repo, [tangled])
+        tangled.write_text("alpha\nbeta-MINE\ngamma\n",
+                           encoding="utf-8", newline="\n")
+        rt = stage(repo, [tangled])[0]
+        ok("V-HUNK-INTERLEAVED-REFUSED", rt["outcome"] == VERIFY_MISMATCH,
+           f"the same line edited by both writers -> {rt['outcome']} "
+           "(refused, never a silent wrong subtraction)")
+        staged_names = git(repo, "diff", "--cached", "--name-only")
+        ok("V-HUNK-REFUSAL-LEAVES-INDEX-CLEAN",
+           "tangled.md" not in staged_names,
+           "a refused file is removed from the index rather than left "
+           "half-staged for the next commit to pick up")
+
         ok("V-HUNK-DISTINCT-EXITS",
            len({EXIT[NO_BASE], EXIT[VERIFY_MISMATCH], EXIT[GUARD_FAILED],
                 EXIT[NOTHING_TO_STAGE], EXIT[STAGED_CLEAN]}) == 5,
            "a broken guard, a refused subject and a clean pass exit differently")
+
+        # Distinctness is not enough, and a mutation probe proved it: flipping
+        # the success code from 0 to 1 kept all five values distinct and
+        # survived, while breaking every caller that branches on a zero exit.
+        # Which code means success is part of the contract, not an internal
+        # detail.
+        ok("V-HUNK-SUCCESS-IS-ZERO",
+           EXIT[STAGED_CLEAN] == 0 and EXIT[FOREIGN_PRESERVED] == 0,
+           "both staging successes exit 0")
+        ok("V-HUNK-REFUSALS-NONZERO",
+           all(EXIT[o] != 0 for o in
+               (NO_BASE, VERIFY_MISMATCH, GUARD_FAILED, NOTHING_TO_STAGE)),
+           "every refusal and every fault exits non-zero, so a caller cannot "
+           "mistake a withheld commit for a completed one")
 
     print(f"HUNK_GUARD_PASS={passes}/{passes + fails}  "
           f"threshold={passes + fails}/{passes + fails}")

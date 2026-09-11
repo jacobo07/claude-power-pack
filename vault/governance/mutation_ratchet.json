@@ -6,7 +6,7 @@
    "min_kill": 3,
    "sampled": 6,
    "module_hash": "f2dc1e74b28522ed",
-   "measured_at": "2026-09-10T22:45:37Z"
+   "measured_at": "2026-09-11T12:28:54Z"
   },
   "tools/test_egcc_residue.py::modules/rule_compiler/parser.py": {
    "tier": "weekly",
@@ -22,7 +22,7 @@
    "min_kill": 6,
    "sampled": 6,
    "module_hash": "4f56970aaec77da0",
-   "measured_at": "2026-09-10T22:45:37Z"
+   "measured_at": "2026-09-11T12:28:54Z"
   },
   "tools/test_done_strength_ladder.py::modules/done_gate/strength_ladder.py": {
    "tier": "push",
@@ -30,21 +30,29 @@
    "min_kill": 6,
    "sampled": 6,
    "module_hash": "63cfc9b55c101974",
-   "measured_at": "2026-09-10T22:45:37Z"
+   "measured_at": "2026-09-11T12:28:54Z"
+  },
+  "tools/test_foreign_hunk_guard.py::tools/foreign_hunk_guard.py": {
+   "tier": "push",
+   "_why": "Same-file concurrent-writer guard. Enrolled after its first probe returned PARTIAL (3/6): a flipped success exit code kept all five exit codes distinct and survived, and a check=False inside the VERIFY_MISMATCH branch survived because nothing had ever driven the guard's most important refusal -- the honest 'I cannot tell your lines from theirs'. Only tier and this note are hand-written; the floor is measured by --baseline.",
+   "min_kill": 4,
+   "sampled": 6,
+   "module_hash": "6e011f3fb856739a",
+   "measured_at": "2026-09-11T12:28:54Z"
   },
   "tools/test_capability_runtime.py::modules/capability_runtime/contract.py": {
    "tier": "push",
    "min_kill": 2,
    "sampled": 6,
    "module_hash": "fcaf3e7ecbee0fb5",
-   "measured_at": "2026-09-10T22:45:37Z"
+   "measured_at": "2026-09-11T12:28:54Z"
   },
   "tools/test_capability_runtime.py::modules/capability_runtime/applicability.py": {
    "tier": "push",
-   "min_kill": 2,
+   "min_kill": 4,
    "sampled": 6,
-   "module_hash": "de0ef2d008dc6ebf",
-   "measured_at": "2026-09-10T22:45:37Z"
+   "module_hash": "6130d9ac2571f3db",
+   "measured_at": "2026-09-11T12:28:54Z"
   },
   "tools/test_duplicate_to_advantage.py::modules/duplicate_to_advantage/d2a_engine.py": {
    "tier": "weekly",
