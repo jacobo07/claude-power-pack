@@ -488,6 +488,9 @@ def main() -> int:
         ("outcome-oracles",
          [PY, str(PP / "tools" / "usea_outcome_contrast.py"), "--controls-only"],
          120),
+        ("fresh-inheritance",
+         [PY, str(PP / "tools" / "test_fresh_session_inheritance.py")],
+         30),
     ]
 
     if args.row:
