@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from modules.execution_env import GIT_UNREADABLE, run_git as _git
+
 from ..dumpers import autodetect, get_dumper
 from ..dumpers.base import ActionScript, DumperError, EvidenceBundle
 from ..verdict import judge
@@ -79,47 +81,31 @@ def _notify_desktop(title: str, body: str) -> None:
 
 
 def _git_head(repo_path: Path) -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
-    except Exception:
-        logger.exception("git head query failed")
+    result = _git(repo_path, "rev-parse", "HEAD", timeout=5)
+    if result is not None and result.returncode == 0:
+        return result.stdout.strip()
     return None
 
 
-def _git_dirty(repo_path: Path) -> bool:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "status", "--porcelain"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-        return bool(result.stdout.strip())
-    except Exception:
-        return True
+def _git_dirty_paths(repo_path: Path) -> set[str]:
+    """Porcelain lines, as a set, so two readings can be DIFFED.
+
+    A boolean answer to "is the tree dirty" cannot distinguish the operator's
+    uncommitted work from the artefacts this run just created by executing the
+    action -- and on any Python target the action creates __pycache__ before the
+    guard is ever consulted. Reading the SET at two moments is what separates
+    the two, and it is the same bracketing the concurrent-writer doctrine
+    already requires of any wide oracle.
+    """
+    result = _git(repo_path, "status", "--porcelain")
+    if result is None or result.returncode != 0:
+        return {GIT_UNREADABLE}
+    return {ln.strip() for ln in result.stdout.splitlines() if ln.strip()}
 
 
 def _git_diff_since(repo_path: Path, since_sha: str) -> str:
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(repo_path), "diff", since_sha, "HEAD"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
-        )
-        return result.stdout
-    except Exception:
-        return ""
+    result = _git(repo_path, "diff", since_sha, "HEAD", timeout=10)
+    return result.stdout if result is not None else ""
 
 
 def run(
@@ -161,6 +147,13 @@ def run(
     terminated = ""
     last_verdict: Verdict | None = None
     heal_commits: list[str] = []
+
+    # Read the tree BEFORE anything in this run touches it. Everything that
+    # appears after this line is either our own exhaust or a concurrent writer,
+    # and only a reading taken here can tell them apart.
+    pre_dirty = _git_dirty_paths(repo_path)
+    run_log.append_event(
+        run_id, {"event": "pre_dirty", "n": len(pre_dirty)})
 
     try:
         with repo_lock(repo_path):
@@ -213,13 +206,37 @@ def run(
                     terminated = "uncertain"
                     break
 
-                # FAIL path
-                if require_clean and _git_dirty(repo_path):
+                # FAIL path. The precondition is "the operator has uncommitted
+                # work", and that is only knowable BEFORE this run touched
+                # anything -- pre_dirty was read above, before the first dumper
+                # launched. Comparing against it separates a concurrent writer
+                # from our own exhaust.
+                #
+                # Untracked additions are excluded deliberately. Running the
+                # action is what produces them: a Python action leaves
+                # __pycache__ in the tree every single time, and judging that as
+                # "dirty" aborted this loop before it could dispatch a heal on
+                # any Python target. Measured 2026-09-11 -- attempts=1, wall 0.6s,
+                # terminated_because='dirty_worktree', zero heal attempts ever
+                # made, on a tree whose only dirt was a .pyc the verification
+                # step had just written. A tracked file changing mid-run is a
+                # different matter and still stops the loop.
+                now_dirty = _git_dirty_paths(repo_path)
+                if require_clean and GIT_UNREADABLE in (now_dirty | pre_dirty):
+                    # Could-not-look is not the same as looked-and-found-nothing,
+                    # and a guard that cannot evaluate must not return the answer
+                    # a passing guard returns. Refuse rather than heal blind.
+                    run_log.append_event(run_id, {"event": "git_unreadable_abort"})
+                    terminated = "git_unreadable"
+                    break
+                foreign = sorted(p for p in (now_dirty - pre_dirty)
+                                 if not p.startswith("??"))
+                if require_clean and foreign:
                     run_log.append_event(
                         run_id,
-                        {"event": "dirty_worktree_abort"},
+                        {"event": "dirty_worktree_abort", "foreign": foreign},
                     )
-                    terminated = "dirty_worktree"
+                    terminated = f"tracked_changes_during_run:{','.join(foreign)[:200]}"
                     break
 
                 if attempts >= max_retry_budget:
