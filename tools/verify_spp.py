@@ -480,6 +480,14 @@ def main() -> int:
         ("git-invocation",
          [PY, str(PP / "tools" / "test_git_invocation.py")],
          60),
+        # Only the CONTROLS half is a regression gate. It proves every outcome
+        # oracle still discriminates -- reference implementation passes, naive
+        # one fails -- and spends no model call doing it. The arms are a paid
+        # experiment and are deliberately NOT wired here; turning every
+        # measurement into standing CI cost is its own antipattern.
+        ("outcome-oracles",
+         [PY, str(PP / "tools" / "usea_outcome_contrast.py"), "--controls-only"],
+         120),
     ]
 
     if args.row:
