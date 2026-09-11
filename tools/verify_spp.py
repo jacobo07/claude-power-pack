@@ -474,6 +474,9 @@ def main() -> int:
         ("hunk-guard",
          [PY, str(PP / "tools" / "test_foreign_hunk_guard.py")],
          60),
+        ("commit-scope",
+         [PY, str(PP / "tools" / "test_commit_scope.py")],
+         90),
     ]
 
     if args.row:
