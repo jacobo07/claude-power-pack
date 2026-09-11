@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""verify_spp.py — S++ end-to-end umbrella verifier.
+"""verify_spp.py â€” S++ end-to-end umbrella verifier.
 
 Composes every sub-verifier in the Power Pack into one row-table +
 single exit code. Sibling of (NOT replacement for) the Owner-authored
@@ -8,22 +8,22 @@ Layer specifically; this umbrella invokes that one as one of its rows
 and adds the rest of the S++ surface.
 
 Rows:
-  1. mirror-parity     — tools/verify_global_mirrors.py
-  2. drift-report      — tools/drift_report.py
-  3. paths+secrets     — tools/normalize_paths.py --check
-  4. rtk-fusion        — tools/verify_rtk_fusion.py
-  5. intent-lock       — modules/harness/intent_lock.js --self-test
-  6. l3-engine         — tools/test_l3_intent.js
-  7. programmatic-budget — tools/verify_full_install.py (Owner-authored)
+  1. mirror-parity     â€” tools/verify_global_mirrors.py
+  2. drift-report      â€” tools/drift_report.py
+  3. paths+secrets     â€” tools/normalize_paths.py --check
+  4. rtk-fusion        â€” tools/verify_rtk_fusion.py
+  5. intent-lock       â€” modules/harness/intent_lock.js --self-test
+  6. l3-engine         â€” tools/test_l3_intent.js
+  7. programmatic-budget â€” tools/verify_full_install.py (Owner-authored)
 
 Each row reports: name | rc | elapsed_s | one-line summary.
 Exit 0 iff EVERY row exits 0 OR is marked ``ADVISORY`` in
-``ADVISORY_ROWS``. ≤120s wall-clock budget (rows past budget abort).
+``ADVISORY_ROWS``. â‰¤120s wall-clock budget (rows past budget abort).
 
 Doctrine alignment:
 * Reality-Contract: each row is a real subprocess call; no synthesised
   composite multiplier. If a sub-verifier does not exist, the row
-  surfaces as ``MISSING`` (red) — never silently skipped.
+  surfaces as ``MISSING`` (red) â€” never silently skipped.
 * Mirror-Sync-Direction: tolerates the Owner's expected ``loose-ahead``
   on the documented mirror-parity exceptions (advisory).
 * Hooks-dir deny doctrine: this umbrella is read-only by design;
@@ -58,7 +58,7 @@ PP = Path(__file__).resolve().parents[1]
 NODE = shutil.which("node") or shutil.which("node.exe") or "node"
 PY = sys.executable
 
-# Rows that may FAIL without failing the umbrella gate. Use sparingly —
+# Rows that may FAIL without failing the umbrella gate. Use sparingly â€”
 # the default is strict.
 ADVISORY_ROWS: set[str] = {
     # programmatic-budget: scope-specific (RTK + JIT + pricing); a
@@ -164,6 +164,36 @@ def _preflight(root: Path, workers: int, peak_mb: int,
     return env
 
 
+# NTSTATUS codes that mean the OS took the process away rather than the process
+# deciding to leave. 0xC0000017 is STATUS_NO_MEMORY, which is the exact way an
+# OOM death presents on Windows -- the death this whole surface exists to stop
+# being read as a verdict about the code.
+_KILLED_NTSTATUS = {
+    0xC0000017,  # STATUS_NO_MEMORY
+    0xC00000FD,  # STATUS_STACK_OVERFLOW
+    0xC000013A,  # STATUS_CONTROL_C_EXIT
+    0xFFFFFFFF,  # TerminateProcess(-1): the harness or a governor stepped in
+}
+
+
+def _terminated_by_os(rc: int) -> bool:
+    """Did this process EXIT, or was it TAKEN?
+
+    A process that returns 1 has judged its subject and found it wanting. A
+    process the kernel removed has judged nothing at all, and the two are
+    indistinguishable by exit code alone unless you look at which codes a
+    process can actually choose.
+
+    POSIX: a negative code is `-signal`; nothing returns that voluntarily.
+    Windows: subprocess surfaces the raw DWORD, so an OS teardown arrives as a
+    negative int or as a 0xCxxxxxxx NTSTATUS. An ordinary failing verifier
+    returns 1 or 2 and never lands in either space.
+    """
+    if rc < 0:
+        return True
+    return (rc & 0xFFFFFFFF) in _KILLED_NTSTATUS
+
+
 def _row(name: str, argv: list[str], cwd: Path = PP,
          budget: int = ROW_BUDGET_S) -> dict:
     """Run one sub-verifier; return {name, rc, elapsed, missing,
@@ -185,9 +215,17 @@ def _row(name: str, argv: list[str], cwd: Path = PP,
         summary = (out[-1] if out else err[-1] if err else "(no output)")
         if len(summary) > 80:
             summary = summary[:77] + "..."
+        killed = _terminated_by_os(rc)
+        if killed:
+            # The founding incident, finally classified. A row the OS took away
+            # is UNMEASURED, exactly like a row that ran out of clock -- the
+            # cause differs, the epistemic status is identical, and only one of
+            # the two had a name in this file before today.
+            summary = (f"TERMINATED by the OS (rc={rc}) after {elapsed:.1f}s "
+                       f"-- not a verdict")
         return {"name": name, "rc": rc, "elapsed": elapsed,
                 "missing": False, "summary": summary, "budget": budget,
-                "stdout": cp.stdout, "stderr": cp.stderr}
+                "killed": killed, "stdout": cp.stdout, "stderr": cp.stderr}
     except subprocess.TimeoutExpired:
         # A row that did not FINISH has not told you anything about the
         # thing it measures. Reporting that as a failure conflates "the
@@ -227,7 +265,7 @@ def main() -> int:
                     metavar="MB",
                     help=("estimated peak memory of ONE row, for the SQI-03 "
                           f"capacity gate (default {ROW_PEAK_MB_ESTIMATE}, an "
-                          "estimate — not a measurement)"))
+                          "estimate â€” not a measurement)"))
     ap.add_argument("--reserve-mb", type=int, default=HOST_RESERVE_MB,
                     metavar="MB",
                     help=(f"memory the rest of the machine needs (default "
@@ -592,6 +630,19 @@ def main() -> int:
         ("git-invocation",
          [PY, str(PP / "tools" / "test_git_invocation.py")],
          60),
+        # The umbrella's own honesty gates. A gate nobody runs is the orphan
+        # trap this very surface was built to close, so they are rows here.
+        #
+        # tools/test_verify_spp_preflight.py is DELIBERATELY ABSENT: it drives
+        # this file through real subprocesses, so registering it as a row would
+        # make the umbrella invoke itself once per row, recursively. It is run
+        # directly, and this comment is the reason it looks unwired.
+        ("row-unmeasured",
+         [PY, str(PP / "tools" / "test_verify_spp_unmeasured.py")],
+         120),
+        ("conhost-leak",
+         [PY, str(PP / "tools" / "test_conhost_hook_leak.py")],
+         30),
         # Only the CONTROLS half is a regression gate. It proves every outcome
         # oracle still discriminates -- reference implementation passes, naive
         # one fails -- and spends no model call doing it. The arms are a paid
@@ -612,7 +663,7 @@ def main() -> int:
             return 2
 
     print("=" * 72)
-    print("verify_spp — S++ end-to-end umbrella")
+    print("verify_spp â€” S++ end-to-end umbrella")
     print(f"  PP root : {PP}")
     print(f"  rows    : {len(rows_spec)}")
     print(f"  budget  : {ROW_BUDGET_S}s per row default")
@@ -624,7 +675,7 @@ def main() -> int:
     if env["available_mb"] is not None:
         print(f"    memory   : {env['available_mb']} MB available, "
               f"{env['required_mb']} MB required "
-              f"({env['peak_mb_per_unit']} MB/row estimated × "
+              f"({env['peak_mb_per_unit']} MB/row estimated Ã— "
               f"{env['workers']} in flight + reserve)")
     else:
         print(f"    memory   : NOT MEASURABLE ({env.get('error') or 'no probe'})")
@@ -632,7 +683,7 @@ def main() -> int:
     if env["dirty_before"] is not None:
         print(f"    tree     : {len(env['dirty_before'])} dirty path(s) at open")
     else:
-        print("    tree     : NOT READABLE — contamination cannot be bracketed")
+        print("    tree     : NOT READABLE â€” contamination cannot be bracketed")
 
     # A SCOPED run is not a sweep, and must not inherit a sweep's ceremony. The
     # caller who typed --row has already done the thing the refusal would ask
@@ -644,7 +695,7 @@ def main() -> int:
         # to whatever still fits would report a green that measured less than it
         # claims; refusing says so out loud and leaves the Owner a real move.
         print("=" * 72)
-        print(f"  REFUSED — {env['blocker']}")
+        print(f"  REFUSED â€” {env['blocker']}")
         print("  A sweep the host cannot carry does not produce a verdict about")
         print("  this code; it produces a verdict about this afternoon. Options:")
         print("    * free memory and re-run")
@@ -713,7 +764,7 @@ def main() -> int:
     # Separated from failures on purpose: a timeout is an unmeasured row.
     timed_out = [r for r in results if r.get("timed_out")]
     if timed_out:
-        print(f"  UNMEASURED: {len(timed_out)} row(s) did not finish — "
+        print(f"  UNMEASURED: {len(timed_out)} row(s) did not finish â€” "
               f"{[r['name'] for r in timed_out]}")
         print("    (a row that did not finish is not a verdict; raise its "
               "budget or make it faster, do not read it as a defect)")
@@ -749,12 +800,37 @@ def main() -> int:
             if len(moved) > 12:
                 print(f"    ... and {len(moved) - 12} more")
 
+    # ---- Bracket: did the HOST hold up while the oracle was looking? --------
+    # The precondition is asserted at the END of the observation window, not only
+    # at the start. A run that silently lost its precondition mid-flight is
+    # indistinguishable from a subject that did nothing, and the convenient
+    # reading of that ambiguity is always the one that blames the subject.
+    #
+    # Deliberately NOT a veto over a clean green: rows that ran and passed on a
+    # degrading host still ran and still passed. Headroom collapse is an
+    # EXPLANATION for a failure or a non-finish, never an eraser for a success.
+    env_close = _preflight(PP, workers, int(args.peak_mb), int(args.reserve_mb))
+    host_degraded = (env["capacity"] is True and env_close["capacity"] is not True)
+    if host_degraded:
+        print(f"  HOST DEGRADED during the run: "
+              f"{env['available_mb']} MB -> {env_close['available_mb']} MB available")
+        print("    (a row that failed or died on this host is not attributable"
+              " to its subject)")
+
     # ---- Verdict ------------------------------------------------------------
     # A row that did not FINISH has said nothing about the thing it measures.
     # Counting it as a failure conflates "the gate found a defect" with "the gate
     # never ran", and sends an engineer to repair code that may be fine.
-    unmeasured = [r for r in results if r.get("timed_out")]
+    # Two ways to produce no verdict: run out of clock, or be taken by the OS.
+    # The second was the founding incident and had no name here until today.
+    unmeasured = [r for r in results if r.get("timed_out") or r.get("killed")]
     unmeasured_names = {r["name"] for r in unmeasured}
+    killed_rows = [r for r in results if r.get("killed")]
+    if killed_rows:
+        print(f"  TERMINATED: {len(killed_rows)} row(s) were killed, not failed â€” "
+              f"{[r['name'] for r in killed_rows]}")
+        print("    (the OS removed the process; it judged nothing. This is the"
+              " same epistemic state as a timeout, not a defect.)")
     failed_strict = [r for r in results
                      if r["rc"] != 0
                      and r["name"] not in ADVISORY_ROWS
@@ -765,12 +841,17 @@ def main() -> int:
     measured = len(results) - len(unmeasured)
 
     if failed_strict:
-        print(f"  STRICT FAIL: {len(failed_strict)} row(s) — "
+        print(f"  STRICT FAIL: {len(failed_strict)} row(s) â€” "
               f"{[r['name'] for r in failed_strict]}")
-        if moved:
-            print("    CONTAMINATED: the tree moved during this run, so these")
-            print("    failures are not attributable to the changeset. Re-run")
-            print("    them scoped (--row) against a still tree before acting.")
+        if moved or host_degraded:
+            cause = []
+            if moved:
+                cause.append(f"the tree moved ({len(moved)} path(s))")
+            if host_degraded:
+                cause.append("host headroom collapsed mid-run")
+            print(f"    CONTAMINATED: {' and '.join(cause)}, so these failures")
+            print("    are not attributable to the changeset. Re-run them scoped")
+            print("    (--row) on a still tree and a healthy host before acting.")
             rc = EXIT_INCONCLUSIVE
         else:
             rc = EXIT_MEASURED_FAILURE
@@ -795,7 +876,11 @@ def main() -> int:
         if env["capacity"] is False:
             why.append(f"host capacity REFUSED and was overridden: "
                        f"{env['blocker']}")
-        print(f"  INCONCLUSIVE — {measured} of {len(results)} rows measured, "
+        if host_degraded:
+            why.append(f"host headroom collapsed during the run "
+                       f"({env['available_mb']} MB -> "
+                       f"{env_close['available_mb']} MB)")
+        print(f"  INCONCLUSIVE â€” {measured} of {len(results)} rows measured, "
               f"none of them failing.")
         for w in why:
             print(f"    * {w}")
@@ -803,7 +888,7 @@ def main() -> int:
         print("    code is wrong, and nothing here licenses a done claim.")
         rc = EXIT_INCONCLUSIVE
     else:
-        print(f"  STRICT PASS — {measured - len(advisory_failing)} "
+        print(f"  STRICT PASS â€” {measured - len(advisory_failing)} "
               f"of {len(results)} rows OK"
               + (f", {len(advisory_failing)} advisory rows failing "
                  f"({[r['name'] for r in advisory_failing]})"

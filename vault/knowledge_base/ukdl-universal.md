@@ -8222,6 +8222,10 @@ and the fixture is visibly "hostile" in the source.
   ergonomics, already mechanically enforced and already in memory. Not a
   reusable engineering pattern.
 
+- [tooling/powershell:==] `ceps_b17cedbdb942b7fd` -- Tool failure in powershell:==: Command failed. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:ErrorActionPreference=St] `ceps_2c101bee55b52700` -- Tool failure in powershell:ErrorActionPreference=St: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
 ## Same-File Writers, Unreachable Registries and Withheld-versus-Blocked (USEA Phase III, sealed 2026-09-11)
 
 Distilled while closing the cross-domain benchmark, the convergence evaluation
@@ -8334,6 +8338,12 @@ happening somewhere else in the same run, or the absence is unproven.
   defence is sized to the damage: doctrine, bracketing, and one hunk-scoped
   staging tool.
 
+- [tooling/powershell:===] `ceps_2c101bee55b52700` -- Tool failure in powershell:===: fatal: Unable.. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:ls] `ceps_b2c0cde34b847d90` -- Tool failure in powershell:ls: fatal: Could. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_9298a1f2863c441d` -- Tool failure in powershell:py: FileNotFoundError: [WinError. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
 ## Proxies for Inheritance, Guards That Measure Themselves, and Owners That Cannot Comply (USEA Phase IV, sealed 2026-09-11)
 
 Distilled while measuring whether the constitution changes engineering outcomes,
@@ -8412,6 +8422,22 @@ expected answer computed wrongly. Both would have produced a clean-looking
 result. SCOPE: benchmarks, evaluations, A/B trials, any grader whose subject
 costs real money or real time to produce.
 
+**`PR-CLASSIFY-THE-TEARDOWN-NOT-ONLY-THE-CLOCK-001`** -- A runner that
+distinguishes "ran out of time" from "failed" must also distinguish "was taken
+by the OS" from "failed", because the two non-verdicts are the same epistemic
+state and only one of them usually gets a name. ORIGEN: `verify_spp._row`
+classified `TimeoutExpired` as rc=124 with the comment "a row that did not
+FINISH has not told you anything", and passed an OOM-killed child straight
+through as an ordinary non-zero row -- so the one death the estate actually
+suffered was the one that read as a defect. DETECTION: ask which exit codes a
+process can CHOOSE. POSIX `rc < 0` is `-signal`; on Windows a teardown arrives
+as a negative int or a `0xCxxxxxxx` NTSTATUS (`0xC0000017` is STATUS_NO_MEMORY,
+the exact OOM shape). An honest verifier returns 1 or 2 and lands in neither
+space. PREVENTION: the classifier ships with both poles driven -- four teardown
+shapes recognised, five real exit codes left alone -- because one that called
+every non-zero row "killed" would pass every positive case and silently excuse
+every real defect. SCOPE: any harness that spawns subjects it does not control.
+
 ### Traps
 
 **`T-AUDIT-DENOMINATOR-EXCLUDES-HALF-THE-ESTATE-001`** -- An audit that
@@ -8441,6 +8467,49 @@ reachable only through its undocumented second entry point, with zero callers in
 the repository. DETECTION: check the owner's INTERFACE against the rule's
 obligation, and run the owner's own documented first usage line.
 
+**`T-DOCTRINE-OWNER-EXISTS-AND-IS-ORPHANED-001`** -- A rule can have an
+executable owner that is correct, carries the exact vocabulary the rule needs,
+is perfectly able to obey it, and is reached by NOTHING. Every audit asking "is
+there an owner" answers yes; every audit asking "does the owner comply" answers
+yes; the rule still never executes. Sister of
+`T-DOCTRINE-WITH-AN-OWNER-THAT-CANNOT-COMPLY-001`, and harder to see, because
+there is no defect in the owner to find. ORIGEN: `~/.claude/rules/`
+`instrument-before-claim.md` states verbatim "a load generator is part of the
+system under test... give the gate a third verdict: a run whose host died is
+INCONCLUSIVE, never a failure of the subject". Days later an 82-row sweep was
+killed by the OS at 2181 MB free of 32061 MB and was narrated as still running.
+`modules/sqi/environment_qualifier.py` (SQI-03) existed the whole time, its
+docstring is that exact question, and it owns six states plus a verdict-ceiling
+table -- while `vault/audits/liveness_report.md` recorded it ORPHANED, reached
+by no live surface, and `tools/verify_spp.py` never asked it anything.
+DETECTION: for any doctrine file that states a VERDICT SEMANTICS, name the
+module that owns that verdict and run the reachability gate against it --
+`python modules/liveness/reachability.py`. PREVENTION: the fix is never a
+better-written rule; it is one caller. SCOPE: every prose rule prescribing what
+a gate must CONCLUDE.
+
+**`T-HOST-WRAPPER-WRITES-PAST-THE-PIPE-001`** -- A wrapper in a hook or task
+command decides where the wrapped command's output goes, and "directly to the
+terminal, bypassing your capture" is one of its options. WHY IT LOOKS CORRECT:
+the wrapped command is right, the registration is right, and the wrapper's name
+suggests it only suppresses a window. ORIGEN: an installer registered
+`conhost.exe --headless cmd.exe /d /c <hook>` in the GLOBAL
+`~/.claude/settings.json` across 11 events, several matching every tool.
+`conhost --headless` allocates a pseudoconsole; measured, that form returns 0
+bytes to the parent where a plain `cmd /d /c "echo hi"` returns 4. The
+pseudoconsole wrote its init/teardown escapes -- including `ESC[2J` (erase
+display) and `ESC[H` -- straight to the attached terminal, so the Owner's screen
+was cleared on every tool call in every repository, and each hook's own output
+was discarded. Three in-house causes were suspected first (the MSYS2 bridge, the
+multiplex clip, a dead-screen closer) and all three are consistent with the
+symptom. DETECTION: compare captured bytes with and without the wrapper; one
+returning 0 is not passing output through. Distinguish "ran and said nothing"
+from "ran and the output went elsewhere" -- same value, different facts.
+PREVENTION: promote the wrapped argv into the command itself; a console child of
+an already-console process inherits the console and flashes nothing.
+`tools/fix_conhost_hook_leak.py`. SCOPE: before diagnosing an agent, read what
+the host runs around it.
+
 ### Candidates REJECTED from this corpus (recorded to prevent re-derivation)
 
 - **"Run bounded convergence on every task"** -- REJECTED. Measured once, live:
@@ -8463,3 +8532,19 @@ obligation, and run the owner's own documented first usage line.
 - [regression/powershell:py] `ceps_5d28a90f4498a814` -- Before touching powershell:py, verify the regression scenario (FAILED) is still covered by a passing test.
 
 - [tooling/powershell:my] `ceps_2c101bee55b52700` -- Tool failure in powershell:my: fatal: Unable.. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:mine] `ceps_5d28a90f4498a814` -- Before touching powershell:mine, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:py] `ceps_7ec2ebf54666134f` -- Tool failure in powershell:py: SyntaxError: unterminated. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:py] `ceps_015d282515cb1863` -- Tool failure in powershell:py: Exception': 4. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:Select-Object] `ceps_2615290907861d38` -- Tool failure in powershell:Select-Object: Error: page.evaluate: Error: git status did not include orc.... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:err] `ceps_4b9501def27fe7fb` -- Tool failure in powershell:err: Error: Cannot find module 'C:\Users\User\Desktop\Cursor. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Select-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-Object, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [regression/powershell:Select-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Select-Object, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:+8341,] `ceps_e9b81137efd16933` -- Tool failure in powershell:+8341,: Exception': 4. Confirm the tool actu. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
