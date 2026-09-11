@@ -64,9 +64,17 @@ def main() -> int:
     # Positive control. Every assertion below is a substring test, and a
     # substring test against an unreadable file passes nothing but also
     # accuses nothing useful -- so prove the documents were actually loaded.
+    # Characters, and said so. read_text gives a str, so len() counts
+    # characters while the filesystem reports bytes -- core.md is 6556 of the
+    # first and 6779 of the second because its arrows and dashes are
+    # multi-byte. Reading the two numbers as the same unit made this file look
+    # like it had grown 223 bytes under a concurrent writer when nothing had
+    # touched it since Phase II. The byte ceiling is enforced, in bytes, by
+    # tools/test_baseline_inheritance.py; this is only a liveness check that
+    # the documents were loaded at all.
     check("V-AUTH-SOURCES-READ",
           len(core) > 1000 and len(overlay) > 1000,
-          f"core.md {len(core)}B, overlay core.md {len(overlay)}B")
+          f"core.md {len(core)} chars, overlay core.md {len(overlay)} chars")
 
     # --- the authority owns the verdict ------------------------------------
     check("V-AUTH-LADDER-IS-AUTHORITY",
