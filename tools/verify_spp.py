@@ -445,6 +445,35 @@ def main() -> int:
         ("cognitive-load-gates",
          [PY, str(PP / "tools" / "test_cognitive_load.py")],
          120),
+        # USEA completeness baseline. Phases I and II shipped these gates and
+        # registered none of them, so the constitutional floor was enforced by
+        # whoever remembered to run it -- which is the Liveness Standard's own
+        # finding wearing a different hat. All eight are cheap; measured
+        # together they add about twelve seconds to the suite.
+        ("usea-corpus",
+         [PY, str(PP / "tools" / "usea_corpus_gate.py"), "--self-test"],
+         30),
+        ("usea-law2",
+         [PY, str(PP / "tools" / "test_architectural_truth.py")],
+         30),
+        ("usea-ladder",
+         [PY, str(PP / "tools" / "test_done_strength_ladder.py")],
+         30),
+        ("usea-inheritance",
+         [PY, str(PP / "tools" / "test_baseline_inheritance.py")],
+         30),
+        ("usea-benchmark",
+         [PY, str(PP / "tools" / "test_usea_cross_domain_benchmark.py")],
+         45),
+        ("usea-convergence",
+         [PY, str(PP / "tools" / "test_convergence_bounds.py")],
+         60),
+        ("completion-authority",
+         [PY, str(PP / "tools" / "test_completion_authority.py")],
+         30),
+        ("hunk-guard",
+         [PY, str(PP / "tools" / "test_foreign_hunk_guard.py")],
+         60),
     ]
 
     if args.row:
