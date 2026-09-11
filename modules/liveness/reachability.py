@@ -218,9 +218,22 @@ def _names(blob: str) -> list[str]:
 
 
 def module_inventory(repo_root: Path | None = None) -> list[str]:
-    """Every module under modules/, as 'pkg/mod' -- the full denominator.
+    """Every module under modules/, as 'pkg/mod'.
 
     __init__ is included: an unreferenced package __init__ is a real signal.
+
+    APERTURE -- this is NOT the full executable denominator, and calling it that
+    (as this docstring did until 2026-09-11) is the very defect the module
+    header warns about, one level up. Packages under modules/ are scanned;
+    tools/ is not, and tools/ holds the verification runner, the benchmarks, the
+    commit wrapper and the hunk guard. Measured 2026-09-11: a tool shipped with
+    no caller outside its own test was invisible here, because it was never in
+    the denominator to be missed. An audit cannot report on a population it does
+    not enumerate, so the report states this aperture rather than leaving silence
+    about tools/ to be read as health. Extending the ledger to tools/ needs the
+    ratchet treatment -- enumerate, freeze current offenders with reasons, fail
+    on growth -- and is filed as such, not bolted on here where it would turn a
+    20-offender gate into a red one that gets switched off.
     """
     root = Path(repo_root or _repo_root()) / "modules"
     if not root.is_dir():
@@ -602,6 +615,11 @@ def _report_md(rows: list[dict], offs: list[dict]) -> str:
         "",
         f"modules: {len(rows)}  |  REACHABLE: {n_r}  |  ORPHAN: {n_o}  |  UNKNOWN: {n_u}"
         f"  |  gate offenders: {len(offs)}",
+        "",
+        "APERTURE: packages under `modules/` only. `tools/` is NOT scanned, so "
+        "nothing below is evidence about the verification runner, the "
+        "benchmarks, the commit wrapper or the hunk guard. Silence here about a "
+        "tool is absence from the denominator, never health.",
         "",
         "## Unreachable and undeclared",
         "",
