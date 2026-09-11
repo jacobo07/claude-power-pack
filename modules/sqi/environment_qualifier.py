@@ -1,7 +1,9 @@
 """SQI-03 — the Environment Qualifier. Qualification precedes interpretation.
 
 A result from an unqualified environment is a result whose meaning has not been
-established. The qualifier runs seven short-circuiting gates; the first that fails sets
+established. The qualifier runs the short-circuiting sequence named in GATES -- that list
+is the only place the count lives, because a number written into prose beside a list goes
+stale while still reading as a measured fact; the first gate that fails sets
 the state, records the blocker VERBATIM, and renders every downstream gate UNKNOWN --
 never skipped, never assumed, never passed by omission (SQI-03 3.9). An omitted gate
 reads as an absent concern; an UNKNOWN gate reads as an open question, and the difference
@@ -43,6 +45,7 @@ GATES = [
     "build_reachability",
     "service_availability",
     "harness_containment",
+    "host_capacity",
 ]
 
 # The verdict ceiling each state imposes (SQI-03 4.9). This is a ceiling, not an
@@ -101,7 +104,149 @@ def _run(argv: list[str], cwd: Path, timeout: int = 30) -> tuple[int, str]:
         return 126, f"{exc}"
 
 
-def qualify(cwd: str | Path, profile=None) -> EnvironmentRecord:
+@dataclass
+class Workload:
+    """What a caller is about to ask of the host, in the caller's own terms.
+
+    Declared, never inferred. This module cannot know whether it is being asked about a
+    single unit test or an eighty-row parallel sweep, and the identical headroom is
+    generous for the first and fatal for the second. A gate that guessed would be wrong
+    in whichever direction the guess was cheap.
+    """
+
+    name: str
+    peak_mb_per_unit: int          # peak RSS of ONE unit of work, measured or estimated
+    units_in_flight: int = 1       # parallelism; 1 for a serial run
+    reserve_mb: int = 1024         # what the rest of the machine still needs to live on
+
+    @property
+    def required_mb(self) -> int:
+        return self.peak_mb_per_unit * max(1, self.units_in_flight) + self.reserve_mb
+
+
+# A factor over the DECLARED requirement, not a fraction of the host. Sized so that a run
+# whose own footprint is small is not refused by a busy machine, and one whose footprint
+# is large is not admitted by a roomy one. The incident host sat at 6.8% free; that number
+# is evidence about one afternoon, and canonising it would gate every future workload on
+# the shape of a single failure.
+CAPACITY_MARGIN = 1.5
+
+
+def _avail_psutil() -> int | None:
+    try:
+        import psutil  # noqa: PLC0415 -- optional dependency, probed not required
+        return int(psutil.virtual_memory().available // (1024 * 1024))
+    except Exception:
+        return None
+
+
+def _avail_windows() -> int | None:
+    if sys.platform != "win32":
+        return None
+    try:
+        import ctypes  # noqa: PLC0415
+
+        class _MemStatus(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        st = _MemStatus()
+        st.dwLength = ctypes.sizeof(_MemStatus)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):
+            return int(st.ullAvailPhys // (1024 * 1024))
+        return None
+    except Exception:
+        return None
+
+
+def _avail_posix() -> int | None:
+    try:
+        pages = os.sysconf("SC_AVPHYS_PAGES")
+        size = os.sysconf("SC_PAGE_SIZE")
+        return int(pages * size // (1024 * 1024))
+    except (ValueError, AttributeError, OSError):
+        return None
+
+
+def available_mb() -> int | None:
+    """Physical memory a new process could actually obtain, in MB.
+
+    None means "could not look", never "looked and found nothing" -- the same distinction
+    modules/execution_env draws for git. Three probes because the first is an optional
+    dependency and the estate must not acquire one to be able to refuse a run.
+    """
+    for probe in (_avail_psutil, _avail_windows, _avail_posix):
+        got = probe()
+        if got is not None:
+            return got
+    return None
+
+
+def capacity_probe(workload: Workload | None,
+                   observed_mb: int | None = None) -> GateResult:
+    """Can this host sustain this workload long enough for its result to mean anything?
+
+    Three outcomes, and the middle one is the point. A run the host can certainly carry
+    and a run the host will certainly kill are easy; the interesting state is the one
+    where it may complete or may be killed, and reporting that as either a pass or a
+    failure is how a killed sweep came to be narrated as a verdict.
+
+    ``observed_mb`` exists so a caller can pass a reading it already took -- and so the
+    red branch can be driven without waiting for a real machine to run out of memory.
+    """
+    avail = available_mb() if observed_mb is None else observed_mb
+
+    if workload is None:
+        return GateResult(
+            "host_capacity", None,
+            "no workload declared; capacity is not evaluable in the abstract",
+        )
+    if avail is None:
+        return GateResult(
+            "host_capacity", None,
+            f"host memory not measurable on {sys.platform}; "
+            f"{workload.name} would require {workload.required_mb} MB",
+            blocker=f"host capacity unmeasurable for {workload.name}",
+        )
+
+    need = workload.required_mb
+    observed = (
+        f"{workload.name}: {avail} MB available, {need} MB required "
+        f"({workload.peak_mb_per_unit} MB x {max(1, workload.units_in_flight)} in flight "
+        f"+ {workload.reserve_mb} MB reserve)"
+    )
+    probe_cmd = "available_mb() [psutil|GlobalMemoryStatusEx|sysconf]"
+
+    if avail < need:
+        return GateResult(
+            "host_capacity", False, observed, command=probe_cmd,
+            blocker=f"insufficient host memory: {avail} MB available, "
+                    f"{need} MB required for {workload.name}",
+        )
+    if avail < need * CAPACITY_MARGIN:
+        return GateResult(
+            "host_capacity", None,
+            observed + f" -- inside the x{CAPACITY_MARGIN} margin; this run may "
+                       "complete or may be killed, and which one happens is not a "
+                       "fact about the subject",
+            command=probe_cmd,
+            blocker=f"host capacity marginal for {workload.name}: {avail} MB "
+                    f"against {need} MB required",
+        )
+    return GateResult("host_capacity", True, observed, command=probe_cmd)
+
+
+def qualify(cwd: str | Path, profile=None,
+            workload: Workload | None = None) -> EnvironmentRecord:
     """Qualify the host for this repository. Fail-open: any gate that cannot be evaluated
     is UNKNOWN, and an UNKNOWN gate is a hard ceiling on interpretation -- never a pass."""
     root = Path(cwd).resolve()
@@ -218,6 +363,22 @@ def qualify(cwd: str | Path, profile=None) -> EnvironmentRecord:
     # which this read-only pass does not perform. It is UNKNOWN, and says so.
     gates.append(GateResult("harness_containment", None,
                             "requires a differential observation around a run; not performed"))
+
+    # ---- Gate 8: host capacity -----------------------------------------------------
+    # Added 2026-09-11 after an 82-row sweep was killed by the OS at 2181 MB free of
+    # 32061 MB and the killed run was first narrated as still running. Gates 1-7 could
+    # all pass on that host: the toolchain was present, the runner was invocable, the
+    # locks resolved. Nothing in this module could see the only condition that mattered.
+    #
+    # Deliberately NOT a percentage of the host. The same 8% headroom is ample for one
+    # unit test and fatal for a parallel sweep, so the requirement is declared by the
+    # caller and the gate compares against it. A workload nobody declared is UNKNOWN,
+    # never a pass -- the module's own law (3.10), applied to capacity.
+    cap = capacity_probe(workload)
+    gates.append(cap)
+    host["available_mb"] = available_mb()
+    if cap.blocker and cap.passed is False:
+        blockers.append(cap.blocker)
 
     # ---- State ---------------------------------------------------------------------
     hard_fail = any(g.passed is False for g in gates)

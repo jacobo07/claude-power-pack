@@ -75,6 +75,94 @@ ADVISORY_ROWS: set[str] = {
 
 ROW_BUDGET_S = 60   # individual row cap; the L3 row needs the bulk of this
 
+# DECLARED, not observed. The SQI-03 capacity gate compares available memory
+# against a requirement the caller states; this is the umbrella's statement of
+# what one row costs at peak. It is an ESTIMATE and is labelled as one wherever
+# it is printed -- promoting it to "measured" would be the requested/observed
+# confusion the monetary-quantity doctrine warns about. Override with --peak-mb
+# once a real per-row peak has been sampled.
+ROW_PEAK_MB_ESTIMATE = 350
+
+# What the rest of the machine still needs to live on. Exposed as a flag for one
+# reason that is not tuning: WITHOUT IT THE PASSING BRANCH CANNOT BE DRIVEN.
+# Every refusal branch is reachable on any host by asking for an absurd peak;
+# the QUALIFIED branch is reachable only on a host that happens to be healthy,
+# so a gate for it would be green on a roomy machine, red on a busy one, and
+# evidence on neither. A declarable reserve makes the pass branch a test rather
+# than a weather report.
+HOST_RESERVE_MB = 1024
+
+
+def _dirty_paths(root: Path) -> list[str] | None:
+    """The SORTED SET of paths git reports dirty. None means 'could not look'.
+
+    A SET, never a count: measured 2026-09-10, a run opened and closed on 254
+    dirty paths and the tree had still moved -- one path left the set as another
+    entered. A count cannot see that, and a hash of the listing sees it without
+    being able to say WHAT moved, which leaves an INCONCLUSIVE nobody can act on.
+    """
+    git = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+    if not Path(git).is_file() and shutil.which("git") is None:
+        return None
+    try:
+        cp = subprocess.run([git, "status", "--porcelain"], cwd=str(root),
+                            capture_output=True, text=True, timeout=30,
+                            errors="replace")
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if cp.returncode != 0:
+        return None
+    return sorted(ln[3:] for ln in (cp.stdout or "").splitlines() if len(ln) > 3)
+
+
+def _preflight(root: Path, workers: int, peak_mb: int,
+               reserve_mb: int = HOST_RESERVE_MB) -> dict:
+    """Is this host fit to have its answer about this repository believed?
+
+    Delegates to SQI-03, the estate's incumbent authority on exactly that
+    question ("may any result from this host be interpreted at all"). It was
+    ORPHANED -- `vault/audits/liveness_report.md` recorded no live surface
+    reaching it -- which is why the 82-row sweep that the OS killed at 2181 MB
+    free of 32061 MB had nothing standing between it and a verdict.
+
+    Never raises. A preflight that can break the umbrella is worse than no
+    preflight, so every failure resolves to UNKNOWN -- which is a ceiling on
+    interpretation, never a pass.
+    """
+    env = {
+        "state": "UNKNOWN",
+        "verdict_ceiling": "UNVERIFIED",
+        "available_mb": None,
+        "required_mb": None,
+        "capacity": None,          # True / False / None, the gate's own tri-state
+        "blocker": None,
+        "workers": max(1, workers),
+        "peak_mb_per_unit": peak_mb,
+        "dirty_before": _dirty_paths(root),
+        "error": None,
+    }
+    try:
+        sys.path.insert(0, str(PP))
+        from modules.sqi.environment_qualifier import (  # noqa: PLC0415
+            Workload, capacity_probe,
+        )
+        w = Workload("verify_spp sweep", peak_mb_per_unit=peak_mb,
+                     units_in_flight=max(1, workers), reserve_mb=reserve_mb)
+        gate = capacity_probe(w)
+        env["capacity"] = gate.passed
+        env["blocker"] = gate.blocker
+        env["required_mb"] = w.required_mb
+        env["observed"] = gate.observed
+        from modules.sqi.environment_qualifier import available_mb  # noqa: PLC0415
+        env["available_mb"] = available_mb()
+        env["state"] = {True: "QUALIFIED", False: "BLOCKED",
+                        None: "PARTIALLY_QUALIFIED"}[gate.passed]
+        env["verdict_ceiling"] = {True: "any", False: "BLOCKED",
+                                  None: "UNVERIFIED for any failing row"}[gate.passed]
+    except Exception as exc:  # noqa: BLE001 -- fail-open to UNKNOWN, never to pass
+        env["error"] = f"{type(exc).__name__}: {exc}"
+    return env
+
 
 def _row(name: str, argv: list[str], cwd: Path = PP,
          budget: int = ROW_BUDGET_S) -> dict:
@@ -119,12 +207,36 @@ def _present(p: Path) -> bool:
     return p.is_file()
 
 
+# Exit codes. 0 and 1 keep their meaning so every existing caller is unaffected;
+# the two new ones exist because "nothing was measured" and "something failed"
+# are different claims and collapsing them is how a killed sweep came to be read
+# as a verdict. Both are non-zero: the gate stays fail-closed in every direction.
+EXIT_OK = 0
+EXIT_MEASURED_FAILURE = 1      # rows ran, rows failed. A verdict about the code.
+EXIT_INCONCLUSIVE = 3          # rows did not finish, or the tree moved under us.
+EXIT_PREFLIGHT_REFUSED = 4     # the host cannot carry the sweep. Nothing ran.
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     ap.add_argument("--quiet", action="store_true",
                     help="suppress per-row stdout dumps; only print table")
     ap.add_argument("--row", default=None,
                     help="run a single named row, skip the rest")
+    ap.add_argument("--peak-mb", type=int, default=ROW_PEAK_MB_ESTIMATE,
+                    metavar="MB",
+                    help=("estimated peak memory of ONE row, for the SQI-03 "
+                          f"capacity gate (default {ROW_PEAK_MB_ESTIMATE}, an "
+                          "estimate — not a measurement)"))
+    ap.add_argument("--reserve-mb", type=int, default=HOST_RESERVE_MB,
+                    metavar="MB",
+                    help=(f"memory the rest of the machine needs (default "
+                          f"{HOST_RESERVE_MB}). Exists so the PASSING branch of "
+                          "the capacity gate can be driven deterministically"))
+    ap.add_argument("--ignore-preflight", action="store_true",
+                    help=("run even when the host capacity gate refuses. The "
+                          "run is still recorded as BLOCKED: this suppresses "
+                          "the refusal, never the finding"))
     ap.add_argument("--parallel", nargs="?", type=int,
                     const=PARALLEL_DEFAULT_WORKERS, default=0,
                     metavar="N",
@@ -506,6 +618,45 @@ def main() -> int:
     print(f"  budget  : {ROW_BUDGET_S}s per row default")
     print("=" * 72)
 
+    # ---- Preflight: qualify the HOST before believing anything it says -------
+    env = _preflight(PP, workers, int(args.peak_mb), int(args.reserve_mb))
+    print("  PREFLIGHT (SQI-03 host capacity)")
+    if env["available_mb"] is not None:
+        print(f"    memory   : {env['available_mb']} MB available, "
+              f"{env['required_mb']} MB required "
+              f"({env['peak_mb_per_unit']} MB/row estimated × "
+              f"{env['workers']} in flight + reserve)")
+    else:
+        print(f"    memory   : NOT MEASURABLE ({env.get('error') or 'no probe'})")
+    print(f"    state    : {env['state']}   ceiling: {env['verdict_ceiling']}")
+    if env["dirty_before"] is not None:
+        print(f"    tree     : {len(env['dirty_before'])} dirty path(s) at open")
+    else:
+        print("    tree     : NOT READABLE — contamination cannot be bracketed")
+
+    # A SCOPED run is not a sweep, and must not inherit a sweep's ceremony. The
+    # caller who typed --row has already done the thing the refusal would ask
+    # them to do; refusing them is the gate punishing the correct move. It is
+    # reported and it lowers the ceiling -- it just does not block.
+    scoped = bool(args.row)
+    if env["capacity"] is False and not args.ignore_preflight and not scoped:
+        # Refuse, and name the scoped alternative. Silently shrinking the sweep
+        # to whatever still fits would report a green that measured less than it
+        # claims; refusing says so out loud and leaves the Owner a real move.
+        print("=" * 72)
+        print(f"  REFUSED — {env['blocker']}")
+        print("  A sweep the host cannot carry does not produce a verdict about")
+        print("  this code; it produces a verdict about this afternoon. Options:")
+        print("    * free memory and re-run")
+        print("    * run a scoped row:  verify_spp.py --row <name>")
+        print("    * lower the load:    verify_spp.py --parallel 1")
+        print("    * override (records BLOCKED): --ignore-preflight")
+        print("=" * 72)
+        return EXIT_PREFLIGHT_REFUSED
+    if env["capacity"] is None:
+        print("    NOTE     : capacity is MARGINAL or unmeasured. A row that dies")
+        print("               on this host is UNMEASURED, not a defect of its subject.")
+
     t_total = time.monotonic()
     results: list[dict] = []
     results_by_name: dict[str, dict] = {}
@@ -578,21 +729,86 @@ def main() -> int:
               + ", ".join(f"{r['name']} {r['elapsed']:.0f}s/{r['budget']}s"
                           for r in marginal))
 
+    # ---- Bracket: did the tree move while the oracle was looking? -----------
+    # An oracle's verdict is about its subject only if its observation domain
+    # equals its subject. This umbrella's domain is the whole repository, so a
+    # concurrent writer can turn a green or a red into a statement about timing.
+    # The SET is diffed, not the count, so the moved paths can be NAMED -- and a
+    # named movement is often demonstrably out of scope, which is the difference
+    # between an INCONCLUSIVE you can act on and one you cannot.
+    dirty_after = _dirty_paths(PP)
+    moved: list[str] = []
+    if env["dirty_before"] is not None and dirty_after is not None:
+        before, after = set(env["dirty_before"]), set(dirty_after)
+        moved = sorted((before - after) | (after - before))
+        if moved:
+            print(f"  TREE MOVED during the run: {len(moved)} path(s)")
+            for p in moved[:12]:
+                side = "left" if p in before - after else "entered"
+                print(f"    {side:<8s} {p}")
+            if len(moved) > 12:
+                print(f"    ... and {len(moved) - 12} more")
+
+    # ---- Verdict ------------------------------------------------------------
+    # A row that did not FINISH has said nothing about the thing it measures.
+    # Counting it as a failure conflates "the gate found a defect" with "the gate
+    # never ran", and sends an engineer to repair code that may be fine.
+    unmeasured = [r for r in results if r.get("timed_out")]
+    unmeasured_names = {r["name"] for r in unmeasured}
     failed_strict = [r for r in results
-                     if r["rc"] != 0 and r["name"] not in ADVISORY_ROWS]
+                     if r["rc"] != 0
+                     and r["name"] not in ADVISORY_ROWS
+                     and r["name"] not in unmeasured_names]
     advisory_failing = [r for r in results
-                        if r["rc"] != 0 and r["name"] in ADVISORY_ROWS]
+                        if r["rc"] != 0 and r["name"] in ADVISORY_ROWS
+                        and r["name"] not in unmeasured_names]
+    measured = len(results) - len(unmeasured)
+
     if failed_strict:
         print(f"  STRICT FAIL: {len(failed_strict)} row(s) — "
               f"{[r['name'] for r in failed_strict]}")
-        rc = 1
+        if moved:
+            print("    CONTAMINATED: the tree moved during this run, so these")
+            print("    failures are not attributable to the changeset. Re-run")
+            print("    them scoped (--row) against a still tree before acting.")
+            rc = EXIT_INCONCLUSIVE
+        else:
+            rc = EXIT_MEASURED_FAILURE
+    elif unmeasured or moved or env["capacity"] is not True:
+        # `is not True` deliberately, not `is None`. MEASURED 2026-09-11: the
+        # first draft tested only None, so a run that OVERRODE a BLOCKED
+        # preflight (--ignore-preflight, or a scoped run on a starved host)
+        # printed STRICT PASS -- on a host the gate had just said could not
+        # carry it. The flag's own help text promised it "suppresses the
+        # refusal, never the finding", and the code suppressed the finding.
+        # That is the exact defect this whole surface exists to prevent, written
+        # by the surface that prevents it. An override must change what the run
+        # DOES, never what the run may CLAIM.
+        why = []
+        if unmeasured:
+            why.append(f"{len(unmeasured)} row(s) did not finish "
+                       f"({sorted(unmeasured_names)})")
+        if moved:
+            why.append(f"{len(moved)} path(s) moved in the tree")
+        if env["capacity"] is None:
+            why.append("host capacity was marginal or unmeasurable")
+        if env["capacity"] is False:
+            why.append(f"host capacity REFUSED and was overridden: "
+                       f"{env['blocker']}")
+        print(f"  INCONCLUSIVE — {measured} of {len(results)} rows measured, "
+              f"none of them failing.")
+        for w in why:
+            print(f"    * {w}")
+        print("    This is neither a pass nor a failure. Nothing here says the")
+        print("    code is wrong, and nothing here licenses a done claim.")
+        rc = EXIT_INCONCLUSIVE
     else:
-        print(f"  STRICT PASS — {len(results) - len(advisory_failing)} "
+        print(f"  STRICT PASS — {measured - len(advisory_failing)} "
               f"of {len(results)} rows OK"
               + (f", {len(advisory_failing)} advisory rows failing "
                  f"({[r['name'] for r in advisory_failing]})"
                  if advisory_failing else ""))
-        rc = 0
+        rc = EXIT_OK
     print("=" * 72)
 
     # Verification provenance. HR-CASCADE-001 and HR-CASCADE-003 read a
