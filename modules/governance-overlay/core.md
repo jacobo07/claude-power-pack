@@ -47,6 +47,10 @@ Every delivery must pass the 5-gate cascade: Static Analysis → Build → Scaff
 
 The words "done", "complete", "ready", "fixed", "passing" require evidence from running the verification commands above. "Should work" or "looks correct" are not evidence.
 
+**Authority: LAW IX in `parts/core.md`, which is always read.** The gates on this page PRODUCE evidence; they do not issue the verdict. Completion is graded across thirteen rungs, not answered yes or no, and a claim is bounded by the rung its evidence actually reaches — grade it with `modules/done_gate/strength_ladder.py`. LAW II applies first: a passing gate is a proxy, and a proxy without its corroborant caps the claim at EXECUTED however many gates are green (`modules/done_gate/architectural_truth.py`).
+
+The `"Complete" = every route responds + every screen renders` line above is the **web/app instantiation** of that law, not a rival definition of done. Firmware, a CLI, a library or a data pipeline reach the same rungs through different evidence, and must not be judged against routes and screens they do not have. `~/.claude/skills/software-best-practices` subordinates its own completion criteria to this page and therefore inherits this authority transitively — one semantic owner, three projections, so the three cannot drift into three different meanings of DONE. Pinned by `tools/test_completion_authority.py`.
+
 ## Tier Upgrade Signal
 
 If during a LIGHT task you discover:
