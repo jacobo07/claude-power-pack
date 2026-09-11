@@ -8221,3 +8221,115 @@ and the fixture is visibly "hostile" in the source.
 - **Anti-thrash gates require Read-then-single-Edit** -- REJECTED as local tool
   ergonomics, already mechanically enforced and already in memory. Not a
   reusable engineering pattern.
+
+## Same-File Writers, Unreachable Registries and Withheld-versus-Blocked (USEA Phase III, sealed 2026-09-11)
+
+Distilled while closing the cross-domain benchmark, the convergence evaluation
+and the concurrent-writer failure class. Every entry below was paid for by a
+measured failure in this phase or the two before it. Two candidates that felt
+universal were deliberately kept out, and the reasons are recorded so nobody
+re-derives them.
+
+### Hard Rules
+
+**`HR-SAMEFILE-COMMIT-001`** -- A commit that names a path claims every
+uncommitted line in that path, not the lines you wrote. Where two writers can
+legitimately be inside one file, staging MUST happen at hunk granularity
+against a baseline recorded BEFORE your edits, or the commit must be refused.
+Authorship cannot be recovered from a diff after the fact, so it has to be
+recorded before the fact; a snapshot taken at the moment you start editing
+makes everything already differing from HEAD provably not yours, and that is
+the only cheap boundary available. Note what this is NOT: atomic writes do not
+help, and roughly twenty-five tmp-plus-rename implementations in this estate
+solve a torn write while doing nothing whatever about a lost attribution. Note
+also what the failure looks like from the inside -- nothing errors, both writers
+followed the pathspec doctrine exactly, and the damage is only visible in an
+insertion count nobody reads. ORIGEN: a knowledge-base commit reported 467
+insertions of which about 85 were the session's own; 185 belonged to a
+concurrent capture system and were carried under a message describing none of
+them. SCOPE: universal -- any version control with file-granular staging and
+more than one concurrent writer, which includes every agent estate running more
+than one pane on one checkout. DETECTION: a diff whose hunk ranges you do not
+recognise. PREVENTION: `tools/foreign_hunk_guard.py`, fail-closed on any file
+with no recorded baseline.
+
+### Process Rules
+
+**`PR-CANONICAL-TEXT-FROM-SOURCE-001`** -- Generated canonical text -- a commit
+message, a changelog entry, a release note, a signed manifest -- must be built
+or rebuilt from its SOURCE FILE, never reassembled from a read-back of the
+rendered artifact. The general failure is an interface returning a COLLECTION
+where the caller assumed a SCALAR: the structure is destroyed at the
+serialization boundary, the value still looks plausible, and the loss shows up
+only in the rendering, which is the one place nobody re-reads. This is why the
+rule is about provenance rather than about any one language -- the same shape
+is a readlines-versus-read in Python, a chunked buffer in Node, or a row set
+where a scalar was expected in SQL. ORIGEN: an amend rebuilt its message from
+command output that was a string ARRAY rather than one string; concatenation
+appended an element and the writer joined the elements with spaces, collapsing
+a 47-line body to a single line. The repair was to rebuild from the original
+message file, which is what the estate's existing commit-by-file rule already
+required for the first write and had not extended to the amend. SCOPE: any
+toolchain that both renders and re-reads canonical text.
+
+**`PR-RELEVANCE-BEFORE-CAPABILITY-GATES-001`** -- In any router that both
+scores relevance and gates on preconditions, evaluate relevance FIRST. A
+precondition gate placed ahead of it answers "I could not judge this" for
+things nobody asked for, and the blocked list fills with entries no operator
+should ever have been shown -- which hides the one entry that genuinely needs
+action. The four refusal verdicts of such an engine all mean "wanted here and
+cannot run"; returning one for something unwanted is a category error, not a
+cosmetic one. The ordering change is safe precisely because it alters no
+activation: an item no trigger reached was never going to activate under either
+ordering, so only the honesty of the verdict moves. ORIGEN: a one-line CLI typo
+reported a transactional component installer as blocked for missing evidence.
+SCOPE: capability routers, plugin activation, policy engines -- anywhere
+relevance and feasibility are separate questions answered by one pass.
+
+### Traps
+
+**`T-MATCHER-FIELD-WRITTEN-AS-PROSE-001`** -- A registry field that is CONSUMED
+by a matcher but AUTHORED as English sentences makes its entry permanently
+unreachable, and every human review of that file reads perfectly. The fields
+describe the right conditions; they simply describe them to a reader rather
+than to the matcher, and no mission text will ever contain a whole sentence and
+no caller will ever pass one as a token. The entry keeps its maturity marking,
+its consumers and its documentation, and is never once selected. WHY IT LOOKS
+CORRECT: prose in a declarative file is the norm in every neighbouring field --
+scope, non-scope, rollback and kill-switch are all legitimately prose -- so the
+matched fields look consistent with their file rather than inconsistent with
+their consumer. DETECTION: run a diverse mission portfolio and assert that no
+entry is blocked on EVERY fixture; an entry that never reaches scoring anywhere
+is unreachable rather than unpopular.
+
+**`T-WITHHELD-VS-BLOCKED-001`** -- A capability that did not activate because
+the engine declined to evaluate it is not evidence of restraint, and counting
+it as such turns a broken router into a model of discipline. The first run of
+the cross-domain benchmark scored zero activations across nine domains; nine
+ceremony gates, the risk-ordering gate and the context-economy gate all went
+green, and the report read as flawless minimalism. Every contract had in fact
+been refused at an evidence gate because the fixtures declared no evidence at
+all. WHY IT LOOKS CORRECT: the numbers are real, the direction is the one you
+were hoping for, and low activation is exactly what a negative-capability test
+is built to reward. Only a positive control caught it. COROLLARY for any
+suite asserting a thing did NOT happen: require that the thing be observed
+happening somewhere else in the same run, or the absence is unproven.
+
+### Candidates REJECTED from this corpus (recorded to prevent re-derivation)
+
+- **"Never build multi-line text through PowerShell"** -- REJECTED as a
+  tool-level prohibition that both over-reaches and under-reaches. It would ban
+  a working tool on the strength of one incident while missing the identical
+  collection-versus-scalar collapse in every other language.
+  `PR-CANONICAL-TEXT-FROM-SOURCE-001` targets the actual mechanism instead.
+- **"Atomic writes are the owner of concurrent-writer safety"** -- REJECTED as
+  measurably wrong. Roughly twenty-five tmp-plus-rename implementations already
+  exist here and not one of them addresses lost attribution. Naming them as the
+  owner would have closed the question with the wrong answer, which is worse
+  than leaving it open.
+- **"Build a lock manager for the shared working tree"** -- REJECTED on
+  measured harm. Across three phases of genuine concurrency the total damage
+  was one mis-titled commit and two contaminated wide-oracle runs, all
+  recoverable, against continuous compounding between the two writers. The
+  defence is sized to the damage: doctrine, bracketing, and one hunk-scoped
+  staging tool.
