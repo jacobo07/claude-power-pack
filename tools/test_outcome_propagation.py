@@ -183,6 +183,52 @@ def test_a_pass_still_vouches() -> None:
               f"verified={verified!r} outcome={outcome!r}")
 
 
+def test_a_killed_run_leaves_a_trace() -> None:
+    """THE STATE A DEAD PROCESS CANNOT REPORT.
+
+    Measured 2026-09-11: an 87-row sweep was taken by the OS at roughly row 50
+    and this store learned nothing, because the process that writes the outcome
+    is the process that died. "A sweep died" and "no sweep ever ran" read
+    identically -- the founding incident of the whole ladder, recurring inside
+    the code written to prevent it.
+
+    The write-ahead stamp is the only evidence a death can leave. It must not
+    vouch, must not accuse, and must displace the previous green -- otherwise a
+    sweep that died lets yesterday's pass keep authorising deploys.
+    """
+    def body():
+        vs.record_verification("verify_spp", True, "87/87 rows")
+        vs.record_verification("verify_spp", False, "dispatching 87 rows",
+                               outcome="STARTED")
+        return vs.was_verified(), vs.last_outcome(), vs.summary()["reason"]
+    verified, outcome, reason = _with_store(body)
+    if verified is None and outcome == "STARTED" and "never reported" in reason:
+        _ok("V-OUTCOME-KILLED-LEAVES-TRACE",
+            "a green did not survive a sweep that died mid-flight")
+    else:
+        _fail("V-OUTCOME-KILLED-LEAVES-TRACE",
+              f"verified={verified!r} outcome={outcome!r} reason={reason!r}")
+
+
+def test_the_umbrella_stamps_before_dispatch() -> None:
+    """The producer must be WIRED, and wired ahead of the rows.
+
+    A write-ahead record that is written after the work is not a write-ahead
+    record. This asserts the call sits before the dispatch loop, because the
+    whole value is in the ordering and nothing else would notice if it moved.
+    """
+    src = UMBRELLA.read_text(encoding="utf-8-sig")
+    stamp = src.find("_record_outcome_started(len(rows_spec))")
+    loop = src.find("t_total = time.monotonic()")
+    if stamp == -1:
+        _fail("V-OUTCOME-WRITE-AHEAD", "the umbrella stamps nothing before dispatch")
+    elif loop != -1 and stamp < loop:
+        _ok("V-OUTCOME-WRITE-AHEAD", "stamp precedes the dispatch loop")
+    else:
+        _fail("V-OUTCOME-WRITE-AHEAD",
+              f"stamp at {stamp} is not before the dispatch loop at {loop}")
+
+
 def test_a_legacy_record_still_reads() -> None:
     """Records written before `outcome` existed carry only `passed`, and were
     only ever written on a real verdict. Dropping them would silently turn
@@ -228,7 +274,7 @@ def test_every_exit_code_has_an_outcome() -> None:
 
 def main() -> int:
     print("=" * 72)
-    print("test_outcome_propagation -- V-OUTCOME-* (1 real path, 4 synthetic)")
+    print("test_outcome_propagation -- V-OUTCOME-* (2 real paths, 5 synthetic)")
     print("=" * 72)
     for fn in (
         test_blocked_survives_the_real_umbrella,
@@ -236,6 +282,8 @@ def main() -> int:
         test_inconclusive_is_not_a_failure,
         test_a_real_failure_still_reads_as_a_failure,
         test_a_pass_still_vouches,
+        test_a_killed_run_leaves_a_trace,
+        test_the_umbrella_stamps_before_dispatch,
         test_a_legacy_record_still_reads,
         test_every_exit_code_has_an_outcome,
     ):

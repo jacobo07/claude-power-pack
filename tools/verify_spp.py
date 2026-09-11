@@ -276,6 +276,22 @@ _OUTCOME_FOR_EXIT = {
 }
 
 
+def _record_outcome_started(n_rows: int) -> None:
+    """Stamp the store BEFORE dispatch, so a death leaves a trace.
+
+    Fail-open like its sibling. Scoped runs never call it: a --row run does not
+    vouch for the tree, so it must not overwrite the record of one that did.
+    """
+    try:
+        from modules.cascade_prevention.verification_state import (
+            OUTCOME_STARTED, record_verification)
+        record_verification("verify_spp", False,
+                            f"dispatching {n_rows} rows",
+                            outcome=OUTCOME_STARTED)
+    except Exception as exc:  # noqa: BLE001 -- must never fail a run
+        print(f"  (verification write-ahead not recorded: {exc})")
+
+
 def _record_outcome(rc: int, detail: str) -> None:
     """Carry this run's typed outcome into verification provenance.
 
@@ -776,6 +792,19 @@ def main() -> int:
     if env["capacity"] is None:
         print("    NOTE     : capacity is MARGINAL or unmeasured. A row that dies")
         print("               on this host is UNMEASURED, not a defect of its subject.")
+
+    # WRITE-AHEAD, stamped before a single row is dispatched. MEASURED
+    # 2026-09-11: this sweep was taken by the OS at roughly row 50 of 87 and
+    # recorded NOTHING, because the process that writes the outcome is the
+    # process that died. The store could not tell a sweep that died from a
+    # sweep that never ran -- the founding incident of this whole ladder,
+    # recurring one layer further in, in the code written to prevent it.
+    #
+    # A STARTED still standing at read time is the only evidence a death
+    # leaves. It reads as None, so it can neither vouch nor accuse; it just
+    # stops the previous green from quietly outliving the run that replaced it.
+    if not scoped:
+        _record_outcome_started(len(rows_spec))
 
     t_total = time.monotonic()
     results: list[dict] = []

@@ -68,6 +68,15 @@ OUTCOME_PASS = "PASS"
 OUTCOME_FAIL = "FAIL"
 OUTCOME_INCONCLUSIVE = "INCONCLUSIVE"
 OUTCOME_BLOCKED = "BLOCKED"
+# WRITE-AHEAD, and the only outcome a DEAD run can leave. A process killed
+# mid-flight reports nothing, because the thing that would write the epitaph is
+# the thing that died. MEASURED 2026-09-11: an 87-row sweep was taken by the OS
+# at roughly row 50 and this store learned nothing at all, so "a sweep died"
+# and "no sweep ever ran" were the same reading -- which is the founding
+# incident of the whole verdict ladder, recurring one layer further in.
+# Stamped before dispatch and overwritten by the real outcome at the end; a
+# STARTED still standing afterwards IS the evidence of a death.
+OUTCOME_STARTED = "STARTED"
 
 # Only these two are verdicts about a subject. Everything else is a statement
 # about the run, and must not be readable as either answer.
@@ -176,6 +185,8 @@ _REASONS = {
                           "which is not a failure of the code",
     OUTCOME_BLOCKED: "last run was REFUSED before it started -- BLOCKED, "
                      "so nothing about the code was measured",
+    OUTCOME_STARTED: "last run STARTED and never reported -- it was killed "
+                     "or is still running; nothing was measured either way",
 }
 
 
