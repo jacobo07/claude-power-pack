@@ -52,6 +52,9 @@ from pathlib import Path
 
 HOME = Path(os.path.expanduser("~"))
 PP_ROOT = Path(__file__).resolve().parents[1]
+if str(PP_ROOT) not in sys.path:
+    sys.path.insert(0, str(PP_ROOT))
+from modules.execution_env import git_exe  # noqa: E402
 RTK_BIN = HOME / ".claude" / "bin" / "rtk.exe"
 USER_SETTINGS = HOME / ".claude" / "settings.json"
 BUDGET_FILE = HOME / ".claude" / "budget.json"
@@ -314,7 +317,17 @@ def probe_rtk_output() -> dict:
         tok = lambda s: len(enc.encode(s))
     except Exception:
         tok = lambda s: math.ceil(len(s) / 4)
-    cmd = ["git", "log", "--stat", "-50"]
+    # Bare "git" does not resolve from a Python subprocess on every host, and on
+    # this one it does not -- PATH carries the GitHub CLI without Git's cmd
+    # directory. This probe caught the FileNotFoundError and reported
+    # "probe-error", which reads as "the measurement could not be taken" when
+    # the truth was "the measurement was never attempted against a real git".
+    # The gate that certifies conformance was itself unmeasurable for that
+    # reason. Resolution is delegated to the one owner that knows where git is.
+    git = git_exe()
+    if git is None:
+        return {"status": "probe-error:git-unresolvable", "pct": None}
+    cmd = [git, "log", "--stat", "-50"]
     try:
         raw = subprocess.run(cmd, capture_output=True, text=True,
                              timeout=15, cwd=str(PP_ROOT))

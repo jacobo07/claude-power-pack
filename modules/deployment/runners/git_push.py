@@ -40,9 +40,11 @@ def _last_lines(text: str, n: int = 15) -> str:
 
 
 def _resolve_remote_url(project_root: str, remote_name: str) -> str:
+    from modules.execution_env import git_exe
+
     try:
         result = subprocess.run(
-            ["git", "-C", project_root, "remote", "get-url", remote_name],
+            [git_exe(), "-C", project_root, "remote", "get-url", remote_name],
             capture_output=True,
             text=True,
             timeout=10,

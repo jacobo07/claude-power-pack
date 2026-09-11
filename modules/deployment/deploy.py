@@ -62,9 +62,11 @@ def _rollback_suggestion(project: str) -> str:
 def _git_head_short(project_root: str) -> str:
     import subprocess
 
+    from modules.execution_env import git_exe
+
     try:
         result = subprocess.run(
-            ["git", "-C", project_root, "rev-parse", "--short", "HEAD"],
+            [git_exe(), "-C", project_root, "rev-parse", "--short", "HEAD"],
             capture_output=True,
             text=True,
             timeout=10,

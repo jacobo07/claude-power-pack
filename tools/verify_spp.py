@@ -477,6 +477,9 @@ def main() -> int:
         ("commit-scope",
          [PY, str(PP / "tools" / "test_commit_scope.py")],
          90),
+        ("git-invocation",
+         [PY, str(PP / "tools" / "test_git_invocation.py")],
+         60),
     ]
 
     if args.row:

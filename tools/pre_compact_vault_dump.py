@@ -37,6 +37,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 SLEEPY_DIR = REPO_ROOT / "vault" / "sleepy"
 INDEX_MD = SLEEPY_DIR / "INDEX.md"
 VERDICTS = REPO_ROOT / "vault" / "audits" / "verdicts.jsonl"
@@ -89,27 +91,37 @@ def recent_audit_artifacts(n: int = 10) -> list[dict]:
 def git_state(repo: Path) -> dict:
     if not (repo / ".git").exists():
         return {"git": False}
+    # This record is what a future session reads to reconstruct where it was.
+    # Invoking git by bare name raised FileNotFoundError on this host, and the
+    # dirty-file handler answered [] -- so a checkpoint written while git was
+    # unreadable claimed a CLEAN tree, which is the one answer that licenses
+    # throwing work away. "unknown" is now used for that case as well, matching
+    # what head already did, so an unreadable git can never be mistaken for a
+    # clean one.
+    from modules.execution_env import git_exe
+
+    git = git_exe()
     try:
         head = subprocess.check_output(
-            ["git", "-C", str(repo), "rev-parse", "HEAD"],
+            [git, "-C", str(repo), "rev-parse", "HEAD"],
             stderr=subprocess.DEVNULL, text=True, timeout=5,
         ).strip()
-    except (subprocess.SubprocessError, OSError):
+    except (subprocess.SubprocessError, OSError, TypeError):
         head = "unknown"
     try:
         dirty_raw = subprocess.check_output(
-            ["git", "-C", str(repo), "status", "--porcelain"],
+            [git, "-C", str(repo), "status", "--porcelain"],
             stderr=subprocess.DEVNULL, text=True, timeout=5,
         )
         dirty = [ln.strip() for ln in dirty_raw.splitlines() if ln.strip()]
-    except (subprocess.SubprocessError, OSError):
-        dirty = []
+    except (subprocess.SubprocessError, OSError, TypeError):
+        dirty = ["<git-unreadable>"]
     try:
         last5 = subprocess.check_output(
-            ["git", "-C", str(repo), "log", "--oneline", "-5"],
+            [git, "-C", str(repo), "log", "--oneline", "-5"],
             stderr=subprocess.DEVNULL, text=True, timeout=5,
         )
-    except (subprocess.SubprocessError, OSError):
+    except (subprocess.SubprocessError, OSError, TypeError):
         last5 = ""
     return {
         "git": True,

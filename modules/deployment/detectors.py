@@ -67,9 +67,11 @@ def _has_non_origin_git_remote(project_root: Path) -> str | None:
     """
     if not (project_root / ".git").exists():
         return None
+    from modules.execution_env import git_exe
+
     try:
         result = subprocess.run(
-            ["git", "-C", str(project_root), "remote", "-v"],
+            [git_exe(), "-C", str(project_root), "remote", "-v"],
             capture_output=True,
             text=True,
             timeout=10,
