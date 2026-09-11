@@ -26,9 +26,17 @@ import tempfile
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+from modules.execution_env import git_exe  # noqa: E402
+
 WRAPPER = _ROOT / "tools" / "git_commit_safe.ps1"
 
-GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+# Resolved through the one owner rather than written as a literal. That is the
+# estate's no-absolute-paths rule, and it is what tools/test_git_invocation.py
+# exists to enforce -- a suite that hardcodes the path it tells other modules
+# not to hardcode is not a gate, it is an exemption.
+GIT = git_exe() or "git"
 PWSH = shutil.which("powershell") or "powershell"
 
 PASSES = 0
