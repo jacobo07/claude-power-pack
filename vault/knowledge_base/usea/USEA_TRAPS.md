@@ -75,3 +75,48 @@ filters, any gate whose subject is a string its own docs must quote.
   hunk guard, not here: its subtract step fails when the foreign lines are near-
   duplicates of rows already in the file, and it fails CLOSED, which is the correct
   half.
+
+---
+
+## Admission on a Machine That Will Not Hold Still (Phase VIII, 2026-09-13)
+
+### Process Rules
+
+**`PR-ADMIT-ON-THE-TROUGH-NOT-THE-INSTANT-001`** — A capacity gate admitting a job
+that will run longer than its own measurement must keep the WORST of several
+samples, and must re-admit between units. WHY A SINGLE SAMPLE LOOKS CORRECT: the
+reading is real, the comparison is right, and the gate genuinely refuses on a
+genuinely small host — so on any machine that happens to be stable it is
+indistinguishable from a correct gate. It is the sampling RATE that is wrong.
+ORIGEN: measured while trying to admit the USEA outcome contrast. Available
+memory on this host swung 277 → 3943 MB inside two minutes, and 1563 → 1183 MB
+across nine seconds; a later five-sample admission read 949, 1032, 878, 871,
+1247. A gate that sampled once at 3943 would have admitted eight model sessions
+that then met 871, and for a job whose units are model sessions the OOM does not
+present as an OOM — it presents as an arm that produced no artefact, which the
+grader scores as a failure of the subject. COROLLARY, and the reason the rule is
+about sampling rather than about memory: **two readings of a volatile quantity
+taken minutes apart are not two instruments disagreeing.** Win32
+`FreePhysicalMemory` reported 3943 MB and SQI-03's `available_mb` reported 554 MB
+about two minutes later, which reads exactly like an instrument bug worth
+chasing. Sampled in the same second they agreed three times running (387/277,
+732/714, 719/694). Before indicting an instrument on a disagreement, check
+whether the subject moved between the two readings. PREVENTION:
+`tools/usea_outcome_contrast.py::admit` keeps `min(samples)` and re-admits before
+each arm; `tools/test_outcome_admission.py` drives both poles on the same host in
+the same second, because a gate that refuses everything and a gate that refuses
+nothing both pass a single-pole drill. SCOPE: any capacity gate on a shared or
+interactive machine — developer laptops, CI runners, burstable containers.
+
+### Candidates REJECTED (Phase VIII)
+
+- **"An experiment with no resource admission gate is a new trap"** — REJECTED as
+  an instance, not a rule. `T-DOCTRINE-OWNER-EXISTS-AND-IS-ORPHANED-001` already
+  owns it exactly: SQI-03 existed, owned the verdict, and the one consumer that
+  most needed it never asked. Recorded here only because the orphan this time was
+  pointed at the single experiment the whole programme exists to run.
+
+- **"Grading a missing artefact as FAIL is a new trap"** — REJECTED, owned by
+  `PR-CLASSIFY-THE-TEARDOWN-NOT-ONLY-THE-CLOCK-001`. The novelty was the blast
+  radius, not the mechanism: here the misclassification would have landed in the
+  treatment column of the programme's own falsification test.

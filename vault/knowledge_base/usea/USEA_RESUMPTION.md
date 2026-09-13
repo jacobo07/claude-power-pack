@@ -42,6 +42,27 @@ run against a paid arm**. No result file exists anywhere in the tree. Every just
 for USEA is still mechanistic, which the instrument's own docstring says is circular.
 A full run = **8 `claude -p` sonnet sessions** (4 tasks × 2 arms).
 
+**Phase VIII attempted it for real and the host refused.** The attempt is the evidence:
+controls 4/4, then admission BLOCKED at a worst-of-3 reading of 1044 MB against 1724 MB
+required; exit 4, `status: BLOCKED`, `runs: 0`, nothing dispatched. A later five-sample
+re-test read 949/1032/878/871/1247 — roughly half of requirement, with 7 python processes
+live from another pane. **This is not a null result and not a treatment failure.**
+
+Before that attempt the experiment **could not be refused at all**, and worse: `run_arm`
+graded a missing artefact as `oracle_pass=False`, so a session the OS killed would have
+entered the treatment column as a FAIL. Repaired in `8a714de` — admission via SQI-03
+before dispatch and between arms keeping the worst of several samples, a teardown
+classifier making such an arm UNMEASURED rather than a verdict, and a summary that
+divides by what was graded and reports how many matched pairs are actually comparable.
+Gate: `python tools/test_outcome_admission.py` → **13/13**, both poles of each.
+
+**To run it:** free memory until `python -c "from tools import usea_outcome_contrast as
+oc; print(oc.admit(samples=5))"` reports `QUALIFIED`, then
+`python tools/usea_outcome_contrast.py --out vault/benchmarks/usea_contrast_<date>.json`.
+Do **not** pass `--ignore-admission` and do **not** shrink the task set: a smaller run is
+a different experiment, and the harness records the override so a forced result can never
+read as clean.
+
 **LAW II / LAW IX are not inherited.** A fresh `claude -p` cited neither. `SKILL.md`
 declaring `parts/core.md` always-read makes it always-read *within the skill*, and a skill
 must be invoked. Owner-side remedy under `~/.claude/`; **HR-001 forbids this repo from
@@ -66,9 +87,12 @@ writing it.** The detector flips to OK by itself once the laws move.
 ## 4. Next actions (highest value first)
 
 1. **Run the outcome contrast.** Owner authorized the spend on 2026-09-13, conditional on
-   freeing memory first. Re-check headroom, then `--controls-only` again (the oracles must
-   still pass both poles), then the arms. A session the OS takes is UNMEASURED, never a
-   result. This is the only item that stops the programme's justification being circular.
+   freeing memory first. The instrument is now repaired and will refuse on its own, so the
+   only precondition is host memory: get `admit(samples=5)` to report `QUALIFIED`, then run
+   it with `--out` into `vault/benchmarks/`. Do not shrink it and do not override it — the
+   harness records an override, and a smaller run is a different experiment. This is still
+   the only item that stops the programme's justification being circular.
+   **Phase VIII attempted it and was refused by the host; that attempt is recorded in §2.**
 2. **Surface the LAW II / LAW IX gap to the Owner** as a one-line edit under `~/.claude/`.
    Repository half is shipped; writing the global half is the HR-001 violation.
 3. **Re-measure the liveness denominator aperture** (`tools/` was outside it) only after
