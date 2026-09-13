@@ -132,30 +132,58 @@ def _registered_hooks(root: Path) -> set[str]:
     Fail-open to empty per surface: an absent/unreadable file contributes no names
     rather than raising, matching this module's fail-open contract throughout.
     """
-    names: set[str] = set()
+    return set(registration_sites(root))
+
+
+def registration_sites(root: Path) -> dict[str, list[str]]:
+    """basename -> the registration surfaces naming it, WITH repeats preserved.
+
+    The same scan `_registered_hooks` performs, exposed as a mapping instead of a
+    set. Two views of one parse, deliberately not two parsers: the regex, the
+    surface list, the basename normalisation and the fail-open contract are
+    single-sourced here, so a fix to any of them reaches both callers.
+
+    The set view answers "is this hook registered at all", which is what an orphan
+    scan needs. It cannot answer "how MANY times", because a set is the data
+    structure that throws exactly that away -- and a hook registered twice for one
+    tool event runs twice, which is a real defect the orphan scan is structurally
+    blind to. Measured 2026-09-13: `cdio_visual_advisory.js` is registered BOTH
+    directly in settings.json (matcher Write|Edit|MultiEdit|NotebookEdit) AND inside
+    the dispatcher's PreToolUse-Edit-chain, so `design_gate.py` spawns twice on every
+    visual write.
+
+    A repeat is NOT by itself a defect and this function does not judge one: the
+    dispatcher is legitimately named once per event it serves, and a hook may serve
+    several distinct chains on purpose. Deciding which repeats are wrong needs the
+    MATCHER each registration sits under, which is the caller's question, not this
+    function's. Reporting the sites is the whole contribution.
+    """
+    sites: dict[str, list[str]] = {}
     installed = _is_installed_root(root)
     lr = live_root()
+
+    def harvest(path_obj: Path, label: str) -> None:
+        if not path_obj.is_file():
+            return
+        text = _read(path_obj)
+        if text is None:
+            return
+        for ref in _HOOK_REF_RE.findall(text):
+            base = ref.replace("\\", "/").rsplit("/", 1)[-1]
+            sites.setdefault(base, []).append(label)
 
     candidates = [root / "hooks" / _DISPATCHER_NAME]
     if installed:
         candidates.insert(0, lr / "hooks" / _DISPATCHER_NAME)
     dispatcher = next((c for c in candidates if c.is_file()), None)
     if dispatcher is not None:
-        text = _read(dispatcher)
-        if text is not None:
-            for ref in _HOOK_REF_RE.findall(text):
-                names.add(ref.replace("\\", "/").rsplit("/", 1)[-1])
+        harvest(dispatcher, _DISPATCHER_NAME)
 
     if installed:
         for settings_name in ("settings.json", "settings.local.json"):
-            settings_path = lr / settings_name
-            if settings_path.is_file():
-                text = _read(settings_path)
-                if text is not None:
-                    for ref in _HOOK_REF_RE.findall(text):
-                        names.add(ref.replace("\\", "/").rsplit("/", 1)[-1])
+            harvest(lr / settings_name, settings_name)
 
-    return names
+    return sites
 
 # `modules.pkg.mod`, `modules/pkg/mod`, `modules\pkg\mod` -- at ARBITRARY depth. An
 # earlier version captured exactly two segments, so a reference to
