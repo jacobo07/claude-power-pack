@@ -73,6 +73,12 @@ writing it.** The detector flips to OK by itself once the laws move.
    Repository half is shipped; writing the global half is the HR-001 violation.
 3. **Re-measure the liveness denominator aperture** (`tools/` was outside it) only after
    confirming the other pane finished — they were mid-flight on exactly this.
+4. **Merge `USEA_TRAPS.md` into `ukdl-universal.md` and delete it.** It is a staging
+   file, not a second corpus. It is parked because that corpus holds ~70 uncommitted
+   prose lines belonging to another author, and `foreign_hunk_guard.py` returned
+   `VERIFY_MISMATCH` twice — it could name the foreign lines but not subtract them, so
+   committing would have absorbed someone else's work. Whoever owns those lines has to
+   commit them anyway; the merge is theirs to make.
 
 Do not build a new agent, engine, fabric, registry or baseline. The ownership audit
 returned zero, and fifteen consecutive mega-corpus proposals in this estate measured
