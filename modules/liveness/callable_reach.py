@@ -34,23 +34,42 @@ live function as dead, which a human investigates and corrects; one that over-ma
 reports a dead function as alive, which nobody ever looks at again. So an unrecognised
 shape yields "no caller found", and that is a prompt to look, never a proof of death.
 
-WHAT THIS INSTRUMENT CANNOT SEE -- read before quoting its number. The unreached count is
-an UPPER BOUND on dead callables, not a census of corpses:
+WHAT THIS MEASURES, STATED EXACTLY -- read before quoting its number.
 
-  1. Only PYTHON callers are resolved. A module a JS hook runs as `spawnSync(python,
+This is a REFERENCE sweep, not a call-graph analysis, and it errs in BOTH directions. An
+earlier version of this docstring called the unreached count "an UPPER BOUND on dead
+callables". That was false and is corrected here rather than quietly deleted: a bound in
+either direction requires the error to be one-sided, and this instrument's is not.
+
+It ACCUSES (reports live code dead) when:
+  1. The caller is not Python. A module a JS hook runs as `spawnSync(python,
      ['modules/x/y.py', ...])` has every symbol reported unreached, and this estate
      drives a great deal of Python from `hooks/*.js` in exactly that way.
-  2. Shell entrypoints are invisible. `main` is excluded for that reason, but a module
-     run as `python modules/x/y.py --flag` reaches other functions no import edge shows.
-  3. Dynamic dispatch -- importlib, getattr, a registry keyed by string -- is invisible
-     by construction. `dispatch.py` exists precisely because that shape defeats static
+  2. The entrypoint is a shell. `main` is excluded for that reason, but a module run as
+     `python modules/x/y.py --flag` reaches other functions no import edge shows.
+  3. Dispatch is dynamic -- importlib, getattr, a registry keyed by string. Invisible by
+     construction; `dispatch.py` exists precisely because that shape defeats static
      reading, and the two instruments are complements, not substitutes.
-  4. A class reached only through a factory, or a dataclass constructed only by the
-     module defining it, reads as unreached and frequently is not.
+  4. The import is relative (`from .engine import f`) or a wildcard.
+  5. The reference is a nested attribute (`modules.widget.engine.f()` spelled in full).
 
-A row here means "no Python import edge names this symbol". That is a question to ask,
-not a verdict to act on -- which is why this ships as a reporter and a growth ratchet
-rather than as a gate that can refuse anything.
+It EXCUSES (reports dead code alive) when:
+  6. The reference is not an invocation. A Load-context mention counts -- passing a
+     function as a callback is a legitimate use, but so is `saved = mod.f` that nobody
+     ever calls. Store context is excluded, so overwriting a name no longer counts as
+     using it; being *read* still does.
+  7. The referrer is itself dead. There are no reachability ROOTS and no transitive
+     traversal: references are unioned across every non-test Python file, so two dead
+     modules can certify each other, and a call sitting inside a function nobody invokes
+     counts exactly like one on a live path.
+  8. Scope is ignored. A parameter or local shadowing an imported name still credits the
+     import.
+
+(6)-(8) are why the number is not a bound. Closing them means building a real call graph
+from declared roots, which is a different and much larger instrument; until then a row
+means "no Python Load-context reference names this symbol", which is a question to ask,
+not a verdict to act on. That is also why this ships as a reporter and a growth ratchet
+and can refuse nothing.
 """
 from __future__ import annotations
 
@@ -189,6 +208,15 @@ def module_references(py_path: Path) -> dict:
 
     hits: dict = {}
     for node in ast.walk(tree):
+        # LOAD context only. Reading a name uses it; ASSIGNING to it does not.
+        # `engine.dead = replacement` and `saved = engine.dead` both parse as an
+        # Attribute on a bound receiver, and counting the first marked a function CALLED
+        # by the act of OVERWRITING it. That is an EXCUSING error -- it reports dead code
+        # as alive, and nobody ever revisits those -- so it is the direction that must
+        # not be sloppy.
+        ctx = getattr(node, "ctx", None)
+        if not isinstance(ctx, ast.Load):
+            continue
         if isinstance(node, ast.Name) and node.id in sym_of:
             # `from m import f [as g]` then a bare `g` -- record f, the name the module
             # exports, NOT g, the name this file happens to call it by.
@@ -210,12 +238,19 @@ def _named_in_prose(symbol: str, dotted: str, blob: str) -> bool:
     `review_gate` (instructed in an agent file, never called by code) from a function
     nobody has ever mentioned.
 
-    Deliberately narrow. A bare name appearing anywhere in any .md would match English
-    words and every changelog that ever mentioned the symbol, which would launder real
-    corpses into "documented". So it must appear either fully qualified, or as an
-    invocation with parentheses -- both shapes a human wrote on purpose.
+    QUALIFIED ONLY. `symbol(` anywhere in the concatenated markdown was too loose by a
+    wide margin: a changelog mentioning some other module's `scan()` classified THIS
+    module's `scan` as PROSE_ONLY, inventing evidence of a documented invocation that
+    does not exist. The name must be attached to its module -- fully dotted, or
+    module-qualified with a call -- because that is the only shape that identifies WHICH
+    `scan` a document meant.
+
+    This state never clears ratchet debt (PROSE_ONLY is still unreached). Getting it
+    wrong therefore costs no false green; it costs a false explanation, which is worse in
+    a different way -- it tells a reader the corpse has a documented caller.
     """
-    return f"{dotted}.{symbol}" in blob or f"{symbol}(" in blob
+    tail = dotted.rsplit(".", 1)[-1]
+    return f"{dotted}.{symbol}" in blob or f"{tail}.{symbol}(" in blob
 
 
 def _is_test(p: Path) -> bool:
@@ -340,8 +375,14 @@ def render(res: dict) -> str:
         if len(res["new"]) > 40:
             lines.append(f"    ... and {len(res['new']) - 40} more")
     if res["stale"]:
-        lines.append(f"\n  STALE inventory entries ({len(res['stale'])}) -- these are "
-                     f"reachable now; delete them so the ratchet keeps turning:")
+        # NOT "reachable now". An entry leaves the gap set for several reasons -- the
+        # symbol got a caller, was renamed, was deleted, moved behind a parse error, or
+        # stopped being enumerated at all -- and only the first is good news. Saying
+        # "reachable now" reports the happy case for all five, which is the kind of
+        # confident diagnosis that sends someone to verify the wrong thing.
+        lines.append(f"\n  STALE inventory entries ({len(res['stale'])}) -- no longer in "
+                     f"the unreached set. Check WHY before deleting: wired, renamed, "
+                     f"deleted, or no longer enumerated are different facts:")
         lines += [f"    - {i}" for i in res["stale"][:40]]
         if len(res["stale"]) > 40:
             lines.append(f"    ... and {len(res['stale']) - 40} more")
@@ -350,22 +391,53 @@ def render(res: dict) -> str:
     return "\n".join(lines)
 
 
-def main(argv=None) -> int:
+def main(argv=None, repo_root=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(
         description="An exported function is not a called function.")
     ap.add_argument("--freeze", action="store_true",
-                    help="rewrite the inventory from today's unreached set")
+                    help="rewrite the inventory from today's unreached set. REFUSES to "
+                         "absorb debt that is not already frozen unless --absorb-new is "
+                         "given; re-freezing after wiring something is the ordinary use")
+    ap.add_argument("--absorb-new", action="store_true",
+                    help="with --freeze, accept NEW unreached callables into the "
+                         "inventory. This is the one action that makes a red gate green "
+                         "without wiring anything, so it is explicit, it names every "
+                         "entry it takes on, and it is recorded in the file")
     ap.add_argument("--list", action="store_true", help="print every unreached callable")
     args = ap.parse_args(argv)
 
-    root = _repo_root()
+    # Injectable so a drill can exercise THIS function against a synthetic repo. Without
+    # it the only way to test the --freeze refusal was to run it against the real tree,
+    # which is a test that writes to the repository it is testing -- and it did: the
+    # first version of that drill rewrote the committed inventory as a side effect.
+    root = Path(repo_root) if repo_root is not None else _repo_root()
     if args.list:
         for r in sorted(gaps(root), key=lambda r: r["id"]):
             print(f"{r['state']:<11} {r['id']}")
         return 0
 
     if args.freeze:
+        # The ratchet compares against an editable snapshot, so `--freeze` was the whole
+        # bypass: run it and every new offender is absorbed, silently, with no wiring
+        # change and no record. A control anyone can disable by running one documented
+        # command is not a control. Absorbing is still possible -- sometimes debt is
+        # genuinely accepted -- but it now has to be asked for, by name, out loud.
+        pre = ratchet(root)
+        if pre["new"] and not args.absorb_new:
+            print(f"REFUSING to freeze: {len(pre['new'])} unreached callable(s) are not "
+                  f"in the inventory.\nWire them, delete them, or re-run with "
+                  f"--absorb-new to take the debt on deliberately:")
+            for i in pre["new"][:40]:
+                print(f"  + {i}")
+            if len(pre["new"]) > 40:
+                print(f"  ... and {len(pre['new']) - 40} more")
+            return 1
+        if pre["new"]:
+            print(f"absorbing {len(pre['new'])} NEW unreached callable(s) by explicit "
+                  f"--absorb-new:")
+            for i in pre["new"][:40]:
+                print(f"  + {i}")
         rows = gaps(root)
         payload = {
             "_doc": "Frozen callable-liveness debt. The gate fails when this set GROWS "

@@ -258,6 +258,41 @@ A real typeface with defaults behind it as fallbacks.
                   f"verdict={out_ok.get('verdict')} is_done={out_ok.get('is_done')} "
                   f"filter={dep_ok}")
 
+        # --- V-DESIGN-FILTER-CRASH-KEEPS-REFUSAL: isolation, not collapse ---------
+        # Wiring the hard filters in was a REGRESSION until this was added. The filters
+        # read the filesystem; score_review does not. So a malformed artifact belonging
+        # to some OTHER concern could raise inside design_gate, and main()'s bare except
+        # degrades any exception to SKIP/exit 0/ALLOW -- turning a slop document that
+        # scored 25 and BLOCKed into an allowed write. A refusal that already worked,
+        # traded for someone else's broken JSON.
+        #
+        # Found by an adversarial review of this session's own diff, after 48/48 suite
+        # gates and a 4/4 red-branch drill had all passed. Mutation testing proves a
+        # suite notices the repairs it was written for; it says nothing about what the
+        # repairs broke.
+        crash = os.path.join(tmp, "crash")
+        os.makedirs(os.path.join(crash, ".cdicf"), exist_ok=True)
+        _write(crash, "DESIGN.md", SLOP)
+        with open(os.path.join(crash, ".cdicf", "installed.json"), "w",
+                  encoding="utf-8") as fh:
+            # Well-formed JSON, wrong shape: "components" as a list, not a mapping.
+            fh.write('{"components": ["card", "button"]}')
+        out_crash = design_gate(os.path.join(crash, "DESIGN.md"))
+        hf = (out_crash.get("hard_filters") or [{}])[0]
+        if (out_crash["verdict"] == "BLOCK"
+                and out_crash["is_done"] is False
+                and hf.get("state") == "unevaluated"
+                and "UNEVALUATED" in out_crash["reason"]):
+            _ok("V-DESIGN-FILTER-CRASH-KEEPS-REFUSAL",
+                f"a filter raising on a malformed install record leaves the verdict at "
+                f"{out_crash['verdict']} (score {out_crash['score']}), reports the "
+                f"filter as {hf.get('state')}, and withholds done")
+        else:
+            _fail("V-DESIGN-FILTER-CRASH-KEEPS-REFUSAL",
+                  f"a crashing filter must not cost the refusal; got "
+                  f"verdict={out_crash.get('verdict')} is_done={out_crash.get('is_done')} "
+                  f"filter_state={hf.get('state')}")
+
     # --- V-DESIGN-TEMPLATE-CLEAN: the PP's own canonical template must PASS ----
     out = design_gate(REPO_TEMPLATE)
     if out["verdict"] == "APPROVE":

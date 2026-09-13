@@ -515,23 +515,58 @@ def design_gate(design_md_path: str) -> dict:
     # `observed_experience` is None because nothing here renders anything: this gate
     # reads declarations. That yields `unassessed` rather than `conforming`, which is
     # the honest state for behaviour nobody measured.
-    gate = review_gate(
-        verdicts,
-        target=os.path.dirname(os.path.abspath(design_md_path)) or ".",
-        declared_experience=parsed["experience"],
-        observed_experience=None,
-        enforce_hard_filters=False,
-    )
+    # ISOLATED. A filter that crashes must not take the score down with it.
+    #
+    # The filters read the filesystem; `score_review` does not. Wiring them in therefore
+    # introduced a way for an unrelated artifact to raise inside this function -- and
+    # `main()` wraps the whole gate in a bare except that degrades ANY exception to
+    # SKIP/exit 0/ALLOW. Measured 2026-09-13: a slop DESIGN.md scoring 25 (BLOCK) in a
+    # project whose `.cdicf/installed.json` has "components" as a LIST returns exit 0,
+    # because check_component_dependencies raises TypeError on the shape. A refusal that
+    # already worked was traded for someone else's malformed JSON.
+    #
+    # Neither of the two tempting fixes is right. Letting it raise keeps the bug. Making
+    # the filter itself swallow everything turns an unreadable record into a PASS, which
+    # is the unknown-as-yes defect one layer down. So the filter's failure is isolated
+    # HERE and reported as its own state: the score stands, the verdict stands, and
+    # `is_done` is withheld because conformance was never established.
+    try:
+        gate = review_gate(
+            verdicts,
+            target=os.path.dirname(os.path.abspath(design_md_path)) or ".",
+            declared_experience=parsed["experience"],
+            observed_experience=None,
+            enforce_hard_filters=False,
+        )
+        filters, gate_verdict, gate_reason, gate_done = (
+            gate.hard_filters, gate.verdict, gate.reason, gate.is_done)
+        result = gate.score_result if gate.score_result is not None \
+            else score_review(verdicts)
+    except Exception as exc:                  # noqa: BLE001 -- isolation is the point
+        result = score_review(verdicts)
+        filters = [{"criterion": "hard-filters", "passed": False, "severity": "",
+                    "state": "unevaluated",
+                    "observed": f"the hard filters could not run: "
+                                f"{type(exc).__name__}: {exc}",
+                    "recommendation": "this says nothing about the surface -- a filter "
+                                      "failed, not the design. Fix the filter's input "
+                                      "(usually a malformed .cdicf/installed.json)",
+                    "detail": {}}]
+        gate_verdict, gate_done = result.verdict, False
+        gate_reason = (result.reason
+                       + "; hard-filters UNEVALUATED -- a filter raised, so conformance "
+                         "is unknown and `done` is withheld. The score and verdict are "
+                         "unaffected: they never depended on the filters")
+
     # Keep the FLAT ScoreResult shape. GateResult.to_json() nests the score under
     # `score_result`, and the hook's deny path reads top-level `critical[]` with
     # criterion/observed/recommendation -- returning the nested shape would silently
     # empty the reason text on every BLOCK.
-    result = gate.score_result if gate.score_result is not None else score_review(verdicts)
     out = result.to_json()
-    out["verdict"] = gate.verdict
-    out["reason"] = gate.reason
-    out["is_done"] = gate.is_done          # any failed filter withholds this
-    out["hard_filters"] = gate.hard_filters
+    out["verdict"] = gate_verdict
+    out["reason"] = gate_reason
+    out["is_done"] = gate_done             # any failed OR unevaluated filter withholds it
+    out["hard_filters"] = filters
     out["design_md"] = design_md_path
     out["parsed"] = parsed
     out["experience_state"] = "unassessed" if parsed["experience"] is None else "declared"
