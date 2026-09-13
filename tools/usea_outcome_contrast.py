@@ -72,6 +72,103 @@ _CLI_TIMEOUT_S = 900
 _MAX_BUDGET_USD = "1.50"
 _LEAK_MARKERS = ("LAW II", "LAW IX", "strength_ladder", "architectural_truth")
 
+# Peak RSS of ONE arm. Grounded, not guessed: 34 live claude processes on this
+# host measured min 77 / mean 175 / p90 304 / max 398 MB, with their node
+# children at most 39 MB each. 700 is the p90 roughly doubled, because an arm
+# runs with tools enabled and writes files, which the sampled interactive
+# sessions were mostly not doing at the instant of measurement.
+_ARM_PEAK_MB = 700
+_HOST_RESERVE_MB = 1024
+
+# Admission samples the host repeatedly and keeps the WORST reading. Measured
+# 2026-09-13: this host oscillated between 277 MB and 3943 MB available inside
+# two minutes. A single sample admits on a spike and then meets the trough
+# mid-arm, which is the OOM this gate exists to prevent -- and an OOM mid-arm is
+# indistinguishable, downstream, from a treatment that produced nothing.
+_ADMISSION_SAMPLES = 3
+_ADMISSION_GAP_S = 3
+
+# Exit codes. A refused run and a run that measured something are different
+# facts and must not share a code.
+EXIT_OK = 0
+EXIT_VOID = 1           # control arm carried doctrine markers; comparison void
+EXIT_NO_PAYLOAD = 3
+EXIT_BLOCKED = 4        # host refused admission; NO arm was dispatched
+EXIT_PARTIAL = 5        # some arms ran, then the host stopped qualifying
+
+# The OS taking a process away is not the process reporting a verdict. POSIX
+# gives -signal; Windows delivers a teardown as a negative int or a 0xCxxxxxxx
+# NTSTATUS, of which 0xC0000017 (STATUS_NO_MEMORY) is the exact OOM shape.
+_KILLED_NTSTATUS = {0xC0000017, 0xC0000005, 0xC000013A, 0xC00000FD}
+
+
+def _teardown(rc: int | None) -> str | None:
+    """Did the OS end this child, rather than the child ending itself?
+
+    Returns a reason, or None when the exit code is one a process could have
+    chosen. An honest non-zero exit from the CLI lands in neither space.
+    """
+    if rc is None:
+        return None
+    if rc < 0:
+        return f"killed by signal {-rc}"
+    if rc in _KILLED_NTSTATUS:
+        return f"killed by the OS (NTSTATUS 0x{rc:08X})"
+    if (rc & 0xF0000000) == 0xC0000000:
+        return f"abnormal termination (NTSTATUS 0x{rc:08X})"
+    return None
+
+
+def admit(*, peak_mb: int = _ARM_PEAK_MB, reserve_mb: int = _HOST_RESERVE_MB,
+          samples: int = _ADMISSION_SAMPLES) -> dict:
+    """May this host be asked to run one arm, and be believed afterwards?
+
+    Delegates to SQI-03, the estate's incumbent authority on that question. It
+    is consulted here because nothing consulted it: this experiment spawns real
+    model sessions and had no admission gate at all, so a host death would have
+    arrived downstream as an arm that produced no artefact -- scored FAIL, and
+    read as evidence about the treatment.
+
+    Never raises. Every failure resolves to UNKNOWN, which is a ceiling on
+    interpretation and never a pass.
+    """
+    env = {"state": "UNKNOWN", "available_mb": None, "required_mb": None,
+           "samples": [], "blocker": None, "error": None,
+           "peak_mb": peak_mb, "reserve_mb": reserve_mb}
+    try:
+        sys.path.insert(0, str(_PP_ROOT))
+        from modules.sqi.environment_qualifier import (  # noqa: PLC0415
+            Workload, available_mb, capacity_probe,
+        )
+        w = Workload("usea outcome arm", peak_mb_per_unit=peak_mb,
+                     units_in_flight=1, reserve_mb=reserve_mb)
+        env["required_mb"] = w.required_mb
+        readings: list[int] = []
+        for i in range(max(1, samples)):
+            a = available_mb()
+            if a is not None:
+                readings.append(a)
+            if i + 1 < samples:
+                time.sleep(_ADMISSION_GAP_S)
+        env["samples"] = readings
+        # The worst reading, not the last and not the mean. A trough that
+        # appeared once during admission will appear again during the arm.
+        env["available_mb"] = min(readings) if readings else None
+        gate = capacity_probe(w)
+        passed = gate.passed
+        if passed is True and readings and min(readings) < w.required_mb:
+            # The probe sampled its own instant; this one saw a worse one.
+            passed = False
+            env["blocker"] = (f"admission trough {min(readings)} MB below "
+                              f"{w.required_mb} MB required")
+        else:
+            env["blocker"] = gate.blocker
+        env["state"] = {True: "QUALIFIED", False: "BLOCKED",
+                        None: "PARTIALLY_QUALIFIED"}[passed]
+    except Exception as exc:  # noqa: BLE001 -- fail to UNKNOWN, never to pass
+        env["error"] = f"{type(exc).__name__}: {exc}"
+    return env
+
 
 # --------------------------------------------------------------------------- #
 # Substrate runner -- isolation recipe copied from fd_04_contrast.ask_model.
@@ -99,10 +196,14 @@ def run_session(prompt: str, workdir: Path, *, doctrine: str | None,
                               cwd=str(workdir), env=env,
                               stdin=subprocess.DEVNULL, check=False)
     except subprocess.TimeoutExpired:
-        return {"ok": False, "note": f"timeout after {timeout}s",
+        # A session that ran out of clock did not answer the question. It is not
+        # a session that answered it badly.
+        return {"ok": False, "unmeasured": f"timeout after {timeout}s",
+                "note": f"timeout after {timeout}s",
                 "wall_s": round(time.time() - t0, 1)}
     except Exception as e:  # noqa: BLE001 -- a broken child proves nothing
-        return {"ok": False, "note": f"{type(e).__name__}: {e}",
+        return {"ok": False, "unmeasured": f"{type(e).__name__}: {e}",
+                "note": f"{type(e).__name__}: {e}",
                 "wall_s": round(time.time() - t0, 1)}
     meta = {}
     try:
@@ -110,8 +211,13 @@ def run_session(prompt: str, workdir: Path, *, doctrine: str | None,
     except Exception:
         pass
     settings.unlink(missing_ok=True)
+    torn = _teardown(proc.returncode)
     return {"ok": proc.returncode == 0,
             "rc": proc.returncode,
+            # Present only when the run cannot support a verdict either way.
+            # Downstream reads its presence, never the exit code, so the rule
+            # lives in one place.
+            "unmeasured": torn,
             "wall_s": round(time.time() - t0, 1),
             "cost_usd": meta.get("total_cost_usd"),
             "turns": meta.get("num_turns"),
@@ -570,7 +676,15 @@ def run_arm(key: str, arm: str, doctrine: str, *, model: str, trial: int) -> dic
                               model=model)
         after = {p.name for p in d.iterdir() if not p.name.startswith("_")}
         produced = (d / task["artifact"]).exists()
-        if produced:
+        unmeasured = session.get("unmeasured")
+        if unmeasured and not produced:
+            # The session was taken away -- by the OS, the clock, or a broken
+            # child -- and left nothing to grade. Grading that absence as FAIL
+            # is how a host death becomes evidence about the treatment, which
+            # is the one reading this experiment must never produce. None is
+            # neither pole, and the summary excludes it from the arithmetic.
+            ok, tail = None, f"UNMEASURED: {unmeasured}"
+        elif produced:
             ok, tail = _verdict(_run_py(d, task["probe"]))
         else:
             ok, tail = False, f"{task['artifact']} was never created"
@@ -589,6 +703,8 @@ def run_arm(key: str, arm: str, doctrine: str, *, model: str, trial: int) -> dic
                   if arm == "control" and m in session.get("result_text", "")]
         return {"task": key, "arm": arm, "trial": trial,
                 "oracle_pass": ok, "oracle_detail": tail,
+                "outcome": "UNMEASURED" if ok is None else "MEASURED",
+                "unmeasured_reason": unmeasured if ok is None else None,
                 "artifact_produced": produced,
                 "artifact_source": artifact_src,
                 "files_added": sorted(after - before),
@@ -612,12 +728,20 @@ def main(argv=None) -> int:
     ap.add_argument("--model", default="sonnet")
     ap.add_argument("--controls-only", action="store_true",
                     help="validate every oracle without spending a session")
+    ap.add_argument("--peak-mb", type=int, default=_ARM_PEAK_MB,
+                    help="peak RSS of one arm, for host admission")
+    ap.add_argument("--reserve-mb", type=int, default=_HOST_RESERVE_MB,
+                    help="memory the rest of the machine still needs")
+    ap.add_argument("--ignore-admission", action="store_true",
+                    help="dispatch arms even when the host is refused. The "
+                         "override is recorded in the report, so a result "
+                         "produced this way cannot later be read as clean.")
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
 
     if not CORE_MD.exists():
         print(f"treatment payload missing: {CORE_MD}", file=sys.stderr)
-        return 3
+        return EXIT_NO_PAYLOAD
     doctrine = CORE_MD.read_text(encoding="utf-8")
 
     print(f"treatment payload: {CORE_MD} "
@@ -644,25 +768,68 @@ def main(argv=None) -> int:
         _emit(report, args.out)
         return 0 if len(runnable) == len(args.tasks) else 1
 
+    # ---- Admission. Ask the host before spending anything on it. ------------
+    gate = admit(peak_mb=args.peak_mb, reserve_mb=args.reserve_mb)
+    report["admission"] = {"open": gate}
+    print("\n=== ADMISSION (SQI-03 host capacity) ===")
+    print(f"  worst of {len(gate['samples'])} sample(s): "
+          f"{gate['available_mb']} MB available, {gate['required_mb']} MB "
+          f"required  (samples: {gate['samples']})")
+    print(f"  state: {gate['state']}"
+          + (f"   {gate['blocker']}" if gate["blocker"] else ""))
+    if gate["state"] == "BLOCKED" and not args.ignore_admission:
+        # Refuse, and refuse LOUDLY at the top level. A smaller experiment is a
+        # different experiment; running two arms instead of eight and calling
+        # the claim measured is the failure this refusal exists to prevent.
+        print("\n  REFUSED: no arm dispatched. This is not a null result and it")
+        print("  is not a failure of the treatment -- the host cannot support an")
+        print("  arm whose verdict could be believed. Free memory and re-run.")
+        report["status"] = "BLOCKED"
+        _emit(report, args.out)
+        return EXIT_BLOCKED
+
     print("\n=== ARMS ===")
+    stopped = None
     for trial in range(1, args.trials + 1):
         for key in runnable:
             for arm in args.arms:
+                # Re-admit between arms. Admission at the top of a run says
+                # nothing about the host twenty minutes later, and this host was
+                # measured swinging by an order of magnitude inside two minutes.
+                if report["runs"]:
+                    mid = admit(peak_mb=args.peak_mb, reserve_mb=args.reserve_mb,
+                                samples=1)
+                    report.setdefault("admission", {}).setdefault("between", []
+                                                                  ).append(mid)
+                    if mid["state"] == "BLOCKED" and not args.ignore_admission:
+                        stopped = (f"host stopped qualifying before "
+                                   f"{key}/{arm}: {mid['blocker']}")
+                        print(f"  STOP: {stopped}")
+                        break
                 r = run_arm(key, arm, doctrine, model=args.model, trial=trial)
                 report["runs"].append(r)
-                print(f"  {key} t{trial} {arm:<9} oracle="
-                      f"{'PASS' if r['oracle_pass'] else 'FAIL'}  "
+                verdict = ("UNMEASURED" if r["oracle_pass"] is None
+                           else "PASS" if r["oracle_pass"] else "FAIL")
+                print(f"  {key} t{trial} {arm:<9} oracle={verdict:<10} "
                       f"${r['cost_usd']}  turns={r['turns']}  "
                       f"{r['wall_s']}s  files={r['files_added']}")
-                if not r["oracle_pass"]:
+                if r["oracle_pass"] is not True:
                     print(f"      -> {r['oracle_detail'][:220]}")
                 if r["leak_markers"]:
                     print(f"      !! LEAK in control arm: {r['leak_markers']}")
+            if stopped:
+                break
+        if stopped:
+            break
 
+    report["status"] = "PARTIAL" if stopped else "COMPLETE"
+    report["stopped_because"] = stopped
+    report["arms_intended"] = (args.trials * len(runnable) * len(args.arms))
     _summarise(report)
     _emit(report, args.out)
-    leaked = any(r["leak_markers"] for r in report["runs"])
-    return 1 if leaked else 0
+    if any(r["leak_markers"] for r in report["runs"]):
+        return EXIT_VOID
+    return EXIT_PARTIAL if stopped else EXIT_OK
 
 
 def _summarise(report: dict) -> None:
@@ -672,20 +839,47 @@ def _summarise(report: dict) -> None:
         sub = [r for r in runs if r["arm"] == arm]
         if not sub:
             continue
-        passed = sum(1 for r in sub if r["oracle_pass"])
+        # The denominator is what was MEASURED. An arm the host took away is
+        # not a failure to divide by; counting it as one understates whichever
+        # arm the machine happened to interrupt.
+        graded = [r for r in sub if r["oracle_pass"] is not None]
+        unmeasured = len(sub) - len(graded)
+        passed = sum(1 for r in graded if r["oracle_pass"])
         cost = sum(r["cost_usd"] or 0 for r in sub)
         turns = sum(r["turns"] or 0 for r in sub)
-        print(f"  {arm:<9} first-attempt oracle {passed}/{len(sub)}   "
-              f"total ${cost:.2f}   turns {turns}")
+        tail = f"   [{unmeasured} UNMEASURED]" if unmeasured else ""
+        print(f"  {arm:<9} first-attempt oracle {passed}/{len(graded)}   "
+              f"total ${cost:.2f}   turns {turns}{tail}")
     print("  per task:")
     for key in sorted({r["task"] for r in runs}):
         row = {r["arm"]: r for r in runs if r["task"] == key}
         c, t = row.get("control"), row.get("treatment")
-        fmt = lambda r: ("PASS" if r["oracle_pass"] else "FAIL") if r else "-"
-        cost = lambda r: f"${r['cost_usd']:.2f}" if r and r["cost_usd"] else "-"
+
+        def fmt(r):
+            if not r:
+                return "-"
+            if r["oracle_pass"] is None:
+                return "UNMEAS"
+            return "PASS" if r["oracle_pass"] else "FAIL"
+
+        def cost(r):
+            return f"${r['cost_usd']:.2f}" if r and r["cost_usd"] else "-"
+
         print(f"    {key} {TASKS[key]['domain']:<38} "
-              f"control={fmt(c):<4} {cost(c):<7} "
-              f"treatment={fmt(t):<4} {cost(t)}")
+              f"control={fmt(c):<6} {cost(c):<7} "
+              f"treatment={fmt(t):<6} {cost(t)}")
+    # A pair is only a comparison when BOTH halves were graded. Said out loud,
+    # because a table with one UNMEASURED cell still reads like a contrast.
+    pairs = sorted({r["task"] for r in runs})
+    comparable = [k for k in pairs
+                  if all((row := {r["arm"]: r for r in runs if r["task"] == k})
+                         .get(a) and row[a]["oracle_pass"] is not None
+                         for a in ("control", "treatment"))]
+    print(f"  comparable matched pairs: {len(comparable)}/{len(pairs)}")
+    if report.get("status") == "PARTIAL":
+        print(f"  PARTIAL: {report.get('stopped_because')}")
+        print(f"  {len(runs)} of {report.get('arms_intended')} intended arms ran."
+              "  This is not the authorized experiment.")
     if any(r["leak_markers"] for r in runs):
         print("  RUN VOID: doctrine markers found in a control transcript.")
 
