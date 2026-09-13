@@ -1,5 +1,12 @@
 # ACTIVE-TASK ROUTER (read first)
 
+**ACTIVE line (2026-09-13): USEA — Universal Software Engineering Architect.** Phases I–VI
+are sealed and green; the one thing the programme still has no evidence for is whether the
+constitution changes engineering OUTCOMES. Resume it from
+`vault/knowledge_base/usea/USEA_RESUMPTION.md`. Read its §1 before acting on any brief that
+asks you to reconcile `UASE` with `USEA` — they are two different systems and one of them
+was rejected.
+
 **ACTIVE build (2026-07-12): DAIF — Duplicate-to-Advantage Institutional Fabric.**
 Resume it from `vault/knowledge_base/d2a_fabric/DAIF_RESUMPTION.md` → then `DAIF_INDEX.md` →
 `DAIF_CANONICAL_MAP.md`. Owner re-spec approved; 22 candidates → 8 sovereign datasets; building DAIF-00.
