@@ -21,6 +21,15 @@ Verdict (CDIO-05 sec.5 / PR-CDIO-REVIEW-GATE-001):
   APPROVE  = score >= 80 AND zero critical
   REVISE   = 60 <= score <= 79 AND zero critical
   BLOCK    = score < 60 OR any critical (a critical forces BLOCK at any score)
+  ABSTAIN  = nothing was assessed, so there is no score to state
+
+ABSTAIN is not a fifth quality band; it is the absence of a judgment. The formula
+starts at 100 and subtracts, so a review that measured NOTHING arrives at 100 and
+reads as flawless -- the strongest possible claim, produced by the weakest possible
+evidence. Keeping abstention away from APPROVE is the whole point: a surface nobody
+examined and a surface examined and found sound are different facts, and only one of
+them supports shipping. `score` is None there, matching the shape `design_gate`
+already emits for SKIP, so a consumer has ONE spelling for "no number here".
 """
 from __future__ import annotations
 
@@ -74,8 +83,8 @@ class Verdict:
 
 @dataclass
 class ScoreResult:
-    score: int
-    verdict: str                       # APPROVE | REVISE | BLOCK
+    score: int | None                  # None only on ABSTAIN -- nothing was assessed
+    verdict: str                       # APPROVE | REVISE | BLOCK | ABSTAIN
     reason: str
     critical: list = field(default_factory=list)
     major: list = field(default_factory=list)
@@ -121,6 +130,24 @@ def score_review(verdicts) -> ScoreResult:
             major.append(v.to_json())
         elif v.severity == "minor":
             minor.append(v.to_json())
+
+    # Zero evidence is not a clean bill. Every branch below deducts from 100, so a
+    # review that assessed nothing falls through to "score 100 >= 80 and zero
+    # critical" -- APPROVE, is_done True, on no observation whatsoever. Measured
+    # 2026-09-13: `score_review([])` returned 100/APPROVE/done.
+    #
+    # `dropped` is deliberately NOT evidence. A call whose every verdict was
+    # rejected as invalid measured nothing either, so treating the dropped count as
+    # participation would let malformed input buy a number.
+    if not (critical or major or minor or passed):
+        return ScoreResult(
+            score=None, verdict="ABSTAIN",
+            reason=("no criterion was assessed -- there is nothing to score; "
+                    + (f"all {len(dropped)} supplied verdict(s) were dropped as "
+                       "invalid (a failing verdict needs an observed value)"
+                       if dropped else "no verdicts were supplied")),
+            critical=critical, major=major, minor=minor,
+            passed=passed, dropped=dropped)
 
     score = 100
     score -= SEVERITY_DEDUCTION["critical"] * len(critical)

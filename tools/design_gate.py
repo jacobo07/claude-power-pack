@@ -187,8 +187,15 @@ def parse_experience(fm: str):
 def check_experience_coherence(exp, *, criterion: str = "experience-contract-coherent"):
     """Refuse a declared contract that contradicts itself or a CDIO-00 floor.
 
-    Returns None when no contract is declared, so an unassessed project appends no
-    verdict and its score is byte-identical to what it was before this axis existed.
+    Returns a LIST of verdicts -- one per independent contradiction, so N wrongs cost
+    N deductions. Returning a single joined verdict capped the axis at one deduction
+    and was the mechanism that made REVISE unreachable (see the comment at the return).
+
+    Returns an EMPTY LIST when no contract is declared, so an unassessed project
+    appends no verdict and its score is byte-identical to what it was before this axis
+    existed. Empty rather than None because the caller extends unconditionally: a
+    sentinel the caller must remember to test for is how the unassessed path acquires
+    a bug the assessed path never sees.
 
     This is a DECLARATION-time check. It sees what a project committed to and nothing
     about what it rendered (CDIO-07 sec.8); the rendered surface stays the property of
@@ -196,9 +203,9 @@ def check_experience_coherence(exp, *, criterion: str = "experience-contract-coh
     surface is built against it is the cheapest possible moment to refuse it.
     """
     if exp is None:
-        return None
+        return []
 
-    unknown, problems, floor_breach = [], [], False
+    unknown, problems = [], []   # problems: list of (severity, text)
 
     for key, allowed in EXPERIENCE_ENUMS.items():
         val = exp.get(key)
@@ -223,68 +230,93 @@ def check_experience_coherence(exp, *, criterion: str = "experience-contract-coh
     declares_motion = (expr_rank is not None and expr_rank >= REDUCED_MOTION_REQUIRED_AT) \
         or (motion_rank is not None and motion_rank > MOTION_RANK["none"])
     if reduced == "absent" and declares_motion:
-        floor_breach = True
-        problems.append(
+        problems.append((
+            "critical",
             f"reduced_motion=absent with motion declared (expressiveness={expr}, "
             f"motion_budget={motion}) -- the contract cannot be honoured without "
-            "breaching the accessibility floor")
+            "breaching the accessibility floor"))
     elif reduced == "absent" and expr is None and motion is None:
-        problems.append(
+        problems.append((
+            "major",
             "reduced_motion=absent declared with no expressiveness and no "
             "motion_budget -- the field constrains nothing and will permit motion "
-            "added later without re-opening this decision")
+            "added later without re-opening this decision"))
 
     if expr_rank is not None and motion_rank is not None and motion_rank > expr_rank:
-        problems.append(
+        problems.append((
+            "major",
             f"motion_budget={motion} outranks expressiveness={expr} -- a ceiling above "
-            "the declared ceiling caps nothing")
+            "the declared ceiling caps nothing"))
 
     if exp.get("trust_posture") == "critical" \
             and exp.get("celebration_policy") not in (None, "never"):
-        problems.append(
+        problems.append((
+            "major",
             f"trust_posture=critical with celebration_policy="
             f"{exp.get('celebration_policy')} -- a celebration on a surface where "
-            "mistakes are costly asserts a confidence the surface exists to withhold")
+            "mistakes are costly asserts a confidence the surface exists to withhold"))
 
     if exp.get("success_posture") == "celebrate" \
             and exp.get("celebration_policy") == "never":
-        problems.append(
+        problems.append((
+            "major",
             "success_posture=celebrate with celebration_policy=never -- the contract "
-            "contradicts itself")
+            "contradicts itself"))
 
     if exp.get("waiting") == "optimistic" and exp.get("error_posture") == "terse":
-        problems.append(
+        problems.append((
+            "major",
             "waiting=optimistic with error_posture=terse -- an optimistic update whose "
-            "failure is terse leaves the user holding a belief the system has abandoned")
+            "failure is terse leaves the user holding a belief the system has abandoned"))
 
     fb = exp.get("feedback_latency_ms")
     pt = exp.get("progress_threshold_ms")
     if isinstance(fb, int) and isinstance(pt, int) and fb > pt:
-        problems.append(
+        problems.append((
+            "major",
             f"feedback_latency_ms={fb} exceeds progress_threshold_ms={pt} -- an "
-            "acknowledgement that arrives after the progress cue inverts the sequence")
+            "acknowledgement that arrives after the progress cue inverts the sequence"))
 
     if unknown:
-        problems.append(
+        problems.append((
+            "major",
             "unrecognised value(s): " + ", ".join(sorted(unknown))
             + " -- a value outside the vocabulary silently disables the check that "
-              "reads it, and a check nobody can fail is not a check")
+              "reads it, and a check nobody can fail is not a check"))
 
     if not problems:
-        return Verdict(
+        return [Verdict(
             criterion=criterion, dimension="experience", status="pass",
             observed=f"{len(exp)} field(s) declared, internally coherent "
                      f"(expressiveness={expr}, motion_budget={motion}, "
-                     f"reduced_motion={reduced})")
+                     f"reduced_motion={reduced})")]
 
-    return Verdict(
+    # ONE verdict per contradiction, not one verdict carrying every contradiction
+    # joined by a semicolon. Collapsing them capped the whole axis at a single
+    # deduction, which is what made REVISE structurally unreachable: the only
+    # non-critical deductions this gate can produce are two majors (font stack and
+    # coherence), so the floor was 100-16 = 84, already >= APPROVE_MIN, while any
+    # critical forces BLOCK. Measured 2026-09-13: a DESIGN.md with FOUR independent
+    # contradictions scored 92/APPROVE -- four separate wrongs cost exactly what one
+    # costs, so the arithmetic reported the contract as sound.
+    #
+    # Severity is now per problem rather than per document. Previously a single floor
+    # breach promoted every co-occurring contradiction to critical; neither that nor
+    # the converse was ever true of the individual finding.
+    #
+    # The criterion string is deliberately UNCHANGED across the split. The hook's
+    # deny path, four gates in test_experience_contract.py and the knowledge-graph
+    # node all match it by exact name, so renaming to distinguish the findings would
+    # trade a real scoring fix for a broken contract. The distinguishing detail
+    # belongs in `observed`, which is where the concrete instance already lives.
+    return [Verdict(
         criterion=criterion, dimension="experience", status="fail",
-        severity="critical" if floor_breach else "major",
-        observed="; ".join(problems),
+        severity=severity, observed=text,
         recommendation="re-run the CDIO-07 sec.2 picker "
                        "(modules/design-md/prompts/experience-picker.md); a contract "
                        "that cannot be conformed to is not a contract a surface "
                        "should be built against")
+        for severity, text in problems]
 
 
 def parse_design_md(path: str) -> dict:
@@ -489,9 +521,7 @@ def design_gate(design_md_path: str) -> dict:
     # Appended ONLY when a contract is declared. An unassessed project therefore
     # scores exactly what it scored before this axis existed -- the equality that
     # makes adding the axis a gate and not a silent re-score of everyone's history.
-    coherence = check_experience_coherence(parsed["experience"])
-    if coherence is not None:
-        verdicts.append(coherence)
+    verdicts.extend(check_experience_coherence(parsed["experience"]))
 
     # The hard filters run HERE, on the automatic path, for the first time.
     #
@@ -644,7 +674,23 @@ def main(argv=None) -> int:
 
     print(json.dumps(out, indent=2, ensure_ascii=False) if args.json else _render(out))
 
-    return {"APPROVE": 0, "SKIP": 0, "REVISE": 1, "BLOCK": 2}.get(out["verdict"], 0)
+    # ABSTAIN maps to 0 for the same reason SKIP does: we have nothing to say about
+    # this surface, and refusing a write because the gate had no evidence would make
+    # silence a refusal. It is listed EXPLICITLY rather than riding the default --
+    # `.get(verdict, 0)` turned every unrecognised verdict into ALLOW without a word,
+    # which is the unknown-becomes-favourable pattern this gate exists to refuse. The
+    # done-claim is withheld in the JSON regardless (`is_done` is False on ABSTAIN),
+    # so allowing the write never launders into calling it complete.
+    codes = {"APPROVE": 0, "SKIP": 0, "ABSTAIN": 0, "REVISE": 1, "BLOCK": 2}
+    if out["verdict"] not in codes:
+        # Still fail-open -- a broken gate must not block real work -- but never
+        # silently. An unrecognised verdict means this table and the scorer have
+        # drifted apart, and the exit code alone could never reveal it.
+        print(f"design_gate: unrecognised verdict {out['verdict']!r} -- allowing the "
+              f"write (fail-open) but this exit table is out of date",
+              file=sys.stderr)
+        return 0
+    return codes[out["verdict"]]
 
 
 if __name__ == "__main__":

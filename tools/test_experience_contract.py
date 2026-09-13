@@ -237,7 +237,7 @@ def gate_unassessed(tmp: str) -> None:
     hf = check_experience_contract(None, None)
 
     appended_nothing = "experience-contract-coherent" not in criteria
-    if parsed["experience"] is None and coherence is None and appended_nothing \
+    if parsed["experience"] is None and coherence == [] and appended_nothing \
             and out["verdict"] == "APPROVE" and out["score"] == 100 \
             and out["experience_state"] == "unassessed" \
             and hf.passed and hf.state == EXP_UNASSESSED:
@@ -268,8 +268,12 @@ def gate_incoherent_refused(tmp: str) -> None:
 
     floor_blocked = out["verdict"] == "BLOCK" \
         and "experience-contract-coherent" in crit
-    others = all(v is not None and v.status == "fail" and v.severity == "major"
-                 for v in (trust, outranked, typo, inverted))
+    # Each of these fixtures carries exactly ONE contradiction, so each must produce
+    # exactly ONE verdict. Pinning the COUNT is what holds the D2 split in place: a
+    # regression that re-joined the problems into a single verdict would still report
+    # status=fail and severity=major, and would have passed the previous assertion.
+    others = all(len(vs) == 1 and vs[0].status == "fail" and vs[0].severity == "major"
+                 for vs in (trust, outranked, typo, inverted))
     if floor_blocked and others:
         _ok("V-EXP-INCOHERENT-REFUSED",
             "high+reduced_motion=absent BLOCKs as a floor breach; trust/budget/typo/"
@@ -427,17 +431,23 @@ def gate_floor_keyed_on_motion() -> None:
     }
     wrong = {}
     for name, exp in cases.items():
-        v = check_experience_coherence(exp)
-        if v is None or v.status != "fail" or v.severity != "critical":
-            wrong[name] = (v and v.status, v and v.severity)
+        vs = check_experience_coherence(exp)
+        # The floor breach must be critical IN ITS OWN VERDICT. Since the D2 split a
+        # fixture may legitimately also carry an unrelated major (motion_budget
+        # outranking expressiveness), and promoting that one to critical would be as
+        # wrong as demoting the breach -- so this asserts a critical EXISTS, not that
+        # every verdict returned is critical.
+        breaches = [v for v in vs if v.status == "fail" and v.severity == "critical"]
+        if not breaches:
+            wrong[name] = [(v.status, v.severity) for v in vs]
 
     # And the converse: no motion declared anywhere must NOT be a floor breach.
     still = check_experience_coherence(
         {"expressiveness": "none", "motion_budget": "none",
          "reduced_motion": "absent"})
-    if wrong or still is None or still.status != "pass":
+    if wrong or len(still) != 1 or still[0].status != "pass":
         _fail("V-EXP-FLOOR-KEYED-ON-MOTION",
-              f"not-critical: {wrong}; still-surface={still and still.status}")
+              f"not-critical: {wrong}; still-surface={[v.status for v in still]}")
     else:
         _ok("V-EXP-FLOOR-KEYED-ON-MOTION",
             "3 spellings of declared motion + absent equivalent all CRITICAL; a "

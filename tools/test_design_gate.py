@@ -20,9 +20,11 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from modules.cdio.scorer import (  # noqa: E402
+    Verdict,
     check_family_declared,
     check_font_stack,
     check_palette_cliche,
+    score_review,
 )
 from tools.design_gate import design_gate, parse_design_md  # noqa: E402
 
@@ -292,6 +294,84 @@ A real typeface with defaults behind it as fallbacks.
                   f"a crashing filter must not cost the refusal; got "
                   f"verdict={out_crash.get('verdict')} is_done={out_crash.get('is_done')} "
                   f"filter_state={hf.get('state')}")
+
+        # --- V-DESIGN-REVISE-REACHABLE (D2) -------------------------------
+        # REVISE was structurally unreachable through this entrypoint. The only
+        # non-critical deductions the gate could produce were two majors, so the
+        # floor was 100-16 = 84 -- already APPROVE -- and any critical forces
+        # BLOCK. The band [60,80) could not be entered by ANY document, so a
+        # verdict the datasets, the agent and DESIGN_GOVERNANCE all describe was
+        # documentary fiction.
+        #
+        # This drives it END TO END through design_gate rather than through
+        # score_review, because the library being able to return REVISE proves
+        # nothing about whether a real DESIGN.md can reach it. Three independent
+        # contradictions, no floor breach: before the split they collapsed into a
+        # single major and the document scored 92/APPROVE.
+        revise_md = _write(tmp, "REVISE.md", """---
+name: ContradictoryProject
+aesthetic_family: F3
+colors:
+  accent: "#2d6cdf"
+  neutral: "#ffffff"
+typography:
+  body-md:
+    fontFamily: Söhne
+experience:
+  trust_posture: critical
+  celebration_policy: milestones_only
+  waiting: optimistic
+  error_posture: terse
+  feedback_latency_ms: 2000
+  progress_threshold_ms: 500
+---
+Three independent contract contradictions, none of them a floor breach.
+""")
+        out_rev = design_gate(revise_md)
+        majors = [f for f in out_rev.get("major", [])
+                  if f["criterion"] == "experience-contract-coherent"]
+        if (out_rev["verdict"] == "REVISE"
+                and len(majors) == 3
+                and not out_rev.get("critical")
+                and out_rev["is_done"] is False):
+            _ok("V-DESIGN-REVISE-REACHABLE",
+                f"3 independent contradictions -> 3 separate majors -> score "
+                f"{out_rev['score']} -> REVISE, done withheld. Before the split the "
+                f"same document scored 92/APPROVE on one collapsed major")
+        else:
+            _fail("V-DESIGN-REVISE-REACHABLE",
+                  f"REVISE must be reachable from a real DESIGN.md; got "
+                  f"verdict={out_rev['verdict']} score={out_rev['score']} "
+                  f"coherence_majors={len(majors)} "
+                  f"criticals={[f['criterion'] for f in out_rev.get('critical', [])]}")
+
+        # --- V-DESIGN-ABSTAIN-NOT-APPROVE (D3) ----------------------------
+        # Zero evidence returned 100/APPROVE/done -- the maximum claim from the
+        # minimum evidence. Both spellings of "nothing was assessed" must abstain:
+        # no verdicts at all, and verdicts that were all rejected as invalid (a
+        # failing verdict with no observed value). The second matters because
+        # malformed input must not be able to buy a number either.
+        empty = score_review([])
+        all_dropped = score_review([Verdict(criterion="x", dimension="visual",
+                                            status="fail", severity="major",
+                                            observed="")])
+        # Positive control: real evidence must still score normally, or a detector
+        # that abstained on EVERYTHING would pass the two assertions above.
+        one_pass = score_review([Verdict(criterion="p", dimension="visual",
+                                         status="pass")])
+        if (empty.verdict == "ABSTAIN" and empty.score is None
+                and empty.is_done is False
+                and all_dropped.verdict == "ABSTAIN"
+                and len(all_dropped.dropped) == 1
+                and one_pass.verdict == "APPROVE" and one_pass.score == 100):
+            _ok("V-DESIGN-ABSTAIN-NOT-APPROVE",
+                "no verdicts -> ABSTAIN/score None/not done; all-dropped -> ABSTAIN; "
+                "one real pass still APPROVE 100 (control)")
+        else:
+            _fail("V-DESIGN-ABSTAIN-NOT-APPROVE",
+                  f"empty={empty.verdict}/{empty.score}/{empty.is_done} "
+                  f"all_dropped={all_dropped.verdict} "
+                  f"control={one_pass.verdict}/{one_pass.score}")
 
     # --- V-DESIGN-TEMPLATE-CLEAN: the PP's own canonical template must PASS ----
     out = design_gate(REPO_TEMPLATE)
