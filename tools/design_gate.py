@@ -308,10 +308,22 @@ def parse_design_md(path: str) -> dict:
 
     fonts = []
     for raw in FONT_RE.findall(fm):
-        # Strip inline comments and quotes: `Lora   # body serif` -> `Lora`
-        name = raw.split("#", 1)[0].strip().strip("\"'")
-        if name:
-            fonts.append(name)
+        # Strip inline comments, then split the STACK on commas: a CSS font-family is
+        # a fallback list, and `check_font_stack` judges each family in it.
+        #
+        # Splitting only on '#' defeated the anti-slop check completely, because the
+        # single most common way anyone writes this line is a stack. `Inter,
+        # sans-serif` arrived as ONE name, that name is not in DEFAULT_TIER_FONTS --
+        # nothing is, with a comma in it -- so it was classified "characterful" and
+        # PASSED. The check could only ever fail a document declaring exactly one
+        # bare default family, which is the shape almost nobody writes. Measured
+        # 2026-09-13: `check_font_stack(["Inter, sans-serif"], "F2")` -> pass, while
+        # `check_font_stack(["Inter"], "F2")` -> fail/critical.
+        head = raw.split("#", 1)[0]
+        for part in head.split(","):
+            name = part.strip().strip("\"'")
+            if name:
+                fonts.append(name)
 
     colors = sorted(set(HEX_RE.findall(fm)))
 
@@ -426,11 +438,31 @@ def emit_context(design_md_path: str) -> dict:
     return ctx
 
 
+def _skip(design_md_path: str, reason: str) -> dict:
+    """A gate that could not evaluate. ALLOWS the work, never claims it is done.
+
+    The action and the assessment are two answers, and this is the one place they were
+    collapsed. SKIP used to carry `is_done: True`, so an unreadable artifact or a
+    crashed gate returned the same done-claim as a surface that had actually cleared
+    every check. A consumer reading `is_done` could not tell "verified" from "never
+    looked" -- which is the sealed rule at ukdl-universal.md:7035, recurring here.
+
+    Fail-open is right about the ACTION and wrong about the EVIDENCE. `assessment`
+    carries the honest half. Exit code stays 0 and the hook still allows the write:
+    this changes what the gate CLAIMS, never what it BLOCKS.
+    """
+    return {"verdict": "SKIP", "score": None, "reason": reason,
+            "design_md": design_md_path,
+            "assessment": "unevaluated",
+            "is_done": False}
+
+
 def design_gate(design_md_path: str) -> dict:
     """Run the CDIO-06 anti-slop checks against a DESIGN.md.
 
     Returns a dict with `verdict` in {APPROVE, REVISE, BLOCK, SKIP}. SKIP means the
-    gate could not evaluate and is standing down -- it is never a failure verdict.
+    gate could not evaluate and is standing down -- it is never a failure verdict,
+    and (since 2026-09-13) never a done-claim either.
     """
     presence = check_design_md_exists(design_md_path)
     if presence.status == "fail":
@@ -444,8 +476,7 @@ def design_gate(design_md_path: str) -> dict:
     try:
         parsed = parse_design_md(design_md_path)
     except SkipGate as exc:
-        return {"verdict": "SKIP", "score": None, "reason": str(exc),
-                "design_md": design_md_path, "is_done": True}
+        return _skip(design_md_path, str(exc))
 
     verdicts = [
         presence,
@@ -535,9 +566,8 @@ def main(argv=None) -> int:
     try:
         out = design_gate(args.design_md)
     except Exception as exc:                      # noqa: BLE001 -- fail-open is the contract
-        out = {"verdict": "SKIP", "score": None, "is_done": True,
-               "reason": f"gate error, standing down (fail-open): {exc}",
-               "design_md": args.design_md}
+        out = _skip(args.design_md,
+                    f"gate error, standing down (fail-open): {exc}")
 
     print(json.dumps(out, indent=2, ensure_ascii=False) if args.json else _render(out))
 

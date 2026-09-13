@@ -113,6 +113,56 @@ def main() -> int:
                   f"F1 + Inter should APPROVE (family sanctions the default); "
                   f"got {out['verdict']} score={out['score']}")
 
+        # --- V-DESIGN-FONT-STACK-SPLIT: a comma must not defeat the font check --
+        # A CSS font-family is a FALLBACK LIST. The parser split only on '#', so the
+        # whole stack arrived as one name; no name containing a comma is in
+        # DEFAULT_TIER_FONTS, so `Inter, sans-serif` was classified "characterful"
+        # and PASSED. The check could then only ever fail a document declaring one
+        # bare default family -- the shape almost nobody writes. Measured 2026-09-13.
+        #
+        # The control is what makes this evidence rather than a stricter assertion:
+        # a stack whose FIRST face is real must still pass, or the repair would just
+        # be a blanket ban on writing fallbacks.
+        stack_slop = _write(tmp, "STACKSLOP.md", """---
+name: StackSlop
+aesthetic_family: F2
+colors:
+  accent: "#c2410c"
+  neutral: "#f5f0e8"
+typography:
+  body-md:
+    fontFamily: Inter, sans-serif
+---
+F2 does not sanction a default stack; every face here is default-tier.
+""")
+        stack_ok = _write(tmp, "STACKOK.md", """---
+name: StackOk
+aesthetic_family: F2
+colors:
+  accent: "#c2410c"
+  neutral: "#f5f0e8"
+typography:
+  body-md:
+    fontFamily: Lora, Georgia, serif
+---
+A real typeface with defaults behind it as fallbacks.
+""")
+        slop_fonts = parse_design_md(stack_slop)["fonts"]
+        out_slop = design_gate(stack_slop)
+        out_ok = design_gate(stack_ok)
+        slop_crit = [f["criterion"] for f in out_slop.get("critical", [])]
+        ok_font = next((f for f in out_ok.get("passed", [])
+                        if f["criterion"] == "font-stack-intent"), None)
+        if (slop_fonts == ["Inter", "sans-serif"]
+                and "font-stack-intent" in slop_crit and ok_font):
+            _ok("V-DESIGN-FONT-STACK-SPLIT",
+                f"'Inter, sans-serif' -> {slop_fonts} -> critical; "
+                f"control 'Lora, Georgia, serif' -> pass ({ok_font['observed']})")
+        else:
+            _fail("V-DESIGN-FONT-STACK-SPLIT",
+                  f"stack must split on ',' and fail as all-default; parsed="
+                  f"{slop_fonts} criticals={slop_crit} control_pass={bool(ok_font)}")
+
         # --- V-DESIGN-FAIL-OPEN: a gate that cannot read must never block ------
         missing = os.path.join(tmp, "no-such-dir", "DESIGN.md")
         out = design_gate(missing)
@@ -128,11 +178,24 @@ def main() -> int:
         with open(binpath, "wb") as fh:
             fh.write(b"\xff\xfe\x00\x00\x80\x81\x82")
         out = design_gate(binpath)
-        if out["verdict"] == "SKIP" and out.get("is_done") is True:
-            _ok("V-DESIGN-FAIL-OPEN", f"unreadable artifact -> SKIP ({out['reason'][:48]}...)")
+        # Two separate claims, and they used to be one. The ACTION must fail open --
+        # SKIP, never BLOCK, so a gate that cannot read never stops real work. The
+        # ASSESSMENT must stay honest -- `is_done` False and `assessment` explicitly
+        # "unevaluated", because an unreadable artifact is the one thing we know
+        # nothing about. Asserting `is_done is True` here (as this did until
+        # 2026-09-13) made an unevaluable gate indistinguishable from a surface that
+        # passed every check, which is the sealed rule at ukdl-universal.md:7035.
+        if (out["verdict"] == "SKIP" and out["verdict"] != "BLOCK"
+                and out.get("is_done") is False
+                and out.get("assessment") == "unevaluated"):
+            _ok("V-DESIGN-FAIL-OPEN",
+                f"unreadable artifact -> SKIP, assessment=unevaluated, is_done=False "
+                f"({out['reason'][:40]}...)")
         else:
             _fail("V-DESIGN-FAIL-OPEN",
-                  f"a gate that cannot read must SKIP, not {out['verdict']}")
+                  f"action must fail open AND the assessment stay honest; got "
+                  f"verdict={out['verdict']} is_done={out.get('is_done')} "
+                  f"assessment={out.get('assessment')!r}")
 
     # --- V-DESIGN-TEMPLATE-CLEAN: the PP's own canonical template must PASS ----
     out = design_gate(REPO_TEMPLATE)
