@@ -373,6 +373,56 @@ Three independent contract contradictions, none of them a floor breach.
                   f"all_dropped={all_dropped.verdict} "
                   f"control={one_pass.verdict}/{one_pass.score}")
 
+        # --- V-DESIGN-SPLIT-WIDENS-REFUSAL (D2 consequence) ---------------
+        # Found by an independent adversarial review of this session's own diff,
+        # then confirmed by execution. Scoring N contradictions instead of 1 does
+        # not only make REVISE reachable -- carried far enough it makes BLOCK
+        # reachable for a document that previously APPROVED. That is a NEW REFUSAL:
+        # the hook denies a write it would have allowed yesterday.
+        #
+        # This is a consequence of the approved decision, not a defect, and it is
+        # pinned here precisely so it stays a decision. An undocumented widening of
+        # what a gate may refuse is how a gate gets switched off; a documented one
+        # can be argued with. If this gate ever goes red because the numbers moved,
+        # that is a product question, not a test to repair.
+        #
+        # Six majors: five independent contract contradictions plus an undeclared
+        # font stack. Before the split the same document scored two majors (one
+        # collapsed coherence verdict + the font stack) = 84 = APPROVE.
+        worst_md = _write(tmp, "WORST.md", """---
+name: WorstCase
+aesthetic_family: F1
+colors:
+  accent: "#5e6ad2"
+  neutral: "#ffffff"
+experience:
+  reduced_motion: absent
+  trust_posture: critical
+  celebration_policy: milestones_only
+  waiting: optimistic
+  error_posture: terse
+  feedback_latency_ms: 2000
+  progress_threshold_ms: 500
+  success_posture: wat
+---
+Five coherence contradictions plus an undeclared font stack.
+""")
+        out_worst = design_gate(worst_md)
+        n_major = len(out_worst.get("major", []))
+        if (out_worst["verdict"] == "BLOCK" and n_major == 6
+                and not out_worst.get("critical")
+                and out_worst["score"] == 52):
+            _ok("V-DESIGN-SPLIT-WIDENS-REFUSAL",
+                f"6 majors and ZERO criticals -> score 52 -> BLOCK. The split made "
+                f"BLOCK reachable without a critical, so this document is now denied "
+                f"where it previously scored 84/APPROVE. Intended and recorded")
+        else:
+            _fail("V-DESIGN-SPLIT-WIDENS-REFUSAL",
+                  f"expected 6 majors / 0 critical / score 52 / BLOCK; got "
+                  f"verdict={out_worst['verdict']} score={out_worst['score']} "
+                  f"majors={n_major} "
+                  f"criticals={[f['criterion'] for f in out_worst.get('critical', [])]}")
+
     # --- V-DESIGN-TEMPLATE-CLEAN: the PP's own canonical template must PASS ----
     out = design_gate(REPO_TEMPLATE)
     if out["verdict"] == "APPROVE":

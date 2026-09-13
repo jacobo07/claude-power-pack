@@ -163,8 +163,11 @@ def registration_sites(root: Path) -> dict[str, list[str]]:
     lr = live_root()
 
     def harvest(path_obj: Path, label: str) -> None:
-        if not path_obj.is_file():
-            return
+        # No is_file() probe here. The dispatcher is selected by an is_file() check
+        # already, so re-testing it added a SECOND stat between selection and read
+        # -- a window in which a file present at selection can be absent at harvest,
+        # suppressing a read the previous code would have attempted. _read is
+        # fail-open on a missing path, which is the same answer without the window.
         text = _read(path_obj)
         if text is None:
             return

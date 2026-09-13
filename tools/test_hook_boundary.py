@@ -107,6 +107,12 @@ def _decision(parsed) -> str:
     return str(parsed.get("hookSpecificOutput", {}).get("permissionDecision", ""))
 
 
+def _context(parsed) -> str:
+    if not isinstance(parsed, dict):
+        return ""
+    return str(parsed.get("hookSpecificOutput", {}).get("additionalContext", ""))
+
+
 def _write(directory: str, name: str, body: str) -> str:
     path = os.path.join(directory, name)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -162,9 +168,24 @@ Three independent contract contradictions, no floor breach.
 
 
 def _surface_payload(surface: str) -> dict:
+    """One session id PER FIXTURE, derived from its project directory.
+
+    A single shared session id silently broke this suite. The hook's throttle key
+    is sanitised and then TRUNCATED to 32 characters, and every fixture lives under
+    one long temp path, so `.../tmpoyp0_oft/cleanproj.tsx` and
+    `.../tmpoyp0_oft/reviseproj.tsx` both reduce to `CUsersUserAppDataLocalTemptmpoyp`
+    -- the part that distinguishes them falls off the end. The second case was
+    therefore throttled by the first and the hook returned `{}` without ever running
+    the gate, while the assertion "not denied" passed.
+
+    An action that never happened and an action correctly declined leave identical
+    evidence, so the fix is to make the two distinguishable at the source: the
+    session id is not truncated, and each project directory yields its own.
+    """
+    case = os.path.basename(os.path.dirname(surface))
     return {"tool_name": "Write",
             "tool_input": {"file_path": surface, "content": "export const X = 1;"},
-            "session_id": _SESSION}
+            "session_id": f"{_SESSION}{case}"}
 
 
 def gate_block_denies(tmp: str) -> None:
@@ -179,10 +200,16 @@ def gate_block_denies(tmp: str) -> None:
     reason = str(parsed.get("hookSpecificOutput", {}).get("permissionDecisionReason", "")
                  if isinstance(parsed, dict) else "")
 
-    if decision == "deny" and code == 0 and "BLOCK" in reason:
+    # The surface basename is required as well as the verdict: "BLOCK appears in
+    # the reason" does not establish that THIS fixture's document produced the
+    # judgment, and a gate that had judged some other file found by the upward walk
+    # would satisfy the weaker assertion.
+    if decision == "deny" and code == 0 and "BLOCK" in reason \
+            and os.path.basename(surface) in reason:
         _ok("V-HOOK-BLOCK-DENIES",
             f"node->python->deny across the real boundary; exit {code} (the refusal "
-            f"rides in the payload, never the exit code); reason names the verdict")
+            f"rides in the payload, never the exit code); the reason names both the "
+            f"verdict and this fixture's own surface")
     else:
         _fail("V-HOOK-BLOCK-DENIES",
               f"a BLOCKing DESIGN.md must deny at the hook boundary; got "
@@ -199,14 +226,22 @@ def gate_approve_allows(tmp: str) -> None:
 
     parsed, code, raw = _run_hook(_surface_payload(surface))
     decision = _decision(parsed)
-    if decision != "deny" and code == 0:
+    context = _context(parsed)
+    # "Not denied" alone is satisfied by `{}` -- which is equally what a throttled
+    # hook, a crashed gate, and a hook that never located the DESIGN.md all return.
+    # So require the hook to SAY what it judged and to name THIS fixture's own
+    # document: that payload is only producible by a gate that actually ran, on the
+    # right file.
+    if decision != "deny" and code == 0 and "APPROVE" in context \
+            and os.path.dirname(surface) in context:
         _ok("V-HOOK-APPROVE-ALLOWS",
-            "a conforming design system is not denied at the boundary "
-            f"(decision={decision or 'none'})")
+            "a conforming design system is not denied, and the hook reports APPROVE "
+            "against this fixture's own DESIGN.md -- evidence the gate RAN, not "
+            "merely that nothing was refused")
     else:
         _fail("V-HOOK-APPROVE-ALLOWS",
-              f"a clean DESIGN.md must not be denied; got decision={decision!r} "
-              f"exit={code} raw={raw[:200]!r}")
+              f"a clean DESIGN.md must not be denied AND must be judged; got "
+              f"decision={decision!r} exit={code} context={context[:160]!r}")
 
 
 def gate_revise_does_not_deny(tmp: str) -> None:
@@ -223,14 +258,18 @@ def gate_revise_does_not_deny(tmp: str) -> None:
 
     parsed, code, raw = _run_hook(_surface_payload(surface))
     decision = _decision(parsed)
-    if decision != "deny" and code == 0:
+    context = _context(parsed)
+    # Same requirement as the APPROVE control, and not hypothetical here: this exact
+    # gate passed against a `{}` produced by the throttle-key collision, so it was
+    # asserting about a hook that had never run the gate at all.
+    if decision != "deny" and code == 0 and "REVISE" in context:
         _ok("V-HOOK-REVISE-DOES-NOT-DENY",
-            "a REVISE verdict is surfaced, not refused -- reachability of the "
-            "verdict did not widen what the gate may block")
+            "the hook REPORTS REVISE and does not refuse -- making the verdict "
+            "reachable did not widen what the gate may block")
     else:
         _fail("V-HOOK-REVISE-DOES-NOT-DENY",
-              f"REVISE must not deny; got decision={decision!r} exit={code} "
-              f"raw={raw[:200]!r}")
+              f"REVISE must be surfaced and must not deny; got decision={decision!r} "
+              f"exit={code} context={context[:160]!r}")
 
 
 def gate_non_surface_inert(tmp: str) -> None:
