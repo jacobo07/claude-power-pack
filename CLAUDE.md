@@ -40,8 +40,17 @@ new build with an interactive surface:
   blocking animation are CRITICAL (`HR-EXPERIENCE-FLOOR-001`).
 - **Three separate answers.** Score/verdict = quality; `is_done` = quality AND conformance;
   product evidence = out of scope. A breach withholds done and never moves the number.
+- **Absence and collapse are not evidence.** Zero assessed criteria ⇒ `ABSTAIN`, score
+  `None`, never done — a review that measured nothing must not arrive at 100/APPROVE. And
+  N contradictions cost N deductions, not one: collapsing them made `REVISE` structurally
+  unreachable (floor 84 ≥ 80). Carried far enough the split makes BLOCK reachable with no
+  critical, so it WIDENS refusal — intended, and pinned by `V-DESIGN-SPLIT-WIDENS-REFUSAL`.
 - Gate: `python tools/test_experience_contract.py` (V-EXP-*). Context for CDICF:
   `python tools/design_gate.py --emit-context ./DESIGN.md --out ctx.json` — never hand-written.
+- Gate: `python tools/test_hook_boundary.py` (V-HOOK-*) — the node→python→`permissionDecision`
+  boundary the product actually crosses, plus whether the hook is registered at all. In-process
+  suites are structurally blind here: break only the serialisation and they stay green while
+  enforcement is gone.
 
 ## Project Governance & Knowledge (added 2026-07-11)
 Normative rules that every project using Claude Power Pack obeys from its first commit live

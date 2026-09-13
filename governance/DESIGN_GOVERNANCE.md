@@ -183,6 +183,20 @@ artifact into the registry entry, never in a side document that drifts.
     `enforce_hard_filters=True`; an unresolved dependency BLOCKs before the score.
   - Report-only weakens the refusal, never the honesty. A surface with an unresolved
     dependency is reported, allowed, and **not done** on either path.
+  - **Naming the caller is not the same as proving it runs.** The sentences above say
+    which path enforces; until 2026-09-13 nothing checked that the path EXISTS. Every
+    gate called `design_gate()` in-process, while the product spawns node, which spawns
+    python, and turns that second process's stdout into a `permissionDecision`. Break
+    only the serialisation between them and every in-process suite stays green with the
+    enforcement entirely absent — measured, in the drill. `python tools/test_hook_boundary.py`
+    (V-HOOK-*) crosses that boundary, and asserts the hook is REGISTERED at all, which is
+    where the trust chain terminates: a line in `settings.json`, an artifact that can be
+    read, not another gate.
+  - **The trust root is currently DOUBLE-registered.** `cdio_visual_advisory.js` is named
+    both directly in `settings.json` and inside the dispatcher's `PreToolUse-Edit-chain`,
+    so `design_gate.py` spawns twice on every visual write. Reported, not failed: the fix
+    is Owner-side (HR-001). Remove the standalone entry; the dispatcher entry carries
+    `block: true` and the larger timeout budget and is the one to keep.
 
 ### 8.3 A tour is a last resort, never a patch over a broken interface
 An onboarding overlay laid over an unresolved usability problem conceals the problem and
