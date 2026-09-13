@@ -836,6 +836,37 @@ def check_experience_contract(declared, observed, *,
     absent yields `unassessed` -- a project that promised nothing has nothing to
     break, and a surface nobody measured has not been shown to conform.
     """
+    # The floor is evaluated BEFORE the unassessed early-returns, and that ordering
+    # is the whole point. It used to sit after them, so a project that declared NO
+    # contract never reached it: a surface shipping motion with no reduced-motion
+    # equivalent came back `unassessed`/passed, which a reviewer reads as "behaviour
+    # checked". The comment below already claimed the floor was not conditioned on
+    # what the contract declared -- it was conditioned on one EXISTING, which is the
+    # same exemption wearing a different costume. An accessibility floor is a floor
+    # for a project that promised nothing exactly as much as for one that promised
+    # everything (CDIO-07 sec.5).
+    #
+    # `observed` absent is still unassessed: nothing was measured, so there is no
+    # breach to find. Absence of measurement is not absence of a defect, and it is
+    # not evidence of one either.
+    floor_breached = bool(observed) and bool(observed.get("motion_present")) \
+        and observed.get("reduced_motion_equivalent") is False
+
+    if floor_breached and not declared:
+        return HardFilter(
+            criterion=criterion, passed=False, severity="critical",
+            state=EXP_BREACHED,
+            observed="motion is present and the rendered surface provides no "
+                     "reduced-motion equivalent -- accessibility floor. No CDIO-07 "
+                     "contract is declared, which does not buy an exemption: the "
+                     "floor is a property of the surface, not of the document",
+            recommendation="deliver the same information and state change without "
+                           "motion under prefers-reduced-motion; then declare an "
+                           "`experience:` block so the rest of the behaviour becomes "
+                           "refusable (CDIO-07 sec.1)",
+            detail={"declared": {}, "observed": dict(observed),
+                    "breaches": ["reduced-motion equivalent absent (floor)"]})
+
     if not declared:
         return HardFilter(
             criterion=criterion, passed=True, state=EXP_UNASSESSED,
@@ -852,7 +883,7 @@ def check_experience_contract(declared, observed, *,
                            "the observations; a declaration verifies nothing on its own",
             detail={"declared": dict(declared)})
 
-    breaches, floor_breach = [], False
+    breaches = []
 
     # The floor is NOT conditioned on what the contract declared. Gating this on
     # `declared.reduced_motion == "equivalent"` meant a project could buy the
@@ -860,9 +891,10 @@ def check_experience_contract(declared, observed, *,
     # or by omitting the field. Worse than silence: the filter then reported
     # CONFORMING, which a reviewer reads as "behaviour checked". Motion shipped
     # without an equivalent is a floor breach whatever the document says.
-    if observed.get("motion_present") \
-            and observed.get("reduced_motion_equivalent") is False:
-        floor_breach = True
+    #
+    # Computed once, above, so the declared and undeclared paths cannot drift apart:
+    # two spellings of one floor is how the undeclared path lost it in the first place.
+    if floor_breached:
         declared_rm = declared.get("reduced_motion")
         breaches.append(
             "motion is present and the rendered surface provides no reduced-motion "
@@ -904,11 +936,11 @@ def check_experience_contract(declared, observed, *,
 
     return HardFilter(
         criterion=criterion, passed=False,
-        severity="critical" if floor_breach else "",
+        severity="critical" if floor_breached else "",
         state=EXP_BREACHED,
         observed=f"{len(breaches)} contract breach(es): " + "; ".join(breaches),
         recommendation=("restore the floor before shipping -- no posture buys a "
-                        "reduced-motion exemption" if floor_breach else
+                        "reduced-motion exemption" if floor_breached else
                         "bring the surface back inside its declared contract, or "
                         "change the contract deliberately at the picker; a contract "
                         "amended to match whatever shipped is not a contract"),

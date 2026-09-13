@@ -590,9 +590,50 @@ def gate_emit_fail_open(tmp: str) -> None:
         _fail("V-EXP-EMIT-FAIL-OPEN", f"exit={code} wrote={os.path.exists(bad)}")
 
 
+def gate_floor_no_contract() -> None:
+    """The floor survives the absence of the whole contract, not just of the field.
+
+    Its sibling above removes the `reduced_motion` FIELD and proves no declaration
+    buys the exemption. Both of its fixtures still declare a contract, so neither
+    could reach the case where `declared` is absent entirely -- and that early
+    return sat BEFORE the floor check, so a project that declared nothing got
+    `unassessed`/passed for a surface shipping motion with no equivalent. A
+    rejection suite that never removes the CONTAINER has a hole shaped exactly like
+    a project that adopted no contract, which is most projects. Measured 2026-09-13.
+
+    Three cases, because one of them is the control: a breaching surface with no
+    contract must BREACH; a clean surface with no contract must stay UNASSESSED
+    (absence of measurement is not evidence of a defect); and nothing measured at
+    all must stay UNASSESSED.
+    """
+    breaching = {"motion_present": True, "reduced_motion_equivalent": False}
+    clean = {"motion_present": True, "reduced_motion_equivalent": True}
+
+    a = check_experience_contract(None, breaching)
+    b = check_experience_contract(None, clean)
+    c = check_experience_contract(None, None)
+    gated = review_gate([Verdict("contrast-body", "visual", "pass", observed="7:1")],
+                        declared_experience=None, observed_experience=breaching)
+
+    if (a.passed is False and a.severity == "critical" and a.state == EXP_BREACHED
+            and b.passed is True and b.state == EXP_UNASSESSED
+            and c.passed is True and c.state == EXP_UNASSESSED
+            and gated.verdict == "BLOCK" and gated.is_done is False):
+        _ok("V-EXP-FLOOR-NO-CONTRACT",
+            "motion with no reduced-motion equivalent breaches the floor even when "
+            "NO contract is declared; a conforming surface and an unmeasured one "
+            "both stay unassessed")
+    else:
+        _fail("V-EXP-FLOOR-NO-CONTRACT",
+              f"breaching={a.passed}/{a.severity}/{a.state} "
+              f"clean={b.passed}/{b.state} unmeasured={c.passed}/{c.state} "
+              f"verdict={gated.verdict} is_done={gated.is_done}")
+
+
 def main() -> int:
     print("V-EXP gates (CDIO-07 experience contract)")
     gate_floors_refuse()
+    gate_floor_no_contract()
     gate_floors_pass()
     gate_bidirectional()
     with tempfile.TemporaryDirectory() as tmp:
