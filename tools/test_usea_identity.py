@@ -73,6 +73,20 @@ SYNTHESIS_MARKERS = ("architecture synthesis", "synthesis engine", "upac",
 CONSTITUTION_MARKERS = ("software engineering architect", "constitution",
                         "fifteen laws", "law ii", "law ix", "cpp-usea")
 
+# Disambiguation prose is the one shape that looks exactly like the defect. A
+# sentence warning a reader not to confuse the two necessarily puts the rejected
+# acronym next to constitutional vocabulary -- so the first version of this gate
+# failed its own repository the moment that warning was written, which is a gate
+# hostile to the documentation it exists to encourage.
+#
+# Recognised NARROWLY, on the hit's own LINE rather than its window: the author
+# must name BOTH acronyms and contrast them in one sentence. A misattribution
+# does not do that, and the alias clause below still catches a line that names
+# both and asserts they are one thing -- so the two clauses close each other's
+# hole rather than trusting this vocabulary alone.
+CONTRAST_MARKERS = ("two different", "not the same", "do not confuse",
+                    "different system", "differ", "rejected", "transposition")
+
 # How far either side of a hit to read for context.
 WINDOW = 400
 
@@ -97,25 +111,35 @@ def _read(p: Path) -> str:
         return ""
 
 
-def classify(text: str, token: str) -> list[tuple[int, bool, bool]]:
+def classify(text: str, token: str) -> list[tuple[int, bool, bool, bool]]:
     """For each occurrence of `token`, does its neighbourhood look like the
-    synthesis engine, the constitution, or both?
+    synthesis engine, the constitution, or both -- and is the line contrasting
+    the two deliberately?
 
-    Returns (offset, synthesis_nearby, constitution_nearby) per hit. Both-true
-    is the ambiguous case and both-false is the unattributed case; the caller
-    decides what each means, because they are different problems.
+    Returns (offset, synthesis_nearby, constitution_nearby, disambiguating).
+    Both-true is the ambiguous case and both-false is the unattributed case; the
+    caller decides what each means, because they are different problems.
+
+    `disambiguating` is LINE-scoped while the other two are window-scoped, and
+    the asymmetry is the point: a window wide enough to establish what a passage
+    is about is far too wide to establish what a sentence intends.
     """
-    hits: list[tuple[int, bool, bool]] = []
+    hits: list[tuple[int, bool, bool, bool]] = []
     start = 0
     while True:
         i = text.find(token, start)
         if i < 0:
             return hits
         window = text[max(0, i - WINDOW): i + WINDOW].lower()
+        ls = text.rfind("\n", 0, i) + 1
+        le = text.find("\n", i)
+        line = text[ls: le if le >= 0 else len(text)]
         hits.append((
             i,
             any(m in window for m in SYNTHESIS_MARKERS),
             any(m in window for m in CONSTITUTION_MARKERS),
+            CANONICAL in line and any(m in line.lower()
+                                      for m in CONTRAST_MARKERS),
         ))
         start = i + len(token)
 
@@ -153,6 +177,7 @@ def main() -> int:
     misattributed: list[str] = []   # near constitution vocabulary
     unattributed: list[str] = []    # near neither
     aliased: list[str] = []         # both acronyms asserted equivalent
+    disambiguating = 0              # deliberately contrasting the two
 
     for f in files:
         text = _read(f)
@@ -160,10 +185,16 @@ def main() -> int:
             continue
         rel = str(f.relative_to(_ROOT))
 
-        for off, synth, const in classify(text, REJECTED):
+        for off, synth, const, disamb in classify(text, REJECTED):
             total_hits += 1
             line_no = text.count("\n", 0, off) + 1
-            if const and not synth:
+            if disamb:
+                # Counted, never silently dropped. A class that disappears from
+                # the arithmetic is an exemption nobody can audit, and this one
+                # is the gate's only way to say yes to a constitutional
+                # neighbourhood.
+                disambiguating += 1
+            elif const and not synth:
                 misattributed.append(f"{rel}:{line_no}")
             elif not const and not synth:
                 unattributed.append(f"{rel}:{line_no}")
@@ -184,7 +215,8 @@ def main() -> int:
     check("V-IDENT-SWEEP-FOUND-SUBJECTS",
           len(files) > 200 and total_hits >= 1,
           f"{len(files)} files walked, {total_hits} occurrence(s) of the "
-          f"rejected acronym found to judge")
+          f"rejected acronym found to judge, {disambiguating} of them "
+          f"deliberately contrasting")
 
     check("V-IDENT-NO-MISATTRIBUTION",
           not misattributed,
@@ -209,9 +241,9 @@ def main() -> int:
                 f"LAW II and LAW IX, are carried by this system.\n")
     red = classify(red_body, REJECTED)
     check("V-IDENT-DRILL-RED",
-          len(red) == 1 and red[0][2] and not red[0][1],
+          len(red) == 1 and red[0][2] and not red[0][1] and not red[0][3],
           "a synthetic line placing the rejected acronym in constitutional "
-          "context is flagged")
+          "context is flagged, and the contrast clause does not rescue it")
 
     green_body = (f"### 02 - {REJECTED} - Universal Architecture Synthesis "
                   f"Engine\nUPAC ownership audit, verdict recorded in DRK-08.\n")
@@ -219,6 +251,32 @@ def main() -> int:
     check("V-IDENT-DRILL-GREEN",
           len(green) == 1 and green[0][1] and not green[0][2],
           "a synthetic line placing it in synthesis context passes")
+
+    # The clause added after this gate failed its own repository: a sentence
+    # warning a reader not to confuse the two sits, necessarily, in
+    # constitutional context. Without this it is indistinguishable from the
+    # defect, and the gate punishes the documentation it exists to encourage.
+    contrast_body = (f"The sealed constitution's fifteen laws: do not confuse "
+                     f"{REJECTED} with {CANONICAL}, they are two different "
+                     f"systems and one was rejected.\n")
+    contrast = classify(contrast_body, REJECTED)
+    check("V-IDENT-DRILL-CONTRAST",
+          len(contrast) == 1 and contrast[0][2] and contrast[0][3],
+          "a synthetic line contrasting the two in constitutional context is "
+          "read as disambiguation, not as a misattribution")
+
+    # ...and contrast vocabulary must not become a laundering route. The same
+    # line asserting equivalence is still caught, by the alias clause, which is
+    # why the two predicates are kept separate rather than merged.
+    launder = ("do not confuse the matter: two different readings aside, "
+               f"{REJECTED} is an alias for {CANONICAL}.")
+    low = launder.lower()
+    check("V-IDENT-DRILL-NO-LAUNDERING",
+          REJECTED in launder and CANONICAL in launder
+          and any(v in low for v in (" is ", " same ", "aka", "alias",
+                                     "rename", "formerly", "a.k.a")),
+          "contrast wording does not rescue a line that asserts equivalence -- "
+          "the alias clause still fires on it")
 
     total = PASSES + FAILS
     print(f"IDENTITY_PASS={PASSES}/{total}  threshold={total}/{total}")
