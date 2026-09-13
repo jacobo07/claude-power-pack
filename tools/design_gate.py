@@ -60,6 +60,7 @@ from modules.cdio.scorer import (  # noqa: E402
     check_family_declared,
     check_font_stack,
     check_palette_cliche,
+    review_gate,
     score_review,
 )
 
@@ -492,8 +493,45 @@ def design_gate(design_md_path: str) -> dict:
     if coherence is not None:
         verdicts.append(coherence)
 
-    result = score_review(verdicts)
+    # The hard filters run HERE, on the automatic path, for the first time.
+    #
+    # Until 2026-09-13 `review_gate` had zero production callers: this entrypoint --
+    # the only thing the PreToolUse hook ever invokes -- called `score_review`
+    # directly, so the CDICF dependency filter and the CDIO-07 conformance filter were
+    # reachable only by an agent choosing to type a command written in an agent
+    # markdown file. DESIGN_GOVERNANCE.md sec.8.2 meanwhile stated as a normative rule
+    # that dependency resolution "is checked again at review time ... review_gate(
+    # verdicts, target=<proj>) runs it as a hard filter BEFORE the score". That rule
+    # was operator discipline wearing the costume of a gate.
+    #
+    # REPORT-ONLY, deliberately. `enforce_hard_filters=False` means a filter can be
+    # seen and cannot refuse. Widening what an instrument SEES and widening what it
+    # may REFUSE are separate decisions -- the same distinction this gate's own hook
+    # already applies to design systems under an unrecognised filename -- and only the
+    # first is earned on a path that, until today, ran none of this at all. A failed
+    # filter still withholds `is_done`, so the honesty is full strength even though
+    # the refusal is not.
+    #
+    # `observed_experience` is None because nothing here renders anything: this gate
+    # reads declarations. That yields `unassessed` rather than `conforming`, which is
+    # the honest state for behaviour nobody measured.
+    gate = review_gate(
+        verdicts,
+        target=os.path.dirname(os.path.abspath(design_md_path)) or ".",
+        declared_experience=parsed["experience"],
+        observed_experience=None,
+        enforce_hard_filters=False,
+    )
+    # Keep the FLAT ScoreResult shape. GateResult.to_json() nests the score under
+    # `score_result`, and the hook's deny path reads top-level `critical[]` with
+    # criterion/observed/recommendation -- returning the nested shape would silently
+    # empty the reason text on every BLOCK.
+    result = gate.score_result if gate.score_result is not None else score_review(verdicts)
     out = result.to_json()
+    out["verdict"] = gate.verdict
+    out["reason"] = gate.reason
+    out["is_done"] = gate.is_done          # any failed filter withholds this
+    out["hard_filters"] = gate.hard_filters
     out["design_md"] = design_md_path
     out["parsed"] = parsed
     out["experience_state"] = "unassessed" if parsed["experience"] is None else "declared"

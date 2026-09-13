@@ -949,13 +949,25 @@ def check_experience_contract(declared, observed, *,
 
 
 def review_gate(verdicts, *, target=None, declared_experience=None,
-                observed_experience=None) -> GateResult:
+                observed_experience=None, enforce_hard_filters=True) -> GateResult:
     """Hard filters first, score second.
 
     With no `target` and no experience arguments this is exactly `score_review` in
     a wrapper: same score, same verdict, same reason. That equality is the
     guarantee that adding these gates did not move the §5 threshold for any
     surface that has no third-party components and no declared contract.
+
+    `enforce_hard_filters=False` runs every filter and REPORTS it, but never lets one
+    decide the verdict. It exists because widening what an instrument can SEE and
+    widening what it may REFUSE are separate decisions, and only the first has been
+    earned on the automatic path: until this commit nothing automatic called this
+    function at all, so turning it on in enforcing mode would have introduced a brand
+    new way to deny a write in an arbitrary repository on its first day.
+
+    A filter failure still withholds `is_done` in both modes -- `GateResult.is_done`
+    reads `passed` directly. That is the point: report-only weakens the REFUSAL, never
+    the honesty. A surface with an unresolved dependency is reported, allowed, and not
+    done.
     """
     filters = []
     if target is not None:
@@ -965,7 +977,7 @@ def review_gate(verdicts, *, target=None, declared_experience=None,
                                                  observed_experience))
 
     blocking = [f for f in filters
-                if not f.passed and f.severity == "critical"]
+                if not f.passed and f.severity == "critical"] if enforce_hard_filters else []
     if blocking:
         return GateResult(
             verdict="BLOCK",
@@ -981,11 +993,21 @@ def review_gate(verdicts, *, target=None, declared_experience=None,
     # which is indistinguishable from a check that never ran. The reason is extended
     # ONLY when such a filter exists, so a call with no filters returns the
     # byte-identical reason score_review produced.
-    noted = [f for f in filters if not f.passed and f.severity != "critical"]
+    #
+    # Every failed filter is noted, including a critical one. Reaching this line with a
+    # critical failure means `enforce_hard_filters` is False -- the enforcing path
+    # returned above -- and that is exactly the case that must not go quiet: a
+    # report-only gate whose most severe finding is the one it omits from the reason
+    # would be worse than no gate, because the reason line is what a reader treats as
+    # the whole story.
+    noted = [f for f in filters if not f.passed]
     reason = sr.reason
     if noted:
         reason += "; " + "; ".join(
-            f"{f.criterion} NOT CONFORMING ({f.observed})" for f in noted) \
+            f"{f.criterion} NOT CONFORMING ({f.observed})"
+            + (" [CRITICAL, reported only -- this gate is not enforcing]"
+               if f.severity == "critical" else "")
+            for f in noted) \
             + " -- reported, not scored: contract compliance is a separate axis from " \
               "quality and never moves the number"
     return GateResult(verdict=sr.verdict, reason=reason,

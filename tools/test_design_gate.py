@@ -197,6 +197,67 @@ A real typeface with defaults behind it as fallbacks.
                   f"verdict={out['verdict']} is_done={out.get('is_done')} "
                   f"assessment={out.get('assessment')!r}")
 
+        # --- V-DESIGN-HARD-FILTERS-REACHED: the automatic path runs review_gate --
+        # Until 2026-09-13 `review_gate` had ZERO production callers: this entrypoint
+        # called `score_review` directly, so the CDICF dependency filter and the
+        # CDIO-07 conformance filter were reachable only by an agent choosing to run
+        # a command written in prose -- while DESIGN_GOVERNANCE.md sec.8.2 asserted as
+        # a normative rule that the dependency check runs "again at review time".
+        #
+        # The suite was 44/44 green throughout, because every test called review_gate
+        # DIRECTLY. Coverage sat beside the capability instead of downstream of
+        # production, so deleting the wiring could not turn anything red. This gate is
+        # the one that can.
+        proj = os.path.join(tmp, "proj")
+        os.makedirs(os.path.join(proj, ".cdicf"), exist_ok=True)
+        _write(proj, "package.json", '{"dependencies": {}}')
+        with open(os.path.join(proj, ".cdicf", "installed.json"), "w",
+                  encoding="utf-8") as fh:
+            fh.write('{"components": {"card": {"dependencies": '
+                     '{"npm": ["clsx"], "registry": []}}}}')
+        _write(proj, "DESIGN.md", SANCTIONED)
+        out = design_gate(os.path.join(proj, "DESIGN.md"))
+
+        dep = next((f for f in out.get("hard_filters", [])
+                    if f["criterion"] == "component-dependency-scope"), None)
+        exp = next((f for f in out.get("hard_filters", [])
+                    if f["criterion"] == "experience-contract"), None)
+        # Report-only: the filter is SEEN (unresolved, not passed) and withholds
+        # is_done, but must NOT decide the verdict -- widening what the gate sees and
+        # widening what it may refuse are separate decisions.
+        if (dep is not None and dep["state"] == "unresolved"
+                and dep["passed"] is False
+                and out["is_done"] is False
+                and out["verdict"] != "BLOCK"
+                and "clsx" in out["reason"]):
+            _ok("V-DESIGN-HARD-FILTERS-REACHED",
+                f"automatic path reached the dependency filter: state={dep['state']}, "
+                f"verdict stays {out['verdict']} (report-only), is_done withheld, "
+                f"experience={exp['state'] if exp else 'n/a'}")
+        else:
+            _fail("V-DESIGN-HARD-FILTERS-REACHED",
+                  f"review_gate not reached from the automatic path, or it refused "
+                  f"when it should only report: filters={out.get('hard_filters')} "
+                  f"verdict={out.get('verdict')} is_done={out.get('is_done')}")
+
+        # Control: the same project with the dependency declared must come back
+        # resolved and DONE. Without this, a filter that flagged everything would
+        # satisfy the assertion above and look like a working detector.
+        _write(proj, "package.json", '{"dependencies": {"clsx": "^2.0.0"}}')
+        out_ok = design_gate(os.path.join(proj, "DESIGN.md"))
+        dep_ok = next((f for f in out_ok.get("hard_filters", [])
+                       if f["criterion"] == "component-dependency-scope"), None)
+        if dep_ok is not None and dep_ok["passed"] is True \
+                and out_ok["is_done"] is True and out_ok["verdict"] == "APPROVE":
+            _ok("V-DESIGN-HARD-FILTERS-NEGATIVE-CONTROL",
+                f"declaring the dependency resolves the filter and restores done "
+                f"(verdict={out_ok['verdict']}, state={dep_ok['state']})")
+        else:
+            _fail("V-DESIGN-HARD-FILTERS-NEGATIVE-CONTROL",
+                  f"a resolved project must still reach APPROVE/done; got "
+                  f"verdict={out_ok.get('verdict')} is_done={out_ok.get('is_done')} "
+                  f"filter={dep_ok}")
+
     # --- V-DESIGN-TEMPLATE-CLEAN: the PP's own canonical template must PASS ----
     out = design_gate(REPO_TEMPLATE)
     if out["verdict"] == "APPROVE":
