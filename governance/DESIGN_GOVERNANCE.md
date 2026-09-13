@@ -168,6 +168,21 @@ artifact into the registry entry, never in a side document that drifts.
   reaches a number. The ≥80 threshold in Section 5 is unchanged by this and was measured
   so, because a criterion that silently re-scores existing surfaces is a regression, not a
   gate.
+- **Which path enforces, and which only reports.** Until 2026-09-13 the sentence above was
+  true of no running code: `review_gate` had **zero production callers**, and
+  `tools/design_gate.py` — the only thing the PreToolUse hook invokes — called
+  `score_review` directly. The rule was operator discipline wearing the costume of a gate,
+  and four suites were 44/44 green throughout because every one of them called
+  `review_gate` itself. State the caller or mark the rule agent-invoked; a normative
+  sentence naming a function nothing calls is indistinguishable from a fiction.
+  - **Automatic (the hook → `design_gate.py`): REPORT-ONLY.** The filters run, appear in
+    the verdict reason, and withhold `is_done`. They cannot BLOCK. Widening what an
+    instrument SEES and widening what it may REFUSE are separate decisions, and only the
+    first is earned on a path that ran none of this before.
+  - **Agent-invoked (`cdio-reviewer` calling `review_gate` directly): ENFORCING.** Default
+    `enforce_hard_filters=True`; an unresolved dependency BLOCKs before the score.
+  - Report-only weakens the refusal, never the honesty. A surface with an unresolved
+    dependency is reported, allowed, and **not done** on either path.
 
 ### 8.3 A tour is a last resort, never a patch over a broken interface
 An onboarding overlay laid over an unresolved usability problem conceals the problem and
