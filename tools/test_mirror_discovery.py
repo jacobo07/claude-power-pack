@@ -327,6 +327,161 @@ def gate_batch_blobs() -> None:
               f"fake={bool(fake)} reason_fake={reason_fake}")
 
 
+# ------------------------------------------------------- extra repo roots
+#
+# The live tree is flat: every agent sits in `~/.claude/agents/` whatever its
+# canonical repo home. A domain declared only as `(name, glob)` therefore
+# cannot see an agent whose repo home is `vault/agents/` or
+# `vendor/rtk/agents/`, and reports it as LIVE_ONLY -- which reads as "no repo
+# copy exists" and is the same class of blind denominator that
+# PR-COVERAGE-BY-CONSTRUCTION-001 removed one level down.
+
+
+@contextlib.contextmanager
+def _extra_roots(mapping: dict):
+    """Temporarily replace the declared extra-root map.
+
+    Used to drive the red branch in the same run as the green one: a pairing
+    that survives the declaration being removed was never caused by it.
+    """
+    prior = md.EXTRA_REPO_ROOTS
+    md.EXTRA_REPO_ROOTS = mapping
+    try:
+        yield
+    finally:
+        md.EXTRA_REPO_ROOTS = prior
+
+
+@contextlib.contextmanager
+def _agent_fixture(extra_repo_rel: str | None = None,
+                   duplicate: bool = False,
+                   orphan_live: bool = False):
+    """live/agents + repo agents/ (+ optionally one extra repo root).
+
+    extra_repo_rel   repo directory that also holds `specialist.md`
+    duplicate        additionally place `specialist.md` under agents/
+    orphan_live      add a live agent with no repo source anywhere
+    """
+    live = Path(tempfile.mkdtemp(prefix="xrlive-"))
+    repo = Path(tempfile.mkdtemp(prefix="xrrepo-"))
+    try:
+        (live / "agents").mkdir(parents=True)
+        (repo / "agents").mkdir(parents=True)
+        (live / "agents" / "specialist.md").write_text("x\n", encoding="utf-8")
+        if extra_repo_rel:
+            base = repo / extra_repo_rel
+            base.mkdir(parents=True)
+            (base / "specialist.md").write_text("x\n", encoding="utf-8")
+        if duplicate:
+            (repo / "agents" / "specialist.md").write_text(
+                "x\n", encoding="utf-8")
+        if orphan_live:
+            (live / "agents" / "orphan.md").write_text("x\n", encoding="utf-8")
+        yield live, repo
+    finally:
+        shutil.rmtree(live, ignore_errors=True)
+        shutil.rmtree(repo, ignore_errors=True)
+
+
+def gate_extra_root_pairs() -> None:
+    """Green and red in one run: the declaration is what does the pairing."""
+    with _agent_fixture(extra_repo_rel="vault/agents") as (live, repo):
+        with _extra_roots({"agents": ("vault/agents",)}):
+            got = md.discover(repo, live)
+        with _extra_roots({}):
+            without = md.discover(repo, live)
+
+    paired = [p.repo.as_posix().split("/")[-3:] for p in got.pairs]
+    declared_ok = (len(got.pairs) == 1
+                   and got.pairs[0].repo.parent.name == "agents"
+                   and got.pairs[0].repo.parent.parent.name == "vault")
+    removed_ok = (not without.pairs
+                  and [rel for _d, rel in without.live_only] == ["specialist.md"])
+
+    if declared_ok and removed_ok:
+        _ok("V-MIRROR-EXTRA-ROOTS",
+            "an agent whose repo home is vault/agents pairs while the root is "
+            "declared, and falls back to LIVE_ONLY the moment it is not -- so "
+            "the pair is attributable to the declaration, not to the scan")
+    else:
+        _fail("V-MIRROR-EXTRA-ROOTS",
+              f"declared_ok={declared_ok} (pairs={paired}) "
+              f"removed_ok={removed_ok} (pairs={len(without.pairs)}, "
+              f"live_only={[r for _d, r in without.live_only]})")
+
+
+def gate_extra_root_no_false_pair() -> None:
+    """Negative control: extra roots must not manufacture pairs."""
+    with _agent_fixture(extra_repo_rel="vault/agents",
+                        orphan_live=True) as (live, repo):
+        with _extra_roots({"agents": ("vault/agents",)}):
+            d = md.discover(repo, live)
+
+    lo = sorted(rel for _dom, rel in d.live_only)
+    if lo == ["orphan.md"] and len(d.pairs) == 1:
+        _ok("V-MIRROR-EXTRA-ROOTS-NO-FALSE-PAIR",
+            "a live agent with no repo source anywhere stays LIVE_ONLY; "
+            "widening the aperture did not turn absence into a pair")
+    else:
+        _fail("V-MIRROR-EXTRA-ROOTS-NO-FALSE-PAIR",
+              f"live_only={lo} pairs={len(d.pairs)}, want ['orphan.md'] and 1")
+
+
+def gate_duplicate_source() -> None:
+    """Two repo roots claiming one live file is reported, never absorbed."""
+    with _agent_fixture(extra_repo_rel="vault/agents",
+                        duplicate=True) as (live, repo):
+        with _extra_roots({"agents": ("vault/agents",)}):
+            d = md.discover(repo, live)
+
+    dupes = [(dom, rel) for dom, rel, _p in d.duplicate_repo]
+    one_pair = len(d.pairs) == 1
+    precedence = bool(d.pairs) and d.pairs[0].repo.parent.name == "agents" \
+        and d.pairs[0].repo.parent.parent.name != "vault"
+    sources = d.duplicate_repo[0][2] if d.duplicate_repo else []
+
+    if dupes == [("agents", "specialist.md")] and one_pair and precedence \
+            and len(sources) == 2:
+        _ok("V-MIRROR-DUPLICATE-SOURCE",
+            "one live file claimed by two repo roots is reported with both "
+            "paths, paired once against the precedence-first root; the second "
+            "copy is named rather than silently ignored")
+    else:
+        _fail("V-MIRROR-DUPLICATE-SOURCE",
+              f"dupes={dupes} one_pair={one_pair} precedence={precedence} "
+              f"sources={len(sources)}")
+
+
+def gate_real_extra_roots_reach() -> None:
+    """On the real repo, every declared extra root must actually contribute.
+
+    Anchored on the root paths rather than on a count, so a directory that is
+    renamed or emptied goes red instead of quietly finding nothing.
+    """
+    d = md.discover(PP_ROOT)
+    declared = md.EXTRA_REPO_ROOTS.get("agents", ())
+    if not declared:
+        _skip("V-MIRROR-EXTRA-ROOTS-REACH", "no extra agent roots declared")
+        return
+    contributed = {}
+    for p in d.pairs:
+        if p.domain != "agents":
+            continue
+        rel = p.repo.relative_to(PP_ROOT).as_posix()
+        for root in declared:
+            if rel.startswith(root + "/"):
+                contributed.setdefault(root, []).append(p.repo.name)
+    barren = [r for r in declared if r not in contributed]
+    if barren:
+        _fail("V-MIRROR-EXTRA-ROOTS-REACH",
+              f"declared root(s) contributed no pair: {barren}; a root that "
+              f"cannot contribute is indistinguishable from one not declared")
+        return
+    summary = ", ".join(f"{r}={len(v)}" for r, v in sorted(contributed.items()))
+    _ok("V-MIRROR-EXTRA-ROOTS-REACH",
+        f"every declared extra root contributes real pairs ({summary})")
+
+
 def main() -> int:
     print("Mirror Discovery Gates (Option B -- producer replaces literal list)")
     print("")
@@ -335,6 +490,10 @@ def main() -> int:
     gate_alias()
     gate_foreign_excluded()
     gate_synthetic_classification()
+    gate_extra_root_pairs()
+    gate_extra_root_no_false_pair()
+    gate_duplicate_source()
+    gate_real_extra_roots_reach()
     gate_e2e_drift()
     gate_e2e_clean_and_inventory()
     gate_e2e_strict()

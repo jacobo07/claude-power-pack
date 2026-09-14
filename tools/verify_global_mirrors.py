@@ -249,6 +249,15 @@ def check_pairs(repo: str, cli_ref: str | None, strict: bool = False,
         print(f"  - {dom}: paired={c['PAIRED']} live-only={c['LIVE_ONLY']} "
               f"repo-only={c['REPO_ONLY']}")
 
+    if d.duplicate_repo:
+        print(f"  {len(d.duplicate_repo)} file(s) claimed by more than one "
+              f"repo root:")
+        for domain, rel, paths in d.duplicate_repo:
+            print(f"  [DUPLICATE-SOURCE] {domain}/{rel}: "
+                  f"{' | '.join(paths)}")
+            print(f"      paired against the first; the others are invisible "
+                  f"to parity and can diverge unobserved")
+
     fails: list = []
     by_ref, untracked, rels = _plan(repo, cli_ref, d.pairs)
 
@@ -290,6 +299,8 @@ def check_pairs(repo: str, cli_ref: str | None, strict: bool = False,
     if strict:
         fails += [f"live-only:{domain}/{rel}" for domain, rel in d.live_only]
         fails += [f"repo-only:{domain}/{rel}" for domain, rel in d.repo_only]
+        fails += [f"duplicate-source:{domain}/{rel}"
+                  for domain, rel, _paths in d.duplicate_repo]
 
     if fails:
         print("VERIFY_GLOBAL_MIRRORS FAIL:", " | ".join(fails))
