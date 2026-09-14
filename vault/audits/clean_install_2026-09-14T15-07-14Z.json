@@ -1,0 +1,191 @@
+{
+  "iso": "2026-09-14T15-07-14Z",
+  "sandbox": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z",
+  "path_a": true,
+  "env_redirects": {
+    "HOME": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z",
+    "USERPROFILE": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z",
+    "APPDATA": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z",
+    "LOCALAPPDATA": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z",
+    "CLAUDE_CONFIG_DIR": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z"
+  },
+  "phases": {
+    "dry_run": {
+      "argv": [
+        "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\install_global_core.py",
+        "--settings",
+        "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\settings.json",
+        "--dry-run"
+      ],
+      "rc": 0,
+      "elapsed_s": 0.41,
+      "stdout_tail": [
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\session-file-guard.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\session-file-guard.js'",
+        "  # SessionStart â€” promotes hook-stub canonicals from .live siblings (BL-2026-05-21)",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\lazarus-stub-recover.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\lazarus-stub-recover.js'",
+        "  # Owner-on-demand â€” triple-gated archive of solitary empty shells (NOT auto-registered)",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\_oneshot_solitary_empty_shell_cleanup.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\_oneshot_solitary_empty_shell_cleanup.js'",
+        "",
+        "Then one consolidator call wires PreToolUse(Bash|PowerShell)->guard",
+        "and SessionStart->stub-recover (idempotent):",
+        "  python tools/settings_merger.py register-session-safety",
+        "",
+        "Layer 3 (daily snapshot) -- Scheduled Task (Windows):",
+        "  schtasks /create /TN 'ClaudePP-SessionSnapshot' /SC DAILY ^",
+        "     /ST 03:00 /TR 'python C:\\Users\\User\\.claude\\skills\\claude-power-pack/tools/session-snapshot.py' /F",
+        "",
+        "And add this 2-line pin to ~/.claude/CLAUDE.md (doctrine forbids",
+        "the installer from auto-writing CLAUDE.md; Owner pastes):",
+        "",
+        "  ## Session Safety (UNIVERSAL LAW)",
+        "  See ~/.claude/SESSION_SAFETY_CONTRACT.md (BL-SESSION-SAFETY-001).",
+        "  Durability (Sacred Invariant) + Discoverability (sister-promise).",
+        "",
+        "",
+        "Next step (Owner-gated):",
+        "  1. Paste the rules above into ~/.claude/settings.json",
+        "     permissions.allow (or skip if already present).",
+        "  2. cp + register hooks per the hooks checklist above.",
+        "  3. /restart   (BL-0067: hooks cold-load at session start).",
+        "  4. python tools/verify_full_install.py  # S++ self-test",
+        "",
+        "DRY-RUN â€” no files mutated. Re-run without --dry-run to apply."
+      ],
+      "stderr_tail": []
+    },
+    "dry_run_inventory": {
+      "agents": 0,
+      "commands": 0,
+      "hooks": 0
+    },
+    "dry_run_tree_added": [],
+    "apply": {
+      "argv": [
+        "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\install_global_core.py",
+        "--settings",
+        "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\settings.json"
+      ],
+      "rc": 0,
+      "elapsed_s": 1.25,
+      "stdout_tail": [
+        "  # PreToolUse(Bash|PowerShell) â€” blocks destructive ops on session .jsonl",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\session-file-guard.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\session-file-guard.js'",
+        "  # SessionStart â€” promotes hook-stub canonicals from .live siblings (BL-2026-05-21)",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\lazarus-stub-recover.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\lazarus-stub-recover.js'",
+        "  # Owner-on-demand â€” triple-gated archive of solitary empty shells (NOT auto-registered)",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\_oneshot_solitary_empty_shell_cleanup.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\_oneshot_solitary_empty_shell_cleanup.js'",
+        "",
+        "Then one consolidator call wires PreToolUse(Bash|PowerShell)->guard",
+        "and SessionStart->stub-recover (idempotent):",
+        "  python tools/settings_merger.py register-session-safety",
+        "",
+        "Layer 3 (daily snapshot) -- Scheduled Task (Windows):",
+        "  schtasks /create /TN 'ClaudePP-SessionSnapshot' /SC DAILY ^",
+        "     /ST 03:00 /TR 'python C:\\Users\\User\\.claude\\skills\\claude-power-pack/tools/session-snapshot.py' /F",
+        "",
+        "And add this 2-line pin to ~/.claude/CLAUDE.md (doctrine forbids",
+        "the installer from auto-writing CLAUDE.md; Owner pastes):",
+        "",
+        "  ## Session Safety (UNIVERSAL LAW)",
+        "  See ~/.claude/SESSION_SAFETY_CONTRACT.md (BL-SESSION-SAFETY-001).",
+        "  Durability (Sacred Invariant) + Discoverability (sister-promise).",
+        "",
+        "",
+        "Next step (Owner-gated):",
+        "  1. Paste the rules above into ~/.claude/settings.json",
+        "     permissions.allow (or skip if already present).",
+        "  2. cp + register hooks per the hooks checklist above.",
+        "  3. /restart   (BL-0067: hooks cold-load at session start).",
+        "  4. python tools/verify_full_install.py  # S++ self-test",
+        ""
+      ],
+      "stderr_tail": []
+    },
+    "apply_inventory": {
+      "agents": 0,
+      "commands": 0,
+      "hooks": 0
+    },
+    "apply_tree": [
+      ".pp-install-report.2026-09-14T15-07-15Z.json",
+      "SESSION_SAFETY_CONTRACT.md",
+      "settings.json"
+    ],
+    "apply_counters": {
+      "installed": 1,
+      "updated": 0,
+      "unchanged": 0,
+      "missing-source": 0,
+      "error": 0,
+      "skipped-not-pp": 0,
+      "shippable-considered": 0,
+      "inventory-rows-seen": 0
+    },
+    "reapply": {
+      "argv": [
+        "C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+        "C:\\Users\\User\\.claude\\skills\\claude-power-pack\\tools\\install_global_core.py",
+        "--settings",
+        "C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\settings.json"
+      ],
+      "rc": 0,
+      "elapsed_s": 0.95,
+      "stdout_tail": [
+        "  # PreToolUse(Bash|PowerShell) â€” blocks destructive ops on session .jsonl",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\session-file-guard.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\session-file-guard.js'",
+        "  # SessionStart â€” promotes hook-stub canonicals from .live siblings (BL-2026-05-21)",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\lazarus-stub-recover.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\lazarus-stub-recover.js'",
+        "  # Owner-on-demand â€” triple-gated archive of solitary empty shells (NOT auto-registered)",
+        "  cp 'C:\\Users\\User\\.claude\\skills\\claude-power-pack\\hooks\\_oneshot_solitary_empty_shell_cleanup.js' 'C:\\Users\\User\\AppData\\Local\\Temp\\pp-e2e-sandboxes\\home-2026-09-14T15-07-14Z\\.claude\\hooks\\_oneshot_solitary_empty_shell_cleanup.js'",
+        "",
+        "Then one consolidator call wires PreToolUse(Bash|PowerShell)->guard",
+        "and SessionStart->stub-recover (idempotent):",
+        "  python tools/settings_merger.py register-session-safety",
+        "",
+        "Layer 3 (daily snapshot) -- Scheduled Task (Windows):",
+        "  schtasks /create /TN 'ClaudePP-SessionSnapshot' /SC DAILY ^",
+        "     /ST 03:00 /TR 'python C:\\Users\\User\\.claude\\skills\\claude-power-pack/tools/session-snapshot.py' /F",
+        "",
+        "And add this 2-line pin to ~/.claude/CLAUDE.md (doctrine forbids",
+        "the installer from auto-writing CLAUDE.md; Owner pastes):",
+        "",
+        "  ## Session Safety (UNIVERSAL LAW)",
+        "  See ~/.claude/SESSION_SAFETY_CONTRACT.md (BL-SESSION-SAFETY-001).",
+        "  Durability (Sacred Invariant) + Discoverability (sister-promise).",
+        "",
+        "",
+        "Next step (Owner-gated):",
+        "  1. Paste the rules above into ~/.claude/settings.json",
+        "     permissions.allow (or skip if already present).",
+        "  2. cp + register hooks per the hooks checklist above.",
+        "  3. /restart   (BL-0067: hooks cold-load at session start).",
+        "  4. python tools/verify_full_install.py  # S++ self-test",
+        ""
+      ],
+      "stderr_tail": []
+    },
+    "reapply_inventory": {
+      "agents": 0,
+      "commands": 0,
+      "hooks": 0
+    },
+    "reapply_breakdown": {
+      "unchanged": 1,
+      "updated": 0,
+      "installed": 0,
+      "errors": 0,
+      "missing-source": 0
+    }
+  },
+  "verdicts": {
+    "dry_run_non_destructive": true,
+    "apply_populates_tree": false,
+    "path_a_viable": true,
+    "redirect_honored": true,
+    "installer_enumerated": false,
+    "reapply_all_unchanged": true,
+    "overall": false
+  }
+}

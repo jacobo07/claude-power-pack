@@ -121,6 +121,51 @@ def _inventory(sandbox: Path) -> dict[str, int]:
     return out
 
 
+def _tree(sandbox: Path) -> set[str]:
+    """Every file under the sandbox's .claude, relative and sorted-comparable.
+
+    This is the discriminant the agent/command counts cannot supply. An
+    installer that shipped nothing and a HOME redirect the interpreter
+    ignored BOTH leave ``agents == 0``; only one of them also leaves the
+    tree empty of everything else the install writes (settings.json, the
+    session-safety contract, its own sidecar report).
+    """
+    cl = sandbox / ".claude"
+    if not cl.exists():
+        return set()
+    return {p.relative_to(cl).as_posix() for p in cl.rglob("*") if p.is_file()}
+
+
+def _sidecar_counters(sandbox: Path) -> dict:
+    """The counters the install wrote for its own run, newest sidecar."""
+    sidecars = sorted((sandbox / ".claude").glob(".pp-install-report.*.json"))
+    if not sidecars:
+        return {}
+    try:
+        last = json.loads(sidecars[-1].read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return last.get("counters", {}) or {}
+
+
+def _enumerated(counters: dict) -> int:
+    """How many rows the SHIPPING LOOP considered, per the installer itself.
+
+    Not derived from installed/updated/unchanged: those are also
+    incremented by the session-safety deploy that runs in the same pass,
+    so summing them measures "the install did some file work" and reads
+    above zero even when no agent was ever enumerated. Measured 2026-09-14:
+    that sum returned 1 against a shipping loop that ran zero times.
+
+    ``shippable-considered`` is written by the shipping loop and by
+    nothing else. An installer too old to report it returns -1, which is
+    "could not tell" and must not be read as either answer.
+    """
+    if "shippable-considered" not in counters:
+        return -1
+    return int(counters.get("shippable-considered", 0))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n", 1)[0])
     ap.add_argument("--keep-sandbox", action="store_true",
@@ -151,40 +196,94 @@ def main() -> int:
     }
 
     try:
-        # PHASE 1: dry-run. Sandbox should still be empty (no PP files).
+        # PHASE 1: dry-run changes nothing. Measured as a set difference
+        # over the whole tree, not as ``agents == 0``: a dry run that
+        # wrote nothing and an installer that ships nothing produce the
+        # same zero, so the old form was satisfied by the defect it was
+        # meant to exclude.
         print("\n  [phase 1] dry-run ...", flush=True)
+        tree0 = _tree(sandbox)
         ph1 = _run_install(env, sandbox, ["--dry-run"])
         inv1 = _inventory(sandbox)
+        tree1 = _tree(sandbox)
+        # Two artifacts are this HARNESS's, not the install's effect, and
+        # both appear on a first dry run: the sidecar is the report OF the
+        # run, and settings.json is seeded by _run_install above (lines
+        # 96-99) as a precondition before the install is even spawned.
+        # Excluding them by name keeps the check a real set difference
+        # rather than widening it back to "nothing landed".
+        _HARNESS_ARTIFACTS = ("settings.json",)
+        added = {p for p in tree1 - tree0
+                 if not p.startswith(".pp-install-report.")
+                 and p not in _HARNESS_ARTIFACTS}
         report["phases"]["dry_run"] = ph1
         report["phases"]["dry_run_inventory"] = inv1
-        v1 = (ph1["rc"] == 0
-              and inv1["agents"] == 0 and inv1["commands"] == 0)
+        report["phases"]["dry_run_tree_added"] = sorted(added)
+        v1 = (ph1["rc"] == 0 and not added)
         report["verdicts"]["dry_run_non_destructive"] = v1
-        print(f"    rc={ph1['rc']} inv={inv1} -> "
+        print(f"    rc={ph1['rc']} inv={inv1} added={sorted(added)} -> "
               f"{'OK' if v1 else 'FAIL'}")
 
-        # PHASE 2: real apply. Sandbox should now have agents+commands.
-        # The install reports rc=1 whenever any pp-original entry has
-        # ``missing-source`` (stale ``pp_match.pp_path`` from the
-        # Owner-pane schema regen, 2026-05-19). That is EXPECTED and
-        # not an installer bug — Path-A viability is decided by
-        # whether files actually landed in the sandbox, not by the
-        # installer's strict rc.
+        # PHASE 2: real apply. Three INDEPENDENT questions, because the
+        # single ``agents >= 1`` check could not tell them apart and
+        # answered all three with one hardcoded accusation against the
+        # host:
+        #   redirect_honored  -- did Path.home() follow USERPROFILE?
+        #   installer_enumerated -- did the shipping loop run at all?
+        #   apply_populates_tree -- did agents + commands actually land?
+        # Measured 2026-09-14: redirect honored, tree populated with
+        # settings.json + the session-safety contract, and every shipping
+        # counter at zero. The gate had reported that as "Path.home()
+        # ignored USERPROFILE redirect ... sandbox stayed empty", which
+        # was false in both clauses and sent the reader to a Path-B
+        # fallback instead of to the installer.
         print("\n  [phase 2] apply (real) ...", flush=True)
         ph2 = _run_install(env, sandbox, [])
         inv2 = _inventory(sandbox)
+        tree2 = _tree(sandbox)
+        counters2 = _sidecar_counters(sandbox)
+        enumerated2 = _enumerated(counters2)
+        redirect_honored = bool(tree2)
+        # Tri-state, never collapsed to a boolean: -1 is "the installer is
+        # too old to report its own aperture", which is different evidence
+        # from "it enumerated nothing" and must not be reported as either.
+        installer_enumerated = (None if enumerated2 < 0
+                                else enumerated2 > 0)
+        path_a_viable = redirect_honored
+        v2 = (inv2["agents"] >= 1 and inv2["commands"] >= 1)
         report["phases"]["apply"] = ph2
         report["phases"]["apply_inventory"] = inv2
-        path_a_viable = (inv2["agents"] >= 1 and inv2["commands"] >= 1)
-        v2 = path_a_viable
+        report["phases"]["apply_tree"] = sorted(tree2)
+        report["phases"]["apply_counters"] = counters2
         report["verdicts"]["apply_populates_tree"] = v2
         report["verdicts"]["path_a_viable"] = path_a_viable
-        if not path_a_viable:
-            print("    Path.home() ignored USERPROFILE redirect on this "
-                  "host. Sandbox stayed empty after apply.")
-        print(f"    rc={ph2['rc']} inv={inv2} -> "
-              f"{'OK' if v2 else 'FAIL'} "
-              f"(install rc=1 from missing-source is expected)")
+        report["verdicts"]["redirect_honored"] = redirect_honored
+        report["verdicts"]["installer_enumerated"] = installer_enumerated
+        if not redirect_honored:
+            print("    Path.home() ignored the USERPROFILE redirect on "
+                  "this host: NOTHING landed in the sandbox, not even "
+                  "settings.json. Path A is not viable here.")
+        elif installer_enumerated is None:
+            print("    Redirect honored, but this install does not report "
+                  "'shippable-considered'. Cannot tell 'shipped nothing' "
+                  "from 'shipped elsewhere' — INCONCLUSIVE, not a verdict "
+                  "about the installer.")
+        elif installer_enumerated is False:
+            rows = int(counters2.get("inventory-rows-seen", 0))
+            print(f"    Redirect HONORED — {len(tree2)} file(s) landed in "
+                  f"the sandbox. The install then shipped nothing: the "
+                  f"shipping loop considered 0 rows out of "
+                  f"{rows} it could read from the inventory, so the loop "
+                  f"body never executed. This is the installer, not the "
+                  f"host — its reader and tools/_inventory/*.json do not "
+                  f"agree on schema.")
+        elif not v2:
+            print(f"    Redirect honored and the shipping loop ran "
+                  f"({enumerated2} row(s) considered), but agents and/or "
+                  f"commands did not land: {inv2}. Look at per-row "
+                  f"verdicts in {EVIDENCE.name}.")
+        print(f"    rc={ph2['rc']} inv={inv2} enumerated={enumerated2} -> "
+              f"{'OK' if v2 else 'FAIL'}")
 
         # PHASE 3: idempotent re-apply. The sidecar JSON exposes
         # ``counters`` directly (install_global_core.py:407-410); on a
@@ -241,11 +340,31 @@ def main() -> int:
             print("  E1 verdict: PASS (Path A - HOME redirect viable, "
                   "dry-run safe, apply populates, idempotent)")
             return 0
-        if not report["verdicts"].get("path_a_viable", True):
+        # Attribution order matters. The host is blamed ONLY when the
+        # sandbox is genuinely empty; an empty agent count on a populated
+        # sandbox is the installer's, and saying otherwise sends the
+        # reader to change the wrong thing.
+        if report["verdicts"].get("redirect_honored") is False:
             print("  E1 verdict: PATH-A NOT VIABLE on this host "
-                  "(Path.home() bypassed env). Plan permits Path B "
-                  "fallback - see vault/plans/power-pack-globalization-"
-                  "2026-05-19.md Phase E1.")
+                  "(Path.home() bypassed env; sandbox empty). Plan "
+                  "permits Path B fallback - see vault/plans/power-pack-"
+                  "globalization-2026-05-19.md Phase E1.")
+            return 1
+        # ``is False`` and not ``not ...``: the verdict is tri-state, and
+        # None means the installer could not be asked. An unanswerable
+        # question must not be reported as an accusation.
+        if report["verdicts"].get("installer_enumerated") is False:
+            print("  E1 verdict: INSTALLER SHIPS NOTHING. The HOME "
+                  "redirect worked; install_global_core.py's shipping "
+                  "loop considered zero rows. Its reader and "
+                  "tools/_inventory/*.json disagree on schema. This is "
+                  "NOT a host limitation and NOT a Path-B case.")
+            return 1
+        if report["verdicts"].get("installer_enumerated") is None:
+            print("  E1 verdict: INCONCLUSIVE. The redirect worked, but "
+                  "this install does not report 'shippable-considered', "
+                  "so the gate cannot attribute the empty tree. Not a "
+                  "pass and not a finding about the installer.")
             return 1
         print("  E1 verdict: FAIL (one or more gates red - see "
               f"{EVIDENCE})")

@@ -493,6 +493,14 @@ def main() -> int:
                 shippable_items.append((kind, entry))
             else:
                 counters["skipped-not-pp"] += 1
+    # The shipping loop's OWN aperture, reported by the producer rather
+    # than inferred by a consumer. The other counters are shared with the
+    # session-safety deploy below, so a verifier reading them cannot tell
+    # "shipped nothing" from "shipped something else"; this one is written
+    # here and nowhere else. Zero means the loop body never executed.
+    counters["shippable-considered"] = len(shippable_items)
+    counters["inventory-rows-seen"] = sum(
+        len(inv.get(k, {}).get("items", [])) for k in SHIPPABLE_KINDS)
 
     for kind, entry in shippable_items:
         name = entry["name"]
