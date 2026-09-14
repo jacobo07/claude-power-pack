@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * closer-guard.js â€” Stop hook. Kills the "dead screen" turn-ending classes.
+ * closer-guard.js — Stop hook. Kills the "dead screen" turn-ending classes.
  *
  * ORIGIN (2026-08-27, TUA-X): a turn ended with the text
  *   "Recording the session objective honestly."
@@ -11,7 +11,7 @@
  * recurred anyway.
  *
  * NOTE (R265, 2026-09-05): CLAUDE.md rule (H) has since been RETIRED, precisely
- * because this hook enforces it â€” its clauses (2) "never close on a passive
+ * because this hook enforces it — its clauses (2) "never close on a passive
  * wait" and (3) "a turn must end with assistant text" are PASSIVE_WAIT and
  * EMPTY below. Its one non-enforceable clause (on a <task-notification>, Read
  * the output-file that same turn) was folded into CLAUDE.md rule (F). Rule (G)
@@ -26,35 +26,35 @@
  *
  * FIVE BANNED CLOSER CLASSES (all produce the same Owner-visible symptom).
  * The list GREW TWICE on 2026-09-02, both times from a real dead screen that
- * walked past every class then defined â€” which is this file's standing lesson:
+ * walked past every class then defined — which is this file's standing lesson:
  * A GUARD ENUMERATES SHAPES, AND AN UNENUMERATED SHAPE PASSES EVEN THOUGH THE
  * DAMAGE IS IDENTICAL. Expect a sixth; look at the borders, not the centre.
- *   4. RHETORICAL_QUESTION â€” a closing question of FACT, not of decision. The
+ *   4. RHETORICAL_QUESTION — a closing question of FACT, not of decision. The
  *                     Owner has nothing to answer, because a tool call would.
  *                     Added after the blanket "ends in ?" exemption was
  *                     measured producing the exact dead screen it exempted.
- *   5. NULL_ACK     â€” the whole turn dismisses a system event as needing no
+ *   5. NULL_ACK     — the whole turn dismisses a system event as needing no
  *                     reply ("No response requested."). A task-notification is
  *                     a WORK TRIGGER, not a message with a politeness slot.
- * Self-test: hooks/tests/test-closer-guard-nullack.js â€” two-way, 17/17. Half of
+ * Self-test: hooks/tests/test-closer-guard-nullack.js — two-way, 17/17. Half of
  * its cases MUST NOT fire, and that half is the half that matters: a gate
  * exercised only where it should trip would pass with every clause deleted.
- *   1. EMPTY        â€” turn ends with no assistant text at all.
- *   2. PASSIVE_WAIT â€” "awaiting", "standing by", "I'll wait", "in progress".
+ *   1. EMPTY        — turn ends with no assistant text at all.
+ *   2. PASSIVE_WAIT — "awaiting", "standing by", "I'll wait", "in progress".
  *                     Implies the Owner must wait; usually the work is done
  *                     or the next step is the agent's.
- *   3. INTENT_NARRATION â€” a short trailing sentence announcing the next
+ *   3. INTENT_NARRATION — a short trailing sentence announcing the next
  *                     action ("Recording X.", "Let me check Y.", "Now I'll
  *                     update Z.") with no tool call after it. The agent
  *                     described the move instead of making it.
  *
  * DESIGN CONSTRAINTS (deliberate, and each one is load-bearing):
  *   - Fail-open ABSOLUTE. Any parse error, missing transcript, unreadable
- *     line â†’ {continue:true}. A guard that breaks the session is worse than
+ *     line → {continue:true}. A guard that breaks the session is worse than
  *     the bug it guards.
  *   - Never block twice in a row for the same session. If the model re-emits
  *     a bad closer after being told once, we let it through. An infinite
- *     block loop is itself a dead screen â€” the exact thing being prevented.
+ *     block loop is itself a dead screen — the exact thing being prevented.
  *   - A closer ending in a QUESTION to the Owner is always allowed. That is
  *     a legitimate active handoff, not a passive wait.
  *   - Only the trailing ~2 sentences are inspected. Mid-message narration
@@ -107,7 +107,7 @@ const PASSIVE_WAIT = [
   /\ben\s+(?:curso|progreso|marcha)\.?\s*$/i,
   /\bte\s+(?:aviso|digo|cuento)\s+cuando\b/i,
   /\bcuando\s+(?:termine|acabe|complete|aterrice)\s+te\s+\w+/i,
-  /\bavisar[Ã©e]\s+cuando\b/i,
+  /\bavisar[ée]\s+cuando\b/i,
 
   // --- SURVEILLANCE + CONDITIONAL TRIGGER (added 2026-09-11, KobiiSports) ---
   // MEASURED. A turn ended with a tool call and this text:
@@ -115,7 +115,7 @@ const PASSIVE_WAIT = [
   //    aparezca, lanzo el formateo solo."
   // Dead screen. The Owner had to interrupt. classify() returned null in BOTH
   // tool-turn and text-only mode, while four positive controls in the same probe
-  // fired correctly â€” so the miss was aperture, not wiring.
+  // fired correctly — so the miss was aperture, not wiring.
   //
   // THE CLASS THAT WAS MISSING IS NOT A LANGUAGE, IT IS A SYNONYM FAMILY.
   // Every pattern above encodes ESPERAR / WAIT. A passive wait does not have to
@@ -124,17 +124,17 @@ const PASSIVE_WAIT = [
   // out") or as a CONDITIONAL TRIGGER ("en cuanto aparezca, lanzo", "as soon as
   // it lands, I'll run it"). Both hand the next move to an event outside the
   // agent's control, which is the exact damage. The probe measured 10 such
-  // shapes passing clean, SIX OF THEM IN ENGLISH â€” so this was never the
+  // shapes passing clean, SIX OF THEM IN ENGLISH — so this was never the
   // Spanish-coverage gap it first looked like, and patching only the Spanish
   // side would have been this file's standing lesson unapplied a seventh time.
   //
   // The conditional-trigger pattern must NOT eat Spanish "en cuanto A" (= "as
   // regards"), which opens ordinary REPORTS: "En cuanto a los ficheros, 6 de 6
   // pasan." Hence the negative lookahead plus the requirement of a comma-clause
-  // carrying a first-person present verb â€” an announcement defers an action,
+  // carrying a first-person present verb — an announcement defers an action,
   // a report states one.
   /\b(?:me\s+)?(?:quedo|quedamos)\s+(?:vigilando|mirando|observando|atent[oa]s?|pendientes?|al\s+tanto|a\s+la\s+escucha)\b/i,
-  /\b(?:estar[Ã©e]|estar[Ã©e]mos|estoy|estamos|sigo|seguimos|seguir[Ã©e])\s+(?:atent[oa]s?|pendientes?|vigilando|monitorizando|al\s+tanto)\b/i,
+  /\b(?:estar[ée]|estar[ée]mos|estoy|estamos|sigo|seguimos|seguir[ée])\s+(?:atent[oa]s?|pendientes?|vigilando|monitorizando|al\s+tanto)\b/i,
   /\bme\s+mantengo\s+(?:al\s+tanto|atent[oa]|pendiente)\b/i,
   /\ben\s+cuanto\s+(?!a\s)[^.!?,]{1,60},\s*[^.!?]{0,40}\b(?:te\s+\w+|\w+o)\b/i,
   /\bwatching\s+(?:for|to\s+see)\b/i,
@@ -165,17 +165,17 @@ const INTENT_NARRATION = [
   // time a Spanish dead screen was measured. Patching only the class where
   // the damage was seen is this file's own lesson unapplied a third time.
   //
-  // TIER A â€” unambiguous future-intent markers. Spanish announces the next
+  // TIER A — unambiguous future-intent markers. Spanish announces the next
   // move with a periphrasis ("voy a", "paso a", "dejame") that no report ever
   // uses, so these fire regardless of what else the sentence carries.
-  /(?:^|[.!?]\s+)(?:ahora\s+|luego\s+|despu[Ã©e]s\s+)?(?:voy|vamos)\s+a\s+\w[^.!?]{0,120}[.!?]?\s*$/i,
+  /(?:^|[.!?]\s+)(?:ahora\s+|luego\s+|despu[ée]s\s+)?(?:voy|vamos)\s+a\s+\w[^.!?]{0,120}[.!?]?\s*$/i,
   /(?:^|[.!?]\s+)(?:paso|pasamos|procedo|procedemos)\s+a\s+\w[^.!?]{0,120}[.!?]?\s*$/i,
-  /(?:^|[.!?]\s+)d[Ã©e]jame\s+\w[^.!?]{0,120}[.!?]?\s*$/i,
-  /(?:^|[.!?]\s+)(?:contin[Ãºu]o|contin[Ãºu]amos|sigo|seguimos)\s+con\s+[^.!?]{0,120}[.!?]?\s*$/i,
+  /(?:^|[.!?]\s+)d[ée]jame\s+\w[^.!?]{0,120}[.!?]?\s*$/i,
+  /(?:^|[.!?]\s+)(?:contin[úu]o|contin[úu]amos|sigo|seguimos)\s+con\s+[^.!?]{0,120}[.!?]?\s*$/i,
   /(?:^|[.!?]\s+)(?:lo\s+siguiente|el\s+siguiente\s+paso)\s+es\s+[^.!?]{0,120}[.!?]?\s*$/i,
   /(?:^|[.!?]\s+)ahora\s+\w+o\b[^.!?]{0,120}[.!?]?\s*$/i,
   //
-  // TIER B â€” a bare first-person-present action verb OPENING the final
+  // TIER B — a bare first-person-present action verb OPENING the final
   // sentence. This is the shape that actually bit ("Corrijo la consulta"),
   // and it is the dangerous one to encode: Spanish drops the subject pronoun,
   // so an honest REPORT opens identically ("Confirmo que las dos raices
@@ -208,13 +208,13 @@ const INTENT_NARRATION = [
   // defects and both read, from outside, as a clean pass. When you add a class
   // for a new language, the grammar of that language is part of the pattern --
   // porting a verb list is not porting a rule.
-  /(?:^|[.!?]\s+)(?:(?:me|te|se|lo|la|le|los|las|les|nos|os)\s+){0,2}(?:corrijo|arreglo|reescribo|reviso|compruebo|verifico|actualizo|a[nÃ±]ado|genero|escribo|borro|quito|muevo|copio|despliego|ejecuto|lanzo|instalo|sello|anoto|preparo|cableo|empaqueto|miro|leo|busco|mido|cuento|aplico|pruebo|reintento|ajusto|edito|subo|guardo|limpio|repito|extraigo|pongo)\b[^.!?\d`]{0,110}[.!?]?\s*$/i,
+  /(?:^|[.!?]\s+)(?:(?:me|te|se|lo|la|le|los|las|les|nos|os)\s+){0,2}(?:corrijo|arreglo|reescribo|reviso|compruebo|verifico|actualizo|a[nñ]ado|genero|escribo|borro|quito|muevo|copio|despliego|ejecuto|lanzo|instalo|sello|anoto|preparo|cableo|empaqueto|miro|leo|busco|mido|cuento|aplico|pruebo|reintento|ajusto|edito|subo|guardo|limpio|repito|extraigo|pongo)\b[^.!?\d`]{0,110}[.!?]?\s*$/i,
 ];
 
 // Null acknowledgement: the WHOLE turn is a dismissal of a system event as if it were a
 // social remark needing no reply. This is not EMPTY (there IS text), not PASSIVE_WAIT
 // (nothing is being waited for), not INTENT_NARRATION (no action is announced) and not a
-// question â€” so it walked past all four classes and produced a dead screen anyway.
+// question — so it walked past all four classes and produced a dead screen anyway.
 //
 // MEASURED 2026-09-02 (KobiiCraft Core Files). A background `<task-notification>` arrived
 // with status=completed; the entire assistant turn was:
@@ -225,7 +225,7 @@ const INTENT_NARRATION = [
 // Deliberately NARROW: only self-directed dismissals of a notification, never the ordinary
 // human acknowledgements ("understood", "got it", "sounds good"), which are legitimate
 // replies to a PERSON and whose blocking would be noise. The distinguishing mark is that
-// nobody asked for a response in the first place â€” which is exactly why the phrase is
+// nobody asked for a response in the first place — which is exactly why the phrase is
 // wrong: a completed task is a WORK TRIGGER, not a message with a politeness slot.
 const NULL_ACK = [
   /^no\s+(?:response|reply|action|further\s+action)\s+(?:is\s+)?(?:requested|required|needed|necessary)\.?$/i,
@@ -238,34 +238,34 @@ const NULL_ACK = [
 //
 // A turn ended with:
 //   "All three commits landed; tree clean apart from disposable `build/`.
-//    Now the boot brief. Â§34 wants it minimal and self-contained â€” you should
+//    Now the boot brief. §34 wants it minimal and self-contained — you should
 //    not need any archaeology to run it."
 // Zero tool calls. Dead screen. classify() returned null. Isolating one
 // variable at a time turned up THREE independent defects, and that closer
 // needed two of them at once to escape:
 //
 //   D1 APOSTROPHE. "I'll wait for the notification." fires PASSIVE_WAIT.
-//      "Iâ€™ll wait for the notification." returns null. One codepoint apart:
+//      "I’ll wait for the notification." returns null. One codepoint apart:
 //      U+0027 vs U+2019. Every pattern here spells it ASCII; the model emits
 //      the typographic form by default. So the two classes that hinge on a
-//      contraction were blind to the form actually written â€” including the
+//      contraction were blind to the form actually written — including the
 //      single most canonical dead-screen closer in the whole doctrine.
 //   D2 ANCHOR. Every INTENT_NARRATION pattern ends `$`, so only the FINAL
-//      sentence was ever inspected â€” while the header two hundred lines above
+//      sentence was ever inspected — while the header two hundred lines above
 //      says "only the trailing ~2 sentences are inspected". Documented
-//      aperture â‰  implemented aperture. Append ANY rationale sentence after an
+//      aperture ≠ implemented aperture. Append ANY rationale sentence after an
 //      announcement and it vanishes: "Let me check the ledger." fires,
 //      "Let me check the ledger. It should be quick." does not.
 //   D3 VERBLESS. Every pattern has a verb slot. Spanish and English both
-//      announce with a bare noun phrase â€” "Now the boot brief.", "Next, the
-//      ledger update.", "Ahora el brief de arranque." â€” and a sentence with no
+//      announce with a bare noun phrase — "Now the boot brief.", "Next, the
+//      ledger update.", "Ahora el brief de arranque." — and a sentence with no
 //      verb cannot match a pattern built around one.
 //
 // This is this file's own standing lesson in its fifth and sixth instances,
 // and the pair is the useful part. The first four were EXEMPTIONS (a case
 // waved through) and one ANCHOR (a case never reached). D1 is neither: it is
 // an ALPHABET the detector could not read. All three read identically from
-// outside â€” a clean pass â€” which is why "no dead screens logged" was never
+// outside — a clean pass — which is why "no dead screens logged" was never
 // evidence that there were none.
 //
 // D1 is fixed at the INPUT BOUNDARY, not in the patterns. Patching each regex
@@ -273,7 +273,7 @@ const NULL_ACK = [
 
 function normalize(s) {
   return String(s || '')
-    .replace(/[\u2018\u2019\u201B\u02BC\uFF07]/g, "'")  // â€™ â€˜ â€› Ê¼ ï¼‡ â†’ '
+    .replace(/[\u2018\u2019\u201B\u02BC\uFF07]/g, "'")  // ’ ‘ ‛ ʼ ＇ → '
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/\u00A0/g, ' ');
 }
@@ -289,36 +289,36 @@ function lastSentences(text, n) {
 }
 
 // A noun-phrase announcement with the verb elided. Deliberately narrow: it must
-// OPEN on a sequencing adverb, be short, and carry no finite verb â€” otherwise
+// OPEN on a sequencing adverb, be short, and carry no finite verb — otherwise
 // "Now the boot brief is on the card at D:\..." (an honest report opening the
 // same way) would trip it. That exclusion is the whole reason this class is
 // safe to add, and test-closer-guard-aperture.js drives both sides of it.
 const VERBLESS_INTENT =
-  /^(?:now|next|then|first|finally|ahora|luego|despu[Ã©e]s|entonces|primero)[,:]?\s+(?:the|a|an|el|la|los|las|un|una)\s+[^.!?]{1,60}[.!?]$/i;
+  /^(?:now|next|then|first|finally|ahora|luego|despu[ée]s|entonces|primero)[,:]?\s+(?:the|a|an|el|la|los|las|un|una)\s+[^.!?]{1,60}[.!?]$/i;
 
 const HAS_FINITE_VERB =
-  /\b(?:is|are|was|were|has|have|had|holds?|shows?|reads?|matches|sits|lands|exists?|says|means|carries|proves|remains|stands|looks|comes|goes|does|did|will|can|must|should|lives?|ships?|passes|fails)\b|\b(?:es|son|est[Ã¡a]|est[Ã¡a]n|queda|quedan|tiene|tienen|hay|muestra|confirma|existe|vale|sale|va|van|falta)\b/i;
+  /\b(?:is|are|was|were|has|have|had|holds?|shows?|reads?|matches|sits|lands|exists?|says|means|carries|proves|remains|stands|looks|comes|goes|does|did|will|can|must|should|lives?|ships?|passes|fails)\b|\b(?:es|son|est[áa]|est[áa]n|queda|quedan|tiene|tienen|hay|muestra|confirma|existe|vale|sale|va|van|falta)\b/i;
 
 // Same discipline the Spanish TIER B already uses: an announcement has no
 // result in it, a report does.
 //
 // But a NUMBER IS NOT AUTOMATICALLY A RESULT, and getting that wrong is what
 // the sealed ES-OK-09 case caught the moment the D2 window opened. Two closers
-// with identical shape â€” announcement, then another sentence â€” must be judged
+// with identical shape — announcement, then another sentence — must be judged
 // in OPPOSITE directions:
 //
-//   fires:  "Now the boot brief. Â§34 wants it minimal and self-contained."
+//   fires:  "Now the boot brief. §34 wants it minimal and self-contained."
 //           The second sentence CITES a spec. Nothing was produced. Dead screen.
 //   passes: "Ahora reviso el gate. El resultado: 19 de 19 en verde."
 //           The second sentence REPORTS the outcome of the announced action.
 //
 // The distinction is the one instrument-before-claim keeps arriving at from the
-// other side: a number that POINTS (Â§34, HR-12, U-022, v3) versus a number that
+// other side: a number that POINTS (§34, HR-12, U-022, v3) versus a number that
 // MEASURES (19 of 19, 1622673 B). Citation-shaped tokens are stripped before
 // asking whether anything remains.
 function hasResult(sentence) {
   const stripped = String(sentence)
-    .replace(/[Â§#]\s*\d+[\w.-]*/g, '')      // Â§34, #12
+    .replace(/[§#]\s*\d+[\w.-]*/g, '')      // §34, #12
     .replace(/\b[A-Z]{1,5}-\d+\b/g, '')     // U-022, HR-12, E-213
     .replace(/\bv\d+(?:\.\d+)*\b/gi, '');   // v2, v1.06
   return /[\d`]/.test(stripped);
@@ -330,7 +330,7 @@ function hasResult(sentence) {
 // tool-call turn straight to `null` whenever it carried any text, so classify()
 // was NEVER RUN on such a turn and PASSIVE_WAIT could not fire on it. That is
 // the THIRD instance of this file's own twice-written lesson, "a guard's
-// exemption is where its defect lives" â€” a blanket exemption standing between
+// exemption is where its defect lives" — a blanket exemption standing between
 // the detector and the case it was built for.
 //
 // The fix is deliberately narrow. On a tool-call turn:
@@ -342,7 +342,7 @@ function hasResult(sentence) {
 //     work is not a null acknowledgement.
 //   - PASSIVE_WAIT is NEVER legitimate as a final message, tool call or not.
 //     "Standing by" after a tool call is the same dead screen as "standing by"
-//     alone â€” arguably worse, because the tool call makes it look alive.
+//     alone — arguably worse, because the tool call makes it look alive.
 function classify(text, opts) {
   const toolTurn = !!(opts && opts.toolTurn);
   const t = normalize(text).trim();   // D1: see the aperture-repair block above
@@ -357,29 +357,67 @@ function classify(text, opts) {
   }
 
   // Whole-message match, capped short: a long substantive turn that happens to close on
-  // "Noted." is fine â€” the failure is a turn that is NOTHING BUT the acknowledgement.
+  // "Noted." is fine — the failure is a turn that is NOTHING BUT the acknowledgement.
   if (t.length <= 120) {
     for (const re of NULL_ACK) {
       if (re.test(t)) return { cls: 'NULL_ACK', snippet: t };
     }
   }
 
-  // A question to the Owner is a legitimate active closer â€” but ONLY when it is a
-  // DECISION only the Owner can make ("Â¿lo lanzo?", "which of these do you want?").
+  // A question to the Owner is a legitimate active closer — but ONLY when it is a
+  // DECISION only the Owner can make ("¿lo lanzo?", "which of these do you want?").
   // A question of FACT is answerable with a tool call, so ending the turn on one is
   // INTENT_NARRATION wearing a question mark: the Owner has nothing to answer and the
   // screen dies.
   //
   // MEASURED 2026-09-02 (KobiiCraft Core Files). This closer passed the old blanket
   // exemption and produced the exact dead screen this hook exists to kill:
-  //   "Lanzo. Primero: Â¿existe ya un verificador registrado para la superficie de
+  //   "Lanzo. Primero: ¿existe ya un verificador registrado para la superficie de
   //    login, o tengo que escribirlo?"
   // Zero tool calls. The answer was one Grep away. The Owner had to interrupt.
   // The lesson generalises: A GUARD'S EXEMPTION IS WHERE ITS DEFECT LIVES.
+  // MEASURED 2026-09-14 (KobiiCraft Core Files), FALSE POSITIVE. The Owner was
+  // handed two production options — revert the config, or move the job to
+  // WorldGuard — and the turn closed "¿Cuál de las dos?". That is the most
+  // Owner-only question there is, and the class fired on it, because `cu[áa]l`
+  // sat in FACT_QUERY.
+  //
+  // The repair is NOT to drop `cuál`. An interrogative does not decide the
+  // class: "¿cuál es el uuid?" is a fact and "¿cuál de las dos?" is a decision,
+  // and they share the word. THE DISCRIMINATOR IS WHETHER THE TURN OFFERED THE
+  // ALTERNATIVES. A question that selects among options the assistant just laid
+  // out cannot be answered by a tool call, by construction — the tool has no
+  // access to what the Owner wants.
+  //
+  // Deliberately narrow, because a wide exemption here would re-open the exact
+  // dead screen this class was sealed for. The measured 2026-09-02 case,
+  //   "Lanzo. Primero: ¿existe ya un verificador registrado ... o tengo que
+  //    escribirlo?"
+  // carries a disjunction too ("o tengo que"), so A BARE `o` MUST NOT EXEMPT.
+  // It has no enumerated list and does not ask the Owner to pick among items
+  // the turn presented, so it still blocks. That case is pinned as a red-branch
+  // test; if this exemption ever swallows it, the test goes red.
   if (/\?\s*$/.test(t)) {
     const q = t.slice(-320);
+
+    // Two or more enumerated items ANYWHERE in the message: "1. …" / "2) …",
+    // with or without bold. Scanned over the whole text, not the tail, because
+    // the options are stated above the question that closes on them.
+    const enumerados = (t.match(/(?:^|\n)\s*(?:\*\*|__)?\d[.)]\s/g) || []).length;
+
+    // Or the question itself names the act of choosing among presented items.
+    const PIDE_ELEGIR = [
+      /\bcu[áa]l\s+de\s+(las|los|ellas|ellos|est[ao]s)\b/i,
+      /\bcu[áa]l\s+(prefieres|prefiere|eliges|elegimos|quieres|escoges)\b/i,
+      /\b(ambas|ambos|las\s+dos|los\s+dos)\s*\?\s*$/i,
+      /\bwhich\s+(of\s+(the|these|those)|one)\b/i,
+      /\bwhich\s+(do|would)\s+you\b/i,
+      /\b(opci[óo]n|option)\s+[ab12]\b/i,
+    ];
+    if (enumerados >= 2 || PIDE_ELEGIR.some((re) => re.test(q))) return null;
+
     const FACT_QUERY = [
-      /Â¿\s*(existe|hay|est[Ã¡a]|est[Ã¡a]n|cu[Ã¡a]l|cu[Ã¡a]nt[oa]s|d[Ã³o]nde)\b/i,
+      /¿\s*(existe|hay|est[áa]|est[áa]n|cu[áa]l|cu[áa]nt[oa]s|d[óo]nde)\b/i,
       /\b(o\s+)?tengo\s+que\s+\w+/i,
       /\bdo\s+I\s+(need|have)\s+to\b/i,
       /\b(is|are)\s+there\b/i,
@@ -390,7 +428,7 @@ function classify(text, opts) {
     return { cls: 'RHETORICAL_QUESTION', snippet: q.slice(-160) };
   }
 
-  // D2: the window is now the last THREE SENTENCES, tested one at a time â€” not
+  // D2: the window is now the last THREE SENTENCES, tested one at a time — not
   // one regex anchored to the very end of the message. The old form could only
   // ever see the FINAL sentence, so any announcement followed by a rationale
   // clause walked past it. Widened to 600 chars because three sentences of
@@ -408,24 +446,24 @@ function classify(text, opts) {
   for (const s of window) {
     // A non-final sentence must carry no result token. An announcement has no
     // evidence in it; a report does. The FINAL sentence keeps its original
-    // unfiltered behaviour â€” that is the shipped-and-proven path, and narrowing
+    // unfiltered behaviour — that is the shipped-and-proven path, and narrowing
     // it here would trade a known detection for an unknown one.
     if (s.idx > 0 && hasResult(s.text)) continue;
 
     // AN ANNOUNCEMENT FOLLOWED BY ITS OUTCOME IS A REPORT, NOT A DEAD SCREEN.
-    // Sealed case ES-OK-09 â€” "Ahora reviso el gate de continuidad. El resultado:
-    // 19 de 19 en verde." â€” must NOT fire, and it started firing the instant the
+    // Sealed case ES-OK-09 — "Ahora reviso el gate de continuidad. El resultado:
+    // 19 de 19 en verde." — must NOT fire, and it started firing the instant the
     // D2 window opened. That regression was caught by the suite, not by review,
     // which is the whole argument for rule (K): the widening looked obviously
     // safe and was not. Any LATER sentence carrying a real result discharges the
-    // announcement. See hasResult() for why Â§34 is not such a result.
+    // announcement. See hasResult() for why §34 is not such a result.
     if (window.some((o) => o.idx < s.idx && hasResult(o.text))) continue;
 
     // "Let me be clear:" / "Let me explain" are RHETORICAL framing, not
     // announcements of work. They were harmless while only the final sentence
     // was inspected; against a three-sentence window they would fire on
     // ordinary prose. A guard that cries wolf gets switched off with
-    // CLAUDE_CLOSER_GUARD=off â€” and an off guard IS the dead screen.
+    // CLAUDE_CLOSER_GUARD=off — and an off guard IS the dead screen.
     if (/^let me\s+(?:be\s+(?:clear|precise|specific|blunt|honest|direct)|explain|put|say|start|note)\b/i.test(s.text)) continue;
 
     for (const re of INTENT_NARRATION) {
@@ -441,10 +479,59 @@ function classify(text, opts) {
 
 // --- Transcript reading ----------------------------------------------------
 
-/** Last assistant message: its text, and whether it issued any tool_use. */
+/** The last assistant TURN: all of its text, and whether it issued any tool_use.
+ *
+ * D4 — A TURN IS MANY RECORDS, AND THIS READ ONE. MEASURED 2026-09-14 (Jacobo/Neom).
+ *
+ * The previous body scanned backwards for the FIRST record with role==='assistant'
+ * and returned it. That is not a turn. Claude Code appends ONE RECORD PER CONTENT
+ * BLOCK, so a turn that writes a paragraph and then calls a tool lands as two
+ * records — text-only, then tool-only — and the last of them carries `text: ''`
+ * with `usedTool: true`. Which is, exactly and by construction, the
+ * SILENT_TOOL_STOP signature.
+ *
+ * Measured by calling this very function on the live transcript's own bytes:
+ *     lastAssistantTurn(...) -> { textLen: 0, usedTool: true, lastTool: 'PowerShell' }
+ *     assistant records in that same turn: 51  (8 of them carrying text)
+ * Eight text-bearing records, and the guard reported a turn with no text at all.
+ * It blocked three consecutive turns that each ended in several paragraphs of
+ * prose, in a session doing nothing wrong.
+ *
+ * THIS IS THIS FILE'S STANDING LESSON IN A NEW FAMILY, AND THE FAMILY IS THE POINT.
+ * Every previous instance was about the PATTERNS: an exemption that waved a case
+ * through, an anchor that never let one arrive, an alphabet the regexes could not
+ * read, a language they did not speak. All of those made the guard SILENT. This one
+ * is the opposite failure and it lives one layer down, in the INPUT: the patterns
+ * were fine and the subject handed to them was a fragment. A detector reading the
+ * wrong UNIT does not go quiet — it ACCUSES. And a false accusation costs more than
+ * a miss, because it also teaches the Owner to reach for CLAUDE_CLOSER_GUARD=off,
+ * and an off guard is the dead screen this file exists to prevent. Check the
+ * aperture of the READ before ever touching a regex.
+ *
+ * The turn boundary: walk back over assistant records, and over `user` records that
+ * are TOOL RESULTS — those are the harness answering, still inside the turn. Stop at
+ * the first genuine human message. Concatenate every text block found, in order.
+ *
+ * What this does NOT weaken: the sealed 2026-09-02 case (an Edit landed and the turn
+ * carried zero text anywhere) still has zero text after aggregation, so
+ * SILENT_TOOL_STOP still fires on it. The class now means what its own guidance text
+ * always claimed — "a tool call and NOTHING ELSE" — measured over the whole turn
+ * instead of over whichever fragment happened to be appended last.
+ */
 function lastAssistantTurn(transcriptPath) {
   const raw = fs.readFileSync(transcriptPath, 'utf8');
   const lines = raw.split(/\r?\n/);
+
+  const chunks = [];
+  let usedTool = false;
+  let productiveTool = false;
+  let lastTool = '';
+  let sawAssistant = false;
+
+  // D5 (see the block above run()): ids whose tool_result came back `is_error`.
+  // Walking backwards, results are met BEFORE the tool_use they answer, so the
+  // set is already complete by the time each tool_use block is inspected.
+  const erroredIds = new Set();
 
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = lines[i].trim();
@@ -455,26 +542,52 @@ function lastAssistantTurn(transcriptPath) {
 
     const msg = rec.message || rec;
     const role = msg.role || rec.type;
+
+    if (role === 'user') {
+      const c = msg.content;
+      const isToolResult = Array.isArray(c)
+        && c.some((b) => b && typeof b === 'object' && b.type === 'tool_result');
+      if (isToolResult) {
+        for (const b of c) {
+          if (!b || typeof b !== 'object' || b.type !== 'tool_result') continue;
+          if (b.is_error === true && b.tool_use_id) erroredIds.add(b.tool_use_id);
+        }
+        continue;                   // harness answering the agent: same turn
+      }
+      break;                        // a real human message: the turn started after it
+    }
+
     if (role !== 'assistant') continue;
+    sawAssistant = true;
 
     const content = msg.content;
     if (!Array.isArray(content)) {
-      return { text: typeof content === 'string' ? content : '', usedTool: false };
+      if (typeof content === 'string' && content) chunks.unshift(content);
+      continue;
     }
 
-    let text = '';
-    let usedTool = false;
-    let lastTool = '';
+    let recText = '';
     for (const block of content) {
       if (!block || typeof block !== 'object') continue;
-      if (block.type === 'text' && typeof block.text === 'string') text += block.text;
+      if (block.type === 'text' && typeof block.text === 'string') recText += block.text;
       // `lastTool` exists ONLY to give the anti-loop fingerprint something that can
       // DIFFER between two text-free turns. See the fingerprint comment in run().
-      if (block.type === 'tool_use') { usedTool = true; if (block.name) lastTool = String(block.name); }
+      // Walking backwards, the FIRST tool_use met is the chronologically last one.
+      if (block.type === 'tool_use') {
+        usedTool = true;
+        if (!lastTool && block.name) lastTool = String(block.name);
+        // A call that was REFUSED or that errored did no work, so it cannot
+        // buy the turn an exemption. A call with no result recorded at all is
+        // counted as productive: at Stop that shape is ambiguous, and D4's
+        // lesson is that a false accusation costs more than a miss.
+        if (!block.id || !erroredIds.has(block.id)) productiveTool = true;
+      }
     }
-    return { text, usedTool, lastTool };
+    if (recText) chunks.unshift(recText);
   }
-  return null;
+
+  if (!sawAssistant) return null;
+  return { text: chunks.join('\n'), usedTool, productiveTool, lastTool };
 }
 
 // --- Anti-loop state -------------------------------------------------------
@@ -512,29 +625,29 @@ const GUIDANCE = {
   SILENT_TOOL_STOP:
     'This turn is about to end on a SILENT TOOL STOP: your last message was a ' +
     'tool call and NOTHING ELSE. The tool succeeded, the turn is over, and the ' +
-    'Owner is looking at an executed action with no sentence attached â€” they ' +
+    'Owner is looking at an executed action with no sentence attached — they ' +
     'cannot tell whether you finished, crashed, or are still thinking. A tool ' +
     'call is work, not a report. Say what landed and what comes next.',
   NULL_ACK:
     'This turn is about to end on a NULL ACKNOWLEDGEMENT: the whole message ' +
     'dismisses a system event as needing no reply. A background task-notification ' +
-    'is a WORK TRIGGER, not a message with a politeness slot â€” status=completed ' +
+    'is a WORK TRIGGER, not a message with a politeness slot — status=completed ' +
     'means its output is on disk RIGHT NOW and the next action is yours. Read the ' +
     'output-file named in the notification and continue, in THIS turn.',
 };
 
 function buildReason(cls, snippet) {
   return [
-    `CLOSER GUARD â€” ${cls}.`,
+    `CLOSER GUARD — ${cls}.`,
     GUIDANCE[cls],
     snippet ? `Your closing text was: "...${snippet.trim()}"` : '',
     '',
     'Do ONE of these before ending the turn:',
-    '  1. If you named a next action â€” DO IT NOW with a tool call. Do not ' +
+    '  1. If you named a next action — DO IT NOW with a tool call. Do not ' +
     're-describe it.',
-    '  2. If the work is finished â€” state the concrete outcome (what landed, ' +
+    '  2. If the work is finished — state the concrete outcome (what landed, ' +
     'what it proves).',
-    '  3. If you are genuinely blocked â€” ask the Owner a direct question they ' +
+    '  3. If you are genuinely blocked — ask the Owner a direct question they ' +
     'can act on.',
     '',
     'Banned as final text: "awaiting", "standing by", "in progress", ' +
@@ -556,7 +669,7 @@ function run(input) {
     const turn = lastAssistantTurn(transcriptPath);
     if (!turn) return { continue: true };
 
-    // A tool-call turn that ALSO carries text is ordinary agentic work â€” exempt.
+    // A tool-call turn that ALSO carries text is ordinary agentic work — exempt.
     // A tool-call turn carrying NO text is not. At Stop the loop is already over,
     // so a silent tool-only final message is not "work in progress": it is the
     // Owner staring at an executed action with no sentence attached.
@@ -565,7 +678,7 @@ function run(input) {
     // it passed the exact dead screen this hook exists to kill: an Edit landed on
     // MapRejectionGate.java, the turn ended with zero text, the Owner saw a frozen
     // screen and had to interrupt. NULL_ACK then caught only the SECOND screen (the
-    // "No response requested." reply to the nudge) â€” the first one was invisible.
+    // "No response requested." reply to the nudge) — the first one was invisible.
     //
     // Same lesson as the question-mark exemption 130 lines above, which this file
     // had ALREADY written down as "a guard's exemption is where its defect lives"
@@ -574,7 +687,36 @@ function run(input) {
     // 2026-09-04: `null` here was the blanket pass. A tool-call turn WITH text
     // now goes through classify() in tool-turn mode (PASSIVE_WAIT only) instead
     // of skipping detection entirely. See the note above classify().
-    const verdict = turn.usedTool
+    //
+    // D5 — A REJECTED TOOL CALL IS NOT WORK. MEASURED 2026-09-14 (Jacobo).
+    //
+    // The Owner rejected an Edit; the turn then ended on the single sentence
+    // "No response requested." and the screen died. That closer is NULL_ACK —
+    // a class this file added on 2026-09-02 for this exact shape — and it was
+    // never tested, because the turn carried a `tool_use` block and every class
+    // but PASSIVE_WAIT is exempt on a tool turn. Measured on the live
+    // transcript:
+    //     classify("No response requested.")                  -> NULL_ACK
+    //     classify("No response requested.", {toolTurn:true}) -> null
+    //
+    // The patterns were right, the read unit was right (D4 had just fixed it),
+    // and the turn was still waved through — because the EXEMPTION'S PREMISE
+    // was false. `usedTool` answers "was a call ISSUED?"; the exemption needs
+    // "did a call SUCCEED?". A refused call did nothing, so the turn that
+    // carried it is a text-only turn and owes the Owner a sentence.
+    //
+    // This is this file's standing lesson in an eighth instance and a third
+    // family. The first six were the PATTERNS (an exemption, an anchor, an
+    // alphabet, a language); D4 was the READ UNIT; this one is the PREDICATE
+    // the exemption is written on. A guard can enumerate every shape, read the
+    // right bytes, and still pass the case — if the question it asks to decide
+    // whether to look is the wrong question. Same defect class, measured the
+    // same day, as the admission gate in tools/usea_outcome_contrast.py: TEST
+    // FOR THE STATE THAT PERMITS, NEVER FOR THE ONE THAT REFUSES.
+    //
+    // Red branch: hooks/tests/test-closer-guard-rejected-tool.js (both poles).
+    const didWork = turn.usedTool && turn.productiveTool !== false;
+    const verdict = didWork
       ? ((turn.text || '').trim()
           ? classify(turn.text, { toolTurn: true })
           : { cls: 'SILENT_TOOL_STOP', snippet: '' })
@@ -599,13 +741,13 @@ function run(input) {
     // BUG FIXED 2026-09-04 (measured in production state, not theorised).
     // The key used to be `cls + '|' + turn.text.slice(-80)`. But EMPTY and
     // SILENT_TOOL_STOP are DEFINED BY THE ABSENCE OF TEXT, so their key collapsed to
-    // the constant "SILENT_TOOL_STOP|" â€” every silent stop in a session collided with
+    // the constant "SILENT_TOOL_STOP|" — every silent stop in a session collided with
     // every other one, an hour and fifty good turns apart. The second one was read as
     // "it repeated itself after being told once" and WAVED THROUGH.
     //
     // Evidence: ~/.claude/logs/closer-guard-state.json carried three REAL session
-    // UUIDs (4d17ab74â€¦, 86038923â€¦, 2ad9818dâ€¦) with "blocked":false against that exact
-    // fingerprint. `blocked:false` is written on one code path only â€” the anti-loop
+    // UUIDs (4d17ab74…, 86038923…, 2ad9818d…) with "blocked":false against that exact
+    // fingerprint. `blocked:false` is written on one code path only — the anti-loop
     // branch. Those are three dead screens this guard consciously let past, which is
     // the precise failure it exists to prevent.
     //
@@ -615,7 +757,7 @@ function run(input) {
     // recurrences hours apart are each blocked on their own merits.
     //
     // Generalises: A DE-DUPLICATION KEY BUILT FROM A FIELD THAT IS EMPTY BY
-    // CONSTRUCTION IDENTIFIES NOTHING â€” it merges the whole class into one instance
+    // CONSTRUCTION IDENTIFIES NOTHING — it merges the whole class into one instance
     // and the guard suppresses itself.
     const MAX_STREAK = 2;
     const state = readState();
@@ -628,7 +770,7 @@ function run(input) {
 
     if (streak >= MAX_STREAK) {
       // Told it twice and it still repeats verbatim. Let it through rather than
-      // trapping the Owner in a block loop â€” that would be the same disease.
+      // trapping the Owner in a block loop — that would be the same disease.
       state[sid] = { blocked: false, fingerprint, streak: 0, ts: Date.now() };
       writeState(state);
       return { continue: true };
