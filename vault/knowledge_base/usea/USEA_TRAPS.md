@@ -120,3 +120,128 @@ interactive machine — developer laptops, CI runners, burstable containers.
   `PR-CLASSIFY-THE-TEARDOWN-NOT-ONLY-THE-CLOCK-001`. The novelty was the blast
   radius, not the mechanism: here the misclassification would have landed in the
   treatment column of the programme's own falsification test.
+
+---
+
+## The Gate That Refused One State And Admitted Three (Phase VIII, 2026-09-14)
+
+### Process Rules
+
+**`PR-TEST-THE-STATE-THAT-PERMITS-001`** — A consumer deciding whether to ACT on
+a multi-valued gate must test for the single state that PERMITS the action, never
+for the state that refuses it. Written the second way, every value the author did
+not enumerate — every state added later, every tri-state middle, every unreadable
+reading — falls through to the action. WHY IT LOOKS CORRECT: the refusing value
+is the one you are thinking about while you write the branch, it is the value
+your drill supplies, and on a gate that currently returns only two states the two
+forms are exactly equivalent. The defect is invisible until the gate returns its
+third answer, which is the day you most need the refusal.
+
+ORIGEN, and the reason this is a rule rather than an anecdote: **it was measured
+TWICE on one day, in two subsystems that share no code.**
+
+1. `usea_outcome_contrast.py` asked `state == "BLOCKED"` before dispatching eight
+   live model sessions. SQI-03 returns four states, and its middle pole says in
+   its own words that such a run "may complete or may be killed, and which one
+   happens is not a fact about the subject". This host read `PARTIALLY_QUALIFIED`
+   with a worst-of-five trough of 476 MB against 1724 MB required, and the
+   experiment would have run. The producer carried the mirror-image fault: the
+   trough correction was guarded on the healthy pole, so the worst reading was
+   compared against the requirement only when the instant probe had already
+   called the host fine.
+2. `closer-guard.js` asked whether a turn carried a `tool_use` block before
+   exempting it from every dead-screen class but one. A tool call that the Owner
+   REFUSED still satisfied that test, so a rejected Edit bought the turn its
+   silence and the session ended on "No response requested." — the exact sentence
+   the `NULL_ACK` class had been sealed for twelve days earlier. Measured on the
+   live transcript: `classify(text)` returns `NULL_ACK` and
+   `classify(text, {toolTurn:true})` returns null.
+
+Two systems, one morning, the same shape: a predicate that asks whether something
+was ATTEMPTED where the decision needs to know whether it SUCCEEDED.
+
+PREVENTION: one named predicate answering "may this proceed", returning true for
+the permitting state alone, called by every decision site — a shared predicate
+travels where a convention does not. Drive it over the gate's FULL vocabulary,
+and over an empty record, so a state added later is refused by construction
+rather than by whoever remembers. When you write an exemption, name the premise
+it rests on and falsify it: construct one input where the premise holds and the
+damage happens anyway. SCOPE: universal — capacity and health probes, auth and
+entitlement checks, migration and readiness gates, any verdict that is not a
+boolean, and any guard whose exemption is phrased as "this case did some work".
+
+### Candidates REJECTED (2026-09-14)
+
+- **"A lesson left as a comment beside the fixed line does not travel"** — NOT
+  filed as new. Already owned by the global rule on a recorded lesson recurring
+  anyway, which prescribes the same remedy this session reached independently:
+  ship the helper, not the advice. Recorded because this is a second measured
+  instance and a sharp one. `verify_spp.py` met this exact class on 2026-09-11
+  and left the reason beside the line it fixed — test `is not True`, deliberately,
+  not `is None`, because an override "must change what the run DOES, never what
+  the run may CLAIM". Two days later the sibling consumer of the same gate, one
+  directory away, was written with the defect. The prose was correct, present,
+  and in the repository. It did not reach the keystroke, which is the whole point
+  of the owning rule.
+
+- **"A suite can be green while blind to its subject's decision"** — REJECTED as
+  an instance of the existing rule that a gate nobody has driven the red branch
+  of is indistinguishable from one that passes. The specific shape is worth
+  naming inside that owner rather than beside it, and both of today's cases wear
+  it: the USEA suite asserted the gate's VOCABULARY — that its state string was
+  one of four — and never asked what the caller DOES with each word; the
+  closer-guard suite, eight files and two hundred cases deep, had never once
+  written a `tool_result` into a fixture, so a refused call was UNREPRESENTABLE
+  and the patterns could only ever be exercised against calls that worked.
+  Thirteen of thirteen and twenty-one of twenty-two, and in both the one branch
+  that mattered was not merely untested but inexpressible.
+
+---
+
+## The Gate That Refused One State And Admitted Three (Phase VIII, 2026-09-14)
+
+### Process Rules
+
+**`PR-TEST-THE-STATE-THAT-PERMITS-001`** — A consumer deciding whether to ACT on a
+multi-valued gate must test for the single state that PERMITS the action, never for
+the state that refuses it. Written the second way, every value the author did not
+enumerate — every state added later, every tri-state middle, every unreadable
+reading — falls through to the action. WHY IT LOOKS CORRECT: the refusing value is
+the one you are thinking about while you write the branch, it is the value your
+drill supplies, and on a gate that currently returns only two states the two forms
+are exactly equivalent. The defect is invisible until the gate returns its third
+answer, which is the day you most need the refusal. ORIGEN: measured here.
+`usea_outcome_contrast.py` asked `state == "BLOCKED"` before dispatching eight live
+model sessions. SQI-03 returns four states, and its middle pole says in its own
+words that such a run "may complete or may be killed, and which one happens is not
+a fact about the subject". On 2026-09-14 this host read `PARTIALLY_QUALIFIED` with a
+worst-of-five trough of 476 MB against 1724 MB required, and the experiment would
+have run. The producer carried the mirror-image fault: the trough correction was
+guarded on the healthy pole, so the worst reading was compared against the
+requirement only when the instant probe had already called the host fine.
+PREVENTION: one named predicate answering "may this proceed", returning true for the
+permitting state alone, called by every decision site — a shared predicate travels
+where a convention does not. Drive it over the gate's FULL vocabulary, and over an
+empty record, so a state added later is refused by construction rather than by
+whoever remembers. SCOPE: universal — capacity and health probes, auth and
+entitlement checks, migration and readiness gates, any verdict that is not a boolean.
+
+### Candidates REJECTED (2026-09-14)
+
+- **"A lesson left as a comment beside the fixed line does not travel"** — NOT filed
+  as new. Already owned by the global rule on a recorded lesson recurring anyway,
+  which prescribes the same remedy this session reached independently: ship the
+  helper, not the advice. Recorded here because this is a second measured instance
+  and a sharp one. `verify_spp.py` met this exact class on 2026-09-11 and left the
+  reason beside the line it fixed — test `is not True`, deliberately, not `is None`,
+  because an override "must change what the run DOES, never what the run may CLAIM".
+  Two days later the sibling consumer of the same gate, one directory away, was
+  written with the defect. The prose was correct, present, and in the repository.
+  It did not reach the keystroke, which is the whole point of the owning rule.
+
+- **"A suite can be green while blind to its subject's decision"** — REJECTED as an
+  instance of the existing rule that a gate nobody has driven the red branch of is
+  indistinguishable from one that passes. The specific shape is worth naming inside
+  that owner rather than beside it: the suite asserted the gate's VOCABULARY — that
+  its state string was one of four — and never asked what the caller DOES with each
+  word. Thirteen of thirteen, and the one branch that mattered was untested.

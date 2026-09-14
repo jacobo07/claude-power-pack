@@ -1,0 +1,70 @@
+{
+  "model": "sonnet",
+  "trials": 1,
+  "payload_bytes": 6688,
+  "controls": {
+    "A": {
+      "positive": {
+        "oracle_pass": true,
+        "detail": "FAILS:none"
+      },
+      "negative": {
+        "oracle_pass": false,
+        "detail": "FAILS:previous contents destroyed by a failed write (JSONDecodeError); target opened for writing directly (not replaced atomically); no atomic rename/replace landed on the target"
+      },
+      "ok": true
+    },
+    "B": {
+      "positive": {
+        "oracle_pass": true,
+        "detail": "FAILS:none"
+      },
+      "negative": {
+        "oracle_pass": false,
+        "detail": "FAILS:lost updates: final=18 expected=200"
+      },
+      "ok": true
+    },
+    "C": {
+      "positive": {
+        "oracle_pass": true,
+        "detail": "FAILS:none"
+      },
+      "negative": {
+        "oracle_pass": false,
+        "detail": "FAILS:top_names raised TypeError: fetch() takes 1 positional argument but 2 were given; short-result case raised TypeError: fetch() takes 1 positional argument but 2 were given"
+      },
+      "ok": true
+    },
+    "D": {
+      "positive": {
+        "oracle_pass": true,
+        "detail": "FAILS:none"
+      },
+      "negative": {
+        "oracle_pass": false,
+        "detail": "FAILS:typo not fixed"
+      },
+      "ok": true
+    }
+  },
+  "runs": [],
+  "admission": {
+    "open": {
+      "state": "BLOCKED",
+      "available_mb": 602,
+      "required_mb": 1724,
+      "samples": [
+        737,
+        602,
+        669
+      ],
+      "blocker": "insufficient host memory: 669 MB available, 1724 MB required for usea outcome arm",
+      "error": null,
+      "peak_mb": 700,
+      "reserve_mb": 1024
+    },
+    "refused_state": "BLOCKED"
+  },
+  "status": "BLOCKED"
+}
