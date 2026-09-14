@@ -126,6 +126,53 @@ def main() -> int:
               "QUALIFIED", "BLOCKED", "PARTIALLY_QUALIFIED", "UNKNOWN"},
           "a nonsense workload resolves to a state rather than an exception")
 
+    # --- the dispatch decision, a different claim from the state ------------
+    # Everything above asserts admit's VOCABULARY. Nothing asked what the
+    # experiment DOES with each word, and that is exactly where the defect sat:
+    # dispatch tested `== "BLOCKED"`, which refuses one value and admits three,
+    # so both UNKNOWN poles fell through to eight live sessions. Measured
+    # 2026-09-14 -- the host read PARTIALLY_QUALIFIED on a 476 MB trough
+    # against 1724 MB required, and the gate would have let it run.
+    verdicts = {s: oc.may_dispatch({"state": s}) for s in
+                ("QUALIFIED", "BLOCKED", "PARTIALLY_QUALIFIED", "UNKNOWN")}
+    check("V-ADMIT-DISPATCH-ONLY-ON-QUALIFIED",
+          verdicts == {"QUALIFIED": True, "BLOCKED": False,
+                       "PARTIALLY_QUALIFIED": False, "UNKNOWN": False},
+          f"only QUALIFIED authorises an arm: {verdicts}")
+
+    check("V-ADMIT-DISPATCH-REFUSES-UNSPOKEN-STATE",
+          oc.may_dispatch({}) is False,
+          "an admission record carrying no state at all does not dispatch")
+
+    # The trough correction must be reachable from the MARGINAL pole, not only
+    # from the pole SQI-03 has already called healthy. Both branches are driven
+    # against the real function: a correction that fired unconditionally would
+    # pass the red branch alone and read as a working detector.
+    from modules.sqi import environment_qualifier as eq  # noqa: PLC0415
+    real_probe, real_avail = eq.capacity_probe, eq.available_mb
+    marginal = eq.GateResult("host_capacity", None, "forced marginal",
+                             blocker="forced marginal")
+    try:
+        eq.capacity_probe = lambda w, observed_mb=None: marginal
+        eq.available_mb = lambda: 50
+        low = oc.admit(peak_mb=100, reserve_mb=100, samples=1)
+        eq.available_mb = lambda: 5000
+        high = oc.admit(peak_mb=100, reserve_mb=100, samples=1)
+    finally:
+        eq.capacity_probe, eq.available_mb = real_probe, real_avail
+
+    check("V-ADMIT-TROUGH-REACHES-MARGINAL-POLE",
+          low["state"] == "BLOCKED" and "trough" in (low["blocker"] or ""),
+          f"a trough below the requirement refuses even when the instant probe "
+          f"read marginal: {low['available_mb']} MB vs {low['required_mb']} MB "
+          f"-> {low['state']}")
+
+    check("V-ADMIT-TROUGH-DOES-NOT-OVERREACH",
+          high["state"] == "PARTIALLY_QUALIFIED",
+          f"a trough above the requirement leaves the marginal verdict intact: "
+          f"{high['available_mb']} MB vs {high['required_mb']} MB -> "
+          f"{high['state']}")
+
     # --- the arithmetic -----------------------------------------------------
     # One graded pass and one arm the host took away. The denominator must be
     # what was measured; 1/2 would report the machine's interruption as a

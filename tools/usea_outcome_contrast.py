@@ -156,10 +156,15 @@ def admit(*, peak_mb: int = _ARM_PEAK_MB, reserve_mb: int = _HOST_RESERVE_MB,
         env["available_mb"] = min(readings) if readings else None
         gate = capacity_probe(w)
         passed = gate.passed
-        if passed is True and readings and min(readings) < w.required_mb:
-            # The probe sampled its own instant; this one saw a worse one.
+        trough = min(readings) if readings else None
+        # The probe sampled its own instant; this one saw a worse one. Reachable
+        # from every pole that is not already a refusal: guarding it on `is True`
+        # made it unreachable from the marginal pole, so a host reading MARGINAL
+        # kept that label while its trough sat at a quarter of the requirement.
+        # Measured 2026-09-14: trough 476 MB against 1724 MB required.
+        if passed is not False and trough is not None and trough < w.required_mb:
             passed = False
-            env["blocker"] = (f"admission trough {min(readings)} MB below "
+            env["blocker"] = (f"admission trough {trough} MB below "
                               f"{w.required_mb} MB required")
         else:
             env["blocker"] = gate.blocker
@@ -168,6 +173,22 @@ def admit(*, peak_mb: int = _ARM_PEAK_MB, reserve_mb: int = _HOST_RESERVE_MB,
     except Exception as exc:  # noqa: BLE001 -- fail to UNKNOWN, never to pass
         env["error"] = f"{type(exc).__name__}: {exc}"
     return env
+
+
+def may_dispatch(gate: dict) -> bool:
+    """May an arm be spawned under this admission reading? QUALIFIED, only.
+
+    SQI-03's contract is that an UNKNOWN gate is a ceiling on interpretation and
+    never a pass; its marginal pole says the run "may complete or may be killed,
+    and which one happens is not a fact about the subject". A dispatch test
+    written as `state == "BLOCKED"` refuses one value and admits three.
+
+    verify_spp.py learned this on 2026-09-11 and recorded it beside the fixed
+    line. The comment did not travel: this consumer, written two days later,
+    tested for the single refusing value. So the rule lives in a predicate both
+    dispatch sites call, rather than in prose either of them can miss.
+    """
+    return gate.get("state") == "QUALIFIED"
 
 
 # --------------------------------------------------------------------------- #
@@ -777,14 +798,16 @@ def main(argv=None) -> int:
           f"required  (samples: {gate['samples']})")
     print(f"  state: {gate['state']}"
           + (f"   {gate['blocker']}" if gate["blocker"] else ""))
-    if gate["state"] == "BLOCKED" and not args.ignore_admission:
+    if not may_dispatch(gate) and not args.ignore_admission:
         # Refuse, and refuse LOUDLY at the top level. A smaller experiment is a
         # different experiment; running two arms instead of eight and calling
         # the claim measured is the failure this refusal exists to prevent.
-        print("\n  REFUSED: no arm dispatched. This is not a null result and it")
-        print("  is not a failure of the treatment -- the host cannot support an")
-        print("  arm whose verdict could be believed. Free memory and re-run.")
+        print(f"\n  REFUSED on {gate['state']}: no arm dispatched. This is not")
+        print("  a null result and it is not a failure of the treatment -- the")
+        print("  host cannot carry an arm whose verdict could be believed.")
+        print("  Free memory and re-run.")
         report["status"] = "BLOCKED"
+        report["admission"]["refused_state"] = gate["state"]
         _emit(report, args.out)
         return EXIT_BLOCKED
 
@@ -801,9 +824,9 @@ def main(argv=None) -> int:
                                 samples=1)
                     report.setdefault("admission", {}).setdefault("between", []
                                                                   ).append(mid)
-                    if mid["state"] == "BLOCKED" and not args.ignore_admission:
-                        stopped = (f"host stopped qualifying before "
-                                   f"{key}/{arm}: {mid['blocker']}")
+                    if not may_dispatch(mid) and not args.ignore_admission:
+                        stopped = (f"host stopped qualifying ({mid['state']}) "
+                                   f"before {key}/{arm}: {mid['blocker']}")
                         print(f"  STOP: {stopped}")
                         break
                 r = run_arm(key, arm, doctrine, model=args.model, trial=trial)
