@@ -36,7 +36,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { spawnSync } = require('child_process');
+const { spawnSync, spawn } = require('child_process');
 
 const HOME = os.homedir();
 const LOG_DIR = path.join(HOME, '.claude', 'logs');
@@ -51,7 +51,28 @@ const EVENT_MAP = {
     '../skills/claude-power-pack/modules/harness/intent_lock.js',
   ],
   'PostToolUse-default': [
-    './gsd-context-monitor.js',
+    // Cierra la miga de frontera: la herramienta COMPLETO, el turno sigue vivo.
+    // Primero y baratisimo. Si esto no corre, la miga sobrevive y el proximo
+    // prompt recibe una correccion de mas — ruido, nunca una sesion perdida.
+    './turn-boundary-breadcrumb-close.js',
+    // gsd-context-monitor.js RETIRADO de este carril 2026-09-15.
+    // Es un hook VENDORED (upstream GSD, refs #3709/#2289/#4285) escrito para el
+    // contrato STANDALONE: lee stdin y termina por allow()/crash(), que son
+    // SALIDAS DE PROCESO (ON_CRASH = HOOK_ON_CRASH.ALLOW; ver su linea 296,
+    // "allow(), not raw process.exit"). Su propio comentario (linea 539) lo dice:
+    // "the stdin adapter ... must not run on require()". Este EVENT_MAP es el
+    // carril in-process (linea 46) y el fichero nunca se refactorizo: exporta
+    // solo {resolveThresholds, WARNING_THRESHOLD, CRITICAL_THRESHOLD}.
+    // MEDIDO 2026-09-15: "module missing run() export" en CADA PostToolUse de
+    // CADA repo -> 417 de las ultimas 3000 lineas del error log, 7.4 MB
+    // acumulados, y el unico slot serie (DEFAULT_CONCURRENCY=1) quemado en cada
+    // llamada a herramienta. Retirarlo no pierde funcionalidad: por esta via el
+    // hook nunca llego a ejecutarse ni una sola vez, solo a lanzar.
+    // NO le anadas un run() que delegue en handleStdinEnd: allow() haria
+    // process.exit(0) a media cadena y truncaria EN SILENCIO los tres hooks
+    // siguientes -- cambia un error ruidoso por una pantalla muerta nueva.
+    // El aviso de contexto lleva muerto desde que se registro aqui. Si se quiere
+    // de vuelta, va en un carril SPAWN (CHAIN_MAP), que es su contrato real.
     './session-logger.js',
     './dna-flywheel.js',
     './trace-emitter.js',
@@ -60,6 +81,20 @@ const EVENT_MAP = {
     './power-pack-reminder.js',
     './baseline-translator.js',
   ],
+
+  // COMPANIONS IN-PROCESS de las tres cadenas PreToolUse ya registradas en
+  // settings.json (Bash-chain, Edit-chain, Read-chain). El dispatcher ejecuta
+  // '<fam>-default' junto a '<fam>-chain' via require, asi que abrir la miga
+  // aqui cuesta ~0 procesos. Registrar un hook PreToolUse nuevo habria anadido
+  // un cold-start de Node (~250 ms) A CADA LLAMADA A HERRAMIENTA, y la latencia
+  // acumulada de la cadena es precisamente el cuelgue transversal que la miga
+  // viene a cerrar. Cobertura honesta: Bash, PowerShell, Write, Edit, MultiEdit,
+  // NotebookEdit, Read, Grep. NO cubre Agent ni WebFetch — esos no tienen cadena
+  // de dispatcher hoy, y preferi cobertura parcial gratis a cobertura total que
+  // empeora el sintoma.
+  'PreToolUse-Bash-default': ['./turn-boundary-breadcrumb.js'],
+  'PreToolUse-Edit-default': ['./turn-boundary-breadcrumb.js'],
+  'PreToolUse-Read-default': ['./turn-boundary-breadcrumb.js'],
   // In-process (require-based) bundles only. The Stop event is handled by
   // CHAIN_MAP below instead: those hooks are heterogeneous (one is Python)
   // and not all export run(), so they run as sequential CHILD processes
@@ -98,6 +133,17 @@ const PY_EXE = process.env.CLAUDE_PY_EXE || (function () {
 
 const CHAIN_MAP = {
   'Stop-chain': [
+    // FIRST in the chain and cheap: kills the three dead-screen closer classes
+    // (empty / passive-wait / intent-narration) before any heavy gate runs.
+    // Fail-open ABSOLUTE, never blocks the same session twice consecutively.
+    // Back-ported from LIVE 2026-08-31: it was wired into ~/.claude/hooks only,
+    // so canonical was NOT a superset and a canonical->live copy would have
+    // silently deleted the anti-dead-screen guard (T-HOOK-DISPATCHER-DRIFT-001
+    // cuts both ways — the mirror is only safe once canonical contains both).
+    // `critical` = runs before the pool opens, uncontended. See the PRIORITY
+    // LANE block in runChain for the measurement that forced it. 8000 ms because
+    // it now runs alone; solo it measures 644-1245 ms on a 7.6 MB transcript.
+    { exe: NODE_EXE, script: './closer-guard.js', timeoutMs: 8000, block: true, critical: true },
     { exe: NODE_EXE, script: './zero-issue-gate.js', timeoutMs: 70000, block: true },
     { exe: NODE_EXE, script: './kobiiclaw-autoresearch.js', timeoutMs: 30000 },
     { exe: NODE_EXE, script: './trace-flusher.js', timeoutMs: 15000 },
@@ -141,6 +187,12 @@ const CHAIN_MAP = {
     // indexer --all). Fail-open, ALWAYS exit 0, never blocks Stop; closes the
     // WRITE->READ loop the GK-12 Graph-First gate reads from.
     { exe: PY_EXE, script: '../skills/claude-power-pack/modules/graphify/session_writeback.py', timeoutMs: 8000 },
+    // Cross-project baseline (spec vault/specs/cross-project-baseline.md,
+    // Owner option B 2026-08-31). Refreshes vault/ceps/promoted.jsonl from the
+    // events THIS session wrote, so the next session in ANY project starts
+    // with a current baseline. Reads ~68 KB, writes 4 records; safe to run
+    // always, which is what "SIEMPRE" requires. Fail-open, never blocks Stop.
+    { exe: PY_EXE, script: '../skills/claude-power-pack/tools/ceps_promote_stop.py', timeoutMs: 8000 },
     // FD-07 Fable Learning Flywheel (SCS C82 EXECUTION-mode): at a FRONTIER
     // session's close (kclaude exports PP_FRONTIER_SESSION=1) read this session's
     // captured deltas from the PM-03 bus, classify/triage/writeback each
@@ -168,6 +220,56 @@ const CHAIN_MAP = {
     // Live only after Copy-Item canonical->live (T-HOOK-DISPATCHER-DRIFT-001).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_delta_stop.js', timeoutMs: 8000 },
   ],
+
+  // --- SessionEnd-chain (2026-09-15, Owner autorizo "sacar la contabilidad
+  // de la frontera de turno") --------------------------------------------
+  //
+  // POR QUE EXISTE. Medido sobre hook-dispatcher-errors.log (7.4 MB, ventana
+  // 2026-05-18 -> 2026-09-15): 15137 lineas ETIMEDOUT. Los tres primeros
+  // ofensores del Stop-chain son CONTABILIDAD, no seguridad, y corrian en el
+  // cierre de CADA turno de CADA repo:
+  //     session_writeback.py   712 timeouts @ 8000 ms
+  //     trace-flusher.js       488 timeouts @ 15000 ms
+  //     ads_sync.py            418 timeouts @ 6000 ms
+  // settings.json da al Stop un techo de 300 s, asi que la frontera de turno
+  // puede quedarse parada minutos: eso es la pantalla congelada que el Owner
+  // reporta de forma transversal. Un hook muerto en su deadline pierde su
+  // stdout y la cadena informa EXACTAMENTE lo que informa un pase limpio.
+  //
+  // ORDEN: no es alfabetico ni estetico, es una cadena de dependencias que ya
+  // estaba documentada en el Stop-chain y que hay que preservar entera:
+  //   ads_sync + session_writeback  escriben en el arbol de trabajo
+  //     -> session_delta_stop       LEE ese arbol (ver su nota "LAST in the
+  //                                 chain deliberately" en el Stop-chain)
+  //       -> learning-sentinel      LEE .claude/cache/learnings/ que produce
+  //                                 session_delta_stop
+  // Mover solo una parte rompe el pipeline de learnings EN SILENCIO: nada se
+  // pondria rojo, simplemente LEARNINGS_PENDING.md dejaria de aparecer.
+  //
+  // INERTE HASTA QUE SE CABLEE. Nada invoca este evento todavia, asi que no
+  // hay doble ejecucion. Para activarlo, el Owner (settings.json es suyo,
+  // self-mod bloqueado para el agente) hace DOS cambios en el bloque
+  // "SessionEnd" de ~/.claude/settings.json:
+  //   1. anadir una entrada que invoque:
+  //        node hook-dispatcher.js --event=SessionEnd-chain   (timeout: 120)
+  //   2. BORRAR la entrada standalone de learning-sentinel.js, que ahora vive
+  //      aqui dentro -- si se dejan las dos corre dos veces.
+  // Solo DESPUES de eso se retiran del Stop-chain las cuatro entradas
+  // duplicadas (doctrina de compactacion: aterrizar la superficie nueva con la
+  // vieja todavia presente, y borrar la vieja en un paso posterior).
+  //
+  // Los timeouts son generosos a proposito: aqui ya no bloquean un turno, solo
+  // el cierre de sesion, asi que el trabajo puede COMPLETARSE en vez de morir
+  // a medias -- que es la diferencia entre un grafo indexado y uno a medio
+  // escribir. Todos son fail-open / exit 0; ninguno lleva block:true.
+  'SessionEnd-chain': [
+    { exe: PY_EXE,   script: '../skills/claude-power-pack/tools/ads_sync.py', timeoutMs: 30000 },
+    { exe: PY_EXE,   script: '../skills/claude-power-pack/modules/graphify/session_writeback.py', timeoutMs: 60000 },
+    { exe: NODE_EXE, script: './trace-flusher.js', timeoutMs: 30000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_delta_stop.js', timeoutMs: 15000 },
+    { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 15000 },
+  ],
+
   // PreToolUse fork-storm fix (2026-05-21) — user explicitly authorized.
   // Root cause: settings.json registered 7 standalone PreToolUse hooks on
   // matcher=Bash and 9 on matcher=Edit|Write|*. Each `type:"command"`
@@ -187,7 +289,16 @@ const CHAIN_MAP = {
     // both now honored by runChain/mergeOutputs). Matcher Bash == chain matcher
     // Bash, so folding loses no coverage. Live-relative path (lives in
     // ~/.claude/hooks, same convention as the Stop-chain ./ entries).
-    { exe: NODE_EXE, script: './windows-bash-bridge-guard.js', timeoutMs: 5000, block: true },
+    // `critical`: this guard timing out is the Owner's cross-repo MSYS2 freeze.
+    // It failed open 12,237-timeouts-deep into a log nobody reads. Priority lane.
+    { exe: NODE_EXE, script: './windows-bash-bridge-guard.js', timeoutMs: 8000, block: true, critical: true },
+    // Blocks launching a packaged desktop build as a child of this shell. The app then inherits
+    // the Owner's console and prints its diagnostics into their working pane for as long as it
+    // runs -- Orca's (already rate-limited) `[pty] hidden-delivery gate ...` line landed there on
+    // 2026-09-08. `Start-Process` does NOT detach it; `explorer.exe <path>` re-parents it. This
+    // chain's settings matcher is "Bash|PowerShell" despite the chain's name, so PowerShell
+    // launches -- the ones that actually caused it -- are covered.
+    { exe: NODE_EXE, script: './gui-app-console-inherit-guard.js', timeoutMs: 5000, block: true },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/process-sandbox.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ovo-push-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
@@ -200,9 +311,21 @@ const CHAIN_MAP = {
     // file existed and was fully correct (fail-open, stdin-piped, no shell
     // injection) but was never registered anywhere -- absent from settings.json
     // AND from this dispatcher's chain map, so the 5 sealed cascade_prevention
-    // Hard Rules had zero live enforcement. Blocks via {continue:false,
-    // stopReason}, honored unconditionally by mergeOutputs (same shape as
-    // secret_firewall_gate.js below -- no `block:true` needed for this style).
+    // Hard Rules had zero live enforcement.
+    //
+    // 2026-09-04 -- SHAPE CORRECTED. This comment used to prescribe
+    // {continue:false, stopReason}. That shape does not deny a TOOL, it HALTS
+    // THE AGENT: the turn ends at the tool boundary with no assistant text, and
+    // the Stop chain never runs, so closer-guard.js (SILENT_TOOL_STOP) cannot
+    // see it. Measured as the cross-repo dead screen. Both this gate and
+    // secret_firewall_gate.js now deny via
+    // hookSpecificOutput.permissionDecision:'deny' -- the SAME shape this file
+    // synthesises for exit-2 gates ~400 lines below, and the shape whose
+    // recovery is already proven in practice by R1 anti-thrash. Enforcement is
+    // identical; only the dead screen is gone. Do NOT reintroduce
+    // {continue:false} in a per-tool safety gate: it means "stop the agent",
+    // which is never what such a gate intends.
+    // Two-way proof: hooks/_tests/test-cascade-deny-and-heredoc.js (8/8).
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/cascade_check_bash.js', timeoutMs: 5000 },
   ],
   'PreToolUse-Edit-chain': [
@@ -215,13 +338,37 @@ const CHAIN_MAP = {
     // swallowed that, post-fix it is honored too. secret_firewall_gate blocks
     // via {continue:false}, preserved by mergeOutputs. Verified: secret passes
     // pre-fix, blocks post-fix.
-    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/secret_firewall_gate.js', timeoutMs: 8000 },
-    { exe: NODE_EXE, script: './secret-scanner.js', timeoutMs: 5000 },
+    // `critical` (2026-09-15): these two ARE the HR-SECRET-001 boundary, and a
+    // timeout here fails OPEN -- the write lands with the credential in it and
+    // nothing surfaces. MEASURED in the last 3000 lines of hook-dispatcher-errors.log:
+    // secret_firewall_gate 31 ETIMEDOUT, secret-scanner 24, every one of them a
+    // timeout rather than a logic error. They are not slow: secret-scanner's
+    // ISOLATED median is 228 ms against a 5000 ms budget. They die because the host
+    // is starved (844 MB free of 32 GB when this was measured), and under starvation
+    // a 228 ms spawn takes longer than any budget you can write.
+    //
+    // The lane stays SMALL on purpose -- widen it and it becomes the pool, which
+    // test-priority-lane.js V-PL-POOL-STILL-CONCURRENT exists to refuse. The line
+    // that decides membership: a guard whose silent failure is UNSAFE, never one
+    // whose silent failure is merely noisy. anti-thrash and the advisories below
+    // are noisy; these two and the two anti-hang guards are unsafe.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/secret_firewall_gate.js', timeoutMs: 8000, critical: true },
+    { exe: NODE_EXE, script: './secret-scanner.js', timeoutMs: 8000, critical: true },
     { exe: NODE_EXE, script: './quality-gate.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './anti-thrash.js', timeoutMs: 5000 },
     { exe: NODE_EXE, script: './readonly-prompts-guard.js', timeoutMs: 3000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js', timeoutMs: 5000 },
-    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/zero-fiction-gate.js', timeoutMs: 5000 },
+    // TIMEOUT RAISED 5000 -> 9000 (2026-09-04). MEASURED: this hook takes ~5,094 ms
+    // against a 5,000 ms budget, so it was killed mid-flight on essentially every
+    // invocation -- which is what filled hook-dispatcher-errors.log with
+    // `spawnSync ETIMEDOUT` for this exact script. A gate that always times out is
+    // not a gate: its stdout never reaches mergeOutputs, so it charged ~5 s on EVERY
+    // Edit/Write while contributing no protection whatsoever.
+    //
+    // Generalises: A HOOK WHOSE RUNTIME EXCEEDS ITS OWN TIMEOUT IS INERT AND
+    // INVISIBLE -- full price, no result, and no failure surfaced anywhere the agent
+    // reads. Budget every gate against a MEASURED runtime, never a guessed one.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/zero-fiction-gate.js', timeoutMs: 9000 },
     { exe: NODE_EXE, script: './jobs-woz-gatekeeper.js', timeoutMs: 20000 },
     // Folded standalone PreToolUse Edit guards (PreToolUse-fold 2026-06-07).
     // Were top-level matcher=Write|Edit|MultiEdit entries (a subset of this
@@ -258,6 +405,15 @@ const CHAIN_MAP = {
   // translator) stays in-process; these 3 were separate top-level entries.
   // jit_skill_loader is Python -> PY_EXE child. grep exit(2) clean.
   'UserPromptSubmit-chain': [
+    // DEAD-CLOSER RECOVERY (2026-09-14, Jacobo). closer-guard.js is a Stop hook,
+    // and a turn that follows a USER INTERRUPT does not reach the Stop chain --
+    // measured: the guard BLOCKS the dead turn's exact bytes on replay, and its
+    // heartbeat never advanced across that turn. So the guard was correct and
+    // unreachable in precisely its highest-value case. This is the same event
+    // trap the file already carries for {continue:false} at ~line 234: CHECK A
+    // HOOK'S EVENT BEFORE ITS LOGIC. Runs FIRST so the correction reaches the
+    // model ahead of the other advisories. Never blocks the user's prompt.
+    { exe: NODE_EXE, script: './dead-closer-recovery.js', timeoutMs: 6000, critical: true },
     { exe: NODE_EXE, script: './correction-guard.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: './prd-keyword-sentinel.js', timeoutMs: 8000 },
     // D2A duplicate advisory (SCS C85 addendum, level-2 — NEVER blocks). Fires only
@@ -266,6 +422,29 @@ const CHAIN_MAP = {
     // builds. Silent on novel proposals and on use/extend/fix. Fail-open absolute.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/d2a_gate.js', timeoutMs: 12000 },
     { exe: PY_EXE, script: '../skills/claude-power-pack/tools/jit_skill_loader.py', timeoutMs: 12000 },
+  ],
+  // CHAIN DEADLINE DRILL (2026-09-15). Registered in NO settings.json event, so it
+  // is inert in production and can only be driven by
+  //   node hook-dispatcher.js --event=__deadline-drill-chain
+  // Synthetic subject by design: it represents the CLASS (fast critical guard +
+  // slow straggler) rather than today's offender, so it keeps asserting on the day
+  // jit_skill_loader gets fast and cannot be fixed out from under the assertion.
+  // Driven by hooks/tests/test-chain-deadline.js, both poles.
+  // Named for the REAL family on purpose: familyOf() matches by prefix, so this
+  // drill travels the same additionalContext routing the production chain uses.
+  // A drill on a synthetic family name proved only that stranded text lands in
+  // systemMessage, which is not the claim.
+  'UserPromptSubmit-deadline-drill-chain': [
+    { exe: NODE_EXE, script: './tests/fixtures/drill-fast-critical.js', timeoutMs: 5000, critical: true },
+    { exe: NODE_EXE, script: './tests/fixtures/drill-slow-straggler.js', timeoutMs: 25000 },
+  ],
+  // Positive control for the same drill: identical shape, everything in budget.
+  // Carries NO CHAIN_DEADLINE_MS entry, so it takes the wait-for-everything path
+  // and proves the pool still delivers -- otherwise a dispatcher that dropped
+  // every pooled hook unconditionally would pass the red case and look correct.
+  'UserPromptSubmit-deadline-drill-control-chain': [
+    { exe: NODE_EXE, script: './tests/fixtures/drill-fast-critical.js', timeoutMs: 5000, critical: true },
+    { exe: NODE_EXE, script: './tests/fixtures/drill-pooled-fast.js', timeoutMs: 5000 },
   ],
   // PostToolUse matcher=Bash standalone fold (hub-fold 2026-06-04). Post-hoc
   // hooks; none block. kg-sync-hook (matcher Write|Edit) stays standalone.
@@ -277,27 +456,274 @@ const CHAIN_MAP = {
   ],
 };
 
-// Run a chain of sub-hooks as sequential, shell-free child processes.
+// --- Per-chain concurrency (LATENCY FIX 2026-09-04) -----------------------
+// SEQUENTIAL (1) was the original contract and remains the DEFAULT: a chain whose
+// hooks share mutable state must never interleave.
+//
+// WHY THIS MAP EXISTS -- measured on this host, real transcript, each chain driven
+// exactly as the harness drives it and wall-clocked:
+//   Stop-chain              54,907 ms   (fires on EVERY turn-end)
+//   PreToolUse-Edit-chain    ~10,000 ms (fires on EVERY Edit/Write)
+//   PreToolUse-Bash-chain     ~5,800 ms
+//   PreToolUse-Read-chain     ~1,400 ms
+// Sequential spawnSync makes a chain cost SUM(hooks), never MAX(hooks). A session
+// with 50 edits + 100 reads + 30 shell calls paid ~13.5 MINUTES of pure hook
+// overhead on top of ~55 s at every turn-end. The Owner reported this cross-repo as
+// "se queda colgado" and the estate spent months attributing it to the MSYS2 Bash
+// bridge. It was never Bash. It is this loop -- and because ~/.claude/hooks is
+// host-wide, it reproduced in EVERY repository, which was itself the clue: a symptom
+// present in all repos lives in what all repos SHARE.
+//
+// Only chains whose hooks are independent reporters/gates are raised; each was
+// checked for shared-file writes and they write distinct paths. Bounded, not
+// unbounded: the whole point of the 2026-05-21 fold was to stop a fork storm, and
+// ~25 concurrent spawns would recreate the exact failure this dispatcher prevents.
+// 4 holds the spawn ceiling at the old per-matcher level while cutting wall time to
+// roughly SUM/4.
+// Tuned by measurement, not taste. The 2026-05-21 fork-storm that motivated the
+// fold was an MSYS2 bash mount-table collapse -- it needed BASH wrappers, and every
+// spawn here is `shell:false`, so no bash.exe is ever created. The real ceiling is
+// therefore memory (~40 MB per node child), not the mount table. Stop-chain carries
+// ~25 hooks so it gets the widest lane; the per-tool-call chains are shorter and
+// fire far more often, so they stay narrower to keep peak spawn count low.
+const CHAIN_CONCURRENCY = {
+  'Stop-chain': 8,
+  // UserPromptSubmit-chain had NO entry, so it fell to DEFAULT_CONCURRENCY = 1 and
+  // cost SUM. See CHAIN_DEADLINE_MS directly below for the measurement that forced
+  // both this line and the deadline: sequential, this chain overran the harness
+  // ceiling on an ORDINARY prompt and every injection it produced was discarded.
+  'UserPromptSubmit-chain': 4,
+  'PreToolUse-Edit-chain': 6,
+  'PreToolUse-Bash-chain': 4,
+  'PreToolUse-Read-chain': 3,
+  'PostToolUse-Bash-chain': 4,
+};
+const DEFAULT_CONCURRENCY = 1;
+
+// --- CHAIN DEADLINE (2026-09-15, Jacobo) ----------------------------------
+// The harness gives each registered hook command a timeout in settings.json. A
+// dispatcher killed AT that deadline loses ALL of its stdout, and the chain then
+// reports EXACTLY what a clean pass reports -- the failure mode this file already
+// documents for individual hooks, one level up, where it takes the whole chain.
+//
+// MEASURED on this host, real payload, driven as the harness drives it:
+//   UserPromptSubmit-chain  15,173 ms   vs a 15,000 ms ceiling  -> killed, output lost
+//   per-hook: dead-closer-recovery 2,181 | correction-guard 2,713
+//             prd-keyword-sentinel 2,856 | d2a_gate 3,386 | jit_skill_loader 11,354
+//
+// So `dead-closer-recovery` finished its rescue at 2.2 s and had its output held
+// hostage by a hook taking five times longer. It logged fired:true, it SPENT its
+// one-shot crumb, and the FRONTERA DE TURNO text reached nobody -- which is the
+// third rung of rules/guard-event-reachability.md: a guard that fires and cannot
+// be heard. Every UserPromptSubmit injector in this estate was mute the same way
+// (AKOS, power-pack-reminder, jit_skill_loader), while PreToolUse injectors on the
+// same dispatcher arrived fine. That sibling contrast is what acquits the harness.
+//
+// Concurrency alone was NOT enough: it lands ~13.6 s against 15 s, a 9% margin on
+// a host whose load varies, and it leaves the hostage relationship intact. The
+// deadline removes it -- critical hooks run first and uncontended, and whatever
+// has settled is EMITTED even if the rest is still running. Stragglers are
+// abandoned and REAPED (see LIVE_CHILDREN), never orphaned.
+//
+// Values are the settings.json timeout MINUS a margin for merge+write+exit.
+// A chain with no entry keeps the old behaviour: wait for everything.
+// ONE ENTRY, DELIBERATELY. The first version of this table also carried the three
+// PreToolUse chains at 8500 ms, on a ceiling I had ASSUMED rather than measured.
+// Driven for sixty seconds it produced, repeatedly:
+//   [PreToolUse-Edit-chain] CHAIN-DEADLINE-ABANDONED before pool
+//       critical lane used 10845ms of 8500ms
+//   [PreToolUse-Bash-chain] CHAIN-DEADLINE-ABANDONED after 8500ms
+//       still running: quality-skill-gate, rtk-rewrite, graph_first_gate, ...
+// i.e. the CRITICAL lane alone overran the budget, and the abandoned members
+// included zero-fiction-gate and quality-skill-gate. On those chains the critical
+// lane IS the HR-SECRET-001 boundary (secret_firewall_gate, secret-scanner) and a
+// block:true gate that is abandoned FAILS OPEN -- the write lands with the
+// credential in it. A deadline is safe on an ADVISORY chain and is a security
+// regression on a BLOCKING one, and no measurement justified adding them.
+// Any future entry here needs its own wall-clock measurement AND an argument
+// about what failing open on that chain costs.
+const CHAIN_DEADLINE_MS = {
+  'UserPromptSubmit-chain': 11500,   // settings.json timeout 15 s; measured 15,173 -> 6,595
+  'UserPromptSubmit-deadline-drill-chain': 1500,  // drill only; in no settings.json event
+};
+
+// One sub-hook as a shell-free child process. Resolves (never rejects) to a
+// spawnSync-SHAPED record {status, stdout, stderr, error} so the ordered reducer
+// below is byte-for-byte the logic the sequential version used.
+// Every child currently in flight. Exists so the CHAIN DEADLINE below can ABANDON
+// a straggler without ORPHANING it: process.exit(0) does not reap children, and
+// this estate has already paid for that once -- 168 node.exe alive with a dead
+// parent and kernelMs=userMs=0, i.e. created and never resumed, which is
+// indistinguishable from a clean finish (memory: never-resumed-grandchild-leak).
+// An abandoned hook must die, not linger.
+const LIVE_CHILDREN = new Set();
+
+function reapLiveChildren() {
+  for (const c of LIVE_CHILDREN) {
+    try { c.kill(); } catch (_) { /* already gone */ }
+  }
+  LIVE_CHILDREN.clear();
+}
+
+function runStep(step, rawStdin) {
+  return new Promise((resolve) => {
+    const abs = path.join(__dirname, step.script);
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+    const done = (res) => {
+      if (settled) return;
+      settled = true;
+      if (child) LIVE_CHILDREN.delete(child);
+      resolve(res);
+    };
+
+    let child;
+    try {
+      child = spawn(step.exe, [abs], { shell: false, windowsHide: true });
+      LIVE_CHILDREN.add(child);
+    } catch (e) { return done({ error: e, status: null, stdout: '', stderr: '' }); }
+
+    // Mirror spawnSync's `timeout`: kill the child and surface an ETIMEDOUT error.
+    const timer = setTimeout(() => {
+      try { child.kill(); } catch (_) { /* already gone */ }
+      done({ error: new Error('ETIMEDOUT after ' + step.timeoutMs + 'ms'), status: null, stdout, stderr });
+    }, step.timeoutMs);
+
+    const CAP = 8 * 1024 * 1024;               // same ceiling as the old maxBuffer
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (d) => { if (stdout.length < CAP) stdout += d; });
+    child.stderr.on('data', (d) => { if (stderr.length < CAP) stderr += d; });
+    child.on('error', (e) => { clearTimeout(timer); done({ error: e, status: null, stdout, stderr }); });
+    child.on('close', (code) => { clearTimeout(timer); done({ error: null, status: code, stdout, stderr }); });
+
+    // A hook that exits before reading stdin makes this EPIPE. Normal; it must not
+    // take the dispatcher down with it.
+    try {
+      child.stdin.on('error', () => { /* EPIPE: child closed stdin early */ });
+      child.stdin.end(rawStdin);
+    } catch (_) { /* fail-open */ }
+  });
+}
+
+// Bounded worker pool. Results land at their ORIGINAL index so downstream merge
+// order is identical to the sequential run regardless of completion order.
+// mergeOutputs is last-wins per key, so a reordered outputs[] would silently change
+// WHICH hook's `reason` survives -- determinism here is load-bearing, not tidiness.
+async function runPool(items, limit, worker) {
+  const results = new Array(items.length);
+  let next = 0;
+  const lanes = new Array(Math.max(1, Math.min(limit, items.length))).fill(0).map(async () => {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await worker(items[i]);
+    }
+  });
+  await Promise.all(lanes);
+  return results;
+}
+
+// Run a chain of sub-hooks as shell-free child processes, up to N concurrently.
 // Returns { outputs:[parsedJSON], blocked:bool, blockStderr:string }.
-function runChain(event, chain, rawStdin) {
+async function runChain(event, chain, rawStdin) {
+  const chainStart = Date.now();   // CHAIN DEADLINE clock; see CHAIN_DEADLINE_MS
   const outputs = [];
   let blocked = false;
   const blockStderr = [];
+
+  // Pre-flight exactly as before: a missing script/interpreter is logged and
+  // skipped rather than spawned.
+  const runnable = [];
   for (const step of chain) {
     const abs = path.join(__dirname, step.script);
     if (!fs.existsSync(abs)) { logError(event, step.script, new Error('script missing')); continue; }
     if (!fs.existsSync(step.exe)) { logError(event, step.script, new Error('interpreter missing: ' + step.exe)); continue; }
-    let r;
-    try {
-      r = spawnSync(step.exe, [abs], {
-        input: rawStdin,
-        timeout: step.timeoutMs,
-        shell: false,            // <-- the fix: never route a sub-hook through bash
-        windowsHide: true,
-        encoding: 'utf8',
-        maxBuffer: 8 * 1024 * 1024,
-      });
-    } catch (e) { logError(event, step.script, e); continue; }
+    runnable.push(step);
+  }
+
+  // --- PRIORITY LANE (2026-09-14, Jacobo) ----------------------------------
+  // MEASURED on this host from ~/.claude/logs/hook-dispatcher-errors.log:
+  // 12,237 ETIMEDOUT entries, and 38 of closer-guard's 45 timeouts land in the
+  // SAME SECOND as another hook's timeout. Three hooks of one chain died inside
+  // a 7 ms window, twice in one minute. That is HOST SATURATION at the turn
+  // boundary, not a slow hook -- closer-guard measures 644-1245 ms solo against
+  // its own 5000 ms budget, i.e. 4x headroom that evaporates under the fan-out.
+  //
+  // Every timeout FAILS OPEN AND SILENT: the child is killed, its stdout never
+  // reaches mergeOutputs, and the chain then reports exactly what a clean pass
+  // reports. So the two guards whose failure IS the Owner's cross-repo hang were
+  // being switched off by the crowd they share a pool with:
+  //   - windows-bash-bridge-guard.js -> banned Bash call issues -> MSYS2 freeze
+  //   - closer-guard.js              -> dead-screen closer passes -> frozen pane
+  // A gate that cannot fire is indistinguishable from a gate that passed
+  // (rules/instrument-before-claim.md). These two had been failing into a 6 MB
+  // log nobody reads, which is why "the guard is wired" stayed true and useless.
+  //
+  // The fix is SCHEDULING, not budget. A step marked `critical` runs BEFORE the
+  // pool opens, sequentially, on an uncontended host. Raising timeouts would
+  // only move the cliff; deleting hooks is the Owner's call, not the
+  // dispatcher's. Ordering into `settled` is by ORIGINAL index because
+  // mergeOutputs is last-wins per key -- see the note above runPool.
+  const limit = CHAIN_CONCURRENCY[event] || DEFAULT_CONCURRENCY;
+  const settled = new Array(runnable.length);
+
+  const critIdx = [];
+  const restIdx = [];
+  runnable.forEach((step, i) => (step.critical ? critIdx : restIdx).push(i));
+
+  for (const i of critIdx) {
+    settled[i] = await runStep(runnable[i], rawStdin);
+    // A critical guard that COULD NOT RUN is not a clean pass, and until now it
+    // read as one. Distinct marker so a liveness sweep can grep for the class
+    // rather than for one script's name.
+    if (settled[i] && settled[i].error) {
+      logError(event, 'CRITICAL-GUARD-INERT ' + runnable[i].script, settled[i].error);
+    }
+  }
+
+  // CHAIN DEADLINE. Results land in `settled` AS THEY COMPLETE rather than only at
+  // pool exit, so that when the deadline fires the work already done is still
+  // emitted. Without this the whole chain's stdout dies with the slowest member.
+  const restSteps = restIdx.map((i) => runnable[i]);
+  const poolDone = runPool(restSteps, limit, (step) => {
+    const orig = restIdx[restSteps.indexOf(step)];
+    return runStep(step, rawStdin).then((r) => { settled[orig] = r; return r; });
+  });
+
+  const budget = CHAIN_DEADLINE_MS[event];
+  const left = budget ? budget - (Date.now() - chainStart) : 0;
+
+  if (budget && left > 0) {
+    let timer;
+    const expired = new Promise((res) => { timer = setTimeout(() => res(false), left); });
+    const finished = await Promise.race([poolDone.then(() => true), expired]);
+    clearTimeout(timer);
+    if (!finished) {
+      // Its own class, greppable, never collapsed into a clean pass -- the same
+      // rule this file applies to CRITICAL-GUARD-INERT. A chain that ran out of
+      // wall clock and one that had nothing to say must not read alike.
+      const lost = restIdx.filter((i) => !settled[i]).map((i) => runnable[i].script);
+      logError(event, 'CHAIN-DEADLINE-ABANDONED after ' + budget + 'ms',
+        new Error('still running: ' + (lost.join(', ') || '(none)')));
+      reapLiveChildren();
+    }
+  } else if (budget) {
+    // The critical lane alone consumed the budget. Emit what it produced rather
+    // than starting a pool whose output cannot survive.
+    logError(event, 'CHAIN-DEADLINE-ABANDONED before pool',
+      new Error('critical lane used ' + (Date.now() - chainStart) + 'ms of ' + budget + 'ms'));
+    reapLiveChildren();
+  } else {
+    await poolDone;
+  }
+
+  // Ordered reduction -- identical to the sequential loop's body.
+  for (let idx = 0; idx < runnable.length; idx++) {
+    const step = runnable[idx];
+    const r = settled[idx];
+    if (!r) continue;
     if (r.error) { logError(event, step.script, r.error); }
     if (r.stdout) {
       const s = r.stdout.trim();
@@ -313,12 +739,45 @@ function runChain(event, chain, rawStdin) {
     // permissionDecision:deny; Stop -> decision:block).
     if (r.status === 2) {
       blocked = true;
-      if (r.stderr) blockStderr.push(String(r.stderr).trim());
+      if (r.stderr) {
+        blockStderr.push(stderrIsSafeToSurface(step.script)
+          ? String(r.stderr).trim()
+          : '[' + path.basename(String(step.script)) + ' blocked; its stderr is '
+            + 'withheld because this gate can echo matched content (HR-SECRET-002)]');
+      }
     } else if (r.status && r.status !== 0) {
       logError(event, step.script, new Error('exit ' + r.status + (r.stderr ? ': ' + String(r.stderr).slice(0, 400) : '')));
     }
   }
   return { outputs, blocked, blockStderr: blockStderr.join('\n') };
+}
+
+/**
+ * May this gate's stderr be shown to the agent verbatim?
+ *
+ * ORIGIN (2026-09-05, measured). main() replaced EVERY exit-2 gate's stderr
+ * with the generic line "Blocked by a PreToolUse gate (exit 2). See hook
+ * output." — and there is no hook output, because the stderr that WAS the
+ * output had just been dropped. The agent therefore learns that it was blocked
+ * but not why, and does the only thing left: retries blind. Measured this
+ * session — three consecutive blocked writes to one scratchpad file, each
+ * reported with no reason, before the cause (anti-thrash R1, count=3) was found
+ * by reading a 32 MB log. anti-thrash.js writes a complete, secret-free,
+ * four-step recovery to stderr; nobody had ever seen it. 6,847 blocks are
+ * recorded in that log, so this was mute across the whole estate.
+ *
+ * The redaction rule it came from is CORRECT and is preserved: a secret gate's
+ * stderr can contain the matched value. But it was written for those gates and
+ * applied as a BLANKET, which is this codebase's own recurring shape — a
+ * policy sized for one member of a set and imposed on all of them.
+ *
+ * DEFAULT DENY: an unlisted gate stays withheld. To surface a new gate's
+ * stderr, prove it cannot echo file content or user input, then add it here.
+ * The listed five emit only text this repo authored.
+ */
+function stderrIsSafeToSurface(script) {
+  return /(?:^|[\\/])(?:anti-thrash|windows-bash-bridge-guard|agent-solo-guard|readonly-prompts-guard|session-file-guard)\.js$/
+    .test(String(script || ''));
 }
 
 // --- Helpers ---
@@ -571,7 +1030,11 @@ function readStdin(timeoutMs) {
 // Exported BEFORE the IIFE so `require('./hook-dispatcher.js')` succeeds
 // without triggering the CLI path. The IIFE below is gated by
 // `require.main === module` so test imports do NOT block on stdin.
-module.exports = { sanitizeForSchema, familyOf, mergeOutputs };
+// `runChain` is exported for tests/test-priority-lane.js. The priority-lane
+// partition is invisible from outside -- a chain with a broken lane returns the
+// same outputs as a working one -- so the only instrument that can tell them
+// apart is an ORDERING assertion, and that needs the function itself.
+module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain };
 
 // --- Main (CLI path only — skipped when required as a module) ---
 if (require.main === module) (async () => {
@@ -580,7 +1043,7 @@ if (require.main === module) (async () => {
   // --- Child-process chain path (Stop event — fork-storm-safe) ---
   if (event && CHAIN_MAP[event]) {
     const rawIn = await readStdin(3000);
-    const { outputs, blocked, blockStderr } = runChain(event, CHAIN_MAP[event], rawIn || '');
+    const { outputs, blocked, blockStderr } = await runChain(event, CHAIN_MAP[event], rawIn || '');
     // COMPANION IN-PROCESS BUNDLE (2026-06-04): a "<fam>-chain" event ALSO runs
     // its "<fam>-default" EVENT_MAP bundle IN-PROCESS (require, ~0 extra spawn)
     // and merges the outputs. Empirically (live timing): 2 in-process UPS hooks
@@ -601,16 +1064,29 @@ if (require.main === module) (async () => {
     if (blocked) {
       const fam = familyOf(event);
       if (fam === 'PreToolUse') {
-        // exit-2 from a PreToolUse gate = DENY the tool. Use a GENERIC reason
-        // -- never echo raw stderr: a secret gate's stderr can contain the
-        // matched value (HR-SECRET-002). The redaction-safe block detail comes
-        // from secret_firewall_gate's own stdout {continue:false, stopReason}.
+        // exit-2 from a PreToolUse gate = DENY the tool.
+        //
+        // The reason now CARRIES the blocking gate's stderr, already redacted
+        // per-gate by stderrIsSafeToSurface() in runChain: gates that can echo
+        // a matched secret contribute a withheld-marker instead of their text,
+        // so HR-SECRET-002 still holds. What changed is that the four gates
+        // whose stderr is authored recovery prose no longer block in silence.
+        //
+        // The old text said "See hook output." while dropping the only hook
+        // output there was. A denial the agent cannot read is a denial it can
+        // only answer by retrying blind — which is how three identical blocked
+        // writes happened this session before anyone knew the rule was R1
+        // anti-thrash. A gate that cannot explain itself trains the exact
+        // behaviour it exists to stop.
         merged.hookSpecificOutput = Object.assign(
           { hookEventName: 'PreToolUse' }, merged.hookSpecificOutput || {},
           {
             permissionDecision: 'deny',
-            permissionDecisionReason:
-              'Blocked by a PreToolUse gate (exit 2). See hook output.',
+            permissionDecisionReason: blockStderr
+              ? 'Blocked by a PreToolUse gate (exit 2).\n\n' + blockStderr
+              : 'Blocked by a PreToolUse gate (exit 2), which emitted no reason. '
+                + 'Do NOT retry the same call: identify the gate in '
+                + '~/.claude/state/ before trying again.',
           });
       } else {
         merged.decision = 'block';
