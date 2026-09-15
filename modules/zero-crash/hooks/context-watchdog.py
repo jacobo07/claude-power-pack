@@ -39,6 +39,13 @@ from pathlib import Path
 # Thresholds (BL-0033)
 THRESHOLD_SNAPSHOT_PCT = 60
 THRESHOLD_ADVISORY_PCT = 70
+# Rearm floor (spec vault/specs/gsd-autonomous-autocompact.md, gap B). Tier 2
+# is debounced once per session; a long unattended run needs it to fire at
+# EVERY crossing, not the first. A reading this far below the advisory
+# threshold is only reachable through a compaction or a fresh context, so it
+# is the signal that the debounce may be cleared. Kept well under
+# THRESHOLD_SNAPSHOT_PCT so the rearm band and the snapshot band cannot touch.
+THRESHOLD_REARM_PCT = 45
 
 ROOT = Path.home() / ".claude" / "skills" / "claude-power-pack"
 LEDGER_PATH = ROOT / "vault" / "sleepy" / "context_snapshots.jsonl"
@@ -102,6 +109,22 @@ def _read_metrics(session_id: str) -> dict | None:
 def _flag_exists(session_id: str, template: str) -> bool:
     flag = Path(tempfile.gettempdir()) / template.format(session_id=session_id)
     return flag.exists()
+
+
+def _clear_flag(session_id: str, template: str) -> bool:
+    """Delete a debounce flag. True when one was actually removed.
+
+    Returning the outcome rather than None keeps "rearmed" distinguishable
+    from "there was nothing to rearm" — the gate asserts on the difference.
+    """
+    flag = Path(tempfile.gettempdir()) / template.format(session_id=session_id)
+    try:
+        flag.unlink()
+        return True
+    except FileNotFoundError:
+        return False
+    except Exception:
+        return False
 
 
 def _set_flag(session_id: str, template: str) -> None:
@@ -315,6 +338,66 @@ def _dump_telemetry(atomic_write, session_id: str, used_pct, cwd: str,
         return None
 
 
+def _read_autorun_marker(session_id: str):
+    """Return the autonomous-run marker for this session, or None.
+
+    Spec vault/specs/gsd-autonomous-autocompact.md. The marker is written by
+    the launcher and names the command to re-issue after a compaction, so a
+    long unattended run continues instead of ending at the compact.
+
+    The marker's contract lives in tools/gsd_autorun_marker.py and is IMPORTED,
+    never re-implemented here: a second copy of validate_command() would be
+    correct the day it was written and wrong the day either side moved. Fully
+    fail-open -- any resolution or parse failure yields None, and tier 2 then
+    behaves exactly as it did before this clause existed.
+    """
+    try:
+        import importlib.util
+        here = Path(__file__).resolve()
+        candidates = [
+            here.parents[3] / "tools" / "gsd_autorun_marker.py",
+            Path.home() / ".claude" / "skills" / "claude-power-pack" / "tools"
+            / "gsd_autorun_marker.py",
+        ]
+        for path in candidates:
+            if not path.is_file():
+                continue
+            spec = importlib.util.spec_from_file_location(
+                "_ctxwd_autorun_marker", path)
+            if spec is None or spec.loader is None:
+                continue
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            return mod.read_marker(session_id)
+    except Exception:
+        pass
+    return None
+
+
+def _resume_clause(marker) -> str:
+    """The tier-2 sentence that keeps an autonomous run going, or "".
+
+    Pure by design. The full tier-2 path writes checkpoints, drops the
+    SendKeys trigger flag and spawns the daemon, so a gate cannot drive it
+    without dispatching a real compaction into the Owner's session -- the
+    instrument would consume the system it measures. Keeping the clause here,
+    free of side effects, is what makes both poles testable: no marker returns
+    the empty string, so the message stays byte-identical for an ordinary
+    session, and that negative control is the pinned one.
+    """
+    if not marker:
+        return ""
+    return (
+        " AN AUTONOMOUS RUN IS IN FLIGHT for this session "
+        f"(phase={marker.get('phase')}). Compacting is the correct move -- do "
+        "NOT wrap up and do NOT stop. After the compaction lands, your FIRST "
+        "action is to re-issue the run by emitting exactly "
+        f"`{marker.get('resume_command')}` as a single trailing line, so the "
+        "remaining phases continue. Clear the marker with "
+        "tools/gsd_autorun_marker.py --clear when the run finishes."
+    )
+
+
 def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str):
     """Drop the SendKeys-daemon trigger flag (Owner 1c, zero-keystroke).
     The detached PS daemon polls ~/.claude/hooks/auto-compact-trigger.flag
@@ -500,7 +583,18 @@ def run(event: dict) -> dict:
         return {}
 
     used_pct = metrics.get("used_pct")
-    if not isinstance(used_pct, (int, float)) or used_pct < THRESHOLD_SNAPSHOT_PCT:
+    if not isinstance(used_pct, (int, float)):
+        return {}
+
+    # Rearm (spec gsd-autonomous-autocompact.md, gap B). MUST run before the
+    # snapshot-threshold return below: a post-compaction reading is by
+    # definition under that floor, so a rearm placed after it could never fire
+    # and tier 2 would stay debounced for the rest of the session, which is
+    # exactly the single-cycle behaviour this closes.
+    if used_pct < THRESHOLD_REARM_PCT:
+        _clear_flag(session_id, ADVISORY_FLAG)
+
+    if used_pct < THRESHOLD_SNAPSHOT_PCT:
         return {}
 
     try:
@@ -541,6 +635,12 @@ def run(event: dict) -> dict:
         #    daemon side; harmless if a previous one is still running.
         daemon_spawned = _spawn_daemon()
 
+        # Autonomous-run awareness (spec gsd-autonomous-autocompact.md, gap C).
+        # Without a marker this is the empty string and the message below is
+        # byte-identical to what it has always been -- the negative control the
+        # gate pins, so an ordinary session cannot be changed by this clause.
+        resume_clause = _resume_clause(_read_autorun_marker(session_id))
+
         message = (
             f"CONTEXT THRESHOLD CROSSED — {used_pct}% used (>= 70%). "
             f"Pre-compact vault checkpoint WRITTEN by tier-2 kclear-equivalent: "
@@ -557,7 +657,7 @@ def run(event: dict) -> dict:
             "no markdown. Per BL-0003 the model itself cannot auto-dispatch the "
             "slash command; emitting the pre-filled line is the model's "
             "contribution to the chain. vault/progress.md remains the resume "
-            "anchor if compact is interrupted."
+            "anchor if compact is interrupted." + resume_clause
         )
         # decision="block" + reason re-invokes the model with reason as injected
         # context — the BL-0033 mechanism; Stop schema forbids
