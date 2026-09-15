@@ -32,7 +32,15 @@ from pathlib import Path
 from typing import Optional
 
 HOME = Path(os.path.expanduser("~"))
-PP_ROOT = HOME / ".claude" / "skills" / "claude-power-pack"
+# The store belongs to the checkout this module was imported FROM, not to
+# whichever checkout happens to sit under $HOME. Hardcoding the installed
+# path meant a copy running from a git worktree wrote its events into the
+# installed corpus: test_capture_liveness snapshotted and restored the
+# store beside it, passed its byte-identical-restore gate, and left the
+# rows it injected in production. Two PowerShell and two Read events in
+# the live corpus arrived exactly that way, and `capture-gates` failed
+# because the test watched one file while this module wrote another.
+PP_ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = PP_ROOT / "vault" / "ceps" / "schema.json"
 EVENTS_PATH = PP_ROOT / "vault" / "ceps" / "events.jsonl"
 DRAFTS_DIR = PP_ROOT / "vault" / "ceps" / "drafts"
@@ -419,6 +427,11 @@ def record_error(
             "admission_status": "valid",
             "admission_note": "",
             "admission_rev": ADMISSION_REV,
+            # Which caller produced this row. The rejection ledger has
+            # carried this since D1; events did not, so a row written by a
+            # test suite was indistinguishable from one a real failure
+            # produced, and no consumer could weigh them differently.
+            "origin": os.environ.get("CEPS_ORIGIN", "direct"),
             "affected_modules": affected_modules or [],
             "evidence_path": evidence_path,
             "confidence": confidence,

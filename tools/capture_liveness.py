@@ -22,15 +22,36 @@ Three rules, each learned from a failure this repo already paid for:
 3. **Zero fires is not proof of health.** An unwired producer fires zero
    times forever and would pass on divergence alone, so registration in
    the live settings.json is checked independently (feedback_zero_cannot_fall).
+4. **Registration presence is not registration coverage.** Rule 3 asked
+   only whether the hook's name appears anywhere in settings.json. It does
+   -- and the producer was still blind to three quarters of its subject,
+   because the entry carrying that name matched `Bash` while the hook's own
+   code declares `Bash` AND `PowerShell`, and host doctrine routes python,
+   pytest, git, npm, node, mix and gh through PowerShell. Measured
+   2026-08-27 over 98 session transcripts (789 MB): PowerShell is 11126 of
+   14744 command-tool invocations, 75.5%. The producer observed the
+   remaining 24.5% and every component reported healthy, exactly as in the
+   80-day outage that created rules 1-3. So the SURFACES a producer
+   declares are compared against the surfaces its registration actually
+   matches, and a shortfall is a failure.
 
-Exit 0 = every AUTOMATIC producer is registered and recording.
-Exit 1 = at least one is unwired, or fired without recording.
+   Declared surfaces are DISCOVERED from the hook's own source, never
+   listed in the table below: an audit whose subjects are enrolled by hand
+   measures memory, not reality (PR-COVERAGE-BY-CONSTRUCTION-001). If the
+   declaration cannot be read, the verdict is COVERAGE-UNVERIFIABLE and the
+   gate FAILS -- unknown coverage must not resolve to fine.
+
+Exit 0 = every AUTOMATIC producer is registered, covering its declared
+         surfaces, and recording.
+Exit 1 = at least one is unwired, narrowly registered, or fired without
+         recording.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -52,6 +73,12 @@ PRODUCERS = [
         "name": "bug-hunter-ceps-bridge",
         "trigger": AUTOMATIC,
         "hook_marker": "bug-hunter-ceps-bridge.js",
+        "event": "PostToolUse",
+        # The INSTALLED file, which is what settings.json invokes -- not a
+        # worktree-relative sibling. A coverage claim about the running
+        # system must be read from the running system
+        # (T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001).
+        "hook_source": PP_ROOT / "hooks" / "bug-hunter-ceps-bridge.js",
         "fires": PP_ROOT / "vault" / "ceps" / "fires.jsonl",
         "sink": PP_ROOT / "vault" / "ceps" / "events.jsonl",
         "rejections": PP_ROOT / "vault" / "ceps" / "rejections.jsonl",
@@ -59,6 +86,23 @@ PRODUCERS = [
         # test suites, which reject invalid input by design.
         "rejection_origin": "hook",
         "note": "PostToolUse failure capture on Bash/PowerShell + harness sentinel",
+    },
+    {
+        # Not a producer of events -- a producer of BLOCKS. It is the sole
+        # live enforcement of HR-CASCADE-001..005, it accepts Bash AND
+        # PowerShell in its own code, and it is reachable only through the
+        # PreToolUse chain whose matcher is `Bash`. So HR-CASCADE-002,
+        # whose flagship pattern is `Remove-Item -Recurse -Force`, cannot fire on
+        # the only surface where that command is ever written.
+        # Enrolled here because coverage is measured for producers, and a
+        # guard is a producer whose output is a refusal.
+        "name": "cascade-check-bash",
+        "trigger": AUTOMATIC,
+        "hook_marker": "PreToolUse-Bash-chain",
+        "event": "PreToolUse",
+        "hook_source": PP_ROOT / "hooks" / "cascade_check_bash.js",
+        "sink": None,
+        "note": "HR-CASCADE-001..005 enforcement; blocks rather than records",
     },
     {
         "name": "mistake-ingest",
@@ -103,6 +147,18 @@ def _parse_ts(raw: str) -> datetime | None:
     return parsed
 
 
+def _accepted(origin: str) -> tuple:
+    """Origins that count as `origin`, including pre-field rows.
+
+    Events only began carrying `origin` on 2026-08-27; rows written before
+    that carry none. Excluding them outright would drop the corpus this
+    gate reasons over, so an absent origin is admitted as legacy -- stated
+    rather than silent, because it is the one hole a test-written row could
+    still slip through if it predates the field.
+    """
+    return (origin, None)
+
+
 def count_since(path: Path, cutoff: datetime, origin: str | None = None) -> int:
     """Rows in a .jsonl whose `ts` is at or after cutoff.
 
@@ -122,7 +178,7 @@ def count_since(path: Path, cutoff: datetime, origin: str | None = None) -> int:
             row = json.loads(line)
         except ValueError:
             continue
-        if origin is not None and row.get("origin") != origin:
+        if origin is not None and row.get("origin") not in _accepted(origin):
             continue
         ts = _parse_ts(row.get("ts", ""))
         if ts and ts >= cutoff:
@@ -166,6 +222,140 @@ def registered_markers() -> set[str]:
     return found
 
 
+# A hook's capture surface, as the hook's own source declares it. Parsed
+# rather than tabulated: widening the set in JS must not leave this gate
+# asserting yesterday's contract (PR-COVERAGE-BY-CONSTRUCTION-001).
+# Two spellings are in use here: a named Set, and an inline array tested
+# with .includes(tool_name). Recognising only the first would read a hook
+# that plainly declares both surfaces as UNVERIFIABLE -- and a gate that
+# cannot see a declaration reports the wrong reason for the right failure.
+_DECLARED_RES = (
+    re.compile(r"COMMAND_TOOLS\s*=\s*new\s+Set\(\s*\[(?P<body>[^\]]*)\]"),
+    re.compile(r"\[(?P<body>[^\]]*)\]\s*\.includes\(\s*"
+               r"(?:\w+\.)?tool_name"),
+)
+# Comments are stripped before matching. These hooks carry long historical
+# headers, and quoting a PRE-REPAIR declaration in one of them is idiomatic
+# here -- a first-match-wins search over raw text would then read the
+# narrower historical set as current and report COVERED. A narrower
+# declared set is the dangerous direction: it makes `declared - matched`
+# empty.
+_COMMENT_RES = (
+    re.compile(r"/\*.*?\*/", re.S),
+    re.compile(r"(?m)^\s*//.*$"),
+)
+# A body that is not a plain literal list -- a spread, a concat, a bare
+# identifier -- cannot be read as the complete set. Answering with the
+# literal fragment would UNDERSTATE it.
+_NON_LITERAL = re.compile(r"\.\.\.|\bconcat\b|(?<![\w'\"])[A-Za-z_]\w*"
+                          r"(?![\w'\"]*\s*['\"])")
+# Matchers admitting every tool: absent, empty, or a wildcard. Matchers
+# are regex-ish, so `.*` and `.+` are universal too -- reading them as the
+# literal tool name ".*" would report NARROW and drive the migration to
+# append `|PowerShell` to a pattern that already matched everything.
+_UNIVERSAL = {"", "*", ".*", ".+", "*.*"}
+
+
+def declared_surfaces(path: Path | None) -> set[str] | None:
+    """Tool names a hook's source says it handles. None = undeterminable."""
+    if not path or not Path(path).is_file():
+        return None
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    for stripper in _COMMENT_RES:
+        text = stripper.sub("", text)
+    found: list[set[str]] = []
+    for pattern in _DECLARED_RES:
+        for match in pattern.finditer(text):
+            body = match.group("body")
+            names = set(re.findall(r"['\"]([A-Za-z]\w*)['\"]", body))
+            quoted = re.sub(r"['\"][^'\"]*['\"]", "", body)
+            if not names or _NON_LITERAL.search(quoted):
+                continue
+            found.append(names)
+    if not found:
+        return None
+    if any(f != found[0] for f in found):
+        # Two different declarations in one file. Which is live is a
+        # judgement, and a coverage gate must not make one.
+        return None
+    return found[0]
+
+
+def registration_surfaces(marker: str,
+                         event: str | None = None) -> set[str] | None:
+    """Tool names the LIVE registrations carrying `marker` actually match.
+
+    Scoped to ONE event. Unioning across events is unsound: Stop,
+    SessionStart, SessionEnd and UserPromptSubmit entries carry no
+    `matcher` key at all, so a producer additionally wired to any of them
+    -- routine on this host -- would answer "universal" and its
+    PostToolUse capture surface could stay Bash-only forever while the
+    gate reported COVERED. That is the false-healthy verdict this whole
+    file exists to abolish, and it would have been restored silently.
+
+    None means a registration under THIS event is universal. An empty set
+    means the marker appears under this event nowhere.
+    """
+    try:
+        blob = json.loads(SETTINGS.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return set()
+    hooks = blob.get("hooks") or {}
+    scoped = {event: hooks.get(event) or []} if event else hooks
+    surfaces: set[str] = set()
+    for entries in scoped.values():
+        for entry in entries or []:
+            joined = " ".join(
+                str(h.get("command", "")) for h in entry.get("hooks") or [])
+            if marker not in joined.replace("\\", "/"):
+                continue
+            raw = entry.get("matcher")
+            if raw is None or str(raw).strip() in _UNIVERSAL:
+                return None
+            surfaces |= {p.strip() for p in str(raw).split("|") if p.strip()}
+    return surfaces
+
+
+def coverage_of(spec: dict) -> dict:
+    """Declared vs matched surfaces for one producer.
+
+    `state` is COVERED / NARROW / UNVERIFIABLE / NOT-APPLICABLE. Only a
+    producer naming a `hook_source` is held to a coverage contract; the
+    rest stay silent here rather than report a coverage they never claimed.
+    """
+    source = spec.get("hook_source")
+    marker = spec.get("hook_marker")
+    if not source or not marker:
+        return {"state": "NOT-APPLICABLE", "declared": None,
+                "matched": None, "uncovered": []}
+    declared = declared_surfaces(source)
+    if not declared:
+        return {"state": "UNVERIFIABLE", "declared": None,
+                "matched": None, "uncovered": []}
+    matched = registration_surfaces(marker, spec.get("event"))
+    if matched is None:          # a universal registration covers everything
+        return {"state": "COVERED", "declared": sorted(declared),
+                "matched": ["*"], "uncovered": []}
+    if not matched:
+        # Absent from settings.json entirely. `declared - set()` would read
+        # as NARROW and invite a migration to widen an entry that does not
+        # exist; the cause is different and so is the fix, which the
+        # `wired is False` arm below already reports. A verdict must not
+        # borrow another verdict's name.
+        return {"state": "UNREGISTERED", "declared": sorted(declared),
+                "matched": [], "uncovered": sorted(declared)}
+    uncovered = sorted(declared - matched)
+    return {
+        "state": "NARROW" if uncovered else "COVERED",
+        "declared": sorted(declared),
+        "matched": sorted(matched),
+        "uncovered": uncovered,
+    }
+
+
 def evaluate(window_days: int) -> dict:
     cutoff = _now() - timedelta(days=window_days)
     live = registered_markers()
@@ -176,9 +366,16 @@ def evaluate(window_days: int) -> dict:
         wired = None
         if marker:
             wired = any(marker in cmd for cmd in live)
+        cover = coverage_of(spec)
 
         fires = count_since(spec.get("fires"), cutoff)
-        records = count_since(spec.get("sink"), cutoff) if str(
+        # Filtered by origin, like rejections already were. Unfiltered,
+        # ONE row from a test suite or a manual `/ceps record` in the same
+        # window makes `records >= 1`, and the fires-without-records check
+        # -- the one born from the 63-fires/0-records outage -- never
+        # trips again.
+        records = count_since(spec.get("sink"), cutoff,
+                              origin=spec.get("rejection_origin")) if str(
             spec.get("sink", "")).endswith(".jsonl") else None
         rejected = count_since(spec.get("rejections"), cutoff,
                                origin=spec.get("rejection_origin"))
@@ -190,25 +387,50 @@ def evaluate(window_days: int) -> dict:
             "fires_in_window": fires if spec.get("fires") else None,
             "records_in_window": records,
             "rejections_in_window": rejected if spec.get("rejections") else None,
+            "coverage": cover["state"],
+            "declared_surfaces": cover["declared"],
+            "matched_surfaces": cover["matched"],
+            "uncovered_surfaces": cover["uncovered"],
             "sink_last_write": last_write(spec.get("sink")),
             "note": spec["note"],
             "verdict": "OK",
         }
 
         if spec["trigger"] == AUTOMATIC:
+            if cover["state"] == "NARROW":
+                row["verdict"] = "NARROW-REGISTRATION"
+                failures.append(
+                    f"{spec['name']}: registration matches "
+                    f"{'|'.join(cover['matched']) or '(nothing)'} but the hook "
+                    f"declares {'|'.join(cover['declared'])} -- "
+                    f"{', '.join(cover['uncovered'])} unobserved. The hook is "
+                    f"present in settings.json, so a presence check calls this "
+                    f"healthy; it is not.")
+            elif cover["state"] == "UNVERIFIABLE":
+                row["verdict"] = "COVERAGE-UNVERIFIABLE"
+                failures.append(
+                    f"{spec['name']}: declares a hook_source whose capture "
+                    f"surface could not be read -- coverage is unknown, and "
+                    f"unknown coverage is not evidence of coverage")
+
             if wired is False:
-                row["verdict"] = "UNWIRED"
+                row["verdict"] = ("UNWIRED+NARROW"
+                                  if row["verdict"] == "NARROW-REGISTRATION"
+                                  else "UNWIRED")
                 failures.append(
                     f"{spec['name']}: AUTOMATIC producer is absent from "
                     f"{SETTINGS} -- it cannot fire at all")
             elif fires > 0 and (records or 0) == 0:
-                row["verdict"] = "FIRES-WITHOUT-RECORDS"
+                row["verdict"] = ("NARROW+FIRES-WITHOUT-RECORDS"
+                                  if row["verdict"] == "NARROW-REGISTRATION"
+                                  else "FIRES-WITHOUT-RECORDS")
                 failures.append(
                     f"{spec['name']}: {fires} fire(s) in {window_days}d "
                     f"produced 0 record(s) in {spec['sink'].name} "
                     f"({rejected} rejection(s) logged)")
             elif rejected > 0:
-                row["verdict"] = "PARTIAL-LOSS"
+                if row["verdict"] == "OK":
+                    row["verdict"] = "PARTIAL-LOSS"
                 failures.append(
                     f"{spec['name']}: {rejected} capture(s) rejected in "
                     f"{window_days}d -- see vault/ceps/rejections.jsonl")
@@ -232,7 +454,7 @@ def render(report: dict) -> str:
         f"({report['generated']})",
         "",
         f"{'producer':<26} {'trigger':<10} {'wired':<6} {'fires':>6} "
-        f"{'recs':>6} {'rej':>5}  verdict",
+        f"{'recs':>6} {'rej':>5}  {'coverage':<10} verdict",
     ]
     for row in report["producers"]:
         def show(value):
@@ -241,7 +463,8 @@ def render(report: dict) -> str:
             f"{row['producer']:<26} {row['trigger']:<10} "
             f"{show(row['registered']):<6} {show(row['fires_in_window']):>6} "
             f"{show(row['records_in_window']):>6} "
-            f"{show(row['rejections_in_window']):>5}  {row['verdict']}")
+            f"{show(row['rejections_in_window']):>5}  "
+            f"{row.get('coverage', '-'):<10} {row['verdict']}")
     lines.append("")
     if report["failures"]:
         lines.append("FAILURES:")

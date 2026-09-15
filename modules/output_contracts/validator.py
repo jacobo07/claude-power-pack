@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Callable
+
+from . import preconditions as _pre
 
 OQS_DONE_THRESHOLD = 70
 CONTRACTS_DIR = Path(__file__).resolve().parent / "contracts"
@@ -104,9 +107,43 @@ def score(contract_name: str, ctx: dict) -> int:
     return earned
 
 
-def is_done(contract_name: str, ctx: dict) -> tuple[bool, int]:
+def certify(contract_name: str, ctx: dict,
+            resolver: Callable | None = None) -> dict:
+    """Score AND preconditions, with the reason Done was withheld.
+
+    The score answers "how good is the artifact". A precondition answers
+    "is this artifact the one that governs behaviour", which no weight can
+    express: a deliverable can lose the delivery check and still clear 70
+    on the others, and that is exactly how a fix declared shipped can
+    spend six days not running.
+
+    A contract that declares no preconditions certifies exactly as before.
+    """
+    contract = get_contract(contract_name) or {}
     oqs = score(contract_name, ctx)
-    return oqs >= OQS_DONE_THRESHOLD, oqs
+    results = _pre.check(contract, ctx, resolver)
+    blockers = _pre.blocking(results)
+    return {
+        "contract": contract_name,
+        "oqs": oqs,
+        "oqs_pass": oqs >= OQS_DONE_THRESHOLD,
+        "claim_scope": _pre.claim_scope(ctx),
+        "preconditions": results,
+        "blockers": blockers,
+        "done": oqs >= OQS_DONE_THRESHOLD and not blockers,
+    }
+
+
+def is_done(contract_name: str, ctx: dict,
+            resolver: Callable | None = None) -> tuple[bool, int]:
+    """(done, oqs). Unchanged for contracts without preconditions.
+
+    Existing callers inherit the delivery veto without being edited, which
+    is the point: a protection that only reaches code someone remembered
+    to update is the prose problem again, wearing an API.
+    """
+    verdict = certify(contract_name, ctx, resolver)
+    return verdict["done"], verdict["oqs"]
 
 
 # --- Per-tier OQS floors (SDD-OS, Sprint 2 / M8) -----------------------
@@ -128,6 +165,7 @@ def is_done_for_tier(contract_name: str, ctx: dict,
     Returns (passed, oqs, floor). A Tier 3 deliverable scoring 80 is
     "done" by the global threshold but NOT by its Tier 3 floor (90).
     """
-    oqs = score(contract_name, ctx)
+    verdict = certify(contract_name, ctx)
+    oqs = verdict["oqs"]
     floor = tier_floor(tier)
-    return oqs >= floor, oqs, floor
+    return (oqs >= floor and not verdict["blockers"]), oqs, floor

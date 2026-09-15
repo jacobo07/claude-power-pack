@@ -31,7 +31,15 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 
 const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
-const PP_PATH = 'C:\\Users\\User\\.claude\\skills\\claude-power-pack';
+// Resolved from this file's own location, not hardcoded. The literal
+// installed path meant a copy of this hook running from a git worktree
+// still wrote to the INSTALLED corpus. test_capture_liveness drives the
+// hook next to it and then restores the store next to it -- so its
+// byte-identical-restore gate passed while the events it injected stayed
+// in production forever. Two PowerShell and two Read rows in the live
+// corpus arrived exactly that way. An address that ignores where the code
+// actually is turns a hermetic test into a silent writer.
+const PP_PATH = path.resolve(__dirname, '..');
 const CAPTURE_TOOL = path.join(PP_PATH, 'tools', 'ceps_capture.py');
 const FIRES_PATH = path.join(PP_PATH, 'vault', 'ceps', 'fires.jsonl');
 
@@ -112,9 +120,17 @@ const NAV_PREFIXES = new Set([
 ]);
 
 function leadingExe(segment) {
-  const first = String(segment || '')
-    .replace(/^[\s&$(]+/, '')
-    .split(/\s+/)[0] || '';
+  const raw = String(segment || '').replace(/^[\s&$(]+/, '');
+  // Take a QUOTED path whole before falling back to whitespace splitting.
+  // Splitting first turned "C:/Program Files/Git/cmd/git.exe" into
+  // `C:/Program`, whose basename is `Program` -- not in READ_TOOLS, so the
+  // quotation filter failed and a git diff that merely PRINTED an error
+  // string was recorded as a failure, bucketed under `bash:Program`. Every
+  // doctrine-mandated absolute path on this host is quoted and contains a
+  // space, so this defeated both the filter and the recurrence key, the
+  // same way the leading `cd` did before it.
+  const quoted = raw.match(/^["']([^"']+)["']/);
+  const first = quoted ? quoted[1] : (raw.split(/\s+/)[0] || '');
   return path.basename(first.replace(/['"]/g, '')).slice(0, 24);
 }
 

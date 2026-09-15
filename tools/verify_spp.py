@@ -58,7 +58,42 @@ PP = Path(__file__).resolve().parents[1]
 NODE = shutil.which("node") or shutil.which("node.exe") or "node"
 PY = sys.executable
 
-# Rows that may FAIL without failing the umbrella gate. Use sparingly â€”
+def suspect_rows(results: list, advisory: set) -> list:
+    """Rows a parallel run reported red, which a solo run could exonerate.
+
+    A parallel run measures the row and the harness together. Measured
+    2026-09-02 over 75 rows: five of fourteen strict fails passed cleanly
+    alone, and only three of those five were timeouts -- one had exited 1
+    outright -- so selecting on "did not finish" alone would have missed
+    two of them.
+
+    Advisory rows are excluded because their red already costs nothing;
+    re-running them would buy a label nobody reads.
+    """
+    return [r for r in results
+            if (r.get("rc") != 0 or r.get("timed_out"))
+            and r.get("name") not in advisory]
+
+
+def apply_solo(row: dict, solo: dict) -> bool:
+    """Fold a solo re-run into a row. True when the row was exonerated.
+
+    Deliberately one-directional, and the asymmetry is a real limit worth
+    stating rather than hiding: this can only ever move a red to green. A
+    row that PASSES under load and would fail alone is never re-run, so it
+    is never caught here. The claim earned is narrow -- "this red did not
+    reproduce without the harness's own load" -- and it is not the same
+    claim as "this row is healthy".
+    """
+    if solo.get("rc") != 0:
+        return False
+    row["rc"] = 0
+    row["timed_out"] = False
+    row["contended"] = True
+    return True
+
+
+# Rows that may FAIL without failing the umbrella gate. Use sparingly —
 # the default is strict.
 ADVISORY_ROWS: set[str] = {
     # programmatic-budget: scope-specific (RTK + JIT + pricing); a
@@ -339,6 +374,11 @@ def main() -> int:
                         "Wall floor on this host is the l3-engine row "
                         "(~86s). 0 (the default) = serial."
                     ))
+    ap.add_argument("--confirm-fails", action="store_true",
+                    help=("re-run every red row alone once before reporting. "
+                          "A parallel red measures the row and the harness "
+                          "together; this separates them. Costs a second "
+                          "pass over the failures, so it is opt-in."))
     args = ap.parse_args()
     workers = max(0, min(int(args.parallel or 0), PARALLEL_MAX_WORKERS))
 
@@ -352,8 +392,27 @@ def main() -> int:
          15),
         ("paths+secrets",
          [PY, str(PP / "tools" / "normalize_paths.py"), "--check"],
-         90),  # 13.6s solo yet exceeded 30s under load: 2.2x variance, so
-               # its REAL failure was masked by an unmeasured verdict
+         600),  # Raised 30 -> 90 once already, on the same reasoning and
+                # from a 13.6s figure that no longer reproduces. Timed solo
+                # three times on 2026-09-02: 151s, 221s, 391s -- identical
+                # deterministic output every run (2196 files scanned, 38
+                # code leaks), so the WORK is constant and only wall time
+                # moves, by 2.6x.
+                #
+                # Two separable facts. The FLOOR of the work already
+                # exceeded the budget, so this row could never finish and
+                # never produced a verdict -- its 38 code-path leaks have
+                # gated nothing, and a gate that cannot practically fire
+                # reads from outside exactly like a gate that passes. That
+                # is a budget below the minimum possible runtime, and
+                # correcting it is not absorption.
+                #
+                # The 2.6x spread on top of it is UNEXPLAINED and this
+                # number does not certify it. 600 is a hang bound, not a
+                # performance target: it exists to catch a wedge, and the
+                # question of why a fixed 2196-file scan varies by 2.6x
+                # stays open and unowned. Do not quote this as a budget
+                # anyone met.
         ("rtk-fusion",
          [PY, str(PP / "tools" / "verify_rtk_fusion.py")],
          30),
@@ -536,7 +595,40 @@ def main() -> int:
          30),
         ("benchmarks-ok",
          [PY, str(PP / "tools" / "verify_bench_all.py")],
-         60),
+         # 9s typical, but the confirm-on-failure retry makes the WORST
+         # case two inner 55s timeouts. The retry only fires when the host
+         # is already slow -- exactly when a 60s budget would kill the row
+         # and render it as a failure it never reached. Budget the worst
+         # case, not the happy-path measurement.
+         150),
+        # The gate above judges performance; this one judges THAT gate.
+        # It compared against the raw target while printing "over 1.5x
+        # target", so it manufactured 5 false alarms and buried the one
+        # real regression among them. Pure -- no subprocess, no clock.
+        ("bench-gate",
+         [PY, str(PP / "tools" / "test_bench_gate.py")],
+         30),
+        # SessionStart must not pay for what it does not use. Asserts what
+        # is LOADED and what is SPAWNED, never wall time -- a timing gate
+        # on this host is a coin flip (measured spreads of 79-418%).
+        # Spawns 3 fresh interpreters + node, so the budget is generous.
+        ("session-start-cost",
+         [PY, str(PP / "tools" / "test_session_start_cost.py")],
+         90),
+        # mirror-parity compares 28 pairs and reports the other 345 files
+        # as a bare count, which reads as accounted-for. This dispositions
+        # them, and fails only on a registration pointing at a file that
+        # does not exist -- wired and dead.
+        ("mirror-unpaired",
+         [PY, str(PP / "tools" / "test_mirror_unpaired.py")],
+         45),
+        # The path normaliser proposed 26 rewrites that would corrupt the
+        # file or contradict doctrine. These pin the exemptions NARROW --
+        # each one bookended by a plain leak that must still be rewritten,
+        # because a silent gate is worse than a noisy one.
+        ("path-exemptions",
+         [PY, str(PP / "tools" / "test_path_exemptions.py")],
+         30),
         ("ram-optimization",
          [PY, str(PP / "tools" / "test_ram_optimization.py")],
          30),
@@ -554,6 +646,12 @@ def main() -> int:
         ("memory-router-freshness",
          [PY, str(PP / "tools" / "test_router_freshness_gate.py")],
          120),
+        # The umbrella's own report is the estate's most-read output, and
+        # this row is what keeps its fail count honest about which reds it
+        # measured and which it caused.
+        ("umbrella-contention",
+         [PY, str(PP / "tools" / "test_umbrella_contention.py")],
+         60),
         ("predictive-governance-gates",
          [PY, str(PP / "tools" / "test_predictive_governance_gate.py")],
          120),
@@ -579,6 +677,48 @@ def main() -> int:
         ("capture-gates",
          [PY, str(PP / "tools" / "test_capture_liveness.py")],
          180),
+        # Registration PRESENCE is not registration COVERAGE. The bridge was
+        # wired, firing and recording -- and blind to 75.5% of the command
+        # traffic on this host, because the entry carrying its name matched
+        # Bash while the hook declares Bash and PowerShell.
+        # The AUDIT, not only its unit tests. verify_spp ran
+        # test_mirror_unpaired.py, whose gate asserts "exit 1 GIVEN a
+        # divergence" -- so the suite was green while session_delta_stop.js
+        # was wired canonically and did not run in production. A test that
+        # the detector works is not a run of the detector.
+        ("mirror-divergence",
+         [PY, str(PP / "tools" / "mirror_unpaired_audit.py")],
+         90),
+        ("capture-coverage",
+         [PY, str(PP / "tools" / "test_capture_coverage.py")],
+         60),
+        # mirror-parity is branch-flip-immune BY DESIGN -- it reads the
+        # committed blob on a named ref so a concurrent pane switching
+        # branches cannot fake DRIFT. That fix removed the only aperture
+        # onto the opposite failure: eleven registrations execute straight
+        # out of the PP working tree, so the bytes that run are whatever
+        # branch was last checked out there. Measured 2026-09-02, 45
+        # commits on a pushed branch put 0 of 27 files into the running
+        # tree. Committed and pushed is not installed when the install
+        # location is a working tree.
+        ("effective-state",
+         [PY, str(PP / "tools" / "test_effective_state.py")],
+         90),
+        # The detector above reports SHADOWED. This row proves the report is
+        # CONSEQUENTIAL: is_done was a weighted score, so a deliverable
+        # could lose the delivery check and still clear 70 on the rest.
+        # Replayed against a claim a prior session really made, the score
+        # model returns OQS 100 and Done while the executing bytes are a
+        # different version. A weight cannot express a precondition.
+        ("effective-precondition",
+         [PY, str(PP / "tools" / "test_effective_precondition.py")],
+         90),
+        # One registration should widen, not five: the Bash-chain carries the
+        # guard that blocks git/npm via Bash to force them onto PowerShell,
+        # so widening it would block the surface doctrine redirects to.
+        ("capture-surface",
+         [PY, str(PP / "tools" / "test_capture_surface_migration.py")],
+         60),
         # And the live divergence check: fires vs records over 7 days. The
         # 2026-05..08 outage was invisible to every other row here because
         # each component passed while the corpus stayed empty.
@@ -855,9 +995,47 @@ def main() -> int:
             results.append(r)
             _emit(r)
 
+    # CONTENTION CONFIRMATION. A parallel run measures the row and the
+    # harness together, and cannot say which one produced a red. Measured
+    # 2026-09-02: of fourteen strict fails and three unmeasured rows in one
+    # parallel run, four passed cleanly when re-run alone -- including one
+    # that had exited 1, so this is not only about timeouts. Reporting all
+    # seventeen as defects would have been wrong by four, and raising the
+    # budgets to make the timeouts go away would have converted unmeasured
+    # into measured without measuring anything.
+    #
+    # Opt-in, because re-running every red doubles the cost of a bad run.
+    # Nothing is suppressed: both observations are printed, and a row that
+    # fails alone stays exactly as red as it was.
+    contended = []
+    if args.confirm_fails and workers > 1 and not args.row:
+        suspect = suspect_rows(results, ADVISORY_ROWS)
+        if suspect:
+            print("=" * 72)
+            print(f"  [confirm] re-running {len(suspect)} red row(s) alone -- "
+                  "a parallel red measures the row AND the harness",
+                  flush=True)
+            by_spec = {n: (a, b) for (n, a, b) in rows_spec}
+            for r in suspect:
+                argv, budget = by_spec[r["name"]]
+                solo = _row(r["name"], argv, budget=budget)
+                verdict = ("still red" if solo["rc"] != 0 else "PASSED ALONE")
+                print(f"    {r['name'].ljust(28)} {verdict}"
+                      f"  ({solo['elapsed']:.1f}s alone vs "
+                      f"{r['elapsed']:.1f}s under load)")
+                if apply_solo(r, solo):
+                    contended.append(r["name"])
+            if contended:
+                print("    -> these reds did not reproduce without the "
+                      "harness's own load. That is a fact about this run, "
+                      "not a clean bill for the rows.")
+
     total_elapsed = time.monotonic() - t_total
     print("=" * 72)
     print(f"  total elapsed: {total_elapsed:.2f}s")
+    if contended:
+        print(f"  CONTENDED: {len(contended)} row(s) red only under "
+              f"parallel load — {contended}")
 
     # Separated from failures on purpose: a timeout is an unmeasured row.
     timed_out = [r for r in results if r.get("timed_out")]

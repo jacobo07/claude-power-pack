@@ -22,7 +22,38 @@ import re
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+def canonical_repo_root(start: Path) -> Path:
+    """The MAIN worktree's path, given any checkout of it.
+
+    This gate derives the router's location from the repo's own path. Run
+    from a linked worktree that arithmetic produced a directory that does
+    not exist, and the gate reported `router absent` -- a clean FAIL, with
+    a plausible message, about nothing. See
+    T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001, which this gate demonstrated
+    within the hour of its being sealed.
+
+    A linked worktree's `.git` is a FILE holding
+    `gitdir: <main>/.git/worktrees/<name>`, so the main worktree is
+    recoverable without shelling out to git -- which matters for a gate
+    that must not depend on git being on PATH (it is not, on this host).
+    """
+    dot = start / ".git"
+    try:
+        if dot.is_file():
+            m = re.match(r"gitdir:\s*(.+)$",
+                         dot.read_text(encoding="utf-8",
+                                       errors="replace").strip())
+            if m:
+                parts = Path(m.group(1).strip()).as_posix().split(
+                    "/.git/worktrees/")
+                if len(parts) == 2 and parts[0]:
+                    return Path(parts[0])
+    except OSError:
+        pass
+    return start
+
+
+REPO_ROOT = canonical_repo_root(Path(__file__).resolve().parents[1])
 CLAUDE_DIR = REPO_ROOT.parents[1]          # ~/.claude
 KNOWLEDGE_VAULT = CLAUDE_DIR / "knowledge_vault"
 
@@ -48,9 +79,15 @@ SEARCH_ROOTS = ("vault", "governance", "knowledge")
 
 
 def router_path(repo_root: Path = REPO_ROOT) -> Path:
-    """Derive the project's MEMORY.md from the repo path, using the harness slug rule."""
-    slug = re.sub(r"[:\\/.]", "-", str(repo_root))
-    return CLAUDE_DIR / "projects" / slug / "memory" / "MEMORY.md"
+    """Derive the project's MEMORY.md from the repo path, using the harness slug rule.
+
+    Canonicalised first: the slug the harness assigns belongs to the main
+    worktree, so a linked checkout must resolve to the same router rather
+    than to a slug nothing ever created.
+    """
+    root = canonical_repo_root(Path(repo_root))
+    slug = re.sub(r"[:\\/.]", "-", str(root))
+    return root.parents[1] / "projects" / slug / "memory" / "MEMORY.md"
 
 
 def _read(path: Path) -> str:
@@ -121,6 +158,34 @@ def run(repo_root: Path = REPO_ROOT) -> int:
     failures: list[str] = []
 
     print(f"router: {router}")
+
+    # V-ROUTER-CANONICAL -- the worktree arithmetic must be exercised, not
+    # trusted. It parses a git internal format, and when it was wrong this
+    # gate did not misbehave: it printed a clean FAIL about a directory
+    # that had never existed. A location bug is invisible from the one
+    # location where it does not bite, so both branches run every time.
+    import tempfile  # noqa: PLC0415
+    with tempfile.TemporaryDirectory() as _td:
+        _fake = Path(_td) / "wt"
+        _fake.mkdir()
+        _main = Path(_td) / "main-repo"
+        (_fake / ".git").write_text(
+            f"gitdir: {_main.as_posix()}/.git/worktrees/wt\n",
+            encoding="utf-8")
+        _linked_ok = canonical_repo_root(_fake) == _main
+        # A normal checkout has a .git DIRECTORY and must pass through
+        # unchanged -- an over-eager rewrite would move every install.
+        _plain = Path(_td) / "plain"
+        (_plain / ".git").mkdir(parents=True)
+        _plain_ok = canonical_repo_root(_plain) == _plain
+    if _linked_ok and _plain_ok:
+        print("V-ROUTER-CANONICAL  PASS  linked worktree resolves to main; "
+              "plain checkout unchanged")
+    else:
+        failures.append("V-ROUTER-CANONICAL")
+        print(f"V-ROUTER-CANONICAL  FAIL  linked={_linked_ok} "
+              f"plain={_plain_ok}")
+
     if not router.exists():
         print("V-ROUTER-LINKS      FAIL  router absent")
         return 1

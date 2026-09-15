@@ -81,6 +81,27 @@ CORRECTNESS_TRAPS: list[tuple[re.Pattern, str, str]] = [
      "Select-Object -First stops the pipeline, killing the native process "
      "early and making $LASTEXITCODE meaningless",
      "redirect to a file, read it, and measure the exit code separately"),
+
+    # Recurrence four, 2026-09-02. Documented in CLAUDE.md, sealed in the
+    # vault, and re-issued four times in the session that was auditing why
+    # known traps recur. PowerShell 5.1 wraps each stderr line from a
+    # NATIVE executable in an ErrorRecord, so the call reports
+    # NativeCommandError and $? goes False even when the exe returned 0 --
+    # output that reads as a failure for a command that succeeded.
+    #
+    # Deliberately narrow. `2>&1` is ordinary and correct in Bash, and this
+    # registry is checked against Bash commands too, so the pattern
+    # requires a PowerShell native-exe invocation: the call operator with a
+    # variable or quoted .exe, or a bare .exe token. Precision over recall
+    # is the right trade on a surface this busy -- a correctness note that
+    # fires on every shell redirect is a note that gets ignored.
+    (re.compile(r"""(?:&\s*(?:\$\w+|['"][^'"]*\.exe['"])"""
+                r"""|\b[\w.-]+\.exe\b)[^|\n]*?2>&1"""),
+     "PowerShell wraps a native executable's stderr in an ErrorRecord, so "
+     "2>&1 reports NativeCommandError and sets $? False on a command that "
+     "exited 0",
+     "drop the redirect -- stderr is already captured; if you must have it, "
+     "send it to a file and read that"),
 ]
 
 

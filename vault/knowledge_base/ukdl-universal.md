@@ -7442,6 +7442,17 @@ only false positive.
 
 ---
 
+**Second instance (2026-08-26), different mechanism, same shape.**
+`recovery_epoch_gate.banner()` imported its verdict module as the FIRST
+statement of the function, two lines above the early return that handles
+the case its own docstring calls the common path. Measured 181 ms with the
+import against 109 ms without; the silent path went 192 -> 154 ms once it
+moved below the check. The first instance was a widened parameter pulling
+work forward; this one is an import that was simply never below the guard.
+Both charge the common case for the rare one, so look for the family at
+every early return, not only where a signature changed.
+
+
 ## T-UNMEASURED-RENDERED-AS-FAILED-001 — a gate that did not finish has told you nothing
 
 **Trap.** A timeout rendered identically to a failure. "The gate found a defect" and "the
@@ -7488,6 +7499,32 @@ reaches the caller — a hook that emits into a channel nothing merges is anothe
 prose.
 
 ---
+
+**Sharpest instance (2026-08-26), and it refines the rule.** A UTF-8 BOM landed in a
+commit subject for the second time in four days -- in the very commit whose message
+recorded reintroducing a different documented trap. At the moment that command was
+composed, the correctness registry ALREADY held the pattern, ALREADY matched the exact
+command, and ALREADY named the correct fix
+(`[System.IO.File]::WriteAllText` with `UTF8Encoding($false)`).
+
+It never ran. The chain carrying it is registered on the matcher `Bash`, and the command
+went through the PowerShell tool -- the tool this host's doctrine REQUIRES for git and
+python. Two sibling hooks in the same settings file already use `Bash|PowerShell`, so the
+form was available and proven; the chain simply had not been widened.
+
+So the failure was not a knowledge gap, and not even a knowledge-execution gap in the
+usual sense. The knowledge had been compiled into a detector, wired into a live chain,
+and pointed at a surface where the command is never composed.
+
+**Refinement.** Executable knowledge is necessary and not sufficient. A rule protects only
+the surfaces its trigger actually covers, and the surface that matters is the one where
+the command is COMPOSED -- which on a host whose doctrine mandates one shell is
+predictable in advance. When adding a detector, enumerate the tool surfaces that can
+produce the pattern and verify the trigger covers every one of them; a detector attached
+to a subset is not partially protective, it is inert for everything outside it. The
+generalisation is [[T-RULE-STARVED-OF-ITS-INPUT-001]] moved one layer out: there a rule
+had no producer for its input, here a rule has no path to its input.
+
 
 ## T-CONSUMER-ORPHANED-BY-ITS-PRODUCER-001 — improving a producer can silently kill its consumer
 
@@ -8646,3 +8683,687 @@ cast of agents, personas, or services per conceptual responsibility.
 - [regression/powershell:Get-Content] `ceps_5d28a90f4498a814` -- Before touching powershell:Get-Content, verify the regression scenario (FAILED) is still covered by a passing test.
 
 - [regression/powershell:Measure-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Measure-Object, verify the regression scenario (FAILED) is still covered by a passing test.
+## T-BAND-DECLARED-NOT-APPLIED-001 — a gate can name a threshold it did not use
+
+BENCHMARKS_OK promised a 1.5x allowance in its docstring, explained WHY it existed
+(documented spawn variance on this host), and printed "over 1.5x target" on every failure.
+The comparison was `value > target`. The band was never applied.
+
+So the gate was stricter than its own contract AND its report named a number it had not
+measured against. `tis_report_ms: 268>225` was published as a failure while sitting well
+inside the 337 band the same line claimed to be using. Three back-to-back runs put the
+real spreads at 79%, 103%, 418% and 109% of the minimum.
+
+The damage is not the false alarms. It is that FIVE of them stood beside ONE genuine
+2.4x-over regression, indistinguishable, in the same list. A gate that cries wolf five
+times cannot make anyone believe the sixth, and the real one had been sitting there for
+six weeks.
+
+**Rule.** A gate's report must name the threshold its comparison actually used. Derive the
+printed number from the same expression that decided the verdict, never from a parallel
+literal in the message. Two spellings of a threshold are two things that can drift, and
+the one that drifts is the one nobody re-derives.
+
+**How to apply.** Name the allowance as a constant, compare against `target * BAND`, and
+format the message from `target * BAND`. When the docstring, the message and the code
+disagree, the code is the outlier and the OTHER TWO are the specification -- two
+independent statements of intent outrank one line. Sister of
+[[T-UNMEASURED-RENDERED-AS-FAILED-001]]: there a gate reported a verdict it had not
+reached, here it reports a comparison it did not make.
+
+
+## T-DETACHED-STILL-COSTS-CREATION-001 — detaching removes the child's run time, not its creation cost
+
+session_start_hub folded four SessionStart cold starts into one, then spawned twelve
+detached children of its own. Its comments stated the premise plainly: a detached child
+"never adds to the hub's wall time". Detaching removes the WAIT. The parent still pays
+CreateProcess, synchronously, once per child.
+
+Ablation on the real hub -- spawn neutered, nothing else changed -- put it at 775 ms with
+the spawns and 290 ms without. Eleven children cost 485 ms of the parent's own wall time.
+The run-to-run spread told the same story more sharply: 160 ms with them, 6 ms without.
+Essentially all of the observed variance entered through process creation, which is why it
+landed on every benchmark in the suite at once.
+
+**Rule.** Fire-and-forget removes the child's execution from the parent's critical path.
+It does not remove the child's creation. On any host where process creation is expensive
+-- Windows with a scanner in the path being the worst case -- N detached children cost the
+parent N creations before it can emit its first byte.
+
+**How to apply.** Collect the specs and hand them to ONE launcher that fans out off the
+critical path. This is the same fold applied one level down, and a component that already
+folded its parents is the likeliest place to find its children unfolded. Measure it by
+ablation, never by a profiler span: the span tells you where time was attributed, not what
+removing the call would return. Keep the fallback -- losing the children is far worse than
+paying for them. Sister of [[PR-MEASURE-BOTH-COSTS-001]].
+
+
+## PR-CONFIRM-A-FAILURE-BEFORE-REPORTING-IT-001 — one sample against a threshold is a coin flip on a noisy host
+
+The same benchmark measured 194 ms and 1008 ms in consecutive runs on an idle machine.
+Another moved 726 to 1465. Against a single sample, a threshold anywhere in that range
+decides by luck, and a gate that fails at random gets read as a gate that fails.
+
+**Rule.** Where the measured spread approaches the threshold, a failure must reproduce
+before it is reported. Take a second sample and hold the MINIMUM against the budget: when
+the noise source is additive -- scheduler, scanner, cold cache, contention -- the smaller
+sample is the closer estimate of the real cost, and the larger one is the noise.
+
+**How to apply.** Pay it only on the red path. The green path takes one sample and stops,
+so the confirm costs nothing until something already looks broken; measured here at 9 s
+against a 60 s budget. Assert BEHAVIOUR in gates and keep timing in benchmarks -- a wall
+clock assertion on a host like this is a flaky gate, and a flaky gate is worse than none.
+Order must not matter: verify that the same two samples give the same verdict whichever
+arrives first, or the retry has become a way of shopping for a pass.
+
+
+## PR-UNSAFE-REMEDIATION-BLOCKS-THE-SAFE-ONES-001 — a fix that is wrong one time in six cannot be applied at all
+
+A path normaliser reported 163 doc-level findings and had done so for months. 26 of its
+proposed rewrites would have damaged the file or contradicted standing doctrine: 18
+rewrote an interpreter path the constitution REQUIRES to be absolute, and 8 collapsed a
+list of three home-directory spellings into one naming the same thing twice.
+
+Because the remediation was wrong one time in six, nobody could run it. Because nobody
+could run it, the 137 CORRECT rewrites never landed either. The unsafe minority held the
+safe majority hostage, and the backlog was read the whole time as 163 things to fix.
+
+**Rule.** Correctness of a remediation gates its adoption, and a remediation nobody adopts
+protects nothing. A partly-wrong auto-fix is worse than no auto-fix: it converts a
+tractable backlog into a permanent one and teaches the reader to ignore the number.
+
+**How to apply.** Separate CANNOT-BE-FIXED from NOT-YET-FIXED in the output, with the
+reason on each exempt line. Count only the second toward the verdict, or the gate stays
+red forever on entries that must never change. Then check what the exemption costs: every
+exemption needs a bookend proving an ordinary case is still caught, because a rule that
+quietly widened turns a noisy gate into a silent one, which is strictly worse.
+
+
+## T-NORMALIZER-COLLAPSES-A-DISTINCTION-001 — never rewrite X into a token the line already uses
+
+A document listed three spellings of a home directory so a reader could recognise any of
+them. The normaliser rewrote the third into the first, leaving a sentence that names the
+same thing twice and no longer mentions the case it was written to cover. The rewrite was
+locally correct on the token and destroyed the meaning of the line.
+
+**Rule.** A transformation that makes two previously-distinct tokens identical has
+destroyed the distinction the text was drawing. Detect it structurally -- the output
+contains more instances of the target token than the input, and the input already used it
+as a standalone token -- and refuse.
+
+**How to apply.** Applies to any normaliser, formatter, codemod or refactor that maps many
+forms onto one canonical form: import rewriters, path canonicalisers, identifier renamers,
+currency and unit normalisers. The enumeration of variants is exactly the passage the
+canonicaliser must not touch, and it is exactly the passage that mentions every variant.
+Documentation about a canonical form is the highest-risk input to the tool that enforces
+it.
+
+
+## T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001 — a tool that hardcodes its install path tells the truth from one directory
+
+A reachability audit decided whether a hook was live by matching the literal installed path
+against the registrations. Correct in the installed tree. Wrong in every worktree, clone
+and CI checkout, where 18 live hooks reported as dormant -- silently, with no error and a
+plausible number.
+
+**Rule.** Identity must be a parameter, never a literal. An audit whose verdict depends on
+where the process happens to be running is measuring its own location.
+
+**How to apply.** Take the root as an argument, default it from the module's own position,
+and RUN THE SUITE FROM SOMEWHERE ELSE -- a worktree is enough. Fixtures naming the
+installed path while the process lives elsewhere make a re-hardcoded version fail
+immediately. Where the answer legitimately differs by checkout, SAY WHICH TREE WAS JUDGED
+in the report: a column of verdicts about a non-running checkout is otherwise read as a
+finding about production.
+
+
+## PR-A-COUNT-IS-NOT-A-DISPOSITION-001 — reporting N unhandled items reads as accounted-for
+
+A mirror comparator compared 28 pairs and printed "345 file(s) present on one side only".
+The sentence is true, the tool is working, and parity spoke for 7.5% of the surface while
+the report looked complete. The one instance that mattered -- an edit that never reached
+production because a relative path resolved into the other tree -- was found by reading,
+not by the estate.
+
+**Rule.** A number attached to unexamined items is not coverage. Every item a checker
+discovers must carry a verdict, and UNKNOWN is a verdict that must be printed as unknown.
+Absence of a verdict must never render as health.
+
+**How to apply.** Classify from evidence, and assert TOTALITY: rows out must equal items
+discovered, so nothing can be dropped between discovery and disposition. Where a class
+cannot be decided, emit it as undecided WITH its count and pin that count in a gate, so a
+domain cannot quietly acquire a verdict before the evidence for it arrives. Exercise the
+failing class against a synthetic case when the tree currently has none -- a branch that
+never runs proves nothing about the tree it claims to watch. Extends
+[[PR-COVERAGE-BY-CONSTRUCTION-001]]: discovery fixes WHO is measured, this fixes whether
+each of them got an answer.
+
+
+## T-CORPUS-DESCRIBES-ITS-INSTRUMENT-001 — a distribution can be a fact about the producer, not about the system
+
+The CEPS event store held 79 events. 70 of them (88.6%) carried a `bash:` subsystem, and a
+majority of those were greps and file reads that had been misclassified as failures. That
+looked like a producer bug, and it was one. It was also concealing a second, larger fact.
+
+The producer is registered as a PostToolUse hook with the matcher `Bash`. This host's
+doctrine MANDATES the PowerShell tool for python, pytest, git, npm, pnpm, node, mix and
+gh. So the producer cannot see the command traffic that dominates the estate. Measured
+across the entire store:
+
+    events on a PowerShell surface .................. 0
+    failures captured from git / pytest / npm /
+    node / gh / mix / pnpm, in the store's history .. 0
+
+The corpus was not a sample of what fails here. It was a sample of what runs through the
+one tool the doctrine reserves for reading files -- which is exactly why it looked like a
+pile of greps and cats. The composition that appeared to be evidence about the estate was
+evidence about the matcher.
+
+**Rule.** Before drawing any conclusion from an event corpus, establish the producer's
+COVERAGE. A distribution over a store answers "what did the instrument see", and only
+equals "what happened" when the instrument sees everything. Skew in a corpus is a claim
+about the instrument until coverage is proven otherwise.
+
+**How to apply.** Enumerate the surfaces that can generate the event and check the trigger
+covers each -- for a hook, that is its matcher against every tool name that can produce the
+pattern. Then apply the cheap falsifier: name the categories that MUST appear if coverage
+were complete, and look for them. Zero events from the busiest tools in the estate is not
+a quiet system; it is an unplugged one, and it is the same absence-reads-as-health failure
+as an audit whose subjects are enrolled by hand
+([[PR-COVERAGE-BY-CONSTRUCTION-001]]). Sister of
+[[T-RULE-STARVED-OF-ITS-INPUT-001]]: there a rule had no producer for its input, here a
+producer has no path to its subject. And note the compounding shape -- repairing this
+producer's CLASSIFICATION while it remained blind to most traffic would have made a
+narrow instrument more precise and no less narrow, which reads as progress and is not.
+
+**Extension, 2026-08-27 -- the denominator, measured.** The blindness above was stated
+from the store's own shape. It has since been measured against a source the producer does
+not control: 98 session transcripts, 789 MB, the window the fire log covers. PowerShell
+accounts for 11126 of 14744 command-tool invocations, 75.5%; the producer's matcher admits
+the remaining 24.5%. Two `powershell:` rows DO exist in the corpus and both were injected
+by a test suite writing through a mis-addressed hook
+([[T-HERMETIC-RESTORE-WRONG-ADDRESS-001]]) -- so the original claim "zero events from a
+PowerShell surface" was true of organic traffic and false of the file, and the evidence
+cited for it had been contaminated by the instrument under audit. Bound the denominator
+from outside the instrument, and check whether your own tooling wrote the rows you are
+reasoning from.
+
+### T-REGISTRATION-PRESENCE-NOT-COVERAGE-001
+
+A capture-liveness gate existed specifically to catch dead producers, built from three
+rules each learned from a real outage. It asked whether the producer's hook name appears
+in the live settings.json. It does. The producer was wired, had fired 84 times, recorded
+84 events and lost none -- and was blind to three quarters of its subject.
+
+The entry carrying that name matched `Bash`. The hook's own source declares `Bash` AND
+`PowerShell`, and this host's doctrine routes python, pytest, git, npm, node, mix and gh
+through PowerShell. Measured over 98 session transcripts, 789 MB, an evidence source the
+instrument does not control:
+
+    PowerShell  11126      Bash  3618      command-tool invocations 14744
+    PowerShell share of command traffic ......... 75.5%
+    observed by the producer .................... 24.5%
+
+**Rule.** Registration PRESENCE is not registration COVERAGE. A producer is wired only
+when the surfaces it is REGISTERED for include the surfaces it DECLARES it handles.
+Anything less is a live capability loss that every presence check will call healthy.
+
+**How to apply.** For each automatic producer, compare declared surfaces against matched
+surfaces and fail on the shortfall. Discover the declared set by parsing the producer's
+own source, never by listing it in the checking table -- a table records what someone
+remembered ([[PR-COVERAGE-BY-CONSTRUCTION-001]]). A declaration that cannot be read is
+UNVERIFIABLE and must fail: unknown coverage is not evidence of coverage. Distinguish
+UNREGISTERED from NARROW -- `declared - {}` reads as NARROW and invites a migration to
+widen an entry that does not exist. Detector: `tools/capture_liveness.py` rule 4,
+`tools/test_capture_coverage.py`. Sister of
+[[T-CORPUS-DESCRIBES-ITS-INSTRUMENT-001]], which is what this looks like downstream.
+
+### PR-PRECISION-BEFORE-COVERAGE-001
+
+The same producer had its classifier repaired the day before: 51 of 75 stored events were
+greps and file reads filed as tooling failures, and the fix was real. What the repair
+never asked was whether the instrument could see its subject at all. It could see 24.5%
+of it.
+
+**Rule.** Bound an instrument's COVERAGE before improving its PRECISION. Precision work
+on a blind instrument produces a narrow instrument that is more accurate and no less
+narrow -- and every artefact of that work reads as progress: cleaner corpus, better
+classification, passing gates, a rising quality number.
+
+**How to apply.** Before accepting a precision task on any sensor, answer two questions in
+writing: what is the eligible denominator, and what fraction of it can this instrument
+observe? Get the denominator from a source the instrument does not produce -- transcripts,
+invocation logs, process launches -- because a corpus cannot be its own evidence of
+representativeness. If coverage is unknown, that is the task; the precision work is
+downstream of it and will otherwise raise confidence without raising truth. Corollary for
+review: a proposal to improve a detector's accuracy should be asked what it observes
+before it is asked how well.
+
+### PR-WIDEN-PER-REGISTRATION-001
+
+Five hook registrations carried the matcher `Bash` on a host whose doctrine mandates
+PowerShell. The obvious correction is to widen five matchers. Measured against the code
+behind each one, exactly ONE should change and one of the others must not:
+
+| registration | disposition | why |
+|---|---|---|
+| the CEPS bridge | WIDEN | declares both surfaces; registration never caught up |
+| the PreToolUse Bash chain | WIDEN | its last entry is the cascade guard, the sole live enforcement of five sealed destructive-command Hard Rules. It accepts both surfaces in code and is inert on PowerShell purely because of the matcher, so the rule whose flagship pattern is `Remove-Item -Recurse -Force` cannot fire on the only surface where that command is written |
+| two learning hooks | NO-OP | their own code hard-rejects non-Bash, so a wider matcher buys nothing and would put a false coverage claim in settings.json |
+| a TTY restorer | KEEP | narrow on purpose -- the escape-sequence leak is an artefact of the Bash bridge |
+
+**Rule.** A family of narrow triggers must be dispositioned one entry at a time against
+the code behind it. "They are all narrow" is an observation about spelling, not a shared
+diagnosis, and a uniform correction applied to a non-uniform family will break whichever
+member was narrow deliberately.
+
+**Correction, same day, and it is the more useful half of this rule.** The chain row above
+first read KEEP, with the reasoning that it carries the guard which blocks git/npm via Bash
+to force them onto PowerShell -- so widening it would block the surface the doctrine
+redirects to. Wrong twice. That guard self-rejects non-Bash at its first line, so widening
+cannot affect it; and the chain's LAST entry is the cascade guard, which the analysis
+missed because the chain definition ran past the lines that had been read. A per-entry
+disposition is only as good as the READ behind it, and a confident wrong disposition is
+more expensive than a bulk one because it comes with a rationale that discourages
+re-checking. Read every member of a chain to its closing bracket before judging the chain,
+and treat "widening this would be harmful" as a claim needing the same evidence as
+"widening this is required".
+
+**How to apply.** For each member establish intended subject, current surface, missing
+surface, what the code does when the new surface arrives, and the blast radius of the
+addition. Bound the change with an explicit allow-list, take the NARROW verdict from the
+measuring owner rather than restating it, and refuse to widen any trigger whose own code
+rejects the surface being added. Sister of [[T-REGISTRATION-PRESENCE-NOT-COVERAGE-001]]:
+that rule finds the gap, this one governs what may be done about it.
+
+### T-PROBE-MEASURES-THE-REFUSAL-001
+
+A benchmark named `ceps_record_ms` called `record_error` with a category outside
+`VALID_CATEGORIES`. The call returned at the first guard, so the probe timed how fast the
+system says no. All 22 historical samples sit in 0.4-3.3 ms against a target of 38 -- a
+12-95x margin that could never be exceeded. The operation the benchmark names was measured
+for the first time on 2026-08-27: min 29.0, p50 39.5, p90 65.0 ms, roughly ten times the
+refusal.
+
+Two things were void, not one. The METRIC never measured its operation, and the THRESHOLD
+inherited that invalidity -- 38 was a real number honestly derived from a measurement of
+the wrong thing. The probe also left 41 rejections in the ledger a sibling gate reads to
+detect real capture loss, so it was seeding the corpus used to find corpus damage.
+
+**Rule.** A probe must assert that the operation it names actually HAPPENED before
+reporting a duration. A rejected call still returns, still takes time, and still produces
+a plausible number.
+
+**Second instance, same day, and it cost more than the first.** The repaired probe
+redirected every write path to an isolated temp store -- correct for hygiene, and it made
+the probe measure the right operation on the WRONG INPUT. The operation appends to two
+corpus files with a whole-file read-modify-write, so aiming them at empty temp targets
+timed about 7% of the real cost, and the new threshold certified the rest. Synthetic
+seeding did not rescue it either. At an identical 619 KB, worst min-of-3: **empty 33 ms,
+one long line 74 ms, realistic line count 87 ms, a COPY of the real files 437 ms.** Neither
+byte count nor line count reproduces a content-dependent cost. **When an operation's cost
+depends on an artifact, the artifact is the fixture; a synthetic stand-in that matches its
+SIZE can still understate it fivefold.** Accept that the metric then moves with the
+artifact -- if the artifact grows in production, that growth is the risk the probe exists
+to see, not drift to be engineered away.
+
+**How to apply.** Have the probe check the operation's success value and report the defect
+instead of a number when it is falsy -- a benchmark whose label and measurement disagree
+is worse than a missing benchmark. Bound a re-derived threshold on BOTH sides: a floor
+alone blocks only lowering it, and a value a hundred times too high passes every time. When such a probe is repaired, treat its threshold as
+unset rather than inherited, re-derive it from the real path, and state that the pre-fix
+series is not comparable: the step change at the repair is the repair, not a regression.
+Route probe writes to an isolated store so a benchmark never feeds the corpus other gates
+learn from. Detector: `tools/test_bench_gate.py` V-BENCH-CEPS-TARGET-MEASURED.
+
+### T-HERMETIC-RESTORE-WRONG-ADDRESS-001
+
+A test drove the real capture hook, snapshotted the event store beside itself, and
+asserted byte-identical restore at the end. Both the hook and the module it calls
+hardcoded the INSTALLED root, so when the test ran from a git worktree it restored a file
+nobody had written while the rows it injected stayed in the live corpus permanently. Its
+own hermeticity gate printed "corpus restored byte-identical" and passed.
+
+The cost was not tidiness. The contaminated rows were later cited as evidence in an
+analysis of the very producer the test exercises.
+
+**Rule.** Snapshot-and-restore hermeticity is void unless the subject writes to the root
+the test restores. A restore gate over the wrong file is not a weak proof of cleanliness;
+it is a confident proof about an unrelated file.
+
+**How to apply.** Assert address coherence directly -- the module's resolved root must
+equal the checkout under test -- and let state roots derive from the code's own location
+(`parents[N]`, `__dirname`) rather than from `$HOME`. Readers that deliberately audit the
+INSTALLED system are the exception and should say so in a comment. Before trusting any
+"restored clean" claim, hash the production artefact across the run. Third instance of
+[[T-AUDIT-TRUE-ONLY-AT-ITS-OWN-ADDRESS-001]] and the most expensive: the other two made a
+gate report the wrong answer, this one made a gate report the right answer about the wrong
+file. Detector: `tools/test_capture_coverage.py` V-COVERAGE-STORE-ADDRESS /
+V-COVERAGE-HOOK-ADDRESS.
+
+### T-FIX-RESTORES-THE-DEFECT-BY-ANOTHER-ROUTE-001
+
+A gate was built to end one specific false-healthy verdict: a producer that is registered,
+firing and recording while blind to most of its subject. Hours later an adversarial pass
+found that the gate reported COVERED for exactly that condition, by a route the fix had
+not considered.
+
+Coverage was computed by scanning every hook event for the producer's name and unioning
+what those registrations matched. Several event types -- Stop, SessionStart, SessionEnd,
+UserPromptSubmit -- carry no matcher at all, because they have no matcher semantics. So
+the instant the producer was also wired to one of them, a routine act, the union answered
+"universal" and the narrow capture surface read as covered. The defect the gate existed to
+catch, reachable through the gate itself.
+
+**Rule.** A fix is not finished when it closes the path the incident took. Ask what OTHER
+input reaches the same wrong verdict, and prefer a formulation with no such path to a
+formulation that patches the known one. A predicate that aggregates across scopes will
+eventually be satisfied by the wrong scope.
+
+**How to apply.** When a check answers a question about ONE context, scope its evidence to
+that context; never let a second context's permissiveness vote. Write the regression test
+as a MIXED fixture -- the narrow thing plus the permissive thing together -- because a
+single-context fixture cannot express the failure. Confirm the test can fail by running
+the pre-fix formulation against it and observing the wrong answer, not by reasoning that
+it would. Sister of [[T-REGISTRATION-PRESENCE-NOT-COVERAGE-001]], whose fix this defect
+lived inside.
+
+### T-GATE-THAT-DEFENDS-A-CONCLUSION-001
+
+A disposition was recorded -- one registration must stay narrow, because widening it would
+block the surface the doctrine redirects to -- and a gate was written to pin it. The gate
+asserted that a name was absent from an allow-list in a sibling file, and that a file
+existed. It examined no property of the thing it dispositioned. It passed.
+
+The disposition was false. The hook in question refuses the surface at its own first line,
+so widening could not affect it; and the entry that mattered sat further down a definition
+than the reading had gone. The gate did not catch any of that, because it was never
+looking at the subject: it was restating the conclusion in the grammar of a test.
+
+**Rule.** A gate must assert a property OF THE SUBJECT, discoverable from the subject.
+Asserting a literal that a sibling file also contains tests that two files agree, which is
+tautology wearing evidence's clothes -- and it is how a wrong conclusion acquires a green
+check beside it.
+
+**How to apply.** For each gate ask: what source did this READ, and what would have to
+change there for it to fail? If the answer is "a constant I also wrote, in a file I also
+wrote", it is vacuous. Prefer reading the artifact under judgement -- the hook's source,
+the running config, the actual output. A gate defending a conclusion is more dangerous
+than no gate, because the next reader stops checking. Sister of [[T-ZERO-CANNOT-FALL-001]]
+and of the bookend discipline: every "rejects X" needs an "admits Y", and every assertion
+needs a source that can disagree with it.
+
+### T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001
+
+Two sessions produced 45 commits across 27 files, every one committed and pushed, and a
+final report that read "all pushed" as delivered. Measured against the bytes that actually
+execute: 0 identical, 16 different, 11 absent. Six days of work, no production effect, and
+nothing in the estate said so.
+
+The cause is structural rather than careless. `~/.claude/skills/claude-power-pack` is at
+once the repository and the directory eleven live hook registrations execute out of. Its
+"installed copy" is therefore a git working tree, and the version that runs is whichever
+branch a pane last checked out -- in this case another pane's, carrying none of the work.
+Three branches sat unmerged at 45, 41 and 3 commits ahead of a `main` that had not moved in
+eight days. Exactly one was effective, by accident of checkout rather than by integration.
+
+Concurrency safety made it worse, not better. Working in an isolated worktree is the
+correct response to a concurrent pane, and it is also what guaranteed the work could not
+reach production. The safety mechanism and the delivery mechanism were in direct conflict
+and nobody had to choose, because nothing measured the second one.
+
+**Rule.** Where the deployment substrate is a checkout rather than an artifact, `git push`
+is not a delivery step, and a completion claim resting on it is unsupported. The question
+"is my change live" is answered by comparing the bytes at the executing path, never by the
+commit log.
+
+**The detector was not enough, and that was predictable.** A day later the gap was still
+open and the same claim could still be made, because a report that prints SHADOWED and
+leaves Done unchanged has no preventive power at all. The barrier came from asking what
+actually arbitrates completion here: `is_done` is a WEIGHTED SCORE at threshold 70, so
+delivery could fail and the deliverable still pass on the strength of the other checks.
+Replayed against the real claim, OQS 100 and Done. A detector becomes consequential only
+where the decision is made, and that place is rarely the place that noticed.
+
+**How to apply.** Before claiming a change to hooks, gates or anything a harness invokes by
+path, compare the file at the REGISTERED path against your committed version, and say which
+tree you compared. `tools/mirror_unpaired_audit.py` reports this as EFFECTIVE / SHADOWED /
+ABSENT_RUNNING / LOCAL_EDIT. Type the direction: a checkout that is behind owes production
+nothing, and conflating that with a checkout that is ahead produces a red everyone learns to
+ignore. Sister of [[T-HOOK-MIRROR-001]], which covers the repo-to-live-mirror leg of the
+same journey; this is the leg where both paths are the same file and only the branch differs.
+
+### T-IMMUNITY-BOUGHT-BY-REMOVING-THE-APERTURE-001
+
+The estate's parity instrument used to read the repository side from the working tree.
+Concurrent panes flip branches, so it reported DRIFT for states that were not defects, and
+it was rebuilt to read the committed blob against a deterministic named ref. The docstring
+records the result with justified satisfaction: invariant to whatever branch a concurrent
+pane checked out.
+
+That is a correct fix for a real false positive. It is also the reason the instrument could
+not see a true positive of the opposite sign for six days. Branch-flip immunity and
+branch-flip blindness are the same property viewed from either side of the defect, and the
+rebuild bought one without ever naming the other.
+
+**Rule.** Suppressing a false positive by removing an input removes every verdict that
+input carried, including the true ones. An instrument hardened against a noisy signal must
+record what it can no longer answer, or its silence will later be read as health.
+
+**How to apply.** When a fix takes the form "stop reading X", write down the question that
+now has no instrument, and route it somewhere. The question here -- which version of a
+registered file is executing -- had a natural owner that already enrolled the files and
+already resolved which copy was live, and was one predicate short of answering it. Prefer
+giving the orphaned question to an adjacent owner over re-introducing the noise. Sister of
+[[T-SQI-NARROW-VOCABULARY-BLINDS-THE-GATE-001]] and of the aperture corollary: check what a
+check is scoped to before reading its verdict as coverage.
+
+### PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001
+
+A session closed by handing the Owner three actions it could not perform itself. One read:
+copy `hooks/hook-dispatcher.js` to `~/.claude/hooks/`, because two hooks were wired
+canonically and did not run.
+
+Re-measured six days later, the installed tree and the live tree registered an identical 54
+scripts -- zero divergence. The only difference was against the SESSION'S OWN worktree,
+which registered 53 and was simply behind. Performing the forwarded action would have
+overwritten the running dispatcher with an older copy and deleted `closer-guard.js` from
+production: the hook that mechanically enforces the anti-passive-closer doctrine, and one
+of the few that blocks rather than advises.
+
+The instruction was not stale in the harmless sense. Its DIRECTION was wrong, and it was
+wrong for the same reason the session could not see its own delivery gap -- it compared its
+worktree against production and read "I have something you lack" as "you are behind".
+
+**Rule.** A forwarded owner action is a measurement with a timestamp, not a standing
+instruction. Re-derive it before execution, and re-derive its direction specifically: which
+side is ahead is exactly the part that a stale comparison inverts, and the cost of executing
+an inverted action is a silent capability deletion.
+
+**How to apply.** Carry the EVIDENCE with a forwarded action, never just the verb -- what
+was compared, against what, at what time. On re-entry, run the comparison again before
+acting; if the finding has dissolved, retire the action loudly rather than passing it on
+another session. An action that survives three handoffs unexamined is a rumour with a
+ticket number.
+
+**Extension, 2026-09-02 -- the other end of the same edge.** The Owner performed one of these
+actions during the session that recommended it: two registrations widened, capture coverage
+NARROW to COVERED, the chain gate green. The message that had asked for it went on printing
+the same command afterwards, for the three registrations that remained -- and the tool
+explicitly declines to touch those, because their code rejects the surface in its own source.
+The instruction had become a recommendation with an effect of exactly zero, still rendered at
+full confidence.
+
+So re-measurement is owed at BOTH ends. Before executing, because the finding may have
+dissolved; and inside whatever emits the action, because the fix may have already landed and
+the remainder may need a different one. Gate the sentence on the condition it repairs, not on
+the presence of the problem: "some gaps remain" and "this command closes them" are different
+predicates, and code that conflates them will keep asking for work already done.
+
+### PR-PROMPT-INDEPENDENT-INHERITANCE-OBSERVED-001
+
+Most claimed compounding is a session reading its own notes. The test that separates
+institutional memory from prompt memory is whether a prior asset changes behaviour when
+nothing in the current context restated what it does. That test was passed here by
+accident, which is the only way it can be passed honestly.
+
+A turn ended on the sentence "I'll read the umbrella result when it lands and attribute
+every red" -- a described next action with no tool call behind it. `closer-guard.js`,
+installed 2026-08-27, classified it INTENT_NARRATION and blocked the turn. The governing
+prompt for this session never named the hook, never described its rule, and never mentioned
+passive closers; the doctrine reached the decision point through installed machinery rather
+than through context. That is C5 evidence on the compounding ladder -- cross-session reuse
+with a measurable behaviour change -- and it is worth more than the same claim made about
+an asset the prompt had just re-explained.
+
+Two details make it stronger. The hook fired against the agent that had spent the session
+auditing hooks, which is the only population that cannot claim the catch was luck. And it
+fired in the same turn in which a forwarded Owner action -- copy the repo's dispatcher over
+the live one -- was measured to DELETE this exact hook from production, because the repo
+copy registered 53 scripts and the live copy 54. The mechanism that proved cross-session
+compounding was one obedient Owner action away from being removed by the session that
+forwarded it.
+
+**Rule.** Record positive compounding with the same rigour as failure, and record it only
+when the prompt did not supply the knowledge. An asset whose operational content appears in
+the current context proves retrieval, not inheritance. Also: an enforcement mechanism that
+demonstrably changes behaviour is load-bearing production capability, and any action that
+would remove one needs the same evidence burden as an action that would add one.
+
+**How to apply.** When a hook, gate or baseline changes what you did, check whether the
+current prompt described its behaviour. If it did, log it as retrieval. If it did not, log
+it as inheritance and name the asset, the date it was installed, and the decision it
+changed. Sister of [[PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001]] -- the same measurement
+that retires a stale action is what protects a live one.
+
+### PR-SCORE-CANNOT-EXPRESS-A-PRECONDITION-001
+
+A done-gate scored deliverables out of 100 and passed them at 70: file present, syntax
+clean, tests green, no slop. Every one of those questions is about the artifact in the
+repository. None is about the artifact that runs. Replayed against a claim a session
+really made -- a hook fix is shipped -- the model returned 100 and Done while the executing
+bytes were a different version and had been for six days.
+
+Adding delivery as one more weighted check would not have helped. At any weight the
+deliverable could lose it and still clear the threshold on the strength of the others, which
+is exactly right for quality and exactly wrong for delivery: a change that does not govern
+behaviour is not seventy percent delivered. Weights model TRADE-OFFS. Some conditions are
+not tradeable, and expressing one as a weight silently converts it into something the rest
+of the score can buy out.
+
+**Rule.** When a gate must express "this cannot be traded away", it needs a precondition
+that vetoes beside the score, not a heavier weight inside it. The tell that you have the
+wrong primitive is reaching for a large number to make a check unignorable.
+
+**How to apply.** Keep the score answering "how good", and let preconditions answer "is this
+the thing at all". Make the veto's applicability an explicit property of the CLAIM rather
+than a global switch -- a delivery gate that fires on documentation gets called noise and
+switched off, and then it protects nothing. Invert the scorer's fail-open while you are
+there: a scorer meeting an unknown check should not fabricate a failure, but a done-gate
+meeting an unknown precondition has been handed a requirement by a newer contract than
+itself, and answering "fine" is how a version-skewed gate certifies what it cannot see.
+Sister of [[T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001]], which supplies
+the evidence this veto consumes.
+
+### PR-ENFORCEMENT-FAILS-AT-TWO-INDEPENDENT-EDGES-001
+
+A trap documented in the global config, sealed in the vault, and cited in prior sessions was
+re-issued four times in one day -- by the session auditing why known rules recur. The
+tempting diagnosis is that prose does not work, and the tempting fix is to write it again
+somewhere stronger.
+
+Tracing it end to end gave a different answer, in two parts, and either one alone would have
+produced the same silence. First, a registry of exactly this kind of trap already existed
+and was the correct owner -- five entries, each a command that is not destructive but is
+reliably wrong on this host, each documented and each re-issued anyway. This trap was simply
+not in it: a CONTENT gap. Second, that registry has one consumer, and the consumer is
+registered on a tool surface where the trap cannot occur: a ROUTING gap. Adding the pattern
+without widening the route leaves it undetectable. Widening the route without the pattern
+leaves it unknown.
+
+**Rule.** When a known rule fails to enforce, ask both questions separately: does the
+mechanism KNOW the rule, and can the mechanism SEE the event? Fixing whichever one you
+noticed first and declaring the failure closed is how a trap reaches its fifth recurrence.
+
+**How to apply.** Name the consumer, then name the surface the consumer is registered on,
+then compare that surface against where the event actually occurs. Report the two edges
+separately in the finding, because they usually have different owners and different
+authority -- here the content was mine to fix and the route was not, so the honest verdict
+was DETECTED, NOT YET REACHABLE rather than a fix claimed for half a repair. And do not add
+another prose entry for a rule that already exists in prose: the medium that failed is not
+the medium to repeat it in. Sister of [[T-REGISTRATION-PRESENCE-NOT-COVERAGE-001]].
+
+### T-DRIFT-VERDICT-WITHOUT-DIRECTION-001
+
+Five registered hooks were reported as running bytes that differ from this checkout's. The
+verdict was SHADOWED for all five, and the remedy it implied was one thing: make the running
+tree match mine.
+
+Measured against the merge base of the two worktrees, the five were three different
+situations. Two were this checkout's committed work that never arrived. Two were the OTHER
+lineage's NEWER commits, already executing, on files this branch had not touched since the
+base -- the running tree was ahead, not behind. One was that tree's uncommitted edit. Acting
+on the single verdict would have overwritten twenty-two commits of somebody else's work in
+order to deliver two files that needed no delivery.
+
+**Rule.** A drift verdict computed against one side's HEAD reports that two things differ.
+It does not report WHICH IS BEHIND, and a comparison that cannot answer that will eventually
+recommend destroying the newer copy.
+
+**How to apply.** Where both sides are commits in one object store, the merge base settles it
+for free: mine-moved and theirs-moved are two independent booleans, and their four
+combinations are four different remedies with four different owners. Where the running side
+is not a commit -- a copied file, a foreign tree -- direction is genuinely unknowable, and
+the honest verdict is the blocking one, never the reassuring one. Sister of
+[[T-COMMIT-IS-NOT-INSTALL-WHEN-THE-INSTALL-IS-A-WORKING-TREE-001]].
+
+### PR-CHARGE-A-GATE-ONLY-FOR-WHAT-ITS-OWNER-CAN-ACT-ON-001
+
+Once direction was visible, the temptation was to fail the delivery gate on every row that
+was not effective. Two of the classes describe a running tree that is AHEAD of this checkout,
+or that carries somebody else's uncommitted work on a file this branch never touched. Both
+are true observations. Neither is undelivered work of the checkout being judged, and neither
+has any action its owner can take.
+
+**Rule.** Report every state; charge the gate only for the states its owner can resolve. A
+red that persists no matter what its reader does is not a standard, it is a permanent
+condition, and permanent conditions get switched off rather than satisfied.
+
+**How to apply.** Separate the observation set from the failing set explicitly, in code, with
+the reason written down -- not by quietly omitting rows, which reads as a coverage gap later.
+Keep anything unmeasured in the failing set: "we could not tell" is not "not your problem".
+
+### T-EMPTY-READER-INDISTINGUISHABLE-FROM-ABSENT-VALUE-001
+
+A batch reader returned committed bytes for several revisions in one call, and answered None
+for a path absent at that revision. On failure it returned an empty dict. Read through
+`.get()`, those two are the same answer -- so a dead reader made every divergent file look
+like the one class the gate does not charge, and the gate went green because its evidence
+source had died.
+
+**Rule.** When a lookup's "value is absent" and "the source failed" collapse to the same
+sentinel, the failure mode of the source becomes a passing verdict. Distinguish them by
+MEMBERSHIP, or by a status the reader returns alongside the data.
+
+**How to apply.** Prove it by substituting a dead reader in a test and asserting the verdict
+does NOT become the passing one. An argument that the reader cannot fail is not the same
+evidence, and it is wrong more often than the reader is.
+
+### PR-AN-INSTRUCTION-IS-AN-ARTIFACT-AND-CAN-BE-SHADOWED-001
+
+One Owner action was forwarded across three sessions: run this repository tool with this
+flag. Measured, the tool was absent from the checkout the Owner would run it in -- committed
+on a branch that tree had not taken. The instruction had never been followable from the only
+place its reader stood, and nothing said so, because a relative command reads as reachable
+from wherever you happen to be standing.
+
+**Rule.** A handoff instruction is subject to the same delivery question as the code it talks
+about. Before forwarding one, resolve the path it names against the tree its reader will
+actually be in.
+
+**How to apply.** Print a path that exists at the moment the line is printed, and say which
+tree it came from. Prefer a durable checkout over a session-scoped one: an instruction whose
+validity expires with the session that wrote it is this same defect one rung up. Reporting
+the gap is the whole remedy -- a tool being out of reach is never a reason to copy files into
+a working tree you do not own. Sister of
+[[PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001]].
