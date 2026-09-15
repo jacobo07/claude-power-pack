@@ -9,6 +9,7 @@ from .discovery import (  # noqa: F401
     FOREIGN_PREFIXES,
     LIVE_ONLY,
     LIVE_ROOT_DEFAULT,
+    NON_DOMAINS,
     PAIRED,
     REPO_ONLY,
     Discovery,
@@ -19,6 +20,6 @@ from .discovery import (  # noqa: F401
 
 __all__ = [
     "ALIASES", "DOMAINS", "ENV_LIVE_ROOT", "FOREIGN_PREFIXES", "LIVE_ONLY",
-    "LIVE_ROOT_DEFAULT", "PAIRED", "REPO_ONLY", "Discovery", "Pair",
-    "discover", "resolve_live_root",
+    "LIVE_ROOT_DEFAULT", "NON_DOMAINS", "PAIRED", "REPO_ONLY", "Discovery",
+    "Pair", "discover", "resolve_live_root",
 ]

@@ -35,6 +35,24 @@ invisible to the producer and surfaced as LIVE_ONLY, which reads as "no repo
 copy exists". Measured on this host: 11 of 22 repo-backed agents, including
 every cdio, graphify and rtk agent. A root declared by hand cannot accuse you
 of what it never scanned, exactly as a file list could not.
+
+Aperture note (2026-09-15) -- the same disease one level higher again, and the
+last level this module has. Fixing the file level left the root level declared
+by hand; fixing the root level left DOMAINS itself, a hand-typed tuple of four
+names. `~/.claude/rules/` is a real live directory holding doctrine that
+reaches every session, and no instrument in this estate could see it, because
+an aperture cannot report what it does not enumerate. It was found by a human
+noticing, which is not a mechanism.
+
+That is the fifth occurrence of PR-COVERAGE-BY-CONSTRUCTION-001 in this one
+module: hand-enrolled file list, hand-declared domain root, hand-curated
+install manifest, hand-written identity map, hand-typed domain tuple. The
+prevention is not a sixth note. `DOMAINS` is now held against the live tree's
+ACTUAL directories by V-RULES-APERTURE-DECLARED in
+tools/test_rule_domain_coverage.py: a live directory must be either a declared
+domain or an explicitly declared non-domain carrying a reason. Adding a
+directory to `~/.claude/` can no longer be silently invisible -- it fails the
+gate until somebody decides which it is.
 """
 from __future__ import annotations
 
@@ -52,7 +70,103 @@ DOMAINS: tuple[tuple[str, str], ...] = (
     ("commands", "*.md"),
     ("agents", "*.md"),
     ("knowledge_vault", "**/*.md"),
+    # Added 2026-09-15. This domain is OWNERSHIP-MIXED, and that is the whole
+    # reason it was missing: `~/.claude/rules/` is a GLOBAL USER surface that
+    # PP shares rather than owns. Measured on this host: 2 paired (the ECC
+    # absorptions, the only repo rules that have ever mirrored), 9 live-only
+    # written by sessions in OTHER repositories, 107 repo-only.
+    #
+    # Listing the 9 is correct and accusing them is not. This producer's
+    # contract already draws that line -- a one-sided file is inventory, never
+    # drift -- so the domain needed no new ownership machinery to be safe.
+    # Evidence: vault/audits/live-rule-ownership-2026-09-15.md.
+    #
+    # WARNING, and it is load-bearing. Adding a domain here ARMS
+    # install_global_core._repo_population for it: that function resolves its
+    # glob through dict(DOMAINS), so it returned {} for rules before this line
+    # and returns 109 sources after it. The only thing between this repo's
+    # rule tree and the operator's home is SHIPPABLE_KINDS, a separate tuple
+    # in that module. Census aperture and deployment aperture were independent
+    # by accident and are now independent by consequence. Pinned by
+    # V-RULES-NOT-SHIPPABLE in tools/test_rule_domain_coverage.py, because a
+    # comment cannot fail.
+    ("rules", "**/*.md"),
 )
+
+# Every live directory that is deliberately NOT a mirror domain, with the
+# reason. Declared 2026-09-15 against the real tree (53 directories, 5 of them
+# domains), because `rules/` proved that a hand-typed DOMAINS tuple cannot
+# report what it never enumerates -- the fifth occurrence of
+# PR-COVERAGE-BY-CONSTRUCTION-001 in this module.
+#
+# This is a RATCHET, not a clean bill. It freezes the population that exists
+# today with one reason each; a directory appearing in `~/.claude/` that is
+# neither a domain nor declared here FAILS the gate until somebody decides
+# which it is. A declared name that no longer exists fails too, so the list
+# cannot outlive its subjects. Both poles are driven in
+# tools/test_rule_domain_coverage.py.
+#
+# RUNTIME      host or agent state, regenerated; no durable source to mirror
+# FOREIGN      another tool installs and owns it; not this repo's to mirror
+# OTHER_OWNER  may hold durable artifacts, but their durability belongs to a
+#              named owner other than this census
+NON_DOMAINS: dict[str, tuple[str, str]] = {
+    ".gsd-staging": ("RUNTIME", "gsd install staging"),
+    ".vscode": ("RUNTIME", "editor settings for the live tree"),
+    "autoresearch-engine": ("RUNTIME", "autoresearch working state"),
+    "autoresearch-triggers": ("RUNTIME", "autoresearch trigger spool"),
+    "backups": ("RUNTIME", "installer backups; restore input, not source"),
+    "_backups": ("RUNTIME", "ad-hoc backups"),
+    "_premutation_snapshots": ("RUNTIME", "mutation-drill snapshots"),
+    "cache": ("RUNTIME", "derived cache"),
+    "chrome": ("RUNTIME", "browser integration state"),
+    "daemon": ("RUNTIME", "daemon pid/state"),
+    "debug": ("RUNTIME", "debug dumps"),
+    "downloads": ("RUNTIME", "scratch downloads"),
+    "feedback": ("RUNTIME", "feedback spool"),
+    "file-history": ("RUNTIME", "editor file history"),
+    "ghost_input": ("RUNTIME", "input-injection scratch"),
+    "gsd-migration-journal": ("RUNTIME", "gsd migration journal"),
+    "ide": ("RUNTIME", "IDE bridge state"),
+    "jobs": ("RUNTIME", "background job records"),
+    "lazarus": ("RUNTIME", "session resurrection store"),
+    "logs": ("RUNTIME", "logs"),
+    "memory": ("RUNTIME", "per-project memory store"),
+    "paste-cache": ("RUNTIME", "clipboard cache"),
+    "projects": ("RUNTIME", "per-project transcripts and memory"),
+    "session-env": ("RUNTIME", "per-session environment"),
+    "sessions": ("RUNTIME", "session records"),
+    "shell-snapshots": ("RUNTIME", "shell snapshots"),
+    "sleepless-qa": ("RUNTIME", "QA run artifacts"),
+    "sovereign_blackbox": ("RUNTIME", "blackbox recorder output"),
+    "state": ("RUNTIME", "runtime state store"),
+    "tmp": ("RUNTIME", "temporary files"),
+    "traces": ("RUNTIME", "execution traces"),
+    # Classified by this gate's FIRST real run, 2026-09-15 15:26, not by the
+    # hand that wrote the rest of this list: it did not exist when the
+    # population was frozen forty minutes earlier and the ratchet refused to
+    # pass until somebody decided what it was. Created empty by the host
+    # mid-session, zero files, self-describing name. Disagree with this by
+    # finding its writer -- it was classified on behaviour, not provenance.
+    "telemetry": ("RUNTIME", "host telemetry spool; appeared empty mid-session"),
+    "get-shit-done": ("FOREIGN", "gsd plugin"),
+    "gsd-core": ("FOREIGN", "gsd plugin core"),
+    "gsd-local-patches": ("FOREIGN", "gsd plugin patches"),
+    "kobiiclaw": ("FOREIGN", "KobiiClaw tooling"),
+    "mcp-servers": ("FOREIGN", "MCP server configs"),
+    "plugins": ("FOREIGN", "host plugin tree"),
+    "bin": ("OTHER_OWNER", "binaries; tools/install_global_core"),
+    "config": ("OTHER_OWNER", "host config; settings.json doctrine"),
+    "governance": ("OTHER_OWNER", "GLOBAL_ALIGNMENT_LEDGER"),
+    "plans": ("OTHER_OWNER", "plan files; SDD-OS spec gate"),
+    "profiles": ("OTHER_OWNER", "host profiles"),
+    "project-prompts": ("OTHER_OWNER", "per-project prompt overlays"),
+    "scripts": ("OTHER_OWNER", "loose scripts; installer checklist"),
+    "skills": ("OTHER_OWNER", "PP itself lives here; the git repo IS the source"),
+    "skills-archive": ("OTHER_OWNER", "retired skills"),
+    "tools": ("OTHER_OWNER", "loose tools; installer checklist"),
+    "vault": ("OTHER_OWNER", "live vault projection; vault_sync"),
+}
 
 # live domain -> extra repo directories that also feed it. Irreducible: the
 # live tree is flat, so nothing in it records which repo directory owns a
@@ -152,6 +266,67 @@ def alias_candidates(repo_root: Path, domain: str, pattern: str,
 PAIRED = "PAIRED"
 LIVE_ONLY = "LIVE_ONLY"
 REPO_ONLY = "REPO_ONLY"
+
+# An `origin:` value that means PP PRODUCED this artifact, so PP owes it a
+# recoverable source. `/cpp-compound` stamps this on every rule it
+# materialises into `~/.claude/rules/` (commands/compound.md, "Provenance is
+# mandatory"), precisely so an unattended global write is never anonymous.
+#
+# The set is deliberately narrow. A live file is PP's because a PP mechanism
+# WROTE it, never because it mentions PP or sits in a directory PP also uses:
+# nine rules in `~/.claude/rules/` name other repositories as their source and
+# one of them cites a Power Pack incident among six, which is content
+# authorship and not artifact ownership.
+PP_ORIGIN_MARKERS: frozenset[str] = frozenset({"unattended-compound"})
+
+_FM_ORIGIN = re.compile(r"^origin:\s*[\"']?([A-Za-z0-9_.\-]+)[\"']?\s*$", re.M)
+
+
+def declared_origin(path: Path) -> str | None:
+    """The `origin:` a file stamps in its own frontmatter, or None.
+
+    Unlike `declared_name`, this IS an ownership oracle -- but only in the
+    positive direction. A stamped origin proves a PP mechanism wrote the file.
+    Its absence proves nothing at all, which is why the nine unstamped rules
+    were attributed by five other instruments rather than by this one.
+    """
+    try:
+        head = path.read_text(encoding="utf-8", errors="replace")[:4000]
+    except OSError:
+        return None
+    if not head.lstrip().startswith("---"):
+        return None
+    parts = head.split("---", 2)
+    if len(parts) < 3:
+        return None
+    m = _FM_ORIGIN.search(parts[1])
+    return m.group(1) if m else None
+
+
+def pp_owned_live_only(repo_root: Path, live_root: Path | None = None,
+                       domain: str = "rules") -> list[tuple[str, str]]:
+    """Live files PP's own mechanisms produced that no repo source can restore.
+
+    The durability question for a shared live surface. Returns
+    `[(relative path, origin), ...]` -- empty is the healthy state and, on
+    this host today, also the EMPTY state: `/cpp-compound`'s global pass has
+    never run (`last_run_global: null`), so no rule carries a PP origin yet.
+
+    That emptiness is why this was invisible. An empty offender list satisfies
+    a completeness claim whether or not the check works, so the gate that
+    consumes this ships a synthetic positive control rather than relying on a
+    real subject to exist.
+    """
+    d = discover(repo_root, live_root)
+    live_base = resolve_live_root(live_root) / domain
+    out: list[tuple[str, str]] = []
+    for dom, rel in d.live_only:
+        if dom != domain:
+            continue
+        origin = declared_origin(live_base / rel)
+        if origin in PP_ORIGIN_MARKERS:
+            out.append((rel, origin))
+    return sorted(out)
 
 
 @dataclass(frozen=True)
