@@ -47,6 +47,20 @@ THRESHOLD_ADVISORY_PCT = 70
 # THRESHOLD_SNAPSHOT_PCT so the rearm band and the snapshot band cannot touch.
 THRESHOLD_REARM_PCT = 45
 
+# Post-compaction resume (gap C; Owner-authorised 2026-09-15 via settings
+# autoMode.allow). Two flags because the dispatch is two-phase, and the reason
+# is a race measured in the existing daemon's own source: it polls every 500 ms
+# and presses Enter the moment it sees a trigger flag with Cursor in front.
+# Dropping that flag in the same Stop that ASKS the model for the resume line
+# would fire Enter while the model is still generating -- into an empty input
+# box, consuming the flag for nothing.
+#   Stop A: arm, and ask the model to end its turn with the command.
+#   Stop B: the turn has ended, so the line is sitting there -- drop the flag
+#           and let the daemon press Enter on what the model itself wrote.
+# Both are cleared at tier 2, so each compaction cycle gets exactly one resume.
+RESUME_ARMED_FLAG = "claude-ctxwd-resumearm-{session_id}.flag"
+RESUME_DONE_FLAG = "claude-ctxwd-resumedone-{session_id}.flag"
+
 ROOT = Path.home() / ".claude" / "skills" / "claude-power-pack"
 LEDGER_PATH = ROOT / "vault" / "sleepy" / "context_snapshots.jsonl"
 ATOMIC_WRITE_DIR = ROOT / "lib"
@@ -398,6 +412,24 @@ def _resume_clause(marker) -> str:
     )
 
 
+def _resume_dispatch_message(marker) -> str:
+    """Stop A's ask: the exact line, and nothing after it.
+
+    Pure, so the gate can drive both poles without running the tier-2 path,
+    which writes checkpoints and launches the daemon. The "nothing after it"
+    clause is load-bearing rather than stylistic: Enter is pressed on whatever
+    the turn ends with, so a trailing sentence would be submitted instead of
+    the command.
+    """
+    cmd = (marker or {}).get("resume_command")
+    return (
+        "COMPACTION LANDED — the autonomous run must re-enter itself. "
+        f"End this response with a SINGLE trailing line, exactly `{cmd}`, "
+        "no preface and no markdown. Enter will be pressed on it at the next "
+        "Stop, so anything written after that line would be submitted instead."
+    )
+
+
 def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str):
     """Drop the SendKeys-daemon trigger flag (Owner 1c, zero-keystroke).
     The detached PS daemon polls ~/.claude/hooks/auto-compact-trigger.flag
@@ -594,6 +626,30 @@ def run(event: dict) -> dict:
     if used_pct < THRESHOLD_REARM_PCT:
         _clear_flag(session_id, ADVISORY_FLAG)
 
+        # Post-compaction resume (gap C). Same low-context window as the rearm,
+        # and it must sit here for the same reason: below the snapshot floor.
+        # Gated on a marker the Owner's launcher wrote, so an ordinary session
+        # never enters this branch at all.
+        if not _flag_exists(session_id, RESUME_DONE_FLAG):
+            marker = _read_autorun_marker(session_id)
+            if marker:
+                if not _flag_exists(session_id, RESUME_ARMED_FLAG):
+                    _set_flag(session_id, RESUME_ARMED_FLAG)
+                    return {"decision": "block",
+                            "reason": _resume_dispatch_message(marker)}
+                # The turn that carried the line has ended: dispatch Enter onto
+                # it. Marked done FIRST -- a failure past this point must not
+                # leave the branch re-entrant, or every later Stop presses Enter
+                # again on whatever the input box happens to hold.
+                _set_flag(session_id, RESUME_DONE_FLAG)
+                try:
+                    _write_trigger_flag(_import_atomic_write(), session_id,
+                                        used_pct, event.get("cwd") or os.getcwd())
+                    _spawn_daemon()
+                except Exception:
+                    pass
+                return {}
+
     if used_pct < THRESHOLD_SNAPSHOT_PCT:
         return {}
 
@@ -619,6 +675,10 @@ def run(event: dict) -> dict:
         try:
             atomic_write.atomic_append_jsonl(LEDGER_PATH, _ledger_row(session_id, metrics, transcript_path, cwd, "advisory"))
             _set_flag(session_id, ADVISORY_FLAG)
+            # A new compaction cycle begins: re-arm the resume machine, or the
+            # run resumes once and every later crossing leaves it stranded.
+            _clear_flag(session_id, RESUME_ARMED_FLAG)
+            _clear_flag(session_id, RESUME_DONE_FLAG)
         except Exception:
             pass
 

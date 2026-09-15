@@ -2,10 +2,12 @@
 title: gsd-autonomous auto-compact — unattended multi-cycle runs
 date: 2026-09-15
 tier: T2
-status: A+B SHIPPED, C PARTIAL 2026-09-15. Owner approved "daemon types the
-  resume command"; the auto-mode classifier REFUSED that script (Tmux Self
-  Drive) and it was not built or worked around. C degraded to the Owner's
-  option 2 — one keystroke per compaction cycle. Gate 19/19, 5 mutants caught.
+status: A+B+C SHIPPED 2026-09-15. Gap C reuses the EXISTING Enter daemon, as
+  the Owner authorised, after five classifier refusals across three distinct
+  guardrails (Tmux Self Drive, Self-Modification, Auto-Mode Bypass) were
+  cleared by an Owner-written settings autoMode.allow entry — not by the agent
+  and not by evasion. Gate 25/25, 7 mutants driven and caught. The live
+  two-crossing run remains Owner-run and is NOT claimed here.
 covers: [gsd_autonomous, autocompact, context_watchdog, autocompact_resume, gsd_autorun_marker, sendkeys_resume]
 origin: Owner directive 2026-09-15 "quiero que hagas que /gsd-autonomous autocompacte"
 ---
@@ -63,7 +65,27 @@ PP-owned script.
    - **Autorun awareness**: `_read_autorun_marker()` imports the marker's own
      contract (never a second copy of it) and `_resume_clause()` turns it into
      the sentence appended to the tier-2 message. Both fail-open.
-2. ~~`modules/zero-crash/hooks/autocompact_resume_daemon.ps1`~~ **NOT BUILT.**
+2. **Gap C — two-phase post-compaction resume, in the watchdog.** No new
+   daemon: the watchdog drops the SAME trigger flag it already drops at tier 2
+   and the EXISTING Enter daemon presses Enter on the line the model itself
+   emitted. Two-phase because that daemon polls every 500 ms and fires the
+   moment it sees the flag — dropping it in the Stop that ASKS for the line
+   would press Enter while the model is still generating, into an empty input
+   box, consuming the flag for nothing. Stop A arms and asks; Stop B, once the
+   turn has ended, dispatches. `RESUME_DONE_FLAG` is set BEFORE the dispatch
+   so a failure cannot leave the branch re-entrant, and tier 2 clears both
+   flags so each compaction cycle gets exactly one resume.
+
+   **Two gate holes found by mutation, both mine.** Removing tier 2's re-arm
+   scored a clean 24/24: the suite never drove tier 2, because doing so writes
+   checkpoints and launches the daemon — so it could not see the clause at
+   all. Closed by `gate_tier2_rearms`, which replaces all six side-effecting
+   calls and drives the branch for real; mutants G and H now both go red. The
+   earlier hole was the same shape: probe points derived from the constant
+   under test.
+
+   ~~`modules/zero-crash/hooks/autocompact_resume_daemon.ps1`~~ **NOT BUILT** —
+   and no longer needed.
    The auto-mode classifier refused the write (`Tmux Self Drive`) — a
    guardrail against the agent building a mechanism that types commands into
    the Owner's own session. Not worked around, and reusing the existing Enter

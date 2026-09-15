@@ -349,6 +349,152 @@ def gate_long_run_config(cfg) -> None:
         shutil.rmtree(root, ignore_errors=True)
 
 
+def gate_two_phase(wd, mk) -> None:
+    """Gap C: the post-compaction resume state machine.
+
+    `_write_trigger_flag` and `_spawn_daemon` are replaced with recorders for
+    the duration. That is not to weaken the check but to keep the test from
+    BEING the thing it measures: driving them for real would drop a live
+    trigger flag and launch the Enter daemon into the running session. The
+    assertions are on whether they were called, which is the actual claim.
+    """
+    sid = f"gsdac-{uuid.uuid4().hex[:12]}"
+    _stamp_orch_throttle(wd, sid)
+    real_flag, real_spawn = wd._write_trigger_flag, wd._spawn_daemon
+    calls = {"flag": 0, "spawn": 0}
+    wd._write_trigger_flag = lambda *a, **k: calls.__setitem__("flag", calls["flag"] + 1)
+    wd._spawn_daemon = lambda *a, **k: calls.__setitem__("spawn", calls["spawn"] + 1)
+
+    try:
+        mk.write_marker(sid, "/gsd-autonomous", cwd=str(ROOT), phase=5)
+
+        # Stop A must ASK and must NOT dispatch: the daemon polls every 500 ms,
+        # so an Enter here lands in an empty box while the model is generating.
+        out_a = _run_at(wd, sid, POST_COMPACTION_PCT)
+        armed = wd._flag_exists(sid, wd.RESUME_ARMED_FLAG)
+        if out_a.get("decision") == "block" and armed and calls["flag"] == 0:
+            _ok("V-GSDAC-TWOPHASE-ARMS-FIRST",
+                "Stop A blocked for the resume line and dispatched nothing")
+        else:
+            _fail("V-GSDAC-TWOPHASE-ARMS-FIRST",
+                  f"decision={out_a.get('decision')!r} armed={armed} "
+                  f"dispatches={calls['flag']} — an Enter at Stop A is consumed "
+                  "on an empty input box and the resume never happens")
+
+        if "/gsd-autonomous" in str(out_a.get("reason", "")):
+            _ok("V-GSDAC-TWOPHASE-NAMES-COMMAND", "Stop A names the exact command")
+        else:
+            _fail("V-GSDAC-TWOPHASE-NAMES-COMMAND",
+                  f"reason omits the command: {out_a.get('reason')!r}")
+
+        # Stop B: the turn carrying the line has ended, so dispatch now.
+        out_b = _run_at(wd, sid, POST_COMPACTION_PCT)
+        if calls["flag"] == 1 and calls["spawn"] == 1 \
+                and out_b.get("decision") != "block":
+            _ok("V-GSDAC-TWOPHASE-DISPATCHES-SECOND",
+                "Stop B dropped the trigger, spawned the daemon, did not block")
+        else:
+            _fail("V-GSDAC-TWOPHASE-DISPATCHES-SECOND",
+                  f"flag={calls['flag']} spawn={calls['spawn']} "
+                  f"decision={out_b.get('decision')!r}")
+
+        # One resume per compaction cycle — not one per Stop.
+        _run_at(wd, sid, POST_COMPACTION_PCT)
+        _run_at(wd, sid, POST_COMPACTION_PCT)
+        if calls["flag"] == 1:
+            _ok("V-GSDAC-TWOPHASE-ONCE-PER-CYCLE",
+                "two further Stops dispatched nothing")
+        else:
+            _fail("V-GSDAC-TWOPHASE-ONCE-PER-CYCLE",
+                  f"dispatched {calls['flag']} times — later Stops would press "
+                  "Enter again on whatever the input box holds")
+
+        # No marker: an ordinary session must not enter the branch at all.
+        sid2 = f"gsdac-{uuid.uuid4().hex[:12]}"
+        _stamp_orch_throttle(wd, sid2)
+        before = calls["flag"]
+        out_n = _run_at(wd, sid2, POST_COMPACTION_PCT)
+        if calls["flag"] == before and not out_n:
+            _ok("V-GSDAC-TWOPHASE-INERT-WITHOUT-MARKER",
+                "no marker: no block, no dispatch")
+        else:
+            _fail("V-GSDAC-TWOPHASE-INERT-WITHOUT-MARKER",
+                  "a session with no autonomous run was dispatched into")
+    finally:
+        wd._write_trigger_flag, wd._spawn_daemon = real_flag, real_spawn
+        mk.clear_marker(sid)
+        for f in (wd.RESUME_ARMED_FLAG, wd.RESUME_DONE_FLAG):
+            wd._clear_flag(sid, f)
+
+
+class _NullWriter:
+    """Stand-in for atomic_write: accepts every call, writes nothing."""
+
+    def atomic_append_jsonl(self, *a, **k):
+        return None
+
+    def atomic_write_bytes(self, *a, **k):
+        return None
+
+
+def gate_tier2_rearms(wd, mk) -> None:
+    """Tier 2 must clear BOTH resume flags, or the run resumes exactly once.
+
+    This gate exists because the suite could not see that defect: removing
+    tier-2's re-arm scored a clean 24/24. The reason was structural — nothing
+    here drove tier 2, because driving it writes vault checkpoints, dumps
+    telemetry, drops the live trigger flag and launches the Enter daemon. So
+    all five side-effecting calls are replaced for the duration and the branch
+    is driven for real. A mutant nobody can catch is a clause nobody is
+    holding.
+    """
+    sid = f"gsdac-{uuid.uuid4().hex[:12]}"
+    _stamp_orch_throttle(wd, sid)
+    saved = {n: getattr(wd, n) for n in
+             ("_import_atomic_write", "_kclear_equivalent", "_dump_telemetry",
+              "_write_trigger_flag", "_spawn_daemon", "_append_progress_md")}
+    wd._import_atomic_write = lambda *a, **k: _NullWriter()
+    wd._kclear_equivalent = lambda *a, **k: {}
+    wd._dump_telemetry = lambda *a, **k: None
+    wd._write_trigger_flag = lambda *a, **k: None
+    wd._spawn_daemon = lambda *a, **k: False
+    wd._append_progress_md = lambda *a, **k: None
+
+    try:
+        # Both resume flags set, as they are after a completed resume.
+        wd._set_flag(sid, wd.RESUME_ARMED_FLAG)
+        wd._set_flag(sid, wd.RESUME_DONE_FLAG)
+        if not (wd._flag_exists(sid, wd.RESUME_ARMED_FLAG)
+                and wd._flag_exists(sid, wd.RESUME_DONE_FLAG)):
+            _fail("V-GSDAC-TIER2-REARMS-RESUME",
+                  "could not establish the precondition — inconclusive, not a pass")
+            return
+
+        out = _run_at(wd, sid, 75.0)          # a genuine tier-2 crossing
+        if out.get("decision") != "block":
+            _fail("V-GSDAC-TIER2-REARMS-RESUME",
+                  f"tier 2 did not fire at 75% (decision={out.get('decision')!r}) "
+                  "— the gate measured nothing")
+            return
+
+        still = [n for n, f in (("armed", wd.RESUME_ARMED_FLAG),
+                                ("done", wd.RESUME_DONE_FLAG))
+                 if wd._flag_exists(sid, f)]
+        if not still:
+            _ok("V-GSDAC-TIER2-REARMS-RESUME",
+                "tier 2 cleared both resume flags — the next cycle can resume")
+        else:
+            _fail("V-GSDAC-TIER2-REARMS-RESUME",
+                  f"tier 2 left {', '.join(still)} set — the run would resume "
+                  "once and then be stranded at every later crossing")
+    finally:
+        for name, fn in saved.items():
+            setattr(wd, name, fn)
+        for f in (wd.RESUME_ARMED_FLAG, wd.RESUME_DONE_FLAG,
+                  wd.ADVISORY_FLAG, wd.SNAPSHOT_FLAG):
+            wd._clear_flag(sid, f)
+
+
 def main() -> int:
     print("V-GSDAC — /gsd-autonomous auto-compact done-gate")
     for path in (WATCHDOG, MARKER_TOOL, CONFIG_TOOL):
@@ -365,6 +511,8 @@ def main() -> int:
     gate_rearm(wd)
     gate_marker(mk)
     gate_resume_clause(wd, mk)
+    gate_two_phase(wd, mk)
+    gate_tier2_rearms(wd, mk)
     gate_long_run_config(cfg)
 
     total = _passes + _fails
