@@ -39,6 +39,7 @@ of what it never scanned, exactly as a file list could not.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -66,9 +67,87 @@ FOREIGN_PREFIXES: tuple[str, ...] = ("gsd-", "claude-mem", "kde-")
 
 # live-relative -> repo-relative, for pairs whose names differ. Irreducible:
 # no scan can infer that these two files are the same document.
+#
+# Measured 2026-09-15, because "irreducible" deserved a challenge. Frontmatter
+# looks like the answer: twelve command sources drop a `cpp-` prefix on disk
+# while declaring `name: cpp-<x>`, and deriving the live name from `name:`
+# reproduces the resume-sovereign entry below unaided, with zero collisions.
+# It is still WRONG. Seven live command files -- autoupdate, customclaw,
+# design-md, obsidian-setup, update, vault-setup, vault-sync -- declare a
+# `cpp-` name while living under the unprefixed filename, and the harness
+# lists them by FILENAME. For commands the filename is the registered name and
+# `name:` is decorative, so derivation would have renamed eleven working
+# commands. The convention is not uniform and cannot be inferred; it has to be
+# recorded. Detection of undeclared candidates lives in
+# tools/test_mirror_discovery.py (V-MIRROR-ALIAS-CANDIDATE), which reports them
+# for a human to declare rather than pairing them on a guess.
 ALIASES: dict[str, str] = {
     "commands/cpp-resume-sovereign.md": "commands/resume-sovereign.md",
+    # Found by the census, not by memory: the installer would have written a
+    # second file at commands/compound.md while /cpp-compound sat beside it.
+    "commands/cpp-compound.md": "commands/compound.md",
 }
+
+_FM_NAME = re.compile(r"^name:\s*[\"']?([A-Za-z0-9_.-]+)[\"']?\s*$", re.M)
+
+
+def declared_name(path: Path) -> str | None:
+    """The `name:` a file declares in its own frontmatter, or None.
+
+    Decorative for commands -- the harness registers them by filename -- so
+    this is NOT an identity oracle. It is a hint good enough to nominate an
+    alias candidate for a human to confirm.
+    """
+    try:
+        head = path.read_text(encoding="utf-8", errors="replace")[:4000]
+    except OSError:
+        return None
+    if not head.lstrip().startswith("---"):
+        return None
+    parts = head.split("---", 2)
+    if len(parts) < 3:
+        return None
+    m = _FM_NAME.search(parts[1])
+    return m.group(1) if m else None
+
+
+def alias_candidates(repo_root: Path, domain: str, pattern: str,
+                     live_root: Path | None = None) -> list[tuple[str, str]]:
+    """Unpaired live files that some repo source claims by declared name.
+
+    The `cpp-compound` pair sat undeclared for months and only the census
+    found it. A hand-maintained identity map is the same hand-maintained
+    denominator as everything else in this module's history, so the map stays
+    -- the filename really is unguessable -- but NOT noticing a candidate is
+    no longer free.
+
+    Reports (live_rel, repo_rel). Nominations, never pairings: acting on one
+    would rename live files, which is exactly the mistake the comment above
+    ALIASES records.
+    """
+    live_base = resolve_live_root(live_root) / domain
+    if not live_base.is_dir():
+        return []
+    sources = repo_sources(repo_root, domain, pattern)
+    alias_live = {k.split("/", 1)[1] for k in ALIASES
+                  if k.startswith(f"{domain}/")}
+    by_declared: dict[str, str] = {}
+    for rel, paths in sources.items():
+        n = declared_name(paths[0])
+        if n and n not in by_declared:
+            by_declared[n] = rel
+    out: list[tuple[str, str]] = []
+    for p in sorted(live_base.glob(pattern)):
+        if not p.is_file():
+            continue
+        rel = p.relative_to(live_base).as_posix()
+        if rel in sources or rel in alias_live or _is_foreign(rel):
+            continue
+        repo_rel = by_declared.get(p.stem)
+        if repo_rel:
+            out.append((rel, repo_rel))
+    return out
+
 
 PAIRED = "PAIRED"
 LIVE_ONLY = "LIVE_ONLY"

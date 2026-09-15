@@ -383,6 +383,90 @@ def _agent_fixture(extra_repo_rel: str | None = None,
         shutil.rmtree(repo, ignore_errors=True)
 
 
+@contextlib.contextmanager
+def _alias_candidate_fixture(declare_matching_name: bool = True,
+                             live_basename: str = "cpp-thing.md"):
+    """A live command with no repo pair, beside a repo source that may or may
+    not claim it by declared name.
+
+    Synthetic on purpose. The only real instance -- commands/compound.md
+    against live cpp-compound.md -- was DECLARED the moment it was found, so a
+    drill pinned to it would now assert about a subject that no longer offends
+    and would report the same green as a detector that had stopped detecting.
+    """
+    live = Path(tempfile.mkdtemp(prefix="aclive-"))
+    repo = Path(tempfile.mkdtemp(prefix="acrepo-"))
+    try:
+        (live / "commands").mkdir(parents=True)
+        (repo / "commands").mkdir(parents=True)
+        declared = "cpp-thing" if declare_matching_name else "something-else"
+        (repo / "commands" / "thing.md").write_text(
+            f"---\nname: {declared}\n---\nbody\n", encoding="utf-8")
+        (live / "commands" / live_basename).write_text(
+            "---\nname: cpp-thing\n---\nbody\n", encoding="utf-8")
+        yield live, repo
+    finally:
+        shutil.rmtree(live, ignore_errors=True)
+        shutil.rmtree(repo, ignore_errors=True)
+
+
+def gate_alias_candidate_detected() -> None:
+    """An undeclared alias must be NOMINATED, not silently left unpaired.
+
+    cpp-compound sat undeclared for months; the installer would have written a
+    second file beside the live one. Nothing was watching for the shape.
+    """
+    gate = "V-MIRROR-ALIAS-CANDIDATE"
+    with _alias_candidate_fixture() as (live, repo):
+        found = md.alias_candidates(repo, "commands", "*.md", live_root=live)
+    if found != [("cpp-thing.md", "thing.md")]:
+        _fail(gate, f"expected the undeclared pair to be nominated, got {found}")
+        return
+    _ok(gate, f"undeclared alias nominated: {found[0][0]} <- {found[0][1]}")
+
+
+def gate_alias_candidate_no_false_nomination() -> None:
+    """Positive control: a detector that nominates everything is not a detector.
+
+    Same fixture, same unpaired live file, only the declared name differs. It
+    must stay silent -- otherwise the gate above passes on a predicate that
+    cannot tell a candidate from any two files in the same domain.
+    """
+    gate = "V-MIRROR-ALIAS-CANDIDATE-NO-FALSE"
+    with _alias_candidate_fixture(declare_matching_name=False) as (live, repo):
+        found = md.alias_candidates(repo, "commands", "*.md", live_root=live)
+    if found:
+        _fail(gate, f"nominated a pair nothing claims: {found}")
+        return
+    with _alias_candidate_fixture() as (live, repo):
+        control = md.alias_candidates(repo, "commands", "*.md", live_root=live)
+    if not control:
+        _fail(gate, "the control found nothing either -- this gate proves "
+                    "silence, not discrimination")
+        return
+    _ok(gate, "silent when no source claims the name; still fires when one does")
+
+
+def gate_alias_declared_is_not_nominated() -> None:
+    """A DECLARED alias must leave the candidate list, or the report is noise.
+
+    Drives the real ALIASES map: every entry it holds is a pair a human has
+    already resolved, and re-nominating them trains the reader to ignore the
+    list -- which is how the next genuine one gets missed.
+    """
+    gate = "V-MIRROR-ALIAS-DECLARED-SILENT"
+    for live_rel, repo_rel in md.ALIASES.items():
+        domain = live_rel.split("/", 1)[0]
+        found = md.alias_candidates(PP_ROOT, domain, "*.md")
+        names = [c[0] for c in found]
+        if live_rel.split("/", 1)[1] in names:
+            _fail(gate, f"{live_rel} is declared in ALIASES and still "
+                        f"nominated as a candidate")
+            return
+    _ok(gate, f"all {len(md.ALIASES)} declared alias(es) stay out of the "
+              f"candidate report")
+
+
 def gate_extra_root_pairs() -> None:
     """Green and red in one run: the declaration is what does the pairing."""
     with _agent_fixture(extra_repo_rel="vault/agents") as (live, repo):
@@ -494,6 +578,9 @@ def main() -> int:
     gate_extra_root_no_false_pair()
     gate_duplicate_source()
     gate_real_extra_roots_reach()
+    gate_alias_candidate_detected()
+    gate_alias_candidate_no_false_nomination()
+    gate_alias_declared_is_not_nominated()
     gate_e2e_drift()
     gate_e2e_clean_and_inventory()
     gate_e2e_strict()
