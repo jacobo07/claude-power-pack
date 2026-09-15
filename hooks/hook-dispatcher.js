@@ -416,6 +416,21 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: './dead-closer-recovery.js', timeoutMs: 6000, critical: true },
     { exe: NODE_EXE, script: './correction-guard.js', timeoutMs: 8000 },
     { exe: NODE_EXE, script: './prd-keyword-sentinel.js', timeoutMs: 8000 },
+    // GSD X ambient applicability (2026-09-16, Jacobo). Computes the ExecutionOS
+    // Lite tier from the prompt's measured evidence instead of leaving it to the
+    // model's self-assessment, so the posture stops depending on the operator
+    // remembering to ask for it. Registered ONLY after reachability was proven:
+    // this path is resolved as path.join(__dirname, script) -> the repo checkout
+    // at ~/.claude/skills/claude-power-pack, which IS the main git worktree and
+    // not a copy, so a committed file is live-served with no install step. The
+    // same relative form already carries 31 other repo-owned hooks on this host.
+    //
+    // NOT critical: it is advisory, so it must not sit in the lane reserved for
+    // guards whose absence is the harm. Silence is a VALID result -- a prompt
+    // needing no escalation emits nothing -- so the evidence that it ran is its
+    // heartbeat, never its stdout. Kill switch: CLAUDE_GSDX=off.
+    // Measured child ~1.2-1.4 s against this chain's 11500 ms deadline.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/gsd_x_tier.js', timeoutMs: 8000 },
     // D2A duplicate advisory (SCS C85 addendum, level-2 — NEVER blocks). Fires only
     // when the prompt PROPOSES CREATING a new system/dataset; spawns the engine
     // (python child) and surfaces the DUPE VERDICT + BUILD CONTRACT before Claude
@@ -445,6 +460,17 @@ const CHAIN_MAP = {
   'UserPromptSubmit-deadline-drill-control-chain': [
     { exe: NODE_EXE, script: './tests/fixtures/drill-fast-critical.js', timeoutMs: 5000, critical: true },
     { exe: NODE_EXE, script: './tests/fixtures/drill-pooled-fast.js', timeoutMs: 5000 },
+  ],
+  // R269: the CRITICAL LANE ALONE eats the budget -- the starved-host case. Shares
+  // CHAIN_DEADLINE_MS with the drill chain above (1500 ms) while its critical step
+  // burns 2200 ms, so `left <= 0` by the time the pool is considered and the pool
+  // must NEVER BE OPENED. The pooled member writes a filesystem sentinel, because
+  // spawned-then-reaped and never-spawned produce identical stdout and an output
+  // assertion cannot tell the pre-fix dispatcher from the post-fix one.
+  // Step timeouts stay well above the deadline so the DEADLINE is always the actor.
+  'UserPromptSubmit-deadline-drill-critstarve-chain': [
+    { exe: NODE_EXE, script: './tests/fixtures/drill-slow-critical.js', timeoutMs: 9000, critical: true },
+    { exe: NODE_EXE, script: './tests/fixtures/drill-spawn-sentinel.js', timeoutMs: 9000 },
   ],
   // PostToolUse matcher=Bash standalone fold (hub-fold 2026-06-04). Post-hoc
   // hooks; none block. kg-sync-hook (matcher Write|Edit) stays standalone.
@@ -595,7 +621,26 @@ function isScratchTarget(rawStdin) {
 const CHAIN_DEADLINE_MS = {
   'UserPromptSubmit-chain': 11500,   // settings.json timeout 15 s; measured 15,173 -> 6,595
   'UserPromptSubmit-deadline-drill-chain': 1500,  // drill only; in no settings.json event
+  'UserPromptSubmit-deadline-drill-critstarve-chain': 1500,  // drill only; critical lane overruns it alone
 };
+
+// Why a deadline log carries the host reading: a chain that overran because the
+// host had 0.67 GB free and a chain that overran because a hook regressed need
+// opposite fixes, and after the fact the evidence is gone. Recorded at the moment
+// of the overrun, the two stop reading alike. Never throws and never blocks --
+// a diagnostic that can break the dispatcher is worse than no diagnostic.
+function hostPressure() {
+  try {
+    const os = require('os');
+    const freeMB = Math.round(os.freemem() / 1048576);
+    const totMB = Math.round(os.totalmem() / 1048576);
+    const pct = totMB ? Math.round((1000 * freeMB) / totMB) / 10 : -1;
+    return 'host free=' + freeMB + 'MB/' + totMB + 'MB (' + pct + '%)'
+      + (pct >= 0 && pct < 5 ? ' STARVED -- hook timeouts here are host, not code' : '');
+  } catch (_) {
+    return 'host unknown';
+  }
+}
 
 // One sub-hook as a shell-free child process. Resolves (never rejects) to a
 // spawnSync-SHAPED record {status, stdout, stderr, error} so the ordered reducer
@@ -767,36 +812,59 @@ async function runChain(event, chain, rawStdin) {
   // pool exit, so that when the deadline fires the work already done is still
   // emitted. Without this the whole chain's stdout dies with the slowest member.
   const restSteps = restIdx.map((i) => runnable[i]);
-  const poolDone = runPool(restSteps, limit, (step) => {
-    const orig = restIdx[restSteps.indexOf(step)];
-    return runStep(step, rawStdin).then((r) => { settled[orig] = r; return r; });
-  });
-
   const budget = CHAIN_DEADLINE_MS[event];
   const left = budget ? budget - (Date.now() - chainStart) : 0;
 
-  if (budget && left > 0) {
-    let timer;
-    const expired = new Promise((res) => { timer = setTimeout(() => res(false), left); });
-    const finished = await Promise.race([poolDone.then(() => true), expired]);
-    clearTimeout(timer);
-    if (!finished) {
-      // Its own class, greppable, never collapsed into a clean pass -- the same
-      // rule this file applies to CRITICAL-GUARD-INERT. A chain that ran out of
-      // wall clock and one that had nothing to say must not read alike.
-      const lost = restIdx.filter((i) => !settled[i]).map((i) => runnable[i].script);
-      logError(event, 'CHAIN-DEADLINE-ABANDONED after ' + budget + 'ms',
-        new Error('still running: ' + (lost.join(', ') || '(none)')));
-      reapLiveChildren();
-    }
-  } else if (budget) {
-    // The critical lane alone consumed the budget. Emit what it produced rather
-    // than starting a pool whose output cannot survive.
+  // R269 ORDERING FIX. The pool used to be STARTED here, one statement above the
+  // budget check, so the "before pool" branch below reaped a pool it had already
+  // paid to spawn. Its own comment said "rather than starting a pool whose output
+  // cannot survive" -- and it started it. On a healthy host that is a wasted
+  // spawn; on a starved one it is the whole failure:
+  //
+  //   measured 2026-09-15, this host -- 0.67 GB free of 31.31 GB (2.1 %), 46
+  //   claude.exe totalling 10.2 GB. A node spawn costed at 2.2 s healthy thrashes
+  //   far past that, the critical lane (sequential, above) eats the 11,500 ms
+  //   budget on its own, N MORE advisory spawns are then launched anyway, the
+  //   chain overruns settings.json's 15 s ceiling, and the harness kills the
+  //   dispatcher BEFORE the ordered reduction below ever flushes. Every member's
+  //   stdout dies together -- including the members that finished early and
+  //   correctly. dead-closer-recovery logged fired:true for session e615f799 at
+  //   20:18:29 and its text never reached the model; the Owner saw a dead screen.
+  //
+  // A budget is a constant and a spawn's cost is a function of host load, so
+  // raising CHAIN_DEADLINE_MS only moves the cliff. Not spawning is the fix that
+  // holds at any load. See memory/feedback_fired_true_is_not_delivered.md.
+  let poolDone = null;
+
+  if (budget && left <= 0) {
+    // Budget already gone. Do NOT open the pool -- emit what critical produced.
     logError(event, 'CHAIN-DEADLINE-ABANDONED before pool',
-      new Error('critical lane used ' + (Date.now() - chainStart) + 'ms of ' + budget + 'ms'));
-    reapLiveChildren();
+      new Error('critical lane used ' + (Date.now() - chainStart) + 'ms of ' + budget
+        + 'ms; pool NOT spawned (' + restSteps.length + ' skipped); ' + hostPressure()));
+    reapLiveChildren();   // no-op unless a critical step leaked a child
   } else {
-    await poolDone;
+    poolDone = runPool(restSteps, limit, (step) => {
+      const orig = restIdx[restSteps.indexOf(step)];
+      return runStep(step, rawStdin).then((r) => { settled[orig] = r; return r; });
+    });
+
+    if (budget) {
+      let timer;
+      const expired = new Promise((res) => { timer = setTimeout(() => res(false), left); });
+      const finished = await Promise.race([poolDone.then(() => true), expired]);
+      clearTimeout(timer);
+      if (!finished) {
+        // Its own class, greppable, never collapsed into a clean pass -- the same
+        // rule this file applies to CRITICAL-GUARD-INERT. A chain that ran out of
+        // wall clock and one that had nothing to say must not read alike.
+        const lost = restIdx.filter((i) => !settled[i]).map((i) => runnable[i].script);
+        logError(event, 'CHAIN-DEADLINE-ABANDONED after ' + budget + 'ms',
+          new Error('still running: ' + (lost.join(', ') || '(none)') + '; ' + hostPressure()));
+        reapLiveChildren();
+      }
+    } else {
+      await poolDone;
+    }
   }
 
   // Ordered reduction -- identical to the sequential loop's body.
