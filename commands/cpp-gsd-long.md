@@ -73,13 +73,19 @@ telling future compactions in this session to re-issue the run.
 
 ## What this does NOT do
 
-**It is not keystroke-free.** After each compaction the agent emits the resume
-command as a trailing line and you press Enter once — the same one-keystroke
-dispatch the `/compact` line already uses. Automatic typing of the resume
-command was designed and refused by the auto-mode classifier (`Tmux Self
-Drive`), so it is not shipped; see the spec's Honest limits.
+**It is keystroke-free, and that has one real limit.** After each compaction
+the agent emits the resume command as its trailing line and the existing Enter
+daemon submits it — no text is ever typed, only Enter, and only while Cursor
+is the foreground window.
 
-Expect roughly one keystroke per compaction cycle, not one per phase.
+That foreground check is a guard, not a guarantee. If you switch to a
+different Cursor pane inside the dispatch window, the Enter lands in that
+pane. It is the same accepted limit the `/compact` dispatch has carried since
+2026-05-20; this adds a second point where it applies, not a new kind of risk.
+
+If the daemon finds Cursor is not in front it demotes the flag to
+`auto-compact-pending.flag` and waits, so a resume can arrive late rather than
+never.
 
 ## Done-gate
 
