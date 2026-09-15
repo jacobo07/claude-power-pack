@@ -128,9 +128,33 @@ same payload, 8218 ms at 844 MB free → **allowed**; 929 ms uncontended →
 **denied**. Host load was deciding whether a credential could land.
 
 Turning it fail-closed immediately produced a **false denial of a clean write**
-on the first suite run (then 3/3 on three reruns). That is the accepted cost and
-it is why the two changes are coupled: **fail-closed is only comfortable once
-orphan accumulation is bounded.** Ship them together or the refusals look random.
+on the first suite run. The fuller measurement matters, because the first number
+was wrong in a way worth recording:
+
+| observation | result | host |
+|---|---|---|
+| first run after the change | R2 denied (false) | starved |
+| three reruns | 3/3 clean | 301 MB free |
+| during heavy concurrent load | **1/3** — R1 and R2 both failed | acute spike |
+| six consecutive runs | 6/6/6 clean | 239 MB free |
+
+`ea18929` recorded this as "roughly one run in four". **That framing is not
+supported** — a rate implies a steady process. What the data shows is a **bursty
+failure correlated with contention spikes**, clean otherwise, and *lower* free
+memory (239 MB) produced a clean sweep while a busier moment at higher free
+memory did not. So free RAM is the wrong predictor; instantaneous CPU/IO
+contention is the real one, and a mean would hide exactly the behaviour that
+matters.
+
+> **A failure that arrives in bursts must not be reported as a rate.** The
+> average is calm precisely when the user is not.
+
+That is the accepted cost and it is why the two changes are coupled:
+**fail-closed is only comfortable once orphan accumulation is bounded.** Ship
+them together or the refusals look random. If the bursts prove disruptive, one
+bounded re-run in a fresh child closes most of them at no cost to the security
+property, because the detector is read-only and idempotent — deliberately not
+done here, since the Owner chose plain deny over retry.
 
 ## DON'T
 
