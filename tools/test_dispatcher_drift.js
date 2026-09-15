@@ -53,17 +53,67 @@ if (!fs.existsSync(LIVE)) {
 }
 ok('CTRL-LIVE-PRESENT', fs.statSync(LIVE).size + ' bytes');
 
+// Authorship recency of the REPO copy, which is not the same question as its
+// mtime. git stamps mtime at CHECKOUT time, so creating a worktree, switching a
+// branch or merging makes this file "newer" than a live dispatcher nobody has
+// touched for days. Returns null when it cannot be established -- an uncommitted
+// copy, or no reachable git -- because the alternative is inventing a direction.
+function repoAuthoredMs() {
+  const { execFileSync } = require('child_process');
+  const dir = path.dirname(REPO);
+  const candidates = [process.env.CLAUDE_GIT_EXE, 'git'];
+  if (process.platform === 'win32') {
+    // This host's non-interactive PATH carries GitHub CLI, not git's cmd dir.
+    candidates.push('C:\\Program Files\\Git\\cmd\\git.exe');
+  }
+  for (const exe of candidates) {
+    if (!exe) continue;
+    try {
+      const run = (args) => execFileSync(exe, ['-C', dir].concat(args),
+        { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+      // Uncommitted bytes are not described by any commit's timestamp.
+      if (run(['status', '--porcelain', '--', REPO]).trim()) return null;
+      const ct = run(['log', '-1', '--format=%ct', '--', REPO]).trim();
+      return ct ? parseInt(ct, 10) * 1000 : null;
+    } catch (_) { /* try the next candidate */ }
+  }
+  return null;
+}
+
 const a = sha(REPO), b = sha(LIVE);
 if (a === b) {
   ok('NO-DRIFT', 'repo and live are byte-identical (' + a.slice(0, 16) + ')');
 } else {
-  const ra = fs.statSync(REPO).mtimeMs, rb = fs.statSync(LIVE).mtimeMs;
-  const newer = rb > ra ? 'LIVE is newer' : 'REPO is newer';
-  no('NO-DRIFT',
-    'diverged -- ' + newer + '. repo=' + a.slice(0, 12) + ' live=' + b.slice(0, 12) +
-    '. Reconcile deliberately: if live is newer, copy live->repo and commit; if repo ' +
-    'is newer, sync repo->live. Never guess, and bracket the copy on the live file\'s ' +
-    'hash before and after -- another pane may be writing it.');
+  const authored = repoAuthoredMs();
+  // The live copy is unversioned and nothing rewrites it mechanically, so its
+  // mtime is an honest authorship signal. The repo copy's is not.
+  const liveMs = fs.statSync(LIVE).mtimeMs;
+  const hashes = 'repo=' + a.slice(0, 12) + ' live=' + b.slice(0, 12);
+  const bracket = ' Bracket any copy on the live file\'s hash before and after -- ' +
+    'another pane may be writing it.';
+
+  if (authored === null) {
+    // Third outcome. A direction we cannot establish must not be reported as
+    // one we can: naming the wrong one here sends the operator to overwrite the
+    // executing dispatcher with a stale snapshot.
+    no('NO-DRIFT',
+      'diverged, DIRECTION UNDETERMINED -- the repo copy is uncommitted or git ' +
+      'is unreachable, so its authorship time is unknown. ' + hashes +
+      '. Attribute the change before reconciling: find which pane wrote the live ' +
+      'file and what it changed. Do NOT copy in either direction on a guess.' + bracket);
+  } else if (liveMs > authored) {
+    no('NO-DRIFT',
+      'diverged -- LIVE is newer (live mtime ' + new Date(liveMs).toISOString() +
+      ' > repo authored ' + new Date(authored).toISOString() + '). ' + hashes +
+      '. Reconcile by copying live->repo and committing, once you have attributed ' +
+      'the live change.' + bracket);
+  } else {
+    no('NO-DRIFT',
+      'diverged -- REPO is newer (repo authored ' + new Date(authored).toISOString() +
+      ' > live mtime ' + new Date(liveMs).toISOString() + '). ' + hashes +
+      '. The repo carries a committed change the live dispatcher has not received; ' +
+      'sync repo->live.' + bracket);
+  }
 }
 
 const total = pass + fail;
