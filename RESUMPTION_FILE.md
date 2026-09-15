@@ -1,5 +1,33 @@
 # ACTIVE-TASK ROUTER (read first)
 
+**GSD X — Invocation Independence is LIVE (2026-09-16). Do not re-litigate this without new evidence.**
+GSD X computes the ExecutionOS Lite tier from a prompt's measured evidence, ambiently, on the real
+`UserPromptSubmit-chain`. Live-served branch `feature/knowledge-acquisition` @ `ee54540` (pushed).
+Integration branch `integrate/gsd-x-landing` @ `42dd006` (pushed).
+
+Settled by measurement — do NOT rebuild these conclusions:
+- There is **no installer** from repo to live. `~/.claude/skills/claude-power-pack` IS the main git
+  worktree, and the live dispatcher resolves `path.join(__dirname, '../skills/claude-power-pack/...')`.
+  A committed file is live-served. 31 other repo-owned hooks already arrive this way.
+- `~/.claude/hooks` is **not under git** (79 hooks; only 15 also exist in the repo). It is the executing
+  authority. `hooks/hook-dispatcher.js` in the repo is a **snapshot**, not an authority; its only
+  consumer is `tools/test_dispatcher_drift.js`. Do not try to make the repo copy execute — the
+  dispatcher's relative paths are resolved from `~/.claude/hooks`, so running it from the repo would
+  break all 31 registrations plus the 64 live-only hooks.
+
+Proven at the production invocation (`node hook-dispatcher.js --event=UserPromptSubmit-chain`):
+heavy prompt → FORENSIC (secret_containment, cascade_prevention), 9000 ms of a 15 s timeout ·
+trivial prompt → silent, heartbeat still advanced (judgements 43→45, LIGHT 10→11) so VALID_SILENCE is
+distinguishable from a dead hook · `CLAUDE_GSDX=off` → 0 emissions, judgements unchanged, chain
+unharmed. Drift gate `DISPATCHER_DRIFT=3/3` byte-identical. `test_gsd_x.py` 14/14,
+`test_gsd_x_timeout_visibility.js` 9/9.
+
+**OPEN, in ROI order:** (1) U05 is only half-measured — per-hook timings inside the chain were not
+broken out, only chain wall time; (2) F06 contract-corpus coverage never started; (3) U01 not
+re-evaluated against the now-live architecture; (4) informative rate is recorded by the heartbeat
+(29/45) but was not analysed for false escalations; (5) concurrency 4 on this chain is still
+**inherited, not proven** — shared stdout/heartbeat surfaces unvalidated.
+
 **ACTIVE line (2026-09-13): USEA — Universal Software Engineering Architect.** Phases I–VI
 are sealed and green; the one thing the programme still has no evidence for is whether the
 constitution changes engineering OUTCOMES. Resume it from
@@ -10,6 +38,11 @@ was rejected.
 **ACTIVE build (2026-07-12): DAIF — Duplicate-to-Advantage Institutional Fabric.**
 Resume it from `vault/knowledge_base/d2a_fabric/DAIF_RESUMPTION.md` → then `DAIF_INDEX.md` →
 `DAIF_CANONICAL_MAP.md`. Owner re-spec approved; 22 candidates → 8 sovereign datasets; building DAIF-00.
+
+**PARALLEL build (2026-07-19): Crawl OS.** Separately tracked, not a replacement for the DAIF
+ACTIVE line above. Resume it from `vault/knowledge_base/crawl_os/CRAWLOS_RESUMPTION.md` →
+`CONSUMER_DECLARATIONS.md`. STOP #1 and Fase 0 (invocation model, consumer declarations) are
+Owner-approved; dataset 01 (Constitutional Architecture) is in progress.
 
 **PRIOR task below — SQI — is SEALED (SCS C90/C91/C94) and pushed.** Its content is preserved verbatim;
 its backlog (threshold inventory §15.7, pointing `run_sqi` at the estate, surfacing the 4 PP findings) is

@@ -112,3 +112,108 @@ default is noise, and noise is what gets a gate switched off. When the measured
 answer equals the incumbent's constant, emit nothing — and count the silence, so
 the rate at which the measurement adds nothing stays visible rather than
 flattering.
+
+---
+
+2026-09-16. Four more, from the session that took GSD X from a branch to the
+live UserPromptSubmit path. Two of these were caught by a guard or an advisory
+rather than by my own reading, which is the part worth noticing.
+
+---
+
+## T-GSDX-MTIME-IS-NOT-AUTHORSHIP-001
+
+**Trap.** Deciding which side of a drift is *newer* by comparing file mtimes,
+when one side is managed by git.
+
+`test_dispatcher_drift.js` compared `mtimeMs` of the repo mirror against the live
+dispatcher. git stamps a file's mtime at **checkout** time, so creating a
+worktree, switching a branch or finishing a merge makes the repo copy "newer"
+than a live file nobody has touched for days. Creating an integration worktree
+did exactly that, and the gate reported
+
+    diverged -- REPO is newer ... if repo is newer, sync repo->live
+
+against a live dispatcher 3360 bytes larger and genuinely last edited the
+previous evening. Followed literally it overwrites the executing dispatcher with
+a stale snapshot and destroys another pane's work.
+
+The detection half was never wrong: the sha256 comparison was correct throughout.
+Only the **direction** was invalid — and the direction is the half that chooses
+between a harmless copy and data loss.
+
+**Rule.** mtime answers "when did something write these bytes", never "when did
+this content last change". For a git-managed file the authorship signal is
+`git log -1 --format=%ct -- <path>`; for an unversioned file mtime is honest,
+because nothing rewrites it mechanically. Never compare the two kinds of clock as
+if they were one.
+
+**Corollary.** A remediation sentence is part of the verdict. A gate confident
+enough to name a direction must be right about it, or it is worse than a gate
+that only says "these differ" — and a third outcome, DIRECTION UNDETERMINED, is
+the correct answer whenever the repo copy is uncommitted or git is unreachable.
+
+---
+
+## T-GSDX-SNAPSHOT-MUST-NOT-BE-LINE-MERGED-001
+
+**Trap.** Resolving a merge conflict in a **snapshot** artifact the way you would
+resolve one in source.
+
+Both branches carried a copy of the live dispatcher, 62678 and 67503 bytes, both
+stale against a live file at 72078. Git offered a normal content conflict and the
+reflex is to merge the hunks. That reflex produces a dispatcher that never
+existed on any machine — strictly worse than either input, because a snapshot's
+only value is that it faithfully records one real historical state.
+
+**Rule.** Ask what an artifact *is* before choosing a resolution. Source merges;
+a snapshot is chosen. For a snapshot, take one whole side (the fresher baseline)
+and reconcile deliberately afterwards, bracketed on the live file's hash.
+
+---
+
+## T-GSDX-ECHOED-PHRASE-CANNOT-DISCRIMINATE-001
+
+**Trap.** Counting occurrences of your hook's own phrasing in a chain's
+aggregated stdout, to decide whether your hook emitted.
+
+Discrimination was measured by grepping the real chain output for
+`ExecutionOS Lite tier`. A trivial prompt scored 1 and read as a false
+escalation. It was not: the match was inside the **JIT hook's** injected project
+spec, which quotes the phrase. Any hook that echoes your vocabulary is
+indistinguishable from you under that instrument, and a shared chain is exactly
+where such echoes live.
+
+**Rule.** Discriminate on a **provenance** marker no other producer can emit —
+here `modules.gsd_x.tier`. Re-measured on provenance, heavy emitted and trivial
+was silent, which is the opposite of the first reading.
+
+---
+
+## T-GSDX-MACHINE-NOISE-HIDES-THE-ONE-REAL-LINE-001
+
+**Trap.** Classifying a diff by its aggregate shape and treating it as
+disposable.
+
+A 431-line uncommitted delta blocking a fast-forward was 215 machine-generated
+CEPS rows appended by a PostToolUse hook — some of them produced by my own tool
+calls that session, so the file could never be clean while any session ran, and
+"wait for the writer to finish" was not a strategy. On that reading the delta was
+noise and safe to discard.
+
+It was 99.8% noise and it carried one line of another pane's real design work:
+
+    -  declares an `aesthetic_family` (F1-F9, CDIO-06) ... three-question picker
+    +  declares an `aesthetic_family` (F1-F10, CDIO-06) ... four-question picker
+
+The single `-` line is what exposed it. A pure append has no deletions.
+
+**Rule.** Before calling a diff machine-generated, inspect its **deletions**
+specifically, and count the added lines that do *not* match the machine pattern.
+Both are one command. The aggregate is what hides the exception, and the
+exception is somebody's uncommitted work.
+
+**Corollary.** When a union resolution is applied to a hunk containing a
+*modified* line rather than pure appends, it keeps both spellings — here that
+would have left the taxonomy declaring nine families and ten families in the same
+file. Verify the modified line survives exactly once, after resolving.
