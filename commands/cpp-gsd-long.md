@@ -42,16 +42,21 @@ $pp = 'C:\Users\User\.claude\skills\claude-power-pack'
 #    first incomplete phase, so it stays correct as phases complete, while a
 #    pinned N goes stale the moment phase N finishes.
 & $py "$pp\tools\gsd_autorun_marker.py" --write `
-      --session $env:CLAUDE_SESSION_ID --command "/gsd-autonomous" --cwd .
+      --session $env:CLAUDE_CODE_SESSION_ID --command "/gsd-autonomous" --cwd .
 ```
 
 Then invoke `/gsd-autonomous` (add `--from <phase>` only when the caller asked
 to start somewhere specific — the marker still holds the bare form).
 
-`$env:CLAUDE_SESSION_ID` must be the id of the session that will do the run;
-the marker is per-session and the watchdog looks it up by that id. If the
-variable is empty, take the session id from the statusline metrics file name
-(`%TEMP%\claude-ctx-<session_id>.json`, newest) rather than guessing.
+The variable is `CLAUDE_CODE_SESSION_ID`. Verified 2026-09-15: it holds this
+session's id, while `CLAUDE_SESSION_ID` — the name that reads as the obvious
+one — is empty, so a marker written with it lands under an invalid id and the
+watchdog silently never finds it.
+
+**Do not fall back to "the newest `%TEMP%\claude-ctx-*.json`".** Measured on
+this host: the newest of those belonged to a different pane, so that fallback
+marks somebody else's session as running your autonomous job. If the variable
+is empty, stop and establish the id — there is no safe guess with panes open.
 
 ## When the run ends
 
