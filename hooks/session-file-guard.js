@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// CANONICAL SOURCE — Power Pack repo. Deployed to ~/.claude/hooks/ via
-// install-global.ps1 + tools/install_global_core.py session-safety manifest.
-// Edit here, re-run install-global; never edit the deployed copy directly.
 /**
  * session-file-guard.js — PreToolUse hook.
  *
@@ -60,16 +57,99 @@ function fail_open(reason) {
   process.exit(0);
 }
 
-function readStdin() {
+// 2026-09-15 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, "utf-8")`.
+//
+// MEASURED, live, while the Owner watched the UI sit on
+// "running PreToolUse hooks 6/8 ... 40m 44s":
+//     pid=47776  age_min=36.5  cpu_sec=0  parent_alive=False
+//     pid=3900   age_min=36.5  cpu_sec=0  parent_alive=False
+// ZERO CPU over 36 minutes is what makes this diagnosable rather than a guess:
+// it rules out the O(n^2) chunk regexes below, which would have burned a core.
+// These processes never executed one line of guard logic. They were parked
+// inside readFileSync(0) on a stdin pipe that never closed.
+//
+// WHY THE 5 s HARNESS BUDGET DID NOT SAVE IT -- the whole chain, and the reason
+// this is the transversal hang rather than one broken hook:
+//   1. the harness kills the shell wrapper at its timeout,
+//   2. but a timeout kills the DIRECT CHILD ONLY, so this node process survives
+//      (parent_alive=False above is that survival, observed),
+//   3. and the survivor still holds the inherited stdout pipe,
+//   4. so whoever is reading that pipe waits on a handle that is never closed.
+// The budget fired perfectly, on the wrong process. See
+// vault/lessons/timeout-without-tree-reaping-is-the-engine.md.
+//
+// A SYNCHRONOUS READ CANNOT BE RESCUED BY A TIMER. readFileSync blocks the
+// event loop, so an in-process watchdog never gets scheduled -- there is no
+// version of this fix that keeps the sync call and adds a timeout beside it.
+// It has to be async, which is why this is a restructure and not a one-liner.
+//
+// Deliberately self-contained rather than importing hook-utils.readStdin:
+// that helper is bounded but leaves its 'data' listener attached after the
+// timeout, so the process can still fail to exit, and it has no 'error'
+// handler. A guard whose whole job is to be bulletproof does not take a
+// dependency with a latent hang in it. The shared helper is fixed separately.
+const STDIN_BUDGET_MS = 2000;
+
+function readStdinBounded() {
+  return new Promise((resolve) => {
+    let input = "";
+    let done = false;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      // Detach and pause: leaving a 'data' listener attached keeps the event
+      // loop alive, which turns "read timed out" into "process never exits" --
+      // the same hang one layer further on.
+      try { process.stdin.removeAllListeners(); process.stdin.pause(); } catch {}
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null), STDIN_BUDGET_MS);
+    try {
+      process.stdin.setEncoding("utf-8");
+      process.stdin.on("data", (chunk) => { input += chunk; });
+      process.stdin.on("end", () => finish(input));
+      process.stdin.on("error", () => finish(null));
+    } catch (e) {
+      finish(null);
+    }
+  });
+}
+
+// Absolute backstop. If anything above is wrong in a way I have not foreseen,
+// this process still dies rather than becoming another 36-minute orphan holding
+// a pipe. NOT unref'd on purpose: an unref'd timer cannot keep the process
+// alive to fire, and firing is the entire point.
+const HARD_EXIT = setTimeout(() => {
   try {
-    const buf = fs.readFileSync(0, "utf-8");
-    return buf ? JSON.parse(buf) : {};
+    fs.appendFileSync(
+      path.join(os.homedir(), ".claude", "state", "session-guard-fail-open.log"),
+      `${new Date().toISOString()}\thard-exit watchdog fired -- stdin never closed\n`);
+  } catch {}
+  process.exit(0);
+}, STDIN_BUDGET_MS + 3000);
+
+async function readStdin() {
+  const raw = await readStdinBounded();
+  clearTimeout(HARD_EXIT);
+  if (raw === null) {
+    // Could not read stdin at all. Fail OPEN, per this hook's stated contract
+    // (a buggy guard must not brick the agent) -- but say so in the log, because
+    // "no input" and "input said nothing destructive" are different facts.
+    fail_open("stdin never closed within budget -- guard did NOT inspect the command");
+  }
+  try {
+    return raw ? JSON.parse(raw) : {};
   } catch (e) {
     fail_open(`stdin parse: ${e.message}`);
   }
 }
 
 function block(reason) {
+  // 2026-09-15 MUTE-GATE FIX: the harness reads fd 2 on exit 2. A reason sent
+  // only to stdout surfaces as "blocked, no reason given" — the caller cannot
+  // pivot, retries blind, and the session walks into the dead screen.
+  try { process.stderr.write(String(reason) + "\n"); } catch {}
   process.stdout.write(JSON.stringify({
     decision: "block",
     reason: reason,
@@ -77,7 +157,12 @@ function block(reason) {
   process.exit(2);
 }
 
-const input = readStdin();
+// Wrapped in an async main because readStdin() is now a Promise (see the
+// deadlock note above). The guard logic below is UNCHANGED -- only the way the
+// input arrives moved. Keeping the analysis byte-identical is deliberate: this
+// commit fixes a liveness bug and must not quietly alter what the guard blocks.
+async function main() {
+const input = await readStdin();
 const toolName = input.tool_name || "";
 if (toolName !== "Bash" && toolName !== "PowerShell") process.exit(0);
 
@@ -219,3 +304,10 @@ const reason = [
 ].join("\n");
 
 block(reason);
+}
+
+// Fail OPEN on any unhandled rejection, consistent with this hook's stated
+// contract, and ALWAYS exit. A rejection that merely logged would leave this
+// process alive holding the inherited stdout pipe -- which is precisely the
+// 36-minute stall this commit exists to remove.
+main().catch((e) => fail_open(`main: ${e && e.message}`));
