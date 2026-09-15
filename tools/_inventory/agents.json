@@ -5,9 +5,9 @@
   "pp_original": [
     {
       "name": "oneshot-architect-auditor.md",
-      "sha256": "9d317b9bac6e02a777275a19c4a077b39b7904b15758a05c1b5f40c6b3cb58a0",
+      "sha256": "7b042ad911f5aba81774777e587fe09571cad659a430707d8ca5cba0a0d9c770",
       "present_in_loose": true,
-      "rationale": "ULTRA Phase-4 audit sub-agent; PP-tracked at agents/"
+      "rationale": "Resident macroagent: ULTRA Phase-4 auditor plus architect/causal-investigator modes; PP-tracked at agents/. Digest refreshed 2026-09-15 against the committed source after the rewrite in 7ed31ae."
     },
     {
       "name": "rtk-testing-specialist.md",

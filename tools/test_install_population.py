@@ -319,6 +319,97 @@ def gate_real_repo_floor() -> None:
     _ok(gate, f"{len(population)} agents; anchors resolve to their own roots")
 
 
+def gate_inventory_digests_match_source() -> None:
+    """The inventory's sha256 field had no reader anywhere in the estate.
+
+    Written once on 2026-05-19 and consumed by nothing: install_global_core
+    computes its own hashes from files, and no other tool reads the field. So
+    two entries drifted for four months in silence -- restart.md, rebuilt by
+    estate commits in May and June, and oneshot-architect-auditor.md, rewritten
+    in 7ed31ae. Both were found by hand this session, which is not a mechanism.
+
+    Before Step 3 most of these names had no repo source at all, so the digest
+    could not have been checked against anything. Now that they do, the field
+    gets a consumer instead of a refresh -- refreshing a number nothing reads
+    buys one honest day.
+
+    Normalisation is the estate's own: LF-normalised, so a CRLF checkout cannot
+    manufacture drift. Verified on a real pair -- worktree and committed blob
+    hash identically.
+    """
+    gate = "V-INSTALL-DIGEST-TRUTH"
+    inv = igc._load_inventory(PP)
+    checked, drifted, unsourced = 0, [], 0
+    for kind in ("agents", "commands"):
+        population = igc._repo_population(PP, kind)
+        if population is None:
+            _fail(gate, "discovery unreachable")
+            return
+        for entry in (inv.get(kind, {}) or {}).get("pp_original", []) or []:
+            if not isinstance(entry, dict):
+                continue
+            name, want = entry.get("name"), entry.get("sha256")
+            if not name or not want:
+                continue
+            src = population.get(name)
+            if src is None:
+                unsourced += 1
+                continue
+            checked += 1
+            have = igc._sha256(src)
+            if have != want:
+                drifted.append(f"{kind}/{name}: source={have[:12]} "
+                               f"inventory={want[:12]}")
+    if drifted:
+        _fail(gate, "inventory digest disagrees with the captured source -- "
+                    "fix the SOURCE or refresh deliberately, never pick the "
+                    "value that makes this green: " + "; ".join(drifted))
+        return
+    if checked < 10:
+        _fail(gate, f"only {checked} digest(s) were comparable; this gate "
+                    f"reports the same green when it checks nothing, and "
+                    f"{unsourced} claimed name(s) still have no source")
+        return
+    _ok(gate, f"{checked} inventory digest(s) match their captured source; "
+              f"{unsourced} claimed name(s) not yet sourced")
+
+
+def gate_digest_drift_is_detected() -> None:
+    """Red branch, synthetic: a changed source must break the claim.
+
+    Pinned to a fabricated entry rather than to whichever real digest is
+    stale today -- the two real ones are being corrected in this same commit,
+    so a drill naming them would assert about subjects that no longer offend.
+    """
+    gate = "V-INSTALL-DIGEST-DRIFT-CAUGHT"
+    inventory = {"agents": {
+        "schema_version": 1, "kind": "agents",
+        "pp_original": [{"name": "drifter.md", "sha256": "0" * 64}],
+        "plugins": {}, "user_personal": [],
+    }}
+    with _fixture_repo({"agents": ["drifter.md"]}, inventory) as repo:
+        with _extra_roots({}):
+            population = igc._repo_population(repo, "agents")
+        inv = igc._load_inventory(repo)
+        entry = inv["agents"]["pp_original"][0]
+        src = population.get(entry["name"])
+        if src is None:
+            _fail(gate, "fixture source missing; the drill proves nothing")
+            return
+        real = igc._sha256(src)
+        if real == entry["sha256"]:
+            _fail(gate, "fabricated digest collided with the real one")
+            return
+        # ... and the matching half, so the comparison is not simply != always
+        entry_ok = dict(entry, sha256=real)
+        if igc._sha256(src) != entry_ok["sha256"]:
+            _fail(gate, "a correct digest did not compare equal; the "
+                        "comparison itself is broken")
+            return
+    _ok(gate, "a drifted digest compares unequal and a correct one compares "
+              "equal (both halves driven)")
+
+
 def main() -> int:
     print("V-INSTALL-* -- installer population, sovereignty and aperture")
     print("=" * 68)
@@ -329,6 +420,8 @@ def main() -> int:
     gate_alias_keys_by_live_name()
     gate_unreachable_discovery_is_not_empty()
     gate_real_repo_floor()
+    gate_inventory_digests_match_source()
+    gate_digest_drift_is_detected()
     total = _passes + _fails
     print("=" * 68)
     print(f"INSTALL_POPULATION_PASS={_passes}/{total}  threshold={total}/{total}")

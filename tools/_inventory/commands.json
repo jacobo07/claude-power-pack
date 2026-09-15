@@ -79,6 +79,7 @@
       "name": "evaluate-repository.md",
       "sha256": "4564c383a262857ae8575789e3e0d8cc629af143063305b14be0e0cf58e3cda3",
       "present_in_loose": true,
+      "origin": "external: Awesome-Claude-Code. Absorbed and shipped by PP, not authored by it; the file carries its own attribution in its title. Listed under pp_original because that is the only list the installer reads -- the key overstates authorship and this field is what corrects it.",
       "rationale": "Awesome-Claude-Code evaluation"
     },
     {
@@ -119,9 +120,9 @@
     },
     {
       "name": "restart.md",
-      "sha256": "6cc797475bee3afa08c35b34b3f98d9f4208c760ae29141070d1197f4974e2e8",
+      "sha256": "7f146cd2b2cfd103ef60238c11fcf7139f5d20e4ea261d30a66e9cd4a6723676",
       "present_in_loose": true,
-      "rationale": "Session restart with --continue"
+      "rationale": "In-pane restart via the kclaude wrapper contract; PP-tracked at commands/. Digest refreshed 2026-09-15: the 2026-05-19 value described the pre-repair command and went stale when /restart was rebuilt (estate commits 2026-05-24, 06-22, 06-23). Refreshed to the captured source, never to whatever made a gate pass."
     },
     {
       "name": "resume-clean.md",
