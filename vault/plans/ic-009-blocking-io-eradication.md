@@ -1,138 +1,90 @@
 # IC-009 — Universal Blocking-I/O Eradication & Critical-Path Liveness Closure
 
-Branch: `feature/knowledge-acquisition` · HEAD at scan: `3de3bfa` · Scanned 2026-09-16
+Branch: `feature/knowledge-acquisition` · Scanned + executed 2026-09-16
+Status: **class closed on the read side, closed on the write side, gates wired.**
+Open items at the bottom are real and named.
 
 ## 1. Reality Scan — handoff verdicts
 
-| Prior claim | Verdict | Evidence |
-|---|---|---|
-| commit `bfb40a1` fixes session-file-guard stdin | **CONFIRMED** | `git show bfb40a1` — 99 insertions, bounded async + hard-exit backstop |
-| commit `1b70c2a` adds the ratchet | **FALSIFIED (hash)** / CONFIRMED (content) | `cat-file -t 1b70c2a` → *not a valid object name*. Real commit is **`5ccbe78`**, `tools/test_hook_stdin_liveness.py`, 223 lines |
-| ten remaining offenders | **CONFIRMED** | gate run: `STDIN_LIVENESS_PASS=5/5`, standing debt = the exact ten |
-| detector false-negative on auto-test-gate | **CONFIRMED, already repaired** | strings no longer stripped; apostrophe trap is a positive control |
-| agent-solo-guard is the only other blocking PreToolUse gate | **CONFIRMED** for `readFileSync(0)`; **REFINED** — see §3 |
-| the 40-min stall is inherited-stdin blocking | **PARTIALLY PROVEN — and INSUFFICIENT.** See §2 |
+| Prior claim | Verdict |
+|---|---|
+| `bfb40a1` fixes session-file-guard's stdin | **CONFIRMED** |
+| `1b70c2a` adds the ratchet | **FALSIFIED (hash)** — no such object. Real commit `5ccbe78` |
+| ten remaining offenders | **CONFIRMED** — gate agreed exactly |
+| detector's own false negative | **CONFIRMED, already repaired** in `5ccbe78` |
+| agent-solo-guard is the only other blocking PreToolUse gate | **CONFIRMED** for `readFileSync(0)`, **REFINED** — that primitive was never the class |
+| the stall is inherited-stdin blocking | **PARTIALLY PROVEN, INSUFFICIENT** — see §2 |
 
-## 2. The finding that changes the mission
+## 2. What the scan found that the handoff did not
 
-Measured live during the scan, `Win32_Process` + `Win32_Thread`:
+`session-file-guard.js` — the hook `bfb40a1` fixed, hash-identical to its repo copy —
+was parked at 11.4 min, zero CPU, dead parent. Beside it `first-time-project.js`,
+which **reads no stdin at all**, parked with the same signature.
 
-    pid=28128  session-file-guard.js   age=11.4 min  cpu=0 s  parent_alive=False  threads=1  handles=18
-    pid=40036  kg-sync-hook.js         age=11.6 min  cpu=0 s  parent_alive=False
-    pid=46996  gsd-read-injection-scanner.js age=6.9 min cpu=0 s parent_alive=False
-    pid=49296/26336/50720  config.js   age=746/667/537 min  cpu=0 s  parent_alive=False
+**A hook has two pipes.** On Windows Node's stdout-to-a-pipe is SYNCHRONOUS, so a write
+over the OS buffer with no reader blocks the event loop exactly like `readFileSync(0)` —
+and unlike the read, it CANNOT be restructured to yield, so no timer will ever bound it.
 
-`session-file-guard.js` **is the hook bfb40a1 fixed**, running from the canonical live path,
-byte-identical to the repo copy (sha `15F66D9C0D4A`). Its stdin budget is 2000 ms and its
-hard-exit backstop is 5000 ms. It is parked at **11.4 minutes with zero CPU**, and
-`state/session-guard-fail-open.log` records **no** hard-exit line — the last entry is
-2026-09-15T14:38, a bounded-read timeout from yesterday.
+Measured buffers (they disagree because the buffer belongs to whoever CREATED the pipe):
 
-`threads=1` is the discriminator. A live Node runtime carries a libuv threadpool; one thread
-means the runtime has torn down. The process is not parked in the read — it is parked
-**after deciding to exit**.
+    .NET RedirectStandardOutput    4096 B passes    8192 B BLOCKS
+    libuv spawn                   65536 B passes  262144 B BLOCKS
 
-> **Bounding the READ does not bound the PROCESS.** The fix moved the block from the input
-> boundary to the teardown boundary. Same symptom, same zero CPU, same held pipe, same dead
-> screen — one layer further on.
+## 3. Final population — four members, not one
 
-This is the prompt's suspected meta-pattern confirmed on its own repair: *the control assumed
-authority over a failure domain it does not own.* An in-process watchdog owns the event loop.
-It does not own process death, which belongs to the OS and to inherited handles.
-
-## 3. Canonical population — three classes, not one
-
-36 harness-spawned scripts enumerated structurally from `settings.json`:
-
-| Class | Count | Primitive | Detector sees it? |
+| Class | Primitive | Count | State |
 |---|---|---|---|
-| **A** | 10 | `fs.readFileSync(0)` — blocks the event loop | yes (frozen) |
-| **B** | 2 | `hook-utils.readStdin()` — bounded but leaves the `data` listener attached, no `error` handler, no hard exit | **no** |
-| **C** | 2 | own `stdin.on('data')` with **no timer at all** | **no** |
-| **D** | 17 | own listener, timer present | partially — bound unverified |
-| safe | 5 | no stdin read | n/a |
+| A | `fs.readFileSync(0)` | 10 | migrated |
+| B | shared helper: timer resolved, listener left attached | 2 helpers → 6 hooks | fixed at source |
+| C | async listener, no timer | 3 | bounded |
+| D | write over the pipe buffer | 1 live (148 KB) | capped + relocated |
 
-Class B is named as unfixed follow-up in bfb40a1's own message. `kg-sync-hook.js` (Class B) is
-parked right now. `gsd-read-injection-scanner.js` (Class D, `exit=N`) is parked right now.
-**The ten is a correct count of one primitive and an undercount of the class.**
+**36 of 36 harness-spawned hooks now exit on an unclosed stdin.**
+`KNOWN_OFFENDERS` is empty. Post-migration orphan census: 1 parked process, `config.js`,
+not a hook.
 
-Live/repo split-brain, measured: `agent-solo-guard.js` live (09-15) ≠ repo (09-04); 4 offenders
-exist only in the repo, 2 only under `~/.claude/hooks`. `settings.json` is the authority and
-names exactly one path per hook; the repo mirror is stale for several.
+## 4. Commits
 
-## 4. Mode arbitration — ULTRA-PLAN → EXECUTION
+| | |
+|---|---|
+| `f9b3b52` | pin the second blocking primitive (V-PIPE, 5/5) |
+| `966310b` | hook-utils: resolved is not exited; helper added to the repo at all |
+| `5ec6d71` | agent-solo-guard migrated; ratchet could be turned by lying |
+| `9750371` | five more migrated; the one that nearly lost data |
+| `4055f6f` | ratchet reaches zero; every claim driven |
+| `7aaf619` | six parked hooks with no banned call; gate rescoped to the property |
+| `986febf` | learning-sentinel 148,740 → 1,191 B; V-EMIT-BUDGET |
+| `2559fa3` | V-MIRROR: nothing pinned live to repo |
+| `98343ce` | UKDL ×4 + incident record |
 
-Downgrading. Ten hooks is multiplicity, not architectural uncertainty: `session-file-guard.js`
-is a proven template and each migration is mechanical-with-semantic-review. The one genuine
-unknown (§2) is settled by **measurement, not deliberation**, so it belongs in execution as the
-first experiment rather than in another planning round.
+## 5. Gates
 
-## 5. Precondition — host
+- `tools/test_hook_stdin_liveness.py` — 7 gates. Scoped to the PROPERTY (can this process
+  die), drives all 36, derives the claimed-fixed set, reads CPU via syscall to separate
+  parked from slow.
+- `tools/test_hook_mirror_identity.py` — 5 gates. 18 dual-resident files, 5 frozen
+  divergences, drift measured in BOTH directions.
+- `hooks/tests/test-pipe-write-liveness.js` — 5 gates, the write-side thresholds.
+- `hooks/tests/test-hook-utils-stdin-bounded.js` — 6 gates, mutant included.
+- `hooks/tests/test-hook-liveness-gates.js` — bridges the Python gates into the canonical
+  `run-all.js`, so enforcement is not a remembered command.
 
-**369 MB free of 32 061 MB (98.8 % used).** Under this, every timing number is noise and my own
-tool calls are part of the load. Reap the proven-abandoned parked processes and re-measure
-headroom *before* any latency claim. Any timing taken under starvation is reported **UNMEASURED**,
-never as a result.
+All four mutation drills landed on their own assertion; every restore verified by SHA-256.
 
-## 6. Execution plan
+## 6. OPEN — named, not hand-waved
 
-**Stage 0 — the exit-boundary experiment (gates everything else).**
-Reproduce a hook that has passed its bounded read and called `process.exit(0)` while holding an
-inherited stdout pipe with no reader. Determine which of these is true: exit blocked on a
-synchronous flush · exit blocked on a held handle · the timer never armed. Outcome decides
-whether Stage 2's template needs an exit-boundary clause. Both outcomes are publishable; the
-failure mode is assuming the answer.
-
-**Stage 1 — template hardening.** Whatever Stage 0 proves, fold into a single shared bounded-input
-contract: bounded read · detached listener · `error` handler · hard-exit backstop that cannot
-itself block · explicit distinction between *no input*, *timed out*, and *input said nothing*.
-Fix `hook-utils.readStdin` here (closes Class B at the source for both consumers).
-
-**Stage 2 — migrate Class A, ordered by blast radius, not alphabetically.**
-1. `agent-solo-guard.js` — PreToolUse, stalls a user turn directly
-2. `session_start_hub.js` — measured 7374 ms, no declared budget, delays session open
-3. `lazarus-stub-recover.js`, `restart-target-consumer.js` — lifecycle stalls
-4. `auto-test-gate.js`, `lazarus-livesnap.js` — PostToolUse / observed orphaned
-5. `bug-hunter-*`, `osa_deploy_detector.js`, `subagent-bash-avoidance-advisor.js` — advisory
-
-Per hook, a semantic diff is required before the commit: input parsing · default · error path ·
-exit status · stdout · **stderr** (the mute-gate channel) · security verdict · empty input ·
-malformed input · premature EOF · parent death. No behaviour change rides along unannounced.
-Fixing one means **deleting its line from `KNOWN_OFFENDERS`** — the stale-entry clause makes that
-mandatory, and the gate is expected to go red between the fix and the deletion. That redness is
-the ratchet working.
-
-**Stage 3 — Class B/C/D.** B closes with Stage 1. C (`cdio_visual_advisory.js`,
-`mistake-ingest.js`) gets the template. D is audited for whether the timer actually bounds the
-read and whether the process can exit; only the unbounded ones are migrated.
-
-**Stage 4 — detector aperture.** The gate currently answers "does this file call
-`readFileSync(0)`". It must answer "can this file park on stdin". Add the Class B/C predicates
-with the same posture already chosen (accuse rather than silently certify), keep
-parser-failure → non-green, keep the bidirectional inventory, and ratchet the floor toward zero
-as entries are deleted. Drive the red branch of each new predicate.
-
-**Stage 5 — promotion + production reality.** For every migrated hook, the target is the path
-`settings.json` names. Snapshot the live copy, validate the candidate, promote, verify installed
-identity by hash, canary, keep rollback until the canary passes. Reconcile the stale repo mirror
-separately and say which direction won.
-
-**Stage 6 — orphan re-measurement.** Re-run the census after migration and attribute what
-remains. `config.js` at 12 hours is a different genesis and will not be claimed as ours.
-
-**Stage 7 — knowledge.** UKDL Hard Rule candidates, deduplicated against the existing corpus,
-centred on: *bounding an input does not bound a process*; *a timeout is a detection event unless
-it owns the resource*; *parser failure is never a PASS*. Vault incidents for the stall, the
-detector false negative, the `1b70c2a` hash, and whatever Stage 0 finds. Baseline elevation is a
-gate, not prose.
-
-## 7. Non-goals
-
-No new liveness framework. No repo-wide async rewrite. No ban on synchronous local I/O that
-cannot block. No CLAUDE.md growth — vault pointers only. No rewriting of another pane's commits.
-
-## 8. Done-gates
-
-Inventory · representative migration · PreToolUse family · full Class A · detector · pipe/process ·
-orphan prevention · host runtime · security · baseline. Each states its Production Reality tier
-separately: SOURCE / TEST / INSTALLED / RUNTIME / PRODUCTION-PATH / UNKNOWN. Unknown stays unknown.
+1. **The canonical suite got slow.** The bridge spawns 36 hooks twice (~200 s); a full
+   `run-all.js` exceeded 600 s. A suite too slow to run is a suite that gets disabled —
+   this needs bounded concurrency or a split fast/full mode. **Highest-ROI next task.**
+2. **Two suite tests flake under that contention** (`test-priority-lane`,
+   `test-block-reason-propagation`) — both pass 4/4 and 20/20 in isolation. The contention
+   is mine.
+3. **Five live/repo divergences unreconciled**, two of which (`research-intent-detector.js`,
+   `_oneshot_solitary_empty_shell_cleanup.js`) are repo-only work that has never executed.
+4. **The harness's own pipe buffer is UNKNOWN.** 4096 B is the conservative floor, not a
+   measurement of the real consumer.
+5. **Orphan prevention is one short observation**, during a session that was also reaping.
+   Not a multi-hour production window.
+6. **`learning-sentinel` does not strip a BOM** from its own stdin where sibling hooks do.
+7. A concurrent session is writing to `~/.claude/rules` (`presence-is-not-residency.md`
+   appeared mid-session). Wide oracles here are bracketing a moving tree.

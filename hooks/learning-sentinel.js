@@ -430,10 +430,37 @@ function handleSessionStart(data) {
         } catch { /* skip */ }
       }
       if (deferred.length) {
+        // DELIVERED, NOT MERELY ENUMERATED. A named list is a capability moved
+        // to a worse place; the bodies still have to arrive. So they are written
+        // to ONE file and the pointer names it. The pipe stays under budget and
+        // nothing has to be hunted for.
+        //
+        // test-global-rule-inheritance.js is the reason this exists rather than
+        // a list. Its words: "enumerating the files is not the same as
+        // delivering them". It was right, and its objection is what turned a
+        // truncation into a relocation.
+        let bundlePath = null;
+        try {
+          const bundle = deferred.map(f => {
+            const body = fs.readFileSync(path.join(RULES_DIR, f), 'utf8');
+            return `### Global Rule: ${f}\n${body}`;
+          }).join('\n\n---\n\n');
+          const stateDir = path.join(os.homedir(), '.claude', 'state');
+          fs.mkdirSync(stateDir, { recursive: true });
+          bundlePath = path.join(stateDir, 'inherited-global-rules.md');
+          fs.writeFileSync(bundlePath, bundle, 'utf8');
+        } catch { /* fall back to the pointer list below */ }
+
         ctx.push(
-          `### Global Rules not inlined (${deferred.length}) — over the stdout emission budget\n`
-          + `Read on demand from \`${RULES_DIR}\`:\n`
+          `### Global Rules — ${deferred.length} delivered by file, not inline\n`
+          + (bundlePath
+            ? `Their full bodies are in \`${bundlePath}\` (refreshed this session). `
+              + 'Read that file: these are binding rules, not references.\n'
+            : `Bundle write failed; read them individually from \`${RULES_DIR}\`.\n`)
           + deferred.map(f => `- ${f}`).join('\n')
+          + '\n\nInlining them would put ~148 KB through a pipe whose OS buffer is '
+          + '4-64 KB, where a synchronous write blocks the event loop and no timer '
+          + 'can bound it. The bodies are preserved; only the channel changed.'
         );
       }
     }
