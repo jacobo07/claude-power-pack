@@ -42,11 +42,59 @@ import subprocess
 import sys
 
 # Budget for the live drive below. A migrated hook's own bound is 2 s with a 5 s
-# hard-exit backstop, so 9 s is comfortably past both. Generous on purpose: a
-# hook that is genuinely hung stays hung for any window, so a wide one costs no
-# strictness -- while a narrow one turns a contended host into a false accusation.
-LIVENESS_BUDGET_S = 9
+# hard-exit backstop, but the population includes third-party GSD plugin hooks
+# that are legitimately slow: gsd-context-monitor.js was MEASURED at 10.6 s with
+# stdin open, bounded and correct. A 9 s budget called it parked, which is a
+# false accusation aimed at a hook that works.
+#
+# 20 s is generous on purpose and costs no strictness: a genuinely parked hook
+# stays parked for any window you choose, so widening the window can only remove
+# false positives, never hide a real one.
+LIVENESS_BUDGET_S = 20
 NODE = shutil.which("node") or r"C:\Program Files\nodejs\node.exe"
+
+# A process that burned this much CPU was WORKING, not parked. The parked
+# signature from the original incident is the discriminator that made it
+# diagnosable at all: pid=47776, 36.5 minutes, cpu_sec=0. A hook that has used
+# real CPU over the budget is slow; one sitting at startup cost and nothing more
+# is blocked. A timeout alone cannot tell those apart, and calling a slow hook
+# parked is a false accusation aimed at a hook that works.
+CPU_BUSY_THRESHOLD_S = 1.0
+
+
+def process_cpu_seconds(pid: int):
+    """Kernel+user CPU of a live pid, or None if it cannot be read.
+
+    ctypes rather than a PowerShell round-trip, on purpose. Get-Process prints
+    the number in the host's locale -- this machine emits '0,109' -- and float()
+    on that raises, which an except-clause then turns into whatever the author
+    defaulted to. That exact bug labelled six genuinely PARKED hooks as BUSY
+    earlier in this session. A Win32 call returns integers and has no locale.
+    """
+    if os.name != "nt":
+        return None
+    import ctypes
+    from ctypes import wintypes
+
+    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    handle = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not handle:
+        return None
+    try:
+        creation, exit_t = wintypes.FILETIME(), wintypes.FILETIME()
+        kernel, user = wintypes.FILETIME(), wintypes.FILETIME()
+        if not k32.GetProcessTimes(handle, ctypes.byref(creation), ctypes.byref(exit_t),
+                                   ctypes.byref(kernel), ctypes.byref(user)):
+            return None
+
+        def _secs(ft):  # FILETIME counts 100-nanosecond intervals
+            return ((ft.dwHighDateTime << 32) | ft.dwLowDateTime) / 1e7
+
+        return _secs(kernel) + _secs(user)
+    finally:
+        k32.CloseHandle(handle)
+
 
 HOME = pathlib.Path(os.path.expanduser("~"))
 SETTINGS = HOME / ".claude" / "settings.json"
@@ -255,17 +303,34 @@ def main() -> int:
     # pipe on purpose: an undrained pipe is a SECOND, independent hang
     # (hooks/tests/test-pipe-write-liveness.js), and importing it here would make
     # every failure ambiguous between the two boundaries.
-    claimed = sorted(ORIGINAL_POPULATION_2026_09_15 - set(KNOWN_OFFENDERS))
-    if not claimed:
-        _ok("V-STDIN-MIGRATED-EXITS", "nothing claimed migrated yet -- nothing to drive")
+    # SCOPE: every harness-spawned script, not just the ten. The static clauses
+    # above answer "does this file call readFileSync(0)". That was never the
+    # class. MEASURED 2026-09-16, driving the whole population: SIX further hooks
+    # parked at zero CPU on an unclosed pipe and NOT ONE of them contained the
+    # banned call --
+    #
+    #   background-verifier, cdio_visual_advisory, first-time-project,
+    #   zero-command-bootstrap, terminal-slot-recorder, mistake-ingest
+    #
+    # Four came from two SHARED runtimes whose timers resolved the promise and
+    # left the 'data' listener attached (hook-runtime.runHook, which additionally
+    # never called process.exit at all); two had no timer whatsoever. A detector
+    # scoped to one primitive cannot see any of that, so this clause is scoped to
+    # the PROPERTY instead: can the process die when its producer never closes
+    # the pipe.
+    #
+    # stdout goes to DEVNULL rather than a pipe on purpose. An undrained pipe is
+    # a SECOND, independent hang (hooks/tests/test-pipe-write-liveness.js), and
+    # importing it here would make every failure ambiguous between the two
+    # boundaries.
+    if os.environ.get("CLAUDE_SKIP_HOOK_DRIVE") == "1":
+        _ok("V-STDIN-ALL-EXIT", "drive skipped by CLAUDE_SKIP_HOOK_DRIVE=1 (NOT a pass)")
     else:
-        by_name = {os.path.basename(p): p for p in scripts}
-        hung, missing, exited = [], [], []
-        for name in claimed:
-            path = by_name.get(name)
-            if not path or not os.path.isfile(path):
-                missing.append(name)
-                continue
+        drivable = sorted(p for p in scripts if os.path.isfile(p))
+        hung, exited, slow = [], [], []
+        hung_cpu: dict[str, str] = {}
+        for path in drivable:
+            name = os.path.basename(path)
             proc = subprocess.Popen(
                 [NODE, path],
                 stdin=subprocess.PIPE,       # held open, never written, never closed
@@ -276,7 +341,20 @@ def main() -> int:
                 proc.wait(timeout=LIVENESS_BUDGET_S)
                 exited.append(name)
             except subprocess.TimeoutExpired:
-                hung.append(name)
+                # Over budget is not yet a verdict. Read the CPU BEFORE killing:
+                # a blocked hook sits at startup cost forever, a slow one has
+                # been burning a core. Only the first is this gate's subject, and
+                # on a contended host the second is common and harmless.
+                cpu = process_cpu_seconds(proc.pid)
+                if cpu is not None and cpu >= CPU_BUSY_THRESHOLD_S:
+                    slow.append(f"{name} (cpu={cpu:.1f}s)")
+                else:
+                    # Name kept BARE. The evidence rides alongside it, because a
+                    # name with a suffix glued on stops matching the population
+                    # sets below, and a gamed-ratchet check that silently matches
+                    # nothing is the failure this whole file exists to prevent.
+                    hung.append(name)
+                    hung_cpu[name] = "unreadable" if cpu is None else f"{cpu:.2f}s"
                 proc.kill()                  # a gate that leaks the process it
                 proc.wait()                  # is testing has refuted itself
             finally:
@@ -285,21 +363,26 @@ def main() -> int:
                 except OSError:
                     pass
 
+        if slow:
+            # Reported, never counted. A hook that is merely slow is not a defect
+            # of this class, and folding it into the failure would train someone
+            # to switch the gate off.
+            print(f"       over budget but BURNING CPU (slow, not parked): {', '.join(sorted(slow))}")
+
         if hung:
-            _fail("V-STDIN-MIGRATED-EXITS",
-                  "claimed migrated but STILL HANGS on an unclosed stdin: " + ", ".join(hung)
-                  + f" (killed after {LIVENESS_BUDGET_S}s) -- the name was removed from "
-                  "KNOWN_OFFENDERS without the fix landing, which is the ratchet being "
-                  "turned by editing a dict")
-        elif missing:
-            _fail("V-STDIN-MIGRATED-EXITS",
-                  "claimed migrated but not found among harness-spawned scripts: "
-                  + ", ".join(missing) + " -- a hook that settings.json no longer names was "
-                  "not fixed, it was unregistered; say which one it was")
+            # One parked hook deserves a sharper message than the rest: a name
+            # removed from KNOWN_OFFENDERS that still hangs means the ratchet was
+            # turned by editing a dict rather than by doing the work.
+            gamed = sorted(set(hung) & (ORIGINAL_POPULATION_2026_09_15 - set(KNOWN_OFFENDERS)))
+            extra = ("; " + ", ".join(gamed) + " was removed from KNOWN_OFFENDERS without the "
+                     "fix landing -- the ratchet turned on a claim, not on work") if gamed else ""
+            named = ", ".join(f"{n} [cpu={hung_cpu.get(n, '?')}]" for n in sorted(hung))
+            _fail("V-STDIN-ALL-EXIT",
+                  f"{len(hung)} harness-spawned hook(s) still alive on an unclosed stdin after "
+                  f"{LIVENESS_BUDGET_S}s at essentially zero CPU (killed): " + named + extra)
         else:
-            _ok("V-STDIN-MIGRATED-EXITS",
-                f"{len(exited)} migrated hook(s) exited on an unclosed stdin: "
-                + ", ".join(exited))
+            _ok("V-STDIN-ALL-EXIT",
+                f"all {len(exited)} harness-spawned hooks exited on an unclosed stdin")
 
     total = len(passes) + len(fails)
     print(f"STDIN_LIVENESS_PASS={len(passes)}/{total}  threshold={total}/{total}")

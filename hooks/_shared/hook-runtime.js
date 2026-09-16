@@ -44,11 +44,48 @@ function stripBom(s) {
 function readStdinJson(timeoutMs = STDIN_TIMEOUT_MS_DEFAULT) {
   return new Promise(resolve => {
     let buf = '';
-    const t = setTimeout(() => resolve(_safeParse(buf)), timeoutMs);
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', c => { buf += c; });
-    process.stdin.on('end', () => { clearTimeout(t); resolve(_safeParse(buf)); });
-    process.stdin.on('error', () => { clearTimeout(t); resolve(_safeParse(buf)); });
+    let settled = false;
+
+    // 2026-09-16 -- RESOLVED IS NOT EXITED.
+    //
+    // This had a timer and an 'error' handler, so it looked bounded, and the
+    // promise did resolve on schedule. The PROCESS still hung: the 'data'
+    // listener stayed attached to a flowing stream, an attached listener is a
+    // referenced libuv handle, and the event loop never emptied.
+    //
+    // MEASURED: six hooks built on runHook were driven with a stdin pipe never
+    // written and never closed, and all six were still alive at 30 s having
+    // burned 0.06-0.11 s of CPU -- i.e. startup and then nothing. Exactly the
+    // signature of the original 40-minute incident (pid 47776, cpu_sec=0).
+    //   background-verifier, cdio_visual_advisory, first-time-project,
+    //   zero-command-bootstrap, terminal-slot-recorder, mistake-ingest
+    // None of them calls readFileSync(0), so the static detector was blind to
+    // every one.
+    const finish = (raw) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(t);
+      // Detach AND pause. Removing the listener alone is not enough: a resumed
+      // stream keeps its handle referenced, which is what turned "the read
+      // timed out" into "the process never exits".
+      try {
+        process.stdin.removeAllListeners('data');
+        process.stdin.removeAllListeners('end');
+        process.stdin.removeAllListeners('error');
+        process.stdin.pause();
+      } catch { /* a hook never throws out of its own input path */ }
+      resolve(_safeParse(raw));
+    };
+
+    const t = setTimeout(() => finish(buf), timeoutMs);
+    try {
+      process.stdin.setEncoding('utf8');
+      process.stdin.on('data', c => { buf += c; });
+      process.stdin.on('end', () => finish(buf));
+      process.stdin.on('error', () => finish(buf));
+    } catch {
+      finish(buf);
+    }
   });
 }
 
@@ -99,6 +136,20 @@ function detectManifest(cwd) {
  *   rt.runHook(logErr, async (event) => { ... });
  */
 function runHook(logErr, handler) {
+  // Absolute backstop, armed BEFORE anything can block. Not unref'd on purpose:
+  // an unref'd timer cannot hold the process alive long enough to fire, and
+  // firing is the entire point.
+  //
+  // This matters more here than anywhere else in the estate, because runHook
+  // never called process.exit AT ALL -- it relied on the event loop draining by
+  // itself. That is a correct-looking design that has no defence whatsoever
+  // against one stray referenced handle, and a stray referenced handle is
+  // exactly what the old readStdinJson left behind on every timeout.
+  const hardExit = setTimeout(() => {
+    try { logErr('hard-exit', new Error('hook did not finish within budget')); } catch { /* noop */ }
+    process.exit(0);
+  }, STDIN_TIMEOUT_MS_DEFAULT + 8000);
+
   return (async () => {
     let event = {};
     try {
@@ -112,6 +163,13 @@ function runHook(logErr, handler) {
     } catch (e) {
       logErr('main', e);
     }
+    clearTimeout(hardExit);
+    // EXIT EXPLICITLY. Relying on the loop to drain means any handle a handler
+    // forgot -- a socket, an interval, a listener -- silently converts a
+    // finished hook into a permanent orphan holding the inherited stdout pipe.
+    // Handlers that spawn long-lived work already detach and unref it, so
+    // exiting here does not cut anything short.
+    process.exit(0);
   })();
 }
 

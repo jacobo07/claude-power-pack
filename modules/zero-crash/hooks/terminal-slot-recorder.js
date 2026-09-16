@@ -82,16 +82,46 @@ try {
 function readStdin() {
   return new Promise(resolve => {
     let buf = '';
+    let settled = false;
+
+    // 2026-09-16 -- RESOLVED IS NOT EXITED. The 800 ms fallback below was real
+    // and it fired on time, so this looked bounded and every caller got its
+    // value on schedule. The PROCESS still hung: the 'data' listener stayed
+    // attached to a flowing stream, an attached listener is a referenced libuv
+    // handle, and the event loop never emptied.
+    //
+    // MEASURED: driven with a stdin pipe never written and never closed, still
+    // alive at 30 s having burned 0.078 s of CPU -- startup, then nothing. No
+    // readFileSync(0) anywhere in the file, so the static detector was blind to
+    // it. A promise settling is a fact about the CALLER; a process exiting is a
+    // fact about the PROCESS.
+    //
+    // The timing below is UNCHANGED -- this is a handle fix, not a tuning change.
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        process.stdin.removeAllListeners();
+        process.stdin.pause();
+      } catch (err) {
+        // Nothing actionable: stdin is already gone, which is the state we want.
+        void err;
+      }
+      resolve(buf);
+    };
+
     process.stdin.setEncoding('utf8');
     process.stdin.on('data', c => { buf += c; });
-    process.stdin.on('end', () => resolve(buf));
+    process.stdin.on('end', finish);
+    process.stdin.on('error', finish);
     // RAM-regression fix 2026-06-08: the SessionStart JSON arrives in a
     // single <1 KB chunk, but the 4500 ms fallback was firing on every
     // session-open (measured 4561 ms ≈ full timeout). Across a 10-pane
     // startup it cost ~45 s of churn. 800 ms keeps a generous margin for
     // event-loop scheduling delay under multi-pane contention while
     // cutting ~3.7 s/pane. Fast path (stdin 'end') is unchanged.
-    setTimeout(() => resolve(buf), 800);
+    const timer = setTimeout(finish, 800);
   });
 }
 
@@ -128,7 +158,12 @@ function normalizeCwd(cwd) {
   const cwd = normalizeCwd(event.cwd);
   if (!sessionId || !cwd) {
     process.stdout.write('{}');
-    return;
+    // EXIT, do not return. MEASURED 2026-09-16: with stdin closed this process
+    // exits in 541 ms; with stdin left open it was still alive at 12 s, on this
+    // exact path. Detaching the listener and pausing the stream was NOT enough
+    // to release the handle -- so the only thing that reliably kills a hook is
+    // reaching an exit call, never the loop draining by itself.
+    process.exit(0);
   }
 
   const data = loadSlots();
@@ -172,7 +207,14 @@ function normalizeCwd(cwd) {
   }
 
   process.stdout.write('{}');
-})();
+  process.exit(0);   // see the note on the early-return path above
+})().catch((err) => {
+  // An async IIFE cannot be wrapped in a synchronous try/catch. Without this a
+  // rejection escapes unhandled and the process stays ALIVE holding the
+  // inherited stdout pipe, which is the stall this whole migration removes.
+  try { process.stderr.write(`terminal-slot-recorder: ${err && err.message}\n`); } catch (e) { void e; }
+  process.exit(0);
+});
 
 function writeRegistryEntry(entry) {
   // mkdir-mutex pattern (BL-0007 lineage); 30s stale-lock recovery (gap #7).

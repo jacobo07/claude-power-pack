@@ -41,10 +41,55 @@ const PY = 'C:\\Users\\User\\AppData\\Local\\Programs\\Python\\Python312\\python
 const MISTAKE_HEADER_REGEX = /^## Mistake #(\d+):\s*(.+?)\s*$/gm;
 
 let input = '';
+let settled = false;
+
+// 2026-09-16 -- UNBOUNDED READ FIX. This waited for 'end' with NO timer and no
+// 'error' handler, so a pipe that never closes parked the process forever at
+// zero CPU. MEASURED: still alive at 30 s having burned 0.078 s of CPU --
+// startup, then nothing.
+//
+// It contains no readFileSync(0), so the static detector could not see it. The
+// banned CALL was never the class: the class is "can this process fail to die
+// when its producer never closes the pipe", and an async listener with no timer
+// answers yes just as loudly as a sync read.
+const STDIN_BUDGET_MS = 2000;
+
+// Detach AND pause. Removing the listener alone is not enough: a resumed stream
+// keeps its handle referenced, which turns "the read timed out" into "the
+// process never exits".
+const releaseStdin = () => {
+    try {
+        process.stdin.removeAllListeners();
+        process.stdin.pause();
+    } catch (err) {
+        // Nothing actionable: stdin is already gone, which is the state we want.
+        void err;
+    }
+};
+
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (chunk) => { input += chunk; });
 
+// On timeout or stream error, emit the no-op response. An ingest hook that
+// could not read its payload must ingest NOTHING -- silence is the only honest
+// answer, and it is what the existing malformed-payload paths already produce.
+const bail = () => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(stdinTimer);
+    releaseStdin();
+    try { process.stdout.write('{}'); } catch (err) { void err; }
+    process.exit(0);
+};
+const stdinTimer = setTimeout(bail, STDIN_BUDGET_MS);
+process.stdin.on('error', bail);
+
 process.stdin.on('end', () => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(stdinTimer);
+    releaseStdin();
+
     let respond = (obj) => {
         try { process.stdout.write(JSON.stringify(obj)); } catch { }
         process.exit(0);

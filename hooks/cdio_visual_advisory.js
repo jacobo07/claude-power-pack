@@ -68,17 +68,92 @@ function isVisualSurface(toolName, toolInput) {
 }
 
 /**
- * Walk up from the surface toward the filesystem root looking for a DESIGN.md.
- * Stops at a .git directory (the project boundary) so a surface in project A can
- * never be judged against project B's design system. Returns '' when none is found.
+ * Where a project's design system may live, relative to each directory on the
+ * walk up. `DESIGN.md` is first because it is the name this gate's scoring
+ * contract was built against.
+ *
+ * WHY THIS IS A LIST (2026-09-13). It was the single literal 'DESIGN.md', and
+ * that produced a FALSE NEGATIVE that misled two consecutive sessions in
+ * CommonWealth Ops: the repo has a complete design system at
+ * frontend/docs/DESIGN_SYSTEM.md, a typed twin at frontend/lib/mythic.ts and 34
+ * CSS custom properties, and the advisory kept announcing "this project has no
+ * DESIGN.md — so no aesthetic family is declared". One session believed it and
+ * shipped a panel unstyled on that basis.
+ *
+ * Two independent reasons it could not see the file: the name differs, and an
+ * upward walk from frontend/components/... never descends into frontend/docs.
+ * An absence claim is only as good as the instrument's ability to find the
+ * thing — "no design system" and "I only know one filename" are different
+ * statements and the hook was making the first while meaning the second.
  */
+const DESIGN_CANDIDATES = [
+  'DESIGN.md',
+  path.join('docs', 'DESIGN.md'),
+  'DESIGN_SYSTEM.md',
+  path.join('docs', 'DESIGN_SYSTEM.md'),
+];
+
+/** True only for the filename this gate's BLOCK path was actually built for. */
+function isGateableName(p) {
+  return path.basename(p) === 'DESIGN.md';
+}
+
+/**
+ * Walk up from the surface toward the filesystem root looking for a design
+ * system. Stops at a .git directory (the project boundary) so a surface in
+ * project A can never be judged against project B's design system.
+ * Returns '' when none is found.
+ */
+/**
+ * A `.git` boundary stops the walk so project A is never judged against project
+ * B's design system. But a NESTED repository is not a project boundary — it is
+ * a subdirectory of a larger project that happens to carry its own `.git`, and
+ * treating the two the same is how this gate stayed blind after its candidate
+ * list was widened.
+ *
+ * MEASURED 2026-09-13, in the same repo the list was widened for: TUA-X has its
+ * design system at `docs/DESIGN_SYSTEM.md` and `frontend/` carries its own
+ * `.git`. Every component lives under `frontend/`, so the walk stopped one
+ * directory short of the answer, on EVERY visual write, and the advisory went on
+ * announcing "this project has no DESIGN.md". Widening DESIGN_CANDIDATES fixed
+ * one of the two independent causes and the session that did it reported the
+ * discovery repaired. Two causes, one fixed, and the symptom is identical —
+ * which is exactly why the claim should have been driven rather than reasoned.
+ *
+ * So: on hitting a boundary, promote ONCE to the nearest enclosing repository,
+ * if one exists, and look there. That keeps the original protection — the walk
+ * still never escapes into a parent that is not itself a repository, and so
+ * never reaches an unrelated sibling — while letting a monorepo's subdirectory
+ * see the design system that actually governs it.
+ */
+function enclosingRepoRoot(startDir) {
+  let dir = path.dirname(startDir);
+  for (let i = 0; i < 32; i += 1) {
+    if (fs.existsSync(path.join(dir, '.git'))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return '';
+    dir = parent;
+  }
+  return '';
+}
+
 function findDesignMd(surfacePath) {
   try {
     let dir = path.dirname(path.resolve(surfacePath));
     for (let i = 0; i < 32; i += 1) {
-      const candidate = path.join(dir, 'DESIGN.md');
-      if (fs.existsSync(candidate)) return candidate;
-      if (fs.existsSync(path.join(dir, '.git'))) return '';   // project boundary
+      for (const rel of DESIGN_CANDIDATES) {
+        const candidate = path.join(dir, rel);
+        if (fs.existsSync(candidate)) return candidate;
+      }
+      if (fs.existsSync(path.join(dir, '.git'))) {
+        const outer = enclosingRepoRoot(dir);
+        if (!outer) return '';                                // a real boundary
+        for (const rel of DESIGN_CANDIDATES) {
+          const candidate = path.join(outer, rel);
+          if (fs.existsSync(candidate)) return candidate;
+        }
+        return '';
+      }
       const parent = path.dirname(dir);
       if (parent === dir) return '';                          // filesystem root
       dir = parent;
@@ -181,7 +256,8 @@ function run(input) {
 
     const designMd = findDesignMd(surface);
 
-    // Tier 2 — no DESIGN.md: the project never adopted the system. Advise, throttled.
+    // Tier 2 — no design system found: the project never adopted one. Advise,
+    // throttled.
     if (!designMd) {
       const familyKey = path.dirname(surface) + ':nosystem';
       if (throttled(sessionId, familyKey)) return {};
@@ -189,6 +265,33 @@ function run(input) {
         hookSpecificOutput: {
           hookEventName: 'PreToolUse',
           additionalContext: adviseNoSystem(surface),
+        },
+      };
+    }
+
+    // Tier 1b — a design system EXISTS under a name this gate's scoring
+    // contract was not built against (DESIGN_SYSTEM.md, docs/DESIGN.md, …).
+    //
+    // Report it, never deny on it. design_gate.py BLOCKs a surface whose design
+    // file declares no family it recognises, so pointing the deny path at an
+    // unvalidated format would turn a discovery fix into a gate that refuses
+    // every visual write in a repo that HAS a design system — which is a
+    // strictly worse failure than the false negative being repaired here.
+    // Widening what an instrument can SEE and widening what it may REFUSE are
+    // separate decisions, and only the first one has been earned.
+    if (!isGateableName(designMd)) {
+      const familyKey = path.dirname(surface) + ':foreign-system';
+      if (throttled(sessionId, familyKey)) return {};
+      return {
+        hookSpecificOutput: {
+          hookEventName: 'PreToolUse',
+          additionalContext:
+            `CDIO: this project HAS a declared design system at ` +
+            `${designMd}. Read it before styling ${path.basename(surface)} and ` +
+            `reuse its tokens rather than introducing new values. ` +
+            `Not auto-scored: the anti-slop gate reads DESIGN.md specifically, ` +
+            `so this is a pointer, not a verdict — and NOT evidence that no ` +
+            `design system exists.`,
         },
       };
     }
@@ -226,10 +329,42 @@ module.exports = { run, isVisualSurface, targetPath, findDesignMd, runGate };
 
 // --- Standalone CLI (shell-free CHAIN_MAP child) --------------------------
 if (require.main === module) {
+  // 2026-09-16 -- UNBOUNDED READ FIX. This waited for 'end' with NO timer, so a
+  // pipe that never closes parked the process forever at zero CPU. MEASURED:
+  // still alive at 30 s having burned 0.062 s of CPU -- startup, then nothing.
+  //
+  // It contains no readFileSync(0), so the static detector could not see it.
+  // That is the lesson: the banned CALL was never the class. The class is "can
+  // this process fail to die when its producer never closes the pipe", and an
+  // async listener with no timer answers yes just as loudly as a sync read.
+  //
+  // A timer works HERE, unlike the sync case, precisely because an async read
+  // yields -- which is why the sync ones had to be restructured rather than
+  // merely bounded.
+  const STDIN_BUDGET_MS = 2000;
   let raw = '';
-  process.stdin.setEncoding('utf8');
-  process.stdin.on('data', c => { raw += c; });
-  process.stdin.on('end', () => {
+  let settled = false;
+
+  // Detach AND pause. Removing the listener alone is not enough: a resumed
+  // stream keeps its handle referenced, which is what turns "the read timed
+  // out" into "the process never exits".
+  const releaseStdin = () => {
+    try {
+      process.stdin.removeAllListeners();
+      process.stdin.pause();
+    } catch (err) {
+      // Nothing actionable: stdin is already gone, which is the state we want.
+      // Swallowing is correct here and only here, and it is why this is a named
+      // helper rather than a bare catch repeated at two call sites.
+      void err;
+    }
+  };
+
+  const finish = () => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    releaseStdin();
     let data = {};
     if (raw && raw.charCodeAt(0) === 0xFEFF) raw = raw.slice(1);
     try { data = JSON.parse(raw || '{}'); } catch (_) { data = {}; }
@@ -237,6 +372,21 @@ if (require.main === module) {
     try { out = run(data) || {}; } catch (_) { out = {}; }
     try { process.stdout.write(JSON.stringify(out)); } catch (_) { process.stdout.write('{}'); }
     process.exit(0);   // the DENY rides in the JSON, never in the exit code
+  };
+
+  // On timeout raw is '' -> data {} -> run({}) advises nothing -> '{}' on
+  // stdout. Identical to the existing error path, so an advisory that could not
+  // read its input stays silent rather than guessing at a verdict.
+  const timer = setTimeout(finish, STDIN_BUDGET_MS);
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', c => { raw += c; });
+  process.stdin.on('end', finish);
+  process.stdin.on('error', () => {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    releaseStdin();
+    process.stdout.write('{}');
+    process.exit(0);
   });
-  process.stdin.on('error', () => { process.stdout.write('{}'); process.exit(0); });
 }
