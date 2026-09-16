@@ -152,7 +152,101 @@ const INTENT_NARRATION = [
   /(?:^|[.!?]\s+)(?:now|next)[,:]?\s+i(?:'ll| will)\s+\w[^.!?]{0,120}[.!?]?\s*$/i,
   /(?:^|[.!?]\s+)i(?:'ll| will) (?:now )?(?:go ahead and )?\w[^.!?]{0,120}[.!?]?\s*$/i,
   /(?:^|[.!?]\s+)proceeding (?:to|with)\s+[^.!?]{0,120}[.!?]?\s*$/i,
-  /(?:^|[.!?]\s+)(?:recording|writing|updating|adding|creating|running|checking|reading|committing|verifying|building|fixing|distilling|investigating|inspecting|generating)\s+(?:the|a|an|my|this|that|it|out|up|through)\b[^.!?]{0,120}[.!?]\s*$/i,
+  // D6d — THE ENUMERATION IN THE FULL-STOP FORM. MEASURED 2026-09-15 (Jacobo,
+  // KobiiCraft Core Files), on the exact bytes that escaped:
+  //     "Now measuring what the feasibility owner actually reports for cantina
+  //      — including whether N=2 is genuinely reachable via the optional-subset
+  //      mechanism."
+  // Dead screen; the Owner interrupted and reported it as the cross-repo hang.
+  // classify() was replayed on those bytes with {toolTurn:true, endsOnText:true}
+  // and returned PASS, so this was a PREDICATE hole, not a delivery failure —
+  // the two are indistinguishable from outside and the replay is what separated
+  // them.
+  //
+  // TWO enumerations failed at once, and neither could ever have answered:
+  //   * the verb list had fifteen participles and not `measuring`;
+  //   * the determiner list had thirteen determiners and not `what`.
+  // The comment that used to stand here said, in its own words, that "an
+  // enumerated allow-list of English determiners is exactly the shape this file
+  // warns about — it answers for the members it lists and is silent for the
+  // rest" — and then answered by appending one more member. That is the
+  // ELEVENTH instance of this file's standing lesson and the second time it was
+  // diagnosed correctly in writing and repaired by widening the list anyway.
+  //
+  // SO STOP SPELLING THE MEMBERS. Any present participle opening the sentence,
+  // any object after it. The two enumerations are replaced by one shape.
+  //
+  // Why this does not cry wolf — the three guards that already stand around it:
+  //   1. On a tool turn it is reachable ONLY behind `endsOnText` (D6): the turn
+  //      produced no work after this text. Narration that is followed by a tool
+  //      call never reaches here.
+  //   2. A later sentence carrying a real result discharges the announcement
+  //      (line ~560), so "Ahora reviso el gate. El resultado: 19 de 19." stays
+  //      clean — the sealed ES-OK-09 case.
+  //   3. Non-final sentences are already filtered by hasResult().
+  // The residual false positive is a gerund-SUBJECT report ("Running the suite
+  // gave 47/47."), and it is NOT new: the old list already held `running` + `the`
+  // and has blocked that shape for 176 blocks across 415 runs without complaint.
+  // Generalising extends an accepted trade-off to the members nobody enumerated;
+  // it does not introduce a new class. hasResult() is deliberately NOT applied to
+  // the final sentence here — the escaped closer carried "N=2", so a digit test
+  // would have re-exempted the very bytes this repair exists to catch.
+  // And the asymmetry settles it: a false positive costs one rewording, a false
+  // negative costs the Owner a frozen screen and an ESC.
+  //
+  // The lookahead holds the -ing words that open a sentence as a NOUN rather
+  // than as an announcement. It is itself an enumeration, which is why it is
+  // kept to pronoun-ish words that cannot be read as an action, and why a miss
+  // here fails toward accusing rather than excusing.
+  //
+  // SCOPED OFF THE COLON TIER, and this is the part I got wrong on the first
+  // attempt. D6c further down already owns the structural gerund COLON closer and
+  // has its own mutation drill. My first version left the terminator optional and
+  // allowed ':' in the tail, so it ALSO matched every colon closer — which added
+  // no coverage and SHADOWED the existing tier: test-closer-guard-gerund-colon.js
+  // deletes D6c and requires its subject to escape, and with a looser duplicate
+  // standing behind it the subject stayed blocked, so the drill reported
+  // "gate measures nothing". A second, looser copy of a check does not merely cry
+  // wolf — IT DISARMS THE DRILL THAT PROVES THE FIRST COPY WORKS, silently, while
+  // every other test stays green. Hence the MANDATORY [.!?] and ':' excluded from
+  // the tail: a colon closer falls through to D6c, where it belongs.
+  /(?:^|[.!?]\s+)(?:now\s+|next\s+|first\s+|then\s+)?(?!nothing\b|something\b|anything\b|everything\b|during\b|morning\b|evening\b)[a-z]{3,}ing\s+\S[^.!?:]{0,160}[.!?]\s*$/i,
+
+  // D6b — THE COLON CLOSER. MEASURED 2026-09-15 (Jacobo, GEO-audit R266) on the
+  // exact bytes that escaped:
+  //     "Checking staging's actual state:"
+  // A colon promises that the thing follows. When the message ENDS there, the
+  // promise is the whole closer and nothing was delivered — the purest form of
+  // this class, and the one the Owner reports most often, because a colon reads
+  // as "output is coming" far more strongly than a full stop does.
+  //
+  // Every pattern above requires a terminator in [.!?], so the colon form could
+  // not match ANY of them. That is the tenth instance of this file's standing
+  // lesson and the second found in one session: the guard enumerated how a
+  // sentence ends and a whole punctuation mark was outside the enumeration.
+  //
+  // Anchored to `:\s*$`, so a colon that actually introduces content cannot
+  // match — the list, table or code block after it is non-whitespace and the
+  // anchor fails. That is what keeps this from firing on ordinary prose.
+  /(?:^|[.!?]\s+|\n\s*)(?:now\s+)?(?:recording|writing|updating|adding|creating|running|checking|reading|committing|verifying|building|fixing|distilling|investigating|inspecting|generating|dispatching|restarting|deploying|uploading|auditing)\b[^.!?\n]{0,120}:\s*$/i,
+
+  // D6c — THE STRUCTURAL COLON TIER. A gerund is MORPHOLOGY, not vocabulary:
+  // `profiling` escaped D6b's enumerated list for the same reason `measuring`
+  // escaped the full-stop list above. Owned and mutation-drilled by
+  // test-closer-guard-gerund-colon.js, which deletes exactly this line and
+  // requires its subject to escape again — so the line is load-bearing for that
+  // gate as well as for the closer it catches.
+  //
+  // RESTORED 2026-09-15 after I deleted it by accident. Repairing D6b's
+  // enumeration, I wrote a generalised colon pattern OVER this one, then reverted
+  // my version back to the enumerated text — and the revert took D6c with it,
+  // because my edit had replaced both tiers with a single line. The suite caught
+  // it in one run ("could not find the D6c structural pattern to mutate"), which
+  // is the argument for a drill that names the line it needs rather than merely
+  // asserting behaviour: behaviour alone would still have looked green, since the
+  // full-stop tier I had just added covered the colon case too.
+  /(?:^|[.!?]\s+|\n\s*)(?:now\s+)?[a-z]{3,}ing\s+\w+\s+\w[^.!?\n]{0,120}:\s*$/i,
+
 
   // --- SPANISH (added 2026-09-04, Jacobo/Neom) -----------------------------
   // MEASURED. A turn ended with "Corrijo la consulta y cuento." and no tool
@@ -324,6 +418,25 @@ function hasResult(sentence) {
   return /[\d`]/.test(stripped);
 }
 
+// D7 (2026-09-15, Orca X). The head-clause twin of VERBLESS_INTENT above.
+//
+// VERBLESS_INTENT models the announcement as the WHOLE sentence: it caps the tail
+// at 60 chars and requires the terminator. Append ", so <rationale>" and BOTH
+// fail — the cap blows and the clause donates the finite verb that disarms the
+// !HAS_FINITE_VERB test. The measured escape is in the D7 block in classify().
+//
+// So this variant drops the terminator and the cap and stops at the comma: it is
+// only ever run against a HEAD already cut at the subordinator, where a length
+// limit would just re-open the same hole one clause further along.
+const VERBLESS_INTENT_HEAD =
+  /^(?:now|next|then|first|finally|ahora|luego|despu[ée]s|entonces|primero)[,:]?\s+(?:the|a|an|el|la|los|las|un|una)\s+[^.!?,]{1,80}$/i;
+
+// Subordinators only — the words that introduce commentary ON an announcement.
+// `and` / `but` are deliberately absent: they coordinate two peers, so the text
+// after them can be the delivery itself rather than a gloss on a promise.
+const RATIONALE_CLAUSE =
+  /,\s*(?:so|because|since|which|while|as|to|for|porque|para|que|mientras)\b/i;
+
 // `opts.toolTurn` = the turn ALSO issued a tool call.
 //
 // MEASURED 2026-09-04 (FIFA 11 Mod). The call site below used to hand a
@@ -345,6 +458,12 @@ function hasResult(sentence) {
 //     alone — arguably worse, because the tool call makes it look alive.
 function classify(text, opts) {
   const toolTurn = !!(opts && opts.toolTurn);
+  // D6. Absent => false, so a caller that cannot supply the order bit keeps the
+  // pre-D6 behaviour instead of inheriting the stricter branch. This binding is
+  // not optional bookkeeping: the branch below reads it, 'use strict' is on, and
+  // an unbound read throws a ReferenceError that this hook's absolute fail-open
+  // converts into SILENCE — a guard that is dead precisely where it was repaired.
+  const endsOnText = !!(opts && opts.endsOnText);
   const t = normalize(text).trim();   // D1: see the aperture-repair block above
   if (!t) return { cls: 'EMPTY', snippet: '' };
 
@@ -353,12 +472,49 @@ function classify(text, opts) {
     for (const re of PASSIVE_WAIT) {
       if (re.test(tail0)) return { cls: 'PASSIVE_WAIT', snippet: tail0.slice(-140) };
     }
-    return null;
+
+    // D6 / MEASURED 2026-09-15 (Jacobo, KobiiCraft Core Files). NINTH instance of
+    // this file's standing lesson, and the largest aperture left in it.
+    //
+    // A turn ended with a PowerShell call, then this text, then nothing:
+    //     "Checking staging's actual state:"
+    // Dead screen; the Owner had to interrupt, and reported it as the cross-repo
+    // hang. classify() RAN (the heartbeat advanced) and returned null, because
+    // INTENT_NARRATION is exempt on any turn carrying a tool call.
+    //
+    // THE EXEMPTION'S PREMISE IS A POSITION CLAIM DECIDED BY A PRESENCE TEST.
+    // The comment defending it says trailing narration is fine because "the work
+    // followed" — true only when a tool_use block comes AFTER the final text.
+    // `usedTool` cannot see order, so both of these were being waved through:
+    //     text("Let me check X") -> tool_use            legitimate, work followed
+    //     tool_use -> text("Let me check X") -> END     dead screen, nothing followed
+    // They are opposite outcomes and the guard could not tell them apart, so it
+    // exempted both — and the second is the single most common shape of the hang.
+    //
+    // `endsOnText` is that missing order bit, read from the chronologically last
+    // assistant record in lastAssistantTurn(). Unknown stays false, so a parser
+    // that cannot tell keeps today's behaviour (D4: a false accusation costs more
+    // than a miss).
+    if (!endsOnText) return null;
+
+    // A closing QUESTION stays exempt on a tool turn: the decision-vs-fact
+    // discriminator below is tuned for text-only turns, and re-opening it here
+    // would risk firing on a legitimate Owner-only question that followed real
+    // work. Narrow on purpose — this repair buys INTENT_NARRATION, nothing else.
+    if (/\?\s*$/.test(t)) return null;
+
+    // Fall through to the SENTENCE-WINDOW intent check below rather than
+    // re-testing INTENT_NARRATION here. That path carries two guards this branch
+    // must not lose: a later sentence bearing a real result discharges the
+    // announcement (hasResult), and "Let me be clear/explain" is framing, not
+    // work. A second, looser copy of the check is how a guard starts crying wolf,
+    // and an off guard IS the dead screen.
   }
 
   // Whole-message match, capped short: a long substantive turn that happens to close on
   // "Noted." is fine — the failure is a turn that is NOTHING BUT the acknowledgement.
-  if (t.length <= 120) {
+  // Skipped on a tool turn: a turn that did real work is not a null acknowledgement.
+  if (!toolTurn && t.length <= 120) {
     for (const re of NULL_ACK) {
       if (re.test(t)) return { cls: 'NULL_ACK', snippet: t };
     }
@@ -473,6 +629,58 @@ function classify(text, opts) {
     if (VERBLESS_INTENT.test(s.text) && !HAS_FINITE_VERB.test(s.text)) {
       return { cls: 'INTENT_NARRATION', snippet: s.text };
     }
+
+    // D7 — THE RATIONALE CLAUSE DISARMS D3. MEASURED 2026-09-15 (Jacobo, Orca X)
+    // on the exact bytes of a turn that froze this very session:
+    //     "Now the destructive module's pre-SIGKILL recheck, so the reason it logs is true."
+    // An Edit ran, then this text, then nothing. The Owner reported it as the
+    // cross-repo hang. Replayed with {toolTurn:true, endsOnText:true} beside two
+    // known-red controls that both fired: PASS. D6 had landed forty minutes
+    // earlier and does not reach it — a PREDICATE hole, not a delivery failure,
+    // and only the replay separates those two.
+    //
+    // ONE COMMA IS THE ENTIRE BYPASS, and it defeats D3 twice over: the clause
+    // supplies the finite verbs ("logs", "is") that !HAS_FINITE_VERB tests for,
+    // and it blows the 60-char cap in VERBLESS_INTENT. Either alone was enough.
+    //
+    // This file already learned this AT SENTENCE LEVEL — D2 widened to a
+    // three-sentence window precisely because "append any rationale SENTENCE
+    // after an announcement" walked past a final-anchored regex. The identical
+    // move INSIDE one sentence was left open, which makes this the twelfth
+    // instance of the standing lesson: the aperture was documented, and the
+    // repair was scoped to the altitude where the damage had been seen.
+    //
+    // THE ANNOUNCEMENT IS THE HEAD CLAUSE. Everything after the subordinator is
+    // commentary on it, so judging the head is what stops a comma from being a
+    // bypass. Two guards keep it from crying wolf: the head must ITSELF be
+    // verbless (so "Now the tree is stable, so we can ship." passes on "is"), and
+    // the FULL sentence must carry no evidence token — unlike D3, which
+    // deliberately skips hasResult. A sentence that cites a measurement is a
+    // report: "Now the gate, which passed 19/19, is sealed." passes on the digits
+    // alone, without the head test ever mattering.
+    // A PARENTHETICAL WEARS THE SAME COSTUME, and it is the false positive this
+    // tier would otherwise ship: "Now the interesting part, as the docs explain,
+    // is the cache." has a verbless head and a subordinator after the comma, and
+    // it is ordinary prose. The discriminator is that a parenthetical CLOSES and
+    // the sentence then resumes with a predicate about the head — so a second
+    // comma followed by a finite verb means the head was a subject, not an
+    // announcement. Found by writing the drill's green half before shipping,
+    // which is the only reason it is not a live regression.
+    const rationaleAt = s.text.search(RATIONALE_CLAUSE);
+    if (rationaleAt > 0) {
+      const head = s.text.slice(0, rationaleAt);
+      const rest = s.text.slice(rationaleAt + 1);
+      const closingComma = rest.indexOf(',');
+      const parenthetical = closingComma >= 0 && HAS_FINITE_VERB.test(rest.slice(closingComma));
+      if (
+        !parenthetical &&
+        VERBLESS_INTENT_HEAD.test(head) &&
+        !HAS_FINITE_VERB.test(head) &&
+        !hasResult(s.text)
+      ) {
+        return { cls: 'INTENT_NARRATION', snippet: s.text };
+      }
+    }
   }
   return null;
 }
@@ -518,8 +726,57 @@ function classify(text, opts) {
  * always claimed — "a tool call and NOTHING ELSE" — measured over the whole turn
  * instead of over whichever fragment happened to be appended last.
  */
+// D6 — THE READ IS O(WHOLE SESSION) AND THE ANSWER IS IN THE LAST 4%.
+// MEASURED 2026-09-14 (Jacobo/Neom), on this estate's own dispatcher log.
+//
+// A turn ends at the last human message, so the only bytes that can change the
+// verdict are the ones after it. Measured on the live 25.9 MB transcript of the
+// session that reported the dead screen:
+//     bytes actually needed (since the last human message) = 978.5 KB  (3.695%)
+//     readFileSync of the whole file                       = 166 ms   (87% of run())
+// And on this estate's largest transcript, 95.2 MB:
+//     readFileSync alone = 5386 ms   against a dispatcher budget of 8000 ms
+// i.e. on a long session the guard could spend most of its budget BEFORE looking
+// at a single character, and a killed child reports exactly what a clean pass
+// reports — the silent-dead-gate shape this file already carries a heartbeat for.
+// `hook-dispatcher-errors.log` holds 48 ETIMEDOUT entries for this script.
+//
+// So: read a WINDOW off the end. The window is sized in megabytes, not turns,
+// because a turn's length is not knowable before reading it.
+//
+// WHICH DIRECTION THIS FAILS IN IS THE WHOLE ARGUMENT FOR ITS SAFETY. If the
+// window is too small to reach the last human message, the walk simply runs out
+// of lines and returns MORE text than the real turn (the tail of earlier turns
+// gets aggregated in). More text can only make EMPTY and SILENT_TOOL_STOP LESS
+// likely to fire, and every other class matches against the END of the joined
+// text, which is unchanged. So a short window degrades toward a MISS, never
+// toward a FALSE ACCUSATION — which is the ordering D4 paid for.
+const TAIL_BYTES = Math.max(
+  262144,
+  parseInt(process.env.CLAUDE_CLOSER_GUARD_TAIL_BYTES || '', 10) || 4 * 1024 * 1024
+);
+
+/** The last `TAIL_BYTES` of a file, starting at a line boundary. */
+function readTail(filePath) {
+  const size = fs.statSync(filePath).size;
+  if (size <= TAIL_BYTES) return fs.readFileSync(filePath, 'utf8');
+
+  const start = size - TAIL_BYTES;
+  const buf = Buffer.allocUnsafe(TAIL_BYTES);
+  const fd = fs.openSync(filePath, 'r');
+  try { fs.readSync(fd, buf, 0, TAIL_BYTES, start); } finally { fs.closeSync(fd); }
+
+  // Drop the leading partial line AND any partial UTF-8 sequence with it: the
+  // window boundary can land mid-codepoint, and a lone replacement character at
+  // the head of a JSON line makes that line unparseable — which the loop already
+  // skips, but dropping it here keeps the fragment out of the text entirely.
+  const s = buf.toString('utf8');
+  const nl = s.indexOf('\n');
+  return nl === -1 ? '' : s.slice(nl + 1);
+}
+
 function lastAssistantTurn(transcriptPath) {
-  const raw = fs.readFileSync(transcriptPath, 'utf8');
+  const raw = readTail(transcriptPath);
   const lines = raw.split(/\r?\n/);
 
   const chunks = [];
@@ -527,6 +784,14 @@ function lastAssistantTurn(transcriptPath) {
   let productiveTool = false;
   let lastTool = '';
   let sawAssistant = false;
+
+  // D6 (2026-09-15, Jacobo) — POSITION, NOT PRESENCE. See the block above
+  // classify(). `usedTool` answers "did this turn call a tool?"; the tool-turn
+  // exemption needs "did a tool call come AFTER the last text?". Only the second
+  // separates ordinary narration (text -> tool_use -> work) from the dead screen
+  // (tool_use -> text -> END). Set once, from the chronologically LAST assistant
+  // record — walking backwards, that is the FIRST one met.
+  let endsOnText = null;
 
   // D5 (see the block above run()): ids whose tool_result came back `is_error`.
   // Walking backwards, results are met BEFORE the tool_use they answer, so the
@@ -563,18 +828,33 @@ function lastAssistantTurn(transcriptPath) {
     const content = msg.content;
     if (!Array.isArray(content)) {
       if (typeof content === 'string' && content) chunks.unshift(content);
+      // A string-content record carries no tool_use, so it ends on text.
+      if (endsOnText === null && typeof content === 'string' && content.trim()) {
+        endsOnText = true;
+      }
       continue;
     }
 
     let recText = '';
-    for (const block of content) {
+    // D6: compare the LAST non-empty text block against the LAST tool_use block
+    // of this record. Computed in the same pass; committed only for the
+    // chronologically last assistant record, which is the first one this
+    // backwards walk meets.
+    let lastTextIdx = -1;
+    let lastToolIdx = -1;
+    for (let k = 0; k < content.length; k++) {
+      const block = content[k];
       if (!block || typeof block !== 'object') continue;
-      if (block.type === 'text' && typeof block.text === 'string') recText += block.text;
+      if (block.type === 'text' && typeof block.text === 'string') {
+        recText += block.text;
+        if (block.text.trim()) lastTextIdx = k;
+      }
       // `lastTool` exists ONLY to give the anti-loop fingerprint something that can
       // DIFFER between two text-free turns. See the fingerprint comment in run().
       // Walking backwards, the FIRST tool_use met is the chronologically last one.
       if (block.type === 'tool_use') {
         usedTool = true;
+        lastToolIdx = k;
         if (!lastTool && block.name) lastTool = String(block.name);
         // A call that was REFUSED or that errored did no work, so it cannot
         // buy the turn an exemption. A call with no result recorded at all is
@@ -583,23 +863,116 @@ function lastAssistantTurn(transcriptPath) {
         if (!block.id || !erroredIds.has(block.id)) productiveTool = true;
       }
     }
+    // A record with neither block leaves endsOnText null, which downstream reads
+    // as "does not end on text" — i.e. the pre-D6 behaviour. Same D4 reasoning:
+    // the ambiguous shape must not inherit the new, stricter branch.
+    if (endsOnText === null && (lastTextIdx >= 0 || lastToolIdx >= 0)) {
+      endsOnText = lastTextIdx > lastToolIdx;
+    }
     if (recText) chunks.unshift(recText);
   }
 
   if (!sawAssistant) return null;
-  return { text: chunks.join('\n'), usedTool, productiveTool, lastTool };
+  return {
+    text: chunks.join('\n'),
+    usedTool,
+    productiveTool,
+    lastTool,
+    endsOnText: endsOnText === true,
+  };
 }
 
 // --- Anti-loop state -------------------------------------------------------
+
+// --- Heartbeat -------------------------------------------------------------
+//
+// MEASURED 2026-09-14 (Jacobo/Neom). A dead screen was reported and it took four
+// tool calls to FAIL to answer the only question that mattered: DID THIS GUARD
+// RUN AT THAT STOP? It could not be answered, and not for want of logging — the
+// answer does not exist. STATE_FILE is written on a block, and on a clean stop
+// ONLY when a previous streak needs clearing. So the overwhelmingly common
+// outcome, "ran and judged the turn clean", leaves no trace at all.
+//
+// That makes a LIVE guard and a DEAD one byte-identical from outside — the exact
+// shape of rules/instrument-before-claim.md ("a gate that cannot fire is
+// indistinguishable from a gate that passes") and of CLAUDE.md rule (K)
+// `silent-dead-gate`. This file has enumerated eight aperture defects in its own
+// patterns; every one of them was found because someone happened to be looking.
+// None would have been visible in a log.
+//
+// It is not hypothetical here. The same dispatcher log carries 45 ETIMEDOUT
+// entries for THIS script, every one of which kills the child, drops its stdout,
+// and reports precisely what a clean pass reports. For those 45 turns the guard
+// was off and nothing said so.
+//
+// So: one line per INVOCATION, whatever the verdict. `runs` is the positive
+// control — a number that stops advancing is a guard that stopped running, and
+// that is a question a human can now answer with one read instead of four.
+// Fail-open like everything else: telemetry never costs a session.
+const HEARTBEAT_FILE = path.join(STATE_DIR, 'closer-guard-heartbeat.json');
+
+function heartbeat(sid, cls) {
+  try {
+    let h = {};
+    try { h = JSON.parse(fs.readFileSync(HEARTBEAT_FILE, 'utf8')); } catch { /* first run */ }
+    const now = new Date().toISOString();
+    h.runs = (typeof h.runs === 'number' ? h.runs : 0) + 1;
+    h.lastRunIso = now;
+    h.lastSessionId = sid;
+    h.lastVerdict = cls || 'CLEAN';
+    if (cls) {
+      h.blocks = (typeof h.blocks === 'number' ? h.blocks : 0) + 1;
+      h.lastBlockIso = now;
+      h.lastBlockClass = cls;
+    }
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.writeFileSync(HEARTBEAT_FILE, JSON.stringify(h), 'utf8');
+  } catch { /* fail-open ABSOLUTE: a heartbeat must never cost a turn */ }
+}
 
 function readState() {
   try { return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); } catch { return {}; }
 }
 
+// D7 — AN ANTI-LOOP MEMO IS NOT AN ARCHIVE, AND THIS ONE NEVER FORGOT.
+// MEASURED 2026-09-14 (Jacobo/Neom): 85 KB, 636 entries, 588 of them (92%)
+// written by this file's OWN TEST SUITE — `test-sts-*`, `antiloop-*`,
+// `chain-probe-*`. Parsed AND rewritten in full on every single Stop, in every
+// repo, forever, to answer one question about ONE session id.
+//
+// The state's entire purpose is "did I just block this same session on this same
+// text?", which is meaningful for minutes and meaningless after that. Nothing
+// ever pruned it because nothing ever hurt: it grows by a few hundred bytes a
+// day and would have been megabytes before anyone noticed, at which point the
+// guard would be timing out on its own bookkeeping — the same silent-dead-gate
+// ending as D6, reached from the other side.
+//
+// Pruned on WRITE rather than on read, so the cost is paid on the rare path (a
+// block) instead of the common one, and a reader never has to trust the pruner.
+const STATE_MAX_AGE_MS = 6 * 60 * 60 * 1000;   // an anti-loop streak cannot outlive a session
+const STATE_MAX_ENTRIES = 64;
+
+function pruneState(state) {
+  const now = Date.now();
+  const vivos = Object.keys(state).filter((k) => {
+    const e = state[k];
+    return e && typeof e.ts === 'number' && (now - e.ts) < STATE_MAX_AGE_MS;
+  });
+  if (vivos.length <= STATE_MAX_ENTRIES) {
+    const out = {};
+    for (const k of vivos) out[k] = state[k];
+    return out;
+  }
+  vivos.sort((a, b) => state[b].ts - state[a].ts);
+  const out = {};
+  for (const k of vivos.slice(0, STATE_MAX_ENTRIES)) out[k] = state[k];
+  return out;
+}
+
 function writeState(state) {
   try {
     fs.mkdirSync(STATE_DIR, { recursive: true });
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state), 'utf8');
+    fs.writeFileSync(STATE_FILE, JSON.stringify(pruneState(state)), 'utf8');
   } catch { /* fail-open: state is an optimisation, not a requirement */ }
 }
 
@@ -718,10 +1091,18 @@ function run(input) {
     const didWork = turn.usedTool && turn.productiveTool !== false;
     const verdict = didWork
       ? ((turn.text || '').trim()
-          ? classify(turn.text, { toolTurn: true })
+          ? classify(turn.text, { toolTurn: true, endsOnText: turn.endsOnText === true })
           : { cls: 'SILENT_TOOL_STOP', snippet: '' })
       : classify(turn.text);
     const sid = (input && input.session_id) || 'unknown';
+
+    // EVERY judged turn, not just the blocked ones. See heartbeat() for why the
+    // clean case is the one that had to start leaving a trace. Placed after the
+    // verdict and before every `return`, so no exit path is unrecorded — the
+    // early returns ABOVE this line (guard disabled, no transcript, unreadable
+    // turn) are deliberately excluded: those are "did not judge", which is
+    // different evidence from "judged and found nothing".
+    heartbeat(sid, verdict && verdict.cls);
 
     // A CLEAN stop ends the streak. Without this the counter below could only ever
     // rise, so one bad closer early in a session permanently degraded the guard for
@@ -788,7 +1169,7 @@ function run(input) {
   }
 }
 
-module.exports = { run, classify, lastAssistantTurn };
+module.exports = { run, classify, lastAssistantTurn, readTail, pruneState, TAIL_BYTES };
 
 // --- Dual-mode entry point (matches scaffold-auditor.js contract) ----------
 if (require.main === module) {

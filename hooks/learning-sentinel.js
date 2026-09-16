@@ -80,8 +80,28 @@ function detectGraphQLSignals(cwd) {
   return false;
 }
 
+/**
+ * Normalize a Windows drive letter UP before slugifying.
+ *
+ * The pid is the key into ~/.claude/state/compound-learnings.json, and it is
+ * case-sensitive. Different producers hand us the same directory spelled
+ * `C:\...` or `c:\...` (graphify's discovery yields the lowercase form), so
+ * without this the SAME project owns two cursor entries: one that the marker
+ * writer advances and one that the consumer advances, neither able to clear the
+ * other. Measured 2026-09-10: this repo held both `C--...Core-Files` (stuck at
+ * 2026-09-04, directive_count 60) and `c--...Core-Files` — 60 consecutive
+ * auto-invocations reporting success while nothing moved.
+ *
+ * Only the drive letter is touched. Casing anywhere else in the path is real
+ * and must survive, or this fix becomes a third spelling.
+ */
+function canonicalCwd(cwd) {
+  return /^[a-z]:/.test(cwd) ? cwd[0].toUpperCase() + cwd.slice(1) : cwd;
+}
+
 function resolveProject(data) {
-  const cwd = (data && data.cwd) || process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const raw = (data && data.cwd) || process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const cwd = canonicalCwd(raw);
   const pid = cwd.replace(/[^a-zA-Z0-9-]/g, '-');
   return { cwd, pid };
 }
