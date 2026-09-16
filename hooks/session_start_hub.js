@@ -108,24 +108,44 @@ function note(msg, err) {
 // ---------------------------------------------------------------------------
 // Hook 1: restart_resume (INLINE, may emit additionalContext)
 // ---------------------------------------------------------------------------
-function readStdin() {
-  try {
-    const raw = fs.readFileSync(0, 'utf8');
-    if (raw && raw.charCodeAt(0) === UTF8_BOM_CHARCODE) {
-      return raw.slice(1);
-    }
-    return raw;
-  } catch (err) {
-    note('stdin unreadable', err);
+// 2026-09-16 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, 'utf8')`,
+// which BLOCKS THE EVENT LOOP: if the pipe never closes the process parks at
+// zero CPU forever and no in-process watchdog can save it, because no timer is
+// ever scheduled. The harness's per-hook budget kills the shell WRAPPER; a
+// timeout kills the direct child only, and the survivor holds the inherited
+// stdout pipe. bfb40a1 has the live measurement.
+//
+// This is the worst one to leave broken: a SessionStart hub measured at 7374 ms
+// with NO declared budget, so a stall here holds the session open screen itself.
+const { readStdinRaw, armHardExit } = require('./hook-utils');
+
+const STDIN_BUDGET_MS = 2000;
+const HARD_EXIT = armHardExit(STDIN_BUDGET_MS + 3000,
+  () => note('hard-exit watchdog fired', new Error('stdin never closed')));
+
+async function readStdin() {
+  const { raw, outcome } = await readStdinRaw(STDIN_BUDGET_MS);
+  clearTimeout(HARD_EXIT);
+  if (raw === null) {
+    // Preserves the old catch's return of '' -- but the old code could only
+    // reach it on a throw, and this branch also covers a pipe that never closed.
+    // note() keeps the two distinguishable in the log, because a hub that timed
+    // out and a hub whose payload was empty lose different things downstream.
+    note('stdin unreadable', new Error(`readStdinRaw outcome=${outcome}`));
     return '';
   }
+  if (raw && raw.charCodeAt(0) === UTF8_BOM_CHARCODE) {
+    return raw.slice(1);
+  }
+  return raw;
 }
 
-function getStdinPayload() {
+async function getStdinPayload() {
   // fd 0 can be read only ONCE -- parse the whole payload here and let
-  // callers pull cwd / session_id from the returned object. A second
-  // readFileSync(0) would return empty and silently drop session_id.
-  const raw = readStdin();
+  // callers pull cwd / session_id from the returned object. A second read
+  // would return empty and silently drop session_id. Still true of the bounded
+  // async read: the stream is consumed once and then paused.
+  const raw = await readStdin();
   if (!raw) {
     return {};
   }
@@ -875,12 +895,16 @@ function hookOwnerQueueIngest() {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
-function main() {
+// Async because getStdinPayload() is now a Promise. Everything below is
+// UNCHANGED -- only the way the input arrives moved. The surrounding try/catch
+// still works here because the await is INSIDE it, so a rejection from the read
+// is caught exactly as a throw was.
+async function main() {
   const t0 = Date.now();
   let additionalContext = null;
 
   try {
-    const payload = getStdinPayload();
+    const payload = await getStdinPayload();
     const cwd = (typeof payload.cwd === 'string' && payload.cwd)
       ? payload.cwd : process.cwd();
     const sessionId = (typeof payload.session_id === 'string')
@@ -982,4 +1006,13 @@ function main() {
   process.exit(0);
 }
 
-main();
+// .catch is mandatory now that main is async. main() has an internal try/catch
+// around its body, but a rejection from OUTSIDE that block would otherwise
+// escape unhandled -- and a process that merely logs one stays ALIVE holding the
+// inherited stdout pipe, which on a SessionStart hub means the session never
+// finishes opening. Emit the bare-continue the harness expects, then exit.
+main().catch((err) => {
+  note('main rejected', err);
+  try { process.stdout.write(JSON.stringify({ continue: true })); } catch (_) { /* noop */ }
+  process.exit(0);
+});

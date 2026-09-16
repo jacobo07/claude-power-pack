@@ -75,17 +75,20 @@ ORIGINAL_POPULATION_2026_09_15 = {
     "subagent-bash-avoidance-advisor.js",
 }
 
-# Frozen 2026-09-15. Each entry is a hook the HARNESS spawns directly that still
-# reads stdin synchronously. Fixing one means DELETING its line here -- the
-# stale-entry check below makes that mandatory rather than optional.
-KNOWN_OFFENDERS = {
-    "auto-test-gate.js": "PostToolUse; lower blast radius, still harness-spawned. "
-                         "Nearly dropped from this list by a stripper bug that ate its "
-                         "real call -- the stale-entry clause is what surfaced it",
-    "bug-hunter-learning.js": "advisory; safe to fix late",
-    "lazarus-stub-recover.js": "SessionStart; a stall here delays session open",
-    "session_start_hub.js": "SessionStart hub; measured 7374 ms with NO declared budget",
-}
+# EMPTY, 2026-09-16. The ratchet reached its target: no harness-spawned hook
+# reads stdin synchronously any more. All ten of the 2026-09-15 population were
+# migrated to the bounded-async template and each one is DRIVEN LIVE by
+# V-STDIN-MIGRATED-EXITS below, not merely re-read.
+#
+# Zero here is not the end of the gate, it is the start of its useful life:
+# V-STDIN-NO-NEW-DEBT now fails on the FIRST new offender instead of on the
+# eleventh, which is the whole reason a ratchet is worth turning rather than
+# leaving frozen at a comfortable number.
+#
+# An entry may be added back, but only with a reason and only as a deliberate
+# admission of debt -- and the stale-entry clause will then force its removal
+# the moment the hook is fixed.
+KNOWN_OFFENDERS: dict[str, str] = {}
 
 # A population floor. An empty or tiny sweep is what a BROKEN enumerator returns,
 # and it reads identically to a healthy estate. 20 is comfortably under the 35

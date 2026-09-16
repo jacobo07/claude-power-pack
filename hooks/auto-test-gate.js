@@ -78,10 +78,39 @@ function warnLine(record) {
   } catch (_) { /* noop */ }
 }
 
-function readStdin() {
+// 2026-09-16 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, 'utf-8')`,
+// which BLOCKS THE EVENT LOOP: if the pipe never closes the process parks at
+// zero CPU forever and no in-process watchdog can save it, because no timer is
+// ever scheduled. The harness's per-hook budget kills the shell WRAPPER; a
+// timeout kills the direct child only, and the survivor holds the inherited
+// stdout pipe. bfb40a1 has the live measurement.
+//
+// This hook nearly escaped the inventory entirely: a stripper bug in the
+// detector ate its real readFileSync(0) call and certified it CLEAN. The
+// stale-entry clause is what surfaced that (5ccbe78).
+const { readStdinRaw, armHardExit } = require('./hook-utils');
+
+const STDIN_BUDGET_MS = 2000;
+const HARD_EXIT = armHardExit(STDIN_BUDGET_MS + 3000);
+
+async function readStdin() {
+  const { raw } = await readStdinRaw(STDIN_BUDGET_MS);
+  clearTimeout(HARD_EXIT);
+  if (raw === null) {
+    // Fail OPEN, matching this hook's existing contract on every other input
+    // failure -- but named separately in the warn log, because "could not read
+    // the command" and "the command was not a commit" are different facts and
+    // only one of them means the gate never ran.
+    //
+    // Worth being explicit, since this hook CAN exit 2: failing open here lets
+    // a commit through untested. That is the pre-existing contract (the old
+    // catch did exactly this), and widening it to fail-closed would be a
+    // behaviour change smuggled in on a liveness fix. It is recorded as a
+    // deliberate keep, not an oversight.
+    failOpen('stdin never closed within budget -- gate did NOT inspect the command');
+  }
   try {
-    const buf = fs.readFileSync(0, 'utf-8');
-    return buf ? JSON.parse(buf) : {};
+    return raw ? JSON.parse(raw) : {};
   } catch (e) {
     failOpen('stdin parse: ' + e.message);
   }
@@ -224,7 +253,7 @@ async function main() {
     process.exit(0);
   }
 
-  const input = readStdin();
+  const input = await readStdin();
   const cmd = extractCommand(input);
 
   if (!looksLikeGitCommit(cmd)) {
@@ -258,5 +287,9 @@ async function main() {
   process.exit(0);
 }
 
-try { main(); }
+// main was ALREADY async (it awaits spawnGate), so this synchronous catch could
+// never see a rejection from it -- a pre-existing hole independent of the stdin
+// read. An escaped rejection leaves the process ALIVE holding the inherited
+// stdout pipe, which is the stall this migration removes. Fail open, always exit.
+try { main().catch((e) => failOpen('top-level: ' + (e && e.message ? e.message : 'unknown'))); }
 catch (e) { failOpen('top-level: ' + e.message); }

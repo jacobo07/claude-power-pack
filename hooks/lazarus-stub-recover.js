@@ -1,7 +1,4 @@
 #!/usr/bin/env node
-// CANONICAL SOURCE — Power Pack repo. Deployed to ~/.claude/hooks/ via
-// install-global.ps1 + tools/install_global_core.py session-safety manifest.
-// Edit here, re-run install-global; never edit the deployed copy directly.
 /**
  * lazarus-stub-recover.js — SessionStart hook.
  *
@@ -60,10 +57,30 @@ process.stdout.write("{}");
 
 if (process.env.LAZARUS_STUB_RECOVER === "off") process.exit(0);
 
-function readStdinJson() {
+// 2026-09-16 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, "utf-8")`,
+// which BLOCKS THE EVENT LOOP: if the pipe never closes the process parks at
+// zero CPU forever and no in-process watchdog can save it, because no timer is
+// ever scheduled. TIME_BUDGET_MS below could never have saved it either -- a
+// deadline checked between loop iterations is no defence against a step that
+// never returns.
+//
+// This is a SessionStart hook, so a stall here delays the session opening. It
+// was observed parked twice within five minutes during the 2026-09-16 census.
+const { readStdinRaw, armHardExit } = require("./hook-utils");
+
+const STDIN_BUDGET_MS = 2000;
+const HARD_EXIT = armHardExit(STDIN_BUDGET_MS + 3000);
+
+async function readStdinJson() {
+  const { raw } = await readStdinRaw(STDIN_BUDGET_MS);
+  clearTimeout(HARD_EXIT);
   try {
-    const buf = fs.readFileSync(0, "utf-8");
-    return buf ? JSON.parse(buf) : {};
+    // Unreadable and empty both become {} exactly as the old catch did. Safe
+    // here because the only thing main takes from the payload is its OWN
+    // session_id, used to avoid promoting itself; without it the recovery sweep
+    // still runs correctly, just without that one exclusion -- which is
+    // precisely what the old catch already produced.
+    return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
 
@@ -198,8 +215,10 @@ function recoverProject(projDir, ownSessionId, deadline) {
   return promoted;
 }
 
-function main() {
-  const input = readStdinJson();
+// Async because readStdinJson() is now a Promise. The recovery sweep below is
+// UNCHANGED -- only the way the input arrives moved.
+async function main() {
+  const input = await readStdinJson();
   const own = input && typeof input.session_id === "string" ? input.session_id : null;
   const deadline = Date.now() + TIME_BUDGET_MS;
   let totalPromoted = 0;
@@ -217,4 +236,8 @@ function main() {
   process.exit(0);
 }
 
-try { main(); } catch { process.exit(0); }
+// A synchronous catch cannot see a rejection from an async main, so without the
+// .catch an error would escape unhandled -- and a process that merely logs one
+// stays ALIVE holding the inherited stdout pipe, which is the stall this
+// migration removes. Every path still exits 0.
+try { main().catch(() => process.exit(0)); } catch { process.exit(0); }
