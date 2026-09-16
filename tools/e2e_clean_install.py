@@ -111,11 +111,28 @@ def _run_install(env: dict[str, str], sandbox: Path,
     }
 
 
+def _domains() -> tuple[str, ...]:
+    """The census's domain names, READ from it rather than restated here.
+
+    This list was ``("agents", "commands", "hooks")`` -- hand-written, and
+    therefore a measure of what somebody remembered. ``rules/`` was a real
+    domain for months and was absent from this denominator, so a clean
+    install could have shipped into it, or deleted out of it, and every
+    verdict in this file would have stayed green. An audit whose subjects
+    are enrolled by hand measures memory, not reality
+    (PR-COVERAGE-BY-CONSTRUCTION-001); the fix is to enroll them from the
+    one place that already has to be complete.
+    """
+    sys.path.insert(0, str(PP))
+    from modules.mirror_discovery import discovery as MD  # noqa: PLC0415
+    return tuple(name for name, _reason in MD.DOMAINS)
+
+
 def _inventory(sandbox: Path) -> dict[str, int]:
-    """Count installed agents + commands + hooks in the sandbox."""
+    """Count installed files per DISCOVERED domain in the sandbox."""
     cl = sandbox / ".claude"
     out: dict[str, int] = {}
-    for k in ("agents", "commands", "hooks"):
+    for k in _domains():
         d = cl / k
         out[k] = sum(1 for p in d.rglob("*") if p.is_file()) if d.exists() else 0
     return out
@@ -134,6 +151,35 @@ def _tree(sandbox: Path) -> set[str]:
     if not cl.exists():
         return set()
     return {p.relative_to(cl).as_posix() for p in cl.rglob("*") if p.is_file()}
+
+
+_FOREIGN_RULE_REL = "rules/zz-foreign-owner-do-not-ship.md"
+_FOREIGN_RULE_BODY = (
+    "# Foreign rule fixture\n"
+    "\n"
+    "Written by e2e_clean_install before the installer runs, owned by\n"
+    "nobody in this repo. Two installs must leave these bytes untouched.\n"
+)
+
+
+def _seed_foreign_rule(sandbox: Path) -> bytes:
+    """Put a rule the installer does not own where it would trip over it.
+
+    ``rules/`` is a domain and is NOT in SHIPPABLE_KINDS, which is a claim
+    with two halves and the tree evidence alone asserts neither: the
+    installer must not CREATE rules, and it must not DESTROY the ones a
+    user or another tool put there.
+
+    This fixture is also the positive control for the half that would
+    otherwise be vacuous. "No unexpected rule appeared" is satisfied by an
+    enumerator that cannot see ``rules/`` at all; the seeded file has to
+    come back, so a blind enumerator goes red instead of clean.
+    """
+    p = sandbox / ".claude" / _FOREIGN_RULE_REL
+    p.parent.mkdir(parents=True, exist_ok=True)
+    body = _FOREIGN_RULE_BODY.encode("utf-8")
+    p.write_bytes(body)
+    return body
 
 
 def _sidecar_counters(sandbox: Path) -> dict:
@@ -186,6 +232,9 @@ def main() -> int:
 
     sandbox = _make_sandbox(args.keep_sandbox)
     env = _sandbox_env(sandbox)
+    # Seeded BEFORE the baseline tree is read, so it belongs to phase 1's
+    # "nothing changed" rather than counting as an addition to it.
+    foreign_body = _seed_foreign_rule(sandbox)
     report: dict = {
         "iso": ISO_TS,
         "sandbox": str(sandbox),
@@ -326,7 +375,45 @@ def main() -> int:
               f"updated={updated} installed={installed} "
               f"errors={errors} -> {'OK' if v3 else 'FAIL'}")
 
-        all_green = v1 and v2 and v3
+        # PHASE 4: the rules domain, which no phase above could speak for.
+        # ``rules`` is a DOMAIN and is not in SHIPPABLE_KINDS. That is two
+        # claims, and two installs have now run over a rule this repo does
+        # not own:
+        #   survived  -- the installer did not delete or rewrite it
+        #   not_shipped -- the installer created no rule of its own
+        # The seeded file is the positive control for the second: an
+        # enumerator blind to ``rules/`` would report "no unexpected rule"
+        # just as loudly as a correct one, so the claim is only worth
+        # anything while the fixture it can see comes back.
+        print("\n  [phase 4] rules: not shipped, not destroyed ...",
+              flush=True)
+        rules_root = sandbox / ".claude" / "rules"
+        live_rules = sorted(
+            p.relative_to(rules_root).as_posix()
+            for p in rules_root.rglob("*") if p.is_file()
+        ) if rules_root.exists() else []
+        seeded = sandbox / ".claude" / _FOREIGN_RULE_REL
+        survived = seeded.is_file() and seeded.read_bytes() == foreign_body
+        unexpected = [r for r in live_rules
+                      if r != _FOREIGN_RULE_REL.split("/", 1)[1]]
+        v4 = survived and not unexpected
+        report["phases"]["rules_present"] = live_rules
+        report["verdicts"]["foreign_rule_survived"] = survived
+        report["verdicts"]["rules_not_shipped"] = not unexpected
+        report["verdicts"]["rules_domain_respected"] = v4
+        if not survived:
+            print("    the foreign rule did NOT come back byte-identical. "
+                  "Either the installer wrote into a domain it does not "
+                  "ship, or this check cannot see rules/ at all -- and "
+                  "those need opposite fixes, so read rules_present "
+                  "before touching the installer.")
+        if unexpected:
+            print(f"    installer created rule(s) it does not own: "
+                  f"{unexpected}")
+        print(f"    seen={len(live_rules)} survived={survived} "
+              f"unexpected={unexpected} -> {'OK' if v4 else 'FAIL'}")
+
+        all_green = v1 and v2 and v3 and v4
         report["verdicts"]["overall"] = all_green
         EVIDENCE.parent.mkdir(parents=True, exist_ok=True)
         EVIDENCE.write_text(
