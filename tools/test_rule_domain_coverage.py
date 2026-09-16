@@ -241,16 +241,55 @@ def gate_aperture_declared() -> None:
             f"all {len(dirs)} live directories classified "
             f"({len(MD.DOMAINS)} domains, {len(MD.NON_DOMAINS)} non-domains)")
 
-    stale = sorted(set(MD.NON_DOMAINS) - dirs)
+    # TRANSIENT entries may legitimately be absent -- the host creates and
+    # removes them. Everything else must exist, or the list is describing
+    # directories that are gone, which reads exactly like one describing
+    # covered ones.
+    transient = {n for n, (cls, _r) in MD.NON_DOMAINS.items()
+                 if cls == "TRANSIENT"}
+    stale = sorted((set(MD.NON_DOMAINS) - transient) - dirs)
     if stale:
         _fail("V-RULES-APERTURE-STALE",
-              f"declared non-domains that no longer exist: {stale}. A list "
-              f"describing deleted directories reads exactly like one "
-              f"describing covered ones")
+              f"declared non-domains that no longer exist: {stale}. Delete "
+              f"them, or mark TRANSIENT if the host removes and recreates "
+              f"them -- but only with an observed disappearance, never a guess")
     else:
         _ok("V-RULES-APERTURE-STALE",
-            f"no stale entries; all {len(MD.NON_DOMAINS)} declared "
-            f"non-domains exist")
+            f"no stale entries; {len(MD.NON_DOMAINS) - len(transient)} of "
+            f"{len(MD.NON_DOMAINS)} declared non-domains must exist and do "
+            f"({len(transient)} TRANSIENT, exempt)")
+
+
+def gate_transient_not_a_blanket_escape() -> None:
+    """TRANSIENT exempts from staleness ONLY. Both poles, one fixture.
+
+    The class exists because `telemetry` appeared and vanished inside one
+    session. It is also the one class that could hide a real deletion, so the
+    exemption has to be proven narrow rather than trusted to be.
+    """
+    real = dict(MD.NON_DOMAINS)
+    present = {"alpha", "beta"}
+    try:
+        MD.NON_DOMAINS = {
+            "alpha": ("RUNTIME", "exists"),
+            "beta": ("TRANSIENT", "exists"),
+            "gone-runtime": ("RUNTIME", "deleted for good"),
+            "gone-transient": ("TRANSIENT", "host removes and recreates it"),
+        }
+        transient = {n for n, (cls, _r) in MD.NON_DOMAINS.items()
+                     if cls == "TRANSIENT"}
+        stale = sorted((set(MD.NON_DOMAINS) - transient) - present)
+        if stale == ["gone-runtime"]:
+            _ok("V-RULES-TRANSIENT-NARROW",
+                "an absent RUNTIME entry is stale while an absent TRANSIENT "
+                "one is not; the exemption does not generalise")
+        else:
+            _fail("V-RULES-TRANSIENT-NARROW",
+                  f"expected exactly ['gone-runtime'] stale, got {stale}. "
+                  f"TRANSIENT must exempt its own entry and nothing else -- "
+                  f"a blanket escape would hide a genuine deletion")
+    finally:
+        MD.NON_DOMAINS = real
 
 
 def gate_aperture_red_branch() -> None:
@@ -290,6 +329,7 @@ def main() -> int:
     gate_ownership_poles()
     gate_real_estate_clean()
     gate_aperture_declared()
+    gate_transient_not_a_blanket_escape()
     gate_aperture_red_branch()
     total = _passes + _fails
     print("-" * 68)

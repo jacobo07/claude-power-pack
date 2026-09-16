@@ -110,7 +110,22 @@ DOMAINS: tuple[tuple[str, str], ...] = (
 # FOREIGN      another tool installs and owns it; not this repo's to mirror
 # OTHER_OWNER  may hold durable artifacts, but their durability belongs to a
 #              named owner other than this census
+# TRANSIENT    the host creates and removes it; MAY legitimately be absent, so
+#              it is exempt from the stale-entry clause and from nothing else.
+#              Use it only with observed evidence of a disappearance -- it is
+#              the one class that can hide a real deletion, so a guess here
+#              buys silence rather than safety.
 NON_DOMAINS: dict[str, tuple[str, str]] = {
+    # `~/.claude/.claude/` -- a nested copy of this very root, created
+    # 2026-09-15 16:42 holding `cache/learnings/*.md`. Not a puzzle and not
+    # TRANSIENT: the compound-learnings corpus is addressed as
+    # `<cwd>/.claude/cache/learnings`, so a session whose cwd was `~/.claude`
+    # grew its own. The files are durable and the writer was found before this
+    # line was written -- the class is OTHER_OWNER because that pipeline owns
+    # their durability, not because nobody looked.
+    ".claude": ("OTHER_OWNER",
+                "cwd-relative compound-learnings corpus; owned by that "
+                "pipeline, mirrored by nothing here"),
     ".gsd-staging": ("RUNTIME", "gsd install staging"),
     ".vscode": ("RUNTIME", "editor settings for the live tree"),
     "autoresearch-engine": ("RUNTIME", "autoresearch working state"),
@@ -142,13 +157,22 @@ NON_DOMAINS: dict[str, tuple[str, str]] = {
     "state": ("RUNTIME", "runtime state store"),
     "tmp": ("RUNTIME", "temporary files"),
     "traces": ("RUNTIME", "execution traces"),
-    # Classified by this gate's FIRST real run, 2026-09-15 15:26, not by the
-    # hand that wrote the rest of this list: it did not exist when the
-    # population was frozen forty minutes earlier and the ratchet refused to
-    # pass until somebody decided what it was. Created empty by the host
-    # mid-session, zero files, self-describing name. Disagree with this by
-    # finding its writer -- it was classified on behaviour, not provenance.
-    "telemetry": ("RUNTIME", "host telemetry spool; appeared empty mid-session"),
+    # The entry that taught this list it needed a fourth class.
+    #
+    # Found by the ratchet's FIRST real run at 15:26, forty minutes after the
+    # population was frozen: the host created it empty, mid-session, and the
+    # gate refused to pass until somebody classified it. It was classified
+    # RUNTIME -- and then it DISAPPEARED before the mutation drill ran, which
+    # made the stale-entry clause fail on it minutes later.
+    #
+    # Both readings were correct and the list was wrong. A directory that
+    # comes and goes is neither a new artifact class nor a rotted entry, and
+    # scoring it as either makes the gate flap -- which is how a ratchet gets
+    # switched off. Hence TRANSIENT: declared, so its arrival is not a
+    # surprise; exempt from staleness, so its departure is not an accusation.
+    "telemetry": ("TRANSIENT",
+                  "host telemetry spool; observed created empty and removed "
+                  "again inside one session, 2026-09-15"),
     "get-shit-done": ("FOREIGN", "gsd plugin"),
     "gsd-core": ("FOREIGN", "gsd plugin core"),
     "gsd-local-patches": ("FOREIGN", "gsd plugin patches"),
