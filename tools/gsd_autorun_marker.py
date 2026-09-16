@@ -132,11 +132,31 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--command", default="")
     ap.add_argument("--cwd", default="")
     ap.add_argument("--phase", type=int, default=None)
+    ap.add_argument("--mission", default="",
+                    help="comma-separated vocabulary of the Owner-approved mission; the active "
+                         "GSD milestone must intersect it or arming is refused")
     args = ap.parse_args(argv)
 
     if args.write:
+        # Arming point of /cpp-gsd-long. A mechanically sound runner pointed at a stale roadmap
+        # executes the wrong mission (tools/gsd_mission_freshness.py), so the CLI refuses to
+        # arm unless the active milestone matches a declared mission. The library call
+        # write_marker() stays unconditional: it is the primitive, this is the boundary.
+        try:
+            import gsd_mission_freshness as _mf
+        except ImportError:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import gsd_mission_freshness as _mf
+        verdict = _mf.check(args.cwd or ".", args.mission)
+        if not verdict.armable:
+            sys.stderr.write(f"REFUSED: mission freshness {verdict.outcome}: {verdict.reason}\n")
+            return 2
         try:
             path = write_marker(args.session, args.command, args.cwd, args.phase)
+            data = json.loads(path.read_text(encoding="utf-8"))
+            data["mission"] = {"terms": verdict.mission_terms, "matched": verdict.matched,
+                               "active_milestone": verdict.active_milestone}
+            path.write_text(json.dumps(data, indent=2), encoding="utf-8")
         except MarkerError as exc:
             sys.stderr.write(f"REFUSED: {exc}\n")
             return 2

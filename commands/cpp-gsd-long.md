@@ -41,9 +41,21 @@ $pp = 'C:\Users\User\.claude\skills\claude-power-pack'
 # 2. Record the run. Use the bare command, not --from N: it re-enters at the
 #    first incomplete phase, so it stays correct as phases complete, while a
 #    pinned N goes stale the moment phase N finishes.
+#    --mission is REQUIRED: 3-8 distinctive terms of the Owner-approved mission.
+#    Arming is refused unless a majority appear in the ACTIVE .planning/STATE.md +
+#    ROADMAP.md (tools/gsd_mission_freshness.py). Exit 2 = do not start the run.
 & $py "$pp\tools\gsd_autorun_marker.py" --write `
-      --session $env:CLAUDE_CODE_SESSION_ID --command "/gsd-autonomous" --cwd .
+      --session $env:CLAUDE_CODE_SESSION_ID --command "/gsd-autonomous" --cwd . `
+      --mission "<term1>,<term2>,<term3>"
 ```
+
+**If step 2 prints `REFUSED: mission freshness STALE`, stop.** The active milestone
+describes a different mission than the one you were asked to run — a mechanically
+sound runner would execute the wrong roadmap. Seed the right milestone with
+`/gsd-new-milestone` (it archives the old phases rather than deleting them), then
+retry. Do not weaken the term list until it passes: generic nouns (`slot`, `menu`,
+`ui`) are exactly what let a stale roadmap through on the subject this gate was
+built from.
 
 Then invoke `/gsd-autonomous` (add `--from <phase>` only when the caller asked
 to start somewhere specific — the marker still holds the bare form).
