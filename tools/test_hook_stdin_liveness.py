@@ -33,6 +33,7 @@ entry goes stale. Names, never a count: a count is satisfied by deleting a hook.
 """
 from __future__ import annotations
 
+import concurrent.futures as cf
 import json
 import os
 import pathlib
@@ -40,6 +41,12 @@ import re
 import shutil
 import subprocess
 import sys
+import time
+
+# How many hooks to drive at once. See the note at the drive loop: sequential
+# runs pushed the canonical hook suite past its 600 s ceiling, and a suite too
+# slow to run gets switched off exactly the way a red-on-arrival gate does.
+DRIVE_CONCURRENCY = 4
 
 # Budget for the live drive below. A migrated hook's own bound is 2 s with a 5 s
 # hard-exit backstop, but the population includes third-party GSD plugin hooks
@@ -60,6 +67,14 @@ NODE = shutil.which("node") or r"C:\Program Files\nodejs\node.exe"
 # is blocked. A timeout alone cannot tell those apart, and calling a slow hook
 # parked is a false accusation aimed at a hook that works.
 CPU_BUSY_THRESHOLD_S = 1.0
+
+# The second sample. A LEVEL cannot separate "parked on a pipe" from
+# "I/O-bound"; only MOVEMENT can. Measured parked hooks sat at 0.06-0.11 s and
+# never moved; a working file-sweep hook sat at 0.64 s and kept creeping. 1.5 s
+# is long enough for a progressing process to register at Windows' ~15.6 ms
+# scheduler granularity and short enough to add little to the run.
+CPU_DELTA_WINDOW_S = 1.5
+CPU_DELTA_MIN_S = 0.03
 
 # The undrained-pipe write budget. MEASURED 2026-09-16
 # (hooks/tests/test-pipe-write-liveness.js): a .NET-created pipe blocks at
@@ -338,7 +353,9 @@ def main() -> int:
         drivable = sorted(p for p in scripts if os.path.isfile(p))
         hung, exited, slow = [], [], []
         hung_cpu: dict[str, str] = {}
-        for path in drivable:
+
+        def drive(path: str):
+            """Spawn one hook against a pipe nothing closes; classify how it ends."""
             name = os.path.basename(path)
             proc = subprocess.Popen(
                 [NODE, path],
@@ -348,29 +365,70 @@ def main() -> int:
             )
             try:
                 proc.wait(timeout=LIVENESS_BUDGET_S)
-                exited.append(name)
+                return ("exited", name, None)
             except subprocess.TimeoutExpired:
                 # Over budget is not yet a verdict. Read the CPU BEFORE killing:
                 # a blocked hook sits at startup cost forever, a slow one has
                 # been burning a core. Only the first is this gate's subject, and
-                # on a contended host the second is common and harmless.
-                cpu = process_cpu_seconds(proc.pid)
-                if cpu is not None and cpu >= CPU_BUSY_THRESHOLD_S:
-                    slow.append(f"{name} (cpu={cpu:.1f}s)")
+                # under the concurrency below the second gets MORE common, not
+                # less -- which is exactly why the discriminator has to exist
+                # before the parallelism does.
+                # TWO SAMPLES, not one. An absolute CPU threshold cannot tell a
+                # process parked on a pipe from one that is I/O-BOUND: both sit
+                # near zero CPU, and only one of them is a defect. MEASURED:
+                # lazarus-index-aggregator.js exceeded the budget at 0.64 s of
+                # CPU -- under any threshold low enough to catch a real park --
+                # while genuinely working through a large file sweep. Calling it
+                # parked is a false accusation aimed at a hook that works.
+                #
+                # What separates them is not the LEVEL but whether the counter
+                # MOVES. A blocked process's CPU is frozen; a working one creeps
+                # even when it is mostly waiting on disk.
+                cpu1 = process_cpu_seconds(proc.pid)
+                time.sleep(CPU_DELTA_WINDOW_S)
+                cpu2 = process_cpu_seconds(proc.pid)
+                proc.kill()                  # a gate that leaks the process it
+                proc.wait()                  # is testing has refuted itself
+
+                if cpu1 is None or cpu2 is None:
+                    # Could not read the counter. That is not evidence the hook
+                    # is fine, and it is not evidence it is broken either -- but
+                    # this gate errs toward accusing, because a missed park is
+                    # never looked at again while a false accusation gets one
+                    # human glance.
+                    return ("hung", name, "cpu unreadable")
+                advanced = cpu2 - cpu1
+                if advanced >= CPU_DELTA_MIN_S:
+                    return ("slow", name, f"{cpu2:.2f}s, +{advanced:.2f}s progressing")
+                if cpu2 >= CPU_BUSY_THRESHOLD_S:
+                    return ("slow", name, f"{cpu2:.1f}s burned")
+                return ("hung", name, f"{cpu2:.2f}s frozen over {CPU_DELTA_WINDOW_S}s")
+            finally:
+                try:
+                    proc.stdin.close()
+                except OSError:
+                    pass
+
+        # Bounded concurrency. Sequentially this pass alone took ~110 s and the
+        # full hook suite ran past 600 s -- and a suite too slow to run is a suite
+        # that gets switched off, which is the same way a red-on-arrival gate
+        # dies. Four is deliberately modest: the drives are mostly waiting, the
+        # host has been measured under memory pressure this session, and the
+        # verdict must not depend on how loaded the machine is. It does not,
+        # because contention shows up as CPU burned and the classifier reads CPU.
+        with cf.ThreadPoolExecutor(max_workers=DRIVE_CONCURRENCY) as pool:
+            for verdict, name, cpu in pool.map(drive, drivable):
+                if verdict == "exited":
+                    exited.append(name)
+                elif verdict == "slow":
+                    slow.append(f"{name} (cpu={cpu})")
                 else:
                     # Name kept BARE. The evidence rides alongside it, because a
                     # name with a suffix glued on stops matching the population
                     # sets below, and a gamed-ratchet check that silently matches
                     # nothing is the failure this whole file exists to prevent.
                     hung.append(name)
-                    hung_cpu[name] = "unreadable" if cpu is None else f"{cpu:.2f}s"
-                proc.kill()                  # a gate that leaks the process it
-                proc.wait()                  # is testing has refuted itself
-            finally:
-                try:
-                    proc.stdin.close()
-                except OSError:
-                    pass
+                    hung_cpu[name] = cpu
 
         if slow:
             # Reported, never counted. A hook that is merely slow is not a defect
@@ -421,16 +479,26 @@ def main() -> int:
             "source": "startup",
         }).encode()
         over, sizes = [], {}
-        for path in sorted(p for p in scripts if os.path.isfile(p)):
+
+        def measure(path: str):
             name = os.path.basename(path)
             try:
                 res = subprocess.run([NODE, path], input=payload, stdout=subprocess.PIPE,
                                      stderr=subprocess.DEVNULL, timeout=LIVENESS_BUDGET_S)
             except subprocess.TimeoutExpired:
-                continue  # liveness is V-STDIN-ALL-EXIT's job, not this clause's
-            sizes[name] = len(res.stdout)
-            if len(res.stdout) > EMIT_BUDGET_BYTES:
-                over.append(f"{name} ({len(res.stdout)} B)")
+                return (name, None)  # liveness is V-STDIN-ALL-EXIT's job, not this clause's
+            return (name, len(res.stdout))
+
+        # Same bounded concurrency as the liveness pass, and safe for the same
+        # reason it is safe there for a different one: a byte count does not
+        # change under load. Only the wall clock does, and nothing here is timed.
+        with cf.ThreadPoolExecutor(max_workers=DRIVE_CONCURRENCY) as pool:
+            for name, size in pool.map(measure, sorted(p for p in scripts if os.path.isfile(p))):
+                if size is None:
+                    continue
+                sizes[name] = size
+                if size > EMIT_BUDGET_BYTES:
+                    over.append(f"{name} ({size} B)")
 
         worst = sorted(sizes.items(), key=lambda kv: -kv[1])[:3]
         margin = ", ".join(f"{n}={b}B" for n, b in worst)
