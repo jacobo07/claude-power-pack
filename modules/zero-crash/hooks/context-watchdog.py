@@ -578,7 +578,72 @@ def _orchestrator_overlay(event: dict) -> dict | None:
     return None
 
 
+HEARTBEAT_LOG = Path.home() / ".claude" / "logs" / "context-watchdog.log"
+_LAST = {}
+
+
+def _heartbeat(session_id, outcome: str, ms: float) -> None:
+    """One line per JUDGEMENT, not per block. Never raises.
+
+    WHY THIS EXISTS. Before it, this hook wrote nothing anywhere -- no log, no
+    counter, no state file it did not also consume. So "did the auto-compact
+    chain run?" was unanswerable from outside, which is the same observable as
+    "it ran and decided not to fire" AND the same observable as "the dispatcher
+    killed it at its timeout and discarded its stdout". Three states, one
+    appearance, and the third is the one that silently cancels a multi-hour
+    unattended run (rules/guard-event-reachability.md).
+
+    MEASURED 2026-09-16, and this is why the line is worth its cost: a real
+    tier-2 crossing takes a median 4026 ms (3987 / 4026 / 4635) of a 6000 ms
+    budget -- 67% -- with the daemon spawn EXCLUDED and the host at a
+    comparatively idle 2781 MB free. This dispatcher's own notes record hooks
+    with 4x headroom dying under Stop-chain fan-out; this one has 1.5x. When it
+    loses that race the compaction simply does not happen, and without this line
+    nothing anywhere says so.
+
+    Records EVERY outcome so a run of `pass` lines with no `block` at a known
+    crossing is itself readable evidence, and so a gap in the timestamps names
+    the turns where the hook never reported at all.
+    """
+    try:
+        import datetime
+        HEARTBEAT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        pct = _LAST.get("used_pct")
+        with open(HEARTBEAT_LOG, "a", encoding="utf-8") as fh:
+            fh.write(
+                f"{datetime.datetime.now(datetime.timezone.utc).isoformat()}"
+                f" session={session_id}"
+                f" used_pct={'?' if pct is None else f'{pct:.1f}'}"
+                f" outcome={outcome}"
+                f" ms={ms:.0f}\n"
+            )
+    except Exception:
+        pass
+
+
 def run(event: dict) -> dict:
+    """Heartbeat wrapper. The judgement itself is `_run_inner`.
+
+    A wrapper rather than a line at each exit because `_run_inner` returns from
+    eight places and the ones that matter most are the early ones -- a missing
+    session id, absent metrics, a non-numeric percentage. Those are exactly the
+    silent no-ops that need to be visible, and they are exactly the ones a
+    hand-placed log line gets left out of.
+    """
+    import time as _time
+    t0 = _time.perf_counter()
+    _LAST.clear()
+    outcome = "error"
+    try:
+        out = _run_inner(event) or {}
+        outcome = out.get("decision") or "pass"
+        return out
+    finally:
+        _heartbeat(event.get("session_id"), outcome,
+                   (_time.perf_counter() - t0) * 1000.0)
+
+
+def _run_inner(event: dict) -> dict:
     session_id = event.get("session_id")
     if not session_id:
         return {}
@@ -617,6 +682,10 @@ def run(event: dict) -> dict:
     used_pct = metrics.get("used_pct")
     if not isinstance(used_pct, (int, float)):
         return {}
+    # Stashed for the heartbeat. Without the percentage the line can say the
+    # hook ran and not whether it SHOULD have fired, which is half an answer:
+    # a `pass` at 74% and a `pass` at 12% are different facts about this chain.
+    _LAST["used_pct"] = float(used_pct)
 
     # Rearm (spec gsd-autonomous-autocompact.md, gap B). MUST run before the
     # snapshot-threshold return below: a post-compaction reading is by

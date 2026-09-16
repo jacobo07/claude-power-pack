@@ -150,7 +150,28 @@ const CHAIN_MAP = {
     { exe: NODE_EXE, script: './session-summary.js', timeoutMs: 20000 },
     { exe: NODE_EXE, script: './scaffold-auditor.js', timeoutMs: 15000, block: true },
     { exe: NODE_EXE, script: './lazarus-snapshot.js', timeoutMs: 10000 },
-    { exe: PY_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py', timeoutMs: 6000 },
+    // TIMEOUT RAISED 6000 -> 20000 (2026-09-16). MEASURED by driving the real
+    // tier-2 branch in-process with only `_spawn_daemon` stubbed (it types into
+    // a Cursor window); checkpoint, telemetry, progress append and trigger flag
+    // all ran for real: 3987 / 4026 / 4635 ms, a median of 4026 ms against the
+    // old 6000 ms budget. That is 67% CONSUMED with the daemon spawn still
+    // EXCLUDED (200-900 ms on this host), measured at a comparatively idle
+    // 2781 MB free. The PRIORITY LANE note below records hooks with 4x headroom
+    // dying under this very chain's fan-out; this one had 1.5x, and its cheap
+    // path alone spread 629-3089 ms at 1114 MB free.
+    //
+    // A loss here is not a missing advisory: tier 2 IS the auto-compact step of
+    // an unattended multi-hour /cpp-gsd-long run. Killed, it fails open with its
+    // stdout discarded, the compaction never happens, and the run stalls --
+    // the Owner's cross-repo hang wearing a different hat.
+    //
+    // Raising beats promoting it to the lane, because the expensive path is
+    // RARE: an ordinary Stop measures 844 ms median and only a genuine crossing
+    // pays the 4 s, whereas the lane is deliberately small and runs its members
+    // sequentially on EVERY turn. The Stop dispatcher's settings.json ceiling is
+    // 300 s at concurrency 8, so 20 s costs nothing it has. Whether that is
+    // enough is now an observable, not an assumption: logs/context-watchdog.log.
+    { exe: PY_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py', timeoutMs: 20000 },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ram-watchdog.js', timeoutMs: 6000 },
     // ram-shield.js removed 2026-06-04: never existed (phantom ref produced a
     // recurring Stop-hook "script missing" error). ram-watchdog.js is the real one.
