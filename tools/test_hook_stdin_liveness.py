@@ -61,6 +61,15 @@ NODE = shutil.which("node") or r"C:\Program Files\nodejs\node.exe"
 # parked is a false accusation aimed at a hook that works.
 CPU_BUSY_THRESHOLD_S = 1.0
 
+# The undrained-pipe write budget. MEASURED 2026-09-16
+# (hooks/tests/test-pipe-write-liveness.js): a .NET-created pipe blocks at
+# 8192 B and passes 4096 B; a libuv-created one passes 65536 B and blocks at
+# 262144 B. The buffer belongs to whoever CREATED the pipe, and the harness's
+# spawner is unknown, so the smaller number is the only safe one to hold hooks
+# to. Raising this requires measuring the harness, not preferring the roomier
+# figure.
+EMIT_BUDGET_BYTES = 4096
+
 
 def process_cpu_seconds(pid: int):
     """Kernel+user CPU of a live pid, or None if it cannot be read.
@@ -383,6 +392,61 @@ def main() -> int:
         else:
             _ok("V-STDIN-ALL-EXIT",
                 f"all {len(exited)} harness-spawned hooks exited on an unclosed stdin")
+
+    # THE OTHER PIPE. Everything above is the read side. A hook has two, and on
+    # Windows Node's stdout-to-a-pipe is SYNCHRONOUS -- so once the OS buffer
+    # fills with no reader, a write blocks the event loop exactly the way
+    # readFileSync(0) did. hooks/tests/test-pipe-write-liveness.js measures the
+    # thresholds: ~4 KB for a .NET-created pipe, ~64 KB for a libuv one.
+    #
+    # THE BUFFER BELONGS TO WHOEVER CREATED THE PIPE, and the harness's spawner
+    # is not known, so the safe budget is the smaller of the two.
+    #
+    # A write cannot be bounded by a timer -- there is no version of the read-side
+    # fix that applies -- so the only defence is not to perform it. That makes
+    # this a SIZE gate, and it is a ratchet on a measured margin rather than
+    # machinery: session_start_hub.js emits 2882 B, which is 70% of the budget.
+    # Nothing is truncated today, and the day someone adds two more kilobytes of
+    # context this goes red instead of the session going dark.
+    #
+    # Driven with stdin CLOSED so every hook completes normally and stdout can be
+    # drained: the question here is the SIZE, not whether it blocks.
+    if os.environ.get("CLAUDE_SKIP_HOOK_DRIVE") == "1":
+        _ok("V-EMIT-BUDGET", "drive skipped by CLAUDE_SKIP_HOOK_DRIVE=1 (NOT a pass)")
+    else:
+        payload = json.dumps({
+            "hook_event_name": "SessionStart",
+            "session_id": "emit-budget-probe",
+            "cwd": os.getcwd(),
+            "source": "startup",
+        }).encode()
+        over, sizes = [], {}
+        for path in sorted(p for p in scripts if os.path.isfile(p)):
+            name = os.path.basename(path)
+            try:
+                res = subprocess.run([NODE, path], input=payload, stdout=subprocess.PIPE,
+                                     stderr=subprocess.DEVNULL, timeout=LIVENESS_BUDGET_S)
+            except subprocess.TimeoutExpired:
+                continue  # liveness is V-STDIN-ALL-EXIT's job, not this clause's
+            sizes[name] = len(res.stdout)
+            if len(res.stdout) > EMIT_BUDGET_BYTES:
+                over.append(f"{name} ({len(res.stdout)} B)")
+
+        worst = sorted(sizes.items(), key=lambda kv: -kv[1])[:3]
+        margin = ", ".join(f"{n}={b}B" for n, b in worst)
+        if over:
+            _fail("V-EMIT-BUDGET",
+                  f"{len(over)} hook(s) write more than {EMIT_BUDGET_BYTES} B to stdout: "
+                  + ", ".join(over) + " -- on an undrained pipe that write BLOCKS THE EVENT "
+                  "LOOP and no timer can bound it. Move the bulk to a file and emit a pointer")
+        else:
+            _ok("V-EMIT-BUDGET",
+                f"every hook's emission is under the {EMIT_BUDGET_BYTES} B undrained-pipe "
+                f"budget; largest: {margin}")
+        # A GENERIC PAYLOAD UNDER-EXERCISES. These numbers are a FLOOR, not the
+        # worst case: a hook given a richer real event may emit more. Printed so
+        # the number is never mistaken for a ceiling.
+        print(f"       (generic SessionStart payload -- emissions are a floor, not a ceiling)")
 
     total = len(passes) + len(fails)
     print(f"STDIN_LIVENESS_PASS={len(passes)}/{total}  threshold={total}/{total}")

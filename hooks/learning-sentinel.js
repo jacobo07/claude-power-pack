@@ -386,14 +386,55 @@ function handleSessionStart(data) {
     }
   }
 
+  // 2026-09-16 -- EMISSION BUDGET. This loop inlined the FULL BODY of every
+  // global rule file and was MEASURED emitting 148,740 B of additionalContext.
+  //
+  // WHY THAT IS A HANG, not just waste. On Windows, Node's stdout-to-a-pipe is
+  // SYNCHRONOUS. A hook whose wrapper has died inherits a stdout pipe with no
+  // reader, and once the OS buffer fills the write BLOCKS THE EVENT LOOP --
+  // exactly the way readFileSync(0) did, and with no timer able to bound it,
+  // because the timer is never scheduled. Measured buffers: ~4 KB for a
+  // .NET-created pipe, ~64 KB for a libuv one. At 148 KB this hook exceeds BOTH,
+  // so it necessarily blocks mid-write on every single run and survives only
+  // because the harness is normally draining. The run where the harness times
+  // out mid-write is the 40-minute stall, on SessionStart.
+  //
+  // NOTHING IS DROPPED SILENTLY. Rules are inlined until the budget is reached
+  // and the remainder is emitted AS A NAMED LIST OF PATHS, so every rule stays
+  // discoverable and readable on demand -- a capability moved, not removed. The
+  // names are the part that must never be lost; a rule that survives only as an
+  // absence is a rule deleted.
+  //
+  // Corroborating, though not the justification: this directory is also loaded
+  // by the harness itself as user instructions, so most of those bytes were
+  // arriving twice. The budget holds either way, which is why it is written as a
+  // budget rather than as a removal.
+  const EMIT_BUDGET_BYTES = 4096;   // the smaller measured buffer; see above
+  const EMIT_RESERVE_BYTES = 1024;  // headroom for the JSON envelope + other ctx
   try {
     if (fs.existsSync(RULES_DIR)) {
       const ruleFiles = fs.readdirSync(RULES_DIR).filter(f => f.endsWith('.md')).sort();
+      let used = ctx.reduce((n, s) => n + Buffer.byteLength(s, 'utf8'), 0);
+      const deferred = [];
       for (const rf of ruleFiles) {
         try {
           const body = fs.readFileSync(path.join(RULES_DIR, rf), 'utf8');
-          ctx.push(`### Global Rule: ${rf}\n${body}`);
+          const entry = `### Global Rule: ${rf}\n${body}`;
+          const size = Buffer.byteLength(entry, 'utf8');
+          if (used + size > EMIT_BUDGET_BYTES - EMIT_RESERVE_BYTES) {
+            deferred.push(rf);
+            continue;
+          }
+          ctx.push(entry);
+          used += size;
         } catch { /* skip */ }
+      }
+      if (deferred.length) {
+        ctx.push(
+          `### Global Rules not inlined (${deferred.length}) — over the stdout emission budget\n`
+          + `Read on demand from \`${RULES_DIR}\`:\n`
+          + deferred.map(f => `- ${f}`).join('\n')
+        );
       }
     }
   } catch { /* noop */ }
