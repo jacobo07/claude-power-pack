@@ -73,7 +73,7 @@ is empty, stop and establish the id — there is no safe guess with panes open.
 ## When the run ends
 
 ```powershell
-& $py "$pp\tools\gsd_autorun_marker.py" --clear --session $env:CLAUDE_SESSION_ID
+& $py "$pp\tools\gsd_autorun_marker.py" --clear --session $env:CLAUDE_CODE_SESSION_ID
 & $py "$pp\tools\gsd_long_run_config.py" --restore --project .
 ```
 
