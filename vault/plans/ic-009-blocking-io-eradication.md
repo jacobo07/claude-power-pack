@@ -73,12 +73,20 @@ All four mutation drills landed on their own assertion; every restore verified b
 
 ## 6. OPEN — named, not hand-waved
 
-1. **The canonical suite got slow.** The bridge spawns 36 hooks twice (~200 s); a full
-   `run-all.js` exceeded 600 s. A suite too slow to run is a suite that gets disabled —
-   this needs bounded concurrency or a split fast/full mode. **Highest-ROI next task.**
-2. **Two suite tests flake under that contention** (`test-priority-lane`,
-   `test-block-reason-propagation`) — both pass 4/4 and 20/20 in isolation. The contention
-   is mine.
+1. ~~The canonical suite got slow.~~ **CLOSED** — bounded concurrency (4) on both drives,
+   216 s → 80 s, and the CPU classifier was strengthened to two samples so the parallelism
+   could not manufacture false accusations. `test-priority-lane` passes again in the suite.
+2. **`test-block-reason-propagation` fails 17/20, and it is NOT this work.** Attributed:
+   the three failures are all E2E-through-dispatcher (`R1 did not fire on the third
+   consecutive edit`); `anti-thrash.js` is unmodified since 2026-04-24 and blocks correctly
+   when DRIVEN DIRECTLY (edit 3 → exit 2 with its full reason on stderr); and another pane
+   replaced the live dispatcher during this session with `ee54540 chore(dispatcher):
+   reconcile the mirror deliberately`. No commit here touches any Edit-chain member.
+   **Left for that writer — rewriting under a live session is worse than a correct report.**
+   Two hypotheses were raised and refuted before landing on this: a size cap in the
+   anti-thrash state map (pruning is by TTL, not count) and the scratchpad fast path
+   swallowing the probe (its predicate needs `/temp/claude/` AND `/scratchpad/`; the probe
+   has neither).
 3. **Five live/repo divergences unreconciled**, two of which (`research-intent-detector.js`,
    `_oneshot_solitary_empty_shell_cleanup.js`) are repo-only work that has never executed.
 4. **The harness's own pipe buffer is UNKNOWN.** 4096 B is the conservative floor, not a
