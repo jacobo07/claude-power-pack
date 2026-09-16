@@ -139,9 +139,27 @@ function runGate(name, command, cwd, timeout = 30000) {
     });
     return { passed: true, gate: name, output: output.substring(0, 2000) };
   } catch (err) {
+    // A command killed at its deadline did not judge the code -- it never finished. Measured
+    // 2026-09-16 (KobiiSports Resort): on a starved host genomic_lint ran past the 30 s budget,
+    // execSync killed it before Python flushed its block-buffered stdout, and the empty output
+    // was counted as a COMPILE failure three times -> BLOCKED_DELIVERY.md with an EMPTY error
+    // block naming four files that compile. A gate that could not run is not a gate that
+    // rejected; it must never count toward the block.
+    if (err.code === 'ETIMEDOUT' || (err.signal && err.status == null)) {
+      return {
+        passed: false, inconclusive: true, gate: name,
+        output: `INCONCLUSIVE: \`${command}\` did not finish within ${timeout} ms ` +
+                `(signal ${err.signal || 'none'}); nothing was judged. Likely host contention.`,
+      };
+    }
     const output = (err.stdout || '') + '\n' + (err.stderr || '');
     return { passed: false, gate: name, output: output.substring(0, 3000), exitCode: err.status };
   }
+}
+
+function reportInconclusive(result) {
+  process.stderr.write(`\n⚠️ ZERO-ISSUE GATE: ${result.gate.toUpperCase()} ${result.output}\n` +
+    'Not counted as a failure and no BLOCKED_DELIVERY.md written. Re-run it when the host is idle.\n');
 }
 
 function runScaffoldAudit(cwd) {
@@ -284,9 +302,10 @@ function run(data) {
 
     // Gate 1: COMPILE
     if (domain && domain.compile) {
-      const compileResult = runGate('compile', domain.compile, cwd);
-      results.push(compileResult);
-      if (!compileResult.passed) {
+      const compileResult = runGate('compile', domain.compile, cwd, domain.compile_timeout_ms || 30000);
+      if (compileResult.inconclusive) reportInconclusive(compileResult);
+      else results.push(compileResult);
+      if (!compileResult.passed && !compileResult.inconclusive) {
         const count = trackFailure(sessionId, 'compile', cwd);
         emitReward(sessionId, 0.0, 'zero-issue-gate', { failed_gate: 'compile', failure_count: count });
         let msg = `\n❌ ZERO-ISSUE GATE: COMPILE FAILED (${domain.name})\n`;
@@ -340,8 +359,9 @@ function run(data) {
     // scaffold+slop gates; Owner opts in for a full run (dispatcher wrap is 70s > 60s).
     if (domain && domain.test && process.env.ZERO_ISSUE_GATE_RUN_TESTS === 'true') {
       const testResult = runGate('test', domain.test, cwd, 60000);
-      results.push(testResult);
-      if (!testResult.passed) {
+      if (testResult.inconclusive) reportInconclusive(testResult);
+      else results.push(testResult);
+      if (!testResult.passed && !testResult.inconclusive) {
         const count = trackFailure(sessionId, 'test', cwd);
         emitReward(sessionId, 0.0, 'zero-issue-gate', { failed_gate: 'test', failure_count: count });
         let msg = `\n❌ ZERO-ISSUE GATE: TESTS FAILED (${domain.name})\n`;
@@ -390,5 +410,5 @@ if (require.main === module) {
     process.exit(0);
   });
 } else {
-  module.exports = { run };
+  module.exports = { run, runGate };
 }
