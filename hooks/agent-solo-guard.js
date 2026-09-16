@@ -72,10 +72,70 @@ function failOpen(reason) {
   process.exit(0);
 }
 
-function readStdin() {
+// 2026-09-16 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, "utf-8")`.
+//
+// readFileSync BLOCKS THE EVENT LOOP, so an in-process watchdog is never
+// scheduled: there is no version of this that keeps the sync call and adds a
+// timeout beside it. And the harness's own per-hook budget does not save it --
+// that kills the shell wrapper, a timeout kills the DIRECT CHILD ONLY, and the
+// surviving node process holds the inherited stdout pipe that someone is still
+// reading. Measured on the sibling hook (bfb40a1): two processes at 36.5 min,
+// zero CPU, parent dead.
+//
+// This hook is the worst place in the estate for that, because it is a
+// PreToolUse gate: it parks the user's turn itself. Same template as
+// session-file-guard.js, which V-PIPE-STDIN-BOUNDED-EXITS drives with the pipe
+// held open forever and which exits in ~1.1 s.
+const STDIN_BUDGET_MS = 2000;
+
+function readStdinBounded() {
+  return new Promise((resolve) => {
+    let input = "";
+    let done = false;
+    const finish = (value) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      // Detach AND pause. Removing the listener alone is not enough: a resumed
+      // stream keeps its handle referenced, which turns "the read timed out"
+      // into "the process never exits" -- the same hang one layer on.
+      try { process.stdin.removeAllListeners(); process.stdin.pause(); } catch {}
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(null), STDIN_BUDGET_MS);
+    try {
+      process.stdin.setEncoding("utf-8");
+      process.stdin.on("data", (chunk) => { input += chunk; });
+      process.stdin.on("end", () => finish(input));
+      process.stdin.on("error", () => finish(null));
+    } catch {
+      finish(null);
+    }
+  });
+}
+
+// Absolute backstop. If anything above is wrong in a way I have not foreseen,
+// this process dies rather than becoming another 36-minute orphan holding a
+// pipe. NOT unref'd on purpose: an unref'd timer cannot keep the process alive
+// to fire, and firing is the entire point.
+const HARD_EXIT = setTimeout(() => {
+  safeLog("hard-exit watchdog fired -- stdin never closed");
+  process.exit(0);
+}, STDIN_BUDGET_MS + 3000);
+
+async function readStdin() {
+  const raw = await readStdinBounded();
+  clearTimeout(HARD_EXIT);
+  if (raw === null) {
+    // Fail OPEN, per this hook's contract everywhere else -- it is a policy
+    // gate, not a security gate, and a policy gate that bricks the agent is
+    // worse than one that misses a dispatch. But SAY SO: "no input" and "input
+    // described nothing worth blocking" are different facts, and the tracker is
+    // deliberately left untouched because we do not know what this dispatch was.
+    failOpen("stdin never closed within budget -- guard did NOT inspect the dispatch");
+  }
   try {
-    const buf = fs.readFileSync(0, "utf-8");
-    return buf ? JSON.parse(buf) : {};
+    return raw ? JSON.parse(raw) : {};
   } catch (e) {
     failOpen(`stdin-parse-error: ${e && e.message ? e.message : "unknown"}`);
   }
@@ -106,13 +166,20 @@ function gc(entries, now) {
   return entries.filter(e => typeof e.ts === "number" && (now - e.ts) < WINDOW_MS);
 }
 
-function main() {
-  // Platform gate — only Windows MSYS2 has the parallel-Agent drop
+// Async because readStdin() is now a Promise (see the deadlock note above). The
+// guard logic below is UNCHANGED -- only the way the input arrives moved.
+// Keeping the analysis byte-identical is deliberate: this commit fixes a
+// liveness bug and must not quietly alter what the guard blocks.
+async function main() {
+  // Platform gate — only Windows MSYS2 has the parallel-Agent drop.
+  // Stays BEFORE the read on purpose: on a non-Windows host this hook must cost
+  // nothing and must not touch stdin at all.
   if (process.platform !== "win32") {
+    clearTimeout(HARD_EXIT);
     process.exit(0);
   }
 
-  const payload = readStdin();
+  const payload = await readStdin();
   if (!payload || typeof payload !== "object") {
     failOpen("payload-not-object");
   }
@@ -178,6 +245,10 @@ function main() {
     ].join("\n");
 
     safeLog(`BLOCK\tsubagent=${subagentType}\tinflight=${tracker.length}\tage=${ageS}s`);
+    // 2026-09-15 MUTE-GATE FIX. The harness reads fd 2 on exit 2; a reason
+    // written only to stdout arrives as "blocked, no reason given", which
+    // forces a blind retry — the cross-repo dead screen. stderr FIRST.
+    try { process.stderr.write(reason + "\n"); } catch {}
     process.stdout.write(JSON.stringify({ decision: "block", reason }));
     process.exit(2);
   }
@@ -241,6 +312,10 @@ function main() {
     ].join("\n");
 
     safeLog(`BLOCK-UNBOUNDED\tsubagent=${subagentType}`);
+    // 2026-09-15 MUTE-GATE FIX. The harness reads fd 2 on exit 2; a reason
+    // written only to stdout arrives as "blocked, no reason given", which
+    // forces a blind retry — the cross-repo dead screen. stderr FIRST.
+    try { process.stderr.write(reason + "\n"); } catch {}
     process.stdout.write(JSON.stringify({ decision: "block", reason }));
     process.exit(2);
   }
@@ -256,8 +331,13 @@ function main() {
   process.exit(0);
 }
 
+// A synchronous try/catch cannot see a rejection from an async main, so the
+// old form would have let an error escape as an unhandled rejection -- and a
+// process that merely logs one stays alive holding the inherited stdout pipe,
+// which is the 36-minute stall this migration exists to remove. Fail OPEN and
+// ALWAYS exit.
 try {
-  main();
+  main().catch((e) => failOpen(`unhandled: ${e && e.message ? e.message : "unknown"}`));
 } catch (e) {
   failOpen(`unhandled: ${e && e.message ? e.message : "unknown"}`);
 }

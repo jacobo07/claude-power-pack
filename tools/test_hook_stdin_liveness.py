@@ -37,16 +37,48 @@ import json
 import os
 import pathlib
 import re
+import shutil
+import subprocess
 import sys
+
+# Budget for the live drive below. A migrated hook's own bound is 2 s with a 5 s
+# hard-exit backstop, so 9 s is comfortably past both. Generous on purpose: a
+# hook that is genuinely hung stays hung for any window, so a wide one costs no
+# strictness -- while a narrow one turns a contended host into a false accusation.
+LIVENESS_BUDGET_S = 9
+NODE = shutil.which("node") or r"C:\Program Files\nodejs\node.exe"
 
 HOME = pathlib.Path(os.path.expanduser("~"))
 SETTINGS = HOME / ".claude" / "settings.json"
+
+# The population as it stood on 2026-09-15, BEFORE any migration. This never
+# shrinks. KNOWN_OFFENDERS below does, and the difference between the two is the
+# set of hooks somebody has CLAIMED to have fixed -- which is what
+# V-STDIN-MIGRATED-EXITS then goes and drives.
+#
+# WHY BOTH LISTS EXIST. The stale-entry clause forces you to delete a name once
+# the hook is fixed. Nothing forced you to fix it before deleting the name, so
+# the ratchet could be turned by editing a dict -- a gate satisfied by
+# describing the work rather than doing it. Deriving the migrated set instead of
+# curating it means a deletion here is a CLAIM that gets tested, not a claim
+# that gets believed.
+ORIGINAL_POPULATION_2026_09_15 = {
+    "agent-solo-guard.js",
+    "auto-test-gate.js",
+    "bug-hunter-ceps-bridge.js",
+    "bug-hunter-learning.js",
+    "lazarus-livesnap.js",
+    "lazarus-stub-recover.js",
+    "osa_deploy_detector.js",
+    "restart-target-consumer.js",
+    "session_start_hub.js",
+    "subagent-bash-avoidance-advisor.js",
+}
 
 # Frozen 2026-09-15. Each entry is a hook the HARNESS spawns directly that still
 # reads stdin synchronously. Fixing one means DELETING its line here -- the
 # stale-entry check below makes that mandatory rather than optional.
 KNOWN_OFFENDERS = {
-    "agent-solo-guard.js": "blocking PreToolUse gate; fix needs the same async restructure",
     "auto-test-gate.js": "PostToolUse; lower blast radius, still harness-spawned. "
                          "Nearly dropped from this list by a stripper bug that ate its "
                          "real call -- the stale-entry clause is what surfaced it",
@@ -212,6 +244,64 @@ def main() -> int:
               + " -- delete these lines; the ratchet only turns if the list shrinks")
     else:
         _ok("V-STDIN-NO-STALE-ENTRIES", "every frozen entry is still a real offender")
+
+    # The claim, driven. Everything above is STATIC: it reads source and decides
+    # whether a forbidden call is present. That cannot tell a migrated hook from
+    # a hook whose name was simply deleted from the dict above, and those are the
+    # two things this gate most needs to distinguish -- one is the work, the
+    # other is the appearance of the work.
+    #
+    # So for every hook claimed migrated, spawn it with a stdin pipe that is
+    # NEVER written to and NEVER closed (what a hook inherits when its wrapper
+    # died) and require the PROCESS TO EXIT. stdout goes to DEVNULL rather than a
+    # pipe on purpose: an undrained pipe is a SECOND, independent hang
+    # (hooks/tests/test-pipe-write-liveness.js), and importing it here would make
+    # every failure ambiguous between the two boundaries.
+    claimed = sorted(ORIGINAL_POPULATION_2026_09_15 - set(KNOWN_OFFENDERS))
+    if not claimed:
+        _ok("V-STDIN-MIGRATED-EXITS", "nothing claimed migrated yet -- nothing to drive")
+    else:
+        by_name = {os.path.basename(p): p for p in scripts}
+        hung, missing, exited = [], [], []
+        for name in claimed:
+            path = by_name.get(name)
+            if not path or not os.path.isfile(path):
+                missing.append(name)
+                continue
+            proc = subprocess.Popen(
+                [NODE, path],
+                stdin=subprocess.PIPE,       # held open, never written, never closed
+                stdout=subprocess.DEVNULL,   # see note above
+                stderr=subprocess.DEVNULL,
+            )
+            try:
+                proc.wait(timeout=LIVENESS_BUDGET_S)
+                exited.append(name)
+            except subprocess.TimeoutExpired:
+                hung.append(name)
+                proc.kill()                  # a gate that leaks the process it
+                proc.wait()                  # is testing has refuted itself
+            finally:
+                try:
+                    proc.stdin.close()
+                except OSError:
+                    pass
+
+        if hung:
+            _fail("V-STDIN-MIGRATED-EXITS",
+                  "claimed migrated but STILL HANGS on an unclosed stdin: " + ", ".join(hung)
+                  + f" (killed after {LIVENESS_BUDGET_S}s) -- the name was removed from "
+                  "KNOWN_OFFENDERS without the fix landing, which is the ratchet being "
+                  "turned by editing a dict")
+        elif missing:
+            _fail("V-STDIN-MIGRATED-EXITS",
+                  "claimed migrated but not found among harness-spawned scripts: "
+                  + ", ".join(missing) + " -- a hook that settings.json no longer names was "
+                  "not fixed, it was unregistered; say which one it was")
+        else:
+            _ok("V-STDIN-MIGRATED-EXITS",
+                f"{len(exited)} migrated hook(s) exited on an unclosed stdin: "
+                + ", ".join(exited))
 
     total = len(passes) + len(fails)
     print(f"STDIN_LIVENESS_PASS={len(passes)}/{total}  threshold={total}/{total}")
