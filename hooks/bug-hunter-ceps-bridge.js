@@ -88,12 +88,29 @@ const READ_TOOLS = new Set([
   'gc', 'find', 'ls', 'dir', 'diff', 'git', 'jq',
 ]);
 
-function readStdin() {
-  try {
-    return fs.readFileSync(0, 'utf8');
-  } catch (_e) {
-    return '';
-  }
+// 2026-09-16 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, 'utf8')`,
+// which BLOCKS THE EVENT LOOP: if the pipe never closes the process parks at
+// zero CPU forever and no in-process watchdog can save it, because no timer is
+// ever scheduled. The harness's per-hook budget kills the shell WRAPPER; a
+// timeout kills the direct child only, and the survivor holds the inherited
+// stdout pipe. bfb40a1 has the live measurement.
+//
+// Raw form on purpose: main() does `JSON.parse(readStdin() || '{}')`, and
+// handing it a parsed object would be a semantic change riding along on a
+// liveness fix.
+const { readStdinRaw, armHardExit } = require('./hook-utils');
+
+const STDIN_BUDGET_MS = 2000;
+const HARD_EXIT = armHardExit(STDIN_BUDGET_MS + 3000);
+
+async function readStdin() {
+  const { raw } = await readStdinRaw(STDIN_BUDGET_MS);
+  clearTimeout(HARD_EXIT);
+  // Unreadable and empty both become '' exactly as the old catch did. Safe here
+  // for one specific reason: main's next step is `|| '{}'` -> emitPass(). An
+  // advisory bridge that stays silent when it could not read the tool output is
+  // the correct fail-open, and it is the same silence the old code produced.
+  return raw === null ? '' : raw;
 }
 
 function extractOutput(payload) {
@@ -263,10 +280,11 @@ function emitAdvisory(text) {
   process.exit(0);
 }
 
-function main() {
+// Async because readStdin() is now a Promise. Everything below is UNCHANGED.
+async function main() {
   let payload;
   try {
-    payload = JSON.parse(readStdin() || '{}');
+    payload = JSON.parse((await readStdin()) || '{}');
   } catch (_e) {
     emitPass();
   }
@@ -353,4 +371,7 @@ module.exports = {
   SENTINEL, SENTINEL_FRAME_MAX, NAV_PREFIXES, READ_TOOLS,
 };
 
-if (require.main === module) main();
+// .catch is mandatory now that main is async: a rejection would otherwise
+// escape as an unhandled rejection, and a process that merely logs one stays
+// ALIVE holding the inherited stdout pipe -- the stall this migration removes.
+if (require.main === module) main().catch(() => process.exit(0));

@@ -42,6 +42,74 @@ const path = require('path');
  * @returns {Promise<object>} Parsed JSON, or {} -- carrying a non-enumerable
  *   `__stdin` of 'ok' | 'timeout' | 'empty' | 'parse-error' | 'stream-error'.
  */
+/**
+ * The raw form. Several hooks parse at the call site (`JSON.parse(readStdin() ||
+ * '{}')`) or need the text itself to strip a BOM, and handing them a parsed
+ * object would force a semantic change during what is supposed to be a pure
+ * liveness migration.
+ *
+ * @param {number} timeoutMs
+ * @returns {Promise<{raw: string|null, outcome: string}>} raw is null when
+ *   nothing could be read -- which is NOT the same as '' (a producer that closed
+ *   with nothing to say). A caller that collapses the two has reintroduced
+ *   "absence read as measured-zero" on its own input.
+ */
+function readStdinRaw(timeoutMs = 3000) {
+  return new Promise((resolve) => {
+    let input = '';
+    let settled = false;
+
+    const finish = (raw, outcome) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      // Detach AND pause -- see the note on readStdin below.
+      try {
+        process.stdin.removeAllListeners('data');
+        process.stdin.removeAllListeners('end');
+        process.stdin.removeAllListeners('error');
+        process.stdin.pause();
+      } catch { /* a hook never throws out of its own input path */ }
+      resolve({ raw, outcome });
+    };
+
+    const timer = setTimeout(() => finish(null, 'timeout'), timeoutMs);
+
+    try {
+      process.stdin.setEncoding('utf8');
+      process.stdin.on('data', (chunk) => { input += chunk; });
+      process.stdin.on('end', () => finish(input, input ? 'ok' : 'empty'));
+      process.stdin.on('error', () => finish(null, 'stream-error'));
+    } catch {
+      finish(null, 'stream-error');
+    }
+  });
+}
+
+/**
+ * Absolute backstop for a hook process.
+ *
+ * NOT unref'd, on purpose: an unref'd timer cannot hold the process alive long
+ * enough to fire, and firing is the entire point. Returns the timer so the
+ * caller clears it on every normal path.
+ *
+ * This is the load-bearing half of the template, and the reason is worth
+ * stating: a mutation drill that kept the event loop busy with setInterval did
+ * NOT hang the hook, because process.exit() is unconditional. What strands a
+ * hook is never REACHING an exit call. So the backstop is not tidiness around
+ * the edges -- it is the guarantee that an exit call happens at all.
+ *
+ * @param {number} ms
+ * @param {function} [onFire] - optional logging; must not throw and must be cheap
+ * @returns {NodeJS.Timeout}
+ */
+function armHardExit(ms, onFire) {
+  return setTimeout(() => {
+    try { if (typeof onFire === 'function') onFire(); } catch { /* never throw here */ }
+    process.exit(0);
+  }, ms);
+}
+
 function readStdin(timeoutMs = 3000) {
   return new Promise((resolve) => {
     let input = '';
@@ -246,6 +314,8 @@ function safeExit(payload = {}, code = 0) {
 
 module.exports = {
   readStdin,
+  readStdinRaw,
+  armHardExit,
   outputPreToolUse,
   outputPostToolUse,
   outputStop,

@@ -82,14 +82,9 @@ KNOWN_OFFENDERS = {
     "auto-test-gate.js": "PostToolUse; lower blast radius, still harness-spawned. "
                          "Nearly dropped from this list by a stripper bug that ate its "
                          "real call -- the stale-entry clause is what surfaced it",
-    "bug-hunter-ceps-bridge.js": "advisory; safe to fix late",
     "bug-hunter-learning.js": "advisory; safe to fix late",
-    "lazarus-livesnap.js": "observed orphaned in the 2026-09-15 census",
     "lazarus-stub-recover.js": "SessionStart; a stall here delays session open",
-    "osa_deploy_detector.js": "advisory",
-    "restart-target-consumer.js": "consumes a marker; stall delays /restart",
     "session_start_hub.js": "SessionStart hub; measured 7374 ms with NO declared budget",
-    "subagent-bash-avoidance-advisor.js": "advisory, fires on every Agent dispatch",
 }
 
 # A population floor. An empty or tiny sweep is what a BROKEN enumerator returns,

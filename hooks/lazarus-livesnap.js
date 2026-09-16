@@ -49,10 +49,28 @@ function overBudget() {
   return Date.now() - startedAt > SELF_TIMEOUT_MS;
 }
 
-function readStdin() {
+// 2026-09-16 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, "utf-8")`,
+// which BLOCKS THE EVENT LOOP: if the pipe never closes the process parks at
+// zero CPU forever and no in-process watchdog can save it, because no timer is
+// ever scheduled. overBudget() below could never fire either -- a soft budget
+// checked between steps is no defence against a step that never returns.
+//
+// This hook was OBSERVED ORPHANED in the 2026-09-15 census, which is what put
+// it on the list.
+const { readStdinRaw, armHardExit } = require("./hook-utils");
+
+const STDIN_BUDGET_MS = 2000;
+const HARD_EXIT = armHardExit(STDIN_BUDGET_MS + 3000);
+
+async function readStdin() {
+  const { raw } = await readStdinRaw(STDIN_BUDGET_MS);
+  clearTimeout(HARD_EXIT);
   try {
-    const buf = fs.readFileSync(0, "utf-8");
-    return buf ? JSON.parse(buf) : {};
+    // Unreadable and empty both become {} exactly as the old catch did. Safe
+    // here because main's next act is to require a session_id and return
+    // without one: a snapshot hook that cannot read its event writes nothing,
+    // which is the same silence as before.
+    return raw ? JSON.parse(raw) : {};
   } catch (_) {
     return {};
   }
@@ -123,8 +141,10 @@ function newestSessionLog(cwd) {
   }
 }
 
-function main() {
-  const input = readStdin();
+// Async because readStdin() is now a Promise. The snapshot logic below is
+// UNCHANGED -- only the way the input arrives moved.
+async function main() {
+  const input = await readStdin();
   const sessionId = input.session_id;
   const cwd = input.cwd || process.cwd();
   if (!sessionId) return;
@@ -169,10 +189,16 @@ function main() {
   } catch (_) { /* fail-open: never block the event pipeline */ }
 }
 
+// THE `finally` HAD TO MOVE, and this is the one place the migration could have
+// silently broken the hook. A synchronous `finally` around an async main runs
+// the moment main returns its PROMISE -- so it would have called process.exit(0)
+// before the snapshot was ever written, turning a liveness fix into silent data
+// loss. Exiting must WAIT for the work, so the exit moves onto the promise. The
+// guarantee is unchanged: every path still exits, swallowing everything.
 try {
-  main();
+  main()
+    .catch(() => { /* must never break SessionStart/PreToolUse */ })
+    .finally(() => process.exit(0));
 } catch (_) {
-  /* swallow everything: this hook must never break SessionStart/PreToolUse */
-} finally {
   process.exit(0);
 }

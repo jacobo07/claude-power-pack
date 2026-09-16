@@ -64,10 +64,34 @@ function failOpen(reason) {
   process.exit(0);
 }
 
-function readStdin() {
+// 2026-09-16 -- STDIN DEADLOCK FIX. This was `fs.readFileSync(0, "utf-8")`,
+// which BLOCKS THE EVENT LOOP: if the pipe never closes the process parks at
+// zero CPU forever and no in-process watchdog can save it, because no timer is
+// ever scheduled. The harness's per-hook budget kills the shell WRAPPER; a
+// timeout kills the direct child only, and the survivor holds the inherited
+// stdout pipe. bfb40a1 has the live measurement.
+//
+// This advisor fires on EVERY Agent dispatch, so it is one of the most
+// frequently spawned hooks in the estate -- which makes it a cheap way to
+// accumulate parked processes.
+const { readStdinRaw, armHardExit } = require("./hook-utils");
+
+const STDIN_BUDGET_MS = 2000;
+const HARD_EXIT = armHardExit(STDIN_BUDGET_MS + 3000,
+  () => safeLog("hard-exit watchdog fired -- stdin never closed"));
+
+async function readStdin() {
+  const { raw } = await readStdinRaw(STDIN_BUDGET_MS);
+  clearTimeout(HARD_EXIT);
+  if (raw === null) {
+    // Fail OPEN -- this is an advisory, and an advisory that bricks a dispatch
+    // is worse than one that misses it. But SAY SO: "no input" and "the prompt
+    // already had the directive" are different facts and used to be spelled
+    // the same silence.
+    failOpen("stdin never closed within budget -- advisor did NOT inspect the dispatch");
+  }
   try {
-    const buf = fs.readFileSync(0, "utf-8");
-    return buf ? JSON.parse(buf) : {};
+    return raw ? JSON.parse(raw) : {};
   } catch (e) {
     failOpen(`stdin-parse-error: ${e && e.message ? e.message : "unknown"}`);
   }
@@ -99,13 +123,18 @@ function hasAvoidanceDirective(prompt) {
   return AVOIDANCE_PHRASES.some((p) => lower.includes(p));
 }
 
-function main() {
-  // Platform gate — only Windows MSYS2 has the bridge hang
+// Async because readStdin() is now a Promise. The advisory logic below is
+// UNCHANGED -- only the way the input arrives moved.
+async function main() {
+  // Platform gate — only Windows MSYS2 has the bridge hang.
+  // Stays BEFORE the read: on a non-Windows host this hook must cost nothing
+  // and must not touch stdin at all.
   if (process.platform !== "win32") {
+    clearTimeout(HARD_EXIT);
     process.exit(0);
   }
 
-  const payload = readStdin();
+  const payload = await readStdin();
   if (!payload || typeof payload !== "object") {
     failOpen("payload-not-object");
   }
@@ -154,8 +183,12 @@ function main() {
   process.exit(0);
 }
 
+// A synchronous try/catch cannot see a rejection from an async main, so without
+// the .catch an error would escape as an unhandled rejection -- and a process
+// that merely logs one stays ALIVE holding the inherited stdout pipe, which is
+// the stall this migration removes. Fail OPEN and ALWAYS exit.
 try {
-  main();
+  main().catch((e) => failOpen(`unhandled: ${e && e.message ? e.message : "unknown"}`));
 } catch (e) {
   failOpen(`unhandled: ${e && e.message ? e.message : "unknown"}`);
 }
