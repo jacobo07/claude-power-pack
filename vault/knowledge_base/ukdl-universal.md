@@ -8888,6 +8888,101 @@ cited for it had been contaminated by the instrument under audit. Bound the deno
 from outside the instrument, and check whether your own tooling wrote the rows you are
 reasoning from.
 
+## HR-BOUND-IN-THE-FAILING-DOMAIN-001 — a timeout is a bound only if it can run where the block happens
+
+The Owner watched the UI sit on `running PreToolUse hooks ... 6/8 ... 40m 44s` on a hook
+registered with `"timeout": 5`. The budget fired perfectly, on the wrong process.
+
+Three separate things get called "a timeout" and none of them implies the next:
+
+    logical timeout     a promise settled, a value was returned
+    cancellation        the operation actually stopped
+    termination         the process died
+    containment         nothing it owned can still hold a caller
+
+Two failures follow, both measured in this estate. **An in-process timer cannot bound a
+synchronous primitive**, because the primitive owns the thread the timer needs in order to
+be scheduled: `fs.readFileSync(0)` on a pipe that never closes parks forever with a live
+`setTimeout` sitting unscheduled beside it. And **a wrapper timeout is not a descendant
+death**: the harness kills the shell wrapper, a timeout kills the DIRECT CHILD ONLY, and
+the surviving node process still holds the inherited stdout pipe, so whoever reads that
+pipe waits on a handle nothing will close. Measured: `pid=47776 age_min=36.5 cpu_sec=0
+parent_alive=False`.
+
+**Rule.** Before trusting any timeout, name the domain the block occurs in and ask whether
+the timeout's authority can execute there. If the answer is no, the timeout is a DETECTION
+EVENT, not a bound, and must be labelled as one. A synchronous blocking primitive has only
+one in-process defence: do not perform it. Restructure to something that yields, or cap the
+operation so it cannot block. Sister of the 2026-06-01 wrapper trap above, which is the
+same mechanism seen from the parent's side.
+
+## T-RESOLVED-IS-NOT-EXITED-001 — a bounded read that leaves its listener attached
+
+`hook-utils.readStdin` and `hook-runtime.readStdinJson` both had a timer, both resolved on
+schedule, and both left a node process alive forever. The `data` listener stayed attached
+to a flowing stream; an attached listener is a referenced libuv handle; the event loop
+never emptied. Every in-process test passed, because every in-process test awaited the
+promise and the promise was fine.
+
+    a promise settling  is a fact about the CALLER
+    a process exiting   is a fact about the PROCESS
+
+Measured, same conditions: the old implementation printed `RESOLVED` and was still alive at
+3000 ms. Six further hooks built on the shared runtime were alive at 30 s having burned
+0.06–0.11 s of CPU — startup, then nothing.
+
+And detaching is not always sufficient either. `terminal-slot-recorder.js` had a tuned
+800 ms fallback AND, after repair, a detach-and-pause — and still parked, because its exit
+path was a bare `return`. Replacing it with `process.exit(0)` fixed it. A mutation drill
+earlier the same day had already pointed at this: a `setInterval` added to a hook failed to
+hang it at all, because `process.exit()` is unconditional.
+
+**Rule.** What strands a process is never REACHING an exit call. Detach and pause on every
+settle, add an `error` handler, arm a hard-exit backstop that is NOT unref'd, and exit
+explicitly rather than trusting the loop to drain. Test the PROCESS, never the promise.
+
+## T-SYNC-PIPE-WRITE-BLOCKS-ON-WINDOWS-001 — a hook has two pipes and only one was guarded
+
+On Windows, Node's stdout-to-a-pipe is SYNCHRONOUS (pipes are sync on Windows and Linux,
+async only on macOS). A hook whose wrapper has died inherits a stdout pipe with no reader;
+once the OS buffer fills, `process.stdout.write` blocks the event loop exactly the way
+`readFileSync(0)` did — and this one CANNOT be restructured to yield, so no timer will ever
+bound it.
+
+Measured buffers, and they disagree because **the buffer belongs to whoever CREATED the
+pipe**: a .NET `RedirectStandardOutput` pipe passes 4096 B and blocks at 8192 B; a libuv
+`spawn` pipe passes 65536 B and blocks at 262144 B. Neither is automatically the harness's,
+so the smaller is the only safe budget.
+
+Live instance: `learning-sentinel.js` inlined every file in `~/.claude/rules` and emitted
+**148,740 B** — over BOTH buffers, so it necessarily blocked mid-write on every run and
+survived only because the harness was normally draining. The run where the harness times
+out mid-write is the 40-minute stall, on SessionStart.
+
+**Rule.** The bound on a write is on the SIZE, not on the time. Cap hook emission at the
+smallest measured buffer, move the bulk to a file, and emit a POINTER — the names must
+survive, because content that survives only as an absence is content deleted.
+
+## PR-DRIVE-THE-PROCESS-NOT-THE-PREDICATE-001 — prove a hook dies, do not read that it should
+
+A static gate asked "does this file call `readFileSync(0)`". That was never the class.
+Driving the whole harness-spawned population against a stdin pipe that is never written and
+never closed found SIX further parked hooks, and not one contained the banned call: four
+inherited a shared runtime whose timer resolved but never detached, two had no timer at all.
+
+A static read also cannot distinguish a migrated hook from a name deleted from the
+inventory — so the ratchet could be turned by editing a dict rather than by doing the work.
+
+**Rule.** Scope a liveness gate to the PROPERTY (can this process die when its producer
+never closes the pipe), never to one primitive, and DRIVE it. Derive the claimed-fixed set
+instead of curating it, so a deletion is a claim that gets tested. And on over-budget, read
+the process's CPU before killing: a blocked hook sits at startup cost forever while a slow
+one burns a core, a timeout alone cannot tell them apart, and calling a slow hook parked is
+a false accusation aimed at something that works. Read that CPU with a syscall, not a shell
+— `Get-Process` prints in the host locale, this machine emits `0,109`, and `float()` on
+that raises into whatever the author's except-clause defaulted to. That exact bug labelled
+all six PARKED hooks as BUSY before it was caught.
+
 ### T-REGISTRATION-PRESENCE-NOT-COVERAGE-001
 
 A capture-liveness gate existed specifically to catch dead producers, built from three
@@ -9797,3 +9892,19 @@ a working tree you do not own. Sister of
 - [env/powershell:Select-String] `ceps_b77f13ea8d89b1be` -- Environment mismatch on powershell:Select-String: Permission denied. Probe the env (uname/whoami/version) before assuming the runtime.
 
 - [regression/powershell:===] `ceps_5d28a90f4498a814` -- Before touching powershell:===, verify the regression scenario (FAILED) is still covered by a passing test.
+
+- [tooling/powershell:if] `ceps_2c101bee55b52700` -- Tool failure in powershell:if: fatal: Unable. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [tooling/powershell:=== where ExactDaemonInc] `ceps_e043cc3f15e7c0e0` -- Tool failure in powershell:=== where ExactDaemonInc: Error, identity: DaemonEndpointIdentity | null = null): void. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:env:Path] `ceps_8b4a0b94853e28ac` -- Before touching powershell:env:Path, verify the regression scenario (2 failed) is still covered by a passing test.
+
+- [regression/powershell:g] `ceps_b2bace02a9ec1ca0` -- Before touching powershell:g, verify the regression scenario (5 failed) is still covered by a passing test.
+
+- [regression/powershell:for] `ceps_6ed49659e758181c` -- Before touching powershell:for, verify the regression scenario (3000 FAILED) is still covered by a passing test.
+
+- [regression/powershell:s] `ceps_e24073ab2f3e4f96` -- Before touching powershell:s, verify the regression scenario (51 failed) is still covered by a passing test.
+
+- [tooling/powershell:[System.IO.File]::WriteA] `ceps_642fb5a1ef0bac6a` -- Tool failure in powershell:[System.IO.File]::WriteA: Error: Ningún proveedor respondió — codex-cli: Neom bridge .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
+
+- [regression/powershell:Measure-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Measure-Object, verify the regression scenario (FAILED) is still covered by a passing test.
