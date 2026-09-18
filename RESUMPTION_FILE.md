@@ -1,3 +1,35 @@
+# POST-INCIDENT STATE (2026-09-18, read before the router below)
+
+**Hook substrate restored.** All six dispatcher chains were dark 2026-09-16 20:02 → 2026-09-18
+13:55 (an agent's exec-form rewrite of `~/.claude/settings.json` dropped every `--event=`).
+Full report: `vault/incidents/2026-09-16-hook-registration-identity-loss.md`. Commits
+`9b536df` `e58b6af` `5dfbda4` `098f564` `f939aef` `a8b5f0a`, pushed.
+
+- Canonical settings generation: sha16 `49402DC084DCC5F7` (repaired 13:55:50). Pre-repair
+  evidence kept: `settings.json.bak-20260918-135550-pre-incident-repair`.
+- Check it any time: `python tools/test_hook_registration_integrity.py --live` (must be 15/15);
+  the launcher also checks at every start and logs `state/session-config-generations.jsonl`.
+- `state/dispatcher-no-event.jsonl` non-empty = a registration lost its identity again.
+- Hooks reload LIVE in running sessions on this build; no stale-session restart program needed.
+
+Do NOT re-litigate without new evidence: the writer (session `2174d82b`, ad-hoc script; not
+fix_conhost, not settings_merger, not Orca); exec form stays; launcher check is detect-only
+by decision (GSDX-I05) — no auto-restore.
+
+**GSD X resumes at the Context Watchdog hot-path slice.** Baseline is GSDX-I11 (real
+sessions only: median 3,132 ms / p90 4,974 ms per Stop). Never use synthetic rows
+(`gsdac-*`, `gsdlr-*`) or the dark window (GSDX-I09).
+
+Next 3 actions:
+1. Read the Stop-chain `CHAIN_MAP['Stop-chain']` members and time each one on a real
+   transcript payload (the watchdog's cost scales with the transcript) to find the
+   unconditional multi-second overlay.
+2. Build the cheap eligibility fast path, keeping the 20 s safety headroom and heartbeat
+   honesty; prove auto-compact semantics are unchanged by a red/green drill.
+3. Make the synthetic drivers stop writing the production watchdog log (override HOME and
+   USERPROFILE, see `tools/test_hook_replay_isolation.py`) — only once the pane editing
+   `tools/test_gsd_autocompact*.py` has committed.
+
 # ACTIVE-TASK ROUTER (read first)
 
 **GSD X — Invocation Independence is LIVE (2026-09-16). Do not re-litigate this without new evidence.**
