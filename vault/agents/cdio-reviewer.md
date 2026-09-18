@@ -33,7 +33,9 @@ yourself picking a number, stop — you record verdicts, the code scores them.
 5. **Conversion path** — one primary action, value before friction, no dark
    patterns?
 6. **Mobile-first** — at 320–390px: body ≥16px, tap targets ≥44px, no horizontal
-   scroll, primary CTA reachable?
+   scroll, primary CTA reachable? For an app screen built for the hand, also
+   apply the CDIO-08 §3 criteria (reported under `ux` / `visual`; a convention
+   such as 60/30/10 never produces a failing verdict — CDIO-08 §4).
 7. **Experience contract (CDIO-07)** — what does the surface do when touched, and
    while it waits? Two separable questions: do the behavioural FLOORS hold
    (scored, like every other floor), and does the observed behaviour CONFORM to

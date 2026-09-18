@@ -326,3 +326,34 @@ behaviour, assign severity by the CDIO-05 §3 rules, and give the concrete fix. 
 concern that cannot be stated as a departure from a declared value is an
 impression, and CDIO does not record impressions — on this axis least of all,
 because this is the axis where impressions are most persuasive.
+
+## 11. Peak-End as a way to spend the contract (absorbed 2026-09-18)
+
+Source: github.com/ceorkm/mobile-app-ui-design, classified in CDIO-08. The
+peak-end effect — people judge an experience largely by its most intense moment
+and by its ending — is a sound reason to decide *where* a declared contract spends
+itself. It is never a reason to raise the contract. Three uses are admitted:
+
+- **Place the one peak.** When `celebration_policy` is `milestones_only` or
+  `first_success`, map the core flow and put the permitted acknowledgement on the
+  step that closes real effort — the first completed lesson, the first saved goal —
+  and nowhere else. A contract that allows one celebration and spends it on a
+  settings toggle has wasted it.
+- **Design the ending inside the declared `success_posture`.** A flow should not
+  simply stop. Under `confirm` the ending names what was done; under `acknowledge`
+  it adds progress and the next step. Neither needs motion, and a summary line is a
+  complete ending.
+- **Remove negative peaks first.** Waits, errors and long forms are the moments
+  that dominate recall in the wrong direction. The fixes are already fields here —
+  `waiting`, `error_posture: explain_and_recover`, `progress_language: staged` — and
+  CDIO-02 governs form length. Removing a negative peak is almost always worth more
+  than adding a positive one.
+
+The source's three strategic principles are recorded with their limits. *Hide
+complex technology behind a familiar interface* restates CDIO-00's trust-over-
+originality ordering. *Make shared insights about who the user is, not what they
+did in the app* is a sharing mechanic: it must clear CDIO-02 §4, because an
+identity claim designed to be posted is an easy route to flattery used as
+pressure. *Make consistency the habit* is CDIO-00's Inconsistency class stated as
+strategy. None of the three creates a criterion; the celebration rules above do
+not relax §5.

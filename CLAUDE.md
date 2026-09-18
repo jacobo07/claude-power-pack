@@ -24,6 +24,11 @@ Activate: `scripts/new_film.py` (beat sheet -> html) -> `scripts/contact_sheet.p
 Two things the Owner must supply and the skill cannot infer: **duration** and **aspect ratio**. Everything else is the skill's job, including the beat sheet.
 DONE for a motion-promo build = `python tools/test_motion_promo.py` exit 0 (11 V-MOTION-* gates), AND the contact sheet was looked at before committing to a full render. Toolchain is pip-vendored (playwright Chromium + imageio-ffmpeg libx264) — no system ffmpeg; preflight with `scripts/check_toolchain.py`.
 
+## Mobile App UI Activation Criteria (added 2026-09-18)
+Invoke the `mobile-app-ui-design` skill (`skills/mobile-app-ui-design/`, mirrored live at `~/.claude/skills/mobile-app-ui-design/`) when the Owner asks to design an app screen, app mockups, mobile UI components, an onboarding flow or mobile navigation, or to improve an existing app screen. Do not wait to be named.
+The skill generates; `cdio-reviewer` judges against CDIO-08 (`vault/knowledge_base/cdio/CDIO-08-mobile-app-surface.md`), which also records what was rejected from the absorbed source (github.com/ceorkm/mobile-app-ui-design). A web page viewed on a phone stays under CDIO-05 Lens 6 alone.
+DONE for the absorption = `python tools/test_cdio.py` and `python tools/test_cdio_mobile.py` exit 0.
+
 ## Experience Contract — baseline for any interactive surface (CDIO-07, added 2026-08-24)
 A surface is judged at rest by CDIO-01..06. How it BEHAVES — on touch, and while it waits —
 is declared, not settled by whoever writes the last component. Baseline, inherited by every

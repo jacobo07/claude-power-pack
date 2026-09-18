@@ -34,10 +34,16 @@ one; do not re-derive design principles from memory:
 - **CDIO-07** — the behavioural axis: the experience contract. What the surface
   does when touched and while it waits. Declared BEFORE the first interactive
   component.
+- **CDIO-08** — the hand-held axis: criteria for app screens built for a phone
+  held in one hand (thumb-zone primary action, value over label, search zero
+  state, input-method fit, bottom-nav count, tabular figures), plus mobile
+  industry conventions and the classified absorption of an external mobile skill.
 
 CDIO-00 through CDIO-05 are evaluative, CDIO-06 is generative, CDIO-07 is
-behavioural. A question that is really about which direction to take belongs to
-06 or 07; a question about whether an existing surface holds belongs to 00–05.
+behavioural, CDIO-08 is evaluative for app screens. A question that is really
+about which direction to take belongs to 06 or 07; a question about whether an
+existing surface holds belongs to 00–05, and to 08 as well when it is an app
+screen rather than a web page viewed on a phone.
 
 Because these are ordinary Graphify nodes, you can also locate them with the
 graph. Read the dataset that governs the question rather than guessing.

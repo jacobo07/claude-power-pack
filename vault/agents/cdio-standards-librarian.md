@@ -26,7 +26,9 @@ exists to prevent.
 
 - **CDIO-00** kernel, **CDIO-01..04** dimension datasets, **CDIO-05** pipeline,
   **CDIO-06** aesthetic families (generative), **CDIO-07** experience contract
-  (behavioural).
+  (behavioural), **CDIO-08** mobile app surface (hand-held). CDIO-08 §12 names
+  its thresholds as uncalibrated: the first real app reviews that cite them are
+  the evidence you re-check them against.
 - The invariant that every criterion is expressed as a **threshold with an
   observed value**, never an adjective (T-DESIGN-OPINION-VS-CRITERIA-001).
 - The alignment between **CDIO-05's score formula** and its implementation in

@@ -4,7 +4,7 @@ name: Design Intelligence Kernel
 type: dataset
 domain: cdio
 status: sealed
-governs: [CDIO-01, CDIO-02, CDIO-03, CDIO-04, CDIO-05]
+governs: [CDIO-01, CDIO-02, CDIO-03, CDIO-04, CDIO-05, CDIO-08]
 ---
 
 # CDIO-00 — Design Intelligence Kernel

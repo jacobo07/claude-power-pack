@@ -50,7 +50,12 @@ dark patterns (CDIO-02 §4; CDIO-04)?
 body text ≥ 16px, tap targets ≥ 44×44px, no horizontal scroll, the primary CTA
 still reachable and prominent, content reflowed rather than shrunk (CDIO-01 +
 CDIO-02 applied at the small breakpoint). Mobile is checked explicitly because a
-desktop-only review misses where most users actually are.
+desktop-only review misses where most users actually are. When the surface is an
+app screen built for the hand rather than a page that must survive a phone, this
+lens also applies the CDIO-08 criteria (thumb-zone primary action, value over
+label, search zero state, input-method fit, bottom navigation count, tabular
+figures); they report under the existing `ux` and `visual` dimensions, so the
+score formula is unchanged.
 
 ## 2. What a criterion verdict is
 
