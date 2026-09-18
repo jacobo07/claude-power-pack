@@ -211,3 +211,12 @@ Read this file, then `SQI_INDEX.md`, then `SQI_COMPLETION_REPORT.md` §4 (honest
 execute Block 4 action 1. Do not ask for approval. Do not explain the plan. Build.
 
 **Update this file after every sealed unit of work — never only at the end.**
+
+---
+
+## Parallel workstream: exact-target continuation (2026-09-18)
+
+The false "COMPACTION LANDED" and the foreground `/d1-continue` injection are fixed in
+`5d17c1e`, `01211b5`, `fd87e39`. Its own resumption contract, with what is and is not
+proven, lives in `vault/specs/exact-target-continuation.RESUMPTION.md`; read that file
+before touching the watchdog resume path, the SendKeys daemon or `continuation_transport`.
