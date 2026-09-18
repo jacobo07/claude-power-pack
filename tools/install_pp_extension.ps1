@@ -27,7 +27,7 @@ $manifest = @'
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Language="en-US" Id="pp-sessions" Version="0.3.0" Publisher="kobii" />
+    <Identity Language="en-US" Id="pp-sessions" Version="__VERSION__" Publisher="kobii" />
     <DisplayName>PP Sessions</DisplayName>
     <Description xml:space="preserve">Side panel of resumable Claude Code panes derived from disk truth. One-click exact resume, no History restored.</Description>
     <Tags>claude-code,sessions,resume,cursor</Tags>
@@ -61,6 +61,12 @@ $ctypes = @'
   <Default Extension="vsixmanifest" ContentType="text/xml"/>
 </Types>
 '@
+# The manifest version must equal package.json's, or Cursor installs one version
+# under the other's folder name. Read it, never hardcode it (it stood at 0.3.0).
+$ver = (Get-Content (Join-Path $extDir "package.json") -Raw | ConvertFrom-Json).version
+if (-not $ver) { throw "package.json has no version" }
+$manifest = $manifest.Replace("__VERSION__", $ver)
+Write-Output ("    version: " + $ver)
 if (Test-Path $vsix) { [System.IO.File]::Delete($vsix) }
 $zip = [System.IO.Compression.ZipFile]::Open($vsix, 'Create')
 function Add-Text($z, $name, $text, $enc) { $e = $z.CreateEntry($name); $s = $e.Open(); $b = $enc.GetBytes($text); $s.Write($b, 0, $b.Length); $s.Close() }

@@ -71,6 +71,9 @@ def run_daemon(d: Path, fg_src: str, windows: list, ttl: int = 3, script=None, e
         "AC_DAEMON_FAKE_WINDOWS": json.dumps(windows),
         "AC_DAEMON_TTL": str(ttl),
         "GSD_LONG_RUN_STATE_DIR": str(d),
+        # isolate the terminal inbox and the session registry from the real ones
+        "AC_INBOX_DIR": str(d / "inbox"),
+        "AC_SESSIONS_DIR": str(d / "sessions"),
     })
     env.update(extra_env or {})
     th = threading.Thread(target=script) if script else None
@@ -292,6 +295,86 @@ def main() -> int:
     check("V-ACPS-X-NOCHECK-BARE-ENTER",
           sent == ["auto-compact-trigger-s1.flag"] and "typed=[]" in text,
           f"sent={sent} log={text[-160:]!r}")
+
+    # --- terminal inbox: type into the session's own terminal, any foreground -
+    # The "session" is this test process: a live pid with its real creation
+    # FILETIME, so the daemon's pid/procStart/ancestor resolution runs for real.
+    me = os.getpid()
+    ft = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-Command",
+         f"(Get-CimInstance Win32_Process -Filter 'ProcessId={me}').CreationDate.ToFileTimeUtc()"],
+        capture_output=True, text=True, timeout=60).stdout.strip()
+    line = "/gsd-autonomous --from 10.1"
+
+    def inbox_case(proc_start=ft, pid=me):
+        d = fresh()
+        (d / "sessions").mkdir()
+        (d / "sessions" / f"{pid}.json").write_text(json.dumps(
+            {"pid": pid, "sessionId": "sx", "procStart": proc_start, "status": "idle"}), encoding="utf-8")
+        tr = transcript(d, "Resuming.\n" + line)
+        expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_line=line)
+        return d
+
+    def fake_extension(d, status, reason=""):
+        seen = {}
+
+        def run():
+            req_p, ack_p = d / "inbox" / "sx.req.json", d / "inbox" / "sx.ack.json"
+            for _ in range(80):
+                if req_p.exists():
+                    try:
+                        req = json.loads(req_p.read_text(encoding="utf-8"))
+                    except ValueError:
+                        time.sleep(0.1)
+                        continue
+                    seen["req"] = req
+                    ack_p.write_text(json.dumps({"id": req["id"], "session_id": "sx", "status": status,
+                                                 "reason": reason, "terminal": "t1"}), encoding="utf-8")
+                    return
+                time.sleep(0.1)
+        return run, seen
+
+    not_cursor = (fg(name="brave", title="x"), ["ProjA - Cursor"])
+
+    d = inbox_case()
+    run, seen = fake_extension(d, "sent")
+    sent, text, _, _ = run_daemon(d, *not_cursor, ttl=5, script=run)
+    req = seen.get("req") or {}
+    check("V-ACPS-I-SENT-WITHOUT-FOREGROUND",
+          "SENT via=extension" in text and sent == [] and remaining(d) == []
+          and req.get("text") == line and me in req.get("ancestors", [])
+          and req.get("claude_pid") == me and str(req.get("proc_start")) == ft,
+          f"req={req} left={remaining(d)} log={text[-200:]!r}")
+
+    d = inbox_case()
+    run, _ = fake_extension(d, "refused", "status-waiting")
+    sent, text, _, _ = run_daemon(d, *win, ttl=5, script=run)
+    led = (d / "gsd-autorun-ledger.jsonl")
+    check("V-ACPS-I-REFUSED-NEVER-TYPES",
+          sent == [] and remaining(d) == ["auto-compact-refused-sx.flag"]
+          and led.exists() and "terminal inbox refused" in led.read_text(encoding="utf-8"),
+          f"sent={sent} left={remaining(d)}")
+
+    d = inbox_case()
+    run, _ = fake_extension(d, "deferred", "status-busy")
+    sent, text, _, _ = run_daemon(d, *win, ttl=5, script=run, extra_env={"AC_ACK_FIRST": "1"})
+    check("V-ACPS-I-DEFERRED-HOLDS-FALLBACK",
+          sent == [] and remaining(d) == ["auto-compact-trigger-sx.flag"] and "deferred by extension" in text,
+          f"sent={sent} left={remaining(d)} log={text[-200:]!r}")
+
+    d = inbox_case()
+    sent, text, _, _ = run_daemon(d, *win, ttl=6, extra_env={"AC_ACK_FIRST": "1"})
+    check("V-ACPS-I-NO-EXTENSION-FALLS-BACK",
+          "no extension answer" in text and sent == ["auto-compact-trigger-sx.flag"]
+          and f"typed=[{line}]" in text,
+          f"sent={sent} log={text[-240:]!r}")
+
+    d = inbox_case(proc_start=str(int(ft) + 50_000_000) if ft.isdigit() else "1")
+    sent, text, _, _ = run_daemon(d, *win, ttl=4)
+    check("V-ACPS-I-REUSED-PID-NO-REQUEST",
+          "REQUESTED" not in text and "not resolvable" in text
+          and not (d / "inbox" / "sx.req.json").exists(),
+          f"log={text[-200:]!r}")
 
     total = passes + fails
     print(f"ACPS_PASS={passes}/{total}  threshold={total}/{total}")

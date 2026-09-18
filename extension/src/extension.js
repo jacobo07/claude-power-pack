@@ -27,6 +27,98 @@ const TERMINAL_DEBOUNCE_MS = 300;
 let terminalTimer = null;
 let registryPath = null;
 
+// --- Terminal inbox (2026-09-18) -------------------------------------------------
+// Types a validated line into the terminal that hosts a given Claude Code session,
+// with no focus change and whether or not Cursor is the foreground window. The
+// requester is auto-compact-sendkeys-daemon.ps1; every safety rule lives in
+// terminal_inbox.js::decide. Request: <sid>.req.json; acknowledgement: <sid>.ack.json.
+const { decide: decideInbox } = require("./terminal_inbox");
+const INBOX_DIR = path.join(os.homedir(), ".claude", "state", "terminal-inbox");
+const SESSIONS_DIR = path.join(os.homedir(), ".claude", "sessions");
+const INBOX_RETRY_MS = 500;   // re-check a deferred request (session busy / dialog open)
+const ENTER_DELAY_MS = 250;   // text and Enter apart, so the TUI does not read one paste
+let inboxBusy = false;
+let inboxAgain = false;
+let inboxTimer = null;
+const inboxDone = new Set();
+const inboxDeferNoted = new Set();
+
+function readJson(p) {
+  return JSON.parse(fs.readFileSync(p, "utf8").replace(/^﻿/, ""));
+}
+
+function writeAck(sid, ack) {
+  const p = path.join(INBOX_DIR, sid + ".ack.json");
+  const tmp = p + "." + process.pid + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(ack), "utf8");
+  fs.renameSync(tmp, p);
+}
+
+async function processInbox() {
+  if (inboxBusy) { inboxAgain = true; return; }
+  inboxBusy = true;
+  let deferred = false;
+  try {
+    let names = [];
+    try { names = fs.readdirSync(INBOX_DIR).filter((n) => n.endsWith(".req.json")); } catch (_e) { names = []; }
+    if (!names.length) return;
+    const terms = vscode.window.terminals || [];
+    const rows = [];
+    for (const t of terms) {
+      let pid = null;
+      try { pid = await t.processId; } catch (_e) { pid = null; }
+      rows.push({ processId: typeof pid === "number" ? pid : null });
+    }
+    const cwd = ((vscode.workspace.workspaceFolders || [])[0] || { uri: { fsPath: "" } }).uri.fsPath;
+    for (const name of names) {
+      const reqPath = path.join(INBOX_DIR, name);
+      let req;
+      try { req = readJson(reqPath); } catch (_e) { continue; }
+      if (!req || !req.id || inboxDone.has(req.id)) continue;
+      let session = null;
+      try { session = readJson(path.join(SESSIONS_DIR, String(req.claude_pid) + ".json")); } catch (_e) { session = null; }
+      const d = decideInbox(req, rows, session, Date.now());
+      if (d.action === "ignore") continue;
+      if (d.action === "defer") {
+        deferred = true;
+        // Tell the requester once that this window owns it and is waiting, so it
+        // does not mistake silence for "no extension" and fall back to SendKeys.
+        if (!inboxDeferNoted.has(req.id)) {
+          inboxDeferNoted.add(req.id);
+          try {
+            writeAck(req.session_id, { id: req.id, session_id: req.session_id, status: "deferred",
+              reason: d.reason, window_cwd: cwd, at_ms: Date.now() });
+          } catch (_e) { /* the requester then falls back after its wait */ }
+        }
+        continue;
+      }
+      // Claim by rename: exactly one claimant, and a re-fired watch cannot resend.
+      const claimed = reqPath + "." + process.pid + ".claimed";
+      try { fs.renameSync(reqPath, claimed); } catch (_e) { continue; }
+      inboxDone.add(req.id);
+      const ack = { id: req.id, session_id: req.session_id, window_cwd: cwd, at_ms: Date.now() };
+      if (d.action === "refuse") {
+        writeAck(req.session_id, { ...ack, status: "refused", reason: d.reason });
+      } else {
+        const term = terms[d.terminalIndex];
+        term.sendText(req.text, false);
+        await new Promise((r) => setTimeout(r, ENTER_DELAY_MS));
+        term.sendText("\r", false);
+        writeAck(req.session_id, { ...ack, status: "sent", terminal: term.name });
+      }
+      try { fs.unlinkSync(claimed); } catch (_e) { /* the ack is the record */ }
+    }
+  } catch (_e) {
+    // Fail-open: no ack means the daemon falls back to its foreground path.
+  } finally {
+    inboxBusy = false;
+    if (inboxTimer) { clearTimeout(inboxTimer); inboxTimer = null; }
+    // Poll only while a request of ours is deferred; otherwise the watch drives it.
+    if (deferred) inboxTimer = setTimeout(() => processInbox(), INBOX_RETRY_MS);
+    if (inboxAgain) { inboxAgain = false; processInbox(); }
+  }
+}
+
 // Record what is ACTUALLY open in this window. vscode.window.terminals is the only
 // authoritative list and it is reachable only from inside an extension; build_pane_map.ps1
 // infers openness from %TEMP% beacons and therefore cannot see a terminal that never
@@ -338,6 +430,18 @@ function activate(context) {
     // terminal events absent -> fail-open, registry simply stops updating
   }
 
+  // Terminal inbox: act on resume requests for sessions hosted in THIS window.
+  try {
+    fs.mkdirSync(INBOX_DIR, { recursive: true });
+    const inboxWatcher = fs.watch(INBOX_DIR, (_evt, fname) => {
+      if (fname && String(fname).endsWith(".req.json")) processInbox();
+    });
+    context.subscriptions.push({ dispose: () => inboxWatcher.close() });
+    processInbox(); // requests written while this window was loading
+  } catch (_e) {
+    // no inbox -> the daemon's foreground SendKeys path remains the fallback
+  }
+
   // Live refresh: watch pane_map.json (regenerated by build_pane_map.ps1 / hub).
   try {
     const watcher = fs.watch(path.dirname(MAP_JSON), (_evt, fname) => {
@@ -358,6 +462,7 @@ function deactivate() {
   // ALSO requires hostPid to still be alive before trusting the rows -- neither
   // guard alone is sufficient.
   try {
+    if (inboxTimer) clearTimeout(inboxTimer);
     if (terminalTimer) clearTimeout(terminalTimer);
     if (registryPath && fs.existsSync(registryPath)) fs.unlinkSync(registryPath);
   } catch (_e) {
