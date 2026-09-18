@@ -114,6 +114,9 @@ ADVISORY_ROWS: set[str] = {
     # is the narrow case the Owner-correction above still allows: not a FAIL
     # being reclassified, but a finding about the HOST rather than the tree.
     "live-hook-wrappers",
+    # Same shape: subject is ~/.claude/settings.json. The launcher (kclaude.ps1)
+    # shows it red on screen at every launch; here it must not block a tree sweep.
+    "live-hook-registry",
 }
 
 ROW_BUDGET_S = 60   # individual row cap; the L3 row needs the bulk of this
@@ -853,6 +856,20 @@ def main() -> int:
         ("live-hook-wrappers",
          [PY, str(PP / "tools" / "check_live_hook_wrappers.py")],
          20),
+        # Incident 2026-09-16 20:02 -> 2026-09-18 13:55: a settings rewrite dropped
+        # --event= from all six dispatcher registrations and every Power Pack hook
+        # went dark for ~42 h while this whole suite stayed green -- no row had the
+        # live REGISTRY as its subject. The drills (tree subject) block; the live
+        # judgement is advisory for the same HR-001 reason as live-hook-wrappers.
+        ("hook-registration-gate",
+         [PY, str(PP / "tools" / "test_hook_registration_integrity.py")],
+         60),
+        ("settings-writer-argv",
+         [PY, str(PP / "tools" / "test_settings_writer_argv.py")],
+         30),
+        ("live-hook-registry",
+         [PY, str(PP / "tools" / "test_hook_registration_integrity.py"), "--live-only"],
+         30),
         # This one DOES drive the umbrella through a real subprocess, and is a
         # row anyway -- the child is forced into the refusal branch by an
         # inflated --peak-mb, so it returns before dispatching a single row.
