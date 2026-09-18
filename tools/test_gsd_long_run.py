@@ -288,6 +288,46 @@ def gates_watchdog():
         _clear_wd(wd2, s)
 
 
+def gates_test_thresholds():
+    """CTXWD_TEST_THRESHOLDS lowers the wall for ONE session; a typo must never disable it."""
+    wd = load(WATCHDOG, "ctxwd_thresholds")
+
+    class _Null:
+        def atomic_append_jsonl(self, *a, **k):
+            return None
+
+        def atomic_write_bytes(self, *a, **k):
+            return None
+
+    for n, v in (("_import_atomic_write", lambda *a, **k: _Null()), ("_kclear_equivalent", lambda *a, **k: {}),
+                 ("_dump_telemetry", lambda *a, **k: None), ("_append_progress_md", lambda *a, **k: None),
+                 ("_write_trigger_flag", lambda *a, **k: "flag"), ("_spawn_daemon", lambda *a, **k: True)):
+        setattr(wd, n, v)
+    try:
+        s = sid(); _stamp(wd, s)
+        out = _run(wd, s, 40.0)
+        check("V-GSDLR-THR-DEFAULT-NO-FIRE-AT-40", out.get("decision") != "block", f"{out.get('decision')!r}")
+        _clear_wd(wd, s)
+
+        os.environ["CTXWD_TEST_THRESHOLDS"] = "31,36,30"
+        s = sid(); _stamp(wd, s)
+        out = _run(wd, s, 40.0)
+        check("V-GSDLR-THR-KNOB-FIRES-AT-40", out.get("decision") == "block" and ">= 36%" in out.get("reason", ""),
+              out.get("reason", "")[:70])
+        check("V-GSDLR-THR-KNOB-VALUES", wd._thresholds() == (31.0, 36.0, 30.0), f"{wd._thresholds()}")
+        _clear_wd(wd, s)
+
+        for bad in ("70,36,30", "31,36", "a,b,c", "31,36,31"):
+            os.environ["CTXWD_TEST_THRESHOLDS"] = bad
+            if wd._thresholds() != (wd.THRESHOLD_SNAPSHOT_PCT, wd.THRESHOLD_ADVISORY_PCT, wd.THRESHOLD_REARM_PCT):
+                check("V-GSDLR-THR-INVALID-FALLS-BACK", False, f"{bad!r} -> {wd._thresholds()}")
+                break
+        else:
+            check("V-GSDLR-THR-INVALID-FALLS-BACK", True, "4 malformed values -> constants")
+    finally:
+        os.environ.pop("CTXWD_TEST_THRESHOLDS", None)
+
+
 # ------------------------------------------------------------------ gap 2 + 9
 def _marker_file(s: str, **kw) -> Path:
     body = {"session_id": s, "resume_command": "/gsd-autonomous", "cwd": "", "cycles": 0}
@@ -401,6 +441,7 @@ def main() -> int:
         gates_preflight()
         gates_budget_and_mission()
         gates_watchdog()
+        gates_test_thresholds()
         gates_sweep()
         gates_report()
         gates_config()

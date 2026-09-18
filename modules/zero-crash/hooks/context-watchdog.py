@@ -48,6 +48,29 @@ THRESHOLD_ADVISORY_PCT = 70
 # THRESHOLD_SNAPSHOT_PCT so the rearm band and the snapshot band cannot touch.
 THRESHOLD_REARM_PCT = 45
 
+
+def _thresholds() -> tuple:
+    """(snapshot, advisory, rearm) for THIS process.
+
+    `CTXWD_TEST_THRESHOLDS="31,36,30"` lowers them for one session only (the
+    hook inherits the env of the Claude Code process that launched it), so a
+    /cpp-gsd-long smoke test crosses the wall at ~360k tokens instead of ~700k.
+    Accepted only when rearm < snapshot <= advisory, all within 5..95 --
+    anything else falls back to the constants, so a typo can never switch
+    the watchdog off. Measured baseline on this host: a fresh session already
+    reads 15-23% used, so a rearm below ~28 would never be reached after a
+    compaction.
+    """
+    raw = os.environ.get("CTXWD_TEST_THRESHOLDS", "")
+    if raw:
+        try:
+            snap, adv, rearm = (float(x) for x in raw.split(","))
+            if 5 <= rearm < snap <= adv <= 95:
+                return snap, adv, rearm
+        except ValueError:
+            pass
+    return THRESHOLD_SNAPSHOT_PCT, THRESHOLD_ADVISORY_PCT, THRESHOLD_REARM_PCT
+
 # Post-compaction resume (gap C; Owner-authorised 2026-09-15 via settings
 # autoMode.allow). Two flags because the dispatch is two-phase, and the reason
 # is a race measured in the existing daemon's own source: it polls every 500 ms
@@ -819,7 +842,8 @@ def _run_inner(event: dict) -> dict:
             and not _flag_exists(session_id, RESUME_CONFIRMED_FLAG):
         _confirm_resume(session_id, event)
 
-    if used_pct < THRESHOLD_REARM_PCT:
+    snap_pct, adv_pct, rearm_pct = _thresholds()
+    if used_pct < rearm_pct:
         _clear_flag(session_id, ADVISORY_FLAG)
 
         # Post-compaction resume (gap C). Same low-context window as the rearm,
@@ -848,7 +872,7 @@ def _run_inner(event: dict) -> dict:
                     pass
                 return {}
 
-    if used_pct < THRESHOLD_SNAPSHOT_PCT:
+    if used_pct < snap_pct:
         return {}
 
     try:
@@ -869,7 +893,7 @@ def _run_inner(event: dict) -> dict:
             pass
 
     # Tier 2 (>= 70%) — kclear-equivalent + zero-keystroke compact dispatch
-    if used_pct >= THRESHOLD_ADVISORY_PCT and not _flag_exists(session_id, ADVISORY_FLAG):
+    if used_pct >= adv_pct and not _flag_exists(session_id, ADVISORY_FLAG):
         try:
             atomic_write.atomic_append_jsonl(LEDGER_PATH, _ledger_row(session_id, metrics, transcript_path, cwd, "advisory"))
             _set_flag(session_id, ADVISORY_FLAG)
@@ -910,7 +934,7 @@ def _run_inner(event: dict) -> dict:
         resume_clause = _resume_clause(_read_autorun_marker(session_id))
 
         message = (
-            f"CONTEXT THRESHOLD CROSSED — {used_pct}% used (>= 70%). "
+            f"CONTEXT THRESHOLD CROSSED — {used_pct}% used (>= {adv_pct:g}%). "
             f"Pre-compact vault checkpoint WRITTEN by tier-2 kclear-equivalent: "
             f"handoff={kclear_paths.get('handoff')}; "
             f"lessons={kclear_paths.get('lessons')}; "
