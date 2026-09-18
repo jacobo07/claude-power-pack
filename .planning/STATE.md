@@ -33,8 +33,11 @@ when the transcript shows the command was really submitted.
 
 ## Phases
 
-- Phase 1: Narrow-wall proof in a live session — IN PROGRESS
-- Phase 2: Two-pane exactness drill — PENDING
-- Phase 3: UserPromptSubmit chain deadline — PENDING
-- Phase 4: Promote the exact-target lessons — PENDING
-- Phase 5: Reap the stale autorun markers — PENDING
+- Phase 1: Two-pane exactness drill — PENDING
+- Phase 2: UserPromptSubmit chain deadline — PENDING
+- Phase 3: Promote the exact-target lessons — PENDING
+- Phase 4: Reap the stale autorun markers — PENDING
+
+The narrow-wall proof is the milestone's acceptance gate, not a phase: it is
+produced by this run crossing its own wall while executing the phases above,
+and read off `gsd_long_run.py report`.
