@@ -462,18 +462,50 @@ def _resume_clause(marker) -> str:
     )
 
 
-def _resume_dispatch_message(marker) -> str:
+def _observe_compaction(session_id: str, marker, event: dict) -> dict:
+    """C1: did a compaction actually happen this cycle? Never raises.
+
+    Fails CLOSED. A resume is an effect, and before 2026-09-18 this branch
+    claimed "COMPACTION LANDED" from a context reading alone; a module that
+    cannot be loaded is an observer that cannot observe, not a licence. Every
+    non-observation is ledgered once per cycle reference, so a run that never
+    resumes says why instead of going quiet.
+    """
+    lr = _load_tool("gsd_long_run")
+    if lr is None:
+        return {"state": "unobservable", "reason": "gsd_long_run unavailable"}
+    try:
+        ref = lr.resume_reference(session_id, marker)
+        obs = dict(lr.compaction_observed(event.get("transcript_path") or "", ref))
+    except Exception as exc:
+        return {"state": "unobservable", "reason": f"observer error {exc.__class__.__name__}"}
+    if obs.get("state") != "observed":
+        try:
+            seen = any(r.get("event") == "compaction_unobserved" and r.get("reference") == ref
+                       for r in lr.ledger_events(session_id))
+            if not seen:
+                lr.ledger_append(session_id, "compaction_unobserved", reference=ref,
+                                 state=obs.get("state"), reason=obs.get("reason"),
+                                 latest_boundary_ts=obs.get("boundary_ts"))
+        except Exception:
+            pass
+    return obs
+
+
+def _resume_dispatch_message(marker, observed=None) -> str:
     """Stop A's ask: the exact line, and nothing after it.
 
     Pure, so the gate can drive both poles without running the tier-2 path,
     which writes checkpoints and launches the daemon. The "nothing after it"
     clause is load-bearing rather than stylistic: Enter is pressed on whatever
     the turn ends with, so a trailing sentence would be submitted instead of
-    the command.
+    the command. The compaction claim names its evidence (the boundary row).
     """
     cmd = (marker or {}).get("resume_command")
+    where = (observed or {}).get("boundary_ts") or "unknown"
     return (
-        "COMPACTION LANDED — the autonomous run must re-enter itself. "
+        f"COMPACTION OBSERVED (transcript compact_boundary at {where}) — the "
+        "autonomous run must re-enter itself. "
         f"End this response with a SINGLE trailing line, exactly `{cmd}`, "
         "no preface and no markdown. Enter will be pressed on it at the next "
         "Stop, so anything written after that line would be submitted instead."
@@ -502,7 +534,7 @@ def _halt_message(marker, reason: str) -> str:
     )
 
 
-def _request_resume(session_id: str, marker: dict) -> dict:
+def _request_resume(session_id: str, marker: dict, observed=None) -> dict:
     """Stop A of a resume cycle: gate it (budget, mission), then ask for the line.
 
     A halt clears the marker AND sets DONE, so neither this cycle nor any later
@@ -532,8 +564,10 @@ def _request_resume(session_id: str, marker: dict) -> dict:
     low = free is not None and lr is not None and free < lr.RAM_FLOOR_MB
     _ledger(session_id, "resume_requested", cycles=cycles,
             free_mb=None if free is None else round(free), ram_low=low,
-            gate=gate.get("reason"))
-    reason = _resume_dispatch_message(marker)
+            gate=gate.get("reason"),
+            boundary_ts=(observed or {}).get("boundary_ts"),
+            boundary_uuid=(observed or {}).get("boundary_uuid"))
+    reason = _resume_dispatch_message(marker, observed)
     if low:
         reason += _ram_note(free, session_id)
     return {"decision": "block", "reason": reason}
@@ -854,7 +888,14 @@ def _run_inner(event: dict) -> dict:
             marker = _read_autorun_marker(session_id)
             if marker:
                 if not _flag_exists(session_id, RESUME_ARMED_FLAG):
-                    return _request_resume(session_id, marker)
+                    # C1 (spec exact-target-continuation.md): a low reading is
+                    # not a compaction -- a restarted session reads ~17% too.
+                    # Only a transcript boundary newer than this cycle licenses
+                    # a resume, and "could not observe" refuses.
+                    observed = _observe_compaction(session_id, marker, event)
+                    if observed.get("state") != "observed":
+                        return {}
+                    return _request_resume(session_id, marker, observed)
                 # The turn that carried the line has ended: dispatch Enter onto
                 # it. Marked done FIRST -- a failure past this point must not
                 # leave the branch re-entrant, or every later Stop presses Enter

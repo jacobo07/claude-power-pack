@@ -100,6 +100,18 @@ def user_cmd(cmd: str, when: float) -> dict:
             "message": {"role": "user", "content": f"<command-name>{cmd}</command-name>"}}
 
 
+def boundary_row(when: float) -> dict:
+    """A compact_boundary row. Since C1 (spec exact-target-continuation.md) Stop A
+    fires only when one postdates the marker -- a low reading alone is not one."""
+    iso = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(when)) + ".000Z"
+    return {"type": "system", "subtype": "compact_boundary", "uuid": uuid.uuid4().hex,
+            "timestamp": iso, "compactMetadata": {"trigger": "auto"}}
+
+
+def compacted(session: str) -> str:
+    return str(transcript(session, str(ROOT), rows=[boundary_row(time.time() + 2)]))
+
+
 def events(session: str) -> list[str]:
     return [e["event"] for e in lr.ledger_events(session)]
 
@@ -205,7 +217,7 @@ def gates_watchdog():
         s = sid(); _stamp(wd, s)
         mk.write_marker(s, "/gsd-autonomous", cwd=str(ROOT), max_cycles=1)
         mk.bump_cycles(s)
-        out = _run(wd, s, 25.0)
+        out = _run(wd, s, 25.0, compacted(s))
         check("V-GSDLR-WD-BUDGET-HALTS",
               out.get("decision") == "block" and "HALTED" in out.get("reason", "")
               and mk.read_marker(s) is None and "halted" in events(s) and not calls,
@@ -218,7 +230,7 @@ def gates_watchdog():
         s = sid(); _stamp(wd, s)
         mk.write_marker(s, "/gsd-autonomous", cwd=str(ROOT))
         os.environ["_TEST_FREE_MB"] = "500"
-        out = _run(wd, s, 25.0)
+        out = _run(wd, s, 25.0, compacted(s))
         os.environ.pop("_TEST_FREE_MB", None)
         check("V-GSDLR-WD-RAM-LOW-WAITS", "wait-ram" in out.get("reason", "") and "/gsd-autonomous" in out.get("reason", ""),
               out.get("reason", "")[-160:])
@@ -249,7 +261,7 @@ def gates_watchdog():
         s = sid(); _stamp(wd, s)
         mk.write_marker(s, "/gsd-autonomous", cwd=str(ROOT))
         os.environ["_TEST_FREE_MB"] = "9000"
-        out = _run(wd, s, 25.0)
+        out = _run(wd, s, 25.0, compacted(s))
         os.environ.pop("_TEST_FREE_MB", None)
         check("V-GSDLR-WD-RAM-OK-NO-WAIT", "wait-ram" not in out.get("reason", "") and out.get("decision") == "block",
               out.get("reason", "")[:80])

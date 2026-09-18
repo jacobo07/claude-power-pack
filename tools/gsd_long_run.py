@@ -240,6 +240,80 @@ def user_issued_command_since(transcript: Path, command: str, since_epoch: float
     return False
 
 
+# --------------------------------------------------------------------------- compaction truth
+# Spec vault/specs/exact-target-continuation.md (C1). A low context reading is
+# not a compaction: a RESUMED session reads ~15-23% too, and on 2026-09-18 that
+# is exactly what told session 8178f7d0 "COMPACTION LANDED" 25 hours after its
+# last compaction. The host writes a `compact_boundary` system row when it
+# compacts; that row is the post-condition, and nothing else is.
+BOUNDARY_TAIL_BYTES = 8 * 1024 * 1024
+
+
+def compaction_observed(transcript, since_epoch: float | None) -> dict:
+    """Is there a compaction boundary in `transcript` newer than `since_epoch`?
+
+    Returns {"state": "observed"|"unobserved"|"unreadable", "boundary_ts",
+    "boundary_uuid", "trigger", "reason"}. Rows are parsed, never substring-
+    matched: this estate's own transcripts quote the boundary row in prose.
+    A boundary older than the tail window reads as unobserved, which refuses a
+    resume -- the safe direction for a claim that licenses an effect.
+    """
+    path = Path(transcript) if transcript else None
+    if path is None or not path.is_file():
+        return {"state": "unreadable", "reason": f"no transcript at {transcript!r}"}
+    if since_epoch is None:
+        return {"state": "unobserved", "reason": "no cycle reference to compare against"}
+    try:
+        size = path.stat().st_size
+        with open(path, "rb") as fh:
+            fh.seek(max(0, size - BOUNDARY_TAIL_BYTES))
+            raw = fh.read()
+    except Exception as exc:
+        return {"state": "unreadable", "reason": f"{exc.__class__.__name__} reading transcript"}
+    latest = None
+    # Only lines carrying the token are parsed (this runs inside a Stop hook with
+    # a 6 s budget); the parsed type/subtype is what decides, not the token.
+    for line in raw.split(b"\n"):
+        if b"compact_boundary" not in line:
+            continue
+        try:
+            row = json.loads(line.decode("utf-8", errors="replace"))
+        except Exception:
+            continue
+        if not isinstance(row, dict):
+            continue
+        if row.get("type") != "system" or row.get("subtype") != "compact_boundary":
+            continue
+        ts = _parse_iso(row.get("timestamp"))
+        if ts is not None and (latest is None or ts > latest[0]):
+            latest = (ts, row)
+    if latest is None:
+        return {"state": "unobserved", "reason": "no compact_boundary row in the transcript tail"}
+    ts, row = latest
+    found = {"boundary_ts": row.get("timestamp"), "boundary_uuid": row.get("uuid"),
+             "trigger": (row.get("compactMetadata") or {}).get("trigger")}
+    if ts <= since_epoch:
+        return {"state": "unobserved", **found,
+                "reason": "latest boundary is not newer than the cycle reference"}
+    return {"state": "observed", **found, "reason": "boundary newer than the cycle reference"}
+
+
+def resume_reference(session_id: str, marker: dict) -> float | None:
+    """The instant a boundary must postdate to license a resume.
+
+    max(marker armed_at -- or `ts` on a schema-1 marker --, the boundary_ts of
+    the last resume this session already requested). Each boundary therefore
+    licenses at most one resume.
+    """
+    marker = marker or {}
+    points = [_parse_iso(marker.get("armed_at") or marker.get("ts"))]
+    for row in ledger_events(session_id):
+        if row.get("event") == "resume_requested" and row.get("boundary_ts"):
+            points.append(_parse_iso(row.get("boundary_ts")))
+    points = [p for p in points if p is not None]
+    return max(points) if points else None
+
+
 # --------------------------------------------------------------------------- GSD
 def gsd_status(project, timeout: int = 45) -> dict:
     # 45 s, not 20: measured 5 s alone and >20 s beside other suites on this host

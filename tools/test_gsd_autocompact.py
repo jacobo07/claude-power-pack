@@ -86,11 +86,27 @@ def _stamp_orch_throttle(wd, session_id: str) -> None:
     flag.write_text(str(time.time()), encoding="utf-8")
 
 
-def _run_at(wd, session_id: str, pct: float) -> dict:
+def _boundary_transcript(session_id: str) -> Path:
+    """A transcript whose compact_boundary postdates the marker.
+
+    Since C1 (spec exact-target-continuation.md) a resume is requested only
+    when a real boundary row is newer than the cycle reference; an empty
+    transcript path is exactly the false-"landed" shape the incident had.
+    """
+    t = Path(tempfile.mkdtemp(prefix="gsdac-tx-")) / f"{session_id}.jsonl"
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() + 2)) + ".000Z"
+    rows = [{"type": "system", "cwd": str(ROOT)},
+            {"type": "system", "subtype": "compact_boundary", "uuid": uuid.uuid4().hex,
+             "timestamp": stamp, "compactMetadata": {"trigger": "auto"}}]
+    t.write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+    return t
+
+
+def _run_at(wd, session_id: str, pct: float, tp="") -> dict:
     os.environ["_TEST_CONTEXT_PCT"] = str(pct)
     try:
         return wd.run({"session_id": session_id, "cwd": str(ROOT),
-                       "transcript_path": ""}) or {}
+                       "transcript_path": str(tp or "")}) or {}
     finally:
         os.environ.pop("_TEST_CONTEXT_PCT", None)
 
@@ -372,10 +388,11 @@ def gate_two_phase(wd, mk) -> None:
 
     try:
         mk.write_marker(sid, "/gsd-autonomous", cwd=str(ROOT), phase=5)
+        tp = _boundary_transcript(sid)
 
         # Stop A must ASK and must NOT dispatch: the daemon polls every 500 ms,
         # so an Enter here lands in an empty box while the model is generating.
-        out_a = _run_at(wd, sid, POST_COMPACTION_PCT)
+        out_a = _run_at(wd, sid, POST_COMPACTION_PCT, tp)
         armed = wd._flag_exists(sid, wd.RESUME_ARMED_FLAG)
         if out_a.get("decision") == "block" and armed and calls["flag"] == 0:
             _ok("V-GSDAC-TWOPHASE-ARMS-FIRST",
@@ -393,7 +410,7 @@ def gate_two_phase(wd, mk) -> None:
                   f"reason omits the command: {out_a.get('reason')!r}")
 
         # Stop B: the turn carrying the line has ended, so dispatch now.
-        out_b = _run_at(wd, sid, POST_COMPACTION_PCT)
+        out_b = _run_at(wd, sid, POST_COMPACTION_PCT, tp)
         if calls["flag"] == 1 and calls["spawn"] == 1 \
                 and out_b.get("decision") != "block":
             _ok("V-GSDAC-TWOPHASE-DISPATCHES-SECOND",
@@ -404,8 +421,8 @@ def gate_two_phase(wd, mk) -> None:
                   f"decision={out_b.get('decision')!r}")
 
         # One resume per compaction cycle — not one per Stop.
-        _run_at(wd, sid, POST_COMPACTION_PCT)
-        _run_at(wd, sid, POST_COMPACTION_PCT)
+        _run_at(wd, sid, POST_COMPACTION_PCT, tp)
+        _run_at(wd, sid, POST_COMPACTION_PCT, tp)
         if calls["flag"] == 1:
             _ok("V-GSDAC-TWOPHASE-ONCE-PER-CYCLE",
                 "two further Stops dispatched nothing")
@@ -418,7 +435,7 @@ def gate_two_phase(wd, mk) -> None:
         sid2 = f"gsdac-{uuid.uuid4().hex[:12]}"
         _stamp_orch_throttle(wd, sid2)
         before = calls["flag"]
-        out_n = _run_at(wd, sid2, POST_COMPACTION_PCT)
+        out_n = _run_at(wd, sid2, POST_COMPACTION_PCT, _boundary_transcript(sid2))
         if calls["flag"] == before and not out_n:
             _ok("V-GSDAC-TWOPHASE-INERT-WITHOUT-MARKER",
                 "no marker: no block, no dispatch")
