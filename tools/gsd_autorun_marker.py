@@ -67,22 +67,43 @@ def validate_command(command: str) -> str:
 
 
 def write_marker(session_id: str, command: str, cwd: str = "",
-                 phase: int | None = None) -> Path:
+                 phase: int | None = None, max_cycles: int | None = None,
+                 max_hours: float | None = None) -> Path:
     path = marker_path(session_id)
     cmd = validate_command(command)
+    now = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
     payload = {
         "session_id": session_id,
         "resume_command": cmd,
         "cwd": cwd,
         "phase": phase,
-        "ts": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
-        "schema_version": 1,
+        "ts": now,
+        "armed_at": now,
+        "cycles": 0,
+        # Budget (spec gsd-long-run-v2.md, gap 11). None -> the resume gate's defaults.
+        "max_cycles": max_cycles,
+        "max_hours": max_hours,
+        "schema_version": 2,
     }
+    _save(path, payload)
+    return path
+
+
+def _save(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     tmp.replace(path)
-    return path
+
+
+def bump_cycles(session_id: str) -> int | None:
+    """Count one resume against the budget. Returns the new count, None if no marker."""
+    data = read_marker(session_id)
+    if data is None:
+        return None
+    data["cycles"] = int(data.get("cycles") or 0) + 1
+    _save(marker_path(session_id), data)
+    return data["cycles"]
 
 
 def read_marker(session_id: str) -> dict | None:
@@ -135,6 +156,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--mission", default="",
                     help="comma-separated vocabulary of the Owner-approved mission; the active "
                          "GSD milestone must intersect it or arming is refused")
+    ap.add_argument("--max-cycles", type=int, default=None,
+                    help="resumes allowed before the run halts (default 12)")
+    ap.add_argument("--max-hours", type=float, default=None,
+                    help="wall-clock hours before the run halts (default 24)")
     args = ap.parse_args(argv)
 
     if args.write:
@@ -142,17 +167,27 @@ def main(argv: list[str] | None = None) -> int:
         # executes the wrong mission (tools/gsd_mission_freshness.py), so the CLI refuses to
         # arm unless the active milestone matches a declared mission. The library call
         # write_marker() stays unconditional: it is the primitive, this is the boundary.
-        try:
-            import gsd_mission_freshness as _mf
-        except ImportError:
-            sys.path.insert(0, str(Path(__file__).resolve().parent))
-            import gsd_mission_freshness as _mf
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import gsd_mission_freshness as _mf
+        import gsd_long_run as _lr
         verdict = _mf.check(args.cwd or ".", args.mission)
         if not verdict.armable:
             sys.stderr.write(f"REFUSED: mission freshness {verdict.outcome}: {verdict.reason}\n")
             return 2
+        # Gaps 6 + 8 (spec gsd-long-run-v2.md): the run executes in the SESSION's directory,
+        # and /gsd-autonomous does nothing on a roadmap GSD cannot parse.
         try:
-            path = write_marker(args.session, args.command, args.cwd, args.phase)
+            validate_command(args.command)
+        except MarkerError as exc:
+            sys.stderr.write(f"REFUSED: {exc}\n")
+            return 2
+        ok, why = _lr.arm_preflight(args.session, args.cwd or ".", args.command)
+        if not ok:
+            sys.stderr.write(f"REFUSED: {why}\n")
+            return 2
+        try:
+            path = write_marker(args.session, args.command, args.cwd, args.phase,
+                                args.max_cycles, args.max_hours)
             data = json.loads(path.read_text(encoding="utf-8"))
             data["mission"] = {"terms": verdict.mission_terms, "matched": verdict.matched,
                                "active_milestone": verdict.active_milestone}
@@ -160,6 +195,8 @@ def main(argv: list[str] | None = None) -> int:
         except MarkerError as exc:
             sys.stderr.write(f"REFUSED: {exc}\n")
             return 2
+        _lr.ledger_append(args.session, "armed", command=args.command, cwd=args.cwd,
+                          max_cycles=data.get("max_cycles"), max_hours=data.get("max_hours"))
         sys.stdout.write(str(path) + "\n")
         return 0
 
@@ -172,6 +209,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     removed = clear_marker(args.session)
+    if removed:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import gsd_long_run as _lr
+        _lr.ledger_append(args.session, "cleared", by="cli")
     sys.stdout.write("CLEARED\n" if removed else "ABSENT\n")
     return 0 if removed else 1
 

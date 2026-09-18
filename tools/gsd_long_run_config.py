@@ -27,7 +27,9 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -36,9 +38,9 @@ from pathlib import Path
 LONG_RUN_WARNING = 12
 LONG_RUN_CRITICAL = 8
 
-# Where the previous values are parked so --restore is exact rather than a
-# guess at the defaults. Stored inside the same config under our own key: a
-# sidecar file would be deleted by anyone tidying .planning/.
+# LEGACY location of the parked values (inside config.json). gsd-tools warned
+# "unknown config key" on every call, so v2 parks them under ~/.claude/state
+# (see backup_path) and migrates this key out on the next apply/restore.
 BACKUP_KEY = "_pp_long_run_backup"
 
 
@@ -78,23 +80,59 @@ def save_config(project: Path, data: dict) -> Path:
     return path
 
 
+def backup_path(project: Path) -> Path:
+    """Where the parked values live (spec gsd-long-run-v2.md, gap 13).
+
+    Not inside config.json: gsd-tools warns "unknown config key" on every call
+    for a key it does not own. Not in .planning/ either: anyone tidying that
+    folder would delete it. ~/.claude/state is ours and nobody tidies it.
+    """
+    override = os.environ.get("GSD_LONG_RUN_STATE_DIR")
+    base = Path(override) if override else Path.home() / ".claude" / "state"
+    key = os.path.normcase(os.path.abspath(str(project))).rstrip("\\/")
+    digest = hashlib.sha1(key.encode("utf-8")).hexdigest()[:16]
+    return base / "gsd-long-run-backups" / f"{digest}.json"
+
+
+def _read_backup(project: Path) -> dict | None:
+    path = backup_path(project)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise ConfigError(f"backup {path} does not parse: {exc}")
+    return data.get("values") if isinstance(data, dict) else None
+
+
+def _write_backup(project: Path, values: dict) -> None:
+    path = backup_path(project)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps({"project": str(project), "values": values}, indent=2),
+                   encoding="utf-8")
+    tmp.replace(path)
+
+
 def apply_long_run(project: Path) -> tuple[Path, dict]:
     """Lower the fire-points, parking whatever was there before.
 
     Idempotent: applying twice does not overwrite the backup with our own
     values, so a double-apply followed by one restore still lands on the
-    operator's original settings.
+    operator's original settings. A backup embedded by an older version is
+    migrated out of config.json.
     """
     data = load_config(project)
     hooks = data.setdefault("hooks", {})
     if not isinstance(hooks, dict):
         raise ConfigError("config 'hooks' is not an object")
 
-    if BACKUP_KEY not in data:
-        data[BACKUP_KEY] = {
+    embedded = data.pop(BACKUP_KEY, None)
+    if _read_backup(project) is None:
+        _write_backup(project, embedded if isinstance(embedded, dict) else {
             "context_warning_threshold": hooks.get("context_warning_threshold"),
             "context_critical_threshold": hooks.get("context_critical_threshold"),
-        }
+        })
 
     hooks["context_warning_threshold"] = LONG_RUN_WARNING
     hooks["context_critical_threshold"] = LONG_RUN_CRITICAL
@@ -104,10 +142,13 @@ def apply_long_run(project: Path) -> tuple[Path, dict]:
 def restore(project: Path) -> tuple[Path, dict]:
     """Put back exactly what was there, including 'the key was absent'."""
     data = load_config(project)
-    backup = data.pop(BACKUP_KEY, None)
+    embedded = data.pop(BACKUP_KEY, None)
+    backup = _read_backup(project)
+    if backup is None:
+        backup = embedded if isinstance(embedded, dict) else None
     if backup is None:
         raise ConfigError(
-            "no long-run backup in this config — nothing to restore "
+            "no long-run backup for this project — nothing to restore "
             "(apply was never run here, or restore already ran)")
 
     hooks = data.setdefault("hooks", {})
@@ -117,7 +158,9 @@ def restore(project: Path) -> tuple[Path, dict]:
             hooks.pop(key, None)   # absent before means absent after
         else:
             hooks[key] = previous
-    return save_config(project, data), data
+    path = save_config(project, data)
+    backup_path(project).unlink(missing_ok=True)
+    return path, data
 
 
 def show(project: Path) -> dict:
@@ -129,7 +172,8 @@ def show(project: Path) -> dict:
         "context_warning_threshold": hooks.get("context_warning_threshold"),
         "context_critical_threshold": hooks.get("context_critical_threshold"),
         "context_warnings": hooks.get("context_warnings"),
-        "long_run_active": data.get(BACKUP_KEY) is not None,
+        "long_run_active": backup_path(project).is_file() or data.get(BACKUP_KEY) is not None,
+        "backup": str(backup_path(project)),
     }
 
 

@@ -60,7 +60,7 @@ def fg(name="Cursor", title="", hwnd="1"):
     return json.dumps({"name": name, "title": title, "hwnd": hwnd})
 
 
-def run_daemon(d: Path, fg_src: str, windows: list, ttl: int = 3, script=None):
+def run_daemon(d: Path, fg_src: str, windows: list, ttl: int = 3, script=None, extra_env=None):
     """Run the daemon to TTL; fg_src is JSON or a path re-read every tick.
     `script` is an optional callable run in a thread while the daemon lives."""
     env = dict(os.environ)
@@ -70,7 +70,9 @@ def run_daemon(d: Path, fg_src: str, windows: list, ttl: int = 3, script=None):
         "AC_DAEMON_FAKE_FG": fg_src,
         "AC_DAEMON_FAKE_WINDOWS": json.dumps(windows),
         "AC_DAEMON_TTL": str(ttl),
+        "GSD_LONG_RUN_STATE_DIR": str(d),
     })
+    env.update(extra_env or {})
     th = threading.Thread(target=script) if script else None
     if th:
         th.start()
@@ -193,14 +195,77 @@ def main() -> int:
     (d / "auto-compact-daemon.log").unlink()
 
     def flip():
-        time.sleep(2.0)
+        # Condition-driven, not clock-driven: on a loaded host the daemon's
+        # Add-Type compile alone can outlast a fixed sleep, and the flip then
+        # happens before the first episode exists (measured: 19/20 at 2.5 GB free).
+        log = d / "auto-compact-daemon.log"
+        end = time.time() + 40
+        while time.time() < end:
+            if log.exists() and "WOULD-SEND" in log.read_text(encoding="utf-8-sig", errors="replace"):
+                break
+            time.sleep(0.2)
         fgfile.write_text(fg(name="explorer", title="x", hwnd="9"), encoding="utf-8")
-        time.sleep(1.5)
+        time.sleep(2.0)
         fgfile.write_text(fg(title="ProjA - Cursor", hwnd="1"), encoding="utf-8")
 
     write_flag(d, "auto-compact-trigger-A3.flag", r"C:\p\ProjA")  # A2 still pending + A3 = 2 to deliver
-    sent, _, _, _ = run_daemon(d, str(fgfile), ["ProjA - Cursor"], ttl=7, script=flip)
+    sent, _, _, _ = run_daemon(d, str(fgfile), ["ProjA - Cursor"], ttl=60, script=flip)
     check("V-ACPS-D-REFOCUS-DELIVERS", len(sent) == 2 and remaining(d) == [], f"sent={sent} left={remaining(d)}")
+
+    # --- expect-line validation (spec gsd-long-run-v2.md, gap 3) -------------
+    def transcript(d: Path, last_text: str) -> Path:
+        t = d / "t.jsonl"
+        rows = [{"type": "user", "message": {"role": "user", "content": "go"}},
+                {"type": "assistant", "message": {"role": "assistant",
+                                                  "content": [{"type": "text", "text": last_text}]}}]
+        t.write_text("\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8")
+        return t
+
+    def expect_flag(d: Path, name: str, tr: Path, age_s: float = 0.0, **expect):
+        p = d / name
+        body = {"session_id": "sx", "cwd": r"C:\p\ProjA", "transcript": str(tr)}
+        body.update(expect)
+        p.write_text(json.dumps(body) + "\n", encoding="utf-8")
+        if age_s:
+            t = time.time() - age_s
+            os.utime(p, (t, t))
+        return p
+
+    win = (fg(title="ProjA - Cursor"), ["ProjA - Cursor"])
+    d = fresh()
+    tr = transcript(d, "Phase 3 done, compacted.\n/gsd-autonomous")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_line="/gsd-autonomous")
+    sent, _, _, _ = run_daemon(d, *win)
+    check("V-ACPS-X-MATCH-SENDS", sent == ["auto-compact-trigger-sx.flag"], f"sent={sent}")
+
+    d = fresh()
+    tr = transcript(d, "/gsd-autonomous\nand one more thing")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_line="/gsd-autonomous")
+    sent, _, _, _ = run_daemon(d, *win, extra_env={"AC_DAEMON_REFUSE_AFTER": "600"})
+    check("V-ACPS-X-MISMATCH-WAITS", sent == [] and remaining(d) == ["auto-compact-trigger-sx.flag"],
+          f"sent={sent} left={remaining(d)}")
+
+    d = fresh()
+    tr = transcript(d, "I will now wrap up.")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, age_s=30, expect_line="/gsd-autonomous")
+    sent, _, _, _ = run_daemon(d, *win, extra_env={"AC_DAEMON_REFUSE_AFTER": "5"})
+    led = (d / "gsd-autorun-ledger.jsonl")
+    led_txt = led.read_text(encoding="utf-8") if led.exists() else ""
+    check("V-ACPS-X-STALE-REFUSED",
+          sent == [] and remaining(d) == ["auto-compact-refused-sx.flag"] and '"refused"' in led_txt,
+          f"sent={sent} left={remaining(d)} ledger={led_txt[:120]!r}")
+
+    d = fresh()
+    tr = transcript(d, "Checkpoint written.\n`/compact focus on phase 4 physics port`")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_prefix="/compact")
+    sent, _, _, _ = run_daemon(d, *win)
+    check("V-ACPS-X-PREFIX-BACKTICKS", sent == ["auto-compact-trigger-sx.flag"], f"sent={sent}")
+
+    d = fresh()
+    tr = transcript(d, "/gsd-autonomous-extra")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_line="/gsd-autonomous")
+    sent, _, _, _ = run_daemon(d, *win, extra_env={"AC_DAEMON_REFUSE_AFTER": "600"})
+    check("V-ACPS-X-EXACT-NOT-PREFIX", sent == [], f"sent={sent}")
 
     total = passes + fails
     print(f"ACPS_PASS={passes}/{total}  threshold={total}/{total}")

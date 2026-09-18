@@ -61,6 +61,9 @@ THRESHOLD_REARM_PCT = 45
 # Both are cleared at tier 2, so each compaction cycle gets exactly one resume.
 RESUME_ARMED_FLAG = "claude-ctxwd-resumearm-{session_id}.flag"
 RESUME_DONE_FLAG = "claude-ctxwd-resumedone-{session_id}.flag"
+# Set once the transcript shows the resume command was actually submitted
+# (spec gsd-long-run-v2.md, gap 1). Cleared with the other two at tier 2.
+RESUME_CONFIRMED_FLAG = "claude-ctxwd-resumeok-{session_id}.flag"
 
 ROOT = Path.home() / ".claude" / "skills" / "claude-power-pack"
 LEDGER_PATH = ROOT / "vault" / "sleepy" / "context_snapshots.jsonl"
@@ -367,26 +370,49 @@ def _read_autorun_marker(session_id: str):
     behaves exactly as it did before this clause existed.
     """
     try:
-        import importlib.util
-        here = Path(__file__).resolve()
-        candidates = [
-            here.parents[3] / "tools" / "gsd_autorun_marker.py",
-            Path.home() / ".claude" / "skills" / "claude-power-pack" / "tools"
-            / "gsd_autorun_marker.py",
-        ]
-        for path in candidates:
-            if not path.is_file():
-                continue
-            spec = importlib.util.spec_from_file_location(
-                "_ctxwd_autorun_marker", path)
-            if spec is None or spec.loader is None:
-                continue
-            mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)
+        mod = _load_tool("gsd_autorun_marker")
+        if mod is not None:
             return mod.read_marker(session_id)
     except Exception:
         pass
     return None
+
+
+_TOOL_CACHE: dict = {}
+
+
+def _load_tool(name: str):
+    """Import a Power Pack tool module by file, or None. Fail-open by contract."""
+    if name in _TOOL_CACHE:
+        return _TOOL_CACHE[name]
+    mod = None
+    try:
+        import importlib.util
+        here = Path(__file__).resolve()
+        for path in (here.parents[3] / "tools" / f"{name}.py",
+                     Path.home() / ".claude" / "skills" / "claude-power-pack" / "tools"
+                     / f"{name}.py"):
+            if not path.is_file():
+                continue
+            tools_dir = str(path.parent)
+            if tools_dir not in sys.path:
+                sys.path.insert(0, tools_dir)
+            spec = importlib.util.spec_from_file_location(f"_ctxwd_{name}", path)
+            if spec is None or spec.loader is None:
+                continue
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            break
+    except Exception:
+        mod = None
+    _TOOL_CACHE[name] = mod
+    return mod
+
+
+def _ledger(session_id: str, event: str, **fields) -> None:
+    lr = _load_tool("gsd_long_run")
+    if lr is not None:
+        lr.ledger_append(session_id, event, **fields)
 
 
 def _resume_clause(marker) -> str:
@@ -431,7 +457,85 @@ def _resume_dispatch_message(marker) -> str:
     )
 
 
-def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str):
+def _ram_note(free_mb, session_id: str) -> str:
+    """Gap 12: a resume on a starved host is what tips it into the hang."""
+    return (
+        f" HOST MEMORY IS LOW ({free_mb:.0f} MB free). BEFORE the trailing line, run "
+        "in the foreground: `python "
+        f"{Path.home() / '.claude' / 'skills' / 'claude-power-pack' / 'tools' / 'gsd_long_run.py'}"
+        f" wait-ram --timeout 600 --session {session_id}`. If it prints RAM TIMEOUT, "
+        "do NOT emit the line: say so to the Owner and stop."
+    )
+
+
+def _halt_message(marker, reason: str) -> str:
+    """Gaps 7 + 11: the run ends here, deliberately, and says why."""
+    return (
+        "AUTONOMOUS RUN HALTED by the resume gate — "
+        f"{reason}. The marker for `{(marker or {}).get('resume_command')}` has "
+        "been cleared, so nothing will re-issue the run. Do NOT re-issue it. "
+        "Summarise where the run stopped (last phase finished, what is next) for "
+        "the Owner and end the turn."
+    )
+
+
+def _request_resume(session_id: str, marker: dict) -> dict:
+    """Stop A of a resume cycle: gate it (budget, mission), then ask for the line.
+
+    A halt clears the marker AND sets DONE, so neither this cycle nor any later
+    tier-2 crossing can re-issue a run the gate stopped. If the gate module
+    cannot be loaded the resume proceeds exactly as before v2 (fail-open), and
+    the absence of ledger rows is what shows it.
+    """
+    lr = _load_tool("gsd_long_run")
+    gate = {"halt": False, "reason": "gate unavailable"}
+    if lr is not None:
+        try:
+            gate = lr.resume_gate(marker)
+        except Exception as exc:
+            gate = {"halt": False, "reason": f"gate error {exc.__class__.__name__}"}
+    if gate.get("halt"):
+        _set_flag(session_id, RESUME_DONE_FLAG)
+        mk = _load_tool("gsd_autorun_marker")
+        if mk is not None:
+            mk.clear_marker(session_id)
+        _ledger(session_id, "halted", kind=gate.get("kind"), reason=gate.get("reason"))
+        return {"decision": "block", "reason": _halt_message(marker, gate.get("reason", ""))}
+
+    _set_flag(session_id, RESUME_ARMED_FLAG)
+    mk = _load_tool("gsd_autorun_marker")
+    cycles = mk.bump_cycles(session_id) if mk is not None else None
+    free = lr.free_ram_mb() if lr is not None else None
+    low = free is not None and lr is not None and free < lr.RAM_FLOOR_MB
+    _ledger(session_id, "resume_requested", cycles=cycles,
+            free_mb=None if free is None else round(free), ram_low=low,
+            gate=gate.get("reason"))
+    reason = _resume_dispatch_message(marker)
+    if low:
+        reason += _ram_note(free, session_id)
+    return {"decision": "block", "reason": reason}
+
+
+def _confirm_resume(session_id: str, event: dict) -> None:
+    """Record resume_confirmed once the transcript shows the command submitted."""
+    try:
+        marker = _read_autorun_marker(session_id)
+        lr = _load_tool("gsd_long_run")
+        transcript = event.get("transcript_path") or ""
+        if not marker or lr is None or not transcript:
+            return
+        done = Path(tempfile.gettempdir()) / RESUME_DONE_FLAG.format(session_id=session_id)
+        since = done.stat().st_mtime - 5
+        if lr.user_issued_command_since(Path(transcript), marker.get("resume_command"), since):
+            _set_flag(session_id, RESUME_CONFIRMED_FLAG)
+            _ledger(session_id, "resume_confirmed", command=marker.get("resume_command"))
+    except Exception:
+        pass
+
+
+def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str,
+                        transcript: str = "", expect_line: str | None = None,
+                        expect_prefix: str | None = None):
     """Drop the SendKeys-daemon trigger flag (Owner 1c, zero-keystroke).
     The detached PS daemon polls ~/.claude/hooks/auto-compact-trigger.flag
     and, when Cursor is focused, sends Enter to dispatch the slash command
@@ -448,10 +552,19 @@ def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str):
         flag_dir.mkdir(parents=True, exist_ok=True)
         safe_sid = re.sub(r"[^A-Za-z0-9-]", "", str(session_id or ""))[:64] or "unknown"
         flag = flag_dir / f"auto-compact-trigger-{safe_sid}.flag"
-        payload = json.dumps({
-            "ts": now_iso, "session_id": session_id,
-            "used_pct": used_pct, "cwd": cwd,
-        })
+        body = {"ts": now_iso, "session_id": session_id,
+                "used_pct": used_pct, "cwd": cwd}
+        # Gap 3 (spec gsd-long-run-v2.md): the daemon presses Enter only when
+        # the transcript's last assistant line is what this flag expects, so a
+        # sentence added after the command -- or a half-typed prompt -- is
+        # never what gets submitted.
+        if transcript and (expect_line or expect_prefix):
+            body["transcript"] = transcript
+            if expect_line:
+                body["expect_line"] = expect_line
+            if expect_prefix:
+                body["expect_prefix"] = expect_prefix
+        payload = json.dumps(body)
         atomic_write.atomic_write_bytes(flag, (payload + "\n").encode("utf-8"))
         return str(flag)
     except Exception:
@@ -698,6 +811,14 @@ def _run_inner(event: dict) -> dict:
     # definition under that floor, so a rearm placed after it could never fire
     # and tier 2 would stay debounced for the rest of the session, which is
     # exactly the single-cycle behaviour this closes.
+    # Gap 1 (spec gsd-long-run-v2.md): an Enter that was pressed is not a
+    # resume that happened. Confirm it from the transcript, once per cycle.
+    # Placed before every early return: the resumed turn's Stop may land at
+    # any context level.
+    if _flag_exists(session_id, RESUME_DONE_FLAG) \
+            and not _flag_exists(session_id, RESUME_CONFIRMED_FLAG):
+        _confirm_resume(session_id, event)
+
     if used_pct < THRESHOLD_REARM_PCT:
         _clear_flag(session_id, ADVISORY_FLAG)
 
@@ -709,9 +830,7 @@ def _run_inner(event: dict) -> dict:
             marker = _read_autorun_marker(session_id)
             if marker:
                 if not _flag_exists(session_id, RESUME_ARMED_FLAG):
-                    _set_flag(session_id, RESUME_ARMED_FLAG)
-                    return {"decision": "block",
-                            "reason": _resume_dispatch_message(marker)}
+                    return _request_resume(session_id, marker)
                 # The turn that carried the line has ended: dispatch Enter onto
                 # it. Marked done FIRST -- a failure past this point must not
                 # leave the branch re-entrant, or every later Stop presses Enter
@@ -719,8 +838,12 @@ def _run_inner(event: dict) -> dict:
                 _set_flag(session_id, RESUME_DONE_FLAG)
                 try:
                     _write_trigger_flag(_import_atomic_write(), session_id,
-                                        used_pct, event.get("cwd") or os.getcwd())
+                                        used_pct, event.get("cwd") or os.getcwd(),
+                                        transcript=event.get("transcript_path") or "",
+                                        expect_line=marker.get("resume_command"))
                     _spawn_daemon()
+                    _ledger(session_id, "resume_dispatched",
+                            command=marker.get("resume_command"))
                 except Exception:
                     pass
                 return {}
@@ -754,8 +877,14 @@ def _run_inner(event: dict) -> dict:
             # run resumes once and every later crossing leaves it stranded.
             _clear_flag(session_id, RESUME_ARMED_FLAG)
             _clear_flag(session_id, RESUME_DONE_FLAG)
+            _clear_flag(session_id, RESUME_CONFIRMED_FLAG)
         except Exception:
             pass
+
+        crossing_marker = _read_autorun_marker(session_id)
+        if crossing_marker:
+            _ledger(session_id, "crossing", used_pct=used_pct,
+                    cycles=crossing_marker.get("cycles"))
 
         # 1. Save vault BEFORE compact (Owner 2a: save then free).
         kclear_paths = _kclear_equivalent(atomic_write, session_id, used_pct,
@@ -763,8 +892,12 @@ def _run_inner(event: dict) -> dict:
         # 2. Empirical-evidence telemetry (Owner DONE-gate 6a).
         tel_path = _dump_telemetry(atomic_write, session_id, used_pct, cwd,
                                    transcript_path, kclear_paths)
-        # 3. SendKeys-daemon trigger flag (Owner 1c, zero-keystroke).
-        flag_path = _write_trigger_flag(atomic_write, session_id, used_pct, cwd)
+        # 3. SendKeys-daemon trigger flag (Owner 1c, zero-keystroke). The
+        #    daemon waits until the transcript's last line starts with
+        #    /compact, so Enter lands on the compact line and nothing else.
+        flag_path = _write_trigger_flag(atomic_write, session_id, used_pct, cwd,
+                                        transcript=transcript_path,
+                                        expect_prefix="/compact")
         # 4. Spawn the daemon immediately (belt+suspenders alongside the
         #    separate Stop-launcher hook). Detached, single-flight on the
         #    daemon side; harmless if a previous one is still running.
@@ -786,7 +919,8 @@ def _run_inner(event: dict) -> dict:
             f"SendKeys-daemon trigger flag DROPPED at {flag_path} — if Cursor "
             "is the focused window the daemon will press Enter for you "
             "(ZERO-keystroke); if it is not, the daemon promotes the flag to "
-            "auto-compact-pending.flag and the dispatch is honest 1-keystroke. "
+            "auto-compact-pending-<session>.flag and the dispatch is honest "
+            "1-keystroke. "
             "End your next response with a SINGLE trailing line — exactly "
             "`/compact focus on <5-12 word current-task summary>` — no preface, "
             "no markdown. Per BL-0003 the model itself cannot auto-dispatch the "

@@ -34,6 +34,10 @@ WATCHDOG = ROOT / "modules" / "zero-crash" / "hooks" / "context-watchdog.py"
 MARKER_TOOL = ROOT / "tools" / "gsd_autorun_marker.py"
 CONFIG_TOOL = ROOT / "tools" / "gsd_long_run_config.py"
 
+# Ledger rows and config backups (spec gsd-long-run-v2.md) go to a throwaway
+# dir: this suite must not write test sessions into the Owner's real ledger.
+os.environ["GSD_LONG_RUN_STATE_DIR"] = tempfile.mkdtemp(prefix="gsdac-state-")
+
 # PROBE POINTS ARE ABSOLUTE, DELIBERATELY. The first version of this gate
 # computed them as THRESHOLD_REARM_PCT +/- n, so moving the constant moved the
 # probes with it: a mutation of the floor to 0 still scored 10/10. A gate that
@@ -173,8 +177,9 @@ def gate_marker(mk) -> None:
             _fail("V-GSDAC-MARKER-ROUNDTRIP", f"round-trip returned {data!r}")
 
         raw = json.loads(Path(path).read_text(encoding="utf-8"))
-        if raw.get("phase") == 3 and raw.get("schema_version") == 1:
-            _ok("V-GSDAC-MARKER-SHAPE", "phase and schema_version persisted")
+        if raw.get("phase") == 3 and raw.get("schema_version") == 2 \
+                and raw.get("cycles") == 0 and raw.get("armed_at"):
+            _ok("V-GSDAC-MARKER-SHAPE", "phase, schema_version 2, cycles=0, armed_at persisted")
         else:
             _fail("V-GSDAC-MARKER-SHAPE", f"unexpected payload {raw!r}")
 

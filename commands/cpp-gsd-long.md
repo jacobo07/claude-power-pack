@@ -6,7 +6,8 @@ argument-hint: "[--from <phase>] [--restore]"
 
 # /cpp-gsd-long — unattended multi-cycle autonomous run
 
-Spec: `vault/specs/gsd-autonomous-autocompact.md`.
+Specs: `vault/specs/gsd-autonomous-autocompact.md` (v1),
+`vault/specs/autocompact-per-session-flags.md`, `vault/specs/gsd-long-run-v2.md` (v2).
 
 A plain `/gsd-autonomous` halts at the first context wall: GSD says "wrap up"
 at 35% remaining and "stop immediately" at 25%, while the Power Pack watchdog
@@ -17,17 +18,22 @@ events so a run can cross the wall and keep going.
 
 1. **Retunes GSD's fire-points** (gap A) so they sit below the compaction
    point instead of above it. The warnings stay on as a last-resort floor.
-2. **Drops the autorun marker** (gap C, partial) — the record that says a run
-   is in flight and which command re-enters it. `context-watchdog.py` reads it
-   and appends "do NOT stop; re-issue this command after compacting" to the
-   tier-2 message, replacing GSD's "wrap up".
+   The previous values are parked in `~/.claude/state/gsd-long-run-backups/`,
+   not in `config.json` (gsd-tools warns on unknown keys).
+2. **Drops the autorun marker** (gap C) — the record that says a run is in
+   flight, which command re-enters it, and its **budget**. `context-watchdog.py`
+   reads it and appends "do NOT stop; re-issue this command after compacting"
+   to the tier-2 message, replacing GSD's "wrap up".
 3. **Starts the run.**
 
 Tier-2 rearm (gap B) needs no setup: the watchdog clears its own debounce
-whenever the context drops below 45% used, so every crossing fires, not just
-the first.
+whenever the context drops below 45% used, so every crossing fires.
 
 ## Steps
+
+**Open the session IN the project you want to run.** The resumed command
+executes in the session's own directory; `--cwd` cannot move it, and arming
+refuses when the two differ.
 
 Run each from the project root, in order.
 
@@ -39,38 +45,77 @@ $pp = 'C:\Users\User\.claude\skills\claude-power-pack'
 & $py "$pp\tools\gsd_long_run_config.py" --apply --project .
 
 # 2. Record the run. Use the bare command, not --from N: it re-enters at the
-#    first incomplete phase, so it stays correct as phases complete, while a
-#    pinned N goes stale the moment phase N finishes.
+#    first incomplete phase, so it stays correct as phases complete.
 #    --mission is REQUIRED: 3-8 distinctive terms of the Owner-approved mission.
-#    Arming is refused unless a majority appear in the ACTIVE .planning/STATE.md +
-#    ROADMAP.md (tools/gsd_mission_freshness.py). Exit 2 = do not start the run.
+#    --max-cycles / --max-hours are the budget (defaults 12 resumes / 24 h).
 & $py "$pp\tools\gsd_autorun_marker.py" --write `
       --session $env:CLAUDE_CODE_SESSION_ID --command "/gsd-autonomous" --cwd . `
-      --mission "<term1>,<term2>,<term3>"
+      --mission "<term1>,<term2>,<term3>" --max-cycles 12 --max-hours 24
 ```
 
-**If step 2 prints `REFUSED: mission freshness STALE`, stop.** The active milestone
-describes a different mission than the one you were asked to run — a mechanically
-sound runner would execute the wrong roadmap. Seed the right milestone with
-`/gsd-new-milestone` (it archives the old phases rather than deleting them), then
-retry. Do not weaken the term list until it passes: generic nouns (`slot`, `menu`,
-`ui`) are exactly what let a stale roadmap through on the subject this gate was
-built from.
+Step 2 exits 2 with `REFUSED: <reason>` and arms nothing when:
+
+| refusal | meaning | fix |
+|---|---|---|
+| `mission freshness STALE` | the active milestone describes another mission | `/gsd-new-milestone` for the right one; never weaken the terms |
+| `this session runs in X but --cwd is Y` | the session was opened in another project | open the session in Y |
+| `GSD parses 0 phases` | ROADMAP.md headings are not GSD phases (e.g. `W0…W8`) | restructure as GSD phases |
+| `could not ask GSD` | gsd-tools/node unavailable — not the same as 0 phases | fix the GSD install |
+| `nothing to run` | every phase is already complete | nothing to do |
+| `resume command must start with '/'` | free text cannot be re-issued | use a slash command |
 
 Then invoke `/gsd-autonomous` (add `--from <phase>` only when the caller asked
 to start somewhere specific — the marker still holds the bare form).
 
-The variable is `CLAUDE_CODE_SESSION_ID`. Verified 2026-09-15: it holds this
-session's id, while `CLAUDE_SESSION_ID` — the name that reads as the obvious
-one — is empty, so a marker written with it lands under an invalid id and the
-watchdog silently never finds it.
+The variable is `CLAUDE_CODE_SESSION_ID` (`CLAUDE_SESSION_ID` is empty). Never
+fall back to "the newest `%TEMP%\claude-ctx-*.json`" — it can belong to another
+pane. If the variable is empty, stop and establish the id.
 
-**Do not fall back to "the newest `%TEMP%\claude-ctx-*.json`".** Measured on
-this host: the newest of those belonged to a different pane, so that fallback
-marks somebody else's session as running your autonomous job. If the variable
-is empty, stop and establish the id — there is no safe guess with panes open.
+## What happens at each compaction
+
+- **Crossing** (70% used): checkpoint, `/compact` line requested, ledger `crossing`.
+- **Resume gate** (after the compaction): the run **halts** — marker cleared,
+  ledger `halted`, the agent told to summarise and stop — when the budget is
+  spent or the mission re-check is no longer FRESH. Otherwise the resume line
+  is requested (ledger `resume_requested`, cycle counted). Under 1500 MB free
+  RAM the agent first runs `gsd_long_run.py wait-ram` (bounded, 10 min).
+- **Dispatch**: the daemon presses Enter only when the transcript's last
+  assistant line is exactly the resume command (or starts with `/compact`);
+  a line still wrong after 180 s is **refused**, never submitted.
+- **Confirmation**: the watchdog records `resume_confirmed` when the transcript
+  shows the command actually submitted.
+
+## Is it working?
+
+```powershell
+& $py "$pp\tools\gsd_long_run.py" status                 # every armed run
+& $py "$pp\tools\gsd_long_run.py" report --session <sid> # one run's verdict
+```
+
+`report` derives the verdict from `~/.claude/state/gsd-autorun-ledger.jsonl`:
+**PROVEN** = at least 2 crossings, each followed by a confirmed resume ·
+PARTIAL · UNPROVEN · NO_CROSSINGS.
+
+## Sweep (every 5 minutes)
+
+Task `PP-GsdLongRun-Sweep` (wscript + `tools/hidden_launch.vbs`, no window)
+runs `tools/gsd_long_run_sweep.ps1` → `gsd_long_run.py sweep`:
+
+- respawns the daemon when flags wait and no daemon is alive;
+- **recovers** a run idle ≥ 20 min whose transcript ends on its resume line
+  (or a `/compact` line) with nothing waiting: re-drops a validated flag;
+- records other idle runs as `stalled` (once per transcript state);
+- **finishes** runs whose milestone is complete and **reaps** markers whose
+  transcript is gone or idle 48 h, then restores that project's config when
+  no other marker uses it.
+
+Actions are logged to `~/.claude/state/gsd-long-run-sweep.log` only when
+something happened. Remove with
+`Unregister-ScheduledTask -TaskName PP-GsdLongRun-Sweep -Confirm:$false`.
 
 ## When the run ends
+
+The sweep cleans up on its own. To end a run by hand:
 
 ```powershell
 & $py "$pp\tools\gsd_autorun_marker.py" --clear --session $env:CLAUDE_CODE_SESSION_ID
@@ -78,41 +123,29 @@ is empty, stop and establish the id — there is no safe guess with panes open.
 ```
 
 `--restore` puts back exactly what the project had, including keys that were
-absent before. Leaving the marker in place is not harmful but it will keep
-telling future compactions in this session to re-issue the run.
+absent before. `/cpp-gsd-long --restore` performs only this cleanup block.
 
-`/cpp-gsd-long --restore` performs only this cleanup block.
+## Limits that remain
 
-## What this does NOT do
+**Keystrokes.** Resumes still go through Enter, only while Cursor is the
+foreground window. Each session drops its own flag and the daemon routes by
+window title (`<project> - Cursor`): a flag is sent only while its own
+project's window is in front; with no window for its project it goes to the
+focused Cursor window; at most one Enter per window until focus leaves and
+returns. **Run each long run in its own Cursor window** — two runs in one
+window (two terminal tabs) cannot be told apart.
 
-**It is keystroke-free, and that has one real limit.** After each compaction
-the agent emits the resume command as its trailing line and the existing Enter
-daemon submits it — no text is ever typed, only Enter, and only while Cursor
-is the foreground window.
+**Headless resume is deliberately not used.** `claude -p --resume <sid>` would
+be a second process appending to the transcript the open pane owns — two
+writers on one log with no lock.
 
-That foreground check is a guard, not a guarantee. If you switch to a
-different Cursor pane inside the dispatch window, the Enter lands in that
-pane. It is the same accepted limit the `/compact` dispatch has carried since
-2026-05-20; this adds a second point where it applies, not a new kind of risk.
-
-If the daemon finds Cursor is not in front it demotes the flag to
-`auto-compact-pending-<session>.flag` and waits, so a resume can arrive late
-rather than never.
-
-**Two runs at once (since 2026-09-18).** Each session drops its own
-`auto-compact-trigger-<session>.flag`, so a second concurrent compaction is never
-discarded. The daemon routes by window title (`<project> - Cursor`): a flag is
-sent only while its own project's window is in front; if its project has no
-Cursor window open it is sent to whichever Cursor window is focused (the old
-behaviour). At most one Enter per window until focus leaves it and returns.
-Run each long run in **its own Cursor window**: two runs in one window (two
-terminal tabs) cannot be told apart, so one waits for a refocus.
-Spec `vault/specs/autocompact-per-session-flags.md`, gate
-`tools/test_autocompact_per_session.py`.
+**Live proof** of a multi-compaction run is produced by `report` on the next
+real run; tests never dispatch a real compaction.
 
 ## Done-gate
 
-`python tools/test_gsd_autocompact.py` — 19 V-GSDAC-* gates. The live
-end-to-end crossing (two consecutive compactions, run continuing at phase N+1)
-is Owner-run and is not claimable from that suite: driving tier 2 in a test
-would dispatch a real compaction into the running session.
+```
+python tools/test_gsd_autocompact.py        # V-GSDAC-*  (v1 loop)
+python tools/test_autocompact_per_session.py # V-ACPS-*   (daemon routing + expect-line)
+python tools/test_gsd_long_run.py            # V-GSDLR-*  (v2: preflight, gates, sweep, report)
+```
