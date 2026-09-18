@@ -41,6 +41,10 @@ const { spawnSync, spawn } = require('child_process');
 const HOME = os.homedir();
 const LOG_DIR = path.join(HOME, '.claude', 'logs');
 const ERROR_LOG = path.join(LOG_DIR, 'hook-dispatcher-errors.log');
+// NO-EVENT receipts (incident 2026-09-16/18). Honours CLAUDE_STATE_DIR so an
+// isolated replay cannot write into the production state root.
+const STATE_DIR = process.env.CLAUDE_STATE_DIR || path.join(HOME, '.claude', 'state');
+const NO_EVENT_LOG = path.join(STATE_DIR, 'dispatcher-no-event.jsonl');
 
 // --- Event registry ---
 // Add new bundles as more hooks get refactored to export `run()`.
@@ -965,6 +969,51 @@ function parseArgs() {
   return null;
 }
 
+// --- NO-EVENT recovery (incident 2026-09-16 20:02 -> 2026-09-18 13:55) --------
+// An ad-hoc exec-form rewrite of settings.json kept `args: [dispatcher.js]` and
+// dropped `--event=<chain>` from all six registrations. The old no-event branch
+// printed `{}` and exited 0, which the harness reads as "every hook passed": the
+// secret firewall, bash guard, Stop chain and UserPromptSubmit chain were off for
+// ~42 h and nothing said so. Missing routing identity is a CONFIGURATION FAILURE,
+// never valid silence.
+//
+// The payload carries enough to recover the route: each registration below owns a
+// disjoint matcher, so (hook_event_name, tool_name) selects exactly one of them.
+// This table MUST mirror settings.json; tools/test_hook_registration_integrity.py
+// asserts they agree, so a new registration cannot drift from it unnoticed.
+const NO_EVENT_ROUTES = [
+  { hook: 'PreToolUse', tools: ['Bash', 'PowerShell'], chain: 'PreToolUse-Bash-chain' },
+  { hook: 'PreToolUse', tools: ['Write', 'Edit', 'MultiEdit', 'NotebookEdit'], chain: 'PreToolUse-Edit-chain' },
+  { hook: 'PreToolUse', tools: ['Read', 'Grep'], chain: 'PreToolUse-Read-chain' },
+  { hook: 'PostToolUse', tools: null, chain: 'PostToolUse-default' },
+  { hook: 'Stop', tools: null, chain: 'Stop-chain' },
+  { hook: 'UserPromptSubmit', tools: null, chain: 'UserPromptSubmit-chain' },
+];
+
+function deriveEventFromPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  const hook = payload.hook_event_name;
+  const tool = payload.tool_name;
+  const hits = NO_EVENT_ROUTES.filter(r => r.hook === hook && (r.tools === null || r.tools.includes(tool)));
+  return hits.length === 1 ? hits[0].chain : null;
+}
+
+function recordNoEvent(rec) {
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.appendFileSync(NO_EVENT_LOG, JSON.stringify(rec) + '\n');
+  } catch (_) { /* a receipt failure must not change the verdict */ }
+}
+
+function noEventWarning(derived) {
+  return 'POWER PACK CONFIG INVALID: hook-dispatcher was invoked WITHOUT --event= '
+    + '(settings.json registration lost its routing identity). '
+    + (derived
+      ? `Recovered chain '${derived}' from the payload so its gates still ran. `
+      : 'No chain could be derived; NO Power Pack hooks ran for this event. ')
+    + 'Repair: python ~/.claude/skills/claude-power-pack/tools/test_hook_registration_integrity.py --live';
+}
+
 function loadHook(relativePath) {
   try {
     return require(path.join(__dirname, relativePath));
@@ -1207,15 +1256,41 @@ function readStdin(timeoutMs) {
 // failure mode is SILENT AND FAIL-OPEN -- a false return runs the full chain,
 // which is exactly what a working filter looks like from the outside on a
 // starved host, so only a direct assertion on the predicate can tell them apart.
-module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget };
+module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurface, runChain, isScratchTarget,
+  deriveEventFromPayload, NO_EVENT_ROUTES, CHAIN_NAMES: Object.keys(CHAIN_MAP), EVENT_NAMES: Object.keys(EVENT_MAP) };
 
 // --- Main (CLI path only — skipped when required as a module) ---
 if (require.main === module) (async () => {
-  const event = parseArgs();
+  let event = parseArgs();
+  let preRaw = null;          // stdin already consumed by the no-event path
+  let noEventMsg = null;      // loud warning merged into this invocation's output
+
+  if (!event) {
+    // Read stdin FIRST: exiting without draining it can wedge the harness's
+    // payload write once it exceeds the pipe buffer (the Orca claude-hook shape).
+    preRaw = await readStdin(3000);
+    let p = null;
+    try { p = JSON.parse(preRaw || '{}'); } catch (_) { /* p stays null */ }
+    const derived = deriveEventFromPayload(p);
+    recordNoEvent({
+      ts: new Date().toISOString(), pid: process.pid, ppid: process.ppid,
+      argv: process.argv.slice(2).map(a => (a.length > 120 ? a.slice(0, 120) + '...' : a)),
+      hook_event_name: p && p.hook_event_name, tool_name: p && p.tool_name,
+      session_id: p && p.session_id, derived,
+    });
+    noEventMsg = noEventWarning(derived);
+    try { process.stderr.write(noEventMsg + '\n'); } catch (_) { /* best effort */ }
+    if (!derived || !CHAIN_MAP[derived] && !EVENT_MAP[derived]) {
+      // CONFIG_INVALID, not VALID_SILENCE. Exit 1 = a visible non-blocking
+      // hook error on every event family; exit 2 would block/loop.
+      process.exit(1);
+    }
+    event = derived;
+  }
 
   // --- Child-process chain path (Stop event — fork-storm-safe) ---
   if (event && CHAIN_MAP[event]) {
-    const rawIn = await readStdin(3000);
+    const rawIn = preRaw !== null ? preRaw : await readStdin(3000);
     const { outputs, blocked, blockStderr } = await runChain(event, CHAIN_MAP[event], rawIn || '');
     // COMPANION IN-PROCESS BUNDLE (2026-06-04): a "<fam>-chain" event ALSO runs
     // its "<fam>-default" EVENT_MAP bundle IN-PROCESS (require, ~0 extra spawn)
@@ -1234,6 +1309,9 @@ if (require.main === module) (async () => {
       }
     }
     const merged = mergeOutputs(outputs, event);
+    if (noEventMsg) {
+      merged.systemMessage = merged.systemMessage ? noEventMsg + '\n\n' + merged.systemMessage : noEventMsg;
+    }
     if (blocked) {
       const fam = familyOf(event);
       if (fam === 'PreToolUse') {
@@ -1275,12 +1353,17 @@ if (require.main === module) (async () => {
   const bundle = event ? EVENT_MAP[event] : null;
 
   if (!event || !bundle) {
-    // Unknown event — emit empty payload, do not block tool use.
-    process.stdout.write('{}');
-    process.exit(0);
+    // Unknown --event= name: a registration pointing at a chain that does not
+    // exist is CONFIG_INVALID too. Drain stdin, leave a receipt, fail visibly
+    // (exit 1 = non-blocking error) instead of a success-shaped `{}`.
+    if (preRaw === null) await readStdin(3000);
+    recordNoEvent({ ts: new Date().toISOString(), pid: process.pid, ppid: process.ppid,
+      argv: process.argv.slice(2), unknown_event: event });
+    try { process.stderr.write(`POWER PACK CONFIG INVALID: hook-dispatcher has no chain named '${event}'.\n`); } catch (_) { /* best effort */ }
+    process.exit(1);
   }
 
-  const raw = await readStdin(3000);
+  const raw = preRaw !== null ? preRaw : await readStdin(3000);
   let data = {};
   try { data = JSON.parse(raw || '{}'); } catch (_) { /* keep empty */ }
 
@@ -1293,6 +1376,9 @@ if (require.main === module) (async () => {
   }
 
   const merged = mergeOutputs(outputs, event);
+  if (noEventMsg) {
+    merged.systemMessage = merged.systemMessage ? noEventMsg + '\n\n' + merged.systemMessage : noEventMsg;
+  }
   const safe = sanitizeForSchema(merged, familyOf(event));
   try {
     process.stdout.write(JSON.stringify(safe));
