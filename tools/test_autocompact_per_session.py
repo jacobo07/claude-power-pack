@@ -267,6 +267,32 @@ def main() -> int:
     sent, _, _, _ = run_daemon(d, *win, extra_env={"AC_DAEMON_REFUSE_AFTER": "600"})
     check("V-ACPS-X-EXACT-NOT-PREFIX", sent == [], f"sent={sent}")
 
+    # --- the validated line is TYPED, not assumed to be in the input box -----
+    # 2026-09-18, session fa6961b6: a bare Enter reached an empty prompt box and
+    # the resume never ran; the Owner had to type it by hand.
+    d = fresh()
+    tr = transcript(d, "Research still running.\n/gsd-autonomous --from 10.1")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_line="/gsd-autonomous --from 10.1")
+    sent, text, _, _ = run_daemon(d, *win)
+    check("V-ACPS-X-TYPES-LINE",
+          sent == ["auto-compact-trigger-sx.flag"] and "typed=[/gsd-autonomous --from 10.1]" in text,
+          f"sent={sent} log={text[-220:]!r}")
+
+    d = fresh()
+    tr = transcript(d, "/compact focus on port (a+b) {x}")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_prefix="/compact")
+    sent, text, _, _ = run_daemon(d, *win)
+    check("V-ACPS-X-TYPES-ESCAPED",
+          "keys=[/compact focus on port {(}a{+}b{)} {{}x{}}~]" in text,
+          f"log={text[-220:]!r}")
+
+    d = fresh()
+    write_flag(d, "auto-compact-trigger-s1.flag", r"C:\p\ProjA")
+    sent, text, _, _ = run_daemon(d, *win)
+    check("V-ACPS-X-NOCHECK-BARE-ENTER",
+          sent == ["auto-compact-trigger-s1.flag"] and "typed=[]" in text,
+          f"sent={sent} log={text[-160:]!r}")
+
     total = passes + fails
     print(f"ACPS_PASS={passes}/{total}  threshold={total}/{total}")
     return 0 if fails == 0 else 1
