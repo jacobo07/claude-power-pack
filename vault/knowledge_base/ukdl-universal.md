@@ -130,6 +130,75 @@ signal-0 probe is not portable, and a wrong guess puts two writers on one
 resource. Correct default plus a documented escape hatch beats a clever check
 that is right most of the time.
 
+## Hook Registration Identity (incident 2026-09-16 20:02 -> 2026-09-18 13:55)
+
+Full account: `vault/incidents/2026-09-16-hook-registration-identity-loss.md`.
+
+### HR-ROUTING-IDENTITY-IS-NEVER-SILENCE-001
+
+TRIGGER: any router/dispatcher that selects work from an identity it is handed
+(an `--event=` arg, a route key, a queue name, a message type).
+ACCION: a missing or unknown identity is CONFIG_INVALID, answered loudly and
+distinguishably from a clean run: drain the input, leave a receipt, surface the
+failure. Where the payload can re-derive the route unambiguously, run it AND warn.
+Never return the success shape (`{}`, empty list, exit 0) for "I do not know what
+to run".
+ORIGEN: `hook-dispatcher.js` answered six registrations that had lost `--event=`
+with `{}` / exit 0 for ~42 h; the host read it as every gate passing, including
+HR-SECRET-001. Fixed `9b536df`; mutant restoring `{}` fails exactly two drills.
+
+### HR-CONFIG-REWRITE-PRESERVES-ARGV-001
+
+TRIGGER: any script, tool or agent that rewrites `~/.claude/settings.json` (or any
+config that feeds a process argv).
+ACCION: backup, then prove round-trip preservation BEFORE the write: every entry's
+`[command] + args` is unchanged except the entries you intended to change, and those
+equal their intended value. Write by compare-and-swap (temp + re-read + replace), and
+run `tools/test_hook_registration_integrity.py --live` after. "Parses" and "counts
+match" are not preservation checks. Never restore a whole old snapshot: semantic-diff
+current vs known-good and change only the lost fields.
+ORIGEN: an exec-form migration regex kept the `.js` path and dropped every argument
+after it (8 args, all six routing identities); its verification checked parse,
+per-event counts and Orca refs -- all true.
+
+### PR-MONITOR-OUTSIDE-THE-SUBSTRATE-001
+
+A health check that runs as a hook cannot report that hooks stopped running. Put
+the substrate's own integrity check where it does not depend on the substrate --
+the launcher, before the session reads its config -- and make it detect-only when
+the repair needs a known-good source and live concurrent writers exist
+(`kclaude.ps1` -> `test_hook_registration_integrity.py --live-only`).
+
+### PR-PROVE-THE-STIMULUS-REACHED-THE-GATE-001
+
+A fresh-session security probe whose model refuses before calling the tool proves
+nothing about the gate: the file-not-created outcome is identical either way. Choose
+a stimulus the model will execute and that only the gate can deny, and assert the
+gate's own wording in the result (canary 1 fake-secret Write: model refused =
+INCONCLUSIVE; canary 2 git-via-Bash: dispatcher deny prefix quoted = PASS).
+
+### T-LIVE-LOG-IS-NOT-LIVE-PRODUCER-001
+
+A log that keeps moving says nothing about its producer when tests write to the same
+file. ~150 synthetic rows (`gsdac-*`, `gsdlr-*`) kept `context-watchdog.log` alive
+while zero real sessions ran the Stop chain. Census the log by session id before
+reading motion as liveness.
+
+### T-CLAUDE-STATE-DIR-IS-NOT-AN-ISOLATION-CONTRACT-001
+
+Only the dispatcher reads `CLAUDE_STATE_DIR`; the hooks resolve state through
+`os.homedir()`/`Path.home()` (USERPROFILE) or `HOME`. A replay that sets only that
+variable writes production state. Isolate by overriding BOTH `HOME` and
+`USERPROFILE`, and prove it: `tools/test_hook_replay_isolation.py`.
+
+### T-HOOKS-RELOAD-LIVE-ON-CURRENT-BUILD-001
+
+Claude Code (2026-09) picks up edited hook registrations in running sessions: a pane
+started on the broken config received chain output after the repair, and the GSD X
+heartbeat resumed from pre-repair sessions 48 s after it. The 2026-04 "read once at
+session start" observation described an older build. Consequence both ways: a bad
+edit darkens every live session at once; a repair heals them without restarts.
+
 ## Single-Source Interrogation (SPEC-KACQ-005, sealed 2026-08-26)
 
 Distilled from classifying 38 answers from one authenticated expert system.

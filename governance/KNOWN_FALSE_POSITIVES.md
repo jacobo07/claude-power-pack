@@ -87,6 +87,21 @@
   `Failed to resolve 'rg' via PATH` notice while doing so. Observed 2026-08-27; the
   warning had been read as gap G1 of a three-gap remediation brief.
 
+## FP-CEPS-MUTATION-ECHO — CEPS "regression captured" from a mutation drill or its own echo
+- What it really is: the PostToolUse CEPS capture (`[Woz] [pp-ceps-analyst] regression
+  failure captured`) matches failure words in ANY tool output. Two shapes produce records
+  that describe no regression: (1) a deliberate mutation drill, whose whole point is that
+  the mutant FAILS (`ceps_91bd58c83335b24d`, "1 failed"); (2) output that merely quotes an
+  earlier CEPS line containing "FAILED" -- the tail of `ukdl-universal.md`, where CEPS
+  appends -- so the capture feeds on its own echo (`ceps_5d28a90f4498a814`).
+- Symptom: a "regression failure captured" advisory right after a mutation run, or right
+  after reading/printing the UKDL tail; the same `ceps_…` id then accumulates recurrence.
+- Measured 2026-09-18 (Power Pack, hook-registration incident session).
+- Response (≤2 min): check whether the "failure" is the mutant's intended red or quoted
+  text. If so, ignore the record and name the id in the session's report; do not add a
+  "fix" for it. Do not print the UKDL tail to a tool result when a Read of a line range
+  would do.
+
 ## How to add a new entry
 What it really is (the true cause) + Symptom (how it surfaces) + Response (what to do,
 always bounded to ≤2 minutes).
