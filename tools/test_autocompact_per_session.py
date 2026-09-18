@@ -385,6 +385,104 @@ def main() -> int:
           and not (d / "inbox" / "sx.req.json").exists(),
           f"log={text[-200:]!r}")
 
+    # --- the staleness budget vs. the latency it races (measured 2026-09-19) ----
+    # A crossing on session 37cfb187 was answered by the real extension in 50 ms
+    # with `deferred/status-busy` and then refused `expired` 60.3 s later: the
+    # session stays busy until its turn ends, and that turn ends by running an
+    # 11-hook Stop chain whose settings ceiling is 300 s. A 60 s TTL could not
+    # outlast the thing it was waiting for, so no crossing was ever deliverable.
+    # These gates pin the two halves of the fix: a budget that covers the chain,
+    # and a withdrawal rule that keeps the wider window safe.
+
+    def ledger_text_early(d):
+        led = d / "gsd-autorun-ledger.jsonl"
+        return led.read_text(encoding="utf-8") if led.exists() else ""
+
+    d = inbox_case()
+    run, seen = fake_extension(d, "sent")
+    run_daemon(d, *not_cursor, ttl=5, script=run)
+    check("V-ACPS-I-TTL-OUTLASTS-STOP-CHAIN",
+          int((seen.get("req") or {}).get("ttl_ms", 0)) >= 300000,
+          f"ttl_ms={(seen.get('req') or {}).get('ttl_ms')!r} (must cover the Stop chain's 300 s ceiling)")
+
+    d = inbox_case()
+    run, seen = fake_extension(d, "sent")
+    run_daemon(d, *not_cursor, ttl=5, script=run, extra_env={"AC_INBOX_TTL": "7000"})
+    check("V-ACPS-I-TTL-OVERRIDABLE",
+          int((seen.get("req") or {}).get("ttl_ms", 0)) == 7000,
+          f"ttl_ms={(seen.get('req') or {}).get('ttl_ms')!r}")
+
+    # A defer is the owner saying "mine, not yet" -- it must not consume the
+    # request. Owner defers, then goes idle and accepts: the line is typed.
+    def defer_then_send(d, hold_s=3.0):
+        def run():
+            req_p, ack_p = d / "inbox" / "sx.req.json", d / "inbox" / "sx.ack.json"
+            req = None
+            for _ in range(120):
+                if req_p.exists():
+                    try:
+                        req = json.loads(req_p.read_text(encoding="utf-8"))
+                        break
+                    except ValueError:
+                        pass
+                time.sleep(0.1)
+            if req is None:
+                return
+            ack_p.write_text(json.dumps({"id": req["id"], "session_id": "sx", "status": "deferred",
+                                         "reason": "status-busy"}), encoding="utf-8")
+            time.sleep(hold_s)
+            ack_p.write_text(json.dumps({"id": req["id"], "session_id": "sx", "status": "sent",
+                                         "terminal": "t1"}), encoding="utf-8")
+        return run
+
+    d = inbox_case()
+    sent, text, _, _ = run_daemon(d, *not_cursor, ttl=12, script=defer_then_send(d),
+                                  extra_env={"AC_INBOX_TTL": "20000"})
+    check("V-ACPS-I-DEFER-THEN-SENT",
+          "SENT via=extension" in text and sent == [] and remaining(d) == [],
+          f"sent={sent} left={remaining(d)} log={text[-200:]!r}")
+
+    # The wider window is only safe because staleness is bounded by the
+    # TRANSCRIPT. Owner defers forever; the transcript moves on underneath ->
+    # the request is withdrawn and nothing is ever typed.
+    def defer_forever_and_move(d, move_after=2.0, move=True):
+        def run():
+            req_p, ack_p = d / "inbox" / "sx.req.json", d / "inbox" / "sx.ack.json"
+            req = None
+            for _ in range(120):
+                if req_p.exists():
+                    try:
+                        req = json.loads(req_p.read_text(encoding="utf-8"))
+                        break
+                    except ValueError:
+                        pass
+                time.sleep(0.1)
+            if req is None:
+                return
+            ack_p.write_text(json.dumps({"id": req["id"], "session_id": "sx", "status": "deferred",
+                                         "reason": "status-busy"}), encoding="utf-8")
+            time.sleep(move_after)
+            if move:
+                transcript(d, "A later turn said something else entirely.")
+        return run
+
+    d = inbox_case()
+    sent, text, _, _ = run_daemon(d, *not_cursor, ttl=10, script=defer_forever_and_move(d),
+                                  extra_env={"AC_INBOX_TTL": "60000"})
+    check("V-ACPS-I-WITHDRAWN-WHEN-TRANSCRIPT-MOVES",
+          "WITHDRAWN" in text and sent == [] and not (d / "inbox" / "sx.req.json").exists()
+          and "terminal inbox withdrawn" in ledger_text_early(d),
+          f"sent={sent} req_left={(d / 'inbox' / 'sx.req.json').exists()} log={text[-240:]!r}")
+
+    # Control: same deferring owner, transcript left alone -> NO withdrawal.
+    # Without this, a predicate that withdrew unconditionally would pass above.
+    d = inbox_case()
+    sent, text, _, _ = run_daemon(d, *not_cursor, ttl=8, script=defer_forever_and_move(d, move=False),
+                                  extra_env={"AC_INBOX_TTL": "60000"})
+    check("V-ACPS-I-NO-WITHDRAW-WHEN-STABLE",
+          "WITHDRAWN" not in text and sent == [] and "withdrawn" not in ledger_text_early(d),
+          f"sent={sent} log={text[-240:]!r}")
+
     # --- DEFAULT mode (no opt-in): exact or refused, never the focused window --
     # spec exact-target-continuation.md (C4). `None` removes the harness opt-in.
     default = {"CPP_LEGACY_FOREGROUND_SENDKEYS": None}
