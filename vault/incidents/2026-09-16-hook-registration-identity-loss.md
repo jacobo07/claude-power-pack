@@ -42,6 +42,17 @@ The earliest causal divergence is not the regex; it is that **settings.json had 
 semantic contract**. Any writer — agent script, Orca installer, CPP's own
 `fix_conhost` — could change what a hook receives and still pass every check.
 
+## Why the existing Hard Rule did not prevent it (iteration pass, CLASE 0)
+
+A NEVER_AGAIN rule already covered this file: "Backup before modifying settings.json is
+MANDATORY" (UKDL-OSA-2026-05-29). The writer obeyed it -- backups at 20:02, 20:05 and
+20:06 are exactly what made this repair precise. The rule demanded **recovery**
+(a backup) and never demanded **prevention** (semantic validation of what the write
+changes). HR-CONFIG-REWRITE-PRESERVES-ARGV-001 closes that half. Also CLASE 4 (the
+dispatcher failed silently) and CLASE 5 (the writer declared done on "parses, counts
+match"). #CROSS-PROJECT: `~/.claude/settings.json` is global, so every repo's sessions
+were dark; the universal form is `knowledge_vault/core/BL-2026-09-18-present-is-not-reachable.md`.
+
 ## Why it was invisible for 42 hours
 
 1. **Success-shaped silence.** `hook-dispatcher.js` answered a registration with no
