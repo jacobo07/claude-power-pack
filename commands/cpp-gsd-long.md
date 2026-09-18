@@ -96,8 +96,19 @@ pane. It is the same accepted limit the `/compact` dispatch has carried since
 2026-05-20; this adds a second point where it applies, not a new kind of risk.
 
 If the daemon finds Cursor is not in front it demotes the flag to
-`auto-compact-pending.flag` and waits, so a resume can arrive late rather than
-never.
+`auto-compact-pending-<session>.flag` and waits, so a resume can arrive late
+rather than never.
+
+**Two runs at once (since 2026-09-18).** Each session drops its own
+`auto-compact-trigger-<session>.flag`, so a second concurrent compaction is never
+discarded. The daemon routes by window title (`<project> - Cursor`): a flag is
+sent only while its own project's window is in front; if its project has no
+Cursor window open it is sent to whichever Cursor window is focused (the old
+behaviour). At most one Enter per window until focus leaves it and returns.
+Run each long run in **its own Cursor window**: two runs in one window (two
+terminal tabs) cannot be told apart, so one waits for a refocus.
+Spec `vault/specs/autocompact-per-session-flags.md`, gate
+`tools/test_autocompact_per_session.py`.
 
 ## Done-gate
 

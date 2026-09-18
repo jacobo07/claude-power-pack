@@ -32,6 +32,7 @@ from __future__ import annotations
 import datetime as _dt
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -435,13 +436,18 @@ def _write_trigger_flag(atomic_write, session_id: str, used_pct, cwd: str):
     The detached PS daemon polls ~/.claude/hooks/auto-compact-trigger.flag
     and, when Cursor is focused, sends Enter to dispatch the slash command
     the model has just emitted. Honest 1-keystroke fallback when Cursor is
-    not focused — daemon promotes the flag to auto-compact-pending.flag.
+    not focused — daemon promotes the flag to auto-compact-pending-<sid>.flag.
+
+    One flag PER SESSION (2026-09-18, vault/specs/autocompact-per-session-flags.md):
+    the single global name let a second concurrent /cpp-gsd-long run overwrite
+    or be discarded against the first, so one run never got its Enter.
     """
     now_iso = _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")
     try:
         flag_dir = Path.home() / ".claude" / "hooks"
         flag_dir.mkdir(parents=True, exist_ok=True)
-        flag = flag_dir / "auto-compact-trigger.flag"
+        safe_sid = re.sub(r"[^A-Za-z0-9-]", "", str(session_id or ""))[:64] or "unknown"
+        flag = flag_dir / f"auto-compact-trigger-{safe_sid}.flag"
         payload = json.dumps({
             "ts": now_iso, "session_id": session_id,
             "used_pct": used_pct, "cwd": cwd,
