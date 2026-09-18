@@ -1,0 +1,70 @@
+# Live daemon ~/.claude/hooks/auto-compact-sendkeys-daemon.ps1 (outside every repo)
+# before sha256 D9F64F8AEC2569795DA988B9E3C19AA613EBC6B5007470B9180A2E4A0CE42AE6
+# after  sha256 EB8D00B90AAD206232D5CFB13A5CF1436BEB224D95BAC6B26D278AA8C7B40A85
+diff --git "a/C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\1074c712-b1ee-4ffb-87e8-655860c8ace7\\scratchpad\\daemon-backup-pre-c4.ps1" "b/C:\\Users\\User\\.claude\\hooks\\auto-compact-sendkeys-daemon.ps1"
+index eaa3b9c..a749557 100644
+--- "a/C:\\Users\\User\\AppData\\Local\\Temp\\claude\\C--Users-User--claude-skills-claude-power-pack\\1074c712-b1ee-4ffb-87e8-655860c8ace7\\scratchpad\\daemon-backup-pre-c4.ps1"
++++ "b/C:\\Users\\User\\.claude\\hooks\\auto-compact-sendkeys-daemon.ps1"
+@@ -249,6 +249,22 @@ function Refuse-Flag($fl) {
+     Write-LedgerRow $fl.sid 'refused' "expected [$want]; last assistant line never matched within ${refuseAfter}s"
+ }
+ 
++# Exact-target continuation (2026-09-18, spec
++# skills/claude-power-pack/vault/specs/exact-target-continuation.md, C4).
++# Foreground is presentation, not identity: on 2026-09-18 this daemon typed
++# /d1-continue and /absw2-continue into Cursor windows that did not own those
++# sessions. By DEFAULT only the exact path (terminal inbox) may type; a flag no
++# exact provider accepted is REFUSED and ledgered. The old foreground SendKeys
++# path runs only with CPP_LEGACY_FOREGROUND_SENDKEYS=1 (manual-class opt-in).
++$legacyForeground = ($env:CPP_LEGACY_FOREGROUND_SENDKEYS -eq '1')
++
++function Refuse-NoExact($fl, $why) {
++    $dest = Join-Path $hooksDir ($fl.file.Name -replace '^auto-compact-(trigger|pending)', 'auto-compact-refused')
++    try { Move-Item -LiteralPath $fl.file.FullName -Destination $dest -Force -ErrorAction Stop } catch {}
++    Log "REFUSED flag=$($fl.file.Name) -- $why; foreground fallback disabled"
++    Write-LedgerRow $fl.sid 'refused' "no exact-session delivery: $why; foreground fallback disabled (CPP_LEGACY_FOREGROUND_SENDKEYS=1 allows it)"
++}
++
+ function Send-Enter($flag, $why) {
+     # A validated line is typed, then Enter; a flag with no expectation keeps the
+     # legacy bare Enter. Honest limit: text the user already typed into that box
+@@ -385,6 +401,23 @@ try {
+         } | Where-Object { Test-Path -LiteralPath $_.file.FullName })
+         if ($flags.Count -eq 0) { Start-Sleep -Milliseconds $tickMs; continue }
+ 
++        # Default (no opt-in): nothing below this point may type. A flag the
++        # inbox gave up on, or one with no session id at all, is refused; a flag
++        # still waiting for its expected line keeps waiting (stale -> refused).
++        if (-not $legacyForeground) {
++            foreach ($fl in $flags) {
++                $k = "$($fl.sid)|$($fl.file.LastWriteTime.Ticks)"
++                if (-not $fl.sid) { Refuse-NoExact $fl 'flag carries no session id' ; continue }
++                if ($inbox.ContainsKey($k) -and $inbox[$k].state -eq 'fallback') {
++                    Refuse-NoExact $fl 'no terminal-inbox provider answered or the session is not resolvable'
++                    continue
++                }
++                if ((Get-ExpectState $fl).state -eq 'refuse') { Refuse-Flag $fl }
++            }
++            Start-Sleep -Milliseconds $tickMs
++            continue
++        }
++
+         $fg = Get-Foreground
+         if ($blockedHwnd -and $fg.hwnd -ne $blockedHwnd) { $blockedHwnd = '' }
+ 
+@@ -418,10 +451,12 @@ try {
+         $own = @($ready | Where-Object { $_.leaf -and $_.leaf -ieq $root })
+         if ($own.Count -gt 0) {
+             $pick = $own[0]; $why = 'title-match'
+-        } else {
+-            $homeless = @($ready | Where-Object { -not $_.leaf -or -not ($roots -icontains $_.leaf) })
+-            if ($homeless.Count -gt 0) { $pick = $homeless[0]; $why = 'no-own-window' }
+         }
++        # The former `no-own-window` rule (type a flag whose project has no open
++        # Cursor window into WHATEVER window is focused) is gone, even under the
++        # legacy opt-in: it is the rule that sent /d1-continue for an Orca-hosted
++        # session into a Cursor pane on 2026-09-18. Such a flag waits, then is
++        # refused by the expect-line timeout.
+ 
+         if ($pick) {
+             try {

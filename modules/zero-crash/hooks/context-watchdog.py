@@ -492,14 +492,97 @@ def _observe_compaction(session_id: str, marker, event: dict) -> dict:
     return obs
 
 
-def _resume_dispatch_message(marker, observed=None) -> str:
+def _route_for(session_id: str) -> dict:
+    """Where an automated continuation for THIS session can go. Never raises.
+
+    Captures the endpoint from this hook's own environment first (the hook is
+    a child of the session's Claude process, so ORCA_PANE_KEY names its own
+    terminal). Two exact providers, never a focused window:
+      * "orca-exact"     -- ORCA_PANE_KEY present: continuation_transport.
+      * "terminal-inbox" -- anything else: the daemon resolves the session's
+        claude.exe chain and the PP Sessions extension that OWNS that terminal
+        types it (commit e5ed2d3). No owner answers -> refused, not typed.
+      * "manual"         -- kill switch, or the machinery could not be loaded.
+    """
+    if (os.environ.get("CPP_CONTINUATION_TRANSPORT") or "").lower() == "off":
+        return {"route": "manual", "why": "continuation transport disabled (kill switch)"}
+    ct = _load_tool("continuation_transport")
+    if ct is None:
+        return {"route": "manual", "why": "continuation transport unavailable"}
+    try:
+        ep = ct.capture_endpoint(session_id)
+    except Exception as exc:
+        return {"route": "manual", "why": f"endpoint capture failed ({exc.__class__.__name__})"}
+    if ep.get("host") == "orca":
+        return {"route": "orca-exact", "pane_key": ep.get("pane_key")}
+    return {"route": "terminal-inbox",
+            "legacy_foreground": os.environ.get("CPP_LEGACY_FOREGROUND_SENDKEYS") == "1"}
+
+
+def _dispatch_continuation(session_id: str, kind: str, *, transcript: str, cwd: str,
+                           used_pct, cid: str, expect_line=None, expect_prefix=None) -> dict:
+    """C4: the ONE door for every keystroke this hook causes. Never raises.
+
+    Before 2026-09-18 both call sites dropped a flag for a SendKeys daemon that
+    typed into whichever Cursor window had focus; it typed `/d1-continue` and
+    `/absw2-continue` into sessions that were not theirs. Now each route is
+    exact or refuses: Orca's own terminal, or the terminal-inbox owner of the
+    session's terminal (the daemon refuses by default when nobody answers; its
+    foreground fallback needs CPP_LEGACY_FOREGROUND_SENDKEYS=1).
+    """
+    route = _route_for(session_id)
+    try:
+        if route["route"] == "orca-exact":
+            ct = _load_tool("continuation_transport")
+            ok = bool(ct and ct.spawn_delivery(session_id, kind, expect_line, expect_prefix,
+                                               transcript, cid))
+            _ledger(session_id, "delivery_spawned" if ok else "delivery_blocked", cid=cid,
+                    kind=kind, route=route["route"], pane_key=route.get("pane_key"),
+                    **({} if ok else {"outcome": "WORKER_SPAWN_FAILED"}))
+            if not ok:
+                route = {"route": "manual", "why": "delivery worker failed to start"}
+        elif route["route"] == "terminal-inbox":
+            _write_trigger_flag(_import_atomic_write(), session_id, used_pct, cwd,
+                                transcript=transcript, expect_line=expect_line,
+                                expect_prefix=expect_prefix)
+            _spawn_daemon()
+            _ledger(session_id, "delivery_inbox_requested", cid=cid, kind=kind,
+                    legacy_foreground=route.get("legacy_foreground"))
+        else:
+            _ledger(session_id, "delivery_blocked", cid=cid, kind=kind,
+                    outcome="EXACT_SESSION_ROUTING_UNSUPPORTED", why=route.get("why"))
+    except Exception as exc:
+        route = {"route": "manual", "why": f"dispatch error {exc.__class__.__name__}"}
+    return route
+
+
+def _route_sentence(route: dict, what: str) -> str:
+    """Tell the model (and through it the Owner) what will actually happen."""
+    if route.get("route") == "orca-exact":
+        return (f"Delivery: the continuation transport will submit {what} into THIS "
+                f"session's own Orca terminal (pane {route.get('pane_key')}) once this "
+                "turn ends, and records a receipt only when the transcript shows it "
+                "arrived. The trailing line is the visible record, not the delivery.")
+    if route.get("route") == "terminal-inbox":
+        tail = (" LEGACY foreground SendKeys is opted in as a fallback (manual-class)."
+                if route.get("legacy_foreground") else
+                " If no extension owns this terminal the request is REFUSED and "
+                "ledgered -- nothing is typed into a focused window -- and the Owner "
+                "submits it in this pane.")
+        return (f"Delivery: the PP Sessions terminal inbox types {what} into THIS "
+                "session's own terminal only if the extension that owns it accepts "
+                "(no focus needed)." + tail)
+    return (f"Delivery: MANUAL -- {route.get('why')}. Nothing will type {what} for you; "
+            "say plainly that the run is paused until the Owner submits it in this pane.")
+
+
+def _resume_dispatch_message(marker, observed=None, route=None) -> str:
     """Stop A's ask: the exact line, and nothing after it.
 
-    Pure, so the gate can drive both poles without running the tier-2 path,
-    which writes checkpoints and launches the daemon. The "nothing after it"
-    clause is load-bearing rather than stylistic: Enter is pressed on whatever
-    the turn ends with, so a trailing sentence would be submitted instead of
-    the command. The compaction claim names its evidence (the boundary row).
+    Pure, so the gate can drive both poles without running the tier-2 path.
+    The compaction claim names its evidence (the boundary row), and the
+    delivery sentence names the route that will actually be used -- the old
+    text promised an Enter that a foreground daemon delivered to other panes.
     """
     cmd = (marker or {}).get("resume_command")
     where = (observed or {}).get("boundary_ts") or "unknown"
@@ -507,8 +590,8 @@ def _resume_dispatch_message(marker, observed=None) -> str:
         f"COMPACTION OBSERVED (transcript compact_boundary at {where}) — the "
         "autonomous run must re-enter itself. "
         f"End this response with a SINGLE trailing line, exactly `{cmd}`, "
-        "no preface and no markdown. Enter will be pressed on it at the next "
-        "Stop, so anything written after that line would be submitted instead."
+        "no preface and no markdown. "
+        + _route_sentence(route or {"route": "manual", "why": "route not computed"}, f"`{cmd}`")
     )
 
 
@@ -567,7 +650,7 @@ def _request_resume(session_id: str, marker: dict, observed=None) -> dict:
             gate=gate.get("reason"),
             boundary_ts=(observed or {}).get("boundary_ts"),
             boundary_uuid=(observed or {}).get("boundary_uuid"))
-    reason = _resume_dispatch_message(marker, observed)
+    reason = _resume_dispatch_message(marker, observed, _route_for(session_id))
     if low:
         reason += _ram_note(free, session_id)
     return {"decision": "block", "reason": reason}
@@ -863,6 +946,12 @@ def _run_inner(event: dict) -> dict:
     # a `pass` at 74% and a `pass` at 12% are different facts about this chain.
     _LAST["used_pct"] = float(used_pct)
 
+    # C2: an autonomous run's endpoint is refreshed on EVERY Stop, from this
+    # hook's own env, so the stall sweep (which runs outside the session) and a
+    # replaced worker always resolve the session's CURRENT terminal.
+    if _read_autorun_marker(session_id):
+        _route_for(session_id)
+
     # Rearm (spec gsd-autonomous-autocompact.md, gap B). MUST run before the
     # snapshot-threshold return below: a post-compaction reading is by
     # definition under that floor, so a rearm placed after it could never fire
@@ -896,21 +985,21 @@ def _run_inner(event: dict) -> dict:
                     if observed.get("state") != "observed":
                         return {}
                     return _request_resume(session_id, marker, observed)
-                # The turn that carried the line has ended: dispatch Enter onto
-                # it. Marked done FIRST -- a failure past this point must not
-                # leave the branch re-entrant, or every later Stop presses Enter
-                # again on whatever the input box happens to hold.
+                # The turn that carried the line has ended: dispatch it. Marked
+                # done FIRST -- a failure past this point must not leave the
+                # branch re-entrant, or every later Stop dispatches again.
+                # C4: through the one door, to this session's own terminal or
+                # to nobody; `resume_dispatched` now names the route taken.
                 _set_flag(session_id, RESUME_DONE_FLAG)
-                try:
-                    _write_trigger_flag(_import_atomic_write(), session_id,
-                                        used_pct, event.get("cwd") or os.getcwd(),
-                                        transcript=event.get("transcript_path") or "",
-                                        expect_line=marker.get("resume_command"))
-                    _spawn_daemon()
-                    _ledger(session_id, "resume_dispatched",
-                            command=marker.get("resume_command"))
-                except Exception:
-                    pass
+                route = _dispatch_continuation(
+                    session_id, "resume",
+                    transcript=event.get("transcript_path") or "",
+                    cwd=event.get("cwd") or os.getcwd(), used_pct=used_pct,
+                    cid=f"{session_id}:resume:{marker.get('cycles')}",
+                    expect_line=marker.get("resume_command"))
+                _ledger(session_id, "resume_dispatched",
+                        command=marker.get("resume_command"), route=route.get("route"),
+                        why=route.get("why"))
                 return {}
 
     if used_pct < snap_pct:
@@ -957,16 +1046,14 @@ def _run_inner(event: dict) -> dict:
         # 2. Empirical-evidence telemetry (Owner DONE-gate 6a).
         tel_path = _dump_telemetry(atomic_write, session_id, used_pct, cwd,
                                    transcript_path, kclear_paths)
-        # 3. SendKeys-daemon trigger flag (Owner 1c, zero-keystroke). The
-        #    daemon waits until the transcript's last line starts with
-        #    /compact, so Enter lands on the compact line and nothing else.
-        flag_path = _write_trigger_flag(atomic_write, session_id, used_pct, cwd,
-                                        transcript=transcript_path,
-                                        expect_prefix="/compact")
-        # 4. Spawn the daemon immediately (belt+suspenders alongside the
-        #    separate Stop-launcher hook). Detached, single-flight on the
-        #    daemon side; harmless if a previous one is still running.
-        daemon_spawned = _spawn_daemon()
+        # 3. Compact dispatch (C4, spec exact-target-continuation.md). The
+        #    transport waits for this turn to end, reads the model's own
+        #    trailing `/compact ...` line, and submits it into THIS session's
+        #    Orca terminal. No exact route -> manual, never the focused window.
+        compact_route = _dispatch_continuation(
+            session_id, "compact", transcript=transcript_path, cwd=cwd,
+            used_pct=used_pct, cid=f"{session_id}:compact:{int(_now_ts())}",
+            expect_prefix="/compact")
 
         # Autonomous-run awareness (spec gsd-autonomous-autocompact.md, gap C).
         # Without a marker this is the empty string and the message below is
@@ -981,11 +1068,7 @@ def _run_inner(event: dict) -> dict:
             f"lessons={kclear_paths.get('lessons')}; "
             f"insights={kclear_paths.get('insights')}; "
             f"telemetry={tel_path}. "
-            f"SendKeys-daemon trigger flag DROPPED at {flag_path} — if Cursor "
-            "is the focused window the daemon will press Enter for you "
-            "(ZERO-keystroke); if it is not, the daemon promotes the flag to "
-            "auto-compact-pending-<session>.flag and the dispatch is honest "
-            "1-keystroke. "
+            + _route_sentence(compact_route, "your trailing `/compact ...` line") + " "
             "End your next response with a SINGLE trailing line — exactly "
             "`/compact focus on <5-12 word current-task summary>` — no preface, "
             "no markdown. Per BL-0003 the model itself cannot auto-dispatch the "

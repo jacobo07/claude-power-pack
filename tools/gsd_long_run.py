@@ -498,6 +498,41 @@ def _restore_config(project: str) -> str:
         return f"not restored: {exc}"
 
 
+def _recover_via_transport(sid: str, cwd: str, transcript: str, tail: str, cmd: str,
+                           mtime: int) -> str:
+    """Re-deliver a stalled run's line to the session's OWN terminal, or to nobody.
+
+    Spec exact-target-continuation.md (C4). This path used to write a trigger
+    flag keyed by cwd only; on 2026-09-18 the daemon then typed
+    `/absw2-continue` into a different session's Cursor window. The sweep runs
+    outside the session, so an Orca-hosted run uses the endpoint its own hook
+    recorded; any other run goes to the terminal inbox by SESSION id (the
+    daemon types only through the extension that owns that terminal, and by
+    default refuses when none answers).
+    """
+    cid = f"{sid}:recover:{mtime}"
+    if (os.environ.get("CPP_CONTINUATION_TRANSPORT") or "").lower() == "off":
+        ledger_append(sid, "delivery_blocked", cid=cid, outcome="BLOCKED_TRANSPORT_DISABLED")
+        return "manual"
+    try:
+        import continuation_transport as ct  # lazy: it imports this module
+    except Exception as exc:
+        ledger_append(sid, "delivery_blocked", cid=cid, outcome="TRANSPORT_UNAVAILABLE",
+                      why=exc.__class__.__name__)
+        return "manual"
+    compact = tail.startswith("/compact")
+    ep = ct.read_endpoint(sid) or {}
+    if ep.get("host") == "orca":
+        if ct.spawn_delivery(sid, "compact" if compact else "resume",
+                             None if compact else cmd, "/compact" if compact else None,
+                             transcript, cid):
+            return "orca-exact"
+        ledger_append(sid, "delivery_blocked", cid=cid, outcome="WORKER_SPAWN_FAILED")
+        return "manual"
+    write_trigger(sid, cwd, transcript, tail)
+    return "terminal-inbox"
+
+
 def sweep(now: float | None = None, dry_run: bool = False) -> list[dict]:
     """One pass. Every action is also a ledger event, so the sweep audits itself."""
     now = time.time() if now is None else now
@@ -542,8 +577,8 @@ def sweep(now: float | None = None, dry_run: bool = False) -> list[dict]:
                 continue
             actions.append({"session_id": sid, "action": "recovered", "line": tail})
             if not dry_run:
-                write_trigger(sid, cwd, str(transcript), tail)
-                ledger_append(sid, "recovered", line=tail, transcript_mtime=mtime)
+                route = _recover_via_transport(sid, cwd, str(transcript), tail, cmd, mtime)
+                ledger_append(sid, "recovered", line=tail, transcript_mtime=mtime, route=route)
             continue
         if not _already(sid, "stalled", "transcript_mtime", mtime):
             actions.append({"session_id": sid, "action": "stalled", "idle_min": round(idle_s / 60),

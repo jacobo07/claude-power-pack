@@ -66,9 +66,16 @@ ONE resume.
 - **C3 transport** (`tools/continuation_transport.py`). Resolve the pane key to exactly
   one terminal; require writable, not orphaned, incarnation unchanged since capture;
   send. 0 matches, >1 matches, stale incarnation, refusal -> refuse with its own reason.
-- **C4 foreground removed.** No autonomous path types into a focused window. The daemon's
-  `no-own-window` branch is deleted. Cursor-hosted runs become an honest manual step
-  (`EXACT_SESSION_ROUTING_UNSUPPORTED`).
+- **C4 foreground removed.** No autonomous path types into a focused window. One door
+  (`_dispatch_continuation`) with two exact providers: Orca-hosted sessions via this
+  spec's transport; every other session via the PP Sessions terminal inbox that another
+  pane shipped the same afternoon (commit `e5ed2d3`), which types only through the
+  extension owning that session's terminal. The daemon's `no-own-window` branch is
+  deleted, and its foreground fallback after an unanswered inbox request runs only with
+  `CPP_LEGACY_FOREGROUND_SENDKEYS=1`; by default an unanswered request is refused and
+  ledgered. (Amended during execution: the first cut routed non-Orca sessions to
+  `manual`, which would have bypassed the inbox's exact path.) Daemon diff:
+  `exact-target-continuation.daemon.patch`.
 - **C5 receipts.** Ledger stages `delivery_requested -> target_resolved ->
   transport_accepted -> resume_confirmed -> mission_advanced`, continuation id
   `sid:cycle`, transcript reconciliation before any resend, at most 2 attempts, then

@@ -74,8 +74,15 @@ def run_daemon(d: Path, fg_src: str, windows: list, ttl: int = 3, script=None, e
         # isolate the terminal inbox and the session registry from the real ones
         "AC_INBOX_DIR": str(d / "inbox"),
         "AC_SESSIONS_DIR": str(d / "sessions"),
+        # Since 2026-09-18 (spec exact-target-continuation.md, C4) the foreground
+        # SendKeys path runs ONLY with this opt-in. The D-* / X-* gates below
+        # characterise that legacy path, so the harness opts in by default; the
+        # DEFAULT (no opt-in) behaviour is pinned by the V-ACPS-E-* gates.
+        "CPP_LEGACY_FOREGROUND_SENDKEYS": "1",
     })
     env.update(extra_env or {})
+    for k in [k for k, v in env.items() if v is None]:
+        del env[k]
     th = threading.Thread(target=script) if script else None
     if th:
         th.start()
@@ -163,11 +170,13 @@ def main() -> int:
     sent, _, _, _ = run_daemon(d, fg(title="notes.md - ProjA - Cursor"), ["notes.md - ProjA - Cursor", "ProjB - Cursor"])
     check("V-ACPS-D-EDITOR-TITLE", sent == ["auto-compact-trigger-A.flag"], f"sent={sent}")
 
-    # --- legacy: one flag, project has no window -> sent as before -----------
+    # --- INVERTED 2026-09-18: a flag whose project has no window is NEVER typed
+    # into the focused one, even under the legacy opt-in. This was the rule that
+    # sent /d1-continue for an Orca-hosted session into a Cursor pane.
     d = fresh()
     write_flag(d, "auto-compact-trigger-C.flag", r"C:\p\ProjC")
     sent, _, _, _ = run_daemon(d, fg(title="ProjA - Cursor"), ["ProjA - Cursor"])
-    check("V-ACPS-D-NO-OWN-WINDOW-SENDS", sent == ["auto-compact-trigger-C.flag"], f"sent={sent}")
+    check("V-ACPS-D-NO-OWN-WINDOW-NEVER-SENDS", sent == [], f"sent={sent}")
 
     # --- legacy single name still consumed ----------------------------------
     d = fresh()
@@ -375,6 +384,46 @@ def main() -> int:
           "REQUESTED" not in text and "not resolvable" in text
           and not (d / "inbox" / "sx.req.json").exists(),
           f"log={text[-200:]!r}")
+
+    # --- DEFAULT mode (no opt-in): exact or refused, never the focused window --
+    # spec exact-target-continuation.md (C4). `None` removes the harness opt-in.
+    default = {"CPP_LEGACY_FOREGROUND_SENDKEYS": None}
+
+    def ledger_text(d):
+        led = d / "gsd-autorun-ledger.jsonl"
+        return led.read_text(encoding="utf-8") if led.exists() else ""
+
+    d = inbox_case()
+    run, _ = fake_extension(d, "sent")
+    sent, text, _, _ = run_daemon(d, *not_cursor, ttl=5, script=run, extra_env=default)
+    check("V-ACPS-E-INBOX-STILL-DELIVERS",
+          "SENT via=extension" in text and sent == [] and remaining(d) == [],
+          f"left={remaining(d)} log={text[-160:]!r}")
+
+    d = inbox_case()
+    sent, text, _, _ = run_daemon(d, *win, ttl=6, extra_env=dict(default, AC_ACK_FIRST="1"))
+    check("V-ACPS-E-NO-EXTENSION-REFUSES",
+          sent == [] and "WOULD-SEND" not in text and remaining(d) == ["auto-compact-refused-sx.flag"]
+          and "no exact-session delivery" in ledger_text(d),
+          f"sent={sent} left={remaining(d)} log={text[-200:]!r}")
+
+    d = inbox_case(proc_start=str(int(ft) + 50_000_000) if ft.isdigit() else "1")
+    sent, text, _, _ = run_daemon(d, *win, ttl=4, extra_env=default)
+    check("V-ACPS-E-UNRESOLVABLE-REFUSES",
+          sent == [] and remaining(d) == ["auto-compact-refused-sx.flag"], f"left={remaining(d)}")
+
+    d = fresh()
+    write_flag(d, "auto-compact-trigger-s1.flag", r"C:\p\ProjA")
+    sent, text, _, _ = run_daemon(d, *win, extra_env=default)
+    check("V-ACPS-E-TITLE-MATCH-IS-NOT-IDENTITY",
+          sent == [] and "WOULD-SEND" not in text, f"sent={sent} log={text[-160:]!r}")
+
+    d = fresh()
+    tr = transcript(d, "/gsd-autonomous\nand one more thing")
+    expect_flag(d, "auto-compact-trigger-sx.flag", tr, expect_line="/gsd-autonomous")
+    sent, _, _, _ = run_daemon(d, *win, extra_env=dict(default, AC_DAEMON_REFUSE_AFTER="600"))
+    check("V-ACPS-E-UNMATCHED-LINE-STILL-WAITS",
+          sent == [] and remaining(d) == ["auto-compact-trigger-sx.flag"], f"left={remaining(d)}")
 
     total = passes + fails
     print(f"ACPS_PASS={passes}/{total}  threshold={total}/{total}")

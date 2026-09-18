@@ -382,9 +382,20 @@ def gate_two_phase(wd, mk) -> None:
     sid = f"gsdac-{uuid.uuid4().hex[:12]}"
     _stamp_orch_throttle(wd, sid)
     real_flag, real_spawn = wd._write_trigger_flag, wd._spawn_daemon
-    calls = {"flag": 0, "spawn": 0}
-    wd._write_trigger_flag = lambda *a, **k: calls.__setitem__("flag", calls["flag"] + 1)
-    wd._spawn_daemon = lambda *a, **k: calls.__setitem__("spawn", calls["spawn"] + 1)
+    real_door = wd._dispatch_continuation
+    calls = {"flag": 0, "spawn": 0, "legacy": 0}
+    # C4: dispatch goes through ONE door (`_dispatch_continuation`), which both
+    # chooses the route and starts the delivery, so one door call counts as
+    # the old flag+spawn pair. The legacy SendKeys pair is still recorded: any
+    # call to it from a session with no opt-in is a foreground leak.
+    wd._write_trigger_flag = lambda *a, **k: calls.__setitem__("legacy", calls["legacy"] + 1)
+    wd._spawn_daemon = lambda *a, **k: calls.__setitem__("legacy", calls["legacy"] + 1)
+
+    def _door(*a, **k):
+        calls["flag"] += 1
+        calls["spawn"] += 1
+        return {"route": "orca-exact", "pane_key": "stub"}
+    wd._dispatch_continuation = _door
 
     try:
         mk.write_marker(sid, "/gsd-autonomous", cwd=str(ROOT), phase=5)
@@ -443,7 +454,13 @@ def gate_two_phase(wd, mk) -> None:
             _fail("V-GSDAC-TWOPHASE-INERT-WITHOUT-MARKER",
                   "a session with no autonomous run was dispatched into")
     finally:
+        if calls["legacy"]:
+            _fail("V-GSDAC-NO-FOREGROUND-LEAK",
+                  f"legacy SendKeys path called {calls['legacy']} times without opt-in")
+        else:
+            _ok("V-GSDAC-NO-FOREGROUND-LEAK", "no legacy SendKeys call across the whole cycle")
         wd._write_trigger_flag, wd._spawn_daemon = real_flag, real_spawn
+        wd._dispatch_continuation = real_door
         mk.clear_marker(sid)
         for f in (wd.RESUME_ARMED_FLAG, wd.RESUME_DONE_FLAG):
             wd._clear_flag(sid, f)
@@ -474,7 +491,9 @@ def gate_tier2_rearms(wd, mk) -> None:
     _stamp_orch_throttle(wd, sid)
     saved = {n: getattr(wd, n) for n in
              ("_import_atomic_write", "_kclear_equivalent", "_dump_telemetry",
-              "_write_trigger_flag", "_spawn_daemon", "_append_progress_md")}
+              "_write_trigger_flag", "_spawn_daemon", "_append_progress_md",
+              "_dispatch_continuation")}
+    wd._dispatch_continuation = lambda *a, **k: {"route": "manual", "why": "stubbed by test"}
     wd._import_atomic_write = lambda *a, **k: _NullWriter()
     wd._kclear_equivalent = lambda *a, **k: {}
     wd._dump_telemetry = lambda *a, **k: None

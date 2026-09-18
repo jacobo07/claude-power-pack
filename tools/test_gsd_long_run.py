@@ -209,9 +209,13 @@ def _clear_wd(wd, s):
 def gates_watchdog():
     wd = load(WATCHDOG, "ctxwd_under_test")
     calls = []
-    saved = (wd._write_trigger_flag, wd._spawn_daemon)
-    wd._write_trigger_flag = lambda *a, **k: calls.append(k) or "flag"
-    wd._spawn_daemon = lambda *a, **k: True
+    # C4 (spec exact-target-continuation.md): Stop B dispatches through the one
+    # door, `_dispatch_continuation`; the foreground flag is no longer the
+    # default path, so the recorder sits on the door. Routing itself is proven
+    # in test_continuation_transport / test_continuation_wiring.
+    saved = wd._dispatch_continuation
+    wd._dispatch_continuation = lambda s_, kind, **k: calls.append(dict(k, kind=kind)) or \
+        {"route": "orca-exact", "pane_key": "stub"}
     try:
         # budget halt
         s = sid(); _stamp(wd, s)
@@ -267,7 +271,7 @@ def gates_watchdog():
               out.get("reason", "")[:80])
         _clear_wd(wd, s)
     finally:
-        wd._write_trigger_flag, wd._spawn_daemon = saved
+        wd._dispatch_continuation = saved
 
     # tier-2 crossing: ledger row + /compact prefix expectation
     wd2 = load(WATCHDOG, "ctxwd_under_test_t2")
@@ -284,18 +288,26 @@ def gates_watchdog():
     wd2._kclear_equivalent = lambda *a, **k: {}
     wd2._dump_telemetry = lambda *a, **k: None
     wd2._append_progress_md = lambda *a, **k: None
-    wd2._write_trigger_flag = lambda *a, **k: rec.append(k) or "flag"
-    wd2._spawn_daemon = lambda *a, **k: True
+    legacy = []
+    wd2._write_trigger_flag = lambda *a, **k: legacy.append(k) or "flag"
+    wd2._spawn_daemon = lambda *a, **k: legacy.append("spawn") or True
+    wd2._dispatch_continuation = lambda s_, kind, **k: rec.append(dict(k, kind=kind)) or \
+        {"route": "manual", "why": "stub: no exact route"}
     s = sid(); _stamp(wd2, s)
     try:
         mk.write_marker(s, "/gsd-autonomous", cwd=str(ROOT))
         out = _run(wd2, s, 75.0, str(TMP / "t.jsonl"))
         check("V-GSDLR-WD-CROSSING-LEDGERED", "crossing" in events(s) and out.get("decision") == "block",
               f"events={events(s)}")
-        check("V-GSDLR-WD-COMPACT-EXPECTS-PREFIX", rec and rec[-1].get("expect_prefix") == "/compact",
+        check("V-GSDLR-WD-COMPACT-EXPECTS-PREFIX",
+              rec and rec[-1].get("kind") == "compact" and rec[-1].get("expect_prefix") == "/compact",
               f"kwargs={rec[-1] if rec else None}")
-        check("V-GSDLR-WD-TEXT-FIXED", "auto-compact-pending-<session>.flag" in out.get("reason", "")
-              and "auto-compact-pending.flag " not in out.get("reason", ""), "tier-2 names the per-session flag")
+        # C4: the text states the route that will actually be used, and no
+        # longer promises an Enter delivered by whichever window has focus.
+        reason = out.get("reason", "")
+        check("V-GSDLR-WD-TEXT-NAMES-ROUTE",
+              "Delivery: MANUAL" in reason and "focused window" not in reason and not legacy,
+              f"route sentence present={('Delivery:' in reason)} legacy_calls={legacy}")
     finally:
         _clear_wd(wd2, s)
 
@@ -364,6 +376,10 @@ def gates_sweep():
     s_fresh = sid(); _marker_file(s_fresh, resume_command="/absw2-continue")
     transcript(s_fresh, "x", rows=[asst("working")])
 
+    # A legacy flag left by an opted-in session: the sweep still owes it a daemon.
+    legacy_flag = HOOKS / f"auto-compact-pending-{sid()}.flag"
+    legacy_flag.write_text(json.dumps({"session_id": "legacy", "cwd": "x"}) + "\n", encoding="utf-8")
+
     os.environ["_TEST_GSD_STATUS"] = gsd("ALL_COMPLETE")
     acts = lr.sweep()
     os.environ.pop("_TEST_GSD_STATUS", None)
@@ -375,15 +391,23 @@ def gates_sweep():
     shown = cfg.show(proj)
     check("V-GSDLR-SWEEP-RESTORES-CONFIG", shown["context_warning_threshold"] is None and not shown["long_run_active"],
           f"{shown}")
+    # Re-specified 2026-09-18 (spec exact-target-continuation.md, C4). The flag is
+    # still written, but its consumer changed: the daemon routes it by SESSION id
+    # to the terminal inbox and, by default, refuses rather than typing into the
+    # focused window -- the path that sent `/absw2-continue` into another session.
     flag = HOOKS / f"auto-compact-trigger-{s_rec}.flag"
     body = json.loads(flag.read_text(encoding="utf-8")) if flag.exists() else {}
-    check("V-GSDLR-SWEEP-RECOVERS", (s_rec, "recovered") in by and body.get("expect_line") == "/absw2-continue",
-          f"flag={body}")
+    rec = [e for e in lr.ledger_events(s_rec) if e.get("event") == "recovered"]
+    check("V-GSDLR-SWEEP-RECOVERS-VIA-INBOX",
+          (s_rec, "recovered") in by and rec and rec[-1].get("route") == "terminal-inbox"
+          and body.get("session_id") == s_rec and body.get("expect_line") == "/absw2-continue",
+          f"flag={body} recovered={rec}")
     check("V-GSDLR-SWEEP-RECORDS-STALL", (s_st, "stalled") in by and "stalled" in events(s_st), f"{acts}")
     check("V-GSDLR-SWEEP-FRESH-UNTOUCHED", not any(a.get("session_id") == s_fresh for a in acts), f"{acts}")
     check("V-GSDLR-SWEEP-DAEMON-FOR-FLAGS", any(a["action"] == "daemon" for a in acts), f"{acts}")
 
-    flag.unlink()
+    legacy_flag.unlink(missing_ok=True)
+    flag.unlink(missing_ok=True)   # so NO-DUPLICATES is held by the ledger dedupe, not the flag
     acts2 = lr.sweep()
     again = {(a.get("session_id"), a["action"]) for a in acts2}
     check("V-GSDLR-SWEEP-NO-DUPLICATES", (s_rec, "recovered") not in again and (s_st, "stalled") not in again,

@@ -71,7 +71,11 @@ def stub_side_effects(wd):
     duration; the heartbeat itself is untouched, since it is the subject."""
     saved = {n: getattr(wd, n) for n in
              ("_import_atomic_write", "_kclear_equivalent", "_dump_telemetry",
-              "_write_trigger_flag", "_spawn_daemon", "_append_progress_md")}
+              "_write_trigger_flag", "_spawn_daemon", "_append_progress_md",
+              "_dispatch_continuation")}
+    # Since C4 tier 2 dispatches through `_dispatch_continuation`, which from
+    # inside an Orca pane would start a REAL delivery into that pane.
+    wd._dispatch_continuation = lambda *a, **k: {"route": "manual", "why": "stubbed by test"}
     wd._kclear_equivalent = lambda *a, **k: {}
     wd._dump_telemetry = lambda *a, **k: None
     wd._write_trigger_flag = lambda *a, **k: None
