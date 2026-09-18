@@ -26,6 +26,7 @@ import argparse
 import datetime as _dt
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -52,6 +53,73 @@ def state_dir() -> Path:
     """Resolved at call time so a test can redirect it without patching a copy."""
     override = os.environ.get("GSD_LONG_RUN_STATE_DIR")
     return Path(override) if override else CLAUDE_HOME / "state"
+
+
+THRESHOLDS_TEMPLATE = "ctxwd-thresholds-{session_id}.json"
+WATCHDOG = CLAUDE_HOME / "skills" / "claude-power-pack" / "modules" / "zero-crash" / "hooks" / "context-watchdog.py"
+
+
+def thresholds_path(session_id: str) -> Path:
+    if not re.match(r"^[A-Za-z0-9._-]{1,128}$", session_id or ""):
+        raise ValueError(f"invalid session id: {session_id!r}")
+    return state_dir() / THRESHOLDS_TEMPLATE.format(session_id=session_id)
+
+
+def _watchdog_validator():
+    """The watchdog's OWN rule, loaded lazily. Raises when it cannot be had.
+
+    Imported rather than restated: two copies of "rearm < snapshot <= advisory"
+    drift, and the copy that drifts is the one nobody drives. Lazy because the
+    watchdog imports THIS module at runtime, and a module-level import back
+    would close the cycle.
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("_ctxwd_for_validation", WATCHDOG)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load the watchdog at {WATCHDOG}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.valid_thresholds
+
+
+def write_thresholds(session_id: str, spec: str, reason: str = "") -> dict:
+    """Ask the watchdog to use `snapshot,advisory,rearm` for THIS session.
+
+    Fails CLOSED at the boundary: if the watchdog's validator cannot be loaded
+    the file is not written at all, because an unvalidated file is exactly the
+    thing the validator exists to refuse.
+    """
+    checked = _watchdog_validator()(*[x.strip() for x in str(spec).split(",")]) \
+        if str(spec).count(",") == 2 else None
+    if checked is None:
+        raise ValueError(
+            f"refused {spec!r}: need snapshot,advisory,rearm with rearm < snapshot <= advisory, all 5..95")
+    snap, adv, rearm = checked
+    payload = {"session_id": session_id, "snapshot": snap, "advisory": adv, "rearm": rearm,
+               "reason": reason, "written_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}
+    path = thresholds_path(session_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    tmp.replace(path)
+    ledger_append(session_id, "thresholds_set", snapshot=snap, advisory=adv, rearm=rearm, reason=reason)
+    return payload
+
+
+def read_thresholds(session_id: str) -> dict | None:
+    try:
+        return json.loads(thresholds_path(session_id).read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def clear_thresholds(session_id: str) -> bool:
+    try:
+        thresholds_path(session_id).unlink()
+    except (FileNotFoundError, ValueError, OSError):
+        return False
+    ledger_append(session_id, "thresholds_cleared")
+    return True
 
 
 def ledger_path() -> Path:
@@ -679,6 +747,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--session", required=True)
     p.add_argument("--cwd", required=True)
     p.add_argument("--command", required=True)
+    t = sub.add_parser("thresholds", help="narrow THIS session's context wall while it is running")
+    t.add_argument("--session", required=True)
+    t.add_argument("--set", dest="spec", default="",
+                   help='"snapshot,advisory,rearm" as percentages used, e.g. "35,40,30"')
+    t.add_argument("--reason", default="")
+    t.add_argument("--clear", action="store_true")
     args = ap.parse_args(argv)
 
     if args.cmd == "report":
@@ -692,6 +766,20 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.cmd == "wait-ram":
         return wait_ram(args.floor, args.timeout, args.session)
+    if args.cmd == "thresholds":
+        if args.clear:
+            print("CLEARED" if clear_thresholds(args.session) else "ABSENT")
+            return 0
+        if not args.spec:
+            current = read_thresholds(args.session)
+            print(json.dumps(current, indent=2) if current else "ABSENT (watchdog uses env or the constants)")
+            return 0 if current else 1
+        try:
+            print(json.dumps(write_thresholds(args.session, args.spec, args.reason), indent=2))
+        except (ValueError, RuntimeError) as exc:
+            sys.stderr.write(f"REFUSED: {exc}\n")
+            return 2
+        return 0
     ok, why = arm_preflight(args.session, args.cwd, args.command)
     print(("OK: " if ok else "REFUSED: ") + why)
     return 0 if ok else 2

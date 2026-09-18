@@ -49,26 +49,75 @@ THRESHOLD_ADVISORY_PCT = 70
 THRESHOLD_REARM_PCT = 45
 
 
-def _thresholds() -> tuple:
-    """(snapshot, advisory, rearm) for THIS process.
+THRESHOLDS_FILE = "ctxwd-thresholds-{session_id}.json"
 
-    `CTXWD_TEST_THRESHOLDS="31,36,30"` lowers them for one session only (the
-    hook inherits the env of the Claude Code process that launched it), so a
-    /cpp-gsd-long smoke test crosses the wall at ~360k tokens instead of ~700k.
-    Accepted only when rearm < snapshot <= advisory, all within 5..95 --
-    anything else falls back to the constants, so a typo can never switch
-    the watchdog off. Measured baseline on this host: a fresh session already
-    reads 15-23% used, so a rearm below ~28 would never be reached after a
-    compaction.
+
+def valid_thresholds(snap, adv, rearm):
+    """The ONE rule. (snap, adv, rearm) as floats, or None.
+
+    rearm < snapshot <= advisory, all within 5..95. Anything else is refused,
+    so a typo can never switch the watchdog off -- it falls back to the next
+    source and ultimately to the constants.
     """
+    try:
+        snap, adv, rearm = float(snap), float(adv), float(rearm)
+    except (TypeError, ValueError):
+        return None
+    return (snap, adv, rearm) if 5 <= rearm < snap <= adv <= 95 else None
+
+
+def _thresholds_from_file(session_id: str):
+    """Thresholds THIS session asked for while already running, or None.
+
+    Why a file at all: CTXWD_TEST_THRESHOLDS is read from the env of the
+    Claude Code process, which is fixed at launch. /cpp-gsd-long is invoked
+    from INSIDE a session that is already running ("Open the session IN the
+    project you want to run"), so the env knob was unreachable from the only
+    place the command is ever used -- the narrow-wall smoke test could be
+    described but not performed. Written by
+    `tools/gsd_long_run.py thresholds --set`, keyed by session id, and
+    validated on read as well as on write: an unreadable or malformed file is
+    not a licence, it is simply not an answer.
+    """
+    try:
+        # Same directory the writer uses, including its GSD_LONG_RUN_STATE_DIR
+        # relocation -- reader and writer must never disagree about where the
+        # answer lives, and a gate that cannot redirect both writes into the
+        # Owner's real state directory to test itself.
+        base = os.environ.get("GSD_LONG_RUN_STATE_DIR") or (Path.home() / ".claude" / "state")
+        p = Path(base) / THRESHOLDS_FILE.format(session_id=session_id)
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return valid_thresholds(data.get("snapshot"), data.get("advisory"), data.get("rearm"))
+    except Exception:
+        return None
+
+
+def _thresholds(session_id: str = "") -> tuple:
+    """(snapshot, advisory, rearm) for THIS session.
+
+    Three sources, most specific first:
+      1. the per-session file, which a running session can write to itself;
+      2. `CTXWD_TEST_THRESHOLDS="31,36,30"` in the launching process's env, so
+         a /cpp-gsd-long smoke test crosses the wall at ~360k tokens instead
+         of ~700k;
+      3. the production constants.
+    The file wins over the env because it is the only one that can change
+    during a run, which is the whole reason it exists. Measured baseline on
+    this host: a fresh session already reads 15-23% used, so a rearm below
+    ~28 would never be reached after a compaction.
+    """
+    from_file = _thresholds_from_file(session_id) if session_id else None
+    if from_file is not None:
+        return from_file
     raw = os.environ.get("CTXWD_TEST_THRESHOLDS", "")
     if raw:
         try:
-            snap, adv, rearm = (float(x) for x in raw.split(","))
-            if 5 <= rearm < snap <= adv <= 95:
-                return snap, adv, rearm
+            snap, adv, rearm = raw.split(",")
         except ValueError:
-            pass
+            snap = adv = rearm = None
+        checked = valid_thresholds(snap, adv, rearm)
+        if checked is not None:
+            return checked
     return THRESHOLD_SNAPSHOT_PCT, THRESHOLD_ADVISORY_PCT, THRESHOLD_REARM_PCT
 
 # Post-compaction resume (gap C; Owner-authorised 2026-09-15 via settings
@@ -965,7 +1014,7 @@ def _run_inner(event: dict) -> dict:
             and not _flag_exists(session_id, RESUME_CONFIRMED_FLAG):
         _confirm_resume(session_id, event)
 
-    snap_pct, adv_pct, rearm_pct = _thresholds()
+    snap_pct, adv_pct, rearm_pct = _thresholds(session_id)
     if used_pct < rearm_pct:
         _clear_flag(session_id, ADVISORY_FLAG)
 

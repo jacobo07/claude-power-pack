@@ -472,12 +472,102 @@ def gates_cli():
     mk.clear_marker(s2)
 
 
+def gates_session_thresholds():
+    """A RUNNING session can narrow its own wall; a malformed ask never widens it.
+
+    The env knob is read from the launching process, so /cpp-gsd-long -- which is
+    invoked from inside an already-running session -- could never reach it. These
+    gates drive the file source end to end: the writer's refusals, the reader's
+    precedence over a valid env, and the fall-through when the file is junk.
+    """
+    lr = load(TOOLS / "gsd_long_run.py", "lr_thresholds")
+    wd = load(WATCHDOG, "ctxwd_session_thresholds")
+    prod = (wd.THRESHOLD_SNAPSHOT_PCT, wd.THRESHOLD_ADVISORY_PCT, wd.THRESHOLD_REARM_PCT)
+    try:
+        s = sid()
+        # Negative control FIRST: with no file and no env this session is ordinary.
+        check("V-GSDLR-SESSTHR-ABSENT-IS-PRODUCTION", wd._thresholds(s) == prod, f"{wd._thresholds(s)}")
+
+        lr.write_thresholds(s, "35,40,30", reason="gate")
+        check("V-GSDLR-SESSTHR-FILE-APPLIES", wd._thresholds(s) == (35.0, 40.0, 30.0), f"{wd._thresholds(s)}")
+        check("V-GSDLR-SESSTHR-LEDGERED",
+              any(r.get("event") == "thresholds_set" for r in lr.ledger_events(s)),
+              f"{[r.get('event') for r in lr.ledger_events(s)]}")
+
+        # Another session is untouched by this one's file -- the knob is per session.
+        other = sid()
+        check("V-GSDLR-SESSTHR-SCOPED-TO-SESSION", wd._thresholds(other) == prod, f"{wd._thresholds(other)}")
+
+        # The file is the only source that can change mid-run, so it outranks the env.
+        os.environ["CTXWD_TEST_THRESHOLDS"] = "31,36,30"
+        try:
+            check("V-GSDLR-SESSTHR-FILE-BEATS-ENV", wd._thresholds(s) == (35.0, 40.0, 30.0), f"{wd._thresholds(s)}")
+            check("V-GSDLR-SESSTHR-ENV-STILL-WORKS", wd._thresholds(other) == (31.0, 36.0, 30.0),
+                  f"{wd._thresholds(other)}")
+            # A junk file is not an answer: fall through to the env, never to "off".
+            lr.thresholds_path(s).write_text("{ not json", encoding="utf-8")
+            check("V-GSDLR-SESSTHR-JUNK-FALLS-THROUGH", wd._thresholds(s) == (31.0, 36.0, 30.0),
+                  f"{wd._thresholds(s)}")
+        finally:
+            os.environ.pop("CTXWD_TEST_THRESHOLDS", None)
+        check("V-GSDLR-SESSTHR-JUNK-THEN-PRODUCTION", wd._thresholds(s) == prod, f"{wd._thresholds(s)}")
+
+        # A file that parses but breaks the rule must be refused on WRITE, and a
+        # hand-written one must be refused on READ -- both poles, same rule.
+        refused = 0
+        for bad in ("70,36,30", "31,36", "a,b,c", "31,36,31", "31,36,4", "31,36,96"):
+            try:
+                lr.write_thresholds(s, bad)
+            except ValueError:
+                refused += 1
+        check("V-GSDLR-SESSTHR-WRITER-REFUSES-BAD", refused == 6, f"{refused}/6 refused")
+        lr.thresholds_path(s).write_text(json.dumps({"snapshot": 70, "advisory": 36, "rearm": 30}),
+                                         encoding="utf-8")
+        check("V-GSDLR-SESSTHR-READER-REFUSES-BAD", wd._thresholds(s) == prod, f"{wd._thresholds(s)}")
+
+        check("V-GSDLR-SESSTHR-CLEAR", lr.clear_thresholds(s) and wd._thresholds(s) == prod,
+              f"{wd._thresholds(s)}")
+        check("V-GSDLR-SESSTHR-CLEAR-ABSENT-IS-FALSE", lr.clear_thresholds(s) is False, "second clear")
+
+        # End to end through the watchdog's own decision, not just the accessor.
+        class _Null:
+            def atomic_append_jsonl(self, *a, **k):
+                return None
+
+            def atomic_write_bytes(self, *a, **k):
+                return None
+
+        for n, v in (("_import_atomic_write", lambda *a, **k: _Null()), ("_kclear_equivalent", lambda *a, **k: {}),
+                     ("_dump_telemetry", lambda *a, **k: None), ("_append_progress_md", lambda *a, **k: None),
+                     ("_write_trigger_flag", lambda *a, **k: "flag"), ("_spawn_daemon", lambda *a, **k: True)):
+            setattr(wd, n, v)
+        s2 = sid(); _stamp(wd, s2)
+        out = _run(wd, s2, 42.0)
+        check("V-GSDLR-SESSTHR-E2E-QUIET-WITHOUT-FILE", out.get("decision") != "block", f"{out.get('decision')!r}")
+        _clear_wd(wd, s2)
+        lr.write_thresholds(s2, "35,40,30", reason="gate-e2e")
+        _stamp(wd, s2)
+        out = _run(wd, s2, 42.0)
+        check("V-GSDLR-SESSTHR-E2E-FIRES-WITH-FILE",
+              out.get("decision") == "block" and ">= 40%" in out.get("reason", ""),
+              f"{out.get('decision')!r} {out.get('reason', '')[:60]}")
+        _clear_wd(wd, s2)
+        lr.clear_thresholds(s2)
+    finally:
+        for s in _ISSUED:
+            try:
+                lr.clear_thresholds(s)
+            except Exception:
+                pass
+
+
 def main() -> int:
     try:
         gates_preflight()
         gates_budget_and_mission()
         gates_watchdog()
         gates_test_thresholds()
+        gates_session_thresholds()
         gates_sweep()
         gates_report()
         gates_config()
