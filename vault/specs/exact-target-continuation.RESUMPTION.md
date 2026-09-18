@@ -32,6 +32,12 @@ Coherence anchor: GSDLR 60, GSDAC 26, ACPS 33, CXT 28, CWIRE 14 -- all green at 
   was refused by the extension that owns this pane; a foreign-ancestor control was ignored.
 - Verdict to reach: `gsd_long_run.py report --session <sid>` = **PROVEN** (>=2 crossings,
   each with a confirmed resume).
+- **Stop-chain reachability confirmed** 22:23:11Z: `session=37cfb187 used_pct=39.0
+  outcome=pass ms=2025` in `~/.claude/logs/context-watchdog.log`. The watchdog does judge
+  this session's turns. It read 39 against a 40 wall, so `pass` is correct -- and note that
+  at 39 the production constants would also pass, so this line proves REACHABILITY, not yet
+  that the narrow band is the one being applied. The crossing is what discriminates.
+- Run position: Phase 1, research sealed (`cf9ba22`), planner in flight.
 
 ## 4. Not proven (do not claim)
 - No live crossing yet. Every marker on this host still reads UNPROVEN or NO_CROSSINGS.
