@@ -36,6 +36,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import copy
 import datetime as _dt
 import json
 import os
@@ -148,18 +149,57 @@ def main(argv: list[str] | None = None) -> int:
         print("\nreport only. re-run with --apply to rewrite (a backup is written first).")
         return 0
 
+    before = copy.deepcopy(settings)
+    n = repair(settings)
+    broken = argv_violations(before, settings, {(e, m, h) for e, m, h, _ in found})
+    if broken:
+        # Incident 2026-09-16: an ad-hoc settings rewrite kept the script path and dropped
+        # every argument after it (six --event= routing identities), and all Power Pack
+        # hooks went dark for ~42 h. A settings writer must prove argv survives, or not write.
+        print("\nREFUSED: the rewrite would change hook argv beyond the unwrap:", file=sys.stderr)
+        for b in broken:
+            print(f"  {b}", file=sys.stderr)
+        return 3
+
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = path.with_name(path.name + f".bak-{stamp}")
     shutil.copy2(path, backup)
 
-    n = repair(settings)
-    path.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n",
-                    encoding="utf-8")
+    # Compare-and-swap: Orca X's installer also rewrites this file at its own launch.
+    # If the bytes moved since we read them, do not overwrite the other writer's work.
+    tmp = path.with_name(path.name + f".tmp-conhost-{os.getpid()}")
+    tmp.write_text(json.dumps(settings, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    if path.read_text(encoding="utf-8-sig") != raw:
+        tmp.unlink()
+        print("fix_conhost_hook_leak: settings.json changed while repairing; not written", file=sys.stderr)
+        return 4
+    os.replace(tmp, path)
 
     print(f"\nbackup   : {backup}")
     print(f"rewrote  : {n} entr{'y' if n == 1 else 'ies'}")
-    print("restart claude for the change to load (hooks are read at session start).")
+    print("running sessions pick up hook changes live on current Claude Code (measured 2026-09-18).")
     return 0
+
+
+def _argv(entry: dict) -> list:
+    return [entry.get("command")] + list(entry.get("args") or [])
+
+
+def argv_violations(before: dict, after: dict, targets: set) -> list[str]:
+    """Every hook entry keeps its argv, except targets, whose argv must equal the wrapped tail."""
+    out: list[str] = []
+    for event, groups in (before.get("hooks") or {}).items():
+        for mi, group in enumerate(groups or []):
+            for hi, old in enumerate(group.get("hooks") or []):
+                try:
+                    new = after["hooks"][event][mi]["hooks"][hi]
+                except (KeyError, IndexError, TypeError):
+                    out.append(f"{event}[{mi}][{hi}]: entry disappeared")
+                    continue
+                want = list(old.get("args") or [])[1:] if (event, mi, hi) in targets else _argv(old)
+                if _argv(new) != want:
+                    out.append(f"{event}[{mi}][{hi}]: argv {_argv(old)} -> {_argv(new)}")
+    return out
 
 
 if __name__ == "__main__":

@@ -33,7 +33,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 # HOOKREG_DISPATCHER lets the mutation drill point the gate at a pre-fix dispatcher copy.
 DISPATCHER = Path(os.environ.get("HOOKREG_DISPATCHER") or REPO / "hooks" / "hook-dispatcher.js")
-LIVE_SETTINGS = Path.home() / ".claude" / "settings.json"
+# HOOKREG_SETTINGS lets the launcher drill judge a fixture instead of the live registry.
+LIVE_SETTINGS = Path(os.environ.get("HOOKREG_SETTINGS") or Path.home() / ".claude" / "settings.json")
 NODE = r"C:\Program Files\nodejs\node.exe" if os.name == "nt" else "node"
 
 # Registrations whose chains are security- or recovery-critical: absence is RED.

@@ -242,26 +242,27 @@ if ($py -and (Test-Path $namer)) {
   } catch { }
 }
 
-# --- FIOS session-compiler preflight (SCS C84 wiring) ------------------------
-# A frontier session (PP_FRONTIER_SESSION=1, set above) with an Owner-declared
-# objective (env PP_SESSION_OBJECTIVE or a repo-local .pp_frontier.json) compiles a
-# SESSION_ZERO plan and prints a 3-line summary before the prompt. No objective ->
-# silent, no python spawn: a plan with no questions is bloat, not a plan
-# (PR-FABLE-DELTA-ONLY-001). Fail-open ABSOLUTE: any error -> launch proceeds.
-function Invoke-FiosPreflight {
-  try {
-    if ($env:PP_FRONTIER_SESSION -ne '1') { return }
-    $declFile = Join-Path $cwd '.pp_frontier.json'
-    if (-not $env:PP_SESSION_OBJECTIVE -and -not (Test-Path $declFile)) { return }
-    if (-not $py) { return }
-    $comp = Join-Path $ppRoot 'modules\frontier_intelligence\session_compiler.py'
-    if (-not (Test-Path $comp)) { return }
-    $env:PYTHONIOENCODING = 'utf-8'
-    $out = & $py $comp --preflight --repo $cwd 2>$null
-    if ($out) { foreach ($ln in $out) { if ($ln) { Write-Host $ln -ForegroundColor Cyan } } }
-  } catch { }
-}
-Invoke-FiosPreflight
+# --- dead-screen guard: conhost --headless hook wrappers ---------------------
+# T-CONHOST-HOOK-REINFECTION-001. Orca X re-registers 11 hook entries across 11
+# events, each wrapped as `conhost.exe --headless cmd.exe /d /c <hook>`. conhost
+# allocates a pseudoconsole whose output does NOT return through the parent pipe:
+# it goes straight to the ATTACHED TERMINAL carrying ESC[2J (erase display) and
+# ESC[H (home). On PreToolUse with matcher '*' that wipes the Owner's screen on
+# EVERY tool call in EVERY repository -- the exact shape of "me pasa en todos mis
+# repos" -- and discards the wrapped hook's stdout.
+#
+# A one-time repair does not hold: the installer reinstates on its next launch
+# (measured 2026-09-11 -- removed 21:37, back by 22:27). So it is re-applied at
+# launch, the one moment independent of the installer's cadence. The full
+# rationale, the byte measurements and the unwrap-never-delete contract live in
+# the guard file; it is ONE definition, dot-sourced, so the gate drives exactly
+# the code that ships here.
+#
+# Fail-open: a missing or broken guard file leaves Repair-HookWrappers undefined
+# and the call site below tolerates that. A screen-clear guard must never be the
+# reason a launch fails.
+$wrapGuard = Join-Path $env:USERPROFILE '.claude\bin\repair-hook-wrappers.ps1'
+if (Test-Path $wrapGuard) { try { . $wrapGuard } catch { } }
 
 # --- launch claude, with /restart loop (supersedes kclaude.bat) --------------
 # Absorbs the MC-LAZ-26 resume loop: when /restart drops a flag, relaunch the
@@ -270,7 +271,16 @@ Invoke-FiosPreflight
 # HR-RESTART-VIA-KCLAUDE-001) so CO-00/CO-08 stay active after every restart.
 $flagPattern = Join-Path $env:TEMP 'claude-restart-*.flag'
 $sidFile = Join-Path $env:USERPROFILE '.claude\lazarus\kclaude-restart-sid.txt'
-Remove-Item $flagPattern -Force -ErrorAction SilentlyContinue   # purge stale flags
+# Pane-keyed handshake (HR-RESTART-PANE-KEYED-001, 2026-09-15). restart-claude.ps1
+# writes claude-restart-w<wrapperpid>.flag and kclaude-restart-sid-w<wrapperpid>.txt
+# for the pane that owns the exiting claude.exe; the un-suffixed names are the
+# legacy global pair, kept so a pane running an older in-memory loop still works.
+$flagPaneFile = Join-Path $env:TEMP ("claude-restart-w{0}.flag" -f $PID)
+$sidFilePane = Join-Path $env:USERPROFILE ".claude\lazarus\kclaude-restart-sid-w$PID.txt"
+# Purge OUR OWN stale flag only. The old line purged the whole glob, so launching
+# any pane destroyed every other pane's pending restart flag -- open Cursor with
+# 19 panes and whichever was mid-restart lost its handshake and fell to the shell.
+Remove-Item $flagPaneFile -Force -ErrorAction SilentlyContinue
 
 $launch = @()
 if ($resumeArg) { $launch += ($resumeArg -split '\s+') }
@@ -288,6 +298,48 @@ while ($true) {
     }
   }
   Write-PaneSidBeacon $paneSid
+
+  # Dead-screen guard: re-strip the conhost wrappers the installer may have
+  # reinstated since the last launch. Inside the loop on purpose -- a /restart or
+  # a hibernate-rehydrate is a fresh config read and deserves the same clean
+  # registry as a cold launch. Guarded on the command existing: if the dot-source
+  # above failed, this is a silent no-op rather than a CommandNotFound error.
+  if (Get-Command Repair-HookWrappers -ErrorAction SilentlyContinue) {
+    try { [void](Repair-HookWrappers) } catch { }
+  }
+
+  # Hook-registration integrity (incident 2026-09-16 20:02 -> 2026-09-18 13:55).
+  # A settings rewrite dropped --event= from all six dispatcher registrations and
+  # every hook-based health check went dark WITH the substrate it was meant to
+  # watch. This check runs OUTSIDE that substrate, at the moment that decides a
+  # session's config generation. DETECT ONLY: it never rewrites settings.json --
+  # repair needs a known-good source and a human-visible decision. Fail-open for
+  # the launch itself; loud on screen when the registry is invalid. The receipt
+  # line records which settings bytes this pane launched on (config generation).
+  try {
+    $hrTool = Join-Path $env:USERPROFILE '.claude\skills\claude-power-pack\tools\test_hook_registration_integrity.py'
+    $hrPy = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'
+    $hrSettings = Join-Path $env:USERPROFILE '.claude\settings.json'
+    if ((Test-Path $hrTool) -and (Test-Path $hrPy) -and (Test-Path $hrSettings)) {
+      $env:PYTHONIOENCODING = 'utf-8'
+      $hrOut = & $hrPy $hrTool --live-only 2>&1 | Out-String
+      $hrRc = $LASTEXITCODE
+      $hrGen = (Get-FileHash $hrSettings -Algorithm SHA256).Hash.Substring(0, 16)
+      $hrVerdict = if ($hrRc -eq 0) { 'VALID' } elseif ($hrRc -eq 1) { 'INVALID' } else { 'UNJUDGEABLE' }
+      $hrState = if ($env:CLAUDE_STATE_DIR) { $env:CLAUDE_STATE_DIR } else { Join-Path $env:USERPROFILE '.claude\state' }
+      $hrLine = '{{"ts":"{0}","pane_pid":{1},"settings_sha16":"{2}","verdict":"{3}"}}' -f (Get-Date).ToString('o'), $PID, $hrGen, $hrVerdict
+      Add-Content -Path (Join-Path $hrState 'session-config-generations.jsonl') -Value $hrLine -Encoding ASCII
+      if ($hrRc -eq 1) {
+        Write-Host ''
+        Write-Host '!!! POWER PACK HOOK REGISTRY INVALID -- security/Stop/prompt hooks may NOT run in this session !!!' -ForegroundColor Red
+        ($hrOut -split "`n") | Where-Object { $_ -match '^FAIL' } | ForEach-Object { Write-Host ('    ' + $_.Trim()) -ForegroundColor Red }
+        Write-Host '    Re-check: python tools/test_hook_registration_integrity.py --live' -ForegroundColor Red
+        Write-Host ''
+      } elseif ($hrRc -ne 0) {
+        Write-Host ('[kclaude] hook registry could not be judged (rc=' + $hrRc + ')') -ForegroundColor Yellow
+      }
+    }
+  } catch { }
 
   & claude @launch
   $code = $LASTEXITCODE
@@ -321,19 +373,46 @@ while ($true) {
     continue
   }
 
-  $flag = Get-ChildItem $flagPattern -ErrorAction SilentlyContinue | Select-Object -First 1
+  # Our own flag first. Only fall back to the global glob when this pane has no
+  # pane-keyed flag AND no other pane could have claimed one -- i.e. the flag was
+  # written by an older restart-claude.ps1 that did not key by wrapper.
+  $flag = $null
+  $flagWasMine = $false
+  if (Test-Path $flagPaneFile) {
+    $flag = Get-Item $flagPaneFile -ErrorAction SilentlyContinue
+    $flagWasMine = $true
+  } else {
+    $legacy = Get-ChildItem $flagPattern -ErrorAction SilentlyContinue |
+      Where-Object { $_.Name -notmatch '^claude-restart-w\d+\.flag$' } |
+      Select-Object -First 1
+    $flag = $legacy
+  }
   if (-not $flag) {
     Remove-Item (Join-Path $env:TEMP ("kclaude-pane-{0}.sid" -f $PID)) `
       -Force -ErrorAction SilentlyContinue
     exit $code
   }
   Remove-Item $flag.FullName -Force -ErrorAction SilentlyContinue
+  # Read the pane-keyed sid when the flag was ours; only a pane-keyed flag proves
+  # the sid belongs to THIS pane. Falling back to the global slot on our own flag
+  # is how a pane used to resume another pane's session.
   $sid = $null
-  if (Test-Path $sidFile) {
+  $sidSource = if ($flagWasMine) { $sidFilePane } else { $sidFile }
+  if (Test-Path $sidSource) {
+    $sid = (Get-Content $sidSource -Raw -ErrorAction SilentlyContinue)
+    if ($sid) { $sid = $sid.Trim() }
+    Remove-Item $sidSource -Force -ErrorAction SilentlyContinue
+  }
+  if ($flagWasMine -and -not $sid -and (Test-Path $sidFile)) {
+    # Our flag, but no pane-keyed sid: an older restart-claude.ps1 wrote only the
+    # global slot. Better to resume the one session recorded than to relaunch bare.
     $sid = (Get-Content $sidFile -Raw -ErrorAction SilentlyContinue)
     if ($sid) { $sid = $sid.Trim() }
     Remove-Item $sidFile -Force -ErrorAction SilentlyContinue
   }
+  # Deliberately do NOT delete the global sid file here. After a pane-keyed read
+  # it may already hold a DIFFERENT pane's pending sid, and deleting it is how a
+  # pane makes its neighbour relaunch bare -- the bug this change exists to end.
   Write-Host ""
   # F3a: re-run the fast CO gates so the Cognitive OS is ACTIVE after restart;
   # pass the sid so the pane's declared CO-08 scope is recalled + re-exported.
