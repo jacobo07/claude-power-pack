@@ -39,7 +39,75 @@ no-nag flag, so every Stop paid the import chain forever. Guards hoisted; pinned
 `tools/test_context_watchdog_overlay_guard.py` 4/4 (counts imports, never a clock — valid on a
 starved host), mutation 2/4, `test_gsd_autocompact.py` 26/26.
 
-Next 3 actions:
+# POST-INCIDENT STATE (2026-09-19 evening) — THE LONG-RUN CAUSAL MODEL CHANGED
+
+**The 7-hour KobiiCraft stall was NOT a hung Stop hook, and not a hung job.** Session
+`de7f3c91` (KobiiCraft Core Files, Phase 13). Measured, not inferred:
+
+- 12:38:58 the mission backgrounds a STATE.md blocker read at the harness 120 s timeout.
+- **12:41:58 the job COMPLETES** — `tasks/b4haxctvm.output`, 3,095 bytes, exit 0. Its content:
+  all four blocker sections **absent**, i.e. "nothing is blocking you, proceed."
+- 12:41:58 and 12:44:45 two `<task-notification>` rows are **enqueued**.
+- The turn ends. Nothing re-invokes the model. **The queue does not pump itself.**
+- 19:50:02 (7 h 08 m later) the notifications are delivered, when the Owner returns and types.
+- 20:06:59 the reply is `No response requested.` — a relapse of CLAUDE.md rule (L).
+
+Stop `4/5` is `gsd-context-monitor.js` (timeout 10 s, and it carries its OWN 10 s stdin guard),
+so it is a poor 7-hour suspect; `4/5` was the last-rendered frame of a turn that had already
+ended. **Do not go looking for a wedged hook without new process evidence.**
+
+**H1 IS REFUTED AS EVIDENCED — and this corrects a claim made in chat on 2026-09-19.**
+It was reported that KME "survived 11 compactions unattended, AUTO=11 / HUMAN=0". That was an
+instrument failure: the classifier listed `<command-name>` as *synthetic*, so every `/compact`
+the Owner typed scored as AUTO. Measured properly across the whole store:
+
+    439 compact boundaries in 131 transcripts -> 419 confirmed MANUAL /compact, 20 window
+    artifacts. 3 of 3 hand-checked candidates (including one inside KME's own bb4e529f,
+    whose /compact row sits at +9 rows) were MANUAL.
+
+**Zero native auto-compactions have ever been observed in this estate.** But note the selection
+effect before concluding the host cannot do it: the watchdog fires at 60/70% and a human
+compacts first, so **nothing has ever been allowed to reach the native wall.** H1 is therefore
+UNTESTED as a host capability, not disproven. The experiment is cheap and decisive and is the
+next big unknown — a disposable session with the watchdog off, run to the real wall.
+
+**H2 IS SUPPORTED.** `closer-guard` measured 867 runs / 385 blocks, live. Stop `decision:block`
+re-invokes the model in the same session. That primitive is proven in production here.
+
+**H3 is supported but did NOT cause this stall.** Three `auto-compact-refused-*.flag` files,
+zero deliveries; `8915b3d5` (KobiiCraft, 71%) went dead 23 h after its refusal. (That session id
+is real — it had been flagged in chat as possibly invented. It is not.)
+
+**LANDED (`4d45b7a`).** `hooks/gsd_stop_continuation.js` — bounded autonomous TURN continuation.
+Second on Stop-chain, critical lane, after `closer-guard`. 17/17 both poles, 2 mutations caught
+on their own assertions, SHA-256 restore verified, and driven END-TO-END through the real
+dispatcher (`runnable=20/26`, reason survives the merge, negative control clean).
+**It is OPT-IN and currently inert:** it does nothing unless the autorun marker carries
+`continuation: "stop-block"`. 11 markers existed when it landed; none opt in. Kill switch
+`CPP_GSD_STOP_CONTINUATION=off`. Anti-loop = A SECOND BLOCK REQUIRES A CAUSAL DELTA.
+
+**LANDED (`1df113f5`, KobiiCraft repo).** `agents_installed:false` with all 35 agents present was
+Orca exporting `CODEX_HOME` into Claude Code panes, so GSD's host-detection rung reported
+`codex` and checked a directory that does not exist. Fixed at `config.runtime`, never in
+`gsd-core` (MANAGED tree — edits are re-staged away). Same file finished the long-run threshold
+restore (12/8 -> defaults) that `_pp_long_run_backup` proved was owed.
+
+Next actions for the long-run track, highest value first:
+1. **The native-wall experiment.** Disposable session, watchdog off, run to the real context
+   wall. This single measurement decides whether the whole compact-delivery apparatus lives or
+   dies. Until it runs, do not retire the legacy path and do not flip the default.
+2. **A/B**, then flip `continuation: "stop-block"` on by default only if it wins.
+3. `Stop-chain` still has **no `CHAIN_DEADLINE_MS` entry**. Adding one needs its own wall-clock
+   measurement AND an argument about what failing open costs — the dispatcher states that bar
+   itself. Note the Stop-chain blockers are `closer-guard` and `zero-issue-gate`, i.e.
+   ACCOUNTING and dead-screen, not the HR-SECRET-001 boundary, so the argument differs from
+   PreToolUse. Blocked on host headroom (6.4% free at time of writing).
+4. Four GSD projects still lack `runtime` in `.planning/config.json` and misreport agents the
+   same way: `gsd-long-smoke`, `Orca X`, `ABSW2-Wii`, `KobiiSports Resort`. Deliberately NOT
+   patched — the Owner does run Codex sessions, so a blind `claude` would create the mirror bug.
+   Apply per project when next active.
+
+Older actions from the watchdog hot-path slice (still open):
 1. **Explain the pass/block asymmetry — still open.** The overlay runs FIRST for both outcomes
    (`context-watchdog.py:963`), so the import defect does not by itself explain why the cheap
    path costs 6.7x the expensive one. Do not assume the fix closed it. Suspect next: what
