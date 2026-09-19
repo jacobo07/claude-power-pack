@@ -492,6 +492,53 @@ def resume_gate(marker: dict, now: float | None = None) -> dict:
     return {"halt": False, "reason": why + "; mission unchecked (marker carries none)", "kind": "ok"}
 
 
+def owed_line(session_id: str, marker: dict, transcript, tail: str, cmd: str) -> dict:
+    """What a stalled run is owed NOW: the line to re-deliver, or a halt.
+
+    `tail` is the transcript's last assistant line, and when it is a `/compact`
+    line it is the same in two OPPOSITE states: the line was never submitted,
+    and the line WAS submitted and the compaction landed. After a compaction the
+    agent has not spoken yet, so the tail does not move -- the two states are
+    indistinguishable from the tail alone, and they need opposite actions.
+    Re-typing `/compact` is right only in the first; in the second the host
+    answers "Not enough messages to compact" and the run can never advance.
+
+    Measured 2026-09-19 on session 37cfb187: one `/compact` line, three sweep
+    recoveries that each re-typed it, then nine idle hours. What was owed after
+    the compaction was the resume command, and nothing ever sent it.
+
+    The boundary row is the only thing that separates the two states (C1), so
+    this asks it, and gates the resume exactly as the watchdog does -- a resume
+    issued from outside the session is still a resume and still spends budget.
+    """
+    if not tail.startswith("/compact") or not cmd:
+        return {"line": tail, "compaction": "n/a", "halt": False}
+    obs = compaction_observed(transcript, resume_reference(session_id, marker))
+    if obs.get("state") != "observed":
+        # Not observed means the compaction cannot be claimed, so the `/compact`
+        # line is still owed. Fail-safe: re-typing it is idempotent, re-typing
+        # the resume when nothing compacted would skip the wall entirely.
+        return {"line": tail, "compaction": obs.get("state"), "halt": False,
+                "reason": obs.get("reason")}
+    gate = resume_gate(marker)
+    if gate.get("halt"):
+        return {"line": None, "compaction": "observed", "halt": True,
+                "reason": gate.get("reason"), "kind": gate.get("kind")}
+    return {"line": cmd, "compaction": "observed", "halt": False,
+            "gate": gate.get("reason"),
+            "boundary_ts": obs.get("boundary_ts"), "boundary_uuid": obs.get("boundary_uuid")}
+
+
+def _marker_module():
+    """Lazy import: the marker module imports nothing from here, but keep it late anyway."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import gsd_autorun_marker as mk
+        return mk
+    except Exception:
+        return None
+
+
 # --------------------------------------------------------------------------- flags
 def _flag_names(session_id: str) -> list[str]:
     return [f"auto-compact-{k}-{session_id}.flag" for k in ("trigger", "pending", "refused")]
@@ -643,10 +690,33 @@ def sweep(now: float | None = None, dry_run: bool = False) -> list[dict]:
         if resumable and not waiting:
             if _already(sid, "recovered", "transcript_mtime", mtime):
                 continue
-            actions.append({"session_id": sid, "action": "recovered", "line": tail})
+            owed = owed_line(sid, m, transcript, tail, cmd)
+            if owed["halt"]:
+                actions.append({"session_id": sid, "action": "halted", "reason": owed["reason"]})
+                if not dry_run:
+                    path.unlink(missing_ok=True)
+                    ledger_append(sid, "halted", kind=owed.get("kind"),
+                                  reason=owed.get("reason"), via="sweep")
+                continue
+            line = owed["line"]
+            actions.append({"session_id": sid, "action": "recovered", "line": line,
+                            "compaction": owed["compaction"]})
             if not dry_run:
-                route = _recover_via_transport(sid, cwd, str(transcript), tail, cmd, mtime)
-                ledger_append(sid, "recovered", line=tail, transcript_mtime=mtime, route=route)
+                if line == cmd and owed["compaction"] == "observed":
+                    # This IS the resume request the watchdog never got to make:
+                    # it spends a cycle and advances the one-resume-per-boundary
+                    # fence, which reads `resume_requested` rows carrying a
+                    # boundary_ts. A bare `recovered` row would leave the fence
+                    # where it was and let the same boundary license a resume again.
+                    mk = _marker_module()
+                    cycles = mk.bump_cycles(sid) if mk is not None else None
+                    ledger_append(sid, "resume_requested", cycles=cycles, via="sweep",
+                                  gate=owed.get("gate"),
+                                  boundary_ts=owed.get("boundary_ts"),
+                                  boundary_uuid=owed.get("boundary_uuid"))
+                route = _recover_via_transport(sid, cwd, str(transcript), line, cmd, mtime)
+                ledger_append(sid, "recovered", line=line, transcript_mtime=mtime, route=route,
+                              compaction=owed["compaction"])
             continue
         if not _already(sid, "stalled", "transcript_mtime", mtime):
             actions.append({"session_id": sid, "action": "stalled", "idle_min": round(idle_s / 60),

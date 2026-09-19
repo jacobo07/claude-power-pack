@@ -561,6 +561,93 @@ def gates_session_thresholds():
                 pass
 
 
+def gates_compact_tail():
+    """The two opposite states a `/compact` tail is the SAME in (spec C1).
+
+    Measured 2026-09-19 on session 37cfb187: the sweep re-delivered one
+    `/compact` line three times, because `last_assistant_text` returns that line
+    both when it was never submitted AND after the compaction landed -- the
+    agent has not spoken since, so the tail does not move. Two states, one
+    observable, opposite correct actions. The run idled nine hours and the
+    resume it was owed was never sent.
+
+    `mk.STATE_DIR` is redirected here (it is a module constant, see the module
+    docstring) so the cycle bump is both observable and kept off live state.
+    """
+    real_state = mk.STATE_DIR
+    mk.STATE_DIR = STATE
+    try:
+        for p in STATE.glob("gsd-autorun-*.json"):
+            p.unlink()
+        armed = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() - 3600)) + "Z"
+        line = "/compact focus on narrow-wall crossing delivery fix"
+        cmd = "/gsd-autonomous"
+
+        # --- the decision, driven directly ----------------------------------
+        s_no = sid()
+        t_no = transcript(s_no, "x", rows=[asst(line)], idle_s=1800)
+        owed = lr.owed_line(s_no, {"armed_at": armed}, t_no, line, cmd)
+        check("V-GSDLR-OWED-NO-BOUNDARY-KEEPS-COMPACT",
+              owed["line"] == line and owed["compaction"] == "unobserved" and not owed["halt"],
+              f"{owed}")
+
+        s_yes = sid()
+        bnd = boundary_row(time.time())
+        t_yes = transcript(s_yes, "x", rows=[asst(line), bnd], idle_s=1800)
+        owed = lr.owed_line(s_yes, {"armed_at": armed}, t_yes, line, cmd)
+        check("V-GSDLR-OWED-AFTER-COMPACT-IS-RESUME",
+              owed["line"] == cmd and owed["compaction"] == "observed"
+              and not owed["halt"] and owed.get("boundary_ts"), f"{owed}")
+
+        owed = lr.owed_line(s_yes, {"armed_at": armed, "cycles": 12, "max_cycles": 12},
+                            t_yes, line, cmd)
+        check("V-GSDLR-OWED-HALTS-ON-SPENT-BUDGET",
+              owed["halt"] and owed["line"] is None and owed.get("kind") == "budget", f"{owed}")
+
+        owed = lr.owed_line(s_yes, {"armed_at": armed}, t_yes, line, "")
+        check("V-GSDLR-OWED-NO-COMMAND-KEEPS-TAIL",
+              owed["line"] == line and not owed["halt"], f"{owed}")
+
+        # --- end to end, through the sweep the daemon actually reads ---------
+        s_e2e = sid()
+        _marker_file(s_e2e, armed_at=armed)
+        b2 = boundary_row(time.time())
+        transcript(s_e2e, "x", rows=[asst(line), b2], idle_s=1800)
+        by = {(a.get("session_id"), a["action"]) for a in lr.sweep()}
+        flag = HOOKS / f"auto-compact-trigger-{s_e2e}.flag"
+        body = json.loads(flag.read_text(encoding="utf-8")) if flag.exists() else {}
+        rows = lr.ledger_events(s_e2e)
+        req = [e for e in rows if e.get("event") == "resume_requested"]
+        rec = [e for e in rows if e.get("event") == "recovered"]
+        check("V-GSDLR-SWEEP-SENDS-RESUME-AFTER-COMPACT",
+              (s_e2e, "recovered") in by and body.get("expect_line") == cmd
+              and rec and rec[-1].get("compaction") == "observed", f"flag={body} rec={rec}")
+        check("V-GSDLR-SWEEP-LEDGERS-RESUME-REQUEST",
+              len(req) == 1 and req[0].get("via") == "sweep"
+              and req[0].get("boundary_ts") and req[0].get("cycles") == 1, f"{req}")
+
+        # The same boundary must not license a second resume. The transcript moves
+        # (new mtime clears the dedupe) but carries the SAME boundary, so the fence
+        # -- which reads `resume_requested` rows -- must now read it as spent.
+        flag.unlink(missing_ok=True)
+        transcript(s_e2e, "x", rows=[asst(line), b2], idle_s=1799)
+        lr.sweep()
+        body2 = json.loads(flag.read_text(encoding="utf-8")) if flag.exists() else {}
+        req2 = [e for e in lr.ledger_events(s_e2e) if e.get("event") == "resume_requested"]
+        check("V-GSDLR-SWEEP-ONE-RESUME-PER-BOUNDARY",
+              len(req2) == 1 and body2.get("expect_line") == line, f"req={req2} flag={body2}")
+
+        s_halt = sid()
+        m_halt = _marker_file(s_halt, armed_at=armed, cycles=12, max_cycles=12)
+        transcript(s_halt, "x", rows=[asst(line), boundary_row(time.time())], idle_s=1800)
+        by = {(a.get("session_id"), a["action"]) for a in lr.sweep()}
+        check("V-GSDLR-SWEEP-HALTS-SPENT-RUN",
+              (s_halt, "halted") in by and not m_halt.exists() and "halted" in events(s_halt)
+              and not (HOOKS / f"auto-compact-trigger-{s_halt}.flag").exists(), f"{by}")
+    finally:
+        mk.STATE_DIR = real_state
+
+
 def main() -> int:
     try:
         gates_preflight()
@@ -569,6 +656,7 @@ def main() -> int:
         gates_test_thresholds()
         gates_session_thresholds()
         gates_sweep()
+        gates_compact_tail()
         gates_report()
         gates_config()
         gates_cli()
