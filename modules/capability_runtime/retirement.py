@@ -215,25 +215,33 @@ def probe_spec_depth_selection(root: Path):
     spec-omission entry. An empty or unreadable record proves nothing and
     returns UNEVALUABLE -- absence of evidence is not evidence of absence,
     and a silent zero must never retire a guard.
+
+    The sample floor gates the ZERO ONLY. Presence of a spec-omission entry is
+    direct positive evidence that the condition has not come true, and it is
+    not weakened by a small denominator -- one incident is one incident. The
+    first version applied the floor ahead of the hit scan, so on this estate's
+    real corpus (99 records against a floor of 200) the probe could return
+    UNEVALUABLE and nothing else: an instrument that can only ever give one
+    answer carries no information when it gives it.
     """
     recs = (_jsonl_records(root / "vault" / "osa" / "never_again_log.jsonl")
             + _jsonl_records(root / "vault" / "ceps" / "events.jsonl"))
     if not recs:
         return None, "incident record empty or unreadable -- cannot conclude"
-    if len(recs) < _MIN_INCIDENT_SAMPLE:
-        # A zero over a tiny denominator is not evidence of extinction, it is
-        # evidence of a small corpus -- and a gate bounded by its own
-        # vocabulary reads an unfamiliar idiom as 0 (feedback_zero_cannot_fall).
-        # Refuse to retire a live guard on that.
-        return None, (f"only {len(recs)} incident record(s); "
-                      f"{_MIN_INCIDENT_SAMPLE} required before a zero can "
-                      "retire a guard")
     hits = [r for r in recs
             if any(tok in json.dumps(r, ensure_ascii=False).lower()
                    for tok in _SPEC_OMISSION)]
     if hits:
         return False, (f"{len(hits)} spec-omission entr(ies) still in an "
                        f"incident record of {len(recs)}")
+    if len(recs) < _MIN_INCIDENT_SAMPLE:
+        # A zero over a tiny denominator is not evidence of extinction, it is
+        # evidence of a small corpus -- and a gate bounded by its own
+        # vocabulary reads an unfamiliar idiom as 0 (feedback_zero_cannot_fall).
+        # Refuse to retire a live guard on that.
+        return None, (f"0 spec-omission entries, but only {len(recs)} incident "
+                      f"record(s); {_MIN_INCIDENT_SAMPLE} required before a "
+                      "zero can retire a guard")
     return True, f"0 spec-omission entries across {len(recs)} incident records"
 
 
@@ -291,6 +299,113 @@ def probe_architecture_reconstruction(root: Path):
                    "architecture contract")
 
 
+# The three guarantees the cdicf-installer contract names, each detected by the
+# MECHANISM that delivers it rather than by the installer's filename. A file
+# called installer.js that copies bytes is not what this condition is about.
+_CDICF_GUARANTEES = {
+    "transaction": ("journal.json",),
+    "provenance": ("provenance",),
+    "recovery": ("recover", "rollback"),
+}
+# The record the installer writes. A reader of it OUTSIDE modules/cdicf is what
+# makes the guarantees load-bearing rather than self-referential.
+_CDICF_RECORD = ".cdicf"
+_CDICF_RECORD_FILE = "installed.json"
+_CONSUMER_SCAN_CAP = 4000
+
+
+def _cdicf_provenance_consumers(root: Path) -> list:
+    """Production files outside modules/cdicf that read the installer's record.
+
+    Discovered, never curated. Tests are excluded on purpose: a test reading the
+    record proves the record is testable, not that anything depends on it.
+    """
+    out, seen = [], 0
+    for sub in ("tools", "modules"):
+        base = root / sub
+        if not base.is_dir():
+            continue
+        try:
+            paths = sorted(base.rglob("*.py")) + sorted(base.rglob("*.js"))
+        except OSError:
+            continue
+        for p in paths:
+            if seen >= _CONSUMER_SCAN_CAP:
+                break
+            seen += 1
+            parts = p.parts
+            if "cdicf" in parts or "node_modules" in parts:
+                continue
+            if p.name.startswith("test_") or p.name.startswith("test-"):
+                continue
+            try:
+                if p.stat().st_size > 2_000_000:
+                    continue
+                body = p.read_text(encoding="utf-8-sig", errors="replace")
+            except OSError:
+                continue
+            if _CDICF_RECORD in body and _CDICF_RECORD_FILE in body:
+                out.append(str(p.relative_to(root)).replace("\\", "/"))
+    return out
+
+
+def probe_cdicf_installer(root: Path):
+    """"a package manager installs registry components transactionally with
+    equivalent provenance and recovery, making a CDICF-specific installer
+    redundant"
+
+    The CAUSE is external -- no repository signal observes npm or pip gaining
+    transactional provenance. The condition's own terminal clause is not: it
+    ends in "making a CDICF-specific installer redundant", and redundancy is
+    settled right here. So this is probe debt, not an EXTERNAL condition, and
+    filing it as external would have closed the coverage gate without paying
+    any evidence at all.
+
+    Three distinguishable worlds:
+      met (True)   -- the cdicf module is present and carries no installer:
+                      the redundancy the condition describes has been realised.
+      not (False)  -- an installer is present, carries all three named
+                      guarantees, and at least one production file outside
+                      modules/cdicf reads the provenance record it writes.
+      None         -- the module is absent (wrong root), the installer is
+                      unreadable, or it is present WITHOUT the guarantees the
+                      contract claims. The last is a contract/reality
+                      disagreement, which is not a verdict about retirement.
+    """
+    mod = root / "modules" / "cdicf"
+    if not mod.is_dir():
+        return None, ("modules/cdicf is absent -- this root cannot observe the "
+                      "installer either way")
+    try:
+        installers = sorted(mod.glob("installer.*"))
+    except OSError:
+        return None, "modules/cdicf is unreadable -- cannot conclude"
+    if not installers:
+        return True, ("modules/cdicf carries no installer -- a CDICF-specific "
+                      "installer is no longer part of this estate")
+    inst = installers[0]
+    try:
+        body = inst.read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return None, f"{inst.name} is unreadable -- cannot conclude"
+    low = body.lower()
+    missing = [name for name, toks in _CDICF_GUARANTEES.items()
+               if not any(t in low for t in toks)]
+    if missing:
+        return None, (f"{inst.name} is present but shows no "
+                      f"{', '.join(missing)} mechanism -- the contract claims a "
+                      "guarantee the installer does not visibly deliver, so "
+                      "redundancy cannot be judged")
+    consumers = _cdicf_provenance_consumers(root)
+    if not consumers:
+        return None, (f"{inst.name} carries all three guarantees but no "
+                      "production file outside modules/cdicf reads the record "
+                      "it writes -- the guarantees are unobserved")
+    return False, (f"{inst.name} still delivers transaction, provenance and "
+                   f"recovery, and {len(consumers)} production consumer(s) read "
+                   f"its record ({', '.join(consumers[:2])}) -- not redundant")
+
+
 # Conditions that depend on facts OUTSIDE this repository. These are not a
 # probe debt -- no probe can exist here, and filing them under UNEVALUABLE
 # would conflate "we owe a measurement" with "this repo cannot measure it",
@@ -316,6 +431,8 @@ PROBES = {
                            "age of the newest recorded chain member"),
     "architecture_reconstruction": (probe_architecture_reconstruction,
                                     "CI verification of an architecture contract"),
+    "cdicf-installer": (probe_cdicf_installer,
+                        "survival of a guaranteeing CDICF-specific installer"),
 }
 
 
