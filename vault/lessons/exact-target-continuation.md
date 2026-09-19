@@ -2,7 +2,14 @@
 
 Spec: `vault/specs/exact-target-continuation.md`. Dataset: `vault/datasets/gsd_x/claims.jsonl`
 GSDX-C01..C11. Staged here because `ukdl-universal.md` had another writer's uncommitted
-hunks at the time; promote the entries below into it once that edit lands.
+hunks at the time.
+
+**PROMOTED 2026-09-19 in `1b2d6f4`** — these rules now live in
+`vault/knowledge_base/ukdl-universal.md` under "Exact-Target Continuation (GSD X)", with
+their ids, plus two new traps from the run that promoted them (T-CONT-06, a `/compact` tail
+is the same line in two opposite states; T-CONT-07, a confirmation cannot see a row its
+window excludes). This file is kept as the origin record, not as a second source of truth:
+edit the UKDL, not this.
 
 ## What happened, in one paragraph
 

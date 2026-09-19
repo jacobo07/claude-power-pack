@@ -50,7 +50,14 @@ when the transcript shows the command was really submitted.
   clock) measured at **42 ms** median, n=5, at 15.5% free RAM: neither the cap
   nor the clock is the defect, and the 19.4/17.1 s readings predate the deadline
   that fixed them. Total is a lower bound (synthetic payload). `02-SUMMARY.md`.
-- Phase 3: Promote the exact-target lessons — PENDING
+- Phase 3: Promote the exact-target lessons — COMPLETE. HR-CONT-01..03,
+  PR-CONT-01..04 and T-CONT-01..07 now live in the UKDL with their ids
+  (`1b2d6f4`), and the global router's "the SendKeys daemon presses Enter when
+  Cursor is foreground" sentence is replaced by the exact-or-refused delivery
+  that actually happens. Two cautions: the router edit is in `~/.claude/CLAUDE.md`,
+  which is UNVERSIONED (same gap class as the daemon); and the UKDL working copy
+  carries 1,029 uncommitted CEPS auto-append rows from a producer outside this
+  session — preserved untouched, deliberately not committed, Owner decision owed.
 - Phase 4: Reap the stale autorun markers — PENDING
 
 The narrow-wall proof is the milestone's acceptance gate, not a phase: it is
