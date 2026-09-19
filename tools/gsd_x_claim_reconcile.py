@@ -248,6 +248,13 @@ def referenced_shas(claims: list[dict]) -> set[str]:
 MIN_PINNED_CLAIMS = 10
 
 
+# Two kinds, both implemented. `path:<repo-relative>@<blob-sha7>` pins a STANDING
+# property to the surface it was observed against; `commit:<sha>` pins a dated
+# measurement to the immutable event that produced it. Adding a kind here without
+# a branch below is what the unknown-kind refusal exists to prevent.
+KNOWN_DEPENDENCY_KINDS = frozenset({"path", "commit"})
+
+
 def dependency_verdicts(claims: list[dict]) -> list[dict]:
     """A claim is STALE_DEPENDENCY when a surface it was pinned to has moved."""
     pinned = [c for c in claims if c.get("depends_on")]
@@ -260,8 +267,36 @@ def dependency_verdicts(claims: list[dict]) -> list[dict]:
     verdicts = []
     for c in claims:
         for dep in c.get("depends_on") or []:
-            if not dep.startswith("path:"):
-                continue                       # gate:/report: kinds are future work
+            # An unrecognised kind used to be skipped silently, which made a
+            # typo (`paht:`) and a declared-but-unbuilt kind read exactly like an
+            # enforced pin. A pin that looks enforced and is not is the failure
+            # class this whole reconciler exists to close, so an unknown kind is
+            # now an instrument failure rather than a quiet pass.
+            kind = dep.split(":", 1)[0] if ":" in dep else dep
+            if kind not in KNOWN_DEPENDENCY_KINDS:
+                raise InstrumentFailure(
+                    f"{c.get('id')}: depends_on kind {kind!r} is not implemented. "
+                    f"Known kinds: {sorted(KNOWN_DEPENDENCY_KINDS)}. Declaring a "
+                    "pin the sweep cannot evaluate is worse than carrying none."
+                )
+            if kind == "commit":
+                # A dated measurement does not depend on a living surface: what
+                # was observed on a given day stays observed however the code
+                # moves afterwards. Pinning such a claim to a mutable blob makes
+                # it permanently, falsely stale -- and a gate nobody can green is
+                # a gate that gets switched off. A commit sha is immutable, so
+                # this pin can only fail when the sha is wrong, which is the only
+                # way a historical claim's dependency CAN be wrong.
+                sha = dep[len("commit:"):].strip()
+                if not sha:
+                    raise InstrumentFailure(
+                        f"{c.get('id')}: depends_on entry {dep!r} names no commit")
+                try:
+                    git("rev-parse", "--verify", f"{sha}^{{commit}}")
+                except InstrumentFailure:
+                    verdicts.append({"id": c["id"], "verdict": "STALE_DEPENDENCY",
+                                     "detail": f"commit {sha} does not resolve"})
+                continue
             surface, _, pinned = dep[len("path:"):].rpartition("@")
             if not surface or not pinned:
                 raise InstrumentFailure(
