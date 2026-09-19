@@ -55,7 +55,8 @@ POSITIVE_CONTROL = "GSDX-R08"   # the CONTRADICTED entry; if this is gone the
 # next. So they SKIP when the subject is not the real ledger, and the drill
 # asserts exactly how many skipped, so the skip cannot silently become permanent.
 SYNTHETIC = DATASET.resolve() != _DEFAULT.resolve()
-REPO_GATES = ("V-GSDX-DATASET-DEPENDENCY", "V-GSDX-DATASET-COVERAGE")
+REPO_GATES = ("V-GSDX-DATASET-DEPENDENCY", "V-GSDX-DATASET-COVERAGE",
+              "V-GSDX-DATASET-PIN-CURRENCY")
 
 # The one pre-existing supersedes edge points outside the claim id space, at a
 # planning artifact that predates the corpus. It is grandfathered BY NAME so a
@@ -252,8 +253,19 @@ def main() -> int:
     # V10 -- material evidence exists that no claim covers. This is the class the
     # other six gates are structurally blind to: it fails by OMISSION, so nothing
     # is contradicted and every other clause stays green.
+    #
+    # V11 -- pin currency, read from the SAME run. V9 above asks whether a claim
+    # carries a pin; this asks whether the pin still points at what it was
+    # observed against. The reconciler has computed STALE_DEPENDENCY since N3 and
+    # printed it and exited 1 on it, and no gate read the number -- so a claim
+    # resting on a surface that had moved passed the suite. That was invisible
+    # for exactly as long as the count was zero: across N3's whole 27-commit
+    # delta it was 0, and the first non-zero reading (6) is what exposed the
+    # missing wire. A detector whose red branch reaches no gate is this corpus's
+    # own failure class, one layer up.
     if SYNTHETIC:
         skip("V-GSDX-DATASET-COVERAGE", "synthetic subject has no commit range")
+        skip("V-GSDX-DATASET-PIN-CURRENCY", "synthetic subject carries no repo surfaces")
     else:
         recon = Path(__file__).resolve().parent / "gsd_x_claim_reconcile.py"
         proc = subprocess.run(
@@ -265,18 +277,35 @@ def main() -> int:
             print(f"INSTRUMENT_FAILED: reconciler could not judge: "
                   f"{proc.stdout.strip()[:200]}")
             return 2
-        n = None
+        # One subprocess, two verdicts. A second run would double the cost on a
+        # host this gate has to survive, and could disagree with the first.
+        counts: dict[str, int] = {}
         for line in proc.stdout.splitlines():
-            if "UNCOVERED_EVIDENCE" in line and ":" in line:
-                n = int(line.rsplit(":", 1)[1].strip())
-        if n is None:
-            print("INSTRUMENT_FAILED: reconciler produced no UNCOVERED_EVIDENCE line")
+            for key in ("UNCOVERED_EVIDENCE", "STALE_DEPENDENCY"):
+                if key in line and ":" in line:
+                    try:
+                        counts[key] = int(line.rsplit(":", 1)[1].strip())
+                    except ValueError:      # a findings line, not the summary
+                        pass
+        missing = [k for k in ("UNCOVERED_EVIDENCE", "STALE_DEPENDENCY")
+                   if k not in counts]
+        if missing:
+            print(f"INSTRUMENT_FAILED: reconciler produced no {' / '.join(missing)} line")
             return 2
-        if n:
+        if counts["UNCOVERED_EVIDENCE"]:
             bad("V-GSDX-DATASET-COVERAGE",
-                f"{n} material evidence event(s) no claim speaks about")
+                f"{counts['UNCOVERED_EVIDENCE']} material evidence event(s) "
+                "no claim speaks about")
         else:
             ok("V-GSDX-DATASET-COVERAGE", "every material event is covered")
+
+        if counts["STALE_DEPENDENCY"]:
+            bad("V-GSDX-DATASET-PIN-CURRENCY",
+                f"{counts['STALE_DEPENDENCY']} claim(s) pinned to a surface that "
+                "has since moved -- re-observe or re-pin")
+        else:
+            ok("V-GSDX-DATASET-PIN-CURRENCY",
+               "every pinned dependency still resolves to its observed blob")
 
     for g in REPO_GATES:
         if g in skipped and not SYNTHETIC:
@@ -380,9 +409,12 @@ def drill() -> int:
                 failures.append(f"{name} survived (rc={rc})")
                 print(f"  FAIL drill/{name}: NOT caught (rc={rc})")
 
-        # The two repo-backed gates MUST have skipped against the synthetic
-        # subject. If they ran, the drill's verdict is a function of the real
-        # repo's history and of whichever pane commits next, not of the mutation.
+        # Every repo-backed gate MUST have skipped against the synthetic subject.
+        # If one ran, the drill's verdict is a function of the real repo's
+        # history and of whichever pane commits next, not of the mutation. The
+        # expected number is read from REPO_GATES rather than written here: a
+        # count in prose beside a list goes stale the first time the list grows,
+        # and reads as a measured fact while it does.
         proc = subprocess.run(
             [sys.executable, str(Path(__file__).resolve())],
             env={**os.environ, "GSDX_DATASET": str(tmp), "PYTHONIOENCODING": "utf-8"},
