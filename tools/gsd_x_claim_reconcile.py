@@ -163,6 +163,12 @@ def material_events(since: str) -> tuple[list[dict], list[dict]]:
         if not files:
             skipped.append({"sha": sha, "subject": subject, "why": "touches zero files"})
             continue
+        # A commit touching ONLY the ledger is the act of reconciling, not
+        # evidence to reconcile. Without this the reconciler can never reach
+        # zero: every reconciliation it prompts becomes a new finding.
+        if all(f.replace("\\", "/").startswith("vault/datasets/gsd_x/") for f in files):
+            skipped.append({"sha": sha, "subject": subject, "why": "ledger bookkeeping"})
+            continue
         substantive = [f for f in files if not is_narration_or_generated(f)]
         if not substantive:
             skipped.append({"sha": sha, "subject": subject, "why": "narration or generated only"})

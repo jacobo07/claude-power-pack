@@ -48,6 +48,37 @@ MIN_CLAIMS = 20
 POSITIVE_CONTROL = "GSDX-R08"   # the CONTRADICTED entry; if this is gone the
                                 # corpus has started deleting its own mistakes
 
+# V7-V10 need the real repository: blob SHAs, a commit range, git itself. The
+# drill redirects DATASET at a synthetic corpus in a temp dir, which has none of
+# those. Running them there would sweep the real repo's history while judging a
+# fabricated claim set -- a verdict that is a function of whichever pane commits
+# next. So they SKIP when the subject is not the real ledger, and the drill
+# asserts exactly how many skipped, so the skip cannot silently become permanent.
+SYNTHETIC = DATASET.resolve() != _DEFAULT.resolve()
+REPO_GATES = ("V-GSDX-DATASET-DEPENDENCY", "V-GSDX-DATASET-COVERAGE")
+
+# The one pre-existing supersedes edge points outside the claim id space, at a
+# planning artifact that predates the corpus. It is grandfathered BY NAME so a
+# new row cannot reuse the escape; a count would be satisfied by any single row.
+LEGACY_SUPERSEDE_ESCAPE = {"GSDX-R03"}
+
+# Shrink-only ratchet, frozen 2026-09-19 at 56 of 82 claims. New claims must pin
+# their surfaces; these are the debt. The list may only get shorter, and an entry
+# that has since been pinned must be DELETED from it -- a ratchet whose inventory
+# can outlive its debts stops turning and becomes a permanent exemption.
+UNPINNED_INVENTORY = frozenset({
+    'GSDX-B05', 'GSDX-B06', 'GSDX-C01', 'GSDX-C02', 'GSDX-C05', 'GSDX-C06',
+    'GSDX-C07', 'GSDX-C08', 'GSDX-C09', 'GSDX-C10', 'GSDX-C11', 'GSDX-C15',
+    'GSDX-C16', 'GSDX-C18', 'GSDX-C19', 'GSDX-D01', 'GSDX-D02', 'GSDX-D03',
+    'GSDX-D05', 'GSDX-D07', 'GSDX-D08', 'GSDX-F03', 'GSDX-F06', 'GSDX-I02',
+    'GSDX-I03', 'GSDX-I05', 'GSDX-I06', 'GSDX-I07', 'GSDX-I08', 'GSDX-I09',
+    'GSDX-I10', 'GSDX-I11', 'GSDX-N01', 'GSDX-N02', 'GSDX-N03', 'GSDX-N04',
+    'GSDX-N05', 'GSDX-O01', 'GSDX-R01', 'GSDX-R02', 'GSDX-R03', 'GSDX-R06',
+    'GSDX-R07', 'GSDX-R08', 'GSDX-R11', 'GSDX-R12', 'GSDX-R13', 'GSDX-R14',
+    'GSDX-R15', 'GSDX-R16', 'GSDX-U01', 'GSDX-U02', 'GSDX-U04', 'GSDX-U05',
+    'GSDX-U06', 'GSDX-U07',
+})
+
 
 def main() -> int:
     passes: list[str] = []
@@ -156,6 +187,102 @@ def main() -> int:
             f"{states.count('UNPROVEN')} unproven",
         )
 
+    skipped: list[str] = []
+
+    def skip(gate: str, why: str) -> None:
+        skipped.append(gate)
+        print(f"  SKIP {gate}: {why}")
+
+    # V7 -- a supersession names a claim that exists. The legacy escape is by
+    # name, so it cannot be inherited.
+    bad_target = [
+        f"{r['id']}->{r['supersedes']}"
+        for r in rows
+        if r.get("supersedes")
+        and r["supersedes"] not in ids
+        and r["id"] not in LEGACY_SUPERSEDE_ESCAPE
+    ]
+    if bad_target:
+        bad("V-GSDX-DATASET-SUPERSEDE-TARGET", f"points at nothing: {bad_target}")
+    else:
+        edges = sum(1 for r in rows if r.get("supersedes"))
+        ok("V-GSDX-DATASET-SUPERSEDE-TARGET",
+           f"{edges} supersedes edge(s), each resolving or grandfathered by name")
+
+    # V8 -- supersession is a history, so it must not close into a loop. A cycle
+    # makes "which claim is current" unanswerable, which is the whole question.
+    succ = {r["id"]: r["supersedes"] for r in rows if r.get("supersedes")}
+    cycles = []
+    for start in succ:
+        seen, cur = [], start
+        while cur in succ and cur not in seen:
+            seen.append(cur)
+            cur = succ[cur]
+        if cur in seen:
+            cycles.append(" -> ".join(seen[seen.index(cur):] + [cur]))
+    if cycles:
+        bad("V-GSDX-DATASET-SUPERSEDE-CYCLE", f"{cycles}")
+    else:
+        ok("V-GSDX-DATASET-SUPERSEDE-CYCLE", "supersession is acyclic")
+
+    # V9 -- the dependency ratchet. Two directions: new debt fails, and an
+    # inventory entry that has since been pinned must be removed.
+    if SYNTHETIC:
+        skip("V-GSDX-DATASET-DEPENDENCY", "synthetic subject carries no repo surfaces")
+    else:
+        new_debt = sorted(
+            r["id"] for r in rows
+            if not r.get("depends_on") and r["id"] not in UNPINNED_INVENTORY
+        )
+        stale_entries = sorted(
+            r["id"] for r in rows
+            if r.get("depends_on") and r["id"] in UNPINNED_INVENTORY
+        )
+        if new_debt:
+            bad("V-GSDX-DATASET-DEPENDENCY",
+                f"new claims with no depends_on: {new_debt}")
+        elif stale_entries:
+            bad("V-GSDX-DATASET-DEPENDENCY",
+                f"pinned but still in the frozen inventory, delete them: {stale_entries}")
+        else:
+            pinned = sum(1 for r in rows if r.get("depends_on"))
+            ok("V-GSDX-DATASET-DEPENDENCY",
+               f"{pinned} pinned, {len(UNPINNED_INVENTORY)} frozen, 0 new debt")
+
+    # V10 -- material evidence exists that no claim covers. This is the class the
+    # other six gates are structurally blind to: it fails by OMISSION, so nothing
+    # is contradicted and every other clause stays green.
+    if SYNTHETIC:
+        skip("V-GSDX-DATASET-COVERAGE", "synthetic subject has no commit range")
+    else:
+        recon = Path(__file__).resolve().parent / "gsd_x_claim_reconcile.py"
+        proc = subprocess.run(
+            [sys.executable, str(recon)],
+            capture_output=True, text=True,
+            env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+        )
+        if proc.returncode == 2:
+            print(f"INSTRUMENT_FAILED: reconciler could not judge: "
+                  f"{proc.stdout.strip()[:200]}")
+            return 2
+        n = None
+        for line in proc.stdout.splitlines():
+            if "UNCOVERED_EVIDENCE" in line and ":" in line:
+                n = int(line.rsplit(":", 1)[1].strip())
+        if n is None:
+            print("INSTRUMENT_FAILED: reconciler produced no UNCOVERED_EVIDENCE line")
+            return 2
+        if n:
+            bad("V-GSDX-DATASET-COVERAGE",
+                f"{n} material evidence event(s) no claim speaks about")
+        else:
+            ok("V-GSDX-DATASET-COVERAGE", "every material event is covered")
+
+    for g in REPO_GATES:
+        if g in skipped and not SYNTHETIC:
+            print(f"INSTRUMENT_FAILED: {g} skipped against the real ledger")
+            return 2
+
     total = len(passes) + len(fails)
     print(f"\nGSDX_DATASET_PASS={len(passes)}/{total}  threshold={total}/{total}")
     return 0 if not fails else 1
@@ -189,6 +316,21 @@ _MUTATIONS = {
     # correctly: a gate that could not judge has not judged.
     "honesty-stripped": lambda rs: [
         r for r in rs if r["state"] not in ("CONTRADICTED", "UNPROVEN")
+    ],
+    # A supersession pointing at a claim that does not exist. SYN-1 is not in
+    # LEGACY_SUPERSEDE_ESCAPE, so the grandfather clause cannot absorb it.
+    "supersede-nowhere": lambda rs: [{**r, "supersedes": "SYN-404"}
+                                     if r["id"] == "SYN-1" else r for r in rs],
+    # The escape is by NAME, so a synthetic row must not inherit it.
+    "supersede-escape-inherited": lambda rs: [
+        {**r, "supersedes": "DATASET-ANYTHING"} if r["id"] == "SYN-1" else r
+        for r in rs
+    ],
+    # Two rows superseding each other: "which is current" becomes unanswerable.
+    "supersede-cycle": lambda rs: [
+        {**r, "supersedes": "SYN-2"} if r["id"] == "SYN-1"
+        else {**r, "supersedes": "SYN-1"} if r["id"] == "SYN-2"
+        else r for r in rs
     ],
 }
 
@@ -238,7 +380,24 @@ def drill() -> int:
                 failures.append(f"{name} survived (rc={rc})")
                 print(f"  FAIL drill/{name}: NOT caught (rc={rc})")
 
-    total = len(_MUTATIONS) + 1
+        # The two repo-backed gates MUST have skipped against the synthetic
+        # subject. If they ran, the drill's verdict is a function of the real
+        # repo's history and of whichever pane commits next, not of the mutation.
+        proc = subprocess.run(
+            [sys.executable, str(Path(__file__).resolve())],
+            env={**os.environ, "GSDX_DATASET": str(tmp), "PYTHONIOENCODING": "utf-8"},
+            capture_output=True, text=True,
+        )
+        n_skipped = proc.stdout.count("  SKIP ")
+        if n_skipped == len(REPO_GATES):
+            print(f"  PASS drill/skip-accounting: {n_skipped} repo gates skipped")
+        else:
+            failures.append(f"skip accounting: {n_skipped} skipped, "
+                            f"expected {len(REPO_GATES)}")
+            print(f"  FAIL drill/skip-accounting: {n_skipped} skipped, expected "
+                  f"{len(REPO_GATES)} -- a repo gate is judging a synthetic corpus")
+
+    total = len(_MUTATIONS) + 2
     print(f"\nGSDX_DATASET_DRILL={total - len(failures)}/{total}  "
           f"threshold={total}/{total}")
     return 0 if not failures else 1
