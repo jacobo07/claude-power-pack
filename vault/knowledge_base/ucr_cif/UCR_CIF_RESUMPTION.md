@@ -134,6 +134,14 @@ is never written by this mission and never rolled back.
   (one 36 KB file) refuted on **204 of its 214** claims.
   The adversarial gate found three defects in the thing it tests, and the mutation drill
   found two more in the gate itself — see `03_MISSION_TRAPS.md`.
+- **W3 · completion-standard ratchet** — `8236636`. **Axis C — durable institutional state**
+  added to the EXISTING owner `knowledge_vault/core/apex-completion-standard.md`, beside
+  Axis A and Axis B. No second standard was created. It is APPLICABILITY-GATED: it binds
+  only a feature introducing state future sessions inherit, and silence is the correct
+  answer for everything else.
+- **W3 · knowledge** — `529ac7c`. Eight entries in `03_MISSION_TRAPS.md`, nine rules in
+  UKDL (dedup-checked; two join existing families by reference rather than restatement),
+  and `04_W3_AUTHORITY.md` as the authority classification of record.
 
 **UNMEASURED (not zero, not fine)**
 
