@@ -46,7 +46,10 @@ when the transcript shows the command was really submitted.
 - Phase 1: Two-pane exactness drill — IN PROGRESS (Task 1 tool landed, `probe`
   7/7 with its red branch driven; **blocked on the operator step** — Tasks 2-3
   need a live subject session this window's extension owns)
-- Phase 2: UserPromptSubmit chain deadline — PENDING
+- Phase 2: UserPromptSubmit chain deadline — COMPLETE. Startup (spawn → deadline
+  clock) measured at **42 ms** median, n=5, at 15.5% free RAM: neither the cap
+  nor the clock is the defect, and the 19.4/17.1 s readings predate the deadline
+  that fixed them. Total is a lower bound (synthetic payload). `02-SUMMARY.md`.
 - Phase 3: Promote the exact-target lessons — PENDING
 - Phase 4: Reap the stale autorun markers — PENDING
 

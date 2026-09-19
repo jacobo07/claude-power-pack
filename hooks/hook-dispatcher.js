@@ -749,6 +749,13 @@ async function runPool(items, limit, worker) {
 // Returns { outputs:[parsedJSON], blocked:bool, blockStderr:string }.
 async function runChain(event, chain, rawStdin) {
   const chainStart = Date.now();   // CHAIN DEADLINE clock; see CHAIN_DEADLINE_MS
+  // The harness's cap starts at PROCESS SPAWN. This clock starts HERE. Node
+  // startup, module load and reading stdin are spent against the cap and are
+  // invisible to the deadline, so the real budget is cap - startup - flush,
+  // never cap. Unmeasured, that gap is what makes a chain overrun a cap it
+  // appears to fit inside. Reported on the debug line below, so it costs
+  // nothing unless someone is asking.
+  const startupMs = Math.round(process.uptime() * 1000);
   const outputs = [];
   let blocked = false;
   const blockStderr = [];
@@ -788,6 +795,8 @@ async function runChain(event, chain, rawStdin) {
       '[dispatch] ' + event +
       ' raw=' + (rawStdin ? rawStdin.length : 0) + 'B' +
       ' scratch=' + scratch +
+      ' startup=' + startupMs + 'ms' +
+      ' deadline=' + (CHAIN_DEADLINE_MS[event] || 0) + 'ms' +
       ' runnable=' + runnable.length + '/' + chain.length +
       ' [' + runnable.map((s) => s.script.split('/').pop()).join(',') + ']\n'
     );
