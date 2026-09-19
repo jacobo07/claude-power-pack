@@ -46,9 +46,20 @@ when the transcript shows the command was really submitted.
 
 ## Phases
 
-- Phase 1: Two-pane exactness drill — IN PROGRESS (Task 1 tool landed, `probe`
-  7/7 with its red branch driven; **blocked on the operator step** — Tasks 2-3
-  need a live subject session this window's extension owns)
+- Phase 1: Two-pane exactness drill — IN PROGRESS, refusal half PROVEN LIVE
+  (`.planning/01-EVIDENCE-refusal-legs.md`). Task 1's tool landed and `probe` is
+  7/7 with its red branch driven. Tasks 2-3 split cleanly in two, and the half
+  that needs no operator is now real: an **owned** request was answered by this
+  window in 0.28 s with `refused / session-unreadable`, and an **unowned** one
+  was ignored by every window for 15 s with no ack and nothing typed — leg A
+  being the positive control that makes leg B's silence mean anything. The
+  negative control was checked where a keystroke would have landed (this pane's
+  own transcript): 0 typed rows, against an 801-occurrence positive control.
+  The **positive** leg — the line really typed into a subject's terminal while a
+  second pane gets nothing — is still unproven: it needs a live subject session
+  in a terminal an extension owns, and at drill time the host had 766 MB free of
+  32 GB (2.4 %), below the run's own 1500 MB floor, so a second window was
+  refused on those grounds rather than attempted.
 - Phase 2: UserPromptSubmit chain deadline — COMPLETE. Startup (spawn → deadline
   clock) measured at **42 ms** median, n=5, at 15.5% free RAM: neither the cap
   nor the clock is the defect, and the 19.4/17.1 s readings predate the deadline
