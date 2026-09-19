@@ -66,13 +66,17 @@ def thresholds_path(session_id: str) -> Path:
     return state_dir() / THRESHOLDS_TEMPLATE.format(session_id=session_id)
 
 
-def _watchdog_validator():
-    """The watchdog's OWN rule, loaded lazily. Raises when it cannot be had.
+def _watchdog_module():
+    """The watchdog itself, loaded lazily. Raises when it cannot be had.
 
     Imported rather than restated: two copies of "rearm < snapshot <= advisory"
     drift, and the copy that drifts is the one nobody drives. Lazy because the
     watchdog imports THIS module at runtime, and a module-level import back
     would close the cycle.
+
+    Returned as the MODULE, not just the rule, so a refusal can quote the
+    watchdog's own REARM_FLOOR_PCT instead of restating the number here -- a
+    second copy of the floor would be the same drift the validator avoids.
     """
     import importlib.util
     spec = importlib.util.spec_from_file_location("_ctxwd_for_validation", WATCHDOG)
@@ -80,7 +84,12 @@ def _watchdog_validator():
         raise RuntimeError(f"cannot load the watchdog at {WATCHDOG}")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod.valid_thresholds
+    return mod
+
+
+def _watchdog_validator():
+    """The watchdog's OWN rule. See `_watchdog_module`."""
+    return _watchdog_module().valid_thresholds
 
 
 def write_thresholds(session_id: str, spec: str, reason: str = "") -> dict:
@@ -93,8 +102,15 @@ def write_thresholds(session_id: str, spec: str, reason: str = "") -> dict:
     checked = _watchdog_validator()(*[x.strip() for x in str(spec).split(",")]) \
         if str(spec).count(",") == 2 else None
     if checked is None:
+        floor = getattr(_watchdog_module(), "REARM_FLOOR_PCT", None)
         raise ValueError(
-            f"refused {spec!r}: need snapshot,advisory,rearm with rearm < snapshot <= advisory, all 5..95")
+            f"refused {spec!r}: need snapshot,advisory,rearm with "
+            f"rearm < snapshot <= advisory, all within {floor}..95. "
+            f"The lower bound is a REACHABILITY floor, not a typo guard: the resume only "
+            f"runs while used_pct < rearm, and a rearm under {floor} is never reached after "
+            f"a compaction (measured p10 = 22.0 over 180 real readings), so the run would "
+            f"cross once and then never compact or resume again -- exactly how session "
+            f"de7f3c91 was bricked on rearm 15 on 2026-09-19.")
     snap, adv, rearm = checked
     payload = {"session_id": session_id, "snapshot": snap, "advisory": adv, "rearm": rearm,
                "reason": reason, "written_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds")}

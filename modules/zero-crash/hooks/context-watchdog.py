@@ -47,6 +47,23 @@ THRESHOLD_ADVISORY_PCT = 70
 # is the signal that the debounce may be cleared. Kept well under
 # THRESHOLD_SNAPSHOT_PCT so the rearm band and the snapshot band cannot touch.
 THRESHOLD_REARM_PCT = 45
+# The lowest rearm that is actually REACHABLE after a compaction, and therefore
+# the lowest one that leaves the resume branch alive. The rearm band is where
+# the post-compaction resume lives; set it under the floor and the session can
+# cross exactly once and then neither compact again (tier 2 stays debounced)
+# nor resume (the branch is never entered).
+#
+# Measured over the 180 real-session readings in ~/.claude/logs/context-watchdog.log:
+#     min 15.0 | p05 19.0 | p10 22.0 | median 35.0
+#     readings strictly below 15 -> 0        readings strictly below 30 -> 59
+# and de7f3c91's own post-compaction reading was 20.0.
+#
+# SEALED 2026-09-19 from the incident this number would have prevented: that
+# session was given rearm 15 and was bricked by it, while 37cfb187 on rearm 30
+# resumed and confirmed. The docstring below already said "a rearm below ~28
+# would never be reached after a compaction" -- in a comment, which is not a
+# constraint, which is why 15 was accepted. It is a constraint now.
+REARM_FLOOR_PCT = 28
 
 
 THRESHOLDS_FILE = "ctxwd-thresholds-{session_id}.json"
@@ -55,15 +72,19 @@ THRESHOLDS_FILE = "ctxwd-thresholds-{session_id}.json"
 def valid_thresholds(snap, adv, rearm):
     """The ONE rule. (snap, adv, rearm) as floats, or None.
 
-    rearm < snapshot <= advisory, all within 5..95. Anything else is refused,
-    so a typo can never switch the watchdog off -- it falls back to the next
-    source and ultimately to the constants.
+    rearm < snapshot <= advisory, all within REARM_FLOOR_PCT..95. Anything else
+    is refused, so a typo can never switch the watchdog off -- it falls back to
+    the next source and ultimately to the constants.
+
+    The lower bound is the reachability floor rather than a nominal 5: a rearm
+    below it is not a typo, it is a configuration that passes every ordering
+    check and still guarantees the run can never resume.
     """
     try:
         snap, adv, rearm = float(snap), float(adv), float(rearm)
     except (TypeError, ValueError):
         return None
-    return (snap, adv, rearm) if 5 <= rearm < snap <= adv <= 95 else None
+    return (snap, adv, rearm) if REARM_FLOOR_PCT <= rearm < snap <= adv <= 95 else None
 
 
 def _thresholds_from_file(session_id: str):
