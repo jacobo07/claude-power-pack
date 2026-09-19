@@ -1,0 +1,267 @@
+{
+  "controls_pass": true,
+  "files_parsed": 856,
+  "stores_discovered": 18,
+  "unresolved_open_sites": 299,
+  "rows": [
+    {
+      "token": "audit_pass2_2026-06-01t12-42-25z.json",
+      "stores": [
+        "vault/benchmarks/audit_pass2_2026-06-01T12-42-25Z.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "audit_run_2026-06-01t12-34-21z.json",
+      "stores": [
+        "vault/benchmarks/audit_run_2026-06-01T12-34-21Z.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "audit_verify_spp_2026-06-01t12-47-42z.json",
+      "stores": [
+        "vault/benchmarks/audit_verify_spp_2026-06-01T12-47-42Z.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "baseline_ledger.jsonl",
+      "stores": [
+        "vault/baseline_ledger.jsonl"
+      ],
+      "verdict": "CLOSED",
+      "direct_writers": [
+        "tools/baseline_ledger_append.py"
+      ],
+      "direct_readers": [
+        "tools/baseline_ledger_append.py"
+      ],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "bench_all_s0_baseline.json",
+      "stores": [
+        "vault/benchmarks/bench_all_S0_baseline.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "c2_opportunity_cost_ledger.jsonl",
+      "stores": [
+        "vault/ias/c2_opportunity_cost_ledger.jsonl"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "commands_index.json",
+      "stores": [
+        "vault/commands_index.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "events.jsonl",
+      "stores": [
+        "vault/ceps/events.jsonl"
+      ],
+      "verdict": "CLOSED",
+      "direct_writers": [
+        "tools/ceps.py"
+      ],
+      "direct_readers": [
+        "modules/osa/dispatcher.py",
+        "modules/pp_agents/signals/cascade.py",
+        "tools/ceps.py",
+        "tools/ceps_backfill_audit.py",
+        "tools/jit_skill_loader.py",
+        "tools/test_capture_liveness.py",
+        "tools/test_ceps_full_cycle.py"
+      ],
+      "indirect_writers": [
+        "tools/bench_all.py",
+        "tools/ceps_capture.py",
+        "tools/ceps_seed_categories.py",
+        "tools/run_all_benchmarks.py",
+        "tools/test_capture_liveness.py",
+        "tools/test_ceps_admission.py",
+        "tools/test_ceps_closed_loop.py",
+        "tools/test_ceps_edge_cases.py",
+        "tools/test_ceps_full_cycle.py"
+      ],
+      "indirect_readers": [
+        "tools/test_ceps_admission.py"
+      ]
+    },
+    {
+      "token": "index.json",
+      "stores": [
+        "vault/research/index.json"
+      ],
+      "verdict": "CLOSED",
+      "direct_writers": [
+        "modules/arch-decision/build_index.py",
+        "tools/vault_indexer.py"
+      ],
+      "direct_readers": [
+        "modules/arch-decision/arch_check.py",
+        "modules/deep-research/deep_research.py",
+        "modules/deep-research/research_discovery.py",
+        "modules/skill_router/skill_index.py",
+        "tools/skills_index_merge.py"
+      ],
+      "indirect_writers": [
+        "modules/arch-decision/arch_check.py",
+        "modules/dispatcher/dispatch.py",
+        "tools/skill_heat_map_indexer.py",
+        "tools/test_sleepy_skills.py",
+        "tools/test_spec_driven.py",
+        "tools/vault_search.py",
+        "tools/vault_summarize.py"
+      ],
+      "indirect_readers": [
+        "modules/decision_review/providers.py"
+      ]
+    },
+    {
+      "token": "ledger.json",
+      "stores": [
+        "vault/benchmarks/ledger.json"
+      ],
+      "verdict": "CLOSED",
+      "direct_writers": [
+        "tools/baseline_ledger_append.py",
+        "tools/bench_all.py"
+      ],
+      "direct_readers": [
+        "tools/baseline_ledger.py",
+        "tools/baseline_ledger_append.py",
+        "tools/bench_all.py"
+      ],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "necessity_ledger.jsonl",
+      "stores": [
+        "vault/dataset_first/necessity_ledger.jsonl"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "predictive_gates_baseline.json",
+      "stores": [
+        "vault/governance/predictive_gates_baseline.json"
+      ],
+      "verdict": "CLOSED",
+      "direct_writers": [
+        "tools/predictive_governance_gate.py"
+      ],
+      "direct_readers": [
+        "tools/predictive_governance_gate.py"
+      ],
+      "indirect_writers": [
+        "tools/test_predictive_governance_gate.py",
+        "tools/verify_spp.py"
+      ],
+      "indirect_readers": []
+    },
+    {
+      "token": "reachability_registry.json",
+      "stores": [
+        "vault/liveness/reachability_registry.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "records.jsonl",
+      "stores": [
+        "vault/decision_registry/records.jsonl"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "skills_index.json",
+      "stores": [
+        "vault/skills_index.json"
+      ],
+      "verdict": "OPEN_CONSUMER",
+      "direct_writers": [],
+      "direct_readers": [
+        "tools/skills_index_merge.py"
+      ],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "skills_index_unified.json",
+      "stores": [
+        "vault/skills_index_unified.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "sqi_baseline.json",
+      "stores": [
+        "vault/audits/sqi_baseline.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    },
+    {
+      "token": "sqi_weakening_baseline.json",
+      "stores": [
+        "vault/audits/sqi_weakening_baseline.json"
+      ],
+      "verdict": "INERT",
+      "direct_writers": [],
+      "direct_readers": [],
+      "indirect_writers": [],
+      "indirect_readers": []
+    }
+  ]
+}
