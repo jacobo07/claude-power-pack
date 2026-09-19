@@ -206,6 +206,65 @@ $pp = 'C:\Users\User\.claude\skills\claude-power-pack'
 & $py "$pp\tools\gsd_long_run.py" sweep --dry-run --explain
 ```
 
+## 9b. Two findings AFTER issue (2026-09-20 00:0x, measured before acting)
+
+The certificate was issued at 13:0x on 09-19 expecting C7 to close by itself.
+It did not, and the reason is two defects neither the gates nor the ledger's
+verdict could show. Both are recorded here rather than in a new document,
+because a certificate that does not track its own subject is a snapshot
+pretending to be a guarantee.
+
+**F1 — the narrow wall reverted silently, and nothing noticed.** At
+`2026-09-19T13:13:00Z` the watchdog read **`used_pct=45.0` against a 40 % wall
+and returned `pass`.** It was right to: `~/.claude/state/ctxwd-thresholds-<sid>.json`
+no longer existed, so `_thresholds()` fell back to the production constants
+(60/70/45), under which 45 passes. The ledger shows why:
+
+```
+12:49:36  de7f3c91…  thresholds_cleared
+12:49:37  37cfb187…  thresholds_cleared
+```
+
+Two sessions one second apart — something iterated the armed markers and cleared
+each one. The only production caller of `clear_thresholds()` is the CLI's
+`thresholds --clear`; the rest are tests, which redirect the state directory.
+
+The whodunit matters less than the shape: **a run's most important parameter
+lived in a sidecar file with no owner, and its disappearance degraded the run
+into looking healthy.** `status` reported the run armed, `report` reported
+PARTIAL, every gate stayed green, and the wall the run existed to prove was
+simply not in force for eleven hours. The wall has been restored (35/40/30,
+verified: this session resolves `(35.0, 40.0, 30.0)`, production `(60, 70, 45)`),
+and the durable fix is to carry the thresholds **in the marker**, which is the
+run's own record, so a lost sidecar cannot widen a wall in silence.
+
+**F2 — a compaction happened and wrote no boundary row.** C4 accepts exactly one
+piece of evidence: a host-written `type=system, subtype=compact_boundary` row.
+Scanning the whole 10.7 MB transcript, not a tail:
+
+```
+2026-09-18T23:07:25.834Z  trigger=manual  pre=465557  post=20445
+2026-09-18T23:51:55.273Z  trigger=manual  pre=16911   post=24260
+```
+
+**Two rows, both from 09-18.** The crossing-3 compaction of 09-19 ~10:15 — the
+one this session visibly came through — produced none, which is why the Stop
+chain logged `compaction_unobserved` at 11:06:40 with the 23:51 boundary as the
+newest it could find. The reader does not filter on `trigger` (it accepted both
+manual rows), and its window is already 8 MB, so this is not the aperture defect
+of T-CONT-07 recurring: the row does not exist.
+
+The consequence is precise and it is not "weaken C4". The boundary row is
+*sufficient* evidence and the design treats it as *necessary*; when the host
+writes none, a correct implementation must refuse to claim a compaction, and
+this one did. What that costs is the automatic advance: the fence stays where it
+was and the resume is never owed. Relaxing it would reopen the 2026-09-18
+incident, where a low reading was read as a compaction 25 hours late. So the
+honest statement is that **C4 is sound and incomplete**: it can recognise a
+compaction the host records, and it cannot recognise one the host does not.
+Whether every compaction path writes that row is now an OPEN question about the
+host, not about this code, and it is the first thing to measure next.
+
 ## 9. The honest summary
 
 The machinery of `/cpp-gsd-long` is proven part by part, and two of its three
