@@ -101,6 +101,12 @@ proves file-on-disk logic; live firing requires `/restart`.
 > Sealed 2026-05-16 (Intent-Lock / L3 cycle). Complementary to the
 > JIT Activation Law above; both define DONE. A new feature satisfies
 > BOTH or it is a draft.
+>
+> Axis C added 2026-09-19 (UCR-CIF W3). Unlike A and B it is
+> APPLICABILITY-GATED: it binds only a feature introducing state that
+> future sessions inherit. Silence is the correct answer for everything
+> else — a standard that audits every feature against every axis stops
+> being read.
 
 ## Axis A — Native concurrent-execution protection (Intent-Lock)
 
@@ -137,6 +143,47 @@ human review without blocking or mutating live:
 Ref: `learning-sentinel.js` `maybeSpawnL3` + scoped
 `modules/harness/l3-child-settings.json`; proposals →
 `~/.claude/cache/compound-proposals/<ts>.md`.
+
+## Axis C — Durable institutional state (sealed 2026-09-19, UCR-CIF W3)
+
+**Applicability gate, not a universal checklist.** Axis C binds only a feature that
+introduces state FUTURE SESSIONS INHERIT — a registry, a ledger of settled facts, a
+capability contract, a policy an agent will read and act on later. A feature that writes no
+such state is exempt and must not be audited against this. (Ordinary caches, logs nobody
+reads back, and per-run artifacts are not institutional state.)
+
+Such a feature satisfies all of:
+
+- **An explicit lifecycle.** Knowledge that can be born must be able to STOP being believed.
+  Absence resolves to the safest state, never to ACTIVE, and a read of an unrecognised value
+  never takes a capability down while a WRITE of one fails closed.
+- **Effect, not representation.** A withdrawal that no consumer honours is a stored string.
+  DONE requires showing a real consumer's behaviour CHANGE — at both poles, since the
+  withdrawn case alone passes against a consumer that selects nothing.
+- **Provenance.** No authority without an actor, a reason and evidence. A transition with
+  none of these is refused, not defaulted.
+- **Reconstructable history.** Withdrawal never deletes. What was true, when, why, on what
+  evidence, and what replaced it stay answerable; supersession names its successor.
+- **Concurrency proportional to blast radius.** A mutation states the state it believes it
+  is replacing and is REFUSED if the subject moved — the authority you reviewed is the only
+  one you may replace. Identity never derives from a line count in a shared file.
+- **Unknown-safe migration.** Backfill classifies from evidence the estate already produces,
+  never from "the row exists, so it must be current". Rows that cannot be honestly
+  classified stay UNKNOWN with an INDIVIDUALLY NAMED reason, and a shrink-only ratchet
+  drives that population down instead of a default hiding it.
+- **No derived projection outliving its authority.** Deriving from withdrawn authority is
+  refused at the source, and the authority field may never be set by a field override that
+  bypasses the provenanced transition.
+
+**Why an axis rather than a rule.** The shape recurs: an estate builds an EVALUATOR that
+proposes and a SELECTOR that decides, both correct, and never joins them — so verdicts have
+no path to effect and the system looks finished from either end. Axis C is the join.
+
+Ref: `skills/claude-power-pack/modules/capability_runtime/lifecycle.py` (authority),
+`applicability.py` gate 0 (effect), `tools/capability_lifecycle_migrate.py` (unknown-safe
+backfill), `vault/capability_runtime/lifecycle_ratchet.json` (the ratchet).
+Gate: `tools/test_capability_lifecycle.py`. Full account:
+`vault/audits/ucr_cif/04_W3_AUTHORITY.md`.
 
 ## Authorization Boundary (operational law)
 
