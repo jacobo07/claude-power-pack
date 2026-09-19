@@ -44,14 +44,38 @@ $pp = 'C:\Users\User\.claude\skills\claude-power-pack'
 # 1. Lower GSD's context warnings below the compaction point.
 & $py "$pp\tools\gsd_long_run_config.py" --apply --project .
 
-# 2. Record the run. Use the bare command, not --from N: it re-enters at the
-#    first incomplete phase, so it stays correct as phases complete.
+# 2. Record the run. Prefer the bare command: it re-enters at the first
+#    incomplete phase, so it stays correct as phases complete. PIN --from N when
+#    the roadmap carries tracks owned by OTHER sessions -- "first incomplete
+#    phase" is then somebody else's Phase 1, and every resume re-enters it.
 #    --mission is REQUIRED: 3-8 distinctive terms of the Owner-approved mission.
 #    --max-cycles / --max-hours are the budget (defaults 12 resumes / 24 h).
 & $py "$pp\tools\gsd_autorun_marker.py" --write `
       --session $env:CLAUDE_CODE_SESSION_ID --command "/gsd-autonomous" --cwd . `
       --mission "<term1>,<term2>,<term3>" --max-cycles 12 --max-hours 24
 ```
+
+```
+# 3. START THE RUN. This is a step, not a footnote.
+```
+
+**Invoke `/gsd-autonomous` now** — the same command string you recorded in step 2,
+`--from N` included if you pinned one.
+
+> **Steps 1 and 2 start nothing.** They make a run *survive* a compaction; they do
+> not launch one. Stopping here leaves compaction-survival configured for a run
+> that never began, and `gsd_long_run.py status` reports that state exactly the way
+> it reports a healthy run — so nothing will tell you.
+>
+> Measured 2026-09-19 across this estate's own ledger: **4 of 9 markers were armed
+> with no evidence a run ever started**, three of them from different sessions. It
+> is not carelessness. Every event that would distinguish "started" from
+> "abandoned" — `crossing`, `resume_requested`, `resume_confirmed` — fires only at
+> the **first compaction**, which can be hours away. Until then the two states are
+> indistinguishable by construction, which is why three sessions passed unnoticed.
+>
+> `gsd_autorun_marker.py --write` now prints this instruction itself, at the moment
+> of arming. That print is the mechanism; this paragraph is only its explanation.
 
 Step 2 exits 2 with `REFUSED: <reason>` and arms nothing when:
 
@@ -64,8 +88,12 @@ Step 2 exits 2 with `REFUSED: <reason>` and arms nothing when:
 | `nothing to run` | every phase is already complete | nothing to do |
 | `resume command must start with '/'` | free text cannot be re-issued | use a slash command |
 
-Then invoke `/gsd-autonomous` (add `--from <phase>` only when the caller asked
-to start somewhere specific — the marker still holds the bare form).
+(Step 3 above is where you invoke it. Two cases call for `--from <phase>`: the
+caller asked to start somewhere specific, **or** the roadmap holds tracks owned by
+other sessions. In the second case the bare form is actively wrong — it re-enters
+at the first incomplete phase across the whole roadmap, which is another session's
+work, on every resume. Verify what the marker actually recorded:
+`resume_command` in `~/.claude/state/gsd-autorun-<session-id>.json`.)
 
 The variable is `CLAUDE_CODE_SESSION_ID` (`CLAUDE_SESSION_ID` is empty). Never
 fall back to "the newest `%TEMP%\claude-ctx-*.json`" — it can belong to another
