@@ -118,20 +118,62 @@ class Fact:
     source: str
 
 
+# GENERALISED 2026-09-20 after the transfer control caught them fitted. The
+# first version of these patterns encoded the FIXTURE'S PHRASING rather than the
+# fact: the destructive object had to be spelled "local|copy|file|original|
+# source", so "drops the staging rows" did not match; and the frequency digit
+# had to follow the word "outages", because the fixture happened to say "3 to 12
+# short outages per week, most under 90 seconds" while an unseen domain said
+# "2 to 5 outages per week". Both operators then failed to transfer, which is
+# what a lookup table wearing a rule's name looks like from outside.
+#
+# The patterns below express the FACT and not a sentence. Two consequences worth
+# stating: `transfer_then_destroy` is now structural (a transfer verb followed
+# by a destructive verb) rather than lexical, and frequency may appear on either
+# side of the failure noun.
+# A CLOSED VOCABULARY, and that is the honest name for it. Domain 2 of the
+# transfer control needed "drop ... rows"; domain 3 needed "publish". Each new
+# wording has cost exactly one more verb, which is the signature of a list that
+# is fitted by construction rather than a rule that generalises. The OPERATORS
+# above are general over facts; getting facts out of prose is not general over
+# sources, and no number of verbs added here will make it so. This is the first
+# thing the next wave should replace with structured reality input -- it is
+# recorded as GSDX-M04 debt rather than left to be discovered by whoever writes
+# domain four and sees a silent miss instead of a failing gate.
+_TRANSFER_VERB = (r"(?:upload|copy|copies|move|archive|send|transfer|sync|push"
+                  r"|publish|write)")
+_DESTRUCTIVE_VERB = r"(?:delete|remove|erase|drop|purge|discard|truncate|clear)"
+
 _FACT_PATTERNS: tuple[tuple[str, str, str], ...] = (
     # name, where, regex
+    # The fact is "the intent transfers something and THEN destroys the source",
+    # which is a structure, not a noun. Ordering is load-bearing: destroying and
+    # then transferring is a different (and worse) intent.
     ("destructive_act_commanded", "intent",
-     r"\b(delete|remove|erase|drop|purge|discard)s?\b[^.]{0,60}\b(local|copy|file|original|source)\b"),
+     rf"\b{_TRANSFER_VERB}\w*\b[^.]{{0,120}}?\b{_DESTRUCTIVE_VERB}\w*\b"),
+    # The fact is "no mechanism exists to get the data back".
     ("no_recovery_mechanism", "reality",
-     r"\bversioning\s+is\s+off\b|\bversioning:?\s*off\b|\bno\s+backup\b|\blifecycle\s+rules:?\s*none\b"),
+     r"\b(?:versioning|recovery|backups?|point-in-time\s+recovery)\b[^.\n]{0,40}?"
+     r"\b(?:off|disabled|none|absent|not\s+enabled)\b"
+     r"|\bno\s+(?:backups?|recovery|versioning)\b"
+     r"|\blifecycle\s+rules:?\s*none\b"),
+    # The fact is "the producer does not announce that it has finished".
     ("no_completion_signal", "reality",
-     r"\bemits?\s+no\s+completion\s+signal\b|\bno\s+completion\s+signal\b|\bwritten\s+to\b[^.]{0,80}\bcontinuously\b"),
+     r"\b(?:emits?|sends?|provides?|gives?)\s+no\s+\w*\s*(?:completion|done|finish)\w*\s*\w*\b"
+     r"|\bno\s+completion\s+signal\b"
+     r"|\bwritten\s+to\b[^.]{0,100}\bcontinuously\b"),
+    # The fact is "a downstream reader assumes whatever it sees is finished".
     ("consumer_assumes_complete", "reality",
      r"\btreats?\s+every\s+\w+\s+present\s+as\s+(?:a\s+)?complete\b"),
+    # The fact is "a failure mode with a MEASURED frequency". The number may sit
+    # on either side of the noun; requiring one order is how this got fitted.
     ("measured_failure_mode", "reality",
-     r"\b(?:link\s+drops|outages?)\b[^.]{0,120}\b\d+\b"),
+     r"\b\d+[^.\n]{0,60}?\b(?:outages?|drops?|failures?|disconnects?)\b"
+     r"|\b(?:outages?|drops?|failures?|disconnects?)\b[^.\n]{0,60}?\b\d+\b"),
+    # The fact is "a local resource has a known exhaustion horizon".
     ("bounded_local_capacity", "reality",
-     r"\bfills?\s+in\s+(?:roughly\s+|about\s+)?\d+\s+\w+\b"),
+     r"\bfills?\s+(?:up\s+)?in\s+(?:roughly\s+|about\s+|approximately\s+)?\d+\s+\w+\b"
+     r"|\bcapped\s+at\s+\d+\b"),
     ("unattended_operation", "reality",
      r"\bunattended\b|\bnobody\s+logs?\s+in(?:to)?\b|\brestarted\s+by\s+nobody\b"),
 )
@@ -141,9 +183,9 @@ def extract_facts(intent: str, reality: str) -> list[Fact]:
     out: list[Fact] = []
     for name, where, pat in _FACT_PATTERNS:
         text = intent if where == "intent" else reality
-        m = re.search(pat, text or "", re.IGNORECASE)
+        m = re.search(pat, text or "", re.IGNORECASE | re.DOTALL)
         if m:
-            out.append(Fact(name, m.group(0).strip()[:160], where))
+            out.append(Fact(name, " ".join(m.group(0).split())[:160], where))
     return out
 
 
@@ -310,6 +352,13 @@ def invalidate_if_parent_gone(ob: Obligation, live_facts: list[Fact]) -> Obligat
     An obligation whose causal parent has stopped holding does not stay required
     by inertia -- it goes STALE, including from SATISFIED, because a proof of
     something that is no longer required is not a reason to keep requiring it.
+
+    Only `fact:`-prefixed parents participate. `human_intent` is a parent too and
+    is deliberately NOT invalidatable here: an intent that changed is a different
+    mission, and silently retiring its obligations would hide that rather than
+    surface it. The prefix is the contract, and a parent written without it is
+    inert -- which cost this suite a failing gate, because the first version of
+    its own test asserted invalidation using a bare parent name.
     """
     if ob.disposition in (REJECTED, NOT_APPLICABLE, DEFERRED):
         return ob
