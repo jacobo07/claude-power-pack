@@ -156,6 +156,11 @@ def _missing_fact(r: Applicability) -> str:
         return "a runtime prerequisite is unmet"
     if r.verdict is Verdict.REJECTED_AS_DUPLICATE:
         return "the scope is already held"
+    if r.verdict is Verdict.WITHHELD_BY_LIFECYCLE:
+        # Not a missing fact at all, and saying so matters: every other branch
+        # here sends someone to supply something. This one is an authority
+        # decision and the correct action is none.
+        return "its authority was withdrawn (lifecycle), not a missing fact"
     return "unknown blocking verdict"
 
 

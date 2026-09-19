@@ -54,6 +54,7 @@
   "maturity": "developing",
   "portable": true,
   "compatible_runtimes": [],
+  "lifecycle": "active",
   "rollback": "",
   "kill_switch": "",
   "retirement_condition": "the repo carries a maintained architecture contract that is verified in CI",

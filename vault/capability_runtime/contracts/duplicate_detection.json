@@ -53,6 +53,7 @@
   "maturity": "mature",
   "portable": true,
   "compatible_runtimes": [],
+  "lifecycle": "active",
   "rollback": "",
   "kill_switch": "",
   "retirement_condition": "proposals stop measuring majority-owned across three consecutive audits",

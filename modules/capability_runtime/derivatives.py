@@ -98,6 +98,31 @@ def derive(parent: CapabilityContract, project: str, overrides: dict,
     if not str(project).strip():
         raise ContractError("a derivative requires a project")
 
+    # UCR-CIF W3 -- a derived projection may not outlive its authority.
+    # Deriving from a withdrawn parent would mint a live child out of dead
+    # authority, and the child would pass every gate because gate 0 reads the
+    # CHILD's lifecycle. Refused at the source instead.
+    from modules.capability_runtime.lifecycle import (  # local: avoid a cycle
+        WITHDRAWN, Lifecycle, state_of,
+    )
+    parent_state = state_of(parent)
+    if parent_state in WITHDRAWN:
+        raise ContractError(
+            f"HR-APA-017 {parent.id}: cannot derive from a parent whose "
+            f"lifecycle is {parent_state.value!r} -- a derivative of withdrawn "
+            "authority is withdrawn authority with a new name")
+
+    # Lifecycle is authority, and authority is written by a provenanced
+    # transition (actor, reason, evidence, append-only history), never by a
+    # field override. Allowing it here would be the laundering path: derive
+    # from an UNCLASSIFIED parent, declare the child active, and the store now
+    # holds an ACTIVE capability no transition ever authorised.
+    if overrides and "lifecycle" in overrides:
+        raise ContractError(
+            f"HR-APA-017 {parent.id}: `lifecycle` may not be set by a "
+            "derivative override -- use lifecycle.transition(), which records "
+            "an actor, a reason and evidence")
+
     base = parent.to_dict()
     base.update(overrides or {})
     base["parent"] = parent.id
@@ -152,6 +177,22 @@ def is_stale(rec: Derivative, parent: CapabilityContract) -> bool:
     return parts(parent.version) > parts(rec.parent_version)
 
 
+def orphaned(rec: Derivative, parent: CapabilityContract) -> bool:
+    """True when the parent's authority has been withdrawn since this was cut.
+
+    `is_stale` answers "has the parent MOVED past me"; this answers "is the
+    parent still authority at all". A derivative cut legitimately from an ACTIVE
+    parent that is later revoked is not stale -- its parent_version still
+    matches -- and it must not keep serving on the strength of that match.
+    Propagation is reported, never silently applied: the Owner transitions the
+    child, exactly as `retirement.py` proposes rather than retires.
+    """
+    from modules.capability_runtime.lifecycle import WITHDRAWN, state_of
+    if rec.parent_id != parent.id:
+        return False
+    return state_of(parent) in WITHDRAWN
+
+
 def lineage(child_id: str, records=None, derivatives_dir=None) -> list:
     """Genealogy chain from a derivative up to its root. Cycle-safe."""
     recs = records if records is not None else load_derivatives(derivatives_dir)
@@ -196,5 +237,5 @@ def save_derivative(rec: Derivative, derivatives_dir=None) -> Path:
 __all__ = [
     "Derivative", "DERIVATIVES_DIR", "NAMING_FIELDS", "PROTECTED_FIELDS",
     "compute_delta", "derive", "is_stale", "lineage", "load_derivatives",
-    "save_derivative",
+    "orphaned", "save_derivative",
 ]

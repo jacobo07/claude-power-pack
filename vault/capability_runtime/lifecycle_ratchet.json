@@ -1,0 +1,19 @@
+{
+  "purpose": "The UNKNOWN capability population, frozen. It may only shrink. A NEW capability landing in the store unclassified fails V-W3-RATCHET-SHRINK-ONLY; a resolved one must be deleted from this list, or the baseline outlives its subjects.",
+  "sealed": "2026-09-19",
+  "sealed_by": "UCR-CIF W3",
+  "why_unknown_is_not_withheld": "Ten contracts predate contract.lifecycle. Resolving absence to 'withheld' would have silently disabled four capabilities this estate activates as MANDATORY on every prompt. UNKNOWN therefore activates, reports lifecycle_verified=False, and is driven down by this list rather than by the default. When it reaches zero, tightening UNKNOWN into WITHDRAWN is a one-line change with no population left to break.",
+  "unknown": [
+    "cdicf-installer",
+    "cost_routing",
+    "premise_verification",
+    "spec_depth_selection"
+  ],
+  "reasons": {
+    "cdicf-installer": "UNEVALUABLE -- no deterministic probe exists for its retirement condition. Probe debt this repository could pay. Independently corroborated: it is also the single offender of the pre-existing V-UCEIMR-G2-COVERAGE failure, which reports it as neither probed, external, nor declared permanent.",
+    "cost_routing": "EXTERNAL -- model pricing is a market fact; no repository signal can observe convergence.",
+    "premise_verification": "EXTERNAL -- editor/toolchain symbol verification is a property of the toolchain, not of this repo.",
+    "spec_depth_selection": "UNEVALUABLE -- no deterministic probe exists for its retirement condition. Probe debt this repository could pay."
+  },
+  "how_to_shrink": "Pay the probe debt in modules/capability_runtime/retirement.py (PROBES), or classify the capability by an Owner transition through modules.capability_runtime.lifecycle.transition. Then re-run tools/capability_lifecycle_migrate.py --apply and delete the resolved id from this list."
+}

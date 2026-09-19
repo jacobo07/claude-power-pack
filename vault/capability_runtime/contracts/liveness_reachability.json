@@ -53,6 +53,7 @@
   "maturity": "proven",
   "portable": true,
   "compatible_runtimes": [],
+  "lifecycle": "active",
   "rollback": "",
   "kill_switch": "",
   "retirement_condition": "every module is registered at creation time by construction",

@@ -42,6 +42,9 @@ from modules.capability_runtime.contract import (  # noqa: E402
     COST_SCALE, FAILURE_SCALE, MATURITY_SCALE, CapabilityContract, Cost,
     FailureRisk, Maturity, load_contracts,
 )
+from modules.capability_runtime.lifecycle import (  # noqa: E402
+    Lifecycle, inheritable, state_of, verified,
+)
 
 
 class Verdict(str, Enum):
@@ -53,11 +56,17 @@ class Verdict(str, Enum):
     BLOCKED_BY_MISSING_EVIDENCE = "BLOCKED_BY_MISSING_EVIDENCE"
     BLOCKED_BY_UNRESOLVED_OWNER = "BLOCKED_BY_UNRESOLVED_OWNER"
     REJECTED_AS_DUPLICATE = "REJECTED_AS_DUPLICATE"
+    # UCR-CIF W3. Its own verdict on purpose: "this capability may not be
+    # inherited" is a different fact from "it could not run here", and folding
+    # it into an existing blocking verdict would send an operator to fix a
+    # runtime that is not broken.
+    WITHHELD_BY_LIFECYCLE = "WITHHELD_BY_LIFECYCLE"
 
 
 BLOCKING = frozenset({
     Verdict.CAPABILITY_INSUFFICIENT, Verdict.BLOCKED_BY_MISSING_EVIDENCE,
     Verdict.BLOCKED_BY_UNRESOLVED_OWNER, Verdict.REJECTED_AS_DUPLICATE,
+    Verdict.WITHHELD_BY_LIFECYCLE,
 })
 
 MANDATORY_SCORE = 0.55
@@ -84,10 +93,25 @@ class Applicability:
     reason: str
     escalates: bool = False
     factors: dict = field(default_factory=dict)
+    # UCR-CIF W3. Stamped on EVERY verdict, whichever gate produced it, so a
+    # caller reading a result never has to consult a second authority to learn
+    # whether the answer rests on verified state.
+    lifecycle: str = ""
 
     @property
     def blocked(self) -> bool:
         return self.verdict in BLOCKING
+
+    @property
+    def withheld(self) -> bool:
+        return self.verdict is Verdict.WITHHELD_BY_LIFECYCLE
+
+    @property
+    def lifecycle_verified(self) -> bool:
+        """False when the capability's authority was never classified. Distinct
+        from `withheld`: unverified still activates, it just may not be
+        presented as verified authority (UNKNOWN != ACTIVE)."""
+        return bool(self.lifecycle) and self.lifecycle != Lifecycle.UNKNOWN.value
 
 
 def _norm(items) -> set:
@@ -114,8 +138,39 @@ def _ratio(part: int, whole: int, *, empty: float = 1.0) -> float:
 
 
 def evaluate(c: CapabilityContract, ctx: MissionContext) -> Applicability:
+    """One contract against one mission, with its lifecycle stamped on.
+
+    A thin wrapper so the stamp cannot be forgotten: `_evaluate` has eight
+    return paths, and a field set at each of them is a field that will be
+    missing from the ninth.
+    """
+    a = _evaluate(c, ctx)
+    a.lifecycle = state_of(c).value
+    return a
+
+
+def _evaluate(c: CapabilityContract, ctx: MissionContext) -> Applicability:
     """One contract against one mission. Gates first, score second."""
     text = ctx.description or ""
+
+    # --- gate 0: authority precedes relevance (UCR-CIF W3).
+    # A withdrawn capability is refused BEFORE anti-triggers, before the
+    # dormancy gate, before evidence -- every other gate asks whether this
+    # capability FITS the mission, and that question does not arise for one that
+    # may no longer be inherited at all. Placing it first makes the guarantee
+    # unconditional: no mission text, evidence set or runtime can route around
+    # it, so "a revoked capability never reaches `activate`" is a property of
+    # the function rather than of the inputs it happens to be given.
+    #
+    # UNKNOWN does NOT refuse here. It is not ACTIVE and is never reported as
+    # verified, but ten contracts predate this field and withholding them would
+    # silently disable capabilities this estate activates today. See
+    # lifecycle.py: the shrink-only ratchet closes that gap, not the default.
+    if not inheritable(c):
+        return Applicability(
+            c.id, Verdict.WITHHELD_BY_LIFECYCLE, 0.0,
+            f"lifecycle is {state_of(c).value!r} -- not inheritable",
+            c.escalates, {"lifecycle": state_of(c).value})
 
     # --- gate 1: an anti-trigger is a veto, whatever else matches.
     anti = _hits(text, c.anti_triggers)
@@ -249,6 +304,17 @@ def compile_stack(ctx: MissionContext, contracts=None, contracts_dir=None) -> di
                     if a.verdict == Verdict.AVAILABLE_ON_TRIGGER],
         "blocked": {a.capability_id: a.verdict.value
                     for a in results if a.blocked},
+        # UCR-CIF W3. Withheld capabilities are also `blocked` -- the property
+        # every existing caller already reads -- but they get their own bucket
+        # because they need a different action: a blocked capability wants its
+        # runtime fixed, a withheld one is an authority decision and wants
+        # nobody to do anything.
+        "withheld": {a.capability_id: a.lifecycle
+                     for a in results if a.withheld},
+        # The honest denominator for "is this stack resting on verified
+        # authority". Reported rather than enforced; the ratchet drives it down.
+        "unverified": [a.capability_id for a in activate
+                       if not a.lifecycle_verified],
         "results": results,
     }
 

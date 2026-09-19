@@ -54,6 +54,7 @@
   "maturity": "proven",
   "portable": true,
   "compatible_runtimes": [],
+  "lifecycle": "active",
   "rollback": "",
   "kill_switch": "",
   "retirement_condition": "never -- the Reality Contract depends on it",

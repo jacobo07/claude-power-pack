@@ -109,6 +109,12 @@ class CapabilityContract:
     maturity: Maturity = Maturity.DEVELOPING
     portable: bool = True
     compatible_runtimes: list = field(default_factory=list)
+    # authority lifecycle (UCR-CIF W3). Orthogonal to `maturity`, which scores
+    # how PROVEN a capability is; this says whether it may be inherited AT ALL.
+    # Deliberately a plain string here so this module keeps no dependency on
+    # `lifecycle.py` -- `lifecycle.coerce` owns the vocabulary, and an empty or
+    # unrecognised value resolves to UNKNOWN, never to ACTIVE.
+    lifecycle: str = ""
     # reversibility
     rollback: str = ""
     kill_switch: str = ""

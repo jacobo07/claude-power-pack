@@ -53,6 +53,7 @@
   "maturity": "proven",
   "portable": true,
   "compatible_runtimes": [],
+  "lifecycle": "active",
   "rollback": "",
   "kill_switch": "",
   "retirement_condition": "the recorded chain set goes two years without a new member",

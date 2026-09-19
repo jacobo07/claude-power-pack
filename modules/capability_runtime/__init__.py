@@ -20,7 +20,12 @@ from modules.capability_runtime.applicability import (
 )
 from modules.capability_runtime.derivatives import (
     Derivative, compute_delta, derive, is_stale, lineage, load_derivatives,
-    save_derivative,
+    orphaned, save_derivative,
+)
+from modules.capability_runtime.lifecycle import (
+    Lifecycle, LifecycleError, LifecycleEvent, WITHDRAWN, classify_population,
+    current_from_log, history, inheritable, load_log, reconstruct_at, state_of,
+    transition, verified,
 )
 from modules.capability_runtime.corpus_adapter import (
     CapabilityProposal, EvidenceUnit, approve, evidence_from_corpus,
@@ -39,7 +44,10 @@ __all__ = [
     "Applicability", "MissionContext", "Verdict", "compile_stack", "evaluate",
     "evaluate_all",
     "Derivative", "compute_delta", "derive", "is_stale", "lineage",
-    "load_derivatives", "save_derivative",
+    "load_derivatives", "orphaned", "save_derivative",
+    "Lifecycle", "LifecycleError", "LifecycleEvent", "WITHDRAWN",
+    "classify_population", "current_from_log", "history", "inheritable",
+    "load_log", "reconstruct_at", "state_of", "transition", "verified",
     "CapabilityProposal", "EvidenceUnit", "approve", "evidence_from_corpus",
     "load_proposals", "mine", "save_proposal",
     "RetirementVerdict", "evaluate_contract", "evaluate_retirement",
