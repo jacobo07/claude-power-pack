@@ -29,6 +29,17 @@ Invoke the `mobile-app-ui-design` skill (`skills/mobile-app-ui-design/`, mirrore
 The skill generates; `cdio-reviewer` judges against CDIO-08 (`vault/knowledge_base/cdio/CDIO-08-mobile-app-surface.md`), which also records what was rejected from the absorbed source (github.com/ceorkm/mobile-app-ui-design). A web page viewed on a phone stays under CDIO-05 Lens 6 alone.
 DONE for the absorption = `python tools/test_cdio.py` and `python tools/test_cdio_mobile.py` exit 0.
 
+## Android Reverse Engineering Activation Criteria (added 2026-09-19)
+Invoke the `android-reverse-engineering` skill (`skills/android-reverse-engineering/`) when ANY of these hold, objectively evaluable, no "when appropriate" judgment call:
+- Owner asks to decompile or reverse engineer an APK, XAPK, JAR or AAR, or hands over such a file.
+- Owner asks what HTTP APIs / endpoints / base URLs an Android app calls, or to reproduce them without source.
+- Owner asks to trace a call flow, deobfuscate Kotlin class names, or identify an app's framework or SDKs.
+Do not wait to be named.
+**Phase 0 is not optional and runs first**: `python skills/android-reverse-engineering/core/fingerprint.py <file>`. It is Python-only, so it runs before any decompiler is installed — which is its point: for a Flutter / React Native / Cordova / Xamarin app, Java decompilation yields ~no app code, and Phase 0 is what says so in seconds instead of an hour. Its `needs_kotlin_recovery` flag, not a judgement call, gates Phase 3.5.
+Absorbed from SimoneAvogadro/android-reverse-engineering-skill (Apache-2.0, v1.5.0, commit `04fe39c`). `scripts/` and `references/` are verbatim upstream — read `skills/android-reverse-engineering/NOTICE.md` before editing either, and before "restoring" the one deliberate divergence (obfuscation is read from dex packages, because upstream's zip-listing count is structurally 0 on every modern APK and so could never open the Phase 3.5 gate).
+Prerequisites are jadx + JDK 17+; JDK is present at `Apps\jdk-17`, **jadx is not installed** — the skill's own `scripts/install-dep.ps1` handles it on first use. The decompile wrappers are absorbed unexercised; the first real decompile is their first test.
+DONE for this absorption = `python tools/test_android_re.py` exit 0 (V-ARE-* gates, run from the repo root). Phase 0 and Phase 3.5 are driven from both poles, and the gate exercises `check-deps.ps1` for real — upstream's PowerShell scripts aborted on PS 5.1 whenever Java was actually installed (`NativeCommandError`), which is patched and pinned.
+
 ## Experience Contract — baseline for any interactive surface (CDIO-07, added 2026-08-24)
 A surface is judged at rest by CDIO-01..06. How it BEHAVES — on touch, and while it waits —
 is declared, not settled by whoever writes the last component. Baseline, inherited by every
