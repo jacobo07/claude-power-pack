@@ -113,7 +113,36 @@ Coherence anchor: GSDLR 72, GSDAC 26, CWIRE 14 -- green at `f2462ee`.
   flight; commit isolation is file-granular. Their bytes are intact. The commit message
   names the first; this file names both, so neither is lost by being mis-titled.
 
+## 3e. The live drill, and the certificate (2026-09-19, later still)
+- `e2acb69` **the two-pane drill, hardened by running it.** Three defects, none visible from
+  the tests: (1) `arm` identified its subject as "the one new session since I started
+  watching" and, on a host whose registry grew 25 -> 31 rows during one drill, adopted a
+  colleague's `/ultra plan mode` pane -- it aborted only because a session registers BEFORE
+  its transcript exists, so an accident saved the run and nothing in the rule did. Identity
+  is now the NONCE, read from a TYPED user row. (2) A session with no transcript is simply
+  not a candidate yet. (3) `arm` returned PASS on a subject in Windows Terminal
+  (`claude.exe -> powershell.exe -> WindowsTerminal.exe`) that no window can own, and `fire`
+  spent its 10 s producing a refusal INDISTINGUISHABLE from the deliberate one;
+  addressability is now a precondition, checked against the terminal registry the extension
+  publishes. Pane B (this session) is recorded at fire time and gated by
+  `V-TWOPANE-B-UNTOUCHED`; a run with no B returns HARNESS-FAILED. TWOPANE 4/4, mutations
+  3/4 x3, restores SHA-256 verified.
+- `d55c7c7` T-CONT-08..11 and PR-CONT-05 in the UKDL, spliced around the other producer's
+  block: working copy proven to be exactly HEAD + 90,507 bytes / 337 `ceps_` rows, committed
+  alone (52 insertions, 0 deletions), block restored, arithmetic closed 561+337=898.
+- `293ef15` **`vault/specs/cpp-gsd-long.CERTIFICATION.md`** -- the Owner-requested
+  certificate. Seven claims; five PROVEN, C5 proven on its refusal side only, C7 (the
+  command's own done-gate) PARTIAL. It states the failure honestly on page one.
+- Phase 4's rule would have degraded THIS run's marker (`cwd: "."`), so the marker was
+  absolutised in place, backed up first, every other field preserved.
+- **Context at 38-39 % against a 40 % wall** as of 12:27Z, climbing ~1 point per turn: the
+  fourth crossing is what C7 needs, and it arrives by working, not by engineering.
+
 ## 4. Not proven (do not claim)
+- **C5 positive side: no line has EVER been observed typed into a subject's own terminal.**
+  It needs a Claude session inside a Cursor integrated terminal; the drill cannot create one
+  and the unattended attempt (a `folderOpen` task in a new Cursor window) was DENIED by the
+  auto-mode classifier as `Create Unsafe Agents`. Recorded, not worked around.
 - `report` is PARTIAL, not PROVEN: 3 crossings, 1 confirmed resume. PROVEN needs a SECOND
   crossing whose resume the transcript shows was really submitted.
 - Phase 4 changed the reap rule and **no reap has ever executed under it** on real state.
