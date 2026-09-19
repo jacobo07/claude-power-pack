@@ -62,22 +62,62 @@ Coherence anchor: GSDLR 68, GSDAC 26, ACPS 38, CXT 28, CWIRE 14 -- green at `64e
   `<command-args>focus on ...</command-args>` in the transcript. The arg was delivered
   every time and the host honoured it.
 
+## 3c. Sealed later the same day (2026-09-19)
+- `f2462ee` **the confirmation could not see the row it looks for.** A resume is confirmed
+  by a Stop hook running at the END of the turn the resume began, and that turn has already
+  written its whole tool output ahead of the row. Against a 262,144 byte window the
+  `/gsd-autonomous` row sat 598,625 bytes from the end of a 5.8 MB transcript, so every Stop
+  chain read False. The coupling is perverse -- the more the turn did, the further back the
+  row -- so it failed exactly in the case it exists for. Aperture now sized to the question
+  (8 MB) and cheap because only lines CONTAINING the command are parsed. Real-bytes proof
+  False -> True with a never-issued control still False. GSDLR 68 -> 72; mutation 71/72;
+  restore SHA-256 `1B95B8AF`.
+- `62da863` **Phase 2 COMPLETE.** Startup (process spawn -> deadline clock) = **42 ms**
+  median, n=5, at 15.5% free RAM; deadline 11,500 ms, cap 15,000 ms. Neither the cap nor the
+  clock is the defect; the 19.4/17.1 s readings predate the deadline that fixed them
+  (`15,173 -> 6,595`). The TOTAL (3,589 ms median) is a LOWER BOUND -- synthetic payload, so
+  transcript-proportional hooks including `jit_skill_loader` did less than a real turn.
+- `1b2d6f4` + `b788b25` **Phase 3 COMPLETE.** HR-CONT-01..03, PR-CONT-01..04, T-CONT-01..07
+  in the UKDL with their ids; the global router's "SendKeys presses Enter when Cursor is
+  foreground" sentence replaced by the exact-or-refused delivery that actually happens.
+- `c5f82c0` Phase 1 Task 1: `tools/two_pane_drill.py` + `tools/test_two_pane_exactness.py`.
+  `probe` 7/7 live, red branch driven in two scenarios (absent / unreadable / too-old all
+  distinct). `arm`/`fire`/`observe` UNEXERCISED -- they need an operator-started subject.
+Coherence anchor: GSDLR 72, GSDAC 26, CWIRE 14 -- green at `f2462ee`.
+
 ## 4. Not proven (do not claim)
-- `report` is still UNPROVEN: two crossings, zero `resume_confirmed`.
-- No live crossing yet. Every marker on this host still reads UNPROVEN or NO_CROSSINGS.
+- `report` is still UNPROVEN: two crossings, zero `resume_confirmed`. The aperture fix
+  removes the reason the confirmation kept failing, but NO confirmed resume has been
+  observed since -- the next crossing is what tests it.
 - No real delivery through `orca-exact` (GSDX-C08); Orca is not running on this host.
-- No live two-pane drill (GSDX-C09) -- that is Phase 1.
-- UserPromptSubmit chain: 19.4 s and 17.1 s against a 15 s cap. Cause unmeasured -- Phase 2.
+- No live two-pane drill (GSDX-C09) -- Phase 1 Tasks 2-3, blocked on the operator step.
+- Phase 2's TOTAL is a lower bound; the straggler under a real transcript is unmeasured.
 
 ## 5. Do not re-litigate without new evidence
 Low context is not compaction. Focus is not identity. `accepted` is not consumed. A turn
 that has not ended has not reached the Stop chain -- an empty watchdog heartbeat for a live
-session is that, not a dead guard.
+session is that, not a dead guard. But TWO ended turns without a `resume_confirmed` is not
+that, and on 2026-09-19 it was a real defect (`f2462ee`) -- "pending" is only honest until
+the next Stop chain has run.
+
+## 5b. Two unversioned files this work depends on
+`~/.claude/hooks/auto-compact-sendkeys-daemon.ps1` (the 300 s inbox TTL) and
+`~/.claude/CLAUDE.md` (the corrected router sentence) are edited live and tracked by nothing.
+`hooks/hook-dispatcher.js` IS mirrored in the repo and both copies carry the startup
+instrument. Losing the first two loses the fixes silently.
+
+## 5c. The UKDL carries another producer's uncommitted rows
+1,031 malformed CEPS auto-append rows sit uncommitted in `vault/knowledge_base/ukdl-universal.md`
+and grow while you work. Committing that file with a plain pathspec takes them ALL under your
+message. Defect recorded in `vault/lessons/ceps-autoappend-keys-are-not-tools.md`; Owner
+decision was to leave them in place. If you must commit the UKDL: back it up byte-exact,
+`git checkout --` it, append only your lines, commit, then restore the block and verify the
+CEPS row count is unchanged.
 
 ## 6. Next actions
 1. Let the run execute the roadmap's phases; honour every trailing-line instruction the
    watchdog returns (`/compact ...`, then exactly `/gsd-autonomous`).
-2. After the second confirmed resume, read `report` and record the verdict here.
+2. After the next crossing, read `report` -- that is the first real test of `f2462ee`.
 3. Then Phase 1 (two-pane drill), Phase 2 (prompt-chain deadline), Phase 3 (UKDL
    promotion + the stale router line), Phase 4 (reap the seven stale markers).
 
