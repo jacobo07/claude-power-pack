@@ -66,6 +66,33 @@ is never written by this mission and never rolled back.
   (`T-BASENAME-COLLAPSE-001`, `T-CONSTANT-PATH-INVISIBLE-001`,
   `PR-STARVED-HOST-COUNT-NOT-CLOCK-001`), appended to the predecessor's five.
 
+- **W1 · corpus compiler** — `7f08ba0`. `modules/ucr_cif/corpus_compiler.py`. Deterministic,
+  no model call. Lines 75,351..167,842 → **47 slices, 982 unique units**, coverage gaps
+  NONE, overlaps NONE. law 619 / definition 202 / metric 149 / trap 12.
+  **Production Reality met:** idempotent (two runs SHA-256 identical); **killed with 19 of
+  47 slices on disk, restarted, completed to 47, byte-identical to the clean run.**
+  `--selftest` drives boundary independence at both poles (green 60/60 identical; red
+  `readahead=0` changes 10 ids). Its first green on the real corpus was **vacuous** — no
+  paragraph straddled a slice edge — and forcing the case exposed a real split-unit bug.
+- **W1 · unified corpus** — `2cec9b7`. `vault/ucr_cif/requirement_corpus.json`,
+  **2,376 units** = 1,394 inherited concepts (`claim_class=INFERRED`) + 982 compiled
+  statements (`OBSERVED`). **Partition VERIFIED:** inherited max line 75,323, compiled span
+  75,352..167,812, out-of-prefix 0, uid collisions 0, 1 cross-half key match. 362 inherited
+  records are unattributed (their `ranges` says `r2_slice4`) and are counted as such.
+- **W2 · disposition ledger** — `085ba2f`. `modules/ucr_cif/disposition_ledger.py`.
+  **2,158 of 2,376 (90.8 %) propose an existing owner; 218 (9.2 %) UNRESOLVED.** Confidence
+  spans 115 distinct values (0.006–0.533), so it is not the D2A constant floor. Independent
+  agreement with the predecessor's prior and the estate's 9–36 % historical CREATE rate.
+  Gate driven red **five ways** (unmapped · laundering · shrunken denominator · degenerate
+  confidence · blind index) plus the green pole.
+  **`disposition` is authoritative and still 0 — `proposed_disposition` is a candidate.**
+  Known bias, stated not buried: `governance-overlay` (452) and one agent `.md` (214) win
+  by vocabulary volume, not ownership. Review is W3's input.
+- **W2 · trap** — `T-EXCLUSION-MATCHED-THE-WORKSPACE-001`: the contamination guard matched
+  the worktree's own name `pp-ucr-cif` and indexed **0** files. Caught only by the
+  population floor, because "all UNRESOLVED" is also what a correct sweep of a truly novel
+  corpus returns — the broken instrument and the flattering reading pointed the same way.
+
 **UNMEASURED (not zero, not fine)**
 
 - **Hook/mission latency timing.** Host was at **1,499 MB free of 32,061 (4.7 %)**, 31
@@ -98,17 +125,23 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
 
 ## 4. Next three actions
 
-1. **W1 — corpus compiler.** D2A-probe first against `modules/knowledge_acquisition/corpus_parser.py`,
-   `modules/dataset_first` and `tools/distiller/`; EXTEND if any fits, CREATE only on a
-   measured miss. Must be incremental, restartable, idempotent, bounded-memory,
-   crash-survivable. Reuse the 1,394 prefix records **with provenance**, process only lines
-   75,351+, and prove the seam by double-compiling a window across it to identical records.
-2. **W2 — disposition ledger + coverage gate.** Every material requirement gets a disposition
-   and an owner; `UNMAPPED` becomes a measured number; anti-gaming detectors (POLICY-only
-   laundering, denominator floor, stale-entry clause, synthetic red drill) ship with it.
-3. **W3 — capability authority + baseline lifecycle.** `baseline_ledger.jsonl` has **no
-   status field**, so revocation has no representation today; that is a proven gap on an
-   existing authority → EXTEND, not a new registry.
+1. **W3 — capability authority + baseline lifecycle.** `vault/baseline_ledger.jsonl` (73
+   rows) has fields `iso_ts / ledger_id / law / evidence / session_id / trigger / scope /
+   schema_version` and **no status field**, so §XXXI revocation
+   (ACTIVE/SUPERSEDED/DEPRECATED/SUSPENDED/REVOKED) has no representation today. That is a
+   proven gap on an existing authority → **EXTEND, never a new registry.** Absence must
+   read as the safest state, never as ACTIVE. Production Reality: a real mission start
+   compiles a baseline, and a revoked capability is provably not inherited.
+2. **Review pass over the 218 UNRESOLVED + the top-bias proposals.** Turn
+   `proposed_disposition` into `disposition` where evidence supports it. Do **not** let a
+   vocabulary-volume winner (`governance-overlay`, an agent `.md`) stand as an owner. A
+   capability-level sweep under any name is mandatory before any `IMPLEMENT` verdict
+   (`T-VOCABULARY-ZERO-IS-NOT-ABSENCE-002`), and `HR-NOVELTY-001`'s 13-question proof is
+   required before admitting any new institutional system.
+3. **W4 — construction observation + privacy projection.** EXTEND `session_delta` /
+   `omnicapture`; all global egress through the `secret_firewall` URB. Exactly-once identity
+   so a retry or resume cannot duplicate an institutional record. Red-branch fixtures:
+   planted secret, prompt injection from a repo file, poisoned evidence.
 
 ## 5. Start instruction
 

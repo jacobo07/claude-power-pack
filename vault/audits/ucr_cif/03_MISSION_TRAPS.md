@@ -288,6 +288,46 @@ lesson; the delta is the *substitution*, not the warning.
 
 ---
 
+## T-EXCLUSION-MATCHED-THE-WORKSPACE-001 — the contamination guard became a total blindfold
+
+**Observed (2026-09-19, UCR-CIF W2).** The disposition ledger excludes this mission's own
+paths before building its estate index, precisely as `T-SELF-CONTAMINATED-DENOMINATOR-001`
+requires. Its first real run reported **`indexed_files=0  distinct_terms=0`**, and therefore
+`UNRESOLVED` for all 2,376 requirements.
+
+**Mechanism.** The exclusion pattern `ucr[-_]?cif` was tested against the **absolute** path.
+The isolated worktree created for this mission is itself named **`pp-ucr-cif`**, so every
+path in the estate contained the excluded token. A guard written to remove ~30 of this
+mission's own files removed all 1,339 of everyone else's.
+
+**Why it would have passed as a finding.** This is the part worth keeping. `UNRESOLVED` for
+every requirement is *exactly* what a correct sweep of a genuinely novel corpus produces —
+and that reading flatters the mission, because it says the corpus is full of unowned,
+buildable systems. The estate's sealed history says the opposite is almost always true
+(CPP-IAS 150→14, DAIF 22→8, RE Baseline 4→1). **The convenient reading and the broken
+instrument pointed the same way**, which is the condition under which nobody looks.
+
+**What caught it.** Not inspection, and not the result looking wrong — the **population
+floor** (`indexed_files < 500`). A stale-entry clause could not have; a "did the sweep find
+anything" control could not have either, since the answer was a consistent, plausible zero.
+
+**Fix.** Exclusion tests the **repo-relative** path. The absolute path carries the
+workspace's name, which is an accident of where the work happens and has nothing to do with
+what the file contains.
+
+**Generalizes to.** Any filter whose pattern is derived from the SUBJECT and applied to a
+string that also carries the ENVIRONMENT — a working directory, a branch name, a container
+id, a temp path, a host name. **Match on the part of the identifier that names the thing,
+never on the part that names where you happen to be standing.** And: an isolation workspace
+named after its mission will collide with any filter that mentions the mission.
+
+**Disposition.** UKDL trap candidate. Direct inverse of
+`T-SELF-CONTAMINATED-DENOMINATOR-001`: that one is a denominator that silently *absorbed*
+its subject, this is a denominator that silently *deleted everything else*. Both are
+one-line mistakes in the same guard, and both produce a number nobody questions.
+
+---
+
 ## Standing obligation
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and
