@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "obligations": [
+    {
+      "id": "DO-1",
+      "text": "The destructive step must not execute until the state it makes unrecoverable is durably established elsewhere, verified rather than assumed.",
+      "operator": "IRREVERSIBILITY_CONSEQUENCE",
+      "parents": [
+        "human_intent",
+        "fact:destructive_act_commanded",
+        "fact:no_recovery_mechanism"
+      ],
+      "consequence": "The only surviving copy is destroyed on every path where the transfer did not actually complete. Unrecoverable, and undetectable afterwards -- nothing remains to compare.",
+      "evidence": [
+        "destructive_act_commanded: 'deletes the local copy' (intent)",
+        "no_recovery_mechanism: 'Lifecycle rules: none' (reality)"
+      ],
+      "owner": "unassigned",
+      "authority": "~/.claude/rules/destructive-state-authorization.md",
+      "closure_condition": "the destructive call is reachable only from a verified-success branch, and from no error path",
+      "done_gate": "a test in which the transfer fails and the local state survives",
+      "proof": "",
+      "invalidated_by": [
+        "a recovery mechanism is introduced (versioning, backup, lifecycle retention)",
+        "the destructive step is removed from the intent"
+      ],
+      "disposition": "ACCEPTED",
+      "disposition_reason": "IRREVERSIBILITY_CONSEQUENCE fired on 2 piece(s) of project evidence, and omission has a named consequence",
+      "revisit_when": ""
+    },
+    {
+      "id": "DO-2",
+      "text": "The work must not act on a subject whose readiness the environment does not signal; readiness has to be established by observation before the subject is consumed.",
+      "operator": "ABSENT_SIGNAL_CONSEQUENCE",
+      "parents": [
+        "human_intent",
+        "fact:no_completion_signal",
+        "fact:consumer_assumes_complete"
+      ],
+      "consequence": "An incomplete subject is processed as though it were complete. A downstream consumer treats whatever it finds as complete, so the defect is silent: nothing errors, and the truncated result is used as though it were the real one.",
+      "evidence": [
+        "no_completion_signal: 'written to by a camera controller, continuously' (reality)",
+        "consumer_assumes_complete: 'treats every object\\n  present as a complete' (reality)"
+      ],
+      "owner": "unassigned",
+      "authority": "~/.claude/rules/real-context-reachability.md (unmeasured is not measured)",
+      "closure_condition": "a readiness test runs before the subject is consumed, and consumption cannot be reached without it",
+      "done_gate": "a test in which a subject still being written is not consumed",
+      "proof": "",
+      "invalidated_by": [
+        "the producer starts emitting a completion signal"
+      ],
+      "disposition": "ACCEPTED",
+      "disposition_reason": "ABSENT_SIGNAL_CONSEQUENCE fired on 2 piece(s) of project evidence, and omission has a named consequence",
+      "revisit_when": ""
+    },
+    {
+      "id": "DO-3",
+      "text": "The measured failure mode must be survivable: work is retained until it succeeds, and retrying must not be unbounded in the resource the environment limits.",
+      "operator": "FAILURE_CONSEQUENCE",
+      "parents": [
+        "human_intent",
+        "fact:measured_failure_mode",
+        "fact:bounded_local_capacity"
+      ],
+      "consequence": "During a failure window the work is either lost or accumulates without limit. The limited resource is exhausted, which stops the producer as well as the consumer.",
+      "evidence": [
+        "measured_failure_mode: 'outages per week, most under 90 seconds, the longest recorded 4' (reality)",
+        "bounded_local_capacity: 'fills in roughly 3 days' (reality)"
+      ],
+      "owner": "unassigned",
+      "authority": "the environment's own measurements",
+      "closure_condition": "failures retain the work and retry, and the retained backlog is bounded or alarmed",
+      "done_gate": "a test across an induced failure window",
+      "proof": "",
+      "invalidated_by": [
+        "the failure mode stops being measured in the environment"
+      ],
+      "disposition": "ACCEPTED",
+      "disposition_reason": "FAILURE_CONSEQUENCE fired on 2 piece(s) of project evidence, and omission has a named consequence",
+      "revisit_when": ""
+    }
+  ]
+}
