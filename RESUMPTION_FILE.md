@@ -20,15 +20,38 @@ by decision (GSDX-I05) — no auto-restore.
 sessions only: median 3,132 ms / p90 4,974 ms per Stop). Never use synthetic rows
 (`gsdac-*`, `gsdlr-*`) or the dark window (GSDX-I09).
 
+**Action 1 partly answered without timing (2026-09-19, `3c49f86`).** The host sat at 4% free
+memory, where this estate has measured 17x drift, so nothing was timed. Two load-independent
+instruments were used instead and both hold on any host:
+- Static profile of `CHAIN_MAP['Stop-chain']`: 25 members, 0 missing, 327 s of serial budget;
+  **6** are both unconditional and transcript-scaling (`lazarus-snapshot`, `mark-live-session`,
+  `research-intent-detector`, `session_snapshot_stop`, `output_contract_stop`,
+  `ceps_promote_stop`). That is a LOWER BOUND: "a gate exists" is not "the gate fires", and
+  `closer-guard` is marked gated while measuring 644-1245 ms.
+- `logs/context-watchdog.log`, which real Stops write themselves — 256 real rows / 106 sessions
+  after excluding 663 synthetic `gsdac-`/`gsdlr-` rows and the dark window. **`pass` median
+  1,555 ms vs `block` 233 ms** (p90 4,930 / max 15,007 on a pass at 45% usage). 92 of 256 are
+  multi-second passes with no crossing. The comment at `hook-dispatcher.js:173` claiming 844 ms
+  for an ordinary Stop is wrong against real sessions.
+
+**Fixed:** `_orchestrator_overlay` imported `auto_reset_orchestrator` ABOVE its throttle and
+no-nag flag, so every Stop paid the import chain forever. Guards hoisted; pinned by
+`tools/test_context_watchdog_overlay_guard.py` 4/4 (counts imports, never a clock — valid on a
+starved host), mutation 2/4, `test_gsd_autocompact.py` 26/26.
+
 Next 3 actions:
-1. Read the Stop-chain `CHAIN_MAP['Stop-chain']` members and time each one on a real
-   transcript payload (the watchdog's cost scales with the transcript) to find the
-   unconditional multi-second overlay.
-2. Build the cheap eligibility fast path, keeping the 20 s safety headroom and heartbeat
-   honesty; prove auto-compact semantics are unchanged by a red/green drill.
+1. **Explain the pass/block asymmetry — still open.** The overlay runs FIRST for both outcomes
+   (`context-watchdog.py:963`), so the import defect does not by itself explain why the cheap
+   path costs 6.7x the expensive one. Do not assume the fix closed it. Suspect next: what
+   `block` short-circuits that `pass` does not.
+2. **Time it once the host has headroom** (>8 GB free, medians not single readings, bracket the
+   headroom on BOTH sides of the sweep — a pre-flight reading cannot see contention the sweep
+   creates). Quantify what the hoisted import actually cost; no timing claim exists yet. Then
+   take the 6 suspects above in order.
 3. Make the synthetic drivers stop writing the production watchdog log (override HOME and
-   USERPROFILE, see `tools/test_hook_replay_isolation.py`) — only once the pane editing
-   `tools/test_gsd_autocompact*.py` has committed.
+   USERPROFILE, see `tools/test_hook_replay_isolation.py`) — `tools/test_gsd_autocompact*.py`
+   has been quiet since 09-18 17:57, so that pane is done and this is now unblocked. Note the
+   synthetic rows already outnumber real ones 2.6:1 in the log.
 
 # ACTIVE-TASK ROUTER (read first)
 
