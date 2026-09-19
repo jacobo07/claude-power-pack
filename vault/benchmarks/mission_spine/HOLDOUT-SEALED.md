@@ -8,12 +8,27 @@ because it worked and because it costs no host resources.
 
 ## What is sealed
 
-    104d8854441000a3  fixture/INTENT.txt
-    32a305828acb27aa  fixture/README.md
-    70a1ba34ec33531f  fixture/probe_env.py
+Git blob ids, which is the seal of record:
 
-SHA-256, first 16 hex. Editing the fixture after this commit invalidates the
-holdout, and the hashes are what makes that detectable rather than deniable.
+    65b00c0  fixture/INTENT.txt
+    b85af34  fixture/README.md
+    35e1a7d  fixture/probe_env.py
+
+Re-derived at any time with `git rev-parse HEAD:<path>`, or `git hash-object`
+against a working copy.
+
+The first seal written here was SHA-256 over the working-tree bytes
+(`104d8854441000a3`, `32a305828acb27aa`, `70a1ba34ec33531f`). Those are kept for
+the record and are NOT the seal, because they are not reproducible: this
+repository converts LF to CRLF on checkout, so a fresh clone hashes to different
+values and the seal would read as tampered-with on a clean machine. A seal whose
+result depends on a line-ending policy cannot distinguish an edit from a
+checkout. Git blob ids are content-addressed over the normalized content and
+have no such dependency. Corrected before any derivation result existed, which
+is the only time such a correction carries no suspicion.
+
+Editing the fixture after this commit invalidates the holdout, and these ids are
+what make that detectable rather than deniable.
 
 ## Honest limitation, stated before the result
 
