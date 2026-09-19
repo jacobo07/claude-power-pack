@@ -49,6 +49,8 @@ REAL_INBOX = HOME / ".claude" / "state" / "terminal-inbox"
 CURSOR_EXTENSIONS = HOME / ".cursor" / "extensions"
 MIN_EXTENSION = (0, 4, 0)
 RUNS = Path(os.environ.get("TEMP", "/tmp")) / "pp-two-pane-drill"
+NONCE_TAIL_BYTES = 2 * 1024 * 1024
+NONCE_POLL_S = 3.0
 
 
 def _load_gsd_long_run():
@@ -177,11 +179,153 @@ def _session_paths() -> set:
         return set()
 
 
+def _carries_nonce(transcript: Path, nonce: str) -> bool:
+    """True when a TYPED user row carries the nonce anywhere in its text.
+
+    Deliberately weaker than `observe`'s predicate, and they must stay
+    different: the operator's own prompt CONTAINS the nonce, so if this test
+    were reused for the observation the drill would pass on its own setup.
+    `observe` calls lr.user_issued_command_since, which additionally requires
+    the row to BEGIN with the nonce and to postdate t0 -- the operator's prompt
+    satisfies neither.
+
+    Rows are classified by shape: a tool result is also `type: "user"`, so
+    counting by type reads an echo as an event.
+
+    Bounded tail: this runs against EVERY registered session on each poll, and
+    reading them whole was ~150 MB per pass on the host where it was written (31
+    sessions, one of them 47 MB). The subject's prompt is the newest thing in a
+    session the operator just started, so the window is sized to the question.
+    """
+    try:
+        size = transcript.stat().st_size
+        with open(transcript, "rb") as fh:
+            fh.seek(max(0, size - NONCE_TAIL_BYTES))
+            raw = fh.read()
+    except OSError:
+        return False
+    if size > NONCE_TAIL_BYTES:
+        raw = raw.split(b"\n", 1)[-1]  # drop the leading fragment
+    needle = nonce.encode("utf-8")
+    for line in raw.split(b"\n"):
+        if needle not in line:
+            continue
+        try:
+            row = json.loads(line.decode("utf-8", errors="replace"))
+        except Exception:
+            continue
+        if not isinstance(row, dict) or row.get("type") != "user" or row.get("toolUseResult"):
+            continue
+        content = (row.get("message") or {}).get("content")
+        if isinstance(content, str):
+            if nonce in content:
+                return True
+        elif isinstance(content, list):
+            kinds = {c.get("type") for c in content if isinstance(c, dict)}
+            if kinds and kinds <= {"text"}:
+                if any(nonce in (c.get("text") or "") for c in content if isinstance(c, dict)):
+                    return True
+    return False
+
+
+def _process_parents() -> dict:
+    """pid -> (ppid, exe), from ONE snapshot. A walk over a moving table is not a chain."""
+    import ctypes
+    import ctypes.wintypes as wt
+
+    class _PE32(ctypes.Structure):
+        _fields_ = [("dwSize", wt.DWORD), ("cntUsage", wt.DWORD), ("th32ProcessID", wt.DWORD),
+                    ("th32DefaultHeapID", ctypes.POINTER(ctypes.c_ulong)),
+                    ("th32ModuleID", wt.DWORD), ("cntThreads", wt.DWORD),
+                    ("th32ParentProcessID", wt.DWORD), ("pcPriClassBase", ctypes.c_long),
+                    ("dwFlags", wt.DWORD), ("szExeFile", ctypes.c_char * 260)]
+
+    k32 = ctypes.windll.kernel32
+    snap = k32.CreateToolhelp32Snapshot(0x00000002, 0)
+    if snap == -1:
+        return {}
+    out, entry = {}, _PE32()
+    entry.dwSize = ctypes.sizeof(_PE32)
+    try:
+        ok = k32.Process32First(snap, ctypes.byref(entry))
+        while ok:
+            out[int(entry.th32ProcessID)] = (int(entry.th32ParentProcessID),
+                                             entry.szExeFile.decode("mbcs", "replace"))
+            ok = k32.Process32Next(snap, ctypes.byref(entry))
+    finally:
+        k32.CloseHandle(snap)
+    return out
+
+
+def _ancestors(pid, table=None) -> list:
+    table = _process_parents() if table is None else table
+    chain, seen = [], set()
+    cur = int(pid) if isinstance(pid, int) or str(pid).isdigit() else 0
+    while cur and cur in table and cur not in seen:
+        seen.add(cur)
+        chain.append(cur)
+        cur = table[cur][0]
+    return chain
+
+
+def _chain_text(pid) -> str:
+    table = _process_parents()
+    return " -> ".join(f"{p} {table.get(p, (0, '?'))[1]}" for p in _ancestors(pid, table)) or "unknown"
+
+
+def _owning_window(pid) -> dict | None:
+    """The window whose terminal registry names a shell in this pid's ancestry.
+
+    Reads the extension's own published registry rather than restating its rule:
+    those rows ARE `vscode.window.terminals[].processId`, which is exactly the
+    set decide() matches against.
+    """
+    chain = set(_ancestors(pid))
+    if not chain:
+        return None
+    root = Path.home() / ".claude" / "state" / "terminals"
+    if not root.is_dir():
+        return None
+    for f in sorted(root.glob("*.json")):
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        rows = data.get("terminals") or data.get("rows") or []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            tpid = row.get("processId")
+            if isinstance(tpid, int) and tpid in chain:
+                return {"registry": f.name, "pid": tpid, "cwd": data.get("cwd")}
+    return None
+
+
+def _nonce_candidates(nonce: str, own: str | None) -> list[tuple[Path, dict, Path]]:
+    """Every registered session whose transcript carries the nonce."""
+    out = []
+    for path in sorted(REAL_SESSIONS.glob("*.json")):
+        try:
+            ident = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        sid = ident.get("sessionId")
+        if not sid or (own and sid == own):
+            continue
+        transcript = lr.find_transcript(sid)
+        if transcript is None:
+            continue          # a session registers BEFORE its transcript exists
+        if _carries_nonce(transcript, nonce):
+            out.append((path, ident, transcript))
+    return out
+
+
 def arm(runid: str, pane: str, timeout: float) -> int:
     run = run_dir(runid)
     cwd = run / "panes" / pane
     cwd.mkdir(parents=True, exist_ok=True)
     nonce = f"DRILL-{pane}-{runid}"
+    own = os.environ.get("CLAUDE_CODE_SESSION_ID")
     before = _session_paths()
 
     print(f"### arm pane {pane}")
@@ -191,39 +335,56 @@ def arm(runid: str, pane: str, timeout: float) -> int:
     print(f"    Reply with a single line beginning {nonce} and nothing else.\n")
     print("Then LEAVE THE PANE ALONE -- a busy pane is not a failure (decide() returns")
     print("`defer` with status-busy and the extension re-polls), but idle is what the")
-    print(f"drill waits for. Waiting up to {timeout:.0f}s for exactly one new session...")
+    print(f"drill waits for. Waiting up to {timeout:.0f}s for the session that carries")
+    print(f"the nonce {nonce}...")
 
+    # Identity is the NONCE, not the timing. The first version of this claimed
+    # "exactly one new session appeared since I started" -- measured 2026-09-19,
+    # that adopted an unrelated working session which happened to start 40 s into
+    # the window (a colleague pane running `/ultra plan mode`), and it aborted on
+    # `no transcript resolved` only because a session registers BEFORE its
+    # transcript exists. A coincidence of timing saved that run; nothing in the
+    # rule did. On this host the registry grew 25 -> 31 rows during one drill.
     deadline = time.time() + timeout
-    subject = None
+    subject = ident = transcript = None
     while time.time() < deadline:
-        new = _session_paths() - before
-        if len(new) == 1:
-            subject = next(iter(new))
+        found = _nonce_candidates(nonce, own)
+        if len(found) == 1:
+            subject, ident, transcript = found[0]
             break
-        if len(new) > 1:
-            print(f"FAIL arm/{pane}: {len(new)} new sessions appeared; identity is ambiguous")
+        if len(found) > 1:
+            sids = [i.get("sessionId") for _, i, _ in found]
+            print(f"FAIL arm/{pane}: {len(found)} sessions carry the nonce; identity is "
+                  f"ambiguous: {sids}")
             return 1
-        time.sleep(1.0)
+        time.sleep(NONCE_POLL_S)
     if subject is None:
-        print(f"FAIL arm/{pane}: no new session within {timeout:.0f}s")
-        return 1
-
-    try:
-        ident = json.loads(subject.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        print(f"FAIL arm/{pane}: could not read {subject}: {exc.__class__.__name__}")
+        appeared = len(_session_paths() - before)
+        print(f"FAIL arm/{pane}: no session carried the nonce within {timeout:.0f}s "
+              f"({appeared} session(s) started meanwhile, none of them the subject)")
         return 1
 
     sid = ident.get("sessionId")
-    own = os.environ.get("CLAUDE_CODE_SESSION_ID")
-    if sid and own and sid == own:
-        print(f"FAIL arm/{pane}: that is THIS session; the drill never targets a real working pane")
-        return 1
 
-    transcript = lr.find_transcript(sid) if sid else None
-    if transcript is None:
-        print(f"FAIL arm/{pane}: no transcript resolved for session {sid}")
+    # PRECONDITION, not a diagnosis after the fact: is this subject ADDRESSABLE?
+    # Ownership is `one of a window's terminals has a shell pid in the subject's
+    # ancestor chain` (terminal_inbox.js::decide). A session started in Windows
+    # Terminal, a detached console or another app has no such ancestor in any
+    # window, so every extension ignores it and the daemon can only time out.
+    # Measured 2026-09-19: arm said PASS on exactly that subject
+    # (21692 claude.exe -> 32340 powershell.exe -> 54752 WindowsTerminal.exe),
+    # fire spent its 10 s discovering it, and the run produced a refusal
+    # indistinguishable from the one the drill demonstrates deliberately.
+    # An unaddressable subject must fail HERE, where it costs nothing and says why.
+    owner = _owning_window(ident.get("pid"))
+    if owner is None:
+        print(f"FAIL arm/{pane}: session {sid} (pid {ident.get('pid')}) sits in a terminal no "
+              f"Cursor window owns.")
+        print(f"      ancestor chain: {_chain_text(ident.get('pid'))}")
+        print("      Open the pane from Cursor's OWN terminal panel (View -> Terminal),")
+        print("      not Windows Terminal, an external console or another app.")
         return 1
+    print(f"arm/{pane}: addressable -- {owner['registry']} owns terminal pid {owner['pid']}")
 
     # Copy the identity verbatim. Resolve-Session reads only sessionId/pid/
     # procStart and never `status`; the extension reads `status` from the LIVE
@@ -279,6 +440,26 @@ def fire(runid: str, pane: str, timeout: float) -> int:
 
     info["t0"] = t0
     info["expect_line"] = expect
+
+    # Record pane B at the same instant. Exactness is a claim about TWO panes --
+    # "A received it" alone is delivery, not exactness -- and B must be a real
+    # live pane, not a fixture. This process's own session is exactly that: a
+    # second Claude session in a terminal this window owns, which is precisely
+    # the pane a mis-resolved request would reach. Captured here rather than at
+    # verification time so the window B is judged over starts at the same t0.
+    own = os.environ.get("CLAUDE_CODE_SESSION_ID")
+    if own:
+        b_transcript = lr.find_transcript(own)
+        if b_transcript is not None:
+            data.setdefault("panes", {})["B"] = {
+                "session_id": own, "transcript": str(b_transcript), "t0": t0,
+                "nonce": info["nonce"], "role": "negative control (the drill's own pane)"}
+        else:
+            print(f"fire/{pane}: WARNING no transcript for pane B ({own}); "
+                  "the negative control cannot be judged")
+    else:
+        print(f"fire/{pane}: WARNING CLAUDE_CODE_SESSION_ID unset; no pane B recorded")
+
     write_manifest(runid, data)
     print(f"fire/{pane}: expect_line={expect!r}")
 
