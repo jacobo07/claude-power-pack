@@ -10069,3 +10069,55 @@ is sized to the question and stays cheap by parsing only lines containing the co
 - An assertion excluding the substring `focused window --` matched the new refusal sentence
   itself; the intent (no LEGACY wording) had to be asserted directly.
 
+### T-CONT-08 — "the one new X that appeared" is a coincidence, not an identity
+Added 2026-09-19, session `37cfb187`, live two-pane drill. `arm()` identified its subject as
+*the single new session that appeared since it started watching*. On a machine running 29
+Claude sessions the registry grew 25 → 31 rows during one drill, and the session that
+appeared 40 s into the window was a colleague's working pane running `/ultra plan mode`. The
+drill would have adopted it and asked the daemon to type into a live turn — the exact
+incident HR-CONT-02/03 exist to prevent. It aborted only because a session registers BEFORE
+its transcript exists, so the lookup returned None: **an accident saved the run, nothing in
+the rule did.** Identity must be a property of the subject (here a nonce the operator's own
+prompt carries, read from a TYPED user row), never of when it showed up. Generalises beyond
+sessions: any "the new file / the new row / the new process" rule is a race on a busy host.
+
+### T-CONT-09 — a tool result is a `type: "user"` row, so an echo reads as an event
+Added 2026-09-19, same session. Checking that a guard had typed nothing into the Owner's
+pane, a control counted every `type: "user"` row carrying the probe string and reported a
+hit. The hit was the control's own stdout: Claude Code records a tool result as a user-type
+row. **A row recording my observation of a thing and a row recording the thing have the same
+`type`.** Classify by SHAPE — a typed prompt carries a plain string or `text` blocks, a tool
+result carries `tool_result` blocks and a `toolUseResult` field — and note the two are not
+redundant: a tool result whose content is a plain string is shaped exactly like a prompt, and
+a mutation removing the `toolUseResult` guard survives any fixture that lacks that case.
+
+### T-CONT-10 — a lifetime clock fed by writes its subject does not make
+Added 2026-09-19, Phase 4. The sweep decided a marker was dead from the transcript's **file
+mtime**. Transcripts also carry host metadata rows — `custom-title`, `cost-state` — which
+carry no timestamp of their own and still advance mtime. Measured drift between the file
+clock and the conversation clock, against a 48 h threshold: 19.0 h, 17.1 h, 12.4 h, 10.7 h,
+8.9 h. The reap could therefore be postponed indefinitely by writes the session never made.
+Read the newest TIMESTAMPED row instead, and label the fallback so a decision taken on the
+weaker clock is identifiable afterwards. Sibling rule: the session registry answers `live` or
+`unknown` and **never `dead`** — a session with no registry row was conversing 0.00 h earlier
+and acquired one 44 minutes later under a new pid when its pane restarted.
+
+### T-CONT-11 — a relative path in a command's own documentation is a defect with a long fuse
+Added 2026-09-19, Phase 4. `/cpp-gsd-long` documented `--cwd .`, the marker stored the string
+verbatim, and the sweep — which runs elsewhere — resolved it against ITSELF. 8 of 9 live
+markers held `"."`. Because `Path(".").is_dir()` is true everywhere, one project reaching
+`ALL_COMPLETE` would have unlinked every other project's marker and restored the wrong
+`.planning/config.json`. Capture identity at the point of observation (PR-CONT-02): the
+arming session knows its absolute directory, the reader does not, and a reader that resolves
+a relative path has silently substituted its own context for the subject's. Fixed by
+absolutising at arming and REFUSING a relative one at read time rather than guessing.
+
+### PR-CONT-05 — a precondition must fail where it costs nothing, not where it looks like a result
+Added 2026-09-19, live drill. `arm()` returned PASS on a subject sitting in a Windows
+Terminal pane (`claude.exe → powershell.exe → WindowsTerminal.exe`), which no editor window
+can own. `fire()` then spent its 10 s timeout discovering this and produced a refusal
+**indistinguishable from the refusal the drill demonstrates deliberately** — two identical
+observations from opposite causes, which is the one thing an instrument may not do. Whatever
+the effect requires, assert it at the cheapest point that can still refuse, and print the
+evidence (here the whole ancestor chain) so the reason is read rather than deduced.
+
