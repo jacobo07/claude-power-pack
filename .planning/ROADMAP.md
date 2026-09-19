@@ -27,6 +27,22 @@ refused rather than typed into whatever window has focus.
 Done: both panes' transcripts read; A carries the resume line, B carries none;
 one deliberately unowned request is ledgered `refused` with its reason.
 
+**Plans:** 1 plan
+
+Plans:
+- [ ] 01-PLAN.md — live two-pane drill: real extension, real second Cursor
+  terminal, real transcripts; owner-answered refusal ledgered with its own
+  `decide()` reason, plus the negative control that makes B's absence mean
+  something.
+
+Planning note (source: `01-PLAN.md` § mechanism_corrections): an *unowned*
+request is ledgered `refused` by `Refuse-NoExact` after the 10 s no-provider
+timeout, with detail `no exact-session delivery: ...` — the daemon saying it
+found no provider, not any window judging the request. The plan therefore
+delivers the owner-answered refusal (`Poll-Inbox` -> `terminal inbox refused:
+<decide() reason>`) as the load-bearing evidence and records the unowned case
+separately as the weaker observation.
+
 ## Phase 2: UserPromptSubmit chain deadline
 
 The prompt chain measured 19.4 s and 17.1 s against a 15 s cap with an 11.5 s
