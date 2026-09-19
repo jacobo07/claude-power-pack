@@ -9977,3 +9977,95 @@ a working tree you do not own. Sister of
 - [tooling/powershell:[System.IO.File]::WriteA] `ceps_642fb5a1ef0bac6a` -- Tool failure in powershell:[System.IO.File]::WriteA: Error: Ningún proveedor respondió — codex-cli: Neom bridge .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [regression/powershell:Measure-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Measure-Object, verify the regression scenario (FAILED) is still covered by a passing test.
+
+## Exact-Target Continuation (GSD X, the false COMPACTION LANDED, 2026-09-18)
+
+Spec `vault/specs/exact-target-continuation.md` Â· dataset `vault/datasets/gsd_x/claims.jsonl`
+GSDX-C01..C11. Promoted here 2026-09-19 from `vault/lessons/exact-target-continuation.md`,
+which had staged them while this file carried another writer's uncommitted hunks.
+
+**Origin.** Session `8178f7d0` was restarted with `--resume`, and a resumed session reads
+~17 % context. The watchdog's rule "context below the rearm floor + autorun marker + no
+flags" read that as a landed compaction, 25 hours after the last real one. It asked the
+model to print `/d1-continue`; a daemon then typed that command, with Enter, into whichever
+Cursor window had focus. The session lived in an Orca terminal. Two minutes earlier the same
+daemon had typed `/absw2-continue` for a different session the same way. Neither command
+reached any Claude transcript. The Owner typed it by hand at 14:26.
+
+### HR-CONT-01 â€” a lifecycle state is claimed only from its post-condition
+"Compaction landed" requires the host-written `compact_boundary` row newer than the cycle
+reference. A proxy â€” a low context reading â€” is produced by other events too; here, a
+restart. Implemented by `gsd_long_run.compaction_observed()`, which parses rows rather than
+substring-matching, and reads a boundary older than its tail window as *unobserved* because
+that refuses a resume, which is the safe direction for a claim that licenses an effect.
+
+### HR-CONT-02 â€” foreground is presentation, never identity
+No automated input may be routed by window focus, window title or "the active terminal".
+Every effect names its target. Orca: `terminal send --terminal <handle>`; the CLI *without*
+that flag resolves the active terminal, which is the same trap one layer down.
+
+### HR-CONT-03 â€” no exact target, no keystroke
+A missing or ambiguous target refuses and is ledgered. A delayed continuation is
+recoverable; a command in the wrong session is not.
+
+### PR-CONT-01 â€” separate the stages, and never promote one into the next
+`requested â†’ target resolved â†’ transport accepted â†’ consumed (transcript row) â†’ mission
+advanced`. An `accepted` from a PTY write is transport only, and says nothing about
+consumption.
+
+### PR-CONT-02 â€” capture identity at the point of observation
+The session's own hook records its `ORCA_PANE_KEY`; a sweep running outside the session uses
+that record rather than re-deriving identity from cwd or window title.
+
+### PR-CONT-03 â€” re-resolve immediately before the effect
+Require the same incarnation, reconcile against the transcript before any resend, and bound
+attempts per logical continuation id.
+
+### PR-CONT-04 â€” resource admission is its own predicate
+`wait-ram` succeeding says nothing about whether a compaction happened or a line was
+delivered.
+
+### T-CONT-01 â€” a correct foreground during testing hides missing routing
+Every drill marks the WRONG pane active, so an unaddressed call lands visibly in it.
+
+### T-CONT-02 â€” printing a command looks like automation
+The UI showed `/d1-continue`; nothing had been delivered.
+
+### T-CONT-03 â€” a hook timeout on UserPromptSubmit discards output, not the prompt
+Measured: prompt at 14:26:01, hooks cancelled at 14:26:11 and 14:26:18, assistant at
+14:26:21.
+
+### T-CONT-04 â€” a fallback added for availability reopens the incident
+The terminal inbox (`e5ed2d3`) was exact, but fell back to foreground SendKeys after 10 s
+without an answer â€” which is exactly what an Orca-hosted session produces. The fallback is
+now an explicit Owner opt-in (`CPP_LEGACY_FOREGROUND_SENDKEYS=1`).
+
+### T-CONT-05 â€” the Orca runtime pointer can vanish while the app runs
+Observed `runtime_unavailable` with Orca X alive; the transport reports
+`BLOCKED_BY_DELIVERY_PROVIDER` rather than guessing.
+
+### T-CONT-06 â€” a `/compact` tail is the same line in two opposite states
+Added 2026-09-19, measured on session `37cfb187`. The last assistant line is a `/compact`
+both when that line was never submitted and after the compaction landed â€” the agent has not
+spoken since, so the tail does not move. The two states need opposite actions, and the sweep
+re-typed the same `/compact` three times, drawing "Not enough messages to compact" and nine
+idle hours. Only the boundary row (HR-CONT-01) separates them. Fixed in `64ec155`
+(`owed_line()`), which also gates the resume and advances the one-resume-per-boundary fence.
+
+### T-CONT-07 â€” a confirmation cannot see a row its window excludes
+Added 2026-09-19, same session. A resume is confirmed by a Stop hook running at the END of
+the turn the resume began, and that turn has already written its whole tool output ahead of
+the row. With a 256 KB window the `/gsd-autonomous` row sat 598,625 bytes from the end of a
+5.8 MB transcript, so every Stop chain read False and the run could never confirm its own
+resume. The coupling is perverse: the more the turn did, the further back the row goes, so
+the instrument failed precisely in the case it exists for. Fixed in `f2462ee` â€” the aperture
+is sized to the question and stays cheap by parsing only lines containing the command name.
+
+### Instrument errors recorded from the same session
+- `Get-Process -Name 'Orca X'` returned nothing for a running process; a regex over
+  `ProcessName` found it. "Orca is not running" was nearly recorded as fact.
+- A lowercase grep for `no-own-window` missed the gate `V-ACPS-D-NO-OWN-WINDOW-SENDS`, which
+  pinned the very behaviour being removed.
+- An assertion excluding the substring `focused window --` matched the new refusal sentence
+  itself; the intent (no LEGACY wording) had to be asserted directly.
+
