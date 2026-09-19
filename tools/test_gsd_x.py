@@ -117,6 +117,27 @@ def main() -> int:
             f"trivial prompts abstained: {abstaining_trivia} -- an abstention "
             "that fires on everything carries no information")
 
+    # --- V3c a trivial prompt must not ESCALATE ------------------------------
+    # V3 asserts heavy prompts do not land too LOW. Nothing asserted the mirror,
+    # and the mirror is the one the engine's own doctrine cares about: measured
+    # 2026-09-20, reverting the Capability Runtime's gate-1 ordering sends
+    # `que hora es` to FORENSIC, because every contract then passes dormancy and
+    # returns a positive verdict, so the count-based ladder climbs. V3b could not
+    # see it -- that prompt does not abstain, it escalates -- and neither could
+    # discrimination, floor-rate or rank. "Activate everything for safety" is the
+    # exact posture minimum-sufficient activation exists to refuse.
+    escalated = [
+        p for p, heavy in CORPUS
+        if not heavy and order.get(verdicts[p].tier, -1) >= order[tier.DEEP]
+    ]
+    if not escalated:
+        ok("V-GSDX-TRIVIAL-CEILING",
+           "no trivial prompt reached DEEP or above")
+    else:
+        bad("V-GSDX-TRIVIAL-CEILING",
+            f"trivial prompts escalated to DEEP+: {escalated[:3]} -- a tier engine "
+            "that sends a clock question to FORENSIC has stopped discriminating")
+
     # --- V4 no new vocabulary ------------------------------------------------
     # The ladder must be spelled exactly as the incumbent spells it, or the model
     # receives one word carrying two meanings on the same event.

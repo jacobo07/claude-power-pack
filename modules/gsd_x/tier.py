@@ -177,6 +177,28 @@ def _silence_dormant(results: list, prompt: str, contracts, contracts_dir) -> li
     So a blocked result survives only if its contract's own triggers hit the
     prompt, using the engine's word-boundary matcher rather than a second one.
     Non-blocking verdicts are never touched.
+
+    CURRENTLY MASKED, DELIBERATELY KEPT (measured 2026-09-20). The Capability
+    Runtime has since fixed the ordering at its source: gate 1 returns
+    NOT_APPLICABLE for an untriggered contract BEFORE the evidence gate is
+    reached, citing the same measured symptom this filter was written for. With
+    upstream correct the engine yields blocked=0 on every prompt in every
+    evidence configuration tested (['source','tests'], ['source'], []), so this
+    function has nothing to filter and no test can observe it working.
+
+    That makes it unreachable today, NOT dead. Driven with gate 1 disabled, the
+    original defect returns exactly -- cdicf-installer comes back
+    BLOCKED_BY_MISSING_EVIDENCE for `que hora es` -- and this filter removes it
+    (blocked 1 -> 0). It is a live backstop against an upstream regression, which
+    is why it stays.
+
+    What it cannot repair is the tier: with dormancy off, every contract reaches
+    scoring and the trivial prompt climbs to FORENSIC. That gap is observed by
+    V-GSDX-TRIVIAL-CEILING, and the `ordering-reverted` mutation in
+    tools/test_gsd_x_mutation.py is what proves both halves. The mutation that
+    used to sit on THIS function was retired as equivalent: a mutant of
+    unreachable code cannot change an observable, so scoring it as an uncaught
+    regression measured nothing.
     """
     blocked = [r for r in results if r.blocked]
     if not blocked:
