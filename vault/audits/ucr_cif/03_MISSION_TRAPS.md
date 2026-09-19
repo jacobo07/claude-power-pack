@@ -191,6 +191,103 @@ the denominator must also be **bounded**, or it silently absorbs the thing being
 
 ---
 
+## T-BASENAME-COLLAPSE-001 — a relative-spelled chain member, reduced to its basename, reads as missing
+
+**Observed (2026-09-19, UCR-CIF W0).** The hook-chain census reported **44 of 69 chain
+members "DEFINED BUT NOT ON DISK"**, among them `secret_firewall_gate.js`. Reported as
+written, that is a CRITICAL finding: HR-SECRET-001 unenforced, host-wide. It was false.
+The dispatcher spells a member relative to its own directory —
+`'../skills/claude-power-pack/hooks/secret_firewall_gate.js'`,
+`'./tests/fixtures/drill-fast-critical.js'` — and the census took `os.path.basename`, then
+tested for existence in one flat directory. After resolving members the way the dispatcher
+resolves them: **0 missing.**
+
+**Why it nearly passed.** The output was *plausible in both directions*. This estate has a
+sealed incident where the secret firewall really was unwired, and another where the
+canonical hook tree and the live one had diverged. A reader holding either memory would
+have accepted "44 missing" as the third instance rather than as a parser bug.
+
+**The second failure, same shape.** The verification probe searched two roots —
+`~/.claude/hooks` and the repo's `hooks/` — and returned ABSENT for `context-watchdog.py`,
+which the dispatcher spells under `modules/zero-crash/hooks/`. A narrower instrument
+confirming a wrong answer is not a confirmation. Two failures of one shape closed the
+parameter route under Regla 12: the fix is to resolve exactly as the consumer resolves,
+never to widen the search path again.
+
+**Generalizes to.** Any audit of a registry whose entries are *paths interpreted by
+somebody else*. **Resolve a reference with the resolver that actually consumes it; a
+basename is not an identity.** Corollary, and the reason this is recorded rather than
+quietly fixed: *when a sweep accuses a safety-critical component, suspect the sweep first* —
+the direction of that error is toward a loud false alarm, which is the survivable
+direction, but it costs the credibility the next true alarm needs.
+
+**Disposition.** UKDL trap candidate. Sibling of `T-VOCABULARY-ZERO-IS-NOT-ABSENCE-002` —
+both are instruments bounded by an assumption about how the subject names things.
+
+---
+
+## T-CONSTANT-PATH-INVISIBLE-001 — `readers=0` on two live stores, produced entirely by the instrument
+
+**Observed (2026-09-19, UCR-CIF W0).** A first pass at "does anything read what we write?"
+reported **0 readers** for `vault/baseline_ledger.jsonl` (73 rows) and `vault/ceps/events.jsonl`
+(891 rows). Both numbers were artifacts. Measured properly, both stores are **CLOSED**.
+
+**Two independent mechanisms, and each alone was sufficient.** (1) The classifier bucketed
+any file containing an append pattern *anywhere* as a writer, so a module that both appends
+and reads could never be counted as a reader. (2) The AST rewrite that replaced it matched
+store tokens against the unparsed call expression — but this estate writes
+`open(LEDGER_PATH, 'a')`, and the filename appears nowhere in that expression. Tokens taken
+from the filename *stem* then failed in both directions at once: `index` matched the English
+word throughout the corpus, while `baseline_ledger` matched nothing at all.
+
+**What caught it.** Not inspection — a **positive control naming a known accessor**. The
+tool exited 2 on its own control before it could publish a clean-looking table. Had the
+control been "did the sweep find *some* access", it would have passed: three other tokens
+were matching fine.
+
+**Fix.** Tokens are the filename *with* extension plus the repo-relative path; module-level
+string constants are resolved (literals, f-strings, `os.path.join`, pathlib `/` chains) and
+substituted before matching; and the count of `open()` sites whose path cannot be resolved
+statically is **reported** (299), so coverage is a measured number rather than an assumption
+and `INERT` is read as "not statically reachable", never as "dead".
+
+**Generalizes to.** Any static sweep for uses of a *named resource*. **The name you search
+for is rarely the name the code writes; resolve the indirection or state your blindness as a
+number.** And: a positive control must name a *specific* expected finding — "found
+something" is satisfied by the half of the estate that was never broken.
+
+**Disposition.** UKDL trap candidate, high applicability.
+
+---
+
+## PR-STARVED-HOST-COUNT-NOT-CLOCK-001 — at 4.7 % free RAM, build the counter instead of taking the reading
+
+**Observed (2026-09-19, UCR-CIF W0).** The plan's §T required a latency baseline *before*
+any gate is added, because once gates exist the "before" number is unrecoverable. The host
+measured **1,499 MB free of 32,061 (4.7 %)**, 31 `claude` and 15 `node` processes. This
+estate has already recorded a **17×** drift on identical payloads under contention, and has
+one sealed incident where a sweep manufactured the very contention it then reported as a
+standing defect.
+
+**Decision.** Timing recorded as **UNMEASURED**, with the blocking precondition named —
+never as a number, and never silently skipped. The load-*independent* half was captured
+instead: 10 chains, 69 members, per-chain concurrency and deadline. Counts do not drift,
+they return the same answer on a quiet host, and they are what actually predicts the failure
+mode: a chain is killed at its budget and unflushed output is lost, so **members × per-member
+cost** is the quantity that matters. That census immediately produced the constraint W6 must
+obey — `Stop-chain` holds **25 members at concurrency 8 with no deadline**, and six of ten
+chains have no deadline at all.
+
+**Generalizes to.** Any performance claim on a shared machine. **When the clock cannot
+resolve the question, stop taking readings and build the counter** — and record the refusal,
+because an absent measurement that nobody wrote down becomes, within one session, an
+assumption that the thing was fine.
+
+**Disposition.** UKDL process-rule candidate. Companion to the existing measure-the-host-first
+lesson; the delta is the *substitution*, not the warning.
+
+---
+
 ## Standing obligation
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and
