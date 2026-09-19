@@ -850,13 +850,38 @@ def _orchestrator_overlay(event: dict) -> dict | None:
     if not session_id:
         return None
     cwd = event.get("cwd") or os.getcwd()
+    forced = os.environ.get("_TEST_ORCH_STATE")
+
+    # GUARDS BEFORE THE IMPORT (2026-09-19). They used to sit BELOW it, so a
+    # throttled or already-advised Stop still paid `sys.path.insert` plus the
+    # auto_reset_orchestrator import chain -- work standing in front of its own
+    # guard, on every Stop, forever, including long after the once-per-session
+    # advisory had fired. Measured from logs/context-watchdog.log across 256
+    # real rows (synthetic gsdac-/gsdlr- drivers and the 09-16..09-18 dark
+    # window excluded): ordinary `pass` Stops ran a median 1,555 ms against
+    # `block`'s 233 ms, 92 of them multi-second with no crossing to justify the
+    # cost. Hoisting cannot change WHEN the overlay fires: `forced` still
+    # bypasses both guards, the stamp still precedes orchestrate(), and an
+    # import failure still returns None without stamping. It only stops the
+    # import from running when the answer is already None. Line 854 was the
+    # file's only `sys.path.insert(0, ROOT)` and 855 its only `from modules.`
+    # import, so skipping them removes no dependency for later code.
+    # Pinned by tools/test_context_watchdog_overlay_guard.py (count-based: it
+    # asserts on sys.modules, never on a clock, so it is valid on a host with
+    # no memory headroom).
+    if not forced:
+        if _orch_throttled(session_id):
+            return None
+        # No-nag: emit the advisory ONCE per session, not every window.
+        if _flag_exists(session_id, ORCH_ADVISORY_FLAG):
+            return None
+
     try:
         sys.path.insert(0, str(ROOT))
         from modules.cpc_os.auto_reset_orchestrator import orchestrate
     except Exception:
         return None
 
-    forced = os.environ.get("_TEST_ORCH_STATE")
     try:
         if forced:
             def _assess(_c, _s):
@@ -864,11 +889,6 @@ def _orchestrator_overlay(event: dict) -> dict | None:
                         "signals": {}}
             result = orchestrate(cwd, session_id, assess_fn=_assess)
         else:
-            if _orch_throttled(session_id):
-                return None
-            # No-nag: emit the advisory ONCE per session, not every window.
-            if _flag_exists(session_id, ORCH_ADVISORY_FLAG):
-                return None
             _orch_stamp(session_id)
             result = orchestrate(cwd, session_id)
     except Exception:
