@@ -1,0 +1,2 @@
+Write a CLI that watches D:\incoming and uploads each new file to S3, then
+deletes the local copy so the disk does not fill up.
