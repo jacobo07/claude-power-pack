@@ -328,6 +328,174 @@ one-line mistakes in the same guard, and both produce a number nobody questions.
 
 ---
 
+## W3 · `T-WORKTREE-IDENTITY-BLIND-001` — a repository that could not recognise itself
+
+**Where.** `modules/fable_distillation/federated_ledger.py:49`, `_is_pp_repo`.
+
+**What.** `return "claude-power-pack" in (repo or "")`. UCR-CIF runs from an isolated
+worktree at `Apps/pp-ucr-cif`, whose path does not carry the repository's name, so the
+Power Pack failed its own self-test and served itself the FIOS/FD-07 advisory written for
+*other* repositories. That advisory is what W2 handed over as an open warning.
+
+**Why it survived.** The two obvious readings were both wrong and both actionable. "A
+missing asset" invites you to manufacture a deposit to silence it. "The FP-01 false
+positive" invites you to ignore it — except FP-01 says the vocabulary is **legitimate**
+inside the Power Pack, which is the one place the exemption is supposed to apply.
+
+**The identity was never lost.** A linked worktree's `.git` is a FILE holding
+`gitdir: <main>/.git/worktrees/<name>`. INC-025 had already fixed the sibling half of this
+— the deposit *key* — by introducing `repo_identity`, and the resolver sits fifteen lines
+below the defect. A partial fix left the predicate on the raw substring.
+
+**Fix.** `repo_identity.main_repo_root` resolves a worktree to its repository;
+`canonical_repo` deliberately does NOT, so ledger keys stay per-worktree. Collapsing them
+would rename every ledger on disk, which `identity.py:41` refuses by name — and a test
+pins both directions, because a fix that satisfied only the first would be a silent
+migration.
+
+**Generalizes to.** The exact sibling of `T-EXCLUSION-MATCHED-THE-WORKSPACE-001`, one
+session later and in the opposite direction: that one matched the environment when it meant
+the subject, this one *failed* to match the subject because it was reading the environment.
+**A checkout path is where you are standing, not what you are.** Any self-identification by
+path substring — repo name, project name, branch — is broken by a worktree, a rename, a
+CI checkout directory, or a container mount.
+
+**Disposition.** UKDL hard-rule candidate. Regression `tools/test_repo_identity_worktree.py`
+15/15; mutation reverting only the resolution gives 10/15 and reproduces the warning W2
+reported, byte-identical.
+
+---
+
+## W3 · `T-POPULATION-FROM-A-DIRTY-SIBLING-001` — 73 rows that exist in no commit
+
+**What.** The handoff and the resumption file both state `baseline_ledger.jsonl` has **73
+rows**. Every committed ref — this branch's HEAD, the pinned base `50837ed`, and
+`origin/main` — holds **42**. The 31 extra rows exist only as uncommitted working-tree
+state in the *other* writer's shared checkout.
+
+**Why it matters more than an off-by-31.** W3's first action was a migration over that
+population. Keyed to 73, it would have migrated rows that exist in no commit, on a branch
+that cannot see them, and been non-reproducible by anyone.
+
+**Root cause.** A measurement taken in the shared checkout was recorded as an institutional
+fact. The concurrent-writers doctrine already says a reading of a shared tree expires the
+moment anything else runs; the sharper version is that it was **never about our subject at
+all** — a different directory's dirty state.
+
+**Fix.** No tool in W3 hardcodes a population count; every sweep re-reads and carries a
+floor. Where a count must be quoted, quote the ref it was read from.
+
+**Generalizes to.** Any figure inherited through a handoff that was measured in a working
+tree rather than at a ref. **A population is a property of a commit, not of a directory.**
+Cross-check with `git show <ref>:<path>` before building on it.
+
+---
+
+## W3 · `T-FRACTION-CEILING-VACUOUS-001` — a threshold that filtered exactly one thing
+
+**What.** `ownership_evidence.distinctive` began with "a term held by more than 25 % of
+owners cannot discriminate". On the synthetic gate (5 owners → ceiling 1) it was absurdly
+strict; on the real estate (756 owners → ceiling 189) it admitted **1136 of 1137** held
+terms. One instrument, both failure modes, and neither visible from the other population.
+
+**What settled it.** Measuring the actual distribution instead of reasoning about the
+shape: 963 of 2100 evidence terms (45.9 %) have ZERO structural holders, and among held
+terms it is median 3, p75 7, p90 15, max 474. An absolute ceiling at the measured median is
+what "few enough owners to select between them" means.
+
+**Generalizes to.** A threshold expressed as a fraction of a population is only meaningful
+if the population is homogeneous and its size is stable. Across a 5-owner fixture and a
+756-owner estate it is two different rules wearing one number. **Derive a ceiling from the
+measured distribution of the quantity, not from a fraction of the population's size** — and
+check it on BOTH the fixture and the real data, because a fraction rule can be simultaneously
+too tight and vacuous.
+
+---
+
+## W3 · `T-OWNER-LEVEL-SIGNAL-ATTRIBUTES-A-TERM-001` — a free pass wearing a signal's name
+
+**What.** `CONSUMER` (inbound import edges) was counted among the structural signals that
+may promote a candidate owner. Inbound imports are a fact about the **owner**, not about the
+term being adjudicated, so the signal fired for every term the owner was ever asked about —
+and `quarantine_engine` "verified" as owner of a capability belonging to `ledger_writer`.
+
+**What caught it.** The adversarial gate's "two legitimate owners, no false pick" case. No
+amount of reading would have; the signal is individually correct and its aggregation is what
+is wrong.
+
+**Generalizes to.** Whenever evidence is fused, check each signal's SUBJECT, not just its
+truth. A signal about the container cannot license a claim about the contents. Keep the
+corroborating signals — they are real — but only term-attributing ones may promote.
+
+---
+
+## W3 · `T-DISTINCTIVENESS-OVER-MENTIONS-001` — the volume attack through the back door
+
+**What.** Distinctiveness was computed over owners that MENTION a term. So a decoy could
+**dilute** a real owner's evidence simply by talking about its capability: the more the
+false owner discussed `quarantine`, the less distinctive `quarantine` became, and the real
+owner lost its only discriminating term. Simultaneously, filler words unique to one big
+document scored as maximally distinctive — rare and meaningless.
+
+**Fix.** Distinctiveness is measured over STRUCTURAL holders (defines / is named for /
+registers). A mention cannot make you a holder, so it cannot dilute.
+
+**Generalizes to.** When a metric exists to neutralise a channel, verify the metric is not
+itself computed over that channel. The first version imported the very signal it was built
+to escape.
+
+**Instrument note.** The mutation that restored mention-counting SURVIVED the first drill,
+because the fixture had a single mention-only decoy and the attack needs enough of them to
+cross the ceiling. **A fixture that cannot express the attack proves nothing about the
+defence**; six decoys made it fail.
+
+---
+
+## W3 · `T-MEMBERSHIP-AGAINST-TUPLES-001` — an assertion that could never match
+
+**What.** `V-W3-LIFE-BYPASS-TIER` asserted `"zzyzx_audit" not in tv.drivers`. `drivers`
+holds `(capability_id, verdict)` PAIRS, so the test compared a string against tuples: it can
+never match, and it therefore passed with the lifecycle gate removed. It printed the drivers
+in its own evidence string, where the tuples were visible.
+
+**Generalizes to.** A negative membership test is satisfied by a type mismatch, silently and
+permanently — the positive form would have gone red immediately. Assert on the element shape
+you actually have, and be suspicious of any `not in` that has never been seen to fail. The
+mutation drill is what exposed it: the gate's own green did not.
+
+**Disposition.** Sibling of the estate's "absence assertion keyed on a translated string"
+trap — same family: an absence test whose selector cannot match anything.
+
+---
+
+## W3 · `PR-FORMAT-MATCHES-PRODUCER-001` — a formatter that laundered the evidence
+
+**What.** The adjudicator wrote `disposition_ledger.json` with `indent=2`; its producer
+writes `indent=1`. A 996-row change arrived as **58,624 insertions / 57,747 deletions** — a
+full-file rewrite in which the actual change was unreviewable. After matching the producer:
+4,314 / 4,307, proportionate to 1,655 touched rows.
+
+**Generalizes to.** When writing back to an artifact another tool produces, reproduce its
+serialization exactly. **A diff is evidence, and a reformat destroys it** — this is the
+shared-file laundering rule applied to a machine-generated artifact rather than to source.
+
+---
+
+## W3 · `PR-LIFECYCLE-IS-NOT-FITNESS-001` — check the arithmetic before reusing a scale
+
+**What.** `contract.Maturity` (EXPERIMENTAL → MATURE) looks like a lifecycle and is a
+fitness scale. `applicability` consumes it as one 0.15-weighted factor, so degrading a
+capability from MATURE to EXPERIMENTAL shifts its score by at most `0.15 × 3/4 = 0.1125`.
+A relevant, high-stakes capability stays MANDATORY however far its maturity falls:
+**revocation through maturity is arithmetically impossible**, and "less proven" was the
+wrong claim anyway.
+
+**Generalizes to.** Before reusing an existing field for a new meaning, compute the maximum
+effect it can have on the decision you need it to change. A scale built to RANK cannot
+express WITHDRAWAL, and the test is one multiplication, not a judgement.
+
+---
+
 ## Standing obligation
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and

@@ -45,6 +45,12 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
+**As of 2026-09-19 `origin/main` has advanced to `06d88cd`, 33 commits past that base**
+(the other writer landing work). Our seven W0–W2 commits plus W3's three remain ancestors of
+HEAD; nothing was rebased. Re-measure the divergence before any merge, and note that
+`git status` in the SHARED checkout (`~/.claude/skills/claude-power-pack`) describes the
+OTHER writer's branch `feature/knowledge-acquisition` — never read this mission's state from
+there.
 Base chosen by measurement: `feature/knowledge-acquisition` was **0 ahead / 23 behind**
 `main`, so `main` is a strict superset. A **live concurrent writer** is confirmed on the
 shared tree — HEAD moved `d243137` → `3e56322` mid-session and `origin` advanced. That tree
@@ -93,6 +99,42 @@ is never written by this mission and never rolled back.
   population floor, because "all UNRESOLVED" is also what a correct sweep of a truly novel
   corpus returns — the broken instrument and the flattering reading pointed the same way.
 
+- **W3 · repository self-identity** — `560720c`. `repo_identity.main_repo_root` +
+  `tools/test_repo_identity_worktree.py` (15/15). The standing FIOS/FD-07 warning W2 handed
+  over was neither a missing asset nor the FP-01 false positive: `_is_pp_repo` tested
+  `"claude-power-pack" in <path>` and **this mission's own worktree does not carry that
+  name**, so the Power Pack served itself an advisory written for other repositories.
+  Reproduced before the fix, byte-identical. Mutation 10/15.
+- **W3 · capability lifecycle** — `54d4c88`. `modules/capability_runtime/lifecycle.py`,
+  gate 0 in `applicability.evaluate`, `derive()` propagation refusal,
+  `tools/capability_lifecycle_migrate.py`, `tools/test_capability_lifecycle.py` (41/41),
+  8/8 mutations caught.
+  **The handoff's premise was wrong in both halves and the scan is what moved the wave:**
+  `baseline_ledger.jsonl` is an append-only HISTORICAL LOG whose only reader is its own
+  `--show` (W0's own closure audit), so a status field there would have been a revocation
+  nothing could honour; and it holds **42** rows at every committed ref, not 73 — the 73 was
+  read from the other writer's uncommitted working copy. Full classification:
+  `vault/audits/ucr_cif/04_W3_AUTHORITY.md`.
+  **Authority = `modules/capability_runtime`**, which is live (this estate's per-prompt tier
+  is computed over it). Lifecycle is orthogonal to `maturity`: maturity is a 0.15-weighted
+  ranking factor, so it can move a score by at most 0.1125 and **cannot express withdrawal
+  at all**.
+  Migration classified **6 ACTIVE on real probe evidence, 4 UNKNOWN with named reasons, 0
+  blind defaults** — 6 files, 6 insertions, 0 deletions; a third `--apply` is byte-identical.
+  UNKNOWN deliberately still activates (withholding it would have silently disabled four
+  MANDATORY capabilities, `premise_verification` among them) and is driven down by
+  `vault/capability_runtime/lifecycle_ratchet.json`, shrink-only.
+- **W3 · corpus disposition authority** — `9094754`.
+  `modules/ucr_cif/ownership_evidence.py`, `tools/ucr_cif_adjudicate.py`,
+  `tools/test_false_owner_adversarial.py` (18/18), 4/4 mutations.
+  The vocabulary-volume bias is now a measurement, not a suspicion:
+  `spearman(proposals, distinct vocabulary) = +0.756`, `bytes = +0.735`.
+  **Authoritative dispositions 0 -> 996**; 659 candidates REFUTED, 503 ABSTAIN, 218
+  UNRESOLVED, partition verified to sum to 2,376. `agents/oneshot-architect-auditor.md`
+  (one 36 KB file) refuted on **204 of its 214** claims.
+  The adversarial gate found three defects in the thing it tests, and the mutation drill
+  found two more in the gate itself — see `03_MISSION_TRAPS.md`.
+
 **UNMEASURED (not zero, not fine)**
 
 - **Hook/mission latency timing.** Host was at **1,499 MB free of 32,061 (4.7 %)**, 31
@@ -125,19 +167,23 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
 
 ## 4. Next three actions
 
-1. **W3 — capability authority + baseline lifecycle.** `vault/baseline_ledger.jsonl` (73
-   rows) has fields `iso_ts / ledger_id / law / evidence / session_id / trigger / scope /
-   schema_version` and **no status field**, so §XXXI revocation
-   (ACTIVE/SUPERSEDED/DEPRECATED/SUSPENDED/REVOKED) has no representation today. That is a
-   proven gap on an existing authority → **EXTEND, never a new registry.** Absence must
-   read as the safest state, never as ACTIVE. Production Reality: a real mission start
-   compiles a baseline, and a revoked capability is provably not inherited.
-2. **Review pass over the 218 UNRESOLVED + the top-bias proposals.** Turn
-   `proposed_disposition` into `disposition` where evidence supports it. Do **not** let a
-   vocabulary-volume winner (`governance-overlay`, an agent `.md`) stand as an owner. A
-   capability-level sweep under any name is mandatory before any `IMPLEMENT` verdict
-   (`T-VOCABULARY-ZERO-IS-NOT-ABSENCE-002`), and `HR-NOVELTY-001`'s 13-question proof is
-   required before admitting any new institutional system.
+1. **Pay the probe debt, and shrink the UNKNOWN ratchet.** Four capabilities are UNKNOWN:
+   `cdicf-installer` and `spec_depth_selection` are **probe debt this repository can pay**
+   (write a deterministic probe in `capability_runtime/retirement.py::PROBES`);
+   `cost_routing` and `premise_verification` are EXTERNAL and may never be probeable, so they
+   need an Owner classification instead, not a probe. Then
+   `tools/capability_lifecycle_migrate.py --apply` and delete the resolved ids from
+   `vault/capability_runtime/lifecycle_ratchet.json`. Paying `cdicf-installer` also closes
+   the pre-existing `V-UCEIMR-G2-COVERAGE` failure, which has the same root cause.
+   **Highest leverage**: at UNKNOWN=0, tightening UNKNOWN into WITHDRAWN is a one-line
+   change with no population left to break, and the lifecycle becomes fully fail-closed.
+2. **Drive the 503 ABSTAIN down with a second evidence family.** The structural adjudicator
+   promotes on SYMBOL / FILENAME / REGISTRY and abstains when a term is held by more than 3
+   owners. The families named in the brief and NOT yet built are: explicit owner
+   declaration, test ownership, command/hook ownership, and git history. Each is structural
+   and none is lexical. Do **not** loosen `DISTINCTIVE_MAX_HOLDERS` to raise coverage — that
+   is coverage bought by forcing false certainty, and the number was derived from the
+   measured distribution (median 3 of held terms).
 3. **W4 — construction observation + privacy projection.** EXTEND `session_delta` /
    `omnicapture`; all global egress through the `secret_firewall` URB. Exactly-once identity
    so a retry or resume cannot duplicate an institutional record. Red-branch fixtures:

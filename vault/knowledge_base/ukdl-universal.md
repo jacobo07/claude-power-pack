@@ -896,6 +896,209 @@ snapshots the datasets hash before/after a full run and asserts equality (+ git
 HEAD @ `45dd1f9`). Origin: an editor-that-writes-back would couple the universal
 source to one consumer; the runtime must interpret doctrine, never edit it.
 
+## PR-PROPOSE-ONLY-NEEDS-AN-AUTHORITY-001 — an evaluator that proposes and a selector that ignores it produce nothing
+
+**Mechanism.** A well-designed estate often separates *evidence* from *action*: an evaluator
+computes whether something should be retired/blocked/escalated and deliberately refuses to
+act ("a capability that retires itself is a gate that grades itself"). That restraint is
+correct. But it is only half a system, and the other half is easy to never notice, because
+both halves individually look finished and tested.
+
+If the SELECTOR — the thing that actually decides what runs — never reads an authority
+field, then the evaluator's verdicts have no path to effect, and the estate has a
+recommendation engine wearing the costume of a control.
+
+**The tell.** Ask of any propose-only component: *what writes the state it proposes, and
+which consumer reads that state?* If the answer to either is "nobody", the missing piece is
+an AUTHORITY between them — a field an owner writes with provenance and the selector
+honours — not more evaluation.
+
+**Origin.** UCR-CIF W3 (2026-09-19). `capability_runtime/retirement.py` produced
+`RETIRED_BY_EVIDENCE` verdicts and was propose-only by design; `applicability.evaluate`
+selected capabilities through five deterministic gates and consulted no lifecycle at all.
+Both shipped, both tested, and a revoked capability would have been inherited forever.
+
+**See also** `PR-SQI-SIGNAL-MUST-GATE-001` (a metric without a guardian is documentation) —
+this is its sibling one layer up: a guardian without an authority is a suggestion.
+
+---
+
+## PR-SCALE-CANNOT-EXPRESS-WITHDRAWAL-001 — compute a field's maximum effect before reusing it for a new meaning
+
+**Mechanism.** Reusing an existing field for a new decision is usually right (EXTEND over
+CREATE). But a field built to RANK cannot express WITHDRAWAL, and the difference is
+arithmetic rather than taste.
+
+**The test is one multiplication.** Take the field's weight in the decision and its full
+range, and compute the largest swing it can produce. If that swing cannot cross the
+threshold you need it to cross, the field is the wrong instrument however apt its name.
+
+**Origin.** UCR-CIF W3. `contract.Maturity` (EXPERIMENTAL → MATURE) reads like a lifecycle.
+`applicability` consumes it as one 0.15-weighted factor, so degrading a capability from
+MATURE to EXPERIMENTAL moves its score by at most `0.15 × 3/4 = 0.1125` — a relevant,
+high-stakes capability stays MANDATORY however far its maturity falls. Revocation through
+maturity was impossible, and "less proven" was the wrong claim anyway. Three axes, kept
+separate: one ranks, one evidences, one authorises.
+
+---
+
+## T-PATH-SUBSTRING-IDENTITY-001 — a checkout path is where you are standing, not what you are
+
+**Mechanism.** Self-identification written as `"<project-name>" in <path>` is broken by any
+checkout whose directory is not named after the project: a git worktree, a rename, a CI
+checkout dir, a container mount. The predicate silently answers "no" and the software treats
+itself as a stranger.
+
+**Why it is rarely caught.** The failure appears only in the environment nobody develops in,
+and it usually degrades toward a *plausible* behaviour — here, an advisory aimed at other
+repositories being served to the repository that owns it.
+
+**The identity is usually recoverable.** A linked worktree's `.git` is a FILE containing
+`gitdir: <main>/.git/worktrees/<name>`, so the main repository is one read away.
+
+**Origin.** UCR-CIF W3. `federated_ledger._is_pp_repo` tested `"claude-power-pack" in repo`
+while the mission ran from `Apps/pp-ucr-cif`. INC-025 had already fixed the sibling half —
+the ledger KEY — by introducing a canonical resolver that sat fifteen lines below the
+defect; a partial fix left the predicate behind.
+
+**Corollary, and it is the load-bearing half.** Resolving identity is NOT the same as
+resolving a storage key. A worktree IS the repository for "which project is this?" and is
+NOT for "which ledger do I append to" — collapsing them renames every ledger on disk.
+Two functions, and a test pinning BOTH directions, or the fix is a silent migration.
+
+**See also** `T-EXCLUSION-MATCHED-THE-WORKSPACE-001` — its exact inverse: that one matched
+the environment when it meant the subject; this one failed to match the subject because it
+was reading the environment. It is recorded in
+`vault/audits/ucr_cif/03_MISSION_TRAPS.md` and has NOT been promoted here, so the reference
+is deliberately to that file rather than to a UKDL id that does not exist.
+
+---
+
+## T-POPULATION-FROM-A-DIRTY-TREE-001 — a population is a property of a commit, not of a directory
+
+**Mechanism.** A count measured in a working tree — especially a SHARED one another writer
+is using — is not an institutional fact. It includes uncommitted state that exists on no
+branch, that nobody else can see, and that may never be committed at all.
+
+**Why a handoff launders it.** Written into a resumption file as "N rows", it arrives at the
+next session as a premise rather than a reading, and the next session builds a migration on
+it.
+
+**Rule.** Quote the ref a count was read from, and re-read at a ref before building on it
+(`git show <ref>:<path>`). Tooling never hardcodes a population; it re-reads and carries a
+floor.
+
+**Origin.** UCR-CIF W3. The handoff and resumption file both stated `baseline_ledger.jsonl`
+had 73 rows. HEAD, the pinned base and `origin/main` all held 42; the 31 extra rows were
+uncommitted state in the other writer's shared checkout. A migration keyed to 73 would have
+migrated rows that exist in no commit.
+
+**See also** the concurrent-writers doctrine: a reading of a shared tree expires the moment
+anything else runs. The sharper version here is that it was never about our subject at all.
+
+---
+
+## T-FRACTION-THRESHOLD-VACUOUS-001 — a threshold expressed as a fraction of a population is two rules wearing one number
+
+**Mechanism.** "More than X % of the population" is only meaningful if the population is
+homogeneous and its size is stable. Across a small fixture and a large real estate it
+becomes two different rules — typically absurdly strict on one and vacuous on the other —
+and neither failure is visible from the other side.
+
+**Fix.** Derive the ceiling from the measured DISTRIBUTION of the quantity, not from a
+fraction of the population's size. Then check it against BOTH the fixture and the real data,
+because a fraction rule can be simultaneously too tight and too loose.
+
+**Origin.** UCR-CIF W3. A distinctiveness ceiling of "25 % of owners" meant 1 owner on a
+5-owner fixture and 189 on the 756-owner estate, where it admitted 1136 of 1137 held terms —
+excluding exactly one. The measured distribution gave the honest replacement: 45.9 % of terms
+had zero structural holders, and among held terms median 3 / p75 7 / p90 15 / max 474.
+
+**Family.** Joins `T-SQI-RATIO-GATE-REWARDS-DELETION-001` (never gate on a ratio) and
+`PR-COVERAGE-BY-CONSTRUCTION-001` (a count over the wrong population is wrong in both
+directions). Same root: a number whose denominator is not the thing being measured.
+
+---
+
+## T-OWNER-LEVEL-SIGNAL-ATTRIBUTES-A-TERM-001 — a signal about the container cannot license a claim about the contents
+
+**Mechanism.** When several signals are fused into a verdict, each is checked for TRUTH and
+rarely for SUBJECT. A signal that is a property of the whole (this module has consumers,
+this repo has tests, this author is trusted) fires identically for every item inside it, and
+so becomes a free pass for any specific claim.
+
+**Fix.** Split fused evidence into *attributing* signals (they tie THIS subject to THIS
+claim) and *corroborating* ones. Only attributing signals may promote; corroborating ones
+are reported.
+
+**Origin.** UCR-CIF W3. Inbound import edges (`CONSUMER`) were counted among the structural
+signals that could promote an ownership claim. Inbound imports are a fact about the module,
+so one module "verified" as owner of a capability belonging to another. Found by an
+adversarial case, not by reading: each signal was individually correct and the aggregation
+was what was wrong.
+
+---
+
+## T-METRIC-COMPUTED-OVER-THE-CHANNEL-IT-NEUTRALISES-001 — check that the antidote is not made of the poison
+
+**Mechanism.** When a metric exists specifically to neutralise a channel (word frequency,
+popularity, recency, self-report), verify the metric is not itself computed over that
+channel. If it is, the attack returns through the back door — and usually in an inverted,
+harder-to-see form.
+
+**Origin.** UCR-CIF W3. "Distinctiveness" was added to stop vocabulary VOLUME deciding
+ownership, and it was computed over owners that MENTION a term. So a decoy could DILUTE a
+real owner's evidence simply by talking about its capability — the more it discussed the
+term, the less distinctive the term became — while filler words unique to one large document
+scored as maximally distinctive. Recomputing over STRUCTURAL holders (defines / is named for
+/ registers) fixed both: a mention cannot make you a holder.
+
+**Instrument corollary.** The mutation restoring the broken version SURVIVED the first drill
+because the fixture had a single decoy and the attack needs enough of them to cross the
+threshold. **A fixture that cannot express the attack proves nothing about the defence.**
+
+---
+
+## T-NEGATIVE-MEMBERSHIP-TYPE-MISMATCH-001 — a `not in` that has never been seen to fail
+
+**Mechanism.** A negative membership assertion is satisfied by a TYPE MISMATCH, silently and
+permanently. Testing `"x" not in collection` where the collection holds tuples, objects or
+dicts can never match, so the assertion passes in every world — including the one where the
+guard it protects has been deleted.
+
+The positive form would have gone red on its first run. The negative form is a permanent
+green nobody questions.
+
+**Rule.** Assert on the element shape you actually have; be suspicious of any absence
+assertion that has never failed; and pair every "it did not happen" with a control proving
+the harness CAN observe it happening.
+
+**Origin.** UCR-CIF W3. A gate asserted `"zzyzx_audit" not in verdict.drivers` where
+`drivers` holds `(capability_id, verdict)` pairs. It passed with the lifecycle gate removed,
+and printed the offending tuples in its own evidence string. The mutation drill caught it;
+the gate's own 41/41 green did not.
+
+**Family.** Same shape as an absence assertion keyed on a translated string, or on a
+selector that never matched anything.
+
+---
+
+## PR-FORMAT-MATCHES-PRODUCER-001 — a diff is evidence, and a reformat destroys it
+
+**Mechanism.** When writing back to an artifact that another tool produces, reproduce its
+serialization exactly — indent, key order, ASCII escaping, line endings. A different
+formatter turns a small semantic change into a whole-file rewrite, and the review that would
+have caught a mistake becomes impossible.
+
+**Origin.** UCR-CIF W3. An adjudicator wrote a ledger with `indent=2` where its producer
+writes `indent=1`: a 996-row change arrived as 58,624 insertions / 57,747 deletions. After
+matching the producer, 4,314 / 4,307 — proportionate to the 1,655 rows actually touched.
+
+**Family.** The machine-generated sibling of the shared-file laundering rule (running a
+formatter over a file whose checkout was never format-clean rewrites other people's lines).
+
+---
+
 ## Workspace Recovery Control Plane — Execution Mode (SCS C83) — 2026-07-10
 
 | Ref | File | Why it matters |
