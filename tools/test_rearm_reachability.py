@@ -36,6 +36,14 @@ import sys
 import tempfile
 from pathlib import Path
 
+# No bytecode, ever. A mutation drill replaces "28" with "50" -- identical
+# length -- and restores within the same mtime second, so CPython's
+# (mtime, size) check passes and the gate executes a .pyc compiled from the
+# MUTANT while the source on disk is correct. Measured 2026-09-19: the source
+# read REARM_FLOOR_PCT = 28 and the gate reported 50, turning a clean restore
+# into a phantom 6/8 regression that a git diff flatly contradicted.
+sys.dont_write_bytecode = True
+
 STATE = tempfile.mkdtemp(prefix="rearm-state-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = STATE
 

@@ -40,6 +40,11 @@ import sys
 import tempfile
 from pathlib import Path
 
+# No bytecode: a same-length mutation restored within one mtime second leaves
+# CPython executing a .pyc built from the mutant while the source is correct
+# (measured 2026-09-19 on the sibling rearm gate -- source said 28, gate said 50).
+sys.dont_write_bytecode = True
+
 os.environ["GSD_LONG_RUN_STATE_DIR"] = tempfile.mkdtemp(prefix="cold-state-")
 os.environ.pop("CPP_CONTINUATION_TRANSPORT", None)
 
