@@ -89,6 +89,46 @@ def canonical_repo(path: str | os.PathLike | None = None) -> str:
     return str(start)
 
 
+def main_repo_root(path: str | os.PathLike | None = None) -> str:
+    """The MAIN repository root, resolving a linked git worktree to the
+    repository it belongs to.
+
+    `canonical_repo` deliberately stops at the nearest version-control root, so
+    a linked worktree keys its own state separately. That is right for a ledger
+    and wrong for the question "which repository is this?" -- a worktree of
+    claude-power-pack IS claude-power-pack, and a self-identification test that
+    reads only the checkout path answers no for it.
+
+    A linked worktree's `.git` is a FILE holding `gitdir: <main>/.git/worktrees/
+    <name>`, so the main root is recoverable without invoking git. A relative
+    gitdir (git's `--relative-paths`) is resolved against the worktree.
+
+    Falls back to `canonical_repo(path)` for a normal checkout, an unreadable
+    `.git`, or any shape not recognised -- never raises, and never guesses.
+    """
+    root = Path(canonical_repo(path))
+    marker = root / ".git"
+    try:
+        if not marker.is_file():
+            return str(root)
+        text = marker.read_text(encoding="utf-8", errors="replace").strip()
+        if not text.lower().startswith("gitdir:"):
+            return str(root)
+        gitdir = Path(text.split(":", 1)[1].strip())
+        if not gitdir.is_absolute():
+            gitdir = (root / gitdir).resolve()
+        parts = gitdir.parts
+        # .../<main-root>/.git/worktrees/<name>  -- cut at the ".git" component
+        # that is followed by "worktrees"; anything else is not a linked
+        # worktree layout and is left alone.
+        for i in range(len(parts) - 1):
+            if parts[i] == ".git" and parts[i + 1] == "worktrees":
+                return str(Path(*parts[:i]))
+    except (OSError, ValueError, IndexError):
+        return str(root)
+    return str(root)
+
+
 def repo_key(path: str | os.PathLike | None = None) -> str:
     """The filename slug for a repository's per-repo state."""
     return _encode(canonical_repo(path))

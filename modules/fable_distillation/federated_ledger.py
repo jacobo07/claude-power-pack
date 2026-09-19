@@ -47,7 +47,27 @@ def _slug(repo: str) -> str:
 
 
 def _is_pp_repo(repo: str) -> bool:
-    return "claude-power-pack" in (repo or "")
+    """True when `repo` is the Power Pack, including one of its worktrees.
+
+    The substring test alone reads the CHECKOUT PATH, and a linked worktree does
+    not carry the repository's name -- `C:/Users/User/Apps/pp-ucr-cif` is
+    claude-power-pack and does not say so. Measured: `fdi_advisory` told the
+    Power Pack's own worktree it was a non-PP frontier repo with 0 deposits,
+    which is the FIOS/FD-07 signal reported from UCR-CIF W2.
+
+    INC-025 fixed the sibling half of this (the deposit KEY) by introducing
+    `repo_identity`; this predicate was left on the raw substring. Fast path
+    first so a normal checkout costs nothing, then the canonical resolver.
+    Fail-open to the substring answer -- identity must never raise here.
+    """
+    text = repo or ""
+    if "claude-power-pack" in text:
+        return True
+    try:
+        from modules.repo_identity import main_repo_root
+        return "claude-power-pack" in main_repo_root(text)
+    except Exception:  # noqa: BLE001 -- identity never blocks an advisory
+        return False
 
 
 # --------------------------------------------------------------------------- #
