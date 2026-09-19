@@ -148,6 +148,23 @@ const CHAIN_MAP = {
     // LANE block in runChain for the measurement that forced it. 8000 ms because
     // it now runs alone; solo it measures 644-1245 ms on a 7.6 MB transcript.
     { exe: NODE_EXE, script: './closer-guard.js', timeoutMs: 8000, block: true, critical: true },
+    // Bounded autonomous TURN continuation (2026-09-19). SECOND, and critical,
+    // for one reason: its whole value is that it reliably gets to speak at turn
+    // end, and a member abandoned in the pool is indistinguishable from one that
+    // decided to allow. It is cheap enough to belong in the critical lane --
+    // statSync plus two small JSON reads, no subprocess, no git, no python --
+    // which matters because this chain already measures ~54.9 s per turn end.
+    //
+    // AFTER closer-guard deliberately: a dead-screen closer is a defect in THIS
+    // turn and must win over "carry on with the mission". The hook also reads
+    // closer-guard's state read-only and stands down when it blocked, so the two
+    // cannot ping-pong.
+    //
+    // OPT-IN: inert unless the session's autorun marker carries
+    // `continuation: "stop-block"`. When this landed there were 11 markers on
+    // disk, three still inside budget; none of them opt in, so registering it
+    // changed nothing until a run is armed for the new path on purpose.
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/gsd_stop_continuation.js', timeoutMs: 5000, block: true, critical: true },
     { exe: NODE_EXE, script: './zero-issue-gate.js', timeoutMs: 70000, block: true },
     { exe: NODE_EXE, script: './kobiiclaw-autoresearch.js', timeoutMs: 30000 },
     { exe: NODE_EXE, script: './trace-flusher.js', timeoutMs: 15000 },
