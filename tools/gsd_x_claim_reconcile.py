@@ -51,7 +51,26 @@ DATASET = Path(os.environ.get("GSDX_DATASET") or REPO / "vault" / "datasets" / "
 
 # The commit at which the ledger was last reconciled. Overridable, because a
 # future reconciliation moves it and nothing should have to edit this file.
-DEFAULT_SINCE = os.environ.get("GSDX_SINCE", "fd87e39")
+def _boundary() -> str:
+    """The commit through which the ledger has been reconciled.
+
+    GSDX-D09 decided this advances with each reconciliation. Holding it as a
+    constant in the reader made that decision documented but not executable --
+    the ledger could be reconciled and the reconciler would keep measuring from
+    a boundary four waves old. It is a fact about the corpus, so it lives beside
+    the corpus.
+    """
+    if os.environ.get("GSDX_SINCE"):
+        return os.environ["GSDX_SINCE"]
+    marker = DATASET.parent / "RECONCILED-THROUGH"
+    if marker.is_file():
+        val = marker.read_text(encoding="utf-8-sig").strip()
+        if val:
+            return val
+    return "fd87e39"
+
+
+DEFAULT_SINCE = _boundary()
 
 # --- materiality -----------------------------------------------------------
 #
@@ -82,10 +101,21 @@ GENERATED = (
 #
 # A sweep that silently stops matching must not read as a clean bill. Ported
 # from tools/gsd_x_ups_sweep.py:63-67, which encodes the same rule.
-MIN_COMMITS = 5                  # below this, the range itself is suspect
-POSITIVE_CONTROL = "9c30713"     # the first confirmed resume; the predicate
-                                 # MUST be able to reach it, or it cannot see
-                                 # the event this reconciler exists for.
+# A sweep that silently stops matching must not read as a clean bill. The first
+# version of this control was a MINIMUM COMMIT COUNT, which worked exactly once:
+# after a reconciliation the range is legitimately short, so the floor turned a
+# freshly-reconciled ledger into a permanent INSTRUMENT_FAILED. An empty range is
+# the CORRECT answer to "what landed since we last reconciled", not a defect.
+#
+# What actually needs asserting is that the BOUNDARY is real and behind us --
+# a boundary that does not resolve, or that is not an ancestor of HEAD, means the
+# sweep is measuring from nowhere and its emptiness means nothing.
+POSITIVE_CONTROL = "9c30713"     # the first confirmed resume. While it is inside
+                                 # the range the predicate must reach it; once the
+                                 # boundary passes it, it must be an ANCESTOR of
+                                 # the boundary -- which proves the boundary did
+                                 # not jump past reality rather than skipping the
+                                 # check.
 
 SHA_RE = re.compile(r"\b[0-9a-f]{7,40}\b")
 
@@ -148,13 +178,21 @@ def commit_files(sha: str) -> list[str]:
 
 def material_events(since: str) -> tuple[list[dict], list[dict]]:
     """Split the range into material evidence events and everything else."""
+    try:
+        git("rev-parse", "--verify", f"{since}^{{commit}}")
+    except InstrumentFailure:
+        raise InstrumentFailure(
+            f"boundary {since!r} does not resolve to a commit"
+        ) from None
+    try:
+        git("merge-base", "--is-ancestor", since, "HEAD")
+    except InstrumentFailure:
+        raise InstrumentFailure(
+            f"boundary {since} is not an ancestor of HEAD -- the sweep would "
+            "measure from a commit this branch never passed through"
+        ) from None
     log = git("log", "--reverse", "--format=%H%x1f%s", f"{since}..HEAD")
     entries = [ln for ln in log.splitlines() if ln.strip()]
-    if len(entries) < MIN_COMMITS:
-        raise InstrumentFailure(
-            f"{len(entries)} commits in {since}..HEAD, floor is {MIN_COMMITS}. "
-            "A range this short is a boundary error, not a clean ledger."
-        )
 
     material, skipped = [], []
     for entry in entries:
@@ -177,11 +215,18 @@ def material_events(since: str) -> tuple[list[dict], list[dict]]:
 
     reachable = {e["sha"][:7] for e in material} | {e["sha"][:7] for e in skipped}
     if POSITIVE_CONTROL not in reachable:
-        raise InstrumentFailure(
-            f"positive control {POSITIVE_CONTROL} is not in {since}..HEAD. "
-            "The sweep cannot see the event it exists for; the range or the "
-            "control is wrong, and a clean result here would mean nothing."
-        )
+        # Out of range is legitimate once the boundary has advanced past it --
+        # but only if it is genuinely BEHIND the boundary. Anything else means
+        # the boundary points somewhere the control never was.
+        try:
+            git("merge-base", "--is-ancestor", POSITIVE_CONTROL, since)
+        except InstrumentFailure:
+            raise InstrumentFailure(
+                f"positive control {POSITIVE_CONTROL} is neither inside "
+                f"{since}..HEAD nor an ancestor of {since}. The boundary does "
+                "not describe this history, and a clean result would mean "
+                "nothing."
+            ) from None
     return material, skipped
 
 
