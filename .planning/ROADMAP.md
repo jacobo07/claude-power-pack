@@ -63,11 +63,20 @@ default since the transport became exact.
 Done: the UKDL carries the rules with their ids, and the router sentence
 describes the delivery that actually happens.
 
-## Phase 4: Reap the stale autorun markers
+## Phase 4: Reap the stale autorun markers — COMPLETE (`d0477b8`)
 
-Seven markers are armed for sessions that no longer exist, each holding a
-project's GSD config at retuned thresholds. Reap them by name and restore every
-project config no live marker still needs.
+Premise as written: *"Seven markers are armed for sessions that no longer
+exist."* Measured before acting, it is false — **zero of nine** qualify under
+any of the three instruments, and the reason is that each one is a proxy other
+events move. The phase therefore delivered the instrument rather than a purge:
+the reap clock reads the session's newest timestamped row instead of the
+transcript's file mtime (measured drift up to 19.0 h on a 48 h threshold),
+liveness reads the session registry and answers `live` or `unknown` but never
+`dead`, and a marker's `cwd` is absolutised at arming so the sweep can no longer
+resolve `"."` against itself — which would have let one project's `ALL_COMPLETE`
+unlink every other project's marker.
 
-Done: `gsd_long_run.py status` lists only live runs, and each reaped project's
-`.planning/config.json` is back to what it held before arming.
+Done: `sweep --dry-run --explain` names, per marker, the clause that held it, so
+an empty sweep is distinguishable from a sweep that judged nothing; GSDLR
+87/87 with four mutations driven red; no project config needed restoring because
+nothing was reaped.

@@ -35,7 +35,10 @@ when the transcript shows the command was really submitted.
   `/compact` tail reads identically whether it was never submitted or was
   submitted and compacted — nine idle hours followed. Fixed in `64ec155`: the
   boundary row discriminates, and the resume is gated and fenced.
-  `report` still reads `UNPROVEN` (2 crossings, 0 `resume_confirmed`).
+  `report` now reads **PARTIAL**: 3 crossings, and the second one's resume was
+  confirmed at 09:30:37 — the first `resume_confirmed` this estate has ever
+  recorded, which is the live test of the aperture fix (`f2462ee`) passing.
+  PROVEN needs a second confirmed crossing.
 - This session re-entered itself at 09:07:51 through the terminal inbox
   (`resume_requested` → `resume_dispatched` → the resumed command executing).
   The confirmation is written by the Stop chain at the end of the turn that
@@ -58,7 +61,21 @@ when the transcript shows the command was really submitted.
   which is UNVERSIONED (same gap class as the daemon); and the UKDL working copy
   carries 1,029 uncommitted CEPS auto-append rows from a producer outside this
   session — preserved untouched, deliberately not committed, Owner decision owed.
-- Phase 4: Reap the stale autorun markers — PENDING
+- Phase 4: Reap the stale autorun markers — COMPLETE (`d0477b8`), and the
+  roadmap's premise was false: **zero of nine markers are reapable**, not seven.
+  What the phase delivered is the instrument. The reap clock read the
+  transcript's file mtime, which host metadata rows (`custom-title`,
+  `cost-state`, no timestamp of their own) advance without the session speaking
+  — measured up to **19.0 h** of drift on a 48 h threshold. Liveness now reads
+  the session registry and answers `live` or `unknown`, never `dead`: a session
+  conversing 0.00 h earlier had no registry row at 11:40 and acquired one at
+  12:24 under a new pid. And a marker's `cwd` was stored as typed (`"."` in 8 of
+  9), so the sweep resolved it against itself — one project's `ALL_COMPLETE`
+  could have unlinked every other project's marker. `sweep --explain` now names
+  the clause holding each kept marker. GSDLR 72 → 87/87, four mutations driven
+  (83/87, 85/87, 85/87, 86/87), one of which survived its first run and was
+  re-pointed. Nothing was deleted: no marker qualifies, and a purge run on a
+  rule written the same hour tests nothing.
 
 The narrow-wall proof is the milestone's acceptance gate, not a phase: it is
 produced by this run crossing its own wall while executing the phases above,

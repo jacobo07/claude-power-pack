@@ -85,10 +85,39 @@ Coherence anchor: GSDLR 68, GSDAC 26, ACPS 38, CXT 28, CWIRE 14 -- green at `64e
   distinct). `arm`/`fire`/`observe` UNEXERCISED -- they need an operator-started subject.
 Coherence anchor: GSDLR 72, GSDAC 26, CWIRE 14 -- green at `f2462ee`.
 
+## 3d. Phase 4 sealed, and the aperture fix proved itself (2026-09-19, later)
+- **`report` moved UNPROVEN -> PARTIAL**: 3 crossings, and crossing 2 (23:06:01) carries
+  `resume_confirmed` at `09:30:37` -- the first confirmed resume this estate has ever
+  recorded. That is `f2462ee` working on real bytes, not a test. Crossing 3 (10:10:22) is
+  the compaction this session came through; its confirmation is still owed.
+- `d0477b8` **Phase 4.** The roadmap's premise ("seven markers armed for sessions that no
+  longer exist") is FALSE: zero of nine markers are reapable. Three defects in the
+  instruments instead. (1) The reap clock read the transcript's file **mtime**, which
+  `custom-title` / `cost-state` rows -- carrying no timestamp of their own -- advance
+  without the session speaking; measured drift up to **19.0 h** on a 48 h threshold.
+  (2) Liveness now reads `~/.claude/sessions/<pid>.json` and answers `live` or `unknown`,
+  **never `dead`**: `fa6961b6` had no row at 11:40 while conversing 0.00 h earlier, and
+  acquired one at 12:24 under a NEW pid (53548, CLI 2.1.278). (3) `cwd` was stored as the
+  caller typed it -- `"."` in 8 of 9 markers -- and `Path(".").is_dir()` is true
+  everywhere, so ONE project reaching `ALL_COMPLETE` would have unlinked every other
+  project's marker and restored the wrong config. Arming absolutises it; `marker_project()`
+  refuses a relative one. GSDLR 72 -> 87/87; mutations 83/87, 85/87, 85/87, 86/87, the
+  last of which SURVIVED its first run (the gate asserted on the helper's return rather
+  than on what `write_marker` stores) and was re-pointed. Restores SHA-256 verified.
+- **Nothing was reaped, deliberately**: no marker qualifies, and a purge run on a rule
+  written the same hour tests nothing. `sweep --dry-run --explain` now names the clause
+  holding each of the nine.
+- **`d0477b8` carries two hunks that are not mine.** A concurrent session added
+  `PHASE_STALL_MINUTES` + `_phase_advance_ok()` to `tools/gsd_long_run.py` and the
+  "ARMING IS NOT STARTING" banner to `tools/gsd_autorun_marker.py` while this work was in
+  flight; commit isolation is file-granular. Their bytes are intact. The commit message
+  names the first; this file names both, so neither is lost by being mis-titled.
+
 ## 4. Not proven (do not claim)
-- `report` is still UNPROVEN: two crossings, zero `resume_confirmed`. The aperture fix
-  removes the reason the confirmation kept failing, but NO confirmed resume has been
-  observed since -- the next crossing is what tests it.
+- `report` is PARTIAL, not PROVEN: 3 crossings, 1 confirmed resume. PROVEN needs a SECOND
+  crossing whose resume the transcript shows was really submitted.
+- Phase 4 changed the reap rule and **no reap has ever executed under it** on real state.
+  The gates drive it on fixtures; the live population has no qualifying subject.
 - No real delivery through `orca-exact` (GSDX-C08); Orca is not running on this host.
 - No live two-pane drill (GSDX-C09) -- Phase 1 Tasks 2-3, blocked on the operator step.
 - Phase 2's TOTAL is a lower bound; the straggler under a real transcript is unmeasured.
@@ -118,7 +147,7 @@ CEPS row count is unchanged.
 1. Let the run execute the roadmap's phases; honour every trailing-line instruction the
    watchdog returns (`/compact ...`, then exactly `/gsd-autonomous`).
 2. After the next crossing, read `report` -- that is the first real test of `f2462ee`.
-3. Then Phase 1 (two-pane drill), Phase 2 (prompt-chain deadline), Phase 3 (UKDL
-   promotion + the stale router line), Phase 4 (reap the seven stale markers).
+3. Phases 2, 3 and 4 are COMPLETE. Phase 1 Tasks 2-3 (the two-pane drill) are the only
+   remaining phase work and they are blocked on the operator opening a second terminal.
 
 Start: read the spec, then this file, then action 1. Update this file after each sealed unit.
