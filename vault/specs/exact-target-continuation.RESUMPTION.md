@@ -22,7 +22,17 @@ compaction, the watchdog will ask you -- at the end of a turn -- to emit exactly
   Also seeds `.planning/` -- GSD parsed 0 phases here, so arming refused outright.
 - `9190432` roadmap restructure: the narrow-wall proof is the milestone's acceptance gate,
   not a phase. GSD parses 4 incomplete phases.
-Coherence anchor: GSDLR 60, GSDAC 26, ACPS 33, CXT 28, CWIRE 14 -- all green at `9190432`.
+- `691c09a` delivery deadline: inbox TTL 300 s (the Stop chain measures 82 s here, so the
+  old 60 s always expired before the session could go `idle`), made safe by
+  transcript-bounded withdrawal. ACPS 33 -> 38.
+- `64ec155` **the sweep sends the RESUME after a compaction, not the `/compact` again.**
+  `owed_line()`: a `/compact` tail is the same line in two opposite states -- never
+  submitted, and submitted-with-the-compaction-landed (the agent has not spoken since, so
+  the tail does not move). The boundary row (C1) is the only discriminator; the resume is
+  gated by `resume_gate` and writes the `resume_requested` row that spends a cycle and
+  advances the one-resume-per-boundary fence. GSDLR 60 -> 68; mutation 62/68 reproducing
+  the production symptom byte-for-byte; restore SHA-256 `111DB4D2`.
+Coherence anchor: GSDLR 68, GSDAC 26, ACPS 38, CXT 28, CWIRE 14 -- green at `64ec155`.
 
 ## 3. This run's state
 - Session `37cfb187-ec05-43db-b57d-4bdcb5625362`, marker armed 12 cycles / 24 h,
@@ -39,7 +49,21 @@ Coherence anchor: GSDLR 60, GSDAC 26, ACPS 33, CXT 28, CWIRE 14 -- all green at 
   that the narrow band is the one being applied. The crossing is what discriminates.
 - Run position: Phase 1, research sealed (`cf9ba22`), planner in flight.
 
+## 3b. What the live run has and has not done (measured from the ledger)
+- Crossing 1 `22:39:30` -> `delivery_inbox_requested` -> `refused` 78 s later (the 60 s TTL
+  defect, fixed in `691c09a`).
+- Crossing 2 `23:06:01` -> `delivery_inbox_requested` -> **no outcome row was ever written**,
+  yet the `/compact` DID land. So delivery works and its ledger leg is missing: a `sent`
+  row for crossing 2 does not exist, which `report` cannot count. OPEN.
+- Then `recovered` x3 (23:51, 00:16, 00:51), each re-typing the SAME `/compact` line ->
+  "Not enough messages to compact" x2 -> `stalled` x9 across nine hours. That is the
+  defect `64ec155` closes.
+- The focus argument is NOT the defect: all three invocations carry
+  `<command-args>focus on ...</command-args>` in the transcript. The arg was delivered
+  every time and the host honoured it.
+
 ## 4. Not proven (do not claim)
+- `report` is still UNPROVEN: two crossings, zero `resume_confirmed`.
 - No live crossing yet. Every marker on this host still reads UNPROVEN or NO_CROSSINGS.
 - No real delivery through `orca-exact` (GSDX-C08); Orca is not running on this host.
 - No live two-pane drill (GSDX-C09) -- that is Phase 1.
