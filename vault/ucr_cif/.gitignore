@@ -1,0 +1,7 @@
+# Derived, regenerable from (corpus_id, range, slice) in ~5s. The durable
+# record is units_new_region.json plus corpus/manifest.json.
+corpus/s*.json
+corpus/casetable.json
+_crashtest/
+_crash_units.json
+units_rerun.json

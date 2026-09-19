@@ -1,0 +1,288 @@
+{
+ "schema_version": 1,
+ "corpus_id": "ef2b381beff512ca6919280a",
+ "slices": {
+  "s0075351_0077350": {
+   "state": "done",
+   "line_start": 75351,
+   "line_end": 77350,
+   "unit_count": 25
+  },
+  "s0077351_0079350": {
+   "state": "done",
+   "line_start": 77351,
+   "line_end": 79350,
+   "unit_count": 17
+  },
+  "s0079351_0081350": {
+   "state": "done",
+   "line_start": 79351,
+   "line_end": 81350,
+   "unit_count": 26
+  },
+  "s0081351_0083350": {
+   "state": "done",
+   "line_start": 81351,
+   "line_end": 83350,
+   "unit_count": 20
+  },
+  "s0083351_0085350": {
+   "state": "done",
+   "line_start": 83351,
+   "line_end": 85350,
+   "unit_count": 9
+  },
+  "s0085351_0087350": {
+   "state": "done",
+   "line_start": 85351,
+   "line_end": 87350,
+   "unit_count": 7
+  },
+  "s0087351_0089350": {
+   "state": "done",
+   "line_start": 87351,
+   "line_end": 89350,
+   "unit_count": 11
+  },
+  "s0089351_0091350": {
+   "state": "done",
+   "line_start": 89351,
+   "line_end": 91350,
+   "unit_count": 20
+  },
+  "s0091351_0093350": {
+   "state": "done",
+   "line_start": 91351,
+   "line_end": 93350,
+   "unit_count": 11
+  },
+  "s0093351_0095350": {
+   "state": "done",
+   "line_start": 93351,
+   "line_end": 95350,
+   "unit_count": 8
+  },
+  "s0095351_0097350": {
+   "state": "done",
+   "line_start": 95351,
+   "line_end": 97350,
+   "unit_count": 19
+  },
+  "s0097351_0099350": {
+   "state": "done",
+   "line_start": 97351,
+   "line_end": 99350,
+   "unit_count": 20
+  },
+  "s0099351_0101350": {
+   "state": "done",
+   "line_start": 99351,
+   "line_end": 101350,
+   "unit_count": 11
+  },
+  "s0101351_0103350": {
+   "state": "done",
+   "line_start": 101351,
+   "line_end": 103350,
+   "unit_count": 15
+  },
+  "s0103351_0105350": {
+   "state": "done",
+   "line_start": 103351,
+   "line_end": 105350,
+   "unit_count": 21
+  },
+  "s0105351_0107350": {
+   "state": "done",
+   "line_start": 105351,
+   "line_end": 107350,
+   "unit_count": 28
+  },
+  "s0107351_0109350": {
+   "state": "done",
+   "line_start": 107351,
+   "line_end": 109350,
+   "unit_count": 27
+  },
+  "s0109351_0111350": {
+   "state": "done",
+   "line_start": 109351,
+   "line_end": 111350,
+   "unit_count": 41
+  },
+  "s0111351_0113350": {
+   "state": "done",
+   "line_start": 111351,
+   "line_end": 113350,
+   "unit_count": 59
+  },
+  "s0113351_0115350": {
+   "state": "done",
+   "line_start": 113351,
+   "line_end": 115350,
+   "unit_count": 47
+  },
+  "s0115351_0117350": {
+   "state": "done",
+   "line_start": 115351,
+   "line_end": 117350,
+   "unit_count": 19
+  },
+  "s0117351_0119350": {
+   "state": "done",
+   "line_start": 117351,
+   "line_end": 119350,
+   "unit_count": 31
+  },
+  "s0119351_0121350": {
+   "state": "done",
+   "line_start": 119351,
+   "line_end": 121350,
+   "unit_count": 22
+  },
+  "s0121351_0123350": {
+   "state": "done",
+   "line_start": 121351,
+   "line_end": 123350,
+   "unit_count": 17
+  },
+  "s0123351_0125350": {
+   "state": "done",
+   "line_start": 123351,
+   "line_end": 125350,
+   "unit_count": 35
+  },
+  "s0125351_0127350": {
+   "state": "done",
+   "line_start": 125351,
+   "line_end": 127350,
+   "unit_count": 16
+  },
+  "s0127351_0129350": {
+   "state": "done",
+   "line_start": 127351,
+   "line_end": 129350,
+   "unit_count": 6
+  },
+  "s0129351_0131350": {
+   "state": "done",
+   "line_start": 129351,
+   "line_end": 131350,
+   "unit_count": 11
+  },
+  "s0131351_0133350": {
+   "state": "done",
+   "line_start": 131351,
+   "line_end": 133350,
+   "unit_count": 11
+  },
+  "s0133351_0135350": {
+   "state": "done",
+   "line_start": 133351,
+   "line_end": 135350,
+   "unit_count": 28
+  },
+  "s0135351_0137350": {
+   "state": "done",
+   "line_start": 135351,
+   "line_end": 137350,
+   "unit_count": 32
+  },
+  "s0137351_0139350": {
+   "state": "done",
+   "line_start": 137351,
+   "line_end": 139350,
+   "unit_count": 29
+  },
+  "s0139351_0141350": {
+   "state": "done",
+   "line_start": 139351,
+   "line_end": 141350,
+   "unit_count": 31
+  },
+  "s0141351_0143350": {
+   "state": "done",
+   "line_start": 141351,
+   "line_end": 143350,
+   "unit_count": 23
+  },
+  "s0143351_0145350": {
+   "state": "done",
+   "line_start": 143351,
+   "line_end": 145350,
+   "unit_count": 23
+  },
+  "s0145351_0147350": {
+   "state": "done",
+   "line_start": 145351,
+   "line_end": 147350,
+   "unit_count": 36
+  },
+  "s0147351_0149350": {
+   "state": "done",
+   "line_start": 147351,
+   "line_end": 149350,
+   "unit_count": 17
+  },
+  "s0149351_0151350": {
+   "state": "done",
+   "line_start": 149351,
+   "line_end": 151350,
+   "unit_count": 18
+  },
+  "s0151351_0153350": {
+   "state": "done",
+   "line_start": 151351,
+   "line_end": 153350,
+   "unit_count": 22
+  },
+  "s0153351_0155350": {
+   "state": "done",
+   "line_start": 153351,
+   "line_end": 155350,
+   "unit_count": 28
+  },
+  "s0155351_0157350": {
+   "state": "done",
+   "line_start": 155351,
+   "line_end": 157350,
+   "unit_count": 12
+  },
+  "s0157351_0159350": {
+   "state": "done",
+   "line_start": 157351,
+   "line_end": 159350,
+   "unit_count": 21
+  },
+  "s0159351_0161350": {
+   "state": "done",
+   "line_start": 159351,
+   "line_end": 161350,
+   "unit_count": 11
+  },
+  "s0161351_0163350": {
+   "state": "done",
+   "line_start": 161351,
+   "line_end": 163350,
+   "unit_count": 13
+  },
+  "s0163351_0165350": {
+   "state": "done",
+   "line_start": 163351,
+   "line_end": 165350,
+   "unit_count": 22
+  },
+  "s0165351_0167350": {
+   "state": "done",
+   "line_start": 165351,
+   "line_end": 167350,
+   "unit_count": 19
+  },
+  "s0167351_0167842": {
+   "state": "done",
+   "line_start": 167351,
+   "line_end": 167842,
+   "unit_count": 8
+  }
+ }
+}
