@@ -648,6 +648,43 @@ def gates_compact_tail():
         mk.STATE_DIR = real_state
 
 
+def gates_confirm_aperture():
+    """A resume is confirmed at the END of the turn it started, so the turn's own
+    output is already in the transcript ahead of it.
+
+    Measured 2026-09-19, session 37cfb187: the `/gsd-autonomous` row sat 598 KB
+    from the end of a 5.8 MB transcript while the reader's window was 256 KB, so
+    every Stop chain read False and the run could not confirm its own resume.
+    The coupling is perverse -- the more the turn did, the further back the row
+    goes -- so the instrument failed precisely in the case it exists for.
+
+    The control here is the OLD window passed explicitly: without it, a gate that
+    merely asserts True would pass against a predicate that had stopped looking
+    at timestamps at all.
+    """
+    s = sid()
+    cmd = "/gsd-autonomous"
+    t_issue = time.time()
+    since = t_issue - 5
+    # >256 KB of turn output written AFTER the command row, as a real turn does.
+    pad = [asst("x" * 4000) for _ in range(80)]
+    t = transcript(s, "x", rows=[user_cmd(cmd, t_issue)] + pad)
+    size = t.stat().st_size
+
+    check("V-GSDLR-CONFIRM-BEYOND-OLD-WINDOW",
+          size > 262144 and lr.user_issued_command_since(t, cmd, since) is True,
+          f"transcript={size}B, row is {size - 262144}B beyond the old window")
+    check("V-GSDLR-CONFIRM-OLD-WINDOW-WAS-BLIND",
+          lr.user_issued_command_since(t, cmd, since, tail_bytes=262144) is False,
+          "the 256 KB window cannot see it -- this is what made the gate above fail in production")
+    check("V-GSDLR-CONFIRM-STILL-DISCRIMINATES",
+          lr.user_issued_command_since(t, "/no-such-command", since) is False,
+          "a command nobody issued is still False, so the widening did not become 'always True'")
+    check("V-GSDLR-CONFIRM-TIME-BOUND-HOLDS",
+          lr.user_issued_command_since(t, cmd, t_issue + 3600) is False,
+          "a row older than `since` is still refused, so the window did not replace the clock")
+
+
 def main() -> int:
     try:
         gates_preflight()
@@ -657,6 +694,7 @@ def main() -> int:
         gates_session_thresholds()
         gates_sweep()
         gates_compact_tail()
+        gates_confirm_aperture()
         gates_report()
         gates_config()
         gates_cli()

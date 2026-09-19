@@ -287,17 +287,52 @@ def last_line(text: str | None) -> str:
     return ""
 
 
-def user_issued_command_since(transcript: Path, command: str, since_epoch: float) -> bool:
+CONFIRM_TAIL_BYTES = 8 * 1024 * 1024
+
+
+def user_issued_command_since(transcript: Path, command: str, since_epoch: float,
+                              tail_bytes: int = CONFIRM_TAIL_BYTES) -> bool:
     """True when a user entry after `since_epoch` carries the command.
 
     Claude Code records a slash command as `<command-name>/name</command-name>`;
     typed text is recorded verbatim. Either counts.
+
+    The window is 8 MB rather than the 256 KB `_tail_rows` default, and that is a
+    measured defect rather than caution. A resume is confirmed by a Stop hook
+    running at the END of the turn the resume began -- and that turn has already
+    written its whole tool output into the transcript by then. Measured
+    2026-09-19 on session 37cfb187: the `/gsd-autonomous` row sat 598 KB from the
+    end of a 5.8 MB transcript, so a 256 KB window could not see it, every Stop
+    chain read False, and the run could never confirm its own resume. The
+    coupling is perverse -- the more work the turn did, the further back the row
+    is pushed -- so the confirmation failed exactly when the run was working
+    hardest, which is the case the whole mechanism exists for.
+
+    Widening is affordable because only lines that CONTAIN the command name are
+    parsed: the cost is a substring scan, not 8 MB of JSON inside a hook budget.
     """
     name = (command or "").split()[0] if command else ""
     if not name:
         return False
-    for row in _tail_rows(transcript):
-        if row.get("type") != "user":
+    needle = name.encode("utf-8", errors="replace")
+    try:
+        size = transcript.stat().st_size
+        with open(transcript, "rb") as fh:
+            fh.seek(max(0, size - tail_bytes))
+            raw = fh.read()
+    except OSError:
+        return False
+    lines = raw.split(b"\n")
+    if size > tail_bytes and lines:
+        lines = lines[1:]  # first line is a fragment
+    for line in lines:
+        if needle not in line:
+            continue
+        try:
+            row = json.loads(line.decode("utf-8", errors="replace"))
+        except Exception:
+            continue
+        if not isinstance(row, dict) or row.get("type") != "user":
             continue
         ts = _parse_iso(row.get("timestamp"))
         if ts is None or ts < since_epoch:
