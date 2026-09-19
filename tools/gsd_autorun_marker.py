@@ -126,6 +126,41 @@ def bump_cycles(session_id: str) -> int | None:
     return data["cycles"]
 
 
+def record_intent(session_id: str, intent: str) -> bool:
+    """Persist what must happen FIRST after the compaction. True when stored.
+
+    This is the durable home for the obligations the model writes into its
+    `/compact ...` line, and it exists because the host destroys them two
+    different ways (measured 2026-09-19, both in this estate's transcripts):
+
+      * 37cfb187 -- the args arrived and were wrapped in
+        `<local-command-caveat> ... DO NOT respond to these messages or
+        otherwise consider them ...`, i.e. the host hands the model the
+        instruction inside an envelope telling it to ignore the instruction;
+      * de7f3c91 -- `<command-args></command-args>`, empty, because the line
+        was ultimately submitted by hand as a bare `/compact`.
+
+    `compactMetadata` has no field for the text at all, so nothing downstream
+    can recover it. Stored here it reaches the model through the Stop hook's
+    `reason`, which the host does not caveat.
+
+    Never raises and never CREATES a marker: an intent for a run that is not
+    armed is not a run, and inventing a marker here would arm one by accident.
+    """
+    try:
+        text = (intent or "").strip()
+        if not text:
+            return False
+        data = read_marker(session_id)
+        if data is None:
+            return False
+        data["post_compact_intent"] = text
+        _save(marker_path(session_id), data)
+        return True
+    except Exception:
+        return False
+
+
 def read_marker(session_id: str) -> dict | None:
     """Return the marker dict, or None when absent/unreadable/malformed.
 

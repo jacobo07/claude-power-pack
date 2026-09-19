@@ -195,6 +195,20 @@ def orca(args: list[str], timeout: float | None = None) -> dict:
     return env if isinstance(env, dict) else {"ok": False, "error": {"code": "cli_unparseable"}}
 
 
+def compact_intent(line: str) -> str:
+    """The obligations carried by a `/compact ...` line, or "" when bare.
+
+    Pure, so both poles are drivable without a delivery. A bare `/compact`
+    yields the empty string rather than a present-but-empty intent: that is
+    the shape de7f3c91's boundary actually recorded, and manufacturing an
+    intent for it would be worse than having none.
+    """
+    rest = (line or "").strip()
+    if not rest.startswith("/compact"):
+        return ""
+    return rest[len("/compact"):].strip()
+
+
 def list_terminals() -> tuple[str, list]:
     """The first CLI call of a delivery, so the one that pays any cold start.
 
@@ -295,6 +309,21 @@ def deliver(session_id: str, kind: str, text: str | None = None, expect_prefix: 
         if not expect_prefix or not line.startswith(expect_prefix):
             return _block(session_id, cid, NO_LINE, expected=expect_prefix, got=line[:80])
         text = line
+        # Capture the obligations HERE, before the send, because this is the
+        # last place they exist in full and because the send is exactly what
+        # may not happen. de7f3c91 proved the point: its delivery was blocked
+        # (cli_timeout), a human then submitted a bare `/compact`, and the
+        # "recheck the revised plan first" obligation the model had written was
+        # gone from the boundary -- `<command-args></command-args>`. Recording
+        # at validation time keeps the intent even when the transport loses.
+        intent = compact_intent(line)
+        if intent:
+            try:
+                import gsd_autorun_marker as _mk
+                if _mk.record_intent(session_id, intent):
+                    _ledger(session_id, "intent_recorded", cid=cid, intent=intent[:200])
+            except Exception:
+                pass  # fail-open: an unrecorded intent must not block the compaction
     if not text:
         return _block(session_id, cid, NO_LINE, expected="a resume command")
     if _consumed(transcript, text, requested_at):

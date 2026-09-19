@@ -656,12 +656,27 @@ def _resume_dispatch_message(marker, observed=None, route=None) -> str:
     """
     cmd = (marker or {}).get("resume_command")
     where = (observed or {}).get("boundary_ts") or "unknown"
+    # The obligations the model wrote into its own `/compact ...` line, carried
+    # across the boundary on the marker. They cannot travel in the command's
+    # arguments: the host either empties them or returns them wrapped in a
+    # caveat telling the model to ignore them (both measured 2026-09-19). This
+    # `reason` is not caveated, so it is where they belong. Absent -> the empty
+    # string, leaving an ordinary run's message byte-identical.
+    intent = (marker or {}).get("post_compact_intent")
+    intent_clause = (
+        f" BEFORE anything else, recover the intent this run recorded for itself "
+        f"immediately before the compaction: \"{intent}\". That text is the "
+        "obligation, not a summary of it -- if it names a check, a re-read or a "
+        "verification, that step runs FIRST and the rest of the phase waits on it. "
+        "Do not infer it from the post-compaction summary, which is lossy by design."
+    ) if intent else ""
     return (
         f"COMPACTION OBSERVED (transcript compact_boundary at {where}) — the "
         "autonomous run must re-enter itself. "
         f"End this response with a SINGLE trailing line, exactly `{cmd}`, "
         "no preface and no markdown. "
         + _route_sentence(route or {"route": "manual", "why": "route not computed"}, f"`{cmd}`")
+        + intent_clause
     )
 
 
