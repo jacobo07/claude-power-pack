@@ -1,0 +1,282 @@
+{
+  "controls_pass": true,
+  "chains": [
+    {
+      "chain": "PostToolUse-Bash-chain",
+      "members": [
+        "../skills/claude-power-pack/modules/zero-crash/hooks/tty-restore.js",
+        "./bug-hunter-learning.js",
+        "../skills/claude-power-pack/hooks/osa_deploy_detector.js",
+        "../skills/claude-power-pack/hooks/bug-hunter-ceps-bridge.js"
+      ],
+      "member_count": 4,
+      "concurrency": 4,
+      "deadline_ms": 0,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "PreToolUse-Bash-chain",
+      "members": [
+        "./windows-bash-bridge-guard.js",
+        "./gui-app-console-inherit-guard.js",
+        "../skills/claude-power-pack/modules/zero-crash/hooks/process-sandbox.js",
+        "../skills/claude-power-pack/modules/zero-crash/hooks/ovo-push-gate.js",
+        "../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js",
+        "./quality-skill-gate.js",
+        "../skills/claude-power-pack/modules/rtk-core/rtk-rewrite.js",
+        "../skills/claude-power-pack/hooks/graph_first_gate.js",
+        "../skills/claude-power-pack/hooks/cascade_check_bash.js"
+      ],
+      "member_count": 9,
+      "concurrency": 4,
+      "deadline_ms": 0,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "PreToolUse-Edit-chain",
+      "members": [
+        "../skills/claude-power-pack/hooks/secret_firewall_gate.js",
+        "./secret-scanner.js",
+        "./quality-gate.js",
+        "./anti-thrash.js",
+        "./readonly-prompts-guard.js",
+        "../skills/claude-power-pack/modules/zero-crash/hooks/skill-heat-map-advisor.js",
+        "../skills/claude-power-pack/modules/zero-crash/hooks/zero-fiction-gate.js",
+        "./jobs-woz-gatekeeper.js",
+        "../skills/claude-power-pack/hooks/uqf_pre_edit_gate.js",
+        "../skills/claude-power-pack/hooks/claude_md_firewall.js",
+        "../skills/claude-power-pack/hooks/cdio_visual_advisory.js"
+      ],
+      "member_count": 11,
+      "concurrency": 6,
+      "deadline_ms": 0,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "PreToolUse-Read-chain",
+      "members": [
+        "./gatekeeper-semantic.js",
+        "./anti-thrash.js",
+        "../skills/claude-power-pack/hooks/graph_first_gate.js"
+      ],
+      "member_count": 3,
+      "concurrency": 3,
+      "deadline_ms": 0,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "SessionEnd-chain",
+      "members": [
+        "../skills/claude-power-pack/tools/ads_sync.py",
+        "../skills/claude-power-pack/modules/graphify/session_writeback.py",
+        "./trace-flusher.js",
+        "../skills/claude-power-pack/hooks/session_delta_stop.js",
+        "./learning-sentinel.js"
+      ],
+      "member_count": 5,
+      "concurrency": 0,
+      "deadline_ms": 0,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "Stop-chain",
+      "members": [
+        "./closer-guard.js",
+        "./zero-issue-gate.js",
+        "./kobiiclaw-autoresearch.js",
+        "./trace-flusher.js",
+        "./session-summary.js",
+        "./scaffold-auditor.js",
+        "./lazarus-snapshot.js",
+        "../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py",
+        "../skills/claude-power-pack/modules/zero-crash/hooks/ram-watchdog.js",
+        "./learning-sentinel.js",
+        "./vault-heartbeat.js",
+        "../skills/claude-power-pack/hooks/claude_md_linter_stop.js",
+        "../skills/claude-power-pack/hooks/mark-live-session.js",
+        "./research-intent-detector.js",
+        "../skills/claude-power-pack/hooks/background-verifier.js",
+        "../skills/claude-power-pack/hooks/jobs_woz_gate.js",
+        "../skills/claude-power-pack/hooks/jit_correlate_stop.js",
+        "../skills/claude-power-pack/hooks/session_snapshot_stop.js",
+        "../skills/claude-power-pack/hooks/output_contract_stop.js",
+        "../skills/claude-power-pack/tools/ads_sync.py",
+        "../skills/claude-power-pack/modules/graphify/session_writeback.py",
+        "../skills/claude-power-pack/tools/ceps_promote_stop.py",
+        "../skills/claude-power-pack/modules/fable_distillation/fd_07_flywheel.py",
+        "../skills/claude-power-pack/modules/frontier_intelligence/token_irr.py",
+        "../skills/claude-power-pack/hooks/session_delta_stop.js"
+      ],
+      "member_count": 25,
+      "concurrency": 8,
+      "deadline_ms": 0,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "UserPromptSubmit-chain",
+      "members": [
+        "./dead-closer-recovery.js",
+        "./correction-guard.js",
+        "./prd-keyword-sentinel.js",
+        "../skills/claude-power-pack/hooks/gsd_x_tier.js",
+        "../skills/claude-power-pack/hooks/d2a_gate.js",
+        "../skills/claude-power-pack/tools/jit_skill_loader.py"
+      ],
+      "member_count": 6,
+      "concurrency": 4,
+      "deadline_ms": 11500,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "UserPromptSubmit-deadline-drill-chain",
+      "members": [
+        "./tests/fixtures/drill-fast-critical.js",
+        "./tests/fixtures/drill-slow-straggler.js"
+      ],
+      "member_count": 2,
+      "concurrency": 0,
+      "deadline_ms": 1500,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "UserPromptSubmit-deadline-drill-control-chain",
+      "members": [
+        "./tests/fixtures/drill-fast-critical.js",
+        "./tests/fixtures/drill-pooled-fast.js"
+      ],
+      "member_count": 2,
+      "concurrency": 0,
+      "deadline_ms": 0,
+      "missing_on_disk": []
+    },
+    {
+      "chain": "UserPromptSubmit-deadline-drill-critstarve-chain",
+      "members": [
+        "./tests/fixtures/drill-slow-critical.js",
+        "./tests/fixtures/drill-spawn-sentinel.js"
+      ],
+      "member_count": 2,
+      "concurrency": 0,
+      "deadline_ms": 1500,
+      "missing_on_disk": []
+    }
+  ],
+  "settings": {
+    "PreToolUse": {
+      "handlers": 19,
+      "timeouts": [
+        5,
+        10,
+        15,
+        20,
+        30,
+        60,
+        120
+      ],
+      "routes_to_dispatcher": true
+    },
+    "PostToolUse": {
+      "handlers": 13,
+      "timeouts": [
+        5,
+        10,
+        15,
+        30
+      ],
+      "routes_to_dispatcher": true
+    },
+    "Stop": {
+      "handlers": 5,
+      "timeouts": [
+        5,
+        10,
+        300
+      ],
+      "routes_to_dispatcher": true
+    },
+    "UserPromptSubmit": {
+      "handlers": 2,
+      "timeouts": [
+        10,
+        15
+      ],
+      "routes_to_dispatcher": true
+    },
+    "SessionStart": {
+      "handlers": 14,
+      "timeouts": [
+        3,
+        5,
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "SessionEnd": {
+      "handlers": 3,
+      "timeouts": [
+        5,
+        10,
+        15
+      ],
+      "routes_to_dispatcher": false
+    },
+    "StopFailure": {
+      "handlers": 1,
+      "timeouts": [
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "SubagentStart": {
+      "handlers": 1,
+      "timeouts": [
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "SubagentStop": {
+      "handlers": 2,
+      "timeouts": [
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "TeammateIdle": {
+      "handlers": 1,
+      "timeouts": [
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "PostToolUseFailure": {
+      "handlers": 1,
+      "timeouts": [
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "PermissionRequest": {
+      "handlers": 1,
+      "timeouts": [
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "PreCompact": {
+      "handlers": 1,
+      "timeouts": [
+        10
+      ],
+      "routes_to_dispatcher": false
+    },
+    "FileChanged": {
+      "handlers": 1,
+      "timeouts": [
+        8
+      ],
+      "routes_to_dispatcher": false
+    }
+  },
+  "total_members": 69,
+  "timing_baseline": "UNMEASURED -- host at 4.7% free RAM when captured; a wall-clock reading under contention is not a measurement"
+}
