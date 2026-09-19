@@ -16,7 +16,7 @@ Enter. This module is what lets that chain be judged instead of trusted:
 CLI:
     python tools/gsd_long_run.py report  --session <sid>
     python tools/gsd_long_run.py status
-    python tools/gsd_long_run.py sweep   [--dry-run]
+    python tools/gsd_long_run.py sweep   [--dry-run] [--explain]
     python tools/gsd_long_run.py wait-ram [--floor 1500] [--timeout 600] [--session <sid>]
     python tools/gsd_long_run.py preflight --session <sid> --cwd <path> --command <cmd>
 """
@@ -44,6 +44,7 @@ RAM_FLOOR_MB = 1500
 DEFAULT_MAX_CYCLES = 12
 DEFAULT_MAX_HOURS = 24.0
 STALL_MINUTES = 20
+PHASE_STALL_MINUTES = 40
 DEAD_HOURS = 48
 TAIL_BYTES = 262144
 
@@ -622,6 +623,170 @@ def spawn_daemon() -> bool:
 
 
 # --------------------------------------------------------------------------- sweep
+SESSIONS_DIR_ENV = "GSD_LONG_RUN_SESSIONS_DIR"
+IDLE_TAIL_BYTES = 4 * 1024 * 1024
+
+
+def sessions_dir() -> Path:
+    override = os.environ.get(SESSIONS_DIR_ENV)
+    return Path(override) if override else CLAUDE_HOME / "sessions"
+
+
+def marker_project(marker: dict) -> Path | None:
+    """The run's project directory, or None when the marker cannot name it.
+
+    A marker's `cwd` is whatever the arming caller typed, and `/cpp-gsd-long`
+    documents `--cwd .`: measured 2026-09-19, 8 of 9 armed markers held `"."`.
+    The sweep reads them from its OWN directory, so a relative path resolves
+    against the reader rather than the run -- and `Path(".").is_dir()` is true
+    everywhere, which is what would let one project's `ALL_COMPLETE` unlink
+    every other project's marker and restore the wrong `.planning/config.json`.
+
+    So a relative `cwd` is not resolved, it is REFUSED. Newly armed markers
+    carry an absolute path (gsd_autorun_marker.resolve_cwd); the legacy ones
+    simply cannot be acted on by project, which is the honest reading of a
+    field that never recorded one.
+    """
+    raw = (marker or {}).get("cwd") or ""
+    if not raw:
+        return None
+    p = Path(raw)
+    if not p.is_absolute():
+        return None
+    return p if p.is_dir() else None
+
+
+def session_idle_seconds(transcript: Path) -> tuple[float, str]:
+    """Seconds since the SESSION last spoke, and which clock produced it.
+
+    The file's mtime is a proxy the conversation does not own: transcripts also
+    carry host metadata rows (`custom-title`, `cost-state`) that advance mtime
+    and carry no timestamp at all. Measured 2026-09-19 across nine armed
+    markers, the file clock ran up to **19.0 h** behind the conversation clock
+    on a 48 h reap threshold.
+
+    Returns ("conversation", ...) when a timestamped row was found in the tail,
+    else ("mtime", ...) -- the weaker reading is labelled rather than hidden, so
+    a reap taken on it is identifiable in the ledger afterwards.
+    """
+    now = time.time()
+    try:
+        size = transcript.stat().st_size
+        mtime_idle = now - transcript.stat().st_mtime
+    except OSError:
+        return 0.0, "unreadable"
+    try:
+        with open(transcript, "rb") as fh:
+            fh.seek(max(0, size - IDLE_TAIL_BYTES))
+            raw = fh.read()
+    except OSError:
+        return mtime_idle, "mtime"
+    lines = raw.split(b"\n")
+    if size > IDLE_TAIL_BYTES and lines:
+        lines = lines[1:]  # the first line is a fragment
+    for line in reversed(lines):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line.decode("utf-8", errors="replace"))
+        except Exception:
+            continue
+        if not isinstance(row, dict):
+            continue
+        ts = _parse_iso(row.get("timestamp")) if row.get("timestamp") else None
+        if ts is not None:
+            return now - ts, "conversation"
+    return mtime_idle, "mtime"
+
+
+def _pid_alive(pid: int) -> bool | None:
+    """True/False, or None when the question could not be asked.
+
+    Pid reuse can only produce a false LIVE here, which keeps a marker; it
+    cannot produce a false dead, so the registry's `procStart` is not consulted.
+    """
+    if not isinstance(pid, int) or pid <= 0:
+        return None
+    try:
+        if sys.platform == "win32":
+            import ctypes
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            k32 = ctypes.windll.kernel32
+            handle = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+            if not handle:
+                return False if k32.GetLastError() == 87 else None  # 87 = no such pid
+            code = ctypes.c_ulong()
+            ok = k32.GetExitCodeProcess(handle, ctypes.byref(code))
+            k32.CloseHandle(handle)
+            if not ok:
+                return None
+            return code.value == 259  # STILL_ACTIVE
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except Exception:
+        return None
+
+
+def session_liveness(session_id: str) -> str:
+    """"live" when a running CLI names this session, else "unknown". Never "dead".
+
+    The registry under ~/.claude/sessions/<pid>.json names the sessionId of a
+    running process, which is a far better liveness instrument than a file
+    mtime -- but it has false negatives on real sessions. Measured 2026-09-19:
+    `fa6961b6` had NO registry row while its transcript's last row was a `user`
+    row written 0.00 h earlier. So absence is `unknown`, and only presence
+    speaks; every error path fails open to `unknown` because an unreadable
+    registry must never become a licence to delete.
+    """
+    root = sessions_dir()
+    if not session_id or not root.is_dir():
+        return "unknown"
+    try:
+        entries = sorted(root.glob("*.json"))
+    except OSError:
+        return "unknown"
+    for path in entries:
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(data, dict) or data.get("sessionId") != session_id:
+            continue
+        alive = _pid_alive(data.get("pid"))
+        if alive is True:
+            return "live"
+        if alive is None:
+            return "unknown"  # a row we cannot check is not evidence of death
+    return "unknown"
+
+
+def reap_decision(session_id: str, transcript: Path | None) -> dict:
+    """Should this marker be reaped? Returns the verdict AND what held it back.
+
+    Two clauses, and the second is a conjunction on purpose: the clock says the
+    session has been silent, and liveness does not say it is running. An empty
+    sweep can then say why it is empty, per marker, instead of reading like a
+    sweep that judged nothing.
+    """
+    if transcript is None:
+        return {"reap": True, "reason": "transcript missing", "clock": "none",
+                "idle_h": None, "liveness": session_liveness(session_id)}
+    idle_s, clock = session_idle_seconds(transcript)
+    liveness = session_liveness(session_id)
+    idle_h = round(idle_s / 3600.0, 2)
+    if idle_s <= DEAD_HOURS * 3600:
+        return {"reap": False, "reason": f"spoke {idle_h} h ago (< {DEAD_HOURS} h)",
+                "clock": clock, "idle_h": idle_h, "liveness": liveness}
+    if liveness == "live":
+        return {"reap": False, "reason": f"silent {idle_h} h but a running CLI owns it",
+                "clock": clock, "idle_h": idle_h, "liveness": liveness}
+    return {"reap": True, "reason": f"idle {idle_h} h, liveness {liveness}",
+            "clock": clock, "idle_h": idle_h, "liveness": liveness}
+
+
 def _markers() -> list[tuple[Path, dict]]:
     out = []
     for path in sorted(state_dir().glob("gsd-autorun-*.json")):
@@ -683,10 +848,77 @@ def _recover_via_transport(sid: str, cwd: str, transcript: str, tail: str, cmd: 
     return "terminal-inbox"
 
 
-def sweep(now: float | None = None, dry_run: bool = False) -> list[dict]:
-    """One pass. Every action is also a ledger event, so the sweep audits itself."""
+def phase_boundary_owed(marker: dict, status: dict | None, tail: str, cmd: str,
+                        waiting: list, idle_s: float) -> dict:
+    """May this idle run be advanced across a PHASE boundary? {"ok", "reason"}.
+
+    The recover path resumes a run whose transcript ends on its own resume line
+    or a `/compact` line. A run that finished a phase and ENDED ON PROSE matches
+    neither, so it fell through to `stalled` and was never re-entered.
+
+    Measured 2026-09-18/19 on session fa6961b6 (KobiiSports Resort, Page 2):
+    armed 12:16Z, mission FRESH 5/5, budget 1/12 spent, verdict NO_CROSSINGS --
+    so the compaction path that owns the only resume was never reached. Phase
+    10.1 closed at 18:54 and the turn ended "Next is phase 11: pagination with
+    your cylinder, the arrow and the N/M indicator." The sweep then logged
+    `stalled` six times over fourteen hours against a transcript that could not
+    become resumable, while the milestone still had six actionable phases.
+
+    So the gap is structural, not a misconfiguration: /cpp-gsd-long has a
+    CONTEXT-boundary advance and no PHASE-boundary advance, and the two had been
+    read as one thing.
+
+    Every clause below REFUSES; none of them licenses. In particular:
+
+    * OPT-IN per marker. An already-armed run keeps its old behaviour, so this
+      cannot start typing into panes armed before it existed. A new field is
+      fail-open where a peer ignores it and fail-CLOSED here, because the
+      absence of the field means "do not advance".
+    * A QUESTION is never advanced past. A turn ending in `?` is the agent
+      asking its Owner something, and typing a resume over it answers for them.
+    * UNAVAILABLE is not actionable. `gsd_status` separates "could not ask" from
+      "0 phases"; only OK proves a next phase exists to advance to.
+    * An EMPTY tail is not evidence. The same session logged one `stalled` with
+      `last_line: ""`; nothing was observed there, so nothing is owed.
+    * Longer idle than the recover path (40 min vs 20), so a live conversation
+      between Owner and agent is never raced.
+
+    Budget and mission freshness are NOT checked here -- the caller puts them
+    through `resume_gate`, the same gate the watchdog uses, so an advance issued
+    from outside the session still spends a cycle and still halts on a stale
+    mission.
+    """
+    if marker.get("advance_on_phase_boundary") is not True:
+        return {"ok": False, "reason": "marker did not opt in to phase-boundary advance"}
+    if not cmd.startswith("/gsd-autonomous"):
+        return {"ok": False, "reason": f"phases are a GSD concept; command is {cmd!r}"}
+    if not status or status.get("outcome") != "OK":
+        outcome = (status or {}).get("outcome", "not asked")
+        return {"ok": False, "reason": f"no proven actionable phase (gsd outcome {outcome})"}
+    if waiting:
+        return {"ok": False, "reason": "a flag is already waiting for this session"}
+    if not tail:
+        return {"ok": False, "reason": "no assistant line observed; nothing is owed"}
+    if tail == cmd or tail.startswith("/compact"):
+        return {"ok": False, "reason": "resumable tail belongs to the recover path"}
+    if tail.rstrip().endswith("?"):
+        return {"ok": False, "reason": "turn ends on a question to the Owner"}
+    if idle_s < PHASE_STALL_MINUTES * 60:
+        return {"ok": False, "reason": f"idle {round(idle_s / 60)}m < {PHASE_STALL_MINUTES}m"}
+    return {"ok": True, "reason": f"phase boundary, gsd {status.get('reason') or 'OK'}"}
+
+
+def sweep(now: float | None = None, dry_run: bool = False,
+          explain: bool = False) -> list[dict]:
+    """One pass. Every action is also a ledger event, so the sweep audits itself.
+
+    `explain` adds one `kept` row per marker the reap path declined, naming the
+    clause that held it. A sweep that reaps nothing and a sweep that judged
+    nothing return the same empty list otherwise, and they are different facts.
+    """
     now = time.time() if now is None else now
     actions: list[dict] = []
+    kept: list[dict] = []
     cleared_projects: set[str] = set()
 
     for path, m in _markers():
@@ -695,25 +927,32 @@ def sweep(now: float | None = None, dry_run: bool = False) -> list[dict]:
         cwd = m.get("cwd") or ""
         transcript = find_transcript(sid)
         idle_s = (now - transcript.stat().st_mtime) if transcript else None
+        project = marker_project(m)
 
-        if transcript is None or idle_s > DEAD_HOURS * 3600:
-            why = "transcript missing" if transcript is None else f"idle {idle_s / 3600:.0f} h"
-            actions.append({"session_id": sid, "action": "reaped", "reason": why})
+        decision = reap_decision(sid, transcript)
+        if decision["reap"]:
+            why = decision["reason"]
+            actions.append({"session_id": sid, "action": "reaped", "reason": why,
+                            "clock": decision["clock"], "liveness": decision["liveness"]})
             if not dry_run:
                 path.unlink(missing_ok=True)
-                ledger_append(sid, "reaped", reason=why)
-                if cwd:
-                    cleared_projects.add(cwd)
+                ledger_append(sid, "reaped", reason=why, clock=decision["clock"],
+                              idle_h=decision["idle_h"], liveness=decision["liveness"])
+                if project is not None:
+                    cleared_projects.add(str(project))
             continue
+        kept.append({"session_id": sid, "held_by": decision["reason"],
+                     "clock": decision["clock"], "liveness": decision["liveness"]})
 
-        if cmd.startswith("/gsd-autonomous") and cwd and Path(cwd).is_dir():
-            st = gsd_status(cwd)
+        st = None
+        if cmd.startswith("/gsd-autonomous") and project is not None:
+            st = gsd_status(str(project))
             if st["outcome"] == "ALL_COMPLETE":
                 actions.append({"session_id": sid, "action": "finished", "reason": st["reason"]})
                 if not dry_run:
                     path.unlink(missing_ok=True)
                     ledger_append(sid, "finished", reason=st["reason"])
-                    cleared_projects.add(cwd)
+                    cleared_projects.add(str(project))
                 continue
 
         if idle_s < STALL_MINUTES * 60:
@@ -760,7 +999,12 @@ def sweep(now: float | None = None, dry_run: bool = False) -> list[dict]:
                 ledger_append(sid, "stalled", idle_min=round(idle_s / 60), last_line=tail[:120],
                               transcript_mtime=mtime)
 
-    live = {norm_dir(m.get("cwd") or "") for _, m in _markers()}
+    # Which projects a SURVIVING marker still needs, by absolute path. Built
+    # through marker_project so an unnameable `cwd` contributes nothing: the old
+    # `norm_dir(cwd or "")` resolved both "" and "." to the SWEEP's directory,
+    # which protected whatever project the sweep happened to run in and named no
+    # other correctly.
+    live = {norm_dir(p) for p in (marker_project(m) for _, m in _markers()) if p is not None}
     for project in cleared_projects:
         if norm_dir(project) in live:
             continue
@@ -772,6 +1016,8 @@ def sweep(now: float | None = None, dry_run: bool = False) -> list[dict]:
     if pending and not daemon_alive():
         spawned = False if dry_run else spawn_daemon()
         actions.append({"action": "daemon", "flags": len(pending), "spawned": spawned})
+    if explain:
+        actions.extend({"action": "kept", **k} for k in kept)
     return actions
 
 
@@ -844,6 +1090,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("status")
     s = sub.add_parser("sweep")
     s.add_argument("--dry-run", action="store_true")
+    s.add_argument("--explain", action="store_true",
+                   help="also report, per marker the reap path declined, which clause held it")
     w = sub.add_parser("wait-ram")
     w.add_argument("--floor", type=float, default=RAM_FLOOR_MB)
     w.add_argument("--timeout", type=float, default=600)
@@ -867,7 +1115,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(status(), indent=2))
         return 0
     if args.cmd == "sweep":
-        print(json.dumps(sweep(dry_run=args.dry_run), indent=2))
+        print(json.dumps(sweep(dry_run=args.dry_run, explain=args.explain), indent=2))
         return 0
     if args.cmd == "wait-ram":
         return wait_ram(args.floor, args.timeout, args.session)

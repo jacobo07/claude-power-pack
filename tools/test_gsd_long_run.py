@@ -34,10 +34,13 @@ TMP = Path(tempfile.mkdtemp(prefix="gsdlr-"))
 STATE = TMP / "state"
 HOOKS = TMP / "hooks"
 PROJECTS = TMP / "projects"
-for d in (STATE, HOOKS, PROJECTS):
+SESSIONS = TMP / "sessions"
+for d in (STATE, HOOKS, PROJECTS, SESSIONS):
     d.mkdir(parents=True)
 os.environ.update({"GSD_LONG_RUN_STATE_DIR": str(STATE), "GSD_LONG_RUN_HOOKS_DIR": str(HOOKS),
-                   "GSD_LONG_RUN_PROJECTS_DIR": str(PROJECTS), "GSD_LONG_RUN_NO_SPAWN": "1"})
+                   "GSD_LONG_RUN_PROJECTS_DIR": str(PROJECTS), "GSD_LONG_RUN_NO_SPAWN": "1",
+                   # the liveness instrument reads the session registry; never the Owner's
+                   "GSD_LONG_RUN_SESSIONS_DIR": str(SESSIONS)})
 
 passes = fails = 0
 
@@ -685,6 +688,125 @@ def gates_confirm_aperture():
           "a row older than `since` is still refused, so the window did not replace the clock")
 
 
+# ------------------------------------------------------------------ phase 4
+def _registry_row(session: str, pid: int) -> Path:
+    p = SESSIONS / f"{pid}.json"
+    p.write_text(json.dumps({"pid": pid, "sessionId": session, "status": "idle"}), encoding="utf-8")
+    return p
+
+
+def _dead_pid() -> int:
+    """A pid nothing owns. Spawn-and-wait, so the number is genuinely retired."""
+    r = subprocess.run([PY, "-c", "import os; print(os.getpid())"], capture_output=True, text=True)
+    return int(r.stdout.strip())
+
+
+def gates_reap_liveness():
+    """Phase 4. The reap path's two instruments, and the project it names.
+
+    Measured 2026-09-19 on nine live markers: the file-mtime clock ran up to
+    19.0 h behind the conversation clock on a 48 h threshold, and 8 of 9 markers
+    stored `cwd: "."`, which the sweep resolves against ITSELF.
+    """
+    for p in STATE.glob("gsd-autorun-*.json"):
+        p.unlink()
+    for p in SESSIONS.glob("*.json"):
+        p.unlink()
+    old = time.time() - 60 * 3600          # silent for 60 h, past DEAD_HOURS=48
+    dead_h = 60.0
+
+    # -- D1: the clock ------------------------------------------------------
+    # mtime is FRESH (something wrote metadata just now); the conversation is 60 h old.
+    s_quiet = sid()
+    t_quiet = transcript(s_quiet, "x", rows=[user_cmd("/gsd-autonomous", old),
+                                             {"type": "cost-state", "usd": 1.0}])
+    idle_s, clock = lr.session_idle_seconds(t_quiet)
+    check("V-GSDLR-REAP-CLOCK-IS-THE-CONVERSATION",
+          clock == "conversation" and abs(idle_s / 3600.0 - dead_h) < 0.2,
+          f"clock={clock} idle_h={idle_s / 3600.0:.2f} mtime_idle_h="
+          f"{(time.time() - t_quiet.stat().st_mtime) / 3600.0:.2f}")
+
+    # No timestamped row at all: the weaker clock is used AND labelled as such.
+    s_mt = sid()
+    t_mt = transcript(s_mt, "x", rows=[{"type": "custom-title", "title": "x"}], idle_s=60 * 3600)
+    idle_mt, clock_mt = lr.session_idle_seconds(t_mt)
+    check("V-GSDLR-REAP-MTIME-FALLBACK-IS-LABELLED",
+          clock_mt == "mtime" and abs(idle_mt / 3600.0 - dead_h) < 0.2,
+          f"clock={clock_mt} idle_h={idle_mt / 3600.0:.2f}")
+
+    # -- D2: liveness -------------------------------------------------------
+    check("V-GSDLR-LIVENESS-NO-ROW-IS-UNKNOWN", lr.session_liveness(s_quiet) == "unknown",
+          f"{lr.session_liveness(s_quiet)}")
+    r_live = _registry_row(s_quiet, os.getpid())
+    check("V-GSDLR-LIVENESS-RUNNING-PID-IS-LIVE", lr.session_liveness(s_quiet) == "live",
+          f"pid={os.getpid()} -> {lr.session_liveness(s_quiet)}")
+    check("V-GSDLR-REAP-LIVE-SESSION-VETOES-THE-CLOCK",
+          lr.reap_decision(s_quiet, t_quiet)["reap"] is False
+          and "running CLI" in lr.reap_decision(s_quiet, t_quiet)["reason"],
+          f"{lr.reap_decision(s_quiet, t_quiet)}")
+    r_live.unlink()
+    # A row naming a pid nobody owns is not evidence of death either -- pid files
+    # go stale, and only PRESENCE speaks. Measured: fa6961b6 was actively
+    # conversing with no registry row at all.
+    r_dead = _registry_row(s_quiet, _dead_pid())
+    check("V-GSDLR-LIVENESS-DEAD-PID-IS-STILL-UNKNOWN", lr.session_liveness(s_quiet) == "unknown",
+          f"{lr.session_liveness(s_quiet)}")
+    d = lr.reap_decision(s_quiet, t_quiet)
+    check("V-GSDLR-REAP-SILENT-AND-NOT-LIVE", d["reap"] is True and d["clock"] == "conversation"
+          and d["liveness"] == "unknown", f"{d}")
+    r_dead.unlink()
+    check("V-GSDLR-REAP-MISSING-TRANSCRIPT-STILL-REAPS",
+          lr.reap_decision(sid(), None)["reap"] is True, "no transcript")
+
+    # -- D3: the project ----------------------------------------------------
+    proj = project("x")
+    check("V-GSDLR-PROJECT-ABSOLUTE-RESOLVES", lr.marker_project({"cwd": str(proj)}) == proj,
+          f"{lr.marker_project({'cwd': str(proj)})}")
+    check("V-GSDLR-PROJECT-REFUSES-RELATIVE",
+          lr.marker_project({"cwd": "."}) is None and lr.marker_project({"cwd": ""}) is None
+          and lr.marker_project({"cwd": "x"}) is None, "'.' / '' / 'x' all refused")
+    # Asserted on what write_marker STORES, not on resolve_cwd's return: the
+    # first version of this gate called the helper directly, and a mutation that
+    # put the raw `cwd` back into the payload survived the whole suite.
+    s_arm = sid()
+    armed = json.loads(mk.write_marker(s_arm, "/gsd-autonomous", ".").read_text(encoding="utf-8"))
+    s_blank = sid()
+    blank = json.loads(mk.write_marker(s_blank, "/gsd-autonomous", "").read_text(encoding="utf-8"))
+    check("V-GSDLR-MARKER-ARMS-ABSOLUTE-CWD",
+          Path(armed["cwd"]).is_absolute() and lr.marker_project(armed) is not None
+          and blank["cwd"] == "", f"stored cwd={armed['cwd']!r} blank={blank['cwd']!r}")
+
+    # The hazard in one gate: ALL_COMPLETE in whatever project the sweep runs in
+    # must not finish a marker that never named a project.
+    s_rel = sid(); m_rel = _marker_file(s_rel, cwd=".")
+    transcript(s_rel, "x", rows=[asst("working")])
+    os.environ["_TEST_GSD_STATUS"] = gsd("ALL_COMPLETE")
+    acts = lr.sweep(dry_run=True, explain=True)
+    os.environ.pop("_TEST_GSD_STATUS", None)
+    check("V-GSDLR-RELATIVE-CWD-CANNOT-BE-FINISHED",
+          not any(a.get("session_id") == s_rel and a["action"] == "finished" for a in acts)
+          and m_rel.exists(), f"{[a for a in acts if a.get('session_id') == s_rel]}")
+
+    # -- an empty sweep that can say why it is empty -------------------------
+    kept = [a for a in acts if a["action"] == "kept" and a.get("session_id") == s_rel]
+    check("V-GSDLR-SWEEP-EXPLAIN-NAMES-THE-CLAUSE",
+          len(kept) == 1 and "ago" in kept[0]["held_by"] and kept[0]["liveness"] == "unknown",
+          f"{kept}")
+    check("V-GSDLR-SWEEP-EXPLAIN-IS-OPT-IN",
+          not any(a["action"] == "kept" for a in lr.sweep(dry_run=True)), "no kept rows by default")
+
+    # -- the reap's own instrument, recorded --------------------------------
+    s_reap = sid(); m_reap = _marker_file(s_reap)
+    transcript(s_reap, "x", rows=[user_cmd("/gsd-autonomous", old)])
+    lr.sweep()
+    row = [e for e in lr.ledger_events(s_reap) if e.get("event") == "reaped"]
+    check("V-GSDLR-REAP-LEDGERS-ITS-INSTRUMENT",
+          not m_reap.exists() and row and row[-1].get("clock") == "conversation"
+          and row[-1].get("liveness") == "unknown" and row[-1].get("idle_h") is not None,
+          f"{row}")
+    m_rel.unlink(missing_ok=True)
+
+
 def main() -> int:
     try:
         gates_preflight()
@@ -695,6 +817,7 @@ def main() -> int:
         gates_sweep()
         gates_compact_tail()
         gates_confirm_aperture()
+        gates_reap_liveness()
         gates_report()
         gates_config()
         gates_cli()

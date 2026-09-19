@@ -66,6 +66,26 @@ def validate_command(command: str) -> str:
     return cmd
 
 
+def resolve_cwd(cwd: str) -> str:
+    """Absolutise the project at ARMING time, where the answer is knowable.
+
+    `/cpp-gsd-long` documents `--cwd .`, and a marker that stores `"."` is read
+    later by a sweep running in its OWN directory -- so the relative path
+    resolves against the reader instead of the run. Measured 2026-09-19: 8 of 9
+    armed markers held `"."`, and `Path(".").is_dir()` is true everywhere, which
+    is what makes the finish path able to unlink another project's marker.
+
+    Empty stays empty: it means *unknown*, and turning it into the arming
+    process's directory would be the same guess one layer earlier.
+    """
+    if not cwd:
+        return ""
+    try:
+        return str(Path(cwd).resolve())
+    except OSError:
+        return cwd
+
+
 def write_marker(session_id: str, command: str, cwd: str = "",
                  phase: int | None = None, max_cycles: int | None = None,
                  max_hours: float | None = None) -> Path:
@@ -75,7 +95,7 @@ def write_marker(session_id: str, command: str, cwd: str = "",
     payload = {
         "session_id": session_id,
         "resume_command": cmd,
-        "cwd": cwd,
+        "cwd": resolve_cwd(cwd),
         "phase": phase,
         "ts": now,
         "armed_at": now,
@@ -197,7 +217,32 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         _lr.ledger_append(args.session, "armed", command=args.command, cwd=args.cwd,
                           max_cycles=data.get("max_cycles"), max_hours=data.get("max_hours"))
+        # Path stays the FIRST line: it is this command's machine-readable result and
+        # callers parse it. Everything after is for the human/agent reading the terminal.
         sys.stdout.write(str(path) + "\n")
+        # ARMING IS NOT STARTING. Measured 2026-09-19 across this estate's own ledger:
+        # 4 of 9 markers had been armed with no evidence a run ever began, three of them
+        # from different sessions. The failure is not carelessness -- it is that a marker
+        # and lowered thresholds make a run SURVIVE a compaction while launching nothing,
+        # and `gsd_long_run.py status` reports an armed-and-idle run exactly the way it
+        # reports a healthy one. Worse, every event that would distinguish them
+        # (crossing / resume_requested / resume_confirmed) only fires at the FIRST
+        # compaction, which can be hours away -- so in between, a started run and an
+        # abandoned one are indistinguishable by construction.
+        #
+        # A sentence in the command doc did not travel to this moment; three sessions
+        # proved that. This does, because it is printed at the instant of the mistake.
+        sys.stdout.write(
+            "\n"
+            "  ARMED -- BUT NOTHING IS RUNNING YET.\n"
+            "  The marker only makes a run survive a compaction. It starts nothing.\n"
+            "\n"
+            f"  NEXT STEP (required, not optional):   {args.command}\n"
+            "\n"
+            "  Invoke that now. If you stop here you have configured compaction-survival\n"
+            "  for a run that never began, and `gsd_long_run.py status` will show it as a\n"
+            "  healthy armed run for as long as it sits there.\n"
+        )
         return 0
 
     if args.read:
