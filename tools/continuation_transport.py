@@ -54,6 +54,20 @@ ORCA_CLI_DEFAULT = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Orca
 NODE_DEFAULT = Path(r"C:\Program Files\nodejs\node.exe")
 
 CLI_TIMEOUT_S = 45
+# The FIRST Orca CLI call of a freshly spawned worker pays a cold Electron/node
+# start. Measured 2026-09-19 on this host at 551 MB free, same instant, same
+# command (`terminal list --json`, all three returning ok):
+#     cold 101,628 ms  |  warm 7,272 ms  |  warm 7,268 ms
+# CLI_TIMEOUT_S was sized against the warm path (6.4x headroom) and is blind to
+# the cold one (0.44x -- a guaranteed loss). Since `spawn_delivery` starts a new
+# process per delivery, the first call is ALWAYS cold, so the transport failed
+# most reliably on the one attempt a crossing gets: session de7f3c91 lost both
+# its compact (46 s) and, 40 minutes later, its resume (50 s) to exactly this.
+#
+# This is a budget, not a raised ceiling. A cold start is a known fixed cost and
+# is paid once and explicitly; CLI_TIMEOUT_S stays tight so that genuine
+# slowness is still caught on every subsequent call.
+COLD_START_BUDGET_S = 180
 IDLE_WAIT_MS = 120_000
 CONSUME_WAIT_S = 120
 CONSUME_POLL_S = 3
@@ -140,16 +154,40 @@ def _cli_prefix() -> list[str]:
     return [str(NODE_DEFAULT), str(ORCA_CLI_DEFAULT)]
 
 
-def orca(args: list[str], timeout: float = CLI_TIMEOUT_S) -> dict:
-    """Run one Orca CLI call. Returns the JSON envelope, or {"ok": False, "error": {...}}."""
+_WARM = False
+
+
+def _reset_warm() -> None:
+    """Forget that the cold start was paid. For gates; never called in production."""
+    global _WARM
+    _WARM = False
+
+
+def orca(args: list[str], timeout: float | None = None) -> dict:
+    """Run one Orca CLI call. Returns the JSON envelope, or {"ok": False, "error": {...}}.
+
+    `timeout=None` means "decide": the cold budget until this process has
+    actually run the CLI once, the tight warm ceiling thereafter. An explicit
+    timeout from the caller is always honoured unchanged -- the tui-idle wait
+    sets its own, and it must not be widened by this.
+    """
+    global _WARM
+    if timeout is None:
+        timeout = CLI_TIMEOUT_S if _WARM else COLD_START_BUDGET_S
     try:
         p = subprocess.run(_cli_prefix() + args + ["--json"], capture_output=True, text=True,
                            encoding="utf-8", errors="replace", timeout=timeout,
                            creationflags=0x08000000 if os.name == "nt" else 0)
     except subprocess.TimeoutExpired:
+        # Warm even on a timeout: the dominant cold cost is the interpreter and
+        # asar image reaching the OS file cache, and a killed process leaves
+        # that paid. This is what makes the retry in list_terminals() cheap.
+        _WARM = True
         return {"ok": False, "error": {"code": "cli_timeout", "message": f"{args[:2]} > {timeout}s"}}
     except Exception as exc:
         return {"ok": False, "error": {"code": "cli_unavailable", "message": exc.__class__.__name__}}
+    # The CLI ran to completion, so the cold cost is paid whatever it answered.
+    _WARM = True
     try:
         env = json.loads(p.stdout or "")
     except Exception:
@@ -158,7 +196,18 @@ def orca(args: list[str], timeout: float = CLI_TIMEOUT_S) -> dict:
 
 
 def list_terminals() -> tuple[str, list]:
+    """The first CLI call of a delivery, so the one that pays any cold start.
+
+    A `cli_timeout` here is retried EXACTLY once. By the retry the interpreter
+    and asar image are cached, so the second call runs on the warm path (7.3 s
+    measured against a 45 s ceiling) -- which is why one retry is enough and a
+    loop would be superstition. Only cli_timeout is retried: a provider that
+    answered `runtime_unavailable` has told us something true, and repeating
+    the question does not make it less true.
+    """
     env = orca(["terminal", "list"])
+    if (env.get("error") or {}).get("code") == "cli_timeout":
+        env = orca(["terminal", "list"])
     if not env.get("ok"):
         return (env.get("error") or {}).get("code") or "unknown", []
     return "OK", list(((env.get("result") or {}).get("terminals")) or [])
