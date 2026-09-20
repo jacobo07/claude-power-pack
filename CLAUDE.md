@@ -40,6 +40,18 @@ Absorbed from SimoneAvogadro/android-reverse-engineering-skill (Apache-2.0, v1.5
 Prerequisites are jadx + JDK 17+; JDK is present at `Apps\jdk-17`, **jadx is not installed** — the skill's own `scripts/install-dep.ps1` handles it on first use. The decompile wrappers are absorbed unexercised; the first real decompile is their first test.
 DONE for this absorption = `python tools/test_android_re.py` exit 0 (V-ARE-* gates, run from the repo root). Phase 0 and Phase 3.5 are driven from both poles, and the gate exercises `check-deps.ps1` for real — upstream's PowerShell scripts aborted on PS 5.1 whenever Java was actually installed (`NativeCommandError`), which is patched and pinned.
 
+## Mobile Game -> Wii Port Activation Criteria (added 2026-09-20)
+Invoke the `mobile-game-wii-port` skill (`skills/mobile-game-wii-port/`) when ANY of these hold, objectively evaluable, no "when appropriate" judgment call:
+- Owner asks to port a mobile/commercial game to the Wii, or names ABSW2 / a WBFS / boot.dol target for a game that exists on another platform.
+- Owner asks what engine a game binary runs, or to read, decrypt or extract a game's packed asset corpus.
+- Owner asks whether to port a scripting runtime or extract its data.
+Do not wait to be named.
+**There is no APK-to-WBFS conversion and the skill must never imply one.** The pipeline is APK corpus -> verified portable content model -> NEW native runtime -> Wii artifact. Framing it as a conversion is the same class of error as the source programme's R-01 and is pinned in `vault/specs/mobile-game-wii-port.md`.
+**Phase 0 runs first and is not optional**: `python skills/mobile-game-wii-port/core/fingerprint_game.py <apk>`. It reads runtime literals out of native binaries, never symbol names (symbol names do not survive stripping, so that scan cannot tell absent from invisible — R-03). When it routes `JAVA_KOTLIN`, the corpus belongs to `android-reverse-engineering`, not here; when it routes `NATIVE_ENGINE`, jadx is not worth the time.
+Distilled from the Owner's ABSW2-Wii programme (`C:\Users\User\Desktop\Cursor Projects\Wii Projects\ABSW2-Wii`), read at the state sealed by W3b-2. Read `skills/mobile-game-wii-port/NOTICE.md` and `references/retractions.md` before asserting an absence or reading a crypto table as a finding. `wii-dev-best-practices` owns everything downstream of a built DOL; `/absw2-continue` stays bound to that one programme.
+**Shipping status is asymmetric and must stay so**: `boot.dol` for the Homebrew Channel / USB Loader is the proven path; the DOL->ISO->WBFS wrap is documented and **UNPROVEN** — no ISO or WBFS has been produced and none has run on hardware.
+DONE for this absorption = `python tools/test_mobile_game_wii_port.py` exit 0 (V-MGWP-* gates, run from the repo root). Every detector is driven from both poles on real byte shapes, and `UNKNOWN` is asserted as reachable rather than only as a default.
+
 ## Experience Contract — baseline for any interactive surface (CDIO-07, added 2026-08-24)
 A surface is judged at rest by CDIO-01..06. How it BEHAVES — on touch, and while it waits —
 is declared, not settled by whoever writes the last component. Baseline, inherited by every
