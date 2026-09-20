@@ -1,3 +1,54 @@
+# POST-INCIDENT STATE (2026-09-20) — /cpp-gsd-long: what is settled, what blocks C7
+
+Commits this wave, all pushed: `15bcdbe` `ba540f2` `27a7094` `d92bcc9`.
+
+**DO NOT RE-LITIGATE WITHOUT NEW EVIDENCE — three premises measured FALSE:**
+1. **The host DOES write `compact_boundary`.** Three rows in session 37cfb187's
+   transcript, newest `2026-09-20T12:43:08Z`. F2 as written is retracted; the one
+   `compaction_unobserved` was a compaction that never happened. Do not weaken C4.
+2. **There is no rearm deadlock.** The advisory flag cleared on its own and the
+   next Stop resumed at `used_pct=24.0`.
+3. **The overlay does not fire every Stop.** It is once-per-session AND 180 s
+   throttled. A `used_pct=?` heartbeat line is the overlay branch; every other
+   line is the normal path.
+
+**CLOSED (`15bcdbe`).** `_run_inner` returned the auto-reset advisory before the
+whole continuation path (used_pct stamp, endpoint refresh, resume confirmation,
+rearm, post-compaction resume, snapshot, crossing, `/compact`). Once-per-session,
+so one Stop — but it fires on context pressure, the same condition that produces
+a crossing. Armed runs now keep the path; unarmed behaviour unchanged.
+`tools/test_watchdog_overlay_precedence.py` 4/4, mutation 3/4 on its own
+assertion, SHA-256 restore verified.
+
+**THE BLOCKER IS F5, NOT THE WALL.** The run re-entered itself with zero human
+input (`resume_requested` → `resume_dispatched` → inbox ack `status:"sent"`,
+`terminal:"claude"`, correct `window_cwd`) and `/gsd-autonomous` executed — but
+**no user row records the submission**, so `user_issued_command_since` reads
+False and `resume_confirmed` cannot fire. On 2026-09-19 the same flow left
+`type=user, isMeta=True` at `09:08:06.552Z` and confirmed. Already excluded by
+measurement: late flush, the 8 MB window, the time bound. Control: the Owner's
+typed messages ARE recorded. **Do not weaken the C6 oracle to close this.** The
+discriminating observation is the next watchdog-initiated crossing, watched live
+end to end.
+
+**Also true and easy to misread:** the 2026-09-20 12:43 compaction was run by the
+Owner. Every rung after it behaved, but an Owner-triggered crossing cannot count
+toward C7.
+
+**Gate state at this tree:** GSDLR 93/93 · GSDAC 26/26 · OVLY 4/4 · OVERLAY_GUARD
+4/4 · REARM 8/8 (names this run's wall `(35,40,30)` as accepted). ACPS is
+**non-attributable**, not green and not a regression: with and without the change
+the failure SETS differ in both directions, 6 fail in both, and two runs of
+identical code gave 31/38 and 32/38 — measured at 610 processes / 20 concurrent
+claude sessions / 1.9 GB free. A valid ACPS verdict on a quiet host is owed.
+
+**Marker:** armed `2026-09-20T11:23:29Z`, `cycles 1/12`, `max_hours 24`, wall
+`{35,40,30}` stamped in the marker, mission FRESH (5/5 terms).
+
+**Two-pane positive leg, negative half: DONE and live.** 33 other live panes
+examined with the product's own predicate at a real delivery; zero touched. No
+window opened, no Owner action. Pane A's half is blocked on F5, not on a pane.
+
 # POST-INCIDENT STATE (2026-09-18, read before the router below)
 
 **Hook substrate restored.** All six dispatcher chains were dark 2026-09-16 20:02 → 2026-09-18
