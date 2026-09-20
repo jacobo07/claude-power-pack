@@ -143,6 +143,42 @@ is never written by this mission and never rolled back.
   UKDL (dedup-checked; two join existing families by reference rather than restatement),
   and `04_W3_AUTHORITY.md` as the authority classification of record.
 
+- **W4 · probe evidence** — `ca54685`. The handoff called `cdicf-installer` and
+  `spec_depth_selection` probe debt. **Only one was.** `probe_spec_depth_selection` already
+  existed, was registered, and RAN; it abstains because the incident record holds **99**
+  entries against a floor of **200**. `cdicf-installer` had no probe and its condition looked
+  EXTERNAL — the cause is (npm gaining transactional provenance), the condition's terminal
+  clause is not ("making a CDICF-specific installer redundant"), and redundancy is settled
+  here. `probe_cdicf_installer` measures the MECHANISM (journal · provenance · recover) plus
+  a production consumer of the record the installer writes: verdict ACTIVE, 4 consumers.
+  The sample floor also sat AHEAD of the hit scan, so the probe could return UNEVALUABLE and
+  nothing else — fixed by placement, **not** by lowering 200, and pinned by a pair of gates.
+- **W4 · contract store** — `4ae8e30`. Applying the classification **deleted three fields**
+  from `cdicf-installer.json` (`_matcher_note`, `verification_obligations`,
+  `minimum_runtime_version`) and escaped every em dash. A dataclass round-trip keeps only
+  declared fields; `save_contract` wrote the reduced document over the original. Saves now
+  MERGE over what is on disk. `V-CAPRT-ROUNDTRIP` could not have caught it — it saves a
+  record built in memory into an empty directory.
+- **W4 · external ownership** — `35465dd`. `retirement.py` separates EXTERNAL from
+  UNEVALUABLE on purpose; W3's migration mapped both to UNKNOWN. With the owner NAMED,
+  external is a closed question, so `cost_routing` and `premise_verification` classify by
+  Owner transition (own actor, authority-only disclaimer in the evidence). An external entry
+  with no named owner stays UNKNOWN — the fail-closed default, driven on a synthetic subject.
+  **UNKNOWN 4 → 1.**
+- **W4 · repository identity** — `dd1f66a`. W3 fixed "our worktree does not look like us"
+  and left the mirror: an unrelated repo under a path containing `claude-power-pack` reads as
+  the Power Pack for ever, because the substring fast path answers before any resolution.
+  Replaced, not patched: `repo_identity.is_power_pack` reads the repository's CONTENTS
+  (majority of 5 structural marks) through the worktree resolver. Two W3 gates INVERTED IN
+  PLACE; identity 15/15 → 17/17.
+- **W4 · mutation harness** — `e104f83`. `mutation_probe.py --plan` drives named
+  (file, old, new, suite) edits through the harness's own bytecode defences, with
+  HARNESS-FAILED as a third outcome when an anchor has rotted. This session's 14 mutations
+  are committed as `vault/governance/mutation_plans/ucr_cif_w4.json` and are re-runnable.
+- **W4 · knowledge** — `fe87d34`. Five mission traps, six UKDL rules + one amendment
+  (`T-PATH-SUBSTRING-IDENTITY-001` EXTENDED, not duplicated), and **Axis C-2** inside the
+  existing Apex Axis C — when an unknown population may be CLOSED.
+
 **UNMEASURED (not zero, not fine)**
 
 - **Hook/mission latency timing.** Host was at **1,499 MB free of 32,061 (4.7 %)**, 31
@@ -173,29 +209,45 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions
+## 4. Next three actions — frontier RECALCULATED 2026-09-20, order changed
 
-1. **Pay the probe debt, and shrink the UNKNOWN ratchet.** Four capabilities are UNKNOWN:
-   `cdicf-installer` and `spec_depth_selection` are **probe debt this repository can pay**
-   (write a deterministic probe in `capability_runtime/retirement.py::PROBES`);
-   `cost_routing` and `premise_verification` are EXTERNAL and may never be probeable, so they
-   need an Owner classification instead, not a probe. Then
-   `tools/capability_lifecycle_migrate.py --apply` and delete the resolved ids from
-   `vault/capability_runtime/lifecycle_ratchet.json`. Paying `cdicf-installer` also closes
-   the pre-existing `V-UCEIMR-G2-COVERAGE` failure, which has the same root cause.
-   **Highest leverage**: at UNKNOWN=0, tightening UNKNOWN into WITHDRAWN is a one-line
-   change with no population left to break, and the lifecycle becomes fully fail-closed.
+The W3 ordering put "more evidence families" second. Measurement moved it: **the 996
+authoritative dispositions have no consumer.** Two independent sweeps for
+`disposition_ledger` across the estate return only its own producer
+(`modules/ucr_cif/disposition_ledger.py`), its adjudicator
+(`tools/ucr_cif_adjudicate.py`), its own test, and documentation. Nothing reads the
+`disposition` field to decide anything. That is exactly the shape Axis C was written for —
+an evaluator that proposes and a selector that decides, both correct, never joined — and it
+means driving 503 more units into that pile adds classification without closure.
+
+1. **Give the authoritative dispositions a consumer. HIGHEST LEVERAGE.** 996 units are
+   settled and inert. Find the real selector by measurement, not by name (W3's lesson: the
+   store called "ledger" was not the authority), then join them so a disposition CHANGES a
+   decision — and prove it at both poles, since a consumer that selects nothing passes the
+   negative case. Until this exists, every later wave adds rows to a store with no effect,
+   and the Reality Contract's "zero status stored without consumer" is open by 996.
 2. **Drive the 503 ABSTAIN down with a second evidence family.** The structural adjudicator
    promotes on SYMBOL / FILENAME / REGISTRY and abstains when a term is held by more than 3
-   owners. The families named in the brief and NOT yet built are: explicit owner
-   declaration, test ownership, command/hook ownership, and git history. Each is structural
-   and none is lexical. Do **not** loosen `DISTINCTIVE_MAX_HOLDERS` to raise coverage — that
-   is coverage bought by forcing false certainty, and the number was derived from the
-   measured distribution (median 3 of held terms).
-3. **W4 — construction observation + privacy projection.** EXTEND `session_delta` /
+   owners. Families named in the brief and NOT yet built: explicit owner declaration, test
+   ownership, command/hook ownership, git history. Each is structural, none lexical. Do
+   **not** loosen `DISTINCTIVE_MAX_HOLDERS` to raise coverage — the number came from the
+   measured distribution (median 3 of held terms), and loosening it buys coverage with false
+   certainty.
+3. **W5 — construction observation + privacy projection.** EXTEND `session_delta` /
    `omnicapture`; all global egress through the `secret_firewall` URB. Exactly-once identity
    so a retry or resume cannot duplicate an institutional record. Red-branch fixtures:
    planted secret, prompt injection from a repo file, poisoned evidence.
+
+**Carried, not forgotten.** (a) `spec_depth_selection` stays UNKNOWN as a named EVIDENCE
+FRONTIER — 99 incident records of 200 — and **the UNKNOWN→withdrawn tightening must not be
+executed while it stands**; it resolves when the estate's incident record grows, not by code.
+(b) The identity fix is committed here and **NOT SHIPPED**: the live installed copy at
+`~/.claude/skills/claude-power-pack` still carries the old substring test and has no
+`main_repo_root`, so the Stop-time FIOS advisory the Owner sees is a stale deployment. That
+tree is the other writer's live checkout — Concurrency=A forbids writing it and HR-001
+forbids writing under `~/.claude/` regardless. **Owner-side step:** merge
+`ucr-cif/construction` into `main` (or mirror `modules/repo_identity/` and
+`modules/fable_distillation/federated_ledger.py`) and the warning stops at the next Stop.
 
 ## 5. Start instruction
 
@@ -205,3 +257,10 @@ of `03_MISSION_TRAPS.md` before proposing any construction — **the correct pri
 named systems are already owned at equal or greater maturity**, and `HR-NOVELTY-001` requires
 a 13-question proof against a *discovered* sweep before any new institutional system is
 admitted. Then execute action 1.
+
+Re-run this session's evidence in one command before trusting any of it:
+
+    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w4.json
+
+ALL_CAUGHT 14/14 at `fe87d34`. A HARNESS-FAILED line means an anchor has rotted against the
+source, which is a stale plan and never a verdict about the suites.
