@@ -356,7 +356,23 @@ def main() -> int:
             return 2
         production_reality(home)
     finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+        # The junction points AT this worktree, so the cleanup is a recursive
+        # delete aimed at the repository. Observed safe across every run --
+        # rmtree unlinks a reparse point rather than descending through it --
+        # but "it did not delete the repo the last four times" is not a
+        # guarantee anyone should rely on. Drop the link first, then REFUSE to
+        # recurse while it is still there.
+        try:
+            if link is not None and link.exists():
+                os.rmdir(link)
+        except OSError:
+            pass
+        if link is not None and link.exists():
+            print(f"  NOTE  left {tmp} in place: the junction at {link} could "
+                  "not be removed, and a recursive delete through it could "
+                  "reach the repository.")
+        else:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     total = PASSES + FAILS
     print(f"\nDISPOSITION_CONSUMPTION_PASS={PASSES}/{total}  "
