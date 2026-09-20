@@ -1,0 +1,65 @@
+{
+  "id": "reconstruction_parity",
+  "name": "Reconstruction Parity",
+  "owner": "modules/osr",
+  "sovereign_question": "Does the candidate behave as the reference, on inputs nobody has shown it yet?",
+  "scope": [
+    "behavioral parity between a reference and a candidate",
+    "reference-candidate differential execution",
+    "earliest divergence attribution"
+  ],
+  "non_scope": [
+    "architecture reconstruction",
+    "acquiring the reference evidence",
+    "publishing a fidelity number",
+    "investigating the cause of a divergence",
+    "deciding what to build"
+  ],
+  "triggers": [
+    "port",
+    "faithfully",
+    "fidelity",
+    "parity",
+    "reimplement",
+    "reference implementation"
+  ],
+  "anti_triggers": [
+    "port number",
+    "port forwarding",
+    "serial port"
+  ],
+  "prerequisites": [],
+  "required_evidence": [
+    "source"
+  ],
+  "inputs": [
+    "a captured reference observation",
+    "a candidate build"
+  ],
+  "outputs": [
+    "per-instrument MATCH/DIFF/UNMEASURED",
+    "earliest divergence index"
+  ],
+  "consumers": [
+    "Claude Code",
+    "modules/craif",
+    "Owner"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "medium",
+  "context_cost": "medium",
+  "operational_cost": "medium",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "critical",
+  "maturity": "developing",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "delete this contract file; the tier returns to its floor answer",
+  "kill_switch": "",
+  "retirement_condition": "the candidate holds a parity verdict over a blind holdout the implementation path never saw, and the reference is retired as oracle",
+  "parent": "",
+  "version": "1.0.0"
+}
