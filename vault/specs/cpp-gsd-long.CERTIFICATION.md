@@ -446,6 +446,39 @@ the pane that owns the session and no other (C5, 6/6 live), and the line it
 carries is really submitted (this section). What remains for C7 is not the
 transport.
 
+**F6 — a submitted `/compact` can fail with EBUSY, and that is probably what
+`compaction_unobserved` has always been.** The fix above was then exercised on
+the REAL session, and the delivery worked: the line was typed and submitted,
+and `/compact` ran. The compaction itself failed:
+
+    Error during compaction: EBUSY: resource busy or locked, open
+    '\\?\C:\Users\User\.claude\projects\...\37cfb187-....jsonl'
+
+Measured immediately afterwards: nothing held the file — an exclusive
+`ReadWrite/None` open succeeded — so the lock was TRANSIENT and contemporaneous
+with the submission. The mechanism is specific. A compaction rewrites the
+transcript, and on Windows a rename/replace fails while any open handle lacks
+`FILE_SHARE_DELETE`, which CPython's default `open()` does not request. The
+delivery lands at TURN END, which is exactly when the Stop chain runs its six
+unconditional transcript-scaling members (`lazarus-snapshot`,
+`mark-live-session`, `research-intent-detector`, `session_snapshot_stop`,
+`output_contract_stop`, `ceps_promote_stop`), and `session-snapshot.py` was
+observed alive at the time.
+
+So a PP hook reading the transcript can block the host from compacting it, and
+the observable is a `/compact` that was genuinely submitted and produced no
+boundary row. **That is the signature this certificate previously recorded as
+"a compaction that never happened" (§9d, the 2026-09-19
+`compaction_unobserved`).** That earlier reading said the line was never
+submitted; this one says it was submitted and the rewrite was refused. The
+second fits the evidence better and is now the leading explanation, though the
+09-19 event itself cannot be re-measured. C4 is unaffected either way: it
+requires a boundary row and correctly reported its absence both times.
+
+This is an own-goal of the same family as the rest of the day: the estate's own
+instruments are part of the system under test, and here they are plausibly
+preventing the very effect the run is trying to produce.
+
 **One claim examined and dropped rather than recorded.** A pane sitting in
 `status: waiting` defers every delivery, which looked like a silent deadlock
 for an unattended run. It is not: `decide` refuses a request as `expired`
