@@ -276,12 +276,51 @@ _NOVELTY_SHAPE = re.compile(
 )
 
 
+#: The question UCR-CIF's authoritative dispositions are able to answer. When
+#: the corpus already holds adjudicated evidence that a named owner holds the
+#: concept, this generic question is REPLACED by one named question per owner.
+#: Matched by identity against NOVELTY_PROOF_QUESTIONS, never by index -- a
+#: reordered tuple would otherwise silently retarget the substitution.
+_OWNERSHIP_QUESTION = "Why is extending an existing owner insufficient?"
+
+
 @dataclass
 class NoveltyGateResult:
     applies: bool
     matched: str | None
     questions: tuple[str, ...]
     message: str
+    #: The UCR-CIF selection this verdict was compiled from, or None when the
+    #: corpus was not consulted. Present so a downstream obligation can be
+    #: traced back to the corpus units that produced it without parsing prose.
+    routing: object | None = None
+
+
+def _ucr_routing(task_description: str):
+    """(selection, obligation_text) from the authoritative disposition corpus.
+
+    UCR-CIF W5. This gate's own contract is that a name without a verified
+    owner gap is not proof -- only cited non-ownership is -- and for six
+    consecutive audits that sweep was run by hand at real Owner cost. W3
+    adjudicated it once, 996 units with named owners, and W4 measured that
+    nothing read the result. This is the join: the sweep this gate asks for,
+    already done, filtered to the units that are actually about the proposal.
+
+    Fail-open by contract, in the safe direction: any failure yields no
+    routing, so the gate falls back to asking for the sweep. It never yields
+    an owner the corpus did not name, and a failure is never reported as
+    evidence that nothing is owned.
+    """
+    import os
+    if os.environ.get("CLAUDEPP_UCR_ROUTING_DISABLE") == "1":
+        return None, None
+    try:
+        from modules.ucr_cif.disposition_consumer import (
+            routing_obligation, select_for)
+        sel = select_for(task_description)
+        return sel, routing_obligation(sel)
+    except Exception:  # noqa: BLE001 -- institutional state never blocks a gate
+        return None, None
 
 
 def check_novelty_gate(task_description: str) -> NoveltyGateResult:
@@ -304,10 +343,35 @@ def check_novelty_gate(task_description: str) -> NoveltyGateResult:
             applies=False, matched=None, questions=(),
             message="No new-mega-system signal detected -- gate not required.")
 
+    # The corpus is consulted ONLY once the signal has fired, so a mission
+    # that is not proposing a new institutional system pays nothing at all.
+    #
+    # Guarded HERE as well as inside the helper, and the two guards have
+    # different scopes rather than being a duplicate: the inner one keeps a
+    # corpus failure from becoming a routing failure, and this one keeps a
+    # ROUTING failure from becoming a GATE failure. Without it a raise in the
+    # helper takes down the whole novelty verdict on a UserPromptSubmit path,
+    # which the hook then swallows fail-open -- losing the thirteen questions
+    # as well as the owners. Found by the drill that makes the helper raise.
+    try:
+        sel, obligation = _ucr_routing(task_description)
+    except Exception:  # noqa: BLE001
+        sel, obligation = None, None
+    questions = NOVELTY_PROOF_QUESTIONS
+    if obligation:
+        named = tuple(
+            f"Why is extending {o.owner} insufficient? "
+            f"({o.units} authoritative UCR-CIF disposition(s) name it)"
+            for o in sel.owners)
+        questions = tuple(
+            q for q in NOVELTY_PROOF_QUESTIONS if q != _OWNERSHIP_QUESTION
+        ) + named
+
     return NoveltyGateResult(
-        applies=True, matched=hit, questions=NOVELTY_PROOF_QUESTIONS,
+        applies=True, matched=hit, questions=questions, routing=sel,
         message=(
-            f"Novelty-system signal detected ({hit!r}). Before treating this "
+            (obligation + "\n\n" if obligation else "")
+            + f"Novelty-system signal detected ({hit!r}). Before treating this "
             "as a new dataset family, answer all 13 questions above with "
             "cited file:line evidence from a DISCOVERED sweep of this repo "
             "(grep for the mechanism, not the name) -- never from the "
