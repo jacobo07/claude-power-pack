@@ -10186,6 +10186,49 @@ observations from opposite causes, which is the one thing an instrument may not 
 the effect requires, assert it at the cheapest point that can still refuse, and print the
 evidence (here the whole ancestor chain) so the reason is read rather than deduced.
 
+### HR-CONT-04 — an advisory may be layered onto a load-bearing path, never swapped in
+Sealed 2026-09-20, commit `15bcdbe`. `context-watchdog.py::_run_inner` opened with
+`overlay = _orchestrator_overlay(event); if overlay: return overlay`. Below that line sat the
+entire continuation mechanism: the used_pct stamp, the endpoint refresh, the resume
+confirmation, the rearm, the post-compaction resume, the snapshot, the crossing and the
+`/compact` instruction. TRIGGER: adding or reordering any early return in a hook an autonomous
+run depends on. ACCIÓN: STOP and enumerate what lives BELOW the return, then ask which of it an
+armed run needs. An advisory that says strictly more may supersede a weaker advisory; it may
+never supersede the path the run is standing on. Stash it and surface it only where the
+load-bearing path had nothing of its own to say. EXCEPCIÓN: none.
+
+### T-CONT-12 — a rate limit bounds an advisory's noise, never its interference
+Same incident. The overlay was once-per-session, which reads as a small blast radius and is
+not one: it fires on CONTEXT PRESSURE, the same condition that produces a crossing, so the
+single Stop it can consume is the one most likely to be carrying one. Noise and interference
+are different quantities and throttling only addresses the first. Whenever a limiter is
+offered as the reason a defect is minor, ask WHICH event it takes, not how many.
+Detector: give the load-bearing path a field the early return cannot reach — here
+`_LAST["used_pct"]`, so `used_pct=?` in `logs/context-watchdog.log` names the branch in one
+read. A missing line cannot; an impossible value can.
+
+### T-CONT-13 — a manual probe can consume the one-shot event it was written to measure
+Same session, and it cost the diagnosis. Timing the watchdog by hand against the LIVE session
+fired the once-per-session advisory and set its flag, so the probe spent the subject's only
+remaining instance and the resulting silence was then read as a permanent deadlock. It was
+not: the next real Stop took the normal path at `used_pct=24.0` and requested the resume.
+Before invoking any hook by hand against a live session, enumerate its one-shot side effects
+(flags, stamps, saved state) and either drive a synthetic session id or pre-stamp the throttle.
+`tools/test_gsd_autocompact.py::_stamp_orch_throttle` already existed for exactly this reason —
+the lesson was in the suite and did not travel to a scratchpad probe.
+
+### PR-CONT-06 — delivery is not submission, and a spent budget is not a landed effect
+Measured 2026-09-20. `resume_requested` → `resume_dispatched` → terminal-inbox ack
+`status:"sent"`, `terminal:"claude"`, `window_cwd` correct → and the marker's `cycles`
+incremented to 1. `/gsd-autonomous` then executed. Yet no user row recorded the submission, so
+`user_issued_command_since` read False and `resume_confirmed` could not fire; on 2026-09-19 the
+same flow left `type=user, isMeta=True` at 09:08:06.552Z and confirmed. Control: the Owner's
+own typed messages that day ARE recorded, so the host had not stopped recording. An ack states
+that the transport ACCEPTED the request; the postcondition is the submitted row. Keep the three
+apart — requested, dispatched, confirmed — and never let the middle one close the cycle.
+Corollary: a budget consumed at REQUEST time is spent even when the effect never lands. That is
+the correct at-most-once posture AND a leak; whichever is chosen must be stated, not inherited.
+
 
 - [tooling/powershell:g] `ceps_c1b34010b02dc23a` -- Tool failure in powershell:g: fatal: 'origin'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
