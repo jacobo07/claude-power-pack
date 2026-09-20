@@ -104,7 +104,27 @@ async function processInbox() {
         term.sendText(req.text, false);
         await new Promise((r) => setTimeout(r, ENTER_DELAY_MS));
         term.sendText("\r", false);
-        writeAck(req.session_id, { ...ack, status: "sent", terminal: term.name });
+        // SECOND ENTER (2026-09-20). The slash-command completion popup eats
+        // the first one. Observed by the Owner in this pane: after a delivery
+        // whose ack read "sent", the prompt still held `/compact` and its
+        // argument line, unsubmitted. That single behaviour explains both
+        // standing failures -- a `/compact` that was "delivered" while no
+        // compaction ever happened, and a resume that executed without
+        // leaving the ordinary user row `user_issued_command_since` looks
+        // for, so `resume_confirmed` could never fire.
+        //
+        // It cannot double-submit. On the path where the first Enter DID
+        // submit, the prompt is empty, and Enter on an empty prompt is a
+        // no-op in this TUI. The failure mode this ADDS is one harmless empty
+        // Enter; the one it REMOVES is an autonomous run stopping in silence
+        // while every instrument reports success.
+        await new Promise((r) => setTimeout(r, ENTER_DELAY_MS));
+        term.sendText("\r", false);
+        // `status:"sent"` still asserts only that the calls were made -- it is
+        // not a postcondition, and PR-CONT-06 says so. `enters` at least makes
+        // the ack say WHAT was done, so a future reader can tell a two-Enter
+        // delivery from a one-Enter one without guessing at the build.
+        writeAck(req.session_id, { ...ack, status: "sent", terminal: term.name, enters: 2 });
       }
       try { fs.unlinkSync(claimed); } catch (_e) { /* the ack is the record */ }
     }
