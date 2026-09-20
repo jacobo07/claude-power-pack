@@ -265,6 +265,50 @@ compaction the host records, and it cannot recognise one the host does not.
 Whether every compaction path writes that row is now an OPEN question about the
 host, not about this code, and it is the first thing to measure next.
 
+## 9c. F3 — the guard that decides the run's survival was never heard (2026-09-20)
+
+F1 explained why a 45 % reading passed a 40 % wall. It did not explain the
+silence that followed: after the wall was restored, **the watchdog logged
+nothing at all for this session across many ended turns**, so no crossing could
+be requested however high the context climbed.
+
+The sibling comparison localised it in one read. The watchdog was alive and
+judging — 240 lines that day, including a live session whose transcript is
+**53.8 MB** judged in 1995 ms, which also kills the obvious hypothesis that this
+session's 11.5 MB transcript had outgrown it. Only this session was missing.
+
+`hook-dispatcher-errors.log` names the cause:
+
+```
+10:27:26Z  [Stop-chain] context-watchdog.py   Error: ETIMEDOUT after 20000ms
+10:49:12Z  [Stop-chain] ten members reported ETIMEDOUT within 8 ms
+```
+
+Ten hooks failing in the same instant is not ten slow hooks; it is **the whole
+chain being abandoned at its deadline**, which takes the members that had
+already finished with it. One of that chain's members carries a 70,000 ms
+timeout.
+
+The dispatcher had met this before and answered by raising the watchdog's
+ceiling 6,000 → 20,000 ms, closing the note with the right test: *"Whether that
+is enough is now an observable, not an assumption: logs/context-watchdog.log."*
+**The observable has answered: it was not.** Raising moved the cliff, which is
+what this estate's own doctrine predicts — the fix is scheduling, not budget.
+
+So the hook is now in the Stop chain's **critical lane**, which runs before the
+pool opens, uncontended, alongside the dead-screen guard. The counter-argument
+in the note it replaces was real and was measured rather than dismissed: the
+lane runs sequentially on every turn, so the ordinary path is what matters.
+Timed alone against the 11.5 MB transcript at 3.5 GB free, n=5: 463 / 1183 /
+1523 / 3037 / 6823 ms, **median 1523**. The lane totals about 3 s per turn end,
+against a measured alternative of the run stalling for eleven hours with every
+gate green.
+
+This is the third instance in this estate of one shape, and it is worth naming
+plainly: **a guard that runs, is correct, and cannot be heard is
+indistinguishable from one that approved.** Here the silence was read for
+eleven hours as "the run is fine".
+
 ## 9. The honest summary
 
 The machinery of `/cpp-gsd-long` is proven part by part, and two of its three
