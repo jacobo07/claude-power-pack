@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import ast
 import hashlib
+import json
 import os
 import subprocess
 import sys
@@ -203,6 +204,102 @@ def probe(suite: Path, module: Path, max_mutants: int = DEFAULT_MAX_MUTANTS) -> 
     return result
 
 
+def directed(plan: list, plan_name: str = "plan") -> dict:
+    """Run a DIRECTED mutation plan: named edits an author chose, not sampled ones.
+
+    `probe` answers "does this suite notice arbitrary damage?". A reviewer
+    usually wants the sharper question -- "does this suite notice the ONE change
+    that removes the property I just claimed?" -- and AST sampling cannot be
+    aimed at it. That gap is why W4 hand-rolled four throwaway drills in a
+    scratchpad, and the first thing they did was reproduce the stale-bytecode
+    failure this file had already solved, documented and defended against on
+    line 110. The knowledge was written down and the defence was real; what was
+    missing was a way to REACH them when aiming a mutation, so the next session
+    inherits the hardening instead of the advice.
+
+    Each entry is {name, file, old, new, suite, why}. Anchors are byte strings,
+    read and written as bytes, because `write_text` translates LF to CRLF on
+    Windows and silently diverges the file it is measuring.
+
+    An anchor that does not match EXACTLY ONCE is HARNESS-FAILED, never a pass
+    and never a survivor: a plan whose anchors have rotted must be loud, since
+    "the suite caught nothing because nothing was mutated" and "the suite caught
+    nothing" are the same observable and need opposite fixes.
+    """
+    res: dict = {"plan": plan_name, "caught": [], "survived": [],
+                 "harness_failed": [], "restored_intact": True}
+    for entry in plan:
+        name = entry.get("name", "?")
+        target = REPO_ROOT / entry["file"]
+        suite = REPO_ROOT / entry["suite"]
+        old = entry["old"].encode("utf-8") if isinstance(entry["old"], str) \
+            else entry["old"]
+        new = entry["new"].encode("utf-8") if isinstance(entry["new"], str) \
+            else entry["new"]
+        if not target.is_file() or not suite.is_file():
+            res["harness_failed"].append(f"{name}: missing file or suite")
+            continue
+        src = target.read_bytes()
+        digest = hashlib.sha256(src).hexdigest()
+        hits = src.count(old)
+        if hits != 1:
+            res["harness_failed"].append(
+                f"{name}: anchor matched {hits} time(s) in {entry['file']} "
+                "-- the plan has rotted against the source")
+            continue
+        try:
+            target.write_bytes(src.replace(old, new))
+            _purge_cache(target)
+            try:
+                rc = _run(suite)
+            except subprocess.TimeoutExpired:
+                res["harness_failed"].append(f"{name}: suite TIMEOUT")
+                continue
+        finally:
+            target.write_bytes(src)
+            _purge_cache(target)
+            if hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+                res["restored_intact"] = False
+        row = {"name": name, "why": entry.get("why", ""),
+               "file": entry["file"], "suite": entry["suite"]}
+        (res["caught"] if rc != 0 else res["survived"]).append(row)
+
+    c, s, h = (len(res["caught"]), len(res["survived"]),
+               len(res["harness_failed"]))
+    res["counts"] = {"caught": c, "survived": s, "harness_failed": h}
+    if h:
+        res["verdict"] = "HARNESS-FAILED"
+        res["reason"] = f"{h} entr(ies) could not be driven; no verdict is implied"
+    elif c + s == 0:
+        res["verdict"] = "UNMEASURABLE"
+        res["reason"] = "the plan is empty"
+    elif s:
+        res["verdict"] = "SURVIVORS"
+        res["reason"] = f"{c} caught, {s} SURVIVED"
+    else:
+        res["verdict"] = "ALL_CAUGHT"
+        res["reason"] = f"all {c} directed mutation(s) were caught"
+    return res
+
+
+def render_directed(res: dict) -> str:
+    lines = [f"DIRECTED_MUTATION plan={res['plan']}",
+             f"  verdict={res['verdict']}  {res.get('reason', '')}"]
+    for row in res["caught"]:
+        lines.append(f"  CAUGHT    {row['name']}  -- {row['why']}")
+    for row in res["survived"]:
+        lines.append(f"  SURVIVED  {row['name']}  -- {row['why']}")
+    for msg in res["harness_failed"]:
+        lines.append(f"  HARNESS   {msg}")
+    if not res["restored_intact"]:
+        lines.append("  WARNING   a subject was NOT restored byte-identical; "
+                     "run `git checkout -- <file>`")
+    c = res["counts"]
+    lines.append(f"DIRECTED_MUTATION_PASS={c['caught']}/"
+                 f"{c['caught'] + c['survived'] + c['harness_failed']}")
+    return "\n".join(lines)
+
+
 def render(res: dict) -> str:
     lines = [f"MUTATION_PROBE suite={res['suite']} module={res['module']}",
              f"  verdict={res['verdict']}  {res.get('reason', '')}"]
@@ -222,11 +319,26 @@ def render(res: dict) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Does this suite catch a real defect?")
-    ap.add_argument("--suite", required=True)
-    ap.add_argument("--module", required=True)
+    ap.add_argument("--suite")
+    ap.add_argument("--module")
     ap.add_argument("--max", type=int, default=DEFAULT_MAX_MUTANTS)
+    ap.add_argument("--plan", help="a directed mutation plan (JSON list)")
     args = ap.parse_args(argv)
 
+    if args.plan:
+        p = REPO_ROOT / args.plan
+        if not p.is_file():
+            print(f"no such plan: {p}")
+            return 2
+        res = directed(json.loads(p.read_text(encoding="utf-8-sig")), p.name)
+        print(render_directed(res))
+        # A survivor and a plan that could not be driven are both failures, and
+        # they are reported separately because they need opposite fixes.
+        return 0 if res["verdict"] == "ALL_CAUGHT" else 1
+
+    if not (args.suite and args.module):
+        print("--suite and --module are required without --plan")
+        return 2
     suite, module = REPO_ROOT / args.suite, REPO_ROOT / args.module
     for p in (suite, module):
         if not p.is_file():

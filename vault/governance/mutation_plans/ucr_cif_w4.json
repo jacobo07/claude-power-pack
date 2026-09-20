@@ -1,0 +1,114 @@
+[
+  {
+    "name": "M1-probe-registration-removed",
+    "file": "modules/capability_runtime/retirement.py",
+    "suite": "tools/test_uceimr_residues.py",
+    "old": "    \"cdicf-installer\": (probe_cdicf_installer,",
+    "new": "    \"cdicf-installer-OFF\": (probe_cdicf_installer,",
+    "why": "the causal claim for V-UCEIMR-G2-COVERAGE: removing only the registration must reintroduce the exact pre-W4 failure"
+  },
+  {
+    "name": "M2-floor-back-ahead-of-hits",
+    "file": "modules/capability_runtime/retirement.py",
+    "suite": "tools/test_capability_probe_evidence.py",
+    "old": "    if hits:",
+    "new": "    if hits and len(recs) >= _MIN_INCIDENT_SAMPLE:",
+    "why": "presence below the sample floor would stop being positive evidence, and the probe could answer UNEVALUABLE and nothing else"
+  },
+  {
+    "name": "M3-tests-count-as-consumers",
+    "file": "modules/capability_runtime/retirement.py",
+    "suite": "tools/test_capability_probe_evidence.py",
+    "old": "            if p.name.startswith(\"test_\") or p.name.startswith(\"test-\"):",
+    "new": "            if False:",
+    "why": "a test reading the record would count as proof the installer's guarantees are load-bearing"
+  },
+  {
+    "name": "M4-absent-root-reads-as-retired",
+    "file": "modules/capability_runtime/retirement.py",
+    "suite": "tools/test_capability_probe_evidence.py",
+    "old": "        return None, (\"modules/cdicf is absent -- this root cannot observe the \"",
+    "new": "        return True, (\"modules/cdicf is absent -- this root cannot observe the \"",
+    "why": "ABSENT would collapse into RETIRED (kernel vMAX-NULL-ERROR)"
+  },
+  {
+    "name": "M5-guarantees-unchecked",
+    "file": "modules/capability_runtime/retirement.py",
+    "suite": "tools/test_capability_probe_evidence.py",
+    "old": "    if missing:",
+    "new": "    if False:",
+    "why": "an installer that only copies bytes would satisfy a contract that names transaction, provenance and recovery"
+  },
+  {
+    "name": "E1-external-owner-unnamed",
+    "file": "modules/capability_runtime/retirement.py",
+    "suite": "tools/test_external_owner_classification.py",
+    "old": "        owner=\"the frontier-model pricing market (per-token list prices \"\r\n              \"published by the model vendors)\",",
+    "new": "        owner=\"\",",
+    "why": "a NAMED owner is what turns an external condition from a gap into a closed question"
+  },
+  {
+    "name": "E2-authority-disclaimer-dropped",
+    "file": "tools/capability_lifecycle_migrate.py",
+    "suite": "tools/test_external_owner_classification.py",
+    "old": "            row[\"evidence_extra\"] = [f\"external_owner:{owner}\",\r\n                                     _EXTERNAL_DISCLAIMER]",
+    "new": "            row[\"evidence_extra\"] = [f\"external_owner:{owner}\"]",
+    "why": "without it, lifecycle=active on an externally-owned capability reads as 'the external thing works'"
+  },
+  {
+    "name": "E3-classify-without-an-owner",
+    "file": "tools/capability_lifecycle_migrate.py",
+    "suite": "tools/test_external_owner_classification.py",
+    "old": "        elif status == R.EXTERNAL and R.external_owner(c.id):\r\n            owner = R.external_owner(c.id)",
+    "new": "        elif status == R.EXTERNAL:\r\n            owner = R.external_owner(c.id) or \"unknown\"",
+    "why": "an external condition nobody owns would be promoted on no argument at all"
+  },
+  {
+    "name": "E4-classification-actors-collapsed",
+    "file": "tools/capability_lifecycle_migrate.py",
+    "suite": "tools/test_external_owner_classification.py",
+    "old": "ACTOR_EXTERNAL = \"owner-classification:ucr-cif-w4-external\"",
+    "new": "ACTOR_EXTERNAL = \"migration:ucr-cif-w3\"",
+    "why": "the lifecycle log could no longer say which institutional act decided a classification"
+  },
+  {
+    "name": "S1-contract-save-stops-merging",
+    "file": "modules/capability_runtime/contract.py",
+    "suite": "tools/test_capability_runtime.py",
+    "old": "    doc.update(c.to_dict())",
+    "new": "    doc = c.to_dict()",
+    "why": "a lifecycle transition would again delete every contract key the dataclass does not model"
+  },
+  {
+    "name": "S2-contract-save-escapes-ascii",
+    "file": "modules/capability_runtime/contract.py",
+    "suite": "tools/test_capability_runtime.py",
+    "old": "    tmp.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + \"\\n\",",
+    "new": "    tmp.write_text(json.dumps(doc, indent=2) + \"\\n\",",
+    "why": "a one-field change would reflow the whole file as \\uXXXX escapes"
+  },
+  {
+    "name": "I1-substring-identity-restored",
+    "file": "modules/fable_distillation/federated_ledger.py",
+    "suite": "tools/test_repo_identity_worktree.py",
+    "old": "        from modules.repo_identity import is_power_pack\r\n        return is_power_pack(repo or \"\")",
+    "new": "        return \"claude-power-pack\" in (repo or \"\")",
+    "why": "the W3 worktree defect AND its mirror both return; reproduces the original advisory byte-for-byte"
+  },
+  {
+    "name": "I2-identity-requires-no-marks",
+    "file": "modules/repo_identity/identity.py",
+    "suite": "tools/test_repo_identity_worktree.py",
+    "old": "_PP_MARKS_REQUIRED = 3",
+    "new": "_PP_MARKS_REQUIRED = 0",
+    "why": "every repository on the machine becomes the Power Pack. NOTE: this edit is byte-length preserving, which is exactly the shape that leaves a stale .pyc valid when the restore lands in the same second -- the reason this plan must be driven by mutation_probe rather than by hand"
+  },
+  {
+    "name": "I3-worktree-resolver-bypassed",
+    "file": "modules/repo_identity/identity.py",
+    "suite": "tools/test_repo_identity_worktree.py",
+    "old": "        root = Path(main_repo_root(path))",
+    "new": "        root = Path(canonical_repo(path))",
+    "why": "a linked worktree stops resolving to the repository it belongs to"
+  }
+]
