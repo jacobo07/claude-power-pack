@@ -113,6 +113,31 @@ def _thresholds_from_file(session_id: str):
         return None
 
 
+def _thresholds_from_marker(session_id: str):
+    """The wall recorded in the RUN'S OWN record, or None.
+
+    The sidecar has no owner: measured 2026-09-19, this estate's thresholds file
+    was removed by something iterating the armed markers, the watchdog fell back
+    to the production constants, and a 45 % reading passed a 40 % wall for eleven
+    hours while `status`, `report` and every gate stayed green. The marker is
+    written when a run is armed and deleted when it ends, so its lifetime IS the
+    run's -- which makes it the right place for the parameter the run exists to
+    prove. Validated on read like every other source: a hand-edited marker is not
+    a licence.
+    """
+    try:
+        # Ask the module that OWNS markers where this one lives. Resolving the
+        # path here instead would disagree with the writer the moment the two
+        # state directories differ, which is precisely the failure mode the
+        # sibling `_thresholds_from_file` docstring warns about.
+        mk = _load_tool("gsd_autorun_marker")
+        data = mk.read_marker(session_id) if mk is not None else None
+        wall = (data or {}).get("wall") or {}
+        return valid_thresholds(wall.get("snapshot"), wall.get("advisory"), wall.get("rearm"))
+    except Exception:
+        return None
+
+
 def _thresholds(session_id: str = "") -> tuple:
     """(snapshot, advisory, rearm) for THIS session.
 
@@ -130,6 +155,15 @@ def _thresholds(session_id: str = "") -> tuple:
     from_file = _thresholds_from_file(session_id) if session_id else None
     if from_file is not None:
         return from_file
+    # The sidecar is gone but the run still declares a wall: use it, and SAY SO.
+    # A wall that silently reverts to the production constants is the defect
+    # (2026-09-19, eleven hours); a wall that heals itself without a trace would
+    # be the same defect wearing a better outcome.
+    from_marker = _thresholds_from_marker(session_id) if session_id else None
+    if from_marker is not None:
+        _ledger_once(session_id, "wall_restored_from_marker",
+                     snapshot=from_marker[0], advisory=from_marker[1], rearm=from_marker[2])
+        return from_marker
     raw = os.environ.get("CTXWD_TEST_THRESHOLDS", "")
     if raw:
         try:
@@ -506,6 +540,28 @@ def _ledger(session_id: str, event: str, **fields) -> None:
     lr = _load_tool("gsd_long_run")
     if lr is not None:
         lr.ledger_append(session_id, event, **fields)
+
+
+def _ledger_once(session_id: str, event: str, **fields) -> bool:
+    """Ledger this event once per (session, event, values), never on every Stop.
+
+    `_thresholds()` runs on every turn, so an unconditional row would bury the
+    ledger the verdict is derived from. The sentinel carries the values, so a
+    SECOND reversion to different thresholds still speaks.
+    """
+    try:
+        base = os.environ.get("GSD_LONG_RUN_STATE_DIR") or (Path.home() / ".claude" / "state")
+        key = "-".join(str(fields[k]) for k in sorted(fields)) or "x"
+        sentinel = Path(base) / f"ctxwd-{event}-{session_id}-{key}.flag"
+        if sentinel.exists():
+            return False
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_text(
+            _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"), encoding="utf-8")
+    except Exception:
+        return False        # a sentinel we cannot write must not silence the run
+    _ledger(session_id, event, **fields)
+    return True
 
 
 def _resume_clause(marker) -> str:

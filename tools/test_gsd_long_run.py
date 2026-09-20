@@ -42,7 +42,7 @@ os.environ.update({"GSD_LONG_RUN_STATE_DIR": str(STATE), "GSD_LONG_RUN_HOOKS_DIR
                    # the liveness instrument reads the session registry; never the Owner's
                    "GSD_LONG_RUN_SESSIONS_DIR": str(SESSIONS)})
 
-passes = fails = 0
+passes = fails = inconclusive = 0
 
 
 def check(gate, cond, ev):
@@ -53,6 +53,19 @@ def check(gate, cond, ev):
     else:
         fails += 1
         print(f"FAIL {gate}: {ev}")
+
+
+def skip(gate, why):
+    """This run could not judge its subject, which is not a verdict about it.
+
+    A gate whose precondition was unavailable and a gate whose subject was wrong
+    are different evidence, and only one of them is about the code. Counted
+    separately so a host that starves mid-run cannot manufacture a red, and so
+    a suite that judged nothing cannot read like a clean one.
+    """
+    global inconclusive
+    inconclusive += 1
+    print(f"SKIP {gate}: INCONCLUSIVE -- {why}")
 
 
 def load(path: Path, name: str):
@@ -156,12 +169,22 @@ def gates_preflight():
     check("V-GSDLR-PRE-GSD-UNAVAILABLE-DISTINCT", not ok and "could not ask GSD" in why, why)
     os.environ.pop("_TEST_GSD_STATUS", None)
 
-    if ABSW2.is_dir():
-        st = lr.gsd_status(ABSW2)
-        check("V-GSDLR-REAL-GSD-ABSW2", st["outcome"] == "NO_PHASES" and st.get("phase_count") == 0,
-              f"real gsd-tools on ABSW2 -> {st}")
+    if not ABSW2.is_dir():
+        skip("V-GSDLR-REAL-GSD-ABSW2", f"{ABSW2} absent on this host")
     else:
-        check("V-GSDLR-REAL-GSD-ABSW2", False, f"INCONCLUSIVE: {ABSW2} absent on this host")
+        st = lr.gsd_status(ABSW2)
+        if st["outcome"] == "UNAVAILABLE":
+            # `gsd_status` itself says UNAVAILABLE means "we could not ask", and
+            # this gate used to call that a FAIL -- reporting a verdict about the
+            # subject on a run that never reached it. Measured 2026-09-20: the
+            # node call timed out at 45 s with the host at 711 MB free of 32 GB,
+            # passed after reaping, and failed again under load. A gate that goes
+            # red on memory pressure trains everyone to ignore red.
+            skip("V-GSDLR-REAL-GSD-ABSW2", f"could not ask gsd-tools: {st.get('reason')}")
+        else:
+            check("V-GSDLR-REAL-GSD-ABSW2",
+                  st["outcome"] == "NO_PHASES" and st.get("phase_count") == 0,
+                  f"real gsd-tools on ABSW2 -> {st}")
 
 
 # ------------------------------------------------------------------ gap 11 + 7
@@ -688,6 +711,65 @@ def gates_confirm_aperture():
           "a row older than `since` is still refused, so the window did not replace the clock")
 
 
+def gates_wall_survives_its_sidecar():
+    """The wall must not vanish silently when its sidecar does.
+
+    Measured 2026-09-19: something iterated the armed markers and cleared their
+    thresholds files; `_thresholds()` fell back to the production constants and
+    a 45 % reading passed a 40 % wall for eleven hours while `status` said armed,
+    `report` said PARTIAL and every gate stayed green.
+    """
+    wd = load(WATCHDOG, "ctxwd_wall_sidecar")
+    prod = (wd.THRESHOLD_SNAPSHOT_PCT, wd.THRESHOLD_ADVISORY_PCT, wd.THRESHOLD_REARM_PCT)
+    s = sid()
+    mk.write_marker(s, "/gsd-autonomous", str(ROOT))
+    lr.write_thresholds(s, "35,40,30", reason="gate")
+
+    marker = json.loads(mk.marker_path(s).read_text(encoding="utf-8"))
+    check("V-GSDLR-WALL-STAMPED-ON-MARKER",
+          (marker.get("wall") or {}).get("advisory") == 40.0
+          and (marker.get("wall") or {}).get("rearm") == 30.0,
+          f"marker wall={marker.get('wall')}")
+
+    # The sidecar disappears the way it did in production: the file, nothing else.
+    lr.thresholds_path(s).unlink()
+    for p in STATE.glob(f"ctxwd-wall_restored_from_marker-{s}-*.flag"):
+        p.unlink()
+    restored = wd._thresholds(s)
+    check("V-GSDLR-WALL-SURVIVES-SIDECAR-LOSS", restored == (35.0, 40.0, 30.0),
+          f"sidecar gone -> {restored} (production would be {prod})")
+    rows = [e for e in lr.ledger_events(s) if e.get("event") == "wall_restored_from_marker"]
+    check("V-GSDLR-WALL-RESTORATION-IS-AUDIBLE", len(rows) == 1 and rows[-1].get("advisory") == 40.0,
+          f"{rows}")
+    wd._thresholds(s); wd._thresholds(s)
+    rows2 = [e for e in lr.ledger_events(s) if e.get("event") == "wall_restored_from_marker"]
+    check("V-GSDLR-WALL-RESTORATION-SAYS-IT-ONCE", len(rows2) == 1,
+          f"{len(rows2)} rows after three resolutions")
+
+    # A deliberate clear must mean what it says: BOTH homes, or `--clear` is a
+    # no-op wearing the costume of an instruction.
+    lr.write_thresholds(s, "35,40,30", reason="gate2")
+    cleared = lr.clear_thresholds(s)
+    after = json.loads(mk.marker_path(s).read_text(encoding="utf-8"))
+    for p in STATE.glob(f"ctxwd-wall_restored_from_marker-{s}-*.flag"):
+        p.unlink()
+    check("V-GSDLR-WALL-CLEAR-REMOVES-BOTH",
+          cleared and "wall" not in after and wd._thresholds(s) == prod,
+          f"cleared={cleared} wall_present={'wall' in after} "
+          f"sidecar={lr.thresholds_path(s).is_file()} thresholds={wd._thresholds(s)} "
+          f"marker={lr._marker_file(s)} same_as_mk={lr._marker_file(s) == mk.marker_path(s)}")
+    mk.clear_marker(s)
+
+    # Negative control: no marker, no sidecar -> the constants, and NO ledger row.
+    s2 = sid()
+    for p in STATE.glob(f"ctxwd-wall_restored_from_marker-{s2}-*.flag"):
+        p.unlink()
+    check("V-GSDLR-WALL-NO-MARKER-IS-PRODUCTION",
+          wd._thresholds(s2) == prod
+          and not [e for e in lr.ledger_events(s2) if e.get("event") == "wall_restored_from_marker"],
+          f"{wd._thresholds(s2)}")
+
+
 # ------------------------------------------------------------------ phase 4
 def _registry_row(session: str, pid: int) -> Path:
     p = SESSIONS / f"{pid}.json"
@@ -818,6 +900,7 @@ def main() -> int:
         gates_compact_tail()
         gates_confirm_aperture()
         gates_reap_liveness()
+        gates_wall_survives_its_sidecar()
         gates_report()
         gates_config()
         gates_cli()
@@ -831,7 +914,8 @@ def main() -> int:
                 p.unlink(missing_ok=True)
         shutil.rmtree(TMP, ignore_errors=True)
     total = passes + fails
-    print(f"GSDLR_PASS={passes}/{total}  threshold={total}/{total}")
+    tail = f"  inconclusive={inconclusive}" if inconclusive else ""
+    print(f"GSDLR_PASS={passes}/{total}  threshold={total}/{total}{tail}")
     return 0 if fails == 0 else 1
 
 

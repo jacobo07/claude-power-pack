@@ -119,8 +119,61 @@ def write_thresholds(session_id: str, spec: str, reason: str = "") -> dict:
     tmp = path.with_suffix(".json.tmp")
     tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     tmp.replace(path)
-    ledger_append(session_id, "thresholds_set", snapshot=snap, advisory=adv, rearm=rearm, reason=reason)
+    stamped = _stamp_wall_on_marker(session_id, snap, adv, rearm)
+    ledger_append(session_id, "thresholds_set", snapshot=snap, advisory=adv, rearm=rearm,
+                  reason=reason, marker=stamped)
     return payload
+
+
+def _marker_file(session_id: str) -> Path:
+    """Where the marker actually is -- asked of the module that owns it.
+
+    `state_dir()` honours GSD_LONG_RUN_STATE_DIR; `gsd_autorun_marker` keeps its
+    own STATE_DIR constant. Those are the same directory in production and
+    different ones under the suite, so a reimplementation here writes the wall
+    into a file the marker module has never heard of -- which is exactly what
+    the first version of this did, and the gate caught it.
+    """
+    mk = _marker_module()
+    if mk is not None:
+        try:
+            return mk.marker_path(session_id)
+        except Exception:
+            pass
+    return state_dir() / f"gsd-autorun-{session_id}.json"
+
+
+def _stamp_wall_on_marker(session_id: str, snap, adv, rearm) -> bool:
+    """Record the wall in the RUN'S OWN record, beside the budget and the mission.
+
+    Measured 2026-09-19: this run's thresholds sidecar was cleared at 12:49:37 by
+    something iterating the armed markers, `_thresholds()` fell back to the
+    production constants, and at 13:13 the watchdog read 45 % against a 40 % wall
+    and passed -- correctly, under constants it should never have been using. For
+    eleven hours `status` said armed, `report` said PARTIAL and every gate was
+    green while the wall the run exists to prove was not in force.
+
+    A sidecar with no owner is the wrong home for a run's most important
+    parameter. The marker already carries the budget and the mission and is
+    deleted only when the run ends, so it is the one file whose lifetime IS the
+    run's. This is not redundancy for its own sake: the watchdog prefers the
+    sidecar (a running session can rewrite it), falls back to here, and says so
+    in the ledger -- so an accidental loss self-heals visibly, while a deliberate
+    `--clear` removes both and still means what it says.
+    """
+    path = _marker_file(session_id)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return False
+        data["wall"] = {"snapshot": snap, "advisory": adv, "rearm": rearm,
+                        "stamped_at": _now_iso()}
+        tmp = path.with_suffix(".json.wall.tmp")
+        tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        tmp.replace(path)
+        return True
+    except (OSError, ValueError):
+        return False        # no marker, or unreadable: the sidecar still stands
 
 
 def read_thresholds(session_id: str) -> dict | None:
@@ -131,11 +184,46 @@ def read_thresholds(session_id: str) -> dict | None:
 
 
 def clear_thresholds(session_id: str) -> bool:
+    """Remove the wall from BOTH homes, so a clear means what it says.
+
+    Clearing only the sidecar would leave the marker's copy in force and turn an
+    explicit instruction into a no-op -- the mirror image of the defect this
+    pair exists to fix.
+    """
+    # Three outcomes, never two: the marker had no wall, the wall was removed,
+    # or a wall IS there and could not be removed. The first version collapsed
+    # the third into the first with a bare `pass`, so a clear that half-applied
+    # still returned True -- and it was not hypothetical: under memory pressure
+    # this gate went red once and green on the next run, which is exactly what a
+    # swallowed write failure looks like from outside.
+    dropped_marker = False
+    marker_blocked = None
+    path = _marker_file(session_id)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, dict) and data.pop("wall", None) is not None:
+            tmp = path.with_suffix(".json.wall.tmp")
+            tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            tmp.replace(path)
+            dropped_marker = True
+    except FileNotFoundError:
+        pass                      # no marker: nothing of ours lives there
+    except (OSError, ValueError) as exc:
+        marker_blocked = exc.__class__.__name__
+
+    if marker_blocked is not None:
+        # Do not unlink the sidecar: leaving the run with a wall in one home and
+        # a "cleared" verdict is worse than leaving it consistently walled.
+        ledger_append(session_id, "thresholds_clear_failed", marker_error=marker_blocked)
+        return False
     try:
         thresholds_path(session_id).unlink()
     except (FileNotFoundError, ValueError, OSError):
+        if dropped_marker:
+            ledger_append(session_id, "thresholds_cleared", sidecar=False, marker=True)
+            return True
         return False
-    ledger_append(session_id, "thresholds_cleared")
+    ledger_append(session_id, "thresholds_cleared", sidecar=True, marker=dropped_marker)
     return True
 
 
