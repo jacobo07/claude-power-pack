@@ -179,13 +179,22 @@ def main() -> int:
           "consumer imports DISTINCTIVE_MAX_HOLDERS=3 and defines no copy")
 
     # ---- one tokenizer, not two -----------------------------------------
-    probe = {"entities": ["Mission Compiler"], "text": "compile the mission"}
-    expected = {"mission": 3 + 1, "compiler": 3, "compile": 1}
+    # "loop" is four letters and not a stop word, so it is admitted from an
+    # entity (min length 4) and refused from body text (min length 5). Without
+    # a word of exactly that length the fixture cannot see the two thresholds
+    # at all: the first version used "compile the mission", every word of
+    # which survives either threshold, and the mutation that collapses them
+    # sailed through a gate named for exactly that property.
+    probe = {"entities": ["Mission Loop"], "text": "compile the loop mission"}
+    expected = {"mission": 3 + 1, "loop": 3, "compile": 1}
     check("V-W5-SEL-ONE-TOKENIZER",
           dict(unit_terms(probe)) == expected
-          and dict(text_terms("compile the mission")) == {"compile": 1,
-                                                          "mission": 1},
-          "unit_terms delegates to text_terms with its weights intact")
+          and dict(text_terms("compile the loop mission")) == {"compile": 1,
+                                                               "mission": 1}
+          and dict(text_terms("compile the loop mission", 4)) == {
+              "compile": 1, "loop": 1, "mission": 1},
+          "unit_terms delegates to text_terms with both length thresholds "
+          "intact (entities >=4, body >=5)")
 
     # ---- determinism ------------------------------------------------------
     again = DC.select_for(P_OWNED)

@@ -1,0 +1,138 @@
+[
+  {
+    "name": "W1-consumer-edge-severed",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_consumption.py",
+    "old": "        sel, obligation = _ucr_routing(task_description)",
+    "new": "        sel, obligation = (None, None) or (None, None)",
+    "why": "THE anti-fake-consumer drill: with the join cut and every endpoint intact, a gate that still passes was never measuring consumption. Mutating the selector would only re-prove the selector"
+  },
+  {
+    "name": "W2-generic-question-survives-its-own-answer",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_consumption.py",
+    "old": "            q for q in NOVELTY_PROOF_QUESTIONS if q != _OWNERSHIP_QUESTION",
+    "new": "            q for q in NOVELTY_PROOF_QUESTIONS if q != \"\"",
+    "why": "the obligation would be ADDED to rather than CHANGED: the agent would be asked to prove an owner gap while being handed the owners"
+  },
+  {
+    "name": "W3-candidate-promoted-to-authority",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "old": "        disp = r.get(\"disposition\")",
+    "new": "        disp = r.get(\"disposition\") or r.get(\"proposed_disposition\")",
+    "suite": "tools/test_disposition_selection.py",
+    "why": "the realistic regression, not a synthetic one: reading the CANDIDATE field would hand 1,162 unreviewed proposals -- 659 of them explicitly refuted -- the authority of the 996"
+  },
+  {
+    "name": "W4-lifecycle-filter-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "        if not _owner_exists(root, str(owner or \"\"), owner_memo):",
+    "new": "        if False and _owner_exists(root, str(owner or \"\"), owner_memo):",
+    "why": "a disposition naming an owner that has left the repository would keep routing missions to a directory nobody has"
+  },
+  {
+    "name": "W5-identity-join-by-substring",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "        hit = memo[owner] = (repo / owner).exists()",
+    "new": "        hit = memo[owner] = (owner in str(repo))",
+    "why": "reintroduces T-PATH-SUBSTRING-IDENTITY-001 at the join: path matching instead of a path join plus an existence test, the exact defect W3 and W4 each paid for once"
+  },
+  {
+    "name": "W6-distinctiveness-clause-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "        if len(distinct) < MIN_DISTINCTIVE_OVERLAP:",
+    "new": "        if False and len(distinct) < MIN_DISTINCTIVE_OVERLAP:",
+    "why": "the regression drill for this session's own defect: without it a proposal about an espresso machine routes to modules/knowledge_acquisition on the term pair ('institutional','system')"
+  },
+  {
+    "name": "W7-applicability-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "        if len(overlap) < MIN_TERM_OVERLAP:",
+    "new": "        if False and len(overlap) < MIN_TERM_OVERLAP:",
+    "why": "AUTHORITATIVE would collapse into APPLICABLE and every mission would inherit all 996 units"
+  },
+  {
+    "name": "W8-population-floor-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "    if population < MIN_AUTHORITATIVE_POPULATION:",
+    "new": "    if False and population < MIN_AUTHORITATIVE_POPULATION:",
+    "why": "a read that silently matched nothing would report the same empty answer as a corpus with nothing to say -- the instrument failure this wave keeps finding one altitude down"
+  },
+  {
+    "name": "W9-schema-check-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "    if meta.get(\"schema_version\") != SCHEMA_VERSION:",
+    "new": "    if False and meta.get(\"schema_version\") != SCHEMA_VERSION:",
+    "why": "a ledger written by a future producer would be read with this consumer's assumptions about what its fields mean"
+  },
+  {
+    "name": "W10-semantic-class-gate-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "        if disp not in SUPPORTED_CLASSES:",
+    "new": "        if False and disp not in SUPPORTED_CLASSES:",
+    "why": "an IMPLEMENT or REJECTED_WITH_EVIDENCE unit would be routed with EXTEND_EXISTING_OWNER's meaning -- eleven declared classes silently mapped onto the one neighbour that has a consumer"
+  },
+  {
+    "name": "W11-duplicate-suppression-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "            if sig in seen:",
+    "new": "            if False and sig in seen:",
+    "why": "one concept indexed from several documents would bill a mission once per copy"
+  },
+  {
+    "name": "W12-term-budget-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "            terms=tuple(shown[:MAX_TERMS_PER_OWNER]),",
+    "new": "            terms=tuple(shown),",
+    "why": "context economy is a property of the code, not of the inputs this session happened to try"
+  },
+  {
+    "name": "W13-owner-budget-removed",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "        owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,",
+    "new": "        owners=tuple(owners), corpus_id=corpus_id,",
+    "why": "the materialization must stay bounded by construction against a proposal that matches everything"
+  },
+  {
+    "name": "W14-provenance-stripped",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_consumption.py",
+    "old": "        \"  Provenance: %s, corpus %s. These are AUTHORITATIVE dispositions \"",
+    "new": "        \"  (%s) (%s) unstated \"",
+    "why": "an obligation that cannot be traced back to the corpus units that produced it is not reconstructable, and a reader could not tell an authority from a guess"
+  },
+  {
+    "name": "W15-kill-switch-inverted",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_consumption.py",
+    "old": "    if os.environ.get(\"CLAUDEPP_UCR_ROUTING_DISABLE\") == \"1\":",
+    "new": "    if os.environ.get(\"CLAUDEPP_UCR_ROUTING_DISABLE\") == \"0\":",
+    "why": "an override must do what it says in both directions; a switch that cannot turn the routing off is an override nobody can audit"
+  },
+  {
+    "name": "W16-outer-failopen-removed",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_consumption.py",
+    "old": "        sel, obligation = None, None",
+    "new": "        raise",
+    "why": "a raise in the routing helper would take down the whole novelty verdict on a UserPromptSubmit path, losing the thirteen questions as well as the owners"
+  },
+  {
+    "name": "W17-tokenizer-divergence",
+    "file": "modules/ucr_cif/disposition_ledger.py",
+    "suite": "tools/test_disposition_selection.py",
+    "old": "    terms.update(text_terms(u.get(\"text\"), 5))",
+    "new": "    terms.update(text_terms(u.get(\"text\"), 4))",
+    "why": "producer and consumer must ask 'what is this about?' with one vocabulary; two tokenizers that agree today diverge the day one learns a stop word, and the join goes quiet with nothing red"
+  }
+]
