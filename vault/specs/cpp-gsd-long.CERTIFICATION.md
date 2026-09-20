@@ -22,7 +22,7 @@ claims, in the order the run exercises them:
 | C2 | the wall is narrowed per session, and the watchdog applies it | **PROVEN** |
 | C3 | a crossing checkpoints and asks for `/compact` | **PROVEN** |
 | C4 | the compaction is recognised from its post-condition, never a proxy | **PROVEN** |
-| C5 | the resume is delivered to the session that owns it, or to nobody | **PROVEN (refusal side). Positive side: its NEGATIVE half is now measured live — 2026-09-20, a real delivery, 33 other live panes examined with the product's own predicate, zero touched. Pane A's half is NOT PROVEN, blocked on F5** |
+| C5 | the resume is delivered to the session that owns it, or to nobody | **PROVEN, both sides, live 2026-09-20 (runid `enterfix`). Pane A `92000647` in a terminal the window owns (pid 6992) received AND submitted; pane B `37cfb187` — this session, same window, same `t0` — received nothing. See §9e** |
 | C6 | a resume counts only when the transcript shows it was submitted | **PROVEN — first ever recorded 2026-09-19 09:30:37** |
 | C7 | two crossings, each with a confirmed resume (`report` = PROVEN) | **NOT YET — `report` reads PARTIAL: 4 crossings, 1 confirmed (2026-09-20). Blocked on F5, not on the wall** |
 
@@ -360,6 +360,80 @@ watched live end to end; that observation separates the two readings.
 **Also note what this cycle does NOT support.** The 12:43 compaction was run by
 the Owner, so this cycle cannot count toward C7 however well the rungs after it
 behaved. A crossing the Owner triggered is not a crossing the run produced.
+
+## 9e. 2026-09-20, evening — C5 closed live, and my own F5 fix measured WRONG
+
+**C5 IS NOW PROVEN ON BOTH SIDES, live.** runid `enterfix`. A disposable
+subject was opened in a Cursor terminal this window owns; `arm` latched it by
+NONCE (`DRILL-A-enterfix`), and its addressability precondition passed rather
+than being discovered later by `fire`:
+
+    arm/A: addressable -- c--Users-User--claude-skills-claude-power-pack.json
+           owns terminal pid 6992
+    PASS arm/A: session=92000647-be77-4e2d-86c6-64b5fbea495e pid=40712
+
+`fire` delivered through the inbox with no focus change, and both halves were
+judged from one `t0`:
+
+| pane | role | result |
+|---|---|---|
+| A `92000647`, terminal pid 6992 | subject | received AND submitted |
+| B `37cfb187`, this session, same window | negative control | untouched |
+
+`tools/test_two_pane_exactness.py --runid enterfix` = **6/6**, including
+`V-TWOPANE-A-RECEIVED` and `V-TWOPANE-B-UNTOUCHED`. Pane B matters more than
+the earlier 33-pane sweep: it is precisely the pane a mis-resolved request
+would reach. The old framing — "the positive leg needs an operator to open a
+second window" — was true only of opening the pane; everything after it ran
+unattended.
+
+**A RETRACTED MEASUREMENT, recorded because it nearly became a finding.**
+The first attempt to test `0c7f304`'s second Enter used `/help` as the slash
+subject and read:
+
+| payload | ack | `user_issued_command_since` |
+|---|---|---|
+| `ping-control-<rand>` (plain) | `status:"sent"`, `enters: 2` | True |
+| `/help` (slash) | `status:"sent"`, `enters: 2` | **False** |
+
+and was about to be written up as "the fix is insufficient". It is not
+evidence. **`/help` is a CLIENT-SIDE command: it submits and writes no
+transcript row**, so a perfect delivery reads False. The measurement was of
+the oracle's aperture, not of the transport — the same class of error this
+certificate documents elsewhere, committed by the instrument built to find it.
+
+What caught it was not an instrument. Pane A was left in `status: waiting` —
+the only one of 24 live sessions, against 14 idle and 9 busy — and two
+incompatible readings fitted that equally well: a stuck completion menu with
+both Enters eaten, or the help screen after a successful submit. Nothing
+reachable from outside the pane separates them, so the Owner was asked to look
+at the pane and answered: **the help screen**. The delivery had worked.
+
+Two things follow, and both are worth more than the retracted claim:
+
+1. **Choose a slash subject with a postcondition the oracle can see.** The
+   re-test uses `/compact`, whose postcondition is a host-written
+   `compact_boundary` row — C4's own predicate, independent of any user row —
+   and which is also the command that actually failed in the live run.
+2. **`enters: 2` in the ack is confirmed genuine.** The extension host had been
+   restarted and the new code is what ran, so whatever the re-test says, it is
+   a statement about the current build.
+
+`test_inbox_delivery_enter.py` remains 5/5 and remains STRUCTURAL: it asserts
+shipped source and copy identity and its own docstring says it cannot see
+submission. That is why 5/5 was never allowed to close F5, and it is still not.
+
+One instrument failure of mine in the same run, caught by its own three-outcome
+design rather than by inspection: the first slash attempt reported
+HARNESS-FAILED because pane A was still busy ANSWERING the control delivery I
+had just sent it, and my 120 s idle wait expired. A two-outcome harness would
+have recorded that as "the slash command failed to submit" — the right answer
+for the wrong reason, which is worse than a red.
+
+**So F5 stays OPEN and C7 stays blocked on it.** What is now known that was not
+this morning: the transport reaches the right pane and only the right pane
+(C5), the failure is specific to lines beginning `/`, and the number of Enters
+is not the variable.
 
 ## 9. The honest summary
 
