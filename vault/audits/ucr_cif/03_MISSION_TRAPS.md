@@ -496,6 +496,126 @@ express WITHDRAWAL, and the test is one multiplication, not a judgement.
 
 ---
 
+## W4 · `T-STALE-BYTECODE-OUTLIVES-A-VERIFIED-RESTORE-001` — the restore was perfect and the wrong thing was running
+
+**What.** A mutation drill changed `_PP_MARKS_REQUIRED = 3` to `= 0`, ran a suite, wrote the
+original bytes back and verified SHA-256. It reported `restore=OK`. Three suites then ran
+against the MUTATED behaviour, because CPython validates a `.pyc` on `(mtime, size)`, the
+edit is byte-length preserving, and the restore landed inside the same second — so the
+cached bytecode still matched and was served. Measured directly: `pyc records
+mtime=1789865699 size=9871`, `source has mtime=1789865699 size=9871`, `pyc considered
+VALID: True`, while `grep` showed `= 3` and the running module reported `0`.
+
+**Why it survived its own verification.** The drill verified the SOURCE, and the source was
+never wrong. A hash of the artifact upstream of the one that executes is not evidence about
+execution.
+
+**How it was caught.** Not by the drill. By the full-suite sweep afterwards, which went
+15/17 with two failures the drill had declared clean. A per-change check and a sweep are not
+redundant: the sweep sees the composed world.
+
+**The part worth more than the fix.** `tools/mutation_probe.py` line 110 already documented
+this exact mechanism, in these words, and already defended against it with
+`PYTHONDONTWRITEBYTECODE` plus a cache purge — from its own first real run. The knowledge was
+written down, correct, and unreachable at the moment of hand-rolling a drill. The repair is
+therefore not a note: `--plan` was added to that harness so a directed mutation cannot be
+aimed without inheriting the defence.
+
+**Generalizes to.** Verify the artifact that EXECUTES, not the one you edited. Anywhere a
+cache is validated by a coarse key — bytecode by `(mtime, size)`, HTTP by `ETag`, a build by
+a timestamp — a same-size change inside the key's resolution is invisible, and a
+length-preserving edit is the shape that hits it.
+
+---
+
+## W4 · `T-FROZEN-REASON-CANNOT-NOTICE-IT-IS-FALSE-001` — a ratchet describing a debt that had already been paid
+
+**What.** The W3 lifecycle ratchet froze `spec_depth_selection` as UNKNOWN with the reason
+"UNEVALUABLE — no deterministic probe exists for this condition. Probe debt this repository
+could pay." Measured: `probe_spec_depth_selection` existed, was registered in `PROBES`, and
+RAN. It abstained for a completely different reason — 99 incident records against a sample
+floor of 200 — which is an evidence frontier owned by time, not a coding task. A session
+acting on the frozen reason would have written a second probe beside a working one and
+learned nothing.
+
+**Root cause.** The reason was a CONSTANT in a table keyed by verdict status, and UNEVALUABLE
+covers two different debts. A constant cannot notice when it stops being true.
+
+**Fix.** The migration DERIVES the reason from the verdict: no `probe` field means nobody
+wrote one, a `probe` field means one ran and honestly could not conclude, and the abstention
+carries the number that would resolve it.
+
+**Generalizes to.** A frozen inventory needs its reasons computed from current evidence, not
+copied at freeze time. The stale-entry clause stops a list outliving its subjects; this is
+the sibling failure — an entry whose subject is still real and whose EXPLANATION has rotted,
+which is worse, because the list still looks maintained.
+
+---
+
+## W4 · `T-A-SAMPLE-FLOOR-THAT-GATES-BOTH-POLES-001` — an instrument that could only ever give one answer
+
+**What.** The same probe applied its 200-record sample floor AHEAD of the hit scan, so on a
+corpus of 99 it returned UNEVALUABLE whatever the corpus contained. Fifty spec-omission
+incidents would have produced the same verdict as zero.
+
+**Why the floor is still right.** A zero over a tiny denominator is evidence of a small
+corpus, not of extinction. But PRESENCE is not weakened by a small denominator: one incident
+is one incident. The floor belongs on the zero branch alone, and lowering it to 99 to "close
+the population" would have been coverage bought with a false certainty.
+
+**Discipline that separates the two.** The fix ships as a PAIR of gates —
+`V-PROBE-SPEC-PRESENCE-BEATS-FLOOR` (1 hit over 50 → ACTIVE) and
+`V-PROBE-SPEC-ZERO-STILL-FLOORED` (0 over 50 → still UNEVALUABLE). The second is the one that
+goes red if anyone later lowers the floor, and it is what makes the change a repair rather
+than a purchase. Measured after the fix: 0 hits over 99, so the capability is STILL
+UNEVALUABLE — which is exactly why the change was safe to make.
+
+**Generalizes to.** A guard clause placed before the measurement gates both poles. Ask of
+every threshold: which of my two answers is this protecting, and can the other one still be
+reached?
+
+---
+
+## W4 · `T-A-QUEUE-IS-NOT-A-POPULATION-001` — two gates that went red the moment the work succeeded
+
+**What.** Two new gates asserted over `plan()["to_write"]` — the migration's pending queue.
+They passed before the migration was applied and failed immediately after, because an applied
+plan has nothing left to write.
+
+**The dangerous version is the one that did not happen.** Phrased as "no row lacks the
+disclaimer" instead of "every row has it", the same gates would have passed VACUOUSLY over an
+empty set, for ever, and nobody would have looked again.
+
+**Fix.** Audit gates read the durable lifecycle log, with a population floor of one. A
+separate gate drives the live classification path on a SYNTHETIC subject, so deleting the
+disclaimer is still caught after the queue empties — and the mutation drill confirms that
+gate is load-bearing: E2 is caught by it alone.
+
+**Generalizes to.** A transient work queue is not a population. Assert over the durable
+record of what happened, and put a floor under it.
+
+---
+
+## W4 · `T-A-ROUND-TRIP-DELETES-WHAT-IT-CANNOT-SEE-001` — one state change, three fields gone
+
+**What.** Writing a lifecycle value into a capability contract deleted `_matcher_note`,
+`verification_obligations` and `minimum_runtime_version` from it, and escaped every em dash
+to `\uXXXX` so the diff was 61 lines. `from_dict` keeps only declared dataclass fields;
+`to_dict` therefore returns a reduced document; `save_contract` wrote that over the original.
+`_matcher_note` was the record of why that contract's triggers had been rewritten — the
+institutional memory of a previous defect, destroyed by a one-field update.
+
+**Why the round-trip test could not see it.** `V-CAPRT-ROUNDTRIP` saves a contract built IN
+MEMORY into an empty directory. There was never a prior document, so there was never anything
+to lose. A fixture that constructs its own subject can only express states its author already
+believed in.
+
+**Generalizes to.** A store must not destroy what it does not model: merge over the document
+on disk rather than replacing it. And any "we round-trip correctly" claim must be tested
+against a document the writer did NOT create.
+
+---
+
 ## Standing obligation
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and

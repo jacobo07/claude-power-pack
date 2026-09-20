@@ -179,6 +179,36 @@ Such a feature satisfies all of:
 proposes and a SELECTOR that decides, both correct, and never joins them — so verdicts have
 no path to effect and the system looks finished from either end. Axis C is the join.
 
+### C-2 — Closing the unknown population (added 2026-09-20, UCR-CIF W4)
+
+W3's clauses make an unknown population SAFE to carry. These four decide when it may be
+closed, and they bind the same applicability gate — a feature with no such state is exempt.
+
+- **An evaluator is not complete until its three worlds are distinguishable.** Positive,
+  negative, and *could not judge* must each be reachable from a real shape of the world, and
+  a guard clause placed ahead of the measurement suppresses both answers rather than the
+  unsafe one. An instrument that can only ever return one answer carries no information when
+  it returns it.
+- **Instrument failure is not subject absence.** "We could not observe it" and "it is not
+  there" must be separate outcomes at every layer that stores or consumes them, and the
+  unknown is never resolved toward the convenient one.
+- **A fail-closed promotion requires a CLASSIFIED population, not a small one.** Every
+  remaining unknown is either *no valid authority* (close on it — that is what fail-closed is
+  for) or *not observed* (do not — closing here disables a live capability on a measurement
+  nobody took). The count reaching zero is satisfied by relabelling either, so the count is
+  not the evidence. Where the debt is external, name the party whose facts decide it, and say
+  in words that the classification is about AUTHORITY and not about availability.
+- **A coverage repair is not proven until removing it reintroduces the failure.** Red before,
+  green after, red again with only the repair removed, green on restore. Anything less is
+  green by coincidence — and the restore must be verified on the artifact that EXECUTES, not
+  the one that was edited.
+
+**And one clause that is not about institutional state at all**, promoted because every axis
+above depends on a system being able to name itself: **project identity survives a rename.**
+Identity is read from what a repository CONTAINS, resolved through the worktree layout —
+never from a substring of the checkout path, which fails in both directions and whose second
+direction (a stranger under your name) no additional substring can fix.
+
 Ref: `skills/claude-power-pack/modules/capability_runtime/lifecycle.py` (authority),
 `applicability.py` gate 0 (effect), `tools/capability_lifecycle_migrate.py` (unknown-safe
 backfill), `vault/capability_runtime/lifecycle_ratchet.json` (the ratchet).

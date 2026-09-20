@@ -972,6 +972,26 @@ was reading the environment. It is recorded in
 `vault/audits/ucr_cif/03_MISSION_TRAPS.md` and has NOT been promoted here, so the reference
 is deliberately to that file rather than to a UKDL id that does not exist.
 
+**AMENDMENT (UCR-CIF W4) — resolving the path does not repair the predicate, and the other
+direction is the dangerous one.** The W3 fix kept the substring test as a fast path and, on a
+miss, asked the SAME question of the resolved main repository root. That closes "our worktree
+does not look like us" and cannot close its mirror: **an unrelated repository living under a
+path that contains the project's name reads as the project for ever**, because the fast path
+answers True before any resolution happens and nothing downstream can retract it.
+
+No additional substrings fix this. A predicate asking the wrong question does not improve by
+being asked more precisely.
+
+**Rule.** Identity is read from the repository's CONTENTS, resolved through the worktree
+resolver: a MAJORITY of structural marks, each a subsystem the project owns rather than a
+name anyone can choose. A majority rather than all, so renaming one subsystem degrades
+identity to "still recognised" instead of "suddenly a stranger". Unreadable root fails closed
+— unknown is not identity. Put it in the identity module, not in the caller: the third
+private detector is how an estate ends up with five disagreeing answers.
+
+**Gate it as a pair.** "An unrelated repo under our name is NOT us" and "our checkout under
+an unrecognisable name IS us". A predicate that refuses everything satisfies the first alone.
+
 ---
 
 ## T-POPULATION-FROM-A-DIRTY-TREE-001 — a population is a property of a commit, not of a directory
@@ -1096,6 +1116,185 @@ matching the producer, 4,314 / 4,307 — proportionate to the 1,655 rows actuall
 
 **Family.** The machine-generated sibling of the shared-file laundering rule (running a
 formatter over a file whose checkout was never format-clean rewrites other people's lines).
+
+---
+
+## HR-FAIL-CLOSED-ON-ABSENT-AUTHORITY-001 — fail closed on absence of authority, never on failure of observation
+
+**TRIGGER.** About to tighten a permissive default into a restrictive one — UNKNOWN into
+withdrawn, unverified into rejected, unclassified into blocked — so that a system "fails
+closed".
+
+**ACCIÓN.** STOP until the remaining unknown population is not merely small but CLASSIFIED,
+and every member is one of: **the subject has no valid authority** (tighten — this is what
+fail-closed is for), or **we could not observe the subject** (do NOT tighten — closing here
+disables a live capability on the strength of a measurement nobody took).
+
+The two are indistinguishable from the metric. Both read as "not known to be valid", and the
+count reaching zero is satisfied by relabelling either one.
+
+**EXCEPCIÓN.** None by phrase. The population is either classified or it is not.
+
+**ORIGEN.** UCR-CIF W4. W3 recorded that at UNKNOWN=0 the lifecycle fallback could be
+tightened "in one line, with no population left to break". W4 drove the population from 4 to
+1 and did **not** tighten: the last member is a capability whose probe exists, is registered,
+ran, and honestly abstained (99 incident records against a floor of 200). Tightening would
+have converted an honest abstention into a withdrawal and silently disabled a live guard,
+while the metric read as success.
+
+**Family.** The kernel's `UNKNOWN != ABSENT` made operational at the moment of a policy
+change. See `PR-UNKNOWN-BURN-DOWN-BEFORE-TIGHTENING-001` for the procedure that produces the
+classification this rule demands.
+
+---
+
+## PR-UNKNOWN-BURN-DOWN-BEFORE-TIGHTENING-001 — three debts wear one label
+
+**Rule.** Before a fail-closed promotion, classify every member of the unknown population by
+WHICH debt it is. Three classes, and only the first is closed by writing code:
+
+| class | what is missing | who closes it |
+|---|---|---|
+| **probe debt** | no evaluator is registered at all | this repository, now |
+| **external ownership** | no repository signal could ever settle it | naming the party whose facts decide it |
+| **evidence frontier** | an evaluator EXISTS, ran, and could not conclude | reality, later — and the missing fact must be named |
+
+**Why the middle class is knowledge, not ignorance.** "No probe can exist" is a gap. "No
+probe can exist, AND here is the owner" supports a deduction: nothing here can retire the
+capability, only an attestation about that owner's facts could, none exists, therefore it
+remains the current authority. An entry with no named owner stays unknown — that is the
+fail-closed default, and it is what makes the mechanism general rather than a hardcoded list.
+
+**What such a classification must NOT claim.** Ownership, availability, health and authority
+are four claims. Classifying an externally-owned capability as active asserts AUTHORITY only,
+and the evidence must say so in words, or a later reader takes `active` to mean the external
+provider works.
+
+**Origin.** UCR-CIF W4. Four UNKNOWN capabilities: one was real probe debt and was paid, two
+were external and were closed by naming their owners, one is an evidence frontier and stays.
+The handoff had called two of them probe debt; measurement moved one of those to a different
+class entirely and made "write a probe" the wrong action for it.
+
+---
+
+## PR-STORE-MUST-NOT-DESTROY-WHAT-IT-CANNOT-MODEL-001 — merge over the document, never replace it
+
+**Rule.** When a typed record is written back over a document on disk, merge the typed fields
+over what is already there. Replacing the document deletes every key the type does not
+declare — and the loss is invisible from both ends, because the type never saw those keys and
+the writer never knew they existed.
+
+**The test that cannot catch it.** A round-trip test that saves a record built in memory into
+an empty directory has nothing to lose. Drive the claim against a document the writer did NOT
+create, carrying keys the type has never heard of.
+
+**Origin.** UCR-CIF W4. One lifecycle transition deleted `_matcher_note` (the record of why a
+contract's triggers had been rewritten), `verification_obligations` and
+`minimum_runtime_version` from a capability contract, and escaped every em dash so the diff
+was 61 lines rather than one. The suite was green throughout.
+
+**Family.** `PR-FORMAT-MATCHES-PRODUCER-001` is the cosmetic half of the same write; this is
+the destructive half.
+
+---
+
+## T-STALE-BYTECODE-OUTLIVES-A-VERIFIED-RESTORE-001 — the hash was right and the wrong code was running
+
+**Mechanism.** CPython validates a `.pyc` against the source's `(mtime, size)`. A
+**length-preserving** edit restored inside the **same second** leaves both unchanged, so the
+cached bytecode is judged valid and the MUTATED module keeps executing while the source file
+is byte-perfect and its SHA-256 verifies.
+
+**Why the verification could not see it.** It checked the source. The source was never the
+thing that was wrong. A hash of the artifact upstream of the one that executes is not
+evidence about execution.
+
+**Rule.** Around any edit-run-restore cycle: disable bytecode writing AND purge the cache,
+both, on every iteration. Then verify with the composed suite, not only with the per-change
+check — a sweep sees the world the drills were each blind to.
+
+**Origin.** UCR-CIF W4. `_PP_MARKS_REQUIRED = 3` → `= 0` restored same-second; three suites
+then ran against invisible mutated bytecode while the drill reported `restore=OK`. Measured:
+`pyc records mtime=1789865699 size=9871` / `source has mtime=1789865699 size=9871` /
+`VALID: True`, with `grep` showing `3` and the running module reporting `0`. Caught only by
+the full sweep going 15/17.
+
+**Generalises.** Any cache validated by a coarse key — bytecode by `(mtime, size)`, HTTP by
+`ETag`, a build by a timestamp — is blind to a change smaller than the key's resolution, and
+a length-preserving edit is precisely that shape.
+
+**The part that is not about bytecode.** `tools/mutation_probe.py` had documented this
+mechanism, in these words, and defended against it since its own first run. The knowledge was
+correct, written down, and unreachable at the moment of hand-rolling a drill. The repair was
+therefore not a note but a new mode on that harness (`--plan`), so a directed mutation cannot
+be aimed without inheriting the defence. **When a recorded failure recurs, the question is
+which artifact would have made forgetting harmless.**
+
+---
+
+## T-FROZEN-REASON-CANNOT-NOTICE-IT-IS-FALSE-001 — a debt register describing a debt already paid
+
+**Mechanism.** A frozen inventory (ratchet, exemption list, allow-list) records a REASON at
+freeze time. Reasons rot faster than subjects: the entry is still real, so the stale-entry
+clause never fires, while the explanation beside it has become false — and the next session
+acts on the explanation.
+
+**Rule.** Derive an inventory's reasons from current evidence at read time, not from a
+constant written at freeze time. Where one status covers two different debts, the reason must
+be computed from the field that distinguishes them.
+
+**Origin.** UCR-CIF W4. The lifecycle ratchet froze `spec_depth_selection` as "no
+deterministic probe exists — probe debt this repository could pay". The probe existed, was
+registered, and had run; it abstained over a sample-floor question that no new probe could
+move. A session following the frozen reason would have written a second probe beside a
+working one.
+
+**Family.** The sibling of the stale-entry clause: that one stops a list outliving its
+subjects, this one stops it outliving its explanations.
+
+---
+
+## T-GUARD-CLAUSE-GATES-BOTH-POLES-001 — a floor placed before the measurement
+
+**Mechanism.** A validity guard — a minimum sample, a confidence floor, a freshness window —
+placed AHEAD of the measurement suppresses both answers, not just the unsafe one. The
+instrument can then return only one verdict, and an instrument that can only ever return one
+answer carries no information when it returns it.
+
+**Rule.** Ask of every threshold which of the two answers it protects. A denominator argument
+constrains an ABSENCE (a zero over a small corpus is evidence of a small corpus) and says
+nothing about a PRESENCE (one incident is one incident). Put the guard on the branch it is
+about.
+
+**And the discipline that keeps the fix from being a purchase.** Ship the repair as a PAIR:
+the new pole that is now reachable, and a control proving the guard still refuses the unsafe
+one. Loosening the threshold instead would satisfy the first gate and fail the second — which
+is the whole point of writing the second.
+
+**Origin.** UCR-CIF W4. A retirement probe applied a 200-record floor before scanning for
+hits, so on this estate's 99-record incident corpus it returned UNEVALUABLE whatever the
+corpus contained. After the fix: 0 hits over 99, still UNEVALUABLE — the capability's state
+did not change, which is why the change was safe.
+
+---
+
+## T-A-QUEUE-IS-NOT-A-POPULATION-001 — a gate that measured the pending work
+
+**Mechanism.** Asserting over a transient work queue means the assertion describes what has
+not happened yet. Once the work lands the queue empties, and the gate either goes red for the
+wrong reason or — if phrased as an absence — passes VACUOUSLY over an empty set for ever.
+
+**Rule.** Audit gates read the durable record of what happened, with a population floor. Where
+the code path that would produce the NEXT entry also needs covering, drive it separately on a
+synthetic subject, because the log cannot see a change to a path with nothing left to run.
+
+**Origin.** UCR-CIF W4. Two gates read a migration's pending queue and failed the moment the
+migration was applied. Rewritten against the lifecycle log plus a synthetic-subject gate for
+the live path — and the mutation drill then showed that synthetic gate was the only thing
+catching the deleted disclaimer.
+
+**Family.** `PR-COVERAGE-BY-CONSTRUCTION-001` and the population rules above; the specific
+shape here is a denominator that legitimately goes to zero on success.
 
 ---
 
