@@ -408,3 +408,79 @@ def routing_obligation(sel: Selection) -> str | None:
         "(reviewed); candidates, rejections and abstentions were excluded."
         % (LEDGER_REL, (sel.corpus_id or "unknown")[:12]))
     return "\n".join(lines)
+
+
+def main() -> int:
+    """Explain a selection: why these owners, and what happened to the rest.
+
+    Observability without a second store. A mission must be able to say which
+    dispositions were considered, which applied, which did not and why -- and
+    because selection is deterministic over (proposal, corpus), re-running
+    this reconstructs any obligation the gate ever emitted. Persisting a
+    decision log instead would create exactly what this wave exists to close:
+    durable state whose only claimed consumer is a future reader.
+    """
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--explain", metavar="TEXT",
+                    help="the proposal text to select against")
+    ap.add_argument("--explain-file", metavar="PATH",
+                    help="read the proposal text from a file instead")
+    ap.add_argument("--json", action="store_true",
+                    help="emit the selection as JSON and nothing else")
+    a = ap.parse_args()
+    if a.explain_file:
+        text = Path(a.explain_file).read_text(encoding="utf-8-sig")
+    elif a.explain is not None:
+        text = a.explain
+    else:
+        ap.error("one of --explain / --explain-file is required")
+        return 2
+
+    sel = select_for(text)
+    if a.json:
+        print(json.dumps(sel.to_dict(), indent=2, ensure_ascii=False))
+        return 0
+
+    print(f"corpus        {sel.corpus_id or '(unknown)'}")
+    if sel.refusal:
+        print(f"REFUSED       {sel.refusal}")
+        print("              nothing was routed, and this is a statement "
+              "about the store, not about the proposal.")
+        return 1
+    print(f"considered    {sel.considered} rows")
+    print(f"  authority   -{sel.excluded_authority}  not reviewed "
+          "(candidate, refuted, abstained or unresolved)")
+    print(f"  semantics   -{sel.excluded_semantics}  class not routable here"
+          + (f" {list(sel.classes_unsupported)}" if sel.classes_unsupported
+             else ""))
+    print(f"  lifecycle   -{sel.excluded_lifecycle}  named owner no longer "
+          "in this repository")
+    print(f"  population   {sel.population} authoritative units survived "
+          f"(floor {MIN_AUTHORITATIVE_POPULATION})")
+    print(f"  not about    -{sel.rejected_applicability}  fewer than "
+          f"{MIN_TERM_OVERLAP} shared terms")
+    print(f"  too generic  -{sel.rejected_generic}  shared terms, none "
+          f"distinctive (<= {DISTINCTIVE_MAX_HOLDERS} owners)")
+    print(f"  applicable   {sel.applicable_units}  "
+          f"({sel.below_owner_floor} below the per-owner floor of "
+          f"{MIN_UNITS_PER_OWNER}, {sel.duplicates_suppressed} duplicate)")
+    print(f"prompt terms  {sel.prompt_terms}")
+    if not sel.owners:
+        print("\nno owner routed. The population was real, so this is an "
+              "answer about the proposal.")
+        return 0
+    print("")
+    for o in sel.owners:
+        print(f"  {o.owner}")
+        print(f"      units {o.units} | terms {', '.join(o.terms)}")
+        print(f"      uids  {', '.join(o.uids)}")
+        if o.sample:
+            print(f"      e.g.  {o.sample}")
+    print("\n" + (routing_obligation(sel) or ""))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -359,13 +359,18 @@ def check_novelty_gate(task_description: str) -> NoveltyGateResult:
         sel, obligation = None, None
     questions = NOVELTY_PROOF_QUESTIONS
     if obligation:
-        named = tuple(
-            f"Why is extending {o.owner} insufficient? "
-            f"({o.units} authoritative UCR-CIF disposition(s) name it)"
-            for o in sel.owners)
-        questions = tuple(
-            q for q in NOVELTY_PROOF_QUESTIONS if q != _OWNERSHIP_QUESTION
-        ) + named
+        # The named owners REPLACE question 4 IN PLACE rather than being
+        # appended. The count is part of this gate's published contract --
+        # HR-NOVELTY-001 and the message below both say "all 13 questions",
+        # and a pre-existing gate pins it -- so appending would have made the
+        # verdict contradict its own instruction while reading as an
+        # improvement. The obligation still changes, and changes harder: the
+        # one question the corpus can answer stops being generic.
+        named = "Why is extending " + ", ".join(
+            f"{o.owner} ({o.units} authoritative UCR-CIF disposition(s))"
+            for o in sel.owners) + " insufficient?"
+        questions = tuple(named if q == _OWNERSHIP_QUESTION else q
+                          for q in NOVELTY_PROOF_QUESTIONS)
 
     return NoveltyGateResult(
         applies=True, matched=hit, questions=questions, routing=sel,

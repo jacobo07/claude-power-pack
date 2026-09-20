@@ -11,9 +11,9 @@
     "name": "W2-generic-question-survives-its-own-answer",
     "file": "modules/spec_gate/gate.py",
     "suite": "tools/test_disposition_consumption.py",
-    "old": "            q for q in NOVELTY_PROOF_QUESTIONS if q != _OWNERSHIP_QUESTION",
-    "new": "            q for q in NOVELTY_PROOF_QUESTIONS if q != \"\"",
-    "why": "the obligation would be ADDED to rather than CHANGED: the agent would be asked to prove an owner gap while being handed the owners"
+    "old": "        questions = tuple(named if q == _OWNERSHIP_QUESTION else q",
+    "new": "        questions = tuple(q if q == _OWNERSHIP_QUESTION else q",
+    "why": "the substitution would silently stop substituting: the agent would be asked to prove an owner gap in the abstract while the owners sat in the message beside it"
   },
   {
     "name": "W3-candidate-promoted-to-authority",

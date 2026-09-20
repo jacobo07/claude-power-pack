@@ -90,12 +90,21 @@ def consumer_gates() -> None:
 
     named = tuple(q for q in owned.questions if q not in base)
 
-    # POSITIVE POLE -- the obligation itself changed, not a log line.
+    # POSITIVE POLE -- the obligation itself changed, not a log line. The
+    # COUNT is unchanged on purpose: it is part of this gate's published
+    # contract ("answer all 13 questions"), and a first version that appended
+    # the owners made the verdict contradict its own instruction while a
+    # pre-existing gate pinned 13. Substitution in place is the stronger
+    # change anyway: the one question the corpus can answer stops being
+    # generic.
     check("V-W5-CON-OBLIGATION-CHANGES",
-          owned.applies and len(named) >= 2
-          and all("Why is extending modules/" in q for q in named),
-          f"{len(named)} named owner obligation(s) replace the generic one: "
-          + "; ".join(q.split("?")[0] for q in named[:2]))
+          owned.applies and len(named) == 1
+          and len(owned.questions) == len(base)
+          and owned.questions.index(named[0]) == base.index(
+              G._OWNERSHIP_QUESTION)
+          and named[0].count("modules/") >= 2,
+          f"question {base.index(G._OWNERSHIP_QUESTION) + 1} of {len(base)} "
+          f"replaced in place, naming {named[0].count('modules/')} owners")
 
     # The substitution is a REPLACEMENT, so the generic question cannot sit
     # beside its own answer.
@@ -127,6 +136,17 @@ def consumer_gates() -> None:
           and not hasattr(owned, "blocked") and owned.applies is True,
           "routed verdict still carries the advisory proof request; no "
           "blocking field was introduced")
+
+    # The verdict's own prose counts its own obligations. This gate is why the
+    # substitution is in place rather than appended: the message hardcodes the
+    # number, so any change to the tuple's length silently makes the gate lie
+    # about what it is asking for.
+    stated = re.search(r"answer all (\d+) questions", owned.message)
+    check("V-W5-CON-COUNT-MATCHES-ITS-OWN-CLAIM",
+          stated is not None
+          and int(stated.group(1)) == len(owned.questions) == len(base),
+          f"message says {stated.group(1) if stated else '?'} questions and "
+          f"the verdict carries {len(owned.questions)}")
 
     # PROVENANCE -- a downstream obligation traces back to corpus units.
     sel = owned.routing
@@ -187,8 +207,7 @@ def consumer_gates() -> None:
     check("V-W5-CON-UNKNOWN-SAFETY",
           "spec_depth_selection" in ratchet.get("unknown", [])
           and not hit
-          and all(q.strip().endswith(")") or q.strip().endswith("?")
-                  for q in owned.questions),
+          and all(q.strip().endswith("?") for q in owned.questions),
           "spec_depth_selection still UNKNOWN in the ratchet; every "
           "obligation is a question and asserts no satisfaction")
 
