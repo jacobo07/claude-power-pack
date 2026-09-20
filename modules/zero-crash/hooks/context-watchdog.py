@@ -1056,6 +1056,13 @@ def run(event: dict) -> dict:
     outcome = "error"
     try:
         out = _run_inner(event) or {}
+        # An armed run does not let the auto-reset advisory take its Stop, so
+        # the advisory is carried here instead and surfaced only when the
+        # continuation path had nothing to return. A crossing or a resume
+        # outranks it; silence does not. `_LAST` was cleared above, so this
+        # cannot leak between invocations.
+        if not out:
+            out = _LAST.get("overlay") or {}
         outcome = out.get("decision") or "pass"
         return out
     finally:
@@ -1069,12 +1076,33 @@ def _run_inner(event: dict) -> dict:
         return {}
 
     # Auto-Reset Orchestrator overlay (M4): multi-proxy RAM/jsonl/turns check
-    # that saves work_state + emits a resume-injectable advisory. Runs first;
-    # supersedes the plain context_pct advisory. Throttled + fail-open.
+    # that saves work_state + emits a resume-injectable advisory. Throttled +
+    # fail-open.
+    #
+    # For an ORDINARY session it still supersedes the plain context_pct
+    # advisory and returns here -- it says strictly more, and that is the
+    # behaviour V-OVLY-UNARMED-SHORT-CIRCUITS pins.
+    #
+    # For an ARMED run it must not. Everything the run depends on lives BELOW
+    # this point: the used_pct stamp, the endpoint refresh, the resume
+    # confirmation, the rearm, the post-compaction resume, the snapshot and
+    # the crossing. Returning here costs the run that whole Stop -- and since
+    # the overlay fires on CONTEXT PRESSURE, the single Stop it takes is the
+    # one most likely to be carrying a crossing. Measured 2026-09-20 on
+    # session 37cfb187: `used_pct=?` in the heartbeat is this return, and the
+    # line above it is the last reading the run ever got.
+    #
+    # So the advisory is layered on rather than swapped in: stashed here, and
+    # surfaced by `run()` only when the continuation path produced nothing of
+    # its own. Fail-open is preserved -- an overlay that raises leaves the
+    # continuation path exactly as it was.
+    # Pinned by tools/test_watchdog_overlay_precedence.py (both poles).
     try:
         overlay = _orchestrator_overlay(event)
         if overlay:
-            return overlay
+            if not _read_autorun_marker(session_id):
+                return overlay
+            _LAST["overlay"] = overlay
     except Exception:
         pass
 
