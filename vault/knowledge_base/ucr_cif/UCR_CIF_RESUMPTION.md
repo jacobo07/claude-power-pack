@@ -178,6 +178,27 @@ is never written by this mission and never rolled back.
 - **W4 · knowledge** — `fe87d34`. Five mission traps, six UKDL rules + one amendment
   (`T-PATH-SUBSTRING-IDENTITY-001` EXTENDED, not duplicated), and **Axis C-2** inside the
   existing Apex Axis C — when an unknown population may be CLOSED.
+- **W5 · selection** — `bc260cb`. `modules/ucr_cif/disposition_consumer.py` answers "which
+  owners does the corpus already hold authority about, for this proposal?" through four
+  ordered filters — authority, semantics, lifecycle, applicability — and **four
+  distinguishable refusals**, so an instrument failure can never be read as evidence of
+  novelty. Applicability requires one DISTINCTIVE shared term, using the producer's own
+  `DISTINCTIVE_MAX_HOLDERS` (imported, never redefined, gated against a local copy): without
+  that clause a proposal about an espresso machine routed to `modules/knowledge_acquisition`
+  on the pair `('institutional', 'system')`, both of them words from the consuming gate's own
+  trigger list.
+- **W5 · consumption** — `8d18717`, `10d9fee`. `check_novelty_gate` replaces question 4 in
+  place with the named owners, their counts and their uids. The count is unchanged on purpose:
+  a first version appended, and the verdict then asked for "all 13 questions" while carrying
+  14 — caught by the pre-existing `V-NOVELTY-TRIGGER-HIT`, not by any new gate.
+  **PRODUCTION REALITY 6/6** drives the real hook in a subprocess under an isolated HOME
+  junctioned to this worktree, because the hook computes `PP_ROOT` from `HOME` and would
+  otherwise have measured the installed copy.
+- **W5 · proof** — `64d3707`. `vault/governance/mutation_plans/ucr_cif_w5.json`, **17/17
+  ALL_CAUGHT**. W1 severs the consumer edge with both endpoints intact; a gate that survives
+  that was never measuring consumption.
+- **W5 · knowledge** — `ae7246a`. Five mission traps, five UKDL rules (dedup-checked against
+  the existing inert-state family), and **Axis C-3 — Circulation** inside Apex Axis C.
 
 **UNMEASURED (not zero, not fine)**
 
@@ -185,6 +206,14 @@ is never written by this mission and never rolled back.
   `claude` + 15 `node` processes. A reading under that contention is not a measurement.
   Blocking precondition: re-measure on a host with meaningful headroom before W6 sets any
   regression budget. The structural baseline above stands in the meantime.
+  **W5 addendum (host at 6.3 %, so the same caveat):** the label stays UNMEASURED, but W5
+  added synchronous work to `UserPromptSubmit` and therefore owes a number. Taken as a
+  **paired** delta — the same hook, the same payload, three runs each, routing on vs
+  `CLAUDEPP_UCR_ROUTING_DISABLE=1` — the median was **5,212 ms vs 5,067 ms, +145 ms**, and it
+  is paid only when the novelty signal fires. The absolute figures are the host's; the delta
+  is the measurement. In-process the selection is 58 ms cold (the 1.9 MB parse) and 5–7 ms
+  warm, and **0.5 ms when the gate does not apply**, because the store is opened only after
+  the trigger fires.
 
 **Coherence anchor:** `SOURCE_INVENTORY_FULL.json` parses and holds **1,394 records with a
 `KIND` on every one** (verified this session — the predecessor's own seal test, re-run, not
@@ -209,23 +238,37 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-20, order changed
+## 4. Next three actions — frontier RECALCULATED 2026-09-20 (W5 close), order changed again
 
-The W3 ordering put "more evidence families" second. Measurement moved it: **the 996
-authoritative dispositions have no consumer.** Two independent sweeps for
-`disposition_ledger` across the estate return only its own producer
-(`modules/ucr_cif/disposition_ledger.py`), its adjudicator
-(`tools/ucr_cif_adjudicate.py`), its own test, and documentation. Nothing reads the
-`disposition` field to decide anything. That is exactly the shape Axis C was written for —
-an evaluator that proposes and a selector that decides, both correct, never joined — and it
-means driving 503 more units into that pile adds classification without closure.
+**W5 closed action 1.** The 996 authoritative dispositions now have a material consumer:
+`modules/spec_gate/gate.py::check_novelty_gate`, reached live from
+`tools/jit_skill_loader.py` on `UserPromptSubmit`. When a proposal matches, question 4 of the
+novelty proof — *"Why is extending an existing owner insufficient?"* — is replaced in place by
+the named owners, their unit counts and their uids. Severing that one call turns the suite red
+with both endpoints intact (`W1-consumer-edge-severed`), which is the only evidence that
+distinguishes a consumer from a reader.
 
-1. **Give the authoritative dispositions a consumer. HIGHEST LEVERAGE.** 996 units are
-   settled and inert. Find the real selector by measurement, not by name (W3's lesson: the
-   store called "ledger" was not the authority), then join them so a disposition CHANGES a
-   decision — and prove it at both poles, since a consumer that selects nothing passes the
-   negative case. Until this exists, every later wave adds rows to a store with no effect,
-   and the Reality Contract's "zero status stored without consumer" is open by 996.
+Measured coverage, stated as a vector rather than a score: **934 of 996 (94%) authoritative
+units are routable** — their owner can be reached by some proposal — across **30 of 40**
+owners. The 62 that cannot: 53 carry no distinctive evidence term (every term they hold is
+shared by more than three owners, so no term says *which* owner), and 9 belong to an owner
+with only one eligible unit. **One semantic class is present and one is supported**, so there
+is no unsupported class and no fake mapping; the other eleven members of the closed
+disposition set are declared and empty.
+
+The bottleneck moved to the TRIGGER, not the corpus. 934 units are routable in principle and
+the only door is a gate that fires on *"fabric / kernel / operating system / compendium"* or
+an enumerated dataset catalog. Ordinary L/XL work — where "this is already owned by
+modules/X" would prevent the most duplicated effort — never reaches it.
+
+1. **Open the second consumption boundary: the L/XL spec gate. HIGHEST LEVERAGE.**
+   `check_spec_gate` (HR-SPEC-001) is the ordinary-work boundary and is already live — the
+   JIT loader injects its card (measured: `spec-injected ... 8979 B` in the hook log). The
+   selector already exists and is mutation-proven; only the edge is new. Apply the same four
+   filters in the same order (authority, semantics, lifecycle, applicability), keep the four
+   refusals distinguishable, prove it at three poles, and measure the paired latency delta
+   again — an L/XL prompt is far more common than a mega-system proposal, so the cost
+   argument that held for the novelty gate has to be re-made, not inherited.
 2. **Drive the 503 ABSTAIN down with a second evidence family.** The structural adjudicator
    promotes on SYMBOL / FILENAME / REGISTRY and abstains when a term is held by more than 3
    owners. Families named in the brief and NOT yet built: explicit owner declaration, test
@@ -237,6 +280,11 @@ means driving 503 more units into that pile adds classification without closure.
    `omnicapture`; all global egress through the `secret_firewall` URB. Exactly-once identity
    so a retry or resume cannot duplicate an institutional record. Red-branch fixtures:
    planted secret, prompt injection from a repo file, poisoned evidence.
+
+**Do not mistake reach for coverage.** "934 routable" means a proposal EXISTS that would route
+them, not that any given mission sees them. The number that matters is still the one W5 moved
+off zero: authoritative dispositions with a proven material consumer. Raising 996 toward 1,499
+before the second boundary exists repeats the mistake W5 was called to fix, one level out.
 
 **Carried, not forgotten.** (a) `spec_depth_selection` stays UNKNOWN as a named EVIDENCE
 FRONTIER — 99 incident records of 200 — and **the UNKNOWN→withdrawn tightening must not be
@@ -258,9 +306,15 @@ named systems are already owned at equal or greater maturity**, and `HR-NOVELTY-
 a 13-question proof against a *discovered* sweep before any new institutional system is
 admitted. Then execute action 1.
 
+Ask the corpus what it already owns before proposing anything — that is now a command, not a
+sweep somebody has to remember to run:
+
+    python -m modules.ucr_cif.disposition_consumer --explain "<your proposal>"
+
 Re-run this session's evidence in one command before trusting any of it:
 
-    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w4.json
+    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w5.json
 
-ALL_CAUGHT 14/14 at `fe87d34`. A HARNESS-FAILED line means an anchor has rotted against the
+ALL_CAUGHT 17/17 at W5 close; the W4 plan (14/14) still stands beside it. A HARNESS-FAILED
+line means an anchor has rotted against the
 source, which is a stale plan and never a verdict about the suites.
