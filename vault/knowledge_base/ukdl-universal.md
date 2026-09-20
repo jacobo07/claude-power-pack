@@ -1298,6 +1298,117 @@ shape here is a denominator that legitimately goes to zero on success.
 
 ---
 
+## HR-READ-IS-NOT-CONSUME-001 — a reader that changes nothing is not a consumer
+
+**Rule.** State whose claimed value is that it changes future behaviour is not institutionalized
+until a consumer is proven to change a DECISION, an OBLIGATION, a routing or a compiled artifact
+because of it. Opening the store, counting its rows, logging them or rendering them is reading.
+**Reading is not consumption.** The proof is not that a consumer exists: it is that severing the
+edge between producer and consumer turns a gate red while both endpoints remain intact.
+
+**Scope, stated so this does not become a tax.** It binds only where the CLAIM is behavioural.
+A historical log, an audit trail or an append-only record owes no runtime reader — W3 established
+that `baseline_ledger` was legitimately historical, and a rule that demanded a consumer for every
+stored field would have been wrong about it.
+
+**Mechanism.** The estate's existing family covers a field nobody reads
+(`T-ORPHAN-FIELD-001`, `T-PRODUCERLESS-FIELD-001`, `T-CONSUMER-CHAIN-STARVED-001`) and logic that
+never reaches the live path (`T-INERT-ARCHITECTURE-TAX-001/002`). This is the rung above all of
+them: the reader exists, is live, is reached on a real path, and the decision downstream is
+identical whether the state says one thing or another. Every liveness check passes. The state is
+still inert.
+
+**Origin.** UCR-CIF W5. 996 authoritative dispositions, adjudicated in W3, each naming the owner
+that already holds a concept. Two independent sweeps found their only readers were the producer,
+the adjudicator and a test. Closed by joining them to `check_novelty_gate`, and proven by
+`W1-consumer-edge-severed`: the call is cut, both sides left intact, and the suite must fail.
+
+**Family.** Extends `T-INERT-ARCHITECTURE-TAX-002` (built and never reached) with the case where
+it IS reached; sibling of `HR-FAIL-CLOSED-ON-ABSENT-AUTHORITY-001`.
+
+---
+
+## HR-AUTHORITATIVE-IS-NOT-APPLICABLE-001 — four dimensions, and collapsing any two is a lie
+
+**Rule.** `AUTHORITATIVE ≠ APPLICABLE ≠ REQUIRED ≠ UNSATISFIED`. A verdict that is authoritative
+about its own classification says nothing about whether it bears on the work in front of you. A
+consumer of institutional state resolves them in order and reports each separately: authority
+(who decided, and were they entitled to), applicability (is this proposal about it), lifecycle
+(is the thing it names still here), semantics (can this class be routed at all).
+
+**And an empty selection is four states, not one.** The store was unreadable · it speaks a schema
+we do not · the surviving population is below a floor so an empty answer is uninformative · the
+population was real and nothing applied. Only the last is an answer about the subject. Collapsing
+them lets an instrument failure report as evidence of novelty, which is the inversion the gate
+existed to prevent.
+
+**Origin.** UCR-CIF W5. 996 authoritative units, of which between 0 and 9 apply to any given
+proposal. Injecting all 996 would have been context explosion and false applicability; treating
+authority as applicability is the same error with the cost hidden.
+
+**Family.** `T-VOCABULARY-ZERO-IS-NOT-ABSENCE-002`, and the population floors above.
+
+---
+
+## PR-MUTATE-THE-LINK-NOT-THE-ENDPOINTS-001 — how to prove a join
+
+**Rule.** When the value of a change is *which component decides*, mutating either component
+re-proves that component and says nothing about whether anything calls it. Mutate the EDGE:
+delete the call, leave producer and consumer perfectly intact, and require the suite to go red.
+Then prove the join at three poles, not two — positive (applicable state produces its
+consequence), negative (the same subject without that state does not), and opposite-semantic (a
+refuted, superseded or not-applicable unit cannot produce the positive consequence). A negative
+pole is worthless without a sibling showing the mechanism could have fired: "it did not route"
+is satisfied by a matcher that stopped matching.
+
+**Origin.** UCR-CIF W5, `vault/governance/mutation_plans/ucr_cif_w5.json`, 17/17 ALL_CAUGHT.
+W1 cuts the consumer edge; `V-W5-SEL-FOREIGN-DID-OVERLAP` is the sibling that proves the five
+refused units really did overlap.
+
+**Family.** `T-GUARD-CLAUSE-GATES-BOTH-POLES-001` is the intra-predicate version of the same
+question; this is the inter-component one.
+
+---
+
+## T-THE-TRIGGER-VOCABULARY-CANNOT-DISCRIMINATE-001 — the words that got you here tell you nothing
+
+**Mechanism.** A filter placed downstream of a trigger cannot use the trigger's own vocabulary as
+evidence, because every input that can reach it contains those words by construction. They are
+the population's common denominator, and a count of shared terms cannot tell them from
+distinctive ones — two generic terms and two distinctive ones are both "two".
+
+**Rule.** Ask what EVERY input reaching this code already contains, and exclude exactly that from
+the evidence. Where the estate already owns a distinctiveness threshold, import it; do not
+redefine or tune it, and gate against a local copy appearing.
+
+**Origin.** UCR-CIF W5. A proposal about an espresso machine routed to
+`modules/knowledge_acquisition`; all four matches were `('institutional', 'system')`, both of
+them words from the novelty gate's own trigger list.
+
+**Family.** `T-VOCABULARY-ZERO-IS-NOT-ABSENCE-002` is the mirror — a term nobody indexed reads as
+absent; this is a term everybody holds reading as present.
+
+---
+
+## T-A-MEMO-OUTLIVED-THE-FACT-IT-DESCRIBED-001 — a cache key from the wrong source
+
+**Mechanism.** A derived value cached beside one source, describing another. The lifecycle
+validity of a path is a projection of the FILESYSTEM; caching it beside ledger rows and keying it
+on the ledger's mtime means nothing that happens to the path can invalidate it. No symptom, no
+error, and a stale authority keeps producing obligations.
+
+**Rule.** Before caching a derived value, name the source that can invalidate it and check the
+key comes from THAT source. Where the two differ, scope the memo to one operation: one pass is one
+consistent view, and the next pass looks again.
+
+**Origin.** UCR-CIF W5. Deleting an owner's directory left it reported as present; the lifecycle
+mutation drill found it, reading the code did not.
+
+**Family.** `T-STALE-BYTECODE-OUTLIVES-A-VERIFIED-RESTORE-001` is the same shape in CPython's
+cache — a validity key that cannot see the change that matters.
+
+---
+
 ## Workspace Recovery Control Plane — Execution Mode (SCS C83) — 2026-07-10
 
 | Ref | File | Why it matters |

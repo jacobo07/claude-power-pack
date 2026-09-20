@@ -215,6 +215,55 @@ backfill), `vault/capability_runtime/lifecycle_ratchet.json` (the ratchet).
 Gate: `tools/test_capability_lifecycle.py`. Full account:
 `vault/audits/ucr_cif/04_W3_AUTHORITY.md`.
 
+### C-3 — Circulation (added 2026-09-20, UCR-CIF W5)
+
+C-1 makes institutional state safe to carry and C-2 says when it may be closed. Neither asks
+whether it is worth anything. A corpus can be complete, adjudicated, provenanced,
+lifecycle-aware and entirely inert, and every clause above will pass — because they all judge
+the state, and none of them judges the join.
+
+The clauses bind the same applicability gate, and they bind only where the CLAIM is
+behavioural. A historical record owes no runtime reader; demanding one would have been wrong
+about `baseline_ledger`, which W3 proved was legitimately historical.
+
+- **Reading is not consumption.** A consumer changes a decision, an obligation, a routing or a
+  compiled artifact. Opening the store, counting its rows, logging or rendering them is
+  reading, and a feature whose only new reader does that is not done. The evidence is not that
+  a consumer exists — it is that **severing the edge turns a gate red with both endpoints
+  intact**. Mutating either component re-proves that component and says nothing about whether
+  anything calls it.
+- **Authoritative is not applicable.** Authority over a classification says nothing about
+  whether it bears on the work in hand. Resolve authority, applicability, lifecycle and
+  semantics as four filters in that order and report each separately. A class the consumer
+  cannot route is a declared GAP, never mapped onto the neighbour that does have a consumer.
+- **An empty selection is four states.** Unreadable · schema not understood · population below
+  a floor, so an empty answer is uninformative · a real population with nothing applicable.
+  Only the last is an answer about the subject, and a floor is what keeps a silently broken
+  read from reporting as an honest no.
+- **A universal effect does not license a universal cost.** Applicable maturity is compiled
+  once, at the highest safe reuse boundary, and carried downstream — never re-queried per
+  action, and never by concatenating the corpus into a prompt. Materialization is bounded by
+  construction and measured against an input that matches everything, not against the inputs
+  the author happened to try.
+- **Obligation without certainty.** Institutional state reaching a decision may not manufacture
+  confidence the institution does not hold. An unknown stays unknown, an abstention is not a
+  negative, a refuted unit reduces the search space rather than settling it, and an advisory
+  authority stays advisory — turning every stored verdict into a hard gate is the failure mode
+  on the other side of inertness.
+- **The obligation must not contradict its own instruction.** Where a surface states how many
+  things it is asking for, that number is part of the contract; changing the set silently makes
+  the surface lie. Assert the stated count against the emitted one.
+
+**A negative pole needs a sibling.** "It did not fire" is satisfied by a mechanism that stopped
+firing. Pair every negative with evidence that the mechanism reached the decision and refused
+it, or the strongest possible green means a dead join.
+
+Ref: `skills/claude-power-pack/modules/ucr_cif/disposition_consumer.py` (selection),
+`modules/spec_gate/gate.py::check_novelty_gate` (the consumer),
+`vault/governance/mutation_plans/ucr_cif_w5.json` (the severed-edge drill).
+Gates: `tools/test_disposition_selection.py`, `tools/test_disposition_consumption.py`
+(the production half drives the real hook under an isolated HOME).
+
 ## Authorization Boundary (operational law)
 
 The capability code is agent-built + standalone-verified. The single

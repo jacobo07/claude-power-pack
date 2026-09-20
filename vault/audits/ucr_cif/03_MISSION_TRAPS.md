@@ -616,6 +616,105 @@ against a document the writer did NOT create.
 
 ---
 
+## W5 · `T-THE-TRIGGER-VOCABULARY-CANNOT-DISCRIMINATE-001` — an espresso machine routed to the knowledge module
+
+**What.** The first applicability filter admitted a unit when the proposal shared two of its
+adjudicated evidence terms. A proposal about an espresso machine — bean freshness, grind size,
+portafilter temperature — routed to `modules/knowledge_acquisition` with four matching units.
+Every one of those matches was the same pair: `('institutional', 'system')`.
+
+**Why.** Those words are in the novelty gate's own **trigger list**. The gate only fires on a
+proposal that contains them, so by construction they are present in 100% of the population
+being discriminated. A term the whole population shares is the population's common denominator
+and carries no information about membership. Counting terms cannot see this, because two
+generic terms and two distinctive ones are both "two". Measured spread across the authoritative
+corpus: `failure` is held by 21 owners, `evidence` by 16, `knowledge` by 12.
+
+**Fix.** At least one shared term must be DISTINCTIVE — held by few enough owners to say *which*
+owner. The threshold is the producer's own `DISTINCTIVE_MAX_HOLDERS`, imported and never
+redefined, with a gate that fails if a copy of the constant ever appears in the consumer. 83%
+of evidence terms qualify, so the clause narrows the false pole rather than the true one.
+
+**The negative gate needed a sibling.** "The foreign proposal does not route" is satisfied by a
+matcher that stopped matching entirely. `V-W5-SEL-FOREIGN-DID-OVERLAP` asserts those five units
+*did* share two terms and were refused for carrying no distinctive one.
+
+**Generalizes to.** Whenever a filter runs downstream of a trigger, the trigger's vocabulary is
+useless inside it. Ask what every input that can reach this code already contains, and exclude
+exactly that from the evidence.
+
+---
+
+## W5 · `T-A-MEMO-OUTLIVED-THE-FACT-IT-DESCRIBED-001` — a deleted owner kept routing
+
+**What.** Owner existence was memoized beside the ledger rows, keyed on the ledger's mtime and
+size — 996 authoritative rows name only 40 distinct owners, so the naive form paid 956
+redundant filesystem calls on a hook path. Deleting an owner's directory cannot change the
+ledger's mtime, so the memo answered "present" for a directory that was gone, and a stale
+authority kept producing obligations.
+
+**Why it is the wave's own disease.** W5 exists because a store's content was not reaching a
+consumer. This was a derived view whose key belonged to a *different* source than its subject:
+the lifecycle validity of a path is a projection of the filesystem, never of the ledger.
+
+**Fix.** The memo is per selection. One selection is one consistent view of the repository — 40
+stat calls instead of 996 — and the next selection looks again. Found by the lifecycle drill,
+not by reading; the code looked obviously correct.
+
+**Generalizes to.** Before caching a derived value, name the source that can invalidate it, and
+check that the cache key comes from THAT source. Two sources, two lifetimes, one key is a
+staleness bug with no symptom.
+
+---
+
+## W5 · `T-A-DETECTOR-MATCHED-ITS-OWN-OUTPUT-001` — "proven" inside "Provenance"
+
+**What.** The UNKNOWN-safety gate scans the emitted obligation for words that would assert a
+certainty the institution does not hold — `verified`, `already satisfied`, `proven`. It went
+red on a line the same commit added: `Provenance: vault/ucr_cif/...`.
+
+**Generalizes to.** A substring detector run over text the same change writes is measuring
+itself. Word-bound the pattern, and check the detector against its own product before trusting
+a red.
+
+---
+
+## W5 · `T-THE-SURFACE-CARRIES-THE-MESSAGE-NOT-THE-STRUCTURE-001` — a gate red while its evidence sat in the output
+
+**What.** The live production-reality gate asserted `"Why is extending modules/"` appeared in
+the hook's `additionalContext`. That wording exists only in the verdict's `questions` tuple;
+the hook injects the verdict's `message`, which names each owner and then asks
+`"Why is extending it insufficient?"`. The gate failed while the obligation it was looking for
+was in the output it was reading.
+
+**The worse half was the control beside it.** "The junction worked" was asserted by looking for
+the ledger path in the output — a string this very change's obligation contains. It could only
+confirm what the gate next to it already said, and it passed while its sibling failed. Replaced
+by a two-sided control: the marker must be present in the output AND provably absent from the
+installed tree, so its presence is attributable to the worktree under test.
+
+**Generalizes to.** Assert on what the SURFACE emits, not on the richest representation
+available in-process. And a control whose evidence is produced by the subject is not a control.
+
+---
+
+## W5 · `T-A-FIXTURE-THAT-CANNOT-EXPRESS-THE-DIFFERENCE-001` — the surviving mutation
+
+**What.** `W17-tokenizer-divergence` collapses the producer's two term-length thresholds
+(entities ≥ 4, body text ≥ 5) into one. The gate named for exactly that property used the probe
+`"compile the mission"` — in which every word survives either threshold. The mutation was
+invisible to the fixture asserting about it.
+
+**Classification.** Not an equivalent mutant and not a reachability question: a real behaviour
+change the instrument could not express. The repair is the fixture, not a new gate — a
+four-letter word, admitted from an entity and refused from body text.
+
+**Generalizes to.** A fixture must contain an input that lies BETWEEN the two behaviours it
+distinguishes. If every element of the fixture falls on the same side of the boundary, the test
+is named for a property it cannot observe.
+
+---
+
 ## Standing obligation
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and
