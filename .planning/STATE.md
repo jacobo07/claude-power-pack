@@ -44,6 +44,48 @@ when the transcript shows the command was really submitted.
   The confirmation is written by the Stop chain at the end of the turn that
   follows, so it is pending rather than missing.
 
+### 2026-09-20 — the guard was inaudible, and the confirmation oracle has a gap
+
+**Fixed and pushed (`15bcdbe`).** `_run_inner` returned the auto-reset advisory
+before the whole continuation path — used_pct stamp, endpoint refresh, resume
+confirmation, rearm, post-compaction resume, snapshot, crossing. The advisory
+is once-per-session, so it cost one Stop; but it fires on CONTEXT PRESSURE,
+which is the same condition that produces a crossing, so the one Stop it could
+take was the one most likely to matter. Armed runs now keep the path and the
+advisory is layered on. `tools/test_watchdog_overlay_precedence.py` 4/4, both
+poles; mutation 3/4 red on its own assertion, restore SHA-256 verified.
+GSDAC 26/26, GSDLR 93/93, OVERLAY_GUARD 4/4, REARM 8/8 (which names this run's
+wall: `(35,40,30)` accepted).
+
+**Two premises this session inherited are FALSE, measured:**
+- The host DOES write `compact_boundary`. Three rows in this transcript, newest
+  2026-09-20T12:43:08Z. The single `compaction_unobserved` was a compaction
+  that never happened, not a row the host failed to write. F2 as stated is
+  closed; what remains is a delivery question, not a recording one.
+- There was no rearm deadlock. The advisory flag cleared on its own and the
+  next Stop resumed at used_pct=24.
+
+**OPEN, and now the top blocker for the acceptance gate.** At 13:11–13:13 the
+run re-entered itself with no human: `resume_requested` → `resume_dispatched`
+→ inbox ack `status:"sent"`, `terminal:"claude"`, `window_cwd` = this project.
+`/gsd-autonomous` then EXECUTED. But **no user row records that submission**,
+so `user_issued_command_since` reads False and `resume_confirmed` cannot fire.
+On 2026-09-19 the same flow left `type=user, isMeta=True, list['text']` at
+09:08:06.552Z and confirmed. Control: the Owner's own typed messages today ARE
+recorded (`go ahead`, 14:51:39.917Z), so the host has not stopped recording.
+Two readings remain open — the host did not record this delivery, or the
+delivery reached the model by a path that produces no user row — and they are
+not distinguishable from the archaeology. **Do not weaken the oracle to close
+this.** The next watchdog-initiated crossing is to be watched live end to end;
+that observation separates them, and context is at 36% against a 40% wall.
+
+**Two-pane POSITIVE leg, negative half: measured live against a real
+delivery.** 33 other live panes examined with the product's own predicate at
+the moment of a genuine inbox delivery; **zero** received the line. No window
+was opened and no Owner action was used, which retires the "needs a second
+pane" framing for that half. Pane A's half is blocked on the same missing row
+as the confirmation above. (Count soft by one: the glob returned pane A twice.)
+
 ## Phases
 
 - Phase 1: Two-pane exactness drill — IN PROGRESS, refusal half PROVEN LIVE
