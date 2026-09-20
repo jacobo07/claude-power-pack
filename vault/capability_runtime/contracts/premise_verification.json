@@ -66,5 +66,6 @@
   "kill_switch": "",
   "retirement_condition": "the toolchain verifies symbol existence at edit time for every supported language",
   "parent": "",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "lifecycle": "active"
 }

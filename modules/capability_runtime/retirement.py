@@ -406,17 +406,61 @@ def probe_cdicf_installer(root: Path):
                    f"its record ({', '.join(consumers[:2])}) -- not redundant")
 
 
+@dataclass(frozen=True)
+class ExternalOwner:
+    """Who owns a retirement condition this repository cannot settle.
+
+    `owner` is the load-bearing field, and it is what turns an external
+    condition from an unknown into a RESOLVED epistemic state. "No probe can
+    exist" is a gap; "no probe can exist, and here is the party whose facts
+    decide it" is knowledge, and only the second can support a lifecycle
+    classification.
+
+    It says nothing whatever about whether the external thing is AVAILABLE,
+    healthy, or reachable. Ownership, availability, health and authority are
+    four claims (kernel vMAX-NULL-ERROR: EXTERNAL != AVAILABLE), and this
+    record carries exactly one of them.
+    """
+    owner: str
+    why: str
+
+
 # Conditions that depend on facts OUTSIDE this repository. These are not a
 # probe debt -- no probe can exist here, and filing them under UNEVALUABLE
 # would conflate "we owe a measurement" with "this repo cannot measure it",
 # so the debt count could never fall for the right reason. Retiring one needs
 # an Owner attestation, not a scanner.
+#
+# An entry WITHOUT a named owner is still external and still unretirable, but
+# it cannot close the epistemic question -- consumers must treat it as unknown.
+# That is the fail-closed default, and removing an owner here is the mutation
+# that proves the machinery is not hardcoded to these two ids.
 EXTERNAL_CONDITIONS = {
-    "cost_routing": ("model pricing is a market fact; no repository signal "
-                     "can observe convergence"),
-    "premise_verification": ("editor/toolchain symbol verification is a "
-                             "property of the toolchain, not of this repo"),
+    "cost_routing": ExternalOwner(
+        owner="the frontier-model pricing market (per-token list prices "
+              "published by the model vendors)",
+        why="model pricing is a market fact; no repository signal can observe "
+            "convergence"),
+    "premise_verification": ExternalOwner(
+        owner="the editor/language-server toolchain (a language server per "
+              "supported language)",
+        why="editor/toolchain symbol verification is a property of the "
+            "toolchain, not of this repo"),
 }
+
+
+def external_owner(cid: str):
+    """The named external owner of `cid`'s retirement condition, or None.
+
+    None means one of two different things and the caller must not collapse
+    them: the condition is not external at all, or it is external and nobody
+    has named who owns it. Both are non-answers; only the second is closed by
+    an Owner writing one line here.
+    """
+    rec = EXTERNAL_CONDITIONS.get(cid)
+    if rec is None:
+        return None
+    return rec.owner or None
 
 # id -> (probe, human description). A contract absent from BOTH this registry
 # and EXTERNAL_CONDITIONS is UNEVALUABLE: a visible debt, never a silent pass.
@@ -455,9 +499,12 @@ def evaluate_contract(c, root=None) -> RetirementVerdict:
                                  "declared permanent by contract",
                                  evaluated_at=stamp)
     if cid in EXTERNAL_CONDITIONS:
+        rec = EXTERNAL_CONDITIONS[cid]
+        owned = (f"owned by {rec.owner}" if rec.owner
+                 else "OWNER NOT NAMED -- the external party is unidentified")
         return RetirementVerdict(
             cid, EXTERNAL, cond,
-            f"depends on facts outside this repo: {EXTERNAL_CONDITIONS[cid]}. "
+            f"depends on facts outside this repo: {rec.why}; {owned}. "
             "Retiring it needs an Owner attestation, not a scanner",
             evaluated_at=stamp)
     entry = PROBES.get(cid)

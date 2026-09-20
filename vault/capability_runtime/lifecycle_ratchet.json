@@ -2,18 +2,20 @@
   "purpose": "The UNKNOWN capability population, frozen. It may only shrink. A NEW capability landing in the store unclassified fails V-W3-RATCHET-SHRINK-ONLY; a resolved one must be deleted from this list, or the baseline outlives its subjects.",
   "sealed": "2026-09-19",
   "sealed_by": "UCR-CIF W3",
-  "why_unknown_is_not_withheld": "Ten contracts predate contract.lifecycle. Resolving absence to 'withheld' would have silently disabled four capabilities this estate activates as MANDATORY on every prompt. UNKNOWN therefore activates, reports lifecycle_verified=False, and is driven down by this list rather than by the default. When it reaches zero, tightening UNKNOWN into WITHDRAWN is a one-line change with no population left to break.",
+  "last_shrunk": "2026-09-20",
+  "last_shrunk_by": "UCR-CIF W4",
+  "why_unknown_is_not_withheld": "Ten contracts predate contract.lifecycle. Resolving absence to 'withheld' would have silently disabled four capabilities this estate activates as MANDATORY on every prompt. UNKNOWN therefore activates, reports lifecycle_verified=False, and is driven down by this list rather than by the default.",
+  "why_the_tightening_did_not_happen": "W3 recorded that at UNKNOWN=0 the fallback could be tightened from UNKNOWN to a withdrawn state in one line, with no population left to break. W4 drove the population from 4 to 1 and stopped there, because the last member cannot be closed by writing code. FAIL-CLOSED MUST CLOSE ON ABSENCE OF VALID AUTHORITY, NOT ON FAILURE OF OBSERVATION -- and spec_depth_selection is the second case. Tightening now would convert an honest abstention into a withdrawal and silently disable a live guard on the strength of a measurement the estate has not yet been able to take.",
   "unknown": [
-    "cdicf-installer",
-    "cost_routing",
-    "premise_verification",
     "spec_depth_selection"
   ],
   "reasons": {
-    "cdicf-installer": "UNEVALUABLE -- no deterministic probe exists for its retirement condition. Probe debt this repository could pay. Independently corroborated: it is also the single offender of the pre-existing V-UCEIMR-G2-COVERAGE failure, which reports it as neither probed, external, nor declared permanent.",
-    "cost_routing": "EXTERNAL -- model pricing is a market fact; no repository signal can observe convergence.",
-    "premise_verification": "EXTERNAL -- editor/toolchain symbol verification is a property of the toolchain, not of this repo.",
-    "spec_depth_selection": "UNEVALUABLE -- no deterministic probe exists for its retirement condition. Probe debt this repository could pay."
+    "spec_depth_selection": "EVIDENCE FRONTIER, not probe debt. The W3 entry here said 'no deterministic probe exists'; that was false when it was written. probe_spec_depth_selection existed, was registered in PROBES, and ran. It abstains because the incident record holds 99 entries against a sample floor of 200, and a zero over a corpus that small is evidence of a small corpus rather than of extinction. Writing another probe would not move it. It resolves when the estate's incident record (vault/osa/never_again_log.jsonl + vault/ceps/events.jsonl) reaches 200 records: with a spec-omission entry among them the capability is measurably ACTIVE, without one it retires. The floor was NOT lowered to close this population -- V-PROBE-SPEC-ZERO-STILL-FLOORED goes red if anyone does."
   },
-  "how_to_shrink": "Pay the probe debt in modules/capability_runtime/retirement.py (PROBES), or classify the capability by an Owner transition through modules.capability_runtime.lifecycle.transition. Then re-run tools/capability_lifecycle_migrate.py --apply and delete the resolved id from this list."
+  "resolved": {
+    "cdicf-installer": "2026-09-20 -- probe debt PAID. probe_cdicf_installer measures the three guarantees the contract names (journal, provenance, recover/rollback) plus a production consumer of the record the installer writes. Verdict ACTIVE. Paying it also closed the pre-existing V-UCEIMR-G2-COVERAGE failure, proven causal by removing only the registration and watching the gate go red again.",
+    "cost_routing": "2026-09-20 -- EXTERNAL with a NAMED owner (the frontier-model pricing market). Classified active by Owner transition, actor owner-classification:ucr-cif-w4-external. Authority only: nothing in this repository can retire it and no attestation has, so it remains current. This is not a claim that the external provider is available or healthy.",
+    "premise_verification": "2026-09-20 -- EXTERNAL with a NAMED owner (the editor/language-server toolchain). Same classification, same authority-only limit."
+  },
+  "how_to_shrink": "Three routes, and they are not interchangeable. (1) PROBE DEBT -- no probe is registered: write one in modules/capability_runtime/retirement.py PROBES, with its positive, negative and cannot-judge worlds all reachable. (2) EXTERNAL -- name the owning party in retirement.EXTERNAL_CONDITIONS; the migration then classifies it, and an entry with no named owner deliberately stays UNKNOWN. (3) EVIDENCE FRONTIER -- a probe exists and ran and could not conclude: nothing to write, the missing fact is named in `reasons`, and the entry leaves this list when reality supplies it. Then run tools/capability_lifecycle_migrate.py --apply and move the id from `unknown` into `resolved` with the date and the evidence."
 }

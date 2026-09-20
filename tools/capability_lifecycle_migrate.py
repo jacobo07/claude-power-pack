@@ -24,10 +24,29 @@ Mapping those verdicts to a lifecycle is the whole migration:
                                                     Owner act, not a migration
     UNEVALUABLE                 (none -- unknown)   probe debt: no evaluator
     NO_CONDITION                (none -- unknown)   the contract never said
-    EXTERNAL                    (none -- unknown)   no repository signal could
-                                                    ever settle it
+    EXTERNAL + named owner      active              see below
+    EXTERNAL, owner unnamed     (none -- unknown)   who decides is itself
+                                                    unknown
 
-Only the first two rows write. Everything else stays UNKNOWN, which is a state
+W3 mapped EXTERNAL to UNKNOWN, and that was one distinction too few.
+`retirement.py` separates EXTERNAL from UNEVALUABLE on purpose -- "we owe a
+measurement" is a gap, "this repo cannot measure it" is a permanent structural
+fact -- and mapping both to UNKNOWN here re-merged them one layer up.
+
+When the external party is NAMED, the currency of the authority is a deduction,
+not an absence: nothing in this repository can retire the capability, only an
+Owner attestation about that named party's facts can, and no such attestation
+exists. So it is the current authority. When no owner is named, who decides is
+itself unknown and the contract stays UNKNOWN -- which is the fail-closed
+default and the mutation that proves this is machinery rather than two
+hardcoded ids.
+
+This classifies AUTHORITY and says nothing about AVAILABILITY. That the pricing
+market exists does not make cost routing healthy, reachable or correct; the
+transition's evidence says so in words, because a future reader of
+`lifecycle=active` must not read it as "the external thing works".
+
+Only the first two rows and the named-owner external row write. Everything else stays UNKNOWN, which is a state
 this system can carry -- UNKNOWN activates, reports `lifecycle_verified=False`,
 and is counted by a shrink-only ratchet. Absence is never promoted to ACTIVE to
 make a number look better.
@@ -69,6 +88,19 @@ from modules.capability_runtime.lifecycle import (  # noqa: E402
 )
 
 ACTOR = "migration:ucr-cif-w3"
+# The external-owner classification is a separate institutional act from the
+# W3 backfill and carries its own actor, so the lifecycle log can answer "which
+# pass decided this?" without anyone reading commit dates.
+ACTOR_EXTERNAL = "owner-classification:ucr-cif-w4-external"
+
+# Stated once, attached to every external classification. A lifecycle of
+# `active` on an externally-owned capability is a claim about AUTHORITY -- that
+# nothing has withdrawn it and nothing in this repository could. It is not a
+# claim that the external party's capability is available, healthy or correct.
+_EXTERNAL_DISCLAIMER = ("authority-only: EXTERNAL != AVAILABLE. This records "
+                        "that no repository signal can retire the capability "
+                        "and that no Owner attestation has, not that the "
+                        "external provider is reachable or healthy")
 
 # Retirement statuses that constitute POSITIVE evidence of live authority.
 _WRITES_ACTIVE = {R.ACTIVE, R.NEVER}
@@ -83,11 +115,36 @@ _WHY_UNKNOWN = {
     R.UNEVALUABLE: ("no deterministic probe exists for this condition "
                     "(probe debt -- this repository could pay it)"),
     R.NO_CONDITION: "the contract declares no retirement condition",
-    R.EXTERNAL: ("the condition is external; no repository signal could "
-                 "settle it"),
+    R.EXTERNAL: ("the condition is external AND no external owner is named, "
+                 "so who decides it is itself unknown -- name the owner in "
+                 "retirement.EXTERNAL_CONDITIONS to close this"),
     R.RETIRED: ("the retirement condition HAS come true -- an Owner decides "
                 "SUPERSEDED vs REVOKED; a migration may not"),
 }
+
+
+def _why_unknown(row: dict) -> str:
+    """Why this contract stays UNKNOWN, derived from the verdict rather than
+    asserted from a table.
+
+    UNEVALUABLE covers two different debts and the W3 ratchet froze the wrong
+    one against `spec_depth_selection`: it recorded "no deterministic probe
+    exists" for a capability whose probe existed, was registered, and had run.
+    A reason that is a constant cannot notice when it stops being true, so the
+    probe field decides -- absent means nobody wrote a probe, present means one
+    ran and honestly could not conclude, which is an evidence frontier and not
+    a coding task.
+    """
+    status = row["retirement_status"]
+    if status == R.UNEVALUABLE:
+        if row.get("probe"):
+            return ("a deterministic probe EXISTS, ran, and could not "
+                    f"conclude: {row['evidence']}. This is an evidence "
+                    "frontier, not probe debt -- writing another probe would "
+                    "not move it")
+        return ("no deterministic probe is registered for this condition "
+                "(probe debt -- this repository could pay it)")
+    return _WHY_UNKNOWN.get(status, f"unmapped status {status!r}")
 
 
 def plan(contracts=None, contracts_dir=None, root=None) -> dict:
@@ -126,9 +183,22 @@ def plan(contracts=None, contracts_dir=None, root=None) -> dict:
                 status, f"admitted by _WRITES_ACTIVE with no stated reason "
                         f"({status!r}) -- reason table is out of step")
             to_write.append(row)
+        elif status == R.EXTERNAL and R.external_owner(c.id):
+            owner = R.external_owner(c.id)
+            row["action"] = "write"
+            row["to"] = Lifecycle.ACTIVE.value
+            row["actor"] = ACTOR_EXTERNAL
+            row["external_owner"] = owner
+            row["why"] = (f"retirement condition is owned by {owner}; no "
+                          "repository signal can settle it and no Owner "
+                          "attestation has retired it, so this remains the "
+                          "current authority")
+            row["evidence_extra"] = [f"external_owner:{owner}",
+                                     _EXTERNAL_DISCLAIMER]
+            to_write.append(row)
         else:
             row["action"] = "leave-unknown"
-            row["why"] = _WHY_UNKNOWN.get(status, f"unmapped status {status!r}")
+            row["why"] = _why_unknown(row)
             (needs_owner if status == R.RETIRED else unknown).append(row)
 
     return {
@@ -149,11 +219,12 @@ def apply(p: dict, contracts=None, contracts_dir=None, log_path=None) -> dict:
             ev = transition(
                 row["id"], row["to"],
                 expected=Lifecycle.UNKNOWN,
-                actor=ACTOR,
+                actor=row.get("actor", ACTOR),
                 reason=row["why"],
                 evidence=[f"retirement:{row['retirement_status']}",
                           str(row["evidence"])[:300]] +
-                         ([f"probe:{row['probe']}"] if row["probe"] else []),
+                         ([f"probe:{row['probe']}"] if row["probe"] else []) +
+                         list(row.get("evidence_extra", [])),
                 contracts=contracts, contracts_dir=contracts_dir,
                 log_path=log_path,
             )
@@ -178,7 +249,8 @@ def _print(p: dict, applied=None) -> None:
 
     block("WRITE (evidence of live authority)", p["to_write"], "evidence")
     block("ALREADY CLASSIFIED", p["already_classified"])
-    block("STAYS UNKNOWN (no evidence either way)", p["stays_unknown"])
+    block("STAYS UNKNOWN (each names the fact that would resolve it)",
+          p["stays_unknown"])
     block("NEEDS AN OWNER DECISION", p["needs_owner_decision"], "evidence")
 
     if applied is not None:
