@@ -119,18 +119,29 @@ def build_index(repo: str):
     return index, files
 
 
+def text_terms(text, min_len: int = 5):
+    """The distinctive terms of a free-text blob, as this mission counts them.
+
+    Extracted so a CONSUMER of the ledger asks "what is this about?" with the
+    producer's own vocabulary instead of a second tokenizer. Two tokenizers
+    that agree today diverge on the day one of them learns a new stop word,
+    and the join goes quiet without anything turning red.
+    """
+    terms = Counter()
+    for t in _TERM_RX.findall(str(text or "")):
+        tl = t.lower()
+        if tl not in _STOP and len(tl) >= min_len:
+            terms[tl] += 1
+    return terms
+
+
 def unit_terms(u: dict):
     """The terms a unit is about. Entities first; they are the high-signal half."""
     terms = Counter()
     for e in (u.get("entities") or []):
-        for t in _TERM_RX.findall(str(e)):
-            tl = t.lower()
-            if tl not in _STOP and len(tl) >= 4:
-                terms[tl] += 3                      # entity mentions weigh more
-    for t in _TERM_RX.findall(u.get("text") or ""):
-        tl = t.lower()
-        if tl not in _STOP and len(tl) >= 5:
-            terms[tl] += 1
+        for tl, n in text_terms(e, 4).items():
+            terms[tl] += 3 * n                      # entity mentions weigh more
+    terms.update(text_terms(u.get("text"), 5))
     return terms
 
 
