@@ -79,6 +79,38 @@ not distinguishable from the archaeology. **Do not weaken the oracle to close
 this.** The next watchdog-initiated crossing is to be watched live end to end;
 that observation separates them, and context is at 36% against a 40% wall.
 
+**F5 ROOT CAUSE FOUND (2026-09-20 15:5x), and it explains the working case too.**
+`extension/src/extension.js:103-107` types the line and then writes
+`status:"sent"` unconditionally:
+
+    term.sendText(req.text, false);
+    await sleep(ENTER_DELAY_MS);
+    term.sendText("\r", false);
+    writeAck(..., status: "sent", ...)
+
+The ack asserts only that `sendText` was CALLED. Readiness is read at :80 from
+`~/.claude/sessions/<claude_pid>.json`, a registry written at TURN BOUNDARIES,
+so it is stale by construction between them — and the decision is not atomic
+with the Enter. The model that fits every observation:
+
+- typed while genuinely idle -> submitted at once -> ordinary user row ->
+  `user_issued_command_since` matches -> `resume_confirmed` fires. This is
+  2026-09-19 09:08:06, and it is the only reason C6 is marked PROVEN.
+- typed while BUSY -> Claude Code QUEUES the line -> it is delivered at the
+  next turn end -> it EXECUTES but leaves no ordinary user row -> the oracle
+  reads False and the cycle can never confirm.
+
+The 13:12 resume is the second case exactly: typed mid-turn, and
+`/gsd-autonomous` reached the model at 14:06 — the moment that turn ended. The
+line was never lost. It was queued, and the confirmation oracle cannot see a
+queued delivery.
+
+So F5 is NOT "the host stopped recording". It is a readiness check that expires
+before the effect it authorises, plus an ack that reports the call instead of
+the postcondition. Both are fixable here and neither needs the C6 oracle
+weakened: re-read readiness immediately before the Enter (or refuse), and make
+the ack carry a verified postcondition rather than `sendText` having returned.
+
 **Two-pane POSITIVE leg, negative half: measured live against a real
 delivery.** 33 other live panes examined with the product's own predicate at
 the moment of a genuine inbox delivery; **zero** received the line. No window
