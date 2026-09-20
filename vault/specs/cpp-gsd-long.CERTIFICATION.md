@@ -421,7 +421,40 @@ Two things follow, and both are worth more than the retracted claim:
 
 `test_inbox_delivery_enter.py` remains 5/5 and remains STRUCTURAL: it asserts
 shipped source and copy identity and its own docstring says it cannot see
-submission. That is why 5/5 was never allowed to close F5, and it is still not.
+submission. That is why 5/5 was never allowed to close F5.
+
+**F5 IS CLOSED. The second Enter works, proven against the real command.**
+Re-tested with `/compact` rather than `/help`, judged by the host's own
+postcondition:
+
+    pane A status=idle   compact_boundary rows BEFORE: 0
+    delivered '/compact'
+    ack {"status":"sent","terminal":"claude","enters":2}
+    compact_boundary rows AFTER: 1
+    V-COMPACT-SUBMITS: PASS -- a real compaction happened in pane A
+                              (2026-09-20T18:25:26.869Z)
+
+So the Owner's original diagnosis, made from looking at the pane, was correct
+on the first attempt: the slash-command completion popup consumes the first
+Enter and a second one submits. Every model I reached by measurement was
+wrong — host-queues-input, then a stale readiness row — and both were
+retracted above. **The fix that survived came from an observation of the
+running product, not from the archaeology.**
+
+The delivery mechanism is therefore complete end to end: the request reaches
+the pane that owns the session and no other (C5, 6/6 live), and the line it
+carries is really submitted (this section). What remains for C7 is not the
+transport.
+
+**One claim examined and dropped rather than recorded.** A pane sitting in
+`status: waiting` defers every delivery, which looked like a silent deadlock
+for an unattended run. It is not: `decide` refuses a request as `expired`
+past its `ttl_ms`, the daemon tracks `pending`/`deferred`, and a request that
+never becomes deliverable is promoted to `auto-compact-refused-<sid>.flag`
+with a `refused` ledger row naming the reason. The behaviour is correct and
+instrumented. It is recorded here only because it was nearly written up as a
+defect, and the thing that stopped it was reading the daemon rather than
+reasoning about it.
 
 One instrument failure of mine in the same run, caught by its own three-outcome
 design rather than by inspection: the first slash attempt reported
