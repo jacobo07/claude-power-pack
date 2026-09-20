@@ -159,6 +159,20 @@ def consumer_gates() -> None:
           f"ledger + corpus {sel.corpus_id[:12]} + uid {uid0} in the "
           "obligation; selection round-trips as JSON")
 
+    # W6 repair. The check above asserts three VALUES appear. It passed with
+    # the provenance line's LABELS deleted (mutation W14-provenance-stripped
+    # SURVIVED, measured 2026-09-21 at 16/17), because the mutant still
+    # interpolates the same ledger path and corpus id -- only the words that
+    # say what they ARE were gone. A reader could no longer tell an authority
+    # from a guess, which is exactly what W14 exists to catch. Assert the
+    # labelling, not the substrings it happens to contain.
+    check("V-W5-CON-PROVENANCE-LABELLED",
+          "Provenance:" in owned.message
+          and "AUTHORITATIVE dispositions" in owned.message
+          and "excluded" in owned.message,
+          "the obligation NAMES its provenance and states the population is "
+          "authoritative with candidates/rejections/abstentions excluded")
+
     # A kill switch must be legible as a kill switch, never as "nothing owned".
     os.environ["CLAUDEPP_UCR_ROUTING_DISABLE"] = "1"
     try:
