@@ -143,6 +143,8 @@ class Fact:
 _TRANSFER_VERB = (r"(?:upload|copy|copies|move|archive|send|transfer|sync|push"
                   r"|publish|write)")
 _DESTRUCTIVE_VERB = r"(?:delete|remove|erase|drop|purge|discard|truncate|clear)"
+_TRANSFORM_VERB = (r"(?:port|reimplement|re-implement|rewrite|recreate|reproduce"
+                   r"|replicate|clone|migrate|reconstruct|emulate)")
 
 _FACT_PATTERNS: tuple[tuple[str, str, str], ...] = (
     # name, where, regex
@@ -176,6 +178,26 @@ _FACT_PATTERNS: tuple[tuple[str, str, str], ...] = (
      r"|\bcapped\s+at\s+\d+\b"),
     ("unattended_operation", "reality",
      r"\bunattended\b|\bnobody\s+logs?\s+in(?:to)?\b|\brestarted\s+by\s+nobody\b"),
+    # The fact is "one artifact is being made to stand in for another", which is
+    # a DIRECTIONAL STRUCTURE (a transformation verb reaching a target), not a
+    # noun. Written as a bare list of domain words -- "APK", "Wii", "emulator" --
+    # this would be the GSDX-M04 defect in a new place: a lookup table that
+    # transfers to nothing. The verb list is still closed and still costs one
+    # entry per unseen wording; what it does NOT do is name a platform.
+    ("reconstruction_relation", "intent",
+     rf"\b{_TRANSFORM_VERB}\w*\b[^.]{{0,120}}?\b(?:to|onto|into|as|against)\b"),
+    # The fact is "the two are required to agree", not any particular tolerance.
+    ("fidelity_requirement", "intent",
+     r"\b(?:faithful\w*|exact\w*|identical\w*|equivalen\w*|parity|fidelity"
+     r"|1:1|bit-for-bit|bit-exact|bit-level|pixel-perfect)\b"),
+    # Enrichment only. A reference that RUNS can be interrogated on inputs
+    # nobody has tried yet; a reference that is only a document cannot, and the
+    # holdout obligation is weaker because there is nothing to hold out against.
+    ("reference_is_executable", "reality",
+     r"\b(?:reference|original|donor|legacy|incumbent)\b[^.\n]{0,60}?"
+     r"\b(?:runs?|running|boots?|playable|executable|still\s+in\s+use)\b"
+     r"|\b(?:runs?|running|boots?|playable|executable)\b[^.\n]{0,60}?"
+     r"\b(?:reference|original|donor|legacy|incumbent)\b"),
 )
 
 
@@ -292,10 +314,56 @@ def op_failure_consequence(facts, _intent, _reality) -> Obligation | None:
     return ob
 
 
+def op_unfalsifiable_parity_consequence(facts, _intent, _reality) -> Obligation | None:
+    """A mission that requires one artifact to behave as another owes the
+    question nobody states: measured against WHAT, and could it have failed?
+
+    Agreement on the traces the implementation was built from is the one result
+    a memorising reconstruction and a generalising one both produce, so it
+    cannot tell them apart. The obligation is evidence the implementation path
+    never saw.
+    """
+    if not _has(facts, "reconstruction_relation", "fidelity_requirement"):
+        return None
+    ob = Obligation(
+        identifier="DO-4",
+        text="Parity must be judged on evidence the implementation path did not "
+             "see: a holdout withheld before the work starts, and kept withheld.",
+        operator="UNFALSIFIABLE_PARITY_CONSEQUENCE",
+        parents=["human_intent", "fact:reconstruction_relation",
+                 "fact:fidelity_requirement"],
+        consequence="The candidate is accepted on the evidence it was fitted to. "
+                    "A reconstruction that matches every observed trace and "
+                    "fails on unseen input is indistinguishable at acceptance "
+                    "time from one that generalises, so the defect is found by "
+                    "the first user to do something nobody recorded.",
+        evidence=_cite(facts, "reconstruction_relation", "fidelity_requirement"),
+        authority="~/.claude/rules/evaluation-corpus-governance.md "
+                  "(partition before ingestion; a corpus cannot be un-taught)",
+        closure_condition="a holdout was partitioned BEFORE the implementation "
+                          "began, the implementation path cannot read it, and "
+                          "the candidate is judged on it",
+        done_gate="a parity verdict over the holdout, reported beside the "
+                  "known-trace verdict rather than merged into it",
+        invalidated_by=["the fidelity requirement is withdrawn",
+                        "the reference stops being available to generate "
+                        "unseen cases"],
+    )
+    if _has(facts, "reference_is_executable"):
+        ob.consequence += (" The reference is executable here, so unseen cases "
+                           "can be GENERATED rather than merely waited for -- "
+                           "which makes the omission a choice rather than a "
+                           "limitation.")
+        ob.evidence += _cite(facts, "reference_is_executable")
+        ob.parents.append("fact:reference_is_executable")
+    return ob
+
+
 OPERATORS = (
     op_irreversibility_consequence,
     op_absent_signal_consequence,
     op_failure_consequence,
+    op_unfalsifiable_parity_consequence,
 )
 
 
