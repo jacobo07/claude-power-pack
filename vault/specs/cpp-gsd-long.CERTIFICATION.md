@@ -22,9 +22,9 @@ claims, in the order the run exercises them:
 | C2 | the wall is narrowed per session, and the watchdog applies it | **PROVEN** |
 | C3 | a crossing checkpoints and asks for `/compact` | **PROVEN** |
 | C4 | the compaction is recognised from its post-condition, never a proxy | **PROVEN** |
-| C5 | the resume is delivered to the session that owns it, or to nobody | **PROVEN (refusal side); the positive side is NOT PROVEN live** |
+| C5 | the resume is delivered to the session that owns it, or to nobody | **PROVEN (refusal side). Positive side: its NEGATIVE half is now measured live — 2026-09-20, a real delivery, 33 other live panes examined with the product's own predicate, zero touched. Pane A's half is NOT PROVEN, blocked on F5** |
 | C6 | a resume counts only when the transcript shows it was submitted | **PROVEN — first ever recorded 2026-09-19 09:30:37** |
-| C7 | two crossings, each with a confirmed resume (`report` = PROVEN) | **NOT YET — `report` reads PARTIAL: 3 crossings, 1 confirmed** |
+| C7 | two crossings, each with a confirmed resume (`report` = PROVEN) | **NOT YET — `report` reads PARTIAL: 4 crossings, 1 confirmed (2026-09-20). Blocked on F5, not on the wall** |
 
 The command's own done-gate is C7. **It is not met at the time of issue**, and
 section 6 says exactly what is missing and why.
@@ -308,6 +308,58 @@ This is the third instance in this estate of one shape, and it is worth naming
 plainly: **a guard that runs, is correct, and cannot be heard is
 indistinguishable from one that approved.** Here the silence was read for
 eleven hours as "the run is fine".
+
+## 9d. 2026-09-20, later — one premise retracted, one defect closed, one opened
+
+**F2 IS RETRACTED. The host DOES write `compact_boundary`.** §9b recorded "a
+compaction happened and wrote no boundary row" as an open question about the
+host. Measured today on this transcript: **three** boundary rows exist
+(2026-09-18T23:07:25Z, 2026-09-18T23:51:55Z, 2026-09-20T12:43:08Z). The single
+`compaction_unobserved` row was a compaction that **never happened** — the
+`/compact` line was never submitted — not a row the host failed to write. C4
+needs no weakening and none was applied. What remains from F2 is a delivery
+question, which is F5 below.
+
+**F4 — the advisory took the Stop the run was standing on. CLOSED, `15bcdbe`.**
+`_run_inner` opened with `overlay = _orchestrator_overlay(event); if overlay:
+return overlay`, and the whole continuation mechanism lives below that line:
+the used_pct stamp, the endpoint refresh, the resume confirmation, the rearm,
+the post-compaction resume, the snapshot, the crossing and the `/compact`
+instruction. The overlay is once-per-session, so it cost one Stop — but it
+fires on CONTEXT PRESSURE, the same condition that produces a crossing, so the
+one Stop it could take was the one most likely to matter. Its signature in
+`logs/context-watchdog.log` is `used_pct=?`, because `_LAST["used_pct"]` is
+stamped just past the early return. Armed runs now keep the path; unarmed
+sessions are unchanged; the advisory is layered on and still surfaces.
+`tools/test_watchdog_overlay_precedence.py` 4/4 both poles, mutation 3/4 red on
+its own assertion, restore SHA-256 verified.
+
+**F5 — delivery is not submission. OPEN, and it is what blocks C7.** At
+13:11–13:13 this run re-entered itself with **no human input**:
+`resume_requested` → `resume_dispatched` → terminal-inbox ack `status:"sent"`,
+`terminal:"claude"`, `window_cwd` = this project. `/gsd-autonomous` then
+executed. But **no user row records the submission**, so C6's oracle
+(`user_issued_command_since`) reads False and `resume_confirmed` cannot fire.
+On 2026-09-19 the identical flow left `type=user, isMeta=True, list['text']` at
+09:08:06.552Z and confirmed — which is the only reason C6 is marked PROVEN at
+all. Excluded by measurement: late flush (two further turns closed, transcript
+grew to 14.7 MB, still absent), the 8 MB window (the row would sit at ~14.0 MB
+of 14.7), and the time bound (removing it changes nothing). Control: the
+Owner's own typed messages that day ARE recorded. Two readings remain — the
+host did not record this delivery, or it reached the model by a path that
+produces no user row — and the archaeology cannot separate them.
+
+**The oracle was NOT weakened to close this.** The outcome the milestone is
+about did occur — three commits (`15bcdbe`, `ba540f2`, `27a7094`) landed and
+were pushed AFTER the 12:43 boundary with zero human continuation input, which
+is meaningful post-boundary work by any reading. But "the mechanism-specific
+oracle missed a real success" is a reason to add a second observable, not a
+licence to lower the first. The next watchdog-initiated crossing is to be
+watched live end to end; that observation separates the two readings.
+
+**Also note what this cycle does NOT support.** The 12:43 compaction was run by
+the Owner, so this cycle cannot count toward C7 however well the rungs after it
+behaved. A crossing the Owner triggered is not a crossing the run produced.
 
 ## 9. The honest summary
 
