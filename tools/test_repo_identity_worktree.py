@@ -37,7 +37,12 @@ _PP_ROOT = Path(__file__).resolve().parents[1]
 if str(_PP_ROOT) not in sys.path:
     sys.path.insert(0, str(_PP_ROOT))
 
-from modules.repo_identity import canonical_repo, main_repo_root  # noqa: E402
+from modules.repo_identity import (  # noqa: E402
+    canonical_repo, is_power_pack, main_repo_root,
+)
+from modules.repo_identity.identity import (  # noqa: E402
+    _PP_MARKS, _PP_MARKS_REQUIRED,
+)
 from modules.fable_distillation.federated_ledger import (  # noqa: E402
     _is_pp_repo, fdi_advisory,
 )
@@ -63,6 +68,23 @@ def _check(gate: str, cond: bool, evidence: str, diagnostic: str = "") -> None:
         _ok(gate, evidence)
     else:
         _fail(gate, diagnostic or evidence)
+
+
+def _mark_as_pp(root: Path) -> None:
+    """Give a synthetic root the CONTENTS that make it the Power Pack.
+
+    Derived from `identity._PP_MARKS` rather than restated here, so a change to
+    what identity means cannot leave the fixture asserting about a definition
+    that no longer exists. Only the required majority is created -- a fixture
+    that satisfies every mark could not notice the threshold being raised.
+    """
+    for mark in _PP_MARKS[:_PP_MARKS_REQUIRED]:
+        p = root / mark
+        if p.suffix:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text("synthetic\n", encoding="utf-8")
+        else:
+            p.mkdir(parents=True, exist_ok=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -166,6 +188,7 @@ def synthetic_half() -> None:
         # A fake main repo + a linked worktree written with an ABSOLUTE gitdir.
         main = base / "claude-power-pack"
         (main / ".git" / "worktrees" / "wt-abs").mkdir(parents=True)
+        _mark_as_pp(main)
         wt_abs = base / "pp-somewhere-else"
         wt_abs.mkdir()
         (wt_abs / ".git").write_text(
@@ -179,6 +202,33 @@ def synthetic_half() -> None:
                _is_pp_repo(str(wt_abs)) is True,
                "_is_pp_repo(synthetic worktree) is True",
                "predicate did not follow the resolver")
+
+        # The MIRROR of the W3 defect, and the case a substring test cannot
+        # answer however many spellings it carries: a repository that is NOT
+        # the Power Pack, living under a path that contains its name. W3 fixed
+        # "PP does not look like PP"; this is "something else looks like PP".
+        # Fixture built with the name and WITHOUT the contents, because the
+        # whole claim is that the name is not the identity.
+        impostor = base / "claude-power-pack-experiments" / "someone-elses-app"
+        (impostor / ".git").mkdir(parents=True)
+        (impostor / "README.md").write_text("not the Power Pack\n",
+                                            encoding="utf-8")
+        _check("V-W4-IDENT-NAME-IS-NOT-IDENTITY",
+               _is_pp_repo(str(impostor)) is False,
+               "an unrelated repo under a claude-power-pack path is NOT the "
+               "Power Pack",
+               "a path substring still decides identity")
+
+        # And the pole that keeps the gate above from being satisfied by a
+        # predicate that simply refuses everything.
+        twin = base / "a-checkout-named-anything"
+        (twin / ".git").mkdir(parents=True)
+        _mark_as_pp(twin)
+        _check("V-W4-IDENT-CONTENTS-DECIDE",
+               _is_pp_repo(str(twin)) is True,
+               "a Power Pack checkout under an unrecognisable name IS the "
+               "Power Pack",
+               "identity is not being read from the repository contents")
 
         # RELATIVE gitdir.
         (main / ".git" / "worktrees" / "wt-rel").mkdir(parents=True)
@@ -229,12 +279,18 @@ def instrument_controls() -> None:
     print("\n[instrument controls]")
     src = (_PP_ROOT / "modules" / "fable_distillation"
            / "federated_ledger.py").read_text(encoding="utf-8", errors="replace")
-    _check("V-W3-IDENT-CONTROL-FASTPATH",
-           '"claude-power-pack" in text' in src,
-           "the cheap substring fast path is still first",
-           "fast path removed -- every normal checkout now pays path I/O")
+    # W3 asserted the cheap substring fast path was still first. W4 retires
+    # that control and inverts it in place, because the fast path WAS the
+    # remaining defect: it answered True for any path containing the name, so
+    # no work done after it could ever take that answer back. The diff between
+    # these two versions of the same gate is the evidence, which is why it is
+    # not a new gate beside a deleted one.
+    _check("V-W4-IDENT-CONTROL-NO-PATH-LITERAL",
+           '"claude-power-pack" in' not in src,
+           "the predicate no longer decides identity from the path text",
+           "a path-literal identity test is back in federated_ledger")
     _check("V-W3-IDENT-CONTROL-RESOLVER-WIRED",
-           "main_repo_root" in src,
+           "is_power_pack" in src,
            "_is_pp_repo consults the canonical resolver",
            "the resolver is no longer wired into the predicate")
 

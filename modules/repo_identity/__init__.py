@@ -6,6 +6,7 @@ session happens to be sitting in when it writes.
 from .identity import (  # noqa: F401
     canonical_repo,
     main_repo_root,
+    is_power_pack,
     repo_key,
     legacy_keys,
     ledger_paths,

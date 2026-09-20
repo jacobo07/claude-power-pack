@@ -56,16 +56,22 @@ def _is_pp_repo(repo: str) -> bool:
     which is the FIOS/FD-07 signal reported from UCR-CIF W2.
 
     INC-025 fixed the sibling half of this (the deposit KEY) by introducing
-    `repo_identity`; this predicate was left on the raw substring. Fast path
-    first so a normal checkout costs nothing, then the canonical resolver.
-    Fail-open to the substring answer -- identity must never raise here.
+    `repo_identity`; this predicate was left on the raw substring.
+
+    W3 resolved the worktree half by consulting `main_repo_root` and then
+    asking the substring question again of the answer, which left the mirror
+    defect standing: an unrelated repository under a path that happens to
+    contain "claude-power-pack" is identified as the Power Pack forever. W4
+    replaces the question rather than adding a third spelling of it --
+    `repo_identity.is_power_pack` reads the repository's CONTENTS through the
+    worktree resolver, and is the primitive any other system asking "is this
+    the Power Pack?" should reuse instead of growing its own detector.
+
+    Fail-open to False -- identity must never raise into an advisory.
     """
-    text = repo or ""
-    if "claude-power-pack" in text:
-        return True
     try:
-        from modules.repo_identity import main_repo_root
-        return "claude-power-pack" in main_repo_root(text)
+        from modules.repo_identity import is_power_pack
+        return is_power_pack(repo or "")
     except Exception:  # noqa: BLE001 -- identity never blocks an advisory
         return False
 

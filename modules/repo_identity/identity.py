@@ -129,6 +129,46 @@ def main_repo_root(path: str | os.PathLike | None = None) -> str:
     return str(root)
 
 
+# Structural marks of THIS repository, chosen because each is a subsystem the
+# Power Pack owns rather than a name anyone could choose. A majority is
+# required, not all of them, so renaming one subsystem degrades identity to
+# "still recognised" rather than to "suddenly a stranger".
+_PP_MARKS = (
+    "modules/capability_runtime/contract.py",
+    "vault/hard_rules/HARD_RULES.md",
+    "modules/rule_compiler",
+    "tools/hardrule_compile.py",
+    "modules/uqf",
+)
+_PP_MARKS_REQUIRED = 3
+
+
+def is_power_pack(path: str | os.PathLike | None = None) -> bool:
+    """True when `path` belongs to the Claude Power Pack repository.
+
+    Identity is read from the repository's CONTENTS, resolved through
+    `main_repo_root` so a linked worktree answers for the repository it belongs
+    to. A directory basename is a display name: two different repositories may
+    share one, one repository may be checked out under several, and W3 measured
+    the first half of that -- `C:/Users/User/Apps/pp-ucr-cif` IS the Power Pack
+    and says nothing of the kind, so the Power Pack served itself an advisory
+    written for other repositories.
+
+    The mirror half is the one a substring test cannot answer at all: an
+    unrelated repository living under a path that happens to contain
+    "claude-power-pack" reads as the Power Pack forever, and no amount of
+    additional substrings fixes a predicate that is asking the wrong question.
+
+    Fail-closed on an unreadable root: unknown is not identity.
+    """
+    try:
+        root = Path(main_repo_root(path))
+        hits = sum(1 for m in _PP_MARKS if (root / m).exists())
+    except (OSError, ValueError):
+        return False
+    return hits >= _PP_MARKS_REQUIRED
+
+
 def repo_key(path: str | os.PathLike | None = None) -> str:
     """The filename slug for a repository's per-repo state."""
     return _encode(canonical_repo(path))
