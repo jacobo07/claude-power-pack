@@ -202,12 +202,36 @@ def load_contracts(contracts_dir: Path | None = None) -> list:
 
 
 def save_contract(c: CapabilityContract, contracts_dir: Path | None = None) -> Path:
-    """Atomically persist a validated contract."""
+    """Atomically persist a validated contract, preserving what it does not model.
+
+    A dataclass round-trip is LOSSY in both directions and both bit on the
+    first contract that had anything to lose. `from_dict` keeps only declared
+    fields, so writing `to_dict` back deletes every other key -- measured on
+    cdicf-installer.json, where a single lifecycle transition would have
+    destroyed `_matcher_note` (the record of why that contract's triggers were
+    rewritten), `verification_obligations` and `minimum_runtime_version`. And
+    `json.dumps` escapes non-ASCII by default, so an em dash comes back as
+    \\u2014 and a one-field change renders as a 61-line diff nobody will read.
+
+    A store must not destroy what it does not understand. So the new values are
+    MERGED over the document already on disk: declared fields are updated,
+    undeclared ones survive untouched and keep their position, and the file's
+    own character set is kept (PR-FORMAT-MATCHES-PRODUCER-001).
+    """
     base = Path(contracts_dir) if contracts_dir is not None else CONTRACTS_DIR
     base.mkdir(parents=True, exist_ok=True)
     p = base / f"{c.id}.json"
+    doc: dict = {}
+    try:
+        existing = json.loads(p.read_text(encoding="utf-8-sig"))
+        if isinstance(existing, dict):
+            doc = existing
+    except (OSError, json.JSONDecodeError, ValueError):
+        doc = {}
+    doc.update(c.to_dict())
     tmp = p.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(c.to_dict(), indent=2), encoding="utf-8")
+    tmp.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n",
+                   encoding="utf-8")
     tmp.replace(p)
     return p
 

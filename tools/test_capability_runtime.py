@@ -10,6 +10,7 @@ Run: python tools/test_capability_runtime.py    (exit 0 = all gates pass)
 """
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -261,6 +262,38 @@ def test_persistence_and_failopen() -> None:
              f"{len(loaded)} valid contract(s) loaded; malformed file skipped")
          if len(loaded) == 1 and loaded[0].id == "arch_truth"
          else _fail("V-CAPRT-ROUNDTRIP", f"loaded={[c.id for c in loaded]}"))
+
+        # A save over a document that ALREADY EXISTS and carries keys the
+        # dataclass does not model. The round-trip gate above saves a contract
+        # built in memory, so it has nothing to lose and could never see this:
+        # measured on cdicf-installer.json, one lifecycle transition deleted
+        # `_matcher_note`, `verification_obligations` and
+        # `minimum_runtime_version` and escaped every em dash to —.
+        prior = Path(cdir) / f"{ARCH.id}.json"
+        doc = json.loads(prior.read_text(encoding="utf-8"))
+        doc["_matcher_note"] = "why the triggers were rewritten — keep me"
+        doc["verification_obligations"] = ["a claim the dataclass never models"]
+        prior.write_text(json.dumps(doc, indent=2, ensure_ascii=False),
+                         encoding="utf-8")
+        save_contract(ARCH, cdir)
+        after_text = prior.read_text(encoding="utf-8")
+        after = json.loads(after_text)
+        if (after.get("_matcher_note") == doc["_matcher_note"]
+                and after.get("verification_obligations")
+                == doc["verification_obligations"]):
+            _ok("V-CAPRT-PRESERVES-UNKNOWN-KEYS",
+                "a save over an existing document keeps the keys the "
+                "dataclass does not model")
+        else:
+            _fail("V-CAPRT-PRESERVES-UNKNOWN-KEYS",
+                  f"lost: {sorted(set(doc) - set(after))}")
+        if "\\u2014" not in after_text and "—" in after_text:
+            _ok("V-CAPRT-NO-ASCII-ESCAPING",
+                "non-ASCII survives as itself, so a one-field change is a "
+                "one-line diff")
+        else:
+            _fail("V-CAPRT-NO-ASCII-ESCAPING",
+                  "the writer escaped non-ASCII; every save reflows the file")
 
         ddir = Path(td) / "derivatives"
         _, rec = derive(ARCH, "proj_c", {"required_evidence": ["trace"]})
