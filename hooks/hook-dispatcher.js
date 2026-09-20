@@ -186,13 +186,38 @@ const CHAIN_MAP = {
     // stdout discarded, the compaction never happens, and the run stalls --
     // the Owner's cross-repo hang wearing a different hat.
     //
-    // Raising beats promoting it to the lane, because the expensive path is
-    // RARE: an ordinary Stop measures 844 ms median and only a genuine crossing
-    // pays the 4 s, whereas the lane is deliberately small and runs its members
-    // sequentially on EVERY turn. The Stop dispatcher's settings.json ceiling is
-    // 300 s at concurrency 8, so 20 s costs nothing it has. Whether that is
-    // enough is now an observable, not an assumption: logs/context-watchdog.log.
-    { exe: PY_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py', timeoutMs: 20000 },
+    // PROMOTED TO THE CRITICAL LANE 2026-09-20. The note this replaces argued
+    // that raising the timeout beat promoting it, and it closed by naming the
+    // test: "Whether that is enough is now an observable, not an assumption:
+    // logs/context-watchdog.log." The observable answered, and the answer is no.
+    //
+    // Measured on session 37cfb187 (an armed /cpp-gsd-long run with a 40 % wall):
+    //   * its last judged turn was 2026-09-19T13:13 at used_pct=45 -- ABOVE its
+    //     own wall, and `pass`, because a separate defect had removed the wall;
+    //   * after the wall was restored the log recorded NOTHING for that session
+    //     across many ended turns, while the same log kept judging other live
+    //     sessions (240 lines that day, one of them a 53.8 MB transcript in
+    //     1995 ms -- so this is not transcript size);
+    //   * hook-dispatcher-errors.log, 10:27:26Z:
+    //       [Stop-chain] context-watchdog.py Error: ETIMEDOUT after 20000ms
+    //     and at 10:49:12 TEN members of this chain reported ETIMEDOUT inside
+    //     8 ms of each other -- the signature of the whole chain being abandoned
+    //     at its deadline, which takes the members that already finished with it.
+    //
+    // So the raise moved the cliff rather than removing it, exactly as the
+    // estate's own doctrine says ("the fix is scheduling, not budget"), and the
+    // run stalled for eleven hours with every gate green.
+    //
+    // The counter-argument was real and was measured rather than dismissed: the
+    // lane runs sequentially on EVERY turn, so what matters is the ORDINARY
+    // path. Timed alone against an 11.5 MB transcript at 3.5 GB free, n=5:
+    // 463 / 1183 / 1523 / 3037 / 6823 ms, median 1523. Beside closer-guard
+    // (644-1245 ms) and the cheap continuation hook, the lane stays ~3 s. That
+    // is the price of the hook that decides whether an unattended run survives
+    // its own context wall, against the measured alternative of it not running
+    // at all. THIRD deliberately: a dead screen and a blocking continuation both
+    // outrank compaction, and neither of those is what stalled this run.
+    { exe: PY_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/context-watchdog.py', timeoutMs: 20000, critical: true },
     { exe: NODE_EXE, script: '../skills/claude-power-pack/modules/zero-crash/hooks/ram-watchdog.js', timeoutMs: 6000 },
     // ram-shield.js removed 2026-06-04: never existed (phantom ref produced a
     // recurring Stop-hook "script missing" error). ram-watchdog.js is the real one.
