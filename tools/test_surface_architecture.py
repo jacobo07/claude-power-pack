@@ -443,8 +443,44 @@ def gate_contrasting_fixtures() -> None:
            "no fixture requires a refusal -- the set only proves it can say yes")
 
 
+def gate_dataset_drift() -> None:
+    """The dataset part and the executable registry must not drift apart.
+
+    A rename in one that is not made in the other would leave a document describing
+    archetypes that no longer exist, which reads exactly like a document describing
+    ones that do.
+    """
+    import re  # noqa: PLC0415
+
+    doc = _PP_ROOT / "vault" / "knowledge_base" / "uacf" / "UACF-01-surface-architecture.md"
+    if not doc.is_file():
+        _fail("V-SA-DATASET-PRESENT", f"missing {doc}")
+        return
+    text = doc.read_text(encoding="utf-8-sig")
+
+    # Ids are cited in backticks in the archetype table.
+    cited = set(re.findall(r"`([A-Z][A-Z_]{3,})`", text))
+    registry = set(A.IDS)
+    missing = sorted(registry - cited)
+    invented = sorted(c for c in cited - registry
+                      if c not in {"RECOMMEND", "ABSTAIN", "REQUIRE_APPROVAL",
+                                   "UNDETERMINED", "CONFLICT"})
+    _check("V-SA-DATASET-DRIFT", not missing and not invented,
+           f"all {len(registry)} registry ids appear in the dataset, and it invents none",
+           f"missing from dataset: {missing}; in dataset but not the registry: {invented}")
+
+    # The ordering principle belongs to CDIO-02. The dataset must CITE it, not restate
+    # it -- two places a rule can be written is one place it can drift.
+    _check("V-SA-DATASET-CITES-CDIO", "CDIO-02" in text,
+           "the dataset cites CDIO-02 for the ordering principle rather than "
+           "restating it",
+           "the dataset does not cite CDIO-02; the value-before-friction rule now has "
+           "two owners")
+
+
 def main() -> int:
     print("V-SA gates -- modules/surface_architecture")
+    gate_dataset_drift()
     gate_contrasting_fixtures()
     gate_contract_activates()
     gate_absence_is_not_a_default()
