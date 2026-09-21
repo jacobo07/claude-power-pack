@@ -45,9 +45,15 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
-**As of 2026-09-19 `origin/main` has advanced to `06d88cd`, 33 commits past that base**
-(the other writer landing work). Our seven W0–W2 commits plus W3's three remain ancestors of
-HEAD; nothing was rebased. Re-measure the divergence before any merge, and note that
+**As of 2026-09-22 (W8 close) HEAD is `41bb2f1` and the branch is 44 ahead / 74 behind
+`origin/main`** — the other writer keeps landing work. Every earlier wave's commits remain
+ancestors; nothing has ever been rebased. **W8 opened by falsifying its own handoff**: the
+prompt that started it carried a state pin of `3c02e32` (W5 seal, 27 ahead / 33 behind) and
+asked for W6 to be built, but `3c02e32` was already **eleven commits** behind the branch tip —
+W6 (`aace845`) and W7 (`b3fefe7`) were both sealed. Executing it literally would have rebuilt a
+landed wave, which is the exact duplication this mission exists to prevent. **Read this file,
+not the prompt's pin, and check `git log` before believing either.**
+Re-measure the divergence before any merge, and note that
 `git status` in the SHARED checkout (`~/.claude/skills/claude-power-pack`) describes the
 OTHER writer's branch `feature/knowledge-acquisition` — never read this mission's state from
 there.
@@ -224,6 +230,33 @@ is never written by this mission and never rolled back.
   SURVIVED the first run and were fixed as real defects in the instrument, one of them my own
   gate reading a persisted artifact instead of driving its producer.
 
+- **W8 · applicability precision** — `0dc2a8f` (spec), `b4f3588` (mechanism + proof),
+  `5b1c836` (mutations), `d5a94a6` (audit), `9e85e65` (anchor repair), `41bb2f1` (knowledge).
+  **PARTIAL: the saturation moved, the precision did not, and the ceiling is now measured.**
+  Two mechanisms in the ONE selector, so both doors inherit them: the applicability bar scales
+  with prompt term count (floor 1, ceiling 3) and owners rank by evidence strength — the summed
+  inverse-holder weight of DISTINCTIVE matched terms — instead of by unit count.
+  On the identical **683 xl cases** of a paired re-derivation: routing ≥1 owner **99.6 % →
+  93.9 %**, mean owners **4.76 → 3.98**, owner slots **−20.3 %**, `cdicf` −56 %, `sqi` −30 %,
+  and **zero true positives lost** (TP 12 → 12, recall 100 %). Holdout precision **20.0 % →
+  20.0 %**: of 128 shared labelled cases exactly **one** changed its fire decision, ~0.8 points
+  against 31 positives, below this oracle's resolution. **The headline acceptance criterion
+  FAILED and is recorded as failed**, not softened.
+  **The finding that reorders the frontier:** sweeping the ceiling cliffs 42 % → 5 % routed
+  between a bar of 3 and 4, and the corpus's distinctive supply is median 3 with only 404 of
+  996 units holding 4. Headroom above the shipped setting is **zero**, and that is a property
+  of the EVIDENCE FAMILY, not of the threshold — so applicability precision is unreachable by
+  tightening a lexical clause at all.
+  Two instrument findings came BEFORE the subject: `ucr_cif_shadow.py` replays a persisted
+  report and never calls `select_for` (W7's one-line success criterion was unfalsifiable in the
+  wrong direction), and W7's stored 23.5 %/2,350 re-derived TODAY unchanged as 20.0 %/2,306 —
+  population drift worth 3.5 points. Both are now UKDL rules.
+  Gates: `tools/test_w8_applicability_precision.py` **17/17** (each mechanism independently
+  discriminative, with the positive control that short thin evidence still routes),
+  `ucr_cif_w8.json` **6/6 ALL_CAUGHT**, and the whole family re-verified — W4 14/14, W5 23/23,
+  W7 10/10 = **53 mutations**, restore checked at source and runtime. `DISTINCTIVE_MAX_HOLDERS`
+  untouched; `PR-W7-X1` still GREEN at 93.9 % and deliberately NOT inverted.
+
 **UNMEASURED (not zero, not fine)**
 
 - **Hook/mission latency timing.** Host was at **1,499 MB free of 32,061 (4.7 %)**, 31
@@ -270,36 +303,56 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-21 (W7 close)
+## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W8 close)
 
-**W7 answered the question W6 left open and the frontier moved off the trigger.** Do not open a
-third consumption boundary and do not revisit the `create_spec` decision without new evidence —
-it is measured, holdout-validated and recorded with its reopening conditions in
-`vault/audits/ucr_cif/05_W7_REACH.md` §9.
+**W8 executed W7's action 1 and the answer changed what action 2 IS.** Do not open a third
+consumption boundary and do not revisit the `create_spec` decision — still measured,
+holdout-validated, and recorded with its reopening conditions in
+`vault/audits/ucr_cif/05_W7_REACH.md` §9. That condition is **not** met and W8 is evidence it
+will not be met by threshold work. Full result: `vault/audits/ucr_cif/06_W8_PRECISION.md`.
 
-1. **HIGHEST LEVERAGE — applicability precision at real prompt length.** The selector routes at
-   least one owner on **99.4 %** of long real prompts (mean 4.74 of a cap of 5), and the three
-   most-routed owners are the three largest by unit count — W3's measured vocabulary-volume
-   bias (`spearman = +0.756`) surviving where the DISTINCTIVE clause was never tested. This is
-   the reason no widening is affordable: the door is currently doing the selector's job, so
-   every extra door multiplies noise rather than value. **Do NOT loosen
-   `DISTINCTIVE_MAX_HOLDERS`** — the defect is the opposite, the clause is too weak at length.
-   Candidate mechanisms, none yet built: require distinctiveness proportional to input length;
-   rank and cap by evidence strength rather than accepting the first five; require a term to be
-   distinctive *and* topically central rather than merely present. Success is measurable
-   directly: re-run `tools/ucr_cif_shadow.py` and watch `P1-ANY-OWNER`'s holdout precision. It
-   is 23.5 % today; the widening decision reopens exactly when it stops collapsing.
-   `PR-W7-X1-SELECTOR-SATURATION-ON-LONG-PROMPTS` is the characterization to INVERT IN PLACE
-   when this lands — never delete it.
-2. **Drive the 503 ABSTAIN down with a second evidence family.** Unchanged from W6, and now
-   second rather than first: the structural adjudicator promotes on SYMBOL / FILENAME /
-   REGISTRY. Families named in the brief and not built: explicit owner declaration, test
-   ownership, command/hook ownership, git history. Each structural, none lexical.
-3. **W5-style construction observation + privacy projection.** EXTEND `session_delta` /
+**What W8 settled.** The lexical distinctive-term clause is now at its measured ceiling. The
+bar scales with prompt length and stops at 3, which is the corpus's own MEDIAN distinctive
+supply — only 404 of 996 units hold 4, and the sweep cliffs from 42 % routed to 5 % exactly
+there. Raising it further refuses on SUPPLY rather than relevance. On the identical 683 xl
+cases of a paired re-derivation, routing fell 99.6 % → **93.9 %**, mean owners 4.76 → **3.98**,
+owner slots **−20 %**, with **zero** true positives lost. Holdout precision did **not** move
+(20.0 % → 20.0 %): of 128 shared labelled cases exactly **one** changed its fire decision.
+
+1. **HIGHEST LEVERAGE — a STRUCTURAL evidence family. This was action 2, and W8 promoted it
+   from a stock task to the only remaining precision lever.** The adjudicator promotes on
+   SYMBOL / FILENAME / REGISTRY and abstains when a term is held by more than three owners.
+   The families named in the brief and still unbuilt — explicit owner declaration, test
+   ownership, command/hook ownership, git history — are **structural, not lexical**, and that
+   is now the whole point: a 20,000-character prompt contains three distinctive terms of
+   almost any owner by coincidence, and it cannot fabricate a declaration, a test that names
+   the owner, or a commit that touched it. None of them is subject to the supply cliff W8
+   measured. Expect this to move precision where a threshold could not, and drive the 503
+   ABSTAIN down as a side effect rather than as the goal. **Do NOT loosen
+   `DISTINCTIVE_MAX_HOLDERS` (3) and do NOT raise `MAX_DISTINCTIVE_REQUIRED` (3)** — both are
+   pinned to measured distributions and the second is enforced against the LIVE ledger by
+   `V-W8-BAR-NEVER-EXCEEDS-MEASURED-SUPPLY`.
+2. **W5-style construction observation + privacy projection.** EXTEND `session_delta` /
    `omnicapture`; all global egress through the `secret_firewall` URB; exactly-once identity so
    a retry or resume cannot duplicate an institutional record. W7 built a privacy-safe local
    derivation pipeline (`modules/ucr_cif/prompt_population.py`) that reads real prompts,
    classifies and discards them — reuse it rather than re-deriving the boundary.
+3. **Widen the labelled oracle before trusting another precision claim.** W8's headline could
+   not be resolved because the labelled population is 128 shared cases with 31 positives, so
+   one case is ~0.8 points and anything under ~3 points is below resolution. Any future
+   precision wave inherits that blindness. The oracle's domain is Power Pack checkouts only;
+   `05_W7_REACH.md` §9 already names widening it as a reopening condition in its own right.
+
+**Two things W8 measured that the next wave should not re-derive.** (a) `tools/ucr_cif_shadow.py`
+REPLAYS a persisted control report and never calls `select_for`, so it cannot see a selector
+change; the re-derivation step (`tools/ucr_cif_reach.py --funnel`) is part of the success
+criterion, not an optional preamble. (b) The funnel's population rolls between runs — W7's
+stored 23.5 %/2,350 re-derived as 20.0 %/2,306 with nothing changed — so a stored baseline from
+another session is not a control, and paired runs must be compared on their shared cases.
+
+**`PR-W7-X1-SELECTOR-SATURATION-ON-LONG-PROMPTS` STAYS GREEN and must NOT be inverted.** It
+asserts `rate > 0.90`; the rate is 93.9 %. It was to be inverted WHEN it went red. It did not,
+and inverting a characterization that has not turned destroys the evidence of a live defect.
 
 **Two things W7 measured that the next wave should not re-derive.** (a) A THIRD suppressed
 action nobody had named: DFP's `knowledge_first_required` pre-empts the spec question on 143 of
@@ -422,24 +475,43 @@ sweep somebody has to remember to run:
 
     python -m modules.ucr_cif.disposition_consumer --explain "<your proposal>"
 
-Re-run this session's evidence before trusting any of it. Three plans, all re-verified at
-W7 close on 2026-09-21:
+Re-run this session's evidence before trusting any of it. Four plans, all re-verified at
+W8 close on 2026-09-22:
 
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w4.json
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w5.json
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w7.json
+    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w8.json
 
-14/14, **23/23** (the W5 plan absorbed W6's six as `W18`..`W23`; the filename is historical)
-and **10/10**. A HARNESS-FAILED line means an anchor has rotted against the source, which is a
-stale plan and never a verdict about the suites.
+14/14, **23/23** (the W5 plan absorbed W6's six as `W18`..`W23`; the filename is historical),
+**10/10** and **6/6** — 53 directed mutations, every restore verified at source AND runtime.
+A HARNESS-FAILED line means an anchor has rotted against the source, which is a stale plan and
+never a verdict about the suites. **W8 rotted one and the repair is the lesson**: re-pointing
+an anchor at whichever new line LOOKS like the old one produced a mutant that changed nothing
+and would have SURVIVED as a false green. When the source changes shape, restore the FALSE
+WORLD, not the string.
+
+Suites, all green at W8 close: selection 22/22, consumption 19/19 (+PR 7/7), spec boundary
+22/22, reach 27/27, W8 applicability 17/17.
 
 Ask how often the corpus actually reaches a decision, and what it would cost to make it reach
-more — both are now commands rather than arguments:
+more. **The order below is the measurement protocol, not a menu** — step 2 alone cannot see a
+selector change, because it replays step 1's output rather than calling the selector:
 
-    python tools/ucr_cif_reach.py --ceiling --funnel --sessions 400
-    python tools/ucr_cif_shadow.py
+    python tools/ucr_cif_reach.py --funnel --sessions 400 --out <somewhere>.json
+    python tools/ucr_cif_shadow.py --report <somewhere>.json
 
-The first replays real `UserPromptSubmit` history through the live chain and persists derived
-cases only — no prompt text, no host paths. The second scores six activation policies on a
-session-split holdout. **The decision they produced is KEEP; read
-`vault/audits/ucr_cif/05_W7_REACH.md` §9 before proposing to widen anything.**
+The first replays real `UserPromptSubmit` history through the live chain
+(`sdd_tier -> check_spec_gate -> select_for`) and persists derived cases only — no prompt
+text, no host paths. It takes roughly ten minutes and is CPU-bound. The second scores six
+activation policies on a session-split holdout **of that file**.
+
+**To measure a change to the selector you must re-derive BOTH halves and compare on their
+SHARED cases.** The population rolls between runs: W7's stored 23.5 % over 2,350 cases
+re-derived at W8 as 20.0 % over 2,306 with nothing modified, and two runs twenty minutes apart
+shared only 1,792 cases. A stored figure from an earlier session is not a control, and the
+labelled subset is ~128 cases with ~31 positives, so anything under ~3 points is below
+resolution.
+
+**The activation decision is still KEEP; read `vault/audits/ucr_cif/05_W7_REACH.md` §9 before
+proposing to widen anything, and `06_W8_PRECISION.md` §6 before proposing to tighten anything.**
