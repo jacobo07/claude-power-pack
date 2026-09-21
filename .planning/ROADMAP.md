@@ -36,6 +36,22 @@ be picked up from rather than only somewhere to be recorded:
   this host routes through the terminal inbox, so a second producer of
   `resume_confirmed` has never fired.
 - The mirrored extension is on disk and not loaded until a window reload.
-- Six pre-existing mirror DRIFT pairs, none introduced by v1.
+- Five pre-existing mirror DRIFT pairs, none introduced by v1. (Six before the
+  v1 merge; advancing `main` closed `hook-dispatcher.js` on its own, because
+  that pair was only drifting while `main` sat 95 commits behind.)
 - The durable `/cpp-compound` fix (Steps 7+8 owned in-process) is blocked behind
   another writer's abandoned change in `tools/compound_unattended.py`.
+- **The parity census cannot see a PowerShell hook.** `modules/mirror_discovery`
+  declares the hooks domain as `("hooks", "*.js")`, so the three auto-compact
+  chain scripts mirrored in `14b2894` are structurally invisible to
+  `verify_global_mirrors.py` — measured: all three are present on both sides and
+  byte-identical (`001ACACEB31DEB55`, `E6B9D21CD69DA01B`, `1BC35366C09F60DF`),
+  and none appears in the census as OK or as DRIFT. Merging to `main` made them
+  *tracked*; it did not make them *visible*, and those are different claims.
+  The obvious fix is a trap: a second `("hooks", "*.ps1")` tuple collapses under
+  `dict(DOMAINS)`, which `install_global_core._repo_population` resolves through
+  (`discovery.py:84-92` says so in its own warning), so the second entry would
+  silently REPLACE `*.js` rather than extend it. Deployment risk is separately
+  zero — `SHIPPABLE_KINDS = ("agents", "commands")` excludes hooks — so this is
+  a census-shape problem, not a safety one. It needs a multi-glob domain, not a
+  second tuple.
