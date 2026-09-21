@@ -18,6 +18,7 @@ Usage:  python tools/test_two_pane_exactness.py --runid <runid>
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import importlib.util
 import json
 import os
@@ -139,6 +140,52 @@ def gates_unit(drill, lr) -> None:
               f"self={mine} system={system_pid} -- the check cannot tell the two apart")
 
 
+def _typed_token_after(transcript: Path, since: float) -> str | None:
+    """A token pane B's transcript GENUINELY carries in a typed row after `since`.
+
+    The negative control needs something the predicate must answer True for, in
+    the same file and the same window as the absence assertion. The plan named
+    `nonce_B`, but pane B is the drill's OWN session: it is never armed, so no
+    nonce is ever typed into it and `nonce_B` does not exist in this design.
+    What does exist is whatever the Owner and the agent actually typed there
+    after t0, and that serves the identical purpose.
+
+    Returns the first whitespace-delimited token of the first typed user row
+    after `since`, or None when the pane said nothing in the window -- which is
+    NOT blindness and must not be reported as a failure.
+    """
+    try:
+        raw = transcript.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    for line in raw.splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if row.get("type") != "user" or row.get("toolUseResult") is not None:
+            continue
+        stamp = row.get("timestamp")
+        if not stamp:
+            continue
+        try:
+            when = _dt.datetime.fromisoformat(str(stamp).replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            continue
+        if when <= since:
+            continue
+        content = (row.get("message") or {}).get("content")
+        if not isinstance(content, str):
+            continue           # a block-shaped body is not a keystroke
+        token = content.strip().split()[0] if content.strip().split() else ""
+        # Long enough to be a needle rather than a coincidence.
+        if len(token) >= 6:
+            return token
+    return None
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runid", default="",
@@ -200,6 +247,32 @@ def main(argv=None) -> int:
         _fail("V-TWOPANE-B-UNTOUCHED",
               f"{b['nonce']} reached {b_transcript.name} -- the line went to a pane that "
               "did not own the request")
+
+    # THE control that makes the absence above mean anything. Without it,
+    # V-TWOPANE-B-UNTOUCHED is satisfied identically by an instrument that cannot
+    # see pane B at all -- a wrong path, a stale handle, an unreadable file -- and
+    # a permanent silent pass is worse than a missing gate, because it reports as
+    # proof. The plan calls this leg load-bearing; it was never coded.
+    #
+    # Same predicate, same transcript, same window, same `since`. Only the needle
+    # changes: from A's nonce (must be absent) to something B really typed (must
+    # be present). One of the two must be True or the instrument is blind.
+    token = _typed_token_after(b_transcript, b["t0"])
+    if token is None:
+        # Not a verdict about exactness: pane B simply said nothing in the window,
+        # so the control could not be run. Exit 2, never a silent pass.
+        return _harness(
+            f"pane B ({b_transcript.name}) carries no typed row after t0={b['t0']}, so "
+            "V-TWOPANE-B-UNTOUCHED cannot be distinguished from an instrument that "
+            "cannot see pane B. Re-run the drill with activity in B during the window.")
+    if lr.user_issued_command_since(b_transcript, token, b["t0"]):
+        _ok("V-TWOPANE-B-INSTRUMENT-CAN-SEE",
+            f"the same predicate finds {token!r} in {b_transcript.name} after t0 -- so "
+            f"the absence of {b['nonce']} is a measurement, not blindness")
+    else:
+        _fail("V-TWOPANE-B-INSTRUMENT-CAN-SEE",
+              f"{token!r} is present in {b_transcript.name} after t0 but the predicate "
+              "does not see it -- every absence assertion over this pane is worthless")
 
     total = passes + fails
     print(f"TWOPANE_PASS={passes}/{total}  threshold={total}/{total}")
