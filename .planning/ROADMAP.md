@@ -18,7 +18,7 @@ checkboxes it could record nothing. Run against phases 2, 3 and 4 it reported
 reporting all four phases incomplete against four committed VERIFICATION.md
 files. The roadmap could not express what the evidence already said.
 
-- [ ] **Phase 1: Two-pane exactness drill** - the continuation reaches A's own terminal and never B's
+- [x] **Phase 1: Two-pane exactness drill** - the continuation reaches A's own terminal and never B's (completed 2026-09-21)
 - [x] **Phase 2: UserPromptSubmit chain deadline** - is the cap or the clock discarding hook output (completed 2026-09-21)
 - [x] **Phase 3: Promote the exact-target lessons** - the CONT rules into the UKDL, the router sentence corrected (completed 2026-09-21)
 - [x] **Phase 4: Reap the stale autorun markers** - reap by the session's own clock, not the file's (completed 2026-09-21)
@@ -41,11 +41,11 @@ refused rather than typed into whatever window has focus.
 Done: both panes' transcripts read; A carries the resume line, B carries none;
 one deliberately unowned request is ledgered `refused` with its reason.
 
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 
-- [ ] 01-PLAN.md — live two-pane drill: real extension, real second Cursor
+- [x] 01-PLAN.md — live two-pane drill: real extension, real second Cursor
   terminal, real transcripts; owner-answered refusal ledgered with its own
   `decide()` reason, plus the negative control that makes B's absence mean
   something.
