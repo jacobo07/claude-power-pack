@@ -1,10 +1,49 @@
 ---
-status: gaps_found
+status: passed
 phase: 01-two-pane-exactness-drill
 date: 2026-09-21
-must_haves_verified: 7
+must_haves_verified: 13
 must_haves_total: 13
+superseded: 2026-09-21 (original gaps_found report preserved below, unedited)
 requirements: n/a (no REQUIREMENTS.md in this project; PLAN cites [C2, C3, C4, C5] but nothing in the repo defines what those IDs mean, so they cannot be traced)
+---
+
+# SUPERSEDED 2026-09-21 — the gaps below are CLOSED
+
+**The body of this report is left exactly as written.** It describes a run that
+happened and findings that were true when taken; editing it to match today's
+tree would fabricate a verification. This banner records what changed since.
+
+Every gap it names was an artifact that did not exist. All now do:
+
+| gap named below | closed by |
+|---|---|
+| `seal` not implemented (`argparse` choices lacked it) | `two_pane_drill.py` — `seal` writes `vault/evidence/two-pane-exactness/<runid>.json` |
+| `vault/evidence/two-pane-exactness/` absent | `enterfix.json`, `live2.json`, `live3.json` |
+| `vault/lessons/two-pane-exactness-drill.md` absent | written |
+| three of six live gates unwritten | `V-TWOPANE-OWNER-REFUSED`, `V-TWOPANE-NOOWNER-NOT-TYPED`, `V-TWOPANE-INBOX-DRAINED` (commit `9b9a1ad`) |
+| red branches never driven | `tools/test_two_pane_gate_drills.py`, 9/9, hermetic |
+
+**Observed, 2026-09-21, this tree:**
+
+```
+python tools/test_two_pane_exactness.py --runid live3   -> TWOPANE_PASS=11/11  exit 0
+python tools/test_two_pane_exactness.py                 -> TWOPANE_PASS=7/7    exit 0
+python tools/test_two_pane_gate_drills.py               -> TWOPANE_DRILL_PASS=9/9  exit 0
+```
+
+`live3` is a genuinely two-pane run: A = `5094872a` (subject), B = `1b7f6df9`
+(dedicated ARMED control). G2 — the gap that said pane B was never a second
+dedicated session — is closed by that run, not by an argument.
+
+**Two limits this banner does not paper over.** The refusal legs pass on rows
+from the REAL ledger, i.e. live autonomous crossings, not rows this drill
+produced; each gate says so in its own evidence string. And
+`V-TWOPANE-INBOX-DRAINED` matches on session ids, so for a session that also
+carries real traffic it names candidates rather than proving ownership — the
+two acks it flagged were removed on the Owner's explicit decision, backed up
+first, not on the gate's say-so.
+
 ---
 
 # Phase 1: Two-pane exactness drill — Verification Report
