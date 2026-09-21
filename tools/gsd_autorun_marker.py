@@ -250,7 +250,14 @@ def main(argv: list[str] | None = None) -> int:
         except MarkerError as exc:
             sys.stderr.write(f"REFUSED: {exc}\n")
             return 2
-        _lr.ledger_append(args.session, "armed", command=args.command, cwd=args.cwd,
+        # cwd is DERIVED from the marker just written, never recomputed from args.cwd.
+        # write_marker stored resolve_cwd(cwd) (:98); passing the raw argument here let one
+        # arming produce two disagreeing records -- an absolute path in the marker and a
+        # bare "." in the ledger row, which no later reader can resolve, and which is the
+        # same defect marker_project already REFUSES rather than resolves
+        # (gsd_long_run.py:739). A second resolve_cwd call could drift; a value read back
+        # from the marker cannot disagree with it. Empty stays empty, per resolve_cwd.
+        _lr.ledger_append(args.session, "armed", command=args.command, cwd=data.get("cwd"),
                           max_cycles=data.get("max_cycles"), max_hours=data.get("max_hours"))
         # Path stays the FIRST line: it is this command's machine-readable result and
         # callers parse it. Everything after is for the human/agent reading the terminal.

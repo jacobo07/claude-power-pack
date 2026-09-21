@@ -497,6 +497,52 @@ def gates_cli():
           f"rc={r.returncode} err={r.stderr.strip()[:120]} marker={m}")
     mk.clear_marker(s2)
 
+    # One arming must not produce two disagreeing records. write_marker stores
+    # resolve_cwd(cwd); the ledger row used to store the RAW argument, so a marker
+    # naming an absolute directory sat beside a row naming ".". No later reader can
+    # resolve that row -- it resolves against whoever is reading, which is exactly
+    # the failure marker_project REFUSES rather than guesses (gsd_long_run.py:739).
+    # Armed here the way the estate actually arms: --cwd "." with the process running
+    # IN the project (measured 2026-09-19, 8 of 9 markers held ".").
+    good2 = project("angry birds rovio powerpc slingshot")
+    s3 = sid()
+    transcript(s3, str(good2))
+    base = [PY, str(TOOLS / "gsd_autorun_marker.py"), "--write", "--session", s3,
+            "--command", "/absw2-continue", "--mission", "angry,birds,rovio,powerpc,slingshot"]
+    r3 = subprocess.run(base + ["--cwd", "."], capture_output=True, text=True,
+                        cwd=str(good2), env=dict(os.environ))
+    rows3 = [e for e in lr.ledger_events(s3) if e.get("event") == "armed"]
+    row_cwd = rows3[-1].get("cwd") if rows3 else None
+    marker3 = mk.read_marker(s3) or {}
+    check("V-GSDLR-LEDGER-CWD-ABSOLUTE",
+          bool(rows3) and isinstance(row_cwd, str) and row_cwd != ""
+          and Path(row_cwd).is_absolute(),
+          f"rc={r3.returncode} row_cwd={row_cwd!r} err={r3.stderr.strip()[:120]}")
+    check("V-GSDLR-LEDGER-CWD-MATCHES-MARKER",
+          bool(rows3) and row_cwd == marker3.get("cwd"),
+          f"row={row_cwd!r} marker={marker3.get('cwd')!r}")
+    mk.clear_marker(s3)
+
+    # Empty stays empty in BOTH records. This is the gate that discriminates: a naive
+    # repair spelled resolve_cwd(args.cwd or ".") passes the two above and silently
+    # turns "unknown" into the arming process's own directory -- the same guess one
+    # layer earlier, which is what resolve_cwd's docstring refuses.
+    good3 = project("angry birds rovio powerpc slingshot")
+    s4 = sid()
+    transcript(s4, str(good3))
+    r4 = subprocess.run([PY, str(TOOLS / "gsd_autorun_marker.py"), "--write", "--session", s4,
+                         "--command", "/absw2-continue",
+                         "--mission", "angry,birds,rovio,powerpc,slingshot"],
+                        capture_output=True, text=True, cwd=str(good3), env=dict(os.environ))
+    rows4 = [e for e in lr.ledger_events(s4) if e.get("event") == "armed"]
+    row4_cwd = rows4[-1].get("cwd") if rows4 else None
+    marker4 = mk.read_marker(s4) or {}
+    check("V-GSDLR-LEDGER-CWD-EMPTY-STAYS-EMPTY",
+          bool(rows4) and row4_cwd == "" and marker4.get("cwd") == "",
+          f"rc={r4.returncode} row={row4_cwd!r} marker={marker4.get('cwd')!r} "
+          f"err={r4.stderr.strip()[:120]}")
+    mk.clear_marker(s4)
+
 
 def gates_session_thresholds():
     """A RUNNING session can narrow its own wall; a malformed ask never widens it.
