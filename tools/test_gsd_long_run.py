@@ -428,6 +428,31 @@ def gates_sweep():
           (s_rec, "recovered") in by and rec and rec[-1].get("route") == "terminal-inbox"
           and body.get("session_id") == s_rec and body.get("expect_line") == "/absw2-continue",
           f"flag={body} recovered={rec}")
+    # A delivery the sweep requests must be VISIBLE to `report`, exactly as the
+    # watchdog's own branch is (context-watchdog.py:675). Until 2026-09-21 this
+    # path wrote the flag and no row, so a delivery that SUCCEEDED could not be
+    # counted by the milestone gate it was serving -- and the deadlock-breaking
+    # hand call that found this left no trace either.
+    inbox_rows = [e for e in lr.ledger_events(s_rec) if e.get("event") == "delivery_inbox_requested"]
+    check("V-GSDLR-INBOX-DELIVERY-IS-LEDGERED", len(inbox_rows) == 1, f"{inbox_rows}")
+    # Derived from the flag just written, not recomputed: the row and the flag
+    # cannot disagree about what is being delivered. /absw2-continue is a resume.
+    check("V-GSDLR-INBOX-ROW-KIND-DERIVED",
+          bool(inbox_rows) and inbox_rows[-1].get("kind") == "resume"
+          and inbox_rows[-1].get("expect_line") == body.get("expect_line"),
+          f"row={inbox_rows[-1] if inbox_rows else None} flag={body}")
+    # Two producers now write this event name. A row that cannot say which one
+    # emitted it cannot distinguish a swept re-delivery from a watchdog crossing.
+    # The expected cid is DERIVED from the sibling row the same action wrote, not
+    # re-stat'd from a file. First version of this assertion used the MARKER's
+    # mtime where the cid is built from the TRANSCRIPT's, and failed against a
+    # correct row -- the recompute-from-a-second-source defect this whole change
+    # is about, reproduced inside its own gate.
+    check("V-GSDLR-INBOX-ROW-NAMES-PRODUCER",
+          bool(inbox_rows) and bool(rec)
+          and inbox_rows[-1].get("producer") == "gsd_long_run.write_trigger"
+          and inbox_rows[-1].get("cid") == f"{s_rec}:recover:{rec[-1].get('transcript_mtime')}",
+          f"row={inbox_rows[-1] if inbox_rows else None} recovered={rec[-1] if rec else None}")
     check("V-GSDLR-SWEEP-RECORDS-STALL", (s_st, "stalled") in by and "stalled" in events(s_st), f"{acts}")
     check("V-GSDLR-SWEEP-FRESH-UNTOUCHED", not any(a.get("session_id") == s_fresh for a in acts), f"{acts}")
     check("V-GSDLR-SWEEP-DAEMON-FOR-FLAGS", any(a["action"] == "daemon" for a in acts), f"{acts}")

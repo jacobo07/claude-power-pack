@@ -688,12 +688,43 @@ def flags_for(session_id: str) -> list[Path]:
     return [hooks_dir() / n for n in _flag_names(session_id) if (hooks_dir() / n).exists()]
 
 
-def write_trigger(session_id: str, cwd: str, transcript: str, expect_line: str) -> Path:
+def write_trigger(session_id: str, cwd: str, transcript: str, expect_line: str,
+                  cid: str | None = None) -> Path:
+    """Write the flag the daemon consumes, AND record that a delivery was requested.
+
+    The ledger row belongs HERE, beside the flag, and not in the caller. The
+    watchdog's equivalent branch records `delivery_inbox_requested`
+    (context-watchdog.py:675), so every delivery IT requests is visible to
+    `report`; every delivery requested through this function was invisible. The
+    flag still reached the daemon and the line was still typed -- what was
+    missing was any record that it had happened, so a delivery that SUCCEEDED
+    could not be counted by the milestone gate it was serving. Two producers of
+    one effect, one of them mute.
+
+    Measured 2026-09-21: this session's delivery deadlock was broken by calling
+    write_trigger by hand. It worked, and it left no row. Recording at the point
+    of the effect is what stops the next caller forgetting -- a caller-side row
+    is a convention, and this one had already been forgotten once.
+
+    `kind` is DERIVED from the payload just written, never recomputed from the
+    arguments. Same rule as the `armed` row at gsd_autorun_marker.py:253 and the
+    same reason: two records of one event must not be able to disagree.
+
+    `producer` is recorded because the event name is now written by two places.
+    A reader that cannot tell which one emitted a row cannot tell a swept
+    re-delivery from a watchdog crossing.
+    """
     path = hooks_dir() / f"auto-compact-trigger-{session_id}.flag"
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"ts": _now_iso(), "session_id": session_id, "cwd": cwd, "used_pct": None,
                "transcript": transcript, "expect_line": expect_line}
     path.write_text(json.dumps(payload) + "\n", encoding="utf-8")
+    line = payload.get("expect_line") or ""
+    # ledger_append never raises (see its docstring), so the flag -- the thing the
+    # daemon actually consumes -- is never at risk from the record of it.
+    ledger_append(session_id, "delivery_inbox_requested", cid=cid,
+                  kind="compact" if line.startswith("/compact") else "resume",
+                  producer="gsd_long_run.write_trigger", expect_line=line)
     return path
 
 
@@ -977,7 +1008,7 @@ def _recover_via_transport(sid: str, cwd: str, transcript: str, tail: str, cmd: 
             return "orca-exact"
         ledger_append(sid, "delivery_blocked", cid=cid, outcome="WORKER_SPAWN_FAILED")
         return "manual"
-    write_trigger(sid, cwd, transcript, tail)
+    write_trigger(sid, cwd, transcript, tail, cid=cid)
     return "terminal-inbox"
 
 
