@@ -9,7 +9,21 @@ a run that actually crossed a context wall twice and came back both times —
 every armed run on this host reads `UNPROVEN` or `NO_CROSSINGS`. These phases
 close that, and the debts the attempt exposed.
 
-## Milestone acceptance (not a phase — the run produces it by running)
+## Phases
+
+Added 2026-09-21. This list did not exist, and its absence was not cosmetic:
+`phase.complete` marks a phase by ticking its checkbox here, so with no
+checkboxes it could record nothing. Run against phases 2, 3 and 4 it reported
+`roadmap_updated: false` and changed only a timestamp, while every index kept
+reporting all four phases incomplete against four committed VERIFICATION.md
+files. The roadmap could not express what the evidence already said.
+
+- [ ] **Phase 1: Two-pane exactness drill** - the continuation reaches A's own terminal and never B's
+- [x] **Phase 2: UserPromptSubmit chain deadline** - is the cap or the clock discarding hook output (completed 2026-09-21)
+- [x] **Phase 3: Promote the exact-target lessons** - the CONT rules into the UKDL, the router sentence corrected (completed 2026-09-21)
+- [x] **Phase 4: Reap the stale autorun markers** - reap by the session's own clock, not the file's (completed 2026-09-21)
+
+## Acceptance gate (not a phase — the run produces it by running)
 
 The narrow-wall proof is not work to plan; it is what happens to this run while
 it executes the phases below. The milestone is accepted when
@@ -30,6 +44,7 @@ one deliberately unowned request is ledgered `refused` with its reason.
 **Plans:** 1 plan
 
 Plans:
+
 - [ ] 01-PLAN.md — live two-pane drill: real extension, real second Cursor
   terminal, real transcripts; owner-answered refusal ledgered with its own
   `decide()` reason, plus the negative control that makes B's absence mean
@@ -63,7 +78,13 @@ default since the transport became exact.
 Done: the UKDL carries the rules with their ids, and the router sentence
 describes the delivery that actually happens.
 
-## Phase 4: Reap the stale autorun markers — COMPLETE (`d0477b8`)
+## Phase 4: Reap the stale autorun markers
+
+Implemented in `d0477b8`. Status lives in the checklist above, not in this
+heading: a name that carries its own verdict is read as a name by every parser
+that consumes it, which is why this phase displayed as
+`Reap the stale autorun markers — COMPLET…` in `/gsd-progress` and in STATE's
+`current_phase_name`.
 
 Premise as written: *"Seven markers are armed for sessions that no longer
 exist."* Measured before acting, it is false — **zero of nine** qualify under

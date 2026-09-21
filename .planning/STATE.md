@@ -2,9 +2,14 @@
 gsd_state_version: "1.0"
 milestone: v1
 status: unknown
-last_updated: "2026-09-21T15:16:58.617Z"
-current_phase: 4
-current_phase_name: Reap the stale autorun markers — COMPLETE (`d0477b8`)
+last_updated: "2026-09-21T15:28:26.676Z"
+progress:
+  total_phases: 4
+  completed_phases: 3
+  total_plans: 1
+  completed_plans: 1
+current_phase: 1
+current_phase_name: Two-pane exactness drill
 ---
 
 # STATE — claude-power-pack
