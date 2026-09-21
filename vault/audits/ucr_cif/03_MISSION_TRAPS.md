@@ -715,6 +715,96 @@ is named for a property it cannot observe.
 
 ---
 
+## W7 · `T-GATE-READS-THE-ARTIFACT-NOT-THE-PRODUCER-001` — my own reader/consumer defect
+
+**What.** `test_ucr_cif_reach_reality` asserted the candidate-policy results by loading
+`w7_shadow.json` from disk. Mutation `W30` broke the shadow scorer's population and every one
+of those assertions still passed, because a stale artifact answers exactly as a correct one
+does.
+
+**Why it is the sharpest trap of the wave.** This is the reader-vs-consumer distinction W5 was
+called to make, reproduced inside W7's own evidence layer — by the session that had just
+re-run W5's proof of it. Writing a rule down does not transfer it to the moment you type an
+assertion; only a drill does.
+
+**Repair.** Import the scorer and DRIVE it. Tell: if deleting the producer's source leaves the
+gate green, the gate is reading. Promoted as an amendment to
+`PR-MUTATE-THE-LINK-NOT-THE-ENDPOINTS-001`.
+
+---
+
+## W7 · `T-PATCHED-THE-RIGHT-OBJECT-AND-ASSERTED-THE-WRONG-FIELD-001`
+
+**What.** The gate proving the instrument holds no private copy of the product's `SPEC_GLOBS`
+patched the product's list and asserted the CEILING flipped. It does flip — but via the gate's
+own `_find_spec`, which reads the patched list regardless. Mutation `W26` gave the instrument a
+private copy and survived: only `matched_globs`, the glob *attribution*, exposes the copy.
+
+**Generalizes to.** When one patch reaches a subject through two paths, assert on the field the
+mutation actually changes, not on the field that is easiest to observe. A patch that flips the
+convenient field proves the path you were not worried about.
+
+---
+
+## W7 · `T-THE-FUNNEL-COULD-HAVE-MODELLED-ITS-SUBJECT-001`
+
+**What.** Before the mutation plan was written, a mutant that replaced
+`sdd_tier.evaluate(...)` with a prediction of its output from the gate's action satisfied every
+gate in the suite. The whole reach measurement would then have measured my model of the signal,
+and would have agreed with reality until `sdd_tier` changed.
+
+**Repair.** `V-W7-FUNNEL-DRIVES-THE-LIVE-SIGNAL` severs the call and requires the failure to
+surface, with a restore control. Kept as mutation `W33`. This is *mutate the link* turned on the
+instrument rather than on the product.
+
+---
+
+## W7 · `T-A-DIRECTORY-IS-NOT-A-REPOSITORY-001`
+
+**What.** Two population errors in the first host sweep, in opposite directions. Matching `.git`
+as a DIRECTORY missed every git worktree — 52 found where the corrected instrument finds 181,
+and the missing set included the worktree this mission runs in. Then counting each surviving
+directory as a repository turned ~5 repositories into 81, and because worktrees share content
+they share the measured property, so the inflation correlated perfectly with the result.
+
+**Also.** That sweep printed `COUNT=52` *after* emitting a `Get-ChildItem` reparse-point error —
+a partial sweep presenting as a complete one. Errors are now first-class fields of the discovery
+result, not log lines.
+
+**Promoted.** `T-N-WORKTREES-ARE-ONE-OBSERVATION-001`.
+
+---
+
+## W7 · `T-A-ZERO-THAT-CONTRADICTS-A-KNOWN-NUMBER-IS-AN-INSTRUMENT-FAILURE-001`
+
+**What.** Reading the disposition ledger for authoritative owners returned `AUTH 0 /
+DISTINCT_OWNERS 0`. The estate has recorded 996 authoritative dispositions across 40 owners
+since W3, so the answer was impossible. The premise was wrong, not the world: the rows carry
+`proposed_owner`, not `owner`, and authority is the disposition VALUE
+`EXTEND_EXISTING_OWNER`, not a status word beginning "AUTH".
+
+**Why it matters here.** A zero is the most dangerous reading in this wave, because "nothing is
+owned" is also what a correct sweep of a genuinely novel corpus returns — the same inversion
+`HR-NOVELTY-001` exists to stop, and the same shape as W2's
+`T-EXCLUSION-MATCHED-THE-WORKSPACE-001`. It was caught only because a prior measurement
+contradicted it.
+
+**Rule.** Verify a store's real schema before reading it, and treat any result that contradicts
+an already-sealed number as an instrument failure until proven otherwise.
+
+---
+
+## W7 · `T-FIRST-MATCH-CLASSIFIER-REPORTS-ITS-OWN-LAYOUT-001`
+
+**What.** The reporting classifier returned the first matching row and put 100 of 127 Tier ≥ 2
+prompts into `investigation`, because that row sat first and its needles appear in almost any
+long prompt. The per-class funnel — the read that a candidate policy would have been designed
+from — was an artifact of the source file's ordering.
+
+**Promoted.** `T-CLASSIFIER-DECIDED-BY-TABLE-ORDER-001`.
+
+---
+
 ## Standing obligation
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and

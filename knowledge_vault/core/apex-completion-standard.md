@@ -264,6 +264,55 @@ Ref: `skills/claude-power-pack/modules/ucr_cif/disposition_consumer.py` (selecti
 Gates: `tools/test_disposition_selection.py`, `tools/test_disposition_consumption.py`
 (the production half drives the real hook under an isolated HOME).
 
+### C-4 — Reach (added 2026-09-21, UCR-CIF W7)
+
+C-3 requires that the join exists and that severing it turns a gate red. It does not ask how
+often the join carries anything. A capability can be authoritative, applicable, provenanced,
+consumed, mutation-proved — and reach a decision so rarely, or so noisily, that it changes
+nothing. Working when called and being called when it would help are different claims, and
+only the first is proved by a severed-edge drill.
+
+Binding the same applicability gate as C-1..C-3, and only where the claim is that institutional
+state IMPROVES ORDINARY WORK:
+
+- **Activation precision and recall are both part of done.** A missed activation and a false
+  activation are both defects, and they are not interchangeable: a miss costs an opportunity, a
+  false activation costs context, attention and the credibility of every later signal. Report
+  both, with numerators and denominators, never a single score.
+- **Recall is never computed against the trigger's own population.** A trigger that selects its
+  denominator has defined itself correct. Ground truth comes from evidence the trigger and its
+  selector cannot influence — and where an oracle cannot judge a case, that case is UNLABELLED
+  and sits OUTSIDE the confusion matrix. Unlabelled is not negative; absence of a commit, of a
+  domain, or of history are three different silences.
+- **Measure the structural ceiling before the behavioural rate.** Where activation depends on a
+  condition that is constant for a whole class of contexts — a directory, a tenant, a device —
+  that condition bounds every rate downstream and is usually measurable with no event
+  population at all. A behavioural recall figure computed without it is scored against a
+  denominator that was never reachable.
+- **State the population unit, and prove it is not replicated.** N copies of one subject are one
+  observation; when the copies share the property being measured, the inflation correlates with
+  the result rather than merely adding noise. Where two units are both legitimate, report both
+  and let neither stand alone — their disagreement is frequently the finding.
+- **Widen only in shadow, and only for a Pareto improvement.** A candidate runs beside the live
+  policy, recording what it would have activated, and must deliver more useful activations at
+  equal or lower harmful cost. Candidates are stated as mechanisms before any confusion matrix
+  is computed, and evaluated on a holdout split at the grain that shares context — a session, a
+  tenant, a repository — not at the grain of the individual event.
+- **A proven refusal to widen is a complete result.** Negative knowledge compounds only if it is
+  durable: record what was rejected, the evidence, and the condition that would reopen it.
+- **Cost is whatever the change actually spends.** It is not always latency. Where a computation
+  already runs on every path, the entire price of rendering it is context and attention — and
+  that is the scarcer resource. Measure the one being spent.
+
+**A characterization that pins a defect is inverted in place when it turns, never deleted.** The
+diff between its two versions is the evidence that the defect existed; a deleted characterization
+takes that evidence with it.
+
+Ref: `modules/ucr_cif/reach_calibration.py`, `reach_funnel.py`, `reach_ground_truth.py`,
+`tools/ucr_cif_shadow.py`, `vault/audits/ucr_cif/05_W7_REACH.md`.
+Gates: `tools/test_ucr_cif_reach.py` (27/27), `tools/test_ucr_cif_reach_reality.py` (18/18),
+`vault/governance/mutation_plans/ucr_cif_w7.json` (10/10 ALL_CAUGHT).
+
 ## Authorization Boundary (operational law)
 
 The capability code is agent-built + standalone-verified. The single

@@ -1387,6 +1387,142 @@ refused units really did overlap.
 **Family.** `T-GUARD-CLAUSE-GATES-BOTH-POLES-001` is the intra-predicate version of the same
 question; this is the inter-component one.
 
+**AMENDMENT (UCR-CIF W7, 2026-09-21) — the rule applies to the GATE, not only to the subject.**
+A gate that asserts on a producer's persisted ARTIFACT is a reader, not a consumer, and reads
+exactly the same whether the producer still works. Measured: `test_ucr_cif_reach_reality`
+loaded `w7_shadow.json` from disk, so mutation `W30` broke the shadow scorer's population and
+every candidate assertion still passed against a stale file. The repair is the same move the
+rule already prescribes one layer down — import the producer and DRIVE it — and the tell is
+cheap: if deleting the producer's source leaves the gate green, the gate is reading. Note the
+asymmetry that makes this survive review: the artifact is *correct* when written, so the gate is
+honest on the day it is added and silently stops measuring later.
+
+---
+
+## T-RECALL-ON-THE-POPULATION-THE-TRIGGER-ADMITS-001 — the denominator the gate chose for you
+
+**Mechanism.** Recall computed over the cases a trigger already admits is 100 % by arithmetic.
+The population is part of the claim, and a trigger that selects its own denominator has defined
+itself correct. The subtle form is not "we only sampled firing cases" — nobody writes that — it
+is sampling the whole stream and then scoring over whatever survived some *earlier* stage that
+the candidate policies also share. Measured: scoring six activation policies over every prompt
+handed the control 132 free true negatives from Tier-1 prompts that `sdd_tier` discards before
+the gate is ever consulted, and roughly HALVED every candidate's false-activation rate — the
+exact direction that makes an unsafe widening look survivable.
+
+**Fix.** Score inside the population every candidate could actually act on, state that
+population beside the metric, and build a second instrument whose population is constructed
+independently — agreement is then evidence and disagreement localises the denominator bug.
+`PR-W7-S5-THE-TWO-INSTRUMENTS-AGREE` is that check.
+
+**Origin.** UCR-CIF W7, `vault/audits/ucr_cif/05_W7_REACH.md`, mutation `W30`.
+
+**Family.** The measurement-side sibling of `T-AUDIT-DENOMINATOR-EXCLUDES-HALF-THE-ESTATE-001`
+and `T-LIVENESS-DENOMINATOR-EXCLUDES-HOOKS-001`: there the denominator was too small by
+omission, here it is too large by inclusion, and both flatter.
+
+---
+
+## PR-SHADOW-BEFORE-WIDENING-A-COMMON-PATH-TRIGGER-001 — measure the noise you would add
+
+**Rule.** Before widening an institutional trigger that fires on a common path, replay the
+candidate in SHADOW over the real event history: the live policy governs execution, the
+candidate records only what it WOULD have activated. Then require a **Pareto** improvement —
+more useful activations at equal or lower harmful cost — not merely higher recall.
+
+State each candidate as a MECHANISM before computing any confusion matrix, and split the
+population by SESSION rather than by case: two prompts of one session share a repository, a
+moment and usually an intent, so a case-level split leaks the answer across the boundary the
+split exists to create.
+
+**Why it earns its place.** Measured on 400 real sessions, four of five candidates bought full
+or higher recall at an 85–90 % false-activation rate and 4.8× the injected context; two of them
+were STRICTLY DOMINATED, scoring below the do-nothing control on recall *as well as* precision.
+Recall alone would have promoted the worst of them. A rigorously proven "do not widen" is a
+complete result, and the negative knowledge compounds.
+
+**Corollary.** Cost is not always latency. Here widening adds ZERO selector calls and zero
+milliseconds, because the gate already computes its routing on every branch — the entire price
+is context and attention. Measure the resource the change actually spends.
+
+**Origin.** UCR-CIF W7. `tools/ucr_cif_shadow.py`, `vault/audits/ucr_cif/w7_shadow.json`.
+
+---
+
+## T-APPLICABILITY-CLAUSE-PROVEN-ON-SHORT-INPUTS-SATURATES-001 — a discriminator sized to the fixture
+
+**Mechanism.** A relevance filter that requires "at least one distinctive shared term" is a real
+discriminator on a short proposal and no discriminator at all on a long one: a longer input
+carries more terms, so the probability that some term is distinctive approaches one, and the
+filter approves almost everything while every fixture stays green. The gates were not wrong —
+they were sized to inputs the production population does not contain.
+
+**Measured.** Route rate by real prompt length: xs 0 % · s 4.2 % · m 45.8 % · l 89.2 % ·
+**xl 99.4 %**, mean 4.74 owners against a cap of 5 — and 85 % of real Tier ≥ 2 prompts are xl.
+The three most-routed owners are the three largest by unit count, i.e. the vocabulary-volume
+bias measured in W3 (`spearman = +0.756`) surviving at real length. The shipped boundary's
+100 % precision therefore comes from the `create_spec` FILTER, not from the selector.
+
+**Detector.** Bucket the real population by input size and report the filter's pass rate per
+bucket. A clause whose pass rate rises monotonically to ~100 % in the modal bucket is not
+filtering. Never read a synthetic-fixture green as evidence about a length the fixtures do not
+reach.
+
+**Origin.** UCR-CIF W7. Pinned as `PR-W7-X1-SELECTOR-SATURATION-ON-LONG-PROMPTS`, a
+CHARACTERIZATION that is expected to go red when applicability is repaired and must then be
+inverted in place, never deleted.
+
+**Family.** The length-scaled case of `T-THE-TRIGGER-VOCABULARY-CANNOT-DISCRIMINATE-001`.
+
+---
+
+## T-N-WORKTREES-ARE-ONE-OBSERVATION-001 — the population unit is not the directory
+
+**Mechanism.** Counting working directories as repositories inflates a denominator with copies
+of one source — and because worktrees of one repository share its content, they also share
+whatever property is being measured, so the inflation is perfectly CORRELATED with the result
+rather than merely noisy. Measured: one directory tree on this host held 81 `.git` markers
+belonging to about five repositories; naive counting turned a sample of five into a sample of
+180.
+
+**Fix.** Report both units and let neither stand alone — repositories answer "what fraction of
+PROJECTS", working directories answer "what fraction of SESSIONS", and on this estate they
+disagreed 82 % against 40 %, which was itself the finding (the shut repositories are the
+high-traffic ones). Resolve a worktree by reading its `.git` FILE (`gitdir: <main>/.git/
+worktrees/<name>`), never by spawning git per directory. On an unreadable marker, fail APART:
+wrongly splitting costs one duplicate observation, wrongly merging deletes a repository from the
+population silently.
+
+**Sibling trap.** A `.git` DIRECTORY match is blind to every worktree, including the one the
+session is running in. The first host sweep of this wave found 52 where the fixed instrument
+found 181.
+
+**Origin.** UCR-CIF W7, mutations `W24` / `W25`. Identity resolution reuses the worktree
+machinery already recorded above in the repository-identity family.
+
+**Family.** Replication-not-independence, as in `T-REFERENT-EXISTS-BUT-IS-THE-WRONG-ONE-001`'s
+"one observation replicated three times".
+
+---
+
+## T-CLASSIFIER-DECIDED-BY-TABLE-ORDER-001 — a first-match rule reports its own layout
+
+**Mechanism.** A keyword classifier that returns the first matching row assigns the population to
+whichever row the author happened to write first, because a long input matches several rows.
+Measured: 100 of 127 Tier ≥ 2 prompts landed in `investigation` — its needles ("explain",
+"analyse", "measure") appear somewhere in almost any long prompt and its row sat first. The
+distribution was an artifact of the source file's ordering, and a candidate policy conditioned on
+it would have been aimed at the wrong intent family.
+
+**Fix.** Score every class and take the strongest; break ties on table order so the
+specific-before-general ordering still carries meaning without being sufficient on its own. Keep
+an explicit null class — a forced answer is worse than "unclassified".
+
+**Detector.** If one class holds the overwhelming majority of a heterogeneous population, check
+whether it is simply first.
+
+**Origin.** UCR-CIF W7, mutation `W29`.
+
 ---
 
 ## T-THE-TRIGGER-VOCABULARY-CANNOT-DISCRIMINATE-001 — the words that got you here tell you nothing
