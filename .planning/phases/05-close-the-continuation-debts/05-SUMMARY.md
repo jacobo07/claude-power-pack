@@ -212,10 +212,11 @@ Three items, all the Owner's:
    `node --check`, live selftest), then reload the Cursor window. Until then
    `V-INBOX-LIVE-MATCHES-REPO` stays red and `f702c5a` changes nothing at runtime. That gate is
    correct and must not be skipped or re-baselined to make the suite look clean.
-2. **Decide the residue** (`05-RESIDUE-INVENTORY.md`). Four items, all present, no reader found.
-   Recommendation: delete all four. The one that matters is `tools/gsd_long_run.py.pre-phase-advance`
-   — a stale 49 KB twin of a live module, **UNTRACKED**, so git cannot undo a wrong call.
-   **Keep-with-a-reason closes the debt exactly as well as delete.**
+2. **Decide the residue** — **ANSWERED 2026-09-21 21:11 and carried out** (`e879d18`). All four,
+   per the recommendation: backup first at `~/.claude/backups/residue-20260921-211149`, every copy
+   re-hashed before anything was removed, `RESIDUE_DELETED=4/4`. The readers finding was then tested
+   rather than trusted — MADM 7/7, INTENT 9/9, GSDLR 96/96 afterwards. Digests in
+   `05-RESIDUE-INVENTORY.md`.
 3. **Decide whether the daemon gets a repo mirror.** `auto-compact-sendkeys-daemon.ps1` has no
    version-controlled copy here, so this phase's edit to it is unversioned. Creating a mirror is a
    drift decision, not a tidy-up.
@@ -223,9 +224,14 @@ Three items, all the Owner's:
 ## Next Phase Readiness
 
 - Debts 1 and 2 are gated with a driven red branch each and a digest-verified restore. Debt 3 is
-  evidence plus a blocking checkpoint.
-- **The milestone gate is still UNPROVEN**, and this phase does not move it: crossings 2, confirmed 0,
-  window 0/2. Two crossings each with a confirmed resume are still owed.
+  answered, carried out and digest-recorded.
+- **The milestone gate reads PARTIAL, not UNPROVEN — and the figure printed above was wrong.**
+  Measured 2026-09-21 21:17: `crossings 3, confirmed 1, proven_window 2, window_confirmed 1`. This
+  session's own 18:52:03 crossing confirmed at 18:56:24 with `/gsd-autonomous`, which is the first
+  confirmed resume this session produced. The "crossings 2, confirmed 0" written elsewhere in this
+  file and in `da489a0` / `f59c471` / `e879d18` was carried forward from a pre-compaction summary
+  and never re-measured, while the confirmation had already landed. **One more crossing whose resume
+  confirms is all `PROVEN` needs**, and nothing about the wall is blocking it.
 - **A fifth debt was named and is NOT fixed:** a manual `gsd_long_run.write_trigger()` writes the flag
   the daemon consumes but not the `delivery_inbox_requested` ledger row (`context-watchdog.py:675`),
   so a successful manual re-arm is invisible to the milestone gate. It was used to break the

@@ -235,5 +235,30 @@ line does no further tool work.**
 
 The narrow-wall proof is the milestone's acceptance gate, not a phase: it is
 produced by this run crossing its own wall while executing the phases above,
-and read off `gsd_long_run.py report`. **Still UNPROVEN** — crossings 2,
-confirmed 0, window 0/2.
+and read off `gsd_long_run.py report`.
+
+### Acceptance gate, MEASURED 2026-09-21 21:17 — and a correction
+
+`report --session 9af80e55` reads **PARTIAL: crossings 3, confirmed 1,
+proven_window 2, window_confirmed 1.**
+
+| crossing | resume confirmed |
+|---|---|
+| 2026-09-20T21:56:22Z | — |
+| 2026-09-21T18:11:46Z | — (the 310 s refusal; see the deadlock above) |
+| **2026-09-21T18:52:03Z** | **2026-09-21T18:56:24Z**, `/gsd-autonomous` |
+
+**The correction, and it is mine.** Everything in this file and in commits
+`da489a0`, `f59c471` and `e879d18` written before 21:17 says *"crossings 2,
+confirmed 0, window 0/2"*. That number was carried forward from a pre-compaction
+summary and never re-measured, while the third crossing had already confirmed at
+18:56:24 — before any of those commits were written. The instrument was one
+command away the whole time. A measured claim restated from memory is not a
+measured claim, and the commits are left standing with the wrong figure rather
+than rewritten, because the correction belongs where a reader will look.
+
+**What this means:** the 18:52 crossing is the FIRST confirmed resume this
+session has produced, and the second confirmed one this estate has ever recorded.
+`PROVEN` needs exactly one more crossing whose resume confirms. Nothing about the
+wall is blocking it; it needs context to be spent on real work until the wall is
+crossed again.
