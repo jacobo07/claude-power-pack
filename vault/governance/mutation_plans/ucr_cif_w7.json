@@ -1,0 +1,82 @@
+[
+ {
+  "name": "W24-worktree-marker-blindness",
+  "file": "modules/ucr_cif/reach_calibration.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "    return entry.name == \".git\"",
+  "new": "    return entry.name == \".git\" and entry.is_dir()",
+  "why": "The false world: a host sweep that sees only .git DIRECTORIES. Every git worktree disappears from the population, including the one this mission runs in, and the ceiling is then computed over a denominator that excludes the Owner's actual working surfaces. This is not hypothetical -- it is exactly what the first PowerShell sweep of this wave did, finding 52 where the fixed instrument finds 181. V-W7-WORKTREE-MARKER-IS-A-FILE-TOO must catch it."
+ },
+ {
+  "name": "W25-every-directory-is-one-repository",
+  "file": "modules/ucr_cif/reach_calibration.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "    marker = path / \".git\"",
+  "new": "    marker = path / \".git\"; return \"MERGED\", \"MERGED\"",
+  "why": "The false world: grouping collapses everything into one repository. Wrongly MERGING is the dangerous direction -- it deletes repositories from the population silently, where wrongly splitting only duplicates an observation. V-W7-BROKEN-MARKER-FAILS-APART must catch it, and it is the gate that encodes the asymmetry."
+ },
+ {
+  "name": "W26-private-copy-of-the-spec-globs",
+  "file": "modules/ucr_cif/reach_calibration.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "        from modules.spec_gate.gate import SPEC_GLOBS, _find_spec",
+  "new": "        from modules.spec_gate.gate import _find_spec; SPEC_GLOBS = (\"vault/plans/*.md\", \"vault/specs/*.md\", \"PRD.md\")",
+  "why": "The false world: the ceiling is computed from the instrument's own snapshot of the product's glob list. It agrees today and goes quiet the day the product's list changes -- the join breaks with nothing red, which is the same defect class W5's tokenizer mutation pins one layer down. V-W7-CEILING-READS-THE-GATES-OWN-GLOBS must catch it."
+ },
+ {
+  "name": "W27-unlabelled-becomes-negative",
+  "file": "modules/ucr_cif/reach_ground_truth.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "        return \"UNLABELLED_NO_COMMITS\", []",
+  "new": "        return \"NOT_RELEVANT\", []",
+  "why": "The false world: a prompt with no commits after it counts as proof that no owner was relevant. Every abandoned session, every read-only investigation and every prompt near the end of the history becomes a true negative, and the control's false-activation rate is driven to zero by arithmetic rather than by merit. This is the single easiest way to manufacture a flattering precision in this wave and kernel vMAX-NULL-ERROR names it directly. V-W7-UNLABELLED-IS-NOT-NEGATIVE must catch it."
+ },
+ {
+  "name": "W28-prompt-text-survives-into-the-record",
+  "file": "modules/ucr_cif/reach_funnel.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "        prompt_sha=_digest(text),",
+  "new": "        prompt_sha=text,",
+  "why": "The false world: the durable artifact becomes a raw-prompt surveillance store. Owner decision 4 is universal observation, NOT universal raw-data replication, and a reach study is precisely the shape of work that would quietly acquire 2,350 verbatim prompts because it needed them for one pass. V-W7-NO-PROMPT-TEXT-IN-THE-DERIVED-CASE must catch it."
+ },
+ {
+  "name": "W29-classifier-decided-by-table-order",
+  "file": "modules/ucr_cif/prompt_population.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "        score = sum(1 for n in needles if n in low)",
+  "new": "        score = 1 if any(n in low for n in needles) else 0",
+  "why": "The false world: every class scores one, ties break on table order, and the first row absorbs the population. Measured before the fix: 100 of 127 Tier>=2 prompts landed in `investigation` because that row sat first, which made the per-class funnel unreadable and would have sent a candidate policy after the wrong intent family. A classifier whose answer is decided by its own layout is reporting the layout. V-W7-SEMANTIC-CLASS-NOT-DECIDED-BY-TABLE-ORDER must catch it."
+ },
+ {
+  "name": "W30-shadow-denominator-diluted",
+  "file": "tools/ucr_cif_shadow.py",
+  "suite": "tools/test_ucr_cif_reach_reality.py",
+  "old": "    labelled = [c for c in _judgeable(cases)",
+  "new": "    labelled = [c for c in (cases)",
+  "why": "The false world: candidate policies are scored over the whole prompt stream, so Tier-1 prompts -- which sdd_tier discards before the gate is ever consulted, and which no candidate is therefore ever offered -- arrive as free true negatives. Measured: it inflated the control's TN from 88 to 220 and roughly halved every candidate's false-activation rate, which is the exact direction that makes a bad widening look survivable. PR-W7-S5-THE-TWO-INSTRUMENTS-AGREE must catch it, because the funnel's population is built independently."
+ },
+ {
+  "name": "W31-machine-text-counted-as-a-prompt",
+  "file": "modules/ucr_cif/prompt_population.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "    if text.startswith(_NOT_A_PROMPT):",
+  "new": "    if False and text.startswith(_NOT_A_PROMPT):",
+  "why": "The false world: system reminders, command echoes and interrupt markers are counted as engineering intents. The denominator swells with text no human typed, recall falls for a reason that has nothing to do with the trigger, and the population identity -- which this brief makes part of the claim -- becomes untrue. V-W7-MACHINE-TEXT-EXCLUDED must catch it."
+ },
+ {
+  "name": "W32-unreadable-cwd-read-as-a-shut-door",
+  "file": "modules/ucr_cif/reach_funnel.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "        case.miss_layer = \"cwd_unreadable\"",
+  "new": "        case.miss_layer = \"spec_present_door_shut\"",
+  "why": "The false world: a prompt whose working directory no longer exists is attributed to the door being shut. 'We cannot judge this' becomes evidence about the boundary, and the miss-layer attribution -- the thing that decides WHICH layer a repair belongs in -- is contaminated by cases nobody measured. V-W7-CWD-UNREADABLE-IS-NOT-A-NEGATIVE must catch it."
+ },
+ {
+  "name": "W33-funnel-models-the-signal-instead-of-driving-it",
+  "file": "modules/ucr_cif/reach_funnel.py",
+  "suite": "tools/test_ucr_cif_reach.py",
+  "old": "        signal = sdd_tier.evaluate(prompt=text, cwd=str(path))",
+  "new": "        signal = type(\"S\", (), {\"advisory\": \"ADJUDICATED evidence\", \"actionable\": \"\"})() if gate.action == \"create_spec\" else None",
+  "why": "The false world, and the one this wave was most exposed to: the funnel PREDICTS what the signal would do from the gate's action instead of calling it. Every reach number would then be a measurement of my model of sdd_tier, and it would agree with reality exactly until sdd_tier changed. Mutate the link, not the endpoints -- both endpoints stay intact here and only the call is replaced. V-W7-FUNNEL-DRIVES-THE-LIVE-SIGNAL was written because this mutant survived the suite as first built."
+ }
+]

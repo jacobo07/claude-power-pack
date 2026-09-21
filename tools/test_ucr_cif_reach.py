@@ -136,12 +136,23 @@ def t_door(tmp: Path) -> None:
     finally:
         gmod.SPEC_GLOBS = original
     restored = rc.measure_repo(shut_repo)
+    # BOTH halves are asserted, and the drill is why. `door_reachable`
+    # comes from the gate's own `_find_spec`, so it flips under this patch
+    # even when the instrument keeps a PRIVATE copy of the list for its
+    # attribution -- which is precisely mutation W26. Only `matched_globs`
+    # exposes the copy, and without this clause the `shut_by_glob` table
+    # in the report would go stale the day the product's list changed,
+    # with nothing red.
     _check("V-W7-CEILING-READS-THE-GATES-OWN-GLOBS",
-           rewired.door_reachable and not restored.door_reachable,
-           "narrowing the gate's SPEC_GLOBS flips the ceiling, and "
-           "restoring it flips back -- no private copy of the list",
-           f"rewired={rewired.door_reachable} restored="
-           f"{restored.door_reachable}")
+           rewired.door_reachable and not restored.door_reachable
+           and rewired.matched_globs == []
+           and restored.matched_globs == ["vault/plans/*.md"],
+           "narrowing the gate's SPEC_GLOBS flips BOTH the ceiling and "
+           "the glob attribution, and restoring it flips both back -- no "
+           "private copy of the list anywhere in the instrument",
+           f"rewired=({rewired.door_reachable}, {rewired.matched_globs}) "
+           f"restored=({restored.door_reachable}, "
+           f"{restored.matched_globs})")
     _check("V-W7-NO-PRIVATE-GLOB-COPY",
            not hasattr(rc, "SPEC_GLOBS"),
            "reach_calibration defines no glob list of its own")
@@ -235,6 +246,31 @@ def t_funnel(tmp: Path) -> None:
            replay(proposal, str(tmp / "gone"), "s", "").miss_layer
            == "cwd_unreadable",
            "a vanished cwd is unjudgeable, never a shut door")
+
+    # MUTATE THE LINK, NOT THE ENDPOINTS. Every gate above is satisfied by
+    # a funnel that MODELS the signal from the gate action instead of
+    # calling it -- and a modelled funnel would measure the model. Sever
+    # the call and require the failure to surface.
+    from modules.pp_agents.signals import sdd_tier
+    real = sdd_tier.evaluate
+
+    def _boom(*a, **k):
+        raise RuntimeError("severed")
+
+    try:
+        sdd_tier.evaluate = _boom
+        severed = replay(proposal, str(open_repo), "s", "")
+    finally:
+        sdd_tier.evaluate = real
+    restored = replay(proposal, str(open_repo), "s", "")
+    _check("V-W7-FUNNEL-DRIVES-THE-LIVE-SIGNAL",
+           (severed.error or "").startswith("sdd_tier")
+           and severed.miss_layer == "error"
+           and restored.miss_layer == "none",
+           "severing sdd_tier.evaluate breaks the replay and restoring it "
+           "heals it -- the funnel calls the live signal rather than "
+           "predicting it from the gate action",
+           f"severed={severed.error!r} restored={restored.miss_layer!r}")
 
 
 # ---------------------------------------------------------- ground truth
