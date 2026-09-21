@@ -1096,6 +1096,51 @@ def sweep(now: float | None = None, dry_run: bool = False,
                 ledger_append(sid, "recovered", line=line, transcript_mtime=mtime, route=route,
                               compaction=owed["compaction"])
             continue
+
+        # PHASE-boundary advance. `phase_boundary_owed` was written against a
+        # real 14-hour stall (session fa6961b6) and had NO caller, so the stall
+        # it documents stayed live: a predicate with no event cannot fire. This
+        # is that event, and it sits exactly where the docstring says the run
+        # "fell through to `stalled` and was never re-entered".
+        #
+        # The 40-minute clause must not be judged on a clock the conversation
+        # does not own -- host metadata rows advance the transcript's mtime
+        # without the session speaking, measured to 19.0 h. Take the MORE
+        # CONSERVATIVE of the two readings, so this path can only ever refuse
+        # sooner and never advance sooner than the raw proxy would.
+        conv_idle, conv_clock = session_idle_seconds(transcript)
+        advance_idle = min(idle_s, conv_idle)
+        boundary = phase_boundary_owed(m, st, tail, cmd, waiting, advance_idle)
+        if boundary["ok"]:
+            if _already(sid, "advanced", "transcript_mtime", mtime):
+                continue
+            gate = resume_gate(m)
+            if gate["halt"]:
+                actions.append({"session_id": sid, "action": "halted",
+                                "reason": gate["reason"], "via": "phase-boundary"})
+                if not dry_run:
+                    path.unlink(missing_ok=True)
+                    ledger_append(sid, "halted", kind=gate.get("kind"),
+                                  reason=gate.get("reason"), via="phase-boundary")
+                continue
+            actions.append({"session_id": sid, "action": "advanced", "line": cmd,
+                            "reason": boundary["reason"], "clock": conv_clock})
+            if not dry_run:
+                mk = _marker_module()
+                cycles = mk.bump_cycles(sid) if mk is not None else None
+                ledger_append(sid, "resume_requested", cycles=cycles, via="phase-boundary",
+                              gate=gate.get("reason"), reason=boundary["reason"])
+                route = _recover_via_transport(sid, cwd, str(transcript), cmd, cmd, mtime)
+                ledger_append(sid, "advanced", line=cmd, transcript_mtime=mtime,
+                              route=route, reason=boundary["reason"], clock=conv_clock)
+            continue
+        if explain:
+            # An advance that did not happen must be nameable. A sweep that
+            # declined every marker and one that judged none are otherwise the
+            # same empty result -- the distinction Phase 4 paid for on `kept`.
+            actions.append({"session_id": sid, "action": "advance_declined",
+                            "reason": boundary["reason"], "clock": conv_clock})
+
         if not _already(sid, "stalled", "transcript_mtime", mtime):
             actions.append({"session_id": sid, "action": "stalled", "idle_min": round(idle_s / 60),
                             "last_line": tail[:120], "flags": [p.name for p in flags_for(sid)]})
