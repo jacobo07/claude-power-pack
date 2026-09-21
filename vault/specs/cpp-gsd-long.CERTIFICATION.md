@@ -24,10 +24,13 @@ claims, in the order the run exercises them:
 | C4 | the compaction is recognised from its post-condition, never a proxy | **PROVEN** |
 | C5 | the resume is delivered to the session that owns it, or to nobody | **PROVEN, both sides, live 2026-09-20 (runid `enterfix`). Pane A `92000647` in a terminal the window owns (pid 6992) received AND submitted; pane B `37cfb187` — this session, same window, same `t0` — received nothing. See §9e** |
 | C6 | a resume counts only when the transcript shows it was submitted | **PROVEN — first ever recorded 2026-09-19 09:30:37** |
-| C7 | two crossings, each with a confirmed resume (`report` = PROVEN) | **NOT YET — `report` reads PARTIAL: 4 crossings, 1 confirmed (2026-09-20). Blocked on F5, not on the wall** |
+| C7 | two crossings, each with a confirmed resume (`report` = PROVEN) | **PROVEN 2026-09-21T20:54:39Z — `report` reads PROVEN: 4 crossings, 2 confirmed, `window_confirmed 2`. See §10** |
 
-The command's own done-gate is C7. **It is not met at the time of issue**, and
-section 6 says exactly what is missing and why.
+The command's own done-gate is C7. **It was not met at the time of issue** — §6
+says what was missing and why, and §10 records the run that closed it. Sections
+6 and 9x are left as written: they describe measurements taken on the days they
+name, and editing a record of a past run to match the present would fabricate a
+verification rather than report one.
 
 ---
 
@@ -515,3 +518,50 @@ pending a fourth crossing that the run produces by running. Anyone who needs the
 missing two can get them with one action each: open a Claude session in a Cursor
 integrated terminal (C5 positive), and let this run cross its wall once more
 (C7).
+
+---
+
+## 10. C7 CLOSED — 2026-09-21T20:54:39Z, session `9af80e55`
+
+§9 above is the state at issue and stays as written. This section supersedes its
+verdict on C7 only.
+
+`report --session 9af80e55-9865-4c6f-877c-d155da18becf`:
+
+```
+"verdict": "PROVEN", "crossings": 4, "confirmed": 2,
+"proven_window": 2, "window_confirmed": 2
+```
+
+| crossing | resume confirmed |
+|---|---|
+| 2026-09-21T18:52:03Z | 2026-09-21T18:56:24Z · `/gsd-autonomous` |
+| 2026-09-21T20:48:26Z | 2026-09-21T20:54:39Z · `/gsd-autonomous` |
+
+**What the fourth cycle actually was**, because the shape of it is the claim:
+the watchdog crossed the narrowed wall, the turn emitted one `/compact` line and
+did no further tool work (the rule §9d bought with a nine-hour deadlock), the
+terminal inbox typed it into this session's own pane, the compaction landed, the
+Stop chain asked for `/gsd-autonomous`, the inbox typed that too, and the run
+re-entered itself and carried on. No human keystroke is in that sequence.
+
+**F5 — "delivery is not submission" — is therefore CLOSED**, and it was closed by
+`64ec155` + `f2462ee` rather than by anything in this session: both confirmed
+cycles ran on that code. §9d's `OPEN` describes 09-20 and remains true of 09-20.
+
+**The confirmation was written by the hook, not by the agent.** Before the turn
+that produced it ended, the preconditions of `_confirm_resume`
+(`context-watchdog.py:800`) were probed read-only with the hook's own predicate:
+`marker_present=True`, `done_flag_exists=True`, `confirmed_flag_set=False`,
+`user_issued_command_since('/gsd-autonomous')=True`, and the control
+`'/this-was-never-typed'=False` — the predicate was shown able to answer both
+ways before its answer was believed. The probe wrote nothing. The ledger row
+that followed is the hook's.
+
+**Still not proven, and unchanged by any of this:** C5's positive side beyond the
+09-20 `enterfix` observation, and F6 (a submitted `/compact` failing with EBUSY)
+remains an open hypothesis rather than a closed cause. Four of this session's
+crossings, two are unconfirmed and both have a recorded reason — 09-20T21:56 has
+none beyond the run being abandoned, and 18:11:46 is the 310 s refusal. Neither
+was silently dropped from the count: `crossings 4` is reported beside
+`confirmed 2`, and the window that matters is the last two.

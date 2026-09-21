@@ -63,6 +63,11 @@ it executes the phases below. The milestone is accepted when
 crossings, each followed by a resume the transcript shows was really submitted,
 typed by the terminal inbox that owns the pane rather than by a human.
 
+**SATISFIED 2026-09-21T20:54:39Z — `report` reads `PROVEN`:** crossings 4,
+confirmed 2, `proven_window 2`, `window_confirmed 2`. The two confirmed cycles
+are 18:52:03 → 18:56:24 and 20:48:26 → 20:54:39, both `/gsd-autonomous`, both
+written by the Stop chain from the transcript rather than by the agent.
+
 ## Phase 1: Two-pane exactness drill
 
 Prove the exactness claim the transport was rebuilt for: with two live sessions

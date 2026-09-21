@@ -1,8 +1,8 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-status: awaiting_acceptance_gate
-last_updated: "2026-09-21T21:15:00.000Z"
+status: acceptance_gate_proven
+last_updated: "2026-09-21T20:55:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 5
@@ -280,3 +280,35 @@ session has produced, and the second confirmed one this estate has ever recorded
 `PROVEN` needs exactly one more crossing whose resume confirms. Nothing about the
 wall is blocking it; it needs context to be spent on real work until the wall is
 crossed again.
+
+### Acceptance gate SATISFIED, measured 2026-09-21 20:54:39Z
+
+`report --session 9af80e55` now reads **PROVEN: crossings 4, confirmed 2,
+proven_window 2, window_confirmed 2.**
+
+| crossing | resume confirmed |
+|---|---|
+| 2026-09-20T21:56:22Z | — |
+| 2026-09-21T18:11:46Z | — (the 310 s refusal; see the deadlock above) |
+| **2026-09-21T18:52:03Z** | **2026-09-21T18:56:24Z**, `/gsd-autonomous` |
+| **2026-09-21T20:48:26Z** | **2026-09-21T20:54:39Z**, `/gsd-autonomous` |
+
+The fourth crossing is the one this session produced by compacting on the
+`focus on mirror applied, chain versioned, compound loop cleared` line, being
+re-entered by the terminal inbox, and running again — the whole loop the
+milestone exists to prove, end to end, with no human keystroke in it.
+
+**The confirmation is not mine and was deliberately not written by me.**
+`context-watchdog.py:800` `_confirm_resume` owns it and records it only when
+`user_issued_command_since` finds the command as a real user row in the
+transcript. Before the turn ended I probed the hook's own preconditions with the
+hook's own predicate — `marker_present=True`, `done_flag_exists=True`,
+`confirmed_flag_set=False`, `user_issued_command_since('/gsd-autonomous')=True`
+— against a control, `'/this-was-never-typed'=False, ` so the predicate was shown
+to be capable of answering either way. The probe said `WOULD-CONFIRM`; the hook
+then fired on its own and the ledger row is its work, not a claim of mine.
+Probe kept at `scratchpad/probe_confirm.py` (read-only: it writes no flag, no
+ledger row and no marker).
+
+C7 of `vault/specs/cpp-gsd-long.CERTIFICATION.md` — the one claim that document
+records as **NOT YET** — is now satisfied, and that file is owed the update.
