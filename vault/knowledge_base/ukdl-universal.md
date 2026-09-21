@@ -1326,6 +1326,25 @@ the adjudicator and a test. Closed by joining them to `check_novelty_gate`, and 
 **Family.** Extends `T-INERT-ARCHITECTURE-TAX-002` (built and never reached) with the case where
 it IS reached; sibling of `HR-FAIL-CLOSED-ON-ABSENT-AUTHORITY-001`.
 
+**TRANSFER EVIDENCE — W6, a second independent boundary (2026-09-21).** The rule was derived at
+one consumer and has now been tested at another, and the second one was already sitting in the
+exact state the rule describes. `pp_agents/signals/sdd_tier.py` reached `check_spec_gate` on the
+live UserPromptSubmit path, with the full prompt and a real cwd, read `gate_passed` and `action`,
+and **threw `message` away**. Enriching that message -- the obvious change, and the one the handoff
+implied -- would have produced a reader wearing a consumer's clothes, on a boundary whose whole
+purpose is to stop duplicated architecture. The material effect had to move to the object the live
+surface actually renders. Pinned by `W19-live-signal-reads-but-does-not-consume`, which leaves the
+gate computing the routing and the signal reading it and lets nothing reach the agent: endpoints
+intact, join alive, decision unchanged. The rule predicted a real defect at a boundary it was not
+derived from, which is the only evidence that it generalises.
+
+**A COROLLARY THE SECOND BOUNDARY ADDED.** Two consumers of one authority may share its SELECTION
+and must not inherit its FRAMING. The shared renderer hardcoded "Question 4 of the novelty proof",
+which is one consumer's frame and is simply false at a spec boundary; the lead sentence became a
+parameter while the selection stayed untouched. Rendering is not authority, and a second consumer
+that cannot phrase its own obligation will be rewritten as a copy of the first.
+Pinned by `W21-spec-boundary-cites-the-wrong-consumer`.
+
 ---
 
 ## HR-AUTHORITATIVE-IS-NOT-APPLICABLE-001 — four dimensions, and collapsing any two is a lie
@@ -9338,6 +9357,68 @@ clock assertion on a host like this is a flaky gate, and a flaky gate is worse t
 Order must not matter: verify that the same two samples give the same verdict whichever
 arrives first, or the retry has become a way of shopping for a pass.
 
+**W6 EXTENSION — what to do when the spread is not NEAR the threshold but far above it
+(2026-09-21).** The rule above assumes confirmation can still resolve the question. Sometimes it
+cannot, and then confirming is theatre. `V-W5-PR-LATENCY-BOUNDED` asserted a 400 ms paired delta
+across a hook subprocess. On UNCHANGED code, three runs measured -1166, -3103 and +8009 ms, with a
+single arm moving 3110 to 11803 ms between runs and a within-arm spread of 8327 ms printed beside
+the verdict. A 400 ms bound under a spread of seconds does not fail flakily -- it carries no
+information at all, in either direction, and it had been passing by luck. It then failed a change
+whose true cost was 10-17 ms. **The threshold was never the defect; measuring a hook subprocess on
+a host at 2-4% free memory was.**
+
+The repair is the one this rule already prescribes -- assert behaviour, keep timing in benchmarks
+-- made concrete, and the important half is that NOTHING WAS LOOSENED. The wall-clock numbers
+became printed evidence, and two claims that can come back either way were gated in their place:
+
+  * **a COUNT, which is load-independent by construction.** The corpus is consulted exactly once
+    per consumption boundary per UserPromptSubmit. Nothing the host does can move that number, and
+    it catches the regression the old gate only pretended to -- a consumer added on a hot path, or
+    a warm read turned cold. When the clock cannot resolve the question, build the counter.
+  * **a marginal cost measured in ONE warm process**, paired on medians, which resolves tens of ms
+    rather than thousands.
+
+**Do not relocate a cross-boundary count into one boundary's suite.** The first version asserted
+the whole-hook total from inside the older suite, and severing the NEWER edge then turned the OLDER
+suite red -- two call sites collapsed into one aggregate nobody could attribute. Measured after the
+split: severing the second edge leaves the first at 19/19 + 7/7 green, rc=0.
+
+
+## T-MUTATION-ANCHOR-ROT-001 — a drill can be disarmed by code that touches neither endpoint
+
+**The trap.** A directed mutation identifies its target by a snippet of source text. That snippet
+is a CONTRACT WITH THE SOURCE, and unlike an import or a call it is invisible to every tool that
+understands the language. Code added somewhere else entirely -- a different function, a different
+concern, by an author who never heard of the drill -- can make the anchor ambiguous or stale. The
+drill then stops testing anything while both of its endpoints remain perfectly healthy.
+
+**Measured, UCR-CIF W6 (2026-09-21).** `W16` anchors on the novelty helper's fail-open line,
+`sel, obligation = None, None`. W6 added an outer guard in a different function that was the same
+statement one indent deeper -- and therefore CONTAINED the anchor as a substring. The anchor now
+matched twice. Nothing about W16's subject, its suite or its meaning had changed.
+
+**Why this did not become a silent hole.** The probe refused to produce a verdict:
+`anchor matched 2 time(s) -- the plan has rotted against the source`, exit HARNESS-FAILED. That is
+the behaviour to preserve and to copy into any text-anchored tool. **An anchor that no longer
+identifies exactly one site is a drill that DID NOT RUN, and the two convenient readings are both
+wrong:** reporting it SURVIVED sends someone to write a test for coverage that already exists, and
+reporting it CAUGHT is a green nobody earned. Sibling of `T-UNMEASURED-RENDERED-AS-FAILED-001` at
+the level of the harness rather than the subject.
+
+**Repair, and the one that does not work.** Widening the anchor to two lines failed with
+`matched 0 time(s)`: the checkout is CRLF and a `\n` in a JSON plan cannot match `\r\n` on disk.
+Any multi-line anchor is line-ending-fragile and should be assumed broken on Windows. The collision
+was removed at the NEW site instead -- the added guard became a chained assignment, with a comment
+at the line saying why -- leaving the older anchor unique and untouched. Prefer repairing the newer
+code over widening the older contract: the drill's anchor is load-bearing for a test that already
+passes, and the new code has no such history.
+
+**How to apply.** After adding code that resembles an existing fail-open, fallback or guard clause,
+re-run the full directed plan and read for HARNESS lines specifically -- a batch summary of
+"4/5 caught" looks like a survivor and is not one. Keep anchors single-line. Where a tool cannot
+detect ambiguity itself, give it a uniqueness assertion before it gives you a verdict.
+
+---
 
 ## PR-UNSAFE-REMEDIATION-BLOCKS-THE-SAFE-ONES-001 — a fix that is wrong one time in six cannot be applied at all
 
