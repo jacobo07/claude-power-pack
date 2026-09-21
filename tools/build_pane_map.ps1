@@ -86,11 +86,50 @@ $SUB_PREFIXES = @(
   'generate a list of search queries'
 )
 
+function Read-HeadLines($jsonl, [int]$max) {
+  # Bounded head read that SHARES WRITE, and holds no handle past the call.
+  #
+  # [System.IO.File]::ReadLines opens with FileShare.Read, which DENIES a
+  # writer -- and Claude Code's own compaction is a writer. Measured
+  # 2026-09-21 with Restart Manager (RmGetList): THIS script was the named
+  # holder denying writers on a live transcript in ~90 consecutive samples
+  # across 97 seconds, while /compact failed with
+  #   EBUSY: resource busy or locked, open '...\<session>.jsonl'
+  #
+  # ReadLines is also LAZY: the enumerator owns the handle, and both callers
+  # left their loop early -- Get-SessionMeta by `break`, Get-TranscriptCwd by
+  # `return` from inside the foreach. PowerShell 5.1 does not reliably dispose
+  # an enumerator on a non-exhausting exit, so every call leaked an open,
+  # writer-denying handle until GC. That is why the denial was near-continuous
+  # rather than momentary, and why compaction failed rather than occasionally
+  # retrying past it.
+  #
+  # Get-LastInternalAgeMin below already opened 'Read','ReadWrite' for exactly
+  # this reason: one of this file's three transcript readers had it right. This
+  # makes the other two agree with it, and returns a MATERIALISED array so no
+  # handle can outlive the call whatever the caller does with the result.
+  $out = New-Object System.Collections.ArrayList
+  $fs = $null; $sr = $null
+  try {
+    $fs = [System.IO.File]::Open($jsonl, 'Open', 'Read', 'ReadWrite')
+    $sr = New-Object System.IO.StreamReader($fs, [System.Text.Encoding]::UTF8)
+    while ($out.Count -lt $max) {
+      $ln = $sr.ReadLine()
+      if ($null -eq $ln) { break }
+      [void]$out.Add($ln)
+    }
+  } catch {
+  } finally {
+    if ($sr) { $sr.Dispose() }      # disposes the underlying stream too
+    elseif ($fs) { $fs.Dispose() }
+  }
+  return , $out.ToArray()
+}
+
 function Get-SessionMeta($jsonl) {
   # Streams the head of the transcript: returns topic, isSub. Bounded scan.
-  $topic = ""; $firstUser = ""; $n = 0
-  foreach ($ln in [System.IO.File]::ReadLines($jsonl, [System.Text.Encoding]::UTF8)) {
-    $n++; if ($n -gt 200) { break }
+  $topic = ""; $firstUser = ""
+  foreach ($ln in (Read-HeadLines $jsonl 200)) {
     try { $o = $ln | ConvertFrom-Json -EA Stop } catch { continue }
     if (-not $topic -and $o.type -eq 'summary' -and $o.summary) { $topic = $o.summary }
     if (-not $firstUser -and $o.type -eq 'user' -and $o.message.role -eq 'user') {
@@ -110,9 +149,10 @@ function Get-SessionMeta($jsonl) {
 
 function Get-TranscriptCwd($jsonl) {
   # Reads the transcript's own recorded cwd (cheap regex, no full JSON parse).
-  $n = 0
-  foreach ($ln in [System.IO.File]::ReadLines($jsonl, [System.Text.Encoding]::UTF8)) {
-    $n++; if ($n -gt 40) { break }
+  # Reads through Read-HeadLines: the old ReadLines form `return`ed from inside
+  # the foreach, which is the worst case for a lazy enumerator -- the handle was
+  # abandoned mid-iteration on every SUCCESSFUL call.
+  foreach ($ln in (Read-HeadLines $jsonl 40)) {
     if ($ln -match '"cwd"\s*:\s*"((?:[^"\\]|\\.)*)"') { return ($matches[1] -replace '\\\\', '\') }
   }
   return $null
