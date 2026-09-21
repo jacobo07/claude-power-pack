@@ -109,7 +109,38 @@ MIN_TERM_OVERLAP = 2
 #: cannot see that, because two generic terms and two distinctive ones are
 #: both "two". 1,242 of 1,498 evidence terms (83%) are distinctive, so this
 #: narrows a false pole rather than the true one.
+#:
+#: W8: this is the FLOOR, not the bar. It is what a SHORT proposal must clear,
+#: and it stays 1 so every W5/W6 fixture keeps the behaviour it pinned.
 MIN_DISTINCTIVE_OVERLAP = 1
+
+#: W8 -- how many prompt terms buy one additional required distinctive match.
+#:
+#: An absolute bar is length-blind, and the null expectation it is meant to
+#: beat is not: the longer the prompt, the more of a unit's evidence terms it
+#: contains by coincidence. W7 measured the consequence directly -- the share
+#: of real prompts routing at least one owner climbs 45.8 % (m) -> 89.2 % (l)
+#: -> 99.4 % (xl), and 85 % of real Tier >= 2 prompts are xl. A clause whose
+#: pass rate rises to ~100 % in the modal bucket is not filtering.
+#:
+#: 200 is chosen from the measured population, not from taste. Real judgeable
+#: prompts have a median of 20,099 chars and this repository's own tokenizer
+#: yields 21-40 unique terms per 1k chars, so the modal prompt carries ~600
+#: terms and the W5/W6 synthetic fixtures carry 5-20 (s median 122 chars, m
+#: median 563). At 200, a fixture stays at the floor of 1 and the modal real
+#: prompt is asked for more than coincidence supplies.
+PROMPT_TERMS_PER_DISTINCTIVE = 200
+
+#: ...and the requirement may never exceed the corpus's own median supply.
+#:
+#: Measured over the 996 authoritative units: distinctive terms per unit run
+#: min 0, median 3, p75 4, p90 6, max 9. 784 units hold >= 2 and 605 hold
+#: >= 3, so a bar of 3 is answerable by most of the population while a bar of
+#: 4 is above the median and would refuse on SUPPLY rather than on relevance
+#: -- buying precision by routing nothing, which is the failure mode on the
+#: other side of saturation. The cap ties the ceiling to a measured
+#: distribution exactly as DISTINCTIVE_MAX_HOLDERS ties its own.
+MAX_DISTINCTIVE_REQUIRED = 3
 
 #: An owner must be named by at least this many applicable units before it is
 #: worth routing to. A single unit is a lead; it is reported in the counters
@@ -134,12 +165,21 @@ _CACHE: dict = {}
 
 @dataclass(frozen=True)
 class OwnerRouting:
-    """One existing owner the corpus already holds authority about."""
+    """One existing owner the corpus already holds authority about.
+
+    `strength` (W8) is why this owner and not another: the summed
+    inverse-holder weight of the distinctive terms it matched, so a term only
+    this owner holds counts 1.0 and one shared by three counts a third. It
+    replaces unit count as the RANK key. `units` is still reported, because
+    how much the corpus holds about an owner is worth knowing -- it simply
+    stopped being the answer to "which owner is this about".
+    """
     owner: str
     units: int
     uids: tuple[str, ...]
     terms: tuple[str, ...]
     sample: str | None = None
+    strength: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -166,6 +206,17 @@ class Selection:
     classes_present: tuple[str, ...] = ()
     classes_unsupported: tuple[str, ...] = ()
     prompt_terms: int = 0
+    # W8. The bar THIS prompt had to clear, reported so an empty result stays
+    # explainable: "no owner" and "no owner at a required distinctiveness of
+    # 3" are different answers, and only the second one names the clause that
+    # produced it. Kernel vMAX-NULL-ERROR: an empty result has epistemology.
+    distinctive_required: int = MIN_DISTINCTIVE_OVERLAP
+    # Units that cleared the term bar and carried SOME distinctive evidence,
+    # but fewer distinctive terms than this prompt's length required. Counted
+    # apart from `rejected_generic` (which is zero distinctive terms) because
+    # they are different refusals: one says the overlap was common vocabulary,
+    # the other says it was real but too thin for a prompt this long.
+    rejected_below_length_bar: int = 0
 
     @property
     def routed(self) -> bool:
@@ -176,13 +227,35 @@ class Selection:
             "corpus_id", "refusal", "population", "considered",
             "excluded_authority", "excluded_lifecycle", "excluded_semantics",
             "rejected_applicability", "rejected_generic", "applicable_units",
-            "below_owner_floor", "duplicates_suppressed", "prompt_terms")}
+            "below_owner_floor", "duplicates_suppressed", "prompt_terms",
+            "distinctive_required", "rejected_below_length_bar")}
         d["classes_present"] = list(self.classes_present)
         d["classes_unsupported"] = list(self.classes_unsupported)
         d["owners"] = [{"owner": o.owner, "units": o.units,
                         "uids": list(o.uids), "terms": list(o.terms),
-                        "sample": o.sample} for o in self.owners]
+                        "sample": o.sample,
+                        "strength": round(o.strength, 4)}
+                       for o in self.owners]
         return d
+
+
+def required_distinctive(n_prompt_terms: int) -> int:
+    """How many distinctive matches a unit must show for a prompt this long.
+
+    Monotone by construction -- a longer prompt never asks for less -- and
+    bounded at both ends: it starts at the floor a short proposal has always
+    faced, so every W5/W6 fixture keeps its pinned behaviour, and it stops at
+    the corpus's own median distinctive supply, so it can never refuse a unit
+    for holding less evidence than the median unit holds.
+
+    The bar is a property of the PROMPT, not of the unit, which is the whole
+    point: the same unit is a coincidence in a 20,000-character prompt and a
+    real match in a sentence.
+    """
+    if n_prompt_terms <= 0:
+        return MIN_DISTINCTIVE_OVERLAP
+    scaled = MIN_DISTINCTIVE_OVERLAP + n_prompt_terms // PROMPT_TERMS_PER_DISTINCTIVE
+    return min(scaled, MAX_DISTINCTIVE_REQUIRED)
 
 
 def repo_root(start=None) -> Path:
@@ -282,9 +355,14 @@ def select_for(text: str, repo=None) -> Selection:
 
     terms = set(text_terms(text))
     holders = term_holders(rows)
+    # W8. The applicability bar is a function of THIS prompt's length, decided
+    # once, before any row is examined, so every unit in one selection faces
+    # the same bar and the decision is reportable rather than emergent.
+    need_distinct = required_distinctive(len(terms))
     owner_memo: dict = {}
     classes: set[str] = set()
     excl_auth = excl_life = excl_sem = rejected = generic = 0
+    below_bar = 0
     population = 0
     by_owner: dict[str, list[dict]] = defaultdict(list)
 
@@ -313,8 +391,17 @@ def select_for(text: str, repo=None) -> Selection:
             continue
         distinct = {t for t in overlap
                     if holders.get(t, 1) <= DISTINCTIVE_MAX_HOLDERS}
-        if len(distinct) < MIN_DISTINCTIVE_OVERLAP:
+        # Two refusals, kept apart. No distinctive term at all means the
+        # overlap was the population's common vocabulary and says nothing
+        # about WHICH owner -- that is the W5 espresso-machine failure and it
+        # is length-independent. Some distinctive evidence but less than this
+        # prompt's length demands is a different statement: the match is real
+        # and too thin to beat coincidence at 20,000 characters.
+        if not distinct:
             generic += 1
+            continue
+        if len(distinct) < need_distinct:
+            below_bar += 1
             continue
         by_owner[str(owner)].append(r)
 
@@ -326,6 +413,8 @@ def select_for(text: str, repo=None) -> Selection:
             excluded_authority=excl_auth, excluded_lifecycle=excl_life,
             excluded_semantics=excl_sem, prompt_terms=len(terms),
             rejected_applicability=rejected, rejected_generic=generic,
+            distinctive_required=need_distinct,
+            rejected_below_length_bar=below_bar,
             classes_present=tuple(sorted(classes)),
             refusal="authoritative population %d below floor %d"
                     % (population, MIN_AUTHORITATIVE_POPULATION))
@@ -360,15 +449,30 @@ def select_for(text: str, repo=None) -> Selection:
         # Most distinctive first: those are the terms that say WHY this owner
         # and not another, which is the whole content of the obligation.
         shown = sorted(merged & terms, key=lambda t: (holders.get(t, 1), t))
+        # W8. Evidence strength: the summed inverse-holder weight of the
+        # DISTINCTIVE terms this owner actually matched. A term only this
+        # owner holds contributes 1.0; one shared by the DISTINCTIVE_MAX
+        # ceiling of three contributes a third. Generic terms contribute
+        # nothing at all, so an owner cannot climb the ranking by sharing the
+        # population's common vocabulary -- which is exactly how the three
+        # largest owners came to be the three most-routed.
+        strength = sum(1.0 / holders.get(t, 1) for t in (merged & terms)
+                       if holders.get(t, 1) <= DISTINCTIVE_MAX_HOLDERS)
         owners.append(OwnerRouting(
             owner=owner,
             units=len(uniq),
             uids=tuple(sorted(str(r.get("uid")) for r in uniq)
                        )[:MAX_UIDS_PER_OWNER],
             terms=tuple(shown[:MAX_TERMS_PER_OWNER]),
-            sample=(str(best.get("name") or "").strip() or None)))
+            sample=(str(best.get("name") or "").strip() or None),
+            strength=strength))
 
-    owners.sort(key=lambda o: (-o.units, o.owner))
+    # W8. Rank by evidence strength, not by volume. The old key was -units,
+    # which asked "which owner does the corpus hold most about" -- a question
+    # whose answer is the same for nearly every prompt, and W3 measured the
+    # consequence as a +0.756 rank correlation between unit count and routing
+    # frequency. Units remain the tie-break and remain reported.
+    owners.sort(key=lambda o: (-o.strength, -o.units, o.owner))
     return Selection(
         owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,
         population=population, considered=len(rows),
@@ -377,6 +481,8 @@ def select_for(text: str, repo=None) -> Selection:
         rejected_generic=generic,
         applicable_units=applicable, below_owner_floor=below_floor,
         duplicates_suppressed=dup, prompt_terms=len(terms),
+        distinctive_required=need_distinct,
+        rejected_below_length_bar=below_bar,
         classes_present=tuple(sorted(classes)),
         classes_unsupported=tuple(sorted(classes - set(SUPPORTED_CLASSES))))
 
@@ -472,6 +578,9 @@ def main() -> int:
           f"{MIN_TERM_OVERLAP} shared terms")
     print(f"  too generic  -{sel.rejected_generic}  shared terms, none "
           f"distinctive (<= {DISTINCTIVE_MAX_HOLDERS} owners)")
+    print(f"  too thin     -{sel.rejected_below_length_bar}  distinctive "
+          f"evidence, but fewer than {sel.distinctive_required} for a prompt "
+          f"of {sel.prompt_terms} terms")
     print(f"  applicable   {sel.applicable_units}  "
           f"({sel.below_owner_floor} below the per-owner floor of "
           f"{MIN_UNITS_PER_OWNER}, {sel.duplicates_suppressed} duplicate)")
@@ -483,7 +592,8 @@ def main() -> int:
     print("")
     for o in sel.owners:
         print(f"  {o.owner}")
-        print(f"      units {o.units} | terms {', '.join(o.terms)}")
+        print(f"      strength {o.strength:.2f} (rank key) | units {o.units} "
+              f"| terms {', '.join(o.terms)}")
         print(f"      uids  {', '.join(o.uids)}")
         if o.sample:
             print(f"      e.g.  {o.sample}")
