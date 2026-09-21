@@ -469,9 +469,14 @@ def fire(runid: str, pane: str, timeout: float) -> int:
     if b_armed and b_armed.get("session_id") and b_armed.get("transcript") \
             and b_armed.get("session_id") != info.get("session_id"):
         b_armed["t0"] = t0
-        b_armed["own_nonce"] = b_armed.get("nonce")          # must be PRESENT in B
-        b_armed["own_nonce_since"] = b_armed.get("armed_at")  # the window that holds it
-        b_armed["nonce"] = info["nonce"]                      # must be ABSENT from B
+        # setdefault, NOT assignment: this block overwrites `nonce` with A's, so a
+        # SECOND fire on the same run would capture the already-overwritten value
+        # and record A's nonce as B's own. Measured 2026-09-21 on runid live3 --
+        # three fires left own_nonce='DRILL-A-live3'. Idempotence is not optional
+        # for a step the drill re-runs.
+        b_armed.setdefault("own_nonce", b_armed.get("nonce"))     # B's identity needle
+        b_armed.setdefault("own_nonce_since", b_armed.get("armed_at"))
+        b_armed["nonce"] = info["nonce"]                          # must be ABSENT from B
         b_armed["role"] = "dedicated negative control (armed)"
         print(f"fire/{pane}: pane B is the ARMED session {b_armed['session_id']} "
               f"(dedicated, not the invoking pane)")

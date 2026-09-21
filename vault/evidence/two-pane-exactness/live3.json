@@ -1,0 +1,91 @@
+{
+  "schema": "two-pane-exactness/1",
+  "runid": "live3",
+  "sealed_at": "2026-09-21T15:55:47Z",
+  "sealed_by": "tools/two_pane_drill.py seal",
+  "contract": "pointers only -- no verdict is stored. Every claim is re-derived by tools/test_two_pane_exactness.py from the artifacts named here, so a deletion or edit reds the gate instead of leaving a green about a vanished world.",
+  "t0": 1790006135.9551885,
+  "panes": {
+    "B": {
+      "session_id": "1b7f6df9-c053-4069-9048-2dc2c818484c",
+      "pid": 21412,
+      "procStart": "134344783984576992",
+      "cwd": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\live3\\panes\\B",
+      "nonce": "DRILL-A-live3",
+      "t0": 1790006135.9551885,
+      "role": "dedicated negative control (armed)",
+      "expect_line": null,
+      "identity_file": "21412.json",
+      "transcript": {
+        "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-pp-two-pane-drill-live2-panes-A\\1b7f6df9-c053-4069-9048-2dc2c818484c.jsonl",
+        "exists": true,
+        "bytes": 954631,
+        "sha256": "659bc5d0e968bd8a904e79161b0735da85e4a976f34a9a8d69670ef87bddcce1",
+        "mtime": 1790005931.5837994
+      }
+    },
+    "A": {
+      "session_id": "5094872a-c2d9-4703-98a7-b52fd58a87ec",
+      "pid": 10188,
+      "procStart": "134344791348125349",
+      "cwd": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\live3\\panes\\A",
+      "nonce": "DRILL-A-live3",
+      "t0": 1790006135.9551885,
+      "role": null,
+      "expect_line": "DRILL-A-live3",
+      "identity_file": "10188.json",
+      "transcript": {
+        "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp\\5094872a-c2d9-4703-98a7-b52fd58a87ec.jsonl",
+        "exists": true,
+        "bytes": 962166,
+        "sha256": "b72439a682ac55c1064248a8cb137c7c3d598af07458219cee036e8d2897a3b0",
+        "mtime": 1790006145.9209378
+      }
+    }
+  },
+  "run_dir": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\live3\\manifest.json",
+    "exists": true,
+    "bytes": 1277,
+    "sha256": "1118b6851d2a948daa48142cd3954b9eaccf17c1a23160e1e9418d2d1d715bbd",
+    "mtime": 1790006135.962028
+  },
+  "daemon_log": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\live3\\hooks\\auto-compact-sendkeys.log",
+    "exists": false
+  },
+  "daemon_log_alt": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\live3\\hooks\\auto-compact-daemon.log",
+    "exists": true,
+    "bytes": 2143,
+    "sha256": "f6f209b0d6577a71e1f50ce5f21bb6f5940fd39430e00a721137a8aa7d5b263b",
+    "mtime": 1790006143.0840626
+  },
+  "ledger_run_local": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\live3\\state\\gsd-autorun-ledger.jsonl",
+    "exists": false
+  },
+  "ledger_rows_run_local": [],
+  "ledger_real": {
+    "path": "C:\\Users\\User\\.claude\\state\\gsd-autorun-ledger.jsonl",
+    "exists": true
+  },
+  "ledger_rows_real": [],
+  "extension": {
+    "dir": "kobii.pp-sessions-0.4.0",
+    "version": "0.4.0",
+    "terminal_inbox": {
+      "path": "C:\\Users\\User\\.cursor\\extensions\\kobii.pp-sessions-0.4.0\\src\\terminal_inbox.js",
+      "exists": true,
+      "bytes": 15044,
+      "sha256": "5aff92d680f5b7c4710bddb5f7e8c5f4e57898d701e0a8f1630ace8a630e8c19",
+      "mtime": 1790002474.5248444
+    }
+  },
+  "inbox_dir": "C:\\Users\\User\\.claude\\state\\terminal-inbox",
+  "pointers_absent": [
+    "opened_at / open_order -- never recorded by arm() or fire()",
+    "run-local ledger -- GSD_LONG_RUN_STATE_DIR was never written for this run, so no sandboxed ledger rows exist",
+    "inbox request ids -- not recorded by fire(); the ack is consumed by the daemon and the request file is unlinked"
+  ]
+}
