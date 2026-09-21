@@ -215,12 +215,30 @@ as the confirmation above. (Count soft by one: the glob returned pane A twice.)
    carries `enters=` and `arg_tail=`) is unversioned. Same gap class as the
    router edit in phase 3.
 
-### The fifth debt, named and unfixed
+### The fifth debt — CLOSED 2026-09-21 (`7f88790`)
 
-A manual `gsd_long_run.write_trigger()` writes the flag the daemon consumes but
-NOT the `delivery_inbox_requested` ledger row (`context-watchdog.py:675`), so a
-successful manual re-arm is invisible to the milestone gate. Found by using it
-to break this session's delivery deadlock.
+Its shape was sharper than its name. `_recover_via_transport` wrote the trigger
+flag and returned `"terminal-inbox"` with **no ledger row**, while the watchdog's
+equivalent branch records `delivery_inbox_requested` (`context-watchdog.py:675`).
+Two producers of one effect, one of them mute — so a delivery that **succeeded**
+could not be counted by the milestone gate it was serving. Found by breaking this
+session's deadlock with a hand call to `write_trigger`: it worked, and it left no
+trace.
+
+The row now lives where the flag is written, not in the caller — a caller-side
+row is a convention, and this one had already been forgotten once. `kind` is
+derived from the payload just written (same rule as the `armed` row at
+`gsd_autorun_marker.py:253`); `producer` is recorded because the event name now
+has two writers, and a reader that cannot tell them apart cannot tell a swept
+re-delivery from a watchdog crossing.
+
+GSDLR 96/99 → **99/99**; CWIRE 14/14, GSDAC 26/26, CTRUTH 15/15 unchanged. Three
+mutations, each landing on its own assertion set, restore byte-exact
+(`a6fa53be3045d7ce`). **The gate's first version carried the very defect it was
+written to catch** — it re-stat'd the marker file to rebuild a cid built from the
+transcript's mtime, and so failed against a correct row. It now derives the
+expected value from the sibling row the same action wrote, with the reason kept
+in the comment.
 
 ### The delivery deadlock, diagnosed 2026-09-21
 
