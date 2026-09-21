@@ -1,0 +1,50 @@
+[
+ {
+  "name": "W34-length-bar-severed",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w8_applicability_precision.py",
+  "old": "    scaled = MIN_DISTINCTIVE_OVERLAP + n_prompt_terms // PROMPT_TERMS_PER_DISTINCTIVE",
+  "new": "    scaled = MIN_DISTINCTIVE_OVERLAP",
+  "why": "The false world: M1 removed while every other symbol stays. required_distinctive still exists, is still called, still returns a plausible integer and still reports itself in the selection -- it is simply length-blind again, which is precisely the pre-W8 defect W7 measured at 99.4 % activation on xl prompts. This is the mutation that severs the MECHANISM rather than an endpoint, and V-W8-LONG-PROMPT-RAISES-THE-BAR must catch it. Note the shape: a reader of the diff sees a function that is still wired and still answers, which is why the gate has to assert the VALUE at a real length and not the existence of the call."
+ },
+ {
+  "name": "W35-ceiling-removed",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w8_applicability_precision.py",
+  "old": "    return min(scaled, MAX_DISTINCTIVE_REQUIRED)",
+  "new": "    return scaled",
+  "why": "The false world: the bar grows without bound, so a 20,000-character prompt demands more distinctive terms than the median authoritative unit HOLDS (measured supply: median 3, max 9). The selector would then refuse on supply rather than on relevance and precision would rise to 100 % by routing nothing -- the failure mode on the other side of saturation, and the one a precision wave is most tempted to ship because the headline number looks excellent. V-W8-BAR-NEVER-EXCEEDS-MEASURED-SUPPLY must catch it, and it does so by recomputing the median from the live ledger rather than from a literal."
+ },
+ {
+  "name": "W36-rank-reverts-to-volume",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w8_applicability_precision.py",
+  "old": "    owners.sort(key=lambda o: (-o.strength, -o.units, o.owner))",
+  "new": "    owners.sort(key=lambda o: (-o.units, o.owner))",
+  "why": "The false world: M2 removed. strength is still computed, still stored on every OwnerRouting and still rendered by --explain, so every observability assertion stays green while the ranking reverts to the +0.756 volume bias W3 measured. A field that is computed and displayed but no longer DECIDES is the exact shape of 'read is not consume' one layer in. V-W8-RANK-IS-STRENGTH-NOT-VOLUME must catch it."
+ },
+ {
+  "name": "W37-strength-counts-generic-terms",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w8_applicability_precision.py",
+  "old": "        strength = sum(1.0 / holders.get(t, 1) for t in (merged & terms)\n                       if holders.get(t, 1) <= DISTINCTIVE_MAX_HOLDERS)",
+  "new": "        strength = sum(1.0 / holders.get(t, 1) for t in (merged & terms))",
+  "why": "The false world: the volume bias returns through the back door. Ranking is still by strength, so W36's gate stays green, but common vocabulary now contributes weight -- and the owners with the most common vocabulary are the largest ones, which is how the three biggest became the three most-routed in the first place. The inverse-holder weight alone does NOT save it: four generic terms at 1/4 outscore one sole-holder term. V-W8-STRENGTH-IGNORES-GENERIC-TERMS must catch it by asserting the VALUE, which is why that gate checks a number rather than an ordering."
+ },
+ {
+  "name": "W38-two-refusals-collapse-into-one",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w8_applicability_precision.py",
+  "old": "            below_bar += 1",
+  "new": "            generic += 1",
+  "why": "The false world: filtering still works perfectly and the selection can no longer say WHY it is empty. 'The overlap was the population's common vocabulary' and 'the evidence was real but too thin for a prompt this long' need opposite repairs -- the first is a corpus problem, the second is a length problem -- and this mutant reports both as the first. Kernel vMAX-NULL-ERROR: an empty result has epistemology. V-W8-THIN-IS-NOT-GENERIC must catch it."
+ },
+ {
+  "name": "W39-floor-raised-under-short-proposals",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w8_applicability_precision.py",
+  "old": "MIN_DISTINCTIVE_OVERLAP = 1",
+  "new": "MIN_DISTINCTIVE_OVERLAP = 2",
+  "why": "The false world: a precision wave quietly buys its number from the SHORT pole as well as the long one. This is the tempting over-correction -- it would raise precision further and it would silently change behaviour every W5 and W6 fixture pinned, none of which is what W7 measured as broken. V-W8-SHORT-PROMPT-KEEPS-THE-FLOOR and V-W8-SHORT-PROMPT-ROUTES-THIN-EVIDENCE must catch it, and the blast radius is deliberate: the W5 selection suite should feel this too, because a shared selector means shared blast radius."
+ }
+]
