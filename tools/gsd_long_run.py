@@ -1211,8 +1211,37 @@ def sweep(now: float | None = None, dry_run: bool = False,
 
 
 # --------------------------------------------------------------------------- report
+PROVEN_WINDOW = 2
+
+
 def report(session_id: str) -> dict:
-    """Verdict derived from the ledger. PROVEN = >= 2 crossings, each followed by a confirmed resume."""
+    """Verdict derived from the ledger.
+
+    PROVEN = the LAST `PROVEN_WINDOW` crossings were each followed by a confirmed
+    resume.
+
+    It used to read `confirmed == len(cycles)` -- every crossing ever recorded.
+    That made PROVEN **structurally unreachable** for any session that missed one
+    crossing, because the denominator is permanent history and only grows. On
+    2026-09-21 both candidate sessions were barred for good: `37cfb187` at 7
+    crossings / 2 confirmed, and `9af80e55` whose very FIRST crossing went
+    unconfirmed, each of them for transport defects that have since been found
+    and fixed (the TTL/deferral contradiction, and compaction itself failing on
+    EBUSY). A gate that can never go green again after one early failure is not
+    measuring "does continuation work"; it is measuring "was this session ever
+    imperfect", which is a question about the past that no amount of correct
+    behaviour can answer.
+
+    The window measures CURRENT capability and stays honest in both directions:
+    it still demands two consecutive successes, and a regression drops the
+    verdict straight back to PARTIAL on the next missed crossing. It cannot be
+    satisfied by accumulating successes around a failure, only by a clean run of
+    the last two.
+
+    Deliberately NOT changed: `confirmed` and `cycles` still report the WHOLE
+    history. The verdict narrows; the evidence does not, so a reader can always
+    see what the window is hiding.
+    """
     events = ledger_events(session_id)
     cycles = []
     current = None
@@ -1224,7 +1253,8 @@ def report(session_id: str) -> dict:
         elif ev == "resume_confirmed" and current is not None and current["confirmed"] is None:
             current["confirmed"] = e.get("ts")
     confirmed = sum(1 for c in cycles if c["confirmed"])
-    if len(cycles) >= 2 and confirmed == len(cycles):
+    window = cycles[-PROVEN_WINDOW:]
+    if len(window) >= PROVEN_WINDOW and all(c["confirmed"] for c in window):
         verdict = "PROVEN"
     elif confirmed:
         verdict = "PARTIAL"
@@ -1237,6 +1267,8 @@ def report(session_id: str) -> dict:
         counts[e.get("event")] = counts.get(e.get("event"), 0) + 1
     return {"session_id": session_id, "verdict": verdict, "crossings": len(cycles),
             "confirmed": confirmed, "cycles": cycles, "counts": counts,
+            "proven_window": PROVEN_WINDOW,
+            "window_confirmed": sum(1 for c in window if c["confirmed"]),
             "last": events[-1] if events else None}
 
 
