@@ -1,14 +1,22 @@
 ---
-status: gaps_found
+status: passed
 phase: 04-reap-the-stale-autorun-markers
 date: 2026-09-21
-must_haves_verified: 7
+must_haves_verified: 8
 must_haves_total: 8
 requirements: n/a (no REQUIREMENTS.md in this project)
 verified_by: orchestrator (direct measurement, not delegated)
+gap_closure: G1 closed 2026-09-21 in c3b493b — see "Gap closure" at the end
 ---
 
 # Phase 4: Reap the stale autorun markers — Verification Report
+
+> **Superseded in part, 2026-09-21.** This report was written at `gaps_found`
+> 7/8. G1 was then fixed in `c3b493b` and re-measured against the live estate,
+> so the frontmatter now reads `passed` 8/8. **The body below is left exactly as
+> it was written.** It describes the run that happened, and editing a
+> verification's findings to match a later repair would fabricate a verification.
+> What changed is recorded at the end, with its own date and commit.
 
 Verified by running the subject, not by reading its SUMMARY — this phase has no
 SUMMARY, and its plan lives at `.planning/04-PLAN.md` rather than in a phase
@@ -89,3 +97,45 @@ and it is what a future reader asking "what was this run armed with" would read.
   production. The deletion branch is covered by tests and has never run for real.
 - Anything about the 19.0 h mtime-drift figure, which is a historical measurement
   this run did not reproduce.
+
+## Gap closure — G1, 2026-09-21, `c3b493b`
+
+`_scan_markers()` now returns admitted markers and refusals from one pass and
+one predicate; `_markers()` keeps its exact signature and returns the admitted
+half, so the three callers that unpack `(Path, dict)` are untouched. Under
+`--explain` the sweep emits a `not_a_marker` row per refusal, with its reason,
+plus a `scanned` row carrying `files` / `admitted` / `rejected`.
+
+That last row is the point. Naming the refusals alone would still leave a glob
+that silently stopped matching indistinguishable from an estate with nothing to
+judge — the population floor is what closes that, and it is the clause
+`instrument-before-claim.md` says every structural sweep needs.
+
+**Re-measured live, same command, same estate:**
+
+```
+not_a_marker  gsd-autorun-intent-ghost-30594a7d.json  no session_id
+not_a_marker  gsd-autorun-intent-ghost-df5d917a.json  no session_id
+scanned       files 8   admitted 6   rejected 2
+kept 6 · advance_declined 5 · reaped 0
+```
+
+Both ghosts named, the denominator explicit, nothing reaped.
+
+**Proof:** `tools/test_marker_admission.py` 7/7. Three mutations driven red —
+non-admissions not emitted (4/7), floor removed (6/7), admit-nothing (4/7, which
+reds the *green control*, so the detector cannot pass by rejecting everything).
+Restores SHA-256 verified. No regression: GSDLR 93/93, PBA 11/11.
+
+**Instrument failure recorded rather than hidden:** the third drill first
+returned `ANCHOR MISS` — twelve spaces of indentation against the file's eight.
+A mutation that never applied is not a mutation that survived. It was re-run
+with the correct anchor, not counted as a result.
+
+**Still open, and NOT closed by the above:**
+
+- Must-have 2 remains UNVERIFIABLE. The 2026-09-19 mutation drills leave no
+  artifact; today's drills are evidence about today's code, not about that run.
+- The reap path has still never deleted anything in production.
+- The adjacent `ledger_append(cwd=args.cwd)` fidelity gap at
+  `gsd_autorun_marker.py:253` is untouched.
