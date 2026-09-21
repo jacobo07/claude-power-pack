@@ -1476,6 +1476,103 @@ inverted in place, never deleted.
 
 ---
 
+## T-THE-ORACLE-REPLAYS-A-RECORDING-001 — an oracle built on persisted derived state cannot see a change to its producer
+
+**Mechanism.** A measurement tool scores its verdict from a stored artifact that some
+earlier run derived. The producer of that artifact is changed. The tool is re-run, and it
+returns **byte-identical numbers** — not because the change did nothing, but because the
+tool never invoked the producer at all. It replayed a recording.
+
+**Why it hides.** Every rung of the usual ladder is green. The tool exists, runs, exits 0,
+emits a well-formed report in the right units and the right range, and its numbers are
+genuinely correct *about the recording*. Nothing is red, nothing is silent, and the
+convenient reading — "my change had no effect" — is the one a tired session accepts.
+Worse, the reading is the safe-sounding direction: it argues for abandoning a repair
+rather than for shipping a bad one.
+
+**Measured.** UCR-CIF W8. `tools/ucr_cif_shadow.py` scores six activation policies over
+`owners_routed` in a persisted control report and never calls `select_for`. W7's closing
+success criterion was written as *"re-run `ucr_cif_shadow.py` and watch `P1-ANY-OWNER`'s
+holdout precision"* — an instruction that, followed literally, is unfalsifiable in the
+wrong direction. The field is re-derived only by `tools/ucr_cif_reach.py --funnel`, which
+drives the live chain.
+
+**Fix.** Before trusting any measurement tool, answer one question: **does this tool
+invoke the thing I changed, or does it read something that was written earlier?** Trace
+the field the verdict depends on back to the call that produces it. Where an oracle is
+legitimately a replay — and it often is, because replays are cheap — its success criterion
+must name the **re-derivation step**, never the scoring step alone. A success criterion
+that omits it is a defect in the criterion, not in the subject.
+
+**Family.** The frozen-in-time sibling of `T-ORACLE-RECOMPUTED-FROM-MECHANISM-001` (which
+is the tautological case, oracle == mechanism). Both produce a confident number that
+carries no information about the subject. Cross-project: tagged `#CROSS-PROJECT`.
+
+---
+
+## PR-PAIRED-REDERIVATION-BEATS-A-STORED-BASELINE-001 — a baseline from another session is not a control
+
+**Rule.** When the measurement population can move between runs — a replay of recent
+history, a sample of live traffic, a sweep of a directory that other processes write — a
+figure recorded by an earlier session is **not** a control. Re-derive BOTH halves, and
+compute the comparison on the **shared** members only.
+
+**Measured.** UCR-CIF W8. W7 recorded holdout precision **23.5 % over 2,350 cases**.
+Re-deriving with the **unchanged** selector on the same host gave **20.0 % over 2,306**.
+Nothing had been modified; sessions had rolled. Comparing a treatment against the stored
+figure would have manufactured a **3.5-point swing out of drift alone** — in whichever
+direction the day happened to fall. Even the two paired runs, twenty minutes apart, shared
+only 1,792 of 2,395 / 2,201 cases, so the honest comparison was computed on the
+intersection and the drift was reported rather than averaged away.
+
+**Why it matters more than it sounds.** The drift is silent and the numbers are real, so
+the error is invisible in the output and appears only as a *conclusion*. It is the same
+defect as an unbracketed wide oracle, one level up: the reading expired, and nothing about
+the reading says so.
+
+**Fix.** Pair the runs; key the comparison on a stable per-item identity; report the
+population sizes and the shared count beside every figure; and treat any effect smaller
+than the drift as **below resolution**, never as a result.
+
+---
+
+## T-A-THRESHOLD-CANNOT-EXCEED-ITS-EVIDENCE-SUPPLY-001 — tightening past the median supply refuses on supply, not on relevance
+
+**Trap.** A filter is too permissive, so the threshold is raised. Past a certain point the
+threshold stops asking "is this relevant?" and starts asking "does this item possess more
+evidence than the median item possesses?" — and the answer is no, for most of the
+population, regardless of relevance. Precision then rises toward 100 % because the filter
+is refusing almost everything, which is the failure mode on the far side of saturation and
+the one most likely to ship, because the headline number looks excellent.
+
+**Detector.** Measure the **supply distribution of the evidence the threshold reads**
+before choosing the threshold, and tie the ceiling to it. Measured in UCR-CIF W8: the
+corpus's distinctive terms per unit run median 3, p75 4, p90 6 — 784 of 996 units hold ≥ 2
+and only 404 hold ≥ 4. Sweeping the bar showed a cliff exactly there: 42 % of long
+documents still routed at a bar of 3, and 5 % at a bar of 4. The shipped ceiling is
+therefore pinned to the measured median, and the gate that enforces it
+(`V-W8-BAR-NEVER-EXCEEDS-MEASURED-SUPPLY`) **recomputes the median from the live ledger**
+rather than comparing against a literal, so the corpus catches the mutant instead of a
+constant somebody has to remember to update.
+
+**The consequence worth more than the fix.** When the ceiling is reached, the remaining
+headroom is **zero**, and that is a statement about the EVIDENCE FAMILY, not about the
+threshold. In W8 it meant applicability precision is unreachable by tightening a lexical
+clause at all: a 20,000-character prompt contains three distinctive terms of almost any
+owner, and asking for four asks for more than the median unit owns. The lever moves to a
+**structurally different** evidence family — declarations, tests, command ownership, git
+history — none of which a long prompt can supply by coincidence.
+
+**Fix.** Before tuning a threshold, sweep it and plot the cliff. If the working point sits
+against the supply boundary, stop tuning and say so: the next gain belongs to a different
+kind of evidence, and further tightening only buys a number by refusing everything.
+
+**Family.** The supply-side complement of `T-SQI-RATIO-GATE-REWARDS-DELETION-001` (gate on
+the absolute, never on a ratio) — both describe a metric improved by shrinking what it
+measures. Cross-project: tagged `#CROSS-PROJECT`.
+
+---
+
 ## T-N-WORKTREES-ARE-ONE-OBSERVATION-001 — the population unit is not the directory
 
 **Mechanism.** Counting working directories as repositories inflates a denominator with copies
