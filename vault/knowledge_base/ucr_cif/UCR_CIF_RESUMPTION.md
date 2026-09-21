@@ -45,7 +45,7 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
-**As of 2026-09-22 (W9 close) HEAD is `<w9-final>`, 51 ahead / 74 behind `origin/main`.**
+**As of 2026-09-22 (W9 close) HEAD is `9c93db4`, 51 ahead / 74 behind `origin/main`.**
 W9 audited those 74 upstream commits BEFORE building: 109 files changed, and the only overlap
 with this mission's dependency surface is
 `vault/capability_runtime/contracts/reconstruction_parity.json`, a contract DATA file. Nothing

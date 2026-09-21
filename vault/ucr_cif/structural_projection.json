@@ -1,6 +1,6 @@
 {
- "build_ms": 14334.2,
- "built_at": "2026-09-21T23:06:57Z",
+ "build_ms": 32653.9,
+ "built_at": "2026-09-21T23:41:47Z",
  "held_terms": 674,
  "ledger_binding": {
   "corpus_id": "ef2b381beff512ca6919280a",
@@ -9,7 +9,7 @@
   "size": 1953853
  },
  "ledger_owners": 40,
- "repo_fingerprint": "41a79e92e92420f6f28ad9f38b7bff52dddc9844473c5f8a828be5fde2392e04",
+ "repo_fingerprint": "1f5a160524bb17cc39797807f37827ee653750b13f94385a9b10b5c26d63617a",
  "schema_version": 1,
  "source": {
   "distinctive_max_holders": 3,
