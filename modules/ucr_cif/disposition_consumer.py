@@ -179,6 +179,13 @@ MIN_AUTHORITATIVE_POPULATION = 200
 #: its own arm rather than folded into M2's result.
 REQUIRE_STRUCTURAL_ATTRIBUTION = False
 
+#: W9. Whether structural evidence DECIDES the owner order (mechanism M2).
+#: Default OFF on measured evidence -- the reasoning is in
+#: `_structural_ranking`, and the short version is that it could not be shown
+#: to help against the independent oracle and has two named ways of hurting.
+STRUCTURAL_RANKING_ENABLED = False
+_RANK_ENV = "UCR_CIF_STRUCTURAL_RANK"
+
 #: Escape hatch for the paired evaluation, read once per call so a measurement
 #: harness can drive both arms in one process without reimporting. It may only
 #: ever turn the clause ON: a released default cannot be weakened by an env
@@ -314,6 +321,49 @@ def _rank_key(o: OwnerRouting) -> tuple:
     ordering exactly, which is the property that makes this wave reversible.
     """
     return (-o.structural_strength, -o.strength, -o.units, o.owner)
+
+
+def _rank_key_lexical(o: OwnerRouting) -> tuple:
+    """W8's key, unchanged. The SHIPPED default -- see below."""
+    return (-o.strength, -o.units, o.owner)
+
+
+def _structural_ranking() -> bool:
+    """Whether structural evidence decides the order. Default OFF, measured.
+
+    W9 built the mechanism, proved it orthogonal, and then measured it
+    against the independent git-behaviour oracle and could NOT show a
+    benefit. On 2,098 paired cases it reorders 78.5 % of routed selections
+    and 59.0 % of top-1 slots -- it is anything but inert -- but of the 18
+    labelled cases whose order changed, the true owner's rank improved in 6
+    and worsened in 12. Two-sided binomial p = 0.238: directional, and the
+    sample cannot carry it.
+
+    Two measured reasons not to ship it on that evidence:
+
+      * OWNERS WHOSE ARTIFACT IS PROSE ARE SYSTEMATICALLY UNDER-CREDITED.
+        `modules/governance-overlay` holds only 13.7 % of its term-pairs
+        structurally, because a policy module's capability lives in Markdown
+        rather than in symbols, filenames or registry keys. W3 read its
+        routing volume as vocabulary bias; the behavioural oracle says it is
+        credited on 21.1 % of labelled hits against a 23.7 % routing share,
+        i.e. roughly in proportion. It is a real owner, and demoting it is
+        not obviously a correction.
+      * THE CAP TURNS A REORDER INTO A LOSS. Ranking preserves the owner set
+        only BEFORE `[:MAX_OWNERS]`. Two labelled cases had the true owner at
+        index 4 -- the last visible slot -- and the reorder pushed it out of
+        the selection entirely.
+
+    So the evidence is kept, reported and explainable, and it does not decide
+    anything by default. This is not caution: promoting a change that
+    reorders 59 % of top-1 slots on a statistical wash would be substituting
+    a prior for a measurement, which is the failure this whole wave exists to
+    prevent. Enable with UCR_CIF_STRUCTURAL_RANK=1 to re-measure once the
+    labelled oracle is wide enough to resolve ~3 points.
+    """
+    if STRUCTURAL_RANKING_ENABLED:
+        return True
+    return os.environ.get(_RANK_ENV, "") == "1"
 
 
 def required_distinctive(n_prompt_terms: int) -> int:
@@ -599,7 +649,11 @@ def select_for(text: str, repo=None) -> Selection:
     # this estate has already measured that a two-line anchor cannot be
     # matched reliably on a CRLF checkout. W9's own edit rotted two W8 anchors
     # here, and a one-line key is what stops the next edit doing it again.
-    owners.sort(key=_rank_key)
+    #
+    # W9 MEASURED IT AND DID NOT PROMOTE IT. The shipped default is W8's key;
+    # the structural key exists, is proven orthogonal, and is switched off.
+    # `_structural_ranking` carries the numbers and the two reasons.
+    owners.sort(key=_rank_key if _structural_ranking() else _rank_key_lexical)
     return Selection(
         owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,
         population=population, considered=len(rows),

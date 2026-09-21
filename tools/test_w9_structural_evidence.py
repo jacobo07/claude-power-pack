@@ -69,8 +69,14 @@ BUILDER = "modules/quarantine_engine"
 MENTIONER = "modules/prose_overlay"
 THIRD = "modules/other_thing"
 
+#: Distinct tags for the optional filler owners. Each filler needs its OWN
+#: distinctive term: sharing one across them pushes it past
+#: DISTINCTIVE_MAX_HOLDERS and the selector correctly refuses everything.
+FILLER_TAGS = ("orchid", "basalt", "kelvin", "tundra", "marlin", "cobalt")
 
-def _mk_repo(tmp: Path, *, with_projection=True, projection_mangle=None) -> Path:
+
+def _mk_repo(tmp: Path, *, with_projection=True, projection_mangle=None,
+             extra_owners=0) -> Path:
     repo = tmp / "repo"
     for owner in (BUILDER, MENTIONER, THIRD):
         (repo / owner).mkdir(parents=True, exist_ok=True)
@@ -100,6 +106,26 @@ def _mk_repo(tmp: Path, *, with_projection=True, projection_mangle=None) -> Path
         rows.append(row(BUILDER, ["quarantine", "batch"], "builder %d" % i))
         rows.append(row(MENTIONER, ["quarantine", "batch"], "mention %d" % i))
         rows.append(row(THIRD, ["quarantine", "batch"], "third %d" % i))
+
+    # Optional extra lexical-only owners, so a fixture can exceed MAX_OWNERS
+    # and observe what truncation does. Without this the cap never binds and
+    # a gate about eviction cannot see its own subject.
+    #
+    # Each filler gets its OWN distinctive term. Sharing `batch` across them
+    # was the first attempt and it routed NOTHING: seven owners holding one
+    # term puts it past DISTINCTIVE_MAX_HOLDERS, every match became generic
+    # and the selector refused the lot. Adding owners to a term destroys its
+    # distinctiveness -- that is the clause working, and a fixture has to
+    # respect it rather than fight it.
+    for n in range(extra_owners):
+        tag = FILLER_TAGS[n]
+        name = "modules/filler_%s" % tag
+        (repo / name).mkdir(parents=True, exist_ok=True)
+        (repo / name / "notes.md").write_text(
+            ("quarantine %s " % tag) * 50, encoding="utf-8")
+        for i in range(3):
+            rows.append(row(name, ["quarantine", tag],
+                            "filler %s-%d" % (tag, i)))
     # Padding so the authoritative population clears its floor.
     for i in range(dc.MIN_AUTHORITATIVE_POPULATION + 20):
         rows.append(row(THIRD, ["filler%d" % i, "padding"], "pad %d" % i))
@@ -118,22 +144,30 @@ def _mk_repo(tmp: Path, *, with_projection=True, projection_mangle=None) -> Path
     return repo
 
 
-def _fresh(repo, text, require=False):
-    """One selection with every cache cleared, so each case is independent."""
+def _fresh(repo, text, require=False, rank=True):
+    """One selection with every cache cleared, so each case is independent.
+
+    `rank` defaults TRUE here and FALSE in production. The mechanism gates
+    exist to prove the structural key works; the shipped default is that it
+    does not decide, and that default has its own gate below rather than
+    being smuggled in as this helper's behaviour.
+    """
     dc._CACHE.clear()
     sp._CACHE.clear()
-    prev = os.environ.get(dc._REQUIRE_ENV)
-    if require:
-        os.environ[dc._REQUIRE_ENV] = "1"
-    else:
-        os.environ.pop(dc._REQUIRE_ENV, None)
+    saved = {k: os.environ.get(k) for k in (dc._REQUIRE_ENV, dc._RANK_ENV)}
+    for k, want in ((dc._REQUIRE_ENV, require), (dc._RANK_ENV, rank)):
+        if want:
+            os.environ[k] = "1"
+        else:
+            os.environ.pop(k, None)
     try:
         return dc.select_for(text, repo)
     finally:
-        if prev is None:
-            os.environ.pop(dc._REQUIRE_ENV, None)
-        else:
-            os.environ[dc._REQUIRE_ENV] = prev
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
 
 PROPOSAL = ("a quarantine batch subsystem that performs quarantine of a batch "
@@ -349,6 +383,52 @@ def gate_absence_and_degradation(tmp: Path) -> None:
                "length was served as current" % sel.structural_status)
 
 
+def gate_control_switch(tmp: Path) -> None:
+    """The paired measurement's control arm must provably BE a control."""
+    repo = _mk_repo(tmp / "s")
+    treatment = _fresh(repo, PROPOSAL)
+
+    prev = os.environ.get(sp.DISABLE_ENV)
+    os.environ[sp.DISABLE_ENV] = "1"
+    try:
+        dc._CACHE.clear()
+        sp._CACHE.clear()
+        control = dc.select_for(PROPOSAL, repo)
+    finally:
+        if prev is None:
+            os.environ.pop(sp.DISABLE_ENV, None)
+        else:
+            os.environ[sp.DISABLE_ENV] = prev
+        dc._CACHE.clear()
+        sp._CACHE.clear()
+
+    _check("V-W9-CONTROL-ARM-IS-W8",
+           control.structural_status == sp.DISABLED
+           and all(o.structural_strength == 0.0 for o in control.owners)
+           and {o.owner for o in control.owners}
+           == {o.owner for o in treatment.owners},
+           "status=DISABLED, every structural strength 0.0, identical owner "
+           "set -- withholding the evidence reproduces W8's ordering over the "
+           "same population, which is what makes the two arms comparable",
+           "status=%s" % control.structural_status)
+
+    _check("V-W9-DISABLED-IS-NOT-ABSENT",
+           sp.DISABLED != sp.ABSENT
+           and control.structural_status != sp.ABSENT,
+           "DISABLED is its own status -- 'switched off for this run' and "
+           "'never built' are different facts, and a control arm that cannot "
+           "tell them apart cannot say it was one",
+           "DISABLED collapsed into ABSENT")
+
+    _check("V-W9-CONTROL-AND-TREATMENT-DIFFER",
+           [o.owner for o in control.owners]
+           != [o.owner for o in treatment.owners],
+           "the two arms produce different orders on one population, so the "
+           "switch is measuring something rather than toggling a no-op",
+           "both arms identical -- the control proves nothing because the "
+           "treatment does nothing")
+
+
 def gate_freshness_and_cost(tmp: Path) -> None:
     """The binding must survive a clone and must not re-read the ledger."""
     repo = _mk_repo(tmp / "f")
@@ -407,9 +487,9 @@ def gate_ranking_cannot_drop_an_owner(tmp: Path) -> None:
     a = {o.owner for o in with_structural.owners}
     b = {o.owner for o in w8.owners}
     _check("V-W9-RANKING-PRESERVES-THE-OWNER-SET", a == b and len(a) >= 2,
-           "identical owner sets (%d owners) with and without structural "
-           "evidence; only the order differs -- a true positive cannot be "
-           "lost to ranking" % len(a),
+           "identical owner sets (%d owners, below the cap of %d) with and "
+           "without structural evidence; BELOW THE CAP only the order differs"
+           % (len(a), dc.MAX_OWNERS),
            "with=%s without=%s" % (sorted(a), sorted(b)))
 
     order_changed = ([o.owner for o in with_structural.owners]
@@ -421,6 +501,58 @@ def gate_ranking_cannot_drop_an_owner(tmp: Path) -> None:
               [o.owner for o in with_structural.owners][:2]),
            "order identical -- V-W9-RANKING-PRESERVES-THE-OWNER-SET would "
            "pass even with the mechanism disconnected")
+
+
+def gate_shipped_default_and_the_cap(tmp: Path) -> None:
+    """What actually ships, and what ranking costs once the list is cut.
+
+    Both claims here were WRONG in this wave's first version. I wrote that
+    ranking "cannot lose a true positive by construction" and the gate above
+    agreed -- on a fixture with three owners against a cap of five, which is
+    a fixture structurally unable to observe the property. The paired run on
+    real prompts then found two labelled cases whose true owner sat at index
+    4, the last visible slot, and was pushed out of the selection entirely.
+    """
+    n_filler = 4
+    repo = _mk_repo(tmp / "cap", extra_owners=n_filler)
+    # The prompt must name each filler's own distinctive term, or the filler
+    # is not applicable and the candidate list never exceeds the cap.
+    prompt = PROPOSAL + " " + " ".join(FILLER_TAGS[:n_filler])
+
+    shipped = _fresh(repo, prompt, rank=False)
+    ranked = _fresh(repo, prompt, rank=True)
+
+    lex_order = sorted((o.owner for o in shipped.owners),
+                       key=lambda n: dc._rank_key_lexical(
+                           next(x for x in shipped.owners if x.owner == n)))
+    _check("V-W9-SHIPPED-DEFAULT-IS-W8",
+           dc.STRUCTURAL_RANKING_ENABLED is False
+           and [o.owner for o in shipped.owners] == lex_order,
+           "STRUCTURAL_RANKING_ENABLED is False and the emitted order is "
+           "exactly W8's lexical key -- W9 measured the structural key "
+           "against the independent oracle and did not promote it",
+           "the shipped default is not W8's ordering")
+
+    _check("V-W9-STRUCTURAL-STILL-COMPUTED-WHEN-OFF",
+           shipped.structural_status == sp.LOADED
+           and any(o.structural_strength > 0 for o in shipped.owners),
+           "with ranking off the evidence is still computed and reported "
+           "(status=%s) -- available to explain and to re-measure, it simply "
+           "does not decide" % shipped.structural_status,
+           "structural evidence vanished when ranking was disabled")
+
+    sh = [o.owner for o in shipped.owners]
+    rk = [o.owner for o in ranked.owners]
+    evicted = set(sh) - set(rk)
+    _check("V-W9-CAP-CAN-EVICT-AN-OWNER",
+           len(sh) == dc.MAX_OWNERS and bool(evicted),
+           "above the cap, enabling structural ranking evicts %s from the %d "
+           "visible slots -- a reorder IS a loss once the list is truncated, "
+           "which is the measured reason the promotion was withdrawn"
+           % (sorted(x.split("/")[-1] for x in evicted), dc.MAX_OWNERS),
+           "with %d visible owners and a cap of %d nothing was evicted, so "
+           "this gate cannot see the property it names"
+           % (len(sh), dc.MAX_OWNERS))
 
 
 def gate_m3_admission(tmp: Path) -> None:
@@ -476,10 +608,14 @@ def main() -> int:
         gate_mechanism(_mk_repo(tmp / "m"))
         print("-- absence and degradation")
         gate_absence_and_degradation(tmp)
+        print("-- control switch")
+        gate_control_switch(tmp)
         print("-- freshness and cost")
         gate_freshness_and_cost(tmp)
         print("-- ranking safety")
         gate_ranking_cannot_drop_an_owner(tmp)
+        print("-- shipped default and the cap")
+        gate_shipped_default_and_the_cap(tmp)
         print("-- M3 admission")
         gate_m3_admission(tmp)
     finally:

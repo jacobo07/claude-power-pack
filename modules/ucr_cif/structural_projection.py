@@ -79,6 +79,17 @@ LEDGER_REL = "vault/ucr_cif/disposition_ledger.json"
 #: UNKNOWN is never resolved toward the convenient answer.
 LOADED = "LOADED"
 ABSENT = "ABSENT"
+#: Withheld deliberately by the operator, via UCR_CIF_STRUCTURAL_DISABLE=1.
+#:
+#: Its own value, never folded into ABSENT. "Nobody built this projection" and
+#: "somebody switched it off for this run" are different facts about the
+#: world, and a measurement that cannot tell them apart cannot say whether its
+#: control arm was actually a control. This is also the operational rollback:
+#: it degrades the selector to W8's ordering, which it can do safely for
+#: exactly the reason M2 is ranking-only -- withholding structural evidence
+#: reorders owners and can never refuse one.
+DISABLED = "DISABLED"
+DISABLE_ENV = "UCR_CIF_STRUCTURAL_DISABLE"
 UNREADABLE = "UNREADABLE"
 SCHEMA = "SCHEMA"
 STALE_LEDGER = "STALE_LEDGER"
@@ -266,6 +277,11 @@ def load(repo=None, corpus_id=None) -> Projection:
     different length and cannot catch a same-length one. The consumer always
     supplies it.
     """
+    if os.environ.get(DISABLE_ENV, "") == "1":
+        # Checked before the file is even stat'd, so a control arm is a
+        # control whatever happens to be on disk.
+        return Projection(DISABLED, {},
+                          detail="withheld by %s=1" % DISABLE_ENV)
     root = repo_root(repo)
     path = root / PROJECTION_REL
     try:
@@ -383,7 +399,8 @@ def _main(argv) -> int:
 
 
 __all__ = [
-    "ABSENT", "LOADED", "PROJECTION_REL", "Projection", "SCHEMA",
+    "ABSENT", "DISABLED", "DISABLE_ENV",
+    "LOADED", "PROJECTION_REL", "Projection", "SCHEMA",
     "SCHEMA_VERSION", "STALE_LEDGER", "UNREADABLE", "build", "load",
     "repo_fingerprint", "save", "verify",
 ]
