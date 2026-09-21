@@ -299,6 +299,78 @@ def gate_contract_activates() -> None:
            f"where the truth is irrelevance: {off}")
 
 
+def gate_vertical_specialization() -> None:
+    """The signup vertical must be a real specialization, not a rename."""
+    from modules.capability_runtime.contract import load_contracts  # noqa: PLC0415
+    from modules.surface_architecture.verticals import signup      # noqa: PLC0415
+
+    parents = {c.id: c for c in load_contracts()}
+    parent = parents.get("surface_architecture")
+    if parent is None:
+        _fail("V-SA-VERTICAL-PARENT", "kernel contract absent; seed it first")
+        return
+
+    sp = signup._load_specialization()
+    spec = signup.build_spec(parent.non_scope)
+    report = sp.audit(spec, parent.to_dict())
+
+    _check("V-SA-VERTICAL-DEPTH",
+           report["depth"] >= 2 and not report["name_level_only"],
+           f"depth={report['depth']}/6 components={report['populated_components']}",
+           f"HR-APA-016: depth {report['depth']} is a rename, not a specialization")
+    _check("V-SA-VERTICAL-COMPILES", report["compiles"],
+           "the six components compile into contract overrides",
+           f"compile refused: {report['reason']}")
+    _check("V-SA-VERTICAL-NO-CONTAMINATION", not report["kernel_contamination"],
+           "no domain vocabulary reaches a kernel field",
+           f"HR-APA-017: {report['kernel_contamination']}")
+
+    # POSITIVE CONTROL. contaminates_kernel is fail-open -- hand it the wrong object
+    # and `not isinstance(kernel_fields, dict)` returns [], i.e. CLEAN. So the empty
+    # result above means nothing until the detector is shown to still fire.
+    probe = signup.build_spec(parent.non_scope)
+    probe.domain_pack.vocabulary = dict(probe.domain_pack.vocabulary)
+    probe.domain_pack.vocabulary["probe"] = "boundary placement"
+    fired = sp.contaminates_kernel(probe, parent.to_dict())
+    _check("V-SA-CONTAMINATION-DETECTOR-LIVE", bool(fired),
+           f"detector fires on a contaminated spec ({len(fired)} field(s))",
+           "the detector found nothing in a contaminated spec -- a clean result "
+           "from it proves nothing")
+
+    # REGRESSION. The first real seed failed here: two of the parent's non_scope
+    # entries had been paraphrased, and HR-APA-017 compares by value, so a reworded
+    # boundary reads as a dropped one.
+    child_non_scope = set(spec.domain_pack.non_scope)
+    dropped = [e for e in parent.non_scope if e not in child_non_scope]
+    _check("V-SA-VERTICAL-INHERITS-BOUNDARIES", not dropped,
+           f"all {len(parent.non_scope)} inherited boundaries present verbatim",
+           f"paraphrased or dropped inherited boundary: {dropped}")
+
+
+def gate_derivative_stays_out_of_contracts() -> None:
+    """A derivative in contracts/ would be scored against every unrelated mission."""
+    from modules.capability_runtime.contract import (  # noqa: PLC0415
+        CONTRACTS_DIR, load_contracts,
+    )
+    from modules.capability_runtime.derivatives import (  # noqa: PLC0415
+        DERIVATIVES_DIR,
+    )
+
+    with_parent = [c.id for c in load_contracts() if c.parent]
+    _check("V-SA-NO-DERIVATIVE-IN-CONTRACTS", not with_parent,
+           f"{len(list(CONTRACTS_DIR.glob('*.json')))} contract(s), none with a parent",
+           f"a derivative is registered as a kernel contract and will be scored "
+           f"against every mission: {with_parent}")
+
+    at_named = [p.name for p in CONTRACTS_DIR.glob("*.json") if "_at_" in p.name]
+    _check("V-SA-DERIVATIVE-SINK",
+           not at_named and DERIVATIVES_DIR.exists(),
+           f"derivatives live in {DERIVATIVES_DIR.name}/ "
+           f"({len(list(DERIVATIVES_DIR.glob('*.json')))} record(s))",
+           f"derivative-shaped file in contracts/: {at_named}" if at_named
+           else "derivatives/ does not exist; nothing was ever cut")
+
+
 def main() -> int:
     print("V-SA gates -- modules/surface_architecture")
     gate_contract_activates()
@@ -311,6 +383,8 @@ def main() -> int:
     gate_registry_is_consistent()
     gate_kernel_is_domain_blind()
     gate_no_store_is_created()
+    gate_vertical_specialization()
+    gate_derivative_stays_out_of_contracts()
     total = _passes + _fails
     print(f"SURFACE_ARCHITECTURE_PASS={_passes}/{total}  threshold={total}/{total}")
     return 0 if _fails == 0 else 1

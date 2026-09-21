@@ -1,0 +1,40 @@
+{
+  "child_id": "surface_architecture@signup",
+  "parent_id": "surface_architecture",
+  "parent_version": "1.0.0",
+  "project": "signup",
+  "inherited": [
+    "activation_cost",
+    "compatible_runtimes",
+    "consumers",
+    "context_cost",
+    "expected_leverage",
+    "failure_risk_if_omitted",
+    "kill_switch",
+    "maturity",
+    "operational_cost",
+    "permissions",
+    "portable",
+    "prerequisites",
+    "required_evidence",
+    "risk_class",
+    "rollback",
+    "version",
+    "write_surfaces"
+  ],
+  "overridden": [
+    "anti_triggers",
+    "dependencies",
+    "inputs",
+    "non_scope",
+    "outputs",
+    "retirement_condition",
+    "scope",
+    "triggers"
+  ],
+  "added": [
+    "dependencies"
+  ],
+  "approved_override": "",
+  "upgrade_path": "re-run tools/seed_signup_derivative.py against the current surface_architecture contract"
+}
