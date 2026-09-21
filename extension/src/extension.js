@@ -137,7 +137,36 @@ async function processInbox() {
         // not a postcondition, and PR-CONT-06 says so. `enters` at least makes
         // the ack say WHAT was done, so a future reader can tell a two-Enter
         // delivery from a one-Enter one without guessing at the build.
-        writeAck(req.session_id, { ...ack, status: "sent", terminal: term.name, enters: 2 });
+        // ARGUMENT TAIL (2026-09-21). Observed by the Owner in this pane: after
+        // `/compact focus on ...` was autosent, a SECOND autosend of the bare
+        // argument line `focus on ...` was still required before compaction
+        // fired. Measured alongside it, the argument is NOT being dropped --
+        // this session's transcript records
+        //   args = focus on v1 phases done, PROVEN gate unearned, EBUSY fixed
+        // so the command and its argument stage correctly, and what is missing
+        // is the submission: one rung past the second Enter above.
+        //
+        // Unlike that Enter, this is NOT free. If the line had already been
+        // submitted, the tail lands in the fresh post-compaction prompt as a
+        // stray user message -- a wasted turn, visible, not destructive. That
+        // is why it is scoped to `/compact` alone, the only command the Owner
+        // has observed this on, so `/gsd-autonomous` and `/cpp-gsd-long`
+        // deliveries are untouched.
+        const argTail = /^\/compact\s+/.test(req.text)
+          ? req.text.replace(/^\/compact\s+/, "").trim()
+          : "";
+        if (argTail) {
+          await new Promise((r) => setTimeout(r, ENTER_DELAY_MS));
+          term.sendText(argTail, false);
+          await new Promise((r) => setTimeout(r, ENTER_DELAY_MS));
+          term.sendText("\r", false);
+        }
+        // `status:"sent"` still asserts only that the calls were made -- it is
+        // not a postcondition, and PR-CONT-06 says so. `enters` at least makes
+        // the ack say WHAT was done, so a future reader can tell a two-Enter
+        // delivery from a one-Enter one without guessing at the build.
+        writeAck(req.session_id, { ...ack, status: "sent", terminal: term.name,
+                                   enters: argTail ? 3 : 2, arg_tail: argTail || null });
       }
       try { fs.unlinkSync(claimed); } catch (_e) { /* the ack is the record */ }
     }
