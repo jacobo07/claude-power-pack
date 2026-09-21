@@ -77,6 +77,12 @@ from modules.ucr_cif.disposition_ledger import (
 #: before it stops telling you anything is the producer's decision, and W4's
 #: standing prohibition is that this number is not a coverage dial.
 from modules.ucr_cif.ownership_evidence import DISTINCTIVE_MAX_HOLDERS
+#: W9. The compiled structural projection -- term -> owners that DEFINE, are
+#: NAMED for, or REGISTER that term. Orthogonal to everything above it: the
+#: holder map below counts which owners' DOCUMENTS mention a term, this counts
+#: which owner BUILDS it, and measured over the 7,785 authoritative
+#: (unit, term) pairs the two disagree on 82 % of the distinctive ones.
+from modules.ucr_cif import structural_projection as _sp
 
 #: Repo-relative location of the canonical authoritative store. Read directly
 #: rather than through a compiled projection: a second copy keyed by corpus id
@@ -160,7 +166,33 @@ MAX_TERMS_PER_OWNER = 6
 #: it and a broken read always does.
 MIN_AUTHORITATIVE_POPULATION = 200
 
+#: W9. Whether an owner must show at least one STRUCTURALLY ATTRIBUTED
+#: distinctive term to be routed at all (mechanism M3).
+#:
+#: Default OFF, and that is a measured decision rather than caution. Ranking
+#: (M2) cannot lose a true positive by construction -- an owner with no
+#: structural attribution scores zero and falls back to W8's order among its
+#: peers. Admission can, and only 18.0 % of authoritative distinctive
+#: (unit, term) pairs carry attribution, so this clause is the one with the
+#: power to refuse a real owner. It ships only if the paired measurement says
+#: the false owners it removes outnumber the true ones, and it is evaluated as
+#: its own arm rather than folded into M2's result.
+REQUIRE_STRUCTURAL_ATTRIBUTION = False
+
+#: Escape hatch for the paired evaluation, read once per call so a measurement
+#: harness can drive both arms in one process without reimporting. It may only
+#: ever turn the clause ON: a released default cannot be weakened by an env
+#: var, because an environment that silently disables a filter is how a
+#: measured policy becomes untrue in production.
+_REQUIRE_ENV = "UCR_CIF_REQUIRE_STRUCTURAL"
+
 _CACHE: dict = {}
+
+
+def _require_structural() -> bool:
+    if REQUIRE_STRUCTURAL_ATTRIBUTION:
+        return True
+    return os.environ.get(_REQUIRE_ENV, "") == "1"
 
 
 @dataclass(frozen=True)
@@ -173,6 +205,18 @@ class OwnerRouting:
     replaces unit count as the RANK key. `units` is still reported, because
     how much the corpus holds about an owner is worth knowing -- it simply
     stopped being the answer to "which owner is this about".
+
+    `structural_strength` (W9) is the SAME inverse-holder sum, evaluated over
+    the subset of those distinctive terms this owner also holds STRUCTURALLY:
+    it defines a symbol named for the term, carries a file or directory named
+    for it, or registers it as a key. No new weight is invented, so both
+    numbers sit on one scale and `structural_strength` is a strict SUB-SUM of
+    `strength`. That is what makes the fusion monotone in both directions and
+    unable to drop an owner -- one with no structural attribution scores 0.0
+    and is ranked by `strength` among its peers, never excluded.
+
+    `attributed` names the terms that earned it, so a rank is reconstructable
+    instead of asserted.
     """
     owner: str
     units: int
@@ -180,6 +224,8 @@ class OwnerRouting:
     terms: tuple[str, ...]
     sample: str | None = None
     strength: float = 0.0
+    structural_strength: float = 0.0
+    attributed: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -217,10 +263,28 @@ class Selection:
     # they are different refusals: one says the overlap was common vocabulary,
     # the other says it was real but too thin for a prompt this long.
     rejected_below_length_bar: int = 0
+    # W9. The structural projection's STANDING, carried on every selection.
+    #
+    # Reported because zero structural evidence has two causes that demand
+    # opposite responses: no owner in this selection happens to build these
+    # terms, or the projection could not be consulted at all. Only the first
+    # is a fact about owners. A caller reading `structural_strength == 0`
+    # without this field cannot tell them apart, which is the collapse the
+    # projection module refuses to make and this field is how the refusal
+    # reaches the consumer.
+    structural_status: str = _sp.ABSENT
+    # Owners dropped by the M3 admission clause, when it is enabled. Always
+    # reported, and zero when the clause is off, so a run can never be read as
+    # having filtered when it did not.
+    rejected_no_attribution: int = 0
 
     @property
     def routed(self) -> bool:
         return bool(self.owners)
+
+    @property
+    def structural_usable(self) -> bool:
+        return self.structural_status == _sp.LOADED
 
     def to_dict(self) -> dict:
         d = {k: getattr(self, k) for k in (
@@ -228,13 +292,16 @@ class Selection:
             "excluded_authority", "excluded_lifecycle", "excluded_semantics",
             "rejected_applicability", "rejected_generic", "applicable_units",
             "below_owner_floor", "duplicates_suppressed", "prompt_terms",
-            "distinctive_required", "rejected_below_length_bar")}
+            "distinctive_required", "rejected_below_length_bar",
+            "structural_status", "rejected_no_attribution")}
         d["classes_present"] = list(self.classes_present)
         d["classes_unsupported"] = list(self.classes_unsupported)
         d["owners"] = [{"owner": o.owner, "units": o.units,
                         "uids": list(o.uids), "terms": list(o.terms),
                         "sample": o.sample,
-                        "strength": round(o.strength, 4)}
+                        "strength": round(o.strength, 4),
+                        "structural_strength": round(o.structural_strength, 4),
+                        "attributed": list(o.attributed)}
                        for o in self.owners]
         return d
 
@@ -355,6 +422,16 @@ def select_for(text: str, repo=None) -> Selection:
 
     terms = set(text_terms(text))
     holders = term_holders(rows)
+    # W9. Loaded ONCE per selection, before any row is examined, so every
+    # owner in one selection is judged against one consistent view of the
+    # repository -- the same discipline `_owner_exists` applies to lifecycle.
+    # An unusable projection contributes nothing and says so; it never becomes
+    # a negative verdict about an owner.
+    # `corpus_id` is already parsed above, so the binding check costs a stat
+    # rather than a second 1.9 MB read. Measured: passing it took the first
+    # load from 70.8 ms to the projection's own parse cost.
+    proj = _sp.load(root, corpus_id=corpus_id)
+    require_structural = _require_structural()
     # W8. The applicability bar is a function of THIS prompt's length, decided
     # once, before any row is examined, so every unit in one selection faces
     # the same bar and the decision is reportable rather than emergent.
@@ -363,6 +440,7 @@ def select_for(text: str, repo=None) -> Selection:
     classes: set[str] = set()
     excl_auth = excl_life = excl_sem = rejected = generic = 0
     below_bar = 0
+    no_attribution = 0
     population = 0
     by_owner: dict[str, list[dict]] = defaultdict(list)
 
@@ -415,6 +493,7 @@ def select_for(text: str, repo=None) -> Selection:
             rejected_applicability=rejected, rejected_generic=generic,
             distinctive_required=need_distinct,
             rejected_below_length_bar=below_bar,
+            structural_status=proj.status,
             classes_present=tuple(sorted(classes)),
             refusal="authoritative population %d below floor %d"
                     % (population, MIN_AUTHORITATIVE_POPULATION))
@@ -456,8 +535,29 @@ def select_for(text: str, repo=None) -> Selection:
         # nothing at all, so an owner cannot climb the ranking by sharing the
         # population's common vocabulary -- which is exactly how the three
         # largest owners came to be the three most-routed.
-        strength = sum(1.0 / holders.get(t, 1) for t in (merged & terms)
-                       if holders.get(t, 1) <= DISTINCTIVE_MAX_HOLDERS)
+        matched_distinctive = [t for t in (merged & terms)
+                               if holders.get(t, 1) <= DISTINCTIVE_MAX_HOLDERS]
+        strength = sum(1.0 / holders.get(t, 1) for t in matched_distinctive)
+        # W9. The same sum over the terms this owner also holds STRUCTURALLY.
+        # A strict sub-sum, which is the whole design: it can never exceed
+        # `strength`, so it cannot invent support, and an owner with none
+        # scores 0.0 and keeps its W8 position relative to its peers rather
+        # than being demoted below them for lacking a signal.
+        #
+        # Measured on this corpus: only 18.0 % of authoritative distinctive
+        # (unit, term) pairs carry attribution, and the terms that fail are
+        # prose -- `failure`, `capability`, `institutional`, `evidence`. Those
+        # are corpus-distinctive and structurally unowned, which is precisely
+        # the coincidence a 20,000-character prompt supplies for free.
+        attributed = sorted((t for t in matched_distinctive
+                             if proj.holds(owner, t)),
+                            key=lambda t: (holders.get(t, 1), t))
+        structural = sum(1.0 / holders.get(t, 1) for t in attributed)
+        if require_structural and not attributed:
+            # M3, off by default. Counted separately from every other refusal
+            # so the arm that used it is visible in the numbers it produced.
+            no_attribution += 1
+            continue
         owners.append(OwnerRouting(
             owner=owner,
             units=len(uniq),
@@ -465,14 +565,26 @@ def select_for(text: str, repo=None) -> Selection:
                        )[:MAX_UIDS_PER_OWNER],
             terms=tuple(shown[:MAX_TERMS_PER_OWNER]),
             sample=(str(best.get("name") or "").strip() or None),
-            strength=strength))
+            strength=strength,
+            structural_strength=structural,
+            attributed=tuple(attributed[:MAX_TERMS_PER_OWNER])))
 
     # W8. Rank by evidence strength, not by volume. The old key was -units,
     # which asked "which owner does the corpus hold most about" -- a question
     # whose answer is the same for nearly every prompt, and W3 measured the
     # consequence as a +0.756 rank correlation between unit count and routing
     # frequency. Units remain the tie-break and remain reported.
-    owners.sort(key=lambda o: (-o.strength, -o.units, o.owner))
+    #
+    # W9 puts STRUCTURAL strength ahead of lexical strength, and the order is
+    # the claim: an owner that BUILDS one of the matched terms outranks one
+    # that merely shares vocabulary with the prompt, however much of it. The
+    # lexical key is untouched behind it, so owners with equal structural
+    # support (including the very common case of none at all, when the
+    # projection is unusable) keep exactly W8's ordering. That is what makes
+    # this reversible: delete the first element of the key and the selector is
+    # W8 again, byte for byte.
+    owners.sort(key=lambda o: (-o.structural_strength, -o.strength,
+                               -o.units, o.owner))
     return Selection(
         owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,
         population=population, considered=len(rows),
@@ -483,6 +595,8 @@ def select_for(text: str, repo=None) -> Selection:
         duplicates_suppressed=dup, prompt_terms=len(terms),
         distinctive_required=need_distinct,
         rejected_below_length_bar=below_bar,
+        structural_status=proj.status,
+        rejected_no_attribution=no_attribution,
         classes_present=tuple(sorted(classes)),
         classes_unsupported=tuple(sorted(classes - set(SUPPORTED_CLASSES))))
 
@@ -584,7 +698,18 @@ def main() -> int:
     print(f"  applicable   {sel.applicable_units}  "
           f"({sel.below_owner_floor} below the per-owner floor of "
           f"{MIN_UNITS_PER_OWNER}, {sel.duplicates_suppressed} duplicate)")
+    if sel.rejected_no_attribution:
+        print(f"  no structure -{sel.rejected_no_attribution}  owner holds no "
+              "matched term structurally (M3 clause ENABLED)")
     print(f"prompt terms  {sel.prompt_terms}")
+    # W9. The projection's standing is printed whatever it is, because a run
+    # with no structural contribution and a run that could not consult the
+    # projection produce the same-looking owner list.
+    print(f"structural    {sel.structural_status}"
+          + ("" if sel.structural_usable
+             else "  -- structural evidence UNAVAILABLE this run; ranking "
+                  "fell back to W8 lexical order. This is not a statement "
+                  "that these owners lack structure."))
     if not sel.owners:
         print("\nno owner routed. The population was real, so this is an "
               "answer about the proposal.")
@@ -592,8 +717,15 @@ def main() -> int:
     print("")
     for o in sel.owners:
         print(f"  {o.owner}")
-        print(f"      strength {o.strength:.2f} (rank key) | units {o.units} "
-              f"| terms {', '.join(o.terms)}")
+        print(f"      structural {o.structural_strength:.2f} (rank key) | "
+              f"lexical {o.strength:.2f} | units {o.units}")
+        print(f"      terms {', '.join(o.terms)}")
+        if o.attributed:
+            print(f"      BUILDS  {', '.join(o.attributed)}  "
+                  "(defines / is named for / registers)")
+        elif sel.structural_usable:
+            print("      BUILDS  nothing it matched on -- lexical support "
+                  "only")
         print(f"      uids  {', '.join(o.uids)}")
         if o.sample:
             print(f"      e.g.  {o.sample}")
