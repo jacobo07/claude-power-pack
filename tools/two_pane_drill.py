@@ -346,7 +346,8 @@ def arm(runid: str, pane: str, timeout: float) -> int:
     # `no transcript resolved` only because a session registers BEFORE its
     # transcript exists. A coincidence of timing saved that run; nothing in the
     # rule did. On this host the registry grew 25 -> 31 rows during one drill.
-    deadline = time.time() + timeout
+    armed_at = time.time()          # bounds a window that contains the nonce row
+    deadline = armed_at + timeout
     subject = ident = transcript = None
     while time.time() < deadline:
         found = _nonce_candidates(nonce, own)
@@ -395,10 +396,17 @@ def arm(runid: str, pane: str, timeout: float) -> int:
     shutil.copy2(subject, sess_dir / subject.name)
 
     data = read_manifest(runid)
+    # `armed_at` is taken BEFORE the nonce row could have been written -- the
+    # operator pasted the prompt during the wait loop above, so this timestamp
+    # bounds a window that provably contains it. That makes an armed pane's own
+    # nonce usable as a POSITIVE control later (see fire()'s `own_nonce`), and it
+    # closes part of the `opened_at / open_order` absence `seal` has been
+    # declaring since it was written.
     data["panes"][pane] = {"session_id": sid, "pid": ident.get("pid"),
                            "procStart": ident.get("procStart"), "cwd": str(cwd),
                            "transcript": str(transcript), "nonce": nonce,
-                           "identity_file": subject.name}
+                           "identity_file": subject.name,
+                           "armed_at": armed_at}
     write_manifest(runid, data)
     print(f"PASS arm/{pane}: session={sid} pid={ident.get('pid')} transcript={transcript}")
     return 0
@@ -444,22 +452,45 @@ def fire(runid: str, pane: str, timeout: float) -> int:
 
     # Record pane B at the same instant. Exactness is a claim about TWO panes --
     # "A received it" alone is delivery, not exactness -- and B must be a real
-    # live pane, not a fixture. This process's own session is exactly that: a
-    # second Claude session in a terminal this window owns, which is precisely
-    # the pane a mis-resolved request would reach. Captured here rather than at
-    # verification time so the window B is judged over starts at the same t0.
-    own = os.environ.get("CLAUDE_CODE_SESSION_ID")
-    if own:
-        b_transcript = lr.find_transcript(own)
-        if b_transcript is not None:
-            data.setdefault("panes", {})["B"] = {
-                "session_id": own, "transcript": str(b_transcript), "t0": t0,
-                "nonce": info["nonce"], "role": "negative control (the drill's own pane)"}
-        else:
-            print(f"fire/{pane}: WARNING no transcript for pane B ({own}); "
-                  "the negative control cannot be judged")
+    # live pane, not a fixture. The window B is judged over must start at the
+    # same t0, so B is captured here rather than at verification time.
+    #
+    # An ARMED B is preferred over the invoking session. Until 2026-09-21 B was
+    # always `CLAUDE_CODE_SESSION_ID`, which made `arm --pane B` meaningless and
+    # made phase 1's gap G2 -- "pane B is the ambient invoking session rather
+    # than a dedicated disposable subject" -- impossible to close by running the
+    # drill at all. No number of runs can fix a design; this is the design change.
+    #
+    # An armed B also supplies the control the plan originally specified. Its own
+    # nonce WAS typed into it (that is how `arm` identified it), so `own_nonce`
+    # is a needle the predicate must find in B -- deterministic, and independent
+    # of whether anyone happened to type in B during the delivery window.
+    b_armed = (data.get("panes") or {}).get("B") if pane != "B" else None
+    if b_armed and b_armed.get("session_id") and b_armed.get("transcript") \
+            and b_armed.get("session_id") != info.get("session_id"):
+        b_armed["t0"] = t0
+        b_armed["own_nonce"] = b_armed.get("nonce")          # must be PRESENT in B
+        b_armed["own_nonce_since"] = b_armed.get("armed_at")  # the window that holds it
+        b_armed["nonce"] = info["nonce"]                      # must be ABSENT from B
+        b_armed["role"] = "dedicated negative control (armed)"
+        print(f"fire/{pane}: pane B is the ARMED session {b_armed['session_id']} "
+              f"(dedicated, not the invoking pane)")
     else:
-        print(f"fire/{pane}: WARNING CLAUDE_CODE_SESSION_ID unset; no pane B recorded")
+        own = os.environ.get("CLAUDE_CODE_SESSION_ID")
+        if own:
+            b_transcript = lr.find_transcript(own)
+            if b_transcript is not None:
+                data.setdefault("panes", {})["B"] = {
+                    "session_id": own, "transcript": str(b_transcript), "t0": t0,
+                    "nonce": info["nonce"],
+                    "role": "negative control (the drill's own pane)"}
+                print(f"fire/{pane}: pane B fell back to the invoking session {own} -- "
+                      "arm a dedicated B to close phase 1 G2")
+            else:
+                print(f"fire/{pane}: WARNING no transcript for pane B ({own}); "
+                      "the negative control cannot be judged")
+        else:
+            print(f"fire/{pane}: WARNING CLAUDE_CODE_SESSION_ID unset; no pane B recorded")
 
     write_manifest(runid, data)
     print(f"fire/{pane}: expect_line={expect!r}")

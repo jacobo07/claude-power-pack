@@ -270,8 +270,18 @@ def main(argv=None) -> int:
     #             currency, so it is labelled and never silently substituted.
     #
     # Only when B has no typed row at any time is this genuinely unjudgeable.
-    token = _typed_token_after(b_transcript, b["t0"])
-    since_for_check, tier = b["t0"], "after t0"
+    # TIER 0, and the one the plan actually specified: an ARMED pane B has its
+    # OWN nonce, typed into it during arming -- that is how `arm` identified it.
+    # Deterministic, independent of whether anyone happened to type in B during
+    # the delivery window, and exactly the `nonce_B` the plan named. Only
+    # available once fire() prefers an armed B over the invoking session.
+    token = b.get("own_nonce")
+    since_for_check, tier = b.get("own_nonce_since"), "B's own arming nonce (strongest)"
+    if token and since_for_check is None:
+        since_for_check = 0.0
+    if not token:
+        token = _typed_token_after(b_transcript, b["t0"])
+        since_for_check, tier = b["t0"], "after t0"
     if token is None:
         token = _typed_token_after(b_transcript, 0.0)
         since_for_check, tier = 0.0, "anywhere in the transcript (weaker: not in-window)"
@@ -285,6 +295,15 @@ def main(argv=None) -> int:
         _ok("V-TWOPANE-B-INSTRUMENT-CAN-SEE",
             f"the same predicate finds {token!r} in {b_transcript.name} [{tier}] -- so "
             f"the absence of {b['nonce']} is a measurement, not blindness")
+    elif b.get("own_nonce") and tier.startswith("B's own"):
+        # Tier 0's needle comes from the MANIFEST and may genuinely be absent.
+        # Tiers 1-2 extract theirs FROM the transcript, so "present but unseen"
+        # is only true there. One message for both would send a reader hunting a
+        # parser bug when the real answer is "this is not the pane it claims".
+        _fail("V-TWOPANE-B-INSTRUMENT-CAN-SEE",
+              f"B's arming nonce {token!r} was NOT found in {b_transcript.name} -- either "
+              "pane B is not the session it was armed as, or the instrument cannot see it. "
+              "Both make every absence assertion over this pane worthless.")
     else:
         _fail("V-TWOPANE-B-INSTRUMENT-CAN-SEE",
               f"{token!r} is present in {b_transcript.name} [{tier}] but the predicate "
