@@ -14,7 +14,7 @@ Cross-repo: takes the active project cwd; uses no hardcoded paths.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 # Spec locations honored, in priority order. Aligned with the JIT
@@ -38,6 +38,13 @@ class SpecGateResult:
     gate_passed: bool
     action: str       # "proceed" | "read_spec" | "create_spec"
     message: str
+    #: The UCR-CIF selection this verdict was compiled from, or None when the
+    #: corpus was not consulted (S/M, blank description, kill switch, failure).
+    #: Optional and defaulted, so the four existing callers are unchanged and
+    #: no `action` value moves. Present so the four refusals stay MACHINE-
+    #: readable here instead of collapsing into prose -- same contract as
+    #: NoveltyGateResult.routing, one authority, two consumers.
+    routing: object | None = None
 
 
 def _find_spec(cwd: Path) -> Path | None:
@@ -99,9 +106,54 @@ def check_spec_gate(task_description: str,
             action="proceed",
             message=f"{task_size} task -- spec gate not required.")
 
+    # UCR-CIF W6 -- the SECOND authoritative-disposition consumption boundary.
+    # Same selector, same four filters in the same order, same fail-open
+    # contract as the novelty gate; the selector is not forked and not tuned,
+    # only the edge is new. Placed INSIDE the gate rather than beside either
+    # live caller because four callers reach it (the One-Shot compiler and the
+    # sdd_tier signal are both live on UserPromptSubmit) and a guard belongs at
+    # the boundary they share, not at whichever one was being edited.
+    #
+    # Guarded here as well as inside the helper, and the two guards have
+    # different scopes: the inner one keeps a corpus failure from becoming a
+    # routing failure, this one keeps a routing failure from becoming a GATE
+    # failure. That matters more here than it did at the novelty gate -- an
+    # ordinary L/XL prompt is far commoner than a mega-system proposal.
+    #
+    # A blank description is not a proposal. modules/dataset_first/classifier
+    # probes this gate with "" purely to read .has_spec; routing an empty
+    # prompt would buy a ledger read and a guaranteed non-answer.
+    sel = None
+    obligation = None
+    if (task_description or "").strip():
+        try:
+            sel, obligation = _ucr_routing(task_description, _SPEC_LEAD)
+        except Exception:  # noqa: BLE001 -- institutional state never blocks
+            sel, obligation = None, None
+
+    def _msg(base: str) -> str:
+        """Prepend what the corpus said, keeping the four refusals distinct.
+
+        An empty answer is not one state. UNREADABLE / SCHEMA / POPULATION are
+        answers about US and must never be legible as "nothing is owned" --
+        that inversion is what HR-NOVELTY-001 exists to stop, and it is worse
+        here, where the reader is deciding whether to build something new. The
+        corpus simply having nothing to say about this proposal is the only
+        case that stays silent.
+        """
+        if obligation:
+            return obligation + "\n\n" + base
+        refusal = getattr(sel, "refusal", None)
+        if refusal:
+            return ("[UCR-CIF could not be consulted -- %s. That is a "
+                    "statement about the corpus, NOT evidence that nothing "
+                    "is already owned; the ownership sweep is still owed.]"
+                    "\n\n" % refusal) + base
+        return base
+
     kv = _check_knowledge_sufficiency(task_description)
     if kv is not None:
-        return kv
+        return replace(kv, message=_msg(kv.message), routing=sel)
 
     root = Path(cwd) if cwd else Path.cwd()
     spec = _find_spec(root)
@@ -112,14 +164,14 @@ def check_spec_gate(task_description: str,
             shown = spec
         return SpecGateResult(
             has_spec=True, spec_path=str(spec), gate_passed=True,
-            action="read_spec",
-            message=(f"Spec found: {shown}. Read it before coding -- the "
-                     "plan's scope and done-gate live there."))
+            action="read_spec", routing=sel,
+            message=_msg(f"Spec found: {shown}. Read it before coding -- the "
+                         "plan's scope and done-gate live there."))
 
     return SpecGateResult(
         has_spec=False, spec_path=None, gate_passed=False,
-        action="create_spec",
-        message=(
+        action="create_spec", routing=sel,
+        message=_msg(
             "No spec found for this L/XL task. Before coding, establish one:\n"
             "  A) the One-Shot contract auto-injected by the JIT loader on "
             "L/XL prompts (scope + done-gate + budget), or\n"
@@ -296,7 +348,18 @@ class NoveltyGateResult:
     routing: object | None = None
 
 
-def _ucr_routing(task_description: str):
+#: The spec gate's own lead sentence. The selection is identical to the one
+#: the novelty gate receives -- same authority, same four filters -- but the
+#: sentence introducing it must not say "question 4 of the novelty proof",
+#: because at this boundary there is no such question. W6.
+_SPEC_LEAD = (
+    "UCR-CIF holds ADJUDICATED evidence that parts of this are ALREADY OWNED. "
+    "Before writing a spec that creates something new, inspect these owners "
+    "and say for each whether you are extending it or why extending it is "
+    "insufficient:")
+
+
+def _ucr_routing(task_description: str, lead: str | None = None):
     """(selection, obligation_text) from the authoritative disposition corpus.
 
     UCR-CIF W5. This gate's own contract is that a name without a verified
@@ -318,7 +381,7 @@ def _ucr_routing(task_description: str):
         from modules.ucr_cif.disposition_consumer import (
             routing_obligation, select_for)
         sel = select_for(task_description)
-        return sel, routing_obligation(sel)
+        return sel, routing_obligation(sel, lead)
     except Exception:  # noqa: BLE001 -- institutional state never blocks a gate
         return None, None
 

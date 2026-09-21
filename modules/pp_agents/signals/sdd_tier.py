@@ -53,22 +53,64 @@ def evaluate(prompt: str = "",
     if gate.gate_passed or gate.action != "create_spec":
         return None
     label = _TIER_LABEL.get(tier.tier, "Feature/System")
+    advisory = (
+        f"SDD-OS Tier {tier.tier} ({label}) task in this repo, and no spec "
+        f"was found ({tier.reason}). Tier >= 2 requires a spec/PRD BEFORE "
+        f"coding -- the scope and done-gate belong in the spec, not in the "
+        f"agent's head."
+    )
+    actionable = (
+        "Establish the spec first: the auto-injected One-Shot contract "
+        "(scope + done-gate + budget), or python "
+        "modules/karimo-harness/prd_parser.py <prd> for a full PRD."
+    )
+
+    # UCR-CIF W6 -- the second consumption boundary's MATERIAL effect.
+    #
+    # This is the live surface. The gate's `message` is not: the JIT's One-Shot
+    # injector calls compile_contract with no cwd (so it never reaches the gate
+    # at all), and this function previously read `gate_passed` and `action` and
+    # threw `message` away. Enriching prose nobody renders would have been a
+    # reader, not a consumer -- the exact distinction W5 was called to make.
+    #
+    # Read the SELECTION, never the prose: `routing` is the machine-readable
+    # field the gate compiled, so no consumer parses another's sentences and
+    # there is no second selector. Owner paths and unit counts only -- no uids,
+    # no evidence terms, no unit bodies (progressive disclosure); whoever wants
+    # more has the ledger named below.
+    owned = []
+    try:
+        routed = getattr(gate.routing, "owners", ()) or ()
+        owned = [(o.owner, o.units) for o in routed]
+    except Exception:  # noqa: BLE001 -- institutional state never blocks
+        owned = []
+
+    if owned:
+        named = "; ".join(f"{path} ({n} authoritative disposition(s))"
+                          for path, n in owned)
+        advisory += (
+            f" UCR-CIF has ADJUDICATED evidence that this is already owned: "
+            f"{named}. A spec that creates something new here has to refute "
+            f"that with file:line evidence -- absence of a spec is not "
+            f"absence of an owner."
+        )
+        actionable = (
+            f"INSPECT the named owner(s) BEFORE writing the spec -- {named} "
+            f"-- and record in the spec, per owner, whether you are extending "
+            f"it or why extending it is insufficient. Then establish the spec: "
+            f"the auto-injected One-Shot contract, or python "
+            f"modules/karimo-harness/prd_parser.py <prd>. Provenance: "
+            f"vault/ucr_cif/disposition_ledger.json (AUTHORITATIVE, reviewed; "
+            f"candidates, rejections and abstentions excluded)."
+        )
+
     return ProactiveSignal(
         agent_name="pp-sdd-tier",
         trigger="tier_spec_required",
         value=0.7 if tier.tier == 2 else 0.85,
-        advisory=(
-            f"SDD-OS Tier {tier.tier} ({label}) task in this repo, and no spec "
-            f"was found ({tier.reason}). Tier >= 2 requires a spec/PRD BEFORE "
-            f"coding -- the scope and done-gate belong in the spec, not in the "
-            f"agent's head."
-        ),
+        advisory=advisory,
         gate="jobs",
-        actionable=(
-            "Establish the spec first: the auto-injected One-Shot contract "
-            "(scope + done-gate + budget), or python "
-            "modules/karimo-harness/prd_parser.py <prd> for a full PRD."
-        ),
+        actionable=actionable,
     )
 
 

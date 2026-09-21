@@ -381,7 +381,19 @@ def select_for(text: str, repo=None) -> Selection:
         classes_unsupported=tuple(sorted(classes - set(SUPPORTED_CLASSES))))
 
 
-def routing_obligation(sel: Selection) -> str | None:
+#: The lead sentence of the novelty gate's obligation. It is that consumer's
+#: frame -- "question 4 of the novelty proof" -- and was the only frame when
+#: there was only one consumer. W6 added a second, where there is no question
+#: 4, so the lead became a parameter rather than a constant. The SELECTION is
+#: not consumer-specific and is not parameterised; only the sentence that
+#: introduces it is, which is rendering, not authority.
+NOVELTY_LEAD = ("UCR-CIF holds ADJUDICATED evidence that this is already "
+                "owned. Question 4 of the novelty proof is therefore not "
+                "open -- it is named, per owner, and the burden is to REFUTE "
+                "these with file:line evidence, not to assert novelty:")
+
+
+def routing_obligation(sel: Selection, lead: str | None = None) -> str | None:
     """The obligation text a routed selection imposes, or None.
 
     This is the behavioural payload: it replaces "go and run a discovered
@@ -393,10 +405,7 @@ def routing_obligation(sel: Selection) -> str | None:
     """
     if not sel.routed:
         return None
-    lines = ["UCR-CIF holds ADJUDICATED evidence that this is already owned. "
-             "Question 4 of the novelty proof is therefore not open -- it is "
-             "named, per owner, and the burden is to REFUTE these with "
-             "file:line evidence, not to assert novelty:"]
+    lines = [lead or NOVELTY_LEAD]
     for o in sel.owners:
         lines.append(
             "  - %s -- %d authoritative unit(s) (e.g. %s; terms: %s; uid %s). "
