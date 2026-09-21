@@ -32,7 +32,7 @@ let registryPath = null;
 // with no focus change and whether or not Cursor is the foreground window. The
 // requester is auto-compact-sendkeys-daemon.ps1; every safety rule lives in
 // terminal_inbox.js::decide. Request: <sid>.req.json; acknowledgement: <sid>.ack.json.
-const { decide: decideInbox } = require("./terminal_inbox");
+const { decide: decideInbox, argumentTail } = require("./terminal_inbox");
 const INBOX_DIR = path.join(os.homedir(), ".claude", "state", "terminal-inbox");
 const SESSIONS_DIR = path.join(os.homedir(), ".claude", "sessions");
 const INBOX_RETRY_MS = 500;   // re-check a deferred request (session busy / dialog open)
@@ -152,9 +152,12 @@ async function processInbox() {
         // is why it is scoped to `/compact` alone, the only command the Owner
         // has observed this on, so `/gsd-autonomous` and `/cpp-gsd-long`
         // deliveries are untouched.
-        const argTail = /^\/compact\s+/.test(req.text)
-          ? req.text.replace(/^\/compact\s+/, "").trim()
-          : "";
+        // The rule itself lives in terminal_inbox.js, which is vscode-free and
+        // therefore reachable by a gate; this module is not. Born inline here
+        // (f771f55) it rested on one Owner observation of one pane. Call it --
+        // never re-inline it, because two copies of one rule drift and only one
+        // of them is tested. See V-INBOX-ARGTAIL-* for both poles.
+        const argTail = argumentTail(req.text);
         if (argTail) {
           await new Promise((r) => setTimeout(r, ENTER_DELAY_MS));
           term.sendText(argTail, false);

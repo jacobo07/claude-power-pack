@@ -50,6 +50,32 @@ function validText(text) {
     ![...text].some((ch) => ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127);
 }
 
+// The argument tail of a staged `/compact`, or "" for everything else.
+//
+// WHY THIS LIVES HERE AND NOT IN extension.js: it was born inline in the
+// delivery block (f771f55), and extension.js requires vscode, so no gate could
+// reach it -- the rule rested on one Owner observation of one pane. This module
+// is already vscode-free, already exported, already driven by
+// tools/test_terminal_inbox.py, so moving the predicate is the whole mechanism.
+// extension.js CALLS this; it must never carry a second copy, because two
+// copies of one rule drift and only one of them is tested.
+//
+// Scoped to /compact deliberately. The second Enter (2026-09-20) was free -- a
+// no-op when the line had already submitted. This tail is NOT: if the command
+// line submitted by itself, the tail lands in the fresh post-compaction prompt
+// as a stray user message (measured 2026-09-21, 18:24 crossing). A wasted turn,
+// visible, not destructive -- and a cost only /compact is known to need, so
+// /gsd-autonomous and /cpp-gsd-long must take the empty branch untouched.
+const COMPACT_WITH_ARGS = /^\/compact\s+/;
+
+function argumentTail(text) {
+  if (typeof text !== "string") return "";
+  // Anchored: a /compact appearing anywhere but the start is prose, not a
+  // command, and `\s+` is what separates `/compact x` from `/compaction x`.
+  if (!COMPACT_WITH_ARGS.test(text)) return "";
+  return text.replace(COMPACT_WITH_ARGS, "").trim();
+}
+
 // terminals: [{ processId }] in this window. Returns the matching indices.
 function ownedTerminals(terminals, ancestors) {
   const set = new Set((Array.isArray(ancestors) ? ancestors : []).filter(Number.isFinite));
@@ -151,8 +177,8 @@ function decide(req, terminals, session, nowMs, deferredSinceMs) {
   return { action: "send", terminalIndex: owned[0] };
 }
 
-module.exports = { decide, ownedTerminals, sameProcStart, validText, DEFAULT_TTL_MS,
-  DEFAULT_MAX_DEFER_MS };
+module.exports = { decide, ownedTerminals, sameProcStart, validText, argumentTail,
+  DEFAULT_TTL_MS, DEFAULT_MAX_DEFER_MS };
 
 if (require.main === module && process.argv.includes("--selftest")) {
   const assert = require("assert");
@@ -266,6 +292,38 @@ if (require.main === module && process.argv.includes("--selftest")) {
     assert.ok(!sameProcStart("134342018799119214", "134342018799119199"));
     assert.ok(!sameProcStart("", "1"));
   });
+
+  // --- the argument tail (2026-09-21) ----------------------------------------
+  // SYNTHETIC subjects only. This session's real /compact line is deliberately
+  // absent: a drill built from the artifact it guards stops testing anything the
+  // moment that artifact changes, and the line changes every crossing.
+  //
+  // Both poles are driven on every run. A predicate that had quietly started
+  // returning "" for everything, or dropped its anchor and tailed every command,
+  // fails a NAMED case rather than shrinking a count nobody reads.
+  check("V-INBOX-ARGTAIL-EXTRACTS", () =>
+    assert.strictEqual(argumentTail("/compact focus on v1 phases"), "focus on v1 phases"));
+  check("V-INBOX-ARGTAIL-TRIMS", () =>
+    assert.strictEqual(argumentTail("/compact   spaced  "), "spaced"));
+  // The negative pole, and the one that protects the other commands: an
+  // unconditional tail would append a stray line to every autonomous resume.
+  check("V-INBOX-ARGTAIL-OTHER-COMMANDS-EMPTY", () =>
+    assert.ok(["/gsd-autonomous --from 3", "/cpp-gsd-long", "/absw2-continue"].every((t) =>
+      argumentTail(t) === "")));
+  // Bare /compact has no separating whitespace, so there is no argument to
+  // submit and a second submission would be an empty stray line.
+  check("V-INBOX-ARGTAIL-BARE-COMPACT-EMPTY", () =>
+    assert.strictEqual(argumentTail("/compact"), ""));
+  // `\s+` is the whole difference between a command and a longer word.
+  check("V-INBOX-ARGTAIL-PREFIX-IS-NOT-A-MATCH", () =>
+    assert.ok(["/compaction now", "/compacted", "/compact-now x"].every((t) =>
+      argumentTail(t) === "")));
+  // Anchored at the start: a /compact inside prose is not a staged command.
+  check("V-INBOX-ARGTAIL-ANCHORED-AT-START", () =>
+    assert.ok(["please /compact x", " /compact x", "x /compact y"].every((t) =>
+      argumentTail(t) === "")));
+  check("V-INBOX-ARGTAIL-NON-STRING-EMPTY", () =>
+    assert.ok([null, undefined, 42, {}, [], "", true].every((v) => argumentTail(v) === "")));
 
   if (process.exitCode === 1) {
     console.log("TERMINAL_INBOX_SELFTEST=FAIL");

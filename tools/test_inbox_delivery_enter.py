@@ -96,7 +96,7 @@ def main() -> int:
         _fail("V-INBOX-CONTROL-PATH-FOUND",
               "could not locate the delivery block in extension.js — every "
               "other gate here would pass vacuously")
-        print(f"\nINBOX_PASS={_passes}/{_passes + _fails}  threshold=5/5  "
+        print(f"\nINBOX_PASS={_passes}/{_passes + _fails}  threshold=6/6"
               "HARNESS-FAILED")
         return 2
     _ok("V-INBOX-CONTROL-PATH-FOUND", f"delivery block located, {len(body)} chars")
@@ -123,14 +123,45 @@ def main() -> int:
               f"ordering wrong (text@{i_text}, enter@{i_enter})")
 
     tail = src[src.find("const term = terms[d.terminalIndex]"):]
-    if re.search(r'writeAck\([^)]*enters:\s*2', tail, re.S):
+    # The PROPERTY is "the ack says what was done", not "the ack says 2".
+    # Pinned as the literal `enters: 2` this went red the moment f771f55 made
+    # the count conditional -- a correct change failing a gate that had quietly
+    # been measuring one build's spelling. Both fields are required: `enters`
+    # alone cannot distinguish a three-submission delivery whose tail was empty
+    # from one that sent a tail, and that distinction is the whole reason a
+    # later reader can tell which build owned the pane.
+    m_enters = re.search(r"writeAck\([^)]*enters:\s*([^,}]+)", tail, re.S)
+    m_tail = re.search(r"writeAck\([^)]*arg_tail:\s*([^,}]+)", tail, re.S)
+    if m_enters and m_tail:
         _ok("V-INBOX-ACK-RECORDS-ENTERS",
-            "the ack records how many Enters were sent, so a reader can tell "
-            "the builds apart without guessing")
+            f"the ack records enters={m_enters.group(1).strip()} and "
+            f"arg_tail={m_tail.group(1).strip()}, so a reader can tell the "
+            "builds apart without guessing")
     else:
         _fail("V-INBOX-ACK-RECORDS-ENTERS",
-              "the ack does not record `enters`; `status:\"sent\"` alone "
-              "asserts only that a call returned (PR-CONT-06)")
+              f"the ack must record BOTH `enters` and `arg_tail` "
+              f"(enters={'yes' if m_enters else 'MISSING'}, "
+              f"arg_tail={'yes' if m_tail else 'MISSING'}); `status:\"sent\"` "
+              "alone asserts only that a call returned (PR-CONT-06)")
+
+    # The tail rule must be CALLED, never re-inlined. It lived inline until
+    # 2026-09-21, where no gate could reach it because this module requires
+    # vscode; moving it into terminal_inbox.js is what gave it a red branch at
+    # all. A second copy re-appearing here would be tested by nothing, and the
+    # two would drift silently -- so assert the call AND the absence of the
+    # regex literal. Either one alone is satisfiable by a half-revert.
+    calls_helper = re.search(r"argumentTail\(\s*req\.text\s*\)", body) is not None
+    inline_regex = re.search(r"/\^\\/compact", src) is not None
+    if calls_helper and not inline_regex:
+        _ok("V-INBOX-ARGTAIL-VIA-SHARED-HELPER",
+            "the delivery calls terminal_inbox.argumentTail and carries no "
+            "second copy of the rule (driven by V-INBOX-ARGTAIL-* both poles)")
+    else:
+        _fail("V-INBOX-ARGTAIL-VIA-SHARED-HELPER",
+              f"calls_helper={calls_helper}, inline_regex_present={inline_regex}: "
+              "the /compact tail rule must live in terminal_inbox.js, which is "
+              "vscode-free and therefore testable. An inline copy here is "
+              "reachable by no gate and was the original defect.")
 
     live = live_copy()
     if live is None:
@@ -151,7 +182,7 @@ def main() -> int:
                   "lands only here changes nothing.")
 
     total = _passes + _fails
-    print(f"\nINBOX_PASS={_passes}/{total}  threshold=5/5  inconclusive={_skips}")
+    print(f"\nINBOX_PASS={_passes}/{total}  threshold=6/6  inconclusive={_skips}")
     return 0 if _fails == 0 else 1
 
 
