@@ -2,7 +2,7 @@
 gsd_state_version: "1.0"
 milestone: v1
 status: unknown
-last_updated: "2026-09-21T15:10:17.938Z"
+last_updated: "2026-09-21T15:16:58.617Z"
 current_phase: 4
 current_phase_name: Reap the stale autorun markers — COMPLETE (`d0477b8`)
 ---
