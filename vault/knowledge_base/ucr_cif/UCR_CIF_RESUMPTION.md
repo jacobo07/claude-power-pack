@@ -45,8 +45,18 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
-**As of 2026-09-22 (W8 close) HEAD is `41bb2f1` and the branch is 44 ahead / 74 behind
-`origin/main`** — the other writer keeps landing work. Every earlier wave's commits remain
+**As of 2026-09-22 (W9 close) HEAD is `<w9-final>`, 51 ahead / 74 behind `origin/main`.**
+W9 audited those 74 upstream commits BEFORE building: 109 files changed, and the only overlap
+with this mission's dependency surface is
+`vault/capability_runtime/contracts/reconstruction_parity.json`, a contract DATA file. Nothing
+upstream touches `modules/ucr_cif`, `capability_runtime` code, `spec_gate`, `graphify`,
+`liveness`, `repo_identity` or `mutation_probe`. **Upstream is orthogonal; do not rebase on
+its account.**
+**W9's own pin lesson: the prompt's pin was CORRECT and the CHECKOUT was wrong.** That session
+opened in the SHARED tree `~/.claude/skills/claude-power-pack` (branch
+`feature/knowledge-acquisition`, ~400 dirty paths from the other writer), whose harness
+snapshot reported it "clean". Verify the WORKTREE, not only the commit.
+The other writer keeps landing work. Every earlier wave's commits remain
 ancestors; nothing has ever been rebased. **W8 opened by falsifying its own handoff**: the
 prompt that started it carried a state pin of `3c02e32` (W5 seal, 27 ahead / 33 behind) and
 asked for W6 to be built, but `3c02e32` was already **eleven commits** behind the branch tip —
@@ -257,6 +267,57 @@ is never written by this mission and never rolled back.
   W7 10/10 = **53 mutations**, restore checked at source and runtime. `DISTINCTIVE_MAX_HOLDERS`
   untouched; `PR-W7-X1` still GREEN at 93.9 % and deliberately NOT inverted.
 
+- **W9 · structural ownership evidence** — `3a46817` (spec), `5ae9784`
+  (projection), `7755063` (fusion), `4f7e63a` (gates + mutations + anchor
+  repair), `2856a3f` (measurement + verdict), `<knowledge>`.
+  **BUILT, MEASURED, NOT PROMOTED — and that is the result, not a failure to
+  finish.** Full account: `vault/audits/ucr_cif/07_W9_STRUCTURAL.md`.
+  **The obvious family was rejected before it was built.** "Does the owner
+  structurally hold this unit's terms" measures **996/996 = 100.0 %** — a
+  PROJECTION of W3's adjudication, which promotes on exactly that predicate.
+  Constant over the admitted population, zero discrimination; the rejected
+  population sits at 14.9 %. The granularity that survives is the TERM,
+  because a prompt matches a subset the adjudication never saw: **21.0 %** of
+  (unit, term) pairs, **18.0 %** of the corpus-distinctive ones, so the two
+  channels disagree on 82 % of what the selector ranks by.
+  `modules/ucr_cif/structural_projection.py` compiles the 45,525 ms index into
+  **674 terms / 65,834 bytes / 0.73 ms**, with a clone-stable binding
+  (corpus_id + size; `mtime_ns` recorded, never compared) and four distinct
+  degradation states. Two self-inflicted cost defects were found by measuring
+  the read path: a 1.9 MB ledger re-parse per selection (**70.8 → 2.71 ms**)
+  and an mtime comparison that would have reported every fresh checkout stale.
+  **Paired on 2,098 of 2,098 shared cases, zero drift** (keyed on
+  `prompt_sha`, control via `UCR_CIF_STRUCTURAL_DISABLE=1`, both arms five
+  minutes apart in one session). The mechanism is NOT inert: order changed on
+  **78.5 %** of routed selections, top-1 on **59.0 %**, `governance-overlay`
+  net **−473** top-1 slots. Fire/no-fire identical **by construction**, as the
+  spec said before the run.
+  **Against the independent git-behaviour oracle it does not help:** of 30
+  labelled cases with the true owner routed, rank improved 6 / worsened 12,
+  two-sided **p = 0.238 → UNRESOLVED**. Two measured reasons not to promote
+  regardless: prose-form owners are systematically under-credited
+  (`governance-overlay` 13.7 % structural, yet credited at 21.1 % of oracle
+  hits against a 23.7 % routing share — it is a real owner), and **the
+  `MAX_OWNERS` cap turns a reorder into a loss** (two labelled cases lost the
+  true owner from index 4). The oracle was checked for volume bias first and
+  is not a mirror of routing: `duplicate_to_advantage` is routed 3.4 % and
+  credited 21.1 %.
+  **Therefore `STRUCTURAL_RANKING_ENABLED = False` and
+  `REQUIRE_STRUCTURAL_ATTRIBUTION = False`.** The default order is W8's, byte
+  for byte; the evidence is computed, reported and rendered by `--explain` as
+  *BUILDS …*, and decides nothing. Re-enable with `UCR_CIF_STRUCTURAL_RANK=1`.
+  Gates `tools/test_w9_structural_evidence.py` **29/29**;
+  `ucr_cif_w9.json` **7/7**; family re-verified **60 mutations ALL_CAUGHT**
+  (W4 14, W5 23, W7 10, W8 6, W9 7). `PR-W7-X1` untouched and green;
+  `DISTINCTIVE_MAX_HOLDERS`, `MAX_DISTINCTIVE_REQUIRED`, `create_spec` and the
+  corpus all untouched.
+  Three instrument failures, all mine, all recorded: W46 survived because the
+  stale-ledger case changed the file SIZE and never exercised the `corpus_id`
+  channel; W36 survived its own repair because I repointed it at a function
+  the shipped path had stopped calling; and the cap fixture first routed
+  nothing because four owners sharing one term pushed it past
+  `DISTINCTIVE_MAX_HOLDERS`.
+
 **UNMEASURED (not zero, not fine)**
 
 - **Hook/mission latency timing.** Host was at **1,499 MB free of 32,061 (4.7 %)**, 31
@@ -303,7 +364,50 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W8 close)
+## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W9 close)
+
+**W9 executed W8's action 1 and the answer inverts the priority order.** The
+structural family is built, orthogonal and measured; what blocks it is not a
+missing evidence family but an oracle that cannot resolve 3 points. **Action 3
+of the W8 list is now action 1, and it gates every precision claim this
+mission can make.**
+
+1. **HIGHEST LEVERAGE — widen the labelled oracle.** W9 could not resolve its
+   own headline: 30 labelled cases with the true owner routed, 18 of which
+   changed, giving p = 0.238 on a 6/12 split. One case is 3.3 points. Until
+   this moves, **no precision wave can succeed or fail honestly**, and a
+   built, working, orthogonal mechanism sits switched off for want of
+   measurement rather than for want of engineering. The oracle's domain is
+   Power Pack checkouts only (`05_W7_REACH.md` §9); the git-behaviour labeller
+   in `modules/ucr_cif/reach_ground_truth.py` is sound and independent — it is
+   simply starved. Widen by window, by repository domain, or by a second
+   independent labeller. Do NOT pad it with weak guesses: evidence quality
+   over sample count, and a labelled case whose provenance is a heuristic is
+   worse than no case.
+2. **Give prose-form ownership a structural signal.** The measured reason W9
+   did not promote is that `governance-overlay` holds 13.7 % of its term-pairs
+   structurally because its capability ships as Markdown, and the behavioural
+   oracle says it is a real owner at roughly its routing share. A family that
+   reads governance rule ids, document headings or front-matter `covers:` keys
+   as DECLARATIONS would credit exactly the owners the current signals miss.
+   It is untested and it is the cheapest remaining orthogonal axis. Measure
+   its supply before choosing any policy, as W9 did.
+3. **Separate the cap from the ranking question.** Ranking below
+   `MAX_OWNERS` and eviction at the boundary are two effects and the current
+   measurement cannot apportion the −6 between them. Re-run the paired
+   comparison with the cap raised, or score rank quality on the pre-cap list,
+   before concluding anything about the ranking key itself.
+
+**Then, and only then, re-run W9's arms.** The mechanism, the projection, the
+gates and the mutation plan are all in place; enabling it is one constant.
+Do not rebuild any of it.
+
+**Carried from W8 and still true:** W5-style construction observation +
+privacy projection (EXTEND `session_delta` / `omnicapture`, reuse
+`modules/ucr_cif/prompt_population.py`) remains unstarted and is unaffected by
+W9.
+
+## 4a. Superseded — the W8-close frontier
 
 **W8 executed W7's action 1 and the answer changed what action 2 IS.** Do not open a third
 consumption boundary and do not revisit the `create_spec` decision — still measured,
@@ -482,17 +586,36 @@ W8 close on 2026-09-22:
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w5.json
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w7.json
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w8.json
+    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w9.json
 
 14/14, **23/23** (the W5 plan absorbed W6's six as `W18`..`W23`; the filename is historical),
-**10/10** and **6/6** — 53 directed mutations, every restore verified at source AND runtime.
+**10/10**, **6/6** and **7/7** — 60 directed mutations, every restore verified at source AND
+runtime.
 A HARNESS-FAILED line means an anchor has rotted against the source, which is a stale plan and
 never a verdict about the suites. **W8 rotted one and the repair is the lesson**: re-pointing
 an anchor at whichever new line LOOKS like the old one produced a mutant that changed nothing
 and would have SURVIVED as a false green. When the source changes shape, restore the FALSE
 WORLD, not the string.
 
-Suites, all green at W8 close: selection 22/22, consumption 19/19 (+PR 7/7), spec boundary
-22/22, reach 27/27, W8 applicability 17/17.
+Suites, all green at W9 close: selection 22/22, consumption 19/19 (+PR 7/7), spec boundary
+22/22, reach 27/27, W8 applicability 17/17, adversarial 18/18, **W9 structural 29/29**.
+
+**W9 added a THIRD anchor-rot lesson, and it is the subtle one.** Restoring the false world
+rather than the string is necessary and NOT sufficient: once a refactor splits a path into a
+shipped branch and an alternative, the anchor must follow **the branch that actually runs
+under the default configuration**. W9 repaired W8's `W36` onto `_rank_key` and then defaulted
+structural ranking OFF, so the mutant edited a function `select_for` no longer calls and
+SURVIVED behind a diff that looked perfectly correct. It is caught on `_rank_key_lexical`.
+
+**The structural projection is a build artifact with a rebuild command.** If `--verify`
+reports `source_fresh False`, the repository moved since it was compiled:
+
+    python -m modules.ucr_cif.structural_projection --verify
+    python -m modules.ucr_cif.structural_projection --build
+
+Staleness is SAFE while ranking is off, because nothing consults the projection for a
+decision. That stops being true the moment `STRUCTURAL_RANKING_ENABLED` or
+`REQUIRE_STRUCTURAL_ATTRIBUTION` is switched on, and the module's docstring says so.
 
 Ask how often the corpus actually reaches a decision, and what it would cost to make it reach
 more. **The order below is the measurement protocol, not a menu** — step 2 alone cannot see a

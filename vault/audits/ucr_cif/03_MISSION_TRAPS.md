@@ -809,3 +809,29 @@ from — was an artifact of the source file's ordering.
 
 New failures are appended here **in the session they occur** (zero knowledge debt), and
 evaluated for UKDL promotion at Phase 9 — never auto-promoted, never silently dropped.
+
+## W9 · `T-THE-STRUCTURAL-FAMILY-WAS-A-PROJECTION-001` — 996/996 = 100 %
+The unit-level structural predicate is guaranteed by W3's own promotion rule,
+so it is constant over the authoritative population and discriminates nothing.
+Caught by measuring the REJECTED population too (14.9 %). Pinned by
+`V-W9-UNIT-LEVEL-IS-A-PROJECTION`.
+
+## W9 · `T-THE-STALE-CASE-PASSED-ON-THE-WRONG-CHANNEL-001` — W46 survived
+The stale-ledger gate rewrote the ledger with a longer generation id, so the
+SIZE check caught it and the `corpus_id` comparison was never exercised.
+Disabling that comparison entirely left the suite green. Fixed with a
+same-length id swap at an identical 46,364 bytes, plus a HARNESS branch that
+fails loudly if the swap ever changes the length again.
+
+## W9 · `T-THE-REPAIRED-ANCHOR-EDITED-DEAD-CODE-001` — W36 survived its repair
+Repointed onto `_rank_key`, which the same wave then made the non-shipped
+branch. An anchor must follow the code that ships, not the code that shares
+its name.
+
+## W9 · `T-THE-CAP-FIXTURE-COULD-NOT-SEE-THE-CAP-001` — three owners, cap of five
+"Ranking cannot lose a true positive" passed on a fixture below `MAX_OWNERS`.
+Two real labelled cases had the true owner at index 4 and lost it. A second
+attempt at the fixture then routed NOTHING, because giving four filler owners
+the same term pushed it past `DISTINCTIVE_MAX_HOLDERS` — adding owners to a
+term destroys its distinctiveness, and a fixture has to respect the clause
+rather than fight it.

@@ -10804,3 +10804,83 @@ a working tree you do not own. Sister of
 - [tooling/powershell:[System.IO.File]::WriteA] `ceps_642fb5a1ef0bac6a` -- Tool failure in powershell:[System.IO.File]::WriteA: Error: Ningún proveedor respondió — codex-cli: Neom bridge .... Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
 - [regression/powershell:Measure-Object] `ceps_5d28a90f4498a814` -- Before touching powershell:Measure-Object, verify the regression scenario (FAILED) is still covered by a passing test.
+
+
+## T-A-SIGNAL-THE-PROMOTION-RULE-GUARANTEES-IS-A-PROJECTION-001 — 100 % coverage that measures nothing
+
+**Rule.** Before adopting a derived signal as evidence, ask what the population
+was SELECTED by. If the admission rule already requires the property, the
+signal is constant over the admitted set and carries zero discrimination —
+however impressive its coverage looks. Measure it against the REJECTED
+population too: a signal that holds for 100 % of admitted and 15 % of rejected
+rows is describing the admission rule, not the world.
+
+**Origin.** UCR-CIF W9. The obvious structural family — does the candidate
+owner structurally hold this unit's evidence terms — measured **996/996 =
+100.0 %** over the authoritative corpus, because W3's adjudicator promotes to
+authoritative exactly when that predicate holds. Non-authoritative rows sat at
+14.9 %. It would have shipped as "100 % structural coverage". The granularity
+that survived is the TERM, because a prompt matches a subset the adjudication
+never saw: 21.0 % of pairs, 18.0 % of the distinctive ones.
+
+**Family.** The selection-effect sibling of the source/projection
+double-count. Related: `T-THE-ORACLE-REPLAYS-A-RECORDING-001`.
+
+## T-A-MUTATION-ANCHOR-MUST-FOLLOW-THE-SHIPPED-BRANCH-001 — mutating the function nobody calls
+
+**Rule.** When a refactor splits one code path into a shipped branch and an
+alternative, every mutation anchor pointing at it must be repointed at the
+branch that ACTUALLY RUNS under the default configuration. A mutant that edits
+a same-named function the default path never calls changes nothing and
+SURVIVES — and it survives quietly, because the diff looks exactly right.
+
+**Origin.** UCR-CIF W9, and it took two attempts. W9's edit first rotted W8's
+`W36-rank-reverts-to-volume` anchor (HARNESS-FAILED, the probe working). It was
+repaired onto `_rank_key` — and W9 then made `_rank_key` the non-shipped branch
+by defaulting structural ranking OFF, so the repaired mutant edited dead code
+and SURVIVED. Repointing onto `_rank_key_lexical`, which `select_for` actually
+uses, caught it.
+
+**Family.** EXTENDS the anchor-rot family already recorded in the W5 and W8
+plan notes ("when the source changes shape, restore the FALSE WORLD, not the
+string"). This is its configuration-dependent case: the shape did not change,
+the REACHABILITY did.
+
+## PR-A-REORDER-IS-A-LOSS-AT-A-TRUNCATION-BOUNDARY-001 — ranking is only safe above the cap
+
+**Rule.** "Reordering cannot drop a member" is true of a list and false of a
+TRUNCATED list. Any ranking change shipped behind a `[:N]` can evict a correct
+member from what the consumer actually sees, and the claim must be stated as
+"preserves the set before the cap". Test it on a fixture that EXCEEDS the cap;
+one below it cannot observe the property and will pass.
+
+**Origin.** UCR-CIF W9. I claimed structural ranking could not lose a true
+positive by construction, and the gate agreed — on a fixture with three owners
+against `MAX_OWNERS = 5`. The paired run on 2,098 real prompts then found two
+labelled cases whose true owner sat at index 4, the last visible slot, and was
+pushed out of the selection entirely.
+
+**Family.** A specific, mechanical instance of
+`T-A-FIXTURE-THAT-CANNOT-EXPRESS-THE-DIFFERENCE-001`.
+
+## T-STRUCTURAL-EVIDENCE-UNDER-CREDITS-PROSE-OWNERS-001 — the policy module is a real owner
+
+**Rule.** Structural ownership signals (symbol defined, file named, key
+registered) measure one ARTIFACT FORM. A module whose capability is delivered
+as documentation, policy or governance text holds almost none of them and is
+demoted as though it owned nothing. Before treating a high-volume owner's
+routing share as vocabulary bias, check an independent BEHAVIOURAL oracle —
+what changed after the prompt — because "owns this in prose" and "is not the
+owner" are different facts that structural evidence renders identically.
+
+**Origin.** UCR-CIF W9. `modules/governance-overlay` holds 13.7 % of its
+term-pairs structurally against `modules/capability_runtime`'s 43.2 %, and W3
+had measured its routing volume as a false-ownership signal (spearman +0.756).
+The git-behaviour oracle credits it on 21.1 % of labelled hits against a 23.7 %
+routing share — roughly proportional. Five of the twelve cases where structural
+ranking worsened the true owner's rank were it, demoted from rank 0. The
+structural family was not promoted, on that evidence.
+
+**Family.** The evidence-dimensionality sibling of
+`T-VOCABULARY-VOLUME-FALSE-OWNERSHIP`: the correction for one bias introduced
+the opposite one.
