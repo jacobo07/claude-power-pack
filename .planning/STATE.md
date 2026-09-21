@@ -1,8 +1,10 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-status: acceptance_gate_proven
-last_updated: "2026-09-21T20:55:00.000Z"
+status: Awaiting next milestone
+last_updated: "2026-09-21T21:37:41.432Z"
+last_activity: 2026-09-21
+last_activity_desc: Milestone v1 completed and archived
 progress:
   total_phases: 5
   completed_phases: 5
@@ -312,3 +314,14 @@ ledger row and no marker).
 
 C7 of `vault/specs/cpp-gsd-long.CERTIFICATION.md` — the one claim that document
 records as **NOT YET** — is now satisfied, and that file is owed the update.
+
+## Current Position
+
+Phase: Milestone v1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-09-21 — Milestone v1 completed and archived
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
