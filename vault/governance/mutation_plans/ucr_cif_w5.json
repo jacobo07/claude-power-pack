@@ -125,7 +125,7 @@
     "suite": "tools/test_disposition_consumption.py",
     "old": "        sel, obligation = None, None",
     "new": "        raise",
-    "why": "a raise in the routing helper would take down the whole novelty verdict on a UserPromptSubmit path, losing the thirteen questions as well as the owners"
+    "why": "a raise in the routing helper would take down the whole novelty verdict on a UserPromptSubmit path, losing the thirteen questions as well as the owners. W6 NOTE: this anchor briefly matched twice, because W6's outer guard in check_spec_gate was the same statement one indent deeper and therefore CONTAINED it. The probe reported HARNESS-FAILED rather than a verdict -- correct, and the only reason the rot was visible. Widening the anchor across two lines does not work on a CRLF checkout, so the collision was removed at the new site instead. A mutation anchor is a contract with the source, and code added elsewhere can break it without touching either endpoint"
   },
   {
     "name": "W17-tokenizer-divergence",

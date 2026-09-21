@@ -129,7 +129,15 @@ def check_spec_gate(task_description: str,
         try:
             sel, obligation = _ucr_routing(task_description, _SPEC_LEAD)
         except Exception:  # noqa: BLE001 -- institutional state never blocks
-            sel, obligation = None, None
+            # Written as one chained assignment, not `sel, obligation = None,
+            # None`: the novelty gate's identical fallback is a directed
+            # mutation anchor (W16), and this line one indent deeper would
+            # CONTAIN it as a substring, making that anchor ambiguous. The
+            # probe refuses an ambiguous anchor and reports HARNESS-FAILED
+            # rather than a verdict, which is right -- but the rot is repaired
+            # here, where it was introduced, instead of widening an anchor
+            # that a CRLF checkout cannot match across lines anyway.
+            sel = obligation = None
 
     def _msg(base: str) -> str:
         """Prepend what the corpus said, keeping the four refusals distinct.
