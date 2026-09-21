@@ -1,3 +1,12 @@
+---
+gsd_state_version: "1.0"
+milestone: v1
+status: unknown
+last_updated: "2026-09-21T15:10:17.938Z"
+current_phase: 4
+current_phase_name: Reap the stale autorun markers — COMPLETE (`d0477b8`)
+---
+
 # STATE — claude-power-pack
 
 milestone: v1
@@ -58,6 +67,7 @@ GSDAC 26/26, GSDLR 93/93, OVERLAY_GUARD 4/4, REARM 8/8 (which names this run's
 wall: `(35,40,30)` accepted).
 
 **Two premises this session inherited are FALSE, measured:**
+
 - The host DOES write `compact_boundary`. Three rows in this transcript, newest
   2026-09-20T12:43:08Z. The single `compaction_unobserved` was a compaction
   that never happened, not a row the host failed to write. F2 as stated is
