@@ -134,5 +134,53 @@
     "old": "    terms.update(text_terms(u.get(\"text\"), 5))",
     "new": "    terms.update(text_terms(u.get(\"text\"), 4))",
     "why": "producer and consumer must ask 'what is this about?' with one vocabulary; two tokenizers that agree today diverge the day one learns a stop word, and the join goes quiet with nothing red"
+  },
+  {
+    "name": "W18-spec-consumer-edge-severed",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_spec_boundary.py",
+    "old": "            sel, obligation = _ucr_routing(task_description, _SPEC_LEAD)",
+    "new": "            sel, obligation = (None, None) or (None, None)",
+    "why": "W1 for the SECOND door. Every endpoint stays intact -- ledger, selector, spec gate, live signal -- and only the join is cut. W1 is left untouched in the same run, so a red here beside a green there is the isolation proof: two consumption boundaries, not one aggregate nobody can attribute"
+  },
+  {
+    "name": "W19-live-signal-reads-but-does-not-consume",
+    "file": "modules/pp_agents/signals/sdd_tier.py",
+    "suite": "tools/test_disposition_spec_boundary.py",
+    "old": "        owned = [(o.owner, o.units) for o in routed]",
+    "new": "        owned = [] if routed else []",
+    "why": "the sharpest drill in this wave: the gate still computes the routing and still carries it on .routing, the signal still reads it, and nothing reaches the agent. That is precisely the reader-not-consumer state W5 was called to distinguish, and it is the state this boundary was ACTUALLY in before W6 -- sdd_tier reached the gate and dropped its message on the floor"
+  },
+  {
+    "name": "W20-blank-description-routes",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_spec_boundary.py",
+    "old": "    if (task_description or \"\").strip():",
+    "new": "    if True or (task_description or \"\").strip():",
+    "why": "modules/dataset_first/classifier probes this gate with an empty description purely to read .has_spec. Without the guard every such probe buys a ledger read and a guaranteed non-answer, and an empty prompt is not a proposal about anything"
+  },
+  {
+    "name": "W21-spec-boundary-cites-the-wrong-consumer",
+    "file": "modules/ucr_cif/disposition_consumer.py",
+    "suite": "tools/test_disposition_spec_boundary.py",
+    "old": "    lines = [lead or NOVELTY_LEAD]",
+    "new": "    lines = [NOVELTY_LEAD]",
+    "why": "one selection, two consumers, and the renderer must not hand a spec-gate reader 'question 4 of the novelty proof' -- there is no question 4 at this boundary. A shared authority that silently imposes one consumer's frame on another is how a second consumer becomes a copy of the first"
+  },
+  {
+    "name": "W22-sm-path-pays-for-the-corpus",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_spec_boundary.py",
+    "old": "    if task_size not in _LXL:",
+    "new": "    if False and task_size not in _LXL:",
+    "why": "the cost argument that held for a rare novelty proposal has to be re-made at a common boundary, and it holds only because S/M returns BEFORE the corpus is consulted. Remove that and every trivial task pays for knowledge that cannot apply to it"
+  },
+  {
+    "name": "W23-four-refusals-collapsed",
+    "file": "modules/spec_gate/gate.py",
+    "suite": "tools/test_disposition_spec_boundary.py",
+    "old": "        refusal = getattr(sel, \"refusal\", None)",
+    "new": "        refusal = None",
+    "why": "an unreadable ledger, a ledger from a future producer and a population below the floor would all become indistinguishable from 'nothing is owned' -- at the exact boundary where a reader is deciding whether to build something new. That inversion is what HR-NOVELTY-001 exists to stop"
   }
 ]

@@ -98,6 +98,19 @@ def _owners(res) -> list[str]:
     return [o.owner for o in getattr(r, "owners", ()) or ()]
 
 
+def _stat(res, attr, default=0):
+    """Read a Selection field without crashing when there is no Selection.
+
+    Under a severed-edge mutation `routing` is None, and a suite that raises
+    an AttributeError there reports a VERIFIER failure where a subject failure
+    belongs: the probe still sees a non-zero exit and calls the mutation
+    caught, but the run stops at the first casualty and nobody can see how
+    many gates the mutation actually moved. Measured: severing W18 crashed
+    this file after two FAILs, so its own summary line never printed.
+    """
+    return getattr(getattr(res, "routing", None), attr, default)
+
+
 def main() -> int:
     print("=== UCR-CIF W6 -- second consumption boundary (L/XL spec gate) ===")
 
@@ -178,23 +191,24 @@ def main() -> int:
         # --- 4. NEGATIVE POLE, non-vacuous ------------------------------
         neg = G.check_spec_gate(FOREIGN, cwd=Path(td), task_size="L")
         neg_sig = sdd_tier.evaluate(FOREIGN, cwd=td)
-        overlap = (neg.routing.applicable_units + neg.routing.rejected_generic)
+        overlap = (_stat(neg, "applicable_units")
+                   + _stat(neg, "rejected_generic"))
         check("V-W6-NEGATIVE-OVERLAP-NO-FALSE-ROUTING",
               overlap > 0 and not _owners(neg)
               and neg_sig is not None
               and "ALREADY OWNED" not in neg.message
               and "already owned" not in neg_sig.advisory,
-              f"foreign domain, real overlap ({neg.routing.applicable_units} "
-              f"applicable + {neg.routing.rejected_generic} generic-only) and "
-              f"0 owners routed; the signal keeps its baseline text")
+              f"foreign domain, real overlap ({_stat(neg, 'applicable_units')} "
+              f"applicable + {_stat(neg, 'rejected_generic')} generic-only) "
+              f"and 0 owners routed; the signal keeps its baseline text")
 
         # --- 5. the boundary's own vocabulary cannot discriminate -------
         gen = G.check_spec_gate(GENERIC, cwd=Path(td), task_size="L")
         check("V-W6-GENERIC-VOCABULARY-ROUTES-NOTHING",
-              gen.routing.rejected_generic > 0 and not _owners(gen),
+              _stat(gen, "rejected_generic") > 0 and not _owners(gen),
               f"a prompt built only from tier vocabulary (feature/module/api/"
               f"schema/system...) shares terms with "
-              f"{gen.routing.rejected_generic} unit(s), none distinctive -> "
+              f"{_stat(gen, 'rejected_generic')} unit(s), none distinctive -> "
               f"0 owners")
 
         # --- 6. the non-applicable paths stay free ----------------------
@@ -276,9 +290,10 @@ def main() -> int:
 
         check("V-W6-FIRST-DOOR-INDEPENDENT",
               nov.applies and getattr(nov.routing, "routed", False)
-              and len(nov.routing.owners) >= 1,
+              and len(_stat(nov, "owners", ())) >= 1,
               f"the W5 novelty consumer still routes "
-              f"{len(nov.routing.owners)} owner(s) with the second edge live")
+              f"{len(_stat(nov, 'owners', ()))} owner(s) with the second edge "
+              f"live")
 
         # --- 11. provenance + determinism -------------------------------
         again = G.check_spec_gate(ORDINARY, cwd=Path(td), task_size="L")
@@ -289,9 +304,9 @@ def main() -> int:
         check("V-W6-PROVENANCE",
               "vault/ucr_cif/disposition_ledger.json" in pos.message
               and "AUTHORITATIVE dispositions" in pos.message
-              and (pos.routing.corpus_id or "")[:12] in pos.message,
+              and (_stat(pos, "corpus_id", "") or "")[:12] in pos.message,
               f"the spec obligation names its ledger and corpus "
-              f"{(pos.routing.corpus_id or '?')[:12]} and states the "
+              f"{(_stat(pos, 'corpus_id', '') or '?')[:12]} and states the "
               f"population is authoritative")
 
         check("V-W6-NO-CORPUS-BODIES",
@@ -300,6 +315,37 @@ def main() -> int:
                       for r in rows[:400]),
               "no corpus unit body reaches the spec gate; owners, counts, "
               "terms and uids only")
+
+        # --- 11b. the whole-hook topology ------------------------------
+        # This claim spans BOTH boundaries, so it lives here, in the suite of
+        # the newer one. It was briefly in the W5 suite and that was wrong:
+        # severing the W6 edge then turned the W5 suite red, which is the
+        # false shared fate that makes two call sites look like one
+        # unverifiable aggregate. The W5 suite now asserts only its own leg.
+        real_sel = DC.select_for
+        seen = {"n": 0}
+
+        def _counting(text, repo=None):
+            seen["n"] += 1
+            return real_sel(text, repo)
+
+        DC.load_ledger()                    # the parse is once per process
+        DC.select_for = _counting
+        try:
+            seen["n"] = 0
+            G.check_novelty_gate(ORDINARY)
+            n_novelty = seen["n"]
+            sdd_tier.evaluate(ORDINARY, cwd=td)
+            n_total = seen["n"]
+        finally:
+            DC.select_for = real_sel
+
+        check("V-W6-HOOK-TOPOLOGY",
+              n_novelty == 0 and n_total == 1,
+              f"an ORDINARY prompt consults the corpus exactly once, through "
+              f"the second door only (novelty={n_novelty}, spec="
+              f"{n_total - n_novelty}) -- the first door does not fire here, "
+              f"which is the whole reason this boundary exists")
 
         # --- 12. cost, paired and in-process ----------------------------
         def _median(fn, n=5):
@@ -319,6 +365,18 @@ def main() -> int:
         print(f"\n  [cost] warm applicable L   {warm_app:8.2f} ms")
         print(f"  [cost] warm no-match L     {warm_miss:8.2f} ms")
         print(f"  [cost] non-applicable S/M  {warm_non:8.2f} ms")
+        sig_on = _median(lambda: sdd_tier.evaluate(ORDINARY, cwd=td))
+        os.environ["CLAUDEPP_UCR_ROUTING_DISABLE"] = "1"
+        try:
+            sig_off = _median(lambda: sdd_tier.evaluate(ORDINARY, cwd=td))
+        finally:
+            os.environ.pop("CLAUDEPP_UCR_ROUTING_DISABLE", None)
+        check("V-W6-MARGINAL-COST-BOUNDED",
+              (sig_on - sig_off) < 250,
+              f"the second door adds {sig_on - sig_off:+.1f} ms to the live "
+              f"consumer ({sig_on:.1f} on vs {sig_off:.1f} off, paired, same "
+              f"process, warm cache) -- a hook-subprocess clock on this host "
+              f"swings by seconds and cannot resolve this")
         check("V-W6-SM-IS-ORDERS-CHEAPER",
               warm_non < warm_app,
               f"the path most prompts take is cheaper than the routed one "

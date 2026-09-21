@@ -104,7 +104,8 @@ def consumer_gates() -> None:
               G._OWNERSHIP_QUESTION)
           and named[0].count("modules/") >= 2,
           f"question {base.index(G._OWNERSHIP_QUESTION) + 1} of {len(base)} "
-          f"replaced in place, naming {named[0].count('modules/')} owners")
+          f"replaced in place, naming "
+          f"{named[0].count('modules/') if named else 0} owners")
 
     # The substitution is a REPLACEMENT, so the generic question cannot sit
     # beside its own answer.
@@ -149,14 +150,23 @@ def consumer_gates() -> None:
           f"the verdict carries {len(owned.questions)}")
 
     # PROVENANCE -- a downstream obligation traces back to corpus units.
+    # Read defensively: under a severed-edge mutation `routing` is None, and a
+    # suite that raises here reports a VERIFIER failure where a SUBJECT
+    # failure belongs. The probe still sees a non-zero exit and calls the
+    # mutation caught, but the run dies at the first casualty, so its own
+    # summary line never prints and nobody can see how many gates moved.
+    # Measured 2026-09-21 while proving the two edges are independent.
     sel = owned.routing
-    uid0 = sel.owners[0].uids[0]
+    _o = getattr(sel, "owners", ()) or ()
+    uid0 = _o[0].uids[0] if _o and _o[0].uids else "(no routing)"
     check("V-W5-CON-PROVENANCE",
           "vault/ucr_cif/disposition_ledger.json" in owned.message
-          and (sel.corpus_id or "")[:12] in owned.message
+          and (getattr(sel, "corpus_id", "") or "")[:12] in owned.message
           and uid0 in owned.message
+          and sel is not None
           and json.loads(json.dumps(sel.to_dict()))["population"] == 996,
-          f"ledger + corpus {sel.corpus_id[:12]} + uid {uid0} in the "
+          f"ledger + corpus {(getattr(sel, 'corpus_id', '') or '?')[:12]} "
+          f"+ uid {uid0} in the "
           "obligation; selection round-trips as JSON")
 
     # W6 repair. The check above asserts three VALUES appear. It passed with
@@ -396,11 +406,17 @@ def production_reality(home: Path) -> None:
         finally:
             _dc.select_for = _real
 
-        check("V-W5-PR-SELECTOR-CALL-COUNT",
-              n_novelty == 1 and n_total == 2,
-              f"one UserPromptSubmit consults the corpus exactly twice -- "
-              f"novelty={n_novelty}, spec={n_total - n_novelty} -- one per "
-              f"consumption boundary, both served from one warm parse")
+        # Scoped to THIS boundary on purpose. The first version asserted the
+        # whole-hook count (novelty + spec == 2) and that coupled the two
+        # suites: severing the W6 edge turned this suite red, so "one edge
+        # broken" stopped being independently observable from "the other edge
+        # broken". The cross-boundary claim now lives in the W6 suite; this
+        # one asserts only that door ONE consults the corpus exactly once.
+        check("V-W5-PR-NOVELTY-CALL-COUNT",
+              n_novelty == 1,
+              f"the novelty consumer consults the corpus exactly once per "
+              f"UserPromptSubmit (novelty={n_novelty}), served from one "
+              f"per-process parse")
 
         def _med(fn, n=9):
             xs = []
@@ -410,16 +426,16 @@ def production_reality(home: Path) -> None:
                 xs.append((time.perf_counter() - t0) * 1000)
             return statistics.median(xs)
 
-        warm_on = _med(lambda: _sdd.evaluate(P_OWNED, cwd=_td))
+        warm_on = _med(lambda: G.check_novelty_gate(P_OWNED))
         os.environ["CLAUDEPP_UCR_ROUTING_DISABLE"] = "1"
         try:
-            warm_off = _med(lambda: _sdd.evaluate(P_OWNED, cwd=_td))
+            warm_off = _med(lambda: G.check_novelty_gate(P_OWNED))
         finally:
             os.environ.pop("CLAUDEPP_UCR_ROUTING_DISABLE", None)
         marginal = warm_on - warm_off
         check("V-W5-PR-MARGINAL-COST-BOUNDED",
               marginal < 250,
-              f"the corpus adds {marginal:+.1f} ms to the live consumer "
+              f"the corpus adds {marginal:+.1f} ms to the novelty gate "
               f"({warm_on:.1f} on vs {warm_off:.1f} off, median of 9, one "
               f"process, warm cache) -- resolvable, unlike the hook delta")
 
