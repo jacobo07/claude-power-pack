@@ -1,0 +1,805 @@
+{
+  "schema": "two-pane-exactness/1",
+  "runid": "enterfix",
+  "sealed_at": "2026-09-21T15:23:55Z",
+  "sealed_by": "tools/two_pane_drill.py seal",
+  "contract": "pointers only -- no verdict is stored. Every claim is re-derived by tools/test_two_pane_exactness.py from the artifacts named here, so a deletion or edit reds the gate instead of leaving a green about a vanished world.",
+  "t0": 1789925988.2111423,
+  "panes": {
+    "A": {
+      "session_id": "92000647-be77-4e2d-86c6-64b5fbea495e",
+      "pid": 40712,
+      "procStart": "134343993818136067",
+      "cwd": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\enterfix\\panes\\A",
+      "nonce": "DRILL-A-enterfix",
+      "t0": 1789925988.2111423,
+      "role": null,
+      "expect_line": "DRILL-A-enterfix",
+      "identity_file": "40712.json",
+      "transcript": {
+        "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User-AppData-Local-Temp-pp-two-pane-drill-enterfix-panes-A\\92000647-be77-4e2d-86c6-64b5fbea495e.jsonl",
+        "exists": true,
+        "bytes": 1095616,
+        "sha256": "573727ad4c0b2356ad889e5cfb28122e995362f69f654ec57a1fda5aafd59b21",
+        "mtime": 1789999877.6104524
+      }
+    },
+    "B": {
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362",
+      "pid": null,
+      "procStart": null,
+      "cwd": null,
+      "nonce": "DRILL-A-enterfix",
+      "t0": 1789925988.2111423,
+      "role": "negative control (the drill's own pane)",
+      "expect_line": null,
+      "identity_file": null,
+      "transcript": {
+        "path": "C:\\Users\\User\\.claude\\projects\\C--Users-User--claude-skills-claude-power-pack\\37cfb187-ec05-43db-b57d-4bdcb5625362.jsonl",
+        "exists": true,
+        "bytes": 17949416,
+        "sha256": "d2319610077f1f76e2ff485a11df31a8aaf93fa0c73a70b0bfaaf97ca3adf466",
+        "mtime": 1790001825.829563
+      }
+    }
+  },
+  "run_dir": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\enterfix\\manifest.json",
+    "exists": true,
+    "bytes": 962,
+    "sha256": "06d691d25101e581966d02db29b7e4c0302ae3301e758b8f4bfbd02d5a4a14d8",
+    "mtime": 1789925988.2722676
+  },
+  "daemon_log": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\enterfix\\hooks\\auto-compact-sendkeys.log",
+    "exists": false
+  },
+  "daemon_log_alt": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\enterfix\\hooks\\auto-compact-daemon.log",
+    "exists": true,
+    "bytes": 540,
+    "sha256": "c0455f58ccf09017ea5aa0bbe49806517b4c837b0b2472c6140360d47fca1725",
+    "mtime": 1789925993.855703
+  },
+  "ledger_run_local": {
+    "path": "C:\\Users\\User\\AppData\\Local\\Temp\\pp-two-pane-drill\\enterfix\\state\\gsd-autorun-ledger.jsonl",
+    "exists": false
+  },
+  "ledger_rows_run_local": [],
+  "ledger_real": {
+    "path": "C:\\Users\\User\\.claude\\state\\gsd-autorun-ledger.jsonl",
+    "exists": true
+  },
+  "ledger_rows_real": [
+    {
+      "offset": 9353,
+      "length": 188,
+      "event": "armed",
+      "detail": null,
+      "ts": "2026-09-18T22:08:37+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 9541,
+      "length": 242,
+      "event": "thresholds_set",
+      "detail": null,
+      "ts": "2026-09-18T22:08:49+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 10079,
+      "length": 141,
+      "event": "crossing",
+      "detail": null,
+      "ts": "2026-09-18T22:39:30+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 10220,
+      "length": 241,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-18T22:39:30+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 10461,
+      "length": 148,
+      "event": "refused",
+      "detail": "terminal inbox refused: expired",
+      "ts": "2026-09-18T22:40:48+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 10609,
+      "length": 141,
+      "event": "crossing",
+      "detail": null,
+      "ts": "2026-09-18T23:06:01+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 10750,
+      "length": 241,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-18T23:06:01+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 11287,
+      "length": 259,
+      "event": "recovered",
+      "detail": null,
+      "ts": "2026-09-18T23:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 11546,
+      "length": 259,
+      "event": "recovered",
+      "detail": null,
+      "ts": "2026-09-19T00:16:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 12101,
+      "length": 259,
+      "event": "recovered",
+      "detail": null,
+      "ts": "2026-09-19T00:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 12360,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T01:16:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 12832,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T02:01:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 14516,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T02:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 14988,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T03:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 15460,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T04:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 15932,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T05:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 16404,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T06:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 16876,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T07:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 17348,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T08:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 17524,
+      "length": 307,
+      "event": "resume_requested",
+      "detail": null,
+      "ts": "2026-09-19T09:07:35+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 17831,
+      "length": 230,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-19T09:07:51+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 18061,
+      "length": 191,
+      "event": "resume_dispatched",
+      "detail": null,
+      "ts": "2026-09-19T09:07:51+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 19006,
+      "length": 150,
+      "event": "resume_confirmed",
+      "detail": null,
+      "ts": "2026-09-19T09:30:37+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 19750,
+      "length": 300,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T10:01:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 20050,
+      "length": 141,
+      "event": "crossing",
+      "detail": null,
+      "ts": "2026-09-19T10:10:22+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 20191,
+      "length": 241,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-19T10:10:23+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 20728,
+      "length": 294,
+      "event": "compaction_unobserved",
+      "detail": null,
+      "ts": "2026-09-19T11:06:40+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 24691,
+      "length": 205,
+      "event": "marker_cwd_absolutised",
+      "detail": null,
+      "ts": "2026-09-19T12:47:21+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 25018,
+      "length": 122,
+      "event": "thresholds_cleared",
+      "detail": null,
+      "ts": "2026-09-19T12:49:37+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 35429,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T13:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 36280,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T14:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 37131,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T15:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 37982,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T16:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 38833,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T17:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 39684,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T18:51:14+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 40535,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T19:51:21+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 41086,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T20:52:11+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 41531,
+      "length": 257,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T21:51:33+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 41992,
+      "length": 316,
+      "event": "thresholds_set",
+      "detail": null,
+      "ts": "2026-09-19T22:09:15+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 42308,
+      "length": 141,
+      "event": "crossing",
+      "detail": null,
+      "ts": "2026-09-19T22:13:54+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 42712,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T22:51:53+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 43086,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-19T23:53:07+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 43983,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T00:51:33+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 45103,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T01:51:15+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 45873,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T02:21:11+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 46523,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T02:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 47645,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T03:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 48767,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T04:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 49889,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T05:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 51011,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T06:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 52133,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T07:51:10+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 53255,
+      "length": 176,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T08:51:08+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 54079,
+      "length": 241,
+      "event": "thresholds_set",
+      "detail": null,
+      "ts": "2026-09-20T10:02:26+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 57306,
+      "length": 238,
+      "event": "armed",
+      "detail": null,
+      "ts": "2026-09-20T11:23:29+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 57544,
+      "length": 246,
+      "event": "thresholds_set",
+      "detail": null,
+      "ts": "2026-09-20T11:24:32+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 58262,
+      "length": 298,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T11:51:38+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 59158,
+      "length": 307,
+      "event": "resume_requested",
+      "detail": null,
+      "ts": "2026-09-20T13:11:16+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 59465,
+      "length": 230,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-20T13:12:22+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 59695,
+      "length": 191,
+      "event": "resume_dispatched",
+      "detail": null,
+      "ts": "2026-09-20T13:12:22+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 61388,
+      "length": 141,
+      "event": "crossing",
+      "detail": null,
+      "ts": "2026-09-20T15:49:07+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 61529,
+      "length": 241,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-20T15:49:07+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 62122,
+      "length": 298,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T16:51:28+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 64886,
+      "length": 141,
+      "event": "crossing",
+      "detail": null,
+      "ts": "2026-09-20T19:08:40+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 65027,
+      "length": 241,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-20T19:08:41+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 65268,
+      "length": 148,
+      "event": "refused",
+      "detail": "terminal inbox refused: expired",
+      "ts": "2026-09-20T19:14:58+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 65416,
+      "length": 141,
+      "event": "crossing",
+      "detail": null,
+      "ts": "2026-09-20T19:20:32+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 65557,
+      "length": 241,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-20T19:20:32+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 66270,
+      "length": 307,
+      "event": "resume_requested",
+      "detail": null,
+      "ts": "2026-09-20T19:50:44+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 66577,
+      "length": 230,
+      "event": "delivery_inbox_requested",
+      "detail": null,
+      "ts": "2026-09-20T19:52:04+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 66807,
+      "length": 191,
+      "event": "resume_dispatched",
+      "detail": null,
+      "ts": "2026-09-20T19:52:04+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 67266,
+      "length": 150,
+      "event": "resume_confirmed",
+      "detail": null,
+      "ts": "2026-09-20T20:05:50+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 69984,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T21:54:36+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 71588,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T22:53:04+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 72358,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-20T23:53:07+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 73304,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T00:53:13+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 74660,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T01:51:40+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 75726,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T02:51:17+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 76792,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T03:51:09+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 77858,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T04:51:10+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 78924,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T05:51:10+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 79990,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T06:51:10+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 81056,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T07:51:10+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 82122,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T08:51:10+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 83188,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T09:52:46+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 84443,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T10:53:03+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 85408,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T11:51:17+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 86373,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T12:51:12+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 87338,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T13:52:59+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    },
+    {
+      "offset": 88303,
+      "length": 296,
+      "event": "stalled",
+      "detail": null,
+      "ts": "2026-09-21T15:06:13+00:00",
+      "session_id": "37cfb187-ec05-43db-b57d-4bdcb5625362"
+    }
+  ],
+  "extension": {
+    "dir": "kobii.pp-sessions-0.4.0",
+    "version": "0.4.0",
+    "terminal_inbox": {
+      "path": "C:\\Users\\User\\.cursor\\extensions\\kobii.pp-sessions-0.4.0\\src\\terminal_inbox.js",
+      "exists": true,
+      "bytes": 15044,
+      "sha256": "5aff92d680f5b7c4710bddb5f7e8c5f4e57898d701e0a8f1630ace8a630e8c19",
+      "mtime": 1790002474.5248444
+    }
+  },
+  "inbox_dir": "C:\\Users\\User\\.claude\\state\\terminal-inbox",
+  "pointers_absent": [
+    "pane B pid/procStart/cwd -- B is captured at fire time from CLAUDE_CODE_SESSION_ID and is never armed, so the drill never resolves its identity file",
+    "opened_at / open_order -- never recorded by arm() or fire()",
+    "run-local ledger -- GSD_LONG_RUN_STATE_DIR was never written for this run, so no sandboxed ledger rows exist",
+    "inbox request ids -- not recorded by fire(); the ack is consumed by the daemon and the request file is unlinked"
+  ]
+}

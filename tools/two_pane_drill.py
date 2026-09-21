@@ -31,6 +31,7 @@ Containment (the drill owns its subjects and can address nothing else):
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -489,9 +490,171 @@ def observe(runid: str, pane: str) -> int:
     return 0 if got else 1
 
 
+# ----------------------------------------------------------------------- seal
+EVIDENCE_DIR = REPO / "vault" / "evidence" / "two-pane-exactness"
+
+
+def _fingerprint(path) -> dict:
+    """A POINTER, plus what the file was at seal time. Never a conclusion.
+
+    The gate re-derives every verdict from the artifact itself. This exists so a
+    later deletion or edit becomes VISIBLE -- it does not stand in for the
+    artifact, and nothing downstream may read a verdict out of it.
+    """
+    p = Path(path)
+    out: dict = {"path": str(p), "exists": p.is_file()}
+    if not out["exists"]:
+        return out
+    try:
+        blob = p.read_bytes()
+    except OSError as exc:
+        out["unreadable"] = f"{exc.__class__.__name__}: {exc}"
+        return out
+    out["bytes"] = len(blob)
+    out["sha256"] = hashlib.sha256(blob).hexdigest()
+    out["mtime"] = p.stat().st_mtime
+    return out
+
+
+def _extension_build() -> dict:
+    """Which build of the extension was installed when this was sealed.
+
+    The transport's behaviour is a property of the RUNNING extension, not of the
+    repo copy, so a sealed run that cannot name its build cannot be compared
+    against a later one.
+
+    NOT named `_extension_version`: that already exists above and returns a
+    3-tuple `(evidence, version, outcome)` which `probe()` unpacks. Defining a
+    second one shadowed it, and `ev, ver, outcome = _extension_version()` then
+    unpacked THIS dict's keys -- probe reported
+    `FAIL probe/pp-sessions>=0.4.0: terminal_inbox -- dir`, which is the dict's
+    key names wearing a verdict's clothes. Caught by running probe, minutes after
+    writing it.
+    """
+    roots = [HOME / ".cursor" / "extensions", HOME / ".vscode" / "extensions"]
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for d in sorted(root.glob("*pp-sessions*")):
+            pkg = d / "package.json"
+            if pkg.is_file():
+                try:
+                    data = json.loads(pkg.read_text(encoding="utf-8-sig"))
+                except (OSError, ValueError) as exc:
+                    return {"dir": d.name, "unreadable": exc.__class__.__name__}
+                return {"dir": d.name, "version": data.get("version"),
+                        "terminal_inbox": _fingerprint(d / "src" / "terminal_inbox.js")}
+    return {"absent": "no pp-sessions extension found under .cursor or .vscode"}
+
+
+def _ledger_rows_for(ledger: Path, sids: set[str]) -> list[dict]:
+    """Byte offset and length of every ledger row naming one of these sessions.
+
+    Offsets rather than copies, for the same reason as everything else here: the
+    gate re-reads the real file, so editing the ledger reds the gate instead of
+    leaving a sealed copy that agrees with nobody.
+    """
+    rows: list[dict] = []
+    if not ledger.is_file():
+        return rows
+    try:
+        blob = ledger.read_bytes()
+    except OSError:
+        return rows
+    offset = 0
+    for raw in blob.splitlines(keepends=True):
+        try:
+            row = json.loads(raw.decode("utf-8", errors="replace"))
+        except ValueError:
+            offset += len(raw)
+            continue
+        if isinstance(row, dict) and row.get("session_id") in sids:
+            rows.append({"offset": offset, "length": len(raw),
+                         "event": row.get("event"), "detail": row.get("detail"),
+                         "ts": row.get("ts"), "session_id": row.get("session_id")})
+        offset += len(raw)
+    return rows
+
+
+def seal(runid: str) -> int:
+    """Freeze POINTERS to one real run under vault/evidence/two-pane-exactness/.
+
+    Deliberately stores no verdict. `a_received: true` would be a green
+    describing a world that may no longer exist; the gate re-runs
+    `user_issued_command_since` against the real transcripts every invocation.
+    """
+    data = read_manifest(runid)
+    panes = data.get("panes") or {}
+    if not panes.get("A"):
+        print(f"FAIL seal/{runid}: pane A was never armed; nothing to seal")
+        return 1
+
+    sids = {p.get("session_id") for p in panes.values() if p.get("session_id")}
+    run = run_dir(runid)
+    run_ledger = run / "state" / "gsd-autorun-ledger.jsonl"
+    real_ledger = HOME / ".claude" / "state" / "gsd-autorun-ledger.jsonl"
+
+    sealed = {
+        "schema": "two-pane-exactness/1",
+        "runid": runid,
+        "sealed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "sealed_by": "tools/two_pane_drill.py seal",
+        "contract": ("pointers only -- no verdict is stored. Every claim is "
+                     "re-derived by tools/test_two_pane_exactness.py from the "
+                     "artifacts named here, so a deletion or edit reds the gate "
+                     "instead of leaving a green about a vanished world."),
+        "t0": (panes.get("A") or {}).get("t0"),
+        "panes": {},
+        "run_dir": _fingerprint(run / "manifest.json"),
+        "daemon_log": _fingerprint(run / "hooks" / "auto-compact-sendkeys.log"),
+        "daemon_log_alt": _fingerprint(run / "hooks" / "auto-compact-daemon.log"),
+        "ledger_run_local": _fingerprint(run_ledger),
+        "ledger_rows_run_local": _ledger_rows_for(run_ledger, sids),
+        "ledger_real": {"path": str(real_ledger), "exists": real_ledger.is_file()},
+        "ledger_rows_real": _ledger_rows_for(real_ledger, sids),
+        "extension": _extension_build(),
+        "inbox_dir": str(REAL_INBOX),
+    }
+    for name, info in panes.items():
+        entry = {k: info.get(k) for k in
+                 ("session_id", "pid", "procStart", "cwd", "nonce", "t0", "role",
+                  "expect_line", "identity_file")}
+        entry["transcript"] = _fingerprint(info.get("transcript") or "")
+        sealed["panes"][name] = entry
+
+    # Say what this run never captured, rather than being quietly thinner than
+    # the plan asked for. An evidence file that hides its own gaps is the same
+    # defect class as a SUMMARY that grades itself.
+    absent = []
+    if not (panes.get("B") or {}).get("pid"):
+        absent.append("pane B pid/procStart/cwd -- B is captured at fire time from "
+                      "CLAUDE_CODE_SESSION_ID and is never armed, so the drill never "
+                      "resolves its identity file")
+    if not any("opened_at" in (p or {}) for p in panes.values()):
+        absent.append("opened_at / open_order -- never recorded by arm() or fire()")
+    if not sealed["ledger_rows_run_local"] and not run_ledger.is_file():
+        absent.append("run-local ledger -- GSD_LONG_RUN_STATE_DIR was never written "
+                      "for this run, so no sandboxed ledger rows exist")
+    if not any("request_id" in (p or {}) for p in panes.values()):
+        absent.append("inbox request ids -- not recorded by fire(); the ack is "
+                      "consumed by the daemon and the request file is unlinked")
+    sealed["pointers_absent"] = absent
+
+    EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+    out = EVIDENCE_DIR / f"{runid}.json"
+    out.write_text(json.dumps(sealed, indent=2) + "\n", encoding="utf-8")
+    print(f"PASS seal/{runid}: {out}")
+    print(f"  panes={sorted(sealed['panes'])} "
+          f"ledger_rows_real={len(sealed['ledger_rows_real'])} "
+          f"pointers_absent={len(absent)}")
+    for gap in absent:
+        print(f"  ABSENT: {gap}")
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Live two-pane exactness drill")
-    ap.add_argument("action", choices=["probe", "arm", "fire", "observe"])
+    ap.add_argument("action", choices=["probe", "arm", "fire", "observe", "seal"])
     ap.add_argument("--runid", default=time.strftime("%Y%m%d-%H%M%S"))
     ap.add_argument("--pane", default="A")
     ap.add_argument("--timeout", type=float, default=300.0)
@@ -509,6 +672,8 @@ def main(argv=None) -> int:
         return arm(args.runid, args.pane, args.timeout)
     if args.action == "fire":
         return fire(args.runid, args.pane, args.timeout)
+    if args.action == "seal":
+        return seal(args.runid)
     return observe(args.runid, args.pane)
 
 
