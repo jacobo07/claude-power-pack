@@ -22,7 +22,7 @@ files. The roadmap could not express what the evidence already said.
 - [x] **Phase 2: UserPromptSubmit chain deadline** - is the cap or the clock discarding hook output (completed 2026-09-21)
 - [x] **Phase 3: Promote the exact-target lessons** - the CONT rules into the UKDL, the router sentence corrected (completed 2026-09-21)
 - [x] **Phase 4: Reap the stale autorun markers** - reap by the session's own clock, not the file's (completed 2026-09-21)
-- [ ] **Phase 5: Close the continuation debts** - the three this milestone exposed and did not fix
+- [x] **Phase 5: Close the continuation debts** - the three this milestone exposed and did not fix (completed 2026-09-21; debt 3 answered by the Owner at the checkpoint, digests in 05-RESIDUE-INVENTORY.md)
 
 Added 2026-09-21, and the reason is mechanical rather than editorial. With
 4/4 phases complete, `gsd_long_run.py preflight` REFUSES to arm a run

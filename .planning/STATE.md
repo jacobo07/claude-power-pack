@@ -1,13 +1,13 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-status: awaiting_owner_decision
-last_updated: "2026-09-21T20:55:00.000Z"
+status: awaiting_acceptance_gate
+last_updated: "2026-09-21T21:15:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 current_phase: 05
 current_phase_name: Close the continuation debts
 ---
@@ -177,8 +177,8 @@ as the confirmation above. (Count soft by one: the glob returned pane A twice.)
   re-pointed. Nothing was deleted: no marker qualifies, and a purge run on a
   rule written the same hour tests nothing.
 
-- Phase 5: Close the continuation debts — EXECUTED, **NOT CLOSED**: debt 3 is a
-  blocking Owner decision and the roadmap's own done-clause requires it.
+- Phase 5: Close the continuation debts — **COMPLETE** (2026-09-21). All three
+  debts closed; debt 3 was answered at the checkpoint and carried out.
   Debt 1 (`839a14c`): the ledger `armed` row derives its cwd from the marker
   dict already loaded two lines above, so two records of one arming can no
   longer disagree; `:98` deliberately untouched, because the asymmetry between
@@ -193,24 +193,24 @@ as the confirmation above. (Count soft by one: the glob returned pane A twice.)
   satisfied as a substring by `ok=120`) and a gate pinning the literal
   `enters: 2`, which made a correct change fail a check measuring one build's
   spelling.
-  Debt 3 (`c71e9a4`): four items inventoried, no reader found, **nothing
-  deleted**. `05-RESIDUE-INVENTORY.md`.
+  Debt 3 (`c71e9a4`): four items inventoried, no reader found, then answered by
+  the Owner and carried out at 21:11:49 — backup first at
+  `~/.claude/backups/residue-20260921-211149\` (4 files, 51,130 B), every copy
+  re-hashed before anything was removed, `RESIDUE_DELETED=4/4`. The readers
+  finding was then TESTED rather than trusted: MADM 7/7, INTENT 9/9, GSDLR 96/96
+  afterwards. Digests and harness in `05-RESIDUE-INVENTORY.md`.
   Summary `da489a0`.
 
 ### Open, and each needs the Owner rather than more work
 
-1. **The residue decision** (`05-RESIDUE-INVENTORY.md`). Delete or keep-with-a-
-   reason both close the debt; leaving it open does not. The item that matters
-   is `tools/gsd_long_run.py.pre-phase-advance` — a stale 49 KB twin of a live
-   module, **UNTRACKED**, so git cannot undo a wrong call.
-2. **The live extension mirror.** Cursor executes
+1. **The live extension mirror.** Cursor executes
    `~/.cursor/extensions/kobii.pp-sessions-0.4.0`, which the auto-mode
    classifier refuses to write (HR-001). `scratchpad/apply-argtail-helper.ps1`
    is staged — backs up, copies, `node --check`, live selftest — and a window
    reload is required after it. Until then `f702c5a` changes nothing at runtime
    and `V-INBOX-LIVE-MATCHES-REPO` stays red. That gate is correct; it must not
    be skipped or re-baselined.
-3. **Whether `auto-compact-sendkeys-daemon.ps1` gets a repo mirror.** It has no
+2. **Whether `auto-compact-sendkeys-daemon.ps1` gets a repo mirror.** It has no
    version-controlled copy here, so this phase's edit to it (SENT line now
    carries `enters=` and `arg_tail=`) is unversioned. Same gap class as the
    router edit in phase 3.
