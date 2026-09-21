@@ -256,8 +256,52 @@ def gate_no_store_is_created() -> None:
            f"resolving created persistence DS13 forbids: {sorted(after - before)}")
 
 
+def gate_contract_activates() -> None:
+    """A registered contract that no mission reaches is a file, not a capability.
+
+    `validate()` proves the JSON is well-formed. It says nothing about whether any
+    mission text reaches the capability -- gate 1.5 returns NOT_APPLICABLE the moment
+    no trigger matches, and relevance divides by the trigger count. So assert the
+    stack, with a control that must come back the other way.
+    """
+    from modules.capability_runtime.applicability import (  # noqa: PLC0415
+        MissionContext, compile_stack,
+    )
+    from modules.capability_runtime.contract import (  # noqa: PLC0415
+        CONTRACTS_DIR, load_contracts,
+    )
+
+    cid = "surface_architecture"
+    on_disk = {c.id for c in load_contracts()}
+    _check("V-SA-CONTRACT-LOADS", cid in on_disk,
+           f"{len(on_disk)} contract(s) load; {cid} among them",
+           f"{cid} is absent or failed validation on read; seed it with "
+           f"tools/seed_surface_architecture_contract.py (dir={CONTRACTS_DIR})")
+    if cid not in on_disk:
+        return
+
+    live = compile_stack(MissionContext(
+        description="design the entry surface and first-run for a new product"))
+    _check("V-SA-CONTRACT-ACTIVATES", cid in live["activate"],
+           f"real mission -> activate={live['activate']}",
+           f"contract exists but no mission reaches it: activate={live['activate']}, "
+           f"dormant={live['dormant']}, blocked={live['blocked']}")
+
+    # CONTROL, and it must fail for the RIGHT reason: an unrelated mission leaves it
+    # dormant or unlisted, never BLOCKED. A blocked verdict would mean "wanted here
+    # and cannot run", which is a different and wrong statement.
+    off = compile_stack(MissionContext(description="fix a typo in a single file"))
+    _check("V-SA-CONTRACT-CONTROL",
+           cid not in off["activate"] and cid not in off["blocked"],
+           f"unrelated mission -> not activated, not blocked "
+           f"(activate={off['activate']}, blocked={list(off['blocked'])})",
+           f"the contract activates on an unrelated mission, or reports BLOCKED "
+           f"where the truth is irrelevance: {off}")
+
+
 def main() -> int:
     print("V-SA gates -- modules/surface_architecture")
+    gate_contract_activates()
     gate_absence_is_not_a_default()
     gate_invalid_is_not_absent()
     gate_three_valued_conditions()

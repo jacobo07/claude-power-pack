@@ -1,0 +1,58 @@
+{
+  "id": "surface_architecture",
+  "name": "Surface Architecture Selection",
+  "owner": "modules/surface_architecture",
+  "sovereign_question": "Given this product's measured constraints, which entry-surface architecture is justified, and where do its boundaries fall?",
+  "scope": [
+    "surface architecture selection",
+    "entry boundary placement"
+  ],
+  "non_scope": [
+    "visual quality and interaction behaviour",
+    "which component realises a semantic",
+    "authentication mechanics",
+    "dispatching its own decision"
+  ],
+  "triggers": [
+    "entry surface",
+    "first-run",
+    "activation path",
+    "surface architecture"
+  ],
+  "anti_triggers": [
+    "single file",
+    "typo"
+  ],
+  "prerequisites": [],
+  "required_evidence": [],
+  "inputs": [
+    "measured product constraints"
+  ],
+  "outputs": [
+    "a justified archetype or a named refusal",
+    "boundary placements with their basis",
+    "the alternatives rejected, and why"
+  ],
+  "consumers": [
+    "Owner",
+    "Claude Code",
+    "commands/surface-architecture.md"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "experimental",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "",
+  "kill_switch": "",
+  "retirement_condition": "a surface-architecture decision is produced and consumed by a live dispatch path, making this registry entry redundant",
+  "parent": "",
+  "version": "1.0.0"
+}
