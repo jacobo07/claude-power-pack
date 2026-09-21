@@ -22,6 +22,38 @@ files. The roadmap could not express what the evidence already said.
 - [x] **Phase 2: UserPromptSubmit chain deadline** - is the cap or the clock discarding hook output (completed 2026-09-21)
 - [x] **Phase 3: Promote the exact-target lessons** - the CONT rules into the UKDL, the router sentence corrected (completed 2026-09-21)
 - [x] **Phase 4: Reap the stale autorun markers** - reap by the session's own clock, not the file's (completed 2026-09-21)
+- [ ] **Phase 5: Close the continuation debts** - the three this milestone exposed and did not fix
+
+Added 2026-09-21, and the reason is mechanical rather than editorial. With
+4/4 phases complete, `gsd_long_run.py preflight` REFUSES to arm a run
+(`nothing to run: 4/4 phases complete`, `gsd_long_run.py:588`) — so the
+acceptance gate below had become unreachable by construction: it is produced
+by a run, and no run could be armed. The gate is not satisfied by planning
+this phase; it is satisfied by the crossings that executing it produces.
+
+## Phase 5: Close the continuation debts
+
+Three debts this milestone surfaced and left open. Each is small, named, and
+independently verifiable — the point is that they are real work, not filler
+to generate crossings.
+
+1. **Ledger cwd fidelity.** `gsd_autorun_marker.py:253` passes raw `args.cwd`
+   to `ledger_append` while `:98` passes `resolve_cwd(cwd)`. A relative `cwd`
+   in a ledger row cannot be resolved by any later reader — the same class of
+   defect `marker_project` already REFUSES rather than resolves
+   (`gsd_long_run.py:749`).
+2. **A red branch for the argument-tail delivery.** The `/compact` arg-tail
+   submission added in `f771f55` is driven by nothing. It lives in the VS Code
+   extension, unreachable from the Python gates, so it rests on one Owner
+   observation. If a future build changes the completion-popup behaviour the
+   tail becomes a stray message in every crossing and no test says so.
+3. **Residue.** `tools/gsd_long_run.py.pre-phase-advance`, the
+   `gsd-autorun-intent-ghost-*.json` fixtures, and
+   `gsd-autorun-37cfb187-….json.pre-phase4` — deletions, so they wait for an
+   explicit decision rather than being swept.
+
+Done: 1 and 2 land with a driven red branch each; 3 is either deleted with
+the Owner's word or recorded as a kept decision with its reason.
 
 ## Acceptance gate (not a phase — the run produces it by running)
 
