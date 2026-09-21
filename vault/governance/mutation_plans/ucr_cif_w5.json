@@ -43,9 +43,9 @@
     "name": "W6-distinctiveness-clause-removed",
     "file": "modules/ucr_cif/disposition_consumer.py",
     "suite": "tools/test_disposition_selection.py",
-    "old": "        if len(distinct) < MIN_DISTINCTIVE_OVERLAP:",
-    "new": "        if False and len(distinct) < MIN_DISTINCTIVE_OVERLAP:",
-    "why": "the regression drill for this session's own defect: without it a proposal about an espresso machine routes to modules/knowledge_acquisition on the term pair ('institutional','system')"
+    "old": "        distinct = {t for t in overlap\n                    if holders.get(t, 1) <= DISTINCTIVE_MAX_HOLDERS}",
+    "new": "        distinct = set(overlap)",
+    "why": "the regression drill for W5's own defect: without it a proposal about an espresso machine routes to modules/knowledge_acquisition on the term pair ('institutional','system'). W8 NOTE: this anchor rotted. It used to disable the rejection `if len(distinct) < MIN_DISTINCTIVE_OVERLAP:`, and W8 replaced that single test with two -- an empty-set branch and a length-scaled branch -- so the anchor matched 0 times and the probe reported HARNESS-FAILED rather than a verdict, which is correct and is the only reason the rot was visible. The repair does NOT chase the new text: disabling either new branch alone leaves the other one still rejecting, so a text-faithful patch would have produced a mutant that changes nothing and SURVIVES as a false green. It mutates the DEFINITION of distinct instead, so every overlapping term counts as distinctive and the original false world -- generic vocabulary selecting an owner -- is reproduced exactly. A mutation anchor is a contract with the source; when the source changes shape, restore the FALSE WORLD, not the string."
   },
   {
     "name": "W7-applicability-removed",
