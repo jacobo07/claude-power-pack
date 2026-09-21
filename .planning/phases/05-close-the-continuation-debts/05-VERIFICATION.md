@@ -88,6 +88,26 @@ traceable units are the ROADMAP's named debts (DEBT-1..3 plus the fifth found
 in-phase), all four closed above. A coverage percentage computed against an
 absent denominator would be a fabricated number.
 
+## Re-verified after the SUMMARY was corrected
+
+`init.manager` reported this phase `verification_status: stale` and it was
+right: `05-SUMMARY.md` was edited *after* this file was first written, so the
+verification predated a substantive change to its own subject. The change was
+not cosmetic — the milestone integration check (FINDING 1) found that the
+summary still described the fifth debt as **NOT fixed** long after `7f88790`
+fixed it, and still carried the superseded `PARTIAL` gate figure.
+
+Both bullets now carry a SUPERSEDED note. Nothing in the coverage table above
+changes: D1's instrument was already the 99/99 suite that the fifth debt's three
+gates are part of, so the correction is to the *record*, not to the result.
+
+The shape is worth naming, because it is the third instance in this one
+milestone: **a SUMMARY is written once and the code keeps moving under it.**
+"This residual is still open" decays into a false statement with nothing to
+signal the decay — the same failure as the stale gate figure, and as C7 reading
+NOT YET. What caught it all three times was an instrument re-run at the moment
+of the claim, never a re-read.
+
 ## Verdict
 
 **passed.** Four debts closed with a measured instrument each; one item (D2)
