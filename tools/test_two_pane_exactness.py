@@ -22,6 +22,7 @@ import datetime as _dt
 import importlib.util
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -186,6 +187,245 @@ def _typed_token_after(transcript: Path, since: float) -> str | None:
     return None
 
 
+INBOX_DIR = Path.home() / ".claude" / "state" / "terminal-inbox"
+REAL_LEDGER = Path.home() / ".claude" / "state" / "gsd-autorun-ledger.jsonl"
+
+# The daemon's two refusal prefixes. They are DISJOINT, and the two gates below
+# must never accept each other's -- a test asserting only that both rows exist
+# passes with the owner leg removed, which is the whole point of separating them.
+OWNER_PREFIX = "terminal inbox refused: "
+NOOWNER_PREFIX = "no exact-session delivery:"
+
+
+def _refusal_vocabulary() -> tuple[set[str], Path]:
+    """Every reason `decide()` can return with action "refuse", read from source.
+
+    Hardcoding a copy is how a reason renamed in the extension drifts past the
+    gate that exists to notice it. The plan named seven; the file defines NINE --
+    `deferred-too-long:` and `expired-while-deferred:` were added 2026-09-21, and
+    a hardcoded set would already be wrong. That is not a hypothetical drift, it
+    is this file's own history.
+
+    Prefixed reasons keep their trailing colon: they are emitted as
+    `"deferred-too-long:" + String(session.status)`, so the ledger carries a
+    suffix no static vocabulary can know.
+
+    Anchored on `action: "refuse"` so the IGNORE reasons (`no-request`,
+    `not-this-window`) and the DEFER reason (`status-`) cannot leak in. Those are
+    exactly the answers a NON-owning window gives, and admitting one would
+    destroy the property this gate rests on.
+    """
+    src = REPO / "extension" / "src" / "terminal_inbox.js"
+    text = src.read_text(encoding="utf-8")
+    return set(re.findall(r'action:\s*"refuse"\s*,\s*reason:\s*"([^"]*)"', text)), src
+
+
+def _ledger_rows(path: Path) -> list[dict] | None:
+    """Parsed rows, or None when the file cannot be read AT ALL.
+
+    None is not "no rows". An unreadable ledger says nothing about whether a
+    refusal ever happened, and reporting that absence as a FAIL would be a
+    verdict about the subject drawn from a failure of the instrument.
+    """
+    if not path.is_file():
+        return None
+    try:
+        raw = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    rows = []
+    for line in raw.splitlines():
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict):
+            rows.append(row)
+    return rows
+
+
+def gates_refusal(run_ledger: Path | None) -> int | None:
+    """The two refusal legs, which are NOT interchangeable.
+
+    `V-TWOPANE-OWNER-REFUSED` is the strong one. Its load-bearing property is
+    structural, not statistical: `decide()` resolves `ownedTerminals` FIRST
+    (terminal_inbox.js:84-86) and every non-owning window returns
+    `{action:"ignore"}` there. No refusal branch is reachable without ownership.
+    So a ledgered `terminal inbox refused: <reason>` whose reason is in decide()'s
+    own refusal vocabulary proves THE OWNING WINDOW READ THE REQUEST AND JUDGED
+    IT. That is the claim the phase needs and the weak leg cannot make.
+
+    `V-TWOPANE-NOOWNER-NOT-TYPED` is the weak one, and it is recorded separately
+    precisely so the difference lives on the record rather than in a planner's
+    head.
+
+    Returns 2 on HARNESS-FAILED, else None.
+    """
+    vocab, vocab_src = _refusal_vocabulary()
+    # Floor. A regex that silently stopped matching reports an empty vocabulary,
+    # against which NO ledger reason can ever match -- and the gate would then
+    # FAIL, blaming the transport for a broken parser. Seven is the plan's own
+    # count; the file currently has nine.
+    if len(vocab) < 7:
+        return _harness(
+            f"only {len(vocab)} refusal reasons parsed out of {vocab_src} "
+            f"({sorted(vocab)}) -- the extractor has gone blind, so any verdict "
+            "about a ledger reason would be about this regex, not the transport")
+
+    sources: list[tuple[str, Path]] = []
+    if run_ledger is not None:
+        sources.append(("run-local", run_ledger))
+    sources.append(("real", REAL_LEDGER))
+
+    rows: list[tuple[str, dict]] = []
+    readable: list[str] = []
+    for label, path in sources:
+        got = _ledger_rows(path)
+        if got is None:
+            continue
+        readable.append(f"{label}={path}")
+        rows.extend((label, r) for r in got)
+    if not readable:
+        return _harness(
+            "no autorun ledger could be read ("
+            + "; ".join(f"{lbl}:{p}" for lbl, p in sources)
+            + ") -- absence of a refusal row here would be a statement about the "
+              "filesystem, not about the transport")
+
+    def _refused(prefix: str) -> list[tuple[str, dict]]:
+        return [(lbl, r) for lbl, r in rows
+                if r.get("event") == "refused"
+                and str(r.get("detail") or "").startswith(prefix)]
+
+    matched = []
+    for lbl, r in _refused(OWNER_PREFIX):
+        reason = str(r["detail"])[len(OWNER_PREFIX):].strip()
+        if reason in vocab or any(v.endswith(":") and reason.startswith(v) for v in vocab):
+            matched.append((lbl, r, reason))
+    if matched:
+        lbl, r, reason = matched[-1]
+        _ok("V-TWOPANE-OWNER-REFUSED",
+            f"[{lbl} ledger] {reason!r} for session {r.get('session_id')} at "
+            f"{r.get('ts')} -- {reason!r} is in decide()'s refusal vocabulary "
+            f"({len(vocab)} reasons read from {vocab_src.name} at gate time), and "
+            "decide() gates on ownedTerminals BEFORE any refusal is reachable, so "
+            "the OWNING window judged this request"
+            + ("" if lbl == "run-local" else
+               " -- NOTE: from the real ledger, i.e. a live autonomous crossing, "
+               "not a row this drill run produced"))
+    else:
+        _fail("V-TWOPANE-OWNER-REFUSED",
+              f"no row with event=refused and detail starting {OWNER_PREFIX!r} "
+              f"naming a reason in {sorted(vocab)}; searched {len(rows)} rows "
+              f"across {', '.join(readable)}")
+
+    noowner = _refused(NOOWNER_PREFIX)
+    if noowner:
+        lbl, r = noowner[-1]
+        _ok("V-TWOPANE-NOOWNER-NOT-TYPED",
+            f"[{lbl} ledger] session {r.get('session_id')} at {r.get('ts')} -- the "
+            "daemon's own timeout row. This proves NOTHING WAS TYPED into whichever "
+            "window happened to be in front. It does NOT prove any window judged "
+            "the request: no owner answered, so decide() may never have run at all. "
+            "Not substitutable for V-TWOPANE-OWNER-REFUSED")
+    else:
+        _fail("V-TWOPANE-NOOWNER-NOT-TYPED",
+              f"no row with event=refused and detail starting {NOOWNER_PREFIX!r}; "
+              f"searched {len(rows)} rows across {', '.join(readable)}")
+    return None
+
+
+def _drill_sids() -> set[str]:
+    """Every session id any drill run recorded, from the run manifests."""
+    out: set[str] = set()
+    for man in sorted(RUNS.glob("*/manifest.json")):
+        try:
+            data = json.loads(man.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        for pane in (data.get("panes") or {}).values():
+            if isinstance(pane, dict) and pane.get("session_id"):
+                out.add(str(pane["session_id"]))
+        for key in ("sid", "session_id", "throwaway_sid"):
+            if data.get(key):
+                out.add(str(data[key]))
+    return out
+
+
+def gate_inbox_drained() -> int | None:
+    """T-01-06: the drill must leave the SHARED inbox dir exactly as it found it.
+
+    This is the one assertion about a directory the drill could not sandbox. A
+    leftover request for a dead sid is re-read by EVERY window with the extension
+    loaded, every 500 ms (extension.js:38, :63) -- so a forgotten file makes the
+    drill a small permanent tax on the Owner's real windows, forever, silently.
+
+    Returns 2 on HARNESS-FAILED, else None.
+    """
+    sids = _drill_sids()
+    if not sids:
+        return _harness(
+            f"no drill session ids found in {RUNS}/*/manifest.json -- with an empty "
+            "needle set this gate would pass against any inbox whatsoever")
+    if not INBOX_DIR.is_dir():
+        return _harness(
+            f"{INBOX_DIR} does not exist -- 'no drill file is present' would be "
+            "true of a directory that cannot hold one, which is not the claim")
+    try:
+        entries = sorted(p.name for p in INBOX_DIR.iterdir())
+    except OSError as exc:
+        return _harness(f"{INBOX_DIR} unreadable: {exc.__class__.__name__}: {exc}")
+
+    # Green control, inline: prove the predicate can say YES before trusting it
+    # to say no. A substring test that matched nothing -- a mangled sid set, a
+    # normalisation slip -- reports a clean inbox identically to a clean inbox.
+    probe = f"{sorted(sids)[0]}.req.json"
+    if not any(s in probe for s in sids):
+        return _harness(
+            f"the drill-sid predicate does not match even a synthetic {probe} -- "
+            "every absence it reports would be worthless")
+
+    hits = [n for n in entries if any(s in n for s in sids)]
+    # The two classes cost different things, and one evidence string cannot be
+    # honest about both. The plan's harm argument -- "re-read by every window
+    # every 500 ms" -- is TRUE OF REQUESTS ONLY: extension.js:69 filters
+    # `.endsWith(".req.json")`, and the watcher at :470 does the same. An ack is
+    # read by the ONE daemon that wrote the matching request, by sid
+    # (extension.js:57). Quoting the request mechanism over an ack would be a
+    # measured-sounding claim about a code path that does not run -- measured
+    # 2026-09-21, when this gate's first version did exactly that.
+    recurring = [n for n in hits if n.endswith(".req.json") or n.endswith(".claimed")]
+    inert = [n for n in hits if n not in recurring]
+    if recurring:
+        _fail("V-TWOPANE-INBOX-DRAINED",
+              f"{len(recurring)} drill REQUEST(s) left in {INBOX_DIR}: {recurring} "
+              "-- every window with the extension loaded re-reads these every 500 ms "
+              f"(extension.js:69, :470). Also present: {len(inert)} inert ack(s).")
+    elif inert:
+        _fail("V-TWOPANE-INBOX-DRAINED",
+              f"no drill request remains, but {len(inert)} drill ack(s) do: {inert}. "
+              "These are NOT a recurring cost -- an ack is read only by the daemon "
+              "that wrote the matching request, keyed by sid (extension.js:57), and "
+              "no window scans for them. They are still the drill's litter in a "
+              "directory it does not own, which is what T-01-06 names. "
+              "ATTRIBUTION LIMIT: the needle is a SESSION ID, and the live drill "
+              "armed REAL sessions rather than the throwaway sids the plan's "
+              "containment clause assumed -- so for a session that also carries "
+              "real traffic, drill residue and the Owner's own ack are "
+              "indistinguishable by name. This gate names candidates; it cannot "
+              "prove they are ours, and nothing should be deleted on its say-so.")
+    else:
+        _ok("V-TWOPANE-INBOX-DRAINED",
+            f"none of {len(entries)} file(s) in {INBOX_DIR} carries any of "
+            f"{len(sids)} drill sid(s); the predicate matches {probe!r}, so the "
+            "absence is a measurement")
+    return None
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runid", default="",
@@ -196,10 +436,20 @@ def main(argv=None) -> int:
     lr = sys.modules.get("gsd_long_run") or _load("gsd_long_run")
     gates_unit(drill, lr)
 
+    # The refusal legs and the shared-inbox check are claims about the TRANSPORT
+    # and the SHARED directory, not about one drill run, so they are judged in
+    # both modes -- including the plan's own <verify> command, which passes no
+    # --runid. A gate that only ran in the mode nobody invokes is not a gate.
+    run_ledger = (RUNS / args.runid / "state" / "gsd-autorun-ledger.jsonl") if args.runid else None
+    for gate in (lambda: gates_refusal(run_ledger), gate_inbox_drained):
+        rc = gate()
+        if rc:
+            return rc
+
     if not args.runid:
         total = passes + fails
-        print(f"TWOPANE_PASS={passes}/{total}  threshold={total}/{total}  (unit gates only, "
-              f"no live drill evidence was judged)")
+        print(f"TWOPANE_PASS={passes}/{total}  threshold={total}/{total}  (unit, refusal "
+              f"and inbox gates; no live two-pane drill evidence was judged)")
         return 0 if fails == 0 else 1
 
     manifest = RUNS / args.runid / "manifest.json"
