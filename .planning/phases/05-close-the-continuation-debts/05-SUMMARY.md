@@ -232,10 +232,22 @@ Three items, all the Owner's:
   file and in `da489a0` / `f59c471` / `e879d18` was carried forward from a pre-compaction summary
   and never re-measured, while the confirmation had already landed. **One more crossing whose resume
   confirms is all `PROVEN` needs**, and nothing about the wall is blocking it.
+  **SUPERSEDED 2026-09-21T20:54:39Z — that crossing happened.** `report` now reads `PROVEN`:
+  crossings 4, confirmed 2, `window_confirmed 2`. See `.planning/STATE.md` and §10 of
+  `vault/specs/cpp-gsd-long.CERTIFICATION.md`.
 - **A fifth debt was named and is NOT fixed:** a manual `gsd_long_run.write_trigger()` writes the flag
   the daemon consumes but not the `delivery_inbox_requested` ledger row (`context-watchdog.py:675`),
   so a successful manual re-arm is invisible to the milestone gate. It was used to break the
   delivery deadlock in this session, which is how it was found.
+  **SUPERSEDED — fixed in `7f88790`, later the same day.** `tools/gsd_long_run.py:725` now appends
+  the row with `producer="gsd_long_run.write_trigger"` and a `kind` **derived** from the payload it
+  just wrote rather than recomputed. Three gates (`V-GSDLR-INBOX-DELIVERY-IS-LEDGERED`,
+  `-ROW-KIND-DERIVED`, `-ROW-NAMES-PRODUCER`), red branch driven, 96 → 99/99.
+
+  Both corrections above were surfaced by the milestone integration check, not by a re-read: a
+  SUMMARY is written once and the code keeps moving under it, so *"this residual is still open"*
+  decays into a false statement silently. That is the same failure as the stale gate figure two
+  bullets up, one artifact later. Recorded in `.planning/INTEGRATION-CHECK.md` as FINDING 1.
 
 ---
 *Phase: 05-close-the-continuation-debts*
