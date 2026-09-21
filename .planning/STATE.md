@@ -1,15 +1,15 @@
 ---
 gsd_state_version: "1.0"
 milestone: v1
-status: unknown
-last_updated: "2026-09-21T17:11:24.657Z"
+status: awaiting_owner_decision
+last_updated: "2026-09-21T20:55:00.000Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
-  total_plans: 1
+  total_plans: 2
   completed_plans: 1
-current_phase: 02
-current_phase_name: UserPromptSubmit chain deadline
+current_phase: 05
+current_phase_name: Close the continuation debts
 ---
 
 # STATE — claude-power-pack
@@ -177,6 +177,63 @@ as the confirmation above. (Count soft by one: the glob returned pane A twice.)
   re-pointed. Nothing was deleted: no marker qualifies, and a purge run on a
   rule written the same hour tests nothing.
 
+- Phase 5: Close the continuation debts — EXECUTED, **NOT CLOSED**: debt 3 is a
+  blocking Owner decision and the roadmap's own done-clause requires it.
+  Debt 1 (`839a14c`): the ledger `armed` row derives its cwd from the marker
+  dict already loaded two lines above, so two records of one arming can no
+  longer disagree; `:98` deliberately untouched, because the asymmetry between
+  the two writes WAS the defect. GSDLR 96/96, two mutations on distinct
+  assertions, restore `3bc96c1ab2fd`.
+  Debt 2 (`f702c5a`): `argumentTail()` moved out of `extension.js` — which
+  requires vscode, so nothing could drive the predicate that types into a live
+  terminal — into `terminal_inbox.js`, already vscode-free and already run by a
+  Python gate. Seven synthetic cases, `ok=23 → 30`, three mutations on distinct
+  assertion sets, restore `4400f98c3c86`. Two instruments repaired in the same
+  task: an equality-pinned population count (permanently red for *growing*, and
+  satisfied as a substring by `ok=120`) and a gate pinning the literal
+  `enters: 2`, which made a correct change fail a check measuring one build's
+  spelling.
+  Debt 3 (`c71e9a4`): four items inventoried, no reader found, **nothing
+  deleted**. `05-RESIDUE-INVENTORY.md`.
+  Summary `da489a0`.
+
+### Open, and each needs the Owner rather than more work
+
+1. **The residue decision** (`05-RESIDUE-INVENTORY.md`). Delete or keep-with-a-
+   reason both close the debt; leaving it open does not. The item that matters
+   is `tools/gsd_long_run.py.pre-phase-advance` — a stale 49 KB twin of a live
+   module, **UNTRACKED**, so git cannot undo a wrong call.
+2. **The live extension mirror.** Cursor executes
+   `~/.cursor/extensions/kobii.pp-sessions-0.4.0`, which the auto-mode
+   classifier refuses to write (HR-001). `scratchpad/apply-argtail-helper.ps1`
+   is staged — backs up, copies, `node --check`, live selftest — and a window
+   reload is required after it. Until then `f702c5a` changes nothing at runtime
+   and `V-INBOX-LIVE-MATCHES-REPO` stays red. That gate is correct; it must not
+   be skipped or re-baselined.
+3. **Whether `auto-compact-sendkeys-daemon.ps1` gets a repo mirror.** It has no
+   version-controlled copy here, so this phase's edit to it (SENT line now
+   carries `enters=` and `arg_tail=`) is unversioned. Same gap class as the
+   router edit in phase 3.
+
+### The fifth debt, named and unfixed
+
+A manual `gsd_long_run.write_trigger()` writes the flag the daemon consumes but
+NOT the `delivery_inbox_requested` ledger row (`context-watchdog.py:675`), so a
+successful manual re-arm is invisible to the milestone gate. Found by using it
+to break this session's delivery deadlock.
+
+### The delivery deadlock, diagnosed 2026-09-21
+
+Two halves. *Transient:* the extension defers while the session is busy and the
+deferral clears on IDLENESS, not on a timer — so a turn that keeps working after
+emitting its `/compact` line spends the daemon's 310 s budget (18:12 refused
+after 310 s; 18:24 sent in 3 s). *Permanent:* after a `refused`, nothing
+re-arms, because `THRESHOLD_REARM_PCT = 45` (`context-watchdog.py:49`) clears the
+debounce only below 45 % used — reachable only by compacting, which is what the
+refusal was carrying. The rule this produces: **the turn that emits a compact
+line does no further tool work.**
+
 The narrow-wall proof is the milestone's acceptance gate, not a phase: it is
 produced by this run crossing its own wall while executing the phases above,
-and read off `gsd_long_run.py report`.
+and read off `gsd_long_run.py report`. **Still UNPROVEN** — crossings 2,
+confirmed 0, window 0/2.
