@@ -60,19 +60,56 @@ function ownedTerminals(terminals, ancestors) {
   return out;
 }
 
+// A request its owner is actively holding is not a stale request. DEFAULT_TTL_MS
+// guards staleness of a line NOBODY has taken up; this bounds how long the owner
+// may hold one while the session is mid-turn. Two different facts, so two clocks
+// -- one clock serving both is what made a busy autonomous run structurally
+// undeliverable (2026-09-20: owned, deferred 7 minutes, then "expired"). Twenty
+// minutes covers the long turns measured on this host (a 26-minute subagent ran
+// the day this was written) without letting a hung session wait forever. The
+// requester may override per request with `max_defer_ms`.
+const DEFAULT_MAX_DEFER_MS = 1200000;
+
 // Returns one of:
 //   { action: "ignore", reason }            -- not this window's request
 //   { action: "defer",  reason }            -- ours, not yet safe; ask again later
 //   { action: "refuse", reason }            -- ours, and it must never be sent
 //   { action: "send",   terminalIndex }     -- ours and safe now
-function decide(req, terminals, session, nowMs) {
+//
+// `deferredSinceMs` is when THIS window first deferred this identified request.
+// Omitted/undefined reproduces the pre-2026-09-21 behaviour exactly, so every
+// existing caller is byte-unchanged until it opts in.
+function decide(req, terminals, session, nowMs, deferredSinceMs) {
   if (!req || typeof req !== "object") return { action: "ignore", reason: "no-request" };
   const owned = ownedTerminals(terminals, req.ancestors);
   if (owned.length === 0) return { action: "ignore", reason: "not-this-window" };
   if (owned.length > 1) return { action: "refuse", reason: "ambiguous-terminal" };
 
+  // Hoisted: both the staleness branch and the deferral bound need it, and
+  // deriving it twice is how two copies of one rule drift apart. It is NOT
+  // collapsed into the identity block below, because that block returns a
+  // distinct reason per failure and those reasons are load-bearing.
+  const identified = !!session && typeof session === "object" &&
+    session.sessionId === req.session_id && session.pid === req.claude_pid &&
+    sameProcStart(session.procStart, req.proc_start);
+
   const ttl = Number.isFinite(req.ttl_ms) ? req.ttl_ms : DEFAULT_TTL_MS;
-  if (!Number.isFinite(req.created_ms) || nowMs - req.created_ms > ttl) {
+  const maxDefer = Number.isFinite(req.max_defer_ms) ? req.max_defer_ms : DEFAULT_MAX_DEFER_MS;
+  // Time this window has been holding the request is excluded from its age: the
+  // TTL measures how long a line went UNCLAIMED, not how long its rightful owner
+  // was busy. Bounded separately below so "paused" can never mean "forever".
+  const deferredFor = (Number.isFinite(deferredSinceMs) && deferredSinceMs > 0 &&
+    nowMs > deferredSinceMs) ? nowMs - deferredSinceMs : 0;
+
+  if (!Number.isFinite(req.created_ms)) return { action: "refuse", reason: "expired" };
+  if (deferredFor > maxDefer) {
+    // The bound, and it is the dominant fact when it fires: this window held the
+    // request as long as it is allowed to. Distinct from every other refusal,
+    // because the fix is "the session never went idle", not "delivery broke".
+    return { action: "refuse",
+             reason: "deferred-too-long:" + String(identified ? session.status : "unidentified") };
+  }
+  if (nowMs - req.created_ms - deferredFor > ttl) {
     // A refusal needs its OWN words. Plain "expired" reads as "no window was
     // listening", and that reading cost a real diagnosis: on 2026-09-20 a live
     // crossing was ledgered `terminal inbox refused: expired` seven minutes
@@ -114,7 +151,8 @@ function decide(req, terminals, session, nowMs) {
   return { action: "send", terminalIndex: owned[0] };
 }
 
-module.exports = { decide, ownedTerminals, sameProcStart, validText, DEFAULT_TTL_MS };
+module.exports = { decide, ownedTerminals, sameProcStart, validText, DEFAULT_TTL_MS,
+  DEFAULT_MAX_DEFER_MS };
 
 if (require.main === module && process.argv.includes("--selftest")) {
   const assert = require("assert");
@@ -138,6 +176,39 @@ if (require.main === module && process.argv.includes("--selftest")) {
   };
   const terms = [{ processId: 111 }, { processId: 54952 }, { processId: 222 }];
   const sess = { sessionId: "fa6961b6-aaaa", pid: 42912, procStart: "134342068323963483", status: "idle" };
+
+  // --- the deferral clock (2026-09-21) ---------------------------------------
+  // The 2026-09-20 crossing in its exact shape, now delivered instead of lost:
+  // created 10 minutes ago against a 60 s TTL, held by this window for almost
+  // all of it because the session was mid-turn, and idle at the moment we ask.
+  // Under the old single clock this refused as "expired" and the run stopped.
+  const oldReq = { ...req, created_ms: now - 600000 };
+  check("V-INBOX-DEFERRAL-PAUSES-THE-CLOCK", () =>
+    assert.deepStrictEqual(decide(oldReq, terms, sess, now, now - 599000),
+      { action: "send", terminalIndex: 1 }));
+  // The bound: "paused" must never mean "forever".
+  check("V-INBOX-DEFERRAL-IS-BOUNDED", () =>
+    assert.strictEqual(
+      decide(oldReq, terms, { ...sess, status: "busy" }, now, now - 1200001).reason,
+      "deferred-too-long:busy"));
+  check("V-INBOX-DEFERRAL-BOUND-IS-OVERRIDABLE", () =>
+    assert.strictEqual(
+      decide({ ...oldReq, max_defer_ms: 1000 }, terms, { ...sess, status: "busy" }, now,
+        now - 5000).reason, "deferred-too-long:busy"));
+  // Green control, and the one that matters most: WITHOUT a deferral stamp the
+  // old behaviour is byte-identical, so no existing caller changed meaning.
+  check("V-INBOX-NO-DEFERRAL-STAMP-IS-UNCHANGED", () =>
+    assert.strictEqual(decide(oldReq, terms, sess, now).reason, "expired"));
+  // A stamp from the future, or a nonsense one, must not extend anything.
+  check("V-INBOX-BOGUS-DEFERRAL-STAMP-IGNORED", () =>
+    assert.ok([now + 60000, -1, 0, NaN, null, undefined, "x"].every((v) =>
+      decide(oldReq, terms, sess, now, v).reason === "expired")));
+  // The pause moves the deadline; it does not remove it. Deferred the whole
+  // time but still older than TTL + deferral -> refused, not sent.
+  check("V-INBOX-PAUSE-STILL-EXPIRES", () =>
+    assert.strictEqual(
+      decide({ ...req, created_ms: now - 600000 }, terms, sess, now, now - 100000).action,
+      "refuse"));
 
   check("V-INBOX-SEND-OWNED", () =>
     assert.deepStrictEqual(decide(req, terms, sess, now), { action: "send", terminalIndex: 1 }));

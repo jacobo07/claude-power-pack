@@ -42,6 +42,12 @@ let inboxAgain = false;
 let inboxTimer = null;
 const inboxDone = new Set();
 const inboxDeferNoted = new Set();
+// When THIS window first deferred each request it owns. `decide` excludes this
+// interval from the request's age, so a session that is merely busy no longer
+// runs out its own TTL while its owner is politely waiting for it (2026-09-20:
+// owned, deferred 7 minutes, then refused as "expired"). Cleared on every
+// terminal outcome, so it cannot grow without bound.
+const inboxDeferSince = new Map();
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, "utf8").replace(/^﻿/, ""));
@@ -77,10 +83,13 @@ async function processInbox() {
       if (!req || !req.id || inboxDone.has(req.id)) continue;
       let session = null;
       try { session = readJson(path.join(SESSIONS_DIR, String(req.claude_pid) + ".json")); } catch (_e) { session = null; }
-      const d = decideInbox(req, rows, session, Date.now());
+      const d = decideInbox(req, rows, session, Date.now(), inboxDeferSince.get(req.id));
       if (d.action === "ignore") continue;
       if (d.action === "defer") {
         deferred = true;
+        // Stamp the FIRST deferral only: the pause must measure how long this
+        // window has held the request, not how long since the last poll.
+        if (!inboxDeferSince.has(req.id)) inboxDeferSince.set(req.id, Date.now());
         // Tell the requester once that this window owns it and is waiting, so it
         // does not mistake silence for "no extension" and fall back to SendKeys.
         if (!inboxDeferNoted.has(req.id)) {
@@ -96,6 +105,10 @@ async function processInbox() {
       const claimed = reqPath + "." + process.pid + ".claimed";
       try { fs.renameSync(reqPath, claimed); } catch (_e) { continue; }
       inboxDone.add(req.id);
+      // Terminal outcome (send or refuse): the deferral stamp has done its job.
+      // Dropped here rather than on a timer, so the map cannot outlive the
+      // requests it describes.
+      inboxDeferSince.delete(req.id);
       const ack = { id: req.id, session_id: req.session_id, window_cwd: cwd, at_ms: Date.now() };
       if (d.action === "refuse") {
         writeAck(req.session_id, { ...ack, status: "refused", reason: d.reason });
