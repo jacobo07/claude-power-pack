@@ -73,6 +73,34 @@ function decide(req, terminals, session, nowMs) {
 
   const ttl = Number.isFinite(req.ttl_ms) ? req.ttl_ms : DEFAULT_TTL_MS;
   if (!Number.isFinite(req.created_ms) || nowMs - req.created_ms > ttl) {
+    // A refusal needs its OWN words. Plain "expired" reads as "no window was
+    // listening", and that reading cost a real diagnosis: on 2026-09-20 a live
+    // crossing was ledgered `terminal inbox refused: expired` seven minutes
+    // after it was made -- while THIS window owned it and was deferring it on
+    // the clause below, because the session was mid-turn the entire time.
+    //
+    // The two clauses contradict each other: the deferral says "ask again
+    // later", this one says "you asked too long", and the TTL keeps running
+    // during the deferral. On a busy autonomous run the deadline always wins,
+    // so the transport is structurally unable to deliver to exactly the class
+    // of session it exists for. Widening the TTL is NOT the fix -- it is a
+    // staleness guard on a line about to be typed into a live terminal.
+    //
+    // Behaviour here is deliberately unchanged: still a refusal, still fail
+    // closed, still nothing typed. Only the word changes, and the word is the
+    // whole diagnostic value -- it separates "nobody owned this" from "its
+    // owner was busy throughout", which need opposite fixes.
+    //
+    // The identity conjunction below is derived from the same three
+    // comparisons the identity block makes; it is NOT collapsed into them
+    // because that block returns a distinct reason per failure, and those
+    // reasons are load-bearing. Keep the two in step.
+    const identified = !!session && typeof session === "object" &&
+      session.sessionId === req.session_id && session.pid === req.claude_pid &&
+      sameProcStart(session.procStart, req.proc_start);
+    if (identified && session.status !== "idle") {
+      return { action: "refuse", reason: "expired-while-deferred:" + String(session.status) };
+    }
     return { action: "refuse", reason: "expired" };
   }
   if (!validText(req.text)) return { action: "refuse", reason: "invalid-text" };
@@ -127,6 +155,32 @@ if (require.main === module && process.argv.includes("--selftest")) {
     assert.strictEqual(decide(req, terms, { ...sess, status: "busy" }, now).action, "defer"));
   check("V-INBOX-EXPIRED-REFUSES", () =>
     assert.strictEqual(decide({ ...req, created_ms: now - 61000 }, terms, sess, now).reason, "expired"));
+  // The 2026-09-20 crossing, in its exact shape: owned by this window, deferred
+  // for the whole TTL because the session was mid-turn, then refused. It must
+  // NOT read as "nobody was listening" -- that word sent two investigations at
+  // the delivery path when the cause was the deadline racing the deferral.
+  check("V-INBOX-EXPIRED-WHILE-BUSY-SAYS-SO", () =>
+    assert.strictEqual(
+      decide({ ...req, created_ms: now - 61000 }, terms, { ...sess, status: "busy" }, now).reason,
+      "expired-while-deferred:busy"));
+  check("V-INBOX-EXPIRED-WHILE-WAITING-SAYS-SO", () =>
+    assert.strictEqual(
+      decide({ ...req, created_ms: now - 61000 }, terms, { ...sess, status: "waiting" }, now).reason,
+      "expired-while-deferred:waiting"));
+  // Green controls: the new word must not swallow the plain case. An expired
+  // request whose session is idle, or whose session cannot be identified, is
+  // still a bare "expired" -- otherwise the split reports everything as busy
+  // and is indistinguishable from a predicate that always fires.
+  check("V-INBOX-EXPIRED-IDLE-STAYS-PLAIN", () =>
+    assert.strictEqual(decide({ ...req, created_ms: now - 61000 }, terms, sess, now).reason, "expired"));
+  check("V-INBOX-EXPIRED-UNIDENTIFIED-STAYS-PLAIN", () =>
+    assert.strictEqual(
+      decide({ ...req, created_ms: now - 61000 }, terms, { ...sess, status: "busy", sessionId: "other" },
+        now).reason, "expired"));
+  // Still a refusal. Nothing may be typed on any of these paths.
+  check("V-INBOX-EXPIRED-NEVER-SENDS", () =>
+    assert.ok(["busy", "waiting", "idle"].every((s) =>
+      decide({ ...req, created_ms: now - 61000 }, terms, { ...sess, status: s }, now).action === "refuse")));
   check("V-INBOX-REUSED-PID-REFUSES", () =>
     assert.strictEqual(decide(req, terms, { ...sess, procStart: "134342068323999999" }, now).reason,
       "proc-start-mismatch"));
