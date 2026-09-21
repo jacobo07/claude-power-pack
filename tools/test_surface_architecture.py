@@ -122,10 +122,23 @@ def gate_four_outcomes_are_reachable() -> None:
                               value_before_identity_possible=False,
                               identity_driver="regulation"))
     seen[esc.outcome] = esc.exit_code
-    tie = R.resolve(_complete(value_before_identity_possible=False,
-                              work_possible_before_identity=False,
-                              identity_driver="regulation", assurance_required=True))
-    seen[tie.outcome] = tie.exit_code
+    # ABSTAIN is reachable only when every SPECIFIC archetype is disqualified by a
+    # measured fact and only the zero-requirement residual survives. Nothing is left
+    # unmeasured here, so the refusal is about the product, not about the measurement.
+    residual = R.resolve(_complete(
+        primary_intent=None, identity_driver="none",
+        value_before_identity_possible=False, work_possible_before_identity=False,
+        work_survives_interruption=False, returning_parties_exist=False,
+        invitation_based=False, artifacts_available=[], integrations_available=[]))
+    seen[residual.outcome] = residual.exit_code
+    _check("V-SA-RESIDUAL-ABSTAINS",
+           residual.outcome == R.ABSTAIN
+           and residual.reason_code == R.NO_ARCHETYPE_JUSTIFIED,
+           f"residual-only context -> {residual.outcome}/{residual.reason_code}, "
+           f"fallback={residual.fallback}",
+           f"expected ABSTAIN when only the residual survives, got "
+           f"{residual.outcome}/{residual.reason_code} "
+           f"archetypes={residual.archetypes}")
 
     _check("V-SA-FOUR-OUTCOMES", len(seen) == 4,
            f"reached {sorted(seen)} with exits {sorted(seen.values())}",
@@ -371,8 +384,68 @@ def gate_derivative_stays_out_of_contracts() -> None:
            else "derivatives/ does not exist; nothing was ever cut")
 
 
+def gate_contrasting_fixtures() -> None:
+    """Six contrasting scenarios. A resolver that encoded one flow family would give
+    most of them the same answer, so the spread IS the falsification.
+
+    Each fixture declares its expected outcome AND archetype, asserted together. A
+    fixture that only checked the outcome would pass while the resolver named the
+    wrong topology.
+    """
+    import json  # noqa: PLC0415
+
+    from modules.surface_architecture.context import from_dict  # noqa: PLC0415
+
+    path = _PP_ROOT / "fixtures" / "surface_architecture" / "scenarios.json"
+    if not path.is_file():
+        _fail("V-SA-FIXTURES-PRESENT", f"missing {path}")
+        return
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
+    cases = {k: v for k, v in data.items() if not k.startswith("_")}
+    _check("V-SA-FIXTURES-PRESENT", len(cases) >= 6,
+           f"{len(cases)} contrasting scenarios loaded",
+           f"only {len(cases)} scenarios -- too few to falsify a single-family resolver")
+
+    outcomes, archetypes, wrong = [], [], []
+    for name, case in sorted(cases.items()):
+        d = R.resolve(from_dict(case["context"]))
+        outcomes.append(d.outcome)
+        archetypes.append(d.archetype or None)
+        want_o, want_a = case["expect_outcome"], case.get("expect_archetype")
+        # Membership, not equality. The answer is a SET: several topologies can be
+        # justified at once and a real surface is frequently more than one of them.
+        # Requiring equality with a single leader would fail every honest composite.
+        got_a = list(d.archetypes)
+        archetypes.extend(got_a)
+        ok_a = (want_a is None) or (want_a in got_a)
+        if d.outcome != want_o or not ok_a:
+            wrong.append(f"{name}: expected {want_o} with {want_a}, "
+                         f"got {d.outcome} with {got_a or None} "
+                         f"[{d.reason_code or '-'}]")
+
+    _check("V-SA-FIXTURES-MATCH", not wrong,
+           f"all {len(cases)} scenarios produced their declared outcome, and every "
+           "declared archetype appears in the justified set",
+           "; ".join(wrong))
+
+    named = {a for a in archetypes if a}
+    _check("V-SA-FIXTURES-DISCRIMINATE", len(named) >= 3 and len(set(outcomes)) >= 3,
+           f"{len(named)} distinct archetype(s) across {len(set(outcomes))} outcome(s): "
+           f"{sorted(named)}",
+           f"the set does not discriminate: archetypes={sorted(named)}, "
+           f"outcomes={sorted(set(outcomes))} -- one flow family would pass this")
+
+    # The refusal case must exist and must name its gap, or the set only proves the
+    # resolver can say yes.
+    refusals = [n for n, c in cases.items() if c.get("expect_archetype") is None]
+    _check("V-SA-FIXTURES-INCLUDE-REFUSAL", len(refusals) >= 2,
+           f"{len(refusals)} scenario(s) require the resolver to name NO archetype",
+           "no fixture requires a refusal -- the set only proves it can say yes")
+
+
 def main() -> int:
     print("V-SA gates -- modules/surface_architecture")
+    gate_contrasting_fixtures()
     gate_contract_activates()
     gate_absence_is_not_a_default()
     gate_invalid_is_not_absent()

@@ -81,6 +81,21 @@ def earliest_justified_identity(ctx) -> Placement:
         return Placement("identity.earliest_justified", UNDETERMINED,
                          basis=[f"identity_driver={driver}"],
                          note="driver outside the closed vocabulary; not placed")
+
+    # An external effect does not always land late. When producing the product's value
+    # REQUIRES the outside call -- authorising an integration, reading someone's
+    # account -- the effect happens at the work phase, not after it. Without this the
+    # model reported a contradiction for every integration-led product: identity
+    # justified only at `effect`, yet nothing possible before `work`.
+    # `value_requires_external_call` is the fact that distinguishes them, and when it
+    # was never measured the onset stays at the later phase rather than being guessed.
+    if driver == "external_effect" and ctx.value_requires_external_call is True:
+        return Placement("identity.earliest_justified", PLACED, "work",
+                         basis=[f"identity_driver={driver}",
+                                "value_requires_external_call=True"],
+                         note="the outside call IS how value is produced, so the "
+                              "effect lands at the work phase")
+
     return Placement("identity.earliest_justified", PLACED, onset,
                      basis=[f"identity_driver={driver}"])
 

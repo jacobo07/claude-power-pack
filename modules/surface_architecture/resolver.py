@@ -83,7 +83,13 @@ class Decision:
     outcome: str
     reason_code: str = ""
     reason: str = ""
+    # The single leading topology, or EMPTY when several are justified together and
+    # none is more pinned by the measured facts. Empty is not a failure -- read
+    # `archetypes`, which is the real answer.
     archetype: str = ""
+    # Every justified topology, most-constrained first. These are not rivals: a real
+    # surface is frequently more than one of them at once.
+    archetypes: list = field(default_factory=list)
     boundaries: list = field(default_factory=list)
     rejected: list = field(default_factory=list)      # [{id, why}]
     undecided: list = field(default_factory=list)     # [{id, why}]
@@ -107,6 +113,7 @@ class Decision:
         each one resolves -- including the ones in `rejected`, which is where an
         invented id would otherwise hide."""
         out = [self.archetype] if self.archetype else []
+        out += list(self.archetypes)
         out += [r["id"] for r in self.rejected if r.get("id")]
         out += [u["id"] for u in self.undecided if u.get("id")]
         if self.fallback:
@@ -122,6 +129,13 @@ class Decision:
         L = [f"{self.outcome}" + (f"  [{self.reason_code}]" if self.reason_code else "")]
         if self.archetype:
             L.append(f"  archetype: {self.archetype}")
+        if self.archetypes:
+            rest = [a for a in self.archetypes if a != self.archetype]
+            if self.archetype and rest:
+                L.append(f"  also justified: {', '.join(rest)}")
+            elif not self.archetype:
+                L.append(f"  composite (no single leader): "
+                         f"{', '.join(self.archetypes)}")
         if self.reason:
             L.append(f"  {self.reason}")
         for f in self.missing_facts:
@@ -143,14 +157,21 @@ class Decision:
 
 
 def _specificity(arch) -> int:
-    """How constrained an entry is: the number of conditions that had to hold.
+    """How constrained an entry is: the number of conditions that HAD TO HOLD.
 
     This is NOT a preference ranking between topologies, which LAW 10 forbids on this
     evidence. It is the observation that an archetype satisfying four measured
     conditions is pinned by more of the context than one satisfying none, so the
     less-constrained one is a residue rather than a rival.
+
+    DISQUALIFIERS ARE DELIBERATELY NOT COUNTED. An earlier version added them, and the
+    contrasting-fixture set caught it: NARRATIVE_BOOTSTRAP won a B2B invitation
+    scenario over INVITATION_FIRST purely because it declares more exclusions. A
+    disqualifier that did not fire is not evidence FOR an archetype -- it is the
+    absence of evidence against it, and rewarding it would let any topology win by
+    listing more ways it could lose.
     """
-    return len(arch.requires) + len(arch.disqualifiers)
+    return len(arch.requires)
 
 
 def resolve(ctx: SurfaceContext) -> Decision:
@@ -184,32 +205,71 @@ def resolve(ctx: SurfaceContext) -> Decision:
                         "every archetype was disqualified by a measured fact",
                         boundaries=placements, rejected=rejected, undecided=undecided)
 
-    top = max(_specificity(a) for a in yes)
-    winners = [a for a in yes if _specificity(a) == top]
+    # THE ANSWER IS A SET, NOT A WINNER.
+    #
+    # An earlier version picked one archetype by a scalar "specificity" and the
+    # contrasting-fixture set falsified it twice. Counting disqualifiers let a topology
+    # win by listing exclusions; counting only requirements made six archetypes tie at
+    # one, so every realistic scenario came back AMBIGUOUS_TIE. Both failures share a
+    # premise, and the premise is what was wrong: these topologies are not mutually
+    # exclusive. A document-heavy flow genuinely IS artifact-first and work-first, and
+    # "hybrid adaptive intake" is a real answer rather than a failure to choose.
+    #
+    # So the decision reports every justified archetype, most-constrained first, and
+    # names a single leader ONLY when one is strictly more pinned by the measured facts
+    # than the next. A leaderless set is still a RECOMMEND -- it is a composite answer,
+    # not an abstention. ABSTAIN is reserved for an EMPTY set.
+    ordered = sorted(yes, key=lambda a: (-_specificity(a), a.id))
+    ranked = [a.id for a in ordered]
+    top = _specificity(ordered[0])
 
-    # An UNKNOWN entry at least as constrained as the winner could overturn it once
-    # measured. Reporting the winner anyway would be a confident answer that another
-    # afternoon of measurement could flip -- so say so instead.
+    # A RESIDUAL is an archetype with no requirements -- it is always justified,
+    # because nothing has to hold for it. STRUCTURED_CONFIGURATOR is one by design: it
+    # is what remains when the product's facts select no topology.
+    #
+    # That makes the "empty set" reading of ABSTAIN structurally unreachable, and an
+    # outcome whose branch cannot be taken is not an outcome. So ABSTAIN means what is
+    # actually reachable and actually useful: every SPECIFIC archetype was disqualified
+    # by a measured fact, and only the residual survives. The facts are complete; they
+    # simply select nothing. That is a statement about the product, not about the
+    # measurement, which is exactly what distinguishes it from UNDETERMINED.
+    if top == 0:
+        return Decision(ABSTAIN, NO_ARCHETYPE_JUSTIFIED,
+                        "every specific archetype was disqualified by a measured "
+                        "fact; only the residual remains, so nothing about this "
+                        "product selects a topology",
+                        archetypes=ranked, boundaries=placements, rejected=rejected,
+                        undecided=undecided, fallback=ordered[0].id)
+    leader = ordered[0] if (len(ordered) == 1
+                            or _specificity(ordered[1]) < top) else None
+
+    # An UNKNOWN entry at least as constrained as the leading justified one could
+    # overturn the ordering once measured. Reporting anyway would be a confident answer
+    # that another afternoon of measurement could flip -- so say so instead.
     contenders = [a for a in unknown if _specificity(a) >= top]
     if contenders:
         gaps = sorted({r.split(": ", 1)[-1]
                        for a in contenders for r in verdicts[a.id][1]})
         return Decision(UNDETERMINED, EVIDENCE_INCOMPLETE,
                         "an unmeasured archetype is at least as constrained as the "
-                        "leader, so more measurement could change this answer",
-                        boundaries=placements, rejected=rejected, undecided=undecided,
-                        missing_facts=gaps)
+                        "leading justified one, so more measurement could change the "
+                        "ordering",
+                        archetypes=ranked, boundaries=placements, rejected=rejected,
+                        undecided=undecided, missing_facts=gaps)
 
-    if len(winners) > 1:
-        tied = ", ".join(sorted(a.id for a in winners))
-        return Decision(
-            ABSTAIN, AMBIGUOUS_TIE,
-            f"more than one archetype is equally justified by the measured facts "
-            f"({tied}); breaking the tie would invent a preference the evidence "
-            "does not support",
-            boundaries=placements, rejected=rejected, undecided=undecided)
+    # Safeguards and fallback come from the leading entry; when the set has no strict
+    # leader they come from the first of the ordering, and `archetype` stays EMPTY so a
+    # caller cannot mistake a composite answer for a single choice.
+    win = leader if leader is not None else ordered[0]
+    named = win.id if leader is not None else ""
+    # Every justified archetype's safeguards apply, not only the leader's -- a
+    # composite answer that carried one member's safeguards would drop the others.
+    safeguards = []
+    for a in ordered:
+        for s in a.safeguards:
+            if s not in safeguards:
+                safeguards.append(s)
 
-    win = winners[0]
     conflicts = [p for p in placements if p["status"] == B.CONFLICT]
     escalations = [why for fld, why in _ESCALATING if getattr(ctx, fld, None) is True]
 
@@ -217,22 +277,27 @@ def resolve(ctx: SurfaceContext) -> Decision:
         return Decision(REQUIRE_APPROVAL, BOUNDARY_CONFLICT,
                         "a boundary has no position satisfying its own constraints; "
                         "a human must resolve the contradiction",
-                        archetype=win.id, boundaries=placements, rejected=rejected,
-                        undecided=undecided, escalations=escalations,
-                        safeguards=list(win.safeguards), fallback=win.fallback)
+                        archetype=named, archetypes=ranked, boundaries=placements,
+                        rejected=rejected, undecided=undecided,
+                        escalations=escalations, safeguards=safeguards,
+                        fallback=win.fallback)
 
     if escalations:
         return Decision(REQUIRE_APPROVAL, ESCALATING_CONSTRAINT,
-                        "the archetype is justified, but a constraint places the "
+                        "the topology is justified, but a constraint places the "
                         "consequence outside the product; a machine may propose it "
                         "and may not choose it",
-                        archetype=win.id, boundaries=placements, rejected=rejected,
-                        undecided=undecided, escalations=escalations,
-                        safeguards=list(win.safeguards), fallback=win.fallback)
+                        archetype=named, archetypes=ranked, boundaries=placements,
+                        rejected=rejected, undecided=undecided,
+                        escalations=escalations, safeguards=safeguards,
+                        fallback=win.fallback)
 
-    return Decision(RECOMMEND, "", win.summary, archetype=win.id,
+    reason = win.summary if leader is not None else (
+        "several topologies are justified together and no single one is more pinned "
+        "by the measured facts; the answer is the composite, in order")
+    return Decision(RECOMMEND, "", reason, archetype=named, archetypes=ranked,
                     boundaries=placements, rejected=rejected, undecided=undecided,
-                    safeguards=list(win.safeguards), fallback=win.fallback)
+                    safeguards=safeguards, fallback=win.fallback)
 
 
 def main(argv=None) -> int:

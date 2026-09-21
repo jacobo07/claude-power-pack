@@ -1,0 +1,199 @@
+{
+  "_README": [
+    "Six contrasting scenarios. fixtures/ held three files with no per-module",
+    "subdirectory convention before this, so fixtures/surface_architecture/ is a new",
+    "precedent, stated here rather than assumed.",
+    "",
+    "The point of the set is falsification: a resolver that encoded one flow family",
+    "would produce the same archetype for most of these. Each entry declares the",
+    "outcome and archetype it must produce, and tools/test_surface_architecture.py",
+    "asserts BOTH, so a fixture cannot silently drift into agreeing with the code.",
+    "",
+    "'expect_archetype': null means the resolver must name NO archetype.",
+    "A field absent from a context is absent on purpose -- it is a fact nobody",
+    "measured, and the resolver must refuse rather than assume."
+  ],
+
+  "consumer-anonymous-value": {
+    "_why": "A consumer tool that can produce a real result before anyone is known. Work precedes a durable owner and survives interruption.",
+    "expect_outcome": "RECOMMEND",
+    "expect_archetype": "WORK_FIRST",
+    "context": {
+      "product_kind": "consumer generation tool",
+      "primary_actor": "an individual trying the product",
+      "primary_intent": "produce a usable result",
+      "first_meaningful_value": "a finished artifact the party can keep",
+      "value_before_identity_possible": true,
+      "value_requires_external_call": false,
+      "identity_driver": "persistence",
+      "assurance_required": false,
+      "regulated": false,
+      "sensitive_data": false,
+      "work_possible_before_identity": true,
+      "work_survives_interruption": true,
+      "integrations_available": [],
+      "artifacts_available": [],
+      "invitation_based": false,
+      "returning_parties_exist": true,
+      "tenancy": "individual",
+      "abuse_risk": "low",
+      "payment_before_value": false,
+      "external_consequences": false,
+      "source": "fixture: contrasting-set/consumer"
+    }
+  },
+
+  "b2b-invitation": {
+    "_why": "Entry is predicated on an invitation that already carries the organisation and the role. Asking for what the invitation answered is the failure mode.",
+    "expect_outcome": "RECOMMEND",
+    "expect_archetype": "INVITATION_FIRST",
+    "context": {
+      "product_kind": "team workspace",
+      "primary_actor": "a colleague who was invited",
+      "primary_intent": "join work already in progress",
+      "first_meaningful_value": "seeing the work they were invited to",
+      "value_before_identity_possible": false,
+      "identity_driver": "collaboration",
+      "assurance_required": false,
+      "regulated": false,
+      "sensitive_data": false,
+      "work_possible_before_identity": false,
+      "work_survives_interruption": false,
+      "integrations_available": [],
+      "artifacts_available": [],
+      "invitation_based": true,
+      "returning_parties_exist": true,
+      "tenancy": "organisation",
+      "abuse_risk": "low",
+      "payment_before_value": false,
+      "external_consequences": false,
+      "source": "fixture: contrasting-set/b2b"
+    }
+  },
+
+  "integration-first-devtool": {
+    "_why": "One authorised connection resolves dozens of facts at once. Progress collapse is the whole reason this topology exists.",
+    "expect_outcome": "RECOMMEND",
+    "expect_archetype": "INTEGRATION_FIRST",
+    "context": {
+      "product_kind": "developer productivity tool",
+      "primary_actor": "an engineer",
+      "primary_intent": "see their own work in the product",
+      "first_meaningful_value": "their real repositories, analysed",
+      "value_before_identity_possible": false,
+      "identity_driver": "external_effect",
+      "assurance_required": false,
+      "regulated": false,
+      "sensitive_data": false,
+      "work_possible_before_identity": false,
+      "work_survives_interruption": false,
+      "value_requires_external_call": true,
+      "integrations_available": ["a source-control provider"],
+      "artifacts_available": [],
+      "invitation_based": false,
+      "returning_parties_exist": true,
+      "tenancy": "individual",
+      "abuse_risk": "medium",
+      "payment_before_value": false,
+      "external_consequences": false,
+      "source": "fixture: contrasting-set/devtool"
+    }
+  },
+
+  "document-heavy-consequential": {
+    "_why": "The QuickLease shape. An artifact the party already holds seeds the work and resolves many facts, but every extracted fact is consequential and must carry provenance.",
+    "expect_outcome": "REQUIRE_APPROVAL",
+    "expect_archetype": "ARTIFACT_FIRST",
+    "context": {
+      "product_kind": "consequential document workflow",
+      "primary_actor": "a party preparing an agreement",
+      "primary_intent": "produce a valid agreement",
+      "first_meaningful_value": "a draft built from what they already hold",
+      "value_before_identity_possible": true,
+      "identity_driver": "external_effect",
+      "assurance_required": false,
+      "regulated": false,
+      "sensitive_data": true,
+      "work_possible_before_identity": true,
+      "work_survives_interruption": true,
+      "integrations_available": [],
+      "artifacts_available": ["an existing agreement", "a property record"],
+      "invitation_based": false,
+      "returning_parties_exist": true,
+      "tenancy": "individual",
+      "abuse_risk": "low",
+      "payment_before_value": false,
+      "external_consequences": true,
+      "source": "fixture: contrasting-set/document"
+    }
+  },
+
+  "regulated-high-assurance": {
+    "_why": "A verified party is required before the product acts. Every value-before-identity topology is disqualified by a measured fact, not by preference. THIS EXPECTATION WAS WRONG ON ITS FIRST RUN: it declared ABSTAIN and the resolver returned REQUIRE_APPROVAL. The resolver was right. A regulated, high-assurance product with consequences outside itself is exactly the case a machine may propose and may not choose. The expectation was corrected; the code was not.",
+    "expect_outcome": "REQUIRE_APPROVAL",
+    "expect_archetype": "IDENTITY_FIRST",
+    "context": {
+      "product_kind": "regulated financial arrangement",
+      "primary_actor": "an applicant",
+      "primary_intent": "open an arrangement",
+      "first_meaningful_value": "an approved arrangement",
+      "value_before_identity_possible": false,
+      "identity_driver": "regulation",
+      "assurance_required": true,
+      "regulated": true,
+      "sensitive_data": true,
+      "work_possible_before_identity": false,
+      "work_survives_interruption": false,
+      "integrations_available": [],
+      "artifacts_available": [],
+      "invitation_based": false,
+      "returning_parties_exist": true,
+      "tenancy": "individual",
+      "abuse_risk": "high",
+      "payment_before_value": false,
+      "external_consequences": true,
+      "source": "fixture: contrasting-set/regulated"
+    }
+  },
+
+  "residual-only-no-topology": {
+    "_why": "The OTHER refusal, and it is not the same as the underspecified one. Everything material was measured; the facts simply select nothing. No value before identity, no work before identity, no artifact, no integration, no invitation, no returning population, and nothing requires a known party. Every specific archetype is disqualified by a measured fact and only the zero-requirement residual survives. That is a statement about the PRODUCT. The underspecified fixture below is a statement about the MEASUREMENT, and conflating the two is the failure this resolver's fourth outcome exists to prevent.",
+    "expect_outcome": "ABSTAIN",
+    "expect_archetype": null,
+    "context": {
+      "product_kind": "a product whose entry facts select nothing",
+      "first_meaningful_value": "an outcome only reachable after commitment",
+      "value_before_identity_possible": false,
+      "value_requires_external_call": false,
+      "identity_driver": "none",
+      "assurance_required": false,
+      "regulated": false,
+      "sensitive_data": false,
+      "work_possible_before_identity": false,
+      "work_survives_interruption": false,
+      "integrations_available": [],
+      "artifacts_available": [],
+      "invitation_based": false,
+      "returning_parties_exist": false,
+      "tenancy": "individual",
+      "abuse_risk": "low",
+      "payment_before_value": false,
+      "external_consequences": false,
+      "source": "fixture: contrasting-set/residual-only"
+    }
+  },
+
+  "adversarial-underspecified": {
+    "_why": "The refusal case. Three material facts were measured and one was not. The resolver must name the gap and decline, not pick the archetype the other three suggest.",
+    "expect_outcome": "UNDETERMINED",
+    "expect_archetype": null,
+    "context": {
+      "product_kind": "unclear",
+      "primary_intent": "something",
+      "first_meaningful_value": "a result",
+      "value_before_identity_possible": true,
+      "returning_parties_exist": true,
+      "source": "fixture: contrasting-set/adversarial-missing-identity-driver"
+    }
+  }
+}
