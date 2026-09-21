@@ -891,16 +891,45 @@ def reap_decision(session_id: str, transcript: Path | None) -> dict:
             "clock": clock, "idle_h": idle_h, "liveness": liveness}
 
 
-def _markers() -> list[tuple[Path, dict]]:
-    out = []
+def _scan_markers() -> tuple[list[tuple[Path, dict]], list[tuple[Path, str]]]:
+    """Every `gsd-autorun-*.json`, split into ADMITTED markers and REFUSALS.
+
+    Phase 4 made the sweep's DECLINES auditable: `kept` names the clause that
+    held each marker, so "reaped nothing" stops being confusable with "judged
+    nothing". It left NON-ADMISSIONS invisible one level below -- a file matching
+    this glob that never became a marker produced no row, no log and no count.
+
+    Measured 2026-09-21: two 82-byte files (`gsd-autorun-intent-ghost-*.json`,
+    test residue carrying `post_compact_intent` and no `session_id`) had sat in
+    the state directory since 09-19. A live `--explain` sweep judged 6 of the 8
+    files matching its own glob and could not say so, which is exactly the
+    distinction the phase's own done-criterion claims to provide.
+
+    Refusing them is right; refusing them SILENTLY is not. One predicate, one
+    pass, both halves returned -- so the reason a file was not admitted cannot
+    drift from the rule that excluded it.
+    """
+    ok: list[tuple[Path, dict]] = []
+    rejected: list[tuple[Path, str]] = []
     for path in sorted(state_dir().glob("gsd-autorun-*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
+        except Exception as exc:
+            rejected.append((path, f"unreadable: {exc.__class__.__name__}"))
             continue
-        if isinstance(data, dict) and data.get("session_id"):
-            out.append((path, data))
-    return out
+        if not isinstance(data, dict):
+            rejected.append((path, f"not an object: {type(data).__name__}"))
+            continue
+        if not data.get("session_id"):
+            rejected.append((path, "no session_id"))
+            continue
+        ok.append((path, data))
+    return ok, rejected
+
+
+def _markers() -> list[tuple[Path, dict]]:
+    """The admitted half. Signature unchanged -- three callers depend on it."""
+    return _scan_markers()[0]
 
 
 def _already(session_id: str, event: str, key: str, value) -> bool:
@@ -1167,6 +1196,17 @@ def sweep(now: float | None = None, dry_run: bool = False,
         actions.append({"action": "daemon", "flags": len(pending), "spawned": spawned})
     if explain:
         actions.extend({"action": "kept", **k} for k in kept)
+        # Non-admissions, and the population floor. A file matching the marker
+        # glob that never became a marker is the one case `--explain` could not
+        # previously name, so a sweep that judged SIX of eight files reported
+        # exactly like one that judged all eight. The `scanned` row makes the
+        # denominator explicit: without it, a glob that silently stopped
+        # matching reads the same as an estate with nothing to judge.
+        admitted, rejected = _scan_markers()
+        actions.extend({"action": "not_a_marker", "file": p.name, "reason": why}
+                       for p, why in rejected)
+        actions.append({"action": "scanned", "files": len(admitted) + len(rejected),
+                        "admitted": len(admitted), "rejected": len(rejected)})
     return actions
 
 
