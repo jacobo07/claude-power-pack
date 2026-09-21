@@ -35,7 +35,24 @@ be picked up from rather than only somewhere to be recorded:
 - `continuation_transport`'s own delivery and confirmation path is unexercised —
   this host routes through the terminal inbox, so a second producer of
   `resume_confirmed` has never fired.
-- The mirrored extension is on disk and not loaded until a window reload.
+- ~~The mirrored extension is on disk and not loaded until a window reload.~~
+  **Closed by observation 2026-09-21T21:44:48Z**, not by a file comparison. The
+  delivery ack for `…:compact:1790027070` reads `"enters":3` with
+  `"arg_tail":"focus on v1 milestone shipped, archived, tagged, merged to main"`
+  — both fields exist only in the build that carries `argumentTail`, so the
+  RUNNING module is the mirrored one. Behaviour, not bytes on disk: a hash match
+  would have said the file arrived, which is the claim that was never in doubt.
+  The same delivery also measures the argument tail's *redundant* branch, which
+  `extension.js:149-154` predicts as "a stray user message — a wasted turn,
+  visible, not destructive". Observed instead: the two-Enter path had already
+  submitted `/compact` **with** its argument (the command ran carrying
+  `focus on v1 milestone shipped, archived, tagged, merged to main`), and the
+  harness discarded the third submission mid-compaction, reporting
+  `"focus on …\n" never got sent`. Cheaper than the predicted branch — no turn
+  was spent — and the notice is about the redundant copy, not about the
+  delivery. Worth correcting in that comment; the tail itself stays
+  unconditional, because the extension still cannot observe whether the first
+  submission landed (PR-CONT-06).
 - Five pre-existing mirror DRIFT pairs, none introduced by v1. (Six before the
   v1 merge; advancing `main` closed `hook-dispatcher.js` on its own, because
   that pair was only drifting while `main` sat 95 commits behind.)
