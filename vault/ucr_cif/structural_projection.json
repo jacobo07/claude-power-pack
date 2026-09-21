@@ -1,0 +1,3181 @@
+{
+ "build_ms": 14334.2,
+ "built_at": "2026-09-21T23:06:57Z",
+ "held_terms": 674,
+ "ledger_binding": {
+  "corpus_id": "ef2b381beff512ca6919280a",
+  "mtime_ns": 1789854607705481200,
+  "schema_version": 1,
+  "size": 1953853
+ },
+ "ledger_owners": 40,
+ "repo_fingerprint": "41a79e92e92420f6f28ad9f38b7bff52dddc9844473c5f8a828be5fde2392e04",
+ "schema_version": 1,
+ "source": {
+  "distinctive_max_holders": 3,
+  "files_seen": 1366,
+  "producer": "modules.ucr_cif.ownership_evidence.build_structural_index",
+  "scan_dirs": [
+   "modules",
+   "tools",
+   "hooks",
+   "commands",
+   "agents",
+   "governance",
+   "rules"
+  ],
+  "signals": [
+   "SYMBOL",
+   "FILENAME",
+   "REGISTRY"
+  ]
+ },
+ "terms": {
+  "above": [
+   "tools/distiller"
+  ],
+  "absence": [
+   "modules/frontier_intelligence"
+  ],
+  "acceptance": [
+   "modules/session_resilience"
+  ],
+  "accepted": [
+   "modules/cognitive_os"
+  ],
+  "access": [
+   "modules/knowledge_acquisition",
+   "tools/distiller"
+  ],
+  "acquire": [
+   "modules/deep-research",
+   "modules/knowledge_acquisition"
+  ],
+  "acquisition": [
+   "modules/knowledge_acquisition"
+  ],
+  "action": [
+   "modules/cdicf",
+   "modules/hard_rules",
+   "modules/sleepless_qa"
+  ],
+  "actionable": [
+   "modules/sleepless_qa"
+  ],
+  "activate": [
+   "modules/cpc_os"
+  ],
+  "activation": [
+   "modules/universal-meta-systems",
+   "tools/jit_skill_loader.py"
+  ],
+  "active": [
+   "modules/cpc_os",
+   "modules/session_resilience",
+   "tools/jit_skill_loader.py"
+  ],
+  "actual": [
+   "modules/cdicf"
+  ],
+  "adapter": [
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/knowledge_acquisition",
+   "modules/omnicapture",
+   "modules/universal-meta-systems"
+  ],
+  "added": [
+   "modules/cdicf"
+  ],
+  "adopted": [
+   "modules/cdicf"
+  ],
+  "advantage": [
+   "modules/duplicate_to_advantage"
+  ],
+  "adversarial": [
+   "modules/decision_review"
+  ],
+  "advisory": [
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/fable_distillation",
+   "modules/pp_agents",
+   "modules/zero-crash"
+  ],
+  "after": [
+   "hooks/tests",
+   "modules/omnicapture"
+  ],
+  "again": [
+   "modules/hard_rules"
+  ],
+  "against": [
+   "modules/deep-research"
+  ],
+  "agent": [
+   "modules/executionos-lite",
+   "modules/pp_agents"
+  ],
+  "agents": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/pp_agents"
+  ],
+  "allowed": [
+   "hooks/hook-dispatcher.js",
+   "modules/omnicapture"
+  ],
+  "already": [
+   "modules/hard_rules",
+   "modules/zero-crash"
+  ],
+  "alternatives": [
+   "modules/cdicf"
+  ],
+  "ambiguity": [
+   "modules/ccf"
+  ],
+  "analysis": [
+   "hooks/tests",
+   "modules/autoresearch"
+  ],
+  "answer": [
+   "modules/knowledge_acquisition"
+  ],
+  "answered": [
+   "modules/knowledge_acquisition"
+  ],
+  "append": [
+   "modules/autoresearch",
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/code-review",
+   "modules/cognitive_os",
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/sleepless_qa",
+   "modules/zero-crash"
+  ],
+  "applicability": [
+   "modules/capability_runtime"
+  ],
+  "apply": [
+   "modules/cdicf",
+   "modules/decision_review",
+   "modules/session_resilience",
+   "modules/sqi",
+   "modules/universal-meta-systems",
+   "tools/distiller"
+  ],
+  "approval": [
+   "modules/cdicf"
+  ],
+  "architect": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "architectural": [
+   "modules/done_gate"
+  ],
+  "architecture": [
+   "modules/capability_runtime",
+   "modules/setup_os"
+  ],
+  "artifact": [
+   "modules/ccf",
+   "modules/done_gate",
+   "modules/duplicate_to_advantage",
+   "modules/knowledge_acquisition"
+  ],
+  "artifacts": [
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/deep-research",
+   "modules/executionos-lite",
+   "modules/rule_compiler"
+  ],
+  "assessment": [
+   "modules/done_gate",
+   "modules/knowledge_acquisition"
+  ],
+  "asset": [
+   "modules/cognitive_os"
+  ],
+  "async": [
+   "modules/autoresearch"
+  ],
+  "atomic": [
+   "modules/cpc_os",
+   "modules/deep-research",
+   "modules/hard_rules",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/omnicapture",
+   "modules/pp_agents",
+   "modules/rule_compiler",
+   "modules/session_resilience",
+   "modules/zero-crash"
+  ],
+  "attempt": [
+   "modules/zero-crash"
+  ],
+  "attribute": [
+   "modules/cognitive_os",
+   "modules/decision_review"
+  ],
+  "audit": [
+   "modules/autoresearch",
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/cognitive_os",
+   "modules/hard_rules",
+   "modules/liveness",
+   "modules/universal-meta-systems",
+   "modules/zero-crash"
+  ],
+  "auditor": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "authenticated": [
+   "modules/knowledge_acquisition"
+  ],
+  "authority": [
+   "modules/autoresearch"
+  ],
+  "available": [
+   "modules/deep-research",
+   "modules/setup_os",
+   "modules/sqi"
+  ],
+  "avoid": [
+   "modules/ccf"
+  ],
+  "avoided": [
+   "modules/cognitive_os"
+  ],
+  "axis": [
+   "modules/deep-research"
+  ],
+  "backup": [
+   "modules/cdicf"
+  ],
+  "balance": [
+   "modules/frontier_intelligence"
+  ],
+  "baseline": [
+   "modules/governance-overlay",
+   "modules/karimo-harness",
+   "modules/liveness",
+   "modules/setup_os",
+   "modules/sqi"
+  ],
+  "batch": [
+   "modules/omnicapture"
+  ],
+  "before": [
+   "hooks/tests",
+   "modules/session_resilience",
+   "modules/zero-crash"
+  ],
+  "benchmark": [
+   "modules/ccf",
+   "modules/session_resilience"
+  ],
+  "best": [
+   "modules/cdicf"
+  ],
+  "binary": [
+   "modules/zero-crash"
+  ],
+  "binding": [
+   "modules/rule_compiler"
+  ],
+  "blast": [
+   "modules/decision_review"
+  ],
+  "block": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/autoresearch",
+   "modules/cascade_prevention",
+   "modules/cdicf",
+   "modules/code-review",
+   "modules/cognitive_os",
+   "modules/hard_rules",
+   "modules/karimo-harness",
+   "modules/omnicapture",
+   "modules/rule_compiler",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "blocked": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/zero-crash"
+  ],
+  "blocker": [
+   "modules/cascade_prevention"
+  ],
+  "blockers": [
+   "modules/cascade_prevention"
+  ],
+  "blocks": [
+   "modules/ccf",
+   "modules/daif",
+   "modules/fable_distillation",
+   "modules/universal-meta-systems",
+   "tools/distiller"
+  ],
+  "bootstrap": [
+   "modules/knowledge_acquisition"
+  ],
+  "boundaries": [
+   "modules/knowledge_acquisition"
+  ],
+  "boundary": [
+   "modules/cdicf",
+   "modules/knowledge_acquisition"
+  ],
+  "bounded": [
+   "hooks/tests",
+   "modules/frontier_intelligence"
+  ],
+  "branch": [
+   "modules/cpc_os"
+  ],
+  "bridge": [
+   "modules/autoresearch",
+   "modules/cognitive_os",
+   "modules/sleepless_qa"
+  ],
+  "brief": [
+   "modules/ccf"
+  ],
+  "broad": [
+   "modules/sqi"
+  ],
+  "browser": [
+   "modules/knowledge_acquisition",
+   "modules/sleepless_qa"
+  ],
+  "budget": [
+   "hooks/hook-dispatcher.js",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/frontier_intelligence",
+   "modules/governance-overlay",
+   "modules/rule_compiler",
+   "modules/sleepless_qa"
+  ],
+  "build": [
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/deep-research",
+   "modules/duplicate_to_advantage",
+   "modules/knowledge_acquisition",
+   "modules/pp_agents",
+   "modules/rule_compiler",
+   "modules/session_resilience",
+   "modules/sleepless_qa",
+   "modules/sqi",
+   "modules/universal-meta-systems"
+  ],
+  "builds": [
+   "modules/ccf"
+  ],
+  "bundle": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/sleepless_qa"
+  ],
+  "burden": [
+   "modules/decision_review"
+  ],
+  "cache": [
+   "modules/autoresearch",
+   "modules/duplicate_to_advantage",
+   "modules/governance-overlay",
+   "modules/sleepless_qa",
+   "tools/jit_skill_loader.py"
+  ],
+  "cached": [
+   "modules/sleepless_qa",
+   "tools/jit_skill_loader.py"
+  ],
+  "calibration": [
+   "modules/dataset_first"
+  ],
+  "candidate": [
+   "modules/cdicf",
+   "modules/dataset_first",
+   "modules/duplicate_to_advantage",
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/sqi"
+  ],
+  "candidates": [
+   "hooks/tests",
+   "modules/cdicf",
+   "modules/code-review",
+   "modules/cognitive_os",
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/universal-meta-systems",
+   "tools/distiller"
+  ],
+  "canonical": [
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience"
+  ],
+  "capabilities": [
+   "modules/session_resilience"
+  ],
+  "capability": [
+   "modules/capability_runtime",
+   "modules/cdicf",
+   "modules/deep-research",
+   "modules/setup_os",
+   "tools/jit_skill_loader.py"
+  ],
+  "capacity": [
+   "modules/sqi"
+  ],
+  "capture": [
+   "modules/knowledge_acquisition",
+   "modules/sleepless_qa"
+  ],
+  "captured": [
+   "modules/knowledge_acquisition"
+  ],
+  "cascade": [
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/pp_agents"
+  ],
+  "cases": [
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/sqi"
+  ],
+  "catches": [
+   "modules/sqi"
+  ],
+  "cause": [
+   "modules/governance-overlay",
+   "modules/session_resilience"
+  ],
+  "ceiling": [
+   "modules/dataset_first",
+   "modules/deep-research",
+   "modules/done_gate"
+  ],
+  "certification": [
+   "modules/dataset_first"
+  ],
+  "chain": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests"
+  ],
+  "change": [
+   "modules/session_resilience"
+  ],
+  "changed": [
+   "modules/cpc_os"
+  ],
+  "cheaper": [
+   "modules/cognitive_os"
+  ],
+  "check": [
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/decision_review",
+   "modules/done_gate",
+   "modules/fable_distillation",
+   "modules/omnicapture",
+   "modules/pp_agents",
+   "modules/session_resilience",
+   "modules/sqi",
+   "modules/token-optimizer",
+   "tools/distiller",
+   "tools/jit_skill_loader.py"
+  ],
+  "checkpoint": [
+   "modules/governance-overlay"
+  ],
+  "child": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/cdicf"
+  ],
+  "choose": [
+   "modules/duplicate_to_advantage"
+  ],
+  "chosen": [
+   "modules/ias_c2"
+  ],
+  "chunk": [
+   "tools/distiller"
+  ],
+  "claim": [
+   "modules/cognitive_os",
+   "modules/knowledge_acquisition",
+   "modules/omnicapture",
+   "modules/rule_compiler"
+  ],
+  "claimed": [
+   "modules/knowledge_acquisition"
+  ],
+  "claims": [
+   "modules/capability_runtime",
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition",
+   "modules/rule_compiler"
+  ],
+  "classification": [
+   "modules/dataset_first"
+  ],
+  "classifier": [
+   "modules/dataset_first",
+   "modules/knowledge_acquisition"
+  ],
+  "classify": [
+   "modules/capability_runtime",
+   "modules/cognitive_os",
+   "modules/daif",
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/executionos-lite",
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/karimo-harness",
+   "modules/omnicapture",
+   "modules/rule_compiler",
+   "modules/session_resilience",
+   "modules/sqi"
+  ],
+  "claude": [
+   "modules/cpc_os",
+   "modules/deep-research",
+   "modules/hard_rules",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "clean": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/ccf",
+   "modules/session_resilience",
+   "modules/sleepless_qa"
+  ],
+  "clear": [
+   "modules/zero-crash"
+  ],
+  "close": [
+   "modules/knowledge_acquisition",
+   "modules/session_resilience"
+  ],
+  "closed": [
+   "modules/code-review"
+  ],
+  "code": [
+   "modules/cdicf",
+   "modules/code-review",
+   "modules/deep-research",
+   "modules/pp_agents",
+   "tools/distiller"
+  ],
+  "cognitive": [
+   "modules/cognitive_os"
+  ],
+  "cold": [
+   "modules/omnicapture"
+  ],
+  "combined": [
+   "modules/code-review"
+  ],
+  "command": [
+   "modules/zero-crash"
+  ],
+  "commit": [
+   "modules/cascade_prevention",
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/duplicate_to_advantage",
+   "modules/sqi"
+  ],
+  "common": [
+   "modules/duplicate_to_advantage",
+   "modules/universal-meta-systems"
+  ],
+  "compile": [
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/daif",
+   "modules/frontier_intelligence",
+   "modules/hard_rules",
+   "modules/rule_compiler",
+   "modules/universal-meta-systems"
+  ],
+  "compiler": [
+   "modules/ccf",
+   "modules/daif",
+   "modules/frontier_intelligence",
+   "modules/rule_compiler"
+  ],
+  "complete": [
+   "modules/dataset_first"
+  ],
+  "completion": [
+   "modules/omnicapture"
+  ],
+  "complexity": [
+   "modules/code-review"
+  ],
+  "component": [
+   "modules/cdicf"
+  ],
+  "components": [
+   "modules/universal-meta-systems"
+  ],
+  "compress": [
+   "modules/token-optimizer"
+  ],
+  "compute": [
+   "modules/capability_runtime",
+   "modules/decision_review",
+   "modules/duplicate_to_advantage",
+   "modules/frontier_intelligence",
+   "modules/omnicapture",
+   "modules/session_resilience"
+  ],
+  "concurrency": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "condition": [
+   "modules/cdicf"
+  ],
+  "conditions": [
+   "modules/cdicf"
+  ],
+  "confidence": [
+   "modules/cdicf",
+   "modules/sleepless_qa"
+  ],
+  "config": [
+   "modules/autoresearch",
+   "modules/ccf",
+   "modules/duplicate_to_advantage",
+   "modules/knowledge_acquisition",
+   "modules/omnicapture",
+   "modules/pp_agents",
+   "modules/sleepless_qa",
+   "modules/zero-crash"
+  ],
+  "confirm": [
+   "modules/zero-crash"
+  ],
+  "conflict": [
+   "modules/governance-overlay"
+  ],
+  "constraint": [
+   "modules/daif"
+  ],
+  "constraints": [
+   "modules/daif",
+   "modules/karimo-harness"
+  ],
+  "consumed": [
+   "modules/cdicf"
+  ],
+  "consumers": [
+   "modules/capability_runtime"
+  ],
+  "content": [
+   "modules/hard_rules",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/sqi",
+   "modules/zero-crash"
+  ],
+  "context": [
+   "hooks/hook-dispatcher.js",
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/daif",
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition",
+   "modules/pp_agents",
+   "modules/setup_os",
+   "modules/sqi",
+   "modules/zero-crash",
+   "tools/jit_skill_loader.py"
+  ],
+  "contexts": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "continue": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "contract": [
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/daif",
+   "modules/done_gate",
+   "modules/duplicate_to_advantage",
+   "modules/sleepless_qa",
+   "modules/sqi",
+   "tools/jit_skill_loader.py"
+  ],
+  "contracts": [
+   "modules/capability_runtime",
+   "modules/universal-meta-systems"
+  ],
+  "contradiction": [
+   "modules/deep-research"
+  ],
+  "contradictions": [
+   "modules/deep-research"
+  ],
+  "control": [
+   "modules/knowledge_acquisition"
+  ],
+  "core": [
+   "modules/executionos-lite",
+   "modules/governance-overlay",
+   "modules/omnicapture",
+   "modules/pp_agents",
+   "modules/zero-crash"
+  ],
+  "corpus": [
+   "modules/autoresearch",
+   "modules/capability_runtime",
+   "modules/dataset_first",
+   "modules/fable_distillation",
+   "modules/frontier_intelligence",
+   "modules/hard_rules",
+   "modules/knowledge_acquisition",
+   "modules/rule_compiler",
+   "modules/universal-meta-systems"
+  ],
+  "correction": [
+   "modules/deep-research",
+   "modules/sleepless_qa"
+  ],
+  "corruption": [
+   "modules/zero-crash"
+  ],
+  "cost": [
+   "modules/capability_runtime",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/fable_distillation",
+   "modules/ias_c2",
+   "modules/pp_agents",
+   "modules/sleepless_qa",
+   "modules/token-optimizer"
+  ],
+  "count": [
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/frontier_intelligence",
+   "modules/governance-overlay",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience",
+   "modules/sqi",
+   "modules/token-optimizer",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "counterfactual": [
+   "modules/rule_compiler"
+  ],
+  "counts": [
+   "modules/cdicf",
+   "modules/cpc_os"
+  ],
+  "coverage": [
+   "modules/pp_agents",
+   "modules/rule_compiler"
+  ],
+  "covered": [
+   "modules/deep-research"
+  ],
+  "covers": [
+   "modules/fable_distillation"
+  ],
+  "crash": [
+   "modules/cpc_os",
+   "modules/session_resilience",
+   "modules/zero-crash"
+  ],
+  "crashes": [
+   "modules/zero-crash"
+  ],
+  "create": [
+   "modules/omnicapture",
+   "modules/zero-crash"
+  ],
+  "creative": [
+   "modules/ccf"
+  ],
+  "criteria": [
+   "modules/session_resilience"
+  ],
+  "critical": [
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/setup_os",
+   "modules/zero-crash"
+  ],
+  "cross": [
+   "modules/autoresearch",
+   "modules/fable_distillation",
+   "modules/session_resilience",
+   "modules/token-optimizer"
+  ],
+  "current": [
+   "modules/capability_runtime",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/daif",
+   "modules/governance-overlay",
+   "modules/hard_rules",
+   "modules/knowledge_acquisition"
+  ],
+  "dangerous": [
+   "modules/cascade_prevention"
+  ],
+  "dataset": [
+   "modules/dataset_first",
+   "modules/fable_distillation",
+   "modules/karimo-harness",
+   "modules/universal-meta-systems",
+   "tools/distiller"
+  ],
+  "dead": [
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/decision_review"
+  ],
+  "decide": [
+   "modules/cognitive_os",
+   "modules/knowledge_acquisition"
+  ],
+  "decision": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/cognitive_os",
+   "modules/daif",
+   "modules/decision_review",
+   "modules/fable_distillation",
+   "modules/session_resilience"
+  ],
+  "decisions": [
+   "modules/daif",
+   "modules/decision_review"
+  ],
+  "declare": [
+   "modules/dataset_first"
+  ],
+  "declared": [
+   "modules/cdicf",
+   "modules/hard_rules",
+   "modules/sqi"
+  ],
+  "deep": [
+   "modules/code-review",
+   "modules/deep-research",
+   "modules/omnicapture"
+  ],
+  "default": [
+   "hooks/hook-dispatcher.js",
+   "modules/autoresearch",
+   "modules/ccf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/omnicapture",
+   "modules/sleepless_qa",
+   "modules/sqi",
+   "modules/zero-crash"
+  ],
+  "defaults": [
+   "modules/omnicapture"
+  ],
+  "delete": [
+   "modules/omnicapture"
+  ],
+  "delta": [
+   "modules/capability_runtime",
+   "modules/fable_distillation",
+   "modules/session_resilience"
+  ],
+  "demand": [
+   "modules/setup_os"
+  ],
+  "denominator": [
+   "modules/dataset_first"
+  ],
+  "density": [
+   "modules/autoresearch"
+  ],
+  "dependencies": [
+   "modules/cdicf",
+   "modules/frontier_intelligence",
+   "modules/omnicapture"
+  ],
+  "dependency": [
+   "modules/setup_os"
+  ],
+  "deploy": [
+   "modules/cascade_prevention"
+  ],
+  "depth": [
+   "modules/capability_runtime",
+   "modules/cognitive_os",
+   "modules/universal-meta-systems"
+  ],
+  "derivative": [
+   "modules/capability_runtime"
+  ],
+  "derived": [
+   "hooks/hook-dispatcher.js",
+   "modules/cdicf"
+  ],
+  "description": [
+   "modules/cdicf",
+   "modules/governance-overlay",
+   "modules/karimo-harness",
+   "modules/session_resilience",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "design": [
+   "modules/karimo-harness"
+  ],
+  "desktop": [
+   "modules/sleepless_qa"
+  ],
+  "destructive": [
+   "hooks/tests"
+  ],
+  "detect": [
+   "modules/cascade_prevention",
+   "modules/ccf",
+   "modules/code-review",
+   "modules/cpc_os",
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/duplicate_to_advantage",
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience",
+   "modules/setup_os",
+   "modules/token-optimizer",
+   "modules/zero-crash",
+   "tools/jit_skill_loader.py"
+  ],
+  "detection": [
+   "modules/capability_runtime",
+   "modules/omnicapture"
+  ],
+  "detector": [
+   "modules/rule_compiler",
+   "modules/setup_os",
+   "modules/token-optimizer"
+  ],
+  "deterministic": [
+   "modules/cognitive_os"
+  ],
+  "dimensions": [
+   "modules/session_resilience"
+  ],
+  "discover": [
+   "modules/deep-research",
+   "modules/duplicate_to_advantage",
+   "modules/liveness",
+   "modules/sqi"
+  ],
+  "discovered": [
+   "modules/liveness"
+  ],
+  "discovery": [
+   "modules/deep-research",
+   "modules/sqi",
+   "tools/jit_skill_loader.py"
+  ],
+  "disposition": [
+   "modules/knowledge_acquisition"
+  ],
+  "distill": [
+   "tools/distiller"
+  ],
+  "distillation": [
+   "modules/fable_distillation"
+  ],
+  "doctrine": [
+   "modules/code-review"
+  ],
+  "does": [
+   "modules/ccf"
+  ],
+  "domain": [
+   "modules/autoresearch",
+   "modules/ias_c2",
+   "modules/universal-meta-systems",
+   "modules/zero-crash"
+  ],
+  "done": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/cdicf",
+   "modules/done_gate"
+  ],
+  "drift": [
+   "modules/liveness",
+   "modules/setup_os"
+  ],
+  "duplicate": [
+   "modules/autoresearch",
+   "modules/capability_runtime",
+   "modules/cognitive_os",
+   "modules/duplicate_to_advantage"
+  ],
+  "durable": [
+   "modules/cdicf",
+   "modules/session_resilience"
+  ],
+  "duration": [
+   "modules/autoresearch"
+  ],
+  "during": [
+   "modules/governance-overlay"
+  ],
+  "economics": [
+   "modules/cognitive_os"
+  ],
+  "ecosystem": [
+   "modules/executionos-lite"
+  ],
+  "edge": [
+   "modules/setup_os"
+  ],
+  "effect": [
+   "hooks/tests",
+   "modules/rule_compiler"
+  ],
+  "effective": [
+   "modules/cognitive_os"
+  ],
+  "empty": [
+   "modules/ccf",
+   "modules/hard_rules"
+  ],
+  "enforced": [
+   "modules/rule_compiler"
+  ],
+  "engine": [
+   "modules/cascade_prevention",
+   "modules/ccf",
+   "modules/duplicate_to_advantage",
+   "modules/frontier_intelligence",
+   "modules/omnicapture",
+   "modules/sleepless_qa"
+  ],
+  "enter": [
+   "modules/knowledge_acquisition",
+   "modules/sleepless_qa"
+  ],
+  "entries": [
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/governance-overlay",
+   "modules/karimo-harness",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "entropy": [
+   "modules/code-review"
+  ],
+  "entry": [
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/frontier_intelligence",
+   "modules/setup_os",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "envelope": [
+   "modules/cognitive_os"
+  ],
+  "environment": [
+   "modules/sqi"
+  ],
+  "epistemic": [
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/fable_distillation"
+  ],
+  "epoch": [
+   "modules/decision_review",
+   "modules/session_resilience"
+  ],
+  "equivalent": [
+   "modules/zero-crash"
+  ],
+  "error": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/capability_runtime",
+   "modules/deep-research",
+   "modules/error_prevention",
+   "modules/knowledge_acquisition",
+   "modules/pp_agents",
+   "modules/sleepless_qa",
+   "modules/universal-meta-systems",
+   "tools/jit_skill_loader.py"
+  ],
+  "errors": [
+   "modules/cdicf",
+   "modules/pp_agents"
+  ],
+  "escalate": [
+   "modules/cognitive_os",
+   "modules/frontier_intelligence"
+  ],
+  "escalates": [
+   "modules/capability_runtime"
+  ],
+  "escape": [
+   "modules/ccf"
+  ],
+  "estimate": [
+   "modules/cognitive_os",
+   "modules/fable_distillation",
+   "modules/sleepless_qa",
+   "modules/token-optimizer"
+  ],
+  "evaluate": [
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/cpc_os",
+   "modules/dataset_first",
+   "modules/pp_agents",
+   "modules/sleepless_qa",
+   "modules/sqi"
+  ],
+  "evaluation": [
+   "modules/capability_runtime",
+   "modules/ccf"
+  ],
+  "event": [
+   "hooks/hook-dispatcher.js",
+   "modules/capability_runtime",
+   "modules/omnicapture",
+   "modules/session_resilience",
+   "modules/sleepless_qa",
+   "modules/zero-crash"
+  ],
+  "events": [
+   "hooks/hook-dispatcher.js",
+   "modules/cascade_prevention",
+   "modules/omnicapture",
+   "modules/pp_agents"
+  ],
+  "evidence": [
+   "modules/capability_runtime",
+   "modules/decision_review",
+   "modules/duplicate_to_advantage",
+   "modules/knowledge_acquisition",
+   "modules/setup_os",
+   "modules/sleepless_qa",
+   "modules/universal-meta-systems"
+  ],
+  "evolution": [
+   "modules/frontier_intelligence"
+  ],
+  "exact": [
+   "modules/ccf"
+  ],
+  "example": [
+   "modules/sleepless_qa"
+  ],
+  "execution": [
+   "modules/universal-meta-systems"
+  ],
+  "executor": [
+   "modules/universal-meta-systems"
+  ],
+  "exemption": [
+   "modules/zero-crash"
+  ],
+  "existing": [
+   "hooks/hook-dispatcher.js",
+   "modules/autoresearch",
+   "modules/cpc_os",
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/zero-crash"
+  ],
+  "exists": [
+   "modules/cognitive_os",
+   "modules/dataset_first",
+   "modules/error_prevention",
+   "modules/fable_distillation",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "expansion": [
+   "modules/duplicate_to_advantage"
+  ],
+  "expectation": [
+   "modules/knowledge_acquisition"
+  ],
+  "expected": [
+   "hooks/tests",
+   "modules/cdicf",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience"
+  ],
+  "external": [
+   "modules/capability_runtime",
+   "modules/code-review",
+   "modules/cognitive_os"
+  ],
+  "extract": [
+   "modules/autoresearch",
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/daif",
+   "modules/deep-research",
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/karimo-harness",
+   "modules/omnicapture",
+   "modules/rule_compiler",
+   "modules/session_resilience",
+   "modules/token-optimizer",
+   "modules/zero-crash",
+   "tools/jit_skill_loader.py"
+  ],
+  "extracted": [
+   "modules/deep-research"
+  ],
+  "extraction": [
+   "modules/deep-research"
+  ],
+  "extractor": [
+   "modules/daif",
+   "modules/hard_rules"
+  ],
+  "fable": [
+   "modules/fable_distillation"
+  ],
+  "fact": [
+   "modules/decision_review"
+  ],
+  "fail": [
+   "hooks/tests",
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/deep-research"
+  ],
+  "failed": [
+   "hooks/tests",
+   "modules/knowledge_acquisition"
+  ],
+  "failing": [
+   "modules/sqi"
+  ],
+  "fails": [
+   "hooks/tests",
+   "modules/ccf"
+  ],
+  "failure": [
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/zero-crash"
+  ],
+  "failures": [
+   "hooks/tests",
+   "modules/cdicf",
+   "modules/done_gate",
+   "modules/zero-crash"
+  ],
+  "fallback": [
+   "hooks/hook-dispatcher.js",
+   "modules/cdicf",
+   "tools/distiller"
+  ],
+  "families": [
+   "modules/duplicate_to_advantage"
+  ],
+  "family": [
+   "hooks/hook-dispatcher.js",
+   "modules/duplicate_to_advantage",
+   "modules/liveness"
+  ],
+  "fast": [
+   "hooks/tests"
+  ],
+  "faster": [
+   "modules/autoresearch"
+  ],
+  "feature": [
+   "modules/executionos-lite",
+   "tools/jit_skill_loader.py"
+  ],
+  "features": [
+   "modules/frontier_intelligence"
+  ],
+  "feeds": [
+   "modules/autoresearch"
+  ],
+  "fidelity": [
+   "modules/session_resilience"
+  ],
+  "field": [
+   "modules/cdicf",
+   "modules/setup_os",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "fields": [
+   "modules/ccf",
+   "tools/distiller"
+  ],
+  "files": [
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/daif",
+   "modules/liveness",
+   "modules/rule_compiler",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "final": [
+   "tools/distiller"
+  ],
+  "finding": [
+   "modules/code-review"
+  ],
+  "findings": [
+   "modules/cdicf",
+   "modules/decision_review",
+   "modules/fable_distillation"
+  ],
+  "fires": [
+   "modules/governance-overlay"
+  ],
+  "first": [
+   "hooks/tests",
+   "modules/dataset_first",
+   "modules/duplicate_to_advantage",
+   "modules/governance-overlay",
+   "modules/knowledge_acquisition",
+   "modules/rule_compiler"
+  ],
+  "fixed": [
+   "hooks/tests"
+  ],
+  "fixture": [
+   "hooks/tests"
+  ],
+  "fixtures": [
+   "modules/deep-research"
+  ],
+  "floor": [
+   "modules/frontier_intelligence",
+   "modules/zero-crash"
+  ],
+  "flywheel": [
+   "modules/fable_distillation"
+  ],
+  "forbidden": [
+   "tools/distiller"
+  ],
+  "found": [
+   "modules/token-optimizer"
+  ],
+  "frame": [
+   "modules/autoresearch",
+   "modules/knowledge_acquisition"
+  ],
+  "frames": [
+   "modules/autoresearch"
+  ],
+  "frequency": [
+   "modules/governance-overlay"
+  ],
+  "fresh": [
+   "modules/cdicf",
+   "modules/cognitive_os"
+  ],
+  "frontier": [
+   "modules/fable_distillation",
+   "modules/frontier_intelligence"
+  ],
+  "frozen": [
+   "modules/universal-meta-systems"
+  ],
+  "full": [
+   "modules/ccf",
+   "modules/zero-crash"
+  ],
+  "gate": [
+   "hooks/tests",
+   "modules/code-review",
+   "modules/deep-research",
+   "modules/done_gate",
+   "modules/fable_distillation",
+   "modules/hard_rules",
+   "modules/liveness",
+   "modules/session_resilience",
+   "modules/sqi",
+   "modules/universal-meta-systems",
+   "modules/zero-crash",
+   "tools/distiller",
+   "tools/jit_skill_loader.py"
+  ],
+  "gated": [
+   "modules/cognitive_os"
+  ],
+  "gates": [
+   "hooks/tests",
+   "modules/ccf",
+   "modules/sqi"
+  ],
+  "generate": [
+   "modules/autoresearch",
+   "modules/ccf",
+   "modules/cpc_os",
+   "modules/deep-research",
+   "modules/frontier_intelligence",
+   "modules/omnicapture",
+   "modules/setup_os",
+   "modules/token-optimizer"
+  ],
+  "generated": [
+   "modules/karimo-harness"
+  ],
+  "generator": [
+   "modules/frontier_intelligence",
+   "modules/setup_os"
+  ],
+  "generic": [
+   "modules/universal-meta-systems",
+   "tools/distiller"
+  ],
+  "global": [
+   "hooks/tests",
+   "modules/omnicapture"
+  ],
+  "govern": [
+   "modules/duplicate_to_advantage"
+  ],
+  "governance": [
+   "modules/executionos-lite",
+   "modules/governance-overlay",
+   "modules/omnicapture",
+   "modules/token-optimizer"
+  ],
+  "governing": [
+   "modules/knowledge_acquisition"
+  ],
+  "graph": [
+   "modules/setup_os"
+  ],
+  "green": [
+   "hooks/tests"
+  ],
+  "group": [
+   "modules/cpc_os",
+   "modules/knowledge_acquisition"
+  ],
+  "guarantee": [
+   "modules/cognitive_os"
+  ],
+  "guard": [
+   "hooks/tests",
+   "modules/sqi"
+  ],
+  "guards": [
+   "modules/sqi"
+  ],
+  "hard": [
+   "modules/cdicf",
+   "modules/hard_rules",
+   "modules/zero-crash"
+  ],
+  "hardware": [
+   "modules/governance-overlay"
+  ],
+  "harness": [
+   "modules/karimo-harness",
+   "modules/rule_compiler"
+  ],
+  "have": [
+   "modules/cdicf",
+   "modules/karimo-harness"
+  ],
+  "heuristic": [
+   "modules/autoresearch"
+  ],
+  "history": [
+   "modules/capability_runtime",
+   "modules/code-review",
+   "modules/deep-research",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience"
+  ],
+  "holder": [
+   "modules/cdicf",
+   "modules/knowledge_acquisition"
+  ],
+  "hooks": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/governance-overlay",
+   "modules/liveness",
+   "modules/zero-crash"
+  ],
+  "hosts": [
+   "modules/deep-research"
+  ],
+  "human": [
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/omnicapture",
+   "modules/session_resilience",
+   "modules/setup_os"
+  ],
+  "identity": [
+   "modules/cdicf",
+   "modules/session_resilience"
+  ],
+  "illegal": [
+   "modules/knowledge_acquisition"
+  ],
+  "incidents": [
+   "modules/governance-overlay"
+  ],
+  "index": [
+   "modules/deep-research",
+   "modules/liveness",
+   "modules/session_resilience",
+   "modules/setup_os",
+   "modules/universal-meta-systems"
+  ],
+  "infrastructure": [
+   "modules/dataset_first"
+  ],
+  "inheritance": [
+   "hooks/tests"
+  ],
+  "inline": [
+   "hooks/tests"
+  ],
+  "input": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests",
+   "modules/code-review",
+   "modules/governance-overlay",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "integration": [
+   "modules/cdicf",
+   "modules/session_resilience",
+   "modules/universal-meta-systems"
+  ],
+  "integrity": [
+   "modules/knowledge_acquisition"
+  ],
+  "intelligence": [
+   "modules/frontier_intelligence"
+  ],
+  "intent": [
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/deep-research",
+   "modules/karimo-harness",
+   "tools/jit_skill_loader.py"
+  ],
+  "interface": [
+   "modules/knowledge_acquisition"
+  ],
+  "interfaces": [
+   "modules/knowledge_acquisition"
+  ],
+  "invalid": [
+   "modules/ccf"
+  ],
+  "invariants": [
+   "modules/cdicf"
+  ],
+  "invocation": [
+   "modules/sqi"
+  ],
+  "issue": [
+   "hooks/tests",
+   "modules/governance-overlay"
+  ],
+  "issues": [
+   "modules/cdicf"
+  ],
+  "itself": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "judge": [
+   "modules/knowledge_acquisition",
+   "modules/rule_compiler",
+   "modules/sleepless_qa"
+  ],
+  "judged": [
+   "hooks/tests"
+  ],
+  "kernel": [
+   "modules/decision_review",
+   "modules/universal-meta-systems"
+  ],
+  "knowledge": [
+   "modules/ccf",
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/knowledge_acquisition",
+   "tools/jit_skill_loader.py"
+  ],
+  "known": [
+   "modules/cdicf",
+   "modules/knowledge_acquisition"
+  ],
+  "kobiicraft": [
+   "modules/omnicapture"
+  ],
+  "label": [
+   "modules/code-review",
+   "modules/cpc_os",
+   "modules/deep-research",
+   "modules/governance-overlay",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/session_resilience",
+   "tools/distiller"
+  ],
+  "ladder": [
+   "modules/done_gate",
+   "modules/fable_distillation",
+   "modules/sleepless_qa"
+  ],
+  "large": [
+   "modules/pp_agents"
+  ],
+  "later": [
+   "modules/ias_c2"
+  ],
+  "layer": [
+   "modules/deep-research"
+  ],
+  "learning": [
+   "modules/deep-research"
+  ],
+  "ledger": [
+   "modules/cognitive_os",
+   "modules/dataset_first",
+   "modules/fable_distillation",
+   "modules/ias_c2",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/sqi",
+   "modules/zero-crash"
+  ],
+  "lesson": [
+   "modules/code-review"
+  ],
+  "lessons": [
+   "modules/pp_agents"
+  ],
+  "level": [
+   "modules/cdicf",
+   "modules/decision_review",
+   "modules/fable_distillation"
+  ],
+  "levels": [
+   "modules/decision_review"
+  ],
+  "leverage": [
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition"
+  ],
+  "lifecycle": [
+   "modules/capability_runtime",
+   "modules/cdicf",
+   "modules/session_resilience",
+   "modules/universal-meta-systems"
+  ],
+  "limits": [
+   "modules/omnicapture",
+   "tools/distiller"
+  ],
+  "lineage": [
+   "modules/capability_runtime"
+  ],
+  "lists": [
+   "modules/ccf"
+  ],
+  "live": [
+   "hooks/hook-dispatcher.js",
+   "modules/cpc_os",
+   "modules/decision_review",
+   "modules/executionos-lite",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/session_resilience"
+  ],
+  "loader": [
+   "tools/jit_skill_loader.py"
+  ],
+  "local": [
+   "modules/cdicf",
+   "modules/session_resilience"
+  ],
+  "looks": [
+   "modules/pp_agents"
+  ],
+  "lookup": [
+   "modules/cognitive_os"
+  ],
+  "loop": [
+   "modules/code-review",
+   "modules/cognitive_os",
+   "modules/universal-meta-systems"
+  ],
+  "lost": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "lower": [
+   "modules/deep-research",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "manifest": [
+   "modules/cdicf",
+   "modules/dataset_first",
+   "modules/omnicapture",
+   "modules/sqi"
+  ],
+  "manifests": [
+   "modules/sqi"
+  ],
+  "manual": [
+   "modules/karimo-harness"
+  ],
+  "markdown": [
+   "modules/deep-research",
+   "modules/hard_rules"
+  ],
+  "marker": [
+   "modules/daif",
+   "modules/karimo-harness",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "markers": [
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "maturity": [
+   "modules/capability_runtime",
+   "modules/cdicf",
+   "modules/fable_distillation"
+  ],
+  "maximum": [
+   "modules/cdicf"
+  ],
+  "measurable": [
+   "modules/deep-research"
+  ],
+  "measure": [
+   "modules/daif",
+   "modules/fable_distillation",
+   "modules/rule_compiler"
+  ],
+  "measured": [
+   "modules/knowledge_acquisition",
+   "modules/zero-crash"
+  ],
+  "measurement": [
+   "modules/knowledge_acquisition",
+   "modules/rule_compiler"
+  ],
+  "memory": [
+   "modules/cognitive_os",
+   "modules/sleepless_qa",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "merge": [
+   "hooks/hook-dispatcher.js",
+   "modules/cpc_os"
+  ],
+  "message": [
+   "modules/zero-crash"
+  ],
+  "meta": [
+   "modules/cdicf",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience",
+   "modules/universal-meta-systems"
+  ],
+  "metrics": [
+   "modules/cognitive_os",
+   "modules/session_resilience",
+   "modules/zero-crash"
+  ],
+  "migrate": [
+   "modules/executionos-lite"
+  ],
+  "migration": [
+   "modules/executionos-lite"
+  ],
+  "minimal": [
+   "modules/ccf"
+  ],
+  "minimum": [
+   "modules/cdicf"
+  ],
+  "mismatch": [
+   "modules/governance-overlay"
+  ],
+  "missing": [
+   "hooks/tests",
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/deep-research"
+  ],
+  "mission": [
+   "modules/capability_runtime",
+   "modules/daif",
+   "modules/setup_os"
+  ],
+  "mistakes": [
+   "modules/governance-overlay"
+  ],
+  "mode": [
+   "modules/cdicf",
+   "modules/knowledge_acquisition",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "model": [
+   "modules/autoresearch",
+   "modules/ccf",
+   "modules/daif",
+   "modules/fable_distillation",
+   "modules/sleepless_qa"
+  ],
+  "models": [
+   "modules/knowledge_acquisition",
+   "modules/session_resilience"
+  ],
+  "modes": [
+   "modules/cdicf"
+  ],
+  "modules": [
+   "modules/autoresearch",
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/code-review",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/daif",
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/done_gate",
+   "modules/duplicate_to_advantage",
+   "modules/error_prevention",
+   "modules/executionos-lite",
+   "modules/fable_distillation",
+   "modules/frontier_intelligence",
+   "modules/governance-overlay",
+   "modules/hard_rules",
+   "modules/ias_c2",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/omnicapture",
+   "modules/pp_agents",
+   "modules/rule_compiler",
+   "modules/session_resilience",
+   "modules/setup_os",
+   "modules/sleepless_qa",
+   "modules/sqi",
+   "modules/token-optimizer",
+   "modules/universal-meta-systems",
+   "modules/zero-crash",
+   "tools/jit_skill_loader.py"
+  ],
+  "months": [
+   "modules/cdicf"
+  ],
+  "motion": [
+   "modules/cdicf"
+  ],
+  "multiplier": [
+   "modules/cdicf",
+   "modules/frontier_intelligence"
+  ],
+  "mutation": [
+   "modules/frontier_intelligence",
+   "modules/sqi"
+  ],
+  "named": [
+   "modules/liveness",
+   "modules/rule_compiler"
+  ],
+  "names": [
+   "modules/cdicf",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/sqi"
+  ],
+  "native": [
+   "modules/executionos-lite",
+   "modules/omnicapture"
+  ],
+  "need": [
+   "modules/cdicf"
+  ],
+  "needed": [
+   "modules/token-optimizer"
+  ],
+  "needs": [
+   "modules/knowledge_acquisition"
+  ],
+  "negative": [
+   "modules/frontier_intelligence"
+  ],
+  "next": [
+   "hooks/hook-dispatcher.js",
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/hard_rules",
+   "modules/knowledge_acquisition"
+  ],
+  "nodes": [
+   "modules/universal-meta-systems"
+  ],
+  "novelty": [
+   "modules/duplicate_to_advantage",
+   "modules/rule_compiler",
+   "tools/jit_skill_loader.py"
+  ],
+  "numeric": [
+   "modules/knowledge_acquisition"
+  ],
+  "object": [
+   "modules/decision_review"
+  ],
+  "obligation": [
+   "modules/daif"
+  ],
+  "obligations": [
+   "modules/daif"
+  ],
+  "observation": [
+   "modules/sqi"
+  ],
+  "observations": [
+   "modules/sqi"
+  ],
+  "only": [
+   "hooks/tests",
+   "modules/cdicf",
+   "tools/distiller"
+  ],
+  "opportunity": [
+   "modules/ias_c2"
+  ],
+  "oracle": [
+   "tools/distiller"
+  ],
+  "order": [
+   "modules/session_resilience"
+  ],
+  "orphan": [
+   "modules/zero-crash"
+  ],
+  "outcome": [
+   "hooks/tests",
+   "modules/cascade_prevention",
+   "modules/dataset_first",
+   "modules/decision_review"
+  ],
+  "output": [
+   "modules/governance-overlay",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "outputs": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "overlays": [
+   "modules/executionos-lite"
+  ],
+  "override": [
+   "modules/dataset_first"
+  ],
+  "owner": [
+   "modules/capability_runtime",
+   "modules/decision_review",
+   "modules/frontier_intelligence"
+  ],
+  "pack": [
+   "modules/cognitive_os",
+   "modules/knowledge_acquisition",
+   "modules/universal-meta-systems"
+  ],
+  "package": [
+   "modules/ccf",
+   "modules/daif",
+   "tools/jit_skill_loader.py"
+  ],
+  "page": [
+   "modules/cognitive_os",
+   "modules/deep-research"
+  ],
+  "pair": [
+   "modules/done_gate"
+  ],
+  "parallel": [
+   "modules/cpc_os"
+  ],
+  "parser": [
+   "modules/ccf",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/rule_compiler",
+   "modules/sleepless_qa",
+   "modules/universal-meta-systems"
+  ],
+  "parte": [
+   "tools/distiller"
+  ],
+  "partes": [
+   "tools/distiller"
+  ],
+  "pass": [
+   "hooks/tests",
+   "modules/ccf",
+   "modules/code-review",
+   "modules/decision_review",
+   "modules/deep-research"
+  ],
+  "paths": [
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/duplicate_to_advantage",
+   "modules/frontier_intelligence",
+   "modules/sleepless_qa"
+  ],
+  "pattern": [
+   "modules/cdicf",
+   "modules/karimo-harness",
+   "modules/sleepless_qa",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "patterns": [
+   "modules/code-review",
+   "modules/sleepless_qa",
+   "modules/sqi",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "pending": [
+   "modules/autoresearch",
+   "modules/cpc_os",
+   "modules/fable_distillation",
+   "modules/frontier_intelligence"
+  ],
+  "permissions": [
+   "modules/token-optimizer"
+  ],
+  "permitted": [
+   "modules/decision_review"
+  ],
+  "phase": [
+   "modules/cdicf"
+  ],
+  "phases": [
+   "modules/executionos-lite"
+  ],
+  "pipeline": [
+   "modules/universal-meta-systems"
+  ],
+  "plan": [
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/duplicate_to_advantage",
+   "modules/frontier_intelligence",
+   "modules/setup_os",
+   "modules/universal-meta-systems"
+  ],
+  "plugin": [
+   "modules/pp_agents",
+   "modules/token-optimizer"
+  ],
+  "policy": [
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "portfolio": [
+   "modules/duplicate_to_advantage"
+  ],
+  "posix": [
+   "modules/sqi",
+   "modules/zero-crash"
+  ],
+  "power": [
+   "modules/cognitive_os",
+   "modules/session_resilience"
+  ],
+  "prediction": [
+   "modules/dataset_first"
+  ],
+  "predictive": [
+   "modules/cascade_prevention"
+  ],
+  "premises": [
+   "modules/error_prevention"
+  ],
+  "present": [
+   "modules/ccf",
+   "modules/hard_rules",
+   "modules/setup_os",
+   "tools/distiller"
+  ],
+  "pressure": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "prevention": [
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/error_prevention"
+  ],
+  "prior": [
+   "modules/cdicf"
+  ],
+  "priority": [
+   "modules/deep-research",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience",
+   "modules/setup_os",
+   "modules/sleepless_qa"
+  ],
+  "private": [
+   "tools/distiller"
+  ],
+  "probe": [
+   "hooks/tests",
+   "modules/capability_runtime",
+   "modules/cdicf",
+   "modules/fable_distillation",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/rule_compiler",
+   "modules/sleepless_qa",
+   "modules/sqi",
+   "modules/zero-crash"
+  ],
+  "probes": [
+   "modules/fable_distillation"
+  ],
+  "process": [
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/omnicapture",
+   "modules/zero-crash"
+  ],
+  "produces": [
+   "modules/ccf"
+  ],
+  "product": [
+   "modules/executionos-lite"
+  ],
+  "profile": [
+   "modules/knowledge_acquisition",
+   "modules/setup_os",
+   "modules/sqi"
+  ],
+  "progress": [
+   "modules/zero-crash"
+  ],
+  "project": [
+   "hooks/tests",
+   "modules/autoresearch",
+   "modules/code-review",
+   "modules/cpc_os",
+   "modules/dataset_first",
+   "modules/governance-overlay",
+   "modules/omnicapture",
+   "modules/setup_os",
+   "modules/token-optimizer",
+   "modules/universal-meta-systems"
+  ],
+  "projects": [
+   "modules/autoresearch",
+   "modules/omnicapture"
+  ],
+  "prompt": [
+   "modules/ccf",
+   "modules/cpc_os",
+   "modules/deep-research",
+   "modules/governance-overlay",
+   "modules/knowledge_acquisition",
+   "modules/sleepless_qa",
+   "modules/token-optimizer",
+   "tools/jit_skill_loader.py"
+  ],
+  "prompts": [
+   "modules/knowledge_acquisition"
+  ],
+  "proof": [
+   "modules/fable_distillation"
+  ],
+  "properties": [
+   "modules/cdicf",
+   "modules/karimo-harness"
+  ],
+  "proposal": [
+   "modules/capability_runtime",
+   "modules/deep-research",
+   "modules/duplicate_to_advantage",
+   "modules/frontier_intelligence",
+   "modules/sqi"
+  ],
+  "proposals": [
+   "modules/capability_runtime"
+  ],
+  "prose": [
+   "modules/code-review",
+   "modules/liveness"
+  ],
+  "protected": [
+   "modules/cognitive_os"
+  ],
+  "protection": [
+   "modules/sqi"
+  ],
+  "protocol": [
+   "modules/dataset_first"
+  ],
+  "prove": [
+   "modules/fable_distillation"
+  ],
+  "proven": [
+   "modules/fable_distillation",
+   "modules/frontier_intelligence"
+  ],
+  "provenance": [
+   "modules/capability_runtime",
+   "modules/cdicf",
+   "modules/duplicate_to_advantage",
+   "modules/karimo-harness"
+  ],
+  "providers": [
+   "modules/decision_review"
+  ],
+  "public": [
+   "modules/liveness"
+  ],
+  "quality": [
+   "modules/autoresearch",
+   "modules/cascade_prevention",
+   "modules/cdicf",
+   "modules/deep-research",
+   "modules/knowledge_acquisition",
+   "modules/pp_agents",
+   "modules/universal-meta-systems",
+   "modules/zero-crash"
+  ],
+  "queries": [
+   "modules/deep-research"
+  ],
+  "query": [
+   "modules/deep-research",
+   "modules/omnicapture",
+   "tools/reconstructor.py"
+  ],
+  "question": [
+   "modules/deep-research",
+   "modules/frontier_intelligence"
+  ],
+  "questions": [
+   "modules/ccf",
+   "modules/frontier_intelligence"
+  ],
+  "queue": [
+   "modules/ccf",
+   "modules/decision_review",
+   "modules/fable_distillation",
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition"
+  ],
+  "radius": [
+   "modules/decision_review"
+  ],
+  "ranked": [
+   "modules/cdicf",
+   "modules/frontier_intelligence",
+   "modules/zero-crash"
+  ],
+  "ratchet": [
+   "modules/liveness",
+   "modules/sqi"
+  ],
+  "rate": [
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/omnicapture",
+   "modules/zero-crash"
+  ],
+  "ratio": [
+   "modules/capability_runtime",
+   "modules/sqi"
+  ],
+  "readme": [
+   "modules/cdicf",
+   "modules/knowledge_acquisition",
+   "modules/sleepless_qa",
+   "modules/universal-meta-systems",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "reality": [
+   "modules/daif",
+   "modules/sqi"
+  ],
+  "reason": [
+   "hooks/tests",
+   "modules/duplicate_to_advantage",
+   "modules/rule_compiler",
+   "modules/zero-crash"
+  ],
+  "recent": [
+   "tools/jit_skill_loader.py"
+  ],
+  "reconstruction": [
+   "modules/capability_runtime"
+  ],
+  "reconstructor": [
+   "tools/reconstructor.py"
+  ],
+  "record": [
+   "hooks/hook-dispatcher.js",
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/ccf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/fable_distillation",
+   "modules/frontier_intelligence",
+   "modules/ias_c2",
+   "modules/knowledge_acquisition",
+   "modules/omnicapture",
+   "modules/session_resilience",
+   "modules/sqi"
+  ],
+  "records": [
+   "modules/capability_runtime",
+   "modules/daif",
+   "modules/deep-research"
+  ],
+  "recover": [
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/knowledge_acquisition"
+  ],
+  "recovery": [
+   "modules/cpc_os",
+   "modules/session_resilience"
+  ],
+  "recurrence": [
+   "modules/decision_review",
+   "modules/pp_agents"
+  ],
+  "recurring": [
+   "modules/pp_agents"
+  ],
+  "reference": [
+   "modules/cdicf",
+   "modules/session_resilience",
+   "modules/universal-meta-systems"
+  ],
+  "references": [
+   "modules/liveness",
+   "modules/sqi"
+  ],
+  "register": [
+   "modules/cpc_os",
+   "modules/session_resilience"
+  ],
+  "registered": [
+   "modules/liveness"
+  ],
+  "registry": [
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/decision_review",
+   "modules/duplicate_to_advantage",
+   "modules/governance-overlay",
+   "modules/liveness",
+   "modules/rule_compiler",
+   "modules/session_resilience",
+   "modules/setup_os",
+   "modules/zero-crash"
+  ],
+  "regression": [
+   "modules/session_resilience",
+   "modules/sqi"
+  ],
+  "rehydration": [
+   "modules/cognitive_os"
+  ],
+  "rejected": [
+   "modules/cdicf"
+  ],
+  "release": [
+   "modules/ccf",
+   "modules/deep-research",
+   "modules/governance-overlay",
+   "modules/knowledge_acquisition"
+  ],
+  "relevance": [
+   "modules/cdicf",
+   "modules/deep-research"
+  ],
+  "relevant": [
+   "modules/cdicf"
+  ],
+  "removed": [
+   "modules/cdicf"
+  ],
+  "render": [
+   "modules/capability_runtime",
+   "modules/cdicf",
+   "modules/cpc_os",
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/done_gate",
+   "modules/duplicate_to_advantage",
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/rule_compiler",
+   "modules/setup_os",
+   "modules/sleepless_qa",
+   "modules/universal-meta-systems",
+   "tools/jit_skill_loader.py"
+  ],
+  "replay": [
+   "modules/fable_distillation"
+  ],
+  "report": [
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/decision_review",
+   "modules/deep-research",
+   "modules/duplicate_to_advantage",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/omnicapture",
+   "modules/setup_os",
+   "modules/sqi",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "request": [
+   "modules/knowledge_acquisition",
+   "modules/omnicapture",
+   "modules/zero-crash"
+  ],
+  "requests": [
+   "modules/knowledge_acquisition"
+  ],
+  "require": [
+   "modules/knowledge_acquisition",
+   "modules/sleepless_qa"
+  ],
+  "required": [
+   "modules/cdicf",
+   "modules/decision_review",
+   "modules/karimo-harness",
+   "modules/sqi",
+   "tools/distiller"
+  ],
+  "requirements": [
+   "modules/done_gate"
+  ],
+  "requires": [
+   "modules/omnicapture"
+  ],
+  "research": [
+   "modules/autoresearch",
+   "modules/capability_runtime",
+   "modules/deep-research"
+  ],
+  "residual": [
+   "modules/hard_rules"
+  ],
+  "resolve": [
+   "hooks/tests",
+   "modules/code-review",
+   "modules/cpc_os",
+   "modules/decision_review",
+   "modules/done_gate",
+   "modules/fable_distillation",
+   "modules/session_resilience",
+   "modules/universal-meta-systems",
+   "modules/zero-crash",
+   "tools/distiller",
+   "tools/reconstructor.py"
+  ],
+  "resolved": [
+   "modules/cdicf"
+  ],
+  "response": [
+   "modules/deep-research",
+   "modules/knowledge_acquisition"
+  ],
+  "restart": [
+   "modules/cpc_os"
+  ],
+  "restore": [
+   "modules/cognitive_os",
+   "modules/zero-crash"
+  ],
+  "result": [
+   "hooks/hook-dispatcher.js",
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/daif",
+   "modules/deep-research",
+   "modules/done_gate",
+   "modules/error_prevention",
+   "modules/fable_distillation",
+   "modules/knowledge_acquisition",
+   "modules/omnicapture",
+   "modules/rule_compiler",
+   "modules/session_resilience",
+   "modules/sleepless_qa",
+   "modules/sqi",
+   "modules/zero-crash"
+  ],
+  "resume": [
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/daif",
+   "modules/session_resilience",
+   "modules/zero-crash"
+  ],
+  "retry": [
+   "modules/omnicapture",
+   "modules/sleepless_qa"
+  ],
+  "reuse": [
+   "modules/cdicf",
+   "modules/frontier_intelligence"
+  ],
+  "reversibility": [
+   "modules/decision_review"
+  ],
+  "review": [
+   "modules/code-review",
+   "modules/decision_review",
+   "modules/fable_distillation"
+  ],
+  "reviewed": [
+   "modules/karimo-harness"
+  ],
+  "risk": [
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/ccf",
+   "modules/pp_agents",
+   "modules/setup_os"
+  ],
+  "rollback": [
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/setup_os"
+  ],
+  "root": [
+   "hooks/hook-dispatcher.js",
+   "modules/cdicf",
+   "modules/governance-overlay",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/liveness",
+   "modules/session_resilience",
+   "modules/universal-meta-systems",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "route": [
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/decision_review",
+   "modules/fable_distillation",
+   "modules/knowledge_acquisition",
+   "modules/zero-crash"
+  ],
+  "router": [
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/knowledge_acquisition",
+   "tools/jit_skill_loader.py"
+  ],
+  "routes": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "routing": [
+   "modules/knowledge_acquisition",
+   "tools/jit_skill_loader.py"
+  ],
+  "rules": [
+   "hooks/tests",
+   "modules/daif",
+   "modules/hard_rules",
+   "modules/omnicapture",
+   "modules/rule_compiler",
+   "modules/sqi",
+   "modules/token-optimizer"
+  ],
+  "runtime": [
+   "modules/capability_runtime",
+   "modules/omnicapture",
+   "modules/setup_os",
+   "modules/universal-meta-systems"
+  ],
+  "saturated": [
+   "modules/sqi"
+  ],
+  "scanner": [
+   "modules/ccf",
+   "modules/decision_review",
+   "modules/setup_os",
+   "modules/sqi"
+  ],
+  "scheduler": [
+   "modules/cognitive_os"
+  ],
+  "scope": [
+   "modules/decision_review",
+   "tools/distiller"
+  ],
+  "score": [
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/dataset_first",
+   "modules/decision_review",
+   "modules/duplicate_to_advantage",
+   "modules/fable_distillation",
+   "modules/session_resilience",
+   "modules/setup_os",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "scorecard": [
+   "modules/session_resilience"
+  ],
+  "scoring": [
+   "modules/autoresearch"
+  ],
+  "scratch": [
+   "hooks/hook-dispatcher.js",
+   "hooks/tests"
+  ],
+  "script": [
+   "modules/sleepless_qa"
+  ],
+  "search": [
+   "modules/deep-research",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience"
+  ],
+  "seconds": [
+   "modules/autoresearch",
+   "modules/omnicapture",
+   "modules/sleepless_qa"
+  ],
+  "section": [
+   "modules/deep-research",
+   "modules/executionos-lite",
+   "modules/token-optimizer",
+   "tools/distiller"
+  ],
+  "security": [
+   "modules/code-review"
+  ],
+  "selection": [
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/cdicf"
+  ],
+  "selector": [
+   "modules/cdicf"
+  ],
+  "semantic": [
+   "modules/ccf"
+  ],
+  "session": [
+   "modules/cascade_prevention",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/daif",
+   "modules/fable_distillation",
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "sessions": [
+   "modules/cognitive_os"
+  ],
+  "severity": [
+   "modules/cascade_prevention",
+   "modules/omnicapture"
+  ],
+  "shape": [
+   "modules/knowledge_acquisition"
+  ],
+  "shared": [
+   "modules/deep-research"
+  ],
+  "signal": [
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/dataset_first",
+   "modules/fable_distillation",
+   "modules/karimo-harness",
+   "modules/liveness",
+   "modules/omnicapture",
+   "modules/pp_agents",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "signals": [
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/pp_agents",
+   "modules/token-optimizer"
+  ],
+  "signature": [
+   "modules/universal-meta-systems"
+  ],
+  "silent": [
+   "modules/sleepless_qa"
+  ],
+  "since": [
+   "modules/cdicf",
+   "modules/omnicapture",
+   "modules/sleepless_qa"
+  ],
+  "sizes": [
+   "hooks/tests"
+  ],
+  "skill": [
+   "modules/autoresearch",
+   "modules/universal-meta-systems",
+   "modules/zero-crash",
+   "tools/jit_skill_loader.py"
+  ],
+  "skills": [
+   "modules/zero-crash"
+  ],
+  "snapshot": [
+   "modules/cpc_os",
+   "modules/session_resilience",
+   "modules/setup_os",
+   "modules/sqi"
+  ],
+  "source": [
+   "hooks/tests",
+   "modules/daif",
+   "modules/deep-research",
+   "modules/karimo-harness",
+   "modules/setup_os",
+   "tools/distiller"
+  ],
+  "sources": [
+   "modules/deep-research",
+   "modules/duplicate_to_advantage",
+   "modules/karimo-harness"
+  ],
+  "specification": [
+   "modules/ccf"
+  ],
+  "split": [
+   "modules/capability_runtime",
+   "modules/ccf",
+   "modules/cdicf",
+   "modules/deep-research",
+   "modules/frontier_intelligence",
+   "modules/universal-meta-systems",
+   "tools/jit_skill_loader.py"
+  ],
+  "stale": [
+   "hooks/tests",
+   "modules/capability_runtime",
+   "modules/cpc_os",
+   "modules/zero-crash"
+  ],
+  "standard": [
+   "modules/dataset_first"
+  ],
+  "state": [
+   "hooks/hook-dispatcher.js",
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/cpc_os",
+   "modules/done_gate",
+   "modules/fable_distillation",
+   "modules/frontier_intelligence",
+   "modules/knowledge_acquisition",
+   "modules/pp_agents",
+   "modules/session_resilience",
+   "modules/sleepless_qa",
+   "tools/jit_skill_loader.py"
+  ],
+  "states": [
+   "modules/ias_c2"
+  ],
+  "status": [
+   "modules/autoresearch",
+   "modules/cdicf",
+   "modules/done_gate",
+   "modules/fable_distillation",
+   "modules/knowledge_acquisition",
+   "modules/sleepless_qa",
+   "modules/sqi"
+  ],
+  "steps": [
+   "hooks/hook-dispatcher.js"
+  ],
+  "stops": [
+   "modules/rule_compiler"
+  ],
+  "storage": [
+   "modules/omnicapture"
+  ],
+  "strategy": [
+   "tools/distiller"
+  ],
+  "strength": [
+   "modules/done_gate"
+  ],
+  "strict": [
+   "modules/daif",
+   "modules/sleepless_qa"
+  ],
+  "subject": [
+   "modules/daif"
+  ],
+  "sufficient": [
+   "modules/deep-research"
+  ],
+  "suite": [
+   "modules/sqi"
+  ],
+  "support": [
+   "modules/cdicf"
+  ],
+  "surface": [
+   "hooks/hook-dispatcher.js",
+   "modules/cdicf",
+   "modules/governance-overlay",
+   "modules/sqi"
+  ],
+  "surfaces": [
+   "modules/cascade_prevention"
+  ],
+  "symptom": [
+   "modules/governance-overlay"
+  ],
+  "system": [
+   "modules/autoresearch",
+   "modules/deep-research",
+   "modules/karimo-harness",
+   "modules/session_resilience",
+   "modules/universal-meta-systems"
+  ],
+  "systems": [
+   "modules/universal-meta-systems"
+  ],
+  "table": [
+   "modules/cpc_os"
+  ],
+  "tables": [
+   "modules/liveness"
+  ],
+  "target": [
+   "hooks/hook-dispatcher.js",
+   "modules/cdicf",
+   "modules/sqi"
+  ],
+  "telemetry": [
+   "modules/cognitive_os",
+   "modules/omnicapture",
+   "modules/session_resilience",
+   "modules/zero-crash",
+   "tools/jit_skill_loader.py"
+  ],
+  "term": [
+   "modules/cpc_os"
+  ],
+  "tests": [
+   "hooks/tests",
+   "modules/deep-research"
+  ],
+  "threshold": [
+   "modules/autoresearch",
+   "modules/governance-overlay",
+   "modules/omnicapture",
+   "modules/session_resilience",
+   "modules/sleepless_qa",
+   "modules/zero-crash"
+  ],
+  "thresholds": [
+   "modules/dataset_first",
+   "modules/zero-crash"
+  ],
+  "time": [
+   "modules/cpc_os",
+   "modules/session_resilience"
+  ],
+  "timeout": [
+   "hooks/tests",
+   "modules/autoresearch",
+   "modules/sleepless_qa",
+   "modules/zero-crash"
+  ],
+  "times": [
+   "modules/autoresearch"
+  ],
+  "token": [
+   "modules/autoresearch",
+   "modules/cognitive_os",
+   "modules/frontier_intelligence",
+   "modules/omnicapture",
+   "modules/token-optimizer",
+   "tools/distiller"
+  ],
+  "tools": [
+   "modules/karimo-harness",
+   "modules/zero-crash",
+   "tools/distiller",
+   "tools/jit_skill_loader.py",
+   "tools/reconstructor.py"
+  ],
+  "topic": [
+   "modules/session_resilience"
+  ],
+  "topology": [
+   "modules/cpc_os",
+   "modules/session_resilience",
+   "modules/setup_os"
+  ],
+  "total": [
+   "hooks/tests",
+   "modules/token-optimizer",
+   "modules/zero-crash"
+  ],
+  "tracked": [
+   "modules/duplicate_to_advantage"
+  ],
+  "transition": [
+   "modules/capability_runtime",
+   "modules/fable_distillation",
+   "modules/knowledge_acquisition"
+  ],
+  "transitions": [
+   "modules/fable_distillation"
+  ],
+  "trigger": [
+   "modules/hard_rules",
+   "modules/sleepless_qa",
+   "modules/zero-crash",
+   "tools/jit_skill_loader.py"
+  ],
+  "triggers": [
+   "modules/autoresearch"
+  ],
+  "truth": [
+   "modules/done_gate"
+  ],
+  "turns": [
+   "modules/daif"
+  ],
+  "types": [
+   "modules/cascade_prevention"
+  ],
+  "ukdl": [
+   "modules/fable_distillation",
+   "modules/frontier_intelligence"
+  ],
+  "uncertainty": [
+   "modules/sqi"
+  ],
+  "under": [
+   "modules/fable_distillation"
+  ],
+  "universal": [
+   "modules/autoresearch",
+   "modules/omnicapture",
+   "modules/universal-meta-systems"
+  ],
+  "unknown": [
+   "modules/frontier_intelligence",
+   "modules/rule_compiler",
+   "modules/token-optimizer"
+  ],
+  "unresolved": [
+   "modules/cdicf"
+  ],
+  "update": [
+   "modules/autoresearch"
+  ],
+  "upstream": [
+   "modules/cdicf"
+  ],
+  "urgency": [
+   "modules/decision_review"
+  ],
+  "user": [
+   "modules/cdicf",
+   "modules/cpc_os"
+  ],
+  "validator": [
+   "modules/omnicapture"
+  ],
+  "vault": [
+   "modules/cognitive_os",
+   "modules/governance-overlay",
+   "modules/knowledge_acquisition"
+  ],
+  "vendor": [
+   "modules/deep-research",
+   "modules/sqi"
+  ],
+  "verification": [
+   "modules/cascade_prevention"
+  ],
+  "verified": [
+   "modules/capability_runtime",
+   "modules/cascade_prevention",
+   "modules/cdicf"
+  ],
+  "verify": [
+   "modules/cdicf",
+   "modules/cognitive_os",
+   "modules/done_gate",
+   "modules/error_prevention",
+   "modules/knowledge_acquisition"
+  ],
+  "version": [
+   "modules/cdicf",
+   "modules/karimo-harness",
+   "modules/knowledge_acquisition",
+   "modules/session_resilience",
+   "modules/sqi",
+   "modules/zero-crash",
+   "tools/distiller"
+  ],
+  "vision": [
+   "modules/autoresearch",
+   "modules/sleepless_qa"
+  ],
+  "visual": [
+   "modules/executionos-lite",
+   "modules/sleepless_qa"
+  ],
+  "warm": [
+   "modules/omnicapture",
+   "tools/jit_skill_loader.py"
+  ],
+  "waste": [
+   "modules/token-optimizer"
+  ],
+  "weight": [
+   "modules/decision_review"
+  ],
+  "windows": [
+   "modules/autoresearch",
+   "modules/session_resilience",
+   "modules/sqi",
+   "modules/zero-crash"
+  ],
+  "without": [
+   "modules/ccf"
+  ],
+  "work": [
+   "modules/cognitive_os",
+   "modules/cpc_os"
+  ],
+  "working": [
+   "modules/cognitive_os"
+  ],
+  "workload": [
+   "modules/sqi"
+  ],
+  "writeback": [
+   "modules/fable_distillation"
+  ],
+  "zero": [
+   "hooks/tests",
+   "modules/governance-overlay",
+   "modules/zero-crash"
+  ]
+ },
+ "universe_terms": 1498
+}

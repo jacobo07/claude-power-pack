@@ -1,0 +1,58 @@
+[
+ {
+  "name": "W40-structural-rank-key-severed",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w9_structural_evidence.py",
+  "old": "    return (-o.structural_strength, -o.strength, -o.units, o.owner)",
+  "new": "    return (-o.strength, -o.units, o.owner)",
+  "why": "The false world: the RELATION between structural evidence and the outcome is cut while both endpoints survive intact. The projection is still built, still loaded, still LOADED-status; structural_strength is still computed, still correct, still reported on every owner and still rendered by --explain. Only the one place where it changes a decision is gone -- which is the W5 law recursively applied, because an evidence family that reaches no decision is inert stock however rich its report. V-W9-BUILDER-OUTRANKS-MENTIONER and V-W9-RANKING-ACTUALLY-CHANGES-ORDER must both catch it, and the pair matters: the first proves the mechanism decides, the second proves the owner-set gate beside it is not passing vacuously. Repointed in the same commit that moved the key into `_rank_key`; the false world is unchanged."
+ },
+ {
+  "name": "W41-attribution-severed",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w9_structural_evidence.py",
+  "old": "        attributed = sorted((t for t in matched_distinctive\n                             if proj.holds(owner, t)),",
+  "new": "        attributed = sorted((t for t in matched_distinctive\n                             if False and proj.holds(owner, t)),",
+  "why": "The false world: the edge from an owner to the terms it BUILDS is cut at the point of attribution, one layer below W40. The sort key still reads structural_strength and the projection is still consulted for nothing -- so the selector looks entirely wired and every owner scores 0.0, which is indistinguishable from an estate where nobody builds anything. This is the mutation that would survive if the gates only asserted that structural_strength EXISTS rather than that it DISCRIMINATES. V-W9-BUILDER-OUTRANKS-MENTIONER, V-W9-LEXICAL-TIE-BROKEN-STRUCTURALLY and V-W9-M3-REFUSES-LEXICAL-ONLY-OWNERS must catch it."
+ },
+ {
+  "name": "W42-absence-becomes-refutation",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w9_structural_evidence.py",
+  "old": "REQUIRE_STRUCTURAL_ATTRIBUTION = False",
+  "new": "REQUIRE_STRUCTURAL_ATTRIBUTION = True",
+  "why": "The false world: the admission clause ships on by default, so an owner with no structural attribution is REFUSED rather than merely ranked below one that has it. This is the single most dangerous edit in the file and it is one character, because it silently converts 'we found no structural evidence' into 'this owner is wrong' -- and with the projection ABSENT, UNREADABLE or STALE it refuses EVERY owner in the estate while reporting a clean, confident, empty selection. Only 18.0 % of authoritative distinctive pairs carry attribution, so the recall cost is not marginal. V-W9-M3-OFF-BY-DEFAULT and V-W9-ABSENT-IS-NOT-REFUTATION must catch it."
+ },
+ {
+  "name": "W43-mtime-back-in-the-binding",
+  "file": "modules/ucr_cif/structural_projection.py",
+  "suite": "tools/test_w9_structural_evidence.py",
+  "old": "    if corpus_id is not None and was.get(\"corpus_id\") != corpus_id:\n        moved.append(\"corpus_id\")",
+  "new": "    if corpus_id is not None and was.get(\"corpus_id\") != corpus_id:\n        moved.append(\"corpus_id\")\n    if was.get(\"mtime_ns\") != (root / LEDGER_REL).stat().st_mtime_ns:\n        moved.append(\"mtime_ns\")",
+  "why": "The false world: the freshness check compares a timestamp no clone, export, archive or fresh checkout preserves. Every one of those reports STALE_LEDGER, structural evidence silently contributes nothing, and the selector degrades to W8 -- correctly, safely, and invisibly, in exactly the environments nobody runs the gate in. It is the failure that looks like caution. V-W9-BINDING-SURVIVES-MTIME-CHANGE must catch it, and it does so by moving the mtime alone while leaving content and size untouched."
+ },
+ {
+  "name": "W44-ledger-reparsed-on-the-read-path",
+  "file": "modules/ucr_cif/structural_projection.py",
+  "suite": "tools/test_w9_structural_evidence.py",
+  "old": "    was = doc.get(\"ledger_binding\") or {}\n    moved = []\n    try:\n        if (root / LEDGER_REL).stat().st_size != was.get(\"size\"):",
+  "new": "    was = doc.get(\"ledger_binding\") or {}\n    moved = []\n    _ledger_binding(root)\n    try:\n        if (root / LEDGER_REL).stat().st_size != was.get(\"size\"):",
+  "why": "The false world: the measured 70.8 ms defect is restored -- consulting the cache re-reads the 1.9 MB file the cache exists so the hook path does not have to touch. Nothing is functionally wrong; every status is still correct and every owner still routes, which is why a correctness suite cannot see it and why the gate has to assert the SHAPE of the read path rather than a wall-clock number on a contended host. V-W9-NO-LEDGER-REPARSE-ON-READ must catch it, by disabling _ledger_binding and requiring load() to succeed anyway."
+ },
+ {
+  "name": "W45-projection-corroborates-its-own-source",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w9_structural_evidence.py",
+  "old": "        structural = sum(1.0 / holders.get(t, 1) for t in attributed)",
+  "new": "        structural = strength + sum(1.0 / holders.get(t, 1) for t in attributed)",
+  "why": "The false world: the structural sum stops being a strict SUB-SUM of the lexical one and starts adding to it, so a term is counted twice -- once because a document mentions it and again because a module builds it. That is the source-plus-projection double count this wave was written to avoid, and it is attractive because it makes the new signal look strong: every owner's number rises and the ranking still 'works'. V-W9-STRUCTURAL-IS-SUB-SUM must catch it. Note that it does NOT change the rank order here, so a gate asserting only on the winner would miss it entirely."
+ },
+ {
+  "name": "W46-stale-generation-admitted",
+  "file": "modules/ucr_cif/structural_projection.py",
+  "suite": "tools/test_w9_structural_evidence.py",
+  "old": "    if corpus_id is not None and was.get(\"corpus_id\") != corpus_id:\n        moved.append(\"corpus_id\")",
+  "new": "    if False and corpus_id is not None and was.get(\"corpus_id\") != corpus_id:\n        moved.append(\"corpus_id\")",
+  "why": "The false world: a projection built against one corpus generation is served against another. The term universe no longer matches the ledger being selected from, so structural attribution is computed from a vocabulary that has moved -- a mixed-generation evidence bundle, reported as LOADED and therefore trusted. The size check alone cannot catch a regenerated ledger of similar length, which is the ordinary case after an adjudication pass. V-W9-STALE-LEDGER-DETECTED must catch it."
+ }
+]

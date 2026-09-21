@@ -19,17 +19,17 @@
   "name": "W36-rank-reverts-to-volume",
   "file": "modules/ucr_cif/disposition_consumer.py",
   "suite": "tools/test_w8_applicability_precision.py",
-  "old": "    owners.sort(key=lambda o: (-o.strength, -o.units, o.owner))",
-  "new": "    owners.sort(key=lambda o: (-o.units, o.owner))",
-  "why": "The false world: M2 removed. strength is still computed, still stored on every OwnerRouting and still rendered by --explain, so every observability assertion stays green while the ranking reverts to the +0.756 volume bias W3 measured. A field that is computed and displayed but no longer DECIDES is the exact shape of 'read is not consume' one layer in. V-W8-RANK-IS-STRENGTH-NOT-VOLUME must catch it."
+  "old": "    return (-o.structural_strength, -o.strength, -o.units, o.owner)",
+  "new": "    return (-o.units, o.owner)",
+  "why": "The false world: M2 removed. strength is still computed, still stored on every OwnerRouting and still rendered by --explain, so every observability assertion stays green while the ranking reverts to the +0.756 volume bias W3 measured. A field that is computed and displayed but no longer DECIDES is the exact shape of 'read is not consume' one layer in. V-W8-RANK-IS-STRENGTH-NOT-VOLUME must catch it. W9 NOTE: this anchor rotted. W9 put structural strength ahead of the lexical key and the sort moved to the named `_rank_key`, so the old single-line anchor matched 0 times and the probe reported HARNESS-FAILED rather than a verdict -- correct, and the only reason the rot was visible. The repair does NOT chase the new text: it reproduces the same FALSE WORLD against the new shape, so the mutant still asserts exactly what it always asserted. Volume ranking is restored in full: both evidence channels are dropped from the key and the biggest owner wins again, which is the +0.756 correlation W3 measured."
  },
  {
   "name": "W37-strength-counts-generic-terms",
   "file": "modules/ucr_cif/disposition_consumer.py",
   "suite": "tools/test_w8_applicability_precision.py",
-  "old": "        strength = sum(1.0 / holders.get(t, 1) for t in (merged & terms)\n                       if holders.get(t, 1) <= DISTINCTIVE_MAX_HOLDERS)",
+  "old": "        strength = sum(1.0 / holders.get(t, 1) for t in matched_distinctive)",
   "new": "        strength = sum(1.0 / holders.get(t, 1) for t in (merged & terms))",
-  "why": "The false world: the volume bias returns through the back door. Ranking is still by strength, so W36's gate stays green, but common vocabulary now contributes weight -- and the owners with the most common vocabulary are the largest ones, which is how the three biggest became the three most-routed in the first place. The inverse-holder weight alone does NOT save it: four generic terms at 1/4 outscore one sole-holder term. V-W8-STRENGTH-IGNORES-GENERIC-TERMS must catch it by asserting the VALUE, which is why that gate checks a number rather than an ordering."
+  "why": "The false world: the volume bias returns through the back door. Ranking is still by strength, so W36's gate stays green, but common vocabulary now contributes weight -- and the owners with the most common vocabulary are the largest ones, which is how the three biggest became the three most-routed in the first place. The inverse-holder weight alone does NOT save it: four generic terms at 1/4 outscore one sole-holder term. V-W8-STRENGTH-IGNORES-GENERIC-TERMS must catch it by asserting the VALUE, which is why that gate checks a number rather than an ordering. W9 NOTE: this anchor rotted. W9 put structural strength ahead of the lexical key and the sort moved to the named `_rank_key`, so the old single-line anchor matched 0 times and the probe reported HARNESS-FAILED rather than a verdict -- correct, and the only reason the rot was visible. The repair does NOT chase the new text: it reproduces the same FALSE WORLD against the new shape, so the mutant still asserts exactly what it always asserted. W9 lifted the distinctive filter into the named `matched_distinctive` list, so the two-line anchor vanished. The mutant now widens the LEXICAL sum back over every overlapping term while leaving `matched_distinctive` -- and therefore W9's attribution -- untouched, so it reproduces the W8 false world alone and does not accidentally test W9 instead."
  },
  {
   "name": "W38-two-refusals-collapse-into-one",

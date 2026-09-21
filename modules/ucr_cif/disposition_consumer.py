@@ -306,6 +306,16 @@ class Selection:
         return d
 
 
+def _rank_key(o: OwnerRouting) -> tuple:
+    """Rank: structural evidence first, then W8's lexical strength.
+
+    Kept on ONE line so a mutation can sever it with a single-line anchor --
+    see the note at the call site. Removing the first element restores W8's
+    ordering exactly, which is the property that makes this wave reversible.
+    """
+    return (-o.structural_strength, -o.strength, -o.units, o.owner)
+
+
 def required_distinctive(n_prompt_terms: int) -> int:
     """How many distinctive matches a unit must show for a prompt this long.
 
@@ -583,8 +593,13 @@ def select_for(text: str, repo=None) -> Selection:
     # projection is unusable) keep exactly W8's ordering. That is what makes
     # this reversible: delete the first element of the key and the selector is
     # W8 again, byte for byte.
-    owners.sort(key=lambda o: (-o.structural_strength, -o.strength,
-                               -o.units, o.owner))
+    #
+    # The key lives in `_rank_key` as ONE line rather than inline across two.
+    # That is not style: a mutation anchor is a contract with the source, and
+    # this estate has already measured that a two-line anchor cannot be
+    # matched reliably on a CRLF checkout. W9's own edit rotted two W8 anchors
+    # here, and a one-line key is what stops the next edit doing it again.
+    owners.sort(key=_rank_key)
     return Selection(
         owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,
         population=population, considered=len(rows),
