@@ -238,9 +238,38 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-20 (W5 close), order changed again
+## 4. Next three actions — frontier RECALCULATED 2026-09-21 (W6 close)
 
-**W5 closed action 1.** The 996 authoritative dispositions now have a material consumer:
+**W6 closed the action that stood here.** There are now TWO proven consumption boundaries, and
+each is independently observable. Ordinary L/XL engineering work — a prompt that never says
+"fabric", "kernel" or "operating system" — reaches the same 996 authoritative dispositions
+through the SDD-OS spec boundary, and the agent is told to inspect the named owners before
+writing a spec that creates something new.
+
+Commits: `226ef90` (W5 provenance drill repaired), `aace845` (the edge), `7634043` (six
+directed mutations + the isolation proof), `dbaa690` (anchor rot), `77b5169` (UKDL).
+
+**Three handoff premises were false and are recorded so they are not re-inherited.**
+(a) `spec-injected ... 8979 B` is the JIT injecting the BODY of an existing spec file;
+`check_spec_gate` appears nowhere in `jit_skill_loader.py`. (b) The JIT's One-Shot injector
+calls `compile_contract(prompt[:300], "L")` with **no cwd**, and the compiler consults the gate
+only when a cwd is given — that path never reaches the gate at all. (c) `sdd_tier` DOES reach
+it, with the full prompt and a real cwd, and threw `message` away. So the live chain is
+`jit_skill_loader → proactive_dispatcher → sdd_tier → check_spec_gate`, and the material effect
+had to land on the ProactiveSignal, not on the gate's prose. A tripwire
+(`V-W6-ONESHOT-IS-NOT-THE-BOUNDARY`) goes red if the One-Shot call site ever starts passing cwd.
+
+**Measured at the new boundary.** Warm applicable L 10–40 ms; warm no-match L 10–23 ms;
+non-applicable S/M 0.00 ms (it returns before the corpus is consulted). Marginal cost to the
+live consumer +7.9 to +17.2 ms, paired, same process. Exactly ONE selector call per boundary
+per UserPromptSubmit, both served from one per-process ledger parse (107.9 ms cold).
+Bounded materialization holds: every corpus term at once yields 5 owners / 1851 bytes.
+**Absolute hook wall-clock on this host is not reportable** — a single arm moved 3110 → 11803 ms
+between runs at 2–4% free memory; that gate was replaced by a count plus an in-process median.
+
+**Gate 25 is NOT satisfied by W6.** W6 is implementation of UCR-CIF, not an independent mission.
+
+Superseded — kept because the reasoning still holds, only its action is done:
 `modules/spec_gate/gate.py::check_novelty_gate`, reached live from
 `tools/jit_skill_loader.py` on `UserPromptSubmit`. When a proposal matches, question 4 of the
 novelty proof — *"Why is extending an existing owner insufficient?"* — is replaced in place by
@@ -261,14 +290,22 @@ the only door is a gate that fires on *"fabric / kernel / operating system / com
 an enumerated dataset catalog. Ordinary L/XL work — where "this is already owned by
 modules/X" would prevent the most duplicated effort — never reaches it.
 
-1. **Open the second consumption boundary: the L/XL spec gate. HIGHEST LEVERAGE.**
-   `check_spec_gate` (HR-SPEC-001) is the ordinary-work boundary and is already live — the
-   JIT loader injects its card (measured: `spec-injected ... 8979 B` in the hook log). The
-   selector already exists and is mutation-proven; only the edge is new. Apply the same four
-   filters in the same order (authority, semantics, lifecycle, applicability), keep the four
-   refusals distinguishable, prove it at three poles, and measure the paired latency delta
-   again — an L/XL prompt is far more common than a mega-system proposal, so the cost
-   argument that held for the novelty gate has to be re-made, not inherited.
+1. **DONE (W6).** Open the second consumption boundary: the L/XL spec gate. Closed as above.
+   The one thing to carry forward is the shape of the miss: the boundary was named correctly
+   and every piece of EVIDENCE offered for it was wrong, so the route was re-measured rather
+   than inherited. Do that again for boundary three.
+
+   **NEW HIGHEST LEVERAGE — measure the second door's real reach before adding a third.**
+   W6 proved the edge works; it did NOT measure how often it fires in practice, and there is a
+   specific reason to doubt the optimistic reading. `sdd_tier` returns None unless
+   `action == "create_spec"`, i.e. unless the repo has NO spec — and `SPEC_GLOBS` includes
+   `vault/specs/*.md` and `vault/plans/*.md`, so in THIS repo a spec is almost always found and
+   the second door stays shut. The door is widest in a fresh project and narrowest at home,
+   which is the opposite of where it was measured. Count, over real prompts: how many reach
+   Tier ≥ 2, how many of those hit `create_spec`, how many route ≥ 1 owner, and how many route
+   falsely. Do not widen `sdd_tier`'s trigger to raise the number — that trades precision for
+   reach and the negative pole is the expensive one to lose. A correct zero beats a generic
+   routing.
 2. **Drive the 503 ABSTAIN down with a second evidence family.** The structural adjudicator
    promotes on SYMBOL / FILENAME / REGISTRY and abstains when a term is held by more than 3
    owners. Families named in the brief and NOT yet built: explicit owner declaration, test

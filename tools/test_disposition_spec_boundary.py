@@ -316,6 +316,32 @@ def main() -> int:
               "no corpus unit body reaches the spec gate; owners, counts, "
               "terms and uids only")
 
+        # --- 11a. the KNOWN GAP, pinned rather than described ----------
+        # sdd_tier fires only when action == "create_spec". SPEC_GLOBS covers
+        # vault/specs/*.md and vault/plans/*.md, so in a mature repo a spec is
+        # almost always found, the action is read_spec, and the signal stays
+        # silent -- while the gate has ALREADY routed the owners and carries
+        # them on .routing. The second door is therefore widest in a fresh
+        # project and narrowest at home, which is the opposite of where it was
+        # built. That is the same reader-not-consumer shape this wave closed,
+        # one condition further out, and it is the next wave's target.
+        #
+        # Asserted, not written in prose, for two reasons: a limitation nobody
+        # executes is indistinguishable from one that was fixed, and the day
+        # someone widens sdd_tier's trigger this gate must be changed on
+        # purpose rather than silently outlived.
+        here = G.check_spec_gate(ORDINARY, cwd=REPO, task_size="L")
+        here_sig = sdd_tier.evaluate(ORDINARY, cwd=str(REPO))
+        check("V-W6-KNOWN-GAP-SPEC-PRESENT-SIGNAL-SILENT",
+              here.action == "read_spec"
+              and len(_owners(here)) >= 1
+              and all(o in here.message for o in _owners(here))
+              and here_sig is None,
+              f"in THIS repo a spec exists ({Path(here.spec_path or '?').name}) "
+              f"so the gate routes {len(_owners(here))} owner(s) into its "
+              f"message and .routing, and sdd_tier still returns None -- the "
+              f"owners are computed and reach nobody. KNOWN, next wave")
+
         # --- 11b. the whole-hook topology ------------------------------
         # This claim spans BOTH boundaries, so it lives here, in the suite of
         # the newer one. It was briefly in the W5 suite and that was wrong:
