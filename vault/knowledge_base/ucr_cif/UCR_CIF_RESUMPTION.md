@@ -200,6 +200,30 @@ is never written by this mission and never rolled back.
 - **W5 · knowledge** — `ae7246a`. Five mission traps, five UKDL rules (dedup-checked against
   the existing inert-state family), and **Axis C-3 — Circulation** inside Apex Axis C.
 
+- **W6 · the second door** — `226ef90`, `aace845`, `7634043`, `dbaa690`, `77b5169`. The SDD-OS
+  L/XL spec boundary consumes the same authority through `sdd_tier`'s ProactiveSignal. Six
+  directed mutations (`W18`..`W23`) appended to the W5 plan, which therefore carries **23**.
+- **W7 · reach calibration** — `a0c96b6` (instrument), `5e18146` (measurement + decision),
+  `43abf73` (proof), `8cb3074` (knowledge). **DECISION: KEEP the current policy; all five
+  widening candidates REJECTED on measured evidence.**
+  Control over 400 real sessions / 2,350 engineering prompts: activation precision **8/8 =
+  100 %** (all 8 the correct owner), recall **8/27 = 29.6 %**, false-activation **0/88 = 0 %**,
+  labelled population **115 of 1,141** with the 1,026 unlabelled cases named and held outside
+  the confusion matrix. Every candidate bought recall at an 85–90 % false-activation rate; two
+  were strictly dominated, scoring below doing nothing on recall as well as precision.
+  **The bottleneck is no longer the door.** Route rate by prompt length runs 0 % → 99.4 % from
+  xs to xl, and 85 % of real Tier ≥ 2 prompts are xl: the DISTINCTIVE-term clause was proven on
+  SHORT synthetic proposals and does not discriminate at real length, so the shipped boundary's
+  precision is produced by the `create_spec` FILTER, not by the selector. Pinned as the
+  characterization `PR-W7-X1`, which is EXPECTED to go red when applicability is repaired.
+  Repo-side ceiling, measured before any prompt was read: door open in **63/77 repositories**
+  but **73/181 working directories** and **52/109 recently active** — reach is anti-correlated
+  with traffic, and all three Power Pack checkouts (where all 40 owners live) are shut.
+  Gates: `tools/test_ucr_cif_reach.py` 27/27, `tools/test_ucr_cif_reach_reality.py` 18/18,
+  `vault/governance/mutation_plans/ucr_cif_w7.json` **10/10 ALL_CAUGHT** — after two mutants
+  SURVIVED the first run and were fixed as real defects in the instrument, one of them my own
+  gate reading a persisted artifact instead of driving its producer.
+
 **UNMEASURED (not zero, not fine)**
 
 - **Hook/mission latency timing.** Host was at **1,499 MB free of 32,061 (4.7 %)**, 31
@@ -214,6 +238,14 @@ is never written by this mission and never rolled back.
   is the measurement. In-process the selection is 58 ms cold (the 1.9 MB parse) and 5–7 ms
   warm, and **0.5 ms when the gate does not apply**, because the store is opened only after
   the trigger fires.
+  **W7 addendum (host at 1.1–3.8 % free of 32,061 MB, 41 `claude` + 23 `node` processes, so the
+  caveat stands and the label does not move):** in-process and paired, re-measured on the day,
+  warm applicable L **12.73 ms**, warm no-match L **12.06 ms**, non-applicable S/M **0.00 ms**,
+  marginal **+10.4 ms**. The number W7 actually needed was not latency at all — widening costs
+  **zero** extra selector calls, because the gate already computes `routing` on every branch.
+  Its whole price is context: **1,052 B per owner-naming signal** (534 advisory + 518
+  actionable), measured live in a fresh subprocess, i.e. about **+764 B on every Tier ≥ 2
+  prompt** under the widest candidate. Measure the resource the change actually spends.
 
 **Coherence anchor:** `SOURCE_INVENTORY_FULL.json` parses and holds **1,394 records with a
 `KIND` on every one** (verified this session — the predecessor's own seal test, re-run, not
@@ -238,7 +270,49 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-21 (W6 close)
+## 4. Next three actions — frontier RECALCULATED 2026-09-21 (W7 close)
+
+**W7 answered the question W6 left open and the frontier moved off the trigger.** Do not open a
+third consumption boundary and do not revisit the `create_spec` decision without new evidence —
+it is measured, holdout-validated and recorded with its reopening conditions in
+`vault/audits/ucr_cif/05_W7_REACH.md` §9.
+
+1. **HIGHEST LEVERAGE — applicability precision at real prompt length.** The selector routes at
+   least one owner on **99.4 %** of long real prompts (mean 4.74 of a cap of 5), and the three
+   most-routed owners are the three largest by unit count — W3's measured vocabulary-volume
+   bias (`spearman = +0.756`) surviving where the DISTINCTIVE clause was never tested. This is
+   the reason no widening is affordable: the door is currently doing the selector's job, so
+   every extra door multiplies noise rather than value. **Do NOT loosen
+   `DISTINCTIVE_MAX_HOLDERS`** — the defect is the opposite, the clause is too weak at length.
+   Candidate mechanisms, none yet built: require distinctiveness proportional to input length;
+   rank and cap by evidence strength rather than accepting the first five; require a term to be
+   distinctive *and* topically central rather than merely present. Success is measurable
+   directly: re-run `tools/ucr_cif_shadow.py` and watch `P1-ANY-OWNER`'s holdout precision. It
+   is 23.5 % today; the widening decision reopens exactly when it stops collapsing.
+   `PR-W7-X1-SELECTOR-SATURATION-ON-LONG-PROMPTS` is the characterization to INVERT IN PLACE
+   when this lands — never delete it.
+2. **Drive the 503 ABSTAIN down with a second evidence family.** Unchanged from W6, and now
+   second rather than first: the structural adjudicator promotes on SYMBOL / FILENAME /
+   REGISTRY. Families named in the brief and not built: explicit owner declaration, test
+   ownership, command/hook ownership, git history. Each structural, none lexical.
+3. **W5-style construction observation + privacy projection.** EXTEND `session_delta` /
+   `omnicapture`; all global egress through the `secret_firewall` URB; exactly-once identity so
+   a retry or resume cannot duplicate an institutional record. W7 built a privacy-safe local
+   derivation pipeline (`modules/ucr_cif/prompt_population.py`) that reads real prompts,
+   classifies and discards them — reuse it rather than re-deriving the boundary.
+
+**Two things W7 measured that the next wave should not re-derive.** (a) A THIRD suppressed
+action nobody had named: DFP's `knowledge_first_required` pre-empts the spec question on 143 of
+1,243 Tier ≥ 2 prompts and discards its owners too. (b) The six historical manual ownership
+sweeps belong to the FIRST door's population (mega-system proposals → the novelty gate, closed
+by W5), so widening the second door would not have retired any of them. No human-rediscovery
+saving beyond the measured 27 labelled-relevant prompts, of which 8 already receive the owner.
+
+**Superseded, kept because the reasoning still holds and only its action is done:**
+
+---
+
+## 4b. Superseded — the W6-close frontier
 
 **W6 closed the action that stood here.** There are now TWO proven consumption boundaries, and
 each is independently observable. Ordinary L/XL engineering work — a prompt that never says
@@ -348,10 +422,24 @@ sweep somebody has to remember to run:
 
     python -m modules.ucr_cif.disposition_consumer --explain "<your proposal>"
 
-Re-run this session's evidence in one command before trusting any of it:
+Re-run this session's evidence before trusting any of it. Three plans, all re-verified at
+W7 close on 2026-09-21:
 
+    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w4.json
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w5.json
+    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w7.json
 
-ALL_CAUGHT 17/17 at W5 close; the W4 plan (14/14) still stands beside it. A HARNESS-FAILED
-line means an anchor has rotted against the
-source, which is a stale plan and never a verdict about the suites.
+14/14, **23/23** (the W5 plan absorbed W6's six as `W18`..`W23`; the filename is historical)
+and **10/10**. A HARNESS-FAILED line means an anchor has rotted against the source, which is a
+stale plan and never a verdict about the suites.
+
+Ask how often the corpus actually reaches a decision, and what it would cost to make it reach
+more — both are now commands rather than arguments:
+
+    python tools/ucr_cif_reach.py --ceiling --funnel --sessions 400
+    python tools/ucr_cif_shadow.py
+
+The first replays real `UserPromptSubmit` history through the live chain and persists derived
+cases only — no prompt text, no host paths. The second scores six activation policies on a
+session-split holdout. **The decision they produced is KEEP; read
+`vault/audits/ucr_cif/05_W7_REACH.md` §9 before proposing to widen anything.**
