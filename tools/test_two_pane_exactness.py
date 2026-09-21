@@ -257,21 +257,37 @@ def main(argv=None) -> int:
     # Same predicate, same transcript, same window, same `since`. Only the needle
     # changes: from A's nonce (must be absent) to something B really typed (must
     # be present). One of the two must be True or the instrument is blind.
+    # TWO TIERS, because the first version of this control was unevaluable on the
+    # very run it was written for (`live2`, 2026-09-21). It required a TYPED row
+    # in B inside the observation window; the drill seals ~15 s after firing, and
+    # an agent pane emits assistant and tool rows in that window, not keystrokes.
+    # A control that cannot run is not a control.
+    #
+    #   strong -- a typed row AFTER t0: the predicate sees B in THIS window.
+    #   weak   -- a typed row anywhere: the predicate can read and parse B's
+    #             transcript at all, which is still decisive about BLINDNESS,
+    #             the failure the control exists to exclude. It says less about
+    #             currency, so it is labelled and never silently substituted.
+    #
+    # Only when B has no typed row at any time is this genuinely unjudgeable.
     token = _typed_token_after(b_transcript, b["t0"])
+    since_for_check, tier = b["t0"], "after t0"
     if token is None:
-        # Not a verdict about exactness: pane B simply said nothing in the window,
-        # so the control could not be run. Exit 2, never a silent pass.
+        token = _typed_token_after(b_transcript, 0.0)
+        since_for_check, tier = 0.0, "anywhere in the transcript (weaker: not in-window)"
+    if token is None:
+        # Not a verdict about exactness. Exit 2, never a silent pass.
         return _harness(
-            f"pane B ({b_transcript.name}) carries no typed row after t0={b['t0']}, so "
+            f"pane B ({b_transcript.name}) carries no typed row at any time, so "
             "V-TWOPANE-B-UNTOUCHED cannot be distinguished from an instrument that "
-            "cannot see pane B. Re-run the drill with activity in B during the window.")
-    if lr.user_issued_command_since(b_transcript, token, b["t0"]):
+            "cannot see pane B at all.")
+    if lr.user_issued_command_since(b_transcript, token, since_for_check):
         _ok("V-TWOPANE-B-INSTRUMENT-CAN-SEE",
-            f"the same predicate finds {token!r} in {b_transcript.name} after t0 -- so "
+            f"the same predicate finds {token!r} in {b_transcript.name} [{tier}] -- so "
             f"the absence of {b['nonce']} is a measurement, not blindness")
     else:
         _fail("V-TWOPANE-B-INSTRUMENT-CAN-SEE",
-              f"{token!r} is present in {b_transcript.name} after t0 but the predicate "
+              f"{token!r} is present in {b_transcript.name} [{tier}] but the predicate "
               "does not see it -- every absence assertion over this pane is worthless")
 
     total = passes + fails
