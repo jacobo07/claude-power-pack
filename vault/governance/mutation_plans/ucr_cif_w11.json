@@ -5,7 +5,7 @@
   "suite": "tools/test_w10_population_fingerprint.py",
   "old": "            return {\"status\": FP_UNREADABLE, \"moved\": [],",
   "new": "            return {\"status\": FP_COMPARABLE, \"moved\": [],",
-  "why": "The false world: a fingerprint that could not be read is reported as agreement. This is the direction that fails OPEN -- an arm whose fingerprint is absent or truncated would license a paired verdict about two populations nobody compared, and the report would carry a COMPARABLE that was never earned. The three V-W11-FP-ABSENT-IS-REFUSAL cases and V-W11-FP-PARTIAL-KEYS-IS-REFUSAL must catch it, and V-W11-FP-IDENTICAL-IS-COMPARABLE proves the guard is not simply refusing everything."
+  "why": "The false world: a fingerprint that could not be read is reported as agreement. This is the direction that fails OPEN -- an arm whose fingerprint is absent or truncated would license a paired verdict about two populations nobody compared. The three V-W11-FP-ABSENT-IS-REFUSAL cases and V-W11-FP-PARTIAL-KEYS-IS-REFUSAL must catch it, and V-W11-FP-IDENTICAL-IS-COMPARABLE proves the guard is not simply refusing everything."
  },
  {
   "name": "W11-fp-watches-only-the-case-set",
@@ -13,7 +13,7 @@
   "suite": "tools/test_w10_population_fingerprint.py",
   "old": "_FP_KEYS = (\"oracle_schema\", \"corpus_id\", \"ledger_rows\", \"owner_universe_n\",\n            \"owner_universe_sha\", \"case_set_sha\", \"cases\", \"sessions_swept\",\n            \"window_hours\", \"max_owners\")",
   "new": "_FP_KEYS = (\"case_set_sha\", \"cases\")",
-  "why": "The false world: the guard narrows to the case set, so two arms run against a regenerated ledger, a different owner universe, a different sweep window or a different MAX_OWNERS compare as COMPARABLE. The cap is the one W10 proved converts rank movement into true-owner eviction, so a cap change slipping past comparability is precisely how a W11 verdict could be attributed to the treatment. V-W11-FP-WATCHED-SET-IS-PINNED must catch it; note that V-W11-FP-EVERY-KEY-IS-LOAD-BEARING iterates the drill's OWN expected tuple rather than the module's, so it cannot shrink along with the mutation."
+  "why": "The false world: the guard narrows to the case set, so two arms run against a regenerated ledger, a different owner universe or a different MAX_OWNERS compare as COMPARABLE. The cap is what W10 proved converts rank movement into true-owner eviction, so a cap change slipping past comparability is exactly how a W11 verdict could be misattributed to the treatment. V-W11-FP-WATCHED-SET-IS-PINNED must catch it; V-W11-FP-EVERY-KEY-IS-LOAD-BEARING iterates the drill's OWN expected tuple, so it cannot shrink along with the mutation."
  },
  {
   "name": "W11-fp-licence-becomes-a-negative-test",
@@ -21,6 +21,46 @@
   "suite": "tools/test_w10_population_fingerprint.py",
   "old": "    return isinstance(cmp, dict) and cmp.get(\"status\") == FP_COMPARABLE",
   "new": "    return isinstance(cmp, dict) and cmp.get(\"status\") != FP_DRIFTED",
-  "why": "The false world: the licence stops being a positive test on the one answer that permits a paired verdict and becomes 'anything that is not DRIFTED'. UNREADABLE then licenses a verdict, and so does every status added in future by someone who never reads this line. The same inversion is what turns an unreachable peer into an unkillable one elsewhere in this estate. V-W11-FP-LICENCE-IS-A-POSITIVE-TEST and the ABSENT-IS-REFUSAL family must catch it."
+  "why": "The false world: the licence stops being a positive test on the one answer that permits a paired verdict and becomes 'anything not DRIFTED'. UNREADABLE then licenses a verdict, and so does every status added later by someone who never reads this line. V-W11-FP-LICENCE-IS-A-POSITIVE-TEST and the ABSENT-IS-REFUSAL family must catch it."
+ },
+ {
+  "name": "W11-any-reference-promotes",
+  "file": "modules/ucr_cif/prose_authority.py",
+  "suite": "tools/test_w11_prose_authority.py",
+  "old": "PROMOTING = (CONSUMER,)",
+  "new": "PROMOTING = (CONSUMER, CITATION, SELF_MEASUREMENT, BENCHMARK)",
+  "why": "The false world is the one this family exists to refuse: a backlink count. Every mention becomes support, so a path printed inside a log message, a docstring, and -- if vault ever entered scope -- the 4,734 oracle rows naming this owner would all promote. V-W11-ONLY-ONE-CLASS-PROMOTES and V-W11-REAL-NEGATIVE-CONTROL must catch it, the latter because pre-task.md carries a CITATION edge and 81 declaration terms it must never be credited for."
+ },
+ {
+  "name": "W11-surface-alone-suffices",
+  "file": "modules/ucr_cif/prose_authority.py",
+  "suite": "tools/test_w11_prose_authority.py",
+  "old": "        if not any(meta[\"edges\"].get(c) for c in PROMOTING):\n            continue",
+  "new": "        if not True:\n            continue",
+  "why": "The false world: the consumer requirement is dropped and the declaration surface alone is enough, which is Markdown-equals-authority exactly. Every README with headings becomes an owner. V-W11-EDGE-SEVERED-SIGNAL-VANISHES, V-W11-LOOKALIKE-EARNS-NOTHING and V-W11-REAL-NEGATIVE-CONTROL must all catch it."
+ },
+ {
+  "name": "W11-lifecycle-ignored",
+  "file": "modules/ucr_cif/prose_authority.py",
+  "suite": "tools/test_w11_prose_authority.py",
+  "old": "    return _DEAD_RX.search(blob or \"\") is None",
+  "new": "    return True",
+  "why": "The false world: a superseded or revoked contract keeps declaring. An old architecture document then outranks the authority that replaced it, on the strength of a declaration nobody has honoured for months. V-W11-SUPERSEDED-DECLARES-NOTHING must catch it."
+ },
+ {
+  "name": "W11-owner-disambiguation-removed",
+  "file": "modules/ucr_cif/prose_authority.py",
+  "suite": "tools/test_w11_prose_authority.py",
+  "old": "                        if meta[\"owner_dir\"] not in blob:\n                            continue",
+  "new": "                        if False:\n                            continue",
+  "why": "The false world: a reference to any `core.md` credits every owner that ships a file with that basename. Ownership degrades from an artifact-specific relation to a basename collision, and the estate has many `core.md` and `README.md` files. The split inside one owner and the real negative control are the gates with the most to say about it."
+ },
+ {
+  "name": "W11-vault-enters-scope",
+  "file": "modules/ucr_cif/ownership_evidence.py",
+  "suite": "tools/test_w11_prose_authority.py",
+  "old": "SCAN_DIRS = (\"modules\", \"tools\", \"hooks\", \"commands\", \"agents\", \"governance\",\n             \"rules\")",
+  "new": "SCAN_DIRS = (\"modules\", \"tools\", \"hooks\", \"commands\", \"agents\", \"governance\",\n             \"rules\", \"vault\")",
+  "why": "The leak mutation. Benchmark exclusion currently rests on a SCOPE invariant rather than on a check -- the oracle and the disposition ledger live under vault/, which is not walked -- so the provenance guard for them cannot fire on today's estate. This drives the invariant itself: with vault in scope the W10 answer key becomes a referrer of the very owner it judges. V-W11-ORACLE-IS-OUT-OF-SCOPE must catch it, and V-W11-BENCHMARK-GUARD-IS-LIVE proves the classifier standing behind the invariant is not decorative."
  }
 ]
