@@ -278,12 +278,99 @@ async function main() {
     /\b(exhaustive|comprehensive|every (?:call|site|reference))/i,
     /\b(trace|map out|survey|enumerate)\b[^.]{0,40}\b(codebase|binary|repo|corpus)/i,
   ];
+  // 2026-09-22. "create" was NOT in this list, so a dispatch carrying a genuine, explicit,
+  // incremental write instruction ("create <path>.md ... append each finding before the next")
+  // was judged to have none and blocked twice. A detector that matches the WORDING of an
+  // instruction rather than its presence produces false blocks on correct dispatches, and the
+  // author then rewords rather than fixes. Verbs widened; the shape of the clause is unchanged.
   const DURABLE_OUTPUT = [
-    /\b(write|save|append|emit|dump|record)\b[^.]{0,60}\b(to|into)\b[^.]{0,60}[\w./\\-]+\.(md|json|txt|csv|jsonl|log)\b/i,
-    /\b(write|save|append)\b[^.]{0,40}\b(findings|results|output|notes|progress)\b[^.]{0,40}\b(to|into)\b/i,
+    /\b(write|save|append|emit|dump|record|create|produce|persist|store)\b[^.]{0,60}\b(to|into|at|in)?\b[^.]{0,60}[\w./\\-]+\.(md|json|txt|csv|jsonl|log)\b/i,
+    /\b(write|save|append|record|persist)\b[^.]{0,40}\b(findings|results|output|notes|progress)\b[^.]{0,40}\b(to|into)\b/i,
   ];
   const looksLong = LONG_RUNNING.some((re) => re.test(prompt));
   const hasDurable = DURABLE_OUTPUT.some((re) => re.test(prompt));
+
+  // --- Contract preflight (2026-09-22, KobiiCraft VRC mission) ---------------
+  //
+  // ORIGIN, measured in the session that added this. A `kme-g1-ownership-arbiter` dispatch
+  // carried the mandated durable-output clause and a Read/Grep/Glob toolset. The obligation was
+  // UNSATISFIABLE BY CONSTRUCTION, and the only reason nothing was lost is that the arbiter
+  // noticed and refused to claim success instead of reporting a file it never wrote.
+  //
+  // The defect is one level up from the prompt: this guard demanded a write and never asked
+  // whether the agent could write. So it blocks satisfiable contracts on a verb technicality
+  // (above) and waves through impossible ones — the two failure directions of one missing check.
+  //
+  // The general rule this mechanises: A MANDATORY OUTPUT MUST NEVER BE ASSIGNED TO AN EXECUTION
+  // CONTEXT INCAPABLE OF PRODUCING IT. Same shape as a runtime gate with no runtime, a deploy
+  // gate with no deploy access, or a screenshot gate with no display.
+  //
+  // FAIL-OPEN IS ABSOLUTE. An agent we cannot resolve is UNKNOWN, never "incapable": "could not
+  // ask" and "was refused" are different facts and only one of them may block.
+  const WRITE_TOOLS = ["write", "edit", "multiedit", "notebookedit"];
+  function declaredTools(type) {
+    try {
+      const fsx = require("fs");
+      const pathx = require("path");
+      const osx = require("os");
+      if (!type || type === "(default)") return null;          // unknown -> fail open
+      if (!/^[A-Za-z0-9_-]+$/.test(type)) return null;          // never build a path from junk
+      const roots = [];
+      if (payload.cwd) roots.push(pathx.join(String(payload.cwd), ".claude", "agents"));
+      roots.push(pathx.join(process.cwd(), ".claude", "agents"));
+      roots.push(pathx.join(osx.homedir(), ".claude", "agents"));
+      for (const root of roots) {
+        const file = pathx.join(root, `${type}.md`);
+        if (!fsx.existsSync(file)) continue;
+        const head = fsx.readFileSync(file, "utf8").slice(0, 4000);
+        const fm = head.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+        if (!fm) return null;
+        const line = fm[1].match(/^tools:\s*(.+)$/im);
+        if (!line) return null;                                 // no tools: key -> inherits all
+        const raw = line[1].trim();
+        if (raw === "*" || /\ball\b/i.test(raw)) return null;    // explicitly everything
+        return raw.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+      }
+      return null;                                              // not found -> UNKNOWN
+    } catch { return null; }                                    // fail open, always
+  }
+
+  if (hasDurable &&
+      String(process.env.CLAUDE_AGENT_CONTRACT_GUARD || "").toLowerCase() !== "off") {
+    const tools = declaredTools(subagentType);
+    if (tools && !tools.some((t) => WRITE_TOOLS.includes(t))) {
+      const reason = [
+        "AGENT-SOLO GUARD blocked an IMPOSSIBLE AGENT CONTRACT.",
+        "",
+        `This prompt requires durable output, and '${subagentType}' has no write tool.`,
+        `  declared tools: ${tools.join(", ")}`,
+        "",
+        "The obligation is unsatisfiable by construction. The agent will either invent a file it",
+        "never wrote, or (at best) spend its whole run and then tell you it could not comply.",
+        "",
+        "MEASURED 2026-09-22 (KobiiCraft, Visual Reconstruction Compiler): a kme-g1 dispatch",
+        "carried the mandated 'write your findings as you go' clause with a Read/Grep/Glob",
+        "toolset. Nothing was lost only because the arbiter noticed and said so.",
+        "",
+        "THREE CORRECT FIXES — pick one, do not reword the prompt:",
+        "  (1) Dispatch an agent that HAS Write/Edit (e.g. general-purpose), keeping the clause.",
+        "  (2) Keep this specialist and NARROW the obligation: delete the durable-output clause",
+        "      and state explicitly that the parent persists the returned report. Then the",
+        "      contract is honest and the parent owns the write.",
+        "  (3) Give this agent a write tool in its definition, if that is truly its job.",
+        "",
+        "A guard that demands a write without checking the toolset is the same defect one level",
+        "up, which is why this check exists beside the one above it.",
+        "",
+        `Blocked Agent: subagent_type=${subagentType}`,
+        "Bypass for one dispatch: set CLAUDE_AGENT_CONTRACT_GUARD=off",
+      ].join("\n");
+      safeLog(`BLOCK-IMPOSSIBLE-CONTRACT\tsubagent=${subagentType}\ttools=${tools.join("|")}`);
+      try { process.stderr.write(reason + "\n"); } catch {}
+      process.stdout.write(JSON.stringify({ decision: "block", reason }));
+      process.exit(2);
+    }
+  }
 
   if (looksLong && !hasDurable &&
       String(process.env.CLAUDE_AGENT_BOUND_GUARD || "").toLowerCase() !== "off") {
