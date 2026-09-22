@@ -45,9 +45,11 @@ SUITES = {
     "V-BRIEF-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
     "V-CLH-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
     "V-CLI-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
+    "V-RC-": ROOT / "tools" / "test_gsd_x_goal_reconcile.py",
 }
 CLP = GOAL / "providers" / "claude.py"
 BRIEF = GOAL / "brief.py"
+RECON = GOAL / "reconcile.py"
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -203,6 +205,30 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
                'or touch a live server.")\n', "",
         "the brief must state the boundaries an executor may not cross",
         "V-BRIEF-BOUNDARIES"),
+    # --- the reconciler (C10) ---
+    "converges-without-judge": (
+        RECON, '        return Decision(READY_FOR_JUDGE, "nothing blocks closure; '
+               'an independent judge must "\n                                         '
+               '"re-run the pinned gates before this converges")',
+        '        return Decision(CONVERGED, "nothing blocks closure")',
+        "clear closure must not converge a goal on the reconciler's own say-so",
+        "V-RC-CLOSURE-NEEDS-JUDGE"),
+    "empty-queue-converges": (
+        RECON, '    return Decision(ESCALATE,\n                    "the goal is not converged '
+               'and no justified action remains: "',
+        '    return Decision(CONVERGED,\n                    "the goal is not converged '
+        'and no justified action remains: "',
+        "an empty queue must never read as convergence",
+        "V-RC-EMPTY-QUEUE-IS-NOT-SUCCESS"),
+    "unknown-observation-ends-epoch": (
+        RECON, "            if obs is None or obs.state == OBS_UNKNOWN:", "            if False:",
+        "an observation we could not make must not end an epoch",
+        "V-RC-UNKNOWN-IS-NOT-AN-ENDING"),
+    "budget-start-truthiness": (
+        RECON, "    if max_hours and started is not None and",
+        "    if max_hours and started and",
+        "a start time of 0.0 is a time, not an absent budget",
+        "V-RC-TIME-BUDGET"),
 }
 
 
