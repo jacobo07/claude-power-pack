@@ -7,6 +7,8 @@
                                         --not-applicable --reason "..."
     python tools/gsd_x_goal.py oblige   --goal <id> --root <repo> --id ob-1 --plane OUTCOME \
                                         --text "..." --gate "python tools/x.py" --gate-file tools/x.py
+    python tools/gsd_x_goal.py record-gates --goal <id> --root <repo>
+    python tools/gsd_x_goal.py sweep    --goal <id> --root <repo> [--dry-run]
     python tools/gsd_x_goal.py retire   --goal <id> --root <repo> --id ob-1 \
                                         --disposition REJECTED --reason "..."
     python tools/gsd_x_goal.py disposition-failure --goal <id> --root <repo> --id f-1 \
@@ -165,6 +167,44 @@ def cmd_status(args) -> int:
     return 0 if closure.may_close else 1
 
 
+def cmd_record_gates(args) -> int:
+    """Run the suites autonomy depends on, here, now, and record what they said.
+
+    The sweep refuses to act until this record is green AT THE CURRENT COMMIT of
+    the engine, so this is not a formality: it is the thing that makes a green
+    recorded for other code stop authorising this code.
+    """
+    from modules.gsd_x.goal import sweep as sw
+    rec = sw.record_gates(ROOT)
+    for suite, r in rec["suites"].items():
+        print(f"  {'OK  ' if r['ok'] else 'FAIL'} {suite}: {r['detail']}")
+    print(f"\nrecorded at {rec['head'][:12]} -> {'GREEN' if rec['green'] else 'NOT GREEN'}")
+    print(f"record: {sw.record_path()}")
+    return 0 if rec["green"] else 1
+
+
+def cmd_sweep(args) -> int:
+    """One unattended pass over this goal -- the entrance a scheduler calls.
+
+    Until this existed the sweep was reachable only from its own test suite,
+    which is a capability the product did not have. It prints what it did and
+    nothing when it did nothing, because a scheduler that speaks every five
+    minutes is one nobody reads.
+    """
+    from modules.gsd_x.goal import sweep as sw
+    lg = _log(args)
+    report = sw.sweep(ROOT, [(lg, Path(args.root))], dry_run=args.dry_run,
+                      actor=args.actor)
+    if report.refused:
+        print(f"REFUSED: {report.refused}")
+        return 1
+    for line in report.skipped:
+        print(f"  skipped {line}")
+    out = report.render()
+    print(out if out else "(nothing to do)")
+    return 0
+
+
 def cmd_explain(args) -> int:
     s = _state(args)
     root = Path(args.root)
@@ -298,6 +338,12 @@ def main(argv: list[str] | None = None) -> int:
     o.add_argument("--gate", required=True)
     o.add_argument("--gate-file", action="append", required=True)
     o.set_defaults(fn=cmd_oblige)
+
+    common(sub.add_parser("record-gates")).set_defaults(fn=cmd_record_gates)
+
+    sw_p = common(sub.add_parser("sweep"))
+    sw_p.add_argument("--dry-run", action="store_true")
+    sw_p.set_defaults(fn=cmd_sweep)
 
     rt = common(sub.add_parser("retire"))
     rt.add_argument("--id", required=True)

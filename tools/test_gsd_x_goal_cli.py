@@ -136,6 +136,16 @@ def main() -> int:
           "the per-root mission store refuses to write under a bound goal",
           f"rc={m2.returncode} {m2.stdout[:200]}")
 
+    # --- the unattended entrance ---------------------------------------------------
+    # The sweep was reachable only from its own test suite, which is a capability
+    # the product did not have. Both halves are driven here; `record-gates` is not,
+    # because it runs two real suites and would make this one quadratic.
+    r = run("sweep", *G, env=env)
+    check("V-CLI-SWEEP-REFUSES-WITHOUT-RECORD",
+          r.returncode == 1 and "REFUSED" in r.stdout and "autonomy record" in r.stdout,
+          "the sweep entrance refuses to act with no recorded green, and says so",
+          f"rc={r.returncode} {r.stdout}")
+
     # --- retiring an obligation, and dispositioning a failure, FROM THE CLI ------------
     # The docstring promises both commands. A promise nobody executes is
     # indistinguishable from a working one, so both are driven here.
