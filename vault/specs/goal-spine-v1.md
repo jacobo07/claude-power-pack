@@ -66,7 +66,26 @@ This file is updated as each stage lands.
 | G2 GSD X goal-scope + `o.id` crash fix | `141d1ae` | `test_gsd_x_mission_goal_scope.py` 5/5 (1/5 before); `test_gsd_x_mission.py` 17/17 unchanged |
 | G1 Goal record + store | `7180d90` | `test_goal_spine.py` 15/15 |
 | G3 convergence | `8b44d10` | `test_goal_spine_convergence.py` 15/15; probe 9/11 |
-| G4 epochs | (this commit) | `test_goal_spine_epoch.py` 13/13; probe 34/39 |
+| G4 epochs | `2985e10` | `test_goal_spine_epoch.py` 13/13; probe 34/39 |
+| Identity fix (intent in a place) | `f692404` | `test_goal_spine.py` 16/16 |
+| G6 receipts | (this commit) | `test_goal_spine_receipt.py` 15/15; probe 16/24 |
+
+### Mutation record — G6
+Probe first scored **14/24**. Real survivor closed: `or`→`and` on the epoch-binding
+check. The receipt's own revision stamp was checked, but the EPOCH it cites was not
+pinned to this Goal and revision — so an epoch prepared under revision 1 could carry
+a receipt stamped revision 2 and satisfy the new target, and a foreign Goal's epoch
+at the same revision could satisfy this one. Also pinned: a refusal is recorded on a
+machine with no state directory. The remaining 8 survivors are EQUIVALENT: `frozen`
+on two value objects, the "no gate ran" default (an empty gate yields no verdict
+whatever the exit status), and hash/JSON formatting inside the receipt id and ledger.
+
+**Finding B12 (for GSD X's owner, not changed here).** `closure.evaluate_transition`
+checks that a verdict passed, not that it came from the gate the obligation names —
+in GSD X `done_gate` is prose, and its own suite satisfies `done_gate="a real gate"`
+with a `"pytest"` verdict. The spine therefore enforces gate identity at its own
+boundary (`receipt.ingest`, gate `V-RCPT-WRONG-GATE-REFUSED`). Any other GSD X caller
+remains exposed; whether `done_gate` should become an identifier is GSD X's decision.
 
 ### Mutation record — G4
 Probe first scored **29/39**. Real survivors closed: a claimed session with no
