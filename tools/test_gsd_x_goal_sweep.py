@@ -131,18 +131,56 @@ def main() -> int:
           "to finish, which a five-minute schedule cannot afford",
           f"state={running.state} outcome={running.outcome}")
 
+    # --- the whole round trip: dispatch, wait, harvest, SATISFY ---------------------------
+    # This is the gate the earlier suite was missing. It dispatched and observed
+    # and never harvested, so a defect that dropped every gate's evidence (the
+    # epoch record not carrying its gate spec) stayed green here and was only
+    # found by running a real goal. A sweep that cannot bank a verdict is a sweep
+    # that does the work and throws the answer away.
+    import time as _t
+    deadline = _t.time() + 120
+    while _t.time() < deadline:
+        s_now = gc.project(lg)
+        o = cv.project_convergence(s_now).obligations["ob-outcome"]
+        if o.disposition == cv.SATISFIED:
+            break
+        sw.sweep(ROOT, [(lg, repo)])
+        _t.sleep(1)
+    o = cv.project_convergence(gc.project(lg)).obligations["ob-outcome"]
+    check("V-SWEEP-BANKS-THE-VERDICT", o.disposition == cv.SATISFIED,
+          f"the sweep ran the gate, harvested its verdict and satisfied the obligation "
+          f"({(o.verdict or {}).get('observed', '')[:60]})",
+          f"disposition={o.disposition}: the gate ran and its evidence was dropped")
+
     # --- it never spends an account -------------------------------------------------------
-    s = gc.project(lg)
-    e = list(ep.project_epochs(s).values())[0]
-    ep.end(lg, s, e.epoch_id, ep.FAILED, "gate failed", "t")
-    acted = sw.sweep_goal(lg, repo, providers=("gate", "codex"), dry_run=True)
+    # Its own goal with a gate that genuinely fails, rather than reaching into the
+    # goal above: a gate that has to end another test's epoch by hand is testing
+    # its own setup as much as the subject.
+    failing = make_repo()
+    (failing / "gate.py").write_text("import sys\nprint('1 failed')\nsys.exit(1)\n",
+                                     encoding="utf-8")
+    subprocess.run([GIT, "-C", str(failing), "commit", "-qam", "gate fails"], check=True,
+                   env=ENV)
+    lg_fail = make_goal(goals_root, "g-failing", failing, autonomous=True)
+    deadline = _t.time() + 120
+    while _t.time() < deadline:
+        eps_f = ep.project_epochs(gc.project(lg_fail))
+        if any(x.outcome == ep.FAILED for x in eps_f.values()):
+            break
+        sw.sweep(ROOT, [(lg_fail, failing)])
+        _t.sleep(1)
+    check("V-SWEEP-FAILED-GATE-IS-EVIDENCE",
+          any(x.outcome == ep.FAILED for x in ep.project_epochs(gc.project(lg_fail)).values()),
+          "a gate that exits non-zero ends its epoch FAILED", "no failed epoch was recorded")
+    acted = sw.sweep_goal(lg_fail, failing, providers=("gate", "codex"), dry_run=True)
     check("V-SWEEP-REPORTS-WORK-NEVER-SPENDS",
-          any(a.startswith("g-auto: NEXT_EPOCH") and "needs provider codex" in a
+          any(a.startswith("g-failing: NEXT_EPOCH") and "needs provider codex" in a
               for a in acted),
           f"work that spends an account is REPORTED, naming the provider it needs, and is "
           f"not dispatched ({acted})", f"{acted}")
     check("V-SWEEP-NO-CODEX-EPOCH",
-          not any(x.provider == "codex" for x in ep.project_epochs(gc.project(lg)).values()),
+          not any(x.provider == "codex"
+                  for x in ep.project_epochs(gc.project(lg_fail)).values()),
           "no codex epoch was created by the sweep", "the sweep spent the account")
 
     # --- silence --------------------------------------------------------------------------

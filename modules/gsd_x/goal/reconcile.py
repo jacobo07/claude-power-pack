@@ -70,6 +70,7 @@ class Context:
     budget: dict = field(default_factory=dict)         # max_epochs, max_hours
     providers: tuple = ()                              # provider names available
     blocked_on: str = ""                               # an external condition, named
+    engine: str = ""                                   # identity of the orchestrating code
 
 
 def _budget_verdict(ctx: Context) -> str:
@@ -156,7 +157,8 @@ def decide(ctx: Context) -> Decision:
                           and e.provider == "gate" for e in eps.values())]
     if ungated and "gate" in ctx.providers:
         o = ungated[0]
-        key = info_key(st.revision, [o.identifier], "gate", "initial", ctx.scope_hash)
+        key = info_key(st.revision, [o.identifier], "gate", "initial", ctx.scope_hash,
+                       engine=ctx.engine)
         if not any(e.info_key == key and e.outcome in UNSUCCESSFUL for e in eps.values()):
             return Decision(NEXT_EPOCH,
                             f"{o.identifier} ({o.plane}) has never been judged at this tree",
@@ -174,7 +176,7 @@ def decide(ctx: Context) -> Decision:
         o = failing[0]
         sig = f"gate-failed:{o.identifier}"
         key = info_key(st.revision, [o.identifier], provider, "new_failure_signature",
-                       ctx.scope_hash, sig)
+                       ctx.scope_hash, sig, engine=ctx.engine)
         if not any(e.info_key == key and e.outcome in UNSUCCESSFUL for e in eps.values()):
             return Decision(NEXT_EPOCH,
                             f"{o.identifier} has a gate that ran and failed; that is new "

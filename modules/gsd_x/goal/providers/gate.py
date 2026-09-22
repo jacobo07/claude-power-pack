@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -50,6 +51,51 @@ class GateProvider:
         written because the coordinator died in between."""
         return self.run_dir / f"gate-{run_token}.json"
 
+    def _result(self, run_token: str) -> Path:
+        """Where the RUN records its own exit status, written by the supervisor.
+
+        Measured 2026-09-22 on the first real goal: the sweep runs as a new
+        process every pass, so the child handle that `poll()` needs belongs to a
+        process that has already exited. Every gate ran, and the next pass could
+        only report LOST -- the work happened and the answer was unreadable.
+        A result file is durable, so any process can read what the gate said.
+        """
+        return self.run_dir / f"gate-{run_token}.result.json"
+
+    @staticmethod
+    def _supervisor() -> str:
+        """Run the real gate, then record its exit status where anyone can read it."""
+        return (
+            "import json,subprocess,sys,time\n"
+            "res=sys.argv[1]; cmd=sys.argv[2:]\n"
+            "rc=subprocess.run(cmd).returncode\n"
+            "json.dump({'exit_status':rc,'ended_at':time.time()}, open(res,'w'))\n"
+            "sys.exit(rc)\n"
+        )
+
+    def _read_result(self, handle: dict) -> dict | None:
+        p = Path(handle.get("result") or self._result(handle.get("token", "")))
+        if not p.is_file():
+            return None
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+
+    @staticmethod
+    def _pid_alive(pid) -> bool:
+        if not pid:
+            return False
+        if os.name == "nt":
+            out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
+                                 capture_output=True, text=True).stdout
+            return str(pid) in out
+        try:
+            os.kill(int(pid), 0)
+            return True
+        except (OSError, ProcessLookupError, ValueError):
+            return False
+
     @staticmethod
     def _spec_gate(spec: dict) -> dict:
         g = spec.get("gate") or {}
@@ -75,13 +121,15 @@ class GateProvider:
         marker.write_text(json.dumps({"token": token, "epoch_id": spec["epoch_id"],
                                       "log": str(log), "started_at": time.time(),
                                       "pid": None}), encoding="utf-8")
+        result = self._result(token)
+        argv = [sys.executable, "-c", self._supervisor(), str(result), *g["command"]]
         with open(log, "wb") as out:        # the child keeps its own duplicate
-            proc = subprocess.Popen(g["command"], cwd=str(root), stdout=out,
+            proc = subprocess.Popen(argv, cwd=str(root), stdout=out,
                                     stderr=subprocess.STDOUT,
                                     env={**os.environ, "PYTHONIOENCODING": "utf-8",
                                          "GSDX_GOAL_EPOCH": spec["epoch_id"]})
         handle = {"pid": proc.pid, "token": token, "log": str(log),
-                  "marker": str(marker), "started_at": time.time(),
+                  "marker": str(marker), "result": str(result), "started_at": time.time(),
                   "tree_before": tree_id(root, spec.get("scope_paths")),
                   "head_before": head(root)}
         marker.write_text(json.dumps({**json.loads(marker.read_text(encoding="utf-8")),
@@ -90,24 +138,31 @@ class GateProvider:
         return handle
 
     def observe(self, handle: dict) -> Observation:
+        # The RESULT FILE first, because it is the only answer that survives the
+        # process that started the gate. A sweep observes from a new process
+        # every pass; reading process memory there can only ever say LOST.
+        res = self._read_result(handle)
+        if res is not None:
+            rc = res.get("exit_status")
+            return Observation(OBS_ENDED, COMPLETED if rc == 0 else FAILED, f"exit {rc}")
         proc = self._procs.get(handle.get("pid"))
-        if proc is None:
-            # Another process owns it (or we restarted). The marker says it was
-            # started; without the child handle we cannot read its exit status,
-            # and guessing is what turns a finished gate into a false failure.
-            return Observation(OBS_LOST, LOST, "no child handle in this process")
-        rc = proc.poll()
-        if rc is None:
+        if proc is not None and proc.poll() is None or self._pid_alive(handle.get("pid")):
             if time.time() - handle.get("started_at", 0) > self.wall_bound_s:
                 return Observation(OBS_RUNNING, "", "over its wall bound; cancel it")
             return Observation(OBS_RUNNING)
-        return Observation(OBS_ENDED, COMPLETED if rc == 0 else FAILED, f"exit {rc}")
+        # No result and nothing alive: the run is gone without saying what it did.
+        # That is LOST -- never a verdict, because we did not see one.
+        return Observation(OBS_LOST, LOST, "no result file and the process is gone")
 
     def harvest(self, handle: dict, spec: dict) -> Receipt:
         g = self._spec_gate(spec)
         root = Path(spec["root"])
-        proc = self._procs.get(handle.get("pid"))
-        rc = proc.poll() if proc is not None else None
+        res = self._read_result(handle)
+        if res is not None:
+            rc = res.get("exit_status")       # durable: readable from any process
+        else:
+            proc = self._procs.get(handle.get("pid"))
+            rc = proc.poll() if proc is not None else None
         # A CANCELLED gate did not judge anything. Its exit status belongs to
         # whoever killed it (measured: taskkill leaves 1), and reporting that as
         # "the gate ran and failed" is a fabricated verdict about work that never

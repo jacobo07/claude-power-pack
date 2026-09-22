@@ -147,11 +147,21 @@ def scope_hash(root: Path, paths: list[str]) -> str:
 
 
 def info_key(revision: str, open_gaps: list[str], provider: str, hypothesis: str,
-             scope: str, last_failure_signature: str = "") -> str:
+             scope: str, last_failure_signature: str = "", engine: str = "") -> str:
+    """`engine` is the identity of the code doing the orchestrating.
+
+    It belongs in the key because a previous attempt can fail for a reason that
+    is neither the subject's nor the provider's. Measured 2026-09-22 on the first
+    real goal: three gates RAN and their evidence was dropped by a defect in the
+    sweep's own harvest. Retrying those gates against a fixed engine is not a
+    blind retry -- the thing that failed has changed, which is exactly what "new
+    information" means. It is narrow on purpose: it moves when the engine moves,
+    not when any unrelated file does.
+    """
     if hypothesis not in HYPOTHESES:
         raise EpochError(f"hypothesis {hypothesis!r} is not one of {sorted(HYPOTHESES)}")
     raw = json.dumps([revision, sorted(open_gaps), provider, hypothesis, scope,
-                      last_failure_signature], separators=(",", ":"))
+                      last_failure_signature, engine], separators=(",", ":"))
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
 
 

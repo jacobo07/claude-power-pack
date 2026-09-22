@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ..mission import closure as mcl
 from . import contract as gc
 from . import convergence as cv
 from . import epoch as ep
@@ -129,6 +130,33 @@ class SweepReport:
         return "\n".join(self.acted)
 
 
+def _apply_verdicts(log: gl.GoalLog, receipt, record, actor: str) -> list[str]:
+    """Move an obligation on the verdict its gate produced -- or say why not.
+
+    Ingesting a receipt banks WHAT HAPPENED; it does not decide what that means.
+    Without this step a gate could run, pass, be banked, and leave its obligation
+    ACCEPTED forever -- measured 2026-09-22, when the sweep did exactly that and
+    then honestly reported that no justified action remained.
+
+    The transition is still `convergence.evaluate`'s to refuse: a verdict from
+    another tree or revision, an unpinned gate, or a non-runtime gate on a
+    REALITY obligation is refused here exactly as it would be anywhere else.
+    """
+    out: list[str] = []
+    ob_id = (record.spec or {}).get("obligation")
+    if not ob_id:
+        return out
+    for v in receipt.verdicts or []:
+        verdict = mcl.Verdict(v.get("gate", ""), int(v.get("exit_status", 1)),
+                              v.get("observed", ""), v.get("tree_hash", ""),
+                              v.get("revision", ""), v.get("gate_class", ""),
+                              tuple(tuple(p) for p in (v.get("gate_pin") or ())))
+        res = cv.satisfy(log, gc.project(log), ob_id, verdict, actor)
+        out.append(f"{log.goal_id}: {ob_id} -> "
+                   f"{'SATISFIED' if res.allowed else res.outcome}: {res.reason[:140]}")
+    return out
+
+
 def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path | None = None,
                dry_run: bool = False, actor: str = "sweep") -> list[str]:
     """One pass over one goal. Returns what it did (empty when it did nothing)."""
@@ -146,10 +174,15 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
         if e.state == "running" and e.provider == "gate" and e.handle:
             observations[e.epoch_id] = prov.observe(e.handle)
 
+    # The engine's own identity is part of the retry key: when the orchestrator
+    # is what failed an attempt, retrying against fixed code is new information
+    # rather than the same attempt again.
+    engine = gs.head(Path(__file__).resolve().parents[3])
     d = rc.decide(rc.Context(state=state, tree_hash=tree,
                              scope_hash=ep.scope_hash(root, paths),
                              observations=observations, now=time.time(),
-                             budget=state.budget, providers=tuple(providers)))
+                             budget=state.budget, providers=tuple(providers),
+                             engine=engine))
     if d.kind == rc.RECOVER:
         if not dry_run:
             out = ep.recover(log, state, prov, d.epoch_id, actor)
@@ -168,6 +201,7 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
             try:
                 receipt = prov.harvest(e.handle or {}, spec)
                 ep.ingest_receipt(log, gc.project(log), receipt, actor)
+                acted.extend(_apply_verdicts(log, receipt, e, actor))
             except (ep.EpochError, KeyError) as exc:
                 acted.append(f"{log.goal_id}: {e.epoch_id} harvest refused: {exc}")
             ep.end(log, gc.project(log), e.epoch_id,
@@ -182,13 +216,21 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
         if dry_run:
             acted.append(f"{log.goal_id}: would run {o.identifier}'s gate")
         else:
-            e = ep.begin(log, state, "gate", {"obligation": o.identifier, "tree_hash": tree},
+            gate = {"id": o.identifier, "command": jd._argv(o.done_gate),
+                    "class": "in_game" if o.plane == cv.REALITY else "unit",
+                    "files": [rel for rel, _ in o.gate_pin]}
+            # The gate spec is STORED on the epoch, never rebuilt at harvest.
+            # Measured 2026-09-22 on the first real goal: harvest rebuilt it from
+            # an epoch record that never carried it, so every gate RAN, produced
+            # an exit status nobody read, and its epoch ended `lost`. The work
+            # happened and the evidence was dropped -- after which the goal
+            # honestly reported that no justified action remained, which was the
+            # right answer to a question the sweep had made unanswerable.
+            e = ep.begin(log, state, "gate",
+                         {"obligation": o.identifier, "tree_hash": tree, "gate": gate},
                          d.info_key, d.hypothesis, actor)
             spec = {"epoch_id": e.epoch_id, "revision": state.revision, "root": str(root),
-                    "identity": e.identity, "scope_paths": paths,
-                    "gate": {"id": o.identifier, "command": jd._argv(o.done_gate),
-                             "class": o.plane == cv.REALITY and "in_game" or "unit",
-                             "files": [rel for rel, _ in o.gate_pin]}}
+                    "identity": e.identity, "scope_paths": paths, "gate": gate}
             # Non-blocking: a five-minute schedule starts the gate and returns.
             handle = prov.dispatch(spec)
             ep.mark_running(log, gc.project(log), e.epoch_id, handle, actor)
