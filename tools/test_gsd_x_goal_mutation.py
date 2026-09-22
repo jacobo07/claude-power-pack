@@ -30,11 +30,14 @@ ROOT = Path(__file__).resolve().parents[1]
 GOAL = ROOT / "modules" / "gsd_x" / "goal"
 LOG, CONTRACT, CONV = GOAL / "log.py", GOAL / "contract.py", GOAL / "convergence.py"
 EPOCH = GOAL / "epoch.py"
+GATEP = GOAL / "providers" / "gate.py"
+GITST = GOAL / "git_state.py"
 STORE = ROOT / "modules" / "gsd_x" / "mission" / "store.py"
 SUITES = {
     "V-GOAL-": ROOT / "tools" / "test_gsd_x_goal.py",
     "V-CONV-": ROOT / "tools" / "test_gsd_x_goal_convergence.py",
     "V-EP-": ROOT / "tools" / "test_gsd_x_goal_epoch.py",
+    "V-GATE-": ROOT / "tools" / "test_gsd_x_goal_gate_provider.py",
 }
 
 # name -> (file, old, new, property removed, gate that must go red)
@@ -121,6 +124,19 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         EPOCH, "    if not (isinstance(p.wall_bound_s, (int, float)) and p.wall_bound_s > 0):",
         "    if False:",
         "a provider with no wall bound must be refused", "V-EP-PROVIDER-BOUND"),
+    # --- gate provider (C6) ---
+    "cancelled-gate-gets-a-verdict": (
+        GATEP, "        if self._was_cancelled(handle):\n            rc = None\n", "",
+        "a cancelled gate must not produce a verdict from its killer's exit code",
+        "V-GATE-CANCELLED-NO-VERDICT"),
+    "gate-class-inferred": (
+        GATEP, 'if g.get("class") not in GATE_CLASSES:', "if False:",
+        "the gate class must be declared, never guessed", "V-GATE-CLASS-DECLARED"),
+    "dirty-tree-reads-as-commit": (
+        GITST, "    if not _dirty(root, paths):\n        return f\"git:{oid}\"",
+        "    if True:\n        return f\"git:{oid}\"",
+        "an uncommitted scope must not borrow the commit's tree name",
+        "V-GATE-TREE-DIRTY"),
 }
 
 
