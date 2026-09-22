@@ -467,6 +467,32 @@ const CHAIN_MAP = {
     // catches Grep, the primary file-exploration tool. Fail-open; no block flag.
     { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/graph_first_gate.js', timeoutMs: 4000 },
   ],
+  // SessionStart fold (2026-09-22, Jacobo). These three were SEPARATE top-level
+  // settings.json registrations, so the harness paid a process spawn for each
+  // with NO pooling and NO deadline -- the one event family that had neither.
+  // Measured serially on an idle disk: 712 + 465 + 1422 = 2,599 ms. On the disk
+  // state that produced the Owner's report (0 % idle, a no-op node spawn costing
+  // 965 ms) the same three cost multiples of that, which is the "abro un pane
+  // nuevo y tarda muchisimo" half of the complaint.
+  //
+  // All three were READ before folding and all three are ADVISORY -- no
+  // `continue:false`, no block decision -- which is the precondition for giving
+  // this chain a deadline at all (see CHAIN_DEADLINE_MS: safe on an advisory
+  // chain, a security regression on a blocking one).
+  //
+  // DELIBERATELY NOT FOLDED: the Orca hook (cmd.exe -> %USERPROFILE%\.orca\
+  // agent-hooks\claude-hook.cmd). It belongs to another product; folding a third
+  // party's integration into this estate's dispatcher would make Orca's startup
+  // depend on a file Orca does not own. It keeps its own registration.
+  //
+  // host-memory-floor is CRITICAL: it is the guard for the host-starvation class
+  // this estate has already paid for repeatedly, so it runs first and uncontended
+  // rather than competing in the pool for a slot it might not get.
+  'SessionStart-chain': [
+    { exe: NODE_EXE, script: './host-memory-floor.js', timeoutMs: 5000, critical: true },
+    { exe: NODE_EXE, script: './learning-sentinel.js', timeoutMs: 3000 },
+    { exe: NODE_EXE, script: '../skills/claude-power-pack/hooks/session_start_hub.js', timeoutMs: 10000 },
+  ],
   // UserPromptSubmit standalone fold (hub-fold 2026-06-04). The EVENT_MAP
   // 'UserPromptSubmit-default' bundle (power-pack-reminder + baseline-
   // translator) stays in-process; these 3 were separate top-level entries.
@@ -581,6 +607,10 @@ const CHAIN_MAP = {
 // fire far more often, so they stay narrower to keep peak spawn count low.
 const CHAIN_CONCURRENCY = {
   'Stop-chain': 8,
+  // 3 members, so 3 slots: the pool is never the constraint here, the spawns are.
+  // The critical member runs ahead of the pool regardless, so this governs the
+  // two advisory ones only.
+  'SessionStart-chain': 3,
   // UserPromptSubmit-chain had NO entry, so it fell to DEFAULT_CONCURRENCY = 1 and
   // cost SUM. See CHAIN_DEADLINE_MS directly below for the measurement that forced
   // both this line and the deadline: sequential, this chain overran the harness
@@ -686,6 +716,22 @@ function isScratchTarget(rawStdin) {
 // Any future entry here needs its own wall-clock measurement AND an argument
 // about what failing open on that chain costs.
 const CHAIN_DEADLINE_MS = {
+  // 2026-09-22 (Jacobo). SessionStart had NO deadline at all, because it had no
+  // chain -- three separate registrations, each spawning its own node, none of
+  // them bounded by anything but its own per-hook timeout (5 + 3 + 10 = 18 s of
+  // worst case with nothing to cap the sum).
+  //
+  // The measurement AND the argument this table demands: serially on an idle disk
+  // the three cost 712 + 465 + 1422 = 2,599 ms, so 4000 leaves real headroom on a
+  // healthy host and bounds the pathological one. All three members were read and
+  // are ADVISORY, so an abandoned member costs a missing injection and never an
+  // enforcement that failed open -- which is the distinction that makes a deadline
+  // legitimate here and illegitimate on the PreToolUse chains below.
+  //
+  // What this does NOT fix: the harness still spawns this dispatcher, and a spawn
+  // on a saturated disk measured 965 ms for a no-op. A deadline bounds the wait;
+  // it cannot make a spawn cheap.
+  'SessionStart-chain': 4000,
   // 2026-09-22 (Jacobo): 11500 -> 3000. The old value was headroom under the 15 s
   // harness ceiling, which is the right question for "does the injection survive"
   // and the WRONG one for "how long does the Owner stare at a pane that will not
