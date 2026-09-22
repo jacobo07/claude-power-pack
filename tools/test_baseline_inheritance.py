@@ -241,6 +241,219 @@ def main() -> int:
           f"unnamed predicate returns FALSE on a stage that names one "
           f"(caught: {named_control})")
 
+    # ==== ARTIFACT GENERICITY: the second dimension (Mission 003) ==========
+    #
+    # Everything above proves CAPABILITY genericity: a capability the gate had
+    # never heard of is inherited from its contract alone. That is one axis, and
+    # on its own it is satisfied by a boundary that is hardwired to ONE artifact
+    # kind and merely open about which capability serves it.
+    #
+    # ARTIFACT genericity is the orthogonal claim: a second, differently-shaped
+    # construction artifact participates through the SAME boundary, with no edit
+    # to the boundary merely to recognise it. A system can pass either axis and
+    # fail the other, so the two are asserted separately and never collapsed
+    # into one word.
+    import ast
+
+    def _code_tokens(src: str) -> set:
+        """Every string literal and identifier in EXECUTABLE code.
+
+        Docstrings are excluded DELIBERATELY. `enrichment.py`'s own header uses
+        "prd_baseline" as an example of the protocol, and a grep would read that
+        prose as coupling and fail a boundary that is in fact clean. The question
+        is not whether a name is mentioned; it is whether the CODE branches on
+        one. An AST is the only instrument that can tell those apart.
+        """
+        tree = ast.parse(src)
+        docs = set()
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.Module, ast.FunctionDef,
+                                 ast.AsyncFunctionDef, ast.ClassDef)):
+                d = ast.get_docstring(node, clean=False)
+                if d is not None:
+                    docs.add(d)
+        out = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                if node.value not in docs:
+                    out.add(node.value)
+            elif isinstance(node, ast.Name):
+                out.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                out.add(node.attr)
+        return out
+
+    # --- F1/F2. The predeclared falsifier, as an executable gate ------------
+    # If the generic boundary ever has to learn an artifact kind or a capability
+    # id to do its job, the mechanism was an integration wearing infrastructure's
+    # clothes. This is the assertion that says so out loud instead of leaving it
+    # to a reviewer's goodwill.
+    FORBIDDEN = ("prd_baseline", "design_md", "surface_architecture",
+                 "surface_architecture_design_md", "karimo", "design_gate")
+    leaked = {}
+    for rel in ("enrichment.py", "contract.py"):
+        toks = _code_tokens(
+            (REPO / "modules" / "capability_runtime" / rel).read_text(
+                encoding="utf-8-sig"))
+        hits = sorted(t for t in FORBIDDEN if t in toks)
+        if hits:
+            leaked[rel] = hits
+    check("V-INHERIT-BOUNDARY-CLEAN", not leaked,
+          f"the generic boundary's CODE names no artifact kind and no capability "
+          f"(leaked: {leaked or 'nothing'})")
+
+    # Positive control. An empty `leaked` is also what a broken AST walk returns,
+    # and a detector that stopped detecting reports exactly the clean bill of a
+    # detector that works. Drive the red branch on a synthetic source.
+    dirty_boundary = _code_tokens(
+        'def candidates(kind):\n'
+        '    if kind == "design_md":\n'
+        '        return ["surface_architecture"]\n'
+        '    return []\n')
+    check("V-INHERIT-BOUNDARY-CLEAN-CONTROL",
+          "design_md" in dirty_boundary and "surface_architecture" in dirty_boundary,
+          "the leak predicate returns TRUE on a boundary that branches on an "
+          "artifact kind")
+
+    # --- B. An artifact kind the boundary has never seen --------------------
+    # The mirror of V-INHERIT-UACF-EFFECTIVE, turned through ninety degrees:
+    # there the CAPABILITY was unknown, here the ARTIFACT KIND is. Same probe
+    # capability, same temp registry, zero edits to enrichment.py.
+    unseen_kind = "an_artifact_kind_nothing_has_ever_declared"
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / f"{probe_id}.json").write_text(json.dumps({
+            "id": probe_id,
+            "name": "synthetic artifact-kind probe",
+            "owner": "test_baseline_inheritance",
+            "triggers": ["an artifact kind the estate has never seen"],
+            "consumers": ["this gate"],
+            "inputs": [unseen_kind],
+            "entrypoint": f"{self_mod}:_probe_capability",
+            "adapter": f"{self_mod}:_probe_adapter",
+            "authority": "decision",
+        }), encoding="utf-8")
+        unseen = decisions_for_artifact(
+            unseen_kind, {"title": "PRD: inherit-probe subject"},
+            contracts_dir=Path(tmp))
+        # Same registry, a DIFFERENT kind: the boundary must not hand this
+        # contract an artifact it never claimed.
+        wrong_kind = decisions_for_artifact(
+            "some_other_kind_entirely", {"title": "PRD: inherit-probe subject"},
+            contracts_dir=Path(tmp))
+    seen = (unseen.get(probe_id) or {})
+    check("V-INHERIT-ARTIFACT-GENERIC",
+          seen.get("status") == "invoked" and not wrong_kind,
+          f"an unseen ARTIFACT KIND is inherited from its contract alone, and a "
+          f"kind the contract never claimed gets nothing "
+          f"(claimed->{seen.get('status')}, unclaimed->{len(wrong_kind)} record(s))")
+
+    # --- C. The second REAL subject, through its own real consumer ----------
+    from tools.design_gate import design_gate  # noqa: E402
+
+    template = REPO / "modules" / "design-md" / "DESIGN.md.template"
+    real = design_gate(str(template))
+    real_caps = real.get("capability_decisions") or {}
+    real_status = (real_caps.get("surface_architecture_design_md") or {}).get("status")
+    # `status == "invoked"` is load-bearing, not belt-and-braces. The first
+    # version of this gate asserted only that the capability APPEARED in the
+    # decisions dict, and the M3 drill -- which severs the adapter entirely --
+    # left it GREEN: an unreachable capability still produces a record, and a
+    # record still has a key. Presence is not invocation. Measured 2026-09-22.
+    check("V-INHERIT-DESIGN-REAL",
+          real.get("capability_state") == "inherited" and real_status == "invoked",
+          f"the estate's real DESIGN.md reaches AND ENTERS a capability through "
+          f"the generic boundary (state={real.get('capability_state')}, "
+          f"status={real_status}, capabilities={sorted(real_caps)})")
+
+    # UNNAMED, for the design stage. Asserted on CODE, not prose: this file's own
+    # comments discuss surface architecture at length, and a grep would fail a
+    # stage that is clean. `design_md` is NOT forbidden here -- a stage naming its
+    # own artifact kind is how it asks the question, exactly as the PRD stage
+    # names `prd_baseline`. Naming a CAPABILITY is the defect.
+    gate_tokens = _code_tokens(
+        (REPO / "tools" / "design_gate.py").read_text(encoding="utf-8-sig"))
+    gate_named = sorted(t for t in ("surface_architecture",
+                                    "surface_architecture_design_md")
+                        if t in gate_tokens)
+    check("V-INHERIT-DESIGN-UNNAMED", not gate_named,
+          f"the design stage names no capability (found: {gate_named or 'none'})")
+
+    # --- D. The non-applicable control --------------------------------------
+    # A design document that is not about an entry surface must come back
+    # CONSIDERED AND DECLINED, not silently untouched and not contaminated.
+    quiet_md = (
+        "---\n"
+        "aesthetic_family: F3\n"
+        "font_display: \"Instrument Serif\"\n"
+        "ground: light\n"
+        "---\n\n"
+        "# Internal Metrics Dashboard\n\n"
+        "Tokens for a read-only dashboard of internal counters.\n")
+    # The substring trap, sharpened. This document is ABOUT design and says so
+    # twelve times; a bare-substring matcher finds "sign" inside "design" and
+    # reports that every design document in the estate describes a signup.
+    trap_md = (
+        "---\n"
+        "aesthetic_family: F3\n"
+        "font_display: \"Instrument Serif\"\n"
+        "ground: light\n"
+        "---\n\n"
+        "# Design System for the Design Team\n\n"
+        "The designer designs designs. Redesign the design, then design the\n"
+        "redesigned design. Designing designs is the designer's design.\n")
+    with tempfile.TemporaryDirectory() as tmp:
+        qp = Path(tmp) / "DESIGN.md"
+        qp.write_text(quiet_md, encoding="utf-8")
+        quiet = design_gate(str(qp))
+        tp = Path(tmp) / "TRAP.md"
+        tp.write_text(trap_md, encoding="utf-8")
+        trap = design_gate(str(tp))
+
+    quiet_caps = quiet.get("capability_decisions") or {}
+    quiet_note = (quiet_caps.get("surface_architecture_design_md") or {}).get("note", "")
+    check("V-INHERIT-DESIGN-NOT-APPLICABLE",
+          quiet.get("capability_state") == "not_applicable"
+          and "not applicable" in quiet_note,
+          f"a design document about a dashboard is considered and declined, with "
+          f"a reason (state={quiet.get('capability_state')}, note={quiet_note!r})")
+
+    check("V-INHERIT-DESIGN-SUBSTRING",
+          trap.get("capability_state") == "not_applicable",
+          f"'design' does not match 'sign up': a document saying design twelve "
+          f"times is still not an entry surface "
+          f"(state={trap.get('capability_state')})")
+
+    # --- E. The axis reports; it does not score -----------------------------
+    # Structurally the decisions are attached after scoring, so they CANNOT move
+    # the number. That is an argument about the code. This is the measurement:
+    # fabricate a maximally-loud inherited decision, run the same document again,
+    # and require score, verdict and is_done to be byte-identical.
+    import tools.design_gate as DG  # noqa: E402
+
+    original = DG._attach_capability_decisions
+    try:
+        DG._attach_capability_decisions = lambda parsed: {
+            "a_loud_capability": {"status": "invoked", "outcome": "BLOCK",
+                                  "exit_code": 1, "selected_because": "noise",
+                                  "entrypoint": "x:y", "authority": "decision"}}
+        loud = design_gate(str(template))
+    finally:
+        DG._attach_capability_decisions = original
+
+    check("V-INHERIT-DESIGN-SCORE-UNMOVED",
+          (loud.get("score"), loud.get("verdict"), loud.get("is_done"))
+          == (real.get("score"), real.get("verdict"), real.get("is_done")),
+          f"an inherited decision does not move the design score "
+          f"({real.get('score')}/{real.get('verdict')} -> "
+          f"{loud.get('score')}/{loud.get('verdict')})")
+
+    # And the control for THAT: the patch must actually have reached the gate,
+    # or the equality above is two identical unpatched runs proving nothing.
+    check("V-INHERIT-DESIGN-SCORE-UNMOVED-CONTROL",
+          "a_loud_capability" in (loud.get("capability_decisions") or {}),
+          "the fabricated decision reached the gate, so the equality above is "
+          "about the axis and not about two identical runs")
+
     print(f"INHERITANCE_PASS={PASSES}/{PASSES + FAILS}  threshold={PASSES + FAILS}/{PASSES + FAILS}")
     return 0 if FAILS == 0 else 1
 
