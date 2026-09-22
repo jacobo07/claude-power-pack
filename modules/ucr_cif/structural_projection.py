@@ -54,14 +54,21 @@ import hashlib
 import json
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from modules.ucr_cif import ownership_evidence as _oe
+from modules.ucr_cif import prose_authority as _pa
 
 #: Bumped when the on-disk shape changes. A reader that speaks a different
 #: version degrades rather than guessing at the layout.
-SCHEMA_VERSION = 1
+#:
+#: 2 (W11) adds `prose_terms`. The bump is deliberate rather than an optional
+#: field: a reader that can consult prose evidence, handed a projection built
+#: before prose existed, would find an empty map and report "no owner declares
+#: this" -- which is the collapse of "we could not look" into "nobody holds it"
+#: that this module exists to refuse. A version mismatch degrades loudly.
+SCHEMA_VERSION = 2
 
 PROJECTION_REL = "vault/ucr_cif/structural_projection.json"
 LEDGER_REL = "vault/ucr_cif/disposition_ledger.json"
@@ -97,6 +104,17 @@ STALE_LEDGER = "STALE_LEDGER"
 _CACHE: dict = {}
 
 
+#: W11. Whether PROSE declarations join the ranking evidence. Off by default and
+#: separate from W9's switch on purpose: W9's arm is `STRUCTURAL only` and must
+#: stay byte-reproducible as the known-harmful reference, so the prose arm is a
+#: DISTINCT treatment identity rather than the same treatment with more data.
+PROSE_RANK_ENV = "UCR_CIF_PROSE_RANK"
+
+
+def _prose_ranking() -> bool:
+    return os.environ.get(PROSE_RANK_ENV, "") == "1"
+
+
 @dataclass(frozen=True)
 class Projection:
     """Compiled structural facts, plus an honest account of their standing."""
@@ -106,6 +124,12 @@ class Projection:
     built_at: str | None = None
     repo_fingerprint: str | None = None
     detail: str | None = None
+    #: W11. term -> owners that DECLARE it in a normatively-consumed prose
+    #: contract. Compiled and reported always; consulted for ranking only under
+    #: the W11 arm. Kept in its own map rather than merged into `terms` so that
+    #: `holders()` -- and therefore every W9 measurement -- stays exactly what it
+    #: was, and so a reader can always tell the two evidence kinds apart.
+    prose_terms: dict = field(default_factory=dict)
 
     @property
     def usable(self) -> bool:
@@ -124,8 +148,28 @@ class Projection:
             return frozenset()
         return self.terms.get(str(term).lower(), frozenset())
 
+    def prose_holders(self, term: str) -> frozenset:
+        """Ledger owners that DECLARE `term` in a consumed prose contract.
+
+        Same refusal as `holders`: an unusable projection answers empty AND
+        carries a status that is not LOADED.
+        """
+        if not self.usable:
+            return frozenset()
+        return self.prose_terms.get(str(term).lower(), frozenset())
+
     def holds(self, owner: str, term: str) -> bool:
-        return bool(owner) and owner in self.holders(term)
+        """Structural support, with the prose channel gated by the W11 arm.
+
+        `holders()` is deliberately NOT widened. W9's arm has to keep producing
+        the numbers W10 judged, or the harmful reference stops being a
+        reference; so the union happens here, on the W11 path only.
+        """
+        if not owner:
+            return False
+        if owner in self.holders(term):
+            return True
+        return _prose_ranking() and owner in self.prose_holders(term)
 
 
 def repo_root(start=None) -> Path:
@@ -231,6 +275,15 @@ def build(repo=None) -> dict:
         held = sorted(_oe.structural_holders(t, index) & owners)
         if held:
             terms[t] = held
+    # W11. Restricted to the SAME ledger universe and owner set as the symbol
+    # channel, so the two maps are comparable and a prose owner cannot enter
+    # through a term the corpus never adjudicated.
+    prose_raw = _pa.prose_declarations(root)
+    prose_terms: dict = {}
+    for t in sorted(universe):
+        held = sorted(set(prose_raw.get(t, ())) & owners)
+        if held:
+            prose_terms[t] = held
     build_ms = (time.perf_counter() - t0) * 1000.0
     return {
         "schema_version": SCHEMA_VERSION,
@@ -240,11 +293,15 @@ def build(repo=None) -> dict:
         # cannot name its source is indistinguishable from an authority.
         "source": {
             "producer": "modules.ucr_cif.ownership_evidence.build_structural_index",
-            "signals": ["SYMBOL", "FILENAME", "REGISTRY"],
+            "signals": ["SYMBOL", "FILENAME", "REGISTRY", "DECLARATION"],
+            "declaration_producer":
+                "modules.ucr_cif.prose_authority.prose_declarations",
             "scan_dirs": list(_oe.SCAN_DIRS),
             "files_seen": index["files_seen"],
             "distinctive_max_holders": _oe.DISTINCTIVE_MAX_HOLDERS,
         },
+        "prose_held_terms": len(prose_terms),
+        "prose_terms": prose_terms,
         "ledger_binding": _ledger_binding(root),
         "repo_fingerprint": repo_fingerprint(root),
         "universe_terms": len(universe),
@@ -337,9 +394,13 @@ def load(repo=None, corpus_id=None) -> Projection:
 
     terms = {str(t).lower(): frozenset(o) for t, o in raw.items()
              if isinstance(o, list)}
+    prose = {str(t).lower(): frozenset(o)
+             for t, o in (doc.get("prose_terms") or {}).items()
+             if isinstance(o, list)}
     proj = Projection(LOADED, terms, corpus_id=was.get("corpus_id"),
                       built_at=doc.get("built_at"),
-                      repo_fingerprint=doc.get("repo_fingerprint"))
+                      repo_fingerprint=doc.get("repo_fingerprint"),
+                      prose_terms=prose)
     _CACHE.update({"k": key, "proj": proj})
     return proj
 

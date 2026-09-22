@@ -1,6 +1,6 @@
 {
- "build_ms": 32653.9,
- "built_at": "2026-09-21T23:41:47Z",
+ "build_ms": 75064.6,
+ "built_at": "2026-09-22T09:41:35Z",
  "held_terms": 674,
  "ledger_binding": {
   "corpus_id": "ef2b381beff512ca6919280a",
@@ -9,11 +9,761 @@
   "size": 1953853
  },
  "ledger_owners": 40,
- "repo_fingerprint": "1f5a160524bb17cc39797807f37827ee653750b13f94385a9b10b5c26d63617a",
- "schema_version": 1,
+ "prose_held_terms": 236,
+ "prose_terms": {
+  "absence": [
+   "modules/universal-meta-systems"
+  ],
+  "access": [
+   "modules/governance-overlay"
+  ],
+  "activation": [
+   "modules/universal-meta-systems"
+  ],
+  "after": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "agent": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "analyzing": [
+   "modules/governance-overlay"
+  ],
+  "answer": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "application": [
+   "modules/universal-meta-systems"
+  ],
+  "apply": [
+   "modules/universal-meta-systems"
+  ],
+  "architect": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "architectural": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "assumed": [
+   "modules/governance-overlay"
+  ],
+  "assumption": [
+   "modules/governance-overlay"
+  ],
+  "assumptions": [
+   "modules/governance-overlay"
+  ],
+  "async": [
+   "modules/governance-overlay"
+  ],
+  "audit": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "auditor": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "automatic": [
+   "modules/universal-meta-systems"
+  ],
+  "autonomy": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "baseline": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "becomes": [
+   "modules/governance-overlay"
+  ],
+  "before": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "behind": [
+   "modules/universal-meta-systems"
+  ],
+  "blind": [
+   "modules/governance-overlay"
+  ],
+  "block": [
+   "modules/governance-overlay"
+  ],
+  "boundary": [
+   "modules/governance-overlay"
+  ],
+  "build": [
+   "modules/universal-meta-systems"
+  ],
+  "building": [
+   "modules/governance-overlay"
+  ],
+  "caller": [
+   "modules/governance-overlay"
+  ],
+  "capability": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "capture": [
+   "modules/governance-overlay"
+  ],
+  "causal": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "chain": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "change": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "checklist": [
+   "modules/governance-overlay"
+  ],
+  "claim": [
+   "modules/governance-overlay"
+  ],
+  "claude": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "clean": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "closed": [
+   "modules/universal-meta-systems"
+  ],
+  "code": [
+   "modules/governance-overlay"
+  ],
+  "cognitive": [
+   "modules/governance-overlay"
+  ],
+  "command": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "compiles": [
+   "modules/governance-overlay"
+  ],
+  "completion": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "concurrency": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "confidence": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "config": [
+   "modules/governance-overlay"
+  ],
+  "constitution": [
+   "modules/executionos-lite"
+  ],
+  "constitutional": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "consulted": [
+   "modules/governance-overlay"
+  ],
+  "consumer": [
+   "modules/governance-overlay"
+  ],
+  "consumers": [
+   "modules/governance-overlay"
+  ],
+  "context": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "contract": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "core": [
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "corpus": [
+   "modules/universal-meta-systems"
+  ],
+  "corruption": [
+   "modules/governance-overlay"
+  ],
+  "coverage": [
+   "modules/governance-overlay"
+  ],
+  "crash": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "critical": [
+   "modules/governance-overlay"
+  ],
+  "database": [
+   "modules/governance-overlay"
+  ],
+  "dead": [
+   "modules/governance-overlay"
+  ],
+  "decide": [
+   "modules/universal-meta-systems"
+  ],
+  "decision": [
+   "modules/governance-overlay"
+  ],
+  "default": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "deferred": [
+   "modules/governance-overlay"
+  ],
+  "deploy": [
+   "modules/governance-overlay"
+  ],
+  "deployment": [
+   "modules/governance-overlay"
+  ],
+  "deprecated": [
+   "modules/governance-overlay"
+  ],
+  "depth": [
+   "modules/executionos-lite"
+  ],
+  "detail": [
+   "modules/governance-overlay"
+  ],
+  "detection": [
+   "modules/governance-overlay"
+  ],
+  "discovery": [
+   "modules/universal-meta-systems"
+  ],
+  "domain": [
+   "modules/universal-meta-systems"
+  ],
+  "done": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "dormant": [
+   "modules/universal-meta-systems"
+  ],
+  "double": [
+   "modules/governance-overlay"
+  ],
+  "drift": [
+   "modules/governance-overlay"
+  ],
+  "duplication": [
+   "modules/governance-overlay"
+  ],
+  "dynamic": [
+   "modules/governance-overlay"
+  ],
+  "edge": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "effects": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "empty": [
+   "modules/governance-overlay"
+  ],
+  "enforcement": [
+   "modules/governance-overlay"
+  ],
+  "engineer": [
+   "modules/governance-overlay"
+  ],
+  "engineering": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "entry": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "environment": [
+   "modules/governance-overlay"
+  ],
+  "error": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "escalation": [
+   "modules/governance-overlay"
+  ],
+  "events": [
+   "modules/governance-overlay"
+  ],
+  "evidence": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "example": [
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "executable": [
+   "modules/universal-meta-systems"
+  ],
+  "execution": [
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "executor": [
+   "modules/governance-overlay"
+  ],
+  "exists": [
+   "modules/governance-overlay"
+  ],
+  "expensive": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "failure": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "fallback": [
+   "modules/governance-overlay"
+  ],
+  "feature": [
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "files": [
+   "modules/universal-meta-systems"
+  ],
+  "final": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "first": [
+   "modules/governance-overlay"
+  ],
+  "fixing": [
+   "modules/governance-overlay"
+  ],
+  "flight": [
+   "modules/executionos-lite"
+  ],
+  "fresh": [
+   "modules/governance-overlay"
+  ],
+  "gate": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "gates": [
+   "modules/executionos-lite"
+  ],
+  "global": [
+   "modules/governance-overlay"
+  ],
+  "good": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "governance": [
+   "modules/governance-overlay"
+  ],
+  "graph": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "ground": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "handling": [
+   "modules/governance-overlay"
+  ],
+  "hard": [
+   "modules/universal-meta-systems"
+  ],
+  "hierarchy": [
+   "modules/executionos-lite"
+  ],
+  "identity": [
+   "modules/universal-meta-systems"
+  ],
+  "impact": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "implementation": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "index": [
+   "modules/universal-meta-systems"
+  ],
+  "infrastructure": [
+   "modules/governance-overlay"
+  ],
+  "inline": [
+   "modules/governance-overlay"
+  ],
+  "input": [
+   "modules/governance-overlay"
+  ],
+  "inside": [
+   "modules/universal-meta-systems"
+  ],
+  "instead": [
+   "modules/governance-overlay"
+  ],
+  "instrument": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "integration": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "intent": [
+   "modules/governance-overlay"
+  ],
+  "invocation": [
+   "modules/governance-overlay"
+  ],
+  "issue": [
+   "modules/governance-overlay"
+  ],
+  "knowledge": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "learning": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "loaded": [
+   "modules/executionos-lite"
+  ],
+  "loader": [
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "loading": [
+   "modules/universal-meta-systems"
+  ],
+  "loop": [
+   "modules/executionos-lite",
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "loops": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "machine": [
+   "modules/governance-overlay"
+  ],
+  "mandatory": [
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "meta": [
+   "modules/universal-meta-systems"
+  ],
+  "migration": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "minimum": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "mismatch": [
+   "modules/governance-overlay"
+  ],
+  "mission": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "mistakes": [
+   "modules/governance-overlay"
+  ],
+  "mode": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "model": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "need": [
+   "modules/governance-overlay"
+  ],
+  "negative": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "next": [
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "only": [
+   "modules/universal-meta-systems"
+  ],
+  "opportunity": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "oracle": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "order": [
+   "modules/universal-meta-systems"
+  ],
+  "output": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "ownership": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "pack": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "pattern": [
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "patterns": [
+   "modules/governance-overlay"
+  ],
+  "performance": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "phases": [
+   "modules/executionos-lite"
+  ],
+  "plugin": [
+   "modules/governance-overlay"
+  ],
+  "possible": [
+   "modules/governance-overlay"
+  ],
+  "power": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "prevent": [
+   "modules/governance-overlay"
+  ],
+  "principles": [
+   "modules/governance-overlay"
+  ],
+  "probe": [
+   "modules/governance-overlay"
+  ],
+  "producer": [
+   "modules/governance-overlay"
+  ],
+  "production": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "project": [
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "protocol": [
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "provenance": [
+   "modules/universal-meta-systems"
+  ],
+  "quality": [
+   "modules/governance-overlay"
+  ],
+  "question": [
+   "modules/executionos-lite"
+  ],
+  "questions": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "reality": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "reasoning": [
+   "modules/executionos-lite",
+   "modules/governance-overlay"
+  ],
+  "record": [
+   "modules/governance-overlay"
+  ],
+  "recovery": [
+   "modules/governance-overlay"
+  ],
+  "reference": [
+   "modules/universal-meta-systems"
+  ],
+  "registry": [
+   "modules/governance-overlay"
+  ],
+  "rejection": [
+   "modules/governance-overlay"
+  ],
+  "report": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "required": [
+   "modules/governance-overlay"
+  ],
+  "requirement": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "result": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "returns": [
+   "modules/governance-overlay"
+  ],
+  "root": [
+   "modules/universal-meta-systems"
+  ],
+  "router": [
+   "modules/executionos-lite"
+  ],
+  "routing": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "rules": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/universal-meta-systems"
+  ],
+  "runtime": [
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "scale": [
+   "modules/governance-overlay"
+  ],
+  "scanner": [
+   "modules/governance-overlay"
+  ],
+  "security": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "selection": [
+   "modules/governance-overlay"
+  ],
+  "semantic": [
+   "modules/governance-overlay"
+  ],
+  "severity": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "signal": [
+   "modules/governance-overlay"
+  ],
+  "silent": [
+   "modules/governance-overlay"
+  ],
+  "single": [
+   "modules/governance-overlay"
+  ],
+  "skills": [
+   "modules/governance-overlay"
+  ],
+  "sources": [
+   "modules/governance-overlay"
+  ],
+  "standard": [
+   "modules/governance-overlay"
+  ],
+  "state": [
+   "modules/governance-overlay"
+  ],
+  "states": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "static": [
+   "modules/governance-overlay"
+  ],
+  "strength": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "substitution": [
+   "modules/universal-meta-systems"
+  ],
+  "success": [
+   "modules/governance-overlay"
+  ],
+  "sufficient": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "synchronous": [
+   "modules/governance-overlay"
+  ],
+  "system": [
+   "modules/governance-overlay"
+  ],
+  "systems": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay",
+   "modules/universal-meta-systems"
+  ],
+  "target": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "time": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "token": [
+   "modules/executionos-lite"
+  ],
+  "triggers": [
+   "modules/governance-overlay"
+  ],
+  "trust": [
+   "modules/governance-overlay"
+  ],
+  "truth": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "ukdl": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "universal": [
+   "modules/universal-meta-systems"
+  ],
+  "update": [
+   "modules/executionos-lite"
+  ],
+  "validation": [
+   "modules/executionos-lite"
+  ],
+  "verification": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ],
+  "version": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "where": [
+   "modules/universal-meta-systems"
+  ],
+  "without": [
+   "modules/governance-overlay"
+  ],
+  "work": [
+   "modules/governance-overlay"
+  ],
+  "worked": [
+   "modules/universal-meta-systems"
+  ],
+  "works": [
+   "modules/governance-overlay"
+  ],
+  "would": [
+   "modules/governance-overlay"
+  ],
+  "writers": [
+   "agents/oneshot-architect-auditor.md"
+  ],
+  "wrong": [
+   "modules/governance-overlay"
+  ],
+  "zero": [
+   "agents/oneshot-architect-auditor.md",
+   "modules/governance-overlay"
+  ]
+ },
+ "repo_fingerprint": "fc3f7a1539071455bb35a815b1687418eb41e5109adf2c4a30b312b819738794",
+ "schema_version": 2,
  "source": {
+  "declaration_producer": "modules.ucr_cif.prose_authority.prose_declarations",
   "distinctive_max_holders": 3,
-  "files_seen": 1366,
+  "files_seen": 1373,
   "producer": "modules.ucr_cif.ownership_evidence.build_structural_index",
   "scan_dirs": [
    "modules",
@@ -27,7 +777,8 @@
   "signals": [
    "SYMBOL",
    "FILENAME",
-   "REGISTRY"
+   "REGISTRY",
+   "DECLARATION"
   ]
  },
  "terms": {

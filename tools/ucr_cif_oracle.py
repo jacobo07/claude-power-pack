@@ -99,20 +99,45 @@ def divergence_ok(reordered: int, routed: int) -> bool:
     return (reordered / routed) >= MIN_ARM_DIVERGENCE
 
 
-def _arm(text: str, cwd: str, sid: str, ts: str, treatment: bool):
-    """One replay of the REAL production chain under one arm."""
-    prior = os.environ.get(RANK_ENV)
-    if treatment:
-        os.environ[RANK_ENV] = "1"
-    else:
-        os.environ.pop(RANK_ENV, None)
+# Treatment identities. W9's arm is the KNOWN-HARMFUL reference and must keep
+# producing the numbers W10 judged, so W11 is a separate name rather than the
+# same treatment with more evidence. `_ARMS` maps a name to the environment the
+# production chain sees, which is the only thing that distinguishes them.
+ARM_CONTROL = "control"
+ARM_W9 = "w9-structural"
+ARM_W11 = "w11-prose"
+
+_ARMS = {
+    ARM_CONTROL: (),
+    ARM_W9: (RANK_ENV,),
+    ARM_W11: (RANK_ENV, _sp.PROSE_RANK_ENV),
+}
+
+
+def _arm(text: str, cwd: str, sid: str, ts: str, treatment: bool,
+         arm: str | None = None):
+    """One replay of the REAL production chain under one named arm.
+
+    `treatment` is kept so every existing caller and test kept its meaning; it
+    selects W9's arm, which is what it always selected.
+    """
+    name = arm or (ARM_W9 if treatment else ARM_CONTROL)
+    wanted = _ARMS[name]
+    touched = (RANK_ENV, _sp.PROSE_RANK_ENV)
+    prior = {k: os.environ.get(k) for k in touched}
+    for k in touched:
+        if k in wanted:
+            os.environ[k] = "1"
+        else:
+            os.environ.pop(k, None)
     try:
         return replay(text, cwd, sid, ts)
     finally:
-        if prior is None:
-            os.environ.pop(RANK_ENV, None)
-        else:
-            os.environ[RANK_ENV] = prior
+        for k, v in prior.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
 
 def classify(ctrl_rank, treat_rank) -> str:
@@ -285,7 +310,7 @@ def paired_verdict_allowed(cmp: dict) -> bool:
     return isinstance(cmp, dict) and cmp.get("status") == FP_COMPARABLE
 
 
-def build(n_sessions: int, window_h: int) -> dict:
+def build(n_sessions: int, window_h: int, arm: str = ARM_W9) -> dict:
     meta, rows = load_ledger()
     if not rows:
         raise RuntimeError("ledger unreadable -- refusing to report numbers")
@@ -310,8 +335,8 @@ def build(n_sessions: int, window_h: int) -> dict:
     reordered = routed_any = 0
 
     for text, cwd, sid, ts in raw:
-        c = _arm(text, cwd, sid, ts, treatment=False)
-        t = _arm(text, cwd, sid, ts, treatment=True)
+        c = _arm(text, cwd, sid, ts, treatment=False, arm=ARM_CONTROL)
+        t = _arm(text, cwd, sid, ts, treatment=True, arm=arm)
         if c.is_slash_command or not c.reached_tier2:
             continue
         if c.miss_layer in ("cwd_unreadable", "error"):
@@ -376,6 +401,12 @@ def build(n_sessions: int, window_h: int) -> dict:
     proj = _sp.load(corpus_id=(meta or {}).get("compiled_corpus_id"))
     return {
         "fingerprint": fp,
+        # The treatment's IDENTITY, recorded beside its numbers. It is
+        # deliberately NOT part of the fingerprint: the fingerprint answers
+        # "did these two runs measure the same population", and folding the arm
+        # into it would make every control-vs-treatment pair read as DRIFTED.
+        "treatment_arm": arm,
+        "control_arm": ARM_CONTROL,
         "structural_share": structural_share(rows, proj),
         "projection_status": proj.status,
         "arm_divergence": {
@@ -617,6 +648,9 @@ def main(argv=None) -> int:
     ap.add_argument("--from-store", action="store_true",
                     help="recompute the report from the canonical store "
                          "instead of re-running the arms")
+    ap.add_argument("--arm", default=ARM_W9, choices=sorted(_ARMS),
+                    help="which treatment identity the treatment arm replays; "
+                         "the control arm is always 'control'")
     ap.add_argument("--compare", nargs=2, metavar=("A", "B"), default=None,
                     help="decide whether two stores or reports are about the "
                          "same population, and refuse a paired verdict if not")
@@ -647,12 +681,13 @@ def main(argv=None) -> int:
     if args.from_store:
         store = json.loads(store_path.read_text(encoding="utf-8"))
     else:
-        store = build(args.sessions, args.window_hours)
+        store = build(args.sessions, args.window_hours, arm=args.arm)
         store_path.parent.mkdir(parents=True, exist_ok=True)
         store_path.write_text(
             json.dumps(store, indent=1, ensure_ascii=False), encoding="utf-8")
         print(f"wrote canonical store {store_path} "
-              f"({len(store['cases'])} cases, {store['elapsed_s']} s)\n")
+              f"({len(store['cases'])} cases, {store['elapsed_s']} s, "
+              f"arm={store.get('treatment_arm')})\n")
 
     rep = analyse(store)
     _print(rep)

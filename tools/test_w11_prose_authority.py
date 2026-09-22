@@ -150,6 +150,42 @@ def main() -> int:
                "current authority",
                f"a superseded contract still declared: {decls_dead}")
 
+    # ---------------- synthetic: rename / move ----------------
+    # A prose contract that moves must take its support with it, and must not
+    # leave a tombstone behind. Both directions matter: the renamed artifact
+    # earns only if the consumer followed it, and the OLD path earns nothing
+    # once it no longer exists.
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        d = tmp / "modules" / "quarantine_engine"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "ladder_v2.md").write_text(CONTRACT, encoding="utf-8")
+        cmd = tmp / "commands"
+        cmd.mkdir(parents=True, exist_ok=True)
+        # The consumer still names the OLD path, which no longer exists.
+        (cmd / "quarantine.md").write_text(
+            "# Run\nApply `modules/quarantine_engine/ladder.md`.\n",
+            encoding="utf-8")
+        stale = PA.prose_declarations(tmp)
+        _check("V-W11-STALE-PATH-EARNS-NOTHING",
+               not stale,
+               "a consumer still naming a path that no longer exists credits "
+               "nobody -- the edge resolves to an artifact, so a rename the "
+               "consumer did not follow is a broken edge, not a surviving one",
+               f"a stale path still earned support: {sorted(stale)}")
+
+        (cmd / "quarantine.md").write_text(
+            "# Run\nApply `modules/quarantine_engine/ladder_v2.md`.\n",
+            encoding="utf-8")
+        moved = PA.prose_declarations(tmp)
+        _check("V-W11-SUPPORT-FOLLOWS-THE-RENAME",
+               "quarantine" in moved
+               and "modules/quarantine_engine" in moved["quarantine"],
+               "once the consumer follows the rename the same owner earns the "
+               "same terms again -- support tracks the relation through a move "
+               "rather than being pinned to a filename",
+               f"support did not follow the rename: {sorted(moved)}")
+
     # ---------------- synthetic: basename collision ----------------
     # Found by a SURVIVING mutant. Dropping the owner disambiguation admitted
     # 418 spurious edges on the real estate and took owners from 26 to 51,
