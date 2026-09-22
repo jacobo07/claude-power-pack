@@ -321,10 +321,14 @@ def gate_fast_excludes_scan():
 
 def gate_advisory_cache_write():
     canned = ["PP: advisory one", "PP: advisory two"]
-    orig1, orig5, origb = prelaunch._w1, prelaunch._w5, prelaunch._w4_burn
+    orig1, orig5, origb, origg = (prelaunch._w1, prelaunch._w5, prelaunch._w4_burn,
+                                  prelaunch._gate)
     prelaunch._w1 = lambda cwd: canned[0]
     prelaunch._w5 = lambda cwd, desc: [canned[1]]
     prelaunch._w4_burn = lambda cwd: None
+    # _gate reads LIVE hot-session state; unstubbed, this case measured the
+    # host (23 hot sessions on 2026-09-22) instead of the cache writer.
+    prelaunch._gate = lambda cwd: dict(prelaunch._GATE_PROCEED)
     try:
         with tempfile.TemporaryDirectory() as td:
             adv = prelaunch.run_advisories(r"C:\fake\R")
@@ -342,6 +346,33 @@ def gate_advisory_cache_write():
                       f"adv={adv} no_bom={no_bom} payload={payload}")
     finally:
         prelaunch._w1, prelaunch._w5, prelaunch._w4_burn = orig1, orig5, origb
+        prelaunch._gate = origg
+
+
+def gate_co08_rides_advisory_cache():
+    """T-KCLAUDE-PASTE-WINDOW-001: a bare pane no longer runs the fast prelaunch,
+    so the CO-08 warning was RELOCATED into the cached advisory bundle. Both
+    poles: a refusing gate yields exactly one CO-08 line carrying its numbers,
+    and a proceeding gate yields none (a line on every launch would be noise)."""
+    orig1, orig5, origb, origg = (prelaunch._w1, prelaunch._w5, prelaunch._w4_burn,
+                                  prelaunch._gate)
+    prelaunch._w1 = lambda cwd: None
+    prelaunch._w5 = lambda cwd, desc: []
+    prelaunch._w4_burn = lambda cwd: None
+    try:
+        prelaunch._gate = lambda cwd: {"verdict": "refuse", "hot_count": 7, "cap": 2,
+                                       "reasons": [], "satisfy": []}
+        red = prelaunch.run_advisories(r"C:\fake\R")
+        prelaunch._gate = lambda cwd: dict(prelaunch._GATE_PROCEED)
+        green = prelaunch.run_advisories(r"C:\fake\R")
+        co = [a for a in red if a.startswith("PP CO-08:")]
+        if len(co) == 1 and "7 hot session" in co[0] and "soft cap 2" in co[0] and green == []:
+            _ok("V-CO08-IN-ADVISORY-CACHE", f"refuse -> {co[0][:60]}...; proceed -> []")
+        else:
+            _fail("V-CO08-IN-ADVISORY-CACHE", f"refuse -> {red}; proceed -> {green}")
+    finally:
+        prelaunch._w1, prelaunch._w5, prelaunch._w4_burn = orig1, orig5, origb
+        prelaunch._gate = origg
 
 
 def gate_single_session_silent():
@@ -438,7 +469,7 @@ def main() -> int:
         gate_cost_gate_real_data, gate_cost_gate_silent_fail,
         gate_w3w4w5_failopen,
         gate_prelaunch_fast_bundle, gate_fast_excludes_scan,
-        gate_advisory_cache_write,
+        gate_advisory_cache_write, gate_co08_rides_advisory_cache,
         gate_single_session_silent, gate_multi_session_prompt,
         gate_no_session_silent,
         gate_launch_new_on_bare, gate_launch_resume_explicit,
@@ -450,7 +481,7 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             _fail(g.__name__, f"raised {type(exc).__name__}: {exc}")
     print()
-    print(f"WRAPPER={PASS}/{PASS + FAIL}  threshold=24/24")
+    print(f"WRAPPER={PASS}/{PASS + FAIL}  threshold=25/25")
     return 0 if FAIL == 0 else 1
 
 

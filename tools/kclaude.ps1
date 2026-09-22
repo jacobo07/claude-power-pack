@@ -69,6 +69,20 @@ $pre = Join-Path $ppRoot "modules\wrapper\prelaunch.py"
 $namer = Join-Path $ppRoot "modules\wrapper\session_namer.py"
 $advCache = Join-Path $env:USERPROFILE ".claude\cache\kclaude_advisories.json"
 
+# --- helper: paste-window step counter (T-KCLAUDE-PASTE-WINDOW-001) ----------
+# When KCLAUDE_TRACE_FILE is set, every SYNCHRONOUS step that runs before
+# `& claude` appends one line naming itself, and the launch appends `launch`.
+# A count of steps is load-independent; a timing on this host is not (python's
+# own floor measured 458-704 ms across three consecutive runs). The gate
+# tools/test_kclaude_paste_window.py reads this trace. Trace mode is a PROBE:
+# it also suppresses the detached spawns and the settings repair, so running
+# the gate never writes the Owner's advisory cache or settings.json.
+function Trace-Step([string] $Step) {
+  if ($env:KCLAUDE_TRACE_FILE) {
+    try { Add-Content -Path $env:KCLAUDE_TRACE_FILE -Value $Step -Encoding ASCII } catch { }
+  }
+}
+
 # --- helper: fast (launch-critical) prelaunch decision, or $null -------------
 # $SidArg (when known: the resume target) lets prelaunch recall this pane's own
 # declared PM-02 scope so the CO-08 gate is intent-aware after a restart.
@@ -77,6 +91,7 @@ function Get-FastDecision {
   $d = $null
   if ($py -and (Test-Path $pre)) {
     try {
+      Trace-Step 'sync:prelaunch-fast'
       $env:PYTHONIOENCODING = 'utf-8'
       $fastArgs = @($pre, '--cwd', $cwd, '--mode', 'fast')
       if ($SidArg) { $fastArgs += @('--sid', $SidArg) }
@@ -117,6 +132,7 @@ function Show-CachedAdvisories {
 
 # --- helper: detached background advisory refresh (non-blocking) -------------
 function Start-AdvisoryRefresh {
+  if ($env:KCLAUDE_TRACE_FILE) { return }   # probe mode: never write the Owner's cache
   if ($py -and (Test-Path $pre)) {
     try {
       Start-Process -FilePath $py -WindowStyle Hidden `
@@ -186,9 +202,40 @@ for ($i = 0; $i -lt $ClaudeArgs.Count; $i++) {
   }
 }
 
-# --- run FAST prelaunch (launch-critical) ------------------------------------
-$decision = Get-FastDecision $initSid
-Set-LaunchScopeEnv $decision
+# --- PASTE WINDOW: nothing blocking before `& claude` on a bare pane ----------
+# T-KCLAUDE-PASTE-WINDOW-001 (2026-09-22). Symptom: pasting a prompt into a NEW
+# pane did not work. Root cause: every millisecond this script spends before
+# `& claude` is time in which the pane is NOT Claude. Claude's prompt box, and
+# the bracketed-paste mode that lets a multi-line paste arrive as ONE paste, do
+# not exist yet, so a paste landing here goes to a console with no reader for
+# it -- it is lost, or its newlines arrive as Enter keys. Measured before this
+# fix (median of 3, host at ~8 GB free): prelaunch --mode fast 1145 ms plus the
+# hook-registry check 1081 ms = ~2.2 s of synchronous Python, on top of the
+# interpreter floor of ~650 ms each. Claude's own SessionStart chain (~4.7 s)
+# is NOT part of the window: it delays SUBMISSION, the prompt box accepts a
+# paste while it runs.
+#
+# The rule this encodes, and the gate that holds it (tools/test_kclaude_paste_
+# window.py): on a bare pane NOTHING synchronous runs before `& claude` except
+# what the launch itself consumes. Anything informational is detached or
+# served from a cache. A new blocking step must justify itself against that
+# gate, not against its own runtime in isolation.
+#
+# The fast prelaunch returns nothing launch-critical for a bare pane: scope
+# recall needs a sid (a bare pane has none) and --scope is exported above
+# already; the resume gate is keyed on $resumeArg, which a bare pane never has;
+# the CO-08 warning never blocked anything and now rides the cached advisories
+# (prelaunch.run_advisories); and the namer's "which sessions existed before"
+# list is read from disk below in ~6 ms, BEFORE launch, so it cannot race the
+# new transcript. Resume and --scope panes keep the synchronous decision,
+# because there it is load-bearing.
+$barePane = (-not $explicitResume) -and (-not $scopeFlag) -and (-not $initSid)
+if ($barePane) {
+  $decision = $null
+} else {
+  $decision = Get-FastDecision $initSid
+  Set-LaunchScopeEnv $decision
+}
 
 # --- advisories: print cached (instant) + refresh in the background ----------
 Show-CachedAdvisories
@@ -232,9 +279,30 @@ if ($py -and (Test-Path $namer)) {
   try {
     if ($newSession) {
       $known = ""
-      if ($decision -and $decision.known_sids) { $known = ($decision.known_sids -join ',') }
-      Start-Process -FilePath $py -WindowStyle Hidden `
-        -ArgumentList @($namer, '--cwd', $cwd, '--known', $known) | Out-Null
+      if ($decision -and $decision.known_sids) {
+        $known = ($decision.known_sids -join ',')
+      } else {
+        # Bare pane: the sessions that exist BEFORE this launch are exactly the
+        # transcripts already on disk for this cwd. Same directory encoding as
+        # auto_resumer._encode_cwd; read here, pre-launch, so the new session's
+        # own transcript cannot be in it. Newest 400 only, to stay well under
+        # the 32K command-line limit (the largest project measured held 115).
+        try {
+          $projDir = Join-Path $env:USERPROFILE ('.claude\projects\' + ($cwd -replace '[^a-zA-Z0-9]', '-'))
+          if (Test-Path $projDir) {
+            $known = (@(Get-ChildItem $projDir -Filter *.jsonl -File -ErrorAction Stop |
+              Sort-Object LastWriteTime -Descending | Select-Object -First 400 |
+              ForEach-Object { $_.BaseName }) -join ',')
+          }
+        } catch { $known = "" }
+      }
+      if ($env:KCLAUDE_TRACE_FILE) {
+        # Probe mode: report what the namer WOULD receive instead of spawning it.
+        Trace-Step ('known:' + @($known -split ',' | Where-Object { $_ }).Count)
+      } else {
+        Start-Process -FilePath $py -WindowStyle Hidden `
+          -ArgumentList @($namer, '--cwd', $cwd, '--known', $known) | Out-Null
+      }
     } elseif ($resumeArg -match 'resume\s+(\S+)') {
       Start-Process -FilePath $py -WindowStyle Hidden `
         -ArgumentList @($namer, '--cwd', $cwd, '--resume-sid', $matches[1]) | Out-Null
@@ -304,7 +372,10 @@ while ($true) {
   # a hibernate-rehydrate is a fresh config read and deserves the same clean
   # registry as a cold launch. Guarded on the command existing: if the dot-source
   # above failed, this is a silent no-op rather than a CommandNotFound error.
-  if (Get-Command Repair-HookWrappers -ErrorAction SilentlyContinue) {
+  # Probe mode skips it: a gate run must never rewrite the live settings.json.
+  # Its own gate is tools/test_kclaude_conhost_repair.py. Measured 17 ms on a
+  # clean registry, so it is not part of the paste-window cost.
+  if ((-not $env:KCLAUDE_TRACE_FILE) -and (Get-Command Repair-HookWrappers -ErrorAction SilentlyContinue)) {
     try { [void](Repair-HookWrappers) } catch { }
   }
 
@@ -321,13 +392,57 @@ while ($true) {
     $hrPy = Join-Path $env:LOCALAPPDATA 'Programs\Python\Python312\python.exe'
     $hrSettings = Join-Path $env:USERPROFILE '.claude\settings.json'
     if ((Test-Path $hrTool) -and (Test-Path $hrPy) -and (Test-Path $hrSettings)) {
-      $env:PYTHONIOENCODING = 'utf-8'
-      $hrOut = & $hrPy $hrTool --live-only 2>&1 | Out-String
-      $hrRc = $LASTEXITCODE
       $hrGen = (Get-FileHash $hrSettings -Algorithm SHA256).Hash.Substring(0, 16)
-      $hrVerdict = if ($hrRc -eq 0) { 'VALID' } elseif ($hrRc -eq 1) { 'INVALID' } else { 'UNJUDGEABLE' }
       $hrState = if ($env:CLAUDE_STATE_DIR) { $env:CLAUDE_STATE_DIR } else { Join-Path $env:USERPROFILE '.claude\state' }
-      $hrLine = '{{"ts":"{0}","pane_pid":{1},"settings_sha16":"{2}","verdict":"{3}"}}' -f (Get-Date).ToString('o'), $PID, $hrGen, $hrVerdict
+      # CONTENT-ADDRESSED VERDICT CACHE (T-KCLAUDE-PASTE-WINDOW-001). This check
+      # cost ~1.1 s of the paste window on EVERY launch, and its verdict is a pure
+      # function of four inputs: the settings bytes, the dispatcher source whose
+      # exports it loads, the checker's own source, and whether each dispatcher
+      # target named in settings exists. Same four -> same verdict, so a VALID
+      # verdict is reused when, and only when, all four match; any change re-runs
+      # the checker synchronously, which is exactly the launch after a rewrite --
+      # the case the check exists for. Only VALID is cached: INVALID and
+      # UNJUDGEABLE always re-run, so a broken registry is never silenced by a
+      # cache hit. The receipt says `cached` so the generations ledger stays
+      # honest about which launches were judged live.
+      $hrKey = $null
+      try {
+        $hrDisp = Join-Path $env:USERPROFILE '.claude\skills\claude-power-pack\hooks\hook-dispatcher.js'
+        $hrText = [IO.File]::ReadAllText($hrSettings)
+        $hrTargets = @([regex]::Matches($hrText, '"([^"]*hook-dispatcher\.js)"') |
+          ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique |
+          ForEach-Object { $p = $_ -replace '^~', $env:USERPROFILE; '{0}={1}' -f $_, [int](Test-Path $p) })
+        $hrKey = @(
+          $hrGen,
+          (Get-FileHash $hrDisp -Algorithm SHA256).Hash.Substring(0, 16),
+          (Get-FileHash $hrTool -Algorithm SHA256).Hash.Substring(0, 16),
+          ($hrTargets -join ';')
+        ) -join '|'
+      } catch { $hrKey = $null }
+      $hrCache = Join-Path $hrState 'hook-registry-verdict-cache.json'
+      $hrCached = $false
+      if ($hrKey) {
+        try {
+          $hc = Get-Content $hrCache -Raw -ErrorAction Stop | ConvertFrom-Json
+          if ($hc.verdict -eq 'VALID' -and $hc.key -eq $hrKey) { $hrCached = $true }
+        } catch { }
+      }
+      if ($hrCached) {
+        $hrOut = ''; $hrRc = 0
+      } else {
+        Trace-Step 'sync:hook-registry'
+        $env:PYTHONIOENCODING = 'utf-8'
+        $hrOut = & $hrPy $hrTool --live-only 2>&1 | Out-String
+        $hrRc = $LASTEXITCODE
+        if ($hrRc -eq 0 -and $hrKey) {
+          try {
+            $hcBody = '{{"key":"{0}","verdict":"VALID","ts":"{1}"}}' -f ($hrKey -replace '\\', '\\' -replace '"', '\"'), (Get-Date).ToString('o')
+            [IO.File]::WriteAllText($hrCache, $hcBody, (New-Object Text.UTF8Encoding($false)))
+          } catch { }
+        }
+      }
+      $hrVerdict = if ($hrRc -eq 0) { 'VALID' } elseif ($hrRc -eq 1) { 'INVALID' } else { 'UNJUDGEABLE' }
+      $hrLine = '{{"ts":"{0}","pane_pid":{1},"settings_sha16":"{2}","verdict":"{3}","cached":{4}}}' -f (Get-Date).ToString('o'), $PID, $hrGen, $hrVerdict, $(if ($hrCached) { 'true' } else { 'false' })
       Add-Content -Path (Join-Path $hrState 'session-config-generations.jsonl') -Value $hrLine -Encoding ASCII
       if ($hrRc -eq 1) {
         Write-Host ''
@@ -341,6 +456,7 @@ while ($true) {
     }
   } catch { }
 
+  Trace-Step 'launch'
   & claude @launch
   $code = $LASTEXITCODE
 

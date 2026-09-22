@@ -243,17 +243,41 @@ def run_advisories(cwd, description=None):
     """The deferred advisory bundle (W1 turn + W5 cost/burn + W4 parallel_burn).
     Run by a detached background process; generous timeouts, blocks no launch.
     Returns the advisory strings. Fail-open to []."""
-    ex = ThreadPoolExecutor(max_workers=3)
+    ex = ThreadPoolExecutor(max_workers=4)
     try:
         f_w1 = ex.submit(_w1, cwd)
         f_w5 = ex.submit(_w5, cwd, description)
         f_burn = ex.submit(_w4_burn, cwd)
+        f_gate = ex.submit(_gate, cwd)
         w1 = _res(f_w1, 10.0, None)
         w5 = _res(f_w5, 40.0, [])
         burn = _res(f_burn, 10.0, None)
+        gate = _res(f_gate, 10.0, dict(_GATE_PROCEED))
     finally:
         ex.shutdown(wait=False)
-    return ([w1] if w1 else []) + list(w5 or []) + ([burn] if burn else [])
+    return (([w1] if w1 else []) + list(w5 or []) + ([burn] if burn else [])
+            + _gate_advisory(gate))
+
+
+def _gate_advisory(gate) -> list:
+    """The CO-08 hot-session warning as a cached advisory line.
+
+    RELOCATED here from kclaude.ps1's blocking path (T-KCLAUDE-PASTE-WINDOW-001).
+    On a bare new pane the launcher no longer runs the fast prelaunch at all,
+    because nothing it returns is launch-critical there and its ~1.1 s is time
+    in which the pane is not yet Claude, so a pasted prompt has no reader. The
+    warning was always informational -- it never blocked or redirected a launch
+    -- so it now reaches the Owner the way W1/W5 already do: from the cache,
+    printed instantly at the next launch on this cwd. Fail-open: a malformed
+    gate yields no line."""
+    try:
+        if (gate or {}).get("verdict") != "refuse":
+            return []
+        return [f"PP CO-08: {gate.get('hot_count')} hot session(s) on this repo "
+                f"(soft cap {gate.get('cap')}) -- new panes still open. "
+                "/compact or close an idle one to relieve token pressure."]
+    except Exception:  # noqa: BLE001 -- fail-open
+        return []
 
 
 def write_cache(cwd, advisories, cache_path=None):
