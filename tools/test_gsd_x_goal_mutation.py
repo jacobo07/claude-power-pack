@@ -42,7 +42,12 @@ SUITES = {
     "V-GATE-": ROOT / "tools" / "test_gsd_x_goal_gate_provider.py",
     "V-LR-": ROOT / "tools" / "test_gsd_x_goal_long_run_provider.py",
     "V-CX-": ROOT / "tools" / "test_gsd_x_goal_codex_provider.py",
+    "V-BRIEF-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
+    "V-CLH-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
+    "V-CLI-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
 }
+CLP = GOAL / "providers" / "claude.py"
+BRIEF = GOAL / "brief.py"
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -180,6 +185,24 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "                                  'observed': 'codex said it worked'}],",
         "codex writing code must not be evidence that the work is right",
         "V-CX-NO-VERDICT"),
+    # --- claude providers and the brief (C9) ---
+    "headless-cap-ignored": (
+        CLP, "        if used >= self.max_per_day:", "        if False:",
+        "the Owner's headless cap must stop a dispatch", "V-CLH-CAP"),
+    "headless-runs-anywhere": (
+        CLP, '        if spec.get("must_be_worktree", True) and not (root / ".git").exists():',
+        "        if False:",
+        "a headless session must run in an isolated worktree, not a live checkout",
+        "V-CLH-WORKTREE-ONLY"),
+    "interactive-expiry-is-lost": (
+        CLP, '            return Observation(OBS_ENDED, EXPIRED, "no receipt before the TTL")',
+        '            return Observation(OBS_LOST, "", "no receipt before the TTL")',
+        "a closed window is EXPIRED, not a worker that died", "V-CLI-EXPIRES"),
+    "brief-drops-boundaries": (
+        BRIEF, '    a("- You may NOT write to any production system, deploy, '
+               'or touch a live server.")\n', "",
+        "the brief must state the boundaries an executor may not cross",
+        "V-BRIEF-BOUNDARIES"),
 }
 
 
