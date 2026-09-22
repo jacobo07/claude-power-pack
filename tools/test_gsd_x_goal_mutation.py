@@ -54,6 +54,10 @@ BRIEF = GOAL / "brief.py"
 RECON = GOAL / "reconcile.py"
 JUDGE = GOAL / "judge.py"
 SWEEP = GOAL / "sweep.py"
+GOALCLI = ROOT / "tools" / "gsd_x_goal.py"
+# Suites that own gates but that no prefix ever named. `suite_for` searches this
+# set too, so a gate cannot go unowned merely because the prefix table is stale.
+EXTRA_SUITES = (ROOT / "tools" / "test_gsd_x_goal_cli.py",)
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -284,6 +288,22 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "    open_obs = list(accepted)",
         "an obligation proven at another tree must have its gate re-run here",
         "V-RC-REGATE-AFTER-TREE-MOVES"),
+    # --- the judge's receipt, and whether anything reads it (C18) ---
+    "converged-is-unreachable": (
+        GOALCLI, "                      judge=jd.current(s, tree, s.revision),",
+        "                      judge=None,",
+        "a recorded judge receipt must be read back, or CONVERGED is reachable "
+        "only by a test that builds the receipt by hand",
+        "V-CLI-CONVERGED-IS-REACHABLE"),
+    "receipt-from-any-tree-certifies": (
+        JUDGE, '        if d.get("tree_hash") == tree_hash and d.get("revision") == revision:',
+        "        if True:",
+        "a judge receipt about another tree must not certify this one",
+        "V-JUDGE-RECEIPT-IS-NOT-READ-AT-ANOTHER-TREE"),
+    "cli-cannot-observe-its-own-gates": (
+        GOALCLI, "    if observations is None:", "    if False:",
+        "the CLI must observe the gates it started, or it waits forever",
+        "V-CLI-CLOSURE-CLEARS"),
     "regate-becomes-code-work": (
         RECON, "    failing = [o for o in accepted", "    failing = [o for o in open_obs",
         "a satisfied-elsewhere obligation must not be sent to a work provider",
@@ -292,10 +312,25 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
 
 
 def suite_for(gate: str) -> Path:
-    for prefix, suite in SUITES.items():
-        if gate.startswith(prefix):
-            return suite
-    raise KeyError(f"no suite owns gate {gate}")
+    """The suite that actually DEFINES this gate, not the one its prefix suggests.
+
+    Prefixes collide: `V-CLI-` is the goal CLI's and also the claude-INTERACTIVE
+    provider's, so the prefix map silently sent a mutant to a suite that has
+    never heard of its gate -- which reports CAUGHT-ELSEWHERE or a vacuous pass,
+    and either way says nothing about the property removed. Asking which file
+    contains the gate name cannot be wrong about that.
+
+    Two suites defining one gate name is an ambiguity nobody can resolve later,
+    so it raises here rather than picking the first.
+    """
+    owners = [p for p in set(SUITES.values()) | set(EXTRA_SUITES)
+              if f'"{gate}"' in p.read_text(encoding="utf-8", errors="replace")]
+    if len(owners) == 1:
+        return owners[0]
+    if not owners:
+        raise KeyError(f"no suite defines gate {gate}")
+    raise KeyError(f"gate {gate} is defined in {len(owners)} suites: "
+                   f"{[p.name for p in owners]} -- rename one")
 
 
 def main() -> int:

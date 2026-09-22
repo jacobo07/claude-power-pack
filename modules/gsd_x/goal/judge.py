@@ -42,6 +42,7 @@ from .git_state import tree_id
 PASS, REFUSED, UNJUDGEABLE = "PASS", "REFUSED", "UNJUDGEABLE"
 EPOCH_ENV = "GSDX_GOAL_EPOCH"
 DEFAULT_GATE_TIMEOUT_S = 900.0
+JUDGED = "goal.judged"
 
 
 @dataclass
@@ -56,6 +57,42 @@ class JudgeReceipt:
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+
+def record(log, state: GoalState, receipt: JudgeReceipt, actor: str) -> None:
+    """Bank a judge receipt on the goal log -- PASS, REFUSED or UNJUDGEABLE.
+
+    Recording only the passes was the first version, and it made the
+    reconciler's "the judge refused, escalate" branch unreachable: there was no
+    refusal to read. A refusal is a fact about the goal and the most useful one
+    there is, so all three verdicts are banked and the LATEST about a given tree
+    is what counts.
+    """
+    log.append(state.last_seq + 1, JUDGED, receipt.to_dict(), actor)
+
+
+def current(state: GoalState, tree_hash: str, revision: str) -> dict | None:
+    """The judge's verdict ABOUT THIS tree and revision, if one was recorded.
+
+    Not merely the latest receipt. A receipt taken against another tree says
+    exactly as much about this one as a gate verdict from another tree does --
+    nothing -- and returning it would either certify a goal on evidence about a
+    state nobody is closing, or strand it on a refusal that has since been
+    addressed.
+
+    This reader is the reason CONVERGED is reachable at all. Until it existed
+    the judge wrote receipts that nothing read, so the terminal state of the
+    whole design could be produced only by a test that built the receipt by
+    hand.
+    """
+    found = None
+    for ev in state.events:
+        if ev.type != JUDGED:
+            continue
+        d = ev.data or {}
+        if d.get("tree_hash") == tree_hash and d.get("revision") == revision:
+            found = dict(d)
+    return found
 
 
 def _argv(command: str) -> list[str]:

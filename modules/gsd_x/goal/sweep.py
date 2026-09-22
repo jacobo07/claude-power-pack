@@ -182,6 +182,10 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
                              scope_hash=ep.scope_hash(root, paths),
                              observations=observations, now=time.time(),
                              budget=state.budget, providers=tuple(providers),
+                             # The receipt the judge banked, about THIS tree.
+                             # Unread, the sweep reports READY_FOR_JUDGE forever
+                             # at a goal an independent judge has already passed.
+                             judge=jd.current(state, tree, state.revision),
                              engine=engine))
     if d.kind == rc.RECOVER:
         if not dry_run:

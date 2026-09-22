@@ -178,6 +178,40 @@ def main() -> int:
           and json.loads(r.stdout)["verdict"] in ("UNJUDGEABLE", "REFUSED"),
           "with nothing proven the judge does not certify", r.stdout[:200])
 
+    # --- CONVERGED, end to end, through the commands an operator types -----------------
+    # The terminal state of the whole design. Until the judge's receipt was read
+    # back it was reachable only by a test that built the receipt by hand, which
+    # is the same as not being reachable at all.
+    repo2 = make_repo()
+    G2 = ["--goal", "g-cli-converge", "--root", str(repo2)]
+    run("declare", *G2, "--intent", "Reach CONVERGED from the CLI.",
+        "--acceptance", "the gate passes", "--scope-path", ".", env=env)
+    for plane in ("OUTCOME", "EVIDENCE", "FAILURE", "REGRESSION", "UCR_CIF_LEARNING"):
+        run("plane", *G2, "--plane", plane, env=env)
+    for plane in ("REALITY", "SETUP_LEARNING", "TRANSFER", "RECOVERY", "OPERATIONAL"):
+        run("plane", *G2, "--plane", plane, "--not-applicable",
+            "--reason", "this goal makes no such claim", env=env)
+    for plane in ("OUTCOME", "EVIDENCE", "REGRESSION", "UCR_CIF_LEARNING"):
+        run("oblige", *G2, "--id", f"ob-{plane.lower()}", "--plane", plane,
+            "--text", "prove it", "--gate", f'"{sys.executable}" gate.py',
+            "--gate-file", "gate.py", env=env)
+    for _ in range(9):                       # dispatch, then harvest, four times over
+        run("reconcile", *G2, "--apply", "--provider", "gate", env=env)
+    r = run("status", *G2, env=env)
+    check("V-CLI-CLOSURE-CLEARS", r.returncode == 0 and "CLOSURE  : CLEAR" in r.stdout,
+          "the gates ran through the CLI and closure cleared", r.stdout[-500:])
+    r = run("reconcile", *G2, env=env)
+    check("V-CLI-CLEAR-IS-NOT-CONVERGED", "READY_FOR_JUDGE" in r.stdout,
+          "closure clear is not convergence: the judge has not run yet", r.stdout[:200])
+    r = run("judge", *G2, "--record", env=env)
+    check("V-CLI-JUDGE-RECORDS", r.returncode == 0 and "recorded the judge receipt" in r.stdout,
+          "the judge certifies and banks its receipt", r.stdout[-300:])
+    r = run("reconcile", *G2, env=env)
+    check("V-CLI-CONVERGED-IS-REACHABLE",
+          "CONVERGED" in r.stdout and "independent judge" in r.stdout,
+          "the recorded receipt is read back and the goal converges",
+          f"the goal did not converge after a recorded PASS: {r.stdout[:300]}")
+
     # --- export / restore ---------------------------------------------------------------
     out = Path(tempfile.mkdtemp(prefix="gsdx_cli_exp_")) / "goal.json"
     r = run("export", *G, "--to", str(out), env=env)

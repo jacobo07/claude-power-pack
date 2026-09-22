@@ -217,10 +217,24 @@ def cmd_explain(args) -> int:
 def _context(args, s: gc.GoalState, providers, observations=None) -> rc.Context:
     import time
     root = Path(args.root)
-    return rc.Context(state=s, tree_hash=_tree(s, root),
+    tree = _tree(s, root)
+    if observations is None:
+        # Observe what is actually running. Without this, every command that
+        # reads a decision answered "could not observe it" about a gate this
+        # same tool had started -- and an unreadable observation is never an
+        # ending, so the CLI reported WAIT forever and could make no progress.
+        prov = GateProvider(Path(args.run_dir) if getattr(args, "run_dir", None)
+                            else Path(_log(args).dir) / "runs")
+        observations = {e.epoch_id: prov.observe(e.handle)
+                        for e in ep.project_epochs(s).values()
+                        if e.state == "running" and e.provider == "gate" and e.handle}
+    return rc.Context(state=s, tree_hash=tree,
                       scope_hash=ep.scope_hash(root, s.scope.get("paths") or ["."]),
                       observations=observations or {}, now=time.time(),
                       budget=s.budget, providers=tuple(providers),
+                      # Without this the judge's receipt is written and never read,
+                      # and CONVERGED is unreachable by anything but a test.
+                      judge=jd.current(s, tree, s.revision),
                       blocked_on=args.blocked_on or "")
 
 
@@ -232,30 +246,28 @@ def cmd_reconcile(args) -> int:
     if not args.apply:
         print("\n(decision only; pass --apply to act on it)")
         return 0 if d.kind in (rc.CONVERGED, rc.WAIT) else 1
-    if d.kind != rc.NEXT_EPOCH:
-        print(f"\nnothing to apply: {d.kind} is not a dispatch")
+    if d.kind not in (rc.NEXT_EPOCH, rc.RECOVER, rc.HARVEST):
+        print(f"\nnothing to apply: {d.kind} is not an action")
         return 0 if d.kind in (rc.CONVERGED, rc.WAIT) else 1
-    if d.provider != "gate":
+    if d.kind == rc.NEXT_EPOCH and d.provider != "gate":
         # Only the deterministic provider is wired into --apply here. Work
         # providers spend an account or a session and are dispatched
         # deliberately, not as a side effect of a status command.
         print(f"\n{d.provider} epochs are dispatched explicitly, not from reconcile --apply")
         return 1
+    # One pass of THE driver, not a second copy of it. This used to dispatch a
+    # gate with its own inline code and then had no way to observe or harvest
+    # one: an operator could start a gate from the CLI and nothing in the CLI
+    # could ever finish it, so the epoch stayed `running` forever. It also built
+    # its epoch record without the gate spec -- the exact defect already fixed in
+    # the sweep, surviving here because the logic had been written twice.
+    from modules.gsd_x.goal import sweep as sw
     run_dir = Path(args.run_dir) if args.run_dir else Path(_log(args).dir) / "runs"
-    prov = GateProvider(run_dir)
-    conv = cv.project_convergence(s)
-    o = conv.obligations[d.spec["obligation"]]
-    e = ep.begin(_log(args), s, "gate", {"epoch_id": "", "obligation": o.identifier,
-                                         "tree_hash": d.spec["tree_hash"]},
-                 d.info_key, d.hypothesis, args.actor)
-    spec = {"epoch_id": e.epoch_id, "revision": s.revision, "root": args.root,
-            "identity": e.identity, "scope_paths": s.scope.get("paths") or ["."],
-            "gate": {"id": o.identifier, "command": jd._argv(o.done_gate),
-                     "class": args.gate_class, "files": [rel for rel, _ in o.gate_pin]}}
-    handle = prov.dispatch(spec)
-    ep.mark_running(_log(args), _state(args), e.epoch_id, handle, args.actor)
-    print(f"\ndispatched {e.epoch_id}: {o.done_gate}")
-    print(f"  log: {handle['log']}")
+    acted = sw.sweep_goal(_log(args), Path(args.root), providers=tuple(providers),
+                          run_dir=run_dir, actor=args.actor)
+    print()
+    for line in acted:
+        print(line)
     return 0
 
 
@@ -265,9 +277,11 @@ def cmd_judge(args) -> int:
     receipt = jd.judge(s, _tree(s, Path(args.root)), worktree,
                        s.scope.get("paths") or ["."])
     print(json.dumps(receipt.to_dict(), indent=2))
-    if args.record and receipt.verdict == jd.PASS:
-        _log(args).append(s.last_seq + 1, "goal.judged", receipt.to_dict(), args.actor)
-        print("\nrecorded the judge receipt on the goal log")
+    if args.record:
+        # Every verdict, not only PASS: a refusal is a fact about the goal, and
+        # the reconciler has a branch for it that nothing could otherwise reach.
+        jd.record(_log(args), s, receipt, args.actor)
+        print(f"\nrecorded the judge receipt ({receipt.verdict}) on the goal log")
     return 0 if receipt.verdict == jd.PASS else 1
 
 
@@ -373,7 +387,11 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--apply", action="store_true")
     r.add_argument("--provider", action="append", default=[])
     r.add_argument("--run-dir")
-    r.add_argument("--gate-class", default="unit", choices=("unit", "integration",
+    # --gate-class is gone: the driver derives the class from the obligation's
+    # PLANE (in_game for REALITY, unit otherwise), and a flag that cannot change
+    # what is dispatched is worse than no flag.
+    r.add_argument("--retired-gate-class", default="unit", help=argparse.SUPPRESS,
+                   choices=("unit", "integration",
                                                             "in_game", "live"))
     r.add_argument("--blocked-on", default="")
     r.set_defaults(fn=cmd_reconcile)

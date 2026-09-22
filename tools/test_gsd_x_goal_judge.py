@@ -155,6 +155,40 @@ def main() -> int:
           "a gate the judge could not run outranks subject failures in the same run",
           f"{r7.verdict}: {r7.reason}")
 
+    # --- the receipt has to be READ BACK, or CONVERGED is unreachable -------------------
+    # Measured 2026-09-22 on the first real goal: the judge passed, `--record`
+    # banked the receipt, and the reconciler still said READY_FOR_JUDGE, because
+    # `ctx.judge` was set in exactly one place in the estate -- a test.
+    repo3 = make_repo(REAL_GATE)
+    tree3 = gs.tree_id(repo3, ["."])
+    lg5 = goal_with_satisfied(base, "g-readback", repo3, tree3)
+    check("V-JUDGE-NOTHING-RECORDED-IS-NOT-A-PASS",
+          jd.current(gc.project(lg5), tree3, gc.project(lg5).revision) is None,
+          "with no receipt banked the reader returns nothing, never an optimistic default",
+          "a receipt appeared from nowhere")
+    r8 = jd.judge(gc.project(lg5), tree3, repo3, ["."], env=clean_env)
+    jd.record(lg5, gc.project(lg5), r8, "t")
+    back = jd.current(gc.project(lg5), tree3, gc.project(lg5).revision)
+    check("V-JUDGE-RECEIPT-IS-READ-BACK",
+          back is not None and back["verdict"] == jd.PASS and back["tree_hash"] == tree3,
+          f"a banked receipt is readable by the reconciler ({back and back['verdict']})",
+          f"the judge's own receipt could not be read back: {back}")
+    check("V-JUDGE-RECEIPT-IS-NOT-READ-AT-ANOTHER-TREE",
+          jd.current(gc.project(lg5), "git:" + "c" * 40, gc.project(lg5).revision) is None,
+          "a receipt about another tree is not offered for this one",
+          "a receipt from another tree was returned, which would certify a goal on "
+          "evidence about a state nobody is closing")
+
+    # A refusal must be bankable too, or the reconciler's escalate branch is dead.
+    r9 = jd.judge(gc.project(lg), weak_tree, repo, ["."], env=clean_env)
+    jd.record(lg, gc.project(lg), r9, "t")
+    back9 = jd.current(gc.project(lg), weak_tree, gc.project(lg).revision)
+    check("V-JUDGE-REFUSAL-IS-RECORDED",
+          back9 is not None and back9["verdict"] != jd.PASS,
+          f"a refusal is banked and readable ({back9 and back9['verdict']}), so the "
+          "reconciler can escalate on it",
+          f"a refusal was not recorded: {back9}")
+
     total = len(passes) + len(fails)
     print(f"\nGSDX_JUDGE_PASS={len(passes)}/{total}  threshold={total}/{total}")
     return 0 if not fails else 1
