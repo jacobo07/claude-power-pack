@@ -92,6 +92,19 @@ if ($args -contains '-HuskSelfTest') {
   exit ($(if ($fails -eq 0) { 0 } else { 1 }))
 }
 
+# A SELF-TEST MUST NOT MUTATE. Measured 2026-09-22 (GSD X N5): `-GhostSelfTest`
+# is not checked until ~165 lines below, so this LIVE husk scan ran first and
+# could reap a real process while the operator believed they were only driving
+# the refusal branches. `-HuskSelfTest` exits above this block and was always
+# clean -- and that asymmetry is exactly what kept the defect invisible: the
+# flag an operator reaches for first is the safe one.
+#
+# The two flag checks cannot move above this block, because each drives functions
+# defined below it and PowerShell binds them in file order. So the SCAN is
+# guarded instead of the flags being relocated.
+$isSelfTest = ($args -contains '-HuskSelfTest') -or ($args -contains '-GhostSelfTest')
+
+if (-not $isSelfTest) {
 try {
   $now = Get-Date
   $huskProcessNames = @($huskExeNames | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
@@ -125,6 +138,7 @@ try {
 } catch {
   Add-Content -Path $log -Value "[$ts] HUSK_SCAN_FAIL: $($_.Exception.Message)"
 }
+}  # end live husk scan -- skipped under any self-test flag
 
 # ---------------------------------------------------------------------------
 # Never-resumed child reaper (sealed 2026-09-13, KobiiCraft Core Files)
