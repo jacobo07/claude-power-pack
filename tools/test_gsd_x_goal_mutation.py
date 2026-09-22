@@ -46,10 +46,12 @@ SUITES = {
     "V-CLH-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
     "V-CLI-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
     "V-RC-": ROOT / "tools" / "test_gsd_x_goal_reconcile.py",
+    "V-JUDGE-": ROOT / "tools" / "test_gsd_x_goal_judge.py",
 }
 CLP = GOAL / "providers" / "claude.py"
 BRIEF = GOAL / "brief.py"
 RECON = GOAL / "reconcile.py"
+JUDGE = GOAL / "judge.py"
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -229,6 +231,21 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "    if max_hours and started and",
         "a start time of 0.0 is a time, not an absent budget",
         "V-RC-TIME-BUDGET"),
+    # --- the independent judge (C13) ---
+    "judge-ignores-pins": (
+        JUDGE, "        if moved:", "        if False:",
+        "a gate weakened after acceptance must not certify the goal",
+        "V-JUDGE-REFUSES-RIGGED-GATE"),
+    "judge-runs-inside-epoch": (
+        JUDGE, "    if environ.get(EPOCH_ENV):", "    if False:",
+        "a builder must not judge itself", "V-JUDGE-REFUSES-INSIDE-EPOCH"),
+    "judge-ignores-tree": (
+        JUDGE, "    if actual != tree_hash:", "    if False:",
+        "judging one tree while standing in another must be refused",
+        "V-JUDGE-WRONG-TREE"),
+    "judge-nothing-is-pass": (
+        JUDGE, "    if not satisfied:", "    if False:",
+        "a goal with nothing proven must not pass", "V-JUDGE-NOTHING-IS-NOT-PASS"),
 }
 
 
