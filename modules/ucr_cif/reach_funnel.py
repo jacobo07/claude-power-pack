@@ -127,6 +127,7 @@ def replay(text: str, cwd: str, session_id: str,
     routed = getattr(gate.routing, "owners", ()) or ()
     case.selector_consulted = gate.routing is not None
     case.owners_routed = [o.owner for o in routed]
+    case.precap_owners = list(getattr(gate.routing, "precap_owners", ()) or ())
     case.owner_units = sum(o.units for o in routed)
 
     try:

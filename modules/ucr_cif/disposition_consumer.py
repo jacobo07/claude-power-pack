@@ -284,6 +284,33 @@ class Selection:
     # reported, and zero when the clause is off, so a run can never be read as
     # having filtered when it did not.
     rejected_no_attribution: int = 0
+    # W10. The ranked owner names BEFORE `[:MAX_OWNERS]`, reporting-only.
+    #
+    # W9 could not apportion its -6 between the RANKING and the CAP, because
+    # the pre-cap order was computed on line 656 and thrown away on the next
+    # line. Two effects arrived as one number and the wave could say nothing
+    # about either. This field is the decomposition: rank quality is read
+    # here, survival is read in `owners`, and an eviction is the difference.
+    #
+    # It also widens the evaluable population at zero labelling cost. An
+    # oracle case is only measurable when the true owner is in the list; the
+    # post-cap list excludes BY CONSTRUCTION exactly the eviction cases the
+    # question is about, so measuring on `owners` alone both shrinks n and
+    # hides the mechanism.
+    #
+    # Names only, not OwnerRouting records: the routed owners already carry
+    # their evidence in full, and duplicating it here would pay a large
+    # serialization cost per case for a diagnostic.
+    #
+    # DECIDES NOTHING. Same contract as W9's `structural_strength`: computed,
+    # reported, never read by the selector. `V-W10-PRECAP-DECIDES-NOTHING`
+    # pins the routed output byte-for-byte against this field's absence.
+    precap_owners: tuple[str, ...] = ()
+
+    @property
+    def evicted_by_cap(self) -> int:
+        """Ranked owners that the cap removed from the rendered selection."""
+        return max(0, len(self.precap_owners) - len(self.owners))
 
     @property
     def routed(self) -> bool:
@@ -301,6 +328,8 @@ class Selection:
             "below_owner_floor", "duplicates_suppressed", "prompt_terms",
             "distinctive_required", "rejected_below_length_bar",
             "structural_status", "rejected_no_attribution")}
+        d["precap_owners"] = list(self.precap_owners)
+        d["evicted_by_cap"] = self.evicted_by_cap
         d["classes_present"] = list(self.classes_present)
         d["classes_unsupported"] = list(self.classes_unsupported)
         d["owners"] = [{"owner": o.owner, "units": o.units,
@@ -655,7 +684,8 @@ def select_for(text: str, repo=None) -> Selection:
     # `_structural_ranking` carries the numbers and the two reasons.
     owners.sort(key=_rank_key if _structural_ranking() else _rank_key_lexical)
     return Selection(
-        owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,
+        owners=tuple(owners[:MAX_OWNERS]),
+        precap_owners=tuple(o.owner for o in owners), corpus_id=corpus_id,
         population=population, considered=len(rows),
         excluded_authority=excl_auth, excluded_lifecycle=excl_life,
         excluded_semantics=excl_sem, rejected_applicability=rejected,

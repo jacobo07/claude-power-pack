@@ -100,6 +100,11 @@ class DerivedCase:
     gate_action: str = ""
     selector_consulted: bool = False
     owners_routed: list[str] = field(default_factory=list)
+    #: W10. The ranked owner names BEFORE `[:MAX_OWNERS]`. Carried so rank
+    #: quality and cap survival can be read as two effects rather than one:
+    #: `owners_routed` is what the agent saw, this is what the ranking
+    #: actually decided, and an eviction is the difference between them.
+    precap_owners: list[str] = field(default_factory=list)
     owner_units: int = 0
     signal_emitted: bool = False
     signal_named_owners: bool = False
