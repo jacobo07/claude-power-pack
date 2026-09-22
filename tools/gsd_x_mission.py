@@ -90,7 +90,11 @@ def cmd_derive(args) -> int:
     for ident, prev in existing.items():
         if ident not in {o.identifier for o in judged}:
             merged.append(ob.invalidate_if_parent_gone(prev, facts))
-    path = st.save(root, merged)
+    try:
+        path = st.save(root, merged)
+    except st.GoalBound as exc:
+        print(f"REFUSED  : {exc}")
+        return 2
     print(f"facts    : {len(facts)}")
     for f in facts:
         print(f"  {f.name:28} [{f.source}] {f.matched[:64]!r}")
@@ -121,6 +125,9 @@ def cmd_contract(args) -> int:
 
 
 def _closure(root: Path, backlog_empty: bool, pr: str):
+    # A root bound to a goal has its obligations in the goal log. A closure
+    # computed from this per-root file would be a second, disagreeing answer.
+    st.refuse_if_bound(root)
     obs = st.load(root)
     contract = mc.project(root, intent=_read(root, INTENT_FILE).strip() or None,
                           obligations=obs)
@@ -129,7 +136,11 @@ def _closure(root: Path, backlog_empty: bool, pr: str):
 
 def cmd_closure(args) -> int:
     root = Path(args.root).resolve()
-    receipt, _ = _closure(root, args.backlog_empty, args.production_reality)
+    try:
+        receipt, _ = _closure(root, args.backlog_empty, args.production_reality)
+    except st.GoalBound as exc:
+        print(f"REFUSED  : {exc}")
+        return 2
     print(receipt.render())
     return 0 if receipt.may_close else 1
 
