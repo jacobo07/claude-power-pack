@@ -1,0 +1,26 @@
+[
+ {
+  "name": "W11-fp-absence-fails-open",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_population_fingerprint.py",
+  "old": "            return {\"status\": FP_UNREADABLE, \"moved\": [],",
+  "new": "            return {\"status\": FP_COMPARABLE, \"moved\": [],",
+  "why": "The false world: a fingerprint that could not be read is reported as agreement. This is the direction that fails OPEN -- an arm whose fingerprint is absent or truncated would license a paired verdict about two populations nobody compared, and the report would carry a COMPARABLE that was never earned. The three V-W11-FP-ABSENT-IS-REFUSAL cases and V-W11-FP-PARTIAL-KEYS-IS-REFUSAL must catch it, and V-W11-FP-IDENTICAL-IS-COMPARABLE proves the guard is not simply refusing everything."
+ },
+ {
+  "name": "W11-fp-watches-only-the-case-set",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_population_fingerprint.py",
+  "old": "_FP_KEYS = (\"oracle_schema\", \"corpus_id\", \"ledger_rows\", \"owner_universe_n\",\n            \"owner_universe_sha\", \"case_set_sha\", \"cases\", \"sessions_swept\",\n            \"window_hours\", \"max_owners\")",
+  "new": "_FP_KEYS = (\"case_set_sha\", \"cases\")",
+  "why": "The false world: the guard narrows to the case set, so two arms run against a regenerated ledger, a different owner universe, a different sweep window or a different MAX_OWNERS compare as COMPARABLE. The cap is the one W10 proved converts rank movement into true-owner eviction, so a cap change slipping past comparability is precisely how a W11 verdict could be attributed to the treatment. V-W11-FP-WATCHED-SET-IS-PINNED must catch it; note that V-W11-FP-EVERY-KEY-IS-LOAD-BEARING iterates the drill's OWN expected tuple rather than the module's, so it cannot shrink along with the mutation."
+ },
+ {
+  "name": "W11-fp-licence-becomes-a-negative-test",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_population_fingerprint.py",
+  "old": "    return isinstance(cmp, dict) and cmp.get(\"status\") == FP_COMPARABLE",
+  "new": "    return isinstance(cmp, dict) and cmp.get(\"status\") != FP_DRIFTED",
+  "why": "The false world: the licence stops being a positive test on the one answer that permits a paired verdict and becomes 'anything that is not DRIFTED'. UNREADABLE then licenses a verdict, and so does every status added in future by someone who never reads this line. The same inversion is what turns an unreachable peer into an unkillable one elsewhere in this estate. V-W11-FP-LICENCE-IS-A-POSITIVE-TEST and the ABSENT-IS-REFUSAL family must catch it."
+ }
+]

@@ -240,6 +240,51 @@ def _fingerprint(meta, rows, universe, sessions, window_h, cases) -> dict:
     }
 
 
+# A paired verdict is about two arms only if both arms measured the same world.
+# W10 computed the fingerprint and printed it; nothing ever compared two, so the
+# guard that makes `control vs treatment` mean anything had never run (PR-W10-11).
+FP_COMPARABLE = "COMPARABLE"
+FP_DRIFTED = "DRIFTED"
+FP_UNREADABLE = "UNREADABLE"
+
+_FP_KEYS = ("oracle_schema", "corpus_id", "ledger_rows", "owner_universe_n",
+            "owner_universe_sha", "case_set_sha", "cases", "sessions_swept",
+            "window_hours", "max_owners")
+
+
+def compare_fingerprints(a, b) -> dict:
+    """Are two runs about the same population?
+
+    Three outcomes, because a fingerprint that could not be read says nothing
+    about drift and must not be reported as agreement. `moved` names the keys
+    that differ: a bare 'they differ' is not actionable, and naming them is what
+    turns an unusable refusal into a precise one.
+    """
+    for side in (a, b):
+        if not isinstance(side, dict) or any(k not in side for k in _FP_KEYS):
+            return {"status": FP_UNREADABLE, "moved": [],
+                    "detail": {},
+                    "reason": "a fingerprint is absent or missing required "
+                              "keys -- absence of evidence about drift is not "
+                              "evidence of no drift"}
+    moved = [k for k in _FP_KEYS if a[k] != b[k]]
+    if moved:
+        return {"status": FP_DRIFTED, "moved": moved,
+                "detail": {k: (a[k], b[k]) for k in moved},
+                "reason": "the two arms did not measure the same population"}
+    return {"status": FP_COMPARABLE, "moved": [], "detail": {},
+            "reason": "both arms measured the same population"}
+
+
+def paired_verdict_allowed(cmp: dict) -> bool:
+    """A POSITIVE test on the one answer that licenses a paired verdict.
+
+    Written as `is COMPARABLE` rather than `is not DRIFTED` on purpose: the
+    negative form silently admits every future status that is not yet named.
+    """
+    return isinstance(cmp, dict) and cmp.get("status") == FP_COMPARABLE
+
+
 def build(n_sessions: int, window_h: int) -> dict:
     meta, rows = load_ledger()
     if not rows:
@@ -572,7 +617,31 @@ def main(argv=None) -> int:
     ap.add_argument("--from-store", action="store_true",
                     help="recompute the report from the canonical store "
                          "instead of re-running the arms")
+    ap.add_argument("--compare", nargs=2, metavar=("A", "B"), default=None,
+                    help="decide whether two stores or reports are about the "
+                         "same population, and refuse a paired verdict if not")
     args = ap.parse_args(argv)
+
+    if args.compare:
+        sides = []
+        for p in args.compare:
+            try:
+                sides.append(json.loads(
+                    Path(p).read_text(encoding="utf-8")).get("fingerprint"))
+            except (OSError, ValueError, AttributeError):
+                sides.append(None)
+        cmp = compare_fingerprints(*sides)
+        print("== POPULATION COMPARABILITY ==")
+        print(f"  status   {cmp['status']}")
+        print(f"  reason   {cmp['reason']}")
+        for k in cmp["moved"]:
+            print(f"  moved    {k}: {cmp['detail'][k][0]} -> {cmp['detail'][k][1]}")
+        if paired_verdict_allowed(cmp):
+            print("\nA paired verdict over these two arms is licensed.")
+            return 0
+        print("\nREFUSED: no paired verdict follows from these two runs. "
+              "Re-derive both arms in one session.")
+        return 1
 
     store_path = Path(args.store)
     if args.from_store:
