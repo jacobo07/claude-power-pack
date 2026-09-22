@@ -43,10 +43,58 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 ## 2. Exact state
 
-**W11 IN PROGRESS (2026-09-22).** Base `8c39376` (the W10 seal). W11 is exactly the
-commits reachable as **`8c39376..HEAD`** — a range, never a count, because W10 wrote
-"the EIGHT commits" into an artifact whose own commit made it nine and whose true
-figure was ten.
+**W12 IN PROGRESS (2026-09-22).** Base **`f2f359d`** (the W11 seal). W12 is exactly the
+commits reachable as **`f2f359d..HEAD`**. W11 sealed at `f2f359d` over `8c39376..f2f359d`.
+Both are ranges, never counts, because W10 wrote "the EIGHT commits" into an artifact
+whose own commit made it nine and whose true figure was ten.
+
+**W12 state, in flight — read this before re-running anything:**
+
+* **The W11 mutation debt is CLOSED.** The whole family re-driven at `f2f359d`:
+  W4 14 · W5 23 · W7 10 · W8 6 · W9 7 · W10 12 · W11 8 = **80 ALL_CAUGHT**, every
+  restore verified. W10's `W64` had rotted — W11 replaced the `if treatment:` block it
+  matched with the `_ARMS` identity table — and was repaired onto `ARM_CONTROL: ()`.
+  **The obvious literal repair was rejected and the reason is the reusable part:**
+  flipping `os.environ.pop(k, None)` in the new else branch matches TWICE at twelve
+  spaces, because it is a substring of the sixteen-space restore line in the `finally`
+  block, so the probe would have mutated the restore path instead of the selection path.
+* **The footprint is measured and the inherited diagnosis was wrong.** The paired build
+  peaks at **155 MB** (`peak_mb = 36.5 + 0.2071 × sessions`, max residual 1.9 MB over
+  three points, `tools/ucr_cif_footprint.py`). `environment_qualifier.capacity_probe`
+  returns **ADMITTED** — 1,179 MB required against 4,267 MB available. W11's run was not
+  killed for being expensive; it was refused on a host-level free-memory percentage that
+  is not a fact about the subject. **The real cost is time:** ~30 min per arm, not the
+  ~12 min this file used to carry.
+* **The pre-registration is committed AHEAD of the numbers**
+  (`vault/audits/ucr_cif/w12_preregistration.md`): the eight pinned by value from the
+  committed store (`worsened 8`, zero improved, pre-cap and post-cap alike), the safety
+  strata, and an operational reading of "recover" in which **an eviction disqualifies**.
+* **The verdict comparator refuses before it reports**
+  (`tools/ucr_cif_w12_verdict.py`, gates 12/12, `ucr_cif_w12.json` **5/5**, family now
+  **85**). Movement is unreachable until comparability, execution and baseline identity
+  all pass. `W69` found a hole in its own gate before it judged real data.
+* **The projection was STALE at the W11 seal and is now rebuilt** (`source_fresh True`).
+  The rebuild changed four lines — `build_ms`, `built_at`, `repo_fingerprint`,
+  `files_seen` 1373→1376 — and **no evidence at all**: 674 symbol-held and 236
+  declaration-held terms byte-identical. A reference arm was killed over a
+  superseded-extractor hypothesis that the diff then falsified. Correct precaution,
+  no semantic gain, ~15 min.
+* **Both arms were launched CONCURRENTLY**, seconds apart, to
+  `vault/ucr_cif/w12_arm_w9.json` and `w12_arm_w11.json` with reports beside them.
+  **Never run an arm on the default `--store`:** it points at the canonical
+  `oracle_cases.json`, so a treatment run with default flags overwrites the control
+  record the comparison is against. Concurrency is deliberate — the session store is
+  live, and two arms thirty minutes apart re-create the population drift W7/W8 measured
+  (23.5 %/2,350 → 20.0 %/2,306 with nothing changed). Ranking is deterministic, so
+  contention cannot move a verdict.
+* **OPEN, deliberately unfixed until the verdict lands:** `prose_authority`'s
+  `SELF_MEASUREMENT_PREFIXES` enumerates `tools/test_w9_`, `_w10_`, `_w11_` **by hand**,
+  so every future wave's own test file is classified as an ordinary runtime consumer.
+  A guard whose population is enumerated rather than discovered. Measured inert today
+  (declared terms 814, owners 26, `governance-overlay` 256, SELF_MEASUREMENT edges 9 —
+  all identical to W11's record with three new `tools/` files present), and fixing it
+  before the first valid measurement would change treatment semantics, which is the one
+  thing this wave may not do.
 
 Sealed so far in W11, each with its own commit:
 
