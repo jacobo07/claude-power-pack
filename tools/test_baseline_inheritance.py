@@ -45,6 +45,35 @@ def check(gate: str, cond: bool, evidence: str) -> None:
         print(f"  FAIL {gate}  {evidence}")
 
 
+class _ProbeDecision:
+    """Shaped like any capability result: an outcome and an exit code."""
+
+    outcome = "PROBE_OK"
+    exit_code = 0
+
+    def to_dict(self) -> dict:
+        return {"outcome": self.outcome, "exit_code": self.exit_code}
+
+
+def _probe_adapter(artifact):
+    """Generic adapter protocol: (payload | None, reason).
+
+    Module-level because the contract reaches these by DOTTED PATH. Note that
+    this file is `__main__` when run as a script and is imported again under its
+    dotted name, so these functions execute in a second module object -- which
+    is harmless here only because the assertions read the returned RECORD and
+    never a counter living in one copy's globals.
+    """
+    title = str((artifact or {}).get("title", "")).lower()
+    if "inherit-probe" in title:
+        return {"probe": True}, "synthetic capability claims this artifact"
+    return None, "synthetic capability does not claim this artifact"
+
+
+def _probe_capability(payload):
+    return _ProbeDecision()
+
+
 def main() -> int:
     core = REPO / "parts" / "core.md"
     router = REPO / "SKILL.md"
@@ -113,6 +142,85 @@ def main() -> int:
           over.outcome != under.outcome,
           f"LAW IX discriminates: overclaim->{over.outcome}, honest->{under.outcome}")
 
+    # ---- UACF construction obligations: inherited, or merely available? ----
+    #
+    # WHAT IS *NOT* ASSERTED HERE, AND WHY.
+    #
+    # `test_capability_consumption.py` already owns "an applicable PRD gets a
+    # decision and a non-applicable one does not", behaviourally, and its
+    # mutation drill (sever the call in parse() -> 5/11) is STRICTER than any
+    # source-level chain check would be. Re-asserting it here would be a looser
+    # duplicate, and a looser duplicate can satisfy the stricter gate's subject
+    # and disarm its drill while every suite stays green.
+    #
+    # So this section asserts only what makes the mechanism INHERITANCE rather
+    # than an integration -- two properties nothing else covers:
+    #
+    #   UNNAMED     the construction stage names no capability, so nobody has
+    #               to remember one by name;
+    #   GENERIC     a capability the stage has never heard of is picked up from
+    #               its declared fields alone, with zero edits to the stage.
+    #
+    # Together with the consumption gate's behavioural proof that the stage
+    # calls the boundary at all, those compose into inheritance.
+    import json
+    import tempfile
+
+    from modules.capability_runtime.enrichment import (  # noqa: E402
+        decisions_for_artifact)
+
+    enrich_path = REPO / "modules" / "capability_runtime" / "enrichment.py"
+    check("V-INHERIT-UACF-PRESENT", enrich_path.exists(),
+          "the generic enrichment boundary is on disk")
+    check("V-INHERIT-UACF-CALLABLE", callable(decisions_for_artifact),
+          "decisions_for_artifact() is callable")
+
+    # UNNAMED. The PRD stage must not mention any capability. If it does, the
+    # baseline is inherited only by whoever remembered to write the name.
+    stage_src = (REPO / "modules" / "karimo-harness" / "prd_parser.py").read_text(
+        encoding="utf-8-sig")
+    named = [w for w in ("surface_architecture", "UACF", "signup") if w in stage_src]
+    check("V-INHERIT-UACF-UNNAMED", not named,
+          f"construction stage names no capability (found: {named or 'none'})")
+
+    # GENERIC / EFFECTIVE. A synthetic capability the estate has never seen is
+    # inherited from its contract alone. This is the rung that separates a
+    # generic boundary from one capability wired into one subsystem: nothing in
+    # enrichment.py or prd_parser.py knows this contract exists.
+    #
+    # Written to a TEMP contracts dir, never the real one -- another session is
+    # live in this tree, and a gate that drops files into a shared registry is
+    # a gate that breaks somebody else's run.
+    probe_id = "inherit_probe_synthetic"
+    self_mod = "tools.test_baseline_inheritance"
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / f"{probe_id}.json").write_text(json.dumps({
+            "id": probe_id,
+            "name": "synthetic inheritance probe",
+            "owner": "test_baseline_inheritance",
+            "triggers": ["a synthetic artifact the estate has never seen"],
+            "consumers": ["this gate"],
+            "inputs": ["prd_baseline"],
+            "entrypoint": f"{self_mod}:_probe_capability",
+            "adapter": f"{self_mod}:_probe_adapter",
+            "authority": "decision",
+        }), encoding="utf-8")
+
+        claimed = decisions_for_artifact(
+            "prd_baseline", {"title": "PRD: inherit-probe subject"},
+            contracts_dir=Path(tmp))
+        ignored = decisions_for_artifact(
+            "prd_baseline", {"title": "PRD: something else entirely"},
+            contracts_dir=Path(tmp))
+
+    got = (claimed.get(probe_id) or {})
+    skipped = (ignored.get(probe_id) or {})
+    check("V-INHERIT-UACF-EFFECTIVE",
+          got.get("status") == "invoked" and got.get("outcome") == "PROBE_OK"
+          and skipped.get("status") == "not_callable",
+          f"an unknown capability is inherited from its contract alone "
+          f"(claimed->{got.get('status')}, unclaimed->{skipped.get('status')})")
+
     # ---- Positive control: the sweep can fail -----------------------------
     # A checker that reports green against a subject that should fail is not a
     # checker. Drive the chain assertion against a document that lacks the row.
@@ -120,6 +228,18 @@ def main() -> int:
     control_fires = not ("ALWAYS read" in synthetic and "parts/core.md" in synthetic)
     check("V-INHERIT-CONTROL", control_fires,
           "chain predicate returns FALSE on a router missing the declaration")
+
+    # Same discipline for the UNNAMED predicate. Driven against a SYNTHETIC
+    # source rather than by editing the real stage: a drill that mutates a live
+    # file must put it back, and a restore that goes wrong costs more than the
+    # drill is worth. It cannot decay either -- it depends on no real file
+    # continuing to name, or not name, a capability.
+    dirty_stage = "baseline = schema_map(...)\nfrom modules.surface_architecture import x\n"
+    named_control = [w for w in ("surface_architecture", "UACF", "signup")
+                     if w in dirty_stage]
+    check("V-INHERIT-UACF-UNNAMED-CONTROL", bool(named_control),
+          f"unnamed predicate returns FALSE on a stage that names one "
+          f"(caught: {named_control})")
 
     print(f"INHERITANCE_PASS={PASSES}/{PASSES + FAILS}  threshold={PASSES + FAILS}/{PASSES + FAILS}")
     return 0 if FAILS == 0 else 1
