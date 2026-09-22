@@ -686,7 +686,30 @@ function isScratchTarget(rawStdin) {
 // Any future entry here needs its own wall-clock measurement AND an argument
 // about what failing open on that chain costs.
 const CHAIN_DEADLINE_MS = {
-  'UserPromptSubmit-chain': 11500,   // settings.json timeout 15 s; measured 15,173 -> 6,595
+  // 2026-09-22 (Jacobo): 11500 -> 3000. The old value was headroom under the 15 s
+  // harness ceiling, which is the right question for "does the injection survive"
+  // and the WRONG one for "how long does the Owner stare at a pane that will not
+  // react".
+  //
+  // Measured this day, real dispatcher, real payload: an ordinary prompt cost
+  // 13,543 ms cold / 4,408 ms warm, and a PASTED 10 KB prompt cost 11,611 and
+  // 11,820 ms -- it consumed the ENTIRE deadline every time, with no warm-up
+  // benefit. The report was "pego prompts y directamente ni reacciona".
+  //
+  // The cost is NOT hook logic. Timed individually the members run 0.5-1.7 s. It is
+  // SIX PROCESS SPAWNS on a host whose C: drive measured 0% idle time (724 IOPS,
+  // driven by another session's `ucr_cif_oracle.py --sessions 573`), where a no-op
+  // `node -e "0"` costs 965 ms and `python -c pass` costs 2-4 s. Defender was
+  // measured and EXONERATED (0.00 s of MsMpEng CPU across 15 spawns) and the CPU
+  // was not saturated (~4.2 of 16 cores), so neither is available as the excuse.
+  //
+  // A deadline cannot make a spawn cheap. What it CAN do is bound what the Owner
+  // waits for, and this chain is ADVISORY -- the paragraph above is explicit that a
+  // deadline is safe here and a security regression on a blocking one. The critical
+  // lane (dead-closer-recovery, measured 520 ms) runs first and uncontended, so it
+  // is unaffected; what a busy host now drops is advisory injection, which was
+  // costing ~29 KB of context on EVERY prompt anyway.
+  'UserPromptSubmit-chain': 3000,
   'UserPromptSubmit-deadline-drill-chain': 1500,  // drill only; in no settings.json event
   'UserPromptSubmit-deadline-drill-critstarve-chain': 1500,  // drill only; critical lane overruns it alone
 };
