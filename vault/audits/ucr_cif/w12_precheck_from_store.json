@@ -1,0 +1,367 @@
+{
+ "fingerprint": {
+  "oracle_schema": "ucr-cif-oracle/1",
+  "corpus_id": "ef2b381beff512ca6919280a",
+  "ledger_rows": 2376,
+  "owner_universe_n": 40,
+  "owner_universe_sha": "ccc401bda49648c8",
+  "case_set_sha": "1235476c90059398",
+  "cases": 1471,
+  "sessions_swept": 573,
+  "window_hours": 24,
+  "max_owners": 5
+ },
+ "arm_divergence": {
+  "routed_cases": 1285,
+  "reordered": 982,
+  "rate": 0.7642,
+  "floor": 0.05,
+  "ok": true
+ },
+ "structural_share": {
+  "modules/deep-research": 0.17990074441687345,
+  "modules/capability_runtime": 0.4315068493150685,
+  "modules/duplicate_to_advantage": 0.17647058823529413,
+  "modules/decision_review": 0.35766423357664234,
+  "modules/governance-overlay": 0.13671444321940462,
+  "modules/sqi": 0.24695121951219512,
+  "modules/knowledge_acquisition": 0.21044386422976502,
+  "modules/omnicapture": 0.3333333333333333,
+  "modules/universal-meta-systems": 0.24479166666666666,
+  "modules/cdicf": 0.3644859813084112,
+  "modules/cognitive_os": 0.2746478873239437,
+  "modules/daif": 0.2601626016260163,
+  "modules/liveness": 0.13043478260869565,
+  "modules/dataset_first": 0.2,
+  "modules/executionos-lite": 0.17204301075268819,
+  "modules/session_resilience": 0.37209302325581395,
+  "modules/frontier_intelligence": 0.29411764705882354,
+  "modules/fable_distillation": 0.2597402597402597,
+  "modules/zero-crash": 0.35,
+  "modules/cpc_os": 0.5833333333333334,
+  "hooks/hook-dispatcher.js": 0.2,
+  "modules/setup_os": 0.3125,
+  "modules/rule_compiler": 0.30434782608695654,
+  "modules/cascade_prevention": 0.38461538461538464,
+  "modules/autoresearch": 0.6666666666666666,
+  "modules/ias_c2": 0.3333333333333333,
+  "modules/done_gate": 0.5,
+  "agents/oneshot-architect-auditor.md": 0.19607843137254902,
+  "modules/karimo-harness": 0.2608695652173913,
+  "hooks/tests": 0.3103448275862069,
+  "modules/ccf": 0.5,
+  "tools/jit_skill_loader.py": 0.3,
+  "tools/distiller": 0.5,
+  "modules/code-review": 0.6,
+  "tools/reconstructor.py": 0.5,
+  "modules/error_prevention": 0.5,
+  "modules/token-optimizer": 0.5,
+  "modules/sleepless_qa": 0.5,
+  "modules/pp_agents": 0.5,
+  "modules/hard_rules": 0.3333333333333333
+ },
+ "status": {
+  "LABELLED": 116,
+  "UNLABELLED_NO_COMMITS": 7,
+  "NO_OWNER_TOUCHED": 17,
+  "UNLABELLED_BY_DOMAIN": 1331
+ },
+ "slot_precision": {
+  "labelled_cases": 116,
+  "control": {
+   "slots": 454,
+   "true": 40,
+   "false": 414,
+   "precision": 0.0881057268722467
+  },
+  "treatment": {
+   "slots": 454,
+   "true": 38,
+   "false": 416,
+   "precision": 0.08370044052863436
+  },
+  "delta_true": -2,
+  "delta_false": 2,
+  "delta_precision_points": -0.4405
+ },
+ "pre_cap": {
+  "moves": {
+   "improved": 16,
+   "worsened": 21,
+   "unchanged": 20,
+   "evicted": 0,
+   "admitted": 0,
+   "absent_both": 302
+  },
+  "observed_pairs": 57,
+  "discordant": 37,
+  "improved_incl_admitted": 16,
+  "worsened_incl_evicted": 21,
+  "p_two_sided": 0.5113757815852296,
+  "power": {
+   "observed_pairs": 57,
+   "discordant": 37,
+   "discordant_rate": 0.6491,
+   "detectable_pi": 0.7229,
+   "resolution_points": 28.94,
+   "observed_pi": 0.4324,
+   "required_for_observed_effect": 427
+  },
+  "effective": {
+   "cases_contributing": 45,
+   "verdicts": {
+    "absent_both": 71,
+    "worsened": 15,
+    "improved": 12,
+    "unchanged": 15,
+    "mixed": 3
+   },
+   "discordant": 27,
+   "improved": 12,
+   "worsened": 15,
+   "p_two_sided": 0.7011080384254456
+  },
+  "by_modality": {
+   "prose": {
+    "moves": {
+     "improved": 6,
+     "worsened": 13,
+     "unchanged": 17,
+     "evicted": 0,
+     "admitted": 0,
+     "absent_both": 91
+    },
+    "improved": 6,
+    "worsened": 13,
+    "p_two_sided": 0.1670684814453125
+   },
+   "code": {
+    "moves": {
+     "improved": 10,
+     "worsened": 8,
+     "unchanged": 3,
+     "evicted": 0,
+     "admitted": 0,
+     "absent_both": 211
+    },
+    "improved": 10,
+    "worsened": 8,
+    "p_two_sided": 0.8145294189453125
+   }
+  },
+  "by_owner": {
+   "agents/oneshot-architect-auditor.md": {
+    "worsened": 1,
+    "improved": 3,
+    "absent_both": 4,
+    "unchanged": 1
+   },
+   "hooks/hook-dispatcher.js": {
+    "absent_both": 51
+   },
+   "hooks/tests": {
+    "absent_both": 20
+   },
+   "modules/capability_runtime": {
+    "absent_both": 35,
+    "worsened": 3,
+    "improved": 2
+   },
+   "modules/cascade_prevention": {
+    "absent_both": 17
+   },
+   "modules/cdicf": {
+    "absent_both": 2
+   },
+   "modules/decision_review": {
+    "absent_both": 1,
+    "improved": 1
+   },
+   "modules/deep-research": {
+    "unchanged": 12,
+    "improved": 1
+   },
+   "modules/done_gate": {
+    "absent_both": 3
+   },
+   "modules/duplicate_to_advantage": {
+    "absent_both": 16,
+    "worsened": 4,
+    "improved": 2,
+    "unchanged": 2
+   },
+   "modules/fable_distillation": {
+    "absent_both": 34,
+    "worsened": 2
+   },
+   "modules/governance-overlay": {
+    "worsened": 8
+   },
+   "modules/knowledge_acquisition": {
+    "absent_both": 2,
+    "improved": 4,
+    "worsened": 1,
+    "unchanged": 2
+   },
+   "modules/liveness": {
+    "absent_both": 20,
+    "unchanged": 2
+   },
+   "modules/pp_agents": {
+    "absent_both": 21
+   },
+   "modules/sleepless_qa": {
+    "absent_both": 7
+   },
+   "modules/sqi": {
+    "absent_both": 3,
+    "improved": 3,
+    "worsened": 2,
+    "unchanged": 1
+   },
+   "modules/zero-crash": {
+    "absent_both": 57
+   },
+   "tools/jit_skill_loader.py": {
+    "absent_both": 9
+   }
+  }
+ },
+ "post_cap": {
+  "moves": {
+   "improved": 9,
+   "worsened": 10,
+   "unchanged": 17,
+   "evicted": 4,
+   "admitted": 2,
+   "absent_both": 317
+  },
+  "observed_pairs": 42,
+  "discordant": 25,
+  "improved_incl_admitted": 11,
+  "worsened_incl_evicted": 14,
+  "p_two_sided": 0.6900379657745361,
+  "power": {
+   "observed_pairs": 42,
+   "discordant": 25,
+   "discordant_rate": 0.5952,
+   "detectable_pi": 0.767,
+   "resolution_points": 31.79,
+   "observed_pi": 0.44,
+   "required_for_observed_effect": 543
+  },
+  "effective": {
+   "cases_contributing": 33,
+   "verdicts": {
+    "absent_both": 83,
+    "worsened": 11,
+    "unchanged": 12,
+    "mixed": 3,
+    "improved": 7
+   },
+   "discordant": 18,
+   "improved": 7,
+   "worsened": 11,
+   "p_two_sided": 0.480682373046875
+  },
+  "by_modality": {
+   "prose": {
+    "moves": {
+     "improved": 3,
+     "worsened": 8,
+     "unchanged": 14,
+     "evicted": 4,
+     "admitted": 0,
+     "absent_both": 98
+    },
+    "improved": 3,
+    "worsened": 12,
+    "p_two_sided": 0.03515625
+   },
+   "code": {
+    "moves": {
+     "improved": 6,
+     "worsened": 2,
+     "unchanged": 3,
+     "evicted": 0,
+     "admitted": 2,
+     "absent_both": 219
+    },
+    "improved": 8,
+    "worsened": 2,
+    "p_two_sided": 0.109375
+   }
+  },
+  "by_owner": {
+   "agents/oneshot-architect-auditor.md": {
+    "absent_both": 9
+   },
+   "hooks/hook-dispatcher.js": {
+    "absent_both": 51
+   },
+   "hooks/tests": {
+    "absent_both": 20
+   },
+   "modules/capability_runtime": {
+    "absent_both": 40
+   },
+   "modules/cascade_prevention": {
+    "absent_both": 17
+   },
+   "modules/cdicf": {
+    "absent_both": 2
+   },
+   "modules/decision_review": {
+    "absent_both": 1,
+    "admitted": 1
+   },
+   "modules/deep-research": {
+    "unchanged": 12,
+    "improved": 1
+   },
+   "modules/done_gate": {
+    "absent_both": 3
+   },
+   "modules/duplicate_to_advantage": {
+    "absent_both": 16,
+    "evicted": 4,
+    "improved": 2,
+    "unchanged": 2
+   },
+   "modules/fable_distillation": {
+    "absent_both": 36
+   },
+   "modules/governance-overlay": {
+    "worsened": 8
+   },
+   "modules/knowledge_acquisition": {
+    "absent_both": 2,
+    "improved": 4,
+    "worsened": 1,
+    "unchanged": 2
+   },
+   "modules/liveness": {
+    "absent_both": 22
+   },
+   "modules/pp_agents": {
+    "absent_both": 21
+   },
+   "modules/sleepless_qa": {
+    "absent_both": 7
+   },
+   "modules/sqi": {
+    "absent_both": 4,
+    "improved": 2,
+    "unchanged": 1,
+    "worsened": 1,
+    "admitted": 1
+   },
+   "modules/zero-crash": {
+    "absent_both": 57
+   },
+   "tools/jit_skill_loader.py": {
+    "absent_both": 9
+   }
+  }
+ }
+}

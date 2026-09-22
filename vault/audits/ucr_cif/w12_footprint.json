@@ -1,0 +1,52 @@
+{
+ "arm": "w11-prose",
+ "target_sessions": 573,
+ "points": [
+  {
+   "sessions": 30,
+   "arm": "w11-prose",
+   "cases": 95,
+   "routed": 84,
+   "peak_mb": 44,
+   "elapsed_s": 87.66,
+   "host_avail_before_mb": 2911,
+   "host_avail_after_mb": 4320
+  },
+  {
+   "sessions": 60,
+   "arm": "w11-prose",
+   "cases": 143,
+   "routed": 122,
+   "peak_mb": 47,
+   "elapsed_s": 183.29,
+   "host_avail_before_mb": 4320,
+   "host_avail_after_mb": 3591
+  },
+  {
+   "sessions": 120,
+   "arm": "w11-prose",
+   "cases": 398,
+   "routed": 334,
+   "peak_mb": 62,
+   "elapsed_s": 437.3,
+   "host_avail_before_mb": 3591,
+   "host_avail_after_mb": 4267
+  }
+ ],
+ "fit": {
+  "ok": true,
+  "intercept_mb": 36.5,
+  "slope_mb_per_session": 0.2071,
+  "max_abs_residual_mb": 1.9,
+  "points": 3
+ },
+ "predicted_peak_mb": 155,
+ "admission": {
+  "passed": true,
+  "verdict": "ADMITTED",
+  "observed": "ucr_cif_oracle paired build (573 sessions, control vs w11-prose): 4267 MB available, 1179 MB required (155 MB x 1 in flight + 1024 MB reserve)",
+  "blocker": null,
+  "required_mb": 1179,
+  "reserve_mb": 1024
+ }
+}
