@@ -45,8 +45,12 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
-**As of 2026-09-22 (W10 close) HEAD is `<W10 seal>`, 57 ahead / 74 behind `origin/main`.**
-W9's base was `822e93e`; W9 sealed at `af2bef0` (52 ahead); W10 added five commits on top.
+**As of 2026-09-22 (W10 close) HEAD is the seal commit whose PARENT is `c164c8e`,
+58 ahead / 74 behind `origin/main`.** W9's base was `822e93e` and W9 sealed at `af2bef0`
+(52 ahead). W10 is six commits: `c2f506b` (evaluator), `28bec1d` (gates + mutations),
+`3509a46` (measurement + verdict), `f7727b2` (traps + anchor repair), `c164c8e` (UKDL +
+resumption), and this seal. Verify with `git log --oneline af2bef0..HEAD` rather than
+trusting this line — W8 opened by falsifying its own handoff's pin.
 W9 audited those 74 upstream commits BEFORE building: 109 files changed, and the only overlap
 with this mission's dependency surface is
 `vault/capability_runtime/contracts/reconstruction_parity.json`, a contract DATA file. Nothing
@@ -353,7 +357,8 @@ is never written by this mission and never rolled back.
 
 - **W10 · owner-relevance oracle** — `c2f506b` (evaluator), `28bec1d` (gates +
   mutations), `3509a46` (measurement + verdict), `f7727b2` (traps + anchor
-  repair), `<knowledge>`. Full account: `vault/audits/ucr_cif/08_W10_ORACLE.md`.
+  repair), `c164c8e` (UKDL + resumption), + seal.
+  Full account: `vault/audits/ucr_cif/08_W10_ORACLE.md`.
   **The oracle widened 3.9×; ~3-point resolution is DEAD; the treatment stays
   OFF — and the last two are now measurements rather than positions.**
   **W9's headline had NO INSTRUMENT.** "6 improved / 12 worsened over 30 cases,
