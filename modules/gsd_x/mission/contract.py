@@ -201,8 +201,13 @@ def project(root: Path, intent: str | None = None,
 
     # A proof requirement is not a field somebody sets; it is what each accepted
     # obligation already carries. Computing it keeps one owner.
+    # `identifier`, not `id`: the dataclass has no `id`, and reading it raised
+    # AttributeError on every ACCEPTED obligation that carried a proof -- the
+    # exact shape of a Production Reality obligation. No test had ever driven
+    # accepted-with-proof through project(); tools/test_gsd_x_mission_goal_scope.py
+    # does now (2026-09-22).
     add("proof_requirements",
-        [{"obligation": o.id, "proof": o.proof} for o in obs
+        [{"obligation": o.identifier, "proof": o.proof} for o in obs
          if o.is_accepted and o.proof],
         COMPUTED, "derived from accepted obligations")
 
