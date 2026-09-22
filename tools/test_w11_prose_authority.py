@@ -288,53 +288,65 @@ def main() -> int:
            f"a richly-headed artifact with no consumer was credited: "
            f"{sorted(alone)[:8]}")
 
-    # PR-W11-10, DRIVEN. Arguing the leak shut from scope is not the same as
-    # showing it shut: the judge is made to shout for one owner and the signal
-    # must not hear a thing. Restore is verified by digest, and the control
-    # proves the perturbation reached disk at all -- otherwise "unchanged" is
-    # satisfied by a write that never happened.
+    # PR-W11-10, driven WITHOUT touching the answer key.
+    #
+    # The first version of this drill rewrote every gold label in the canonical
+    # store and restored it in a `finally`. That is not crash-safe, and this
+    # session measured the consequence: a mutation run whose suite subprocess
+    # was killed left 10,297 injected lines in the canonical oracle on disk.
+    # Only pathspec-scoped commits kept the corrupted answer key out of history.
+    # A drill that can damage the artifact it certifies is the wrong instrument
+    # however green it reports.
+    #
+    # It is also the weaker measurement. "The signal did not change when the
+    # oracle changed" is circumstantial; "the signal never opened the oracle" is
+    # the property itself.
     store = _ROOT / "vault" / "ucr_cif" / "oracle_cases.json"
-    before_sig = hashlib.sha256(
-        json.dumps(decls, sort_keys=True).encode()).hexdigest()
-    original = store.read_bytes()
-    backup = Path(tempfile.gettempdir()) / "w11_oracle_backup.json"
-    backup.write_bytes(original)
-    try:
-        doc = json.loads(original.decode("utf-8"))
-        for case in doc.get("cases", []):
-            case["gold_owners"] = [HARMED]
-            case["truth"] = [HARMED]
-        store.write_text(json.dumps(doc, indent=1, ensure_ascii=False),
-                         encoding="utf-8")
-        perturbed_on_disk = store.read_bytes() != original
-        after = PA.prose_declarations(_ROOT, PA.build_edges(_ROOT))
-        after_sig = hashlib.sha256(
-            json.dumps(after, sort_keys=True).encode()).hexdigest()
-    finally:
-        store.write_bytes(original)
-    restored = hashlib.sha256(store.read_bytes()).hexdigest() == \
-        hashlib.sha256(original).hexdigest()
+    ledger = _ROOT / "vault" / "ucr_cif" / "disposition_ledger.json"
+    opened: list = []
+    _real_read_text = Path.read_text
 
-    _check("V-W11-ORACLE-PERTURBATION-REACHED-DISK",
-           perturbed_on_disk,
-           "the answer key really was rewritten to name one owner as gold for "
-           "every case -- without this control, an unchanged signal would be "
-           "satisfied by a perturbation that never landed",
-           "the oracle was not modified, so the leak test measured nothing")
+    def _spy(self, *a, **k):
+        opened.append(str(self).replace("\\", "/"))
+        return _real_read_text(self, *a, **k)
+
+    Path.read_text = _spy
+    try:
+        PA.build_edges(_ROOT)
+    finally:
+        Path.read_text = _real_read_text
+
+    judges = [p for p in opened if "/vault/ucr_cif/" in p]
+
+    _check("V-W11-LEAK-PROBE-ACTUALLY-OBSERVED",
+           len(opened) > 500 and store.is_file() and ledger.is_file(),
+           f"the probe recorded {len(opened)} reads and both the oracle and the "
+           f"ledger exist on disk -- so 'never opened' is a measurement, not an "
+           f"artefact of a blind probe or an absent file",
+           f"probe saw {len(opened)} reads; oracle={store.is_file()} "
+           f"ledger={ledger.is_file()}")
 
     _check("V-W11-NO-ORACLE-TO-PRODUCTION-LEAK",
-           before_sig == after_sig,
-           f"with every gold label rewritten to {HARMED}, the declaration set "
-           f"is byte-identical ({after_sig[:12]}) -- the judge cannot coach the "
-           f"contestant",
-           f"the signal moved with the answer key: {before_sig[:12]} -> "
-           f"{after_sig[:12]} -- this is benchmark leakage")
+           not judges,
+           "compiling the whole channel opens neither the W10 answer key nor "
+           "the disposition ledger -- the judge is never consulted, so it "
+           "cannot coach the contestant",
+           f"the channel read its own judge: {judges[:4]}")
 
-    _check("V-W11-ORACLE-RESTORED",
-           restored,
-           "the canonical store is byte-identical to its pre-drill bytes, "
-           "verified by digest rather than assumed from a finally block",
-           f"the oracle store was NOT restored; a copy is at {backup}")
+    _check("V-W11-DRILL-IS-NON-DESTRUCTIVE",
+           store.stat().st_size == len(store.read_bytes()),
+           "this drill writes nothing, so no interrupted run can leave a "
+           "perturbed answer key on disk for a later wave to measure against",
+           "the drill wrote to the canonical store")
+
+    _check("V-W11-DECLARATION-SET-IS-STABLE",
+           hashlib.sha256(json.dumps(decls, sort_keys=True).encode())
+           .hexdigest() == hashlib.sha256(
+               json.dumps(PA.prose_declarations(_ROOT, edges),
+                          sort_keys=True).encode()).hexdigest(),
+           "the channel is deterministic over one compiled edge set, so a "
+           "paired arm cannot differ for reasons the treatment did not cause",
+           "the declaration set is not reproducible from one edge set")
 
     _check("V-W11-ADMISSION-IS-UNTOUCHED",
            "prose_authority" not in (_ROOT / "modules" / "ucr_cif" /

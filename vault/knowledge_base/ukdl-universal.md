@@ -982,6 +982,40 @@ what stops that authority field being written by its own judge.
 
 ---
 
+## T-DRILL-THAT-PERTURBS-ITS-OWN-SUBJECT-001 — a `finally` is not crash-safe, and the corpus is the one thing you cannot re-derive
+
+**Mechanism.** The intuitive way to prove "X does not influence Y" is to perturb X and show Y
+unchanged. When X is a canonical corpus, answer key or ledger, that drill mutates the estate's
+most irreplaceable artifact and depends on a `finally` to put it back. `finally` survives an
+exception; it does not survive a killed process. Run such a drill under a mutation harness, a
+timeout, or any runner that kills subprocesses, and the false world is left on disk — where the
+next wave measures against it and cannot tell.
+
+Two repairs, and the second is the better one:
+
+* make the drill **non-destructive** — never write to the canonical artifact at all;
+* prefer the **direct** property. "The signal did not change when the oracle changed" is
+  circumstantial. "The signal never opened the oracle" is the claim itself, and it is measured
+  by recording the paths the subject reads, with a control asserting the probe saw a plausible
+  number of reads and that the file it never opened actually exists.
+
+**The tell.** Any test that writes to a path under a corpus, vault or fixture directory the
+repository treats as canonical. Grep the suite for writes to tracked data files; a drill needing
+a backup copy is already the wrong shape.
+
+**Origin.** UCR-CIF W11 (2026-09-22). The first oracle-leak drill rewrote `gold_owners` in all
+1,471 cases of `vault/ucr_cif/oracle_cases.json` and restored it in a `finally`. Driven eight
+times per mutation run, one suite subprocess was killed mid-drill and **10,297 injected lines
+survived on disk**. Only pathspec-scoped commits kept the corrupted answer key out of history —
+the commit that landed beside it carried six files and none of them was the store. Replaced by a
+read-path probe: 1,692 reads recorded, zero under `vault/ucr_cif/`.
+
+**See also** the estate's mutation-in-flight rule — this is its data-plane twin: that rule
+protects SOURCE from being committed mid-mutation, this one protects the CORPUS from being left
+mutated at all.
+
+---
+
 ## T-SCOPE-EXCLUSION-MAKES-ITS-OWN-GUARD-MUTE-001 — the strongest protection can silence the check behind it
 
 **Mechanism.** Excluding a hazard by SCOPE — never walking the directory it lives in — is
