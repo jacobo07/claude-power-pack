@@ -1,12 +1,28 @@
 {
-  "id": "gsd-x-mission",
+  "id": "cpp-gsd-x-mission",
   "role": "feature",
   "version": "1.0.0",
   "title": "GSD X Mission Obligations",
   "tier": "full",
   "description": "Holds wave completion while a derived mission obligation is still open. The obligations, the contract projection and the closure receipt are owned by modules/gsd_x/mission; this manifest is only the registration that makes them reachable from a real GSD run.",
+  "requires": [],
+  "skills": [],
+  "agents": [],
+  "runtimeCompat": {
+    "supported": [
+      "claude"
+    ],
+    "unsupported": [],
+    "notes": {
+      "claude": "The only runtime installed on the host this was proven against (.gsd-runtime = claude). Other runtimes are left unlisted rather than declared unsupported, because nothing here has been measured against them."
+    }
+  },
   "config": {
-    "enabled": false
+    "enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Hold a wave while a derived mission obligation is still open. Off by default: capability install writes to the runtime config dir, so this gate is visible to every GSD project on the host, and it fails closed (onError: halt) once switched on."
+    }
   },
   "activationKey": "enabled",
   "steps": [],
