@@ -117,6 +117,20 @@ class CapabilityContract:
     parent: str = ""
     version: str = "1.0.0"
 
+    # --- the invocation seam (see modules/capability_runtime/invocation.py) ---
+    # `entrypoint` is what makes a capability CALLABLE rather than merely
+    # DISCOVERABLE. Empty is the honest default and the common case: most
+    # capabilities are consumed by an agent reading the contract, not by code.
+    # It must be a real dataclass field because `from_dict` filters to known
+    # fields, so a JSON-only convention would be dropped without a word.
+    entrypoint: str = ""
+    # Declared, never inferred. A capability that returns a decision is not
+    # thereby permitted to mutate; `invoke` checks this BEFORE entering.
+    authority: str = "advisory"
+    # Measured and reported by `invoke`, not enforced -- an in-process call
+    # cannot be preempted, and claiming otherwise would be self-certification.
+    budget_ms: int = 0
+
     def __post_init__(self) -> None:
         self._coerce()
         self.validate()

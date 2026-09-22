@@ -50,9 +50,12 @@
   "maturity": "experimental",
   "portable": true,
   "compatible_runtimes": [],
-  "rollback": "",
-  "kill_switch": "",
+  "rollback": "clear \"entrypoint\" in this file; the capability reverts to DISCOVERABLE and every caller receives status=not_callable, which is a defined outcome and not an error",
+  "kill_switch": "set CPP_CAPABILITY_INVOKE=off, or clear \"entrypoint\" here. Either makes invoke() return status=not_callable without entering the capability.",
   "retirement_condition": "a surface-architecture decision is produced and consumed by a live dispatch path, making this registry entry redundant",
   "parent": "",
-  "version": "1.0.0"
+  "version": "1.1.0",
+  "entrypoint": "modules.surface_architecture.resolver:resolve",
+  "authority": "decision",
+  "budget_ms": 250
 }

@@ -5,10 +5,28 @@ Every other registry in this estate is module-level (`liveness`), skill-level
 one: a contract object, an applicability computation over it, and a governed
 derivative registry.
 
-Scope is deliberately narrow. It does NOT activate anything (the hook
-dispatcher does), does NOT select models (CO-03 does), does NOT propose new
-systems (D2A does), and does NOT persist activation records (CDP owns
-provenance -- see vault/audits/apir/NON_DUPLICATION_LEDGER.md sec. 3).
+Scope is deliberately narrow. It does NOT select models (CO-03 does), does NOT
+propose new systems (D2A does), and does NOT persist activation records (CDP
+owns provenance -- see vault/audits/apir/NON_DUPLICATION_LEDGER.md sec. 3).
+
+AMENDED 2026-09-22. This docstring used to read "does NOT activate anything
+(the hook dispatcher does)", and that sentence was doing real damage: it was
+read as a prohibition on ever turning a selected capability into a call, so
+`compile_stack` returned identifiers forever and every capability in the estate
+stayed DISCOVERABLE. The hook dispatcher decides WHEN a capability applies and
+is the right owner of that; it cannot decide HOW to call one, because a
+`UserPromptSubmit` payload is a prompt string and a capability's input is a
+typed context it has no way to build.
+
+So the boundary is drawn one notch differently, and more honestly:
+
+    applicability.py   WHEN does this capability apply     (hook-driven, live)
+    invocation.py      HOW is it called, once, safely      (caller-driven)
+    the consumer       WHAT is done with the answer        (not ours)
+
+`invocation.invoke` still activates nothing on its own -- it has no scheduler,
+no trigger and no opinion about timing. It is the seam a caller that ALREADY
+holds the capability's input can cross.
 """
 from modules.capability_runtime.contract import (
     CapabilityContract, ContractError, Cost, FailureRisk, Maturity, Risk,
@@ -32,6 +50,10 @@ from modules.capability_runtime.retirement import (
 from modules.capability_runtime.retirement import (
     evaluate_all as evaluate_retirement,
 )
+from modules.capability_runtime.invocation import (
+    Authority, InvocationError, InvocationRecord, Status, invoke,
+    resolve_entrypoint,
+)
 
 __all__ = [
     "CapabilityContract", "ContractError", "Cost", "FailureRisk", "Maturity",
@@ -44,4 +66,6 @@ __all__ = [
     "load_proposals", "mine", "save_proposal",
     "RetirementVerdict", "evaluate_contract", "evaluate_retirement",
     "record_evaluation", "stale",
+    "Authority", "InvocationError", "InvocationRecord", "Status", "invoke",
+    "resolve_entrypoint",
 ]
