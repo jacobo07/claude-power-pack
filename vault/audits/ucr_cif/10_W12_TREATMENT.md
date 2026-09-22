@@ -238,3 +238,57 @@ fewer concurrent live sessions: 23 `claude` and 55 `Cursor` processes hold 16.6 
 
 Everything the run needs is committed, green, frozen and re-runnable. What is missing is
 half an hour in which nothing reaps it.
+
+## 11. Can it be moved to a host with headroom? Measured: no, and not for want of a host
+
+The obvious response to §4 is to run it somewhere that is not memory-starved. That was
+asked and measured rather than reasoned about, because the answer decides whether the
+blocker is schedulable or structural.
+
+`gex44` (`kobicraft-gex44`, Linux 6.8.0) is reachable and is exactly the right shape of
+machine:
+
+| | |
+|---|---|
+| available memory | **59,886 MB of 64,081** — 386× the 155 MB the job needs |
+| cores | 20 |
+| toolchain | Python 3.12.3, git 2.43.0 |
+| disk free | 229 G |
+| Power Pack present | yes, `~/.claude/skills/claude-power-pack` |
+| `ucr-cif` branches present | **0** — the mission branch has never been pushed there |
+
+**And it cannot run this experiment, because the experiment's subject is this host's own
+history.** `prompt_population.TRANSCRIPT_ROOT` is `~/.claude/projects` — *"where Claude
+Code keeps **this host's** session transcripts"* — and the pre-registration pins that
+population by hash: `sessions_swept 573`, `cases 1471`,
+`case_set_sha 1235476c90059398`.
+
+GEX44 has a session store of its own: **90,349 transcripts, 2.2 GB**. A run there would
+sweep those, produce a different `case_set_sha`, and `compare_fingerprints` would return
+DRIFTED — so this wave's own comparator would refuse the verdict, correctly. The baseline
+identity check could not reproduce either: `governance-overlay worsened 8` names eight
+specific prompts from this machine, and no other machine has them.
+
+Nor is the arm-independent truth portable. Labelling calls `is_power_pack(cwd)` and
+`load_history(Path(cwd))` against the repository each prompt was issued in. GEX44's
+recorded cwds are `/home/kobii/kobicraft`, `/opt/kobii/gpu` and siblings — none of the 40
+authoritative owners, all of which are Power-Pack-internal paths. W10 already measured
+that 90.5 % of prompts here are `UNLABELLED_BY_DOMAIN` for exactly that reason; on GEX44
+the figure would approach 100 %.
+
+Carrying the population across is refused on three independent grounds, any one of which
+is sufficient: Decision 4 forbids globalising raw content (the store is raw prompts),
+Decision 6 scopes the mission host-local, and `prompt_population`'s own docstring states
+the 3.5 GB store **must never be materialised**. And even with the transcripts moved, the
+labeller would still need every repository those prompts were issued in, at the commits
+they were issued at.
+
+> **The blocker is not capacity, and adding capacity does not touch it.** This oracle's
+> population is a property of one machine, so the only host that can answer the
+> pre-registered question is the one whose idle memory this mission does not control.
+
+That is worth stating plainly because it also sharpens the frontier's standing doubt
+(§4): an instrument whose subject cannot leave the machine it was collected on, and whose
+aggregate W10 measured as economically dead, is an instrument with a real ceiling. Whether
+the paired design is the right one is a design question for a new wave — and this
+measurement is now one of its inputs rather than a suspicion.

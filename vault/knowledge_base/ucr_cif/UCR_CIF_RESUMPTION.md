@@ -606,6 +606,22 @@ the refreshed projection. Re-running them costs an hour and changes nothing.
    The pre-registered kill condition is unchanged and committed in
    `vault/audits/ucr_cif/w12_preregistration.md`: if the eight do not recover, record
    the falsification of W9's causal story and stop.
+   **Do NOT try to move the run to a bigger host — that was measured, not assumed.**
+   `gex44` is reachable, has **59,886 MB available of 64,081** (386× the 155 MB the job
+   needs), 20 cores, Python 3.12.3 and the Power Pack, and **still cannot answer this
+   question**. The experiment's subject is THIS host's history: `TRANSCRIPT_ROOT` is
+   `~/.claude/projects`, and the pre-registration pins that population as
+   `sessions_swept 573`, `cases 1471`, `case_set_sha 1235476c90059398`. GEX44 holds
+   **90,349 transcripts of its own (2.2 GB)**, so a run there yields a different
+   `case_set_sha`, this wave's own comparator refuses it as DRIFTED, and
+   `governance-overlay worsened 8` cannot reproduce because the eight are specific
+   prompts from this machine. Its recorded cwds are `/home/kobii/kobicraft` and siblings
+   — none of the 40 owners — so the git-behaviour labeller has nothing to label against
+   either. Carrying the population over is refused on three independent grounds, any one
+   sufficient: Decision 4 (never globalise raw content), Decision 6 (host-local scope),
+   and `prompt_population`'s own docstring (the 3.5 GB store **must never be
+   materialised**). **The blocker is not capacity, and adding capacity does not touch
+   it.** Full account: `10_W12_TREATMENT.md` §11.
 2. **First commit of the measuring wave, BEFORE the arms:** repair the two
    hand-enumerated populations inside `prose_authority` (§2) and the destructive
    `--store` default in `ucr_cif_oracle`. All three are recorded and measured inert,
