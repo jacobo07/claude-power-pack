@@ -7,15 +7,16 @@ Same contract as test_gsd_x_mission_mutation: anchors matched in the file's own
 line endings, bytecode disabled, every restore verified by SHA-256, and outcomes
 that are never collapsed -- a mutant whose anchor is missing is not a verdict.
 
-Each mutant also names the gate that is SUPPOSED to catch it. A mutant caught
-only by some other gate is reported CAUGHT-ELSEWHERE and is not counted: a red
-for the wrong reason says nothing about the property the mutant removed.
+Each mutant also names the gate that is SUPPOSED to catch it; the suite that owns
+that gate is chosen from the gate's prefix. A mutant caught only by some other
+gate is reported CAUGHT-ELSEWHERE and is not counted: a red for the wrong reason
+says nothing about the property the mutant removed.
 
-NOT a mutant here: removing the sequence-gap clause in `read()` is EQUIVALENT.
-Any real gap also breaks the hash chain (the next event's prev_digest names the
-missing event), so the chain clause raises anyway. Measured 2026-09-22: that
-mutant SURVIVED with rc=0. The clause stays for its clearer message and is not
-counted as a guarantee.
+NOT a mutant here: removing the sequence-gap clause in `log.read()` is
+EQUIVALENT. Any real gap also breaks the hash chain (the next event's
+prev_digest names the missing event), so the chain clause raises anyway.
+Measured 2026-09-22: that mutant SURVIVED with rc=0. The clause stays for its
+clearer message and is not counted as a guarantee.
 """
 from __future__ import annotations
 
@@ -26,10 +27,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-LOG = ROOT / "modules" / "gsd_x" / "goal" / "log.py"
-CONTRACT = ROOT / "modules" / "gsd_x" / "goal" / "contract.py"
+GOAL = ROOT / "modules" / "gsd_x" / "goal"
+LOG, CONTRACT, CONV = GOAL / "log.py", GOAL / "contract.py", GOAL / "convergence.py"
 STORE = ROOT / "modules" / "gsd_x" / "mission" / "store.py"
-SUITE = ROOT / "tools" / "test_gsd_x_goal.py"
+SUITES = {
+    "V-GOAL-": ROOT / "tools" / "test_gsd_x_goal.py",
+    "V-CONV-": ROOT / "tools" / "test_gsd_x_goal_convergence.py",
+}
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -54,12 +58,52 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "def save(root: Path, obligations: list[Obligation]) -> Path:\n    refuse_if_bound(root)\n",
         "def save(root: Path, obligations: list[Obligation]) -> Path:\n",
         "a goal-bound root must refuse per-root obligation writes", "V-GOAL-SINGLE-OWNER"),
+    # --- convergence (C2/C3) ---
+    "unknown-plane-passes": (
+        CONV, "        if pstate == CANDIDATE:", "        if False:",
+        "a plane nobody judged must block closure", "V-CONV-UNKNOWN-BLOCKS"),
+    "reality-accepts-unit-test": (
+        CONV, "if ob.plane in REALITY_PLANES and verdict.gate_class not in RUNTIME_GATE_CLASSES:",
+        "if False:",
+        "a unit test must not prove a REALITY obligation", "V-CONV-REALITY-NEEDS-RUNTIME"),
+    "verdict-revision-ignored": (
+        CONV, "    if verdict.revision != state.revision:", "    if False:",
+        "a verdict about another revision must be refused", "V-CONV-VERDICT-REVISION"),
+    "gate-pin-ignored": (
+        CONV, "    if _pin(verdict.gate_pin) != _pin(ob.gate_pin):", "    if False:",
+        "a gate changed since acceptance must not prove the pinned one", "V-CONV-GATE-PIN"),
+    "obligation-revision-ignored": (
+        CONV, "    if ob.revision != state.revision:", "    if False:",
+        "an old-revision obligation must be carried before it is re-proven",
+        "V-CONV-REVISION-NEEDS-CARRY"),
+    "closure-tree-ignored": (
+        CONV, '            if v.get("tree_hash") != tree_hash:', "            if False:",
+        "evidence about another tree must not close this one", "V-CONV-CLOSE-AT-OTHER-TREE"),
+    "open-epoch-ignored": (
+        CONV, "    for ep in open_epochs or []:", "    for ep in []:",
+        "an open epoch must block closure", "V-CONV-OPEN-EPOCH"),
+    "failure-ignored": (
+        CONV, '        if not f["disposition"]:', "        if False:",
+        "an undispositioned failure must block closure", "V-CONV-FAILURE-BLOCKS"),
+    "carry-keeps-old-proof": (
+        CONV, "                if o.disposition == SATISFIED:      # its proof was about the old meaning\n"
+              "                    o.disposition, o.verdict = ACCEPTED, None\n",
+        "",
+        "a carried obligation must be proven again under the new revision",
+        "V-CONV-REVISION-CARRIED"),
 }
+
+
+def suite_for(gate: str) -> Path:
+    for prefix, suite in SUITES.items():
+        if gate.startswith(prefix):
+            return suite
+    raise KeyError(f"no suite owns gate {gate}")
 
 
 def main() -> int:
     targets = {m[0] for m in MUTATIONS.values()}
-    for p in targets | {SUITE}:
+    for p in targets | set(SUITES.values()):
         if not p.is_file():
             print(f"INSTRUMENT_FAILED: missing {p}")
             return 2
@@ -76,8 +120,9 @@ def main() -> int:
                 continue
             path.write_bytes(text.replace(old, new, 1).encode("utf-8"))
             try:
-                proc = subprocess.run([sys.executable, "-B", str(SUITE)], capture_output=True,
-                                      text=True, cwd=str(ROOT), timeout=300,
+                proc = subprocess.run([sys.executable, "-B", str(suite_for(gate))],
+                                      capture_output=True, text=True, cwd=str(ROOT),
+                                      timeout=300,
                                       env={**os.environ, "PYTHONIOENCODING": "utf-8",
                                            "PYTHONDONTWRITEBYTECODE": "1"})
             finally:
@@ -105,7 +150,7 @@ def main() -> int:
             print(f"  CRASHED   {name}  rc={rc} with no failing gate -- mutant malformed")
         elif gate in names:
             caught += 1
-            print(f"  CAUGHT  {name} by {gate}\n            property: {prop}")
+            print(f"  CAUGHT  {name} by {gate}")
         elif failed:
             print(f"  CAUGHT-ELSEWHERE  {name}: expected {gate}, red: {names}")
         else:
