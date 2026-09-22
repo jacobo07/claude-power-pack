@@ -47,11 +47,13 @@ SUITES = {
     "V-CLI-": ROOT / "tools" / "test_gsd_x_goal_claude_providers.py",
     "V-RC-": ROOT / "tools" / "test_gsd_x_goal_reconcile.py",
     "V-JUDGE-": ROOT / "tools" / "test_gsd_x_goal_judge.py",
+    "V-SWEEP-": ROOT / "tools" / "test_gsd_x_goal_sweep.py",
 }
 CLP = GOAL / "providers" / "claude.py"
 BRIEF = GOAL / "brief.py"
 RECON = GOAL / "reconcile.py"
 JUDGE = GOAL / "judge.py"
+SWEEP = GOAL / "sweep.py"
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -246,6 +248,23 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
     "judge-nothing-is-pass": (
         JUDGE, "    if not satisfied:", "    if False:",
         "a goal with nothing proven must not pass", "V-JUDGE-NOTHING-IS-NOT-PASS"),
+    # --- the unattended sweep (C12) ---
+    "sweep-acts-without-record": (
+        SWEEP, '    if not path.is_file():\n        return False, (f"no autonomy record at '
+               '{path}: run `record-gates` -- the judge and "\n                       "chaos '
+               'suites must be green before anything runs unattended")\n',
+        "    if not path.is_file():\n        return True, 'no record, carrying on'\n",
+        "the sweep must not act unattended with no recorded green",
+        "V-SWEEP-REFUSES-WITHOUT-RECORD"),
+    "sweep-accepts-stale-record": (
+        SWEEP, '    if head and rec.get("head") and rec["head"] != head:',
+        "    if False:",
+        "a green recorded for another commit must not authorise this one",
+        "V-SWEEP-REFUSES-STALE-RECORD"),
+    "sweep-runs-every-goal": (
+        SWEEP, "        if not is_autonomous(state):", "        if False:",
+        "a goal nobody marked autonomous must not be driven unattended",
+        "V-SWEEP-SKIPS-MANUAL-GOALS"),
 }
 
 
