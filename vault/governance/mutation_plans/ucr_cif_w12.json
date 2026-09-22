@@ -1,0 +1,42 @@
+[
+ {
+  "name": "W66-movement-printed-on-an-invalid-run",
+  "file": "tools/ucr_cif_w12_verdict.py",
+  "suite": "tools/test_w12_verdict.py",
+  "old": "    if not valid:",
+  "new": "    if False and not valid:",
+  "why": "The false world this whole comparator exists to refuse: movement is computed and printed whether or not the run was valid. Nothing looks wrong -- on every VALID run the output is byte-identical, which is every run anybody inspects closely -- and the failure only appears on the runs where the numbers must not be read: two arms over populations that were never the same, or an arm that never diverged from its own control. W10's entire finding rests on the cap, so a movement table from a drifted pair is not a weak result, it is a meaningless one wearing the costume of a verdict. Worse, it inverts the ordering that protects against motivated acceptance: once a reader has seen the outcome, the decision about whether the run counted is no longer independent of it. V-W12-DRIFT-REFUSES, V-W12-UNREADABLE-REFUSES, V-W12-DEAD-ARM-REFUSES and V-W12-BASELINE-DRIFT-REFUSES must all catch it, and they assert on the ABSENCE of the movement header rather than on the exit code, because a non-zero exit beside a printed answer still tells the reader the answer."
+ },
+ {
+  "name": "W67-eviction-stops-disqualifying-a-recovery",
+  "file": "tools/ucr_cif_w12_verdict.py",
+  "suite": "tools/test_w12_verdict.py",
+  "old": "    if t_e > b_e:",
+  "new": "    if False and t_e > b_e:",
+  "why": "The false world: `worsened` falling is read as repair even when the fall was bought by evicting the owner from the agent's view. This is the most dangerous mutation in the plan because the resulting number is the one everybody wants -- eight worsened becomes two -- and the mechanism producing it is the exact substitution W10 already measured and named (PR-W10-20: slots constant, true owners 40 to 38, false owners 414 to 416). A treatment that removes the harmed owner entirely scores as the best possible outcome under the mutated rule. V-W12-EVICTION-IS-NOT-RECOVERY must catch it, and V-W12-EVICTION-NAMED proves the refusal explains itself rather than merely refusing, because a verdict a reader cannot argue with is one they will route around."
+ },
+ {
+  "name": "W68-baseline-identity-assumed-rather-than-reproduced",
+  "file": "tools/ucr_cif_w12_verdict.py",
+  "suite": "tools/test_w12_verdict.py",
+  "old": "    baseline_ok = (base_post[\"worsened\"] == PREREG_WORSENED",
+  "new": "    baseline_ok = True or (base_post[\"worsened\"] == PREREG_WORSENED",
+  "why": "The false world: the freshly derived W9 arm is trusted to be the reference without being checked against the pre-registered value. W11 asserts it left `holders()` unchanged so W9's arm stays byte-reproducible, and that assertion is precisely the kind this wave refused to inherit elsewhere -- the whole mutation family was re-driven at final HEAD because a green earned before the last commits describes a tree that no longer exists. If the reference has moved, the comparison is between the W11 arm and something nobody characterised, and the eight the verdict is about are not the eight that were pre-registered. V-W12-BASELINE-DRIFT-REFUSES must catch it."
+ },
+ {
+  "name": "W69-headline-keyed-to-the-flattering-half",
+  "file": "tools/ucr_cif_w12_verdict.py",
+  "suite": "tools/test_w12_verdict.py",
+  "old": "    headline = mv[\"post-cap\"][\"verdict\"]",
+  "new": "    headline = mv[\"pre-cap\"][\"verdict\"]",
+  "why": "The false world: the headline reports the pre-cap half, where a ranking change is free, instead of the post-cap half that actually reaches the agent. W10's central structural finding is that pre-cap evicted equals admitted equals zero -- ranking reorders the candidate list and never changes its membership -- so EVERY set-level effect in this system is the cap's. A treatment can therefore repair the order perfectly and still deliver the owner nowhere, and the pre-cap half is the one that will look repaired. V-W12-HALVES-INDEPENDENT must catch it. The gate's FIRST version could not: it asserted `\"NOT_RECOVERED\" in out`, which the post-cap line satisfies regardless of which half the headline names, so the mutant had nothing to fail. It now parses the value off the headline line itself. The mutation found a defect in its own gate before the gate ever judged real data, which is the whole argument for writing the plan beside the instrument rather than after the result."
+ },
+ {
+  "name": "W70-licence-becomes-a-negative-test",
+  "file": "tools/ucr_cif_w12_verdict.py",
+  "suite": "tools/test_w12_verdict.py",
+  "old": "    licensed = O.paired_verdict_allowed(cmp)",
+  "new": "    licensed = cmp.get(\"status\") != O.FP_DRIFTED",
+  "why": "The false world: comparability stops being a positive test on the one status that permits a paired verdict and becomes `anything that is not DRIFTED`. UNREADABLE then licenses a verdict -- and a fingerprint that could not be read says nothing about drift, which is exactly why `compare_fingerprints` has three outcomes rather than two. So does every status added later by someone who never reads this line. This is the same defect W11 closed inside `paired_verdict_allowed` itself, reintroduced one layer up at the call site, which is where a guard's caller can quietly undo the guard. V-W12-UNREADABLE-REFUSES must catch it, and V-W12-VALID-WITHOUT-MOVEMENT proves the licence still admits a genuinely comparable pair rather than refusing everything."
+ }
+]
