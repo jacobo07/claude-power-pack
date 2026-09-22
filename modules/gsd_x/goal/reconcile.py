@@ -31,8 +31,8 @@ from dataclasses import dataclass, field
 from .contract import GoalState
 from .convergence import (ACCEPTED, REALITY, SATISFIED, goal_closure,
                           project_convergence)
-from .epoch import (HYPOTHESES, OBS_ENDED, OBS_LOST, OBS_RUNNING, OBS_UNKNOWN,
-                    UNSUCCESSFUL, info_key, project_epochs)
+from .epoch import (COMPLETED, FAILED, HYPOTHESES, OBS_ENDED, OBS_LOST, OBS_RUNNING,
+                    OBS_UNKNOWN, UNSUCCESSFUL, info_key, project_epochs)
 
 # Decision kinds.
 WAIT = "WAIT"                       # an epoch is running; nothing to do yet
@@ -151,10 +151,15 @@ def decide(ctx: Context) -> Decision:
     #    gate has not been run at THIS tree is evidence waiting to be collected,
     #    and running a gate is cheaper and more decisive than writing code.
     open_obs = [o for o in cv.obligations.values() if o.disposition == ACCEPTED]
-    ungated = [o for o in open_obs
-               if not any(e.spec.get("obligation") == o.identifier
-                          and e.spec.get("tree_hash") == ctx.tree_hash
-                          and e.provider == "gate" for e in eps.values())]
+    # "Judged at this tree" means a VERDICT exists -- not that an epoch happened.
+    # Only COMPLETED and FAILED produce one; LOST, EXPIRED and CANCELLED leave the
+    # obligation exactly as unjudged as before. Measured 2026-09-22: counting any
+    # epoch left three obligations permanently unrunnable after their gates ran
+    # and their evidence was dropped, and the goal could only escalate.
+    judged = {e.spec.get("obligation") for e in eps.values()
+              if e.provider == "gate" and e.spec.get("tree_hash") == ctx.tree_hash
+              and e.outcome in (COMPLETED, FAILED)}
+    ungated = [o for o in open_obs if o.identifier not in judged]
     if ungated and "gate" in ctx.providers:
         o = ungated[0]
         key = info_key(st.revision, [o.identifier], "gate", "initial", ctx.scope_hash,
