@@ -99,9 +99,9 @@
     "name": "W13-owner-budget-removed",
     "file": "modules/ucr_cif/disposition_consumer.py",
     "suite": "tools/test_disposition_selection.py",
-    "old": "        owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,",
-    "new": "        owners=tuple(owners), corpus_id=corpus_id,",
-    "why": "the materialization must stay bounded by construction against a proposal that matches everything"
+    "old": "        owners=tuple(owners[:MAX_OWNERS]),",
+    "new": "        owners=tuple(owners),",
+    "why": "the materialization must stay bounded by construction against a proposal that matches everything. ANCHOR REPAIRED W10: the original matched `owners=tuple(owners[:MAX_OWNERS]), corpus_id=corpus_id,` as one line, and W10 split that line to add the reporting-only `precap_owners`. Repaired by restoring the FALSE WORLD -- an unbounded materialization -- rather than by re-matching whatever text now looks like the old string, which is the W8 lesson, and narrowed to a ONE-LINE anchor, which is the W9 lesson about CRLF checkouts. It still follows the shipped branch: `owners` is what the agent receives, and `precap_owners` is deliberately left uncapped beside it, so mutating the latter would edit a field no consumer reads."
   },
   {
     "name": "W14-provenance-stripped",

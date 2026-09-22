@@ -835,3 +835,59 @@ attempt at the fixture then routed NOTHING, because giving four filler owners
 the same term pushed it past `DISTINCTIVE_MAX_HOLDERS` — adding owners to a
 term destroys its distinctiveness, and a fixture has to respect the clause
 rather than fight it.
+
+## W10 · `T-THE-HEADLINE-HAD-NO-INSTRUMENT-001` — a number with no code behind it
+W9's "6 improved / 12 worsened over 30 cases, p = 0.238" existed in exactly two
+places: prose in `07_W9_STRUCTURAL.md` and a docstring in
+`disposition_consumer`. **No committed code computed it.** A repo-wide sweep at
+W10 open is what found this; two directory-scoped greps had already come back
+empty and I widened rather than concluded.
+The consequence is not untidiness. The brief requires both arms re-derived
+fresh rather than read from a stored report — and there was nothing to run, so
+the previous wave's headline was unfalsifiable in both directions.
+**A measurement recorded only in prose is a claim, not a result.** If a number
+gates a decision, the code that produces it ships in the same commit.
+
+## W10 · `T-THE-TRUTH-SET-WAS-A-FUNCTION-OF-THE-ARM-001` — suppression flattered the treatment
+`reach_ground_truth.label_case(case.owners_routed, …)` credits an owner only
+when that owner **was routed**. Correct for W7's activation question, which
+asks whether what we said was useful. Reused for a RANKING question it leaks,
+and the leak runs one way: a case whose true owner the treatment DROPS yields
+no hits, is re-labelled `NOT_RELEVANT`, and **leaves the population** instead
+of counting as the loss it is.
+So dropping a true owner improved the apparent score. W9 measured through this.
+**An oracle reused across questions inherits the question it was built for.**
+Ask what the label is a function of before reusing it; if the treatment is one
+of its inputs, it is not ground truth for that treatment.
+
+## W10 · `T-THE-DECOMPOSITION-WAS-DISCARDED-ONE-LINE-LATER-001`
+W9 reported that it could not apportion its −6 between ranking and cap
+eviction. The reason was two adjacent lines: `owners.sort(...)` computed the
+ranked verdict and `owners[:MAX_OWNERS]` threw away everything past the cap on
+the next. The quantity was not merely unmeasured — it was **unmeasurable**, and
+no amount of labelling would have produced it.
+**When a wave reports "cannot apportion", look for the line that discards the
+evidence before looking for more data.**
+
+## W10 · `T-A-FIXTURE-CANNOT-CATCH-A-TRUNCATION-001` — the gate I nearly shipped
+Designing the mutation `W62-precap-truncated-to-the-cap` exposed a hole in the
+suite I had just written: slicing `precap_owners` to `MAX_OWNERS` would delete
+the whole rank/cap decomposition, and **every one of my fixture gates would
+still have passed**, because a fixture supplies both lists directly and never
+calls the selector.
+Fixed by forcing `MAX_OWNERS` to 2 in-process — it is read at call time — and
+requiring the two lists to differ on a REAL selection.
+This is `T-THE-CAP-FIXTURE-COULD-NOT-SEE-THE-CAP-001` one layer up, found by
+writing the mutation rather than by writing the test. **Design the mutation
+first; it names the gate the suite is missing.**
+
+## W10 · `T-A-BACKGROUND-MUTATION-RUN-IS-A-CONCURRENT-WRITER-001`
+`mutation_probe` edits source in place and restores it. Committing while a plan
+runs can capture a MUTANT as the healthy world — a false green that survives
+review, because the diff looks like whatever the mutation was.
+I committed `disposition_consumer.py` with a family re-verification in flight
+and had to verify after the fact (it was clean: five markers checked at
+`HEAD`). Minutes later the same run had `reach_funnel.py` mutated on disk.
+**A mutation run holds a write lock on the tree in every sense that matters.
+Commit before it starts or after it finishes, never during — and if you already
+did, verify the committed BYTES rather than the exit code.**
