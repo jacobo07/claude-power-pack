@@ -78,5 +78,21 @@
   "old": "    return (reordered / routed) >= MIN_ARM_DIVERGENCE",
   "new": "    return True",
   "why": "The false world: the harness stops checking that the treatment arm ran. A misspelled env var, a cached import or a refactor that stops reading UCR_CIF_STRUCTURAL_RANK would then produce two identical arms, zero movement everywhere, and a serene `no effect` verdict -- which is exactly W8's `ucr_cif_shadow.py` defect, where an evaluator replayed a persisted report and never called the selector at all. The whole wave's credibility rests on this one comparison being live. V-W10-DEAD-ARM-IS-A-FAILURE and V-W10-EMPTY-POPULATION-IS-A-FAILURE must catch it."
+ },
+ {
+  "name": "W64-the-control-arm-is-a-second-treatment",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    if treatment:\n        os.environ[RANK_ENV] = \"1\"\n    else:\n        os.environ.pop(RANK_ENV, None)",
+  "new": "    os.environ[RANK_ENV] = \"1\"",
+  "why": "The false world: BOTH arms run with structural ranking enabled, so the `control` is a second treatment wearing the label. This is the one contamination the divergence proof cannot see -- W63 checks that the arms DIFFER, and it says nothing about WHICH is which. Worse, the symptom here is the opposite of alarming: the arms become identical, divergence falls to zero, and the run would be dismissed as a dead harness rather than as a contaminated comparison. Every paired number in the wave would be a treatment-vs-treatment null. V-W10-CONTROL-ARM-IS-A-CONTROL must catch it, by reading the environment INSIDE the production call rather than inferring it from the outcome."
+ },
+ {
+  "name": "W65-slot-precision-scores-both-arms-on-the-control",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "        for arm, key in ((\"control\", \"control_routed\"),\n                         (\"treatment\", \"treatment_routed\")):",
+  "new": "        for arm, key in ((\"control\", \"control_routed\"),\n                         (\"treatment\", \"control_routed\")):",
+  "why": "The false world: the treatment's owner slots are scored against the CONTROL's rendered selection, so the two arms are identical by construction and the substitution measurement reports a flat zero. PR-W10-20 asks whether a precision claim corresponds to a real false-owner reduction; this mutation guarantees the answer is always `no change`, which is the most comfortable possible finding and the least informative. It matters because the real measurement came back NEGATIVE -- 40 true owners fall to 38 while false owners rise 414 to 416, a pure substitution at constant slot count -- and that number is what falsifies any future claim that structural ranking improves precision by removing false owners. V-W10-SLOT-SUBSTITUTION-IS-VISIBLE must catch it, with V-W10-SLOT-PRECISION-CONTROL proving the metric is not merely reporting movement on every input."
  }
 ]

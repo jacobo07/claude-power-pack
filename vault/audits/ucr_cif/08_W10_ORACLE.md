@@ -162,6 +162,30 @@ not quietly lowered. Per §LVII, the reason is named: **too-small finite
 population and a domain restriction intrinsic to the owner set** — not
 insufficient labelling effort, so more labelling is not the answer.
 
+## 6a. The treatment removes no false owners — it substitutes (PR-W10-20)
+
+The rank metrics follow the *true* owner and say nothing about what fills the
+other slots, so a treatment could look neutral on rank while swapping correct
+owners for incorrect ones. Measured on the rendered surface, over the 116
+labelled cases:
+
+| | slots | true | false | slot precision |
+|---|---|---|---|---|
+| control | 454 | **40** | 414 | 8.81 % |
+| treatment | 454 | **38** | 416 | 8.37 % |
+| delta | 0 | **−2** | **+2** | **−0.44 points** |
+
+Slot count is identical because the cap fills the same slots in both arms,
+which makes this a clean **substitution** measurement: every true owner lost is
+a false owner gained.
+
+So the claim that structural ranking improves precision by removing false
+owners is not merely unsupported — it is **directly falsified**. The treatment
+removes no false owners at all, and the small movement it does produce runs
+against it. Derived by `slot_precision`, pinned by
+`V-W10-SLOT-SUBSTITUTION-IS-VISIBLE` with an unchanged-selection control, and
+driven red by mutation `W65`.
+
 ## 7. Decision against the pre-declared contract
 
 Pre-registered in the approved plan: promotion requires MPIE ≥ 5 points **AND**
@@ -170,6 +194,8 @@ cap safety **AND** prose-modality safety — all three.
 - practical effect: **not demonstrated**; aggregate is a wash at 29–32 point resolution
 - cap safety: **FAILED** — 4 true-owner evictions, 0 recoveries
 - prose-modality safety: **FAILED** — pre-registered owner demoted 8/8, never improved
+- false-owner reduction: **FALSIFIED** — −2 true / +2 false at constant slot count,
+  slot precision −0.44 points
 
 **KEEP DISABLED — HARM.** Stronger than W9's UNRESOLVED: the aggregate remains
 unresolved *and is now known to be unresolvable at rational cost*, while the
@@ -191,11 +217,12 @@ The family is **not deleted** (§LV). It stays computed, reported and rendered b
 
 ## 8. Proof
 
-* `tools/test_w10_oracle.py` **33/33**, every negative assertion paired with a
+* `tools/test_w10_oracle.py` **38/38**, every negative assertion paired with a
   positive control.
-* `vault/governance/mutation_plans/ucr_cif_w10.json` **10/10 ALL_CAUGHT**.
-* Family re-verified: W4 14, W5 23, W7 10, W8 6, W9 7, W10 10 = **70 directed
-  mutations**.
+* `vault/governance/mutation_plans/ucr_cif_w10.json` **12/12 ALL_CAUGHT**.
+* Family re-verified: W4 14, W5 23, W7 10, W8 6, W9 7, W10 12 = **72 directed
+  mutations**. W5's `W13` anchor rotted on this wave's edit and was repaired by
+  restoring the false world, as a one-line anchor on the shipped branch.
 * Suites: selection 22/22, consumption PR 7/7, spec boundary 22/22, reach 27/27,
   W8 applicability 17/17, adversarial 18/18, W9 structural 29/29.
 * Frozen and untouched: `STRUCTURAL_RANKING_ENABLED`, `MAX_OWNERS`,
@@ -219,3 +246,41 @@ values: corpus aggregate **1,634 / 7,785 = 21.0 %** and `governance-overlay`
   8 is.
 * The prose finding is **one pre-registered stratum**, not a survivor of
   correction across the four.
+
+## 9. Production Reality ledger — 21 of 22, and the one that is open
+
+Recorded per gate rather than as a total, because a count hides which one failed.
+
+| gate | status |
+|---|---|
+| PR-W10-1 W9 state / fresh control | MET — ranking off, control re-derived in the paired run |
+| PR-W10-2 real case acquisition | MET — 1,471 real prompts, 573 sessions |
+| PR-W10-3 independent label | MET — truth from git behaviour, independent of selector *and* of both arms |
+| PR-W10-4 negative label | MET — 17 `NO_OWNER_TOUCHED`: work happened, no authoritative owner touched |
+| PR-W10-5 prose owner | MET — `governance-overlay` credited despite 13.7 % structural |
+| PR-W10-6 multi/no-owner | MET — truth is a set; `NO_OWNER_TOUCHED` is its own state |
+| PR-W10-7 ambiguity | MET — three distinct `UNLABELLED_*` states, never coerced to negative |
+| PR-W10-8 blindness | MET — `V-W10-TRUTH-IS-ARM-INDEPENDENT`, mutation `W57` |
+| PR-W10-9 duplicate defence | MET — dedup by `prompt_sha`; clustering reported at case level |
+| **PR-W10-10 label correction** | **OPEN — NOT EXERCISED.** No label was corrected, so the supersession path is *designed* (schema version + case-level store) and never driven. Claiming it would be claiming a green nobody has falsified. |
+| PR-W10-11 population fingerprint | PARTIAL — computed and printed; not driven against a second, deliberately-drifted population |
+| PR-W10-12 fresh report | MET — report recomputes from the store; verified at seal, byte-comparable |
+| PR-W10-13 fresh paired run | MET — both arms, one process, interleaved |
+| PR-W10-14 treatment execution | MET — 76.4 % divergence + mutation `W63` |
+| PR-W10-15 control execution | MET — `V-W10-CONTROL-ARM-IS-A-CONTROL` reads the flag *inside* the production call; mutation `W64` |
+| PR-W10-16 pre-cap rank effect | MET |
+| PR-W10-17 post-cap cap effect | MET — 4 evictions, 2 admissions |
+| PR-W10-18 prose-modality effect | MET |
+| PR-W10-19 true-positive retention | MET — arm-independent truth makes suppression a scored loss |
+| PR-W10-20 false-owner removal | MET — and **falsified**: −2 true / +2 false |
+| PR-W10-21 practical effect | MET — compared against the pre-declared 5-point MPIE |
+| PR-W10-22 decision | MET — KEEP DISABLED, HARM |
+
+**PR-W10-P1…P7 are not applicable**: they gate a promotion, and there is none.
+
+PR-W10-15 and PR-W10-20 were both **initially unmet and are recorded here
+because closing them changed the result** — PR-W10-20 turned "no false-owner
+evidence either way" into a falsification, and PR-W10-15 closed the one
+contamination the divergence proof structurally cannot see: a control that is a
+second treatment produces *identical* arms, which reads as a dead harness rather
+than as a contaminated comparison.

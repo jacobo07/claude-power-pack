@@ -386,6 +386,74 @@ def gate_precap_reaches_past_the_cap() -> None:
           "fixture alone, which is what W9's failed gate already did")
 
 
+def gate_arms_are_what_they_claim() -> None:
+    """PR-W10-15: prove the CONTROL arm is a control.
+
+    The divergence check proves the two arms DIFFER. It cannot prove which
+    is which -- a harness that set the ranking flag on both, or on
+    neither, would be caught only if the reordering happened to vanish.
+    This drives `_arm` itself and reads the environment the real
+    production call would see.
+    """
+    import os
+
+    import tools.ucr_cif_oracle as oracle
+
+    seen = {}
+
+    def spy(text, cwd, sid, ts):
+        seen[text] = os.environ.get(oracle.RANK_ENV)
+        return type("C", (), {"is_slash_command": False,
+                              "reached_tier2": False})()
+
+    original = oracle.replay
+    outer = os.environ.get(oracle.RANK_ENV)
+    try:
+        oracle.replay = spy
+        oracle._arm("ctl", "", "s", "t", treatment=False)
+        oracle._arm("trt", "", "s", "t", treatment=True)
+    finally:
+        oracle.replay = original
+
+    check("V-W10-CONTROL-ARM-IS-A-CONTROL", seen.get("ctl") != "1",
+          f"inside the control call the ranking flag reads "
+          f"{seen.get('ctl')!r} -- the control is genuinely unranked, not a "
+          f"second treatment wearing the label",
+          f"the control arm ran with the treatment flag set: {seen!r}")
+    check("V-W10-TREATMENT-ARM-IS-A-TREATMENT", seen.get("trt") == "1",
+          "inside the treatment call the flag reads '1', so the two arms "
+          "are distinguishable at the point production reads them",
+          f"the treatment arm did not carry the flag: {seen!r}")
+    check("V-W10-ARM-ENV-RESTORED",
+          os.environ.get(oracle.RANK_ENV) == outer,
+          "the ambient environment is restored after both arms, so a "
+          "measurement cannot leak a ranking flag into whatever runs next",
+          "the arm helper leaked its environment variable")
+
+
+def gate_slot_precision() -> None:
+    """PR-W10-20: a precision claim must name a real false-owner reduction."""
+    owner, other = "modules/alpha", "modules/beta"
+    # Control shows the true owner; treatment swaps it for a false one.
+    st = _mini_store(owner, [owner, other], [other, "modules/gamma"])
+    sp = analyse(st)["slot_precision"]
+    check("V-W10-SLOT-SUBSTITUTION-IS-VISIBLE",
+          sp["delta_true"] == -1 and sp["delta_false"] == 1,
+          "swapping a true owner for a false one on the rendered surface "
+          "reports as -1 true / +1 false -- a substitution the rank metrics "
+          "alone cannot see, because they follow the true owner and say "
+          "nothing about what fills the other slots",
+          f"the substitution was not visible: {sp}")
+
+    clean = _mini_store(owner, [owner, other], [owner, other])
+    sp2 = analyse(clean)["slot_precision"]
+    check("V-W10-SLOT-PRECISION-CONTROL",
+          sp2["delta_true"] == 0 and sp2["delta_precision_points"] == 0,
+          "an unchanged selection reports zero delta, so the metric is not "
+          "reporting movement on every input",
+          f"an unchanged selection produced a delta: {sp2}")
+
+
 def gate_store_is_canonical() -> None:
     owner = "modules/alpha"
     worse = _mini_store(owner, [owner, "b"], ["b", owner])
@@ -451,6 +519,8 @@ def main() -> int:
     gate_clustering()
     gate_modality()
     gate_execution_proof()
+    gate_arms_are_what_they_claim()
+    gate_slot_precision()
     gate_precap_reaches_past_the_cap()
     gate_store_is_canonical()
     gate_cap_decomposition()

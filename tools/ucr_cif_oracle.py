@@ -380,6 +380,45 @@ def _case_verdict(moves: list[str]) -> str:
     return "unchanged"
 
 
+def slot_precision(cases) -> dict:
+    """True vs false OWNER SLOTS on the surface the agent actually reads.
+
+    PR-W10-20: a precision improvement must correspond to a real reduction
+    in false owners. The rank metrics above cannot answer that -- they
+    follow the true owner and say nothing about what fills the other
+    slots, so a treatment could look neutral on rank while quietly
+    swapping correct owners for incorrect ones.
+
+    Slot counts are near-constant by construction, because the cap fills
+    the same number of slots in both arms. That is what makes this a clean
+    SUBSTITUTION measurement: any true-owner loss is a false-owner gain.
+    """
+    out = {"labelled_cases": 0,
+           "control": {"slots": 0, "true": 0},
+           "treatment": {"slots": 0, "true": 0}}
+    for c in cases:
+        if c["status"] != "LABELLED":
+            continue
+        out["labelled_cases"] += 1
+        truth = set(c["truth_owners"])
+        for arm, key in (("control", "control_routed"),
+                         ("treatment", "treatment_routed")):
+            out[arm]["slots"] += len(c[key])
+            out[arm]["true"] += sum(1 for o in c[key] if o in truth)
+    for arm in ("control", "treatment"):
+        a = out[arm]
+        a["false"] = a["slots"] - a["true"]
+        a["precision"] = (a["true"] / a["slots"]) if a["slots"] else None
+    c_, t_ = out["control"], out["treatment"]
+    out["delta_true"] = t_["true"] - c_["true"]
+    out["delta_false"] = t_["false"] - c_["false"]
+    out["delta_precision_points"] = (
+        round(100.0 * (t_["precision"] - c_["precision"]), 4)
+        if c_["precision"] is not None and t_["precision"] is not None
+        else None)
+    return out
+
+
 def analyse(store: dict) -> dict:
     cases = store["cases"]
     shares = store.get("structural_share") or {}
@@ -389,6 +428,7 @@ def analyse(store: dict) -> dict:
 
     status = Counter(c["status"] for c in cases)
     out["status"] = dict(status)
+    out["slot_precision"] = slot_precision(cases)
 
     for name, precap in (("pre_cap", True), ("post_cap", False)):
         moves = Counter()
@@ -467,6 +507,17 @@ def _print(rep: dict) -> None:
     print("== ORACLE POPULATION ==")
     for k, n in sorted(rep["status"].items(), key=lambda x: -x[1]):
         print(f"  {k:<24} {n}")
+    sp = rep["slot_precision"]
+    print()
+    print("== OWNER SLOTS ON THE RENDERED SURFACE (PR-W10-20) ==")
+    for arm in ("control", "treatment"):
+        a = sp[arm]
+        pr = "n/a" if a["precision"] is None else f"{100 * a['precision']:.2f} %"
+        print(f"  {arm:<10} slots {a['slots']:<5} true {a['true']:<4} "
+              f"false {a['false']:<5} precision {pr}")
+    print(f"  delta      true {sp['delta_true']:+d}  "
+          f"false {sp['delta_false']:+d}  "
+          f"precision {sp['delta_precision_points']:+.4f} points")
     for name in ("pre_cap", "post_cap"):
         s = rep[name]
         m = s["moves"]

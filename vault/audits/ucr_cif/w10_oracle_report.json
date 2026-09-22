@@ -66,6 +66,24 @@
   "NO_OWNER_TOUCHED": 17,
   "UNLABELLED_BY_DOMAIN": 1331
  },
+ "slot_precision": {
+  "labelled_cases": 116,
+  "control": {
+   "slots": 454,
+   "true": 40,
+   "false": 414,
+   "precision": 0.0881057268722467
+  },
+  "treatment": {
+   "slots": 454,
+   "true": 38,
+   "false": 416,
+   "precision": 0.08370044052863436
+  },
+  "delta_true": -2,
+  "delta_false": 2,
+  "delta_precision_points": -0.4405
+ },
  "pre_cap": {
   "moves": {
    "improved": 16,
