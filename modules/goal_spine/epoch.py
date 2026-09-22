@@ -31,7 +31,9 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import re
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -53,6 +55,12 @@ OPEN_STATES = frozenset({PREPARED, CLAIMED, STARTED})
 
 _EPOCH_ID_RE = re.compile(r"^e-[0-9a-f]{12}$")
 _PP_ROOT = Path(__file__).resolve().parents[2]
+
+# How long an epoch may sit before the reconciler gives up on it. A worker epoch
+# waits for a human to open a pane, so it is generous; an autonomous epoch should
+# be executed by its runner within the same tick, so it is short.
+UNCLAIMED_LEASE_HOURS = 48.0
+AUTONOMOUS_LEASE_HOURS = 2.0
 
 
 def fingerprint(provider: str, scope: list[str], obligations_digest: str) -> str:
@@ -113,10 +121,28 @@ def prepare(goal: gl.Goal, provider: str, scope: list[str], obligations_digest: 
         raise ValueError("a worker epoch needs the exact slash command the pane will run")
     now = gl.now_iso()
     fp = fingerprint(provider, scope, obligations_digest)
-    eid = "e-" + hashlib.sha256(f"{goal.goal_id}|{goal.revision}|{fp}|{now}".encode()).hexdigest()[:12]
+    # A NONCE, not just the clock. `now` has one-second resolution, so a replan in
+    # the same second -- same Goal, same revision, same fingerprint, which is
+    # exactly what abandoning an unclaimed epoch and re-preparing produces --
+    # minted the SAME id and the save collided at version 0, escaping the tick
+    # after its side effects. It passed alone and failed in a full run, because
+    # the difference was whether the two calls straddled a second boundary.
+    # Identity is per PREPARATION; refusing a duplicate attempt is the
+    # fingerprint's job and serialising coordinators is the lock's.
+    eid = "e-" + hashlib.sha256(
+        f"{goal.goal_id}|{goal.revision}|{fp}|{now}|{uuid.uuid4().hex}".encode()).hexdigest()[:12]
+    # EVERY epoch carries a lease from birth. Only `claim()` used to set one, so a
+    # worker epoch no pane ever claimed -- or an autonomous epoch no runner ever
+    # executed -- stayed in an open state forever: each tick answered WAIT, no
+    # budget advanced and no Owner was ever told. A Goal cannot be allowed to go
+    # quiet because nobody picked up its work (adversarial audit, 2026-09-22).
+    hours = (UNCLAIMED_LEASE_HOURS if provider in WORKER_PROVIDERS
+             else AUTONOMOUS_LEASE_HOURS)
+    expires = (datetime.now(timezone.utc) + timedelta(hours=hours)).strftime(
+        "%Y-%m-%dT%H:%M:%SZ")
     return Epoch(epoch_id=eid, goal_id=goal.goal_id, goal_revision=goal.revision,
                  provider=provider, scope=sorted(scope), fingerprint=fp,
-                 command=command, cwd=cwd, prepared_at=now)
+                 command=command, cwd=cwd, prepared_at=now, lease_expires_at=expires)
 
 
 def save(ep: Epoch, *, expected_version: int) -> Epoch:
@@ -126,7 +152,7 @@ def save(ep: Epoch, *, expected_version: int) -> Epoch:
         raise gs.ConflictError(f"{ep.epoch_id} is at version {current}, caller read {expected_version}")
     ep.version = expected_version + 1
     p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_suffix(".json.tmp")
+    tmp = p.with_suffix(f".{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")   # per-writer, never shared
     tmp.write_text(json.dumps(ep.to_dict(), indent=2) + "\n", encoding="utf-8")
     tmp.replace(p)
     return ep
@@ -148,7 +174,11 @@ def for_goal(goal_id: str) -> list[Epoch]:
     if not d.is_dir():
         return []
     out = [load(p.stem) for p in sorted(d.glob("e-*.json")) if _EPOCH_ID_RE.match(p.stem)]
-    return sorted((e for e in out if e.goal_id == goal_id), key=lambda e: e.prepared_at)
+    # prepared_at has one-second resolution, so it alone is not a total order: two
+    # epochs prepared in the same second tied and "the last one" was whichever the
+    # glob happened to return first. The id is the tiebreak.
+    return sorted((e for e in out if e.goal_id == goal_id),
+                  key=lambda e: (e.prepared_at, e.epoch_id))
 
 
 def is_stale(ep: Epoch, goal: gl.Goal) -> bool:
@@ -209,7 +239,12 @@ def observe_worker_start(ep: Epoch, transcript: Path | None = None) -> bool:
 
 
 def lease_expired(ep: Epoch, now: datetime | None = None) -> bool:
-    if not ep.lease_expires_at or ep.state not in (CLAIMED, STARTED):
+    """True for any OPEN epoch past its lease -- PREPARED included.
+
+    PREPARED was excluded before, which is how an epoch nobody claimed became
+    immortal instead of being abandoned and replanned.
+    """
+    if not ep.lease_expires_at or ep.state not in OPEN_STATES:
         return False
     return (now or datetime.now(timezone.utc)) >= _parse(ep.lease_expires_at)
 

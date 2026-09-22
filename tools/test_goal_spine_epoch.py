@@ -218,16 +218,23 @@ def main() -> int:
     else:
         bad("V-EPOCH-NO-TRANSCRIPT-IS-NOT-STARTED", f"state={e.state}")
 
-    # --- only a live claim can expire; an ended or unclaimed epoch never does -
-    later = datetime.now(timezone.utc) + timedelta(hours=25)
+    # --- an ENDED epoch never expires; an unclaimed one does, on its own lease --
+    # PREPARED epochs carry a lease from birth now: one nobody claims must be
+    # abandoned and replanned, not waited on forever.
     done = _claimed()
     ep_.end(done, ep_.COMPLETED, "finished")
     unclaimed = ep_.prepare(g, "gsd_long", ["DO-GATE"], "d", command=CMD)
-    if not ep_.lease_expired(done, now=later) and not ep_.lease_expired(unclaimed, now=later):
-        ok("V-EPOCH-ONLY-LIVE-CLAIMS-EXPIRE", "COMPLETED and PREPARED never read as expired")
+    before = datetime.now(timezone.utc) + timedelta(hours=ep_.UNCLAIMED_LEASE_HOURS - 1)
+    after = datetime.now(timezone.utc) + timedelta(hours=ep_.UNCLAIMED_LEASE_HOURS + 1)
+    if (not ep_.lease_expired(done, now=after) and not ep_.lease_expired(unclaimed, now=before)
+            and ep_.lease_expired(unclaimed, now=after)):
+        ok("V-EPOCH-UNCLAIMED-EXPIRES-ENDED-NEVER",
+           f"PREPARED live at {ep_.UNCLAIMED_LEASE_HOURS - 1}h, expired after; COMPLETED never")
     else:
-        bad("V-EPOCH-ONLY-LIVE-CLAIMS-EXPIRE",
-            f"done={ep_.lease_expired(done, now=later)} unclaimed={ep_.lease_expired(unclaimed, now=later)}")
+        bad("V-EPOCH-UNCLAIMED-EXPIRES-ENDED-NEVER",
+            f"done={ep_.lease_expired(done, now=after)} "
+            f"unclaimed_before={ep_.lease_expired(unclaimed, now=before)} "
+            f"unclaimed_after={ep_.lease_expired(unclaimed, now=after)}")
 
     # --- a fresh machine, and version counts writes ---------------------------
     prev = os.environ["GOAL_SPINE_STATE_DIR"]

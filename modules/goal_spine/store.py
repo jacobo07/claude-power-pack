@@ -18,18 +18,82 @@ Location: `~/.claude/state/goal-spine/`, overridable with GOAL_SPINE_STATE_DIR
 """
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
+import time
+import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from .goal import Goal, now_iso
 
 _GOAL_ID_RE = re.compile(r"^g-[0-9a-f]{12}$")
+TICK_LEASE_SECONDS = 900
 
 
 class ConflictError(RuntimeError):
     """The record changed after the caller read it."""
+
+
+class LockBusy(RuntimeError):
+    """Another coordinator holds this Goal's tick lock."""
+
+
+@contextlib.contextmanager
+def tick_lock(goal_id: str, *, ttl_s: int = TICK_LEASE_SECONDS):
+    """Exclusive, expiring lock over one Goal's whole reconciliation.
+
+    The version CAS alone is NOT a lease: it fences only writers that read before
+    it, so a second coordinator loading AFTER the first one's claim succeeded and
+    both prepared epochs for the same obligation (found by adversarial audit,
+    2026-09-22). A lock has to span load -> decide -> save, which a compare-and-set
+    on a single write cannot.
+
+    O_CREAT|O_EXCL is atomic on Windows and POSIX alike. The lock EXPIRES, because
+    a coordinator killed mid-tick must not park a Goal forever; a holder past its
+    ttl is taken over, and the takeover is recorded in the lock file it replaces.
+    """
+    p = _goal_path(goal_id).with_suffix(".lock")
+    p.parent.mkdir(parents=True, exist_ok=True)
+    mine = f"{os.getpid()}:{uuid.uuid4().hex[:8]}"
+    fd = None
+    try:
+        try:
+            fd = os.open(p, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            try:
+                held = json.loads(p.read_text(encoding="utf-8"))
+                until = datetime.strptime(held["until"], "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=timezone.utc)
+            except (OSError, ValueError, KeyError):
+                until = datetime.now(timezone.utc)       # unreadable lock: treat as expired
+            if datetime.now(timezone.utc) < until:
+                raise LockBusy(f"{goal_id} is being ticked by {held.get('owner', '?')} "
+                               f"until {held['until']}") from None
+            with contextlib.suppress(OSError):
+                p.unlink()
+            time.sleep(0.01)
+            try:
+                fd = os.open(p, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            except FileExistsError:
+                raise LockBusy(f"{goal_id}: another coordinator took the expired lock") from None
+        until = (datetime.now(timezone.utc) + timedelta(seconds=ttl_s)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ")
+        os.write(fd, json.dumps({"owner": mine, "until": until}).encode("utf-8"))
+        os.close(fd)
+        fd = None
+        yield mine
+    finally:
+        if fd is not None:
+            with contextlib.suppress(OSError):
+                os.close(fd)
+        try:
+            if p.is_file() and json.loads(p.read_text(encoding="utf-8")).get("owner") == mine:
+                p.unlink()
+        except (OSError, ValueError):
+            pass
 
 
 def state_dir() -> Path:
@@ -71,7 +135,11 @@ def save(goal: Goal, *, expected_version: int) -> Goal:
             f"{goal.goal_id} is at version {current}, caller read {expected_version}")
     goal.version = expected_version + 1
     p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_suffix(".json.tmp")
+    # A PER-WRITER temp name. A single shared `<id>.json.tmp` is two processes
+    # writing one file before either replaces it, so a torn or foreign payload can
+    # land under the winner's name. The version check above is still check-then-act
+    # and is NOT a lock -- `tick_lock` is what serialises a whole reconciliation.
+    tmp = p.with_suffix(f".{os.getpid()}.{uuid.uuid4().hex[:8]}.tmp")
     tmp.write_text(json.dumps(goal.to_dict(), indent=2, ensure_ascii=False) + "\n",
                    encoding="utf-8")
     tmp.replace(p)
