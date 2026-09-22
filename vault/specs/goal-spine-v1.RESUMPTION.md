@@ -33,11 +33,34 @@ written. UCR-CIF is a separate live programme in `C:\Users\User\Apps\pp-ucr-cif`
 - `a1a682b` G6 — receipts through GSD X `closure.satisfy`, from the named gate only.
 
 ## 4. In flight at this write
-- G5 `modules/goal_spine/reconciler.py` + `tools/test_goal_spine_reconciler.py`
-  (18/18), NOT yet committed. Independent mutation probe and an independent
-  adversarial audit were running against it. **The probe rewrites the module on
-  disk per mutant** — do not edit reconciler.py while a probe runs, and discard any
-  audit finding that quotes code absent from the restored file.
+All ten commits are sealed. PP: `b209776` G5 reconciler + the five audit fixes,
+`7d96aa5` providers + CLI, `8be2e31` spec + this file. KC `kseip/goal-spine-v1`:
+`1a8b474f` the KobiiCraft adapters. **233 gates green** across both repos.
+
+Uncommitted in PP: `tools/test_goal_spine_providers.py` (6/6, preflight through
+`gsd_status`'s own `_TEST_GSD_STATUS` seam). Uncommitted in KC: the
+`kseip-goal-promotion` entry in `vault/config/verification_registry.json`.
+
+**The probe rewrites its module on disk per mutant** — never edit `reconciler.py`
+while one runs, and discard any audit finding quoting code absent from the restored
+file. Verify restoration by content, not by matching line 1 (that is the shebang).
+
+## 4b. BLOCKING FINDING — KobiiCraft's done-gate is red at HEAD, and not because of us
+`python scripts/verify_change.py --files vault/config/verification_registry.json
+tools/ksis/kseip/goal/*.py` returns **VERIFY_PASS=6/18, VERIFY_RESULT=BLOCKED**.
+Our own `kseip-goal-promotion` PASSES (1.7s). Measured at base `330cea16` in a
+throwaway worktree, the failures reproduce WITHOUT our change:
+
+* `kseip-dataset-ledger` — `TypeError: run() got an unexpected keyword argument
+  'profile'` (`tools/ksis/kseip/cli.py:204` calls `dl.run(..., profile=prof)`);
+* `ksis-input-freshness` — `FAIL V-KIF-ACK-COVERS`;
+* plus `kme-here-carve-selftest` (a missing `vault/config/kme_deploy_targets.json`),
+  `config-surface-routing`, `enforcement-integrity`, `ksis-suite`.
+
+**Consequence for the programme: no KobiiCraft change can be done-verified today**,
+so Goal 2's Production Reality plane cannot close until these are repaired by their
+owners. A full like-for-like base run was launched to state the exact pre-existing
+ratio. This is an Owner-visible finding, not a Goal Spine defect.
 
 ## 5. Owner packets queued (surfaced at SessionStart via owner_queue)
 `q-28d106ac15` P-1 UCR-CIF reaper env var · `q-525be41a00` P-2 open worker pane at
