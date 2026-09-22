@@ -145,6 +145,38 @@ def cmd_closure(args) -> int:
     return 0 if receipt.may_close else 1
 
 
+def _goal_gate_payload(root: Path, bound: dict) -> dict:
+    """The same gate answer, computed from the goal that owns this root.
+
+    Imported here rather than at module import time: the mission path must keep
+    working in a tree where the goal package is absent, and a gate that fails to
+    import is a gate that blocks every wave.
+    """
+    from modules.gsd_x.goal import contract as gcon
+    from modules.gsd_x.goal import convergence as gconv
+    from modules.gsd_x.goal import epoch as gep
+    from modules.gsd_x.goal import git_state as ggit
+    from modules.gsd_x.goal import log as glog
+
+    lg = glog.GoalLog(bound["repo"], bound["goal_id"])
+    state = gcon.project(lg)
+    paths = state.scope.get("paths") or ["."]
+    closure = gconv.goal_closure(state, ggit.tree_id(root, paths), gep.open_epochs(state))
+    conv = gconv.project_convergence(state)
+    open_ids = [o.identifier for o in conv.obligations.values()
+                if o.disposition in (gconv.ACCEPTED, gconv.CANDIDATE, gconv.STALE)]
+    return {
+        "block": bool(open_ids),
+        "message": ("; ".join(closure.blocking) if open_ids
+                    else "no goal obligation is open"),
+        "capId": "gsd-x-goal-obligations",
+        "goal_id": bound["goal_id"],
+        "revision": state.revision,
+        "open_obligations": open_ids,
+        "closure_blocking": list(closure.blocking),
+    }
+
+
 def cmd_check(args) -> int:
     """The GSD gate, for either of the two seams GSD actually offers.
 
@@ -168,6 +200,25 @@ def cmd_check(args) -> int:
                                    f"{args.root!r}"}))
         return 2 if args.exit_code else 1
     root = Path(args.root).resolve()
+    # A root bound to a goal has its obligations in the goal log. Failing closed
+    # here would block every wave in that project; asking the WRONG store would
+    # pass them. So the gate asks the goal, which is the owner.
+    try:
+        bound = st.bound_goal(root)
+    except st.GoalBound as exc:
+        print(json.dumps({"error": f"GoalBound: {exc}"}))
+        return 2 if args.exit_code else 1
+    if bound:
+        try:
+            payload = _goal_gate_payload(root, bound)
+        except Exception as exc:                      # noqa: BLE001 -- boundary
+            print(json.dumps({"error": f"{exc.__class__.__name__}: {exc}"}))
+            return 2 if args.exit_code else 1
+        print(json.dumps(payload, ensure_ascii=False)
+              if args.raw else json.dumps(payload, indent=2, ensure_ascii=False))
+        if not args.exit_code:
+            return 0
+        return 1 if payload["open_obligations"] else 0
     try:
         receipt, obs = _closure(root, args.backlog_empty, args.production_reality)
     except Exception as exc:                          # noqa: BLE001 -- boundary
