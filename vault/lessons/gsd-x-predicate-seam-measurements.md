@@ -118,3 +118,60 @@ either path. A registry is authoritative about its own contents — ask it.
 dated pre-migration backup (13/05/2026, `backup-meta.json`, the old
 `get-shit-done/` tree). Landing an upstream fix there would land it nowhere.
 The mechanism was inferred from a directory name by two independent readers.
+
+## M5 — the activation key was validator-clean and could never be true
+
+`activationKey: "enabled"` with `config: { "enabled": {...} }` passes
+`capability-validator.cjs:717`, which only checks that `config` carries an own
+property of that name. But `capability-validator.cjs:700` documents the field as
+"the **dotted** config key that gates this capability", and
+`capability-activation.cjs:71-107` resolves it through a four-level walk —
+loaded config, workstream `config.json`, root `config.json`, registry schema
+default — returning `false` when none is found.
+
+A bare `enabled` is found at none of them. Measured: `capability set` reported
+`"capability is surfaced but every hook is gated off"`, and the hook stayed
+`configured:false active:false` whichever way the capability-level flag was
+turned, because that flag is a different thing from the config key the hook's
+`when` names.
+
+Every first-party capability is namespaced — `intel.enabled` with a config key
+literally named `"intel.enabled"` (`capability-registry.cjs:2028-2035`), and
+likewise `graphify.enabled`, `refactor.trigger_enabled`, `workflow.live_dom_uat`.
+Ours was also un-namespaced in a host-global config space, so any project with a
+top-level `enabled` would have flipped it.
+
+Now `gsd_x_mission.enabled` in all three places (config key, activationKey,
+gate `when`). This is the fourth member of one family in this capability's short
+life: **installed, surfaced, validator-clean, and unable to fire.** Validation
+proves shape; only activation proves reach.
+
+## M6 — activation is project-scoped, which contains the blast radius
+
+The install is global (`scope: global`, `runtimeConfigDir: C:\Users\User\.claude`),
+and the audit's first gap was that enabling a `blocking:true` / `onError:halt`
+gate there exposes the four other GSD projects on this host. Measured, that is
+not what happens: `when` resolves from the **project's** config, so the same
+installed capability renders differently per project.
+
+    ship:pre, scratch project (gsd_x_mission.enabled true)
+      activeHooks = [cpp-gsd-x-mission, security]   ours present, blocking, onError halt
+    ship:pre, claude-power-pack (not set)
+      activeHooks = [security]                      ours absent
+
+Global install, per-project activation, default false. The exposure the gap
+described requires someone to set the key in that project's own config.
+
+This pair is also the attribution instrument the audit asked for. A wave or ship
+that completes is returned identically by "gate passed", "gate disabled", "never
+registered" and "manifest rejected"; `loop render-hooks <point>` across the
+transition distinguishes them, and the outcome is kept only as a corroborant.
+
+## What is still not proven
+
+No `/gsd:ship` run has dispatched this gate. The ship workflow is driven by an
+agent reading workflow markdown, so it cannot be invoked from a tool call —
+everything above is the real capability registry, the real activation resolver
+and the real `check predicate` CLI, which is one seam short of the real
+lifecycle. The `sh` question is likewise answered for a PowerShell-spawned child
+and not for GSD's own dispatch, which runs its preamble in `sh`.
