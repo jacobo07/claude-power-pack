@@ -376,8 +376,17 @@ def parse_design_md(path: str) -> dict:
                  for i in UX_FINDING_ITEM_RE.findall(findings.group(1))]
         declared["unresolved_ux_findings"] = [i for i in items if i]
 
+    # `source` and `text` are the artifact's own provenance and its own words.
+    # They exist so this document can be handed to the capability runtime as a
+    # construction ARTIFACT (see `_attach_capability_decisions`), which needs the
+    # prose: a design document states what it is designing in sentences, not in
+    # typed fields. Both are additive -- every existing consumer reads this dict
+    # by key -- and `text` is stripped again before the gate's JSON output,
+    # because the PreToolUse hook reads that JSON and has no use for a copy of
+    # the whole file.
     return {"family": family, "fonts": fonts, "colors": colors, "ground": ground,
-            "experience": parse_experience(fm), "declared_context": declared}
+            "experience": parse_experience(fm), "declared_context": declared,
+            "source": path, "text": text}
 
 
 def _normalised_wcag(value):
@@ -490,6 +499,34 @@ def _skip(design_md_path: str, reason: str) -> dict:
             "is_done": False}
 
 
+def _attach_capability_decisions(parsed: dict) -> dict:
+    """Let every capability that claims a `design_md` weigh in.
+
+    THIS FUNCTION NAMES NO CAPABILITY, and that is the entire point. It hands an
+    artifact KIND to the capability runtime and stores whatever comes back, so a
+    capability declaring `design_md` tomorrow is inherited here with no edit to
+    this file -- the same property `karimo.prd_parser` has for `prd_baseline`.
+    The design gate does not import, mention or know about surface architecture.
+
+    FAIL-OPEN, ABSOLUTELY. This gate runs inside a live PreToolUse hook and its
+    own contract is that it must never block good work. A design review must not
+    fail because a capability is broken, absent or slow, so every error leaves
+    the review exactly as it was -- an empty dict, which the caller reports as
+    `unassessed` rather than as a pass.
+
+    Returns the decisions keyed by capability id; `{}` means either that nothing
+    claimed this artifact kind or that the runtime could not be reached. Those
+    two are deliberately indistinguishable HERE and distinguished by the caller's
+    state field, because this function's only job is to not raise.
+    """
+    try:
+        from modules.capability_runtime.enrichment import decisions_for_artifact
+        return decisions_for_artifact(
+            "design_md", parsed, requested_by="design_gate") or {}
+    except Exception:  # noqa: BLE001 -- the design gate owes nothing to a capability
+        return {}
+
+
 def design_gate(design_md_path: str) -> dict:
     """Run the CDIO-06 anti-slop checks against a DESIGN.md.
 
@@ -592,14 +629,59 @@ def design_gate(design_md_path: str) -> dict:
     # `score_result`, and the hook's deny path reads top-level `critical[]` with
     # criterion/observed/recommendation -- returning the nested shape would silently
     # empty the reason text on every BLOCK.
+    # Inherited construction obligations. Run AFTER scoring and stored beside it,
+    # never inside it: this axis is REPORTED, and it does not move the number.
+    #
+    # That is the CDIO-07 precedent applied deliberately rather than by habit. An
+    # experience contract is reported and never scored so that adding the axis
+    # cannot silently re-score every project's history, and the same argument
+    # holds here with more force -- a capability's opinion arriving through an
+    # inheritance boundary must not retroactively change what a design document
+    # scored before that boundary existed. Widening what an instrument SEES and
+    # widening what it may REFUSE are separate decisions, and only the first is
+    # earned today.
+    decisions = _attach_capability_decisions(parsed)
+
+    # `text` is the whole file. It was carried this far because the adapter needs
+    # the document's own words; it is dropped here because the PreToolUse hook
+    # reads this JSON and a copy of the file in it is pure weight.
+    public_parsed = {k: v for k, v in parsed.items() if k != "text"}
+
     out = result.to_json()
     out["verdict"] = gate_verdict
     out["reason"] = gate_reason
     out["is_done"] = gate_done             # any failed OR unevaluated filter withholds it
     out["hard_filters"] = filters
     out["design_md"] = design_md_path
-    out["parsed"] = parsed
+    out["parsed"] = public_parsed
     out["experience_state"] = "unassessed" if parsed["experience"] is None else "declared"
+    # THREE states, not two. "nothing claimed this artifact" and "a capability
+    # was asked and declined" are different facts about this document, and only
+    # the second one means somebody looked. Collapsing them would turn a
+    # capability that never ran into a capability that approved.
+    out["capability_decisions"] = decisions
+    statuses = {d.get("status") for d in decisions.values()}
+    if not decisions:
+        out["capability_state"] = "unassessed"
+    elif "invoked" in statuses:
+        out["capability_state"] = "inherited"
+    elif statuses == {"not_callable"}:
+        out["capability_state"] = "not_applicable"
+    else:
+        # A capability CLAIMED this artifact and could not be reached -- a broken
+        # adapter, an unresolvable entrypoint, a capability that raised.
+        #
+        # This branch exists because the mutation drill found its absence. The
+        # first version had three states and an `else: inherited`, so severing
+        # the design adapter left the gate reporting `inherited` while nothing
+        # had been invoked at all -- a broken capability wearing the word for a
+        # working one. Every ordinary test stayed green, because every ordinary
+        # test had a working adapter.
+        #
+        # "reached and declined" and "could not be reached" are different facts
+        # about this document and they need different fixes, so they get
+        # different words. Collapsing them is how an outage reads as health.
+        out["capability_state"] = "unresolved"
     return out
 
 
@@ -615,6 +697,31 @@ def _render(out: dict) -> str:
                      "(not a finding; declare one to make behaviour refusable)")
     elif state == "declared":
         lines.append("  experience: declared -- CDIO-07 contract present")
+    cap_state = out.get("capability_state")
+    if cap_state == "not_applicable":
+        # The reason travels. A document that was CONSIDERED and left alone is
+        # different evidence from one nobody ever looked at, and the difference is
+        # only visible if the decline says why.
+        for cid, d in (out.get("capability_decisions") or {}).items():
+            lines.append(f"  capability: {cid} considered, not applicable "
+                         f"-- {d.get('note', 'no reason given')}")
+    elif cap_state == "inherited":
+        for cid, d in (out.get("capability_decisions") or {}).items():
+            lines.append(f"  capability: {cid} -> {d.get('status')} "
+                         f"({d.get('selected_because') or 'no basis given'})")
+    elif cap_state == "unresolved":
+        # Loud on purpose. This is the one capability state that IS a defect --
+        # something claimed this artifact and could not be reached -- and it is
+        # also the state most easily mistaken for a pass, because the design
+        # review around it succeeded perfectly well.
+        for cid, d in (out.get("capability_decisions") or {}).items():
+            lines.append(f"  capability: {cid} claimed this document and could "
+                         f"NOT be reached -- {d.get('note', 'no reason given')}")
+        lines.append("             -> this says nothing about the design: a "
+                     "capability is broken, not the document")
+    elif cap_state == "unassessed":
+        lines.append("  capability: unassessed -- no capability claims the "
+                     "`design_md` artifact kind (not a finding)")
     for sev in ("critical", "major", "minor"):
         for f in out.get(sev, []) or []:
             lines.append(f"  [{sev.upper():8}] {f['criterion']}: {f['observed']}")

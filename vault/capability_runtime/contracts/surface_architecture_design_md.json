@@ -1,0 +1,63 @@
+{
+  "id": "surface_architecture_design_md",
+  "name": "Surface Architecture Selection (DESIGN.md derivative)",
+  "owner": "modules/surface_architecture",
+  "sovereign_question": "Given what this DESIGN.md says it is designing, which entry-surface architecture is justified, and where do its boundaries fall?",
+  "scope": [
+    "surface architecture selection",
+    "entry boundary placement"
+  ],
+  "non_scope": [
+    "visual quality and interaction behaviour",
+    "which component realises a semantic",
+    "authentication mechanics",
+    "dispatching its own decision",
+    "anything the design gate already owns: family, fonts, palette, ground, the CDIO-07 experience contract"
+  ],
+  "triggers": [
+    "entry surface",
+    "first-run",
+    "activation path",
+    "surface architecture"
+  ],
+  "anti_triggers": [
+    "single file",
+    "typo"
+  ],
+  "prerequisites": [],
+  "required_evidence": [],
+  "inputs": [
+    "design_md"
+  ],
+  "outputs": [
+    "a justified archetype or a named refusal",
+    "boundary placements with their basis",
+    "the alternatives rejected, and why"
+  ],
+  "consumers": [
+    "Owner",
+    "Claude Code",
+    "tools/design_gate.py"
+  ],
+  "dependencies": [],
+  "permissions": [],
+  "write_surfaces": [],
+  "risk_class": "reversible",
+  "activation_cost": "low",
+  "context_cost": "low",
+  "operational_cost": "low",
+  "expected_leverage": "high",
+  "failure_risk_if_omitted": "medium",
+  "maturity": "experimental",
+  "portable": true,
+  "compatible_runtimes": [],
+  "rollback": "delete this file, or clear its \"entrypoint\". The DESIGN.md artifact kind reverts to having no candidate, design_gate reports capability_state=unassessed, and the parent contract's prd_baseline path is untouched because it is a separate file.",
+  "kill_switch": "set CPP_CAPABILITY_INVOKE=off, or clear \"entrypoint\" here. Either makes invoke() return status=not_callable without entering the capability. Killing this derivative does not kill the parent.",
+  "retirement_condition": "a surface-architecture decision for a design document is produced and consumed by a live dispatch path, making this registry entry redundant",
+  "parent": "surface_architecture",
+  "version": "1.0.0",
+  "entrypoint": "modules.surface_architecture.resolver:resolve",
+  "authority": "decision",
+  "budget_ms": 250,
+  "adapter": "modules.surface_architecture.verticals.design_md_adapter:payload_for"
+}
