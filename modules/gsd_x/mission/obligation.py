@@ -367,16 +367,33 @@ OPERATORS = (
 )
 
 
-def derive(intent: str, reality: str) -> tuple[list[Obligation], list[Fact]]:
-    """Propose candidates. Nothing here decides anything: every obligation comes
-    back as CANDIDATE, and a candidate is evidence, not authority."""
-    facts = extract_facts(intent, reality)
+# The fact vocabulary the operators understand. A second fact source
+# (structured_facts.py, GSDX-M04) validates against this set, so a name the
+# operators cannot read is refused at load rather than silently dropping an
+# obligation. Derived from the prose table so the two can never disagree.
+FACT_NAMES: frozenset[str] = frozenset(name for name, _, _ in _FACT_PATTERNS)
+
+
+def derive_from_facts(facts: list[Fact], intent: str,
+                      reality: str) -> tuple[list[Obligation], list[Fact]]:
+    """Run the operators over facts from ANY source.
+
+    The operators were always general over facts; only the prose extractor was
+    fitted. Separating the two is the whole of GSDX-M04's seam: a structured
+    source feeds this directly and never passes through a regex."""
     out = []
     for op in OPERATORS:
         ob = op(facts, intent, reality)
         if ob is not None:
             out.append(ob)
     return out, facts
+
+
+def derive(intent: str, reality: str) -> tuple[list[Obligation], list[Fact]]:
+    """Propose candidates from PROSE. Nothing here decides anything: every
+    obligation comes back as CANDIDATE, and a candidate is evidence, not
+    authority."""
+    return derive_from_facts(extract_facts(intent, reality), intent, reality)
 
 
 # --- materiality gate -------------------------------------------------------

@@ -6,20 +6,25 @@
     python tools/gsd_x_mission.py closure  <mission-root> [--backlog-empty]
     python tools/gsd_x_mission.py check    <mission-root> [--raw]
 
-`check` is the GSD seam. GSD's capability-hook dispatcher evaluates a
-`kind: "gate"` entry and reads two fields off the result -- `block` (boolean) and
-`message` -- and when the hook is registered `blocking: true`, a `block: true`
-halts wave completion (gsd-core/references/loop-hook-dispatch.md, and
-workflows/execute-phase/steps/wave-post-gate-hooks.md). This command emits
-exactly that envelope. GSD keeps the lifecycle; this only answers.
+`check` is the GSD seam. It is registered by
+capabilities/cpp-gsd-x-mission/capability.json as a `ship:pre` gate whose
+`check.predicate` (kind `command-exit-zero`) runs `check <PHASE_DIR>
+--exit-code`; GSD reads the exit code (gate-predicate-evaluator.cjs). Without
+--exit-code it emits the `{block, message}` envelope for the prose `kind:"gate"`
+seam instead. GSD keeps the lifecycle; this only answers.
 
-REGISTRATION IS UNVERIFIED, and that is stated rather than implied. The DISPATCH
-contract above was read from GSD Core's own reference documents and is what this
-output is shaped to. The MANIFEST format by which a capability registers a hook
-at a point was not found on this host -- the only capability manifests present
-are Power Pack's own Capability Runtime contracts, which are a different noun --
-so this gate is proven to produce the envelope GSD consumes and is NOT proven to
-be reachable from a GSD run. Production Reality is graded accordingly.
+WHAT IS PROVEN, AND WHERE IT STOPS (2026-09-22). Through GSD's real capability
+registry, its activation resolver and its `check predicate` CLI: open
+obligations block naming them, a passing gate verdict clears them, narrative
+and failing verdicts do not, and the hook renders only in a project whose
+config sets `gsd_x_mission.enabled`. NOT proven: a live `/gsd:ship` run
+dispatching it -- that workflow is driven by an agent reading markdown and
+cannot be invoked from a tool call. See
+vault/lessons/gsd-x-predicate-seam-measurements.md.
+
+FACTS come from `FACTS.json` in the mission root when it is present (declared,
+schema `gsdx-facts/1`, modules/gsd_x/mission/structured_facts.py) and from the
+prose adapter over INTENT.txt + README.md otherwise. `derive` reports which.
 """
 from __future__ import annotations
 
@@ -34,6 +39,7 @@ from modules.gsd_x.mission import closure as cl          # noqa: E402
 from modules.gsd_x.mission import contract as mc         # noqa: E402
 from modules.gsd_x.mission import obligation as ob       # noqa: E402
 from modules.gsd_x.mission import store as st            # noqa: E402
+from modules.gsd_x.mission import structured_facts as sf  # noqa: E402
 
 INTENT_FILE = "INTENT.txt"
 REALITY_FILE = "README.md"
@@ -44,16 +50,31 @@ def _read(root: Path, name: str) -> str:
     return p.read_text(encoding="utf-8-sig") if p.is_file() else ""
 
 
-def _derive(root: Path) -> tuple[list, list]:
+def _derive(root: Path) -> tuple[list, list, str]:
+    """Derive from FACTS.json when present, otherwise from prose.
+
+    A FACTS.json that cannot be trusted raises StructuredFactsError rather than
+    falling back to prose: a mission that declared its facts and got them wrong
+    must not be silently re-read through the very vocabulary it was written to
+    escape."""
     intent = _read(root, INTENT_FILE)
     reality = _read(root, REALITY_FILE)
-    cands, facts = ob.derive(intent, reality)
-    return [ob.judge(c) for c in cands], facts
+    source = sf.source_of(root)
+    if source == sf.SOURCE:
+        cands, facts = ob.derive_from_facts(sf.load(sf.facts_path(root)), intent, reality)
+    else:
+        cands, facts = ob.derive(intent, reality)
+    return [ob.judge(c) for c in cands], facts, source
 
 
 def cmd_derive(args) -> int:
     root = Path(args.root).resolve()
-    judged, facts = _derive(root)
+    try:
+        judged, facts, source = _derive(root)
+    except sf.StructuredFactsError as exc:
+        print(f"REFUSED  : {exc}")
+        return 2
+    print(f"source   : {source}")
     existing = {o.identifier: o for o in st.load(root)}
     # An obligation already dispositioned by a human is not re-decided by a
     # re-run: re-derivation refreshes what is DERIVABLE, never what was DECIDED.
