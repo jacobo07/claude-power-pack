@@ -45,18 +45,21 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
-**As of 2026-09-22 (W10 close): base `af2bef0` (the W9 seal), 74 behind `origin/main`,
-and W10 is the EIGHT commits reachable as `af2bef0..HEAD`** — `c2f506b` (evaluator),
-`28bec1d` (gates + mutations), `3509a46` (measurement + verdict), `f7727b2` (traps +
-anchor repair), `c164c8e` (UKDL + resumption), `ececc47` (seal), `4e873c7` (two
-Production Reality gates closed, one falsification), `269f791` (re-seal). W9's own base
-was `822e93e`; W9 sealed at `af2bef0`, 52 ahead.
-**The ahead-count is deliberately NOT written here.** It moved three times inside this
-one wave — 57, then 58, then 60 — and each stale value is exactly the wrong-pin defect
-W8 opened on and W9 repeated. A range (`af2bef0..HEAD`) stays true as commits land; a
-count does not. **Run `git log --oneline af2bef0..HEAD` and
-`git rev-list --left-right --count origin/main...HEAD` rather than trusting any prose
-in this file, including this sentence.**
+**As of 2026-09-22 (W10 close): base `af2bef0` (the W9 seal), and W10 is exactly the
+commits reachable as `af2bef0..HEAD`** — `c2f506b` (evaluator), `28bec1d` (gates +
+mutations), `3509a46` (measurement + verdict), `f7727b2` (traps + anchor repair),
+`c164c8e` (UKDL + resumption), `ececc47` (seal), `4e873c7` (two Production Reality gates
+closed, one falsification), `269f791` (re-seal), `504f756` (range pin). W9's own base was
+`822e93e`; W9 sealed at `af2bef0`.
+**No ahead-count is written here, and no total either.** The count moved four times
+inside this one wave — 57, 58, 60, 61 — and each stale value is the wrong-pin defect W8
+opened on and W9 repeated. The first version of THIS paragraph said "the EIGHT commits"
+and was wrong by one the moment it was committed, because committing it added a ninth:
+**a self-describing artifact cannot carry its own cardinality.** A range stays true as
+commits land; a count and an enumeration-total do not. **Run
+`git log --oneline af2bef0..HEAD` and `git rev-list --left-right --count
+origin/main...HEAD` rather than trusting any prose in this file, including this
+sentence.** (Upstream was 74 behind throughout the wave; re-measure rather than reuse it.)
 W9 audited those 74 upstream commits BEFORE building: 109 files changed, and the only overlap
 with this mission's dependency surface is
 `vault/capability_runtime/contracts/reconstruction_parity.json`, a contract DATA file. Nothing
