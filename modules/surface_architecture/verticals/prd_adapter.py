@@ -40,30 +40,19 @@ adjudication, from a detector in this same subsystem.
 """
 from __future__ import annotations
 
-import re
-
 from modules.surface_architecture.context import SurfaceContext
+from modules.surface_architecture.verticals.surface_phrases import (
+    apply_phrase_evidence, entry_surface_hits)
 
 ARTIFACT_KIND = "prd_baseline"
 
-# Multi-token phrases only. A single generic word is a false-positive engine.
-_INVITE = ("invite only", "invitation only", "invited by", "referral code",
-           "waiting list", "waitlist")
-_PAYMENT_FIRST = ("payment before", "card required", "credit card up front",
-                  "paid plan required", "pay before")
-_REGULATED = ("regulated", "kyc", "know your customer", "aml", "hipaa",
-              "gdpr", "sox", "pci dss", "financial conduct")
-_SENSITIVE = ("personal data", "sensitive data", "medical record",
-              "health record", "national id", "passport number")
-_ASSURANCE = ("identity verification", "verified identity", "proof of address",
-              "document verification", "id check")
-_MULTI_TENANT = ("multi tenant", "multi-tenant", "organisation account",
-                 "organization account", "team workspace", "shared workspace")
-_SINGLE_TENANT = ("single tenant", "single-tenant", "personal account only")
-_EXTERNAL = ("sends email", "charges the customer", "places an order",
-             "notifies third part", "publishes publicly")
-_RETURNING = ("returning user", "existing customer", "log back in",
-              "sign back in", "repeat visit")
+# The phrase vocabulary moved to `surface_phrases.py` when `design_md` became a
+# second artifact kind needing the SAME judgement about the SAME words. It was
+# EXTRACTED rather than copied: a copy is correct on the day it is written and
+# wrong on the day either side changes, with nothing to say which day that was.
+# What stays here is the only thing that is genuinely PRD-shaped -- how to build
+# a haystack out of this artifact, and the `auth_required` tri-state, which no
+# other artifact has.
 
 
 def _hay(baseline: dict) -> str:
@@ -88,14 +77,6 @@ def _hay(baseline: dict) -> str:
     return " \n ".join(parts).lower()
 
 
-def _any(hay: str, phrases) -> bool:
-    """Word-boundary match, never a bare substring."""
-    for p in phrases:
-        if re.search(r"\b" + re.escape(p) + r"\b", hay):
-            return True
-    return False
-
-
 def applies(baseline: dict) -> tuple[bool, str]:
     """Is a surface-architecture decision even relevant to this PRD?
 
@@ -105,12 +86,9 @@ def applies(baseline: dict) -> tuple[bool, str]:
     nicety.
     """
     hay = _hay(baseline)
-    signals = ("sign up", "signup", "sign-up", "onboarding", "create an account",
-               "account creation", "register", "registration", "log in",
-               "login", "trial", "free trial")
-    hit = [s for s in signals if re.search(r"\b" + re.escape(s) + r"\b", hay)]
+    hit = entry_surface_hits(hay)
     if hit:
-        return True, f"PRD names an entry surface: {sorted(set(hit))[:4]}"
+        return True, f"PRD names an entry surface: {hit[:4]}"
     if baseline.get("auth_required") is True:
         return True, "PRD declares auth_required"
     return False, "PRD names no entry surface and requires no auth"
@@ -136,24 +114,8 @@ def context_from_prd_baseline(baseline: dict) -> SurfaceContext:
     elif auth is False:
         ctx.value_before_identity_possible = True
 
-    if _any(hay, _INVITE):
-        ctx.invitation_based = True
-    if _any(hay, _PAYMENT_FIRST):
-        ctx.payment_before_value = True
-    if _any(hay, _REGULATED):
-        ctx.regulated = True
-    if _any(hay, _SENSITIVE):
-        ctx.sensitive_data = True
-    if _any(hay, _ASSURANCE):
-        ctx.assurance_required = True
-    if _any(hay, _EXTERNAL):
-        ctx.external_consequences = True
-    if _any(hay, _RETURNING):
-        ctx.returning_parties_exist = True
-    if _any(hay, _MULTI_TENANT):
-        ctx.tenancy = "multi_tenant"
-    elif _any(hay, _SINGLE_TENANT):
-        ctx.tenancy = "single_tenant"
+    # Every phrase-driven field, from the vocabulary both adapters share.
+    apply_phrase_evidence(hay, ctx)
 
     integrations = baseline.get("integrations") or []
     if isinstance(integrations, list) and integrations:
