@@ -32,6 +32,7 @@ LOG, CONTRACT, CONV = GOAL / "log.py", GOAL / "contract.py", GOAL / "convergence
 EPOCH = GOAL / "epoch.py"
 GATEP = GOAL / "providers" / "gate.py"
 LRP = GOAL / "providers" / "long_run.py"
+CXP = GOAL / "providers" / "codex.py"
 GITST = GOAL / "git_state.py"
 STORE = ROOT / "modules" / "gsd_x" / "mission" / "store.py"
 SUITES = {
@@ -40,6 +41,7 @@ SUITES = {
     "V-EP-": ROOT / "tools" / "test_gsd_x_goal_epoch.py",
     "V-GATE-": ROOT / "tools" / "test_gsd_x_goal_gate_provider.py",
     "V-LR-": ROOT / "tools" / "test_gsd_x_goal_long_run_provider.py",
+    "V-CX-": ROOT / "tools" / "test_gsd_x_goal_codex_provider.py",
 }
 
 # name -> (file, old, new, property removed, gate that must go red)
@@ -157,6 +159,27 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "                                  'observed': 'the run ended'}],",
         "a run ending must not be evidence that anything was proven",
         "V-LR-HARVEST-NO-VERDICT"),
+    # --- codex provider (C8), a SHARED account ---
+    "codex-ignores-kill-switch": (
+        CXP, "        why = self.disabled_reason()\n        if why:\n"
+             "            raise EpochError(f\"codex is disabled: {why}\")\n", "",
+        "the shared kill switch must stop a dispatch", "V-CX-KILL-FLAG"),
+    "codex-ignores-daily-cap": (
+        CXP, "        if used >= self.max_per_day:", "        if False:",
+        "the Owner's daily cap must stop a dispatch", "V-CX-BUDGET-STOPS"),
+    "codex-ignores-lock": (
+        CXP, "        if not stale:", "        if False:",
+        "two local epochs must not hold one account at once", "V-CX-LOCK"),
+    "codex-ignores-rate-limit": (
+        CXP, "            self.trip_cooldown()", "            pass",
+        "a rate limit must write the shared cooldown", "V-CX-RATELIMIT-TRIPS-COOLDOWN"),
+    "codex-emits-verdict": (
+        CXP, "                       commits=commits, failures=failures,",
+        "                       commits=commits, failures=failures,\n"
+        "                       verdicts=[{'gate': 'codex', 'exit_status': 0,\n"
+        "                                  'observed': 'codex said it worked'}],",
+        "codex writing code must not be evidence that the work is right",
+        "V-CX-NO-VERDICT"),
 }
 
 
