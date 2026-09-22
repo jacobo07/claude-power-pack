@@ -46,6 +46,19 @@ def main() -> int:
         fails.append(g)
         print(f"  FAIL {g}  {ev}")
 
+    # --- identity is an intent IN A PLACE --------------------------------------
+    # Found by the receipt suite: identity once hashed the intent alone, so two
+    # repositories with the same sentence shared one global record.
+    here = gl.declare("C:/repo-one", INTENT, ["DO-1"], [dict(i) for i in OUTCOME])
+    there = gl.declare("C:/repo-two", INTENT, ["DO-1"], [dict(i) for i in OUTCOME])
+    respelled = gl.declare("c:\\REPO-ONE", INTENT, ["DO-1"], [dict(i) for i in OUTCOME])
+    if here.goal_id != there.goal_id and here.goal_id == respelled.goal_id \
+            and here.intent_sha == there.intent_sha:
+        ok("V-GOAL-ID-IS-INTENT-IN-A-PLACE",
+           "same intent, two roots -> two Goals; one root respelled -> same Goal")
+    else:
+        bad("V-GOAL-ID-IS-INTENT-IN-A-PLACE", f"{here.goal_id} {there.goal_id} {respelled.goal_id}")
+
     # --- AC2: identity and revision -------------------------------------------
     a, b = _declare(), _declare("  Make every KSEIP   role provably wired.\n")
     if a.goal_id == b.goal_id and a.revision == b.revision == 1:

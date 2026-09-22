@@ -31,9 +31,11 @@ Three rules live in code rather than in a caller's memory:
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 
 # --- lifecycle ----------------------------------------------------------------
 DECLARED = "DECLARED"
@@ -160,7 +162,14 @@ def declare(root: str, intent: str, required_obligation_ids: list[str],
         i["done"] = bool(i.get("done", False))
     sha = intent_digest(intent)
     ts = now_iso()
-    return Goal(goal_id=f"g-{sha[:12]}", root=str(root), intent=intent.strip(),
+    # IDENTITY IS AN INTENT IN A PLACE. The first version hashed the intent alone,
+    # so two repositories each declaring "Add regression tests." shared one record
+    # in the global store -- found when the receipt suite, declaring the same
+    # intent in separate roots, collided on epoch ids. `intent_sha` stays
+    # intent-only because it is what decides whether a revision happened.
+    place = os.path.normcase(str(Path(root).resolve()))
+    ident = hashlib.sha256(f"{place}\n{normalize_intent(intent)}".encode("utf-8")).hexdigest()
+    return Goal(goal_id=f"g-{ident[:12]}", root=str(root), intent=intent.strip(),
                 required_obligation_ids=ids, outcome_contract=items,
                 intent_sha=sha, created_at=ts, updated_at=ts, **extra)
 
