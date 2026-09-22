@@ -75,11 +75,39 @@ New in N5, and equally binding:
    and every rule additionally requires the parent to be dead.
    Do not reach for it as the memory lever without first re-reading its log:
    if it says `GHOST_CLEAN`, the population is empty and the lever is absent.
-9. **`sh` exists on this host and is not on PATH.** `C:\Program Files\Git\bin\sh.exe`
-   and `...\Git\usr\bin\sh.exe` both exist; `Get-Command sh` fails. So the open
-   question is a **resolution contract**, never "Windows-incompatible". A
-   PowerShell-spawned probe is a proxy for the GSD dispatch environment and is
-   not evidence about it.
+9. **`sh` does not resolve in GSD's dispatch surface, and that makes the gate
+   fire ALWAYS. MEASURED, not open.** Answered later in N5 through the surface
+   that actually dispatches the gate — `shell-command-projection.execTool`, the
+   function `check-command-router.cjs:1100` calls — rather than through a
+   PowerShell proxy:
+
+       resolveExecutableBinary('sh')   -> null
+       execTool('sh', ['-c', 'echo'])  -> exit 127, "sh: not found"
+
+   `sh.exe` exists twice (Git for Windows `bin\sh.exe`, `usr\bin\sh.exe`), so
+   this is a **resolution contract**, never "Windows-incompatible".
+
+   **The consequence is the severe part.** Our only surface is a
+   `command-exit-zero` gate, and `gate-predicate-evaluator.cjs:94-102` maps any
+   non-zero exit to `block: true`. With `blocking: true` and `onError: halt`,
+   `ship.md` step 2 halts. Driven end to end, real manifest through the real
+   evaluator:
+
+       {"block":true,"message":"command exited 127: sh: not found",
+        "details":{"kind":"command-exit-zero","exitCode":127}}
+
+   **So `gsd_x_mission.enabled` must NOT be switched on for any GSD project on
+   this host.** It would halt every ship, unconditionally, for a reason with
+   nothing to do with obligations. Pinned by `tools/test_gsd_x_sh_dispatch.js`
+   (4/4), whose `V-GSDXSH-DEFECT` is written to go RED when upstream resolves
+   `sh` — invert it then and record the fixing version.
+
+   **And the methodological lesson, which is the transferable one:** a gate that
+   fires ALWAYS is indistinguishable from a gate that works. W1's planned red
+   pole — "an open obligation blocks the ship" — would have passed here for
+   entirely the wrong reason. Only the negative control (no obligation, must NOT
+   block) separates them. That is why the negative control is required rather
+   than nice.
 10. **`host-memory-floor.js` already owns host-memory visibility.** SessionStart,
     `critical`, zero spawns, fail-open, 420 readings logged to
     `~/.claude/logs/host-memory-floor.json` (OK 291 / WARN 85 / CRITICAL 44).
@@ -126,7 +154,7 @@ until it sets the key itself. That asymmetry is deliberate and measured.
 | structured facts | PROVEN | `test_gsd_x_structured_facts.py` 15/15, 7/7 mutations, G2-PARITY mechanically derived from sealed blobs |
 | consent defect | CHARACTERIZED | `test_gsd_x_consent_integrity.js` 3/3 + driven red branch |
 | **live ship dispatch** | **UNPROVEN** | never dispatched |
-| **`sh` in real dispatch env** | **UNPROVEN** | only a PowerShell proxy exists, and it does not count |
+| **`sh` in real dispatch env** | **MEASURED — and it is a DEFECT** | `test_gsd_x_sh_dispatch.js` 4/4 with both controls: bare `sh` is unresolvable (exit 127), so the gate returns `block:true` on every run. **Do not enable the capability on this host.** The live ship drill is now blocked *behind* this, not merely unattempted |
 | **FACTS.json producer** | **ABSENT** | no instance of `FACTS.json` exists anywhere on disk |
 
 Production Reality: **FIRST_VERTICAL_SLICE**, `UNIVERSAL_CAPABILITY_UNPROVEN`.
@@ -174,8 +202,32 @@ never mission state) · `host-memory-floor.js` (host memory visibility) ·
 
 ## Next exact valid action
 
-Drive the W1 live ship drill in a scratch project, measuring `sh` inside the
-dispatch environment as it runs. If the host is under `host-memory-floor.js`'s
-CRITICAL floor (1024 MB), expect protected writes to be denied for liveness
-rather than for content — that is rule 7 above, not a new problem, and the
-reaper is only the answer if its log says there are orphans to take.
+**Not the live ship drill.** That was the next action when this file was first
+written; the `sh` measurement recorded in rule 9 landed afterwards and moved the
+blocker underneath it. A drill run today would halt at the gate for exit 127 and
+prove nothing about obligations — and, worse, would LOOK like the red pole
+passing.
+
+Take the resolution contract first. In rough order of leverage:
+
+1. **Decide the owner's fix for `sh`.** The bare-`sh` assumption is upstream
+   (`check-command-router.cjs:1100`), so the options are: get upstream to resolve
+   a shell the way it already resolves other binaries; or express our gate in a
+   kind that needs no shell (`artifact-frontmatter-equals` is the only other
+   built-in, and it cannot run our python, so this likely means asking upstream
+   for a shell-free executable kind). **No environment magic** — prepending Git's
+   `bin` to PATH in a wrapper would make our gate pass while leaving every other
+   capability's `command-exit-zero` gate broken on every Windows host, and would
+   hide the defect rather than fix it.
+2. **Declare the runtime requirement in the manifest**, which is ours today and
+   is honest regardless of how (1) resolves, alongside the E11 absolute paths in
+   the predicate.
+3. **Then** the live ship drill, in a disposable scratch project, with the
+   negative control that rule 9 explains is load-bearing.
+
+Standing operational note: if the host is under `host-memory-floor.js`'s CRITICAL
+floor (1024 MB), expect protected writes to be denied for liveness rather than
+for content — rule 7, not a new problem. Run the reaper first and re-read its
+log: `GHOST_CLEAN` means the population is empty at that instant, but it
+regenerates from our own timed-out hook spawns, so a denial a few minutes later
+usually has something to take.
