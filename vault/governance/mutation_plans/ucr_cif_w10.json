@@ -1,0 +1,82 @@
+[
+ {
+  "name": "W54-prefix-becomes-substring",
+  "file": "modules/ucr_cif/owner_truth.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "        if any(p == norm or p.startswith(norm + \"/\") for p in touched):",
+  "new": "        if any(p == norm or p.startswith(norm) for p in touched):",
+  "why": "The false world: owner matching degrades from a path-component test to a bare string prefix, so `modules/code-reviewer` credits `modules/code-review` and `modules/sqi_ratchet` credits `modules/sqi`. Truth sets silently GROW, which is the dangerous direction -- a wider truth set makes both arms look like they routed the right owner more often, and the inflation is invisible because every credited path really does exist. V-W10-PREFIX-NOT-SUBSTRING must catch it, and V-W10-PREFIX-CONTROL proves the gate is not simply refusing every match."
+ },
+ {
+  "name": "W55-universe-floor-removed",
+  "file": "modules/ucr_cif/owner_truth.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    if len(owners) < MIN_OWNER_UNIVERSE:",
+  "new": "    if False and len(owners) < MIN_OWNER_UNIVERSE:",
+  "why": "The false world: a truncated ledger read returns a short owner universe instead of raising. Every truth set downstream shrinks, so fewer cases are LABELLED and fewer true owners are credited -- and the run reports a clean, confident, smaller population rather than an error. This is W2's `T-EXCLUSION-MATCHED-THE-WORKSPACE-001` at the truth layer: the broken instrument and the flattering reading point the same way, because a treatment that loses owners looks better when the owners were never in the universe to begin with. V-W10-UNIVERSE-FLOOR must catch it."
+ },
+ {
+  "name": "W56-absent-becomes-a-rank",
+  "file": "modules/ucr_cif/owner_truth.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    except ValueError:\n        return None",
+  "new": "    except ValueError:\n        return len(list(ordered))",
+  "why": "The false world: an owner that never reached the agent is given a numeric rank just past the end of the list. Eviction stops being a distinct outcome and becomes a one-place demotion -- the four real evictions this wave measured would read as ordinary rank movement, and the entire post-cap harm would vanish into the noise of the pre-cap wash. This is the collapse `rank_of`'s docstring refuses to make. V-W10-ABSENT-IS-NONE and V-W10-MOVE-CLASSES-DISTINCT must both catch it."
+ },
+ {
+  "name": "W57-eviction-reported-as-demotion",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    if treat_rank is None:\n        return \"evicted\"",
+  "new": "    if treat_rank is None:\n        return \"worsened\"",
+  "why": "The false world: one layer above W56, the classifier itself folds eviction into demotion. The counts still add up and the sign test still runs, so nothing looks wrong; what is lost is the ability to say that a statistically insignificant ranking change (duplicate_to_advantage, p = 0.6875) produced four true owners removed from the agent's view entirely. That sentence IS this wave's finding, and this mutation deletes it while keeping every number plausible. V-W10-MOVE-CLASSES-DISTINCT and V-W10-SUPPRESSION-CANNOT-FLATTER must catch it."
+ },
+ {
+  "name": "W58-ties-become-a-p-value",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    n = improved + worsened\n    if n == 0:\n        return None",
+  "new": "    n = improved + worsened\n    if n == 0:\n        return 1.0",
+  "why": "The false world: a population with no discordant pairs reports p = 1.0 instead of None. `We measured nothing` becomes `we measured no effect`, which is the kernel vMAX-NULL-ERROR collapse stated in statistics: a stratum with two unchanged cases would publish a confident null and a future wave would stop looking. Every modality and owner stratum runs through this function, and the thin ones are exactly where it matters. V-W10-TIES-EXCLUDED must catch it."
+ },
+ {
+  "name": "W59-mixed-resolved-to-the-convenient-pole",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    if up and down:\n        return \"mixed\"",
+  "new": "    if up and down:\n        return \"improved\"",
+  "why": "The false world: a case whose owners both gained and lost is resolved toward the flattering answer instead of being held as mixed. Three real cases in this run are mixed; converting them moves the effective-n split from 7/11 to 10/11 at post-cap and would turn a directional harm into a wash. The edit is one word and it is unfalsifiable from the aggregate -- only a gate that names the mixed state can see it. V-W10-MIXED-IS-NOT-RESOLVED must catch it."
+ },
+ {
+  "name": "W60-modality-defaults-to-prose",
+  "file": "modules/ucr_cif/owner_truth.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    if not shares or owner not in shares:\n        return \"unknown\"",
+  "new": "    if not shares or owner not in shares:\n        return \"prose\"",
+  "why": "The false world: an owner whose structural share could not be computed is classified as prose rather than unknown. With the projection unreadable EVERY owner becomes prose, so the prose stratum absorbs the code owners' gains and the modality finding inverts -- the promotion blocker this wave rests on would read as a promotion argument. `We could not look` becoming `it is prose` is the same refusal the projection module makes about holders, one layer up. V-W10-MODALITY-NEEDS-PROJECTION must catch it."
+ },
+ {
+  "name": "W61-unusable-projection-yields-zeros",
+  "file": "modules/ucr_cif/owner_truth.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    if projection is None or not projection.usable:\n        return {}",
+  "new": "    if projection is None:\n        return {}",
+  "why": "The false world: an UNREADABLE, STALE or DISABLED projection is consulted anyway. `holds()` correctly answers the empty set for every term, so every owner measures 0.0 % structural -- a dict of zeros rather than an absence. Combined with the 21 % prose boundary that makes the entire estate prose-form, and the modality report becomes a measurement of the projection's health rather than of the owners. This is the twin of W60 and it fails through the DATA rather than the default. V-W10-MODALITY-NEEDS-PROJECTION must catch it."
+ },
+ {
+  "name": "W62-precap-truncated-to-the-cap",
+  "file": "modules/ucr_cif/disposition_consumer.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "        precap_owners=tuple(o.owner for o in owners), corpus_id=corpus_id,",
+  "new": "        precap_owners=tuple(o.owner for o in owners[:MAX_OWNERS]), corpus_id=corpus_id,",
+  "why": "The false world: the pre-cap list is sliced by the very cap it exists to see past, so pre-cap and post-cap become identical and the rank/cap decomposition silently disappears. Every fixture-based gate keeps passing, because a fixture supplies both lists directly; only live code can see it. This is W9's cap-fixture failure repeating one layer up -- a gate structurally unable to observe the property it names. V-W10-PRECAP-NOT-SLICED-BY-CAP must catch it, by forcing MAX_OWNERS to 2 and requiring the two lists to differ on a real selection."
+ },
+ {
+  "name": "W63-execution-proof-accepts-a-dead-arm",
+  "file": "tools/ucr_cif_oracle.py",
+  "suite": "tools/test_w10_oracle.py",
+  "old": "    return (reordered / routed) >= MIN_ARM_DIVERGENCE",
+  "new": "    return True",
+  "why": "The false world: the harness stops checking that the treatment arm ran. A misspelled env var, a cached import or a refactor that stops reading UCR_CIF_STRUCTURAL_RANK would then produce two identical arms, zero movement everywhere, and a serene `no effect` verdict -- which is exactly W8's `ucr_cif_shadow.py` defect, where an evaluator replayed a persisted report and never called the selector at all. The whole wave's credibility rests on this one comparison being live. V-W10-DEAD-ARM-IS-A-FAILURE and V-W10-EMPTY-POPULATION-IS-A-FAILURE must catch it."
+ }
+]
