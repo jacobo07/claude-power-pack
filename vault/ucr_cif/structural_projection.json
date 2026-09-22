@@ -1,6 +1,6 @@
 {
- "build_ms": 75064.6,
- "built_at": "2026-09-22T09:41:35Z",
+ "build_ms": 29619.6,
+ "built_at": "2026-09-22T11:31:10Z",
  "held_terms": 674,
  "ledger_binding": {
   "corpus_id": "ef2b381beff512ca6919280a",
@@ -758,12 +758,12 @@
    "modules/governance-overlay"
   ]
  },
- "repo_fingerprint": "fc3f7a1539071455bb35a815b1687418eb41e5109adf2c4a30b312b819738794",
+ "repo_fingerprint": "4755af4c8d490b853970c36aaf5783f2f3ddd32f739a557d5f86121339a9803c",
  "schema_version": 2,
  "source": {
   "declaration_producer": "modules.ucr_cif.prose_authority.prose_declarations",
   "distinctive_max_holders": 3,
-  "files_seen": 1373,
+  "files_seen": 1376,
   "producer": "modules.ucr_cif.ownership_evidence.build_structural_index",
   "scan_dirs": [
    "modules",
