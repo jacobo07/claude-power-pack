@@ -91,6 +91,14 @@ def main() -> int:
     try:
         for name, (path, old, new, prop) in MUTATIONS.items():
             text = originals[path].decode("utf-8")
+            # Anchors are written with "\n". A fresh Windows checkout under
+            # core.autocrlf=true materialises the same file with "\r\n", and a
+            # multi-line anchor then never matches -- measured 2026-09-22: 2 of 6
+            # drills reported ANCHOR NOT FOUND in a new worktree while the main
+            # tree (LF) caught all 6. Match in the file's own convention; the
+            # restore below is byte-exact either way.
+            if "\r\n" in text:
+                old, new = old.replace("\n", "\r\n"), new.replace("\n", "\r\n")
             if old not in text:
                 outcomes[name] = ("ANCHOR NOT FOUND -- drill invalid, not a verdict",
                                   prop)
