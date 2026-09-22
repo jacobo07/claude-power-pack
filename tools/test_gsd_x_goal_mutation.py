@@ -31,6 +31,7 @@ GOAL = ROOT / "modules" / "gsd_x" / "goal"
 LOG, CONTRACT, CONV = GOAL / "log.py", GOAL / "contract.py", GOAL / "convergence.py"
 EPOCH = GOAL / "epoch.py"
 GATEP = GOAL / "providers" / "gate.py"
+LRP = GOAL / "providers" / "long_run.py"
 GITST = GOAL / "git_state.py"
 STORE = ROOT / "modules" / "gsd_x" / "mission" / "store.py"
 SUITES = {
@@ -38,6 +39,7 @@ SUITES = {
     "V-CONV-": ROOT / "tools" / "test_gsd_x_goal_convergence.py",
     "V-EP-": ROOT / "tools" / "test_gsd_x_goal_epoch.py",
     "V-GATE-": ROOT / "tools" / "test_gsd_x_goal_gate_provider.py",
+    "V-LR-": ROOT / "tools" / "test_gsd_x_goal_long_run_provider.py",
 }
 
 # name -> (file, old, new, property removed, gate that must go red)
@@ -137,6 +139,24 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "    if True:\n        return f\"git:{oid}\"",
         "an uncommitted scope must not borrow the commit's tree name",
         "V-GATE-TREE-DIRTY"),
+    # --- long-run provider (C7) ---
+    "halted-kind-collapsed": (
+        LRP, 'outcome = STALE_REVISION if kind == "mission" else EXPIRED',
+        "outcome = EXPIRED",
+        "a stale mission and a spent budget are different endings",
+        "V-LR-HALTED-MISSION"),
+    "no-rows-is-lost": (
+        LRP, 'return Observation(OBS_UNKNOWN, "", "no ledger rows for this session")',
+        'return Observation(OBS_LOST, LOST, "no ledger rows for this session")',
+        "a ledger we could not read must not end a live run",
+        "V-LR-NO-ROWS-UNKNOWN"),
+    "longrun-emits-verdict": (
+        LRP, "                       failures=failures,",
+        "                       failures=failures,\n"
+        "                       verdicts=[{'gate': 'cpp-gsd-long', 'exit_status': 0,\n"
+        "                                  'observed': 'the run ended'}],",
+        "a run ending must not be evidence that anything was proven",
+        "V-LR-HARVEST-NO-VERDICT"),
 }
 
 
