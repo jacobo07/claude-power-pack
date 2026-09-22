@@ -45,13 +45,23 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
-**As of 2026-09-22 (W9 close) HEAD is `9c93db4`, 51 ahead / 74 behind `origin/main`.**
+**As of 2026-09-22 (W10 close) HEAD is `<W10 seal>`, 57 ahead / 74 behind `origin/main`.**
+W9's base was `822e93e`; W9 sealed at `af2bef0` (52 ahead); W10 added five commits on top.
 W9 audited those 74 upstream commits BEFORE building: 109 files changed, and the only overlap
 with this mission's dependency surface is
 `vault/capability_runtime/contracts/reconstruction_parity.json`, a contract DATA file. Nothing
 upstream touches `modules/ucr_cif`, `capability_runtime` code, `spec_gate`, `graphify`,
 `liveness`, `repo_identity` or `mutation_probe`. **Upstream is orthogonal; do not rebase on
 its account.**
+**W10 re-audited the same 74 with a WIDER term set and found one thing W9 had no reason to
+look for:** `vault/benchmarks/mission_spine/HOLDOUT-SEALED.md`, an upstream sealed-holdout
+protocol for an unrelated subject. Orthogonal in content, **reusable in method** — its seal of
+record is **git blob ids, not SHA-256 over working-tree bytes**, because this repository
+converts LF to CRLF on checkout and a byte hash therefore reads as tampered-with on a fresh
+clone. W10 independently hit the same artifact class: `retirement.py` showed as modified all
+session with an EMPTY diff and an mtime predating the session. **A previous wave's "upstream is
+orthogonal" is scoped to the terms that wave searched; re-run the sweep with your own subject's
+vocabulary.**
 **W9's own pin lesson: the prompt's pin was CORRECT and the CHECKOUT was wrong.** That session
 opened in the SHARED tree `~/.claude/skills/claude-power-pack` (branch
 `feature/knowledge-acquisition`, ~400 dirty paths from the other writer), whose harness
@@ -341,6 +351,73 @@ is never written by this mission and never rolled back.
   actionable), measured live in a fresh subprocess, i.e. about **+764 B on every Tier ≥ 2
   prompt** under the widest candidate. Measure the resource the change actually spends.
 
+- **W10 · owner-relevance oracle** — `c2f506b` (evaluator), `28bec1d` (gates +
+  mutations), `3509a46` (measurement + verdict), `f7727b2` (traps + anchor
+  repair), `<knowledge>`. Full account: `vault/audits/ucr_cif/08_W10_ORACLE.md`.
+  **The oracle widened 3.9×; ~3-point resolution is DEAD; the treatment stays
+  OFF — and the last two are now measurements rather than positions.**
+  **W9's headline had NO INSTRUMENT.** "6 improved / 12 worsened over 30 cases,
+  p = 0.238" existed only as prose in `07_W9_STRUCTURAL.md` and a docstring in
+  `disposition_consumer`; a repo-wide sweep found no code computing it, after two
+  directory-scoped greps came back empty. So "re-run both arms fresh" was
+  unsatisfiable — there was nothing to run. `tools/ucr_cif_oracle.py` is that
+  instrument, and `V-W10-REPRODUCES-W9-P` re-derives p = 0.2379 from W9's own
+  6/12 split, so the test producing W10's numbers is the one that produced W9's.
+  **Two defects it concealed.** (1) The truth set was **a function of the arm**:
+  `label_case(case.owners_routed, …)` credits an owner only if it was ROUTED, so
+  a treatment that DROPS a true owner produced no hits, was re-labelled
+  `NOT_RELEVANT`, and left the population instead of scoring as the loss —
+  suppression flattered the treatment, and W9 measured through it. Truth now
+  comes from the 40-owner authoritative universe (`modules/ucr_cif/owner_truth.py`).
+  (2) Rank and cap were **unmeasurable**, not merely unmeasured: `owners.sort()`
+  computed the verdict and `owners[:MAX_OWNERS]` discarded it on the next line.
+  `Selection.precap_owners` carries it, reporting-only, same contract as W9's
+  `structural_strength`.
+  **Population:** 573 of 573 available sessions (W9 used 400), 1,471 unique
+  prompts, 1,285 routed, pre-cap order changed **982/1285 = 76.4 %**
+  (independently reproducing W9's 78.5 %, and doubling as the execution proof —
+  identical arms are a HARNESS FAILURE, never "the treatment does nothing").
+  **LABELLED 116 vs W9's 30.** Both arms run in ONE process interleaved per
+  prompt, so population drift is not a caveat this instrument carries.
+  **Result:** aggregate is a wash (pre-cap 16/21 p = 0.51; post-cap 9/10
+  p = 0.69). **Pre-cap evicted = admitted = 0** is a structural validation:
+  ranking reorders the candidate list and never changes its membership, so
+  **every set-level effect is the cap's**. Two mechanisms, named:
+  `governance-overlay` (prose, 13.7 %) moved **8 times / 8 distinct prompts, 0
+  improved, 8 worsened**, from **rank 0** in six, p = 0.0078 — a hypothesis W9
+  PRE-REGISTERED, so no correction is owed, though the four modality tests as a
+  family do NOT survive Holm, and the stratum is 8 prompts over only **4
+  sessions** (0/4, p = 0.125). `duplicate_to_advantage` drifted rank 3–4 → 5–6
+  (p = 0.6875, nothing) and was **evicted entirely** post-cap, four times: a
+  reorder too small to detect removed four true owners from view because they sat
+  at the boundary — where **453 of 1,471 cases (30.8 %)** live.
+  **~3 POINTS IS NOT REACHABLE AND THE POPULATION IS EXHAUSTED.** Achieved
+  resolution 28.9 pre-cap / 31.8 post-cap points. Resolving 3 points needs
+  ≈3,100–3,700 discordant pairs against 25–37 available (~100×), and 90.5 % of
+  prompts are `UNLABELLED_BY_DOMAIN` because all 40 authoritative owners are
+  Power-Pack-internal paths — a prompt in any other repository cannot produce a
+  commit that touches one. **The resumption's own "widen by repository domain" is
+  not cheap; it is unavailable.** More labels through this route is not the answer.
+  **Verdict against the pre-declared contract** (MPIE ≥ 5 pts AND cap safety AND
+  prose safety): practical effect not demonstrated · cap safety **FAILED** (4
+  evictions, 0 recoveries) · prose safety **FAILED**. **KEEP DISABLED — HARM.**
+  Stronger than W9's UNRESOLVED: the aggregate is unresolved *and now known to be
+  unresolvable at rational cost*, while the pre-registered stratum resolves
+  against promotion. The family is **not deleted** — computed, reported,
+  `--explain`-rendered, and only its authority over the order stays off.
+  Gates `tools/test_w10_oracle.py` **33/33**; `ucr_cif_w10.json` **10/10**;
+  family **70 mutations ALL_CAUGHT** (W4 14, W5 23, W7 10, W8 6, W9 7, W10 10).
+  `STRUCTURAL_RANKING_ENABLED`, `MAX_OWNERS`, `DISTINCTIVE_MAX_HOLDERS`,
+  `MAX_DISTINCTIVE_REQUIRED`, `create_spec`, the corpus, the 503 ABSTAIN and the
+  218 UNRESOLVED all untouched.
+  **W5's `W13` anchor rotted on my edit** (I split the line it matched) and was
+  repaired by restoring the FALSE WORLD — an unbounded materialization — as a
+  one-line anchor on the shipped branch: W5 back to 23/23.
+  Five traps in `03_MISSION_TRAPS.md`, incl.
+  `T-A-BACKGROUND-MUTATION-RUN-IS-A-CONCURRENT-WRITER-001` — I committed a source
+  file with a mutation plan in flight and had to verify the committed BYTES after
+  the fact.
+
 **Coherence anchor:** `SOURCE_INVENTORY_FULL.json` parses and holds **1,394 records with a
 `KIND` on every one** (verified this session — the predecessor's own seal test, re-run, not
 trusted). If that fails, the inventory is not sealed and W1's prefix reuse is invalid.
@@ -364,7 +441,47 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W9 close)
+## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W10 close)
+
+**W10 executed W9's action 1, and the answer closes that action permanently.**
+The oracle is 3.9× wider and materially better built — arm-independent truth,
+rank/cap decomposition, modality stratification, an execution proof. It still
+cannot resolve 3 points, and W10 measured why: **the population is exhausted,
+not under-sampled.** 573 of 573 sessions, 90.5 % structurally unlabellable,
+~100× more discordant pairs required. **Do not open another labelling wave on
+this route** — that is the one conclusion W10 is most confident about.
+
+The measurement also promoted W9's action 2 to action 1 on evidence, and
+demoted the aggregate question to a footnote.
+
+1. **HIGHEST LEVERAGE — give prose-form ownership a structural signal.** This
+   was W9's action 2 and it is now the only lever with a measured, named,
+   mechanism-level defect behind it: `governance-overlay` holds 13.7 % of its
+   term-pairs structurally against a 21.0 % corpus average, is credited by the
+   behavioural oracle at roughly its routing share, and was demoted in **8 of 8**
+   movements — from rank 0 in six. A family reading governance rule ids,
+   document headings or front-matter `covers:` keys as DECLARATIONS would credit
+   exactly the owners the current signals miss. **Measure its supply before
+   choosing any policy, as W9 did for the structural family** — and note that if
+   it succeeds, the correct next step is to re-run W10's paired evaluator, which
+   now exists and is committed.
+2. **Make the cap rank-aware, or raise it.** W10 localised the harm: the ranking
+   change is a statistical wash, and the damage is entirely at the truncation
+   boundary — 4 true owners evicted, 0 recovered, with **30.8 % of all routed
+   cases carrying more than `MAX_OWNERS` candidates**. This is a bounded,
+   high-ROI change to OUTPUT POLICY rather than to ranking, and it is
+   independently valuable whether or not structural ranking is ever promoted.
+   It was W9's action 3 and W10 turned it from a suspicion into a count.
+3. **Carried from W8/W9 and still true, still unstarted:** W5-style construction
+   observation + privacy projection (EXTEND `session_delta` / `omnicapture`,
+   reuse `modules/ucr_cif/prompt_population.py`). Unaffected by W9 or W10.
+
+**Do NOT re-run W9's arms expecting a different answer.** They were re-run, on a
+3.9× wider oracle, with a better instrument, and the verdict moved from
+UNRESOLVED to KEEP DISABLED — HARM. Re-running costs 12 minutes and changes
+nothing until one of the two mechanisms above is addressed.
+
+## 4a. Superseded — the W9-close frontier
 
 **W9 executed W8's action 1 and the answer inverts the priority order.** The
 structural family is built, orthogonal and measured; what blocks it is not a
@@ -588,17 +705,40 @@ W8 close on 2026-09-22:
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w8.json
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w9.json
 
+    python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w10.json
+
 14/14, **23/23** (the W5 plan absorbed W6's six as `W18`..`W23`; the filename is historical),
-**10/10**, **6/6** and **7/7** — 60 directed mutations, every restore verified at source AND
-runtime.
+**10/10**, **6/6**, **7/7** and **10/10** — **70 directed mutations**, every restore verified
+at source AND runtime.
+
+**W10's oracle is re-runnable, and its report is DERIVED rather than stored:**
+
+    python tools/ucr_cif_oracle.py --sessions 573     # ~12 min, BOTH arms, one process
+    python tools/ucr_cif_oracle.py --from-store       # seconds, recomputes from the cases
+
+The canonical state is the case-level store `vault/ucr_cif/oracle_cases.json`; the report is
+a projection of it and may always be rebuilt. A run reporting **IDENTICAL ARMS exits 2 as a
+HARNESS FAILURE** — it is never a finding that the treatment does nothing.
+**Never commit while a mutation plan is running.** `mutation_probe` edits source in place and
+restores it; a commit taken mid-run can capture a MUTANT as the healthy world. W10 did this
+once and had to verify the committed BYTES after the fact
+(`T-A-BACKGROUND-MUTATION-RUN-IS-A-CONCURRENT-WRITER-001`).
 A HARNESS-FAILED line means an anchor has rotted against the source, which is a stale plan and
 never a verdict about the suites. **W8 rotted one and the repair is the lesson**: re-pointing
 an anchor at whichever new line LOOKS like the old one produced a mutant that changed nothing
 and would have SURVIVED as a false green. When the source changes shape, restore the FALSE
 WORLD, not the string.
 
-Suites, all green at W9 close: selection 22/22, consumption 19/19 (+PR 7/7), spec boundary
-22/22, reach 27/27, W8 applicability 17/17, adversarial 18/18, **W9 structural 29/29**.
+Suites, all green at W10 close: selection 22/22, consumption 19/19 (+PR 7/7), spec boundary
+22/22, reach 27/27, W8 applicability 17/17, adversarial 18/18, **W9 structural 29/29**,
+**W10 oracle 33/33**.
+
+**W10 added a FOURTH anchor-rot instance, and it is the ordinary one.** Adding a field split
+the line W5's `W13` matched, so the plan reported HARNESS-FAILED — correctly. The repair
+applied all three prior lessons at once: restore the FALSE WORLD (unbounded materialization),
+narrow to a ONE-LINE anchor, and point it at the branch that SHIPS. `precap_owners` is
+deliberately uncapped beside `owners`, so an anchor on that line would have mutated a field no
+consumer reads.
 
 **W9 added a THIRD anchor-rot lesson, and it is the subtle one.** Restoring the false world
 rather than the string is necessary and NOT sufficient: once a refactor splits a path into a

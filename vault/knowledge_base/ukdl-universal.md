@@ -10863,6 +10863,25 @@ pushed out of the selection entirely.
 **Family.** A specific, mechanical instance of
 `T-A-FIXTURE-THAT-CANNOT-EXPRESS-THE-DIFFERENCE-001`.
 
+**AMENDED, UCR-CIF W10 — measured, and the two effects separate cleanly.** W9
+could not apportion its −6 between ranking and cap, and the reason was two
+adjacent lines: the sort computed the ranked verdict and `[:MAX_OWNERS]`
+discarded everything past the cap on the next, so the quantity was
+**unmeasurable**, not merely unmeasured. **When a wave reports "cannot
+apportion", look for the line that throws the evidence away before asking for
+more data.** Carrying the pre-cap order as a reporting-only field gave:
+
+* pre-cap **evicted = admitted = 0** — the ranking reorders the candidate list
+  and never changes its membership, so **every set-level effect is the cap's**;
+* `duplicate_to_advantage` drifted rank 3–4 → 5–6, a wash at **p = 0.6875**, and
+  four true owners were **evicted entirely** post-cap.
+
+So a ranking change too small to detect removed four correct answers from the
+consumer's view, purely because they lived at the boundary — and **453 of 1,471
+cases (30.8 %) rank more than 5 owners**, so the boundary is where a third of
+traffic lives, not a corner case. A statistically insignificant reorder is not a
+safe one when a truncation follows it.
+
 ## T-STRUCTURAL-EVIDENCE-UNDER-CREDITS-PROSE-OWNERS-001 — the policy module is a real owner
 
 **Rule.** Structural ownership signals (symbol defined, file named, key
@@ -10884,3 +10903,86 @@ structural family was not promoted, on that evidence.
 **Family.** The evidence-dimensionality sibling of
 `T-VOCABULARY-VOLUME-FALSE-OWNERSHIP`: the correction for one bias introduced
 the opposite one.
+
+**AMENDED, UCR-CIF W10 — the pre-registered stratum held on a 3.9× larger
+population.** W9 named this owner as its first reason not to promote, before
+W10 existed. Re-measured on 116 labelled cases against W9's 30:
+`governance-overlay` moved **8 times across 8 distinct prompts, 0 improved, 8
+worsened**, demoted **from rank 0** in six of them, two-sided p = 0.0078.
+Because the hypothesis was pre-registered it needs no multiple-comparison
+correction — and the four modality tests taken as a family do NOT survive Holm,
+which is stated rather than omitted. Clustering limit stated with the number: 8
+prompts, **4 sessions**; at session level the split is 0/4, p = 0.125. The
+pair-level p is an upper bound on the evidence, not a measurement of it.
+
+## PR-AN-ORACLES-TRUTH-SET-MUST-NOT-BE-A-FUNCTION-OF-THE-ARM-001
+
+**Rule.** When an oracle credits a correct answer only among the candidates the
+system under test PROPOSED, the label depends on the treatment — and the
+dependence runs one way: a treatment that DROPS a correct answer produces no
+credit, so the case is re-labelled negative and **leaves the measured
+population** instead of counting as the loss it is. Suppression then improves
+the apparent score. Compute truth against the full universe of possible correct
+answers, independently of any arm, so an absent answer is a named miss rather
+than a vanished case.
+
+**Corollary — an oracle reused across questions inherits the question it was
+built for.** Before reusing a labeller, ask what its label is a FUNCTION of. If
+the treatment is one of its inputs, it is not ground truth for that treatment,
+however sound it was for its original question.
+
+**Origin.** UCR-CIF W10. `reach_ground_truth.label_case(case.owners_routed, …)`
+was correct for W7's activation question — "was what we said useful" — and W9
+measured a RANKING change through it. Driven in both worlds by
+`V-W10-SUPPRESSION-CANNOT-FLATTER` and mutation `W57`.
+
+**Family.** The evaluation-plane instance of
+`T-A-SIGNAL-THE-PROMOTION-RULE-GUARANTEES-IS-A-PROJECTION-001`: there the
+evidence was a projection of the admission predicate; here the TRUTH is a
+projection of the treatment.
+
+## PR-A-HEADLINE-SHIPS-WITH-THE-CODE-THAT-COMPUTES-IT-001
+
+**Rule.** A measurement that gates a decision is committed as executable code in
+the same commit as the claim. A number recorded only in prose cannot be
+re-derived, cannot be falsified in either direction, and silently makes every
+later "re-run both arms" contract unsatisfiable. When a wave inherits a headline,
+locate the code that produces it BEFORE building on it — and widen the sweep
+before concluding it is absent, because a directory-scoped grep that finds
+nothing is not evidence about the repository.
+
+**Origin.** UCR-CIF W10. W9's "6 improved / 12 worsened over 30 cases,
+p = 0.238" existed in exactly two places — prose in `07_W9_STRUCTURAL.md` and a
+docstring in `disposition_consumer` — with no committed code behind it. Two
+directory-scoped greps returned nothing before a repo-wide sweep found it.
+`V-W10-REPRODUCES-W9-P` now re-derives p = 0.2379 from that same 6/12 split, so
+the instrument producing the current numbers is demonstrably the one that
+produced the inherited one.
+
+**Family.** The measurement-plane instance of the estate's standing rule that a
+documented capability nobody executes is indistinguishable from a working one.
+
+## PR-NOMINAL-PAIRS-ARE-NOT-EFFECTIVE-N-001
+
+**Rule.** Observations drawn from one prompt, mission, session or owner are not
+independent, and counting them as such manufactures power that does not exist.
+Report BOTH the nominal count and a cluster-respecting effective count, because
+the gap between them IS the clustering; a single number hides whichever
+direction flatters the result. A unit that both gained and lost is `mixed`, never
+resolved toward the convenient pole.
+
+**Corollary — derive the achievable resolution and report it rather than
+lowering the bar.** State what the population CAN resolve, what resolving the
+observed effect would cost, and whether the population is exhausted. "We could
+not resolve it" and "there is no effect" are different findings.
+
+**Origin.** UCR-CIF W10. 57 nominal (owner, case) pairs collapsed to 45
+contributing cases; the strongest stratum was 8 prompts but only 4 sessions.
+Achieved resolution measured 28.9 points pre-cap against a target of ~3, which
+would need ≈3,700 discordant pairs against 37 available — and the population was
+already exhausted at 573 of 573 sessions, with 90.5 % of prompts unlabellable
+for a structural reason no labelling effort removes. The honest finding was that
+the target is unreachable by this route, not that more labels were needed.
+
+**Family.** Extends `PR-COVERAGE-BY-CONSTRUCTION-001` (a count over the wrong
+population is wrong in both directions) into the statistical plane.
