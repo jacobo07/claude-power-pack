@@ -87,6 +87,36 @@ whose own commit made it nine and whose true figure was ten.
   live, and two arms thirty minutes apart re-create the population drift W7/W8 measured
   (23.5 %/2,350 → 20.0 %/2,306 with nothing changed). Ranking is deterministic, so
   contention cannot move a verdict.
+* **BOTH ARMS WERE KILLED, and the cause is now named rather than suspected.** The
+  harness's background-shell pressure reaper stopped them, and its own notification
+  states the mechanism: *stopped because the system is running low on memory while the
+  session was idle, which says nothing about the command or its own memory use.*
+  Measured at the kill: **3,947 MB free of 32,061 (12.3 %)** — W11 died at 12.8 %, the
+  same trigger — with `claude` 23 processes / 8,268 MB and **`Cursor` 55 processes /
+  8,342 MB**. Mission-owned reapable residue: **none** (3 python processes, 118 MB, all
+  Power Pack hooks with live parents). No partial artifacts, from either arm.
+  > **There are two admission authorities with different criteria, and the binding one
+  > is not the one this mission models.** `capacity_probe` reasons about the WORKLOAD
+  > and said ADMITTED — correctly; 155 MB against 4 GB would have completed. The reaper
+  > reasons about HOST TOTAL WHILE IDLE and takes a 155 MB job at 4 GB free.
+  This retires a class of remedy: shrinking the experiment cannot reach that gate (the
+  job was already 1/26th of free memory), and neither can retrying, because the trigger
+  is a host total this mission does not control, sampled exactly when a long derivation
+  is idle. **Detaching the run so the reaper cannot see it was available and was
+  refused** — that is the resource-gate bypass the Contract of Reality names, and the
+  harness explicitly instructed that the work not be restarted unasked.
+* **W12 TERMINAL STATE: `BLOCKED — RESOURCE / EXTERNAL`.** The treatment is
+  **UNMEASURED** — not failed, not passed, not harmful, not beneficial. Promotion family
+  stays **KEEP COMPUTED / REPORT-ONLY**, unchanged, because nothing this wave measured
+  bears on it. Full account: `vault/audits/ucr_cif/10_W12_TREATMENT.md`.
+* **A destructive default, caught before it fired:** `ucr_cif_oracle.main`'s `--store`
+  defaults to the canonical case store, so a treatment run with default flags overwrites
+  the control record in place, with no confirmation. Recorded, not repaired — it is
+  inside the frozen subject.
+* **Second hand-enumerated-population defect, same family as the first:**
+  `prose_authority.RUNTIME_DIRS` and `CONTRACT_DIRS` both list `"skills"`, but referrers
+  are enumerated from `ownership_evidence.SCAN_DIRS`, which has no `skills`. Those
+  branches cannot fire. Also deferred, for the same freeze reason.
 * **OPEN, deliberately unfixed until the verdict lands:** `prose_authority`'s
   `SELF_MEASUREMENT_PREFIXES` enumerates `tools/test_w9_`, `_w10_`, `_w11_` **by hand**,
   so every future wave's own test file is classified as an ordinary runtime consumer.
@@ -552,7 +582,52 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W11 close)
+## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W12 close)
+
+**W12 tried to execute W11's action 1 and could not, and the reason is not the one
+either wave assumed.** Everything the paired run needs is committed, green, frozen,
+mutation-proven at final HEAD and re-runnable. The experiment is `BLOCKED — RESOURCE /
+EXTERNAL` by an authority outside the repository.
+
+**Do NOT re-derive any of this. It is done:** the 80-mutation family at final HEAD, the
+155 MB footprint, the committed pre-registration, the refusing comparator (12/12, 5/5),
+the refreshed projection. Re-running them costs an hour and changes nothing.
+
+1. **HIGHEST LEVERAGE — obtain thirty uninterrupted minutes, then run the two arms.**
+   This is a scheduling action, not an engineering one, and the levers are named:
+   start Claude Code with `CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP=1` **in its
+   environment at launch** (the harness states a shell-set value has no effect), or
+   reduce the live session count — 23 `claude` and 55 `Cursor` processes held 16.6 GB
+   of 32 GB at the kill. Then: both arms **concurrently**, each to its **own**
+   `--store`, then `tools/ucr_cif_w12_verdict.py` in two stages, validity before
+   movement. **Do not shrink the experiment to fit** — it was already 1/26th of free
+   memory when it was reaped, so its footprint is not what that gate reads. **Do not
+   detach the run to hide it from the reaper**; that is a resource-gate bypass.
+   The pre-registered kill condition is unchanged and committed in
+   `vault/audits/ucr_cif/w12_preregistration.md`: if the eight do not recover, record
+   the falsification of W9's causal story and stop.
+2. **First commit of the measuring wave, BEFORE the arms:** repair the two
+   hand-enumerated populations inside `prose_authority` (§2) and the destructive
+   `--store` default in `ucr_cif_oracle`. All three are recorded and measured inert,
+   and were frozen only because the subject may not move before its first valid
+   measurement. Once the measuring wave begins they go first, and the arms then run
+   against the repaired subject under its own treatment identity.
+3. **Carried from W8/W9/W10/W11, still unstarted:** W5-style construction observation +
+   privacy projection. Unaffected by anything above.
+
+**If a second valid run is also unobtainable**, the honest move is not a third attempt.
+It is to ask whether this oracle's paired design — two half-hour derivations that must
+share one population, on a machine whose idle memory is not this mission's to control —
+is the right instrument, given W10 already measured that the aggregate it serves is
+economically dead. That is a design question for a new wave, not a retry.
+
+**Still true and still unstarted from the W11 list:** make the cap rank-aware, or raise
+it. 30.8 % of routed cases exceed `MAX_OWNERS`, and every set-level loss W10 measured
+happened at truncation rather than in ranking. It is independently valuable whether or
+not the prose treatment is ever promoted — and it is the one remaining action that does
+**not** require a half-hour uninterrupted host.
+
+## 4-W11. Superseded — the W11-close frontier
 
 **W11 executed W10's action 1 and got half of it.** The evidence channel exists, is
 typed, is independent of the benchmark, reaches the harmed stratum and refuses

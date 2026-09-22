@@ -10479,6 +10479,105 @@ the gap is the whole remedy -- a tool being out of reach is never a reason to co
 a working tree you do not own. Sister of
 [[PR-REMEASURE-A-FORWARDED-OWNER-ACTION-001]].
 
+### HR-AN-ABORTED-RUN-CHANGES-THE-EXPERIMENT-STATE-NOT-THE-SUBJECT-001
+
+An experiment that was killed before it wrote anything has produced no evidence about its
+subject. It is **UNMEASURED** — not failed, not passed, not harmful, not beneficial, and
+not "unresolved from valid data", which is a different state reached by a run that
+completed and could not decide.
+
+**Rule.** When a run aborts, the only thing permitted to change is the experiment's own
+state. The subject's verdict stays exactly where the last valid measurement left it, and
+the frozen treatment stays frozen. Restore valid conditions and measure the same subject;
+do not respond to an invalid run by changing the model.
+
+**How to apply.** Say which of the four it is, in the artifact, in those words. The
+failure mode is not dishonesty but drift: "the run was killed" becomes "the treatment did
+not help" over two handoffs, and a frozen candidate quietly acquires a negative verdict
+nobody measured. A treatment tuned after an invalid run can never produce a clean first
+result, because there is no longer a first result — only a second attempt at a subject
+that moved. Sister of
+[[PR-VALIDATE-ARM-COMPARABILITY-BEFORE-EXPOSING-OUTCOME-001]].
+
+**Origin.** UCR-CIF W11 and W12. W11's paired run was killed for host memory pressure and
+recorded the treatment as UNMEASURED, correctly. W12 re-derived it under an admitted host
+and both arms were killed again; the treatment is still UNMEASURED, and
+`STRUCTURAL_RANKING_ENABLED` is still `False` for the reason W10 gave, not for anything
+either later wave observed.
+
+### PR-VALIDATE-ARM-COMPARABILITY-BEFORE-EXPOSING-OUTCOME-001
+
+A paired verdict is about two arms only if both arms measured the same world, ran the
+code they claim to, and reproduce the reference the comparison rests on. All three are
+decidable **before** any outcome is visible, and deciding them afterwards is not the same
+decision — once a reader knows the answer, whether the run counted is no longer
+independent of what it said.
+
+**Rule.** Build the ordering into the instrument, not into the operator. Comparability,
+execution proof and baseline identity are computed first; movement is computed only if
+all three pass; a refusal prints no movement at all.
+
+**How to apply.** Three outcomes on comparability, never two — a fingerprint that could
+not be read says nothing about drift, so UNREADABLE is its own class and must not fall
+into "not DRIFTED". License on a **positive** test of the one status that permits a
+verdict, or every status added later silently joins the permitted set. Assert in the
+gates on the **absence** of the movement section rather than on an exit code: a non-zero
+exit beside a printed answer still tells the reader the answer. Pair every refusal case
+with a licensing case, or a comparator that refuses everything passes the whole suite.
+
+**Origin.** UCR-CIF W12, `tools/ucr_cif_w12_verdict.py` + `test_w12_verdict.py` 12/12,
+`ucr_cif_w12.json` 5/5. Extends [[T-DRIFT-VERDICT-WITHOUT-DIRECTION-001]].
+
+### T-THE-BINDING-ADMISSION-GATE-IS-NOT-THE-ONE-YOU-MODELLED-001
+
+Work that keeps dying after its admission gate passes is usually not a tuning problem. It
+is a **second** gate, with a different input, that nobody modelled — and because the
+modelled gate keeps saying yes, every remedy gets aimed at the wrong quantity.
+
+The measured instance: one authority reasoned about the **workload** (155 MB required,
+4,267 MB available, ADMITTED, clear of its ×1.5 margin) and was correct — the job would
+have finished. The other reasoned about **host total while the session was idle** and
+reaped the same 155 MB job at 3,947 MB free, stating in its own notification that this
+*says nothing about the command or its own memory use*.
+
+**Recognizer.** The owner's gate passes, the work dies anyway, and the death correlates
+with something the gate does not read.
+
+**How to apply.** Find the second gate and read its criterion before proposing anything.
+Then check which remedies it retires: here, shrinking the workload cannot reach it (the
+job was already one twenty-sixth of free memory) and retrying cannot either (the trigger
+is sampled exactly when a long derivation is idle). Name the lever that *does* reach it,
+even when it is outside the repository — a blocker with a named owner is actionable and a
+blocker attributed to "resources" is not. And do not evade the second gate once found:
+detaching the work so it becomes invisible converts a scheduling problem into an
+unprotected one.
+
+### PR-MEASURE-THE-WORKLOAD-BEFORE-BUDGETING-THE-HOST-001
+
+"The host was busy" and "the run is expensive" are different claims, and a killed run
+supports neither until the workload has been measured. The second is the one that gets
+inherited, because it implies an action.
+
+**Rule.** Before a handoff blames a host or prescribes budgeting one, measure the peak
+cost of the workload itself and state it. An undeclared requirement is exactly what a
+capacity gate refuses to infer on a caller's behalf.
+
+**How to apply.** Measure in a **child per sweep point** — peak RSS is monotonic within a
+process, so an in-process sweep reports the largest point for every point after it. Prefer
+the child's own peak to any host gauge: it is a property of the workload and is immune to
+what the rest of the machine is doing, which matters on a host whose free memory moved
+2,245 → 1,055 → 3,795 MB inside one wave. Report the fit with its residual, and let the
+fail path say UNMEASURED rather than invent a number — a peak-memory probe that silently
+returns None on a marshalling error reads exactly like "this platform cannot be measured".
+
+**Origin.** UCR-CIF W12, `tools/ucr_cif_footprint.py`. The inherited frontier said
+*"budget the host first; losing the run twice is scheduling, not evidence"*, resting on an
+unmeasured premise that the run was expensive. Measured: `peak_mb = 36.5 + 0.2071 ×
+sessions`, max residual 1.9 MB over three points, 155 MB at 573 sessions — and the real
+cost was **time** (~30 min per arm against the ~12 min the handoff carried), which no
+amount of host budgeting addresses. Sister of the W7 rule that the resource a change
+spends is not always the one you were watching.
+
 - [regression/powershell:sys.path.insert(0,.)] `ceps_5d28a90f4498a814` -- Before touching powershell:sys.path.insert(0,.), verify the regression scenario (FAILED) is still covered by a passing test.
 
 - [tooling/powershell:sp] `ceps_d47d40fe40071e32` -- Tool failure in powershell:sp: Traceback (most recent call last). Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.

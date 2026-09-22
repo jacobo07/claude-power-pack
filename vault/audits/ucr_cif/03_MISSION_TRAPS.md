@@ -891,3 +891,90 @@ and had to verify after the fact (it was clean: five markers checked at
 **A mutation run holds a write lock on the tree in every sense that matters.
 Commit before it starts or after it finishes, never during — and if you already
 did, verify the committed BYTES rather than the exit code.**
+
+## W12 · `T-THE-BINDING-GATE-WAS-NOT-THE-MODELLED-GATE-001`
+Two admission authorities decide whether this experiment runs, with different
+criteria, and the mission models only one of them.
+`environment_qualifier.capacity_probe` reasons about the **workload**: 155 MB
+against 4,267 MB available, `ADMITTED`, clear of the ×1.5 margin — and it was
+right, the run would have completed. The harness's background-shell reaper
+reasons about **host total while the session is idle**, and took the same 155 MB
+job at 3,947 MB free. Its own notification says so: *says nothing about the
+command or its own memory use.*
+A run can be ADMITTED by the first and reaped by the second for ever. This is
+not a bad threshold; it is a second gate whose input is a quantity the first
+never reads. **When a run keeps dying after its owner's admission gate passes,
+stop tuning the workload and go find the other gate.** Shrinking the experiment
+cannot reach it — the job was already one twenty-sixth of free memory — and
+neither can retrying, because the trigger is sampled exactly when a long
+derivation is idle.
+
+## W12 · `T-THE-ANCHOR-MATCHED-ITS-OWN-RESTORE-LINE-001`
+W10's `W64` rotted when W11 replaced the `if treatment:` block with the `_ARMS`
+table. The faithful-looking repair is to flip `os.environ.pop(k, None)` in the
+new `else` branch. At twelve spaces of indentation that string is **also a
+substring of the sixteen-space restore line in the `finally` block**, so the
+anchor matches twice and the probe mutates the restore path rather than the
+selection path — a mutant editing code no arm depends on, behind a diff that
+looks perfectly correct. That is `T-THE-REPAIRED-ANCHOR-EDITED-DEAD-CODE-001`
+arriving through indentation instead of through a refactor.
+**An anchor's uniqueness is a property of the whole file, not of the line you
+copied it from. Count the matches before trusting the repair**, and prefer an
+anchor at the point where the semantics live — here the identity table, which is
+also strictly stronger, because it contaminates the control with the prose
+environment as well as the rank one.
+
+## W12 · `T-A-DEFAULT-ARGUMENT-CAN-BE-A-DESTRUCTIVE-DEFAULT-001`
+`ucr_cif_oracle.main`'s `--store` defaults to the canonical case store. A
+treatment run with default flags therefore **overwrites the control record the
+comparison is against**, in place, with no confirmation and no diff — and the
+overwrite is invisible until a paired verdict is refused for a drift the
+operator caused.
+The whole hazard is a convenience: the default is right for the one command that
+refreshes the canonical store, and wrong for every other caller. **Ask of every
+destructive default what it destroys when the flag is omitted by someone who did
+not read the parser**, especially where a tool's ordinary mode and its
+answer-key-refreshing mode share one entry point.
+
+## W12 · `T-THE-PRECAUTION-THAT-COST-AN-ARM-001`
+`--verify` reported `source_fresh False`. The projection predated W11's own
+commits `390c3e6` and `f281762`, one of which changed how declaration works, so
+I concluded it was the output of a superseded extractor, killed the running
+reference arm and rebuilt.
+The rebuild changed four lines — `build_ms`, `built_at`, `repo_fingerprint`,
+`files_seen` 1373→1376 — and **no evidence at all**: 674 symbol-held and 236
+declaration-held terms byte-identical. The extractor's code had changed and its
+output had not.
+The reasoning was sound and the conclusion was unmeasured. **A freshness flag
+tells you the inputs moved, never that the output did** — and the output is one
+diff away. Cost: about fifteen minutes of a half-hour arm. Recorded as a
+precaution that bought nothing rather than as a catch, because the next reader
+should take the same precaution and check the diff FIRST.
+
+## W12 · `T-A-HAND-ENUMERATED-PREFIX-LIST-EXPIRES-EVERY-WAVE-001`
+`prose_authority.SELF_MEASUREMENT_PREFIXES` enumerates `tools/test_w9_`,
+`_w10_`, `_w11_` by hand, so this mission's own instruments stop being
+recognised as self-measurement the moment a new wave names a file. W12's
+`tools/test_w12_verdict.py` already falls outside it. The sibling instance:
+`RUNTIME_DIRS` and `CONTRACT_DIRS` both list `"skills"`, which cannot fire at
+all, because referrers are enumerated from `ownership_evidence.SCAN_DIRS` and
+that tuple has no `skills`.
+Same root cause in both directions — a population enumerated rather than
+discovered — one over-narrow and one over-wide, and **neither is visible from
+the list itself**. Measured inert today (declared terms 814, owners 26,
+`governance-overlay` 256, SELF_MEASUREMENT edges 9, all identical to W11's
+record with three new `tools/` files present), and deliberately NOT repaired,
+because the subject may not move before its first valid measurement.
+
+## W12 · `T-THE-GATE-ASSERTED-A-STRING-THE-OUTPUT-CARRIES-ANYWAY-001`
+The W12 comparator's headline must name the **post-cap** half, because W10
+proved pre-cap `evicted = admitted = 0` and every set-level effect is the cap's.
+The gate asserted `"NOT_RECOVERED" in out` — which the post-cap movement line
+satisfies no matter which half the headline is keyed to. A comparator reporting
+the flattering half would have passed.
+Found by writing the mutation (`W69`) and noticing it had **nothing to fail
+against**. The gate now parses the value off the headline line itself.
+**A substring assertion over a report that already contains every verdict word
+is not an assertion about the field you meant** — and a mutation written beside
+the instrument finds that, where a mutation written after the result finds
+nothing.
