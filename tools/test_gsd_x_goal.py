@@ -114,6 +114,24 @@ def main() -> int:
     except gl.LostRace:
         ok("V-GOAL-CAS-STALE", "append at an already-published seq refused as LostRace")
 
+    # The DETERMINISTIC half of the CAS claim: two writers that both got past
+    # append()'s pre-read hand the same prepared event to publish(). No timing
+    # is involved, so this cannot pass by luck the way the process race below
+    # can when the two happen to serialise.
+    lgp = gl.GoalLog(REPO, "g-publish", base=base)
+    gc.declare(lgp, "publish once")
+    prepared = {"seq": 2, "type": "race.probe", "ts": "2026-09-22T00:00:00+00:00",
+                "actor": "w1", "data": {}, "prev_digest": lgp.read()[-1].digest}
+    prepared["digest"] = gl.event_digest(prepared)
+    lgp.publish(prepared)
+    try:
+        lgp.publish(dict(prepared))
+        bad("V-GOAL-CAS-PUBLISH-ONCE", "the same sequence number was published twice")
+    except gl.LostRace:
+        ok("V-GOAL-CAS-PUBLISH-ONCE", "a second publish of one sequence number refused")
+    check("V-GOAL-CAS-PUBLISH-ONE-EVENT", len(lgp.read()) == 2,
+          "only one event exists at that sequence", f"{len(lgp.read())} events")
+
     lg2 = gl.GoalLog(REPO, "g-race", base=base)
     gc.declare(lg2, "race")
     import time

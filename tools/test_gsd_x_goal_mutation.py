@@ -29,10 +29,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GOAL = ROOT / "modules" / "gsd_x" / "goal"
 LOG, CONTRACT, CONV = GOAL / "log.py", GOAL / "contract.py", GOAL / "convergence.py"
+EPOCH = GOAL / "epoch.py"
 STORE = ROOT / "modules" / "gsd_x" / "mission" / "store.py"
 SUITES = {
     "V-GOAL-": ROOT / "tools" / "test_gsd_x_goal.py",
     "V-CONV-": ROOT / "tools" / "test_gsd_x_goal_convergence.py",
+    "V-EP-": ROOT / "tools" / "test_gsd_x_goal_epoch.py",
 }
 
 # name -> (file, old, new, property removed, gate that must go red)
@@ -41,7 +43,10 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         LOG, "os.link(tmp, target)            # atomic",
         "os.replace(tmp, target)            # atomic",
         "two writers must not both publish the same sequence number",
-        "V-GOAL-CAS-TWO-WRITERS"),
+        # Attributed to the DETERMINISTIC gate. The two-process race also goes
+        # red under this mutant, but only when the two overlap; keying the drill
+        # on it reported "caught" by luck (measured 2026-09-22).
+        "V-GOAL-CAS-PUBLISH-ONCE"),
     "digest-unchecked": (
         LOG, 'if raw.get("digest") != event_digest(raw):', "if False:",
         "an edited past event must be detected", "V-GOAL-LOG-CHAIN"),
@@ -91,6 +96,31 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         "",
         "a carried obligation must be proven again under the new revision",
         "V-CONV-REVISION-CARRIED"),
+    # --- epochs (C5) ---
+    "retry-key-ignored": (
+        EPOCH, "        if e.info_key == key and e.outcome in UNSUCCESSFUL:",
+        "        if False:",
+        "an attempt whose information key already failed must be refused",
+        "V-EP-NO-BLIND-RETRY"),
+    "recover-redispatches": (
+        EPOCH, "    handle = provider.probe(e.identity)",
+        "    handle = provider.dispatch(e.spec)",
+        "recovery must probe the pre-minted identity, never dispatch again",
+        "V-EP-RECOVER-LOST"),
+    "receipt-duplicate-allowed": (
+        EPOCH, "    if any(rid in x.receipts for x in eps.values()):", "    if False:",
+        "a receipt must be ingested once", "V-EP-RECEIPT-DUPLICATE"),
+    "receipt-revision-ignored": (
+        EPOCH, "    if receipt.revision != e.revision:", "    if False:",
+        "a receipt about another revision must be refused", "V-EP-RECEIPT-STALE-REVISION"),
+    "scope-hash-whole-tree": (
+        EPOCH, "        p = root / rel", "        p = root",
+        "the scope hash must ignore changes outside the declared scope",
+        "V-EP-SCOPE-IGNORES-OUTSIDE"),
+    "provider-bound-unchecked": (
+        EPOCH, "    if not (isinstance(p.wall_bound_s, (int, float)) and p.wall_bound_s > 0):",
+        "    if False:",
+        "a provider with no wall bound must be refused", "V-EP-PROVIDER-BOUND"),
 }
 
 

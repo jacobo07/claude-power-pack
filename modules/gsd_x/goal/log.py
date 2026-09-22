@@ -191,6 +191,19 @@ class GoalLog:
             "prev_digest": events[-1].digest if events else GENESIS,
         }
         body["digest"] = event_digest(body)
+        return self.publish(body)
+
+    def publish(self, body: dict) -> Event:
+        """Publish a PREPARED event onto its sequence name, or raise.
+
+        Split out from `append` so the compare-and-swap can be driven directly.
+        `append`'s pre-read is a cheap early-out, NOT the guarantee: two writers
+        that both pass it must still be separated here. A test that only races
+        `append` catches a broken publish when the two happen to overlap and
+        misses it when they serialise -- measured 2026-09-22, where exactly that
+        made a mutation drill report a mutant as caught by luck.
+        """
+        expected_seq = int(body["seq"])
         self.dir.mkdir(parents=True, exist_ok=True)
         target = self.dir / f"{expected_seq:06d}.json"
         tmp = self.dir / f".tmp-{uuid.uuid4().hex}"
