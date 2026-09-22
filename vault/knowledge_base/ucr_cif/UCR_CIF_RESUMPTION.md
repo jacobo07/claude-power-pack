@@ -403,15 +403,30 @@ is never written by this mission and never rolled back.
   Power-Pack-internal paths — a prompt in any other repository cannot produce a
   commit that touches one. **The resumption's own "widen by repository domain" is
   not cheap; it is unavailable.** More labels through this route is not the answer.
+  **NO FALSE OWNERS ARE REMOVED — the treatment SUBSTITUTES (PR-W10-20).** On
+  the rendered surface over the 116 labelled cases, slot count is identical
+  (454 = 454, because the cap fills the same slots), true owners fall **40 → 38**
+  and false owners rise **414 → 416**: slot precision 8.81 % → 8.37 %, **−0.44
+  points**. So "structural ranking improves precision by removing false owners"
+  is **falsified**, not merely unsupported. Derived by `slot_precision`, mutation
+  `W65`.
   **Verdict against the pre-declared contract** (MPIE ≥ 5 pts AND cap safety AND
   prose safety): practical effect not demonstrated · cap safety **FAILED** (4
-  evictions, 0 recoveries) · prose safety **FAILED**. **KEEP DISABLED — HARM.**
+  evictions, 0 recoveries) · prose safety **FAILED** · false-owner reduction
+  **FALSIFIED**. **KEEP DISABLED — HARM.**
   Stronger than W9's UNRESOLVED: the aggregate is unresolved *and now known to be
   unresolvable at rational cost*, while the pre-registered stratum resolves
   against promotion. The family is **not deleted** — computed, reported,
   `--explain`-rendered, and only its authority over the order stays off.
-  Gates `tools/test_w10_oracle.py` **33/33**; `ucr_cif_w10.json` **10/10**;
-  family **70 mutations ALL_CAUGHT** (W4 14, W5 23, W7 10, W8 6, W9 7, W10 10).
+  Gates `tools/test_w10_oracle.py` **38/38**; `ucr_cif_w10.json` **12/12**;
+  family **72 mutations ALL_CAUGHT** (W4 14, W5 23, W7 10, W8 6, W9 7, W10 12).
+  **Production Reality is recorded PER GATE in `08_W10_ORACLE.md` §9, not as a
+  total** — 21 of 22 met, **PR-W10-10 (label correction lineage) is OPEN and
+  stated as open**: no label was corrected this wave, so the supersession path is
+  designed and never driven, and a green nobody has falsified is not claimed.
+  PR-W10-11 is PARTIAL (fingerprint computed, never driven against a
+  deliberately-drifted population). PR-W10-P1…P7 do not apply — they gate a
+  promotion and there is none.
   `STRUCTURAL_RANKING_ENABLED`, `MAX_OWNERS`, `DISTINCTIVE_MAX_HOLDERS`,
   `MAX_DISTINCTIVE_REQUIRED`, `create_spec`, the corpus, the 503 ABSTAIN and the
   218 UNRESOLVED all untouched.
@@ -713,7 +728,7 @@ W8 close on 2026-09-22:
     python tools/mutation_probe.py --plan vault/governance/mutation_plans/ucr_cif_w10.json
 
 14/14, **23/23** (the W5 plan absorbed W6's six as `W18`..`W23`; the filename is historical),
-**10/10**, **6/6**, **7/7** and **10/10** — **70 directed mutations**, every restore verified
+**10/10**, **6/6**, **7/7** and **12/12** — **72 directed mutations**, every restore verified
 at source AND runtime.
 
 **W10's oracle is re-runnable, and its report is DERIVED rather than stored:**
@@ -736,7 +751,7 @@ WORLD, not the string.
 
 Suites, all green at W10 close: selection 22/22, consumption 19/19 (+PR 7/7), spec boundary
 22/22, reach 27/27, W8 applicability 17/17, adversarial 18/18, **W9 structural 29/29**,
-**W10 oracle 33/33**.
+**W10 oracle 38/38**.
 
 **W10 added a FOURTH anchor-rot instance, and it is the ordinary one.** Adding a field split
 the line W5's `W13` matched, so the plan reported HARNESS-FAILED — correctly. The repair
