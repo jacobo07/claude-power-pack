@@ -7,6 +7,10 @@
                                         --not-applicable --reason "..."
     python tools/gsd_x_goal.py oblige   --goal <id> --root <repo> --id ob-1 --plane OUTCOME \
                                         --text "..." --gate "python tools/x.py" --gate-file tools/x.py
+    python tools/gsd_x_goal.py retire   --goal <id> --root <repo> --id ob-1 \
+                                        --disposition REJECTED --reason "..."
+    python tools/gsd_x_goal.py disposition-failure --goal <id> --root <repo> --id f-1 \
+                                        --disposition fixed --reason "..."
     python tools/gsd_x_goal.py bind     --goal <id> --root <repo>
     python tools/gsd_x_goal.py status   --goal <id> --root <repo> [--json]
     python tools/gsd_x_goal.py explain  --goal <id> --root <repo>
@@ -85,6 +89,34 @@ def cmd_oblige(args) -> int:
     print(f"accepted {args.id} ({args.plane}); proven by {args.gate!r}")
     for rel, digest in pin:
         print(f"  pinned {rel} {digest[:16]}...")
+    return 0
+
+
+def cmd_retire(args) -> int:
+    """Retire an obligation that will not be proven, with a reason.
+
+    Reachable from here because a writer only an ad-hoc script can call is a
+    capability the tool does not have. The refusals live in `convergence`, not
+    in this argument parser: SATISFIED is not offered as a choice AND would be
+    refused if it were.
+    """
+    lg = _log(args)
+    cv.disposition_obligation(lg, gc.project(lg), args.id, args.disposition,
+                              args.reason, args.actor)
+    print(f"retired {args.id} as {args.disposition}: {args.reason}")
+    s = gc.project(lg)
+    closure = cv.goal_closure(s, _tree(s, Path(args.root)), ep.open_epochs(s))
+    still = [b for b in closure.blocking if args.id in b or "retired unproven" in b]
+    for b in still:
+        print(f"  still blocking: {b}")
+    return 0
+
+
+def cmd_dispose_failure(args) -> int:
+    lg = _log(args)
+    cv.disposition_failure(lg, gc.project(lg), args.id, args.disposition,
+                           args.reason, args.actor)
+    print(f"failure {args.id}: {args.disposition} -- {args.reason}")
     return 0
 
 
@@ -266,6 +298,20 @@ def main(argv: list[str] | None = None) -> int:
     o.add_argument("--gate", required=True)
     o.add_argument("--gate-file", action="append", required=True)
     o.set_defaults(fn=cmd_oblige)
+
+    rt = common(sub.add_parser("retire"))
+    rt.add_argument("--id", required=True)
+    rt.add_argument("--disposition", required=True,
+                    choices=sorted(cv.DECLARABLE_DISPOSITIONS))
+    rt.add_argument("--reason", required=True)
+    rt.set_defaults(fn=cmd_retire)
+
+    df = common(sub.add_parser("disposition-failure"))
+    df.add_argument("--id", required=True)
+    df.add_argument("--disposition", required=True,
+                    choices=sorted(cv.FAILURE_DISPOSITIONS))
+    df.add_argument("--reason", required=True)
+    df.set_defaults(fn=cmd_dispose_failure)
 
     common(sub.add_parser("bind")).set_defaults(fn=cmd_bind)
 

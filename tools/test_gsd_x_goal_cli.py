@@ -136,6 +136,32 @@ def main() -> int:
           "the per-root mission store refuses to write under a bound goal",
           f"rc={m2.returncode} {m2.stdout[:200]}")
 
+    # --- retiring an obligation, and dispositioning a failure, FROM THE CLI ------------
+    # The docstring promises both commands. A promise nobody executes is
+    # indistinguishable from a working one, so both are driven here.
+    r = run("retire", *G, "--id", "ob-outcome", "--disposition", "SATISFIED",
+            "--reason", "the gate passed, honest", env=env)
+    check("V-CLI-RETIRE-CANNOT-DECLARE-SATISFIED", r.returncode == 2,
+          "the CLI will not let an operator declare an obligation satisfied",
+          f"rc={r.returncode} {r.stdout}{r.stderr}")
+    r = run("retire", *G, "--id", "ob-outcome", "--disposition", "REJECTED",
+            "--reason", "its gate pin names a path this commit moved", env=env)
+    check("V-CLI-RETIRE", r.returncode == 0 and "retired ob-outcome" in r.stdout,
+          "an obligation is retired with a stated reason", f"rc={r.returncode} {r.stdout}")
+    check("V-CLI-RETIRE-REOPENS-ITS-PLANE", "retired unproven" in r.stdout,
+          "retiring the only obligation on a plane reports that plane as blocking again",
+          f"the command did not say the plane reopened: {r.stdout}")
+    r = run("status", *G, env=env)
+    check("V-CLI-RETIRED-PLANE-BLOCKS", r.returncode == 1
+          and "OUTCOME applies and every obligation on it was retired" in r.stdout,
+          "status names the reopened plane", r.stdout[-400:])
+
+    r = run("disposition-failure", *G, "--id", "f-nope", "--disposition", "fixed",
+            "--reason", "it went away", env=env)
+    check("V-CLI-DISPOSITION-UNKNOWN-FAILURE", r.returncode == 2,
+          "dispositioning a failure nobody recorded is refused",
+          f"rc={r.returncode} {r.stdout}")
+
     # --- judge -----------------------------------------------------------------------
     r = run("judge", *G, env=env)
     check("V-CLI-JUDGE-REFUSES-UNPROVEN", r.returncode == 1
