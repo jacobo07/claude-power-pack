@@ -56,6 +56,13 @@ FAILURE_DISPOSITIONED = "failure.dispositioned"
 
 FAILURE_DISPOSITIONS = frozenset({"fixed", "regression_added", "accepted_risk",
                                   "not_reproducible", "superseded"})
+# Dispositions a person may declare on an OBLIGATION. SATISFIED is absent on
+# purpose -- it is reached by a verdict and by nothing else -- and so are the
+# open states, which are reached by accepting or carrying.
+DECLARABLE_DISPOSITIONS = frozenset({DEFERRED, REJECTED, NOT_APPLICABLE})
+# An obligation in one of these states will never be proven, so it cannot stand
+# in as a plane's coverage.
+RETIRED_DISPOSITIONS = DECLARABLE_DISPOSITIONS
 
 
 @dataclass
@@ -169,6 +176,42 @@ def carry_obligation(log: GoalLog, state: GoalState, ob_id: str, reason: str,
                {"id": ob_id, "revision": state.revision, "reason": reason}, actor)
 
 
+def disposition_obligation(log: GoalLog, state: GoalState, ob_id: str, disposition: str,
+                           reason: str, actor: str) -> None:
+    """Retire an obligation that will not be proven, with a stated reason.
+
+    `obligation.dispositioned` has been read by the projection since C2 and
+    nothing ever wrote it -- a consumer with no producer, which is
+    indistinguishable from a working feature until the day it is needed.
+
+    That day was the first real goal, 2026-09-22. Committing the job file moved
+    it out of `jobs/pending/` (which the repo's own .gitignore excludes) into
+    `jobs/examples/`, so `ob-outcome`'s gate pin named a path that no longer
+    exists. The pin is immutable on purpose -- a changed gate proves nothing
+    about the pinned one -- so the obligation could never be satisfied again,
+    and with no writer here it could never be retired either. The goal could
+    only escalate, correctly and forever.
+
+    It cannot be used to wave work away quietly. SATISFIED is unreachable from
+    here (only a verdict reaches it) and so are the open states (those are
+    reached by accepting or carrying); a reason is required; and `goal_closure`
+    does not count a retired obligation as a plane's coverage, so retiring the
+    last live obligation on an applicable plane reopens that plane's block
+    rather than closing it.
+    """
+    if disposition not in DECLARABLE_DISPOSITIONS:
+        raise GoalLogError(
+            f"{disposition!r} may not be declared on an obligation; declarable: "
+            f"{sorted(DECLARABLE_DISPOSITIONS)}. SATISFIED is reached by a verdict, "
+            "never by saying so")
+    if not (reason or "").strip():
+        raise GoalLogError(f"retiring {ob_id} unproven needs a reason")
+    if ob_id not in project_convergence(state).obligations:
+        raise GoalLogError(f"no obligation {ob_id!r}")
+    log.append(state.last_seq + 1, OB_DISPOSITIONED,
+               {"id": ob_id, "disposition": disposition, "reason": reason}, actor)
+
+
 def record_failure(log: GoalLog, state: GoalState, fid: str, summary: str,
                    actor: str) -> None:
     if not (summary or "").strip():
@@ -259,8 +302,16 @@ def goal_closure(state: GoalState, tree_hash: str, open_epochs: list | None = No
         if pstate == CANDIDATE:
             blocking.append(f"plane {plane} was never judged applicable or not")
         elif pstate == ACCEPTED and plane not in EVENT_CARRIED:
-            if not any(o.plane == plane for o in cv.obligations.values()):
+            on_plane = [o for o in cv.obligations.values() if o.plane == plane]
+            # A retired obligation is not coverage: it records a decision NOT to
+            # prove that plane. Counting it would turn `disposition_obligation`
+            # into a way to close a plane by retiring the only thing that could
+            # have proven it -- the hole that writer would otherwise open.
+            if not on_plane:
                 blocking.append(f"plane {plane} applies and has no obligation")
+            elif all(o.disposition in RETIRED_DISPOSITIONS for o in on_plane):
+                blocking.append(f"plane {plane} applies and every obligation on it was "
+                                "retired unproven")
     for o in cv.obligations.values():
         if o.disposition == SATISFIED:
             v = o.verdict or {}

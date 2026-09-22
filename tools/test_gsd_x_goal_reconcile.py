@@ -161,6 +161,39 @@ def main() -> int:
           and rc.decide(c).reason == rc.decide(c).reason,
           "the same context always produces the same decision", "the decision moved")
 
+    # 9. a commit moves the tree: proof taken elsewhere is open work HERE.
+    #    `lg2`'s obligations are all SATISFIED at TREE and d8 above proves that
+    #    closes -- the control that stops this pair passing by refusing always.
+    MOVED = "git:" + "a" * 40
+    d15 = rc.decide(ctx_for(lg2, tree=MOVED))
+    check("V-RC-REGATE-AFTER-TREE-MOVES",
+          d15.kind == rc.NEXT_EPOCH and d15.provider == "gate"
+          and "was proven at tree" in d15.reason,
+          f"evidence from another tree re-runs its gate here: {d15.reason[:90]}",
+          rc.render(d15))
+    check("V-RC-REGATE-IS-NOT-AN-ESCALATION", d15.kind != rc.ESCALATE,
+          "saving your work does not strand the goal", rc.render(d15))
+    st2b = gc.project(lg2)
+    st2b = gc.revise(lg2, st2b.last_seq + 1, st2b.intent, st2b.acceptance + ["and fast"],
+                     st2b.constraints, st2b.scope)
+    d16 = rc.decide(rc.Context(state=st2b, tree_hash=TREE, scope_hash=SCOPE,
+                               providers=ALL_PROV, now=1000.0))
+    check("V-RC-REGATE-AFTER-REVISION", d16.kind == rc.NEXT_EPOCH,
+          "proof about an older revision is open work too", rc.render(d16))
+
+    # 10. an obligation proven elsewhere needs its GATE re-run, never a coder:
+    #     re-running a gate is cheap and decisive, writing code against a passing
+    #     gate is neither.
+    lg3 = build(base, "g-regate-work", satisfy=True)
+    st3 = gc.project(lg3)
+    k = ep.info_key(st3.revision, ["ob-outcome"], "gate", "initial", SCOPE)
+    e3 = ep.begin(lg3, st3, "gate", {"obligation": "ob-outcome"}, k, "initial", "t")
+    ep.mark_running(lg3, gc.project(lg3), e3.epoch_id, {"pid": 2}, "t")
+    ep.end(lg3, gc.project(lg3), e3.epoch_id, ep.FAILED, "gate exited 1", "t")
+    d17 = rc.decide(ctx_for(lg3, tree=MOVED, providers=("codex",)))
+    check("V-RC-REGATE-IS-NOT-CODE-WORK", d17.provider != "codex",
+          "a satisfied-elsewhere obligation is not sent to a work provider", rc.render(d17))
+
     total = len(passes) + len(fails)
     print(f"\nGSDX_RECONCILE_PASS={len(passes)}/{total}  threshold={total}/{total}")
     return 0 if not fails else 1

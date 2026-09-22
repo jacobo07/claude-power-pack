@@ -172,6 +172,44 @@ def main() -> int:
     check("V-CONV-FAILURE-DISPOSITIONED", cv.goal_closure(gc.project(lg6), TREE).may_close,
           "a dispositioned failure no longer blocks", "still blocked")
 
+    # --- retiring an obligation that will never be proven -------------------------------
+    lg8 = fresh(base, "g-retire")
+    satisfy_all(lg8)
+    s8 = gc.project(lg8)
+    refused("V-CONV-OB-DISPOSITION-NOT-SATISFIED",
+            lambda: cv.disposition_obligation(lg8, s8, "ob-outcome", cv.SATISFIED,
+                                              "the gate passed, honest", "t"),
+            "SATISFIED may not be declared on an obligation; only a verdict reaches it")
+    refused("V-CONV-OB-DISPOSITION-NEEDS-REASON",
+            lambda: cv.disposition_obligation(lg8, s8, "ob-outcome", cv.REJECTED, " ", "t"),
+            "retiring an obligation without a reason refused")
+    refused("V-CONV-OB-DISPOSITION-UNKNOWN-OB",
+            lambda: cv.disposition_obligation(lg8, s8, "ob-nope", cv.REJECTED, "because", "t"),
+            "retiring an obligation that does not exist refused")
+
+    # Retiring the only obligation on an applicable plane must REOPEN that plane,
+    # not close it. Without this the writer above is a way to converge a goal by
+    # deleting the thing that would have proven it.
+    cv.disposition_obligation(lg8, gc.project(lg8), "ob-outcome", cv.REJECTED,
+                              "its gate pin names a path the commit moved", "t")
+    c8 = cv.goal_closure(gc.project(lg8), TREE)
+    check("V-CONV-RETIRED-IS-NOT-COVERAGE",
+          not c8.may_close and any("retired unproven" in b for b in c8.blocking),
+          "retiring the last obligation on an applicable plane blocks that plane",
+          f"blocking={c8.blocking}")
+    r = cv.satisfy(lg8, gc.project(lg8), "ob-outcome", verdict(gc.project(lg8)), "t")
+    check("V-CONV-RETIRED-STAYS-RETIRED", not r.allowed and "no satisfied state" in r.reason,
+          "a retired obligation cannot be proven afterwards (mission rule reused)", r.reason)
+
+    # The control: a successor pinned to what exists now closes it. A pair that
+    # only ever refuses would pass every assertion above.
+    cv.accept_obligation(lg8, gc.project(lg8), "ob-outcome-2", cv.OUTCOME, "x",
+                         "python tools/gate.py", PIN, "t")
+    satisfy_all(lg8)
+    c8b = cv.goal_closure(gc.project(lg8), TREE)
+    check("V-CONV-RETIRED-WITH-SUCCESSOR-CLOSES", c8b.may_close,
+          "a retired obligation replaced by a proven successor closes", f"blocking={c8b.blocking}")
+
     # --- revision change --------------------------------------------------------------
     lg7 = fresh(base, "g-rev")
     satisfy_all(lg7)

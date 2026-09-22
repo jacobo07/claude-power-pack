@@ -97,6 +97,29 @@ def _work_provider(ctx: Context) -> str:
     return ""
 
 
+def _needs_a_gate_here(o, ctx: Context) -> str:
+    """Why this obligation's gate should run against THIS tree -- or ''.
+
+    An obligation is open work when it has never been proven, and equally when
+    its proof is about a state that is not the one being closed. The second case
+    is not an edge: it is what every commit does, and what a revision does to
+    meaning. Closure already refuses such evidence; without this the refusal has
+    no remedy and the goal is stranded.
+    """
+    if o.disposition == ACCEPTED:
+        return "has never been judged at this tree"
+    if o.disposition != SATISFIED:
+        return ""                       # retired, or not work at all
+    v = o.verdict or {}
+    if v.get("tree_hash") != ctx.tree_hash:
+        return (f"was proven at tree {v.get('tree_hash')}, and the tree being closed is "
+                f"{ctx.tree_hash}: its gate has to run here")
+    if v.get("revision") != ctx.state.revision:
+        return (f"was proven under revision {v.get('revision')}, and the goal is now "
+                f"{ctx.state.revision}")
+    return ""
+
+
 def decide(ctx: Context) -> Decision:
     st = ctx.state
     eps = project_epochs(st)
@@ -150,7 +173,16 @@ def decide(ctx: Context) -> Decision:
     # 5. Work. The cheapest justified action first: an accepted obligation whose
     #    gate has not been run at THIS tree is evidence waiting to be collected,
     #    and running a gate is cheaper and more decisive than writing code.
-    open_obs = [o for o in cv.obligations.values() if o.disposition == ACCEPTED]
+    accepted = [o for o in cv.obligations.values() if o.disposition == ACCEPTED]
+    # An obligation proven somewhere else is open work HERE. Without this the
+    # filter reads `disposition == ACCEPTED` while the sentence above promises
+    # "has not been run at THIS tree", and the two differ on the most ordinary
+    # event there is: a commit. Measured 2026-09-22 on the first real goal --
+    # committing the scope moved the tree from `work:` to `git:`, closure
+    # correctly refused evidence taken at the old tree, and nothing would ever
+    # re-run those gates because they were SATISFIED rather than ACCEPTED. The
+    # goal could only ESCALATE, forever, for having saved its work.
+    open_obs = [o for o in cv.obligations.values() if _needs_a_gate_here(o, ctx)]
     # "Judged at this tree" means a VERDICT exists -- not that an epoch happened.
     # Only COMPLETED and FAILED produce one; LOST, EXPIRED and CANCELLED leave the
     # obligation exactly as unjudged as before. Measured 2026-09-22: counting any
@@ -166,14 +198,16 @@ def decide(ctx: Context) -> Decision:
                        engine=ctx.engine)
         if not any(e.info_key == key and e.outcome in UNSUCCESSFUL for e in eps.values()):
             return Decision(NEXT_EPOCH,
-                            f"{o.identifier} ({o.plane}) has never been judged at this tree",
+                            f"{o.identifier} ({o.plane}) {_needs_a_gate_here(o, ctx)}",
                             provider="gate", hypothesis="initial", info_key=key,
                             spec={"obligation": o.identifier, "gate": o.done_gate,
                                   "tree_hash": ctx.tree_hash, "plane": o.plane})
 
     # 6. A gate that ran and failed is new information: someone has to change
     #    the code. That is work, and work needs a work provider.
-    failing = [o for o in open_obs
+    #    Strictly the never-proven ones: an obligation that IS proven, elsewhere,
+    #    needs its gate re-run at this tree, not somebody writing code for it.
+    failing = [o for o in accepted
                if any(e.spec.get("obligation") == o.identifier and e.outcome in UNSUCCESSFUL
                       for e in eps.values())]
     provider = _work_provider(ctx)

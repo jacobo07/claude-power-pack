@@ -265,6 +265,29 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         SWEEP, "        if not is_autonomous(state):", "        if False:",
         "a goal nobody marked autonomous must not be driven unattended",
         "V-SWEEP-SKIPS-MANUAL-GOALS"),
+    # --- retiring an obligation, and re-proving one after the tree moves (C15) ---
+    "retired-obligation-covers-its-plane": (
+        CONV, "            elif all(o.disposition in RETIRED_DISPOSITIONS for o in on_plane):",
+        "            elif False:",
+        "an obligation retired unproven must not stand in as a plane's coverage",
+        "V-CONV-RETIRED-IS-NOT-COVERAGE"),
+    "obligation-may-be-declared-satisfied": (
+        CONV, "    if disposition not in DECLARABLE_DISPOSITIONS:", "    if False:",
+        "SATISFIED must be unreachable by declaration", "V-CONV-OB-DISPOSITION-NOT-SATISFIED"),
+    "retire-needs-no-reason": (
+        CONV, '        raise GoalLogError(f"retiring {ob_id} unproven needs a reason")',
+        "        pass",
+        "retiring an obligation without a reason must be refused",
+        "V-CONV-OB-DISPOSITION-NEEDS-REASON"),
+    "proof-elsewhere-is-not-open-work": (
+        RECON, "    open_obs = [o for o in cv.obligations.values() if _needs_a_gate_here(o, ctx)]",
+        "    open_obs = list(accepted)",
+        "an obligation proven at another tree must have its gate re-run here",
+        "V-RC-REGATE-AFTER-TREE-MOVES"),
+    "regate-becomes-code-work": (
+        RECON, "    failing = [o for o in accepted", "    failing = [o for o in open_obs",
+        "a satisfied-elsewhere obligation must not be sent to a work provider",
+        "V-RC-REGATE-IS-NOT-CODE-WORK"),
 }
 
 
