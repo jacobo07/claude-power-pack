@@ -198,3 +198,85 @@ deleting the obligation and requiring the gate to fail.
 **Start from:** `modules/capability_runtime/enrichment.py` (the generic boundary
 -- a second artifact kind needs no new mechanism), `tools/test_baseline_inheritance.py`
 (the four-rung ladder), and `modules/sqi/baseline_guardian.py` (the orphan).
+
+---
+
+## 8. SUPERSEDES section 7 -- Slice 4 executed, and section 7 was wrong
+
+Commit `db8e34f`. Section 7 above is preserved rather than edited, because it is
+the evidence for what follows.
+
+**Section 7 told the next session to wire `modules/sqi/baseline_guardian.py`.
+Do not.** Read, it is a TEST-PROTECTION regression guardian: executed cases per
+root, authored test files, Test File Reach, and one asymmetry -- "an increase
+requires nothing, and a decrease fails the build". It measures whether test
+protection was withdrawn in silence. It has nothing whatever to do with
+construction obligations. Wiring it at the PRD boundary would have run a
+test-count regression check against a document.
+
+Only the word **baseline** matched. SQI's "baseline" is a stored measurement
+snapshot; UACF's is a set of constitutional construction obligations.
+
+**This is the third instance of one failure in two missions**, and that is the
+finding worth more than the slice:
+
+| # | what matched | what was actually there |
+|---|---|---|
+| 1 | "architecture" | an import-graph blast-radius ranker (Mission 001, D2A 95 % FOLD) |
+| 2 | a paraphrase of DS08 | "capability registration -- Wiring only", not a dispatch reservation |
+| 3 | "baseline" | a test-count regression guardian |
+
+Instance 1 came from an instrument. Instances 2 and 3 came from **prose written
+by the previous session, in good faith, to help the next one** -- and instance 3
+was written by me, in section 7 of this very file, one commit earlier. A handoff
+is the highest-leverage place in the estate to plant a false owner, because it
+is read with more trust than a similarity score and carries no confidence number
+to warn anybody.
+
+`PR-VERIFY-THE-LEDGER-ROW-NOT-THE-HANDOFF-001` (section 4) therefore generalises
+beyond ledger rows: **before acting on ANY named owner a handoff supplies, read
+the named thing's own mechanism.** The cost of the check is one file read; the
+cost of skipping it is a wave spent wiring the wrong subsystem.
+
+Negative evidence, so the claim is falsifiable: a case-insensitive sweep of
+`modules/sqi` for construction-obligation or inheritance language returns
+**zero** matches.
+
+### What Slice 4 actually delivered
+
+The Gap-2 mechanism is the enrichment boundary from `2314257`, so the canonical
+gate was extended rather than a second one built. Two properties, chosen because
+nothing else covers them and a looser duplicate would have disarmed the stricter
+consumption drill:
+
+* **UNNAMED** -- the construction stage names no capability. The executable form
+  of "future work inherits this without anyone remembering UACF by name".
+* **GENERIC** -- a synthetic capability the estate has never seen is inherited
+  from its contract alone, via a temp contracts dir.
+
+`INHERITANCE_PASS=20/20` (was 15/15). Both predicates carry controls driven
+against synthetic subjects, so neither decays when a real file changes.
+
+**The drill is the justification.** Hardcoding one capability id inside
+`candidates()` takes this gate to 18/19 -- while
+`test_capability_consumption.py` still passes **11/11** under that same mutant,
+because `surface_architecture` keeps working. The boundary could silently revert
+from an inheritance mechanism to a hardcoded integration with every pre-existing
+suite green. Restore SHA-256 verified.
+
+### Rung, restated honestly
+
+**INHERITED is reached for the `prd_baseline` artifact kind, and for that kind
+only.** A second artifact kind (a DESIGN.md, a spec, a roadmap) needs no new
+mechanism, but it has not been demonstrated, so it is not claimed.
+
+### Next task -- one
+
+Take a SECOND artifact kind through the same boundary -- `design-md` is the
+strongest candidate, since `DESIGN.md` already carries an `experience:`
+front-matter contract and a real consumer in `tools/design_gate.py`. That both
+exercises genericity on a real subject rather than a synthetic one and extends
+inheritance to a second construction surface. If it needs any change to
+`enrichment.py`, the boundary was not generic and this record should say so.
+
+**Do not** start a second UACF vertical, and do not wire `baseline_guardian`.
