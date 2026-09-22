@@ -137,8 +137,57 @@ offline by construction, compiled at the existing `structural_projection` build
 boundary. Deriving declarations from compiled edges costs **~1.8 ms**. Nothing on a
 selection path parses a document, walks git, or traverses the vault.
 
-## 9. PR-W10-10
+Full projection rebuild, both channels: **75.4 s**, offline.
+
+## 9. The treatment: built, wired, and NOT measured
+
+The channel reaches ranking behind its own identity. `structural_projection` compiles
+`prose_terms` at schema 2 — **236 declaration-held terms** beside 674 symbol-held, over
+the same 1,498-term ledger universe — and `holds()` consults it only under the W11 arm.
+`holders()` is deliberately unchanged, so W9's arm keeps producing the numbers W10
+judged and the known-harmful reference stays a reference.
+
+Three arms, proven distinct by driving the production predicates under each:
+`control` (False, False) · `w9-structural` (True, False) · `w11-prose` (True, True).
+
+**The paired `w11-prose` run did not execute.** It was killed by the harness for host
+memory pressure — 12.8 % free of 32 GB — during the build phase, before writing
+anything. No store, no report, no partial artifacts; both output paths are absent.
+
+So the headline question is **not answered**. Whether `governance-overlay`'s eight
+movements recover, pre-cap and post-cap, is unmeasured, and nothing in this wave should
+be read as evidence that they do. W9's causal story is neither confirmed nor falsified.
+
+This is a legitimate terminal state and was pre-registered as one: *prose signal proven,
+active ranking still disabled*. What would be illegitimate is presenting the channel's
+own gates as if they answered the routing question — they do not, and were never
+designed to.
+
+## 10. Verdict
+
+| question | answer |
+|---|---|
+| Is the prose relation real, typed, independent? | **YES** — 23/23, 8 mutations ALL_CAUGHT twice |
+| Does it reach the harmed stratum? | **YES** — 256 declared terms via real consumer edges |
+| Is it Markdown-equals-authority? | **NO** — `pre-task.md`, 81 terms, same directory, earns nothing |
+| Does it generalize beyond one owner? | **YES** — 25 further owners, same mechanism |
+| Can the benchmark reach it? | **NO** — 1,692 reads, zero under `vault/ucr_cif/` |
+| Does it change admission? | **NO** — not imported by `ownership_evidence`; ledger and corpus frozen |
+| **Does it repair the routing harm?** | **UNRESOLVED — not measured** |
+
+**Promotion family: KEEP COMPUTED / REPORT-ONLY** — structurally valid, active benefit
+unproven, which is exactly what that family names. `STRUCTURAL_RANKING_ENABLED` stays
+`False`; `UCR_CIF_PROSE_RANK` stays unset.
+
+## 11. PR-W10-10
 
 Still **OPEN — NOT EXERCISED**. No real label defect surfaced during this wave, and
 a gold label will not be mutated to make the correction lineage look driven. A
 production claim requires a production event.
+
+## 12. What the next wave must do FIRST
+
+Run `tools/ucr_cif_oracle.py --arm w11-prose` on a quiet host, then
+`--compare` the two stores to prove the populations are identical before reading any
+movement. The comparison guard exists now and refuses a paired verdict across drifted
+populations — that is what PR-W10-11 bought.

@@ -43,6 +43,40 @@ and evidence windows. Subagents are not a context-limit workaround.
 
 ## 2. Exact state
 
+**W11 IN PROGRESS (2026-09-22).** Base `8c39376` (the W10 seal). W11 is exactly the
+commits reachable as **`8c39376..HEAD`** — a range, never a count, because W10 wrote
+"the EIGHT commits" into an artifact whose own commit made it nine and whose true
+figure was ten.
+
+Sealed so far in W11, each with its own commit:
+
+* **PR-W10-11 CLOSED.** `compare_fingerprints` + `paired_verdict_allowed` in
+  `tools/ucr_cif_oracle.py`, three outcomes (UNREADABLE is neither DRIFTED nor
+  COMPARABLE), driven on the real 1,471-case store and through the shipped
+  `--compare` CLI. `tools/test_w10_population_fingerprint.py` 13/13.
+* **The prose declaration channel.** `modules/ucr_cif/prose_authority.py` +
+  `tools/ucr_cif_prose.py`. A prose artifact declares only when a consumer
+  resolves a path to that specific artifact; declarations come from headings,
+  rule ids and `covers:` keys, never the prose body. Six provenance classes,
+  exactly one promotes. `tools/test_w11_prose_authority.py` 21/21 (23 with the
+  rename gates).
+* **Projection schema 2.** `structural_projection` now compiles `prose_terms`
+  (236 declaration-held terms beside 674 symbol-held, over the same 1,498-term
+  universe). `holders()` is deliberately unchanged so W9's arm stays
+  byte-reproducible; the union happens in `holds()` behind the W11 arm only.
+* **Three named arms** in `ucr_cif_oracle`: `control`, `w9-structural`,
+  `w11-prose`. W9's identity is preserved as the known-harmful reference.
+
+**Frozen and untouched throughout:** `STRUCTURAL_RANKING_ENABLED = False`,
+`MAX_OWNERS`, `DISTINCTIVE_MAX_HOLDERS`, `MAX_DISTINCTIVE_REQUIRED`,
+`create_spec`, the corpus, the 503 ABSTAIN and the 218 UNRESOLVED.
+**PR-W10-10 remains OPEN — NOT EXERCISED**; no real label defect surfaced and one
+will not be manufactured.
+
+**Foreign items in the tree, NOT mine, never touched:**
+`vault/knowledge_base/session_lessons.md` (M), `.pp-capabilities` (??),
+`LEARNINGS_PENDING.md` (??).
+
 **Working surface — ISOLATED.** Worktree `C:\Users\User\Apps\pp-ucr-cif`, branch
 `ucr-cif/construction`, base pinned at **`50837ed`** (`main`).
 **As of 2026-09-22 (W10 close): base `af2bef0` (the W9 seal), and W10 is exactly the
@@ -470,7 +504,32 @@ trusted). If that fails, the inventory is not sealed and W1's prefix reuse is in
    *after* the runtime exists, with control/treatment and anti-gaming rules.
 6. **Scope = host-local.** No VPS, no remote DB, no external credentials. No video exists.
 
-## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W10 close)
+## 4. Next three actions — frontier RECALCULATED 2026-09-22 (W11 close)
+
+**W11 executed W10's action 1 and got half of it.** The evidence channel exists, is
+typed, is independent of the benchmark, reaches the harmed stratum and refuses
+look-alikes. It has NOT moved a single routing decision: the paired run was killed
+for host memory pressure before writing anything.
+
+1. **HIGHEST LEVERAGE — run the paired `w11-prose` evaluation on a quiet host.**
+   Everything it needs is committed and green. Compare the two stores' fingerprints
+   BEFORE reading any movement; that guard exists now and refuses a paired verdict
+   across drifted populations. Measure the eight `governance-overlay` movements
+   pre-cap and post-cap, with code-form and mixed owners as safety strata.
+   **Pre-registered kill condition: if they do not recover, record the falsification
+   of W9's causal story and stop — do not raise the signal's strength until they
+   move.** Budget the host first; losing the run twice is scheduling, not evidence.
+2. **Make the cap rank-aware, or raise it.** Unchanged and still true: 30.8 % of
+   routed cases exceed `MAX_OWNERS`, and every set-level loss W10 measured happened
+   at truncation rather than in ranking.
+3. **Carried from W8/W9/W10, still unstarted:** W5-style construction observation +
+   privacy projection.
+
+**Do NOT** re-open a labelling wave, re-enable global structural ranking, or read
+W11's 23/23 as evidence about routing. The channel's gates prove the channel; only
+the paired run can speak about owners moving.
+
+## 4-W10. Superseded — the W10-close frontier
 
 **W10 executed W9's action 1, and the answer closes that action permanently.**
 The oracle is 3.9× wider and materially better built — arm-independent truth,
