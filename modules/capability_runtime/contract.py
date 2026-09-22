@@ -130,6 +130,11 @@ class CapabilityContract:
     # Measured and reported by `invoke`, not enforced -- an in-process call
     # cannot be preempted, and claiming otherwise would be self-certification.
     budget_ms: int = 0
+    # Dotted path to fn(artifact) -> (payload | None, reason). It is how a
+    # construction ARTIFACT reaches this capability without the stage naming it
+    # (see enrichment.py). The capability owns its own applicability here,
+    # because it is the only party that knows what it needs.
+    adapter: str = ""
 
     def __post_init__(self) -> None:
         self._coerce()

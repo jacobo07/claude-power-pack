@@ -86,6 +86,27 @@
           "lines": { "type": "array", "items": { "type": "string" } }
         }
       }
+    },
+    "capability_decisions": {
+      "type": "object",
+      "description": "OPTIONAL. Decisions contributed by capabilities declaring 'prd_baseline' as an input, keyed by capability id. Attached AFTER content_sha256 is computed, so a baseline that gains none is byte-identical to one produced before this property existed and no stored hash moves. Deliberately generic: a second capability needs no schema change. 'status' sits beside 'outcome' because 'never called' and 'called and abstained' are opposite facts.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["invoked", "not_callable", "unresolvable", "refused_by_authority", "failed"]
+          },
+          "outcome": { "type": "string" },
+          "exit_code": { "type": ["integer", "null"] },
+          "selected_because": { "type": "string" },
+          "entrypoint": { "type": "string" },
+          "authority": { "type": "string" },
+          "note": { "type": "string" },
+          "decision": { "type": "object" }
+        }
+      }
     }
   }
 }

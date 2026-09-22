@@ -312,8 +312,68 @@ def blueprint_from_baseline(b: dict) -> str:
         seed += 1
     if seed == 1:
         L.append("1. (no actionable seed tasks extracted — narrative PRD)")
+    cap = capability_lines(b)
+    if cap:
+        L.append("")
+        L.append("## Capability decisions")
+        L += cap
     L.append("")
     return "\n".join(L)
+
+
+def capability_lines(b: dict, indent: str = "") -> list:
+    """Render capability decisions WITHOUT deciding anything.
+
+    Four rules, each guarding a way this rendering could lie:
+
+    1. `archetypes` is a SET and is printed as one. A surface is frequently
+       artifact-first AND work-first at once; collapsing the set to `archetype`
+       would reintroduce a false winner at the rendering boundary, after the
+       resolver went to the trouble of refusing one.
+    2. REQUIRE_APPROVAL never renders as a recommendation, and says what is
+       owed. Automatic dispatch must not become implicit approval.
+    3. UNDETERMINED names no leader at all. A conflict silently resolved by
+       print order is still a conflict silently resolved.
+    4. A capability that was NOT invoked says so, with the reason. "Not
+       applicable" and "never considered" are different facts and only the
+       record can separate them.
+    """
+    found = b.get("capability_decisions") or {}
+    if not found:
+        return []
+    out = [f"{indent}CAPABILITY DECISIONS:"]
+    for cid in sorted(found):
+        e = found[cid] or {}
+        status = e.get("status", "?")
+        outcome = e.get("outcome", "")
+        out.append(f"{indent}  - {cid}: status={status}"
+                   + (f" outcome={outcome}" if outcome else ""))
+        if status != "invoked":
+            if e.get("note"):
+                out.append(f"{indent}      why: {e['note']}")
+            continue
+        d = e.get("decision") or {}
+        archetypes = d.get("archetypes") or []
+        if outcome == "RECOMMEND" and archetypes:
+            out.append(f"{indent}      topologies (composable, not rivals): "
+                       + ", ".join(str(a) for a in archetypes))
+        elif outcome == "REQUIRE_APPROVAL":
+            out.append(f"{indent}      NOT APPROVED -- a human must decide. "
+                       + str(d.get("reason", "")))
+        elif outcome == "UNDETERMINED":
+            out.append(f"{indent}      no leader named; evidence conflicts or "
+                       "is absent. " + str(d.get("reason", "")))
+        elif outcome == "ABSTAIN":
+            out.append(f"{indent}      abstained: " + str(d.get("reason", "")))
+        missing = d.get("missing_facts") or []
+        if missing:
+            out.append(f"{indent}      measure to decide: "
+                       + ", ".join(str(m) for m in missing[:6]))
+        invalid = d.get("invalid_values") or []
+        if invalid:
+            out.append(f"{indent}      correct what was written: "
+                       + ", ".join(str(m) for m in invalid[:6]))
+    return out
 
 
 def constraints_block(b: dict) -> str:
@@ -329,16 +389,51 @@ def constraints_block(b: dict) -> str:
         parts.append("PERF:")
         parts += [f"  - {p['op']} {p['value']:g} {p['unit']}"
                   for p in b["perf_targets"]]
+    parts += capability_lines(b)
     parts.append(f"SOURCE_SHA256: {b['content_sha256']}")
     parts.append("</prd-constraints>")
     return "\n".join(parts)
 
 
 # ---------- pipeline ----------
+def _attach_capability_decisions(baseline: dict) -> None:
+    """Let every capability that claims a `prd_baseline` weigh in.
+
+    Deliberately AFTER `schema_map`, which computes `content_sha256` over the
+    extracted core. A baseline that gains no decisions is byte-identical to one
+    produced before this existed, so no stored hash moves and no prior baseline
+    is invalidated.
+
+    This stage names no capability. It hands an artifact kind to the capability
+    runtime and stores whatever comes back, so a second capability declaring the
+    same kind is inherited here with no edit -- that is the difference between
+    an inheritance boundary and a bolted-on integration.
+
+    FAIL-OPEN, ABSOLUTELY. This function runs inside the live `UserPromptSubmit`
+    sentinel. A PRD parse must never fail because a capability is broken, absent
+    or slow, so every error leaves the baseline exactly as it was.
+    """
+    try:
+        import os
+        import sys
+        root = os.path.dirname(os.path.dirname(HERE))
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        from modules.capability_runtime.enrichment import decisions_for_artifact
+        found = decisions_for_artifact(
+            "prd_baseline", baseline, requested_by="karimo.prd_parser")
+    except Exception:  # noqa: BLE001 -- the PRD stage owes nothing to a capability
+        return
+    if found:
+        baseline["capability_decisions"] = found
+
+
 def parse(raw: str, source_label: str = "inline", stamp: bool = True) -> dict:
     sections = classify(tokenize(raw))
     buckets = extract(sections)
-    return schema_map(raw, sections, buckets, source_label, stamp)
+    baseline = schema_map(raw, sections, buckets, source_label, stamp)
+    _attach_capability_decisions(baseline)
+    return baseline
 
 
 def _validate(baseline: dict) -> tuple[bool, str]:
