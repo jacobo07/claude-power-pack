@@ -83,9 +83,37 @@ own runtime in isolation -- each one was "only ~1 s" when it was added.
 - The fate of bytes pasted inside the window (lost vs replayed as keystrokes)
   was reasoned from the absent reader, **not observed**: driving a paste into a
   fresh Cursor pane is outside what the agent can do from a tool call.
-- The NGEN effect is predicted from the missing native images, not yet measured:
-  the script needs elevation this session did not have. Its report
-  (`%TEMP%\ngen_powershell_report.txt`) is the measurement.
+- ~~The NGEN effect is predicted from the missing native images, not yet
+  measured.~~ **CLOSED BY MEASUREMENT, same session, 2026-09-22** -- see below.
+
+## The NGEN fix, run and measured (2026-09-22, elevated)
+
+The Owner ran `tools/ngen_powershell.ps1` as Administrator. Eleven assemblies
+had no native image; all eleven installed `ok`; the after-probe found **zero**
+remaining. The script measures itself **in the same batch**, which is the only
+comparison an irreversible machine-wide change permits:
+
+| `powershell -NoProfile -Command exit` | median | readings |
+|---|---|---|
+| before | 1962 ms | 1962 / 1867 / 2167 |
+| after | **433 ms** | 869 / 433 / 320 |
+
+**4.5x, and the prediction's magnitude was wrong.** The 4183 ms recorded higher
+up in this file is a real reading of a starved host, not the machine's resting
+cost -- the same-batch before figure is 1962 ms. So the honest claim is the
+ratio, not the 4183 ms of saving the earlier number implied. The original
+readings are left standing above: a historical measurement describes the run
+that happened, and editing it to match today would fabricate a verification.
+
+Bare-pane launcher after the fix, same harness as the gate (real launcher, stub
+`claude`, private TEMP and state dir), **at 467 MB free**: readings
+2133 / 1439 / 1498 / 2096 / 2425, **median 2096 ms**, against 7502 ms in the
+previous session. That pair is **cross-load, not same-batch**, and is reported
+as such -- it is the comparison that already cost this investigation one wrong
+number (the "+3 s of module autoload" that a same-batch reading put at ~700 ms).
+The trace also re-confirms both behaviours the commit claims: no synchronous
+Python on a bare pane, and `sync:hook-registry` on the cold run only, absent on
+the four that follow it.
 
 ## Instrument failures on the way
 
