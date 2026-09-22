@@ -72,8 +72,23 @@ This file is updated as each stage lands.
 | G5 reconciler + audit fixes | `b209776` | `test_goal_spine_reconciler.py` 27/27 (18 before); probe 41/54 pre-fix |
 | P1/P3 providers + CLI | `7d96aa5` | `test_goal_spine_verify.py` 5/5, incl. the first end-to-end autonomous loop |
 
-**Full set: 227 gates green**, including the untouched baselines `test_gsd_long_run.py`
+**Full set: 234 gates green**, including the untouched baselines `test_gsd_long_run.py`
 99/99 and `test_done_strength_ladder.py` 15/15.
+
+### Mutation record — G5, re-run against the COMMITTED reconciler
+**45/59 caught** (41/54 before the audit fixes). One survivor was real and is now
+pinned: `packet_delivered` defaults to `False`, and flipping that default survived —
+a fail-open default on the one field the whole packet design rests on, so an action
+carrying no packet could have claimed delivery (`V-RECON-NO-PACKET-NEVER-CLAIMS-DELIVERY`).
+The other 13 are classified:
+
+| Survivors | Class |
+|---|---|
+| `Action(frozen=)`, hash prefixes, subprocess timeout, `[:12]` in a message | EQUIVALENT — value objects and formatting |
+| the re-ask loop's bounds and its `attempt == 1` text choice | EQUIVALENT — which wording is used first, not whether a packet is pending |
+| `return rid, False` after five closed rows | DEFENSIVE — unreachable unless five re-asks were all closed |
+| `elif e.state == CLAIMED` | EQUIVALENT — `observe_worker_start` guards the same condition itself |
+| `max_epochs`, `max_epochs_per_obligation` defaults | DEFAULT VALUES — every gate passes an explicit budget; the defaults are policy, not behaviour |
 
 ### Audit record — G5 (independent adversarial audit + probe 41/54)
 Five real defects the first 18 gates could not see, each now pinned:

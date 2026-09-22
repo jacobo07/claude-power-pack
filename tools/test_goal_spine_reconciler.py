@@ -118,6 +118,13 @@ def main() -> int:
           and g.state == gl.ACTIVE and len(ep_.for_goal(g.goal_id)) == 1,
           f"{a.kind}/{a.provider} state={g.state}")
 
+    # --- an action with no packet never claims one was delivered -------------
+    # `packet_delivered` defaults to False, and the mutant flipping that default
+    # survived: a fail-open default on the one field the packet design rests on.
+    check("V-RECON-NO-PACKET-NEVER-CLAIMS-DELIVERY",
+          not a.packet_delivered and not a.packet_id,
+          "a DISPATCH carries no packet and says so")
+
     # --- an epoch in flight is never doubled --------------------------------
     a2 = rcn.tick(g.goal_id, gates=GATES)
     check("V-RECON-INFLIGHT-WAITS", a2.kind == rcn.WAIT and len(ep_.for_goal(g.goal_id)) == 1,
