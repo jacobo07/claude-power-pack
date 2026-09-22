@@ -68,7 +68,37 @@ This file is updated as each stage lands.
 | G3 convergence | `8b44d10` | `test_goal_spine_convergence.py` 15/15; probe 9/11 |
 | G4 epochs | `2985e10` | `test_goal_spine_epoch.py` 13/13; probe 34/39 |
 | Identity fix (intent in a place) | `f692404` | `test_goal_spine.py` 16/16 |
-| G6 receipts | (this commit) | `test_goal_spine_receipt.py` 15/15; probe 16/24 |
+| G6 receipts | `a1a682b` | `test_goal_spine_receipt.py` 15/15; probe 16/24 |
+| G5 reconciler + audit fixes | `b209776` | `test_goal_spine_reconciler.py` 27/27 (18 before); probe 41/54 pre-fix |
+| P1/P3 providers + CLI | `7d96aa5` | `test_goal_spine_verify.py` 5/5, incl. the first end-to-end autonomous loop |
+
+**Full set: 227 gates green**, including the untouched baselines `test_gsd_long_run.py`
+99/99 and `test_done_strength_ladder.py` 15/15.
+
+### Audit record — G5 (independent adversarial audit + probe 41/54)
+Five real defects the first 18 gates could not see, each now pinned:
+
+| Finding | What it would have done |
+|---|---|
+| **HIGH** the claim was a version CAS, not a lease | a coordinator loading AFTER the claim passed its own CAS; two panes could run `/gsd-autonomous` in one root. Fixed with an exclusive expiring lock over load→decide→save; `store.save`/`epoch.save` also shared one temp filename |
+| fingerprint hashed the whole dirty tree | in a shared checkout another pane's save minted "new information": retry refusal effectively off, and verify could spend the whole budget without the obligation ever being worked. Now revision + obligations + HEAD, plus a verify cap |
+| leases began only at `claim()` | an epoch nobody claimed or executed waited for ever — WAIT every tick, no budget, no packet. Every epoch now leases from birth |
+| `owner_queue.append` is idempotent across every status | a closed packet parked the Goal in AWAITING_OWNER with nothing pending. A closed row is re-asked under a fresh identity |
+| CONVERGE left open epochs | nothing reconciles a CONVERGED Goal again, so a pane could keep working on finished work |
+
+**Found by running the suites together, not alone:** `epoch_id` hashed a one-second
+clock, so abandoning an unclaimed epoch and replanning within the same second minted
+the same id; the save collided and escaped the tick after its side effects. A green
+run and a red run differed only by whether the two calls straddled a second boundary.
+Ids now carry a nonce, and `for_goal` tie-breaks on id because `prepared_at` alone is
+not a total order.
+
+**Process note:** the mutation probe rewrites its subject ON DISK per mutant, and the
+auditor was reading the same file concurrently — it noticed, and its report says so.
+That is this estate's own `T-A-BACKGROUND-MUTATION-RUN-IS-A-CONCURRENT-WRITER-001`,
+re-created by me. Restoration was verified (270 lines, docstring and comments intact)
+before anything was committed; the first restoration check was itself wrong, matching
+the docstring against line 1, which is the shebang.
 
 ### Mutation record — G6
 Probe first scored **14/24**. Real survivor closed: `or`→`and` on the epoch-binding
