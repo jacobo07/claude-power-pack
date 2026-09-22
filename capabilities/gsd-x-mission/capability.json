@@ -1,0 +1,29 @@
+{
+  "id": "gsd-x-mission",
+  "role": "feature",
+  "version": "1.0.0",
+  "title": "GSD X Mission Obligations",
+  "tier": "full",
+  "description": "Holds wave completion while a derived mission obligation is still open. The obligations, the contract projection and the closure receipt are owned by modules/gsd_x/mission; this manifest is only the registration that makes them reachable from a real GSD run.",
+  "config": {
+    "enabled": false
+  },
+  "activationKey": "enabled",
+  "steps": [],
+  "contributions": [],
+  "gates": [
+    {
+      "point": "execute:wave:post",
+      "when": "enabled",
+      "blocking": true,
+      "onError": "halt",
+      "check": {
+        "predicate": {
+          "kind": "command-exit-zero",
+          "command": "\"C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe\" \"C:/Users/User/.claude/skills/claude-power-pack/tools/gsd_x_mission.py\" check \"${PHASE_DIR}\" --exit-code --raw",
+          "timeout": 30
+        }
+      }
+    }
+  ]
+}

@@ -114,9 +114,27 @@ def cmd_closure(args) -> int:
 
 
 def cmd_check(args) -> int:
-    """The GSD gate. Emits {block, message} and exits 0 -- the dispatcher reads
-    the fields, and a non-zero exit would be read as the CHECK having failed
-    (its `onError` path), which is a different thing from a gate that blocked."""
+    """The GSD gate, for either of the two seams GSD actually offers.
+
+    WITHOUT --exit-code: emits {block, message} and exits 0. This is the
+    prose-dispatched `kind:"gate"` envelope; the dispatcher reads the fields,
+    and a non-zero exit would be read as the CHECK having failed (its `onError`
+    path), which is a different thing from a gate that blocked.
+
+    WITH --exit-code: the same computation, reported as an exit code, for
+    `check.predicate` + `command-exit-zero` -- the only seam that both runs a
+    third party's own command AND may set `blocking: true`."""
+    # A root that does not exist is UNREADABLE INPUT, never "nothing is open".
+    # `${PHASE_DIR}` is interpolated by the host and an absent value becomes the
+    # empty string (gate-predicate-evaluator.cjs `interpolate`, undefined => ''),
+    # which resolves to the process cwd -- a directory with no obligations, so
+    # the gate would report a clean pass on a MISCONFIGURED path. Measured: a
+    # nonexistent root exited 0. That is the fail-open shape this whole gate
+    # exists to prevent, so it is refused before anything is computed.
+    if not str(args.root).strip() or not Path(args.root).is_dir():
+        print(json.dumps({"error": f"UNREADABLE_INPUT: no such mission root: "
+                                   f"{args.root!r}"}))
+        return 2 if args.exit_code else 1
     root = Path(args.root).resolve()
     try:
         receipt, obs = _closure(root, args.backlog_empty, args.production_reality)
@@ -124,18 +142,58 @@ def cmd_check(args) -> int:
         # An error here is the CHECK failing, not the mission passing. Say so in
         # the envelope so `onError` routes it rather than it reading as a pass.
         print(json.dumps({"error": f"{exc.__class__.__name__}: {exc}"}))
-        return 1
-    blocked = receipt.blocking
+        return 2 if args.exit_code else 1
+    open_ids = [o.identifier for o in obs if o.is_open]
+    # `block` names the SAME condition the exit code names. It used to carry
+    # `receipt.blocking`, which is wider (it includes "explicit backlog is not
+    # empty"), so the two seams would have disagreed about the same phase: the
+    # prose envelope blocking while the predicate passed. One computation, one
+    # answer, whichever seam is reading. `receipt.blocking` is still reported,
+    # under its own key, because it is genuine information about the mission --
+    # it is simply not what a WAVE gate decides on.
     payload = {
-        "block": bool(blocked),
-        "message": ("; ".join(blocked) if blocked
+        "block": bool(open_ids),
+        "message": ("; ".join(receipt.blocking) if open_ids
                     else "no derived obligation is open"),
         "capId": "gsd-x-mission-obligations",
-        "open_obligations": [o.identifier for o in obs if o.is_open],
+        "open_obligations": open_ids,
+        "closure_blocking": list(receipt.blocking),
     }
     print(json.dumps(payload, ensure_ascii=False)
           if args.raw else json.dumps(payload, indent=2, ensure_ascii=False))
-    return 0
+    if not args.exit_code:
+        return 0
+    # --exit-code is the GSD `check.predicate` / `command-exit-zero` seam, which
+    # reads the EXIT CODE and nothing else (gate-predicate-evaluator.cjs:86-100:
+    # `exitCode === 0` -> block:false, anything else -> block:true, with the
+    # stdout tail as the gate message). The default path must keep returning 0,
+    # because the OTHER seam -- the prose-dispatched `kind:"gate"` envelope --
+    # reads these fields and treats a non-zero exit as the check having failed.
+    # Two seams, two contracts, one computation; only the exit code differs.
+    #
+    # TWO values were within reach here and only one covers the effect.
+    #
+    # `closure` answers "may this mission close?" -- DENIED for a phase carrying
+    # no obligations at all (measured: every section printed "(none)" and it
+    # still exited 1). Wired to a wave gate it blocks every wave in every
+    # project on the host.
+    #
+    # `receipt.blocking` is narrower and still too wide: it also carries
+    # "explicit backlog is not empty", a mission-CLOSURE condition. Measured on
+    # a mission root with nothing derived, `receipt.blocking` was non-empty
+    # while `open_obligations` was []. Wiring the exit code to it made the GREEN
+    # pole fail -- a wave with no obligations blocked anyway -- which is the
+    # same defect as `closure`, one level in and harder to see.
+    #
+    # The effect this gate authorises is "hold the wave because a derived
+    # obligation is still open". The field that covers exactly that effect is
+    # the open set, so that is what decides the exit code.
+    #
+    # 1 = an obligation is open (the gate blocks on a real verdict).
+    # 2 = the check itself could not run (the gate also blocks, fail-closed,
+    #     but the envelope carries "error" rather than "block" so a human can
+    #     tell a refusal from a breakage).
+    return 1 if payload["open_obligations"] else 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -148,6 +206,10 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--raw", action="store_true")
         p.add_argument("--backlog-empty", action="store_true")
         p.add_argument("--production-reality", default="UNPROVEN")
+        # Defined on every subparser so `args.exit_code` always resolves; only
+        # `check` gives it meaning. Default False keeps every existing caller's
+        # exit code exactly as it was.
+        p.add_argument("--exit-code", action="store_true")
         p.set_defaults(fn=fn)
     args = ap.parse_args(argv)
     return args.fn(args)
