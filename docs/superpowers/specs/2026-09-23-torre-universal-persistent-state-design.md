@@ -144,7 +144,8 @@ instalación verificada «la promesa de captura universal sería ficticia»:
 Al arrancar una misión que toque estado persistente, el Baseline & Policy Plane emite una
 **Mission Baseline Capsule** pequeña:
 
-- baseline heredado de la familia, con generación (`PERSISTENT_STATE-B7`)
+- baseline heredado de la familia, nombrado por su generación (`PERSISTENT_STATE-B0` en la
+  primera rebanada, `B1`, `B2`… conforme el gate del §5 promueva)
 - capabilities activadas, **cada una con su razón**
 - familias de fallo plausibles **para este diff concreto**, no para la familia en abstracto
 - contrato de evidencia por claim (qué prueba exige cada afirmación de «hecho»)
