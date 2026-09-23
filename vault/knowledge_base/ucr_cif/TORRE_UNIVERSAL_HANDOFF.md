@@ -160,8 +160,33 @@ Detalle: `vault/audits/ucr_cif/09_G3_DECISION.md`.
 | **C — HR-NOVELTY 13/13** | **SELLADA** (`4b97909`) — corridas contra el sujeto REAL, no en abstracto |
 | **D — G-3** | **SELLADA** (`60048a0`) |
 | **E — O0 baseline** | **SELLADA** (`f58de7f`) — capturada **antes** de que exista cápsula, que era la única ventana |
-| **F — estado persistido mínimo** | **BLOQUEADA con razón medida** (`51c7645`) — falta elegir la señal de familia |
+| **F — P3 catálogo de familias** | **ENTREGADA** (`3b3ae85` predeclaración → `dd8aee0` scanner) — 42 proyectos, 17 DENTRO / 25 FUERA, ambos polos, drill de mutación con restauración por hash |
+| **F — P2 clasificación de MISIONES** | **ABIERTA** — el scanner clasifica repos, no misiones |
+| **F — conector a `applicability.py`** | **ABIERTA** — nadie consume la etiqueta todavía |
+| **H — UKDL / Completion Standard** | **SELLADA** (`4d06d6f`) — 4 candidatos redactados, **3 rechazados por sinónimos** |
 | E1/E2 descubrimiento de dueño | **CERRADO** (`260e088`, `9d6e6b9`) |
+
+### 7.e El hallazgo transversal de la pasada: el estate son 42 proyectos, no 164
+
+> **164 checkouts colapsan a 42 proyectos distintos. Factor 3,9×. La diferencia son worktrees.**
+
+La primera corrida del scanner dio 118 DENTRO de 164 y su lista estaba dominada por
+`TUA-X-acmf`, `TUA-X-bdci`, `InfinityOps-gscfix`… Quince worktrees de un proyecto aportaban
+quince clasificaciones: no era una distribución sobre el estate sino sobre checkouts.
+
+**`repo_identity.canonical_repo` NO arregla esto, y hace bien** — trata el `.git` de un worktree
+como marcador válido **a propósito** (`identity.py:46-49`) para que cada worktree conserve su
+estado. Correcto para estado-por-repo, equivocado para una población. El colapso exige leer el
+puntero `gitdir:`.
+
+**Consecuencia para todo lo demás:** cualquier tasa por repo calculada sobre checkouts está
+inflada ~4×, **incluidos los 11 ledgers de depósitos FD-07** del §7.d. Son ledgers por checkout.
+
+**Y el suelo de población falló, que fue el sistema funcionando:** declarado 120 sobre la unidad
+equivocada, el barrido salió con `exit 2` en vez de reportar limpio. Se movió a 35 **y se dice que
+se movió**, con la justificación junto a la constante.
+
+Detalle: `15_P3_FAMILY_SCAN_RESULT.md` · `14_P2_PREDECLARATION.md`.
 
 ### 7.b Fase C — veredicto, y el trigger
 
