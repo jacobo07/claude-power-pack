@@ -162,7 +162,10 @@ def main() -> int:
     Path(os.environ[cl.DISABLE_FLAG_ENV]).unlink()
 
     # --- interactive -------------------------------------------------------------------
-    ip = cl.InteractiveClaudeProvider(runs, wall_bound_s=1.0)
+    # 5 s, not 1 s: between dispatch and the first observe this test writes and re-reads
+    # the brief, and on a loaded host that took longer than 1 s -- the epoch had
+    # legitimately expired and V-CLI-WAITS failed 1 run in 3 (measured 2026-09-23).
+    ip = cl.InteractiveClaudeProvider(runs, wall_bound_s=5.0)
     ep.check_provider(ip)
     repo2 = make_repo("gsdx_cl_repo2_")
     s_i = {**spec("t-int", "ep-int", root=repo2, brief_text="an operator does this")}
@@ -172,7 +175,7 @@ def main() -> int:
           "the brief is written where the operator will find it", "no brief on disk")
     check("V-CLI-WAITS", ip.observe(hi).state == ep.OBS_RUNNING,
           "with no receipt yet, the epoch is running", "it did not wait")
-    time.sleep(1.2)
+    time.sleep(5.3)
     obs_i = ip.observe(hi)
     check("V-CLI-EXPIRES", obs_i.state == ep.OBS_ENDED and obs_i.outcome == ep.EXPIRED,
           "past its TTL the epoch ends EXPIRED, not LOST -- nobody died, the window closed",
