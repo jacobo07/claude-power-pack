@@ -59,6 +59,10 @@ START_DEADLINE_S = 300        # launch -> first ack from the launched session
 HANDOFF_DEADLINE_S = 1800     # hand-off requested -> owner's turn ended
 HEARTBEAT_STALE_S = 1800      # RUNNING with no heartbeat -> ask the host
 MAX_REPLACEMENTS = 3          # consecutive unacknowledged launches before HALTED
+# Hand-off wall, % of context used, in the watchdog's own vocabulary. The same narrowed wall
+# /cpp-gsd-long has run on since v2 (crossing at 40 % used), so a worker hands off long
+# before native compaction would fire.
+DEFAULT_WALL = {"snapshot": 35.0, "advisory": 40.0, "rearm": 30.0}
 
 LIVE = "ALIVE"
 DEAD = "DEAD"
@@ -661,8 +665,10 @@ def _arm_worker_marker(rec: dict, session_id: str) -> None:
     data.update({"mission_id": rec["mission_id"], "epoch": rec["epoch"], "mode": rec.get("mode")})
     if rec.get("workstream"):
         data["workstream"] = rec["workstream"]
-    if rec.get("wall"):
-        data["thresholds"] = rec["wall"]
+    # The watchdog reads the wall from the marker's `wall` key
+    # (context-watchdog._thresholds_from_marker); any other key is silently ignored and
+    # the worker would run on the production constants.
+    data["wall"] = rec.get("wall") or dict(DEFAULT_WALL)
     mk._save(path, data)
     lr.ledger_append(session_id, "armed", command=rec["resume_command"], cwd=rec["cwd"],
                      mission_id=rec["mission_id"], epoch=rec["epoch"], via="mission")

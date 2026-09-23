@@ -1164,7 +1164,10 @@ def _run_inner(event: dict) -> dict:
         # never enters this branch at all.
         if not _flag_exists(session_id, RESUME_DONE_FLAG):
             marker = _read_autorun_marker(session_id)
-            if marker:
+            # A mission worker is a background process with no terminal to type into,
+            # and a native (safety-net) compaction continues its turn by itself; the
+            # keystroke resume path is for interactive panes only.
+            if marker and not marker.get("mission_id"):
                 if not _flag_exists(session_id, RESUME_ARMED_FLAG):
                     # C1 (spec exact-target-continuation.md): a low reading is
                     # not a compaction -- a restarted session reads ~17% too.
@@ -1228,6 +1231,26 @@ def _run_inner(event: dict) -> dict:
         if crossing_marker:
             _ledger(session_id, "crossing", used_pct=used_pct,
                     cycles=crossing_marker.get("cycles"))
+
+        # MISSION WORKER (spec mission-continuity.md, Owner decision 2026-09-23): a worker
+        # launched by tools/gsd_mission.py does not compact at its wall -- it hands off
+        # and a FRESH process continues, which is what frees the RAM. No /compact line
+        # is requested and no keystroke is dispatched; the out-of-band supervisor starts
+        # the successor once this turn has ended. The vault checkpoint is still written.
+        if crossing_marker and crossing_marker.get("mission_id"):
+            try:
+                _kclear_equivalent(atomic_write, session_id, used_pct, cwd, transcript_path)
+            except Exception:
+                pass
+            mission = _load_tool("gsd_mission")
+            instruction = (mission.handoff_instruction(crossing_marker, used_pct)
+                           if mission is not None else
+                           f"CONTEXT WALL — {used_pct}% used. Finish and commit the step in "
+                           "progress, then end your response; a fresh session continues.")
+            _ledger(session_id, "handoff_asked", used_pct=used_pct,
+                    mission_id=crossing_marker.get("mission_id"),
+                    epoch=crossing_marker.get("epoch"))
+            return {"decision": "block", "reason": instruction}
 
         # 1. Save vault BEFORE compact (Owner 2a: save then free).
         kclear_paths = _kclear_equivalent(atomic_write, session_id, used_pct,
