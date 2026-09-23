@@ -1,7 +1,8 @@
 # TORRE UNIVERSAL — HANDOFF
 
-**Escrito 2026-09-23.** Autocontenido: una sesión fría continúa desde aquí sin que el Owner
-vuelva a explicar el concepto. Actualizar tras cada unidad sellada, nunca sólo al final.
+**Escrito 2026-09-23. Actualizado 2026-09-23 (pasada R1).** Autocontenido: una sesión fría
+continúa desde aquí sin que el Owner vuelva a explicar el concepto. Actualizar tras cada unidad
+sellada, nunca sólo al final.
 
 ---
 
@@ -11,174 +12,195 @@ vuelva a explicar el concepto. Actualizar tras cada unidad sellada, nunca sólo 
 |---|---|
 | repo | `C:\Users\User\.claude\skills\claude-power-pack` |
 | rama | `feature/knowledge-acquisition` |
-| **HEAD** | **`f893800`** |
-| upstream | `origin/feature/knowledge-acquisition` — **0 adelante / 0 detrás: todo pusheado** |
-| vs `main` | 9 commits por delante, 0 por detrás |
-| rango autoritativo de esta sesión | `dea16d4..f893800` (9 commits) |
-| rutas sucias | **443** |
-| host | 10 % de RAM libre durante toda la sesión |
+| **pin base de la pasada R1** | **`d2351a0`** (estado al recibir el encargo) |
+| rango autoritativo R1 | **`d2351a0..HEAD`** — rango, no cuenta: el commit de este fichero cambiaría cualquier número escrito aquí |
+| rango acumulado | `dea16d4..HEAD` |
+| upstream | `origin/feature/knowledge-acquisition` — **verificar relación antes de empujar; no se empujó en R1** |
+| último commit de contenido R1 | `260e088` (E1/E2), seguido por el commit de este handoff |
+| rutas sucias | **445**, todas ajenas — **cero mission-owned sucias** |
+| worktrees | **7 activos**, incluido `C:\Users\User\Apps\pp-ucr-cif` en `ucr-cif/construction` |
+| host | 4 %–11 % de RAM libre durante toda la pasada |
 
-**Consecuencia operativa de las 443 rutas sucias:** cualquier oráculo ancho (suite completa,
-`tsc` global, lint de repo) es **INCONCLUSIVE** por construcción. Commits con pathspec
-obligatorio, y leer las cabeceras de hunk antes de commitear. Preferir **fichero NUEVO** a
-extender uno compartido — es lo que ha funcionado en toda esta sesión.
+**Consecuencia operativa:** cualquier oráculo ancho (suite completa, `tsc` global, lint de repo)
+es **INCONCLUSIVE** por construcción. Commits con pathspec obligatorio, leer cabeceras de hunk
+antes de commitear, y preferir **fichero NUEVO** a extender uno compartido. El contador de sucias
+se movió 449 → 444 → 445 durante la pasada: hay escritores concurrentes vivos.
 
-**Escritores concurrentes:** hay worktrees activos (`.claude/worktrees/gsd-x/`). `RESUMPTION_FILE.md`
-en la raíz pertenece a **otra misión** (`/cpp-gsd-long`, watchdog/continuación, 2026-09-20).
-**No sobrescribirlo.** Toca maquinaria que esta sesión también tocó — ver §7.
+`RESUMPTION_FILE.md` en la raíz pertenece a **otra misión** (`/cpp-gsd-long`). **No sobrescribir.**
+Este fichero es el dueño durable de la Torre; el pin de la misión de corpus sigue siendo
+`UCR_CIF_RESUMPTION.md`.
 
 ## 2. Qué es esta misión
 
-El Owner lo pidió así, literalmente:
+> *«que por ejemplo, si yo avanzo con QuickLease, la próxima vez que yo pida algo en InfinityOps,
+> se haga con más ingeniería, más cosas tenidas en cuenta, más completitud, sin necesidad de que
+> yo pida cada cosa»*
 
-> *«que por ejemplo, si yo avanzo con QuickLease, la próxima vez que yo pida algo en
-> InfinityOps, se haga con más ingeniería, más cosas tenidas en cuenta, más completitud, sin
-> necesidad de que yo pida cada cosa»*
+La fuente enuncia esa petición literalmente como **Baseline Lift global** (B 90.556): *«InfinityOps
+lo paga una vez. ORCA X lo hereda. KobiiCraft lo hereda. CostaLuz lo hereda. El próximo software
+que todavía no existe lo hereda.»*
 
-En el dataset fuente eso tiene nombre propio: **Constitutive Baseline Ratchet**, y su
-granularidad es **familia de sistema**, no «universal». Diseño aprobado por el Owner (7
-secciones): `docs/superpowers/specs/2026-09-23-torre-universal-persistent-state-design.md`.
+Diseño aprobado y **reconciliado (R1)**:
+`docs/superpowers/specs/2026-09-23-torre-universal-persistent-state-design.md`.
 
-Después llegó un prompt `/ultra plan mode` que eleva la misión a «Universal Tower / civilización
-de ingeniería acumulativa». **Veredicto de modo: PLAN MODE, no ULTRA-PLAN**, justificado por
-medición (§3), no por el tamaño del prompt.
+## 3. Semántica canónica — RESUELTA en R1
 
-## 3. Prompt rancio — comprobado, positivo en dos sitios
+> **B 102.293:** `Baseline Tower Lift = verified capability delta, deduplicated against existing
+> capability state.`
 
-- **`W11`/`W12`: CERO ocurrencias en todo el repo.** El prompt pide preservar una deuda que aquí
-  no existe. No hay nada que preservar y nada que duplicar.
-- **`Gate 25`: UNA ocurrencia**, en `vault/specs/gsd-autonomous-autocompact.md`, sin relación con
-  UCR-CIF. La semántica canónica que el prompt pide recuperar **no existe en este repo**.
+Y la aritmética que separa esfuerzo de ganancia (B 76.176–76.223):
 
-El pin de estado real es `vault/knowledge_base/ucr_cif/UCR_CIF_RESUMPTION.md`. **Bloqueante que
-precedía a este prompt y que el Owner ya resolvió el 2026-09-23: autorizó generar datasets;
-forma de cobertura A (D2A-gated), que era la recomendación en pie.**
+```
+Gross Feature Lift                          1.000
+  − ya cubierto institucionalmente            400   ← HERENCIA, no logro
+  − específico de producto                    200
+  − trade-offs no transferibles               100
+  = Marginal Institutional Lift               300   ← lo único que sube la Torre
+```
 
-## 4. Lo que quedó FALSADO
+Más `Direct Marginal` · `Transitive` · **`Compositional`** · `Meta-Lift`, donde el corpus dice
+explícitamente que el Compositional **puede superar al Direct**.
 
-Cada una cambió una decisión. Ninguna es opinión.
+**No hay un conjunto fijo de «ocho Lifts».** Hay ≥4 descomposiciones (8 en B 90.491, **6 en
+B 92.130 sobre el mismo sujeto**, 9 en B 101.803, más la aritmética). Fijar el diseño sobre «los
+ocho» habría elevado el ejemplo de UNA absorción a ontología de la institución. Estructural entre
+las tres listas: **Direct Capability · Failure-Immunity · Skill · Metrology · Meta-Engineering**.
 
-1. **El corpus canónico es el de 167.842 líneas** (`…Fabric 1 (1).txt`, 19/09), y **contiene
-   estrictamente** al de 75.350 sobre el que se hizo la Fase 1: 37.947/37.947 = 100,0 %, mapeo
-   monótono hasta la línea 75.350 de B. Son el mismo export, extendido.
-   → **El inventario de Fase 1 cubre el 46,4 % del corpus.** 1.394 conceptos, 336 leyes y 71
-   sistemas top-level son **SUELOS**, no medidas. «28 sistemas espina» **no es la población**.
-   → **Los ocho *Lifts* de la Torre Universal están en la línea 89.813, dentro de la mitad que
-   nadie ha inventariado.** Ninguna pasada llegó: Fase 1 paró en 75.350, la lectura del 09-23 en
-   40.200. Prueba: `vault/audits/ucr_cif/04_SOURCE_RECONCILIATION.md`.
-2. **El UBC NO hay que construirlo.** `modules/capability_runtime/applicability.py` ya lo posee
-   —cinco puertas deterministas antes de cualquier score, `NOT_APPLICABLE`, anti-triggers,
-   activación graduada—. El delta real es sólo el artefacto persistido y el Project/Mission Genome.
-3. **El Resident Kernel no está ausente: está DISPERSO** — 4.393 hits / 483 ficheros, `hooks/` y
-   `tools/` cargan el mecanismo, sin módulo propietario.
-4. **Q4 de HR-NOVELTY-001 apunta a `EXTEND_EXISTING_OWNER`.** El borde
-   `prompt → MissionContext → applicability → inyección ambiente` **ya está vivo y registrado**.
-   Prueba leída, no citada: `vault/audits/ucr_cif/07_Q4_EXISTING_OWNER.md`.
-5. **`continuation_transport` NO está «sin ejercitar».** Funciona: 14 `resume_dispatched`,
-   9 `resume_confirmed`, y dos compacts entregados el 2026-09-23.
-6. **Mi propia afirmación «26 peticiones de /compact, 0 entregas jamás» era FALSA.** El ledger
-   sólo registraba los fallos. Ver §7.
+**Sin escalar, y lo dice la fuente** (B 92.075): la torre es una **proyección del Capability
+Baseline Graph**; la altura se deriva del Marginal Institutional Lift, nunca al revés.
 
-## 5. Dueños identificados
+Detalle con procedencia línea a línea: `vault/audits/ucr_cif/08_TOWER_SEMANTIC_RECOVERED.md`.
+
+## 4. Lo FALSADO — acumulado
+
+De pasadas anteriores, todo sigue en pie:
+
+1. El corpus canónico es el de **167.842 líneas** y contiene **estrictamente** al de 75.350
+   (prefijo byte a byte, 100,0000 %). Fase 1 cubre el **46,4 %** de las líneas no vacías. 1.394
+   conceptos / 336 leyes / 71 sistemas son **SUELOS**. «28 sistemas espina» no es la población.
+2. **El UBC no hay que construirlo** — `modules/capability_runtime/applicability.py`.
+3. **El Resident Kernel no está ausente: está DISPERSO** (4.393 hits / 483 ficheros).
+4. **Q4 → `EXTEND_EXISTING_OWNER`.**
+5. `continuation_transport` **no** está sin ejercitar.
+6. «26 peticiones de /compact, 0 entregas» era **FALSO** — observabilidad asimétrica.
+
+Añadido en R1:
+
+7. **`applicability.py` tiene SEIS puertas, no cinco**, y G-4 está en el código, no era hipótesis:
+   la puerta 2 es `if ctx.resolved_owners and …`, así que **un conjunto vacío la DESACTIVA y uno
+   parcial la convierte en veto universal**.
+8. **Construction Return y Composición SÍ tienen dueño** (§5). Las filas `NO IDENTIFICADO` eran
+   ceros acotados por nombre.
+9. **`gsd_x_tier`, el dueño vivo del Project Birth, se abandona en producción** entre 215 y ~408
+   de 639 abandonos de su cadena.
+
+### 4.b Falsaciones contra mí mismo, en esta pasada
+
+Cinco, todas contra evidencia que resultó correcta, todas por medir con un instrumento más pobre
+que el que ya estaba en el expediente:
+
+- `Get-Content | Measure-Object -Line` dio **81.779** en vez de 167.842 (puntúa la línea vacía
+  como cero). Estuve a una frase de reportar como falsado un handoff correcto.
+- Declaré falsado el puntero `89.813` tras leer **su primera línea**. El audit citaba un **rango**
+  89.813–90.636 y los Lifts están en 90.491, dentro.
+- Llamé «corrección» a 44,89 % vs 46,4 %: son dos denominadores, ambos correctos.
+- Un regex de agrupado capturó el **timestamp** en vez del nombre de cadena.
+- Dije «NO DRILL» leyendo el árbol equivocado; el drill existe en `~/.claude/hooks/tests/`.
+
+**La ley de la misión aplica a quien la ejecuta.**
+
+## 5. Dueños — actualizado en R1
 
 | concepto de la Torre | dueño en disco | estado |
 |---|---|---|
-| Applicability / UBC | `modules/capability_runtime/applicability.py` | **OWNED** |
-| Project Birth (inyección ambiente) | `modules/gsd_x/tier.py` + `hooks/gsd_x_tier.js`, registrado en `hooks/hook-dispatcher.js:526` | **OWNED y vivo** |
-| identidad de repo para estado persistido | `modules/repo_identity/identity.py` | **OWNED — usar, no reinventar** |
-| gate de novedad | `modules/spec_gate/gate.py:287` | **OWNED** — pero ver §6 |
-| Construction Return | — | **NO IDENTIFICADO** |
-| composición / síntesis | — | **NO IDENTIFICADO** |
-| semántica canónica de Torre | — | **NO EXISTE** |
+| Applicability / UBC | `modules/capability_runtime/applicability.py` | **OWNED** — verificado en fuente |
+| Project Birth (inyección ambiente) | `modules/gsd_x/tier.py` + `hooks/gsd_x_tier.js`, registrado en `hook-dispatcher.js:526` | **OWNED y vivo — pero su ENTREGA falla bajo carga** |
+| identidad de repo | `modules/repo_identity/identity.py` (`canonical_repo:56`, `repo_key:92`) | **OWNED — usar, no reinventar** |
+| gate de novedad | `modules/spec_gate/gate.py:287` | **OWNED** — trigger acotado por nombre |
+| **Construction Return** | **`modules/fable_distillation/fd_07_flywheel.py`** | **`EXTEND`** |
+| **composición / síntesis** | **`modules/capability_runtime/`** (`compile_stack`) | **`CONNECT`** |
+| semántica canónica de Torre | — (existe en el corpus, B 102.293) | **sin dueño en disco** |
 
-D2A completo de 28 sistemas espina (10 OWNED · 8 EXTEND · 6 CREATE candidate · 4 UNRESOLVED):
-`vault/audits/ucr_cif/02_D2A_OWNERSHIP_AUDIT.md` — **preexistente, reutilizado, no rehecho.**
+**FD-07 implementa la definición canónica cláusula por cláusula**: `classify_delta` = capability
+delta; Jaccard contra depósitos previos = deduplicated; y `portability_proven` **siempre `False`,
+`# always False here -- honest`** = la cláusula `verified`, retenida a propósito.
 
-## 6. El hallazgo que más pesa
+**EL DELTA REAL, y es pequeño:** Construction Return **escribe**; Project Birth **lee**; **no hay
+conector**. Nadie convierte un depósito `NEW`/`STRONGER` en una entrada de baseline por familia
+que `applicability.py` consuma al arrancar la siguiente misión.
 
-**El trigger de HR-NOVELTY-001 está acotado por el NOMBRE, no por el mecanismo.** Dispara con
-`fabric`, `operating system`, `kernel`, `compendium`. La descripción funcional del Constitutive
-Baseline Ratchet lo atraviesa entera: `applies=False`, `matched=None`, con control positivo que
-prueba el trigger vivo (`matched='fabric'`).
+Detalle: `vault/audits/ucr_cif/10_E1_E2_OWNER_DISPOSITION.md`.
 
-**Por tanto `applies=False` sobre el Ratchet es UNKNOWN, no inocencia.** No puede reportarse como
-«el gate no aplicaba». Detalle: `vault/audits/ucr_cif/06_NOVELTY_GATE_TRIGGER.md`.
+## 6. G-3 — DECIDIDO en R1
 
-Es la **tercera instancia del mismo defecto en un día** —ledger de compact, sondeo del UBC en el
-D2A, y este trigger—. Los tres produjeron un cero que parecía hallazgo. `Zero cannot fall`.
+815 abandonos reales de cadena en 8 días, leídos del log de producción (no drill: el host estaba
+al 0,2–9,6 % y el instrumento habría consumido el recurso que mide).
 
-## 7. Trabajo colateral, no de la Torre — CERRADO
+- `UserPromptSubmit-chain`: **639** abandonos · `SessionStart-chain`: **69** (⇒ **no es puerto
+  seguro**) · RAM libre al abandonar: mediana 8,2 %, **máximo 28,2 %** (no es sólo inanición).
+- **`gsd_x_tier` nombrado en 215 de 639 (33,6 %)**, y es un **suelo**: la rama `before pool`
+  skippeó 965 slots sin nombrar ninguno.
 
-El Owner reportó que la línea `/compact` no se tecleaba sola. Causa medida: **observabilidad
-asimétrica** — los tres caminos de fallo del daemon ledgereaban, los dos de éxito no, así que el
-ledger sólo podía responder «nunca».
+**Decisión: `A′ + C`.** El productor **no corre en ninguna cadena con deadline de latencia** y
+persiste; `UserPromptSubmit` **sólo lee**; y la degradación es legible **por el consumidor**, no
+sólo por `logError`. Rechazadas D, B (el coste ligante son **seis spawns**, no lógica de hook —
+IC-009) y A ingenua.
 
-- Arreglado (`f6fe4ab`): `compact_dispatched` + `foreground_dispatched`, eventos distintos a
-  propósito.
-- Gate `tools/test_autocompact_ledger_symmetry.py` 4/4 — fija la **clase**, no la línea.
-  Encontró en su primera corrida un segundo camino sin ledger que la lectura manual no vio.
-- Mutación → 3/4 rojo en la aserción correcta; restauración SHA-256 idéntica.
-- **PENDIENTE DEL OWNER (HR-001):** `vault/staged/2026-09-23_deploy_autocompact_ledger.md`.
-  El fichero vivo está bajo `~/.claude/hooks/`; el agente no lo escribe. Medido: el espejo vivo
-  tiene **cero líneas propias**, así que copiar es seguro.
-- **ABIERTO:** por qué falló *esa* entrega concreta —
-  `vault/backlog/2026-09-23_autocompact-withdrawal-race.md`, con contraevidencia contra la
-  hipótesis y dos sujetos reales del mismo día para contrastar.
+Estados obligatorios: `AVAILABLE` · `NOT_APPLICABLE` · `EMPTY_BY_EVIDENCE` · `PRODUCER_FAILURE` ·
+`STALE` · `UNKNOWN`. Seis mundos, seis observables ⇒ **O4 ya puede fallar**.
 
-**Cruce importante:** `RESUMPTION_FILE.md` (misión `/cpp-gsd-long`) ya midió parte de esta
-maquinaria — `compaction_unobserved`, el ack del inbox, `resume_confirmed`, y un bloqueante F5:
-*«no user row records the submission»*. **Leerlo antes de tocar la carrera de la retirada**, o se
-re-deriva lo que ya está medido.
+Detalle: `vault/audits/ucr_cif/09_G3_DECISION.md`.
 
-## 8. Puertas — estado real
+## 7. Puertas — estado real tras R1
 
-Las cuatro condiciones de sellado del propio prompt (§CXXVIII): **0 de 5.** Nada de la Torre
-construido. Semántica de Torre, Project Birth, Construction Return, síntesis generativa e
-integración: todas abiertas.
+| fase | estado |
+|---|---|
+| **A — reconciliación del spec** | **SELLADA** (`2512bb3`, `91d551f`) |
+| **B — semántica de la Torre** | **PARCIAL** — lo crítico recuperado (`955c3b4`); el resto del sufijo sin leer |
+| **C — 12 preguntas HR-NOVELTY** | **NO INICIADA** |
+| **D — G-3** | **SELLADA** (`60048a0`) |
+| **E — O0 baseline** | **NO INICIADA** — y **caduca**: hay que capturarla antes de que la cápsula exista |
+| **F — estado persistido mínimo** | **NO INICIADA** (correctamente: E es precondición) |
+| E1/E2 descubrimiento de dueño | **CERRADO** (`260e088`) |
 
-- **Fundación (16 ítems): ~11.** Abiertos **6** (semántica canónica), **9** (Project Challenge vs
-  Tower Lift), **12** y **13** (dueños de return y composición).
-- **Project Birth: 0/9 · Construction Return: 0/8 · Síntesis generativa: 0/14.**
-- **Tower Score: N/A** — el Owner lo dejó fuera; el prompt lo permite.
-- **Benchmark KSEIP: no iniciado**, al backlog por decisión del Owner.
+Tower Score: **N/A por decisión del Owner, y el corpus coincide.** KSEIP: backlog.
 
-Auditoría adversarial de fase 4, **7 huecos (2 CRITICAL)**:
-`vault/audits/ucr_cif/05_PHASE4_PLAN_AUDIT.md`. Los dos que bloquean:
+## 8. Siguientes tres acciones
 
-- **G-1** — O3 crearía un segundo dueño de un efecto vivo. *(Confirmado por §4.4.)*
-- **G-3** — O4 es **infalsable** hoy: `UserPromptSubmit-chain` tiene deadline de 3.000 ms
-  (`hook-dispatcher.js:758`), `gsd_x_tier` es advisory, y en host cargado se cae por diseño. Una
-  cápsula abandonada y una que no tenía nada que decir son el mismo observable.
-- **G-7** — falta una **O0**: CRR y RFR son tasas sobre una población; una sola misión no mueve
-  una tasa, y el suelo «sin cápsula» hay que capturarlo **antes** de que la cápsula exista.
+1. **O0 antes que nada que emita cápsula.** CRR y RFR son tasas sobre una población; una misión no
+   mueve una tasa; y el suelo «sin cápsula» **desaparece** en cuanto el trinquete corre. Definir
+   población, denominador, ventana y contaminación. Sin O0, cualquier O4 es un evento, no una tasa.
+2. **El conector FD-07 → `applicability.py`.** Es el delta real de la Torre y es pequeño: un
+   depósito `NEW`/`STRONGER` debe poder convertirse en entrada de baseline por familia que
+   `MissionContext` consuma. **Ojo a G-4**: alimentar `held_scopes`/`resolved_owners` con un genoma
+   parcial **invierte** la aplicabilidad. Por defecto: score y `available_evidence`; campo ausente
+   se **omite**, nunca se envía vacío.
+3. **Las 12 preguntas de HR-NOVELTY**, por mecanismo y con control positivo. Q4 ya está respondida
+   y es la que más pesa contra crear.
 
 ## 9. Decisiones del Owner ya selladas
 
 Canónico = fichero de 167k · datasets autorizados, cobertura forma A · HR-NOVELTY-001 clasifica
 pero no detiene · Tower Score escalar **fuera** · la misión Torre **absorbe** la rebanada
-PERSISTENT_STATE (la rebanada es el vehículo de prueba, no un proyecto paralelo) · Hidden
-Invention / KSEIP al backlog · todo lo fuera de alcance al backlog, no al descarte.
+PERSISTENT_STATE · Hidden Invention / KSEIP al backlog · fuera de alcance al backlog, no al
+descarte.
 
-## 10. Siguientes tres acciones
+## 10. Deuda abierta, nombrada
 
-1. **Revisar el spec aprobado contra §4.** Tres de sus premisas están falsadas (UBC owned, kernel
-   disperso, Q4 → EXTEND). Construir sobre él tal cual sería construir sobre premisas muertas.
-   **No es retroceso: es §IX y §XCI del prompt funcionando.**
-2. **Cerrar las 12 preguntas restantes de HR-NOVELTY-001** con barrido descubierto por mecanismo,
-   nunca por nombre. Q4 ya está respondida y es la que más pesa contra crear.
-3. **Decidir G-3 antes de tocar O4.** Si la cápsula es premisa de misión, no puede vivir en el
-   carril advisory de una cadena que se pasa de deadline en cada prompt frío. Sin esa decisión,
-   cualquier prueba de O4 es infalsable y por tanto no es prueba.
-
-**Aviso de documentación que miente:** `hook-dispatcher.js:525` afirma *"against this chain's
-11500 ms deadline"*. La deadline viva son **3.000 ms** (`:758`). El comentario está rancio por un
-factor de casi 4, justo al lado del registro donde alguien iría a verificarlo.
+- **`hooks/tests/` diverge**: 11 ficheros en el repo, 48 en `~/.claude/hooks/tests/`, y el repo no
+  tiene `fixtures/`. `hook-dispatcher.js:540` documenta un drill que **en el repo no se puede
+  ejecutar**. Qué árbol es el dueño canónico es decisión del Owner.
+- **Despliegue pendiente (HR-001)**: `vault/staged/2026-09-23_deploy_deadline_abandon_names.md`
+  y `vault/staged/2026-09-23_deploy_autocompact_ledger.md`. El agente no escribe bajo
+  `~/.claude/hooks/`.
+- **Carrera de la retirada del auto-compact**: `vault/backlog/2026-09-23_autocompact-withdrawal-race.md`.
+- **Solapamiento E1∩E2** (87 ficheros) sin desambiguar.
+- **`liveness/reachability.py` no se ha corrido** en esta pasada.
 
 ## 11. Instrucción de arranque
 
-Leer §1 (estado del árbol), §4 (lo falsado) y §8 (puertas) antes de proponer ninguna
-construcción. Después ejecutar la acción 1 de §10.
+Leer §1 (árbol), §4 (falsado, **incluido 4.b**), §5 (dueños) y §7 (puertas) antes de proponer
+ninguna construcción. Después ejecutar la acción 1 del §8.
 
-**No generar ningún artefacto de la Torre hasta que el spec esté revisado contra §4.** Y antes de
-afirmar cualquier ausencia en este repo: buscar el **mecanismo**, nunca el acrónimo. Ese error ya
-ocurrió tres veces en un solo día, una de ellas en el gate que existe para evitarlo.
+**Antes de afirmar cualquier ausencia: buscar el MECANISMO, nunca el acrónimo.** Ese error ya
+ocurrió **ocho veces** documentadas, cinco de ellas en la pasada que escribió este párrafo.
