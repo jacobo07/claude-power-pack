@@ -373,30 +373,52 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
 
 
 # --------------------------------------------------------------------------- effects
-BG_LINE_RE = re.compile(r"backgrounded\s*\W+\s*([0-9a-f]{8})\b")
+ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+IDLE_LAUNCH_MARK = "send a prompt to start"   # host's words for a worker that got no prompt
 CARD_MAX_BYTES = 8000            # claude-code-handoff measured ~9 KB SessionStart truncation
 STOP_WAIT_S = 90                 # `claude stop` is asynchronous: the pid outlives the verb
 AUTOCOMPACT_SAFETY_NET = "600k"  # native compaction only if the hand-off itself failed
 
 
+def worker_name(rec: dict) -> str:
+    return f"{rec['mission_id']}-e{rec['epoch']}"
+
+
+def parse_launch(out: str, name: str) -> tuple[str | None, bool]:
+    """(bg_id, started_idle) from the launcher's stdout. The id is anchored to the name WE
+    passed with -n, never to "an 8-hex word somewhere". W8 measured two shapes:
+    `backgrounded · <id> · <name>` and `<id> · <name> (idle — send a prompt to start)`,
+    both wrapped in ANSI colour codes."""
+    text = ANSI_RE.sub("", out or "")
+    m = re.search(rf"\b([0-9a-f]{{8}})\W+{re.escape(name)}\b", text)
+    return (m.group(1) if m else None), IDLE_LAUNCH_MARK in text
+
+
 def worker_argv(rec: dict, prompt: str) -> list[str]:
     """The launch command. `--bg` manages the session id (W0 E4) and does not inherit the
-    launcher's environment (E3), so identity comes back on stdout (E5), nowhere else."""
+    launcher's environment (E3), so identity comes back on stdout (E5), nowhere else.
+
+    ORDER IS LOAD-BEARING. `--add-dir <directories...>` and `--allowedTools <tools...>` are
+    variadic: placed last, they swallowed the prompt as one more value and the worker
+    started idle (W8, measured). So the variadic options come first and a non-variadic
+    option (`--autocompact N`) sits between them and the prompt -- the exact shape W0
+    launched successfully."""
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
-    argv = [exe, "--bg", "-n", f"{rec['mission_id']}-e{rec['epoch']}",
-            "--autocompact", rec.get("autocompact") or AUTOCOMPACT_SAFETY_NET]
-    mode = rec.get("permission_mode")
-    if mode:
-        argv += ["--permission-mode", mode]
+    argv = [exe, "--bg", "-n", worker_name(rec)]
     for tool in rec.get("allowed_tools") or []:
         argv += ["--allowedTools", tool]
     for d in rec.get("add_dirs") or []:
         argv += ["--add-dir", d]
+    mode = rec.get("permission_mode")
+    if mode:
+        argv += ["--permission-mode", mode]
+    argv += ["--autocompact", rec.get("autocompact") or AUTOCOMPACT_SAFETY_NET]
     return argv + [prompt]
 
 
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
-                  runner=None, now: float | None = None, note: str | None = None) -> dict:
+                  runner=None, now: float | None = None, note: str | None = None,
+                  stop_runner=None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     Claim-before-launch is what makes a duplicate supervisor harmless: the loser
@@ -428,12 +450,21 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         rc = r.returncode
     except Exception as exc:  # the launch itself could not happen
         out, rc = f"{type(exc).__name__}: {exc}", None
-    m = BG_LINE_RE.search(out)
-    if rc != 0 or not m:
+    bg_id, started_idle = parse_launch(out, worker_name(rec))
+    detail = ANSI_RE.sub("", out).strip()[-300:]
+    if rc != 0 or not bg_id or started_idle:
+        why = "worker started WITHOUT its prompt" if (bg_id and started_idle) else "launch refused"
         lr.ledger_append(mission_id, "launch_failed", mission_id=mission_id, epoch=epoch, rc=rc,
-                         detail=out.strip()[-300:])
-        return {"ok": False, "epoch": epoch, "detail": out.strip()[-300:]}
-    bg_id = m.group(1)
+                         bg_id=bg_id, why=why, detail=detail)
+        if bg_id and started_idle:
+            # An idle worker is "armed but never started" in its purest form: stop it, so it
+            # holds no RAM and can never be mistaken for the run.
+            try:
+                (stop_runner or (lambda a: subprocess.run(a, capture_output=True, timeout=120)))(
+                    [os.environ.get("CPP_CLAUDE_EXE") or "claude", "stop", bg_id])
+            except Exception:
+                pass
+        return {"ok": False, "epoch": epoch, "bg_id": bg_id, "why": why, "detail": detail}
     rec = transition(mission_id, expect_epoch=epoch, expect_state=LAUNCHING, event="launched",
                      now=now, pending={**rec["pending"], "bg_id": bg_id})
     return {"ok": True, "epoch": epoch, "bg_id": bg_id}

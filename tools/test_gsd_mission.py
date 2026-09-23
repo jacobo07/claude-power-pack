@@ -165,6 +165,20 @@ def main() -> int:
         calls.append(argv)
         return R("backgrounded · 1a2b3c4d · m-l-e1\n  claude agents  list sessions")
 
+    # the two stdout shapes measured live (W8), ANSI codes included
+    real_idle = ("\x1b[36ma554ff0e\x1b[39m \u00b7 m-130c7e665774-e1\x1b[2m (idle \u2014 send a prompt "
+                 "to start)\x1b[22m\n\x1b[2m  claude agents             list sessions\x1b[22m")
+    real_ok = "backgrounded \u00b7 \x1b[36m0b75ac7f\x1b[39m \u00b7 mc-ralph-1\n"
+    check("V-MC-PARSE-REAL-IDLE", gm.parse_launch(real_idle, "m-130c7e665774-e1") == ("a554ff0e", True))
+    check("V-MC-PARSE-REAL-BACKGROUNDED", gm.parse_launch(real_ok, "mc-ralph-1") == ("0b75ac7f", False))
+    check("V-MC-PARSE-OTHER-NAME-REFUSED", gm.parse_launch(real_ok, "someone-else") == (None, False))
+    argv = gm.worker_argv({"mission_id": "m", "epoch": 1, "allowed_tools": ["Read", "Edit"],
+                           "add_dirs": ["C:/x"], "permission_mode": "acceptEdits"}, "/mc-task")
+    check("V-MC-ARGV-PROMPT-NOT-AFTER-VARIADIC",
+          argv[-1] == "/mc-task" and argv[-3] == "--autocompact"
+          and max(i for i, a in enumerate(argv) if a in ("--add-dir", "--allowedTools")) < len(argv) - 4,
+          str(argv))
+
     gm.create(TMP, "/gsd-autonomous --from 2", mission_id="m-l", now=NOW)
     res = gm.launch_worker("m-l", expect_epoch=0, expect_state=gm.PREPARED, reason="t",
                            runner=runner_ok, now=NOW)
@@ -239,7 +253,7 @@ def main() -> int:
 
     def launch_run(argv, cwd):
         launches.append(argv)
-        return R("backgrounded · 9e9e9e9e · x")
+        return R(f"backgrounded · 9e9e9e9e · {argv[argv.index('-n') + 1]}")
 
     def fresh(mid):
         for p in Path(TMP).glob("gsd-mission-*.json"):
