@@ -277,6 +277,13 @@ function Send-Enter($flag, $why) {
     } else {
         [System.Windows.Forms.SendKeys]::SendWait($keys)
         Log "SENT flag=$($flag.file.Name) leaf=$($flag.leaf) why=$why$what"
+        # Its own event, never merged with the extension path. This is the
+        # FOREGROUND send: it reaches whichever window has focus, which on
+        # 2026-09-18 was a session that had not asked for anything. A delivery
+        # whose target is presentation rather than identity is the one most worth
+        # a durable record, and it was the one with none. Merging the two names
+        # would leave the ledger unable to say which path typed.
+        Write-LedgerRow $flag.sid 'foreground_dispatched' "legacy foreground SendKeys typed into the FOCUSED window (CPP_LEGACY_FOREGROUND_SENDKEYS=1); why=$why"
     }
     Remove-Item -LiteralPath $flag.file.FullName -Force -ErrorAction SilentlyContinue
 }
@@ -404,6 +411,18 @@ function Poll-Inbox($flags) {
                 $ent = if ($null -ne $ack.enters) { [string]$ack.enters } else { '<none>' }
                 $at = if ($ack.arg_tail) { [string]$ack.arg_tail } else { '<none>' }
                 Log "SENT via=extension sid=$($e.sid) terminal=[$($ack.terminal)] window=[$($ack.window_cwd)] enters=$ent arg_tail=[$at]"
+                # The ledger row is not a duplicate of the log line. Every FAILURE
+                # path here ledgers (refused x2, withdrawn) and this success path
+                # did not, so the ledger was structurally incapable of showing a
+                # compact that worked: it could only ever answer "never delivered".
+                # Measured 2026-09-23 -- a query for compact outcomes returned 26
+                # requests and 0 deliveries and was believed, while this daemon's
+                # own log held two SENT rows from the same day. A zero bounded by
+                # the instrument's vocabulary is UNKNOWN, not evidence.
+                # The event name mirrors resume_dispatched deliberately: one query
+                # over the ledger must see both kinds, or the next reader repeats
+                # the same wrong conclusion.
+                Write-LedgerRow $e.sid 'compact_dispatched' "terminal inbox delivered via extension; terminal=[$($ack.terminal)] enters=$ent"
                 foreach ($fl in $mine) { Remove-Item -LiteralPath $fl.file.FullName -Force -ErrorAction SilentlyContinue }
                 continue
             }
