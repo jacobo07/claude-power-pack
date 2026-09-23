@@ -94,9 +94,15 @@ Step 2 exits 2 with `REFUSED: <reason>` and arms nothing when:
 When the root `.planning/` milestone belongs to another session's track, run the new
 mission as a GSD workstream instead of replacing that milestone:
 
+> ⛔ **Never `workstream.create` in a repo still in flat mode.** Measured 2026-09-23: on a flat
+> `.planning/` it *migrates* the root `ROADMAP.md`, `STATE.md`, `REQUIREMENTS.md` and `phases/`
+> into `workstreams/default/` -- every other pane's milestone vanishes from the root (git: `D`
+> on all of them). Create the directory by hand; `workstream.set` needs only that it exists.
+> With the root left flat, a session with no pointer still sees the root milestone.
+
 ```powershell
 $n = (Get-Command node).Source; $gt = "$env:USERPROFILE\.claude\gsd-core\bin\gsd-tools.cjs"
-& $n $gt query workstream.create <name> --raw --cwd .   # .planning/workstreams/<name>/
+New-Item -ItemType Directory -Force .planning\workstreams\<name>\phases   # NOT workstream.create -- see the warning above
 & $n $gt query workstream.set <name> --raw --cwd .      # session-local: keyed by CLAUDE_CODE_SESSION_ID
 # seed its STATE.md / ROADMAP.md (GSD phases) with the mission, then:
 & $py "$pp\tools\gsd_autorun_marker.py" --write --session $env:CLAUDE_CODE_SESSION_ID `
