@@ -1,0 +1,26 @@
+{
+  "repos_visited": 42,
+  "classified_in": 17,
+  "classified_out": 25,
+  "both_poles": true,
+  "predeclared_met": true,
+  "in_repos": [
+    "Club Náutico",
+    "CostaLuz Lawyers",
+    "FIFA 11 Mod",
+    "GEO-audit",
+    "InfinityOps",
+    "Internal SaaS Bootstrap Engine",
+    "Jacobo",
+    "KobiiSpy",
+    "LaptOps",
+    "SalesTrainer",
+    "Software Lab OS",
+    "TUA-X",
+    "VintOps",
+    "_tuax_wiz_deploy",
+    "infinityops-mail-studio",
+    "nexumops-project",
+    "nexumops-saas"
+  ]
+}
