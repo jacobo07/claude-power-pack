@@ -230,6 +230,23 @@ def observable_evidence(root: Path | None = None) -> list:
 
     Anything NOT checkable from a prompt and a directory stays absent, and the
     ABSTAIN branch is the designed consequence of that absence.
+
+    A PERSISTED TOWER CAPSULE IS SUCH A FACT, which is why it is read here and
+    nowhere else. The file either exists for this repo, is fresh, and says
+    AVAILABLE -- or it does not, and contributes nothing. That is an
+    observation, not an assumption, so it satisfies this function's own
+    contract rather than bending it.
+
+    Two bounds, both deliberate:
+
+    * It contributes ONLY to available_evidence. Adding evidence can unblock a
+      capability and can never invert applicability. `held_scopes` and
+      `resolved_owners` CAN invert it -- `applicability.py:146` disables its
+      gate on an empty set and turns a partial one into a universal veto -- so
+      the capsule never touches them (G-4).
+    * It is a file read, never a spawn. The producer runs out of band, because
+      815 measured chain abandonments showed there is no safe hook lane for it
+      (vault/audits/ucr_cif/09_G3_DECISION.md).
     """
     root = root or Path.cwd()
     found = []
@@ -241,6 +258,18 @@ def observable_evidence(root: Path | None = None) -> list:
             found.append("tests")
     except Exception:                                 # noqa: BLE001
         return []
+
+    # Inherited institutional maturity. Its own try/except on purpose: a capsule
+    # that cannot be read must cost this prompt NOTHING, not even the two tokens
+    # already established above. With no capsule the result is byte-identical to
+    # the behaviour that shipped before this line existed.
+    try:
+        from modules.tower.capsule import evidence_tokens
+        for token in evidence_tokens(str(root)):
+            if token not in found:
+                found.append(token)
+    except Exception:                                 # noqa: BLE001
+        pass
     return found
 
 

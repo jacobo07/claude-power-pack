@@ -25,7 +25,11 @@ for p in (_PP_ROOT, _HERE):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-import tower_capsule as tc  # noqa: E402
+from modules.tower import capsule as tc  # noqa: E402
+
+# The module under test, for the G-4 source assertion below. Derived, never a
+# second literal: if the implementation moves again this follows it.
+_MODULE_SRC = os.path.abspath(tc.__file__)
 
 _PASS = 0
 _FAIL = 0
@@ -152,8 +156,8 @@ def main() -> int:
                "a broken producer must not read as an empty baseline")
 
         # --- G-4: the capsule must never touch the gating fields ------------
-        src = open(os.path.join(_HERE, "tower_capsule.py"), "r",
-                   encoding="utf-8").read()
+        with open(_MODULE_SRC, "r", encoding="utf-8") as fh:
+            src = fh.read()
         emits_gates = ('"held_scopes"' in src or "'held_scopes'" in src
                        or '"resolved_owners"' in src or "'resolved_owners'" in src)
         _check("V-TOWER-G4-EVIDENCE-ONLY", not emits_gates,
