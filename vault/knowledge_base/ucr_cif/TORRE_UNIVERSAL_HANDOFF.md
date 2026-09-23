@@ -159,17 +159,44 @@ Detalle: `vault/audits/ucr_cif/09_G3_DECISION.md`.
 | **B — semántica de la Torre** | **PARCIAL** — lo crítico recuperado (`955c3b4`); el resto del sufijo sin leer |
 | **C — 12 preguntas HR-NOVELTY** | **NO INICIADA** |
 | **D — G-3** | **SELLADA** (`60048a0`) |
-| **E — O0 baseline** | **NO INICIADA** — y **caduca**: hay que capturarla antes de que la cápsula exista |
-| **F — estado persistido mínimo** | **NO INICIADA** (correctamente: E es precondición) |
-| E1/E2 descubrimiento de dueño | **CERRADO** (`260e088`) |
+| **E — O0 baseline** | **SELLADA** (`f58de7f`) — capturada **antes** de que exista cápsula, que era la única ventana |
+| **F — estado persistido mínimo** | **NO INICIADA** (correctamente: E era precondición) |
+| E1/E2 descubrimiento de dueño | **CERRADO** (`260e088`, `9d6e6b9`) |
 
 Tower Score: **N/A por decisión del Owner, y el corpus coincide.** KSEIP: backlog.
 
+### 7.a O0 — el suelo, un renglón por plano
+
+- **P1 aplicabilidad ambiente:** 927 juicios / 4,18 días · 450 suelo · 472 informativo ·
+  **50,9 % informativo** · ambos polos presentes.
+- **P3 censo de juicios FD-07:** 5.074 turnos · **26.183 hallazgos** · 221 depositados
+  (**0,8 %**) · **25.962 deduplicados (99,2 %)** · 0 descartados.
+- **Contaminación declarada:** el suelo **no** es «sin tratamiento». Aplicabilidad ambiente y
+  flywheel ya corren; el flywheel además **sólo en sesiones frontier** (`PP_FRONTIER_SESSION=1`).
+- **CRR / RFR / BIR: NO capturables hoy.** Cuentan *construcciones de una familia*, y **no existe
+  clasificador de familia**. Una tasa sin denominador no se reporta. Definiciones canónicas
+  exactas recuperadas en B 27.573–27.611 — **dentro del 46,4 % ya inventariado**; no hacía falta
+  leer el sufijo, hacía falta mirar. **BIR** (Baseline Inheritance Rate) no aparecía en ningún
+  documento de esta misión.
+
+**Corrección a §5, importante.** El ledger de depósitos marca `NEW 215/215`, lo que leído solo
+diría que la cláusula `deduplicated` no disparó jamás. **Es falso.** `fd_07_flywheel.py:336-344`
+hace `continue` en `DUP` y en `DISCARD`, así que el ledger registra **supervivientes, no
+juicios**. En el censo real esa cláusula es **el camino más ejercitado de la estancia** (25.962).
+Mismo defecto que el ledger de auto-compact **con el signo invertido**: aquél registraba sólo
+fallos y sólo podía responder «nunca entregó»; éste registra sólo éxitos y sólo podía responder
+«nunca dedujo».
+
+Detalle: `vault/audits/ucr_cif/11_O0_PRETREATMENT_BASELINE.md`.
+
 ## 8. Siguientes tres acciones
 
-1. **O0 antes que nada que emita cápsula.** CRR y RFR son tasas sobre una población; una misión no
-   mueve una tasa; y el suelo «sin cápsula» **desaparece** en cuanto el trinquete corre. Definir
-   población, denominador, ventana y contaminación. Sin O0, cualquier O4 es un evento, no una tasa.
+1. **El clasificador de familia.** Dejó de ser una casilla del spec (§11.a P2/P3): es el
+   **bloqueante único** de CRR, RFR y BIR, las tres métricas que el Owner pidió. Sonda por nombre:
+   `system_family` / `family_catalog` / `classify_family` → **0 ficheros**; los triggers de
+   `applicability.py` clasifican por **capacidad**, que es otro eje. Exige señal estructural del
+   estate y **suelo de población** — un barrido que deja de encontrar nada falla, no reporta
+   limpio.
 2. **El conector FD-07 → `applicability.py`.** Es el delta real de la Torre y es pequeño: un
    depósito `NEW`/`STRONGER` debe poder convertirse en entrada de baseline por familia que
    `MissionContext` consuma. **Ojo a G-4**: alimentar `held_scopes`/`resolved_owners` con un genoma
