@@ -598,9 +598,18 @@ the refreshed projection. Re-running them costs an hour and changes nothing.
    start Claude Code with `CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP=1` **in its
    environment at launch** (the harness states a shell-set value has no effect), or
    reduce the live session count — 23 `claude` and 55 `Cursor` processes held 16.6 GB
-   of 32 GB at the kill. Then: both arms **concurrently**, each to its **own**
-   `--store`, then `tools/ucr_cif_w12_verdict.py` in two stages, validity before
-   movement. **Do not shrink the experiment to fit** — it was already 1/26th of free
+   of 32 GB at the kill.
+   **Then it is ONE command, not a protocol to reconstruct:**
+   `python tools/ucr_cif_w12_run.py --rebuild-projection`. It preflights (reaper,
+   capacity through the canonical owner, projection freshness, the frozen constants,
+   the store paths), runs both arms **concurrently**, compares fingerprints, and runs
+   the verdict in two stages — validity, then movement. It refuses in under a second
+   when a precondition fails, which is the whole point: each arm is half an hour, and
+   W11 and W12 each lost an afternoon finding that out the slow way. `--rebuild-projection`
+   is needed whenever anything under the scanned directories has moved since the last
+   build, which any commit to `tools/` or `modules/` does. Gates:
+   `tools/test_w12_run_preflight.py` **14/14**, `ucr_cif_w12.json` **8/8**, family **88**.
+   **Do not shrink the experiment to fit** — it was already 1/26th of free
    memory when it was reaped, so its footprint is not what that gate reads. **Do not
    detach the run to hide it from the reaper**; that is a resource-gate bypass.
    The pre-registered kill condition is unchanged and committed in
