@@ -18,6 +18,37 @@
       "shellRequirement": "MEASURED 2026-09-23, and it is a hard prerequisite this manifest previously left undeclared. The gate below is a command-exit-zero predicate, which gsd-core runs through execTool('sh', ['-c', ...]) at check-command-router.cjs:1100. Where bare `sh` does not resolve, that call exits 127 and gate-predicate-evaluator.cjs:94-102 maps any non-zero exit to block:true -- so with blocking:true and onError:halt the gate halts EVERY ship, unconditionally, for a reason unrelated to obligations. On this Windows host sh.exe exists twice (Git for Windows bin/ and usr/bin/) and resolveExecutableBinary('sh') still returns null, so the prerequisite is RESOLUTION, not presence. Do not switch gsd_x_mission.enabled on until `sh` resolves inside the dispatch surface. Pinned by tools/test_gsd_x_sh_dispatch.js (4/4, both controls)."
     }
   },
+  "runtimeRequirements": {
+    "_why": "MEASURED 2026-09-23 (N6). runtimeCompat.notes below says the same thing in prose, and prose is not a check: nothing reads it, nothing fails on it, and three sessions read it without being stopped by it. These entries are machine-checked by tools/gsd_x_runtime_preflight.js, which probes each one through the SAME surface gsd-core dispatches the gate on (shell-command-projection.resolveExecutableBinary / execTool) rather than through a PowerShell proxy.",
+    "onUnmet": "refuse-activation",
+    "requirements": [
+      {
+        "id": "posix-shell",
+        "kind": "executable",
+        "name": "sh",
+        "probeArgs": ["-c", "exit 0"],
+        "requiredBy": "gates[0].check.predicate — gsd-core runs every command-exit-zero predicate through execTool('sh', ['-c', ...]) at check-command-router.cjs:1100",
+        "consequenceIfUnmet": "execTool exits 127; gate-predicate-evaluator.cjs:94-102 maps ANY non-zero exit to block:true; with blocking:true + onError:halt the gate halts EVERY ship, unconditionally, for a reason unrelated to obligations.",
+        "knownUnmetOn": "this Windows host — sh.exe exists twice (Git for Windows bin/ and usr/bin/) and neither directory is on PATH, so this is RESOLUTION, not presence."
+      },
+      {
+        "id": "python-interpreter",
+        "kind": "file",
+        "path": "C:/Users/User/AppData/Local/Programs/Python/Python312/python.exe",
+        "requiredBy": "gates[0].check.predicate — the predicate command invokes this interpreter by absolute path",
+        "consequenceIfUnmet": "the gate command fails to start and, by the same evaluator mapping, blocks the ship.",
+        "portabilityDebt": "E11: the predicate embeds this absolute path rather than resolving it. NOT fixed in N6 by decision — gsd-core interpolates only ${PHASE_NUMBER}/${PHASE_DIR}/${PHASE_REQ_IDS}, so a portable form would have to rely on sh's own variable expansion, which cannot be exercised on a host where sh does not resolve. Fixing it now would ship an unverifiable change. It is declared here so it is visible, and it is owed in the same slice that resolves posix-shell."
+      },
+      {
+        "id": "mission-tool",
+        "kind": "file",
+        "path": "C:/Users/User/.claude/skills/claude-power-pack/tools/gsd_x_mission.py",
+        "requiredBy": "gates[0].check.predicate — the checker the gate actually runs",
+        "consequenceIfUnmet": "same evaluator mapping: a missing tool reads as a domain verdict rather than as a missing tool.",
+        "portabilityDebt": "E11, same reason and same owed slice as python-interpreter."
+      }
+    ]
+  },
   "config": {
     "gsd_x_mission.enabled": {
       "type": "boolean",
