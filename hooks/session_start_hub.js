@@ -323,6 +323,58 @@ function hookRecoveryEpoch() {
   }
 }
 
+// Mission continuity (spec vault/specs/mission-continuity.md). A `claude --bg` worker
+// launched by tools/gsd_mission.py acknowledges itself HERE -- its own SessionStart is the
+// first event only it can produce, which is what moves the mission from LAUNCHING to
+// RUNNING -- and a successor receives its rehydration card as additionalContext.
+// Every other session pays one directory read: python runs only when a mission record
+// names this session (owner, or the pending launch whose host-printed id prefixes it).
+const GSD_MISSION_PY = path.join(PP_PATH, 'tools', 'gsd_mission.py');
+// Well inside the dispatcher's 10 s budget for this whole hub: a hub killed at its deadline
+// loses EVERY line it would have emitted, not just this one. The ack is written before the
+// git reads, so a timeout here costs the card only -- the successor still reconciles from GSD.
+const MISSION_START_TIMEOUT_MS = 5000;
+
+function missionNamesSession(sessionId) {
+  if (!sessionId) return false;
+  const dir = process.env.GSD_LONG_RUN_STATE_DIR || STATE_DIR;
+  let names;
+  try {
+    names = fs.readdirSync(dir).filter((n) => n.startsWith('gsd-mission-') && n.endsWith('.json'));
+  } catch (err) {
+    return false;
+  }
+  for (const n of names) {
+    try {
+      const rec = JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8'));
+      const owner = rec.owner || {};
+      const pend = rec.pending || {};
+      if (owner.session_id === sessionId) return true;
+      if (rec.state === 'LAUNCHING' && pend.bg_id && sessionId.startsWith(pend.bg_id)) return true;
+    } catch (err) {
+      // A record being rewritten reads as malformed for an instant; python re-reads it.
+      continue;
+    }
+  }
+  return false;
+}
+
+function hookMissionStart(sessionId, source) {
+  try {
+    if (!missionNamesSession(sessionId) || !fs.existsSync(GSD_MISSION_PY)) return null;
+    const out = require('child_process').execFileSync(
+      PYTHON_EXE, [GSD_MISSION_PY, 'session-start', '--session', sessionId, '--source', source || ''],
+      { encoding: 'utf8', timeout: MISSION_START_TIMEOUT_MS, windowsHide: true,
+        env: Object.assign({}, process.env, { PYTHONIOENCODING: 'utf-8' }) });
+    const card = (out || '').trim();
+    note('mission start: ' + (card ? 'card ' + card.length + ' chars' : 'acked, no card'));
+    return card || null;
+  } catch (err) {
+    note('mission start failed (fail-open; the start deadline will surface it)', err);
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Deferred spawning (T-DETACH-SPAWN-COST-001)
 //
@@ -913,6 +965,17 @@ async function main() {
     // 1. Sync hook (may write to stdout).
     additionalContext = hookRestartResume(cwd);
 
+    // 0. Mission worker ack + rehydration card. FIRST in the context: the host truncates
+    // SessionStart output near 9 KB (claude-code-handoff, measured), and the card is the
+    // one line a successor cannot work without. Capped at 8 KB by gsd_mission itself.
+    const missionCard = hookMissionStart(sessionId,
+      (typeof payload.source === 'string') ? payload.source : '');
+    if (missionCard) {
+      additionalContext = additionalContext
+        ? (missionCard + '\n' + additionalContext)
+        : missionCard;
+    }
+
     // 1a. Recovery epoch. MUST run before hookCpcOsRegister, which writes a fresh
     // ACTIVE beacon: that beacon is what proves the PREVIOUS session died without
     // closing, and overwriting it before reading it would destroy the evidence of
@@ -1011,8 +1074,15 @@ async function main() {
 // escape unhandled -- and a process that merely logs one stays ALIVE holding the
 // inherited stdout pipe, which on a SessionStart hub means the session never
 // finishes opening. Emit the bare-continue the harness expects, then exit.
-main().catch((err) => {
-  note('main rejected', err);
-  try { process.stdout.write(JSON.stringify({ continue: true })); } catch (_) { /* noop */ }
-  process.exit(0);
-});
+// Run only when executed as the hook. A test that requires this file to reach one
+// function must not fire every side effect of a session start (live-session marks,
+// detached jobs) under a synthetic session id.
+if (require.main === module) {
+  main().catch((err) => {
+    note('main rejected', err);
+    try { process.stdout.write(JSON.stringify({ continue: true })); } catch (_) { /* noop */ }
+    process.exit(0);
+  });
+}
+
+module.exports = { missionNamesSession, hookMissionStart };

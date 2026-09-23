@@ -22,11 +22,17 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
-STATE_DIR = Path.home() / ".claude" / "state"
+# Opt-in redirect for suites that must not write synthetic markers into the Owner's real
+# state dir. Deliberately NOT GSD_LONG_RUN_STATE_DIR: ~20 existing suites and tools set that
+# variable while writing markers to the real dir, and reusing it split them from the
+# watchdog they drive (measured: V-OVLY-ARMED-LEGACY-REACHED went red). A new name has no
+# existing consumer to break.
+STATE_DIR = Path(os.environ.get("GSD_AUTORUN_MARKER_DIR") or (Path.home() / ".claude" / "state"))
 MARKER_TEMPLATE = "gsd-autorun-{session_id}.json"
 
 # SendKeys treats these as control characters. A command containing one would
