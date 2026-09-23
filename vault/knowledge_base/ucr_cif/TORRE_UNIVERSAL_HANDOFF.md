@@ -157,15 +157,50 @@ Detalle: `vault/audits/ucr_cif/09_G3_DECISION.md`.
 |---|---|
 | **A — reconciliación del spec** | **SELLADA** (`2512bb3`, `91d551f`) |
 | **B — semántica de la Torre** | **PARCIAL** — lo crítico recuperado (`955c3b4`); el resto del sufijo sin leer |
-| **C — 12 preguntas HR-NOVELTY** | **NO INICIADA** |
+| **C — HR-NOVELTY 13/13** | **SELLADA** (`4b97909`) — corridas contra el sujeto REAL, no en abstracto |
 | **D — G-3** | **SELLADA** (`60048a0`) |
 | **E — O0 baseline** | **SELLADA** (`f58de7f`) — capturada **antes** de que exista cápsula, que era la única ventana |
-| **F — estado persistido mínimo** | **NO INICIADA** (correctamente: E era precondición) |
+| **F — estado persistido mínimo** | **BLOQUEADA con razón medida** (`51c7645`) — falta elegir la señal de familia |
 | E1/E2 descubrimiento de dueño | **CERRADO** (`260e088`, `9d6e6b9`) |
+
+### 7.b Fase C — veredicto, y el trigger
+
+**`NEW_SCANNER_OR_GATE` + `EXTEND_EXISTING_OWNER`.** El clasificador de familia **no es un
+sistema institucional nuevo**: es un barrido descubierto que emite una **etiqueta** con suelo de
+población, y esa etiqueta entrando como **campo** de un `MissionContext` que ya existe. Prohibido
+explícitamente: un «Family Intelligence Fabric», un catálogo curado a mano, y cualquier almacén
+nuevo. Lo que falta es una *etiqueta*, no un *sustrato*.
+
+**El trigger de HR-NOVELTY NO se toca.** Corrección al audit 06: `gate.py:272` ya lleva
+`_NOVELTY_SHAPE`, un **segundo instrumento independiente del vocabulario**, nacido el 2026-08-04
+de esta misma crítica. El gate tiene dos triggers y ya aprendió la lección. Sigue siendo cierto
+que el Ratchet no dispara ninguno y que su `applies=False` es **UNKNOWN, no inocencia**.
+
+### 7.c Fase F — por qué está bloqueada, y no es una excusa
+
+P3 exige descubrir el catálogo de familias de una **señal estructural**. El primer candidato
+—`task_class` de los 215 depósitos FD-07— **NO sirve**: 162 clases, 79 % singletons, y las 27 que
+recurren entre repos son **nombres de lección epistémica** (`absence-does-not-describe-itself`,
+`measured-not-tolerated`…), no familias de sistema.
+
+**Mi propio script imprimió `usable discovery seed`. Era falso.** Preguntó *«¿recurre?»* cuando
+la pregunta era *«¿es familia?»*. **Un «sí» mal leído es peor que un cero mal leído, porque
+autoriza a construir.**
+
+**Señal candidata más prometedora y barata, sin probar:** la **composición de ficheros del repo**
+(migraciones/`*.sql` ⇒ migración de esquema · rutas HTTP ⇒ superficie web con efectos · ledgers
+`.jsonl`/sqlite ⇒ `PERSISTENT_STATE`). Estructural por construcción: no depende de que nadie haya
+etiquetado nada.
+
+**P2 no se predeclara todavía, a propósito:** elegir los dos sujetos antes que la señal sería
+elegir los que la señal futura sepa clasificar. Orden: **señal → predeclarar → implementar →
+conducir ambas ramas.**
+
+Detalle: `12_HR_NOVELTY_13Q_FAMILY_CLASSIFIER.md` · `13_FAMILY_SIGNAL_PROBE.md`.
 
 Tower Score: **N/A por decisión del Owner, y el corpus coincide.** KSEIP: backlog.
 
-### 7.a O0 — el suelo, un renglón por plano
+### 7.d O0 — el suelo, un renglón por plano
 
 - **P1 aplicabilidad ambiente:** 927 juicios / 4,18 días · 450 suelo · 472 informativo ·
   **50,9 % informativo** · ambos polos presentes.
