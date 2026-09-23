@@ -16,4 +16,12 @@ $out = (& $py $tool sweep 2>&1 | Out-String).Trim()
 if ($out -and $out -ne '[]') {
     Add-Content -LiteralPath $log -Value ("{0} {1}" -f [DateTime]::UtcNow.ToString('o'), ($out -replace '\s+', ' ')) -Encoding UTF8
 }
+# Mission continuity (spec vault/specs/mission-continuity.md): the out-of-band supervisor
+# that relays a finished worker to a fresh one. It runs here, outside every worker's failure
+# domain, and asks the host nothing when no mission is live.
+$mission = Join-Path $PSScriptRoot 'gsd_mission.py'
+$mout = (& $py $mission supervise --actions-only 2>&1 | Out-String).Trim()
+if ($mout -and $mout -ne '[]') {
+    Add-Content -LiteralPath $log -Value ("{0} mission {1}" -f [DateTime]::UtcNow.ToString('o'), ($mout -replace '\s+', ' ')) -Encoding UTF8
+}
 exit 0

@@ -273,6 +273,21 @@ def main() -> int:
                             runner=stop_run, wait_s=0)
     check("V-MC-STOP-WAITS-FOR-PID", ok is False and "still alive" in why, why)
 
+    # an idle estate never asks the host (the 5-minute sweep must cost nothing)
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    real_host = gm.host_sessions
+    asked = []
+    gm.host_sessions = lambda *a, **k: asked.append(1) or []
+    try:
+        gm.supervise(now=NOW)
+        check("V-MC-SUP-IDLE-NO-HOST-QUERY", asked == [], f"host asked {len(asked)}x")
+        gm.create(TMP, "/gsd-autonomous", mission_id="m-live", now=NOW)
+        gm.supervise(now=NOW, dry_run=True)
+        check("V-MC-SUP-LIVE-ASKS-HOST", asked == [1], "control: a live mission does ask")
+    finally:
+        gm.host_sessions = real_host
+
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

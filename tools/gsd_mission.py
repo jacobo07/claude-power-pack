@@ -554,10 +554,16 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
     transition it makes; a pass that decides nothing still returns one row per
     mission, so an empty estate and an unjudged one never look alike."""
     now = time.time() if now is None else now
+    missions = all_missions()
+    if not any(m["state"] not in TERMINAL for m in missions):
+        # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
+        # measured > 60 s once under load) on every 5-minute pass of an idle estate.
+        return [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
+                 "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
     if sessions is None:
         sessions = host_sessions()
     out = []
-    for rec in all_missions():
+    for rec in missions:
         mid = rec["mission_id"]
         plan = plan_next(rec, now, sessions, pid_alive)
         row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], **plan}
@@ -706,6 +712,8 @@ def _cli(argv=None) -> int:
     h.add_argument("--note", default="")
     v = sub.add_parser("supervise")
     v.add_argument("--dry-run", action="store_true")
+    v.add_argument("--actions-only", action="store_true",
+                   help="print only rows where the pass acted (the sweep logs nothing otherwise)")
     sub.add_parser("status")
     args = ap.parse_args(argv)
     if args.cmd == "arm":
@@ -723,7 +731,10 @@ def _cli(argv=None) -> int:
         print(f"HANDOFF RECORDED mission={rec['mission_id']} epoch={rec['epoch']} -- end your turn now")
         return 0
     if args.cmd == "supervise":
-        print(json.dumps(supervise(dry_run=args.dry_run), indent=2))
+        rows = supervise(dry_run=args.dry_run)
+        if args.actions_only:
+            rows = [r for r in rows if r.get("action") not in ("none", "await")]
+        print(json.dumps(rows))
         return 0
     rows = []
     sessions = host_sessions()
