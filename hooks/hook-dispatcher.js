@@ -1381,6 +1381,15 @@ module.exports = { sanitizeForSchema, familyOf, mergeOutputs, stderrIsSafeToSurf
 
 // --- Main (CLI path only — skipped when required as a module) ---
 if (require.main === module) (async () => {
+  // Heal a console-allocator re-infection of the LIVE registry within one event
+  // of it happening. The launcher's repair only reaches a pane at birth, and
+  // this build reloads hooks live, so a pane that started clean gets re-infected
+  // while it runs -- which is when the Owner's screen starts clearing on every
+  // tool call. Detects here, delegates the rewrite to the one existing fixer.
+  // Fail-open, absolute: a guard that can break the dispatcher is worse than
+  // the screen-clearing it was written to stop.
+  try { require('./wrapper-selfheal.js').selfHeal({}); } catch (_) { /* never fatal */ }
+
   let event = parseArgs();
   let preRaw = null;          // stdin already consumed by the no-event path
   let noEventMsg = null;      // loud warning merged into this invocation's output
