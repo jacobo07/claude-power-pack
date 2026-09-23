@@ -89,12 +89,27 @@ def _frontmatter_value(text: str, key: str) -> str:
     return m.group(1).strip().strip("'\"") if m else ""
 
 
-def check(project_dir, mission_terms) -> Verdict:
+def planning_dir(project_dir, workstream=None) -> Path:
+    """The planning files a run obeys: the root milestone, or one GSD workstream's.
+
+    A repo whose root milestone belongs to another track can only host a second mission
+    as a workstream (`.planning/workstreams/<name>/`); checking the root there would
+    judge the wrong mission -- the exact defect this gate exists to catch.
+    """
+    root = Path(project_dir) / ".planning"
+    if not workstream:
+        return root
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", str(workstream)) or str(workstream) in (".", ".."):
+        raise ValueError(f"invalid workstream name {workstream!r}")
+    return root / "workstreams" / str(workstream)
+
+
+def check(project_dir, mission_terms, workstream=None) -> Verdict:
     terms = parse_terms(mission_terms)
     if not terms:
         return Verdict(UNDECLARED, reason="no mission terms declared; an undeclared mission "
                                           "cannot be shown to match the roadmap")
-    planning = Path(project_dir) / ".planning"
+    planning = planning_dir(project_dir, workstream)
     sources = [planning / "STATE.md", planning / "ROADMAP.md"]
     texts = []
     for src in sources:
@@ -128,9 +143,10 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="GSD mission-freshness gate")
     ap.add_argument("--project", default=".")
     ap.add_argument("--mission", default="", help="comma-separated mission vocabulary")
+    ap.add_argument("--workstream", default=None, help="judge .planning/workstreams/<name>")
     args = ap.parse_args(argv)
     try:
-        verdict = check(args.project, args.mission)
+        verdict = check(args.project, args.mission, args.workstream)
     except Exception as exc:  # the gate itself failed: never a pass
         verdict = Verdict(UNREADABLE, reason=f"gate error: {exc.__class__.__name__}: {exc}")
     out = asdict(verdict)

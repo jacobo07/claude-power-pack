@@ -95,8 +95,8 @@ def drive_write(command: str, tmpdir: Path) -> tuple[int, str]:
 
     saved = (marker.write_marker, mf.check, lr.arm_preflight, lr.ledger_append)
     marker.write_marker = fake_write_marker
-    mf.check = lambda cwd, mission: _Verdict()
-    lr.arm_preflight = lambda session, cwd, cmd: (True, "stubbed")
+    mf.check = lambda cwd, mission, workstream=None: _Verdict()
+    lr.arm_preflight = lambda session, cwd, cmd, workstream=None: (True, "stubbed")
     lr.ledger_append = lambda *a, **k: None
     try:
         buf = io.StringIO()

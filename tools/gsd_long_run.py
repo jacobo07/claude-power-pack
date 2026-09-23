@@ -523,12 +523,15 @@ def resume_reference(session_id: str, marker: dict) -> float | None:
 
 
 # --------------------------------------------------------------------------- GSD
-def gsd_status(project, timeout: int = 45) -> dict:
+def gsd_status(project, timeout: int = 45, workstream: str | None = None) -> dict:
     # 45 s, not 20: measured 5 s alone and >20 s beside other suites on this host
     # at 2.5 GB free. A short ceiling turns a loaded host into an arming refusal.
     """Ask GSD what it sees in `project`. Outcomes: OK, NO_PHASES, ALL_COMPLETE, UNAVAILABLE.
 
     UNAVAILABLE means we could not ask -- it is never read as "0 phases".
+    `workstream` asks about that GSD workstream instead of the root milestone; passed as
+    `--ws`, which outranks any env or session pointer, so the answer cannot drift to the
+    root when this process lacks the session's env.
     """
     forced = os.environ.get("_TEST_GSD_STATUS")
     if forced:
@@ -536,10 +539,13 @@ def gsd_status(project, timeout: int = 45) -> dict:
     node = shutil.which("node")
     if not node or not GSD_TOOLS.is_file():
         return {"outcome": "UNAVAILABLE", "reason": "node or gsd-tools.cjs not found"}
+    argv = [node, str(GSD_TOOLS), "query", "init.manager"]
+    if workstream:
+        argv += ["--ws", str(workstream)]
     try:
         # stdin=DEVNULL is load-bearing: with an inherited pipe gsd-tools waits on
         # stdin and the call times out (measured: 20 s from Python, instant from a TTY).
-        r = subprocess.run([node, str(GSD_TOOLS), "query", "init.manager"], cwd=str(project),
+        r = subprocess.run(argv, cwd=str(project),
                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=timeout,
                            encoding="utf-8", errors="replace")
     except Exception as exc:
@@ -569,7 +575,8 @@ def gsd_status(project, timeout: int = 45) -> dict:
 
 
 # --------------------------------------------------------------------------- arm / resume gates
-def arm_preflight(session_id: str, cwd: str, command: str) -> tuple[bool, str]:
+def arm_preflight(session_id: str, cwd: str, command: str,
+                  workstream: str | None = None) -> tuple[bool, str]:
     """Refuse to arm a run that would execute somewhere else, or do nothing.
 
     Gap 6: `--cwd` is metadata; the run executes in the SESSION's directory.
@@ -586,7 +593,7 @@ def arm_preflight(session_id: str, cwd: str, command: str) -> tuple[bool, str]:
         return False, (f"this session runs in {actual!r} but --cwd is {cwd!r}; the resumed command "
                        f"would execute in the session's project. Open the session in {cwd!r} and arm there")
     if (command or "").strip().startswith("/gsd-autonomous"):
-        st = gsd_status(cwd)
+        st = gsd_status(cwd, workstream=workstream)
         if st["outcome"] == "UNAVAILABLE":
             return False, f"could not ask GSD for the phase list: {st['reason']}"
         if st["outcome"] == "NO_PHASES":
@@ -621,7 +628,7 @@ def resume_gate(marker: dict, now: float | None = None) -> dict:
         try:
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             import gsd_mission_freshness as _mf
-            verdict = _mf.check(cwd, terms)
+            verdict = _mf.check(cwd, terms, marker.get("workstream"))
         except Exception as exc:
             return {"halt": True, "kind": "mission",
                     "reason": f"mission re-check could not run: {exc.__class__.__name__}: {exc}"}
@@ -1110,7 +1117,7 @@ def sweep(now: float | None = None, dry_run: bool = False,
 
         st = None
         if cmd.startswith("/gsd-autonomous") and project is not None:
-            st = gsd_status(str(project))
+            st = gsd_status(str(project), workstream=m.get("workstream"))
             if st["outcome"] == "ALL_COMPLETE":
                 actions.append({"session_id": sid, "action": "finished", "reason": st["reason"]})
                 if not dry_run:

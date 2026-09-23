@@ -215,6 +215,13 @@ def main(argv: list[str] | None = None) -> int:
                     help="resumes allowed before the run halts (default 12)")
     ap.add_argument("--max-hours", type=float, default=None,
                     help="wall-clock hours before the run halts (default 24)")
+    ap.add_argument("--workstream", default=None,
+                    help="arm against GSD workstream .planning/workstreams/<name> instead of the "
+                         "root milestone, for a repo whose root milestone belongs to another track. "
+                         "Freshness, the phase preflight, every resume re-check and the sweep's "
+                         "finish test then read that workstream. Set it active for THIS session "
+                         "first (gsd-tools query workstream.set <name>), so the resumed command "
+                         "routes there too.")
     args = ap.parse_args(argv)
 
     if args.write:
@@ -225,7 +232,11 @@ def main(argv: list[str] | None = None) -> int:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import gsd_mission_freshness as _mf
         import gsd_long_run as _lr
-        verdict = _mf.check(args.cwd or ".", args.mission)
+        try:
+            verdict = _mf.check(args.cwd or ".", args.mission, args.workstream)
+        except ValueError as exc:
+            sys.stderr.write(f"REFUSED: {exc}\n")
+            return 2
         if not verdict.armable:
             sys.stderr.write(f"REFUSED: mission freshness {verdict.outcome}: {verdict.reason}\n")
             return 2
@@ -236,7 +247,8 @@ def main(argv: list[str] | None = None) -> int:
         except MarkerError as exc:
             sys.stderr.write(f"REFUSED: {exc}\n")
             return 2
-        ok, why = _lr.arm_preflight(args.session, args.cwd or ".", args.command)
+        ok, why = _lr.arm_preflight(args.session, args.cwd or ".", args.command,
+                                    workstream=args.workstream)
         if not ok:
             sys.stderr.write(f"REFUSED: {why}\n")
             return 2
@@ -246,6 +258,10 @@ def main(argv: list[str] | None = None) -> int:
             data = json.loads(path.read_text(encoding="utf-8"))
             data["mission"] = {"terms": verdict.mission_terms, "matched": verdict.matched,
                                "active_milestone": verdict.active_milestone}
+            if args.workstream:
+                # Every later reader (resume_gate, sweep) re-derives its answer from this key;
+                # absent, they read the root milestone -- another track's, in the case it exists for.
+                data["workstream"] = args.workstream
             path.write_text(json.dumps(data, indent=2), encoding="utf-8")
         except MarkerError as exc:
             sys.stderr.write(f"REFUSED: {exc}\n")

@@ -81,12 +81,32 @@ Step 2 exits 2 with `REFUSED: <reason>` and arms nothing when:
 
 | refusal | meaning | fix |
 |---|---|---|
-| `mission freshness STALE` | the active milestone describes another mission | `/gsd-new-milestone` for the right one; never weaken the terms |
+| `mission freshness STALE` | the active milestone describes another mission | `/gsd-new-milestone` for the right one; never weaken the terms. **If the root milestone is another track's, live work, do not replace it** — use a workstream (below) |
+| `invalid workstream name` | `--workstream` is not `[A-Za-z0-9._-]+` | pick a plain name |
 | `this session runs in X but --cwd is Y` | the session was opened in another project | open the session in Y |
 | `GSD parses 0 phases` | ROADMAP.md headings are not GSD phases (e.g. `W0…W8`) | restructure as GSD phases |
 | `could not ask GSD` | gsd-tools/node unavailable — not the same as 0 phases | fix the GSD install |
 | `nothing to run` | every phase is already complete | nothing to do |
 | `resume command must start with '/'` | free text cannot be re-issued | use a slash command |
+
+### A second mission in a shared repo: `--workstream` (LIVE since 2026-09-23)
+
+When the root `.planning/` milestone belongs to another session's track, run the new
+mission as a GSD workstream instead of replacing that milestone:
+
+```powershell
+$n = (Get-Command node).Source; $gt = "$env:USERPROFILE\.claude\gsd-core\bin\gsd-tools.cjs"
+& $n $gt query workstream.create <name> --raw --cwd .   # .planning/workstreams/<name>/
+& $n $gt query workstream.set <name> --raw --cwd .      # session-local: keyed by CLAUDE_CODE_SESSION_ID
+# seed its STATE.md / ROADMAP.md (GSD phases) with the mission, then:
+& $py "$pp\tools\gsd_autorun_marker.py" --write --session $env:CLAUDE_CODE_SESSION_ID `
+      --command "/gsd-autonomous" --cwd . --mission "<terms>" --workstream <name>
+```
+
+The marker records `workstream`; mission freshness, the phase preflight, every resume
+re-check and the sweep's finish test then read `.planning/workstreams/<name>/`, never the
+root. A named workstream that does not exist is `UNREADABLE`, never a fallback to the root.
+Gates: `V-MF-WS-*`, `V-MF-ARM-WS`, `V-MF-RESUME-WS` in `tools/test_gsd_mission_freshness.py`.
 
 (Step 3 above is where you invoke it. Two cases call for `--from <phase>`: the
 caller asked to start somewhere specific, **or** the roadmap holds tracks owned by
