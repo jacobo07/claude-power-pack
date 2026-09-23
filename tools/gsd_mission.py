@@ -327,6 +327,13 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
         return {"action": "launch", "reason": "prepared, nothing launched"}
     if state == LAUNCHING:
         deadline = float(pending.get("deadline") or 0)
+        row = launched_row(pending, sessions)
+        if row is not None and row.get("state") not in ("stopped", "done", "exited", "failed"):
+            # Second witness of the start. The worker's own SessionStart ack can race the
+            # launcher writing `bg_id` (the host starts the worker while `claude --bg` is
+            # still returning); the host listing THAT id -- the one it printed for this
+            # launch -- is independent evidence the worker exists. Never "a new session".
+            return {"action": "adopt", "reason": f"host lists launched worker {pending.get('bg_id')}"}
         if now <= deadline:
             return {"action": "await", "reason": f"start ack due in {int(deadline - now)} s"}
         if rec.get("failed_launches", 0) + 1 >= MAX_REPLACEMENTS:
@@ -518,6 +525,30 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
     return card
 
 
+def launched_row(pending: dict | None, sessions: list[dict] | None) -> dict | None:
+    """The host's row for the worker THIS launch printed, matched by that id only."""
+    bg = (pending or {}).get("bg_id")
+    if not bg or not sessions:
+        return None
+    return next((s for s in sessions
+                 if s.get("id") == bg or str(s.get("sessionId", "")).startswith(bg)), None)
+
+
+def adopt_launched(rec: dict, row: dict, now: float | None = None) -> dict:
+    """RUNNING from the host's witness when the worker's own ack did not arrive. The worker
+    missed its SessionStart, so it gets no card this epoch -- recorded, not hidden."""
+    sid = row.get("sessionId")
+    new = transition(rec["mission_id"], expect_epoch=rec["epoch"], expect_state=LAUNCHING,
+                     event="worker_adopted", now=now, state=RUNNING, pending=None,
+                     failed_launches=0, iterations=rec.get("iterations", 0) + 1, worker=sid,
+                     reason="host witness; worker's own ack absent (no card this epoch)",
+                     owner={"session_id": sid, "pid": row.get("pid"), "proc_start": None,
+                            "heartbeat_at": now or time.time(), "epoch": rec["epoch"],
+                            "kind": "background"})
+    _arm_worker_marker(new, sid)
+    return new
+
+
 def owner_idle(owner: dict | None, sessions: list[dict] | None) -> bool:
     """True only when the host lists the owner as idle: its turn has ended."""
     if not owner or sessions is None:
@@ -594,6 +625,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
                                event="mission_blocked", now=now, state=BLOCKED,
                                reason=plan["reason"])
+            elif act == "adopt":
+                adopt_launched(rec, launched_row(rec.get("pending"), sessions), now=now)
             elif act == "unblock":
                 transition(mid, expect_epoch=rec["epoch"], expect_state=BLOCKED,
                            event="mission_unblocked", now=now, state=RUNNING,

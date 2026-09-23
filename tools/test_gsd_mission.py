@@ -19,6 +19,7 @@ from pathlib import Path
 TMP = tempfile.mkdtemp(prefix="gsd-mission-test-")
 os.environ["GSD_LONG_RUN_STATE_DIR"] = TMP
 os.environ["GSD_LONG_RUN_SESSIONS_DIR"] = str(Path(TMP) / "sessions")
+os.environ["GSD_AUTORUN_MARKER_DIR"] = TMP  # adopt/ack write markers: never in the real dir
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gsd_mission as gm  # noqa: E402
 
@@ -331,6 +332,33 @@ def main() -> int:
         check("V-MC-NOTE-ABSENT-EMPTY", gm.handoff_note_from_transcript("s-none") == "")
     finally:
         gm.lr.find_transcript = real_find
+
+    # --- adopt: the host's witness of THIS launch, when the worker's own ack raced ------------
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    gm.create(TMP, "/gsd-autonomous", mission_id="m-ad", now=NOW)
+    gm.transition("m-ad", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=1,
+                  pending={"kind": "worker_start", "bg_id": "ad0ad0ad", "deadline": NOW + 300})
+    listed = [{"id": "ad0ad0ad", "sessionId": "ad0ad0ad-1111-2222", "pid": 4321,
+               "kind": "background", "state": "working", "status": "busy"}]
+    stranger = [{"id": "5757aaaa", "sessionId": "5757aaaa-0000", "kind": "background",
+                 "state": "working", "status": "busy"}]
+    check("V-MC-ADOPT-PLANNED", gm.plan_next(gm.load("m-ad"), NOW, listed, alive)["action"] == "adopt")
+    check("V-MC-ADOPT-NEVER-A-STRANGER",
+          gm.plan_next(gm.load("m-ad"), NOW, stranger, alive)["action"] == "await",
+          "a new unrelated session is not the launched worker (T-CONT-08)")
+    gm.supervise(now=NOW, sessions=listed, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=alive)
+    rec = gm.load("m-ad")
+    check("V-MC-ADOPT-RUNNING", rec["state"] == gm.RUNNING
+          and rec["owner"]["session_id"] == "ad0ad0ad-1111-2222" and rec["owner"]["kind"] == "background")
+    check("V-MC-ADOPT-ARMS-MARKER", (Path(TMP) / "gsd-autorun-ad0ad0ad-1111-2222.json").exists())
+    # its late SessionStart then only heartbeats, and still gets the card (epoch > 1 case)
+    before_iter = rec["iterations"]
+    gm.ack_session("ad0ad0ad-1111-2222", now=NOW + 1)
+    check("V-MC-ADOPT-LATE-ACK-HEARTBEATS", gm.load("m-ad")["iterations"] == before_iter
+          and gm.load("m-ad")["state"] == gm.RUNNING)
 
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
