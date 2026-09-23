@@ -983,9 +983,22 @@ async function runChain(event, chain, rawStdin) {
 
   if (budget && left <= 0) {
     // Budget already gone. Do NOT open the pool -- emit what critical produced.
+    // NAMES, not just a count (2026-09-23, Jacobo). This branch used to log
+    // '(N skipped)' while the `after` branch below logs 'still running: <scripts>'.
+    // Same event class, two levels of observability -- and the cheaper half is the
+    // one that fires when the CRITICAL lane alone blew the budget, i.e. exactly
+    // when you most need to know who was dropped. Measured over 2026-09-15..09-23:
+    // 193 'before pool' events on UserPromptSubmit-chain abandoned 965 member-slots
+    // WITHOUT naming one of them, which is why an audit of how often the live
+    // Project Birth owner (gsd_x_tier) is lost could only report a RANGE, 215-408
+    // of 639, instead of a count. A log that says how many but not which cannot
+    // answer the question it exists for. restSteps is in scope and carries .script,
+    // so this is the same expression the `after` branch already uses.
     logError(event, 'CHAIN-DEADLINE-ABANDONED before pool',
       new Error('critical lane used ' + (Date.now() - chainStart) + 'ms of ' + budget
-        + 'ms; pool NOT spawned (' + restSteps.length + ' skipped); ' + hostPressure()));
+        + 'ms; pool NOT spawned (' + restSteps.length + ' skipped: '
+        + (restSteps.map((s) => s.script).join(', ') || '(none)') + '); '
+        + hostPressure()));
     reapLiveChildren();   // no-op unless a critical step leaked a child
   } else {
     poolDone = runPool(restSteps, limit, (step) => {
