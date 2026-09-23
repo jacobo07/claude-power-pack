@@ -38,5 +38,29 @@
   "old": "    licensed = O.paired_verdict_allowed(cmp)",
   "new": "    licensed = cmp.get(\"status\") != O.FP_DRIFTED",
   "why": "The false world: comparability stops being a positive test on the one status that permits a paired verdict and becomes `anything that is not DRIFTED`. UNREADABLE then licenses a verdict -- and a fingerprint that could not be read says nothing about drift, which is exactly why `compare_fingerprints` has three outcomes rather than two. So does every status added later by someone who never reads this line. This is the same defect W11 closed inside `paired_verdict_allowed` itself, reintroduced one layer up at the call site, which is where a guard's caller can quietly undo the guard. V-W12-UNREADABLE-REFUSES must catch it, and V-W12-VALID-WITHOUT-MOVEMENT proves the licence still admits a genuinely comparable pair rather than refusing everything."
+ },
+ {
+  "name": "W71-runner-stops-noticing-the-reaper",
+  "file": "tools/ucr_cif_w12_run.py",
+  "suite": "tools/test_w12_run_preflight.py",
+  "old": "    live = os.environ.get(REAPER_ENV, \"\") != \"1\"",
+  "new": "    live = False",
+  "why": "The false world: the runner always believes the reaper is off, so it starts a thirty-minute paired derivation in exactly the session state that killed W11's and W12's arms -- at 12.8 % and 12.3 % host free, with a 155 MB job. The cost of this mutation is not a wrong answer; it is an hour, twice, and a handoff that has to say UNMEASURED again. It matters because the preflight's entire value is that it refuses in under a second, and because this particular precondition cannot be recovered from afterwards: a reaped arm writes nothing, so there is no partial result to salvage and no evidence of what went wrong beyond a killed shell. V-W12RUN-REAPER-REFUSES and V-W12RUN-REAPER-ZERO-IS-NOT-SET must catch it, with V-W12RUN-REAPER-SET-PASSES proving the check still admits a session where the variable is genuinely set."
+ },
+ {
+  "name": "W72-projection-freshness-becomes-vacuous-again",
+  "file": "tools/ucr_cif_w12_run.py",
+  "suite": "tools/test_w12_run_preflight.py",
+  "old": "    fresh = (built == sp.repo_fingerprint(ROOT))",
+  "new": "    fresh = getattr(proj, \"source_fresh\", None)",
+  "why": "This mutation restores the defect the runner SHIPPED WITH, verbatim, which is why it is in the plan rather than a hypothetical. `Projection` has no `source_fresh` field: `load()` records the fingerprint the projection was built with and never compares it, while `--verify` does the comparison itself. So the expression is None on every call, `fresh is False` never holds, and the stale branch cannot fire. It is the worst shape of guard -- present, readable, reviewed, and structurally unable to refuse -- standing in front of the one precondition that silently voids the treatment, because a stale projection still loads, still reports LOADED, and still answers every query with the wrong generation of evidence. The arms would run for an hour against evidence compiled from a different tree and produce a confident verdict about nothing. It was caught only because the live run printed `source_fresh None` where a boolean belonged. V-W12RUN-STALE-PROJECTION-REFUSES must catch it, and V-W12RUN-FRESH-PROJECTION-PASSES -- synthetic, so it does not decay as the working tree moves -- proves the repaired check still admits a fresh projection."
+ },
+ {
+  "name": "W73-runner-will-write-an-arm-to-the-canonical-store",
+  "file": "tools/ucr_cif_w12_run.py",
+  "suite": "tools/test_w12_run_preflight.py",
+  "old": "        if rp == canon:",
+  "new": "        if False and rp == canon:",
+  "why": "The false world: the runner permits an arm to be written to `vault/ucr_cif/oracle_cases.json`. That is not a hypothetical path -- it is `ucr_cif_oracle`'s own `--store` DEFAULT, so the destructive case is the one a caller reaches by omitting a flag. The overwrite destroys the canonical control record that the paired comparison is against, in place, with no confirmation and no diff, and it is invisible until some later run is refused for a drift the operator caused and cannot explain. The wave found this default and deliberately did not repair it, because it lives inside the frozen subject; this guard is the containment, and the mutation proves the containment is load-bearing rather than decorative. V-W12RUN-CANONICAL-STORE-REFUSES must catch it, with V-W12RUN-ARM-STORES-PASS proving ordinary arm paths still pass."
  }
 ]
