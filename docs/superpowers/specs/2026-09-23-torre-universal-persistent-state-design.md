@@ -192,6 +192,14 @@ multi-familia · la Meta-Ratchet y los Improvement Derivatives de v2.
 Todo ello es el destino, nada entra en esta rebanada. Registrado en
 `vault/backlog/2026-09-23_torre-universal-out-of-scope.md` con razón por ítem, no descartado.
 
+**Segunda pasada (2026-09-23).** La lista de arriba está organizada por *sistema del dataset*, que
+es la taxonomía de la fuente y tiene un punto ciego: el propósito del Owner es un comportamiento,
+no un sistema. El backlog recibió tres grupos más — precondiciones de medición (A), mecanismos que
+ningún fabric nombra (B: revocación, deuda de herencia, precedencia vs `CLAUDE.md`, transporte
+cross-host, Override Ledger, separación cliente/doctrina, escritores concurrentes) y deuda de
+estate que bloquea el bucle (C). **El grupo A no es diferido**: son precondiciones de esta misma
+rebanada y están en el §11.a.
+
 ## 10. Riesgos y lo que este diseño NO promete
 
 - **No promete** que el kernel capture en repos que el Owner nunca abra con Claude Code. La
@@ -206,7 +214,25 @@ Todo ello es el destino, nada entra en esta rebanada. Registrado en
 
 ## 11. Done-gate de esta rebanada
 
-Todos, o no está hecho:
+### 11.a Precondiciones — antes de la primera promoción, no después
+
+Añadidas el 2026-09-23 tras el brainstorming de backlog. Sin ellas el resto del gate no se puede
+falsar, y la primera **caduca**: en cuanto el trinquete empiece a correr ya no hay forma de saber
+cómo era antes.
+
+- **P1 · A/A de CRR y RFR medido, con el método predeclarado por escrito antes de la primera
+  medición contada.** Un umbral elegido después de ver los números no es un umbral.
+- **P2 · Clasificador de familia con las dos ramas alcanzables sobre entradas reales** — una
+  misión del estate que debe clasificar dentro y otra que debe quedar fuera, nombradas antes de
+  implementarlo. Un clasificador que dice «sí» a todo pasa todos los tests de activación.
+- **P3 · Catálogo de familias descubierto de una señal estructural del estate, con suelo de
+  población**: un barrido que deja de encontrar nada falla, no reporta limpio. Curarlo a mano mide
+  memoria, no realidad.
+- **P4 · Techo de tokens de la cápsula**, y superarlo es un fallo del compilador, no una nota.
+
+Detalle y primer paso de cada una: `vault/backlog/2026-09-23_torre-universal-out-of-scope.md` §A.
+
+### 11.b Observaciones — todas, o no está hecho
 
 1. `PERSISTENT_STATE-B0` existe con ≥1 entrada promovida por el gate del §5, con su evidencia de
    origen real en QuickLease y su respuesta contrafactual escrita.
