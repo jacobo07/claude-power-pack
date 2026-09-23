@@ -87,8 +87,9 @@ def cmd_oblige(args) -> int:
     lg = _log(args)
     pin = gs.file_pin(Path(args.root), args.gate_file)
     cv.accept_obligation(lg, gc.project(lg), args.id, args.plane, args.text, args.gate,
-                         pin, args.actor)
-    print(f"accepted {args.id} ({args.plane}); proven by {args.gate!r}")
+                         pin, args.actor, gate_class=args.gate_class)
+    print(f"accepted {args.id} ({args.plane}); proven by {args.gate!r} "
+          f"({args.gate_class or 'unstated'} gate)")
     for rel, digest in pin:
         print(f"  pinned {rel} {digest[:16]}...")
     return 0
@@ -351,6 +352,9 @@ def main(argv: list[str] | None = None) -> int:
     o.add_argument("--text", required=True)
     o.add_argument("--gate", required=True)
     o.add_argument("--gate-file", action="append", required=True)
+    o.add_argument("--gate-class", default="", choices=("",) + cv.GATE_CLASSES,
+                   help="what kind of observation the gate makes. REALITY obligations "
+                        "must declare in_game or live; it is never inferred from the plane")
     o.set_defaults(fn=cmd_oblige)
 
     common(sub.add_parser("record-gates")).set_defaults(fn=cmd_record_gates)

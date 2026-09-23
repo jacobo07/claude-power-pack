@@ -219,9 +219,20 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
         o = cv.project_convergence(state).obligations[d.spec["obligation"]]
         if dry_run:
             acted.append(f"{log.goal_id}: would run {o.identifier}'s gate")
+        elif o.plane in cv.REALITY_PLANES and o.gate_class not in cv.RUNTIME_GATE_CLASSES:
+            # Refuse rather than guess. This branch used to read
+            # `"in_game" if o.plane == cv.REALITY else "unit"`, which derived the
+            # class from the very plane `goal_closure` then checked it against --
+            # so the reality check could not fail, and a unit test named as a
+            # REALITY obligation's done gate would have satisfied a production
+            # claim. An obligation accepted before that was fixed carries no
+            # class; it needs re-accepting with one declared, not a guess here.
+            acted.append(f"{log.goal_id}: {o.identifier} declares no runtime gate class "
+                         f"({o.gate_class or 'nothing'}); a {o.plane} obligation is not "
+                         "dispatched on an inferred one")
         else:
             gate = {"id": o.identifier, "command": jd._argv(o.done_gate),
-                    "class": "in_game" if o.plane == cv.REALITY else "unit",
+                    "class": o.gate_class or "unit",
                     "files": [rel for rel, _ in o.gate_pin]}
             # The gate spec is STORED on the epoch, never rebuilt at harvest.
             # Measured 2026-09-22 on the first real goal: harvest rebuilt it from

@@ -37,8 +37,12 @@ def fresh(base: Path, gid: str, applicable_optional=()):
             cv.set_plane(lg, s, plane, False, "no runtime/transfer claim in this goal", "t")
     for plane in (cv.OUTCOME, cv.EVIDENCE, cv.REGRESSION, cv.UCR_CIF_LEARNING,
                   *applicable_optional):
+        # REALITY declares its class, like any real registration must. The
+        # fixture used to omit it and lean on the sweep inferring `in_game` from
+        # the plane, which is the defect this fixture would otherwise reproduce.
         cv.accept_obligation(lg, gc.project(lg), f"ob-{plane.lower()}", plane, "x",
-                             "python tools/gate.py", PIN, "t")
+                             "python tools/gate.py", PIN, "t",
+                             gate_class="in_game" if plane in cv.REALITY_PLANES else "unit")
     return lg
 
 

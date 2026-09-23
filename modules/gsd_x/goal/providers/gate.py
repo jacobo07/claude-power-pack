@@ -25,9 +25,9 @@ from pathlib import Path
 
 from ..epoch import (COMPLETED, FAILED, LOST, OBS_ENDED, OBS_LOST, OBS_RUNNING,
                      EpochError, Observation, Receipt)
+from ..convergence import GATE_CLASSES
 from ..git_state import file_pin, head, tree_id
 
-GATE_CLASSES = ("unit", "integration", "in_game", "live")
 DEFAULT_TIMEOUT_S = 900.0
 
 

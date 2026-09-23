@@ -40,6 +40,9 @@ PLANES = (OUTCOME, REALITY, EVIDENCE, FAILURE, REGRESSION, SETUP_LEARNING,
           UCR_CIF_LEARNING, TRANSFER, RECOVERY, OPERATIONAL)
 # Planes that apply to every goal. They may not be declared N/A.
 ALWAYS = frozenset({OUTCOME, EVIDENCE, FAILURE, REGRESSION, UCR_CIF_LEARNING})
+# The kinds of observation a gate can make. Canonical here rather than in the
+# provider, because acceptance validates a class long before any provider runs.
+GATE_CLASSES = ("unit", "integration", "in_game", "live")
 # Planes whose obligations only a runtime gate can satisfy.
 RUNTIME_GATE_CLASSES = frozenset({"in_game", "live"})
 REALITY_PLANES = frozenset({REALITY})
@@ -77,6 +80,13 @@ class GoalObligation:
     disposition: str = ACCEPTED
     disposition_reason: str = ""
     verdict: dict | None = None
+    # The KIND of observation this obligation's gate makes, declared by whoever
+    # registered it. Never inferred from the plane: deriving it from the plane is
+    # what made the reality check below tautological -- the class the check reads
+    # would be the class the plane implied, so its refusing branch was
+    # unreachable and a unit test could prove a production claim. Measured
+    # 2026-09-23 in `sweep`, which built {"class": "in_game" if plane == REALITY}.
+    gate_class: str = ""
 
 
 @dataclass
@@ -103,7 +113,7 @@ def project_convergence(state: GoalState) -> Convergence:
             elif ev.type == OB_ACCEPTED:
                 cv.obligations[d["id"]] = GoalObligation(
                     d["id"], d["plane"], d["text"], d["done_gate"], _pin(d.get("gate_pin")),
-                    d["revision"])
+                    d["revision"], gate_class=d.get("gate_class", ""))
             elif ev.type == OB_SATISFIED:
                 o = cv.obligations[d["id"]]
                 o.disposition, o.verdict = SATISFIED, dict(d["verdict"])
@@ -144,18 +154,29 @@ def set_plane(log: GoalLog, state: GoalState, plane: str, applicable: bool,
 
 
 def accept_obligation(log: GoalLog, state: GoalState, ob_id: str, plane: str, text: str,
-                      done_gate: str, gate_pin, actor: str) -> None:
+                      done_gate: str, gate_pin, actor: str, gate_class: str = "") -> None:
     if plane not in PLANES or plane in EVENT_CARRIED:
         raise GoalLogError(f"{plane!r} does not take obligations")
     if not (done_gate or "").strip():
         raise GoalLogError(f"{ob_id}: an obligation needs a done gate that can settle it")
     if not gate_pin:
         raise GoalLogError(f"{ob_id}: the gate's files must be pinned at acceptance")
-    if ob_id in project_convergence(state).obligations:
-        raise GoalLogError(f"{ob_id} already exists")
+    if gate_class and gate_class not in GATE_CLASSES:
+        raise GoalLogError(f"{ob_id}: gate class {gate_class!r} must be one of {GATE_CLASSES}")
+    # Fail closed, and only here. An unstated class on a REALITY obligation is
+    # "nobody said what kind of observation this is", which is not evidence that
+    # a runtime one was made. Refusing at ACCEPTANCE is what makes the check in
+    # `goal_closure` falsifiable: the class now comes from a person, so its
+    # refusing branch is reachable by a real registration.
+    if plane in REALITY_PLANES and gate_class not in RUNTIME_GATE_CLASSES:
+        raise GoalLogError(
+            f"{ob_id}: a {plane} obligation must declare an in_game or live gate class at "
+            f"acceptance (got {gate_class or 'nothing'}); only a runtime observation can "
+            "prove a reality claim, and the plane may not be used to infer that it made one")
     log.append(state.last_seq + 1, OB_ACCEPTED,
                {"id": ob_id, "plane": plane, "text": text, "done_gate": done_gate,
-                "gate_pin": [list(p) for p in gate_pin], "revision": state.revision},
+                "gate_pin": [list(p) for p in gate_pin], "revision": state.revision,
+                "gate_class": gate_class},
                actor)
 
 
