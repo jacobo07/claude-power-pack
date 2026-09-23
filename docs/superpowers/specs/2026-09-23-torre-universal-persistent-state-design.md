@@ -119,7 +119,7 @@ que ser un **bucle cerrado con telemetría de consumo**, nunca un registro.
 | Capability Baseline Graph | familias, instancias, capabilities, autoridad, ciclo de vida | NUEVO | **D2A PENDIENTE** — renombrado desde «Institutional System Graph» al término del corpus (B 92.075). No se crea sin barrido por mecanismo |
 | Evidence & Knowledge Plane | Vault + UKDL + confianza + linaje | EXISTE | **EXISTE** |
 | Evaluation Plane | tests, adversarios, mutaciones, contrafactuales | EXISTE | **EXISTE** |
-| Baseline & Policy Plane | compilador de baseline y aplicabilidad | ~~NUEVO~~ | **EXISTE — `modules/capability_runtime/applicability.py`.** Cinco puertas deterministas antes de cualquier score, `NOT_APPLICABLE`, anti-triggers, activación graduada. **El delta real es sólo el estado persistido** |
+| Baseline & Policy Plane | compilador de baseline y aplicabilidad | ~~NUEVO~~ | **EXISTE — `modules/capability_runtime/applicability.py`.** **Seis** puertas deterministas antes de cualquier score (`:120` `:138` `:146` `:151` `:158` `:164`), `NOT_APPLICABLE`, anti-triggers, activación graduada, `evaluate_all` fail-open (`:226`). **El delta real es sólo el estado persistido** |
 | Event Stream | eventos de construcción, fallos, intervenciones | PARCIAL | **PARCIAL** (hooks) |
 
 **`NO CONSTRUIR UN SEGUNDO UBC` es ahora una restricción del diseño, no una recomendación.**
@@ -247,19 +247,36 @@ prompt · mínimo acotado síncrono con enriquecimiento posterior · modo degrad
 
 ### 7.b El genoma alimenta PUERTAS, no sólo el score (G-4)
 
-`applicability.py` evalúa cinco puertas deterministas **antes** de cualquier score.
+`applicability.py` evalúa **seis** puertas deterministas **antes** de cualquier score.
 `tier.py:251-253` deja `owners`, `prerequisites` y `held_scopes` **vacíos a propósito**: *«a hook
 cannot establish them and guessing would defeat the point»*. Rellenarlos mal no degrada el
 resultado: lo **invierte** — un genoma rancio o parcial **bloquea** capacidades.
+
+**Verificado en fuente ejecutable, no en cita (R1).** La puerta 2 es literalmente
+`if ctx.resolved_owners and c.owner… not in …` (`:146`): **un conjunto vacío la DESACTIVA, y uno
+parcial la convierte en veto universal.** La puerta 4 se comporta igual con `held_scopes`
+(`:158`). G-4 no era una hipótesis del auditor — está en el código, y es la razón exacta por la
+que un campo ausente debe **omitirse** en vez de enviarse vacío.
 
 Por defecto el genoma alimenta **score y `available_evidence`**. `held_scopes` y
 `resolved_owners` exigen frescura probada. **Un campo ausente significa *no medido* (se omite),
 nunca *conjunto vacío*.**
 
+**Y la cápsula NO necesita inventar su vocabulario de estados.** La puerta 1.5 (`:126-143`) ya
+distingue *dormant* de *blocked*, con la razón escrita en el módulo: *«A capability the mission
+never reached for is DORMANT, not BLOCKED. The four blocking verdicts all mean "this capability
+is wanted here and cannot run"»*, y con la medición que lo forzó (un typo de una línea en CLI
+reportaba el instalador transaccional como `BLOCKED_BY_MISSING_EVIDENCE`). Ésa es, ya
+implementada y ya falsada por un benchmark cross-domain, la distinción `NOT_APPLICABLE` ≠
+`BLOCKED` del §7.a. Lo que el §7.a **añade** son los estados del *canal* —
+`ABANDONED_BY_DEADLINE`, `PRODUCER_FAILURE`, `STALE` —, que son los que hoy no existen en
+ninguna parte.
+
 ### 7.c Identidad del genoma (G-5)
 
 La clave del genoma sale de `modules/repo_identity/identity.py`
-(`canonical_repo` / `repo_key`). **No se inventa un esquema propio**: ese módulo existe porque
+(`canonical_repo` `:56` / `repo_key` `:92`, con `legacy_keys` `:97` y `ledger_paths` `:134`
+— **leídos, no citados**). **No se inventa un esquema propio**: ese módulo existe porque
 sluguear el cwd creaba una segunda identidad con su ledger vacío al hacer `cd` a un
 subdirectorio. Aserción obligatoria: el genoma de un subdirectorio resuelve a la misma clave que
 el de la raíz, y el `.git` de un worktree es un **fichero**, no un directorio — este árbol tiene
