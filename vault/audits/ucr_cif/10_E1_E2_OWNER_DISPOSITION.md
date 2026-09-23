@@ -93,7 +93,7 @@ la sección 30 del prompt pide descubrimiento de dueño, no síntesis.
 
 - **No** afirma que FD-07 esté *alcanzado* en producción. Mide que existe y qué hace, leído. Si
   nadie lo invoca, es la Liveness Standard quien lo dice — `python modules/liveness/reachability.py`
-  es el instrumento, y **no se ha corrido en esta pasada**.
+  es el instrumento. **CORREGIDO: se corrió.** Ver §4.b.
 - **No** afirma que los 235 ficheros E1 sean todos dueños. Son la **superficie del mecanismo**;
   el dueño es uno y está nombrado.
 - **No** afirma cobertura del sufijo del corpus para estos dos conceptos: `project challenge` y
@@ -101,6 +101,27 @@ la sección 30 del prompt pide descubrimiento de dueño, no síntesis.
   INSTRUMENT BLIND allí, no aquí.
 - El solapamiento E1∩E2 (87 ficheros) **no** se ha desambiguado. Un fichero que toca los dos
   mecanismos puede ser dueño de uno y consumidor del otro; el barrido no lo distingue.
+
+### 4.b FD-07 no es huérfano — el instrumento se corrió
+
+`python modules/liveness/reachability.py` reporta
+**409 módulos · 272 REACHABLE · 137 ORPHAN · 0 UNKNOWN · 29 gate offenders**, y `fd_07_flywheel`
+tiene **cero menciones** en la lista de no alcanzables y no declarados. Está en el denominador y
+**no es huérfano**.
+
+**Lo que eso NO prueba.** El gate sólo *imprime* los huérfanos, así que no distingue `REACHABLE`
+de un `LIBRARY`/`SCHEDULED` declarado. La afirmación defendible es **«no es huérfano»**, nunca
+«se invoca en producción». Y la apertura del propio gate lo dice mejor de lo que yo lo diría:
+
+> *«APERTURE: packages under `modules/` only. `tools/` is NOT scanned … Silence here about a tool
+> is absence from the denominator, never health.»*
+
+Por tanto `tools/ceps.py` y `tools/ceps_promote_stop.py` —dos de los fragmentos E1— **siguen sin
+medir**, y su ausencia de esta lista no es salud.
+
+**Hallazgo de paso:** `fable_distillation/fd_04_acceleration` **sí es huérfano**. Eso matiza el
+*«FD-04 es código ejecutable, no doctrina»* de `05_PHASE4_PLAN_AUDIT.md` §1: cierto para
+`fd_04_contrast` y `fd_04_prover`, falso para el tercero de los tres que esa línea nombra.
 
 ## 5. Consecuencia para la Torre
 
