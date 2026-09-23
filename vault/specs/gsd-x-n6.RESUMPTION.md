@@ -46,6 +46,31 @@ which N6 did, and which caught `7bc075b → c8a5d03`.
 - Regression unchanged: reachability 9/9 · gsd-x 15/15 · mission 17/17 ·
   facts 15/15 · consent 3/3 · sh dispatch 4/4.
 
+### `dc5ff59` — the Fact Producer exists, and absence stopped meaning one thing
+
+- `tools/gsd_x_fact_producer.py` produces facts from sources this estate already
+  owns: `bounded_local_capacity` **OBSERVED** from `host-memory-floor.js`'s own
+  readings, `unattended_operation` **DERIVED** from the long-run markers in
+  `~/.claude/state`, scoped to the mission root.
+- Live: capacity HOLDS (1312 MB free of 32061, WARN), unattended NOT-HELD. Both
+  poles came from the world, not from a fixture.
+- Document has **three** buckets — `facts[]`, `not_held[]`, `unknown[]` — because
+  the consumer reads presence as "holds", so a single absence silently carried
+  measured-false, could-not-measure and never-asked. **UNKNOWN is not false.**
+- Freshness is dependency-driven, no clock: each fact records sha256+mtime+size of
+  its sources. Unrelated file changes → FRESH. A source changing → STALE, named.
+  A source that **vanished → UNKNOWN, not STALE**.
+- Proof: **15/15**; three mutations driven (UNKNOWN→false reds all four UNKNOWN
+  gates at 11/15; dropping mission scoping reds the cross-mission gate; reporting
+  an unreadable source as STALE reds its own), restore SHA-256 `2C0EA317…`.
+
+**Open, deliberately:** the document is `gsdx-facts/2` and `load()` accepts only
+`gsdx-facts/1`, so it **refuses** the document today. That is fail-closed and
+correct; an additive field the loader silently ignored would be fail-open. **No
+FACTS.json is emitted into the repo until the loader learns v2** — writing one
+into `vault/benchmarks/mission_spine` would flip `source_of()` from prose to
+structured underneath the parity proof.
+
 ## What N6 MEASURED that changes the architecture
 
 **The root cause is not `sh`.** Read the source, not the symptom:
@@ -105,6 +130,11 @@ upstream is outward-facing and needs the Owner** — it is the one open decision
 
 ## Next exact valid action
 
+0. **Teach `structured_facts.load()` schema v2** — accept v1 unchanged (the parity
+   proof builds v1 fixtures through `dump()`), require `state` + `depends_on` on a
+   v2 document, and surface a non-empty `unknown[]` in the mission verdict so a
+   closure receipt can never silently claim completeness. Only then emit a real
+   FACTS.json. Until this lands the producer's output is correctly refused.
 1. **Draft the upstream report** for D1/D2/D4 (do not send). One issue, three
    defects, each with file:line, the measured verdict, and the minimal fix:
    `runBoundedShell` forwards the spawn error; `evaluateCommandExitZero` gains a
