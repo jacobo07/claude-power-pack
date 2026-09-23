@@ -8,6 +8,7 @@ replaces) everything cannot go green.
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
@@ -287,6 +288,49 @@ def main() -> int:
         check("V-MC-SUP-LIVE-ASKS-HOST", asked == [1], "control: a live mission does ask")
     finally:
         gm.host_sessions = real_host
+
+    # a turn that ended past the budget halts instead of relaying forever
+    check("V-MC-PLAN-RELAY-BUDGET-HALT",
+          gm.plan_next({**base, "owner": bg, "iterations": 999}, NOW, idle_row, alive)["action"]
+          == "halt")
+
+    # the successor's note: taken from the predecessor's transcript, never a stale epoch's
+    real_note = gm.handoff_note_from_transcript
+    try:
+        gm.handoff_note_from_transcript = lambda sid: "resume at f41" if sid == "s-m-n1" else ""
+        hs = fresh("m-n1")
+        rec = gm.load("m-n1")
+        gm.transition("m-n1", expect_epoch=rec["epoch"], expect_state=gm.RUNNING, event="t",
+                      now=NOW, note="STALE note from epoch 0")
+        gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                     stop_runner=stop_run, pid_alive=gone)
+        check("V-MC-NOTE-FROM-TRANSCRIPT", gm.load("m-n1")["note"] == "resume at f41",
+              repr(gm.load("m-n1")["note"]))
+        gm.handoff_note_from_transcript = lambda sid: ""
+        hs = fresh("m-n2")
+        rec = gm.load("m-n2")
+        gm.transition("m-n2", expect_epoch=rec["epoch"], expect_state=gm.RUNNING, event="t",
+                      now=NOW, note="STALE note from epoch 0")
+        gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                     stop_runner=stop_run, pid_alive=gone)
+        check("V-MC-STALE-NOTE-NOT-INHERITED", gm.load("m-n2")["note"] == "",
+              repr(gm.load("m-n2")["note"]))
+    finally:
+        gm.handoff_note_from_transcript = real_note
+    # the extractor itself, on a real-shaped transcript
+    tdir = Path(TMP) / "projects" / "p"
+    tdir.mkdir(parents=True, exist_ok=True)
+    (tdir / "s-note-1.jsonl").write_text(json.dumps({"type": "assistant", "message": {"content": [
+        {"type": "text", "text": "done f40.\n\nHANDOFF NOTE: next is f41; f40 verified."}]}}) + "\n",
+        encoding="utf-8")
+    real_find = gm.lr.find_transcript
+    gm.lr.find_transcript = lambda sid: (tdir / f"{sid}.jsonl") if (tdir / f"{sid}.jsonl").exists() else None
+    try:
+        check("V-MC-NOTE-EXTRACTED", gm.handoff_note_from_transcript("s-note-1")
+              == "next is f41; f40 verified.")
+        check("V-MC-NOTE-ABSENT-EMPTY", gm.handoff_note_from_transcript("s-none") == "")
+    finally:
+        gm.lr.find_transcript = real_find
 
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1

@@ -102,7 +102,10 @@ def main() -> int:
     out = run_at(sid, 45.0)
     reason = out.get("reason", "")
     check("V-MCW-HANDOFF-ASKED", out.get("decision") == "block" and "CONTEXT WALL" in reason
-          and "gsd_mission.py" in reason and "handoff" in reason, reason[:120])
+          and gm.NOTE_TAG in reason, reason[:120])
+    # the hand-off must need no tool: an acceptEdits worker cannot run a shell here (W0 E8)
+    check("V-MCW-HANDOFF-NEEDS-NO-SHELL", "python" not in reason.lower()
+          and "gsd_mission.py" not in reason, reason[:120])
     check("V-MCW-NO-COMPACT-LINE", "/compact focus" not in reason)
     check("V-MCW-NOTHING-DISPATCHED", calls["dispatch"] == before["dispatch"],
           f"dispatch calls {calls['dispatch'] - before['dispatch']}")

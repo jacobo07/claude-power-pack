@@ -136,7 +136,9 @@ class _Lock:
 def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
            workstream: str | None = None, mission_terms=None,
            max_cycles: int | None = None, max_hours: float | None = None,
-           mode: str = "ralph", now: float | None = None) -> dict:
+           mode: str = "ralph", now: float | None = None,
+           permission_mode: str | None = None, allowed_tools=None, add_dirs=None,
+           wall: dict | None = None) -> dict:
     """A PREPARED mission. Refuses to overwrite an existing, non-terminal one."""
     now = time.time() if now is None else now
     mid = mission_id or f"m-{uuid.uuid4().hex[:12]}"
@@ -155,6 +157,10 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
             "state": PREPARED, "epoch": 0, "owner": None, "pending": None,
             "iterations": 0, "failed_launches": 0, "note": "",
             "created_at": now, "updated_at": now, "last_progress_at": None,
+            # How each worker is launched. None -> the host's own defaults for that setting.
+            "permission_mode": permission_mode, "allowed_tools": list(allowed_tools or []),
+            "add_dirs": [str(Path(d).resolve()) for d in (add_dirs or [])],
+            "wall": wall or dict(DEFAULT_WALL),
         }
         _write(path, rec)
     lr.ledger_append(mid, "mission_prepared", mission_id=mid, cwd=rec["cwd"],
@@ -350,7 +356,10 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             return {"action": "unblock", "reason": why}
         if verdict == LIVE and owner_idle(rec.get("owner"), sessions):
             # Ralph: a worker whose turn ended is finished, whatever it said. The
-            # supervisor asks GSD first; only an incomplete mission is relayed.
+            # supervisor asks GSD first; only an incomplete mission is relayed -- and never
+            # past its budget, or a mission with no completion predicate relays forever.
+            if spent:
+                return {"action": "halt", "reason": f"turn ended and budget: {spent}"}
             return {"action": "relay", "reason": f"owner's turn ended without completion: {why}"}
         return {"action": "none", "reason": f"owner {verdict}: {why}"}
     return {"action": "none", "reason": f"unhandled state {state}"}
@@ -374,11 +383,13 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
         argv += ["--permission-mode", mode]
     for tool in rec.get("allowed_tools") or []:
         argv += ["--allowedTools", tool]
+    for d in rec.get("add_dirs") or []:
+        argv += ["--add-dir", d]
     return argv + [prompt]
 
 
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
-                  runner=None, now: float | None = None) -> dict:
+                  runner=None, now: float | None = None, note: str | None = None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
 
     Claim-before-launch is what makes a duplicate supervisor harmless: the loser
@@ -393,11 +404,13 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
         raise MissionError(f"no mission {mission_id}")
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
+    extra = {"note": note} if note is not None else {}
     rec = transition(mission_id, expect_epoch=expect_epoch, expect_state=expect_state,
                      event="launch_claimed", now=now, state=LAUNCHING, epoch=epoch,
                      failed_launches=failed, reason=reason,
                      pending={"kind": "worker_start", "epoch": epoch,
-                              "requested_at": now, "deadline": now + START_DEADLINE_S})
+                              "requested_at": now, "deadline": now + START_DEADLINE_S},
+                     **extra)
     prompt = rec["resume_command"]
     run = runner or (lambda argv, cwd: subprocess.run(
         argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8",
@@ -607,9 +620,18 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     row["stop"] = why
                     if not ok:
                         continue  # the next pass retries; nothing launched beside a live worker
+                note = None
+                if act in ("relay", "replace") and rec.get("owner"):
+                    # Read BEFORE the launch: the note describes the predecessor's last turn.
+                    # An explicit `handoff --note` counts only when THIS owner recorded it
+                    # (state HANDOFF); otherwise the record's note is the previous epoch's and
+                    # would be handed on as current.
+                    explicit = rec.get("note") if rec["state"] == HANDOFF else ""
+                    note = explicit or handoff_note_from_transcript(rec["owner"]["session_id"]) or ""
+                    row["note_chars"] = len(note)
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
-                                              runner=runner, now=now)
+                                              runner=runner, now=now, note=note)
         except CasConflict as exc:
             row["cas"] = str(exc)  # another supervisor acted first: correct, not an error
     return out
@@ -680,17 +702,38 @@ def _arm_worker_marker(rec: dict, session_id: str) -> None:
                      mission_id=rec["mission_id"], epoch=rec["epoch"], via="mission")
 
 
+NOTE_TAG = "HANDOFF NOTE:"
+NOTE_MAX_CHARS = 2000
+
+
 def handoff_instruction(marker: dict, used_pct) -> str:
-    sid = marker.get("session_id", "<sid>")
+    """What the worker is told at its wall. It needs NO tool to hand off: a worker in
+    acceptEdits cannot run a shell command on this host (W0 E8), so a hand-off that required
+    one would leave it parked on a permission prompt exactly at the wall. The note travels
+    as the last text of its response, which the supervisor reads from the transcript."""
     return (
         f"CONTEXT WALL — {used_pct}% used. This mission continues in a FRESH session; this one "
-        f"ends here (mission {marker.get('mission_id')}, epoch {marker.get('epoch')}). Do exactly this, "
-        "then stop: (1) finish ONLY the atomic step in progress and commit it — start nothing new; "
-        "(2) record the hand-off: `python \"%USERPROFILE%\\.claude\\skills\\claude-power-pack\\tools"
-        f"\\gsd_mission.py\" handoff --session {sid} --note \"<next exact action; open facts the "
-        "repository does not record>\"`; (3) end your response. Do NOT run /compact and do NOT "
-        "re-issue the run command: the supervisor starts the next worker once this turn ends."
+        f"ends here (mission {marker.get('mission_id')}, epoch {marker.get('epoch')}). Do exactly "
+        "this: (1) finish ONLY the atomic step in progress and make it durable (commit / save) — "
+        "start nothing new; (2) end your response with a paragraph that begins "
+        f"`{NOTE_TAG}` stating the next exact action and any fact the repository does not "
+        "record. Do NOT run /compact and do NOT re-issue the run command: the supervisor "
+        "starts the next worker once this turn ends."
     )
+
+
+def handoff_note_from_transcript(session_id: str) -> str:
+    """The predecessor's hand-off note: the text after the LAST ``HANDOFF NOTE:`` in its last
+    assistant message. Empty when absent -- the successor then reconstructs from durable
+    state, and the card says so. A claim, never a fact: the card labels it as such."""
+    try:
+        t = lr.find_transcript(session_id)
+        text = lr.last_assistant_text(t) if t else None
+    except Exception:
+        return ""
+    if not text or NOTE_TAG not in text:
+        return ""
+    return text.rsplit(NOTE_TAG, 1)[1].strip()[:NOTE_MAX_CHARS]
 
 
 def _cli(argv=None) -> int:
@@ -704,6 +747,12 @@ def _cli(argv=None) -> int:
     a.add_argument("--max-cycles", type=int)
     a.add_argument("--max-hours", type=float)
     a.add_argument("--no-launch", action="store_true")
+    a.add_argument("--permission-mode", default=None,
+                   help="worker permission mode; omitted -> the host default (auto on this estate)")
+    a.add_argument("--allowed-tools", nargs="*", default=None)
+    a.add_argument("--add-dir", action="append", default=None)
+    a.add_argument("--wall", default=None,
+                   help="snapshot,advisory,rearm in %% of context (default 35,40,30)")
     s = sub.add_parser("session-start")
     s.add_argument("--session", required=True)
     s.add_argument("--source", default="")
@@ -717,8 +766,14 @@ def _cli(argv=None) -> int:
     sub.add_parser("status")
     args = ap.parse_args(argv)
     if args.cmd == "arm":
+        wall = None
+        if args.wall:
+            snap, adv, rearm = (float(x) for x in args.wall.split(","))
+            wall = {"snapshot": snap, "advisory": adv, "rearm": rearm}
         res = arm(args.cwd, args.command, launch=not args.no_launch, workstream=args.workstream,
-                  max_cycles=args.max_cycles, max_hours=args.max_hours)
+                  max_cycles=args.max_cycles, max_hours=args.max_hours,
+                  permission_mode=args.permission_mode, allowed_tools=args.allowed_tools,
+                  add_dirs=args.add_dir, wall=wall)
         print(json.dumps(res, indent=2))
         return 0 if args.no_launch or res.get("launch", {}).get("ok") else 1
     if args.cmd == "session-start":
