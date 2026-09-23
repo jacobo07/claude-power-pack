@@ -75,12 +75,12 @@ def capsule_path(path: str | None = None) -> str | None:
     return os.path.join(_state_dir(), "capsule_%s.json" % key) if key else None
 
 
-def _deposits_for(key: str) -> list:
-    """FD-07 deposits for this repo. Survivors only, by design: run_flywheel
-    `continue`s on DUP and DISCARD before _writeback, so this ledger holds
-    NEW/STRONGER and nothing else (11_O0_PRETREATMENT_BASELINE.md §4)."""
-    p = os.path.join(os.path.expanduser("~"), ".claude", "state",
-                     "fable_distillation", "deposits_%s.jsonl" % key)
+def _deposits_dir() -> str:
+    return os.path.join(os.path.expanduser("~"), ".claude", "state",
+                        "fable_distillation")
+
+
+def _read_ledger(p: str) -> list:
     out = []
     if not os.path.exists(p):
         return out
@@ -94,6 +94,49 @@ def _deposits_for(key: str) -> list:
             except Exception:  # noqa: BLE001
                 continue
     return out
+
+
+def _deposits_for(key: str) -> list:
+    """Deposits from THIS repo's own ledger. Survivors only, by design:
+    run_flywheel `continue`s on DUP and DISCARD before _writeback, so the ledger
+    holds NEW/STRONGER and nothing else (11_O0_PRETREATMENT_BASELINE.md §4)."""
+    return _read_ledger(os.path.join(_deposits_dir(), "deposits_%s.jsonl" % key))
+
+
+def _deposits_institutional(exclude_key: str | None = None) -> tuple[list, int]:
+    """EVERY repo's deposits, which is the whole point of a Tower.
+
+    The first version of this module read only the local ledger, so advancing in
+    QuickLease raised QuickLease's own capsule and nothing else -- per-project
+    maturity wearing an institutional name. The Owner's ask is the opposite:
+    "si yo avanzo con QuickLease, la proxima vez que pida algo en InfinityOps".
+    The corpus states it as a Baseline Lift global (B 90.556): InfinityOps pays
+    once, ORCA X inherits, KobiiCraft inherits.
+
+    So inheritance is read from the WHOLE estate, and APPLICABILITY decides who
+    receives it -- which is the spec's own rule, "la herencia viaja por la
+    familia, no por el proyecto". A repo outside the family gets NOT_APPLICABLE
+    before this function's result is ever used.
+
+    KNOWN LIMITATION, stated rather than hidden: deposits carry no family tag.
+    `task_class` was measured and does NOT carry that axis
+    (13_FAMILY_SIGNAL_PROBE.md), so this counts institutional volume, not
+    family-filtered maturity. Narrowing it needs family-tagged deposits, which
+    is the next slice and not this one.
+    """
+    d = _deposits_dir()
+    if not os.path.isdir(d):
+        return ([], 0)
+    rows: list = []
+    ledgers = 0
+    for fn in sorted(os.listdir(d)):
+        if not (fn.startswith("deposits_") and fn.endswith(".jsonl")):
+            continue
+        if exclude_key and fn == "deposits_%s.jsonl" % exclude_key:
+            continue
+        ledgers += 1
+        rows.extend(_read_ledger(os.path.join(d, fn)))
+    return (rows, ledgers)
 
 
 def _family_of(path: str) -> tuple[bool, str]:
@@ -129,13 +172,17 @@ def produce(path: str | None = None) -> dict:
             cap = {"state": NOT_APPLICABLE,
                    "reason": "repo is not in %s (%s)" % (FAMILY, why)}
         else:
-            deposits = _deposits_for(key)
+            own = _deposits_for(key)
+            inherited, ledgers = _deposits_institutional(exclude_key=key)
+            deposits = own + inherited
             promoted = [d for d in deposits
                         if d.get("delta_class") in ("NEW", "STRONGER")]
+            own_promoted = [d for d in own
+                            if d.get("delta_class") in ("NEW", "STRONGER")]
             if not promoted:
                 cap = {"state": EMPTY_BY_EVIDENCE,
-                       "reason": "in %s (%s) but no promoted deposit for this "
-                                 "repo yet" % (FAMILY, why)}
+                       "reason": "in %s (%s) but the estate holds no promoted "
+                                 "deposit at all yet" % (FAMILY, why)}
             else:
                 dests: dict[str, int] = {}
                 for d in promoted:
@@ -143,9 +190,14 @@ def produce(path: str | None = None) -> dict:
                     dests[k] = dests.get(k, 0) + 1
                 cap = {
                     "state": AVAILABLE,
-                    "reason": "%d promoted delta(s) in %s (%s)"
-                              % (len(promoted), FAMILY, why),
+                    "reason": "%d promoted delta(s) in %s (%s): %d from this "
+                              "repo, %d INHERITED from %d other ledger(s)"
+                              % (len(promoted), FAMILY, why, len(own_promoted),
+                                 len(promoted) - len(own_promoted), ledgers),
                     "entries": len(promoted),
+                    "own_entries": len(own_promoted),
+                    "inherited_entries": len(promoted) - len(own_promoted),
+                    "source_ledgers": ledgers + 1,
                     "destinations": dests,
                     # Honest: FD-07 writes portability_proven=False by contract,
                     # so the `verified` clause of the canonical Tower definition

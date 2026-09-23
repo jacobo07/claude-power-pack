@@ -57,9 +57,17 @@ def main() -> int:
     real_repo_key = tc._repo_key
     real_family = tc._family_of
     real_deposits = tc._deposits_for
+    real_institutional = tc._deposits_institutional
     try:
         tc._state_dir = lambda: tmp                      # hermetic
         tc._repo_key = lambda path=None: "SYNTHETIC-REPO"
+        # The estate's OWN ledgers must be isolated too. Cross-repo inheritance
+        # made produce() read every ledger under ~/.claude/state, so without
+        # this the real 215 deposits leak in and EMPTY_BY_EVIDENCE becomes
+        # unreachable -- which is exactly how this gate went 13/15 the moment
+        # inheritance landed. A hermetic test is hermetic about ALL its inputs,
+        # and a new input silently un-isolates it.
+        tc._deposits_institutional = lambda exclude_key=None: ([], 0)
 
         print("V-TOWER gates")
 
@@ -202,6 +210,7 @@ def main() -> int:
         tc._repo_key = real_repo_key
         tc._family_of = real_family
         tc._deposits_for = real_deposits
+        tc._deposits_institutional = real_institutional
         shutil.rmtree(tmp, ignore_errors=True)
 
 
