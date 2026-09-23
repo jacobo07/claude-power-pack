@@ -172,6 +172,27 @@ def main() -> int:
                "no .tmp debris after produce()",
                "found %s" % leftovers)
 
+        # --- G-5: one repo, one key, whatever directory you stand in --------
+        # Spec §11.b.9. The real repo_key is restored for this case: mocking it
+        # would make the assertion about the mock. repo_identity exists BECAUSE
+        # slugging the cwd created a second identity with an empty ledger the
+        # moment anyone cd'd into a subdirectory, and a worktree's `.git` is a
+        # FILE, which this tree has seven of.
+        tc._repo_key = real_repo_key
+        root_key = tc._repo_key(_PP_ROOT)
+        sub = os.path.join(_PP_ROOT, "modules", "tower")
+        sub_key = tc._repo_key(sub)
+        rel_key = tc._repo_key(os.path.relpath(sub, os.getcwd())) if os.path.isdir(sub) else None
+        _check("V-TOWER-G5-SUBDIR-SAME-KEY", root_key == sub_key and bool(root_key),
+               "root and modules/tower both -> %s" % root_key,
+               "subdirectory resolved to a DIFFERENT identity: %s vs %s"
+               % (root_key, sub_key))
+        _check("V-TOWER-G5-RELATIVE-SAME-KEY", rel_key == root_key,
+               "a RELATIVE path resolves to the same key",
+               "relative path gave %s, absolute gave %s -- this is the silent "
+               "UNKNOWN measured on the first probe of the wired path"
+               % (rel_key, root_key))
+
         print()
         print("TOWER_CAPSULE_PASS=%d/%d  threshold=%d/%d"
               % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))
