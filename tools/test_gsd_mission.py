@@ -548,6 +548,80 @@ def main() -> int:
     launched = [r for r in rows if (r.get("launch") or {}).get("ok")]
     check("V-MC-SUP-ERROR-ISOLATED", len(errs) == 1 and len(launched) == 1, str(rows))
 
+    # --- M6 finding: the run moved into a git worktree; the mission must follow it -----------
+    import subprocess as _sp
+    G = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    repo = Path(TMP) / "wt-repo"
+    (repo / "sub").mkdir(parents=True, exist_ok=True)
+    (repo / "sub" / "a.txt").write_text("a", encoding="utf-8")
+    other = Path(TMP) / "other-repo"
+    other.mkdir(exist_ok=True)
+    for args in (["init", "-q", str(repo)], ["-C", str(repo), "add", "-A"],
+                 ["-C", str(repo), "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "i"],
+                 ["-C", str(repo), "worktree", "add", "-q", "-b", "run",
+                  str(repo / ".claude" / "worktrees" / "run")],
+                 ["init", "-q", str(other)]):
+        _sp.run([G, *args], capture_output=True, timeout=60)
+    wt = str((repo / ".claude" / "worktrees" / "run").resolve())
+    tdir2 = Path(TMP) / "projects" / "wt"
+    tdir2.mkdir(parents=True, exist_ok=True)
+
+    def transcript(sid, cwds):
+        (tdir2 / f"{sid}.jsonl").write_text(
+            "".join(json.dumps({"type": "user", "cwd": c}) + "\n" for c in cwds), encoding="utf-8")
+    transcript("s-wt", [str(repo), wt])
+    transcript("s-sub", [str(repo), str(repo / "sub")])
+    transcript("s-oth", [str(repo), str(other)])
+    real_find = gm.lr.find_transcript
+    gm.lr.find_transcript = lambda sid: (tdir2 / f"{sid}.jsonl") if (tdir2 / f"{sid}.jsonl").exists() else None
+    try:
+        got = gm.effective_workdir("s-wt", str(repo))
+        check("V-MC-WORKDIR-FOLLOWS-WORKTREE", got and os.path.normcase(got) == os.path.normcase(wt),
+              repr(got))
+        check("V-MC-WORKDIR-SUBDIR-IGNORED", gm.effective_workdir("s-sub", str(repo)) == str(repo))
+        check("V-MC-WORKDIR-OTHER-REPO-IGNORED", gm.effective_workdir("s-oth", str(repo)) == str(repo))
+        check("V-MC-WORKDIR-NO-TRANSCRIPT-UNKNOWN", gm.effective_workdir("s-none", str(repo)) is None)
+
+        # supervise: GSD is asked in the worktree, the card names it, the launch stays at cwd
+        for p in Path(TMP).glob("gsd-mission-*.json"):
+            p.unlink()
+        gm.create(str(repo), "/gsd-autonomous", mission_id="m-wt", now=NOW)
+        gm.transition("m-wt", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                      state=gm.RUNNING, epoch=1, owner={**bg, "session_id": "s-wt"})
+        hs_wt = [{"sessionId": "s-wt", "status": "idle", "state": "working", "kind": "background",
+                  "id": "s-wt", "pid": 999}]
+        asked_at, launched_at = [], []
+
+        def gsd_at(c, workstream=None):
+            asked_at.append(os.path.normcase(str(c)))
+            return {"outcome": "OK", "reason": "ok"}
+
+        def launch_at(argv, cwd):
+            launched_at.append(os.path.normcase(str(cwd)))
+            return launch_run(argv, cwd)
+        gm.supervise(now=NOW, sessions=hs_wt, gsd_status=gsd_at, runner=launch_at,
+                     stop_runner=stop_run, pid_alive=gone)
+        rec = gm.load("m-wt")
+        check("V-MC-SUP-GSD-ASKED-IN-WORKTREE", asked_at == [os.path.normcase(wt)], str(asked_at))
+        check("V-MC-CARD-NAMES-WORKTREE", "WORK TREE" in (rec.get("card") or "")
+              and wt.lower() in (rec.get("card") or "").lower())
+        check("V-MC-LAUNCH-STAYS-AT-TRUSTED-CWD",
+              launched_at == [os.path.normcase(str(Path(repo).resolve()))], str(launched_at))
+        # control: a predecessor that never left the main checkout gets no WORK TREE line
+        for p in Path(TMP).glob("gsd-mission-*.json"):
+            p.unlink()
+        transcript("s-main", [str(repo)])
+        gm.create(str(repo), "/gsd-autonomous", mission_id="m-main", now=NOW)
+        gm.transition("m-main", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                      state=gm.RUNNING, epoch=1, owner={**bg, "session_id": "s-main"})
+        asked_at.clear()
+        gm.supervise(now=NOW, sessions=[{**hs_wt[0], "sessionId": "s-main", "id": "s-main"}],
+                     gsd_status=gsd_at, runner=launch_at, stop_runner=stop_run, pid_alive=gone)
+        check("V-MC-NO-WORKTREE-NO-LINE", "WORK TREE" not in (gm.load("m-main").get("card") or "")
+              and asked_at == [os.path.normcase(str(Path(repo).resolve()))], str(asked_at))
+    finally:
+        gm.lr.find_transcript = real_find
+
     # Owner decision 2026-09-24: real mission workers run `auto` unless told otherwise. Driven
     # through the real CLI (hermetic state dir), so the default is executed, not just documented.
     import subprocess

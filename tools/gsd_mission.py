@@ -442,8 +442,13 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
 
 def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: str,
                   runner=None, now: float | None = None, note: str | None = None,
-                  stop_runner=None) -> dict:
+                  stop_runner=None, work_dir: str | None = None) -> dict:
     """Claim the next epoch FIRST (CAS), then launch, then bind the host's answer.
+
+    ``work_dir`` is where the predecessor actually worked (a git worktree of the project,
+    see effective_workdir). The worker is still LAUNCHED in the mission's cwd -- workspace
+    trust is exact-path (W0 E2), a fresh worktree path is never trusted -- and the card tells
+    it where the work is.
 
     Claim-before-launch is what makes a duplicate supervisor harmless: the loser
     of the CAS launches nothing. The worker is bound only by the id the host
@@ -458,11 +463,15 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
+    if work_dir:
+        extra["work_dir"] = work_dir
     if note is not None:
         # Pre-render the successor's card NOW: this runs out of band with no deadline, and
-        # the git facts are exactly those of the hand-off moment the card claims to show.
-        extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note},
-                                    _git_facts(rec["cwd"]))
+        # the git facts are exactly those of the hand-off moment the card claims to show --
+        # read where the work IS, not where the worker was launched.
+        wd = work_dir or rec.get("work_dir") or rec["cwd"]
+        extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note,
+                                     "work_dir": wd}, _git_facts(wd))
     rec = transition(mission_id, expect_epoch=expect_epoch, expect_state=expect_state,
                      event="launch_claimed", now=now, state=LAUNCHING, epoch=epoch,
                      failed_launches=failed, reason=reason,
@@ -578,6 +587,13 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         f"HEAD at hand-off: {g.get('head') or 'unknown'}",
         f"Dirty paths at hand-off: {g.get('dirty') if g.get('dirty') is not None else 'unknown'}",
     ]
+    wd = rec.get("work_dir")
+    if wd and os.path.normcase(str(wd)) != os.path.normcase(str(rec.get("cwd") or "")):
+        # Measured M6 (2026-09-24): /gsd-autonomous moved into a git worktree and reset the main
+        # checkout's planning files, so everything done lives THERE. A successor that starts in
+        # the main checkout sees the old roadmap and redoes finished phases.
+        parts[2:2] = [f"WORK TREE: the work is in {wd} -- enter it first (EnterWorktree path=\"{wd}\").",
+                      "The main checkout below is only where you were launched; its .planning is stale."]
     if g.get("recent"):
         parts += ["Recent commits:"] + [f"  {c}" for c in g["recent"][:5]]
     if gsd_facts:
@@ -590,6 +606,61 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
     if len(raw) > CARD_MAX_BYTES:
         card = raw[:CARD_MAX_BYTES - 40].decode("utf-8", errors="ignore") + "\n[card truncated at cap]"
     return card
+
+
+def _git_toplevel_and_common(path: str) -> tuple[str, str] | None:
+    import subprocess
+    g = os.environ.get("CPP_GIT_EXE") or r"C:\Program Files\Git\cmd\git.exe"
+    if not Path(g).exists():
+        g = "git"
+    try:
+        r = subprocess.run([g, "-C", path, "rev-parse", "--show-toplevel", "--git-common-dir"],
+                           capture_output=True, text=True, timeout=20)
+    except Exception:
+        return None
+    lines = [l.strip() for l in (r.stdout or "").splitlines() if l.strip()]
+    if r.returncode != 0 or len(lines) != 2:
+        return None
+    top = Path(lines[0]).resolve()
+    common = Path(lines[1])
+    common = (common if common.is_absolute() else Path(path) / common).resolve()
+    return os.path.normcase(str(top)), os.path.normcase(str(common))
+
+
+def effective_workdir(session_id: str, base_cwd: str) -> str | None:
+    """Where the predecessor was ACTUALLY working, from its own transcript's `cwd` field.
+
+    Accepted only when it is the top of a git worktree of the SAME repository as the
+    mission's cwd (same common git dir): a worker that wandered into a subdirectory, or into
+    another repo, does not move the mission. None = the transcript could not tell us, which
+    is never read as "the base directory"."""
+    path = lr.find_transcript(session_id)
+    if not path:
+        return None
+    last = None
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if '"cwd"' not in line:
+                    continue
+                try:
+                    cwd = json.loads(line).get("cwd")
+                except Exception:
+                    continue
+                if cwd:
+                    last = cwd
+    except OSError:
+        return None
+    if not last:
+        return None
+    if os.path.normcase(str(Path(last).resolve())) == os.path.normcase(str(Path(base_cwd).resolve())):
+        return base_cwd
+    here, base = _git_toplevel_and_common(last), _git_toplevel_and_common(base_cwd)
+    if not here or not base:
+        return base_cwd if base else None
+    if here[1] == base[1] and here[0] == os.path.normcase(str(Path(last).resolve())):
+        return str(Path(last).resolve())
+    return base_cwd
 
 
 def launched_row(pending: dict | None, sessions: list[dict] | None) -> dict | None:
@@ -772,8 +843,18 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                 # Ask GSD before ANY successor: a background worker that finished its turn reads
                 # host `done` (W8), which plans a REPLACE, not a relay -- and a worker that just
                 # completed the milestone must not be followed by another one.
+                work_dir = None
+                if act in ("relay", "replace") and rec.get("owner"):
+                    # Judge (and brief) where the predecessor actually worked. Measured M6: the
+                    # run lived in a git worktree while the mission's cwd kept a reset roadmap,
+                    # so asking GSD there would read 1/8 for ever and never complete.
+                    work_dir = (effective_workdir(rec["owner"]["session_id"], rec["cwd"])
+                                or rec.get("work_dir"))
+                    if work_dir:
+                        row["work_dir"] = work_dir
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
-                    st = (gsd_status or lr.gsd_status)(rec["cwd"], workstream=rec.get("workstream"))
+                    st = (gsd_status or lr.gsd_status)(work_dir or rec.get("work_dir") or rec["cwd"],
+                                                       workstream=rec.get("workstream"))
                     row["gsd"] = st.get("outcome")
                     if st.get("outcome") == "ALL_COMPLETE":
                         transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
@@ -806,7 +887,8 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     row["note_chars"] = len(note)
                 row["launch"] = launch_worker(mid, expect_epoch=rec["epoch"],
                                               expect_state=rec["state"], reason=plan["reason"],
-                                              runner=runner, now=now, note=note)
+                                              runner=runner, now=now, note=note,
+                                              work_dir=work_dir)
         except CasConflict as exc:
             row["cas"] = str(exc)  # another supervisor acted first: correct, not an error
         except Exception as exc:  # noqa: BLE001 -- one mission's failure must not blind the rest
