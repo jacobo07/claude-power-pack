@@ -57,6 +57,12 @@ trusted; 1/8 phases done, GSD `OK`), worker 1 `f3c0b67e`, `--permission-mode aut
 decision; default since `18c7299`), budget 5 iterations / 8 h. Witness snapshot of the project
 at HEAD `4f09667` in `<scratchpad>\m6-smoke-snapshot`. Rows below are appended as the run moves.
 
+| # | observed | instrument |
+|---|---|---|
+| E26 | worker 1 adopted 09:54:28 (own ack absent, as E20); under `auto` it ran unprompted | ledger, `agents --json` (`working/busy`, no `waitingFor`) |
+| E27 | **the run left the mission's directory**: `EnterWorktree` failed, the worker built `.claude/worktrees/gsd-autonomous-run` by hand (branch `gsd-autonomous-run`), reset master's ROADMAP/STATE and worked there — 268 transcript entries carry that cwd. The supervisor would have asked GSD in master (stale, never complete) and briefed the successor with master's HEAD. Fixed before the first relay (`582db71`: follow the transcript's cwd when it is a worktree of the same repo) | transcript `cwd` field, `git worktree list` |
+| E28 | GSD counts differ by tree: master `1/8`, worktree `0/8` — master's `01-VERIFICATION.md` was untracked, so it never reached the worktree. The master query also timed out once at 45 s under load (→ UNAVAILABLE → held, never a licence) | `gsd_status` both trees |
+
 ## Consequences for the design
 
 - Identity: bind the lease from the launcher's own synchronous stdout (E5), never by env (E3),
