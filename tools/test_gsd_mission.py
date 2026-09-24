@@ -264,6 +264,14 @@ def main() -> int:
         return [{"sessionId": f"s-{mid}", "status": "idle", "state": "working",
                  "kind": "background", "id": f"s-{mid}"[:8], "pid": 999}]
 
+    def fresh_keep(mid):
+        """fresh() without wiping the other missions: for multi-mission passes."""
+        gm.create(TMP, "/gsd-autonomous", mission_id=mid, now=NOW)
+        gm.transition(mid, expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                      state=gm.RUNNING, epoch=1, owner={**bg, "session_id": f"s-{mid}"})
+        return [{"sessionId": f"s-{mid}", "status": "idle", "state": "working",
+                 "kind": "background", "id": f"s-{mid}"[:8], "pid": 999}]
+
     def gsd(outcome):
         return lambda c, workstream=None: {"outcome": outcome, "reason": outcome.lower()}
 
@@ -454,6 +462,91 @@ def main() -> int:
         check("V-MC-SESSIONSTART-NO-GIT-NO-DUPLICATE", False, str(exc))
     finally:
         gm._git_facts = real_git
+
+    # --- adversarial review 2026-09-24 (scratchpad ADVERSARIAL-REVIEW.md) --------------------
+    # H1: an overdue launch with the host unanswerable awaits; the answerable case replaces.
+    check("V-MC-LAUNCH-OVERDUE-HOST-UNKNOWN-AWAITS",
+          plan(None, state=gm.LAUNCHING, pending={"deadline": NOW - 1})["action"] == "await",
+          "UNKNOWN never replaces (spec :166)")
+    # H3: the budget binds an owner that can never become DEAD or idle ...
+    check("V-MC-BUDGET-UNKNOWN-HALTS",
+          plan(None, gone, owner=bg, iterations=999)["action"] == "halt")
+    check("V-MC-BUDGET-BLOCKED-HALTS", plan(host_wait, iterations=999)["action"] == "halt")
+    check("V-MC-BUDGET-LIVE-BUSY-FINISHES-TURN",
+          plan(busy_row, owner=bg, iterations=999)["action"] == "none", "control")
+    # ... and an owner UNKNOWN for longer than the stale bound is made visible, not replaced.
+    stale = plan([], gone, owner=bg, updated_at=NOW - gm.HEARTBEAT_STALE_S - 10)
+    check("V-MC-UNKNOWN-STALE-SURFACED", stale["action"] == "surface_blocked", stale["reason"])
+    check("V-MC-UNKNOWN-FRESH-QUIET", plan([], gone, owner=bg, updated_at=NOW)["action"] == "none")
+
+    # H2: the claim moves the lease; the old owner cannot claim the new epoch.
+    hs = fresh("m-h2")
+    gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    rec = gm.load("m-h2")
+    check("V-MC-CLAIM-CLEARS-OWNER", rec["state"] == gm.LAUNCHING and rec["owner"] is None
+          and rec["previous_owner"]["session_id"] == "s-m-h2", str(rec.get("owner")))
+    check("V-MC-OLD-OWNER-CANNOT-CLAIM", gm.ack_session("s-m-h2", now=NOW + 1) is None
+          and gm.load("m-h2")["state"] == gm.LAUNCHING)
+    rec = gm.ack_session(f"{rec['pending']['bg_id']}-new", now=NOW + 2)
+    check("V-MC-NEW-WORKER-STILL-CLAIMS", rec and rec["state"] == gm.RUNNING, "control")
+
+    # M1: a DEAD owner whose pid lingers is waited on before the replacement launches.
+    real_wait = gm.STOP_WAIT_S
+    gm.STOP_WAIT_S = 0
+    try:
+        hs = fresh("m-m1")
+        hs[0]["state"] = "done"
+        hs[0].pop("status", None)
+        n = len(launches)
+        rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                            stop_runner=stop_run, pid_alive=alive)
+        check("V-MC-REPLACE-WAITS-FOR-PID", len(launches) == n
+              and gm.load("m-m1")["state"] == gm.RUNNING, str(rows))
+        hs = fresh("m-m1b")
+        hs[0]["state"] = "done"
+        hs[0].pop("status", None)
+        gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                     stop_runner=stop_run, pid_alive=gone)
+        check("V-MC-REPLACE-PID-GONE-LAUNCHES", len(launches) == n + 1, "control")
+    finally:
+        gm.STOP_WAIT_S = real_wait
+
+    # M2: a launch in flight (claimed, bg_id not yet written) is not reaped as an orphan.
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    gm.create(TMP, "/mc-task", mission_id="mF", now=NOW)
+    gm.transition("mF", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.LAUNCHING, epoch=2, pending={"kind": "worker_start", "deadline": NOW + 300})
+    world = [{"id": "f0f00002", "sessionId": "f0f00002-x", "name": "mF-e2", "state": "working",
+              "status": "busy"},
+             {"id": "f0f00001", "sessionId": "f0f00001-x", "name": "mF-e1", "state": "working",
+              "status": "busy"}]
+    stopped = []
+    gm.supervise(now=NOW, sessions=world, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=lambda a: stopped.append(a[-1]) or R("stopped"), pid_alive=alive)
+    check("V-MC-INFLIGHT-LAUNCH-NOT-REAPED", "f0f00002" not in stopped, str(stopped))
+    check("V-MC-OLD-EPOCH-STILL-REAPED", "f0f00001" in stopped, "control")
+
+    # M3: one mission's exception does not abort the pass for the others.
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    hs = fresh("m-x1") + fresh_keep("m-x2")
+    calls_gsd = []
+
+    def gsd_flaky(c, workstream=None):
+        calls_gsd.append(1)
+        if len(calls_gsd) == 1:
+            raise PermissionError("os.replace refused (file held)")
+        return {"outcome": "OK", "reason": "ok"}
+    try:
+        rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd_flaky, runner=launch_run,
+                            stop_runner=stop_run, pid_alive=gone)
+    except Exception as exc:  # the defect itself: the pass died, so no row was judged
+        rows = [{"escaped": f"{type(exc).__name__}: {exc}"}]
+    errs = [r for r in rows if r.get("error")]
+    launched = [r for r in rows if (r.get("launch") or {}).get("ok")]
+    check("V-MC-SUP-ERROR-ISOLATED", len(errs) == 1 and len(launched) == 1, str(rows))
 
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1

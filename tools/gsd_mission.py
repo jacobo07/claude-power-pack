@@ -336,12 +336,30 @@ def plan_next(rec: dict, now: float, sessions: list[dict] | None,
             return {"action": "adopt", "reason": f"host lists launched worker {pending.get('bg_id')}"}
         if now <= deadline:
             return {"action": "await", "reason": f"start ack due in {int(deadline - now)} s"}
+        if sessions is None:
+            # Overdue, but the host could not be asked: the launched worker may be running
+            # and simply unacknowledged (W0 E9 slow host + E20 hub never acking coincide under
+            # starvation). UNKNOWN never replaces -- a replacement here runs BESIDE it.
+            return {"action": "await", "reason": "start ack overdue but host unanswerable; "
+                                                 "UNKNOWN never replaces"}
         if rec.get("failed_launches", 0) + 1 >= MAX_REPLACEMENTS:
             return {"action": "halt", "reason": f"{MAX_REPLACEMENTS} launches never acknowledged"}
         return {"action": "replace", "reason": "start ack overdue"}
     verdict, why = liveness(rec.get("owner"), sessions, pid_alive)
+    if spent and state in (RUNNING, BLOCKED) and verdict in (UNKNOWN, WAITING_HUMAN):
+        # The budget must bind when the owner can never become DEAD or idle: a background
+        # worker the host forgot (reboot) stays UNKNOWN forever, and one parked on a prompt
+        # stays BLOCKED forever. Only a LIVE, busy owner is let finish its turn first.
+        return {"action": "halt", "reason": f"owner {verdict} and budget: {spent}"}
     if verdict == WAITING_HUMAN:
         return {"action": "surface_blocked", "reason": why}
+    if verdict == UNKNOWN and state == RUNNING:
+        owner = rec.get("owner") or {}
+        seen = max(float(owner.get("heartbeat_at") or 0), float(rec.get("updated_at") or 0))
+        if seen and now - seen > HEARTBEAT_STALE_S:
+            # Not a death (UNKNOWN never replaces), but never silence either: make it visible.
+            return {"action": "surface_blocked",
+                    "reason": f"owner UNKNOWN for {int(now - seen)} s: {why}"}
     if state == HANDOFF:
         if verdict == DEAD:
             return {"action": "replace", "reason": f"hand-off owner gone: {why}"}
@@ -448,6 +466,10 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     rec = transition(mission_id, expect_epoch=expect_epoch, expect_state=expect_state,
                      event="launch_claimed", now=now, state=LAUNCHING, epoch=epoch,
                      failed_launches=failed, reason=reason,
+                     # The lease leaves the predecessor at the claim, not at the ack: while
+                     # LAUNCHING, an old session starting again (host auto-restart, the Owner
+                     # reopening it) must not be able to claim the new epoch.
+                     owner=None, previous_owner=rec.get("owner"),
                      pending={"kind": "worker_start", "epoch": epoch,
                               "requested_at": now, "deadline": now + START_DEADLINE_S},
                      **extra)
@@ -488,10 +510,13 @@ def mission_for_session(session_id: str) -> dict | None:
             continue
         owner = rec.get("owner") or {}
         pend = rec.get("pending") or {}
-        if owner.get("session_id") == session_id:
-            return rec
         bg = pend.get("bg_id")
-        if rec["state"] == LAUNCHING and bg and session_id.startswith(bg):
+        if rec["state"] == LAUNCHING:
+            # Only the worker the host printed for THIS launch; never a previous owner.
+            if bg and session_id.startswith(bg):
+                return rec
+            continue
+        if owner.get("session_id") == session_id:
             return rec
     return None
 
@@ -608,7 +633,7 @@ def _host_row(session_id: str, sessions: list[dict] | None) -> dict | None:
 
 
 def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pid_alive,
-               runner=None, wait_s: float = STOP_WAIT_S) -> tuple[bool, str]:
+               runner=None, wait_s: float | None = None) -> tuple[bool, str]:
     """Stop the predecessor and WAIT until its process is gone (W0: `claude stop` returns
     while the pid still lives). Only a background worker is stopped; an interactive pane
     is the Owner's and is left alone -- it simply no longer holds the lease."""
@@ -616,18 +641,26 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
     if not owner:
         return True, "no owner"
     row = _host_row(owner.get("session_id"), sessions)
-    if row is None or row.get("state") in ("stopped", "done"):
-        return True, "not running per host"
-    if row.get("kind") != "background":
+    if row is None:
+        return True, "not listed by host"
+    # Our record says how WE launched it; the host row's `kind` is corroboration, not a
+    # precondition (it was only ever seen in fixtures).
+    if "background" not in (row.get("kind"), owner.get("kind")):
         return True, "interactive owner left running; lease moves"
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
     run = runner or (lambda argv: subprocess.run(argv, capture_output=True, text=True, timeout=120))
-    run([exe, "stop", row.get("id") or owner["session_id"][:8]])
+    if row.get("state") not in ("stopped", "done", "exited", "failed"):
+        run([exe, "stop", row.get("id") or owner["session_id"][:8]])
+    # Even a host `stopped`/`done` is waited on: the pid outlives the verdict (W0 E13), and a
+    # successor launched before it is gone overlaps it.
     pid = row.get("pid")
+    wait_s = STOP_WAIT_S if wait_s is None else wait_s
     deadline = time.time() + wait_s
-    while isinstance(pid, int) and time.time() < deadline:
-        if pid_alive(pid) is False:
+    while isinstance(pid, int):
+        if pid_alive(pid) is False:   # checked at least once, even with no wait budget
             return True, f"stopped; pid {pid} gone"
+        if time.time() >= deadline:
+            break
         time.sleep(1)
     if isinstance(pid, int):
         return False, f"pid {pid} still alive after {int(wait_s)} s"
@@ -647,9 +680,14 @@ def orphan_workers(rec: dict, sessions: list[dict] | None) -> list[dict]:
     prefix = f"{rec['mission_id']}-e"
     owner_sid = (rec.get("owner") or {}).get("session_id") if rec["state"] not in TERMINAL else None
     pend = (rec.get("pending") or {}) if rec["state"] not in TERMINAL else {}
+    # A launch in flight has no bg_id yet: its worker is known only by the name of the epoch
+    # just claimed. Reaping it would kill the launch another supervisor is making.
+    launching = worker_name(rec) if rec["state"] == LAUNCHING else None
     out = []
     for s in sessions or []:
         if not str(s.get("name", "")).startswith(prefix):
+            continue
+        if launching and s.get("name") == launching:
             continue
         if s.get("state") in ("stopped", "done", "exited", "failed"):
             continue
@@ -685,6 +723,10 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
     exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
 
     def reap(rec: dict, row: dict) -> None:
+        # Judge against the record as it is NOW, not as this pass first read it: the host
+        # listing was taken earlier, so any worker in it was claimed before this re-read, and
+        # a launch another supervisor claimed meanwhile is recognised by its epoch's name.
+        rec = load(rec["mission_id"]) or rec
         stray = orphan_workers(rec, sessions)
         for s in stray:
             stop_run([exe, "stop", s.get("id") or str(s.get("sessionId", ""))[:8]])
@@ -703,12 +745,12 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
         out.append(row)
         if dry_run:
             continue
-        reap(rec, row)
-        if row.get("orphans_stopped"):
-            row["action"] = "reaped" if plan["action"] in ("none", "await") else plan["action"]
-        if plan["action"] in ("none", "await"):
-            continue
         try:
+            reap(rec, row)
+            if row.get("orphans_stopped"):
+                row["action"] = "reaped" if plan["action"] in ("none", "await") else plan["action"]
+            if plan["action"] in ("none", "await"):
+                continue
             act = plan["action"]
             if act == "halt":
                 halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
@@ -745,7 +787,9 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                         lr.ledger_append(mid, "relay_held", mission_id=mid, epoch=rec["epoch"],
                                          gsd=st.get("outcome"), reason=st.get("reason"))
                         continue
-                if act == "relay":
+                if act in ("relay", "replace") and rec.get("owner"):
+                    # A replaced owner is DEAD by the host's word, and its pid can still outlive
+                    # that word (W0 E13): wait for it too, or the successor overlaps it.
                     ok, why = stop_owner(rec.get("owner"), sessions, pid_alive=pid_alive,
                                          runner=stop_runner)
                     row["stop"] = why
@@ -765,6 +809,14 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                                               runner=runner, now=now, note=note)
         except CasConflict as exc:
             row["cas"] = str(exc)  # another supervisor acted first: correct, not an error
+        except Exception as exc:  # noqa: BLE001 -- one mission's failure must not blind the rest
+            # e.g. os.replace refused by a scanner holding the file (Windows), a busy lock, a
+            # malformed record. Recorded per mission; the next pass retries from the record.
+            row["error"] = f"{type(exc).__name__}: {exc}"
+            try:
+                lr.ledger_append(mid, "supervise_error", mission_id=mid, error=row["error"])
+            except Exception:  # noqa: BLE001 -- the row still carries the error
+                pass
     return out
 
 
