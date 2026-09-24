@@ -10285,6 +10285,31 @@ and stopped `git add`). The worker's permission mode is a product decision, not 
 Pointing markers at `GSD_LONG_RUN_STATE_DIR` split ~20 existing suites from the watchdog they
 drive (`V-OVLY-ARMED-LEGACY-REACHED` red). A new, opt-in name has no consumer to break.
 
+### T-CONT-18 — a deadline turns "could not ask" into "absent" unless the plan checks first
+An overdue start ack with `claude agents --json` unanswerable planned REPLACE: the deadline
+branch ran before anyone asked whether the host had answered. Under starvation a slow host
+(W0 E9) and a hub that never acks (E20) coincide, so the replacement runs beside a live,
+unacknowledged worker. Every deadline branch that licenses a launch must first rule out
+UNKNOWN (`V-MC-LAUNCH-OVERDUE-HOST-UNKNOWN-AWAITS`, fixed `3c2116f`).
+
+### T-CONT-19 — a lease that moves at the ack leaves a window where the old holder can take it
+The launch claimed a new epoch but kept the old owner until the successor acked; any
+SessionStart of the OLD session in that window (host auto-restart, the Owner reopening it)
+matched it as the owner and claimed the new epoch, and the real worker was then reaped as an
+orphan. Move the lease at the claim (`owner=None`, `previous_owner` for audit).
+
+### T-CONT-20 — a budget checked only on the exits the subject can take is not a budget
+The budget was consulted when the owner was DEAD or idle. An owner the host forgot (reboot →
+UNKNOWN forever) or one parked on a prompt (BLOCKED forever) never takes either exit, so the
+mission lived past its budget silently. Check the budget on every state that cannot resolve
+itself; surface a long UNKNOWN instead of leaving it quiet.
+
+### PR-CONT-10 — review the orchestrator adversarially BEFORE the long live run, not after
+The W8 E2E was green while three HIGH defects sat on paths it never took (host unanswerable,
+old session restarting mid-launch, reboot). A live pass proves the path it walked; a read-only
+adversarial review names the paths it did not. Order: review → fix + drill → then the
+expensive real run (M6), so the run spends its budget on the unknowns only it can measure.
+
 
 - [tooling/powershell:g] `ceps_c1b34010b02dc23a` -- Tool failure in powershell:g: fatal: 'origin'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
