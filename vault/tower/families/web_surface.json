@@ -1,0 +1,12 @@
+{
+  "id": "web_surface",
+  "name": "Sitio web / landing",
+  "triggers": ["landing", "landing page", "sitio web", "pagina web", "web", "website",
+               "homepage", "home page", "hero", "seo", "formulario de contacto",
+               "next.js", "nextjs", "astro", "dominio"],
+  "anti_triggers": ["wii", "libogc", "servidor de minecraft", "plugin de paper"],
+  "repo_markers": [
+    {"file": "next.config.js"}, {"file": "next.config.mjs"}, {"file": "next.config.ts"},
+    {"file": "astro.config.mjs"}, {"file": "vercel.json"}
+  ]
+}

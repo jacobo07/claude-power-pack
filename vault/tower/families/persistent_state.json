@@ -1,0 +1,10 @@
+{
+  "id": "persistent_state",
+  "name": "SaaS con estado persistente",
+  "triggers": ["migracion", "migration", "tabla", "base de datos", "database", "schema",
+               "esquema", "prisma", "postgres", "supabase", "sqlite", "crud", "backend",
+               "persistencia", "ecto", "sqlalchemy"],
+  "anti_triggers": [],
+  "delegate": "family_scan",
+  "repo_markers": []
+}

@@ -1,0 +1,12 @@
+{
+  "id": "kobiicraft_mode",
+  "name": "Modalidad KobiiCraft",
+  "triggers": ["modalidad", "minijuego", "skywars", "bedwars", "arena", "arenas", "kits",
+               "plugin de paper", "paper plugin", "servidor de minecraft", "kobiicraft"],
+  "anti_triggers": ["landing", "sitio web", "pagina web", "website"],
+  "repo_markers": [
+    {"file": "plugin.yml", "contains": ["main:"]},
+    {"file": "paper-plugin.yml"},
+    {"file": "pom.xml", "contains": ["io.papermc", "paper-api"]}
+  ]
+}

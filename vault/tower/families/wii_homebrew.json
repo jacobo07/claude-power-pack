@@ -1,0 +1,12 @@
+{
+  "id": "wii_homebrew",
+  "name": "Homebrew Wii",
+  "triggers": ["wii", "libogc", "devkitppc", "gx", "dolphin", "wbfs", "boot.dol",
+               "homebrew channel", "wiimote", "nw4r"],
+  "anti_triggers": [],
+  "repo_markers": [
+    {"file": "Makefile", "contains": ["DEVKITPPC", "devkitPPC", "wii_rules"]},
+    {"file": "CMakeLists.txt", "contains": ["DEVKITPPC", "libogc"]},
+    {"file": "meta.xml", "contains": ["<app"]}
+  ]
+}
