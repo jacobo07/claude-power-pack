@@ -15,7 +15,16 @@ commit by pathspec, check diff hunk headers (UKDL is edited by others concurrent
    (Owner, 2026-09-24; `arm --permission-mode` default since `18c7299`).
 3. M6 runs NOW (Owner: "Sí, ahora").
 
-## UPDATE 2026-09-24 09:5x — review closed, M6 in flight
+## UPDATE 2026-09-24 15:2x — M6 PROVEN, stopped by the Owner
+Two live relays, three workers committing in the run's git worktree, no phase redone, one
+writer at a time (W0-EVIDENCE E26–E34; CERTIFICATION §11 M6). Fixed live: `582db71`
+(follow the worktree), `8b979bb` (supervisor GSD 240 s; sweep task limit 15 min). `8084d8c`:
+/cpp-gsd-long ALWAYS arms a Ralph mission, "autocompact" wording included; the live command
+copy was the 2026-09-19 v2 text and is now synced (V-ROUTE-LIVE-COMMAND-IS-REPO-COMMAND).
+Not observed live: a mission ending COMPLETED (gates only). Debt: L1 stale-lock race.
+Next: nothing in flight. Real runs: `/cpp-gsd-long` in a trusted project.
+
+## (history) UPDATE 2026-09-24 09:5x — review closed, M6 in flight
 `3c2116f` closes the adversarial review (H1–H3, M1–M3; L1 stale-lock race = debt; report
 in scratchpad `ADVERSARIAL-REVIEW.md`, summary in W0-EVIDENCE). `18c7299` auto default.
 Gates: test_gsd_mission 92/92, watchdog 12/12, hub 8/8, wall 7/7, GSDLR 99/99, GSDAC 26/26.
