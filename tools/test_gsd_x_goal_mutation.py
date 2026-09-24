@@ -20,10 +20,15 @@ clearer message and is not counted as a guarantee.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
+import json
 import os
+import shutil
+import signal
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -333,14 +338,93 @@ def suite_for(gate: str) -> Path:
                    f"{[p.name for p in owners]} -- rename one")
 
 
+# A killed drill must not leave a mutant behind. `finally` covers an exception and
+# a catchable signal; nothing in-process covers a hard kill (TerminateProcess,
+# SIGKILL, a memory guard). Measured 2026-09-23: two kills stranded two mutants,
+# one of them `sweep.autonomy_verdict` answering "carry on" with no safety record,
+# and the next run read that mutant as its "original". So the originals are also
+# written to a journal outside the tree before the first mutation, the next run
+# restores from it before anything else, and a run refuses a target git reports
+# modified -- a drill cannot tell someone's edit from a mutant it left.
+JOURNAL = (Path(tempfile.gettempdir())
+           / f"gsdx-goal-mutation-{hashlib.sha256(str(ROOT).encode()).hexdigest()[:12]}.json")
+
+
+def write_journal(journal: Path, originals: dict[Path, bytes]) -> None:
+    body = json.dumps({str(p): {"sha256": hashlib.sha256(b).hexdigest(),
+                                "bytes": base64.b64encode(b).decode("ascii")}
+                       for p, b in originals.items()})
+    tmp = journal.with_suffix(".tmp")
+    tmp.write_text(body, encoding="utf-8")
+    os.replace(tmp, journal)
+
+
+def recover(journal: Path) -> list[str]:
+    """Restore every file a killed run left mutated; return the ones that moved.
+
+    A journal entry whose bytes do not match its own digest raises: restoring
+    from a damaged record would write a second unknown state over the first."""
+    if not journal.is_file():
+        return []
+    data = json.loads(journal.read_text(encoding="utf-8"))
+    moved = []
+    for path, entry in data.items():
+        raw = base64.b64decode(entry["bytes"])
+        if hashlib.sha256(raw).hexdigest() != entry["sha256"]:
+            raise RuntimeError(f"mutation journal entry for {path} is corrupt; "
+                               f"restore it from git and delete {journal}")
+        p = Path(path)
+        if not p.is_file() or p.read_bytes() != raw:
+            p.write_bytes(raw)
+            moved.append(path)
+    journal.unlink()
+    return moved
+
+
+def dirty_targets(root: Path, targets) -> list[str] | None:
+    """Targets git reports modified, [] when clean, None when git could not answer.
+
+    None is not clean: an unreadable status refuses the run like a dirty one."""
+    git = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
+    rels = sorted(p.relative_to(root).as_posix() for p in targets)
+    try:
+        proc = subprocess.run([git, "-C", str(root), "status", "--porcelain", "--", *rels],
+                              capture_output=True, text=True, timeout=60,
+                              stdin=subprocess.DEVNULL)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return [ln[3:] for ln in proc.stdout.splitlines() if ln.strip()]
+
+
+def _interrupted(signum, _frame):
+    raise KeyboardInterrupt(f"signal {signum}")
+
+
 def main() -> int:
+    for name in ("SIGTERM", "SIGINT", "SIGBREAK", "SIGHUP"):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), _interrupted)
     targets = {m[0] for m in MUTATIONS.values()}
     for p in targets | set(SUITES.values()):
         if not p.is_file():
             print(f"INSTRUMENT_FAILED: missing {p}")
             return 2
+    moved = recover(JOURNAL)
+    if moved:
+        print(f"RECOVERED from a killed run's journal: {moved}")
+    dirty = dirty_targets(ROOT, targets)
+    if dirty is None:
+        print("INSTRUMENT_FAILED: git could not report the targets' state; refusing")
+        return 2
+    if dirty:
+        print(f"INSTRUMENT_FAILED: mutation targets are modified: {dirty} -- a drill "
+              "cannot tell an edit from a mutant; commit or restore them first")
+        return 2
     originals = {p: p.read_bytes() for p in targets}
     digests = {p: hashlib.sha256(b).hexdigest() for p, b in originals.items()}
+    write_journal(JOURNAL, originals)
     outcomes: dict[str, object] = {}
     try:
         for name, (path, old, new, prop, gate) in MUTATIONS.items():
@@ -369,8 +453,9 @@ def main() -> int:
     restored = all(hashlib.sha256(p.read_bytes()).hexdigest() == digests[p] for p in targets)
     print(f"restored (sha256, {len(targets)} file(s)): {restored}\n")
     if not restored:
-        print("INSTRUMENT_FAILED: a mutated module was not restored")
+        print(f"INSTRUMENT_FAILED: a mutated module was not restored; journal kept at {JOURNAL}")
         return 2
+    JOURNAL.unlink(missing_ok=True)
     caught = 0
     for name, (outcome, prop, gate) in outcomes.items():
         if isinstance(outcome, str):
