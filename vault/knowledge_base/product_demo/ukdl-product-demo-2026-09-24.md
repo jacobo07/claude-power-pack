@@ -85,3 +85,12 @@ A reference video handed over as "the demo" was a phone screen recording of a la
 demo embedded; status bar, URL bar and nav bar were the medium. Measure geometry and locate the
 subject region before extracting motion grammar. Evidence:
 vault/knowledge_base/product_demo/reference-hintora-forensics.md.
+
+### T-A-VALID-VERDICT-IS-NOT-A-LOOK-001
+
+The first real QuickLease render passed every validator check and still carried a wrong-target
+callout: on a click, the callout outlived the page and outlined an empty area on the next screen. The
+validator checks placement against geometry measured at capture, which cannot see a callout that
+outlives its page. Only the contact sheet showed it. A demo's done gate needs both the verdict AND a
+human-eye pass over a contact sheet; then encode what the eye found as a gate
+(V-DEMO-CALLOUT-ENDS-AT-CLICK, 82369d6). #CROSS-PROJECT
