@@ -155,6 +155,14 @@ gate("V-DEMO-CURSOR-TRUTH", len(clicks) == 1 and (clicks[0]["x"], clicks[0]["y"]
      and (arrive[-1]["x"], arrive[-1]["y"]) == (200.0, 220.0),
      f"(click at {clicks[0]['x'] if clicks else None},{clicks[0]['y'] if clicks else None}; recorded 200,220)")
 
+co = tl.callouts[0]
+before_seg = next(s for s in tl.segments if s.step == "go" and s.kind == "before")
+after_seg = next(s for s in tl.segments if s.step == "go" and s.kind == "after")
+gate("V-DEMO-CALLOUT-ENDS-AT-CLICK",
+     co["end_ms"] == before_seg.start_ms + before_seg.dur_ms and co["end_ms"] <= after_seg.start_ms,
+     f"(callout ends {co['end_ms']} ms; pre-click frame ends {before_seg.start_ms + before_seg.dur_ms}; "
+     f"next page starts {after_seg.start_ms})")
+
 long_text = "A deliberately long callout that nobody could read in time"
 tl_short = timeline.build(tele(6000, long_text), out_cfg)
 has_timing = any(d["class"] == "TIMING" for d in tl_short.defects)

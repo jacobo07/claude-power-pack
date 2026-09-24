@@ -79,6 +79,12 @@ def build(telemetry: dict, output: dict, hold_overrides: dict | None = None) -> 
             centre = (b["x"] + b["width"] / 2, b["y"] + b["height"] / 2)
         step_start = t
         prev_chars = 0
+        # A click/press can change the page: its "after" frame may show a different
+        # screen where the measured target no longer is. A callout for it must end
+        # at the click. Measured on the first real product demo: the callout stayed
+        # into the next page and outlined an empty area -- a wrong-target callout.
+        navigating_callout = bool(step.get("callout") and tgt) and step["do"] in ("click", "press")
+        before_end = None
         for fi, fr in enumerate(frames):
             nxt = frames[fi + 1]["t_ms"] if fi + 1 < len(frames) else step.get("t_end_ms", fr["t_ms"])
             real = max(0, nxt - fr["t_ms"])
@@ -100,7 +106,9 @@ def build(telemetry: dict, output: dict, hold_overrides: dict | None = None) -> 
             last = fi == len(frames) - 1
             if last and step.get("hold_ms"):
                 dur = max(dur, int(step["hold_ms"]))
-            if last:
+            # Revision time goes on the frame the callout is actually shown on: for a
+            # navigating step that is the pre-click frame, not the next page.
+            if (kind == "before") if navigating_callout else last:
                 dur += int(extra.get(step["id"], 0))
             if kind == "working" and real and dur * MAX_WORK_COMPRESSION < real:
                 dur = int(real / MAX_WORK_COMPRESSION)
@@ -122,11 +130,14 @@ def build(telemetry: dict, output: dict, hold_overrides: dict | None = None) -> 
                     cp = step.get("click_point") or {"x": centre[0], "y": centre[1]}
                     tl.cursor.append({"t_ms": t + dur - 60, "x": round(cp["x"], 1), "y": round(cp["y"], 1),
                                       "click": True})
+            if kind == "before":
+                before_end = t + dur
             t += dur
 
         if step.get("callout") and tgt:
             n_callout += 1
-            start, end = step_start, t
+            start = step_start
+            end = before_end if (navigating_callout and before_end is not None) else t
             text = step["callout"]
             need = read_ms(text)
             if end - start < need:
