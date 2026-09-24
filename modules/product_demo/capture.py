@@ -300,6 +300,8 @@ class Capture:
                 loc.check()
             elif step.do == "press":
                 loc.press(step.value)
+            elif step.do == "hover":
+                loc.hover(timeout=step.timeout_ms)   # real hover state; nothing is activated
             elif step.do == "click":
                 box = rec["target"]["box"]
                 rec["click_point"] = {"x": round(box["x"] + box["width"] / 2, 2),

@@ -18,7 +18,8 @@
     {"id": "rent", "do": "fill", "target": {"label": "Monthly rent"}, "value": "950"},
     {"id": "generate", "do": "click", "target": {"role": "button", "name": "Generate contract"},
      "callout": "One click"},
-    {"id": "ready", "do": "wait_text", "text": "Contract ready for review", "timeout_ms": 8000, "hold_ms": 2200}
+    {"id": "ready", "do": "wait_text", "text": "Contract ready for review", "timeout_ms": 8000, "hold_ms": 1200},
+    {"id": "point", "do": "hover", "target": {"role": "button", "name": "Generate contract"}, "hold_ms": 1600}
   ],
   "output": {"fps": 30, "max_seconds": 20, "max_bytes": 6000000, "formats": ["mp4", "poster"]}
 }

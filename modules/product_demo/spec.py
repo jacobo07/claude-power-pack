@@ -14,8 +14,10 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ACTIONS = {"goto", "fill", "select", "check", "click", "press", "wait_text", "assert_absent"}
-TARGETED = {"fill", "select", "check", "click", "press"}
+ACTIONS = {"goto", "fill", "select", "check", "click", "press", "hover", "wait_text", "assert_absent"}
+# "hover" points at a target without activating it: the way a demo ends on a
+# control it must never press (a payment button, a destructive action).
+TARGETED = {"fill", "select", "check", "click", "press", "hover"}
 TARGET_KINDS = ("role", "label", "testid", "text", "css")
 STAGES = {"raw", "browser", "laptop", "phone"}
 FORMATS = {"mp4", "webm", "poster"}

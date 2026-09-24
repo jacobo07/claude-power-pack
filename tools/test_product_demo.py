@@ -58,7 +58,8 @@ print("=" * 64)
 
 try:
     s = parse(base_spec())
-    gate("V-DEMO-SPEC-VALID", len(s.steps) == 6 and len(s.viewports) == 2 and len(s.sha256) == 64,
+    gate("V-DEMO-SPEC-VALID", len(s.steps) == 7 and s.steps[-1].do == "hover" and len(s.viewports) == 2
+         and len(s.sha256) == 64,
          f"({len(s.steps)} steps, sha {s.sha256[:10]})")
 except Exception as exc:
     gate("V-DEMO-SPEC-VALID", False, f"({exc})")
@@ -317,6 +318,10 @@ res = json.loads(r.stdout[r.stdout.index("["):]) if "[" in r.stdout else [{}]
 mpath = out / "phone" / "manifest.json"
 m = json.loads(mpath.read_text(encoding="utf-8")) if mpath.is_file() else {}
 probe_info = validate.probe(Path(res[0]["mp4"])) if res[0].get("mp4") else {}
+tl_path = out / "phone" / "timeline.json"
+clicks = sum(1 for k in json.loads(tl_path.read_text(encoding="utf-8"))["cursor"] if k["click"]) if tl_path.is_file() else -1
+# 2 fills + 1 select + 1 click activate; the closing hover must NOT show a click.
+gate("V-DEMO-HOVER-NO-CLICK", clicks == 4, f"({clicks} click emphases; expected 4 -- the hover adds none)")
 gate("V-DEMO-E2E", r.returncode == 0 and res[0].get("outcome") == "VALID"
      and (probe_info.get("w"), probe_info.get("h")) == (1080, 1920)
      and len(m.get("capture", {}).get("frameset_sha256", "")) == 64 and "mp4" in m.get("outputs", {}),
