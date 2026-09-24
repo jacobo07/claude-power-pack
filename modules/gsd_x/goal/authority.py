@@ -12,14 +12,24 @@ Founder-class events now carry an Ed25519 signature by a key the resident
 cannot read, and the signature is checked on PROJECTION, not only on append:
 the files can be written without going through this API.
 
+A signature binds its predecessor, never its successor, so deleting the newest
+events of a log leaves a perfectly valid chain -- and rolls back whatever the
+Founder decided last. The WITNESS (a directory named by ``GSDX_FOUNDER_WITNESS``)
+closes that: every signed founder event leaves a high-water mark there, and a
+log that no longer holds the witnessed event is refused as FOUNDER_ROLLBACK.
+The same directory holds the judge's licence sequence, so an older signed
+licence cannot be replayed over a newer one.
+
 Four modes, decided by the trust anchor named by ``GSDX_FOUNDER_KEYS``:
 
   * ABSENT       -- the variable is unset. Legacy behaviour, reported as
                     "founder authority unverified". Unsetting it is the rollback.
-  * UNPROTECTED  -- the anchor is readable and valid but writable by this
-                    process (POSIX ``os.access(W_OK)``, or any file on Windows):
-                    signatures are checked, the anchor is not a boundary.
-  * ENFORCED     -- readable, valid, and not writable by this process.
+  * UNPROTECTED  -- the anchor is readable and valid, but something is not a
+                    boundary against this process: the anchor (or its directory,
+                    named or resolved) is writable or is a symlink, any Windows
+                    file, or the witness is unset / writable / a symlink.
+                    Signatures are checked; the detail names what is exposed.
+  * ENFORCED     -- anchor and witness are both out of this process's reach.
   * UNVERIFIABLE -- the variable names an anchor that cannot be used: the
                     crypto library is missing, or the file is absent, unreadable
                     or malformed. The resident refuses; this is never a pass.
@@ -37,6 +47,7 @@ import base64
 import hashlib
 import json
 import os
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -54,6 +65,10 @@ except ImportError as _exc:                      # reported as UNVERIFIABLE, nev
 ENV_ANCHOR = "GSDX_FOUNDER_KEYS"
 ENV_FOUNDER_KEY = "GSDX_FOUNDER_SIGNING_KEY"
 ENV_JUDGE_KEY = "GSDX_JUDGE_SIGNING_KEY"
+# A directory the resident cannot write, holding the founder's high-water marks
+# (<witness>/<repo>/<goal>.json) and the judge's licence sequence (licence.json).
+ENV_WITNESS = "GSDX_FOUNDER_WITNESS"
+LICENCE_WITNESS = "licence.json"
 
 ABSENT = "ABSENT"
 UNPROTECTED = "UNPROTECTED"
@@ -85,6 +100,11 @@ UNKNOWN_KEY = "UNKNOWN_KEY"
 WRONG_ROLE = "WRONG_ROLE"
 BAD_SIGNATURE = "BAD_SIGNATURE"
 MALFORMED_SIGNATURE = "MALFORMED_SIGNATURE"
+FOUNDER_ROLLBACK = "FOUNDER_ROLLBACK"
+FOUNDER_WITNESS_MISSING = "FOUNDER_WITNESS_MISSING"
+FOUNDER_WITNESS_UNREADABLE = "FOUNDER_WITNESS_UNREADABLE"
+LICENCE_STALE = "LICENCE_STALE"
+LICENCE_UNWITNESSED = "LICENCE_UNWITNESSED"
 
 
 class AuthorityError(GoalLogError):
@@ -109,21 +129,44 @@ class Anchor:
     path: str = ""
     detail: str = ""
     keys: dict = field(default_factory=dict)     # key_id -> (role, Ed25519PublicKey)
+    witness: str = ""                            # the witness directory; "" when unset
 
 
 def key_id_of(public_raw: bytes) -> str:
     return hashlib.sha256(public_raw).hexdigest()[:16]
 
 
-def _anchor_writable(path: Path) -> bool:
+def _boundary_breach(path: Path) -> str:
+    """Why ``path`` is NOT a boundary against this process, or "" when it is.
+
+    Applied to the anchor file and to the witness directory alike.
+    """
     if os.name == "nt":
-        # NTFS ACLs are not what os.access reports; a Windows anchor is never
-        # claimed as a boundary.
-        return True
-    # The DIRECTORY counts too: a read-only anchor in a directory the reader can
-    # write is replaceable (unlink + write a new file), so it is not a boundary.
-    parent = Path(os.path.realpath(path)).parent
-    return os.access(path, os.W_OK) or os.access(parent, os.W_OK)
+        # NTFS ACLs are not what os.access reports; nothing on a Windows host
+        # is ever claimed as a boundary.
+        return "Windows host: os.access is not an ACL boundary"
+    # A symlink is replaceable by whoever can write the directory holding the
+    # LINK; its resolved target says nothing about that directory.
+    if os.path.islink(path):
+        return f"{path} is a symlink"
+    if os.access(path, os.W_OK):
+        return f"{path} is writable by this process"
+    # The DIRECTORY counts too, as named and as resolved: a read-only file in a
+    # directory the reader can write is replaceable (unlink + write anew).
+    unresolved = Path(os.path.abspath(path)).parent
+    resolved = Path(os.path.realpath(path)).parent
+    for parent in (unresolved, resolved):
+        if os.access(parent, os.W_OK):
+            return f"its directory {parent} is writable by this process"
+    return ""
+
+
+def _witness_breach(raw: str) -> str:
+    if not raw:
+        return (f"WITNESS_UNSET: {ENV_WITNESS} is not set, so a log truncated below the "
+                "founder's last signed event cannot be detected")
+    breach = _boundary_breach(Path(raw))
+    return f"WITNESS_WRITABLE: the witness {raw} is not a boundary ({breach})" if breach else ""
 
 
 def load_anchor() -> Anchor:
@@ -156,8 +199,14 @@ def load_anchor() -> Anchor:
             return Anchor(UNVERIFIABLE, str(path),
                           f"ANCHOR_MALFORMED: entry {kid!r} is not the hash of its public key")
         keys[kid] = (entry["role"], pub)
-    mode = UNPROTECTED if _anchor_writable(path) else ENFORCED
-    return Anchor(mode, str(path), "", keys)
+    witness = os.environ.get(ENV_WITNESS, "").strip()
+    anchor_breach = _boundary_breach(path)
+    if anchor_breach:
+        return Anchor(UNPROTECTED, str(path), f"ANCHOR_WRITABLE: {anchor_breach}", keys, witness)
+    witness_breach = _witness_breach(witness)
+    if witness_breach:
+        return Anchor(UNPROTECTED, str(path), witness_breach, keys, witness)
+    return Anchor(ENFORCED, str(path), "", keys, witness)
 
 
 def describe(anchor: Anchor) -> str:
@@ -167,15 +216,17 @@ def describe(anchor: Anchor) -> str:
         return f"founder authority UNVERIFIABLE at {anchor.path}: {anchor.detail}"
     if anchor.mode == UNPROTECTED:
         return (f"founder authority UNPROTECTED: signatures are checked, but the anchor at "
-                f"{anchor.path} is writable by this process, so it is not a boundary")
-    return f"founder authority ENFORCED: anchor {anchor.path} is not writable by this process"
+                f"{anchor.path} is not a boundary against this process ({anchor.detail})")
+    return (f"founder authority ENFORCED: anchor {anchor.path} and witness {anchor.witness} "
+            "are not writable by this process")
 
 
 def event_message(repo: str, goal: str, seq: int, type_: str, data: dict,
-                  prev_digest: str) -> bytes:
+                  prev_digest: str, ts: str, actor: str) -> bytes:
     body = {k: v for k, v in (data or {}).items() if k != SIG_FIELD}
     return _canonical({"repo": repo, "goal": goal, "seq": int(seq), "type": type_,
-                       "data": body, "prev_digest": prev_digest})
+                       "data": body, "prev_digest": prev_digest, "ts": str(ts),
+                       "actor": str(actor)})
 
 
 def _load_private(env_name: str, anchor: Anchor, role: str):
@@ -206,11 +257,14 @@ def _load_private(env_name: str, anchor: Anchor, role: str):
 
 
 def sign_event_data(anchor: Anchor, repo: str, goal: str, seq: int, type_: str,
-                    data: dict, prev_digest: str) -> dict:
-    """The event's data with a founder signature attached, or raise."""
+                    data: dict, prev_digest: str, ts: str, actor: str) -> dict:
+    """The event's data with a founder signature attached, or raise.
+
+    ``ts`` and ``actor`` are signed too: the caller must store exactly these.
+    """
     kid, key = _load_private(ENV_FOUNDER_KEY, anchor, FOUNDER)
     body = {k: v for k, v in (data or {}).items() if k != SIG_FIELD}
-    sig = key.sign(event_message(repo, goal, seq, type_, body, prev_digest))
+    sig = key.sign(event_message(repo, goal, seq, type_, body, prev_digest, ts, actor))
     body[SIG_FIELD] = {"key_id": kid, "sig": base64.b64encode(sig).decode("ascii")}
     return body
 
@@ -235,7 +289,7 @@ def _check(anchor: Anchor, block, message: bytes, role: str) -> tuple[bool, str]
 
 def verify_event(anchor: Anchor, repo: str, goal: str, ev) -> tuple[bool, str]:
     """Is this founder-class event validly signed by a founder-role key?"""
-    msg = event_message(repo, goal, ev.seq, ev.type, ev.data, ev.prev_digest)
+    msg = event_message(repo, goal, ev.seq, ev.type, ev.data, ev.prev_digest, ev.ts, ev.actor)
     return _check(anchor, (ev.data or {}).get(SIG_FIELD), msg, FOUNDER)
 
 
@@ -263,6 +317,102 @@ def check_founder_chain(anchor: Anchor, repo: str, goal: str, events) -> int:
             raise GoalLogCorrupt(f"{goal} seq {ev.seq}: {FOUNDER_SIGNATURE_INVALID} "
                                  f"({ev.type}: {why})")
     return first
+
+
+# --- the witness ------------------------------------------------------------------
+
+def _write_json_atomic(path: Path, obj: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.write(json.dumps(obj, sort_keys=True))
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+
+
+def _read_json(path: Path, what: str) -> dict | None:
+    """The witnessed record, None when there is none; raise when it cannot be read.
+
+    An unreadable witness is never "no witness": that would turn a damaged
+    high-water mark into permission to accept a truncated log.
+    """
+    if not path.exists():
+        return None
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise GoalLogCorrupt(f"{FOUNDER_WITNESS_UNREADABLE}: {what} at {path} "
+                             f"({exc.__class__.__name__})") from None
+    if not isinstance(doc, dict):
+        raise GoalLogCorrupt(f"{FOUNDER_WITNESS_UNREADABLE}: {what} at {path} is not an object")
+    return doc
+
+
+def witness_path(anchor: Anchor, repo: str, goal: str) -> Path | None:
+    return Path(anchor.witness) / repo / f"{goal}.json" if anchor.witness else None
+
+
+def check_witness(anchor: Anchor, repo: str, goal: str, events, governed: bool) -> None:
+    """Raise unless the log still holds the founder's witnessed high-water mark.
+
+    Only in checking modes with a witness configured (without one the mode is
+    at most UNPROTECTED, and says why). A witnessed seq the log no longer holds,
+    or holds with another digest, is FOUNDER_ROLLBACK. A GOVERNED goal with no
+    witness file is FOUNDER_WITNESS_MISSING: the resident cannot write the
+    witness directory, so a missing mark means the signed history was never
+    witnessed, not that it is safe.
+    """
+    if anchor.mode not in CHECKING_MODES or not anchor.witness:
+        return
+    path = witness_path(anchor, repo, goal)
+    mark = _read_json(path, "founder high-water mark")
+    if mark is None:
+        if governed:
+            raise GoalLogCorrupt(f"{goal}: {FOUNDER_WITNESS_MISSING} -- a governed goal has no "
+                                 f"high-water mark at {path}; the founder must re-sign a "
+                                 "decision so it is witnessed")
+        return
+    seq, digest = mark.get("seq"), mark.get("digest")
+    if (mark.get("repo") != repo or mark.get("goal") != goal or not isinstance(seq, int)
+            or not isinstance(digest, str)):
+        raise GoalLogCorrupt(f"{goal}: {FOUNDER_WITNESS_UNREADABLE} -- the mark at {path} "
+                             "does not describe this goal")
+    held = {ev.seq: ev.digest for ev in events}
+    if seq not in held:
+        raise GoalLogCorrupt(f"{goal}: {FOUNDER_ROLLBACK} -- the founder's history was "
+                             f"witnessed to seq {seq}, the log ends at {len(events)}")
+    if held[seq] != digest:
+        raise GoalLogCorrupt(f"{goal}: {FOUNDER_ROLLBACK} -- seq {seq} is not the event the "
+                             "founder's history was witnessed at")
+
+
+def witness_event(anchor: Anchor, repo: str, goal: str, seq: int, digest: str) -> None:
+    """Raise the goal's high-water mark to this signed founder event.
+
+    Never lowers it: a mark already past ``seq`` is left alone. No-op without a
+    witness directory.
+    """
+    path = witness_path(anchor, repo, goal)
+    if path is None:
+        return
+    current = _read_json(path, "founder high-water mark")
+    if current is not None and isinstance(current.get("seq"), int) and current["seq"] >= seq:
+        return
+    _write_json_atomic(path, {"repo": repo, "goal": goal, "seq": int(seq), "digest": digest})
+
+
+def read_licence_witness(anchor: Anchor) -> dict | None:
+    if not anchor.witness:
+        return None
+    return _read_json(Path(anchor.witness) / LICENCE_WITNESS, "licence witness")
+
+
+def witness_licence(anchor: Anchor, licence_seq: int, head: str) -> None:
+    if not anchor.witness:
+        return
+    _write_json_atomic(Path(anchor.witness) / LICENCE_WITNESS,
+                       {"licence_seq": int(licence_seq), "head": head})
 
 
 def is_governed(state, anchor: Anchor | None = None) -> bool:

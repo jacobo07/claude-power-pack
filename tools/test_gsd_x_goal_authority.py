@@ -42,11 +42,14 @@ GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"
 ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t", "PYTHONIOENCODING": "utf-8"}
 REPO_ID = "a7" * 20
-AUTH_ENV = (au.ENV_ANCHOR, au.ENV_FOUNDER_KEY, au.ENV_JUDGE_KEY)
+AUTH_ENV = (au.ENV_ANCHOR, au.ENV_FOUNDER_KEY, au.ENV_JUDGE_KEY, au.ENV_WITNESS)
+# Events written past the API carry this ts, so a signature made for them
+# (which covers ts and actor) matches what is stored.
+RAW_TS = datetime(2026, 9, 24, tzinfo=timezone.utc).isoformat()
 
 
-def set_env(anchor=None, founder=None, judge=None) -> None:
-    for name, value in zip(AUTH_ENV, (anchor, founder, judge)):
+def set_env(anchor=None, founder=None, judge=None, witness=None) -> None:
+    for name, value in zip(AUTH_ENV, (anchor, founder, judge, witness)):
         if value is None:
             os.environ.pop(name, None)
         else:
@@ -60,8 +63,7 @@ def load_priv(path: Path):
 def raw_append(lg: gl.GoalLog, type_: str, data: dict) -> None:
     """Write an event WITHOUT the API -- what a principal with store access can do."""
     events = lg.read()
-    body = {"seq": len(events) + 1, "type": type_,
-            "ts": datetime.now(timezone.utc).isoformat(), "actor": "founder",
+    body = {"seq": len(events) + 1, "type": type_, "ts": RAW_TS, "actor": "founder",
             "data": data, "prev_digest": events[-1].digest if events else gl.GENESIS}
     body["digest"] = gl.event_digest(body)
     lg.publish(body)
@@ -70,8 +72,14 @@ def raw_append(lg: gl.GoalLog, type_: str, data: dict) -> None:
 def forged_data(lg: gl.GoalLog, type_: str, data: dict, key, kid: str) -> dict:
     events = lg.read()
     seq, prev = len(events) + 1, events[-1].digest
-    sig = key.sign(au.event_message(lg.repo, lg.goal_id, seq, type_, data, prev))
+    sig = key.sign(au.event_message(lg.repo, lg.goal_id, seq, type_, data, prev,
+                                    RAW_TS, "founder"))
     return {**data, au.SIG_FIELD: {"key_id": kid, "sig": base64.b64encode(sig).decode()}}
+
+
+def adopt_reviewed(lg: gl.GoalLog, actor: str = "owner") -> gc.GoalState:
+    """Adopt attesting the digest a reviewer would have seen just now."""
+    return gc.adopt(lg, actor, gc.project(lg).events[-1].digest)
 
 
 def rewrite(lg: gl.GoalLog, mutate, rechain: bool) -> None:
@@ -196,23 +204,66 @@ def main() -> int:
           "control: the valid anchor is not", f"{modes}")
 
     # --- ENFORCED needs a real POSIX permission drill ----------------------------------
+    posix_gates = ("V-AUTH-MODE-ENFORCED", "V-AUTH-MODE-WITNESS-REQUIRED",
+                   "V-AUTH-SYMLINK-ANCHOR-NOT-ENFORCED")
     if os.name == "nt":
-        unjudge("V-AUTH-MODE-ENFORCED", "Windows host: os.access is not an ACL boundary; "
-                "judged on GEX44")
+        for g in posix_gates:
+            unjudge(g, "Windows host: os.access is not an ACL boundary; judged on GEX44")
     elif hasattr(os, "geteuid") and os.geteuid() == 0:
-        unjudge("V-AUTH-MODE-ENFORCED", "running as root: every file is writable, the "
-                "permission drill cannot fail; judged as a non-root user")
+        for g in posix_gates:
+            unjudge(g, "running as root: every file is writable, the permission drill "
+                    "cannot fail; judged as a non-root user")
     else:
         rodir = tmp / "anchor_dir"
         rodir.mkdir()
         ro = rodir / "ro_anchor.json"
         ro.write_text(anchor.read_text(encoding="utf-8"), encoding="utf-8")
         r_only = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+        rx_only = r_only | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        # The witness must be out of reach too, INCLUDING its named parent.
+        wit_outer = tmp / "wit_outer"
+        ro_wit = wit_outer / "witness"
+        ro_wit.mkdir(parents=True)
+        os.chmod(ro_wit, rx_only)
+        os.chmod(wit_outer, rx_only)
+        # A symlink to the read-only anchor, itself inside a read-only directory:
+        # resolving it would read ENFORCED; the link is still not a boundary.
+        linkdir = tmp / "link_dir"
+        linkdir.mkdir()
+        link = linkdir / "anchor_link.json"
+        try:
+            os.symlink(ro, link)
+            linked = True
+        except OSError:
+            linked = False
+        os.chmod(linkdir, rx_only)
         os.chmod(ro, r_only)
-        os.chmod(rodir, r_only | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        os.chmod(rodir, rx_only)
         set_env(ro)
+        m_nowit = au.load_anchor()
+        set_env(ro, witness=tmp)
+        m_rwwit = au.load_anchor()
+        if linked:
+            set_env(link, witness=ro_wit)
+            m_link = au.load_anchor()
+            check("V-AUTH-SYMLINK-ANCHOR-NOT-ENFORCED",
+                  m_link.mode == au.UNPROTECTED and "symlink" in m_link.detail,
+                  f"a symlinked anchor in a read-only dir -> {m_link.mode} ({m_link.detail}); "
+                  "control: the same file named directly is judged below",
+                  f"{m_link.mode}: {m_link.detail}")
+        else:
+            unjudge("V-AUTH-SYMLINK-ANCHOR-NOT-ENFORCED", "this host refused os.symlink")
+        set_env(ro, witness=ro_wit)
         writable_ro = os.access(ro, os.W_OK) or os.access(rodir, os.W_OK)
         m_ro = au.load_anchor().mode
+        check("V-AUTH-MODE-WITNESS-REQUIRED",
+              m_nowit.mode == au.UNPROTECTED and "WITNESS_UNSET" in m_nowit.detail
+              and m_rwwit.mode == au.UNPROTECTED and "WITNESS_WRITABLE" in m_rwwit.detail
+              and m_ro == au.ENFORCED,
+              "a protected anchor with no witness, or a writable one, is UNPROTECTED and says "
+              f"so; control: a protected witness -> {m_ro}",
+              f"nowit={m_nowit.mode}/{m_nowit.detail} rwwit={m_rwwit.mode}/{m_rwwit.detail} "
+              f"ro={m_ro}")
         lg_enf = gl.GoalLog(REPO_ID, "g-enforced", base=base)
         refused = False
         try:
@@ -285,7 +336,7 @@ def main() -> int:
     gc.set_budget(lg_adopt, 2, {"epochs": 3}, "owner")
     set_env(anchor, founder=fk)
     legacy_ok = corrupt_reason(lg_adopt) == "" and not au.is_governed(gc.project(lg_adopt))
-    gc.adopt(lg_adopt, "owner")
+    adopt_reviewed(lg_adopt)
     governed = au.is_governed(gc.project(lg_adopt))
     raw_append(lg_adopt, gc.BUDGET_SET, {"epochs": 999})
     why = corrupt_reason(lg_adopt)
@@ -339,7 +390,7 @@ def main() -> int:
         gc.declare(lg, "the original intent", ["x"], [], {"paths": ["."]})
         gc.set_budget(lg, 2, {"epochs": 3}, "owner")
         set_env(anchor, founder=fk)
-        gc.adopt(lg, "owner")
+        adopt_reviewed(lg)
         return lg
 
     def edit_intent(raws):
@@ -455,7 +506,7 @@ def main() -> int:
           f"acted={rep.acted} skipped={rep.skipped} direct={direct} absent={rep_abs.acted}")
 
     set_env(anchor, founder=fk)
-    gc.adopt(lg_sw, "owner")
+    adopt_reviewed(lg_sw)
     set_env(anchor)
     rep = sw.sweep(ROOT, [(lg_sw, repo)], dry_run=True)
     check("V-AUTH-SWEEP-ADMITS-AFTER-ADOPT",
@@ -494,16 +545,173 @@ def main() -> int:
         cli.main(["declare", "--goal", "g-cli", "--root", str(cli_repo), "--intent", "cli goal"])
         rc_abs = cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo)])
     set_env(anchor, founder=fk)
+    lg_cli = gl.GoalLog(gl.repo_id(cli_repo), "g-cli")
+    d0, n0 = gc.project(lg_cli).events[-1].digest, event_count(lg_cli)
+    review = io.StringIO()
+    with contextlib.redirect_stdout(review):
+        rc_rev = cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo)])
+    n_after_review = event_count(lg_cli)
+    # History planted AFTER the review: the reviewed digest must no longer sign.
+    raw_append(lg_cli, gc.BUDGET_SET, {"epochs": 999})
     with contextlib.redirect_stdout(buf):
-        rc_ad = cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo)])
-        rc_twice = cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo)])
-    st_cli = gc.project(gl.GoalLog(gl.repo_id(cli_repo), "g-cli"))
+        rc_stale = cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo),
+                             "--attest-digest", d0])
+    n_after_stale = event_count(lg_cli)
+    review2 = io.StringIO()
+    with contextlib.redirect_stdout(review2):
+        cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo)])
+    d1 = gc.project(lg_cli).events[-1].digest
+    with contextlib.redirect_stdout(buf):
+        rc_ad = cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo),
+                          "--attest-digest", d1])
+        rc_twice = cli.main(["adopt", "--goal", "g-cli", "--root", str(cli_repo),
+                             "--attest-digest", gc.project(lg_cli).events[-1].digest])
+    st_cli = gc.project(lg_cli)
+    rv = review.getvalue()
     check("V-AUTH-CLI-ADOPT",
           rc_abs == 2 and rc_ad == 0 and rc_twice == 2 and au.is_governed(st_cli)
-          and st_cli.events[-1].type == gc.ADOPTED,
-          "`adopt` governs a legacy goal (exit 0); refused without an anchor and when already "
-          "governed (exit 2)", f"absent={rc_abs} adopt={rc_ad} twice={rc_twice} "
-          f"out={buf.getvalue()[-300:]!r}")
+          and st_cli.events[-1].type == gc.ADOPTED
+          and st_cli.events[-1].data.get("attests_digest") == d1,
+          "`adopt --attest-digest <reviewed digest>` governs a legacy goal (exit 0); refused "
+          "without an anchor and when already governed (exit 2)",
+          f"absent={rc_abs} adopt={rc_ad} twice={rc_twice} out={buf.getvalue()[-300:]!r}")
+    check("V-AUTH-ADOPT-REVIEW-BEFORE-SIGN",
+          rc_rev == 2 and n_after_review == n0 and gc.DECLARED in rv and d0 in rv
+          and "--attest-digest" in rv and "autonomous=" in rv and "budget=" in rv
+          and rc_stale == 2 and n_after_stale == n0 + 1 and '"epochs":999' in review2.getvalue(),
+          "without --attest-digest adopt lists the founder-class events and resulting state, "
+          "prints the digest and signs nothing (exit 2); a digest reviewed before history was "
+          "planted is refused and signs nothing; control: the current digest adopts",
+          f"rev={rc_rev} written_on_review={n_after_review - n0} stale={rc_stale} "
+          f"written_on_stale={n_after_stale - n0 - 1} review={rv[-400:]!r}")
+
+    lg_lib = gl.GoalLog(REPO_ID, "g-adopt-lib", base=base)
+    set_env()
+    gc.declare(lg_lib, "library adopt", ["x"], [], {"paths": ["."]})
+    set_env(anchor, founder=fk)
+    lib_refused = False
+    try:
+        gc.adopt(lg_lib, "owner", "")
+    except gl.GoalLogError as exc:
+        lib_refused = "history changed since review" in str(exc)
+    lib_n = event_count(lg_lib)
+    adopt_reviewed(lg_lib)
+    check("V-AUTH-ADOPT-LIBRARY-NEEDS-ATTEST",
+          lib_refused and lib_n == 1 and au.is_governed(gc.project(lg_lib)),
+          "the library adopt refuses an empty attestation and writes nothing; control: the "
+          "reviewed digest adopts", f"refused={lib_refused} n={lib_n}")
+
+    # --- the witness: a truncated log is a rolled-back founder ---------------------------
+    wit = tmp / "witness"
+
+    def autonomy_goal(gid: str) -> gl.GoalLog:
+        set_env(anchor, founder=fk, witness=wit)
+        lg = gl.GoalLog(REPO_ID, gid, base=base)
+        gc.declare(lg, gid, ["x"], [], {"paths": ["."]})
+        sw.set_autonomous(lg, gc.project(lg), True, "go", "owner")
+        sw.set_autonomous(lg, gc.project(lg), False, "the founder stops it", "owner")
+        return lg
+
+    lg_rb_ctl = autonomy_goal("g-rollback-control")
+    lg_rb = autonomy_goal("g-rollback")
+    (lg_rb.dir / "000003.json").unlink()                # delete the founder's disable
+    set_env(anchor, witness=wit)
+    why_rb = corrupt_reason(lg_rb)
+    ctl_ok = corrupt_reason(lg_rb_ctl) == "" and not sw.is_autonomous(gc.project(lg_rb_ctl))
+    set_env(anchor)                                     # the same attack, no witness
+    blind = corrupt_reason(lg_rb) == "" and sw.is_autonomous(gc.project(lg_rb))
+    set_env(anchor, founder=fk, witness=wit)
+    sign_refused = False
+    try:
+        gc.set_budget(lg_rb, 3, {"epochs": 1}, "owner")
+    except gl.GoalLogCorrupt as exc:
+        sign_refused = au.FOUNDER_ROLLBACK in str(exc)
+    check("V-AUTH-FOUNDER-ROLLBACK-REFUSED",
+          au.FOUNDER_ROLLBACK in why_rb and ctl_ok and blind and sign_refused
+          and event_count(lg_rb) == 2,
+          f"deleting a later signed disable is refused ({why_rb[:80]}); the founder cannot sign "
+          "atop the truncated log either; control: the untouched copy projects, disabled; "
+          "without a witness the same truncation re-enables autonomy silently",
+          f"why={why_rb!r} control={ctl_ok} blind={blind} sign_refused={sign_refused} "
+          f"n={event_count(lg_rb)}")
+
+    set_env(anchor, founder=fk)                         # signed, never witnessed
+    lg_unw = gl.GoalLog(REPO_ID, "g-unwitnessed", base=base)
+    gc.declare(lg_unw, "never witnessed", ["x"], [], {"paths": ["."]})
+    set_env()
+    lg_leg = gl.GoalLog(REPO_ID, "g-legacy-witness", base=base)
+    gc.declare(lg_leg, "legacy, ungoverned", ["x"], [], {"paths": ["."]})
+    set_env(anchor, witness=wit)
+    why_unw = corrupt_reason(lg_unw)
+    check("V-AUTH-FOUNDER-WITNESS-MISSING",
+          au.FOUNDER_WITNESS_MISSING in why_unw and corrupt_reason(lg_rb_ctl) == ""
+          and corrupt_reason(lg_leg) == "",
+          f"a governed goal with no witness file is refused ({why_unw[:70]}); control: a "
+          "witnessed goal projects, and an ungoverned legacy goal needs no witness",
+          f"why={why_unw!r} ctl={corrupt_reason(lg_rb_ctl)!r} leg={corrupt_reason(lg_leg)!r}")
+
+    # --- ts and actor are signed ------------------------------------------------------
+    lg_ts_ctl = governed_goal("g-ts-control")
+    lg_ts = governed_goal("g-ts-tamper")
+    lg_ac = governed_goal("g-actor-tamper")
+    rewrite(lg_ts, lambda raws: raws[0].__setitem__("ts", "2020-01-01T00:00:00+00:00"),
+            rechain=True)
+    rewrite(lg_ac, lambda raws: raws[0].__setitem__("actor", "resident"), rechain=True)
+    why_ts, why_ac = corrupt_reason(lg_ts), corrupt_reason(lg_ac)
+    check("V-AUTH-SIGNED-TS-ACTOR",
+          au.BAD_SIGNATURE in why_ts and au.BAD_SIGNATURE in why_ac
+          and corrupt_reason(lg_ts_ctl) == "",
+          "editing a signed event's ts or actor (re-chained) breaks its signature; control: "
+          "the untouched copy projects", f"ts={why_ts!r} actor={why_ac!r} "
+          f"ctl={corrupt_reason(lg_ts_ctl)!r}")
+
+    # --- the licence: empty head, replay --------------------------------------------------
+    set_env(anchor, judge=jk)
+    blank = au.sign_licence(dict(green, head=""), au.load_anchor())
+    set_env(anchor)
+    rec.write_text(json.dumps(blank), encoding="utf-8")
+    ok_blank, why_blank = sw.autonomy_verdict(ROOT)
+    rec.write_text(json.dumps(signed), encoding="utf-8")
+    ok_notree, why_notree = sw.autonomy_verdict(tmp)            # not a repository: no head
+    ok_real, why_real = sw.autonomy_verdict(ROOT)
+    check("V-AUTH-LICENCE-EMPTY-HEAD-REFUSED",
+          not ok_blank and "unknown head" in why_blank and not ok_notree
+          and "unknown head" in why_notree and ok_real,
+          "a licence with no head, or a tree with none, is refused; control: the real head "
+          f"on both sides is a licence ({why_real})",
+          f"blank={why_blank!r} notree={why_notree!r} real={why_real!r}")
+
+    lic_repo = make_repo()
+    wit_l = tmp / "witness_licence"
+    set_env(anchor, judge=jk, witness=wit_l)
+    r1 = sw.record_gates(lic_repo)            # no suites there: fast, and not green
+    r2 = sw.record_gates(lic_repo)
+    head_l = gs.head(lic_repo)
+    w_now = au.read_licence_witness(au.load_anchor())
+    set_env(anchor, witness=wit_l)
+    _ok_cur, why_cur = sw.autonomy_verdict(lic_repo)
+    rec.write_text(json.dumps(r1), encoding="utf-8")            # replay the older licence
+    ok_old, why_old = sw.autonomy_verdict(lic_repo)
+    set_env(anchor, judge=jk, witness=wit_l)
+    lic3 = au.sign_licence({"head": head_l, "ts": "t", "green": True, "licence_seq": 3,
+                            "suites": {s: {"ok": True, "detail": "x"} for s in sw.REQUIRED_SUITES}},
+                           au.load_anchor())
+    au.witness_licence(au.load_anchor(), 3, head_l)
+    set_env(anchor, witness=wit_l)
+    rec.write_text(json.dumps(lic3), encoding="utf-8")
+    ok_cur3, why_cur3 = sw.autonomy_verdict(lic_repo)
+    set_env(anchor, witness=tmp / "witness_empty")
+    ok_unw, why_unw_l = sw.autonomy_verdict(lic_repo)
+    check("V-AUTH-LICENCE-REPLAY-REFUSED",
+          r2.get("licence_seq") == r1.get("licence_seq", -9) + 1
+          and w_now == {"licence_seq": r2.get("licence_seq"), "head": head_l}
+          and "not green" in why_cur and not ok_old and au.LICENCE_STALE in why_old
+          and ok_cur3 and not ok_unw and au.LICENCE_UNWITNESSED in why_unw_l,
+          "record-gates advances a witnessed licence_seq; an older signed licence restored over "
+          f"it is refused ({why_old[:60]}); an unwitnessed one too; control: the witnessed "
+          f"licence is accepted ({why_cur3})",
+          f"r1={r1.get('licence_seq')} r2={r2.get('licence_seq')} w={w_now} cur={why_cur!r} "
+          f"old={why_old!r} cur3={why_cur3!r} unw={why_unw_l!r}")
 
     set_env()
     total = len(passes) + len(fails)

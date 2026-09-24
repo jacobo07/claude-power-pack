@@ -302,7 +302,21 @@ def cmd_adopt(args) -> int:
     """Bring an existing unsigned goal under founder authority (signed adoption)."""
     from modules.gsd_x.goal import authority as au
     lg = _log(args)
-    s = gc.adopt(lg, args.actor, args.reason)
+    anchor = au.load_anchor()
+    if anchor.mode == au.ABSENT:
+        raise au.AuthorityAbsent(f"{lg.goal_id}: adoption needs founder authority; set "
+                                 f"{au.ENV_ANCHOR} to the trust anchor first")
+    if anchor.mode == au.UNVERIFIABLE:
+        raise au.AuthorityUnverifiable(au.describe(anchor))
+    if not args.attest_digest:
+        # An adoption vouches for every unsigned event before it, so the Founder
+        # sees them -- and what they add up to -- before anything is signed.
+        state = gc.project(lg)
+        print("\n".join(gc.adoption_review(state)))
+        print(f"\nNOT ADOPTED: review, then re-run with --attest-digest "
+              f"{state.events[-1].digest}")
+        return COULD_NOT_RUN
+    s = gc.adopt(lg, args.actor, args.attest_digest, args.reason)
     print(f"adopted {s.goal_id} at seq {s.last_seq}: {au.describe(au.load_anchor())}")
     return 0
 
@@ -441,6 +455,9 @@ def main(argv: list[str] | None = None) -> int:
 
     ad = common(sub.add_parser("adopt"))
     ad.add_argument("--reason", default="")
+    ad.add_argument("--attest-digest", default="",
+                    help="the last-event digest printed by a review run; without it, adopt "
+                         "only prints what it would attest and exits 2")
     ad.set_defaults(fn=cmd_adopt)
 
     args = ap.parse_args(argv)
