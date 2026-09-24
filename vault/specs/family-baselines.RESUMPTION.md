@@ -10,7 +10,8 @@ familia recibe ese baseline y lo implementa sin que se lo pidan. Spec:
 - C2 `a6d2042` capa universal + lecciones como texto por `modules/gsd_x/cli.py`.
 - C3 `b7bf685` 42 capsulas; tarea `PP-Tower-Capsules` registrada (03:45/15:45), probada: `state/tower/production.jsonl`.
 - `247ffc0` spec + predeclaracion S1. `14d6c8a` S1 clasificador (20/20, drill 5/5).
-- Ancla de coherencia: `python tools/test_family_baselines.py` -> 20/20; `tools/test_tower_inheritance.py` -> 16/16.
+- `c95ebbc` **S2 sellado**: B0 de las 4 familias, 60 entradas, cita literal anclada (15/15, drill 4/4).
+- Ancla de coherencia: `tools/test_family_baselines.py` 20/20 · `tools/test_baseline_generations.py` 15/15 · `tools/test_tower_inheritance.py` 16/16.
 
 ## Decisiones activas del Owner
 Cuatro familias (web_surface, kobiicraft_mode, persistent_state, wii_homebrew). Promocion
@@ -22,9 +23,11 @@ AUTOMATICA al instante, el Owner revisa despues. KEOS vive en la GEX44 (no leido
 - Lift verificado = 0 (C4).
 
 ## Proximas 3 acciones
-1. **S2** B0 de las 4 familias desde gobierno ya sellado, cada entrada con fichero:linea verificado.
-2. **S3** O0: cobertura de B0 sobre repos reales, commit ANTES de S4.
-3. **S4** inyeccion por `cli.py` + control positivo + `CPP_FAMILY_BASELINES=off`.
+1. **S3** O0: predeclarar el metodo por escrito, luego medir cobertura de B0 sobre repos reales
+   de cada familia; commit ANTES de S4. Solo pocas entradas tienen `check` maquina: el metodo
+   debe decir como se juzgan las que no.
+2. **S4** inyeccion por `cli.py` + control positivo + `CPP_FAMILY_BASELINES=off`.
+3. **S5** promocion automatica (decision del Owner) + `review`/`revert`; leer KEOS en la GEX44.
 
 ## Empezar
 Lee el spec §3-§6, corre las dos gates del ancla, y sigue por la primera accion no sellada.
