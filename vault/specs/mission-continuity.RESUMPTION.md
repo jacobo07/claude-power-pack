@@ -11,8 +11,22 @@ commit by pathspec, check diff hunk headers (UKDL is edited by others concurrent
 ## Owner decisions (do not re-litigate)
 1. **Ralph is the primary path of /cpp-gsd-long**: at the wall a FRESH `claude --bg` session
    continues; native autocompact is only a safety net (`--autocompact 600k`). Reason: RAM.
-2. Probe workers run `acceptEdits`, scratch only. **Open**: permission mode for REAL mission
-   workers — `acceptEdits` cannot run git here (T-CONT-16); host default is `auto`.
+2. Probe workers run `acceptEdits`, scratch only. REAL mission workers run **`auto`**
+   (Owner, 2026-09-24; `arm --permission-mode` default since `18c7299`).
+3. M6 runs NOW (Owner: "Sí, ahora").
+
+## UPDATE 2026-09-24 09:5x — review closed, M6 in flight
+`3c2116f` closes the adversarial review (H1–H3, M1–M3; L1 stale-lock race = debt; report
+in scratchpad `ADVERSARIAL-REVIEW.md`, summary in W0-EVIDENCE). `18c7299` auto default.
+Gates: test_gsd_mission 92/92, watchdog 12/12, hub 8/8, wall 7/7, GSDLR 99/99, GSDAC 26/26.
+W8 closed HALTED on budget: 41 rows, 0 dupes, writers disjoint (E25).
+**M6**: mission `m-7f6d988e3c93`, cwd `C:\Users\User\Desktop\Cursor Projects\gsd-long-smoke`
+(trusted canary, 1/8 phases at HEAD `4f09667`, snapshot in scratchpad `m6-smoke-snapshot`),
+worker 1 `f3c0b67e`, budget 5 iterations / 8 h. Proven when: ≥ 2 relays, each successor
+continues the roadmap (phase count strictly increases, no phase redone), `git log` shows
+commits from ≥ 3 workers, and the mission ends COMPLETED or HALTED-on-budget — never
+two workers at once. Judge with `python tools/gsd_mission.py status`, the ledger rows for
+the mission, `gsd_status`, and the smoke repo's `git log`.
 
 ## SEALED (commits, all pathspec-scoped)
 `f3b9896` mission record/CAS/liveness/relay core · `1f445e0` watchdog asks hand-off at the

@@ -39,6 +39,23 @@ Each row: what was asked · what the host did · instrument.
 | E22 | worker 1 stopped at f23 and ended with a `HANDOFF NOTE` naming the next file and a non-repo fact (anti-thrash cadence) | transcript |
 | E23 | a finished background turn reads host `done` → REPLACE; relay at 00:41:25: note 509 chars from the transcript, card 1058 B via `--append-system-prompt` | ledger, mission record |
 | E24 | **worker 2 (fresh process, fresh session) wrote f24, f25, f26… — sole writer; 27 rows in order, 0 dupes, 0 wrong** | `writers.py 88525fc9`, `verify.py` |
+| E25 | W8 closed as designed: worker 2 reached the wall at f41 (00:58:41 `handoff_already_asked` — the mid-turn flag had already asked), its turn ended, the budget (2 iterations) HALTED the mission at 01:05:23 and the halt stopped the worker (`orphan_stopped` 01:05:30). **Final: 41 rows, in order, 0 dupes, 0 wrong; writers disjoint (ef5fe657 f01–f23, 88525fc9 f24–f41)** | ledger, `verify.py`, `writers.py` |
+
+## Adversarial review (2026-09-24) — 3 HIGH / 3 MEDIUM closed in `3c2116f`
+
+Found by reading, not by a live failure; each fix carries a V-MC gate with a control, and a
+mutation drill that reverts it (7/7 caught, restore SHA-256 OK). H1 overdue launch + host
+unanswerable now AWAITS (never replace on UNKNOWN). H2 the lease leaves the predecessor at the
+claim. H3 budget binds UNKNOWN/BLOCKED owners; UNKNOWN past `HEARTBEAT_STALE_S` is surfaced.
+M1 replace waits for the dead owner's pid. M2 reaping spares the launch in flight. M3 one
+mission's exception no longer aborts the pass. L1 (stale-lock race) stays recorded debt.
+
+## M6 — real `/gsd-autonomous` (started 2026-09-24)
+
+Mission `m-7f6d988e3c93` on `Desktop\Cursor Projects\gsd-long-smoke` (the v2 canary, already
+trusted; 1/8 phases done, GSD `OK`), worker 1 `f3c0b67e`, `--permission-mode auto` (Owner
+decision; default since `18c7299`), budget 5 iterations / 8 h. Witness snapshot of the project
+at HEAD `4f09667` in `<scratchpad>\m6-smoke-snapshot`. Rows below are appended as the run moves.
 
 ## Consequences for the design
 
