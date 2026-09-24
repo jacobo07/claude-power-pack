@@ -111,6 +111,19 @@ def main() -> int:
           f"dispatch calls {calls['dispatch'] - before['dispatch']}")
     check("V-MCW-CHECKPOINT-STILL-WRITTEN", calls["kclear"] == before["kclear"] + 1)
 
+    # asked mid-turn already (hooks/mission_wall.js flag) -> the Stop must NOT block again,
+    # or the turn cannot end and the relay cannot happen (measured W8)
+    bg2 = uuid.uuid4().hex[:8]
+    sid2 = f"{bg2}-{uuid.uuid4().hex[:4]}-mcw"
+    mid2 = f"m-mcw2-{uuid.uuid4().hex[:6]}"
+    gm.create(str(ROOT), "/gsd-autonomous", mission_id=mid2)
+    gm.transition(mid2, expect_epoch=0, expect_state=gm.PREPARED, event="t", state=gm.LAUNCHING,
+                  epoch=1, pending={"kind": "worker_start", "bg_id": bg2, "deadline": time.time() + 300})
+    gm.session_start(sid2, "startup")
+    (Path(TMP) / f"mission-wall-{sid2}-e1.flag").write_text("1", encoding="utf-8")
+    out2 = run_at(sid2, 45.0)
+    check("V-MCW-MIDTURN-ASKED-STOP-DOES-NOT-BLOCK", out2.get("decision") != "block", str(out2)[:80])
+
     # the worker records its hand-off; the next worker gets a card that carries it
     gm.request_handoff(sid, "next: plan 03-02 task 3")
     rec = gm.load(mid)

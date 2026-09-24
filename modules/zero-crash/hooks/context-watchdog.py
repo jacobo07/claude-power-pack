@@ -483,6 +483,14 @@ def _dump_telemetry(atomic_write, session_id: str, used_pct, cwd: str,
         return None
 
 
+def mk_state_dir() -> str:
+    """The marker directory, as the marker module (and hooks/mission_wall.js) resolve it."""
+    mod = _load_tool("gsd_autorun_marker")
+    if mod is not None:
+        return str(mod.STATE_DIR)
+    return os.environ.get("GSD_AUTORUN_MARKER_DIR") or str(Path.home() / ".claude" / "state")
+
+
 def _read_autorun_marker(session_id: str):
     """Return the autonomous-run marker for this session, or None.
 
@@ -1238,6 +1246,16 @@ def _run_inner(event: dict) -> dict:
         # is requested and no keystroke is dispatched; the out-of-band supervisor starts
         # the successor once this turn has ended. The vault checkpoint is still written.
         if crossing_marker and crossing_marker.get("mission_id"):
+            # Already asked MID-TURN by hooks/mission_wall.js for this epoch: asking again
+            # here would `block` the Stop, i.e. keep the turn from ending after the worker
+            # has handed off -- and a turn that cannot end is a relay that cannot happen
+            # (measured W8: both witnesses fired, 00:32:00 and 00:33:21, the worker stayed busy).
+            wall_flag = Path(mk_state_dir()) / (f"mission-wall-{session_id}-e"
+                                                f"{crossing_marker.get('epoch')}.flag")
+            if wall_flag.exists():
+                _ledger(session_id, "handoff_already_asked", used_pct=used_pct,
+                        mission_id=crossing_marker.get("mission_id"))
+                return {}
             try:
                 _kclear_equivalent(atomic_write, session_id, used_pct, cwd, transcript_path)
             except Exception:
