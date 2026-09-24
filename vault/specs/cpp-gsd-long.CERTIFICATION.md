@@ -583,7 +583,7 @@ Owner decision 2026-09-23: a run continues in a fresh session at its wall. Spec
 | M3 | a successor in a fresh process continues exactly, carrying the note | **PROVEN live** — relay 00:41:25, f24.. by the successor only, 0 dupes (E24) |
 | M4 | a crashed busy background worker is never replaced beside its host restart | **PROVEN** — measured E14/E15, pinned V-MC-BG-KILLED-* with a mutation |
 | M5 | a halt stops its workers; duplicate supervisors launch one worker | **PROVEN** — unit + mutation (race 1 winner / 5 losers) |
-| M6 | a real `/gsd-autonomous` run crosses ≥ 2 relays and completes | **NOT PROVEN** — needs the Owner's worker permission mode (acceptEdits cannot git here, T-CONT-16) |
+| M6 | a real `/gsd-autonomous` run crosses ≥ 2 relays and completes | **NOT PROVEN — RUN IN FLIGHT.** Blocker removed: Owner chose `auto` (default since `18c7299`). Mission `m-7f6d988e3c93` armed 2026-09-24 09:49Z on the trusted `gsd-long-smoke` canary (1/8 phases, HEAD `4f09667`), worker 1 `f3c0b67e` adopted 09:54Z, budget 5 iterations / 8 h. Passes only on: ≥ 2 relays, roadmap strictly advancing with no phase redone, commits from ≥ 3 workers, never two workers at once, ending COMPLETED or HALTED-on-budget. Result replaces this cell. |
 | M7 | Windows | the tested host throughout |
 
 Gates: `tools/test_gsd_mission.py` 76/76 · `tools/test_mission_watchdog.py` 12/12 ·
