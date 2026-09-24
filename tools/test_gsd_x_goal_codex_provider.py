@@ -53,7 +53,7 @@ if mode == "sleep":
 root = pathlib.Path.cwd()
 (root / "written_by_codex.txt").write_text("work\\n", encoding="utf-8")
 subprocess.run([GIT, "add", "."], cwd=root)
-subprocess.run([GIT, "commit", "-qm", "codex work"], cwd=root)
+subprocess.run([GIT, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "codex work"], cwd=root)
 print("codex: wrote written_by_codex.txt")
 """
 

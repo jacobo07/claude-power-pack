@@ -40,7 +40,7 @@ brief = sys.argv[-1]
 root = pathlib.Path.cwd()
 (root / "claude_did_this.txt").write_text(brief[:80], encoding="utf-8")
 subprocess.run([GIT, "add", "."], cwd=root)
-subprocess.run([GIT, "commit", "-qm", "headless work"], cwd=root)
+subprocess.run([GIT, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "headless work"], cwd=root)
 print("claude: done")
 """
 

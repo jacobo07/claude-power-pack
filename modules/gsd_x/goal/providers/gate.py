@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -127,7 +128,11 @@ class GateProvider:
             proc = subprocess.Popen(argv, cwd=str(root), stdout=out,
                                     stderr=subprocess.STDOUT,
                                     env={**os.environ, "PYTHONIOENCODING": "utf-8",
-                                         "GSDX_GOAL_EPOCH": spec["epoch_id"]})
+                                         "GSDX_GOAL_EPOCH": spec["epoch_id"]},
+                                    # POSIX: its own session, so the pid is also the
+                                    # process-group id cancel() kills -- the gate itself
+                                    # runs as a grandchild, under the supervisor.
+                                    start_new_session=os.name != "nt")
         handle = {"pid": proc.pid, "token": token, "log": str(log),
                   "marker": str(marker), "result": str(result), "started_at": time.time(),
                   "tree_before": tree_id(root, spec.get("scope_paths")),
@@ -229,11 +234,18 @@ class GateProvider:
             return
         # Kill the TREE, not the parent. A gate that spawns a test runner leaves
         # grandchildren writing into the worktree the next epoch will read.
+        # The gate runs UNDER a supervisor, so killing only `pid` leaves the gate
+        # itself running: on POSIX that was the whole behaviour (measured on GEX44,
+        # 2026-09-24), and a recovered handle (no Popen object) killed nothing.
         if os.name == "nt":
             subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"],
                            capture_output=True, timeout=60)
-        elif proc is not None:
-            proc.kill()
+        else:
+            try:
+                os.killpg(int(pid), signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, ValueError):
+                if proc is not None:
+                    proc.kill()
         if proc is not None:
             try:
                 proc.wait(timeout=30)

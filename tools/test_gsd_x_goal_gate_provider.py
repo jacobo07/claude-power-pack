@@ -34,7 +34,14 @@ def make_repo() -> Path:
     (d / "gate_ok.py").write_text("print('12 passed')\n", encoding="utf-8")
     (d / "gate_bad.py").write_text("import sys\nprint('1 failed')\nsys.exit(1)\n",
                                    encoding="utf-8")
-    (d / "gate_slow.py").write_text("import time\ntime.sleep(120)\n", encoding="utf-8")
+    # The slow gate spawns a grandchild of its own, so cancel must kill a TREE: the
+    # gate already runs under the provider's supervisor, and a grandchild of the gate
+    # is what a real verifier or bot is.
+    (d / "gate_slow.py").write_text(
+        "import os, pathlib, subprocess, sys, time\n"
+        "c = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(120)'])\n"
+        "pathlib.Path(os.environ['GSDX_TEST_PIDFILE']).write_text(str(c.pid))\n"
+        "time.sleep(120)\n", encoding="utf-8")
     subprocess.run([GIT, "-C", str(d), "add", "."], check=True, env=ENV)
     subprocess.run([GIT, "-C", str(d), "commit", "-qm", "gates"], check=True, env=ENV)
     return d
@@ -56,6 +63,22 @@ def spec_for(root: Path, gate_file: str, cls: str, token: str, eid: str):
             "scope_paths": ["."],
             "gate": {"id": gate_file, "command": [sys.executable, gate_file],
                      "class": cls, "files": [gate_file]}}
+
+
+def pid_alive(pid) -> bool:
+    """Independent of the provider's own liveness predicate: the instrument must not
+    be the subject. POSIX reads /proc so a zombie awaiting its reaper reads dead."""
+    if not pid:
+        return False
+    if os.name == "nt":
+        out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}"],
+                             capture_output=True, text=True).stdout
+        return str(pid) in out
+    stat = Path(f"/proc/{pid}/stat")
+    try:
+        return stat.read_text().rsplit(")", 1)[1].split()[0] != "Z"
+    except (OSError, IndexError):
+        return False
 
 
 def main() -> int:
@@ -154,16 +177,29 @@ def main() -> int:
             ok(name, why)
 
     # --- cancellation and the bound ----------------------------------------------------
+    pidfile = Path(tempfile.mkdtemp(prefix="gsdx_gate_pid_")) / "grandchild.pid"
+    os.environ["GSDX_TEST_PIDFILE"] = str(pidfile)
     s_slow = spec_for(repo, "gate_slow.py", "unit", "tok-slow", "ep-slow")
     h3 = prov.dispatch(s_slow)
     check("V-GATE-RUNNING", prov.observe(h3).state == ep.OBS_RUNNING,
           "a live gate reports running", "a live gate did not report running")
+    deadline = time.time() + 30
+    while time.time() < deadline and not (pidfile.is_file() and pidfile.read_text().strip()):
+        time.sleep(0.1)
+    grandchild = int(pidfile.read_text().strip()) if pidfile.is_file() else None
+    check("V-GATE-CANCEL-PRECONDITION", grandchild is not None and pid_alive(grandchild),
+          "precondition: the gate's own grandchild is running before cancel",
+          f"grandchild={grandchild}")
     prov.cancel(h3)
-    time.sleep(1.0)
-    alive = subprocess.run(["tasklist", "/FI", f"PID eq {h3['pid']}"],
-                           capture_output=True, text=True).stdout
-    check("V-GATE-CANCEL-KILLS", str(h3["pid"]) not in alive,
-          f"cancel killed the process tree (pid {h3['pid']} gone)", alive[-200:])
+    deadline = time.time() + 10
+    while time.time() < deadline and (pid_alive(h3["pid"]) or pid_alive(grandchild)):
+        time.sleep(0.2)
+    check("V-GATE-CANCEL-KILLS",
+          not pid_alive(h3["pid"]) and grandchild is not None and not pid_alive(grandchild),
+          f"cancel killed the process tree (supervisor {h3['pid']} and grandchild "
+          f"{grandchild} gone)",
+          f"supervisor alive={pid_alive(h3['pid'])} grandchild alive="
+          f"{pid_alive(grandchild) if grandchild else 'never seen'}")
     r3 = prov.harvest(h3, s_slow)
     check("V-GATE-CANCELLED-NO-VERDICT",
           not r3.verdicts and r3.failures
