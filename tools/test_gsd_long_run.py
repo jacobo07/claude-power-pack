@@ -509,7 +509,8 @@ def gates_cli():
     s = sid()
     transcript(s, r"C:\p\SomewhereElse")
     args = [PY, str(TOOLS / "gsd_autorun_marker.py"), "--write", "--session", s, "--command", "/absw2-continue",
-            "--cwd", str(good), "--mission", "angry,birds,rovio,powerpc,slingshot"]
+            "--cwd", str(good), "--mission", "angry,birds,rovio,powerpc,slingshot",
+            "--legacy-compact"]  # v2 arming is opt-in since 2026-09-24
     r = subprocess.run(args, capture_output=True, text=True, env=dict(os.environ))
     check("V-GSDLR-CLI-REFUSES-WRONG-SESSION-DIR", r.returncode == 2 and "this session runs in" in r.stderr,
           f"rc={r.returncode} err={r.stderr.strip()[:140]}")
@@ -533,7 +534,8 @@ def gates_cli():
     s3 = sid()
     transcript(s3, str(good2))
     base = [PY, str(TOOLS / "gsd_autorun_marker.py"), "--write", "--session", s3,
-            "--command", "/absw2-continue", "--mission", "angry,birds,rovio,powerpc,slingshot"]
+            "--command", "/absw2-continue", "--mission", "angry,birds,rovio,powerpc,slingshot",
+            "--legacy-compact"]
     r3 = subprocess.run(base + ["--cwd", "."], capture_output=True, text=True,
                         cwd=str(good2), env=dict(os.environ))
     rows3 = [e for e in lr.ledger_events(s3) if e.get("event") == "armed"]
@@ -557,7 +559,7 @@ def gates_cli():
     transcript(s4, str(good3))
     r4 = subprocess.run([PY, str(TOOLS / "gsd_autorun_marker.py"), "--write", "--session", s4,
                          "--command", "/absw2-continue",
-                         "--mission", "angry,birds,rovio,powerpc,slingshot"],
+                         "--mission", "angry,birds,rovio,powerpc,slingshot", "--legacy-compact"],
                         capture_output=True, text=True, cwd=str(good3), env=dict(os.environ))
     rows4 = [e for e in lr.ledger_events(s4) if e.get("event") == "armed"]
     row4_cwd = rows4[-1].get("cwd") if rows4 else None

@@ -228,7 +228,26 @@ def main(argv: list[str] | None = None) -> int:
                          "finish test then read that workstream. Set it active for THIS session "
                          "first (gsd-tools query workstream.set <name>), so the resumed command "
                          "routes there too.")
+    ap.add_argument("--legacy-compact", action="store_true",
+                    help="arm the v2 compact-and-resume path. Only when the Owner's own message "
+                         "says 'legacy compact'; the default for /cpp-gsd-long is a Ralph mission")
     args = ap.parse_args(argv)
+
+    if args.write and not args.legacy_compact:
+        # Owner decision 2026-09-24: whatever the request says ("autocompact", "compact", ...),
+        # a long run continues in a FRESH session (Ralph), never by compacting this one. This
+        # CLI is the v2 arming point, so it is where a run would silently take the compaction
+        # route; refusing here, with the replacement printed, is what makes the wording moot.
+        cwd = args.cwd or "."
+        pp = Path(__file__).resolve().parent
+        sys.stderr.write(
+            "REFUSED: /cpp-gsd-long arms a Ralph mission, not a compaction marker "
+            "(Owner decision 2026-09-24; 'autocompact' in a request does not change it).\n"
+            f"Run instead:  python \"{pp / 'gsd_mission.py'}\" arm --cwd \"{cwd}\" "
+            f"--command \"{args.command or '/gsd-autonomous'}\" --max-cycles 12 --max-hours 24\n"
+            "and do NOT invoke the command in this session afterwards -- the mission's worker "
+            "runs it.\nThe v2 path needs --legacy-compact and the Owner's literal 'legacy compact'.\n")
+        return 2
 
     if args.write:
         # Arming point of /cpp-gsd-long. A mechanically sound runner pointed at a stale roadmap

@@ -1,10 +1,25 @@
 ---
 name: cpp-gsd-long
-description: Start a /gsd-autonomous run that survives context compactions — retunes GSD's context warnings, drops the autorun marker, then starts the run. Use for multi-hour unattended runs; plain /gsd-autonomous is right for anything that fits in one context.
-argument-hint: "[--from <phase>] [--restore]"
+description: Start a multi-hour unattended /gsd-autonomous run as a Ralph MISSION — at every context wall a FRESH background session continues the work (no compaction). Words like "autocompact" or "compact" in the request do not change this. Plain /gsd-autonomous is right for anything that fits in one context.
+argument-hint: "[--from <phase>] [--max-cycles N] [--max-hours H]"
 ---
 
 # /cpp-gsd-long — unattended multi-cycle autonomous run
+
+## Routing — read this first, it is not optional
+
+**This command always arms a Ralph mission** (section below). That holds even when the request
+says "autocompact", "compact", "compactar", "/compact", "survive compactions" or "use
+autocompact". The Owner decided (2026-09-24) that those words mean "keep going past the
+context wall", and on this estate that means a fresh session, not a compaction.
+
+- Do **not** run `gsd_long_run_config.py --apply` or `gsd_autorun_marker.py --write`: the v2
+  marker CLI refuses without `--legacy-compact`, and its refusal names the Ralph command.
+- Do **not** invoke `/gsd-autonomous` in THIS session after arming. The mission's background
+  worker runs it; a second copy here would put two writers on one roadmap.
+- The worker's native `--autocompact 600k` stays on as a safety net only.
+- The legacy compact-and-resume path (v2, further below) is used only when the Owner's own
+  message contains the literal phrase **"legacy compact"**. Nothing else unlocks it.
 
 Specs: `vault/specs/mission-continuity.md` (v3, **default**),
 `vault/specs/gsd-autonomous-autocompact.md` (v1),
@@ -40,13 +55,22 @@ A crashed **busy** worker is restarted by the host itself (measured) and is neve
 by the mission — replacing it put two writers on the same work. The mission replaces only a
 worker the host reports stopped/done while GSD still has work.
 
-**Permission mode of workers** — omitted, a worker runs in the host default (`auto` on this
-estate). `acceptEdits` cannot run git through PowerShell here, so a GSD run in that mode
-parks on a permission prompt (surfaced as `BLOCKED`).
+**Permission mode of workers** — `auto` by default (Owner decision 2026-09-24, pinned in
+`arm --permission-mode` so a settings change cannot alter it). `acceptEdits` cannot run git
+through PowerShell here, so a GSD run in that mode parks on a permission prompt (surfaced as
+`BLOCKED`).
+
+**If the run moves into a git worktree** (`/gsd-autonomous` may enter one), the supervisor
+follows it: the predecessor's transcript names the directory, GSD is asked there, and the
+successor's card says `WORK TREE: … enter it first`. Launches stay in the trusted cwd.
 
 The keystroke `/compact` path below remains for runs armed the v2 way.
 
 ## Legacy (v2): compact-and-resume in the same session
+
+> **Only when the Owner's message contains "legacy compact".** Every command in this section
+> then needs `--legacy-compact` on `gsd_autorun_marker.py --write`; without it the CLI
+> refuses and prints the Ralph `arm` command instead.
 
 A plain `/gsd-autonomous` halts at the first context wall: GSD says "wrap up"
 at 35% remaining and "stop immediately" at 25%, while the Power Pack watchdog

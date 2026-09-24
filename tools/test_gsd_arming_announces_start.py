@@ -104,6 +104,7 @@ def drive_write(command: str, tmpdir: Path) -> tuple[int, str]:
             code = marker.main([
                 "--write", "--session", "test-session-0000", "--command", command,
                 "--cwd", ".", "--mission", "alpha,beta,gamma",
+                "--legacy-compact",  # the v2 path under test is opt-in since 2026-09-24
             ])
         return code, buf.getvalue()
     finally:

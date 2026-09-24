@@ -67,6 +67,10 @@ def project(tmp: Path, name: str, state: str | None, roadmap: str | None, bom=Fa
 def cli(argv):
     if "--cwd" in argv:
         ARMED_CWD[0] = argv[argv.index("--cwd") + 1]
+    if "--write" in argv:
+        # This suite judges the v2 arming boundary itself; since 2026-09-24 that path is
+        # opt-in (/cpp-gsd-long arms a Ralph mission by default).
+        argv = [*argv, "--legacy-compact"]
     out, err = io.StringIO(), io.StringIO()
     with redirect_stdout(out), redirect_stderr(err):
         rc = mk.main(argv)
