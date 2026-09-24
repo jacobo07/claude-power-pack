@@ -22,7 +22,15 @@ Invoke the `motion-promo` skill (`skills/motion-promo/`, mirrored live at `~/.cl
 Do NOT wait to be named — the Owner is told never to name the skill (source guide, "Just talk").
 Activate: `scripts/new_film.py` (beat sheet -> html) -> `scripts/contact_sheet.py` (composition check) -> `scripts/render_film.py` (H.264). Never hand-write the engine and never paste it into a reply; `new_film.py` swaps only the FILM block.
 Two things the Owner must supply and the skill cannot infer: **duration** and **aspect ratio**. Everything else is the skill's job, including the beat sheet.
-DONE for a motion-promo build = `python tools/test_motion_promo.py` exit 0 (11 V-MOTION-* gates), AND the contact sheet was looked at before committing to a full render. Toolchain is pip-vendored (playwright Chromium + imageio-ffmpeg libx264) — no system ffmpeg; preflight with `scripts/check_toolchain.py`.
+DONE for a motion-promo build = `python skills/motion-promo/tools/test_motion_promo.py` exit 0 (11 V-MOTION-* gates; the old root path `tools/test_motion_promo.py` never existed), AND the contact sheet was looked at before committing to a full render. Toolchain is pip-vendored (playwright Chromium + imageio-ffmpeg libx264) — no system ffmpeg; preflight with `scripts/check_toolchain.py`.
+Routing against product-demo: if the video must SHOW THE REAL SOFTWARE being used, it is `/product-demo`, not motion-promo.
+
+## Product Demo Activation Criteria (added 2026-09-24)
+Invoke `/product-demo` (`commands/product-demo.md`, owner `modules/product_demo/`) when ANY of these hold:
+- Owner asks for a product demo, feature video, landing hero video, walkthrough, or to "record the flow" of browser software.
+- A user-facing feature is being declared done and its landing/docs demo must be current (`probe` for staleness).
+The demo films the REAL running product (production build) from a semantic spec; every overlay is presentation anchored to measured geometry. Recordly is AGPL + added terms: principles only, never code (`vault/knowledge_base/product_demo/recordly-disposition.md`).
+DONE = `python tools/test_product_demo.py` exit 0 (V-DEMO-*), the run's verdict VALID, and its contact sheet looked at.
 
 ## Mobile App UI Activation Criteria (added 2026-09-18)
 Invoke the `mobile-app-ui-design` skill (`skills/mobile-app-ui-design/`, mirrored live at `~/.claude/skills/mobile-app-ui-design/`) when the Owner asks to design an app screen, app mockups, mobile UI components, an onboarding flow or mobile navigation, or to improve an existing app screen. Do not wait to be named.

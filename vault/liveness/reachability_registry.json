@@ -119,10 +119,6 @@
       "class": "PLANNED",
       "note": "CO-0x series -- see cognitive_os/context note"
     },
-    "cognitive_os/loop_budget": {
-      "class": "PLANNED",
-      "note": "CO-0x series -- see cognitive_os/context note"
-    },
     "cognitive_os/memory": {
       "class": "PLANNED",
       "note": "CO-04 series -- see cognitive_os/context note"
