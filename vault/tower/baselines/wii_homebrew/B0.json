@@ -1,0 +1,204 @@
+{
+  "family": "wii_homebrew",
+  "generation": 0,
+  "parent": null,
+  "created_at": 1790266429.3722205,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "wii_homebrew-wii-first-not-pc-only",
+      "requirement": "No feature is done until the Wii .dol builds and the change has been reasoned about under real Wii hardware constraints (Broadway/PPC750CL, GX fixed-function pipeline, MEM1/MEM2 limits); PC-only verification is a dev-loop step, not a completion gate.",
+      "why": "The PC target exists purely as a fast dev-loop; CavEX's shipping identity is the Wii .dol, and a change that only runs/looks correct on PC can ship broken to the actual target.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\CavEX\\CONSTITUTION.md",
+        "line": 17,
+        "quote": "**Enforcement:** no feature is \"done\" until the Wii `.dol` builds and the"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-build-green-before-commit",
+      "requirement": "The Wii-target `make` must exit 0 before any commit that touches source/, the Makefile, or vendored dependencies.",
+      "why": "The Wii Makefile has broken silently before from an unrelated-looking change with no obvious symptom until make was actually run.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\CavEX\\CONSTITUTION.md",
+        "line": 51,
+        "quote": "**Enforcement:** `make` (Wii target) must exit 0 before any commit that"
+      },
+      "class": "D",
+      "check": "make (Wii target) exits 0",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-verify-external-specs-before-coding",
+      "requirement": "When an instruction states a specific external technical spec as fact (file format, schema, exact dimensions, a required constant) with no citation, verify it against the primary source (WebFetch/WebSearch) before writing the value into a committed file -- confident phrasing in a prompt is not evidence.",
+      "why": "A prompt's own TRAP text asserted icon.png must be 128x128 (real: 128x48) and release_date must be 8-digit YYYYMMDD (real: 14-digit YYYYMMDDHHMMSS); both wrong, both caught by one WebFetch each before anything was written.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\CavEX\\governance\\HARD_RULES.md",
+        "line": 136,
+        "quote": "**ACCIÓN:** STOP. Verify against the primary source (`WebFetch`/"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-trace-runtime-load-paths-before-packaging",
+      "requirement": "Before designing a packaging/deployment step (Homebrew Channel folder, install layout), grep how the binary actually loads its runtime assets (bare relative filenames? absolute paths? embedded?) rather than inferring from a README description.",
+      "why": "The binary loaded assets/ and config.json as bare CWD-relative filenames; a naive 'just copy boot.dol+meta.xml+icon.png' packaging step would have shipped a build that crashes at first texture load.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\CavEX\\governance\\HARD_RULES.md",
+        "line": 150,
+        "quote": "**ACCIÓN:** STOP. Grep for how the binary actually loads its runtime"
+      },
+      "class": "D",
+      "check": "grep fopen()/asset-load call sites before writing the packaging step",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-e2e-dolphin-verification-before-done",
+      "requirement": "Before claiming any feature/wave done, run it in Dolphin (local or headless) and produce screenshot evidence -- reasoning about the change is not sufficient.",
+      "why": "E2E Verification Gate, part of the always-loaded core-safety standard.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\core-safety.md",
+        "line": 79,
+        "quote": "- **E2E Verification Gate:** Before claiming ANY wave done → run Dolphin test (local or OmniCapture headless). Screenshot evidence required."
+      },
+      "class": "D",
+      "check": "Dolphin (or OmniCapture headless) run with a screenshot artifact",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-no-per-frame-malloc",
+      "requirement": "Never allocate memory per-frame; allocate once at init and reuse, on hardware with only ~24MB MEM1.",
+      "why": "Inviolable Rule #4 of core-safety: OOM after hours of gameplay is caused by per-frame malloc on constrained Wii memory.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\core-safety.md",
+        "line": 63,
+        "quote": "4. No per-frame malloc — allocate at init on 24MB hardware"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-float-literals-need-f-suffix",
+      "requirement": "Every float literal must carry the f suffix (1.0f, not 1.0); the Broadway PPC750CL has no double-precision FPU.",
+      "why": "Inviolable Rule #7 of core-safety.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\core-safety.md",
+        "line": 66,
+        "quote": "7. Float literals: `1.0f` not `1.0` — PPC 750CL has no double FPU"
+      },
+      "class": "D",
+      "check": "grep for bare double-literal float assignments/args",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-makefile-gate-new-source-files",
+      "requirement": "After creating any new .c file, grep for the filename in the Makefile; if missing, add it before claiming the work done.",
+      "why": "Makefile Gate in core-safety's Build & Integration Gates -- a new source file that is never compiled is a silent no-op.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\core-safety.md",
+        "line": 73,
+        "quote": "- **Makefile Gate:** After creating ANY new .c file → `grep filename Makefile`. If missing, add BEFORE claiming done."
+      },
+      "class": "D",
+      "check": "grep <filename> Makefile",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-enum-sync-gate",
+      "requirement": "After expanding any enum with a _MAX/_COUNT sentinel, grep for ENUM_MAX across source/ and include/ and verify every array indexed by that enum was resized to match, or it is an out-of-bounds read / UB / crash.",
+      "why": "Enum Sync Gate in core-safety's Build & Integration Gates.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\core-safety.md",
+        "line": 74,
+        "quote": "- **Enum Sync Gate:** After expanding ANY enum with _MAX/_COUNT → `grep -rn \"ENUM_MAX\" source/ include/` and verify ALL indexed arrays match."
+      },
+      "class": "D",
+      "check": "grep -rn \"ENUM_MAX\" source/ include/ and verify every indexed array",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-gx-buffers-memalign-dcflush-never-malloc",
+      "requirement": "Textures and vertex buffers that GX reads must be allocated with memalign(32, size) and cache-flushed with DCFlushRange(buf, size) before GX reads them; never malloc GX-visible data.",
+      "why": "malloc is not guaranteed 32-byte aligned -- it works in Dolphin (which is lenient) but fails on real Wii hardware, a documented Dolphin-vs-hardware divergence.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\memory-and-build.md",
+        "line": 23,
+        "quote": "**Textures/vertex buffers:** `memalign(32, size)` + `DCFlushRange(buf, size)` before GX reads. Never `malloc` for GX data (not guaranteed 32-byte aligned; works in Dolphin, fails on Wii)."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-no-posix-headers",
+      "requirement": "Never include POSIX-only headers such as <unistd.h> or <pthread.h> -- Wii has no POSIX layer.",
+      "why": "Forbidden Patterns table in memory-and-build.md.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\memory-and-build.md",
+        "line": 18,
+        "quote": "| `<unistd.h>`, `<pthread.h>` | No POSIX on Wii |"
+      },
+      "class": "D",
+      "check": "grep -rn '#include <unistd.h>\\|#include <pthread.h>' source/",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-seven-completion-gates-before-done",
+      "requirement": "A 'done' claim requires all completion gates to pass, including gate 7: empirical evidence (a boot log plus a screenshot, or a vision verdict) -- not build success alone.",
+      "why": "Reality Contract Completion Gates table; a claim of done without all 7 gates is a Mistake #17 (Static ≠ Runtime) violation.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\reality-contract.md",
+        "line": 41,
+        "quote": "| 7 | Empirical Evidence | Boot log + screenshot OR vision verdict per N3 + N22 |"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-zero-stub-state-gap-and-stop",
+      "requirement": "If a feature cannot be wired end-to-end in the current turn, state the gap and stop -- do not scaffold the shell (TODO/FIXME/PLACEHOLDER/NotImplementedError/empty-catch markers in production code are delivery blockers).",
+      "why": "Reality Contract Zero-Stub section; Mistake #16 (Scaffold Illusion) is the canonical antipattern this guards against.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-dev-best-practices\\standards\\reality-contract.md",
+        "line": 18,
+        "quote": "If a feature cannot be wired end-to-end this turn: **state the gap and stop**. Do not scaffold the shell. Mistake #16 (Scaffold Illusion) is the canonical antipattern."
+      },
+      "class": "D",
+      "check": "grep -E 'TODO|FIXME|HACK|PLACEHOLDER|Coming Soon' <changed files> returns 0",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-claim-must-name-observing-plane",
+      "requirement": "A runtime claim (it boots, it works, it renders) must name the plane that observed it (static/Dolphin/silicon); an unattributed claim is not a claim.",
+      "why": "The development plane optimizes engineering speed; the validation plane owns every runtime verdict -- conflating them lets an unproven claim pass as proven.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\develop-here-prove-there.md",
+        "line": 9,
+        "quote": "> every runtime verdict. A claim names the plane that observed it, or it is not a claim.**"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "wii_homebrew-evidence-authority-order-never-majority-vote",
+      "requirement": "When verifying a claim about Wii runtime behavior, rank evidence by authority (silicon > gex44/live-device-bot > emulator > binary/disassembly > static source > documentation > inference) and resolve contradictions by authority, never by counting how many sources agree.",
+      "why": "Five agents reading one wrong corpus agree perfectly -- a majority vote among same-provenance sources is not independent evidence.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\wii-power-pack\\SKILL.md",
+        "line": 45,
+        "quote": "`silicon > gex44 > emulator > binary/disassembly > static source > documentation > inference`"
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    }
+  ]
+}

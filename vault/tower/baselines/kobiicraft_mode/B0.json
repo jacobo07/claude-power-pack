@@ -1,0 +1,204 @@
+{
+  "family": "kobiicraft_mode",
+  "generation": 0,
+  "parent": null,
+  "created_at": 1790266427.9721048,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "kobiicraft_mode-blind-testing-protocol",
+      "requirement": "A new mode/mechanic may not be claimed DONE on build success, static code reading, console-with-no-errors, or 'should work' reasoning alone; the agent must show a bot connected to the server, an input sent, an observed state change (chat/window/scoreboard), and an extracted assert log as evidence.",
+      "why": "BTP-001 (Blind Testing Protocol) is mandatory for all KobiiCraft mechanics per governance.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\kobiicraft-testing\\instructions.md",
+        "line": 118,
+        "quote": "**Blind Testing Protocol** — Mandatory for all KobiiCraft mechanics."
+      },
+      "class": "D",
+      "check": "node src/cli.js snapshot/assert log shows observed state change, not just build success",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-ingame-verifier-fail-closed",
+      "requirement": "Every in-game-affecting change must be covered by a registered verifier in the verification registry; a red verifier blocks the done-claim, and an in-game surface modified with NO registered verifier also blocks it (absence of coverage is treated the same as a failing check).",
+      "why": "The NPC config gate reported 37/37 while a whitelist setting silently blocked the player from ever reaching the feature -- only a real click caught it; config-correct is not the same as player-works.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 46,
+        "quote": "Registro declarativo: `vault/config/verification_registry.json` (superficie → verificador → qué prueba). **Fail-closed doble:** (1) un verificador en rojo bloquea; (2) una superficie in-game modificada **sin verificador registrado** también bloquea — la ausencia de comprobación se lee igual que un verde, así que un hueco de cobertura tiene que doler. Añadir superficie nueva = añadir su verificador en el mismo cambio."
+      },
+      "class": "D",
+      "check": "python scripts/verify_change.py exit 0, and vault/config/verification_registry.json has an entry for the touched surface",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-p3-player-experience-required",
+      "requirement": "A Minecraft feature/mode is not DONE without satisfying all 3 verification pillars P1/P2/P3; missing P3 (player-experience validation) means the feature is WIP, not done.",
+      "why": "VERIFICATION_STANDARDS.md is the sealed 3-pillar standard the router requires reading before any Minecraft feature done-claim (GOLD §85).",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 170,
+        "quote": "- ALWAYS Read `vault/standards/VERIFICATION_STANDARDS.md` before declaring ANY Minecraft feature \"done\" (3 pillars P1/P2/P3 — sin P3 player-experience = WIP, no done; GOLD §85). Cross-pane sync + Spec Reality-First live here too."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-golden-run-e2e",
+      "requirement": "A new mode must ship a hermetic Golden Run end-to-end script asserting at least 6 boundary contracts before it can be called complete.",
+      "why": "Sovereign Standard of Completeness v1.6, pillar 4 (canonical shape: e2e_content_golden_run.py).",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 163,
+        "quote": "(4) **Golden Run executable** — hermetic `scripts/e2e_*.py` asserting ≥6 boundary contracts end-to-end (canonical shape: `e2e_content_golden_run.py`);"
+      },
+      "class": "D",
+      "check": "scripts/e2e_*.py exit 0 asserting >=6 boundary contracts",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-observability-without-ssh",
+      "requirement": "A new mode's runtime state must be visible without SSH access (a health endpoint, an agents endpoint, or a ledger row).",
+      "why": "Sovereign Standard of Completeness v1.6, pillar 2 (Observability).",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 161,
+        "quote": "(2) **Observability** — runtime state visible without SSH (`/mc/health`, `/mc/agents/*`, or ledger row);"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-zero-stubs-nd7",
+      "requirement": "A new mode must ship with no stubs or incomplete shells (ND-7 enforced, no override token).",
+      "why": "Sovereign Standard of Completeness v1.6, pillar 3.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 162,
+        "quote": "(3) **Sin stubs ni shells incompletos** — ND-7 enforced, sin override token;"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-preflight-before-deploy",
+      "requirement": "Before every deploy of new/changed plugin config, run the preflight validator: it must check YAML syntax, color tags (no MiniMessage in LEGACY_ONLY plugins), JSON syntax, required plugin.yml fields (api-version=1.21), and duplicate JARs -- deploy proceeds only on PASS.",
+      "why": "Pre-flight checks are wired into the deploy workflow (Agent modifies code -> mvn package -> preflight.py -> PASS -> SFTP upload; FAIL -> fix -> retry).",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\kobiicraft-testing\\instructions.md",
+        "line": 70,
+        "quote": "python scripts/preflight.py --plugins-dir /path/to/plugins/ --format json"
+      },
+      "class": "D",
+      "check": "python scripts/preflight.py --plugins-dir <dir> --format json",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-verify-server-logs-after-deploy",
+      "requirement": "After restarting the live server to deploy a new mode's JAR, verify by checking server logs for startup errors before the deploy is considered complete.",
+      "why": "Deploy Workflow step 4 of the KobiiClaw operations doctrine.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\kobiicraft-ops\\instructions.md",
+        "line": 12,
+        "quote": "4. Verify: check server logs for startup errors"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-never-restart-during-active-match",
+      "requirement": "Never restart the live server while a match of the mode is active; match state must be checked before issuing any restart command.",
+      "why": "Match Protection rule in KobiiClaw operations doctrine.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\kobiicraft-ops\\instructions.md",
+        "line": 21,
+        "quote": "- NEVER restart during active match"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-gui-click-handler-standards",
+      "requirement": "Every GUI click handler for the mode must call setCancelled(true), and must check getClickedInventory() != null before accessing the clicked slot.",
+      "why": "Event Handler Standards for KobiiCraft plugin development.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\skills\\kobiicraft-dev\\instructions.md",
+        "line": 33,
+        "quote": "- Always setCancelled(true) in GUI click handlers"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-inventory-open-close-tick-delay",
+      "requirement": "Never call openInventory() in the same tick as closeInventory(); use a 2-tick delay via runTaskLater() when chaining inventory transitions.",
+      "why": "Bukkit rule #21 in the KobiiCraft Quick Reference (Inlined Critical Bukkit Rules).",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 177,
+        "quote": "- **#21**: NEVER openInventory() same tick as closeInventory(). 2-tick delay via runTaskLater()."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-no-heavy-ops-in-onenable",
+      "requirement": "Never run heavy operations inside onEnable(); use an async scheduler with staggered delays instead.",
+      "why": "Bukkit rule #27 in the KobiiCraft Quick Reference.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 179,
+        "quote": "- **#27**: NEVER run heavy ops in onEnable(). Async scheduler with staggered delays."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-async-io",
+      "requirement": "Every FileReader, Gson, HttpClient, and SQL call must run inside runTaskAsynchronously().",
+      "why": "Bukkit rule #39 in the KobiiCraft Quick Reference.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 180,
+        "quote": "- **#39**: EVERY FileReader/Gson/HttpClient/SQL MUST be inside runTaskAsynchronously()."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-gui-state-via-pdc",
+      "requirement": "Persist GUI state via PersistentDataContainer, never via slot-to-ID HashMaps.",
+      "why": "Bukkit rule #40 in the KobiiCraft Quick Reference.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 181,
+        "quote": "- **#40**: GUI state via PersistentDataContainer, NEVER slot-to-ID HashMaps."
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "kobiicraft_mode-wiring-check-every-command",
+      "requirement": "For every new public method and every new command, grep for its callers/setExecutor() registration before declaring the mode done -- an unwired method or an unregistered command is the Scaffold Illusion, not a finished feature.",
+      "why": "Bukkit rule #47 in the KobiiCraft Quick Reference.",
+      "origin": {
+        "file": "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files\\CLAUDE.md",
+        "line": 182,
+        "quote": "- **#47**: Scaffold Illusion — grep callers for every public method. setExecutor() for every command."
+      },
+      "class": "D",
+      "check": "grep for callers of every new public method; grep setExecutor() for every new command",
+      "status": "reviewed"
+    }
+  ]
+}

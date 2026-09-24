@@ -1,0 +1,204 @@
+{
+  "family": "persistent_state",
+  "generation": 0,
+  "parent": null,
+  "created_at": 1790266424.7471015,
+  "reason": "B0 from Owner-sealed governance; every entry's cited line re-read and verified",
+  "entries": [
+    {
+      "id": "persistent_state-delete-prod-data-needs-backup-and-consent",
+      "requirement": "Never delete production data (DB rows, files, storage volumes, prod-only env vars) without a verified backup (pulled, sha256-confirmed) AND explicit Owner consent typed in the same session.",
+      "why": "Irreversible-damage class hard rule; a blanket 'Owner said autonomous mode' does NOT cover this.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\knowledge_vault\\core\\HARD-RULES.md",
+        "line": 24,
+        "quote": "### HR-1 — Never delete production data without verified backup + explicit Owner confirmation"
+      },
+      "class": "D",
+      "check": "backup exists + sha256 verified + explicit consent string present in session log",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-destructive-op-authorizes-exact-state-seen",
+      "requirement": "Every destructive operation must authorize exactly the state the user observed, re-verified as still present immediately before destruction -- never merely the identity of the request.",
+      "why": "A user authorizes destroying the state they reviewed, not whatever occupies that path when the request arrives.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\destructive-state-authorization.md",
+        "line": 8,
+        "quote": "> **What exact state did the user authorize destroying, and is it still there?**"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-destructive-identity-falsification-test",
+      "requirement": "Before trusting any field as the destructive precondition's identity, construct a case where the destructive target changes while that field stays constant; if it can, the identity is insufficient and must be replaced (e.g. a content hash of the actual bytes).",
+      "why": "A version-control status id and a client-side row identity both passed the falsification test as insufficient in the source investigation.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\destructive-state-authorization.md",
+        "line": 21,
+        "quote": "**The test is a falsification, and it is cheap:** construct one case where the destructive target"
+      },
+      "class": "D",
+      "check": "test case: mutate target bytes, assert candidate identity field also changes",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-absence-of-identity-refuses",
+      "requirement": "A missing or unreadable state-identity value must be treated as a refusal, never as 'unchanged'.",
+      "why": "Absence of an identity is never 'unchanged' -- a missing value means the caller could not say.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\destructive-state-authorization.md",
+        "line": 37,
+        "quote": "**Absence of an identity is never \"unchanged\".** A missing value means the caller could not say, and"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-precondition-window-must-be-closed",
+      "requirement": "A state-authorization check only covers a destructive effect if nothing can move the state between the final check and the destruction; name and bound that interval in milliseconds rather than assuming it is zero.",
+      "why": "A stale-state test proves the past changed; a concurrency test proves the world can change while you act -- passing the first says nothing about the second.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\destructive-state-authorization.md",
+        "line": 77,
+        "quote": "## The check is authoritative for the effect only if nothing can move in between"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-batch-reauthorize-per-item",
+      "requirement": "A batch destructive operation must re-authorize each item's state immediately before that item's own destruction, at the granularity the destruction actually has -- never share one authorization moment across the whole batch.",
+      "why": "The last item's authorization is an entire destruction old when its turn arrives in a multi-select batch -- this is what a multi-select does every time, not a corner case.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\destructive-state-authorization.md",
+        "line": 104,
+        "quote": "**A batch cannot share one authorization moment.** Authorize every item in one pass and then destroy"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-state-lifetime-matches-authority",
+      "requirement": "State that authorizes a destructive effect must live at least as long as the authority that consumes it, or its loss must fail closed.",
+      "why": "Renderer-local evidence cannot be the only witness for something a host still holds after the renderer dies.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\state-lifetime-and-incarnation.md",
+        "line": 11,
+        "quote": "- **State that authorizes a destructive effect must live at least as long as the authority that"
+      },
+      "class": "D",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-state-scoped-to-incarnation-must-not-survive",
+      "requirement": "State scoped to one incarnation (one shell, one process, one session) must not survive into a genuinely new incarnation unless a stronger logical owner deliberately translates it.",
+      "why": "Storage keyed by a long-lived container (a row, a slot, a connection) but describing a short-lived occupant makes the state immortal.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\state-lifetime-and-incarnation.md",
+        "line": 14,
+        "quote": "- **State scoped to one incarnation must not survive into a genuinely new one,** unless a stronger"
+      },
+      "class": "D",
+      "check": "on new-incarnation start, assert prior-incarnation-scoped fields are cleared",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-durable-exit-plan-then-refuse-partial",
+      "requirement": "A destructive multi-subject exit/teardown must first PLAN every subject to be released with a reason for anything kept, then REFUSE the whole operation if anything would be kept, unless the caller explicitly chose a partial exit -- nothing is released on refusal.",
+      "why": "'Save my work, free the machine, quit' looks like a button; it is a destructive transaction that fails in ways a button hides.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+        "line": 8,
+        "quote": "1. **Plan** every subject that would be released, with reasons for anything kept."
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-durable-exit-save-before-release-and-reread",
+      "requirement": "Save what a relaunch needs BEFORE the first release, then save again after every release and read that save back from disk (not from memory) before actually exiting.",
+      "why": "Only a disk re-read proves the save a relaunch depends on actually landed.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\durable-exit-transaction.md",
+        "line": 11,
+        "quote": "3. **Save** what a relaunch needs, before the first release."
+      },
+      "class": "C",
+      "check": "read persisted state file back from disk post-save, compare to expected",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-monetary-qualifiers-travel-with-amount",
+      "requirement": "Every stored or computed monetary amount must carry its currency, unit scale, basis, and observed/derived flag as data fields -- never only in the field name -- or it must not be combined with another amount.",
+      "why": "SUM(total_price_usd) over rows that each record their own currency in a column nobody reads is the entire defect in one line.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\monetary-quantity-integrity.md",
+        "line": 10,
+        "quote": "**An amount travels with its qualifiers as fields, or it cannot be combined with"
+      },
+      "class": "C",
+      "check": "schema check: every monetary column has sibling currency/scale/basis fields",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-monetary-conflicting-qualifiers-refuse",
+      "requirement": "When two amounts carry disagreeing known qualifiers (e.g. different currencies), the combining operation must refuse rather than silently combine them; an undeclared qualifier reports a gap instead of assuming a default.",
+      "why": "Two known qualifiers that disagree have nothing to go find out -- it is a caller error and it raises; absence of a declaration is not evidence of a bad number.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\monetary-quantity-integrity.md",
+        "line": 21,
+        "quote": "- **Two known qualifiers that disagree → refuse.** There is nothing to go and"
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-monetary-no-conversion-without-authorized-source",
+      "requirement": "Never convert between currencies without a rate, a rate date, a provider, and provenance for all four; without an authorized source, refuse to mix rather than invent a rate.",
+      "why": "A rate invented inside a P&L is indistinguishable afterwards from one that was real; refusal composes, invention does not.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\monetary-quantity-integrity.md",
+        "line": 32,
+        "quote": "Conversion needs a rate, a rate date, a provider and provenance. Without all"
+      },
+      "class": "C",
+      "check": "",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-error-classify-at-status-boundary",
+      "requirement": "Classify a failure into a closed product-facing union (the semantic) plus a separate cause record (status, kind, correlation id) at the one boundary that sees the raw status; the failure arm must carry no renderable raw-message field at all.",
+      "why": "A failure result carrying a message: string has already lost the argument -- downstream cannot tell a dead network from a missing route from an expired session.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\technical-failure-to-product-state.md",
+        "line": 12,
+        "quote": "> **A failure result carrying a `message: string` has already lost the"
+      },
+      "class": "D",
+      "check": "type/AST sweep: failure-branch type has no string message field reachable by a renderer",
+      "status": "reviewed"
+    },
+    {
+      "id": "persistent_state-empty-constructible-only-from-success",
+      "requirement": "An EMPTY data state must be constructible only from a SUCCESS result, so 'the load failed and rendered an empty list' is unrepresentable rather than merely untested.",
+      "why": "This is one of two invariants worth making structural, because it converts a class of bug into a type error.",
+      "origin": {
+        "file": "C:\\Users\\User\\.claude\\rules\\technical-failure-to-product-state.md",
+        "line": 34,
+        "quote": "- **`EMPTY` constructible only from a SUCCESS.** Then \"the load failed and"
+      },
+      "class": "D",
+      "check": "type system: EMPTY variant only constructible from the SUCCESS branch",
+      "status": "reviewed"
+    }
+  ]
+}
