@@ -289,6 +289,9 @@ def _session_findings(repo: str, sid: str, *, state_dir=None, bus=None) -> list:
     try:
         from modules.parallel_mesh import pm_03_bus as pm
         pm.drain_staging_findings(repo, sid)          # commit staged findings first
+        # Then the producer that needs nobody to remember: landed commits the
+        # session-delta files already recorded (pm_03_bus.harvest_session_deltas).
+        pm.harvest_session_deltas(repo)
         b = bus or pm.FindingsBus()
         return b.load(repo)
     except Exception:  # noqa: BLE001 -- fail-open
@@ -326,6 +329,23 @@ def run_flywheel(repo: str, sid: str = "", *, findings=None, state_dir=None,
             if claim:
                 items.append((topic or "", str(claim), str(evid), str(qref)))
 
+        # The cap bounds NEW work, not the bus's history. It used to count
+        # findings already in the ledger, and bus.load() returns the whole
+        # append-only history oldest-first, so once a repo's bus passed the cap
+        # the same deposited head was re-read every Stop and the tail was never
+        # reached. Measured 2026-09-24 on Orca X: 9 NEW findings, all at bus
+        # position >= 25, never deposited. A known fingerprint is a DUP whatever
+        # the cap says, so it is counted and dropped before the cap applies.
+        fresh = []
+        for it in items:
+            if _fingerprint(triage_destination(it[1]), it[1]) in seen_fps:
+                res.processed += 1
+                res.dup += 1
+            else:
+                fresh.append(it)
+        items = fresh
+        n_fresh = len(items)
+
         if len(items) > max_findings:
             res.truncated = True
             items = items[:max_findings]
@@ -360,7 +380,7 @@ def run_flywheel(repo: str, sid: str = "", *, findings=None, state_dir=None,
 
         if res.truncated:
             res.note = (f"max-step cap {max_findings} reached -- "
-                        f"{len(raw or []) - max_findings} finding(s) deferred to next turn")
+                        f"{n_fresh - max_findings} finding(s) deferred to next turn")
         if record:
             _record_turn_signal(repo, sid, res, state_dir)
         return res

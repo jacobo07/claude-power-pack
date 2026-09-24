@@ -356,6 +356,60 @@ def drain_staging_findings(repo: str, sid: str, *, now: datetime | None = None,
         return 0
 
 
+# HARVEST -- the producer that does not depend on anyone remembering.
+#
+# Publishing to this bus was agent-driven only (stage_finding), so a repo whose
+# sessions never ran `--stage` contributed nothing to the Tower however much it
+# built: CavEX had 24 session-delta files and zero bus findings (2026-09-24).
+# session_delta_stop.js already writes <repo>/.claude/cache/learnings/*.md at
+# every Stop. This reads the one part of those files that is about THIS repo --
+# the `Landed <hash> <subject>` lines, i.e. a causal commit plus its claim -- and
+# nothing else: the same files also carry the Power Pack's OWNER_QUEUE residuals,
+# which would pollute every repo's ledger with PP debt.
+HARVEST_TOPIC = "landed-commit"
+_LANDED = re.compile(r"^- Landed `([0-9a-f]{7,40}) (.+)`\s*$")
+
+
+def harvest_session_deltas(repo: str, *, state_dir=None,
+                           learnings_dir=None) -> int:
+    """Publish every landed commit recorded in the repo's session-delta files
+    that the bus does not hold yet. Idempotent by the bus identity, so running it
+    at every Stop costs a parse and appends only what is new. Returns the count
+    appended. Fail-open -> 0: a harvest must never break a Stop."""
+    try:
+        d = Path(learnings_dir) if learnings_dir else (
+            Path(repo) / ".claude" / "cache" / "learnings")
+        if not d.is_dir():
+            return 0
+        bus = FindingsBus(state_dir=state_dir)
+        have = {f.identity for f in bus.load(repo)}
+        p = bus.path_for(repo)
+        new_lines = []
+        for md in sorted(d.glob("*.md")):
+            try:
+                text = md.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            for line in text.splitlines():
+                m = _LANDED.match(line.strip())
+                if not m:
+                    continue
+                f = Finding(repo=repo, topic=HARVEST_TOPIC, claim=m.group(2).strip(),
+                            evidence="commit %s (%s)" % (m.group(1), md.name),
+                            ts=datetime.now(timezone.utc).isoformat())
+                if f.identity in have:
+                    continue
+                have.add(f.identity)
+                new_lines.append(json.dumps(f.to_json(), ensure_ascii=False))
+        if new_lines:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            with p.open("a", encoding="utf-8") as fh:
+                fh.write("\n".join(new_lines) + "\n")
+        return len(new_lines)
+    except Exception:  # noqa: BLE001 -- fail-open
+        return 0
+
+
 def load_context_digest(repo: str, *, state_dir=None, max_topics: int = 40) -> str:
     """SessionStart side: the compact bus digest a launching pane consults."""
     try:
