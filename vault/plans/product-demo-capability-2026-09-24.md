@@ -48,6 +48,17 @@ head_at_scan: 1f0cf4d (branch feature/knowledge-acquisition, 463 dirty paths fro
 9 staleness probe · 10 skill surface + liveness + CLAUDE.md activation + doc-drift fix · 11 [InfinityOps] 3 QL fixes ·
 12 QL demo proof (16:9 + 9:16) · 13 [InfinityOps] landing embed + deploy · 14 UKDL + baseline decision.
 
+## Baseline decision (2026-09-24, evidence-bound)
+- PROMOTED now: `/product-demo` + activation criteria in CLAUDE.md (a user-facing demo/walkthrough request
+  routes here; synthetic promo films stay motion-promo). Reason: built, 22/22 gates, 7/7 mutations, and one
+  real product proven end to end on its deployed build.
+- PLANNED, not promoted: "every user-facing feature leaves an agent-executable interaction path (a demo
+  spec)". The single proof shows the value is real -- the path doubled as a production smoke test and
+  found a CORS outage plus a contrast defect -- but one product is not a population. Promote after a
+  second product's spec runs green, with applicability limited to interactive UI (never backend-only work).
+- NOT created: a separate recorder, a Recordly integration, a second encoder, a new loop primitive
+  (loop_budget reused and wired), a Playwright lifecycle beside the existing ones without the bounded runner.
+
 ## Done-gates
 V-DEMO-* unit gates (spec, missing-target refusal, time map, cursor/event alignment, callout binding, manifest, staleness,
 4 validator outcomes), kill drill (Chromium tree gone), janitor red branch, mutation drills (reverting each guard reds its gate),
