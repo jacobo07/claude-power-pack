@@ -16,7 +16,7 @@
      "applies_if": "InventoryClickEvent", "mode": "every_applicable_file",
      "met": "setCancelled\\(\\s*true\\s*\\)"},
     {"entry": "kobiicraft_mode-inventory-open-close-tick-delay", "glob": ["*.java"],
-     "applies_if": "(?s)closeInventory\\(.*openInventory\\(|(?s)openInventory\\(.*closeInventory\\(",
+     "applies_if": "(?s)closeInventory\\(.*openInventory\\(|openInventory\\(.*closeInventory\\(",
      "mode": "every_applicable_file", "met": "runTaskLater\\("},
     {"entry": "kobiicraft_mode-async-io", "glob": ["*.java"],
      "applies_if": "new FileReader\\(|HttpClient\\.newHttpClient|\\.executeQuery\\(",

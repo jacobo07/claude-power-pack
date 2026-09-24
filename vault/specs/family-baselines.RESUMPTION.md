@@ -22,12 +22,14 @@ AUTOMATICA al instante, el Owner revisa despues. KEOS vive en la GEX44 (no leido
 - Harvest re-lee todos los learnings en cada Stop (150-630 ms en KobiiCraft) -> cursor.
 - Lift verificado = 0 (C4).
 
+- **S3 sellado**: metodo `bf69726`, O0 `vault/tower/o0/O0_2026-09-24.json`, sondas sha256
+  `b156db7ab3d80346` (O1 DEBE usar ese hash). Resultado: `vault/audits/ucr_cif/21_O0_RESULT.md`.
+- Pendiente de revision del Owner: B0 `wii_homebrew-no-posix-headers` contradicha por CavEX.
+
 ## Proximas 3 acciones
-1. **S3** O0: predeclarar el metodo por escrito, luego medir cobertura de B0 sobre repos reales
-   de cada familia; commit ANTES de S4. Solo pocas entradas tienen `check` maquina: el metodo
-   debe decir como se juzgan las que no.
-2. **S4** inyeccion por `cli.py` + control positivo + `CPP_FAMILY_BASELINES=off`.
-3. **S5** promocion automatica (decision del Owner) + `review`/`revert`; leer KEOS en la GEX44.
+1. **S4** inyeccion por `cli.py` + control positivo + `CPP_FAMILY_BASELINES=off`.
+2. **S5** promocion automatica (decision del Owner) + `review`/`revert`; leer KEOS en la GEX44.
+3. **S6** done-gate por mision (mide las 49 entradas PROCESS/RENDERED/DESIGN que O0 no puede).
 
 ## Empezar
 Lee el spec §3-§6, corre las dos gates del ancla, y sigue por la primera accion no sellada.

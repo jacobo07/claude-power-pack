@@ -1,0 +1,2559 @@
+{
+ "probes_sha256": "b156db7ab3d803463aa15c75356d874949f11b20edae9ded0b1b8563fb443c72",
+ "measured_at": 1790268814.324545,
+ "repos": {
+  "C:\\Users\\User\\.claude\\skills\\claude-power-pack": {
+   "persistent_state": {
+    "coverage": 1.0,
+    "met": 1,
+    "not_met": 0,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "MET",
+      "evidence": "tools\\test_gsd_x_dataset.py"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Apps\\_kp_src": {
+   "kobiicraft_mode": {
+    "coverage": null,
+    "met": 0,
+    "not_met": 0,
+    "not_applicable": 4,
+    "unjudged": 11,
+    "verdicts": {
+     "kobiicraft_mode-gui-click-handler-standards": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "kobiicraft_mode-inventory-open-close-tick-delay": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "kobiicraft_mode-async-io": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "kobiicraft_mode-golden-run-e2e": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "kobiicraft_mode-blind-testing-protocol": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-ingame-verifier-fail-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-p3-player-experience-required": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-observability-without-ssh": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-zero-stubs-nd7": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-preflight-before-deploy": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-verify-server-logs-after-deploy": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-never-restart-during-active-match": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-no-heavy-ops-in-onenable": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-gui-state-via-pdc": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-wiring-check-every-command": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Apps\\ksr_rehydrate": {
+   "wii_homebrew": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 2,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "wii_homebrew-no-posix-headers": {
+      "verdict": "NOT_MET",
+      "evidence": "1 file(s), e.g. tools\\wmos_diag\\source\\wmos_export.c"
+     },
+     "wii_homebrew-float-literals-need-f-suffix": {
+      "verdict": "NOT_MET",
+      "evidence": "11 file(s), e.g. tools\\caddie\\include\\caddie\\math\\kobii_fixed.h"
+     },
+     "wii_homebrew-gx-buffers-memalign-dcflush-never-malloc": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "wii_homebrew-wii-first-not-pc-only": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-build-green-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-verify-external-specs-before-coding": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-trace-runtime-load-paths-before-packaging": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-e2e-dolphin-verification-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-no-per-frame-malloc": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "wii_homebrew-makefile-gate-new-source-files": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-enum-sync-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-seven-completion-gates-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-zero-stub-state-gap-and-stop": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-claim-must-name-observing-plane": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-evidence-authority-order-never-majority-vote": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Club Náutico": {
+   "persistent_state": {
+    "coverage": null,
+    "met": 0,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": null,
+    "met": 0,
+    "not_met": 0,
+    "not_applicable": 2,
+    "unjudged": 13,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "UNJUDGED",
+      "evidence": "gh could not answer: no git remotes found"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\CostaLuz Lawyers": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "51 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 1.0,
+    "met": 2,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "MET",
+      "evidence": "costaluz-companion\\portal\\priv\\static\\assets\\default.css"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "MET",
+      "evidence": "PRIVATE"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\GEO-audit": {
+   "persistent_state": {
+    "coverage": 1.0,
+    "met": 1,
+    "not_met": 0,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "MET",
+      "evidence": "data\\costaluz\\stream_backups_R136\\stream_a_relocation.py"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\InfinityOps": {
+   "persistent_state": {
+    "coverage": 1.0,
+    "met": 1,
+    "not_met": 0,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "MET",
+      "evidence": "01_Core_Systems\\infinity_mie\\lib\\infinity_mie\\pal\\adapters\\stripe_adapter.ex"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 1.0,
+    "met": 2,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "MET",
+      "evidence": "13_UI_Product_Layer\\infinity_ui\\app\\globals.css"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "MET",
+      "evidence": "PRIVATE"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Jacobo": {
+   "persistent_state": {
+    "coverage": 1.0,
+    "met": 1,
+    "not_met": 0,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "MET",
+      "evidence": "prisma\\schema.prisma"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 1.0,
+    "met": 2,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "MET",
+      "evidence": "app\\globals.css"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "MET",
+      "evidence": "PRIVATE"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\KobiiSpy": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "16 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\LaptOps": {
+   "persistent_state": {
+    "coverage": null,
+    "met": 0,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 0.667,
+    "met": 2,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 12,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_MET",
+      "evidence": "1 applicable, none met"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "MET",
+      "evidence": "apps\\client\\app\\globals.css"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "MET",
+      "evidence": "PRIVATE"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Minecraft Projects\\KobiiCraft Workspace\\KobiiCraft Core Files": {
+   "kobiicraft_mode": {
+    "coverage": 0.25,
+    "met": 1,
+    "not_met": 3,
+    "not_applicable": 0,
+    "unjudged": 11,
+    "verdicts": {
+     "kobiicraft_mode-gui-click-handler-standards": {
+      "verdict": "NOT_MET",
+      "evidence": "4/60 applicable fail, e.g. KobiCraftServer\\plugins\\kobicore\\src\\main\\java\\com\\kobicraft\\core\\modules\\boss\\gui\\BossDashboardGUI.java"
+     },
+     "kobiicraft_mode-inventory-open-close-tick-delay": {
+      "verdict": "NOT_MET",
+      "evidence": "16/36 applicable fail, e.g. KobiCraftServer\\plugins\\kMundiCore\\src\\main\\java\\com\\kobiicraft\\mundicore\\battlepass\\BattlePassManager.java"
+     },
+     "kobiicraft_mode-async-io": {
+      "verdict": "NOT_MET",
+      "evidence": "29/42 applicable fail, e.g. KobiCraftServer\\plugins\\kobicore\\src\\main\\java\\com\\kobicraft\\core\\modules\\lang\\storage\\LanguageStorage.java"
+     },
+     "kobiicraft_mode-golden-run-e2e": {
+      "verdict": "MET",
+      "evidence": "docs\\KOBII_PHILOSOPHY\\SENTIENT_ENGINE_GOLDEN_RUN_HANDOFF.md"
+     },
+     "kobiicraft_mode-blind-testing-protocol": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-ingame-verifier-fail-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-p3-player-experience-required": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-observability-without-ssh": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-zero-stubs-nd7": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-preflight-before-deploy": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-verify-server-logs-after-deploy": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-never-restart-during-active-match": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "kobiicraft_mode-no-heavy-ops-in-onenable": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-gui-state-via-pdc": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "kobiicraft_mode-wiring-check-every-command": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 1.0,
+    "met": 2,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "MET",
+      "evidence": "kobicraft_content_intelligence\\dashboard\\app\\globals.css"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "MET",
+      "evidence": "PRIVATE"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Mytilus Belgian Restaurant": {
+   "web_surface": {
+    "coverage": null,
+    "met": 0,
+    "not_met": 0,
+    "not_applicable": 2,
+    "unjudged": 13,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "UNJUDGED",
+      "evidence": "gh could not answer: no git remotes found"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\NexumOps\\nexumops-project": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "4 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\NexumOps\\nexumops-saas": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "17 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Project-Template\\Internal SaaS Bootstrap Engine": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "1 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 1,
+    "unjudged": 13,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "NOT_MET",
+      "evidence": "5 applicable, none met"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "UNJUDGED",
+      "evidence": "gh could not answer: no git remotes found"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Regina Margherita": {
+   "web_surface": {
+    "coverage": null,
+    "met": 0,
+    "not_met": 0,
+    "not_applicable": 2,
+    "unjudged": 13,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "UNJUDGED",
+      "evidence": "gh could not answer: no git remotes found"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\TUA-X": {
+   "persistent_state": {
+    "coverage": 1.0,
+    "met": 1,
+    "not_met": 0,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "MET",
+      "evidence": "scripts\\agency_beta_reality_gate.py"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 1.0,
+    "met": 2,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "MET",
+      "evidence": "frontend\\app\\globals.css"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "MET",
+      "evidence": "PRIVATE"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Vibe Coding Projects\\SalesTrainer": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "5 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 0.5,
+    "met": 1,
+    "not_met": 1,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "NOT_MET",
+      "evidence": "14 applicable, none met"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "MET",
+      "evidence": "PRIVATE"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Vibe Coding Projects\\Software Lab OS": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "9 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 1,
+    "unjudged": 13,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "NOT_MET",
+      "evidence": "6 applicable, none met"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "UNJUDGED",
+      "evidence": "gh could not answer: no git remotes found"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Vibe Coding Projects\\VintOps": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "2 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   },
+   "web_surface": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 1,
+    "unjudged": 13,
+    "verdicts": {
+     "web_surface-experience-declared-before-build": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "web_surface-experience-floors-not-arbitrable": {
+      "verdict": "NOT_MET",
+      "evidence": "1 applicable, none met"
+     },
+     "web_surface-repo-private-by-default": {
+      "verdict": "UNJUDGED",
+      "evidence": "gh could not answer: no git remotes found"
+     },
+     "web_surface-deploy-http-200-real-domain": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-external-deps-or-honest-preview": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-pii-scrub-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-copy-humanized-done-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-copy-href-label-clean": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-accessibility-is-the-floor": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-legibility-thresholds": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-cdio-review-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-above-the-fold-essentials": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-mobile-first-check": {
+      "verdict": "UNJUDGED",
+      "evidence": "RENDERED"
+     },
+     "web_surface-deploy-claims-match-shipped-infra": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "web_surface-finding-needs-criterion-and-value": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\ABSW2-Wii": {
+   "wii_homebrew": {
+    "coverage": 0.5,
+    "met": 1,
+    "not_met": 1,
+    "not_applicable": 1,
+    "unjudged": 12,
+    "verdicts": {
+     "wii_homebrew-no-posix-headers": {
+      "verdict": "MET",
+      "evidence": "8 file(s) scanned"
+     },
+     "wii_homebrew-float-literals-need-f-suffix": {
+      "verdict": "NOT_MET",
+      "evidence": "4 file(s), e.g. source\\absl.h"
+     },
+     "wii_homebrew-gx-buffers-memalign-dcflush-never-malloc": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "wii_homebrew-wii-first-not-pc-only": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-build-green-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-verify-external-specs-before-coding": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-trace-runtime-load-paths-before-packaging": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-e2e-dolphin-verification-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-no-per-frame-malloc": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "wii_homebrew-makefile-gate-new-source-files": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-enum-sync-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-seven-completion-gates-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-zero-stub-state-gap-and-stop": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-claim-must-name-observing-plane": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-evidence-authority-order-never-majority-vote": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\CavEX": {
+   "wii_homebrew": {
+    "coverage": 0.333,
+    "met": 1,
+    "not_met": 2,
+    "not_applicable": 0,
+    "unjudged": 12,
+    "verdicts": {
+     "wii_homebrew-no-posix-headers": {
+      "verdict": "NOT_MET",
+      "evidence": "10 file(s), e.g. source\\durable_file.c"
+     },
+     "wii_homebrew-float-literals-need-f-suffix": {
+      "verdict": "NOT_MET",
+      "evidence": "55 file(s), e.g. knowledge-vault\\tests\\settings_test.c"
+     },
+     "wii_homebrew-gx-buffers-memalign-dcflush-never-malloc": {
+      "verdict": "MET",
+      "evidence": "2/2 applicable met"
+     },
+     "wii_homebrew-wii-first-not-pc-only": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-build-green-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-verify-external-specs-before-coding": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-trace-runtime-load-paths-before-packaging": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-e2e-dolphin-verification-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-no-per-frame-malloc": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "wii_homebrew-makefile-gate-new-source-files": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-enum-sync-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-seven-completion-gates-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-zero-stub-state-gap-and-stop": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-claim-must-name-observing-plane": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-evidence-authority-order-never-majority-vote": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\CavEX-II-Reps": {
+   "wii_homebrew": {
+    "coverage": 0.333,
+    "met": 1,
+    "not_met": 2,
+    "not_applicable": 0,
+    "unjudged": 12,
+    "verdicts": {
+     "wii_homebrew-no-posix-headers": {
+      "verdict": "NOT_MET",
+      "evidence": "10 file(s), e.g. source\\durable_file.c"
+     },
+     "wii_homebrew-float-literals-need-f-suffix": {
+      "verdict": "NOT_MET",
+      "evidence": "53 file(s), e.g. knowledge-vault\\tests\\settings_test.c"
+     },
+     "wii_homebrew-gx-buffers-memalign-dcflush-never-malloc": {
+      "verdict": "MET",
+      "evidence": "2/2 applicable met"
+     },
+     "wii_homebrew-wii-first-not-pc-only": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-build-green-before-commit": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-verify-external-specs-before-coding": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-trace-runtime-load-paths-before-packaging": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-e2e-dolphin-verification-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-no-per-frame-malloc": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "wii_homebrew-makefile-gate-new-source-files": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-enum-sync-gate": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-seven-completion-gates-before-done": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-zero-stub-state-gap-and-stop": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-claim-must-name-observing-plane": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "wii_homebrew-evidence-authority-order-never-majority-vote": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\Wii Projects\\FIFA 11 Mod": {
+   "persistent_state": {
+    "coverage": 0.0,
+    "met": 0,
+    "not_met": 1,
+    "not_applicable": 0,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_MET",
+      "evidence": "7 applicable, none met"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   }
+  },
+  "C:\\Users\\User\\Desktop\\Cursor Projects\\infinityops-mail-studio": {
+   "persistent_state": {
+    "coverage": null,
+    "met": 0,
+    "not_met": 0,
+    "not_applicable": 1,
+    "unjudged": 14,
+    "verdicts": {
+     "persistent_state-monetary-qualifiers-travel-with-amount": {
+      "verdict": "NOT_APPLICABLE",
+      "evidence": "no applicable file"
+     },
+     "persistent_state-delete-prod-data-needs-backup-and-consent": {
+      "verdict": "UNJUDGED",
+      "evidence": "PROCESS"
+     },
+     "persistent_state-destructive-op-authorizes-exact-state-seen": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-destructive-identity-falsification-test": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-absence-of-identity-refuses": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-precondition-window-must-be-closed": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-batch-reauthorize-per-item": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-lifetime-matches-authority": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-state-scoped-to-incarnation-must-not-survive": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-plan-then-refuse-partial": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-durable-exit-save-before-release-and-reread": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-conflicting-qualifiers-refuse": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-monetary-no-conversion-without-authorized-source": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-error-classify-at-status-boundary": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     },
+     "persistent_state-empty-constructible-only-from-success": {
+      "verdict": "UNJUDGED",
+      "evidence": "DESIGN"
+     }
+    }
+   }
+  }
+ },
+ "excluded": {},
+ "best_demonstrated": {
+  "persistent_state": {
+   "coverage": 1.0,
+   "repo": "claude-power-pack"
+  },
+  "wii_homebrew": {
+   "coverage": 0.5,
+   "repo": "ABSW2-Wii"
+  },
+  "web_surface": {
+   "coverage": 1.0,
+   "repo": "CostaLuz Lawyers"
+  },
+  "kobiicraft_mode": {
+   "coverage": 0.25,
+   "repo": "KobiiCraft Core Files"
+  }
+ }
+}
