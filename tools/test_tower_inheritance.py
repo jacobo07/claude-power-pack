@@ -251,6 +251,26 @@ def main() -> int:
 
         _c2(tmp)
 
+        # --- C3 population: an MSYS worktree pointer resolves to a REAL repo --
+        # `tower_capsule.py --all` produced a capsule for `\c\Users\...\TUA-X`,
+        # a phantom: a Git-Bash worktree records `gitdir: /c/...`.
+        sys.path.insert(0, _HERE)
+        import family_scan
+        main_git = os.path.join(tmp, "mainrepo", ".git")
+        os.makedirs(os.path.join(main_git, "worktrees", "wt1"))
+        wt = os.path.join(tmp, "wt1")
+        os.makedirs(wt)
+        drive, rest = os.path.splitdrive(main_git)
+        msys = "/" + drive[0].lower() + rest.replace("\\", "/") + "/worktrees/wt1"
+        with open(os.path.join(wt, ".git"), "w", encoding="utf-8") as fh:
+            fh.write("gitdir: " + msys + "\n")
+        got = family_scan.main_repo_of(wt)
+        _check("V-TINH-MSYS-WORKTREE-RESOLVES",
+               os.path.normcase(got) == os.path.normcase(os.path.join(tmp, "mainrepo"))
+               and os.path.isdir(got),
+               "gitdir /x/... resolves to the real main repo",
+               "MSYS pointer produced a phantom: %s" % got)
+
         print()
         print("TOWER_INHERITANCE_PASS=%d/%d  threshold=%d/%d"
               % (_PASS, _PASS + _FAIL, _PASS + _FAIL, _PASS + _FAIL))

@@ -59,6 +59,19 @@ def produce_all() -> int:
         print("  %-18s %s%s" % (state, repo, extra))
     print()
     print("CAPSULES %d  %s" % (len(repos), counts))
+    # A scheduled run has no console (pythonw). Without this line, "the task
+    # ran and produced 42 capsules" and "the task never ran" look the same:
+    # every capsule simply goes STALE. Symmetric: success is recorded too.
+    try:
+        import json
+        import time
+        from modules.tower.capsule import _state_dir
+        with open(os.path.join(_state_dir(), "production.jsonl"), "a",
+                  encoding="utf-8") as fh:
+            fh.write(json.dumps({"ts": time.time(), "projects": len(repos),
+                                 "states": counts}) + "\n")
+    except Exception:  # noqa: BLE001 -- the ledger must never fail the run
+        pass
     return 0 if PRODUCER_FAILURE not in counts else 1
 
 

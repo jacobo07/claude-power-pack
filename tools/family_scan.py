@@ -143,6 +143,14 @@ def main_repo_of(path: str) -> str:
     if not line.startswith("gitdir:"):
         return os.path.normpath(path)
     gitdir = line.split(":", 1)[1].strip()
+    # A worktree created from Git Bash records its pointer in MSYS form,
+    # `/c/Users/...`. Read verbatim on Windows that became `\c\Users\...`, a
+    # directory that does not exist -- so TUA-X was counted twice, once as
+    # itself and once as a phantom, and the phantom got its own capsule
+    # (measured 2026-09-24, `tower_capsule.py --all`).
+    m = re.match(r"^/([a-zA-Z])/(.*)$", gitdir)
+    if m and os.name == "nt":
+        gitdir = m.group(1).upper() + ":\\" + m.group(2)
     marker = os.sep + "worktrees" + os.sep
     idx = gitdir.replace("/", os.sep).find(marker)
     if idx == -1:
