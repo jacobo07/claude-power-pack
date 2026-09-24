@@ -1,0 +1,24 @@
+{
+  "id": "fixture-lease",
+  "title": "Fixture lease intake",
+  "base_url": "http://127.0.0.1:{PORT}",
+  "locale": "en-US",
+  "timezone": "UTC",
+  "forbid_text": ["Llamando a"],
+  "fixture_text": [],
+  "viewports": [
+    {"name": "desktop", "width": 1280, "height": 800, "dsf": 1, "stage": "laptop"},
+    {"name": "phone", "width": 390, "height": 844, "dsf": 2, "stage": "phone"}
+  ],
+  "steps": [
+    {"id": "open", "do": "goto", "path": "/index.html{QUERY}", "hold_ms": 900},
+    {"id": "tenant", "do": "fill", "target": {"label": "Tenant name"}, "value": "Ana Ruiz",
+     "callout": "Only the facts it needs"},
+    {"id": "kind", "do": "select", "target": {"label": "Contract type"}, "value": "Seasonal"},
+    {"id": "rent", "do": "fill", "target": {"label": "Monthly rent"}, "value": "950"},
+    {"id": "generate", "do": "click", "target": {"role": "button", "name": "Generate contract"},
+     "callout": "One click"},
+    {"id": "ready", "do": "wait_text", "text": "Contract ready for review", "timeout_ms": 8000, "hold_ms": 2200}
+  ],
+  "output": {"fps": 30, "max_seconds": 20, "max_bytes": 6000000, "formats": ["mp4", "poster"]}
+}

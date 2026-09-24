@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>product-demo stage</title>
+<!--
+  Product-demo composition stage. Implements the motion-promo film contract:
+    window.__ready  true once every captured frame is decoded
+    window.__meta   {w, h, fps, frames, duration, title, aspect, beats}
+    window.__renderFrame(i)  async; draws frame i deterministically
+  Every product pixel shown here is a captured screenshot of the real product.
+  The stage adds only presentation: device frame, cursor, click emphasis and
+  callouts, each anchored to geometry measured at capture time.
+-->
+<style>
+  :root { --accent: #2563eb; --ink: #0f172a; --paper: #ffffff; --shadow: 0 30px 80px rgba(15, 23, 42, .22); }
+  html, body { margin: 0; padding: 0; background: #e9edf3; overflow: hidden; }
+  #canvas { position: relative; overflow: hidden;
+    background: radial-gradient(120% 90% at 50% 20%, #f8fafc 0%, #e8edf4 60%, #dde3ec 100%); }
+  .abs { position: absolute; }
+  #chrome { pointer-events: none; }
+  #screen { overflow: hidden; background: #fff; }
+  #screen img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; }
+  #cursor { width: 30px; height: 30px; transform-origin: 3px 3px; z-index: 5; }
+  #touch { width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 23, 42, .18);
+    border: 2px solid rgba(255, 255, 255, .9); box-shadow: 0 2px 10px rgba(0,0,0,.25); z-index: 5; }
+  #ripple { border-radius: 50%; border: 3px solid var(--accent); z-index: 4; }
+  #ring { border: 3px solid var(--accent); border-radius: 10px; z-index: 3;
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 18%, transparent); }
+  #callout { z-index: 6; background: var(--paper); color: var(--ink); border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .22); font: 600 26px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; align-items: center; gap: 12px; padding: 0 18px; white-space: nowrap; box-sizing: border-box; }
+  #callout .n { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff;
+    font-size: 18px; display: grid; place-items: center; }
+  #callout .ptr { position: absolute; width: 16px; height: 16px; background: var(--paper); transform: rotate(45deg); }
+</style>
+</head>
+<body>
+<div id="canvas">
+  <div id="chrome" class="abs"></div>
+  <div id="screen" class="abs"></div>
+  <div id="ring" class="abs" style="display:none"></div>
+  <div id="leader" class="abs" style="display:none;height:2px;background:var(--accent);transform-origin:0 50%;z-index:6"></div>
+  <div id="ripple" class="abs" style="display:none"></div>
+  <div id="callout" class="abs" style="display:none"><span class="n"></span><span class="t"></span><span class="ptr"></span></div>
+  <svg id="cursor" class="abs" viewBox="0 0 30 30" style="display:none">
+    <path d="M3 2 L3 24 L9 18.5 L13.2 27.5 L17 25.8 L12.9 17 L21 17 Z" fill="#111" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+  </svg>
+  <div id="touch" class="abs" style="display:none"></div>
+</div>
+<script>
+const D = /*__DATA__*/null;
+const $ = id => document.getElementById(id);
+document.documentElement.style.setProperty("--accent", D.accent);
+const C = $("canvas"); C.style.width = D.w + "px"; C.style.height = D.h + "px";
+const S = D.screen;
+Object.assign($("screen").style, {left: S.x + "px", top: S.y + "px", width: S.w + "px", height: S.h + "px"});
+const touchStage = D.stage === "phone";
+
+// ---- device chrome (presentation only) ---------------------------------------
+(function chrome() {
+  const ch = $("chrome");
+  if (D.stage === "laptop") {
+    const p = 20;
+    ch.innerHTML =
+      `<div class="abs" style="left:${S.x - p}px;top:${S.y - p}px;width:${S.w + 2*p}px;height:${S.h + 2*p}px;
+        background:#0b0f16;border-radius:22px;box-shadow:var(--shadow)"></div>
+       <div class="abs" style="left:${S.x - p - 70}px;top:${S.y + S.h + p}px;width:${S.w + 2*p + 140}px;height:24px;
+        background:linear-gradient(#cfd5de,#9aa3b1);border-radius:0 0 26px 26px"></div>
+       <div class="abs" style="left:${S.x + S.w/2 - 70}px;top:${S.y + S.h + p}px;width:140px;height:9px;
+        background:#8b94a3;border-radius:0 0 10px 10px"></div>`;
+    $("screen").style.borderRadius = "4px";
+  } else if (D.stage === "phone") {
+    const p = 16;
+    ch.innerHTML =
+      `<div class="abs" style="left:${S.x - p}px;top:${S.y - p}px;width:${S.w + 2*p}px;height:${S.h + 2*p}px;
+        background:#0b0f16;border-radius:70px;box-shadow:var(--shadow)"></div>`;
+    $("screen").style.borderRadius = "56px";
+  } else if (D.stage === "browser") {
+    const bar = 46;
+    ch.innerHTML =
+      `<div class="abs" style="left:${S.x}px;top:${S.y - bar}px;width:${S.w}px;height:${S.h + bar}px;
+        background:#f1f3f6;border-radius:14px;box-shadow:var(--shadow)"></div>
+       ${["#ff5f57","#febc2e","#28c840"].map((c,i)=>`<div class="abs" style="left:${S.x+18+i*20}px;top:${S.y-bar+17}px;
+        width:12px;height:12px;border-radius:50%;background:${c}"></div>`).join("")}
+       <div class="abs" style="left:${S.x + S.w*0.3}px;top:${S.y - bar + 9}px;width:${S.w*0.4}px;height:28px;
+        background:#fff;border-radius:8px;font:500 15px/28px system-ui,sans-serif;color:#475569;text-align:center">${D.host}</div>`;
+    $("screen").style.borderRadius = "0 0 14px 14px";
+  }
+})();
+
+// ---- frames ------------------------------------------------------------------
+const segs = D.segments;
+const cache = new Map();
+// Decoded <img> elements live in the DOM and are only shown/hidden: reassigning
+// src would start a new async load and a screenshot could catch it unpainted.
+function load(file) {
+  if (!cache.has(file)) {
+    const im = new Image(); im.src = "frames/" + file; im.alt = "";
+    im.style.opacity = 0; $("screen").appendChild(im);
+    cache.set(file, im.decode().then(() => im));
+  }
+  return cache.get(file);
+}
+let shown = [];
+function segAt(t) {
+  let lo = 0, hi = segs.length - 1;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (segs[m].start_ms <= t) lo = m; else hi = m - 1; }
+  return lo;
+}
+const smooth = u => u * u * (3 - 2 * u);
+function cursorAt(t) {
+  const P = D.cursor;
+  if (t <= P[0].t_ms) return [P[0].x, P[0].y];
+  for (let k = 0; k + 1 < P.length; k++) {
+    const a = P[k], b = P[k + 1];
+    if (a.t_ms <= t && t <= b.t_ms) {
+      const e = smooth((t - a.t_ms) / Math.max(1, b.t_ms - a.t_ms));
+      return [a.x + (b.x - a.x) * e, a.y + (b.y - a.y) * e];
+    }
+  }
+  const L = P[P.length - 1]; return [L.x, L.y];
+}
+const toStage = (x, y) => [S.x + x * S.scale, S.y + y * S.scale];
+const CROSS = 120, RIPPLE = 480, FADE = 180;
+
+async function renderAt(t) {
+  const i = segAt(t), seg = segs[i];
+  for (const im of shown) { im.style.opacity = 0; im.style.zIndex = 0; }
+  const cur = await load(seg.frame);
+  const since = t - seg.start_ms;
+  shown = [cur];
+  cur.style.zIndex = 2;
+  if (i > 0 && since < CROSS) {                 // short cross-fade between two REAL states
+    const prev = await load(segs[i - 1].frame);
+    prev.style.zIndex = 1; prev.style.opacity = 1; shown.push(prev);
+    cur.style.opacity = smooth(since / CROSS);
+  } else cur.style.opacity = 1;
+
+  // cursor / touch
+  const [cx, cy] = toStage(...cursorAt(t));
+  let pressed = 0, clickAt = null;
+  for (const k of D.cursor) if (k.click && t >= k.t_ms && t < k.t_ms + RIPPLE) { clickAt = k; pressed = (t - k.t_ms) / RIPPLE; }
+  const cursorEl = $("cursor"), touchEl = $("touch");
+  if (touchStage) {
+    cursorEl.style.display = "none";
+    touchEl.style.display = clickAt ? "block" : "none";
+    if (clickAt) { const [px, py] = toStage(clickAt.x, clickAt.y);
+      Object.assign(touchEl.style, {left: (px - 22) + "px", top: (py - 22) + "px", opacity: 1 - pressed * 0.6}); }
+  } else {
+    touchEl.style.display = "none"; cursorEl.style.display = "block";
+    const sz = 30 * Math.max(1, S.scale), squeeze = clickAt && pressed < 0.35 ? 0.88 : 1;
+    Object.assign(cursorEl.style, {left: (cx - 3) + "px", top: (cy - 2) + "px", width: sz + "px", height: sz + "px",
+      transform: `scale(${squeeze})`});
+  }
+  const rp = $("ripple");
+  if (clickAt) {
+    const [px, py] = toStage(clickAt.x, clickAt.y), r = 10 + 34 * smooth(pressed);
+    Object.assign(rp.style, {display: "block", left: (px - r) + "px", top: (py - r) + "px",
+      width: 2 * r + "px", height: 2 * r + "px", opacity: 1 - pressed});
+  } else rp.style.display = "none";
+
+  // callout + target ring (one at a time)
+  const co = D.callouts.find(c => t >= c.start_ms && t < c.end_ms);
+  const el = $("callout"), ring = $("ring");
+  if (co) {
+    const a = Math.min(1, (t - co.start_ms) / FADE, (co.end_ms - t) / FADE);
+    el.style.display = "flex"; el.style.opacity = a;
+    Object.assign(el.style, {left: co.x + "px", top: co.y + "px", width: co.w + "px", height: co.h + "px"});
+    el.querySelector(".n").textContent = co.n; el.querySelector(".t").textContent = co.text;
+    const ptr = el.querySelector(".ptr");
+    Object.assign(ptr.style, {left: (co.pointer.x - co.x - 8) + "px", top: (co.pointer.y - co.y - 8) + "px"});
+    const ld = $("leader"), p = co.pointer, q = co.anchor;
+    const len = Math.hypot(q.x - p.x, q.y - p.y);
+    if (len > 12) {                                 // callout stepped away: keep it visibly tied to its target
+      const ang = Math.atan2(q.y - p.y, q.x - p.x);
+      Object.assign(ld.style, {display: "block", opacity: a, left: p.x + "px", top: p.y + "px", width: len + "px",
+        transform: `rotate(${ang}rad)`});
+    } else ld.style.display = "none";
+    const g = co.target, pad = 6;
+    Object.assign(ring.style, {display: "block", opacity: a, left: (g.x - pad) + "px", top: (g.y - pad) + "px",
+      width: (g.w + 2 * pad) + "px", height: (g.h + 2 * pad) + "px"});
+  } else { el.style.display = "none"; ring.style.display = "none"; }
+}
+
+window.__meta = {w: D.w, h: D.h, fps: D.fps, frames: D.frames, duration: D.duration, title: D.title,
+  aspect: D.stage === "phone" ? "9:16" : "16:9",
+  beats: D.callouts.map(c => ({t: c.start_ms / 1000, label: c.text}))};
+window.__renderFrame = async i => { await renderAt(i / D.fps * 1000); };
+Promise.all(segs.map(s => load(s.frame))).then(() => renderAt(0)).then(() => { window.__ready = true; });
+</script>
+</body>
+</html>

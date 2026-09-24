@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fixture: lease intake</title>
+<style>
+  :root { --bg:#f6f7f9; --ink:#111827; --muted:#6b7280; --accent:#2563eb; --line:#e5e7eb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width: 560px; margin: 48px auto; padding: 0 16px; }
+  h1 { font-size: 22px; margin: 0 0 20px; }
+  form { background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; display:grid; gap:14px; }
+  label { display:grid; gap:6px; font-size:13px; color:var(--muted); }
+  input, select { font: inherit; padding:10px 12px; border:1px solid var(--line); border-radius:8px; color:var(--ink); }
+  button { font: inherit; font-weight:600; padding:11px 16px; border:0; border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
+  #status { margin-top:18px; padding:14px 16px; border-radius:10px; background:#fff; border:1px solid var(--line); min-height: 52px; }
+  .ok { border-color:#16a34a !important; color:#166534; }
+</style>
+</head>
+<body>
+<main>
+  <h1>New lease</h1>
+  <form id="f" onsubmit="return go(event)">
+    <label>Tenant name <input id="tenant" autocomplete="off"></label>
+    <label>Contract type
+      <select id="kind"><option>Long-term</option><option>Seasonal</option></select>
+    </label>
+    <label>Monthly rent <input id="rent" inputmode="numeric" autocomplete="off"></label>
+    <button id="gen" type="submit">Generate contract</button>
+  </form>
+  <div id="status" aria-live="polite"></div>
+</main>
+<script>
+  const q = new URLSearchParams(location.search);
+  const mode = q.get("mode") || "";
+  if (mode === "pii") document.querySelector("h1").textContent = "New lease for maria.lopez@example.org";
+  if (mode === "moved") document.getElementById("gen").textContent = "Create";
+  if (mode === "dupe") document.getElementById("f").insertAdjacentHTML("beforeend",
+      '<button type="button">Generate contract</button>');
+  if (mode === "500") fetch("/missing-endpoint");
+  function go(e) {
+    e.preventDefault();
+    const s = document.getElementById("status");
+    s.className = ""; s.textContent = "Preparing the contract…";
+    // Real work the demo must not misrepresent: two phases, 1.8 s in total.
+    setTimeout(() => { s.textContent = "Checking the clauses…"; }, 900);
+    setTimeout(() => {
+      s.className = "ok";
+      s.textContent = "Contract ready for review: " + document.getElementById("tenant").value +
+                      ", " + document.getElementById("kind").value + ", " + document.getElementById("rent").value + " €/month";
+    }, 1800);
+    return false;
+  }
+</script>
+</body>
+</html>
