@@ -39,6 +39,11 @@
   if (mode === "dupe") document.getElementById("f").insertAdjacentHTML("beforeend",
       '<button type="button">Generate contract</button>');
   if (mode === "500") fetch("/missing-endpoint");
+  // A controlled input that throws away what was typed, the way a pre-hydration
+  // fill is reset by React (measured on a live Next.js sign-up form).
+  if (mode === "reset") document.getElementById("tenant").addEventListener("input", e => {
+    setTimeout(() => { e.target.value = ""; }, 60);
+  });
   function go(e) {
     e.preventDefault();
     const s = document.getElementById("status");

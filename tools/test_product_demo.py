@@ -230,7 +230,8 @@ def refusal_of(t: dict):
 cases = [("V-DEMO-REFUSE-DRIFT", "?mode=moved", True, "TARGET_DRIFT"),
          ("V-DEMO-REFUSE-AMBIGUOUS", "?mode=dupe", True, "TARGET_AMBIGUOUS"),
          ("V-DEMO-REFUSE-PII", "?mode=pii", False, "PRIVACY_REFUSED"),
-         ("V-DEMO-REFUSE-HTTP-ERROR", "?mode=500", True, "PRODUCT_ERROR")]
+         ("V-DEMO-REFUSE-HTTP-ERROR", "?mode=500", True, "PRODUCT_ERROR"),
+         ("V-DEMO-REFUSE-INPUT-RESET", "?mode=reset", True, "INPUT_NOT_ACCEPTED")]
 for name, q, probe, want in cases:
     t = capture(spec_file(q, f"{name}.json"), name, probe)
     gate(name, refusal_of(t) == want, f"(got {refusal_of(t) or t.get('outcome')}: {(t.get('refusal') or {}).get('detail', t.get('stderr', ''))})")

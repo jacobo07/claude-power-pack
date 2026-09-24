@@ -12,7 +12,7 @@ compression it applies. Nothing on screen is synthesised here.
 
 Every abnormal condition is a named refusal, never a skipped animation:
 TARGET_DRIFT, TARGET_AMBIGUOUS, AUTH_REDIRECT, FORBIDDEN_TEXT, PRIVACY_REFUSED,
-PRODUCT_ERROR, BLOCKED_ENV.
+INPUT_NOT_ACCEPTED, PRODUCT_ERROR, BLOCKED_ENV.
 
     python -m modules.product_demo.capture --spec S.json --viewport desktop --out DIR [--probe]
 """
@@ -278,6 +278,17 @@ class Capture:
                         loc.press_sequentially(value[prev:c])
                         prev = c
                         self.shot(page, rec, f"typing{c}", caret=True)
+                # Never trust a fill. Measured on a live Next.js app: a value typed
+                # before hydration was silently reset to "" by the controlled input,
+                # and the submit then failed on native validation. Filming that
+                # would show typing that the product threw away.
+                self.settle(page)
+                held = loc.input_value()
+                if held != value:
+                    shown = f"{len(held)} chars" if step.secret else repr(held[:40])
+                    raise Refusal("INPUT_NOT_ACCEPTED",
+                                  f"{step.target.describe()} holds {shown} after filling "
+                                  f"{len(value)} chars", step.id)
             elif step.do == "select":
                 value = self.value_for(step)
                 try:
