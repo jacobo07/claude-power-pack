@@ -28,7 +28,7 @@ from pathlib import Path
 
 from ..epoch import (COMPLETED, EXPIRED, FAILED, OBS_ENDED, OBS_LOST, OBS_RUNNING,
                      EpochError, Observation, Receipt)
-from ..git_state import head, tree_id
+from ..git_state import commits_between, head, tree_id
 
 BIN_ENV = "CLAUDE_BIN"
 ARGS_ENV = "CLAUDE_ARGS_TEMPLATE"        # space-separated; {prompt} substituted
@@ -163,12 +163,7 @@ class HeadlessClaudeProvider:
             failures.append({"summary": f"the headless session exited {rc}: {text.strip()[-200:]}",
                              "signature": f"claude-exit:{rc}"})
         before, after = handle.get("head_before", ""), head(root)
-        commits = []
-        if before and after and before != after:
-            rng = subprocess.run([r"C:\Program Files\Git\cmd\git.exe", "-C", str(root),
-                                  "log", "--format=%H", f"{before}..{after}"],
-                                 capture_output=True, text=True, timeout=60)
-            commits = [c for c in (rng.stdout or "").split() if c]
+        commits = commits_between(root, before, after)
         self.audit("harvested", f"rc={rc} commits={len(commits)}", spec.get("epoch_id", ""))
         return Receipt(spec["epoch_id"], self.name, spec["revision"], head_before=before,
                        head_after=after, tree_before=handle.get("tree_before", ""),
@@ -265,12 +260,7 @@ class InteractiveClaudeProvider:
             failures.append({"summary": "the epoch expired with no operator receipt",
                              "signature": "interactive-expired"})
         before, after = handle.get("head_before", ""), head(root)
-        commits = []
-        if before and after and before != after:
-            rng = subprocess.run([r"C:\Program Files\Git\cmd\git.exe", "-C", str(root),
-                                  "log", "--format=%H", f"{before}..{after}"],
-                                 capture_output=True, text=True, timeout=60)
-            commits = [c for c in (rng.stdout or "").split() if c]
+        commits = commits_between(root, before, after)
         return Receipt(spec["epoch_id"], self.name, spec["revision"], head_before=before,
                        head_after=after, tree_before=handle.get("tree_before", ""),
                        tree_after=tree_id(root, spec.get("scope_paths")), commits=commits,

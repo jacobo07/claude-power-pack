@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -24,7 +25,7 @@ from modules.gsd_x.goal import contract as gc  # noqa: E402
 from modules.gsd_x.goal import log as gl       # noqa: E402
 from modules.gsd_x.mission import store as st  # noqa: E402
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"   # PATH first: GEX44 (Linux) runs these
 REPO = "a" * 40
 
 RACE_SCRIPT = r"""

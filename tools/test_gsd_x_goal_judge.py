@@ -10,6 +10,7 @@ weakened gate.
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -25,7 +26,7 @@ from modules.gsd_x.goal import judge as jd          # noqa: E402
 from modules.gsd_x.goal import log as gl            # noqa: E402
 from modules.gsd_x.mission import closure as mcl    # noqa: E402
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"   # PATH first: GEX44 (Linux) runs these
 ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
 REPO_ID = "a1" * 20

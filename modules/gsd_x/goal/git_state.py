@@ -37,6 +37,18 @@ def head(root: Path) -> str:
     return out if rc == 0 else ""
 
 
+def commits_between(root: Path, before: str, after: str) -> list[str]:
+    """Commits in before..after, oldest-last as git prints them.
+
+    Through `_git`, never a hardcoded executable: a provider on a Linux host
+    (the unattended Night Shift) raised FileNotFoundError at harvest when this
+    was a Windows path spelled inline in three places."""
+    if not before or not after or before == after:
+        return []
+    rc, out = _git(Path(root), "log", "--format=%H", f"{before}..{after}")
+    return [c for c in out.split() if c] if rc == 0 else []
+
+
 def _dirty(root: Path, paths: list[str] | None) -> bool:
     args = ["status", "--porcelain", "--"] + list(paths or ["."])
     rc, out = _git(Path(root), *args)

@@ -9,6 +9,7 @@ only against fakes proves the fake.
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -22,7 +23,7 @@ from modules.gsd_x.goal import epoch as ep                      # noqa: E402
 from modules.gsd_x.goal import git_state as gs                  # noqa: E402
 from modules.gsd_x.goal.providers.gate import GateProvider      # noqa: E402
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"   # PATH first: GEX44 (Linux) runs these
 ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
 

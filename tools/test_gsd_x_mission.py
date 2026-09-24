@@ -12,6 +12,7 @@ than a lookup table with a rule's name.
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -27,7 +28,7 @@ from modules.gsd_x.mission import store as st            # noqa: E402
 
 BENCH = ROOT / "vault" / "benchmarks" / "mission_spine"
 FIXTURE = BENCH / "fixture"
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"   # PATH first: GEX44 (Linux) runs these
 
 # The sealed blob ids, copied from HOLDOUT-SEALED.md. If the fixture is edited
 # after sealing, these stop matching -- which is the point of sealing it.

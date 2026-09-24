@@ -43,7 +43,7 @@ from pathlib import Path
 
 from ..epoch import COMPLETED, FAILED, OBS_ENDED, OBS_LOST, OBS_RUNNING, EpochError, \
     Observation, Receipt
-from ..git_state import head, tree_id
+from ..git_state import commits_between, head, tree_id
 
 # The other tiers' own names, reused so one account keeps one switch and one
 # ledger. Re-spelling them here would create the second control surface this
@@ -292,13 +292,8 @@ class CodexProvider:
             failures.append({"summary": f"codex exited {rc}: {text.strip()[-200:]}",
                              "signature": f"codex-exit:{rc}"})
         after = head(root)
-        commits = []
         before = handle.get("head_before", "")
-        if before and after and before != after:
-            rng = subprocess.run([r"C:\Program Files\Git\cmd\git.exe", "-C", str(root),
-                                  "log", "--format=%H", f"{before}..{after}"],
-                                 capture_output=True, text=True, timeout=60)
-            commits = [c for c in (rng.stdout or "").split() if c]
+        commits = commits_between(root, before, after)
         self.audit("harvested", f"rc={rc} commits={len(commits)}", spec.get("epoch_id", ""))
         self.release_lock(handle.get("epoch_id", ""))
         # NO verdicts: Codex writing code is work, and a gate epoch is what says

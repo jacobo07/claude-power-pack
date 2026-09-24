@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -28,7 +29,7 @@ from modules.gsd_x.goal import epoch as ep                          # noqa: E402
 from modules.gsd_x.goal.providers.codex import CodexProvider        # noqa: E402
 from modules.gsd_x.goal.providers import codex as cx                # noqa: E402
 
-GIT = r"C:\Program Files\Git\cmd\git.exe"
+GIT = shutil.which("git") or r"C:\Program Files\Git\cmd\git.exe"   # PATH first: GEX44 (Linux) runs these
 ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
        "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
 
@@ -37,7 +38,8 @@ ENV = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t",
 # same cwd, same exit code, same stdout channel.
 FAKE = """
 import subprocess, sys, pathlib
-GIT = r"C:\\Program Files\\Git\\cmd\\git.exe"
+import shutil
+GIT = shutil.which("git") or r"C:\\Program Files\\Git\\cmd\\git.exe"
 args = sys.argv[1:]
 mode = "ok"
 for a in args:
