@@ -727,7 +727,10 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                            event="mission_unblocked", now=now, state=RUNNING,
                            reason=plan["reason"])
             elif act in ("launch", "replace", "relay"):
-                if act == "relay" and rec["resume_command"].startswith("/gsd-autonomous"):
+                # Ask GSD before ANY successor: a background worker that finished its turn reads
+                # host `done` (W8), which plans a REPLACE, not a relay -- and a worker that just
+                # completed the milestone must not be followed by another one.
+                if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
                     st = (gsd_status or lr.gsd_status)(rec["cwd"], workstream=rec.get("workstream"))
                     row["gsd"] = st.get("outcome")
                     if st.get("outcome") == "ALL_COMPLETE":

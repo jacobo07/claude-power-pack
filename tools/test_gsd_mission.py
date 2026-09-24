@@ -267,6 +267,17 @@ def main() -> int:
     def gsd(outcome):
         return lambda c, workstream=None: {"outcome": outcome, "reason": outcome.lower()}
 
+    # W8: a worker that finished its turn reads host `done` -> plan REPLACE. A completed GSD
+    # milestone must still end the mission, not start another worker.
+    hs_done = fresh("m-fin")
+    hs_done[0]["state"] = "done"
+    hs_done[0].pop("status", None)
+    n_before = len(launches)
+    gm.supervise(now=NOW, sessions=hs_done, gsd_status=gsd("ALL_COMPLETE"), runner=launch_run,
+                 stop_runner=stop_run, pid_alive=gone)
+    check("V-MC-SUP-REPLACE-ASKS-GSD-FIRST", gm.load("m-fin")["state"] == gm.COMPLETED
+          and len(launches) == n_before, gm.load("m-fin")["state"])
+
     hs = fresh("m-ok")
     rows = gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
                         stop_runner=stop_run, pid_alive=gone)
