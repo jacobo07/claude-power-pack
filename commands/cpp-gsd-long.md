@@ -202,6 +202,13 @@ runs `tools/gsd_long_run_sweep.ps1` → `gsd_long_run.py sweep`:
   transcript is gone or idle 48 h, then restores that project's config when
   no other marker uses it.
 
+Execution limit: **15 minutes**, `MultipleInstances IgnoreNew`. One mission relay pass can
+spend ~90 s asking the host, up to 240 s asking GSD (measured 67.5 s at 1.4 GB free; the
+supervisor's ceiling is `SUPERVISE_GSD_TIMEOUT_S`), up to 90 s waiting for the predecessor's
+pid and up to 180 s launching. The original 4-minute limit could kill a pass between the
+epoch claim and the launch. When (re)registering:
+`$t=Get-ScheduledTask -TaskName PP-GsdLongRun-Sweep; $t.Settings.ExecutionTimeLimit='PT15M'; Set-ScheduledTask -InputObject $t`.
+
 Actions are logged to `~/.claude/state/gsd-long-run-sweep.log` only when
 something happened. Remove with
 `Unregister-ScheduledTask -TaskName PP-GsdLongRun-Sweep -Confirm:$false`.

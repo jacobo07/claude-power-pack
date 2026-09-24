@@ -739,6 +739,14 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
 
 
 ORPHAN_LOOKBACK_S = 86400   # a terminal mission is re-checked for live workers this long
+# The supervisor runs out of band with no deadline, so its GSD question may wait. Measured M6
+# (2026-09-24, 1.4 GB free of 32): `gsd-tools query init.manager` took 67.5 s; the arming
+# ceiling of 45 s held the relay as UNAVAILABLE on every pass, i.e. until the budget ran out.
+SUPERVISE_GSD_TIMEOUT_S = 240
+
+
+def _supervise_gsd_status(cwd, workstream=None):
+    return lr.gsd_status(cwd, timeout=SUPERVISE_GSD_TIMEOUT_S, workstream=workstream)
 
 
 def orphan_workers(rec: dict, sessions: list[dict] | None) -> list[dict]:
@@ -853,7 +861,7 @@ def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
                     if work_dir:
                         row["work_dir"] = work_dir
                 if act in ("relay", "replace") and rec["resume_command"].startswith("/gsd-autonomous"):
-                    st = (gsd_status or lr.gsd_status)(work_dir or rec.get("work_dir") or rec["cwd"],
+                    st = (gsd_status or _supervise_gsd_status)(work_dir or rec.get("work_dir") or rec["cwd"],
                                                        workstream=rec.get("workstream"))
                     row["gsd"] = st.get("outcome")
                     if st.get("outcome") == "ALL_COMPLETE":

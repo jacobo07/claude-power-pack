@@ -622,6 +622,21 @@ def main() -> int:
     finally:
         gm.lr.find_transcript = real_find
 
+    # M6: the supervisor's own GSD question waits longer than the arming ceiling (67.5 s measured)
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    hs = fresh("m-to")
+    seen_to = []
+    real_gs = gm.lr.gsd_status
+    gm.lr.gsd_status = lambda c, timeout=45, workstream=None: (seen_to.append(timeout)
+                                                                or {"outcome": "UNAVAILABLE", "reason": "t"})
+    try:
+        gm.supervise(now=NOW, sessions=hs, runner=launch_run, stop_runner=stop_run, pid_alive=gone)
+    finally:
+        gm.lr.gsd_status = real_gs
+    check("V-MC-SUP-GSD-PATIENT", seen_to == [gm.SUPERVISE_GSD_TIMEOUT_S]
+          and gm.SUPERVISE_GSD_TIMEOUT_S >= 120, str(seen_to))
+
     # Owner decision 2026-09-24: real mission workers run `auto` unless told otherwise. Driven
     # through the real CLI (hermetic state dir), so the default is executed, not just documented.
     import subprocess
