@@ -412,6 +412,12 @@ def worker_argv(rec: dict, prompt: str) -> list[str]:
     mode = rec.get("permission_mode")
     if mode:
         argv += ["--permission-mode", mode]
+    if rec.get("card"):
+        # The card rides the launch itself. Measured W8: the worker's SessionStart hub never
+        # completed in two of two launches (chain abandoned under starvation once, silent the
+        # other), so a card delivered only by that hook would be lost. The launch argument has
+        # no deadline and no hook between it and the model.
+        argv += ["--append-system-prompt", rec["card"]]
     argv += ["--autocompact", rec.get("autocompact") or AUTOCOMPACT_SAFETY_NET]
     return argv + [prompt]
 
@@ -807,7 +813,9 @@ def session_start(session_id: str, source: str = "") -> str:
     # project -- timed out at 5 s on a loaded host (measured: ETIMEDOUT) and cost the
     # successor its card exactly when the host was under pressure. The fallback renders
     # without git facts, which the card then reports as unknown.
-    return rec.get("card") or render_card(rec, None)
+    if rec.get("card"):
+        return ""  # already delivered through --append-system-prompt at launch; never twice
+    return render_card(rec, None)
 
 
 def _arm_worker_marker(rec: dict, session_id: str) -> None:

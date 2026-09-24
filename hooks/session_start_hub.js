@@ -333,7 +333,9 @@ const GSD_MISSION_PY = path.join(PP_PATH, 'tools', 'gsd_mission.py');
 // Well inside the dispatcher's 10 s budget for this whole hub: a hub killed at its deadline
 // loses EVERY line it would have emitted, not just this one. The ack is written before the
 // git reads, so a timeout here costs the card only -- the successor still reconciles from GSD.
-const MISSION_START_TIMEOUT_MS = 5000;
+// Overridable ONLY so a logic test on a starved host does not measure process-spawn latency
+// (measured: 5 s ETIMEDOUT with a 243 ms import at 2.7 GB free). Production stays at 5000.
+const MISSION_START_TIMEOUT_MS = Number(process.env.CPP_MISSION_START_TIMEOUT_MS) || 5000;
 
 function missionNamesSession(sessionId) {
   if (!sessionId) return false;

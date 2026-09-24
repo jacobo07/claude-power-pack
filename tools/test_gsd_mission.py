@@ -427,14 +427,20 @@ def main() -> int:
     check("V-MC-CARD-PRERENDERED-AT-RELAY", "feedbee" in (rec.get("card") or "")
           and "epoch 2" in rec["card"], (rec.get("card") or "")[:60])
 
+    last = launches[-1]
+    check("V-MC-CARD-RIDES-THE-LAUNCH",
+          "--append-system-prompt" in last
+          and "feedbee" in last[last.index("--append-system-prompt") + 1]
+          and last[-1] == "/gsd-autonomous", "card in argv, prompt still last")
+
     def boom(cwd):
         raise AssertionError("SessionStart must not run git")
     gm._git_facts = boom
     try:
         card = gm.session_start(f"{rec['pending']['bg_id']}-late", "startup")
-        check("V-MC-SESSIONSTART-NO-GIT", "feedbee" in card, card[:60])
+        check("V-MC-SESSIONSTART-NO-GIT-NO-DUPLICATE", card == "", repr(card[:60]))
     except AssertionError as exc:
-        check("V-MC-SESSIONSTART-NO-GIT", False, str(exc))
+        check("V-MC-SESSIONSTART-NO-GIT-NO-DUPLICATE", False, str(exc))
     finally:
         gm._git_facts = real_git
 

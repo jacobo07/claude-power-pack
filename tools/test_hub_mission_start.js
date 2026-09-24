@@ -10,6 +10,9 @@ const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'hubms-'));
 process.env.GSD_LONG_RUN_STATE_DIR = TMP;
 process.env.GSD_LONG_RUN_SESSIONS_DIR = path.join(TMP, 'sessions');
 process.env.GSD_AUTORUN_MARKER_DIR = TMP;  // markers too: never a synthetic marker in the real dir
+// This suite judges the hub's LOGIC; the 5 s production budget is a separate question that a
+// starved host answers with spawn latency, not with anything about this code.
+process.env.CPP_MISSION_START_TIMEOUT_MS = '60000';
 const hub = require('../hooks/session_start_hub.js');
 
 let pass = 0; let fail = 0;
