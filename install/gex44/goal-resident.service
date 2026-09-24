@@ -1,0 +1,39 @@
+# GOAL RESIDENT -- systemd USER unit TEMPLATE (not installed by anything in this repo).
+# Contract: vault/specs/gdd-resident-driver.md (Entrance).
+#
+# Install by hand on GEX44 as the `factory` user:
+#   cp install/gex44/goal-resident.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload && systemctl --user enable --now goal-resident
+#   loginctl enable-linger factory      # keep the user manager alive without a login
+#
+# PATH is absolute and starts with /home/factory/.local/bin: a non-interactive
+# ssh / systemd environment does not read ~/.profile (measured 2026-09-24), so
+# uv, codex and claude installed there are otherwise invisible.
+[Unit]
+Description=GSD-X goal resident (supervised driver of the goal engine)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=600
+StartLimitBurst=10
+
+[Service]
+Type=simple
+WorkingDirectory=/home/factory/pp
+Environment=PATH=/home/factory/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONIOENCODING=utf-8
+Environment=GSDX_GOALS_ROOT=/var/lib/kobii-factory/goals
+Environment=GSDX_FOUNDER_KEYS=/etc/kobii-factory/founder_keys.json
+Environment=GSDX_QUOTA_DIR=/var/lib/kobii-factory/quota
+Environment=GSDX_RESIDENT_STATE=/home/factory/.local/state/gsd-x/resident
+ExecStart=/usr/bin/python3 -B /home/factory/pp/tools/gsd_x_resident.py run
+# After the unit stops (clean exit, crash or `systemctl --user stop`): classify
+# every mission and report any process group that outlived the unit.
+ExecStopPost=/usr/bin/python3 -B /home/factory/pp/tools/gsd_x_resident.py census
+Restart=always
+RestartSec=30
+# Every process the resident started dies with the unit's cgroup.
+KillMode=control-group
+TimeoutStopSec=120
+
+[Install]
+WantedBy=default.target
