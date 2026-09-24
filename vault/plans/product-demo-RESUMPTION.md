@@ -1,36 +1,29 @@
-# RESUMPTION: Product Demo capability (updated 2026-09-24)
+# RESUMPTION: Product Demo capability (updated 2026-09-24, late)
 
-IDENTITY. Claude Power Pack repo `C:\Users\User\.claude\skills\claude-power-pack`, branch
-`feature/knowledge-acquisition` (shared with another live writer: commit by pathspec only).
-Thesis: `modules/product_demo` turns a REAL product flow into a validated demo video; QuickLease
-is the first proof. Plan: `vault/plans/product-demo-capability-2026-09-24.md`.
+IDENTITY. Claude Power Pack `C:\Users\User\.claude\skills\claude-power-pack`, branch
+`feature/knowledge-acquisition` (shared with live writers: pathspec commits only; re-read HEAD first).
+Capability: `modules/product_demo` + `/product-demo`. Gate: `python tools/test_product_demo.py` (22/22).
+Plan: `vault/plans/product-demo-capability-2026-09-24.md`.
 
-SEALED (commits): a62e9bf plan + forensics + Recordly disposition · be1dc28 janitor no longer
-kills Python Playwright (matcher + 3 copies, 13/13) · dc0cf8a product_demo module + 19 gates ·
-f463feb /product-demo command, CLAUDE.md activation, liveness (10/10 reachable) · d309865
-INPUT_NOT_ACCEPTED guard (20/20). Gate: `python tools/test_product_demo.py` (20/20, ~5 min).
-Coherence anchor: `modules/product_demo/cli.py` has RENDER_ATTEMPTS = 2.
+SEALED (PP): a62e9bf plan/forensics · be1dc28 janitor matcher · dc0cf8a module+gates · f463feb wiring ·
+d309865 INPUT_NOT_ACCEPTED · 9ae2eca incident · dfe149c fixture_env · 90ccbde hover · 192390b lazy decode.
+SEALED (InfinityOps, live on prod): #419 7b0d94cd same-origin auth (sign-up on ql.infinityops.ai works;
+apex sign-in regression-checked) · #420 83268ab4 dark-theme QL paper contrast (1.1:1 -> 14.3:1).
 
-OWNER DECISIONS. Film `/ql/new-case` (Property -> Rental intent -> Review & pay; stop before
-Stripe). Capture against the DEPLOYED app (https://ql.infinityops.ai), fresh demo account per run
-via the real sign-up, reserved `@example.com` address (drafts are invisible to ops and to the
-case list; 20 draft creations per IP per hour). Two stages: laptop 16:9 + phone 9:16. Deploy
-of the finished asset to the QL landing (quicklease.ai) is authorised; read the DEPLOY hard
-rules first (`hardrule_compile.py --class DEPLOY`).
+IN FLIGHT. InfinityOps worktree `C:\Users\User\Apps\io-ql-demo`, branch `feat/ql-landing-demo` (off 83268ab4),
+uncommitted: `17_Businesses/QuickLease/demo/{new-case.demo.json,run_demo.py}`,
+`components/ui/quicklease/ql-product-demo.tsx`, `app/quicklease/page.tsx` (section between hero and how-it-works).
+Last desktop render was REFUSED by the validator (OCCLUSION: callout on the rental radio hid 1459 px^2 of
+text) -> callout moved to save-2 in the spec; re-render needed. Phone render was running.
+UKDL entries: `vault/knowledge_base/product_demo/ukdl-product-demo-2026-09-24.md` (ukdl-universal.md was
+dirty from another writer; fold in when clean). Not yet committed.
 
-BLOCKER. Production sign-up on ql.infinityops.ai fails (cross-origin auth client, no
-trustedOrigins). Evidence + proposed fix: `vault/knowledge_base/product_demo/
-incident-ql-signup-cross-origin-2026-09-24.md`. The demo cannot be filmed until it is fixed;
-fixing production auth is an Owner decision. InfinityOps worktree ready at
-`C:\Users\User\Apps\io-ql-demo` (branch fix/ql-demo-readiness off origin/main 325d947b).
+NEXT.
+1. `python 17_Businesses/QuickLease/demo/run_demo.py --out <dir>` (each viewport = 1 fresh demo account;
+   20 drafts/IP/hour). Both must be VALID; look at a contact sheet of each MP4.
+2. Copy `<id>_<vp>.{mp4,webm,poster.png}` to `13_UI_Product_Layer/infinity_ui/public/quicklease/demo/`
+   (component expects `ql-new-case_desktop.*`, `ql-new-case_phone.*`); check sizes; commit; PR; CI; merge;
+   verify https://quicklease.ai/ shows the section, assets 200, and the build-info SHA matches.
+3. Commit UKDL file + update plan/handoff; baseline decision (agent-executable interaction path, PLANNED).
 
-NEXT 3 ACTIONS.
-1. Once sign-up works: write the QL spec (setup steps film:false via value_env; region confirm
-   button is "Confirm <region>" -- discover the exact region string with one run), add
-   `fixture_env` for the per-run email, run `cli run` for both viewports, look at contact sheets.
-2. Embed the MP4/WebM + poster on the quicklease.ai landing (muted, playsinline, poster,
-   preload=metadata, reduced-motion fallback), deploy, verify HTTP 200 + mobile playback.
-3. UKDL promotion + baseline decision (agent-executable interaction path for UI features).
-
-START. Read this file, then the incident file, then run the fast gate to confirm the tree:
-`python tools/test_product_demo.py --fast`.
+START. Read this file, then run `python tools/test_product_demo.py --fast`.
