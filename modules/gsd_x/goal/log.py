@@ -183,25 +183,43 @@ class GoalLog:
             raise LostRace(f"{self.goal_id}: expected to write seq {expected_seq}, "
                            f"log is at {len(events)}")
         prev_digest = events[-1].digest if events else GENESIS
+        # Fixed BEFORE signing: the signature covers ts and actor, so the stored
+        # values must be exactly the signed ones.
+        ts = datetime.now(timezone.utc).isoformat()
         from . import authority as au    # local: authority imports this module
+        anchor = None
         if type_ in au.FOUNDER_CLASS:
             anchor = au.load_anchor()
-            if anchor.mode != au.ABSENT:
+            if anchor.mode == au.ABSENT:
+                anchor = None
+            else:
+                # Signing onto a log already truncated below its witnessed
+                # high-water mark would ratify the rollback: refuse first.
+                au.check_witness(anchor, self.repo, self.goal_id, events, governed=False)
                 # Founder authority is a signature, not the `actor` label. Signing
                 # happens before anything is written, so a missing or unusable key
                 # raises here and the log is untouched.
                 data = au.sign_event_data(anchor, self.repo, self.goal_id, expected_seq,
-                                          type_, data, prev_digest)
+                                          type_, data, prev_digest, ts, actor)
         body = {
             "seq": expected_seq,
             "type": type_,
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": ts,
             "actor": actor,
             "data": data,
             "prev_digest": prev_digest,
         }
         body["digest"] = event_digest(body)
-        return self.publish(body)
+        ev = self.publish(body)
+        if anchor is not None:
+            try:
+                au.witness_event(anchor, self.repo, self.goal_id, ev.seq, ev.digest)
+            except OSError as exc:
+                raise au.AuthorityError(
+                    f"{self.goal_id}: seq {ev.seq} is published but its witness was not "
+                    f"written ({exc.__class__.__name__}: {exc}); until it is, a truncation "
+                    "of this event cannot be detected") from exc
+        return ev
 
     def publish(self, body: dict) -> Event:
         """Publish a PREPARED event onto its sequence name, or raise.

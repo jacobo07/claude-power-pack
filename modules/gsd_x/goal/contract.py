@@ -101,7 +101,11 @@ def project(log: GoalLog) -> GoalState:
         raise GoalNotDeclared(f"{log.goal_id}: no declaration event")
     # Founder authority is checked HERE, on every read, not only on append: the
     # event files can be written without this API. ABSENT mode is a no-op.
-    au.check_founder_chain(au.load_anchor(), log.repo, log.goal_id, events)
+    anchor = au.load_anchor()
+    first_signed = au.check_founder_chain(anchor, log.repo, log.goal_id, events)
+    # A valid chain can still be a TRUNCATED one: the witness says how far the
+    # founder's signed history went (spec section 9).
+    au.check_witness(anchor, log.repo, log.goal_id, events, governed=bool(first_signed))
     st = GoalState(goal_id=log.goal_id, repo=log.repo, events=events)
     for ev in events:
         if ev.type in (DECLARED, REVISED):
@@ -159,13 +163,51 @@ def set_authority(log: GoalLog, expected_seq: int, authority: dict, actor: str) 
     return project(log)
 
 
-def adopt(log: GoalLog, actor: str, reason: str = "") -> GoalState:
+def _summary(data: dict, width: int = 100) -> str:
+    body = {k: v for k, v in (data or {}).items() if k != au.SIG_FIELD}
+    text = json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return text if len(text) <= width else text[:width - 3] + "..."
+
+
+def adoption_review(state: GoalState) -> list[str]:
+    """What an adoption would attest, in lines a human reads before signing.
+
+    Every founder-class event (unsigned history included -- that is exactly what
+    the adoption vouches for), and the state it produces: autonomy, authority,
+    budget and paused. The autonomy and pause flags are derived here from the
+    event types directly, because sweep imports this module.
+    """
+    lines = [f"founder-class events of {state.goal_id} (the adoption attests all of them):"]
+    autonomous, paused = False, False
+    for ev in state.events:
+        if ev.type not in au.FOUNDER_CLASS:
+            continue
+        lines.append(f"  seq {ev.seq:>4}  {ev.type:<24} actor={ev.actor:<10} {_summary(ev.data)}")
+        if ev.type == "goal.autonomous":
+            autonomous = bool(ev.data.get("enabled"))
+        elif ev.type == PAUSED:
+            paused = True
+        elif ev.type == RESUMED:
+            paused = False
+    lines.append("resulting state:")
+    lines.append(f"  autonomous={autonomous}  paused={paused}")
+    lines.append(f"  authority={_summary(state.authority)}")
+    lines.append(f"  budget={_summary(state.budget)}")
+    lines.append(f"last-event digest: {state.events[-1].digest}")
+    return lines
+
+
+def adopt(log: GoalLog, actor: str, attest_digest: str, reason: str = "") -> GoalState:
     """Bring an existing, unsigned goal under founder authority.
 
     The adoption event is founder-class, so `GoalLog.append` signs it; its
     signature binds `prev_digest`, which attests the whole unsigned history
     before it. Refused without an anchor (an unsigned adoption means nothing)
     and refused when the goal is already governed (a second one attests nothing).
+
+    ``attest_digest`` is the last-event digest the Founder REVIEWED (see
+    `adoption_review`). Signing is refused unless it is still the log's last
+    digest: history planted after the review must never be signed unseen.
     """
     anchor = au.load_anchor()
     if anchor.mode == au.ABSENT:
@@ -177,6 +219,10 @@ def adopt(log: GoalLog, actor: str, reason: str = "") -> GoalState:
     if au.is_governed(current, anchor):
         raise GoalLogError(f"{log.goal_id}: already governed; nothing to adopt")
     last = current.events[-1]
+    if not attest_digest or attest_digest != last.digest:
+        raise GoalLogError(f"{log.goal_id}: the attested digest is not the log's last event "
+                           f"(seq {last.seq}); the history changed since review -- review it "
+                           "again before adopting")
     log.append(current.last_seq + 1, ADOPTED,
                {"attests_seq": last.seq, "attests_digest": last.digest,
                 "reason": reason or "adopted under founder authority"}, actor)

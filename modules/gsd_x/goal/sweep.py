@@ -62,10 +62,20 @@ def record_gates(pp_root: Path, python: str | None = None) -> dict:
     """Run the required suites here, now, and record what they said."""
     python = python or sys.executable
     anchor = au.load_anchor()
+    licence_seq = 0
     if anchor.mode != au.ABSENT:
         # Prove the judge key is usable BEFORE an hour of suites: a licence that
         # cannot be signed is refused by `autonomy_verdict` anyway. Writes nothing.
         au.sign_licence({"probe": True}, anchor)
+        # The licence sequence is monotonic against the WITNESS, which the
+        # resident cannot write: an older signed licence restored over a newer
+        # one then carries a stale sequence and is refused.
+        witnessed = au.read_licence_witness(anchor)
+        if witnessed is not None:
+            prev = witnessed.get("licence_seq")
+        else:
+            prev = _previous_licence_seq()
+        licence_seq = (prev if isinstance(prev, int) else 0) + 1
     head = gs.head(pp_root)
     results = {}
     for suite in REQUIRED_SUITES:
@@ -85,11 +95,46 @@ def record_gates(pp_root: Path, python: str | None = None) -> dict:
     if anchor.mode != au.ABSENT:
         # The licence is signed by the judge role, so the resident -- which can
         # write this file -- cannot mint one for itself.
+        payload["licence_seq"] = licence_seq
         payload = au.sign_licence(payload, anchor)
     path = record_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    if anchor.mode != au.ABSENT:
+        # After the record: a crash between the two leaves the record ahead of
+        # the witness, which `autonomy_verdict` refuses -- never the reverse.
+        au.witness_licence(anchor, licence_seq, head)
     return payload
+
+
+def _previous_licence_seq():
+    """The sequence of the record already on disk, when no witness holds one."""
+    try:
+        rec = json.loads(record_path().read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return 0
+    return rec.get("licence_seq", 0) if isinstance(rec, dict) else 0
+
+
+def _licence_refusal(anchor: au.Anchor, rec: dict, head: str) -> str:
+    """Why a judge-signed licence is still not permission under an anchor, or ""."""
+    if not head or not rec.get("head"):
+        return (f"the licence head is {rec.get('head')!r} and this tree is {head!r}: an "
+                "unknown head is not permission")
+    if not anchor.witness:
+        return ""                     # the mode already reports WITNESS_UNSET
+    try:
+        witnessed = au.read_licence_witness(anchor)
+    except gl.GoalLogCorrupt as exc:
+        return f"the licence witness cannot be read ({exc}); that is not permission"
+    if witnessed is None:
+        return (f"{au.LICENCE_UNWITNESSED}: no licence is witnessed at {anchor.witness}; "
+                "re-run `record-gates` with the judge key")
+    if rec.get("licence_seq") != witnessed.get("licence_seq") or rec.get("head") != witnessed.get("head"):
+        return (f"{au.LICENCE_STALE}: the record is licence {rec.get('licence_seq')!r}, the "
+                f"witness holds {witnessed.get('licence_seq')!r}; a replayed or superseded "
+                "licence is not permission")
+    return ""
 
 
 def autonomy_verdict(pp_root: Path) -> tuple[bool, str]:
@@ -109,6 +154,9 @@ def autonomy_verdict(pp_root: Path) -> tuple[bool, str]:
         signed, why = au.verify_licence(rec if isinstance(rec, dict) else {}, anchor)
         if not signed:
             return False, f"the licence is not signed by the judge ({why})"
+        refusal = _licence_refusal(anchor, rec, gs.head(pp_root))
+        if refusal:
+            return False, refusal
     if not rec.get("green"):
         bad = [s for s, r in (rec.get("suites") or {}).items() if not r.get("ok")]
         return False, f"the autonomy record is not green: {bad}"

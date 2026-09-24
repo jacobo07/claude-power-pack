@@ -329,6 +329,16 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         SWEEP, "        if not signed:", "        if False:",
         "under an anchor the autonomy licence must carry a valid judge signature",
         "V-AUTH-LICENCE-UNSIGNED-REFUSED"),
+    "founder-witness-skipped": (
+        CONTRACT, "    au.check_witness(anchor, log.repo, log.goal_id, events, governed=bool(first_signed))\n",
+        "    pass\n",
+        "a log truncated below the founder's witnessed high-water mark must be refused on "
+        "projection", "V-AUTH-FOUNDER-ROLLBACK-REFUSED"),
+    "licence-seq-unchecked": (
+        SWEEP, '    if rec.get("licence_seq") != witnessed.get("licence_seq") or rec.get("head") != witnessed.get("head"):',
+        "    if False:",
+        "an older signed licence replayed over a newer witnessed one must be refused",
+        "V-AUTH-LICENCE-REPLAY-REFUSED"),
 }
 
 
