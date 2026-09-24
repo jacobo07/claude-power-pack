@@ -10229,6 +10229,62 @@ apart — requested, dispatched, confirmed — and never let the middle one clos
 Corollary: a budget consumed at REQUEST time is spent even when the effect never lands. That is
 the correct at-most-once posture AND a leak; whichever is chosen must be stated, not inherited.
 
+### Mission continuity (2026-09-23/24, spec `vault/specs/mission-continuity.md`)
+
+Owner decision: a long run continues in a FRESH session at its wall (RAM), not by compacting.
+Evidence for every entry: `.planning/mission-continuity/W0-EVIDENCE.md` and commits
+`f3b9896`..`46739ca`.
+
+### HR-CONT-05 — a background worker that dies is not the mission's to replace
+TRIGGER: judging liveness of a `claude --bg` worker, or planning a replacement for one.
+ACCIÓN: the host's session list is the only authority. A busy background worker killed
+mid-work was RESTARTED BY THE HOST ("automatically restarted after its process exited
+unexpectedly"); the replacement launched on "pid gone" ran beside it and wrote a duplicate
+row. Replace only what the host reports stopped/done while work remains. EXCEPCIÓN: none.
+
+### HR-CONT-06 — a halt must change the world, not only the record
+TRIGGER: moving a mission (or any supervised run) to a terminal state.
+ACCIÓN: stop every live worker that carries the mission's name in the same pass, and keep
+reconciling for a lookback window. Measured: a replacement launched seconds before a manual
+halt kept writing the same file as the next mission's worker. EXCEPCIÓN: none.
+
+### PR-CONT-07 — bind a launched worker by what the host said about THIS launch
+`--bg` ignores `--session-id` and does not inherit the launcher's environment. The only
+exact identity is the id the launcher's own synchronous stdout prints, anchored to a name
+you chose (`-n <mission>-e<epoch>`). Never by env, never by a pre-chosen id, never by "the
+new session that appeared" (T-CONT-08).
+
+### PR-CONT-08 — what a successor needs is computed out of band, before it starts
+A SessionStart hook shares its chain's deadline, and under host starvation the whole chain
+is abandoned (measured: 1035 MB free, "pool NOT spawned", ack and card never ran). So: the
+card is rendered by the supervisor at relay time; SessionStart only reads JSON; and a second
+witness (the host listing the launched id) moves LAUNCHING → RUNNING when the worker's own
+ack never arrived.
+
+### PR-CONT-09 — a continuation instruction must be executable in the worker's permission mode
+A hand-off that asked the worker to run a shell command would park an `acceptEdits` worker
+on a permission prompt exactly at its wall. The note travels as the last text of the
+response (`HANDOFF NOTE:`), which the supervisor reads from the transcript.
+
+### T-CONT-14 — a variadic option swallows the prompt that follows it
+`--add-dir <directories...>` / `--allowedTools <tools...>` placed last consumed the prompt;
+the worker started "idle — send a prompt to start". No fake runner can see this: only the
+real CLI. Put a non-variadic option between variadic ones and the positional.
+
+### T-CONT-15 — the host's verbs and states are not the effects they name
+`claude stop` returns while the pid still lives (wait for it); host `done` is also what a
+killed IDLE worker reads (it means "not running", never "mission complete"); a `SessionEnd`
+hook fired for one stopped worker and not for another (not a stop witness).
+
+### T-CONT-16 — an unattended `acceptEdits` worker cannot run git on this estate
+The inherited doctrine routes git through PowerShell; `Bash(git *)`, `PowerShell(& '<git>' *)`
+and `PowerShell(*git.exe*)` each left the worker blocked on a prompt (the last passed `git log`
+and stopped `git add`). The worker's permission mode is a product decision, not a probe knob.
+
+### T-CONT-17 — reusing a variable name to redirect one thing redirects everything that reads it
+Pointing markers at `GSD_LONG_RUN_STATE_DIR` split ~20 existing suites from the watchdog they
+drive (`V-OVLY-ARMED-LEGACY-REACHED` red). A new, opt-in name has no consumer to break.
+
 
 - [tooling/powershell:g] `ceps_c1b34010b02dc23a` -- Tool failure in powershell:g: fatal: 'origin'. Confirm the tool actually ran and returned the expected output before trusting its absence-of-error.
 
