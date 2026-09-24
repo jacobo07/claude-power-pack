@@ -89,6 +89,42 @@ gate("V-DEMO-PII", {k for k, _ in pii_red} >= {"email", "es_nif_nie", "iban"} an
      f"(red kinds {sorted({k for k, _ in pii_red})}; declared fixture admitted: {not pii_ok})")
 
 
+import os  # noqa: E402
+
+from modules.product_demo.capture import Capture, Refusal  # noqa: E402
+
+
+class _TextPage:
+    """Stands in for a page whose visible text is known; scan() only calls evaluate()."""
+
+    def __init__(self, text):
+        self.text = text
+
+    def evaluate(self, _js):
+        return self.text
+
+
+d_env = base_spec()
+d_env["fixture_env"] = ["PDEMO_TEST_EMAIL"]
+spec_env = parse(d_env)
+cap_env = Capture(spec_env, "desktop", Path(tempfile.mkdtemp()), probe=True)
+page_env = _TextPage("Signed in as run-123@example.com")
+os.environ["PDEMO_TEST_EMAIL"] = "run-123@example.com"
+try:
+    cap_env.scan(page_env, "s")
+    admitted = True
+except Refusal:
+    admitted = False
+del os.environ["PDEMO_TEST_EMAIL"]
+try:
+    cap_env.scan(page_env, "s")
+    refused_without = False
+except Refusal as r:
+    refused_without = r.code == "PRIVACY_REFUSED"
+gate("V-DEMO-FIXTURE-ENV", admitted and refused_without,
+     f"(env-declared email admitted: {admitted}; same email refused once the env is unset: {refused_without})")
+
+
 def tele(work_real_ms: int = 6000, callout: str = "Only the facts it needs") -> dict:
     return {"outcome": "ok", "viewport": {"name": "t", "width": 1000, "height": 800, "dsf": 1},
             "steps": [

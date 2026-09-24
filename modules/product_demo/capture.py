@@ -170,7 +170,8 @@ class Capture:
         for forbidden in self.spec.forbid_text:
             if forbidden and forbidden in text:
                 raise Refusal("FORBIDDEN_TEXT", f"'{forbidden}' is on screen", step_id)
-        leaks = pii_findings(text, self.spec.fixture_text)
+        fixture = self.spec.fixture_text + [os.environ[v] for v in self.spec.fixture_env if os.environ.get(v)]
+        leaks = pii_findings(text, fixture)
         if leaks:
             kinds = sorted({k for k, _ in leaks})
             raise Refusal("PRIVACY_REFUSED",

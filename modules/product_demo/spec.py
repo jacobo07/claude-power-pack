@@ -89,6 +89,9 @@ class DemoSpec:
     timezone: str = "UTC"
     forbid_text: list = field(default_factory=list)
     fixture_text: list = field(default_factory=list)
+    # Names of env vars whose VALUES are synthetic and may appear on screen (a per-run
+    # demo account email). The value never enters the spec, so the spec hash is stable.
+    fixture_env: list = field(default_factory=list)
     allow_http_errors: list = field(default_factory=list)
     brand_accent: str = "#2563eb"
     source_path: Path | None = None
@@ -202,6 +205,7 @@ def parse(data: dict, source_path: Path | None = None) -> DemoSpec:
         timezone=str(data.get("timezone", "UTC")),
         forbid_text=[str(t) for t in data.get("forbid_text", [])],
         fixture_text=[str(t) for t in data.get("fixture_text", [])],
+        fixture_env=[str(t) for t in data.get("fixture_env", [])],
         allow_http_errors=[str(t) for t in data.get("allow_http_errors", [])],
         brand_accent=str(data.get("brand_accent", "#2563eb")),
         source_path=source_path, sha256=hashlib.sha256(canon).hexdigest(),
