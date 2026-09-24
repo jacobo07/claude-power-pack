@@ -374,6 +374,70 @@ def main() -> int:
     check("V-MC-ADOPT-LATE-ACK-HEARTBEATS", gm.load("m-ad")["iterations"] == before_iter
           and gm.load("m-ad")["state"] == gm.RUNNING)
 
+    # --- orphans: the W8 contamination, replayed -------------------------------------------
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    gm.create(TMP, "/mc-task", mission_id="mA", now=NOW)
+    gm.transition("mA", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.HALTED, epoch=2)
+    gm.create(TMP, "/mc-task", mission_id="mB", now=NOW)
+    gm.transition("mB", expect_epoch=0, expect_state=gm.PREPARED, event="t", now=NOW,
+                  state=gm.RUNNING, epoch=1,
+                  owner={"session_id": "bbbb0001-x", "kind": "background", "pid": 1})
+    world = [
+        {"id": "aaaa0002", "sessionId": "aaaa0002-x", "name": "mA-e2", "kind": "background",
+         "state": "working", "status": "busy"},
+        {"id": "bbbb0001", "sessionId": "bbbb0001-x", "name": "mB-e1", "kind": "background",
+         "state": "working", "status": "busy"},
+        {"id": "cccc0003", "sessionId": "cccc0003-x", "name": "someone-elses-run", "kind": "background",
+         "state": "working", "status": "busy"},
+    ]
+    stopped = []
+    gm.supervise(now=NOW, sessions=world, gsd_status=gsd("OK"), runner=launch_run,
+                 stop_runner=lambda a: stopped.append(a[-1]) or R("stopped"), pid_alive=alive)
+    check("V-MC-ORPHAN-OF-HALTED-STOPPED", "aaaa0002" in stopped, str(stopped))
+    check("V-MC-ORPHAN-OWNER-KEPT", "bbbb0001" not in stopped)
+    check("V-MC-ORPHAN-STRANGER-KEPT", "cccc0003" not in stopped)
+    # an old terminal mission costs no host query
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    gm.create(TMP, "/mc-task", mission_id="mOld", now=NOW - 3 * 86400)
+    gm.transition("mOld", expect_epoch=0, expect_state=gm.PREPARED, event="t",
+                  now=NOW - 3 * 86400, state=gm.COMPLETED)
+    real_host, asked = gm.host_sessions, []
+    gm.host_sessions = lambda *a, **k: asked.append(1) or []
+    try:
+        gm.supervise(now=NOW)
+        check("V-MC-OLD-TERMINAL-NO-HOST-QUERY", asked == [])
+    finally:
+        gm.host_sessions = real_host
+
+    # --- the card is rendered at relay time; SessionStart spawns nothing --------------------
+    for p in Path(TMP).glob("gsd-mission-*.json"):
+        p.unlink()
+    hs = fresh("m-card")
+    real_git = gm._git_facts
+    gm._git_facts = lambda cwd: {"head": "feedbee", "dirty": 0, "recent": ["feedbee x"]}
+    try:
+        gm.supervise(now=NOW, sessions=hs, gsd_status=gsd("OK"), runner=launch_run,
+                     stop_runner=stop_run, pid_alive=gone)
+    finally:
+        gm._git_facts = real_git
+    rec = gm.load("m-card")
+    check("V-MC-CARD-PRERENDERED-AT-RELAY", "feedbee" in (rec.get("card") or "")
+          and "epoch 2" in rec["card"], (rec.get("card") or "")[:60])
+
+    def boom(cwd):
+        raise AssertionError("SessionStart must not run git")
+    gm._git_facts = boom
+    try:
+        card = gm.session_start(f"{rec['pending']['bg_id']}-late", "startup")
+        check("V-MC-SESSIONSTART-NO-GIT", "feedbee" in card, card[:60])
+    except AssertionError as exc:
+        check("V-MC-SESSIONSTART-NO-GIT", False, str(exc))
+    finally:
+        gm._git_facts = real_git
+
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 

@@ -434,6 +434,11 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
     epoch = expect_epoch + 1
     failed = rec.get("failed_launches", 0) + (1 if rec.get("state") == LAUNCHING else 0)
     extra = {"note": note} if note is not None else {}
+    if note is not None:
+        # Pre-render the successor's card NOW: this runs out of band with no deadline, and
+        # the git facts are exactly those of the hand-off moment the card claims to show.
+        extra["card"] = render_card({**rec, "epoch": expect_epoch + 1, "note": note},
+                                    _git_facts(rec["cwd"]))
     rec = transition(mission_id, expect_epoch=expect_epoch, expect_state=expect_state,
                      event="launch_claimed", now=now, state=LAUNCHING, epoch=epoch,
                      failed_launches=failed, reason=reason,
@@ -623,34 +628,87 @@ def stop_owner(owner: dict | None, sessions: list[dict] | None, pid_alive=lr._pi
     return True, "stopped; no pid to wait on"
 
 
+ORPHAN_LOOKBACK_S = 86400   # a terminal mission is re-checked for live workers this long
+
+
+def orphan_workers(rec: dict, sessions: list[dict] | None) -> list[dict]:
+    """Live host sessions carrying this mission's worker name that the record does not
+    own. Identity is exact because WE chose the name (`<mission_id>-e<epoch>`).
+
+    Measured 2026-09-23 (W8): a supervisor pass launched a replacement a moment before the
+    mission was halted by hand; the halt changed the record and not the world, and the
+    orphan wrote the same progress file as the next mission's worker."""
+    prefix = f"{rec['mission_id']}-e"
+    owner_sid = (rec.get("owner") or {}).get("session_id") if rec["state"] not in TERMINAL else None
+    pend = (rec.get("pending") or {}) if rec["state"] not in TERMINAL else {}
+    out = []
+    for s in sessions or []:
+        if not str(s.get("name", "")).startswith(prefix):
+            continue
+        if s.get("state") in ("stopped", "done", "exited", "failed"):
+            continue
+        if owner_sid and s.get("sessionId") == owner_sid:
+            continue
+        if pend.get("bg_id") and (s.get("id") == pend["bg_id"]
+                                  or str(s.get("sessionId", "")).startswith(pend["bg_id"])):
+            continue
+        out.append(s)
+    return out
+
+
+def _needs_look(m: dict, now: float) -> bool:
+    return m["state"] not in TERMINAL or now - float(m.get("updated_at") or 0) < ORPHAN_LOOKBACK_S
+
+
 def supervise(now: float | None = None, dry_run: bool = False, sessions=None,
               gsd_status=None, runner=None, stop_runner=None, pid_alive=lr._pid_alive) -> list[dict]:
     """One out-of-band pass over every mission. Each action is ledgered by the
     transition it makes; a pass that decides nothing still returns one row per
     mission, so an empty estate and an unjudged one never look alike."""
+    import subprocess
     now = time.time() if now is None else now
     missions = all_missions()
-    if not any(m["state"] not in TERMINAL for m in missions):
+    if not any(_needs_look(m, now) for m in missions):
         # Nothing to supervise: do not ask the host (`claude agents --json` costs seconds,
         # measured > 60 s once under load) on every 5-minute pass of an idle estate.
         return [{"mission_id": m["mission_id"], "state": m["state"], "epoch": m["epoch"],
                  "action": "none", "reason": f"terminal {m['state']}"} for m in missions]
     if sessions is None:
         sessions = host_sessions()
+    stop_run = stop_runner or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=120))
+    exe = os.environ.get("CPP_CLAUDE_EXE") or "claude"
+
+    def reap(rec: dict, row: dict) -> None:
+        stray = orphan_workers(rec, sessions)
+        for s in stray:
+            stop_run([exe, "stop", s.get("id") or str(s.get("sessionId", ""))[:8]])
+            lr.ledger_append(rec["mission_id"], "orphan_stopped", mission_id=rec["mission_id"],
+                             worker=s.get("sessionId"), name=s.get("name"), mission_state=rec["state"])
+        if stray:
+            row["orphans_stopped"] = [s.get("name") for s in stray]
+
     out = []
     for rec in missions:
+        if not _needs_look(rec, now):
+            continue
         mid = rec["mission_id"]
         plan = plan_next(rec, now, sessions, pid_alive)
         row = {"mission_id": mid, "state": rec["state"], "epoch": rec["epoch"], **plan}
         out.append(row)
-        if dry_run or plan["action"] in ("none", "await"):
+        if dry_run:
+            continue
+        reap(rec, row)
+        if row.get("orphans_stopped"):
+            row["action"] = "reaped" if plan["action"] in ("none", "await") else plan["action"]
+        if plan["action"] in ("none", "await"):
             continue
         try:
             act = plan["action"]
             if act == "halt":
-                transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
-                           event="mission_halted", now=now, state=HALTED, pending=None,
-                           reason=plan["reason"])
+                halted = transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
+                                    event="mission_halted", now=now, state=HALTED, pending=None,
+                                    reason=plan["reason"])
+                reap(halted, row)  # a halt changes the record; stop the world to match it
             elif act == "surface_blocked":
                 if rec["state"] != BLOCKED:
                     transition(mid, expect_epoch=rec["epoch"], expect_state=rec["state"],
@@ -744,7 +802,12 @@ def session_start(session_id: str, source: str = "") -> str:
         _arm_worker_marker(rec, session_id)
     if rec["epoch"] <= 1 and not rec.get("note"):
         return ""
-    return render_card(rec, _git_facts(rec["cwd"]))
+    # The card was rendered at RELAY time by the supervisor (out of band, no deadline), so
+    # this path reads JSON and spawns nothing. Rendering it here -- git status on the
+    # project -- timed out at 5 s on a loaded host (measured: ETIMEDOUT) and cost the
+    # successor its card exactly when the host was under pressure. The fallback renders
+    # without git facts, which the card then reports as unknown.
+    return rec.get("card") or render_card(rec, None)
 
 
 def _arm_worker_marker(rec: dict, session_id: str) -> None:
