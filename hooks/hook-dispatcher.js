@@ -59,6 +59,11 @@ const EVENT_MAP = {
     // Primero y baratisimo. Si esto no corre, la miga sobrevive y el proximo
     // prompt recibe una correccion de mas — ruido, nunca una sesion perdida.
     './turn-boundary-breadcrumb-close.js',
+    // Mission hand-off wall, judged MID-TURN (spec vault/specs/mission-continuity.md).
+    // The watchdog judges the wall at Stop; a mission worker works in one long turn, so the
+    // wall was never judged while it mattered (W8: used_pct=39 vs 40 % wall, zero watchdog
+    // lines). One fs.stat for every non-mission session. Pinned: tools/test_mission_wall.js.
+    '../skills/claude-power-pack/hooks/mission_wall.js',
     // gsd-context-monitor.js RETIRADO de este carril 2026-09-15.
     // Es un hook VENDORED (upstream GSD, refs #3709/#2289/#4285) escrito para el
     // contrato STANDALONE: lee stdin y termina por allow()/crash(), que son
