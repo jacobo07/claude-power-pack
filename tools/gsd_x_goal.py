@@ -286,6 +286,27 @@ def cmd_judge(args) -> int:
     return 0 if receipt.verdict == jd.PASS else 1
 
 
+def cmd_founder_keygen(args) -> int:
+    """Mint a founder or judge key. The private half goes to --out (0600) and is
+    never printed; the public anchor entry is printed for the Owner to add to
+    the file named by GSDX_FOUNDER_KEYS."""
+    from modules.gsd_x.goal import authority as au
+    kid, entry = au.generate_keypair(Path(args.out), args.role)
+    print(f"wrote {args.role} private key {kid} to {args.out} (never printed)")
+    print(f"add this entry to the anchor named by {au.ENV_ANCHOR}:")
+    print(json.dumps(entry))
+    return 0
+
+
+def cmd_adopt(args) -> int:
+    """Bring an existing unsigned goal under founder authority (signed adoption)."""
+    from modules.gsd_x.goal import authority as au
+    lg = _log(args)
+    s = gc.adopt(lg, args.actor, args.reason)
+    print(f"adopted {s.goal_id} at seq {s.last_seq}: {au.describe(au.load_anchor())}")
+    return 0
+
+
 def cmd_export(args) -> int:
     """A checkpoint for cold birth: the events, as they are, labelled derived."""
     lg = _log(args)
@@ -412,6 +433,15 @@ def main(argv: list[str] | None = None) -> int:
     rs = common(sub.add_parser("restore"))
     rs.add_argument("--from", required=True, dest="from")
     rs.set_defaults(fn=cmd_restore)
+
+    kg = sub.add_parser("founder-keygen")
+    kg.add_argument("--out", required=True)
+    kg.add_argument("--role", required=True, choices=("founder", "judge"))
+    kg.set_defaults(fn=cmd_founder_keygen)
+
+    ad = common(sub.add_parser("adopt"))
+    ad.add_argument("--reason", default="")
+    ad.set_defaults(fn=cmd_adopt)
 
     args = ap.parse_args(argv)
     try:

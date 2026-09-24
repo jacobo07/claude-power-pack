@@ -20,12 +20,22 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 
+from . import authority as au
 from .log import Event, GoalLog, GoalLogCorrupt, GoalLogError, LostRace
 
 DECLARED = "goal.declared"
 REVISED = "goal.revised"
 BUDGET_SET = "goal.budget_set"
 AUTHORITY_SET = "goal.authority_set"
+# Founder-class event types reserved by the founder-authority spec
+# (vault/specs/gdd-founder-authority.md). Only ADOPTED has a writer in this
+# slice; the rest are declared so they are signed and verified from the first
+# event any later writer appends.
+PAUSED = "goal.paused"
+RESUMED = "goal.resumed"
+TIER_SET = "goal.tier_set"
+DECISION_ANSWERED = "goal.decision_answered"
+ADOPTED = "goal.adopted"
 
 SEMANTIC_FIELDS = ("intent", "acceptance", "constraints", "scope")
 
@@ -89,6 +99,9 @@ def project(log: GoalLog) -> GoalState:
     events = log.read()
     if not events or events[0].type != DECLARED:
         raise GoalNotDeclared(f"{log.goal_id}: no declaration event")
+    # Founder authority is checked HERE, on every read, not only on append: the
+    # event files can be written without this API. ABSENT mode is a no-op.
+    au.check_founder_chain(au.load_anchor(), log.repo, log.goal_id, events)
     st = GoalState(goal_id=log.goal_id, repo=log.repo, events=events)
     for ev in events:
         if ev.type in (DECLARED, REVISED):
@@ -143,6 +156,30 @@ def set_budget(log: GoalLog, expected_seq: int, budget: dict, actor: str) -> Goa
 
 def set_authority(log: GoalLog, expected_seq: int, authority: dict, actor: str) -> GoalState:
     log.append(expected_seq, AUTHORITY_SET, dict(authority), actor)
+    return project(log)
+
+
+def adopt(log: GoalLog, actor: str, reason: str = "") -> GoalState:
+    """Bring an existing, unsigned goal under founder authority.
+
+    The adoption event is founder-class, so `GoalLog.append` signs it; its
+    signature binds `prev_digest`, which attests the whole unsigned history
+    before it. Refused without an anchor (an unsigned adoption means nothing)
+    and refused when the goal is already governed (a second one attests nothing).
+    """
+    anchor = au.load_anchor()
+    if anchor.mode == au.ABSENT:
+        raise au.AuthorityAbsent(f"{log.goal_id}: adoption needs founder authority; "
+                                 f"set {au.ENV_ANCHOR} to the trust anchor first")
+    if anchor.mode == au.UNVERIFIABLE:
+        raise au.AuthorityUnverifiable(au.describe(anchor))
+    current = project(log)
+    if au.is_governed(current, anchor):
+        raise GoalLogError(f"{log.goal_id}: already governed; nothing to adopt")
+    last = current.events[-1]
+    log.append(current.last_seq + 1, ADOPTED,
+               {"attests_seq": last.seq, "attests_digest": last.digest,
+                "reason": reason or "adopted under founder authority"}, actor)
     return project(log)
 
 

@@ -62,7 +62,9 @@ SWEEP = GOAL / "sweep.py"
 GOALCLI = ROOT / "tools" / "gsd_x_goal.py"
 # Suites that own gates but that no prefix ever named. `suite_for` searches this
 # set too, so a gate cannot go unowned merely because the prefix table is stale.
-EXTRA_SUITES = (ROOT / "tools" / "test_gsd_x_goal_cli.py",)
+EXTRA_SUITES = (ROOT / "tools" / "test_gsd_x_goal_cli.py",
+                ROOT / "tools" / "test_gsd_x_goal_authority.py")
+AUTH = GOAL / "authority.py"
 
 # name -> (file, old, new, property removed, gate that must go red)
 MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
@@ -313,6 +315,20 @@ MUTATIONS: dict[str, tuple[Path, str, str, str, str]] = {
         RECON, "    failing = [o for o in accepted", "    failing = [o for o in open_obs",
         "a satisfied-elsewhere obligation must not be sent to a work provider",
         "V-RC-REGATE-IS-NOT-CODE-WORK"),
+    # --- founder authority (GDD slice 1, vault/specs/gdd-founder-authority.md) ---
+    "founder-signature-unchecked": (
+        AUTH, "        if first or carries:", "        if False:",
+        "after the first signed founder event, an unsigned or invalid founder event "
+        "must be refused on projection",
+        "V-AUTH-UNSIGNED-AFTER-ADOPTION-REFUSED"),
+    "ungoverned-goal-admitted": (
+        SWEEP, "    if not au.is_governed(state, anchor):", "    if False:",
+        "under an anchor the resident must refuse a goal with no signed founder event",
+        "V-AUTH-SWEEP-REFUSES-UNGOVERNED"),
+    "licence-signature-unchecked": (
+        SWEEP, "        if not signed:", "        if False:",
+        "under an anchor the autonomy licence must carry a valid judge signature",
+        "V-AUTH-LICENCE-UNSIGNED-REFUSED"),
 }
 
 
@@ -398,6 +414,26 @@ def dirty_targets(root: Path, targets) -> list[str] | None:
     return [ln[3:] for ln in proc.stdout.splitlines() if ln.strip()]
 
 
+def bust_bytecode(path: Path) -> int:
+    """Delete every cached .pyc of this module; return how many went.
+
+    A BACKSTOP, not the primary defence. CPython validates a .pyc on the source's
+    mtime and size at one-second resolution, so a same-length mutant restored
+    inside that second leaves a cache that still matches -- the next suite then
+    runs the MUTANT while the correct bytes sit on disk (measured by another pane
+    on GEX44, 2026-09-24: 3/5 -> 5/5 once busted). This drill runs with -B and
+    PYTHONDONTWRITEBYTECODE, and the Factory runs it in a fresh checkout, so no
+    cache should ever exist; this is for the run that lost that isolation."""
+    gone = 0
+    for pyc in (path.parent / "__pycache__").glob(f"{path.stem}.*.pyc"):
+        try:
+            pyc.unlink()
+            gone += 1
+        except FileNotFoundError:
+            continue
+    return gone
+
+
 def _interrupted(signum, _frame):
     raise KeyboardInterrupt(f"signal {signum}")
 
@@ -435,6 +471,7 @@ def main() -> int:
                 outcomes[name] = ("ANCHOR NOT FOUND -- drill invalid, not a verdict", prop, gate)
                 continue
             path.write_bytes(text.replace(old, new, 1).encode("utf-8"))
+            busted = sum(bust_bytecode(p) for p in targets)
             try:
                 proc = subprocess.run([sys.executable, "-B", str(suite_for(gate))],
                                       capture_output=True, text=True, cwd=str(ROOT),
@@ -443,15 +480,21 @@ def main() -> int:
                                            "PYTHONDONTWRITEBYTECODE": "1"})
             finally:
                 path.write_bytes(originals[path])
+            if busted:
+                print(f"  note: {busted} stale .pyc removed before {name} -- isolation was lost")
             failed = [ln.strip() for ln in proc.stdout.splitlines()
                       if ln.strip().startswith("FAIL")]
             outcomes[name] = ((proc.returncode, failed), prop, gate)
     finally:
         for p, b in originals.items():
             p.write_bytes(b)
+        for p in targets:
+            bust_bytecode(p)
 
     restored = all(hashlib.sha256(p.read_bytes()).hexdigest() == digests[p] for p in targets)
-    print(f"restored (sha256, {len(targets)} file(s)): {restored}\n")
+    # This proves the SOURCE was restored. It says nothing about which bytes a suite
+    # executed -- that is what bust_bytecode and a fresh checkout are for.
+    print(f"restored (sha256 of source, {len(targets)} file(s)): {restored}\n")
     if not restored:
         print(f"INSTRUMENT_FAILED: a mutated module was not restored; journal kept at {JOURNAL}")
         return 2

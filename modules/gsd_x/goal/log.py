@@ -182,13 +182,23 @@ class GoalLog:
         if expected_seq != len(events) + 1:
             raise LostRace(f"{self.goal_id}: expected to write seq {expected_seq}, "
                            f"log is at {len(events)}")
+        prev_digest = events[-1].digest if events else GENESIS
+        from . import authority as au    # local: authority imports this module
+        if type_ in au.FOUNDER_CLASS:
+            anchor = au.load_anchor()
+            if anchor.mode != au.ABSENT:
+                # Founder authority is a signature, not the `actor` label. Signing
+                # happens before anything is written, so a missing or unusable key
+                # raises here and the log is untouched.
+                data = au.sign_event_data(anchor, self.repo, self.goal_id, expected_seq,
+                                          type_, data, prev_digest)
         body = {
             "seq": expected_seq,
             "type": type_,
             "ts": datetime.now(timezone.utc).isoformat(),
             "actor": actor,
             "data": data,
-            "prev_digest": events[-1].digest if events else GENESIS,
+            "prev_digest": prev_digest,
         }
         body["digest"] = event_digest(body)
         return self.publish(body)

@@ -33,6 +33,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..mission import closure as mcl
+from . import authority as au
 from . import contract as gc
 from . import convergence as cv
 from . import epoch as ep
@@ -60,6 +61,11 @@ def record_path() -> Path:
 def record_gates(pp_root: Path, python: str | None = None) -> dict:
     """Run the required suites here, now, and record what they said."""
     python = python or sys.executable
+    anchor = au.load_anchor()
+    if anchor.mode != au.ABSENT:
+        # Prove the judge key is usable BEFORE an hour of suites: a licence that
+        # cannot be signed is refused by `autonomy_verdict` anyway. Writes nothing.
+        au.sign_licence({"probe": True}, anchor)
     head = gs.head(pp_root)
     results = {}
     for suite in REQUIRED_SUITES:
@@ -76,6 +82,10 @@ def record_gates(pp_root: Path, python: str | None = None) -> dict:
     payload = {"head": head, "ts": datetime.now(timezone.utc).isoformat(),
                "suites": results,
                "green": all(r["ok"] for r in results.values())}
+    if anchor.mode != au.ABSENT:
+        # The licence is signed by the judge role, so the resident -- which can
+        # write this file -- cannot mint one for itself.
+        payload = au.sign_licence(payload, anchor)
     path = record_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -92,6 +102,13 @@ def autonomy_verdict(pp_root: Path) -> tuple[bool, str]:
         rec = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         return False, f"the autonomy record is unreadable ({exc}); that is not permission"
+    anchor = au.load_anchor()
+    if anchor.mode == au.UNVERIFIABLE:
+        return False, f"{au.describe(anchor)}: the licence cannot be checked"
+    if anchor.mode in au.CHECKING_MODES:
+        signed, why = au.verify_licence(rec if isinstance(rec, dict) else {}, anchor)
+        if not signed:
+            return False, f"the licence is not signed by the judge ({why})"
     if not rec.get("green"):
         bad = [s for s, r in (rec.get("suites") or {}).items() if not r.get("ok")]
         return False, f"the autonomy record is not green: {bad}"
@@ -108,6 +125,22 @@ def is_autonomous(state: gc.GoalState) -> bool:
         if ev.type == AUTONOMOUS_EVENT:
             on = bool(ev.data.get("enabled"))
     return on
+
+
+def governance_refusal(state: gc.GoalState) -> str:
+    """Why this goal may not be driven unattended under founder authority, or "".
+
+    Under any anchor, an unsigned goal carries only labels: its autonomy flag,
+    budget and authority could have been written by anyone able to write the
+    store -- including the resident itself. ABSENT keeps legacy behaviour.
+    """
+    anchor = au.load_anchor()
+    if anchor.mode == au.ABSENT:
+        return ""
+    if not au.is_governed(state, anchor):
+        return (f"ungoverned under founder authority {anchor.mode}: no validly signed "
+                f"founder event; run `adopt --goal {state.goal_id}` with the founder key")
+    return ""
 
 
 def set_autonomous(log: gl.GoalLog, state: gc.GoalState, enabled: bool, reason: str,
@@ -164,6 +197,10 @@ def sweep_goal(log: gl.GoalLog, root: Path, providers=("gate",), run_dir: Path |
 
     acted: list[str] = []
     state = gc.project(log)
+    # Also here, not only in `sweep`: `reconcile --apply` drives this directly.
+    ungoverned = governance_refusal(state)
+    if ungoverned:
+        return [f"{log.goal_id}: REFUSED -- {ungoverned}"]
     paths = state.scope.get("paths") or ["."]
     tree = gs.tree_id(root, paths)
     eps = ep.project_epochs(state)
@@ -270,6 +307,11 @@ def sweep(pp_root: Path, goals: list[tuple[gl.GoalLog, Path]], dry_run: bool = F
             state = gc.project(log)
         except gl.GoalLogError as exc:
             report.skipped.append(f"{log.goal_id}: {exc}")
+            continue
+        # Before the autonomy flag: on an ungoverned goal that flag is a label.
+        ungoverned = governance_refusal(state)
+        if ungoverned:
+            report.skipped.append(f"{log.goal_id}: {ungoverned}")
             continue
         if not is_autonomous(state):
             report.skipped.append(f"{log.goal_id}: not marked autonomous")
