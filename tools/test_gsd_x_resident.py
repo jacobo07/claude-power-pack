@@ -612,7 +612,8 @@ def main() -> int:
               prov.dispatched == [] and any("UNGOVERNED" in s for s in rep.skipped),
               f"under anchor {au.load_anchor().mode} an unsigned goal is refused",
               f"{rep.skipped} {prov.dispatched}")
-        gc.adopt(lg, "founder", "test adoption")
+        reviewed = gc.project(lg).events[-1].digest       # what the Founder reviewed
+        gc.adopt(lg, "founder", reviewed, "test adoption")
         rep = r.once()
         r.close()
         check("V-RES-GOVERNED-ADMITTED", len(prov.dispatched) == 1,
