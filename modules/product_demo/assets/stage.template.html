@@ -94,13 +94,32 @@ const segs = D.segments;
 const cache = new Map();
 // Decoded <img> elements live in the DOM and are only shown/hidden: reassigning
 // src would start a new async load and a screenshot could catch it unpainted.
+// Frames are decoded LAZILY and only a small window stays resident. Measured:
+// decoding all 36 frames of a 2160x1350 capture at once (~420 MB of bitmaps) on a
+// memory-starved host made Chromium reject decode() ("The source image cannot be
+// decoded") and the stage never became ready.
+const RESIDENT = 4;
 function load(file) {
   if (!cache.has(file)) {
-    const im = new Image(); im.src = "frames/" + file; im.alt = "";
-    im.style.opacity = 0; $("screen").appendChild(im);
-    cache.set(file, im.decode().then(() => im));
+    const attempt = (n) => {
+      const im = new Image(); im.src = "frames/" + file; im.alt = "";
+      im.style.opacity = 0; $("screen").appendChild(im);
+      return im.decode().then(() => im, (err) => {
+        im.remove();
+        if (n > 0) return attempt(n - 1);
+        throw new Error(`frame ${file} could not be decoded: ${err}`);
+      });
+    };
+    cache.set(file, attempt(1));
   }
   return cache.get(file);
+}
+function evict(keep) {
+  for (const [file, p] of cache) {
+    if (keep.has(file) || cache.size <= RESIDENT) continue;
+    p.then(im => im.remove(), err => console.warn("evicting a frame that never decoded", err));
+    cache.delete(file);
+  }
 }
 let shown = [];
 function segAt(t) {
@@ -136,6 +155,10 @@ async function renderAt(t) {
     prev.style.zIndex = 1; prev.style.opacity = 1; shown.push(prev);
     cur.style.opacity = smooth(since / CROSS);
   } else cur.style.opacity = 1;
+  const keep = new Set([seg.frame]);
+  if (i > 0) keep.add(segs[i - 1].frame);
+  if (i + 1 < segs.length) { keep.add(segs[i + 1].frame); load(segs[i + 1].frame); }   // prefetch next
+  evict(keep);
 
   // cursor / touch
   const [cx, cy] = toStage(...cursorAt(t));
@@ -187,7 +210,7 @@ window.__meta = {w: D.w, h: D.h, fps: D.fps, frames: D.frames, duration: D.durat
   aspect: D.stage === "phone" ? "9:16" : "16:9",
   beats: D.callouts.map(c => ({t: c.start_ms / 1000, label: c.text}))};
 window.__renderFrame = async i => { await renderAt(i / D.fps * 1000); };
-Promise.all(segs.map(s => load(s.frame))).then(() => renderAt(0)).then(() => { window.__ready = true; });
+renderAt(0).then(() => { window.__ready = true; });
 </script>
 </body>
 </html>
