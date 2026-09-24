@@ -558,6 +558,9 @@ that produced it ended, the preconditions of `_confirm_resume`
 ways before its answer was believed. The probe wrote nothing. The ledger row
 that followed is the hook's.
 
+**Superseded as the default path on 2026-09-24 — see §11.** The claims above certify the
+keystroke compact-and-resume mechanism and remain true of it.
+
 **Still not proven, and unchanged by any of this:** C5's positive side beyond the
 09-20 `enterfix` observation, and F6 (a submitted `/compact` failing with EBUSY)
 remains an open hypothesis rather than a closed cause. Four of this session's
@@ -565,3 +568,23 @@ crossings, two are unconfirmed and both have a recorded reason — 09-20T21:56 h
 none beyond the run being abandoned, and 18:11:46 is the 310 s refusal. Neither
 was silently dropped from the count: `crossings 4` is reported beside
 `confirmed 2`, and the window that matters is the last two.
+
+---
+
+## 11. Mission continuity (v3, Ralph) — certifies the MISSION, not one mechanism
+
+Owner decision 2026-09-23: a run continues in a fresh session at its wall. Spec
+`vault/specs/mission-continuity.md`; evidence `.planning/mission-continuity/W0-EVIDENCE.md`.
+
+| # | claim | status |
+|---|---|---|
+| M1 | prepared is not running: only the launched worker's ack, or the host listing the id printed for that launch, makes RUNNING | **PROVEN** — unit + live (adopted 23:57:29, 00:15:50) |
+| M2 | the wall is judged mid-turn and asks for a tool-free hand-off | **PROVEN live** — flag 00:32:00, worker stopped at f23 with a HANDOFF NOTE |
+| M3 | a successor in a fresh process continues exactly, carrying the note | **PROVEN live** — relay 00:41:25, f24.. by the successor only, 0 dupes (E24) |
+| M4 | a crashed busy background worker is never replaced beside its host restart | **PROVEN** — measured E14/E15, pinned V-MC-BG-KILLED-* with a mutation |
+| M5 | a halt stops its workers; duplicate supervisors launch one worker | **PROVEN** — unit + mutation (race 1 winner / 5 losers) |
+| M6 | a real `/gsd-autonomous` run crosses ≥ 2 relays and completes | **NOT PROVEN** — needs the Owner's worker permission mode (acceptEdits cannot git here, T-CONT-16) |
+| M7 | Windows | the tested host throughout |
+
+Gates: `tools/test_gsd_mission.py` 76/76 · `tools/test_mission_watchdog.py` 12/12 ·
+`node tools/test_hub_mission_start.js` 8/8 · `node tools/test_mission_wall.js` 7/7.

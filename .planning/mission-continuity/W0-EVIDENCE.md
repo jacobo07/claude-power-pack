@@ -28,6 +28,18 @@ Each row: what was asked · what the host did · instrument.
 | E16 | Host state after killing an IDLE worker | `done` — the same word as a clean finish → host `done` means "not running", never "mission complete" | `agents --json --all` |
 | E17 | Do the user's global hooks run in a `--bg` worker? | **Yes** — `context-watchdog` logged `session=0b75ac7f used_pct=24.0 outcome=pass ms=9654` | `~/.claude/logs/context-watchdog.log` |
 
+## W8 — live relay on the production path (mission `m-7cebf2b33bf3`, 2026-09-24)
+
+| # | observed | instrument |
+|---|---|---|
+| E18 | attempt 1: variadic `--add-dir` swallowed the prompt → worker "idle — send a prompt to start" (fixed `9355f8e`) | launch stdout |
+| E19 | attempt 2: an orphan of a halted mission wrote the same file as the next worker (fixed `46739ca`) | `writers.py` |
+| E20 | both launches: the worker's own SessionStart hub never completed (chain abandoned at 1035 MB free once; silent once) → supervisor ADOPTED on the host witness at 23:57:29 and 00:15:50 | ledger `worker_adopted`, hub log, dispatcher errors |
+| E21 | the Stop-only wall was blind mid-turn: used_pct 39 → 45 in ONE turn with zero watchdog lines; the PostToolUse wall (`4616039`) fired at 00:32:00 | metrics file, `mission-wall-*.flag` |
+| E22 | worker 1 stopped at f23 and ended with a `HANDOFF NOTE` naming the next file and a non-repo fact (anti-thrash cadence) | transcript |
+| E23 | a finished background turn reads host `done` → REPLACE; relay at 00:41:25: note 509 chars from the transcript, card 1058 B via `--append-system-prompt` | ledger, mission record |
+| E24 | **worker 2 (fresh process, fresh session) wrote f24, f25, f26… — sole writer; 27 rows in order, 0 dupes, 0 wrong** | `writers.py 88525fc9`, `verify.py` |
+
 ## Consequences for the design
 
 - Identity: bind the lease from the launcher's own synchronous stdout (E5), never by env (E3),

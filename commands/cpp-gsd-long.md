@@ -6,8 +6,47 @@ argument-hint: "[--from <phase>] [--restore]"
 
 # /cpp-gsd-long — unattended multi-cycle autonomous run
 
-Specs: `vault/specs/gsd-autonomous-autocompact.md` (v1),
+Specs: `vault/specs/mission-continuity.md` (v3, **default**),
+`vault/specs/gsd-autonomous-autocompact.md` (v1),
 `vault/specs/autocompact-per-session-flags.md`, `vault/specs/gsd-long-run-v2.md` (v2).
+
+## Default: Ralph mission (fresh session at every wall) — v3
+
+**Owner decision 2026-09-23:** a long run continues in a **new session** at its context wall
+instead of compacting — a fresh process frees the RAM a long-lived one accumulates (one
+worker measured at ~660 MB working set). The mission, not the session, owns the work.
+
+```powershell
+$py = 'C:\Users\User\AppData\Local\Programs\Python\Python312\python.exe'
+$pp = 'C:\Users\User\.claude\skills\claude-power-pack'
+# from the project root (it must be a TRUSTED workspace -- `claude --bg` refuses otherwise):
+& $py "$pp\tools\gsd_mission.py" arm --cwd . --command "/gsd-autonomous" --max-cycles 12 --max-hours 24
+& $py "$pp\tools\gsd_mission.py" status
+```
+
+`arm` creates the mission record (`~/.claude/state/gsd-mission-<id>.json`) and launches worker 1
+as `claude --bg`. From then on nothing needs the pane that armed it:
+
+| step | who | evidence |
+|---|---|---|
+| worker starts | host (`claude --bg`) | the id the host prints for THIS launch |
+| `LAUNCHING → RUNNING` | the worker's own SessionStart (hub), or the host listing that id | ledger `worker_acked` / `worker_adopted` |
+| wall (40 % used) | judged MID-TURN on every tool call (`hooks/mission_wall.js`, PostToolUse) and again at Stop: finish + commit the step, end with `HANDOFF NOTE:` | `mission-wall-<sid>-e<N>.flag`, ledger `handoff_asked` |
+| relay | sweep (every 5 min, out of band): GSD still has work → stop the worker, **wait for its pid**, launch the next | ledger `launch_claimed` / `launched` |
+| rehydration | the supervisor renders the card at relay time (≤ 8 KB: reconcile-first, HEAD, dirty paths, the predecessor's note labelled as a claim) and passes it with `--append-system-prompt` — no hook in between | mission record `card` |
+| end | GSD `ALL_COMPLETE` → `COMPLETED`; budget → `HALTED`; permission prompt → `BLOCKED` (surfaced, never replaced) | ledger |
+
+A crashed **busy** worker is restarted by the host itself (measured) and is never replaced
+by the mission — replacing it put two writers on the same work. The mission replaces only a
+worker the host reports stopped/done while GSD still has work.
+
+**Permission mode of workers** — omitted, a worker runs in the host default (`auto` on this
+estate). `acceptEdits` cannot run git through PowerShell here, so a GSD run in that mode
+parks on a permission prompt (surfaced as `BLOCKED`).
+
+The keystroke `/compact` path below remains for runs armed the v2 way.
+
+## Legacy (v2): compact-and-resume in the same session
 
 A plain `/gsd-autonomous` halts at the first context wall: GSD says "wrap up"
 at 35% remaining and "stop immediately" at 25%, while the Power Pack watchdog

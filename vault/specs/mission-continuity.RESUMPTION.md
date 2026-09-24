@@ -24,7 +24,14 @@ Gates: `tools/test_gsd_mission.py` 74/74 · `tools/test_mission_watchdog.py` 11/
 `node tools/test_hub_mission_start.js` 8/8 · regression GSDAC 26/26, GSDLR 99/99, OVLY 4/4.
 Mutations driven (all caught, SHA-256 restores): 6 core + 2 watchdog + 2 note/budget + 1 adopt.
 
-## IN FLIGHT — W8 clean E2E (attempt 3)
+## UPDATE 2026-09-24 00:5x — W8 PROVEN LIVE (see W0-EVIDENCE E18–E24, CERTIFICATION §11)
+Later commits: `fdf32fc` card via `--append-system-prompt` · `4616039` mid-turn wall
+(PostToolUse, `hooks/mission_wall.js`, registered in the LIVE dispatcher and the repo mirror)
+· `9ea9a92` Stop does not re-ask · `567b1f0` GSD asked before replace too.
+Relay proven: worker ef5fe657 handed off at f23 (mid-turn wall), successor 88525fc9 continued
+at f24 as sole writer. Remaining: M6 (real /gsd-autonomous, needs Owner's permission mode).
+
+## (history) W8 clean E2E (attempt 3)
 Mission `m-7cebf2b33bf3`, worker 1 `ef5fe657`, armed 00:10:27Z 2026-09-24, cwd
 `C:\Users\User\AppData\Local\Temp` (trusted), command `/mc-task`
 (`Temp\.claude\commands\mc-task.md`), sandbox `<scratchpad>\mc-w0\p1repo` (60 files,
