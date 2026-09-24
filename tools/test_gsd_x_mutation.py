@@ -96,6 +96,11 @@ def main() -> int:
     try:
         for name, (path, old, new) in MUTATIONS.items():
             text = originals[path].decode("utf-8")
+            # Match in the file's own line-ending convention: a fresh Windows
+            # checkout (core.autocrlf=true) is CRLF and a "\n" anchor never
+            # matches there (measured 2026-09-22, see test_gsd_x_mission_mutation).
+            if "\r\n" in text:
+                old, new = old.replace("\n", "\r\n"), new.replace("\n", "\r\n")
             if old not in text:
                 # The anchor moved. Reporting this as a caught mutation would be
                 # a lie, and reporting it as survived would blame the suite.

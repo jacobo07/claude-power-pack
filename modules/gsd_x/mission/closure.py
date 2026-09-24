@@ -34,10 +34,20 @@ UNJUDGEABLE = "UNJUDGEABLE"
 
 @dataclass(frozen=True)
 class Verdict:
-    """What a gate that actually ran produced."""
+    """What a gate that actually ran produced.
+
+    The trailing fields are optional and unused by the mission path. The goal
+    spine requires them: a verdict it cannot tie to a tree, a revision, a
+    class of gate and the exact gate files that ran cannot tell a local unit
+    test from a live check, nor evidence about today's tree from last week's.
+    """
     gate: str
     exit_status: int
     observed: str
+    tree_hash: str = ""
+    revision: str = ""
+    gate_class: str = ""
+    gate_pin: tuple = ()          # ((path, sha256), ...) of the gate files that ran
 
     @property
     def passed(self) -> bool:
