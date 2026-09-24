@@ -158,60 +158,139 @@ def _family_of(path: str) -> tuple[bool, str]:
         return (False, "scan failed: %s" % type(exc).__name__)
 
 
+FAMILY_TOKEN = "tower_family_persistent_state"
+HARVEST_TOPIC = "landed-commit"   # pm_03_bus.HARVEST_TOPIC; see _lessons_from
+
+# P4 -- the capsule's token ceiling. A lesson list that grows with the estate
+# would turn inheritance into a context cost paid on every session, which is
+# exactly how an advisory gets switched off.
+MAX_LESSONS = 8
+MAX_LESSON_CHARS = 220
+MAX_LESSONS_CHARS = 1400
+_DEST_RANK = {"hard_rule": 0, "benchmark": 1, "asset": 2, "prompt_fragment": 3,
+              "dataset_part": 4}
+
+
+def _lessons_from(own: list, inherited: list) -> list:
+    """The deposits worth putting in front of the agent, bounded.
+
+    Excluded on purpose: `landed-commit` deposits. From ANOTHER repo a commit
+    subject is product-specific (class A/B in spec §5) -- CavEX's "Pos is eye
+    height" means nothing in InfinityOps. From THIS repo it is already in
+    `git log`. Both still count as Tower entries; neither is a lesson to inherit.
+
+    Ranked by destination, then confidence, then recency. That is a priority,
+    NOT relevance to the current mission: nothing here reads the prompt, and
+    saying otherwise would be a claim this module cannot back.
+    """
+    pool = []
+    for origin, rows in (("own", own), ("inherited", inherited)):
+        for d in rows:
+            if d.get("delta_class") not in ("NEW", "STRONGER"):
+                continue
+            if (d.get("task_class") or "") == HARVEST_TOPIC:
+                continue
+            claim = " ".join(str(d.get("claim") or "").split())
+            if not claim:
+                continue
+            pool.append((_DEST_RANK.get(d.get("destination"), 9),
+                         -float(d.get("confidence") or 0), str(d.get("ts") or ""),
+                         origin, d.get("destination", "?"), claim))
+    pool.sort(key=lambda t: t[2], reverse=True)          # newest first ...
+    pool.sort(key=lambda t: (t[0], t[1]))                # ... within rank+confidence
+    out, used, seen = [], 0, set()
+    for _, _, _, origin, dest, claim in pool:
+        text = claim if len(claim) <= MAX_LESSON_CHARS else claim[:MAX_LESSON_CHARS - 1] + "…"
+        if text in seen:
+            continue
+        if len(out) >= MAX_LESSONS or used + len(text) > MAX_LESSONS_CHARS:
+            break
+        seen.add(text)
+        used += len(text)
+        out.append({"origin": origin, "destination": dest, "claim": text})
+    return out
+
+
 def produce(path: str | None = None) -> dict:
     """Build and persist the capsule. Out of band by construction: nothing calls
-    this from a hook chain."""
+    this from a hook chain.
+
+    TWO LAYERS (spec §12.4). The Tower is universal ancestry and sits ABOVE the
+    family baselines; it does not replace them. The first version gated the
+    whole capsule behind PERSISTENT_STATE, so a repo outside that one family --
+    CavEX, whose level.dat writer destroyed three worlds -- inherited nothing at
+    all, and the only lever left was widening a family classifier until it
+    over-matched (17_P3B_RESULT_STOPPED.md). Now:
+
+      state    the UNIVERSAL layer. Every repo is in it; never NOT_APPLICABLE.
+      family   the family layer, on the strict classifier, with its own state.
+    """
     root = os.path.abspath(path or os.getcwd())
     key = _repo_key(root)
     if not key:
         return {"state": PRODUCER_FAILURE, "reason": "repo identity unresolved"}
 
     try:
-        in_family, why = _family_of(root)
-        if not in_family:
-            cap = {"state": NOT_APPLICABLE,
-                   "reason": "repo is not in %s (%s)" % (FAMILY, why)}
-        else:
-            own = _deposits_for(key)
-            inherited, ledgers = _deposits_institutional(exclude_key=key)
-            deposits = own + inherited
-            promoted = [d for d in deposits
+        own = _deposits_for(key)
+        inherited, ledgers = _deposits_institutional(exclude_key=key)
+        promoted = [d for d in own + inherited
+                    if d.get("delta_class") in ("NEW", "STRONGER")]
+        own_promoted = [d for d in own
                         if d.get("delta_class") in ("NEW", "STRONGER")]
-            own_promoted = [d for d in own
-                            if d.get("delta_class") in ("NEW", "STRONGER")]
-            if not promoted:
-                cap = {"state": EMPTY_BY_EVIDENCE,
-                       "reason": "in %s (%s) but the estate holds no promoted "
-                                 "deposit at all yet" % (FAMILY, why)}
-            else:
-                dests: dict[str, int] = {}
-                for d in promoted:
-                    k = d.get("destination", "?")
-                    dests[k] = dests.get(k, 0) + 1
-                cap = {
-                    "state": AVAILABLE,
-                    "reason": "%d promoted delta(s) in %s (%s): %d from this "
-                              "repo, %d INHERITED from %d other ledger(s)"
-                              % (len(promoted), FAMILY, why, len(own_promoted),
-                                 len(promoted) - len(own_promoted), ledgers),
-                    "entries": len(promoted),
-                    "own_entries": len(own_promoted),
-                    "inherited_entries": len(promoted) - len(own_promoted),
-                    "source_ledgers": ledgers + 1,
-                    "destinations": dests,
-                    # Honest: FD-07 writes portability_proven=False by contract,
-                    # so the `verified` clause of the canonical Tower definition
-                    # is NOT claimed here.
-                    "verified_entries": sum(
-                        1 for d in promoted if d.get("portability_proven") is True),
-                    "evidence_tokens": ["tower_baseline"],
-                }
+
+        try:
+            in_family, why = _family_of(root)
+            family = {"name": FAMILY,
+                      "state": AVAILABLE if in_family else NOT_APPLICABLE,
+                      "reason": ("in %s (%s)" if in_family
+                                 else "repo is not in %s (%s)") % (FAMILY, why)}
+        except Exception as exc:  # noqa: BLE001
+            in_family = False
+            family = {"name": FAMILY, "state": PRODUCER_FAILURE,
+                      "reason": "family scan failed: %s" % type(exc).__name__}
+
+        if not promoted:
+            cap = {"state": EMPTY_BY_EVIDENCE,
+                   "reason": "the estate holds no promoted deposit at all yet",
+                   "evidence_tokens": [],
+                   "lessons": []}
+        else:
+            dests: dict[str, int] = {}
+            for d in promoted:
+                k = d.get("destination", "?")
+                dests[k] = dests.get(k, 0) + 1
+            harvested = sum(1 for d in promoted
+                            if (d.get("task_class") or "") == HARVEST_TOPIC)
+            cap = {
+                "state": AVAILABLE,
+                "reason": "%d promoted delta(s) in the estate: %d from this "
+                          "repo, %d INHERITED from %d other ledger(s)"
+                          % (len(promoted), len(own_promoted),
+                             len(promoted) - len(own_promoted), ledgers),
+                "entries": len(promoted),
+                "own_entries": len(own_promoted),
+                "inherited_entries": len(promoted) - len(own_promoted),
+                # Captured automatically from landed commits (C1) vs published
+                # as a finding. Volume is not lift; this keeps the two apart.
+                "harvested_entries": harvested,
+                "source_ledgers": ledgers + 1,
+                "destinations": dests,
+                # Honest: FD-07 writes portability_proven=False by contract,
+                # so the `verified` clause of the canonical Tower definition
+                # is NOT claimed here.
+                "verified_entries": sum(
+                    1 for d in promoted if d.get("portability_proven") is True),
+                "evidence_tokens": ["tower_baseline"]
+                                   + ([FAMILY_TOKEN] if in_family else []),
+                "lessons": _lessons_from(own, inherited),
+            }
+        cap["family_layer"] = family
     except Exception as exc:  # noqa: BLE001
         cap = {"state": PRODUCER_FAILURE,
                "reason": "%s: %s" % (type(exc).__name__, exc)}
 
     cap.update({"family": FAMILY, "repo_key": key, "repo": root,
-                "produced_at": time.time(), "schema": 1})
+                "produced_at": time.time(), "schema": 2})
     out = capsule_path(root)
     tmp = out + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
@@ -240,8 +319,20 @@ def read(path: str | None = None) -> dict:
         cap["reason"] = "produced %.1f h ago, contract is %.0f h" % (
             age / 3600.0, FRESH_SECONDS / 3600.0)
         cap["evidence_tokens"] = []      # stale evidence is not evidence
+        cap["lessons"] = []              # ... and a stale lesson is not a lesson
     cap.setdefault("evidence_tokens", [])
+    cap.setdefault("lessons", [])
     return cap
+
+
+def lessons(path: str | None = None) -> list:
+    """The bounded lessons a fresh AVAILABLE capsule hands to the prompt path.
+    Anything else -- UNKNOWN, STALE, EMPTY, a schema-1 capsule -- hands over none."""
+    try:
+        cap = read(path)
+        return list(cap.get("lessons") or []) if cap.get("state") == AVAILABLE else []
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def evidence_tokens(path: str | None = None) -> list:

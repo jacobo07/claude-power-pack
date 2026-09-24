@@ -20,6 +20,7 @@ from .capsule import (  # noqa: F401
     UNKNOWN,
     capsule_path,
     evidence_tokens,
+    lessons,
     produce,
     read,
 )

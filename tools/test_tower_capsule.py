@@ -84,9 +84,10 @@ def main() -> int:
                "state=%s entries=%s" % (cap["state"], cap.get("entries")),
                "expected AVAILABLE, got %s" % cap["state"])
         _check("V-TOWER-AVAILABLE-TOKENS",
-               tc.evidence_tokens("/synthetic") == ["tower_baseline"],
+               tc.evidence_tokens("/synthetic") == ["tower_baseline", tc.FAMILY_TOKEN],
                "tokens=%s" % tc.evidence_tokens("/synthetic"),
-               "AVAILABLE must contribute its evidence token")
+               "an in-family AVAILABLE capsule must contribute the universal "
+               "AND the family token, got %s" % tc.evidence_tokens("/synthetic"))
         _check("V-TOWER-VERIFIED-NOT-CLAIMED", cap.get("verified_entries") == 0,
                "verified_entries=0 while FD-07 writes portability_proven=False",
                "the `verified` clause must not be claimed from unproven deposits")
@@ -118,18 +119,28 @@ def main() -> int:
                "reason=%r tokens=[]" % read_absent["reason"],
                "absence must carry a reason, not an empty return")
 
-        # --- NOT_APPLICABLE still produces a capsule ------------------------
+        # --- OUT OF THE FAMILY STILL INHERITS THE UNIVERSAL LAYER -----------
+        # INVERTED 2026-09-24 (C2). This case used to assert that an
+        # out-of-family repo's WHOLE capsule was NOT_APPLICABLE -- which is how
+        # CavEX inherited nothing. Spec §12.4: the Tower is universal ancestry
+        # ABOVE the family baselines. Not-applicable now lives in family_layer.
         tc._family_of = lambda path: (False, "no markers")
+        tc._deposits_for = lambda key: [
+            {"delta_class": "NEW", "destination": "hard_rule",
+             "portability_proven": False, "claim": "never truncate before serializing"}]
         cap_na = tc.produce("/synthetic")
         _check("V-TOWER-NOT-APPLICABLE",
-               cap_na["state"] == tc.NOT_APPLICABLE
+               cap_na["family_layer"]["state"] == tc.NOT_APPLICABLE
+               and cap_na["state"] == tc.AVAILABLE
                and os.path.exists(tc.capsule_path("/synthetic")),
-               "state=NOT_APPLICABLE and a capsule was still written",
-               "out-of-family must STATE not-applicable, not stay silent")
+               "family_layer=NOT_APPLICABLE, universal=AVAILABLE, capsule written",
+               "out-of-family must be NOT_APPLICABLE in the family layer only, "
+               "got state=%s family=%s" % (cap_na["state"], cap_na.get("family_layer")))
         _check("V-TOWER-NOT-APPLICABLE-NO-TOKENS",
-               tc.evidence_tokens("/synthetic") == [],
-               "tokens=[] for NOT_APPLICABLE",
-               "a non-applicable capsule must contribute no evidence")
+               tc.evidence_tokens("/synthetic") == ["tower_baseline"],
+               "tokens=['tower_baseline'] -- universal yes, family token no",
+               "out-of-family must carry the universal token and never the "
+               "family one, got %s" % tc.evidence_tokens("/synthetic"))
 
         # --- STALE: produced, but past its contract -------------------------
         tc._family_of = lambda path: (True, "migrations_dir")
@@ -153,15 +164,27 @@ def main() -> int:
                "stale evidence must not reach MissionContext")
 
         # --- PRODUCER_FAILURE is its own state ------------------------------
-        def _boom(path):
-            raise RuntimeError("scanner exploded")
-        tc._family_of = _boom
+        # The UNIVERSAL producer broken -> the capsule says so.
+        def _boom(*a, **k):
+            raise RuntimeError("ledger read exploded")
+        tc._deposits_institutional = _boom
         cap_fail = tc.produce("/synthetic")
+        tc._deposits_institutional = lambda exclude_key=None: ([], 0)
         _check("V-TOWER-PRODUCER-FAILURE",
                cap_fail["state"] == tc.PRODUCER_FAILURE
                and cap_fail["state"] != tc.EMPTY_BY_EVIDENCE,
                "state=PRODUCER_FAILURE, distinct from EMPTY_BY_EVIDENCE",
                "a broken producer must not read as an empty baseline")
+        # The FAMILY scanner broken -> only the family layer says so; the
+        # universal inheritance must survive it.
+        tc._family_of = _boom
+        cap_ff = tc.produce("/synthetic")
+        _check("V-TOWER-FAMILY-FAILURE-ISOLATED",
+               cap_ff["family_layer"]["state"] == tc.PRODUCER_FAILURE
+               and cap_ff["state"] == tc.AVAILABLE,
+               "family_layer=PRODUCER_FAILURE, universal still AVAILABLE",
+               "a broken family scanner must not cost the universal layer, got "
+               "state=%s family=%s" % (cap_ff["state"], cap_ff.get("family_layer")))
 
         # --- G-4: the capsule must never touch the gating fields ------------
         with open(_MODULE_SRC, "r", encoding="utf-8") as fh:

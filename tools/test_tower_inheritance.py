@@ -57,6 +57,111 @@ def _claim(i: int) -> str:
     return "alpha%d bravo%d charlie%d delta%d echo%d foxtrot%d" % ((i,) * 6)
 
 
+def _c2(tmp: str) -> None:
+    """C2 (receive): lessons are bounded, foreign commits are not inherited as
+    lessons, and the prompt path hands them over -- a bounded number of times,
+    with every offer recorded, including the empty ones."""
+    from modules.tower import capsule as tc
+    from modules.gsd_x import cli
+
+    print("V-TINH gates (C2 receive)")
+    state = os.path.join(tmp, "tower_state")
+    os.makedirs(state)
+    saved = (tc._state_dir, tc._family_of, tc._deposits_for,
+             tc._deposits_institutional, cli._tower_dir)
+    try:
+        tc._state_dir = lambda: state
+        cli._tower_dir = lambda: __import__("pathlib").Path(state)
+        tc._family_of = lambda path: (False, "no markers")     # CavEX's case
+        own = [{"delta_class": "NEW", "destination": "dataset_part",
+                "task_class": "t", "confidence": 0.5, "ts": "2026-09-20",
+                "claim": "own lesson about world save durability ordering"}]
+        inherited = [{"delta_class": "NEW", "destination": "hard_rule",
+                      "task_class": "t", "confidence": 0.9, "ts": "2026-09-21",
+                      "claim": "INHERITED-RULE never destroy state the user did not see"},
+                     {"delta_class": "NEW", "destination": "benchmark",
+                      "task_class": "landed-commit", "confidence": 0.9,
+                      "ts": "2026-09-22",
+                      "claim": "FOREIGN-COMMIT product specific subject line"}]
+        inherited += [{"delta_class": "NEW", "destination": "asset",
+                       "task_class": "t", "confidence": 0.1, "ts": "2026-09-01",
+                       "claim": "filler lesson number %d " % i + "x" * 300}
+                      for i in range(40)]
+        tc._deposits_for = lambda key: own
+        tc._deposits_institutional = lambda exclude_key=None: (inherited, 3)
+        repo = os.path.join(tmp, "repo")
+        cap = tc.produce(repo)
+        ls = cap.get("lessons") or []
+        claims = [x["claim"] for x in ls]
+        _check("V-TINH-OUT-OF-FAMILY-INHERITS",
+               cap["state"] == tc.AVAILABLE
+               and cap["family_layer"]["state"] == tc.NOT_APPLICABLE
+               and cap["inherited_entries"] == len(inherited),
+               "out-of-family repo inherits all %d estate deltas" % len(inherited),
+               "state=%s family=%s" % (cap["state"], cap.get("family_layer")))
+        _check("V-TINH-LESSONS-BOUNDED",
+               0 < len(ls) <= tc.MAX_LESSONS
+               and sum(len(c) for c in claims) <= tc.MAX_LESSONS_CHARS
+               and all(len(c) <= tc.MAX_LESSON_CHARS for c in claims),
+               "%d lessons, %d chars (ceiling %d/%d)"
+               % (len(ls), sum(len(c) for c in claims), tc.MAX_LESSONS,
+                  tc.MAX_LESSONS_CHARS),
+               "lessons exceed the P4 ceiling: n=%d chars=%d"
+               % (len(ls), sum(len(c) for c in claims)))
+        _check("V-TINH-NO-FOREIGN-COMMITS",
+               not any("FOREIGN-COMMIT" in c for c in claims)
+               and claims and claims[0].startswith("INHERITED-RULE"),
+               "foreign landed-commit excluded; hard_rule ranks first",
+               "lessons=%s" % claims[:3])
+
+        payload = {"session_id": "gate-sid", "cwd": repo}
+        first = cli.inherited_block(payload)
+        _check("V-TINH-CLI-HANDS-OVER",
+               "INHERITED-RULE never destroy state" in first,
+               "the prompt path hands the lesson text over",
+               "no lesson text reached the prompt path: %r" % first[:120])
+        rest = [cli.inherited_block(payload) for _ in range(cli.MAX_OFFERS)]
+        _check("V-TINH-CLI-OFFERS-BOUNDED",
+               all(r for r in rest[:cli.MAX_OFFERS - 1]) and rest[-1] == "",
+               "offered %d times per session, then silent" % cli.MAX_OFFERS,
+               "offer count unbounded or short: %s" % [bool(r) for r in rest])
+
+        # THE LINK: cli.main() -- what gsd_x_tier.js actually spawns -- must
+        # emit the lessons from a stdin payload. Testing inherited_block alone
+        # left a severed main() green (drill M4, 2026-09-24).
+        import io
+        import json as _json
+        real_in, real_out = sys.stdin, sys.stdout
+        buf = io.StringIO()
+        try:
+            sys.stdin = io.StringIO(_json.dumps({
+                "prompt": "fix the save path", "session_id": "gate-sid-main",
+                "cwd": repo}))
+            sys.stdout = buf
+            cli.main()
+        finally:
+            sys.stdin, sys.stdout = real_in, real_out
+        _check("V-TINH-CLI-MAIN-EMITS",
+               "INHERITED-RULE never destroy state" in buf.getvalue(),
+               "cli.main() on a real payload emits the inherited lessons",
+               "the hook's entry point dropped the lessons: %r" % buf.getvalue()[:120])
+
+        empty_payload = {"session_id": "gate-sid-2",
+                         "cwd": os.path.join(tmp, "never_produced")}
+        cli.inherited_block(empty_payload)
+        rows = [__import__("json").loads(l) for l in
+                open(os.path.join(state, "consumption.jsonl"), encoding="utf-8")]
+        _check("V-TINH-OFFER-TELEMETRY-SYMMETRIC",
+               any(r["offered"] > 0 for r in rows)
+               and any(r["offered"] == 0 and r["capsule_state"] == "UNKNOWN"
+                       for r in rows),
+               "offers with lessons AND zero-offers (UNKNOWN) are both recorded",
+               "telemetry is one-sided: %s" % rows)
+    finally:
+        (tc._state_dir, tc._family_of, tc._deposits_for,
+         tc._deposits_institutional, cli._tower_dir) = saved
+
+
 def main() -> int:
     tmp = tempfile.mkdtemp(prefix="tower_inheritance_gate_")
     try:
@@ -143,6 +248,8 @@ def main() -> int:
                "30 new -> 25 deposited, 5 deferred and said so",
                "cap no longer bounds new work: deposited=%d note=%r"
                % (res2.deposited, res2.note))
+
+        _c2(tmp)
 
         print()
         print("TOWER_INHERITANCE_PASS=%d/%d  threshold=%d/%d"
