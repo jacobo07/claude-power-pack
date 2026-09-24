@@ -937,8 +937,11 @@ def _cli(argv=None) -> int:
     a.add_argument("--max-cycles", type=int)
     a.add_argument("--max-hours", type=float)
     a.add_argument("--no-launch", action="store_true")
-    a.add_argument("--permission-mode", default=None,
-                   help="worker permission mode; omitted -> the host default (auto on this estate)")
+    # Owner decision 2026-09-24: real mission workers run `auto`. Pinned here rather than left
+    # to the host's settings default, so a settings change cannot silently turn an unattended
+    # worker into one that stops on every prompt (acceptEdits cannot run git here, T-CONT-16).
+    a.add_argument("--permission-mode", default="auto",
+                   help="worker permission mode (default auto, Owner decision 2026-09-24)")
     a.add_argument("--allowed-tools", nargs="*", default=None)
     a.add_argument("--add-dir", action="append", default=None)
     a.add_argument("--wall", default=None,

@@ -548,6 +548,22 @@ def main() -> int:
     launched = [r for r in rows if (r.get("launch") or {}).get("ok")]
     check("V-MC-SUP-ERROR-ISOLATED", len(errs) == 1 and len(launched) == 1, str(rows))
 
+    # Owner decision 2026-09-24: real mission workers run `auto` unless told otherwise. Driven
+    # through the real CLI (hermetic state dir), so the default is executed, not just documented.
+    import subprocess
+    env = {**os.environ, "GSD_LONG_RUN_STATE_DIR": TMP, "GSD_AUTORUN_MARKER_DIR": TMP}
+    cli = str(Path(__file__).resolve().parent / "gsd_mission.py")
+    for mid_flag, want in ((None, "auto"), ("acceptEdits", "acceptEdits")):
+        argv = [sys.executable, cli, "arm", "--cwd", TMP, "--command", "/x", "--no-launch"]
+        if mid_flag:
+            argv += ["--permission-mode", mid_flag]
+        r = subprocess.run(argv, capture_output=True, text=True, env=env, timeout=120)
+        try:
+            got = json.loads(r.stdout)["mission"]["permission_mode"]
+        except Exception as exc:  # noqa: BLE001
+            got = f"unparseable: {exc}: {r.stdout[-200:]} {r.stderr[-200:]}"
+        check(f"V-MC-CLI-PERMISSION-{want.upper()}", got == want, repr(got))
+
     print(f"MC_PASS={passes}/{passes + fails}")
     return 0 if fails == 0 else 1
 
