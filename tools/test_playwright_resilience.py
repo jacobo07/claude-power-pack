@@ -149,6 +149,47 @@ else:
     killer_evidence = "(script not found)"
 gate("V-PW-KILLER-DRYRUN", killer_ok, killer_evidence)
 
+# --- V-PW-KILLER-MATCHER -------------------------------------------------
+# The killer judges by command line. It must keep matching the MCP server in
+# the shape Windows actually spawns (backslashes), and must NOT match the Python
+# Playwright driver, which it used to kill mid-render once it was 10 min old.
+# Cases are the measured 2026-09-24 command lines, not invented ones.
+MATCHER_CASES = [
+    ('"C:\\Program Files\\nodejs\\node.exe" C:\\Users\\U\\.claude\\mcp-servers\\playwright'
+     '\\node_modules\\@playwright\\mcp\\cli.js --port 8931', "MATCH"),
+    ("node /home/u/.npm/_npx/x/node_modules/@playwright/mcp/cli.js", "MATCH"),
+    ('"C:\\Py312\\Lib\\site-packages\\playwright\\driver\\node.exe" '
+     '"C:\\Py312\\Lib\\site-packages\\playwright\\driver\\package\\cli.js" run-driver', "NOMATCH"),
+    ('"C:\\Program Files\\nodejs\\node.exe" C:\\app\\server.js', "NOMATCH"),
+]
+if platform.system() == "Windows" and KILLER.is_file():
+    wrong = []
+    for cmdline, want in MATCHER_CASES:
+        rc, out, err = run_ps(KILLER, "-Classify", cmdline, timeout=30)
+        got = (out or "").strip()
+        if rc != 0 or got != want:
+            wrong.append(f"{want} expected, got {got or err.strip()!r} for {cmdline[:60]}...")
+    gate("V-PW-KILLER-MATCHER", not wrong,
+         f"({len(MATCHER_CASES) - len(wrong)}/{len(MATCHER_CASES)} classified)"
+         + ("" if not wrong else " " + " | ".join(wrong)))
+elif platform.system() != "Windows":
+    gate("V-PW-KILLER-MATCHER", True, "(skipped: non-Windows)")
+else:
+    gate("V-PW-KILLER-MATCHER", False, "(script not found)")
+
+# --- V-PW-MATCHER-COPIES -------------------------------------------------
+# Three counters copy the killer's predicate. A copy without the driver
+# exclusion reports a Python render as a live MCP server.
+COPIES = [PP / "tools" / "playwright_watchdog.ps1",
+          PP / "tools" / "check_playwright_mcp.py",
+          PP / "modules" / "pp_agents" / "signals" / "health.py"]
+stale = [c.name for c in COPIES
+         if not c.is_file() or "playwright\\driver\\" not in c.read_text(encoding="utf-8", errors="replace")
+         .replace("\\\\", "\\")]
+gate("V-PW-MATCHER-COPIES", not stale,
+     f"({len(COPIES) - len(stale)}/{len(COPIES)} copies exclude the Python driver)"
+     + (f" missing: {stale}" if stale else ""))
+
 # --- V-BASELINE-INTACT ---------------------------------------------------
 # Lightweight: confirm our own modules still import without error.
 baseline_ok = True

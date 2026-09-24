@@ -28,8 +28,29 @@ Sealed 2026-05-31 (Option A, Owner-approved arquitectura).
 #>
 param(
     [int]$IdleThresholdMinutes = 10,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [string]$Classify = ""
 )
+
+# Which node.exe command lines belong to the Playwright MCP server.
+# Measured 2026-09-24: on Windows the MCP runs as
+#   ...\node_modules\@playwright\mcp\cli.js   (BACKSLASHES)
+# so a forward-slash "@playwright/mcp" pattern never matched it; only the broad
+# "*playwright*cli.js*" clause did. That broad clause ALSO matched the Python
+# Playwright driver (...\site-packages\playwright\driver\package\cli.js), so any
+# Python browser run older than the threshold (motion-promo renders, product-demo
+# captures) was killed mid-run by age. Keep MCP coverage, exclude the driver.
+function Test-IsMcpPlaywright([string]$cmd) {
+    if (-not $cmd) { return $false }
+    if ($cmd -match '[\\/]playwright[\\/]driver[\\/]') { return $false }
+    if ($cmd -match '@playwright[\\/]mcp') { return $true }
+    return ($cmd -like "*playwright*cli.js*")
+}
+
+if ($Classify) {
+    if (Test-IsMcpPlaywright $Classify) { Write-Output "MATCH" } else { Write-Output "NOMATCH" }
+    exit 0
+}
 
 $LogFile = "$env:TEMP\pp-playwright-killer.log"
 
@@ -42,13 +63,7 @@ function Write-Log($msg, $Level = "INFO") {
 
 function Get-PlaywrightProcesses {
     Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
-        Where-Object {
-            $_.CommandLine -and
-            (
-                $_.CommandLine -like "*@playwright/mcp*" -or
-                $_.CommandLine -like "*playwright*cli.js*"
-            )
-        } |
+        Where-Object { Test-IsMcpPlaywright $_.CommandLine } |
         Select-Object ProcessId, CommandLine,
             @{N="AgeMinutes";E={
                 if ($_.CreationDate) {

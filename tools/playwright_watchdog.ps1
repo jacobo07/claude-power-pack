@@ -56,8 +56,11 @@ function Write-Log($msg) {
 function Count-PlaywrightProcs {
     $procs = Get-CimInstance Win32_Process -Filter "Name='node.exe'" -ErrorAction SilentlyContinue |
         Where-Object {
-            $_.CommandLine -and (
-                $_.CommandLine -like "*@playwright/mcp*" -or
+            # Same predicate as playwright_stale_killer.ps1 Test-IsMcpPlaywright:
+            # the Python Playwright driver (...\playwright\driver\...) is not the MCP.
+            $_.CommandLine -and
+            $_.CommandLine -notlike "*\playwright\driver\*" -and (
+                $_.CommandLine -like "*@playwright*mcp*" -or
                 $_.CommandLine -like "*playwright*cli.js*"
             )
         }
