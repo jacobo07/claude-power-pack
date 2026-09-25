@@ -63,6 +63,24 @@ class RepoIdUnknown(GoalLogError):
     """The repository identity could not be established."""
 
 
+def _fsync_dir(path: Path) -> None:
+    """Make a just-linked name durable (UWCP S1-4).
+
+    fsync of the event FILE persists its bytes, not the directory entry that
+    names it. On ext4 after a power loss the link can vanish while the effect it
+    recorded (an enqueue on the remote broker) already happened -- an event lost
+    after its side effect. POSIX only: Windows cannot open a directory for
+    fsync, and NTFS journals the metadata of the rename/link itself.
+    """
+    if os.name == "nt":
+        return
+    fd = os.open(str(path), os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 def repo_id(root: Path) -> str:
     """The repository's root commit hash.
 
@@ -212,6 +230,7 @@ class GoalLog:
                 if target.exists():
                     raise LostRace(f"{self.goal_id}: seq {expected_seq} already published")
                 os.rename(tmp, target)
+            _fsync_dir(self.dir)
         finally:
             # A leftover temp file is harmless (read() ignores it) and must not
             # replace the outcome already decided above, whichever it was.
