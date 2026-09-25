@@ -47,7 +47,13 @@ LIVE since the Owner restarted kobiiclaw.service 2026-09-25 17:11Z. Run 1 (uwc-2
 commit 5de14dd, GEX44 python 3.12.3 / git 2.43.0): claude-providers 20/20 x3 -> V-CLI-WAITS was
 host load, not a defect; workspace 36/37 in 3 s (vs ~10 min on the laptop): CASE-COLLISION red on
 ext4 -- fixture wrote only A.txt, so a.txt was a carried deletion; fixed in c109608 (both names
-written). Drills INVALID behind the red baseline, by design. Run 2 = uwc-20260925-172032.
+written). Drills INVALID behind the red baseline, by design. Run 2 (uwc-20260925-172032) exposed
+two runner faults (CRLF archive; a crash reported as SURVIVED), fixed in 29a6b47.
+**Run 3 (uwc-20260925-173318, commit 29a6b47, artifact_crlf=false) is the verdict of record:**
+baseline 37/37, claude-providers 20/20 x3, drills M1 M3 M4 M5 M6 M7 M8 CAUGHT by their named gates,
+M2 (fsck flags removed) SURVIVED, all restores SHA-256 verified. M2 is equivalent for a flipped
+compressed byte (inflate rejects it anyway); fsck's value for malformed-but-inflatable objects is
+UNPROVEN and stays open debt. V-CLI-WAITS is CLOSED as host load (20/20 in 9 GEX44 runs).
 
 ## Traps learned this run (for the vault at S10)
 - Editing a module while a background suite exercises it produced a false 22/25 (NameError
