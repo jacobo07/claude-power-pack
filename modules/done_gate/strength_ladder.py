@@ -170,3 +170,66 @@ def assess(claimed: str, evidence: dict[str, bool] | None = None) -> Assessment:
             LADDER_FAILED, str(claimed), LADDER[0],
             detail=f"{type(exc).__name__}: {exc}; the claim was NOT judged",
         )
+
+
+# --- evidence class: WHERE the evidence was observed ----------------------------
+# The ladder above grades how strong a claim is. This axis grades which plane the
+# evidence came from (UWCP assimilation X6; develop-here-prove-there doctrine).
+# The rule is stricter than the ladder's: classes are NOT climbed. A model check
+# says nothing about a real run, a simulation says nothing about hardware, and a
+# remote run says nothing about production. A claim of class X is SUPPORTED only
+# when X itself was observed positive. The order below is for reporting the
+# weakest link of a composite claim, never for promotion.
+EVIDENCE_CLASSES: tuple[str, ...] = (
+    "THEORETICAL",
+    "MODEL_CHECKED",
+    "SIMULATED",
+    "LOCAL_REALITY",
+    "REMOTE_REALITY",
+    "PRODUCTION_REALITY",
+    "HARDWARE_REALITY",
+)
+
+
+def _class_key(name: str) -> str:
+    return str(name).strip().upper().replace("-", "_").replace(" ", "_")
+
+
+def assess_evidence_class(claimed: str, observed: dict[str, bool] | None = None) -> Assessment:
+    """Grade a claim like "REMOTE_REALITY" against the classes actually observed.
+
+    `observed` maps a class to True (observed, positive), False (observed,
+    negative) or is absent (nobody ran it there). Absent -> UNDETERMINED.
+    """
+    try:
+        obs = {_class_key(k): v for k, v in dict(observed or {}).items()}
+        bad_keys = [k for k in obs if k not in EVIDENCE_CLASSES]
+        key = _class_key(claimed)
+        if key not in EVIDENCE_CLASSES or bad_keys:
+            return Assessment(LADDER_FAILED, str(claimed), "THEORETICAL",
+                              detail=f"unrecognised evidence class(es) "
+                                     f"{[claimed] if key not in EVIDENCE_CLASSES else bad_keys}")
+        positive = [c for c in EVIDENCE_CLASSES if obs.get(c) is True]
+        best = positive[-1] if positive else "THEORETICAL"
+        val = obs.get(key)
+        if val is True:
+            return Assessment(SUPPORTED, key, best)
+        if val is False:
+            return Assessment(OVERSTATED, key, best, missing=[key],
+                              detail=f"{key} was observed and it failed")
+        return Assessment(UNDETERMINED, key, best, unknown=[key],
+                          detail=f"{key} was never observed; {best} evidence does not carry "
+                                 "over to another plane")
+    except Exception as exc:  # noqa: BLE001 - the axis's own failure branch
+        return Assessment(LADDER_FAILED, str(claimed), "THEORETICAL",
+                          detail=f"{type(exc).__name__}: {exc}; the claim was NOT judged")
+
+
+def weakest_class(classes) -> str:
+    """The weakest link of a composite claim (for reporting). Empty -> THEORETICAL:
+    a claim with no evidence classes rests on nothing observed."""
+    keys = [_class_key(c) for c in classes]
+    unknown = [k for k in keys if k not in EVIDENCE_CLASSES]
+    if unknown:
+        raise ValueError(f"unrecognised evidence class(es) {unknown}")
+    return min(keys, key=EVIDENCE_CLASSES.index) if keys else "THEORETICAL"

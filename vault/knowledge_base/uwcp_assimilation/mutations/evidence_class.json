@@ -1,0 +1,21 @@
+{
+  "gate": "tools/test_evidence_class.py",
+  "mutations": [
+    {"name": "climb-classes", "file": "modules/done_gate/strength_ladder.py",
+     "old": "        val = obs.get(key)\n        if val is True:",
+     "new": "        val = True if EVIDENCE_CLASSES.index(best) >= EVIDENCE_CLASSES.index(key) and positive else obs.get(key)\n        if val is True:",
+     "expect_red": ["V-EVCLASS-NO-SIDEWAYS"]},
+    {"name": "absent-is-negative", "file": "modules/done_gate/strength_ladder.py",
+     "old": "        if val is False:\n            return Assessment(OVERSTATED, key, best, missing=[key],",
+     "new": "        if not val:\n            return Assessment(OVERSTATED, key, best, missing=[key],",
+     "expect_red": ["V-EVCLASS-NO-PROMOTION", "V-EVCLASS-MODEL-IS-NOT-REALITY"]},
+    {"name": "unknown-class-mapped", "file": "modules/done_gate/strength_ladder.py",
+     "old": "        if key not in EVIDENCE_CLASSES or bad_keys:",
+     "new": "        if key not in EVIDENCE_CLASSES:",
+     "expect_red": ["V-EVCLASS-UNKNOWN-NAME-LOCAL_REALITY"]},
+    {"name": "weakest-is-strongest", "file": "modules/done_gate/strength_ladder.py",
+     "old": "    return min(keys, key=EVIDENCE_CLASSES.index) if keys else \"THEORETICAL\"",
+     "new": "    return max(keys, key=EVIDENCE_CLASSES.index) if keys else \"THEORETICAL\"",
+     "expect_red": ["V-EVCLASS-WEAKEST"]}
+  ]
+}
