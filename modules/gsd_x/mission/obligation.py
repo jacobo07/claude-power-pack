@@ -111,11 +111,39 @@ class Obligation:
 # SOURCES. That limitation is the first thing the next wave should attack, and
 # it is recorded rather than hidden behind a passing benchmark.
 
+# --- how a fact is known ----------------------------------------------------
+# ONE owner for this vocabulary, and it lives here because `Fact` lives here.
+# tools/gsd_x_fact_producer.py imported to define its own OBSERVED/DERIVED/
+# DECLARED/UNKNOWN; two spellings of one vocabulary is the second truth this
+# wave exists to remove, and it would be absurd to leave it in the same wave
+# that makes freshness single-owner.
+#
+# EXTRACTED is deliberately NOT DECLARED. A fact mined out of prose by the regex
+# adapter was not declared by anybody. Stamping it DECLARED would give every
+# prose fact a provenance it does not have -- the same class of untruth this
+# module exists to refuse, committed by its own default value.
+OBSERVED = "OBSERVED"      # measured directly from an authoritative source
+DERIVED = "DERIVED"        # computed deterministically from authoritative evidence
+DECLARED = "DECLARED"      # a human asserted it; nothing mechanical established it
+EXTRACTED = "EXTRACTED"    # mined out of prose by the regex adapter
+UNKNOWN = "UNKNOWN"        # the evidence to decide does not exist
+
+FACT_STATES = frozenset({OBSERVED, DERIVED, DECLARED, EXTRACTED, UNKNOWN})
+
+
 @dataclass(frozen=True)
 class Fact:
     name: str
     matched: str
     source: str
+    # Defaulted so every existing construction keeps working unchanged. `Fact`
+    # is frozen but is never hashed, sorted, compared or serialized outside
+    # dump(), so a trailing defaulted field breaks no contract.
+    #
+    # The default is DECLARED rather than EXTRACTED: the prose extractor passes
+    # EXTRACTED explicitly, so a caller that reaches this default asserted a
+    # fact without saying how it knows -- which is exactly what DECLARED means.
+    state: str = DECLARED
 
 
 # GENERALISED 2026-09-20 after the transfer control caught them fitted. The
@@ -207,7 +235,9 @@ def extract_facts(intent: str, reality: str) -> list[Fact]:
         text = intent if where == "intent" else reality
         m = re.search(pat, text or "", re.IGNORECASE | re.DOTALL)
         if m:
-            out.append(Fact(name, " ".join(m.group(0).split())[:160], where))
+            # EXTRACTED, explicitly: nobody declared this, a regex found it.
+            out.append(Fact(name, " ".join(m.group(0).split())[:160], where,
+                            state=EXTRACTED))
     return out
 
 

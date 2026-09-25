@@ -24,17 +24,28 @@ CLI = REPO / "tools" / "gsd_x_mission.py"
 
 # (name, file, exact old text, replacement, gate that must go red)
 MUTANTS = [
+    # RE-ANCHORED 2026-09-25 (GSDX-M05). The v2 loader moved name validation
+    # into `_require_name` and replaced the `seen` set with a cross-bucket
+    # `claim()`. Both anchors then matched 0x and this drill exited 2 as
+    # HARNESS-FAILED -- which says NOTHING about the subject while the wave's
+    # regression line still quoted "7/7 mutations" as evidence. A drill pinned
+    # to exact source text decays the moment that text is refactored, and it
+    # decays SILENTLY into a number nobody re-earned. Re-anchor in the same
+    # commit as the refactor, never in a follow-up.
     ("accept-unknown-name", SF,
-     "        if name not in FACT_NAMES:\n",
-     "        if False and name not in FACT_NAMES:\n",
+     "    if name not in FACT_NAMES:\n",
+     "    if False and name not in FACT_NAMES:\n",
      "V-GSDXFACTS-REFUSE-UNKNOWN-NAME"),
     ("accept-no-evidence", SF,
      "        if not isinstance(evidence, str) or not evidence.strip():\n",
      "        if not isinstance(evidence, str):\n",
      "V-GSDXFACTS-REFUSE-NO-EVIDENCE"),
+    # Blinding `claim()`'s lookup disables BOTH duplicate detection and the
+    # cross-bucket contradiction refusal: with `prior` always None every name
+    # is recorded as first-seen and nothing can ever raise.
     ("accept-duplicate", SF,
-     "        if name in seen:\n",
-     "        if False and name in seen:\n",
+     "        prior = seen.get(name)\n",
+     "        prior = None\n",
      "V-GSDXFACTS-REFUSE-DUPLICATE"),
     ("die-on-bom", SF,
      'doc = json.loads(path.read_text(encoding="utf-8-sig"))',
@@ -83,13 +94,27 @@ def main() -> int:
     for name, path, old, new, must in MUTANTS:
         original = path.read_bytes()
         text = original.decode("utf-8")
-        if text.count(old) != 1:
-            print(f"HARNESS-FAILED: mutant {name!r} anchor found {text.count(old)}x in {path.name}")
+        # ANCHORS ARE WRITTEN WITH \n AND THE FILE MAY BE CRLF. `core.autocrlf`
+        # is true on this host, so a file CLEAN FROM CHECKOUT arrives as CRLF
+        # while a file dirty in the working tree keeps the LF its writer used.
+        # Measured 2026-09-25: gsd_x_mission.py was LF=302/CRLF=302 (every line)
+        # while structured_facts.py and obligation.py were pure LF -- so this
+        # drill's verdict depended on whether its target happened to be
+        # modified. It exited 2 as HARNESS-FAILED, which says nothing about the
+        # subject, while the wave's regression line still quoted a mutation
+        # count nobody had re-earned. Translate the anchor to the file's own
+        # convention; the restore is byte-exact either way.
+        nl = "\r\n" if "\r\n" in text else "\n"
+        old_a, new_a = old.replace("\n", nl), new.replace("\n", nl)
+        if text.count(old_a) != 1:
+            print(f"HARNESS-FAILED: mutant {name!r} anchor found "
+                  f"{text.count(old_a)}x in {path.name} (line endings: "
+                  f"{'CRLF' if nl == chr(13) + chr(10) else 'LF'})")
             return 2
         try:
             # Write bytes, not text: the restore below must reproduce the file
             # exactly, and a text-mode write on Windows would convert LF to CRLF.
-            path.write_bytes(text.replace(old, new).encode("utf-8"))
+            path.write_bytes(text.replace(old_a, new_a).encode("utf-8"))
             code, failed = _run_gate()
         finally:
             path.write_bytes(original)
