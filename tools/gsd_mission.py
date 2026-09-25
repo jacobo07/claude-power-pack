@@ -606,6 +606,11 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         "You have no memory of earlier workers. Durable state is the repository and GSD, not this card.",
         f"Project: {rec['cwd']}",
         f"Resume command: {bind_workstream(rec['resume_command'], rec.get('workstream'))}",
+        *([f"WORKSTREAM {rec['workstream']}: before any GSD step run `node "
+           f"~/.claude/gsd-core/bin/gsd-tools.cjs query workstream.set {rec['workstream']} --raw "
+           f"--cwd .` (session-local pointer; gsd_run calls do not forward --ws). The repo's ROOT "
+           f"milestone belongs to another track -- never plan or execute it."]
+          if rec.get("workstream") else []),
         "",
         "RECONCILE BEFORE ACTING (run these first and say what you found):",
         "  git status --short ; git log --oneline -5 ; GSD progress for the active milestone",

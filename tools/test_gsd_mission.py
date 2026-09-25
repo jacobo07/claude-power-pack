@@ -212,6 +212,14 @@ def main() -> int:
           bool(ws_calls) and ws_calls[-1][-1] == "/gsd-autonomous --ws lobby-ws",
           str(ws_calls[-1][-1] if ws_calls else None))
 
+    wcard = gm.render_card({"epoch": 2, "mission_id": "m-ws", "cwd": "C:/p",
+                            "resume_command": "/gsd-autonomous", "workstream": "lobby-ws"})
+    check("V-MC-WS-CARD-PINS-POINTER",
+          "/gsd-autonomous --ws lobby-ws" in wcard and "workstream.set lobby-ws" in wcard, wcard[:200])
+    ncard = gm.render_card({"epoch": 2, "mission_id": "m", "cwd": "C:/p",
+                            "resume_command": "/gsd-autonomous"})
+    check("V-MC-WS-CARD-NONE-SILENT", "workstream.set" not in ncard)
+
     gm.create(TMP, "/gsd-autonomous --from 2", mission_id="m-l", now=NOW)
     res = gm.launch_worker("m-l", expect_epoch=0, expect_state=gm.PREPARED, reason="t",
                            runner=runner_ok, now=NOW)
