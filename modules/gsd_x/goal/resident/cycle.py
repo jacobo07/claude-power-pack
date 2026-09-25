@@ -19,7 +19,10 @@ worktree on branch `resident/<mission-id>` at the goal root's clean HEAD, the
 provider's cwd is that worktree only, and at harvest every changed path --
 committed or not -- is checked against the declared write set before anything
 is ingested. The resident never merges, pushes or rewrites the goal's branch:
-the worktree branch is the deliverable.
+the worktree branch is the deliverable. After an ingested harvest it re-runs
+the goal's gates IN the worktree (GateProvider, bounded; evidence on the
+mission, never a satisfaction) and, only if all are green, fast-forwards the
+one ref `factory/integration` to the job commit by compare-and-swap.
 
 AUTHORITY. Under an UNVERIFIABLE anchor `contract.project()` checks no
 signature at all, so the resident refuses to admit ANY goal and reports
@@ -45,6 +48,7 @@ from .. import log as gl
 from .. import reconcile as rc
 from .. import brief as br
 from .. import sweep as sw
+from ..providers.gate import GateProvider
 from . import control, health, isolate as iso, ledgers, missions as ms, procs, store
 
 WORK_PROVIDERS = ("codex", "claude-headless", "claude-interactive")
@@ -52,7 +56,8 @@ DISPATCHABLE = ("gate",) + WORK_PROVIDERS
 ACTIVE_KINDS = frozenset({rc.WAIT, rc.HARVEST, rc.NEXT_EPOCH, rc.RECOVER})
 # Kinds that need a person: a refused isolation, a write-set violation, a
 # delivered branch nobody has merged yet.
-PERSON_KINDS = frozenset({"ISOLATION_REFUSED", "AWAITING_MERGE", "WRITE_SET_VIOLATION"})
+PERSON_KINDS = frozenset({"ISOLATION_REFUSED", "AWAITING_MERGE", "DELIVERED_NOT_INTEGRATED",
+                          "WRITE_SET_VIOLATION"})
 
 
 class SimulatedCrash(Exception):
@@ -70,6 +75,10 @@ class Config:
     lease_ttl_s: float = 900.0
     provider_caps: dict = field(default_factory=lambda: {"gate": 2})
     cancel_grace_s: float = 0.5
+    # Integration: each goal gate re-run in a job's worktree is bounded by this,
+    # and cancelled (process tree) at the bound. The cycle blocks while they run.
+    integration_gate_wall_s: float = 900.0
+    integration_poll_s: float = 0.2
 
 
 @dataclass
@@ -110,7 +119,7 @@ class Resident:
     def __init__(self, pp_root: Path, providers: dict, goals=None, state_dir: Path | None = None,
                  config: Config | None = None, info: procs.ProcInfo | None = None,
                  runner=control.run_command, fault=None, clock=time.time,
-                 actor: str = "resident"):
+                 actor: str = "resident", integration_gates=None, sleep=time.sleep):
         self.pp_root = Path(pp_root)
         self.providers = dict(providers)
         self._goals = goals
@@ -135,6 +144,11 @@ class Resident:
         self.last_census: list = []
         self.last_evidence_ts: float | None = None
         self.current: dict = {}
+        # The gate machinery, reused: a DEDICATED GateProvider instance, so an
+        # integration run never shares handles or run files with a gate epoch.
+        self.integration_gates = integration_gates or GateProvider(
+            self.sd.runs / "integration", wall_bound_s=self.cfg.integration_gate_wall_s)
+        self._sleep = sleep
 
     # --- lifecycle -------------------------------------------------------------
     def _fault(self, point: str, **ctx) -> None:
@@ -432,7 +446,117 @@ class Resident:
             extra["deliverable_head"] = gs.head(Path(m0["worktree"]))
             extra["deliverable_branch"] = m0.get("branch")
         self.missions.advance(e.epoch_id, ms.RECONCILED, **extra)
+        if isolated and rid:
+            self._integrate(log, e.epoch_id, key, rep)
         return ""
+
+    # --- integration (Owner decision "option 1") -----------------------------------
+    def _integration_gates(self, state: gc.GoalState) -> list:
+        """The goal's live gates, built exactly as a gate epoch builds them."""
+        out = []
+        for o in cv.project_convergence(state).obligations.values():
+            if o.disposition in cv.RETIRED_DISPOSITIONS or not (o.done_gate or "").strip():
+                continue
+            out.append({"id": o.identifier, "command": jd._argv(o.done_gate),
+                        "class": o.gate_class or "unit", "files": [rel for rel, _ in o.gate_pin]})
+        return out
+
+    def _run_gate_in(self, wt: Path, gate: dict, mid: str, n: int, revision: str,
+                     write_set: list) -> dict:
+        """One gate, cwd = the job's worktree, through the GateProvider: its own
+        supervised process (own session on POSIX), result file, tree-kill cancel.
+        Bounded; a run that did not report an exit status is not green."""
+        prov = self.integration_gates
+        token = f"integ-{mid}-{n}-{os.urandom(4).hex()}"
+        spec = {"epoch_id": f"integration:{mid}:{gate['id']}", "revision": revision,
+                "root": str(wt), "identity": {"run_token": token},
+                "scope_paths": list(write_set), "gate": gate}
+        row = {"gate": gate["id"], "command": gate["command"], "class": gate["class"],
+               "cwd": str(wt), "exit_status": None, "green": False, "detail": ""}
+        try:
+            handle = prov.dispatch(spec)
+        except Exception as exc:
+            row["detail"] = f"dispatch raised {exc.__class__.__name__}: {exc}"[:300]
+            return row
+        bound = float(getattr(prov, "wall_bound_s", self.cfg.integration_gate_wall_s))
+        deadline = time.monotonic() + bound
+        obs = None
+        while True:
+            try:
+                obs = prov.observe(handle)
+            except Exception as exc:
+                obs = None
+                row["detail"] = f"observe raised {exc.__class__.__name__}: {exc}"[:300]
+            if obs is not None and obs.state != ep.OBS_RUNNING:
+                break
+            if time.monotonic() >= deadline:
+                try:
+                    prov.cancel(handle)
+                except Exception as exc:
+                    row["detail"] = f"cancel raised {exc.__class__.__name__}: {exc}"[:300]
+                row["timed_out"] = True
+                break
+            self._sleep(self.cfg.integration_poll_s)
+        try:
+            receipt = prov.harvest(handle, spec)
+        except Exception as exc:
+            row["detail"] = (row["detail"] + f"; harvest raised {exc.__class__.__name__}: "
+                             f"{exc}")[:300]
+            return row
+        v = receipt.verdicts[0] if receipt.verdicts else None
+        if v is not None:
+            row.update(exit_status=v.get("exit_status"), observed=v.get("observed", ""),
+                       tree_hash=v.get("tree_hash", ""), gate_pin=v.get("gate_pin", []))
+        row["failures"] = [f.get("summary", "") for f in receipt.failures]
+        row["green"] = (v is not None and v.get("exit_status") == 0 and not receipt.failures
+                        and not row.get("timed_out"))
+        return row
+
+    def _integrate(self, log: gl.GoalLog, mid: str, key: str, rep: CycleReport) -> None:
+        m = self.missions.get(mid)
+        wt, root = Path(m["worktree"]), Path(m["root"])
+        base, job = m.get("base_commit", ""), m.get("deliverable_head", "")
+        rec = {"state": iso.INTEGRATION_REFUSED, "reason": "", "detail": "", "gates": [],
+               "ref": iso.INTEGRATION_REF, "ref_before": "", "ref_after": "",
+               "job_commit": job, "base": base}
+
+        def done(reason: str = "", detail: str = "", **more) -> None:
+            rec.update(more)
+            rec.update(reason=reason, detail=detail[:400])
+            self.missions.advance(mid, integration=rec)
+            what = rec["state"] if not rec["reason"] else f"{rec['state']} {rec['reason']}"
+            rep.acted.append(f"{key}: {mid} integration: {what} {rec['detail'][:160]}")
+
+        if not job or job == base:
+            return done(iso.NOTHING_TO_INTEGRATE, "the worktree HEAD is the base: no commit "
+                        "was delivered", state=iso.NOTHING_TO_INTEGRATE)
+        try:
+            dirty = iso.uncommitted_paths(wt)
+        except OSError as exc:
+            return done(iso.UNREADABLE, f"worktree status unreadable: {exc}")
+        if dirty:
+            return done(iso.INTEGRATION_WORKTREE_DIRTY,
+                        f"uncommitted bytes the commit does not carry: {dirty[:10]}")
+        gates = self._integration_gates(gc.project(log))
+        if not gates:
+            return done(iso.NO_GATES, "the goal has no live gate; nothing was proved")
+        rows = [self._run_gate_in(wt, g, mid, i, m.get("revision", ""), m.get("write_set") or [])
+                for i, g in enumerate(gates)]
+        rec["gates"] = rows
+        red = [r["gate"] for r in rows if not r["green"]]
+        if red:
+            return done(iso.GATES_RED, f"not green in the worktree: {red}")
+        now_head = gs.head(wt)
+        if now_head != job:
+            return done(iso.INTEGRATION_HEAD_MOVED,
+                        f"worktree HEAD {now_head[:12]} after the gates is not the judged "
+                        f"commit {job[:12]}")
+        res = iso.integrate(root, job, base)
+        rec.update(state=res["state"], ref_before=res["ref_before"], ref_after=res["ref_after"],
+                   created=res["created"])
+        if not res["ok"]:
+            return done(res["reason"], res["detail"])
+        return done(detail=res["detail"])
 
     def _refuse_harvest(self, log, e, m, verdict, key, rep) -> str:
         """WRITE_SET_VIOLATION: nothing is ingested, the epoch ends FAILED (so the
@@ -467,14 +591,15 @@ class Resident:
             reason, detail = iso.validate_write_set(root, write_set)
             if not reason:
                 base, reason, detail = iso.clean_base(root, write_set)
+            pending_kind = ""
             if not reason:
-                pending = self._awaiting_merge(key, root)
-                if pending:
+                pending_kind, pending = self._awaiting_merge(key, root)
+                if pending_kind:
                     reason, detail = iso.WORK_AWAITING_MERGE, pending
             if reason:
                 rep.notes.append(f"{key}: NEXT_EPOCH {d.provider} refused before any spend: "
                                  f"{reason}: {detail}")
-                return "AWAITING_MERGE" if reason == iso.WORK_AWAITING_MERGE \
+                return pending_kind if reason == iso.WORK_AWAITING_MERGE \
                     else "ISOLATION_REFUSED"
         cap = int(self.cfg.provider_caps.get(d.provider, 1))
         in_flight = sum(1 for m in self.missions.non_terminal()
@@ -538,17 +663,33 @@ class Resident:
         return rc.NEXT_EPOCH
 
     # --- the ISOLATED stage ----------------------------------------------------------
-    def _awaiting_merge(self, key: str, root: Path) -> str:
-        """A delivered work branch for this goal that the goal root does not yet
-        contain. The reconciler cannot see an unmerged branch, so without this it
-        would pay for the same work again against the same tree."""
+    def _awaiting_merge(self, key: str, root: Path) -> tuple[str, str]:
+        """(kind, detail) for a delivered work branch of this goal that the goal
+        root does not yet contain; ('', '') when none. The reconciler cannot see an
+        unmerged branch, so without this it would pay for the same work again
+        against the same tree. The kind says which person is needed for what:
+        AWAITING_MERGE -- factory/integration carries it, the Owner merges that;
+        DELIVERED_NOT_INTEGRATED -- red gates or a refused integration."""
         for m in self.missions.all():
-            if (m.get("goal") == key and m.get("isolated") and m.get("state") == ms.RECONCILED
-                    and iso.awaiting_merge(root, m.get("deliverable_head", ""),
-                                           m.get("base_commit", ""))):
-                return (f"branch {m.get('branch')} ({str(m.get('deliverable_head'))[:12]}) from "
-                        f"{m['id']} is not merged into the goal root; merge or discard it first")
-        return ""
+            head = m.get("deliverable_head", "")
+            if not (m.get("goal") == key and m.get("isolated") and m.get("state") == ms.RECONCILED
+                    and iso.awaiting_merge(root, head, m.get("base_commit", ""))):
+                continue
+            integ = m.get("integration") or {}
+            where = f"branch {m.get('branch')} ({str(head)[:12]}) from {m['id']}"
+            if (integ.get("state") in (iso.INTEGRATED, iso.ALREADY_INTEGRATED)
+                    and iso.integration_carries(root, head)):
+                return "AWAITING_MERGE", (
+                    f"INTEGRATED: {where} is on {iso.INTEGRATION_BRANCH}; the Owner merges "
+                    f"{iso.INTEGRATION_BRANCH} into the goal branch")
+            why = integ.get("reason") or ("integration moved away since"
+                                          if integ.get("state") in (iso.INTEGRATED,
+                                                                    iso.ALREADY_INTEGRATED)
+                                          else "never attempted")
+            return "DELIVERED_NOT_INTEGRATED", (
+                f"NOT_INTEGRATED({why}): {where} is not merged into the goal root and not on "
+                f"{iso.INTEGRATION_BRANCH}; a person merges, repairs or discards it")
+        return "", ""
 
     def _dispatch_work(self, log, state, root, write_set, base, tree, d, prov, key, rep) -> str:
         obligation = d.spec.get("obligation", "")

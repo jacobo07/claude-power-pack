@@ -27,6 +27,10 @@ Environment=GSDX_FOUNDER_KEYS=/etc/kobii-factory/founder_keys.json
 Environment=GSDX_FOUNDER_WITNESS=/var/lib/kobii-factory/witness
 Environment=GSDX_QUOTA_DIR=/var/lib/kobii-factory/quota
 Environment=GSDX_RESIDENT_STATE=/home/factory/.local/state/gsd-x/resident
+# The goal store is shared with factory-judge (group factory, setgid 2770): the
+# resident must create files and dirs the relay can append to. Witness modes are
+# set explicitly in code and do not depend on this (GEX44 drill, 2026-09-26).
+UMask=0007
 ExecStart=/usr/bin/python3 -B /home/factory/pp/tools/gsd_x_resident.py run
 # After the unit stops (clean exit, crash or `systemctl --user stop`): classify
 # every mission and report any process group that outlived the unit.

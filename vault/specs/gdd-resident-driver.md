@@ -103,6 +103,57 @@ the mission records `deliverable_head`.
 **The resident NEVER merges into, pushes, or rewrites the goal's branch.** The deliverable is the
 branch `resident/<mission-id>`; its commits reach the goal tree only when a person merges it.
 
+**Integration (Owner decision "option 1", 2026-09-25).** After a harvest that passed the write-set
+check and ingested its receipt, the resident offers the delivery on ONE dedicated branch,
+`factory/integration`, in the goal repo. Order, each step fail-closed, outcome recorded on the
+mission as `integration` = {state, reason, detail, gates, ref_before, ref_after}:
+1. `NOTHING_TO_INTEGRATE` — the worktree HEAD equals base (no commit delivered). No gates run.
+2. `INTEGRATION_WORKTREE_DIRTY` — the worktree holds uncommitted bytes; gates would judge bytes the
+   commit does not carry. No gates run.
+3. **Gates in the worktree.** Every obligation of the goal whose disposition is not retired
+   (DEFERRED/REJECTED/NOT_APPLICABLE) has its done gate run with cwd = the job's worktree, through a
+   dedicated `GateProvider` instance (run dir `<state>/runs/integration`) — the same supervised
+   process, own session/process group, result file and tree-kill cancel as any gate epoch; there is
+   no second gate runner. Each run is bounded by `Config.integration_gate_wall_s` (default 900 s)
+   and cancelled at the bound; a cancelled or unreadable run counts as NOT green. This runs
+   synchronously inside the cycle (the cycle is blocked for at most n_gates × bound). The results
+   are recorded on the mission as evidence and are **NOT** a satisfaction of any obligation: nothing
+   of them is written to the goal log. The goal is judged on its own tree only.
+   `NO_GATES` (the goal has no live gate — nothing proved) and `GATES_RED` (any gate not exit 0) ⇒
+   no integration. `INTEGRATION_HEAD_MOVED` — the worktree HEAD after the gates is not the commit
+   that was judged ⇒ no integration.
+4. **Fast-forward `factory/integration` to the job commit**, in this order:
+   `INTEGRATION_CHECKED_OUT` if `git worktree list --porcelain` shows `refs/heads/factory/integration`
+   checked out anywhere (updating a checked-out branch desynchronises that worktree's index from its
+   HEAD). If the ref does not exist it is created at the job's base with `git update-ref <ref> <base>
+   ""` (the empty old value = "must not exist"). Then `INTEGRATION_NOT_FAST_FORWARD` unless the
+   current tip is an ancestor of the job commit (`merge-base --is-ancestor`) — never merge, rebase or
+   force; a person decides. Then `git update-ref <ref> <job> <tip>` (compare-and-swap):
+   `INTEGRATION_RACE_LOST` if the ref moved since it was read. A tip already equal to the job commit
+   is `ALREADY_INTEGRATED`, not an error.
+   The resident touches NO other ref: never the goal's current branch, never a remote (no fetch,
+   no push), never `resident/*`.
+The engine's epoch outcome is unchanged by integration (the work epoch already ended with the
+provider's outcome); red gates are resident evidence, not an engine verdict.
+
+**The re-dispatch guard, qualified.** `WORK_AWAITING_MERGE` still blocks every re-dispatch while a
+delivered branch is not an ancestor of the goal root's HEAD, and now says which case holds:
+`INTEGRATED` (kind `AWAITING_MERGE`: `factory/integration` carries the delivery; the Owner merges
+`factory/integration` into the goal branch) or `NOT_INTEGRATED(<reason>)` (kind
+`DELIVERED_NOT_INTEGRATED`: red gates or a refused integration; a person merges, repairs or discards
+the branch). Both are person kinds. The guard clears by the existing merge detection once the goal
+HEAD contains the delivered commit. A second job starts from the goal HEAD; after the Owner's merge
+that HEAD contains the previous integration tip, so the second job fast-forwards on top of it. If the
+Owner squashed or rebased instead, the tip is no longer an ancestor ⇒ `INTEGRATION_NOT_FAST_FORWARD`.
+
+**What integration does NOT protect.** The checked-out test and the CAS are two reads, not one
+atomic step: a `git checkout factory/integration` landing between them is not seen. Green gates in
+the worktree say the job commit passed the gates *on its own base*; they say nothing about the
+commit merged onto a goal branch that moved since. A gate that writes untracked files into the
+worktree keeps that worktree from automatic removal (cleanup never deletes dirty trees). The
+integration ref is local only; nothing leaves the machine. Integration refusals do not retry: the
+record stays until a person acts.
+
 **Cleanup** (terminal missions only, every cycle and at census): `git worktree remove <path>` WITHOUT
 `--force`, attempted only when `git status --porcelain` in it is empty (git re-checks and refuses a
 dirty tree itself). The branch is ALWAYS kept. A dirty worktree is never removed: the mission records
@@ -116,7 +167,7 @@ recovery, and a later decision begins a new epoch with a new worktree); present 
 uncommitted bytes ⇒ UNCERTAIN (terminal, blocks its goal), nothing deleted.
 
 **Not built here:** a budget system (spend stays under provider caps + each provider's own
-per-day/wall bounds); running gates inside the worktree; merging.
+per-day/wall bounds); merging into the goal branch; pushing anything.
 
 ## Entrance
 `tools/gsd_x_resident.py` with `run` (the loop, what systemd calls), `once` (one cycle), `status

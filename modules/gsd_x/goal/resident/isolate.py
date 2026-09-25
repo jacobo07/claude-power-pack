@@ -12,7 +12,9 @@ ingested. Contract: vault/specs/gdd-resident-driver.md, "ISOLATED stage".
              the branch is always kept -- it IS the deliverable
 
 THE RESIDENT NEVER MERGES, PUSHES OR REWRITES THE GOAL'S BRANCH. The work
-reaches the goal tree only when a person merges `resident/<mission-id>`.
+reaches the goal tree only when a person merges it. After green gates in the
+worktree the resident FAST-FORWARDS one dedicated ref, `factory/integration`
+(`integrate`), by compare-and-swap, and touches no other ref.
 
 Everything here reads git through one helper that keeps stderr, because a
 refusal must carry git's own words, not a guess about them.
@@ -42,6 +44,20 @@ HISTORY_REWRITTEN = "HISTORY_REWRITTEN"
 LEFT_BRANCH = "LEFT_BRANCH"
 MAIN_BRANCH_MOVED = "MAIN_BRANCH_MOVED"
 UNREADABLE = "UNREADABLE"
+
+# Integration (Owner decision "option 1"): fast-forward ONE dedicated branch.
+INTEGRATION_BRANCH = "factory/integration"
+INTEGRATION_REF = f"refs/heads/{INTEGRATION_BRANCH}"
+INTEGRATED, ALREADY_INTEGRATED, INTEGRATION_REFUSED = (
+    "INTEGRATED", "ALREADY_INTEGRATED", "INTEGRATION_REFUSED")
+NOTHING_TO_INTEGRATE = "NOTHING_TO_INTEGRATE"
+INTEGRATION_WORKTREE_DIRTY = "INTEGRATION_WORKTREE_DIRTY"
+NO_GATES = "NO_GATES"
+GATES_RED = "GATES_RED"
+INTEGRATION_HEAD_MOVED = "INTEGRATION_HEAD_MOVED"
+INTEGRATION_CHECKED_OUT = "INTEGRATION_CHECKED_OUT"
+INTEGRATION_NOT_FAST_FORWARD = "INTEGRATION_NOT_FAST_FORWARD"
+INTEGRATION_RACE_LOST = "INTEGRATION_RACE_LOST"
 
 # Worktree inspection verdicts (census).
 ABSENT, PRISTINE, DIRTY, ADVANCED = "ABSENT", "PRISTINE", "DIRTY", "ADVANCED"
@@ -253,6 +269,88 @@ def check_harvest(mission: dict) -> dict:
     ev["reasons"] = reasons
     return {"ok": not reasons, "reason": "" if not reasons else WRITE_SET_VIOLATION,
             "evidence": ev}
+
+
+def worktree_list_has_branch(root: Path, ref: str) -> tuple[bool, str]:
+    """(checked_out, error). `git worktree list --porcelain` names the branch
+    each worktree -- the main one included -- has checked out."""
+    rc, out, err = git(root, "worktree", "list", "--porcelain")
+    if rc != 0:
+        return False, f"git worktree list rc={rc}: {err}"
+    return any(line.strip() == f"branch {ref}" for line in out.splitlines()), ""
+
+
+def read_ref(root: Path, ref: str) -> tuple[str, str]:
+    """(commit, error). ('', '') when the ref does not exist."""
+    rc, out, err = git(root, "rev-parse", "--verify", "-q", f"{ref}^{{commit}}")
+    if rc == 0:
+        return out.strip(), ""
+    rc2, out2, _ = git(root, "show-ref", "--verify", "-q", ref)
+    if rc2 != 0:
+        return "", ""                    # absent
+    return "", f"{ref} exists but does not resolve to a commit: {err}"
+
+
+def integrate(root: Path, job_commit: str, base: str) -> dict:
+    """Fast-forward refs/heads/factory/integration to `job_commit`. Touches that
+    one ref and nothing else; never merges, rebases, forces or pushes.
+
+    Returns {ok, state, reason, detail, ref_before, ref_after, created}."""
+    out = {"ok": False, "state": INTEGRATION_REFUSED, "reason": "", "detail": "",
+           "ref": INTEGRATION_REF, "ref_before": "", "ref_after": "", "created": False}
+
+    def refuse(reason: str, detail: str) -> dict:
+        out.update(reason=reason, detail=detail[:400])
+        out["ref_after"] = read_ref(root, INTEGRATION_REF)[0]
+        return out
+
+    if not job_commit or not base:
+        return refuse(UNREADABLE, f"job commit {job_commit!r} / base {base!r} missing")
+    busy, err = worktree_list_has_branch(root, INTEGRATION_REF)
+    if err:
+        return refuse(UNREADABLE, err)
+    if busy:
+        return refuse(INTEGRATION_CHECKED_OUT,
+                      f"{INTEGRATION_BRANCH} is checked out in a worktree; updating it there "
+                      "would desynchronise that worktree -- a person switches it away first")
+    cur, err = read_ref(root, INTEGRATION_REF)
+    if err:
+        return refuse(UNREADABLE, err)
+    out["ref_before"] = cur
+    if not cur:
+        rc, o, e = git(root, "update-ref", "-m", f"resident: create at base {base[:12]}",
+                       INTEGRATION_REF, base, "")
+        if rc != 0:
+            return refuse(INTEGRATION_RACE_LOST,
+                          f"creating {INTEGRATION_REF} at {base[:12]} refused: {e or o}")
+        out["created"] = True
+        cur = base
+    if cur == job_commit:
+        out.update(ok=True, state=ALREADY_INTEGRATED, ref_after=cur,
+                   detail=f"{INTEGRATION_BRANCH} already at {cur[:12]}")
+        return out
+    if not is_ancestor(root, cur, job_commit):
+        return refuse(INTEGRATION_NOT_FAST_FORWARD,
+                      f"{INTEGRATION_BRANCH} tip {cur[:12]} is not an ancestor of the job commit "
+                      f"{job_commit[:12]}; never merged, rebased or forced -- a person decides")
+    rc, o, e = git(root, "update-ref", "-m", f"resident: fast-forward to {job_commit[:12]}",
+                   INTEGRATION_REF, job_commit, cur)
+    if rc != 0:
+        return refuse(INTEGRATION_RACE_LOST,
+                      f"{INTEGRATION_REF} moved since it was read at {cur[:12]}: {e or o}")
+    after = read_ref(root, INTEGRATION_REF)[0]
+    if after != job_commit:
+        return refuse(INTEGRATION_RACE_LOST,
+                      f"{INTEGRATION_REF} reads {after[:12]} after the update, not {job_commit[:12]}")
+    out.update(ok=True, state=INTEGRATED, ref_after=after,
+               detail=f"{INTEGRATION_BRANCH} {cur[:12]} -> {after[:12]} (fast-forward)")
+    return out
+
+
+def integration_carries(root: Path, commit: str) -> bool:
+    """Does factory/integration currently contain `commit`?"""
+    tip = read_ref(root, INTEGRATION_REF)[0]
+    return bool(tip) and is_ancestor(root, commit, tip)
 
 
 def awaiting_merge(root: Path, delivered_head: str, base: str) -> bool:

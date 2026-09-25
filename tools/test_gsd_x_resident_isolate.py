@@ -12,7 +12,13 @@ Providers are fakes implementing the engine's provider contract; the work fake
 writes and commits in whatever cwd it is handed, so a resident that handed it
 the goal root would show up as a moved main branch. No real codex / claude.
 
-    python tools/test_gsd_x_resident_isolate.py
+V-INT gates (Owner decision "option 1"): after a passing harvest the goal's REAL
+gate is re-run inside the job worktree (GateProvider) and, only when green,
+`factory/integration` is fast-forwarded to the job commit by compare-and-swap.
+The content gate is green only for the job's bytes and red at the goal root, so
+a gate run in the wrong cwd shows up as a missing integration.
+
+    python tools/test_gsd_x_resident_isolate.py [--integration-only]
 """
 from __future__ import annotations
 
@@ -227,14 +233,31 @@ def new_state() -> Path:
     return Path(tempfile.mkdtemp(prefix="gsdx_iso_state_"))
 
 
+def make_repo_contentgate() -> Path:
+    """A repo whose REAL gate is green only when src/app.py reads `x = 2`: red at
+    the goal root (x = 1), green in a worktree whose job wrote x = 2. The goal's
+    gate epochs still go to the FailingGate fake; the integration re-run is real."""
+    d = make_repo()
+    (d / "gate.py").write_text(
+        "import sys\n"
+        "sys.exit(0 if open('src/app.py', encoding='utf-8').read().strip() == 'x = 2' else 1)\n",
+        encoding="utf-8")
+    git(d, "add", "gate.py")
+    git(d, "commit", "-qm", "content gate")
+    return d
+
+
 def build(goals_root, gid, action, paths=("src",), state=None, fault=None, work_name="codex",
-          gain_window_s=6 * 3600.0):
-    repo = make_repo()
+          gain_window_s=6 * 3600.0, repo_maker=make_repo, setup=None):
+    repo = repo_maker()
+    if setup is not None:
+        setup(repo)
     lg = make_goal(goals_root, gid, repo, list(paths))
     gate, work = FailingGate(), FakeWork(action, work_name)
     st = state or new_state()
     r = cycle.Resident(ROOT, {"gate": gate, work_name: work}, goals=[(lg, repo)], state_dir=st,
-                       config=cycle.Config(cancel_grace_s=0.0, gain_window_s=gain_window_s),
+                       config=cycle.Config(cancel_grace_s=0.0, gain_window_s=gain_window_s,
+                                           integration_gate_wall_s=120.0),
                        info=FakeInfo(), fault=fault)
     r.start()
     return repo, lg, gate, work, r, st
@@ -262,6 +285,253 @@ def branch_exists(repo, branch):
     return git_rc(repo, "rev-parse", "--verify", "-q", f"refs/heads/{branch}") == 0
 
 
+# --- integration (Owner decision "option 1") ----------------------------------------------
+
+INT_REF = "refs/heads/factory/integration"
+NETWORK_VERBS = {"push", "fetch", "pull", "clone", "ls-remote", "remote", "send-pack"}
+
+
+def act_red(wt):
+    (wt / "src" / "app.py").write_text("x = 7\n", encoding="utf-8")
+    commit_all(wt, "in scope, gate stays red")
+
+
+def act_second(wt):
+    (wt / "src" / "b.py").write_text("y = 2\n", encoding="utf-8")
+    commit_all(wt, "second job, in scope")
+
+
+def ref_of(repo, ref=INT_REF) -> str:
+    return iso.read_ref(repo, ref)[0]
+
+
+def other_refs(repo) -> list:
+    """Every ref except the two the resident may write: resident/* and factory/integration."""
+    out = git(repo, "for-each-ref", "--format=%(refname) %(objectname)")
+    return sorted(l for l in out.splitlines()
+                  if not l.startswith(("refs/heads/resident/", INT_REF + " ")))
+
+
+def child_commit(repo, parent, msg) -> str:
+    tree = git(repo, "rev-parse", f"{parent}^{{tree}}")
+    return git(repo, "commit-tree", tree, "-p", parent, "-m", msg)
+
+
+def integration_scenarios(check, goals_root) -> None:
+    # --- green in the worktree: created at base, fast-forwarded; second job on top ---------
+    repo, lg, gate, work, r, st = build(goals_root, "g-int-green", act_in_scope,
+                                        repo_maker=make_repo_contentgate)
+    git(repo, "remote", "add", "origin", "file:///Z:/no/such/remote/resident.git")
+    before_main, before_refs = main_state(repo), other_refs(repo)
+    calls: list = []
+    real_git = iso.git
+
+    def spy_git(root, *args, **kw):
+        calls.append(args)
+        return real_git(root, *args, **kw)
+    iso.git = spy_git
+    try:
+        drive(r)
+    finally:
+        iso.git = real_git
+    m = work_missions(r)[0]
+    integ = m.get("integration") or {}
+    job, base = m.get("deliverable_head", ""), m.get("base_commit", "")
+    rows = integ.get("gates") or []
+    prev = git(repo, "rev-parse", f"{INT_REF}@{{1}}") if ref_of(repo) else ""
+    check("V-INT-GREEN-FAST-FORWARD",
+          integ.get("state") == iso.INTEGRATED and integ.get("created") and ref_of(repo) == job
+          and job and job != base and prev == base and integ.get("ref_before") == "",
+          f"green gates: {iso.INTEGRATION_BRANCH} created at base {base[:12]} then fast-forwarded "
+          f"to the job commit {job[:12]} (reflog @{{1}} = base)",
+          f"state={integ.get('state')} reason={integ.get('reason')} {integ.get('detail')} "
+          f"ref={ref_of(repo)[:12]} job={job[:12]} prev={prev[:12]}")
+    root_rc = subprocess.run([sys.executable, "gate.py"], cwd=str(repo), env=ENV,
+                             capture_output=True, timeout=120).returncode
+    check("V-INT-GATES-RAN-IN-WORKTREE",
+          rows and all(x["green"] and x["exit_status"] == 0 for x in rows)
+          and all(Path(x["cwd"]) == Path(m["worktree"]) for x in rows) and root_rc == 1,
+          f"{len(rows)} gate(s) exit 0 with cwd = the job worktree; control: the same gate at "
+          f"the goal root exits {root_rc}", f"rows={rows} root_rc={root_rc}")
+    ob = cv.project_convergence(gc.project(lg)).obligations["ob-outcome"]
+    check("V-INT-NOT-A-SATISFACTION", ob.disposition != cv.SATISFIED,
+          f"green worktree gates are mission evidence only; obligation stays {ob.disposition}",
+          f"obligation became {ob.disposition}")
+    check("V-INT-MAIN-UNTOUCHED-GREEN",
+          main_state(repo) == before_main and other_refs(repo) == before_refs,
+          "goal HEAD/ref/status and every other ref identical; only factory/integration moved",
+          f"{before_main} -> {main_state(repo)}; refs {before_refs} -> {other_refs(repo)}")
+    verbs = {a[0] for a in calls if a}
+    check("V-INT-NO-NETWORK",
+          "update-ref" in verbs and not (verbs & NETWORK_VERBS)
+          and git(repo, "for-each-ref", "refs/remotes") == "",
+          f"{len(calls)} resident git calls seen (incl. update-ref), none of {sorted(NETWORK_VERBS)}; "
+          "the bogus remote was never contacted (no remote-tracking refs)",
+          f"verbs={sorted(verbs)}")
+    n_before = len(work.specs)
+    reps = [r.once() for _ in range(2)]
+    notes = " ".join(n for rp in reps for n in rp.notes)
+    kind, _ = r._awaiting_merge(m["goal"], repo)
+    check("V-INT-GUARD-INTEGRATED",
+          kind == "AWAITING_MERGE" and "INTEGRATED:" in notes and iso.WORK_AWAITING_MERGE in notes
+          and len(work.specs) == n_before and main_state(repo) == before_main,
+          "delivered AND integrated: re-dispatch blocked, kind AWAITING_MERGE (the Owner merges "
+          "factory/integration)", f"kind={kind} dispatches {n_before}->{len(work.specs)} "
+          f"notes={notes[:200]}")
+    # The Owner merges factory/integration; the guard clears; the next job lands on top.
+    # git_rc, not git: with no integration ref the merge fails, and the checks
+    # below must report that rather than the harness aborting on it.
+    git_rc(repo, "merge", "-q", "--ff-only", "factory/integration")
+    owner_head = git(repo, "rev-parse", "HEAD")
+    work.action = act_second
+    for _ in range(12):
+        r.once()
+        wm = work_missions(r)
+        if len(wm) >= 2 and all(x["state"] in ms.TERMINAL for x in wm):
+            break
+    wm = sorted(work_missions(r), key=lambda x: x.get("created_ts", 0))
+    m2 = wm[1] if len(wm) >= 2 else {}
+    i2 = m2.get("integration") or {}
+    check("V-INT-SEQUENTIAL-FAST-FORWARD",
+          m2 and m2.get("base_commit") == job and i2.get("state") == iso.INTEGRATED
+          and not i2.get("created") and i2.get("ref_before") == job
+          and ref_of(repo) == m2.get("deliverable_head")
+          and git(repo, "rev-parse", f"{INT_REF}@{{1}}") == job,
+          f"after the Owner's merge the second job (base {job[:12]}) fast-forwards "
+          f"{iso.INTEGRATION_BRANCH} {job[:12]} -> {str(m2.get('deliverable_head'))[:12]}",
+          f"missions={len(wm)} m2 state={m2.get('state')} base={str(m2.get('base_commit'))[:12]} "
+          f"integ={i2.get('state')} {i2.get('reason')} {i2.get('detail')}")
+    check("V-INT-MAIN-ONLY-OWNER-MOVED",
+          git(repo, "rev-parse", "HEAD") == owner_head
+          and git(repo, "status", "--porcelain", "--untracked-files=all") == "",
+          f"the goal HEAD is exactly the Owner's merge {owner_head[:12]}; the resident never "
+          "moved it", f"HEAD={git(repo, 'rev-parse', 'HEAD')[:12]}")
+    r.close()
+
+    # --- red gate in the worktree: no ref change, guard says NOT_INTEGRATED ----------------
+    repo, lg, gate, work, r, st = build(goals_root, "g-int-red", act_red,
+                                        repo_maker=make_repo_contentgate)
+    before_main, before_refs = main_state(repo), other_refs(repo)
+    drive(r)
+    m = work_missions(r)[0]
+    integ = m.get("integration") or {}
+    check("V-INT-RED-NO-REF",
+          m["state"] == ms.RECONCILED and integ.get("reason") == iso.GATES_RED
+          and ref_of(repo) == "" and any(not x["green"] for x in integ.get("gates") or []),
+          f"red gate in the worktree: {integ.get('reason')}, {iso.INTEGRATION_BRANCH} never "
+          "created; red gates recorded on the mission",
+          f"state={m['state']} integ={integ.get('state')} {integ.get('reason')} "
+          f"ref={ref_of(repo)[:12]}")
+    reps = [r.once() for _ in range(2)]
+    notes = " ".join(n for rp in reps for n in rp.notes)
+    kind, _ = r._awaiting_merge(m["goal"], repo)
+    check("V-INT-GUARD-NOT-INTEGRATED",
+          kind == "DELIVERED_NOT_INTEGRATED" and f"NOT_INTEGRATED({iso.GATES_RED})" in notes
+          and len(work.specs) == 1,
+          "delivered but not integrated: re-dispatch blocked with its own reason (GATES_RED)",
+          f"kind={kind} specs={len(work.specs)} notes={notes[:200]}")
+    check("V-INT-MAIN-UNTOUCHED-RED",
+          main_state(repo) == before_main and other_refs(repo) == before_refs,
+          "goal main and every other ref identical", f"{before_main} -> {main_state(repo)}")
+    r.close()
+
+    # --- integration tip elsewhere (not an ancestor): refused, ref unchanged -----------------
+    side = {}
+
+    def setup_side(rp):
+        side["c"] = child_commit(rp, git(rp, "rev-parse", "HEAD"), "someone else's side commit")
+        git(rp, "update-ref", INT_REF, side["c"])
+    repo, lg, gate, work, r, st = build(goals_root, "g-int-noff", act_in_scope,
+                                        repo_maker=make_repo_contentgate, setup=setup_side)
+    before_main, before_refs = main_state(repo), other_refs(repo)
+    drive(r)
+    m = work_missions(r)[0]
+    integ = m.get("integration") or {}
+    check("V-INT-NOT-FAST-FORWARD",
+          integ.get("reason") == iso.INTEGRATION_NOT_FAST_FORWARD and ref_of(repo) == side["c"]
+          and bool(integ.get("gates")) and all(x["green"] for x in integ.get("gates") or []),
+          f"tip {side['c'][:12]} not an ancestor of the job: {integ.get('reason')}, ref unchanged "
+          "(gates were green, so the refusal is the ancestry rule)",
+          f"{integ.get('state')} {integ.get('reason')} ref={ref_of(repo)[:12]}")
+    check("V-INT-MAIN-UNTOUCHED-NOFF",
+          main_state(repo) == before_main and other_refs(repo) == before_refs,
+          "goal main and every other ref identical", f"{before_main} -> {main_state(repo)}")
+    r.close()
+
+    # --- integration checked out in a worktree: refused, ref and that worktree unchanged ------
+    wt_hold = {}
+
+    def setup_checked_out(rp):
+        git(rp, "branch", "factory/integration", "HEAD")
+        p = Path(tempfile.mkdtemp(prefix="gsdx_int_co_")) / "wt"
+        git(rp, "worktree", "add", "-q", str(p), "factory/integration")
+        wt_hold["p"], wt_hold["tip"] = p, git(rp, "rev-parse", "HEAD")
+    repo, lg, gate, work, r, st = build(goals_root, "g-int-co", act_in_scope,
+                                        repo_maker=make_repo_contentgate, setup=setup_checked_out)
+    before_main, before_refs = main_state(repo), other_refs(repo)
+    drive(r)
+    m = work_missions(r)[0]
+    integ = m.get("integration") or {}
+    check("V-INT-CHECKED-OUT-REFUSED",
+          integ.get("reason") == iso.INTEGRATION_CHECKED_OUT and ref_of(repo) == wt_hold["tip"]
+          and git(wt_hold["p"], "rev-parse", "HEAD") == wt_hold["tip"]
+          and git(wt_hold["p"], "status", "--porcelain") == "",
+          f"{iso.INTEGRATION_BRANCH} checked out elsewhere: {integ.get('reason')}; ref and that "
+          "worktree untouched", f"{integ.get('state')} {integ.get('reason')} "
+          f"ref={ref_of(repo)[:12]}")
+    check("V-INT-MAIN-UNTOUCHED-CO",
+          main_state(repo) == before_main and other_refs(repo) == before_refs,
+          "goal main and every other ref identical", f"{before_main} -> {main_state(repo)}")
+    r.close()
+
+    # --- CAS: the ref moves between read and update ------------------------------------------
+    repo = make_repo()
+    base = git(repo, "rev-parse", "HEAD")
+    job = child_commit(repo, base, "job")
+    racer = child_commit(repo, base, "racer")
+    git(repo, "update-ref", INT_REF, base)
+    real_anc = iso.is_ancestor
+
+    def racing_ancestor(root, a, b):
+        if a == base and b == job:
+            real_git(root, "update-ref", INT_REF, racer)     # someone else moves the ref now
+        return real_anc(root, a, b)
+    iso.is_ancestor = racing_ancestor
+    try:
+        res = iso.integrate(repo, job, base)
+    finally:
+        iso.is_ancestor = real_anc
+    check("V-INT-CAS-RACE-REFUSED",
+          not res["ok"] and res["reason"] == iso.INTEGRATION_RACE_LOST and ref_of(repo) == racer,
+          f"ref moved {base[:12]} -> {racer[:12]} between read and update: {res['reason']}; the "
+          "racer's value survives", f"{res} ref={ref_of(repo)[:12]}")
+    git(repo, "update-ref", INT_REF, base)
+    res_ok = iso.integrate(repo, job, base)
+    check("V-INT-CAS-CONTROL", res_ok["ok"] and ref_of(repo) == job,
+          "control: the same integration with nothing racing fast-forwards", f"{res_ok}")
+    # creation race: absent at read, created by someone else before our create
+    git(repo, "update-ref", "-d", INT_REF)
+    real_read = iso.read_ref
+    n_read = {"n": 0}
+
+    def racing_read(root, ref):
+        got = real_read(root, ref)
+        n_read["n"] += 1
+        if n_read["n"] == 1:
+            real_git(root, "update-ref", ref, racer)
+        return got
+    iso.read_ref = racing_read
+    try:
+        res_c = iso.integrate(repo, job, base)
+    finally:
+        iso.read_ref = real_read
+    check("V-INT-CAS-CREATE-RACE",
+          not res_c["ok"] and res_c["reason"] == iso.INTEGRATION_RACE_LOST
+          and ref_of(repo) == racer,
+          "absent at read, created by someone else before our create: refused, theirs kept",
+          f"{res_c} ref={ref_of(repo)[:12]}")
+
+
 def main() -> int:
     passes, fails = [], []
 
@@ -275,6 +545,14 @@ def main() -> int:
     goals_root.mkdir(parents=True)
     os.environ["GSDX_GOALS_ROOT"] = str(goals_root)
     green_record()
+
+    if "--integration-only" in sys.argv:
+        integration_scenarios(check, goals_root)
+        total = len(passes) + len(fails)
+        if fails:
+            print(f"\nFAILED: {fails}")
+        print(f"GSDX_RESIDENT_INTEGRATION_ONLY_PASS={len(passes)}/{total}")
+        return 0 if not fails else 1
 
     # --- unit: the write set -----------------------------------------------------------
     repo0 = make_repo()
@@ -579,6 +857,8 @@ def main() -> int:
           "control of the block: the goal dispatches nothing more until a person reconciles",
           f"{rep.skipped}")
     r3.close()
+
+    integration_scenarios(check, goals_root)
 
     total = len(passes) + len(fails)
     if fails:
