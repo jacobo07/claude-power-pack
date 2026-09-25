@@ -179,6 +179,39 @@ def main() -> int:
           and max(i for i, a in enumerate(argv) if a in ("--add-dir", "--allowedTools")) < len(argv) - 4,
           str(argv))
 
+    # --- workstream binding (2026-09-25: a bare /gsd-autonomous ran the ROOT milestone) ------
+    rec = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws", workstream="lobby-ws", now=NOW)
+    check("V-MC-WS-BOUND-AT-CREATE", rec["resume_command"] == "/gsd-autonomous --ws lobby-ws",
+          rec["resume_command"])
+    rec = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws-none", now=NOW)
+    check("V-MC-WS-NONE-UNCHANGED", rec["resume_command"] == "/gsd-autonomous", rec["resume_command"])
+    rec = gm.create(TMP, "/gsd-autonomous --ws lobby-ws --from 3", mission_id="m-ws-same",
+                    workstream="lobby-ws", now=NOW)
+    check("V-MC-WS-EXPLICIT-NOT-DOUBLED",
+          rec["resume_command"] == "/gsd-autonomous --ws lobby-ws --from 3", rec["resume_command"])
+    check("V-MC-WS-NON-GSD-UNCHANGED", gm.bind_workstream("/mc-task", "lobby-ws") == "/mc-task")
+    try:
+        gm.create(TMP, "/gsd-autonomous --ws other", mission_id="m-ws-bad", workstream="lobby-ws",
+                  now=NOW)
+        _fail("V-MC-WS-CONFLICT-REFUSED", "a --ws naming another workstream was accepted")
+    except gm.MissionError:
+        _ok("V-MC-WS-CONFLICT-REFUSED")
+    # A record armed BEFORE the fix holds the bare command: the launch itself must bind it.
+    legacy = gm.create(TMP, "/gsd-autonomous", mission_id="m-ws-legacy", now=NOW)
+    legacy["workstream"] = "lobby-ws"
+    gm._write(gm.mission_path("m-ws-legacy"), legacy)
+    ws_calls = []
+
+    def runner_ws(argv, cwd):
+        ws_calls.append(argv)
+        return R("backgrounded · 5e6f7a8b · m-ws-legacy-e1\n")
+
+    gm.launch_worker("m-ws-legacy", expect_epoch=0, expect_state=gm.PREPARED, reason="t",
+                     runner=runner_ws, now=NOW)
+    check("V-MC-WS-LEGACY-LAUNCH-BINDS",
+          bool(ws_calls) and ws_calls[-1][-1] == "/gsd-autonomous --ws lobby-ws",
+          str(ws_calls[-1][-1] if ws_calls else None))
+
     gm.create(TMP, "/gsd-autonomous --from 2", mission_id="m-l", now=NOW)
     res = gm.launch_worker("m-l", expect_epoch=0, expect_state=gm.PREPARED, reason="t",
                            runner=runner_ok, now=NOW)

@@ -133,6 +133,30 @@ class _Lock:
         self.path.unlink(missing_ok=True)
 
 
+_WS_FLAG = re.compile(r"(?:^|\s)--ws(?:=|\s+)(\S+)")
+
+
+def bind_workstream(command: str, workstream: str | None) -> str:
+    """The command a worker actually types, with the mission's workstream IN it.
+
+    The record's `workstream` field is read only by the supervisor (GSD status, finish test).
+    The worker's /gsd-* command resolves its roadmap from its own session pointer, which a
+    fresh `claude --bg` session never has -- so a bare `/gsd-autonomous` ran the ROOT
+    milestone. Measured 2026-09-25: m-1d270cd85220, armed --workstream luckyarena-lobby,
+    spent its first worker re-verifying another track's P0-A phases 1-3 and parked on that
+    track's Phase 4 question; zero Lobby work. Missions armed with an explicit `--ws` never
+    did. A `--ws` naming a DIFFERENT workstream is a contradiction, not a preference."""
+    if not workstream or not command.startswith("/gsd-"):
+        return command
+    m = _WS_FLAG.search(command)
+    if m:
+        if m.group(1) != workstream:
+            raise MissionError(f"command names --ws {m.group(1)} but the mission's workstream "
+                               f"is {workstream}")
+        return command
+    return f"{command} --ws {workstream}"
+
+
 def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
            workstream: str | None = None, mission_terms=None,
            max_cycles: int | None = None, max_hours: float | None = None,
@@ -141,6 +165,7 @@ def create(cwd: str, resume_command: str, *, mission_id: str | None = None,
            wall: dict | None = None) -> dict:
     """A PREPARED mission. Refuses to overwrite an existing, non-terminal one."""
     now = time.time() if now is None else now
+    resume_command = bind_workstream(resume_command, workstream)
     mid = mission_id or f"m-{uuid.uuid4().hex[:12]}"
     path = mission_path(mid)
     with _Lock(path.with_suffix(".lock")):
@@ -482,7 +507,9 @@ def launch_worker(mission_id: str, *, expect_epoch: int, expect_state, reason: s
                      pending={"kind": "worker_start", "epoch": epoch,
                               "requested_at": now, "deadline": now + START_DEADLINE_S},
                      **extra)
-    prompt = rec["resume_command"]
+    # Bound here too, not only at create: a record armed before bind_workstream existed still
+    # carries the bare command, and its relay would put the successor on the root milestone.
+    prompt = bind_workstream(rec["resume_command"], rec.get("workstream"))
     run = runner or (lambda argv, cwd: subprocess.run(
         argv, cwd=cwd, capture_output=True, text=True, encoding="utf-8",
         errors="replace", timeout=180))
@@ -578,7 +605,7 @@ def render_card(rec: dict, git_facts: dict | None = None, gsd_facts: str = "") -
         f"MISSION CONTINUITY — you are worker epoch {rec['epoch']} of mission {rec['mission_id']}.",
         "You have no memory of earlier workers. Durable state is the repository and GSD, not this card.",
         f"Project: {rec['cwd']}",
-        f"Resume command: {rec['resume_command']}",
+        f"Resume command: {bind_workstream(rec['resume_command'], rec.get('workstream'))}",
         "",
         "RECONCILE BEFORE ACTING (run these first and say what you found):",
         "  git status --short ; git log --oneline -5 ; GSD progress for the active milestone",
