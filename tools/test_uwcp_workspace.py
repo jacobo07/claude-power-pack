@@ -373,7 +373,12 @@ def run(tmp: Path) -> None:
     git(cc, "update-index", "--add", "--cacheinfo", f"100644,{ob},A.txt")
     git(cc, "update-index", "--add", "--cacheinfo", f"100644,{ob},a.txt")
     git(cc, "commit", "-q", "-m", "twins")
+    # Both names on disk. On NTFS they are one file; on Linux writing only A.txt left
+    # a.txt as an unstaged DELETION, which the capture rightly carried, so the tree
+    # had no twins and the gate failed on GEX44 (uwc-20260925-171136) -- a fixture
+    # premise that held only on the development plane.
     (cc / "A.txt").write_bytes(b"same\n")
+    (cc / "a.txt").write_bytes(b"same\n")
     ccm = ws.capture(cc, tmp / "c_cc", scope_paths=["."])
     ccn = mkrepo(tmp / "cc_node")
     git(ccn, "config", "core.ignorecase", "true")
