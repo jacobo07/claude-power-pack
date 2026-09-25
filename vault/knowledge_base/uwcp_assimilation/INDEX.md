@@ -6,6 +6,10 @@ Research done 2026-09-25 for the Universal Workstream Continuity Plane. Plan:
 SHA or tag, date). Confidence per claim: VERIFIED (raw file read), OBSERVED (fetch-tool summary),
 RECALLED (prior knowledge, not re-fetched) -- the research files mark each.
 
+UKDL from this program (3 hard rules, 8 process rules, 12 traps): `UKDL.md`. Failure corpus:
+`vault/datasets/uwcp/external_failure_corpus.jsonl` (gate `tools/test_external_failure_corpus.py`).
+Mutation drill specs per module: `mutations/` (runner `tools/lane_r_mutate.py`).
+
 Reports: `A1_temporal_etcd.md` · `A2_tla_jepsen.md` · `B1_cas_workspace.md` ·
 `B2_routing_obs_thresholds.md` · `L0_local_reality.md` (our own code) · `S_synthesis_core.md`.
 Phase-4 audit (oneshot-architect-auditor, REVISE, 21 gaps, all accepted) is summarised in §P4 below.
