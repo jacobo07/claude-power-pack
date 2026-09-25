@@ -253,3 +253,18 @@ confirmation of the fix in `e5aff74`.
 - **Obligation summary:** Copyright (c) **Kamran Ahmed** — the license states no year.
   Reproduce the notice verbatim including the absent year; do not supply one. No appended
   clause.
+
+### TLA+ tools (tla2tools.jar, TLC) — MIT
+
+- **Source:**    https://github.com/tlaplus/tlaplus (release v1.7.4 "Xenophanes", 2024-08-05; TLC2 Version 2.19 rev 5a47802)
+- **Snapshot:**  not bundled. Downloaded to `C:\Users\User\Apps\tla\tla2tools-1.7.4.jar` (outside git), sha256 `936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88`, 2,274,532 bytes. GitHub publishes no digest for this 2024 asset: the pin is trust-on-first-use; the size matched the release metadata.
+- **Adapter:**   `tools/test_uwcp_tla.py` (invokes `java -cp <jar> tlc2.TLC`; refuses a jar whose sha256 differs)
+- **Added:**     2026-09-25
+- **Gate verdict:** PERMISSIVE
+- **Redistribution:** allowed (not redistributed: dev-only, never deployed to the VPS or GEX44)
+- **Integration mode:** passthrough (development-time model checker)
+- **License file:** `LICENSE` at tag v1.7.4, text sha256 `45364edd2a021d51b9d75bfc96a49ca5573286f00034acf324f0ffc067f2f9c4`
+- **Fingerprint:** not run through `license_gate.js` (no source is vendored); license text read at the pinned tag.
+- **Confidence:** VERIFIED (full LICENSE text read at the pinned tag, 2026-09-25)
+- **Exit plan:** the gate reports UNJUDGED without the jar and nothing else depends on it. The spec `vault/specs/tla/UWCP.tla` is plain TLA+; it has NOT been checked under any other tool (Apalache would need type annotations and Java 21).
+- **Obligation summary:** Copyright (c) 2017 Microsoft Corporation. MIT: keep the notice if the jar is ever redistributed; it is not.

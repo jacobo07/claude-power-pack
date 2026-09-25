@@ -1,0 +1,247 @@
+# TLC counterexample for UWCP_mutant_nofence.cfg (predicted: StaleFenceCannotAdvance)
+Error: Invariant StaleFenceCannotAdvance is violated.
+Error: The behavior up to this point is:
+State 1: <Initial predicate>
+/\ pending = (e1 :> FALSE @@ e2 :> FALSE)
+/\ goal = "active"
+/\ blocked = (e1 :> FALSE @@ e2 :> FALSE)
+/\ gen = 0
+/\ st = (e1 :> "idle" @@ e2 :> "idle")
+/\ alive = (e1 :> FALSE @@ e2 :> FALSE)
+/\ receiptAfterEnd = FALSE
+/\ efence = (e1 :> 0 @@ e2 :> 0)
+/\ staleEffect = FALSE
+/\ obs = (e1 :> "none" @@ e2 :> "none")
+
+State 2: <Begin line 75, col 5 to line 81, col 85 of module UWCP>
+/\ pending = (e1 :> FALSE @@ e2 :> FALSE)
+/\ goal = "active"
+/\ blocked = (e1 :> FALSE @@ e2 :> FALSE)
+/\ gen = 1
+/\ st = (e1 :> "idle" @@ e2 :> "dispatching")
+/\ alive = (e1 :> FALSE @@ e2 :> FALSE)
+/\ receiptAfterEnd = FALSE
+/\ efence = (e1 :> 0 @@ e2 :> 1)
+/\ staleEffect = FALSE
+/\ obs = (e1 :> "none" @@ e2 :> "none")
+
+State 3: <Launch line 84, col 5 to line 88, col 86 of module UWCP>
+/\ pending = (e1 :> FALSE @@ e2 :> FALSE)
+/\ goal = "active"
+/\ blocked = (e1 :> FALSE @@ e2 :> FALSE)
+/\ gen = 1
+/\ st = (e1 :> "idle" @@ e2 :> "running")
+/\ alive = (e1 :> FALSE @@ e2 :> TRUE)
+/\ receiptAfterEnd = FALSE
+/\ efence = (e1 :> 0 @@ e2 :> 1)
+/\ staleEffect = FALSE
+/\ obs = (e1 :> "none" @@ e2 :> "running")
+
+State 4: <Cancel line 158, col 5 to line 161, col 91 of module UWCP>
+/\ pending = (e1 :> FALSE @@ e2 :> FALSE)
+/\ goal = "cancelled"
+/\ blocked = (e1 :> FALSE @@ e2 :> FALSE)
+/\ gen = 2
+/\ st = (e1 :> "idle" @@ e2 :> "running")
+/\ alive = (e1 :> FALSE @@ e2 :> TRUE)
+/\ receiptAfterEnd = FALSE
+/\ efence = (e1 :> 0 @@ e2 :> 1)
+/\ staleEffect = FALSE
+/\ obs = (e1 :> "none" @@ e2 :> "running")
+
+State 5: <Effect line 92, col 5 to line 95, col 89 of module UWCP>
+/\ pending = (e1 :> FALSE @@ e2 :> FALSE)
+/\ goal = "cancelled"
+/\ blocked = (e1 :> FALSE @@ e2 :> FALSE)
+/\ gen = 2
+/\ st = (e1 :> "idle" @@ e2 :> "running")
+/\ alive = (e1 :> FALSE @@ e2 :> TRUE)
+/\ receiptAfterEnd = FALSE
+/\ efence = (e1 :> 0 @@ e2 :> 1)
+/\ staleEffect = TRUE
+/\ obs = (e1 :> "none" @@ e2 :> "running")
+
+The coverage statistics at 2026-09-25 17:13:00
+<Init line 59, col 1 to line 59, col 4 of module UWCP>: 2:2
+  line 60, col 5 to line 69, col 30 of module UWCP: 2
+<Begin line 74, col 1 to line 74, col 8 of module UWCP>: 2:4
+  line 75, col 8 to line 75, col 22 of module UWCP: 187
+  |line 75, col 8 to line 75, col 11 of module UWCP: 183
+  line 75, col 27 to line 75, col 40 of module UWCP: 140
+  |line 75, col 27 to line 75, col 31 of module UWCP: 136
+  line 75, col 45 to line 75, col 53 of module UWCP: 74
+  |line 75, col 45 to line 75, col 48 of module UWCP: 70
+  ||line 45, col 11 to line 45, col 63 of module UWCP: 70
+  |||line 45, col 27 to line 45, col 62 of module UWCP: 140
+  |||line 45, col 18 to line 45, col 23 of module UWCP: 70
+  |line 75, col 52 to line 75, col 53 of module UWCP: 70
+  line 76, col 8 to line 76, col 23 of module UWCP: 4
+  |line 76, col 8 to line 76, col 10 of module UWCP: 13
+  |line 76, col 14 to line 76, col 23 of module UWCP: 13
+  line 77, col 8 to line 77, col 33 of module UWCP: 13
+  line 72, col 44 to line 72, col 78 of module UWCP: 4
+  |line 72, col 44 to line 72, col 58 of module UWCP: 13
+  |line 72, col 63 to line 72, col 78 of module UWCP: 9
+  line 72, col 29 to line 72, col 40 of module UWCP: 13
+  line 77, col 51 to line 77, col 51 of module UWCP: 13
+  line 78, col 8 to line 78, col 45 of module UWCP: 4
+  line 79, col 8 to line 79, col 21 of module UWCP: 4
+  line 80, col 8 to line 80, col 47 of module UWCP: 4
+  line 81, col 8 to line 81, col 85 of module UWCP: 4
+<Launch line 83, col 1 to line 83, col 9 of module UWCP>: 2:23
+  line 84, col 8 to line 84, col 28 of module UWCP: 205
+  |line 84, col 8 to line 84, col 12 of module UWCP: 182
+  line 85, col 8 to line 85, col 41 of module UWCP: 23
+  line 86, col 8 to line 86, col 42 of module UWCP: 23
+  line 87, col 8 to line 87, col 43 of module UWCP: 23
+  line 88, col 8 to line 88, col 86 of module UWCP: 23
+<Effect line 91, col 1 to line 91, col 9 of module UWCP>: 2:30
+  line 92, col 8 to line 92, col 15 of module UWCP: 28
+  |line 92, col 8 to line 92, col 12 of module UWCP: 181
+  |line 92, col 14 to line 92, col 14 of module UWCP: 181
+  line 94, col 11 to line 94, col 71 of module UWCP: 28
+  |line 94, col 27 to line 94, col 70 of module UWCP: 30
+  line 95, col 8 to line 95, col 89 of module UWCP: 28
+<Finish line 97, col 1 to line 97, col 9 of module UWCP>: 2:27
+  line 98, col 8 to line 98, col 15 of module UWCP: 27
+  |line 98, col 8 to line 98, col 12 of module UWCP: 178
+  |line 98, col 14 to line 98, col 14 of module UWCP: 178
+  line 99, col 8 to line 99, col 43 of module UWCP: 27
+  line 100, col 8 to line 100, col 46 of module UWCP: 27
+  line 101, col 8 to line 101, col 86 of module UWCP: 27
+<Crash line 103, col 1 to line 103, col 8 of module UWCP>: 2:27
+  line 104, col 8 to line 104, col 15 of module UWCP: 27
+  |line 104, col 8 to line 104, col 12 of module UWCP: 178
+  |line 104, col 14 to line 104, col 14 of module UWCP: 178
+  line 105, col 8 to line 105, col 43 of module UWCP: 27
+  line 106, col 8 to line 106, col 95 of module UWCP: 27
+<NodeUnreachable line 108, col 1 to line 108, col 18 of module UWCP>: 6:42
+  line 109, col 8 to line 109, col 37 of module UWCP: 220
+  |line 109, col 8 to line 109, col 12 of module UWCP: 178
+  |line 109, col 18 to line 109, col 37 of module UWCP: 178
+  line 109, col 42 to line 109, col 71 of module UWCP: 100
+  |line 109, col 42 to line 109, col 47 of module UWCP: 58
+  |line 109, col 53 to line 109, col 71 of module UWCP: 58
+  line 110, col 8 to line 110, col 43 of module UWCP: 42
+  line 111, col 8 to line 111, col 97 of module UWCP: 42
+<ObserveOK line 113, col 1 to line 113, col 12 of module UWCP>: 0:13
+  line 114, col 8 to line 114, col 25 of module UWCP: 191
+  |line 114, col 8 to line 114, col 13 of module UWCP: 178
+  line 115, col 8 to line 115, col 73 of module UWCP: 13
+  line 116, col 8 to line 116, col 47 of module UWCP: 13
+  line 117, col 8 to line 117, col 88 of module UWCP: 13
+<ObserveExit line 119, col 1 to line 119, col 14 of module UWCP>: 4:24
+  line 120, col 8 to line 120, col 25 of module UWCP: 202
+  |line 120, col 8 to line 120, col 13 of module UWCP: 178
+  line 120, col 30 to line 120, col 38 of module UWCP: 66
+  |line 120, col 31 to line 120, col 38 of module UWCP: 42
+  line 121, col 8 to line 121, col 41 of module UWCP: 24
+  line 122, col 8 to line 122, col 97 of module UWCP: 24
+<FalseLost line 125, col 1 to line 125, col 12 of module UWCP>: 0:0
+  line 126, col 8 to line 126, col 24 of module UWCP: 178
+  line 128, col 8 to line 128, col 39 of module UWCP: 0
+  line 129, col 8 to line 129, col 41 of module UWCP: 0
+  line 130, col 8 to line 130, col 93 of module UWCP: 0
+<Expire line 133, col 1 to line 133, col 9 of module UWCP>: 11:49
+  line 134, col 8 to line 134, col 24 of module UWCP: 227
+  |line 134, col 8 to line 134, col 12 of module UWCP: 178
+  line 135, col 8 to line 135, col 39 of module UWCP: 49
+  line 136, col 8 to line 136, col 98 of module UWCP: 49
+<Harvest line 138, col 1 to line 138, col 10 of module UWCP>: 0:2
+  line 139, col 8 to line 139, col 24 of module UWCP: 180
+  |line 139, col 8 to line 139, col 12 of module UWCP: 178
+  line 139, col 29 to line 139, col 44 of module UWCP: 51
+  |line 139, col 29 to line 139, col 34 of module UWCP: 49
+  line 139, col 49 to line 139, col 59 of module UWCP: 5
+  |line 139, col 50 to line 139, col 59 of module UWCP: 3
+  line 140, col 8 to line 140, col 39 of module UWCP: 2
+  line 141, col 8 to line 141, col 98 of module UWCP: 2
+<Bound line 143, col 1 to line 143, col 8 of module UWCP>: 5:12
+  line 144, col 8 to line 144, col 18 of module UWCP: 12
+  line 145, col 8 to line 145, col 24 of module UWCP: 190
+  |line 145, col 8 to line 145, col 12 of module UWCP: 178
+  line 145, col 29 to line 145, col 46 of module UWCP: 61
+  |line 145, col 29 to line 145, col 34 of module UWCP: 49
+  line 145, col 51 to line 145, col 61 of module UWCP: 24
+  |line 145, col 52 to line 145, col 61 of module UWCP: 12
+  line 146, col 8 to line 146, col 46 of module UWCP: 12
+  line 147, col 8 to line 147, col 93 of module UWCP: 12
+<Receipt line 149, col 1 to line 149, col 10 of module UWCP>: 3:17
+  line 150, col 8 to line 150, col 17 of module UWCP: 17
+  |line 150, col 8 to line 150, col 14 of module UWCP: 178
+  |line 150, col 16 to line 150, col 16 of module UWCP: 178
+  line 151, col 8 to line 151, col 47 of module UWCP: 17
+  line 153, col 14 to line 153, col 82 of module UWCP: 17
+  |line 153, col 34 to line 153, col 81 of module UWCP: 17
+  ||line 153, col 34 to line 153, col 48 of module UWCP: 17
+  ||line 153, col 54 to line 153, col 80 of module UWCP: 17
+  |||line 153, col 54 to line 153, col 61 of module UWCP: 17
+  ||||line 152, col 24 to line 152, col 94 of module UWCP: 17
+  |||||line 152, col 27 to line 152, col 44 of module UWCP: 17
+  |||||line 152, col 51 to line 152, col 84 of module UWCP: 17
+  ||||||line 152, col 51 to line 152, col 65 of module UWCP: 17
+  ||||||line 152, col 70 to line 152, col 84 of module UWCP: 16
+  |||line 153, col 66 to line 153, col 80 of module UWCP: 16
+  line 154, col 14 to line 154, col 70 of module UWCP: 17
+  |line 154, col 20 to line 154, col 70 of module UWCP: 17
+  ||line 154, col 23 to line 154, col 30 of module UWCP: 17
+  |||line 152, col 24 to line 152, col 94 of module UWCP: 17
+  ||||line 152, col 27 to line 152, col 44 of module UWCP: 17
+  ||||line 152, col 51 to line 152, col 84 of module UWCP: 17
+  |||||line 152, col 51 to line 152, col 65 of module UWCP: 17
+  |||||line 152, col 70 to line 152, col 84 of module UWCP: 16
+  ||line 154, col 37 to line 154, col 62 of module UWCP: 16
+  ||line 154, col 69 to line 154, col 70 of module UWCP: 1
+  line 155, col 8 to line 155, col 72 of module UWCP: 17
+<Cancel line 157, col 1 to line 157, col 6 of module UWCP>: 21:81
+  line 158, col 8 to line 158, col 25 of module UWCP: 168
+  |line 158, col 8 to line 158, col 11 of module UWCP: 87
+  line 158, col 30 to line 158, col 41 of module UWCP: 81
+  line 159, col 8 to line 159, col 26 of module UWCP: 81
+  line 160, col 8 to line 160, col 21 of module UWCP: 81
+  line 161, col 8 to line 161, col 91 of module UWCP: 81
+<Pause line 163, col 1 to line 163, col 5 of module UWCP>: 21:65
+  line 164, col 8 to line 164, col 22 of module UWCP: 151
+  |line 164, col 8 to line 164, col 11 of module UWCP: 86
+  line 164, col 27 to line 164, col 42 of module UWCP: 65
+  line 165, col 8 to line 165, col 96 of module UWCP: 65
+<Resume line 167, col 1 to line 167, col 6 of module UWCP>: 0:15
+  line 168, col 11 to line 168, col 25 of module UWCP: 101
+  |line 168, col 11 to line 168, col 14 of module UWCP: 86
+  line 169, col 11 to line 169, col 48 of module UWCP: 86
+  line 170, col 8 to line 170, col 23 of module UWCP: 15
+  line 171, col 8 to line 171, col 96 of module UWCP: 15
+<Done line 174, col 1 to line 174, col 4 of module UWCP>: 0:8
+  line 175, col 26 to line 175, col 52 of module UWCP: 136
+  |line 175, col 26 to line 175, col 30 of module UWCP: 120
+  |line 175, col 36 to line 175, col 52 of module UWCP: 120
+  line 175, col 57 to line 175, col 65 of module UWCP: 66
+  |line 175, col 58 to line 175, col 65 of module UWCP: 50
+  line 175, col 70 to line 175, col 80 of module UWCP: 59
+  |line 175, col 71 to line 175, col 80 of module UWCP: 43
+  line 175, col 17 to line 175, col 22 of module UWCP: 86
+  line 176, col 8 to line 176, col 21 of module UWCP: 8
+<TypeOK line 47, col 1 to line 47, col 6 of module UWCP>
+  line 48, col 5 to line 57, col 34 of module UWCP: 82
+<StaleFenceCannotAdvance line 197, col 1 to line 197, col 23 of module UWCP>
+  line 197, col 28 to line 197, col 39 of module UWCP: 82
+<ReceiptOnlyForOpenEpoch line 198, col 1 to line 198, col 23 of module UWCP>
+  line 198, col 28 to line 198, col 43 of module UWCP: 80
+<AtMostOneOpenEpoch line 199, col 1 to line 199, col 18 of module UWCP>
+  line 199, col 28 to line 199, col 49 of module UWCP: 80
+  |line 199, col 28 to line 199, col 44 of module UWCP: 80
+  ||line 199, col 40 to line 199, col 43 of module UWCP: 80
+  |||line 45, col 11 to line 45, col 63 of module UWCP: 80
+  ||||line 45, col 27 to line 45, col 62 of module UWCP: 160
+  ||||line 45, col 18 to line 45, col 23 of module UWCP: 80
+<AtMostOneLiveExecutor line 200, col 1 to line 200, col 21 of module UWCP>
+  line 200, col 28 to line 200, col 70 of module UWCP: 80
+  |line 200, col 28 to line 200, col 65 of module UWCP: 80
+  ||line 200, col 40 to line 200, col 64 of module UWCP: 80
+  |||line 200, col 56 to line 200, col 63 of module UWCP: 160
+  |||line 200, col 47 to line 200, col 52 of module UWCP: 80
+End of statistics.
+144 states generated, 82 distinct states found, 49 states left on queue.
+The depth of the complete state graph search is 6.
+The average outdegree of the complete state graph is 3 (minimum is 0, the maximum 6 and the 95th percentile is 6).
+Finished in 03s at (2026-09-25 17:13:00)
