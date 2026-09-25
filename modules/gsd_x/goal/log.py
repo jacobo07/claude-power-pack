@@ -210,8 +210,17 @@ class GoalLog:
             "prev_digest": prev_digest,
         }
         body["digest"] = event_digest(body)
+        return self._publish_witnessed(body, anchor)
+
+    def _publish_witnessed(self, body: dict, anchor) -> Event:
+        """Publish, then raise the founder's high-water mark when ``anchor`` is set.
+
+        The one tail both `append` and `append_presigned` go through, so a
+        relayed founder event is published and witnessed exactly as a local one.
+        """
         ev = self.publish(body)
         if anchor is not None:
+            from . import authority as au
             try:
                 au.witness_event(anchor, self.repo, self.goal_id, ev.seq, ev.digest)
             except OSError as exc:
@@ -220,6 +229,46 @@ class GoalLog:
                     f"written ({exc.__class__.__name__}: {exc}); until it is, a truncation "
                     "of this event cannot be detected") from exc
         return ev
+
+    def append_presigned(self, expected_seq: int, type_: str, data: dict, actor: str,
+                         ts: str, prev_digest: str) -> Event:
+        """Publish a founder event SIGNED ELSEWHERE (the relay, spec section 10).
+
+        The narrow sibling of `append` for a signature made on a host that holds
+        the founder key and cannot write this store. It signs nothing: ``data``
+        must already carry the `_founder` block, over exactly these ``ts``,
+        ``actor`` and ``prev_digest``. Everything else is `append`'s: the same
+        read, the same witness check, the same compare-and-swap publish, the same
+        witness write. A signature that does not verify here is refused before
+        anything is written -- a relay that forgot to check must not be the only
+        check.
+        """
+        from . import authority as au
+        if type_ not in au.FOUNDER_CLASS:
+            raise au.AuthorityError(f"{self.goal_id}: {type_} is not founder-class; only a "
+                                    "founder event is ever pre-signed")
+        anchor = au.load_anchor()
+        if anchor.mode not in au.CHECKING_MODES:
+            raise au.AuthorityError(f"{self.goal_id}: a pre-signed founder event needs an "
+                                    f"anchor that checks ({au.describe(anchor)})")
+        events = self.read()
+        if expected_seq != len(events) + 1:
+            raise LostRace(f"{self.goal_id}: expected to write seq {expected_seq}, "
+                           f"log is at {len(events)}")
+        current = events[-1].digest if events else GENESIS
+        if prev_digest != current:
+            raise LostRace(f"{self.goal_id}: the event was signed after seq {expected_seq - 1} "
+                           "with another digest; the log's history is not the one signed")
+        au.check_witness(anchor, self.repo, self.goal_id, events, governed=False)
+        body = {"seq": expected_seq, "type": type_, "ts": str(ts), "actor": str(actor),
+                "data": dict(data or {}), "prev_digest": prev_digest}
+        ok, why = au.verify_event(anchor, self.repo, self.goal_id, Event(
+            expected_seq, type_, body["ts"], body["actor"], body["data"], prev_digest, ""))
+        if not ok:
+            raise au.AuthorityError(f"{self.goal_id} seq {expected_seq}: "
+                                    f"{au.FOUNDER_SIGNATURE_INVALID} ({type_}: {why})")
+        body["digest"] = event_digest(body)
+        return self._publish_witnessed(body, anchor)
 
     def publish(self, body: dict) -> Event:
         """Publish a PREPARED event onto its sequence name, or raise.
