@@ -36,6 +36,9 @@ RestartSec=30
 # Exit 3 = `run` honoured STOP. Without this, Restart=always relaunches it every
 # 30 s until StartLimitBurst fails the unit (found in the wave F rehearsal).
 RestartPreventExitStatus=3
+# ...and a STOP is an orderly end, not a fault: without this the unit reads
+# `failed` after `stop` (measured on GEX44), which monitors would page on.
+SuccessExitStatus=3
 # Every process the resident started dies with the unit's cgroup.
 KillMode=control-group
 TimeoutStopSec=120
