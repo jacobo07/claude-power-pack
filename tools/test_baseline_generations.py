@@ -95,6 +95,55 @@ def main() -> int:
                "an existing generation is never rewritten",
                "raised=%s intact=%s" % (raised, intact))
 
+        # --- two writers race for the same B<n>: exactly one may publish ----
+        # Positioned, not hoped for: both writers are held on a barrier AFTER
+        # they have read the generation list and BEFORE either publishes, so
+        # the window between "B<n> does not exist" and the write is occupied
+        # by the other writer on every run.
+        import threading
+        race_root = os.path.join(tmp, "race")
+        bl.write_generation("race_family", [], "b0", root=race_root)
+        barrier = threading.Barrier(2, timeout=10)
+        real_dump = bl.json.dump
+
+        def held_dump(*a, **k):
+            barrier.wait()
+            return real_dump(*a, **k)
+
+        outcomes = {}
+
+        def writer(tag):
+            try:
+                bl.write_generation("race_family", [{"id": tag}], tag, root=race_root)
+                outcomes[tag] = "published"
+            except FileExistsError:
+                outcomes[tag] = "refused"
+            except Exception as exc:  # noqa: BLE001 -- recorded, asserted below
+                outcomes[tag] = "error:%s" % type(exc).__name__
+
+        bl.json.dump = held_dump
+        try:
+            threads = [threading.Thread(target=writer, args=(t,)) for t in ("A", "B")]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join(15)
+        finally:
+            bl.json.dump = real_dump
+        published = sorted(k for k, v in outcomes.items() if v == "published")
+        refused = sorted(k for k, v in outcomes.items() if v == "refused")
+        survivor = bl.load_generation("race_family", 1, root=race_root)
+        leftovers = [f for f in os.listdir(os.path.join(race_root, "race_family"))
+                     if not bl._GEN.match(f)]
+        _check("V-BGEN-RACE-ONE-WINNER",
+               len(published) == 1 and len(refused) == 1
+               and survivor["reason"] == published[0]
+               and bl.generations("race_family", root=race_root) == [0, 1]
+               and not leftovers,
+               "one writer published B1, the other was refused, no temp residue",
+               "outcomes=%s survivor=%s leftovers=%s"
+               % (outcomes, survivor.get("reason"), leftovers))
+
         # --- quote anchoring: drift is DETECTED, not averaged away ----------
         q = dict(_entry(src, 5))
         q["origin"] = dict(q["origin"], quote="DONE means HTTP 200 on the real domain")

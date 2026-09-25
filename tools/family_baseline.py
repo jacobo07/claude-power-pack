@@ -2,6 +2,15 @@
 
     python tools/family_baseline.py build-b0 <family> <candidates.jsonl>
     python tools/family_baseline.py show <family>
+    python tools/family_baseline.py review <family>
+    python tools/family_baseline.py verify <family>
+    python tools/family_baseline.py revert <family> <id> --reason R --authority A
+
+review lists the entries still `auto` and then verifies the chain. verify
+reports every unrecorded weakening between consecutive generations and every
+generation whose parent changed after it was written (modules/tower/ratchet).
+revert writes B<n+1> with the entry reverted and the change on the record; it
+refuses an empty reason or authority, and an id that is not active.
 
 build-b0 re-reads every candidate's cited line (baselines.verify_origin) and
 writes B0 from the VERIFIED ones only. WEAK, LINE_MISSING, FILE_MISSING and
@@ -84,11 +93,64 @@ def show(family: str) -> int:
     return 0
 
 
+def review(family: str) -> int:
+    """Entries still `auto` in the newest generation, plus the chain verdict.
+
+    The docstring promised this command since S2; it did not exist until the
+    ratchet did, because a review with no way to verify the chain it reviews
+    would only be a listing."""
+    g = bl.latest(family)
+    if not g:
+        print("%s: no generation" % family)
+        return 0
+    auto = [e for e in g["entries"] if e.get("status") == "auto"]
+    print("%s B%d: %d auto-promoted entr%s awaiting review"
+          % (family, g["generation"], len(auto), "y" if len(auto) == 1 else "ies"))
+    for e in auto:
+        print("  [auto] %s  %s" % (e["id"], e["requirement"]))
+    return verify(family)
+
+
+def verify(family: str) -> int:
+    from modules.tower import ratchet as rt
+    rep = rt.verify_chain(family)
+    for r in rep.regressions:
+        print("  REGRESSION B%d %s %s (no reason+authority on record)"
+              % (r["generation"], r["id"], r["kind"]))
+    for n in rep.tampered:
+        print("  TAMPERED B%d: its parent's bytes changed after it was written" % n)
+    print("%s chain: %s (generations %s)" % (family, "OK" if rep.ok else "REGRESSED",
+                                              rep.generations))
+    return 0 if rep.ok else 1
+
+
+def revert_cmd(family: str, entry_id: str, reason: str, authority: str) -> int:
+    from modules.tower import ratchet as rt
+    try:
+        path = rt.revert(family, entry_id, reason=reason, authority=authority)
+    except rt.RatchetRefusal as exc:
+        print("REFUSED: %s" % exc)
+        return 2
+    print("reverted %s -> %s" % (entry_id, path))
+    return 0
+
+
+def _opt(argv: list, name: str) -> str:
+    return argv[argv.index(name) + 1] if name in argv and argv.index(name) + 1 < len(argv) \
+        else ""
+
+
 def main(argv: list) -> int:
     if len(argv) >= 3 and argv[0] == "build-b0":
         return build_b0(argv[1], argv[2])
     if len(argv) >= 2 and argv[0] == "show":
         return show(argv[1])
+    if len(argv) >= 2 and argv[0] == "review":
+        return review(argv[1])
+    if len(argv) >= 2 and argv[0] == "verify":
+        return verify(argv[1])
+    if len(argv) >= 3 and argv[0] == "revert":
+        return revert_cmd(argv[1], argv[2], _opt(argv, "--reason"), _opt(argv, "--authority"))
     print(__doc__)
     return 2
 

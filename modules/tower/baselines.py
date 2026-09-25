@@ -13,9 +13,12 @@ built only from entries that verify.
 """
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import json
 import os
 import re
+import tempfile
 import time
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -124,21 +127,73 @@ def active_entries(family: str, root: str | None = None) -> list:
     return [e for e in g.get("entries", []) if e.get("status") != "reverted"]
 
 
+def generation_sha256(family: str, n: int, root: str | None = None) -> str:
+    """SHA-256 of a generation file's exact bytes."""
+    with open(os.path.join(_family_dir(family, root), "B%d.json" % n), "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
+# Fields write_generation owns; `extra` may add keys but never override these.
+_CORE = ("family", "generation", "parent", "parent_sha256", "created_at", "reason",
+         "entries")
+
+
 def write_generation(family: str, entries: list, reason: str,
-                     root: str | None = None) -> str:
-    """Write B<n+1>. Refuses to overwrite: a generation is a record."""
+                     root: str | None = None, extra: dict | None = None) -> str:
+    """Write B<n+1>. Refuses to overwrite: a generation is a record.
+
+    Publication is create-if-absent in ONE step. The earlier shape checked that
+    B<n> did not exist, wrote a shared `B<n>.json.tmp`, then `os.replace`d it:
+    two writers that both passed the check both reported success and the later
+    one silently replaced the earlier (measured 2026-09-25, positioned race,
+    V-BGEN-RACE-ONE-WINNER). Each writer now owns a private temp file and
+    publishes with a hard link, which the OS refuses when the target exists, so
+    the loser gets FileExistsError and the winner's bytes are never touched.
+    """
     d = _family_dir(family, root)
     os.makedirs(d, exist_ok=True)
     gens = generations(family, root)
     n = gens[-1] + 1 if gens else 0
     path = os.path.join(d, "B%d.json" % n)
-    if os.path.exists(path):
-        raise FileExistsError(path)
+    # The parent's exact bytes are anchored, so an older generation edited after
+    # a child was written is detectable (ratchet.verify_chain -> TAMPERED).
     doc = {"family": family, "generation": n, "parent": gens[-1] if gens else None,
+           "parent_sha256": generation_sha256(family, gens[-1], root) if gens else None,
            "created_at": time.time(), "reason": reason, "entries": entries}
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8", newline="\n") as fh:
-        json.dump(doc, fh, indent=2, ensure_ascii=False)
-        fh.write("\n")
-    os.replace(tmp, path)
+    clash = sorted(set(extra or {}) & set(_CORE))
+    if clash:
+        raise ValueError("extra may not override core generation fields: %s" % clash)
+    # Two entries with one id would let every id-keyed reader keep one and
+    # silently lose the other (code review 2026-09-25, MEDIUM).
+    seen, dupes = set(), set()
+    for e in entries:
+        ident = e.get("id") if isinstance(e, dict) else None
+        (dupes if ident in seen else seen).add(ident)
+    if dupes:
+        raise ValueError("duplicate entry ids in one generation: %s"
+                         % sorted(map(str, dupes)))
+    doc.update(extra or {})
+    fd, tmp = tempfile.mkstemp(prefix=".B%d." % n, suffix=".tmp", dir=d)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump(doc, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+        try:
+            os.link(tmp, path)
+        except FileExistsError:
+            raise
+        except OSError:
+            # A filesystem without hard links: fall back to an exclusive create.
+            # Still refuses an existing target; loses only atomicity of content.
+            # O_BINARY: without it the Windows CRT opens in text mode and turns
+            # every LF into CRLF, so the published bytes would not be the ones
+            # serialized (code review 2026-09-25, LOW).
+            flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY | getattr(os, "O_BINARY", 0)
+            with open(tmp, "rb") as src, os.fdopen(os.open(path, flags), "wb") as dst:
+                dst.write(src.read())
+    finally:
+        # Only "already gone" is benign; any other failure leaves residue that
+        # V-BGEN-RACE-ONE-WINNER reports, so it must stay loud.
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
     return path
